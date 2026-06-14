@@ -60,14 +60,26 @@ export function SkillCard({ skill, variant, onPick }: Props) {
                 👁 Lookahead — next picks
               </div>
               {leadsTo.length ? (
-                leadsTo.map((s) => (
-                  <div key={s.id} className="flex items-center gap-2 text-[14px] my-1 text-white">
-                    <span>{skill.icon}</span>
-                    <span className="text-[#5a6580]">→</span>
-                    <span>{s.icon}</span>
-                    <span className="text-[#97a0b5]">{s.name}</span>
-                  </div>
-                ))
+                leadsTo.map((s) =>
+                  s.isClass ? (
+                    <div
+                      key={s.id}
+                      className="flex items-center gap-2 text-[14px] my-1 font-semibold text-[#ffd98a]"
+                    >
+                      <span>🏆</span>
+                      <span>Achieves</span>
+                      <span>{s.icon}</span>
+                      <span>{s.name}</span>
+                    </div>
+                  ) : (
+                    <div key={s.id} className="flex items-center gap-2 text-[14px] my-1 text-white">
+                      <span>{skill.icon}</span>
+                      <span className="text-[#5a6580]">→</span>
+                      <span>{s.icon}</span>
+                      <span className="text-[#97a0b5]">{s.name}</span>
+                    </div>
+                  ),
+                )
               ) : (
                 <div className="text-[13px] text-[#97a0b5] italic">Unlocks your job class</div>
               )}

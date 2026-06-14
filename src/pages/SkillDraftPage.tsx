@@ -1,5 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
-import { getDraft, type Draft } from "../skill-draft/graph";
+import { useCallback, useState } from "react";
+import {
+  getDraft,
+  classUnlockedBy,
+  BRANCH_META,
+  type Draft,
+  type Skill,
+} from "../skill-draft/graph";
 import { SkillCard } from "../skill-draft/SkillCard";
 import { SkillTree } from "../skill-draft/SkillTree";
 import { BuildPanel } from "../skill-draft/BuildPanel";
@@ -11,33 +17,62 @@ const PAGE_BG =
   "radial-gradient(900px 500px at 50% 120%, #1a1230 0%, transparent 55%)," +
   "#0a0c12";
 
+const draftIds = (d: Draft | null): string[] =>
+  d ? [...d.guaranteed.map((s) => s.id), ...(d.wildcard ? [d.wildcard.id] : [])] : [];
+
 /** Interactive level-up skill draft + skill tree, driven by one shared graph. */
 export function SkillDraftPage() {
   const [owned, setOwned] = useState<Set<string>>(() => new Set(START));
   const [level, setLevel] = useState(1);
-  const [draft, setDraft] = useState<Draft | null>(() => getDraft(new Set(START)));
+  // Ledger of every skill ever offered. A skill that lands here but is never
+  // chosen is "burned" — getDraft excludes it so it can't be drafted again.
+  const [seen, setSeen] = useState<Set<string>>(() => new Set());
+  const [draft, setDraft] = useState<Draft | null>(() => getDraft(new Set(START), new Set()));
   const [lastPicked, setLastPicked] = useState<string | null>(null);
+  const [achievedClass, setAchievedClass] = useState<Skill | null>(null);
 
-  // Re-draw the 3 options whenever the owned set changes (i.e. on a pick).
-  useEffect(() => {
-    setDraft(getDraft(owned));
-  }, [owned]);
+  const pick = useCallback(
+    (id: string) => {
+      setSeen((prevSeen) => {
+        // Burn the whole tray that was on screen (the picked one becomes owned,
+        // the rest become unreachable for the rest of the run).
+        const nextSeen = new Set(prevSeen);
+        draftIds(draft).forEach((sid) => nextSeen.add(sid));
 
-  const pick = useCallback((id: string) => {
-    setOwned((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-    setLevel((l) => l + 1);
-    setLastPicked(id);
-  }, []);
+        const nextOwned = new Set(owned);
+        nextOwned.add(id);
+
+        // Job classes are revealed, not selected: picking a skill that leads
+        // into one auto-grants the class.
+        const unlocked = classUnlockedBy(id);
+        if (unlocked) {
+          nextOwned.add(unlocked.id);
+          setAchievedClass(unlocked);
+        }
+
+        setOwned(nextOwned);
+        setDraft(getDraft(nextOwned, nextSeen));
+        return nextSeen;
+      });
+      setLevel((l) => l + 1);
+      setLastPicked(id);
+    },
+    [draft, owned],
+  );
 
   const reset = () => {
-    setOwned(new Set(START));
+    const fresh = new Set(START);
+    setOwned(fresh);
+    setSeen(new Set());
+    setDraft(getDraft(fresh, new Set()));
     setLevel(1);
     setLastPicked(null);
+    setAchievedClass(null);
   };
+
+  // Currently draftable (lit in the tree) vs. burned/missed (dimmed in the tree).
+  const available = new Set(draftIds(draft));
+  const burned = new Set([...seen].filter((sid) => !owned.has(sid) && !available.has(sid)));
 
   return (
     <div className="min-h-screen text-[#e7ebf3] font-sans" style={{ background: PAGE_BG }}>
@@ -47,6 +82,26 @@ export function SkillDraftPage() {
             Skill Progression — Roguelike Draft
           </div>
         </header>
+
+        {achievedClass && (
+          <div className="flex justify-center mb-7" key={achievedClass.id}>
+            <div
+              className="animate-achieve flex items-center gap-2.5 rounded-full px-5 py-2.5 text-[15px] font-bold border-2"
+              style={{
+                color: BRANCH_META[achievedClass.branch].color,
+                borderColor: BRANCH_META[achievedClass.branch].color,
+                background: "rgba(12,14,20,.85)",
+                boxShadow: `0 0 30px ${BRANCH_META[achievedClass.branch].glow}`,
+              }}
+            >
+              <span className="text-[20px]">{achievedClass.icon}</span>
+              <span>
+                Achieved <span className="text-white">{achievedClass.name}</span> Class!
+              </span>
+              <span className="text-[18px]">🏆</span>
+            </div>
+          </div>
+        )}
 
         {draft ? (
           <>
@@ -68,8 +123,12 @@ export function SkillDraftPage() {
           </>
         ) : (
           <div className="text-center my-12">
-            <h1 className="text-[32px] font-extrabold text-[#ffd98a] mb-2">All skills learned!</h1>
-            <p className="text-[#97a0b5]">You've drafted the entire tree.</p>
+            <h1 className="text-[32px] font-extrabold text-[#ffd98a] mb-2">Path complete</h1>
+            <p className="text-[#97a0b5]">
+              {achievedClass
+                ? `No more skills to draft — you've locked in the ${achievedClass.name}.`
+                : "No more skills to draft on your current path."}
+            </p>
           </div>
         )}
 
@@ -87,7 +146,7 @@ export function SkillDraftPage() {
             <div className="text-center text-[12px] tracking-[3px] uppercase text-[#97a0b5] mb-4">
               🌳 Skill tree — path → job class
             </div>
-            <SkillTree owned={owned} lastPicked={lastPicked} />
+            <SkillTree owned={owned} lastPicked={lastPicked} available={available} burned={burned} />
           </div>
           <BuildPanel owned={owned} level={level} />
         </div>

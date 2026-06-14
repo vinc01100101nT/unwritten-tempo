@@ -1,8 +1,11 @@
-import { SKILLS, headingToward } from "./graph";
+import { SKILLS, headingToward, BRANCH_META } from "./graph";
 
-/** Side panel: skills owned this run + the class the build is trending toward. */
+/** Side panel: skills owned this run + the class achieved (or trending toward). */
 export function BuildPanel({ owned, level }: { owned: Set<string>; level: number }) {
-  const learned = [...owned].filter((id) => id !== "novice").map((id) => SKILLS[id]);
+  const all = [...owned].filter((id) => id !== "novice").map((id) => SKILLS[id]);
+  const learned = all.filter((s) => !s.isClass);
+  // Classes earned this run, base → prestige — the path shift, made visible.
+  const classChain = all.filter((s) => s.isClass).sort((a, b) => a.tier - b.tier);
   const heading = headingToward(owned);
 
   return (
@@ -28,14 +31,33 @@ export function BuildPanel({ owned, level }: { owned: Set<string>; level: number
         )}
       </div>
 
-      <div className="border-t border-[#222838] pt-3 flex items-center gap-2">
-        <span className="text-[11px] tracking-wider uppercase text-[#7f8aa3]">Heading toward</span>
-        {heading ? (
-          <span className="font-extrabold" style={{ color: heading.color }}>
-            {heading.label}
-          </span>
+      <div className="border-t border-[#222838] pt-3">
+        {classChain.length ? (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] tracking-wider uppercase text-[#7f8aa3] flex items-center gap-1">
+              Class <span>🏆</span>
+            </span>
+            <span className="flex items-center gap-1.5 flex-wrap font-extrabold">
+              {classChain.map((c, i) => (
+                <span key={c.id} className="flex items-center gap-1.5">
+                  {i > 0 && <span className="text-[#5a6580] font-normal">▸</span>}
+                  <span>{c.icon}</span>
+                  <span style={{ color: BRANCH_META[c.branch].color }}>{c.name}</span>
+                </span>
+              ))}
+            </span>
+          </div>
         ) : (
-          <span className="text-[#97a0b5] italic">Undecided</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] tracking-wider uppercase text-[#7f8aa3]">Heading toward</span>
+            {heading ? (
+              <span className="font-extrabold" style={{ color: heading.color }}>
+                {heading.label}
+              </span>
+            ) : (
+              <span className="text-[#97a0b5] italic">Undecided</span>
+            )}
+          </div>
         )}
       </div>
     </div>

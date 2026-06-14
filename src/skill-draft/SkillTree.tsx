@@ -14,6 +14,10 @@ interface Line {
 interface Props {
   owned: Set<string>;
   lastPicked: string | null;
+  /** Skills the player can draft right now (lit). Defaults to all reachable. */
+  available?: Set<string>;
+  /** Skills offered before but passed over — permanently missed (dimmed). */
+  burned?: Set<string>;
 }
 
 /**
@@ -22,13 +26,16 @@ interface Props {
  * on resize — never hardcoded — so every line hits node centers and stays
  * aligned at any width (PRD R7).
  */
-export function SkillTree({ owned, lastPicked }: Props) {
+export function SkillTree({ owned, lastPicked, available, burned }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [lines, setLines] = useState<Line[]>([]);
   const [hovered, setHovered] = useState<string | null>(null);
 
-  const available = new Set(neighborsOf(owned));
+  // Fall back to "every reachable neighbour" when the page doesn't pass an
+  // explicit draftable set (e.g. an isolated storyboard).
+  const availableSet = available ?? new Set(neighborsOf(owned));
+  const burnedSet = burned ?? new Set<string>();
 
   const recompute = useCallback(() => {
     const c = containerRef.current;
@@ -102,7 +109,8 @@ export function SkillTree({ owned, lastPicked }: Props) {
             {row.map((id) => {
               const s = SKILLS[id];
               const isOwned = owned.has(id);
-              const isAvail = available.has(id);
+              const isAvail = !isOwned && availableSet.has(id);
+              const isBurned = !isOwned && !isAvail && burnedSet.has(id);
               const isLast = lastPicked === id;
               const meta = BRANCH_META[s.branch];
               return (
@@ -117,11 +125,23 @@ export function SkillTree({ owned, lastPicked }: Props) {
                     className={[
                       "grid place-items-center rounded-2xl border transition-all duration-200 text-[26px]",
                       s.isClass ? "px-4 h-14" : "w-14 h-14",
-                      isOwned ? "bg-[#1d2230] scale-105" : isAvail ? "bg-[#171b27]" : "bg-[#12151c] opacity-45",
+                      isOwned
+                        ? "bg-[#1d2230] scale-105"
+                        : isAvail
+                          ? "bg-[#171b27]"
+                          : isBurned
+                            ? "bg-[#160f13] opacity-40 grayscale"
+                            : "bg-[#12151c] opacity-45",
                       isLast ? "animate-pulse" : "",
                     ].join(" ")}
                     style={{
-                      borderColor: isOwned ? meta.color : isAvail ? "#3a4258" : "#222838",
+                      borderColor: isOwned
+                        ? meta.color
+                        : isAvail
+                          ? "#3a4258"
+                          : isBurned
+                            ? "#5a2b39"
+                            : "#222838",
                       boxShadow: isOwned
                         ? `0 0 22px ${meta.glow}`
                         : isAvail
@@ -142,8 +162,16 @@ export function SkillTree({ owned, lastPicked }: Props) {
                     )}
                   </div>
                   {!s.isClass && (
-                    <div className="text-[12px]" style={{ color: isOwned ? "#e7ebf3" : "#7f8aa3" }}>
+                    <div
+                      className={["text-[12px]", isBurned ? "line-through" : ""].join(" ")}
+                      style={{ color: isOwned ? "#e7ebf3" : isBurned ? "#7d5560" : "#7f8aa3" }}
+                    >
                       {s.name}
+                    </div>
+                  )}
+                  {isBurned && !s.isClass && (
+                    <div className="text-[9px] uppercase tracking-wider text-[#7d4a57] -mt-1.5">
+                      missed
                     </div>
                   )}
                   {hovered === id && (
