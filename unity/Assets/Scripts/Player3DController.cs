@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -20,6 +21,8 @@ public class Player3DController : MonoBehaviour
     public float framesPerSecond = 8f;
     [Tooltip("Stop this close to a click target.")]
     public float arriveDistance = 0.12f;
+    [Tooltip("Clearance kept from props when routing (Phase 3D-C) — about the CharacterController radius.")]
+    public float agentRadius = 0.35f;
     [Tooltip("Constant downward pull (units/s) that keeps the CharacterController grounded.")]
     public float gravity = 12f;
 
@@ -28,7 +31,8 @@ public class Player3DController : MonoBehaviour
     Camera cam;
     Vector2 facing = Vector2.down;
     float timer; int frame;
-    bool hasTarget; Vector3 target;
+    readonly List<Vector2> path = new List<Vector2>();   // XZ waypoints from Pathfinder3D
+    int wp; bool routing;
     float groundY;
 
     void Awake()
@@ -42,18 +46,12 @@ public class Player3DController : MonoBehaviour
     {
         if (cam == null) cam = Camera.main;
 
-        // WASD takes priority and cancels any click destination.
+        // WASD takes priority and cancels any routed destination.
         Vector3 move = ReadWasd();
-        if (move.sqrMagnitude > 0.001f) { hasTarget = false; move.Normalize(); }
-        else if (TryReadClick(out var p)) { target = p; hasTarget = true; }
+        if (move.sqrMagnitude > 0.001f) { routing = false; path.Clear(); move.Normalize(); }
+        else if (TryReadClick(out var p)) StartRoute(p);   // click → A* route around props (3D-C)
 
-        // Steer toward a click destination until we arrive.
-        if (hasTarget)
-        {
-            Vector3 to = target - transform.position; to.y = 0f;
-            if (to.magnitude <= arriveDistance) { hasTarget = false; move = Vector3.zero; }
-            else move = to.normalized;
-        }
+        if (routing) move = FollowRoute();
 
         bool moving = move.sqrMagnitude > 0.001f;
         if (moving)
@@ -115,6 +113,54 @@ public class Player3DController : MonoBehaviour
             if (t > 0f) { point = ray.GetPoint(t); return true; }
         }
         return false;
+    }
+
+    // Phase 3D-C: ask Pathfinder3D for a route (around props) to the clicked point.
+    void StartRoute(Vector3 goal)
+    {
+        var from = new Vector2(transform.position.x, transform.position.z);
+        var to = new Vector2(goal.x, goal.z);
+        var route = Pathfinder3D.FindPath(from, to, agentRadius);
+        path.Clear();
+        if (route != null) path.AddRange(route); else path.Add(to);   // truly stuck → straight line
+        wp = 0;
+        routing = path.Count > 0;
+    }
+
+    // Unit step direction toward the current waypoint (zero when the route ends).
+    Vector3 FollowRoute()
+    {
+        if (wp >= path.Count) { routing = false; return Vector3.zero; }
+        Vector3 to = WaypointDelta();
+        if (to.magnitude <= arriveDistance)
+        {
+            wp++;
+            if (wp >= path.Count) { routing = false; return Vector3.zero; }
+            to = WaypointDelta();
+        }
+        return to.sqrMagnitude > 1e-4f ? to.normalized : Vector3.zero;
+    }
+
+    Vector3 WaypointDelta()
+    {
+        Vector2 c = path[wp];
+        Vector3 d = new Vector3(c.x, transform.position.y, c.y) - transform.position;
+        d.y = 0f;
+        return d;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (!routing || path.Count == 0) return;
+        Gizmos.color = new Color(0.4f, 0.9f, 1f, 0.9f);
+        Vector3 prev = transform.position;
+        for (int i = wp; i < path.Count; i++)
+        {
+            Vector3 p = new Vector3(path[i].x, transform.position.y, path[i].y);
+            Gizmos.DrawLine(prev, p);
+            Gizmos.DrawWireSphere(p, 0.1f);
+            prev = p;
+        }
     }
 
     void Animate(bool moving)
