@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47508e1f2de9da94baf9e054014e1078, type: 3}
+  m_Name: House_Small
+  m_EditorClassIdentifier: Assembly-CSharp::HouseTemplate
+  placement: 0
+  weight: 100
+  size: {x: 3, y: 3}
+  anchorCell: {x: 1, y: 0}
+  cells:
+  - layer: Buildings
+    pos: {x: 0, y: 0}
+    tile: {fileID: 11400000, guid: 37bbabc1c52df24408211cfa8b18abb3, type: 2}
+  - layer: Buildings
+    pos: {x: 1, y: 0}
+    tile: {fileID: 11400000, guid: 9c656206c6e55ca43b0ff86f7dfafbff, type: 2}
+  - layer: Buildings
+    pos: {x: 2, y: 0}
+    tile: {fileID: 11400000, guid: 1d3e27410445d6541a7fa58372131c8a, type: 2}
+  - layer: Buildings
+    pos: {x: 0, y: 1}
+    tile: {fileID: 11400000, guid: 430c70dea76397547afaefcf9eb4fdbf, type: 2}
+  - layer: Buildings
+    pos: {x: 1, y: 1}
+    tile: {fileID: 11400000, guid: 79baa813e0e01b84c81c183dfa53dd92, type: 2}
+  - layer: Buildings
+    pos: {x: 2, y: 1}
+    tile: {fileID: 11400000, guid: c67483fab5f2fe645807dd0a33910841, type: 2}
+  - layer: Buildings
+    pos: {x: 0, y: 2}
+    tile: {fileID: 11400000, guid: 1a41976928df3234cb5c7cd05979ca12, type: 2}
+  - layer: Buildings
+    pos: {x: 1, y: 2}
+    tile: {fileID: 11400000, guid: 2affffd7887f42e4a920571dd7089b2f, type: 2}
+  - layer: Buildings
+    pos: {x: 2, y: 2}
+    tile: {fileID: 11400000, guid: 3e4f961f21d5bcb4983e0c242a301c62, type: 2}
+  collisionMode: 1
+  collisionCells:
+  - {x: 4, y: 2}
+  - {x: 3, y: 2}
+  - {x: 2, y: 2}
+  - {x: 1, y: 2}
+  - {x: 5, y: 2}
+  - {x: 0, y: 2}

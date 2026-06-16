@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
+  m_Name: Gold Coin
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  displayName: Gold Coin
+  icon: {fileID: -8171958947958391838, guid: d833d8d5b4847c74cab606b3b3fe8a1f, type: 3}
+  slot: 0
+  bonusHP: 0
+  bonusAttack: 0
+  bonusDefense: 0
+  healAmount: 0
+  description: Currency of the realm. (Shops come later.)

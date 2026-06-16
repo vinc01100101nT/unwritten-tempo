@@ -1,0 +1,74 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Git LFS for the Unity project under unity/.
+#
+# Why this lives at the REPO ROOT (not unity/.gitattributes): git [attr] macros
+# only work in a top-level .gitattributes. The Unity project's own .gitattributes
+# defines its LFS rules via a macro, which silently STOPS working once that file
+# sits in a subdirectory — binaries would then commit as raw blobs and bloat
+# history. These root-level, unity/-scoped rules are the authoritative source so
+# Unity binaries (sprites, 3D models, audio…) always route to LFS. Scoped to
+# unity/ so the React app at the repo root is untouched.
+# ─────────────────────────────────────────────────────────────────────────────
+
+[attr]unitylfs filter=lfs diff=lfs merge=lfs -text
+
+# Images / textures
+unity/**/*.png    unitylfs
+unity/**/*.jpg    unitylfs
+unity/**/*.jpeg   unitylfs
+unity/**/*.gif    unitylfs
+unity/**/*.bmp    unitylfs
+unity/**/*.tga    unitylfs
+unity/**/*.tif    unitylfs
+unity/**/*.tiff   unitylfs
+unity/**/*.psd    unitylfs
+unity/**/*.exr    unitylfs
+unity/**/*.hdr    unitylfs
+unity/**/*.webp   unitylfs
+
+# 3D models (for the 2.5D / RO-style experiment: FBX, OBJ, …)
+unity/**/*.fbx    unitylfs
+unity/**/*.FBX    unitylfs
+unity/**/*.obj    unitylfs
+unity/**/*.blend  unitylfs
+unity/**/*.dae    unitylfs
+unity/**/*.3ds    unitylfs
+unity/**/*.ply    unitylfs
+unity/**/*.stl    unitylfs
+
+# Audio
+unity/**/*.wav    unitylfs
+unity/**/*.mp3    unitylfs
+unity/**/*.ogg    unitylfs
+unity/**/*.aif    unitylfs
+unity/**/*.aiff   unitylfs
+
+# Video
+unity/**/*.mp4    unitylfs
+unity/**/*.mov    unitylfs
+unity/**/*.webm   unitylfs
+
+# Fonts
+unity/**/*.ttf    unitylfs
+unity/**/*.otf    unitylfs
+
+# Native libs / packages
+unity/**/*.dll          unitylfs
+unity/**/*.so           unitylfs
+unity/**/*.a            unitylfs
+unity/**/*.cubemap      unitylfs
+unity/**/*.unitypackage unitylfs
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Unity source text files (scoped to unity/). Keeps C# diffs readable. The smart
+# Unity-YAML merge driver from the original repo is intentionally omitted — it
+# needs an [attr] macro (root-only) plus a configured mergetool; for a solo dev,
+# plain-text merges on scenes/prefabs are fine.
+# ─────────────────────────────────────────────────────────────────────────────
+unity/**/*.cs       text diff=csharp
+unity/**/*.shader   text
+unity/**/*.hlsl     text
+unity/**/*.cginc    text
+unity/**/*.compute  text
+unity/**/*.uss      text
+unity/**/*.uxml     text

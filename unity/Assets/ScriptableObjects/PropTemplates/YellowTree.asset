@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47508e1f2de9da94baf9e054014e1078, type: 3}
+  m_Name: YellowTree
+  m_EditorClassIdentifier: Assembly-CSharp::PropTemplate
+  placement: 0
+  weight: 20
+  size: {x: 3, y: 3}
+  anchorCell: {x: 0, y: 0}
+  cells:
+  - layer: Tilemap
+    pos: {x: 0, y: 0}
+    tile: {fileID: 11400000, guid: d6c06771ed81c6d45b5f4329375d27a7, type: 2}
+  - layer: Tilemap
+    pos: {x: 1, y: 0}
+    tile: {fileID: 11400000, guid: 14df2dbf4306c7046a4e3ac9f729390e, type: 2}
+  - layer: Tilemap
+    pos: {x: 2, y: 0}
+    tile: {fileID: 11400000, guid: 79c373ba74e5b3e4bbb943e245aedab4, type: 2}
+  - layer: Tilemap
+    pos: {x: 0, y: 1}
+    tile: {fileID: 11400000, guid: fd50bdda4fffbd644a4959644c6c993a, type: 2}
+  - layer: Tilemap
+    pos: {x: 1, y: 1}
+    tile: {fileID: 11400000, guid: 3af8d2a4107a66e4488c6e2e44ab23b9, type: 2}
+  - layer: Tilemap
+    pos: {x: 2, y: 1}
+    tile: {fileID: 11400000, guid: 33ebac60cd360c140901eae014e57755, type: 2}
+  - layer: Tilemap
+    pos: {x: 0, y: 2}
+    tile: {fileID: 11400000, guid: 567b06b7da591cf43bff242d09876b05, type: 2}
+  - layer: Tilemap
+    pos: {x: 1, y: 2}
+    tile: {fileID: 11400000, guid: eadfe9a5401b0114fa278992fd0a2564, type: 2}
+  - layer: Tilemap
+    pos: {x: 2, y: 2}
+    tile: {fileID: 11400000, guid: a54ecbcf2b9a24e46a29203cbda7fccb, type: 2}
+  collisionMode: 1
+  collisionCells:
+  - {x: 2, y: 2}
+  - {x: 3, y: 2}

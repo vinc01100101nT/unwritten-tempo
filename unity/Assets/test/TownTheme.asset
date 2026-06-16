@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f7bd404395cd0b42aa2e40fc36179d0, type: 3}
+  m_Name: TownTheme
+  m_EditorClassIdentifier: Assembly-CSharp::TownTheme
+  groundTiles:
+  - {fileID: 11400000, guid: 7ef3e5e80adcf5c4dbf337b164990955, type: 2}
+  roadTiles:
+  - {fileID: 11400000, guid: 3d894133639400e4aae45ee1bb6f33a0, type: 2}
+  - {fileID: 11400000, guid: 2a1627e174cdf604cb59c39a6a9e5634, type: 2}
+  - {fileID: 11400000, guid: 3c34e6afe1165a34d835a39e01183d20, type: 2}
+  - {fileID: 11400000, guid: 77b172fbb4a3ab24e9b636850a85058c, type: 2}
+  - {fileID: 11400000, guid: 62b04e499def78c4bac0bc02bd6b6f2f, type: 2}
+  pathTile: {fileID: 11400000, guid: 4b4966c5c9c97f4479ffaa6f9744e09f, type: 2}
+  patchTerrains:
+  - {fileID: 11400000, guid: 4b4966c5c9c97f4479ffaa6f9744e09f, type: 2}
+  props:
+  - {fileID: 11400000, guid: d4d9a19115af6764dbfed8397b13a7a5, type: 2}
+  - {fileID: 11400000, guid: d977aef54809eca40968d2c47324b4ca, type: 2}
+  - {fileID: 11400000, guid: de4b720188a72484a9355681f2c43d0c, type: 2}
+  boundaryTiles:
+  - {fileID: 11400000, guid: 121626925d715b24aad013549c73ac9d, type: 2}
+  - {fileID: 11400000, guid: ad0e773e743c6ce42aab127a96ba2e35, type: 2}
+  - {fileID: 11400000, guid: ab8e96db9cf8c4e42bf2781085a943e6, type: 2}
+  decorTiles: []
+  monsterPrefabs:
+  - {fileID: 789903035442623518, guid: 9a851fbf9a86317408f1fcc1a2cd51ee, type: 3}

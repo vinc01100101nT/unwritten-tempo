@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
+  m_Name: Leather Vest
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  displayName: Leather Vest
+  icon: {fileID: -2757887451555568444, guid: c6f5be1754b7b604a998a04fd37fd14c, type: 3}
+  slot: 2
+  bonusHP: 8
+  bonusAttack: 0
+  bonusDefense: 3
+  healAmount: 0
+  description: Boiled leather that turns a blow.
