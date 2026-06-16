@@ -188,6 +188,10 @@ public static class Build25DSpike
                 for (int k = 0; k < mats.Length; k++) mats[k] = mat;
                 mr.sharedMaterials = mats;
             }
+            // Solid collision so the player can't walk through props (Phase 3D-B).
+            foreach (var mf in inst.GetComponentsInChildren<MeshFilter>())
+                if (mf.sharedMesh != null && mf.GetComponent<Collider>() == null)
+                    mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
             placed++;
         }
         return placed;
@@ -226,6 +230,9 @@ public static class Build25DSpike
         sr.sprite = frames[0];
         go.AddComponent<Billboard>();
         var ctrl = go.AddComponent<Player3DController>();   // click-to-move + WASD + 4-dir anim
+
+        var cc = go.GetComponent<CharacterController>();     // auto-added; size to the sprite (Phase 3D-B)
+        cc.radius = 0.3f; cc.height = 1f; cc.center = Vector3.zero; cc.stepOffset = 0.2f;
 
         Sprite[] Col(int c) => Enumerable.Range(0, walk).Select(r => frames[c + r * cols]).ToArray();
         ctrl.down = Col(0); ctrl.up = Col(1); ctrl.left = Col(2); ctrl.right = Col(3);

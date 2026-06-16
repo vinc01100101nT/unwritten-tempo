@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 /// in Phase 3D-C (the existing grid A*, adapted to XZ). Pair with <see cref="Billboard"/>; the
 /// frame arrays are filled by Build25DSpike. Supersedes the throwaway SpikeActor.
 /// </summary>
-[RequireComponent(typeof(SpriteRenderer))]
+[RequireComponent(typeof(SpriteRenderer), typeof(CharacterController))]
 public class Player3DController : MonoBehaviour
 {
     [Header("Walk frames (column = facing), filled by Build 2.5D Spike")]
@@ -20,8 +20,11 @@ public class Player3DController : MonoBehaviour
     public float framesPerSecond = 8f;
     [Tooltip("Stop this close to a click target.")]
     public float arriveDistance = 0.12f;
+    [Tooltip("Constant downward pull (units/s) that keeps the CharacterController grounded.")]
+    public float gravity = 12f;
 
     SpriteRenderer sr;
+    CharacterController controller;
     Camera cam;
     Vector2 facing = Vector2.down;
     float timer; int frame;
@@ -31,7 +34,8 @@ public class Player3DController : MonoBehaviour
     void Awake()
     {
         sr = GetComponent<SpriteRenderer>();
-        groundY = transform.position.y;   // keep the sprite at this height while moving on XZ
+        controller = GetComponent<CharacterController>();
+        groundY = transform.position.y;   // sprite height; ground-raycast targets snap to XZ
     }
 
     void Update()
@@ -53,12 +57,14 @@ public class Player3DController : MonoBehaviour
 
         bool moving = move.sqrMagnitude > 0.001f;
         if (moving)
-        {
-            transform.position += move * (moveSpeed * Time.deltaTime);
-            var pos = transform.position; pos.y = groundY; transform.position = pos;
             facing = Mathf.Abs(move.x) > Mathf.Abs(move.z) ? new Vector2(Mathf.Sign(move.x), 0f)
                                                            : new Vector2(0f, Mathf.Sign(move.z));
-        }
+
+        // Move via CharacterController (Phase 3D-B) so we slide along props instead of through
+        // them; the downward term keeps us pinned to the flat ground.
+        Vector3 motion = move * moveSpeed + Vector3.down * gravity;
+        controller.Move(motion * Time.deltaTime);
+
         Animate(moving);
     }
 
