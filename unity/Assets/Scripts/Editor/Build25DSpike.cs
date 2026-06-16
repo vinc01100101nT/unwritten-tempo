@@ -50,6 +50,7 @@ public static class Build25DSpike
         int placed = ScatterProps();
         var player = BuildPlayer();              // returns the player GameObject (or null)
         BuildCamera(rendererIndex, player);      // 3D follow-camera tracks the player
+        int monsters = BuildMonsters();          // billboard mobs that wander + chase (Phase 3D-D)
 
         if (!Directory.Exists("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
         EditorSceneManager.SaveScene(scene, ScenePath);
@@ -64,7 +65,8 @@ public static class Build25DSpike
         EditorUtility.DisplayDialog("2.5D Spike — built",
             $"Built {ScenePath}\n\n" +
             $"• {placed} Kenney props placed\n" +
-            $"• Player billboard: {(player != null ? "yes" : "MISSING — see Console")}\n\n" +
+            $"• Player billboard: {(player != null ? "yes" : "MISSING — see Console")}\n" +
+            $"• Monsters: {monsters} (wander, then chase when you get close)\n\n" +
             "NEXT: open Assets/Scenes/Spike2D5.unity and press Play. Click the ground to walk there, or WASD.\n\n" +
             "NOTE: I set Play-Mode Start Scene to None so the spike plays standalone. To go back " +
             "to the real game, open NewTown and re-run Tools ▸ unwritten ▸ Setup Systems Scene.",
@@ -205,6 +207,51 @@ public static class Build25DSpike
         {
             string p = AssetDatabase.GUIDToAssetPath(g);
             if (p.ToLowerInvariant().EndsWith(".fbx")) return p;
+        }
+        return null;
+    }
+
+    static int BuildMonsters()
+    {
+        string sheetPath = FindMonsterSheet();
+        if (sheetPath == null) { Debug.LogWarning("[unwritten] Spike: no Ninja Adventure monster sheet found."); return 0; }
+        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
+        if (tex == null) return 0;
+
+        const int count = 3;
+        for (int i = 0; i < count; i++)
+        {
+            var go = new GameObject("Monster_" + tex.name);
+            float a = (i * (360f / count) + 25f) * Mathf.Deg2Rad;
+            go.transform.position = new Vector3(Mathf.Cos(a) * 8f, 0.5f, Mathf.Sin(a) * 8f);   // start outside aggro
+
+            go.AddComponent<SpriteRenderer>();
+            go.AddComponent<Billboard>();
+
+            var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
+            agent.moveSpeed = 2.5f; agent.agentRadius = 0.3f;
+            var cc = go.GetComponent<CharacterController>();
+            cc.radius = 0.3f; cc.height = 1f; cc.center = Vector3.zero; cc.stepOffset = 0.05f;
+
+            go.AddComponent<Health>().maxHealth = 12;
+            go.AddComponent<MonsterAI3D>();
+            go.AddComponent<BillboardAnimator3D>().sheet = tex;
+        }
+        return count;
+    }
+
+    static string FindMonsterSheet()
+    {
+        const string dir = "Assets/Art/NinjaAdventure/Actor/Monster";
+        foreach (var n in new[] { "Slime", "KappaGreen", "Cyclope", "BlueBat", "Flam" })
+        {
+            string p = $"{dir}/{n}/SpriteSheet.png";
+            if (File.Exists(p)) return p;
+        }
+        foreach (var g in AssetDatabase.FindAssets("SpriteSheet t:Texture2D", new[] { dir }))
+        {
+            string p = AssetDatabase.GUIDToAssetPath(g);
+            if (p.EndsWith("SpriteSheet.png")) return p;
         }
         return null;
     }
