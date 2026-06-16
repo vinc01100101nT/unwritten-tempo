@@ -29,8 +29,11 @@ public static class Build25DSpike
     const int CellSize = 16, WalkFrames = 4;
     // Transparent padding below the feet inside each (center-pivoted) sprite cell, in world units.
     // We drop the billboard by this and raise the CharacterController center to match, so the art's
-    // feet meet the ground instead of floating. Tune if sprites sit slightly high/low.
-    const float SpriteFoot = 0.22f;
+    // feet sit near the ground instead of floating. Kept slightly UNDER the true padding on purpose:
+    // sprites now write depth (alpha-clip), so any pixels below the ground plane get clipped by it —
+    // a small residual float is safe, dropping too far hides the feet. Tune: lower if feet clip,
+    // raise if they float. (Sheets are isReadable:0, so we can't auto-measure the padding.)
+    public const float SpriteFoot = 0.1f;
 
     // Curated props (each guarded — skipped if not present in the kit).
     static readonly string[] Props = {
@@ -95,7 +98,7 @@ public static class Build25DSpike
 
     /// <summary>Create a 3D Universal Renderer (once) and add it to the URP asset's renderer
     /// list; returns its index, or -1 (with a dialog) if URP's internals don't match.</summary>
-    static int EnsureUniversalRenderer()
+    public static int EnsureUniversalRenderer()
     {
         var urp = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(UrpPath)
                   ?? GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
@@ -132,7 +135,7 @@ public static class Build25DSpike
         return idx;
     }
 
-    static void BuildCamera(int rendererIndex, GameObject player)
+    public static void BuildCamera(int rendererIndex, GameObject player)
     {
         var go = new GameObject("Spike Camera") { tag = "MainCamera" };
         var cam = go.AddComponent<Camera>();
@@ -151,7 +154,7 @@ public static class Build25DSpike
         if (player != null) follow.target = player.transform;
     }
 
-    static void BuildLight()
+    public static void BuildLight()
     {
         var go = new GameObject("Sun");
         var l = go.AddComponent<Light>();
@@ -203,7 +206,7 @@ public static class Build25DSpike
 
     // Make a sprite billboard light up like the rest of the 3D world: flat art that darkens in
     // shadow (receive) and throws a clean cutout shadow (cast). No-op material if the shader is missing.
-    static void ApplyBillboardLighting(SpriteRenderer sr)
+    public static void ApplyBillboardLighting(SpriteRenderer sr)
     {
         var mat = BillboardMaterial();
         if (mat != null) sr.sharedMaterial = mat;
@@ -265,7 +268,7 @@ public static class Build25DSpike
         return null;
     }
 
-    static void BuildCursor(GameObject host)
+    public static void BuildCursor(GameObject host)
     {
         const string dir = "Assets/Art/KenneyCursorPack/PNG/Outline/Default";
         foreach (var n in new[] { "pointer_b", "tool_sword_a", "target_b" })
@@ -280,7 +283,7 @@ public static class Build25DSpike
             Debug.LogWarning("[unwritten] Kenney cursors not found under " + dir + " — using the OS cursor.");
     }
 
-    static void BuildCharacter()
+    public static void BuildCharacter()
     {
         // Always give the spike its OWN Character. The scene is rebuilt fresh each run and plays
         // standalone, so there's no duplicate — and a FindObjectByType guard wrongly skipped this
@@ -288,7 +291,7 @@ public static class Build25DSpike
         new GameObject("Character").AddComponent<Character>();       // sets Character.Instance on Play
     }
 
-    static void BuildHUD()
+    public static void BuildHUD()
     {
         var canvasGO = new GameObject("HUD Canvas");
         var canvas = canvasGO.AddComponent<Canvas>();
@@ -341,7 +344,11 @@ public static class Build25DSpike
         hud.fill = fill; hud.label = label;
     }
 
-    static int BuildMonsters()
+    static int BuildMonsters() => BuildMonsters(Vector3.zero, 8f);
+
+    /// <summary>Spawn the wander/chase billboard mobs in a ring of <paramref name="radius"/> around
+    /// <paramref name="center"/> (XZ). Reused by the town converter to drop mobs near the spawn.</summary>
+    public static int BuildMonsters(Vector3 center, float radius)
     {
         string sheetPath = FindMonsterSheet();
         if (sheetPath == null) { Debug.LogWarning("[unwritten] Spike: no Ninja Adventure monster sheet found."); return 0; }
@@ -353,7 +360,7 @@ public static class Build25DSpike
         {
             var go = new GameObject("Monster_" + tex.name);
             float a = (i * (360f / count) + 25f) * Mathf.Deg2Rad;
-            go.transform.position = new Vector3(Mathf.Cos(a) * 8f, 0.5f - SpriteFoot, Mathf.Sin(a) * 8f);   // start outside aggro
+            go.transform.position = new Vector3(center.x + Mathf.Cos(a) * radius, 0.5f - SpriteFoot, center.z + Mathf.Sin(a) * radius);   // start outside aggro
 
             ApplyBillboardLighting(go.AddComponent<SpriteRenderer>());   // flat art + receive/cast shadows
             go.AddComponent<Billboard>();
@@ -387,7 +394,12 @@ public static class Build25DSpike
         return null;
     }
 
-    static GameObject BuildPlayer()
+    static GameObject BuildPlayer() => BuildPlayer(Vector3.zero);
+
+    /// <summary>Build the billboard player standing on the ground at <paramref name="foot"/> (XZ;
+    /// Y is overridden to the sprite-foot height). Reused by the town converter to drop the player
+    /// on the map's spawn point.</summary>
+    public static GameObject BuildPlayer(Vector3 foot)
     {
         string sheetPath = PlayerSheetPath();
         if (sheetPath == null) { Debug.LogWarning("[unwritten] Spike: no player sprite sheet found."); return null; }
@@ -403,7 +415,7 @@ public static class Build25DSpike
         { Debug.LogWarning("[unwritten] Spike: player sheet isn't a 4-column grid: " + sheetPath); return null; }
 
         var go = new GameObject("Player3D");
-        go.transform.position = new Vector3(0f, 0.5f - SpriteFoot, 0f);
+        go.transform.position = new Vector3(foot.x, 0.5f - SpriteFoot, foot.z);
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = frames[0];
         ApplyBillboardLighting(sr);                  // flat art + receive/cast environment shadows

@@ -18,14 +18,64 @@ public static class Pathfinder3D
     public static int MaxExpansions = 6000;
     public static LayerMask ObstacleMask = ~0;
 
-    /// <summary>World-Y at which obstacles are sampled — above the flat ground, through the body
-    /// of standing props. Set to the agent's mid-height (~0.5 for a 1-unit-tall sprite).</summary>
+    /// <summary>World-Y at which obstacles are sampled — above the ground, through the body of
+    /// standing props. Set to the agent's mid-height (~0.5 for a 1-unit-tall sprite). In height-aware
+    /// mode this is RELATIVE to the sampled ground height under each cell.</summary>
     public static float ProbeY = 0.5f;
+
+    // ---- elevation (opt-in) ---------------------------------------------------
+    /// <summary>When true, the grid samples the ground height under each cell and only lets you step
+    /// between cells whose heights differ by <= <see cref="MaxStep"/> — so ramps/stairs are walkable
+    /// and cliffs are not. Default false keeps the original flat-XZ behaviour (no per-cell raycasts).
+    /// Set via <see cref="Pathfinder3DConfig"/>.</summary>
+    public static bool HeightAware = false;
+
+    /// <summary>Layers that count as walkable GROUND (terrain tiers + ramps) for height sampling.
+    /// Must be set (non-zero) when <see cref="HeightAware"/> is on, or every cell reads as void.</summary>
+    public static LayerMask GroundMask = 0;
+
+    /// <summary>Max walkable height change between adjacent cells (a step/stair/ramp rise). Larger
+    /// deltas are cliffs and block the move.</summary>
+    public static float MaxStep = 0.6f;
+
+    const float RayTop = 60f;   // height we drop ground-probe rays from
+    static readonly System.Collections.Generic.Dictionary<long, float> groundCache
+        = new System.Collections.Generic.Dictionary<long, float>();
+
+    // Reset the elevation statics at every Play start so they can't leak between scenes when
+    // "Enter Play Mode" domain reload is disabled — each scene's Pathfinder3DConfig (or its absence)
+    // is then authoritative. Flat scenes (no config) get the default flat behaviour.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void ResetElevationStatics()
+    {
+        HeightAware = false;
+        GroundMask = 0;
+        ObstacleMask = ~0;
+        groundCache.Clear();
+    }
 
     public static string LastOutcome = "";
 
     static readonly Collider[] overlapBuf = new Collider[16];
     static readonly RaycastHit[] castBuf = new RaycastHit[16];
+
+    // Ground surface Y under a world XZ point (raycast straight down on the ground layers), or NaN if
+    // there's no ground there (a hole/void — treated as unwalkable).
+    static float SampleGroundYWorld(Vector2 xz)
+    {
+        if (Physics.Raycast(new Vector3(xz.x, RayTop, xz.y), Vector3.down, out var hit, RayTop * 2f, GroundMask, QueryTriggerInteraction.Ignore))
+            return hit.point.y;
+        return float.NaN;
+    }
+
+    static float GroundYCell(int x, int y)
+    {
+        long k = Key(x, y);
+        if (groundCache.TryGetValue(k, out float gy)) return gy;
+        gy = SampleGroundYWorld(Center(x, y));
+        groundCache[k] = gy;
+        return gy;
+    }
 
     static readonly (int dx, int dy)[] N8 =
     {
@@ -40,7 +90,14 @@ public static class Pathfinder3D
 
     static bool Blocked(Vector2 center, float radius)
     {
-        Vector3 p = new Vector3(center.x, ProbeY, center.y);
+        float py = ProbeY;
+        if (HeightAware)
+        {
+            float gy = SampleGroundYWorld(center);
+            if (float.IsNaN(gy)) return true;   // no ground under this cell = void = unwalkable
+            py = gy + ProbeY;                   // probe obstacles relative to the local ground height
+        }
+        Vector3 p = new Vector3(center.x, py, center.y);
         int n = Physics.OverlapSphereNonAlloc(p, Mathf.Max(0.01f, radius), overlapBuf, ObstacleMask, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < n; i++)
             if (IsWall(overlapBuf[i])) return true;
@@ -76,7 +133,11 @@ public static class Pathfinder3D
     /// the start, ending at the goal / closest reachable cell), or null if truly stuck.</summary>
     public static List<Vector2> FindPath(Vector2 from, Vector2 to, float radius)
     {
-        if (HasClearPath(from, to, radius))
+        if (HeightAware) groundCache.Clear();   // heights are per-query (terrain may have changed)
+
+        // Flat LOS fast-path: a straight spherecast can't see a cliff edge (no collider in the air),
+        // so skip it in height-aware mode and let the grid (with the step-gate) route honestly.
+        if (!HeightAware && HasClearPath(from, to, radius))
         {
             LastOutcome = "clear-LOS";
             return new List<Vector2> { to };
@@ -123,6 +184,14 @@ public static class Pathfinder3D
                 long nk = Key(nx, ny);
                 if (closed.Contains(nk)) continue;
 
+                // Elevation step-gate: only walk to a neighbour whose ground height is within MaxStep
+                // (a stair/ramp rise). A bigger delta (or a void) is a cliff — not a valid move.
+                if (HeightAware)
+                {
+                    float gn = GroundYCell(nx, ny);
+                    if (float.IsNaN(gn) || Mathf.Abs(gn - GroundYCell(cur.x, cur.y)) > MaxStep) continue;
+                }
+
                 bool isStart = nx == sx && ny == sy;
                 if (!isStart && Blocked(Center(nx, ny), radius)) continue;
                 if (dx != 0 && dy != 0 &&
@@ -159,7 +228,9 @@ public static class Pathfinder3D
         var pts = new List<Vector2>(cells.Count + 1) { from };
         for (int i = 1; i < cells.Count - 1; i++) pts.Add(cells[i]);
         pts.Add(endPoint);
-        var smoothed = Smooth(pts, radius);
+        // Smoothing uses straight-line LOS, which (like the fast-path above) can't see cliffs — so in
+        // height-aware mode keep the grid waypoints (the controller's slope handling smooths motion).
+        var smoothed = HeightAware ? pts.GetRange(1, pts.Count - 1) : Smooth(pts, radius);
         LastOutcome = found ? $"routed ({smoothed.Count} wp)" : $"partial ({smoothed.Count} wp)";
         return smoothed;
     }

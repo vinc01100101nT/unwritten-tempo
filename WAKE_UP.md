@@ -1,5 +1,10 @@
 # ☀️ WAKE_UP — Town Map Generator (VIN-13) · ✅ PER-PROP COLLISION + PERFORMANCE PRE-BAKE (Play-confirmed)
 
+> ⏩ **NEWER WORK (2026-06-17): read `SESSION_STATE.md` → "LATEST — 2.5D on a REAL map" FIRST.** The
+> game has since pivoted to RO-style 2.5D; `Tools ▸ unwritten ▸ Convert Town to 2.5D` bakes
+> `NewTown25D.unity` (open it & Play). This generator doc below is still valid as the 2D-map authoring
+> source, but the live target is now the 2.5D converted map.
+
 **For:** vince · **Date:** 2026-06-16 · **Built by:** interactive session
 
 > ✅ Everything below is **compiled + Play-confirmed by the dev**. The generator bakes clean towns; props have **authorable per-prop collision** (Auto/Custom/None, half-cell resolution); collision + visuals are **pre-baked at generate time** (no on-Play generation). Collision now blocks across the whole map (the last two bugs are fixed).

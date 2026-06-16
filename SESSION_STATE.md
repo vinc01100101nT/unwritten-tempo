@@ -1,5 +1,39 @@
 # SESSION_STATE — unwritten (Unity 2D)
 
+---
+## ⏩ LATEST — DIRECTION LOCKED: Kenney 3D maps + billboard characters (2026-06-17) — read first
+Active branch **`experiment/3d-world`**. After spiking it, we **rejected the "2D sprite-props in a 3D
+world" approach** (billboard trees/houses). The killer: a billboard building can't have honest collision —
+a collider that rotates with the always-camera-facing art confuses players, and a static collider
+mismatches the rotating art. Large/enterable structures force real 3D meshes.
+
+**DECISION (final): the ENVIRONMENT (ground, buildings, trees, props, terrain) is built from Kenney 3D
+mesh assets; only CHARACTERS (player / mobs / NPCs) stay 2D billboards** — the Ragnarok-Online model, and
+what `Build25DSpike` already does (Kenney FBX props + billboard player). With 3D meshes, occlusion is the
+depth buffer (billboards write depth via `BillboardLit`), so the old "camera-depth vs world-Y sprite-prop"
+problem doesn't exist — that whole sub-system is gone.
+
+**CLEANUP done this session — deleted the 2D-in-3D experiments:** `Town25DConverter.cs` (billboard town
+from tilemaps), `Build25DTerraceDemo.cs` (2D-tile-skinned terraces), `CameraDepthManager.cs` +
+`CameraDepthProp.cs` (static sprite-prop sorting — moot with 3D meshes), and scenes `NewTown25D.unity` +
+`Terrace25D.unity`.
+
+**KEPT (valid for the Kenney direction):** `Build25DSpike.cs` (Kenney-props + billboard rig — the
+foundation; its helpers are now public, incl. `BuildPlayer(foot)` / `BuildMonsters(center,r)` overloads);
+the height-aware `Pathfinder3D` + `Pathfinder3DConfig` (multi-level terrain pathing works on ANY 3D
+ground, incl. Kenney elevation blocks); `Build25DElevationSpike.cs` (primitive plateau/ramp proof of it,
+holds the `Ground`-layer helper); `CameraDepthSorter` + all billboard-character/combat code.
+
+**Kenney 3D asset location:** existing kit = `unity/Assets/Art/KenneyFantasyTownKit/FBX format/`
+(FBX models + `Textures/colormap.png`). Put each NEW downloaded pack in its OWN folder under
+**`unity/Assets/Art/`** (e.g. `unity/Assets/Art/KenneyMiniDungeon/`), using the pack's **FBX format**
+folder + its colormap texture. (`Build25DSpike` loads `.fbx` and re-applies the kit colormap material.)
+
+**NEXT:** pick the Kenney-map authoring flow (A: hand-place Kenney prefabs in a clean 2.5D scene · B: a 3D
+town generator · C: reskin an existing layout) and stand a real Kenney map under a 2.5D Systems boot.
+Prior spike session doc: `q1755ftddqpyy9qm7e357hdpf188sajr`.
+---
+
 **Last updated:** 2026-06-16 · **Status:** 🟢 foundation A–F built; Phase G is next. **Repo: the Unity game was relocated INTO `unity/` of this workspace (committed `98b796c`); old `D:\Unity3d\unwritten` is now just an archive.**
 
 > **Map Generator (VIN-13) — BUILT & WORKING (2026-06-16).** Editor tool bakes *permanent* town scenes from a `MapRecipe` (params + seed) — NOT runtime/roguelike. `Tools ▸ unwritten ▸ Generate Town`. Generic `PropTemplate` objects (houses/trees/wells, placement Lot/OpenGround/PlazaCenter/Roadside); auto-tiled terrain; gate Portals + spawns. **Per-prop collision is authorable** (`PropTemplate.collisionMode` Auto/Custom/None, **half-cell** resolution, edited via the Inspector grid). **Everything is PRE-BAKED at generate time** (static foot-sorted props w/ fixed sort orders + plain run-merged static box colliders) — **no on-Play generation** (perf rule: memory `performance-first-prebake`). Hand-painted maps → `Bake Map (props + collision)`. Spec doc `q178ppzhynajt660nadeh6ras988n88a`; **workflow how-to** doc `q171zzcsyy34n52cga9v1zn95d88sn9g`; detail in memories `map-generator-tool` + `ysort-depth`. **Live build checkpoint =** `WAKE_UP.md` **(project root) — on resume, read it first.** Safe to `/clear`: on-disk code + notes are the source of truth.

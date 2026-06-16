@@ -85,10 +85,11 @@ Shader "Unwritten/BillboardLit"
                 half4 tex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv) * IN.color;
                 clip(tex.a - _Cutoff);
 
+                // Per-pixel shadow: each pixel samples the shadowmap at its own world position, so a
+                // tree's shadow falls across the sprite accurately (half-body shade). No N·L — art
+                // colors stay true in light, dimming toward _ShadeFloor where the shadowmap says shade.
                 float4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
                 Light mainLight = GetMainLight(shadowCoord);
-
-                // No N·L: keep the art's authored colors in light; just dim toward _ShadeFloor in shade.
                 half shade = lerp(_ShadeFloor, 1.0h, mainLight.shadowAttenuation);
                 return half4(tex.rgb * shade, 1.0h);
             }
