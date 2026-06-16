@@ -1,24 +1,27 @@
 # SESSION_STATE — unwritten (Unity 2D)
 
-**Last updated:** 2026-06-14 · **Status:** 🟢 foundation A–F built; Phase G is next.
+**Last updated:** 2026-06-16 · **Status:** 🟢 foundation A–F built; Phase G is next. **Repo: the Unity game was relocated INTO `unity/` of this workspace (committed `98b796c`); old `D:\Unity3d\unwritten` is now just an archive.**
 
-> Cheap-resume file. Canonical status lives in the **"unwritten — Development Roadmap"** doc (Tempo Docs); this is the quick pointer. On "resume": read this, then the roadmap doc, then the on-disk files in the **real Unity project** at `D:\Unity3d\unwritten\Assets\Scripts\`. ⚠️ There is no longer a `unity/` copy in this repo — edit the real project directly.
+> **Map Generator (VIN-13) — BUILT & WORKING (2026-06-16).** Editor tool bakes *permanent* town scenes from a `MapRecipe` (params + seed) — NOT runtime/roguelike. `Tools ▸ unwritten ▸ Generate Town`. Generic `PropTemplate` objects (houses/trees/wells, placement Lot/OpenGround/PlazaCenter/Roadside); auto-tiled terrain; gate Portals + spawns. **Per-prop collision is authorable** (`PropTemplate.collisionMode` Auto/Custom/None, **half-cell** resolution, edited via the Inspector grid). **Everything is PRE-BAKED at generate time** (static foot-sorted props w/ fixed sort orders + plain run-merged static box colliders) — **no on-Play generation** (perf rule: memory `performance-first-prebake`). Hand-painted maps → `Bake Map (props + collision)`. Spec doc `q178ppzhynajt660nadeh6ras988n88a`; **workflow how-to** doc `q171zzcsyy34n52cga9v1zn95d88sn9g`; detail in memories `map-generator-tool` + `ysort-depth`. **Live build checkpoint =** `WAKE_UP.md` **(project root) — on resume, read it first.** Safe to `/clear`: on-disk code + notes are the source of truth.
+
+> Cheap-resume file. Canonical status lives in the **"unwritten — Development Roadmap"** doc (Tempo Docs); this is the quick pointer. On "resume": read this, then the roadmap doc, then the on-disk files in the Unity project — **now at `unity/Assets/Scripts/` inside THIS repo** (relocated + committed 2026-06-16 as `98b796c`; edits show in Tempo's diff). The standalone `D:\Unity3d\unwritten` / GitHub `unwritten-unity` are just the archive now.
 
 ---
 
 ## Where we are
 
 The playable foundation is essentially complete (Phases A–F). Most recent work (2026-06-14) **reworked movement & combat into Dota-style controls**:
+
 - `PlayerCommander` (new) — order brain: **right-click** move / attack (enemy) / follow (`FriendlyUnit`); **A** then click = attack-click (enemy = attack, ground = attack-move); **S** = stop & cancel everything (incl. un-landed damage) + `onStop` hook for future skill-casts.
 - `PlayerController2D` is now a click-to-move **service** (`MoveTo`/`MoveToward`/`Halt`); **WASD removed**.
 - `PlayerAttacker` is now a swing **executor** with a `windupTime` — damage lands at the end of the swing, so **S** cancels it.
 - `GameCursor` (new) drives a **hardware cursor** from the **Kenney Cursor Pack** (`Assets/Art/KenneyCursorPack`, Outline) — pointer / sword / crosshair. Replaces the old UI `CombatCursor` (deleted).
-- Also new: `ClickMarker` (click ripple), `FriendlyUnit` (follow marker), and a **Tools ▸ unwritten ▸ Add Test Ally** menu. All wired by `Setup Mouse Combat`.
+- Also new: `ClickMarker` (click ripple) and `FriendlyUnit` — the **reusable allegiance marker** for friendlies (non-attackable + right-click-to-follow); it's the seam a future mercenary/companion reuses. Wired by `Setup Mouse Combat`. (The temporary `Add Test Ally` menu was removed — follow is code-complete but only testable once a real `FriendlyUnit` exists in a scene.)
 
 (Earlier predecessor work had reworked combat into mouse-target click-to-attack with `SlashEffect` / `CharacterAnimator2D.PlayAttack` / `TargetIndicator` — those FX still apply.)
 
 | Phase | State |
-|---|---|
+| --- | --- |
 | A Engine/hello-world | ✅ done |
 | B Character & tiled world | ✅ done |
 | C Towns/portals/dialogue | ✅ systems done (town content hand-painted) |
@@ -43,6 +46,7 @@ Small loose end if preferred first: Phase F **death/respawn screen** (at 0 HP yo
 
 ## Gotchas / decisions
 
-- Scripts are authored **directly** in the real Unity project at `D:\Unity3d\unwritten\Assets\Scripts\`. The old `unity/` staging copy in this repo was **deleted 2026-06-14** — there is no copy step any more; never recreate it.
+- Scripts are authored in the Unity project at **`unity/Assets/Scripts/` inside this repo** (the whole game was relocated here 2026-06-16 — one git repo, edits show in Tempo's diff). The standalone `D:\Unity3d\unwritten` + GitHub `unwritten-unity` are the archive. (A *separate* 2026-06-14 `unity/` script-mirror was deleted back then; this deliberate full relocation supersedes that note.)
 - PPU 16 for all art; world content is hand-painted by the user (don't auto-generate).
-- Pathfinding deferred — monster chase is line-of-sight only.
+- **Depth/z-index + player drift ✅ DONE (2026-06-14):** depth uses **per-object feet-Y sorting** (`YDepthSorter` on every entity) + fixed order **BANDS** for tilemaps/FX, all in `DepthSortRuntime` (auto-applied on Play, no menu needed). Layer stack: Ground/Decor (behind) → ENTITIES (per-object) → Overhead → FX. **Obstacle tilemaps auto-bake into grouped foot-sorted props at Play** (`DepthSortRuntime`, runtime + non-destructive) — just paint trees/houses on the Obstacles tilemap, no convert menu. Multi-tile props group into one foot-sorted unit (`YDepthSorter` GROUP mode); trees get a trunk base collider (walk under leaves), "building/house"-named tilemaps get full colliders. **Create Decor + Overhead Layers** adds two non-collider decoration tilemaps. The earlier transparency-axis-only attempt **flickered** on same-row ties and is retired. Full detail + gotchas (16-bit sortingOrder, stacked-tile caveat) in \[\[ysort-depth\]\]. Player **drift fixed** separately by turning OFF crowd-avoidance on the player (`PlayerController2D.Start` → `agent.avoidRadius = 0`). See \[\[pathfinding-grid-astar\]\].
+- Pathfinding ✅ DONE (2026-06-14): grid A\* over the physics world (`Pathfinder.cs`, static, no package/scene-object) + `PathAgent.cs` (attachable mover, the "smart movement" component) for every moving unit. `PlayerController2D` delegates to a sibling `PathAgent` (auto-added) so `PlayerCommander` is unchanged; `MonsterAI` is now a pure brain issuing `PathAgent` orders. **Wall rule:** a non-trigger collider blocks unless its Rigidbody2D is *Dynamic* (so painted Tilemap/Composite obstacle colliders — backed by a *Static* body — block correctly; the early `attachedRigidbody==null` check was the "mobs stuck at the tree" bug, now fixed). Open ground = straight line (A\* only when blocked). **Units don't hard-block A**\* (you must be able to reach a chased/attacked unit); PathAgent instead does **soft local avoidance** (`Separation` + `avoidIgnore` = current target) so units flow around each other Dota-style instead of stacking/shoving. Existing scene player auto-gains routing on Play; re-run **Setup Mouse Combat** (or rebuild monster prefabs) to make the component Inspector-visible. **⚠️ Critical fix:** `PathAgent.Awake` sets `rb.sleepMode = NeverSleep` — a Dynamic body moved only by `MovePosition` falls asleep and then IGNORES `MovePosition`, which froze every unit mid-route (the whole "mobs stuck" saga; normal-looking body state). Validated working: monsters move/chase/route around obstacles. Remaining polish only: crowd-jam when mobs mob the player (avoidance under-spreads).
