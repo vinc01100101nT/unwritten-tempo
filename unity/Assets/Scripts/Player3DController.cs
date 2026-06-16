@@ -33,12 +33,16 @@ public class Player3DController : MonoBehaviour
     float timer; int frame;
     readonly List<Vector2> path = new List<Vector2>();   // XZ waypoints from Pathfinder3D
     int wp; bool routing;
+    Player3DAttacker attacker;
+    Health attackTarget;          // a clicked mob we're fighting (Phase 3D-D chunk 2)
+    float nextChaseRepath;
     float groundY;
 
     void Awake()
     {
         sr = GetComponent<SpriteRenderer>();
         controller = GetComponent<CharacterController>();
+        attacker = GetComponent<Player3DAttacker>();
         groundY = transform.position.y;   // sprite height; ground-raycast targets snap to XZ
     }
 
@@ -46,12 +50,16 @@ public class Player3DController : MonoBehaviour
     {
         if (cam == null) cam = Camera.main;
 
-        // WASD takes priority and cancels any routed destination.
-        Vector3 move = ReadWasd();
-        if (move.sqrMagnitude > 0.001f) { routing = false; path.Clear(); move.Normalize(); }
-        else if (TryReadClick(out var p)) StartRoute(p);   // click → A* route around props (3D-C)
+        // Click to move / attack — the only locomotion input (WASD removed at user request).
+        Vector3 move = Vector3.zero;
+        if (TryReadClick(out var p, out var clickedMob))
+        {
+            if (clickedMob != null) { attackTarget = clickedMob; routing = false; path.Clear(); }   // attack the mob
+            else { attackTarget = null; StartRoute(p); }                                              // move to ground
+        }
 
-        if (routing) move = FollowRoute();
+        if (attackTarget != null) move = AttackBehavior();
+        else if (routing) move = FollowRoute();
 
         bool moving = move.sqrMagnitude > 0.001f;
         if (moving)
@@ -66,28 +74,9 @@ public class Player3DController : MonoBehaviour
         Animate(moving);
     }
 
-    Vector3 ReadWasd()
+    bool TryReadClick(out Vector3 point, out Health monster)
     {
-        float h = 0f, v = 0f;
-#if ENABLE_INPUT_SYSTEM
-        var kb = Keyboard.current;
-        if (kb != null)
-        {
-            if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) h += 1f;
-            if (kb.aKey.isPressed || kb.leftArrowKey.isPressed)  h -= 1f;
-            if (kb.wKey.isPressed || kb.upArrowKey.isPressed)    v += 1f;
-            if (kb.sKey.isPressed || kb.downArrowKey.isPressed)  v -= 1f;
-        }
-#elif ENABLE_LEGACY_INPUT_MANAGER
-        h = Input.GetAxisRaw("Horizontal");
-        v = Input.GetAxisRaw("Vertical");
-#endif
-        return new Vector3(h, 0f, v);
-    }
-
-    bool TryReadClick(out Vector3 point)
-    {
-        point = default;
+        point = default; monster = null;
         if (cam == null) return false;
 
         bool clicked = false; Vector2 mouse = default;
@@ -105,7 +94,13 @@ public class Player3DController : MonoBehaviour
         if (!clicked) return false;
 
         var ray = cam.ScreenPointToRay(mouse);
-        if (Physics.Raycast(ray, out var hit, 500f)) { point = hit.point; return true; }
+        if (Physics.Raycast(ray, out var hit, 500f))
+        {
+            point = hit.point;
+            var h = hit.collider.GetComponentInParent<Health>();
+            if (h != null && !h.IsDead && h.GetComponent<MonsterAI3D>() != null) monster = h;   // clicked a mob
+            return true;
+        }
         // Fallback: intersect the flat ground plane at y = groundY.
         if (Mathf.Abs(ray.direction.y) > 1e-4f)
         {
@@ -147,6 +142,26 @@ public class Player3DController : MonoBehaviour
         Vector3 d = new Vector3(c.x, transform.position.y, c.y) - transform.position;
         d.y = 0f;
         return d;
+    }
+
+    // Phase 3D-D chunk 2: close on the clicked mob, then stand and auto-swing.
+    Vector3 AttackBehavior()
+    {
+        if (attackTarget == null || attackTarget.IsDead) { attackTarget = null; routing = false; path.Clear(); return Vector3.zero; }
+
+        if (attacker != null && attacker.InRange(attackTarget))
+        {
+            routing = false; path.Clear();
+            attacker.TryAttack(attackTarget);
+            Vector3 d = attackTarget.transform.position - transform.position; d.y = 0f;
+            if (d.sqrMagnitude > 1e-4f)
+                facing = Mathf.Abs(d.x) > Mathf.Abs(d.z) ? new Vector2(Mathf.Sign(d.x), 0f) : new Vector2(0f, Mathf.Sign(d.z));
+            return Vector3.zero;   // in range: stand and swing
+        }
+
+        // Out of range: route toward the (moving) mob, re-routing on a cadence.
+        if (!routing || Time.time >= nextChaseRepath) { StartRoute(attackTarget.transform.position); nextChaseRepath = Time.time + 0.3f; }
+        return routing ? FollowRoute() : Vector3.zero;
     }
 
     void OnDrawGizmosSelected()

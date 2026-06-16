@@ -190,10 +190,17 @@ public static class Build25DSpike
                 for (int k = 0; k < mats.Length; k++) mats[k] = mat;
                 mr.sharedMaterials = mats;
             }
-            // Solid collision so the player can't walk through props (Phase 3D-B).
+            // Solid collision so the player can't walk through props (Phase 3D-B). Hollow props
+            // (fountain/well) get a CONVEX hull so you can't stand inside the ring — keeps the
+            // walkable footprint consistent between physical collision and the A* (3D-D fix).
+            bool hollow = inst.name.ToLowerInvariant().Contains("fountain") || inst.name.ToLowerInvariant().Contains("well");
             foreach (var mf in inst.GetComponentsInChildren<MeshFilter>())
                 if (mf.sharedMesh != null && mf.GetComponent<Collider>() == null)
-                    mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
+                {
+                    var mc = mf.gameObject.AddComponent<MeshCollider>();
+                    mc.sharedMesh = mf.sharedMesh;
+                    if (hollow) mc.convex = true;
+                }
             placed++;
         }
         return placed;
@@ -231,7 +238,7 @@ public static class Build25DSpike
             var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
             agent.moveSpeed = 2.5f; agent.agentRadius = 0.3f;
             var cc = go.GetComponent<CharacterController>();
-            cc.radius = 0.3f; cc.height = 1f; cc.center = Vector3.zero; cc.stepOffset = 0.05f;
+            cc.radius = 0.3f; cc.height = 1f; cc.center = Vector3.zero; cc.stepOffset = 0.05f; cc.slopeLimit = 10f;
 
             go.AddComponent<Health>().maxHealth = 12;
             go.AddComponent<MonsterAI3D>();
@@ -277,11 +284,12 @@ public static class Build25DSpike
         sr.sprite = frames[0];
         go.AddComponent<Billboard>();
         var ctrl = go.AddComponent<Player3DController>();   // click-to-move + WASD + 4-dir anim
+        go.AddComponent<Player3DAttacker>();                // click a mob to attack it (3D-D chunk 2)
 
         var cc = go.GetComponent<CharacterController>();     // auto-added; size to the sprite (Phase 3D-B)
         // stepOffset near 0 so the player can't climb/mount low props (e.g. the well rim) — keeps
         // physical collision consistent with what A* treats as solid (Phase 3D-C consistency fix).
-        cc.radius = 0.3f; cc.height = 1f; cc.center = Vector3.zero; cc.stepOffset = 0.05f;
+        cc.radius = 0.3f; cc.height = 1f; cc.center = Vector3.zero; cc.stepOffset = 0.05f; cc.slopeLimit = 10f;
 
         Sprite[] Col(int c) => Enumerable.Range(0, walk).Select(r => frames[c + r * cols]).ToArray();
         ctrl.down = Col(0); ctrl.up = Col(1); ctrl.left = Col(2); ctrl.right = Col(3);
