@@ -90,8 +90,7 @@ public class PathAgent3D : MonoBehaviour
 
         Moving = moving;
         if (moving)
-            Facing = Mathf.Abs(dir.x) >= Mathf.Abs(dir.z) ? new Vector2(Mathf.Sign(dir.x), 0f)
-                                                          : new Vector2(0f, Mathf.Sign(dir.z));
+            Facing = Facing3D.FromWorldDir(dir);
     }
 
     Vector3 WaypointDelta(int i)

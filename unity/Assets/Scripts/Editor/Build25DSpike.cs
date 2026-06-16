@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
@@ -26,6 +27,10 @@ public static class Build25DSpike
     const string KitFbxDir      = "Assets/Art/KenneyFantasyTownKit/FBX format";
     const string ColormapPath   = KitFbxDir + "/Textures/colormap.png";
     const int CellSize = 16, WalkFrames = 4;
+    // Transparent padding below the feet inside each (center-pivoted) sprite cell, in world units.
+    // We drop the billboard by this and raise the CharacterController center to match, so the art's
+    // feet meet the ground instead of floating. Tune if sprites sit slightly high/low.
+    const float SpriteFoot = 0.22f;
 
     // Curated props (each guarded — skipped if not present in the kit).
     static readonly string[] Props = {
@@ -53,6 +58,7 @@ public static class Build25DSpike
         int monsters = BuildMonsters();          // billboard mobs that wander + chase (Phase 3D-D)
         BuildCharacter();                        // player HP/ATK/XP hub — turns on two-way combat (A)
         BuildHUD();                              // screen-space HP / Lv / XP bar (A)
+        if (player != null) BuildCursor(player); // Dota hardware cursor (pointer / sword / crosshair)
 
         if (!Directory.Exists("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
 
@@ -77,7 +83,10 @@ public static class Build25DSpike
             $"• Player billboard: {(player != null ? "yes" : "MISSING — see Console")}\n" +
             $"• Monsters: {monsters} (wander/chase; now bite back)\n" +
             "• Player HP + HUD bar (two-way combat)\n\n" +
-            "NEXT: Spike2D5 is now open — just press Play. Click ground to move, click a mob to attack — mobs hurt you now, watch the HP bar.\n\n" +
+            "NEXT: Spike2D5 is now open — just press Play.\n" +
+            "Controls: LEFT-click ground = move, LEFT-click a mob = attack;  A then LEFT-click = attack-move;  S = stop.\n" +
+            "Camera: scroll = zoom;  Q/E or RIGHT-drag = orbit (X/Y).\n" +
+            "The hardware cursor changes: pointer / sword (over a mob) / crosshair (after A).\n\n" +
             "NOTE: I set Play-Mode Start Scene to None so the spike plays standalone. To go back " +
             "to the real game, open NewTown and re-run Tools ▸ unwritten ▸ Setup Systems Scene.",
             "OK");
@@ -135,9 +144,10 @@ public static class Build25DSpike
         go.AddComponent<AudioListener>();
         cam.GetUniversalAdditionalCameraData().SetRenderer(rendererIndex);   // 3D renderer, this camera only
 
-        var follow = go.AddComponent<CameraFollow3D>();    // smoothly track the player
-        follow.offset = new Vector3(0f, 10f, -8f);
-        follow.pitch = 52f;
+        var follow = go.AddComponent<CameraFollow3D>();    // orbit (Q/E + right-drag) + zoom follow rig
+        follow.distance = 9f;
+        follow.height = 10f;
+        follow.yaw = 0f;
         if (player != null) follow.target = player.transform;
     }
 
@@ -172,6 +182,33 @@ public static class Build25DSpike
         else Debug.LogWarning("[unwritten] colormap not found at " + ColormapPath + " — props will be untextured.");
         _kitMat.SetFloat("_Smoothness", 0f);
         return _kitMat;
+    }
+
+    static Material _billboardMat;
+    // Flat-shaded, shadow-RECEIVING material for the sprite billboards (Unwritten/BillboardLit).
+    // One shared instance — the sprite texture is fed per-renderer by the SpriteRenderer.
+    static Material BillboardMaterial()
+    {
+        if (_billboardMat != null) return _billboardMat;
+        var shader = Shader.Find("Unwritten/BillboardLit");
+        if (shader == null)
+        {
+            Debug.LogWarning("[unwritten] Shader 'Unwritten/BillboardLit' not found — sprites won't " +
+                             "receive shadows. Make sure Assets/Shaders/BillboardLit.shader imported.");
+            return null;
+        }
+        _billboardMat = new Material(shader) { name = "BillboardLit (spike)" };
+        return _billboardMat;
+    }
+
+    // Make a sprite billboard light up like the rest of the 3D world: flat art that darkens in
+    // shadow (receive) and throws a clean cutout shadow (cast). No-op material if the shader is missing.
+    static void ApplyBillboardLighting(SpriteRenderer sr)
+    {
+        var mat = BillboardMaterial();
+        if (mat != null) sr.sharedMaterial = mat;
+        sr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;  // thin quad: cast from both faces
+        sr.receiveShadows = true;
     }
 
     static int ScatterProps()
@@ -228,6 +265,21 @@ public static class Build25DSpike
         return null;
     }
 
+    static void BuildCursor(GameObject host)
+    {
+        const string dir = "Assets/Art/KenneyCursorPack/PNG/Outline/Default";
+        foreach (var n in new[] { "pointer_b", "tool_sword_a", "target_b" })
+            AssetDatabase.ImportAsset($"{dir}/{n}.png", ImportAssetOptions.ForceUpdate);   // ensure readable Cursor textures
+
+        var cur = host.AddComponent<GameCursor3D>();
+        cur.defaultCursor    = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/pointer_b.png");      // normal
+        cur.attackCursor     = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/tool_sword_a.png");   // hovering a mob
+        cur.attackMoveCursor = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/target_b.png");       // A-armed
+        cur.defaultHotspot   = new Vector2(3, 3);
+        if (cur.defaultCursor == null)
+            Debug.LogWarning("[unwritten] Kenney cursors not found under " + dir + " — using the OS cursor.");
+    }
+
     static void BuildCharacter()
     {
         // Always give the spike its OWN Character. The scene is rebuilt fresh each run and plays
@@ -245,6 +297,12 @@ public static class Build25DSpike
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
         canvasGO.AddComponent<GraphicRaycaster>();
+
+        // The GraphicRaycaster only reports "pointer over HUD" if an EventSystem drives it. The real
+        // game gets one from the Systems scene; the standalone spike needs its own, or clicking the
+        // HP bar would fall through to the world and move the player (Player3DController.PointerOverUI).
+        if (Object.FindFirstObjectByType<EventSystem>() == null)
+            new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
 
         var uiSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
 
@@ -295,19 +353,20 @@ public static class Build25DSpike
         {
             var go = new GameObject("Monster_" + tex.name);
             float a = (i * (360f / count) + 25f) * Mathf.Deg2Rad;
-            go.transform.position = new Vector3(Mathf.Cos(a) * 8f, 0.5f, Mathf.Sin(a) * 8f);   // start outside aggro
+            go.transform.position = new Vector3(Mathf.Cos(a) * 8f, 0.5f - SpriteFoot, Mathf.Sin(a) * 8f);   // start outside aggro
 
-            go.AddComponent<SpriteRenderer>();
+            ApplyBillboardLighting(go.AddComponent<SpriteRenderer>());   // flat art + receive/cast shadows
             go.AddComponent<Billboard>();
 
             var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
             agent.moveSpeed = 2.5f; agent.agentRadius = 0.3f;
             var cc = go.GetComponent<CharacterController>();
-            cc.radius = 0.3f; cc.height = 1f; cc.center = Vector3.zero; cc.stepOffset = 0.05f; cc.slopeLimit = 10f;
+            cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.05f; cc.slopeLimit = 10f;
 
             go.AddComponent<Health>().maxHealth = 12;
             go.AddComponent<MonsterAI3D>();
             go.AddComponent<BillboardAnimator3D>().sheet = tex;
+            go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
         }
         return count;
     }
@@ -344,17 +403,19 @@ public static class Build25DSpike
         { Debug.LogWarning("[unwritten] Spike: player sheet isn't a 4-column grid: " + sheetPath); return null; }
 
         var go = new GameObject("Player3D");
-        go.transform.position = new Vector3(0f, 0.5f, 0f);
+        go.transform.position = new Vector3(0f, 0.5f - SpriteFoot, 0f);
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = frames[0];
+        ApplyBillboardLighting(sr);                  // flat art + receive/cast environment shadows
         go.AddComponent<Billboard>();
-        var ctrl = go.AddComponent<Player3DController>();   // click-to-move + WASD + 4-dir anim
-        go.AddComponent<Player3DAttacker>();                // click a mob to attack it (3D-D chunk 2)
+        var ctrl = go.AddComponent<Player3DController>();
+        go.AddComponent<Player3DAttacker>();
+        go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
 
         var cc = go.GetComponent<CharacterController>();     // auto-added; size to the sprite (Phase 3D-B)
         // stepOffset near 0 so the player can't climb/mount low props (e.g. the well rim) — keeps
         // physical collision consistent with what A* treats as solid (Phase 3D-C consistency fix).
-        cc.radius = 0.3f; cc.height = 1f; cc.center = Vector3.zero; cc.stepOffset = 0.05f; cc.slopeLimit = 10f;
+        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.05f; cc.slopeLimit = 10f;
 
         Sprite[] Col(int c) => Enumerable.Range(0, walk).Select(r => frames[c + r * cols]).ToArray();
         ctrl.down = Col(0); ctrl.up = Col(1); ctrl.left = Col(2); ctrl.right = Col(3);

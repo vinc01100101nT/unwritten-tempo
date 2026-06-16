@@ -50,6 +50,11 @@ public static class DepthSortRuntime
     public static int OrderForY(float y)
         => Mathf.Clamp(Mathf.RoundToInt(-y * Precision), -EntityClamp, EntityClamp);
 
+    /// <summary>Per-object entity order for camera-relative depth (2.5D): projection along the
+    /// camera's horizontal forward direction. Closer to camera = higher order = drawn in front.</summary>
+    public static int OrderForDepth(float depth)
+        => Mathf.Clamp(Mathf.RoundToInt(-depth * Precision), -EntityClamp, EntityClamp);
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Init()
     {
@@ -64,7 +69,13 @@ public static class DepthSortRuntime
             BandTilemap(tm);
         BakeObstacleProps();
         foreach (var sr in Object.FindObjectsByType<SpriteRenderer>(FindObjectsSortMode.None))
-            if (IsUnit(sr)) EnsureUnitSorter(sr);
+        {
+            if (!IsUnit(sr)) continue;
+            // 3D entities: camera-relative depth sorting (tilted/orbiting camera).
+            if (IsUnit3D(sr)) { EnsureUnitSorter3D(sr); continue; }
+            // 2D entities: Y-based depth sorting (straight top-down).
+            EnsureUnitSorter(sr);
+        }
     }
 
     public static void SetupCameraAxis()
@@ -105,13 +116,32 @@ public static class DepthSortRuntime
             sr.gameObject.AddComponent<YDepthSorter>();
     }
 
+    /// <summary>Adds <see cref="CameraDepthSorter"/> to a 3D entity (player/mob). Removes any
+    /// existing <see cref="YDepthSorter"/> to avoid conflicts.</summary>
+    public static void EnsureUnitSorter3D(SpriteRenderer sr)
+    {
+        if (sr == null) return;
+        if (sr.TryGetComponent<YDepthSorter>(out var ySorter)) Object.Destroy(ySorter);
+        if (!sr.TryGetComponent<CameraDepthSorter>(out _))
+            sr.gameObject.AddComponent<CameraDepthSorter>();
+    }
+
+    public static bool IsUnit3D(SpriteRenderer sr)
+    {
+        var go = sr.gameObject;
+        return go.GetComponent<Player3DController>() != null
+            || go.GetComponent<MonsterAI3D>() != null;
+    }
+
     public static bool IsUnit(SpriteRenderer sr)
     {
         var go = sr.gameObject;
         return go.GetComponent<PlayerController2D>() != null
             || go.GetComponent<MonsterAI>() != null
             || go.GetComponent<Interactable>() != null
-            || go.GetComponent<CharacterAnimator2D>() != null;
+            || go.GetComponent<CharacterAnimator2D>() != null
+            || go.GetComponent<Player3DController>() != null
+            || go.GetComponent<MonsterAI3D>() != null;
     }
 
     // ---- obstacle tilemap → per-object props ---------------------------------

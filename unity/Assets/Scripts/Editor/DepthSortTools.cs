@@ -73,11 +73,21 @@ public static class DepthSortTools
         }
 
         foreach (var sr in Object.FindObjectsByType<SpriteRenderer>(FindObjectsSortMode.None))
-            if (DepthSortRuntime.IsUnit(sr) && !sr.TryGetComponent<YDepthSorter>(out _))
+        {
+            if (!DepthSortRuntime.IsUnit(sr)) continue;
+            if (DepthSortRuntime.IsUnit3D(sr))
+            {
+                if (sr.TryGetComponent<CameraDepthSorter>(out _)) continue;
+                if (sr.TryGetComponent<YDepthSorter>(out var yOld)) Undo.DestroyObjectImmediate(yOld);
+                Undo.AddComponent<CameraDepthSorter>(sr.gameObject);
+                units++;
+            }
+            else if (!sr.TryGetComponent<YDepthSorter>(out _))
             {
                 Undo.AddComponent<YDepthSorter>(sr.gameObject);
                 units++;
             }
+        }
 
         if (AssetDatabase.IsValidFolder("Assets/Prefabs"))
         {

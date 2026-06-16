@@ -1,0 +1,32 @@
+using UnityEngine;
+
+/// <summary>
+/// Maps a world-space move/aim direction to a 4-direction billboard facing that's RELATIVE to the
+/// main camera — so a character's frames track the camera as it orbits (moving "toward the camera"
+/// = down frame, "away" = up, screen-left/right = left/right), even while idle. Returns a (x, z)
+/// Vector2 matching the animators' ClipFor: y&gt;0 = up (away), y&lt;0 = down (toward), x = left/right.
+/// </summary>
+public static class Facing3D
+{
+    public static Vector2 FromWorldDir(Vector3 dir)
+    {
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 1e-6f) return Vector2.down;
+
+        var cam = Camera.main;
+        Vector3 fwd, right;
+        if (cam != null)
+        {
+            fwd = cam.transform.forward; fwd.y = 0f;
+            right = cam.transform.right; right.y = 0f;
+            if (fwd.sqrMagnitude < 1e-6f) fwd = Vector3.forward;
+        }
+        else { fwd = Vector3.forward; right = Vector3.right; }
+        fwd.Normalize(); right.Normalize();
+
+        float f = Vector3.Dot(dir, fwd);     // + = away from the camera (up the screen)
+        float r = Vector3.Dot(dir, right);   // + = screen-right
+        return Mathf.Abs(f) >= Mathf.Abs(r) ? new Vector2(0f, Mathf.Sign(f))
+                                            : new Vector2(Mathf.Sign(r), 0f);
+    }
+}
