@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 /// <summary>
 /// One-click 2.5D spike (RO-style look test). Builds <b>Assets/Scenes/Spike2D5.unity</b>: your
@@ -41,7 +42,6 @@ public static class Build25DSpike
         int rendererIndex = EnsureUniversalRenderer();
         if (rendererIndex < 0) return;   // EnsureUniversalRenderer already explained why
 
-        var prevActive = SceneManager.GetActiveScene();
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
         SceneManager.SetActiveScene(scene);
 
@@ -51,27 +51,37 @@ public static class Build25DSpike
         var player = BuildPlayer();              // returns the player GameObject (or null)
         BuildCamera(rendererIndex, player);      // 3D follow-camera tracks the player
         int monsters = BuildMonsters();          // billboard mobs that wander + chase (Phase 3D-D)
+        BuildCharacter();                        // player HP/ATK/XP hub — turns on two-way combat (A)
+        BuildHUD();                              // screen-space HP / Lv / XP bar (A)
 
         if (!Directory.Exists("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
-        EditorSceneManager.SaveScene(scene, ScenePath);
 
-        if (prevActive.IsValid()) SceneManager.SetActiveScene(prevActive);
-        EditorSceneManager.CloseScene(scene, true);
+        // If Spike2D5 is already open, close it first — Unity won't SaveScene onto a path another
+        // open scene occupies ("Overwriting the same path as another open scene is not allowed").
+        var alreadyOpen = SceneManager.GetSceneByPath(ScenePath);
+        if (alreadyOpen.IsValid() && alreadyOpen.isLoaded && alreadyOpen != scene)
+            EditorSceneManager.CloseScene(alreadyOpen, true);
+
+        EditorSceneManager.SaveScene(scene, ScenePath);
 
         // The spike is standalone — Play must use the OPEN scene, not boot Systems.
         EditorSceneManager.playModeStartScene = null;
+
+        // Re-open the freshly-built scene by itself so you can just press Play — no delete dance.
+        EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
 
         AssetDatabase.SaveAssets();
         EditorUtility.DisplayDialog("2.5D Spike — built",
             $"Built {ScenePath}\n\n" +
             $"• {placed} Kenney props placed\n" +
             $"• Player billboard: {(player != null ? "yes" : "MISSING — see Console")}\n" +
-            $"• Monsters: {monsters} (wander, then chase when you get close)\n\n" +
-            "NEXT: open Assets/Scenes/Spike2D5.unity and press Play. Click the ground to walk there, or WASD.\n\n" +
+            $"• Monsters: {monsters} (wander/chase; now bite back)\n" +
+            "• Player HP + HUD bar (two-way combat)\n\n" +
+            "NEXT: Spike2D5 is now open — just press Play. Click ground to move, click a mob to attack — mobs hurt you now, watch the HP bar.\n\n" +
             "NOTE: I set Play-Mode Start Scene to None so the spike plays standalone. To go back " +
             "to the real game, open NewTown and re-run Tools ▸ unwritten ▸ Setup Systems Scene.",
             "OK");
-        Debug.Log($"[unwritten] 2.5D Spike built ({placed} props, renderer index {rendererIndex}). Open {ScenePath} and Play (WASD).");
+        Debug.Log($"[unwritten] 2.5D Spike built ({placed} props, renderer index {rendererIndex}). Spike2D5 is open — press Play.");
     }
 
     /// <summary>Create a 3D Universal Renderer (once) and add it to the URP asset's renderer
@@ -216,6 +226,61 @@ public static class Build25DSpike
             if (p.ToLowerInvariant().EndsWith(".fbx")) return p;
         }
         return null;
+    }
+
+    static void BuildCharacter()
+    {
+        // Always give the spike its OWN Character. The scene is rebuilt fresh each run and plays
+        // standalone, so there's no duplicate — and a FindObjectByType guard wrongly skipped this
+        // when another open scene (e.g. Systems) already had a Character, leaving Instance null.
+        new GameObject("Character").AddComponent<Character>();       // sets Character.Instance on Play
+    }
+
+    static void BuildHUD()
+    {
+        var canvasGO = new GameObject("HUD Canvas");
+        var canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        var scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        canvasGO.AddComponent<GraphicRaycaster>();
+
+        var uiSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+
+        // Bar root, top-left.
+        var bar = new GameObject("HealthBar", typeof(RectTransform), typeof(Image));
+        bar.transform.SetParent(canvasGO.transform, false);
+        var barRT = (RectTransform)bar.transform;
+        barRT.anchorMin = barRT.anchorMax = barRT.pivot = new Vector2(0f, 1f);
+        barRT.anchoredPosition = new Vector2(20f, -20f);
+        barRT.sizeDelta = new Vector2(340f, 30f);
+        var bg = bar.GetComponent<Image>();
+        bg.sprite = uiSprite; bg.type = Image.Type.Sliced; bg.color = new Color(0f, 0f, 0f, 0.6f);
+
+        // Fill.
+        var fillGO = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+        fillGO.transform.SetParent(bar.transform, false);
+        var fillRT = (RectTransform)fillGO.transform;
+        fillRT.anchorMin = Vector2.zero; fillRT.anchorMax = Vector2.one;
+        fillRT.offsetMin = new Vector2(3f, 3f); fillRT.offsetMax = new Vector2(-3f, -3f);
+        var fill = fillGO.GetComponent<Image>();
+        fill.sprite = uiSprite; fill.type = Image.Type.Filled;
+        fill.fillMethod = Image.FillMethod.Horizontal; fill.fillOrigin = 0;
+        fill.color = new Color(0.85f, 0.25f, 0.25f); fill.fillAmount = 1f;
+
+        // Label.
+        var labelGO = new GameObject("Label", typeof(RectTransform), typeof(Text));
+        labelGO.transform.SetParent(bar.transform, false);
+        var lRT = (RectTransform)labelGO.transform;
+        lRT.anchorMin = Vector2.zero; lRT.anchorMax = Vector2.one; lRT.offsetMin = lRT.offsetMax = Vector2.zero;
+        var label = labelGO.GetComponent<Text>();
+        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        label.alignment = TextAnchor.MiddleCenter; label.color = Color.white;
+        label.fontSize = 16; label.fontStyle = FontStyle.Bold;
+
+        var hud = bar.AddComponent<HealthBarHUD>();
+        hud.fill = fill; hud.label = label;
     }
 
     static int BuildMonsters()

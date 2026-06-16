@@ -17,8 +17,8 @@ public class MonsterAI3D : MonoBehaviour
     [Header("Senses (world units)")]
     public float aggroRadius = 6f;
     public float leashRadius = 10f;
-    [Tooltip("Hold this far from the player so it doesn't pile on top of them.")]
-    public float stopDistance = 1.0f;
+    [Tooltip("Hold this far from the player. Must be < touchRange so it can actually land hits.")]
+    public float stopDistance = 0.7f;
 
     [Header("Wander")]
     public float wanderRadius = 3f;
