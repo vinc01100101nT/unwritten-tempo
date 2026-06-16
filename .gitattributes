@@ -29,6 +29,8 @@ unity/**/*.webp   unitylfs
 # 3D models (for the 2.5D / RO-style experiment: FBX, OBJ, …)
 unity/**/*.fbx    unitylfs
 unity/**/*.FBX    unitylfs
+unity/**/*.glb    unitylfs
+unity/**/*.gltf   unitylfs
 unity/**/*.obj    unitylfs
 unity/**/*.blend  unitylfs
 unity/**/*.dae    unitylfs
