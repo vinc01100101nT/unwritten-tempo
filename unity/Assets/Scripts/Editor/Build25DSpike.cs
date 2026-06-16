@@ -45,11 +45,11 @@ public static class Build25DSpike
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
         SceneManager.SetActiveScene(scene);
 
-        BuildCamera(rendererIndex);
         BuildLight();
         BuildGround();
         int placed = ScatterProps();
-        bool player = BuildPlayer();
+        var player = BuildPlayer();              // returns the player GameObject (or null)
+        BuildCamera(rendererIndex, player);      // 3D follow-camera tracks the player
 
         if (!Directory.Exists("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
         EditorSceneManager.SaveScene(scene, ScenePath);
@@ -64,8 +64,8 @@ public static class Build25DSpike
         EditorUtility.DisplayDialog("2.5D Spike — built",
             $"Built {ScenePath}\n\n" +
             $"• {placed} Kenney props placed\n" +
-            $"• Player billboard: {(player ? "yes" : "MISSING — see Console")}\n\n" +
-            "NEXT: open Assets/Scenes/Spike2D5.unity and press Play. Move with WASD.\n\n" +
+            $"• Player billboard: {(player != null ? "yes" : "MISSING — see Console")}\n\n" +
+            "NEXT: open Assets/Scenes/Spike2D5.unity and press Play. Click the ground to walk there, or WASD.\n\n" +
             "NOTE: I set Play-Mode Start Scene to None so the spike plays standalone. To go back " +
             "to the real game, open NewTown and re-run Tools ▸ unwritten ▸ Setup Systems Scene.",
             "OK");
@@ -111,7 +111,7 @@ public static class Build25DSpike
         return idx;
     }
 
-    static void BuildCamera(int rendererIndex)
+    static void BuildCamera(int rendererIndex, GameObject player)
     {
         var go = new GameObject("Spike Camera") { tag = "MainCamera" };
         var cam = go.AddComponent<Camera>();
@@ -122,6 +122,11 @@ public static class Build25DSpike
         go.transform.SetPositionAndRotation(new Vector3(0f, 10f, -8f), Quaternion.Euler(52f, 0f, 0f));
         go.AddComponent<AudioListener>();
         cam.GetUniversalAdditionalCameraData().SetRenderer(rendererIndex);   // 3D renderer, this camera only
+
+        var follow = go.AddComponent<CameraFollow3D>();    // smoothly track the player
+        follow.offset = new Vector3(0f, 10f, -8f);
+        follow.pitch = 52f;
+        if (player != null) follow.target = player.transform;
     }
 
     static void BuildLight()
@@ -200,31 +205,31 @@ public static class Build25DSpike
         return null;
     }
 
-    static bool BuildPlayer()
+    static GameObject BuildPlayer()
     {
         string sheetPath = PlayerSheetPath();
-        if (sheetPath == null) { Debug.LogWarning("[unwritten] Spike: no player sprite sheet found."); return false; }
+        if (sheetPath == null) { Debug.LogWarning("[unwritten] Spike: no player sprite sheet found."); return null; }
 
         var frames = AssetDatabase.LoadAllAssetsAtPath(sheetPath).OfType<Sprite>().OrderBy(FrameIndex).ToArray();
         var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
         if (frames.Length == 0 || tex == null)
-        { Debug.LogWarning("[unwritten] Spike: player sheet not sliced (Sprite Mode = Multiple?): " + sheetPath); return false; }
+        { Debug.LogWarning("[unwritten] Spike: player sheet not sliced (Sprite Mode = Multiple?): " + sheetPath); return null; }
 
         int cols = Mathf.Max(1, tex.width / CellSize);
         int walk = Mathf.Min(WalkFrames, frames.Length / cols);
         if (cols < 4 || walk < 1)
-        { Debug.LogWarning("[unwritten] Spike: player sheet isn't a 4-column grid: " + sheetPath); return false; }
+        { Debug.LogWarning("[unwritten] Spike: player sheet isn't a 4-column grid: " + sheetPath); return null; }
 
-        var go = new GameObject("Spike Player");
+        var go = new GameObject("Player3D");
         go.transform.position = new Vector3(0f, 0.5f, 0f);
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = frames[0];
         go.AddComponent<Billboard>();
-        var actor = go.AddComponent<SpikeActor>();
+        var ctrl = go.AddComponent<Player3DController>();   // click-to-move + WASD + 4-dir anim
 
         Sprite[] Col(int c) => Enumerable.Range(0, walk).Select(r => frames[c + r * cols]).ToArray();
-        actor.down = Col(0); actor.up = Col(1); actor.left = Col(2); actor.right = Col(3);
-        return true;
+        ctrl.down = Col(0); ctrl.up = Col(1); ctrl.left = Col(2); ctrl.right = Col(3);
+        return go;
     }
 
     static string PlayerSheetPath()
