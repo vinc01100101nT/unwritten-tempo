@@ -27,6 +27,10 @@ public class Player3DAttacker : MonoBehaviour
     public float slashFps = 22f;
     public float slashScale = 1.1f;
 
+    [Header("Audio (used when the equipped weapon has none of its own)")]
+    public SfxSet defaultAttackSfx;   // swing
+    public SfxSet defaultHitSfx;      // impact
+
     float nextSwing;
     Coroutine swing;
     public bool Swinging => swing != null;
@@ -43,7 +47,16 @@ public class Player3DAttacker : MonoBehaviour
     {
         if (Time.time < nextSwing || swing != null || !InRange(t)) return;
         nextSwing = Time.time + cooldown;
+        Sfx.Play(WeaponSfx(w => w.attackSfx, defaultAttackSfx));   // swing
         swing = StartCoroutine(SwingThenHit(t));
+    }
+
+    // The equipped weapon's set if it has clips, else the player default.
+    static SfxSet WeaponSfx(System.Func<Item, SfxSet> pick, SfxSet fallback)
+    {
+        var w = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
+        var s = w != null ? pick(w) : null;
+        return s != null && !s.Empty ? s : fallback;
     }
 
     IEnumerator SwingThenHit(Health t)
@@ -57,6 +70,7 @@ public class Player3DAttacker : MonoBehaviour
         Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
         SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps, fxPos, slashScale);
 
+        Sfx.Play(WeaponSfx(w => w.hitSfx, defaultHitSfx));   // impact
         t.TakeDamage(power);
     }
 

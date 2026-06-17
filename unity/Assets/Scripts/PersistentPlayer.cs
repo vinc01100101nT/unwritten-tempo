@@ -48,6 +48,10 @@ public class PersistentPlayer : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode) => PlaceInScene();
 
+    /// <summary>Teleport the avatar back to the current map's SpawnPoint (used by the death screen
+    /// on respawn).</summary>
+    public void Respawn() => PlaceInScene();
+
     void PlaceInScene()
     {
         placed = true;

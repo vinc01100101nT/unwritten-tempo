@@ -17,16 +17,30 @@ public class BillboardAnimator3D : MonoBehaviour
     public int walkFrames = 4;
     public float framesPerSecond = 6f;
 
+    [Header("Idle breathing (procedural — the sheets have no idle frames)")]
+    [Tooltip("Gentle squash-stretch loop while standing still, so a stopped mob still feels alive.")]
+    public bool breathe = true;
+    [Tooltip("Peak breath amount (0.03 = ±3% wider/flatter).")]
+    public float breatheAmount = 0.03f;
+    [Tooltip("Breaths per ~6 seconds (higher = faster).")]
+    public float breatheSpeed = 2.5f;
+
     SpriteRenderer sr;
     PathAgent3D agent;
+    AttackLunge lunge;
     Sprite[] down, up, left, right;
     Vector2 facing = Vector2.down;
     float timer; int frame;
+    Vector3 baseScale;
+    float breathePhase;
 
     void Awake()
     {
         sr = GetComponent<SpriteRenderer>();
         agent = GetComponent<PathAgent3D>();
+        lunge = GetComponent<AttackLunge>();
+        baseScale = transform.localScale;
+        breathePhase = Random.value * Mathf.PI * 2f;   // desync the herd
         BuildFrames();
         if (down != null && down.Length > 0) sr.sprite = down[0];   // show before moving
     }
@@ -68,6 +82,24 @@ public class BillboardAnimator3D : MonoBehaviour
         }
         else { frame = 0; timer = 0f; }
         sr.sprite = clip[Mathf.Min(frame, clip.Length - 1)];
+
+        ApplyIdleScale(moving);
+    }
+
+    // Procedural idle: a soft squash-stretch loop while standing still. Yields to AttackLunge (the
+    // chomp owns the scale during a bite); resets to base while moving.
+    void ApplyIdleScale(bool moving)
+    {
+        if (lunge != null && lunge.Punching) return;
+        if (breathe && !moving)
+        {
+            float e = Mathf.Sin(Time.time * breatheSpeed + breathePhase);
+            transform.localScale = new Vector3(
+                baseScale.x * (1f + breatheAmount * e),
+                baseScale.y * (1f - breatheAmount * e),
+                baseScale.z);
+        }
+        else transform.localScale = baseScale;
     }
 
     Sprite[] ClipFor(Vector2 f)

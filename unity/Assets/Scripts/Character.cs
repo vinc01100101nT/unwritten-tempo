@@ -37,7 +37,16 @@ public class Character : MonoBehaviour
     public event Action OnStatsChanged;    // level / equipment changed
     public event Action OnHealthChanged;   // current or max HP changed
     public event Action<int> OnLeveledUp;  // passes the new level
-    public event Action OnDied;
+    public event Action<int> OnDamaged;    // took a hit — passes the damage (drives the hurt flash)
+    public event Action OnBlocked;         // an off-hand blocked a hit (no damage taken)
+    public event Action OnDied;            // HP hit 0 — the death screen takes over (Phase F)
+    public event Action OnRevived;         // came back to life (respawn)
+
+    [Header("Audio")]
+    [Tooltip("Default block sound when the equipped off-hand has none of its own.")]
+    public SfxSet blockSfx;
+
+    static readonly Color GuardColor = new Color(0.78f, 0.85f, 1f);
 
     public int MaxHP   => baseMaxHP   + hpPerLevel      * (Level - 1) + Bonus(i => i.bonusHP);
     public int Attack  => baseAttack  + attackPerLevel  * (Level - 1) + Bonus(i => i.bonusAttack);
@@ -75,16 +84,33 @@ public class Character : MonoBehaviour
     public int TakeDamage(int attackerAttack)
     {
         if (IsDead) return 0;
+
+        // Off-hand block: a shield can negate the hit (and clang) before any damage applies.
+        var off = GetEquipped(EquipSlotType.OffHand);
+        if (off != null && off.blockChance > 0f && UnityEngine.Random.value < off.blockChance)
+        {
+            Sfx.Play(off.guardSfx != null && !off.guardSfx.Empty ? off.guardSfx : blockSfx);
+            var av = Avatar();
+            if (av != null) DamagePopup.SpawnText(av.position, "Guard", GuardColor);
+            OnBlocked?.Invoke();
+            return 0;
+        }
+
         int dmg = Mathf.Max(1, attackerAttack - Defense);
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
-        if (CurrentHP == 0)
-        {
-            OnDied?.Invoke();
-            CurrentHP = MaxHP;            // Phase F: instant revive at full HP (no death screen yet)
-            OnHealthChanged?.Invoke();
-        }
+        OnDamaged?.Invoke(dmg);                  // drives the player hurt flash
+        if (CurrentHP == 0) OnDied?.Invoke();   // Phase F: DeathScreen handles the death → respawn flow
         return dmg;
+    }
+
+    /// <summary>Bring the player back to full HP after a death. The <see cref="DeathScreen"/>
+    /// calls this on respawn (and teleports the avatar to a SpawnPoint separately).</summary>
+    public void Revive()
+    {
+        CurrentHP = MaxHP;
+        OnHealthChanged?.Invoke();
+        OnRevived?.Invoke();
     }
 
     public void Heal(int amount)

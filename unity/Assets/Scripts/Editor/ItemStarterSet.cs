@@ -65,6 +65,18 @@ public static class ItemStarterSet
             item.healAmount = d.heal;
             item.description = d.desc;
 
+            // Equipment-specific combat audio (overrides the player defaults while equipped).
+            if (d.slot == EquipSlotType.Weapon)
+            {
+                item.attackSfx = SfxAssets.Set(0.8f, SfxAssets.SwordDir, "Sword Attack 1", "Sword Attack 2", "Sword Attack 3");
+                item.hitSfx    = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Impact Hit 1", "Sword Impact Hit 2", "Sword Impact Hit 3");
+            }
+            else if (d.slot == EquipSlotType.OffHand)
+            {
+                item.guardSfx = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Blocked 1", "Sword Blocked 2", "Sword Blocked 3");
+                item.blockChance = 0.25f;   // a buckler blocks ~1 in 4 hits
+            }
+
             if (isNew) AssetDatabase.CreateAsset(item, path);
             else EditorUtility.SetDirty(item);   // persist the refreshed stats
         }

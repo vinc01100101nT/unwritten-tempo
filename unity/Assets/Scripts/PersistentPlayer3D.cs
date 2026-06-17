@@ -41,6 +41,10 @@ public class PersistentPlayer3D : MonoBehaviour
     void Start() { if (!placed) PlaceInScene(); }                 // first map (no sceneLoaded for it)
     void OnSceneLoaded(Scene scene, LoadSceneMode mode) => PlaceInScene();
 
+    /// <summary>Teleport the avatar back to the current map's SpawnPoint (used by the death screen
+    /// on respawn). Reuses the same snap-to-terrain placement as a fresh map arrival.</summary>
+    public void Respawn() => PlaceInScene();
+
     void PlaceInScene()
     {
         placed = true;

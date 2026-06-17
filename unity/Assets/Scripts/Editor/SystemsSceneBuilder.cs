@@ -67,6 +67,8 @@ public static class SystemsSceneBuilder
 
         var gameSystems = new GameObject("GameSystems");
         Build25DSpike.BuildCursor(gameSystems);         // hardware GameCursor3D (pointer / sword / crosshair)
+        gameSystems.AddComponent<DeathScreen>();        // Phase F: "YOU DIED" overlay + respawn (builds its own canvas)
+        gameSystems.AddComponent<Sfx>();                // pooled one-shot SFX player (attack/hit/block/footsteps)
 
         var root = new GameObject("GameRoot").AddComponent<GameRoot>();   // loads the first map under Systems
         root.firstMap = FirstMap;

@@ -1,7 +1,84 @@
 # SESSION_STATE — unwritten (Unity 2D)
 
 ---
-## ⏩⏩⏩ CHECKPOINT (2026-06-17, late) — gameplay + 2.5D Systems port — READ FIRST
+## ⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-17, latest) — SFX SYSTEM (TomMusic) — READ FIRST
+Branch `experiment/3d-world`, still UNCOMMITTED. Audio direction: **TomMusic "Free Fantasy 200 SFX"**
+(realistic foley, royalty-free; the user rejected Kenney as too chiptune). RO-rip audio is OFF-limits
+(copyright). Pack lives at `Assets/Audio/TomMusic/` (we use the **WAV** files).
+
+**System built this session:**
+- `Sfx.cs` — `SfxSet` (clip[] + volume + pitch range; `Pick()` = random, no immediate repeat) + `Sfx`
+  (pooled one-shot player, 16 2D voices, `Sfx.Play(set)` static). Lives on Systems (`GameSystems`).
+  RANDOM VARIATION is ~free (one Random + index); cost is voices, capped by the pool.
+- `Editor/SfxAssets.cs` — `SfxAssets.Set(vol, folder, names…)` loads clips from
+  `Assets/Audio/TomMusic/WAV Files/SFX/` and forces **Decompress On Load** import (right for short SFX).
+- Equipment-driven audio: `Item` gained `attackSfx`/`hitSfx` (weapon) + `guardSfx`/`blockChance` (off-hand).
+  Direct AudioClip refs on the SO (NOT an id→wav registry — the SO ref IS the link).
+- Hooks: **attack** (swing) + **hit** (impact) in `Player3DAttacker` (equipped weapon overrides player
+  defaults via `WeaponSfx`); **footsteps** in `Player3DController` (Dirt Walk, `stepInterval` 0.32s);
+  **block** = new off-hand mechanic in `Character.TakeDamage` (rolls `off.blockChance`, on proc negates
+  the hit, plays guardSfx/`blockSfx`, pops "Guard", fires `OnBlocked`). `MonsterAI3D` skips the dmg popup
+  when blocked (dealt==0).
+- Defaults assigned in `Build25DSpike` (player attack/hit/footstep + Character blockSfx = Sword sets);
+  `ItemStarterSet` gives weapons Sword attack/hit, the "Wooden Guard" off-hand Sword Blocked + 0.25 block.
+
+**⚠️ RE-BAKE for audio:** **Setup Systems Scene** (adds `Sfx` + player/Character default sets) **AND
+Create Starter Items** (or Build UI Shell — populates the new Item audio fields). NOT Populate Mobs
+(mobs have no sounds yet). Test: walk = footsteps; click a mob = swing + impact; equip "Wooden Guard"
+(drag to off-hand) + let a mob hit you = ~25% "Guard" clang. NEXT possible: mob hurt/death cries, UI
+clicks, ambient BGS loops (TomMusic has Forest Day/Night), level-up sting.
+
+---
+## ⏩⏩⏩⏩ CHECKPOINT (2026-06-17) — PHASE F death/respawn DONE (code)
+Branch **`experiment/3d-world`**, still **UNCOMMITTED**. Phase F (the last foundation gap) is coded; user
+verifies in Unity (press Play, let a mob kill you).
+
+**WHAT CHANGED:**
+- `Character.TakeDamage` NO LONGER instant-revives at 0 HP — it just fires `OnDied` and stays dead
+  (`IsDead`). New `Character.Revive()` (full HP + `OnRevived` event) is the only way back.
+- `DeathScreen.cs` (NEW, runtime) — persistent overlay on the Systems layer. Listens to `OnDied`, fades
+  in a full-screen "YOU DIED" vignette, counts down `respawnDelay` (3s), then a **Respawn** button →
+  `Character.Revive()` + teleport to the map's SpawnPoint. **Builds its own ScreenSpaceOverlay canvas
+  in code** (sortingOrder 5000, no theme assets) — fully self-contained.
+- `Player3DController.Update` freezes input/orders while `Character.Instance.IsDead` (corpse only gets
+  gravity; can't walk a dead player).
+- Respawn teleport reuses existing placement: `PersistentPlayer3D.Respawn()` (NEW public, = re-`PlaceInScene`)
+  with a 2D fallback `PersistentPlayer.Respawn()` (NEW public). Both just re-run their SpawnPoint snap.
+- Wired in: `SystemsSceneBuilder` now `gameSystems.AddComponent<DeathScreen>()`.
+
+**DEATH ANIMATIONS (same session):**
+- **Player** — `Player3DController` shows a defeated pose while `IsDead` (new `deadSheet` Texture2D field,
+  sliced at runtime in Awake like `attackSheet`; from NinjaAdventure `SeparateAnim/Dead.png`, one 16×16
+  frame). `Build25DSpike.BuildPlayer` assigns it (`LoadDeadSheet`). DeathScreen now waits `preFadeDelay`
+  (0.5s) before fading in so the fall reads first.
+- **Mobs** — `DeathDissolve.cs` (NEW, per user spec): NO shrink. On death → **smoke puff** (NinjaAdventure
+  `FX/Smoke/Smoke/SpriteSheet.png`, 6×32px, via `SlashEffect.Spawn`), freeze the mob (disable
+  AI/agent/CC/colliders), **remains lie `remainSeconds` (3s, tunable)**, then **fade `fadeSeconds` (1s)** →
+  destroy. The fade swaps the renderer to `Sprites/Default` (alpha-blend) first, because `BillboardLit`
+  is alpha-CLIPPED and can't fade. `Health.Die()` defers to `DeathDissolve` if present (else
+  instant-destroy — 2D mobs unchanged). Added in `Build25DSpike.BuildMonster`.
+
+**EXTRA ANIMS (this round):**
+- **Mob attack tell** — `AttackLunge.cs` (NEW): squash-stretch "chomp" (scale punch only, never position,
+  so it can't fight CC/pathing). `MonsterAI3D` calls `lunge.Punch()` on each bite. Added in BuildMonster.
+- **Player hurt flash** — `PlayerHurtFlash.cs` (NEW): red tint for 0.12s on damage (red works under the
+  cutout shader; white wouldn't). Driven by new `Character.OnDamaged` event. Added in BuildPlayer.
+- **Idle breathing** — procedural squash-stretch loop (no idle art exists). In `BillboardAnimator3D`
+  (mobs) + `Player3DController` (player), gated to standing-still; random per-instance phase desyncs the
+  herd. Single scale owner per object: idle YIELDS to `AttackLunge.Punching`; DeathDissolve disables the
+  mob animator so no fight during the corpse linger/fade; player resets to base when moving/attacking/dead.
+  Knobs: `breathe`/`breatheAmount`(0.03)/`breatheSpeed`(2.5).
+
+**⚠️ USER MUST RE-RUN `Setup Systems Scene`** (bakes DeathScreen + player `deadSheet` + `PlayerHurtFlash`
+into `Systems.unity`) **AND `Populate Mobs (Nature)`** (so mobs get `DeathDissolve` + `AttackLunge` +
+smoke). Then Play → mob bite = chomp + red flash; kill a mob = smoke → body lingers 3s → fades; die =
+defeated pose → overlay → Respawn.
+
+**NEXT:** verify in Unity → then Phase G skill-draft (the empty K panel) OR NPCs+dialogue. Also: COMMIT
+the whole uncommitted pile when ready.
+
+---
+## ⏩⏩⏩ CHECKPOINT (2026-06-17, late) — gameplay + 2.5D Systems port
 Branch **`experiment/3d-world`**, **UNCOMMITTED** (user is staying uncommitted for now; offer to commit on resume).
 All work below is in the working tree; compile-clean by reference scan (user verifies in Unity = presses Play).
 

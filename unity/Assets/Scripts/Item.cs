@@ -27,5 +27,15 @@ public class Item : ScriptableObject
     [Tooltip("Right-click in the bag to heal this much, then consume it. 0 = not a consumable.")]
     public int healAmount;
 
+    [Header("Combat audio (weapon / off-hand — overrides the player defaults while equipped)")]
+    [Tooltip("Weapon: the swing sound.")]
+    public SfxSet attackSfx;
+    [Tooltip("Weapon: the impact sound when a swing lands.")]
+    public SfxSet hitSfx;
+    [Tooltip("Off-hand: the block/parry sound.")]
+    public SfxSet guardSfx;
+    [Tooltip("Off-hand: chance (0..1) to block an incoming hit (and play guardSfx).")]
+    [Range(0f, 1f)] public float blockChance;
+
     [TextArea] public string description;
 }

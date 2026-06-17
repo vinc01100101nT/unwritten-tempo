@@ -32,6 +32,7 @@ public class MonsterAI3D : MonoBehaviour
     public float touchInterval = 1f;
 
     PathAgent3D agent;
+    AttackLunge lunge;
     Transform player;
     Vector3 home;
     float nextWander;
@@ -41,6 +42,7 @@ public class MonsterAI3D : MonoBehaviour
     void Awake()
     {
         agent = GetComponent<PathAgent3D>();
+        lunge = GetComponent<AttackLunge>();
         home = transform.position;
     }
 
@@ -61,7 +63,9 @@ public class MonsterAI3D : MonoBehaviour
     void Update()
     {
         Vector3 pos = transform.position;
-        float toPlayer = player != null ? PlanarDist(pos, player.position) : Mathf.Infinity;
+        // A dead player is no target: leash off and resume wandering until they respawn.
+        bool playerAlive = player != null && Character.Instance != null && !Character.Instance.IsDead;
+        float toPlayer = playerAlive ? PlanarDist(pos, player.position) : Mathf.Infinity;
 
         bool was = chasing;
         if (chasing && toPlayer > leashRadius) chasing = false;
@@ -71,8 +75,9 @@ public class MonsterAI3D : MonoBehaviour
         if (player != null && toPlayer <= touchRange && Time.time >= nextTouch && Character.Instance != null)
         {
             int dealt = Character.Instance.TakeDamage(attack);
-            DamagePopup.Spawn(player.position, dealt, new Color(1f, 0.35f, 0.35f));
+            if (dealt > 0) DamagePopup.Spawn(player.position, dealt, new Color(1f, 0.35f, 0.35f));   // blocked = Character pops "Guard"
             nextTouch = Time.time + touchInterval;
+            if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell
         }
 
         if (chasing)

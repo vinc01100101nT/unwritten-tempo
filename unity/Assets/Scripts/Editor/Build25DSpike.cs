@@ -26,6 +26,7 @@ public static class Build25DSpike
     const string Renderer3DPath = "Assets/Settings/Spike3DRenderer.asset";
     const string KitFbxDir      = "Assets/Art/KenneyFantasyTownKit/FBX format";
     const string ColormapPath   = KitFbxDir + "/Textures/colormap.png";
+    const string SmokeSheetPath = "Assets/Art/NinjaAdventure/FX/Smoke/Smoke/SpriteSheet.png";
     const int CellSize = 16, WalkFrames = 4;
     // Transparent padding below the feet inside each (center-pivoted) sprite cell, in world units.
     // We drop the billboard by this and raise the CharacterController center to match, so the art's
@@ -296,7 +297,8 @@ public static class Build25DSpike
         // Always give the spike its OWN Character. The scene is rebuilt fresh each run and plays
         // standalone, so there's no duplicate — and a FindObjectByType guard wrongly skipped this
         // when another open scene (e.g. Systems) already had a Character, leaving Instance null.
-        new GameObject("Character").AddComponent<Character>();       // sets Character.Instance on Play
+        var ch = new GameObject("Character").AddComponent<Character>();   // sets Character.Instance on Play
+        ch.blockSfx = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Blocked 1", "Sword Blocked 2", "Sword Blocked 3");
     }
 
     public static void BuildHUD()
@@ -390,6 +392,9 @@ public static class Build25DSpike
         go.AddComponent<Health>().maxHealth = 12;
         go.AddComponent<MonsterAI3D>();
         go.AddComponent<BillboardAnimator3D>().sheet = tex;
+        go.AddComponent<AttackLunge>();              // squash-stretch "chomp" on each bite
+        var death = go.AddComponent<DeathDissolve>();   // smoke puff → remains linger → fade (no death sprite)
+        death.smokeSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(SmokeSheetPath);
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
         return go;
     }
@@ -445,9 +450,12 @@ public static class Build25DSpike
         ApplyBillboardLighting(sr);                  // flat art + receive/cast environment shadows
         go.AddComponent<Billboard>();
         var ctrl = go.AddComponent<Player3DController>();
+        go.AddComponent<PlayerHurtFlash>();          // red flash when the Character takes damage
         var atk = go.AddComponent<Player3DAttacker>();
         atk.slashSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(
             "Assets/Art/NinjaAdventure/FX/Attack/SlashCurved/SpriteSheet.png");   // slash FX on each hit
+        atk.defaultAttackSfx = SfxAssets.Set(0.8f, SfxAssets.SwordDir, "Sword Attack 1", "Sword Attack 2", "Sword Attack 3");
+        atk.defaultHitSfx    = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Impact Hit 1", "Sword Impact Hit 2", "Sword Impact Hit 3");
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
 
         var cc = go.GetComponent<CharacterController>();     // auto-added; size to the sprite (Phase 3D-B)
@@ -458,6 +466,9 @@ public static class Build25DSpike
         Sprite[] Col(int c) => Enumerable.Range(0, walk).Select(r => frames[c + r * cols]).ToArray();
         ctrl.down = Col(0); ctrl.up = Col(1); ctrl.left = Col(2); ctrl.right = Col(3);
         ctrl.attackSheet = LoadAttackSheet(sheetPath);   // SeparateAnim/Attack.png — sliced at runtime per facing
+        ctrl.deadSheet = LoadDeadSheet(sheetPath);       // SeparateAnim/Dead.png — defeated pose for Phase F death
+        ctrl.footstepSfx = SfxAssets.Set(0.55f, "Footsteps/Dirt",
+            "Dirt Walk 1", "Dirt Walk 2", "Dirt Walk 3", "Dirt Walk 4", "Dirt Walk 5");
         return go;
     }
 
@@ -468,6 +479,15 @@ public static class Build25DSpike
         string folder = Path.GetDirectoryName(sheetPath).Replace('\\', '/');
         string atkPath = folder + "/SeparateAnim/Attack.png";
         return File.Exists(atkPath) ? AssetDatabase.LoadAssetAtPath<Texture2D>(atkPath) : null;
+    }
+
+    /// <summary>The SeparateAnim/Dead.png texture beside the player sheet (Ninja Adventure ships one
+    /// 16×16 defeated-pose frame), sliced at runtime by Player3DController, or null.</summary>
+    static Texture2D LoadDeadSheet(string sheetPath)
+    {
+        string folder = Path.GetDirectoryName(sheetPath).Replace('\\', '/');
+        string deadPath = folder + "/SeparateAnim/Dead.png";
+        return File.Exists(deadPath) ? AssetDatabase.LoadAssetAtPath<Texture2D>(deadPath) : null;
     }
 
     static string PlayerSheetPath()

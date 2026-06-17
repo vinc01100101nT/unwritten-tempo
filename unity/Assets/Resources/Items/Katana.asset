@@ -19,4 +19,23 @@ MonoBehaviour:
   bonusAttack: 5
   bonusDefense: 0
   healAmount: 0
+  attackSfx:
+    clips:
+    - {fileID: 8300000, guid: 878de55de930ef847ae44df0e8de01eb, type: 3}
+    - {fileID: 8300000, guid: 5ea2a3ee5bacab2478a21080f476b659, type: 3}
+    - {fileID: 8300000, guid: 5e78d9229f342644fb602ca85816f666, type: 3}
+    volume: 0.8
+    pitch: {x: 0.95, y: 1.05}
+  hitSfx:
+    clips:
+    - {fileID: 8300000, guid: 640240968c6578f468544093ea92b95f, type: 3}
+    - {fileID: 8300000, guid: 203f9d09276713d4e84c777b0fcb2120, type: 3}
+    - {fileID: 8300000, guid: 49d119a83e396134fa07af4f5855130c, type: 3}
+    volume: 0.9
+    pitch: {x: 0.95, y: 1.05}
+  guardSfx:
+    clips: []
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  blockChance: 0
   description: Folded steel with a wicked edge.

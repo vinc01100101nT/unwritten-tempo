@@ -70,7 +70,10 @@ public class Health : MonoBehaviour
     void Die()
     {
         onDeath?.Invoke();
-        // Minimal for Phase D: just remove it. (Loot / death FX / XP come later.)
-        Destroy(gameObject);
+        // Play the "poof" death animation if one is attached, and only remove the object once it
+        // finishes; otherwise remove it instantly (the original Phase D behavior).
+        var fx = GetComponent<DeathDissolve>();
+        if (fx != null && gameObject.activeInHierarchy) fx.Play(() => Destroy(gameObject));
+        else Destroy(gameObject);
     }
 }

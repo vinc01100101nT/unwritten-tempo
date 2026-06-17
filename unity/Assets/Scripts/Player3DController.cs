@@ -23,6 +23,11 @@ public class Player3DController : MonoBehaviour
     [Header("Walk frames (column = facing), filled by Build 2.5D Spike")]
     public Sprite[] down, up, left, right;
 
+    [Header("Death pose (SeparateAnim/Dead.png) — shown while the player is dead")]
+    [Tooltip("Single defeated-pose texture; sliced in Awake (like attackSheet) so it serializes as an asset ref.")]
+    public Texture2D deadSheet;
+    Sprite deadSprite;
+
     [Header("Attack pose strip (SeparateAnim/Attack.png) — sliced at runtime [down,up,left,right]")]
     [Tooltip("The 4-direction attack-pose texture; sliced in Awake so the art's (often broken) auto-slices don't matter.")]
     public Texture2D attackSheet;
@@ -42,6 +47,17 @@ public class Player3DController : MonoBehaviour
     [Tooltip("During attack-move, auto-engage a mob within this range.")]
     public float acquireRange = 5f;
 
+    [Header("Idle breathing (procedural)")]
+    public bool breathe = true;
+    public float breatheAmount = 0.03f;
+    public float breatheSpeed = 2.5f;
+
+    [Header("Footsteps")]
+    public SfxSet footstepSfx;
+    [Tooltip("Seconds between footstep sounds while walking.")]
+    public float stepInterval = 0.32f;
+    float nextStep;
+
     /// <summary>True after pressing A, until the next click (the cursor shows the crosshair).</summary>
     public bool AttackArmed { get; private set; }
 
@@ -58,6 +74,8 @@ public class Player3DController : MonoBehaviour
     Camera cam;
     Vector2 facing = Vector2.down;
     float timer; int frame;
+    Vector3 baseScale;
+    float breathePhase;
     readonly List<Vector2> path = new List<Vector2>();
     int wp; bool routing;
     float nextChaseRepath;
@@ -68,7 +86,10 @@ public class Player3DController : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         controller = GetComponent<CharacterController>();
         attacker = GetComponent<Player3DAttacker>();
+        baseScale = transform.localScale;
+        breathePhase = Random.value * Mathf.PI * 2f;
         BuildAttackPoses();
+        BuildDeadPose();
         targetMarker = TargetIndicator.Create();
         targetMarker.gameObject.AddComponent<Billboard>();   // face the camera so the arrow isn't edge-on when orbiting
     }
@@ -86,9 +107,33 @@ public class Player3DController : MonoBehaviour
                 new Vector2(0.5f, 0.5f), attackCell);   // pivot centre, ppu = cell — matches the walk frames
     }
 
+    // Slice the single defeated-pose frame from the Dead.png texture (top-left cell), like the
+    // attack poses — so the field can serialize as a plain Texture2D asset reference.
+    void BuildDeadPose()
+    {
+        if (deadSheet == null) return;
+        int size = Mathf.Min(attackCell, Mathf.Min(deadSheet.width, deadSheet.height));
+        deadSprite = Sprite.Create(deadSheet,
+            new Rect(0, deadSheet.height - size, size, size),
+            new Vector2(0.5f, 0.5f), size);
+    }
+
     void Update()
     {
         if (cam == null) cam = Camera.main;
+
+        // Dead: no input, no orders — show the defeated pose and keep the corpse pinned to the
+        // ground (gravity) until the death screen respawns us.
+        if (Character.Instance != null && Character.Instance.IsDead)
+        {
+            if (order != Order.Idle) Stop();
+            if (deadSprite != null) sr.sprite = deadSprite;
+            attackUntil = 0f;   // drop any held attack pose
+            transform.localScale = baseScale;
+            controller.Move(Vector3.down * gravity * Time.deltaTime);
+            return;
+        }
+
         ReadInput();
         Vector3 move = Tick();
 
@@ -100,6 +145,34 @@ public class Player3DController : MonoBehaviour
         // Hold the attack pose while a swing is in flight (refreshed each swinging frame, with a tail).
         if (attacker != null && attacker.Swinging) attackUntil = Time.time + attackPoseHold;
         Animate(moving);
+        ApplyIdleScale(moving);
+        Footsteps(moving);
+    }
+
+    // Tick footstep sounds while walking; reset so the first step plays promptly on the next move.
+    void Footsteps(bool moving)
+    {
+        if (moving)
+        {
+            if (Time.time >= nextStep) { Sfx.Play(footstepSfx); nextStep = Time.time + stepInterval; }
+        }
+        else nextStep = 0f;
+    }
+
+    // Procedural idle breathing — a soft squash-stretch while standing still; base scale otherwise
+    // (moving or mid-swing). Matches the mob breathing in BillboardAnimator3D.
+    void ApplyIdleScale(bool moving)
+    {
+        bool attacking = Time.time < attackUntil;
+        if (breathe && !moving && !attacking)
+        {
+            float e = Mathf.Sin(Time.time * breatheSpeed + breathePhase);
+            transform.localScale = new Vector3(
+                baseScale.x * (1f + breatheAmount * e),
+                baseScale.y * (1f - breatheAmount * e),
+                baseScale.z);
+        }
+        else transform.localScale = baseScale;
     }
 
     // ---- input: Dota controls -------------------------------------------------
