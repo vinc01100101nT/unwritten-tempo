@@ -1,0 +1,66 @@
+using System;
+using System.Collections.Generic;
+
+/// <summary>
+/// The player's passive skill state — where on the ring they've walked. A plain C#
+/// class (not a MonoBehaviour): <see cref="Character"/> owns one instance as
+/// <c>Character.Passives</c>, the effective-stat getters fold its <see cref="Percent"/>
+/// in, and the Skills (K) panel reads/writes it. No save system yet, so this is
+/// runtime-only (resets to level-1 each session).
+///
+/// Model (doc §4): every level-up <see cref="AddPoint"/>s a bankable skill point.
+/// Spending one = <see cref="Pick"/>: it always does the same two things —
+/// <c>ranks[chosen]++; Leader = chosen;</c>. The "stack / slide / recenter" steering
+/// is emergent: picking the current leader leaves it put, picking a neighbor slides the
+/// window, picking the wildcard recenters — all just "leader becomes whatever you chose."
+/// </summary>
+public class PassiveRanks
+{
+    readonly Dictionary<StatId, int> ranks = new Dictionary<StatId, int>();
+
+    /// <summary>The current center of the Trio window — the last stat picked.
+    /// <see cref="HasLeader"/> is false until the level-1 opening pick chooses a start.</summary>
+    public StatId Leader { get; private set; }
+    public bool HasLeader { get; private set; }
+
+    /// <summary>Unspent skill points. Each level-up banks one; each <see cref="Pick"/> spends one.
+    /// Starts at 1 — the level-1 "free start" pick (all stats, no wildcard — doc §4).</summary>
+    public int BankedPoints { get; private set; } = 1;
+
+    /// <summary>Fired whenever points or ranks change — drives both the K-panel badge and
+    /// (via Character) a stat recompute.</summary>
+    public event Action OnChanged;
+
+    public int RanksIn(StatId stat) => ranks.TryGetValue(stat, out var r) ? r : 0;
+
+    /// <summary>The passive multiplier for a stat (0.32 == +32%), straight off the soft-cap curve.</summary>
+    public float Percent(StatId stat) => SkillRing.Percent(stat, RanksIn(stat));
+
+    /// <summary>Bank a skill point (called once per level gained).</summary>
+    public void AddPoint()
+    {
+        BankedPoints++;
+        OnChanged?.Invoke();
+    }
+
+    /// <summary>Spend one banked point on <paramref name="stat"/>: +1 rank and recenter the
+    /// leader on it. No-op (and returns false) if there are no points to spend.</summary>
+    public bool Pick(StatId stat)
+    {
+        if (BankedPoints <= 0) return false;
+        BankedPoints--;
+        ranks[stat] = RanksIn(stat) + 1;
+        Leader = stat;
+        HasLeader = true;
+        OnChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>Total ranks invested across all stats — the length of the walk so far.</summary>
+    public int TotalRanks()
+    {
+        int total = 0;
+        foreach (var r in ranks.Values) total += r;
+        return total;
+    }
+}

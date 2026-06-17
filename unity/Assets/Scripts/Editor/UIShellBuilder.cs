@@ -94,6 +94,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<PersistentUI>();        // survives scene loads (singleton)
         canvasGO.AddComponent<CharacterUIBinder>();   // drives HUD/stats/equip from Character
         canvasGO.AddComponent<BagSeeder>();           // fills the bag from Resources at runtime
+        canvasGO.AddComponent<SkillDraftPanel>();     // Phase G: builds the Trio-Ring draft into the Skills (K) panel
 
         // UI click sounds (TomMusic latch foley): panel open/close + a generic button click.
         var ui = canvasGO.AddComponent<UISounds>();

@@ -4,21 +4,59 @@
 > `experiment/3d-world`. **Committing/pushing to GitHub is the USER's job** — Claude only reminds, never commits.
 
 ---
-## ⏩⏩⏩⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-17, latest) — PHASE G SKILL SYSTEM: PLANNING — READ FIRST
-Branch `experiment/3d-world`, UNCOMMITTED. Starting Phase G (the signature skill-draft) — PLANNING stage,
-no code yet. Web prototype to port lives in `src/skill-draft/`:
-- `graph.ts` = the BRAIN (pure, deterministic): `SKILLS` (28 nodes, tiers 0–6, 7 branches), `TIERS` rows,
-  `BRANCH_META` (label/color), and the draft algorithm `getDraft(owned, seen)` = **2 guaranteed (strongest
-  on-path) + 1 wildcard (random off-path pivot)**, no-repeat via a `seen`/burned ledger, **classes are
-  auto-granted never drafted** (`classUnlockedBy`). Helpers: `neighborsOf`, `dominantBranch`, `isDraftable`.
-- `SkillCard.tsx` = a draft card (guaranteed=blue, wildcard=gold, lookahead "next picks" on guaranteed only).
-- `SkillTree.tsx` = tier-row graph with owned/available/burned(missed) node states + computed connector lines.
-- `Tooltip.tsx`, `BuildPanel.tsx` = hover tooltip + current-build summary.
+## ⏩⏩⏩⏩⏩⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-18, latest) — PHASE G SKILL MVP: **BUILT (code)** — READ FIRST
+Branch `experiment/3d-world`, UNCOMMITTED. The Trio-Ring passive draft MVP is now CODED (the design doc
+`q17as16xh2gt1g058kemazjar588tvc8` is still source of truth). **Draft UX decision LOCKED = bankable points**
+(doc §11 #4): each level banks 1 skill point; player spends it in the Skills (K) panel on a 4-card draft.
 
-Hooks into existing code: `Character.OnLeveledUp(int)` ALREADY fires; the empty **Skills (K)** panel
-(built by `UIShellBuilder`) is the home for the tree. Planned port = 4 layers (data → state/hook → draft
-popup → tree view). See chat for the full plan + open decisions (data-as-static-C# vs ScriptableObjects;
-icons; whether picks apply mechanical effects yet). Tracked by issues VIN-1 epic + VIN-3/4/5/6.
+**NEW FILES (`unity/Assets/Scripts/`):**
+- `SkillRing.cs` — `enum StatId` (10 stable identities) + static ring: clockwise `Ring[]`, neighbor lookup,
+  `InTrio`, soft-cap `Percent(stat,ranks)=Cap·R/(R+K)` (Cap .80 global, **CritChance .50**), ShortName, TintFor.
+- `PassiveRanks.cs` — plain class (NOT MonoBehaviour); ranks dict + `Leader`/`HasLeader` + `BankedPoints`
+  (starts **1** = the lvl-1 free start). `Pick(stat)` = `ranks++ ; Leader=stat` (the stack/slide/recenter
+  steering collapses to this ONE line — emergent from the window). `OnChanged` event.
+- `DraftService.cs` — pure: `BuildDraft(passives,rng)` → opening(all 10, no wild) | `[left,leader,right]`+wildcard
+  (uniform over non-Trio). Unit-test-friendly.
+- `SkillDraftPanel.cs` — runtime UI on GameUICanvas; builds banked-points header + draft cards (gold STACK /
+  purple WILD / region-tinted) + ring view (ranks/%s, leader ▶, Trio highlit) into the empty "SkillsPanel/Content";
+  + a level-up toast off `OnLeveledUp`.
+- `Editor/SkillSelfTest.cs` — **Tools ▸ unwritten ▸ Skills ▸** Print Ring+Soft-Cap Table / Simulate Draft Walk
+  (proves the logic with NO Play mode).
+
+**EDITED:** `Character.cs` — added `Passives` (owns PassiveRanks); `MaxHP/Attack/Defense` now `×(1+Percent)`
+(only HP/Atk/Def have flat sources today — other 7 stats accrue ranks but are inert until those systems exist);
+`AddXP` banks a point per level; `Passives.OnChanged`→`OnStatsChanged`+`OnHealthChanged`.
+`Editor/UIShellBuilder.cs` — `AddComponent<SkillDraftPanel>()`.
+
+**⚠️ RE-BAKE (only one):** **Tools ▸ unwritten ▸ Build UI Shell** (bakes SkillDraftPanel into the
+`Resources/GameUICanvas.prefab`). Character changes are code-only — no systems re-bake. TEST: Play → press **K**
+→ opening shows all 10 stats → pick one (leader set) → level up (kill mobs) = toast + banked point → K → 4-card
+Trio+wildcard → picking center stacks / side slides / wild recenters; ATK/HP/DEF on the Character (C) panel rise.
+Or skip Play: run the two **Skills** self-test menus and read the Console.
+
+**STILL NEXT:** rewrite issues VIN-3/4/5/6 bodies (still describe the RETIRED graph) onto this slice; persistence/
+save (ranks are runtime-only); per-stat cap tuning + ring-order playtest; actives (every-10th, post-MVP §9).
+Open questions remain in doc §11. **COMMIT the pile when ready (USER's job).**
+
+---
+## ⏩⏩⏩⏩⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-18) — PHASE G SKILL SYSTEM: REDESIGNED (Trio-Ring) — design
+Branch `experiment/3d-world`, UNCOMMITTED. **PLANNING-ONLY session, no code** (user keeps planning & coding in
+separate sessions). **The old 28-node graph draft (`src/skill-draft/`) is RETIRED — user called it "trash."
+Do NOT port it.** Brand-new mechanic designed this session and written to the canonical design doc
+**`q17as16xh2gt1g058kemazjar588tvc8`** ("Skill System — Trio-Ring Passive Draft (MVP Design)", linked to VIN-1).
+Memory `skill-system-mechanical-model` is the index; the doc is the source of truth.
+
+THE MODEL (locked): draft = **1 of 4 each level — 3 known (a "Trio") + 1 random wildcard**. MVP skills are all
+**repeatable generic stat passives** (no content). The 10 stats sit on a fixed **ring**; a Trio = a stat + its
+2 ring-neighbors = a sliding window centered on your **leader** (last pick). Pick center=stack, pick a
+side=slide (new leader), pick wildcard=recenter. **Level 1 = all stats, no wildcard** (free start). Ring beats a
+line (no dead ends; closes phys/magic poles). Effects = **% multipliers** (flat lives on stats/equips) with a
+**soft-cap DR curve** `passive% = Cap·R/(R+K)` that rewards diversification. **Every 10th level = an ACTIVE
+draft — designed but POST-MVP.**
+
+NEXT (next session): rewrite issues VIN-3/4/5/6 (their bodies still describe the retired graph) to the new
+slice — data ring → rank store → fold % into `Character` → pure draft service → 4-card popup off
+`Character.OnLeveledUp` → ring view in the empty Skills (K) panel. Open decisions still in the doc §11.
 
 ---
 ## ⏩⏩⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-17) — COMBAT BUGFIXES: phantom damage + mob respawn

@@ -31,6 +31,11 @@ public class Character : MonoBehaviour
 
     readonly Dictionary<EquipSlotType, Item> equipped = new Dictionary<EquipSlotType, Item>();
 
+    /// <summary>The Phase G passive skill layer (Trio-Ring draft). Owns the player's ranks +
+    /// banked skill points; its <see cref="PassiveRanks.Percent"/> is the % multiplier folded
+    /// into the effective-stat getters below. Runtime-only (no save yet).</summary>
+    public PassiveRanks Passives { get; } = new PassiveRanks();
+
     static readonly Color HealColor = new Color(0.45f, 1f, 0.45f);
     Transform avatar;   // the in-scene player, located lazily for heal popups
 
@@ -52,11 +57,17 @@ public class Character : MonoBehaviour
 
     static readonly Color GuardColor = new Color(0.78f, 0.85f, 1f);
 
-    public int MaxHP   => baseMaxHP   + hpPerLevel      * (Level - 1) + Bonus(i => i.bonusHP);
-    public int Attack  => baseAttack  + attackPerLevel  * (Level - 1) + Bonus(i => i.bonusAttack);
-    public int Defense => baseDefense + defensePerLevel * (Level - 1) + Bonus(i => i.bonusDefense);
+    // Effective stat = flat layer (level growth + equipment) × (1 + passive%).
+    // The passive layer is deliberately separate so a +% never goes obsolete the way a
+    // flat bonus does (doc §7). Stats with no flat source yet (MAtk/MP/Evasion/…) still
+    // accrue ranks; they just have nothing to multiply until those systems exist.
+    public int MaxHP   => Scale(baseMaxHP   + hpPerLevel      * (Level - 1) + Bonus(i => i.bonusHP),      StatId.HP);
+    public int Attack  => Scale(baseAttack  + attackPerLevel  * (Level - 1) + Bonus(i => i.bonusAttack),  StatId.Atk);
+    public int Defense => Scale(baseDefense + defensePerLevel * (Level - 1) + Bonus(i => i.bonusDefense), StatId.Def);
     public int XPToNext => 5 + Level * 5;
     public bool IsDead => CurrentHP <= 0;
+
+    int Scale(int flat, StatId stat) => Mathf.RoundToInt(flat * (1f + Passives.Percent(stat)));
 
     int Bonus(Func<Item, int> select)
     {
@@ -69,6 +80,16 @@ public class Character : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        // Spending a skill point changes both the displayed stats and (for HP) the max —
+        // re-fire the existing UI events so the HUD/Character panel/Skills panel all refresh.
+        Passives.OnChanged += () =>
+        {
+            CurrentHP = Mathf.Min(CurrentHP, MaxHP);
+            OnStatsChanged?.Invoke();
+            OnHealthChanged?.Invoke();
+        };
+
         CurrentHP = MaxHP;
     }
 
@@ -151,9 +172,10 @@ public class Character : MonoBehaviour
         {
             XP -= XPToNext;
             Level++;
+            Passives.AddPoint();         // Phase G: bank a skill point to spend in the Skills (K) panel
             CurrentHP = MaxHP;           // level-up fully heals
             Sfx.Play(levelUpSfx);        // triumphant sting
-            OnLeveledUp?.Invoke(Level);  // Phase G will hang the skill-draft off this
+            OnLeveledUp?.Invoke(Level);  // drives the level-up toast / draft prompt
         }
         OnStatsChanged?.Invoke();
         OnHealthChanged?.Invoke();
