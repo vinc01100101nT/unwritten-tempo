@@ -33,6 +33,21 @@ public class Town3DTheme : ScriptableObject
              "rows of pillows with leaking edges. Keep blocks for raised terrain (Phase 4), not the base.")]
     public bool tiledGround = false;
 
+    [Header("Tiered interior (multi-level ground)")]
+    [Tooltip("ON = the town INTERIOR is multi-level: Perlin tiers with houses on flat high-ground pads, " +
+             "connected by ramps (cliffs block, ramps climb). OFF = today's flat plane. Works on any map.")]
+    public bool tieredInterior = true;
+    [Tooltip("Number of distinct height levels (0..tiers-1).")]
+    [Min(1)] public int interiorTiers = 3;
+    [Tooltip("World height per tier — the cliff/ramp rise between levels.")]
+    [Min(0.05f)] public float interiorTierStep = 0.6f;
+    [Tooltip("Perlin frequency for the heightmap — smaller = broader plateaus.")]
+    [Min(0.01f)] public float interiorNoiseScale = 0.16f;
+    [Tooltip("Block body depth buried below each tier's top surface.")]
+    [Min(0f)] public float interiorBaseSlab = 1.0f;
+    [Tooltip("Push building pads toward the UPPER tiers so the high ground actually gets used.")]
+    public bool biasHousesHigh = true;
+
     [Header("Objects")]
     [Tooltip("Everything the town places — houses, trees, wells, props. Placement (Lot/OpenGround/" +
              "PlazaCenter/Roadside) drives WHERE, exactly like the 2D PropTemplate list.")]

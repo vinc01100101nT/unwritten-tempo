@@ -35,6 +35,20 @@ public static class Town3DBaker
     const float ScenicBaseSlab = 1.0f;     // block body depth below the surface
     const float TerrainOverlap = 1.3f;     // overlap so rounded shoulders merge (memory: kenney-3d-terrain-overlap)
 
+    // ---- tiered-interior state (set per Generate(), read by EmitTerrain/EmitProps/spawn snap) ----
+    static bool   _tiered;
+    static int[]  _tier;                    // per interior cell, row-major (y*width+x)
+    static int    _tW, _tH;
+    static float  _tierStep;
+
+    // World-Y of the top surface of interior cell (x,y). 0 when not tiered. Clamped to the grid.
+    static float InteriorTopY(int x, int y)
+    {
+        if (!_tiered || _tier == null) return 0f;
+        x = Mathf.Clamp(x, 0, _tW - 1); y = Mathf.Clamp(y, 0, _tH - 1);
+        return _tier[y * _tW + x] * _tierStep;
+    }
+
     [MenuItem("Tools/unwritten/Generate 3D Town", priority = 10)]
     static void Generate()
     {
@@ -66,11 +80,22 @@ public static class Town3DBaker
         Build25DSpike.BuildLight();
         var root = new GameObject("Town3D").transform;
 
+        // Tiered interior: build the heightfield + flatten house pads/plaza BEFORE emitting, so the
+        // terrain, props and spawns all read the same per-cell tier. Off → classic flat town.
+        _tiered = theme.tieredInterior;
+        _tier = null; _tW = L.width; _tH = L.height; _tierStep = theme.interiorTierStep;
+        if (_tiered)
+        {
+            _tier = Terrain3DField.BuildHeightmap(L.width, L.height, theme.interiorTiers,
+                                                  theme.interiorNoiseScale, recipe.seed);
+            FlattenPads(L, theme, map);
+        }
+
         EmitTerrain(L, theme, cs, groundLayer, root);
         if (theme.scenicBorder) EmitScenicBorder(L, theme, cs, groundLayer, root);
         else EmitBoundary(L, theme, cs, groundLayer, root);
         int props = EmitProps(L, theme, map, cs, root);
-        BuildPathfinderConfig(groundLayer);
+        BuildPathfinderConfig(groundLayer, theme);
 
         // Rig (player at the open centre, camera, mobs, HUD) — reuse the spike helpers.
         Vector3 centerWorld = CellToWorld(L.center.x, L.center.y, L, cs);
@@ -80,6 +105,20 @@ public static class Town3DBaker
         Build25DSpike.BuildCharacter();
         Build25DSpike.BuildHUD();
         if (player != null) Build25DSpike.BuildCursor(player);
+
+        // Tiered terrain: make ramps walkable but cliffs walls, and drop every unit onto the surface
+        // (the plaza is flattened to tier 0, but mobs ring outward onto higher tiers). Same as TerrainSandbox.
+        if (_tiered)
+        {
+            Physics.SyncTransforms();
+            LayerMask groundMask = 1 << groundLayer;
+            foreach (var cc in Object.FindObjectsByType<CharacterController>(FindObjectsSortMode.None))
+            {
+                cc.slopeLimit = 45f;                       // ramps are walkable…
+                cc.stepOffset = 0.1f;                      // …but cliffs (>> this) are walls
+                Terrain3DField.SnapToGround(cc.transform, groundMask, Build25DSpike.FootOffsetY);
+            }
+        }
 
         if (!Directory.Exists("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
         var open = SceneManager.GetSceneByPath(ScenePath);
@@ -157,6 +196,8 @@ public static class Town3DBaker
 
     static void EmitTerrain(TownLayout L, Town3DTheme t, float cs, int groundLayer, Transform root)
     {
+        if (_tiered) { EmitTieredInterior(L, t, cs, groundLayer, root); return; }
+
         var roads = new GameObject("Roads").transform; roads.SetParent(root);
         float roadDrop = t.roadPrefab != null ? -TopY(t.roadPrefab) : 0f;
 
@@ -202,6 +243,87 @@ public static class Town3DBaker
                         Vector3 w = CellToWorld(x, y, L, cs);
                         PlaceVisual(t.roadPrefab, new Vector3(w.x, roadDrop + 0.02f, w.z), Quaternion.identity, roads);
                     }
+    }
+
+    // Level the ground UNDER each house (footprint + a 1-cell apron) to a single tier, so multi-cell
+    // buildings sit flush on a flat pad with a walkable ring (where the ramp lands). The plaza is
+    // flattened to tier 0 so the player spawns level. Scatter props (trees/decor) follow the raw terrain.
+    static void FlattenPads(TownLayout L, Town3DTheme t, Dictionary<PropTemplate, Prop3D> map)
+    {
+        int W = L.width, H = L.height;
+        int Cx(int v) => Mathf.Clamp(v, 0, W - 1);
+        int Cy(int v) => Mathf.Clamp(v, 0, H - 1);
+
+        // Open centre → tier 0 (flat spawn plaza).
+        int r = Mathf.Max(1, t.tieredInterior ? 2 : 0);
+        for (int dy = -r; dy <= r; dy++)
+            for (int dx = -r; dx <= r; dx++)
+            {
+                int x = L.center.x + dx, y = L.center.y + dy;
+                if (x >= 0 && y >= 0 && x < W && y < H) _tier[y * W + x] = 0;
+            }
+
+        // Each building footprint (+1-cell apron) → one tier.
+        foreach (var placed in L.placed)
+        {
+            if (!map.TryGetValue(placed.template, out var p) || p == null) continue;
+            string kind = (p.kind ?? "").ToLowerInvariant();
+            if (kind.Contains("tree") || kind.Contains("bush") || kind.Contains("decor")) continue;
+
+            var sz = placed.template.size;
+            int x0 = placed.origin.x, y0 = placed.origin.y;
+            int T = _tier[Cy(y0) * W + Cx(x0)];
+            if (t.biasHousesHigh)   // sit the house on the HIGHEST part it touches (favours high ground, no >1 gaps)
+                for (int yy = 0; yy < sz.y; yy++)
+                    for (int xx = 0; xx < sz.x; xx++)
+                        T = Mathf.Max(T, _tier[Cy(y0 + yy) * W + Cx(x0 + xx)]);
+
+            for (int yy = -1; yy <= sz.y; yy++)
+                for (int xx = -1; xx <= sz.x; xx++)
+                {
+                    int cx = x0 + xx, cy = y0 + yy;
+                    if (cx >= 0 && cy >= 0 && cx < W && cy < H) _tier[cy * W + cx] = T;
+                }
+        }
+    }
+
+    // Multi-level interior: one merged grass block + flat collider per cell at its tier top, ramps on a
+    // spanning tree so every plateau is reachable, roads laid on the surface. Mirrors TerrainSandbox via
+    // the shared Terrain3DField helpers.
+    static void EmitTieredInterior(TownLayout L, Town3DTheme t, float cs, int groundLayer, Transform root)
+    {
+        var block = t.groundPrefab;
+        var b = Terrain3DField.MeasureBounds(block);
+        var ground  = new GameObject("Ground").transform;           ground.SetParent(root);
+        var ramps   = new GameObject("Ramps").transform;            ramps.SetParent(root);
+        var collide = new GameObject("TerrainCollision").transform; collide.SetParent(root);
+
+        for (int y = 0; y < L.height; y++)
+            for (int x = 0; x < L.width; x++)
+            {
+                float top = InteriorTopY(x, y);
+                Vector3 w = CellToWorld(x, y, L, cs);
+                Terrain3DField.EmitBlock(block, b, ground, w, top, t.interiorBaseSlab, cs);
+                Terrain3DField.EmitFlatCollider(collide, w, top, cs, groundLayer);
+            }
+
+        foreach (var kv in Terrain3DField.PlanRamps(_tier, L.width, L.height))
+            Terrain3DField.EmitRamp(block, b, ramps, CellToWorld(kv.Key.x, kv.Key.y, L, cs),
+                                    InteriorTopY(kv.Key.x, kv.Key.y), kv.Value, t.interiorTierStep, cs, groundLayer);
+
+        if (t.roadPrefab != null)
+        {
+            var roads = new GameObject("Roads").transform; roads.SetParent(root);
+            float roadDrop = -TopY(t.roadPrefab);
+            for (int y = 0; y < L.height; y++)
+                for (int x = 0; x < L.width; x++)
+                    if (L.road[L.Idx(x, y)] != null)
+                    {
+                        Vector3 w = CellToWorld(x, y, L, cs);
+                        PlaceVisual(t.roadPrefab, new Vector3(w.x, InteriorTopY(x, y) + roadDrop + 0.02f, w.z),
+                                    Quaternion.identity, roads);
+                    }
+        }
     }
 
     // Edge-ring solids = the boundary (props never sit on the extreme edge). Place the boundary prefab
@@ -281,13 +403,14 @@ public static class Town3DBaker
             float cz = placed.origin.y + (p.size.y - 1) * 0.5f;
             Vector3 w = CellToWorldF(cx, cz, L, cs);
             var b = MeasureBounds(p.prefab);
+            float topY = InteriorTopY(placed.origin.x, placed.origin.y);   // 0 when flat; the pad/cell tier when tiered
 
             string kind = (p.kind ?? "").ToLowerInvariant();
             bool isTree = kind.Contains("tree") || kind.Contains("bush");
             // Houses keep door-facing (-Z); scatter props get a random quarter-turn for variety.
             Quaternion rot = (p.placement == PropPlacement.Lot) ? Quaternion.identity
                                                                 : Quaternion.Euler(0f, Random.Range(0, 4) * 90f, 0f);
-            var go = PlaceVisual(p.prefab, new Vector3(w.x, -b.min.y, w.z), rot, parent);
+            var go = PlaceVisual(p.prefab, new Vector3(w.x, topY - b.min.y, w.z), rot, parent);
 
             if (kind.Contains("decor")) { /* walkable, no collider */ }
             else if (isTree)
@@ -311,12 +434,13 @@ public static class Town3DBaker
         floor.GetComponent<MeshRenderer>().enabled = false;       // invisible — the grass tiles are the look
     }
 
-    static void BuildPathfinderConfig(int groundLayer)
+    static void BuildPathfinderConfig(int groundLayer, Town3DTheme t)
     {
         var cfg = new GameObject("Pathfinder3DConfig").AddComponent<Pathfinder3DConfig>();
         cfg.heightAware = true;
         cfg.groundMask = 1 << groundLayer;
-        cfg.maxStep = 0.6f;
+        // Ramp half-steps pass, full cliffs block. Tiered interior gates on its own tier rise.
+        cfg.maxStep = t.tieredInterior ? t.interiorTierStep * 0.75f : 0.6f;
     }
 
     // ---- placement / measurement helpers -------------------------------------

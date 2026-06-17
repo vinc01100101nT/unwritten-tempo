@@ -41,7 +41,10 @@ public static class KenneyPrefabBaker
             return;
         }
 
+        // Prefer the palette-remapped colormap (VIN-15) when it exists, so a re-bake keeps the recolour.
         string colormap = kitDir + "/Textures/colormap.png";
+        string ninja = KenneyPaletteRemap.NinjaColormap(colormap);
+        if (File.Exists(ninja)) colormap = ninja;
         string matPath = kitDir + "/" + prefabFolder + ".mat";
         string prefabDir = "Assets/Prefabs/" + prefabFolder;
 

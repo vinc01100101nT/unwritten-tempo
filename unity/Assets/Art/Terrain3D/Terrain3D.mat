@@ -37,7 +37,7 @@ Material:
     - _GrassMax: 0.8
     - _GrassMin: 0.5
     - _ShadeFloor: 0.5
-    - _Tiles: 1
+    - _Tiles: 0.2
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1
