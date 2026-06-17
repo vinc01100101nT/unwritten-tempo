@@ -20,6 +20,13 @@ public class Player3DAttacker : MonoBehaviour
     [Tooltip("Fallback damage when there's no Character (e.g. the standalone spike).")]
     public int damage = 3;
 
+    [Header("Slash FX (sliced off a horizontal sheet at runtime)")]
+    public Texture2D slashSheet;
+    public int slashFrameSize = 32;
+    public int slashFrames = 4;
+    public float slashFps = 22f;
+    public float slashScale = 1.1f;
+
     float nextSwing;
     Coroutine swing;
     public bool Swinging => swing != null;
@@ -45,6 +52,11 @@ public class Player3DAttacker : MonoBehaviour
         swing = null;
         if (!InRange(t)) yield break;   // target moved out / died during the windup
         int power = Character.Instance != null ? Character.Instance.Attack : damage;
+
+        // Slash FX at the target (a bit above its feet), billboarded by SlashEffect so it faces the camera.
+        Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
+        SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps, fxPos, slashScale);
+
         t.TakeDamage(power);
     }
 

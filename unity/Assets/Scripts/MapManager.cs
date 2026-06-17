@@ -74,6 +74,8 @@ public static class MapManager
             foreach (var cam in root.GetComponentsInChildren<Camera>(true)) { cam.enabled = false; cam.tag = "Untagged"; }
             foreach (var al in root.GetComponentsInChildren<AudioListener>(true)) al.enabled = false;
             foreach (var es in root.GetComponentsInChildren<EventSystem>(true)) es.gameObject.SetActive(false);
+            // A map may carry its own Sun for edit-mode lighting; Systems owns the single runtime light.
+            foreach (var lt in root.GetComponentsInChildren<Light>(true)) lt.enabled = false;
         }
     }
 

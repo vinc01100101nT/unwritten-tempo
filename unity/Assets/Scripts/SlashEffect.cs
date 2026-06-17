@@ -16,6 +16,7 @@ public class SlashEffect : MonoBehaviour
         go.transform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sortingOrder = DepthSortRuntime.FxSlash;   // FX band: above all entities + overhead
+        go.AddComponent<Billboard>();                 // face the camera in 2.5D (harmless under a top-down 2D cam)
         go.AddComponent<SlashEffect>().Init(sheet, frameSize, frameCount, fps, sr);
     }
 

@@ -15,24 +15,19 @@ using UnityEngine;
 /// </summary>
 public static class KenneyPrefabBaker
 {
-    [MenuItem("Tools/unwritten/Build Prefabs/Platformer Kit", priority = 20)]
-    static void BuildPlatformer() =>
-        BakeKit("Platformer", "Assets/Art/KenneyPlatformerKit/FBX format", "KenneyPlatformer");
-
-    [MenuItem("Tools/unwritten/Build Prefabs/Fantasy Town Kit", priority = 21)]
-    static void BuildFantasyTown() =>
-        BakeKit("Fantasy Town", "Assets/Art/KenneyFantasyTownKit/FBX format", "KenneyFantasyTown");
-
-    [MenuItem("Tools/unwritten/Build Prefabs/Both Kits", priority = 22)]
-    static void BuildBoth()
-    {
-        BuildPlatformer();
-        BuildFantasyTown();
-    }
+    // Just Create Studio "Stylized Low Poly Nature": loose FBX sharing ONE texture atlas (same model as a
+    // Kenney kit). FBX live at the folder root (no "FBX format/Textures" sub-tree), so we point the baker
+    // straight at the shared texture file. Add a sibling line here for each new pack from this artist.
+    [MenuItem("Tools/unwritten/Build Prefabs/Low Poly Nature", priority = 23)]
+    static void BuildLowPolyNature() =>
+        BakeKit("Low Poly Nature", "Assets/Art/LowPolySimpleNature_FBX", "LowPolyNature",
+                "Assets/Art/LowPolySimpleNature_FBX/SimpleNature_Texture_01.png");
 
     /// <summary>Bake every FBX in <paramref name="kitDir"/> into drop-ready prefabs under
-    /// Assets/Prefabs/<paramref name="prefabFolder"/>, sharing one colormap material.</summary>
-    public static void BakeKit(string kitName, string kitDir, string prefabFolder)
+    /// Assets/Prefabs/<paramref name="prefabFolder"/>, sharing one colormap material.
+    /// <paramref name="colormapPath"/> overrides the texture location (default = Kenney's
+    /// <c>&lt;kitDir&gt;/Textures/colormap.png</c>) for packs that ship their atlas elsewhere.</summary>
+    public static void BakeKit(string kitName, string kitDir, string prefabFolder, string colormapPath = null)
     {
         if (!Directory.Exists(kitDir))
         {
@@ -41,10 +36,7 @@ public static class KenneyPrefabBaker
             return;
         }
 
-        // Prefer the palette-remapped colormap (VIN-15) when it exists, so a re-bake keeps the recolour.
-        string colormap = kitDir + "/Textures/colormap.png";
-        string ninja = KenneyPaletteRemap.NinjaColormap(colormap);
-        if (File.Exists(ninja)) colormap = ninja;
+        string colormap = colormapPath ?? kitDir + "/Textures/colormap.png";
         string matPath = kitDir + "/" + prefabFolder + ".mat";
         string prefabDir = "Assets/Prefabs/" + prefabFolder;
 

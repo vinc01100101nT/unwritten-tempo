@@ -1,8 +1,97 @@
 # SESSION_STATE — unwritten (Unity 2D)
 
 ---
-## ⏩ LATEST — DIRECTION LOCKED: Kenney 3D maps + billboard characters (2026-06-17) — read first
-Active branch **`experiment/3d-world`**. After spiking it, we **rejected the "2D sprite-props in a 3D
+## ⏩⏩⏩ CHECKPOINT (2026-06-17, late) — gameplay + 2.5D Systems port — READ FIRST
+Branch **`experiment/3d-world`**, **UNCOMMITTED** (user is staying uncommitted for now; offer to commit on resume).
+All work below is in the working tree; compile-clean by reference scan (user verifies in Unity = presses Play).
+
+**WHAT'S NEW since the nature-direction commit (all this session):**
+1. **Mobs + combat in the nature world.** `Populate Mobs (Nature)` / `Clear Mobs (Nature)` (`NatureMobs.cs`) —
+   surface-snapped billboard mobs (`Build25DSpike.BuildMonster`), clear of spawn, area-density. The 2.5D
+   combat loop was already wired: `Player3DController` click-to-attack (`MonsterUnderCursor`, A-attack-move,
+   S-stop) → `Player3DAttacker` → `Health`; `MonsterAI3D` chases + bites via `Character`. `PathAgent3D` has
+   gravity so mobs stick to hills.
+2. **Player attack POSE** — `Player3DController` slices 4 directional poses at RUNTIME from a `Texture2D
+   attackSheet` (NinjaAdventure SeparateAnim/Attack.png auto-slices are BROKEN, so we slice 16px cols
+   ourselves; player is NinjaBlue2). Holds pose ~0.22s per swing.
+3. **Target indicator** — gold down-arrow ported to 3D: `Player3DController` creates a `TargetIndicator` in
+   Awake (+`Billboard`), Follows the attack target, clears on stop/kill/move.
+4. **Slash FX** — `Player3DAttacker` spawns `SlashEffect` (SlashCurved sheet, 32px×4@22fps) on each landed
+   hit; `SlashEffect.Spawn` now adds a `Billboard`.
+5. **Damage numbers** — `DamagePopup` faces the camera each LateUpdate (no more skew when orbiting).
+6. **⭐ 2.5D SYSTEMS PORT (the big one).** Player/camera/HUD/cursor are now PERSISTENT in `Systems.unity`,
+   maps are CONTENT-ONLY. So player tweaks never require a map rebuild again.
+   - `SystemsSceneBuilder` REWRITTEN → 2.5D: Sun + billboard player (+`PersistentPlayer3D`) + 3D follow cam
+     + Character + **GameUICanvas** (full UI shell: HP bar + Bag(I)/Character(C)/Skills(K) panels via
+     `PanelToggle`/`CharacterUIBinder`/`BagSeeder`, bound to `Character.Instance`) + `GameCursor3D` +
+     `GameRoot` (firstMap="NatureStage"). Sets Build index 0 + playModeStartScene=Systems. (NOTE: Skills/K
+     panel is an EMPTY placeholder — Phase G skill-draft still unbuilt.)
+   - `NatureStageBuilder` REFACTORED → content-only map: terrain (Ground layer) + `Pathfinder3DConfig` +
+     a `SpawnPoint` (id "Start") + an edit-mode Sun; registered in Build Settings. NO player/cam/HUD.
+   - `PersistentPlayer3D.cs` (NEW) — 3D spawn: on map load, teleport to SpawnPoint, raycast-snap feet to
+     terrain (precise via CC geometry → groundY+0.28), cancel order (`Player3DController.Halt`), aim
+     `CameraFollow3D`. Reuses GameRoot/MapManager/SystemsPlayMode/SceneTravel UNCHANGED.
+   - `MapManager.StripForeignGlobals` now also disables a map's Lights at Play (Systems owns the one light).
+   - `BuildPlayer`/`BuildMonster` CC bumped to slopeLimit 45 / stepOffset 0.3 so units walk the hills.
+
+**RUN FLOW (the new boot model):** Build Prefabs ▸ Low Poly Nature → **New Nature Stage** → **Scatter
+Nature** → **Populate Mobs** → **Setup Systems Scene** → press **Play** (Systems boots, NatureStage loads
+under it, player spawns at SpawnPoint). Re-running `Setup Systems Scene` is cheap (no content loss); the
+map content is in NatureStage. `activeInputHandler: 2` (Both) so PanelToggle's old `Input` works.
+
+**KNOWN/UNVERIFIED:** levitation fix + light-in-edit + slash + panels were JUST coded — user hadn't
+confirmed the last round in-Unity before this checkpoint. If player still floats a hair, bump
+`Build25DSpike.SpriteFoot` (0.1) up (sprite bottom padding). Editor-light: add a Directional Light to
+NatureStage by hand (auto-disabled at Play) OR re-run New Nature Stage.
+
+**NEXT options (user to pick):** verify this round → then Phase G skill-draft (fills the K panel) /
+death-respawn (Phase F gap) / NPCs+dialogue+a clearing. Also: COMMIT the cleanup+gameplay+port when ready.
+
+---
+## ⏩⏩ DIRECTION FULLY COMMITTED: artist low-poly nature + billboard characters (2026-06-17)
+Active branch **`experiment/3d-world`**. **The world is now built from Just Create Studio's "Stylized Low
+Poly Nature" pack** (`unity/Assets/Art/LowPolySimpleNature_FBX/`, 25 FBX sharing ONE atlas
+`SimpleNature_Texture_01.png`). The pack's **Ground_0x meshes are artist-sculpted terrain with baked-in
+hills** — so we get elevation FOR FREE (no procedural terrain gen needed). Characters stay 2D billboards
+(NinjaAdventure). Play `Assets/Scenes/NatureStage.unity`. **VERIFIED Play-confirmed: forest renders, player
+walks the hills, paths around trees/rocks, walks through grass; clean Console.** User will add MORE free
+packs from the same artist (drop each in `Assets/Art/`, add a sibling line in `KenneyPrefabBaker`).
+
+**The nature pipeline = 3 one-click tools (all NEW this session):**
+- `Build Prefabs ▸ Low Poly Nature` (`KenneyPrefabBaker.cs`) — bakes the 25 FBX → drop-ready prefabs at
+  `Assets/Prefabs/LowPolyNature/` (shared atlas material + MeshCollider each). `BakeKit` now takes an
+  optional `colormapPath` so any single-atlas pack works.
+- `New Nature Stage (low-poly ground)` (`NatureStageBuilder.cs`) — builds `NatureStage.unity`: Ground_01 as
+  the floor (Ground layer + collider + height-aware `Pathfinder3DConfig`) + the standard billboard rig
+  (reuses `Build25DSpike` public helpers). Self-contained (owns `EnsureGroundLayer`).
+- `Scatter Nature (fill map)` + `Clear Nature Scatter` (`NatureScatter.cs`) — area-based weighted scatter of
+  trees/bushes/grass/flowers/rocks/mushrooms/stumps onto the terrain via raycast. Re-runnable (reseeds).
+  Colliders per category: trees/stumps = trunk capsule (walk under canopy), rocks = box, decor (grass/
+  flowers/mushrooms/bushes) = none. All scatter on Default layer (NOT Ground) so the height-ray ignores it.
+  Obstacles = non-ground colliders (see `Pathfinder3DConfig`). Tunables = consts at top of NatureScatter.cs.
+
+**BIG CLEANUP done this session — committed to nature, deleted the dead experiments.** Tools menu cut
+~40 → 16. **Deleted:** all 2D-tilemap authoring (DepthSortTools, FloorRuleTileBuilder, TilemapTools,
+GroundFillTool, MapBaker, BuildingBakeTools, MapBoundaryBuilder, NewMapSceneTool, PropTemplate ×2, Generate
+Town) · Kenney 3D experiments (Town3DBaker, TerrainSandbox, Stage25DBuilder, Build25DElevationSpike,
+HouseAssembler, KenneyPaletteRemap, PlayerBuilder, Terrain3DArt/Field) · the whole `Scripts/MapGen/` runtime
+(town-generator brain) · `TerrainProjected.shader` · scenes NewTown/Town3D · art (Kenney FantasyTown +
+Platformer kits, Tiles, Terrain3D, Palettes, baked Kenney prefabs). **Surgical edits:** `MonsterBuilder`
+stripped to its shared combat+cursor helpers (still called by Run All / Setup Global Systems — the Systems
+layer is KEPT per user); `Build25DSpike` kept all rig helpers, demo menu removed.
+⚠️ **SCAR (don't repeat):** `rm -rf Shaders` nuked `BillboardLit.shader` too → player went magenta;
+restored from git (same .meta/GUID). And the batch delete + recompile triggered a transient URP
+`get_scriptableRenderer IndexOutOfRange` (renderer-cache desync) — cleared by reimporting UniversalRP.asset /
+Unity restart, NOT a data bug.
+
+**NEXT:** commit the cleanup on `experiment/3d-world` (pending), then content: more packs from the artist,
+mob/NPC placement in the nature world, and folding combat/RPG into the nature stage. Spike doc:
+`q1755ftddqpyy9qm7e357hdpf188sajr`.
+
+---
+
+## (Superseded) Kenney 3D maps + billboard characters (2026-06-17)
+After spiking it, we **rejected the "2D sprite-props in a 3D
 world" approach** (billboard trees/houses). The killer: a billboard building can't have honest collision —
 a collider that rotates with the always-camera-facing art confuses players, and a static collider
 mismatches the rotating art. Large/enterable structures force real 3D meshes.

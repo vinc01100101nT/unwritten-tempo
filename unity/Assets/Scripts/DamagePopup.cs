@@ -20,6 +20,7 @@ public class DamagePopup : MonoBehaviour
     Text text;
     Color startColor;
     float age;
+    Transform camT;
 
     /// <summary>Spawn a number at a world position (a head offset is added for you).</summary>
     public static void Spawn(Vector3 worldPos, int amount, Color color)
@@ -80,5 +81,18 @@ public class DamagePopup : MonoBehaviour
         transform.localScale = Vector3.one * (BaseScale * pop);
 
         if (age >= lifetime) Destroy(gameObject);
+    }
+
+    // Face the camera every frame so orbiting the 2.5D camera never skews/edge-ons the number —
+    // the canvas stays coplanar with the screen (upright, readable, never mirrored). Runs in
+    // LateUpdate so it's applied AFTER CameraFollow3D has moved the camera this frame.
+    void LateUpdate()
+    {
+        if (camT == null)
+        {
+            if (Camera.main == null) return;
+            camT = Camera.main.transform;
+        }
+        transform.rotation = camT.rotation;
     }
 }

@@ -48,7 +48,8 @@ public static class Build25DSpike
         "lantern", "hedge-large", "pillar-stone", "banner-red", "pillar-wood", "hedge",
     };
 
-    [MenuItem("Tools/unwritten/Build 2.5D Spike", priority = 2)]
+    // Retired from the menu (Kenney-prop demo). The public Build* helpers below are the live 2.5D rig,
+    // reused by NatureStageBuilder. This method is kept only as an internal reference for that rig.
     static void Build()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -357,33 +358,47 @@ public static class Build25DSpike
     /// <paramref name="center"/> (XZ). Reused by the town converter to drop mobs near the spawn.</summary>
     public static int BuildMonsters(Vector3 center, float radius)
     {
-        string sheetPath = FindMonsterSheet();
-        if (sheetPath == null) { Debug.LogWarning("[unwritten] Spike: no Ninja Adventure monster sheet found."); return 0; }
-        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
-        if (tex == null) return 0;
+        var tex = MonsterSheet();
+        if (tex == null) { Debug.LogWarning("[unwritten] Spike: no Ninja Adventure monster sheet found."); return 0; }
 
         const int count = 3;
         for (int i = 0; i < count; i++)
         {
-            var go = new GameObject("Monster_" + tex.name);
-            go.transform.localScale = Vector3.one * BillboardScale;
             float a = (i * (360f / count) + 25f) * Mathf.Deg2Rad;
-            go.transform.position = new Vector3(center.x + Mathf.Cos(a) * radius, FootOffsetY, center.z + Mathf.Sin(a) * radius);   // start outside aggro
-
-            ApplyBillboardLighting(go.AddComponent<SpriteRenderer>());   // flat art + receive/cast shadows
-            go.AddComponent<Billboard>();
-
-            var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
-            agent.moveSpeed = 2.5f; agent.agentRadius = 0.3f;
-            var cc = go.GetComponent<CharacterController>();
-            cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.05f; cc.slopeLimit = 10f;
-
-            go.AddComponent<Health>().maxHealth = 12;
-            go.AddComponent<MonsterAI3D>();
-            go.AddComponent<BillboardAnimator3D>().sheet = tex;
-            go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
+            BuildMonster(tex, new Vector3(center.x + Mathf.Cos(a) * radius, 0f, center.z + Mathf.Sin(a) * radius));   // start outside aggro
         }
         return count;
+    }
+
+    /// <summary>Build ONE wander/chase billboard mob standing at <paramref name="foot"/> (XZ; Y is the
+    /// ground height there — the sprite-foot offset is added on top). Returns the GameObject so callers
+    /// can parent/position it (e.g. surface-snapped scatter on terrain).</summary>
+    public static GameObject BuildMonster(Texture2D tex, Vector3 foot)
+    {
+        var go = new GameObject("Monster_" + tex.name);
+        go.transform.localScale = Vector3.one * BillboardScale;
+        go.transform.position = new Vector3(foot.x, foot.y + FootOffsetY, foot.z);
+
+        ApplyBillboardLighting(go.AddComponent<SpriteRenderer>());   // flat art + receive/cast shadows
+        go.AddComponent<Billboard>();
+
+        var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
+        agent.moveSpeed = 2.5f; agent.agentRadius = 0.3f;
+        var cc = go.GetComponent<CharacterController>();
+        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // walk the low-poly hills
+
+        go.AddComponent<Health>().maxHealth = 12;
+        go.AddComponent<MonsterAI3D>();
+        go.AddComponent<BillboardAnimator3D>().sheet = tex;
+        go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
+        return go;
+    }
+
+    /// <summary>The Ninja Adventure monster sprite sheet used for billboard mobs (or null).</summary>
+    public static Texture2D MonsterSheet()
+    {
+        string sheetPath = FindMonsterSheet();
+        return sheetPath == null ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
     }
 
     static string FindMonsterSheet()
@@ -430,17 +445,29 @@ public static class Build25DSpike
         ApplyBillboardLighting(sr);                  // flat art + receive/cast environment shadows
         go.AddComponent<Billboard>();
         var ctrl = go.AddComponent<Player3DController>();
-        go.AddComponent<Player3DAttacker>();
+        var atk = go.AddComponent<Player3DAttacker>();
+        atk.slashSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(
+            "Assets/Art/NinjaAdventure/FX/Attack/SlashCurved/SpriteSheet.png");   // slash FX on each hit
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
 
         var cc = go.GetComponent<CharacterController>();     // auto-added; size to the sprite (Phase 3D-B)
         // stepOffset near 0 so the player can't climb/mount low props (e.g. the well rim) — keeps
         // physical collision consistent with what A* treats as solid (Phase 3D-C consistency fix).
-        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.05f; cc.slopeLimit = 10f;
+        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // walk the low-poly hills
 
         Sprite[] Col(int c) => Enumerable.Range(0, walk).Select(r => frames[c + r * cols]).ToArray();
         ctrl.down = Col(0); ctrl.up = Col(1); ctrl.left = Col(2); ctrl.right = Col(3);
+        ctrl.attackSheet = LoadAttackSheet(sheetPath);   // SeparateAnim/Attack.png — sliced at runtime per facing
         return go;
+    }
+
+    /// <summary>The SeparateAnim/Attack.png texture beside the player sheet (sliced into 4 directional
+    /// poses at runtime by Player3DController), or null if there's no attack strip.</summary>
+    static Texture2D LoadAttackSheet(string sheetPath)
+    {
+        string folder = Path.GetDirectoryName(sheetPath).Replace('\\', '/');
+        string atkPath = folder + "/SeparateAnim/Attack.png";
+        return File.Exists(atkPath) ? AssetDatabase.LoadAssetAtPath<Texture2D>(atkPath) : null;
     }
 
     static string PlayerSheetPath()

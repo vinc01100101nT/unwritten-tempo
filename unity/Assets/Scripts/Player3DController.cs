@@ -23,6 +23,15 @@ public class Player3DController : MonoBehaviour
     [Header("Walk frames (column = facing), filled by Build 2.5D Spike")]
     public Sprite[] down, up, left, right;
 
+    [Header("Attack pose strip (SeparateAnim/Attack.png) — sliced at runtime [down,up,left,right]")]
+    [Tooltip("The 4-direction attack-pose texture; sliced in Awake so the art's (often broken) auto-slices don't matter.")]
+    public Texture2D attackSheet;
+    public int attackCell = 16;
+    [Tooltip("Seconds to hold the attack pose after a swing starts.")]
+    public float attackPoseHold = 0.22f;
+    Sprite[] attackPoses;
+    float attackUntil;
+
     public float moveSpeed = 4f;
     public float framesPerSecond = 8f;
     public float arriveDistance = 0.12f;
@@ -45,6 +54,7 @@ public class Player3DController : MonoBehaviour
     SpriteRenderer sr;
     CharacterController controller;
     Player3DAttacker attacker;
+    TargetIndicator targetMarker;
     Camera cam;
     Vector2 facing = Vector2.down;
     float timer; int frame;
@@ -58,6 +68,22 @@ public class Player3DController : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         controller = GetComponent<CharacterController>();
         attacker = GetComponent<Player3DAttacker>();
+        BuildAttackPoses();
+        targetMarker = TargetIndicator.Create();
+        targetMarker.gameObject.AddComponent<Billboard>();   // face the camera so the arrow isn't edge-on when orbiting
+    }
+
+    // Slice the 4 directional attack poses straight from the texture (16px columns), ignoring the art's
+    // auto-slices which are often broken on Ninja Adventure SeparateAnim sheets. Mirrors CharacterAnimator2D.
+    void BuildAttackPoses()
+    {
+        if (attackSheet == null || attackCell <= 0) return;
+        int cols = Mathf.Max(1, attackSheet.width / attackCell);
+        attackPoses = new Sprite[4];
+        for (int i = 0; i < 4 && i < cols; i++)
+            attackPoses[i] = Sprite.Create(attackSheet,
+                new Rect(i * attackCell, 0, attackCell, attackCell),
+                new Vector2(0.5f, 0.5f), attackCell);   // pivot centre, ppu = cell — matches the walk frames
     }
 
     void Update()
@@ -70,6 +96,9 @@ public class Player3DController : MonoBehaviour
         if (moving) worldFacing = move;
         facing = Facing3D.FromWorldDir(worldFacing);   // camera-relative — frames track the camera as it orbits
         controller.Move((move * moveSpeed + Vector3.down * gravity) * Time.deltaTime);
+
+        // Hold the attack pose while a swing is in flight (refreshed each swinging frame, with a tail).
+        if (attacker != null && attacker.Swinging) attackUntil = Time.time + attackPoseHold;
         Animate(moving);
     }
 
@@ -121,6 +150,7 @@ public class Player3DController : MonoBehaviour
         if (attackTarget == null || attackTarget.IsDead)
         {
             attackTarget = null; routing = false; path.Clear();
+            if (targetMarker != null) targetMarker.Follow(null);
             if (resumeAttackMove) { BeginAttackMove(movePoint); return Vector3.zero; }   // keep clearing the area
             order = Order.Idle;
             return Vector3.zero;
@@ -145,16 +175,26 @@ public class Player3DController : MonoBehaviour
         if (attacker != null) attacker.Cancel();
         order = Order.Attack; attackTarget = mob; resumeAttackMove = resume;
         routing = false; path.Clear();
+        if (targetMarker != null) targetMarker.Follow(mob != null ? mob.transform : null);
     }
+
+    /// <summary>Cancel any move/attack order (used on map arrival by PersistentPlayer3D).</summary>
+    public void Halt() => Stop();
 
     void Stop()
     {
         AttackArmed = false; order = Order.Idle;
         routing = false; path.Clear(); attackTarget = null; resumeAttackMove = false;
         if (attacker != null) attacker.Cancel();   // drop an in-flight swing's damage
+        if (targetMarker != null) targetMarker.Follow(null);
     }
 
-    void ClearCombat() { if (attacker != null) attacker.Cancel(); attackTarget = null; resumeAttackMove = false; }
+    void ClearCombat()
+    {
+        if (attacker != null) attacker.Cancel();
+        attackTarget = null; resumeAttackMove = false;
+        if (targetMarker != null) targetMarker.Follow(null);
+    }
 
     void FaceTarget()
     {
@@ -213,6 +253,13 @@ public class Player3DController : MonoBehaviour
     // ---- animation ------------------------------------------------------------
     void Animate(bool moving)
     {
+        // Attacking: hold the directional attack pose (overrides walk/idle), like the old 2D animator.
+        if (Time.time < attackUntil)
+        {
+            var pose = AttackPoseFor(facing);
+            if (pose != null) { sr.sprite = pose; frame = 0; timer = 0f; return; }
+        }
+
         var clip = ClipFor(facing);
         if (clip == null || clip.Length == 0) return;
         if (moving)
@@ -231,6 +278,14 @@ public class Player3DController : MonoBehaviour
         if (f.y < 0f) return down;
         if (f.x < 0f) return left;
         return right;
+    }
+
+    // attackPoses order matches the sliced Attack.png: [0]=down [1]=up [2]=left [3]=right.
+    Sprite AttackPoseFor(Vector2 f)
+    {
+        if (attackPoses == null || attackPoses.Length < 4) return null;
+        int i = f.y > 0f ? 1 : f.y < 0f ? 0 : f.x < 0f ? 2 : 3;
+        return attackPoses[i];
     }
 
     // ---- raycast + input helpers (new Input System OR legacy) -----------------

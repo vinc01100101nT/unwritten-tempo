@@ -44,19 +44,6 @@ public class PixelArtImportPostprocessor : AssetPostprocessor
             return;
         }
 
-        // Terrain3D tiling textures: plain Texture2D that must REPEAT (world-projected onto the 3D
-        // terrain). Everything else under Art/ is clamped pixel-art sprites.
-        if (path.Contains("/Terrain3D/"))
-        {
-            importer.textureType = TextureImporterType.Default;
-            importer.filterMode = FilterMode.Point;
-            importer.textureCompression = TextureImporterCompression.Uncompressed;
-            importer.mipmapEnabled = false;
-            importer.npotScale = TextureImporterNPOTScale.None;
-            importer.wrapMode = TextureWrapMode.Repeat;
-            return;
-        }
-
         importer.textureType = TextureImporterType.Sprite;
         importer.spritePixelsPerUnit = PixelsPerUnit;
         importer.filterMode = FilterMode.Point;                       // crisp, no blur
