@@ -24,6 +24,10 @@ public class TownLayout
     public readonly List<Vector2Int> npcSpawns = new List<Vector2Int>();
     public readonly List<Vector2Int> monsterSpawns = new List<Vector2Int>();
     public readonly List<Gate> gates = new List<Gate>();
+    // Each whole prop the generator stamped, with its bottom-left origin cell. The 2D path dissolves
+    // props into per-cell tiles; the 3D baker instead needs "this prop went here" to drop ONE prefab.
+    // Additive — the 2D pipeline ignores it.
+    public readonly List<PlacedProp> placed = new List<PlacedProp>();
     public Vector2Int center;
 
     public TownLayout(int w, int h)
@@ -56,6 +60,13 @@ public class TownLayout
         if (protectedCells.Contains(c)) return;   // never erase a placed prop / boundary
         solid.Remove(c); building.Remove(c); if (In(c)) tree[Idx(c)] = null;
     }
+}
+
+/// <summary>One stamped prop and where it landed (bottom-left origin cell). Used by the 3D baker.</summary>
+public struct PlacedProp
+{
+    public PropTemplate template;
+    public Vector2Int origin;
 }
 
 /// <summary>A gap in the boundary the player enters/leaves through — becomes a Portal + SpawnPoint.</summary>

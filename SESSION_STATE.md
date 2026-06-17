@@ -29,9 +29,68 @@ holds the `Ground`-layer helper); `CameraDepthSorter` + all billboard-character/
 **`unity/Assets/Art/`** (e.g. `unity/Assets/Art/KenneyMiniDungeon/`), using the pack's **FBX format**
 folder + its colormap texture. (`Build25DSpike` loads `.fbx` and re-applies the kit colormap material.)
 
-**NEXT:** pick the Kenney-map authoring flow (A: hand-place Kenney prefabs in a clean 2.5D scene · B: a 3D
-town generator · C: reskin an existing layout) and stand a real Kenney map under a 2.5D Systems boot.
-Prior spike session doc: `q1755ftddqpyy9qm7e357hdpf188sajr`.
+**FLOW CHOSEN (2026-06-17): A — hand-place Kenney prefabs in a clean 2.5D scene.** New pack
+`KenneyPlatformerKit` is in `unity/Assets/Art/KenneyPlatformerKit/` (153 FBX + `FBX format/Textures/colormap.png`).
+Two new one-click tools built this session (both reuse `Build25DSpike` public helpers):
+- `Tools ▸ unwritten ▸ Build Kenney Platformer Prefabs` (`KenneyPrefabBaker.cs`) — bakes every kit FBX
+  (skips `character-*`, since chars are 2D billboards) into drop-ready prefabs at
+  `Assets/Prefabs/KenneyPlatformer/` with the colormap material + a MeshCollider each, plus a shared
+  `PlatformerKit.mat`. Re-runnable (overwrites in place).
+- `Tools ▸ unwritten ▸ New 2.5D Stage (hand-place)` (`Stage25DBuilder.cs`) — builds clean
+  `Assets/Scenes/Stage25D.unity`: boot rig only (3D follow cam, sun, flat grass ground, billboard
+  player, HP/HUD, Dota cursor), NO scattered props/mobs. Drag the baked prefabs in by hand.
+
+**AUTO-GENERATION (2026-06-17): reuse the 2D generator for 3D maps — Phases 1–3 BUILT.** Decision:
+both kits + (eventual) elevation. The 2D layout brain (`TownGenerator.Generate(recipe)`→`TownLayout`)
+is reused UNCHANGED; only the backend differs.
+- Phase 1 — `KenneyPrefabBaker` generalized → menu **Build Prefabs ▸ {Platformer · Fantasy Town · Both Kits}**
+  (→ `Assets/Prefabs/Kenney{Platformer,FantasyTown}/`). Old single menu name retired.
+- House — `HouseAssembler` → **Build Prefabs ▸ Assemble House (Fantasy Town)** tiles modular wall/door/
+  window/roof FBX into `Assets/Prefabs/KenneyFantasyTown/house-small.prefab`. VERIFIED good (door front,
+  windows, eaves). Tuning consts at top of the file.
+- Phase 2 — `Town3DTheme` + `Prop3D` (`MapGen/Town3DTheme.cs`): prefab palette mirroring the fields the
+  generator reads. Tiny additive hook: `TownLayout.placed` (List<PlacedProp>) + a 2-line record in
+  `TownGenerator.Stamp()` (2D path ignores it).
+- Phase 3 — `Town3DBaker` → menu **Generate 3D Town**. Feeds the generator a synthetic MARKER TownTheme
+  (sentinel tiles + synthesized PropTemplates from Prop3D, mapped back), runs it, then emits Kenney
+  prefabs: ground tiles + roads + Fence boundary + one prefab per placed prop; ONE big Ground-layer
+  floor box collider (perf) + per-prop box colliders; `Pathfinder3DConfig` height-aware. Auto-creates a
+  default `Assets/MapGen/Town3DTheme_Default.asset` wired from baked prefabs (no manual setup). Output
+  `Assets/Scenes/Town3D.unity`. FLAT for now.
+- Phase 4 — elevation/slopes: TERRAIN SANDBOX WORKING (`TerrainSandbox.cs`, menu **Terrain Sandbox**).
+  Merged, tiered, ramp-gated Kenney terrain, VERIFIED good + walkable:
+  • merged lawn via the OVERLAP trick (blocks scaled ~1.3× so rounded shoulders fuse — memory
+    `kenney-3d-terrain-overlap`); blocks visual-only, flat per-cell box collider on `Ground` layer.
+  • quantised-Perlin heightmap; every tier edge is an IMPASSABLE cliff; the ONLY way up is generated
+    grass RAMPS placed on a union-find spanning tree of tier regions (all areas reachable).
+  • ramp = same block-grass, oversized + thick + ROTATED ABOUT ITS BOUNDS CENTRE (its pivot is off-base
+    — rotating about pivot flung it into the air; centre-rotate fixed it). Player stepOffset 0.1 (cliffs
+    are walls) + slopeLimit 45 (ramps walk); `Pathfinder3DConfig` maxStep = TierStep*0.75.
+  • KNOWN MINOR BUG (deferred to a pathfinding-polish pass): when the player is flush against a cliff
+    right by a ramp mouth, PathAgent3D steers straight into the wall (walks in place) instead of backing
+    off to the ramp. Not structural.
+  NOT YET: fold the terrain into `Generate 3D Town` (houses/roads/props at terrain height).
+- FLAT+SCENIC town: BUILT. `Town3DBaker` rings the flat walkable town with tiered Kenney hills
+  (`EmitScenicBorder`) as the natural boundary (no fence); `Town3DTheme.scenicBorder` toggles it.
+  Billboards (player/mobs/NPCs) scaled to `Build25DSpike.BillboardScale = 0.7` (30% smaller vs the 3D
+  map; only the 2.5D scenes, NOT the 2D game).
+- TERRAIN TEXTURING: WORKS (2026-06-17). 2D pixel-art ground tiles painted on the merged 3D terrain via
+  world-projection shader `Unwritten/TerrainProjected` (canonical URP unlit: GetVertexPositionInputs +
+  instancing macros) + `Terrain3DArt.cs` (grass/dirt tiles extracted to `Art/Terrain3D/`, point+repeat).
+  ⚠️ **GOTCHA that cost ~6 round-trips:** the shader renders in the GAME (3D renderer, Play mode) but
+  NOT in the Scene view (which uses the project's 2D Renderer2D, default renderer index 0) — so terrain
+  looks INVISIBLE while editing and only shows on **Play**. Stock URP/Lit/Unlit DO draw under the 2D
+  renderer, which made diagnosis misleading. **Always verify 3D-shader work by pressing Play, not Scene
+  view.** 2nd gotcha: the `Art/` import postprocessor forces `wrapMode=Clamp`, so tiles didn't repeat
+  (detail only at world origin) — fixed two ways: shader wraps UVs with `frac()`, and the postprocessor
+  now exempts `Art/Terrain3D/` → Repeat. Shader is now LIT: gentle Lambert + RECEIVES soft main-light
+  shadows (player/props/cliffs darken the ground) + a ShadowCaster pass (cliffs self-shadow). Tune on
+  `Art/Terrain3D/Terrain3D.mat`: `_Tiles` (grass density, default 4), `_ShadeFloor`, `_Ambient`.
+  TERRAIN MILESTONE COMPLETE: generated, walkable, ramp-gated, textured, lit/shadowed 2.5D terrain+town.
+
+**NEXT (user step):** Unity → **Build Prefabs ▸ Both Kits**, then **Assemble House (Fantasy Town)**, then
+**Generate 3D Town**; press Play + screenshot. Watch for: house footprint vs grass cell-size match,
+road look, prop overlap. Prior spike doc: `q1755ftddqpyy9qm7e357hdpf188sajr`.
 ---
 
 **Last updated:** 2026-06-16 · **Status:** 🟢 foundation A–F built; Phase G is next. **Repo: the Unity game was relocated INTO `unity/` of this workspace (committed `98b796c`); old `D:\Unity3d\unwritten` is now just an archive.**

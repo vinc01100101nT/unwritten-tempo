@@ -138,7 +138,7 @@ public static class Build25DElevationSpike
     {
         Vector3 p = t.position;
         if (Physics.Raycast(new Vector3(p.x, 60f, p.z), Vector3.down, out var hit, 120f, groundMask, QueryTriggerInteraction.Ignore))
-            t.position = new Vector3(p.x, hit.point.y + (0.5f - Build25DSpike.SpriteFoot), p.z);
+            t.position = new Vector3(p.x, hit.point.y + Build25DSpike.FootOffsetY, p.z);
     }
 
     // Find or create a user layer named "Ground" (user layers are slots 8..31). Returns its index, or -1.

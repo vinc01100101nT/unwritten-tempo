@@ -428,6 +428,9 @@ public static class TownGenerator
         // object. The prop's full-cell origin maps to half-cell origin*2; offsets are already half-cells.
         foreach (var cc in p.CollisionFootprint())
             L.AddCollision(new Vector2Int(origin.x * 2 + cc.x, origin.y * 2 + cc.y));
+
+        // Record the whole-prop placement so a 3D backend can drop one prefab here (2D path ignores it).
+        L.placed.Add(new PlacedProp { template = p, origin = origin });
     }
 
     static PropTemplate WeightedPick(List<PropTemplate> list, MapRng rng)

@@ -35,6 +35,13 @@ public static class Build25DSpike
     // raise if they float. (Sheets are isReadable:0, so we can't auto-measure the padding.)
     public const float SpriteFoot = 0.1f;
 
+    // Size of the 2D billboards (player / mobs / NPCs) RELATIVE to the 3D map. 1 = one world cell tall;
+    // 0.7 = 30% smaller than that. One shared knob so every billboard builder matches. ONLY affects the
+    // 2.5D scenes built here — the 2D game (PlayerController2D + Player.prefab) is untouched.
+    public const float BillboardScale = 0.7f;
+    // Y the billboard's transform sits at so its feet rest on ground y=0, at the current scale.
+    public static float FootOffsetY => BillboardScale * (0.5f - SpriteFoot);
+
     // Curated props (each guarded — skipped if not present in the kit).
     static readonly string[] Props = {
         "tree", "tree-high", "tree-crooked", "fountain-round", "cart", "cart-high",
@@ -359,8 +366,9 @@ public static class Build25DSpike
         for (int i = 0; i < count; i++)
         {
             var go = new GameObject("Monster_" + tex.name);
+            go.transform.localScale = Vector3.one * BillboardScale;
             float a = (i * (360f / count) + 25f) * Mathf.Deg2Rad;
-            go.transform.position = new Vector3(center.x + Mathf.Cos(a) * radius, 0.5f - SpriteFoot, center.z + Mathf.Sin(a) * radius);   // start outside aggro
+            go.transform.position = new Vector3(center.x + Mathf.Cos(a) * radius, FootOffsetY, center.z + Mathf.Sin(a) * radius);   // start outside aggro
 
             ApplyBillboardLighting(go.AddComponent<SpriteRenderer>());   // flat art + receive/cast shadows
             go.AddComponent<Billboard>();
@@ -415,7 +423,8 @@ public static class Build25DSpike
         { Debug.LogWarning("[unwritten] Spike: player sheet isn't a 4-column grid: " + sheetPath); return null; }
 
         var go = new GameObject("Player3D");
-        go.transform.position = new Vector3(foot.x, 0.5f - SpriteFoot, foot.z);
+        go.transform.localScale = Vector3.one * BillboardScale;
+        go.transform.position = new Vector3(foot.x, FootOffsetY, foot.z);
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = frames[0];
         ApplyBillboardLighting(sr);                  // flat art + receive/cast environment shadows
