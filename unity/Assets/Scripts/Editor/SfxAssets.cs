@@ -11,7 +11,8 @@ using UnityEngine;
 /// </summary>
 public static class SfxAssets
 {
-    public const string Root = "Assets/Audio/TomMusic/WAV Files/SFX/";
+    public const string PackRoot = "Assets/Audio/TomMusic/WAV Files/";
+    public const string Root = PackRoot + "SFX/";
     public const string SwordDir = "Attacks/Sword Attacks Hits and Blocks";
 
     /// <summary>A set from <paramref name="folder"/> (under <see cref="Root"/>) given bare clip names
@@ -24,20 +25,30 @@ public static class SfxAssets
         return new SfxSet { clips = clips, volume = volume };
     }
 
-    static AudioClip Load(string path)
+    /// <summary>A single looping ambient/BGS clip from <see cref="PackRoot"/> (e.g.
+    /// "BGS Loops/Forest Day", "Forest Day"), imported as Streaming (right for long loops).</summary>
+    public static AudioClip Ambient(string folder, string name)
     {
-        if (!File.Exists(path)) return null;
-        ConfigureImport(path);
+        string path = $"{PackRoot}{folder}/{name}.wav";
+        if (!File.Exists(path)) { Debug.LogWarning($"[unwritten] Ambient clip not found: {path}"); return null; }
+        ConfigureImport(path, AudioClipLoadType.Streaming);
         return AssetDatabase.LoadAssetAtPath<AudioClip>(path);
     }
 
-    static void ConfigureImport(string path)
+    static AudioClip Load(string path)
+    {
+        if (!File.Exists(path)) return null;
+        ConfigureImport(path, AudioClipLoadType.DecompressOnLoad);
+        return AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+    }
+
+    static void ConfigureImport(string path, AudioClipLoadType loadType)
     {
         if (!(AssetImporter.GetAtPath(path) is AudioImporter ai)) return;
         var s = ai.defaultSampleSettings;
-        if (s.loadType != AudioClipLoadType.DecompressOnLoad)
+        if (s.loadType != loadType)
         {
-            s.loadType = AudioClipLoadType.DecompressOnLoad;
+            s.loadType = loadType;
             ai.defaultSampleSettings = s;
             ai.SaveAndReimport();
         }

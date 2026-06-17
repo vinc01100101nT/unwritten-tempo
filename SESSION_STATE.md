@@ -1,7 +1,83 @@
 # SESSION_STATE — unwritten (Unity 2D)
 
+> ⚠️ **COMMIT REMINDER:** the whole pile (audio, day/night, respawn, bugfixes) is UNCOMMITTED on
+> `experiment/3d-world`. **Committing/pushing to GitHub is the USER's job** — Claude only reminds, never commits.
+
 ---
-## ⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-17, latest) — SFX SYSTEM (TomMusic) — READ FIRST
+## ⏩⏩⏩⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-17, latest) — PHASE G SKILL SYSTEM: PLANNING — READ FIRST
+Branch `experiment/3d-world`, UNCOMMITTED. Starting Phase G (the signature skill-draft) — PLANNING stage,
+no code yet. Web prototype to port lives in `src/skill-draft/`:
+- `graph.ts` = the BRAIN (pure, deterministic): `SKILLS` (28 nodes, tiers 0–6, 7 branches), `TIERS` rows,
+  `BRANCH_META` (label/color), and the draft algorithm `getDraft(owned, seen)` = **2 guaranteed (strongest
+  on-path) + 1 wildcard (random off-path pivot)**, no-repeat via a `seen`/burned ledger, **classes are
+  auto-granted never drafted** (`classUnlockedBy`). Helpers: `neighborsOf`, `dominantBranch`, `isDraftable`.
+- `SkillCard.tsx` = a draft card (guaranteed=blue, wildcard=gold, lookahead "next picks" on guaranteed only).
+- `SkillTree.tsx` = tier-row graph with owned/available/burned(missed) node states + computed connector lines.
+- `Tooltip.tsx`, `BuildPanel.tsx` = hover tooltip + current-build summary.
+
+Hooks into existing code: `Character.OnLeveledUp(int)` ALREADY fires; the empty **Skills (K)** panel
+(built by `UIShellBuilder`) is the home for the tree. Planned port = 4 layers (data → state/hook → draft
+popup → tree view). See chat for the full plan + open decisions (data-as-static-C# vs ScriptableObjects;
+icons; whether picks apply mechanical effects yet). Tracked by issues VIN-1 epic + VIN-3/4/5/6.
+
+---
+## ⏩⏩⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-17) — COMBAT BUGFIXES: phantom damage + mob respawn
+Branch `experiment/3d-world`, UNCOMMITTED.
+
+**BUG 1 — "still taking damage, no mobs around."** `MonsterAI3D` touch-damage used PLANAR (XZ) distance, so a
+mob that walked off a cliff/map-edge and fell BELOW the terrain (invisible, same XZ as the player) kept biting
+forever. FIX: gate the bite on TRUE 3D distance (`Vector3.Distance`) — a mob far below can't reach you.
+(A killed mob already can't bite: `DeathDissolve.Play` disables its `MonsterAI3D` synchronously.)
+
+**BUG 2 — mobs don't respawn.** There was NO respawn system (`NatureMobs` is an editor one-shot). Since mobs
+are built procedurally (no runtime prefab), added a RECYCLE-based respawner:
+- NEW `MobRespawn.cs` — on `Health.Die`, after `DeathDissolve` finishes, hides the mob for `respawnDelay`
+  (8s), then revives it at a fresh ground spot within `homeRadius` of its spawn, kept `playerClearRadius`
+  (7s) from the player. Re-enables everything DeathDissolve switched off (AI/agent/CC/colliders/renderer).
+- `Health.Revive()` (NEW) = full HP + base color; `Health.Die` now hands off to `MobRespawn.OnFadedOut` if
+  present (else Destroy, unchanged for 2D/spike mobs).
+- `DeathDissolve` captures original material/color on Awake + `ResetAfterRespawn()` to undo the fade.
+- `Build25DSpike.BuildMonster` now adds `MobRespawn` to every mob.
+
+**⚠️ RE-BAKE:** **Populate Mobs (Nature)** (bakes `MobRespawn` onto mobs + the 3D-touch fix is code-only).
+Test: kill a mob → ~8s later it returns elsewhere; walk the map → no more phantom hits. Tune knobs on the
+mob's `MobRespawn` (respawnDelay/homeRadius/playerClearRadius).
+
+---
+## ⏩⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-17) — UI CLICK + HURT GRUNT + DAY/NIGHT AMBIENCE
+Branch `experiment/3d-world`, still UNCOMMITTED. Extends the TomMusic SFX system (checkpoint below) with
+the 3 requested sounds. All TomMusic WAV foley (no vocals in the pack).
+
+**Built this session:**
+- **UI click sounds** — NEW `UISounds.cs` (runtime) on `GameUICanvas`: `open`/`close`/`click` SfxSets +
+  static `PlayOpen/PlayClose/PlayClick`; auto-wires every `Button` under the canvas to the click. Clips
+  (TomMusic "Doors Gates and Chests"): open = Chest Open 1/2, close = Chest Close 1/2, click = Lock Unlock,
+  assigned in `UIShellBuilder`. `PanelToggle` plays open/close on I/C/K toggle + Esc-close-all.
+  `DeathScreen.OnRespawnClicked` calls `UISounds.PlayClick()` (its canvas is separate, so direct call).
+- **Player hurt grunt** — `Character.hurtSfx` (NEW SfxSet), played in `Character.TakeDamage` on UNblocked
+  damage (before OnDamaged). PLACEHOLDER = low-pitched "chop" (pitch 0.7–0.85) as a meaty body-hit; assigned
+  in `Build25DSpike.BuildCharacter`. ⚠️ swap in a CC0 human grunt later (TomMusic has no vocals).
+- **Day↔night CYCLE (light + ambience + clock).** Central NEW `TimeOfDay.cs` (singleton on GameSystems) =
+  accelerated clock split EVENLY: `halfCycleSeconds` 3600 → **1h day + 1h night** (full = 7200s). `time01`
+  0=sunrise, 0.25=noon, 0.5=sunset, 0.75=midnight. Exposes `Daylight01` = (cos((t−0.25)2π)+1)/2 and
+  `Night01`. **It IS the live in-game tuner**: `paused` + `[Range] time01` slider to scrub, `testSpeed`
+  fast-forward, `[ContextMenu]` Jump ▶ Sunrise/Noon/Sunset/Midnight, and a `_readout` string showing live
+  phase/clock in the Inspector during Play.
+  - **Light** — NEW `DayNightLight.cs` on the Systems Sun (added in `SystemsSceneBuilder`; `BuildLight()`
+    now RETURNS the Light). Lerps sun color (warm↔blue) + intensity (1.1↔0.18) + sky pitch + scene
+    `RenderSettings.ambientLight` (sets ambientMode=Flat) by `Daylight01`.
+  - **Ambience** — `DayNightAmbience` REFACTORED to read `TimeOfDay.Instance.Night01` (falls back to its own
+    `fallbackCycleSeconds` timer only if no clock). Forest Day↔Night still wired by `NatureStageBuilder`.
+
+**⚠️ RE-BAKE for these:** **Build UI Shell** (UISounds + click clips into GameUICanvas prefab) → **Setup
+Systems Scene** (Character.hurtSfx + DayNightLight on Sun + TimeOfDay clock + new UI prefab) → **Add Forest
+Ambience (day/night)** with NatureStage open (or **New Nature Stage** rebuild). Test: open Bag/Char/Skills =
+latch click; get hit by a mob = thud grunt + red flash; day/night = select **GameSystems** in the hierarchy
+during Play, tick **TimeOfDay ▸ paused**, drag **time01** (or right-click ▸ Jump ▶ Midnight) → sun dims to
+blue, ambient darkens, forest audio crossfades to night. Untick paused + raise testSpeed to watch it cycle.
+
+---
+## ⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-17) — SFX SYSTEM (TomMusic)
 Branch `experiment/3d-world`, still UNCOMMITTED. Audio direction: **TomMusic "Free Fantasy 200 SFX"**
 (realistic foley, royalty-free; the user rejected Kenney as too chiptune). RO-rip audio is OFF-limits
 (copyright). Pack lives at `Assets/Audio/TomMusic/` (we use the **WAV** files).
@@ -22,11 +98,21 @@ Branch `experiment/3d-world`, still UNCOMMITTED. Audio direction: **TomMusic "Fr
 - Defaults assigned in `Build25DSpike` (player attack/hit/footstep + Character blockSfx = Sword sets);
   `ItemStarterSet` gives weapons Sword attack/hit, the "Wooden Guard" off-hand Sword Blocked + 0.25 block.
 
-**⚠️ RE-BAKE for audio:** **Setup Systems Scene** (adds `Sfx` + player/Character default sets) **AND
-Create Starter Items** (or Build UI Shell — populates the new Item audio fields). NOT Populate Mobs
-(mobs have no sounds yet). Test: walk = footsteps; click a mob = swing + impact; equip "Wooden Guard"
-(drag to off-hand) + let a mob hit you = ~25% "Guard" clang. NEXT possible: mob hurt/death cries, UI
-clicks, ambient BGS loops (TomMusic has Forest Day/Night), level-up sting.
+**MORE SFX added (same session):**
+- **Mob death** — `DeathDissolve.deathSfx`, played on death (assigned "Spell Impact 1/2/3" = poof; TomMusic
+  has NO creature vocals — swap in CC0 monster cries later). Set in `Build25DSpike.BuildMonster`.
+- **Level-up sting** — `Character.levelUpSfx`, played in `AddXP` on level (assigned "Firebuff 1/2"). Set in
+  `BuildCharacter`.
+- **Forest ambience** — per-map looping `AudioSource` (TomMusic "BGS Loops/Forest Day", 2D, vol 0.22,
+  Streaming import). `SfxAssets.Ambient()` loads it. Added by `NatureStageBuilder` on fresh builds AND via a
+  NEW menu **Tools ▸ unwritten ▸ Add Forest Ambience** that injects it into the OPEN map WITHOUT rebuild
+  (so you don't lose scatter/mobs). Survives Systems load (MapManager strips listeners, not AudioSources).
+
+**⚠️ RE-BAKE for audio:** **Setup Systems Scene** (Sfx player + player/Character defaults incl. levelup) +
+**Create Starter Items** (Item audio) + **Populate Mobs (Nature)** (mob deathSfx) + **Add Forest Ambience**
+(open NatureStage, no rebuild). Test: walk=footsteps; hit mob=swing+impact; kill mob=poof; level=Firebuff;
+forest hum in bg; equip Wooden Guard = ~25% Guard clang. NEXT possible: UI click sounds, player hurt grunt,
+day/night ambience swap, more weapon-distinct sets (bow).
 
 ---
 ## ⏩⏩⏩⏩ CHECKPOINT (2026-06-17) — PHASE F death/respawn DONE (code)

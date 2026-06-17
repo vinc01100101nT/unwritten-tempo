@@ -72,7 +72,10 @@ public class MonsterAI3D : MonoBehaviour
         else if (!chasing && toPlayer <= aggroRadius) chasing = true;
 
         // Touch damage (Phase F parity). No-op in the spike: Character.Instance is null without Systems.
-        if (player != null && toPlayer <= touchRange && Time.time >= nextTouch && Character.Instance != null)
+        // Use TRUE 3D distance (not planar) so a mob that has fallen off a cliff/edge below the terrain —
+        // same XZ as the player but far below — can't keep biting an invisible, "there are no mobs" hit.
+        float touch3D = playerAlive ? Vector3.Distance(pos, player.position) : Mathf.Infinity;
+        if (player != null && touch3D <= touchRange && Time.time >= nextTouch && Character.Instance != null)
         {
             int dealt = Character.Instance.TakeDamage(attack);
             if (dealt > 0) DamagePopup.Spawn(player.position, dealt, new Color(1f, 0.35f, 0.35f));   // blocked = Character pops "Guard"

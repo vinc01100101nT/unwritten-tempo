@@ -26,11 +26,19 @@ public class PanelToggle : MonoBehaviour
         foreach (var b in panels)
         {
             if (b.panel != null && Input.GetKeyDown(b.key))
-                b.panel.SetActive(!b.panel.activeSelf);
+            {
+                bool nowOpen = !b.panel.activeSelf;
+                b.panel.SetActive(nowOpen);
+                if (nowOpen) UISounds.PlayOpen(); else UISounds.PlayClose();   // latch click
+            }
         }
 
         if (closeAllKey != KeyCode.None && Input.GetKeyDown(closeAllKey))
+        {
+            bool closedAny = false;
             foreach (var b in panels)
-                if (b.panel != null) b.panel.SetActive(false);
+                if (b.panel != null && b.panel.activeSelf) { b.panel.SetActive(false); closedAny = true; }
+            if (closedAny) UISounds.PlayClose();   // only click if something was actually open
+        }
     }
 }

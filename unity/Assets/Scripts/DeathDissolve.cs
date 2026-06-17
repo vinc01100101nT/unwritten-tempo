@@ -21,6 +21,9 @@ public class DeathDissolve : MonoBehaviour
     public float smokeFps = 16f;
     public float smokeScale = 1.2f;
 
+    [Tooltip("Played once on death (a poof / death cry).")]
+    public SfxSet deathSfx;
+
     [Header("Remains")]
     [Tooltip("Seconds the corpse lies on the ground before it starts fading.")]
     public float remainSeconds = 3f;
@@ -29,6 +32,26 @@ public class DeathDissolve : MonoBehaviour
 
     static Material _fadeMat;
     bool playing;
+
+    SpriteRenderer sr;
+    Material originalMat;     // restored when a MobRespawn recycles the mob
+    Color originalColor;
+
+    void Awake()
+    {
+        sr = GetComponent<SpriteRenderer>();
+        originalMat = sr.sharedMaterial;
+        originalColor = sr.color;
+    }
+
+    /// <summary>Undo the death visuals so <see cref="MobRespawn"/> can reuse this object: stop the fade,
+    /// restore the lit material + full-alpha color, and allow it to die again.</summary>
+    public void ResetAfterRespawn()
+    {
+        StopAllCoroutines();
+        playing = false;
+        if (sr != null) { sr.sharedMaterial = originalMat; sr.color = originalColor; }
+    }
 
     /// <summary>Freeze the unit, puff smoke, linger, then fade out; <paramref name="onComplete"/>
     /// fires when done (Health passes Destroy here).</summary>
@@ -45,9 +68,10 @@ public class DeathDissolve : MonoBehaviour
         foreach (var col in GetComponentsInChildren<Collider>())   col.enabled = false;
         foreach (var col in GetComponentsInChildren<Collider2D>()) col.enabled = false;
 
-        // Puff of smoke exactly on death (reuses the generic one-shot sheet player).
+        // Puff of smoke + sound exactly on death (smoke reuses the generic one-shot sheet player).
         if (smokeSheet != null)
             SlashEffect.Spawn(smokeSheet, smokeFrameSize, smokeFrames, smokeFps, transform.position, smokeScale);
+        Sfx.Play(deathSfx);
 
         StartCoroutine(Run(onComplete));
     }
@@ -58,7 +82,6 @@ public class DeathDissolve : MonoBehaviour
         if (remainSeconds > 0f) yield return new WaitForSeconds(remainSeconds);
 
         // Fade out — swap to an alpha-blended material so the alpha ramp actually shows.
-        var sr = GetComponent<SpriteRenderer>();
         var mat = FadeMaterial();
         if (mat != null) sr.sharedMaterial = mat;       // shared is fine: color is a per-renderer property
         Color c = sr.color;

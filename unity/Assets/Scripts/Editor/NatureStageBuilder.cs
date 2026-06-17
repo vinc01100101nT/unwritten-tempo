@@ -19,6 +19,52 @@ public static class NatureStageBuilder
     const string ScenePath  = "Assets/Scenes/NatureStage.unity";
     const string GroundPrefab = "Assets/Prefabs/LowPolyNature/Ground_01.prefab";
 
+    /// <summary>Drop the looping forest ambience into the CURRENTLY OPEN map without rebuilding it —
+    /// so you don't lose scattered props / mobs. Idempotent (upgrades an existing "Ambient" in place).</summary>
+    [MenuItem("Tools/unwritten/Add Forest Ambience (day/night)", priority = 6)]
+    static void AddAmbienceMenu()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+        { EditorUtility.DisplayDialog("Add Forest Ambience", "Exit Play mode first, then re-run.", "OK"); return; }
+
+        var scene = SceneManager.GetActiveScene();
+        var amb = EnsureForestAmbience(scene);
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        EditorUtility.DisplayDialog("Add Forest Ambience",
+            amb != null && amb.dayClip != null
+                ? $"Added day/night forest ambience to '{scene.name}'. Press Play — it crossfades " +
+                  "Forest Day ↔ Forest Night locked to the TimeOfDay clock (tune/scrub on GameSystems ▸ TimeOfDay)."
+                : "Couldn't find the Forest Day/Night loops in Assets/Audio/TomMusic. Is the pack imported?", "OK");
+    }
+
+    // Create (or upgrade) the per-map looping ambience as a day/night crossfade. The DayNightAmbience
+    // component owns its own looping AudioSources, which survive the Systems load (MapManager strips
+    // AudioListeners/cameras/lights, not the map's AudioSources). Removes any stale single AudioSource
+    // from the old forest-hum so day audio doesn't double up.
+    static DayNightAmbience EnsureForestAmbience(Scene scene)
+    {
+        GameObject go = null;
+        foreach (var root in scene.GetRootGameObjects())
+            if (root.name == "Ambient") { go = root; break; }
+
+        if (go == null)
+        {
+            go = new GameObject("Ambient");
+            SceneManager.MoveGameObjectToScene(go, scene);
+        }
+        else
+            foreach (var old in go.GetComponents<AudioSource>())   // drop the legacy single-loop source
+                Object.DestroyImmediate(old);
+
+        var amb = go.GetComponent<DayNightAmbience>();
+        if (amb == null) amb = go.AddComponent<DayNightAmbience>();
+        amb.dayClip   = SfxAssets.Ambient("BGS Loops/Forest Day",   "Forest Day");
+        amb.nightClip = SfxAssets.Ambient("BGS Loops/Forest Night", "Forest Night");
+        amb.maxVolume = 0.22f;
+        return amb;
+    }
+
     [MenuItem("Tools/unwritten/New Nature Stage (low-poly ground)", priority = 5)]
     static void Build()
     {
@@ -66,6 +112,8 @@ public static class NatureStageBuilder
         var spawn = new GameObject("SpawnPoint").AddComponent<SpawnPoint>();
         spawn.id = "Start";
         spawn.transform.position = SurfacePoint(center, groundMask);
+
+        EnsureForestAmbience(scene);   // looping forest BGS (per-map AudioSource)
 
         if (!Directory.Exists("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
         var alreadyOpen = SceneManager.GetSceneByPath(ScenePath);

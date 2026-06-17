@@ -50,6 +50,13 @@ public class Health : MonoBehaviour
         return dmg;
     }
 
+    /// <summary>Reset to full HP and base color (used by <see cref="MobRespawn"/> to bring a mob back).</summary>
+    public void Revive()
+    {
+        Current = maxHealth;
+        if (sr != null) sr.color = baseColor;
+    }
+
     /// <summary>Restore HP (capped at max) and pop a green "+N" over the unit.</summary>
     public void Heal(int amount)
     {
@@ -70,10 +77,15 @@ public class Health : MonoBehaviour
     void Die()
     {
         onDeath?.Invoke();
-        // Play the "poof" death animation if one is attached, and only remove the object once it
-        // finishes; otherwise remove it instantly (the original Phase D behavior).
+        // Play the "poof" death animation if one is attached, and once it finishes either RECYCLE the mob
+        // (if it has a MobRespawn) or remove it (the original Phase D behavior). With no FX, do the same
+        // immediately.
+        var respawn = GetComponent<MobRespawn>();
+        System.Action done;
+        if (respawn != null) done = respawn.OnFadedOut;
+        else done = () => Destroy(gameObject);
         var fx = GetComponent<DeathDissolve>();
-        if (fx != null && gameObject.activeInHierarchy) fx.Play(() => Destroy(gameObject));
-        else Destroy(gameObject);
+        if (fx != null && gameObject.activeInHierarchy) fx.Play(done);
+        else done();
     }
 }

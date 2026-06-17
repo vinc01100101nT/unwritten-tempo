@@ -95,6 +95,12 @@ public static class UIShellBuilder
         canvasGO.AddComponent<CharacterUIBinder>();   // drives HUD/stats/equip from Character
         canvasGO.AddComponent<BagSeeder>();           // fills the bag from Resources at runtime
 
+        // UI click sounds (TomMusic latch foley): panel open/close + a generic button click.
+        var ui = canvasGO.AddComponent<UISounds>();
+        ui.open  = SfxAssets.Set(0.6f, "Doors Gates and Chests", "Chest Open 1",  "Chest Open 2");
+        ui.close = SfxAssets.Set(0.6f, "Doors Gates and Chests", "Chest Close 1", "Chest Close 2");
+        ui.click = SfxAssets.Set(0.5f, "Doors Gates and Chests", "Lock Unlock");
+
         Undo.RegisterCreatedObjectUndo(canvasGO, "Build UI Shell");
 
         // Save as a Resources prefab so the UI auto-spawns in any scene and persists.

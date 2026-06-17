@@ -45,6 +45,10 @@ public class Character : MonoBehaviour
     [Header("Audio")]
     [Tooltip("Default block sound when the equipped off-hand has none of its own.")]
     public SfxSet blockSfx;
+    [Tooltip("Played on level-up.")]
+    public SfxSet levelUpSfx;
+    [Tooltip("Player hurt grunt — played when an unblocked hit lands.")]
+    public SfxSet hurtSfx;
 
     static readonly Color GuardColor = new Color(0.78f, 0.85f, 1f);
 
@@ -99,6 +103,7 @@ public class Character : MonoBehaviour
         int dmg = Mathf.Max(1, attackerAttack - Defense);
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
+        Sfx.Play(hurtSfx);                       // player hurt grunt
         OnDamaged?.Invoke(dmg);                  // drives the player hurt flash
         if (CurrentHP == 0) OnDied?.Invoke();   // Phase F: DeathScreen handles the death → respawn flow
         return dmg;
@@ -147,6 +152,7 @@ public class Character : MonoBehaviour
             XP -= XPToNext;
             Level++;
             CurrentHP = MaxHP;           // level-up fully heals
+            Sfx.Play(levelUpSfx);        // triumphant sting
             OnLeveledUp?.Invoke(Level);  // Phase G will hang the skill-draft off this
         }
         OnStatsChanged?.Invoke();

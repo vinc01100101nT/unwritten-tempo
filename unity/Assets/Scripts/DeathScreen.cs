@@ -84,6 +84,7 @@ public class DeathScreen : MonoBehaviour
     void OnRespawnClicked()
     {
         if (building) return;            // still counting down
+        UISounds.PlayClick();            // button click (this canvas is separate, so play it directly)
         SetButtonEnabled(false);
         StopAllCoroutines();
         StartCoroutine(RespawnRoutine());

@@ -163,7 +163,7 @@ public static class Build25DSpike
         if (player != null) follow.target = player.transform;
     }
 
-    public static void BuildLight()
+    public static Light BuildLight()
     {
         var go = new GameObject("Sun");
         var l = go.AddComponent<Light>();
@@ -172,6 +172,7 @@ public static class Build25DSpike
         l.intensity = 1.1f;
         l.shadows = LightShadows.Soft;
         go.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+        return l;
     }
 
     static void BuildGround()
@@ -299,6 +300,11 @@ public static class Build25DSpike
         // when another open scene (e.g. Systems) already had a Character, leaving Instance null.
         var ch = new GameObject("Character").AddComponent<Character>();   // sets Character.Instance on Play
         ch.blockSfx = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Blocked 1", "Sword Blocked 2", "Sword Blocked 3");
+        ch.levelUpSfx = SfxAssets.Set(0.8f, "Spells", "Firebuff 1", "Firebuff 2");   // level-up sting
+        // Hurt grunt: TomMusic has NO vocals, so use a low-pitched "chop" as a meaty body-hit
+        // PLACEHOLDER (swap in a CC0 human grunt later, same as the deferred monster cries).
+        ch.hurtSfx = SfxAssets.Set(0.65f, "Chopping and Mining", "chop 1", "chop 2", "chop 3", "chop 4");
+        ch.hurtSfx.pitch = new Vector2(0.7f, 0.85f);
     }
 
     public static void BuildHUD()
@@ -395,6 +401,8 @@ public static class Build25DSpike
         go.AddComponent<AttackLunge>();              // squash-stretch "chomp" on each bite
         var death = go.AddComponent<DeathDissolve>();   // smoke puff → remains linger → fade (no death sprite)
         death.smokeSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(SmokeSheetPath);
+        death.deathSfx = SfxAssets.Set(0.7f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");  // poof (TomMusic has no creature cries)
+        go.AddComponent<MobRespawn>();               // recycle the mob back into the world after it dies
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
         return go;
     }
