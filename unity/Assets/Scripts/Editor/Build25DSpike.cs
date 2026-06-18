@@ -422,6 +422,8 @@ public static class Build25DSpike
         agent.moveSpeed = arc.moveSpeed; agent.agentRadius = 0.3f;
         var cc = go.GetComponent<CharacterController>();
         cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // walk the low-poly hills
+        int crowd = NatureStageBuilder.EnsureLayer(UnitCrowd.LayerName);   // mobs pass through each other (no stacking/hopping)
+        if (crowd >= 0) go.layer = crowd;
 
         var mh = go.AddComponent<Health>();
         mh.maxHealth    = arc.maxHealth;
@@ -531,6 +533,31 @@ public static class Build25DSpike
         caster.boltSheet = spark;
         if (spark != null) { caster.boltFrameSize = spark.height; caster.boltFrames = Mathf.Max(1, spark.width / spark.height); }
         caster.castSfx = SfxAssets.Set(0.8f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
+        caster.icon = LoadSkillIcon("Spell/Fireball");        // hotbar icon (ranged magic)
+
+        // Swordsman signature active — Bash (slot 1): a heavy, always-landing strike that staggers the target.
+        var bash = go.AddComponent<Player3DBash>();
+        bash.bashSfx = SfxAssets.Set(0.95f, SfxAssets.SwordDir, "Sword Attack 1", "Sword Attack 2", "Sword Attack 3");
+        bash.hitSfx  = SfxAssets.Set(1f,    SfxAssets.SwordDir, "Sword Impact Hit 1", "Sword Impact Hit 2", "Sword Impact Hit 3");
+        bash.icon = LoadSkillIcon("Spell/Cut");               // hotbar icon (heavy slash)
+
+        // Swordsman active 2 — Charge (slot 2): gap-closer dash to a target, then a staggering hit.
+        var charge = go.AddComponent<Player3DCharge>();
+        charge.chargeSfx = SfxAssets.Set(0.8f, SfxAssets.SwordDir, "Sword Attack 1", "Sword Attack 2", "Sword Attack 3");
+        charge.hitSfx    = SfxAssets.Set(1f,   SfxAssets.SwordDir, "Sword Impact Hit 1", "Sword Impact Hit 2", "Sword Impact Hit 3");
+        charge.icon = LoadSkillIcon("Spell/Counter");         // hotbar icon (forceful lunge)
+
+        // Swordsman defensive active — Guard (slot 3): a brief damage-reduction stance + shield bubble.
+        var guard = go.AddComponent<Player3DGuard>();
+        guard.shieldSheet = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Shield/SpriteSheetBlue.png");
+        guard.guardSfx = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Blocked 1", "Sword Blocked 2", "Sword Blocked 3");
+        guard.icon = LoadSkillIcon("Spell/DefenseUpgrade");   // hotbar icon (defensive buff)
+
+        // Swordsman AoE active — Warcry (slot 4): damages + knocks back every nearby mob.
+        var warcry = go.AddComponent<Player3DWarcry>();
+        warcry.shockSheet = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Aura/SpriteSheet.png");
+        warcry.warcrySfx = SfxAssets.Set(1f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
+        warcry.icon = LoadSkillIcon("Spell/Explosion");       // hotbar icon (AoE burst)
 
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
 
@@ -538,6 +565,8 @@ public static class Build25DSpike
         // stepOffset near 0 so the player can't climb/mount low props (e.g. the well rim) — keeps
         // physical collision consistent with what A* treats as solid (Phase 3D-C consistency fix).
         cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // walk the low-poly hills
+        int crowd = NatureStageBuilder.EnsureLayer(UnitCrowd.LayerName);   // player passes through mobs (can't hop onto them)
+        if (crowd >= 0) go.layer = crowd;
 
         Sprite[] Col(int c) => Enumerable.Range(0, walk).Select(r => frames[c + r * cols]).ToArray();
         ctrl.down = Col(0); ctrl.up = Col(1); ctrl.left = Col(2); ctrl.right = Col(3);
@@ -555,6 +584,29 @@ public static class Build25DSpike
         string folder = Path.GetDirectoryName(sheetPath).Replace('\\', '/');
         string atkPath = folder + "/SeparateAnim/Attack.png";
         return File.Exists(atkPath) ? AssetDatabase.LoadAssetAtPath<Texture2D>(atkPath) : null;
+    }
+
+    /// <summary>Loads a hotbar icon from the Ninja Adventure "Skill Icon" pack (e.g. "Spell/Cut"),
+    /// ensuring it's imported as a Sprite first. Returns null (→ the hotbar shows the text label) if the
+    /// file is missing. Assigned to the skill components so the icon serializes / is swappable in the
+    /// Inspector.</summary>
+    static Sprite LoadSkillIcon(string relativeNoExt)
+    {
+        string path = $"Assets/Art/NinjaAdventure/UI/Skill Icon/{relativeNoExt}.png";
+        var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (importer == null) { Debug.LogWarning($"[unwritten] Hotbar icon not found: {path}"); return null; }
+        // The pack ships these icons as Sprite/Multiple (one 24×24 sub-sprite each), which
+        // LoadAssetAtPath<Sprite> can't return directly — force Single so the whole image is one
+        // addressable sprite. Nothing references the sub-sprites yet, so this is non-destructive.
+        if (importer.textureType != TextureImporterType.Sprite || importer.spriteImportMode != SpriteImportMode.Single)
+        {
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.SaveAndReimport();
+        }
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        if (sprite == null) Debug.LogWarning($"[unwritten] Hotbar icon failed to load as Sprite: {path}");
+        return sprite;
     }
 
     /// <summary>The SeparateAnim/Dead.png texture beside the player sheet (Ninja Adventure ships one

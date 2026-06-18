@@ -27,6 +27,16 @@ public class PathAgent3D : MonoBehaviour
              "goal from burning the player's full search budget. ~2500 cells ≈ a 25×25-unit area.")]
     public int maxPathExpansions = 2500;
 
+    [Header("Crowd avoidance (local separation so units don't stack)")]
+    [Tooltip("Spread away from other units within this radius (~a body). 0 = off.")]
+    public float avoidRadius = 0.8f;
+    [Tooltip("How hard to push off / slide around crowders. 0 = off.")]
+    public float avoidStrength = 0.9f;
+    [Tooltip("Layers scanned for crowders — set to the Crowd layer by MonsterAI3D.")]
+    public LayerMask avoidMask;
+    [Tooltip("One unit to NOT spread away from — the chase target (player) — so melee still reaches it.")]
+    public Transform avoidIgnore;
+
     public Vector2 Facing { get; private set; } = Vector2.down;   // cardinal (x, z)
     public bool Moving { get; private set; }
     public bool Arrived => !active;
@@ -38,7 +48,27 @@ public class PathAgent3D : MonoBehaviour
     Vector2 lastGoal;
     float nextRepath;
 
+    // Knockback impulse (an AoE shove, e.g. the Swordsman's Warcry). Overrides pathing while it lasts.
+    Vector3 knockbackVel;
+    float knockbackDecel, knockbackUntil;
+
+    static readonly Collider[] avoidBuf = new Collider[16];   // reused overlap buffer (no per-frame alloc)
+
     void Awake() => cc = GetComponent<CharacterController>();
+
+    /// <summary>Shove this agent in <paramref name="worldDir"/> at <paramref name="speed"/>, easing out
+    /// to a stop over <paramref name="seconds"/>. Cancels any current path (the caller should also stagger
+    /// the brain so it doesn't immediately re-route). The slide goes through the CharacterController, so it
+    /// still collides with props/terrain rather than phasing through them.</summary>
+    public void Knockback(Vector3 worldDir, float speed, float seconds)
+    {
+        worldDir.y = 0f;
+        if (worldDir.sqrMagnitude < 1e-6f || speed <= 0f || seconds <= 0f) return;
+        knockbackVel = worldDir.normalized * speed;
+        knockbackDecel = speed / seconds;        // hits 0 right at the end → an ease-out shove
+        knockbackUntil = Time.time + seconds;
+        Halt();
+    }
 
     public void MoveTo(Vector3 worldPoint)
     {
@@ -71,6 +101,16 @@ public class PathAgent3D : MonoBehaviour
 
     void Update()
     {
+        // A knockback impulse overrides pathing: slide (decelerating) until the window ends, then the
+        // brain (un-staggered) resumes routing on its next tick.
+        if (Time.time < knockbackUntil)
+        {
+            cc.Move((knockbackVel + Vector3.down * gravity) * Time.deltaTime);
+            knockbackVel = Vector3.MoveTowards(knockbackVel, Vector3.zero, knockbackDecel * Time.deltaTime);
+            Moving = false;
+            return;
+        }
+
         Vector3 dir = Vector3.zero;
         bool moving = false;
 
@@ -89,11 +129,69 @@ public class PathAgent3D : MonoBehaviour
         }
 
         // Move (with a constant downward pull to stay grounded; CharacterController slides on props).
-        cc.Move((dir * moveSpeed + Vector3.down * gravity) * Time.deltaTime);
+        // Blend in crowd separation: while chasing, bend the heading; while halted, still drift apart so a
+        // cluster un-stacks (units pass through each other now, so steering is what keeps them spread).
+        if (moving)
+        {
+            dir = Steer(transform.position, dir);
+            Facing = Facing3D.FromWorldDir(dir);
+            cc.Move((dir * moveSpeed + Vector3.down * gravity) * Time.deltaTime);
+        }
+        else
+        {
+            Vector3 push = Steer(transform.position, Vector3.zero);   // separation-only (no desired heading)
+            if (push.sqrMagnitude > 1e-4f)
+                cc.Move((push * moveSpeed * 0.6f + Vector3.down * gravity) * Time.deltaTime);
+            else
+                cc.Move(Vector3.down * gravity * Time.deltaTime);
+        }
 
         Moving = moving;
-        if (moving)
-            Facing = Facing3D.FromWorldDir(dir);
+    }
+
+    // Local crowd avoidance (ported from the 2D PathAgent): blend the desired heading with a radial push-off
+    // from nearby units plus a tangential slide around whoever is dead ahead, so chasers fan out and surround
+    // instead of stacking. One OverlapSphere per agent per frame (reused buffer, allocation-free). With a
+    // zero `desired` it returns a pure separation direction (used to un-stack a halted cluster).
+    Vector3 Steer(Vector3 pos, Vector3 desired)
+    {
+        if (avoidRadius <= 0f || avoidStrength <= 0f || avoidMask.value == 0) return desired;
+
+        int n = Physics.OverlapSphereNonAlloc(pos, avoidRadius, avoidBuf, avoidMask);
+        Vector3 separation = Vector3.zero, aheadDir = Vector3.zero;
+        float nearestAhead = float.MaxValue;
+
+        for (int i = 0; i < n; i++)
+        {
+            var col = avoidBuf[i];
+            if (col == null) continue;
+            Transform t = col.transform;
+            if (t == transform) continue;                            // self
+            if (avoidIgnore != null && t == avoidIgnore) continue;   // the player we're chasing
+
+            Vector3 to = t.position - pos; to.y = 0f;
+            float d = to.magnitude;
+            if (d < 1e-4f) continue;
+            Vector3 toDir = to / d;
+
+            separation -= toDir * (1f - Mathf.Min(d / avoidRadius, 1f));   // push off, closer = harder
+
+            // Remember the closest unit roughly in our way (within a ~60° cone ahead).
+            if (Vector3.Dot(toDir, desired) > 0.5f && d < nearestAhead) { nearestAhead = d; aheadDir = toDir; }
+        }
+
+        Vector3 result = desired + separation * avoidStrength;
+
+        // Slide around the blocker ahead — the deflection that turns a queue into a spread.
+        if (nearestAhead < float.MaxValue)
+        {
+            Vector3 tangent = new Vector3(-aheadDir.z, 0f, aheadDir.x);
+            if (Vector3.Dot(tangent, desired) < 0f) tangent = -tangent;
+            result += tangent * avoidStrength;
+        }
+
+        result.y = 0f;
+        return result.sqrMagnitude > 1e-6f ? result.normalized : desired;
     }
 
     Vector3 WaypointDelta(int i)

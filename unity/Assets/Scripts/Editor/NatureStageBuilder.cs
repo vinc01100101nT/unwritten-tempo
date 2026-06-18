@@ -159,7 +159,11 @@ public static class NatureStageBuilder
     }
 
     // Find or create a user layer named "Ground" (user layers are slots 8..31). Returns its index, or -1.
-    public static int EnsureGroundLayer()
+    public static int EnsureGroundLayer() => EnsureLayer("Ground");
+
+    /// <summary>Find or create a user layer with the given name (user slots 8..31). Returns its index, or -1
+    /// if all 24 user slots are taken or the TagManager can't be read.</summary>
+    public static int EnsureLayer(string name)
     {
         var assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
         if (assets == null || assets.Length == 0) return -1;
@@ -168,11 +172,11 @@ public static class NatureStageBuilder
         if (layers == null) return -1;
 
         for (int i = 8; i < layers.arraySize; i++)
-            if (layers.GetArrayElementAtIndex(i).stringValue == "Ground") return i;
+            if (layers.GetArrayElementAtIndex(i).stringValue == name) return i;
         for (int i = 8; i < layers.arraySize; i++)
         {
             var p = layers.GetArrayElementAtIndex(i);
-            if (string.IsNullOrEmpty(p.stringValue)) { p.stringValue = "Ground"; so.ApplyModifiedProperties(); return i; }
+            if (string.IsNullOrEmpty(p.stringValue)) { p.stringValue = name; so.ApplyModifiedProperties(); return i; }
         }
         return -1;
     }

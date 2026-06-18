@@ -114,6 +114,41 @@ public class Player3DAttacker : MonoBehaviour
 
     public void Cancel() { if (swing != null) { StopCoroutine(swing); swing = null; } engaged = false; engagedTarget = null; }
 
+    /// <summary>Execute a SKILL strike (e.g. the Swordsman's Bash) on <paramref name="t"/>: a heavier,
+    /// always-landing hit that reuses the normal swing's windup → slash-FX → damage pipeline, then
+    /// staggers the target. Independent of the auto-swing cooldown (the skill owns its own), but shares
+    /// the <c>swing</c> flag so the controller shows the attack pose and no double-swing overlaps.</summary>
+    public void Strike(Health t, float damageMult, float fxScale, SfxSet swingSfx, SfxSet hitSfx, float staggerSecs)
+    {
+        if (t == null || t.IsDead || swing != null) return;
+        Sfx.Play(swingSfx != null && !swingSfx.Empty ? swingSfx : WeaponSfx(w => w.attackSfx, defaultAttackSfx));
+        swing = StartCoroutine(StrikeRoutine(t, Mathf.Max(1f, damageMult), Mathf.Max(0.1f, fxScale), hitSfx, staggerSecs));
+    }
+
+    IEnumerator StrikeRoutine(Health t, float damageMult, float fxScale, SfxSet hitSfx, float staggerSecs)
+    {
+        float scale = MotionScale;
+        yield return new WaitForSeconds(windupTime * scale);
+        swing = null;
+        if (t == null || t.IsDead) yield break;
+        if (PlanarDist(t) > range * 1.6f) yield break;   // target slipped out of the skill's (extended) reach
+
+        bool crit;
+        int basePower = Character.Instance != null ? Character.Instance.RollDamage(out crit) : damage;
+        int power = Mathf.RoundToInt(basePower * damageMult);
+
+        Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
+        SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), fxPos, slashScale * fxScale);
+
+        int dealt = t.TakeDamage(power, true, -1);   // skills always land; gold (crit-styled) number sells the impact
+        if (dealt > 0)
+        {
+            Sfx.Play(hitSfx != null && !hitSfx.Empty ? hitSfx : WeaponSfx(w => w.hitSfx, defaultHitSfx));
+            var ai = t.GetComponent<MonsterAI3D>();   // once per Bash (~every few s), not a per-frame hot path
+            if (ai != null && staggerSecs > 0f) ai.Stagger(staggerSecs);
+        }
+    }
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(1f, 0.9f, 0.3f, 0.4f);

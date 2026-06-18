@@ -54,6 +54,7 @@ public class MonsterAI3D : MonoBehaviour
     float nextWander;
     bool chasing;
     float nextTouch;
+    float stunnedUntil;   // hit by a stagger (e.g. the Swordsman's Bash) — frozen until this time
 
     /// <summary>This mob's <see cref="Health"/>, cached once. The cursor pick and auto-combat target
     /// scans read this instead of calling <c>GetComponent&lt;Health&gt;()</c> per mob, every frame.</summary>
@@ -69,6 +70,7 @@ public class MonsterAI3D : MonoBehaviour
         lunge = GetComponent<AttackLunge>();
         Health = GetComponent<Health>();
         home = transform.position;
+        UnitCrowd.Register(gameObject);   // pass through other units (no stacking / climbing on heads)
     }
 
     void OnEnable()  { if (!Active.Contains(this)) Active.Add(this); }
@@ -81,14 +83,40 @@ public class MonsterAI3D : MonoBehaviour
         var pc = FindFirstObjectByType<Player3DController>();
         if (pc != null) player = pc.transform;
 
+        // Crowd avoidance: spread out from other mobs (they no longer physically block each other),
+        // but NOT from the player we're chasing — so melee can still close in.
+        agent.avoidMask = UnitCrowd.Mask;
+        agent.avoidIgnore = player;
+
         if (Health != null)
             Health.onDeath.AddListener(() => { if (Character.Instance != null) Character.Instance.AddXP(xpReward); });
 
         nextWander = Time.time + Random.value;
     }
 
+    /// <summary>Briefly freeze this mob (chase + touch-attack) — a reusable stagger/crowd-control hook for
+    /// skills like the Swordsman's Bash. Stacks by taking the later end time, not by adding.</summary>
+    public void Stagger(float seconds)
+    {
+        if (seconds > 0f) stunnedUntil = Mathf.Max(stunnedUntil, Time.time + seconds);
+    }
+
+    /// <summary>Shove this mob directly away from <paramref name="worldFrom"/> at <paramref name="speed"/>
+    /// for <paramref name="time"/>s and stagger it for <paramref name="stagger"/>s (so its AI doesn't fight
+    /// the slide). Used by AoE skills like the Swordsman's Warcry. Reuses the cached <see cref="agent"/> —
+    /// no per-call GetComponent.</summary>
+    public void Knockback(Vector3 worldFrom, float speed, float time, float stagger)
+    {
+        Vector3 dir = transform.position - worldFrom; dir.y = 0f;
+        if (dir.sqrMagnitude < 1e-4f) dir = transform.forward;   // standing on the source → any direction
+        if (agent != null) agent.Knockback(dir, speed, time);
+        Stagger(Mathf.Max(stagger, time));
+    }
+
     void Update()
     {
+        if (Time.time < stunnedUntil) { if (agent != null) agent.Halt(); return; }   // staggered — frozen
+
         Vector3 pos = transform.position;
         // A dead player is no target: leash off and resume wandering until they respawn.
         bool playerAlive = player != null && Character.Instance != null && !Character.Instance.IsDead;

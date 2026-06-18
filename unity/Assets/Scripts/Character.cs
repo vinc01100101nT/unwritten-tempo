@@ -277,6 +277,28 @@ public class Character : MonoBehaviour
         OnHealthChanged?.Invoke();
     }
 
+    // ---- Guard (Swordsman defensive active, Player3DGuard) ----------------------------------------
+    // A timed damage-reduction stance: while active, incoming physical AND magic damage is cut by
+    // guardReduction. Runtime-only (not saved); cleared on revive.
+    float guardUntil;
+    float guardReduction;
+
+    /// <summary>True while the Guard stance is mitigating incoming damage.</summary>
+    public bool GuardActive => Time.time < guardUntil && guardReduction > 0f;
+    /// <summary>Seconds left on the Guard stance (0 when inactive).</summary>
+    public float GuardRemaining => Mathf.Max(0f, guardUntil - Time.time);
+
+    /// <summary>Begin a damage-reduction stance for <paramref name="seconds"/>, preventing
+    /// <paramref name="reduction"/> (0..1) of each incoming hit. Called by <see cref="Player3DGuard"/>.</summary>
+    public void BeginGuard(float seconds, float reduction)
+    {
+        guardUntil = Time.time + Mathf.Max(0f, seconds);
+        guardReduction = Mathf.Clamp01(reduction);
+    }
+
+    // Apply the Guard reduction to a post-defense damage figure (min 1 so a hit still registers).
+    int Guarded(int dmg) => GuardActive ? Mathf.Max(1, Mathf.RoundToInt(dmg * (1f - guardReduction))) : dmg;
+
     public int TakeDamage(int attackerAttack) => TakeDamage(attackerAttack, -1);
 
     /// <summary>Apply an incoming PHYSICAL hit: damage = max(1, attackerAttack − Defense). When
@@ -307,7 +329,7 @@ public class Character : MonoBehaviour
             return 0;
         }
 
-        int dmg = Mathf.Max(1, attackerAttack - Defense);
+        int dmg = Guarded(Mathf.Max(1, attackerAttack - Defense));
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);                       // player hurt grunt
@@ -323,7 +345,7 @@ public class Character : MonoBehaviour
     {
         if (IsDead) return 0;
 
-        int dmg = Mathf.Max(1, attackerMagic - MagicDefense);
+        int dmg = Guarded(Mathf.Max(1, attackerMagic - MagicDefense));
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);
@@ -351,6 +373,7 @@ public class Character : MonoBehaviour
     {
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
+        guardUntil = 0f;                          // a Guard stance doesn't carry across death
         OnHealthChanged?.Invoke();
         OnManaChanged?.Invoke();
         OnRevived?.Invoke();

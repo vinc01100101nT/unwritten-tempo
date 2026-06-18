@@ -96,6 +96,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<BagSeeder>();           // fills the bag from Resources at runtime
         canvasGO.AddComponent<SkillDraftPanel>();     // Phase G: builds the Trio-Ring draft into the Skills (K) panel
         canvasGO.AddComponent<StatPanel>();           // RO-style stat distribution into the Character (C) panel
+        canvasGO.AddComponent<HotbarPanel>();         // populates HUD_Hotbar with the player's actives (icon + cooldown)
 
         // UI click sounds (TomMusic latch foley): panel open/close + a generic button click.
         var ui = canvasGO.AddComponent<UISounds>();

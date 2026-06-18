@@ -84,6 +84,12 @@ public class Player3DController : MonoBehaviour
     SpriteRenderer sr;
     CharacterController controller;
     Player3DAttacker attacker;
+
+    // Charge / gap-closer dash state (driven by Player3DCharge via BeginDash).
+    bool dashing;
+    Transform dashTarget;
+    float dashSpeed, dashEndTime, dashArriveRange;
+    System.Action dashOnArrive;
     TargetIndicator targetMarker;
     Camera cam;
     Vector2 facing = Vector2.down;
@@ -108,6 +114,15 @@ public class Player3DController : MonoBehaviour
         targetMarker = TargetIndicator.Create();
         targetMarker.gameObject.AddComponent<Billboard>();   // face the camera so the arrow isn't edge-on when orbiting
         autoIndicator = AutoCombatIndicator.Create();        // "AUTO-COMBAT" screen tag, hidden until toggled
+        UnitCrowd.Register(gameObject);                      // pass through mobs (so we can't hop on top of them)
+
+        // Swordsman kit: ensure Bash (slot 1) exists even on a player built before this skill, so it works
+        // without re-running Build Player. A fresh Build Player run configures its SFX; the defaults +
+        // Strike's fallback to the attacker's swing sounds make it functional either way.
+        if (GetComponent<Player3DBash>() == null) gameObject.AddComponent<Player3DBash>();
+        if (GetComponent<Player3DCharge>() == null) gameObject.AddComponent<Player3DCharge>();
+        if (GetComponent<Player3DGuard>() == null) gameObject.AddComponent<Player3DGuard>();
+        if (GetComponent<Player3DWarcry>() == null) gameObject.AddComponent<Player3DWarcry>();
     }
 
     // Slice the 4 directional attack poses straight from the texture (16px columns), ignoring the art's
@@ -142,8 +157,22 @@ public class Player3DController : MonoBehaviour
             if (autoIndicator != null) autoIndicator.Show(false);   // dying cancels auto-combat
             if (deadSprite != null) sr.sprite = deadSprite;
             attackUntil = 0f;   // drop any held attack pose
+            dashing = false;    // death cancels a charge in progress
             transform.localScale = baseScale;
             controller.Move(Vector3.down * gravity * Time.deltaTime);
+            return;
+        }
+
+        // A charge (gap-closer) overrides normal control: rush the target, then the skill's on-arrive
+        // callback strikes. Skips input/orders until it lands (or times out).
+        if (dashing)
+        {
+            bool dashMoving = StepDash();
+            facing = Facing3D.FromWorldDir(worldFacing);
+            if (attacker != null && attacker.Swinging) attackUntil = Time.time + attackPoseHold * Player3DAttacker.MotionScale;
+            Animate(dashMoving);
+            ApplyIdleScale(dashMoving);
+            Footsteps(dashMoving);
             return;
         }
 
@@ -324,8 +353,51 @@ public class Player3DController : MonoBehaviour
     {
         AttackArmed = false; order = Order.Idle;
         routing = false; path.Clear(); attackTarget = null; resumeAttackMove = false;
+        dashing = false; dashOnArrive = null; dashTarget = null;   // a charge is cancelled by Stop / S
         if (attacker != null) attacker.Cancel();   // drop an in-flight swing's damage
         if (targetMarker != null) targetMarker.Follow(null);
+    }
+
+    public bool Dashing => dashing;
+
+    /// <summary>Start a charge/gap-closer dash toward <paramref name="target"/> at <paramref name="speed"/>.
+    /// Overrides the current order; on arrival (within <paramref name="arriveRange"/>) or after
+    /// <paramref name="maxTime"/> it fires <paramref name="onArrive"/> (the skill's strike). Used by
+    /// <see cref="Player3DCharge"/>.</summary>
+    public void BeginDash(Transform target, float speed, float maxTime, float arriveRange, System.Action onArrive)
+    {
+        if (target == null) return;
+        ClearCombat();
+        order = Order.Idle; routing = false; path.Clear();
+        dashing = true; dashTarget = target; dashSpeed = speed;
+        dashEndTime = Time.time + maxTime; dashArriveRange = arriveRange; dashOnArrive = onArrive;
+    }
+
+    // Advance the charge one frame. Returns true while still dashing; on arrival/timeout it stops and
+    // fires the on-arrive callback (the strike). Exactly one controller.Move per frame, never two.
+    bool StepDash()
+    {
+        bool arrived = dashTarget == null || Time.time >= dashEndTime;
+        if (!arrived)
+        {
+            Vector3 to = dashTarget.position - transform.position; to.y = 0f;
+            float dist = to.magnitude;
+            if (dist <= dashArriveRange) arrived = true;
+            else
+            {
+                Vector3 dir = to / Mathf.Max(dist, 1e-4f);
+                worldFacing = dir;
+                controller.Move((dir * dashSpeed + Vector3.down * gravity) * Time.deltaTime);
+            }
+        }
+        if (arrived)
+        {
+            dashing = false;
+            var cb = dashOnArrive; dashOnArrive = null; dashTarget = null;
+            cb?.Invoke();
+            return false;
+        }
+        return true;
     }
 
     void ClearCombat()

@@ -14,8 +14,10 @@ using UnityEngine.InputSystem;
 /// This is deliberately a single hardcoded spell, NOT the every-10th-level actives draft (that's a
 /// later phase) — just enough of a magic path to make MAtk / MP / MDef real foundation stats.
 /// </summary>
-public class Player3DCaster : MonoBehaviour
+public class Player3DCaster : MonoBehaviour, IHotbarSkill
 {
+    [Tooltip("Hotbar icon (Skill Icon pack). Optional — the bar falls back to the text label if unset.")]
+    public Sprite icon;
     [Tooltip("Mana spent per cast.")]
     public int manaCost = 6;
     [Tooltip("Seconds between casts.")]
@@ -35,30 +37,40 @@ public class Player3DCaster : MonoBehaviour
     public SfxSet failSfx;   // not enough mana
 
     float nextCast;
+    float lastDuration;        // the cooldown actually applied last cast (for the hotbar's sweep fraction)
     Camera cam;
 
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
 
     void Update()
     {
-        if (cam == null) cam = Camera.main;
         if (Character.Instance == null || Character.Instance.IsDead) return;
         if (!CastKey() || PointerOverUI()) return;
-        if (Time.time < nextCast) return;
+        Activate();
+    }
+
+    /// <summary>Cast the bolt now — shared by the keypress and the HUD hotbar click. Returns true only
+    /// if it actually cast.</summary>
+    public bool Activate()
+    {
+        if (Character.Instance == null || Character.Instance.IsDead) return false;
+        if (Time.time < nextCast) return false;
+        if (cam == null) cam = Camera.main;
 
         var target = Player3DController.MonsterUnderCursor(cam) ?? NearestMonsterWithin(range);
-        if (target == null) return;                       // nothing to cast at — don't burn mana/cooldown
-        if (PlanarDist(transform.position, target.transform.position) > range) return;
+        if (target == null) return false;                 // nothing to cast at — don't burn mana/cooldown
+        if (PlanarDist(transform.position, target.transform.position) > range) return false;
 
         if (!Character.Instance.SpendMana(manaCost))
         {
             Sfx.Play(failSfx);
             DamagePopup.SpawnText(transform.position, "No MP", NoManaColor);
-            nextCast = Time.time + 0.4f;                  // brief lockout so it can't spam the popup
-            return;
+            nextCast = Time.time + 0.4f; lastDuration = 0.4f;   // brief lockout so it can't spam the popup
+            return false;
         }
 
-        nextCast = Time.time + cooldown / Mathf.Max(0.01f, Character.Instance.CastSpeedMult);   // DEX casts faster
+        lastDuration = cooldown / Mathf.Max(0.01f, Character.Instance.CastSpeedMult);   // DEX casts faster
+        nextCast = Time.time + lastDuration;
         Sfx.Play(castSfx);
 
         Vector3 fxPos = target.transform.position + Vector3.up * 0.4f;
@@ -66,7 +78,19 @@ public class Player3DCaster : MonoBehaviour
 
         int power = Character.Instance.RollMagicDamage(out bool crit);
         target.TakeMagicDamage(power, crit);
+        return true;
     }
+
+    // ---- IHotbarSkill (drives the HUD hotbar slot) ----
+    public int SlotOrder => 4;            // after the Swordsman actives (Bash/Charge/Guard/Warcry); Bolt is the universal magic
+    public string ShortLabel => "Bolt";
+    public string KeyLabel => "Q";
+    public int ManaCost => manaCost;
+    public Sprite Icon => icon;
+    public bool Affordable => Character.Instance != null && Character.Instance.CurrentMP >= manaCost;
+    public float CooldownRemaining => Mathf.Max(0f, nextCast - Time.time);
+    public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
+    public Color Tint => new Color(0.55f, 0.7f, 1f);   // magic blue
 
     static readonly Collider[] hits = new Collider[32];
 

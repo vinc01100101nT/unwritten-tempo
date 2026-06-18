@@ -1,10 +1,196 @@
 # SESSION_STATE — unwritten (Unity 2D)
 
-> ⚠️ **COMMIT REMINDER:** the whole pile (audio, day/night, respawn, bugfixes) is UNCOMMITTED on
-> `experiment/3d-world`. **Committing/pushing to GitHub is the USER's job** — Claude only reminds, never commits.
+> ⚠️ **COMMIT REMINDER:** the whole pile (audio, day/night, respawn, bugfixes, **save/load, enemy variety,
+> Swordsman class**) is UNCOMMITTED on `experiment/3d-world`. **Committing/pushing to GitHub is the USER's job**
+> — Claude only reminds, never commits.
 
 ---
-## ⏩ CHECKPOINT (2026-06-18, latest) — 120 FPS CAP + skill-draft steer animation
+## ⏩ CHECKPOINT (2026-06-18, LATEST) — FIX: Warcry AoE skipped ~half its targets
+Branch `experiment/3d-world`, UNCOMMITTED. **Code-only, no re-bake.** `Player3DWarcry.Activate` damaged mobs
+while iterating `MonsterAI3D.Active` by index — but a one-shot kill removes the mob from `Active` mid-loop
+(Health.Die → DeathDissolve disables MonsterAI3D → OnDisable → `Active.Remove`), shifting indices so `i++`
+skipped the NEXT mob (≈ every other one on a one-shot AoE). FIX: two-pass — collect in-range mobs into a
+reused static `targets` list FIRST, then damage/knockback from the snapshot (immune to mid-loop removal).
+Now every mob in `radius` is hit. (If a tanky mob still survives, that's the min–max damage roll × `damageMult`,
+not the bug — tune `damageMult`.) ⚠️ Pattern note: never mutate-by-kill while index-iterating a live registry.
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — FIX: units stacking / hopping on each other's heads
+Branch `experiment/3d-world`, UNCOMMITTED (user commits). Mobs were piling into one spot and the player could
+stand on top of them. Root cause: **CharacterControllers don't keep each other apart** (so mobs converged) and
+the **0.3 stepOffset let a CC climb onto another CC's capsule** (the "hopping on heads"). The 2D game already
+solved this (Crowd layer + agent avoidance); the 3D port had dropped it. Ported both.
+
+**FIX 1 — units pass through each other** (no climbing, no hard pile-ups): NEW `UnitCrowd.cs` puts player +
+mobs on a shared **"Crowd" layer** and, once at runtime, `Physics.IgnoreLayerCollision(Crowd, Crowd, true)`.
+Units still collide with terrain/props (other layers) — only unit↔unit collision is off. `MonsterAI3D.Awake`
+and `Player3DController.Awake` call `UnitCrowd.Register(gameObject)`. The layer is CREATED at bake via the new
+generalized `NatureStageBuilder.EnsureLayer(name)` (EnsureGroundLayer now wraps it), and assigned in
+`Build25DSpike.BuildPlayer`/`BuildMonster`. Camera/Light cullingMask = Everything, so Crowd still renders/lit.
+⚠️ **The player now WALKS THROUGH mobs** (RO-style) instead of being body-blocked — that's what guarantees you
+can't stand on them. Melee/targeting are distance+raycast based, unaffected.
+
+**FIX 2 — mobs fan out** (since they no longer block each other): ported the 2D `PathAgent`'s local avoidance
+into **`PathAgent3D`** — `avoidRadius 0.8` / `avoidStrength 0.9` + `Steer()` (radial push-off + tangential
+slide around whoever's dead ahead, breaks conga lines). One `OverlapSphereNonAlloc` per agent/frame (reused
+buffer, alloc-free — sanctioned per PERFORMANCE.md). `MonsterAI3D.Start` sets `agent.avoidMask = UnitCrowd.Mask`
+and `agent.avoidIgnore = player` (so mobs spread from each other but NOT from the player → melee still closes
+in). Halted-but-stacked mobs also drift apart (Steer with zero desired). Knockback branch runs before Steer
+(shove dominates).
+
+**⚠️ RE-BAKES:** **Setup Systems Scene** (player → Crowd + register) **and** **Populate Mobs (Nature)** (mobs →
+Crowd). Both create/assign the layer; without a re-bake the layer doesn't exist and it safely no-ops (old
+behavior). TEST: gather a swarm → they ring/spread around you instead of stacking; you can't stand on a mob nor
+they on each other; you walk through them. **COMMIT the pile when ready (USER's job).**
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — M1: WARCRY (AoE knockback) — Swordsman now has 4 actives
+Branch `experiment/3d-world`, UNCOMMITTED (user commits). A point-blank **AoE** that damages + knocks back +
+staggers all nearby mobs.
+
+**NEW `Player3DWarcry.cs`** (key **4**, `IHotbarSkill` slot 3 → on the hotbar; **Bolt bumped to slot 4**, so
+bar = Bash(1)·Charge(2)·Guard(3)·**Warcry(4)**·Bolt(Q), 5 of 6 cells filled). No target — point-blank; can
+fire into empty space. Defaults: MP 7, cooldown 10s, **radius 3.5**, damage **1.4× a swing to every mob in
+range**. Scans `MonsterAI3D.Active` (registry, cached `.Health` — NO OverlapSphere), deals
+`Health.TakeDamage(power, crit, -1)` (always-lands), then knocks each back + staggers. Self-bootstraps via
+`Player3DController.Awake`.
+
+**KNOCKBACK plumbing (reusable):** `PathAgent3D.Knockback(dir, speed, secs)` — a decelerating shove through
+the CharacterController (so it still collides with props/terrain, never phases), overrides pathing for the
+window. `MonsterAI3D.Knockback(worldFrom, speed, time, stagger)` — computes the away-dir, calls the agent's
+shove + `Stagger` (so the brain doesn't fight the slide), reusing the cached agent. Distance ≈ ½·speed·time
+(defaults 13/0.22 ≈ **1.4 units**).
+
+**WIRED in `Build25DSpike.BuildPlayer`:** shockwave FX `FX/Magic/Aura` (sliced 24×5 via SlashEffect.Spawn) +
+`warcrySfx` (Spell Impact 1-3 boom) + icon `Spell/Explosion`.
+
+**⚠️ RE-BAKES (still the same two):** **Build UI Shell** (HotbarPanel) + **Setup Systems Scene** (gives the
+player Warcry's FX/SFX/icon). Without Setup Systems Scene it still works on key 4 (text label, no shockwave/
+boom/icon). TEST: gather a pack, press **4** → aura pulse + boom, everyone takes a hit and gets shoved ~1.4u
+outward + briefly frozen, slot 4 sweeps its 10s cooldown. **COMMIT the pile when ready (USER's job).**
+
+**NEXT (M1 remaining):** Mage template (class #2; also gives Flam a real projectile). Then **M2** (one region:
+town + quests + dungeon).
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — M1: GUARD (defensive Swordsman active) — kit complete
+Branch `experiment/3d-world`, UNCOMMITTED (user commits). The **3rd Swordsman skill**, completing the kit.
+
+**Mechanic = a timed damage-reduction STANCE** (not a target skill, not fake "stagger immunity" — the player
+has no stagger to be immune to). `Character` gained `BeginGuard(secs, reduction)` + `GuardActive` +
+`GuardRemaining` + a private `Guarded(dmg)` applied in BOTH `TakeDamage` and `TakeMagicDamage` (cuts
+physical AND magic by `damageReduction`, min 1). Cleared on `Revive()`. Runtime-only (not saved).
+
+**NEW `Player3DGuard.cs`** (key **3**, `IHotbarSkill` → auto-appears on the hotbar as slot 3). No target —
+self-buff; fires whenever off-cooldown + affordable. Defaults: MP 4, cooldown 9s, **duration 3.5s,
+reduction 0.6 (take 40%)** — all tunable. Self-bootstraps via `Player3DController.Awake` (works on key 3 with
+no rebuild; assets null until Build Player).
+**NEW `GuardShieldFX.cs`** — a looping shield bubble (`FX/Magic/Shield/SpriteSheetBlue.png`, sliced 24×6 via
+SpriteSheetCache) that FOLLOWS the player (not parented → no billboard/breathe scale inheritance), shown for
+the stance duration, billboarded, FxSlash band. Created lazily on first use.
+
+**HOTBAR is now 4 actives** — reordered by key: **Bash(1)·Charge(2)·Guard(3)·Bolt(Q)** (Guard `SlotOrder` 2,
+Bolt bumped to 3). 2 of the 6 baked cells stay empty.
+
+**WIRED in `Build25DSpike.BuildPlayer`:** shieldSheet + `guardSfx` (Sword Blocked 1-3 clang) + icon
+`Spell/DefenseUpgrade`.
+
+**⚠️ RE-BAKES (same two as the hotbar):** **Build UI Shell** (HotbarPanel on the canvas — if not already
+done) + **Setup Systems Scene** (gives the player Guard's assets + all skill icons). Without Setup Systems
+Scene, Guard still works on key 3 but with no shield FX / clang / icon (text label "Guard"). TEST: stand in a
+mob, press **3** → shield bubble + clang, incoming numbers drop ~60% for 3.5s, hotbar slot 3 sweeps its 9s
+cooldown. **COMMIT the pile when ready (USER's job).**
+
+**NEXT (M1 remaining):** Mage template (class #2; also gives Flam a real projectile). Then **M2** (one region:
+town + quests + dungeon).
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — M1: HOTBAR UI (actives + cooldowns) + skill icons
+Branch `experiment/3d-world`, UNCOMMITTED (user commits). Built the **HUD hotbar** that makes the Swordsman
+kit legible — the next M1 item after the class build below.
+
+**NEW reusable extension point: `IHotbarSkill`** (`IHotbarSkill.cs`) — any player active that implements it
+appears on the bar automatically, ordered by `SlotOrder`. Exposes label/key/icon/MP/affordable/cooldown
+fraction+remaining/tint + `Activate()`. **Refactored `Player3DBash`/`Player3DCharge`/`Player3DCaster`** to
+implement it: each gained a public `Activate()` (the keypress path AND the hotbar-click path both call it —
+identical target/MP/cooldown rules) + a `float lastDuration` (so the sweep knows the % left) + a `public
+Sprite icon`. Behavior on keypress is unchanged.
+
+**NEW `HotbarPanel.cs`** (runtime, on GameUICanvas) — finds the `Player3DController`, collects its
+`IHotbarSkill`s, and decorates the **first N of the 6 baked `HUD_Hotbar` cells** (built empty by
+`UIShellBuilder.BuildHud`) with: icon (or text label fallback), hotkey glyph (top-left), MP cost
+(bottom-right, reddens when unaffordable), a **radial cooldown sweep** (1×1 white sprite, Filled/Radial360)
++ a live countdown number, and a Button that fires the skill on click. Builds once (retries till player+holder
+exist), then per-frame just sets fillAmount + repaints the second-counter when it ticks (alloc-light).
+Currently shows **3 actives** (Bash·Charge·Bolt); the other 3 cells stay empty (room for the defensive active).
+
+**ICONS (user found the Ninja "Skill Icon" pack** `Assets/Art/NinjaAdventure/Ui/Skill Icon/`): assigned at
+bake in `Build25DSpike.BuildPlayer` via new `LoadSkillIcon(...)` — **Bash→Spell/Cut, Charge→Spell/Counter,
+Bolt→Spell/Fireball** (24×24, were Sprite/**Multiple** → loader forces Single so `LoadAssetAtPath<Sprite>`
+returns them). Swappable per-skill in the Inspector (`icon` field). Other Spell/Meteo/Job icons are there for
+future skills.
+
+**⚠️ RE-BAKES:** **Build UI Shell** (REQUIRED — bakes `HotbarPanel` onto `GameUICanvas.prefab`; without it
+there's no hotbar). **Setup Systems Scene** (for the ICONS — re-runs `BuildPlayer` to assign them; without it
+the bar still works but shows TEXT labels "Bash/Charge/Bolt"). TEST: Play → bottom-center bar shows 3 slots
+with icons + keys 1/2/Q; use a skill (key or click) → radial sweep + countdown; drain MP → MP number reddens
+& slot dims; off-cooldown → ready. **COMMIT the pile when ready (USER's job).**
+
+**NEXT (M1 remaining):** defensive Swordsman active (guard/endure — will auto-appear on the bar as slot 4) ·
+Mage template (gives Flam a real projectile). Then M2.
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — ROADMAP REFRAME + M1: SAVE + ENEMY VARIETY + SWORDSMAN CLASS
+Branch `experiment/3d-world`, UNCOMMITTED (user commits). Code-only; **player skills SELF-BOOTSTRAP (no rebuild)**.
+⚠️ **Re-run `Populate Mobs (Nature)` once** for the new bestiary.
+
+**ROADMAP REFRAMED → two-tier launch plan.** Doc renamed **"unwritten — Roadmap to Launch"**
+(`q1732p46z2r8bsssth46fq955n88kveq`): **Tier 1** = Minimum Shippable single-player/co-op ARPG on Steam
+(milestones **M1–M5**), **Tier 2** = full MMO (deferred — "a second whole game"). Honest distance: ~5–10% to the
+MMO dream; months to a Tier-1 demo. **Deleted** the superseded "Unity 2D Dev Setup" doc. NEW issues
+**VIN-16..20 = M1..M5** (VIN-16 = M1, in-progress), linked to the roadmap.
+
+**M1 BUILT this session (code-only, on the existing player/scene):**
+1. **SAVE/LOAD (progression slice 1).** NEW `SaveData.cs` / `SaveSystem.cs` (JSON → `persistentDataPath`) /
+   `SaveManager.cs` (self-bootstraps via `[RuntimeInitializeOnLoadMethod]`; auto-load on launch, auto-save on
+   level-up/respawn/quit/20s-dirty) / `Editor/SaveTools.cs` (Tools ▸ unwritten ▸ Save ▸ Delete/Open/Print).
+   `Character.CaptureSave/RestoreSave` + `PassiveRanks.RankMap/LoadState`. Persists level/XP/HP/MP/6 primary
+   stats+points/TRIO-RING ranks+banked+leader. ⚠️ **Equipment + bag NOT saved** (UI-layer → M3). Death/respawn
+   was ALREADY built (`DeathScreen.cs`) — that listed M1 gap was a no-op.
+2. **ENEMY VARIETY (bestiary).** NEW `Editor/Bestiary.cs` — 5 archetypes (Slime grunt · Bat swarmer · Kappa
+   bruiser · Flam caster · Cyclope darter), each own sheet+stats+tint+size, weighted. `MonsterAI3D` gained
+   **`preferredRange`** (caster kites), **`fleeHpFraction`** (skittish flee), **`Stagger(secs)`** (CC freeze) —
+   all allocation-free. `Build25DSpike.BuildMonster` refactored archetype-driven (old `(tex,foot,bool)` overload
+   KEPT for spike/dummy). `NatureMobs` rolls `Bestiary.WeightedPick()`. ⚠️ **RE-BAKE: Populate Mobs (Nature)**.
+   Flam = "magic touch at range" (no visible projectile yet → Mage-template follow-up).
+3. **BUG FIX (variety exposed it): attack thrash vs kiters.** Stand-vs-chase flipped every frame at the range
+   edge → machine-gun footstep SFX + stuck attack pose + pacing. FIX: `Player3DAttacker.EngagedWith` range
+   **hysteresis** (strict `InRange` still gates the hit) + `Player3DController.Footsteps` persistent cooldown.
+   Flam retuned (preferredRange 5→3.2 = catchable).
+4. **SWORDSMAN = CLASS #1.** Model doc **"Class System — Design"** (`q171yxv1de9zce12zhzrssr59188ws6t`): class =
+   active-skill **kit + attack-type + stat affinity** ON TOP of universal stats/passives (NOT a stat lock). Skills
+   = code components mirroring `Player3DCaster`. Built: **Bash** (`Player3DBash.cs`, key **1** — heavy ~2.6×
+   always-landing hit, MP, staggers, gold number) + **Charge** (`Player3DCharge.cs`, key **2** — gap-closer dash
+   that tracks fleeing kiters → ~2× staggering hit). NEW reusable hooks: `Player3DAttacker.Strike(...)`,
+   `MonsterAI3D.Stagger`, `Player3DController.BeginDash(...)`. Both **self-bootstrap** via `Player3DController.Awake`
+   (no Build Player rerun; BuildPlayer only sets SFX). Fixed a CS0136 (`dashMoving` rename) live.
+5. **PERF CHECKUP: PASS.** Profiler Hierarchy = gameplay `UpdateScene` **~210 B/frame** (≈ baseline 0). The earlier
+   PerfHud 4.2 MB/s was the pre-fix thrash, now gone. `PERF_LOG.md` entry added; new `PERFORMANCE.md` rule:
+   hysteresis on per-frame boundary checks that gate a hot path.
+
+**DOCS/ISSUES:** Roadmap `q1732...`, Class System `q171yxv1...`, Skill System `q17as16xh2gt1g058kemazjar588tvc8`.
+**VIN-16** carries the M1 progress comments + links. Memory added: `tempo-docs-no-markdown-tables`
+(⚠️ **Tempo doc GFM tables vanish on re-edit — use bullet lists**), `class-system-design`.
+
+**VERIFIED in Play (user):** save persists across restart; bestiary varied & distinct; Bash(1)+Charge(2) work;
+clean Console; perf clean.
+
+**NEXT (M1 remaining):** a defensive Swordsman active (guard/endure) · **hotbar UI** (show the 3 actives +
+cooldowns — AI's pick, makes the kit legible) · **Mage template** (also gives Flam a real projectile). Then **M2**
+(one region: town + quests + a dungeon). **COMMIT the pile when ready (USER's job).**
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — 120 FPS CAP + skill-draft steer animation
 Branch `experiment/3d-world`, UNCOMMITTED.
 - **FRAME RATE:** the game had NO cap → VSync-locked to monitor (60 Hz = 60 FPS). Now `GameSystems` sets
   **120 FPS, VSync OFF** globally via a `[RuntimeInitializeOnLoadMethod] BootFrameRate()` (works at boot, **no
