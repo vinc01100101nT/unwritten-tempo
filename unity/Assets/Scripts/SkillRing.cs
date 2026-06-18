@@ -65,7 +65,14 @@ public static class SkillRing
     public const float DefaultK   = 40f;     // ranks to reach half the cap
 
     public static float CapFor(StatId stat)
-        => stat == StatId.CritChance ? 0.50f : DefaultCap;
+    {
+        switch (stat)
+        {
+            case StatId.CritChance: return 0.50f;   // crit rate near 100% would trivialise combat
+            case StatId.Evasion:    return 0.60f;    // dodge is strong defensively — keep it under a hard wall
+            default:                return DefaultCap;
+        }
+    }
 
     public static float KFor(StatId stat) => DefaultK;
 

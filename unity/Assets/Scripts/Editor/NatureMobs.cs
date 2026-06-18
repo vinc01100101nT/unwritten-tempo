@@ -13,9 +13,9 @@ using UnityEngine;
 public static class NatureMobs
 {
     const string Container   = "Nature_Mobs";
-    const float  MobDensity  = 0.012f;   // mobs per square world-unit (×80×80 ≈ 12)
+    const float  MobDensity  = 0.036f;   // mobs per square world-unit — cranked ~3× for a target-rich auto-combat field
     const float  SpawnClearR = 8f;       // keep mobs this far from the player spawn (no instant aggro)
-    const float  MobSpacing  = 3f;       // min gap between mobs
+    const float  MobSpacing  = 1.8f;     // min gap between mobs (tightened so the higher density can actually pack in)
     const float  MaxSlope    = 28f;      // don't spawn on cliffs (degrees)
     const float  Inset       = 2f;       // pull in from the terrain edge
 
@@ -67,7 +67,7 @@ public static class NatureMobs
             if (new Vector2(hit.point.x - spawn.x, hit.point.z - spawn.z).magnitude < SpawnClearR) continue;
             if (spots.Any(p => (p - hit.point).sqrMagnitude < MobSpacing * MobSpacing)) continue;
 
-            var mob = Build25DSpike.BuildMonster(tex, hit.point);   // foot.y = ground height
+            var mob = Build25DSpike.BuildMonster(tex, hit.point, Random.value < 0.3f);   // ~30% mystic (magic attackers)
             mob.transform.SetParent(root.transform, true);
             spots.Add(hit.point);
             placed++;

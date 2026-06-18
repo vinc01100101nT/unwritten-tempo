@@ -13,8 +13,15 @@ public class Health : MonoBehaviour
     [Tooltip("Starting / maximum hit points.")]
     public int maxHealth = 3;
 
-    [Tooltip("Incoming attack is reduced by this; damage dealt is always at least 1.")]
+    [Tooltip("Incoming PHYSICAL attack is reduced by this; damage dealt is always at least 1.")]
     public int defense = 0;
+
+    [Tooltip("Incoming MAGIC attack is reduced by this; damage dealt is always at least 1.")]
+    public int magicDefense = 0;
+
+    [Tooltip("FLEE (RO evasion). A physical attacker's HIT is rolled against this; when it loses, the hit " +
+             "MISSes (red) and deals no damage. Magic can't be evaded. Higher = dodges more. See Combat.")]
+    public int flee = 0;
 
     [Header("Hit feedback")]
     public Color flashColor = Color.white;
@@ -26,24 +33,61 @@ public class Health : MonoBehaviour
     public int Current { get; private set; }
     public bool IsDead => Current <= 0;
 
+    static readonly Color MissColor = new Color(1f, 0.3f, 0.3f);   // a player-dealt hit whiffed → red MISS
+
     SpriteRenderer sr;
     Color baseColor;
+    WaitForSeconds flashWait;   // cached so each hit's Flash() doesn't allocate a new yield instruction
 
     void Awake()
     {
         Current = maxHealth;
         sr = GetComponent<SpriteRenderer>();
         baseColor = sr.color;
+        flashWait = new WaitForSeconds(flashTime);
     }
 
     /// <summary>Apply a hit; final damage = max(1, attackerAttack − defense). Returns the damage dealt.</summary>
-    public int TakeDamage(int attackerAttack)
+    public int TakeDamage(int attackerAttack) => TakeDamage(attackerAttack, false, -1);
+
+    /// <summary>As <see cref="TakeDamage(int)"/>, but a <paramref name="crit"/> hit pops a distinct
+    /// gold number so the player can see the crit land.</summary>
+    public int TakeDamage(int attackerAttack, bool crit) => TakeDamage(attackerAttack, crit, -1);
+
+    /// <summary>As above, but with the attacker's RO <paramref name="attackerHit"/> (≥ 0) rolled against
+    /// our <see cref="flee"/> first — a non-crit miss pops a RED MISS and deals no damage. Pass −1 to skip
+    /// the accuracy roll (always lands). Red here = player-dealt; monster-dealt misses are white (Character).</summary>
+    public int TakeDamage(int attackerAttack, bool crit, int attackerHit)
     {
         if (IsDead) return 0;
+
+        // Accuracy (physical only; a crit can't be evaded). The hit came from the player, so a whiff
+        // shows a RED MISS — monster-dealt misses on the player are white (see Character.TakeDamage).
+        if (!crit && attackerHit >= 0 && !Combat.Lands(attackerHit, flee))
+        {
+            DamagePopup.SpawnText(transform.position, "MISS", MissColor);
+            return 0;
+        }
+
         int dmg = Mathf.Max(1, attackerAttack - defense);
         Current = Mathf.Max(0, Current - dmg);
 
-        DamagePopup.Spawn(transform.position, dmg, Color.white);
+        DamagePopup.Spawn(transform.position, dmg, crit ? new Color(1f, 0.85f, 0.2f) : Color.white);
+        if (isActiveAndEnabled) StartCoroutine(Flash());
+
+        if (IsDead) Die();
+        return dmg;
+    }
+
+    /// <summary>Apply a MAGIC hit, reduced by <see cref="magicDefense"/> instead of <see cref="defense"/>.
+    /// Pops a purple number (gold on a crit). Returns the damage dealt.</summary>
+    public int TakeMagicDamage(int attackerMagic, bool crit)
+    {
+        if (IsDead) return 0;
+        int dmg = Mathf.Max(1, attackerMagic - magicDefense);
+        Current = Mathf.Max(0, Current - dmg);
+
+        DamagePopup.Spawn(transform.position, dmg, crit ? new Color(1f, 0.85f, 0.2f) : new Color(0.7f, 0.5f, 1f));
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
         if (IsDead) Die();
@@ -70,7 +114,7 @@ public class Health : MonoBehaviour
     IEnumerator Flash()
     {
         sr.color = flashColor;
-        yield return new WaitForSeconds(flashTime);
+        yield return flashWait;
         if (sr != null) sr.color = baseColor;
     }
 

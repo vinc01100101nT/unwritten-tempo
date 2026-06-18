@@ -43,6 +43,15 @@ public class PassiveRanks
         OnChanged?.Invoke();
     }
 
+    /// <summary>Debug/respec: force the unspent banked total (clamped at 0). Used when the character
+    /// level is tuned in the inspector, so the bankable points match what a real level-up walk grants.
+    /// Fires <see cref="OnChanged"/> so the K-panel badge refreshes.</summary>
+    public void SetBankedPoints(int points)
+    {
+        BankedPoints = Math.Max(0, points);
+        OnChanged?.Invoke();
+    }
+
     /// <summary>Spend one banked point on <paramref name="stat"/>: +1 rank and recenter the
     /// leader on it. No-op (and returns false) if there are no points to spend.</summary>
     public bool Pick(StatId stat)

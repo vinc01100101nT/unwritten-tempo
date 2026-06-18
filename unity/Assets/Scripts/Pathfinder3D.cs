@@ -59,6 +59,17 @@ public static class Pathfinder3D
     static readonly Collider[] overlapBuf = new Collider[16];
     static readonly RaycastHit[] castBuf = new RaycastHit[16];
 
+    // Reused A* working sets — cleared at the top of each FindPath instead of newly allocated every query.
+    // Pathfinding is single-threaded (main-thread only), so sharing these is safe and kills the steady GC
+    // churn of many mobs re-routing on a cadence.
+    static readonly Dictionary<long, long> came = new Dictionary<long, long>();
+    static readonly Dictionary<long, float> gScore = new Dictionary<long, float>();
+    static readonly HashSet<long> closed = new HashSet<long>();
+    static readonly List<(float f, long key, int x, int y)> open = new List<(float f, long key, int x, int y)>();
+    // Reused result-building scratch, so route reconstruction allocates nothing per query either.
+    static readonly List<Vector2> cellsScratch = new List<Vector2>();
+    static readonly List<Vector2> ptsScratch = new List<Vector2>();
+
     // Ground surface Y under a world XZ point (raycast straight down on the ground layers), or NaN if
     // there's no ground there (a hole/void — treated as unwalkable).
     static float SampleGroundYWorld(Vector2 xz)
@@ -128,11 +139,22 @@ public static class Pathfinder3D
         return (dx + dy) + (Sqrt2 - 2f) * Mathf.Min(dx, dy);   // octile distance
     }
 
-    /// <summary>Route on the XZ plane from <paramref name="from"/> to <paramref name="to"/>
-    /// (both = (X, Z)) keeping <paramref name="radius"/> clearance. Returns waypoints (excluding
-    /// the start, ending at the goal / closest reachable cell), or null if truly stuck.</summary>
-    public static List<Vector2> FindPath(Vector2 from, Vector2 to, float radius)
+    /// <summary>Route on the XZ plane from <paramref name="from"/> to <paramref name="to"/> (both = (X, Z))
+    /// keeping <paramref name="radius"/> clearance, writing the waypoints (excluding the start, ending at the
+    /// goal / closest reachable cell) into the caller-owned <paramref name="result"/>. Returns true if a path
+    /// was produced; false (with <paramref name="result"/> left empty) if truly stuck.
+    ///
+    /// Allocation-free in the steady state: the result list and every internal working set / scratch list are
+    /// reused, so a field of mobs can repath on a cadence without feeding the GC (the per-frame combat garbage
+    /// the profiler pinned on MonsterAI3D.Update was these result Lists).</summary>
+    public static bool FindPath(Vector2 from, Vector2 to, float radius, List<Vector2> result, int maxExpansions = 0)
     {
+        result.Clear();
+
+        // Mobs pass a smaller cap than the player (their routes are short — aggro/leash are a few units),
+        // so a blocked goal can't burn the full 6000-cell budget on a tiny chase. <=0 → the global default.
+        int cap = maxExpansions > 0 ? maxExpansions : MaxExpansions;
+
         if (HeightAware) groundCache.Clear();   // heights are per-query (terrain may have changed)
 
         // Flat LOS fast-path: a straight spherecast can't see a cliff edge (no collider in the air),
@@ -140,7 +162,8 @@ public static class Pathfinder3D
         if (!HeightAware && HasClearPath(from, to, radius))
         {
             LastOutcome = "clear-LOS";
-            return new List<Vector2> { to };
+            result.Add(to);
+            return true;
         }
 
         int sx = Floor(from.x), sy = Floor(from.y);
@@ -149,17 +172,14 @@ public static class Pathfinder3D
         if (Blocked(Center(gx, gy), radius) && !FindNearbyOpen(ref gx, ref gy, radius))
         {
             LastOutcome = "goal-cell-walled-off";
-            return null;
+            return false;
         }
 
-        var came = new Dictionary<long, long>();
-        var g = new Dictionary<long, float>();
-        var closed = new HashSet<long>();
-        var open = new List<(float f, long key, int x, int y)>();
+        came.Clear(); gScore.Clear(); closed.Clear(); open.Clear();
 
         long startKey = Key(sx, sy);
         long goalKey = Key(gx, gy);
-        g[startKey] = 0f;
+        gScore[startKey] = 0f;
         HeapPush(open, (Heur(sx, sy, gx, gy), startKey, sx, sy));
 
         bool found = false;
@@ -167,7 +187,7 @@ public static class Pathfinder3D
         long bestKey = startKey;
         float bestH = Heur(sx, sy, gx, gy);
 
-        while (open.Count > 0 && expansions < MaxExpansions)
+        while (open.Count > 0 && expansions < cap)
         {
             var cur = HeapPop(open);
             if (!closed.Add(cur.key)) continue;
@@ -177,7 +197,7 @@ public static class Pathfinder3D
             float hcur = Heur(cur.x, cur.y, gx, gy);
             if (hcur < bestH) { bestH = hcur; bestKey = cur.key; }
 
-            float cg = g[cur.key];
+            float cg = gScore[cur.key];
             foreach (var (dx, dy) in N8)
             {
                 int nx = cur.x + dx, ny = cur.y + dy;
@@ -199,9 +219,9 @@ public static class Pathfinder3D
                     continue;
 
                 float ng = cg + ((dx != 0 && dy != 0) ? Sqrt2 : 1f);
-                if (g.TryGetValue(nk, out float old) && ng >= old) continue;
+                if (gScore.TryGetValue(nk, out float old) && ng >= old) continue;
 
-                g[nk] = ng;
+                gScore[nk] = ng;
                 came[nk] = cur.key;
                 HeapPush(open, (ng + Heur(nx, ny, gx, gy), nk, nx, ny));
             }
@@ -210,29 +230,36 @@ public static class Pathfinder3D
         long endKey = found ? goalKey : bestKey;
         if (!found && endKey == startKey)
         {
-            LastOutcome = $"no-route (searched {expansions})";
-            return null;
+            LastOutcome = "no-route";   // constant string — no per-query interpolation alloc
+            return false;
         }
 
-        var cells = new List<Vector2>();
+        // Reconstruct the cell chain into reused scratch (no per-call List alloc).
+        cellsScratch.Clear();
         long k = endKey;
         while (true)
         {
-            cells.Add(Center((int)(k >> 32), (int)(uint)k));
+            cellsScratch.Add(Center((int)(k >> 32), (int)(uint)k));
             if (k == startKey) break;
             k = came[k];
         }
-        cells.Reverse();
+        cellsScratch.Reverse();
 
         Vector2 endPoint = found ? to : Center((int)(endKey >> 32), (int)(uint)endKey);
-        var pts = new List<Vector2>(cells.Count + 1) { from };
-        for (int i = 1; i < cells.Count - 1; i++) pts.Add(cells[i]);
-        pts.Add(endPoint);
+        ptsScratch.Clear();
+        ptsScratch.Add(from);
+        for (int i = 1; i < cellsScratch.Count - 1; i++) ptsScratch.Add(cellsScratch[i]);
+        ptsScratch.Add(endPoint);
+
         // Smoothing uses straight-line LOS, which (like the fast-path above) can't see cliffs — so in
         // height-aware mode keep the grid waypoints (the controller's slope handling smooths motion).
-        var smoothed = HeightAware ? pts.GetRange(1, pts.Count - 1) : Smooth(pts, radius);
-        LastOutcome = found ? $"routed ({smoothed.Count} wp)" : $"partial ({smoothed.Count} wp)";
-        return smoothed;
+        if (HeightAware)
+            for (int i = 1; i < ptsScratch.Count; i++) result.Add(ptsScratch[i]);
+        else
+            Smooth(ptsScratch, radius, result);
+
+        LastOutcome = found ? "routed" : "partial";
+        return true;
     }
 
     static bool FindNearbyOpen(ref int gx, ref int gy, float radius)
@@ -247,11 +274,12 @@ public static class Pathfinder3D
         return false;
     }
 
-    static List<Vector2> Smooth(List<Vector2> pts, float radius)
+    // Pull the route taut: keep a waypoint only where the straight line to the next-next point is blocked.
+    // Appends the kept waypoints to <paramref name="outp"/> (caller-owned) — no allocation.
+    static void Smooth(List<Vector2> pts, float radius, List<Vector2> outp)
     {
-        var outp = new List<Vector2>();
-        if (pts.Count == 0) return outp;
-        if (pts.Count <= 2) { outp.Add(pts[pts.Count - 1]); return outp; }
+        if (pts.Count == 0) return;
+        if (pts.Count <= 2) { outp.Add(pts[pts.Count - 1]); return; }
 
         int anchor = 0;
         for (int i = 1; i < pts.Count; i++)
@@ -259,7 +287,6 @@ public static class Pathfinder3D
             if (i == pts.Count - 1) { outp.Add(pts[i]); break; }
             if (!HasClearPath(pts[anchor], pts[i + 1], radius)) { outp.Add(pts[i]); anchor = i; }
         }
-        return outp;
     }
 
     static void HeapPush(List<(float f, long key, int x, int y)> h, (float f, long key, int x, int y) item)

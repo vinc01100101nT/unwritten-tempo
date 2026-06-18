@@ -373,7 +373,7 @@ public static class Build25DSpike
         for (int i = 0; i < count; i++)
         {
             float a = (i * (360f / count) + 25f) * Mathf.Deg2Rad;
-            BuildMonster(tex, new Vector3(center.x + Mathf.Cos(a) * radius, 0f, center.z + Mathf.Sin(a) * radius));   // start outside aggro
+            BuildMonster(tex, new Vector3(center.x + Mathf.Cos(a) * radius, 0f, center.z + Mathf.Sin(a) * radius), i == 0);   // one mystic; start outside aggro
         }
         return count;
     }
@@ -381,13 +381,19 @@ public static class Build25DSpike
     /// <summary>Build ONE wander/chase billboard mob standing at <paramref name="foot"/> (XZ; Y is the
     /// ground height there — the sprite-foot offset is added on top). Returns the GameObject so callers
     /// can parent/position it (e.g. surface-snapped scatter on terrain).</summary>
-    public static GameObject BuildMonster(Texture2D tex, Vector3 foot)
+    public static GameObject BuildMonster(Texture2D tex, Vector3 foot) => BuildMonster(tex, foot, false);
+
+    /// <summary>Build one billboard mob. <paramref name="mystic"/> = a MAGIC attacker (blue-tinted) that
+    /// hits the player's MagicDefense instead of Defense — so the magic stats have something to test.</summary>
+    public static GameObject BuildMonster(Texture2D tex, Vector3 foot, bool mystic)
     {
-        var go = new GameObject("Monster_" + tex.name);
+        var go = new GameObject((mystic ? "MysticMonster_" : "Monster_") + tex.name);
         go.transform.localScale = Vector3.one * BillboardScale;
         go.transform.position = new Vector3(foot.x, foot.y + FootOffsetY, foot.z);
 
-        ApplyBillboardLighting(go.AddComponent<SpriteRenderer>());   // flat art + receive/cast shadows
+        var msr = go.AddComponent<SpriteRenderer>();
+        ApplyBillboardLighting(msr);   // flat art + receive/cast shadows
+        if (mystic) msr.color = new Color(0.62f, 0.72f, 1f);   // arcane blue tint marks a caster
         go.AddComponent<Billboard>();
 
         var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
@@ -395,8 +401,11 @@ public static class Build25DSpike
         var cc = go.GetComponent<CharacterController>();
         cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // walk the low-poly hills
 
-        go.AddComponent<Health>().maxHealth = 12;
-        go.AddComponent<MonsterAI3D>();
+        var mh = go.AddComponent<Health>();
+        mh.maxHealth = 12;
+        mh.flee = 10;             // RO FLEE: low-level mobs dodge a few of the player's swings (red MISS) until DEX climbs
+        var ai = go.AddComponent<MonsterAI3D>();
+        if (mystic) ai.attackType = MonsterAI3D.AttackType.Magic;
         go.AddComponent<BillboardAnimator3D>().sheet = tex;
         go.AddComponent<AttackLunge>();              // squash-stretch "chomp" on each bite
         var death = go.AddComponent<DeathDissolve>();   // smoke puff → remains linger → fade (no death sprite)
@@ -464,6 +473,14 @@ public static class Build25DSpike
             "Assets/Art/NinjaAdventure/FX/Attack/SlashCurved/SpriteSheet.png");   // slash FX on each hit
         atk.defaultAttackSfx = SfxAssets.Set(0.8f, SfxAssets.SwordDir, "Sword Attack 1", "Sword Attack 2", "Sword Attack 3");
         atk.defaultHitSfx    = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Impact Hit 1", "Sword Impact Hit 2", "Sword Impact Hit 3");
+
+        // Basic magic bolt (Q) — the first thing that uses MAtk / MP / MDef (Phase G magic foundation).
+        var caster = go.AddComponent<Player3DCaster>();
+        var spark = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Spark/SpriteSheet.png");
+        caster.boltSheet = spark;
+        if (spark != null) { caster.boltFrameSize = spark.height; caster.boltFrames = Mathf.Max(1, spark.width / spark.height); }
+        caster.castSfx = SfxAssets.Set(0.8f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
+
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
 
         var cc = go.GetComponent<CharacterController>();     // auto-added; size to the sprite (Phase 3D-B)

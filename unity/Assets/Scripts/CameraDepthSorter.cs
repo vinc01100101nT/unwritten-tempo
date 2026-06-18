@@ -31,7 +31,6 @@ public class CameraDepthSorter : MonoBehaviour
 
     SpriteRenderer self;
     SpriteRenderer[] group;
-    Camera cam;
 
     void Awake() => Cache();
     void OnEnable() => Cache();
@@ -40,21 +39,16 @@ public class CameraDepthSorter : MonoBehaviour
     {
         self = GetComponent<SpriteRenderer>();
         group = self == null ? GetComponentsInChildren<SpriteRenderer>(true) : null;
-        cam = Camera.main;
     }
 
     void LateUpdate()
     {
         if (!Application.isPlaying && self == null && (group == null || group.Length == 0)) Cache();
-        if (cam == null) cam = Camera.main;
-        if (cam == null) return;
+        if (CameraRig.Cam == null) return;
 
-        // Camera's horizontal forward = the depth axis. (The < threshold guard only trips at a
-        // near-perfectly top-down pitch, which the CameraFollow3D height/distance clamps avoid.)
-        Vector3 forward = cam.transform.forward;
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 1e-6f) forward = Vector3.forward;
-        forward.Normalize();
+        // Camera's horizontal forward = the depth axis. CameraRig computes it ONCE per frame and shares
+        // it across every sorter/billboard, instead of each of N sprites redoing the same normalize.
+        Vector3 forward = CameraRig.ForwardXZ;
 
         float depth = Vector3.Dot(transform.position, forward) + sortOffset;
         int order = DepthSortRuntime.OrderForDepth(depth);

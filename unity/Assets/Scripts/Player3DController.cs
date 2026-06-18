@@ -47,6 +47,12 @@ public class Player3DController : MonoBehaviour
     [Tooltip("During attack-move, auto-engage a mob within this range.")]
     public float acquireRange = 5f;
 
+    [Header("Target magnetism (soft-snap)")]
+    [Tooltip("A mob whose on-screen sprite is within this many pixels of the cursor counts as hovered/" +
+             "clickable, so you don't have to pixel-aim a small billboard. 0 = off (exact aim only).")]
+    public float snapRadiusPixels = 72f;
+    static float snapRadius = 72f;   // static mirror so the static MonsterUnderCursor can read it
+
     [Header("Idle breathing (procedural)")]
     public bool breathe = true;
     public float breatheAmount = 0.03f;
@@ -58,14 +64,22 @@ public class Player3DController : MonoBehaviour
     public float stepInterval = 0.32f;
     float nextStep;
 
+    [Header("Auto-combat (T to toggle, S to stop)")]
+    [Tooltip("While auto-combat roams, it engages the nearest mob within this range and walks to it. " +
+             "Larger = ranges farther from where you stand to find fights.")]
+    public float roamRange = 14f;
+
     /// <summary>True after pressing A, until the next click (the cursor shows the crosshair).</summary>
     public bool AttackArmed { get; private set; }
+    /// <summary>True while roam auto-combat is running (drives the on-screen indicator).</summary>
+    public bool AutoActive => order == Order.AutoCombat;
 
-    enum Order { Idle, Move, AttackMove, Attack }
+    enum Order { Idle, Move, AttackMove, Attack, AutoCombat }
     Order order = Order.Idle;
     Vector3 movePoint;
     Health attackTarget;
     bool resumeAttackMove;
+    AutoCombatIndicator autoIndicator;
 
     SpriteRenderer sr;
     CharacterController controller;
@@ -86,12 +100,14 @@ public class Player3DController : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         controller = GetComponent<CharacterController>();
         attacker = GetComponent<Player3DAttacker>();
+        snapRadius = snapRadiusPixels;   // publish to the static cursor pick
         baseScale = transform.localScale;
         breathePhase = Random.value * Mathf.PI * 2f;
         BuildAttackPoses();
         BuildDeadPose();
         targetMarker = TargetIndicator.Create();
         targetMarker.gameObject.AddComponent<Billboard>();   // face the camera so the arrow isn't edge-on when orbiting
+        autoIndicator = AutoCombatIndicator.Create();        // "AUTO-COMBAT" screen tag, hidden until toggled
     }
 
     // Slice the 4 directional attack poses straight from the texture (16px columns), ignoring the art's
@@ -99,12 +115,8 @@ public class Player3DController : MonoBehaviour
     void BuildAttackPoses()
     {
         if (attackSheet == null || attackCell <= 0) return;
-        int cols = Mathf.Max(1, attackSheet.width / attackCell);
-        attackPoses = new Sprite[4];
-        for (int i = 0; i < 4 && i < cols; i++)
-            attackPoses[i] = Sprite.Create(attackSheet,
-                new Rect(i * attackCell, 0, attackCell, attackCell),
-                new Vector2(0.5f, 0.5f), attackCell);   // pivot centre, ppu = cell — matches the walk frames
+        // The 4 poses are a 1-row strip [down,up,left,right] — share them via the slice cache.
+        attackPoses = SpriteSheetCache.Strip(attackSheet, attackCell, 4);   // pivot centre, ppu = cell
     }
 
     // Slice the single defeated-pose frame from the Dead.png texture (top-left cell), like the
@@ -127,6 +139,7 @@ public class Player3DController : MonoBehaviour
         if (Character.Instance != null && Character.Instance.IsDead)
         {
             if (order != Order.Idle) Stop();
+            if (autoIndicator != null) autoIndicator.Show(false);   // dying cancels auto-combat
             if (deadSprite != null) sr.sprite = deadSprite;
             attackUntil = 0f;   // drop any held attack pose
             transform.localScale = baseScale;
@@ -143,10 +156,13 @@ public class Player3DController : MonoBehaviour
         controller.Move((move * moveSpeed + Vector3.down * gravity) * Time.deltaTime);
 
         // Hold the attack pose while a swing is in flight (refreshed each swinging frame, with a tail).
-        if (attacker != null && attacker.Swinging) attackUntil = Time.time + attackPoseHold;
+        // The hold scales with attack speed (same MotionScale as the swing) so the pose snaps back
+        // faster at high ASPD instead of bleeding into the next swing.
+        if (attacker != null && attacker.Swinging) attackUntil = Time.time + attackPoseHold * Player3DAttacker.MotionScale;
         Animate(moving);
         ApplyIdleScale(moving);
         Footsteps(moving);
+        if (autoIndicator != null) autoIndicator.Show(AutoActive);   // show the "AUTO" tag only while roaming
     }
 
     // Tick footstep sounds while walking; reset so the first step plays promptly on the next move.
@@ -181,17 +197,25 @@ public class Player3DController : MonoBehaviour
         if (cam == null) return;
 
         if (KeyS()) { Stop(); return; }
+        if (KeyT()) { ToggleAuto(); return; }   // T toggles roam auto-combat; S stops it
         if (KeyA()) AttackArmed = true;
         if (KeyEsc()) AttackArmed = false;
 
-        // Left-click drives the character (right-click is the camera orbit). A-armed = attack-move.
+        // Left-click drives the character (right-click is the camera orbit). Attacking now REQUIRES A:
+        //   • plain left-click            → MOVE (even onto a mob — it no longer auto-attacks),
+        //   • A-armed + click on a mob    → ATTACK it,
+        //   • A-armed + click on ground   → ATTACK-MOVE there.
         // Ignore clicks that land on UI (e.g. the HUD) so they don't also order a move.
         if (LeftDown() && !PointerOverUI())
         {
-            var mob = MonsterUnderCursor(cam);
             bool armed = AttackArmed; AttackArmed = false;
-            if (mob != null) BeginAttack(mob, false);
-            else if (GroundPoint(cam, out var gp)) { if (armed) BeginAttackMove(gp); else BeginMove(gp); }
+            if (armed)
+            {
+                var mob = MonsterUnderCursor(cam);
+                if (mob != null) BeginAttack(mob, false);
+                else if (GroundPoint(cam, out var gp)) BeginAttackMove(gp);
+            }
+            else if (GroundPoint(cam, out var gp)) BeginMove(gp);
         }
     }
 
@@ -213,9 +237,46 @@ public class Player3DController : MonoBehaviour
             case Order.Attack:
                 return AttackStep();
 
+            case Order.AutoCombat:
+                return AutoStep();
+
             default:
                 return Vector3.zero;
         }
+    }
+
+    // Roam auto-combat: re-acquire the nearest mob within roamRange forever (never goes Idle, never
+    // leaves the AutoCombat order), walking to it and swinging in range. Mirrors AttackStep but loops
+    // back to acquisition instead of stopping when a target dies. Any manual order (move/attack) or S
+    // exits by switching the order out from under it.
+    Vector3 AutoStep()
+    {
+        if (attackTarget == null || attackTarget.IsDead)
+        {
+            attackTarget = NearestMonsterWithin(roamRange);
+            if (targetMarker != null) targetMarker.Follow(attackTarget != null ? attackTarget.transform : null);
+            routing = false; path.Clear();
+            if (attackTarget == null) return Vector3.zero;   // nothing in range — stand and wait for a wanderer
+        }
+        if (attacker != null && attacker.InRange(attackTarget))
+        {
+            routing = false; path.Clear();
+            attacker.TryAttack(attackTarget);
+            FaceTarget();
+            return Vector3.zero;                 // in range: stand and swing
+        }
+        if (!routing || Time.time >= nextChaseRepath) { StartRoute(attackTarget.transform.position); nextChaseRepath = Time.time + 0.3f; }
+        return routing ? FollowRoute() : Vector3.zero;
+    }
+
+    // T: flip roam auto-combat on/off. Pressing it again (or S, or any manual order) turns it off.
+    void ToggleAuto()
+    {
+        if (order == Order.AutoCombat) { Stop(); return; }
+        ClearCombat();              // drop any in-flight swing / stale target / marker
+        AttackArmed = false;
+        routing = false; path.Clear();
+        order = Order.AutoCombat;   // AutoStep acquires a target next tick
     }
 
     Vector3 AttackStep()
@@ -254,6 +315,8 @@ public class Player3DController : MonoBehaviour
     /// <summary>Cancel any move/attack order (used on map arrival by PersistentPlayer3D).</summary>
     public void Halt() => Stop();
 
+    void OnDestroy() { if (autoIndicator != null) Destroy(autoIndicator.gameObject); }   // its own canvas — clean it up
+
     void Stop()
     {
         AttackArmed = false; order = Order.Idle;
@@ -276,17 +339,23 @@ public class Player3DController : MonoBehaviour
         if (d.sqrMagnitude > 1e-4f) worldFacing = d;   // facing derived camera-relative in Update
     }
 
-    static readonly Collider[] acquireHits = new Collider[32];   // reused buffer (no per-frame GC)
-
+    // Nearest living mob within radius (planar XZ). Scans the MonsterAI3D registry rather than a physics
+    // OverlapSphere — the old fixed 32-collider buffer overflowed with props/terrain at large roamRange in
+    // a dense scene, returning colliders in arbitrary order and silently dropping mobs (auto-combat then
+    // just stood still). The registry is unbounded, prop-free, and cheaper.
     Health NearestMonsterWithin(float radius)
     {
         Health best = null; float bestSqr = radius * radius;
-        int n = Physics.OverlapSphereNonAlloc(transform.position, radius, acquireHits);
-        for (int i = 0; i < n; i++)
+        Vector3 me = transform.position;
+        var list = MonsterAI3D.Active;
+        for (int i = 0; i < list.Count; i++)
         {
-            var h = acquireHits[i].GetComponentInParent<Health>();
-            if (h == null || h.IsDead || h.GetComponent<MonsterAI3D>() == null) continue;
-            float sqr = (h.transform.position - transform.position).sqrMagnitude;
+            var ai = list[i];
+            if (ai == null) continue;
+            var h = ai.Health;                                  // cached on the mob — no per-scan GetComponent
+            if (h == null || h.IsDead) continue;
+            Vector3 d = ai.transform.position - me; d.y = 0f;   // planar distance — ignore height
+            float sqr = d.sqrMagnitude;
             if (sqr <= bestSqr) { bestSqr = sqr; best = h; }
         }
         return best;
@@ -297,9 +366,9 @@ public class Player3DController : MonoBehaviour
     {
         var from = new Vector2(transform.position.x, transform.position.z);
         var to = new Vector2(goal.x, goal.z);
-        var route = Pathfinder3D.FindPath(from, to, agentRadius);
-        path.Clear();
-        if (route != null) path.AddRange(route); else path.Add(to);
+        // Fills `path` in place (allocation-free); player uses the full default expansion budget.
+        if (!Pathfinder3D.FindPath(from, to, agentRadius, path))
+            { path.Clear(); path.Add(to); }
         wp = 0; routing = path.Count > 0;
     }
 
@@ -366,13 +435,34 @@ public class Player3DController : MonoBehaviour
     public static Health MonsterUnderCursor(Camera cam)
     {
         if (cam == null) return null;
-        var ray = cam.ScreenPointToRay(MousePos());
+        Vector2 mp = MousePos();
+
+        // 1) Exact aim: a direct collider hit always wins (you're pointing right at it).
+        var ray = cam.ScreenPointToRay(mp);
         if (Physics.Raycast(ray, out var hit, 500f))
         {
             var h = hit.collider.GetComponentInParent<Health>();
             if (h != null && !h.IsDead && h.GetComponent<MonsterAI3D>() != null) return h;
         }
-        return null;
+
+        // 2) Soft-snap (magnetism): if no exact hit, grab the nearest LIVING mob whose on-screen sprite
+        //    is within snapRadius pixels of the cursor — so small billboards don't demand pixel-perfect aim.
+        if (snapRadius <= 0f) return null;
+        Health best = null; float bestSqr = snapRadius * snapRadius;
+        var list = MonsterAI3D.Active;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var ai = list[i];
+            if (ai == null) continue;
+            var h = ai.Health;                                  // cached on the mob — no per-scan GetComponent
+            if (h == null || h.IsDead) continue;
+            // Aim at mid-body (a bit above the feet) so the snap point matches the sprite, not the ground.
+            Vector3 sp = cam.WorldToScreenPoint(ai.transform.position + Vector3.up * 0.4f);
+            if (sp.z <= 0f) continue;                               // behind the camera
+            float sqr = ((Vector2)sp - mp).sqrMagnitude;
+            if (sqr <= bestSqr) { bestSqr = sqr; best = h; }
+        }
+        return best;
     }
 
     static bool GroundPoint(Camera cam, out Vector3 point)
@@ -414,6 +504,14 @@ public class Player3DController : MonoBehaviour
         if (Keyboard.current != null && Keyboard.current.aKey.wasPressedThisFrame) return true;
 #endif
         return Input.GetKeyDown(KeyCode.A);
+    }
+
+    static bool KeyT()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame) return true;
+#endif
+        return Input.GetKeyDown(KeyCode.T);
     }
 
     static bool KeyS()

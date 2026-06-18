@@ -13,16 +13,10 @@ public static class Facing3D
         dir.y = 0f;
         if (dir.sqrMagnitude < 1e-6f) return Vector2.down;
 
-        var cam = Camera.main;
-        Vector3 fwd, right;
-        if (cam != null)
-        {
-            fwd = cam.transform.forward; fwd.y = 0f;
-            right = cam.transform.right; right.y = 0f;
-            if (fwd.sqrMagnitude < 1e-6f) fwd = Vector3.forward;
-        }
-        else { fwd = Vector3.forward; right = Vector3.right; }
-        fwd.Normalize(); right.Normalize();
+        // Camera basis is computed ONCE per frame by CameraRig and shared by every caller — this used
+        // to call Camera.main + re-normalize for each moving unit, every frame.
+        Vector3 fwd = CameraRig.ForwardXZ;     // world-forward when there's no camera
+        Vector3 right = CameraRig.RightXZ;
 
         float f = Vector3.Dot(dir, fwd);     // + = away from the camera (up the screen)
         float r = Vector3.Dot(dir, right);   // + = screen-right

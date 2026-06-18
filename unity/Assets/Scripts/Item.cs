@@ -23,6 +23,11 @@ public class Item : ScriptableObject
     public int bonusAttack;
     public int bonusDefense;
 
+    [Header("Magic bonuses (applied while equipped)")]
+    public int bonusMP;
+    public int bonusMAtk;
+    public int bonusMDef;
+
     [Header("Consumable")]
     [Tooltip("Right-click in the bag to heal this much, then consume it. 0 = not a consumable.")]
     public int healAmount;

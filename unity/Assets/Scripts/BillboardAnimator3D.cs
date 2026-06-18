@@ -48,23 +48,10 @@ public class BillboardAnimator3D : MonoBehaviour
     void BuildFrames()
     {
         if (sheet == null) { Debug.LogWarning("[unwritten] BillboardAnimator3D has no sheet on " + name); return; }
-        int cols = Mathf.Max(1, sheet.width / cell);
-        int rows = Mathf.Max(1, sheet.height / cell);
-        int wf = Mathf.Clamp(walkFrames, 1, rows);
-
-        Sprite[] Column(int c)
-        {
-            c = Mathf.Min(c, cols - 1);
-            var arr = new Sprite[wf];
-            for (int r = 0; r < wf; r++)
-            {
-                // Unity texture origin is bottom-left; row 0 is the TOP of the sheet.
-                var rect = new Rect(c * cell, sheet.height - (r + 1) * cell, cell, cell);
-                arr[r] = Sprite.Create(sheet, rect, new Vector2(0.5f, 0.5f), cell);
-            }
-            return arr;
-        }
-        down = Column(0); up = Column(1); left = Column(2); right = Column(3);
+        // Shared slice cache: all mobs that use the same sheet+cell share ONE set of walk frames instead
+        // of each instance allocating its own identical copies in Awake.
+        var dirs = SpriteSheetCache.Walk4(sheet, cell, walkFrames);
+        down = dirs[0]; up = dirs[1]; left = dirs[2]; right = dirs[3];
     }
 
     void Update()

@@ -18,6 +18,9 @@ MonoBehaviour:
   bonusHP: 0
   bonusAttack: 5
   bonusDefense: 0
+  bonusMP: 0
+  bonusMAtk: 0
+  bonusMDef: 0
   healAmount: 0
   attackSfx:
     clips:

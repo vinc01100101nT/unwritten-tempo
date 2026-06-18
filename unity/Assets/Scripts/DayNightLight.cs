@@ -29,6 +29,7 @@ public class DayNightLight : MonoBehaviour
     public float yaw = -30f;
 
     Light sun;
+    float lastDay = float.NaN;   // last applied daylight weight; NaN forces the first Update to apply
 
     void Awake()
     {
@@ -40,6 +41,11 @@ public class DayNightLight : MonoBehaviour
     {
         var tod = TimeOfDay.Instance;
         float day = tod != null ? tod.Daylight01 : 1f;
+
+        // Daylight crawls (a 1-hour half-cycle), so most frames it's unchanged. Skip the light + GLOBAL
+        // RenderSettings writes until it actually moves — those globals aren't free to set every frame.
+        if (!float.IsNaN(lastDay) && Mathf.Abs(day - lastDay) < 0.0005f) return;
+        lastDay = day;
 
         sun.color = Color.Lerp(nightColor, dayColor, day);
         sun.intensity = Mathf.Lerp(nightIntensity, dayIntensity, day);

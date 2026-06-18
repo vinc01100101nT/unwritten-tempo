@@ -23,6 +23,9 @@ public class PathAgent3D : MonoBehaviour
     public float repathInterval = 0.35f;
     [Tooltip("Re-route early if the chase target drifts at least this far from the last route goal.")]
     public float repathThreshold = 0.6f;
+    [Tooltip("A* cell budget per route. Mobs only chase a few units, so a small cap keeps a blocked " +
+             "goal from burning the player's full search budget. ~2500 cells ≈ a 25×25-unit area.")]
+    public int maxPathExpansions = 2500;
 
     public Vector2 Facing { get; private set; } = Vector2.down;   // cardinal (x, z)
     public bool Moving { get; private set; }
@@ -60,9 +63,9 @@ public class PathAgent3D : MonoBehaviour
         lastGoal = goal;
         nextRepath = Time.time + repathInterval;
         var from = new Vector2(transform.position.x, transform.position.z);
-        var route = Pathfinder3D.FindPath(from, goal, agentRadius);
-        path.Clear();
-        if (route != null) path.AddRange(route); else path.Add(goal);   // stuck → straight line
+        // Fills `path` in place (allocation-free); false = stuck → fall back to a straight line.
+        if (!Pathfinder3D.FindPath(from, goal, agentRadius, path, maxPathExpansions))
+            { path.Clear(); path.Add(goal); }
         wp = 0;
     }
 

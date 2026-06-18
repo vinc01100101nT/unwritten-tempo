@@ -49,7 +49,10 @@ public class TimeOfDay : MonoBehaviour
         float full = Mathf.Max(0.01f, halfCycleSeconds * 2f);   // day + night
         if (!paused)
             time01 = Mathf.Repeat(time01 + Time.deltaTime * Mathf.Max(0f, testSpeed) / full, 1f);
+#if UNITY_EDITOR
+        // Inspector-only debug string — building it every frame allocates; a build has no inspector to show it.
         _readout = $"{Phase()}  ·  t={time01:0.000}  ·  {(IsDay ? "DAY" : "NIGHT")}  ·  light={Daylight01:0.00}";
+#endif
     }
 
     string Phase()

@@ -4,7 +4,64 @@
 > `experiment/3d-world`. **Committing/pushing to GitHub is the USER's job** — Claude only reminds, never commits.
 
 ---
-## ⏩⏩⏩⏩⏩⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-18, latest) — PHASE G SKILL MVP: **BUILT (code)** — READ FIRST
+## ⏩ CHECKPOINT (2026-06-18, latest) — RO HIT/FLEE ACCURACY SYSTEM — BUILT (code)
+Branch `experiment/3d-world`, UNCOMMITTED. Code-only, **no re-bake**. Replaces the earlier flat-evade hack
+(`Health.evadeChance` + `Character.BaseEvasion`/`Evasion01` — all REMOVED) with a real HIT-vs-FLEE roll.
+- **NEW `Combat.cs`** (static): `HitChance01(atkHit, defFlee) = clamp((100 + atkHit − defFlee)/100, 0.05, 0.95)`;
+  `Lands(atkHit, defFlee)`. The **[5%,95%] clamp guarantees both MISSes always show** (even a maxed attacker
+  whiffs 5%; you can't fully dodge by FLEE alone). Magic ignores it entirely (MATK vs MDEF).
+- **`Character.cs`**: `Hit = Level + DEX`, `Flee = (Level + AGI) × (1 + Evasion-passive%)`. `TakeDamage` gained an
+  `(attackerAttack, attackerHit)` overload — rolls monster HIT vs player FLEE → **WHITE MISS** on a dodge
+  (`attackerHit = −1` skips the roll = always lands, for legacy 2D callers).
+- **`Health.cs`**: `evadeChance` → `int flee`. `TakeDamage(attack, crit, attackerHit)` overload rolls player HIT
+  vs mob FLEE → **RED MISS** (crits bypass; `−1` skips). Old 1/2-arg overloads pass −1 (2D unaffected).
+- **`MonsterAI3D.hit` (def 8)** passed on each bite; **`Player3DAttacker`** passes `Character.Hit`.
+  `BuildMonster` sets mob `flee = 10`; **dummy `flee = 15`** (tunable; set Health▸Flee=0 for clean DPS).
+  ⚠️ existing saved mobs get field defaults (mob flee **0** → still 5% red MISS via the ceiling; monster hit 8).
+  Stat panels now show **HIT / FLEE** instead of EVA%. Re-run Spawn Training Dummy for the flee-15 dummy.
+  ⚠️ **Bugfix (white MISS "not rendering"):** `Character.Avatar()` only searched for `PlayerController2D`, so
+  in the 2.5D game it returned null and the `if (a != null)` guard silently dropped the white MISS / Guard /
+  heal popups (monster *hit* numbers still showed — `MonsterAI3D` spawns those itself). `Avatar()` now also
+  finds `Player3DController`. At base AGI the dodge is the 5% floor (95% hit cap); pump AGI/level to see more.
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — RO-STYLE DAMAGE RANGE + MISS — BUILT (code)
+Branch `experiment/3d-world`, UNCOMMITTED. Code-only, **no re-bake**.
+- **Min–max damage** (`Character.cs`): hits now roll `Random.Range(Min, Max+1)` instead of fixed. `MaxAttack`=
+  the existing `Attack`; `MinAttack` = `Attack × MinFraction(DEX)`; `MinFraction = clamp01(0.55 + stat×0.012)`
+  so **DEX raises (and stabilises) min physical dmg** (~38 DEX → min==max). Magic mirrors it: `MinMagicAttack`
+  driven by **INT**. A **crit ignores the spread → always max** ×CritMult. `RollDamage`/`RollMagicDamage` updated.
+  Stat readouts (`StatPanel.cs`, `CharacterUIBinder.cs`) now show `ATK min-max` / `M.ATK min-max`.
+  Monster outgoing dmg also varies: `MonsterAI3D.damageSpread` (def 0.25) → `attack×(1−rand(0,spread))`.
+- **MISS rendering**: physical hits can now whiff. **Player→monster miss = RED "MISS"** (`Health.evadeChance`,
+  default **0.08**, rolled in `Health.TakeDamage`; crits can't be evaded; magic can't be evaded).
+  **Monster→player miss = WHITE "MISS"** (the AGI `Evasion01` dodge in `Character.TakeDamage`, popup text
+  cyan "Dodge" → white "MISS"). `BuildMonster` sets mob evade 0.08 (= new field default, so saved NatureStage
+  mobs evade too). ⚠️ **Visibility fix (after "miss not showing"):** AGI-only evasion was ~0.4% at base AGI, and
+  the dummy had evade 0 — so neither MISS ever appeared. Added `Character.BaseEvasion = 0.05` (flat flee floor so
+  WHITE miss shows when any mob hits you), and the **dummy now spawns with `evadeChance = 0.25`** so RED miss pops
+  when you hit it (zero it in the inspector for clean DPS). **Must re-run Spawn Training Dummy** — the dummy
+  already in the scene was saved with evade 0. WHITE miss still needs a real mob attacking you (Populate Mobs).
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — COMBAT TEST RIG: training dummy + level knob — BUILT (code)
+Branch `experiment/3d-world`, UNCOMMITTED. Two tuning tools for measuring damage/builds:
+- **Training dummy** — `TrainingDummy.cs` (runtime: 10,000,000-HP marker, `health.Revive()` every 5 s,
+  floating "current/max" HP label that billboards). Spawned by **Tools ▸ unwritten ▸ Spawn Training Dummy**
+  (`Editor/TrainingDummyTool.cs`): reuses `Build25DSpike.BuildMonster` (so it's click-targetable + has a
+  collider), then neuters it — 10M HP, defense/magicDefense 0, all `MonsterAI3D` senses/move/touch/attack/xp = 0,
+  strips MobRespawn+DeathDissolve, slate-gray tint. **Tools ▸ unwritten ▸ Clear Training Dummy** removes it.
+  No re-bake needed — just run the menu in whatever 2.5D scene is open, then Play and swing/cast at it.
+- **Tunable level** — `Character.cs`: `Level` is now a `[SerializeField] int level` (was read-only auto-prop;
+  `AddXP` writes `level++`). New `OnValidate` refills HP/MP + fires OnStats/Health/Mana events so dragging the
+  level in the inspector AT RUNTIME recomputes MaxHP/Attack/MaxMP/… live. Skill % layer (Passives) and allocated
+  stat points are separate layers applied on top, so a build stays valid at any dialed-in level. Code-only, no re-bake.
+  `OnValidate` also calls `ReconcilePointsToLevel()` → tops up/trims the allocatable **StatPoints**
+  (`startingStatPoints + statPointsPerLevel·(level−1) − spent`) and skill **BankedPoints** (`level − TotalRanks()`,
+  via new `PassiveRanks.SetBankedPoints`), accounting for already-spent points so it's idempotent up/down.
+
+---
+## ⏩⏩⏩⏩⏩⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-18) — PHASE G SKILL MVP: **BUILT (code)** — READ FIRST
 Branch `experiment/3d-world`, UNCOMMITTED. The Trio-Ring passive draft MVP is now CODED (the design doc
 `q17as16xh2gt1g058kemazjar588tvc8` is still source of truth). **Draft UX decision LOCKED = bankable points**
 (doc §11 #4): each level banks 1 skill point; player spends it in the Skills (K) panel on a 4-card draft.
@@ -34,9 +91,54 @@ Branch `experiment/3d-world`, UNCOMMITTED. The Trio-Ring passive draft MVP is no
 Trio+wildcard → picking center stacks / side slides / wild recenters; ATK/HP/DEF on the Character (C) panel rise.
 Or skip Play: run the two **Skills** self-test menus and read the Console.
 
-**STILL NEXT:** rewrite issues VIN-3/4/5/6 bodies (still describe the RETIRED graph) onto this slice; persistence/
-save (ranks are runtime-only); per-stat cap tuning + ring-order playtest; actives (every-10th, post-MVP §9).
-Open questions remain in doc §11. **COMMIT the pile when ready (USER's job).**
+**ISSUES SYNCED (2026-06-18):** VIN-3/4/5/6 bodies REWRITTEN to the built slice + moved to stage **merged**;
+VIN-1 epic → **implementation**. ⚠️ **Cross-artifact LINKS STILL NOT WIRED** — `link_items` / `get_linked_items`
+are 500ing server-side again (same outage as 2026-06-14, retried several times 2026-06-18). RETRY next session:
+link VIN-3/4/5/6 → VIN-1, and VIN-1 → design doc `q17as16xh2gt1g058kemazjar588tvc8`.
+
+**STATS WIRED (2026-06-18, same session):** 7/10 ring stats now affect real combat — added **Evasion**
+(dodge roll in `Character.TakeDamage`, cap .60, cyan "Dodge" popup + `OnEvaded`), **AttackSpeed**
+(`AttackSpeedMult` shortens `Player3DAttacker` cooldown), **CritChance** (cap .50) + **CritDamage**
+(`BaseCritMultiplier` 1.5 + %) via `Character.RollDamage(out crit)` → new `Health.TakeDamage(power, crit)`
+gold-number overload. Caps live in `SkillRing.CapFor`. New stats shown on the Character (C) panel
+(`CharacterUIBinder`). ⚠️ **MAtk/MP/MDef still INERT** — blocked on a magic/mana/actives layer (post-MVP §9);
+not fake-wired. Same **Build UI Shell** re-bake covers the panel text; combat changes are code-only.
+
+**MAGIC FOUNDATION BUILT (2026-06-18, same session) → ALL 10 STATS LIVE.** User chose "finish all the basic
+stats now." Added to `Character`: **mana pool** (`CurrentMP`/`MaxMP` + regen `Update` + `SpendMana` +
+`OnManaChanged`, refills on level/revive), **MagicAttack/MagicDefense** (flat bases + per-level), `RollMagicDamage`,
+`TakeMagicDamage` (ignores Evasion). `Item` got `bonusMP/bonusMAtk/bonusMDef`. NEW **`Player3DCaster.cs`** =
+basic magic bolt on key **Q** (costs `manaCost` MP, dmg=MagicAttack, FX=`FX/Magic/Spark`, targets cursor/nearest
+within range) → makes MAtk+MP real. `Health` got `magicDefense` + `TakeMagicDamage`. `MonsterAI3D` got
+`AttackType{Physical,Magic}`; ~**30% of mobs are now MYSTIC** (magic attackers, blue-tinted) so player **MDef**
+matters. HUD: blue **MP bar** under HP (`UIShellBuilder`/`CharacterUIBinder`); C-panel shows MP/M.ATK/M.DEF/ASPD/
+CRIT/EVA. Builder wiring: `Build25DSpike.BuildPlayer` adds the caster, `BuildMonster(tex,foot,mystic)` overload,
+mystic in both spawners. ⚠️ This is a HARDCODED spell, NOT the actives-draft (still post-MVP §9).
+
+**⚠️ RE-BAKES for this batch:** **Build UI Shell** (MP bar + skill panel) → **Setup Systems Scene** (player
+caster + Character magic stats) → **Populate Mobs (Nature)** (mystic mobs). TEST: Q near a mob = bolt + MP drains
++ regens; blue mobs hit through M.DEF (purple numbers, no dodge); crit = gold numbers; stack EVA = "Dodge".
+
+**STAT-DISTRIBUTION SYSTEM (RO-style) BUILT (2026-06-18, same session).** This is the doc's planned FLAT
+"stat-point distribution" layer. `Character` now has 6 primary stats `enum PrimaryStat{STR,AGI,VIT,INT,DEX,LUK}`
+(`int[] primary`, start 1 each), `StatPoints` (`startingStatPoints`=9 + `statPointsPerLevel`=3/level), `GetStat`,
+`AddStat(s)` (spend 1 pt). Contributions FOLD INTO the flat layer of the getters (inside `Scale`, so passive %
+still multiplies on top): STR→ATK, VIT→HP+DEF, INT→MP+M.ATK+M.DEF, AGI→ASPD+EVA, LUK→CRIT(+ATK/MATK),
+DEX→new `CastSpeedMult`(+ATK). Tunable consts at top of Character (HpPerVit=8, MpPerInt=5, divisors for DEF/MDEF
+etc.). `Player3DCaster` cooldown now ÷ `CastSpeedMult`. NEW **`StatPanel.cs`** (runtime, on GameUICanvas, added
+in `UIShellBuilder`) builds the 6 stat rows + `[+]` buttons + "Stat Points" counter + a live derived-stats readout
+into CharacterPanel/Content; it **disables the old static "Stats" text** and subscribes to OnStatsChanged +
+**OnHealthChanged + OnManaChanged** — which also **FIXES the reported bug** (C-panel text was stale during MP
+regen because it only refreshed on OnStatsChanged). ⚠️ Allocation is permanent (no respec yet); 1 pt per stat
+(no RO escalating cost) — MVP simplification.
+
+**⚠️ RE-BAKE for this batch:** just **Build UI Shell** (bakes StatPanel into the prefab). Character/caster changes
+are code-only (new serialized fields take their defaults on recompile — no Setup Systems Scene needed). TEST:
+Play → C panel shows STR..LUK with [+], "Stat Points: 9"; click + → stat rises, derived ATK/HP/etc. update live,
+MP line updates while regenerating.
+
+**STILL NEXT:** persistence/save (ranks + stats + MP/level are runtime-only); respec item; per-stat cap tuning +
+ring-order playtest; actives (every-10th, post-MVP §9). Open questions in doc §11. **COMMIT when ready (USER's job).**
 
 ---
 ## ⏩⏩⏩⏩⏩⏩⏩⏩⏩ CHECKPOINT (2026-06-18) — PHASE G SKILL SYSTEM: REDESIGNED (Trio-Ring) — design

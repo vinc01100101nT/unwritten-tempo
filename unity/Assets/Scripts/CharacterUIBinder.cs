@@ -13,6 +13,8 @@ public class CharacterUIBinder : MonoBehaviour
 {
     Image healthFill;
     Text healthLabel;
+    Image manaFill;
+    Text manaLabel;
     Text statsText;
     ItemSlot[] equipSlots;
     bool bound;
@@ -27,6 +29,8 @@ public class CharacterUIBinder : MonoBehaviour
 
         healthFill  = transform.Find("HUD_HealthBar/Fill")?.GetComponent<Image>();
         healthLabel = transform.Find("HUD_HealthBar/Label")?.GetComponent<Text>();
+        manaFill    = transform.Find("HUD_ManaBar/Fill")?.GetComponent<Image>();
+        manaLabel   = transform.Find("HUD_ManaBar/Label")?.GetComponent<Text>();
         statsText   = GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Stats");
         equipSlots  = GetComponentsInChildren<ItemSlot>(true).Where(s => s.accepts != EquipSlotType.None).ToArray();
 
@@ -39,8 +43,10 @@ public class CharacterUIBinder : MonoBehaviour
 
         c.OnStatsChanged  += RefreshStats;
         c.OnHealthChanged += RefreshHealth;
+        c.OnManaChanged   += RefreshMana;
         RefreshStats();
         RefreshHealth();
+        RefreshMana();
         bound = true;
     }
 
@@ -52,6 +58,14 @@ public class CharacterUIBinder : MonoBehaviour
         if (healthLabel != null) healthLabel.text = $"{c.CurrentHP} / {c.MaxHP}";
     }
 
+    void RefreshMana()
+    {
+        var c = Character.Instance;
+        if (c == null) return;
+        if (manaFill != null) manaFill.fillAmount = c.MaxMP > 0 ? (float)c.CurrentMP / c.MaxMP : 0f;
+        if (manaLabel != null) manaLabel.text = $"{c.CurrentMP} / {c.MaxMP}";
+    }
+
     void RefreshStats()
     {
         var c = Character.Instance;
@@ -60,8 +74,15 @@ public class CharacterUIBinder : MonoBehaviour
             $"Level   {c.Level}\n" +
             $"XP      {c.XP} / {c.XPToNext}\n" +
             $"HP      {c.CurrentHP} / {c.MaxHP}\n" +
-            $"ATK     {c.Attack}\n" +
-            $"DEF     {c.Defense}";
+            $"MP      {c.CurrentMP} / {c.MaxMP}\n" +
+            $"ATK     {c.MinAttack}-{c.MaxAttack}\n" +
+            $"DEF     {c.Defense}\n" +
+            $"M.ATK   {c.MinMagicAttack}-{c.MaxMagicAttack}\n" +
+            $"M.DEF   {c.MagicDefense}\n" +
+            $"ASPD    +{Mathf.RoundToInt(c.Passives.Percent(StatId.AttackSpeed) * 100)}%\n" +
+            $"CRIT    {Mathf.RoundToInt(c.CritChance01 * 100)}%  ×{c.CritMultiplier:0.0}\n" +
+            $"HIT     {c.Hit}    FLEE {c.Flee}";
         RefreshHealth();
+        RefreshMana();
     }
 }

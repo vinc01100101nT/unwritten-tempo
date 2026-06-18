@@ -95,6 +95,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<CharacterUIBinder>();   // drives HUD/stats/equip from Character
         canvasGO.AddComponent<BagSeeder>();           // fills the bag from Resources at runtime
         canvasGO.AddComponent<SkillDraftPanel>();     // Phase G: builds the Trio-Ring draft into the Skills (K) panel
+        canvasGO.AddComponent<StatPanel>();           // RO-style stat distribution into the Character (C) panel
 
         // UI click sounds (TomMusic latch foley): panel open/close + a generic button click.
         var ui = canvasGO.AddComponent<UISounds>();
@@ -155,6 +156,20 @@ public static class UIShellBuilder
         Fill(fill.rectTransform, new Vector2(4, 4), new Vector2(-4, -4));
         var hp = NewText("Label", bar.transform, "HP", 16, FontStyle.Bold, TextAnchor.MiddleCenter, true);
         Fill(hp.rectTransform, Vector2.zero, Vector2.zero);
+
+        // Mana bar, sitting just above the health bar (blue).
+        var mana = NewSliced("HUD_ManaBar", canvas, barBgSprite);
+        Anchor(mana.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);
+        mana.rectTransform.anchoredPosition = new Vector2(16, 48);
+        mana.rectTransform.sizeDelta = new Vector2(200, 18);
+        var mfill = NewColor("Fill", mana.transform, new Color(0.25f, 0.45f, 0.95f, 1f));
+        mfill.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+        mfill.type = Image.Type.Filled;
+        mfill.fillMethod = Image.FillMethod.Horizontal;
+        mfill.fillOrigin = (int)Image.OriginHorizontal.Left;
+        Fill(mfill.rectTransform, new Vector2(3, 3), new Vector2(-3, -3));
+        var mp = NewText("Label", mana.transform, "MP", 13, FontStyle.Bold, TextAnchor.MiddleCenter, true);
+        Fill(mp.rectTransform, Vector2.zero, Vector2.zero);
 
         var holder = NewColor("HUD_Hotbar", canvas, new Color(0, 0, 0, 0f));
         Anchor(holder.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));

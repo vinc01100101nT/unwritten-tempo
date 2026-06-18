@@ -14,7 +14,7 @@ using UnityEngine;
 public class MobRespawn : MonoBehaviour
 {
     [Tooltip("Seconds after the corpse fades before the mob returns.")]
-    public float respawnDelay = 8f;
+    public float respawnDelay = 1f;   // near-instant respawn — keeps the field full for auto-combat
     [Tooltip("Respawn within this radius of the original spawn home.")]
     public float homeRadius = 4f;
     [Tooltip("Never respawn closer than this to the player (no spawning on their head).")]

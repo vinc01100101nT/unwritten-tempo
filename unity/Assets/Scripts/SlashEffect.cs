@@ -29,12 +29,10 @@ public class SlashEffect : MonoBehaviour
     {
         sr = renderer;
         this.fps = Mathf.Max(1f, fps);
-        int cols = Mathf.Max(1, sheet.width / frameSize);
-        int n = Mathf.Clamp(frameCount, 1, cols);
-        frames = new Sprite[n];
-        for (int i = 0; i < n; i++)
-            frames[i] = Sprite.Create(sheet, new Rect(i * frameSize, 0, frameSize, frameSize),
-                                      new Vector2(0.5f, 0.5f), frameSize);
+        // Shared slice cache: every slash/bolt/smoke off the same sheet reuses ONE Sprite[] instead of
+        // re-slicing (allocating) the sheet on every spawn — this runs on every hit.
+        frames = SpriteSheetCache.Strip(sheet, frameSize, frameCount);
+        if (frames.Length == 0) { Destroy(gameObject); return; }
         sr.sprite = frames[0];
     }
 

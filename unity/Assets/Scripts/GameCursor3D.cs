@@ -30,9 +30,9 @@ public class GameCursor3D : MonoBehaviour
         if (cam == null) cam = Camera.main;
         if (player == null) player = FindFirstObjectByType<Player3DController>();
 
-        Kind want = Kind.Default;
-        if (player != null && player.AttackArmed) want = Kind.AttackMove;
-        else if (Player3DController.MonsterUnderCursor(cam) != null) want = Kind.Attack;
+        // Attacking requires A. While armed → crosshair (mob or ground alike); unarmed left-click just
+        // moves, so a plain hover shows the default pointer. The sword cursor is retired.
+        Kind want = player != null && player.AttackArmed ? Kind.AttackMove : Kind.Default;
 
         if (want != current) { Apply(want); current = want; }
     }

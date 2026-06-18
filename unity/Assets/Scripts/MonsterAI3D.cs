@@ -25,8 +25,16 @@ public class MonsterAI3D : MonoBehaviour
     public float wanderPauseMin = 1f;
     public float wanderPauseMax = 3f;
 
+    public enum AttackType { Physical, Magic }
+
     [Header("Combat")]
+    [Tooltip("Physical hits the player's Defense; Magic hits MagicDefense (and ignores Evasion).")]
+    public AttackType attackType = AttackType.Physical;
     public int attack = 3;
+    [Tooltip("Outgoing damage swings down to (1−spread)×attack each hit, RO-style (0 = always full attack).")]
+    [Range(0f, 1f)] public float damageSpread = 0.25f;
+    [Tooltip("HIT (RO accuracy). Rolled against the player's FLEE on each bite; lose and the attack MISSes (white).")]
+    public int hit = 8;
     public int xpReward = 5;
     public float touchRange = 0.9f;
     public float touchInterval = 1f;
@@ -39,12 +47,24 @@ public class MonsterAI3D : MonoBehaviour
     bool chasing;
     float nextTouch;
 
+    /// <summary>This mob's <see cref="Health"/>, cached once. The cursor pick and auto-combat target
+    /// scans read this instead of calling <c>GetComponent&lt;Health&gt;()</c> per mob, every frame.</summary>
+    public Health Health { get; private set; }
+
+    /// <summary>Live registry of active mobs, so cursor target-magnetism can scan candidates without a
+    /// per-frame <c>FindObjectsByType</c>. Maintained on enable/disable (so it respects MobRespawn pooling).</summary>
+    public static readonly System.Collections.Generic.List<MonsterAI3D> Active = new System.Collections.Generic.List<MonsterAI3D>();
+
     void Awake()
     {
         agent = GetComponent<PathAgent3D>();
         lunge = GetComponent<AttackLunge>();
+        Health = GetComponent<Health>();
         home = transform.position;
     }
+
+    void OnEnable()  { if (!Active.Contains(this)) Active.Add(this); }
+    void OnDisable() => Active.Remove(this);
 
     void Start()
     {
@@ -53,9 +73,8 @@ public class MonsterAI3D : MonoBehaviour
         var pc = FindFirstObjectByType<Player3DController>();
         if (pc != null) player = pc.transform;
 
-        var health = GetComponent<Health>();
-        if (health != null)
-            health.onDeath.AddListener(() => { if (Character.Instance != null) Character.Instance.AddXP(xpReward); });
+        if (Health != null)
+            Health.onDeath.AddListener(() => { if (Character.Instance != null) Character.Instance.AddXP(xpReward); });
 
         nextWander = Time.time + Random.value;
     }
@@ -65,27 +84,34 @@ public class MonsterAI3D : MonoBehaviour
         Vector3 pos = transform.position;
         // A dead player is no target: leash off and resume wandering until they respawn.
         bool playerAlive = player != null && Character.Instance != null && !Character.Instance.IsDead;
-        float toPlayer = playerAlive ? PlanarDist(pos, player.position) : Mathf.Infinity;
+        // Compare SQUARED distances against squared radii — avoids a sqrt per check, per mob, per frame.
+        float toPlayerSqr = playerAlive ? PlanarSqr(pos, player.position) : Mathf.Infinity;
 
         bool was = chasing;
-        if (chasing && toPlayer > leashRadius) chasing = false;
-        else if (!chasing && toPlayer <= aggroRadius) chasing = true;
+        if (chasing && toPlayerSqr > leashRadius * leashRadius) chasing = false;
+        else if (!chasing && toPlayerSqr <= aggroRadius * aggroRadius) chasing = true;
 
         // Touch damage (Phase F parity). No-op in the spike: Character.Instance is null without Systems.
         // Use TRUE 3D distance (not planar) so a mob that has fallen off a cliff/edge below the terrain —
         // same XZ as the player but far below — can't keep biting an invisible, "there are no mobs" hit.
-        float touch3D = playerAlive ? Vector3.Distance(pos, player.position) : Mathf.Infinity;
-        if (player != null && touch3D <= touchRange && Time.time >= nextTouch && Character.Instance != null)
+        float touch3DSqr = playerAlive ? (player.position - pos).sqrMagnitude : Mathf.Infinity;
+        if (player != null && touch3DSqr <= touchRange * touchRange && Time.time >= nextTouch && Character.Instance != null)
         {
-            int dealt = Character.Instance.TakeDamage(attack);
-            if (dealt > 0) DamagePopup.Spawn(player.position, dealt, new Color(1f, 0.35f, 0.35f));   // blocked = Character pops "Guard"
+            // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
+            int atk = Mathf.RoundToInt(attack * (1f - Random.Range(0f, damageSpread)));   // RO-style spread
+            int dealt = attackType == AttackType.Magic
+                ? Character.Instance.TakeMagicDamage(atk)          // magic ignores HIT/FLEE (MATK vs MDEF)
+                : Character.Instance.TakeDamage(atk, hit);          // physical: our HIT rolled vs player FLEE
+            if (dealt > 0)
+                DamagePopup.Spawn(player.position, dealt,
+                    attackType == AttackType.Magic ? new Color(0.7f, 0.5f, 1f) : new Color(1f, 0.35f, 0.35f));
             nextTouch = Time.time + touchInterval;
             if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell
         }
 
         if (chasing)
         {
-            if (toPlayer <= stopDistance) agent.Halt();
+            if (toPlayerSqr <= stopDistance * stopDistance) agent.Halt();
             else agent.MoveToward(player.position);
         }
         else
@@ -100,10 +126,10 @@ public class MonsterAI3D : MonoBehaviour
         }
     }
 
-    static float PlanarDist(Vector3 a, Vector3 b)
+    static float PlanarSqr(Vector3 a, Vector3 b)
     {
         a.y = 0f; b.y = 0f;
-        return Vector3.Distance(a, b);
+        return (a - b).sqrMagnitude;
     }
 
     void OnDrawGizmosSelected()
