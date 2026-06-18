@@ -1,5 +1,22 @@
 using UnityEngine;
 
+/// <summary>The player's active-skill identity. A class = which kit of <see cref="IHotbarSkill"/> components
+/// is enabled (see <see cref="ClassState"/> / Player3DController.ApplyClass). NOT a stat lock.</summary>
+public enum PlayerClass { Swordsman, Mage }
+
+/// <summary>Persists the chosen class (PlayerPrefs) so it survives restarts and is read at boot.</summary>
+public static class ClassState
+{
+    const string Key = "unwritten.class";
+    static PlayerClass? current;
+
+    public static PlayerClass Current
+    {
+        get { if (current == null) current = (PlayerClass)PlayerPrefs.GetInt(Key, 0); return current.Value; }
+        set { current = value; PlayerPrefs.SetInt(Key, (int)value); PlayerPrefs.Save(); }
+    }
+}
+
 /// <summary>
 /// A player active that can show up on the HUD hotbar. Each Swordsman/class skill component
 /// (<see cref="Player3DBash"/>, <see cref="Player3DCharge"/>, <see cref="Player3DCaster"/>…)
@@ -29,6 +46,9 @@ public interface IHotbarSkill
     float CooldownFraction01 { get; }
     /// <summary>Accent colour for the slot label, so the actives read as distinct.</summary>
     Color Tint { get; }
+    /// <summary>Whether this skill belongs to (shows up for) the given class. Universal skills return true
+    /// for every class; class skills return true only for their own.</summary>
+    bool InClass(PlayerClass c);
     /// <summary>Fire the skill now (same target/MP/cooldown rules as the keypress). Returns true if it fired.</summary>
     bool Activate();
 }

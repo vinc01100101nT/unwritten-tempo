@@ -92,6 +92,7 @@ public class Player3DBash : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => new Color(1f, 0.55f, 0.5f);   // heavy-strike red
+    public bool InClass(PlayerClass c) => c == PlayerClass.Swordsman;
 
     static readonly Collider[] hits = new Collider[32];
 

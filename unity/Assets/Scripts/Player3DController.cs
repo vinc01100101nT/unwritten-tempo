@@ -123,7 +123,28 @@ public class Player3DController : MonoBehaviour
         if (GetComponent<Player3DCharge>() == null) gameObject.AddComponent<Player3DCharge>();
         if (GetComponent<Player3DGuard>() == null) gameObject.AddComponent<Player3DGuard>();
         if (GetComponent<Player3DWarcry>() == null) gameObject.AddComponent<Player3DWarcry>();
+
+        // Mage kit (class #2). Both kits live on the player; ApplyClass enables only the chosen one's
+        // skills (a baked player already has these with FX/icons; self-bootstrap adds them asset-less).
+        if (GetComponent<Player3DFireball>()  == null) gameObject.AddComponent<Player3DFireball>();
+        if (GetComponent<Player3DFrostNova>() == null) gameObject.AddComponent<Player3DFrostNova>();
+        if (GetComponent<Player3DMeteor>()    == null) gameObject.AddComponent<Player3DMeteor>();
+
+        ApplyClass(ClassState.Current);
     }
+
+    /// <summary>Enable only the active-skill components belonging to class <paramref name="c"/> (universal
+    /// skills stay on); disable the rest, then ask the hotbar to rebuild. This IS the class identity layer.</summary>
+    public void ApplyClass(PlayerClass c)
+    {
+        var skills = GetComponents<IHotbarSkill>();
+        for (int i = 0; i < skills.Length; i++)
+            if (skills[i] is MonoBehaviour mb) mb.enabled = skills[i].InClass(c);
+        HotbarPanel.RebuildRequested?.Invoke();   // null until the HUD exists — it builds correctly on its own then
+    }
+
+    /// <summary>Switch class at runtime (persists + re-applies). Used by the DevSettings (P) panel.</summary>
+    public void SetClass(PlayerClass c) { ClassState.Current = c; ApplyClass(c); }
 
     // Slice the 4 directional attack poses straight from the texture (16px columns), ignoring the art's
     // auto-slices which are often broken on Ninja Adventure SeparateAnim sheets. Mirrors CharacterAnimator2D.
@@ -222,7 +243,8 @@ public class Player3DController : MonoBehaviour
     void ReadInput()
     {
         if (cam == null) return;
-        if (DevSettings.Blocking) return;   // cursor is over the dev-settings panel — don't leak clicks/keys into the world
+        if (DevSettings.Blocking) return;    // cursor is over the dev-settings panel — don't leak clicks/keys into the world
+        if (GroundTargeter.Active) return;   // aiming a placed skill — the click confirms the target, not a move
 
         if (KeyS()) { Stop(); return; }
         if (KeyT()) { ToggleAuto(); return; }   // T toggles roam auto-combat; S stops it
@@ -539,6 +561,9 @@ public class Player3DController : MonoBehaviour
         }
         return best;
     }
+
+    /// <summary>Public wrapper for the cursor→ground raycast — used by ground-targeted skills (e.g. Meteor).</summary>
+    public static bool GroundUnderCursor(Camera cam, out Vector3 point) => GroundPoint(cam, out point);
 
     static bool GroundPoint(Camera cam, out Vector3 point)
     {

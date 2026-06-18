@@ -39,19 +39,43 @@ public class HotbarPanel : MonoBehaviour
     static readonly string[] Secs = BuildSecs();
     static string[] BuildSecs() { var a = new string[61]; for (int i = 0; i < a.Length; i++) a[i] = i.ToString(); return a; }
 
+    /// <summary>Invoke to rebuild the bar (e.g. after a class switch). Set by the live HotbarPanel.</summary>
+    public static System.Action RebuildRequested;
+
     Font font;
     Sprite whiteSprite;
     Player3DController player;
     Transform holder;
     readonly List<Slot> slots = new List<Slot>();
+    readonly List<IHotbarSkill> enabledSkills = new List<IHotbarSkill>();
     bool built;
 
-    void Start() => TryBuild();
+    void Start()
+    {
+        RebuildRequested = Rebuild;
+        TryBuild();
+    }
 
     void Update()
     {
         if (!built) { TryBuild(); return; }
         Refresh();
+    }
+
+    /// <summary>Tear down the decorated cells and rebuild from the player's currently-enabled skills (the
+    /// class changed). Safe to call before the first build.</summary>
+    public void Rebuild()
+    {
+        if (holder != null)
+            for (int i = 0; i < holder.childCount; i++)
+            {
+                var cell = holder.GetChild(i);
+                for (int c = cell.childCount - 1; c >= 0; c--) Destroy(cell.GetChild(c).gameObject);
+                var btn = cell.GetComponent<Button>();
+                if (btn != null) Destroy(btn);
+            }
+        slots.Clear();
+        built = false;   // Update() will TryBuild() again next frame, reading the new enabled set
     }
 
     void TryBuild()
@@ -61,9 +85,14 @@ public class HotbarPanel : MonoBehaviour
         if (holder == null) holder = FindByName("HUD_Hotbar");
         if (holder == null) return;
 
-        var skills = player.GetComponents<IHotbarSkill>();
-        if (skills == null || skills.Length == 0) return;
-        System.Array.Sort(skills, (a, b) => a.SlotOrder.CompareTo(b.SlotOrder));
+        // Only the ENABLED skills (the current class's kit — see Player3DController.ApplyClass) get a slot.
+        var all = player.GetComponents<IHotbarSkill>();
+        if (all == null || all.Length == 0) return;
+        enabledSkills.Clear();
+        for (int i = 0; i < all.Length; i++)
+            if (all[i] is MonoBehaviour mb && mb.enabled) enabledSkills.Add(all[i]);
+        if (enabledSkills.Count == 0) return;
+        enabledSkills.Sort((a, b) => a.SlotOrder.CompareTo(b.SlotOrder));
 
         font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         // 1×1 white sprite for the radial cooldown shade — avoids any built-in/Resources dependency.
@@ -71,11 +100,11 @@ public class HotbarPanel : MonoBehaviour
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
 
         slots.Clear();
-        int n = Mathf.Min(skills.Length, holder.childCount);   // decorate the first N baked cells; extras stay empty
+        int n = Mathf.Min(enabledSkills.Count, holder.childCount);   // decorate the first N baked cells; extras stay empty
         for (int i = 0; i < n; i++)
         {
             var cell = holder.GetChild(i).GetComponent<Image>();
-            if (cell != null) slots.Add(BuildSlot(cell, skills[i]));
+            if (cell != null) slots.Add(BuildSlot(cell, enabledSkills[i]));
         }
         built = slots.Count > 0;
     }

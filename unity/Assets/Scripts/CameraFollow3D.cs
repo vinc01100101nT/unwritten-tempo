@@ -41,11 +41,48 @@ public class CameraFollow3D : MonoBehaviour
     Vector3 vel;
     Vector2 lastMouse;
 
-    void Awake() => cam = GetComponent<Camera>();
+    void Awake() { cam = GetComponent<Camera>(); Main = this; }
+    void OnDestroy() { if (Main == this) Main = null; }
     void OnEnable() => lastMouse = MousePos();
+
+    // ---- screen shake (call CameraFollow3D.ShakeMain from anywhere, e.g. a meteor impact) ----------
+    public static CameraFollow3D Main { get; private set; }
+    Vector3 shakeOffset;            // the offset applied last frame (undone next frame so it can't feed back)
+    float shakeMag, shakeDur, shakeLeft;
+
+    /// <summary>Kick a screen shake on the main follow-camera: <paramref name="magnitude"/> world-units of
+    /// jitter that decays to zero over <paramref name="duration"/>s. Overlapping shakes take the strongest +
+    /// longest (bounded, not additive). No-op if there's no follow camera.</summary>
+    public static void ShakeMain(float magnitude, float duration)
+    {
+        if (Main != null) Main.AddShake(magnitude, duration);
+    }
+
+    void AddShake(float magnitude, float duration)
+    {
+        if (magnitude <= 0f || duration <= 0f) return;
+        shakeMag  = Mathf.Max(shakeMag, magnitude);
+        shakeDur  = Mathf.Max(shakeDur, duration);
+        shakeLeft = Mathf.Max(shakeLeft, duration);
+    }
+
+    // This frame's shake offset (camera-local screen plane), ticking the timer down. Zero (alloc-free) when idle.
+    Vector3 CurrentShakeOffset()
+    {
+        if (shakeLeft <= 0f) return Vector3.zero;
+        shakeLeft -= Time.deltaTime;
+        float amp = shakeMag * (shakeDur > 1e-4f ? Mathf.Clamp01(shakeLeft / shakeDur) : 0f);   // linear decay to 0
+        if (shakeLeft <= 0f) { shakeMag = 0f; shakeDur = 0f; shakeLeft = 0f; }
+        return (transform.right * Random.Range(-1f, 1f) + transform.up * Random.Range(-1f, 1f)) * amp;
+    }
 
     void LateUpdate()
     {
+        // Undo last frame's shake so the follow smoothing always works from the CLEAN base position
+        // (shake never feeds back into SmoothDamp → no drift/runaway).
+        transform.position -= shakeOffset;
+        shakeOffset = Vector3.zero;
+
         HandleInput();
         if (target == null) return;
 
@@ -55,6 +92,9 @@ public class CameraFollow3D : MonoBehaviour
             ? Vector3.SmoothDamp(transform.position, desired, ref vel, smoothTime)
             : desired;
         transform.LookAt(target.position + Vector3.up * lookAtHeight);
+
+        shakeOffset = CurrentShakeOffset();   // re-apply on TOP of the smoothed base (after LookAt set rotation)
+        transform.position += shakeOffset;
 
         SyncSortAxis();
     }

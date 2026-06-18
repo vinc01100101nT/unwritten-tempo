@@ -107,6 +107,7 @@ public class Player3DCharge : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => new Color(1f, 0.75f, 0.4f);   // gap-closer amber
+    public bool InClass(PlayerClass c) => c == PlayerClass.Swordsman;
 
     // Nearest living mob within radius — via the MonsterAI3D registry (cached .Health, squared distance),
     // the perf-correct target scan (NOT a fixed-buffer OverlapSphere, which drops mobs in dense scenes).

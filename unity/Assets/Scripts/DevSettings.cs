@@ -130,6 +130,12 @@ public class DevSettings : MonoBehaviour
 
     void BuildKnobs()
     {
+        // ---- Class (swap the active-skill kit live; persists via PlayerPrefs) ----
+        Cat("Class");
+        B("Mage (off = Swordsman)",
+            () => ClassState.Current == PlayerClass.Mage,
+            v => { if (player) player.SetClass(v ? PlayerClass.Mage : PlayerClass.Swordsman); });
+
         // ---- Player (movement / feel) — Player3DController -----------------
         Cat("Player");
         F("Move speed",       0f, 12f, () => player ? player.moveSpeed : 0f,       v => { if (player) player.moveSpeed = v; });

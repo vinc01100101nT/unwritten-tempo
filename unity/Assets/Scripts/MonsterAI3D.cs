@@ -47,6 +47,25 @@ public class MonsterAI3D : MonoBehaviour
              "and runs from the player — a skittish 'wounded animal' that breaks off when hurt.")]
     [Range(0f, 1f)] public float fleeHpFraction = 0f;
 
+    [Header("Ranged projectile (magic mobs only)")]
+    [Tooltip("Visible projectile lobbed by a Magic attacker; the hit lands on arrival. Null = instant magic touch.")]
+    public Texture2D projectileSheet;
+    public int projFrameSize = 16;
+    public int projFrames = 4;
+    public float projFps = 16f;
+    public float projSpeed = 9f;
+    public float projScale = 1.1f;
+
+    [Header("Stun indicator (FX/Magic/Spirit)")]
+    [Tooltip("Spinning swirl shown over the mob's head while stunned. Null = stun still freezes it (no swirl).")]
+    public Texture2D stunSheet;
+    public int stunFrameSize = 32;
+    public int stunFrames = 5;
+
+    static readonly Color MagicHitColor = new Color(0.7f, 0.5f, 1f);
+    static readonly Color PhysHitColor  = new Color(1f, 0.35f, 0.35f);
+    static readonly Color StunColor     = new Color(1f, 0.9f, 0.3f);
+
     PathAgent3D agent;
     AttackLunge lunge;
     Transform player;
@@ -55,6 +74,9 @@ public class MonsterAI3D : MonoBehaviour
     bool chasing;
     float nextTouch;
     float stunnedUntil;   // hit by a stagger (e.g. the Swordsman's Bash) — frozen until this time
+    float slowUntil;      // chilled (e.g. Frost Nova) — moves at slowFactor speed until this time
+    float slowFactor = 1f;
+    StatusFX stunFx;      // looping swirl shown over the head while stunned (created on first stun)
 
     /// <summary>This mob's <see cref="Health"/>, cached once. The cursor pick and auto-combat target
     /// scans read this instead of calling <c>GetComponent&lt;Health&gt;()</c> per mob, every frame.</summary>
@@ -101,6 +123,31 @@ public class MonsterAI3D : MonoBehaviour
         if (seconds > 0f) stunnedUntil = Mathf.Max(stunnedUntil, Time.time + seconds);
     }
 
+    /// <summary>Chill this mob to <paramref name="factor"/>× move speed (0..1) for <paramref name="seconds"/>s —
+    /// a reusable slow for skills like the Mage's Frost Nova. Stacks by the later end time + stronger factor.</summary>
+    public void Slow(float factor, float seconds)
+    {
+        if (seconds <= 0f) return;
+        slowFactor = Mathf.Min(slowFactor < 1f && Time.time < slowUntil ? slowFactor : 1f, Mathf.Clamp01(factor));
+        slowUntil = Mathf.Max(slowUntil, Time.time + seconds);
+    }
+
+    /// <summary>Stun this mob for <paramref name="seconds"/> — freezes it (reusing the <see cref="Stagger"/>
+    /// freeze) and shows a spinning swirl over its head. A reusable status hook for per-hit procs (e.g. the
+    /// Mage's multi-hit Meteor). Re-stunning while already stunned just refreshes the duration (no popup spam).</summary>
+    public void Stun(float seconds)
+    {
+        if (seconds <= 0f) return;
+        bool wasStunned = Time.time < stunnedUntil;
+        Stagger(seconds);   // freeze chase + attack (shares stunnedUntil)
+        if (stunSheet != null)
+        {
+            if (stunFx == null) stunFx = StatusFX.Create(transform, stunSheet, stunFrameSize, stunFrames, 12f, 0.7f, 1.15f);
+            stunFx.Show(seconds);
+        }
+        if (!wasStunned) DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Stun!", StunColor);
+    }
+
     /// <summary>Shove this mob directly away from <paramref name="worldFrom"/> at <paramref name="speed"/>
     /// for <paramref name="time"/>s and stagger it for <paramref name="stagger"/>s (so its AI doesn't fight
     /// the slide). Used by AoE skills like the Swordsman's Warcry. Reuses the cached <see cref="agent"/> —
@@ -116,6 +163,9 @@ public class MonsterAI3D : MonoBehaviour
     void Update()
     {
         if (Time.time < stunnedUntil) { if (agent != null) agent.Halt(); return; }   // staggered — frozen
+
+        // Chill (Frost Nova): scale move speed while slowed; full speed once it expires.
+        agent.moveSpeed = (Time.time < slowUntil) ? moveSpeed * slowFactor : moveSpeed;
 
         Vector3 pos = transform.position;
         // A dead player is no target: leash off and resume wandering until they respawn.
@@ -135,12 +185,28 @@ public class MonsterAI3D : MonoBehaviour
         {
             // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
             int atk = Mathf.RoundToInt(attack * (1f - Random.Range(0f, damageSpread)));   // RO-style spread
-            int dealt = attackType == AttackType.Magic
-                ? Character.Instance.TakeMagicDamage(atk)          // magic ignores HIT/FLEE (MATK vs MDEF)
-                : Character.Instance.TakeDamage(atk, hit);          // physical: our HIT rolled vs player FLEE
-            if (dealt > 0)
-                DamagePopup.Spawn(player.position, dealt,
-                    attackType == AttackType.Magic ? new Color(0.7f, 0.5f, 1f) : new Color(1f, 0.35f, 0.35f));
+            if (attackType == AttackType.Magic && projectileSheet != null)
+            {
+                // Ranged caster: lob a VISIBLE projectile at the player; the magic damage lands on arrival.
+                int dmg = atk;   // capture for the on-arrive callback
+                Vector3 from = pos + Vector3.up * 0.5f;
+                Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
+                    from, player, player.position + Vector3.up * 0.4f, projSpeed, 0.45f, 3f, () =>
+                    {
+                        if (Character.Instance == null || Character.Instance.IsDead) return;
+                        int d = Character.Instance.TakeMagicDamage(dmg);
+                        if (d > 0) DamagePopup.Spawn(player.position, d, MagicHitColor);
+                    });
+            }
+            else
+            {
+                int dealt = attackType == AttackType.Magic
+                    ? Character.Instance.TakeMagicDamage(atk)          // magic ignores HIT/FLEE (MATK vs MDEF)
+                    : Character.Instance.TakeDamage(atk, hit);          // physical: our HIT rolled vs player FLEE
+                if (dealt > 0)
+                    DamagePopup.Spawn(player.position, dealt,
+                        attackType == AttackType.Magic ? MagicHitColor : PhysHitColor);
+            }
             nextTouch = Time.time + touchInterval;
             if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell
         }

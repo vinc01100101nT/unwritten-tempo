@@ -94,6 +94,24 @@ public class Health : MonoBehaviour
         return dmg;
     }
 
+    /// <summary>Like <see cref="TakeMagicDamage"/> but ALWAYS registers a damage number — even when already
+    /// dead. A multi-hit sequence keeps showing its remaining ticks (overkill) over a mob that died partway,
+    /// the RO way. HP floors at 0; death fires exactly once (on the alive→dead transition). Returns the hit's
+    /// value, so a combo total can keep accumulating past the kill.</summary>
+    public int TakeMagicDamageOverkill(int attackerMagic, bool crit)
+    {
+        int dmg = Mathf.Max(1, attackerMagic - magicDefense);
+        bool wasAlive = !IsDead;
+        Current = Mathf.Max(0, Current - dmg);
+        DamagePopup.Spawn(transform.position, dmg, crit ? new Color(1f, 0.85f, 0.2f) : new Color(0.7f, 0.5f, 1f));
+        if (wasAlive)
+        {
+            if (isActiveAndEnabled) StartCoroutine(Flash());
+            if (IsDead) Die();
+        }
+        return dmg;
+    }
+
     /// <summary>Reset to full HP and base color (used by <see cref="MobRespawn"/> to bring a mob back).</summary>
     public void Revive()
     {

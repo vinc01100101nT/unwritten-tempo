@@ -25,6 +25,16 @@ public static class SfxAssets
         return new SfxSet { clips = clips, volume = volume };
     }
 
+    /// <summary>A set from explicit project asset paths (under "Assets/…") — for custom one-off clips that live
+    /// OUTSIDE the TomMusic pack (e.g. "Assets/Audio/Customs/hit.wav"). Forces DecompressOnLoad like <see cref="Set"/>.</summary>
+    public static SfxSet Custom(float volume, params string[] assetPaths)
+    {
+        var clips = assetPaths.Select(Load).Where(c => c != null).ToArray();
+        if (clips.Length == 0)
+            Debug.LogWarning($"[unwritten] No custom SFX found at: {string.Join(", ", assetPaths)}");
+        return new SfxSet { clips = clips, volume = volume };
+    }
+
     /// <summary>A single looping ambient/BGS clip from <see cref="PackRoot"/> (e.g.
     /// "BGS Loops/Forest Day", "Forest Day"), imported as Streaming (right for long loops).</summary>
     public static AudioClip Ambient(string folder, string name)

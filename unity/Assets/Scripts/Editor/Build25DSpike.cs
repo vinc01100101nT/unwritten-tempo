@@ -447,6 +447,12 @@ public static class Build25DSpike
         if (arc.wanderRadius > 0f) ai.wanderRadius = arc.wanderRadius;
         ai.preferredRange = arc.preferredRange;             // >0 = caster/archer kites at range
         ai.fleeHpFraction = arc.fleeHpFraction;             // >0 = skittish: flees when wounded
+        // Magic mobs (e.g. the Flam caster) now lob a VISIBLE fireball — the hit lands on arrival.
+        // Defaults (16px × 4 frames) match this sheet; null sheet = the old instant magic touch.
+        if (ai.attackType == MonsterAI3D.AttackType.Magic)
+            ai.projectileSheet = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Projectile/Fireball.png");
+        // Stun swirl shown over the head when a status (e.g. Meteor's per-hit stun) procs (32px × 5 frames).
+        ai.stunSheet = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Spirit/SpriteSheet.png");
 
         go.AddComponent<BillboardAnimator3D>().sheet = tex;
         if (arc.tint.a > 0f && arc.tint != Color.white) msr.color = arc.tint;   // tint AFTER the animator sets frames
@@ -533,7 +539,7 @@ public static class Build25DSpike
         caster.boltSheet = spark;
         if (spark != null) { caster.boltFrameSize = spark.height; caster.boltFrames = Mathf.Max(1, spark.width / spark.height); }
         caster.castSfx = SfxAssets.Set(0.8f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
-        caster.icon = LoadSkillIcon("Spell/Fireball");        // hotbar icon (ranged magic)
+        caster.icon = LoadSkillIcon("Spell/OrbLight");        // hotbar icon (generic magic bolt; distinct from Mage Fireball)
 
         // Swordsman signature active — Bash (slot 1): a heavy, always-landing strike that staggers the target.
         var bash = go.AddComponent<Player3DBash>();
@@ -558,6 +564,31 @@ public static class Build25DSpike
         warcry.shockSheet = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Aura/SpriteSheet.png");
         warcry.warcrySfx = SfxAssets.Set(1f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
         warcry.icon = LoadSkillIcon("Spell/Explosion");       // hotbar icon (AoE burst)
+
+        // ---- Mage kit (class #2): enabled only when ClassState.Current == Mage (Player3DController.ApplyClass).
+        var fireballTex  = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Projectile/Fireball.png");
+        var explosionTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Elemental/Explosion/SpriteSheet.png");
+        var iceTex       = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Elemental/Ice/SpriteSheet.png");
+        var spellSfx     = SfxAssets.Set(0.85f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
+
+        var fireball = go.AddComponent<Player3DFireball>();   // 1: single-target projectile nuke
+        fireball.projectileSheet = fireballTex;
+        fireball.impactSheet = explosionTex;
+        fireball.castSfx = spellSfx;
+        fireball.icon = LoadSkillIcon("Spell/Fireball");
+
+        var frost = go.AddComponent<Player3DFrostNova>();     // 2: PBAoE magic + slow
+        frost.burstSheet = iceTex;
+        frost.castSfx = spellSfx;
+        frost.icon = LoadSkillIcon("Spell/BookIce");
+
+        var meteor = go.AddComponent<Player3DMeteor>();       // 3: ground-targeted delayed AoE
+        meteor.meteorSheet = fireballTex;
+        meteor.impactSheet = explosionTex;
+        meteor.castSfx = spellSfx;
+        meteor.hitSfx = SfxAssets.Custom(0.8f, "Assets/Audio/Customs/hit.wav");   // custom per-hit sound, every hit of the multi-hit
+        meteor.meteorSfx = SfxAssets.Set(0.9f, "Spells", "Fireball 1", "Fireball 2", "Fireball 3");   // randomized fireball boom per meteor impact
+        meteor.icon = LoadSkillIcon("Spell/RockSpike");
 
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
 

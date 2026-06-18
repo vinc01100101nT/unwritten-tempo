@@ -91,6 +91,7 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextCast - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => new Color(0.55f, 0.7f, 1f);   // magic blue
+    public bool InClass(PlayerClass c) => true;        // universal basic (both classes have the bolt)
 
     static readonly Collider[] hits = new Collider[32];
 

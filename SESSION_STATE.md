@@ -5,7 +5,142 @@
 > — Claude only reminds, never commits.
 
 ---
-## ⏩ CHECKPOINT (2026-06-18, LATEST) — FIX: Warcry AoE skipped ~half its targets
+## ⏩ CHECKPOINT (2026-06-18, LATEST) — Meteor multi-hit: PER-TICK yellow totals + overkill numbers + per-hit SFX
+Branch `experiment/3d-world`, UNCOMMITTED. Reworked the RO multi-hit so the yellow combo total shows **once per
+tick** (not one across the whole skill), per-hit numbers keep showing even after a mob dies mid-sequence, **one
+meteor falls per tick**, and a **custom `hit.wav` plays on every hit beat**.
+
+**PER-HIT SOUND (custom `hit.wav`).** `MultiHitBurst.Run` gained an optional `onHitBeat` callback — fires **once
+per hit pulse** (a hit landed on ≥1 mob), NOT per-mob (so a pack doesn't stack N copies into mush) and NOT per
+tick. `Player3DMeteor` got a `hitSfx` `SfxSet` field, passed as `() => Sfx.Play(hitSfx)`. NEW `SfxAssets.Custom(vol,
+paths…)` loads clips from arbitrary `Assets/…` paths (outside the TomMusic pack); `Build25DSpike` wires
+`meteor.hitSfx = SfxAssets.Custom(0.8f, "Assets/Audio/Customs/hit.wav")`.
+
+**PER-METEOR FIREBALL whoosh (staggered) + hit-interval tuning.** `Player3DMeteor.hitInterval` 0.3 → 0.1 → **0.2**.
+NEW `meteorSfx` `SfxSet` plays once per METEOR **on LAUNCH** — wired to randomized **Fireball 1/2/3** from `Spells`
+(`SfxSet.Pick` randomizes). `CastAt` now starts a **`MeteorShower` coroutine** that spawns the meteors one at a
+time, `meteorInterval` (1.2s) apart — so each meteor is its OWN fall animation with its OWN fireball whoosh
+(replaced the old simultaneous staggered-HEIGHT spawn, which fired all 3 whooshes the same frame). Coroutine
+survives `enabled=false` (class switch); impacts stay `meteorInterval` apart so the damage cadence is unchanged.
+Impact `onTick` is explosion-FX-only (no boom). Added `using System.Collections;`.
+
+**SCREEN SHAKE on each meteor impact.** NEW reusable shake in `CameraFollow3D` — static `ShakeMain(magnitude,
+duration)` + `Main` singleton; the offset is applied in `LateUpdate` ON TOP of the smoothed follow (and undone
+next frame so it never feeds back into `SmoothDamp`), camera-local screen-plane jitter with linear decay,
+overlapping shakes take strongest+longest. Alloc-free + no-op when idle. `Player3DMeteor.DetonateTick` calls it
+per meteor impact; tunable `shakeStrength` (0.3) + `shakeDuration` (0.18) fields. **Code-only, NO re-bake** (the
+new float fields take their inline defaults on the baked player; only the audio CLIPS needed the re-bake).
+
+⚠️ **RE-BAKE Setup Systems Scene** to put the clips + new `hitInterval` 0.2 onto the baked player (new serialized
+fields default empty/old value until a fresh `AddComponent` on re-bake; tune volumes/`meteorInterval` on the component).
+
+**`MultiHitBurst.cs`** — `totals[]`/`totalPopups[]` are now **reset at the start of EACH tick** (and the
+popup released at the tick's end), so a 3-tick skill pops **3 separate rising yellow totals** per mob: each
+appears on its tick's FIRST hit, accumulates over the tick's hits, then rises + fades when the tick ends.
+(Before: one running total across all 15 hits, released only at the very end.)
+**`DamagePopup.cs`** — `SpawnHeld`/`SetHeld`/`Release`: a held, live-updating number that sits + pulses while
+it accumulates, then rises+fades on Release. `MaxHold` 8s failsafe.
+**`Health.TakeMagicDamageOverkill`** — always pops a damage number, **even on an already-dead mob** (HP floors
+at 0, death fires once). So the flurry's remaining ticks still show over a mob that died partway (RO overkill).
+**`Player3DMeteor`** — now drops **ONE meteor PER TICK** (a 3-meteor shower). All meteors launch at once but
+from **staggered heights** (higher = lands later, same fall speed) so impacts are ~`meteorInterval` (1.2s) apart
+**without a coroutine** — each `Projectile3D` is self-contained (survives a mid-cast class switch). Each meteor's
+`onArrive` → `DetonateTick` = a **1-tick** `MultiHitBurst.Run` (5 hits + its own yellow total + 1 explosion), so
+the numbers land exactly when that meteor hits. Per-hit dmg = `damageMult / (ticks×hitsPerTick)` = `/15`, so the
+shower deals the SAME total as before (visual split, not a buff; bump `damageMult` if numbers read small). New
+fields: `meteorInterval` (1.2, gap between impacts) + `meteorScatter` (0.6, horizontal spread). Removed the now-
+unused `tickInterval`. **3 ticks × 5 hits = 15** unchanged.
+
+TEST: Mage → press **3** → click a pack → **3 meteors rain down one after another**; each impact pops its own
+explosion + 5 purple per-hit numbers + a rising yellow total, and the numbers keep counting over mobs that die
+mid-burst. Tune `meteorInterval` for how fast the shower falls.
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — Meteor: yellow combo TOTAL + ground-target reticle (circle)
+Branch `experiment/3d-world`, UNCOMMITTED. Two polish asks on the multi-hit Meteor — **all code-only** except
+the bigger radius (see re-bake).
+
+**1. RO-style yellow COMBO TOTAL.** `MultiHitBurst.Run`'s `onHit` now RETURNS the damage it dealt; the burst
+sums it per mob and, when the ticks finish, pops a **big bright-yellow total** over each mob (1.7× size) — the
+individual purple per-tick numbers still flash (exactly like RO: hit-flurry + combo number). `DamagePopup`
+gained a `scaleMult` overload (`Spawn/SpawnText(..., float scaleMult)`) for the bigger number. Total shows over
+kills too (the GameObject lingers during the death dissolve).
+
+**2. GROUND-TARGET RETICLE.** NEW reusable **`GroundTargeter.cs`** — `Begin(player, radius, castRange, onConfirm)`
+puts you in AIM mode: a **LineRenderer circle** (sized to the AoE) follows the cursor on the ground, clamped to
+castRange. **Left-click = drop**, **Esc / re-press = cancel**. While `GroundTargeter.Active`,
+`Player3DController.ReadInput` skips (the confirm click doesn't also move you). MP/cooldown are spent only on
+CONFIRM (cancel = free). **`Player3DMeteor`** rewired: `Activate()` enters aim → `CastAt(point)` casts; **radius
+3→4.5, castRange 9→11** (bigger circle). New flow: press **3** → circle on cursor → click ground to drop.
+
+**⚠️ RE-BAKE: Setup Systems Scene** — ONLY to pick up the bigger `radius`/`castRange` defaults on the already-
+baked Meteor (serialized at the old 3/9). The reticle, click-to-place, yellow total, and multi-hit all work
+**code-only** (just a smaller circle until re-baked). TEST: Mage → press 3 → orange circle follows mouse →
+click a pack → meteor drops, 3 purple ticks/mob + a yellow TOTAL, some stun. Esc cancels with no cost.
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — RO-style MULTI-HIT + STATUS (stun) on Meteor
+Branch `experiment/3d-world`, UNCOMMITTED. The "one cast, several damage ticks + per-hit proc" RO pattern,
+built as reusable systems and applied to Meteor.
+
+**NEW reusable `MultiHitBurst.cs`** — `MultiHitBurst.Run(center, radius, hits, interval, onHit)` snapshots the
+mobs in a blast ONCE (death-safe, like the Warcry fix), then calls `onHit(mob, hitIndex)` for each living
+target across `hits` waves spaced `interval` apart (numbers pop in sequence). Runs on its OWN GameObject, so it
+survives even if the casting skill is disabled (class switch) mid-burst.
+**NEW reusable `StatusFX.cs`** — a looping indicator that follows a unit + billboards for a duration
+(generalized [[GuardShieldFX]]); self-destroys when the unit is destroyed.
+**NEW reusable `MonsterAI3D.Stun(seconds)`** — freezes the mob (reuses the `Stagger` freeze = no move/attack)
++ shows a spinning **swirl over its head** (`FX/Magic/Spirit`, via StatusFX) + a "Stun!" popup (once, no spam
+on re-stun). `stunSheet` assigned to ALL mobs in `BuildMonster`; null sheet = freeze+popup, no swirl.
+
+**METEOR is now multi-hit + per-hit stun** — `Player3DMeteor.Detonate` → `MultiHitBurst.Run`. Defaults: **3
+hits**, `hitInterval` 0.12s, each tick rolls **its own** magic damage (`damageMult/hits` = the total split, so
+it's NOT a power buff) AND **its own stun proc** (`stunChance` 0.25, `stunSeconds` 1.5). 3×25% ≈ 58% to lock a
+mob. All knobs on the `Player3DMeteor` component. This is the template for adding multi-hit/procs to other
+skills (Fireball/Bash/… just call `MultiHitBurst.Run` or roll a status in their hit).
+
+**⚠️ RE-BAKE:** **Populate Mobs (Nature)** ONLY (mobs get `stunSheet` for the swirl). Meteor's multi-hit +
+stun-freeze + "Stun!" popup are **code-only** (new fields default; works without re-bake — just no swirl until
+mobs are re-baked). TEST: P → Class ▸ Mage → press **3** on a pack → meteor falls, **3 damage numbers per mob
+in sequence**, some mobs freeze with a head-swirl + "Stun!". **COMMIT the pile when ready (USER's job).**
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — M1: MAGE (class #2) + projectile system + class toggle
+Branch `experiment/3d-world`, UNCOMMITTED. The second class kit + the long-promised Flam projectile.
+
+**NEW reusable `Projectile3D.cs`** — a traveling billboard projectile: flies from a point toward a Transform
+(homes) or a fixed fallback point, fires an on-arrive callback (caller applies damage) + optional impact FX,
+then self-destroys. Frames via SpriteSheetCache; created per shot like SlashEffect. Powers the Flam fireball
+AND the Mage's Fireball/Meteor.
+
+**FLAM MOB now lobs a VISIBLE fireball** — `MonsterAI3D` magic attack: if `projectileSheet` set (assigned to
+magic mobs in `BuildMonster` = `FX/Projectile/Fireball`), spawn a Projectile3D at the player; the magic damage
+lands ON ARRIVAL (was instant). Null sheet = old instant touch (fallback). Also added **`MonsterAI3D.Slow(factor,
+secs)`** (chills move speed; applied each frame) for Frost Nova.
+
+**MAGE KIT (chosen: Fireball · Frost Nova · Meteor)** — 3 new `IHotbarSkill` components mirroring the caster
+template: **`Player3DFireball`** (1: homing projectile nuke, explosion impact), **`Player3DFrostNova`** (2:
+PBAoE magic dmg + Slow, two-pass collect-then-apply à la the Warcry fix), **`Player3DMeteor`** (3: ground-
+targeted — falling meteor IS the telegraph — AoE on impact; uses new `Player3DController.GroundUnderCursor`).
+Bolt (Q) stays the universal basic (icon swapped to `Spell/OrbLight` so it's distinct from Mage Fireball).
+
+**CLASS SYSTEM (minimal, real)** — `enum PlayerClass {Swordsman, Mage}` + `ClassState` (PlayerPrefs). Every
+skill now implements **`IHotbarSkill.InClass(c)`** (Swordsman kit → Swordsman, Mage kit → Mage, Bolt → both).
+`Player3DController` bootstraps BOTH kits and `ApplyClass(c)` **enables only the chosen class's components**
+(disabled = no keypress + filtered off the bar) then calls `HotbarPanel.RebuildRequested`. `HotbarPanel` now
+shows only ENABLED skills + has `Rebuild()`. **Switch live via the DevSettings (P) panel → "Class" ▸ "Mage
+(off = Swordsman)"** → swaps kit + rebuilds hotbar, persists.
+
+**⚠️ RE-BAKES:** **Setup Systems Scene** (player gets Mage components + FX/icons + Bolt icon) + **Populate Mobs
+(Nature)** (Flam projectile). NOT Build UI Shell (HotbarPanel code-only). Without re-bake: Mage self-bootstraps
+asset-less (text labels, instant spells), Flam stays instant — functional, no visuals. TEST: P → Class ▸ Mage →
+bar shows Fireball/Frost/Meteor/Bolt; 1 = flying fireball→boom, 2 = frost ring slows mobs, 3 = click ground →
+meteor falls; get hit by a Flam mob = incoming fireball. **COMMIT the pile when ready (USER's job).**
+
+**NEXT (M1):** that's the combat-variety slice done. Remaining M1 → **M2** (one region: town + quests + dungeon).
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — FIX: Warcry AoE skipped ~half its targets
 Branch `experiment/3d-world`, UNCOMMITTED. **Code-only, no re-bake.** `Player3DWarcry.Activate` damaged mobs
 while iterating `MonsterAI3D.Active` by index — but a one-shot kill removes the mob from `Active` mid-loop
 (Health.Die → DeathDissolve disables MonsterAI3D → OnDisable → `Active.Remove`), shifting indices so `i++`

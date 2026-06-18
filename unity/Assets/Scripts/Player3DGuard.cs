@@ -101,6 +101,7 @@ public class Player3DGuard : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => GuardColor;   // defensive blue
+    public bool InClass(PlayerClass c) => c == PlayerClass.Swordsman;
 
     static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 

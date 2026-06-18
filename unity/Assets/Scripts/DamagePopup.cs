@@ -34,19 +34,56 @@ public class DamagePopup : MonoBehaviour
     static Transform camT;                                   // cached camera transform for billboarding
 
     /// <summary>Spawn a number at a world position (a head offset is added for you).</summary>
-    public static void Spawn(Vector3 worldPos, int amount, Color color)
+    public static void Spawn(Vector3 worldPos, int amount, Color color) => Spawn(worldPos, amount, color, 1f);
+
+    /// <summary>As <see cref="Spawn(Vector3,int,Color)"/> but at <paramref name="scaleMult"/>× size — e.g. a
+    /// big yellow multi-hit TOTAL.</summary>
+    public static void Spawn(Vector3 worldPos, int amount, Color color, float scaleMult)
     {
         if (amount <= 0) return;
-        SpawnText(worldPos, amount.ToString(), color);
+        SpawnText(worldPos, amount.ToString(), color, scaleMult);
     }
 
     /// <summary>Spawn arbitrary floating text (e.g. "+10" for heals, "MISS").</summary>
-    public static void SpawnText(Vector3 worldPos, string label, Color color)
+    public static void SpawnText(Vector3 worldPos, string label, Color color) => SpawnText(worldPos, label, color, 1f);
+
+    /// <summary>As <see cref="SpawnText(Vector3,string,Color)"/> but at <paramref name="scaleMult"/>× size.</summary>
+    public static void SpawnText(Vector3 worldPos, string label, Color color, float scaleMult)
     {
         if (string.IsNullOrEmpty(label)) return;
         EnsureHost();
         var popup = pool.Count > 0 ? pool.Pop() : Create();
-        popup.Begin(worldPos, label, color);
+        popup.Begin(worldPos, label, color, scaleMult);
+    }
+
+    /// <summary>Spawn a HELD number that stays put (no rise/fade) and can be UPDATED — for a live combo total
+    /// that accumulates across a multi-hit. Update it with <see cref="SetHeld"/>, then <see cref="Release"/> to
+    /// let it rise + fade. Returns the handle.</summary>
+    public static DamagePopup SpawnHeld(Vector3 worldPos, int amount, Color color, float scaleMult)
+    {
+        EnsureHost();
+        var popup = pool.Count > 0 ? pool.Pop() : Create();
+        popup.Begin(worldPos, amount.ToString(), color, scaleMult);
+        popup.held = true;
+        popup.holdAge = 0f;
+        return popup;
+    }
+
+    /// <summary>Update a held popup's value + position (resets its idle failsafe). No-op once released.</summary>
+    public void SetHeld(int amount, Vector3 worldPos)
+    {
+        if (!held) return;
+        text.text = amount.ToString();
+        transform.position = worldPos + new Vector3(0f, 0.5f, 0f);
+        holdAge = 0f;
+    }
+
+    /// <summary>Stop holding — the popup now rises + fades like a normal number.</summary>
+    public void Release()
+    {
+        if (!held) return;
+        held = false;
+        age = 0f;   // fresh fade starting now
     }
 
     // The shared canvas. Recreated lazily if a scene unload destroyed it (the pool is cleared then, since
@@ -96,22 +133,40 @@ public class DamagePopup : MonoBehaviour
     Text text;
     Color startColor;
     float age;
+    float scaleMult = 1f;
+    bool held;          // a live combo total: stays put + updatable until Release()
+    float holdAge;      // failsafe so a never-released held popup can't get stuck on screen
+    const float MaxHold = 8f;
 
-    // (Re)activate this pooled popup at a fresh position with new text/colour.
-    void Begin(Vector3 worldPos, string label, Color color)
+    // (Re)activate this pooled popup at a fresh position with new text/colour/size.
+    void Begin(Vector3 worldPos, string label, Color color, float mult)
     {
         text.text = label;
         text.color = color;
         startColor = color;
+        scaleMult = Mathf.Max(0.1f, mult);
         age = 0f;
+        held = false;       // SpawnHeld re-sets this true after Begin; a normal reuse starts un-held
+        holdAge = 0f;
         // lift to the head, plus a little horizontal scatter so rapid hits don't stack exactly
         transform.position = worldPos + new Vector3(Random.Range(-0.15f, 0.15f), 0.5f, 0f);
-        transform.localScale = Vector3.one * BaseScale;
+        transform.localScale = Vector3.one * (BaseScale * scaleMult);
         gameObject.SetActive(true);
     }
 
     void Update()
     {
+        // Held (live combo total): don't rise/fade/recycle — just sit and pulse while it accumulates.
+        if (held)
+        {
+            holdAge += Time.deltaTime;
+            float beat = 1f + 0.12f * Mathf.Abs(Mathf.Sin(holdAge * 9f));
+            transform.localScale = Vector3.one * (BaseScale * scaleMult * beat);
+            text.color = startColor;
+            if (holdAge >= MaxHold) Release();   // failsafe: updates stopped → let it fade instead of sticking
+            return;
+        }
+
         age += Time.deltaTime;
         transform.position += Vector3.up * (riseSpeed * Time.deltaTime);
 
@@ -121,7 +176,7 @@ public class DamagePopup : MonoBehaviour
 
         // a quick "pop": briefly larger at spawn, then settle to the base size
         float pop = 1f + 0.4f * Mathf.Clamp01(1f - age * 6f);
-        transform.localScale = Vector3.one * (BaseScale * pop);
+        transform.localScale = Vector3.one * (BaseScale * scaleMult * pop);
 
         if (age >= lifetime) Recycle();
     }
