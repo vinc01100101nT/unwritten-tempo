@@ -33,6 +33,24 @@ public class PassiveRanks
 
     public int RanksIn(StatId stat) => ranks.TryGetValue(stat, out var r) ? r : 0;
 
+    /// <summary>Read-only view of every invested rank — used by the save system to snapshot the walk.</summary>
+    public IReadOnlyDictionary<StatId, int> RankMap => ranks;
+
+    /// <summary>Restore the whole passive state from a save (parallel arrays, since JsonUtility can't
+    /// serialize a Dictionary). Replaces any current ranks/leader/banked total and fires
+    /// <see cref="OnChanged"/> so the stat layer + K-panel refresh.</summary>
+    public void LoadState(StatId[] stats, int[] values, StatId leader, bool hasLeader, int banked)
+    {
+        ranks.Clear();
+        if (stats != null && values != null)
+            for (int i = 0; i < stats.Length && i < values.Length; i++)
+                ranks[stats[i]] = values[i];
+        Leader = leader;
+        HasLeader = hasLeader;
+        BankedPoints = Math.Max(0, banked);
+        OnChanged?.Invoke();
+    }
+
     /// <summary>The passive multiplier for a stat (0.32 == +32%), straight off the soft-cap curve.</summary>
     public float Percent(StatId stat) => SkillRing.Percent(stat, RanksIn(stat));
 

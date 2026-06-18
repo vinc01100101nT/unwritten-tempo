@@ -63,6 +63,11 @@ frame-time or GC spike when it runs ×N every frame. The rules below are how we 
 - ❌ Setting `Text.text = $"..."` every frame when the value rarely changes. → Cache the last value and only
   rewrite on change (see `TrainingDummy`). Each assignment both allocates a string AND forces a canvas rebuild.
 - ❌ One `Canvas` per HUD widget. Canvases are batch/rebuild boundaries — fewer, shared canvases batch better.
+- ❌ A per-frame boundary check (`InRange`, "am I close enough?") that **gates a hot path** with no hysteresis.
+  A target sitting right at the threshold (e.g. a kiting mob at attack-range edge) flips the check true/false
+  every frame, thrashing whatever it gates — re-routing (`StartRoute`/`FindPath`), restarting an animation, or
+  re-firing SFX. → Add **hysteresis**: enter at `range`, stay engaged until `range × k` (see
+  `Player3DAttacker.EngagedWith`); keep the strict check only for the irreversible action (landing the hit).
 
 ---
 
@@ -80,14 +85,20 @@ frame-time or GC spike when it runs ×N every frame. The rules below are how we 
 
 ## How we verify (no local Play loop)
 
-There's **no automated Play loop** — the dev presses **Play** in the Unity Editor to verify. When you
-make a perf change, ask them to:
+There's **no automated Play loop** — the dev presses **Play** in the Unity Editor to verify. Two tools:
 
-1. Open **Window ▸ Analysis ▸ Profiler**, enter Play, and watch the **CPU** track during auto-combat with
-   a full field of mobs. The big wins show up as a lower, flatter **GC Alloc** (ideally ~0 B/frame during a
-   steady fight) and fewer spikes.
-2. Sanity-check visuals still work: damage numbers/MISS/heal text appear and face the camera; mobs animate
-   and route around props; depth sorting (walking behind/in front of trees) is correct; day/night still
-   transitions.
+- **`PerfHud`** (in-game overlay, F3) — the quick glance. Shows `GC/s`, worst-frame peak, FPS, mob count.
+  During combat `GC/s` should be ~0 (a small steady floor is the HUD itself) and peak should stay in bytes,
+  not KB. Use this for the routine check.
+- **Profiler ▸ Hierarchy** — the authoritative number. Click a CPU spike → expand
+  `PlayerLoop ▸ UpdateScene ▸ … ▸ BehaviourUpdate` → read **GC Alloc** per script. Target **0 B** from
+  gameplay scripts during a steady fight. The HUD never pollutes these rows (it's its own marker).
+
+Recurring process: the **`/perf-checkup`** command runs the full loop (scan → measure → fix → re-measure →
+log). Append every checkup's result to **`PERF_LOG.md`** (the history; this file is the rules).
+
+Also sanity-check visuals after a change: damage numbers/MISS/heal text appear and face the camera; mobs
+animate and route around props; depth sorting (behind/in front of trees) is correct; day/night transitions.
+Judge true frame-time from a **Development Build** — the editor inflates it.
 
 If you add a new pooled/cached system, document it in the table above so the next agent reuses it.

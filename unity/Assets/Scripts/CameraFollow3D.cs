@@ -6,8 +6,8 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// Orbiting tilted follow-camera for the 2.5D world. Tracks the target (player) and supports:
-///   • Scroll wheel         → zoom (<see cref="distance"/>).
-///   • Q / E or right-drag  → orbit (<see cref="yaw"/> + <see cref="height"/>) around the target.
+///   • Scroll wheel  → zoom (<see cref="distance"/>).
+///   • Right-drag    → orbit (<see cref="yaw"/> + <see cref="height"/>) around the target.
 /// Position = target + yaw-rotated (0, height, -distance); always looks at the target.
 ///
 /// Also owns the camera's transparency sort axis: each frame it points it along the camera's
@@ -34,7 +34,6 @@ public class CameraFollow3D : MonoBehaviour
 
     [Header("Sensitivity")]
     public float zoomStep = 2f;             // world-units of pull-back per scroll notch
-    public float keyOrbitSpeed = 90f;       // deg/sec for Q / E
     public float dragYawSpeed = 0.25f;      // deg/pixel for right-drag X
     public float dragHeightSpeed = 0.04f;   // units/pixel for right-drag Y
 
@@ -75,6 +74,8 @@ public class CameraFollow3D : MonoBehaviour
 
     void HandleInput()
     {
+        if (DevSettings.Blocking) return;   // cursor is over the dev-settings panel — don't zoom/orbit while tuning
+
         int zoom = ScrollDir();
         if (zoom != 0)
         {
@@ -86,9 +87,6 @@ public class CameraFollow3D : MonoBehaviour
                 height = Mathf.Clamp(height * (newDist / distance), minHeight, maxHeight);
             distance = newDist;
         }
-
-        if (KeyHeldQ()) yaw -= keyOrbitSpeed * Time.deltaTime;
-        if (KeyHeldE()) yaw += keyOrbitSpeed * Time.deltaTime;
 
         Vector2 mouse = MousePos();
         Vector2 delta = mouse - lastMouse;
@@ -129,19 +127,5 @@ public class CameraFollow3D : MonoBehaviour
         if (Mouse.current != null && Mouse.current.rightButton.isPressed) return true;
 #endif
         return Input.GetMouseButton(1);
-    }
-    static bool KeyHeldQ()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.qKey.isPressed) return true;
-#endif
-        return Input.GetKey(KeyCode.Q);
-    }
-    static bool KeyHeldE()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.eKey.isPressed) return true;
-#endif
-        return Input.GetKey(KeyCode.E);
     }
 }

@@ -165,14 +165,12 @@ public class Player3DController : MonoBehaviour
         if (autoIndicator != null) autoIndicator.Show(AutoActive);   // show the "AUTO" tag only while roaming
     }
 
-    // Tick footstep sounds while walking; reset so the first step plays promptly on the next move.
+    // Tick footstep sounds while walking. nextStep is a persistent cooldown — we DON'T reset it when
+    // momentarily stopped, so a stand/chase stutter (e.g. pacing a kiting mob at range-edge) can't
+    // machine-gun the step SFX every other frame; steps still fire at most once per stepInterval.
     void Footsteps(bool moving)
     {
-        if (moving)
-        {
-            if (Time.time >= nextStep) { Sfx.Play(footstepSfx); nextStep = Time.time + stepInterval; }
-        }
-        else nextStep = 0f;
+        if (moving && Time.time >= nextStep) { Sfx.Play(footstepSfx); nextStep = Time.time + stepInterval; }
     }
 
     // Procedural idle breathing — a soft squash-stretch while standing still; base scale otherwise
@@ -195,6 +193,7 @@ public class Player3DController : MonoBehaviour
     void ReadInput()
     {
         if (cam == null) return;
+        if (DevSettings.Blocking) return;   // cursor is over the dev-settings panel — don't leak clicks/keys into the world
 
         if (KeyS()) { Stop(); return; }
         if (KeyT()) { ToggleAuto(); return; }   // T toggles roam auto-combat; S stops it
@@ -258,10 +257,10 @@ public class Player3DController : MonoBehaviour
             routing = false; path.Clear();
             if (attackTarget == null) return Vector3.zero;   // nothing in range — stand and wait for a wanderer
         }
-        if (attacker != null && attacker.InRange(attackTarget))
+        if (attacker != null && attacker.EngagedWith(attackTarget))
         {
             routing = false; path.Clear();
-            attacker.TryAttack(attackTarget);
+            attacker.TryAttack(attackTarget);    // only actually swings when strictly InRange + off cooldown
             FaceTarget();
             return Vector3.zero;                 // in range: stand and swing
         }
@@ -289,10 +288,10 @@ public class Player3DController : MonoBehaviour
             order = Order.Idle;
             return Vector3.zero;
         }
-        if (attacker != null && attacker.InRange(attackTarget))
+        if (attacker != null && attacker.EngagedWith(attackTarget))
         {
             routing = false; path.Clear();
-            attacker.TryAttack(attackTarget);
+            attacker.TryAttack(attackTarget);    // only actually swings when strictly InRange + off cooldown
             FaceTarget();
             return Vector3.zero;                 // in range: stand and swing
         }
@@ -314,6 +313,10 @@ public class Player3DController : MonoBehaviour
 
     /// <summary>Cancel any move/attack order (used on map arrival by PersistentPlayer3D).</summary>
     public void Halt() => Stop();
+
+    /// <summary>Re-publish <see cref="snapRadiusPixels"/> to the static the cursor pick reads, so the
+    /// dev-settings panel can tune target magnetism live (the field is only mirrored in Awake otherwise).</summary>
+    public void ApplySnapRadius() => snapRadius = snapRadiusPixels;
 
     void OnDestroy() { if (autoIndicator != null) Destroy(autoIndicator.gameObject); }   // its own canvas — clean it up
 

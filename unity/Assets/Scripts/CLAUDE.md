@@ -25,10 +25,16 @@ allocation to **~0 B/frame**. Don't reintroduce that class of mistake.
 - Hot collision queries → `Physics.*NonAlloc` with a reused buffer
 
 ### Verifying perf changes
-There's **no local Play loop** — the dev presses Play. To check a change, ask them to open the Profiler
-(Window ▸ Analysis ▸ Profiler), and in **Hierarchy** view watch the **GC Alloc** column during auto-combat;
+There's **no local Play loop** — the dev presses Play. Quick glance: the in-game **`PerfHud`** overlay
+(press **F3**) shows `GC/s`, worst-frame peak, FPS, and mob count — `GC/s` should be ~0 during combat.
+Precise number: Profiler ▸ **Hierarchy**, watch the **GC Alloc** column per script during auto-combat;
 target ~0 B/frame from gameplay scripts. In-Editor frame time is inflated by editor overhead — judge true
 frame time from a **Development Build**, not the editor.
+
+### Recurring checkup
+Run **`/perf-checkup`** (scan → measure → fix → re-measure → log). Append each result to **`PERF_LOG.md`**
+(the history; `PERFORMANCE.md` is the rules). Trigger it after adding any per-frame/per-hit system or before
+merging — regressions follow code changes, not the calendar.
 
 ## Other house rules
 - User is new to Unity / strong in JS-TS — explain C#/Unity by analogy when surfacing changes.

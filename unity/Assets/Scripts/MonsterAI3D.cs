@@ -39,6 +39,14 @@ public class MonsterAI3D : MonoBehaviour
     public float touchRange = 0.9f;
     public float touchInterval = 1f;
 
+    [Header("Behavior style")]
+    [Tooltip("0 = melee (close in and bite). >0 = HOLD this far from the player and attack from range " +
+             "(a caster/archer kites). For ranged mobs set touchRange ≥ this so they can land hits while holding.")]
+    public float preferredRange = 0f;
+    [Tooltip("0 = never flee. Otherwise, once HP drops below this fraction of max while aggroed, the mob turns " +
+             "and runs from the player — a skittish 'wounded animal' that breaks off when hurt.")]
+    [Range(0f, 1f)] public float fleeHpFraction = 0f;
+
     PathAgent3D agent;
     AttackLunge lunge;
     Transform player;
@@ -111,8 +119,7 @@ public class MonsterAI3D : MonoBehaviour
 
         if (chasing)
         {
-            if (toPlayerSqr <= stopDistance * stopDistance) agent.Halt();
-            else agent.MoveToward(player.position);
+            Pursue(pos, toPlayerSqr);
         }
         else
         {
@@ -124,6 +131,44 @@ public class MonsterAI3D : MonoBehaviour
                 nextWander = Time.time + Random.Range(wanderPauseMin, wanderPauseMax);
             }
         }
+    }
+
+    // The chase brain, split by behavior style. All branches reuse the per-frame distance already computed
+    // in Update — no extra Find/GetComponent/alloc (PERFORMANCE.md: nothing new in the per-mob hot path).
+    void Pursue(Vector3 pos, float toPlayerSqr)
+    {
+        // Skittish: wounded enough → break off and run from the player.
+        if (fleeHpFraction > 0f && Health != null && Health.Current <= Health.maxHealth * fleeHpFraction)
+        {
+            agent.MoveToward(AwayPoint(pos));
+            return;
+        }
+
+        // Ranged/caster: hold the pocket at preferredRange — kite back if too close, close in if too far,
+        // otherwise stand and let the touch-attack above fire (touchRange is set ≥ preferredRange).
+        if (preferredRange > 0f)
+        {
+            float near = preferredRange * 0.8f;
+            if (toPlayerSqr < near * near)            agent.MoveToward(AwayPoint(pos));
+            else if (toPlayerSqr > preferredRange * preferredRange) agent.MoveToward(player.position);
+            else                                       agent.Halt();
+            return;
+        }
+
+        // Melee: close to stopDistance and bite (the original behavior).
+        if (toPlayerSqr <= stopDistance * stopDistance) agent.Halt();
+        else agent.MoveToward(player.position);
+    }
+
+    // A point ~2 units from the player, directly opposite this mob — the target for kiting / fleeing.
+    // Planar; locals only (no allocation).
+    Vector3 AwayPoint(Vector3 pos)
+    {
+        Vector3 away = pos - player.position;
+        away.y = 0f;
+        if (away.sqrMagnitude < 0.0001f) away = transform.forward;   // on top of the player → pick any direction
+        away.Normalize();
+        return pos + away * 2f;
     }
 
     static float PlanarSqr(Vector3 a, Vector3 b)

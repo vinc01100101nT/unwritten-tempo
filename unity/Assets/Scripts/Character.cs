@@ -251,6 +251,20 @@ public class Character : MonoBehaviour
         Passives.SetBankedPoints(level - Passives.TotalRanks());
     }
 
+    /// <summary>Dev/testing: set the character level at runtime — reconciles the stat/skill point pools
+    /// and refills HP/MP, exactly like dragging the inspector <c>level</c> field (see <see cref="OnValidate"/>).
+    /// Used by the DevSettings (P) panel's "Level" knob.</summary>
+    public void SetLevel(int newLevel)
+    {
+        level = Mathf.Max(1, newLevel);
+        ReconcilePointsToLevel();
+        CurrentHP = MaxHP;
+        CurrentMP = MaxMP;
+        OnStatsChanged?.Invoke();
+        OnHealthChanged?.Invoke();
+        OnManaChanged?.Invoke();
+    }
+
     public Item GetEquipped(EquipSlotType slot)
         => equipped.TryGetValue(slot, out var item) ? item : null;
 
@@ -391,5 +405,61 @@ public class Character : MonoBehaviour
         }
         OnStatsChanged?.Invoke();
         OnHealthChanged?.Invoke();
+    }
+
+    // ---- Save / load (M1) -----------------------------------------------------
+    // The progression spine — level, XP, HP/MP, the six primary stats + unspent points, and the
+    // Trio-Ring passive walk. Equipment/bag persistence is deliberately out of scope here (it lives
+    // in the UI layer and lands with the inventory milestone, M3). These two methods are the only
+    // place that touches the private fields, so SaveSystem stays free of Character internals.
+
+    /// <summary>Snapshot the character's progression into a serializable <see cref="SaveData"/>.</summary>
+    public SaveData CaptureSave()
+    {
+        var d = new SaveData
+        {
+            version    = SaveData.CurrentVersion,
+            level      = level,
+            xp         = XP,
+            currentHP  = CurrentHP,
+            currentMP  = CurrentMP,
+            statPoints = StatPoints,
+            primary    = (int[])primary.Clone(),
+        };
+
+        var map = Passives.RankMap;
+        d.rankStats  = new StatId[map.Count];
+        d.rankValues = new int[map.Count];
+        int i = 0;
+        foreach (var kv in map) { d.rankStats[i] = kv.Key; d.rankValues[i] = kv.Value; i++; }
+        d.bankedPoints = Passives.BankedPoints;
+        d.leader       = Passives.Leader;
+        d.hasLeader    = Passives.HasLeader;
+        return d;
+    }
+
+    /// <summary>Apply a loaded <see cref="SaveData"/>, overwriting the current runtime progression.
+    /// Stats are set first so HP/MP clamp against the restored max; a save written while dead
+    /// (HP 0) revives to full rather than loading you into the death screen.</summary>
+    public void RestoreSave(SaveData d)
+    {
+        if (d == null) return;
+
+        level      = Mathf.Max(1, d.level);
+        XP         = Mathf.Max(0, d.xp);
+        StatPoints = Mathf.Max(0, d.statPoints);
+        if (d.primary != null)
+            for (int i = 0; i < primary.Length && i < d.primary.Length; i++)
+                primary[i] = Mathf.Max(1, d.primary[i]);
+
+        Passives.LoadState(d.rankStats, d.rankValues, d.leader, d.hasLeader, d.bankedPoints);
+
+        // HP/MP last, against the now-restored maxima. Never load into a dead state.
+        CurrentHP = Mathf.Clamp(d.currentHP <= 0 ? MaxHP : d.currentHP, 1, MaxHP);
+        CurrentMP = Mathf.Clamp(d.currentMP, 0, MaxMP);
+
+        OnStatsChanged?.Invoke();
+        OnHealthChanged?.Invoke();
+        OnManaChanged?.Invoke();
     }
 }

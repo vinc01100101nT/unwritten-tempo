@@ -171,6 +171,9 @@ public static class UIShellBuilder
         var mp = NewText("Label", mana.transform, "MP", 13, FontStyle.Bold, TextAnchor.MiddleCenter, true);
         Fill(mp.rectTransform, Vector2.zero, Vector2.zero);
 
+        // Hotkey legend, sitting just above the mana bar (lower-left stack: hotkeys ▸ MP ▸ HP).
+        BuildHotkeyLegend(canvas);
+
         var holder = NewColor("HUD_Hotbar", canvas, new Color(0, 0, 0, 0f));
         Anchor(holder.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
         holder.rectTransform.anchoredPosition = new Vector2(0, 14);
@@ -182,6 +185,42 @@ public static class UIShellBuilder
         h.childForceExpandWidth = h.childForceExpandHeight = false;
         for (int i = 0; i < 6; i++)
             NewSliced("Hotslot", holder.transform, cellSprite).rectTransform.sizeDelta = new Vector2(48, 48);
+    }
+
+    // A small always-on controls cheat-sheet in the lower-left, just above the HP/MP bars.
+    // Two text columns (keys + actions) inside a themed panel; purely informational, so it
+    // never eats clicks (raycastTarget off on every graphic).
+    static void BuildHotkeyLegend(Transform canvas)
+    {
+        // Keep the two arrays in lock-step — left column = key, right column = what it does.
+        const string keys =
+            "L-Click\nR-Drag\nA\nQ\nT\nS\nC\nI\nK\nP\nEsc";
+        const string actions =
+            "Move\nOrbit camera\nArm attack (+click)\nCast spell\nAuto-combat\nStop\nCharacter\nInventory\nSkills\nDev panel\nClose / cancel";
+
+        var panel = NewSliced("HUD_Hotkeys", canvas, panelSprite);
+        Anchor(panel.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);   // bottom-left
+        panel.rectTransform.anchoredPosition = new Vector2(16, 74);              // above MP bar (y 48 + 18)
+        panel.rectTransform.sizeDelta = new Vector2(210, 210);
+        panel.raycastTarget = false;
+
+        var title = NewText("Title", panel.transform, "HOTKEYS", 14, FontStyle.Bold, TextAnchor.UpperCenter, true);
+        title.rectTransform.anchorMin = new Vector2(0, 1);
+        title.rectTransform.anchorMax = new Vector2(1, 1);
+        title.rectTransform.pivot = new Vector2(0.5f, 1);
+        title.rectTransform.sizeDelta = new Vector2(0, 22);
+        title.rectTransform.anchoredPosition = new Vector2(0, -8);
+        title.color = new Color(1f, 0.88f, 0.5f);   // warm accent
+        title.raycastTarget = false;
+
+        var keyText = NewText("Keys", panel.transform, keys, 13, FontStyle.Bold, TextAnchor.UpperLeft, true);
+        Fill(keyText.rectTransform, new Vector2(14, 10), new Vector2(-118, -32));
+        keyText.color = new Color(1f, 0.85f, 0.45f);   // keys stand out in amber
+        keyText.raycastTarget = false;
+
+        var actText = NewText("Actions", panel.transform, actions, 13, FontStyle.Normal, TextAnchor.UpperLeft, true);
+        Fill(actText.rectTransform, new Vector2(92, 10), new Vector2(-10, -32));
+        actText.raycastTarget = false;
     }
 
     // ---- Panels ---------------------------------------------------------------

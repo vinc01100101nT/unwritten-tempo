@@ -4,7 +4,21 @@
 > `experiment/3d-world`. **Committing/pushing to GitHub is the USER's job** — Claude only reminds, never commits.
 
 ---
-## ⏩ CHECKPOINT (2026-06-18, latest) — RO HIT/FLEE ACCURACY SYSTEM — BUILT (code)
+## ⏩ CHECKPOINT (2026-06-18, latest) — 120 FPS CAP + skill-draft steer animation
+Branch `experiment/3d-world`, UNCOMMITTED.
+- **FRAME RATE:** the game had NO cap → VSync-locked to monitor (60 Hz = 60 FPS). Now `GameSystems` sets
+  **120 FPS, VSync OFF** globally via a `[RuntimeInitializeOnLoadMethod] BootFrameRate()` (works at boot, **no
+  re-bake**). ⚠️ The "GameSystems" object never actually had the `GameSystems` COMPONENT — fixed in
+  `SystemsSceneBuilder` (`AddComponent<GameSystems>()`); re-run **Setup Systems Scene** to get the runtime
+  inspector tuner (`targetFps` + `lockToVSync`). 60 Hz monitors may TEAR at 120 (tick lockToVSync for no-tear).
+  Verify via PerfHud **F3** (editor Play-mode FPS is throttled; true 120 = Dev Build).
+- **SKILL-DRAFT STEER ANIMATION** (`SkillDraftPanel`): clipped carousel viewport; neighbor pick slides the card
+  set L/R, leader/wildcard/opening = zoom/fade, new leader ring row pulses. Eased with **smootherstep** (gentle
+  in+out), `SlideDur` 0.30s, `LayoutRebuilder.ForceRebuildLayoutImmediate` on the incoming set (no 1-frame
+  flash), unscaled time, `animating` flag gates Render, ring rows update in-place. Code-only, **no re-bake**.
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — RO HIT/FLEE ACCURACY SYSTEM — BUILT (code)
 Branch `experiment/3d-world`, UNCOMMITTED. Code-only, **no re-bake**. Replaces the earlier flat-evade hack
 (`Health.evadeChance` + `Character.BaseEvasion`/`Evasion01` — all REMOVED) with a real HIT-vs-FLEE roll.
 - **NEW `Combat.cs`** (static): `HitChance01(atkHit, defFlee) = clamp((100 + atkHit − defFlee)/100, 0.05, 0.95)`;

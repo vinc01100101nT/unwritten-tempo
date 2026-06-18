@@ -34,8 +34,7 @@ public static class NatureMobs
         { EditorUtility.DisplayDialog("Populate Mobs",
             "No ground on the 'Ground' layer in the open scene.\n\nRun New Nature Stage first.", "OK"); return; }
 
-        var tex = Build25DSpike.MonsterSheet();
-        if (tex == null)
+        if (Build25DSpike.MonsterSheet() == null)
         { EditorUtility.DisplayDialog("Populate Mobs",
             "No Ninja Adventure monster sprite sheet found under Assets/Art/NinjaAdventure/Actor/Monster.", "OK"); return; }
 
@@ -67,7 +66,7 @@ public static class NatureMobs
             if (new Vector2(hit.point.x - spawn.x, hit.point.z - spawn.z).magnitude < SpawnClearR) continue;
             if (spots.Any(p => (p - hit.point).sqrMagnitude < MobSpacing * MobSpacing)) continue;
 
-            var mob = Build25DSpike.BuildMonster(tex, hit.point, Random.value < 0.3f);   // ~30% mystic (magic attackers)
+            var mob = Build25DSpike.BuildMonster(Bestiary.WeightedPick(), hit.point);   // mixed bestiary (weighted)
             mob.transform.SetParent(root.transform, true);
             spots.Add(hit.point);
             placed++;
@@ -77,10 +76,11 @@ public static class NatureMobs
         EditorSceneManager.SaveScene(root.scene);
         Debug.Log($"[unwritten] Populated {placed} mobs onto the nature terrain.");
         EditorUtility.DisplayDialog("Populate Mobs — done",
-            $"Spawned {placed} mobs under '{Container}'.\n\n" +
+            $"Spawned {placed} mobs under '{Container}' — a mixed bestiary (Slime grunts, Bat swarmers, " +
+            "Kappa bruisers, Flam casters that kite, Cyclope darters that flee when hurt).\n\n" +
             "Press Play: LEFT-click a mob to attack (A = attack-move, S = stop). They wander, then " +
             "chase + bite when you get close.\n\n" +
-            "Re-run for a new layout, or tweak MobDensity / SpawnClearR at the top of NatureMobs.cs.", "OK");
+            "Re-run for a new layout, tweak archetypes/weights in Bestiary.cs, or MobDensity in NatureMobs.cs.", "OK");
     }
 
     [MenuItem("Tools/unwritten/Clear Mobs (Nature)", priority = 9)]

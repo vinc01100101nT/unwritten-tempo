@@ -13,6 +13,10 @@ public class Player3DAttacker : MonoBehaviour
 {
     [Tooltip("How close (world units, XZ) you must be to land a hit.")]
     public float range = 1.4f;
+    [Tooltip("Once in range, stay 'engaged' (stand & swing) until the target passes range×this. Prevents the " +
+             "stand-vs-chase decision from thrashing frame-to-frame against a target that hovers at the range " +
+             "edge (e.g. a kiting caster) — which otherwise machine-guns the step SFX and freezes the pose.")]
+    public float rangeHysteresis = 1.4f;
     [Tooltip("Seconds between auto-attacks.")]
     public float cooldown = 0.6f;
     [Tooltip("Delay between a swing starting and the hit landing (cancellable window).")]
@@ -33,6 +37,8 @@ public class Player3DAttacker : MonoBehaviour
 
     float nextSwing;
     Coroutine swing;
+    bool engaged;                         // sticky in-range state (hysteresis) for the stand-vs-chase decision
+    Health engagedTarget;                 // who `engaged` refers to, so a new target re-evaluates from scratch
     public bool Swinging => swing != null;
 
     /// <summary>
@@ -44,12 +50,27 @@ public class Player3DAttacker : MonoBehaviour
     public static float MotionScale =>
         Character.Instance != null ? 1f / Mathf.Max(0.01f, Character.Instance.AttackSpeedMult) : 1f;
 
-    public bool InRange(Health t)
+    /// <summary>Strict planar range — used to actually LAND a hit (TryAttack / the windup check).</summary>
+    public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= range;
+
+    /// <summary>Sticky version of <see cref="InRange"/> for the controller's stand-vs-chase decision:
+    /// turns true at <see cref="range"/> and stays true until the target passes range×<see cref="rangeHysteresis"/>.
+    /// Landing a hit still uses the strict <see cref="InRange"/>, so the extra margin never extends reach.</summary>
+    public bool EngagedWith(Health t)
     {
-        if (t == null || t.IsDead) return false;
+        if (t == null || t.IsDead) { engaged = false; engagedTarget = null; return false; }
+        if (t != engagedTarget) { engaged = false; engagedTarget = t; }   // new target → must reach `range` afresh
+        float d = PlanarDist(t);
+        if (d <= range) engaged = true;
+        else if (d > range * Mathf.Max(1f, rangeHysteresis)) engaged = false;
+        return engaged;
+    }
+
+    float PlanarDist(Health t)
+    {
         Vector3 a = transform.position, b = t.transform.position;
         a.y = 0f; b.y = 0f;
-        return Vector3.Distance(a, b) <= range;
+        return Vector3.Distance(a, b);
     }
 
     public void TryAttack(Health t)
@@ -91,7 +112,7 @@ public class Player3DAttacker : MonoBehaviour
         if (dealt > 0) Sfx.Play(WeaponSfx(w => w.hitSfx, defaultHitSfx));   // impact — only on a landed hit, not a MISS
     }
 
-    public void Cancel() { if (swing != null) { StopCoroutine(swing); swing = null; } }
+    public void Cancel() { if (swing != null) { StopCoroutine(swing); swing = null; } engaged = false; engagedTarget = null; }
 
     void OnDrawGizmosSelected()
     {

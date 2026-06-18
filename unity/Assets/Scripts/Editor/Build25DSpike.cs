@@ -383,30 +383,72 @@ public static class Build25DSpike
     /// can parent/position it (e.g. surface-snapped scatter on terrain).</summary>
     public static GameObject BuildMonster(Texture2D tex, Vector3 foot) => BuildMonster(tex, foot, false);
 
-    /// <summary>Build one billboard mob. <paramref name="mystic"/> = a MAGIC attacker (blue-tinted) that
-    /// hits the player's MagicDefense instead of Defense — so the magic stats have something to test.</summary>
+    /// <summary>Back-compat overload: a default melee grunt (or a magic "mystic" if <paramref name="mystic"/>)
+    /// from an explicit sheet. Used by the spike ring + training dummy. Varied spawns use the archetype
+    /// overload below (see <see cref="Bestiary"/>).</summary>
     public static GameObject BuildMonster(Texture2D tex, Vector3 foot, bool mystic)
     {
-        var go = new GameObject((mystic ? "MysticMonster_" : "Monster_") + tex.name);
-        go.transform.localScale = Vector3.one * BillboardScale;
-        go.transform.position = new Vector3(foot.x, foot.y + FootOffsetY, foot.z);
+        var arc = Bestiary.All[0];          // the Slime grunt as the baseline
+        arc.sheet = null;                   // use the caller's texture, not the archetype's sheet
+        arc.tint  = Color.white;
+        if (mystic)
+        {
+            arc.name       = "Mystic";
+            arc.attackType = MonsterAI3D.AttackType.Magic;
+            arc.tint       = new Color(0.62f, 0.72f, 1f);   // arcane blue marks a caster
+        }
+        return BuildMonster(tex, foot, arc);
+    }
+
+    /// <summary>Build a mob from a <see cref="MonsterArchetype"/>, resolving its sprite sheet by name
+    /// (falls back to the default monster sheet if that art folder is missing).</summary>
+    public static GameObject BuildMonster(in MonsterArchetype arc, Vector3 foot)
+        => BuildMonster(MonsterSheet(arc.sheet) ?? MonsterSheet(), foot, arc);
+
+    /// <summary>Core builder: stamp <paramref name="arc"/>'s stats / behavior / look onto the shared
+    /// billboard-mob template using <paramref name="tex"/> as the sprite sheet.</summary>
+    static GameObject BuildMonster(Texture2D tex, Vector3 foot, in MonsterArchetype arc)
+    {
+        float scale = arc.scale <= 0f ? 1f : arc.scale;
+        var go = new GameObject("Monster_" + (string.IsNullOrEmpty(arc.name) ? tex.name : arc.name));
+        go.transform.localScale = Vector3.one * BillboardScale * scale;
+        go.transform.position = new Vector3(foot.x, foot.y + FootOffsetY * scale, foot.z);   // scale the foot offset too
 
         var msr = go.AddComponent<SpriteRenderer>();
         ApplyBillboardLighting(msr);   // flat art + receive/cast shadows
-        if (mystic) msr.color = new Color(0.62f, 0.72f, 1f);   // arcane blue tint marks a caster
         go.AddComponent<Billboard>();
 
         var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
-        agent.moveSpeed = 2.5f; agent.agentRadius = 0.3f;
+        agent.moveSpeed = arc.moveSpeed; agent.agentRadius = 0.3f;
         var cc = go.GetComponent<CharacterController>();
         cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // walk the low-poly hills
 
         var mh = go.AddComponent<Health>();
-        mh.maxHealth = 12;
-        mh.flee = 10;             // RO FLEE: low-level mobs dodge a few of the player's swings (red MISS) until DEX climbs
+        mh.maxHealth    = arc.maxHealth;
+        mh.defense      = arc.defense;
+        mh.magicDefense = arc.magicDefense;
+        mh.flee         = arc.flee;                          // RO FLEE: dodges some of the player's swings (red MISS)
+        mh.flashColor   = arc.flash.a > 0f ? arc.flash : Color.white;
+
         var ai = go.AddComponent<MonsterAI3D>();
-        if (mystic) ai.attackType = MonsterAI3D.AttackType.Magic;
+        ai.attackType     = arc.attackType;
+        ai.attack         = arc.attack;
+        ai.hit            = arc.hit;
+        ai.xpReward       = arc.xpReward;
+        ai.damageSpread   = arc.damageSpread;
+        ai.touchRange     = arc.touchRange;
+        ai.touchInterval  = arc.touchInterval;
+        ai.moveSpeed      = arc.moveSpeed;
+        ai.aggroRadius    = arc.aggroRadius;
+        ai.leashRadius    = arc.leashRadius;
+        ai.stopDistance   = arc.stopDistance;
+        if (arc.wanderRadius > 0f) ai.wanderRadius = arc.wanderRadius;
+        ai.preferredRange = arc.preferredRange;             // >0 = caster/archer kites at range
+        ai.fleeHpFraction = arc.fleeHpFraction;             // >0 = skittish: flees when wounded
+
         go.AddComponent<BillboardAnimator3D>().sheet = tex;
+        if (arc.tint.a > 0f && arc.tint != Color.white) msr.color = arc.tint;   // tint AFTER the animator sets frames
+
         go.AddComponent<AttackLunge>();              // squash-stretch "chomp" on each bite
         var death = go.AddComponent<DeathDissolve>();   // smoke puff → remains linger → fade (no death sprite)
         death.smokeSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(SmokeSheetPath);
@@ -421,6 +463,15 @@ public static class Build25DSpike
     {
         string sheetPath = FindMonsterSheet();
         return sheetPath == null ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
+    }
+
+    /// <summary>Load a specific monster sheet by its folder name under Actor/Monster (e.g. "Slime"),
+    /// or null if that art folder doesn't exist — callers fall back to <see cref="MonsterSheet()"/>.</summary>
+    public static Texture2D MonsterSheet(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return MonsterSheet();
+        string p = $"Assets/Art/NinjaAdventure/Actor/Monster/{name}/SpriteSheet.png";
+        return File.Exists(p) ? AssetDatabase.LoadAssetAtPath<Texture2D>(p) : null;
     }
 
     static string FindMonsterSheet()
