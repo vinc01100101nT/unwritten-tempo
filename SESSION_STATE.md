@@ -1,11 +1,221 @@
 # SESSION_STATE — unwritten (Unity 2D)
 
-> ⚠️ **COMMIT REMINDER:** the whole pile (audio, day/night, respawn, bugfixes, **save/load, enemy variety,
-> Swordsman class**) is UNCOMMITTED on `experiment/3d-world`. **Committing/pushing to GitHub is the USER's job**
-> — Claude only reminds, never commits.
+> ⚠️ **COMMIT REMINDER:** prior M1 pile was COMMITTED by the user. The new **M2 region skeleton** (Portal3D,
+> Town hub baker, field↔town wiring, field boss) is UNCOMMITTED on `experiment/3d-world`. **Committing/pushing
+> is the USER's job** — Claude only reminds, never commits.
 
 ---
-## ⏩ CHECKPOINT (2026-06-18, LATEST) — Meteor multi-hit: PER-TICK yellow totals + overkill numbers + per-hit SFX
+## ⏩ CHECKPOINT (2026-06-19, LATEST) — visible-weapon spike CONCLUDED → not pursuing (reverted)
+Branch `experiment/3d-world`, UNCOMMITTED. After seeing the placeholder 3D weapon hang/swing on the 2D player,
+**user decided NOT to use it.** No visible-weapon system, no Low Poly RPG Fantasy Weapons purchase. **REVERTED
+clean:** deleted `WeaponHolder.cs`, removed the `Facing` property + self-bootstrap line from `Player3DController`
+(back to pristine); `grep` confirms zero "WeaponHolder" refs. Combat stays sprite-pose + `SlashEffect` FX as-is.
+NEXT remains the JustCreate3D Medieval Village (houses/town) + M2 region. (Details of the spike below, historical.)
+
+## ⏩ (history) the visible-weapon spike
+User wanted visible weapons from the **Low Poly RPG Fantasy Weapons**
+pack on the 2D billboard player, and **explicitly accepts the weapon NOT syncing to sprite frames**. Building the
+engine side FIRST with a placeholder (asset-agnostic) so the buy is de-risked. RO-style approach: weapon = an
+"equip layer" that follows the player + re-poses per facing, NOT welded to animation frames.
+
+**NEW `WeaponHolder.cs`** (runtime): builds a **placeholder sword from primitives** (blade/guard/grip/pommel,
+URP/Lit), hangs it on the player, and each LateUpdate: reads `Player3DController.Facing` (4-dir, camera-relative)
+→ poses the weapon on the correct **side + depth** (front for down/left/right via a toward-camera offset so it
+sorts over the sprite; behind for up-facing), **billboards** the flat side to the camera (orbit-proof via
+`CameraRig`), and **sweeps on attack** (rising edge of `Player3DAttacker.Swinging`, sin out-and-back, no end-pop).
+Tunables: handHeight/sideOffset/depthOffset/weaponScale/swingDuration/swingAmplitude. Perf: builds once,
+LateUpdate is alloc-free vector math.
+**EDITS:** `Player3DController` — added `public Vector2 Facing => facing;` + self-bootstrap line (marked SPIKE)
+`if (GetComponent<WeaponHolder>()==null) gameObject.AddComponent<WeaponHolder>();`.
+
+**⚠️ NO RE-BAKE** (self-bootstraps at runtime on the baked player). TEST: just press **Play** → a sword hangs at
+the player's side, swaps side as you change facing, and sweeps when you attack a mob. JUDGE: does a 3D weapon on
+the 2D sprite read well? Tune offsets in the WeaponHolder inspector. Possible caveat = sprite-vs-mesh depth
+sorting on the "up" facing (weapon should hide behind). **If it reads well → confident buy** of the weapon pack +
+swap placeholder for the real FBX (assign `weaponPrefab`). **REVERT:** delete `WeaponHolder.cs` + the bootstrap
+line + the `Facing` property in `Player3DController`.
+
+---
+## ⏩ CHECKPOINT (2026-06-19) — DECISION: STAY 2D billboard characters (hybrid spike REJECTED, KayKit deleted)
+Branch `experiment/3d-world`, UNCOMMITTED. After the full spike (3D KayKit Knight w/ idle/walk/run/attack/block +
+sword, next to sprite mobs), **user decided on FEEL: keep 2D billboard characters.** RO-style 2.5D identity stands
+(3D world + 2D sprite player & mobs). The 3D-player hybrid is OFF the table.
+**CLEANUP DONE:** deleted all of `Assets/Art/KayKit/` (both the Adventurers free pack + Character Animations 1.1,
+~65 MB) and the spike scripts `Editor/KayKitSpike.cs` + `KayKitSpikeMover.cs`. No scene referenced them; `grep`
+confirms zero "KayKit" refs remain. Spike concluded — its value was the decision, cheaply (CC0/free assets, no
+production code committed).
+**BACK TO THE PLAN:** houses/town art = **JustCreate3D Low Poly Fantasy Medieval Village** (Vol.1, $10 — still the
+pending buy; premade houses + props + URP demo, same artist as our nature). Then M2 region: wire village houses/
+props into `RegionBuilder`/`NatureScatter` for Town + field maps. Weapons/visible-gear on the 2D player = future
+2D-sprite-layer system (NOT 3D), if ever.
+
+---
+## ⏩ CHECKPOINT (2026-06-19) — SPIKE: 3D KayKit hero + 2D sprite mobs (hybrid test) [CONCLUDED → rejected]
+Branch `experiment/3d-world`, UNCOMMITTED. **Exploring a HYBRID art direction** (user's idea): keep mobs as 2D
+billboards (cheap, big bestiary) but make the PLAYER a rigged 3D KayKit character so weapons/armor are visible +
+animate (the thing billboards can't do). Concentrates the rigging/animation/perf cost on the ONE entity that
+matters; mobs stay cheap. Decision = pure visual-coherence call (smooth 3D hero vs flat pixel mobs) → **spike it**
+(KayKit is CC0/free, like how the 2.5D pivot itself was spike-validated).
+
+**Pack:** `Assets/Art/KayKit/KayKit_Adventurers_2.0_FREE` — 6 chars (Knight/Mage/Ranger/Rogue/Rogue_Hooded/Barbarian),
+single gradient texture per char, shared **Rig_Medium** animation FBX (General = idle/attacks/block/hit/death,
+MovementBasic = walk/run/jump). Rig imports **Generic**; weapons socket into dedicated **`handslot.r/.l`** bones.
+
+**NEW (spike, throwaway):** `Editor/KayKitSpike.cs` → **Tools ▸ unwritten ▸ Spike ▸ Build KayKit 3D Hero**. One
+click: sets Knight rig=Generic+own Avatar, sets the anim FBX to CopyFromOther(Knight avatar) so clips retarget,
+builds a URP/Lit material from the gradient texture (no steel), builds an AnimatorController (Idle⇄Walk by Speed,
+AnyState→Attack trigger, Idle⇄Block bool — clips picked by keyword at build time since FBX names are truncated),
+instantiates the Knight in the open scene, sockets `sword_1handed` into `handslot.r`, adds `KayKitSpikeMover`
+(runtime, WASD move + J attack + K block). Generated assets in `Assets/Art/KayKit/_Spike`. `HeroScale` const if
+size is off vs the sprite player.
+
+**ITERATION (verified by user screenshots):** hybrid **LOOKS COHESIVE** — chunky 3D Knight reads fine beside the
+pixel mobs. Fixes applied: HeroScale 0.6 (was too big), keys moved to **Arrows + U(attack) + I(block)** (avoid the
+game's W/A/S/D/K bindings), re-runs now replace the old hero. Lighting: started Unlit (bright but ignored the tree
+shadow → looked pasted-on) → switched to **URP/Lit** so it receives+casts shadows (ambient 0.55 grey at noon keeps
+shade soft). Hero renderers forced receiveShadows+cast On.
+
+**⚠️ KEY FINDING — the FREE Adventurers pack has NO attack/block/cast animations.** Its entire clip set =
+Idle_A/B · Walking_A/B/C · Running_A/B · Jump_* · Hit_A/B · Death_A/B · Spawn · Use_Item · Interact · Throw (verified
+by extracting clip names from the FBX). Combat anims live in the **separate free "KayKit Character Animations"**
+pack (same Rig_Medium skeleton, the pack page links it). So attack/block "not working" was NOT a code bug — the
+clips don't exist. The spike now **auto-discovers any anim FBX under `Assets/Art/KayKit`** (path contains
+"animation") + sets it CopyFromOther(Knight avatar), so dropping that pack in + re-running makes attack/block
+"just work." Until then idle/walk/run/hit play; U/I are no-ops (logs a warning).
+
+**EventSystem "only one active" warning = harmless** (spike scene + Systems each have one).
+
+**ANIMATION PACK ADDED:** user dropped **KayKit Character Animations 1.1** at `Assets/Art/KayKit/KayKit_Character_
+Animations_1.1` (Rig_Medium + Rig_Large + Mannequin meshes + glb dupes). Spike's `AnimPaths()` tightened to
+**Rig_Medium `.fbx` only** (excludes Rig_Large/Mannequin/glb). Real clips confirmed: attack=`Melee_1H_Attack_Slice_
+Diagonal`, block=`Melee_Blocking` (held loop). Loop keywords now also loop `blocking`; clip freeze fixed (idle/
+walk/run looped); Run state added (Shift). Controls FINAL: Arrows=move, Shift=run, U=attack, hold I=block.
+
+**⚠️ TEST:** re-run the menu → full combat loop should play next to the sprite mobs (U slice, I block, walk/run
+loop, no freeze, Lit + tree shadow). **DECISION still open:** hybrid good enough to pursue? (user leaning yes →
+if yes, next is planning the REAL migration: 3D player on existing combat/stats/skills, mobs stay sprites).
+**REVERT:** delete `Assets/Art/KayKit/_Spike` + `Editor/KayKitSpike.cs` + `KayKitSpikeMover.cs`.
+
+---
+## ⏩ CHECKPOINT (2026-06-19) — QUATERNIUS RETIRED → pivot to JustCreate3D Medieval Village
+Branch `experiment/3d-world`, UNCOMMITTED. **Decision (user):** drop the procedural Quaternius house pipeline
+entirely and buy JustCreate3D's **Low Poly Fantasy Medieval Village** ($10, itch.io) — same artist as our existing
+`LowPolySimpleNature_FBX`, single 1024 texture, **9 premade houses** + props + nature + a **URP demo scene**. Why:
+Quaternius was realistic-PBR (steel-look materials, didn't match our flat low-poly terrain) and modular-only (had
+to assemble by hand); the JustCreate pack is premade + style-matched + perf-friendly (one atlas material). Vol.1
+($10) chosen over Vol.2 ($20) — Vol.2 is modular/interiors-focused = more hand-building, against the user's goal.
+
+**DELETED this session (clean, git-recoverable):** `Assets/Art/Quaternius/`, `Assets/Prefabs/Quaternius/` (3 baked
+houses), and the Quaternius-only tooling `Editor/HouseAssembler.cs` + `Editor/QuaterniusMaterials.cs`. No scenes
+referenced the prefabs; `grep` confirms zero "Quaternius" refs remain. The `Tools ▸ unwritten ▸ Build Houses` menu
+is gone with those scripts.
+
+**FOLDER CONVENTION (user):** group vendor art under `Assets/Art/<vendor>/`. Moving `LowPolySimpleNature_FBX` →
+`Assets/Art/JustCreate3d/LowPolySimpleNature_FBX` (do the move INSIDE Unity so GUIDs/refs survive). Already updated
+the one hardcoded path: `Editor/KenneyPrefabBaker.cs` BuildLowPolyNature now points at the JustCreate3d location.
+New village pack lands as `Assets/Art/JustCreate3d/MedievalVillage` (or similar — user to confirm name on import).
+
+**NEXT:** user imports the village `.unitypackage` → move under `JustCreate3d/` → wire its 9 house prefabs + props
+into `RegionBuilder`/`NatureScatter` for the Town (and reuse props/nature/landscape for FIELD maps too — same
+license covers unlimited maps). Possible later add-ons (same artist, same style): Grass & Plants pack (shader-wind,
+URP, scatter as walkable no-collider clumps — watch density vs perf) and Village Vol.2 (detail/interiors). The OLD
+Quaternius tuning checkpoints below are RETIRED/historical.
+
+---
+## ⏩ CHECKPOINT (2026-06-19, retired) — HOUSE ASSEMBLER tuning pass #1 (roof + wall facing fixed)
+Branch `experiment/3d-world`, UNCOMMITTED. First tuning pass on `Editor/HouseAssembler.cs` after the user
+looked at the baked houses: reported **wrong size · gaps/walls facing wrong · "no roof"** (NOT gray — materials
+render fine). Two provable code bugs fixed:
+- **ROOF (the "no roof"):** roof was rotated upright (−90°X) then scaled with `localScale` against WORLD bounds,
+  so the scale axes were permuted — depth got 0.36 (should be ~0.60), height blew up → roof squished/invisible.
+  NEW `ScaleRoofToFootprint` + `SetWorldScale`/`PickAxis` route each world target to the correct LOCAL axis
+  (valid because all rotations here are axis-aligned 90° → clean permutation, no shear). Roof now sizes to the
+  footprint + overhang with pitch proportional. Knobs: `RoofHeightMul` (1=natural), `RoofExtraYaw` (90 if ridge
+  runs the wrong way).
+- **WALL FACING:** opposite walls shared the same yaw → one of each pair showed its back inward. Now south/west
+  get +180° vs north/east (antiparallel) so all show their outer face. `FlipFrontBack` bool swaps the whole house
+  if it bakes inside-out (mesh front-face direction is unknown until seen).
+- **SIZE:** left `HouseScale = 1` (a taste call, ambiguous direction) — dial it after seeing the fixed bake
+  (~0.7 if too big, ~1.3 if too small). Player billboard ≈ 1u tall; house ≈ 4–5u.
+
+⚠️ **RE-BAKE:** Tools ▸ unwritten ▸ Build Houses ▸ Medieval House — Small/Medium/Large (overwrites the 3 prefabs
+in `Assets/Prefabs/Quaternius`).
+
+**VERIFIED (user screenshot):** after re-bake the ROOF + FACING fixes WORK — clean red-tile roof, walls face out,
+good proportions. Remaining issue was **"steel" walls**.
+
+## ⏩ tuning pass #2 — MATERIALS (kill the chrome) — BUILT (code)
+The kit is a **PBR texture set** (`Assets/Art/Quaternius/Textures/T_<Set>_BaseColor/_Normal/_ORM.png` for sets
+Plaster · WoodTrim · Brick · UnevenBrick · RedBrick · RockTrim · RoundTiles), NOT vertex colors / not a single
+atlas. The FREE pack's imported materials use a metallic-ORM setup that URP misreads → every surface looks like
+polished STEEL. NEW `Editor/QuaterniusMaterials.cs`: builds one clean **URP/Lit** material per surface set
+(BaseColor→Base Map, Normal→Normal Map auto-set to NormalMap import type, **Metallic 0**, Smoothness 0.12) into
+`Assets/Art/Quaternius/Materials/M_<Set>.mat`, and `RetextureToUrp(root)` re-assigns each renderer by reading the
+albedo texture it already uses (reliable key, no name-guessing). `HouseAssembler` calls it automatically before
+saving, so re-baked houses come out matte. Also a standalone menu **Tools ▸ unwritten ▸ Build Houses ▸ Re-URP
+Selected (de-chrome)** to fix any already-placed Quaternius object in a scene. Consts `Metallic`/`Smoothness` at
+top to tune. ⚠️ ORM roughness is NOT channel-unpacked (flat smoothness instead) — fine for stylized; revisit if
+they want per-pixel roughness. **RE-BAKE the houses again** to pick up the materials (or Re-URP Selected on the
+instance already in the scene). Then report: matte now? right surfaces (plaster walls / wood beams / clay roof)?
+
+---
+## ⏩ CHECKPOINT (2026-06-19) — M2: REGION SKELETON (Town hub ↔ Field + field BOSS) — BUILT (code)
+Branch `experiment/3d-world`, UNCOMMITTED. Start of **M2 (VIN-17)**. Decisions (user): skeleton loop first ·
+one-click editor bakers · **RO-style FIELD boss, NO dungeon yet** (anthell-style dungeons deferred). The 3D
+multi-map architecture was already 90% there (`MapManager.Travel` is scene-name based + works in 3D;
+`PersistentPlayer3D` already places at the `SpawnPoint` a portal asks for). Only the **portal primitive** was
+2D-only — that was the gap.
+
+**NEW `Portal3D.cs`** (runtime) — 2.5D analogue of the 2D `Portal`: a trigger `Collider` that detects the
+`Player3DController` (a CharacterController, fires OnTriggerEnter) → `MapManager.Travel(targetScene, spawnId)`.
+`fired` guard against double-trigger during the async load.
+**NEW `BossBanner.cs`** (runtime) — floating name + HP bar above a boss (world-space, billboarded, counter-
+scaled), polls `Health` but only repaints on HP change (TrainingDummy discipline); hides while dead, restores
+on revive.
+**NEW `MobRoster.Boss`** — RO MVP archetype (Dragon sheet, ×2.3 size, 600 HP, def 8/mdef 6, atk 16, xp 400,
+wide aggro/long leash, never flees). NOT in the weighted `All` pool — placed once by the tool.
+**NEW `Editor/RegionBuilder.cs`** — `Tools ▸ unwritten ▸ Region ▸`:
+- **Build Town Hub** → bakes `Assets/Scenes/Town.unity` (Ground_02 + Ground layer + Pathfinder3DConfig +
+  SpawnPoints `Start`/`FromField` + a Portal3D → NatureStage @ `FromTown` + a visible warp pad). No mobs (safe
+  zone). Registers in Build Settings.
+- **Link Field → Town (open field map)** → non-destructively adds SpawnPoint `FromTown` + Portal3D → Town @
+  `FromField` to the OPEN field scene (idempotent). Run with NatureStage open.
+- **Spawn Field Boss (open field map)** → drops `MobRoster.Boss` (+ BossBanner, respawnDelay 120s, homeRadius
+  10) into the open field map.
+
+**TRAVEL CONTRACT:** Town `Start`(boot)/`FromField` ↔ Field `FromTown`. Town pad (cyan, +X) → field; field pad
+(gold, −X) → town. **BOOT MAP → "Town"** (`SystemsSceneBuilder.FirstMap` + `GameRoot.firstMap`, were the stale
+"NatureStage"/"NewTown").
+
+**⚠️ DO (in order):** 1) **Region ▸ Build Town Hub**. 2) Open **NatureStage** → **Region ▸ Link Field → Town**.
+3) (optional) NatureStage open → **Region ▸ Spawn Field Boss**. 4) **Setup Systems Scene** (picks up boot map =
+Town). TEST: open **Town**, press Play → spawn at Start → walk into cyan pad → arrive in field next to gold pad
+→ fight mobs + the Dragon boss (name + HP bar) → walk into gold pad → back in town. **COMMIT when ready (USER's job).**
+
+**HOUSES PIPELINE (same session):** houses = 3D low-poly models (matches the 3D ground; characters stay 2D
+billboards). Reuses the existing `KenneyPrefabBaker` (FBX → drop-ready prefab w/ shared colormap + MeshCollider).
+Added **asset-agnostic** `Build Prefabs ▸ From Folder…` (pick ANY downloaded kit's FBX folder under Assets →
+auto-detects colormap → bakes to `Assets/Prefabs/<folder>`) and **Region ▸ Drop Selected to Ground** (raycast-
+snaps hand-dragged props onto the bumpy terrain). WORKFLOW: download a CC0 kit (Kenney Fantasy Town / Medieval /
+City — FBX) → drop under `Assets/Art/…` → Build Prefabs ▸ From Folder… → drag houses into Town → Drop Selected
+to Ground. ⚠️ Keep houses OFF the Ground layer (Default is fine) so the player-arrival raycast doesn't snap onto
+roofs. Pairs with VIN-15 (skin props).
+
+**QUATERNIUS MODULAR MEDIEVAL (user's actual download, `Assets/Art/Quaternius/FBX`):** it's a MODULAR kit (no
+whole houses — walls/corners/roofs/doors/windows as separate FBX) and **vertex-colored** (no texture/atlas;
+`materialImportMode 2`), so the colormap baker does NOT apply. User chose a **procedural assembler**. NEW
+`Editor/HouseAssembler.cs` → `Tools ▸ unwritten ▸ Build Houses ▸ Medieval House Small/Medium/Large` — bounds-
+DRIVEN (measures each piece's real AABB, aligns by edges, no hard-coded grid): builds a wall-ring facade +
+corners + front door + a scaled roof (no interior floor — RO facades you walk around), keeps imported materials,
+adds MeshColliders, saves to `Assets/Prefabs/Quaternius`. Consts at top (piece names, `HouseScale`,
+`RoofOverhang`) for iteration. ⚠️ EXPECT a tuning pass: if houses render GRAY → add a vertex-color shader; wrong
+size vs player → bump `HouseScale`; wall facing/gaps → tweak piece names+offsets, re-run (overwrites).
+
+**NEXT (M2):** more field maps (3–5 total — same bakers) · NPCs + dialogue + a quest system · a story thread ·
+minimap/POI. The field-boss is the MVP placeholder until an anthell-style dungeon later.
+
+---
+## ⏩ CHECKPOINT (2026-06-18) — Meteor multi-hit: PER-TICK yellow totals + overkill numbers + per-hit SFX
 Branch `experiment/3d-world`, UNCOMMITTED. Reworked the RO multi-hit so the yellow combo total shows **once per
 tick** (not one across the whole skill), per-hit numbers keep showing even after a mob dies mid-sequence, **one
 meteor falls per tick**, and a **custom `hit.wav` plays on every hit beat**.

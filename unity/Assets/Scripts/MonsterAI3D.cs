@@ -31,6 +31,21 @@ public class MonsterAI3D : MonoBehaviour
     [Tooltip("Physical hits the player's Defense; Magic hits MagicDefense (and ignores Evasion).")]
     public AttackType attackType = AttackType.Physical;
     public int attack = 3;
+    [Tooltip("This mob's attack ELEMENT (RO property), checked against the player's armor element. The mob's " +
+             "OWN armor element (what the player's spells hit) lives on its Health component.")]
+    public Element attackElement = Element.Neutral;
+
+    [Header("On-hit status (RO — inflicted on the player when this mob lands a hit)")]
+    [Tooltip("The ailment applied on a landed hit. Only used when the chance below is > 0.")]
+    public Ailment onHitAilment = Ailment.Poison;
+    [Range(0f, 1f)]
+    [Tooltip("Chance per LANDED hit to inflict the ailment (0 = this mob inflicts no status).")]
+    public float onHitAilmentChance = 0f;
+    [Tooltip("Ailment duration in seconds.")]
+    public float onHitAilmentSeconds = 4f;
+    [Tooltip("Ailment magnitude — DoT damage/tick, Slow factor (0..1), or Blind HIT loss.")]
+    public float onHitAilmentMagnitude = 3f;
+
     [Tooltip("Outgoing damage swings down to (1−spread)×attack each hit, RO-style (0 = always full attack).")]
     [Range(0f, 1f)] public float damageSpread = 0.25f;
     [Tooltip("HIT (RO accuracy). Rolled against the player's FLEE on each bite; lose and the attack MISSes (white).")]
@@ -77,6 +92,7 @@ public class MonsterAI3D : MonoBehaviour
     float slowUntil;      // chilled (e.g. Frost Nova) — moves at slowFactor speed until this time
     float slowFactor = 1f;
     StatusFX stunFx;      // looping swirl shown over the head while stunned (created on first stun)
+    StatusController status;   // poison/bleed/burn/blind host (Stun/Slow still delegate to the fields above)
 
     /// <summary>This mob's <see cref="Health"/>, cached once. The cursor pick and auto-combat target
     /// scans read this instead of calling <c>GetComponent&lt;Health&gt;()</c> per mob, every frame.</summary>
@@ -91,8 +107,16 @@ public class MonsterAI3D : MonoBehaviour
         agent = GetComponent<PathAgent3D>();
         lunge = GetComponent<AttackLunge>();
         Health = GetComponent<Health>();
+        status = Status.Of(gameObject);   // poison/bleed/burn ticks + silence/blind flags
         home = transform.position;
         UnitCrowd.Register(gameObject);   // pass through other units (no stacking / climbing on heads)
+
+        // Floating HP bar + name under the sprite. Auto-added here so EVERY mob gets one (even those baked
+        // before the nameplate existed — no re-bake). The training dummy keeps its own HP readout; the
+        // boss's bigger plate is configured by BossBanner. DisallowMultipleComponent + this guard avoid a
+        // duplicate when one is already present.
+        if (GetComponent<TrainingDummy>() == null && !TryGetComponent<MobNameplate>(out _))
+            gameObject.AddComponent<MobNameplate>();
     }
 
     void OnEnable()  { if (!Active.Contains(this)) Active.Add(this); }
@@ -160,6 +184,16 @@ public class MonsterAI3D : MonoBehaviour
         Stagger(Mathf.Max(stagger, time));
     }
 
+    /// <summary>Roll this mob's configured on-hit ailment onto the player — called only when a hit actually
+    /// LANDED (so a MISS / Immune doesn't proc it). Applies straight to the player's status host.</summary>
+    public void TryInflictOnHit()
+    {
+        if (onHitAilmentChance <= 0f) return;
+        var ps = StatusController.Player;
+        if (ps != null && Random.value < onHitAilmentChance)
+            ps.Apply(onHitAilment, onHitAilmentSeconds, onHitAilmentMagnitude);
+    }
+
     void Update()
     {
         if (Time.time < stunnedUntil) { if (agent != null) agent.Halt(); return; }   // staggered — frozen
@@ -188,24 +222,31 @@ public class MonsterAI3D : MonoBehaviour
             if (attackType == AttackType.Magic && projectileSheet != null)
             {
                 // Ranged caster: lob a VISIBLE projectile at the player; the magic damage lands on arrival.
-                int dmg = atk;   // capture for the on-arrive callback
+                int dmg = atk;            // capture for the on-arrive callback
+                Element elem = attackElement;
+                var self = this;          // for damage-reflect on arrival (guarded if we've since died)
                 Vector3 from = pos + Vector3.up * 0.5f;
                 Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
                     from, player, player.position + Vector3.up * 0.4f, projSpeed, 0.45f, 3f, () =>
                     {
                         if (Character.Instance == null || Character.Instance.IsDead) return;
-                        int d = Character.Instance.TakeMagicDamage(dmg);
-                        if (d > 0) DamagePopup.Spawn(player.position, d, MagicHitColor);
+                        int d = Character.Instance.TakeMagicDamage(dmg, elem, self);
+                        if (d > 0) { DamagePopup.Spawn(player.position, d, MagicHitColor); self.TryInflictOnHit(); }
                     });
             }
             else
             {
+                // Blind cuts our accuracy: physical attacks roll a reduced HIT against the player's FLEE.
+                int effHit = Mathf.Max(0, hit - (status != null ? status.HitPenalty : 0));
                 int dealt = attackType == AttackType.Magic
-                    ? Character.Instance.TakeMagicDamage(atk)          // magic ignores HIT/FLEE (MATK vs MDEF)
-                    : Character.Instance.TakeDamage(atk, hit);          // physical: our HIT rolled vs player FLEE
+                    ? Character.Instance.TakeMagicDamage(atk, attackElement, this)        // magic: MATK vs MDEF + element
+                    : Character.Instance.TakeDamage(atk, effHit, attackElement, this);    // physical: HIT vs FLEE + element
                 if (dealt > 0)
+                {
                     DamagePopup.Spawn(player.position, dealt,
                         attackType == AttackType.Magic ? MagicHitColor : PhysHitColor);
+                    TryInflictOnHit();
+                }
             }
             nextTouch = Time.time + touchInterval;
             if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell

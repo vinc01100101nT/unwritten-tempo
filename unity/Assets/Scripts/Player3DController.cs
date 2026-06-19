@@ -37,6 +37,33 @@ public class Player3DController : MonoBehaviour
     Sprite[] attackPoses;
     float attackUntil;
 
+    [Header("NinjaGreen animated sheet (optional — richer animations)")]
+    [Tooltip("Baked, NORMALIZED NinjaGreen sheet (built by Editor/NinjaGreenPlayer). When set it DRIVES " +
+             "animated idle/walk/attack/hit + death and the legacy single-pose fields above are ignored. " +
+             "Row-major: 4 direction rows (down/up/left/right) × [idle 0-3 | walk 4-7 | attack 8-11 | hit " +
+             "12-13], death on row 4. 64px cells. Wired by Tools ▸ unwritten ▸ Player ▸ Use NinjaGreen Player.")]
+    public Texture2D animSheet;
+    public int animCell = 64;
+    [Tooltip("Pixels-per-unit for the frames. 16 = the centred ~16px character renders ~1 world unit tall.")]
+    public int animPpu = 16;
+    [Tooltip("Idle loop speed (frames/sec) for the animated sheet.")]
+    public float idleFps = 5f;
+    [Tooltip("Attack-swing speed (frames/sec); also scaled by attack-speed so it keeps pace with the swing cadence.")]
+    public float attackFps = 16f;
+    [Tooltip("Seconds the flinch animation shows after taking damage (an in-progress attack still takes priority).")]
+    public float hitFlinchTime = 0.25f;
+    public float hitFps = 14f;
+
+    // Built from animSheet in Awake; null when there's no sheet → the legacy single-pose path runs instead.
+    // dir index: 0=down 1=up 2=left 3=right (baked sheet row order).
+    Sprite[][] idleClips, walkClips, atkClips, hitClips;
+    bool Animated => walkClips != null;
+    float hitUntil;
+    int atkFrame; float atkTimer; bool wasAttacking;
+    int idleFrame; float idleTimer;
+    int hitFrame;  float hitTimer;
+    Character hurtCharacter;   // subscribed for the hit-flinch trigger (separate from PlayerHurtFlash's tint)
+
     public float moveSpeed = 4f;
     public float framesPerSecond = 8f;
     public float arriveDistance = 0.12f;
@@ -84,6 +111,7 @@ public class Player3DController : MonoBehaviour
     SpriteRenderer sr;
     CharacterController controller;
     Player3DAttacker attacker;
+    StatusController status;   // stun/freeze (no act), slow (speed), silence/blind — read here + by the spells/attacker
 
     // Charge / gap-closer dash state (driven by Player3DCharge via BeginDash).
     bool dashing;
@@ -106,11 +134,13 @@ public class Player3DController : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         controller = GetComponent<CharacterController>();
         attacker = GetComponent<Player3DAttacker>();
+        status = Status.Of(gameObject);   // registers as StatusController.Player for the spells' silence check
         snapRadius = snapRadiusPixels;   // publish to the static cursor pick
         baseScale = transform.localScale;
         breathePhase = Random.value * Mathf.PI * 2f;
         BuildAttackPoses();
         BuildDeadPose();
+        BuildAnimClips();   // if animSheet is set, this supersedes the two single-pose builders above
         targetMarker = TargetIndicator.Create();
         targetMarker.gameObject.AddComponent<Billboard>();   // face the camera so the arrow isn't edge-on when orbiting
         autoIndicator = AutoCombatIndicator.Create();        // "AUTO-COMBAT" screen tag, hidden until toggled
@@ -131,6 +161,45 @@ public class Player3DController : MonoBehaviour
         if (GetComponent<Player3DMeteor>()    == null) gameObject.AddComponent<Player3DMeteor>();
 
         ApplyClass(ClassState.Current);
+    }
+
+    // Subscribe to player damage for the hit-flinch animation (mirrors PlayerHurtFlash, which only
+    // tints — the sprite itself is owned here, so the flinch frame swap must live in the controller).
+    // Character.Instance is set on Play, so we bind in Start like PlayerHurtFlash does.
+    void Start()
+    {
+        hurtCharacter = Character.Instance;
+        if (hurtCharacter != null) hurtCharacter.OnDamaged += OnDamaged;
+    }
+
+    void OnDamaged(int dmg)
+    {
+        if (!isActiveAndEnabled) return;
+        hitUntil = Time.time + hitFlinchTime;
+        hitTimer = 0f; hitFrame = 0;   // restart the flinch clip
+    }
+
+    // Slice the animated clips from the baked NinjaGreen master (see animSheet's tooltip for the layout).
+    // No-op when there's no sheet, leaving Animated == false so the legacy single-pose path stays in use.
+    // Slice the clips from the NORMALIZED baked sheet (built by Editor/NinjaGreenPlayer). Uniform layout:
+    // 4 direction rows (0=down 1=up 2=left 3=right) × [idle 0-3 | walk 4-7 | attack 8-11 | hit 12-15],
+    // with the 2 death frames on row 4. No-op without a sheet, leaving Animated == false (legacy path).
+    void BuildAnimClips()
+    {
+        if (animSheet == null || animCell <= 0) return;
+        int c = animCell, p = animPpu > 0 ? animPpu : animCell;
+        idleClips = new Sprite[4][]; walkClips = new Sprite[4][]; atkClips = new Sprite[4][]; hitClips = new Sprite[4][];
+        for (int d = 0; d < 4; d++)
+        {
+            idleClips[d] = SpriteSheetCache.Grid(animSheet, c, d, 0,  4, p);
+            walkClips[d] = SpriteSheetCache.Grid(animSheet, c, d, 4,  4, p);
+            atkClips[d]  = SpriteSheetCache.Grid(animSheet, c, d, 8,  4, p);
+            hitClips[d]  = SpriteSheetCache.Grid(animSheet, c, d, 12, 2, p);   // hit/flinch is 2 frames
+        }
+        var dead = SpriteSheetCache.Grid(animSheet, c, 4, 1, 1, p);   // row 4, col 1 = lying pose
+        if (dead.Length > 0) deadSprite = dead[0];
+        breathe = false;   // the idle clip conveys life; skip the procedural squash so they don't fight
+        if (idleClips[0].Length > 0) sr.sprite = idleClips[0][0];   // sensible frame before the first Update
     }
 
     /// <summary>Enable only the active-skill components belonging to class <paramref name="c"/> (universal
@@ -184,6 +253,18 @@ public class Player3DController : MonoBehaviour
             return;
         }
 
+        // Hard-CC (stun / freeze): no input, no orders, no movement — gravity only — until it lifts.
+        // Cancels an in-flight swing and any charge dash so nothing fires while we're locked.
+        if (status != null && status.CannotAct)
+        {
+            if (attacker != null && attacker.Swinging) attacker.Cancel();
+            dashing = false; dashOnArrive = null; dashTarget = null;
+            controller.Move(Vector3.down * gravity * Time.deltaTime);
+            Animate(false);
+            ApplyIdleScale(false);
+            return;
+        }
+
         // A charge (gap-closer) overrides normal control: rush the target, then the skill's on-arrive
         // callback strikes. Skips input/orders until it lands (or times out).
         if (dashing)
@@ -203,7 +284,8 @@ public class Player3DController : MonoBehaviour
         bool moving = move.sqrMagnitude > 0.001f;
         if (moving) worldFacing = move;
         facing = Facing3D.FromWorldDir(worldFacing);   // camera-relative — frames track the camera as it orbits
-        controller.Move((move * moveSpeed + Vector3.down * gravity) * Time.deltaTime);
+        float spd = moveSpeed * (status != null ? status.MoveMult : 1f);   // Slow ailment scales walk speed
+        controller.Move((move * spd + Vector3.down * gravity) * Time.deltaTime);
 
         // Hold the attack pose while a swing is in flight (refreshed each swinging frame, with a tail).
         // The hold scales with attack speed (same MotionScale as the swing) so the pose snaps back
@@ -369,7 +451,11 @@ public class Player3DController : MonoBehaviour
     /// dev-settings panel can tune target magnetism live (the field is only mirrored in Awake otherwise).</summary>
     public void ApplySnapRadius() => snapRadius = snapRadiusPixels;
 
-    void OnDestroy() { if (autoIndicator != null) Destroy(autoIndicator.gameObject); }   // its own canvas — clean it up
+    void OnDestroy()
+    {
+        if (autoIndicator != null) Destroy(autoIndicator.gameObject);   // its own canvas — clean it up
+        if (hurtCharacter != null) hurtCharacter.OnDamaged -= OnDamaged;
+    }
 
     void Stop()
     {
@@ -491,6 +577,73 @@ public class Player3DController : MonoBehaviour
 
     // ---- animation ------------------------------------------------------------
     void Animate(bool moving)
+    {
+        if (Animated) { AnimateRich(moving); return; }
+        AnimateLegacy(moving);
+    }
+
+    // Full animated player (baked NinjaGreen sheet). Priority: attack > hit-flinch > walk > idle (death is
+    // handled earlier in Update). Each non-loop state (attack/hit) plays once and holds its last frame.
+    void AnimateRich(bool moving)
+    {
+        int dir = DirIndex(facing);
+
+        // Attack swing — plays the 4-frame clip once, sped up with attack-speed so it tracks the cadence.
+        if (Time.time < attackUntil)
+        {
+            if (!wasAttacking) { wasAttacking = true; atkTimer = 0f; atkFrame = 0; }
+            var clip = atkClips[dir];
+            if (clip.Length > 0)
+            {
+                atkTimer += Time.deltaTime;
+                float fps = attackFps / Mathf.Max(0.01f, Player3DAttacker.MotionScale);
+                atkFrame = Mathf.Min(clip.Length - 1, Mathf.FloorToInt(atkTimer * fps));
+                sr.sprite = clip[atkFrame];
+            }
+            return;
+        }
+        wasAttacking = false;
+
+        // Hit flinch — brief recoil after taking damage (4 directions; left/right baked from the down clip).
+        if (Time.time < hitUntil)
+        {
+            var clip = hitClips[dir];
+            if (clip != null && clip.Length > 0)
+            {
+                hitTimer += Time.deltaTime;
+                hitFrame = Mathf.Min(clip.Length - 1, Mathf.FloorToInt(hitTimer * hitFps));
+                sr.sprite = clip[hitFrame];
+                return;
+            }
+        }
+
+        // Walk (while moving) or idle (standing) — both loop.
+        if (moving)
+        {
+            idleTimer = 0f; idleFrame = 0;
+            Step(walkClips[dir], framesPerSecond, ref timer, ref frame);
+        }
+        else
+        {
+            timer = 0f; frame = 0;
+            Step(idleClips[dir], idleFps, ref idleTimer, ref idleFrame);
+        }
+    }
+
+    // Advance a looping clip and show the current frame (shared by walk + idle).
+    void Step(Sprite[] clip, float fps, ref float t, ref int f)
+    {
+        if (clip == null || clip.Length == 0) return;
+        t += Time.deltaTime;
+        float ft = 1f / Mathf.Max(fps, 0.01f);
+        while (t >= ft) { t -= ft; f = (f + 1) % clip.Length; }
+        sr.sprite = clip[Mathf.Min(f, clip.Length - 1)];
+    }
+
+    // facing → dir index (0=down 1=up 2=left 3=right), matching the master sheet's row order.
+    static int DirIndex(Vector2 f) => f.y > 0f ? 1 : f.y < 0f ? 0 : f.x < 0f ? 2 : 3;
+
+    void AnimateLegacy(bool moving)
     {
         // Attacking: hold the directional attack pose (overrides walk/idle), like the old 2D animator.
         if (Time.time < attackUntil)

@@ -58,6 +58,8 @@ public static class TrainingDummyTool
         // dummy is a clean, predictable fixture.
         StripIfPresent<MobRespawn>(go);
         StripIfPresent<DeathDissolve>(go);
+        // (No MobNameplate to strip — MonsterAI3D.Awake skips the dummy, which shows its own "TEST DUMMY"
+        // readout above its head.)
 
         var sr = go.GetComponent<SpriteRenderer>();
         if (sr != null) sr.color = new Color(0.7f, 0.72f, 0.78f);   // slate-gray "training" tint (also the Revive base color)

@@ -20,8 +20,53 @@ public static class KenneyPrefabBaker
     // straight at the shared texture file. Add a sibling line here for each new pack from this artist.
     [MenuItem("Tools/unwritten/Build Prefabs/Low Poly Nature", priority = 23)]
     static void BuildLowPolyNature() =>
-        BakeKit("Low Poly Nature", "Assets/Art/LowPolySimpleNature_FBX", "LowPolyNature",
-                "Assets/Art/LowPolySimpleNature_FBX/SimpleNature_Texture_01.png");
+        BakeKit("Low Poly Nature", "Assets/Art/JustCreate3d/LowPolySimpleNature_FBX", "LowPolyNature",
+                "Assets/Art/JustCreate3d/LowPolySimpleNature_FBX/SimpleNature_Texture_01.png");
+
+    /// <summary>Asset-agnostic baker: pick ANY kit's FBX folder (e.g. a downloaded Kenney "Fantasy Town"
+    /// pack's <c>FBX format</c> folder placed under Assets/Art/…) and turn every FBX in it into drop-ready
+    /// house/prop prefabs. Auto-detects the colormap atlas (Textures/colormap.png, else the first .png in
+    /// the folder or its Textures subfolder). Output → Assets/Prefabs/&lt;folder name&gt;.</summary>
+    [MenuItem("Tools/unwritten/Build Prefabs/From Folder…", priority = 24)]
+    static void BuildFromFolder()
+    {
+        string abs = EditorUtility.OpenFolderPanel("Pick the kit's FBX folder (must be inside Assets)", Application.dataPath, "");
+        if (string.IsNullOrEmpty(abs)) return;
+
+        abs = abs.Replace('\\', '/');
+        string root = Application.dataPath.Replace('\\', '/');   // <project>/Assets
+        if (!abs.StartsWith(root))
+        { EditorUtility.DisplayDialog("Build Prefabs", "That folder isn't inside this project's Assets folder.\nMove the kit under Assets/Art and re-run.", "OK"); return; }
+
+        string kitDir = "Assets" + abs.Substring(root.Length);     // project-relative
+        string leaf = Path.GetFileName(kitDir.TrimEnd('/'));
+        string prefabFolder = SanitizeFolderName(leaf);
+
+        if (Directory.GetFiles(kitDir, "*.fbx", SearchOption.TopDirectoryOnly).Length == 0)
+        { EditorUtility.DisplayDialog("Build Prefabs", $"No .fbx files directly in:\n{kitDir}\n\nPoint at the pack's 'FBX format' folder (where the .fbx files live).", "OK"); return; }
+
+        BakeKit(leaf, kitDir, prefabFolder, DetectColormap(kitDir));
+    }
+
+    // Find a texture atlas for a kit that doesn't follow Kenney's Textures/colormap.png convention.
+    static string DetectColormap(string kitDir)
+    {
+        string kenney = kitDir + "/Textures/colormap.png";
+        if (File.Exists(kenney)) return kenney;
+        foreach (var dir in new[] { kitDir, kitDir + "/Textures" })
+        {
+            if (!Directory.Exists(dir)) continue;
+            var png = Directory.GetFiles(dir, "*.png", SearchOption.TopDirectoryOnly).FirstOrDefault();
+            if (png != null) return png.Replace('\\', '/');
+        }
+        return null;   // BakeKit warns + bakes untextured
+    }
+
+    static string SanitizeFolderName(string s)
+    {
+        foreach (char c in Path.GetInvalidFileNameChars()) s = s.Replace(c, '_');
+        return s.Replace(' ', '_');
+    }
 
     /// <summary>Bake every FBX in <paramref name="kitDir"/> into drop-ready prefabs under
     /// Assets/Prefabs/<paramref name="prefabFolder"/>, sharing one colormap material.

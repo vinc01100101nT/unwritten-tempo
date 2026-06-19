@@ -54,6 +54,8 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill
     public bool Activate()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return false;
+        if (StatusController.Player != null && StatusController.Player.Silenced)
+        { DamagePopup.SpawnText(transform.position, "Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
         if (Time.time < nextCast) return false;
         if (cam == null) cam = Camera.main;
 

@@ -21,6 +21,12 @@ public class Player3DFireball : MonoBehaviour, IHotbarSkill
     [Tooltip("Damage as a multiple of a normal magic hit.")]
     public float damageMult = 1.8f;
 
+    [Header("Burn (RO fire DoT applied on impact)")]
+    [Tooltip("Seconds the Burn lingers after the hit (0 = no burn).")]
+    public float burnSeconds = 3f;
+    [Tooltip("Burn damage per tick.")]
+    public int burnDamage = 3;
+
     [Header("Projectile FX (FX/Projectile/Fireball)")]
     public Texture2D projectileSheet;
     public int projFrameSize = 16;
@@ -53,6 +59,8 @@ public class Player3DFireball : MonoBehaviour, IHotbarSkill
     public bool Activate()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return false;
+        if (StatusController.Player != null && StatusController.Player.Silenced)
+        { DamagePopup.SpawnText(transform.position, "Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
         if (Time.time < nextUse) return false;
         if (cam == null) cam = Camera.main;
 
@@ -79,7 +87,8 @@ public class Player3DFireball : MonoBehaviour, IHotbarSkill
             {
                 if (t == null || t.IsDead || Character.Instance == null) return;
                 int power = Character.Instance.RollMagicDamage(out bool crit);
-                t.TakeMagicDamage(Mathf.RoundToInt(power * damageMult), crit);
+                t.TakeMagicDamage(Mathf.RoundToInt(power * damageMult), crit, Element.Fire);
+                if (burnSeconds > 0f && !t.IsDead) Status.Apply(t.gameObject, Ailment.Burn, burnSeconds, burnDamage);
             },
             impactSheet, impactFrameSize, impactFrames, 22f, impactScale);
         return true;

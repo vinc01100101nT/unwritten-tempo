@@ -32,6 +32,13 @@ public struct MonsterArchetype
 
     // Behavior style (see MonsterAI3D): 0 preferredRange = melee; fleeHpFraction 0 = never flee.
     public float preferredRange, fleeHpFraction;
+
+    // Element & status (RO). `element` = this mob's ARMOR property (what the player's attacks are checked
+    // against — Fire vs Earth = Weak!, etc.); `attackElement` = its OUTGOING property. On-hit ailment is
+    // inflicted on the player when a hit lands (chance 0 = this mob inflicts no status).
+    public Element element, attackElement;
+    public Ailment onHitAilment;
+    public float onHitAilmentChance, onHitAilmentSeconds, onHitAilmentMagnitude;
 }
 
 public static class MobRoster
@@ -51,6 +58,7 @@ public static class MobRoster
             damageSpread = 0.25f, touchRange = 0.9f, touchInterval = 1.0f,
             moveSpeed = 2.2f, aggroRadius = 6f, leashRadius = 10f, stopDistance = 0.7f, wanderRadius = 3f,
             preferredRange = 0f, fleeHpFraction = 0f,
+            element = Element.Earth, attackElement = Element.Neutral,   // Fireball melts it (Fire→Earth = Weak!)
         },
 
         // 2) SWARMER — fast, fragile, dodgy harasser. Common; comes in numbers.
@@ -61,6 +69,7 @@ public static class MobRoster
             damageSpread = 0.3f, touchRange = 0.8f, touchInterval = 0.8f,
             moveSpeed = 3.6f, aggroRadius = 7f, leashRadius = 12f, stopDistance = 0.6f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0f,
+            element = Element.Wind, attackElement = Element.Neutral,   // Frost (Water→Wind) is Resisted on bats
         },
 
         // 3) BRUISER — slow, tanky, heavy hits. Uncommon; a real threat one-on-one.
@@ -71,6 +80,7 @@ public static class MobRoster
             damageSpread = 0.2f, touchRange = 1.0f, touchInterval = 1.4f,
             moveSpeed = 1.6f, aggroRadius = 5f, leashRadius = 9f, stopDistance = 0.8f, wanderRadius = 2.5f,
             preferredRange = 0f, fleeHpFraction = 0f,
+            element = Element.Water, attackElement = Element.Neutral,   // water turtle: Fire is Resisted (use melee/wind)
         },
 
         // 4) CASTER — holds JUST outside melee and lobs magic (hits MagicDefense, can't be dodged). Uncommon.
@@ -83,6 +93,8 @@ public static class MobRoster
             damageSpread = 0.2f, touchRange = 3.6f, touchInterval = 1.6f,
             moveSpeed = 2.2f, aggroRadius = 7f, leashRadius = 11f, stopDistance = 0.7f, wanderRadius = 3f,
             preferredRange = 3.2f, fleeHpFraction = 0f,
+            element = Element.Fire, attackElement = Element.Fire,   // flame: Frost (Water→Fire) = Weak!; its bolt BURNS
+            onHitAilment = Ailment.Burn, onHitAilmentChance = 0.4f, onHitAilmentSeconds = 4f, onHitAilmentMagnitude = 2f,
         },
 
         // 5) DARTER — hit-and-run; flees once wounded below 40% HP. Uncommon.
@@ -93,7 +105,29 @@ public static class MobRoster
             damageSpread = 0.3f, touchRange = 0.9f, touchInterval = 1.0f,
             moveSpeed = 3.2f, aggroRadius = 6f, leashRadius = 11f, stopDistance = 0.7f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0.4f,
+            element = Element.Neutral, attackElement = Element.Neutral,   // plain baseline — but its hit-and-run bite POISONS
+            onHitAilment = Ailment.Poison, onHitAilmentChance = 0.35f, onHitAilmentSeconds = 5f, onHitAilmentMagnitude = 2f,
         },
+    };
+
+    /// <summary>The field BOSS (Ragnarok MVP style): a big, slow, tanky unique that roams the field and
+    /// hits hard. NOT in <see cref="All"/>, so the weighted field spawner never rolls it — it's placed once
+    /// by Tools ▸ unwritten ▸ Region ▸ Spawn Field Boss. Pair it with a <see cref="BossBanner"/> (name + HP
+    /// bar) and a long respawn so it feels like an event, not trash.</summary>
+    public static readonly MonsterArchetype Boss = new MonsterArchetype
+    {
+        name = "Ancient Dragon", sheet = "Dragon", weight = 0,
+        tint = new Color(1f, 0.85f, 0.85f), scale = 2.3f, flash = new Color(1f, 0.4f, 0.3f),
+        // A real wall of HP + real defenses so the whole kit (multi-hit, status, crit) matters.
+        maxHealth = 600, defense = 8, magicDefense = 6, flee = 2,
+        attackType = MonsterAI3D.AttackType.Physical, attack = 16, hit = 14, xpReward = 400,
+        damageSpread = 0.2f, touchRange = 1.6f, touchInterval = 1.5f,
+        // Slow and relentless: wide aggro, long leash so it commits to the chase, never flees.
+        moveSpeed = 1.7f, aggroRadius = 9f, leashRadius = 22f, stopDistance = 1.1f, wanderRadius = 5f,
+        preferredRange = 0f, fleeHpFraction = 0f,
+        // Fire dragon: resists Fire, MELTS to Frost (Water→Fire = Weak!), and its bite BURNS you.
+        element = Element.Fire, attackElement = Element.Fire,
+        onHitAilment = Ailment.Burn, onHitAilmentChance = 0.5f, onHitAilmentSeconds = 5f, onHitAilmentMagnitude = 4f,
     };
 
     /// <summary>Pick an archetype weighted by <see cref="MonsterArchetype.weight"/> (commons more often).</summary>

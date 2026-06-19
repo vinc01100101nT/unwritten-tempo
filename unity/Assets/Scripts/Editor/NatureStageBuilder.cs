@@ -136,14 +136,14 @@ public static class NatureStageBuilder
     }
 
     // Drop a point onto the terrain surface below 'p' (else keep p).
-    static Vector3 SurfacePoint(Vector3 p, int groundMask)
+    public static Vector3 SurfacePoint(Vector3 p, int groundMask)
     {
         if (Physics.Raycast(new Vector3(p.x, p.y + 60f, p.z), Vector3.down, out var hit, 200f, groundMask, QueryTriggerInteraction.Ignore))
             return hit.point;
         return p;
     }
 
-    static void RegisterInBuildSettings(string scenePath)
+    public static void RegisterInBuildSettings(string scenePath)
     {
         foreach (var s in EditorBuildSettings.scenes)
             if (s.path == scenePath) return;   // already listed
@@ -152,7 +152,7 @@ public static class NatureStageBuilder
         EditorBuildSettings.scenes = list.ToArray();
     }
 
-    static void SetLayerRecursive(GameObject go, int layer)
+    public static void SetLayerRecursive(GameObject go, int layer)
     {
         go.layer = layer;
         foreach (Transform c in go.transform) SetLayerRecursive(c.gameObject, layer);
@@ -182,7 +182,7 @@ public static class NatureStageBuilder
     }
 
     // The baked prefab already carries MeshColliders, but guard for a raw/old prefab too.
-    static void EnsureMeshColliders(GameObject go)
+    public static void EnsureMeshColliders(GameObject go)
     {
         foreach (var mf in go.GetComponentsInChildren<MeshFilter>())
             if (mf.sharedMesh != null && mf.GetComponent<Collider>() == null)

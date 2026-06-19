@@ -1,0 +1,1846 @@
+fileFormatVersion: 2
+guid: d75b5444577f5a541ba205a77c27f8c5
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -3283644925812061519
+    second: NinjaGreen_Katana_0
+  - first:
+      213: -6998478249335958872
+    second: NinjaGreen_Katana_1
+  - first:
+      213: 9155554722231932020
+    second: NinjaGreen_Katana_2
+  - first:
+      213: 893988079814762889
+    second: NinjaGreen_Katana_3
+  - first:
+      213: 7821123192943863785
+    second: NinjaGreen_Katana_4
+  - first:
+      213: 2728330661549163272
+    second: NinjaGreen_Katana_5
+  - first:
+      213: 3320212130667991661
+    second: NinjaGreen_Katana_6
+  - first:
+      213: 5829978478110524441
+    second: NinjaGreen_Katana_7
+  - first:
+      213: 1459273969729421635
+    second: NinjaGreen_Katana_8
+  - first:
+      213: 1805578648246943109
+    second: NinjaGreen_Katana_9
+  - first:
+      213: -1149392831870027772
+    second: NinjaGreen_Katana_10
+  - first:
+      213: 2131729485958926453
+    second: NinjaGreen_Katana_11
+  - first:
+      213: -8228638642431645636
+    second: NinjaGreen_Katana_12
+  - first:
+      213: 6803790080954727522
+    second: NinjaGreen_Katana_13
+  - first:
+      213: 6320387522292454845
+    second: NinjaGreen_Katana_14
+  - first:
+      213: 1508340756357008475
+    second: NinjaGreen_Katana_15
+  - first:
+      213: -5902320345183268919
+    second: NinjaGreen_Katana_16
+  - first:
+      213: -18417361159031387
+    second: NinjaGreen_Katana_17
+  - first:
+      213: -1815546960640538450
+    second: NinjaGreen_Katana_18
+  - first:
+      213: 2653759127014860380
+    second: NinjaGreen_Katana_19
+  - first:
+      213: 2738215230137906554
+    second: NinjaGreen_Katana_20
+  - first:
+      213: 8342239020305511248
+    second: NinjaGreen_Katana_21
+  - first:
+      213: 6981346343256070358
+    second: NinjaGreen_Katana_22
+  - first:
+      213: -4388252459710655767
+    second: NinjaGreen_Katana_23
+  - first:
+      213: -6816739600589171828
+    second: NinjaGreen_Katana_24
+  - first:
+      213: 7132418907327293253
+    second: NinjaGreen_Katana_25
+  - first:
+      213: 7932634346206629973
+    second: NinjaGreen_Katana_26
+  - first:
+      213: 4329998049273376560
+    second: NinjaGreen_Katana_27
+  - first:
+      213: -8608970369299028299
+    second: NinjaGreen_Katana_28
+  - first:
+      213: -3757766714450166627
+    second: NinjaGreen_Katana_29
+  - first:
+      213: 3540676341660208093
+    second: NinjaGreen_Katana_30
+  - first:
+      213: 242704703830748500
+    second: NinjaGreen_Katana_31
+  - first:
+      213: 4471970527867710280
+    second: NinjaGreen_Katana_32
+  - first:
+      213: -919459018618382910
+    second: NinjaGreen_Katana_33
+  - first:
+      213: -2627972320762356259
+    second: NinjaGreen_Katana_34
+  - first:
+      213: -8337998563156343872
+    second: NinjaGreen_Katana_35
+  - first:
+      213: -226679846764049054
+    second: NinjaGreen_Katana_36
+  - first:
+      213: -8895637914584470981
+    second: NinjaGreen_Katana_37
+  - first:
+      213: -5524781580652200650
+    second: NinjaGreen_Katana_38
+  - first:
+      213: -6533327886701078045
+    second: NinjaGreen_Katana_39
+  - first:
+      213: -190281052356444865
+    second: NinjaGreen_Katana_40
+  - first:
+      213: -6528971872867203099
+    second: NinjaGreen_Katana_41
+  - first:
+      213: 9091989970245030790
+    second: NinjaGreen_Katana_42
+  - first:
+      213: 7381830922346307452
+    second: NinjaGreen_Katana_43
+  - first:
+      213: -7773433789925840626
+    second: NinjaGreen_Katana_44
+  - first:
+      213: 5842405907147906095
+    second: NinjaGreen_Katana_45
+  - first:
+      213: -7002127738839672971
+    second: NinjaGreen_Katana_46
+  - first:
+      213: -1073195565722514656
+    second: NinjaGreen_Katana_47
+  - first:
+      213: 2203237589832186293
+    second: NinjaGreen_Katana_48
+  - first:
+      213: 7298324197951381252
+    second: NinjaGreen_Katana_49
+  - first:
+      213: 937608592095038364
+    second: NinjaGreen_Katana_50
+  - first:
+      213: -2494523253640923320
+    second: NinjaGreen_Katana_51
+  - first:
+      213: 6950150507522005931
+    second: NinjaGreen_Katana_52
+  - first:
+      213: -2217798360231198486
+    second: NinjaGreen_Katana_53
+  - first:
+      213: 6331294685458623186
+    second: NinjaGreen_Katana_54
+  - first:
+      213: 3829886869632126256
+    second: NinjaGreen_Katana_55
+  - first:
+      213: 4690485689385099345
+    second: NinjaGreen_Katana_56
+  - first:
+      213: 499312114456428031
+    second: NinjaGreen_Katana_57
+  - first:
+      213: 4542752482568478768
+    second: NinjaGreen_Katana_58
+  - first:
+      213: 1420814644293379002
+    second: NinjaGreen_Katana_59
+  - first:
+      213: 7252486422386571377
+    second: NinjaGreen_Katana_60
+  - first:
+      213: 6447897356622325369
+    second: NinjaGreen_Katana_61
+  - first:
+      213: 1250683970004713787
+    second: NinjaGreen_Katana_62
+  - first:
+      213: 7880157952022234239
+    second: NinjaGreen_Katana_63
+  - first:
+      213: 6825083373120551848
+    second: NinjaGreen_Katana_64
+  - first:
+      213: -3040382657634444679
+    second: NinjaGreen_Katana_65
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_0
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 135
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1ba457466562e62d0800000000000000
+      internalID: -3283644925812061519
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_1
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 135
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8a2580c9c1960ee90800000000000000
+      internalID: -6998478249335958872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_2
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 135
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 474d84cf2801f0f70800000000000000
+      internalID: 9155554722231932020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_3
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 135
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 981eaca0c65186c00800000000000000
+      internalID: 893988079814762889
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_4
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 135
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e7ecfb1b163a8c60800000000000000
+      internalID: 7821123192943863785
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_5
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 135
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 803c177084afcd520800000000000000
+      internalID: 2728330661549163272
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_6
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 135
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6298637753c31e20800000000000000
+      internalID: 3320212130667991661
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_7
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 135
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 91443fb898e38e050800000000000000
+      internalID: 5829978478110524441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_8
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 134
+        width: 19
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 34142b3a1f1604410800000000000000
+      internalID: 1459273969729421635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_9
+      rect:
+        serializedVersion: 2
+        x: 284
+        y: 136
+        width: 8
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 58df9c6d634be0910800000000000000
+      internalID: 1805578648246943109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_10
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 135
+        width: 20
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 408b1052f498c00f0800000000000000
+      internalID: -1149392831870027772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_11
+      rect:
+        serializedVersion: 2
+        x: 329
+        y: 135
+        width: 19
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 570decf4cac659d10800000000000000
+      internalID: 2131729485958926453
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_12
+      rect:
+        serializedVersion: 2
+        x: 348
+        y: 136
+        width: 8
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c382fcc70c00ecd80800000000000000
+      internalID: -8228638642431645636
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_13
+      rect:
+        serializedVersion: 2
+        x: 356
+        y: 135
+        width: 19
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26cf1a5d70beb6e50800000000000000
+      internalID: 6803790080954727522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_14
+      rect:
+        serializedVersion: 2
+        x: 392
+        y: 135
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db59d05f6f686b750800000000000000
+      internalID: 6320387522292454845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_15
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 135
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b5c47e62de3bee410800000000000000
+      internalID: 1508340756357008475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_16
+      rect:
+        serializedVersion: 2
+        x: 457
+        y: 135
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cf4acafaeeb61ea0800000000000000
+      internalID: -5902320345183268919
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_17
+      rect:
+        serializedVersion: 2
+        x: 487
+        y: 135
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a57a62f1819ebff0800000000000000
+      internalID: -18417361159031387
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_18
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 103
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea80bf198a1edc6e0800000000000000
+      internalID: -1815546960640538450
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_19
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 103
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c56eb25addb04d420800000000000000
+      internalID: 2653759127014860380
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_20
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 103
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a753fee7e38100620800000000000000
+      internalID: 2738215230137906554
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_21
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 103
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05376bc903695c370800000000000000
+      internalID: 8342239020305511248
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_22
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 103
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d810cba289b2e060800000000000000
+      internalID: 6981346343256070358
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_23
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 103
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e2563a43abc913c0800000000000000
+      internalID: -4388252459710655767
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_24
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 103
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c835b8c23731661a0800000000000000
+      internalID: -6816739600589171828
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_25
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 103
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 547e58005317bf260800000000000000
+      internalID: 7132418907327293253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_26
+      rect:
+        serializedVersion: 2
+        x: 262
+        y: 101
+        width: 21
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55095b2b8e0661e60800000000000000
+      internalID: 7932634346206629973
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_27
+      rect:
+        serializedVersion: 2
+        x: 293
+        y: 101
+        width: 21
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03fe215d84e371c30800000000000000
+      internalID: 4329998049273376560
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_28
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 103
+        width: 19
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b66118bf0bc68880800000000000000
+      internalID: -8608970369299028299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_29
+      rect:
+        serializedVersion: 2
+        x: 359
+        y: 103
+        width: 19
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9c396c251bb9dbc0800000000000000
+      internalID: -3757766714450166627
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_30
+      rect:
+        serializedVersion: 2
+        x: 391
+        y: 103
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ddb49499f52032130800000000000000
+      internalID: 3540676341660208093
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_31
+      rect:
+        serializedVersion: 2
+        x: 423
+        y: 103
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 45de52964a24e5300800000000000000
+      internalID: 242704703830748500
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_32
+      rect:
+        serializedVersion: 2
+        x: 456
+        y: 103
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84b22976081af0e30800000000000000
+      internalID: 4471970527867710280
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_33
+      rect:
+        serializedVersion: 2
+        x: 487
+        y: 103
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c5d8b1e4ec6d33f0800000000000000
+      internalID: -919459018618382910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_34
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 71
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ddd966d0911978bd0800000000000000
+      internalID: -2627972320762356259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_35
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 71
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0c34951cb7a794c80800000000000000
+      internalID: -8337998563156343872
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_36
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 71
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26d83ef51ebaadcf0800000000000000
+      internalID: -226679846764049054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_37
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 71
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b3a22b2a2785c8480800000000000000
+      internalID: -8895637914584470981
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_38
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 71
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 63dba978c680453b0800000000000000
+      internalID: -5524781580652200650
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_39
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 71
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e95700f6e4f455a0800000000000000
+      internalID: -6533327886701078045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_40
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 71
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3d7eca146cfb5df0800000000000000
+      internalID: -190281052356444865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_41
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 71
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e7cb317cae6465a0800000000000000
+      internalID: -6528971872867203099
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_42
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 63
+        width: 50
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6839eddd4bc3d2e70800000000000000
+      internalID: 9091989970245030790
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_43
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 71
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7f127efc18817660800000000000000
+      internalID: 7381830922346307452
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_44
+      rect:
+        serializedVersion: 2
+        x: 342
+        y: 59
+        width: 36
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e09a37a47273f1490800000000000000
+      internalID: -7773433789925840626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_45
+      rect:
+        serializedVersion: 2
+        x: 392
+        y: 71
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2cd139d735641150800000000000000
+      internalID: 5842405907147906095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_46
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 71
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5775d8e9be173de90800000000000000
+      internalID: -7002127738839672971
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_47
+      rect:
+        serializedVersion: 2
+        x: 457
+        y: 71
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02bc59aa15e3b11f0800000000000000
+      internalID: -1073195565722514656
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_48
+      rect:
+        serializedVersion: 2
+        x: 487
+        y: 71
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b93cb92ae8739e10800000000000000
+      internalID: 2203237589832186293
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_49
+      rect:
+        serializedVersion: 2
+        x: 8
+        y: 39
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40f978a903bd84560800000000000000
+      internalID: 7298324197951381252
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_50
+      rect:
+        serializedVersion: 2
+        x: 39
+        y: 39
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9bcd2efb0e030d00800000000000000
+      internalID: 937608592095038364
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_51
+      rect:
+        serializedVersion: 2
+        x: 72
+        y: 39
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 847f7ce315ca16dd0800000000000000
+      internalID: -2494523253640923320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_52
+      rect:
+        serializedVersion: 2
+        x: 103
+        y: 39
+        width: 17
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bab99582015e37060800000000000000
+      internalID: 6950150507522005931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_53
+      rect:
+        serializedVersion: 2
+        x: 136
+        y: 39
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae0c9fa442cc831e0800000000000000
+      internalID: -2217798360231198486
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_54
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 39
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2da6417c8f64dd750800000000000000
+      internalID: 6331294685458623186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_55
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 39
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03d0b5af0dd762530800000000000000
+      internalID: 3829886869632126256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_56
+      rect:
+        serializedVersion: 2
+        x: 231
+        y: 39
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1502adb12e3f71140800000000000000
+      internalID: 4690485689385099345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_57
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 31
+        width: 50
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffd793ef8b9ede600800000000000000
+      internalID: 499312114456428031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_58
+      rect:
+        serializedVersion: 2
+        x: 326
+        y: 39
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 030a40a70591b0f30800000000000000
+      internalID: 4542752482568478768
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_59
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 39
+        width: 18
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab3a7c4246fb7b310800000000000000
+      internalID: 1420814644293379002
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_60
+      rect:
+        serializedVersion: 2
+        x: 392
+        y: 39
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 178f1b0d9f106a460800000000000000
+      internalID: 7252486422386571377
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_61
+      rect:
+        serializedVersion: 2
+        x: 424
+        y: 39
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97667a1cb788b7950800000000000000
+      internalID: 6447897356622325369
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_62
+      rect:
+        serializedVersion: 2
+        x: 457
+        y: 39
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b31086eb1725b5110800000000000000
+      internalID: 1250683970004713787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_63
+      rect:
+        serializedVersion: 2
+        x: 487
+        y: 39
+        width: 16
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f74414018e1fb5d60800000000000000
+      internalID: 7880157952022234239
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_64
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 5
+        width: 20
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ab7641ca2197be50800000000000000
+      internalID: 6825083373120551848
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: NinjaGreen_Katana_65
+      rect:
+        serializedVersion: 2
+        x: 38
+        y: 4
+        width: 17
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97ad07ed4146ec5d0800000000000000
+      internalID: -3040382657634444679
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      NinjaGreen_Katana_0: -3283644925812061519
+      NinjaGreen_Katana_1: -6998478249335958872
+      NinjaGreen_Katana_10: -1149392831870027772
+      NinjaGreen_Katana_11: 2131729485958926453
+      NinjaGreen_Katana_12: -8228638642431645636
+      NinjaGreen_Katana_13: 6803790080954727522
+      NinjaGreen_Katana_14: 6320387522292454845
+      NinjaGreen_Katana_15: 1508340756357008475
+      NinjaGreen_Katana_16: -5902320345183268919
+      NinjaGreen_Katana_17: -18417361159031387
+      NinjaGreen_Katana_18: -1815546960640538450
+      NinjaGreen_Katana_19: 2653759127014860380
+      NinjaGreen_Katana_2: 9155554722231932020
+      NinjaGreen_Katana_20: 2738215230137906554
+      NinjaGreen_Katana_21: 8342239020305511248
+      NinjaGreen_Katana_22: 6981346343256070358
+      NinjaGreen_Katana_23: -4388252459710655767
+      NinjaGreen_Katana_24: -6816739600589171828
+      NinjaGreen_Katana_25: 7132418907327293253
+      NinjaGreen_Katana_26: 7932634346206629973
+      NinjaGreen_Katana_27: 4329998049273376560
+      NinjaGreen_Katana_28: -8608970369299028299
+      NinjaGreen_Katana_29: -3757766714450166627
+      NinjaGreen_Katana_3: 893988079814762889
+      NinjaGreen_Katana_30: 3540676341660208093
+      NinjaGreen_Katana_31: 242704703830748500
+      NinjaGreen_Katana_32: 4471970527867710280
+      NinjaGreen_Katana_33: -919459018618382910
+      NinjaGreen_Katana_34: -2627972320762356259
+      NinjaGreen_Katana_35: -8337998563156343872
+      NinjaGreen_Katana_36: -226679846764049054
+      NinjaGreen_Katana_37: -8895637914584470981
+      NinjaGreen_Katana_38: -5524781580652200650
+      NinjaGreen_Katana_39: -6533327886701078045
+      NinjaGreen_Katana_4: 7821123192943863785
+      NinjaGreen_Katana_40: -190281052356444865
+      NinjaGreen_Katana_41: -6528971872867203099
+      NinjaGreen_Katana_42: 9091989970245030790
+      NinjaGreen_Katana_43: 7381830922346307452
+      NinjaGreen_Katana_44: -7773433789925840626
+      NinjaGreen_Katana_45: 5842405907147906095
+      NinjaGreen_Katana_46: -7002127738839672971
+      NinjaGreen_Katana_47: -1073195565722514656
+      NinjaGreen_Katana_48: 2203237589832186293
+      NinjaGreen_Katana_49: 7298324197951381252
+      NinjaGreen_Katana_5: 2728330661549163272
+      NinjaGreen_Katana_50: 937608592095038364
+      NinjaGreen_Katana_51: -2494523253640923320
+      NinjaGreen_Katana_52: 6950150507522005931
+      NinjaGreen_Katana_53: -2217798360231198486
+      NinjaGreen_Katana_54: 6331294685458623186
+      NinjaGreen_Katana_55: 3829886869632126256
+      NinjaGreen_Katana_56: 4690485689385099345
+      NinjaGreen_Katana_57: 499312114456428031
+      NinjaGreen_Katana_58: 4542752482568478768
+      NinjaGreen_Katana_59: 1420814644293379002
+      NinjaGreen_Katana_6: 3320212130667991661
+      NinjaGreen_Katana_60: 7252486422386571377
+      NinjaGreen_Katana_61: 6447897356622325369
+      NinjaGreen_Katana_62: 1250683970004713787
+      NinjaGreen_Katana_63: 7880157952022234239
+      NinjaGreen_Katana_64: 6825083373120551848
+      NinjaGreen_Katana_65: -3040382657634444679
+      NinjaGreen_Katana_7: 5829978478110524441
+      NinjaGreen_Katana_8: 1459273969729421635
+      NinjaGreen_Katana_9: 1805578648246943109
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -53,6 +53,8 @@ public class Player3DFrostNova : MonoBehaviour, IHotbarSkill
     public bool Activate()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return false;
+        if (StatusController.Player != null && StatusController.Player.Silenced)
+        { DamagePopup.SpawnText(transform.position, "Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
         if (Time.time < nextUse) return false;
 
         if (!Character.Instance.SpendMana(manaCost))
@@ -88,7 +90,7 @@ public class Player3DFrostNova : MonoBehaviour, IHotbarSkill
             var ai = targets[i];
             if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
             int power = Mathf.RoundToInt(Character.Instance.RollMagicDamage(out bool crit) * damageMult);
-            ai.Health.TakeMagicDamage(power, crit);
+            ai.Health.TakeMagicDamage(power, crit, Element.Water);
             ai.Slow(slowFactor, slowSeconds);
         }
         return true;

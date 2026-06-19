@@ -431,6 +431,7 @@ public static class Build25DSpike
         mh.magicDefense = arc.magicDefense;
         mh.flee         = arc.flee;                          // RO FLEE: dodges some of the player's swings (red MISS)
         mh.flashColor   = arc.flash.a > 0f ? arc.flash : Color.white;
+        mh.element      = arc.element;                        // armor PROPERTY — what the player's spells/melee hit
 
         var ai = go.AddComponent<MonsterAI3D>();
         ai.attackType     = arc.attackType;
@@ -447,6 +448,11 @@ public static class Build25DSpike
         if (arc.wanderRadius > 0f) ai.wanderRadius = arc.wanderRadius;
         ai.preferredRange = arc.preferredRange;             // >0 = caster/archer kites at range
         ai.fleeHpFraction = arc.fleeHpFraction;             // >0 = skittish: flees when wounded
+        ai.attackElement          = arc.attackElement;       // outgoing PROPERTY (checked vs player's armor)
+        ai.onHitAilment           = arc.onHitAilment;        // status inflicted on a landed hit (chance 0 = none)
+        ai.onHitAilmentChance     = arc.onHitAilmentChance;
+        ai.onHitAilmentSeconds    = arc.onHitAilmentSeconds;
+        ai.onHitAilmentMagnitude  = arc.onHitAilmentMagnitude;
         // Magic mobs (e.g. the Flam caster) now lob a VISIBLE fireball — the hit lands on arrival.
         // Defaults (16px × 4 frames) match this sheet; null sheet = the old instant magic touch.
         if (ai.attackType == MonsterAI3D.AttackType.Magic)
@@ -463,6 +469,8 @@ public static class Build25DSpike
         death.deathSfx = SfxAssets.Set(0.7f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");  // poof (TomMusic has no creature cries)
         go.AddComponent<MobRespawn>();               // recycle the mob back into the world after it dies
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
+        // The floating HP bar + name (MobNameplate) is auto-added at runtime by MonsterAI3D.Awake, so it
+        // works on mobs baked before it existed too — no re-bake needed.
         return go;
     }
 
@@ -605,6 +613,11 @@ public static class Build25DSpike
         ctrl.deadSheet = LoadDeadSheet(sheetPath);       // SeparateAnim/Dead.png — defeated pose for Phase F death
         ctrl.footstepSfx = SfxAssets.Set(0.55f, "Footsteps/Dirt",
             "Dirt Walk 1", "Dirt Walk 2", "Dirt Walk 3", "Dirt Walk 4", "Dirt Walk 5");
+
+        // Make the player the animated NinjaGreen avatar (idle/walk/attack/hit + a baked weapon) when the
+        // CharacterAnimated art is present. Overrides the legacy single-pose look wired just above; a no-op
+        // if that art is missing, so the Boy-sheet fallback stays intact.
+        NinjaGreenPlayer.TryApply(go);
         return go;
     }
 

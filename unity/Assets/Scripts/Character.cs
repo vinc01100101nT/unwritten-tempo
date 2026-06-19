@@ -30,6 +30,19 @@ public class Character : MonoBehaviour
     [Tooltip("Mana regenerated per second.")]
     public float mpRegenPerSecond = 1.5f;
 
+    [Header("Element & cards (RO)")]
+    [Tooltip("The player's armor PROPERTY. Incoming attacks are scaled by their element vs this (Elements chart).")]
+    public Element armorElement = Element.Neutral;
+    [Range(0f, 1f)]
+    [Tooltip("Lifesteal: fraction of damage you DEAL that silently heals you. The mechanical core of a leech card.")]
+    public float lifeStealPct = 0f;
+    [Range(0f, 1f)]
+    [Tooltip("Damage reflect: fraction of damage you TAKE returned to the attacker. A thorns card.")]
+    public float reflectPct = 0f;
+
+    /// <summary>Lifesteal fraction (0..1), read by <see cref="Health"/> when the player deals damage.</summary>
+    public float LifeStealPct => lifeStealPct;
+
     [Header("Growth per level")]
     public int hpPerLevel = 6;
     public int attackPerLevel = 1;
@@ -121,6 +134,9 @@ public class Character : MonoBehaviour
 
     static readonly Color GuardColor = new Color(0.78f, 0.85f, 1f);
     static readonly Color MonsterMissColor = Color.white;   // a monster's swing whiffed the player → white MISS
+    static readonly Color ReflectColor = new Color(0.85f, 0.85f, 0.95f);   // thorns damage bounced back at a mob
+    static readonly Color ElemWeakColor = new Color(1f, 0.55f, 0.2f);      // incoming element super-effective on us
+    static readonly Color ElemResistColor = new Color(0.7f, 0.85f, 1f);    // incoming element resisted by our armor
 
     // Effective stat = flat layer (base + level growth + PRIMARY-STAT contribution + equipment) × (1 + passive%).
     // The passive % layer is deliberately separate so a +% never goes obsolete the way a flat bonus does (doc §7).
@@ -301,10 +317,12 @@ public class Character : MonoBehaviour
 
     public int TakeDamage(int attackerAttack) => TakeDamage(attackerAttack, -1);
 
-    /// <summary>Apply an incoming PHYSICAL hit: damage = max(1, attackerAttack − Defense). When
+    /// <summary>Apply an incoming PHYSICAL hit: damage = max(1, attackerAttack − Defense), then scaled by the
+    /// attacker's <paramref name="attackElement"/> vs our <see cref="armorElement"/>. When
     /// <paramref name="attackerHit"/> ≥ 0, the attacker's HIT is first rolled against our <see cref="Flee"/>
-    /// (RO accuracy); a miss negates the hit. Pass −1 to skip the roll (always lands). Returns damage dealt.</summary>
-    public int TakeDamage(int attackerAttack, int attackerHit)
+    /// (RO accuracy); a miss negates the hit. Pass −1 to skip the roll (always lands). <paramref name="source"/>
+    /// (the attacking mob) is used for damage-reflect. Returns damage dealt.</summary>
+    public int TakeDamage(int attackerAttack, int attackerHit, Element attackElement = Element.Neutral, MonsterAI3D source = null)
     {
         if (IsDead) return 0;
 
@@ -329,11 +347,17 @@ public class Character : MonoBehaviour
             return 0;
         }
 
-        int dmg = Guarded(Mathf.Max(1, attackerAttack - Defense));
+        // Element property: the incoming attack's element vs our armor element scales the damage (RO chart).
+        float mod = Elements.Modifier(attackElement, armorElement);
+        if (mod <= 0f) { ElementCue(mod); return 0; }   // our armor fully resists this element
+
+        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt((attackerAttack - Defense) * mod)));
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);                       // player hurt grunt
+        ElementCue(mod);
         OnDamaged?.Invoke(dmg);                  // drives the player hurt flash
+        Reflect(dmg, source);                    // thorns: bounce a fraction back at the attacker
         if (CurrentHP == 0) OnDied?.Invoke();   // Phase F: DeathScreen handles the death → respawn flow
         return dmg;
     }
@@ -341,17 +365,70 @@ public class Character : MonoBehaviour
     /// <summary>Apply an incoming MAGIC hit: reduced by <see cref="MagicDefense"/> (not
     /// <see cref="Defense"/>), and NOT avoidable by Evasion (dodge is physical only). Returns the
     /// damage dealt.</summary>
-    public int TakeMagicDamage(int attackerMagic)
+    public int TakeMagicDamage(int attackerMagic, Element attackElement = Element.Neutral, MonsterAI3D source = null)
     {
         if (IsDead) return 0;
 
-        int dmg = Guarded(Mathf.Max(1, attackerMagic - MagicDefense));
+        float mod = Elements.Modifier(attackElement, armorElement);
+        if (mod <= 0f) { ElementCue(mod); return 0; }
+
+        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt((attackerMagic - MagicDefense) * mod)));
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);
+        ElementCue(mod);
+        OnDamaged?.Invoke(dmg);
+        Reflect(dmg, source);
+        if (CurrentHP == 0) OnDied?.Invoke();
+        return dmg;
+    }
+
+    /// <summary>Apply raw over-time damage (e.g. a <see cref="StatusController"/> Poison/Bleed/Burn tick) that
+    /// bypasses Defense, element, and Guard. Pops a <paramref name="color"/> number over the avatar, drives the
+    /// hurt flash, and triggers death once.</summary>
+    public int TakeTrueDamage(int amount, Color color)
+    {
+        if (IsDead || amount <= 0) return 0;
+        int dmg = Mathf.Max(1, amount);
+        CurrentHP = Mathf.Max(0, CurrentHP - dmg);
+        OnHealthChanged?.Invoke();
+        var a = Avatar();
+        if (a != null) DamagePopup.Spawn(a.position, dmg, color);
         OnDamaged?.Invoke(dmg);
         if (CurrentHP == 0) OnDied?.Invoke();
         return dmg;
+    }
+
+    // Pop a Weak!/Resist cue over the avatar when an incoming attack's element matters (the damage number
+    // already changed; this just makes WHY legible). Immune (mod ≤ 0) shows "Immune".
+    void ElementCue(float mod)
+    {
+        var a = Avatar();
+        if (a == null) return;
+        if (mod <= 0f) DamagePopup.SpawnText(a.position, "Immune", ElemResistColor);
+        else if (Elements.IsStrong(mod)) DamagePopup.SpawnText(a.position + Vector3.up * 0.3f, "Weak!", ElemWeakColor);
+        else if (Elements.IsWeak(mod)) DamagePopup.SpawnText(a.position + Vector3.up * 0.3f, "Resist", ElemResistColor);
+    }
+
+    // Damage reflect (thorns card): bounce a fraction of damage taken back at the attacking mob as true
+    // damage (bypasses its defense, can't itself be reflected — TakeTrueDamage never calls back here).
+    void Reflect(int dmgTaken, MonsterAI3D source)
+    {
+        if (reflectPct <= 0f || dmgTaken <= 0 || source == null) return;
+        var h = source.Health;
+        if (h == null || h.IsDead) return;
+        int r = Mathf.RoundToInt(dmgTaken * reflectPct);
+        if (r > 0) h.TakeTrueDamage(r, ReflectColor);
+    }
+
+    /// <summary>Heal from lifesteal — like <see cref="Heal"/> but SILENT (no green popup), so multi-hit leech
+    /// doesn't spam numbers. Clamped to <see cref="MaxHP"/>.</summary>
+    public void LeechHeal(int amount)
+    {
+        if (amount <= 0 || IsDead) return;
+        int before = CurrentHP;
+        CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
+        if (CurrentHP != before) OnHealthChanged?.Invoke();
     }
 
     // Mana regenerates over time toward MaxMP (whole points; the fraction is carried in mpAccum).

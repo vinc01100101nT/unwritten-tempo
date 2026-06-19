@@ -22,7 +22,7 @@ public static class SystemsSceneBuilder
 {
     const string ScenesDir = "Assets/Scenes";
     const string SystemsPath = ScenesDir + "/Systems.unity";
-    const string FirstMap = "NatureStage";
+    const string FirstMap = "Town";   // boot into the region's safe hub (Region ▸ Build Town Hub)
 
     [MenuItem("Tools/unwritten/Setup Systems Scene", priority = 3)]
     static void Build()

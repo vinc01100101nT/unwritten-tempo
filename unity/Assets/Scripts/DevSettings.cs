@@ -46,9 +46,10 @@ public class DevSettings : MonoBehaviour
     {
         public string label;
         public float min, max;
-        public bool isInt, isBool;
+        public bool isInt, isBool, isAct;
         public Func<float> get; public Action<float> set;
         public Func<bool> getB; public Action<bool> setB;
+        public Action act; public Func<string> dyn;   // isAct: a button (optionally with a live label)
         public bool hasDefault; public float def; public bool defB;
     }
 
@@ -91,6 +92,10 @@ public class DevSettings : MonoBehaviour
         => cur.knobs.Add(new Knob { label = label, min = min, max = max, isInt = true, get = get, set = set });
     void B(string label, Func<bool> get, Action<bool> set)
         => cur.knobs.Add(new Knob { label = label, isBool = true, getB = get, setB = set });
+    void Act(string label, Action act)
+        => cur.knobs.Add(new Knob { label = label, isAct = true, act = act });
+    void Act(Func<string> dyn, Action act)
+        => cur.knobs.Add(new Knob { isAct = true, dyn = dyn, act = act });
 
     // ---- mob fan-out: read the first live mob, write to ALL of them ----
     static void MobForEach(Action<MonsterAI3D> act)
@@ -127,6 +132,67 @@ public class DevSettings : MonoBehaviour
     }
 
     static Character Ch => Character.Instance;
+
+    // ---- Combat Test helpers --------------------------------------------------
+    MonsterAI3D NearestMob()
+    {
+        if (player == null) return null;
+        Vector3 p = player.transform.position;
+        MonsterAI3D best = null; float bestSqr = float.MaxValue;
+        var list = MonsterAI3D.Active;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var m = list[i];
+            if (m == null || m.Health == null || m.Health.IsDead) continue;
+            float sqr = (m.transform.position - p).sqrMagnitude;
+            if (sqr < bestSqr) { bestSqr = sqr; best = m; }
+        }
+        return best;
+    }
+
+    static Element NextElement(Element e) => (Element)(((int)e + 1) % Elements.Count);
+
+    string MobElementLabel()
+    {
+        var m = NearestMob();
+        string e = (m != null && m.Health != null) ? m.Health.element.ToString() : "(none)";
+        return "Mob armor: " + e + "   ▶ cycle";
+    }
+
+    void CycleMobElement()
+    {
+        var m = NearestMob();
+        if (m == null || m.Health == null) return;
+        m.Health.element = NextElement(m.Health.element);
+        DamagePopup.SpawnText(m.transform.position + Vector3.up * 1.1f, "Armor: " + m.Health.element, Elements.Tint(m.Health.element));
+    }
+
+    void CyclePlayerElement()
+    {
+        if (Ch == null) return;
+        Ch.armorElement = NextElement(Ch.armorElement);
+        if (player != null)
+            DamagePopup.SpawnText(player.transform.position + Vector3.up * 1.1f, "Armor: " + Ch.armorElement, Elements.Tint(Ch.armorElement));
+    }
+
+    void CycleWeaponElement()
+    {
+        if (attacker == null) return;
+        attacker.meleeElement = NextElement(attacker.meleeElement);
+        if (player != null)
+            DamagePopup.SpawnText(player.transform.position + Vector3.up * 1.1f, "Weapon: " + attacker.meleeElement, Elements.Tint(attacker.meleeElement));
+    }
+
+    void Afflict(Ailment a, float secs, float mag)
+    {
+        var m = NearestMob();
+        if (m != null) Status.Apply(m.gameObject, a, secs, mag);
+    }
+
+    void AfflictMe(Ailment a, float secs, float mag)
+    {
+        if (player != null) Status.Apply(player.gameObject, a, secs, mag);
+    }
 
     void BuildKnobs()
     {
@@ -191,6 +257,30 @@ public class DevSettings : MonoBehaviour
         F("Respawn delay",    0f, 10f, () => RespawnRead(r => r.respawnDelay),     v => RespawnForEach(r => r.respawnDelay = v));
         F("Home radius",      0f, 15f, () => RespawnRead(r => r.homeRadius),       v => RespawnForEach(r => r.homeRadius = v));
         F("Player clear rad", 0f, 15f, () => RespawnRead(r => r.playerClearRadius), v => RespawnForEach(r => r.playerClearRadius = v));
+
+        // ---- Combat Test (RO) — elements, status ailments, leech/reflect ----
+        // Buttons act on the mob NEAREST the player (or on you). Cast Fireball (Fire) / Frost (Water) at a
+        // mob whose armor element you've cycled to see Weak!/Resist + changed numbers; afflict status to
+        // watch DoT ticks / freeze / blind misses; set Lifesteal/Reflect to feel the card mechanics.
+        Cat("Combat Test (RO)");
+        F("Lifesteal %", 0f, 1f, () => Ch ? Ch.lifeStealPct : 0f, v => { if (Ch) Ch.lifeStealPct = v; });
+        F("Reflect %",   0f, 1f, () => Ch ? Ch.reflectPct : 0f,   v => { if (Ch) Ch.reflectPct = v; });
+        Act(MobElementLabel, CycleMobElement);
+        Act(() => "My armor: " + (Ch != null ? Ch.armorElement.ToString() : "-") + "   ▶ cycle", CyclePlayerElement);
+        Act(() => "Weapon: " + (attacker != null ? attacker.meleeElement.ToString() : "-") + "   ▶ cycle", CycleWeaponElement);
+        Act("Poison nearest (5s)", () => Afflict(Ailment.Poison, 5f, 4f));
+        Act("Bleed nearest (5s)",  () => Afflict(Ailment.Bleed, 5f, 4f));
+        Act("Burn nearest (5s)",   () => Afflict(Ailment.Burn, 5f, 4f));
+        Act("Stun nearest (2s)",   () => Afflict(Ailment.Stun, 2f, 0f));
+        Act("Freeze nearest (2s)", () => Afflict(Ailment.Freeze, 2f, 0f));
+        Act("Slow nearest (4s)",   () => Afflict(Ailment.Slow, 4f, 0.4f));
+        Act("Blind nearest (5s)",  () => Afflict(Ailment.Blind, 5f, 50f));
+        Act("Stun ME (2s)",        () => AfflictMe(Ailment.Stun, 2f, 0f));
+        Act("Freeze ME (2s)",      () => AfflictMe(Ailment.Freeze, 2f, 0f));
+        Act("Slow ME (5s)",        () => AfflictMe(Ailment.Slow, 5f, 0.4f));
+        Act("Silence ME (4s)",     () => AfflictMe(Ailment.Silence, 4f, 0f));
+        Act("Blind ME (6s)",       () => AfflictMe(Ailment.Blind, 6f, 60f));
+        Act("Poison ME (6s)",      () => AfflictMe(Ailment.Poison, 6f, 3f));
 
         // ---- Environment — TimeOfDay + DayNightLight -----------------------
         Cat("Environment");
@@ -265,6 +355,13 @@ public class DevSettings : MonoBehaviour
 
     void DrawKnob(Knob k)
     {
+        if (k.isAct)
+        {
+            string lbl = k.dyn != null ? k.dyn() : k.label;
+            if (GUILayout.Button(lbl, GUILayout.Width(330))) k.act?.Invoke();
+            return;
+        }
+
         GUILayout.BeginHorizontal();
         GUILayout.Label(k.label, labelStyle, GUILayout.Width(150));
 

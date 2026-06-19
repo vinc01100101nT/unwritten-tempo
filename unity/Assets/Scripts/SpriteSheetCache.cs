@@ -23,6 +23,11 @@ public static class SpriteSheetCache
     static readonly Dictionary<(int tex, int cell, int frames), Sprite[][]> walk4
         = new Dictionary<(int, int, int), Sprite[][]>();
 
+    // Arbitrary horizontal clips read left→right from a grid cell. Used by the row-major NinjaGreen
+    // "CharacterAnimated" sheets (one direction per ROW), vs walk4's column-major mob sheets.
+    static readonly Dictionary<(int tex, int cell, int row, int col, int frames, int ppu), Sprite[]> grids
+        = new Dictionary<(int, int, int, int, int, int), Sprite[]>();
+
     /// <summary>N square frames of side <paramref name="frameSize"/> along the sheet's bottom row,
     /// clamped to the number of columns. Pivot centred, pixels-per-unit = frameSize. Shared/read-only.</summary>
     public static Sprite[] Strip(Texture2D sheet, int frameSize, int frameCount)
@@ -73,5 +78,31 @@ public static class SpriteSheetCache
         var dirs = new[] { Column(0), Column(1), Column(2), Column(3) };
         walk4[key] = dirs;
         return dirs;
+    }
+
+    /// <summary>One horizontal clip: <paramref name="frames"/> cells of side <paramref name="cell"/>,
+    /// read left→right starting at grid (<paramref name="row"/>, <paramref name="col"/>). Row 0 is the
+    /// TOP of the sheet (Unity's texture origin is bottom-left). Pivot centred; pixels-per-unit =
+    /// <paramref name="ppu"/> — pass the cell size for a 1-unit sprite, or a SMALLER ppu to render the
+    /// art larger (NinjaGreen's 32px frames slice at ppu 16 so the ~16px character is ~1 unit tall).
+    /// Shared/read-only. The slicer behind the row-major NinjaGreen player animations.</summary>
+    public static Sprite[] Grid(Texture2D sheet, int cell, int row, int col, int frames, int ppu)
+    {
+        if (sheet == null || cell <= 0 || frames <= 0) return System.Array.Empty<Sprite>();
+        if (ppu <= 0) ppu = cell;
+        int cols = Mathf.Max(1, sheet.width / cell);
+        int n = Mathf.Clamp(frames, 1, Mathf.Max(1, cols - col));
+
+        var key = (sheet.GetInstanceID(), cell, row, col, n, ppu);
+        if (grids.TryGetValue(key, out var cached)) return cached;
+
+        var arr = new Sprite[n];
+        for (int i = 0; i < n; i++)
+        {
+            var rect = new Rect((col + i) * cell, sheet.height - (row + 1) * cell, cell, cell);
+            arr[i] = Sprite.Create(sheet, rect, new Vector2(0.5f, 0.5f), ppu);
+        }
+        grids[key] = arr;
+        return arr;
     }
 }

@@ -23,6 +23,9 @@ public class Player3DAttacker : MonoBehaviour
     public float windupTime = 0.18f;
     [Tooltip("Fallback damage when there's no Character (e.g. the standalone spike).")]
     public int damage = 3;
+    [Tooltip("The weapon's attack ELEMENT (RO property), applied to basic swings and skill strikes vs the " +
+             "target's armor element. Neutral = no interaction; a fire sword would set this to Fire.")]
+    public Element meleeElement = Element.Neutral;
 
     [Header("Slash FX (sliced off a horizontal sheet at runtime)")]
     public Texture2D slashSheet;
@@ -108,7 +111,8 @@ public class Player3DAttacker : MonoBehaviour
 
         // Pass our HIT so the target rolls it against its FLEE (RO accuracy); −1 in the Character-less spike.
         int hit = Character.Instance != null ? Character.Instance.Hit : -1;
-        int dealt = t.TakeDamage(power, crit, hit);
+        if (hit >= 0 && StatusController.Player != null) hit = Mathf.Max(0, hit - StatusController.Player.HitPenalty);  // Blind
+        int dealt = t.TakeDamage(power, crit, hit, meleeElement);
         if (dealt > 0) Sfx.Play(WeaponSfx(w => w.hitSfx, defaultHitSfx));   // impact — only on a landed hit, not a MISS
     }
 
@@ -140,7 +144,7 @@ public class Player3DAttacker : MonoBehaviour
         Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
         SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), fxPos, slashScale * fxScale);
 
-        int dealt = t.TakeDamage(power, true, -1);   // skills always land; gold (crit-styled) number sells the impact
+        int dealt = t.TakeDamage(power, true, -1, meleeElement);   // skills always land; gold (crit-styled) number sells the impact
         if (dealt > 0)
         {
             Sfx.Play(hitSfx != null && !hitSfx.Empty ? hitSfx : WeaponSfx(w => w.hitSfx, defaultHitSfx));

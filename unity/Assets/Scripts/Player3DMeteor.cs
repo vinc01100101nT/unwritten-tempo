@@ -92,6 +92,8 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill
     public bool Activate()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return false;
+        if (StatusController.Player != null && StatusController.Player.Silenced)
+        { DamagePopup.SpawnText(transform.position, "Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
         if (Time.time < nextUse) return false;
         if (GroundTargeter.Active) { GroundTargeter.Cancel(); return false; }   // re-press cancels aiming
 
@@ -161,7 +163,7 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill
             {
                 if (Character.Instance == null) return 0;
                 int power = Mathf.RoundToInt(Character.Instance.RollMagicDamage(out bool crit) * (damageMult / totalHits));
-                int dealt = ai.Health.TakeMagicDamageOverkill(power, crit);
+                int dealt = ai.Health.TakeMagicDamageOverkill(power, crit, Element.Fire);
                 if (!ai.Health.IsDead && Random.value < stunChance) ai.Stun(stunSeconds);   // only stun the living
                 return dealt;
             },
