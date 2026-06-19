@@ -385,10 +385,10 @@ public static class Build25DSpike
 
     /// <summary>Back-compat overload: a default melee grunt (or a magic "mystic" if <paramref name="mystic"/>)
     /// from an explicit sheet. Used by the spike ring + training dummy. Varied spawns use the archetype
-    /// overload below (see <see cref="Bestiary"/>).</summary>
+    /// overload below (see <see cref="MobRoster"/>).</summary>
     public static GameObject BuildMonster(Texture2D tex, Vector3 foot, bool mystic)
     {
-        var arc = Bestiary.All[0];          // the Slime grunt as the baseline
+        var arc = MobRoster.All[0];          // the Slime grunt as the baseline
         arc.sheet = null;                   // use the caller's texture, not the archetype's sheet
         arc.tint  = Color.white;
         if (mystic)

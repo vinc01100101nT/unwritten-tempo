@@ -34,7 +34,7 @@ public struct MonsterArchetype
     public float preferredRange, fleeHpFraction;
 }
 
-public static class Bestiary
+public static class MobRoster
 {
     static readonly Color None  = Color.white;
     static readonly Color Arcane = new Color(0.62f, 0.72f, 1f);   // the old "mystic" blue, now the caster's

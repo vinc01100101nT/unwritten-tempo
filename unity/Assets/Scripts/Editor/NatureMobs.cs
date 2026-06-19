@@ -66,7 +66,7 @@ public static class NatureMobs
             if (new Vector2(hit.point.x - spawn.x, hit.point.z - spawn.z).magnitude < SpawnClearR) continue;
             if (spots.Any(p => (p - hit.point).sqrMagnitude < MobSpacing * MobSpacing)) continue;
 
-            var mob = Build25DSpike.BuildMonster(Bestiary.WeightedPick(), hit.point);   // mixed bestiary (weighted)
+            var mob = Build25DSpike.BuildMonster(MobRoster.WeightedPick(), hit.point);   // mixed mobs (weighted)
             mob.transform.SetParent(root.transform, true);
             spots.Add(hit.point);
             placed++;
@@ -76,11 +76,11 @@ public static class NatureMobs
         EditorSceneManager.SaveScene(root.scene);
         Debug.Log($"[unwritten] Populated {placed} mobs onto the nature terrain.");
         EditorUtility.DisplayDialog("Populate Mobs — done",
-            $"Spawned {placed} mobs under '{Container}' — a mixed bestiary (Slime grunts, Bat swarmers, " +
+            $"Spawned {placed} mobs under '{Container}' — a mixed roster (Slime grunts, Bat swarmers, " +
             "Kappa bruisers, Flam casters that kite, Cyclope darters that flee when hurt).\n\n" +
             "Press Play: LEFT-click a mob to attack (A = attack-move, S = stop). They wander, then " +
             "chase + bite when you get close.\n\n" +
-            "Re-run for a new layout, tweak archetypes/weights in Bestiary.cs, or MobDensity in NatureMobs.cs.", "OK");
+            "Re-run for a new layout, tweak archetypes/weights in MobRoster.cs, or MobDensity in NatureMobs.cs.", "OK");
     }
 
     [MenuItem("Tools/unwritten/Clear Mobs (Nature)", priority = 9)]
