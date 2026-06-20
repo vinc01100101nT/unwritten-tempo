@@ -1,20 +1,23 @@
 # SESSION_STATE — resume here (keep this SHORT; git holds history)
 
-_2026-06-20 · branch `experiment/3d-world` · last commit `e9f2932`_
+_2026-06-20 · branch `experiment/3d-world` · last commit TBD (loot-drops)_
 
 ## Protocols (full text in `~/.claude/.../memory/`)
 - **Effort + model**: defaults **Sonnet 4.6 + Medium**. Assess each task first for BOTH effort + model; auto-GO on Low/Medium fitting the model; PAUSE for >Medium OR higher tier until user sets dials + GO. Tag each task reply with bold first line `**EFFORT: X · MODEL: Y — …**`. Opus 4.8 for hard/ambiguous; model switches bust the cache (don't micro-toggle).
 - **Checkpoint**: OVERWRITE current state (never append history — git holds it); on milestones + before `/clear` only; keep short.
 
-## ✅ Done (verified "it works"), UNCOMMITTED
-Single-target aim-first skill:
-- NEW `UnitTargeter.cs` — single-target reticle (analog of `GroundTargeter`): hover ring green/red, left-click locks+fires, Esc/right-click cancels, over ground auto-targets nearest mob to cursor.
-- NEW `Player3DSoulStrike.cs` — Mage skill slot 3 / key 4; aim → confirm → `Projectile3D`, 2.6× magic dmg + 35% stun.
-- EDIT `Player3DController.cs` (suppress move while `UnitTargeter.Active`), `GameCursor3D.cs` (64×64 `targetCursor`, ForceSoftware), `Editor/Build25DSpike.cs` (wire skill + cursor).
-- In-game: Setup Systems Scene → Save → Play → Mage (P panel) → key 4.
+## ✅ Recently shipped
+Loot drops (Zeny) on mob death:
+- `Wallet.cs` — static gold store + `OnChanged` event; persisted via SaveData.gold
+- `WorldPickup.cs` — bobbing coin billboard in 3D world, auto-collects on player proximity
+- `LootDropper.cs` — hooks `Health.onDeath`, spawns WorldPickup with per-archetype gold ranges
+- `GoldCounter.cs` — HUD text (top-right) wired to Wallet.OnChanged
+- `MobRoster.cs` — added `goldMin`/`goldMax` to MonsterArchetype + values for all 5 archetypes + boss
+- `Build25DSpike.cs` — wires LootDropper in BuildMonster (GoldCoin.png sprite)
+- `UIShellBuilder.cs` — gold panel (HUD_GoldPanel / HUD_Gold) in top-right corner
+- `SaveData.cs` / `Character.cs` — gold captured + restored on save/load
+
+**To activate**: run **Tools ▸ unwritten ▸ Build UI Shell** (new gold panel) then **Populate Mobs / Setup Systems Scene** (mobs get LootDropper). Press Play, kill a mob → coin spawns → walk over it → counter updates.
 
 ## ⏳ TODO
-1. **Commit** the above. Msg: "Aim-first single-target skill (Soul Strike) + UnitTargeter + 64px reticle cursor" + `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
-2. **Write `unity/Assets/Scripts/PERF_LOG.md` entry** (newest on top): gameplay CLEAN — Hierarchy `UpdateScene` ≈1.4 KB/frame flat (34 mobs); PerfHud "4.5 MB/s" was editor/Profiler inflation. New systems alloc-free. Recovery note: "No cameras rendering" → re-run Setup Systems Scene.
-
-Resume: re-read this + `git status`. "commit" → #1. "finish perf checkup" → #2.
+- Nothing pending. (Next idea is open — ask the user.)

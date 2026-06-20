@@ -175,6 +175,16 @@ public static class UIShellBuilder
         // Hotkey legend, sitting just above the mana bar (lower-left stack: hotkeys ▸ MP ▸ HP).
         BuildHotkeyLegend(canvas);
 
+        // Gold counter — top-right corner; GoldCounter.cs wires it to Wallet.OnChanged at runtime.
+        var goldPanel = NewSliced("HUD_GoldPanel", canvas, barBgSprite);
+        Anchor(goldPanel.rectTransform, Vector2.one, Vector2.one, Vector2.one);
+        goldPanel.rectTransform.anchoredPosition = new Vector2(-16, -16);
+        goldPanel.rectTransform.sizeDelta = new Vector2(120, 26);
+        var goldLabel = NewText("HUD_Gold", goldPanel.transform, "0 z", 15, FontStyle.Bold, TextAnchor.MiddleCenter, true);
+        Fill(goldLabel.rectTransform, new Vector2(4, 2), new Vector2(-4, -2));
+        goldLabel.color = new Color(1f, 0.90f, 0.3f);   // warm gold tint
+        goldLabel.gameObject.AddComponent<GoldCounter>();
+
         var holder = NewColor("HUD_Hotbar", canvas, new Color(0, 0, 0, 0f));
         Anchor(holder.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
         holder.rectTransform.anchoredPosition = new Vector2(0, 14);

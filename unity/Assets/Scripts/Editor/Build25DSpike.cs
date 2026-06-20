@@ -472,6 +472,18 @@ public static class Build25DSpike
         death.deathSfx = SfxAssets.Set(0.7f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");  // poof (TomMusic has no creature cries)
         go.AddComponent<MobRespawn>();               // recycle the mob back into the world after it dies
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
+
+        // Loot: drop Zeny on death (coin sprite from the Treasure folder).
+        if (arc.goldMax > 0)
+        {
+            var dropper = go.AddComponent<LootDropper>();
+            dropper.goldMin = arc.goldMin;
+            dropper.goldMax = arc.goldMax;
+            // GoldCoin.png is a Multiple-sprite sheet — LoadAllAssetsAtPath picks the first Sprite.
+            foreach (var obj in AssetDatabase.LoadAllAssetsAtPath("Assets/Art/NinjaAdventure/Items/Treasure/GoldCoin.png"))
+                if (obj is Sprite s) { dropper.coinSprite = s; break; }
+        }
+
         // The floating HP bar + name (MobNameplate) is auto-added at runtime by MonsterAI3D.Awake, so it
         // works on mobs baked before it existed too — no re-bake needed.
         return go;

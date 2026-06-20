@@ -39,6 +39,9 @@ public struct MonsterArchetype
     public Element element, attackElement;
     public Ailment onHitAilment;
     public float onHitAilmentChance, onHitAilmentSeconds, onHitAilmentMagnitude;
+
+    // Loot (Zeny drop on death). goldDropChance defaults to 0.85 in LootDropper if both are 0.
+    public int goldMin, goldMax;
 }
 
 public static class MobRoster
@@ -59,6 +62,7 @@ public static class MobRoster
             moveSpeed = 2.2f, aggroRadius = 6f, leashRadius = 10f, stopDistance = 0.7f, wanderRadius = 3f,
             preferredRange = 0f, fleeHpFraction = 0f,
             element = Element.Earth, attackElement = Element.Neutral,   // Fireball melts it (Fire→Earth = Weak!)
+            goldMin = 2, goldMax = 6,
         },
 
         // 2) SWARMER — fast, fragile, dodgy harasser. Common; comes in numbers.
@@ -70,6 +74,7 @@ public static class MobRoster
             moveSpeed = 3.6f, aggroRadius = 7f, leashRadius = 12f, stopDistance = 0.6f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0f,
             element = Element.Wind, attackElement = Element.Neutral,   // Frost (Water→Wind) is Resisted on bats
+            goldMin = 1, goldMax = 3,
         },
 
         // 3) BRUISER — slow, tanky, heavy hits. Uncommon; a real threat one-on-one.
@@ -81,6 +86,7 @@ public static class MobRoster
             moveSpeed = 1.6f, aggroRadius = 5f, leashRadius = 9f, stopDistance = 0.8f, wanderRadius = 2.5f,
             preferredRange = 0f, fleeHpFraction = 0f,
             element = Element.Water, attackElement = Element.Neutral,   // water turtle: Fire is Resisted (use melee/wind)
+            goldMin = 5, goldMax = 14,
         },
 
         // 4) CASTER — holds JUST outside melee and lobs magic (hits MagicDefense, can't be dodged). Uncommon.
@@ -95,6 +101,7 @@ public static class MobRoster
             preferredRange = 3.2f, fleeHpFraction = 0f,
             element = Element.Fire, attackElement = Element.Fire,   // flame: Frost (Water→Fire) = Weak!; its bolt BURNS
             onHitAilment = Ailment.Burn, onHitAilmentChance = 0.4f, onHitAilmentSeconds = 4f, onHitAilmentMagnitude = 2f,
+            goldMin = 4, goldMax = 10,
         },
 
         // 5) DARTER — hit-and-run; flees once wounded below 40% HP. Uncommon.
@@ -107,6 +114,7 @@ public static class MobRoster
             preferredRange = 0f, fleeHpFraction = 0.4f,
             element = Element.Neutral, attackElement = Element.Neutral,   // plain baseline — but its hit-and-run bite POISONS
             onHitAilment = Ailment.Poison, onHitAilmentChance = 0.35f, onHitAilmentSeconds = 5f, onHitAilmentMagnitude = 2f,
+            goldMin = 3, goldMax = 8,
         },
     };
 
@@ -128,6 +136,7 @@ public static class MobRoster
         // Fire dragon: resists Fire, MELTS to Frost (Water→Fire = Weak!), and its bite BURNS you.
         element = Element.Fire, attackElement = Element.Fire,
         onHitAilment = Ailment.Burn, onHitAilmentChance = 0.5f, onHitAilmentSeconds = 5f, onHitAilmentMagnitude = 4f,
+        goldMin = 500, goldMax = 1000,
     };
 
     /// <summary>Pick an archetype weighted by <see cref="MonsterArchetype.weight"/> (commons more often).</summary>

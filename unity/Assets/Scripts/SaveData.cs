@@ -35,4 +35,7 @@ public class SaveData
     public int bankedPoints = 1;   // 1 = the level-1 free start
     public bool hasLeader;
     public StatId leader;
+
+    // Currency (M2 loot slice).
+    public int gold;
 }

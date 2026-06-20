@@ -535,6 +535,7 @@ public class Character : MonoBehaviour
         d.bankedPoints = Passives.BankedPoints;
         d.leader       = Passives.Leader;
         d.hasLeader    = Passives.HasLeader;
+        d.gold         = Wallet.Capture();
         return d;
     }
 
@@ -553,6 +554,7 @@ public class Character : MonoBehaviour
                 primary[i] = Mathf.Max(1, d.primary[i]);
 
         Passives.LoadState(d.rankStats, d.rankValues, d.leader, d.hasLeader, d.bankedPoints);
+        Wallet.Restore(d.gold);
 
         // HP/MP last, against the now-restored maxima. Never load into a dead state.
         CurrentHP = Mathf.Clamp(d.currentHP <= 0 ? MaxHP : d.currentHP, 1, MaxHP);
