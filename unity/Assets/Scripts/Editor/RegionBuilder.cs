@@ -97,20 +97,7 @@ public static class RegionBuilder
         if (scene.name == TownScene)
         { EditorUtility.DisplayDialog("Link Field → Town", "The active scene is Town. Open the FIELD map (NatureStage) first, then re-run.", "OK"); return; }
 
-        int groundLayer = NatureStageBuilder.EnsureGroundLayer();
-        int groundMask = groundLayer >= 0 ? 1 << groundLayer : ~0;
-        Physics.SyncTransforms();
-
-        // Anchor near the field's default arrival ("Start" if present, else origin).
-        Vector3 anchor = Vector3.zero;
-        foreach (var sp in Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None))
-            if (sp.id == "Start") { anchor = sp.transform.position; break; }
-
-        Vector3 spawnPos  = NatureStageBuilder.SurfacePoint(anchor + new Vector3(-4.5f, 0f, 0f), groundMask);
-        Vector3 portalPos = NatureStageBuilder.SurfacePoint(anchor + new Vector3(-8f, 0f, 0f), groundMask);
-
-        bool addedSpawn  = EnsureSpawn(scene, "FromTown", spawnPos);
-        bool addedPortal = EnsurePortal(scene, "Portal_ToTown", portalPos, TownScene, "FromField", new Color(1f, 0.85f, 0.4f));
+        var (addedSpawn, addedPortal) = LinkFieldBack(scene);
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
@@ -163,6 +150,30 @@ public static class RegionBuilder
         Debug.Log($"[unwritten] Field boss '{MobRoster.Boss.name}' spawned in '{scene.name}'.");
     }
 
+    /// <summary>Wire an open FIELD scene back to the Town: ensure a "FromTown" SpawnPoint + a Portal3D →
+    /// Town @ "FromField", placed just west of the field's default arrival. Idempotent. Returns what was
+    /// added. Shared by the menu item and the Fantasy Town builder (which calls it on NatureStage so the
+    /// whole travel loop is wired in one click). Caller saves the scene.</summary>
+    public static (bool addedSpawn, bool addedPortal) LinkFieldBack(Scene scene)
+    {
+        int groundLayer = NatureStageBuilder.EnsureGroundLayer();
+        int groundMask = groundLayer >= 0 ? 1 << groundLayer : ~0;
+        Physics.SyncTransforms();
+
+        // Anchor near the field's default arrival ("Start" if present, else origin).
+        Vector3 anchor = Vector3.zero;
+        foreach (var sp in Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None))
+            if (sp.id == "Start") { anchor = sp.transform.position; break; }
+
+        Vector3 spawnPos  = NatureStageBuilder.SurfacePoint(anchor + new Vector3(-4.5f, 0f, 0f), groundMask);
+        Vector3 portalPos = NatureStageBuilder.SurfacePoint(anchor + new Vector3(-8f, 0f, 0f), groundMask);
+
+        bool addedSpawn  = EnsureSpawn(scene, "FromTown", spawnPos);
+        bool addedPortal = EnsurePortal(scene, "Portal_ToTown", portalPos, TownScene, "FromField", new Color(1f, 0.85f, 0.4f));
+        NatureStageBuilder.RegisterInBuildSettings(TownScenePath);   // so the field's portal can load Town by name
+        return (addedSpawn, addedPortal);
+    }
+
     // ── HAND-PLACE HELPER: snap dragged-in props onto the terrain ────────────────────────────────────
     [MenuItem("Tools/unwritten/Region/Drop Selected to Ground", priority = 23)]
     static void DropSelectedToGround()
@@ -194,7 +205,7 @@ public static class RegionBuilder
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────────────────────────────
-    static GameObject MakeSpawn(Scene scene, string id, Vector3 pos)
+    public static GameObject MakeSpawn(Scene scene, string id, Vector3 pos)
     {
         var go = new GameObject($"SpawnPoint_{id}");
         SceneManager.MoveGameObjectToScene(go, scene);
@@ -204,7 +215,7 @@ public static class RegionBuilder
     }
 
     // Add a SpawnPoint only if this scene doesn't already have one with that id.
-    static bool EnsureSpawn(Scene scene, string id, Vector3 pos)
+    public static bool EnsureSpawn(Scene scene, string id, Vector3 pos)
     {
         foreach (var sp in Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None))
             if (sp.id == id && sp.gameObject.scene == scene) return false;
@@ -212,7 +223,7 @@ public static class RegionBuilder
         return true;
     }
 
-    static GameObject MakePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, Color padColor)
+    public static GameObject MakePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, Color padColor)
     {
         var go = new GameObject(name);
         SceneManager.MoveGameObjectToScene(go, scene);
@@ -244,7 +255,7 @@ public static class RegionBuilder
     }
 
     // Add a Portal3D only if this scene doesn't already have one pointing at the same target.
-    static bool EnsurePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, Color padColor)
+    public static bool EnsurePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, Color padColor)
     {
         foreach (var p in Object.FindObjectsByType<Portal3D>(FindObjectsSortMode.None))
             if (p.targetScene == targetScene && p.gameObject.scene == scene) return false;

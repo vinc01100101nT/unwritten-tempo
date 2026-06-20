@@ -36,6 +36,12 @@ public static class Wallet
     /// <summary>Export current balance into a save snapshot.</summary>
     public static int Capture() => _gold;
 
-    /// <summary>Restore balance from a save snapshot (silently, no OnChanged spam on load).</summary>
-    public static void Restore(int saved) => _gold = Mathf.Max(0, saved);
+    /// <summary>Restore balance from a save snapshot. Fires OnChanged once so HUD listeners that
+    /// already subscribed (e.g. GoldCounter, which reads Gold in Awake before the save loads) refresh
+    /// to the loaded total instead of being stuck on the pre-load value.</summary>
+    public static void Restore(int saved)
+    {
+        _gold = Mathf.Max(0, saved);
+        OnChanged?.Invoke(_gold);
+    }
 }

@@ -31,6 +31,7 @@ public class BillboardAnimator3D : MonoBehaviour
     Sprite[] down, up, left, right;
     Vector2 facing = Vector2.down;
     float timer; int frame;
+    Vector3 buildScale;   // authored localScale (UnitScale.ForMob is applied on top of this each frame)
     Vector3 baseScale;
     float breathePhase;
 
@@ -39,7 +40,8 @@ public class BillboardAnimator3D : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
         agent = GetComponent<PathAgent3D>();
         lunge = GetComponent<AttackLunge>();
-        baseScale = transform.localScale;
+        buildScale = transform.localScale;
+        baseScale = buildScale * UnitScale.ForMob;
         breathePhase = Random.value * Mathf.PI * 2f;   // desync the herd
         BuildFrames();
         if (down != null && down.Length > 0) sr.sprite = down[0];   // show before moving
@@ -56,6 +58,7 @@ public class BillboardAnimator3D : MonoBehaviour
 
     void Update()
     {
+        baseScale = buildScale * UnitScale.ForMob;   // live: track the global/mob unit-size dial (breathe squashes around this)
         bool moving = agent != null && agent.Moving;
         if (moving) facing = agent.Facing;
 

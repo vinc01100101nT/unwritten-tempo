@@ -42,6 +42,11 @@ public struct MonsterArchetype
 
     // Loot (Zeny drop on death). goldDropChance defaults to 0.85 in LootDropper if both are 0.
     public int goldMin, goldMax;
+
+    // Item drops: parallel arrays — name must match a Resources/Items/*.asset displayName (without .asset).
+    // Each entry is rolled independently on death. Leave null/empty for no item drops.
+    public string[] itemDropNames;
+    public float[]  itemDropChances;
 }
 
 public static class MobRoster
@@ -63,6 +68,7 @@ public static class MobRoster
             preferredRange = 0f, fleeHpFraction = 0f,
             element = Element.Earth, attackElement = Element.Neutral,   // Fireball melts it (Fire→Earth = Weak!)
             goldMin = 2, goldMax = 6,
+            itemDropNames = new[]{ "Life Potion" }, itemDropChances = new[]{ 0.08f },
         },
 
         // 2) SWARMER — fast, fragile, dodgy harasser. Common; comes in numbers.
@@ -75,6 +81,7 @@ public static class MobRoster
             preferredRange = 0f, fleeHpFraction = 0f,
             element = Element.Wind, attackElement = Element.Neutral,   // Frost (Water→Wind) is Resisted on bats
             goldMin = 1, goldMax = 3,
+            itemDropNames = new[]{ "Silver Ring" }, itemDropChances = new[]{ 0.05f },
         },
 
         // 3) BRUISER — slow, tanky, heavy hits. Uncommon; a real threat one-on-one.
@@ -87,6 +94,7 @@ public static class MobRoster
             preferredRange = 0f, fleeHpFraction = 0f,
             element = Element.Water, attackElement = Element.Neutral,   // water turtle: Fire is Resisted (use melee/wind)
             goldMin = 5, goldMax = 14,
+            itemDropNames = new[]{ "Wooden Guard", "Leather Vest" }, itemDropChances = new[]{ 0.12f, 0.08f },
         },
 
         // 4) CASTER — holds JUST outside melee and lobs magic (hits MagicDefense, can't be dodged). Uncommon.
@@ -102,6 +110,7 @@ public static class MobRoster
             element = Element.Fire, attackElement = Element.Fire,   // flame: Frost (Water→Fire) = Weak!; its bolt BURNS
             onHitAilment = Ailment.Burn, onHitAilmentChance = 0.4f, onHitAilmentSeconds = 4f, onHitAilmentMagnitude = 2f,
             goldMin = 4, goldMax = 10,
+            itemDropNames = new[]{ "Fire Scroll" }, itemDropChances = new[]{ 0.20f },
         },
 
         // 5) DARTER — hit-and-run; flees once wounded below 40% HP. Uncommon.
@@ -115,6 +124,7 @@ public static class MobRoster
             element = Element.Neutral, attackElement = Element.Neutral,   // plain baseline — but its hit-and-run bite POISONS
             onHitAilment = Ailment.Poison, onHitAilmentChance = 0.35f, onHitAilmentSeconds = 5f, onHitAilmentMagnitude = 2f,
             goldMin = 3, goldMax = 8,
+            itemDropNames = new[]{ "Jade Amulet" }, itemDropChances = new[]{ 0.10f },
         },
     };
 
@@ -137,6 +147,8 @@ public static class MobRoster
         element = Element.Fire, attackElement = Element.Fire,
         onHitAilment = Ailment.Burn, onHitAilmentChance = 0.5f, onHitAilmentSeconds = 5f, onHitAilmentMagnitude = 4f,
         goldMin = 500, goldMax = 1000,
+        itemDropNames   = new[]{ "Katana", "Iron Sword", "Boots" },
+        itemDropChances = new[]{ 0.50f,    0.35f,        0.70f   },
     };
 
     /// <summary>Pick an archetype weighted by <see cref="MonsterArchetype.weight"/> (commons more often).</summary>

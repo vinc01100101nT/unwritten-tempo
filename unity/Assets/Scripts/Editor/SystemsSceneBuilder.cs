@@ -48,6 +48,7 @@ public static class SystemsSceneBuilder
         // The persistent 2.5D rig.
         var sun = Build25DSpike.BuildLight();
         sun.gameObject.AddComponent<DayNightLight>();   // sun color/intensity/angle + ambient by time-of-day
+        sun.gameObject.AddComponent<CloudShadows>();    // drifting full-screen cloud shadows (DayNightLight also self-adds)
         var player = Build25DSpike.BuildPlayer(Vector3.zero);
         if (player != null) player.AddComponent<PersistentPlayer3D>();
         Build25DSpike.BuildCamera(rendererIndex, player);
@@ -72,6 +73,7 @@ public static class SystemsSceneBuilder
         gameSystems.AddComponent<DeathScreen>();        // Phase F: "YOU DIED" overlay + respawn (builds its own canvas)
         gameSystems.AddComponent<Sfx>();                // pooled one-shot SFX player (attack/hit/block/footsteps)
         gameSystems.AddComponent<TimeOfDay>();          // accelerated day/night clock (1h day + 1h night) + live tuner
+        gameSystems.AddComponent<MobHoverPanel>();      // top-right hover tooltip: HP bar + name + element
 
         var root = new GameObject("GameRoot").AddComponent<GameRoot>();   // loads the first map under Systems
         root.firstMap = FirstMap;

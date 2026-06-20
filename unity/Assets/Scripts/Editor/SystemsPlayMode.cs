@@ -1,18 +1,36 @@
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Because <c>Setup Systems Scene</c> sets the editor Play-start scene to Systems, pressing Play
-/// always boots the persistent layer first — but that means the map you had open isn't the one
-/// that loads. This bridge fixes that: right before entering Play, it remembers the active map's
-/// name so <see cref="GameRoot"/> loads THAT map under Systems (so "press Play in Town" tests
-/// Town). In a build there's no editor start-scene override, so GameRoot just uses its firstMap.
+/// Guarantees that pressing Play boots the persistent <c>Systems</c> scene — the ONLY scene that
+/// owns the camera (plus player / HUD / cursor / character). Maps (Town, NatureStage) are
+/// content-only and carry no camera (<see cref="MapManager.StripForeignGlobals"/> even disables any
+/// a map still holds), so if Play starts in a map directly you get a black "No cameras rendering"
+/// screen. This bridge has two jobs:
+///
+///   1. <b>Pin the editor Play-start scene to Systems.unity.</b> "Setup Systems Scene"
+///      (<see cref="SystemsSceneBuilder"/>) sets this once, but the value lives in the project's
+///      <c>Library/</c> folder, which is NOT committed — a fresh clone / repo relocation / Library
+///      rebuild silently resets it to null, and the next Play boots a camera-less map. Because this
+///      type is <see cref="InitializeOnLoadAttribute"/>, it runs on every editor load and re-pins
+///      the start scene, so the repo self-heals instead of needing a manual re-run.
+///
+///   2. <b>Remember the active map</b> so <see cref="GameRoot"/> loads THAT map under Systems
+///      (press Play in Town → test Town), not just its default firstMap.
+///
+/// In a build there's no editor start-scene override; scene index 0 is Systems and GameRoot uses
+/// its firstMap.
 /// </summary>
 [InitializeOnLoad]
 static class SystemsPlayMode
 {
+    const string SystemsScenePath = "Assets/Scenes/Systems.unity";
+
     static SystemsPlayMode()
     {
+        // Defer off the load tick so the AssetDatabase is ready to resolve the SceneAsset.
+        EditorApplication.delayCall += EnsurePlayStartsAtSystems;
         EditorApplication.playModeStateChanged += OnChange;
     }
 
@@ -20,8 +38,23 @@ static class SystemsPlayMode
     {
         if (state != PlayModeStateChange.ExitingEditMode) return;
 
+        EnsurePlayStartsAtSystems();   // belt-and-suspenders in case it was cleared this session
+
         var active = SceneManager.GetActiveScene();
         if (active.IsValid() && !string.IsNullOrEmpty(active.name) && active.name != MapManager.SystemsScene)
             SessionState.SetString("unwritten.bootMap", active.name);
+    }
+
+    // Point the editor Play-start scene at Systems so the camera always boots, whatever map is open.
+    // No-op until Systems.unity exists (run Setup Systems Scene first) or if it's already pinned.
+    static void EnsurePlayStartsAtSystems()
+    {
+        var systems = AssetDatabase.LoadAssetAtPath<SceneAsset>(SystemsScenePath);
+        if (systems == null || EditorSceneManager.playModeStartScene == systems) return;
+
+        EditorSceneManager.playModeStartScene = systems;
+        UnityEngine.Debug.Log("[unwritten] Play-start scene pinned to Systems.unity so the camera always boots " +
+            "(self-heal: this setting lives in the uncommitted Library and is lost on a fresh clone). " +
+            "Press Play from any map.");
     }
 }

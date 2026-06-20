@@ -7,6 +7,9 @@
 // carries the SpriteRenderer tint. Assigned to player/mobs by Build25DSpike. See the 2.5D depth
 // notes: because this renders in the AlphaTest (opaque) queue it writes depth, so sprites also
 // z-test against the 3D meshes for free.
+//
+// _HueShift / _Saturation / _Brightness are per-renderer (MaterialPropertyBlock) HSV knobs driven
+// by CharacterDye. All default to identity (no change) so existing sprites are unaffected.
 Shader "Unwritten/BillboardLit"
 {
     Properties
@@ -15,6 +18,45 @@ Shader "Unwritten/BillboardLit"
         _Color ("Tint", Color) = (1,1,1,1)
         _Cutoff ("Alpha Cutoff", Range(0,1)) = 0.5
         _ShadeFloor ("Shadowed Brightness", Range(0,1)) = 0.45
+
+        // HSV dye knobs — set per-renderer via MaterialPropertyBlock (CharacterDye.cs).
+        // Identity values: HueShift=0, Saturation=1, Brightness=1.
+        [PerRendererData] _HueShift   ("Hue Shift",   Range(0,1)) = 0
+        [PerRendererData] _Saturation ("Saturation",  Range(0,2)) = 1
+        [PerRendererData] _Brightness ("Brightness",  Range(0,2)) = 1
+
+        // Absolute-hue recolor: when _UseTargetHue > 0.5, every non-protected pixel's hue is SET
+        // to _TargetHue (keeping its S/V), computed in gamma space so the result matches the sRGB
+        // swatch. Default 0 → legacy _HueShift rotation, so mobs/untouched sprites are unaffected.
+        [PerRendererData] _TargetHue    ("Target Hue (absolute)", Range(0,1)) = 0
+        [PerRendererData] _TargetSat    ("Target Saturation",     Range(0,1)) = 1
+        [PerRendererData] _TargetVal    ("Target Value",          Range(0,1)) = 0.5
+        [PerRendererData] _BaseValue    ("Cloth Base Value (midtone anchor)", Range(0.01,1)) = 0.53
+        [PerRendererData] _UseTargetHue ("Use Target Hue",        Float)      = 0
+
+        // Palette swap — up to 4 slots (source → destination color replacement).
+        // Swaps are applied AFTER HSV so the eyedropper samples the color the user sees.
+        // All disabled by default (_SwapEnabled = 0000).
+        [PerRendererData] _SwapSrc0 ("Swap Source 0", Color) = (1,1,1,1)
+        [PerRendererData] _SwapSrc1 ("Swap Source 1", Color) = (1,1,1,1)
+        [PerRendererData] _SwapSrc2 ("Swap Source 2", Color) = (1,1,1,1)
+        [PerRendererData] _SwapSrc3 ("Swap Source 3", Color) = (1,1,1,1)
+        [PerRendererData] _SwapDst0 ("Swap Dest 0",   Color) = (1,0,0,1)
+        [PerRendererData] _SwapDst1 ("Swap Dest 1",   Color) = (1,0,0,1)
+        [PerRendererData] _SwapDst2 ("Swap Dest 2",   Color) = (1,0,0,1)
+        [PerRendererData] _SwapDst3 ("Swap Dest 3",   Color) = (1,0,0,1)
+        [PerRendererData] _SwapEnabled    ("Swap Enabled (xyzw = slots 0-3)", Vector) = (0,0,0,0)
+        [PerRendererData] _SwapTolerances ("Swap Tolerances", Vector) = (0.1,0.1,0.1,0.1)
+
+        // Whitelist protect — up to 4 art colors that the HSV dye must NEVER recolor (skin,
+        // outline, etc.). Matched against the ORIGINAL (pre-dye) color in GAMMA space, where the
+        // protected colors stay well separated (in linear, darks/brights collapse together).
+        [PerRendererData] _ProtectColor0 ("Protect Color 0", Color) = (0,0,0,1)
+        [PerRendererData] _ProtectColor1 ("Protect Color 1", Color) = (0,0,0,1)
+        [PerRendererData] _ProtectColor2 ("Protect Color 2", Color) = (0,0,0,1)
+        [PerRendererData] _ProtectColor3 ("Protect Color 3", Color) = (0,0,0,1)
+        [PerRendererData] _ProtectEnabled ("Protect Enabled (xyzw = slots 0-3)", Vector) = (0,0,0,0)
+        [PerRendererData] _ProtectTol     ("Protect Tolerances", Vector) = (0.12,0.12,0.12,0.12)
     }
 
     SubShader
@@ -52,6 +94,21 @@ Shader "Unwritten/BillboardLit"
                 half4  _Color;
                 half   _Cutoff;
                 half   _ShadeFloor;
+                half   _HueShift;
+                half   _Saturation;
+                half   _Brightness;
+                half   _TargetHue;
+                half   _TargetSat;
+                half   _TargetVal;
+                half   _BaseValue;
+                half   _UseTargetHue;
+                half4  _SwapSrc0; half4 _SwapSrc1; half4 _SwapSrc2; half4 _SwapSrc3;
+                half4  _SwapDst0; half4 _SwapDst1; half4 _SwapDst2; half4 _SwapDst3;
+                half4  _SwapEnabled;
+                half4  _SwapTolerances;
+                half4  _ProtectColor0; half4 _ProtectColor1; half4 _ProtectColor2; half4 _ProtectColor3;
+                half4  _ProtectEnabled;
+                half4  _ProtectTol;
             CBUFFER_END
 
             struct Attributes
@@ -69,6 +126,63 @@ Shader "Unwritten/BillboardLit"
                 float3 positionWS : TEXCOORD1;
             };
 
+            // ---- HSV helpers ------------------------------------------------------------
+            // Convert linear RGB → HSV (H in 0-1).
+            half3 RGBtoHSV(half3 c)
+            {
+                half4 K = half4(0.0h, -1.0h/3.0h, 2.0h/3.0h, -1.0h);
+                half4 p = lerp(half4(c.bg, K.wz), half4(c.gb, K.xy), step(c.b, c.g));
+                half4 q = lerp(half4(p.xyw, c.r), half4(c.r, p.yzx), step(p.x, c.r));
+                half  d = q.x - min(q.w, q.y);
+                half  e = 1.0e-10h;
+                return half3(abs(q.z + (q.w - q.y) / (6.0h * d + e)), d / (q.x + e), q.x);
+            }
+
+            // Convert HSV → linear RGB.
+            half3 HSVtoRGB(half3 c)
+            {
+                half4 K = half4(1.0h, 2.0h/3.0h, 1.0h/3.0h, 3.0h);
+                half3 p = abs(frac(c.xxx + K.xyz) * 6.0h - K.www);
+                return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
+            }
+
+            // Palette swap: each enabled slot replaces pixels whose color is within tolerance
+            // of _SwapSrcN (measured as squared Euclidean distance in RGB, tol range 0-1).
+            // Applied AFTER HSV so the DevSettings eyedropper samples the color it sees.
+            half3 ApplySwaps(half3 rgb)
+            {
+                half3 r = rgb;
+                half3 d;
+                d = rgb - _SwapSrc0.rgb; r = lerp(r, _SwapDst0.rgb, _SwapEnabled.x * step(dot(d,d), _SwapTolerances.x * _SwapTolerances.x * 3.0h));
+                d = rgb - _SwapSrc1.rgb; r = lerp(r, _SwapDst1.rgb, _SwapEnabled.y * step(dot(d,d), _SwapTolerances.y * _SwapTolerances.y * 3.0h));
+                d = rgb - _SwapSrc2.rgb; r = lerp(r, _SwapDst2.rgb, _SwapEnabled.z * step(dot(d,d), _SwapTolerances.z * _SwapTolerances.z * 3.0h));
+                d = rgb - _SwapSrc3.rgb; r = lerp(r, _SwapDst3.rgb, _SwapEnabled.w * step(dot(d,d), _SwapTolerances.w * _SwapTolerances.w * 3.0h));
+                return r;
+            }
+
+            // Cheap linear→gamma for the protect comparison. URP samples the sRGB sprite as LINEAR,
+            // but the protected colors arrive as their authored sRGB values, so we compare in gamma.
+            half3 LinToGamma(half3 c) { return pow(max(c, 0.0h), 0.4545h); }
+            half3 GammaToLin(half3 c) { return pow(max(c, 0.0h), 2.2h);    }
+
+            // Whitelist protect: if the ORIGINAL (pre-dye) color matches a protected color within
+            // tolerance, keep the original instead of the dyed color — so the dye recolors everything
+            // EXCEPT the protected set. Exact pixel-art colors + gamma-space separation make this
+            // reliable with a small tolerance.
+            half3 ApplyProtect(half3 orig, half3 dyed)
+            {
+                // Uniform per-renderer branch: when no slot is enabled (every mob, and any sprite the
+                // dye doesn't touch) skip the gamma conversion + four compares entirely.
+                if (!any(_ProtectEnabled)) return dyed;
+                half3 g = LinToGamma(orig);
+                half3 r = dyed; half3 d;
+                d = g - _ProtectColor0.rgb; r = lerp(r, orig, _ProtectEnabled.x * step(dot(d,d), _ProtectTol.x * _ProtectTol.x * 3.0h));
+                d = g - _ProtectColor1.rgb; r = lerp(r, orig, _ProtectEnabled.y * step(dot(d,d), _ProtectTol.y * _ProtectTol.y * 3.0h));
+                d = g - _ProtectColor2.rgb; r = lerp(r, orig, _ProtectEnabled.z * step(dot(d,d), _ProtectTol.z * _ProtectTol.z * 3.0h));
+                d = g - _ProtectColor3.rgb; r = lerp(r, orig, _ProtectEnabled.w * step(dot(d,d), _ProtectTol.w * _ProtectTol.w * 3.0h));
+                return r;
+            }
+
             Varyings vert (Attributes IN)
             {
                 Varyings OUT;
@@ -84,6 +198,36 @@ Shader "Unwritten/BillboardLit"
             {
                 half4 tex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv) * IN.color;
                 clip(tex.a - _Cutoff);
+
+                // HSV dye: shift hue, scale saturation and brightness.
+                // All three are identity by default (0, 1, 1) so untouched sprites are free.
+                half3 orig = tex.rgb;                  // original art color (pre-dye, linear)
+                half3 dyed;
+                if (_UseTargetHue > 0.5h)
+                {
+                    // Recolor to the swatch: apply the swatch's hue + saturation, and take the sprite's
+                    // own brightness (gamma V) remapped so the outfit midtone (_BaseValue) lands on the
+                    // swatch's value. Result: base = swatch, shadows darker, highlights lighter — coherent
+                    // shading. Done in gamma space so the displayed color matches the authored sRGB swatch.
+                    half3 hsv = RGBtoHSV(LinToGamma(orig));
+                    half  v   = saturate(hsv.z * (_TargetVal / max(_BaseValue, 0.001h)));
+                    dyed = GammaToLin(HSVtoRGB(half3(_TargetHue, _TargetSat, v)));
+                }
+                else
+                {
+                    half3 hsv = RGBtoHSV(orig);
+                    hsv.x = frac(hsv.x + _HueShift);
+                    hsv.y = saturate(hsv.y * _Saturation);
+                    hsv.z = saturate(hsv.z * _Brightness);
+                    dyed  = HSVtoRGB(hsv);
+                }
+
+                // Whitelist: protected art colors (skin / outline / etc.) keep their ORIGINAL color.
+                dyed = ApplyProtect(orig, dyed);
+                tex.rgb = dyed;
+
+                // Palette swap (after HSV so the eyedropper picks the same color the user sees).
+                tex.rgb = ApplySwaps(tex.rgb);
 
                 // Per-pixel shadow: each pixel samples the shadowmap at its own world position, so a
                 // tree's shadow falls across the sprite accurately (half-body shade). No N·L — art
@@ -120,6 +264,21 @@ Shader "Unwritten/BillboardLit"
                 half4  _Color;
                 half   _Cutoff;
                 half   _ShadeFloor;
+                half   _HueShift;
+                half   _Saturation;
+                half   _Brightness;
+                half   _TargetHue;
+                half   _TargetSat;
+                half   _TargetVal;
+                half   _BaseValue;
+                half   _UseTargetHue;
+                half4  _SwapSrc0; half4 _SwapSrc1; half4 _SwapSrc2; half4 _SwapSrc3;
+                half4  _SwapDst0; half4 _SwapDst1; half4 _SwapDst2; half4 _SwapDst3;
+                half4  _SwapEnabled;
+                half4  _SwapTolerances;
+                half4  _ProtectColor0; half4 _ProtectColor1; half4 _ProtectColor2; half4 _ProtectColor3;
+                half4  _ProtectEnabled;
+                half4  _ProtectTol;
             CBUFFER_END
 
             float3 _LightDirection;

@@ -9,14 +9,17 @@ using UnityEngine;
 /// </summary>
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(SphereCollider))]
+[RequireComponent(typeof(Rigidbody))]
 public class WorldPickup : MonoBehaviour
 {
-    [Header("Reward")]
-    [Tooltip("How many Zeny this pickup is worth. 0 = it's an item pickup (future).")]
-    public int goldAmount = 1;
+    [Header("Reward — set one or the other")]
+    [Tooltip("Zeny reward. 0 = not a gold pickup.")]
+    public int goldAmount = 0;
+    [Tooltip("Item to add to the player's bag. Null = gold pickup.")]
+    public Item item;
 
-    [Header("Visuals")]
-    [Tooltip("Sprite shown in the world. Assign GoldCoin or SilverCoin from NinjaAdventure/Items/Treasure.")]
+    [Header("Visuals (gold pickup)")]
+    [Tooltip("Sprite shown for a gold coin pickup. Item pickups use item.icon automatically.")]
     public Sprite coinSprite;
     [Tooltip("Size of the pickup billboard in world units.")]
     public float displaySize = 0.35f;
@@ -41,21 +44,33 @@ public class WorldPickup : MonoBehaviour
     void Awake()
     {
         sr = GetComponent<SpriteRenderer>();
-        if (coinSprite != null) sr.sprite = coinSprite;
+        baseY = transform.position.y;
+        phase = Random.Range(0f, Mathf.PI * 2f);
+
+        // Kinematic Rigidbody: bobbing moves the collider every frame, and moving a *static* collider
+        // (no body) forces PhysX to re-cook the scene's static AABB tree each time. A kinematic body is
+        // cheap to move and still raises OnTriggerEnter against the player's CharacterController.
+        var rb = GetComponent<Rigidbody>();
+        rb.isKinematic = true;
+        rb.useGravity  = false;
+    }
+
+    // Start runs the frame AFTER AddComponent, so coinSprite / item are already assigned.
+    void Start()
+    {
+        Sprite activeSprite = (item != null && item.icon != null) ? item.icon : coinSprite;
+        if (activeSprite != null) sr.sprite = activeSprite;
 
         // Scale so the sprite occupies displaySize world units regardless of PPU.
-        float ppu = coinSprite != null ? coinSprite.pixelsPerUnit : 16f;
-        float texSize = coinSprite != null ? Mathf.Max(coinSprite.rect.width, coinSprite.rect.height) : 16f;
-        float scale = displaySize * ppu / texSize;
+        float ppu     = activeSprite != null ? activeSprite.pixelsPerUnit : 16f;
+        float texSize = activeSprite != null ? Mathf.Max(activeSprite.rect.width, activeSprite.rect.height) : 16f;
+        float scale   = displaySize * ppu / texSize;
         transform.localScale = Vector3.one * scale;
 
         // Sphere trigger — sized to collectRadius (in LOCAL space we undo the scale).
         var col = GetComponent<SphereCollider>();
         col.isTrigger = true;
         col.radius = collectRadius / scale;   // world-space radius = col.radius * localScale
-
-        baseY = transform.position.y;
-        phase = Random.Range(0f, Mathf.PI * 2f);
     }
 
     void Update()
@@ -76,7 +91,13 @@ public class WorldPickup : MonoBehaviour
 
     void Collect()
     {
-        if (goldAmount > 0)
+        if (item != null)
+        {
+            if (!ItemSlot.TryAddToBag(item))
+                Debug.Log($"[unwritten] Bag full — {item.displayName} dropped on the ground.");
+            Sfx.Play(collectSfx);
+        }
+        else if (goldAmount > 0)
         {
             Wallet.Add(goldAmount);
             Sfx.Play(collectSfx);

@@ -31,6 +31,8 @@ public class CameraFollow3D : MonoBehaviour
     [Header("Limits")]
     public float minDistance = 4f, maxDistance = 22f;
     public float minHeight = 2f, maxHeight = 26f;
+    [Tooltip("Cap the camera's downward tilt (degrees from horizontal) so right-drag can't reach a full top-down view.")]
+    public float maxPitch = 45f;
 
     [Header("Sensitivity")]
     public float zoomStep = 2f;             // world-units of pull-back per scroll notch
@@ -137,6 +139,12 @@ public class CameraFollow3D : MonoBehaviour
             yaw += delta.x * dragYawSpeed;
             height = Mathf.Clamp(height - delta.y * dragHeightSpeed, minHeight, maxHeight);
         }
+
+        // Cap the pitch so the view can't tilt past maxPitch toward full top-down. The look angle is
+        // atan2(height, distance), so height ≤ distance·tan(maxPitch) holds it at/under the cap. Enforced every
+        // frame (incl. the default framing); zoom scales height with distance so the ratio — and the cap — hold.
+        float maxH = distance * Mathf.Tan(Mathf.Clamp(maxPitch, 5f, 89f) * Mathf.Deg2Rad);
+        if (height > maxH) height = maxH;
     }
 
     // ---- input helpers (legacy Input always works; new Input System optional) ---

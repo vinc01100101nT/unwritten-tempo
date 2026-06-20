@@ -28,6 +28,12 @@ public static class SpriteSheetCache
     static readonly Dictionary<(int tex, int cell, int row, int col, int frames, int ppu), Sprite[]> grids
         = new Dictionary<(int, int, int, int, int, int), Sprite[]>();
 
+    // Single horizontal strip of NON-square cells (cellW × cellH) read left→right along the BOTTOM row.
+    // Strip/Grid/Walk4 above all assume SQUARE cells; the Sscary player art is 48×64 (one strip PNG per
+    // direction), so it needs its own cut. Used by the Sscary 8-direction player (Player3DController.Scary).
+    static readonly Dictionary<(int tex, int w, int h, int frames, int ppu), Sprite[]> rows
+        = new Dictionary<(int, int, int, int, int), Sprite[]>();
+
     /// <summary>N square frames of side <paramref name="frameSize"/> along the sheet's bottom row,
     /// clamped to the number of columns. Pivot centred, pixels-per-unit = frameSize. Shared/read-only.</summary>
     public static Sprite[] Strip(Texture2D sheet, int frameSize, int frameCount)
@@ -104,5 +110,30 @@ public static class SpriteSheetCache
         }
         grids[key] = arr;
         return arr;
+    }
+
+    /// <summary><paramref name="frames"/> cells of <paramref name="cellW"/>×<paramref name="cellH"/> read
+    /// left→right along the sheet's BOTTOM row (a single-row strip), clamped to the column count. Pivot is
+    /// centred horizontally and on the CELL bottom-eighth so the character's feet sit near the transform
+    /// regardless of cell height; pixels-per-unit = <paramref name="ppu"/>. Shared/read-only. This is the
+    /// non-square cousin of <see cref="Strip"/> for the Sscary 48×64 directional strips.</summary>
+    public static Sprite[] Row(Texture2D sheet, int cellW, int cellH, int frames, int ppu)
+    {
+        if (sheet == null || cellW <= 0 || cellH <= 0) return System.Array.Empty<Sprite>();
+        if (ppu <= 0) ppu = cellH;
+        int cols = Mathf.Max(1, sheet.width / cellW);
+        int n = Mathf.Clamp(frames, 1, cols);
+
+        var key = (sheet.GetInstanceID(), cellW, cellH, n, ppu);
+        if (rows.TryGetValue(key, out var cached)) return cached;
+
+        // Centre pivot — grounding is handled by the controller lifting the transform to its measured
+        // foot offset, so a plain centre pivot keeps every action's frames consistent.
+        var frames2 = new Sprite[n];
+        for (int i = 0; i < n; i++)
+            frames2[i] = Sprite.Create(sheet, new Rect(i * cellW, 0, cellW, cellH),
+                                       new Vector2(0.5f, 0.5f), ppu);
+        rows[key] = frames2;
+        return frames2;
     }
 }

@@ -108,15 +108,11 @@ public static class NinjaGreenPlayer
         pos.y = FeetBelowCenterLocal * scale;   // lift so the feet rest on ground y=0 (initial; maps re-ground)
         playerGO.transform.position = pos;
 
-        // Ground the capsule bottom on the sprite's feet — PersistentPlayer3D.MoveTo snaps to terrain by
-        // (cc.center.y - cc.height/2)*scale, so this is what keeps the feet on the floor across maps.
+        // Tuned SHORT capsule (clears overhead eaves/leaves; bumps/climbs ground geometry). Single source
+        // of truth in Player3DController; PersistentPlayer3D.MoveTo re-grounds across maps from its bottom.
         var cc = playerGO.GetComponent<CharacterController>();
         if (cc != null)
-        {
-            cc.height = 1f; cc.radius = 0.3f;
-            cc.center = new Vector3(0f, cc.height * 0.5f - FeetBelowCenterLocal, 0f);   // bottom at -FeetBelowCenter
-            cc.stepOffset = 0.3f; cc.slopeLimit = 45f;
-        }
+            Player3DController.ApplyDefaultCapsule(cc);
 
         EditorUtility.SetDirty(ctrl);
         EditorUtility.SetDirty(playerGO);

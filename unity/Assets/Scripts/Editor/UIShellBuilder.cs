@@ -76,9 +76,10 @@ public static class UIShellBuilder
 
         SetupEventSystem(root);
         BuildHud(root);
-        var bag    = BuildBagPanel(root);
-        var chr    = BuildCharacterPanel(root);
-        var skills = BuildSkillsPanel(root);
+        var bag      = BuildBagPanel(root);
+        var chr      = BuildCharacterPanel(root);
+        var skills   = BuildSkillsPanel(root);
+        var customize = BuildCustomizePanel(root);
         BuildTooltip(root);       // on top of every panel
         // (The old UI-image sword cursor was retired — GameCursor now drives a hardware
         //  cursor from the Kenney pack, wired by Tools ▸ unwritten ▸ Setup Global Systems.)
@@ -89,14 +90,16 @@ public static class UIShellBuilder
             new PanelToggle.Binding { name = "Bag",       key = KeyCode.I, panel = bag },
             new PanelToggle.Binding { name = "Character", key = KeyCode.C, panel = chr },
             new PanelToggle.Binding { name = "Skills",    key = KeyCode.K, panel = skills },
+            new PanelToggle.Binding { name = "Outfit",    key = KeyCode.O, panel = customize },
         };
 
-        canvasGO.AddComponent<PersistentUI>();        // survives scene loads (singleton)
-        canvasGO.AddComponent<CharacterUIBinder>();   // drives HUD/stats/equip from Character
-        canvasGO.AddComponent<BagSeeder>();           // fills the bag from Resources at runtime
-        canvasGO.AddComponent<SkillDraftPanel>();     // Phase G: builds the Trio-Ring draft into the Skills (K) panel
-        canvasGO.AddComponent<StatPanel>();           // RO-style stat distribution into the Character (C) panel
-        canvasGO.AddComponent<HotbarPanel>();         // populates HUD_Hotbar with the player's actives (icon + cooldown)
+        canvasGO.AddComponent<PersistentUI>();             // survives scene loads (singleton)
+        canvasGO.AddComponent<CharacterUIBinder>();        // drives HUD/stats/equip from Character
+        canvasGO.AddComponent<BagSeeder>();                // fills the bag from Resources at runtime
+        canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Skills (K) panel
+        canvasGO.AddComponent<StatPanel>();                // RO-style stat distribution into the Character (C) panel
+        canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
+        canvasGO.AddComponent<CharacterCustomizePanel>();  // O = Outfit: animated preview + cloth colour palette
 
         // UI click sounds (TomMusic latch foley): panel open/close + a generic button click.
         var ui = canvasGO.AddComponent<UISounds>();
@@ -205,14 +208,14 @@ public static class UIShellBuilder
     {
         // Keep the two arrays in lock-step — left column = key, right column = what it does.
         const string keys =
-            "L-Click\nR-Drag\nA\nQ\nT\nS\nC\nI\nK\nP\nEsc";
+            "L-Click\nR-Drag\nA\nQ\nT\nS\nC\nI\nK\nO\nP\nEsc";
         const string actions =
-            "Move\nOrbit camera\nArm attack (+click)\nCast spell\nAuto-combat\nStop\nCharacter\nInventory\nSkills\nDev panel\nClose / cancel";
+            "Move\nOrbit camera\nArm attack (+click)\nCast spell\nAuto-combat\nStop\nCharacter\nInventory\nSkills\nOutfit\nDev panel\nClose / cancel";
 
         var panel = NewSliced("HUD_Hotkeys", canvas, panelSprite);
         Anchor(panel.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);   // bottom-left
         panel.rectTransform.anchoredPosition = new Vector2(16, 74);              // above MP bar (y 48 + 18)
-        panel.rectTransform.sizeDelta = new Vector2(210, 210);
+        panel.rectTransform.sizeDelta = new Vector2(210, 228);
         panel.raycastTarget = false;
 
         var title = NewText("Title", panel.transform, "HOTKEYS", 14, FontStyle.Bold, TextAnchor.UpperCenter, true);
@@ -349,6 +352,17 @@ public static class UIShellBuilder
             "Your drafted skills will live here.\nThe level-up draft + skill tree (Phase G).",
             16, FontStyle.Normal, TextAnchor.MiddleCenter, true);
         Fill(text.rectTransform, new Vector2(16, 16), new Vector2(-16, -16));
+        return content.parent.gameObject;
+    }
+
+    // Centre-wide panel — leaves room for the left preview + right swatch palette.
+    // CharacterCustomizePanel.TryBuild() populates the Content area at runtime.
+    static GameObject BuildCustomizePanel(Transform canvas)
+    {
+        var content = NewPanel(canvas, "CustomizePanel",
+            new Vector2(0.22f, 0.18f), new Vector2(0.78f, 0.84f), "Outfit");
+        // Content is intentionally left empty here — CharacterCustomizePanel builds
+        // the animated preview + colour palette into it at runtime.
         return content.parent.gameObject;
     }
 

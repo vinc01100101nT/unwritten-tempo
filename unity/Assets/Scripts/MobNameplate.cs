@@ -26,13 +26,13 @@ public class MobNameplate : MonoBehaviour
 
     [Header("Layout (safe to tweak)")]
     [Tooltip("World size of the whole plate (shrinks the UI pixels into the 3D world).")]
-    public float worldScale = 0.012f;
+    public float worldScale = 0.0075f;
     [Tooltip("Bar width / height in UI pixels (before worldScale).")]
-    public float barWidth = 64f, barHeight = 10f;
+    public float barWidth = 48f, barHeight = 9f;
     [Tooltip("Extra drop below the sprite's feet, in world units.")]
     public float gap = 0.02f;
     [Tooltip("Name font size in UI pixels (before worldScale).")]
-    public int nameFontSize = 20;
+    public int nameFontSize = 16;
 
     Health health;
     Transform camT;

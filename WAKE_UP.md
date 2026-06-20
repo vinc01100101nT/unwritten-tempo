@@ -1,9 +1,6 @@
 # ☀️ WAKE_UP — Town Map Generator (VIN-13) · ✅ PER-PROP COLLISION + PERFORMANCE PRE-BAKE (Play-confirmed)
 
-> ⏩ **NEWER WORK (2026-06-17): read `SESSION_STATE.md` → "LATEST — 2.5D on a REAL map" FIRST.** The
-> game has since pivoted to RO-style 2.5D; `Tools ▸ unwritten ▸ Convert Town to 2.5D` bakes
-> `NewTown25D.unity` (open it & Play). This generator doc below is still valid as the 2D-map authoring
-> source, but the live target is now the 2.5D converted map.
+> ⏩ **NEWER WORK (2026-06-17): read** `SESSION_STATE.md` **→ "LATEST — 2.5D on a REAL map" FIRST.** The game has since pivoted to RO-style 2.5D; `Tools ▸ unwritten ▸ Convert Town to 2.5D` bakes `NewTown25D.unity` (open it & Play). This generator doc below is still valid as the 2D-map authoring source, but the live target is now the 2.5D converted map.
 
 **For:** vince · **Date:** 2026-06-16 · **Built by:** interactive session
 
@@ -38,17 +35,17 @@ The dev's words: *"a 2D game that lags is a bad game."* Protect **GPU / CPU / RA
    - `collisionMode` = **Auto** (buildings full footprint, trees bottom-row trunk) / **Custom** / **None** (off, keeps cells). Default Auto.
    - **Half-cell resolution** — a 3×3 prop edits as a **6×6 grid** in the Inspector (`PropTemplateEditor`). Click half-cells to paint Custom (auto-switches to Custom); or paint a `Collision` capture layer (full cells → 4 half-cells). `Clear → Auto` / `Fill footprint → Custom` buttons.
 2. **Everything is PRE-BAKED at Generate time** (no on-Play generation):
-   - Visuals → static foot-sorted prop objects with **fixed `sortingOrder`** (computed once), **no per-frame `YDepthSorter`** on statics (only moving units sort each frame).
-   - Collision → one `Collision` GameObject (Static `Rigidbody2D` + **plain run-merged `BoxCollider2D`**, half-cell sized; green outlines; Pathfinder wall).
+   - Visuals → static foot-sorted prop objects with **fixed** `sortingOrder` (computed once), **no per-frame** `YDepthSorter` on statics (only moving units sort each frame).
+   - Collision → one `Collision` GameObject (Static `Rigidbody2D` + **plain run-merged** `BoxCollider2D`, half-cell sized; green outlines; Pathfinder wall).
    - `DepthSortRuntime`'s on-Play bake is now a guarded **fallback** that no-ops for pre-baked scenes; **on-Play collider generation REMOVED**.
 3. **Generate Town** is fixed (two editor crashes gone): the additive-untitled-scene error and the `EndLayoutGroup` GUI error.
-4. **Hand-painted maps** → `Tools ▸ unwritten ▸ Bake Map (props + collision)` (name-derived collision: building=full, tree=trunk). **`Bake Buildings to Objects` retired** → now redirects to Bake Map (no slow path).
+4. **Hand-painted maps** → `Tools ▸ unwritten ▸ Bake Map (props + collision)` (name-derived collision: building=full, tree=trunk). `Bake Buildings to Objects` **retired** → now redirects to Bake Map (no slow path).
 
 ## ⭐ The 4 bugs squashed this session (don't repeat the hunts)
 
 1. **Generate threw "Cannot create a new scene additively with an untitled scene unsaved."** A leftover untitled preview (orphaned across a domain reload) wasn't closed. Fix: close **every** loaded untitled scene first; use `NewSceneMode.Single` when the only scene left is untitled. (`MapGeneratorWindow.Generate`)
-2. **`EndLayoutGroup: BeginLayoutGroup must be called first`.** Generate/Save did scene + dialog work *inside* `OnGUI`, corrupting IMGUI's layout stack. Fix: defer both via `EditorApplication.delayCall` + `Repaint()`.
-3. **Player passed through everything (no collision).** I'd used a `CompositeCollider2D` — it shows outlines in the editor but loads with **empty geometry at Play**. Fix: **plain static `BoxCollider2D`** (run-merged), no composite. ⚠️ Don't reintroduce a scene-baked composite for collision.
+2. `EndLayoutGroup: BeginLayoutGroup must be called first`**.** Generate/Save did scene + dialog work *inside* `OnGUI`, corrupting IMGUI's layout stack. Fix: defer both via `EditorApplication.delayCall` + `Repaint()`.
+3. **Player passed through everything (no collision).** I'd used a `CompositeCollider2D` — it shows outlines in the editor but loads with **empty geometry at Play**. Fix: **plain static** `BoxCollider2D` (run-merged), no composite. ⚠️ Don't reintroduce a scene-baked composite for collision.
 4. **Collision only in the lower-left quarter.** `TownLayout.AddCollision` ran HALF-cell coords through `In()`, a FULL-cell bounds check, dropping everything past the midpoint. Fix: bounds-check against the half-grid (`< width*2 && < height*2`).
 
 ## ⚠️ Migration notes (tell the dev if they reopen old content)
@@ -59,7 +56,7 @@ The dev's words: *"a 2D game that lags is a bad game."* Protect **GPU / CPU / RA
 
 ## Files touched (this session) — all under `D:\Unity3d\unwritten\Assets\Scripts\`
 
-- **Runtime (`MapGen/`, root):** `PropTemplate.cs` (collisionMode + half-cell `collisionCells` + `CollisionFootprint()` + `HalfCellsOf()`), `TownLayout.cs` (`collision` half-cell set + `AddCollision` half-grid bounds), `TownGenerator.cs` (Stamp + boundary feed `collision`), `DepthSortRuntime.cs` (no on-Play colliders; fixed static sort order; public `BakeObstacles()`; skip Collision layer).
+- **Runtime (**`MapGen/`**, root):** `PropTemplate.cs` (collisionMode + half-cell `collisionCells` + `CollisionFootprint()` + `HalfCellsOf()`), `TownLayout.cs` (`collision` half-cell set + `AddCollision` half-grid bounds), `TownGenerator.cs` (Stamp + boundary feed `collision`), `DepthSortRuntime.cs` (no on-Play colliders; fixed static sort order; public `BakeObstacles()`; skip Collision layer).
 - **Editor:** `CollisionLayerTools.cs` *(new — plain run-merged static boxes)*, `PropTemplateEditor.cs` *(new — 2× half-cell grid)*, `MapBaker.cs` *(new — hand-painted bake)*, `PropTemplateTools.cs` (capture peels Collision layer; stamp materializes collision; no visual-layer colliders), `MapGeneratorWindow.cs` (untitled-scene + delayCall fixes; no visual colliders; materialize `collision`; pre-bake visuals), `BuildingBakeTools.cs` (gutted → redirects to Bake Map).
 
 ## What to tell me next (menu)

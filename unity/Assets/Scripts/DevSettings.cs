@@ -50,10 +50,11 @@ public class DevSettings : MonoBehaviour
         public Func<float> get; public Action<float> set;
         public Func<bool> getB; public Action<bool> setB;
         public Action act; public Func<string> dyn;   // isAct: a button (optionally with a live label)
+        public bool isRaw; public Action draw;         // isRaw: escape hatch for custom IMGUI (DrawSwapSlots)
         public bool hasDefault; public float def; public bool defB;
     }
 
-    class Group { public string name; public bool open = true; public readonly List<Knob> knobs = new List<Knob>(); }
+    class Group { public string name; public bool open = false; public readonly List<Knob> knobs = new List<Knob>(); }
 
     readonly List<Group> groups = new List<Group>();
     Group cur;   // group currently being filled by the builder helpers
@@ -62,8 +63,11 @@ public class DevSettings : MonoBehaviour
     Player3DController player;
     Player3DAttacker attacker;
     CameraFollow3D camRig;
+    CameraOccluderFader fader;
     TimeOfDay tod;
     DayNightLight sun;
+    CloudShadows cloud;
+    CharacterDye dye;
     MobRespawn[] respawns;
     float nextRespawnRefresh;
 
@@ -73,15 +77,18 @@ public class DevSettings : MonoBehaviour
     bool built, rectInit;
     const int WinId = 920411;
 
-    GUIStyle headerStyle, labelStyle, valueStyle;
+    GUIStyle headerStyle, labelStyle, valueStyle, swatchStyle;
 
     void EnsureRefs()
     {
         if (player == null)   player   = FindFirstObjectByType<Player3DController>();
         if (attacker == null) attacker = FindFirstObjectByType<Player3DAttacker>();
         if (camRig == null)   camRig   = FindFirstObjectByType<CameraFollow3D>();
+        if (fader == null)    fader    = FindFirstObjectByType<CameraOccluderFader>();
         if (tod == null)      tod      = TimeOfDay.Instance;
         if (sun == null)      sun      = FindFirstObjectByType<DayNightLight>();
+        if (cloud == null)    cloud    = FindFirstObjectByType<CloudShadows>();
+        if (dye == null)      dye      = FindFirstObjectByType<CharacterDye>();
     }
 
     // ---- builder helpers ------------------------------------------------------
@@ -92,10 +99,18 @@ public class DevSettings : MonoBehaviour
         => cur.knobs.Add(new Knob { label = label, min = min, max = max, isInt = true, get = get, set = set });
     void B(string label, Func<bool> get, Action<bool> set)
         => cur.knobs.Add(new Knob { label = label, isBool = true, getB = get, setB = set });
+    // Sun knobs must nudge DayNightLight after writing: its Update early-outs until the clock moves, so a
+    // colour/intensity slider otherwise wouldn't show until you also scrubbed Time of day.
+    void FSun(string label, float min, float max, Func<float> get, Action<float> set)
+        => F(label, min, max, get, v => { set(v); if (sun) sun.Refresh(); });
+    void BSun(string label, Func<bool> get, Action<bool> set)
+        => B(label, get, v => { set(v); if (sun) sun.Refresh(); });
     void Act(string label, Action act)
         => cur.knobs.Add(new Knob { label = label, isAct = true, act = act });
     void Act(Func<string> dyn, Action act)
         => cur.knobs.Add(new Knob { isAct = true, dyn = dyn, act = act });
+    void Raw(Action draw)
+        => cur.knobs.Add(new Knob { isRaw = true, draw = draw });
 
     // ---- mob fan-out: read the first live mob, write to ALL of them ----
     static void MobForEach(Action<MonsterAI3D> act)
@@ -215,6 +230,27 @@ public class DevSettings : MonoBehaviour
         B("Idle breathing",   () => player && player.breathe,                      v => { if (player) player.breathe = v; });
         F("Breathe amount",   0f, 0.2f, () => player ? player.breatheAmount : 0f,  v => { if (player) player.breatheAmount = v; });
         F("Breathe speed",    0f, 6f,  () => player ? player.breatheSpeed : 0f,    v => { if (player) player.breatheSpeed = v; });
+        // Sscary traversal (only affect a Sscary player — SPACE = forward hop, E = dash burst).
+        F("Foot offset",      0f, 0.5f,  () => player ? player.scaryFeetBelowCenter : 0f, v => { if (player) player.SetScaryFootOffset(v); });
+        F("Jump distance",    0f, 6f,    () => player ? player.jumpDistance : 0f,  v => { if (player) player.jumpDistance = v; });
+        F("Jump height",      0f, 2.5f,  () => player ? player.jumpHeight : 0f,    v => { if (player) player.jumpHeight = v; });
+        F("Dash speed",       0f, 30f,   () => player ? player.eDashSpeed : 0f,    v => { if (player) player.eDashSpeed = v; });
+        F("Dash duration",    0.05f, 0.6f, () => player ? player.eDashDuration : 0f, v => { if (player) player.eDashDuration = v; });
+        F("Dash cooldown",    0f, 3f,    () => player ? player.eDashCooldown : 0f, v => { if (player) player.eDashCooldown = v; });
+        F("Walk anim FPS",    1f, 24f,   () => player ? player.scaryWalkFps : 0f,  v => { if (player) player.scaryWalkFps = v; });
+
+        // ---- Units (global size dial; each unit's MOVE SPEED scales with its size) ----
+        Cat("Units");
+        F("Unit size (global)", 0.3f, 2.5f, () => UnitScale.Global,      v => UnitScale.SetGlobal(v));
+        F("Mob size (rel)",     0.3f, 2f,   () => UnitScale.MobRelative, v => UnitScale.SetMobRelative(v));
+
+        // ---- Appearance — CharacterDye HSV knobs ---------------------------
+        Cat("Appearance");
+        F("Hue shift",   0f, 1f,  () => dye ? dye.HueShift   : 0f, v => { if (dye) dye.HueShift   = v; });
+        F("Saturation",  0f, 2f,  () => dye ? dye.Saturation  : 1f, v => { if (dye) dye.Saturation  = v; });
+        F("Brightness",  0f, 2f,  () => dye ? dye.Brightness  : 1f, v => { if (dye) dye.Brightness  = v; });
+        Act("Reset dye", () => { if (dye) { dye.HueShift = 0f; dye.Saturation = 1f; dye.Brightness = 1f; } });
+        Raw(DrawSwapSlots);
 
         // ---- Player Combat — Player3DAttacker ------------------------------
         Cat("Player Combat");
@@ -288,24 +324,57 @@ public class DevSettings : MonoBehaviour
         F("Time of day",      0f, 1f,    () => tod ? tod.time01 : 0f,        v => { if (tod) tod.time01 = v; });
         F("Half-cycle (s)",   5f, 3600f, () => tod ? tod.halfCycleSeconds : 0f, v => { if (tod) tod.halfCycleSeconds = v; });
         F("Test speed",       0f, 50f,   () => tod ? tod.testSpeed : 0f,     v => { if (tod) tod.testSpeed = v; });
-        F("Day intensity",    0f, 3f,    () => sun ? sun.dayIntensity : 0f,  v => { if (sun) sun.dayIntensity = v; });
-        F("Night intensity",  0f, 2f,    () => sun ? sun.nightIntensity : 0f, v => { if (sun) sun.nightIntensity = v; });
-        F("Noon pitch",       0f, 90f,   () => sun ? sun.noonPitch : 0f,     v => { if (sun) sun.noonPitch = v; });
-        F("Horizon pitch",    0f, 45f,   () => sun ? sun.horizonPitch : 0f,  v => { if (sun) sun.horizonPitch = v; });
-        F("Sun yaw",        -180f, 180f, () => sun ? sun.yaw : 0f,           v => { if (sun) sun.yaw = v; });
-        B("Drive ambient",    () => sun && sun.driveAmbient,                 v => { if (sun) sun.driveAmbient = v; });
-        B("Rotate sun",       () => sun && sun.rotateSun,                    v => { if (sun) sun.rotateSun = v; });
+        FSun("Day intensity",   0f, 3f,    () => sun ? sun.dayIntensity : 0f,  v => { if (sun) sun.dayIntensity = v; });
+        FSun("Night intensity", 0f, 2f,    () => sun ? sun.nightIntensity : 0f, v => { if (sun) sun.nightIntensity = v; });
+        FSun("Sunset glow",     0f, 1f,    () => sun ? sun.horizonStrength : 0f, v => { if (sun) sun.horizonStrength = v; });
+        FSun("Sunset band",     0.05f, 0.5f, () => sun ? sun.horizonBand : 0f, v => { if (sun) sun.horizonBand = v; });
+        FSun("Sunset R",        0f, 1f,    () => sun ? sun.horizonColor.r : 0f, v => { if (sun) { var c = sun.horizonColor; c.r = v; sun.horizonColor = c; } });
+        FSun("Sunset G",        0f, 1f,    () => sun ? sun.horizonColor.g : 0f, v => { if (sun) { var c = sun.horizonColor; c.g = v; sun.horizonColor = c; } });
+        FSun("Sunset B",        0f, 1f,    () => sun ? sun.horizonColor.b : 0f, v => { if (sun) { var c = sun.horizonColor; c.b = v; sun.horizonColor = c; } });
+        FSun("Sunrise R",       0f, 1f,    () => sun ? sun.sunriseColor.r : 0f, v => { if (sun) { var c = sun.sunriseColor; c.r = v; sun.sunriseColor = c; } });
+        FSun("Sunrise G",       0f, 1f,    () => sun ? sun.sunriseColor.g : 0f, v => { if (sun) { var c = sun.sunriseColor; c.g = v; sun.sunriseColor = c; } });
+        FSun("Sunrise B",       0f, 1f,    () => sun ? sun.sunriseColor.b : 0f, v => { if (sun) { var c = sun.sunriseColor; c.b = v; sun.sunriseColor = c; } });
+        FSun("Noon pitch",      0f, 90f,   () => sun ? sun.noonPitch : 0f,     v => { if (sun) sun.noonPitch = v; });
+        FSun("Horizon pitch",   0f, 90f,   () => sun ? sun.horizonPitch : 0f,  v => { if (sun) sun.horizonPitch = v; });
+        FSun("Sun yaw",       -180f, 180f, () => sun ? sun.yaw : 0f,           v => { if (sun) sun.yaw = v; });
+        FSun("Sun yaw swing", 0f, 180f,    () => sun ? sun.yawSwing : 0f,      v => { if (sun) sun.yawSwing = v; });
+        BSun("Drive ambient",   () => sun && sun.driveAmbient,                 v => { if (sun) sun.driveAmbient = v; });
+        BSun("Rotate sun",      () => sun && sun.rotateSun,                    v => { if (sun) sun.rotateSun = v; });
+        // Night lamps — global dials over every NightLight prop (houses/candles/lamps). They self-update each
+        // frame, so these apply live without needing a sun Refresh.
+        B("Night lamps",      () => NightLight.GlobalEnabled,                  v => NightLight.GlobalEnabled = v);
+        F("Lamp intensity",   0f, 4f,    () => NightLight.GlobalIntensity,     v => NightLight.GlobalIntensity = v);
+        F("Lamp range x",     0.3f, 3f,  () => NightLight.GlobalRange,         v => NightLight.GlobalRange = v);
+        // Cloud shadows — coverage/darkness/softness rebake the texture (MarkDirty); the rest are live.
+        B("Cloud shadows",    () => cloud && cloud.enabled,                    v => { if (cloud) cloud.enabled = v; });
+        F("Cloud strength",   0f, 1f,    () => cloud ? cloud.strength : 0f,    v => { if (cloud) cloud.strength = v; });
+        F("Cloud coverage",   0f, 1f,    () => cloud ? cloud.coverage : 0f,    v => { if (cloud) { cloud.coverage = v; cloud.MarkDirty(); } });
+        F("Cloud darkness",   0f, 1f,    () => cloud ? cloud.darkness : 0f,    v => { if (cloud) { cloud.darkness = v; cloud.MarkDirty(); } });
+        F("Cloud softness",   0.01f, 0.5f, () => cloud ? cloud.softness : 0f,  v => { if (cloud) { cloud.softness = v; cloud.MarkDirty(); } });
+        F("Cloud patch size", 10f, 150f, () => cloud ? cloud.patchSize : 0f,   v => { if (cloud) cloud.patchSize = v; });
+        F("Wind speed",       0f, 3f,    () => cloud ? cloud.windSpeed : 0f,   v => { if (cloud) cloud.windSpeed = v; });
+        F("Wind direction",   0f, 360f,  () => cloud ? cloud.windDirDeg : 0f,  v => { if (cloud) cloud.windDirDeg = v; });
 
         // ---- Camera — CameraFollow3D ---------------------------------------
         Cat("Camera");
         F("Distance",         2f, 25f, () => camRig ? camRig.distance : 0f,     v => { if (camRig) camRig.distance = v; });
         F("Height",           1f, 28f, () => camRig ? camRig.height : 0f,       v => { if (camRig) camRig.height = v; });
+        F("Max pitch",       20f, 80f, () => camRig ? camRig.maxPitch : 0f,     v => { if (camRig) camRig.maxPitch = v; });
         F("Yaw",           -180f, 180f, () => camRig ? camRig.yaw : 0f,         v => { if (camRig) camRig.yaw = v; });
         F("Look-at height",   0f, 3f,  () => camRig ? camRig.lookAtHeight : 0f, v => { if (camRig) camRig.lookAtHeight = v; });
         F("Smooth time",      0f, 0.5f, () => camRig ? camRig.smoothTime : 0f,  v => { if (camRig) camRig.smoothTime = v; });
         F("Zoom step",        0.5f, 6f, () => camRig ? camRig.zoomStep : 0f,    v => { if (camRig) camRig.zoomStep = v; });
         F("Drag yaw speed",   0f, 1f,  () => camRig ? camRig.dragYawSpeed : 0f, v => { if (camRig) camRig.dragYawSpeed = v; });
         F("Drag height speed", 0f, 0.2f, () => camRig ? camRig.dragHeightSpeed : 0f, v => { if (camRig) camRig.dragHeightSpeed = v; });
+
+        // ---- Occlusion Fade — CameraOccluderFader (fade props that block the player) ----
+        // "Enabled" off instantly restores every faded prop to solid (the component's OnDisable cleans up).
+        Cat("Occlusion Fade");
+        B("Enabled",       () => fader && fader.enabled,         v => { if (fader) fader.enabled = v; });
+        F("Faded alpha",   0f, 1f,     () => fader ? fader.fadedAlpha : 0f, v => { if (fader) fader.fadedAlpha = v; });
+        F("Fade speed",    1f, 30f,    () => fader ? fader.fadeSpeed : 0f,  v => { if (fader) fader.fadeSpeed = v; });
+        F("Cast radius",   0.1f, 1.5f, () => fader ? fader.castRadius : 0f, v => { if (fader) fader.castRadius = v; });
+        F("Aim height",    0f, 3f,     () => fader ? fader.aimHeight : 0f,  v => { if (fader) fader.aimHeight = v; });
     }
 
     void Update()
@@ -355,6 +424,7 @@ public class DevSettings : MonoBehaviour
 
     void DrawKnob(Knob k)
     {
+        if (k.isRaw) { k.draw?.Invoke(); return; }
         if (k.isAct)
         {
             string lbl = k.dyn != null ? k.dyn() : k.label;
@@ -382,6 +452,100 @@ public class DevSettings : MonoBehaviour
             if (!Mathf.Approximately(nv, cv)) k.set(nv);
         }
         GUILayout.EndHorizontal();
+    }
+
+    // ── Palette swap UI (called as a Raw knob from the Appearance group) ──────
+
+    // A white-backgrounded box style so GUI.backgroundColor gives accurate color swatches.
+    GUIStyle SwatchStyle
+    {
+        get
+        {
+            if (swatchStyle != null) return swatchStyle;
+            swatchStyle = new GUIStyle();
+            swatchStyle.normal.background = Texture2D.whiteTexture;
+            return swatchStyle;
+        }
+    }
+
+    void DrawSwapSlots()
+    {
+        if (dye == null) { GUILayout.Label("  (no CharacterDye)", labelStyle); return; }
+
+        GUILayout.Space(2f);
+        GUILayout.Label("Palette Swaps", labelStyle);
+
+        for (int i = 0; i < CharacterDye.SwapCount; i++)
+        {
+            var  slot    = dye.swaps[i];
+            bool picking = dye.EyedropperActive && dye.EyedropperSlot == i;
+            bool changed = false;
+
+            // ── row 1: enable toggle + src swatch → dst swatch + Pick button ──
+            GUILayout.BeginHorizontal();
+
+            bool en = GUILayout.Toggle(slot.enabled, " " + (i + 1), GUILayout.Width(42));
+            if (en != slot.enabled) { slot.enabled = en; changed = true; }
+
+            var prevBg = GUI.backgroundColor;
+            GUI.backgroundColor = slot.source;
+            GUILayout.Box(GUIContent.none, SwatchStyle, GUILayout.Width(20), GUILayout.Height(14));
+            GUI.backgroundColor = prevBg;
+
+            GUILayout.Label("→", GUILayout.Width(16));
+
+            GUI.backgroundColor = slot.target;
+            GUILayout.Box(GUIContent.none, SwatchStyle, GUILayout.Width(20), GUILayout.Height(14));
+            GUI.backgroundColor = prevBg;
+
+            GUILayout.FlexibleSpace();
+
+            if (picking)
+            {
+                GUI.backgroundColor = new Color(1f, 0.85f, 0.2f);
+                if (GUILayout.Button("◉ cancel", GUILayout.Width(70))) dye.CancelEyedropper();
+                GUI.backgroundColor = prevBg;
+            }
+            else
+            {
+                if (GUILayout.Button("Pick src", GUILayout.Width(64))) dye.StartEyedropper(i);
+            }
+            GUILayout.EndHorizontal();
+
+            // ── row 2: target R / G / B ──────────────────────────────────────
+            Color tgt = slot.target;
+            float nr = DrawMiniSlider("R", tgt.r);
+            float ng = DrawMiniSlider("G", tgt.g);
+            float nb = DrawMiniSlider("B", tgt.b);
+            if (!Mathf.Approximately(nr, tgt.r) || !Mathf.Approximately(ng, tgt.g) || !Mathf.Approximately(nb, tgt.b))
+            {
+                slot.target = new Color(nr, ng, nb);
+                changed = true;
+            }
+
+            // ── row 3: tolerance ─────────────────────────────────────────────
+            float ntol = DrawMiniSlider("Tol", slot.tolerance, 0.01f, 0.5f);
+            if (!Mathf.Approximately(ntol, slot.tolerance)) { slot.tolerance = ntol; changed = true; }
+
+            if (changed) dye.Apply();
+            GUILayout.Space(3f);
+        }
+
+        if (GUILayout.Button("Clear all swaps", GUILayout.Width(152)))
+        {
+            foreach (var s in dye.swaps) s.enabled = false;
+            dye.Apply();
+        }
+    }
+
+    float DrawMiniSlider(string lbl, float v, float min = 0f, float max = 1f)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(lbl, labelStyle, GUILayout.Width(26));
+        float nv = GUILayout.HorizontalSlider(v, min, max, GUILayout.Width(84));
+        GUILayout.Label(nv.ToString("0.00"), valueStyle, GUILayout.Width(34));
+        GUILayout.EndHorizontal();
+        return nv;
     }
 
     void ResetAll()

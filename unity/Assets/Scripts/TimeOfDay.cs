@@ -17,8 +17,8 @@ public class TimeOfDay : MonoBehaviour
     public static TimeOfDay Instance { get; private set; }
 
     [Header("Cycle (accelerated)")]
-    [Tooltip("Real seconds for ONE HALF of the cycle. 3600 = a 1-hour day + a 1-hour night (full cycle = 2×).")]
-    public float halfCycleSeconds = 3600f;
+    [Tooltip("Real seconds for ONE HALF of the cycle. 300 = a 5-min day + a 5-min night (full cycle = 2×).")]
+    public float halfCycleSeconds = 300f;
 
     [Header("Live test tuner — works in Play mode")]
     [Tooltip("Pause the clock so you can scrub the slider below by hand.")]

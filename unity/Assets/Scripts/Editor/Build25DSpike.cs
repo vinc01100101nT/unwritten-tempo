@@ -161,6 +161,9 @@ public static class Build25DSpike
         follow.height = 10f;
         follow.yaw = 0f;
         if (player != null) follow.target = player.transform;
+
+        var fader = go.AddComponent<CameraOccluderFader>();   // fade props that block the view of the player
+        if (player != null) fader.target = player.transform;
     }
 
     public static Light BuildLight()
@@ -473,8 +476,10 @@ public static class Build25DSpike
         go.AddComponent<MobRespawn>();               // recycle the mob back into the world after it dies
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
 
-        // Loot: drop Zeny on death (coin sprite from the Treasure folder).
-        if (arc.goldMax > 0)
+        // Loot: drop Zeny and/or items on death.
+        bool hasGold  = arc.goldMax > 0;
+        bool hasItems = arc.itemDropNames != null && arc.itemDropNames.Length > 0;
+        if (hasGold || hasItems)
         {
             var dropper = go.AddComponent<LootDropper>();
             dropper.goldMin = arc.goldMin;
@@ -482,6 +487,25 @@ public static class Build25DSpike
             // GoldCoin.png is a Multiple-sprite sheet — LoadAllAssetsAtPath picks the first Sprite.
             foreach (var obj in AssetDatabase.LoadAllAssetsAtPath("Assets/Art/NinjaAdventure/Items/Treasure/GoldCoin.png"))
                 if (obj is Sprite s) { dropper.coinSprite = s; break; }
+
+            if (hasItems)
+            {
+                int count = arc.itemDropNames.Length;
+                var table = new ItemDropEntry[count];
+                for (int i = 0; i < count; i++)
+                {
+                    var item = Resources.Load<Item>($"Items/{arc.itemDropNames[i]}");
+                    if (item == null)
+                        Debug.LogWarning($"[unwritten] LootDropper: item '{arc.itemDropNames[i]}' not found in Resources/Items/");
+                    table[i] = new ItemDropEntry
+                    {
+                        item   = item,
+                        chance = (arc.itemDropChances != null && i < arc.itemDropChances.Length)
+                                 ? arc.itemDropChances[i] : 0.1f,
+                    };
+                }
+                dropper.lootTable = table;
+            }
         }
 
         // The floating HP bar + name (MobNameplate) is auto-added at runtime by MonsterAI3D.Awake, so it
@@ -622,11 +646,13 @@ public static class Build25DSpike
         soul.icon = LoadSkillIcon("Spell/OrbDarkness");      // hotbar icon (focused single-target bolt; distinct from caster's OrbLight)
 
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
+        // go.AddComponent<CharacterDye>();          // live HSV palette control — DISABLED for now (no color-palette dye on the character)
 
         var cc = go.GetComponent<CharacterController>();     // auto-added; size to the sprite (Phase 3D-B)
-        // stepOffset near 0 so the player can't climb/mount low props (e.g. the well rim) — keeps
-        // physical collision consistent with what A* treats as solid (Phase 3D-C consistency fix).
-        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // walk the low-poly hills
+        // Tuned SHORT capsule (radius 0.15, height 0.5, centre offset to the feet) — its top clears
+        // overhead prop geometry (roof eaves, tree leaves) while the bottom still bumps/climbs walls,
+        // stairs and roots. Single source of truth so all player builders + runtime agree.
+        Player3DController.ApplyDefaultCapsule(cc);
         int crowd = NatureStageBuilder.EnsureLayer(UnitCrowd.LayerName);   // player passes through mobs (can't hop onto them)
         if (crowd >= 0) go.layer = crowd;
 
@@ -637,10 +663,11 @@ public static class Build25DSpike
         ctrl.footstepSfx = SfxAssets.Set(0.55f, "Footsteps/Dirt",
             "Dirt Walk 1", "Dirt Walk 2", "Dirt Walk 3", "Dirt Walk 4", "Dirt Walk 5");
 
-        // Make the player the animated NinjaGreen avatar (idle/walk/attack/hit + a baked weapon) when the
-        // CharacterAnimated art is present. Overrides the legacy single-pose look wired just above; a no-op
-        // if that art is missing, so the Boy-sheet fallback stays intact.
-        NinjaGreenPlayer.TryApply(go);
+        // Make the player the Sscary Male avatar (48×64 idle/walk/jump/dash/death + Shadow/Dust). Full
+        // replacement of the older looks wired above; falls back to the animated NinjaGreen avatar (then the
+        // legacy single-pose Boy sheet) if the Sscary art is absent, so older art setups still work.
+        if (!ScaryPlayer.TryApply(go))
+            NinjaGreenPlayer.TryApply(go);
         return go;
     }
 

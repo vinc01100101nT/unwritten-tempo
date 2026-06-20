@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sprite Grid Viewer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #111318;
+  color: #d0d0d8;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── header ── */
+header {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  background: #1a1d26;
+  border-bottom: 1px solid #2a2d3a;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: .04em;
+  color: #7c6af7;
+}
+
+.ctrl-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ctrl-group label {
+  font-size: 11px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.ctrl-group input[type=number] {
+  width: 68px;
+  padding: 4px 8px;
+  background: #0e1017;
+  border: 1px solid #2a2d3a;
+  border-radius: 5px;
+  color: #d0d0d8;
+  font-size: 13px;
+  font-family: monospace;
+}
+.ctrl-group input[type=number]:focus {
+  outline: none;
+  border-color: #7c6af7;
+}
+
+.sep { width: 1px; height: 22px; background: #2a2d3a; }
+
+.hint {
+  font-size: 11px;
+  color: #444;
+  margin-left: auto;
+}
+
+/* ── canvas area ── */
+#wrap {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+/* ── drop zone ── */
+#drop-zone {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  border: 2px dashed #2a2d3a;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+#drop-zone:hover, #drop-zone.drag-over {
+  border-color: #7c6af7;
+  background: rgba(124,106,247,.05);
+}
+#drop-zone svg { opacity: .3; }
+#drop-zone p { color: #444; font-size: 14px; }
+#drop-zone small { color: #333; font-size: 12px; }
+
+/* ── canvas ── */
+canvas {
+  display: none;
+  cursor: crosshair;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ── tooltip ── */
+#tooltip {
+  position: fixed;
+  background: #1a1d26;
+  border: 1px solid #7c6af7;
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-family: monospace;
+  color: #b0aaff;
+  pointer-events: none;
+  display: none;
+  z-index: 200;
+  white-space: nowrap;
+}
+
+/* ── copied toast ── */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #7c6af7;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: monospace;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s, transform .15s;
+  z-index: 300;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── status bar ── */
+#statusbar {
+  flex-shrink: 0;
+  padding: 4px 16px;
+  background: #1a1d26;
+  border-top: 1px solid #2a2d3a;
+  font-size: 11px;
+  color: #444;
+  font-family: monospace;
+  display: flex;
+  gap: 20px;
+}
+#statusbar span b { color: #666; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">⊞ Sprite Grid Viewer</span>
+  <div class="sep"></div>
+
+  <div class="ctrl-group">
+    <label>Cell W</label>
+    <input type="number" id="cw" value="64" min="1" max="512">
+    <label>px</label>
+  </div>
+
+  <div class="ctrl-group">
+    <label>Cell H</label>
+    <input type="number" id="ch" value="64" min="1" max="512">
+    <label>px</label>
+  </div>
+
+  <div class="sep"></div>
+
+  <div class="ctrl-group">
+    <label>Zoom</label>
+    <input type="number" id="zoom" value="100" min="10" max="800" step="10">
+    <label>%</label>
+  </div>
+
+  <div class="sep"></div>
+
+  <div class="ctrl-group">
+    <label>Start index</label>
+    <input type="number" id="origin" value="0" min="0" max="1">
+  </div>
+
+  <span class="hint">Hover = preview ID · Click = copy to clipboard</span>
+</header>
+
+<div id="wrap">
+  <div id="drop-zone" id="drop-zone">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <path d="M3 9h18M9 21V9"/>
+    </svg>
+    <p>Drop a sprite sheet PNG here</p>
+    <small>or click to browse</small>
+    <input type="file" id="file-input" accept="image/*" style="display:none">
+  </div>
+  <canvas id="canvas"></canvas>
+</div>
+
+<div id="tooltip"></div>
+<div id="toast"></div>
+
+<div id="statusbar">
+  <span id="sb-size">—</span>
+  <span id="sb-grid">—</span>
+  <span id="sb-cell">hover a cell</span>
+</div>
+
+<script>
+const cwEl     = document.getElementById('cw');
+const chEl     = document.getElementById('ch');
+const zoomEl   = document.getElementById('zoom');
+const originEl = document.getElementById('origin');
+const canvas   = document.getElementById('canvas');
+const ctx      = canvas.getContext('2d');
+const dropZone = document.getElementById('drop-zone');
+const fileInput= document.getElementById('file-input');
+const tooltip  = document.getElementById('tooltip');
+const toast    = document.getElementById('toast');
+const sbSize   = document.getElementById('sb-size');
+const sbGrid   = document.getElementById('sb-grid');
+const sbCell   = document.getElementById('sb-cell');
+
+let img       = null;
+let hoverCol  = -1;
+let hoverRow  = -1;
+let toastTimer = null;
+
+// ── helpers ──────────────────────────────────────────────
+function cw()     { return Math.max(1, parseInt(cwEl.value)     || 64); }
+function ch()     { return Math.max(1, parseInt(chEl.value)     || 64); }
+function zoom()   { return Math.max(0.1, (parseInt(zoomEl.value) || 100) / 100); }
+function origin() { return parseInt(originEl.value) || 0; }
+
+function cellId(col, row) {
+  const o = origin();
+  return `${col + o}-${row + o}`;
+}
+
+// ── load ─────────────────────────────────────────────────
+function loadImage(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(file);
+  const i   = new Image();
+  i.onload  = () => {
+    img = i;
+    URL.revokeObjectURL(url);
+    dropZone.style.display = 'none';
+    canvas.style.display   = 'block';
+    updateStatus();
+    render();
+  };
+  i.src = url;
+}
+
+// ── render ───────────────────────────────────────────────
+function render() {
+  if (!img) return;
+
+  const z  = zoom();
+  const W  = Math.round(img.naturalWidth  * z);
+  const H  = Math.round(img.naturalHeight * z);
+  const cW = cw();
+  const cH = ch();
+
+  canvas.width  = W;
+  canvas.height = H;
+
+  // image
+  ctx.imageSmoothingEnabled = z > 1 ? false : true;
+  ctx.drawImage(img, 0, 0, W, H);
+
+  const cols = Math.ceil(img.naturalWidth  / cW);
+  const rows = Math.ceil(img.naturalHeight / cH);
+
+  // hover highlight (draw before grid so lines sit on top)
+  if (hoverCol >= 0 && hoverRow >= 0) {
+    const hx = Math.round(hoverCol * cW * z);
+    const hy = Math.round(hoverRow * cH * z);
+    const hw = Math.round(cW * z);
+    const hh = Math.round(cH * z);
+
+    ctx.fillStyle = 'rgba(124,106,247,0.30)';
+    ctx.fillRect(hx, hy, hw, hh);
+
+    // ID label
+    const fs = Math.max(9, Math.round(11 * z));
+    ctx.font         = `bold ${fs}px monospace`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    // shadow for readability
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillText(cellId(hoverCol, hoverRow), hx + hw/2 + 1, hy + hh/2 + 1);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(cellId(hoverCol, hoverRow), hx + hw/2, hy + hh/2);
+  }
+
+  // grid lines
+  ctx.strokeStyle = 'rgba(124,106,247,0.55)';
+  ctx.lineWidth   = 1;
+
+  for (let c = 0; c <= cols; c++) {
+    const x = Math.round(c * cW * z) + 0.5;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let r = 0; r <= rows; r++) {
+    const y = Math.round(r * cH * z) + 0.5;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // hover border on top of grid
+  if (hoverCol >= 0 && hoverRow >= 0) {
+    const hx = Math.round(hoverCol * cW * z) + 0.5;
+    const hy = Math.round(hoverRow * cH * z) + 0.5;
+    const hw = Math.round(cW * z) - 1;
+    const hh = Math.round(cH * z) - 1;
+    ctx.strokeStyle = '#b0aaff';
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(hx, hy, hw, hh);
+  }
+}
+
+// ── status bar ───────────────────────────────────────────
+function updateStatus() {
+  if (!img) return;
+  const cols = Math.ceil(img.naturalWidth  / cw());
+  const rows = Math.ceil(img.naturalHeight / ch());
+  sbSize.innerHTML = `<b>Image:</b> ${img.naturalWidth} × ${img.naturalHeight} px`;
+  sbGrid.innerHTML = `<b>Grid:</b> ${cols} cols × ${rows} rows (${cols * rows} cells)`;
+}
+
+// ── mouse ─────────────────────────────────────────────────
+canvas.addEventListener('mousemove', e => {
+  if (!img) return;
+  const rect = canvas.getBoundingClientRect();
+  const z    = zoom();
+  const cW   = cw();
+  const cH   = ch();
+  const mx   = (e.clientX - rect.left)  / z;
+  const my   = (e.clientY - rect.top)   / z;
+  const col  = Math.floor(mx / cW);
+  const row  = Math.floor(my / cH);
+
+  if (col !== hoverCol || row !== hoverRow) {
+    hoverCol = col; hoverRow = row;
+    sbCell.innerHTML = `<b>Cell:</b> ${cellId(col, row)} &nbsp; col ${col + origin()}, row ${row + origin()}`;
+    render();
+  }
+
+  tooltip.textContent    = cellId(col, row);
+  tooltip.style.display  = 'block';
+  tooltip.style.left     = (e.clientX + 16) + 'px';
+  tooltip.style.top      = (e.clientY - 10) + 'px';
+});
+
+canvas.addEventListener('mouseleave', () => {
+  hoverCol = -1; hoverRow = -1;
+  tooltip.style.display = 'none';
+  sbCell.textContent    = 'hover a cell';
+  render();
+});
+
+canvas.addEventListener('click', () => {
+  if (hoverCol < 0) return;
+  const id = cellId(hoverCol, hoverRow);
+  navigator.clipboard.writeText(id).then(() => showToast(id));
+});
+
+// ── toast ─────────────────────────────────────────────────
+function showToast(id) {
+  toast.textContent = `Copied: ${id}`;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 1600);
+}
+
+// ── controls ──────────────────────────────────────────────
+[cwEl, chEl, zoomEl, originEl].forEach(el => el.addEventListener('input', () => {
+  updateStatus();
+  render();
+}));
+
+// ── drag & drop ───────────────────────────────────────────
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => loadImage(e.target.files[0]));
+
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  loadImage(e.dataTransfer.files[0]);
+});
+
+// accept drop anywhere on the page
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) loadImage(file);
+});
+
+// ── keyboard zoom ─────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === '+' || e.key === '=') { zoomEl.value = Math.min(800, (parseInt(zoomEl.value)||100) + 25); render(); }
+  if (e.key === '-')                  { zoomEl.value = Math.max(10,  (parseInt(zoomEl.value)||100) - 25); render(); }
+  if (e.key === '0')                  { zoomEl.value = 100; render(); }
+});
+</script>
+</body>
+</html>

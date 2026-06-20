@@ -161,4 +161,13 @@ public class ItemSlot : MonoBehaviour, IDropHandler, IPointerClickHandler, IPoin
             if (s.accepts == EquipSlotType.None && s.Item == null) return s;
         return null;
     }
+
+    /// <summary>Puts <paramref name="item"/> into the first free bag slot. Returns false if the bag is full.</summary>
+    public static bool TryAddToBag(Item item)
+    {
+        var slot = FindEmptyBagSlot();
+        if (slot == null) return false;
+        slot.SetItem(item);
+        return true;
+    }
 }

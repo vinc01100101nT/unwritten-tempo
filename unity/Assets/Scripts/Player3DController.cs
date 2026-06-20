@@ -6,19 +6,21 @@ using UnityEngine.InputSystem;
 #endif
 
 /// <summary>
-/// The 2.5D player with your Dota-style controls (ported from PlayerCommander). Left-click drives
-/// the character; right-click is the camera orbit (<see cref="CameraFollow3D"/>):
+/// The 2.5D player. WASD gives direct, camera-relative movement; the mouse keeps the Dota-style
+/// orders. Right-click is the camera orbit (<see cref="CameraFollow3D"/>):
+///   • W A S D             → move (camera-relative; overrides any active click order).
 ///   • Left-click ground   → move there (A* around props).
 ///   • Left-click a mob    → attack it (close in, then auto-swing).
-///   • A, then left-click  → ATTACK-MOVE to the point, auto-engaging any mob within
-///                           <see cref="acquireRange"/>; left-click a mob = attack it.
-///   • S                   → STOP: cancel move / attack-move and any in-flight swing.
+///   • T                   → toggle roam auto-combat.
+/// NOTE: the old A (arm attack-click → ATTACK-MOVE) and S (STOP) keyboard hotkeys are currently
+/// commented out in <see cref="ReadInput"/> because WASD reclaimed those keys — the Stop() /
+/// attack-arm functions are kept intact so they can be re-bound later.
 /// Movement routes via <see cref="Pathfinder3D"/> + a CharacterController; 4-dir billboard
-/// animation from motion. Click-to-move only (no WASD). Exposes <see cref="AttackArmed"/> and a
-/// static <see cref="MonsterUnderCursor"/> for <see cref="GameCursor3D"/>.
+/// animation from motion. Exposes <see cref="AttackArmed"/> and a static
+/// <see cref="MonsterUnderCursor"/> for <see cref="GameCursor3D"/>.
 /// </summary>
 [RequireComponent(typeof(SpriteRenderer), typeof(CharacterController))]
-public class Player3DController : MonoBehaviour
+public partial class Player3DController : MonoBehaviour
 {
     [Header("Walk frames (column = facing), filled by Build 2.5D Spike")]
     public Sprite[] down, up, left, right;
@@ -74,6 +76,27 @@ public class Player3DController : MonoBehaviour
     [Tooltip("During attack-move, auto-engage a mob within this range.")]
     public float acquireRange = 5f;
 
+    // ── Collision capsule (CharacterController) — hand-tuned for the 2.5D billboard ──────────────────
+    // Deliberately SHORT so the capsule's top clears overhead prop geometry (overhanging roof eaves,
+    // tree leaves) while the bottom still bumps + climbs ground-level geometry (walls, stairs, tree
+    // roots). Applied in Awake so every player gets it without a rebuild and it survives map loads;
+    // also the shared default the player builders bake in (see ApplyDefaultCapsule). Prop colliders
+    // stay the exact visible mesh — the oversize-collision feel was THIS capsule being full-height.
+    public const float DefaultCapsuleRadius = 0.15f;
+    public const float DefaultCapsuleHeight = 0.5f;
+    public const float DefaultCapsuleStepOffset = 0.3f;
+    public const float DefaultCapsuleSlopeLimit = 45f;
+    public const float DefaultCapsuleSkinWidth = 0.08f;
+    public static readonly Vector3 DefaultCapsuleCenter = new Vector3(0f, 0f, 0f);
+
+    [Header("Collision capsule (applied in Awake — tuned to clear overhead leaves/eaves)")]
+    public float capsuleRadius = DefaultCapsuleRadius;
+    public float capsuleHeight = DefaultCapsuleHeight;
+    public Vector3 capsuleCenter = new Vector3(0f, 0f, 0f);
+    public float capsuleStepOffset = DefaultCapsuleStepOffset;
+    public float capsuleSlopeLimit = DefaultCapsuleSlopeLimit;
+    public float capsuleSkinWidth = DefaultCapsuleSkinWidth;
+
     [Header("Target magnetism (soft-snap)")]
     [Tooltip("A mob whose on-screen sprite is within this many pixels of the cursor counts as hovered/" +
              "clickable, so you don't have to pixel-aim a small billboard. 0 = off (exact aim only).")]
@@ -91,7 +114,7 @@ public class Player3DController : MonoBehaviour
     public float stepInterval = 0.32f;
     float nextStep;
 
-    [Header("Auto-combat (T to toggle, S to stop)")]
+    [Header("Auto-combat (T to toggle)")]
     [Tooltip("While auto-combat roams, it engages the nearest mob within this range and walks to it. " +
              "Larger = ranges farther from where you stand to find fights.")]
     public float roamRange = 14f;
@@ -122,6 +145,7 @@ public class Player3DController : MonoBehaviour
     Camera cam;
     Vector2 facing = Vector2.down;
     float timer; int frame;
+    Vector3 buildScale;   // authored localScale; UnitScale.ForPlayer is applied on top each frame
     Vector3 baseScale;
     float breathePhase;
     readonly List<Vector2> path = new List<Vector2>();
@@ -133,14 +157,17 @@ public class Player3DController : MonoBehaviour
     {
         sr = GetComponent<SpriteRenderer>();
         controller = GetComponent<CharacterController>();
+        ApplyCapsule();   // enforce the tuned (short) collision capsule so it clears overhead eaves/leaves
         attacker = GetComponent<Player3DAttacker>();
         status = Status.Of(gameObject);   // registers as StatusController.Player for the spells' silence check
         snapRadius = snapRadiusPixels;   // publish to the static cursor pick
-        baseScale = transform.localScale;
+        buildScale = transform.localScale;
+        baseScale = buildScale;
         breathePhase = Random.value * Mathf.PI * 2f;
         BuildAttackPoses();
         BuildDeadPose();
         BuildAnimClips();   // if animSheet is set, this supersedes the two single-pose builders above
+        BuildScary();       // if the Sscary 48×64 strips are wired, this supersedes BOTH paths above (Scary == true)
         targetMarker = TargetIndicator.Create();
         targetMarker.gameObject.AddComponent<Billboard>();   // face the camera so the arrow isn't edge-on when orbiting
         autoIndicator = AutoCombatIndicator.Create();        // "AUTO-COMBAT" screen tag, hidden until toggled
@@ -215,6 +242,35 @@ public class Player3DController : MonoBehaviour
     /// <summary>Switch class at runtime (persists + re-applies). Used by the DevSettings (P) panel.</summary>
     public void SetClass(PlayerClass c) { ClassState.Current = c; ApplyClass(c); }
 
+    /// <summary>Push the serialized capsule fields onto the CharacterController. Called in Awake so the
+    /// tuned (short) capsule is enforced on every player — even one built before this — and re-applies
+    /// across map loads. Tune via the Inspector fields (or the Default* consts) and it sticks.</summary>
+    public void ApplyCapsule()
+    {
+        if (controller == null) controller = GetComponent<CharacterController>();
+        if (controller == null) return;
+        controller.radius = capsuleRadius;
+        controller.height = capsuleHeight;
+        controller.center = capsuleCenter;
+        controller.stepOffset = capsuleStepOffset;
+        controller.slopeLimit = capsuleSlopeLimit;
+        controller.skinWidth = capsuleSkinWidth;
+    }
+
+    /// <summary>Write the canonical tuned capsule onto a CharacterController — the one place the player
+    /// builders (Build Player / NinjaGreen / Sscary) call so a freshly-built player matches the runtime
+    /// default in edit mode too. Keeps all four sites from drifting.</summary>
+    public static void ApplyDefaultCapsule(CharacterController cc)
+    {
+        if (cc == null) return;
+        cc.radius = DefaultCapsuleRadius;
+        cc.height = DefaultCapsuleHeight;
+        cc.center = DefaultCapsuleCenter;
+        cc.stepOffset = DefaultCapsuleStepOffset;
+        cc.slopeLimit = DefaultCapsuleSlopeLimit;
+        cc.skinWidth = DefaultCapsuleSkinWidth;
+    }
+
     // Slice the 4 directional attack poses straight from the texture (16px columns), ignoring the art's
     // auto-slices which are often broken on Ninja Adventure SeparateAnim sheets. Mirrors CharacterAnimator2D.
     void BuildAttackPoses()
@@ -238,6 +294,7 @@ public class Player3DController : MonoBehaviour
     void Update()
     {
         if (cam == null) cam = Camera.main;
+        baseScale = buildScale * UnitScale.ForPlayer;   // live: track the global unit-size dial (breathe/idle squash around this)
 
         // Dead: no input, no orders — show the defeated pose and keep the corpse pinned to the
         // ground (gravity) until the death screen respawns us.
@@ -245,9 +302,11 @@ public class Player3DController : MonoBehaviour
         {
             if (order != Order.Idle) Stop();
             if (autoIndicator != null) autoIndicator.Show(false);   // dying cancels auto-combat
-            if (deadSprite != null) sr.sprite = deadSprite;
+            if (Scary) AnimateScary(ScaryState.Death);              // play the 6-dir death clip (+ death shadow) once, hold
+            else if (deadSprite != null) sr.sprite = deadSprite;
             attackUntil = 0f;   // drop any held attack pose
             dashing = false;    // death cancels a charge in progress
+            jumping = false; eDashing = false;   // …and any Sscary hop/dash in progress
             transform.localScale = baseScale;
             controller.Move(Vector3.down * gravity * Time.deltaTime);
             return;
@@ -278,13 +337,27 @@ public class Player3DController : MonoBehaviour
             return;
         }
 
+        // Sscary traversal abilities (Space = forward hop, E = dash burst). Handled before normal input so an
+        // active hop/dash overrides movement, and a freshly-pressed one starts THIS frame (no 1-frame lag).
+        if (Scary && TickScaryAbilities()) return;
+
         ReadInput();
-        Vector3 move = Tick();
+
+        // WASD: direct, camera-relative movement. When any direction is held it OVERRIDES the
+        // click-to-move / attack / auto order (cancelling it once) so the two schemes don't fight.
+        Vector3 wasd = ReadWasd();
+        Vector3 move;
+        if (wasd.sqrMagnitude > 0.001f)
+        {
+            if (order != Order.Idle) Stop();   // drop any routed move/attack/auto so WASD wins
+            move = wasd;
+        }
+        else move = Tick();
 
         bool moving = move.sqrMagnitude > 0.001f;
         if (moving) worldFacing = move;
         facing = Facing3D.FromWorldDir(worldFacing);   // camera-relative — frames track the camera as it orbits
-        float spd = moveSpeed * (status != null ? status.MoveMult : 1f);   // Slow ailment scales walk speed
+        float spd = moveSpeed * UnitScale.ForPlayer * (status != null ? status.MoveMult : 1f);   // Slow ailment + unit-size speed coupling
         controller.Move((move * spd + Vector3.down * gravity) * Time.deltaTime);
 
         // Hold the attack pose while a swing is in flight (refreshed each swinging frame, with a tail).
@@ -329,9 +402,12 @@ public class Player3DController : MonoBehaviour
         if (GroundTargeter.Active) return;   // aiming a placed skill — the click confirms the target, not a move
         if (UnitTargeter.Active) return;     // aiming a single-target skill — the click locks the enemy, not a move
 
-        if (KeyS()) { Stop(); return; }
-        if (KeyT()) { ToggleAuto(); return; }   // T toggles roam auto-combat; S stops it
-        if (KeyA()) AttackArmed = true;
+        // --- A / S keyboard hotkeys DISABLED: WASD reclaimed these keys for movement. The Stop()
+        //     and attack-arm functions are kept intact below — un-comment (and rebind off A/S) to
+        //     restore them later.
+        // if (KeyS()) { Stop(); return; }      // S = STOP (cancel move / attack-move / swing)
+        if (KeyT()) { ToggleAuto(); return; }   // T toggles roam auto-combat
+        // if (KeyA()) AttackArmed = true;      // A = arm an attack-click (next left-click attacks)
         if (KeyEsc()) AttackArmed = false;
 
         // Left-click drives the character (right-click is the camera orbit). Attacking now REQUIRES A:
@@ -350,6 +426,21 @@ public class Player3DController : MonoBehaviour
             }
             else if (GroundPoint(cam, out var gp)) BeginMove(gp);
         }
+    }
+
+    // WASD → a camera-relative XZ move direction (normalized), or zero when nothing is held. Built on
+    // CameraRig's compute-once-per-frame basis so "W" is always away-from-camera even as it orbits, and
+    // diagonals aren't faster (normalized). Held-key reads, so movement continues while the key is down.
+    Vector3 ReadWasd()
+    {
+        float x = 0f, z = 0f;
+        if (HeldW()) z += 1f;
+        if (HeldS()) z -= 1f;
+        if (HeldD()) x += 1f;
+        if (HeldA()) x -= 1f;
+        if (x == 0f && z == 0f) return Vector3.zero;
+        Vector3 dir = CameraRig.ForwardXZ * z + CameraRig.RightXZ * x; dir.y = 0f;
+        return dir.sqrMagnitude > 1e-4f ? dir.normalized : Vector3.zero;
     }
 
     // ---- per-order behavior (returns the horizontal step direction) -----------
@@ -579,6 +670,7 @@ public class Player3DController : MonoBehaviour
     // ---- animation ------------------------------------------------------------
     void Animate(bool moving)
     {
+        if (Scary) { AnimateScary(moving ? ScaryState.Walk : ScaryState.Idle); return; }
         if (Animated) { AnimateRich(moving); return; }
         AnimateLegacy(moving);
     }
@@ -782,6 +874,40 @@ public class Player3DController : MonoBehaviour
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) return true;
 #endif
         return Input.GetKeyDown(KeyCode.Escape);
+    }
+
+    // WASD movement uses HELD reads (isPressed / GetKey), not the edge reads above, so motion
+    // continues for as long as the key is down.
+    static bool HeldW()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && Keyboard.current.wKey.isPressed) return true;
+#endif
+        return Input.GetKey(KeyCode.W);
+    }
+
+    static bool HeldA()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && Keyboard.current.aKey.isPressed) return true;
+#endif
+        return Input.GetKey(KeyCode.A);
+    }
+
+    static bool HeldS()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && Keyboard.current.sKey.isPressed) return true;
+#endif
+        return Input.GetKey(KeyCode.S);
+    }
+
+    static bool HeldD()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && Keyboard.current.dKey.isPressed) return true;
+#endif
+        return Input.GetKey(KeyCode.D);
     }
 
     void OnDrawGizmosSelected()

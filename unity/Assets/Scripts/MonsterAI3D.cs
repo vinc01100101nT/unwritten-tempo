@@ -124,7 +124,7 @@ public class MonsterAI3D : MonoBehaviour
 
     void Start()
     {
-        agent.moveSpeed = moveSpeed;
+        agent.moveSpeed = moveSpeed * UnitScale.ForMob;
 
         var pc = FindFirstObjectByType<Player3DController>();
         if (pc != null) player = pc.transform;
@@ -198,8 +198,9 @@ public class MonsterAI3D : MonoBehaviour
     {
         if (Time.time < stunnedUntil) { if (agent != null) agent.Halt(); return; }   // staggered — frozen
 
-        // Chill (Frost Nova): scale move speed while slowed; full speed once it expires.
-        agent.moveSpeed = (Time.time < slowUntil) ? moveSpeed * slowFactor : moveSpeed;
+        // Chill (Frost Nova): scale move speed while slowed; full speed once it expires. UnitScale.ForMob
+        // couples speed to size (smaller mob = slower) so it keeps the same body-lengths/sec at any size.
+        agent.moveSpeed = ((Time.time < slowUntil) ? moveSpeed * slowFactor : moveSpeed) * UnitScale.ForMob;
 
         Vector3 pos = transform.position;
         // A dead player is no target: leash off and resume wandering until they respawn.
