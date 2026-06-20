@@ -281,13 +281,16 @@ public static class Build25DSpike
     public static void BuildCursor(GameObject host)
     {
         const string dir = "Assets/Art/KenneyCursorPack/PNG/Outline/Default";
+        const string dirBig = "Assets/Art/KenneyCursorPack/PNG/Outline/Double";   // 64×64 variants
         foreach (var n in new[] { "pointer_b", "tool_sword_a", "target_b" })
             AssetDatabase.ImportAsset($"{dir}/{n}.png", ImportAssetOptions.ForceUpdate);   // ensure readable Cursor textures
+        AssetDatabase.ImportAsset($"{dirBig}/target_round_b.png", ImportAssetOptions.ForceUpdate);
 
         var cur = host.AddComponent<GameCursor3D>();
-        cur.defaultCursor    = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/pointer_b.png");      // normal
-        cur.attackCursor     = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/tool_sword_a.png");   // hovering a mob
-        cur.attackMoveCursor = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/target_b.png");       // A-armed
+        cur.defaultCursor    = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/pointer_b.png");          // normal
+        cur.attackCursor     = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/tool_sword_a.png");       // hovering a mob
+        cur.attackMoveCursor = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/target_b.png");           // A-armed
+        cur.targetCursor     = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dirBig}/target_round_b.png");  // aiming a skill — large 64×64 reticle, drawn full-size (software cursor)
         cur.defaultHotspot   = new Vector2(3, 3);
         if (cur.defaultCursor == null)
             Debug.LogWarning("[unwritten] Kenney cursors not found under " + dir + " — using the OS cursor.");
@@ -597,6 +600,14 @@ public static class Build25DSpike
         meteor.hitSfx = SfxAssets.Custom(0.8f, "Assets/Audio/Customs/hit.wav");   // custom per-hit sound, every hit of the multi-hit
         meteor.meteorSfx = SfxAssets.Set(0.9f, "Spells", "Fireball 1", "Fireball 2", "Fireball 3");   // randomized fireball boom per meteor impact
         meteor.icon = LoadSkillIcon("Spell/RockSpike");
+
+        var soul = go.AddComponent<Player3DSoulStrike>();     // 4: aim-first SINGLE-target nuke (pick the enemy, then fire)
+        var sparkTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Spark/SpriteSheet.png");
+        soul.projectileSheet = sparkTex != null ? sparkTex : fireballTex;   // focused arcane bolt (falls back to fireball art)
+        if (sparkTex != null) { soul.projFrameSize = sparkTex.height; soul.projFrames = Mathf.Max(1, sparkTex.width / sparkTex.height); }
+        soul.impactSheet = explosionTex;
+        soul.castSfx = spellSfx;
+        soul.icon = LoadSkillIcon("Spell/OrbDarkness");      // hotbar icon (focused single-target bolt; distinct from caster's OrbLight)
 
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
 

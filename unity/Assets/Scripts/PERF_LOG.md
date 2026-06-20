@@ -33,6 +33,37 @@ or the Profiler ▸ Hierarchy for the precise per-system number.
 
 ---
 
+## 2026-06-20 — RO-combat systems checkup: clean (PerfHud editor-inflation clarified)
+
+Checkup after the RO-combat batch (animated NinjaGreen player, `MobNameplate`, `StatusController`,
+`MonsterAI3D` element/on-hit-status, `Element`) + the aim-first single-target skill (`UnitTargeter`,
+`Player3DSoulStrike`).
+
+- **Mobs in test:** 34 (NatureStage, gathered)
+- **Combat alloc (BehaviourUpdate GC/frame):** **~0 / ≈1.4 KB `UpdateScene`** (Profiler ▸ Hierarchy,
+  authoritative). Flat graph, **no spikes**. Of `PlayerLoop` 2.7 KB/frame, ~1.3 KB is editor-only
+  `RenderPlayModeViewCameras` + `PerfHud.OnGUI`/`GUIUtility.BeginGUI` IMGUI (0 in a build).
+- **PerfHud read:** showed `GC/s 4.5 MB`, `peak 666 KB/frame` — **editor/Profiler inflation, NOT gameplay**.
+  PerfHud sums the `"GC Allocated In Frame"` recorder, which includes editor game-view IMGUI **and the open
+  Profiler window** (a heavy allocator while recording). `peak` is max-since-F4 and stuck from a one-time
+  transient (scene load / first nameplate builds / DamagePopup pool fill). The Hierarchy is the truth → clean.
+- **Frame time:** editor-dominated (FPS 95–117 in-editor). Judge true frame time from a Development Build.
+- **Found:** the three new ×N-per-frame systems are all allocation-free in steady state —
+  `MobNameplate.LateUpdate` only writes transforms + rewrites its HP fill **on HP change** (no per-frame
+  canvas rebuild); `StatusController.Update` early-outs unless a DoT is live; `MonsterAI3D` changes are in the
+  combat/Awake path (the ranged-caster lambda allocates a closure only per projectile, not per frame).
+  `UnitTargeter` runs only while aiming (single instance) and reuses the magnetised `MonsterUnderCursor`
+  pick + registry scan — no per-frame `GetComponent`/alloc.
+- **Fixed:** nothing — no regression. (Profiler corrected the PerfHud-suspected culprit, as the process warns.)
+- **Also surfaced (not perf):** "No cameras rendering" recovery = re-run **Tools ▸ unwritten ▸ Setup Systems
+  Scene** (the Spike Camera lives in Systems.unity; a disabled cam / stale URP renderer index blanks the view).
+- **New rule added to PERFORMANCE.md?** no — the "editor inflates allocation; trust Hierarchy over PerfHud"
+  caveat is already documented. Reinforced here as a worked example.
+- **Verdict:** gameplay alloc ~0; the RO-combat + targeting additions did not regress the budget. Confirm true
+  frame-time from a Development Build.
+
+---
+
 ## 2026-06-18 — Enemy-variety regression caught & fixed (player attack thrash)
 
 Checkup after the M1 enemy-variety work (Bestiary archetypes + `MonsterAI3D` kiting/flee behaviors).

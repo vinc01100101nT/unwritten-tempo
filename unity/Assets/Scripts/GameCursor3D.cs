@@ -12,8 +12,9 @@ public class GameCursor3D : MonoBehaviour
     public Texture2D defaultCursor;    public Vector2 defaultHotspot = new Vector2(3, 3);
     public Texture2D attackCursor;     public Vector2 attackHotspot = Vector2.zero;       // (0,0) => centered
     public Texture2D attackMoveCursor; public Vector2 attackMoveHotspot = Vector2.zero;   // (0,0) => centered
+    public Texture2D targetCursor;     public Vector2 targetHotspot = Vector2.zero;       // (0,0) => centered; shown while aiming a skill
 
-    enum Kind { None, Default, Attack, AttackMove }
+    enum Kind { None, Default, Attack, AttackMove, Target }
     Kind current = Kind.None;
 
     Player3DController player;
@@ -30,9 +31,11 @@ public class GameCursor3D : MonoBehaviour
         if (cam == null) cam = Camera.main;
         if (player == null) player = FindFirstObjectByType<Player3DController>();
 
-        // Attacking requires A. While armed → crosshair (mob or ground alike); unarmed left-click just
-        // moves, so a plain hover shows the default pointer. The sword cursor is retired.
-        Kind want = player != null && player.AttackArmed ? Kind.AttackMove : Kind.Default;
+        // Aiming a skill (single-target UnitTargeter or AoE GroundTargeter) takes priority → reticle cursor.
+        // Otherwise: A-armed → crosshair (mob or ground alike); unarmed hover shows the default pointer.
+        Kind want = UnitTargeter.Active || GroundTargeter.Active ? Kind.Target
+                  : player != null && player.AttackArmed       ? Kind.AttackMove
+                  :                                               Kind.Default;
 
         if (want != current) { Apply(want); current = want; }
     }
@@ -43,15 +46,18 @@ public class GameCursor3D : MonoBehaviour
         {
             case Kind.Attack:     Set(attackCursor, attackHotspot); break;
             case Kind.AttackMove: Set(attackMoveCursor, attackMoveHotspot); break;
+            // Reticle is the large 64×64 texture; ForceSoftware so the OS doesn't clamp it to ~32px (hardware
+            // cursors are size-limited). Software cursor renders the texture at its full native resolution.
+            case Kind.Target:     Set(targetCursor != null ? targetCursor : attackMoveCursor, targetHotspot, CursorMode.ForceSoftware); break;
             default:              Set(defaultCursor, defaultHotspot); break;
         }
     }
 
-    void Set(Texture2D tex, Vector2 hotspot)
+    void Set(Texture2D tex, Vector2 hotspot, CursorMode mode = CursorMode.Auto)
     {
         if (tex == null) { Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); return; }
-        if (hotspot == Vector2.zero) hotspot = new Vector2(tex.width, tex.height) * 0.5f;
-        Cursor.SetCursor(tex, hotspot, CursorMode.Auto);
+        if (hotspot == Vector2.zero) hotspot = new Vector2(tex.width, tex.height) * 0.5f;   // centre on the cursor point
+        Cursor.SetCursor(tex, hotspot, mode);
     }
 
     void OnDisable() => Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);   // restore the OS cursor

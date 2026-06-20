@@ -327,6 +327,7 @@ public class Player3DController : MonoBehaviour
         if (cam == null) return;
         if (DevSettings.Blocking) return;    // cursor is over the dev-settings panel — don't leak clicks/keys into the world
         if (GroundTargeter.Active) return;   // aiming a placed skill — the click confirms the target, not a move
+        if (UnitTargeter.Active) return;     // aiming a single-target skill — the click locks the enemy, not a move
 
         if (KeyS()) { Stop(); return; }
         if (KeyT()) { ToggleAuto(); return; }   // T toggles roam auto-combat; S stops it
