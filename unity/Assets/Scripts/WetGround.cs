@@ -31,13 +31,19 @@ public class WetGround : MonoBehaviour
     [Range(0f, 1f)] [Tooltip("Ripple distortion strength.")]
     public float rippleStrength = 0.35f;
 
-    [Header("Ripple rings")]
-    [Tooltip("Density of the ambient rain-ripple grid (higher = smaller, more frequent rings).")]
-    public float ripScale = 0.5f;
-    [Tooltip("Ambient ripple animation speed.")]
-    public float ripSpeed = 1f;
-    [Range(0f, 4f)] [Tooltip("Strength of the ambient rain ripples on puddles.")]
-    public float ripAmbient = 0.44f;
+    [Header("Rain impact rings")]
+    [Tooltip("Density of the rain-impact grid (higher = smaller, more frequent rings). Default = small, snappy " +
+             "raindrop impacts.")]
+    public float ripScale = 5.4f;
+    [Tooltip("Impact-ring animation speed — higher = each ring blooms + fades faster (shorter life, faster rate).")]
+    public float ripSpeed = 22f;
+    // The SAME rain-impact ring pattern (rainRipple) is drawn on every flat wet pixel; these two dials are just its
+    // brightness on the two surfaces it can land on. Independent — turning one down never affects the other.
+    [Range(0f, 4f)] [Tooltip("Brightness of the rain-impact rings ON PUDDLES (standing water). The watery splashes.")]
+    public float waterImpact = 0.44f;
+    [Range(0f, 4f)] [Tooltip("Brightness of the SAME rain-impact rings on flat ground OFF puddles (0 = puddles only; " +
+        "higher = rain visibly lands across the whole wet ground). Independent of Water impact.")]
+    public float groundImpact = 0.15f;
 
     [Header("Footstep ripples")]
     [Tooltip("Seconds a footstep ripple takes to expand and fade. (The step POSITIONS come from the shared " +
@@ -79,7 +85,8 @@ public class WetGround : MonoBehaviour
     static readonly int SpecStrID     = Shader.PropertyToID("_SpecStrength");
     static readonly int RipScaleID    = Shader.PropertyToID("_RipScale");
     static readonly int RipSpeedID    = Shader.PropertyToID("_RipSpeed");
-    static readonly int RipAmbientID  = Shader.PropertyToID("_RipAmbient");
+    static readonly int WaterImpactID = Shader.PropertyToID("_WaterImpact");
+    static readonly int GroundImpactID = Shader.PropertyToID("_GroundImpact");
     static readonly int StepRadiusID  = Shader.PropertyToID("_StepRadius");
     static readonly int StepBrightID  = Shader.PropertyToID("_StepBright");
     static readonly int StepsID       = Shader.PropertyToID("_Steps");
@@ -233,7 +240,8 @@ public class WetGround : MonoBehaviour
         mat.SetFloat(SpecStrID, specStrength);
         mat.SetFloat(RipScaleID, ripScale);
         mat.SetFloat(RipSpeedID, ripSpeed);
-        mat.SetFloat(RipAmbientID, ripAmbient);
+        mat.SetFloat(WaterImpactID, waterImpact);
+        mat.SetFloat(GroundImpactID, groundImpact);
         mat.SetFloat(StepRadiusID, stepRadius);
         mat.SetFloat(StepBrightID, stepBright);
         mat.SetFloat(ReflStrengthID, reflStrength);

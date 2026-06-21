@@ -50,7 +50,7 @@ public static class SystemsSceneBuilder
         sun.gameObject.AddComponent<DayNightLight>();   // sun color/intensity/angle + ambient by time-of-day
         sun.gameObject.AddComponent<CloudShadows>();    // drifting full-screen cloud shadows (DayNightLight also self-adds)
         sun.gameObject.AddComponent<RainOverlay>();     // screen-space rain overlay (intensity 0 = dry/zero-cost until raised)
-        sun.gameObject.AddComponent<WetGround>();       // HEAVY: wet/puddle screen-space pass (High tier only, follows rain)
+        sun.gameObject.AddComponent<WetGround>();       // HEAVY: wet/puddle screen-space pass + rain-impact rings (High tier, follows rain)
         sun.gameObject.AddComponent<PlanarReflection>();// HEAVY: mirror-camera reflection of the 3D world into puddles
         sun.gameObject.AddComponent<SnowOverlay>();     // screen-space drifting-flake overlay (intensity 0 = clear/zero-cost)
         sun.gameObject.AddComponent<SnowGround>();      // snow build-up on roofs/ground (all tiers) + footprints (High only)

@@ -23,7 +23,8 @@ Shader "Unwritten/WetGround"
         _Flatness     ("Flatness Cutoff", Range(0,1)) = 0.6
         _RipScale     ("Ambient Ripple Scale", Float) = 0.5
         _RipSpeed     ("Ambient Ripple Speed", Float) = 1.0
-        _RipAmbient   ("Ambient Ripple Strength", Range(0,4)) = 0.8
+        _WaterImpact  ("Water Impact (rings on puddles)", Range(0,4)) = 0.44
+        _GroundImpact ("Ground Impact (same rings off puddles)", Range(0,4)) = 0.15
         _StepRadius   ("Step Ripple Radius", Float) = 0.6
         _StepBright   ("Step Ripple Strength", Range(0,8)) = 2.5
         _ReflStrength ("Reflection Strength", Range(0,2)) = 0.0
@@ -47,10 +48,11 @@ Shader "Unwritten/WetGround"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "Splash.hlsl"   // rain crown-splash SHAPE primitive (SplashShape)
 
             float _Wetness, _Darken, _PuddleScale, _PuddleAmount;
             float _RippleSpeed, _RippleStrength, _SpecStrength, _Flatness;
-            float _RipScale, _RipSpeed, _RipAmbient, _StepRadius, _StepBright;
+            float _RipScale, _RipSpeed, _WaterImpact, _StepRadius, _StepBright, _GroundImpact;
             float _ReflStrength, _ReflDistort, _ReflFlipY;
             float4 _ReflectColor;
             float4 _Steps[16];   // footstep ripples: xy = world XZ, z = age 0..1 (>=1 = dead slot)
@@ -94,20 +96,22 @@ Shader "Unwritten/WetGround"
                 return v;
             }
 
-            // One field of scattered rain ripples: each cell gets a ripple at a RANDOM centre, with random size,
-            // phase, and existence (gaps) — so it doesn't read as a regular grid of identical rings.
+            // One field of scattered rain CROWN-SPLASHES. This function owns only the SCATTER (which cells splash,
+            // and each splash's random centre / phase / size); the splash SHAPE itself is SplashShape (Splash.hlsl).
             float rainRipple(float2 p, float seed)
             {
                 float2 cell = floor(p);
                 float2 f    = frac(p);
-                float  ex   = step(0.45, hash21(cell + float2(seed + 9.1, seed)));          // ~55% of cells ripple
-                float2 ctr  = float2(0.30 + 0.40 * hash21(cell + float2(seed,       seed + 2.0)),
-                                     0.30 + 0.40 * hash21(cell + float2(seed + 4.0, seed)));  // random centre in cell
-                float  age  = frac(_Time.y * _RipSpeed * 0.30 + hash21(cell + float2(seed + 1.3, seed + 6.0)));
-                float  maxR = lerp(0.173, 0.367, hash21(cell + float2(seed + 5.5, seed + 3.0))); // ring size — 3× smaller (polish 2026-06-21)
-                float  d    = distance(f, ctr);
-                float  ring = smoothstep(0.03, 0.0, abs(d - age * maxR));   // thin outline (lower = thinner)
-                return ring * (1.0 - age) * ex;
+                float  ex   = step(0.45, hash21(cell + float2(seed + 9.1, seed)));          // ~55% of cells splash
+                float  phase = _Time.y * _RipSpeed * 0.30 + hash21(cell + float2(seed + 1.3, seed + 6.0));
+                float  age  = frac(phase);
+                float  k    = floor(phase);   // life-cycle index: which impact this cell is on (bumps each loop)
+                float  maxR = lerp(0.173, 0.367, hash21(cell + float2(seed + 5.5, seed + 3.0))); // splash size
+
+                // Per-IMPACT seed = cell + cycle index, so every loop lands the splash at a NEW random spot inside
+                // the cell (wander 0.2 keeps the old middle-of-cell placement range). SplashShape does the rest.
+                float2 iseed = cell + seed + float2(31.7, 13.3) * k;
+                return SplashShape(f - 0.5, age, maxR, 0.13, iseed, 0.20) * ex;
             }
 
             half4 frag (Varyings IN) : SV_Target
@@ -124,58 +128,69 @@ Shader "Unwritten/WetGround"
                 if (N.y < 0.0) N = -N;                                   // face up
                 float flatW = saturate((N.y - _Flatness) / max(0.001, 1.0 - _Flatness));
 
+                // Wet-ground masks — TWO tiers, both need flat ground + live rain:
+                //   • groundWet — ALL flat ground while it's raining. Gets ONLY the faint rain-impact rings, so
+                //                 rain visibly lands on the whole ground, not just puddles (Option A, 2026-06-21).
+                //   • wet (puddle) — the shiny standing-water mask. Gets reflections, fresnel spec, footstep
+                //                 splashes and darkening — the full puddle look, UNCHANGED from before.
+                float groundWet = saturate(flatW) * _Wetness;
+                if (groundWet <= 0.001) return half4(0, 0, 0, 0);   // not flat ground, or no rain: leave untouched
+
                 // Puddle mask: low spots of world-XZ noise, only on flat ground.
                 float pn = fbm(wp.xz * _PuddleScale);
                 float puddle = smoothstep(1.0 - _PuddleAmount, 1.0 - _PuddleAmount + 0.18, pn);
                 float wet = saturate(puddle * flatW) * _Wetness;
-                if (wet <= 0.001) return half4(0, 0, 0, 0);
 
-                // Animated ripples: perturb the normal by the gradient of scrolling noise → shimmering fresnel.
-                float t = _Time.y * _RippleSpeed;
-                float2 rc = wp.xz * 2.0 + t;
-                float e = 0.06;
-                float hx = vnoise(rc + float2(e, 0)) - vnoise(rc - float2(e, 0));
-                float hz = vnoise(rc + float2(0, e)) - vnoise(rc - float2(0, e));
-                N = normalize(N + float3(-hx, 0.0, -hz) * _RippleStrength);
-
-                // Faked reflection: a glancing-angle fresnel tinted by the sky/reflection colour.
-                float3 V = normalize(_WorldSpaceCameraPos - wp);
-                float fres = pow(1.0 - saturate(dot(N, V)), 4.0);
-                float3 spec = _ReflectColor.rgb * (fres * _SpecStrength) * wet;
-
-                // Concentric ripples — ambient rain + footsteps. Both are added only where it's wet, so a
-                // footstep ripple is invisible off a puddle: that's how "is the player on a puddle?" is answered.
-                float ripples = 0.0;
-
-                // Ambient: two overlapping ripple fields at different scales/offsets, each with random centre,
-                // size, phase and gaps — so the rings vary in size and position instead of reading as a grid.
-                // Polish 2026-06-21: grid frequency ×2 per axis = ×4 as many ripples (denser stipple); combined
-                // with the ×2/3 maxR above this also lands each ring ~3× smaller in world units than before.
+                // Rain-impact rings: ONE pattern (two overlapping fields with random centre/size/phase/gaps so it
+                // doesn't read as a grid), drawn on EVERY flat wet pixel. Its brightness is the bigger of the two
+                // independent per-surface dials — _WaterImpact where there's standing water (puddle), _GroundImpact
+                // on the open wet ground — so "rings on water" and "rings on ground" tune separately.
+                // Polish 2026-06-21: grid frequency ×2 per axis = ×4 as many ripples (denser stipple).
                 float ambient = rainRipple(wp.xz * _RipScale * 2.0,        0.0)
                               + rainRipple(wp.xz * _RipScale * 3.4 + 11.3, 31.0);
-                ripples += ambient * _RipAmbient;
+                float3 spec = _ReflectColor.rgb * (ambient * max(wet * _WaterImpact, groundWet * _GroundImpact));
 
-                // Footsteps: an expanding ring at each recent step position (dead slots have age >= 1).
-                for (int i = 0; i < 16; i++)
+                // Everything below is PUDDLE-only (standing-water shine), branched out so the vast majority of
+                // ground pixels (no puddle) skip the fresnel, footstep loop and reflection sample — that's what
+                // keeps Option A ~free: off-puddle ground pays only for the cheap ambient rings above.
+                if (wet > 0.001)
                 {
-                    float4 s   = _Steps[i];
-                    float  age = s.z;
-                    float  scl = max(s.w, 0.0001);    // per-ripple scale: 1 = footstep, larger = landing splash
-                    float  d   = distance(wp.xz, s.xy);
-                    float  ring = smoothstep(0.03 * scl, 0.0, abs(d - age * _StepRadius * scl)) * saturate(1.0 - age);
-                    ripples += ring * _StepBright * scl * step(age, 1.0);
+                    // Animated ripples: perturb the normal by the gradient of scrolling noise → shimmering fresnel.
+                    float t = _Time.y * _RippleSpeed;
+                    float2 rc = wp.xz * 2.0 + t;
+                    float e = 0.06;
+                    float hx = vnoise(rc + float2(e, 0)) - vnoise(rc - float2(e, 0));
+                    float hz = vnoise(rc + float2(0, e)) - vnoise(rc - float2(0, e));
+                    N = normalize(N + float3(-hx, 0.0, -hz) * _RippleStrength);
+
+                    // Faked reflection: a glancing-angle fresnel tinted by the sky/reflection colour.
+                    float3 V = normalize(_WorldSpaceCameraPos - wp);
+                    float fres = pow(1.0 - saturate(dot(N, V)), 4.0);
+                    spec += _ReflectColor.rgb * (fres * _SpecStrength) * wet;
+
+                    // Footsteps: an expanding ring at each recent step position (dead slots have age >= 1). Kept
+                    // puddle-masked so a footstep ripple is invisible off a puddle — that's how IsPuddleAt answers.
+                    float steps = 0.0;
+                    for (int i = 0; i < 16; i++)
+                    {
+                        float4 s   = _Steps[i];
+                        float  age = s.z;
+                        float  scl = max(s.w, 0.0001);    // per-ripple scale: 1 = footstep, larger = landing splash
+                        float  d   = distance(wp.xz, s.xy);
+                        float  ring = smoothstep(0.03 * scl, 0.0, abs(d - age * _StepRadius * scl)) * saturate(1.0 - age);
+                        steps += ring * _StepBright * scl * step(age, 1.0);
+                    }
+                    spec += _ReflectColor.rgb * steps * wet;
+
+                    // Planar reflection: sample the mirror RT at this screen pixel, ripple-distorted, blended by
+                    // wetness. Contributes nothing when reflections are off (texture is bound to black).
+                    float2 ruv = saturate(uv + N.xz * _ReflDistort);
+                    ruv.y = lerp(ruv.y, 1.0 - ruv.y, _ReflFlipY);
+                    float3 refl = SAMPLE_TEXTURE2D(_ReflectionTex, sampler_ReflectionTex, ruv).rgb;
+                    spec += refl * (wet * _ReflStrength);
                 }
 
-                spec += _ReflectColor.rgb * ripples * wet;
-
-                // Planar reflection: sample the mirror RT at this screen pixel, ripple-distorted, blended by
-                // wetness. Contributes nothing when reflections are off (texture is bound to black).
-                float2 ruv = saturate(uv + N.xz * _ReflDistort);
-                ruv.y = lerp(ruv.y, 1.0 - ruv.y, _ReflFlipY);
-                float3 refl = SAMPLE_TEXTURE2D(_ReflectionTex, sampler_ReflectionTex, ruv).rgb;
-                spec += refl * (wet * _ReflStrength);
-
-                return half4(spec, _Darken * wet);   // premultiplied: add spec, darken by _Darken*wet
+                return half4(spec, _Darken * wet);   // premultiplied: add spec, darken puddles by _Darken*wet
             }
             ENDHLSL
         }

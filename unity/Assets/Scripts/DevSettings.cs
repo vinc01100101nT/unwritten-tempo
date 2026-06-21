@@ -54,7 +54,9 @@ public class DevSettings : MonoBehaviour
         public bool hasDefault; public float def; public bool defB;
     }
 
-    class Group { public string name; public bool open = false; public readonly List<Knob> knobs = new List<Knob>(); }
+    // A category. `isSub` groups are sub-categories: they render indented under the most recent top-level (non-sub)
+    // category and are hidden while that parent is collapsed — one level of nesting, e.g. Environment ▸ Snow.
+    class Group { public string name; public bool open = false; public bool isSub; public readonly List<Knob> knobs = new List<Knob>(); }
 
     readonly List<Group> groups = new List<Group>();
     Group cur;   // group currently being filled by the builder helpers
@@ -107,6 +109,8 @@ public class DevSettings : MonoBehaviour
 
     // ---- builder helpers ------------------------------------------------------
     void Cat(string name) { cur = new Group { name = name }; groups.Add(cur); }
+    // A sub-category under the current top-level Cat (renders indented + collapses with its parent).
+    void Sub(string name) { cur = new Group { name = name, isSub = true }; groups.Add(cur); }
     void F(string label, float min, float max, Func<float> get, Action<float> set)
         => cur.knobs.Add(new Knob { label = label, min = min, max = max, get = get, set = set });
     void I(string label, float min, float max, Func<float> get, Action<float> set)
@@ -334,6 +338,7 @@ public class DevSettings : MonoBehaviour
 
         // ---- Environment — TimeOfDay + DayNightLight -----------------------
         Cat("Environment");
+        Sub("Sky & Time");
         B("Pause clock",      () => tod && tod.paused,                       v => { if (tod) tod.paused = v; });
         F("Time of day",      0f, 1f,    () => tod ? tod.time01 : 0f,        v => { if (tod) tod.time01 = v; });
         F("Half-cycle (s)",   5f, 3600f, () => tod ? tod.halfCycleSeconds : 0f, v => { if (tod) tod.halfCycleSeconds = v; });
@@ -354,11 +359,13 @@ public class DevSettings : MonoBehaviour
         FSun("Sun yaw swing", 0f, 180f,    () => sun ? sun.yawSwing : 0f,      v => { if (sun) sun.yawSwing = v; });
         BSun("Drive ambient",   () => sun && sun.driveAmbient,                 v => { if (sun) sun.driveAmbient = v; });
         BSun("Rotate sun",      () => sun && sun.rotateSun,                    v => { if (sun) sun.rotateSun = v; });
+        Sub("Night Lamps");
         // Night lamps — global dials over every NightLight prop (houses/candles/lamps). They self-update each
         // frame, so these apply live without needing a sun Refresh.
         B("Night lamps",      () => NightLight.GlobalEnabled,                  v => NightLight.GlobalEnabled = v);
         F("Lamp intensity",   0f, 4f,    () => NightLight.GlobalIntensity,     v => NightLight.GlobalIntensity = v);
         F("Lamp range x",     0.3f, 3f,  () => NightLight.GlobalRange,         v => NightLight.GlobalRange = v);
+        Sub("Cloud Shadows");
         // Cloud shadows — coverage/darkness/softness rebake the texture (MarkDirty); the rest are live.
         B("Cloud shadows",    () => cloud && cloud.enabled,                    v => { if (cloud) cloud.enabled = v; });
         F("Cloud strength",   0f, 1f,    () => cloud ? cloud.strength : 0f,    v => { if (cloud) cloud.strength = v; });
@@ -368,6 +375,7 @@ public class DevSettings : MonoBehaviour
         F("Cloud patch size", 10f, 150f, () => cloud ? cloud.patchSize : 0f,   v => { if (cloud) cloud.patchSize = v; });
         F("Wind speed",       0f, 3f,    () => cloud ? cloud.windSpeed : 0f,   v => { if (cloud) cloud.windSpeed = v; });
         F("Wind direction",   0f, 360f,  () => cloud ? cloud.windDirDeg : 0f,  v => { if (cloud) cloud.windDirDeg = v; });
+        Sub("Rain");
         // Rain (spike) — screen-space overlay; created on demand the first time you raise it, so it works even
         // on a Systems scene baked before RainOverlay joined the rig. Zero GPU cost while intensity is 0.
         B("Rain",             () => rain && rain.enabled && rain.intensity > 0f,
@@ -376,14 +384,16 @@ public class DevSettings : MonoBehaviour
         F("Rain fall speed",  0.2f, 20f, () => rain ? rain.fallSpeed : 0f,     v => { if (rain) rain.fallSpeed = v; });
         F("Rain slant",      -1f, 1f,    () => rain ? rain.slant : 0f,         v => { if (rain) rain.slant = v; });
         F("Rain density",     20f, 160f, () => rain ? rain.density : 0f,       v => { if (rain) rain.density = v; });
+        Sub("Rain Audio");
         // Rain audio — Forest Day/Night Storm crossfaded by time-of-day, scaled by rain. Follows rain, not tier.
         B("Rain audio",       () => rainAudio && rainAudio.enabled && rainAudio.maxVolume > 0f,
                               v => { rainAudio = RainAudio.Ensure(); rainAudio.enabled = true;
                                      rainAudio.maxVolume = v ? Mathf.Max(0.5f, rainAudio.maxVolume) : 0f; });
         F("Rain volume",      0f, 1f,    () => rainAudio ? rainAudio.maxVolume : 0f,
                               v => { if (!rainAudio) rainAudio = RainAudio.Ensure(); rainAudio.maxVolume = v; });
-        // Heavy weather (High tier only) — wet ground + splashes; both follow the live rain amount. Toggling on
-        // raises the quality tier and spawns the effects; they cost nothing on Low/Medium so min spec is intact.
+        Sub("Wet Ground");
+        // Heavy weather (High tier only) — wet ground + rain-impact rings; follow the live rain amount. Toggling on
+        // raises the quality tier and spawns the effect; it costs nothing on Low/Medium so min spec is intact.
         B("Heavy weather",    () => WeatherFX.Heavy,
                               v => { WeatherFX.Quality = v ? WeatherFX.Tier.High : WeatherFX.Tier.Medium;
                                      if (v) wet = WetGround.Ensure(); });
@@ -392,14 +402,17 @@ public class DevSettings : MonoBehaviour
         F("Wet puddle size",  0.03f, 0.4f, () => wet ? wet.puddleScale : 0f,   v => { if (wet) wet.puddleScale = v; });
         F("Wet reflection",   0f, 4f,    () => wet ? wet.specStrength : 0f,    v => { if (wet) wet.specStrength = v; });
         F("Wet ripple speed", 0f, 4f,    () => wet ? wet.rippleSpeed : 0f,     v => { if (wet) wet.rippleSpeed = v; });
-        F("Ambient ripples",  0f, 4f,    () => wet ? wet.ripAmbient : 0f,      v => { if (wet) wet.ripAmbient = v; });
+        F("Water impact",     0f, 4f,    () => wet ? wet.waterImpact : 0f,     v => { if (wet) wet.waterImpact = v; });
+        F("Ground impact",    0f, 4f,    () => wet ? wet.groundImpact : 0f,   v => { if (wet) wet.groundImpact = v; });
         F("Step ripples",     0f, 8f,    () => wet ? wet.stepBright : 0f,      v => { if (wet) wet.stepBright = v; });
         F("Step radius",      0.1f, 1f,  () => wet ? wet.stepRadius : 0f,      v => { if (wet) wet.stepRadius = v; });
+        Sub("Footsteps");
         // Gait (shared FootstepTracker) — gap/spacing/offset/jump-splash drive BOTH puddle ripples and snow prints.
         F("Footstep gap",     0.12f, 1.2f, () => foot ? foot.strideDist : 0f,  v => { foot = FootstepTracker.Ensure(); foot.strideDist = v; });
         F("Foot spacing",     0f, 0.6f,  () => foot ? foot.footSpacing : 0f,   v => { foot = FootstepTracker.Ensure(); foot.footSpacing = v; });
         F("Step offset",     -1f, 1f,    () => foot ? foot.stepOffset : 0f,    v => { foot = FootstepTracker.Ensure(); foot.stepOffset = v; });
         F("Jump splash",      1f, 6f,    () => foot ? foot.landingScale : 0f,  v => { foot = FootstepTracker.Ensure(); foot.landingScale = v; });
+        Sub("Reflection");
         // Planar reflection (Step 1: 3D world only) — mirror camera into puddles. Needs High tier + rain.
         B("Water reflection", () => refl && refl.enabled && wet && wet.reflStrength > 0f,
                               v => { refl = PlanarReflection.Ensure(); refl.enabled = true;
@@ -407,9 +420,10 @@ public class DevSettings : MonoBehaviour
         F("Reflection amount",0f, 2f,    () => wet ? wet.reflStrength : 0f,    v => { if (wet) wet.reflStrength = v; });
         B("Reflection flip Y",() => wet && wet.reflFlipY,                      v => { if (wet) wet.reflFlipY = v; });
         F("Water level",     -5f, 5f,    () => refl ? refl.waterHeight : 0f,   v => { if (refl) refl.waterHeight = v; });
+        Sub("Snow");
         // Snow — drifting-flake overlay (all tiers, cheap) + ground build-up on roofs/terrain. The blanket ramps
         // up/melts over "Snow build time"; footprints in the snow are a High-tier extra (toggle Heavy weather on).
-        // Created on demand like rain so it works on a Systems scene baked before snow joined the rig.
+        // Created on demand like rain so it works on a Systems scene baked before snow joined the rig. OFF by default.
         B("Snow",             () => snow && snow.enabled && snow.intensity > 0f,
                               v => { snow = SnowOverlay.Ensure(); snow.enabled = true; snow.intensity = v ? Mathf.Max(0.6f, snow.intensity) : 0f;
                                      if (v) snowGround = SnowGround.Ensure(); });
@@ -486,10 +500,25 @@ public class DevSettings : MonoBehaviour
     void DrawWindow(int id)
     {
         scroll = GUILayout.BeginScrollView(scroll, GUILayout.Width(360), GUILayout.Height(Mathf.Min(Screen.height - 70, 660)));
+        bool parentOpen = true;   // is the current top-level category expanded? (gates its sub-categories)
         for (int gi = 0; gi < groups.Count; gi++)
         {
             var grp = groups[gi];
+            if (grp.isSub)
+            {
+                if (!parentOpen) continue;   // parent category collapsed → hide its sub-categories
+                GUILayout.BeginHorizontal();
+                GUILayout.Space(12f);        // indent the whole sub-category
+                GUILayout.BeginVertical();
+                grp.open = GUILayout.Toggle(grp.open, (grp.open ? "▼  " : "▶  ") + grp.name, headerStyle);
+                if (grp.open) for (int ki = 0; ki < grp.knobs.Count; ki++) DrawKnob(grp.knobs[ki]);
+                GUILayout.EndVertical();
+                GUILayout.EndHorizontal();
+                GUILayout.Space(2f);
+                continue;
+            }
             grp.open = GUILayout.Toggle(grp.open, (grp.open ? "▼  " : "▶  ") + grp.name, headerStyle);
+            parentOpen = grp.open;
             if (!grp.open) continue;
             for (int ki = 0; ki < grp.knobs.Count; ki++) DrawKnob(grp.knobs[ki]);
             GUILayout.Space(4f);

@@ -15,8 +15,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class SnowOverlay : MonoBehaviour
 {
-    [Range(0f, 1f)] [Tooltip("Master snow amount (the TARGET the flakes ease toward). 0 = clear (quad disabled).")]
-    public float intensity = 1f;
+    [Range(0f, 1f)] [Tooltip("Master snow amount (the TARGET the flakes ease toward). 0 = clear (quad disabled). " +
+             "Default 0 — snow is OFF until raised (DevSettings 'Snow' toggle, or a weather preset).")]
+    public float intensity = 0f;
     [Range(0f, 60f)] [Tooltip("Seconds for the flakes to fade IN when snow starts (or out when it stops). Kept " +
              "separate from SnowGround's accumTime — flakes appear fast, the ground blanket builds up slower.")]
     public float rampTime = 3f;
