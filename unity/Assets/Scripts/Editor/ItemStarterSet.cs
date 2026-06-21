@@ -36,7 +36,7 @@ public static class ItemStarterSet
         ("Fire Scroll", ART + "/Items/Scroll/ScrollFire.png",    EquipSlotType.None, 0, 0, 0, 0, "Crackles with unspent flame. (Usable later.)"),
     };
 
-    [MenuItem("Tools/unwritten/Create Starter Items")]
+    [MenuItem("Tools/unwritten/Scene Setup/Create Starter Items", priority = 130)]
     static void CreateMenu()
     {
         int n = EnsureStarterItems().Count;

@@ -67,6 +67,10 @@ public class DevSettings : MonoBehaviour
     TimeOfDay tod;
     DayNightLight sun;
     CloudShadows cloud;
+    RainOverlay rain;
+    WetGround wet;
+    PlanarReflection refl;
+    RainAudio rainAudio;
     CharacterDye dye;
     MobRespawn[] respawns;
     float nextRespawnRefresh;
@@ -88,6 +92,10 @@ public class DevSettings : MonoBehaviour
         if (tod == null)      tod      = TimeOfDay.Instance;
         if (sun == null)      sun      = FindFirstObjectByType<DayNightLight>();
         if (cloud == null)    cloud    = FindFirstObjectByType<CloudShadows>();
+        if (rain == null)     rain     = FindFirstObjectByType<RainOverlay>();
+        if (wet == null)      wet      = FindFirstObjectByType<WetGround>();
+        if (refl == null)     refl     = FindFirstObjectByType<PlanarReflection>();
+        if (rainAudio == null) rainAudio = FindFirstObjectByType<RainAudio>();
         if (dye == null)      dye      = FindFirstObjectByType<CharacterDye>();
     }
 
@@ -354,6 +362,39 @@ public class DevSettings : MonoBehaviour
         F("Cloud patch size", 10f, 150f, () => cloud ? cloud.patchSize : 0f,   v => { if (cloud) cloud.patchSize = v; });
         F("Wind speed",       0f, 3f,    () => cloud ? cloud.windSpeed : 0f,   v => { if (cloud) cloud.windSpeed = v; });
         F("Wind direction",   0f, 360f,  () => cloud ? cloud.windDirDeg : 0f,  v => { if (cloud) cloud.windDirDeg = v; });
+        // Rain (spike) — screen-space overlay; created on demand the first time you raise it, so it works even
+        // on a Systems scene baked before RainOverlay joined the rig. Zero GPU cost while intensity is 0.
+        B("Rain",             () => rain && rain.enabled && rain.intensity > 0f,
+                              v => { rain = RainOverlay.Ensure(); rain.enabled = true; rain.intensity = v ? Mathf.Max(0.5f, rain.intensity) : 0f; });
+        F("Rain intensity",   0f, 1f,    () => rain ? rain.intensity : 0f,     v => { if (!rain) rain = RainOverlay.Ensure(); rain.enabled = true; rain.intensity = v; });
+        F("Rain fall speed",  0.2f, 20f, () => rain ? rain.fallSpeed : 0f,     v => { if (rain) rain.fallSpeed = v; });
+        F("Rain slant",      -1f, 1f,    () => rain ? rain.slant : 0f,         v => { if (rain) rain.slant = v; });
+        F("Rain density",     20f, 160f, () => rain ? rain.density : 0f,       v => { if (rain) rain.density = v; });
+        // Rain audio — Forest Day/Night Storm crossfaded by time-of-day, scaled by rain. Follows rain, not tier.
+        B("Rain audio",       () => rainAudio && rainAudio.enabled && rainAudio.maxVolume > 0f,
+                              v => { rainAudio = RainAudio.Ensure(); rainAudio.enabled = true;
+                                     rainAudio.maxVolume = v ? Mathf.Max(0.5f, rainAudio.maxVolume) : 0f; });
+        F("Rain volume",      0f, 1f,    () => rainAudio ? rainAudio.maxVolume : 0f,
+                              v => { if (!rainAudio) rainAudio = RainAudio.Ensure(); rainAudio.maxVolume = v; });
+        // Heavy weather (High tier only) — wet ground + splashes; both follow the live rain amount. Toggling on
+        // raises the quality tier and spawns the effects; they cost nothing on Low/Medium so min spec is intact.
+        B("Heavy weather",    () => WeatherFX.Heavy,
+                              v => { WeatherFX.Quality = v ? WeatherFX.Tier.High : WeatherFX.Tier.Medium;
+                                     if (v) wet = WetGround.Ensure(); });
+        F("Wet darken",       0f, 1f,    () => wet ? wet.darken : 0f,          v => { if (wet) wet.darken = v; });
+        F("Wet puddles",      0f, 1f,    () => wet ? wet.puddleAmount : 0f,    v => { if (wet) wet.puddleAmount = v; });
+        F("Wet puddle size",  0.03f, 0.4f, () => wet ? wet.puddleScale : 0f,   v => { if (wet) wet.puddleScale = v; });
+        F("Wet reflection",   0f, 4f,    () => wet ? wet.specStrength : 0f,    v => { if (wet) wet.specStrength = v; });
+        F("Wet ripple speed", 0f, 4f,    () => wet ? wet.rippleSpeed : 0f,     v => { if (wet) wet.rippleSpeed = v; });
+        F("Ambient ripples",  0f, 4f,    () => wet ? wet.ripAmbient : 0f,      v => { if (wet) wet.ripAmbient = v; });
+        F("Step ripples",     0f, 8f,    () => wet ? wet.stepBright : 0f,      v => { if (wet) wet.stepBright = v; });
+        // Planar reflection (Step 1: 3D world only) — mirror camera into puddles. Needs High tier + rain.
+        B("Water reflection", () => refl && refl.enabled && wet && wet.reflStrength > 0f,
+                              v => { refl = PlanarReflection.Ensure(); refl.enabled = true;
+                                     if (!wet) wet = WetGround.Ensure(); wet.reflStrength = v ? Mathf.Max(0.9f, wet.reflStrength) : 0f; });
+        F("Reflection amount",0f, 2f,    () => wet ? wet.reflStrength : 0f,    v => { if (wet) wet.reflStrength = v; });
+        B("Reflection flip Y",() => wet && wet.reflFlipY,                      v => { if (wet) wet.reflFlipY = v; });
+        F("Water level",     -5f, 5f,    () => refl ? refl.waterHeight : 0f,   v => { if (refl) refl.waterHeight = v; });
 
         // ---- Camera — CameraFollow3D ---------------------------------------
         Cat("Camera");

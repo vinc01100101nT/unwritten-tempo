@@ -42,7 +42,7 @@ public static class FantasyTownBuilder
     // If houses end up facing AWAY from the street, flip this to false and re-run.
     const bool  HouseFrontIsPlusZ = true;
 
-    [MenuItem("Tools/unwritten/Region/Build Fantasy Town (houses + grounds)", priority = 19)]
+    [MenuItem("Tools/unwritten/World/Build Fantasy Town (houses + grounds)", priority = 221)]
     static void Build()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)

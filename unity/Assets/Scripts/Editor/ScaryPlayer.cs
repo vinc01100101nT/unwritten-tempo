@@ -31,7 +31,7 @@ public static class ScaryPlayer
     const float DefaultFeetBelowCenter = 0.42f;
 
     // ---- menu ----------------------------------------------------------------
-    [MenuItem("Tools/unwritten/Player/Use Sscary Player", priority = 41)]
+    [MenuItem("Tools/unwritten/Player/Use Sscary Player", priority = 600)]
     static void ApplyToOpenScene()
     {
         var player = Object.FindFirstObjectByType<Player3DController>();

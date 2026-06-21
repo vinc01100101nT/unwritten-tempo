@@ -18,7 +18,7 @@ public class PropPalette : EditorWindow
 {
     const string PropsDir = "Assets/Prefabs/Props";
 
-    [MenuItem("Tools/unwritten/Prop Palette", priority = 1)]
+    [MenuItem("Tools/unwritten/Authoring/Prop Palette", priority = 400)]
     static void Open() => GetWindow<PropPalette>("Prop Palette").minSize = new Vector2(260, 360);
 
     // settings

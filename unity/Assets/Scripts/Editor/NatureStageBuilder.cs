@@ -21,7 +21,7 @@ public static class NatureStageBuilder
 
     /// <summary>Drop the looping forest ambience into the CURRENTLY OPEN map without rebuilding it —
     /// so you don't lose scattered props / mobs. Idempotent (upgrades an existing "Ambient" in place).</summary>
-    [MenuItem("Tools/unwritten/Add Forest Ambience (day/night)", priority = 6)]
+    [MenuItem("Tools/unwritten/World/Add Forest Ambience (day/night)", priority = 201)]
     static void AddAmbienceMenu()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -65,7 +65,7 @@ public static class NatureStageBuilder
         return amb;
     }
 
-    [MenuItem("Tools/unwritten/New Nature Stage (low-poly ground)", priority = 5)]
+    [MenuItem("Tools/unwritten/World/New Nature Stage (low-poly ground)", priority = 200)]
     static void Build()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)

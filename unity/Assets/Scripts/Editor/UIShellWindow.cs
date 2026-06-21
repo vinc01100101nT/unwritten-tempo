@@ -19,7 +19,7 @@ public class UIShellWindow : EditorWindow
     int themeIndex;
     int scaleIndex = 1;
 
-    [MenuItem("Tools/unwritten/UI Shell Theme…")]
+    [MenuItem("Tools/unwritten/Scene Setup/UI Shell Theme…", priority = 111)]
     static void Open()
     {
         var w = GetWindow<UIShellWindow>(true, "unwritten — UI Shell");

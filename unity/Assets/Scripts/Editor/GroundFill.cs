@@ -24,7 +24,7 @@ public static class GroundFill
     const int   MaxTiles   = 1600;   // safety budget on tile count
     const int   Seed       = 73;
 
-    [MenuItem("Tools/unwritten/Authoring/Fill Ground Under Map", priority = 30)]
+    [MenuItem("Tools/unwritten/World/Fill Ground Under Map", priority = 212)]
     static void Fill()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)

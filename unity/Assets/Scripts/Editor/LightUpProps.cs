@@ -32,7 +32,7 @@ public static class LightUpProps
 
     static Color Warm(float r, float g, float b) => new Color(r, g, b);
 
-    [MenuItem("Tools/unwritten/Light Up Props (night)", priority = 30)]
+    [MenuItem("Tools/unwritten/Prefabs & Art/Light Up Props (night)", priority = 511)]
     static void Run()
     {
         int lit = 0, skipped = 0, missing = 0;

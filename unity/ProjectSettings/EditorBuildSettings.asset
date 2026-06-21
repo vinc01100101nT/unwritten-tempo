@@ -11,9 +11,9 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Field.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Town.unity
-    guid: deb784b6c1e50c7448dab978428a5c58
+    guid: 2aa937dff3308b847906d3a32c3047c2
   - enabled: 0
     path: Assets/Scenes/NewTown.unity
     guid: 295357b162dc789429fc52f2769d019f

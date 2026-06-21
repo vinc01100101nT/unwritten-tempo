@@ -14,7 +14,7 @@ public static class TrainingDummyTool
     const string Name = "Training_Dummy";
     const int    DummyHP = 10_000_000;
 
-    [MenuItem("Tools/unwritten/Spawn Training Dummy", priority = 10)]
+    [MenuItem("Tools/unwritten/Mobs & NPCs/Spawn Training Dummy", priority = 310)]
     static void Spawn()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -82,7 +82,7 @@ public static class TrainingDummyTool
             "Re-run to respawn it, or Tools ▸ unwritten ▸ Clear Training Dummy to remove it.", "OK");
     }
 
-    [MenuItem("Tools/unwritten/Clear Training Dummy", priority = 11)]
+    [MenuItem("Tools/unwritten/Mobs & NPCs/Clear Training Dummy", priority = 311)]
     static void Clear()
     {
         var prev = GameObject.Find(Name);

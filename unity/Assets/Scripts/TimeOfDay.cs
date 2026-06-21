@@ -4,7 +4,7 @@ using UnityEngine;
 /// The game's single accelerated day/night clock. Lives on the persistent <c>Systems</c> layer so the
 /// light (<see cref="DayNightLight"/>) and ambience (<see cref="DayNightAmbience"/>) share ONE source of
 /// time instead of each running its own. The cycle is split evenly: <see cref="halfCycleSeconds"/> of day
-/// (incl. sunrise) then the same of night (incl. sunset) — default 3600s each = a 1-hour day + 1-hour night.
+/// (incl. sunrise) then the same of night (incl. sunset) — default 60s each = a 1-min day + 1-min night.
 ///
 /// It's also the in-game <b>test tuner</b>: in Play mode, tick <see cref="paused"/> and drag
 /// <see cref="time01"/> to scrub, bump <see cref="testSpeed"/> to fast-forward, or right-click the
@@ -17,8 +17,8 @@ public class TimeOfDay : MonoBehaviour
     public static TimeOfDay Instance { get; private set; }
 
     [Header("Cycle (accelerated)")]
-    [Tooltip("Real seconds for ONE HALF of the cycle. 300 = a 5-min day + a 5-min night (full cycle = 2×).")]
-    public float halfCycleSeconds = 300f;
+    [Tooltip("Real seconds for ONE HALF of the cycle. 60 = a 1-min day + a 1-min night (full cycle = 2×).")]
+    public float halfCycleSeconds = 60f;
 
     [Header("Live test tuner — works in Play mode")]
     [Tooltip("Pause the clock so you can scrub the slider below by hand.")]

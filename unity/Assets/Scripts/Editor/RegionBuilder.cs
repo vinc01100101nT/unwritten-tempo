@@ -24,7 +24,7 @@ public static class RegionBuilder
     const string TownScene  = "Town";
 
     // ── 1) TOWN HUB ────────────────────────────────────────────────────────────────────────────────
-    [MenuItem("Tools/unwritten/Region/Build Town Hub", priority = 20)]
+    [MenuItem("Tools/unwritten/World/Build Town Hub", priority = 220)]
     static void BuildTownHub()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -87,7 +87,7 @@ public static class RegionBuilder
     }
 
     // ── 2) LINK FIELD → TOWN ───────────────────────────────────────────────────────────────────────
-    [MenuItem("Tools/unwritten/Region/Link Field → Town (open field map)", priority = 21)]
+    [MenuItem("Tools/unwritten/World/Link Field → Town (open field map)", priority = 222)]
     static void LinkFieldToTown()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -110,7 +110,7 @@ public static class RegionBuilder
     }
 
     // ── 3) FIELD BOSS ──────────────────────────────────────────────────────────────────────────────
-    [MenuItem("Tools/unwritten/Region/Spawn Field Boss (open field map)", priority = 22)]
+    [MenuItem("Tools/unwritten/Mobs & NPCs/Spawn Field Boss (open field map)", priority = 320)]
     static void SpawnFieldBoss()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -175,7 +175,7 @@ public static class RegionBuilder
     }
 
     // ── HAND-PLACE HELPER: snap dragged-in props onto the terrain ────────────────────────────────────
-    [MenuItem("Tools/unwritten/Region/Drop Selected to Ground", priority = 23)]
+    [MenuItem("Tools/unwritten/Authoring/Drop Selected to Ground", priority = 411)]
     static void DropSelectedToGround()
     {
         var sel = Selection.gameObjects;

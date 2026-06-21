@@ -19,7 +19,7 @@ public static class NatureMobs
     const float  MaxSlope    = 28f;      // don't spawn on cliffs (degrees)
     const float  Inset       = 2f;       // pull in from the terrain edge
 
-    [MenuItem("Tools/unwritten/Populate Mobs (Nature)", priority = 8)]
+    [MenuItem("Tools/unwritten/Mobs & NPCs/Populate Mobs (Nature)", priority = 300)]
     static void Populate()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -83,7 +83,7 @@ public static class NatureMobs
             "Re-run for a new layout, tweak archetypes/weights in MobRoster.cs, or MobDensity in NatureMobs.cs.", "OK");
     }
 
-    [MenuItem("Tools/unwritten/Clear Mobs (Nature)", priority = 9)]
+    [MenuItem("Tools/unwritten/Mobs & NPCs/Clear Mobs (Nature)", priority = 301)]
     static void Clear()
     {
         var prev = GameObject.Find(Container);

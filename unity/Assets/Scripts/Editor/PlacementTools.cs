@@ -12,21 +12,21 @@ using UnityEngine.SceneManagement;
 public static class PlacementTools
 {
     // Ctrl+Shift+G — re-seat selection on the ground after nudging it around.
-    [MenuItem("Tools/unwritten/Authoring/Drop to Ground %#g", priority = 40)]
+    [MenuItem("Tools/unwritten/Authoring/Drop to Ground %#g", priority = 410)]
     static void DropToGround() => Apply("Drop to Ground", go => PropPlacement.DropToGround(go, PropPlacement.GroundMask()));
 
-    [MenuItem("Tools/unwritten/Authoring/Scale ×0.3 (pack scale)", priority = 41)]
+    [MenuItem("Tools/unwritten/Authoring/Scale ×0.3 (pack scale)", priority = 412)]
     static void Scale03() => Apply("Scale ×0.3", go => go.transform.localScale = Vector3.one * 0.3f);
 
-    [MenuItem("Tools/unwritten/Authoring/Snap to Grid (0.5)", priority = 42)]
+    [MenuItem("Tools/unwritten/Authoring/Snap to Grid (0.5)", priority = 413)]
     static void SnapGrid() => Apply("Snap to Grid", go => go.transform.position = PropPlacement.SnapToGrid(go.transform.position, 0.5f));
 
     // Ctrl+Shift+R — rotate selection 90° about Y (face it a different way).
-    [MenuItem("Tools/unwritten/Authoring/Rotate 90° %#r", priority = 43)]
+    [MenuItem("Tools/unwritten/Authoring/Rotate 90° %#r", priority = 414)]
     static void Rotate90() => Apply("Rotate 90°", go => go.transform.Rotate(0f, 90f, 0f, Space.World));
 
     // Strip colliders off the SELECTED props (any prop) so you can walk through them.
-    [MenuItem("Tools/unwritten/Authoring/Remove Colliders (selected)", priority = 44)]
+    [MenuItem("Tools/unwritten/Authoring/Remove Colliders (selected)", priority = 415)]
     static void RemoveCollidersSelected()
     {
         var sel = Selection.gameObjects;
@@ -42,7 +42,7 @@ public static class PlacementTools
     }
 
     // Scene-wide: strip colliders from ALL walk-through decor (grass, flowers, ferns, mushrooms…) at once.
-    [MenuItem("Tools/unwritten/Authoring/Strip Decor Colliders (grass, flowers…)", priority = 45)]
+    [MenuItem("Tools/unwritten/Authoring/Strip Decor Colliders (grass, flowers…)", priority = 416)]
     static void StripDecorColliders()
     {
         var scene = SceneManager.GetActiveScene();

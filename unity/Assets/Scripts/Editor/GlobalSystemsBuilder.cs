@@ -25,7 +25,7 @@ public static class GlobalSystemsBuilder
     const string PlayerPrefabPath  = "Assets/Resources/Player.prefab";
     const string SystemsPrefabPath = "Assets/Resources/GameSystems.prefab";
 
-    [MenuItem("Tools/unwritten/Setup Global Systems", priority = 2)]
+    [MenuItem("Tools/unwritten/Scene Setup/Setup Global Systems", priority = 100)]
     static void SetupGlobalSystems()
     {
         EnsureFolder("Assets/Resources");

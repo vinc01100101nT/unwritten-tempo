@@ -24,7 +24,7 @@ public static class SystemsSceneBuilder
     const string SystemsPath = ScenesDir + "/Systems.unity";
     const string FirstMap = "Town";   // boot into the region's safe hub (Region ▸ Build Town Hub)
 
-    [MenuItem("Tools/unwritten/Setup Systems Scene", priority = 3)]
+    [MenuItem("Tools/unwritten/Scene Setup/Setup Systems Scene", priority = 101)]
     static void Build()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -49,6 +49,13 @@ public static class SystemsSceneBuilder
         var sun = Build25DSpike.BuildLight();
         sun.gameObject.AddComponent<DayNightLight>();   // sun color/intensity/angle + ambient by time-of-day
         sun.gameObject.AddComponent<CloudShadows>();    // drifting full-screen cloud shadows (DayNightLight also self-adds)
+        sun.gameObject.AddComponent<RainOverlay>();     // screen-space rain overlay (intensity 0 = dry/zero-cost until raised)
+        sun.gameObject.AddComponent<WetGround>();       // HEAVY: wet/puddle screen-space pass (High tier only, follows rain)
+        sun.gameObject.AddComponent<PlanarReflection>();// HEAVY: mirror-camera reflection of the 3D world into puddles
+        var rainAudio = sun.gameObject.AddComponent<RainAudio>();   // day/night storm loop, crossfaded + scaled by rain
+        const string bgs = "Assets/Audio/TomMusic/WAV Files/BGS Loops";
+        rainAudio.dayStorm   = AssetDatabase.LoadAssetAtPath<AudioClip>(bgs + "/Forest Day/Forest Day Storm.wav");
+        rainAudio.nightStorm = AssetDatabase.LoadAssetAtPath<AudioClip>(bgs + "/Forest Night/Forest Night Storm.wav");
         var player = Build25DSpike.BuildPlayer(Vector3.zero);
         if (player != null) player.AddComponent<PersistentPlayer3D>();
         Build25DSpike.BuildCamera(rendererIndex, player);
@@ -72,7 +79,7 @@ public static class SystemsSceneBuilder
         Build25DSpike.BuildCursor(gameSystems);         // hardware GameCursor3D (pointer / sword / crosshair)
         gameSystems.AddComponent<DeathScreen>();        // Phase F: "YOU DIED" overlay + respawn (builds its own canvas)
         gameSystems.AddComponent<Sfx>();                // pooled one-shot SFX player (attack/hit/block/footsteps)
-        gameSystems.AddComponent<TimeOfDay>();          // accelerated day/night clock (1h day + 1h night) + live tuner
+        gameSystems.AddComponent<TimeOfDay>();          // accelerated day/night clock (1-min day + 1-min night) + live tuner
         gameSystems.AddComponent<MobHoverPanel>();      // top-right hover tooltip: HP bar + name + element
 
         var root = new GameObject("GameRoot").AddComponent<GameRoot>();   // loads the first map under Systems

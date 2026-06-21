@@ -18,7 +18,7 @@ public static class KenneyPrefabBaker
     // Just Create Studio "Stylized Low Poly Nature": loose FBX sharing ONE texture atlas (same model as a
     // Kenney kit). FBX live at the folder root (no "FBX format/Textures" sub-tree), so we point the baker
     // straight at the shared texture file. Add a sibling line here for each new pack from this artist.
-    [MenuItem("Tools/unwritten/Build Prefabs/Low Poly Nature", priority = 23)]
+    [MenuItem("Tools/unwritten/Prefabs & Art/Build Low Poly Nature", priority = 500)]
     static void BuildLowPolyNature() =>
         BakeKit("Low Poly Nature", "Assets/Art/JustCreate3d/LowPolySimpleNature_FBX", "LowPolyNature",
                 "Assets/Art/JustCreate3d/LowPolySimpleNature_FBX/SimpleNature_Texture_01.png");
@@ -27,7 +27,7 @@ public static class KenneyPrefabBaker
     /// pack's <c>FBX format</c> folder placed under Assets/Art/…) and turn every FBX in it into drop-ready
     /// house/prop prefabs. Auto-detects the colormap atlas (Textures/colormap.png, else the first .png in
     /// the folder or its Textures subfolder). Output → Assets/Prefabs/&lt;folder name&gt;.</summary>
-    [MenuItem("Tools/unwritten/Build Prefabs/From Folder…", priority = 24)]
+    [MenuItem("Tools/unwritten/Prefabs & Art/Build From Folder…", priority = 501)]
     static void BuildFromFolder()
     {
         string abs = EditorUtility.OpenFolderPanel("Pick the kit's FBX folder (must be inside Assets)", Application.dataPath, "");

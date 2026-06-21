@@ -144,6 +144,7 @@ public class CloudShadows : MonoBehaviour
     {
         var go = new GameObject("CloudShadowQuad");
         go.hideFlags = HideFlags.DontSave;
+        go.layer = LayerMask.NameToLayer("TransparentFX");   // excluded from the planar-reflection camera
         quad = go.transform;
 
         mesh = new Mesh { name = "CloudShadowFullscreen" };

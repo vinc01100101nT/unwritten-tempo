@@ -36,7 +36,7 @@ public static class UIShellBuilder
     static Font uiFont;
     static Sprite panelSprite, cellSprite, barBgSprite;
 
-    [MenuItem("Tools/unwritten/Build UI Shell")]
+    [MenuItem("Tools/unwritten/Scene Setup/Build UI Shell", priority = 110)]
     static void BuildUIShellMenu()
     {
         Build(EditorPrefs.GetString(PrefTheme, DefaultTheme),

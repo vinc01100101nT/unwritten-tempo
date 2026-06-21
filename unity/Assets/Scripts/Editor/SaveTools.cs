@@ -8,7 +8,7 @@ using UnityEngine;
 /// </summary>
 public static class SaveTools
 {
-    [MenuItem("Tools/unwritten/Save/Delete Save File (new game)", priority = 200)]
+    [MenuItem("Tools/unwritten/Save/Delete Save File (new game)", priority = 900)]
     static void DeleteSave()
     {
         if (!SaveSystem.Exists())
@@ -24,10 +24,10 @@ public static class SaveTools
         }
     }
 
-    [MenuItem("Tools/unwritten/Save/Open Save Folder", priority = 201)]
+    [MenuItem("Tools/unwritten/Save/Open Save Folder", priority = 901)]
     static void OpenFolder() => EditorUtility.RevealInFinder(SaveSystem.Path);
 
-    [MenuItem("Tools/unwritten/Save/Print Save Path", priority = 202)]
+    [MenuItem("Tools/unwritten/Save/Print Save Path", priority = 902)]
     static void PrintPath()
         => Debug.Log($"[unwritten] Save path: {SaveSystem.Path}  (exists: {SaveSystem.Exists()})");
 }

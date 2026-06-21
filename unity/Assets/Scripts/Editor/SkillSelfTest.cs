@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 public static class SkillSelfTest
 {
-    [MenuItem("Tools/unwritten/Skills/Print Ring + Soft-Cap Table")]
+    [MenuItem("Tools/unwritten/Debug/Print Skill Ring + Soft-Cap Table", priority = 800)]
     static void PrintRing()
     {
         var sb = new StringBuilder("[unwritten] Trio-Ring layout (clockwise):\n");
@@ -25,7 +25,7 @@ public static class SkillSelfTest
         Debug.Log(sb.ToString());
     }
 
-    [MenuItem("Tools/unwritten/Skills/Simulate Draft Walk (20 levels)")]
+    [MenuItem("Tools/unwritten/Debug/Simulate Skill Draft Walk (20 levels)", priority = 801)]
     static void SimulateWalk()
     {
         var p = new PassiveRanks();

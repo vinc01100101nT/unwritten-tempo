@@ -40,3 +40,20 @@ merging — regressions follow code changes, not the calendar.
 - User is new to Unity / strong in JS-TS — explain C#/Unity by analogy when surfacing changes.
 - Prefer one-click editor tools (`Tools ▸ unwritten ▸ …`) over manual editor steps.
 - Keep static/never-changing work baked at author/generate time, not in Play.
+
+## Throwaway "quick fix" editor tools — tag them so they're purgeable
+
+When you add an editor tool that exists only to patch a one-off problem (a temporary repair, a migration
+helper, a spike) — i.e. something we'll want to delete once it's served its purpose — **tag it** so a future
+"clean up the quick fixes" pass is a grep, not a guess:
+
+1. Put a single-line marker on its own line directly above the class:
+   `// QUICKFIX <yyyy-mm-dd> — <why it exists>; delete after <the condition that makes it obsolete>.`
+2. Park its menu under the **`Tools/unwritten/Quick Fixes/…`** submenu (not the main menu), e.g.
+   `[MenuItem("Tools/unwritten/Quick Fixes/<name>")]`.
+
+To purge later: `grep -rl "QUICKFIX" Assets/Scripts/Editor/`, delete each hit **plus its `.meta`**, then
+re-check references first (a "spike" can quietly become load-bearing — `Build25DSpike` is the cautionary
+tale: self-labelled "throwaway", now the shared rig-builder used by ~15 files). Do **not** tag recurring,
+idempotent maintenance tools that you re-run on every re-import (e.g. `Fix Pxltgr Materials`) — those are
+keepers, not quick fixes.

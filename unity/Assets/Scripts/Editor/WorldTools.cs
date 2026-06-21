@@ -15,7 +15,7 @@ public static class WorldTools
     const string DialoguePrefabPath = "Assets/Resources/DialogueCanvas.prefab";
     const string PromptPrefabPath   = "Assets/Resources/InteractPromptCanvas.prefab";
 
-    [MenuItem("Tools/unwritten/Build Dialogue UI")]
+    [MenuItem("Tools/unwritten/World UI/Build Dialogue UI", priority = 700)]
     static void BuildDialogueUI()
     {
         if (System.IO.File.Exists(DialoguePrefabPath) &&
@@ -68,7 +68,7 @@ public static class WorldTools
                   "Run Setup Systems Scene to pull it into the persistent layer (it no longer lives per-map).");
     }
 
-    [MenuItem("Tools/unwritten/Build Interact Prompt")]
+    [MenuItem("Tools/unwritten/World UI/Build Interact Prompt", priority = 701)]
     static void BuildInteractPrompt()
     {
         if (System.IO.File.Exists(PromptPrefabPath) &&
@@ -131,7 +131,7 @@ public static class WorldTools
         EditorGUIUtility.PingObject(asset);
     }
 
-    [MenuItem("Tools/unwritten/Create NPC from selected SpriteSheet")]
+    [MenuItem("Tools/unwritten/Mobs & NPCs/Create NPC from selected SpriteSheet", priority = 330)]
     static void CreateNpc()
     {
         Sprite sprite = null;
@@ -170,7 +170,7 @@ public static class WorldTools
             : "[unwritten] Created NPC (no sprite — select a sliced character sheet first, or assign one in its SpriteRenderer).");
     }
 
-    [MenuItem("Tools/unwritten/Create Portal")]
+    [MenuItem("Tools/unwritten/World/Create Portal", priority = 230)]
     static void CreatePortal()
     {
         var go = new GameObject("Portal");
@@ -187,7 +187,7 @@ public static class WorldTools
                   "and make sure both scenes are in File > Build Settings.");
     }
 
-    [MenuItem("Tools/unwritten/Create Spawn Point")]
+    [MenuItem("Tools/unwritten/World/Create Spawn Point", priority = 231)]
     static void CreateSpawnPoint()
     {
         var go = new GameObject("SpawnPoint");

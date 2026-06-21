@@ -25,7 +25,7 @@ public static class PxltgrMaterialFixer
         "Assets/Art/Pxltgr/fantasy-assets/textures",
     };
 
-    [MenuItem("Tools/unwritten/Fix Pxltgr Materials (URP + leaf alpha)", priority = 27)]
+    [MenuItem("Tools/unwritten/Prefabs & Art/Fix Pxltgr Materials (URP + leaf alpha)", priority = 510)]
     static void Fix()
     {
         var lit = Shader.Find("Universal Render Pipeline/Lit");

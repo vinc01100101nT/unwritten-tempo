@@ -59,7 +59,7 @@ public static class NinjaGreenPlayer
     public const int OutDeadRow = 4, OutDeadCol = 0;  // 2 death frames at (4,0) collapse and (4,1) lying
 
     // ---- menu ----------------------------------------------------------------
-    [MenuItem("Tools/unwritten/Player/Use NinjaGreen Player", priority = 40)]
+    [MenuItem("Tools/unwritten/Player/Use NinjaGreen Player", priority = 601)]
     static void ApplyToOpenScene()
     {
         var baked = BakeIfNeeded(DefaultWeapon);

@@ -17,7 +17,13 @@ using UnityEngine.UI;
 /// It adds a 3D (Universal) Renderer ALONGSIDE the existing 2D one and overrides it only on the
 /// spike camera, so NewTown / Systems (2D renderer, index 0) are untouched. Safe to re-run.
 ///
-/// After building: open Spike2D5.unity and press Play (WASD to move). Throwaway / branch-only.
+/// After building: open Spike2D5.unity and press Play (WASD to move).
+///
+/// NOT throwaway despite its name: the spike's <c>[MenuItem]</c> was removed at the 2.5D pivot, but this
+/// class is now the shared rig-builder library — its public helpers (BuildPlayer/Camera/Light/Character/
+/// HUD/Cursor/Monster, BillboardScale, FootOffsetY, EnsureUniversalRenderer, MonsterSheet) are called by
+/// SystemsSceneBuilder, RegionBuilder, FantasyTownBuilder, NatureStageBuilder, NatureMobs, TrainingDummyTool,
+/// ScaryPlayer and NinjaGreenPlayer. Keep it; deleting it breaks the whole editor build pipeline.
 /// </summary>
 public static class Build25DSpike
 {

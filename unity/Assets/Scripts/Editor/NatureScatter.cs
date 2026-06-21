@@ -38,7 +38,7 @@ public static class NatureScatter
     const float SpawnClearR   = 3.0f;   // keep solids this far from the terrain centre (player spawn)
     const float Inset         = 1.5f;   // pull scatter in from the ground edge
 
-    [MenuItem("Tools/unwritten/Scatter Nature (fill map)", priority = 6)]
+    [MenuItem("Tools/unwritten/World/Scatter Nature (fill map)", priority = 210)]
     static void Scatter()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -94,7 +94,7 @@ public static class NatureScatter
             "hand-move/delete individual props (they keep their prefab links).", "OK");
     }
 
-    [MenuItem("Tools/unwritten/Clear Nature Scatter", priority = 7)]
+    [MenuItem("Tools/unwritten/World/Clear Nature Scatter", priority = 211)]
     static void Clear()
     {
         var prev = GameObject.Find(Container);
