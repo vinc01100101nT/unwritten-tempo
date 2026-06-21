@@ -104,7 +104,7 @@ Shader "Unwritten/WetGround"
                 float2 ctr  = float2(0.30 + 0.40 * hash21(cell + float2(seed,       seed + 2.0)),
                                      0.30 + 0.40 * hash21(cell + float2(seed + 4.0, seed)));  // random centre in cell
                 float  age  = frac(_Time.y * _RipSpeed * 0.30 + hash21(cell + float2(seed + 1.3, seed + 6.0)));
-                float  maxR = lerp(0.26, 0.55, hash21(cell + float2(seed + 5.5, seed + 3.0))); // random ring size
+                float  maxR = lerp(0.173, 0.367, hash21(cell + float2(seed + 5.5, seed + 3.0))); // ring size — 3× smaller (polish 2026-06-21)
                 float  d    = distance(f, ctr);
                 float  ring = smoothstep(0.03, 0.0, abs(d - age * maxR));   // thin outline (lower = thinner)
                 return ring * (1.0 - age) * ex;
@@ -149,18 +149,21 @@ Shader "Unwritten/WetGround"
 
                 // Ambient: two overlapping ripple fields at different scales/offsets, each with random centre,
                 // size, phase and gaps — so the rings vary in size and position instead of reading as a grid.
-                float ambient = rainRipple(wp.xz * _RipScale,               0.0)
-                              + rainRipple(wp.xz * _RipScale * 1.7 + 11.3, 31.0);
+                // Polish 2026-06-21: grid frequency ×2 per axis = ×4 as many ripples (denser stipple); combined
+                // with the ×2/3 maxR above this also lands each ring ~3× smaller in world units than before.
+                float ambient = rainRipple(wp.xz * _RipScale * 2.0,        0.0)
+                              + rainRipple(wp.xz * _RipScale * 3.4 + 11.3, 31.0);
                 ripples += ambient * _RipAmbient;
 
                 // Footsteps: an expanding ring at each recent step position (dead slots have age >= 1).
                 for (int i = 0; i < 16; i++)
                 {
-                    float3 s   = _Steps[i].xyz;
+                    float4 s   = _Steps[i];
                     float  age = s.z;
+                    float  scl = max(s.w, 0.0001);    // per-ripple scale: 1 = footstep, larger = landing splash
                     float  d   = distance(wp.xz, s.xy);
-                    float  ring = smoothstep(0.03, 0.0, abs(d - age * _StepRadius)) * saturate(1.0 - age);
-                    ripples += ring * _StepBright * step(age, 1.0);
+                    float  ring = smoothstep(0.03 * scl, 0.0, abs(d - age * _StepRadius * scl)) * saturate(1.0 - age);
+                    ripples += ring * _StepBright * scl * step(age, 1.0);
                 }
 
                 spec += _ReflectColor.rgb * ripples * wet;

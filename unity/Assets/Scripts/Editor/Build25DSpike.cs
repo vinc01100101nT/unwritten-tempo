@@ -668,6 +668,9 @@ public static class Build25DSpike
         ctrl.deadSheet = LoadDeadSheet(sheetPath);       // SeparateAnim/Dead.png — defeated pose for Phase F death
         ctrl.footstepSfx = SfxAssets.Set(0.55f, "Footsteps/Dirt",
             "Dirt Walk 1", "Dirt Walk 2", "Dirt Walk 3", "Dirt Walk 4", "Dirt Walk 5");
+        ctrl.waterFootstepSfx = SfxAssets.Set(0.55f, "Footsteps/Water",   // splash when walking through rain puddles
+            "Water Walk 1", "Water Walk 2", "Water Walk 3", "Water Walk 4", "Water Walk 5");
+        ctrl.waterJumpSfx = SfxAssets.Set(0.65f, "Footsteps/Water", "Water Jump");   // splash when a hop lands in a puddle
 
         // Make the player the Sscary Male avatar (48×64 idle/walk/jump/dash/death + Shadow/Dust). Full
         // replacement of the older looks wired above; falls back to the animated NinjaGreen avatar (then the

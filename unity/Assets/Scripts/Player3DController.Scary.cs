@@ -75,6 +75,10 @@ public partial class Player3DController
 
     // Ability state.
     bool jumping; float jumpStart; Vector3 jumpDir;
+
+    /// <summary>True while a hop arc is in progress (takeoff → land). Read by FX like wet-ground footstep
+    /// ripples so they pause mid-air and splash on landing.</summary>
+    public bool IsAirborne => jumping;
     float jumpBaseY;       // ground Y captured at takeoff — the arc returns here, then gravity falls to land
     bool eDashing; float eDashStart; Vector3 eDashDir; float eDashReadyAt;
 
@@ -321,10 +325,19 @@ public partial class Player3DController
             // so the walk/idle pose can't play mid-fall. Horizontal steering stays live.
             delta.y = -gravity * Time.deltaTime;
             controller.Move(delta);
-            if (controller.isGrounded) jumping = false;   // landed -> hand control back to normal movement
+            if (controller.isGrounded) { jumping = false; OnJumpLand(); }   // landed -> hand control back to normal movement
         }
 
         if (jumpDir.sqrMagnitude > 1e-4f) worldFacing = jumpDir;   // re-face toward live input; no input keeps facing
+    }
+
+    // On touchdown: if we landed in a visible rain puddle, splash. Same puddle test as the walking water step,
+    // so the landing sound only fires where you'd see (and hear) water — dry-ground landings stay silent.
+    void OnJumpLand()
+    {
+        if (waterJumpSfx != null && !waterJumpSfx.Empty
+            && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(transform.position))
+            Sfx.Play(waterJumpSfx);
     }
 
     void StepEDash()

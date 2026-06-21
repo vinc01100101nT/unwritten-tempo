@@ -74,10 +74,12 @@ public class PersistentPlayer3D : MonoBehaviour
             pos.y = hit.point.y - capsuleBottom;
         }
 
-        // CharacterController fights direct transform writes — disable it for the teleport frame.
+        // CharacterController fights direct transform writes — disable it for the teleport frame. try/finally so
+        // it's ALWAYS re-enabled even if the position write triggers something that throws (a disabled controller
+        // left behind would spam "Move called on inactive controller" forever).
         if (cc != null) cc.enabled = false;
-        transform.position = pos;
-        if (cc != null) cc.enabled = true;
+        try { transform.position = pos; }
+        finally { if (cc != null) cc.enabled = true; }
     }
 
     // SpawnPoint a Portal requested (by id), else one named "Start", else the first, else null.

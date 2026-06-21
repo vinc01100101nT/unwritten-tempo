@@ -110,6 +110,12 @@ public partial class Player3DController : MonoBehaviour
 
     [Header("Footsteps")]
     public SfxSet footstepSfx;
+    [Tooltip("Played instead of the normal step when walking through a rain puddle (WetGround must be active and " +
+             "the feet over a visible puddle). Leave empty to always use the normal footstep.")]
+    public SfxSet waterFootstepSfx;
+    [Tooltip("One-shot splash played when a jump LANDS in a rain puddle (same puddle test as the water step). " +
+             "Leave empty for a silent landing.")]
+    public SfxSet waterJumpSfx;
     [Tooltip("Seconds between footstep sounds while walking.")]
     public float stepInterval = 0.32f;
     float nextStep;
@@ -296,6 +302,11 @@ public partial class Player3DController : MonoBehaviour
         if (cam == null) cam = Camera.main;
         baseScale = buildScale * UnitScale.ForPlayer;   // live: track the global unit-size dial (breathe/idle squash around this)
 
+        // The CharacterController is momentarily disabled during teleports/respawns. Never call Move() while it's
+        // off — otherwise a controller left disabled (bad spawn, duplicate rig) spams "Move called on inactive
+        // controller" every frame. Normal play never hits this (it's re-enabled before the next Update).
+        if (controller == null || !controller.enabled) return;
+
         // Dead: no input, no orders — show the defeated pose and keep the corpse pinned to the
         // ground (gravity) until the death screen respawns us.
         if (Character.Instance != null && Character.Instance.IsDead)
@@ -375,7 +386,14 @@ public partial class Player3DController : MonoBehaviour
     // machine-gun the step SFX every other frame; steps still fire at most once per stepInterval.
     void Footsteps(bool moving)
     {
-        if (moving && Time.time >= nextStep) { Sfx.Play(footstepSfx); nextStep = Time.time + stepInterval; }
+        if (!moving || Time.time < nextStep) return;
+
+        // Splash instead of the dry step when the feet are over a visible rain puddle (the WetGround shader's
+        // own puddle mask answers "are we on water?" — see WetGround.IsPuddleAt). Falls back to the normal set.
+        bool onWater = waterFootstepSfx != null && !waterFootstepSfx.Empty
+                       && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(transform.position);
+        Sfx.Play(onWater ? waterFootstepSfx : footstepSfx);
+        nextStep = Time.time + stepInterval;
     }
 
     // Procedural idle breathing — a soft squash-stretch while standing still; base scale otherwise

@@ -52,6 +52,9 @@ public static class SystemsSceneBuilder
         sun.gameObject.AddComponent<RainOverlay>();     // screen-space rain overlay (intensity 0 = dry/zero-cost until raised)
         sun.gameObject.AddComponent<WetGround>();       // HEAVY: wet/puddle screen-space pass (High tier only, follows rain)
         sun.gameObject.AddComponent<PlanarReflection>();// HEAVY: mirror-camera reflection of the 3D world into puddles
+        sun.gameObject.AddComponent<SnowOverlay>();     // screen-space drifting-flake overlay (intensity 0 = clear/zero-cost)
+        sun.gameObject.AddComponent<SnowGround>();      // snow build-up on roofs/ground (all tiers) + footprints (High only)
+        sun.gameObject.AddComponent<FootstepTracker>(); // single source of footstep positions, shared by wet + snow
         var rainAudio = sun.gameObject.AddComponent<RainAudio>();   // day/night storm loop, crossfaded + scaled by rain
         const string bgs = "Assets/Audio/TomMusic/WAV Files/BGS Loops";
         rainAudio.dayStorm   = AssetDatabase.LoadAssetAtPath<AudioClip>(bgs + "/Forest Day/Forest Day Storm.wav");

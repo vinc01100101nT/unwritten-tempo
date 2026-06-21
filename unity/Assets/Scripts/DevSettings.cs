@@ -71,6 +71,9 @@ public class DevSettings : MonoBehaviour
     WetGround wet;
     PlanarReflection refl;
     RainAudio rainAudio;
+    SnowOverlay snow;
+    SnowGround snowGround;
+    FootstepTracker foot;
     CharacterDye dye;
     MobRespawn[] respawns;
     float nextRespawnRefresh;
@@ -96,6 +99,9 @@ public class DevSettings : MonoBehaviour
         if (wet == null)      wet      = FindFirstObjectByType<WetGround>();
         if (refl == null)     refl     = FindFirstObjectByType<PlanarReflection>();
         if (rainAudio == null) rainAudio = FindFirstObjectByType<RainAudio>();
+        if (snow == null)     snow     = FindFirstObjectByType<SnowOverlay>();
+        if (snowGround == null) snowGround = FindFirstObjectByType<SnowGround>();
+        if (foot == null)     foot     = FindFirstObjectByType<FootstepTracker>();
         if (dye == null)      dye      = FindFirstObjectByType<CharacterDye>();
     }
 
@@ -388,6 +394,12 @@ public class DevSettings : MonoBehaviour
         F("Wet ripple speed", 0f, 4f,    () => wet ? wet.rippleSpeed : 0f,     v => { if (wet) wet.rippleSpeed = v; });
         F("Ambient ripples",  0f, 4f,    () => wet ? wet.ripAmbient : 0f,      v => { if (wet) wet.ripAmbient = v; });
         F("Step ripples",     0f, 8f,    () => wet ? wet.stepBright : 0f,      v => { if (wet) wet.stepBright = v; });
+        F("Step radius",      0.1f, 1f,  () => wet ? wet.stepRadius : 0f,      v => { if (wet) wet.stepRadius = v; });
+        // Gait (shared FootstepTracker) — gap/spacing/offset/jump-splash drive BOTH puddle ripples and snow prints.
+        F("Footstep gap",     0.12f, 1.2f, () => foot ? foot.strideDist : 0f,  v => { foot = FootstepTracker.Ensure(); foot.strideDist = v; });
+        F("Foot spacing",     0f, 0.6f,  () => foot ? foot.footSpacing : 0f,   v => { foot = FootstepTracker.Ensure(); foot.footSpacing = v; });
+        F("Step offset",     -1f, 1f,    () => foot ? foot.stepOffset : 0f,    v => { foot = FootstepTracker.Ensure(); foot.stepOffset = v; });
+        F("Jump splash",      1f, 6f,    () => foot ? foot.landingScale : 0f,  v => { foot = FootstepTracker.Ensure(); foot.landingScale = v; });
         // Planar reflection (Step 1: 3D world only) — mirror camera into puddles. Needs High tier + rain.
         B("Water reflection", () => refl && refl.enabled && wet && wet.reflStrength > 0f,
                               v => { refl = PlanarReflection.Ensure(); refl.enabled = true;
@@ -395,6 +407,34 @@ public class DevSettings : MonoBehaviour
         F("Reflection amount",0f, 2f,    () => wet ? wet.reflStrength : 0f,    v => { if (wet) wet.reflStrength = v; });
         B("Reflection flip Y",() => wet && wet.reflFlipY,                      v => { if (wet) wet.reflFlipY = v; });
         F("Water level",     -5f, 5f,    () => refl ? refl.waterHeight : 0f,   v => { if (refl) refl.waterHeight = v; });
+        // Snow — drifting-flake overlay (all tiers, cheap) + ground build-up on roofs/terrain. The blanket ramps
+        // up/melts over "Snow build time"; footprints in the snow are a High-tier extra (toggle Heavy weather on).
+        // Created on demand like rain so it works on a Systems scene baked before snow joined the rig.
+        B("Snow",             () => snow && snow.enabled && snow.intensity > 0f,
+                              v => { snow = SnowOverlay.Ensure(); snow.enabled = true; snow.intensity = v ? Mathf.Max(0.6f, snow.intensity) : 0f;
+                                     if (v) snowGround = SnowGround.Ensure(); });
+        F("Snow intensity",   0f, 1f,    () => snow ? snow.intensity : 0f,     v => { if (!snow) snow = SnowOverlay.Ensure(); snow.enabled = true; snow.intensity = v;
+                                                                                       if (!snowGround) snowGround = SnowGround.Ensure(); });
+        F("Snow fall speed",  0.5f, 12f, () => snow ? snow.fallSpeed : 0f,     v => { if (snow) snow.fallSpeed = v; });
+        F("Snow drift",       0f, 1f,    () => snow ? snow.drift : 0f,         v => { if (snow) snow.drift = v; });
+        F("Snow density",     10f, 120f, () => snow ? snow.density : 0f,       v => { if (snow) snow.density = v; });
+        F("Flake size",       0.05f, 0.9f, () => snow ? snow.flakeSize : 0f,   v => { if (snow) snow.flakeSize = v; });
+        F("Snow parallax",   -1f, 1f,    () => snow ? snow.parallax : 0f,      v => { if (snow) snow.parallax = v; });
+        F("Flake fade in",    0f, 30f,   () => snow ? snow.rampTime : 0f,      v => { if (snow) snow.rampTime = v; });
+        F("Snow coverage",    0f, 1f,    () => snowGround ? snowGround.coverage : 0f,  v => { if (snowGround) snowGround.coverage = v; });
+        F("Snow on slopes",   0f, 1f,    () => snowGround ? snowGround.upCutoff : 0f,  v => { if (snowGround) snowGround.upCutoff = v; });
+        F("Snow build time",  0.5f, 60f, () => snowGround ? snowGround.accumTime : 0f, v => { if (snowGround) snowGround.accumTime = v; });
+        F("Snow patch size",  0.05f, 1f, () => snowGround ? snowGround.patchScale : 0f,v => { if (snowGround) snowGround.patchScale = v; });
+        F("Snow sparkle",     0f, 2f,    () => snowGround ? snowGround.sparkle : 0f,   v => { if (snowGround) snowGround.sparkle = v; });
+        F("Snow thickness",   0f, 1f,    () => snowGround ? snowGround.thickness : 0f, v => { if (snowGround) snowGround.thickness = v; });
+        F("Snow clumpiness",  0f, 1f,    () => snowGround ? snowGround.lumpiness : 0f, v => { if (snowGround) snowGround.lumpiness = v; });
+        F("Footprint heal",   0.5f, 30f, () => snowGround ? snowGround.footHeal : 0f,  v => { if (snowGround) snowGround.footHeal = v; });
+        F("Footprint carve",  0f, 1f,    () => snowGround ? snowGround.footCarve : 0f, v => { if (snowGround) snowGround.footCarve = v; });
+        F("Footprint radius", 0.1f, 0.6f, () => snowGround ? snowGround.footRadius : 0f, v => { if (snowGround) snowGround.footRadius = v; });
+        // Footprint GAP (shared FootstepTracker — same value as the wet "Footstep gap" knob; also moves snow prints
+        // closer/farther). Lower this if steps look too far apart.
+        F("Footprint gap",    0.12f, 1.2f, () => foot ? foot.strideDist : 0f,   v => { foot = FootstepTracker.Ensure(); foot.strideDist = v; });
+        F("Footprint spacing",0f, 0.6f,  () => foot ? foot.footSpacing : 0f,    v => { foot = FootstepTracker.Ensure(); foot.footSpacing = v; });
 
         // ---- Camera — CameraFollow3D ---------------------------------------
         Cat("Camera");
