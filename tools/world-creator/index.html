@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>unwritten — World Creator</title>
+<style>
+  :root {
+    --town:   #f2c200;   /* yellow */
+    --field:  #3fb24a;   /* green  */
+    --dungeon:#8a3ffb;   /* purple */
+    --special:#e23b3b;   /* red    */
+    --warp:   #2b6cf2;   /* blue dot */
+    --bg:     #1c1c20;
+    --panel:  #26262c;
+    --line:   #3a3a42;
+    --text:   #e8e8ee;
+    --muted:  #9a9aa6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--text); }
+  #canvas { display: block; position: absolute; inset: 0; cursor: crosshair; }
+
+  /* ── Toolbar ───────────────────────────────────────────── */
+  #toolbar {
+    position: absolute; top: 12px; left: 12px; right: 12px; z-index: 10;
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    background: var(--panel); padding: 8px 10px; border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4); border: 1px solid var(--line);
+  }
+  #toolbar .title { font-weight: 700; margin-right: 6px; letter-spacing: .3px; }
+  #toolbar .spacer { flex: 1; }
+  button.tool {
+    background: #33333b; color: var(--text); border: 1px solid var(--line);
+    padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;
+  }
+  button.tool:hover { background: #3d3d47; }
+  button.tool.active { background: var(--warp); border-color: var(--warp); color: #fff; }
+  button.tool.primary { background: #2e7d3a; border-color: #2e7d3a; color: #fff; }
+  button.tool.primary:hover { filter: brightness(1.1); }
+  .legend { display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); }
+  .legend .chip { display: inline-flex; align-items: center; gap: 5px; }
+  .legend .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .hint { position: absolute; bottom: 12px; left: 12px; z-index: 10; font-size: 12px;
+    color: var(--muted); background: var(--panel); padding: 6px 10px; border-radius: 8px;
+    border: 1px solid var(--line); max-width: 520px; }
+
+  /* ── Radial-ish popup menu ─────────────────────────────── */
+  #menu {
+    position: absolute; z-index: 20; display: none; flex-direction: column;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.5); overflow: hidden; min-width: 150px;
+  }
+  #menu .row {
+    display: flex; align-items: center; gap: 9px; padding: 9px 13px; cursor: pointer;
+    font-size: 14px; border: none; background: none; color: var(--text); width: 100%; text-align: left;
+  }
+  #menu .row:hover { background: #34343d; }
+  #menu .sw { width: 14px; height: 14px; border-radius: 4px; }
+  #menu .sep { height: 1px; background: var(--line); }
+  #menu .row.danger { color: #ff8a8a; }
+  input[type=file] { display: none; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div id="toolbar">
+  <span class="title">🗺️ World Creator</span>
+  <button class="tool" id="mode-paint">✏️ Paint</button>
+  <button class="tool" id="mode-warp">🔵 Warp</button>
+  <button class="tool" id="mode-link">🔗 Link</button>
+  <span class="spacer"></span>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--town)"></span>Town</span>
+    <span class="chip"><span class="sw" style="background:var(--field)"></span>Field</span>
+    <span class="chip"><span class="sw" style="background:var(--dungeon)"></span>Dungeon</span>
+    <span class="chip"><span class="sw" style="background:var(--special)"></span>Special</span>
+    <span class="chip"><span class="sw" style="background:var(--warp);border-radius:50%"></span>Warp</span>
+  </div>
+  <span class="spacer"></span>
+  <button class="tool" id="btn-import">⬆️ Import</button>
+  <button class="tool primary" id="btn-export">⬇️ Export</button>
+  <button class="tool" id="btn-clear">🗑 Clear</button>
+  <input type="file" id="file-input" accept="application/json,.json" />
+</div>
+
+<div id="menu"></div>
+
+<div class="hint" id="hint"></div>
+
+<script>
+"use strict";
+
+// ── World state ────────────────────────────────────────────────────────────
+// maps: key "c,r" -> { col, row, type, id, seed?, pathTile?, pathWidth? }
+// portals: { aKey, bKey, offset }  (internal: keyed by cell coords; exported by map id)
+const WORLD_SIZE = 60;            // world units per square map (matches Unity)
+const TYPES = ["town", "field", "dungeon", "special"];
+const COLORS = { town: "#f2c200", field: "#3fb24a", dungeon: "#8a3ffb", special: "#e23b3b" };
+
+const state = {
+  maps: new Map(),
+  portals: [],
+  nextIndex: { town: 0, field: 0, dungeon: 0, special: 0 },
+};
+
+// ── Camera ─────────────────────────────────────────────────────────────────
+const cam = { x: 0, y: 0, scale: 64 };   // scale = px per cell
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let mode = "paint";   // "paint" | "warp"
+
+function key(c, r) { return c + "," + r; }
+function worldToScreen(c, r) { return { x: c * cam.scale + cam.x, y: r * cam.scale + cam.y }; }
+function screenToCell(px, py) {
+  return { col: Math.floor((px - cam.x) / cam.scale), row: Math.floor((py - cam.y) / cam.scale) };
+}
+
+// ── Rendering ────────────────────────────────────────────────────────────────
+function resize() {
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  draw();
+}
+
+let hoverCell = null;   // {col,row}
+let linkPickA = null;   // map key chosen as endpoint A while building a distant warp
+let lastMouse = null;   // {x,y} screen, for the link rubber-band
+
+function draw() {
+  const W = window.innerWidth, H = window.innerHeight;
+  ctx.clearRect(0, 0, W, H);
+
+  // grid (guide only)
+  ctx.strokeStyle = "#34343c";
+  ctx.lineWidth = 1;
+  const startCol = Math.floor((0 - cam.x) / cam.scale) - 1;
+  const endCol   = Math.ceil((W - cam.x) / cam.scale) + 1;
+  const startRow = Math.floor((0 - cam.y) / cam.scale) - 1;
+  const endRow   = Math.ceil((H - cam.y) / cam.scale) + 1;
+  ctx.beginPath();
+  for (let c = startCol; c <= endCol; c++) {
+    const x = c * cam.scale + cam.x;
+    ctx.moveTo(x, 0); ctx.lineTo(x, H);
+  }
+  for (let r = startRow; r <= endRow; r++) {
+    const y = r * cam.scale + cam.y;
+    ctx.moveTo(0, y); ctx.lineTo(W, y);
+  }
+  ctx.stroke();
+
+  // painted cells
+  const pad = Math.max(3, cam.scale * 0.08);
+  for (const m of state.maps.values()) {
+    const s = worldToScreen(m.col, m.row);
+    roundRect(ctx, s.x + pad, s.y + pad, cam.scale - pad * 2, cam.scale - pad * 2, cam.scale * 0.16);
+    ctx.lineWidth = Math.max(2, cam.scale * 0.045);
+    ctx.strokeStyle = COLORS[m.type];
+    ctx.fillStyle = COLORS[m.type] + "22";
+    ctx.fill();
+    ctx.stroke();
+    // id label
+    if (cam.scale > 40) {
+      ctx.fillStyle = "#e8e8ee";
+      ctx.font = Math.round(cam.scale * 0.16) + "px system-ui, sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(m.id, s.x + cam.scale / 2, s.y + cam.scale / 2);
+    }
+  }
+
+  // warps: round dots for adjacent, dashed line + square caps for distant
+  const dotR = Math.max(4, cam.scale * 0.1);
+  for (const p of state.portals) {
+    if (p.distant) {
+      const a = state.maps.get(p.aKey), b = state.maps.get(p.bKey);
+      if (!a || !b) continue;
+      const pa = anchorScreenPos(a, p.anchorA), pb = anchorScreenPos(b, p.anchorB);
+      ctx.strokeStyle = "#2b6cf2";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([7, 6]);
+      ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+      ctx.setLineDash([]);
+      const sq = dotR * 1.7;
+      ctx.fillStyle = "#2b6cf2"; ctx.strokeStyle = "#cfe0ff"; ctx.lineWidth = 2;
+      for (const pt of [pa, pb]) {
+        ctx.beginPath();
+        ctx.rect(pt.x - sq / 2, pt.y - sq / 2, sq, sq);
+        ctx.fill(); ctx.stroke();
+      }
+    } else {
+      const pos = portalScreenPos(p);
+      if (!pos) continue;
+      ctx.fillStyle = "#2b6cf2"; ctx.strokeStyle = "#cfe0ff"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, dotR, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+    }
+  }
+
+  // link-mode selection: highlight picked map A + rubber-band to cursor
+  if (mode === "link" && linkPickA) {
+    const a = state.maps.get(linkPickA);
+    if (a) {
+      const s = worldToScreen(a.col, a.row);
+      ctx.strokeStyle = "#6a9bff"; ctx.lineWidth = 3;
+      ctx.setLineDash([5, 4]);
+      ctx.strokeRect(s.x + 2, s.y + 2, cam.scale - 4, cam.scale - 4);
+      if (lastMouse) {
+        ctx.beginPath();
+        ctx.moveTo(s.x + cam.scale / 2, s.y + cam.scale / 2);
+        ctx.lineTo(lastMouse.x, lastMouse.y);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
+  }
+
+  // hover affordance
+  if (hoverCell) {
+    const k = key(hoverCell.col, hoverCell.row);
+    const s = worldToScreen(hoverCell.col, hoverCell.row);
+    if (mode === "paint" && !state.maps.has(k)) {
+      // a "+" sign
+      ctx.strokeStyle = "#6a9bff";
+      ctx.lineWidth = Math.max(2, cam.scale * 0.04);
+      const cx = s.x + cam.scale / 2, cy = s.y + cam.scale / 2, r = cam.scale * 0.16;
+      ctx.beginPath();
+      ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy);
+      ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r);
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(s.x + 1, s.y + 1, cam.scale - 2, cam.scale - 2);
+    }
+  }
+
+  updateHint();
+}
+
+function roundRect(c, x, y, w, h, r) {
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+
+// ── Adjacency + portal geometry ──────────────────────────────────────────────
+// Returns the screen-space point of a portal dot, or null if either end is gone.
+function portalScreenPos(p) {
+  const a = state.maps.get(p.aKey), b = state.maps.get(p.bKey);
+  if (!a || !b) return null;
+  const dc = b.col - a.col, dr = b.row - a.row;
+  const t = p.offset;
+  // shared border in cell-space, then to screen
+  let bx, by; // border point in cell coords
+  if (dc === 1 && dr === 0) { bx = a.col + 1;        by = a.row + t; }
+  else if (dc === -1 && dr === 0) { bx = a.col;      by = a.row + t; }
+  else if (dr === 1 && dc === 0) { bx = a.col + t;   by = a.row + 1; }
+  else if (dr === -1 && dc === 0) { bx = a.col + t;  by = a.row; }
+  else return null; // adjacent only; distant warps use anchors (see below)
+  return { x: bx * cam.scale + cam.x, y: by * cam.scale + cam.y };
+}
+
+// ── Distant-warp geometry (explicit edge + offset anchors) ───────────────────
+// A point on a map's named edge at offset t (0..1), in cell coords.
+function edgePointCell(m, edge, t) {
+  switch (edge) {
+    case "N": return { x: m.col + t, y: m.row };
+    case "S": return { x: m.col + t, y: m.row + 1 };
+    case "E": return { x: m.col + 1, y: m.row + t };
+    case "W": return { x: m.col,     y: m.row + t };
+  }
+  return { x: m.col + 0.5, y: m.row + 0.5 };
+}
+function anchorScreenPos(m, anchor) {
+  const p = edgePointCell(m, anchor.edge, anchor.offset);
+  return { x: p.x * cam.scale + cam.x, y: p.y * cam.scale + cam.y };
+}
+// The edge of A that faces B (dominant axis of the center-to-center vector).
+function facingEdge(a, b) {
+  const dx = b.col - a.col, dy = b.row - a.row;
+  if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? "E" : "W";
+  return dy >= 0 ? "S" : "N";
+}
+// Snap a screen point to the nearest edge of map m → { edge, offset }.
+function nearestEdgeAnchor(m, px, py) {
+  const s = worldToScreen(m.col, m.row), sz = cam.scale;
+  const edges = {
+    N: [{ x: s.x, y: s.y },            { x: s.x + sz, y: s.y }],
+    S: [{ x: s.x, y: s.y + sz },       { x: s.x + sz, y: s.y + sz }],
+    W: [{ x: s.x, y: s.y },            { x: s.x, y: s.y + sz }],
+    E: [{ x: s.x + sz, y: s.y },       { x: s.x + sz, y: s.y + sz }],
+  };
+  let best = null;
+  for (const e in edges) {
+    const proj = projectToSegment(px, py, edges[e][0], edges[e][1]);
+    if (!best || proj.dist < best.dist) best = { edge: e, offset: clamp(proj.t, 0.12, 0.88), dist: proj.dist };
+  }
+  return best;
+}
+// Nearest distant-warp endpoint to a screen point → { portal, end } or null.
+function nearestEndpoint(px, py) {
+  let best = null, bestDist = Infinity;
+  for (const p of state.portals) {
+    if (!p.distant) continue;
+    const a = state.maps.get(p.aKey), b = state.maps.get(p.bKey);
+    if (!a || !b) continue;
+    const pa = anchorScreenPos(a, p.anchorA), pb = anchorScreenPos(b, p.anchorB);
+    const da = Math.hypot(pa.x - px, pa.y - py), db = Math.hypot(pb.x - px, pb.y - py);
+    if (da < bestDist) { bestDist = da; best = { portal: p, end: "a" }; }
+    if (db < bestDist) { bestDist = db; best = { portal: p, end: "b" }; }
+  }
+  if (best && bestDist <= Math.max(12, cam.scale * 0.16)) return best;
+  return null;
+}
+
+// Find the nearest adjacent-cell border to a screen point. Returns {aKey,bKey,offset,dist} or null.
+function nearestBorder(px, py) {
+  let best = null;
+  for (const a of state.maps.values()) {
+    const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
+    for (const [dc, dr] of neighbors) {
+      const b = state.maps.get(key(a.col + dc, a.row + dr));
+      if (!b) continue;
+      if (a.col + "," + a.row > b.col + "," + b.row) continue; // dedupe: handle each pair once
+      // border segment endpoints in screen space
+      let p1, p2;
+      const s = worldToScreen(a.col, a.row);
+      if (dc === 1) { p1 = { x: s.x + cam.scale, y: s.y }; p2 = { x: s.x + cam.scale, y: s.y + cam.scale }; }
+      else if (dc === -1) { p1 = { x: s.x, y: s.y }; p2 = { x: s.x, y: s.y + cam.scale }; }
+      else if (dr === 1) { p1 = { x: s.x, y: s.y + cam.scale }; p2 = { x: s.x + cam.scale, y: s.y + cam.scale }; }
+      else { p1 = { x: s.x, y: s.y }; p2 = { x: s.x + cam.scale, y: s.y }; }
+      const proj = projectToSegment(px, py, p1, p2);
+      if (!best || proj.dist < best.dist) {
+        best = { aKey: key(a.col, a.row), bKey: key(b.col, b.row), offset: clamp(proj.t, 0.12, 0.88), dist: proj.dist };
+      }
+    }
+  }
+  return best;
+}
+
+function projectToSegment(px, py, p1, p2) {
+  const vx = p2.x - p1.x, vy = p2.y - p1.y;
+  const len2 = vx * vx + vy * vy || 1;
+  let t = ((px - p1.x) * vx + (py - p1.y) * vy) / len2;
+  t = clamp(t, 0, 1);
+  const cx = p1.x + t * vx, cy = p1.y + t * vy;
+  return { t, dist: Math.hypot(px - cx, py - cy) };
+}
+function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+// ── Interaction ──────────────────────────────────────────────────────────────
+let drag = null;  // panning
+const DRAG_THRESHOLD = 5;
+
+canvas.addEventListener("mousedown", (e) => {
+  if (e.button === 1 || e.button === 2 || e.shiftKey) {  // middle/right/shift = pan
+    drag = { panning: true, sx: e.clientX, sy: e.clientY, ox: cam.x, oy: cam.y, moved: false };
+    return;
+  }
+  drag = { panning: false, sx: e.clientX, sy: e.clientY, ox: cam.x, oy: cam.y, moved: false };
+  // In link mode, grabbing a distant-warp endpoint starts a re-anchor drag.
+  if (mode === "link") {
+    const ep = nearestEndpoint(e.clientX, e.clientY);
+    if (ep) drag.endpoint = ep;
+  }
+});
+
+canvas.addEventListener("mousemove", (e) => {
+  lastMouse = { x: e.clientX, y: e.clientY };
+  const c = screenToCell(e.clientX, e.clientY);
+  hoverCell = c;
+  if (drag) {
+    const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+    if (Math.hypot(dx, dy) > DRAG_THRESHOLD) drag.moved = true;
+    if (drag.panning) { cam.x = drag.ox + dx; cam.y = drag.oy + dy; }
+    else if (drag.endpoint && drag.moved) reanchorEndpoint(drag.endpoint, e.clientX, e.clientY);
+  }
+  draw();
+});
+
+window.addEventListener("mouseup", (e) => {
+  if (!drag) return;
+  const wasPan = drag.panning, moved = drag.moved, endpoint = drag.endpoint;
+  drag = null;
+  if (wasPan) { draw(); return; }
+  if (endpoint) {                                  // endpoint: drag = re-anchor, click = delete
+    if (!moved) state.portals.splice(state.portals.indexOf(endpoint.portal), 1);
+    draw(); return;
+  }
+  if (moved) { draw(); return; }                   // a drag, not a click
+  handleClick(e.clientX, e.clientY);
+});
+
+// Snap the dragged endpoint to the nearest edge of its own map.
+function reanchorEndpoint(ep, px, py) {
+  const m = state.maps.get(ep.end === "a" ? ep.portal.aKey : ep.portal.bKey);
+  if (!m) return;
+  const na = nearestEdgeAnchor(m, px, py);
+  const anchor = { edge: na.edge, offset: na.offset };
+  if (ep.end === "a") ep.portal.anchorA = anchor; else ep.portal.anchorB = anchor;
+}
+
+canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
+canvas.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+  const ns = clamp(cam.scale * factor, 22, 200);
+  // zoom toward cursor
+  const wx = (e.clientX - cam.x) / cam.scale, wy = (e.clientY - cam.y) / cam.scale;
+  cam.scale = ns;
+  cam.x = e.clientX - wx * cam.scale;
+  cam.y = e.clientY - wy * cam.scale;
+  draw();
+}, { passive: false });
+
+function handleClick(px, py) {
+  if (mode === "warp") { handleWarpClick(px, py); return; }
+  if (mode === "link") { handleLinkClick(px, py); return; }
+  const c = screenToCell(px, py);
+  openMenu(px, py, c);
+}
+
+// Distant warp: click map A, then map B → create a cross-map warp with auto anchors.
+function handleLinkClick(px, py) {
+  const c = screenToCell(px, py);
+  const k = key(c.col, c.row);
+  const m = state.maps.get(k);
+  if (!m) { linkPickA = null; draw(); return; }     // clicked empty space → cancel pick
+  if (!linkPickA) { linkPickA = k; draw(); return; } // first endpoint
+  if (k === linkPickA) { linkPickA = null; draw(); return; } // same map → cancel
+  const a = state.maps.get(linkPickA), b = m;
+  // already a distant warp between these two? ignore duplicate
+  const dup = state.portals.some(p => p.distant &&
+    ((p.aKey === linkPickA && p.bKey === k) || (p.aKey === k && p.bKey === linkPickA)));
+  if (!dup) {
+    state.portals.push({
+      distant: true, aKey: linkPickA, bKey: k,
+      anchorA: { edge: facingEdge(a, b), offset: 0.5 },
+      anchorB: { edge: facingEdge(b, a), offset: 0.5 },
+    });
+  } else {
+    flash("Those maps are already linked");
+  }
+  linkPickA = null;
+  draw();
+}
+
+function handleWarpClick(px, py) {
+  const nb = nearestBorder(px, py);
+  if (!nb || nb.dist > Math.max(14, cam.scale * 0.22)) return;
+  // existing dot near this click on the same border? -> remove it
+  const onBorder = state.portals.filter(p =>
+    (p.aKey === nb.aKey && p.bKey === nb.bKey) || (p.aKey === nb.bKey && p.bKey === nb.aKey));
+  for (const p of onBorder) {
+    const pos = portalScreenPos(p);
+    if (pos && Math.hypot(pos.x - px, pos.y - py) < Math.max(10, cam.scale * 0.14)) {
+      state.portals.splice(state.portals.indexOf(p), 1);
+      draw(); return;
+    }
+  }
+  if (onBorder.length >= 3) { flash("Max 3 warps on a border"); return; }
+  state.portals.push({ aKey: nb.aKey, bKey: nb.bKey, offset: nb.offset });
+  draw();
+}
+
+// ── Popup menu ───────────────────────────────────────────────────────────────
+const menu = document.getElementById("menu");
+function openMenu(px, py, cell) {
+  const k = key(cell.col, cell.row);
+  const existing = state.maps.get(k);
+  menu.innerHTML = "";
+  for (const t of TYPES) {
+    const row = document.createElement("button");
+    row.className = "row";
+    row.innerHTML = `<span class="sw" style="background:${COLORS[t]}"></span>${cap(t)}`;
+    row.onclick = () => { setCell(cell, t); closeMenu(); };
+    menu.appendChild(row);
+  }
+  if (existing) {
+    const sep = document.createElement("div"); sep.className = "sep"; menu.appendChild(sep);
+    const del = document.createElement("button");
+    del.className = "row danger";
+    del.innerHTML = "🗑 Delete map";
+    del.onclick = () => { deleteCell(cell); closeMenu(); };
+    menu.appendChild(del);
+  }
+  menu.style.display = "flex";
+  menu.style.left = Math.min(px, window.innerWidth - 170) + "px";
+  menu.style.top = Math.min(py, window.innerHeight - menu.offsetHeight - 10) + "px";
+}
+function closeMenu() { menu.style.display = "none"; }
+document.addEventListener("mousedown", (e) => {
+  if (menu.style.display === "flex" && !menu.contains(e.target)) closeMenu();
+}, true);
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── Mutations ────────────────────────────────────────────────────────────────
+function setCell(cell, type) {
+  const k = key(cell.col, cell.row);
+  const existing = state.maps.get(k);
+  if (existing) {
+    existing.type = type;   // keep id stable on retype
+  } else {
+    const id = type + "_" + (state.nextIndex[type]++);
+    state.maps.set(k, { col: cell.col, row: cell.row, type, id });
+  }
+  draw();
+}
+function deleteCell(cell) {
+  const k = key(cell.col, cell.row);
+  state.maps.delete(k);
+  // drop any portals touching this cell
+  state.portals = state.portals.filter(p => p.aKey !== k && p.bKey !== k);
+  draw();
+}
+
+// ── Export / Import ──────────────────────────────────────────────────────────
+function exportJSON() {
+  const maps = [...state.maps.values()].map(m => {
+    const o = { id: m.id, cell: [m.col, m.row], type: m.type };
+    if (m.seed !== undefined) o.seed = m.seed;
+    if (m.pathTile !== undefined) o.pathTile = m.pathTile;
+    if (m.pathWidth !== undefined) o.pathWidth = m.pathWidth;
+    return o;
+  });
+  const portals = state.portals.map(p => {
+    const o = { a: state.maps.get(p.aKey).id, b: state.maps.get(p.bKey).id };
+    if (p.distant) {
+      o.anchorA = { edge: p.anchorA.edge, offset: round2(p.anchorA.offset) };
+      o.anchorB = { edge: p.anchorB.edge, offset: round2(p.anchorB.offset) };
+    } else {
+      o.offset = round2(p.offset);
+    }
+    return o;
+  });
+  const data = { version: 1, worldSize: WORLD_SIZE, maps, portals };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "world.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function round2(n) { return Math.round(n * 100) / 100; }
+
+function importJSON(text) {
+  let data;
+  try { data = JSON.parse(text); } catch (e) { alert("Invalid JSON: " + e.message); return; }
+  if (!data.maps) { alert("Not a world.json (no maps array)."); return; }
+  state.maps.clear();
+  state.portals = [];
+  state.nextIndex = { town: 0, field: 0, dungeon: 0, special: 0 };
+  const idToKey = new Map();
+  for (const m of data.maps) {
+    const [col, row] = m.cell;
+    const k = key(col, row);
+    const cell = { col, row, type: m.type, id: m.id };
+    if (m.seed !== undefined) cell.seed = m.seed;
+    if (m.pathTile !== undefined) cell.pathTile = m.pathTile;
+    if (m.pathWidth !== undefined) cell.pathWidth = m.pathWidth;
+    state.maps.set(k, cell);
+    idToKey.set(m.id, k);
+    // keep nextIndex ahead of any imported numeric suffix so new ids don't collide
+    const msuffix = /_(\d+)$/.exec(m.id);
+    if (msuffix && state.nextIndex[m.type] !== undefined)
+      state.nextIndex[m.type] = Math.max(state.nextIndex[m.type], +msuffix[1] + 1);
+  }
+  for (const p of (data.portals || [])) {
+    const aKey = idToKey.get(p.a), bKey = idToKey.get(p.b);
+    if (!aKey || !bKey) continue;
+    if (p.anchorA && p.anchorB) {
+      state.portals.push({ distant: true, aKey, bKey,
+        anchorA: { edge: p.anchorA.edge, offset: p.anchorA.offset ?? 0.5 },
+        anchorB: { edge: p.anchorB.edge, offset: p.anchorB.offset ?? 0.5 } });
+    } else {
+      state.portals.push({ aKey, bKey, offset: p.offset ?? 0.5 });
+    }
+  }
+  fitToContent();
+  draw();
+  flash(`Imported ${state.maps.size} maps, ${state.portals.length} warps`);
+}
+
+function fitToContent() {
+  if (state.maps.size === 0) return;
+  let minC = Infinity, maxC = -Infinity, minR = Infinity, maxR = -Infinity;
+  for (const m of state.maps.values()) {
+    minC = Math.min(minC, m.col); maxC = Math.max(maxC, m.col);
+    minR = Math.min(minR, m.row); maxR = Math.max(maxR, m.row);
+  }
+  const cols = maxC - minC + 1, rows = maxR - minR + 1;
+  const W = window.innerWidth, H = window.innerHeight;
+  cam.scale = clamp(Math.min((W - 160) / cols, (H - 200) / rows), 22, 120);
+  cam.x = W / 2 - ((minC + maxC + 1) / 2) * cam.scale;
+  cam.y = H / 2 - ((minR + maxR + 1) / 2) * cam.scale;
+}
+
+// ── Toolbar wiring ───────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  if (m !== "link") linkPickA = null;
+  document.getElementById("mode-paint").classList.toggle("active", m === "paint");
+  document.getElementById("mode-warp").classList.toggle("active", m === "warp");
+  document.getElementById("mode-link").classList.toggle("active", m === "link");
+  canvas.style.cursor = (m === "warp" || m === "link") ? "pointer" : "crosshair";
+  draw();
+}
+document.getElementById("mode-paint").onclick = () => setMode("paint");
+document.getElementById("mode-warp").onclick = () => setMode("warp");
+document.getElementById("mode-link").onclick = () => setMode("link");
+document.getElementById("btn-export").onclick = exportJSON;
+document.getElementById("btn-clear").onclick = () => {
+  if (confirm("Clear the whole world?")) {
+    state.maps.clear(); state.portals = [];
+    state.nextIndex = { town: 0, field: 0, dungeon: 0, special: 0 };
+    draw();
+  }
+};
+const fileInput = document.getElementById("file-input");
+document.getElementById("btn-import").onclick = () => fileInput.click();
+fileInput.onchange = (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => importJSON(reader.result);
+  reader.readAsText(f);
+  fileInput.value = "";
+};
+
+// keyboard: W warp, V/P paint
+window.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.key === "w" || e.key === "W") setMode("warp");
+  if (e.key === "l" || e.key === "L") setMode("link");
+  if (e.key === "p" || e.key === "P" || e.key === "v" || e.key === "V") setMode("paint");
+  if (e.key === "Escape") { closeMenu(); if (linkPickA) { linkPickA = null; draw(); } }
+});
+
+let flashTimer = null;
+function flash(msg) {
+  const h = document.getElementById("hint");
+  h.dataset.flash = msg;
+  updateHint();
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => { delete h.dataset.flash; updateHint(); }, 1600);
+}
+function updateHint() {
+  const h = document.getElementById("hint");
+  if (h.dataset.flash) { h.textContent = "💬 " + h.dataset.flash; return; }
+  if (mode === "paint")
+    h.textContent = "✏️ Paint: click a cell to pick a type · click a painted map to retype/delete · Shift-drag or middle-drag to pan · scroll to zoom · [W] warp · [L] link";
+  else if (mode === "warp")
+    h.textContent = "🔵 Warp (adjacent): click the border between two adjacent maps to drop a dot (max 3) · click a dot to remove · [P] paint · [L] link";
+  else
+    h.textContent = "🔗 Link (distant): click map A then map B to warp across the world · drag a square end-marker to re-anchor it · click an end-marker to delete · [Esc] cancel · [P] paint";
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+window.addEventListener("resize", resize);
+cam.x = window.innerWidth / 2 - cam.scale * 1.5;
+cam.y = window.innerHeight / 2 - cam.scale * 1.5;
+setMode("paint");
+resize();
+</script>
+</body>
+</html>

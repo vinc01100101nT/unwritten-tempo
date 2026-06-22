@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ee439e426eefd964bac0acbb3407f345, type: 3}
-  m_Name: StarterTown Recipe
+  m_Name: TownRecipe
   m_EditorClassIdentifier: Assembly-CSharp::MapRecipe
   mapName: StarterTown
-  seed: 216972936
+  seed: 12345
   randomizeSeed: 1
   sizeX: 60
   sizeZ: 60
   dirtAmount: 0.18
-  pathTile: 2
-  pathCount: 2
-  pathWidth: 2
-  pathWander: 0.75
+  pathTile: 0
+  pathCount: 5
+  pathWidth: 4.5
+  pathWander: 0.732
   pathSmoothness: 1
   propGroups:
   - label: Houses
@@ -38,7 +38,7 @@ MonoBehaviour:
     clearFromCenter: 0
     avoidPath: 0
     randomYaw: 1
-    rowOffset: 2
+    rowOffset: 4
   - label: Landmarks
     prefabs: []
     category: 10
@@ -114,12 +114,5 @@ MonoBehaviour:
     avoidPath: 1
     randomYaw: 1
     rowOffset: 4
-  mobGroups:
-  - label: Wildlife
-    archetypeName: 
-    amountMode: 0
-    density: 0.02
-    count: 12
-    minSpacing: 1.8
-    clearFromSpawn: 8
-  forestAmbience: 0
+  mobGroups: []
+  forestAmbience: 1
