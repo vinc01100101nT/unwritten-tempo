@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// A named arrival point. A <see cref="Portal"/>'s <c>spawnId</c> matches a
+/// A named arrival point. A <see cref="Portal3D"/>'s <c>spawnId</c> matches a
 /// SpawnPoint's <c>id</c> in the destination scene — that's where the player
 /// appears after travelling. Place it just OUTSIDE the return portal's trigger
 /// so you don't immediately bounce back.

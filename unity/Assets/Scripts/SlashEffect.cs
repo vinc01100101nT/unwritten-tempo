@@ -4,7 +4,7 @@ using UnityEngine;
 /// A short-lived slash animation played at a world position when an attack lands.
 /// Slices its frames straight off a horizontal sprite-sheet texture at runtime
 /// (no asset slicing needed), plays them once, then removes itself. Spawned by
-/// <see cref="PlayerAttacker"/>; the sheet is assigned in the editor.
+/// <see cref="Player3DAttacker"/>; the sheet is assigned in the editor.
 /// </summary>
 public class SlashEffect : MonoBehaviour
 {

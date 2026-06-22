@@ -22,18 +22,18 @@ Fog seq = Cloud 0.45 + Fog→1.0); renderer/shader/channels all fine.
 (idempotent re-bake; fixes all 6), then Play + load fog day to verify. ⚠️ Footgun ACCEPTED: must re-bake after any
 `WeatherSequences.cs` edit or stale assets shadow code again.
 
-## 🔨 IN PROGRESS — Retire the dead 2D layer (Phase A committed c2fd369; Phase B UNCOMMITTED, awaiting recompile+Play-test)
-**Phase B (this step):** edited DeathDissolve (drop 2D MonsterAI/PathAgent disables), MapManager (removed CameraFollow2D
-strip + BindCameraBounds 2D tilemap method), Build25DSpike.PlayerSheetPath (no longer reads Player.prefab → fallback sheet),
-WorldTools (removed stale 2D Create Portal). DELETED 16 scripts (PlayerController2D/Commander/Attacker, PersistentPlayer,
-MonsterAI, MonsterSpawner, CharacterAnimator2D, CameraFollow2D, Portal, PathAgent, Pathfinder, Bootstrap, MonsterBuilder,
-GlobalSystemsBuilder, GameCursor) + 4 prefabs (Player, Monster_SpriteSheet, Monster_Slime2, GameSystems). Verified ZERO
-remaining CODE refs (only harmless doc-comment crefs → CS1574 warnings, deferrable). ⚠️ `Assets/test/TownTheme.asset` has
-dangling refs to the deleted monster prefabs (test-folder scratch, harmless). **→ USER: let Unity recompile (Console = no
-red errors), then Play-test warp between maps + die/respawn + combat + cursor. If good, commit Phase B.**
-Optional follow-up: scrub ~15 stale `<see cref>` doc comments pointing at deleted 2D types.
+## ✅ DONE — Dead 2D layer fully retired (committed e18fa6f, c2fd369, 54d0412)
+The whole 2D generation is gone (16 scripts + 4 prefabs, −3087 lines); 3D system (Player3DController/PersistentPlayer3D/
+Portal3D/MonsterAI3D/GameCursor3D) is the sole player layer. Recompiled clean + Play-tested (warp/death/combat/cursor).
+Loose ends (optional, low-pri): (a) `PathAgent3D.cs:65` DiagInactiveOnce LogWarning is noisy diag spam — silence/remove it;
+(b) ~15 stale `<see cref>` doc comments still name deleted 2D types (harmless, no warnings shown); (c) `Assets/test/TownTheme.asset`
+has dangling refs to deleted monster prefabs (test scratch).
 
-## (history) Phase A — retire dead 2D layer, repoint live refs (committed c2fd369)
+## ⏭️ NEXT — Unit-test harness (planned with user)
+Build EditMode test assembly (.asmdef) + tests for the pure-logic crucial functionality: Element modifier table, stat-distribution
+math, skill % soft-cap/DR curve, Pathfinder3D. Add Tools ▸ unwritten ▸ Run Tests (+ CLI batchmode for later CI). ⚠️ adding .asmdef
+regroups script compilation — may surface hidden cross-asm refs; do it as its own change. Start with ONE module (Element + stats)
+so the user sees the pattern before wiring the rest.
 Architecture confirmed: 2.5D has a COMPLETE parallel system (Player3DController/PersistentPlayer3D/Portal3D/
 CameraFollow3D/MonsterAI3D all live in Systems.unity). The old 2D generation (PlayerController2D + PersistentPlayer
 + Portal + CameraFollow2D + MonsterAI/MonsterSpawner + PlayerCommander/PlayerAttacker + PathAgent + CharacterAnimator2D

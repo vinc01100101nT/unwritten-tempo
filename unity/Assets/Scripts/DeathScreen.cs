@@ -7,8 +7,7 @@ using UnityEngine.UI;
 /// listens to <see cref="Character.OnDied"/>. When the player hits 0 HP it fades in a full-screen
 /// "YOU DIED" overlay, counts down, then offers a Respawn button. Respawn calls
 /// <see cref="Character.Revive"/> (back to full HP) and teleports the avatar to the current map's
-/// SpawnPoint via <see cref="PersistentPlayer3D.Respawn"/> (falls back to the 2D
-/// <see cref="PersistentPlayer"/> if that's what's in the scene).
+/// SpawnPoint via <see cref="PersistentPlayer3D.Respawn"/>.
 ///
 /// Self-contained: it builds its own ScreenSpaceOverlay canvas in Awake (drawn above the HUD), so no
 /// theme assets or prefab wiring are needed — just attach the component to a Systems GameObject.

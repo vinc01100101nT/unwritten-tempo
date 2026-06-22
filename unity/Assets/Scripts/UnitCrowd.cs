@@ -3,8 +3,7 @@ using UnityEngine;
 /// <summary>
 /// Keeps player + mobs from physically colliding with (and climbing onto) <i>each other</i> while still
 /// colliding with terrain and props. It puts every unit on a shared "Crowd" layer and, once, disables
-/// Crowd↔Crowd collision in the physics matrix — the 3D twin of what the 2D <see cref="MonsterAI"/> did
-/// with <c>Physics2D.IgnoreLayerCollision</c>. With CharacterControllers that otherwise climb onto one
+/// Crowd↔Crowd collision in the physics matrix. With CharacterControllers that otherwise climb onto one
 /// another's capsules (the "hopping on heads" bug), pass-through is the clean fix; <see cref="PathAgent3D"/>'s
 /// avoidance steering then spreads mobs out so they don't occupy the same spot.
 ///

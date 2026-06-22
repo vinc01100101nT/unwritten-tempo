@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 3D port of <see cref="MonsterAI"/> — pure brain for a billboard mob. Wanders near its spawn,
+/// Pure brain for a billboard mob. Wanders near its spawn,
 /// CHASES the <see cref="Player3DController"/> once within <see cref="aggroRadius"/>, and gives up
 /// past <see cref="leashRadius"/>. Movement is delegated to a <see cref="PathAgent3D"/> sibling
 /// (routes around props via the grid A*); <see cref="BillboardAnimator3D"/> animates from that

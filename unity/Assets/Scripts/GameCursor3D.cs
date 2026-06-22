@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// 3D port of <see cref="GameCursor"/> — swaps the hardware cursor (Kenney pack) to match intent,
+/// Swaps the hardware cursor (Kenney pack) to match intent,
 /// Dota-style: default pointer, sword while hovering a mob, crosshair while attack-armed (A).
 /// Reads <see cref="Player3DController"/> (AttackArmed + the static MonsterUnderCursor). Textures
 /// are assigned by Build 2.5D Spike. Uses Cursor.SetCursor, so the PNGs must import as readable

@@ -6,7 +6,7 @@ using UnityEngine.Tilemaps;
 /// <summary>
 /// Swaps gameplay maps additively UNDER the persistent <c>Systems</c> scene, so the HUD,
 /// cursor, character data, player and camera (all living in Systems) are never unloaded —
-/// no <c>DontDestroyOnLoad</c> anywhere. A <see cref="Portal"/> calls <see cref="Travel"/>;
+/// no <c>DontDestroyOnLoad</c> anywhere. A <see cref="Portal3D"/> calls <see cref="Travel"/>;
 /// <see cref="GameRoot"/> calls <see cref="LoadMap"/> for the first map.
 ///
 /// On each map load it makes the new map the ACTIVE scene (so runtime spawns / lighting /
@@ -32,7 +32,7 @@ public static class MapManager
         if (string.IsNullOrEmpty(targetScene)) return;
 
         Scene previous = SceneManager.GetActiveScene();   // the map we're leaving (Systems is never active)
-        SceneTravel.Target = spawnId;                     // PersistentPlayer reads this on arrival
+        SceneTravel.Target = spawnId;                     // PersistentPlayer3D reads this on arrival
 
         var op = SceneManager.LoadSceneAsync(targetScene, LoadSceneMode.Additive);
         if (op == null) return;                           // target not in Build Settings
@@ -63,8 +63,7 @@ public static class MapManager
     static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => Activate(scene);
 
     // Maps authored before the Systems split may still carry their own camera / audio listener /
-    // event system. Disable them (and strip foreign CameraFollow2D so the persistent camera is the
-    // only follow rig) so the singletons in Systems win.
+    // event system. Disable them so the singletons in Systems win.
     static void StripForeignGlobals(Scene scene)
     {
         foreach (var root in scene.GetRootGameObjects())

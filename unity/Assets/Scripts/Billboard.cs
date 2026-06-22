@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// Turns this object to face the camera every frame — the core of the 2.5D "billboard"
 /// look (a flat 2D sprite standing in a 3D world, à la Ragnarok Online / Don't Starve).
-/// Put it on the SpriteRenderer object that <see cref="CharacterAnimator2D"/> drives: the
+/// Put it on the SpriteRenderer object that <see cref="BillboardAnimator3D"/> drives: the
 /// animator keeps swapping the 4-direction walk frames while this keeps the quad turned
 /// toward the camera so the sprite never looks foreshortened as the 3D world tilts.
 ///

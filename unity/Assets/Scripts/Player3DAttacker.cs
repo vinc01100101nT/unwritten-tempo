@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// 3D melee swing executor — a lean port of <see cref="PlayerAttacker"/> (minus the 2D mouse
+/// 3D melee swing executor — lean billboard melee (no legacy 2D mouse
 /// helpers, which <see cref="Player3DController"/> handles via a camera raycast). The controller
 /// owns the target; this only knows how to swing: it gates on <see cref="cooldown"/> and applies
 /// damage at the END of a short <see cref="windupTime"/>, so a swing can be cancelled before it

@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// A small gold down-arrow that bobs over the player's current attack target.
 /// Built entirely in code (procedural sprite) and created on demand by
-/// <see cref="PlayerAttacker"/>; call <see cref="Follow"/> with the target's
+/// <see cref="Player3DAttacker"/>; call <see cref="Follow"/> with the target's
 /// transform to move it, or null to hide it.
 /// </summary>
 public class TargetIndicator : MonoBehaviour

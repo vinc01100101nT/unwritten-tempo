@@ -1,8 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// A doorway between 3D maps — the 2.5D analogue of <see cref="Portal"/> (which is 2D-only:
-/// Collider2D + PlayerController2D). When the billboard player (<see cref="Player3DController"/>,
+/// A doorway between 3D maps. When the billboard player (<see cref="Player3DController"/>,
 /// a CharacterController) walks into this trigger collider, it asks <see cref="MapManager"/> to
 /// swap to <c>targetScene</c> — loaded additively under the persistent <c>Systems</c> scene, with
 /// the old map unloaded. The arriving <see cref="PersistentPlayer3D"/> reads <c>spawnId</c> and

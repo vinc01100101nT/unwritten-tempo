@@ -44,7 +44,7 @@ public static class Build25DSpike
 
     // Size of the 2D billboards (player / mobs / NPCs) RELATIVE to the 3D map. 1 = one world cell tall;
     // 0.7 = 30% smaller than that. One shared knob so every billboard builder matches. ONLY affects the
-    // 2.5D scenes built here — the 2D game (PlayerController2D + Player.prefab) is untouched.
+    // 2.5D scenes built here (the legacy 2D game has been removed).
     public const float BillboardScale = 0.7f;
     // Y the billboard's transform sits at so its feet rest on ground y=0, at the current scale.
     public static float FootOffsetY => BillboardScale * (0.5f - SpriteFoot);

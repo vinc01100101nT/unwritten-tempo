@@ -2,13 +2,13 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// The single billboard player avatar for the WHOLE 2.5D game — the 3D analogue of
-/// <see cref="PersistentPlayer"/>. It lives in the persistent <c>Systems</c> scene (never unloaded),
+/// The single billboard player avatar for the WHOLE 2.5D game.
+/// It lives in the persistent <c>Systems</c> scene (never unloaded),
 /// so its movement (<see cref="Player3DController"/>), combat (<see cref="Player3DAttacker"/>) and the
 /// follow camera survive every map swap with no <c>DontDestroyOnLoad</c>.
 ///
 /// On each map load it: drops any stray per-map player, cancels a carried order, teleports to the
-/// <see cref="SpawnPoint"/> a <see cref="Portal"/> asked for (via <see cref="SceneTravel.Target"/>),
+/// <see cref="SpawnPoint"/> a <see cref="Portal3D"/> asked for (via <see cref="SceneTravel.Target"/>),
 /// raycast-snaps onto that map's terrain (so it lands on the hills, not in the air), and re-aims the
 /// persistent <see cref="CameraFollow3D"/>.
 /// </summary>

@@ -2,14 +2,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 3D port of <see cref="Pathfinder"/> for the 2.5D world — the SAME grid A*, just run over the
+/// Grid A* for the 2.5D world — run over the
 /// XZ plane against 3D colliders instead of Physics2D. Grid cells are (X, Z). Obstacles are
 /// sampled at a fixed <see cref="ProbeY"/> height, so the flat ground plane is ignored and only
 /// props that stick up count as walls. Units (anything with a <see cref="CharacterController"/>)
 /// are passed through, so characters route AROUND scenery but THROUGH each other — matching the
 /// 2D design. Open ground returns a straight line (one spherecast), keeping direct moves snappy.
-///
-/// Kept separate from Pathfinder.cs so the 2D game is untouched (additive 2.5D migration).
 /// </summary>
 public static class Pathfinder3D
 {
