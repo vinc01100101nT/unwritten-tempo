@@ -94,9 +94,8 @@ public class DeathScreen : MonoBehaviour
     {
         if (Character.Instance != null) Character.Instance.Revive();
 
-        // Put the avatar back at the map's SpawnPoint (3D first, 2D fallback).
+        // Put the avatar back at the map's SpawnPoint.
         if (PersistentPlayer3D.Instance != null) PersistentPlayer3D.Instance.Respawn();
-        else { var p2d = FindFirstObjectByType<PersistentPlayer>(); if (p2d != null) p2d.Respawn(); }
 
         // Fade the overlay back out.
         for (float t = group.alpha; t > 0f; t -= Time.deltaTime / Mathf.Max(fadeTime, 0.01f))

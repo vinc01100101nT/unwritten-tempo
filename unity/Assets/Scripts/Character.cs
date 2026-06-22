@@ -470,20 +470,15 @@ public class Character : MonoBehaviour
         }
     }
 
-    // The in-scene player avatar (re-found after scene changes destroy the old one). Looks for BOTH the
-    // 2D player and the 2.5D billboard player — without the latter, MISS/Guard/heal popups silently
-    // vanished in the 3D game (Avatar() returned null, so the `if (a != null)` guards skipped them).
+    // The in-scene player avatar (re-found after scene changes destroy the old one). Without it,
+    // MISS/Guard/heal popups silently vanish (Avatar() returns null, so the `if (a != null)` guards
+    // skip them).
     Transform Avatar()
     {
         if (avatar == null)
         {
-            var pc2 = FindFirstObjectByType<PlayerController2D>();
-            if (pc2 != null) avatar = pc2.transform;
-            else
-            {
-                var pc3 = FindFirstObjectByType<Player3DController>();
-                avatar = pc3 != null ? pc3.transform : null;
-            }
+            var pc3 = FindFirstObjectByType<Player3DController>();
+            avatar = pc3 != null ? pc3.transform : null;
         }
         return avatar;
     }
