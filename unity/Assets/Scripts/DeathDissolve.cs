@@ -61,9 +61,9 @@ public class DeathDissolve : MonoBehaviour
         playing = true;
 
         // Stop it acting, moving, colliding or being targeted — it's now just remains.
-        Disable<MonsterAI3D>(); Disable<MonsterAI>();
+        Disable<MonsterAI3D>();
         Disable<BillboardAnimator3D>();
-        Disable<PathAgent3D>(); Disable<PathAgent>();
+        Disable<PathAgent3D>();
         var cc = GetComponent<CharacterController>(); if (cc != null) cc.enabled = false;
         foreach (var col in GetComponentsInChildren<Collider>())   col.enabled = false;
         foreach (var col in GetComponentsInChildren<Collider2D>()) col.enabled = false;

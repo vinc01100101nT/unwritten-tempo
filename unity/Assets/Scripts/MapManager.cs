@@ -58,7 +58,6 @@ public static class MapManager
         if (!scene.IsValid() || scene.name == SystemsScene) return;
         SceneManager.SetActiveScene(scene);
         StripForeignGlobals(scene);
-        BindCameraBounds(scene);
     }
 
     static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => Activate(scene);
@@ -70,32 +69,11 @@ public static class MapManager
     {
         foreach (var root in scene.GetRootGameObjects())
         {
-            foreach (var follow in root.GetComponentsInChildren<CameraFollow2D>(true)) Object.Destroy(follow);
             foreach (var cam in root.GetComponentsInChildren<Camera>(true)) { cam.enabled = false; cam.tag = "Untagged"; }
             foreach (var al in root.GetComponentsInChildren<AudioListener>(true)) al.enabled = false;
             foreach (var es in root.GetComponentsInChildren<EventSystem>(true)) es.gameObject.SetActive(false);
             // A map may carry its own Sun for edit-mode lighting; Systems owns the single runtime light.
             foreach (var lt in root.GetComponentsInChildren<Light>(true)) lt.enabled = false;
         }
-    }
-
-    // Clamp the persistent camera to THIS map's ground tilemap (bounds are per-map).
-    static void BindCameraBounds(Scene scene)
-    {
-        var follow = Object.FindFirstObjectByType<CameraFollow2D>();
-        if (follow == null) return;
-
-        Tilemap ground = null;
-        foreach (var root in scene.GetRootGameObjects())
-        {
-            foreach (var tm in root.GetComponentsInChildren<Tilemap>(true))
-            {
-                string n = tm.name.ToLowerInvariant();
-                if (n.Contains("ground") || n.Contains("base") || n.Contains("floor") || n.Contains("terrain"))
-                { ground = tm; break; }
-            }
-            if (ground != null) break;
-        }
-        follow.boundsTilemap = ground;   // null = no clamping, which is fine
     }
 }

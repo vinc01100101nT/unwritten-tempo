@@ -170,23 +170,6 @@ public static class WorldTools
             : "[unwritten] Created NPC (no sprite — select a sliced character sheet first, or assign one in its SpriteRenderer).");
     }
 
-    [MenuItem("Tools/unwritten/World/Create Portal", priority = 230)]
-    static void CreatePortal()
-    {
-        var go = new GameObject("Portal");
-        var box = go.AddComponent<BoxCollider2D>();
-        box.isTrigger = true;
-        box.size = Vector2.one;                 // a one-tile doorway
-        go.AddComponent<Portal>();
-        go.transform.position = new Vector3(-6f, 0f, 0f);
-
-        Undo.RegisterCreatedObjectUndo(go, "Create Portal");
-        EditorSceneManager.MarkSceneDirty(go.scene);
-        Selection.activeGameObject = go;
-        Debug.Log("[unwritten] Created Portal. Set its 'Target Scene', drag it to a doorway/edge, " +
-                  "and make sure both scenes are in File > Build Settings.");
-    }
-
     [MenuItem("Tools/unwritten/World/Create Spawn Point", priority = 231)]
     static void CreateSpawnPoint()
     {

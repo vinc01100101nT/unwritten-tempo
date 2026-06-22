@@ -724,15 +724,8 @@ public static class Build25DSpike
 
     static string PlayerSheetPath()
     {
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Player.prefab");
-        var sr = prefab != null ? prefab.GetComponentInChildren<SpriteRenderer>() : null;
-        if (sr != null && sr.sprite != null)
-        {
-            string p = AssetDatabase.GetAssetPath(sr.sprite.texture);
-            if (!string.IsNullOrEmpty(p)) return p;
-        }
-        const string fallback = "Assets/Art/NinjaAdventure/Actor/Character/Boy/SpriteSheet.png";
-        return File.Exists(fallback) ? fallback : null;
+        const string sheet = "Assets/Art/NinjaAdventure/Actor/Character/Boy/SpriteSheet.png";
+        return File.Exists(sheet) ? sheet : null;
     }
 
     static int FrameIndex(Sprite s)
