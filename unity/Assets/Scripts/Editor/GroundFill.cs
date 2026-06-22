@@ -8,10 +8,10 @@ using UnityEngine.SceneManagement;
 /// One-click <b>ground filler</b> for a hand-authored map. Instead of clicking ground tiles one-by-one in the
 /// Prop Palette, this measures everything you've already placed in the ACTIVE scene, then carpets a rectangle
 /// of <c>ground_grass</c> tiles under it (with a margin) — same bounds-driven, GPU-instanced, collider-free
-/// tiling the town baker uses (<see cref="FantasyTownBuilder"/>), plus the single flat floor collider on the
+/// tiling the ground builder uses (<see cref="PxltgrGround"/>), plus the single flat floor collider on the
 /// Ground layer that the player snaps to and the pathfinder rays against.
 ///
-/// Unlike "Build Fantasy Town", this does NOT touch your hand-placed houses/trees — it only adds the ground.
+/// Unlike a full map generate, this does NOT touch your hand-placed houses/trees — it only adds the ground.
 /// Safe to re-run: it deletes the previous <c>Ground_Fill</c> root first and re-carpets to the current size.
 /// </summary>
 public static class GroundFill

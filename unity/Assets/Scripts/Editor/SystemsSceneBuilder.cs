@@ -15,7 +15,7 @@ using UnityEngine.SceneManagement;
 /// Then it makes Systems Build index 0 and the editor Play-start scene, so pressing Play in any map
 /// boots Systems first and loads that map underneath via <see cref="GameRoot"/> / <see cref="MapManager"/>;
 /// the player arrives at the map's <see cref="SpawnPoint"/> (see <see cref="PersistentPlayer3D"/>). Maps
-/// (built by <see cref="PxltgrFieldBuilder"/> / <see cref="FantasyTownBuilder"/>) only carry terrain + props + mobs + a SpawnPoint.
+/// (built by the <see cref="RecipeGenerator"/>) only carry terrain + props + mobs + a SpawnPoint.
 /// Safe to re-run (rebuilds Systems.unity from the 2.5D rig). Reuses <see cref="Build25DSpike"/> helpers.
 /// </summary>
 public static class SystemsSceneBuilder

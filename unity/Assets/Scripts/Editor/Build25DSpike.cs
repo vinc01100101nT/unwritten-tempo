@@ -22,7 +22,7 @@ using UnityEngine.UI;
 /// NOT throwaway despite its name: the spike's <c>[MenuItem]</c> was removed at the 2.5D pivot, but this
 /// class is now the shared rig-builder library — its public helpers (BuildPlayer/Camera/Light/Character/
 /// HUD/Cursor/Monster, BillboardScale, FootOffsetY, EnsureUniversalRenderer, MonsterSheet) are called by
-/// SystemsSceneBuilder, RegionBuilder, FantasyTownBuilder, PxltgrFieldBuilder, NatureMobs, TrainingDummyTool,
+/// SystemsSceneBuilder, RegionBuilder, RecipeGenerator, TrainingDummyTool,
 /// ScaryPlayer and NinjaGreenPlayer. Keep it; deleting it breaks the whole editor build pipeline.
 /// </summary>
 public static class Build25DSpike
@@ -166,6 +166,7 @@ public static class Build25DSpike
         follow.distance = 9f;
         follow.height = 10f;
         follow.yaw = 0f;
+        follow.minHeight = 0.3f;   // allow right-drag down to a near-horizontal, ground-level view
         if (player != null) follow.target = player.transform;
 
         var fader = go.AddComponent<CameraOccluderFader>();   // fade props that block the view of the player

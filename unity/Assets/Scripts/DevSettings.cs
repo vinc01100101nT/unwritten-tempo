@@ -530,6 +530,7 @@ public class DevSettings : MonoBehaviour
         Cat("Camera");
         F("Distance",         2f, 25f, () => camRig ? camRig.distance : 0f,     v => { if (camRig) camRig.distance = v; });
         F("Height",           1f, 28f, () => camRig ? camRig.height : 0f,       v => { if (camRig) camRig.height = v; });
+        F("Min height",       0f, 6f,  () => camRig ? camRig.minHeight : 0f,    v => { if (camRig) camRig.minHeight = v; });   // floor for right-drag tilt (low = reach ground-level view)
         F("Max pitch",       20f, 80f, () => camRig ? camRig.maxPitch : 0f,     v => { if (camRig) camRig.maxPitch = v; });
         F("Yaw",           -180f, 180f, () => camRig ? camRig.yaw : 0f,         v => { if (camRig) camRig.yaw = v; });
         F("Look-at height",   0f, 3f,  () => camRig ? camRig.lookAtHeight : 0f, v => { if (camRig) camRig.lookAtHeight = v; });

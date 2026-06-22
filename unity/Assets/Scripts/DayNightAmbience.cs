@@ -9,7 +9,7 @@ using UnityEngine;
 /// the light's day/night state — and to the live test tuner. If no <see cref="TimeOfDay"/> exists (a map
 /// played standalone), it falls back to its own internal <see cref="fallbackCycleSeconds"/> timer.
 ///
-/// Lives on the map's <c>Ambient</c> object (added by <c>PxltgrFieldBuilder</c>). Survives the additive
+/// Lives on the map's <c>Ambient</c> object (added by the <c>RecipeGenerator</c>). Survives the additive
 /// Systems load — MapManager strips AudioListeners/cameras/lights, not the map's own AudioSources.
 /// </summary>
 public class DayNightAmbience : MonoBehaviour

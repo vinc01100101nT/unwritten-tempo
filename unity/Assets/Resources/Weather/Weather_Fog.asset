@@ -24,10 +24,14 @@ MonoBehaviour:
     target: 0
     ramp: 6
   - at: 0
-    channel: 1
-    target: 1
-    ramp: 8
-  - at: 8
     channel: 3
     target: 0
+    ramp: 12
+  - at: 0
+    channel: 1
+    target: 0.45
+    ramp: 10
+  - at: 2
+    channel: 4
+    target: 1
     ramp: 12

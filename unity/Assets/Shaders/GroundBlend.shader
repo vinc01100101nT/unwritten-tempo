@@ -1,9 +1,12 @@
-// Opaque, lit GROUND shader that blends two ground textures (grass ↔ dirt) by VERTEX-COLOR ALPHA — the exact
-// trick the Pxltgr "Fantasy Landscape" FBX uses to make grass melt into soil (its ground meshes carry white
-// RGB + a 0..1 alpha ring; the GPU interpolates that alpha across each triangle into a soft gradient). Here the
-// alpha is baked per-vertex by PxltgrGroundBlend (dirt blobs + optional road), so a single mesh gets organic
-// grass→dirt patches with NO hard tile seams and NO transparency overdraw (it stays Opaque — cheap, see
-// PERFORMANCE.md). Textures are sampled by WORLD-XZ so tiling is seamless regardless of mesh size.
+// Opaque, lit GROUND shader that layers THREE ground textures by VERTEX COLOR — the exact trick the Pxltgr
+// "Fantasy Landscape" FBX uses to make grass melt into soil (its ground meshes carry white RGB + a 0..1 alpha
+// ring; the GPU interpolates that across each triangle into a soft gradient). Two channels drive it, both baked
+// per-vertex by PxltgrGroundBlend:
+//   • vertex .a  → grass↔dirt blend (organic noise blobs)      base   = lerp(grass, dirt, a)
+//   • vertex .r  → PATH weight (feathered routed polylines)     albedo = lerp(base, path, r)
+// So the path is its OWN texture (road/soil/stones) feathered on top of the grass+dirt base — distinct yet
+// seamless, no hard tile seams and no transparency overdraw (it stays Opaque — cheap, see PERFORMANCE.md).
+// Textures are sampled by WORLD-XZ so tiling is seamless regardless of mesh size.
 //
 // Writes depth + casts/receives shadows like URP/Lit, so the screen-space weather passes (CloudShadow,
 // WetGround, SnowGround — all read the depth texture) layer on top of it exactly as they do the tiled ground.
@@ -13,8 +16,10 @@ Shader "Unwritten/GroundBlend"
     {
         _GrassMap    ("Grass Map", 2D) = "white" {}
         _DirtMap     ("Dirt Map",  2D) = "white" {}
+        _PathMap     ("Path Map",  2D) = "white" {}
         _GrassTiling ("Grass Tiling (tiles/world-unit)", Float) = 0.4
         _DirtTiling  ("Dirt Tiling (tiles/world-unit)",  Float) = 0.4
+        _PathTiling  ("Path Tiling (tiles/world-unit)",  Float) = 0.4
         _Color       ("Tint", Color) = (1,1,1,1)
     }
 
@@ -41,26 +46,28 @@ Shader "Unwritten/GroundBlend"
 
             TEXTURE2D(_GrassMap);
             TEXTURE2D(_DirtMap);
+            TEXTURE2D(_PathMap);
             // Inline sampler: FORCE trilinear + repeat regardless of how the texture was imported. The Pxltgr
             // ground textures come in sprite-style (Clamp wrap), which with our continuous world-space UVs smears
             // the texture and leaves a bright "cross" at the UV origin (world 0,0) — this sidesteps that entirely.
             SAMPLER(sampler_trilinear_repeat);
-            float _GrassTiling, _DirtTiling;
+            float _GrassTiling, _DirtTiling, _PathTiling;
             float4 _Color;
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
-                float4 color      : COLOR;     // .a = dirt mask baked per-vertex (0 = grass, 1 = dirt)
+                float4 color      : COLOR;     // .a = dirt mask (0 grass→1 dirt); .r = path weight (0 none→1 path)
             };
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 float3 normalWS   : TEXCOORD1;
-                float  blend      : TEXCOORD2; // interpolated vertex-alpha → the soft gradient
-                float  fogCoord   : TEXCOORD3;
+                float  blend      : TEXCOORD2; // interpolated vertex-alpha → the soft grass↔dirt gradient
+                float  pathW      : TEXCOORD3; // interpolated vertex-red   → the feathered path weight
+                float  fogCoord   : TEXCOORD4;
             };
 
             Varyings vert (Attributes IN)
@@ -71,6 +78,7 @@ Shader "Unwritten/GroundBlend"
                 OUT.positionWS = p.positionWS;
                 OUT.normalWS   = TransformObjectToWorldNormal(IN.normalOS);
                 OUT.blend      = IN.color.a;
+                OUT.pathW      = IN.color.r;
                 OUT.fogCoord   = ComputeFogFactor(p.positionCS.z);
                 return OUT;
             }
@@ -80,7 +88,9 @@ Shader "Unwritten/GroundBlend"
                 // World-XZ tiling → seamless across the whole plot, independent of mesh UVs/size.
                 half3 grass = SAMPLE_TEXTURE2D(_GrassMap, sampler_trilinear_repeat, IN.positionWS.xz * _GrassTiling).rgb;
                 half3 dirt  = SAMPLE_TEXTURE2D(_DirtMap,  sampler_trilinear_repeat, IN.positionWS.xz * _DirtTiling).rgb;
-                half3 albedo = lerp(grass, dirt, saturate(IN.blend)) * _Color.rgb;
+                half3 path  = SAMPLE_TEXTURE2D(_PathMap,  sampler_trilinear_repeat, IN.positionWS.xz * _PathTiling).rgb;
+                half3 gd     = lerp(grass, dirt, saturate(IN.blend));     // grass+dirt blended base
+                half3 albedo = lerp(gd, path, saturate(IN.pathW)) * _Color.rgb;   // path feathered on top
 
                 // Cheap Lambert + ambient SH + main-light shadow (ground is large; keep it light).
                 float3 N = normalize(IN.normalWS);

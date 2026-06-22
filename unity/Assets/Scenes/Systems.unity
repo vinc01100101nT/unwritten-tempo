@@ -439,7 +439,7 @@ MonoBehaviour:
   smoothTime: 0.12
   minDistance: 4
   maxDistance: 22
-  minHeight: 2
+  minHeight: 0.3
   maxHeight: 26
   maxPitch: 45
   zoomStep: 2

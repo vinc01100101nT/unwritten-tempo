@@ -3,8 +3,8 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Neutral, pack-agnostic helpers shared by the world bakers (<see cref="PxltgrFieldBuilder"/>,
-/// <see cref="FantasyTownBuilder"/>, <see cref="RegionBuilder"/>, <see cref="GroundFill"/>,
+/// Neutral, pack-agnostic helpers shared by the world toolchain (<see cref="RecipeGenerator"/>,
+/// <see cref="RegionBuilder"/>, <see cref="GroundFill"/>,
 /// <see cref="SystemsSceneBuilder"/>, <see cref="Build25DSpike"/>). These used to live on
 /// <c>NatureStageBuilder</c>, which was tied to the (now-removed) LowPolySimpleNature pack — they were
 /// extracted here so the builders no longer depend on that pack to reach the utilities.

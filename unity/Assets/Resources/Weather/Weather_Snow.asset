@@ -20,6 +20,10 @@ MonoBehaviour:
     target: 0
     ramp: 4
   - at: 0
+    channel: 4
+    target: 0
+    ramp: 10
+  - at: 0
     channel: 1
     target: 0.6
     ramp: 8

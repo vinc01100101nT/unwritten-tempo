@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -10,13 +11,14 @@ using UnityEngine.SceneManagement;
 /// grass-melts-into-soil look. Inspecting that FBX showed the ground meshes carry white RGB vertex colours with a
 /// 0..1 <i>alpha ring</i>; the GPU interpolates that alpha across each triangle into a soft gradient, and an
 /// alpha-blended material reveals the dirt beneath. We do the flat-field equivalent here: ONE subdivided plane
-/// whose per-vertex alpha is painted from noise (organic dirt blobs + an optional road), rendered by the OPAQUE
-/// <c>Unwritten/GroundBlend</c> shader which <c>lerp</c>s grass↔dirt by that alpha. Result: dirt patches and the
-/// road feather into the grass with NO hard tile seams — and, being opaque, no transparency overdraw
+/// whose per-vertex alpha is painted from noise (organic dirt blobs), plus a per-vertex RED channel carrying the
+/// feathered weight of the routed <see cref="PathRouting"/> polylines, rendered by the OPAQUE
+/// <c>Unwritten/GroundBlend</c> shader which layers grass↔dirt (by alpha) then the path tile (by red). Result:
+/// dirt patches and winding paths feather into the grass with NO hard tile seams — and, being opaque, no overdraw
 /// (see PERFORMANCE.md; one mesh + one draw beats hundreds of feathered transparent tiles).
 ///
-/// Drop-in shaped like <see cref="PxltgrGround.LayPlot"/> (same surface at y=0, same flat floor collider +
-/// <see cref="Pathfinder3DConfig"/> via <see cref="PxltgrGround.AddWalkableFloor"/>), so scatter/mobs/pathfinding
+/// Produces the surface at y=0 + a flat floor collider + a <see cref="Pathfinder3DConfig"/> via
+/// <see cref="PxltgrGround.AddWalkableFloor"/>, so scatter/mobs/pathfinding
 /// all work unchanged. Textures are pulled from the pack's own <c>ground_grass</c> / <c>ground_soil</c> prefab
 /// materials, so it tracks <c>Fix Pxltgr Materials</c> with no extra wiring.
 /// </summary>
@@ -33,15 +35,24 @@ public static class PxltgrGroundBlend
     /// <c>ground_grass</c> prefab or the <c>Unwritten/GroundBlend</c> shader is missing (caller shows a dialog).
     /// </summary>
     /// <param name="dirtAmount">0 = nearly all grass, 1 = mostly dirt. ~0.3 gives occasional organic patches.</param>
-    /// <param name="roadHalf">Half-width of an optional central dirt road strip along X (0 = no road).</param>
+    /// <param name="paths">Routed path polylines (world XZ) baked into the vertex red channel as a feathered path
+    /// weight. Null/empty = no paths.</param>
+    /// <param name="pathWidth">Full width of the path in world units (0 = no path even if routes are supplied).</param>
+    /// <param name="pathTexName">Ground prop name whose Base Map textures the path (e.g. "ground_road",
+    /// "ground_soil", "ground_stones"). Falls back to the dirt texture if missing.</param>
     /// <param name="cell">Vertex spacing in world units — smaller = smoother patch edges, more verts.</param>
     public static GameObject LayPlot(Scene scene, string rootName, Vector3 center, float sizeX, float sizeZ,
-                                     int groundLayer, int seed = 73, float roadHalf = 0f,
-                                     float dirtAmount = 0.3f, float cell = 0.8f)
+                                     int groundLayer, int seed = 73,
+                                     IReadOnlyList<PathRouting.Route> paths = null, float pathWidth = 0f,
+                                     string pathTexName = null, float dirtAmount = 0.3f, float cell = 0.8f)
     {
         var grassTex = GroundBaseMap("ground_grass");
         if (grassTex == null) return null;
         var dirtTex = GroundBaseMap("ground_soil") ?? GroundBaseMap("ground_road");
+        var pathTex = (!string.IsNullOrEmpty(pathTexName) ? GroundBaseMap(pathTexName) : null) ?? dirtTex;
+        bool hasPath = paths != null && paths.Count > 0 && pathWidth > 0f;
+        float pathHalf = pathWidth * 0.5f;
+        float pathFeather = Mathf.Max(0.4f, pathWidth * 0.25f);
 
         var shader = Shader.Find("Unwritten/GroundBlend");
         if (shader == null)
@@ -77,16 +88,18 @@ public static class PxltgrGroundBlend
                         + Mathf.PerlinNoise(wx * 0.13f + ox2, wz * 0.13f + oz2) * 0.35f;
                 float a = Smooth(thresh, thresh + 0.13f, n);
 
-                if (roadHalf > 0f)   // central dirt road along X, soft shoulders
+                // Path weight in the RED channel: 1 on the routed polylines, feathered to 0 at the shoulders.
+                float pathW = 0f;
+                if (hasPath)
                 {
-                    float d = Mathf.Abs(wz - center.z);
-                    a = Mathf.Max(a, 1f - Smooth(roadHalf - 0.6f, roadHalf + 0.2f, d));
+                    float d = PathRouting.MinDistanceXZ(new Vector2(wx, wz), paths);
+                    pathW = 1f - Smooth(pathHalf - pathFeather, pathHalf + pathFeather, d);
                 }
 
                 verts[vi] = new Vector3(lx, 0f, lz);
                 norms[vi] = Vector3.up;
                 uvs[vi]   = new Vector2(wx, wz);
-                cols[vi]  = new Color(1f, 1f, 1f, Mathf.Clamp01(a));
+                cols[vi]  = new Color(Mathf.Clamp01(pathW), 1f, 1f, Mathf.Clamp01(a));   // .r=path, .a=dirt
                 vi++;
             }
 
@@ -123,8 +136,10 @@ public static class PxltgrGroundBlend
         else mat.shader = shader;
         mat.SetTexture("_GrassMap", grassTex);
         if (dirtTex != null) mat.SetTexture("_DirtMap", dirtTex);
+        if (pathTex != null) mat.SetTexture("_PathMap", pathTex);
         mat.SetFloat("_GrassTiling", 0.4f);   // ~one tile per 2.5 units → matches the old tiled texel density
         mat.SetFloat("_DirtTiling", 0.4f);
+        mat.SetFloat("_PathTiling", 0.4f);
         EditorUtility.SetDirty(mat);
 
         // ── Scene objects ───────────────────────────────────────────────────────────────────────────────

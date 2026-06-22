@@ -6,165 +6,22 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// One-click bakers for the M2 starting REGION — the skeleton loop: a safe <b>Town</b> hub linked to the
-/// existing <b>NatureStage</b> field, with an RO-style <b>field boss</b> roaming the field. Mirrors
-/// <see cref="PxltgrFieldBuilder"/>'s content-only pattern (terrain + Ground layer + pathfinding + spawns,
-/// no player/camera — those live in the persistent <c>Systems</c> scene) and reuses the <see cref="WorldBuildUtil"/> helpers.
-///
-/// Travel contract (ids matched by <see cref="PersistentPlayer3D"/> on arrival):
+/// Shared world-authoring helpers used across the toolchain — NOT a map generator (that's the single
+/// <see cref="RecipeGenerator"/> now). This holds the reusable building blocks the recipe generator and the
+/// Link Maps tool depend on:
 /// <list type="bullet">
-/// <item>Town has SpawnPoints <c>Start</c> (boot) + <c>FromField</c>, and a <see cref="Portal3D"/> → NatureStage @ <c>FromTown</c>.</item>
-/// <item>Field gets SpawnPoint <c>FromTown</c> + a <see cref="Portal3D"/> → Town @ <c>FromField</c> (added non-destructively).</item>
+/// <item><b>Spawns &amp; portals:</b> <see cref="MakeSpawn"/>/<see cref="EnsureSpawn"/>,
+/// <see cref="MakePortal"/>/<see cref="EnsurePortal"/> — a <see cref="Portal3D"/> + arrival <see cref="SpawnPoint"/>,
+/// with the warp ring colour auto-chosen from the destination map (town=yellow, field=green …).</item>
+/// <item><b>Authoring:</b> Fit Portal Triggers, Drop Selected to Ground.</item>
+/// <item><b>Content:</b> Spawn Field Boss (hand-place a unique boss into the open map).</item>
 /// </list>
+/// Travel contract (ids matched by <see cref="PersistentPlayer3D"/> on arrival): a portal stores the target
+/// scene name + the id of the <see cref="SpawnPoint"/> to arrive at; see MapLinker for the From_&lt;map&gt; scheme.
 /// </summary>
 public static class RegionBuilder
 {
-    const string TownScenePath = "Assets/Scenes/Town.unity";
-    const string FieldScenePath = "Assets/Scenes/NatureStage.unity";
-    const string FieldScene = "NatureStage";
-    const string TownScene  = "Town";
-    const float  TownX = 30f;   // bare-hub plot size (world units); the furnished town uses FantasyTownBuilder
-    const float  TownZ = 22f;
-
-    // ── 1) TOWN HUB ────────────────────────────────────────────────────────────────────────────────
-    [MenuItem("Tools/unwritten/World/Build Town Hub", priority = 220)]
-    static void BuildTownHub()
-    {
-        if (EditorApplication.isPlayingOrWillChangePlaymode)
-        { EditorUtility.DisplayDialog("Town Hub", "Exit Play mode first, then re-run.", "OK"); return; }
-
-        int groundLayer = WorldBuildUtil.EnsureGroundLayer();
-        if (groundLayer < 0)
-        { EditorUtility.DisplayDialog("Town Hub", "No free layer slot for 'Ground'. Free one in Project Settings ▸ Tags and Layers.", "OK"); return; }
-        int groundMask = 1 << groundLayer;
-
-        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-        SceneManager.SetActiveScene(scene);
-
-        Build25DSpike.BuildLight();   // authoring Sun (disabled at Play; Systems owns the runtime light)
-
-        // Flat Pxltgr grass plot (central road) + one flat floor collider + a Pathfinder3DConfig.
-        var ground = PxltgrGround.LayPlot(scene, "Ground_Town", Vector3.zero, TownX, TownZ, groundLayer, roadHalf: 1.6f);
-        if (ground == null)
-        {
-            EditorUtility.DisplayDialog("Town Hub",
-                "No 'ground_grass' prefab in Assets/Prefabs/Props.\n\nRun Build Prefabs ▸ Fantasy Assets (Pxltgr) → Props first.", "OK");
-            EditorSceneManager.CloseScene(scene, true);
-            return;
-        }
-
-        // The portal to the field sits toward the +X edge; spawns sit a few units back from it (so you don't
-        // bounce straight back through on arrival, and don't boot on top of it).
-        Vector3 portalPos = WorldBuildUtil.SurfacePoint(new Vector3(TownX * 0.5f - 3f,   0f, 0f), groundMask);
-        Vector3 startPos  = WorldBuildUtil.SurfacePoint(Vector3.zero, groundMask);
-        Vector3 backPos   = WorldBuildUtil.SurfacePoint(new Vector3(TownX * 0.5f - 6.5f, 0f, 0f), groundMask);
-
-        MakeSpawn(scene, "Start", startPos);
-        MakeSpawn(scene, "FromField", backPos);
-        MakePortal(scene, "Portal_ToField", portalPos, FieldScene, "FromTown", new Color(0.4f, 0.8f, 1f));
-
-        if (!Directory.Exists("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
-        var open = SceneManager.GetSceneByPath(TownScenePath);
-        if (open.IsValid() && open.isLoaded && open != scene) EditorSceneManager.CloseScene(open, true);
-
-        EditorSceneManager.SaveScene(scene, TownScenePath);
-        WorldBuildUtil.RegisterInBuildSettings(TownScenePath);
-        EditorSceneManager.OpenScene(TownScenePath, OpenSceneMode.Single);
-        AssetDatabase.SaveAssets();
-
-        EditorUtility.DisplayDialog("Town Hub — built",
-            $"Built {TownScenePath} (ground + Ground layer + pathfinding + spawns + a portal to the field).\n\n" +
-            "NEXT:\n" +
-            "1. Open NatureStage and run Region ▸ Link Field → Town (adds the return portal).\n" +
-            "2. (optional) Region ▸ Spawn Field Boss while NatureStage is open.\n" +
-            "3. Hand-finish the town art (houses / NPCs / props).\n\n" +
-            "PLAY: open Town and press Play — Systems boots, the town loads, you spawn at 'Start'. Walk into the " +
-            "cyan pad (+X) to warp to the field; walk into the field's pad to come back.", "OK");
-        Debug.Log($"[unwritten] Town Hub built → {TownScenePath} (Ground layer {groundLayer}).");
-    }
-
-    // ── 2) LINK FIELD → TOWN ───────────────────────────────────────────────────────────────────────
-    [MenuItem("Tools/unwritten/World/Link Field → Town (open field map)", priority = 222)]
-    static void LinkFieldToTown()
-    {
-        if (EditorApplication.isPlayingOrWillChangePlaymode)
-        { EditorUtility.DisplayDialog("Link Field → Town", "Exit Play mode first, then re-run.", "OK"); return; }
-
-        var scene = SceneManager.GetActiveScene();
-        if (scene.name == TownScene)
-        { EditorUtility.DisplayDialog("Link Field → Town", "The active scene is Town. Open the FIELD map (NatureStage) first, then re-run.", "OK"); return; }
-
-        var (addedSpawn, addedPortal) = LinkFieldBack(scene);
-
-        EditorSceneManager.MarkSceneDirty(scene);
-        EditorSceneManager.SaveScene(scene);
-        EditorUtility.DisplayDialog("Link Field → Town — done",
-            $"Wired '{scene.name}' back to the Town:\n" +
-            $"• SpawnPoint 'FromTown' {(addedSpawn ? "added" : "already present")}\n" +
-            $"• Portal_ToTown → Town @ 'FromField' {(addedPortal ? "added" : "already present")}\n\n" +
-            "The gold pad warps back to town. Move the pad/spawn where you want.", "OK");
-        Debug.Log($"[unwritten] Linked field '{scene.name}' → Town.");
-    }
-
-    // ── 2b) RELINK BOTH WAYS + REFRESH WARP VFX ──────────────────────────────────────────────────────
-    // Wires the full Town ↔ NatureStage travel loop AND re-skins every existing portal with the current
-    // warp marker (the Magic circle VFX). Safe to re-run; preserves hand-finished art in both scenes.
-    [MenuItem("Tools/unwritten/World/Relink Town ↔ Field + Refresh Warp VFX", priority = 221)]
-    static void RelinkRegion()
-    {
-        if (EditorApplication.isPlayingOrWillChangePlaymode)
-        { EditorUtility.DisplayDialog("Relink Region", "Exit Play mode first, then re-run.", "OK"); return; }
-
-        // ── Town: ensure the portal to the field + refresh its VFX ──
-        var town = EditorSceneManager.OpenScene(TownScenePath, OpenSceneMode.Single);
-        SceneManager.SetActiveScene(town);
-        int gl = WorldBuildUtil.EnsureGroundLayer();
-        int gm = gl >= 0 ? 1 << gl : ~0;
-        Physics.SyncTransforms();
-        Vector3 portalPos = WorldBuildUtil.SurfacePoint(new Vector3(TownX * 0.5f - 3f, 0f, 0f), gm);
-        bool addedTownPortal = EnsurePortal(town, "Portal_ToField", portalPos, FieldScene, "FromTown", new Color(0.4f, 0.8f, 1f));
-        int townFx = RefreshWarpFxInScene(town);
-        EditorSceneManager.MarkSceneDirty(town);
-        EditorSceneManager.SaveScene(town);
-
-        // ── NatureStage: ensure the return portal + refresh its VFX ──
-        var field = EditorSceneManager.OpenScene(FieldScenePath, OpenSceneMode.Single);
-        SceneManager.SetActiveScene(field);
-        var (addedSpawn, addedFieldPortal) = LinkFieldBack(field);
-        int fieldFx = RefreshWarpFxInScene(field);
-        EditorSceneManager.MarkSceneDirty(field);
-        EditorSceneManager.SaveScene(field);
-        AssetDatabase.SaveAssets();
-
-        EditorUtility.DisplayDialog("Relink Region — done",
-            "Town ↔ NatureStage are linked and every warp now uses the Magic circle VFX.\n\n" +
-            $"Town: portal {(addedTownPortal ? "added" : "already present")}, {townFx} warp(s) refreshed.\n" +
-            $"NatureStage: spawn {(addedSpawn ? "added" : "present")}, return portal {(addedFieldPortal ? "added" : "present")}, {fieldFx} warp(s) refreshed.\n\n" +
-            "NatureStage is the open scene. Open Town and press Play to test the loop.", "OK");
-        Debug.Log($"[unwritten] Relinked region; refreshed {townFx + fieldFx} warp VFX.");
-    }
-
-    // Strip any old warp marker children (cylinder "WarpPad" or a prior "WarpFX") off every Portal3D in the
-    // scene and re-attach the current marker. Returns how many portals were refreshed.
-    static int RefreshWarpFxInScene(Scene scene)
-    {
-        int n = 0;
-        foreach (var p in Object.FindObjectsByType<Portal3D>(FindObjectsSortMode.None))
-        {
-            if (p.gameObject.scene != scene) continue;
-            for (int i = p.transform.childCount - 1; i >= 0; i--)
-            {
-                var c = p.transform.GetChild(i);
-                if (c.name == "WarpPad" || c.name == "WarpFX") Object.DestroyImmediate(c.gameObject);
-            }
-            // Normalise stale portals to the current standards: unit-scale root, fresh FX, fitted trigger.
-            p.transform.localScale = Vector3.one;
-            AddWarpFx(p.gameObject);
-            if (p.TryGetComponent<BoxCollider>(out var box)) FitTriggerToFx(p.transform, box);
-            n++;
-        }
-        return n;
-    }
+    const string TownScene = "Town";   // used by Spawn Field Boss to refuse spawning in the safe hub
 
     [MenuItem("Tools/unwritten/World/Fit Portal Triggers (active scene)", priority = 235)]
     static void FitPortalTriggersMenu()
@@ -308,30 +165,6 @@ public static class RegionBuilder
         Debug.Log($"[unwritten] Field boss '{MobRoster.Boss.name}' spawned in '{scene.name}'.");
     }
 
-    /// <summary>Wire an open FIELD scene back to the Town: ensure a "FromTown" SpawnPoint + a Portal3D →
-    /// Town @ "FromField", placed just west of the field's default arrival. Idempotent. Returns what was
-    /// added. Shared by the menu item and the Fantasy Town builder (which calls it on NatureStage so the
-    /// whole travel loop is wired in one click). Caller saves the scene.</summary>
-    public static (bool addedSpawn, bool addedPortal) LinkFieldBack(Scene scene)
-    {
-        int groundLayer = WorldBuildUtil.EnsureGroundLayer();
-        int groundMask = groundLayer >= 0 ? 1 << groundLayer : ~0;
-        Physics.SyncTransforms();
-
-        // Anchor near the field's default arrival ("Start" if present, else origin).
-        Vector3 anchor = Vector3.zero;
-        foreach (var sp in Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None))
-            if (sp.id == "Start") { anchor = sp.transform.position; break; }
-
-        Vector3 spawnPos  = WorldBuildUtil.SurfacePoint(anchor + new Vector3(-4.5f, 0f, 0f), groundMask);
-        Vector3 portalPos = WorldBuildUtil.SurfacePoint(anchor + new Vector3(-8f, 0f, 0f), groundMask);
-
-        bool addedSpawn  = EnsureSpawn(scene, "FromTown", spawnPos);
-        bool addedPortal = EnsurePortal(scene, "Portal_ToTown", portalPos, TownScene, "FromField", new Color(1f, 0.85f, 0.4f));
-        WorldBuildUtil.RegisterInBuildSettings(TownScenePath);   // so the field's portal can load Town by name
-        return (addedSpawn, addedPortal);
-    }
-
     // ── HAND-PLACE HELPER: snap dragged-in props onto the terrain ────────────────────────────────────
     [MenuItem("Tools/unwritten/Authoring/Drop Selected to Ground", priority = 411)]
     static void DropSelectedToGround()
@@ -447,7 +280,7 @@ public static class RegionBuilder
     // Attach the visible warp marker so the player can see the doorway in-game: the destination-coloured
     // upright Hovl "Portal" ring if it's present, otherwise a tinted cylinder fallback (hand-finished later).
     // The colour is driven by where the portal LEADS (its Portal3D.targetScene) — so this works the same for
-    // fresh bakes and for RefreshWarpFxInScene re-attaching markers onto existing portals.
+    // fresh bakes and for the Link Maps tool re-attaching markers onto existing portals.
     static void AddWarpFx(GameObject portal)
     {
         var p3 = portal.GetComponent<Portal3D>();
