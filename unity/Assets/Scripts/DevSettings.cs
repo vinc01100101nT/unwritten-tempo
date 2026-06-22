@@ -67,6 +67,9 @@ public class DevSettings : MonoBehaviour
     CameraFollow3D camRig;
     CameraOccluderFader fader;
     TimeOfDay tod;
+    GameCalendar cal;
+    WeatherDirector wx;
+    WeatherChannels wc;
     DayNightLight sun;
     CloudShadows cloud;
     RainOverlay rain;
@@ -75,6 +78,7 @@ public class DevSettings : MonoBehaviour
     RainAudio rainAudio;
     SnowOverlay snow;
     SnowGround snowGround;
+    FogOverlay fog;
     FootstepTracker foot;
     CharacterDye dye;
     MobRespawn[] respawns;
@@ -95,6 +99,9 @@ public class DevSettings : MonoBehaviour
         if (camRig == null)   camRig   = FindFirstObjectByType<CameraFollow3D>();
         if (fader == null)    fader    = FindFirstObjectByType<CameraOccluderFader>();
         if (tod == null)      tod      = TimeOfDay.Instance;
+        if (cal == null)      cal      = GameCalendar.Instance;
+        if (wx == null)       wx       = WeatherDirector.Instance;
+        if (wc == null)       wc       = WeatherChannels.Instance;
         if (sun == null)      sun      = FindFirstObjectByType<DayNightLight>();
         if (cloud == null)    cloud    = FindFirstObjectByType<CloudShadows>();
         if (rain == null)     rain     = FindFirstObjectByType<RainOverlay>();
@@ -103,6 +110,7 @@ public class DevSettings : MonoBehaviour
         if (rainAudio == null) rainAudio = FindFirstObjectByType<RainAudio>();
         if (snow == null)     snow     = FindFirstObjectByType<SnowOverlay>();
         if (snowGround == null) snowGround = FindFirstObjectByType<SnowGround>();
+        if (fog == null)      fog      = FindFirstObjectByType<FogOverlay>();
         if (foot == null)     foot     = FindFirstObjectByType<FootstepTracker>();
         if (dye == null)      dye      = FindFirstObjectByType<CharacterDye>();
     }
@@ -225,6 +233,23 @@ public class DevSettings : MonoBehaviour
     void AfflictMe(Ailment a, float secs, float mag)
     {
         if (player != null) Status.Apply(player.gameObject, a, secs, mag);
+    }
+
+    // ---- Calendar & Weather helpers -------------------------------------------
+    // The weather-channels hub (source of truth for rain/cloud/snow/puddle), created on demand so the knobs work
+    // even on a Systems scene baked before it joined the rig.
+    WeatherChannels WC() => wc != null ? wc : (wc = WeatherChannels.Ensure());
+    // A DevSettings master slider snaps its channel for instant feedback (manual tuning wants no lag).
+    float ChGet(WeatherChannel c) => wc != null ? wc.Shown(c) : 0f;
+    void  ChSnap(WeatherChannel c, float v) => WC().Snap(c, v);
+
+    // Forcing a preset implies manual control, so flip autoFromCalendar off and step to the next weather.
+    void CycleForcedWeather()
+    {
+        if (wx == null) return;
+        wx.autoFromCalendar = false;
+        int count = (int)WeatherDirector.Preset.Fog + 1;   // Fog is the last enum member
+        wx.forcedPreset = (WeatherDirector.Preset)(((int)wx.forcedPreset + 1) % count);
     }
 
     void BuildKnobs()
@@ -372,6 +397,19 @@ public class DevSettings : MonoBehaviour
         FSun("Night sprite R",  0f, 1f,    () => sun ? sun.nightSpriteTint.r : 0f, v => { if (sun) { var c = sun.nightSpriteTint; c.r = v; sun.nightSpriteTint = c; } });
         FSun("Night sprite G",  0f, 1f,    () => sun ? sun.nightSpriteTint.g : 0f, v => { if (sun) { var c = sun.nightSpriteTint; c.g = v; sun.nightSpriteTint = c; } });
         FSun("Night sprite B",  0f, 1f,    () => sun ? sun.nightSpriteTint.b : 0f, v => { if (sun) { var c = sun.nightSpriteTint; c.b = v; sun.nightSpriteTint = c; } });
+        Sub("Calendar & Weather");
+        // The deterministic date + per-day weather (GameCalendar / WeatherDirector). Scrub days to fast-test season
+        // and weather rollover; force a preset to lock the sky for a screenshot. Day-scrub detaches from real UTC.
+        Act(() => "▶ " + (cal != null ? cal.DateString : "-") + "   ·   " +
+                  (wx != null ? WeatherDirector.TagOf(wx.Current) : "-") + "    (tap = live clock)",
+            () => { if (tod) tod.useRealClock = true; });
+        B("Auto weather (calendar)", () => wx && wx.autoFromCalendar, v => { if (wx) wx.autoFromCalendar = v; });
+        Act(() => "Force weather: " + (wx != null ? WeatherDirector.TagOf(wx.forcedPreset) : "-") + "    ▶ cycle",
+            CycleForcedWeather);
+        Act("◀  Previous day",               () => { if (tod) tod.NudgeDays(-1); });
+        Act("Next day  ▶",                   () => { if (tod) tod.NudgeDays(1); });
+        Act("Skip ▶ next season (+12 days)", () => { if (tod) tod.NudgeDays(GameCalendar.DaysPerSeason); });
+
         Sub("Night Lamps");
         // Night lamps — global dials over every NightLight prop (houses/candles/lamps). They self-update each
         // frame, so these apply live without needing a sun Refresh.
@@ -381,7 +419,8 @@ public class DevSettings : MonoBehaviour
         Sub("Cloud Shadows");
         // Cloud shadows — coverage/darkness/softness rebake the texture (MarkDirty); the rest are live.
         B("Cloud shadows",    () => cloud && cloud.enabled,                    v => { if (cloud) cloud.enabled = v; });
-        F("Cloud strength",   0f, 1f,    () => cloud ? cloud.strength : 0f,    v => { if (cloud) cloud.strength = v; });
+        // Cloud cover is the Cloud weather channel now (a sequence drives it); snap it here for manual tuning.
+        F("Cloud strength",   0f, 1f,    () => ChGet(WeatherChannel.Cloud),    v => ChSnap(WeatherChannel.Cloud, v));
         F("Cloud coverage",   0f, 1f,    () => cloud ? cloud.coverage : 0f,    v => { if (cloud) { cloud.coverage = v; cloud.MarkDirty(); } });
         F("Cloud darkness",   0f, 1f,    () => cloud ? cloud.darkness : 0f,    v => { if (cloud) { cloud.darkness = v; cloud.MarkDirty(); } });
         F("Cloud softness",   0.01f, 0.5f, () => cloud ? cloud.softness : 0f,  v => { if (cloud) { cloud.softness = v; cloud.MarkDirty(); } });
@@ -391,9 +430,9 @@ public class DevSettings : MonoBehaviour
         Sub("Rain");
         // Rain (spike) — screen-space overlay; created on demand the first time you raise it, so it works even
         // on a Systems scene baked before RainOverlay joined the rig. Zero GPU cost while intensity is 0.
-        B("Rain",             () => rain && rain.enabled && rain.intensity > 0f,
-                              v => { rain = RainOverlay.Ensure(); rain.enabled = true; rain.intensity = v ? Mathf.Max(0.5f, rain.intensity) : 0f; });
-        F("Rain intensity",   0f, 1f,    () => rain ? rain.intensity : 0f,     v => { if (!rain) rain = RainOverlay.Ensure(); rain.enabled = true; rain.intensity = v; });
+        B("Rain",             () => ChGet(WeatherChannel.Rain) > 0f,
+                              v => { rain = RainOverlay.Ensure(); rain.enabled = true; ChSnap(WeatherChannel.Rain, v ? Mathf.Max(0.5f, ChGet(WeatherChannel.Rain)) : 0f); });
+        F("Rain intensity",   0f, 1f,    () => ChGet(WeatherChannel.Rain),     v => { rain = RainOverlay.Ensure(); rain.enabled = true; ChSnap(WeatherChannel.Rain, v); });
         F("Rain fall speed",  0.2f, 20f, () => rain ? rain.fallSpeed : 0f,     v => { if (rain) rain.fallSpeed = v; });
         F("Rain slant",      -1f, 1f,    () => rain ? rain.slant : 0f,         v => { if (rain) rain.slant = v; });
         F("Rain density",     20f, 160f, () => rain ? rain.density : 0f,       v => { if (rain) rain.density = v; });
@@ -412,12 +451,15 @@ public class DevSettings : MonoBehaviour
                               v => { WeatherFX.Quality = v ? WeatherFX.Tier.High : WeatherFX.Tier.Medium;
                                      if (v) wet = WetGround.Ensure(); });
         F("Wet darken",       0f, 1f,    () => wet ? wet.darken : 0f,          v => { if (wet) wet.darken = v; });
-        // After-rain feel: puddle COVERAGE is self-driven (decoupled from live rain) — it spreads in after rain
-        // starts and lingers/recedes after it stops. "Wet puddles" below is the coverage CAP; these tune the timing.
-        F("Wet soak delay",   0f, 30f,   () => wet ? wet.wetDelayIn : 0f,      v => { if (wet) wet.wetDelayIn = v; });
-        F("Wet build time",   0.1f, 60f, () => wet ? wet.wetRampIn : 0f,       v => { if (wet) wet.wetRampIn = v; });
-        F("Wet dry delay",    0f, 60f,   () => wet ? wet.wetDelayOut : 0f,     v => { if (wet) wet.wetDelayOut = v; });
-        F("Wet dry time",     0.1f, 60f, () => wet ? wet.wetRampOut : 0f,      v => { if (wet) wet.wetRampOut = v; });
+        // Puddles are their own weather CHANNEL now. "Puddle coverage" is the live channel (0..1, ×"Wet puddles" cap);
+        // dragging it takes manual control (Auto puddle OFF). The four timers below drive the AUTO-puddle behaviour —
+        // used when rain is raised manually and no sequence is authoring puddles (they're authored in WeatherSequences).
+        F("Puddle coverage",  0f, 1f,    () => ChGet(WeatherChannel.Puddle),   v => { WC().autoPuddle = false; ChSnap(WeatherChannel.Puddle, v); });
+        B("Auto puddle (from rain)", () => wc && wc.autoPuddle,                 v => WC().autoPuddle = v);
+        F("Puddle soak delay",0f, 30f,   () => wc ? wc.puddleSoakDelay : 0f,   v => WC().puddleSoakDelay = v);
+        F("Puddle build time",0.1f, 60f, () => wc ? wc.puddleSpread : 0f,      v => WC().puddleSpread = v);
+        F("Puddle dry delay", 0f, 60f,   () => wc ? wc.puddleDryDelay : 0f,    v => WC().puddleDryDelay = v);
+        F("Puddle dry time",  0.1f, 60f, () => wc ? wc.puddleRecede : 0f,      v => WC().puddleRecede = v);
         F("Wet puddles",      0f, 1f,    () => wet ? wet.puddleAmount : 0f,    v => { if (wet) wet.puddleAmount = v; });
         F("Wet puddle size",  0.03f, 0.4f, () => wet ? wet.puddleScale : 0f,   v => { if (wet) wet.puddleScale = v; });
         F("Wet reflection",   0f, 4f,    () => wet ? wet.specStrength : 0f,    v => { if (wet) wet.specStrength = v; });
@@ -444,11 +486,11 @@ public class DevSettings : MonoBehaviour
         // Snow — drifting-flake overlay (all tiers, cheap) + ground build-up on roofs/terrain. The blanket ramps
         // up/melts over "Snow build time"; footprints in the snow are a High-tier extra (toggle Heavy weather on).
         // Created on demand like rain so it works on a Systems scene baked before snow joined the rig. OFF by default.
-        B("Snow",             () => snow && snow.enabled && snow.intensity > 0f,
-                              v => { snow = SnowOverlay.Ensure(); snow.enabled = true; snow.intensity = v ? Mathf.Max(0.6f, snow.intensity) : 0f;
-                                     if (v) snowGround = SnowGround.Ensure(); });
-        F("Snow intensity",   0f, 1f,    () => snow ? snow.intensity : 0f,     v => { if (!snow) snow = SnowOverlay.Ensure(); snow.enabled = true; snow.intensity = v;
-                                                                                       if (!snowGround) snowGround = SnowGround.Ensure(); });
+        B("Snow",             () => ChGet(WeatherChannel.Snow) > 0f,
+                              v => { snow = SnowOverlay.Ensure(); snow.enabled = true; snowGround = SnowGround.Ensure();
+                                     ChSnap(WeatherChannel.Snow, v ? Mathf.Max(0.6f, ChGet(WeatherChannel.Snow)) : 0f); });
+        F("Snow intensity",   0f, 1f,    () => ChGet(WeatherChannel.Snow),     v => { snow = SnowOverlay.Ensure(); snow.enabled = true;
+                                                                                       snowGround = SnowGround.Ensure(); ChSnap(WeatherChannel.Snow, v); });
         F("Snow fall speed",  0.5f, 12f, () => snow ? snow.fallSpeed : 0f,     v => { if (snow) snow.fallSpeed = v; });
         F("Snow drift",       0f, 1f,    () => snow ? snow.drift : 0f,         v => { if (snow) snow.drift = v; });
         F("Snow density",     10f, 120f, () => snow ? snow.density : 0f,       v => { if (snow) snow.density = v; });
@@ -469,6 +511,20 @@ public class DevSettings : MonoBehaviour
         // closer/farther). Lower this if steps look too far apart.
         F("Footprint gap",    0.12f, 1.2f, () => foot ? foot.strideDist : 0f,   v => { foot = FootstepTracker.Ensure(); foot.strideDist = v; });
         F("Footprint spacing",0f, 0.6f,  () => foot ? foot.footSpacing : 0f,    v => { foot = FootstepTracker.Ensure(); foot.footSpacing = v; });
+        Sub("Fog");
+        // Fog — DEPTH fog (all tiers, one pass), its own weather CHANNEL. Fogs by true distance from the camera so far
+        // trees/ground dissolve into haze. Created on demand like rain/snow so it works on a Systems scene baked before
+        // FogOverlay joined the rig. Zero GPU cost while intensity is 0.
+        B("Fog",              () => ChGet(WeatherChannel.Fog) > 0f,
+                              v => { fog = FogOverlay.Ensure(); fog.enabled = true; ChSnap(WeatherChannel.Fog, v ? Mathf.Max(0.7f, ChGet(WeatherChannel.Fog)) : 0f); });
+        F("Fog intensity",    0f, 1f,    () => ChGet(WeatherChannel.Fog),      v => { fog = FogOverlay.Ensure(); fog.enabled = true; ChSnap(WeatherChannel.Fog, v); });
+        F("Fog start dist",   0f, 60f,   () => fog ? fog.startDistance : 0f,   v => { if (fog) fog.startDistance = v; });
+        F("Fog full dist",    1f, 150f,  () => fog ? fog.fullDistance : 0f,    v => { if (fog) fog.fullDistance = v; });
+        F("Fog coverage",     0f, 1f,    () => fog ? fog.coverage : 0f,        v => { if (fog) fog.coverage = v; });
+        F("Fog floor",        0f, 1f,    () => fog ? fog.floor : 0f,           v => { if (fog) fog.floor = v; });
+        F("Fog patch size",   2f, 120f,  () => fog ? fog.patchSize : 0f,       v => { if (fog) fog.patchSize = v; });
+        F("Fog drift speed",  0f, 4f,    () => fog ? fog.driftSpeed : 0f,      v => { if (fog) fog.driftSpeed = v; });
+        F("Fog roll in",      0f, 30f,   () => fog ? fog.rampTime : 0f,        v => { if (fog) fog.rampTime = v; });
 
         // ---- Camera — CameraFollow3D ---------------------------------------
         Cat("Camera");

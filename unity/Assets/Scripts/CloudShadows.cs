@@ -66,6 +66,15 @@ public class CloudShadows : MonoBehaviour
     static readonly int ScrollXID  = Shader.PropertyToID("_ScrollX");
     static readonly int ScrollYID  = Shader.PropertyToID("_ScrollY");
 
+    /// <summary>Find the live cloud-shadows effect, creating one if none exists yet (used by the weather director so
+    /// clouds work even on a Systems scene baked before this component joined the rig; normally it's on the Sun).</summary>
+    public static CloudShadows Ensure()
+    {
+        var c = FindFirstObjectByType<CloudShadows>();
+        if (c == null) c = new GameObject("CloudShadows").AddComponent<CloudShadows>();
+        return c;
+    }
+
     void Awake()
     {
         seedX = Random.value * 1000f;
@@ -104,6 +113,12 @@ public class CloudShadows : MonoBehaviour
         if (mat == null) return;
 
         if (dirty && Time.unscaledTime >= regenAt) { Rebuild(); dirty = false; }
+
+        // Follow the Cloud weather channel when present — the master fade IS the cloud channel's eased value, so a
+        // weather sequence drives cloud cover here exactly like rain/snow/puddle. Falls back to the serialized
+        // `strength` (manual/standalone) when there's no channels hub.
+        var wc = WeatherChannels.Instance;
+        if (wc != null) strength = wc.Shown(WeatherChannel.Cloud);
 
         // Make sure the camera produces the depth texture our shader samples, and keep the quad parked on the
         // camera so its (huge) bounds always pass culling. The world-XZ sampling is what pins the pattern —

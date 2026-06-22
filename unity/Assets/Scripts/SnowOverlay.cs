@@ -123,9 +123,11 @@ public class SnowOverlay : MonoBehaviour
     {
         if (mat == null) return;
 
-        // Ease the flakes IN/OUT instead of popping: `shown` ramps toward the live intensity, so when snow starts
-        // the flakes build 0→full (alongside the ground accumulation) and fade out when it stops.
-        shown = Mathf.MoveTowards(shown, intensity, Time.deltaTime / Mathf.Max(0.1f, rampTime));
+        // Follow the Snow weather channel when present (central easing in WeatherChannels); fall back to the local
+        // `intensity` ease when there's no channels hub (standalone / DevSettings on a bare scene).
+        var wc = WeatherChannels.Instance;
+        if (wc != null) shown = wc.Shown(WeatherChannel.Snow);
+        else            shown = Mathf.MoveTowards(shown, intensity, Time.deltaTime / Mathf.Max(0.1f, rampTime));
 
         // Zero-cost when clear: deactivate the quad so it issues no draw call at all.
         bool show = enabled && shown > 0.001f;

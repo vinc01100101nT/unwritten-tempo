@@ -54,6 +54,7 @@ public static class SystemsSceneBuilder
         sun.gameObject.AddComponent<PlanarReflection>();// HEAVY: mirror-camera reflection of the 3D world into puddles
         sun.gameObject.AddComponent<SnowOverlay>();     // screen-space drifting-flake overlay (intensity 0 = clear/zero-cost)
         sun.gameObject.AddComponent<SnowGround>();      // snow build-up on roofs/ground (all tiers) + footprints (High only)
+        sun.gameObject.AddComponent<FogOverlay>();      // screen-space drifting fog haze (all tiers; fog 0 = clear/zero-cost)
         sun.gameObject.AddComponent<FootstepTracker>(); // single source of footstep positions, shared by wet + snow
         var rainAudio = sun.gameObject.AddComponent<RainAudio>();   // day/night storm loop, crossfaded + scaled by rain
         const string bgs = "Assets/Audio/TomMusic/WAV Files/BGS Loops";
@@ -82,7 +83,10 @@ public static class SystemsSceneBuilder
         Build25DSpike.BuildCursor(gameSystems);         // hardware GameCursor3D (pointer / sword / crosshair)
         gameSystems.AddComponent<DeathScreen>();        // Phase F: "YOU DIED" overlay + respawn (builds its own canvas)
         gameSystems.AddComponent<Sfx>();                // pooled one-shot SFX player (attack/hit/block/footsteps)
-        gameSystems.AddComponent<TimeOfDay>();          // accelerated day/night clock (1-min day + 1-min night) + live tuner
+        gameSystems.AddComponent<TimeOfDay>();          // real-UTC-anchored day/night clock (2-hour cycle, 12×) + DayIndex + live tuner
+        gameSystems.AddComponent<GameCalendar>();       // 4-season / 48-day calendar derived from TimeOfDay.DayIndex (+ OnNewDay/OnSeasonChange)
+        gameSystems.AddComponent<WeatherChannels>();    // the 4 independent weather channels (rain/cloud/snow/puddle) every renderer follows
+        gameSystems.AddComponent<WeatherDirector>();    // deterministic per-day weather: season-gated weighted pick → plays a composed WeatherSequence on the channels
         gameSystems.AddComponent<MobHoverPanel>();      // top-right hover tooltip: HP bar + name + element
 
         var root = new GameObject("GameRoot").AddComponent<GameRoot>();   // loads the first map under Systems

@@ -141,8 +141,18 @@ public class SnowGround : MonoBehaviour
         go.SetActive(false);
     }
 
-    // Live snow amount (0 if there's no snow overlay), used as the accumulation target.
-    static float SnowAmount => SnowOverlay.Instance != null ? SnowOverlay.Instance.intensity : 0f;
+    // Live snow amount, used as the accumulation target. Reads the Snow weather channel (the source of truth);
+    // falls back to the overlay's own intensity when there's no channels hub. The ground blanket still builds on its
+    // OWN slower clock (accumTime) on top of this — roofs gather snow well after the flakes appear.
+    static float SnowAmount
+    {
+        get
+        {
+            var wc = WeatherChannels.Instance;
+            if (wc != null) return wc.Shown(WeatherChannel.Snow);
+            return SnowOverlay.Instance != null ? SnowOverlay.Instance.intensity : 0f;
+        }
+    }
 
     void LateUpdate()
     {

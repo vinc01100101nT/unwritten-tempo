@@ -24,6 +24,7 @@ public static class UIShellBuilder
     const string UIRoot = "Assets/Art/NinjaAdventure/UI";
     const string WOOD   = UIRoot + "/Theme/Theme Wood";
     const string ITEMS  = UIRoot + "/Skill Icon/Items & Weapon";
+    const string METEO  = UIRoot + "/Skill Icon/Meteo";   // weather icons (Sun/Rain/Snow) for the calendar
     const string FontPath = UIRoot + "/Font/NormalFont.ttf";
     const string ResourcePrefabPath = "Assets/Resources/GameUICanvas.prefab";
 
@@ -80,6 +81,7 @@ public static class UIShellBuilder
         var chr      = BuildCharacterPanel(root);
         var skills   = BuildSkillsPanel(root);
         var customize = BuildCustomizePanel(root);
+        var calendar = BuildCalendarPanel(root);
         BuildTooltip(root);       // on top of every panel
         // (The old UI-image sword cursor was retired — GameCursor now drives a hardware
         //  cursor from the Kenney pack, wired by Tools ▸ unwritten ▸ Setup Global Systems.)
@@ -91,6 +93,7 @@ public static class UIShellBuilder
             new PanelToggle.Binding { name = "Character", key = KeyCode.C, panel = chr },
             new PanelToggle.Binding { name = "Skills",    key = KeyCode.K, panel = skills },
             new PanelToggle.Binding { name = "Outfit",    key = KeyCode.O, panel = customize },
+            new PanelToggle.Binding { name = "Calendar",  key = KeyCode.L, panel = calendar },
         };
 
         canvasGO.AddComponent<PersistentUI>();             // survives scene loads (singleton)
@@ -100,6 +103,12 @@ public static class UIShellBuilder
         canvasGO.AddComponent<StatPanel>();                // RO-style stat distribution into the Character (C) panel
         canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
         canvasGO.AddComponent<CharacterCustomizePanel>();  // O = Outfit: animated preview + cloth colour palette
+        var calPanel = canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: 12-day season grid w/ per-day weather (+ click the date widget)
+        // Bake in the Ninja Adventure "Meteo" weather icons (the runtime can't AssetDatabase-load, so we wire the
+        // Sprite refs into the prefab now — same pattern as the skill-icon Sprites the hotbar reads).
+        calPanel.sunIcon  = AssetDatabase.LoadAssetAtPath<Sprite>(METEO + "/Sun.png");
+        calPanel.rainIcon = AssetDatabase.LoadAssetAtPath<Sprite>(METEO + "/Rain.png");
+        calPanel.snowIcon = AssetDatabase.LoadAssetAtPath<Sprite>(METEO + "/Snow.png");
 
         // UI click sounds (TomMusic latch foley): panel open/close + a generic button click.
         var ui = canvasGO.AddComponent<UISounds>();
@@ -191,6 +200,18 @@ public static class UIShellBuilder
         goldLabel.color = new Color(1f, 0.90f, 0.3f);   // warm gold tint
         goldLabel.gameObject.AddComponent<GoldCounter>();
 
+        // Calendar + weather readout — continues the top-right stack (minimap ▸ gold ▸ date/weather).
+        // CalendarWeatherHUD.cs wires the two text lines to GameCalendar.DateString + WeatherDirector.CurrentName.
+        var calPanel = NewSliced("HUD_CalendarPanel", canvas, barBgSprite);
+        Anchor(calPanel.rectTransform, Vector2.one, Vector2.one, Vector2.one);
+        calPanel.rectTransform.anchoredPosition = new Vector2(-16, -(16 + MinimapSize + 8 + 26 + 8));
+        calPanel.rectTransform.sizeDelta = new Vector2(150, 42);
+        calPanel.raycastTarget = false;   // purely informational — never eats clicks
+        var calLabel = NewText("HUD_Calendar", calPanel.transform, "Spring · Day 1\nClear", 13, FontStyle.Bold, TextAnchor.MiddleCenter, true);
+        Fill(calLabel.rectTransform, new Vector2(4, 2), new Vector2(-4, -2));
+        calLabel.raycastTarget = false;
+        calLabel.gameObject.AddComponent<CalendarWeatherHUD>();
+
         var holder = NewColor("HUD_Hotbar", canvas, new Color(0, 0, 0, 0f));
         Anchor(holder.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
         holder.rectTransform.anchoredPosition = new Vector2(0, 14);
@@ -240,14 +261,14 @@ public static class UIShellBuilder
     {
         // Keep the two arrays in lock-step — left column = key, right column = what it does.
         const string keys =
-            "L-Click\nR-Drag\nA\nQ\nT\nS\nC\nI\nK\nO\nM\nP\nEsc";
+            "L-Click\nR-Drag\nA\nQ\nT\nS\nC\nI\nK\nO\nL\nM\nP\nEsc";
         const string actions =
-            "Move\nOrbit camera\nArm attack (+click)\nCast spell\nAuto-combat\nStop\nCharacter\nInventory\nSkills\nOutfit\nMinimap\nDev panel\nClose / cancel";
+            "Move\nOrbit camera\nArm attack (+click)\nCast spell\nAuto-combat\nStop\nCharacter\nInventory\nSkills\nOutfit\nCalendar\nMinimap\nDev panel\nClose / cancel";
 
         var panel = NewSliced("HUD_Hotkeys", canvas, panelSprite);
         Anchor(panel.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);   // bottom-left
         panel.rectTransform.anchoredPosition = new Vector2(16, 74);              // above MP bar (y 48 + 18)
-        panel.rectTransform.sizeDelta = new Vector2(210, 244);
+        panel.rectTransform.sizeDelta = new Vector2(210, 262);
         panel.raycastTarget = false;
 
         var title = NewText("Title", panel.transform, "HOTKEYS", 14, FontStyle.Bold, TextAnchor.UpperCenter, true);
@@ -395,6 +416,14 @@ public static class UIShellBuilder
             new Vector2(0.22f, 0.18f), new Vector2(0.78f, 0.84f), "Outfit");
         // Content is intentionally left empty here — CharacterCustomizePanel builds
         // the animated preview + colour palette into it at runtime.
+        return content.parent.gameObject;
+    }
+
+    // Empty themed window — CalendarPanel.cs builds the header + 4×3 day-cell grid into Content at runtime
+    // (each cell shows that day's deterministic weather). Toggled by L / clicking the top-right date widget.
+    static GameObject BuildCalendarPanel(Transform canvas)
+    {
+        var content = NewPanel(canvas, "CalendarPanel", new Vector2(0.28f, 0.18f), new Vector2(0.72f, 0.82f), "Calendar");
         return content.parent.gameObject;
     }
 

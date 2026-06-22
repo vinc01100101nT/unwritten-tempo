@@ -113,13 +113,20 @@ public class RainOverlay : MonoBehaviour
     {
         if (mat == null) return;
 
-        // Spawn into an established storm at full strength: snap to the map's starting rain on the first frame so
-        // it doesn't fade in on load. Only LATER changes (toggling rain on/off mid-session) ease via the ramp.
-        if (!primed) { shown = intensity; primed = true; }
-
-        // Ease the rain IN/OUT instead of popping: `shown` ramps toward the target intensity, so the storm builds
-        // 0→full when it starts and tapers off when it stops (the same easing SnowOverlay uses for flakes).
-        shown = Mathf.MoveTowards(shown, intensity, Time.deltaTime / Mathf.Max(0.1f, rampTime));
+        // Follow the Rain weather channel when present — easing lives centrally in WeatherChannels, so we just read
+        // the eased value (this is what lets a sequence ramp rain 0→target over an exact time, with clouds leading).
+        var wc = WeatherChannels.Instance;
+        if (wc != null)
+        {
+            shown = wc.Shown(WeatherChannel.Rain);
+        }
+        else
+        {
+            // Standalone fallback (no channels hub): ease locally toward `intensity`, snapping on the first frame so
+            // we don't fade in on load into an already-rainy map.
+            if (!primed) { shown = intensity; primed = true; }
+            shown = Mathf.MoveTowards(shown, intensity, Time.deltaTime / Mathf.Max(0.1f, rampTime));
+        }
 
         // Zero-cost when dry: deactivate the quad so it issues no draw call at all.
         bool show = enabled && shown > 0.001f;

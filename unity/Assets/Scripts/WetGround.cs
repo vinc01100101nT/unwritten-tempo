@@ -8,13 +8,14 @@ using UnityEngine.Rendering.Universal;
 /// depth buffer holds. Gated behind <see cref="WeatherFX.Heavy"/> (High tier only) so it never costs anything
 /// on Low/Medium.
 ///
-/// <para>The puddle COVERAGE is SELF-DRIVEN and decoupled from the live rain amount: when rain starts the ground
-/// waits <see cref="wetDelayIn"/> seconds, then the puddles SPREAD 0→<see cref="puddleAmount"/> over
-/// <see cref="wetRampIn"/> (the wet AREA grows — it is NOT an opacity fade); when rain stops they LINGER for
-/// <see cref="wetDelayOut"/> seconds and then recede over <see cref="wetRampOut"/>. So the ground stays wet for a
-/// while after the rain — an after-rain feel — instead of the puddles vanishing the instant the rain does. The
-/// rain-impact rings + open-ground sheen instead follow the LIVE rain (<c>_RainNow</c> = <see cref="RainOverlay.Shown"/>),
-/// so raindrops stop landing the moment the rain does, while the standing-water puddles fade out on their own clock.</para>
+/// <para>The puddle COVERAGE is its own weather CHANNEL (<see cref="WeatherChannel.Puddle"/>), fully decoupled from
+/// rain: this pass just renders <c>Puddle.shown × </c><see cref="puddleAmount"/> (the per-map coverage cap) as the wet
+/// AREA — it is NOT an opacity fade. A weather <see cref="WeatherSequence"/> eases that channel (puddles can begin
+/// after, and linger past, the rain), or the channels hub's auto-puddle driver follows rain with a soak/linger delay.
+/// The rain-impact rings + open-ground sheen instead follow the LIVE Rain channel (<c>_RainNow</c>), so raindrops stop
+/// landing the moment the rain does, while the standing-water puddles fade out on their own clock. (When there's no
+/// <see cref="WeatherChannels"/> hub at all, this falls back to the old self-driven timing off the rain overlay, tuned
+/// by <see cref="wetDelayIn"/>/<see cref="wetRampIn"/>/<see cref="wetDelayOut"/>/<see cref="wetRampOut"/>.)</para>
 /// </summary>
 [DisallowMultipleComponent]
 public class WetGround : MonoBehaviour
@@ -245,45 +246,33 @@ public class WetGround : MonoBehaviour
     {
         if (mat == null) return;
 
-        // --- Self-driven puddle COVERAGE, decoupled from the live rain so puddles persist after the rain. ---
-        // A rain start/stop only flips the target; the puddles SPREAD in (after wetDelayIn) and RECEDE out (after
-        // wetDelayOut) on their OWN timers — the transition is the wet AREA growing/shrinking, not an opacity fade.
-        bool raining = Raining;
-        if (!primed)
+        // --- Puddle COVERAGE + live rain, read from the weather CHANNELS (the source of truth). ---
+        // Puddles are their own channel now (decoupled from rain): a sequence — or the auto-puddle driver — eases
+        // the normalized Puddle channel, and we scale it by this map's coverage CAP. The rain-impact rings + open
+        // ground sheen follow the live Rain channel, so they stop when the rain does even while puddles linger.
+        var wc = WeatherChannels.Instance;
+        float rainNow;
+        if (wc != null)
         {
-            // Spawn into an established storm with the ground already soaked: skip the soak-in and start at full
-            // coverage, so we don't watch puddles spread from dry every time we load into a rainy map.
-            primed = true;
-            wasRaining = raining;
-            puddleLevel = raining ? puddleAmount : 0f;
-            delayTimer = 0f;
-        }
-        if (raining != wasRaining)
-        {
-            wasRaining = raining;
-            delayTimer = raining ? wetDelayIn : wetDelayOut;   // hold for the delay before the next spread/recede
-        }
-
-        float target;
-        if (delayTimer > 0f)
-        {
-            delayTimer -= Time.deltaTime;
-            target = puddleLevel;                    // still inside the delay window — hold steady
+            puddleLevel = wc.Shown(WeatherChannel.Puddle) * Mathf.Max(0f, puddleAmount);
+            rainNow     = wc.Shown(WeatherChannel.Rain);
         }
         else
         {
-            target = raining ? puddleAmount : 0f;    // spread to the per-map coverage cap, or recede to nothing
+            // Standalone fallback (no channels hub): the old self-driven puddle timing off the rain overlay.
+            bool raining = Raining;
+            if (!primed) { primed = true; wasRaining = raining; puddleLevel = raining ? puddleAmount : 0f; delayTimer = 0f; }
+            if (raining != wasRaining) { wasRaining = raining; delayTimer = raining ? wetDelayIn : wetDelayOut; }
+
+            float target;
+            if (delayTimer > 0f) { delayTimer -= Time.deltaTime; target = puddleLevel; }
+            else                 { target = raining ? puddleAmount : 0f; }
+
+            float ramp  = raining ? wetRampIn : wetRampOut;
+            float speed = Mathf.Max(0f, puddleAmount) / Mathf.Max(0.1f, ramp);
+            puddleLevel = Mathf.MoveTowards(puddleLevel, target, speed * Time.deltaTime);
+            rainNow     = RainOverlay.Instance != null ? RainOverlay.Instance.Shown : 0f;
         }
-
-        // Spread/recede at "full coverage over the ramp time", so dry→puddleAmount takes wetRampIn and the reverse
-        // takes wetRampOut, regardless of what the coverage cap is set to per map.
-        float ramp  = raining ? wetRampIn : wetRampOut;
-        float speed = Mathf.Max(0f, puddleAmount) / Mathf.Max(0.1f, ramp);
-        puddleLevel = Mathf.MoveTowards(puddleLevel, target, speed * Time.deltaTime);
-
-        // The rain-impact rings + open-ground wet sheen follow the LIVE (eased) rain, so they fade out when the rain
-        // stops even while the puddles linger. Only the standing-water puddles persist past the storm.
-        float rainNow = RainOverlay.Instance != null ? RainOverlay.Instance.Shown : 0f;
 
         bool show = enabled && WeatherFX.Heavy && (puddleLevel > 0.001f || rainNow > 0.001f);
         if (quad != null && quad.gameObject.activeSelf != show) quad.gameObject.SetActive(show);
