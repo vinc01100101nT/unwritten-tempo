@@ -177,6 +177,47 @@ public class WorldCreator : EditorWindow
     bool IsDistant(PortalJson p) => p.anchorA != null && !string.IsNullOrEmpty(p.anchorA.edge)
                                  && p.anchorB != null && !string.IsNullOrEmpty(p.anchorB.edge);
 
+    // Resolve a portal's edge + offset on BOTH maps. Distant → explicit anchors; adjacent → derive the facing edge
+    // from the cell delta (and the opposite on B), shared offset. Single source so Build's exit-points and the
+    // placed portals agree exactly.
+    void ResolvePortalEdges(PortalJson p, Dictionary<string, MapJson> byId,
+                            out string edgeA, out float offA, out string edgeB, out float offB)
+    {
+        if (IsDistant(p))
+        {
+            edgeA = p.anchorA.edge; offA = p.anchorA.offset;
+            edgeB = p.anchorB.edge; offB = p.anchorB.offset;
+        }
+        else
+        {
+            var ca = byId[p.a].cell; var cb = byId[p.b].cell;
+            edgeA = FacingEdge(cb[0] - ca[0], cb[1] - ca[1]);
+            edgeB = Opposite(edgeA);
+            offA = offB = p.offset;
+        }
+    }
+
+    // Each map's warp doorway positions (world-XZ on the plot rim), fed to RecipeGenerator so roads reach them.
+    Dictionary<string, List<Vector2>> ComputeExits(Dictionary<string, MapJson> byId, float W)
+    {
+        var exits = new Dictionary<string, List<Vector2>>();
+        if (world.portals == null) return exits;
+        void Add(string id, string edge, float off)
+        {
+            Vector3 ep = EdgePoint(edge, off, W * 0.5f);
+            if (!exits.TryGetValue(id, out var l)) exits[id] = l = new List<Vector2>();
+            l.Add(new Vector2(ep.x, ep.z));
+        }
+        foreach (var p in world.portals)
+        {
+            if (!byId.ContainsKey(p.a) || !byId.ContainsKey(p.b)) continue;
+            ResolvePortalEdges(p, byId, out string ea, out float oa, out string eb, out float ob);
+            Add(p.a, ea, oa);
+            Add(p.b, eb, ob);
+        }
+        return exits;
+    }
+
     void Validate()
     {
         errors.Clear(); warnings.Clear(); summary = "";
@@ -258,6 +299,11 @@ public class WorldCreator : EditorWindow
         int groundLayer = WorldBuildUtil.EnsureGroundLayer();
         int mask = groundLayer >= 0 ? 1 << groundLayer : ~0;
 
+        var byId = new Dictionary<string, MapJson>();
+        foreach (var m in world.maps) byId[m.id] = m;
+        // Portal positions per map → fed to the generator so its roads terminate at the doorways (Part 3).
+        var exitsByMap = ComputeExits(byId, W);
+
         // PASS 1 — bake every map scene from its template clone.
         var scenePathById = new Dictionary<string, string>();
         try
@@ -276,7 +322,8 @@ public class WorldCreator : EditorWindow
                     clone.seed = m.seed != 0 ? m.seed : StableSeed(m.id);
                     if (TryParsePathTile(m.pathTile, out var pt)) clone.pathTile = pt;
                     if (m.pathWidth > 0f) clone.pathWidth = m.pathWidth;
-                    var res = RecipeGenerator.Generate(clone);
+                    var exits = exitsByMap.TryGetValue(m.id, out var ex) ? ex : null;
+                    var res = RecipeGenerator.Generate(clone, exits);
                     if (!res.ok) { EditorUtility.ClearProgressBar(); EditorUtility.DisplayDialog("Build World", $"Failed to bake '{m.id}'. Check the Console.", "OK"); return; }
                     scenePathById[m.id] = res.path;
                 }
@@ -289,27 +336,12 @@ public class WorldCreator : EditorWindow
             void AddPortal(string id, PortalSpec s) { if (!portalsByScene.TryGetValue(id, out var l)) portalsByScene[id] = l = new List<PortalSpec>(); l.Add(s); }
             void AddSpawn(string id, SpawnSpec s)   { if (!spawnsByScene.TryGetValue(id, out var l)) spawnsByScene[id] = l = new List<SpawnSpec>(); l.Add(s); }
 
-            var byId = new Dictionary<string, MapJson>();
-            foreach (var m in world.maps) byId[m.id] = m;
-
             if (world.portals != null)
                 for (int i = 0; i < world.portals.Length; i++)
                 {
                     var p = world.portals[i];
                     if (!byId.ContainsKey(p.a) || !byId.ContainsKey(p.b)) continue;
-                    string edgeA, edgeB; float offA, offB;
-                    if (IsDistant(p))
-                    {
-                        edgeA = p.anchorA.edge; offA = p.anchorA.offset;
-                        edgeB = p.anchorB.edge; offB = p.anchorB.offset;
-                    }
-                    else
-                    {
-                        var ca = byId[p.a].cell; var cb = byId[p.b].cell;
-                        edgeA = FacingEdge(cb[0] - ca[0], cb[1] - ca[1]);
-                        edgeB = Opposite(edgeA);
-                        offA = offB = p.offset;
-                    }
+                    ResolvePortalEdges(p, byId, out string edgeA, out float offA, out string edgeB, out float offB);
 
                     string sceneA = SceneName(p.a), sceneB = SceneName(p.b);
                     string arrA = $"w{i}_from_{p.b}";   // land here when arriving on A from B

@@ -77,6 +77,36 @@ public static class PathRouting
         return routes;
     }
 
+    /// <summary>
+    /// Path network for a map whose roads must reach its <b>warp doorways</b>: one winding route from a shared
+    /// centre hub out to each exit point in <paramref name="exits"/> (world-XZ positions on the plot rim, e.g. a
+    /// portal's edge+offset). All routes share the hub, so they meet as a crossroads in the middle (where the
+    /// "Start" spawn sits) and a road runs to every portal. Used by <see cref="RecipeGenerator"/> when the World
+    /// Creator passes a map's portal positions; falls back to <see cref="Build"/> for portal-less maps.
+    /// Returns empty when there are no exits.
+    /// </summary>
+    public static List<Route> BuildToExits(Vector2 center, float sizeX, float sizeZ, IReadOnlyList<Vector2> exits,
+                                           float wander, int seed, int smoothness = 0)
+    {
+        var routes = new List<Route>();
+        if (exits == null || exits.Count == 0) return routes;
+
+        var rng = new System.Random(seed * 7919 + 13);
+        // One shared hub (jittered a touch off true centre) so every road meets there = a crossroads.
+        Vector2 hub = center + new Vector2(Range(rng, -1f, 1f) * sizeX * 0.06f, Range(rng, -1f, 1f) * sizeZ * 0.06f);
+
+        foreach (var exit in exits)
+        {
+            var r = new Route();
+            r.pts.Add(hub);
+            AppendWinding(r.pts, hub, exit, wander, rng);   // hub → doorway, with a couple of bends
+            r.pts.Add(exit);
+            Chaikin(r.pts, smoothness);                     // round corners; hub + exit stay anchored
+            routes.Add(r);
+        }
+        return routes;
+    }
+
     // Chaikin corner-cutting: each pass replaces every corner with two points at ¼ and ¾ of its edges, rounding
     // the polyline toward a curve. The first/last points (the edge anchors) are preserved so routes still reach
     // their edges. The shared centre hub is an interior point, so it rounds slightly too — harmless, the path is

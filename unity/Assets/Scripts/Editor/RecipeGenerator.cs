@@ -40,6 +40,12 @@ public static class RecipeGenerator
     /// <summary>Bake <paramref name="r"/> into Assets/Scenes/&lt;mapName&gt;.unity. Returns success + the scene
     /// path and how much was placed (the Inspector / link picker use these). Leaves the new map open &amp; active.</summary>
     public static (bool ok, string path, int props, int mobs) Generate(MapRecipe r)
+        => Generate(r, null);
+
+    /// <summary>As <see cref="Generate(MapRecipe)"/>, but <paramref name="exitPointsXZ"/> (a map's warp doorway
+    /// positions in world-XZ, passed by the World Creator) routes the paths to terminate at each doorway — so warp
+    /// pads land on roads, not mid-field. When null/empty, paths fall back to the recipe's random pathCount routes.</summary>
+    public static (bool ok, string path, int props, int mobs) Generate(MapRecipe r, IReadOnlyList<Vector2> exitPointsXZ)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
         { EditorUtility.DisplayDialog("Generate Map", "Exit Play mode first, then re-run.", "OK"); return (false, null, 0, 0); }
@@ -63,7 +69,11 @@ public static class RecipeGenerator
 
         Vector3 center = Vector3.zero;
         // Route the path network ONCE: it drives the ground bake, follow-path placement, and prop clearance.
-        var paths = PathRouting.Build(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, r.pathCount, r.pathWander, seed, r.pathSmoothness);
+        // With warp exits (World Creator), roads run hub→each doorway so pads sit on roads; else random routes.
+        bool toExits = exitPointsXZ != null && exitPointsXZ.Count > 0;
+        var paths = toExits
+            ? PathRouting.BuildToExits(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, exitPointsXZ, r.pathWander, seed, r.pathSmoothness)
+            : PathRouting.Build(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, r.pathCount, r.pathWander, seed, r.pathSmoothness);
         // One ground style for every map: the single blended grass→dirt mesh (no tile seams; the path feathers in).
         var ground = PxltgrGroundBlend.LayPlot(scene, $"Ground_{safe}", center, r.sizeX, r.sizeZ, groundLayer, seed,
                                                paths, r.pathWidth, PathTexName(r.pathTile), r.dirtAmount);
