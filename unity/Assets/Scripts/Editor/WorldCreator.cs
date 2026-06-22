@@ -143,6 +143,8 @@ public class WorldCreator : EditorWindow
         {
             if (GUILayout.Button("⚒ Build World", GUILayout.Height(34)))
                 BuildWorld();
+            if (GUILayout.Button("🗺 Bake World Map only (re-snapshot existing scenes)"))
+                WorldAtlasBaker.Bake(CollectCells(), WorldSize());
         }
         if (world != null && errors.Count > 0)
             EditorGUILayout.LabelField("Fix the errors above to enable Build World.", EditorStyles.miniLabel);
@@ -282,6 +284,19 @@ public class WorldCreator : EditorWindow
 
     float WorldSize() => world != null && world.worldSize > 0f ? world.worldSize : 60f;
 
+    // The grid (scene name + cell + type) the world-atlas baker snapshots.
+    List<WorldAtlasBaker.Cell> CollectCells()
+    {
+        var cells = new List<WorldAtlasBaker.Cell>();
+        if (world == null) return cells;
+        foreach (var m in world.maps)
+        {
+            if (m.cell == null || m.cell.Length < 2) continue;
+            cells.Add(new WorldAtlasBaker.Cell { scene = SceneName(m.id), col = m.cell[0], row = m.cell[1], type = m.type });
+        }
+        return cells;
+    }
+
     // ── build ─────────────────────────────────────────────────────────────────────────────────────────────
     void BuildWorld()
     {
@@ -383,12 +398,17 @@ public class WorldCreator : EditorWindow
 
             EditorUtility.ClearProgressBar();
             AssetDatabase.SaveAssets();
+
+            // Also bake the world-map atlas so the World Map HUD (N) is ready straight away.
+            WorldAtlasBaker.Bake(CollectCells(), W, interactive: false);
+
             Debug.Log($"[unwritten] World Creator built {world.maps.Length} maps + {portalCount} portals from {Path.GetFileName(sourcePath)}.");
             EditorUtility.DisplayDialog("World built",
-                $"Generated {world.maps.Length} maps and {portalCount} portals.\n\n"
+                $"Generated {world.maps.Length} maps and {portalCount} portals, and baked the world map.\n\n"
                 + "Each warp is a paired Portal3D + arrival SpawnPoint; portal colour follows the destination "
                 + "(town=yellow, field=green …).\n\n"
-                + "Make sure Systems is set up (Setup Systems Scene), then PLAY from any map and walk into a pad.", "OK");
+                + "Make sure Systems is set up (Setup Systems Scene), then PLAY from any map — walk into a pad to "
+                + "travel, press N for the World Map.", "OK");
         }
         finally { EditorUtility.ClearProgressBar(); }
     }
