@@ -22,7 +22,7 @@ public static class SystemsSceneBuilder
 {
     const string ScenesDir = "Assets/Scenes";
     const string SystemsPath = ScenesDir + "/Systems.unity";
-    const string FirstMap = "Town";   // boot into the region's safe hub (Region ▸ Build Town Hub)
+    const string FirstMap = "town_0";   // boot into the starting town (its SpawnPoint id "Start" places the player)
 
     [MenuItem("Tools/unwritten/Scene Setup/Setup Systems Scene", priority = 101)]
     static void Build()
@@ -49,6 +49,7 @@ public static class SystemsSceneBuilder
         var sun = Build25DSpike.BuildLight();
         sun.gameObject.AddComponent<DayNightLight>();   // sun color/intensity/angle + ambient by time-of-day
         sun.gameObject.AddComponent<CloudShadows>();    // drifting full-screen cloud shadows (DayNightLight also self-adds)
+        sun.gameObject.AddComponent<WindGlobals>();     // feeds _GlobalWind for foliage sway (DayNightLight also self-adds)
         sun.gameObject.AddComponent<RainOverlay>();     // screen-space rain overlay (intensity 0 = dry/zero-cost until raised)
         sun.gameObject.AddComponent<WetGround>();       // HEAVY: wet/puddle screen-space pass + rain-impact rings (High tier, follows rain)
         sun.gameObject.AddComponent<PlanarReflection>();// HEAVY: mirror-camera reflection of the 3D world into puddles

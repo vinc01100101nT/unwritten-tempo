@@ -72,6 +72,7 @@ public class DevSettings : MonoBehaviour
     WeatherChannels wc;
     DayNightLight sun;
     CloudShadows cloud;
+    WindGlobals wind;
     RainOverlay rain;
     WetGround wet;
     PlanarReflection refl;
@@ -104,6 +105,7 @@ public class DevSettings : MonoBehaviour
         if (wc == null)       wc       = WeatherChannels.Instance;
         if (sun == null)      sun      = FindFirstObjectByType<DayNightLight>();
         if (cloud == null)    cloud    = FindFirstObjectByType<CloudShadows>();
+        if (wind == null)     wind     = FindFirstObjectByType<WindGlobals>();
         if (rain == null)     rain     = FindFirstObjectByType<RainOverlay>();
         if (wet == null)      wet      = FindFirstObjectByType<WetGround>();
         if (refl == null)     refl     = FindFirstObjectByType<PlanarReflection>();
@@ -425,8 +427,17 @@ public class DevSettings : MonoBehaviour
         F("Cloud darkness",   0f, 1f,    () => cloud ? cloud.darkness : 0f,    v => { if (cloud) { cloud.darkness = v; cloud.MarkDirty(); } });
         F("Cloud softness",   0.01f, 0.5f, () => cloud ? cloud.softness : 0f,  v => { if (cloud) { cloud.softness = v; cloud.MarkDirty(); } });
         F("Cloud patch size", 10f, 150f, () => cloud ? cloud.patchSize : 0f,   v => { if (cloud) cloud.patchSize = v; });
-        F("Wind speed",       0f, 3f,    () => cloud ? cloud.windSpeed : 0f,   v => { if (cloud) cloud.windSpeed = v; });
+        F("Cloud wind base",  0f, 3f,    () => cloud ? cloud.windSpeed : 0f,   v => { if (cloud) cloud.windSpeed = v; });
+        F("Cloud wind response", 0f, 4f, () => cloud ? cloud.windResponse : 0f, v => { if (cloud) cloud.windResponse = v; });
         F("Wind direction",   0f, 360f,  () => cloud ? cloud.windDirDeg : 0f,  v => { if (cloud) cloud.windDirDeg = v; });
+        Sub("Wind & Foliage Sway");
+        // The Wind weather CHANNEL (0..1) — like Rain/Cloud, authored per weather. It drives the foliage sway, the
+        // cloud drift speed AND the rain slant together, so one value = how windy it is. Direction is set above.
+        F("Wind (weather)",   0f, 1f,    () => ChGet(WeatherChannel.Wind),     v => ChSnap(WeatherChannel.Wind, v));
+        // These shape how the foliage responds to that Wind value.
+        F("Sway amount",      0f, 3f,    () => wind ? wind.swayScale : 1f,     v => { wind = WindGlobals.Ensure(); wind.swayScale = v; });
+        F("Sway base wind",   0f, 2f,    () => wind ? wind.baseStrength : 0f,  v => { wind = WindGlobals.Ensure(); wind.baseStrength = v; });
+        F("Sway storm boost", 0f, 4f,    () => wind ? wind.stormBoost : 0f,    v => { wind = WindGlobals.Ensure(); wind.stormBoost = v; });
         Sub("Rain");
         // Rain (spike) — screen-space overlay; created on demand the first time you raise it, so it works even
         // on a Systems scene baked before RainOverlay joined the rig. Zero GPU cost while intensity is 0.
@@ -466,6 +477,7 @@ public class DevSettings : MonoBehaviour
         F("Wet ripple speed", 0f, 4f,    () => wet ? wet.rippleSpeed : 0f,     v => { if (wet) wet.rippleSpeed = v; });
         F("Water impact",     0f, 4f,    () => wet ? wet.waterImpact : 0f,     v => { if (wet) wet.waterImpact = v; });
         F("Ground impact",    0f, 4f,    () => wet ? wet.groundImpact : 0f,   v => { if (wet) wet.groundImpact = v; });
+        F("Ground impact start", 0f, 1f, () => wet ? wet.groundImpactStart : 0f, v => { if (wet) wet.groundImpactStart = v; });
         F("Step ripples",     0f, 8f,    () => wet ? wet.stepBright : 0f,      v => { if (wet) wet.stepBright = v; });
         F("Step radius",      0.1f, 1f,  () => wet ? wet.stepRadius : 0f,      v => { if (wet) wet.stepRadius = v; });
         Sub("Footsteps");

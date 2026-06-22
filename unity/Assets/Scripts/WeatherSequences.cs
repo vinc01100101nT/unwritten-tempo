@@ -56,6 +56,7 @@ public static class WeatherSequences
         K(0f,  WeatherChannel.Snow,   0.00f, 6f),
         K(0f,  WeatherChannel.Fog,    0.00f, 10f),   // burn off any lingering fog as the skies clear
         K(0f,  WeatherChannel.Cloud,  0.15f, 10f),
+        K(0f,  WeatherChannel.Wind,   0.12f, 8f),    // a calm, clear-day breeze — plants barely stir
         K(8f,  WeatherChannel.Puddle, 0.00f, 12f),   // linger 8s, then dry over 12s
     });
 
@@ -66,6 +67,7 @@ public static class WeatherSequences
         K(0f,  WeatherChannel.Snow,   0.00f, 6f),
         K(0f,  WeatherChannel.Fog,    0.00f, 10f),
         K(0f,  WeatherChannel.Cloud,  0.85f, 8f),
+        K(0f,  WeatherChannel.Wind,   0.35f, 8f),    // breezier overcast — a steady push
         K(8f,  WeatherChannel.Puddle, 0.00f, 12f),
     });
 
@@ -76,7 +78,9 @@ public static class WeatherSequences
         K(0f,  WeatherChannel.Cloud,  0.92f, 6f),    // strong cloudy moment first
         K(0f,  WeatherChannel.Snow,   0.00f, 6f),
         K(0f,  WeatherChannel.Fog,    0.00f, 10f),
+        K(0f,  WeatherChannel.Wind,   0.30f, 8f),    // wind picks up with the gathering cloud…
         K(6f,  WeatherChannel.Rain,   0.45f, 10f),   // light rain eases in 0→0.45 over 10s, after the clouds
+        K(6f,  WeatherChannel.Wind,   0.50f, 10f),   // …and freshens as the rain arrives
         K(10f, WeatherChannel.Puddle, 0.60f, 14f),   // very light puddles begin forming
         K(12f, WeatherChannel.Cloud,  0.72f, 8f),    // settle the over-dark sky to steady rain overcast
     });
@@ -88,10 +92,12 @@ public static class WeatherSequences
         K(0f,  WeatherChannel.Cloud,  0.95f, 6f),    // heavy clouds appear first
         K(0f,  WeatherChannel.Snow,   0.00f, 6f),
         K(0f,  WeatherChannel.Fog,    0.00f, 10f),
+        K(0f,  WeatherChannel.Wind,   0.45f, 6f),    // gusts foreshadow the storm before a drop falls
         K(5f,  WeatherChannel.Rain,   0.20f, 8f),    // then very light rain
         K(9f,  WeatherChannel.Puddle, 0.25f, 10f),   // then very light puddles
         K(18f, WeatherChannel.Rain,   1.00f, 12f),   // storm comes in
         K(18f, WeatherChannel.Cloud,  1.00f, 6f),    // sky goes black
+        K(18f, WeatherChannel.Wind,   1.00f, 8f),    // full gale — the foliage whips, rain blows sideways
         K(22f, WeatherChannel.Puddle, 1.00f, 15f),   // increase puddles
     });
 
@@ -102,6 +108,7 @@ public static class WeatherSequences
         K(0f,  WeatherChannel.Fog,    0.00f, 10f),
         K(0f,  WeatherChannel.Cloud,  0.60f, 8f),
         K(0f,  WeatherChannel.Puddle, 0.00f, 8f),
+        K(0f,  WeatherChannel.Wind,   0.25f, 8f),    // a light drift carries the flakes
         K(2f,  WeatherChannel.Snow,   0.70f, 6f),    // flakes start just after the clouds
     });
 
@@ -114,6 +121,7 @@ public static class WeatherSequences
         K(0f,  WeatherChannel.Snow,   0.00f, 6f),
         K(0f,  WeatherChannel.Puddle, 0.00f, 12f),
         K(0f,  WeatherChannel.Cloud,  0.45f, 10f),   // soft grey lid — distinctly lighter than Cloudy/Storm
+        K(0f,  WeatherChannel.Wind,   0.05f, 12f),   // near-still air — fog needs calm to hang
         K(2f,  WeatherChannel.Fog,    1.00f, 12f),   // the haze rolls in to full and limits visibility
     });
 }

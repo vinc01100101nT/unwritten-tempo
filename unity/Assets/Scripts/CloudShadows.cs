@@ -35,8 +35,11 @@ public class CloudShadows : MonoBehaviour
     [Header("Drift (live)")]
     [Tooltip("Size of one cloud-shadow tile in world units — bigger = larger, broader patches.")]
     public float patchSize = 10f;
-    [Tooltip("How fast the clouds drift.")]
+    [Tooltip("How fast the clouds drift on a calm day — the BASE speed the Wind weather channel scales up from.")]
     public float windSpeed = 1.06f;
+    [Range(0f, 4f)] [Tooltip("How much the Wind weather channel speeds the drift (clouds scud faster in a gale). " +
+                             "0 = ignore weather; the clouds always drift at the base Wind speed.")]
+    public float windResponse = 2f;
     [Range(0f, 360f)] [Tooltip("Wind direction in degrees.")]
     public float windDirDeg = 71.33f;
     [Range(0f, 1f)] [Tooltip("Master fade over the whole effect (on top of the baked darkness).")]
@@ -134,9 +137,12 @@ public class CloudShadows : MonoBehaviour
             if (quad != null) quad.position = cam.transform.position;
         }
 
-        // Scroll one direction with the wind (UV space; /patchSize keeps speed ~constant in world terms).
+        // Scroll one direction with the wind (UV space; /patchSize keeps speed ~constant in world terms). The Wind
+        // weather channel speeds the drift, so clouds race during a storm and barely move on a still, foggy day.
+        float wind01  = WeatherChannels.Instance != null ? WeatherChannels.Instance.Shown(WeatherChannel.Wind) : 0f;
+        float effSpeed = windSpeed * (1f + wind01 * windResponse);
         float r = windDirDeg * Mathf.Deg2Rad;
-        scroll += new Vector2(Mathf.Cos(r), Mathf.Sin(r)) * (windSpeed * Time.deltaTime / Mathf.Max(1f, patchSize));
+        scroll += new Vector2(Mathf.Cos(r), Mathf.Sin(r)) * (effSpeed * Time.deltaTime / Mathf.Max(1f, patchSize));
 
         mat.SetFloat(ScaleID, 1f / Mathf.Max(1f, patchSize));
         mat.SetFloat(StrengthID, strength);

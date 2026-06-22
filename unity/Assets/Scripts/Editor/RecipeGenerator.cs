@@ -26,6 +26,13 @@ public static class RecipeGenerator
     const float  Inset = 2f;       // pull placement in from the plot edge
     const float  PathMargin = 0.75f;   // extra clearance a solid prop keeps from a path edge
 
+    // ── wind sway ────────────────────────────────────────────────────────────────────────────────────────
+    // Soft prop groups get their renderers re-materialed onto Unwritten/FoliageWind so they sway. The cloned
+    // sway materials are cached per SOURCE material within one bake, so every flower shares ONE material and
+    // stays batched (and we don't make N copies). Cleared at the top of each Generate.
+    static readonly Dictionary<(Material src, bool canopy), Material> _swayMats = new Dictionary<(Material, bool), Material>();
+    static Shader _foliageWind;
+
     // PathTile → the ground_* prop whose Base Map textures the path. Falls back to dirt inside LayPlot if missing.
     static string PathTexName(PathTile t) => t switch
     {
@@ -62,6 +69,10 @@ public static class RecipeGenerator
         int seed = r.randomizeSeed ? (int)(System.DateTime.Now.Ticks & 0x7fffffff) : r.seed;
         if (r.randomizeSeed) { r.seed = seed; EditorUtility.SetDirty(r); }   // write back so the layout is reproducible
         var rng = new System.Random(seed);
+
+        _swayMats.Clear();   // fresh per-bake material cache (see ApplySway)
+        _foliageWind = Shader.Find("Unwritten/FoliageWind");
+        if (_foliageWind != null) EnsureAlwaysIncluded(_foliageWind);   // so foliage sway survives a player build
 
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
         SceneManager.SetActiveScene(scene);
@@ -147,12 +158,63 @@ public static class RecipeGenerator
                 + "PLAY: the player/camera live in Systems — run 'Setup Systems Scene' once, then press Play.", "OK");
     }
 
+    // Retrofit: make the foliage in the CURRENTLY-OPEN scene sway, without re-baking it from a recipe. Handy for
+    // hand-authored maps — it finds plant props by name and re-materials them onto the wind shader: whole-plant
+    // DECOR (flowers/grass/ferns) sways entirely; TREES/bushes sway only their leaf material (trunk stays rigid).
+    // Re-runnable (idempotent). Save the scene afterwards to keep it.
+    static readonly string[] DecorNames = { "flower", "sunflower", "grass", "rye", "fern", "mushroom", "clover", "plant" };
+    static readonly string[] TreeNames  = { "tree", "oak", "birch", "pine", "willow", "deciduous", "bush", "shrub" };
+
+    [MenuItem("Tools/unwritten/World/Apply Foliage Wind to Open Scene", priority = 192)]
+    static void ApplyWindToOpenScene()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+        { EditorUtility.DisplayDialog("Apply Foliage Wind", "Exit Play mode first, then re-run.", "OK"); return; }
+
+        _foliageWind = Shader.Find("Unwritten/FoliageWind");
+        if (_foliageWind == null)
+        { EditorUtility.DisplayDialog("Apply Foliage Wind", "Shader 'Unwritten/FoliageWind' not found — is Assets/Shaders/FoliageWind.shader imported?", "OK"); return; }
+
+        _swayMats.Clear();
+        EnsureAlwaysIncluded(_foliageWind);
+
+        var scene = SceneManager.GetActiveScene();
+        int decor = 0, trees = 0;
+        foreach (var root in scene.GetRootGameObjects())
+            foreach (var rend in root.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                int kind = SwayKind(rend.transform);     // 2 = tree (canopy/leaves only), 1 = decor (whole), 0 = none
+                if (kind == 2) { SwayRenderer(rend, true);  trees++; }
+                else if (kind == 1) { SwayRenderer(rend, false); decor++; }
+            }
+
+        if (decor + trees > 0) UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+        EditorUtility.DisplayDialog("Apply Foliage Wind",
+            $"Applied wind sway in '{scene.name}':\n• {decor} decor renderer(s) (whole-plant)\n• {trees} tree renderer(s) (leaves only)\n\n"
+            + "Make sure Systems has the WindGlobals driver (Setup Systems Scene adds it), then press Play.\n"
+            + "Save the scene (Ctrl+S) to keep the change.", "OK");
+    }
+
+    // Classify a renderer by its name (or any ancestor's, e.g. its prop-group node): 2 = tree/bush (sway leaves
+    // only), 1 = whole-plant decor, 0 = not foliage. Trees win over decor so a "Treeline" group reads as canopy.
+    static int SwayKind(Transform t)
+    {
+        for (var x = t; x != null; x = x.parent)
+        {
+            string n = x.name.ToLowerInvariant();
+            foreach (var k in TreeNames)  if (n.Contains(k)) return 2;
+            foreach (var k in DecorNames) if (n.Contains(k)) return 1;
+        }
+        return 0;
+    }
+
     // ── PROP PLACEMENT ENGINE ────────────────────────────────────────────────────────────────────────────
     static int PlaceGroup(RecipePropGroup g, Transform parent, Vector3 center, float sizeX, float sizeZ,
                           System.Random rng, int mask, IReadOnlyList<PathRouting.Route> paths, float pathWidth,
                           List<(Vector2 c, float r)> blockers)
     {
         bool hasPath = paths != null && paths.Count > 0 && pathWidth > 0f;
+        bool sway = g.ShouldSway;                          // soft decor leans in the wind (Unwritten/FoliageWind)
         float pathClear = pathWidth * 0.5f + PathMargin;   // solid props must stay this far off any path
         // The "main street" = the longest route; StreetRows houses line it.
         PathRouting.Route mainRoute = null;
@@ -197,6 +259,7 @@ public static class RecipeGenerator
             go.transform.SetParent(parent, true);
             WorldBuildUtil.SetLayerRecursive(go, 0);                        // Default — never the Ground layer
             if (!g.solid) PropPlacement.StripColliders(go);                 // decor = walk-through
+            if (sway) ApplySway(go, g.CanopyOnly);                          // Auto+solid (trees) = leaves only; else whole plant
 
             placedAt.Add(go.transform.position);
             if (g.solid)
@@ -365,6 +428,91 @@ public static class RecipeGenerator
     static float RangeF(System.Random r, float a, float b) => a + (float)r.NextDouble() * (b - a);
 
     static GameObject LoadProp(string name) => AssetDatabase.LoadAssetAtPath<GameObject>($"{PropsDir}/{name}.prefab");
+
+    // ── WIND SWAY ──────────────────────────────────────────────────────────────────────────────────────────
+    // Re-material a prop's renderers onto Unwritten/FoliageWind so its vertices bend with the world wind, reusing
+    // one cloned material per (source material, profile) so instances stay batched. Two profiles:
+    //   • DECOR  (canopy = false): whole-plant decor (flowers/grass/ferns) — sway EVERY material, snappy default look.
+    //   • CANOPY (canopy = true):  trees/bushes — sway ONLY the leaf material (the trunk/bark stays rigid), with
+    //                              taller/gentler/slower params so the crown rustles instead of the whole tree whipping.
+    static void ApplySway(GameObject go, bool canopy)
+    {
+        if (_foliageWind == null) return;   // shader missing (already warned at Generate); leave props un-swayed
+        foreach (var rend in go.GetComponentsInChildren<MeshRenderer>(true)) SwayRenderer(rend, canopy);
+    }
+
+    // Swap one renderer's materials to their cached wind clones (idempotent — skips ones already on the shader).
+    // Canopy mode swaps ONLY foliage-named materials (oak_leaves, Tree_leaves…) so bark/wood is left rigid.
+    static void SwayRenderer(MeshRenderer rend, bool canopy)
+    {
+        if (_foliageWind == null || rend == null) return;
+        var mats = rend.sharedMaterials;
+        bool changed = false;
+        for (int i = 0; i < mats.Length; i++)
+        {
+            var src = mats[i];
+            if (src == null || src.shader == _foliageWind) continue;
+            if (canopy && !IsFoliageMat(src)) continue;   // trees: sway the leaves, never the trunk
+            mats[i] = GetSwayMaterial(src, canopy);
+            changed = true;
+        }
+        if (changed) rend.sharedMaterials = mats;
+    }
+
+    // Leaf/plant material? Matched by name (the Pxltgr pack names them oak_leaves, Birch_leaves, Tree_leaves1,
+    // Plant, … while trunks are *_bark) — the same convention PxltgrMaterialFixer keys its alpha-clip off.
+    static readonly string[] FoliageMatKeywords = { "leaf", "leaves", "plant", "foliage", "needle", "fern", "bush" };
+    static bool IsFoliageMat(Material m)
+    {
+        if (m == null) return false;
+        string n = m.name.ToLowerInvariant();
+        foreach (var k in FoliageMatKeywords) if (n.Contains(k)) return true;
+        return false;
+    }
+
+    // Clone a source URP/Lit prop material onto the wind shader, copying its Base Map + tint + cutout so it looks
+    // the same — just swaying. Cached per (source, profile) within a bake so instances share ONE material (batched).
+    static Material GetSwayMaterial(Material src, bool canopy)
+    {
+        var key = (src, canopy);
+        if (_swayMats.TryGetValue(key, out var m) && m != null) return m;
+
+        m = new Material(_foliageWind) { name = src.name + (canopy ? " (wind canopy)" : " (wind)") };
+        if      (src.HasProperty("_BaseMap")) m.SetTexture("_BaseMap", src.GetTexture("_BaseMap"));
+        else if (src.HasProperty("_MainTex")) m.SetTexture("_BaseMap", src.GetTexture("_MainTex"));
+        if      (src.HasProperty("_BaseColor")) m.SetColor("_BaseColor", src.GetColor("_BaseColor"));
+        else if (src.HasProperty("_Color"))     m.SetColor("_BaseColor", src.GetColor("_Color"));
+        m.SetFloat("_Cutoff", src.HasProperty("_Cutoff") ? src.GetFloat("_Cutoff") : 0.5f);
+
+        if (canopy)
+        {
+            // A tree crown is metres up and broad: a taller full-bend height keeps the lowest leaves calmer, a
+            // lower stiffness lets the whole canopy lean together, and a smaller/slower amount reads as a heavy
+            // rustle rather than the flower-tier whip. (World wind still scales all of this with the weather.)
+            m.SetFloat("_SwayHeight", 3.0f);
+            m.SetFloat("_SwayStiffness", 1.2f);
+            m.SetFloat("_SwayAmount", 0.05f);
+            m.SetFloat("_SwaySpeed", 0.85f);
+        }
+
+        _swayMats[key] = m;
+        return m;
+    }
+
+    // Register a shader in Project Settings ▸ Graphics ▸ Always Included Shaders (idempotent) so a generated
+    // shader the scene only references via runtime-cloned materials isn't stripped from a player build.
+    static void EnsureAlwaysIncluded(Shader sh)
+    {
+        var gs = UnityEngine.Rendering.GraphicsSettings.GetGraphicsSettings();
+        var so = new SerializedObject(gs);
+        var arr = so.FindProperty("m_AlwaysIncludedShaders");
+        for (int i = 0; i < arr.arraySize; i++)
+            if (arr.GetArrayElementAtIndex(i).objectReferenceValue == sh) return;   // already there
+        int idx = arr.arraySize;
+        arr.InsertArrayElementAtIndex(idx);
+        arr.GetArrayElementAtIndex(idx).objectReferenceValue = sh;
+        so.ApplyModifiedProperties();
+    }
 
     static string Sanitize(string s)
     {

@@ -21,8 +21,12 @@ public class RainOverlay : MonoBehaviour
     public float rampTime = 4f;
     [Tooltip("How fast the streaks fall.")]
     public float fallSpeed = 20f;
-    [Range(-1f, 1f)] [Tooltip("Wind slant — negative leans left, positive leans right.")]
+    [Range(-1f, 1f)] [Tooltip("Base wind slant — negative leans left, positive leans right. The Wind weather " +
+                              "channel adds to this, so rain blows harder sideways in a storm.")]
     public float slant = 0.2f;
+    [Range(0f, 1.5f)] [Tooltip("How far the Wind weather channel tilts the rain on top of the base slant (0 = " +
+                               "ignore wind; rain falls at the fixed base slant).")]
+    public float windSlant = 0.7f;
     [Tooltip("Number of vertical rain lanes across the screen — higher = denser, thinner rain.")]
     public float density = 160f;
     [Tooltip("Rain tint + max opacity (alpha).")]
@@ -140,7 +144,10 @@ public class RainOverlay : MonoBehaviour
         mat.SetColor(ColorID, color);
         mat.SetFloat(IntensityID, shown);
         mat.SetFloat(PhaseID, phase);
-        mat.SetFloat(SlantID, slant);
+        // Lean the rain with the wind: the Wind channel × the horizontal component of the wind direction, added on
+        // top of the manual base slant. So a calm shower falls near-straight and a gale drives it hard sideways.
+        float windLean = WindGlobals.CurrentWind01 * windSlant * Mathf.Cos(WindGlobals.CurrentDirDeg * Mathf.Deg2Rad);
+        mat.SetFloat(SlantID, Mathf.Clamp(slant + windLean, -1f, 1f));
         mat.SetFloat(DensityID, density);
     }
 }

@@ -15,7 +15,7 @@ public class GameRoot : MonoBehaviour
 {
     [Tooltip("Map to load on Play when none is open (the build's starting map). In the editor, " +
              "whichever map you had open is remembered and used instead.")]
-    public string firstMap = "Town";
+    public string firstMap = "town_0";
 
     void Start()
     {

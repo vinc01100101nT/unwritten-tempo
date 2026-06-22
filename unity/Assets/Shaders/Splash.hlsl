@@ -30,6 +30,20 @@ float SplashHash(float2 p)
 //   wander : how far (in `local` units) the impact centre may stray from the origin (0 = pinned)
 // Returns an unweighted intensity (ring + core + droplets), already faded by (1-age). The caller multiplies in
 // colour / alpha / per-surface strength.
+// Cheap variant: just the expanding crown ring + central pop, NO droplet loop and NO internal wander (the caller
+// passes `local` already relative to the impact's chosen centre). Built for the scattered ground field, where many
+// neighbouring impacts are summed per pixel (a 3×3 cell sweep) and the 5-droplet loop ×N would be too costly — and
+// the tiny droplets aren't readable at ground-impact scale anyway. Same ring/core maths as SplashShape.
+float SplashRing(float2 local, float age, float maxR, float thick)
+{
+    float r  = length(local);
+    float rr = lerp(0.08, 1.0, age) * maxR;
+    float th = thick * (1.0 - 0.55 * age) * maxR;
+    float ring = smoothstep(th, 0.0, abs(r - rr));
+    float core = smoothstep(0.22 * maxR, 0.0, r) * saturate(1.0 - age * 3.0);
+    return (ring + core) * (1.0 - age);
+}
+
 float SplashShape(float2 local, float age, float maxR, float thick, float2 iseed, float wander)
 {
     // Pick THIS impact's centre — a random offset from the origin, fresh whenever iseed changes.

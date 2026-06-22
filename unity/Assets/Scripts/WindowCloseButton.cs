@@ -1,0 +1,40 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+/// <summary>
+/// The ✕ button in a window header — hides the target window and plays the UI
+/// close foley (matching the Esc / hotkey-toggle close behaviour).
+///
+/// It also implements the drag interfaces as no-ops. That's deliberate: the header
+/// above it is a <see cref="WindowDragHandle"/> (an ancestor <c>IDragHandler</c>),
+/// and without this the EventSystem would route the press gesture up to the header's
+/// drag and swallow the button's click — so clicking the ✕ would do nothing. By
+/// "claiming" the drag here, the gesture stays on the button and the click fires
+/// reliably (and dragging the ✕ correctly does NOT move the window).
+///
+/// ⚠️ Unity requires every MonoBehaviour to live in a file whose name matches the
+/// class name. This used to share <c>WindowChrome.cs</c> with
+/// <see cref="WindowDragHandle"/>; because that filename matched neither class,
+/// Unity couldn't resolve the scripts and both serialized as the generic
+/// <c>fileID: 11500000</c> — which is why the ✕ did nothing at runtime. Keep one
+/// MonoBehaviour per correctly-named file. (Re-run Tools ▸ unwritten ▸ Scene Setup
+/// ▸ Build UI Shell after touching this so the prefab re-binds the script refs.)
+/// </summary>
+public class WindowCloseButton : MonoBehaviour,
+    IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+{
+    /// <summary>The window root to hide on click.</summary>
+    public GameObject window;
+
+    public void OnPointerClick(PointerEventData e)
+    {
+        if (window == null) return;
+        window.SetActive(false);
+        UISounds.PlayClose();
+    }
+
+    // No-ops: present only so the header's drag handler can't steal our click.
+    public void OnBeginDrag(PointerEventData e) { }
+    public void OnDrag(PointerEventData e) { }
+    public void OnEndDrag(PointerEventData e) { }
+}

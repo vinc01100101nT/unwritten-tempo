@@ -17,6 +17,10 @@ public enum PlacementRule
 
 public enum AmountMode { Density, Count }
 
+/// <summary>Whether a prop group's plants sway in the wind. <c>Auto</c> = sway soft decor (non-solid props:
+/// flowers, grass, ferns) and leave solid props (trees, houses, rocks) planted; <c>On</c>/<c>Off</c> force it.</summary>
+public enum SwayMode { Auto, On, Off }
+
 /// <summary>Which Pxltgr ground texture the routed paths use. Maps to the matching <c>ground_*</c> prop's Base Map.</summary>
 public enum PathTile { Road, Soil, Stones, Rock }
 
@@ -52,6 +56,18 @@ public class RecipePropGroup
     public bool randomYaw = true;
     [Tooltip("StreetRows only: distance from the centre line out to each of the two rows.")]
     public float rowOffset = 4f;
+
+    [Tooltip("Wind sway, synced to the world wind. Auto = sway foliage automatically: whole-plant decor (flowers/" +
+             "grass) sways entirely, while solid props sway only their LEAF material (tree canopies rustle, trunks " +
+             "stay rigid; rocks/houses have no leaves so they're unaffected). On = force whole-plant sway. Off = none.")]
+    public SwayMode sway = SwayMode.Auto;
+
+    /// <summary>Does this group sway at all? (Anything but Off.)</summary>
+    public bool ShouldSway => sway != SwayMode.Off;
+
+    /// <summary>Sway only the foliage (leaf) materials, leaving structural materials rigid. True for Auto on a SOLID
+    /// prop (a tree: canopy rustles, trunk stays put); whole-plant decor and an explicit On sway every material.</summary>
+    public bool CanopyOnly => sway == SwayMode.Auto && solid;
 }
 
 [System.Serializable]

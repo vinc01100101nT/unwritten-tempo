@@ -10,10 +10,22 @@ public static class ClassState
     const string Key = "unwritten.class";
     static PlayerClass? current;
 
+    /// <summary>Class a fresh install starts as (no saved choice yet) — Mage is the default kit.</summary>
+    public const PlayerClass Default = PlayerClass.Mage;
+
     public static PlayerClass Current
     {
-        get { if (current == null) current = (PlayerClass)PlayerPrefs.GetInt(Key, 0); return current.Value; }
+        get { if (current == null) current = (PlayerClass)PlayerPrefs.GetInt(Key, (int)Default); return current.Value; }
         set { current = value; PlayerPrefs.SetInt(Key, (int)value); PlayerPrefs.Save(); }
+    }
+
+    /// <summary>Forget the saved class so the next read falls back to <see cref="Default"/> — i.e. simulate a
+    /// fresh install. Used by the "Reset Saved Class" editor tool to verify the default-class behaviour.</summary>
+    public static void Reset()
+    {
+        current = null;
+        PlayerPrefs.DeleteKey(Key);
+        PlayerPrefs.Save();
     }
 }
 

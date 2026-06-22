@@ -31,6 +31,10 @@ MonoBehaviour:
     channel: 1
     target: 0.85
     ramp: 8
+  - at: 0
+    channel: 5
+    target: 0.35
+    ramp: 8
   - at: 8
     channel: 3
     target: 0

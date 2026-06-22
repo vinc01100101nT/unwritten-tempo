@@ -26,7 +26,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class WeatherChannels : MonoBehaviour
 {
-    public const int Count = 5;
+    public const int Count = 6;
     public static WeatherChannels Instance { get; private set; }
 
     struct Chan { public float target, shown, ramp; }
@@ -185,7 +185,7 @@ public class WeatherChannels : MonoBehaviour
 
 /// <summary>The weather channels. Each is an independent eased 0..1 quantity; renderers follow them by name.
 /// (Adding one here means bumping <see cref="WeatherChannels.Count"/> to match — the channel array is sized to it.)</summary>
-public enum WeatherChannel { Rain = 0, Cloud = 1, Snow = 2, Puddle = 3, Fog = 4 }
+public enum WeatherChannel { Rain = 0, Cloud = 1, Snow = 2, Puddle = 3, Fog = 4, Wind = 5 }
 
 /// <summary>One step in a <see cref="WeatherSequence"/>: at <see cref="at"/> seconds into the event, aim
 /// <see cref="channel"/> at <see cref="target"/>, easing over <see cref="ramp"/> seconds.</summary>

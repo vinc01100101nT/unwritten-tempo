@@ -25,7 +25,8 @@ Shader "Unwritten/WetGround"
         _RipScale     ("Ambient Ripple Scale", Float) = 0.5
         _RipSpeed     ("Ambient Ripple Speed", Float) = 1.0
         _WaterImpact  ("Water Impact (rings on puddles)", Range(0,4)) = 0.44
-        _GroundImpact ("Ground Impact (same rings off puddles)", Range(0,4)) = 0.15
+        _GroundImpact ("Ground Impact (same rings off puddles)", Range(0,4)) = 1.14
+        _GroundImpactStart ("Ground Impact rain onset (rings start at this rain intensity)", Range(0,1)) = 0.5
         _StepRadius   ("Step Ripple Radius", Float) = 0.6
         _StepBright   ("Step Ripple Strength", Range(0,8)) = 2.5
         _ReflStrength ("Reflection Strength", Range(0,2)) = 0.0
@@ -53,7 +54,7 @@ Shader "Unwritten/WetGround"
 
             float _Wetness, _RainNow, _Darken, _PuddleScale, _PuddleAmount;
             float _RippleSpeed, _RippleStrength, _SpecStrength, _Flatness;
-            float _RipScale, _RipSpeed, _WaterImpact, _StepRadius, _StepBright, _GroundImpact;
+            float _RipScale, _RipSpeed, _WaterImpact, _StepRadius, _StepBright, _GroundImpact, _GroundImpactStart;
             float _ReflStrength, _ReflDistort, _ReflFlipY;
             float4 _ReflectColor;
             float4 _Steps[16];   // footstep ripples: xy = world XZ, z = age 0..1 (>=1 = dead slot)
@@ -97,22 +98,41 @@ Shader "Unwritten/WetGround"
                 return v;
             }
 
-            // One field of scattered rain CROWN-SPLASHES. This function owns only the SCATTER (which cells splash,
-            // and each splash's random centre / phase / size); the splash SHAPE itself is SplashShape (Splash.hlsl).
+            // A field of scattered rain CROWN-SPLASHES with NO visible grid. Each cell hosts at most one live impact,
+            // but the impact lands at a FULLY RANDOM spot anywhere in its cell — and we sum the 3×3 neighbourhood, so a
+            // splash near a cell edge bleeds correctly into the next cell instead of being clipped at the border. That
+            // (plus re-rolling the position every life-cycle) dissolves the lattice into random rainfall.
             float rainRipple(float2 p, float seed)
             {
-                float2 cell = floor(p);
-                float2 f    = frac(p);
-                float  ex   = step(0.45, hash21(cell + float2(seed + 9.1, seed)));          // ~55% of cells splash
-                float  phase = _Time.y * _RipSpeed * 0.30 + hash21(cell + float2(seed + 1.3, seed + 6.0));
-                float  age  = frac(phase);
-                float  k    = floor(phase);   // life-cycle index: which impact this cell is on (bumps each loop)
-                float  maxR = lerp(0.173, 0.367, hash21(cell + float2(seed + 5.5, seed + 3.0))); // splash size
+                float2 ip = floor(p);
+                float  sum = 0.0;
 
-                // Per-IMPACT seed = cell + cycle index, so every loop lands the splash at a NEW random spot inside
-                // the cell (wander 0.2 keeps the old middle-of-cell placement range). SplashShape does the rest.
-                float2 iseed = cell + seed + float2(31.7, 13.3) * k;
-                return SplashShape(f - 0.5, age, maxR, 0.13, iseed, 0.20) * ex;
+                [unroll]
+                for (int y = -1; y <= 1; y++)
+                {
+                  [unroll]
+                  for (int x = -1; x <= 1; x++)
+                  {
+                    float2 cell  = ip + float2(x, y);
+                    // Phase runs the cell's impact life-cycle; k = which impact (bumps each loop) seeds a NEW position.
+                    float  phase = _Time.y * _RipSpeed * 0.30 + hash21(cell + float2(seed + 1.3, seed + 6.0));
+                    float  age   = frac(phase);
+                    float  k     = floor(phase);
+
+                    // Occupancy depends on the cell AND the cycle index, so there are no PERMANENT empty cells (which
+                    // would themselves read as a grid of holes) — which cells are raining shuffles every cycle.
+                    float  ex    = step(0.42, hash21(cell + float2(k * 2.7 + seed + 9.1, k * 1.3 + seed)));
+                    if (ex <= 0.0) continue;
+
+                    float  maxR  = lerp(0.173, 0.367, hash21(cell + float2(seed + 5.5, seed + 3.0)));
+                    // Impact centre: anywhere in [0,1)² of the cell, re-rolled each cycle (k). No clamp/wander limit.
+                    float2 rc    = float2(hash21(cell + float2(k + 17.3, seed)),
+                                          hash21(cell + float2(k + 41.7, seed + 4.0)));
+                    float2 centre = cell + rc;
+                    sum += SplashRing(p - centre, age, maxR, 0.13);
+                  }
+                }
+                return sum;
             }
 
             half4 frag (Varyings IN) : SV_Target
@@ -143,18 +163,20 @@ Shader "Unwritten/WetGround"
                 float puddle = smoothstep(1.0 - _PuddleAmount, 1.0 - _PuddleAmount + 0.18, pn);
                 float wet = saturate(puddle * flat) * _Wetness;
 
-                float groundWet = flat * _RainNow;
+                // Open-ground rain impact has a rain-intensity ONSET: nothing in a drizzle, easing in above
+                // _GroundImpactStart and reaching full at heavy rain. (Puddle rings below still use raw _RainNow, so
+                // standing water dimples from any rain.) Below the onset on non-puddle ground this is 0 → early-out.
+                float groundRain = smoothstep(_GroundImpactStart, 1.0, _RainNow);
+                float groundWet  = flat * groundRain;
 
                 // Nothing to draw: not flat ground, or it's neither raining nor any standing water left.
                 if (groundWet <= 0.001 && wet <= 0.001) return half4(0, 0, 0, 0);
 
-                // Rain-impact rings: ONE pattern (two overlapping fields with random centre/size/phase/gaps so it
-                // doesn't read as a grid), drawn on EVERY flat wet pixel. Its brightness is the bigger of the two
-                // independent per-surface dials — _WaterImpact where there's standing water (puddle), _GroundImpact
-                // on the open wet ground — so "rings on water" and "rings on ground" tune separately.
-                // Polish 2026-06-21: grid frequency ×2 per axis = ×4 as many ripples (denser stipple).
-                float ambient = rainRipple(wp.xz * _RipScale * 2.0,        0.0)
-                              + rainRipple(wp.xz * _RipScale * 3.4 + 11.3, 31.0);
+                // Rain-impact rings: a single scattered field of crown-splashes (random centre/size/phase, summed over
+                // a 3×3 cell sweep so it never reads as a grid), drawn on EVERY flat wet pixel. Its brightness is the
+                // bigger of the two independent per-surface dials — _WaterImpact where there's standing water (puddle),
+                // _GroundImpact on the open wet ground — so "rings on water" and "rings on ground" tune separately.
+                float ambient = rainRipple(wp.xz * _RipScale * 2.4, 0.0);
                 // Both ring brightnesses scale by the LIVE rain (_RainNow): groundWet already carries it, and the
                 // on-puddle rings get it explicitly — so raindrops stop dimpling the puddles when the rain stops,
                 // even though the standing water (reflection/fresnel below) lingers.

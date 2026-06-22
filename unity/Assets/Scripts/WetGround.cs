@@ -66,7 +66,11 @@ public class WetGround : MonoBehaviour
     public float waterImpact = 0.44f;
     [Range(0f, 4f)] [Tooltip("Brightness of the SAME rain-impact rings on flat ground OFF puddles (0 = puddles only; " +
         "higher = rain visibly lands across the whole wet ground). Independent of Water impact.")]
-    public float groundImpact = 0.15f;
+    public float groundImpact = 1.14f;
+    [Range(0f, 1f)] [Tooltip("Rain intensity at which the ground-impact rings START showing — below this the open " +
+        "ground stays free of splashes (a drizzle doesn't dimple it), easing in to full by heavy rain. Puddles " +
+        "still dimple from any rain regardless.")]
+    public float groundImpactStart = 0.5f;
 
     [Header("Footstep ripples")]
     [Tooltip("Seconds a footstep ripple takes to expand and fade. (The step POSITIONS come from the shared " +
@@ -116,6 +120,7 @@ public class WetGround : MonoBehaviour
     static readonly int RipSpeedID    = Shader.PropertyToID("_RipSpeed");
     static readonly int WaterImpactID = Shader.PropertyToID("_WaterImpact");
     static readonly int GroundImpactID = Shader.PropertyToID("_GroundImpact");
+    static readonly int GroundImpactStartID = Shader.PropertyToID("_GroundImpactStart");
     static readonly int StepRadiusID  = Shader.PropertyToID("_StepRadius");
     static readonly int StepBrightID  = Shader.PropertyToID("_StepBright");
     static readonly int StepsID       = Shader.PropertyToID("_Steps");
@@ -302,6 +307,7 @@ public class WetGround : MonoBehaviour
         mat.SetFloat(RipSpeedID, ripSpeed);
         mat.SetFloat(WaterImpactID, waterImpact);
         mat.SetFloat(GroundImpactID, groundImpact);
+        mat.SetFloat(GroundImpactStartID, groundImpactStart);
         mat.SetFloat(StepRadiusID, stepRadius);
         mat.SetFloat(StepBrightID, stepBright);
         mat.SetFloat(ReflStrengthID, reflStrength);

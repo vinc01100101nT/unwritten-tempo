@@ -105,6 +105,11 @@ public class DayNightLight : MonoBehaviour
         // a previous run that already added one doesn't get a duplicate.
         if (enableCloudShadows && GetComponent<CloudShadows>() == null)
             gameObject.AddComponent<CloudShadows>();
+
+        // Bootstrap the foliage-wind driver too — it feeds _GlobalWind from the cloud wind so plants sway in
+        // sync with the drifting clouds. Guarded against duplicates the same way.
+        if (GetComponent<WindGlobals>() == null)
+            gameObject.AddComponent<WindGlobals>();
     }
 
     /// <summary>Force the next <see cref="Update"/> to re-apply colour/intensity/angle even when the clock

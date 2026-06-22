@@ -427,6 +427,8 @@ public static class UIShellBuilder
         return content.parent.gameObject;
     }
 
+    const int HeaderH = 30;   // height of the draggable title bar across the top of every window
+
     static RectTransform NewPanel(Transform canvas, string name, Vector2 aMin, Vector2 aMax, string title)
     {
         var bg = NewSliced(name, canvas, panelSprite);
@@ -435,21 +437,52 @@ public static class UIShellBuilder
         bg.rectTransform.offsetMin = Vector2.zero;
         bg.rectTransform.offsetMax = Vector2.zero;
 
-        var titleText = NewText("Title", bg.transform, title, 24, FontStyle.Bold, TextAnchor.UpperCenter, true);
-        titleText.rectTransform.anchorMin = new Vector2(0, 1);
-        titleText.rectTransform.anchorMax = new Vector2(1, 1);
-        titleText.rectTransform.pivot = new Vector2(0.5f, 1);
-        titleText.rectTransform.sizeDelta = new Vector2(0, 32);
-        titleText.rectTransform.anchoredPosition = new Vector2(0, -10);
+        BuildWindowHeader(bg, title);
 
         var content = NewColor("Content", bg.transform, new Color(0, 0, 0, 0f));
         content.rectTransform.anchorMin = Vector2.zero;
         content.rectTransform.anchorMax = Vector2.one;
         content.rectTransform.offsetMin = new Vector2(16, 16);
-        content.rectTransform.offsetMax = new Vector2(-16, -46);
+        content.rectTransform.offsetMax = new Vector2(-16, -(HeaderH + 16));   // start below the header bar
 
         bg.gameObject.SetActive(false);
         return content.rectTransform;
+    }
+
+    // A draggable title bar across the top of a window: title on the left, an ✕ close
+    // button on the right, and the whole bar acts as the drag handle (WindowDragHandle
+    // moves the window; WindowCloseButton hides it). The bar is inset a little so the
+    // window's 9-slice frame still shows around it.
+    static void BuildWindowHeader(Image bg, string title)
+    {
+        var header = NewSliced("Header", bg.transform, barBgSprite);
+        header.rectTransform.anchorMin = new Vector2(0, 1);
+        header.rectTransform.anchorMax = new Vector2(1, 1);
+        header.rectTransform.pivot = new Vector2(0.5f, 1);
+        header.rectTransform.offsetMin = new Vector2(6, -(6 + HeaderH));   // left 6, bottom = top - HeaderH
+        header.rectTransform.offsetMax = new Vector2(-6, -6);              // right 6, top 6 below the frame
+        header.gameObject.AddComponent<WindowDragHandle>().window = bg.rectTransform;
+
+        var titleText = NewText("Title", header.transform, title, 20, FontStyle.Bold, TextAnchor.MiddleLeft, true);
+        titleText.rectTransform.anchorMin = Vector2.zero;
+        titleText.rectTransform.anchorMax = Vector2.one;
+        titleText.rectTransform.offsetMin = new Vector2(12, 0);
+        titleText.rectTransform.offsetMax = new Vector2(-(HeaderH + 4), 0);   // leave room for the ✕ on the right
+        titleText.raycastTarget = false;   // let clicks fall through to the drag handle
+
+        // ✕ close button — a square red cell pinned to the right edge of the header.
+        var close = NewColor("Close", header.transform, new Color(0.62f, 0.14f, 0.14f, 0.95f));
+        close.raycastTarget = true;   // must catch the click (WindowCloseButton listens here)
+        close.rectTransform.anchorMin = new Vector2(1, 0.5f);
+        close.rectTransform.anchorMax = new Vector2(1, 0.5f);
+        close.rectTransform.pivot = new Vector2(1, 0.5f);
+        close.rectTransform.sizeDelta = new Vector2(HeaderH - 8, HeaderH - 8);
+        close.rectTransform.anchoredPosition = new Vector2(-5, 0);
+        close.gameObject.AddComponent<WindowCloseButton>().window = bg.gameObject;
+
+        var x = NewText("X", close.transform, "X", 16, FontStyle.Bold, TextAnchor.MiddleCenter, true);
+        Fill(x.rectTransform, Vector2.zero, Vector2.zero);
+        x.raycastTarget = false;   // the parent cell catches the click
     }
 
     // ---- primitives -----------------------------------------------------------
