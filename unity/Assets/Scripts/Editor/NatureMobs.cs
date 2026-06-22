@@ -27,12 +27,12 @@ public static class NatureMobs
 
         int groundLayer = LayerMask.NameToLayer("Ground");
         if (groundLayer < 0)
-        { EditorUtility.DisplayDialog("Populate Mobs", "No 'Ground' layer. Build a Nature Stage first.", "OK"); return; }
+        { EditorUtility.DisplayDialog("Populate Mobs", "No 'Ground' layer. Build a field first (World ▸ New Field (Pxltgr grass)).", "OK"); return; }
         int groundMask = 1 << groundLayer;
 
         if (!TryGetGroundBounds(groundLayer, out var bounds))
         { EditorUtility.DisplayDialog("Populate Mobs",
-            "No ground on the 'Ground' layer in the open scene.\n\nRun New Nature Stage first.", "OK"); return; }
+            "No ground on the 'Ground' layer in the open scene.\n\nRun World ▸ New Field (Pxltgr grass) first.", "OK"); return; }
 
         if (Build25DSpike.MonsterSheet() == null)
         { EditorUtility.DisplayDialog("Populate Mobs",

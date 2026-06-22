@@ -11,6 +11,7 @@ Shader "Unwritten/SnowScreen"
     Properties
     {
         _Color     ("Snow Color", Color) = (0.96, 0.98, 1.0, 0.9)
+        _LightTint ("Day/Night Light Tint", Color) = (1, 1, 1, 1)
         _Intensity ("Intensity", Range(0,1)) = 0
         _Phase     ("Phase (scroll)", Float) = 0
         _Drift     ("Drift (wind sway)", Float) = 0.25
@@ -34,7 +35,7 @@ Shader "Unwritten/SnowScreen"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            float4 _Color;
+            float4 _Color, _LightTint;
             float _Intensity, _Phase, _Drift, _Density, _FlakeSize;
             float2 _Parallax;   // camera pan/rotate offset (screen UV), accumulated in C# — anchors snow to the world
 
@@ -106,7 +107,8 @@ Shader "Unwritten/SnowScreen"
                 s += sheet(uv, _Density * 2.30, 20.0, 0.18, 29.0, 0.040 * _Drift, 0.6, 0.55, 0.26) * 0.30;  // far haze
 
                 float a = saturate(s) * _Intensity * _Color.a;
-                return half4(_Color.rgb, a);
+                // Dim the flakes at night to match the darkened world (white tint by day = no change).
+                return half4(_Color.rgb * _LightTint.rgb, a);
             }
             ENDHLSL
         }

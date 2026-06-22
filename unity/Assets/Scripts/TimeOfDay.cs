@@ -36,6 +36,12 @@ public class TimeOfDay : MonoBehaviour
     public float Night01 => 1f - Daylight01;
     public bool IsDay => time01 < 0.5f;
 
+    /// <summary>Day/night tint for the UNLIT screen-space weather overlays (snow/rain) so they darken to match
+    /// the world at night instead of glowing white. White at full noon (no change), easing to <paramref
+    /// name="nightTint"/> (a dim cool colour) at midnight. Those passes can't be lit by the sun/ambient the way
+    /// world geometry is, so they multiply their colour by this instead.</summary>
+    public Color WeatherTint(Color nightTint) => Color.Lerp(nightTint, Color.white, Daylight01);
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(this); return; }

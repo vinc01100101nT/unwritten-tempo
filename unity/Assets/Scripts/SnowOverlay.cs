@@ -34,6 +34,8 @@ public class SnowOverlay : MonoBehaviour
     public float flakeSize = 0.71f;
     [Tooltip("Flake tint + max opacity (alpha).")]
     public Color color = new Color(0.96f, 0.98f, 1f, 0.9f);
+    [Tooltip("Colour the flakes fade toward at MIDNIGHT so they don't glow white over a dark world. White by day.")]
+    public Color nightTint = new Color(0.30f, 0.34f, 0.48f, 1f);
 
     /// <summary>Most-recently-awoken snow overlay, so the heavy ground-accumulation pass can read the live
     /// snow amount without a hard reference (mirrors <see cref="RainOverlay.Instance"/>).</summary>
@@ -51,6 +53,7 @@ public class SnowOverlay : MonoBehaviour
     bool hasPrevCam;
 
     static readonly int ColorID     = Shader.PropertyToID("_Color");
+    static readonly int LightTintID = Shader.PropertyToID("_LightTint");
     static readonly int IntensityID = Shader.PropertyToID("_Intensity");
     static readonly int PhaseID     = Shader.PropertyToID("_Phase");
     static readonly int DriftID     = Shader.PropertyToID("_Drift");
@@ -156,6 +159,8 @@ public class SnowOverlay : MonoBehaviour
 
         phase += Time.deltaTime * fallSpeed;
         mat.SetColor(ColorID, color);
+        var tod = TimeOfDay.Instance;
+        mat.SetColor(LightTintID, tod != null ? tod.WeatherTint(nightTint) : Color.white);
         mat.SetFloat(IntensityID, shown);
         mat.SetFloat(PhaseID, phase);
         mat.SetFloat(DriftID, drift);

@@ -305,7 +305,8 @@ public partial class Player3DController : MonoBehaviour
         // The CharacterController is momentarily disabled during teleports/respawns. Never call Move() while it's
         // off — otherwise a controller left disabled (bad spawn, duplicate rig) spams "Move called on inactive
         // controller" every frame. Normal play never hits this (it's re-enabled before the next Update).
-        if (controller == null || !controller.enabled) return;
+        // activeInHierarchy guards the SetActive(false) case (scene swap), which doesn't clear .enabled.
+        if (controller == null || !controller.enabled || !controller.gameObject.activeInHierarchy) return;
 
         // Dead: no input, no orders — show the defeated pose and keep the corpse pinned to the
         // ground (gravity) until the death screen respawns us.

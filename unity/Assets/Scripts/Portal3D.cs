@@ -19,9 +19,16 @@ public class Portal3D : MonoBehaviour
     [Tooltip("Id of the SpawnPoint in the target scene to arrive at (leave empty for that map's default).")]
     public string spawnId;
 
+    /// <summary>Live portals in the loaded map(s). The <see cref="Minimap"/> reads this to draw portal
+    /// blips with zero per-frame allocation (same pattern as <c>MonsterAI3D.Active</c>).</summary>
+    public static readonly System.Collections.Generic.List<Portal3D> Active = new System.Collections.Generic.List<Portal3D>();
+
     // Guards against the trigger firing again on the frames between entering and the async map load
     // actually swapping scenes (the CharacterController can report several OnTriggerEnter ticks).
     bool fired;
+
+    void OnEnable()  { Active.Add(this); }
+    void OnDisable() { Active.Remove(this); }
 
     // When the component is first added, make its collider a trigger.
     void Reset()

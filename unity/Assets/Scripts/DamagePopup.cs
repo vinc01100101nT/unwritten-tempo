@@ -25,7 +25,10 @@ public class DamagePopup : MonoBehaviour
     [Tooltip("World units it floats upward per second.")]
     public float riseSpeed = 1.4f;
 
-    const float BaseScale = 0.03f;   // shrinks UI pixels down into world units (art is 16 PPU)
+    // On-screen size = fontSize * BaseScale. We render the glyphs into a HIGH-res atlas (big fontSize) and
+    // downscale with a small BaseScale — downscaling a large atlas stays crisp, where a small atlas upscaled
+    // goes blurry. Tune size here via BaseScale; keep fontSize comfortably >= the displayed pixel height.
+    const float BaseScale = 0.0026f;   // 64px atlas * 0.0026 ≈ 0.166 world units (a bit smaller than before)
 
     // ---- shared pool ----------------------------------------------------------
     static Transform host;                                   // the one canvas everything parents under
@@ -94,6 +97,7 @@ public class DamagePopup : MonoBehaviour
         pool.Clear();                    // stale refs from a previous scene's destroyed host — drop them
 
         var go = new GameObject("DamagePopupSystem");
+        go.layer = LayerMask.NameToLayer("TransparentFX");   // excluded from the planar-reflection camera (no mirrored numbers)
         var canvas = go.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
         canvas.sortingOrder = DepthSortRuntime.FxPopup;   // FX band: above all entities + overhead
@@ -110,11 +114,12 @@ public class DamagePopup : MonoBehaviour
         var go = new GameObject("DamagePopup",
             typeof(RectTransform), typeof(CanvasRenderer), typeof(Text), typeof(Outline), typeof(DamagePopup));
         go.transform.SetParent(host, false);
+        go.layer = host.gameObject.layer;   // inherit TransparentFX so popups stay out of water reflections
         ((RectTransform)go.transform).sizeDelta = new Vector2(100, 40);
 
         var t = go.GetComponent<Text>();
         t.font = Font;
-        t.fontSize = 28;
+        t.fontSize = 64;   // high-res glyph atlas; BaseScale downscales it to the small on-screen size (stays crisp)
         t.fontStyle = FontStyle.Bold;
         t.alignment = TextAnchor.MiddleCenter;
         t.horizontalOverflow = HorizontalWrapMode.Overflow;

@@ -6,20 +6,42 @@ using UnityEngine.Rendering.Universal;
 /// rippling puddle reflections. Built on the exact full-screen-depth-quad pattern as <see cref="CloudShadows"/>
 /// (camera-locked quad, requests the camera depth texture, world-XZ sampling), so it projects onto whatever the
 /// depth buffer holds. Gated behind <see cref="WeatherFX.Heavy"/> (High tier only) so it never costs anything
-/// on Low/Medium, and its master amount follows the live rain (<see cref="RainOverlay.Instance"/>).
+/// on Low/Medium.
+///
+/// <para>The puddle COVERAGE is SELF-DRIVEN and decoupled from the live rain amount: when rain starts the ground
+/// waits <see cref="wetDelayIn"/> seconds, then the puddles SPREAD 0→<see cref="puddleAmount"/> over
+/// <see cref="wetRampIn"/> (the wet AREA grows — it is NOT an opacity fade); when rain stops they LINGER for
+/// <see cref="wetDelayOut"/> seconds and then recede over <see cref="wetRampOut"/>. So the ground stays wet for a
+/// while after the rain — an after-rain feel — instead of the puddles vanishing the instant the rain does. The
+/// rain-impact rings + open-ground sheen instead follow the LIVE rain (<c>_RainNow</c> = <see cref="RainOverlay.Shown"/>),
+/// so raindrops stop landing the moment the rain does, while the standing-water puddles fade out on their own clock.</para>
 /// </summary>
 [DisallowMultipleComponent]
 public class WetGround : MonoBehaviour
 {
     [Header("Wet look")]
-    [Range(0f, 1f)] [Tooltip("Extra wetness multiplier on top of the live rain amount.")]
+    [Range(0f, 1f)] [Tooltip("Puddle strength master — darkening/shine OPACITY at full. Held CONSTANT; the puddle " +
+             "transition is its area/coverage growing (puddleAmount), NOT this fading in/out. Leave at 1 normally.")]
     public float wetness = 1f;
     [Range(0f, 1f)] [Tooltip("How much wet surfaces darken.")]
     public float darken = 0.66f;
-    [Range(0f, 1f)] [Tooltip("How much of the ground pools into puddles.")]
-    public float puddleAmount = 0.59f;
+    [Range(0f, 1f)] [Tooltip("Per-map MAX puddle COVERAGE — how much of the ground pools into puddles once fully " +
+             "soaked (default 0.75). After rain starts the coverage GROWS 0→this (the puddles spread, it's NOT an " +
+             "opacity fade); after rain stops it shrinks back to 0. Decoupled from the live rain so puddles linger.")]
+    public float puddleAmount = 0.75f;
     [Tooltip("Puddle size — smaller value = larger puddles (it's 1/size in world units).")]
     public float puddleScale = 0.40f;
+
+    [Header("Wet timing — the after-rain feel")]
+    [Range(0f, 30f)] [Tooltip("Seconds AFTER rain starts before puddles begin forming (the ground takes a moment to " +
+             "soak). Timed from rain 0→onwards.")]
+    public float wetDelayIn = 5f;
+    [Range(0.1f, 60f)] [Tooltip("Seconds for puddle COVERAGE to spread from none to full (puddleAmount) once it starts.")]
+    public float wetRampIn = 10f;
+    [Range(0f, 60f)] [Tooltip("Seconds AFTER rain stops before puddles begin drying — they linger first (after-rain feel).")]
+    public float wetDelayOut = 10f;
+    [Range(0.1f, 60f)] [Tooltip("Seconds for puddle COVERAGE to shrink back to none once it starts receding.")]
+    public float wetRampOut = 10f;
 
     [Header("Reflection + ripples")]
     [Tooltip("Tint of the faked puddle reflection (sky colour).")]
@@ -69,6 +91,11 @@ public class WetGround : MonoBehaviour
     Mesh mesh;
     bool depthRequested;
 
+    float puddleLevel; // current puddle COVERAGE (0..puddleAmount) fed to _PuddleAmount — self-driven, persists after rain
+    float delayTimer;  // counts down the soak-in / dry-out delay before puddleLevel starts spreading/receding
+    bool  wasRaining;  // last-frame rain-on state, to catch the start/stop edges
+    bool  primed;      // first-frame: if we load into rain, start fully puddled instead of spreading from dry
+
     // Footstep ripple buffer, filled each frame from the shared FootstepTracker: (worldX, worldZ, age01, size);
     // dead slots have age >= 1. The positions/gait are the tracker's job — we only convert them to OUR lifetime.
     const int MaxSteps = FootstepTracker.MaxSteps;
@@ -76,6 +103,7 @@ public class WetGround : MonoBehaviour
     FootstepTracker foot;
 
     static readonly int WetnessID    = Shader.PropertyToID("_Wetness");
+    static readonly int RainNowID     = Shader.PropertyToID("_RainNow");
     static readonly int DarkenID      = Shader.PropertyToID("_Darken");
     static readonly int PuddleScaleID = Shader.PropertyToID("_PuddleScale");
     static readonly int PuddleAmtID   = Shader.PropertyToID("_PuddleAmount");
@@ -105,9 +133,10 @@ public class WetGround : MonoBehaviour
         return w;
     }
 
-    /// <summary>True while wet ground is actually rendering — High tier, enabled, and live rain making it wet.
-    /// Matches the same gate <see cref="LateUpdate"/> uses to show the quad, so audio can follow the visuals.</summary>
-    public bool Active => enabled && WeatherFX.Heavy && wetness * RainAmount > 0.001f;
+    /// <summary>True while there's visible standing water — High tier, enabled, and the puddle coverage still
+    /// spread enough to show. Tracks the self-driven <see cref="puddleLevel"/> (which lingers after the rain stops),
+    /// so audio and the planar reflection follow the visible puddles, not the rain.</summary>
+    public bool Active => enabled && WeatherFX.Heavy && puddleLevel > 0.001f;
 
     /// <summary>Is <paramref name="world"/> standing in a visible puddle right now? Re-evaluates the SAME world-XZ
     /// puddle mask the shader draws (<c>fbm(xz*_PuddleScale)</c> thresholded by <c>_PuddleAmount</c>), so the answer
@@ -117,7 +146,7 @@ public class WetGround : MonoBehaviour
     {
         if (!Active) return false;
         float pn = Fbm(new Vector2(world.x, world.z) * puddleScale);
-        float edge = 1f - puddleAmount;
+        float edge = 1f - puddleLevel;   // match the LIVE coverage the shader is drawing, not the per-map max
         return Smoothstep(edge, edge + 0.18f, pn) >= 0.5f;   // past the midpoint of the shader's puddle smoothstep
     }
 
@@ -207,15 +236,56 @@ public class WetGround : MonoBehaviour
         go.SetActive(false);
     }
 
-    // Live rain amount (0 if there's no rain overlay), used as the master wetness driver.
-    static float RainAmount => RainOverlay.Instance != null ? RainOverlay.Instance.intensity : 0f;
+    // Is rain currently COMMANDED on? Triggers the soak/dry timers off the rain TARGET (not the eased amount), so
+    // the ground starts soaking the instant rain begins ("from 0 onwards") and starts its dry-out clock the instant
+    // it's switched off — independent of how wet the ground currently looks.
+    static bool Raining => RainOverlay.Instance != null && RainOverlay.Instance.intensity > 0.001f;
 
     void LateUpdate()
     {
         if (mat == null) return;
 
-        float amount = wetness * RainAmount;
-        bool show = enabled && WeatherFX.Heavy && amount > 0.001f;
+        // --- Self-driven puddle COVERAGE, decoupled from the live rain so puddles persist after the rain. ---
+        // A rain start/stop only flips the target; the puddles SPREAD in (after wetDelayIn) and RECEDE out (after
+        // wetDelayOut) on their OWN timers — the transition is the wet AREA growing/shrinking, not an opacity fade.
+        bool raining = Raining;
+        if (!primed)
+        {
+            // Spawn into an established storm with the ground already soaked: skip the soak-in and start at full
+            // coverage, so we don't watch puddles spread from dry every time we load into a rainy map.
+            primed = true;
+            wasRaining = raining;
+            puddleLevel = raining ? puddleAmount : 0f;
+            delayTimer = 0f;
+        }
+        if (raining != wasRaining)
+        {
+            wasRaining = raining;
+            delayTimer = raining ? wetDelayIn : wetDelayOut;   // hold for the delay before the next spread/recede
+        }
+
+        float target;
+        if (delayTimer > 0f)
+        {
+            delayTimer -= Time.deltaTime;
+            target = puddleLevel;                    // still inside the delay window — hold steady
+        }
+        else
+        {
+            target = raining ? puddleAmount : 0f;    // spread to the per-map coverage cap, or recede to nothing
+        }
+
+        // Spread/recede at "full coverage over the ramp time", so dry→puddleAmount takes wetRampIn and the reverse
+        // takes wetRampOut, regardless of what the coverage cap is set to per map.
+        float ramp  = raining ? wetRampIn : wetRampOut;
+        float speed = Mathf.Max(0f, puddleAmount) / Mathf.Max(0.1f, ramp);
+        puddleLevel = Mathf.MoveTowards(puddleLevel, target, speed * Time.deltaTime);
+
+        // The rain-impact rings + open-ground wet sheen follow the LIVE (eased) rain, so they fade out when the rain
+        // stops even while the puddles linger. Only the standing-water puddles persist past the storm.
+        float rainNow = RainOverlay.Instance != null ? RainOverlay.Instance.Shown : 0f;
+
+        bool show = enabled && WeatherFX.Heavy && (puddleLevel > 0.001f || rainNow > 0.001f);
         if (quad != null && quad.gameObject.activeSelf != show) quad.gameObject.SetActive(show);
         if (!show) return;
 
@@ -230,10 +300,11 @@ public class WetGround : MonoBehaviour
             if (quad != null) quad.position = cam.transform.position;
         }
 
-        mat.SetFloat(WetnessID, amount);
+        mat.SetFloat(WetnessID, wetness);            // constant puddle strength (opacity); coverage does the easing
+        mat.SetFloat(RainNowID, rainNow);            // live rain → drives the impact rings + open-ground wetness
         mat.SetFloat(DarkenID, darken);
         mat.SetFloat(PuddleScaleID, puddleScale);
-        mat.SetFloat(PuddleAmtID, puddleAmount);
+        mat.SetFloat(PuddleAmtID, puddleLevel);      // the LIVE coverage (0..puddleAmount), the visible transition
         mat.SetFloat(RippleSpeedID, rippleSpeed);
         mat.SetFloat(RippleStrID, rippleStrength);
         mat.SetColor(ReflectColID, reflectColor);

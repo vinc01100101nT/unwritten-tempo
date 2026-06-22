@@ -62,7 +62,7 @@ public class RainAudio : MonoBehaviour
 
     void Update()
     {
-        float rain   = RainOverlay.Instance != null ? RainOverlay.Instance.intensity : 0f;
+        float rain   = RainOverlay.Instance != null ? RainOverlay.Instance.Shown : 0f;   // follow the VISIBLE rain
         float master = Mathf.Clamp01(rain) * maxVolume;
         float night  = TimeOfDay.Instance != null ? TimeOfDay.Instance.Night01 : 0f;   // 0 day .. 1 night
 

@@ -111,6 +111,13 @@ Shader "Unwritten/BillboardLit"
                 half4  _ProtectTol;
             CBUFFER_END
 
+            // Global day/night sprite tint, driven by DayNightLight via Shader.SetGlobalColor("_SpriteEnv").
+            // NOT in the per-material CBUFFER (it's a Shader-wide global). White = noon (art shown true);
+            // a dim cool colour = night, so every billboard (player/mobs/loot) dims & cools after dark
+            // WITHOUT N·L shading. DayNightLight seeds it white before the first frame (and in-editor),
+            // so sprites are never black when no clock is present.
+            half4 _SpriteEnv;
+
             struct Attributes
             {
                 float3 positionOS : POSITION;
@@ -235,7 +242,8 @@ Shader "Unwritten/BillboardLit"
                 float4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
                 Light mainLight = GetMainLight(shadowCoord);
                 half shade = lerp(_ShadeFloor, 1.0h, mainLight.shadowAttenuation);
-                return half4(tex.rgb * shade, 1.0h);
+                // × global env light: noon = white (true art), night = dim & cool. Tracks time of day.
+                return half4(tex.rgb * shade * _SpriteEnv.rgb, 1.0h);
             }
             ENDHLSL
         }

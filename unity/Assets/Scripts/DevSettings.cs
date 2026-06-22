@@ -359,6 +359,19 @@ public class DevSettings : MonoBehaviour
         FSun("Sun yaw swing", 0f, 180f,    () => sun ? sun.yawSwing : 0f,      v => { if (sun) sun.yawSwing = v; });
         BSun("Drive ambient",   () => sun && sun.driveAmbient,                 v => { if (sun) sun.driveAmbient = v; });
         BSun("Rotate sun",      () => sun && sun.rotateSun,                    v => { if (sun) sun.rotateSun = v; });
+        BSun("Drive sky",       () => sun && sun.driveSky,                     v => { if (sun) sun.driveSky = v; });
+        FSun("Sky horizon tint", 0f, 1f, () => sun ? sun.skyHorizonTint : 0f,  v => { if (sun) sun.skyHorizonTint = v; });
+        FSun("Day sky R",       0f, 1f,    () => sun ? sun.daySky.r : 0f,      v => { if (sun) { var c = sun.daySky; c.r = v; sun.daySky = c; } });
+        FSun("Day sky G",       0f, 1f,    () => sun ? sun.daySky.g : 0f,      v => { if (sun) { var c = sun.daySky; c.g = v; sun.daySky = c; } });
+        FSun("Day sky B",       0f, 1f,    () => sun ? sun.daySky.b : 0f,      v => { if (sun) { var c = sun.daySky; c.b = v; sun.daySky = c; } });
+        FSun("Night sky R",     0f, 1f,    () => sun ? sun.nightSky.r : 0f,    v => { if (sun) { var c = sun.nightSky; c.r = v; sun.nightSky = c; } });
+        FSun("Night sky G",     0f, 1f,    () => sun ? sun.nightSky.g : 0f,    v => { if (sun) { var c = sun.nightSky; c.g = v; sun.nightSky = c; } });
+        FSun("Night sky B",     0f, 1f,    () => sun ? sun.nightSky.b : 0f,    v => { if (sun) { var c = sun.nightSky; c.b = v; sun.nightSky = c; } });
+        BSun("Dim sprites night", () => sun && sun.driveSpriteLight,            v => { if (sun) sun.driveSpriteLight = v; });
+        FSun("Sprite warmth",   0f, 1f,    () => sun ? sun.spriteHorizonWarmth : 0f, v => { if (sun) sun.spriteHorizonWarmth = v; });
+        FSun("Night sprite R",  0f, 1f,    () => sun ? sun.nightSpriteTint.r : 0f, v => { if (sun) { var c = sun.nightSpriteTint; c.r = v; sun.nightSpriteTint = c; } });
+        FSun("Night sprite G",  0f, 1f,    () => sun ? sun.nightSpriteTint.g : 0f, v => { if (sun) { var c = sun.nightSpriteTint; c.g = v; sun.nightSpriteTint = c; } });
+        FSun("Night sprite B",  0f, 1f,    () => sun ? sun.nightSpriteTint.b : 0f, v => { if (sun) { var c = sun.nightSpriteTint; c.b = v; sun.nightSpriteTint = c; } });
         Sub("Night Lamps");
         // Night lamps — global dials over every NightLight prop (houses/candles/lamps). They self-update each
         // frame, so these apply live without needing a sun Refresh.
@@ -384,6 +397,7 @@ public class DevSettings : MonoBehaviour
         F("Rain fall speed",  0.2f, 20f, () => rain ? rain.fallSpeed : 0f,     v => { if (rain) rain.fallSpeed = v; });
         F("Rain slant",      -1f, 1f,    () => rain ? rain.slant : 0f,         v => { if (rain) rain.slant = v; });
         F("Rain density",     20f, 160f, () => rain ? rain.density : 0f,       v => { if (rain) rain.density = v; });
+        F("Rain fade in",     0f, 30f,   () => rain ? rain.rampTime : 0f,      v => { if (rain) rain.rampTime = v; });
         Sub("Rain Audio");
         // Rain audio — Forest Day/Night Storm crossfaded by time-of-day, scaled by rain. Follows rain, not tier.
         B("Rain audio",       () => rainAudio && rainAudio.enabled && rainAudio.maxVolume > 0f,
@@ -398,6 +412,12 @@ public class DevSettings : MonoBehaviour
                               v => { WeatherFX.Quality = v ? WeatherFX.Tier.High : WeatherFX.Tier.Medium;
                                      if (v) wet = WetGround.Ensure(); });
         F("Wet darken",       0f, 1f,    () => wet ? wet.darken : 0f,          v => { if (wet) wet.darken = v; });
+        // After-rain feel: puddle COVERAGE is self-driven (decoupled from live rain) — it spreads in after rain
+        // starts and lingers/recedes after it stops. "Wet puddles" below is the coverage CAP; these tune the timing.
+        F("Wet soak delay",   0f, 30f,   () => wet ? wet.wetDelayIn : 0f,      v => { if (wet) wet.wetDelayIn = v; });
+        F("Wet build time",   0.1f, 60f, () => wet ? wet.wetRampIn : 0f,       v => { if (wet) wet.wetRampIn = v; });
+        F("Wet dry delay",    0f, 60f,   () => wet ? wet.wetDelayOut : 0f,     v => { if (wet) wet.wetDelayOut = v; });
+        F("Wet dry time",     0.1f, 60f, () => wet ? wet.wetRampOut : 0f,      v => { if (wet) wet.wetRampOut = v; });
         F("Wet puddles",      0f, 1f,    () => wet ? wet.puddleAmount : 0f,    v => { if (wet) wet.puddleAmount = v; });
         F("Wet puddle size",  0.03f, 0.4f, () => wet ? wet.puddleScale : 0f,   v => { if (wet) wet.puddleScale = v; });
         F("Wet reflection",   0f, 4f,    () => wet ? wet.specStrength : 0f,    v => { if (wet) wet.specStrength = v; });

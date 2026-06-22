@@ -13,6 +13,7 @@ Shader "Unwritten/WetGround"
     Properties
     {
         _Wetness      ("Wetness", Range(0,1)) = 1
+        _RainNow      ("Rain Now (live rain, drives impact rings)", Range(0,1)) = 0
         _Darken       ("Darken", Range(0,1)) = 0.35
         _PuddleScale  ("Puddle Scale (1/size)", Float) = 0.12
         _PuddleAmount ("Puddle Amount", Range(0,1)) = 0.55
@@ -50,7 +51,7 @@ Shader "Unwritten/WetGround"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Splash.hlsl"   // rain crown-splash SHAPE primitive (SplashShape)
 
-            float _Wetness, _Darken, _PuddleScale, _PuddleAmount;
+            float _Wetness, _RainNow, _Darken, _PuddleScale, _PuddleAmount;
             float _RippleSpeed, _RippleStrength, _SpecStrength, _Flatness;
             float _RipScale, _RipSpeed, _WaterImpact, _StepRadius, _StepBright, _GroundImpact;
             float _ReflStrength, _ReflDistort, _ReflFlipY;
@@ -128,18 +129,24 @@ Shader "Unwritten/WetGround"
                 if (N.y < 0.0) N = -N;                                   // face up
                 float flatW = saturate((N.y - _Flatness) / max(0.001, 1.0 - _Flatness));
 
-                // Wet-ground masks — TWO tiers, both need flat ground + live rain:
-                //   • groundWet — ALL flat ground while it's raining. Gets ONLY the faint rain-impact rings, so
-                //                 rain visibly lands on the whole ground, not just puddles (Option A, 2026-06-21).
-                //   • wet (puddle) — the shiny standing-water mask. Gets reflections, fresnel spec, footstep
-                //                 splashes and darkening — the full puddle look, UNCHANGED from before.
-                float groundWet = saturate(flatW) * _Wetness;
-                if (groundWet <= 0.001) return half4(0, 0, 0, 0);   // not flat ground, or no rain: leave untouched
+                // Wet-ground masks — TWO tiers on flat ground, driven by DIFFERENT sources so puddles outlive rain:
+                //   • groundWet — ALL flat ground, follows the LIVE rain (_RainNow). Gets ONLY the faint rain-impact
+                //                 rings, so rain visibly lands on the whole ground while it's falling — and STOPS the
+                //                 moment the rain does (Option A, 2026-06-21).
+                //   • wet (puddle) — the shiny standing-water mask, driven by _PuddleAmount which the C# spreads in /
+                //                 recedes out on its OWN clock. Gets reflections, fresnel spec, footstep splashes and
+                //                 darkening — the full puddle look, PERSISTING after the rain has stopped.
+                float flat = saturate(flatW);
 
-                // Puddle mask: low spots of world-XZ noise, only on flat ground.
+                // Puddle mask: low spots of world-XZ noise, only on flat ground. _PuddleAmount IS the live coverage.
                 float pn = fbm(wp.xz * _PuddleScale);
                 float puddle = smoothstep(1.0 - _PuddleAmount, 1.0 - _PuddleAmount + 0.18, pn);
-                float wet = saturate(puddle * flatW) * _Wetness;
+                float wet = saturate(puddle * flat) * _Wetness;
+
+                float groundWet = flat * _RainNow;
+
+                // Nothing to draw: not flat ground, or it's neither raining nor any standing water left.
+                if (groundWet <= 0.001 && wet <= 0.001) return half4(0, 0, 0, 0);
 
                 // Rain-impact rings: ONE pattern (two overlapping fields with random centre/size/phase/gaps so it
                 // doesn't read as a grid), drawn on EVERY flat wet pixel. Its brightness is the bigger of the two
@@ -148,7 +155,10 @@ Shader "Unwritten/WetGround"
                 // Polish 2026-06-21: grid frequency ×2 per axis = ×4 as many ripples (denser stipple).
                 float ambient = rainRipple(wp.xz * _RipScale * 2.0,        0.0)
                               + rainRipple(wp.xz * _RipScale * 3.4 + 11.3, 31.0);
-                float3 spec = _ReflectColor.rgb * (ambient * max(wet * _WaterImpact, groundWet * _GroundImpact));
+                // Both ring brightnesses scale by the LIVE rain (_RainNow): groundWet already carries it, and the
+                // on-puddle rings get it explicitly — so raindrops stop dimpling the puddles when the rain stops,
+                // even though the standing water (reflection/fresnel below) lingers.
+                float3 spec = _ReflectColor.rgb * (ambient * max(wet * _WaterImpact * _RainNow, groundWet * _GroundImpact));
 
                 // Everything below is PUDDLE-only (standing-water shine), branched out so the vast majority of
                 // ground pixels (no puddle) skip the fresnel, footstep loop and reflection sample — that's what

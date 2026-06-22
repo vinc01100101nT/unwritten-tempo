@@ -56,6 +56,17 @@ public class PathAgent3D : MonoBehaviour
 
     void Awake() => cc = GetComponent<CharacterController>();
 
+#if UNITY_EDITOR
+    static readonly System.Collections.Generic.HashSet<int> _diagged = new System.Collections.Generic.HashSet<int>();
+    void DiagInactiveOnce()
+    {
+        if (_diagged.Count >= 6 || !_diagged.Add(GetInstanceID())) return;
+        Vector3 s = transform.lossyScale;
+        Debug.LogWarning($"[diag PathAgent3D] {name}: cc.enabled={cc.enabled} isActiveAndEnabled={cc.enabled && cc.gameObject.activeInHierarchy} " +
+            $"activeInHierarchy={cc.gameObject.activeInHierarchy} lossyScale={s:F3} height={cc.height} radius={cc.radius} step={cc.stepOffset}");
+    }
+#endif
+
     /// <summary>Shove this agent in <paramref name="worldDir"/> at <paramref name="speed"/>, easing out
     /// to a stop over <paramref name="seconds"/>. Cancels any current path (the caller should also stagger
     /// the brain so it doesn't immediately re-route). The slide goes through the CharacterController, so it
@@ -101,6 +112,20 @@ public class PathAgent3D : MonoBehaviour
 
     void Update()
     {
+        // The CharacterController is momentarily disabled while a mob is dead/fading (DeathDissolve) and during
+        // respawn/teleport repositioning. Never call Move() on an inactive controller — Unity logs "Move called
+        // on inactive controller" every frame per mob otherwise. Mirrors the guard in Player3DController.Update.
+        // NOTE: check activeInHierarchy too — SetActive(false) (mass mob despawn on a scene/portal transition)
+        // does NOT clear cc.enabled, so a final Update tick that frame would otherwise still call Move().
+        if (cc == null || !cc.enabled || !cc.gameObject.activeInHierarchy) { Moving = false; return; }
+
+#if UNITY_EDITOR
+        // TEMP DIAGNOSTIC (remove once the "Move called on inactive controller" cause is found): the guard above
+        // passed (cc.enabled reads true), so any "inactive controller" error that follows on THIS mob means a
+        // managed/native desync — log its real state so we can see scale/dims. Logs each distinct mob once.
+        DiagInactiveOnce();
+#endif
+
         // A knockback impulse overrides pathing: slide (decelerating) until the window ends, then the
         // brain (un-staggered) resumes routing on its next tick.
         if (Time.time < knockbackUntil)

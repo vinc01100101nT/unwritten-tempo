@@ -93,11 +93,17 @@ public static class FbxPropExtractor
                 c.SetParent(null, true);
                 c.localPosition = Vector3.zero;
 
+                // Rocks/stones are lumpy: a non-convex (concave) MeshCollider lets the player capsule
+                // wedge into the bumps & jitter, so bake them as a convex hull (a smooth walk-around
+                // shape) — same trick the hollow props use. Solid scenery stays cheap non-convex.
+                bool rock = IsRock(name);
                 foreach (var mf in c.GetComponentsInChildren<MeshFilter>())
                 {
                     if (mf.sharedMesh == null || mf.GetComponent<Collider>() != null) continue;
                     if (IsFoliage(mf.gameObject.name)) continue;   // walk-under canopies → no collider
-                    mf.gameObject.AddComponent<MeshCollider>().sharedMesh = mf.sharedMesh;
+                    var mc = mf.gameObject.AddComponent<MeshCollider>();
+                    mc.sharedMesh = mf.sharedMesh;
+                    if (rock) mc.convex = true;
                 }
 
                 PrefabUtility.SaveAsPrefabAsset(c.gameObject, $"{outDir}/{name}.prefab");
@@ -126,6 +132,15 @@ public static class FbxPropExtractor
     {
         n = n.ToLowerInvariant();
         return n.Contains("leaf") || n.Contains("leaves") || n.Contains("canopy") || n.Contains("foliage");
+    }
+
+    /// <summary>Rock/stone/boulder obstacles want a convex hull collider. Floor tiles (ground_*) are
+    /// flat terrain, not obstacles, so they're excluded.</summary>
+    static bool IsRock(string n)
+    {
+        n = n.ToLowerInvariant();
+        if (n.StartsWith("ground_")) return false;
+        return n.Contains("rock") || n.Contains("stone") || n.Contains("boulder");
     }
 
     static string Sanitize(string s)

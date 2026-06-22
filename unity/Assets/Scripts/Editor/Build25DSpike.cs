@@ -22,7 +22,7 @@ using UnityEngine.UI;
 /// NOT throwaway despite its name: the spike's <c>[MenuItem]</c> was removed at the 2.5D pivot, but this
 /// class is now the shared rig-builder library — its public helpers (BuildPlayer/Camera/Light/Character/
 /// HUD/Cursor/Monster, BillboardScale, FootOffsetY, EnsureUniversalRenderer, MonsterSheet) are called by
-/// SystemsSceneBuilder, RegionBuilder, FantasyTownBuilder, NatureStageBuilder, NatureMobs, TrainingDummyTool,
+/// SystemsSceneBuilder, RegionBuilder, FantasyTownBuilder, PxltgrFieldBuilder, NatureMobs, TrainingDummyTool,
 /// ScaryPlayer and NinjaGreenPlayer. Keep it; deleting it breaks the whole editor build pipeline.
 /// </summary>
 public static class Build25DSpike
@@ -56,7 +56,7 @@ public static class Build25DSpike
     };
 
     // Retired from the menu (Kenney-prop demo). The public Build* helpers below are the live 2.5D rig,
-    // reused by NatureStageBuilder. This method is kept only as an internal reference for that rig.
+    // reused by the world bakers. This method is kept only as an internal reference for that rig.
     static void Build()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -433,8 +433,8 @@ public static class Build25DSpike
         var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
         agent.moveSpeed = arc.moveSpeed; agent.agentRadius = 0.3f;
         var cc = go.GetComponent<CharacterController>();
-        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // walk the low-poly hills
-        int crowd = NatureStageBuilder.EnsureLayer(UnitCrowd.LayerName);   // mobs pass through each other (no stacking/hopping)
+        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // walk gentle slopes
+        int crowd = WorldBuildUtil.EnsureLayer(UnitCrowd.LayerName);   // mobs pass through each other (no stacking/hopping)
         if (crowd >= 0) go.layer = crowd;
 
         var mh = go.AddComponent<Health>();
@@ -659,7 +659,7 @@ public static class Build25DSpike
         // overhead prop geometry (roof eaves, tree leaves) while the bottom still bumps/climbs walls,
         // stairs and roots. Single source of truth so all player builders + runtime agree.
         Player3DController.ApplyDefaultCapsule(cc);
-        int crowd = NatureStageBuilder.EnsureLayer(UnitCrowd.LayerName);   // player passes through mobs (can't hop onto them)
+        int crowd = WorldBuildUtil.EnsureLayer(UnitCrowd.LayerName);   // player passes through mobs (can't hop onto them)
         if (crowd >= 0) go.layer = crowd;
 
         Sprite[] Col(int c) => Enumerable.Range(0, walk).Select(r => frames[c + r * cols]).ToArray();

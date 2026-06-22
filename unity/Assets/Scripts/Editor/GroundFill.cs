@@ -39,7 +39,7 @@ public static class GroundFill
         if (!scene.IsValid())
         { EditorUtility.DisplayDialog("Fill Ground", "No active scene to fill.", "OK"); return; }
 
-        int groundLayer = NatureStageBuilder.EnsureGroundLayer();
+        int groundLayer = WorldBuildUtil.EnsureGroundLayer();
         if (groundLayer < 0)
         { EditorUtility.DisplayDialog("Fill Ground", "No free layer slot for 'Ground'. Free one in Project Settings ▸ Tags and Layers.", "OK"); return; }
         int groundMask = 1 << groundLayer;
@@ -103,7 +103,7 @@ public static class GroundFill
                 foreach (var col in tile.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(col);
                 tile.transform.SetParent(rootGO.transform, true);
             }
-        NatureStageBuilder.SetLayerRecursive(rootGO, groundLayer);
+        WorldBuildUtil.SetLayerRecursive(rootGO, groundLayer);
 
         // One flat floor collider (the walkable surface: player snap + pathfinder ground rays).
         var floor = new GameObject("Ground_Floor") { layer = groundLayer };

@@ -38,6 +38,44 @@ public class DayNightLight : MonoBehaviour
     public Color dayAmbient = new Color(0.55f, 0.56f, 0.60f);
     public Color nightAmbient = new Color(0.10f, 0.12f, 0.22f);
 
+    [Header("Sky (camera background)")]
+    // Drives the main camera's solid clear colour — the "sky" you see at the world edges and through gaps.
+    // Lerps day→night by Daylight01 (same weight as the sun/ambient) and warms toward the sunrise/sunset
+    // colour while the sun is low, so the backdrop tracks the same dawn/dusk glow as the world. The reflection
+    // camera copies this each frame, so the water's sky follows for free.
+    [Tooltip("Tint the main camera's background (sky) by time of day.")]
+    public bool driveSky = true;
+    [Tooltip("Sky colour at midday — bright daytime blue.")]
+    public Color daySky = new Color(0.55f, 0.70f, 0.85f);
+    [Tooltip("Sky colour at midnight — deep night blue.")]
+    public Color nightSky = new Color(0.04f, 0.05f, 0.10f);
+    [Range(0f, 1f)] [Tooltip("How strongly the sunrise/sunset glow bleeds into the sky (0 = off).")]
+    public float skyHorizonTint = 0.6f;
+
+    [Header("Sprite lighting (player / mobs / loot)")]
+    // Billboard sprites use the unlit Unwritten/BillboardLit shader, so they ignore the sun and stay
+    // full-bright at night unless we tell them otherwise. We push a single global tint (_SpriteEnv) that
+    // the shader multiplies in: white at noon (true art) easing to nightSpriteTint (dim, cool moonlight)
+    // at midnight, warmed slightly toward the sunrise/sunset glow. One global write per clock change —
+    // zero per-sprite cost, no extra shadow/dye conflict.
+    [Tooltip("Dim & cool the billboard sprites by time of day (player, mobs, loot).")]
+    public bool driveSpriteLight = true;
+    [Tooltip("Sprite multiply tint at midnight — dim, cool moonlight (1,1,1 = no change).")]
+    public Color nightSpriteTint = new Color(0.34f, 0.42f, 0.60f);
+    [Range(0f, 1f)] [Tooltip("How much the sunrise/sunset glow warms the sprites (0 = off).")]
+    public float spriteHorizonWarmth = 0.25f;
+
+    static readonly int SpriteEnvProp = Shader.PropertyToID("_SpriteEnv");
+
+    // Seed the global white BEFORE the first frame renders (play mode) and on every editor domain reload,
+    // so billboards are never multiplied by an unset (black) global when no DayNightLight is driving it.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void SeedSpriteEnv() => Shader.SetGlobalColor(SpriteEnvProp, Color.white);
+#if UNITY_EDITOR
+    [UnityEditor.InitializeOnLoadMethod]
+    static void SeedSpriteEnvEditor() => Shader.SetGlobalColor(SpriteEnvProp, Color.white);
+#endif
+
     [Header("Sun angle")]
     public bool rotateSun = true;
     // Pitch is lerped horizonPitch→noonPitch by Daylight01, so it tracks the real sun: HIGH/overhead at noon
@@ -107,6 +145,28 @@ public class DayNightLight : MonoBehaviour
             if (tintAmbient) amb = Color.Lerp(amb, hc, glow * 0.5f);
             RenderSettings.ambientLight = amb;
         }
+
+        if (driveSky)
+        {
+            var cam = CameraRig.Cam;   // cached; re-fetched after a scene swap
+            if (cam != null)
+            {
+                Color sky = Color.Lerp(nightSky, daySky, day);
+                sky = Color.Lerp(sky, hc, glow * skyHorizonTint);
+                cam.backgroundColor = sky;
+            }
+            // No camera yet (Systems boots before the map's camera). Re-arm so we apply the moment it exists,
+            // instead of being stuck at Bootstrap's colour until the clock next moves (e.g. while paused).
+            else lastTime = float.NaN;
+        }
+
+        if (driveSpriteLight)
+        {
+            Color env = Color.Lerp(nightSpriteTint, Color.white, day);
+            env = Color.Lerp(env, hc, glow * spriteHorizonWarmth);
+            Shader.SetGlobalColor(SpriteEnvProp, env);
+        }
+        else Shader.SetGlobalColor(SpriteEnvProp, Color.white);   // off → sprites render true art
 
         if (rotateSun)
         {

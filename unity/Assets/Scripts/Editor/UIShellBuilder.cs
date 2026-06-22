@@ -178,10 +178,13 @@ public static class UIShellBuilder
         // Hotkey legend, sitting just above the mana bar (lower-left stack: hotkeys ▸ MP ▸ HP).
         BuildHotkeyLegend(canvas);
 
-        // Gold counter — top-right corner; GoldCounter.cs wires it to Wallet.OnChanged at runtime.
+        // Minimap — top-right corner (terrain RT + player/mob blips). Sits above the gold counter.
+        BuildMinimap(canvas);
+
+        // Gold counter — top-right, tucked just under the minimap; GoldCounter.cs wires it to Wallet.OnChanged.
         var goldPanel = NewSliced("HUD_GoldPanel", canvas, barBgSprite);
         Anchor(goldPanel.rectTransform, Vector2.one, Vector2.one, Vector2.one);
-        goldPanel.rectTransform.anchoredPosition = new Vector2(-16, -16);
+        goldPanel.rectTransform.anchoredPosition = new Vector2(-16, -(16 + MinimapSize + 8));
         goldPanel.rectTransform.sizeDelta = new Vector2(120, 26);
         var goldLabel = NewText("HUD_Gold", goldPanel.transform, "0 z", 15, FontStyle.Bold, TextAnchor.MiddleCenter, true);
         Fill(goldLabel.rectTransform, new Vector2(4, 2), new Vector2(-4, -2));
@@ -201,6 +204,35 @@ public static class UIShellBuilder
             NewSliced("Hotslot", holder.transform, cellSprite).rectTransform.sizeDelta = new Vector2(48, 48);
     }
 
+    const int MinimapSize = 180;   // square minimap edge (px @ reference resolution)
+
+    // Top-right minimap: a themed frame holding a RawImage (terrain RenderTexture) + a clipped blip layer.
+    // The Minimap component spawns the top-down camera/RT at runtime and projects player/mob dots onto blipRoot.
+    static void BuildMinimap(Transform canvas)
+    {
+        var panel = NewSliced("HUD_Minimap", canvas, panelSprite);
+        Anchor(panel.rectTransform, Vector2.one, Vector2.one, Vector2.one);   // top-right corner
+        panel.rectTransform.anchoredPosition = new Vector2(-16, -16);
+        panel.rectTransform.sizeDelta = new Vector2(MinimapSize, MinimapSize);
+        panel.raycastTarget = false;
+
+        // Terrain RenderTexture surface, inset so the themed frame border shows around it.
+        var viewGo = new GameObject("MinimapView", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+        viewGo.transform.SetParent(panel.transform, false);
+        var view = viewGo.GetComponent<RawImage>();
+        view.raycastTarget = false;
+        Fill(view.rectTransform, new Vector2(7, 7), new Vector2(-7, -7));
+
+        // Blip layer over the RT, clipped to the same inset so dots can't spill onto the frame.
+        var blipGo = new GameObject("Blips", typeof(RectTransform), typeof(RectMask2D));
+        blipGo.transform.SetParent(panel.transform, false);
+        Fill(blipGo.GetComponent<RectTransform>(), new Vector2(7, 7), new Vector2(-7, -7));
+
+        var minimap = canvas.GetComponent<Minimap>() ?? canvas.gameObject.AddComponent<Minimap>();
+        minimap.view = view;
+        minimap.blipRoot = blipGo.GetComponent<RectTransform>();
+    }
+
     // A small always-on controls cheat-sheet in the lower-left, just above the HP/MP bars.
     // Two text columns (keys + actions) inside a themed panel; purely informational, so it
     // never eats clicks (raycastTarget off on every graphic).
@@ -208,14 +240,14 @@ public static class UIShellBuilder
     {
         // Keep the two arrays in lock-step — left column = key, right column = what it does.
         const string keys =
-            "L-Click\nR-Drag\nA\nQ\nT\nS\nC\nI\nK\nO\nP\nEsc";
+            "L-Click\nR-Drag\nA\nQ\nT\nS\nC\nI\nK\nO\nM\nP\nEsc";
         const string actions =
-            "Move\nOrbit camera\nArm attack (+click)\nCast spell\nAuto-combat\nStop\nCharacter\nInventory\nSkills\nOutfit\nDev panel\nClose / cancel";
+            "Move\nOrbit camera\nArm attack (+click)\nCast spell\nAuto-combat\nStop\nCharacter\nInventory\nSkills\nOutfit\nMinimap\nDev panel\nClose / cancel";
 
         var panel = NewSliced("HUD_Hotkeys", canvas, panelSprite);
         Anchor(panel.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);   // bottom-left
         panel.rectTransform.anchoredPosition = new Vector2(16, 74);              // above MP bar (y 48 + 18)
-        panel.rectTransform.sizeDelta = new Vector2(210, 228);
+        panel.rectTransform.sizeDelta = new Vector2(210, 244);
         panel.raycastTarget = false;
 
         var title = NewText("Title", panel.transform, "HOTKEYS", 14, FontStyle.Bold, TextAnchor.UpperCenter, true);

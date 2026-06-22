@@ -52,7 +52,7 @@ public static class FantasyTownBuilder
         if (grassSrc == null)
         { EditorUtility.DisplayDialog("Fantasy Town", $"No ground tiles found in {PropsDir} (expected 'ground_grass').\nRun Build Prefabs ▸ Fantasy Assets (Pxltgr) → Props first.", "OK"); return; }
 
-        int groundLayer = NatureStageBuilder.EnsureGroundLayer();
+        int groundLayer = WorldBuildUtil.EnsureGroundLayer();
         if (groundLayer < 0)
         { EditorUtility.DisplayDialog("Fantasy Town", "No free layer slot for 'Ground'. Free one in Project Settings ▸ Tags and Layers.", "OK"); return; }
         int groundMask = 1 << groundLayer;
@@ -101,7 +101,7 @@ public static class FantasyTownBuilder
                 foreach (var col in tile.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(col);
                 tile.transform.SetParent(groundRoot.transform, true);
             }
-        NatureStageBuilder.SetLayerRecursive(groundRoot, groundLayer);
+        WorldBuildUtil.SetLayerRecursive(groundRoot, groundLayer);
 
         // One flat floor collider on the Ground layer = the walkable surface (player snap + path ground rays).
         var floor = new GameObject("Ground_Floor") { layer = groundLayer };
@@ -205,7 +205,7 @@ public static class FantasyTownBuilder
         var open = SceneManager.GetSceneByPath(TownScenePath);
         if (open.IsValid() && open.isLoaded && open != scene) EditorSceneManager.CloseScene(open, true);
         EditorSceneManager.SaveScene(scene, TownScenePath);
-        NatureStageBuilder.RegisterInBuildSettings(TownScenePath);
+        WorldBuildUtil.RegisterInBuildSettings(TownScenePath);
 
         bool linked = false;
         if (AssetDatabase.LoadAssetAtPath<SceneAsset>(FieldScenePath) != null)
@@ -213,7 +213,7 @@ public static class FantasyTownBuilder
             var field = EditorSceneManager.OpenScene(FieldScenePath, OpenSceneMode.Single);
             RegionBuilder.LinkFieldBack(field);
             EditorSceneManager.SaveScene(field);
-            NatureStageBuilder.RegisterInBuildSettings(FieldScenePath);
+            WorldBuildUtil.RegisterInBuildSettings(FieldScenePath);
             linked = true;
         }
         EditorSceneManager.OpenScene(TownScenePath, OpenSceneMode.Single);

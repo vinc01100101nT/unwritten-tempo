@@ -88,7 +88,9 @@ public class PlanarReflection : MonoBehaviour
 
     bool ShouldRun()
         => enabled && WeatherFX.Heavy
-        && RainOverlay.Instance != null && RainOverlay.Instance.intensity > 0.001f;
+        // Follow the VISIBLE puddles (which linger after the rain), not the rain itself, so reflections fade out
+        // with the puddles instead of snapping off the moment the rain stops.
+        && WetGround.Instance != null && WetGround.Instance.Active;
 
     void Update()
     {

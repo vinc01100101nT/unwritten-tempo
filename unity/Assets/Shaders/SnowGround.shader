@@ -17,6 +17,7 @@ Shader "Unwritten/SnowGround"
     {
         _Accum      ("Accumulation", Range(0,1)) = 0
         _SnowColor  ("Snow Color", Color) = (0.95, 0.97, 1.0, 1)
+        _LightTint  ("Day/Night Light Tint", Color) = (1, 1, 1, 1)
         _ShadowTint ("Crevice Shadow Tint", Color) = (0.62, 0.70, 0.85, 1)
         _UpCutoff   ("Up-Facing Cutoff", Range(0,1)) = 0.35
         _Coverage   ("Coverage", Range(0,1)) = 0.7
@@ -50,7 +51,7 @@ Shader "Unwritten/SnowGround"
             float _Accum, _UpCutoff, _Coverage, _PatchScale, _Sparkle, _SparkleScale;
             float _Thickness, _Lumpiness;
             float _FootRadius, _FootCarve, _FootDark;
-            float4 _SnowColor, _ShadowTint;
+            float4 _SnowColor, _ShadowTint, _LightTint;
             float4 _Steps[16];   // footprints: xy = world XZ, z = age 0..1 (>=1 = dead slot), w = size scale
 
             struct Attributes { float4 positionOS : POSITION; };
@@ -157,6 +158,11 @@ Shader "Unwritten/SnowGround"
                 float rim = smoothstep(0.02, 0.4, cov) * (1.0 - smoothstep(0.4, 0.85, cov)); // edge band
                 snow  = lerp(snow, _ShadowTint.rgb, rim * _Thickness * 0.45);      // cool shadow lip at the rim
                 cov   = saturate(cov + thick * _Thickness * 0.2);                  // thick areas read more solid
+
+                // Day/night: this depth pass overwrites the (already-lit, dimmed-at-night) scene with snow, so it
+                // would glow white in the dark unless we dim it ourselves. Multiply by the time-of-day tint
+                // (white at noon = no change, dim cool blue at midnight) so the blanket respects the night.
+                snow *= _LightTint.rgb;
 
                 return half4(snow, cov);
             }

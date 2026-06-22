@@ -13,8 +13,12 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class RainOverlay : MonoBehaviour
 {
-    [Range(0f, 1f)] [Tooltip("Master rain amount. 0 = dry (quad disabled, zero cost).")]
+    [Range(0f, 1f)] [Tooltip("TARGET rain amount the streaks ease toward — the per-map MAX (default 1). Flip this " +
+             "on/off; the VISIBLE rain ramps to it over rampTime instead of popping. 0 = dry (quad disabled).")]
     public float intensity = 1f;
+    [Range(0f, 60f)] [Tooltip("Seconds for the rain to fade IN when it starts (and OUT when it stops) — the storm " +
+             "builds 0→target gradually and tapers off when it clears. Mirrors SnowOverlay.rampTime.")]
+    public float rampTime = 4f;
     [Tooltip("How fast the streaks fall.")]
     public float fallSpeed = 20f;
     [Range(-1f, 1f)] [Tooltip("Wind slant — negative leans left, positive leans right.")]
@@ -28,10 +32,18 @@ public class RainOverlay : MonoBehaviour
     /// rain amount without a hard reference.</summary>
     public static RainOverlay Instance { get; private set; }
 
+    /// <summary>The eased, on-screen rain amount (0..1) — ramps toward <see cref="intensity"/> over
+    /// <see cref="rampTime"/>. Consumers that should follow the VISIBLE rain (e.g. rain audio) read this, not the
+    /// raw target. (The wet-ground soak/dry timers trigger off the raw <see cref="intensity"/> instead, so the
+    /// ground starts soaking the instant rain is commanded on — "from 0 onwards".)</summary>
+    public float Shown => shown;
+
     Material mat;
     Transform quad;
     Mesh mesh;
     float phase;
+    float shown;   // ramped rain amount (0..1) easing toward `intensity` — the actual value fed to the shader
+    bool primed;   // first-frame: snap `shown` to the map's starting rain so we don't fade in on load
 
     static readonly int ColorID     = Shader.PropertyToID("_Color");
     static readonly int IntensityID = Shader.PropertyToID("_Intensity");
@@ -101,8 +113,16 @@ public class RainOverlay : MonoBehaviour
     {
         if (mat == null) return;
 
+        // Spawn into an established storm at full strength: snap to the map's starting rain on the first frame so
+        // it doesn't fade in on load. Only LATER changes (toggling rain on/off mid-session) ease via the ramp.
+        if (!primed) { shown = intensity; primed = true; }
+
+        // Ease the rain IN/OUT instead of popping: `shown` ramps toward the target intensity, so the storm builds
+        // 0→full when it starts and tapers off when it stops (the same easing SnowOverlay uses for flakes).
+        shown = Mathf.MoveTowards(shown, intensity, Time.deltaTime / Mathf.Max(0.1f, rampTime));
+
         // Zero-cost when dry: deactivate the quad so it issues no draw call at all.
-        bool show = enabled && intensity > 0.001f;
+        bool show = enabled && shown > 0.001f;
         if (quad != null && quad.gameObject.activeSelf != show) quad.gameObject.SetActive(show);
         if (!show) return;
 
@@ -111,7 +131,7 @@ public class RainOverlay : MonoBehaviour
 
         phase += Time.deltaTime * fallSpeed;
         mat.SetColor(ColorID, color);
-        mat.SetFloat(IntensityID, intensity);
+        mat.SetFloat(IntensityID, shown);
         mat.SetFloat(PhaseID, phase);
         mat.SetFloat(SlantID, slant);
         mat.SetFloat(DensityID, density);

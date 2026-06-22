@@ -43,6 +43,9 @@ public class SnowGround : MonoBehaviour
     public float thickness = 0f;
     [Range(0f, 1f)] [Tooltip("Breaks the surface into cotton-like clumps instead of a smooth sheet.")]
     public float lumpiness = 0.4f;
+    [Tooltip("Colour the snow fades toward at MIDNIGHT so the blanket respects the dark (it's a depth-overwrite " +
+             "pass, so it can't be lit like the world — this dims it by hand). Stays bright white through the day.")]
+    public Color nightTint = new Color(0.28f, 0.32f, 0.46f, 1f);
 
     [Header("Footprints (High tier only)")]
     [Tooltip("Seconds a footprint takes to heal/fill back in. Higher = a longer-lasting trail. (Print POSITIONS " +
@@ -69,6 +72,7 @@ public class SnowGround : MonoBehaviour
 
     static readonly int AccumID      = Shader.PropertyToID("_Accum");
     static readonly int SnowColorID  = Shader.PropertyToID("_SnowColor");
+    static readonly int LightTintID  = Shader.PropertyToID("_LightTint");
     static readonly int ShadowTintID = Shader.PropertyToID("_ShadowTint");
     static readonly int UpCutoffID   = Shader.PropertyToID("_UpCutoff");
     static readonly int CoverageID   = Shader.PropertyToID("_Coverage");
@@ -165,6 +169,8 @@ public class SnowGround : MonoBehaviour
 
         mat.SetFloat(AccumID, accum);
         mat.SetColor(SnowColorID, snowColor);
+        var tod = TimeOfDay.Instance;
+        mat.SetColor(LightTintID, tod != null ? tod.WeatherTint(nightTint) : Color.white);
         mat.SetColor(ShadowTintID, shadowTint);
         mat.SetFloat(UpCutoffID, upCutoff);
         mat.SetFloat(CoverageID, coverage);
