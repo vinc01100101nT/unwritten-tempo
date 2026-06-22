@@ -17,7 +17,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/NewTown.unity
     guid: 295357b162dc789429fc52f2769d019f
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/NatureStage.unity
     guid: 2580c58bf3fb5854ca734f7fe1e53b20
   - enabled: 1
@@ -26,10 +26,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/field_2.unity
     guid: bc30f794800e1bd4b86545e7b8e331bf
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Town.unity
     guid: 6c64f549bca12ae4980429dd2d4c3584
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/StarterTown.unity
     guid: 10babedc824752d4880717bf793ccc28
   - enabled: 1
