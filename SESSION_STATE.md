@@ -12,11 +12,11 @@
   - **Unity** `Editor/WorldCreator.cs` → `Tools ▸ unwritten ▸ World ▸ World Creator…`: load json → validate → **Build World** (clone type→template `MapRecipe`, seed=json|FNV(id), `RecipeGenerator.Generate` per map; paired `MakePortal`+`MakeSpawn`, spawn ids `w{i}_from_{map}` for ≤3 stacked warps). Templates wired in window slots (EditorPrefs by GUID); user made `TownRecipe`/`FieldRecipe`.
   - **Roads to doorways**: `PathRouting.BuildToExits` + `Generate(r, exitPointsXZ)` — roads run from centre hub to each portal (crossroads at Start spawn). Templates need `pathWidth>0`.
   - World = 8 maps (town_0/1, field_0..5) baked + connected. ⚠️ Build World OVERWRITES scene files (confirm dialog warns).
+  - **Legacy manual map tools RETIRED** (`d216930`): `MapLinkWindow.cs` (MapLinker + both link windows) + `MapRecipeEditor.cs` (per-recipe Generate buttons + starter) + RecipeGenerator's "Generate Map from Selected Recipe" menu all DELETED. World Creator (Build World) is the ONLY map-build/link path; recipes authored via Assets ▸ Create ▸ unwritten ▸ Map Recipe; `RecipeGenerator.Generate()` engine + Apply Foliage Wind kept.
 - **World Map HUD** (`d119097`) — press **`N`** in-game for a full-screen top-down atlas of the whole world + pulsing "you are here" marker. (**`M` = corner minimap**, separate.)
   - `WorldAtlas.cs` (Resources SO) + `Editor/WorldAtlasBaker.cs` (per-scene top-down snapshot → composite by grid cell; atlas marked `HideAndDontSave` so OpenScene cleanup can't destroy it mid-bake) + `WorldMapHUD.cs` (self-bootstraps into Systems scene, builds own canvas). Build World auto-bakes the atlas; standalone "🗺 Bake World Map only" button too.
 
 ## ⏭️ NEXT (optional, pick any — none urgent)
-- Retire `MapLinkWindow`/`LinkMapsWindow` (`Editor/MapLinkWindow.cs`) — Build World fully replaces them.
 - Cluster near-duplicate exits on the same edge (stacked warps currently make near-parallel roads).
 - Brighten world-map tiles if they read too dark (snapshot lighting; same as Bake Minimap).
 - Bigger roadmap items still open: threat/aggro (deferred), next class (#2), weather calendar.
