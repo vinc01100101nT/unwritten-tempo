@@ -515,6 +515,7 @@ public class DevSettings : MonoBehaviour
         F("SSR distance",     2f, 80f,   () => wet ? wet.ssrMaxDistance : 0f,  v => { if (wet) wet.ssrMaxDistance = v; });
         F("SSR thickness",    0.2f, 4f,  () => wet ? wet.ssrThickness : 0f,    v => { if (wet) wet.ssrThickness = v; });
         F("SSR edge fade",    0.01f, 0.4f, () => wet ? wet.ssrEdgeFade : 0f,   v => { if (wet) wet.ssrEdgeFade = v; });
+        B("SSR debug view",   () => wet && wet.ssrDebug,                       v => { if (wet) wet.ssrDebug = v; });
         Sub("Snow");
         // Snow — drifting-flake overlay (all tiers, cheap) + ground build-up on roofs/terrain. The blanket ramps
         // up/melts over "Snow build time"; footprints in the snow are a High-tier extra (toggle Heavy weather on).

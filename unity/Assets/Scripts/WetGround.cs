@@ -106,6 +106,9 @@ public class WetGround : MonoBehaviour
     [Range(0.01f, 0.4f)] [Tooltip("Screen-edge fade width — reflections dissolve into the sky fallback near the borders " +
         "instead of cutting off sharply.")]
     public float ssrEdgeFade = 0.12f;
+    [Tooltip("DIAGNOSTIC: paint puddle pixels GREEN where the SSR ray hits on-screen geometry, RED where it misses. " +
+        "Turn on to see what the rays are doing; turn off for the real reflection.")]
+    public bool ssrDebug = false;
 
     /// <summary>True while SSR is the active reflection path (High tier + showing). PlanarReflection / DevSettings
     /// can read this to coordinate.</summary>
@@ -152,6 +155,7 @@ public class WetGround : MonoBehaviour
     static readonly int SSRStepsID     = Shader.PropertyToID("_SSRSteps");
     static readonly int SSRThicknessID = Shader.PropertyToID("_SSRThickness");
     static readonly int SSREdgeID      = Shader.PropertyToID("_SSREdge");
+    static readonly int SSRDebugID     = Shader.PropertyToID("_SSRDebug");
     const string SSRKeyword = "_SSR";
 
     /// <summary>Most-recent live effect, so consumers (e.g. footstep SFX) can query puddles without a Find.</summary>
@@ -347,6 +351,7 @@ public class WetGround : MonoBehaviour
         mat.SetFloat(SSRStepsID, ssrSteps);
         mat.SetFloat(SSRThicknessID, ssrThickness);
         mat.SetFloat(SSREdgeID, ssrEdgeFade);
+        mat.SetFloat(SSRDebugID, ssrDebug ? 1f : 0f);
         ScreenSpaceActive = useScreenSpace && show;
 
         // Footstep ripples come from the shared tracker, aged by OUR short ripple lifetime (so a print can have

@@ -59,6 +59,7 @@ Shader "Unwritten/WetGround"
             float _RipScale, _RipSpeed, _WaterImpact, _StepRadius, _StepBright, _GroundImpact, _GroundImpactStart;
             float _ReflStrength, _ReflDistort, _ReflFlipY;
             float _SSRMaxDist, _SSRSteps, _SSRThickness, _SSREdge;   // screen-space reflection march params
+            float _SSRDebug;   // >0.5 → paint puddle pixels green (SSR hit) / red (miss) to diagnose
             float4 _ReflectColor;
             float4 _Steps[16];   // footstep ripples: xy = world XZ, z = age 0..1 (>=1 = dead slot)
 
@@ -308,7 +309,10 @@ Shader "Unwritten/WetGround"
                     // March with the GEOMETRIC normal (rays stay stable/upward on flat water); add a tiny ripple
                     // jitter to the hit UV for shimmer instead of bending the whole ray (which caused the smear band).
                     float2 ssrUV; float ssrFade;
-                    if (ScreenSpaceReflect(wp, Ngeo, ssrUV, ssrFade))
+                    bool ssrHit = ScreenSpaceReflect(wp, Ngeo, ssrUV, ssrFade);
+                    if (_SSRDebug > 0.5)   // diagnostic: green = ray hit on-screen geometry, red = miss
+                        return half4((ssrHit ? float3(0.0, ssrFade, 0.0) : float3(0.6, 0.0, 0.0)) * wet, wet);
+                    if (ssrHit)
                         refl = lerp(refl, SampleSceneColor(saturate(ssrUV + N.xz * _ReflDistort)).rgb, ssrFade);
                 #endif
                     spec += refl * (wet * _ReflStrength);
