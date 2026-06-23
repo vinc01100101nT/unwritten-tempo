@@ -48,14 +48,17 @@ Shader "Unwritten/WetGround"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile _ _SSR   // SSR path (screen-space reflection) toggled by WetGround.useScreenSpace
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"   // SampleSceneColor (SSR)
             #include "Splash.hlsl"   // rain crown-splash SHAPE primitive (SplashShape)
 
             float _Wetness, _RainNow, _Darken, _PuddleScale, _PuddleAmount;
             float _RippleSpeed, _RippleStrength, _SpecStrength, _Flatness;
             float _RipScale, _RipSpeed, _WaterImpact, _StepRadius, _StepBright, _GroundImpact, _GroundImpactStart;
             float _ReflStrength, _ReflDistort, _ReflFlipY;
+            float _SSRMaxDist, _SSRSteps, _SSRThickness, _SSREdge;   // screen-space reflection march params
             float4 _ReflectColor;
             float4 _Steps[16];   // footstep ripples: xy = world XZ, z = age 0..1 (>=1 = dead slot)
 
@@ -134,6 +137,45 @@ Shader "Unwritten/WetGround"
                 }
                 return sum;
             }
+
+#if defined(_SSR)
+            // Screen-space reflection: march the reflected view ray through the DEPTH buffer and, on a hit, return
+            // the screen UV to read scene colour from. Height-correct by construction — each pixel reflects from its
+            // OWN world position + normal, so it works on the ground AND on an elevated rock, and it reflects the
+            // billboard player/mobs (they're written into the opaque depth+colour buffers, AlphaTest queue, before
+            // this Transparent-100 pass). Misses / off-screen rays return false so the caller keeps the planar
+            // mirror (which carries the far sky/clouds). Coarse fixed-step linear march: cheap + stylized-friendly.
+            bool ScreenSpaceReflect(float3 wp, float3 N, out float2 hitUV, out float fade)
+            {
+                hitUV = 0.0; fade = 0.0;
+                float3 V = normalize(wp - _WorldSpaceCameraPos);
+                float3 R = reflect(V, N);
+                int steps = max(1, (int)_SSRSteps);
+                float stepLen = _SSRMaxDist / steps;
+                float3 p = wp + R * (stepLen * 0.5);          // bias off the surface so step 1 can't self-intersect
+                [loop]
+                for (int i = 0; i < steps; i++)
+                {
+                    p += R * stepLen;
+                    float4 clip = mul(UNITY_MATRIX_VP, float4(p, 1.0));
+                    if (clip.w <= 1e-4) return false;          // crossed behind the camera
+                    float2 suv = (clip.xy / clip.w) * 0.5 + 0.5;
+                    if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) return false;   // left the screen
+                    float sd = SampleSceneDepth(suv);
+                    if (sd == UNITY_RAW_FAR_CLIP_VALUE) continue;   // sky here (no solid) — keep marching
+                    float3 scenePos = ComputeWorldSpacePosition(suv, sd, UNITY_MATRIX_I_VP);
+                    float diff = distance(_WorldSpaceCameraPos, p) - distance(_WorldSpaceCameraPos, scenePos);
+                    if (diff > 0.0 && diff < stepLen * _SSRThickness)   // ray just passed behind a surface → hit
+                    {
+                        hitUV = suv;
+                        float2 ef = smoothstep(0.0, _SSREdge, suv) * smoothstep(0.0, _SSREdge, 1.0 - suv);
+                        fade = ef.x * ef.y;                    // fade toward the screen borders (no hard cut)
+                        return true;
+                    }
+                }
+                return false;
+            }
+#endif
 
             half4 frag (Varyings IN) : SV_Target
             {
@@ -215,10 +257,20 @@ Shader "Unwritten/WetGround"
                     spec += _ReflectColor.rgb * steps * wet;
 
                     // Planar reflection: sample the mirror RT at this screen pixel, ripple-distorted, blended by
-                    // wetness. Contributes nothing when reflections are off (texture is bound to black).
+                    // wetness. Contributes nothing when reflections are off (texture is bound to black). This is also
+                    // the SSR FALLBACK below — it carries the far sky/clouds (height-insensitive) where SSR misses.
                     float2 ruv = saturate(uv + N.xz * _ReflDistort);
                     ruv.y = lerp(ruv.y, 1.0 - ruv.y, _ReflFlipY);
                     float3 refl = SAMPLE_TEXTURE2D(_ReflectionTex, sampler_ReflectionTex, ruv).rgb;
+                #if defined(_SSR)
+                    // Screen-space reflection OVERRIDES the planar fallback wherever the reflected ray hits on-screen
+                    // geometry — the height-correct part (character, nearby props, the surface itself), valid on the
+                    // ground AND up on a rock. Where it misses (sky / past a screen edge) we keep the planar mirror,
+                    // cross-faded by the edge term so a tall cropped object dissolves into sky, not a sharp cut.
+                    float2 ssrUV; float ssrFade;
+                    if (ScreenSpaceReflect(wp, N, ssrUV, ssrFade))
+                        refl = lerp(refl, SampleSceneColor(ssrUV).rgb, ssrFade);
+                #endif
                     spec += refl * (wet * _ReflStrength);
                 }
 

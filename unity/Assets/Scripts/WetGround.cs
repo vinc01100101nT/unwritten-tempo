@@ -91,10 +91,31 @@ public class WetGround : MonoBehaviour
     [Tooltip("Flip the reflection vertically (fix if it renders upside-down on your platform).")]
     public bool reflFlipY = false;
 
+    [Header("Screen-space reflection (height-correct — reflects the character + elevated surfaces)")]
+    [Tooltip("Use SCREEN-SPACE reflection instead of relying only on the single-plane mirror. SSR reflects each " +
+        "puddle pixel from its OWN surface, so it's correct on the ground AND up on a rock, and it mirrors the " +
+        "billboard player/mobs. Where a ray misses (sky / off-screen) it falls back to the planar mirror, so KEEP " +
+        "'Water reflection' on for the sky/clouds. Turn this OFF to get exactly the old single-plane behaviour.")]
+    public bool useScreenSpace = true;
+    [Range(4, 48)] [Tooltip("SSR march steps — more = catches thinner/further reflections, costs more per puddle pixel.")]
+    public int ssrSteps = 24;
+    [Range(2f, 80f)] [Tooltip("How far (world units) a reflection ray travels before giving up.")]
+    public float ssrMaxDistance = 30f;
+    [Range(0.2f, 4f)] [Tooltip("Hit tolerance (in step-lengths). Higher = fewer holes but more smear behind objects.")]
+    public float ssrThickness = 1.2f;
+    [Range(0.01f, 0.4f)] [Tooltip("Screen-edge fade width — reflections dissolve into the sky fallback near the borders " +
+        "instead of cutting off sharply.")]
+    public float ssrEdgeFade = 0.12f;
+
+    /// <summary>True while SSR is the active reflection path (High tier + showing). PlanarReflection / DevSettings
+    /// can read this to coordinate.</summary>
+    public static bool ScreenSpaceActive { get; private set; }
+
     Material mat;
     Transform quad;
     Mesh mesh;
-    bool depthRequested;
+    Camera lastCam;                              // cached so we don't GetComponent the camera data every frame
+    UniversalAdditionalCameraData camData;
 
     float puddleLevel; // current puddle COVERAGE (0..puddleAmount) fed to _PuddleAmount — self-driven, persists after rain
     float delayTimer;  // counts down the soak-in / dry-out delay before puddleLevel starts spreading/receding
@@ -127,6 +148,11 @@ public class WetGround : MonoBehaviour
     static readonly int ReflStrengthID = Shader.PropertyToID("_ReflStrength");
     static readonly int ReflDistortID  = Shader.PropertyToID("_ReflDistort");
     static readonly int ReflFlipYID    = Shader.PropertyToID("_ReflFlipY");
+    static readonly int SSRMaxDistID   = Shader.PropertyToID("_SSRMaxDist");
+    static readonly int SSRStepsID     = Shader.PropertyToID("_SSRSteps");
+    static readonly int SSRThicknessID = Shader.PropertyToID("_SSRThickness");
+    static readonly int SSREdgeID      = Shader.PropertyToID("_SSREdge");
+    const string SSRKeyword = "_SSR";
 
     /// <summary>Most-recent live effect, so consumers (e.g. footstep SFX) can query puddles without a Find.</summary>
     public static WetGround Instance { get; private set; }
@@ -209,7 +235,7 @@ public class WetGround : MonoBehaviour
         BuildQuad();
     }
 
-    void OnDisable() { if (quad != null) quad.gameObject.SetActive(false); }
+    void OnDisable() { ScreenSpaceActive = false; if (quad != null) quad.gameObject.SetActive(false); }
     void OnDestroy()
     {
         if (Instance == this) Instance = null;
@@ -281,15 +307,16 @@ public class WetGround : MonoBehaviour
 
         bool show = enabled && WeatherFX.Heavy && (puddleLevel > 0.001f || rainNow > 0.001f);
         if (quad != null && quad.gameObject.activeSelf != show) quad.gameObject.SetActive(show);
-        if (!show) return;
+        if (!show) { ScreenSpaceActive = false; return; }
 
         var cam = CameraRig.Cam;
         if (cam != null)
         {
-            if (!depthRequested)
+            if (camData == null || lastCam != cam) { camData = cam.GetUniversalAdditionalCameraData(); lastCam = cam; }
+            if (camData != null)
             {
-                var data = cam.GetUniversalAdditionalCameraData();
-                if (data != null) { data.requiresDepthTexture = true; depthRequested = true; }
+                camData.requiresDepthTexture = true;                 // depth → puddle masking + SSR march
+                camData.requiresColorTexture = useScreenSpace;       // opaque colour → what SSR samples on a hit
             }
             if (quad != null) quad.position = cam.transform.position;
         }
@@ -313,6 +340,14 @@ public class WetGround : MonoBehaviour
         mat.SetFloat(ReflStrengthID, reflStrength);
         mat.SetFloat(ReflDistortID, reflDistort);
         mat.SetFloat(ReflFlipYID, reflFlipY ? 1f : 0f);
+
+        // Screen-space reflection path: compile the _SSR variant only when on, and feed its march params.
+        if (useScreenSpace) mat.EnableKeyword(SSRKeyword); else mat.DisableKeyword(SSRKeyword);
+        mat.SetFloat(SSRMaxDistID, ssrMaxDistance);
+        mat.SetFloat(SSRStepsID, ssrSteps);
+        mat.SetFloat(SSRThicknessID, ssrThickness);
+        mat.SetFloat(SSREdgeID, ssrEdgeFade);
+        ScreenSpaceActive = useScreenSpace && show;
 
         // Footstep ripples come from the shared tracker, aged by OUR short ripple lifetime (so a print can have
         // rippled away here while it's still healing in the snow). The shader masks them to puddles anyway.
