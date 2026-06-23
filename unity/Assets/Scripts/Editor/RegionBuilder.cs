@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 /// <summary>
 /// Shared world-authoring helpers used across the toolchain — NOT a map generator (that's the single
 /// <see cref="RecipeGenerator"/> now). This holds the reusable building blocks the recipe generator and the
-/// Link Maps tool depend on:
+/// <see cref="WorldCreator"/> (Build World) depend on:
 /// <list type="bullet">
 /// <item><b>Spawns &amp; portals:</b> <see cref="MakeSpawn"/>/<see cref="EnsureSpawn"/>,
 /// <see cref="MakePortal"/>/<see cref="EnsurePortal"/> — a <see cref="Portal3D"/> + arrival <see cref="SpawnPoint"/>,
@@ -17,7 +17,8 @@ using UnityEngine.SceneManagement;
 /// <item><b>Content:</b> Spawn Field Boss (hand-place a unique boss into the open map).</item>
 /// </list>
 /// Travel contract (ids matched by <see cref="PersistentPlayer3D"/> on arrival): a portal stores the target
-/// scene name + the id of the <see cref="SpawnPoint"/> to arrive at; see MapLinker for the From_&lt;map&gt; scheme.
+/// scene name + the id of the <see cref="SpawnPoint"/> to arrive at; <see cref="WorldCreator"/> keys each warp's
+/// paired arrival spawn id by source map (the w{i}_from_&lt;map&gt; scheme).
 /// </summary>
 public static class RegionBuilder
 {
@@ -279,8 +280,8 @@ public static class RegionBuilder
 
     // Attach the visible warp marker so the player can see the doorway in-game: the destination-coloured
     // upright Hovl "Portal" ring if it's present, otherwise a tinted cylinder fallback (hand-finished later).
-    // The colour is driven by where the portal LEADS (its Portal3D.targetScene) — so this works the same for
-    // fresh bakes and for the Link Maps tool re-attaching markers onto existing portals.
+    // The colour is driven by where the portal LEADS (its Portal3D.targetScene) — so World Creator's paired
+    // portals are coloured by their destination map the moment they're placed.
     static void AddWarpFx(GameObject portal)
     {
         var p3 = portal.GetComponent<Portal3D>();

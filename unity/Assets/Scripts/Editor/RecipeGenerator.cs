@@ -14,7 +14,7 @@ using UnityEngine.SceneManagement;
 /// <list type="bullet">
 /// <item>Ground: <see cref="PxltgrGround"/> / <see cref="PxltgrGroundBlend"/> (tiled or blended grass→dirt).</item>
 /// <item>Prop seating: <see cref="PropPlacement"/> (bounds-driven PlaceOnGround / StripColliders).</item>
-/// <item>Spawns &amp; portals: <see cref="RegionBuilder"/> (MakeSpawn). Linking is the separate Link Maps tool.</item>
+/// <item>Spawns &amp; portals: <see cref="RegionBuilder"/> (MakeSpawn). Warp wiring is <see cref="WorldCreator"/>'s job.</item>
 /// <item>Mobs: <see cref="Build25DSpike.BuildMonster(in MonsterArchetype, Vector3)"/> + <see cref="MobRoster"/>.</item>
 /// </list>
 /// All randomness flows from <see cref="MapRecipe.seed"/>, so a recipe + seed reproduces a map exactly.
@@ -45,7 +45,8 @@ public static class RecipeGenerator
 
     // ── ENTRY POINTS ───────────────────────────────────────────────────────────────────────────────────
     /// <summary>Bake <paramref name="r"/> into Assets/Scenes/&lt;mapName&gt;.unity. Returns success + the scene
-    /// path and how much was placed (the Inspector / link picker use these). Leaves the new map open &amp; active.</summary>
+    /// path and how much was placed. Leaves the new map open &amp; active. <see cref="WorldCreator"/> is the only
+    /// caller — it clones a template recipe per map cell and bakes each via the exit-aware overload below.</summary>
     public static (bool ok, string path, int props, int mobs) Generate(MapRecipe r)
         => Generate(r, null);
 
@@ -129,7 +130,7 @@ public static class RecipeGenerator
             }
 
         // ── SPAWN + AMBIENCE ─────────────────────────────────────────────────────────────────────────────
-        RegionBuilder.MakeSpawn(scene, "Start", spawnPos);   // boot/arrival point (link tool adds From_* later)
+        RegionBuilder.MakeSpawn(scene, "Start", spawnPos);   // boot/arrival point (World Creator adds warp spawns later)
         if (r.forestAmbience) EnsureForestAmbience(scene);
 
         // ── SAVE + REGISTER ──────────────────────────────────────────────────────────────────────────────
@@ -143,19 +144,6 @@ public static class RecipeGenerator
 
         Debug.Log($"[unwritten] Generated map '{safe}' (seed {seed}) → {path}: {props} props, {mobs} mobs.");
         return (true, path, props, mobs);
-    }
-
-    [MenuItem("Tools/unwritten/World/Generate Map from Selected Recipe", priority = 191)]
-    static void GenerateSelected()
-    {
-        var r = Selection.activeObject as MapRecipe;
-        if (r == null)
-        { EditorUtility.DisplayDialog("Generate Map", "Select a Map Recipe asset in the Project window first (or use the Generate button on the recipe).", "OK"); return; }
-        var res = Generate(r);
-        if (res.ok)
-            EditorUtility.DisplayDialog("Map generated",
-                $"Built {res.path}\n• {res.props} props\n• {res.mobs} mobs\n\n"
-                + "PLAY: the player/camera live in Systems — run 'Setup Systems Scene' once, then press Play.", "OK");
     }
 
     // Retrofit: make the foliage in the CURRENTLY-OPEN scene sway, without re-baking it from a recipe. Handy for
