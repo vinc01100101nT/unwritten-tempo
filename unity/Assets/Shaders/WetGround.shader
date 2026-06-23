@@ -145,33 +145,70 @@ Shader "Unwritten/WetGround"
             // billboard player/mobs (they're written into the opaque depth+colour buffers, AlphaTest queue, before
             // this Transparent-100 pass). Misses / off-screen rays return false so the caller keeps the planar
             // mirror (which carries the far sky/clouds). Coarse fixed-step linear march: cheap + stylized-friendly.
+            // Project a world point to screen UV; w<=0 (behind camera) signalled by returning a UV outside [0,1].
+            float2 WorldToUV(float3 p, out bool behind)
+            {
+                float4 clip = mul(UNITY_MATRIX_VP, float4(p, 1.0));
+                behind = clip.w <= 1e-4;
+                return (clip.xy / max(clip.w, 1e-4)) * 0.5 + 0.5;
+            }
+
+            // Camera-space depth (distance along view) of the SCENE surface under a screen UV; <0 = sky/no-surface.
+            float SceneViewDist(float2 uv)
+            {
+                float sd = SampleSceneDepth(uv);
+                if (sd == UNITY_RAW_FAR_CLIP_VALUE) return -1.0;
+                float3 sp = ComputeWorldSpacePosition(uv, sd, UNITY_MATRIX_I_VP);
+                return distance(_WorldSpaceCameraPos, sp);
+            }
+
             bool ScreenSpaceReflect(float3 wp, float3 N, out float2 hitUV, out float fade)
             {
                 hitUV = 0.0; fade = 0.0;
                 float3 V = normalize(wp - _WorldSpaceCameraPos);
                 float3 R = reflect(V, N);
+                // Reject rays that don't point clearly UPWARD. A grazing/downward ray skims the ground and samples
+                // nearby grass straight back — that's the full-width horizontal SMEAR band. Real reflections of the
+                // character / props off a near-flat puddle go up (R.y > 0). Fade in over a small band so it's not a
+                // hard cutoff as ripples wobble the normal.
+                float up = smoothstep(0.05, 0.22, R.y);
+                if (up <= 0.0) return false;
+
                 int steps = max(1, (int)_SSRSteps);
                 float stepLen = _SSRMaxDist / steps;
-                float3 p = wp + R * (stepLen * 0.5);          // bias off the surface so step 1 can't self-intersect
+                float3 prev = wp + R * (stepLen * 0.5);       // bias off the surface so step 1 can't self-intersect
+                float prevDiff = -1.0;                        // ray-depth minus scene-depth at the previous sample
                 [loop]
-                for (int i = 0; i < steps; i++)
+                for (int i = 1; i <= steps; i++)
                 {
-                    p += R * stepLen;
-                    float4 clip = mul(UNITY_MATRIX_VP, float4(p, 1.0));
-                    if (clip.w <= 1e-4) return false;          // crossed behind the camera
-                    float2 suv = (clip.xy / clip.w) * 0.5 + 0.5;
-                    if (suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) return false;   // left the screen
-                    float sd = SampleSceneDepth(suv);
-                    if (sd == UNITY_RAW_FAR_CLIP_VALUE) continue;   // sky here (no solid) — keep marching
-                    float3 scenePos = ComputeWorldSpacePosition(suv, sd, UNITY_MATRIX_I_VP);
-                    float diff = distance(_WorldSpaceCameraPos, p) - distance(_WorldSpaceCameraPos, scenePos);
-                    if (diff > 0.0 && diff < stepLen * _SSRThickness)   // ray just passed behind a surface → hit
+                    float3 p = prev + R * stepLen;
+                    bool behind; float2 suv = WorldToUV(p, behind);
+                    if (behind || suv.x < 0.0 || suv.x > 1.0 || suv.y < 0.0 || suv.y > 1.0) return false;  // off-screen
+                    float scn = SceneViewDist(suv);
+                    if (scn < 0.0) { prev = p; prevDiff = -1.0; continue; }   // sky here — keep marching
+                    float ray  = distance(_WorldSpaceCameraPos, p);
+                    float diff = ray - scn;                   // >0 once the ray has gone BEHIND a surface
+                    if (diff > 0.0 && diff < stepLen * _SSRThickness)
                     {
-                        hitUV = suv;
-                        float2 ef = smoothstep(0.0, _SSREdge, suv) * smoothstep(0.0, _SSREdge, 1.0 - suv);
-                        fade = ef.x * ef.y;                    // fade toward the screen borders (no hard cut)
+                        // Binary-refine between the last in-front sample and this behind one → land ON the surface,
+                        // not a fat band. (If prevDiff>=0 we stepped from sky; just use this sample.)
+                        float3 a = prev, b = p;
+                        if (prevDiff < 0.0) a = prev;
+                        [unroll]
+                        for (int k = 0; k < 5; k++)
+                        {
+                            float3 m = (a + b) * 0.5;
+                            bool bh; float2 muv = WorldToUV(m, bh);
+                            float ms = SceneViewDist(muv);
+                            if (ms > 0.0 && distance(_WorldSpaceCameraPos, m) - ms > 0.0) b = m; else a = m;
+                        }
+                        bool bh2; hitUV = WorldToUV(b, bh2);
+                        float2 ef = smoothstep(0.0, _SSREdge, hitUV) * smoothstep(0.0, _SSREdge, 1.0 - hitUV);
+                        float distFade = saturate(1.0 - distance(wp, b) / _SSRMaxDist);   // far hits fade out
+                        fade = ef.x * ef.y * up * distFade;
                         return true;
                     }
+                    prev = p; prevDiff = diff;
                 }
                 return false;
             }
@@ -235,6 +272,7 @@ Shader "Unwritten/WetGround"
                     float e = 0.06;
                     float hx = vnoise(rc + float2(e, 0)) - vnoise(rc - float2(e, 0));
                     float hz = vnoise(rc + float2(0, e)) - vnoise(rc - float2(0, e));
+                    float3 Ngeo = N;                          // pre-ripple geometric normal — steers the stable SSR ray
                     N = normalize(N + float3(-hx, 0.0, -hz) * _RippleStrength);
 
                     // Faked reflection: a glancing-angle fresnel tinted by the sky/reflection colour.
@@ -267,9 +305,11 @@ Shader "Unwritten/WetGround"
                     // geometry — the height-correct part (character, nearby props, the surface itself), valid on the
                     // ground AND up on a rock. Where it misses (sky / past a screen edge) we keep the planar mirror,
                     // cross-faded by the edge term so a tall cropped object dissolves into sky, not a sharp cut.
+                    // March with the GEOMETRIC normal (rays stay stable/upward on flat water); add a tiny ripple
+                    // jitter to the hit UV for shimmer instead of bending the whole ray (which caused the smear band).
                     float2 ssrUV; float ssrFade;
-                    if (ScreenSpaceReflect(wp, N, ssrUV, ssrFade))
-                        refl = lerp(refl, SampleSceneColor(ssrUV).rgb, ssrFade);
+                    if (ScreenSpaceReflect(wp, Ngeo, ssrUV, ssrFade))
+                        refl = lerp(refl, SampleSceneColor(saturate(ssrUV + N.xz * _ReflDistort)).rgb, ssrFade);
                 #endif
                     spec += refl * (wet * _ReflStrength);
                 }
