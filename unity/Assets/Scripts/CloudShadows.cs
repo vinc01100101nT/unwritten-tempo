@@ -26,9 +26,9 @@ public class CloudShadows : MonoBehaviour
 {
     [Header("Cloud look (baked into the texture)")]
     [Range(0f, 1f)] [Tooltip("How much of the sky is clouded — higher = more/larger shadow patches.")]
-    public float coverage = 0.38f;
+    public float coverage = 0.39f;
     [Range(0f, 1f)] [Tooltip("How dark the cloud shadows get (0 = invisible, 1 = deep shade).")]
-    public float darkness = 0.98f;
+    public float darkness = 1f;
     [Range(0.01f, 0.5f)] [Tooltip("Edge softness of the patches (low = crisp clouds, high = hazy).")]
     public float softness = 0.5f;
 
@@ -41,7 +41,7 @@ public class CloudShadows : MonoBehaviour
                              "0 = ignore weather; the clouds always drift at the base Wind speed.")]
     public float windResponse = 2f;
     [Range(0f, 360f)] [Tooltip("Wind direction in degrees.")]
-    public float windDirDeg = 71.33f;
+    public float windDirDeg = 70.67f;
     [Range(0f, 1f)] [Tooltip("Master fade over the whole effect (on top of the baked darkness).")]
     public float strength = 1f;
 
@@ -68,6 +68,10 @@ public class CloudShadows : MonoBehaviour
     static readonly int StrengthID = Shader.PropertyToID("_Strength");
     static readonly int ScrollXID  = Shader.PropertyToID("_ScrollX");
     static readonly int ScrollYID  = Shader.PropertyToID("_ScrollY");
+
+    /// <summary>The baked procedural cloud texture (R8: 1 = clear sky, lower = thicker cloud). <see cref="SkyboxSky"/>
+    /// samples THIS same texture so the visible sky clouds and the ground cloud-shadows share one pattern.</summary>
+    public Texture CloudTexture => tex;
 
     /// <summary>Find the live cloud-shadows effect, creating one if none exists yet (used by the weather director so
     /// clouds work even on a Systems scene baked before this component joined the rig; normally it's on the Sun).</summary>

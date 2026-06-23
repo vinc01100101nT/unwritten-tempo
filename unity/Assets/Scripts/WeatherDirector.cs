@@ -175,6 +175,7 @@ public class WeatherDirector : MonoBehaviour
         RainOverlay.Ensure();
         SnowOverlay.Ensure();
         CloudShadows.Ensure();
+        SkyboxSky.Ensure();
         WetGround.Ensure();
         SnowGround.Ensure();
         RainAudio.Ensure();

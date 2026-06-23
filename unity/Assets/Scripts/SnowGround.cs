@@ -33,10 +33,6 @@ public class SnowGround : MonoBehaviour
     public Color snowColor = new Color(1f, 1f, 1f, 1f);
     [Tooltip("Cool tint in crevices and footprint dents.")]
     public Color shadowTint = new Color(0.62f, 0.70f, 0.85f, 1f);
-    [Range(0f, 2f)] [Tooltip("Twinkle strength of the sparkle specks on fresh snow.")]
-    public float sparkle = 2f;
-    [Tooltip("Sparkle speck density (world units).")]
-    public float sparkleScale = 60f;
     [Range(0f, 1f)] [Tooltip("Fake VOLUME: domes the deep interior bright and shades a soft lip at the snow edge " +
              "so the blanket reads thick/rounded. (Screen-space can't bulge past silhouettes — that needs the " +
              "geometry snow-shell upgrade; this is the cheap illusion.)")]
@@ -77,8 +73,6 @@ public class SnowGround : MonoBehaviour
     static readonly int UpCutoffID   = Shader.PropertyToID("_UpCutoff");
     static readonly int CoverageID   = Shader.PropertyToID("_Coverage");
     static readonly int PatchScaleID = Shader.PropertyToID("_PatchScale");
-    static readonly int SparkleID    = Shader.PropertyToID("_Sparkle");
-    static readonly int SparkleSclID = Shader.PropertyToID("_SparkleScale");
     static readonly int ThicknessID  = Shader.PropertyToID("_Thickness");
     static readonly int LumpinessID  = Shader.PropertyToID("_Lumpiness");
     static readonly int FootRadiusID = Shader.PropertyToID("_FootRadius");
@@ -185,8 +179,6 @@ public class SnowGround : MonoBehaviour
         mat.SetFloat(UpCutoffID, upCutoff);
         mat.SetFloat(CoverageID, coverage);
         mat.SetFloat(PatchScaleID, patchScale);
-        mat.SetFloat(SparkleID, sparkle);
-        mat.SetFloat(SparkleSclID, sparkleScale);
         mat.SetFloat(ThicknessID, thickness);
         mat.SetFloat(LumpinessID, lumpiness);
         mat.SetFloat(FootRadiusID, footRadius);

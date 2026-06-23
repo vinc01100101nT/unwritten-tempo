@@ -169,8 +169,10 @@ public class PlanarReflection : MonoBehaviour
         reflCam.farClipPlane  = main.farClipPlane;
         reflCam.aspect        = main.aspect;
         reflCam.cullingMask   = reflectMask;
-        reflCam.clearFlags    = CameraClearFlags.SolidColor;
-        reflCam.backgroundColor = main.backgroundColor;
+        // Clear with the SKYBOX so the wrapped sky (gradient + sun + drifting clouds) shows up in the puddles —
+        // the mirror cam looks UP from below the water, so it samples the sky in the reflected directions.
+        reflCam.clearFlags    = CameraClearFlags.Skybox;
+        reflCam.backgroundColor = main.backgroundColor;   // fallback only (used if no skybox material is set)
 
         Vector3 planePos = new Vector3(0f, waterHeight, 0f);
         Vector3 normal   = Vector3.up;

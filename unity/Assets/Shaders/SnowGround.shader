@@ -3,7 +3,7 @@
 // surfaces — so roofs, the ground, fences and tree-tops gather snow while walls/trunks stay bare, all from the
 // one reconstructed normal (no per-material snow shader needed). _UpCutoff is gentler than WetGround's puddle
 // flatness so SLOPED roofs still catch snow. Coverage is broken up by a world-XZ noise patch so edges read
-// organic, and a high-frequency sparkle twinkles on the fresh snow.
+// organic.
 //
 // FOOTPRINTS: the same _Steps[16] ring buffer WetGround uses for ripples, but here each step is a PERSISTENT
 // filled depression that slowly heals (age 0->1 over many seconds in C#). A print CARVES the snow (lowers
@@ -22,8 +22,6 @@ Shader "Unwritten/SnowGround"
         _UpCutoff   ("Up-Facing Cutoff", Range(0,1)) = 0.35
         _Coverage   ("Coverage", Range(0,1)) = 0.7
         _PatchScale ("Patch Scale (1/size)", Float) = 0.25
-        _Sparkle    ("Sparkle Strength", Range(0,2)) = 0.6
-        _SparkleScale ("Sparkle Scale", Float) = 60
         _Thickness  ("Fake Volume", Range(0,1)) = 0.6
         _Lumpiness  ("Clumpiness", Range(0,1)) = 0.4
         _FootRadius ("Footprint Radius", Float) = 0.28
@@ -48,7 +46,7 @@ Shader "Unwritten/SnowGround"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
-            float _Accum, _UpCutoff, _Coverage, _PatchScale, _Sparkle, _SparkleScale;
+            float _Accum, _UpCutoff, _Coverage, _PatchScale;
             float _Thickness, _Lumpiness;
             float _FootRadius, _FootCarve, _FootDark;
             float4 _SnowColor, _ShadowTint, _LightTint;
@@ -136,15 +134,10 @@ Shader "Unwritten/SnowGround"
                 }
                 cov = saturate(cov - carve * _FootCarve * cov);
 
-                // Snow colour: bright top, cooled in crevices (low fbm) and in footprint dents. Sparkle = sparse
-                // high-frequency twinkle that drifts with time, only on undisturbed snow.
+                // Snow colour: bright top, cooled in crevices (low fbm) and in footprint dents.
                 float shade = saturate(fbm(wp.xz * _PatchScale * 3.0) * 0.4 + 0.78);   // brighter floor = whiter snow
                 float3 snow = lerp(_ShadowTint.rgb, _SnowColor.rgb, shade);
                 snow = lerp(snow, _ShadowTint.rgb, dent * _FootDark);
-
-                float sp = hash21(floor(wp.xz * _SparkleScale) + floor(_Time.y * 3.0));
-                float sparkle = step(0.985, sp) * _Sparkle * (1.0 - carve);
-                snow += sparkle;
 
                 // ---- Fake VOLUME (cotton thickness without geometry) -----------------------------------------
                 // This pass can only re-shade existing surface pixels, so it can't bulge past a silhouette — but

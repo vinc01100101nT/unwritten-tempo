@@ -72,6 +72,7 @@ public class DevSettings : MonoBehaviour
     WeatherChannels wc;
     DayNightLight sun;
     CloudShadows cloud;
+    SkyboxSky sky;
     WindGlobals wind;
     RainOverlay rain;
     WetGround wet;
@@ -105,6 +106,7 @@ public class DevSettings : MonoBehaviour
         if (wc == null)       wc       = WeatherChannels.Instance;
         if (sun == null)      sun      = FindFirstObjectByType<DayNightLight>();
         if (cloud == null)    cloud    = FindFirstObjectByType<CloudShadows>();
+        if (sky == null)      sky      = FindFirstObjectByType<SkyboxSky>();
         if (wind == null)     wind     = FindFirstObjectByType<WindGlobals>();
         if (rain == null)     rain     = FindFirstObjectByType<RainOverlay>();
         if (wet == null)      wet      = FindFirstObjectByType<WetGround>();
@@ -430,6 +432,20 @@ public class DevSettings : MonoBehaviour
         F("Cloud wind base",  0f, 3f,    () => cloud ? cloud.windSpeed : 0f,   v => { if (cloud) cloud.windSpeed = v; });
         F("Cloud wind response", 0f, 4f, () => cloud ? cloud.windResponse : 0f, v => { if (cloud) cloud.windResponse = v; });
         F("Wind direction",   0f, 360f,  () => cloud ? cloud.windDirDeg : 0f,  v => { if (cloud) cloud.windDirDeg = v; });
+        // VISIBLE clouds = the procedural SKYBOX (SkyboxSky): wraps the whole sky, seen everywhere + in wet-ground
+        // reflections. Cover is the Cloud channel above; these shape the look.
+        F("Cloud size (sky)", 4f, 120f,  () => sky ? sky.cloudSize : 0f,      v => { sky = SkyboxSky.Ensure(); sky.cloudSize = v; });
+        F("Cloud density",    0f, 4f,    () => sky ? sky.density : 0f,        v => { sky = SkyboxSky.Ensure(); sky.density = v; });
+        F("Cloud edge soft",  0.01f, 1f, () => sky ? sky.softEdge : 0f,       v => { sky = SkyboxSky.Ensure(); sky.softEdge = v; });
+        F("Cloud horizon fade",0.01f, 1f,() => sky ? sky.horizonFade : 0f,    v => { sky = SkyboxSky.Ensure(); sky.horizonFade = v; });
+        F("Cloud storm darken",0f, 1f,   () => sky ? sky.stormDarken : 0f,    v => { sky = SkyboxSky.Ensure(); sky.stormDarken = v; });
+        F("Cloud grey onset", 0f, 1f,    () => sky ? sky.fairCloud : 0f,      v => { sky = SkyboxSky.Ensure(); sky.fairCloud = v; });
+        F("Sky gradient pow", 0.2f, 4f,  () => sky ? sky.gradientPower : 0f,  v => { sky = SkyboxSky.Ensure(); sky.gradientPower = v; });
+        F("Sun disk size",    50f, 4000f,() => sky ? sky.sunSharpness : 0f,   v => { sky = SkyboxSky.Ensure(); sky.sunSharpness = v; });
+        F("Sun halo spread",  2f, 64f,   () => sky ? sky.sunHalo : 0f,        v => { sky = SkyboxSky.Ensure(); sky.sunHalo = v; });
+        F("Moon disk size",   50f, 6000f,() => sky ? sky.moonSharpness : 0f,  v => { sky = SkyboxSky.Ensure(); sky.moonSharpness = v; });
+        F("Moon halo spread", 2f, 64f,   () => sky ? sky.moonHalo : 0f,       v => { sky = SkyboxSky.Ensure(); sky.moonHalo = v; });
+        F("Moon height",      0f, 2f,    () => sky ? sky.moonLift : 0f,       v => { sky = SkyboxSky.Ensure(); sky.moonLift = v; });
         Sub("Wind & Foliage Sway");
         // The Wind weather CHANNEL (0..1) — like Rain/Cloud, authored per weather. It drives the foliage sway, the
         // cloud drift speed AND the rain slant together, so one value = how windy it is. Direction is set above.
@@ -513,7 +529,6 @@ public class DevSettings : MonoBehaviour
         F("Snow on slopes",   0f, 1f,    () => snowGround ? snowGround.upCutoff : 0f,  v => { if (snowGround) snowGround.upCutoff = v; });
         F("Snow build time",  0.5f, 60f, () => snowGround ? snowGround.accumTime : 0f, v => { if (snowGround) snowGround.accumTime = v; });
         F("Snow patch size",  0.05f, 1f, () => snowGround ? snowGround.patchScale : 0f,v => { if (snowGround) snowGround.patchScale = v; });
-        F("Snow sparkle",     0f, 2f,    () => snowGround ? snowGround.sparkle : 0f,   v => { if (snowGround) snowGround.sparkle = v; });
         F("Snow thickness",   0f, 1f,    () => snowGround ? snowGround.thickness : 0f, v => { if (snowGround) snowGround.thickness = v; });
         F("Snow clumpiness",  0f, 1f,    () => snowGround ? snowGround.lumpiness : 0f, v => { if (snowGround) snowGround.lumpiness = v; });
         F("Footprint heal",   0.5f, 30f, () => snowGround ? snowGround.footHeal : 0f,  v => { if (snowGround) snowGround.footHeal = v; });

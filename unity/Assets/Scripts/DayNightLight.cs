@@ -92,6 +92,10 @@ public class DayNightLight : MonoBehaviour
     Light sun;
     float lastTime = float.NaN;   // last applied time-of-day; NaN forces the next Update to apply
 
+    /// <summary>The current day/night sky colour (lerped day→night + dawn/dusk glow). <see cref="SkyboxSky"/> reads
+    /// this as the horizon colour so the procedural sky tracks the same clock. Updated whenever the clock moves.</summary>
+    public Color SkyColorNow { get; private set; } = new Color(0.55f, 0.70f, 0.85f);
+
     [Header("Cloud shadows")]
     [Tooltip("Project drifting cloud-shadow patches on the ground (adds/uses a CloudShadows component).")]
     public bool enableCloudShadows = true;
@@ -110,6 +114,9 @@ public class DayNightLight : MonoBehaviour
         // sync with the drifting clouds. Guarded against duplicates the same way.
         if (GetComponent<WindGlobals>() == null)
             gameObject.AddComponent<WindGlobals>();
+
+        // Bootstrap the procedural sky (wraps the scene in a skybox; sets RenderSettings.skybox + camera clear).
+        SkyboxSky.Ensure();
     }
 
     /// <summary>Force the next <see cref="Update"/> to re-apply colour/intensity/angle even when the clock
@@ -153,13 +160,14 @@ public class DayNightLight : MonoBehaviour
 
         if (driveSky)
         {
+            // Always compute + store the sky colour (the SkyboxSky reads SkyColorNow as its horizon colour, even
+            // when there's no camera yet or the camera clears with the skybox instead of this solid colour).
+            Color sky = Color.Lerp(nightSky, daySky, day);
+            sky = Color.Lerp(sky, hc, glow * skyHorizonTint);
+            SkyColorNow = sky;
+
             var cam = CameraRig.Cam;   // cached; re-fetched after a scene swap
-            if (cam != null)
-            {
-                Color sky = Color.Lerp(nightSky, daySky, day);
-                sky = Color.Lerp(sky, hc, glow * skyHorizonTint);
-                cam.backgroundColor = sky;
-            }
+            if (cam != null) cam.backgroundColor = sky;   // harmless when the camera clears with the skybox
             // No camera yet (Systems boots before the map's camera). Re-arm so we apply the moment it exists,
             // instead of being stuck at Bootstrap's colour until the clock next moves (e.g. while paused).
             else lastTime = float.NaN;

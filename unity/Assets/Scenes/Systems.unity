@@ -770,8 +770,6 @@ MonoBehaviour:
   patchScale: 1
   snowColor: {r: 1, g: 1, b: 1, a: 1}
   shadowTint: {r: 0.62, g: 0.7, b: 0.85, a: 1}
-  sparkle: 2
-  sparkleScale: 60
   thickness: 0
   lumpiness: 0.4
   nightTint: {r: 0.28, g: 0.32, b: 0.46, a: 1}
@@ -903,13 +901,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c865df3e2790db14fa4cc392239efbab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CloudShadows
-  coverage: 0.38
-  darkness: 0.98
+  coverage: 0.39
+  darkness: 1
   softness: 0.5
   patchSize: 10
   windSpeed: 1.06
   windResponse: 2
-  windDirDeg: 71.33
+  windDirDeg: 70.67
   strength: 1
   resolution: 256
   baseCells: 3

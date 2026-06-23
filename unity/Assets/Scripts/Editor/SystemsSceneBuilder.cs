@@ -49,6 +49,7 @@ public static class SystemsSceneBuilder
         var sun = Build25DSpike.BuildLight();
         sun.gameObject.AddComponent<DayNightLight>();   // sun color/intensity/angle + ambient by time-of-day
         sun.gameObject.AddComponent<CloudShadows>();    // drifting full-screen cloud shadows (DayNightLight also self-adds)
+        sun.gameObject.AddComponent<SkyboxSky>();        // procedural wrap-around sky (gradient + sun + drifting clouds); DayNightLight also self-adds
         sun.gameObject.AddComponent<WindGlobals>();     // feeds _GlobalWind for foliage sway (DayNightLight also self-adds)
         sun.gameObject.AddComponent<RainOverlay>();     // screen-space rain overlay (intensity 0 = dry/zero-cost until raised)
         sun.gameObject.AddComponent<WetGround>();       // HEAVY: wet/puddle screen-space pass + rain-impact rings (High tier, follows rain)

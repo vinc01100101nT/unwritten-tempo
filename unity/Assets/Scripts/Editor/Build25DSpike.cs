@@ -154,8 +154,8 @@ public static class Build25DSpike
     {
         var go = new GameObject("Spike Camera") { tag = "MainCamera" };
         var cam = go.AddComponent<Camera>();
-        cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.55f, 0.70f, 0.85f);
+        cam.clearFlags = CameraClearFlags.Skybox;   // SkyboxSky drives RenderSettings.skybox (procedural sky)
+        cam.backgroundColor = new Color(0.55f, 0.70f, 0.85f);   // fallback if no skybox material is set
         cam.fieldOfView = 35f;
         cam.farClipPlane = 200f;
         go.transform.SetPositionAndRotation(new Vector3(0f, 10f, -8f), Quaternion.Euler(52f, 0f, 0f));
