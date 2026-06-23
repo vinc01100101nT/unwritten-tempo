@@ -510,12 +510,6 @@ public class DevSettings : MonoBehaviour
         F("Reflection amount",0f, 2f,    () => wet ? wet.reflStrength : 0f,    v => { if (wet) wet.reflStrength = v; });
         B("Reflection flip Y",() => wet && wet.reflFlipY,                      v => { if (wet) wet.reflFlipY = v; });
         F("Water level",     -5f, 5f,    () => refl ? refl.waterHeight : 0f,   v => { if (refl) refl.waterHeight = v; });
-        // SSR (height-correct: reflects the character + elevated puddles). Off = the old single-plane mirror only.
-        B("SSR reflection",   () => wet && wet.useScreenSpace,                 v => { if (!wet) wet = WetGround.Ensure(); wet.useScreenSpace = v; });
-        F("SSR distance",     2f, 80f,   () => wet ? wet.ssrMaxDistance : 0f,  v => { if (wet) wet.ssrMaxDistance = v; });
-        F("SSR thickness",    0.2f, 4f,  () => wet ? wet.ssrThickness : 0f,    v => { if (wet) wet.ssrThickness = v; });
-        F("SSR edge fade",    0.01f, 0.4f, () => wet ? wet.ssrEdgeFade : 0f,   v => { if (wet) wet.ssrEdgeFade = v; });
-        B("SSR debug view",   () => wet && wet.ssrDebug,                       v => { if (wet) wet.ssrDebug = v; });
         Sub("Snow");
         // Snow — drifting-flake overlay (all tiers, cheap) + ground build-up on roofs/terrain. The blanket ramps
         // up/melts over "Snow build time"; footprints in the snow are a High-tier extra (toggle Heavy weather on).
