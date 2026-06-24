@@ -34,5 +34,7 @@ public class BossBanner : MonoBehaviour
         plate.barWidth     = barWidth;
         plate.barHeight    = barHeight;
         plate.nameFontSize = nameFontSize;
+        plate.showName        = true;    // a boss keeps its name…
+        plate.hideAtFullHealth = false;  // …and its bar is always visible (not hidden at full HP)
     }
 }

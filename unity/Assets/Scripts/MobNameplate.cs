@@ -21,8 +21,15 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class MobNameplate : MonoBehaviour
 {
-    [Tooltip("Name shown under the HP bar. Set by the mob builder; falls back to the GameObject name.")]
+    [Tooltip("Name shown under the HP bar. Set by the mob builder; falls back to the GameObject name. Still used " +
+             "by the hover panel even when the on-plate label is hidden (see showName).")]
     public string displayName;
+
+    [Tooltip("Draw the name label under the bar. OFF for normal mobs (cleaner); the boss turns it ON (BossBanner).")]
+    public bool showName = false;
+    [Tooltip("Hide the whole plate while the mob is at FULL health; show it only once it's been damaged (and " +
+             "hide again if fully healed). The boss turns this OFF so its bar is always visible.")]
+    public bool hideAtFullHealth = true;
 
     [Header("Layout (safe to tweak)")]
     [Tooltip("World size of the whole plate (shrinks the UI pixels into the 3D world).")]
@@ -40,7 +47,7 @@ public class MobNameplate : MonoBehaviour
     Image fill;
     float feetOffset;            // world units below the mob's centre to hang the plate (its feet)
     int lastShownHP = int.MinValue;
-    bool shown = true;
+    bool shown = false;   // nothing is shown until the plate is first built (on first damage)
 
     // ---- shared across ALL mobs: one canvas, one white sprite, the builtin font, one on-top material ----
     static Transform host;
@@ -70,12 +77,14 @@ public class MobNameplate : MonoBehaviour
 
     void LateUpdate()
     {
-        if (root == null) Build();                 // first frame: build the widget once
         if (camT == null) { var c = Camera.main; if (c == null) return; camT = c.transform; }
 
-        bool alive = health.Current > 0;           // dead → remains/fade/respawn-wait: hide the plate
-        if (alive != shown) { shown = alive; root.gameObject.SetActive(alive); }
-        if (!alive) return;
+        // Hidden when dead, and (for normal mobs) while at full HP — only appears once damaged, like RO.
+        bool show = health.Current > 0 && (!hideAtFullHealth || health.Current < health.maxHealth);
+        if (!show) { if (root != null && shown) { shown = false; root.gameObject.SetActive(false); } return; }
+
+        if (root == null) Build();                 // lazy: build the widget only the first time it needs to show
+        if (!shown) { shown = true; root.gameObject.SetActive(true); }
 
         // Follow the mob (after it has moved this frame) and yaw to face the camera — same as DamagePopup.
         root.position = transform.position + new Vector3(0f, feetOffset, 0f);
@@ -122,27 +131,31 @@ public class MobNameplate : MonoBehaviour
         fill.fillOrigin = (int)Image.OriginHorizontal.Left;
         fill.fillAmount = 1f;
 
-        // Name, just BELOW the bar.
-        var labelGO = new GameObject("Name", typeof(RectTransform));
-        var lrt = (RectTransform)labelGO.transform;
-        lrt.SetParent(root, false);
-        lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 1f); lrt.pivot = new Vector2(0.5f, 1f);
-        lrt.anchoredPosition = new Vector2(0f, -barHeight - 2f);
-        lrt.sizeDelta = new Vector2(barWidth * 3f, nameFontSize + 4);
-        var label = labelGO.AddComponent<Text>();
-        label.font = Font;
-        label.fontSize = nameFontSize;
-        label.fontStyle = FontStyle.Bold;
-        label.alignment = TextAnchor.UpperCenter;
-        label.horizontalOverflow = HorizontalWrapMode.Overflow;
-        label.verticalOverflow = VerticalWrapMode.Overflow;
-        label.raycastTarget = false;
-        label.color = new Color(0.97f, 0.97f, 0.99f);
-        label.text = displayName;
-        if (OnTop != null) label.material = OnTop;
-        var outline = labelGO.AddComponent<Outline>();      // dark edge so the name reads on any terrain
-        outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
-        outline.effectDistance = new Vector2(1.2f, -1.2f);
+        // Name, just BELOW the bar — opt-in (off for normal mobs, on for the boss). The hover panel still
+        // shows the name regardless, so hiding this only declutters the world, it doesn't lose the info.
+        if (showName)
+        {
+            var labelGO = new GameObject("Name", typeof(RectTransform));
+            var lrt = (RectTransform)labelGO.transform;
+            lrt.SetParent(root, false);
+            lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 1f); lrt.pivot = new Vector2(0.5f, 1f);
+            lrt.anchoredPosition = new Vector2(0f, -barHeight - 2f);
+            lrt.sizeDelta = new Vector2(barWidth * 3f, nameFontSize + 4);
+            var label = labelGO.AddComponent<Text>();
+            label.font = Font;
+            label.fontSize = nameFontSize;
+            label.fontStyle = FontStyle.Bold;
+            label.alignment = TextAnchor.UpperCenter;
+            label.horizontalOverflow = HorizontalWrapMode.Overflow;
+            label.verticalOverflow = VerticalWrapMode.Overflow;
+            label.raycastTarget = false;
+            label.color = new Color(0.97f, 0.97f, 0.99f);
+            label.text = displayName;
+            if (OnTop != null) label.material = OnTop;
+            var outline = labelGO.AddComponent<Outline>();  // dark edge so the name reads on any terrain
+            outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
+            outline.effectDistance = new Vector2(1.2f, -1.2f);
+        }
 
         lastShownHP = int.MinValue;                         // force the first fill refresh in LateUpdate
     }

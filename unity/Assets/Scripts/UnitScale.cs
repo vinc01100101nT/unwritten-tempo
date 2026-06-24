@@ -20,7 +20,7 @@ public static class UnitScale
     /// <summary>Scales every unit's size + speed. 1 = authored size.</summary>
     public static float Global = 1f;
     /// <summary>Extra size+speed multiplier on mobs only (match mob height to the player). 1 = no change.</summary>
-    public static float MobRelative = 0.42f;
+    public static float MobRelative = 0.30f;
 
     /// <summary>Size+speed multiplier for the player.</summary>
     public static float ForPlayer => Global;

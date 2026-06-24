@@ -32,9 +32,11 @@ public class GameCursor3D : MonoBehaviour
         if (player == null) player = FindFirstObjectByType<Player3DController>();
 
         // Aiming a skill (single-target UnitTargeter or AoE GroundTargeter) takes priority → reticle cursor.
-        // Otherwise: A-armed → crosshair (mob or ground alike); unarmed hover shows the default pointer.
+        // Then: A-armed → crosshair; hovering a living mob → SWORD (so the player sees it's clickable to attack);
+        // otherwise the default pointer. Skip the mob check while a panel is blocking (cursor is over the UI).
         Kind want = UnitTargeter.Active || GroundTargeter.Active ? Kind.Target
                   : player != null && player.AttackArmed       ? Kind.AttackMove
+                  : player != null && !DevSettings.Blocking && Player3DController.MonsterUnderCursor(cam) != null ? Kind.Attack
                   :                                               Kind.Default;
 
         if (want != current) { Apply(want); current = want; }

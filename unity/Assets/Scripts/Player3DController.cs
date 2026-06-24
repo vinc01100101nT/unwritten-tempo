@@ -519,10 +519,16 @@ public partial class Player3DController : MonoBehaviour
             }
             else
             {
-                // Plain click: a pickup wins (walk to it + collect), else it's a move.
-                var pick = PickupUnderCursor(cam);
-                if (pick != null) BeginPickup(pick);
-                else if (GroundPoint(cam, out var gp)) BeginMove(gp);
+                // Plain click: a mob → target-lock + attack it (shows the target indicator); else a pickup
+                // (walk to it + collect); else a ground move (which clears any lock via ClearCombat).
+                var mob = MonsterUnderCursor(cam);
+                if (mob != null) BeginAttack(mob, false);
+                else
+                {
+                    var pick = PickupUnderCursor(cam);
+                    if (pick != null) BeginPickup(pick);
+                    else if (GroundPoint(cam, out var gp)) BeginMove(gp);
+                }
             }
         }
     }
