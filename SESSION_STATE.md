@@ -11,8 +11,8 @@ Visible character = the **baked 8-dir billboard** (`BakedPlayerVisual` + `BakedB
 
 - **Tunable defaults**: camera (`CameraFollow3D` + `Systems.unity` + `Build25DSpike`) zoomStep 1 / minHeight 0 / minDistance 1 / maxDistance 4 / distance 4 / lookAtHeight 0. Player moveSpeed 1.5, stepInterval 0.42, walkStepInterval 0.62. Baked `feetOffset` 0.17 (default + `BaseCharacter.prefab`; BlueSoldier prefabs still 0.45).
 - **Free-fall**: `Player3DController.ApplyGravityAndMove` accumulates `vy` (real air time off ledges), resets on land; `fallAnimSpeed` (1.5) gates `falling`. Pose reuses **Jump** clip tail via `BakedBillboard8.PlayFall`; `BakedPlayerVisual.fallPosePhase` (0.5) picks the window.
-- **Billboard shadows**: `SunRig.cs` (cached light dir) + `BillboardShadow.cs` = light-facing `ShadowsOnly` proxy (fixes side-on light) + always-on flat **ground blob** decal at feet (fixes top-down light), distance-culled. Self-bootstrapped on mobs (`BillboardAnimator3D.Awake`) + baked player (`BakedBillboard8.Awake`).
-- **P-panel**: new **Shadows** cat (Billboard shadows / cull dist 32 / Ground blob / Blob strength 0.5 / Blob size 1) + Player "Fall pose @ speed" + Baked "Fall pose phase".
+- **Billboard shadows**: `SunRig.cs` (cached light dir) + `BillboardShadow.cs` = a SINGLE `ShadowsOnly` proxy that turns to **fully face the light in 3D** (`SunRig.ShadowFacing`) — stands up for a low sun (streak), lies flat for an overhead sun (contact shadow under feet). One morphing caster → works at every angle incl. top-down, never separates, and grounds the character. Distance-culled (32). Self-bootstrapped on mobs (`BillboardAnimator3D.Awake`) + baked player (`BakedBillboard8.Awake`). **Ground-blob decal approach was tried then REMOVED** (a static blob separates from the swinging cast shadow) — don't reintroduce it.
+- **P-panel**: **Shadows** cat (Billboard shadows / cull dist 32) + Player "Fall pose @ speed" + Baked "Fall pose phase".
 
 ⏭️ Verify in Play: walk off a ledge (fall pose), rotate sun side-on & top-down (shadow persists), tune via P. New `SunRig.cs`/`BillboardShadow.cs` need `.meta` from Unity's next import.
 
