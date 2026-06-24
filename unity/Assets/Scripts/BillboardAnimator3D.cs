@@ -45,6 +45,10 @@ public class BillboardAnimator3D : MonoBehaviour
         breathePhase = Random.value * Mathf.PI * 2f;   // desync the herd
         BuildFrames();
         if (down != null && down.Length > 0) sr.sprite = down[0];   // show before moving
+
+        // Light-facing cast shadow that survives the sun being off to the camera's side (see BillboardShadow).
+        // Self-bootstrapped so existing baked mobs get it at Play without a re-bake.
+        if (GetComponent<BillboardShadow>() == null) gameObject.AddComponent<BillboardShadow>();
     }
 
     void BuildFrames()

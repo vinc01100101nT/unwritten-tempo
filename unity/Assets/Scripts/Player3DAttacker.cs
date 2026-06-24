@@ -21,6 +21,10 @@ public class Player3DAttacker : MonoBehaviour
     public float cooldown = 0.6f;
     [Tooltip("Delay between a swing starting and the hit landing (cancellable window).")]
     public float windupTime = 0.18f;
+    [Tooltip("Fraction (0..1) of the swing at which the basic-attack hit LANDS. The animation still plays the " +
+             "FULL swing for the same cadence; the damage just connects at this point — 0.7 = 70% in, the " +
+             "natural contact moment — instead of right at the end.")]
+    [Range(0.1f, 1f)] public float hitTiming = 0.70f;
     [Tooltip("Fallback damage when there's no Character (e.g. the standalone spike).")]
     public int damage = 3;
     [Tooltip("The weapon's attack ELEMENT (RO property), applied to basic swings and skill strikes vs the " +
@@ -53,9 +57,10 @@ public class Player3DAttacker : MonoBehaviour
     public static float MotionScale =>
         Character.Instance != null ? 1f / Mathf.Max(0.01f, Character.Instance.AttackSpeedMult) : 1f;
 
-    /// <summary>How long one swing lasts (start → damage), scaled by attack-speed. Damage lands at the END of this
-    /// window, so the attack animation can be sped to play fully within it (see BakedPlayerVisual). Equals the swing
-    /// interval, so DPS is unchanged — the hit just lands when the animation finishes instead of mid-windup.</summary>
+    /// <summary>How long one whole swing lasts (start → next swing can begin), scaled by attack-speed. The attack
+    /// animation is sped to play fully within this window (see BakedPlayerVisual); the hit lands partway through at
+    /// <see cref="hitTiming"/> (default 70%) — the contact moment. Equals the swing interval, so DPS is unchanged —
+    /// only WHEN inside the window the hit connects moves.</summary>
     public float SwingTime => Mathf.Max(0.05f, cooldown * MotionScale);
 
     /// <summary>Strict planar range — used to actually LAND a hit (TryAttack / the windup check).</summary>
@@ -101,26 +106,36 @@ public class Player3DAttacker : MonoBehaviour
 
     IEnumerator SwingThenHit(Health t)
     {
-        // Damage lands at the END of the whole swing (= SwingTime), so the attack animation plays fully first and
-        // the hit syncs to its finish. SwingTime scales with attack-speed, so faster ASPD = quicker swing + quicker
-        // anim (BakedPlayerVisual speeds the clip to fill exactly this window). Swinging stays true the whole time.
+        // The whole swing spans SwingTime (scales with attack-speed; BakedPlayerVisual speeds the clip to fill it).
+        // The hit lands at hitTiming OF that window — the contact moment, ~70% in — not at the very end. We then
+        // hold `swing` for the remainder so the animation finishes and cadence (= SwingTime) is unchanged.
         float scale = MotionScale;
-        yield return new WaitForSeconds(SwingTime);
+        float swingTime = SwingTime;
+        float impactAt = swingTime * Mathf.Clamp01(hitTiming);
+        yield return new WaitForSeconds(impactAt);
+
+        if (InRange(t))   // target still in reach when the blow connects (skip if it moved out / died during windup)
+        {
+            // Roll the hit through Character so CritChance/CritDamage apply (spike has no Character → flat damage).
+            bool crit = false;
+            int power = Character.Instance != null ? Character.Instance.RollDamage(out crit) : damage;
+
+            // Slash FX at the target (a bit above its feet), billboarded by SlashEffect so it faces the camera.
+            Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
+            SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), fxPos, slashScale);
+
+            // Pass our HIT so the target rolls it against its FLEE (RO accuracy); −1 in the Character-less spike.
+            int hit = Character.Instance != null ? Character.Instance.Hit : -1;
+            if (hit >= 0 && StatusController.Player != null) hit = Mathf.Max(0, hit - StatusController.Player.HitPenalty);  // Blind
+            int dealt = t.TakeDamage(power, crit, hit, meleeElement);
+            if (dealt > 0) Sfx.Play(WeaponSfx(w => w.hitSfx, defaultHitSfx));   // impact — only on a landed hit, not a MISS
+        }
+
+        // Let the rest of the swing play out before freeing the slot, so the pose/animation completes and the next
+        // swing still starts one SwingTime after this one began (DPS unchanged).
+        float rest = swingTime - impactAt;
+        if (rest > 0f) yield return new WaitForSeconds(rest);
         swing = null;
-        if (!InRange(t)) yield break;   // target moved out / died during the swing
-        // Roll the hit through Character so CritChance/CritDamage apply (spike has no Character → flat damage).
-        bool crit = false;
-        int power = Character.Instance != null ? Character.Instance.RollDamage(out crit) : damage;
-
-        // Slash FX at the target (a bit above its feet), billboarded by SlashEffect so it faces the camera.
-        Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
-        SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), fxPos, slashScale);
-
-        // Pass our HIT so the target rolls it against its FLEE (RO accuracy); −1 in the Character-less spike.
-        int hit = Character.Instance != null ? Character.Instance.Hit : -1;
-        if (hit >= 0 && StatusController.Player != null) hit = Mathf.Max(0, hit - StatusController.Player.HitPenalty);  // Blind
-        int dealt = t.TakeDamage(power, crit, hit, meleeElement);
-        if (dealt > 0) Sfx.Play(WeaponSfx(w => w.hitSfx, defaultHitSfx));   // impact — only on a landed hit, not a MISS
     }
 
     public void Cancel() { if (swing != null) { StopCoroutine(swing); swing = null; } engaged = false; engagedTarget = null; }

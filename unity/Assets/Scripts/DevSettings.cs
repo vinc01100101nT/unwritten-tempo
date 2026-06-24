@@ -320,14 +320,11 @@ public class DevSettings : MonoBehaviour
             v => { if (bakedVisual) bakedVisual.fallPosePhase = v; });
 
         // ---- Shadows — light-facing billboard cast shadows (player + mobs) -------
-        // The proxy turns broadside to the sun so the silhouette shadow survives the light being off to the
-        // camera's side; far units are culled (no proxy) past the distance to keep crowded scenes cheap.
+        // The proxy turns to fully face the sun so the silhouette shadow survives any light angle (side-on AND
+        // overhead); far units are culled (no proxy) past the distance to keep crowded scenes cheap.
         Cat("Shadows");
         B("Billboard shadows", () => BillboardShadow.Enabled,     v => BillboardShadow.Enabled = v);
         F("Shadow cull dist",  5f, 80f, () => BillboardShadow.MaxDistance, v => BillboardShadow.MaxDistance = v);
-        B("Ground blob",       () => BillboardShadow.GroundBlob,  v => BillboardShadow.GroundBlob = v);   // always-on contact shadow
-        F("Blob strength",     0f, 1f,  () => BillboardShadow.BlobStrength, v => BillboardShadow.BlobStrength = v);
-        F("Blob size",         0.3f, 2.5f, () => BillboardShadow.BlobSize,  v => BillboardShadow.BlobSize = v);
 
         // ---- World — move the whole ground floor (Ground_Visual + Ground_Floor) up/down ----
         // Lifts/sinks the entire ground plot. Props/units are seated separately so they DON'T follow — this is a

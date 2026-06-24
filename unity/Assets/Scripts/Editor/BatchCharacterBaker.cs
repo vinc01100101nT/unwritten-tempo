@@ -16,8 +16,12 @@ public class BatchCharacterBaker : EditorWindow
     string fbxFolder = "Assets/Art/Quat/FBX";
     string outputRoot = "Assets/Art/Characters";
     // yawOffset 0 = correct for the Quaternius pack (faces the opposite way from Mixamo's +Z-forward, which needs 180).
+    // framePadding 1.2 (NOT 1.0): the cell is framed around the UNION of all poses, and the jump apex is the
+    // tallest — at padding 1.0 it sat flush with the cell's top edge and the head got CLIPPED. 1.2 leaves ~8.5%
+    // (~5px @64) headroom so no pose's head is cut. worldScale is bumped in step (0.5→0.6 = ×1.2) so the on-screen
+    // character size is unchanged — the extra headroom comes for free. Re-bake with "Skip already baked" OFF to apply.
     SpriteBakeCore.Settings settings = new SpriteBakeCore.Settings
-    { cellSize = 64, pixelate = true, superSample = 4, cameraPitch = 30f, framePadding = 1f, yawOffset = 0f, clockwise = true };
+    { cellSize = 64, pixelate = true, superSample = 4, cameraPitch = 30f, framePadding = 1.2f, yawOffset = 0f, clockwise = true };
 
     bool limitCount = true;
     int firstN = 3;
@@ -25,7 +29,7 @@ public class BatchCharacterBaker : EditorWindow
 
     // Runtime params written onto each prefab's BakedBillboard8. feetNudge is ADDED to the auto-measured
     // grounding offset (0 = trust the measurement; +/- to fine-tune if a character reads slightly off).
-    float feetNudge = 0f, worldScale = 0.5f, walkThreshold = 0.15f, runThreshold = 3.5f;
+    float feetNudge = 0f, worldScale = 0.6f, walkThreshold = 0.15f, runThreshold = 3.5f;   // 0.6 = 0.5 × 1.2, compensating the framePadding bump so on-screen size holds
 
     // Per-action animation FPS — doubles as the BAKED frame count (frames = clip length × fps) AND the playback
     // rate, so higher = smoother motion at the same real speed (costs more frames/VRAM). Editable in the window.

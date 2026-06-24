@@ -293,6 +293,23 @@ public class Character : MonoBehaviour
         OnHealthChanged?.Invoke();
     }
 
+    // ---- Invulnerability (i-frames) ---------------------------------------------------------------
+    /// <summary>True while the player has invincibility frames — set by the controller for the duration of the
+    /// dodge-dash. Incoming physical AND magic hits are fully negated and pop a "Dodge" cue. Runtime-only.</summary>
+    public bool Invulnerable { get; set; }
+
+    static readonly Color DodgeColor = new Color(0.55f, 0.9f, 1f);
+
+    // Negate an incoming hit because we're dashing through it; pop a small "Dodge" cue over the avatar.
+    bool DodgedByInvuln()
+    {
+        if (!Invulnerable) return false;
+        var a = Avatar();
+        if (a != null) DamagePopup.SpawnText(a.position, "Dodge", DodgeColor);
+        OnEvaded?.Invoke();
+        return true;
+    }
+
     // ---- Guard (Swordsman defensive active, Player3DGuard) ----------------------------------------
     // A timed damage-reduction stance: while active, incoming physical AND magic damage is cut by
     // guardReduction. Runtime-only (not saved); cleared on revive.
@@ -325,6 +342,7 @@ public class Character : MonoBehaviour
     public int TakeDamage(int attackerAttack, int attackerHit, Element attackElement = Element.Neutral, MonsterAI3D source = null)
     {
         if (IsDead) return 0;
+        if (DodgedByInvuln()) return 0;   // i-frames (dodge-dash): the hit passes harmlessly through
 
         // FLEE: roll the attacker's HIT against our FLEE. A miss negates the hit — the monster's attack
         // "missed", so show a WHITE MISS over the player (player-dealt misses are red, see Health).
@@ -368,6 +386,7 @@ public class Character : MonoBehaviour
     public int TakeMagicDamage(int attackerMagic, Element attackElement = Element.Neutral, MonsterAI3D source = null)
     {
         if (IsDead) return 0;
+        if (DodgedByInvuln()) return 0;   // i-frames (dodge-dash) dodge magic too
 
         float mod = Elements.Modifier(attackElement, armorElement);
         if (mod <= 0f) { ElementCue(mod); return 0; }
