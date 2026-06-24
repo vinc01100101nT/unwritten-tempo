@@ -163,10 +163,10 @@ public static class Build25DSpike
         cam.GetUniversalAdditionalCameraData().SetRenderer(rendererIndex);   // 3D renderer, this camera only
 
         var follow = go.AddComponent<CameraFollow3D>();    // orbit (Q/E + right-drag) + zoom follow rig
-        follow.distance = 9f;
+        follow.distance = 4f;
         follow.height = 10f;
         follow.yaw = 0f;
-        follow.minHeight = 0.3f;   // allow right-drag down to a near-horizontal, ground-level view
+        follow.minHeight = 0f;   // allow right-drag down to a near-horizontal, ground-level view
         if (player != null) follow.target = player.transform;
 
         var fader = go.AddComponent<CameraOccluderFader>();   // fade props that block the view of the player

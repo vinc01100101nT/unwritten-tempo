@@ -64,6 +64,7 @@ public class DevSettings : MonoBehaviour
     // ---- lazily-resolved targets (re-found after map swaps destroy/recreate them) ----
     Player3DController player;
     BakedBillboard8 bakedPlayer;   // the baked 8-dir visual riding the player (if "Use Baked Character" is active)
+    BakedPlayerVisual bakedVisual; // the driver on top of bakedPlayer (owns the fall-pose phase)
     Transform groundRoot;          // the ground root moved by the "Ground height" knob (found via a Ground-layer ray)
     int groundLayerMask = -1;      // cached Ground layer mask (-1 = not resolved yet)
     Player3DAttacker attacker;
@@ -100,7 +101,8 @@ public class DevSettings : MonoBehaviour
     void EnsureRefs()
     {
         if (player == null)   player   = FindFirstObjectByType<Player3DController>();
-        if (bakedPlayer == null) { var bpv = FindFirstObjectByType<BakedPlayerVisual>(); if (bpv != null) bakedPlayer = bpv.GetComponent<BakedBillboard8>(); }
+        if (bakedVisual == null) bakedVisual = FindFirstObjectByType<BakedPlayerVisual>();
+        if (bakedPlayer == null && bakedVisual != null) bakedPlayer = bakedVisual.GetComponent<BakedBillboard8>();
         if (attacker == null) attacker = FindFirstObjectByType<Player3DAttacker>();
         if (camRig == null)   camRig   = FindFirstObjectByType<CameraFollow3D>();
         if (fader == null)    fader    = FindFirstObjectByType<CameraOccluderFader>();
@@ -290,7 +292,9 @@ public class DevSettings : MonoBehaviour
         F("Snap radius (px)", 0f, 200f, () => player ? player.snapRadiusPixels : 0f, v => { if (player) { player.snapRadiusPixels = v; player.ApplySnapRadius(); } });
         F("Agent radius",     0.1f, 1f, () => player ? player.agentRadius : 0f,    v => { if (player) player.agentRadius = v; });
         F("Gravity",          0f, 30f, () => player ? player.gravity : 0f,         v => { if (player) player.gravity = v; });
-        F("Step interval",    0.1f, 1f, () => player ? player.stepInterval : 0f,   v => { if (player) player.stepInterval = v; });
+        F("Fall pose @ speed", 0f, 10f, () => player ? player.fallAnimSpeed : 0f,  v => { if (player) player.fallAnimSpeed = v; });   // min downward speed before the falling pose plays
+        F("Run step gap (s)",  0.1f, 1.5f, () => player ? player.stepInterval : 0f,     v => { if (player) player.stepInterval = v; });
+        F("Walk step gap (s)", 0.1f, 1.5f, () => player ? player.walkStepInterval : 0f, v => { if (player) player.walkStepInterval = v; });
         B("Idle breathing",   () => player && player.breathe,                      v => { if (player) player.breathe = v; });
         F("Breathe amount",   0f, 0.2f, () => player ? player.breatheAmount : 0f,  v => { if (player) player.breatheAmount = v; });
         F("Breathe speed",    0f, 6f,  () => player ? player.breatheSpeed : 0f,    v => { if (player) player.breatheSpeed = v; });
@@ -310,6 +314,20 @@ public class DevSettings : MonoBehaviour
         Cat("Baked Character");
         F("Feet offset", -0.5f, 1f, () => bakedPlayer ? bakedPlayer.FeetOffset : 0f,
             v => { if (bakedPlayer) bakedPlayer.SetFeetOffset(v); });
+        // Where in the Jump clip the looped FALLING frames start (0 = whole clip, 0.5 = 2nd/descent half,
+        // ~0.9 ≈ hold the last frame). Reuses Jump because there's no dedicated Fall bake.
+        F("Fall pose phase", 0f, 1f, () => bakedVisual ? bakedVisual.fallPosePhase : 0f,
+            v => { if (bakedVisual) bakedVisual.fallPosePhase = v; });
+
+        // ---- Shadows — light-facing billboard cast shadows (player + mobs) -------
+        // The proxy turns broadside to the sun so the silhouette shadow survives the light being off to the
+        // camera's side; far units are culled (no proxy) past the distance to keep crowded scenes cheap.
+        Cat("Shadows");
+        B("Billboard shadows", () => BillboardShadow.Enabled,     v => BillboardShadow.Enabled = v);
+        F("Shadow cull dist",  5f, 80f, () => BillboardShadow.MaxDistance, v => BillboardShadow.MaxDistance = v);
+        B("Ground blob",       () => BillboardShadow.GroundBlob,  v => BillboardShadow.GroundBlob = v);   // always-on contact shadow
+        F("Blob strength",     0f, 1f,  () => BillboardShadow.BlobStrength, v => BillboardShadow.BlobStrength = v);
+        F("Blob size",         0.3f, 2.5f, () => BillboardShadow.BlobSize,  v => BillboardShadow.BlobSize = v);
 
         // ---- World — move the whole ground floor (Ground_Visual + Ground_Floor) up/down ----
         // Lifts/sinks the entire ground plot. Props/units are seated separately so they DON'T follow — this is a

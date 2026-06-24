@@ -66,13 +66,22 @@ public partial class Player3DController : MonoBehaviour
     int hitFrame;  float hitTimer;
     Character hurtCharacter;   // subscribed for the hit-flinch trigger (separate from PlayerHurtFlash's tint)
 
-    public float moveSpeed = 4f;
+    public float moveSpeed = 1.5f;
+    [Tooltip("Speed multiplier while holding Shift to walk — slower than the default run, and plays the Walk animation.")]
+    public float walkSpeedMult = 0.45f;
+    /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="BakedPlayerVisual"/> to
+    /// choose the Walk vs Run animation.</summary>
+    public bool WalkingSlow { get; private set; }
     public float framesPerSecond = 8f;
     public float arriveDistance = 0.12f;
     [Tooltip("Clearance kept from props when routing.")]
     public float agentRadius = 0.35f;
-    [Tooltip("Constant downward pull to keep the CharacterController grounded.")]
+    [Tooltip("Downward acceleration (units/s²). Now ACCUMULATES into a vertical velocity while airborne so " +
+             "walking off a ledge free-falls (accelerates) instead of descending at a flat rate; reset on landing.")]
     public float gravity = 12f;
+    [Tooltip("Downward speed (units/s) the player must exceed before the falling pose plays — keeps small " +
+             "steps/slopes from flickering the in-air animation.")]
+    public float fallAnimSpeed = 1.5f;
     [Tooltip("During attack-move, auto-engage a mob within this range.")]
     public float acquireRange = 5f;
 
@@ -116,8 +125,10 @@ public partial class Player3DController : MonoBehaviour
     [Tooltip("One-shot splash played when a jump LANDS in a rain puddle (same puddle test as the water step). " +
              "Leave empty for a silent landing.")]
     public SfxSet waterJumpSfx;
-    [Tooltip("Seconds between footstep sounds while walking.")]
-    public float stepInterval = 0.32f;
+    [Tooltip("Seconds between footstep sounds while RUNNING (normal movement).")]
+    public float stepInterval = 0.42f;
+    [Tooltip("Seconds between footstep sounds while WALKING (Shift held) — usually larger than the run gap since walking is slower.")]
+    public float walkStepInterval = 0.62f;
     float nextStep;
 
     [Header("Auto-combat (T to toggle)")]
@@ -164,6 +175,16 @@ public partial class Player3DController : MonoBehaviour
     int wp; bool routing;
     float nextChaseRepath;
     Vector3 worldFacing = Vector3.back;          // last move/aim world dir; facing derived camera-relative
+
+    // Free-fall: vertical velocity that ACCUMULATES under gravity while airborne (so a ledge walk-off
+    // accelerates downward with real air time), reset to a small stick value on landing. `falling` gates
+    // the in-air (jump-descent) animation — true only once we're descending faster than fallAnimSpeed, so
+    // ordinary steps/slopes don't flicker it. Driven by ApplyGravityAndMove on the normal-movement path.
+    float vy;
+    bool falling;
+    /// <summary>True while the player is in an accelerating free-fall (read by the Sscary animation path to
+    /// show the jump clip's descent frames). Distinct from <see cref="IsAirborne"/> (the scripted hop arc).</summary>
+    public bool IsFalling => falling;
 
     /// <summary>Last move/aim direction in WORLD space (XZ meaningful). Read by the minimap to orient the
     /// player arrow. Fixed-north top-down: world +X = map right, world +Z = map up.</summary>
@@ -318,6 +339,10 @@ public partial class Player3DController : MonoBehaviour
         // activeInHierarchy guards the SetActive(false) case (scene swap), which doesn't clear .enabled.
         if (controller == null || !controller.enabled || !controller.gameObject.activeInHierarchy) return;
 
+        // Clear the free-fall pose each frame; only the normal-movement path (ApplyGravityAndMove) re-asserts
+        // it, so locked/dash/jump states below can't leave a stale in-air pose showing.
+        falling = false;
+
         // Dead: no input, no orders — show the defeated pose and keep the corpse pinned to the
         // ground (gravity) until the death screen respawns us.
         if (Character.Instance != null && Character.Instance.IsDead)
@@ -329,6 +354,7 @@ public partial class Player3DController : MonoBehaviour
             attackUntil = 0f;   // drop any held attack pose
             dashing = false;    // death cancels a charge in progress
             jumping = false; eDashing = false;   // …and any Sscary hop/dash in progress
+            if (Scary) SetDashInvuln(false);     // …so a dash cut short by death doesn't leave us invulnerable
             transform.localScale = baseScale;
             controller.Move(Vector3.down * gravity * Time.deltaTime);
             return;
@@ -403,8 +429,10 @@ public partial class Player3DController : MonoBehaviour
         bool moving = move.sqrMagnitude > 0.001f;
         if (moving) worldFacing = move;
         facing = Facing3D.FromWorldDir(worldFacing);   // camera-relative — frames track the camera as it orbits
-        float spd = moveSpeed * UnitScale.ForPlayer * (status != null ? status.MoveMult : 1f);   // Slow ailment + unit-size speed coupling
-        controller.Move((move * spd + Vector3.down * gravity) * Time.deltaTime);
+        WalkingSlow = moving && HeldShift();            // Shift = walk: slower move + Walk animation (read by BakedPlayerVisual)
+        float spd = moveSpeed * UnitScale.ForPlayer * (status != null ? status.MoveMult : 1f)   // Slow ailment + unit-size speed coupling
+                    * (WalkingSlow ? walkSpeedMult : 1f);                                        // …and the Shift-walk downshift
+        ApplyGravityAndMove(move * spd);   // accumulating free-fall (sets `falling` for the in-air pose)
 
         // Hold the attack pose while a swing is in flight (refreshed each swinging frame, with a tail).
         // The hold scales with attack speed (same MotionScale as the swing) so the pose snaps back
@@ -412,8 +440,20 @@ public partial class Player3DController : MonoBehaviour
         if (attacker != null && attacker.Swinging) attackUntil = Time.time + attackPoseHold * Player3DAttacker.MotionScale;
         Animate(moving);
         ApplyIdleScale(moving);
-        Footsteps(moving);
+        Footsteps(moving && !falling);   // no footsteps while free-falling through the air
         if (autoIndicator != null) autoIndicator.Show(AutoActive);   // show the "AUTO" tag only while roaming
+    }
+
+    // Move horizontally while applying ACCUMULATING gravity, so stepping off higher ground free-falls with
+    // real air time (the body accelerates) instead of the old constant-rate descent that looked glued to the
+    // floor. On the ground we hold a small downward stick so CharacterController.isGrounded stays reliable;
+    // airborne we integrate vy and, once descending past fallAnimSpeed, flag `falling` for the in-air pose.
+    void ApplyGravityAndMove(Vector3 horizVel)
+    {
+        if (controller.isGrounded && vy < 0f) vy = -2f;        // stick to the floor (keeps isGrounded true on slopes)
+        else vy -= gravity * Time.deltaTime;                   // in the air → accelerate downward (free-fall)
+        controller.Move((horizVel + Vector3.up * vy) * Time.deltaTime);
+        falling = !controller.isGrounded && vy < -fallAnimSpeed;
     }
 
     // Tick footstep sounds while walking. nextStep is a persistent cooldown — we DON'T reset it when
@@ -428,7 +468,7 @@ public partial class Player3DController : MonoBehaviour
         bool onWater = waterFootstepSfx != null && !waterFootstepSfx.Empty
                        && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(transform.position);
         Sfx.Play(onWater ? waterFootstepSfx : footstepSfx);
-        nextStep = Time.time + stepInterval;
+        nextStep = Time.time + (WalkingSlow ? walkStepInterval : stepInterval);   // slower gait → wider gap
     }
 
     // Procedural idle breathing — a soft squash-stretch while standing still; base scale otherwise
@@ -748,7 +788,7 @@ public partial class Player3DController : MonoBehaviour
     // ---- animation ------------------------------------------------------------
     void Animate(bool moving)
     {
-        if (Scary) { AnimateScary(moving ? ScaryState.Walk : ScaryState.Idle); return; }
+        if (Scary) { AnimateScary(falling ? ScaryState.Fall : moving ? ScaryState.Walk : ScaryState.Idle); return; }
         if (Animated) { AnimateRich(moving); return; }
         AnimateLegacy(moving);
     }
@@ -994,6 +1034,15 @@ public partial class Player3DController : MonoBehaviour
         if (Keyboard.current != null && Keyboard.current.dKey.isPressed) return true;
 #endif
         return Input.GetKey(KeyCode.D);
+    }
+
+    // Shift = walk (held). Either Shift key downshifts run → walk.
+    static bool HeldShift()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed)) return true;
+#endif
+        return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
     }
 
     void OnDrawGizmosSelected()

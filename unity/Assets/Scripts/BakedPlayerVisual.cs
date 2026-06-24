@@ -25,6 +25,14 @@ public class BakedPlayerVisual : MonoBehaviour
     public float hurtDuration = 0.4f;
     [Tooltip("Seconds the PickUp action plays when collecting loot.")]
     public float pickUpDuration = 0.6f;
+    [Tooltip("Free-fall pose: where in the Jump clip the looped falling frames begin (0 = whole clip, 0.5 = its " +
+             "2nd/descent half, ~0.9 ≈ hold the last frame). No dedicated Fall art exists, so we reuse Jump.")]
+    [Range(0f, 1f)] public float fallPosePhase = 0.5f;
+    [Tooltip("While DEAD, lift the (lying) corpse sprite to this grounding offset so the whole death pose — head " +
+             "included — stays above the ground plane. The standing feet-offset seats the cell bottom a hair " +
+             "below Y0 (fine for feet, but the lying body fills those rows, so the head clips into the ground). " +
+             "0.5 = cell bottom exactly on the ground; a touch over keeps a sliver of clearance.")]
+    public float deadFeetOffset = 0.52f;
 
     BakedBillboard8 baked;
     Player3DAttacker attacker;     // for the Swinging (attack) state
@@ -33,6 +41,8 @@ public class BakedPlayerVisual : MonoBehaviour
     Character subscribed;          // the Character we hooked OnDamaged on (to unhook the SAME one)
     Vector3 lastPlayerPos;
     bool wasDead;
+    float groundedFeetOffset;      // standing grounding captured at death, restored on revive
+    bool wasRolling;               // rising-edge guard so the dash→Roll time-fit + log fire once per dash
     float hurtUntil, pickUpUntil;  // momentary one-shot windows (event-driven, not state-driven)
 
     void Awake() => baked = GetComponent<BakedBillboard8>();
@@ -54,6 +64,27 @@ public class BakedPlayerVisual : MonoBehaviour
 
         lastPlayerPos = player.transform.position;
         transform.position = GroundedPos(lastPlayerPos);
+
+        ApplyClimbLimit();
+    }
+
+    // Block elevated surfaces that are ≥50% of the VISIBLE character height: cap the CharacterController's
+    // auto-climb (stepOffset) at just UNDER half the baked sprite's world height. Small curbs / tree-roots
+    // (< 50%) still step up; anything taller becomes a wall you must jump to clear. Measured off the real
+    // sprite so it tracks whatever was baked/scaled, and written onto the player's serialized capsule field
+    // so it survives any later ApplyCapsule() call.
+    void ApplyClimbLimit()
+    {
+        if (cc == null || baked == null) return;
+        float h = baked.VisualWorldHeight;
+        if (h <= 0.01f) return;
+        float climb = h * 0.5f - 0.02f;                       // just under 50% so a half-height ledge blocks
+        float safeMax = cc.height + 2f * cc.radius - 0.02f;   // Unity requires stepOffset < height + 2·radius
+        climb = Mathf.Clamp(climb, 0.02f, safeMax);
+        player.capsuleStepOffset = climb;                     // persists through ApplyCapsule()
+        player.ApplyCapsule();
+        Debug.Log($"[unwritten] Player auto-climb (stepOffset) set to {climb:0.00}u = 50% of the {h:0.00}u " +
+                  "sprite; taller elevated surfaces now block (jump to clear).");
     }
 
     void OnDamaged(int dmg)
@@ -87,10 +118,29 @@ public class BakedPlayerVisual : MonoBehaviour
 
         // Death overrides everything (the controller hides its own dead sprite, which we've disabled anyway).
         bool dead = Character.Instance != null && Character.Instance.IsDead;
-        if (dead) { baked.Play(CharacterAction.Die); wasDead = true; return; }
-        if (wasDead) { baked.StopOverride(); wasDead = false; }
+        if (dead)
+        {
+            // On the alive→dead edge, raise the grounding so the LYING corpse (which fills the bottom rows the
+            // standing pose leaves empty) doesn't sink its head below Y0 and get clipped by the ground plane.
+            if (!wasDead) { groundedFeetOffset = baked.FeetOffset; baked.SetFeetOffset(deadFeetOffset); }
+            baked.Play(CharacterAction.Die);   // plays once and holds its final (lying) frame — see BakedBillboard8.HoldsLastFrame
+            wasDead = true;
+            return;
+        }
+        if (wasDead) { baked.SetFeetOffset(groundedFeetOffset); baked.StopOverride(); wasDead = false; }   // revived → stand back up on the normal feet
 
         Vector3 dir = player.WorldFacing; dir.y = 0f;
+
+        // Free-fall (walked/ran off higher ground): reuse the Jump clip's descent half as the falling pose,
+        // looped while airborne. Mutually exclusive with the scripted hop (IsAirborne) below — the controller
+        // clears IsFalling during the hop/dash/swing frames. Beats locomotion so you don't "run" through the air.
+        if (player.IsFalling && baked.HasAction(CharacterAction.Jump))
+        {
+            wasRolling = false;
+            baked.PlayFall(CharacterAction.Jump, fallPosePhase);
+            if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);
+            return;
+        }
 
         // One-shot / action overrides, highest priority first. While one is active we feed only FACING (not
         // velocity) so movement can't cancel it — a swing/jump/dash on the run keeps playing its action.
@@ -100,7 +150,7 @@ public class BakedPlayerVisual : MonoBehaviour
         bool hasOverride = true;
         if (attacker != null && attacker.Swinging)          ov = CharacterAction.Attack;
         else if (player.IsAirborne)                         ov = CharacterAction.Jump;
-        else if (player.Dashing)                            ov = CharacterAction.Dash;
+        else if (player.Dashing || player.EDashing)         ov = baked.HasAction(CharacterAction.Roll) ? CharacterAction.Roll : CharacterAction.Dash;
         else if (Time.time < pickUpUntil)                   ov = CharacterAction.PickUp;
         else if (Time.time < hurtUntil && speed < walkThreshold) ov = CharacterAction.Hurt;
         else { ov = CharacterAction.Idle; hasOverride = false; }
@@ -117,16 +167,43 @@ public class BakedPlayerVisual : MonoBehaviour
                     baked.SetActionSpeed(CharacterAction.Attack, natural / swing);
             }
 
+            // Dash → Roll: compress the Roll clip to play in full within the (short) dash window so it reads as a
+            // dodge-roll, not a 2-frame flash. Done once on the rising edge.
+            if (ov == CharacterAction.Roll)
+            {
+                if (!wasRolling)
+                {
+                    wasRolling = true;
+                    float dashLen = player.EDashing ? player.eDashDuration : 0.4f;
+                    float natural = baked.NaturalDuration(CharacterAction.Roll);
+                    if (dashLen > 0.01f && natural > 0.01f) baked.SetActionSpeed(CharacterAction.Roll, natural / dashLen);
+                }
+            }
+            else wasRolling = false;
+
             baked.Play(ov);                                              // missing action falls back to Idle internally
             if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);          // keep aiming without clearing the override
             return;
         }
 
-        // Locomotion — facing from the player's INTENT (stable even when blocked); Idle/Walk/Run from ACTUAL speed.
-        baked.StopOverride();
+        // Locomotion — facing from the player's INTENT (stable even when blocked). Normal movement RUNS;
+        // holding Shift (player.WalkingSlow) downshifts to WALK (+ slower speed, set in the controller). We
+        // force the locomotion action rather than letting speed thresholds pick it, so a "run" reads as Run
+        // even at the modest player move speed. Falls back to Walk if no Run strip was baked.
         if (speed >= walkThreshold && dir.sqrMagnitude > 1e-4f)
-            baked.SetVelocity(dir.normalized * speed);
-        else { baked.SetVelocity(Vector3.zero); if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir); }
+        {
+            CharacterAction loco = player.WalkingSlow
+                ? CharacterAction.Walk
+                : (baked.HasAction(CharacterAction.Run) ? CharacterAction.Run : CharacterAction.Walk);
+            baked.Play(loco);
+            baked.SetFacing(dir.normalized);
+        }
+        else
+        {
+            baked.StopOverride();
+            baked.SetVelocity(Vector3.zero);
+            if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);
+        }
     }
 
     void OnDestroy()

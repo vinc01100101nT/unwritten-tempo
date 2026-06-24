@@ -119,27 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &77014267 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 127881863563754863, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-  m_PrefabInstance: {fileID: 1406225966}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &77014268
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 77014267}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2e4a3dcb83bada240a912244595b5037, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BakedPlayerVisual
-  player: {fileID: 1849173072}
-  walkThreshold: 0.12
-  hurtDuration: 0.4
-  pickUpDuration: 0.6
 --- !u!1 &257278076
 GameObject:
   m_ObjectHideFlags: 0
@@ -373,17 +352,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow3D
   target: {fileID: 1849173058}
-  distance: 9
+  distance: 4
   height: 10
   yaw: 0
-  lookAtHeight: 0.6
+  lookAtHeight: 0
   smoothTime: 0.12
-  minDistance: 4
-  maxDistance: 22
-  minHeight: 0.3
+  minDistance: 1
+  maxDistance: 4
+  minHeight: 0
   maxHeight: 26
   maxPitch: 45
-  zoomStep: 2
+  zoomStep: 1
   dragYawSpeed: 0.25
   dragHeightSpeed: 0.04
 --- !u!114 &600679140
@@ -403,7 +382,7 @@ MonoBehaviour:
   m_RequiresOpaqueTextureOption: 2
   m_CameraType: 0
   m_Cameras: []
-  m_RendererIndex: 1
+  m_RendererIndex: 0
   m_VolumeLayerMask:
     serializedVersion: 2
     m_Bits: 1
@@ -588,6 +567,66 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &778094854
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 127881863563754863, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_Name
+      value: PlayerBakedVisual (BaseCharacter)
+      objectReference: {fileID: 0}
+    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.19479167
+      objectReference: {fileID: 0}
+    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 127881863563754863, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1634129077}
+  m_SourcePrefab: {fileID: 100100000, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
 --- !u!1 &883892963
 GameObject:
   m_ObjectHideFlags: 0
@@ -692,70 +731,27 @@ Material:
     - _SwapTolerances: {r: 0.1, g: 0.1, b: 0.1, a: 0.1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!1001 &1406225966
-PrefabInstance:
+--- !u!1 &1634129076 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 127881863563754863, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+  m_PrefabInstance: {fileID: 778094854}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1634129077
+MonoBehaviour:
   m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 127881863563754863, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_Name
-      value: PlayerBakedVisual (BaseCharacter)
-      objectReference: {fileID: 0}
-    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.19479167
-      objectReference: {fileID: 0}
-    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6139954981553086089, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8013768171672326909, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      propertyPath: feetOffset
-      value: 0.32
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 127881863563754863, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 77014268}
-  m_SourcePrefab: {fileID: 100100000, guid: 11295b702a12a2b488570f3f17ff5f47, type: 3}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1634129076}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e4a3dcb83bada240a912244595b5037, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BakedPlayerVisual
+  player: {fileID: 1849173072}
+  walkThreshold: 0.12
+  hurtDuration: 0.4
+  pickUpDuration: 0.6
 --- !u!1 &1832086327
 GameObject:
   m_ObjectHideFlags: 0
@@ -1658,8 +1654,8 @@ MonoBehaviour:
   scaryDeathFps: 12
   jumpDistance: 2.4
   jumpHeight: 0.8
-  eDashSpeed: 13
-  eDashDuration: 0.22
+  eDashSpeed: 4
+  eDashDuration: 0.5
   eDashCooldown: 0.7
   down:
   - {fileID: 5546671543968653177, guid: 32e42725532a33342a4b0055127d2d8b, type: 3}
@@ -1692,7 +1688,7 @@ MonoBehaviour:
   attackFps: 16
   hitFlinchTime: 0.25
   hitFps: 14
-  moveSpeed: 2.6
+  moveSpeed: 1.5
   framesPerSecond: 8
   arriveDistance: 0.12
   agentRadius: 0.35
@@ -1731,7 +1727,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: f312d1ff96d6581408e5692e4287b9ab, type: 3}
     volume: 0.65
     pitch: {x: 0.95, y: 1.05}
-  stepInterval: 0.32
+  stepInterval: 0.42
   roamRange: 14
 --- !u!143 &1849173073
 CharacterController:
@@ -2155,4 +2151,4 @@ SceneRoots:
   - {fileID: 2088658857}
   - {fileID: 257278086}
   - {fileID: 883892965}
-  - {fileID: 1406225966}
+  - {fileID: 778094854}

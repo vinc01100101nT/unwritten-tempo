@@ -62,7 +62,13 @@ public class BakedBillboard8 : MonoBehaviour
     [Header("Grounding")]
     [Tooltip("Local units to lift the (centre-pivot) sprite so the feet sit on this transform. The baker " +
              "bottom-aligns the art, so ~0.45 × sprite height grounds it; tune if it floats/sinks.")]
-    public float feetOffset = 0.45f;
+    public float feetOffset = 0.17f;
+
+    [Header("Lighting / shadows")]
+    [Tooltip("Light the sprite like the 3D world: assign the Unwritten/BillboardLit material so the flat art " +
+             "casts a cutout shadow and darkens in shade — the SAME treatment regular mobs get. Off keeps the " +
+             "plain unlit Sprites/Default look (no shadow).")]
+    public bool castReceiveShadows = true;
 
     // ---- sliced clips, keyed by action: [octant][frame] ----
     readonly Dictionary<CharacterAction, Sprite[][]> clips = new Dictionary<CharacterAction, Sprite[][]>();
@@ -78,6 +84,9 @@ public class BakedBillboard8 : MonoBehaviour
     bool externallyDriven, moving;
     float extSpeed;
     bool hasOverride; CharacterAction overrideAction;
+    // Fall pose: loop only the LATTER part of a source clip (no dedicated Fall art exists, so we reuse the
+    // Jump clip's descent half as the free-fall pose). fallStartFrac picks where the looped window begins.
+    bool fallMode; CharacterAction fallSource; float fallStartFrac = 0.5f;
     CharacterAction current;
     float clock; int frame;
 
@@ -98,6 +107,11 @@ public class BakedBillboard8 : MonoBehaviour
         lastPos = transform.position;
         var c = ClipFor(current);
         if (c != null) { var s = c[4]; if (s != null && s.Length > 0) sr.sprite = s[0]; }
+
+        // Light-facing cast shadow (survives the sun being off to the camera's side — see BillboardShadow).
+        // Only when this character casts shadows at all; source = the BakedSprite child found by the component.
+        if (castReceiveShadows && GetComponent<BillboardShadow>() == null)
+            gameObject.AddComponent<BillboardShadow>().source = sr;
     }
 
     // The sprite lives on a CHILD lifted to ground the feet. Self-contained: we do the camera-facing here
@@ -112,7 +126,30 @@ public class BakedBillboard8 : MonoBehaviour
         spriteTf = go.transform;
         var r = go.GetComponent<SpriteRenderer>();
         if (r == null) r = go.AddComponent<SpriteRenderer>();
+        if (castReceiveShadows) ApplyBillboardLighting(r);
         return r;
+    }
+
+    // Runtime twin of Build25DSpike.ApplyBillboardLighting (which lives in the editor assembly and can't be
+    // called from Play): light the flat sprite like the rest of the 3D world so it throws a clean cutout
+    // shadow (cast from both faces of the thin quad) and darkens in shade — exactly what regular mobs get.
+    static Material _billboardMat;
+    static void ApplyBillboardLighting(SpriteRenderer sr)
+    {
+        if (_billboardMat == null)
+        {
+            var shader = Shader.Find("Unwritten/BillboardLit");
+            if (shader == null)
+            {
+                Debug.LogWarning("[unwritten] Shader 'Unwritten/BillboardLit' not found — baked character won't " +
+                                 "cast/receive shadows. Add it to Project Settings ▸ Graphics ▸ Always Included Shaders.");
+                return;
+            }
+            _billboardMat = new Material(shader) { name = "BillboardLit (baked)" };
+        }
+        sr.sharedMaterial = _billboardMat;
+        sr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.TwoSided;  // thin quad: cast from both faces
+        sr.receiveShadows = true;
     }
 
     /// <summary>Scale an action's PLAYBACK speed relative to its baked fps (1 = baked, 2 = twice as fast). Used to
@@ -169,18 +206,50 @@ public class BakedBillboard8 : MonoBehaviour
         return arr;
     }
 
+    // Actions that play ONCE and then freeze on their final frame instead of looping. Die is the clear case:
+    // the corpse must stay down on the ground, not snap back to standing and re-play the fall (the "repeating
+    // death" bug). The windowed one-shots the controller drives (Attack/Jump/Roll/Hurt/PickUp) are switched
+    // away the instant they end, so looping within their short window is invisible — only the persistent Die
+    // pose ever shows the wrap.
+    static bool HoldsLastFrame(CharacterAction a) => a == CharacterAction.Die;
+
     bool Has(CharacterAction a) => clips.TryGetValue(a, out var c) && c != null;
     CharacterAction FirstAction() => actions.Count > 0 && actions[0] != null ? actions[0].action : CharacterAction.Idle;
     Sprite[][] ClipFor(CharacterAction a) => clips.TryGetValue(a, out var c) ? c : null;
 
+    /// <summary>True if the given action has baked strips, so a caller can fall back when it's missing
+    /// (e.g. use Dash when Roll wasn't baked, or Walk when there's no Run).</summary>
+    public bool HasAction(CharacterAction a) => Has(a);
+
+    /// <summary>The current sprite's world-space height (sprite bounds × lossy scale), or 0 before the first
+    /// frame is set. Used to size gameplay thresholds to the VISIBLE character — e.g. the player's max
+    /// auto-climb step (block elevated surfaces ≥50% of this).</summary>
+    public float VisualWorldHeight
+    {
+        get
+        {
+            if (sr == null || sr.sprite == null) return 0f;
+            float s = spriteTf != null ? Mathf.Abs(spriteTf.lossyScale.y) : 1f;
+            return sr.sprite.bounds.size.y * s;
+        }
+    }
+
     // ---- AI / controller hooks ----
     /// <summary>Force a specific action (e.g. Attack) until <see cref="StopOverride"/>. Switches off self-drive.</summary>
-    public void Play(CharacterAction a) { externallyDriven = true; hasOverride = true; overrideAction = a; }
+    public void Play(CharacterAction a) { externallyDriven = true; hasOverride = true; overrideAction = a; fallMode = false; }
+    /// <summary>Play <paramref name="src"/> as a FALL pose: loop only the clip's tail (from <paramref name="startFrac"/>
+    /// of its length to the end), so reusing the Jump clip reads as a sustained descent while airborne. Cleared by
+    /// any other Play / StopOverride. <paramref name="startFrac"/> ~0.5 = its 2nd half; near 1 ≈ hold the last frame.</summary>
+    public void PlayFall(CharacterAction src, float startFrac)
+    {
+        Play(src);                       // sets the override; Play cleared fallMode, so re-arm it below
+        fallMode = true; fallSource = src; fallStartFrac = Mathf.Clamp01(startFrac);
+    }
     /// <summary>Return to movement-driven Idle/Walk/Run selection (still under explicit facing/moving if set).</summary>
-    public void StopOverride() => hasOverride = false;
+    public void StopOverride() { hasOverride = false; fallMode = false; }
     /// <summary>Hand control fully back to the built-in self-drive (movement-sampled facing + Idle/Walk/Run).
     /// Clears any override and re-bases the movement sampler so the first frame doesn't see a stale jump.</summary>
-    public void ResumeSelfDrive() { externallyDriven = false; hasOverride = false; lastPos = transform.position; }
+    public void ResumeSelfDrive() { externallyDriven = false; hasOverride = false; fallMode = false; lastPos = transform.position; }
     /// <summary>Set the world-space facing/move direction (XZ). Switches off self-drive movement sampling.</summary>
     public void SetFacing(Vector3 worldDir) { externallyDriven = true; worldDir.y = 0f; if (worldDir.sqrMagnitude > 1e-6f) facingDir = worldDir; }
     /// <summary>Set whether the character is moving (drives Walk/Run vs Idle). Switches off self-drive.</summary>
@@ -240,8 +309,23 @@ public class BakedBillboard8 : MonoBehaviour
         float fps = fpsByAction.TryGetValue(current, out var f) ? f : 12f;
         if (speedScale.TryGetValue(current, out var sc)) fps *= sc;   // attack-speed sync etc.
         clock += Time.deltaTime * Mathf.Max(1f, fps);
-        if (clock >= clip.Length) clock -= clip.Length * Mathf.Floor(clock / clip.Length);
-        frame = Mathf.Min((int)clock, clip.Length - 1);
+
+        // Fall pose: loop just the tail of the (Jump) clip so a free-fall holds the descent motion.
+        if (fallMode && current == fallSource)
+        {
+            int start = Mathf.Clamp(Mathf.FloorToInt(clip.Length * fallStartFrac), 0, clip.Length - 1);
+            int span = Mathf.Max(1, clip.Length - start);
+            sr.sprite = clip[start + ((int)clock % span)];
+            return;
+        }
+
+        if (HoldsLastFrame(current))
+            frame = Mathf.Min((int)clock, clip.Length - 1);   // play ONCE, then hold the final frame (no loop)
+        else
+        {
+            if (clock >= clip.Length) clock -= clip.Length * Mathf.Floor(clock / clip.Length);
+            frame = Mathf.Min((int)clock, clip.Length - 1);
+        }
         sr.sprite = clip[frame];
     }
 }

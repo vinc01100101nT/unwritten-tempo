@@ -54,12 +54,12 @@ public partial class Player3DController
     public float jumpHeight = 0.8f;
 
     [Header("Sscary dash (E) — facing-direction burst")]
-    public float eDashSpeed = 13f;
-    public float eDashDuration = 0.22f;
+    public float eDashSpeed = 4f;
+    public float eDashDuration = 0.50f;
     public float eDashCooldown = 0.7f;
 
     // ===== runtime =====
-    public enum ScaryState { Idle, Walk, Jump, Dash, Death }
+    public enum ScaryState { Idle, Walk, Jump, Dash, Death, Fall }
 
     bool scaryBuilt;
     /// <summary>True once the Sscary strips are sliced — this path then owns the sprite (see class doc).</summary>
@@ -81,6 +81,10 @@ public partial class Player3DController
     public bool IsAirborne => jumping;
     float jumpBaseY;       // ground Y captured at takeoff — the arc returns here, then gravity falls to land
     bool eDashing; float eDashStart; Vector3 eDashDir; float eDashReadyAt;
+
+    /// <summary>True during the Sscary E-key dash burst. Exposed so the baked visual can play Roll for it
+    /// (the charge gap-closer uses <see cref="Dashing"/>; this is the free traversal dash).</summary>
+    public bool EDashing => eDashing;
 
     // ---- build (called from Awake, after BuildAnimClips) ----------------------------------------------
     void BuildScary()
@@ -182,6 +186,7 @@ public partial class Player3DController
         {
             case ScaryState.Walk:  return sWalk;
             case ScaryState.Jump:  return sJump;
+            case ScaryState.Fall:  return sJump;   // free-fall reuses the jump clip (we loop its descent half)
             case ScaryState.Dash:  return sDash;
             case ScaryState.Death: return sDeath;
             default:               return sIdle;
@@ -218,6 +223,20 @@ public partial class Player3DController
     int AdvanceScary(ScaryState s, int len)
     {
         if (len <= 0) return 0;
+
+        // Free-fall: loop the jump clip's DESCENT half (2nd half of the frames) for as long as we're airborne,
+        // so a ledge walk-off shows the same falling pose the hop ends on — without a takeoff/landing frame.
+        if (s == ScaryState.Fall)
+        {
+            scaryOnceState = (ScaryState)(-1);
+            int half = len >= 2 ? len / 2 : 0;
+            int span = Mathf.Max(1, len - half);
+            scaryLoopT += Time.deltaTime;
+            float ftf = 1f / Mathf.Max(scaryWalkFps, 0.01f);
+            while (scaryLoopT >= ftf) { scaryLoopT -= ftf; scaryLoopFrame++; }
+            return half + (scaryLoopFrame % span);
+        }
+
         bool loop = s == ScaryState.Idle || s == ScaryState.Walk;
         if (loop)
         {
@@ -272,6 +291,7 @@ public partial class Player3DController
         if (KeyDash() && Time.time >= eDashReadyAt)
         {
             eDashDir = AbilityDir(); eDashing = true; eDashStart = Time.time;
+            SetDashInvuln(true);   // i-frames for the whole dash burst — roll THROUGH incoming hits
             StepEDash(); AnimateScary(ScaryState.Dash); transform.localScale = baseScale; return true;
         }
         if (KeyJump())
@@ -345,8 +365,17 @@ public partial class Player3DController
         float spd = eDashSpeed * UnitScale.ForPlayer * (status != null ? status.MoveMult : 1f);   // dash distance scales with size
         controller.Move((eDashDir * spd + Vector3.down * gravity) * Time.deltaTime);
         worldFacing = eDashDir;
-        if (Time.time - eDashStart >= eDashDuration) { eDashing = false; eDashReadyAt = Time.time + eDashCooldown; }
+        if (Time.time - eDashStart >= eDashDuration)
+        {
+            eDashing = false; eDashReadyAt = Time.time + eDashCooldown;
+            SetDashInvuln(false);   // dash over → vulnerable again
+        }
     }
+
+    /// <summary>Tie the player's i-frames to the dash burst. The dash is the dodge: while it runs the player is
+    /// <see cref="Character.Invulnerable"/>, so incoming hits whiff with a "Dodge" cue. Cleared whenever the dash
+    /// ends — including a death-cancel (see the dead branch in the main controller).</summary>
+    void SetDashInvuln(bool on) { if (Character.Instance != null) Character.Instance.Invulnerable = on; }
 
     static bool KeyJump()
     {
