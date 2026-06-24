@@ -13,6 +13,8 @@ public enum PlacementRule
     StreetRows,  // two rows flanking the central path (houses lining a street)
     Roadside,    // hugging the central path edges (market carts, lamps)
     Center,      // clustered near the middle (landmarks: tavern, well, statue)
+    Grid,        // buildings on a rectangular block grid; roads (paths) carve the streets between blocks (a walled town)
+    PerimeterWall, // assemble the modular Pxltgr wall kit (Wall_part/corner/tower/gate) around the plot edge, with a gate gap
 }
 
 public enum AmountMode { Density, Count }
@@ -23,6 +25,11 @@ public enum SwayMode { Auto, On, Off }
 
 /// <summary>Which Pxltgr ground texture the routed paths use. Maps to the matching <c>ground_*</c> prop's Base Map.</summary>
 public enum PathTile { Road, Soil, Stones, Rock }
+
+/// <summary>Shape of the road network. <c>Winding</c> = the default <c>pathCount</c> wandering routes through a
+/// jittered hub. <c>Cardinal</c> = a straight plaza-centred cross: one road each to N/E/S/W meeting exactly at the
+/// map centre (ignores <c>pathCount</c>/<c>pathWander</c>) — for a planned, RO-style town.</summary>
+public enum PathStyle { Winding, Cardinal }
 
 [System.Serializable]
 public class RecipePropGroup
@@ -113,6 +120,8 @@ public class MapRecipe : ScriptableObject
     public float dirtAmount = 0.18f;
 
     [Header("Paths")]
+    [Tooltip("Winding = pathCount wandering routes through a hub. Cardinal = a straight plaza-centred cross to N/E/S/W (ignores pathCount/pathWander).")]
+    public PathStyle pathStyle = PathStyle.Winding;
     [Tooltip("Which ground texture the paths use (the 'select your tile as path' choice).")]
     public PathTile pathTile = PathTile.Road;
     [Tooltip("How many winding routes cross the map (0 = no paths). 2+ share a centre hub → a crossroads.")]

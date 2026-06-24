@@ -26,6 +26,20 @@ public static class RecipeGenerator
     const float  Inset = 2f;       // pull placement in from the plot edge
     const float  PathMargin = 0.75f;   // extra clearance a solid prop keeps from a path edge
 
+    // ── modular wall kit (Pxltgr) — used by PlacementRule.PerimeterWall ──────────────────────────────────
+    // Straight runs + corner posts + towers + a gate. The straight piece is measured at bake time for its run
+    // length, so the wall tiles seamlessly whatever the kit's authored size/scale is.
+    static readonly string[] WallStraightNames = { "Wall_part1", "Wall_part2" };
+    static readonly string[] WallTowerNames    = { "Wall_tower1", "Wall_tower2" };
+    const string WallCornerName   = "Wall_corner";
+    const string WallEntranceName = "Wall_entrance";
+    const string WallGateLName    = "Wall_gateL";
+    const string WallGateRName    = "Wall_gateR";
+    // ⚠️ ORIENTATION: the kit's authored facing isn't knowable from code, so we assume a straight piece's FRONT
+    // faces +Z/+X and flip the far (north/east) edges 180° to face inward. If the walls end up facing OUTWARD in
+    // Play, flip this sign (the whole wall turns 180°). Towers are ~square so their yaw is cosmetic.
+    const float WallFacingSign = 1f;
+
     // ── wind sway ────────────────────────────────────────────────────────────────────────────────────────
     // Soft prop groups get their renderers re-materialed onto Unwritten/FoliageWind so they sway. The cloned
     // sway materials are cached per SOURCE material within one bake, so every flower shares ONE material and
@@ -85,7 +99,9 @@ public static class RecipeGenerator
         bool toExits = exitPointsXZ != null && exitPointsXZ.Count > 0;
         var paths = toExits
             ? PathRouting.BuildToExits(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, exitPointsXZ, r.pathWander, seed, r.pathSmoothness)
-            : PathRouting.Build(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, r.pathCount, r.pathWander, seed, r.pathSmoothness);
+            : r.pathStyle == PathStyle.Cardinal
+                ? PathRouting.BuildCardinal(new Vector2(center.x, center.z), r.sizeX, r.sizeZ)
+                : PathRouting.Build(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, r.pathCount, r.pathWander, seed, r.pathSmoothness);
         // One ground style for every map: the single blended grass→dirt mesh (no tile seams; the path feathers in).
         var ground = PxltgrGroundBlend.LayPlot(scene, $"Ground_{safe}", center, r.sizeX, r.sizeZ, groundLayer, seed,
                                                paths, r.pathWidth, PathTexName(r.pathTile), r.dirtAmount);
@@ -212,6 +228,9 @@ public static class RecipeGenerator
         var pool = new List<GameObject>();
         if (g.prefabs != null) foreach (var p in g.prefabs) if (p != null) pool.Add(p);
         if (pool.Count == 0) foreach (var n in CategoryNames(g.category)) { var pf = LoadProp(n); if (pf != null) pool.Add(pf); }
+        // PerimeterWall ignores category/picks for the run pieces — it loads the wall kit by name.
+        if (pool.Count == 0 && g.placement == PlacementRule.PerimeterWall)
+            foreach (var n in WallStraightNames) { var pf = LoadProp(n); if (pf != null) pool.Add(pf); }
         if (pool.Count == 0)
         {
             Debug.LogWarning($"[unwritten] Prop group '{g.label}' has no usable prefabs (empty picks + category {g.category}); skipped.");
@@ -346,8 +365,112 @@ public static class RecipeGenerator
                 }
                 break;
             }
+            case PlacementRule.Grid:
+            {
+                // Buildings on a rectangular block grid. SOLID props auto-skip the path band (see TryPlaceAt), so the
+                // routed roads carve the streets and the houses left standing form blocks between them — a walled town.
+                // Set randomYaw=false in the recipe for aligned, orderly blocks; clearFromCenter keeps the plaza open.
+                float pitch = Mathf.Max(2f, g.minSpacing);
+                int cap = g.amountMode == AmountMode.Count ? g.count : int.MaxValue;
+                for (float x = minX + pitch * 0.5f; x <= maxX && placed < cap; x += pitch)
+                    for (float z = minZ + pitch * 0.5f; z <= maxZ && placed < cap; z += pitch)
+                        if (TryPlaceAt(x, z, false)) placed++;
+                break;
+            }
+            case PlacementRule.PerimeterWall:
+            {
+                placed += BuildPerimeterWall(g, parent, pool, minX, maxX, minZ, maxZ, center, mask, blockers);
+                break;
+            }
         }
         return placed;
+    }
+
+    // Assemble the modular wall kit around the plot's inset rectangle: a tower on each corner, straight runs tiling
+    // each edge (measured so they butt seamlessly), and a gate opening centred on the SOUTH edge (min Z). Pieces are
+    // seated bottom-on-ground (Y0) and registered as blockers so a later Grid/Scatter group won't overlap the wall.
+    static int BuildPerimeterWall(RecipePropGroup g, Transform parent, List<GameObject> straight,
+                                  float minX, float maxX, float minZ, float maxZ, Vector3 center, int mask,
+                                  List<(Vector2 c, float r)> blockers)
+    {
+        if (straight.Count == 0) return 0;
+        var corner   = LoadProp(WallCornerName);
+        GameObject tower = null; foreach (var n in WallTowerNames) { tower = LoadProp(n); if (tower != null) break; }
+        var entrance = LoadProp(WallEntranceName);
+        var gateL    = LoadProp(WallGateLName);
+        var gateR    = LoadProp(WallGateRName);
+        var cornerPiece = tower != null ? tower : corner;   // square towers hide corner-orientation guesswork
+
+        // Measure one straight piece (at the group's scale) for its run length + which local axis it runs along.
+        float segLen = 2f; bool runAxisIsX = true;
+        {
+            var probe = (GameObject)PrefabUtility.InstantiatePrefab(straight[0]);
+            probe.transform.localScale = Vector3.one * Mathf.Max(0.01f, g.scale);
+            probe.transform.rotation = Quaternion.identity;
+            if (PropPlacement.TryWorldBounds(probe, out var pb))
+            { runAxisIsX = pb.size.x >= pb.size.z; segLen = Mathf.Max(0.5f, runAxisIsX ? pb.size.x : pb.size.z); }
+            Object.DestroyImmediate(probe);
+        }
+        float horizYaw = runAxisIsX ? 0f : 90f;   // yaw that makes the run align with X (top/bottom edges)
+        float vertYaw  = runAxisIsX ? 90f : 0f;   // yaw that makes the run align with Z (left/right edges)
+        float gateHalf = segLen * 0.6f;            // half-width of the gate opening on the south edge (~one piece wide)
+        int placed = 0;
+        int idx = 0;   // walks the straight-piece pool so Wall_part1/2 alternate
+
+        void Register(GameObject go)
+        {
+            if (!g.solid) return;
+            float r = Mathf.Max(0.5f, segLen * 0.5f);
+            if (PropPlacement.TryWorldBounds(go, out var wb)) r = Mathf.Max(r, Mathf.Max(wb.extents.x, wb.extents.z));
+            blockers.Add((new Vector2(go.transform.position.x, go.transform.position.z), r));
+        }
+        void Run(GameObject pf, float x, float z, float yaw)
+        { var go = SeatPiece(pf, x, z, yaw, g.scale, g, false, parent, mask); Register(go); placed++; }
+
+        // 4 corner towers
+        Run(cornerPiece, minX, minZ, 0f); Run(cornerPiece, maxX, minZ, 90f);
+        Run(cornerPiece, maxX, maxZ, 180f); Run(cornerPiece, minX, maxZ, 270f);
+
+        // South edge (z=minZ) with a centred gate gap; North edge (z=maxZ) flipped to face inward.
+        for (float x = minX + segLen; x <= maxX - segLen * 0.5f; x += segLen)
+        {
+            if (Mathf.Abs(x - center.x) <= gateHalf) continue;   // leave the gate opening
+            Run(straight[idx++ % straight.Count], x, minZ, horizYaw);
+        }
+        for (float x = minX + segLen; x <= maxX - segLen * 0.5f; x += segLen)
+            Run(straight[idx++ % straight.Count], x, maxZ, horizYaw + 180f * WallFacingSign);
+
+        // West edge (x=minX); East edge (x=maxX) flipped to face inward.
+        for (float z = minZ + segLen; z <= maxZ - segLen * 0.5f; z += segLen)
+            Run(straight[idx++ % straight.Count], minX, z, vertYaw);
+        for (float z = minZ + segLen; z <= maxZ - segLen * 0.5f; z += segLen)
+            Run(straight[idx++ % straight.Count], maxX, z, vertYaw + 180f * WallFacingSign);
+
+        // Gate on the south edge: a single entrance piece if the kit has one, else the L/R gate pair flanking centre.
+        if (entrance != null) Run(entrance, center.x, minZ, horizYaw);
+        else
+        {
+            if (gateL != null) Run(gateL, center.x - gateHalf * 0.5f, minZ, horizYaw);
+            if (gateR != null) Run(gateR, center.x + gateHalf * 0.5f, minZ, horizYaw);
+        }
+        return placed;
+    }
+
+    // Instantiate one prefab, scale + yaw it, seat its bounds-bottom on the ground (Y0), parent + layer it, and
+    // strip/sway per the group. Used by the structured rules (PerimeterWall) that need an EXPLICIT yaw rather than
+    // the random-yaw scatter path. Caller registers blockers if it wants later groups to avoid this piece.
+    static GameObject SeatPiece(GameObject prefab, float x, float z, float yawDeg, float scale,
+                                RecipePropGroup g, bool sway, Transform parent, int mask)
+    {
+        var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        go.transform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
+        go.transform.rotation = Quaternion.Euler(0f, yawDeg, 0f);
+        PropPlacement.PlaceOnGround(go, new Vector3(x, 0f, z), mask);
+        go.transform.SetParent(parent, true);
+        WorldBuildUtil.SetLayerRecursive(go, 0);
+        if (!g.solid) PropPlacement.StripColliders(go);
+        if (sway) ApplySway(go, g.CanopyOnly);
+        return go;
     }
 
     // ── MOB PLACEMENT ────────────────────────────────────────────────────────────────────────────────────
@@ -508,9 +631,32 @@ public static class RecipeGenerator
         return s.Replace(' ', '_');
     }
 
-    // Canonical Pxltgr prefab names per family (LOD0 where the pack ships LODs) — the same lists the old
-    // field/town bakers used, now in one place so a recipe can say "Trees" without naming each prefab.
-    static string[] CategoryNames(PropCategory c) => c switch
+    // ── BRUSH PALETTE (single source of truth) ───────────────────────────────────────────────────────────
+    // The BrushPalette asset (edited in Unity, exported to the web painter) is the canonical category→prefab map.
+    // When present, CategoryNames reads it; otherwise it falls back to the hardcoded seed list below. Cached per
+    // domain reload (statics reset on recompile); editing the asset in-session keeps the same live reference.
+    static BrushPalette _palette; static bool _paletteSearched;
+    internal static BrushPalette LoadPalette()
+    {
+        if (_paletteSearched) return _palette;
+        _paletteSearched = true;
+        var guids = AssetDatabase.FindAssets("t:BrushPalette");
+        if (guids.Length > 0) _palette = AssetDatabase.LoadAssetAtPath<BrushPalette>(AssetDatabase.GUIDToAssetPath(guids[0]));
+        return _palette;
+    }
+
+    // Canonical Pxltgr prefab names per family (LOD0 where the pack ships LODs). The palette (if any) wins; this
+    // hardcoded list is the seed/fallback (and what Auto-fill classification starts from). Exposed internal so the
+    // Brush Palette window can seed brushes from it.
+    internal static string[] CategoryNames(PropCategory c)
+    {
+        var pal = LoadPalette();
+        var brush = pal != null ? pal.FindByCategory(c) : null;
+        if (brush != null) return brush.prefabNames.ToArray();
+        return CategoryNamesSeed(c);
+    }
+
+    static string[] CategoryNamesSeed(PropCategory c) => c switch
     {
         PropCategory.Trees     => new[] { "Oak_tree1", "Oak_tree2", "Oak_tree3", "Birch_tree1", "Birch_tree2",
                                           "Birch_tree3", "Pine_tree1", "Pine_tree2", "Pine_tree3", "Deciduous_tree1",

@@ -1,12 +1,15 @@
-// Opaque, lit GROUND shader that layers THREE ground textures by VERTEX COLOR — the exact trick the Pxltgr
+// Opaque, lit GROUND shader that layers up to FIVE ground textures by VERTEX COLOR — the exact trick the Pxltgr
 // "Fantasy Landscape" FBX uses to make grass melt into soil (its ground meshes carry white RGB + a 0..1 alpha
-// ring; the GPU interpolates that across each triangle into a soft gradient). Two channels drive it, both baked
-// per-vertex by PxltgrGroundBlend:
+// ring; the GPU interpolates that across each triangle into a soft gradient). ALL FOUR vertex-colour channels
+// drive it, baked per-vertex by PxltgrGroundBlend (the procedural recipe leaves g/b at 0):
 //   • vertex .a  → grass↔dirt blend (organic noise blobs)      base   = lerp(grass, dirt, a)
-//   • vertex .r  → PATH weight (feathered routed polylines)     albedo = lerp(base, path, r)
-// So the path is its OWN texture (road/soil/stones) feathered on top of the grass+dirt base — distinct yet
-// seamless, no hard tile seams and no transparency overdraw (it stays Opaque — cheap, see PERFORMANCE.md).
-// Textures are sampled by WORLD-XZ so tiling is seamless regardless of mesh size.
+//   • vertex .r  → PATH/road weight (feathered)                albedo = lerp(base,  path,  r)
+//   • vertex .g  → STONE-path weight                           albedo = lerp(albedo, stone, g)
+//   • vertex .b  → ROCK-path weight                            albedo = lerp(albedo, rock,  b)
+// So each path variant is its OWN texture (road/stone/rock) feathered on top of the grass+dirt base — distinct yet
+// seamless, no hard tile seams and no transparency overdraw (it stays Opaque — cheap, see PERFORMANCE.md). The Map
+// Painter importer paints one channel per ground brush (path→r, stone→g, rock→b, dirt→a) so a single map can mix
+// all of them. Textures are sampled by WORLD-XZ so tiling is seamless regardless of mesh size.
 //
 // Writes depth + casts/receives shadows like URP/Lit, so the screen-space weather passes (CloudShadow,
 // WetGround, SnowGround — all read the depth texture) layer on top of it exactly as they do the tiled ground.
@@ -16,10 +19,14 @@ Shader "Unwritten/GroundBlend"
     {
         _GrassMap    ("Grass Map", 2D) = "white" {}
         _DirtMap     ("Dirt Map",  2D) = "white" {}
-        _PathMap     ("Path Map",  2D) = "white" {}
+        _PathMap     ("Path Map (road, .r)",  2D) = "white" {}
+        _StoneMap    ("Stone Map (.g)", 2D) = "white" {}
+        _RockMap     ("Rock Map (.b)",  2D) = "white" {}
         _GrassTiling ("Grass Tiling (tiles/world-unit)", Float) = 0.4
         _DirtTiling  ("Dirt Tiling (tiles/world-unit)",  Float) = 0.4
         _PathTiling  ("Path Tiling (tiles/world-unit)",  Float) = 0.4
+        _StoneTiling ("Stone Tiling (tiles/world-unit)", Float) = 0.4
+        _RockTiling  ("Rock Tiling (tiles/world-unit)",  Float) = 0.4
         _Color       ("Tint", Color) = (1,1,1,1)
     }
 
@@ -47,18 +54,20 @@ Shader "Unwritten/GroundBlend"
             TEXTURE2D(_GrassMap);
             TEXTURE2D(_DirtMap);
             TEXTURE2D(_PathMap);
+            TEXTURE2D(_StoneMap);
+            TEXTURE2D(_RockMap);
             // Inline sampler: FORCE trilinear + repeat regardless of how the texture was imported. The Pxltgr
             // ground textures come in sprite-style (Clamp wrap), which with our continuous world-space UVs smears
             // the texture and leaves a bright "cross" at the UV origin (world 0,0) — this sidesteps that entirely.
             SAMPLER(sampler_trilinear_repeat);
-            float _GrassTiling, _DirtTiling, _PathTiling;
+            float _GrassTiling, _DirtTiling, _PathTiling, _StoneTiling, _RockTiling;
             float4 _Color;
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
-                float4 color      : COLOR;     // .a = dirt mask (0 grass→1 dirt); .r = path weight (0 none→1 path)
+                float4 color      : COLOR;     // .a = dirt mask; .r = road; .g = stone; .b = rock (all 0..1 weights)
             };
             struct Varyings
             {
@@ -66,7 +75,7 @@ Shader "Unwritten/GroundBlend"
                 float3 positionWS : TEXCOORD0;
                 float3 normalWS   : TEXCOORD1;
                 float  blend      : TEXCOORD2; // interpolated vertex-alpha → the soft grass↔dirt gradient
-                float  pathW      : TEXCOORD3; // interpolated vertex-red   → the feathered path weight
+                float3 pathW      : TEXCOORD3; // interpolated vertex .rgb  → road / stone / rock weights
                 float  fogCoord   : TEXCOORD4;
             };
 
@@ -78,7 +87,7 @@ Shader "Unwritten/GroundBlend"
                 OUT.positionWS = p.positionWS;
                 OUT.normalWS   = TransformObjectToWorldNormal(IN.normalOS);
                 OUT.blend      = IN.color.a;
-                OUT.pathW      = IN.color.r;
+                OUT.pathW      = IN.color.rgb;   // .x road, .y stone, .z rock
                 OUT.fogCoord   = ComputeFogFactor(p.positionCS.z);
                 return OUT;
             }
@@ -89,8 +98,13 @@ Shader "Unwritten/GroundBlend"
                 half3 grass = SAMPLE_TEXTURE2D(_GrassMap, sampler_trilinear_repeat, IN.positionWS.xz * _GrassTiling).rgb;
                 half3 dirt  = SAMPLE_TEXTURE2D(_DirtMap,  sampler_trilinear_repeat, IN.positionWS.xz * _DirtTiling).rgb;
                 half3 path  = SAMPLE_TEXTURE2D(_PathMap,  sampler_trilinear_repeat, IN.positionWS.xz * _PathTiling).rgb;
-                half3 gd     = lerp(grass, dirt, saturate(IN.blend));     // grass+dirt blended base
-                half3 albedo = lerp(gd, path, saturate(IN.pathW)) * _Color.rgb;   // path feathered on top
+                half3 stone = SAMPLE_TEXTURE2D(_StoneMap, sampler_trilinear_repeat, IN.positionWS.xz * _StoneTiling).rgb;
+                half3 rock  = SAMPLE_TEXTURE2D(_RockMap,  sampler_trilinear_repeat, IN.positionWS.xz * _RockTiling).rgb;
+                half3 gd     = lerp(grass, dirt, saturate(IN.blend));            // grass+dirt blended base
+                half3 albedo = lerp(gd, path,  saturate(IN.pathW.x));           // road feathered on top
+                albedo       = lerp(albedo, stone, saturate(IN.pathW.y));       // then stone
+                albedo       = lerp(albedo, rock,  saturate(IN.pathW.z));       // then rock
+                albedo      *= _Color.rgb;
 
                 // Cheap Lambert + ambient SH + main-light shadow (ground is large; keep it light).
                 float3 N = normalize(IN.normalWS);

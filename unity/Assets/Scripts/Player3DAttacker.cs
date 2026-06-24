@@ -53,6 +53,11 @@ public class Player3DAttacker : MonoBehaviour
     public static float MotionScale =>
         Character.Instance != null ? 1f / Mathf.Max(0.01f, Character.Instance.AttackSpeedMult) : 1f;
 
+    /// <summary>How long one swing lasts (start → damage), scaled by attack-speed. Damage lands at the END of this
+    /// window, so the attack animation can be sped to play fully within it (see BakedPlayerVisual). Equals the swing
+    /// interval, so DPS is unchanged — the hit just lands when the animation finishes instead of mid-windup.</summary>
+    public float SwingTime => Mathf.Max(0.05f, cooldown * MotionScale);
+
     /// <summary>Strict planar range — used to actually LAND a hit (TryAttack / the windup check).</summary>
     public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= range;
 
@@ -96,11 +101,13 @@ public class Player3DAttacker : MonoBehaviour
 
     IEnumerator SwingThenHit(Health t)
     {
-        // Windup scales with attack speed too — the hit lands proportionally sooner at high ASPD.
+        // Damage lands at the END of the whole swing (= SwingTime), so the attack animation plays fully first and
+        // the hit syncs to its finish. SwingTime scales with attack-speed, so faster ASPD = quicker swing + quicker
+        // anim (BakedPlayerVisual speeds the clip to fill exactly this window). Swinging stays true the whole time.
         float scale = MotionScale;
-        yield return new WaitForSeconds(windupTime * scale);
+        yield return new WaitForSeconds(SwingTime);
         swing = null;
-        if (!InRange(t)) yield break;   // target moved out / died during the windup
+        if (!InRange(t)) yield break;   // target moved out / died during the swing
         // Roll the hit through Character so CritChance/CritDamage apply (spike has no Character → flat damage).
         bool crit = false;
         int power = Character.Instance != null ? Character.Instance.RollDamage(out crit) : damage;

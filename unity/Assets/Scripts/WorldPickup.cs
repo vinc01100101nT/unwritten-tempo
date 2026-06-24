@@ -36,6 +36,10 @@ public class WorldPickup : MonoBehaviour
     [Tooltip("Sound played on pickup. Assign a coin jingle clip via LootDropper or leave empty.")]
     public SfxSet collectSfx;
 
+    /// <summary>Fires when the player collects ANY pickup (the player is the only collector). Lets the baked
+    /// character play its PickUp gesture without this knowing about the visual. Static so listeners don't need a ref.</summary>
+    public static event System.Action OnCollected;
+
     // -- internals --
     SpriteRenderer sr;
     float baseY;
@@ -82,14 +86,10 @@ public class WorldPickup : MonoBehaviour
         transform.position = pos;
     }
 
-    void OnTriggerEnter(Collider other)
-    {
-        // Only the player collects pickups — check for the controller rather than relying on a tag.
-        if (other.GetComponentInParent<Player3DController>() == null) return;
-        Collect();
-    }
-
-    void Collect()
+    /// <summary>Collect this pickup — give the reward, fire <see cref="OnCollected"/> (PickUp gesture), destroy.
+    /// Called by <see cref="Player3DController"/> when the player CLICKS the item and reaches it (no auto-collect:
+    /// the player must click to pick up, and is movement-locked briefly while the gesture plays).</summary>
+    public void Collect()
     {
         if (item != null)
         {
@@ -102,6 +102,7 @@ public class WorldPickup : MonoBehaviour
             Wallet.Add(goldAmount);
             Sfx.Play(collectSfx);
         }
+        OnCollected?.Invoke();   // let the baked player visual play its PickUp gesture
         Destroy(gameObject);
     }
 }

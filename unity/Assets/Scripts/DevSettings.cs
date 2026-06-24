@@ -63,6 +63,9 @@ public class DevSettings : MonoBehaviour
 
     // ---- lazily-resolved targets (re-found after map swaps destroy/recreate them) ----
     Player3DController player;
+    BakedBillboard8 bakedPlayer;   // the baked 8-dir visual riding the player (if "Use Baked Character" is active)
+    Transform groundRoot;          // the ground root moved by the "Ground height" knob (found via a Ground-layer ray)
+    int groundLayerMask = -1;      // cached Ground layer mask (-1 = not resolved yet)
     Player3DAttacker attacker;
     CameraFollow3D camRig;
     CameraOccluderFader fader;
@@ -97,6 +100,7 @@ public class DevSettings : MonoBehaviour
     void EnsureRefs()
     {
         if (player == null)   player   = FindFirstObjectByType<Player3DController>();
+        if (bakedPlayer == null) { var bpv = FindFirstObjectByType<BakedPlayerVisual>(); if (bpv != null) bakedPlayer = bpv.GetComponent<BakedBillboard8>(); }
         if (attacker == null) attacker = FindFirstObjectByType<Player3DAttacker>();
         if (camRig == null)   camRig   = FindFirstObjectByType<CameraFollow3D>();
         if (fader == null)    fader    = FindFirstObjectByType<CameraOccluderFader>();
@@ -117,6 +121,19 @@ public class DevSettings : MonoBehaviour
         if (fog == null)      fog      = FindFirstObjectByType<FogOverlay>();
         if (foot == null)     foot     = FindFirstObjectByType<FootstepTracker>();
         if (dye == null)      dye      = FindFirstObjectByType<CharacterDye>();
+        EnsureGround();
+    }
+
+    // Resolve the ground root by raycasting straight down on the Ground layer under the player. The whole floor
+    // (Ground_Visual + Ground_Floor) lives under one root, so moving that root's Y lifts/sinks the entire ground.
+    void EnsureGround()
+    {
+        if (groundRoot != null) return;
+        if (groundLayerMask == -1) { int l = LayerMask.NameToLayer("Ground"); groundLayerMask = l >= 0 ? (1 << l) : 0; }
+        if (groundLayerMask == 0) return;
+        Vector3 from = (player != null ? player.transform.position : Vector3.zero) + Vector3.up * 100f;
+        if (Physics.Raycast(from, Vector3.down, out var hit, 500f, groundLayerMask, QueryTriggerInteraction.Ignore))
+            groundRoot = hit.collider.transform.root;
     }
 
     // ---- builder helpers ------------------------------------------------------
@@ -285,6 +302,21 @@ public class DevSettings : MonoBehaviour
         F("Dash duration",    0.05f, 0.6f, () => player ? player.eDashDuration : 0f, v => { if (player) player.eDashDuration = v; });
         F("Dash cooldown",    0f, 3f,    () => player ? player.eDashCooldown : 0f, v => { if (player) player.eDashCooldown = v; });
         F("Walk anim FPS",    1f, 24f,   () => player ? player.scaryWalkFps : 0f,  v => { if (player) player.scaryWalkFps = v; });
+
+        // ---- Baked Character (the 8-dir billboard riding the player via "Use Baked Character") ----
+        // Live-seat the feet on the ground: higher = lift the sprite up, lower = sink it. ~0.42 grounds a
+        // standard bake; once you like a value, write it into the prefab's BakedBillboard8.feetOffset (or set
+        // the matching "Feet nudge" in the batch baker) so it sticks. Only does anything while a baked char is active.
+        Cat("Baked Character");
+        F("Feet offset", -0.5f, 1f, () => bakedPlayer ? bakedPlayer.FeetOffset : 0f,
+            v => { if (bakedPlayer) bakedPlayer.SetFeetOffset(v); });
+
+        // ---- World — move the whole ground floor (Ground_Visual + Ground_Floor) up/down ----
+        // Lifts/sinks the entire ground plot. Props/units are seated separately so they DON'T follow — this is a
+        // test/alignment dial (e.g. seat the ground exactly on Y0). SyncTransforms so ground rays update same-frame.
+        Cat("World");
+        F("Ground height (Y)", -1f, 1f, () => groundRoot ? groundRoot.position.y : 0f,
+            v => { if (groundRoot) { var p = groundRoot.position; p.y = v; groundRoot.position = p; Physics.SyncTransforms(); } });
 
         // ---- Units (global size dial; each unit's MOVE SPEED scales with its size) ----
         Cat("Units");
@@ -509,7 +541,11 @@ public class DevSettings : MonoBehaviour
                                      if (!wet) wet = WetGround.Ensure(); wet.reflStrength = v ? Mathf.Max(0.9f, wet.reflStrength) : 0f; });
         F("Reflection amount",0f, 2f,    () => wet ? wet.reflStrength : 0f,    v => { if (wet) wet.reflStrength = v; });
         B("Reflection flip Y",() => wet && wet.reflFlipY,                      v => { if (wet) wet.reflFlipY = v; });
-        F("Water level",     -5f, 5f,    () => refl ? refl.waterHeight : 0f,   v => { if (refl) refl.waterHeight = v; });
+        // Mirror plane: auto-snaps to the real ground (followGround). The fine offset nudges the seam and STICKS;
+        // the manual "Water level" only applies when auto is off (narrow range so you can land on it).
+        B("Auto water level", () => refl && refl.followGround,                 v => { if (refl) refl.followGround = v; });
+        F("Water level offset", -0.3f, 0.3f, () => refl ? refl.groundOffset : 0f, v => { if (refl) refl.groundOffset = v; });
+        F("Water level (manual)", -0.5f, 1.5f, () => refl ? refl.waterHeight : 0f, v => { if (refl) refl.waterHeight = v; });
         Sub("Snow");
         // Snow — drifting-flake overlay (all tiers, cheap) + ground build-up on roofs/terrain. The blanket ramps
         // up/melts over "Snow build time"; footprints in the snow are a High-tier extra (toggle Heavy weather on).

@@ -78,6 +78,35 @@ public static class PathRouting
     }
 
     /// <summary>
+    /// A straight, plaza-centred <b>cardinal cross</b>: two dead-straight routes through the exact map centre — one
+    /// E↔W and one N↔S — so a road runs from the central plaza out to each of the four edge midpoints (N/E/S/W) and
+    /// nowhere else. No hub jitter, no wander, no extra spokes. The two routes cross exactly at <paramref name="center"/>,
+    /// which is where the "Start" spawn / plaza sits. Used when a recipe's <c>PathStyle</c> is <c>Cardinal</c>.
+    /// </summary>
+    public static List<Route> BuildCardinal(Vector2 center, float sizeX, float sizeZ)
+    {
+        var routes = new List<Route>();
+        float halfX = sizeX * 0.5f, halfZ = sizeZ * 0.5f;
+        float inset = Mathf.Min(sizeX, sizeZ) * 0.04f;   // stop a touch inside the edge (matches Build)
+
+        // East↔West, dead straight at z = center.y, through the centre.
+        var ew = new Route();
+        ew.pts.Add(new Vector2(center.x - halfX + inset, center.y));
+        ew.pts.Add(center);
+        ew.pts.Add(new Vector2(center.x + halfX - inset, center.y));
+        routes.Add(ew);
+
+        // North↔South, dead straight at x = center.x, through the centre (so it lines up with the south gate).
+        var ns = new Route();
+        ns.pts.Add(new Vector2(center.x, center.y - halfZ + inset));
+        ns.pts.Add(center);
+        ns.pts.Add(new Vector2(center.x, center.y + halfZ - inset));
+        routes.Add(ns);
+
+        return routes;
+    }
+
+    /// <summary>
     /// Path network for a map whose roads must reach its <b>warp doorways</b>: one winding route from a shared
     /// centre hub out to each exit point in <paramref name="exits"/> (world-XZ positions on the plot rim, e.g. a
     /// portal's edge+offset). All routes share the hub, so they meet as a crossroads in the middle (where the

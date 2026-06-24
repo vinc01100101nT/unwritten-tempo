@@ -26,6 +26,7 @@ using UnityEngine.SceneManagement;
 static class SystemsPlayMode
 {
     const string SystemsScenePath = "Assets/Scenes/Systems.unity";
+    const string SandboxScene = "CharacterSandbox";   // the standalone character-select playground
 
     static SystemsPlayMode()
     {
@@ -38,9 +39,18 @@ static class SystemsPlayMode
     {
         if (state != PlayModeStateChange.ExitingEditMode) return;
 
+        var active = SceneManager.GetActiveScene();
+
+        // The character sandbox owns its OWN camera and isn't part of the game, so don't force Systems —
+        // clear the override and let it boot itself. (Re-pinned automatically next time a real map is played.)
+        if (active.IsValid() && active.name == SandboxScene)
+        {
+            EditorSceneManager.playModeStartScene = null;
+            return;
+        }
+
         EnsurePlayStartsAtSystems();   // belt-and-suspenders in case it was cleared this session
 
-        var active = SceneManager.GetActiveScene();
         if (active.IsValid() && !string.IsNullOrEmpty(active.name) && active.name != MapManager.SystemsScene)
             SessionState.SetString("unwritten.bootMap", active.name);
     }

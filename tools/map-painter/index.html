@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>unwritten · Map Painter</title>
+<style>
+  :root { --bg:#1b1d22; --panel:#24272e; --panel2:#2c303a; --line:#3a3f4b; --text:#d8dce4; --muted:#8b93a3; --accent:#5b9bd5; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--text);
+              font:13px/1.4 system-ui,Segoe UI,Roboto,sans-serif; overflow:hidden; }
+  #app { display:grid; grid-template-columns:240px 1fr; grid-template-rows:46px 1fr 26px; height:100%; }
+  header { grid-column:1 / 3; display:flex; align-items:center; gap:10px; padding:0 12px;
+           background:var(--panel); border-bottom:1px solid var(--line); }
+  header h1 { font-size:14px; margin:0 12px 0 0; font-weight:600; letter-spacing:.3px; }
+  header .sp { flex:1; }
+  aside { background:var(--panel); border-right:1px solid var(--line); padding:10px; overflow-y:auto; }
+  main { position:relative; overflow:hidden; background:#15171b; }
+  canvas { position:absolute; inset:0; display:block; }
+  footer { grid-column:1 / 3; display:flex; align-items:center; gap:16px; padding:0 12px;
+           background:var(--panel); border-top:1px solid var(--line); color:var(--muted); font-size:12px; }
+  button, select, input[type=number] { background:var(--panel2); color:var(--text); border:1px solid var(--line);
+           border-radius:6px; padding:6px 10px; font:inherit; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  input[type=number] { width:62px; cursor:text; }
+  label.fld { display:flex; align-items:center; gap:6px; color:var(--muted); }
+  .group { margin-bottom:14px; }
+  .group h2 { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin:0 0 8px; }
+  .brush { display:flex; align-items:center; gap:9px; width:100%; margin-bottom:5px; text-align:left; }
+  .brush .sw { width:18px; height:18px; border-radius:4px; border:1px solid #0006; flex:none; }
+  .brush .meta { color:var(--muted); font-size:11px; margin-left:auto; }
+  .brush.on { outline:2px solid var(--accent); }
+  .layerTag { font-size:10px; padding:1px 5px; border-radius:3px; background:#0004; color:var(--muted); }
+  kbd { background:#0006; border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:11px; }
+  .warn { color:#e0a050; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>🗺️ Map Painter</h1>
+    <label class="fld">Mode
+      <button id="modeBtn" title="Grid snaps to cells; Free places anywhere">Grid</button>
+    </label>
+    <label class="fld">Cols <input id="cols" type="number" min="4" max="400" value="30"></label>
+    <label class="fld">Rows <input id="rows" type="number" min="4" max="400" value="16"></label>
+    <label class="fld">Yaw <span id="yawTxt">0°</span>
+      <button id="rotBtn" title="Rotate placement (R)">⟳</button>
+    </label>
+    <span class="sp"></span>
+    <button id="importBtn">Import map…</button>
+    <button id="exportBtn">Export map.json</button>
+    <input id="fileMap" type="file" accept="application/json" hidden>
+    <input id="fileMani" type="file" accept="application/json" hidden>
+  </header>
+
+  <aside>
+    <div class="group">
+      <h2>Object brushes</h2>
+      <div id="objBrushes"></div>
+    </div>
+    <div class="group" id="variantGroup" hidden>
+      <h2>Variant — <span id="variantBrush"></span></h2>
+      <div id="variants"></div>
+    </div>
+    <div class="group">
+      <h2>Ground brushes</h2>
+      <div id="gndBrushes"></div>
+    </div>
+    <div class="group">
+      <h2>Tools</h2>
+      <button id="eraseBtn" class="brush">🩹 Eraser <span class="meta">right-drag</span></button>
+      <button id="fitBtn" class="brush" style="margin-top:6px">🔍 Fit view</button>
+      <button id="clearBtn" class="brush" style="margin-top:6px">🗑️ Clear map</button>
+    </div>
+    <div class="group">
+      <h2>Manifest</h2>
+      <div id="maniInfo" class="meta" style="font-size:11px"></div>
+      <button id="reloadMani" class="brush" style="margin-top:6px">↻ Reload manifest</button>
+      <button id="loadManiFile" class="brush" style="margin-top:6px">📂 Load manifest file…</button>
+    </div>
+  </aside>
+
+  <main>
+    <canvas id="cv"></canvas>
+  </main>
+
+  <footer>
+    <span id="hint">Left-drag paint · Right-drag erase · <kbd>Alt</kbd>+drag move · <kbd>R</kbd> rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
+    <span class="sp" style="flex:1"></span>
+    <span id="stat"></span>
+  </footer>
+</div>
+
+<script>
+"use strict";
+// ── State ───────────────────────────────────────────────────────────────────────────────────────────────
+const S = {
+  manifest:null, brushes:[], brushById:{}, prefabById:{},
+  cellSize:4, cols:30, rows:16,
+  mode:"grid",                 // "grid" | "free"
+  active:null,                 // brush id or "erase"
+  activeVariant:"",            // chosen prefab name within the active brush ("" = random)
+  yaw:0,                       // current placement yaw, degrees (0 = up/north)
+  ground:{},                   // "cx,cz" -> brushId  (ground-paint layer)
+  objects:[],                  // { brush, prefab, x, z, yaw }  (world units; origin = top-left corner)
+  view:{ x:40, y:40, zoom:1 }, // pan px + zoom
+  basePx:26,                   // px per cell at zoom 1
+  pan:false, panStart:null, paint:0, // paint: 0 none, 1 left, 2 right
+  dragObj:null,                // object being moved via Alt+left-drag
+  dirty:false,                 // unsaved edits since last export → guards reload (beforeunload) + autosaves
+  mouse:{ x:0, y:0, wx:0, wz:0 },
+};
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const pxPerWorld = () => (S.basePx * S.view.zoom) / S.cellSize;
+const worldW = () => S.cols * S.cellSize, worldH = () => S.rows * S.cellSize;
+
+// ── Undo / Redo ─────────────────────────────────────────────────────────────────────────────────────────
+// Snapshot the editable content (ground cells + objects) one step per GESTURE: commitHistory() is called at the
+// start of each paint/erase/drag/clear, capturing the PRE-mutation state, so one Ctrl+Z reverts a whole stroke.
+const HIST_MAX = 100;
+let undoStack = [], redoStack = [];
+const snapshot = () => ({ ground:{ ...S.ground }, objects:S.objects.map(o => ({ ...o })) });
+function restore(s) { S.ground = { ...s.ground }; S.objects = s.objects.map(o => ({ ...o })); }
+function commitHistory() { undoStack.push(snapshot()); if (undoStack.length > HIST_MAX) undoStack.shift(); redoStack = []; S.dirty = true; }
+function clearHistory() { undoStack = []; redoStack = []; }
+function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); restore(undoStack.pop()); S.dirty = true; saveDraft(); updateStat(); render(); }
+function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); restore(redoStack.pop()); S.dirty = true; saveDraft(); updateStat(); render(); }
+
+// ── Crash/reload safety net: autosave the map to localStorage; offered for restore on next boot ────────────
+const DRAFT_KEY = "unwritten.mapPainter.draft";
+function saveDraft() { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(buildMap())); } catch (e) {} }
+function loadDraft() { try { const s = localStorage.getItem(DRAFT_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+
+// ── Manifest loading ────────────────────────────────────────────────────────────────────────────────────
+async function loadManifest() {
+  try {
+    const r = await fetch("./prop-manifest.json?" + Date.now());
+    if (!r.ok) throw new Error(r.status);
+    applyManifest(await r.json());
+  } catch (e) {
+    document.getElementById("maniInfo").innerHTML =
+      '<span class="warn">Could not fetch prop-manifest.json (file://?).<br>Use “Load manifest file…”.</span>';
+  }
+}
+function applyManifest(m) {
+  S.manifest = m;
+  S.cellSize = m.cellSize || 4;
+  S.brushes = m.brushes || [];
+  S.brushById = {}; S.prefabById = {};
+  S.brushes.forEach(b => {
+    S.brushById[b.id] = b;
+    (b.prefabs || []).forEach(pf => S.prefabById[pf.name] = { x:pf.x, z:pf.z, brush:b.id });
+  });
+  if (!S.active && S.brushes.length) S.active = S.brushes[0].id;
+  document.getElementById("maniInfo").textContent =
+    `${S.brushes.length} brushes · ${m.brushes.reduce((n,b)=>n+(b.prefabs?b.prefabs.length:0),0)} prefabs · ${m.exportedAt||""}`;
+  buildPalette();
+  resize();
+}
+
+// ── Palette UI ──────────────────────────────────────────────────────────────────────────────────────────
+function buildPalette() {
+  const obj = document.getElementById("objBrushes"), gnd = document.getElementById("gndBrushes");
+  obj.innerHTML = ""; gnd.innerHTML = "";
+  for (const b of S.brushes) {
+    const el = document.createElement("button");
+    el.className = "brush" + (b.id === S.active ? " on" : "");
+    el.dataset.id = b.id;
+    const fp = b.kind === "object" && b.hasFootprint ? `${b.footprint.x.toFixed(1)}×${b.footprint.z.toFixed(1)}` : "ground";
+    el.innerHTML = `<span class="sw" style="background:${b.color}"></span>${b.label}
+                    <span class="meta">${fp}</span>`;
+    el.onclick = () => { S.active = b.id; S.activeVariant = ""; refreshPaletteSel(); buildVariants(); };
+    (b.kind === "object" ? obj : gnd).appendChild(el);
+  }
+  refreshPaletteSel();
+  buildVariants();
+}
+function refreshPaletteSel() {
+  document.querySelectorAll(".brush[data-id]").forEach(e =>
+    e.classList.toggle("on", e.dataset.id === S.active));
+  document.getElementById("eraseBtn").classList.toggle("on", S.active === "erase");
+}
+// Variant strip: pick a specific prefab (drawn + placed at its OWN footprint) or 🎲 Random for a mixed look.
+function buildVariants() {
+  const grp = document.getElementById("variantGroup"), box = document.getElementById("variants");
+  const b = S.brushById[S.active];
+  if (!b || b.kind !== "object" || !(b.prefabs && b.prefabs.length)) { grp.hidden = true; return; }
+  grp.hidden = false;
+  document.getElementById("variantBrush").textContent = b.label;
+  box.innerHTML = "";
+  const add = (id, label, meta) => {
+    const el = document.createElement("button");
+    el.className = "brush" + (S.activeVariant === id ? " on" : "");
+    el.dataset.var = id;
+    el.innerHTML = `<span class="sw" style="background:${b.color}"></span>${label}<span class="meta">${meta}</span>`;
+    el.onclick = () => { S.activeVariant = id; document.querySelectorAll("[data-var]").forEach(e => e.classList.toggle("on", e.dataset.var === id)); render(); };
+    box.appendChild(el);
+  };
+  add("", "🎲 Random", `${b.prefabs.length} variants`);
+  for (const pf of b.prefabs) add(pf.name, pf.name, `${pf.x.toFixed(1)}×${pf.z.toFixed(1)}`);
+}
+
+// ── Coordinate helpers ──────────────────────────────────────────────────────────────────────────────────
+function screenToWorld(sx, sy) {
+  const p = pxPerWorld();
+  return { wx:(sx - S.view.x) / p, wz:(sy - S.view.y) / p };
+}
+function worldToScreen(wx, wz) {
+  const p = pxPerWorld();
+  return { x:wx * p + S.view.x, y:wz * p + S.view.y };
+}
+const cellOf = (wx, wz) => ({ cx:Math.floor(wx / S.cellSize), cz:Math.floor(wz / S.cellSize) });
+const inBounds = (cx, cz) => cx >= 0 && cz >= 0 && cx < S.cols && cz < S.rows;
+// Autotiled object brushes are painted as plain grid cells (the importer assembles the kit from neighbours), so
+// they snap one-per-cell, fill the cell square, and ignore yaw. Wall is the one such brush today.
+const isCellObject = b => !!b && b.id === "wall";
+// Wall-cell lookup, rebuilt each render() so the preview can classify each cell by its neighbours EXACTLY like the
+// Unity importer (straight run / tower post / gate) — see drawWallGlyph.
+let _wallSet = new Set();
+const wallKey = (cx, cz) => cx + "," + cz;
+const wallAt = (cx, cz) => _wallSet.has(wallKey(cx, cz));
+// A ground cell that reads as a road (matches the importer's GroundChannel: ids containing "path"/"road").
+const isRoadCell = (cx, cz) => { const g = S.ground[wallKey(cx, cz)]; return !!g && (g.includes("path") || g.includes("road")); };
+
+// ── Painting ────────────────────────────────────────────────────────────────────────────────────────────
+function pickPrefab(b) {
+  // A chosen variant (belonging to this brush) wins; otherwise pick a random variant for a mixed look.
+  if (S.activeVariant && S.prefabById[S.activeVariant] && S.prefabById[S.activeVariant].brush === b.id) return S.activeVariant;
+  if (!b.prefabs || !b.prefabs.length) return "";
+  return b.prefabs[(Math.random() * b.prefabs.length) | 0].name;
+}
+// True footprint of a placed object: its OWN prefab's size (so each variant shows its real size), with the
+// brush's representative size as a fallback (random hover / missing prefab).
+function objFoot(o) {
+  if (isCellObject(S.brushById[o.brush])) return { x:S.cellSize, z:S.cellSize };   // wall = one cell
+  const pf = S.prefabById[o.prefab];
+  if (pf) return { x:pf.x, z:pf.z };
+  const b = S.brushById[o.brush];
+  return (b && b.hasFootprint) ? { x:b.footprint.x, z:b.footprint.z } : { x:S.cellSize, z:S.cellSize };
+}
+function paintAt(wx, wz, erase) {
+  const b = S.brushById[S.active];
+  if (erase || S.active === "erase") { eraseAt(wx, wz); return; }
+  if (!b) return;
+  if (b.kind === "ground") {
+    const { cx, cz } = cellOf(wx, wz);
+    if (inBounds(cx, cz)) S.ground[cx + "," + cz] = b.id;
+  } else {
+    // object: snap to cell centre in grid mode, free position otherwise
+    let x = wx, z = wz;
+    if (S.mode === "grid") {
+      const { cx, cz } = cellOf(wx, wz);
+      if (!inBounds(cx, cz)) return;
+      x = (cx + 0.5) * S.cellSize; z = (cz + 0.5) * S.cellSize;
+      // one object per cell for grid mode (avoid stacks)
+      if (S.objects.some(o => o.brush === b.id && Math.abs(o.x - x) < 1e-3 && Math.abs(o.z - z) < 1e-3)) return;
+    }
+    // Wall is autotiled on import (the importer picks straight/corner/tower/gate from neighbours), so paint it as a
+    // plain cell — yaw is ignored. Everything else keeps the chosen facing.
+    S.objects.push({ brush:b.id, prefab:pickPrefab(b), x, z, yaw:isCellObject(b) ? 0 : S.yaw });
+  }
+}
+// Index of the topmost object whose (axis-aligned) footprint contains the point, else -1. Shared by erase + drag.
+function topObjectIndexAt(wx, wz) {
+  for (let i = S.objects.length - 1; i >= 0; i--) {
+    const o = S.objects[i], f = objFoot(o);
+    if (Math.abs(wx - o.x) <= f.x / 2 && Math.abs(wz - o.z) <= f.z / 2) return i;
+  }
+  return -1;
+}
+function eraseAt(wx, wz) {
+  // erase the topmost object whose footprint contains the point; else clear the ground cell.
+  const i = topObjectIndexAt(wx, wz);
+  if (i >= 0) { S.objects.splice(i, 1); return; }
+  const { cx, cz } = cellOf(wx, wz);
+  delete S.ground[cx + "," + cz];
+}
+// Move the object currently grabbed by Alt+drag to the cursor (cell-snapped in grid mode / for cell objects).
+function dragObjectTo(wx, wz) {
+  const o = S.dragObj; if (!o) return;
+  const cellSnap = S.mode === "grid" || isCellObject(S.brushById[o.brush]);
+  if (cellSnap) {
+    const { cx, cz } = cellOf(wx, wz);
+    if (!inBounds(cx, cz)) return;
+    o.x = (cx + 0.5) * S.cellSize; o.z = (cz + 0.5) * S.cellSize;
+  } else { o.x = wx; o.z = wz; }
+}
+
+// ── Rendering ───────────────────────────────────────────────────────────────────────────────────────────
+function render() {
+  const w = cv.width, h = cv.height, p = pxPerWorld();
+  ctx.clearRect(0, 0, w, h);
+
+  // plot background
+  const o = worldToScreen(0, 0);
+  ctx.fillStyle = "#2a3a26";
+  ctx.fillRect(o.x, o.y, worldW() * p, worldH() * p);
+
+  // ground cells
+  for (const k in S.ground) {
+    const [cx, cz] = k.split(",").map(Number);
+    const b = S.brushById[S.ground[k]]; if (!b) continue;
+    const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
+    ctx.fillStyle = b.color; ctx.globalAlpha = 0.5;
+    ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p);
+    ctx.globalAlpha = 1;
+  }
+
+  // grid lines
+  if (S.view.zoom > 0.35) {
+    ctx.strokeStyle = "#ffffff14"; ctx.lineWidth = 1; ctx.beginPath();
+    for (let c = 0; c <= S.cols; c++) { const s = worldToScreen(c * S.cellSize, 0); ctx.moveTo(s.x, o.y); ctx.lineTo(s.x, o.y + worldH() * p); }
+    for (let r = 0; r <= S.rows; r++) { const s = worldToScreen(0, r * S.cellSize); ctx.moveTo(o.x, s.y); ctx.lineTo(o.x + worldW() * p, s.y); }
+    ctx.stroke();
+  }
+  // plot border
+  ctx.strokeStyle = "#ffffff44"; ctx.lineWidth = 2;
+  ctx.strokeRect(o.x, o.y, worldW() * p, worldH() * p);
+
+  // row / column index labels (match the cx,cz cell coords + JSON), with level-of-detail
+  drawLabels(o, p);
+
+  // wall-cell lookup for the autotile preview (cell coords of every wall object)
+  _wallSet = new Set();
+  for (const ob of S.objects) if (ob.brush === "wall") _wallSet.add(wallKey(Math.floor(ob.x / S.cellSize), Math.floor(ob.z / S.cellSize)));
+
+  // objects (true footprint, brush colour, facing arrow)
+  for (const ob of S.objects) drawObject(ob, p);
+
+  // hover preview
+  drawHover(p);
+
+  // N indicator
+  ctx.fillStyle = "#ffffff66"; ctx.font = "11px system-ui";
+  ctx.fillText("N ↑", o.x + 6, o.y + 14);
+}
+function drawLabels(o, p) {
+  const cellPx = S.cellSize * p;
+  if (cellPx < 9) return;                                   // too small to read — skip entirely
+  const step = cellPx >= 22 ? 1 : cellPx >= 13 ? 5 : 10;    // thin out as we zoom out
+  ctx.fillStyle = "#aeb6c4"; ctx.font = "11px system-ui";
+  ctx.textBaseline = "middle";
+  // columns (cx) along the top
+  ctx.textAlign = "center";
+  for (let c = 0; c < S.cols; c++) {
+    if (c % step !== 0 && c !== S.cols - 1) continue;
+    ctx.fillText(c, o.x + (c + 0.5) * cellPx, o.y - 10);
+  }
+  // rows (cz) down the left
+  ctx.textAlign = "right";
+  for (let r = 0; r < S.rows; r++) {
+    if (r % step !== 0 && r !== S.rows - 1) continue;
+    ctx.fillText(r, o.x - 8, o.y + (r + 0.5) * cellPx);
+  }
+  ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";  // restore defaults for other text
+}
+function drawObject(ob, p, ghost) {
+  const b = S.brushById[ob.brush]; if (!b) return;
+  if (isCellObject(b)) { drawWallGlyph(ob, p, ghost); return; }   // walls preview their autotiled piece, not a plain box
+  const f = objFoot(ob);
+  const fx = f.x * p, fz = f.z * p;
+  const s = worldToScreen(ob.x, ob.z);
+  ctx.save();
+  ctx.translate(s.x, s.y);
+  ctx.rotate(ob.yaw * Math.PI / 180);
+  ctx.globalAlpha = ghost ? 0.45 : 0.92;
+  ctx.fillStyle = b.color;
+  ctx.fillRect(-fx / 2, -fz / 2, fx, fz);
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = "#0008"; ctx.lineWidth = 1; ctx.strokeRect(-fx / 2, -fz / 2, fx, fz);
+  // facing arrow (points "up" = +yaw from north) — skipped for autotiled cell objects (wall), which have no yaw
+  if (!isCellObject(b)) {
+    const a = Math.min(fx, fz) * 0.32 + 4;
+    ctx.fillStyle = "#fff"; ctx.beginPath();
+    ctx.moveTo(0, -fz / 2 + 2); ctx.lineTo(-a * 0.5, -fz / 2 + 2 + a); ctx.lineTo(a * 0.5, -fz / 2 + 2 + a); ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+// Preview the piece the Unity importer's AutotileWalls will choose for this wall cell, from its 4 neighbours:
+//   • 2 opposite neighbours → STRAIGHT run (bar along the run)   • +road cell → GATE (split bar, accent colour)
+//   • anything else (corner / end / T / cross / isolated) → TOWER post (circle)
+function drawWallGlyph(ob, p, ghost) {
+  const cx = Math.floor(ob.x / S.cellSize), cz = Math.floor(ob.z / S.cellSize);
+  const n = wallAt(cx, cz - 1), s = wallAt(cx, cz + 1), e = wallAt(cx + 1, cz), w = wallAt(cx - 1, cz);
+  const straightX = e && w && !n && !s, straightZ = n && s && !e && !w;
+  const straight = straightX || straightZ;
+  const gate = straight && isRoadCell(cx, cz);
+  const c = worldToScreen(ob.x, ob.z), cp = S.cellSize * p, bar = cp * 0.42, half = cp / 2;
+
+  ctx.save();
+  ctx.globalAlpha = ghost ? 0.5 : 0.95;
+  // faint cell footprint so the painted extent still reads
+  ctx.globalAlpha *= 0.45; ctx.fillStyle = "#8A8A8A";
+  ctx.fillRect(c.x - half, c.y - half, cp, cp);
+  ctx.globalAlpha = ghost ? 0.6 : 1;
+
+  if (gate) {
+    ctx.fillStyle = "#6cc070";                       // gate = opening on a road
+    const g = cp * 0.34;
+    if (straightX) { ctx.fillRect(c.x - half, c.y - bar / 2, half - g / 2, bar); ctx.fillRect(c.x + g / 2, c.y - bar / 2, half - g / 2, bar); }
+    else           { ctx.fillRect(c.x - bar / 2, c.y - half, bar, half - g / 2); ctx.fillRect(c.x - bar / 2, c.y + g / 2, bar, half - g / 2); }
+  } else if (straightX) {
+    ctx.fillStyle = "#b8bdc4"; ctx.fillRect(c.x - half, c.y - bar / 2, cp, bar);
+  } else if (straightZ) {
+    ctx.fillStyle = "#b8bdc4"; ctx.fillRect(c.x - bar / 2, c.y - half, bar, cp);
+  } else {
+    ctx.fillStyle = "#e0e3e8";                       // tower post (corner / end / junction / isolated)
+    ctx.beginPath(); ctx.arc(c.x, c.y, cp * 0.3, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.strokeStyle = "#0007"; ctx.lineWidth = 1; ctx.strokeRect(c.x - half, c.y - half, cp, cp);
+  ctx.restore();
+}
+
+function drawHover(p) {
+  if (S.dragObj || S.active === "erase" || !S.brushById[S.active]) return;
+  const b = S.brushById[S.active];
+  let { wx, wz } = S.mouse;
+  if (b.kind === "object") {
+    if (S.mode === "grid") { const { cx, cz } = cellOf(wx, wz); if (!inBounds(cx, cz)) return; wx = (cx + 0.5) * S.cellSize; wz = (cz + 0.5) * S.cellSize; }
+    drawObject({ brush:b.id, prefab:S.activeVariant, x:wx, z:wz, yaw:isCellObject(b) ? 0 : S.yaw }, p, true);
+  } else {
+    const { cx, cz } = cellOf(wx, wz); if (!inBounds(cx, cz)) return;
+    const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
+    ctx.globalAlpha = 0.4; ctx.fillStyle = b.color;
+    ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p); ctx.globalAlpha = 1;
+  }
+}
+
+// ── Input ───────────────────────────────────────────────────────────────────────────────────────────────
+cv.addEventListener("mousedown", e => {
+  if (e.button === 1 || (e.button === 0 && S.spaceDown)) { S.pan = true; S.panStart = { x:e.clientX - S.view.x, y:e.clientY - S.view.y }; return; }
+  // Alt+left grabs the topmost object under the cursor to move it (no painting).
+  if (e.button === 0 && e.altKey) {
+    const r = cv.getBoundingClientRect(), w = screenToWorld(e.clientX - r.left, e.clientY - r.top);
+    const i = topObjectIndexAt(w.wx, w.wz);
+    if (i >= 0) { commitHistory(); S.dragObj = S.objects[i]; render(); }
+    return;
+  }
+  commitHistory();                  // one undo step per stroke (captured before the first cell is painted)
+  S.paint = e.button === 2 ? 2 : 1;
+  doPaint(e);
+});
+window.addEventListener("mousemove", e => {
+  const r = cv.getBoundingClientRect();
+  S.mouse.x = e.clientX - r.left; S.mouse.y = e.clientY - r.top;
+  const w = screenToWorld(S.mouse.x, S.mouse.y); S.mouse.wx = w.wx; S.mouse.wz = w.wz;
+  cv.style.cursor = S.dragObj ? "grabbing" : (e.altKey && !S.pan ? "move" : "");
+  if (S.dragObj) dragObjectTo(w.wx, w.wz);
+  else if (S.pan) { S.view.x = e.clientX - S.panStart.x; S.view.y = e.clientY - S.panStart.y; }
+  else if (S.paint) doPaint(e);
+  updateStat(); render();
+});
+window.addEventListener("mouseup", () => {
+  const edited = S.paint !== 0 || S.dragObj !== null;   // a real paint/erase/drag just ended → persist it
+  S.paint = 0; S.pan = false; S.dragObj = null;
+  if (edited) saveDraft();
+});
+cv.addEventListener("contextmenu", e => e.preventDefault());
+cv.addEventListener("wheel", e => {
+  e.preventDefault();
+  const before = screenToWorld(S.mouse.x, S.mouse.y);
+  S.view.zoom = Math.min(4, Math.max(0.2, S.view.zoom * (e.deltaY < 0 ? 1.1 : 1 / 1.1)));
+  const after = screenToWorld(S.mouse.x, S.mouse.y);
+  const p = pxPerWorld();
+  S.view.x += (after.wx - before.wx) * p; S.view.y += (after.wz - before.wz) * p;
+  render();
+}, { passive:false });
+function doPaint(e) {
+  const r = cv.getBoundingClientRect();
+  const w = screenToWorld(e.clientX - r.left, e.clientY - r.top);
+  paintAt(w.wx, w.wz, S.paint === 2);
+  render();
+}
+window.addEventListener("keydown", e => {
+  const ctrl = e.ctrlKey || e.metaKey;
+  const z = e.key === "z" || e.key === "Z", y = e.key === "y" || e.key === "Y";
+  if (ctrl && z && !e.shiftKey) { e.preventDefault(); undo(); return; }   // Ctrl+Z
+  if (ctrl && (y || (z && e.shiftKey))) { e.preventDefault(); redo(); return; }   // Ctrl+Y or Ctrl+Shift+Z
+  if (e.code === "Space") { S.spaceDown = true; }
+  if (e.key === "r" || e.key === "R") { S.yaw = (S.yaw + (S.mode === "grid" ? 90 : 15)) % 360; document.getElementById("yawTxt").textContent = S.yaw + "°"; render(); }
+});
+window.addEventListener("keyup", e => { if (e.code === "Space") S.spaceDown = false; });
+
+// ── Toolbar ─────────────────────────────────────────────────────────────────────────────────────────────
+document.getElementById("modeBtn").onclick = e => { S.mode = S.mode === "grid" ? "free" : "grid"; e.target.textContent = S.mode === "grid" ? "Grid" : "Free"; render(); };
+document.getElementById("rotBtn").onclick = () => window.dispatchEvent(new KeyboardEvent("keydown", { key:"r" }));
+document.getElementById("cols").onchange = e => { S.cols = +e.target.value; S.dirty = true; saveDraft(); render(); };
+document.getElementById("rows").onchange = e => { S.rows = +e.target.value; S.dirty = true; saveDraft(); render(); };
+document.getElementById("eraseBtn").onclick = () => { S.active = "erase"; refreshPaletteSel(); };
+document.getElementById("clearBtn").onclick = () => { if (confirm("Clear all painted ground + objects?")) { commitHistory(); S.ground = {}; S.objects = []; saveDraft(); render(); } };
+document.getElementById("fitBtn").onclick = fitView;
+document.getElementById("reloadMani").onclick = loadManifest;
+document.getElementById("loadManiFile").onclick = () => document.getElementById("fileMani").click();
+document.getElementById("fileMani").onchange = ev => readJSON(ev, applyManifest);
+document.getElementById("exportBtn").onclick = exportMap;
+document.getElementById("importBtn").onclick = () => document.getElementById("fileMap").click();
+document.getElementById("fileMap").onchange = ev => readJSON(ev, importMap);
+
+function fitView() {
+  const m = document.querySelector("main").getBoundingClientRect();
+  S.view.zoom = Math.max(0.2, Math.min(4, Math.min(m.width / (S.cols * S.basePx + 80), m.height / (S.rows * S.basePx + 80))));
+  const p = pxPerWorld();
+  S.view.x = (m.width - worldW() * p) / 2; S.view.y = (m.height - worldH() * p) / 2;
+  render();
+}
+
+// ── Export / Import ─────────────────────────────────────────────────────────────────────────────────────
+function buildMap() {
+  return {
+    version:1, name:"PaintedMap", cellSize:S.cellSize,
+    size:{ x:worldW(), z:worldH() }, cols:S.cols, rows:S.rows,
+    ground:Object.entries(S.ground).map(([k, brush]) => { const [cx, cz] = k.split(",").map(Number); return { brush, cx, cz }; }),
+    objects:S.objects.map(o => ({ brush:o.brush, prefab:o.prefab, x:+o.x.toFixed(3), z:+o.z.toFixed(3), yaw:o.yaw })),
+  };
+}
+function exportMap() {
+  const blob = new Blob([JSON.stringify(buildMap(), null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "map.json"; a.click();
+  URL.revokeObjectURL(a.href);
+  S.dirty = false;   // exported → no longer warn on reload
+}
+function importMap(m) {
+  S.cellSize = m.cellSize || S.cellSize;
+  S.cols = m.cols || Math.round((m.size?.x || worldW()) / S.cellSize);
+  S.rows = m.rows || Math.round((m.size?.z || worldH()) / S.cellSize);
+  document.getElementById("cols").value = S.cols; document.getElementById("rows").value = S.rows;
+  S.ground = {}; (m.ground || []).forEach(g => S.ground[g.cx + "," + g.cz] = g.brush);
+  S.objects = (m.objects || []).map(o => ({ brush:o.brush, prefab:o.prefab || "", x:o.x, z:o.z, yaw:o.yaw || 0 }));
+  clearHistory();   // a freshly loaded map starts a new undo timeline (grid size also changes)
+  S.dirty = false; saveDraft();   // loaded map is the new baseline
+  fitView();
+}
+function readJSON(ev, cb) {
+  const f = ev.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { try { cb(JSON.parse(rd.result)); } catch (e) { alert("Bad JSON: " + e.message); } };
+  rd.readAsText(f); ev.target.value = "";
+}
+
+// ── Misc ────────────────────────────────────────────────────────────────────────────────────────────────
+function updateStat() {
+  const { cx, cz } = cellOf(S.mouse.wx, S.mouse.wz);
+  document.getElementById("stat").textContent =
+    `cell ${cx},${cz} · ${S.objects.length} objects · ${Object.keys(S.ground).length} ground · zoom ${S.view.zoom.toFixed(2)}`;
+}
+function resize() {
+  const m = document.querySelector("main").getBoundingClientRect();
+  cv.width = m.width; cv.height = m.height; render();
+}
+window.addEventListener("resize", resize);
+
+// Guard against an accidental reload / tab-close / navigation while there are unsaved edits: the browser shows its
+// native "Leave site? Changes may not be saved" confirm. We also flush the autosave so a confirmed leave still
+// recovers next boot. (Browsers ignore custom text and only prompt after the user has interacted with the page.)
+window.addEventListener("beforeunload", e => {
+  saveDraft();
+  if (S.dirty) { e.preventDefault(); e.returnValue = ""; }
+});
+
+// ── Boot ────────────────────────────────────────────────────────────────────────────────────────────────
+loadManifest().then(() => {
+  fitView();
+  const d = loadDraft();
+  const hasContent = d && (((d.objects && d.objects.length) || (d.ground && d.ground.length)));
+  if (hasContent && confirm("Restore your unsaved map from the previous session?")) {
+    importMap(d);
+    S.dirty = true;   // restored draft is unsaved work → keep guarding until exported
+  }
+});
+</script>
+</body>
+</html>

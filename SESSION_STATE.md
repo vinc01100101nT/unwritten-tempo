@@ -6,27 +6,34 @@
 - **Effort**: model ALWAYS Opus 4.8 (never assess/print model). Assess EFFORT only; auto-GO Low/Medium; PAUSE >Medium until user GO. Tag `**EFFORT: X**`.
 - **Checkpoint**: OVERWRITE this file (never append); prune landed; keep short.
 
-## ✅ Landed & verified (committed)
-- **World Creator pipeline** (`c5d1fee` + `84602a8`) — declarative connected-world authoring, replaces manual `MapLinker`. Spec doc `q176qkd22qmbk4r5t9g7fcc30n895whr`. Memory: [[world-creator-pipeline]].
-  - **HTML tool** `tools/world-creator/index.html` (self-contained): Paint cells (town=yellow/field=green/dungeon=purple/special=red) · Warp (adjacent dots ≤3/border) · Link (distant anchors) · Export/Import `world.json`.
-  - **Unity** `Editor/WorldCreator.cs` → `Tools ▸ unwritten ▸ World ▸ World Creator…`: load json → validate → **Build World** (clone type→template `MapRecipe`, seed=json|FNV(id), `RecipeGenerator.Generate` per map; paired `MakePortal`+`MakeSpawn`, spawn ids `w{i}_from_{map}` for ≤3 stacked warps). Templates wired in window slots (EditorPrefs by GUID); user made `TownRecipe`/`FieldRecipe`.
-  - **Roads to doorways**: `PathRouting.BuildToExits` + `Generate(r, exitPointsXZ)` — roads run from centre hub to each portal (crossroads at Start spawn). Templates need `pathWidth>0`.
-  - World = 8 maps (town_0/1, field_0..5) baked + connected. ⚠️ Build World OVERWRITES scene files (confirm dialog warns).
-  - **Legacy manual map tools RETIRED** (`d216930`): `MapLinkWindow.cs` (MapLinker + both link windows) + `MapRecipeEditor.cs` (per-recipe Generate buttons + starter) + RecipeGenerator's "Generate Map from Selected Recipe" menu all DELETED. World Creator (Build World) is the ONLY map-build/link path; recipes authored via Assets ▸ Create ▸ unwritten ▸ Map Recipe; `RecipeGenerator.Generate()` engine + Apply Foliage Wind kept.
-- **World Map HUD** (`d119097`) — press **`N`** in-game for a full-screen top-down atlas of the whole world + pulsing "you are here" marker. (**`M` = corner minimap**, separate.)
-  - `WorldAtlas.cs` (Resources SO) + `Editor/WorldAtlasBaker.cs` (per-scene top-down snapshot → composite by grid cell; atlas marked `HideAndDontSave` so OpenScene cleanup can't destroy it mid-bake) + `WorldMapHUD.cs` (self-bootstraps into Systems scene, builds own canvas). Build World auto-bakes the atlas; standalone "🗺 Bake World Map only" button too.
+## 🎯 ACTIVE: Baked-character animation → game wiring (this session, UNCOMMITTED)
+Goal: the baked 8-dir Quaternius chars (via **Use Baked Character** / `BakedPlayerVisual`) ground correctly, animate smoothly, and play real game actions. Pipeline context in memory **[[bake-8dir-sprites-pipeline]]**.
 
-## ⏭️ NEXT (optional, pick any — none urgent)
-- Cluster near-duplicate exits on the same edge (stacked warps currently make near-parallel roads).
-- Brighten world-map tiles if they read too dark (snapshot lighting; same as Bake Minimap).
-- Bigger roadmap items still open: threat/aggro (deferred), next class (#2), weather calendar.
-- Unit-test harness = **SKIPPED** by user (still available if wanted; adding `.asmdef` is its own change).
+**DONE (code, needs user re-bake to see visuals):**
+- **Grounding**: `BakedPlayerVisual.GroundedPos` drops visual to capsule BOTTOM (`cc.center.y - height/2`; player transform sits ~0.25 above floor). `SpriteBakeCore.GroundingFeetOffset()` auto-measures feet row from baked `_S` strip → `feetOffset = 0.5 - feetFromBottom`, scale-independent. `BakedBillboard8.SetFeetOffset()` live setter.
+- **Frame cap (fixes INVISIBLE chars)**: strips wider than the 8192 import cap got downscaled (height too) → fixed-cell slicing OOB → null sprites. `SpriteBakeCore.MaxTexSize=8192` + `FrameCap` (=128 @64px) clamps `nFrames`.
+- **Jump head-cut FIX**: real cause = sizing ignored the 30° camera PITCH. On-screen height = `y·cos + depth·sin` > raw `b.size.y`, so apex pose overflowed at padding 1. `SpriteBakeCore` now frames in SCREEN space (projection-aware, worst-case across 8 yaws via `radius=max(x,z)`) + centres on bounds (dropped the headroom-eating bottom margin; grounding still measured). Also union-bounds across poses. **Needs re-bake.**
+- **Anim FPS**: editable Idle/Walk/Run/Other in `BatchCharacterBaker` — **default 24** (= source rate, FBX FrameRate/TimeMode=11). FPS = baked frame count AND playback rate.
+- **Action wiring** (`BakedPlayerVisual` priority override, facing-only so movement can't cancel): Die > Attack(`attacker.Swinging`) > Jump(`IsAirborne`) > Dash(`Dashing`) > PickUp(timed) > **Hurt ONLY when idle** (`speed<walkThreshold`, lowest) > Idle/Walk/Run.
+- **Attack = full clip per swing, damage at END, sped to attack-speed**: `Player3DAttacker.SwingTime = cooldown*MotionScale`; `SwingThenHit` waits SwingTime then damages (Swinging stays true throughout); DPS unchanged. `BakedBillboard8.NaturalDuration()` + `BakedPlayerVisual` sets Attack speed = `natural/SwingTime` so the whole clip plays once in the window.
+- **Movement LOCKED during swing**: `Player3DController` early-returns (gravity only) while `attacker.Swinging` — no WASD/click/order/jump/dash. (Between swings a 1-frame window lets held WASD break out after the swing.)
+- **Click-to-pickup (auto-collect REMOVED)**: `WorldPickup.OnTriggerEnter` gone, `Collect()` public + `OnCollected` static event. Controller: click a pickup → `BeginPickup` walks to it (`pendingPickup`), `TryCollectPending` collects within `collectRadius`, then `pickupLockUntil` locks WASD/clicks 0.6s (gravity only) while PickUp gesture plays. `PickupUnderCursor` raycast in `ReadInput`.
+- **Reflection gap fix**: was the MIRROR PLANE. `PlanarReflection.followGround` (default on) raycasts Ground under player → `waterHeight`; `groundOffset` nudge.
+- **DevSettings knobs**: Baked Character→Feet offset; Reflection→Auto water level + offset + narrowed manual; World→Ground height (Y).
+
+Files: `Editor/SpriteBakeCore.cs`, `Editor/BatchCharacterBaker.cs`, `BakedBillboard8.cs`, `BakedPlayerVisual.cs`, `Player3DController.cs`, `Player3DAttacker.cs`, `WorldPickup.cs`, `PlanarReflection.cs`, `DevSettings.cs`.
+
+## ⏭️ NEXT
+1. **User must RE-BAKE** (Bake All Characters, **uncheck "Skip already baked"**) — current on-disk bake is the broken 45fps one (invisible) AND predates the jump-framing fix. Then Use Baked Character → Play to verify: grounding, jump apex (head intact), full attack anim + damage-at-end + movement lock, click-to-pickup, idle-only hurt.
+2. Untriggered actions baked + idle (use later): Cast, Victory, Defeat, StandUp, Sit, Punch, Shoot, Roll, WalkCarry, RunCarry.
+3. Future: promote `BakedPlayerVisual` logic into `Player3DController` for a PERMANENT avatar (currently a QA-bridge swap). Grid sprite-sheet layout would lift the 128-frame cap if long high-fps clips ever needed.
+
+## 💤 PENDING (uncommitted, prior session): Map Painter Phase 3 + Prontera
+Hand-author ONE map → JSON → Unity import. Design in memory **[[map-painter-pipeline]]**. Phase 1 (BrushPalette SO + `Brush Palette…` window, manifest exported) + Phase 2 (`tools/map-painter/index.html` painter) DONE. **Phase 3 importer NOT STARTED** — read `map.json` → bake (ground→GroundBlend, objects→exact prefab via `PropPlacement` + yaw, walls via `BuildPerimeterWall`). BLOCKED on user sending a real painted `map.json` to lock schema. Prontera: `unity/Assets/Prontera.asset` bakes via re-added `MapRecipeEditor.cs` (Grid + PerimeterWall + Cardinal path rules in recipe engine).
 
 ## Gotchas
-- No local Play loop — **user presses Play** to verify.
-- To rebuild the world: edit in the HTML tool → Export `world.json` → World Creator → Build World (auto-bakes the map). To boot, open a generated map scene (e.g. `town_0`) as active before Play (`GameRoot.firstMap` default is the literal `"Town"` which no longer exists).
-- Custom runtime shaders (`Unwritten/FogScreen`, `Unwritten/GroundBlend`) MUST be in **Always Included Shaders** before a real build.
-- Re-baking `Systems.unity` resets hand-tuned overlay/light values → prefer editing script defaults over full re-bake.
-- SO weather assets SHADOW code timelines once generated → re-bake after editing `WeatherSequences.cs`.
-- Perf check: in-game **PerfHud (F3)** for GC/s; judge true frame time from a Development Build, not the editor.
-- `Assets/test/TownTheme.asset` has dangling refs to 2 deleted 2D monster prefabs (test scratch, harmless).
+- **No local Play loop** — user presses Play / Bakes / clicks Generate to verify. I can't compile here; on recompile error, user pastes it.
+- Re-bake required after ANY baker change (FPS, cap, grounding) — frame count + feetOffset are baked at author time. Uncheck "Skip already baked".
+- 8192 texture cap → single-row strips limited to 128 frames @64px (down/shrink → invisible if exceeded). Grid layout = future lift.
+- Char "elevation vs reflection" residual: user said LEAVE IT (deprioritized). Reflection auto-follows ground now.
+- World ground standard: Y0 floor, Ground layer; seat props bounds-bottom (PropPlacement). Custom shaders (WetGround/GroundBlend/FoliageWind) need Always-Included before a real build.

@@ -1,0 +1,119 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f434afd353e2f942831b3c0c5f6b4f6, type: 3}
+  m_Name: BrushPalette
+  m_EditorClassIdentifier: Assembly-CSharp::BrushPalette
+  cellSize: 4
+  defaultScale: 0.3
+  brushes:
+  - id: houses
+    label: Houses
+    colorHex: '#CC3B3B'
+    kind: 0
+    category: 9
+    prefabNames:
+    - House1
+    - House2
+    - House3
+    - WoodenHouse_1_LOD0
+    - WoodenHouse_2_LOD0
+    - WoodenHouse_3_LOD0
+    groundTex:
+    forwardOffset: 180
+  - id: trees
+    label: Trees
+    colorHex: '#3FAF47'
+    kind: 0
+    category: 1
+    prefabNames:
+    - Birch_tree1
+    - Birch_tree2
+    - Birch_tree3
+    - Deciduous_tree1
+    - Deciduous_tree2
+    - Deciduous_tree3
+    - Deciduous_tree4
+    - Oak_tree1
+    - Oak_tree2
+    - Oak_tree3
+    - Pine_tree1
+    - Pine_tree2
+    - Pine_tree3
+    - Willow_tree1
+    - Willow_tree2
+    groundTex: 
+  - id: wall
+    label: Wall
+    colorHex: '#8A8A8A'
+    kind: 0
+    category: 0
+    prefabNames:
+    - Wall_corner
+    - Wall_entrance
+    - Wall_gateL
+    - Wall_gateR
+    - Wall_part1
+    - Wall_part2
+    - Wall_tower1
+    - Wall_tower2
+    groundTex: 
+  - id: landmark
+    label: Landmark
+    colorHex: '#C8922B'
+    kind: 0
+    category: 10
+    prefabNames:
+    - Tavern_LOD0
+    - Windmill_LOD0
+    groundTex: 
+  - id: grass
+    label: Grass
+    colorHex: '#7CB342'
+    kind: 1
+    category: 0
+    prefabNames: []
+    groundTex: ground_grass
+  - id: path
+    label: Path
+    colorHex: '#E8D44D'
+    kind: 1
+    category: 0
+    prefabNames: []
+    groundTex: ground_road
+  - id: stone
+    label: Stone
+    colorHex: '#9C8F6E'
+    kind: 1
+    category: 0
+    prefabNames: []
+    groundTex: ground_stones
+  - id: rock
+    label: Rock
+    colorHex: '#6E7479'
+    kind: 1
+    category: 0
+    prefabNames: []
+    groundTex: ground_rock
+  - id: dirt
+    label: Dirt
+    colorHex: '#8B5A2B'
+    kind: 1
+    category: 0
+    prefabNames: []
+    groundTex: ground_soil
+  - id: water
+    label: Water
+    colorHex: '#3E7FD4'
+    kind: 1
+    category: 0
+    prefabNames: []
+    groundTex: 

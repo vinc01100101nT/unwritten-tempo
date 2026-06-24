@@ -28,6 +28,12 @@ public static class PxltgrGroundBlend
     const string MeshDir  = "Assets/Meshes/Generated";
     const string MatDir   = "Assets/Materials/Generated";
 
+    /// <summary>Per-vertex ground sampler: given a world XZ, return the four blend weights as a Vector4 mapped to the
+    /// mesh vertex-colour channels — <c>x</c>=road (.r), <c>y</c>=stone (.g), <c>z</c>=rock (.b), <c>w</c>=dirt (.a),
+    /// all 0..1. The procedural <see cref="LayPlot"/> overload feeds a noise-dirt + routed-path sampler (stone/rock
+    /// left 0); the Map Painter importer feeds one that reads its painted cell grid.</summary>
+    public delegate void GroundSampler(float worldX, float worldZ, out Vector4 weights);
+
     /// <summary>
     /// Lay a single blended grass→dirt ground mesh ~<paramref name="sizeX"/>×<paramref name="sizeZ"/> world units
     /// centred on (<paramref name="center"/>.x, <paramref name="center"/>.z), surface at y=0, under a new root in
@@ -46,28 +52,65 @@ public static class PxltgrGroundBlend
                                      IReadOnlyList<PathRouting.Route> paths = null, float pathWidth = 0f,
                                      string pathTexName = null, float dirtAmount = 0.3f, float cell = 0.8f)
     {
-        var grassTex = GroundBaseMap("ground_grass");
-        if (grassTex == null) return null;
-        var dirtTex = GroundBaseMap("ground_soil") ?? GroundBaseMap("ground_road");
-        var pathTex = (!string.IsNullOrEmpty(pathTexName) ? GroundBaseMap(pathTexName) : null) ?? dirtTex;
         bool hasPath = paths != null && paths.Count > 0 && pathWidth > 0f;
         float pathHalf = pathWidth * 0.5f;
         float pathFeather = Mathf.Max(0.4f, pathWidth * 0.25f);
-
-        var shader = Shader.Find("Unwritten/GroundBlend");
-        if (shader == null)
-        { Debug.LogError("[unwritten] Shader 'Unwritten/GroundBlend' not found (Assets/Shaders/GroundBlend.shader)."); return null; }
-
-        // ── Build the subdivided plane with per-vertex dirt alpha ──────────────────────────────────────
-        int nx = Mathf.Clamp(Mathf.CeilToInt(sizeX / Mathf.Max(0.1f, cell)), 2, 240);
-        int nz = Mathf.Clamp(Mathf.CeilToInt(sizeZ / Mathf.Max(0.1f, cell)), 2, 240);
-        int vcount = (nx + 1) * (nz + 1);
 
         // Per-seed noise offsets so each plot gets a different patch layout (Mathf.PerlinNoise has no seed arg).
         var rng = new System.Random(seed);
         float ox1 = (float)rng.NextDouble() * 1000f, oz1 = (float)rng.NextDouble() * 1000f;
         float ox2 = (float)rng.NextDouble() * 1000f, oz2 = (float)rng.NextDouble() * 1000f;
         float thresh = Mathf.Lerp(0.78f, 0.40f, Mathf.Clamp01(dirtAmount));   // more dirt → lower threshold
+
+        // Procedural sampler: two-octave noise blobs for dirt + feathered distance-to-route for paths. Stone/rock
+        // (vertex .g/.b) stay 0 — those layers are the painter's domain, never the procedural recipe's.
+        void Sample(float wx, float wz, out Vector4 w)
+        {
+            float n = Mathf.PerlinNoise(wx * 0.06f + ox1, wz * 0.06f + oz1) * 0.65f
+                    + Mathf.PerlinNoise(wx * 0.13f + ox2, wz * 0.13f + oz2) * 0.35f;
+            float dirtA = Smooth(thresh, thresh + 0.13f, n);
+            float pathW = 0f;
+            if (hasPath)
+            {
+                float d = PathRouting.MinDistanceXZ(new Vector2(wx, wz), paths);
+                pathW = 1f - Smooth(pathHalf - pathFeather, pathHalf + pathFeather, d);
+            }
+            w = new Vector4(pathW, 0f, 0f, dirtA);   // (road, stone, rock, dirt)
+        }
+
+        return LayPlotSampled(scene, rootName, center, sizeX, sizeZ, groundLayer, Sample,
+                              "ground_grass", "ground_soil", pathTexName, null, null, cell);
+    }
+
+    /// <summary>
+    /// As <see cref="LayPlot"/>, but the per-vertex grass/dirt/path weights come from <paramref name="sample"/>
+    /// instead of noise+routes — so a caller (the Map Painter importer) can drive the blend from an authored cell
+    /// grid. Same single-mesh + opaque-shader output, walkable floor and Pathfinder config. Texture names resolve to
+    /// the matching <c>ground_*</c> prop's Base Map (dirt/path fall back if their prop is missing). Returns the
+    /// ground root, or <c>null</c> if the grass prop or the <c>Unwritten/GroundBlend</c> shader is missing.
+    /// </summary>
+    public static GameObject LayPlotSampled(Scene scene, string rootName, Vector3 center, float sizeX, float sizeZ,
+                                            int groundLayer, GroundSampler sample,
+                                            string grassTexName = "ground_grass", string dirtTexName = "ground_soil",
+                                            string pathTexName = "ground_road", string stoneTexName = null,
+                                            string rockTexName = null, float cell = 0.8f)
+    {
+        var grassTex = GroundBaseMap(string.IsNullOrEmpty(grassTexName) ? "ground_grass" : grassTexName);
+        if (grassTex == null) return null;
+        var dirtTex = (!string.IsNullOrEmpty(dirtTexName) ? GroundBaseMap(dirtTexName) : null)
+                      ?? GroundBaseMap("ground_soil") ?? GroundBaseMap("ground_road");
+        var pathTex  = (!string.IsNullOrEmpty(pathTexName)  ? GroundBaseMap(pathTexName)  : null) ?? dirtTex;
+        var stoneTex = (!string.IsNullOrEmpty(stoneTexName) ? GroundBaseMap(stoneTexName) : null);
+        var rockTex  = (!string.IsNullOrEmpty(rockTexName)  ? GroundBaseMap(rockTexName)  : null);
+
+        var shader = Shader.Find("Unwritten/GroundBlend");
+        if (shader == null)
+        { Debug.LogError("[unwritten] Shader 'Unwritten/GroundBlend' not found (Assets/Shaders/GroundBlend.shader)."); return null; }
+
+        // ── Build the subdivided plane, painting each vertex's path/dirt weight from the sampler ──────────
+        int nx = Mathf.Clamp(Mathf.CeilToInt(sizeX / Mathf.Max(0.1f, cell)), 2, 240);
+        int nz = Mathf.Clamp(Mathf.CeilToInt(sizeZ / Mathf.Max(0.1f, cell)), 2, 240);
+        int vcount = (nx + 1) * (nz + 1);
 
         var verts = new Vector3[vcount];
         var norms = new Vector3[vcount];
@@ -83,23 +126,13 @@ public static class PxltgrGroundBlend
                 float lz = -halfZ + sizeZ * (j / (float)nz);
                 float wx = center.x + lx, wz = center.z + lz;
 
-                // Two-octave value noise → organic blobs; smoothstep around the threshold = soft grass↔dirt edge.
-                float n = Mathf.PerlinNoise(wx * 0.06f + ox1, wz * 0.06f + oz1) * 0.65f
-                        + Mathf.PerlinNoise(wx * 0.13f + ox2, wz * 0.13f + oz2) * 0.35f;
-                float a = Smooth(thresh, thresh + 0.13f, n);
-
-                // Path weight in the RED channel: 1 on the routed polylines, feathered to 0 at the shoulders.
-                float pathW = 0f;
-                if (hasPath)
-                {
-                    float d = PathRouting.MinDistanceXZ(new Vector2(wx, wz), paths);
-                    pathW = 1f - Smooth(pathHalf - pathFeather, pathHalf + pathFeather, d);
-                }
+                sample(wx, wz, out Vector4 w);
 
                 verts[vi] = new Vector3(lx, 0f, lz);
                 norms[vi] = Vector3.up;
                 uvs[vi]   = new Vector2(wx, wz);
-                cols[vi]  = new Color(Mathf.Clamp01(pathW), 1f, 1f, Mathf.Clamp01(a));   // .r=path, .a=dirt
+                cols[vi]  = new Color(Mathf.Clamp01(w.x), Mathf.Clamp01(w.y),       // .r=road, .g=stone
+                                      Mathf.Clamp01(w.z), Mathf.Clamp01(w.w));      // .b=rock, .a=dirt
                 vi++;
             }
 
@@ -135,11 +168,15 @@ public static class PxltgrGroundBlend
         if (mat == null) { mat = new Material(shader); AssetDatabase.CreateAsset(mat, matPath); }
         else mat.shader = shader;
         mat.SetTexture("_GrassMap", grassTex);
-        if (dirtTex != null) mat.SetTexture("_DirtMap", dirtTex);
-        if (pathTex != null) mat.SetTexture("_PathMap", pathTex);
+        if (dirtTex  != null) mat.SetTexture("_DirtMap",  dirtTex);
+        if (pathTex  != null) mat.SetTexture("_PathMap",  pathTex);
+        if (stoneTex != null) mat.SetTexture("_StoneMap", stoneTex);
+        if (rockTex  != null) mat.SetTexture("_RockMap",  rockTex);
         mat.SetFloat("_GrassTiling", 0.4f);   // ~one tile per 2.5 units → matches the old tiled texel density
         mat.SetFloat("_DirtTiling", 0.4f);
         mat.SetFloat("_PathTiling", 0.4f);
+        mat.SetFloat("_StoneTiling", 0.4f);
+        mat.SetFloat("_RockTiling", 0.4f);
         EditorUtility.SetDirty(mat);
 
         // ── Scene objects ───────────────────────────────────────────────────────────────────────────────

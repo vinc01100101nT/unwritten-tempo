@@ -22,8 +22,14 @@ using UnityEngine.Rendering.Universal;
 [DisallowMultipleComponent]
 public class PlanarReflection : MonoBehaviour
 {
-    [Tooltip("World Y of the water surface the scene is mirrored about (puddles sit ~ground level).")]
+    [Tooltip("World Y of the water surface the scene is mirrored about (puddles sit ~ground level). When " +
+        "'followGround' is on this is overwritten each frame with the real ground height under the player.")]
     public float waterHeight = 0f;
+    [Tooltip("Auto-snap waterHeight to the real ground under the player each frame (raycasts the Ground layer), " +
+        "so puddle reflections line up at the true floor on every map without hand-tuning. Off = set waterHeight manually.")]
+    public bool followGround = true;
+    [Tooltip("Fine offset added to the auto-detected ground height (use to nudge the reflection seam up/down).")]
+    public float groundOffset = 0f;
     [Tooltip("Layers the reflection renders. Default = the 3D world; sprites (Crowd), UI, FX quads, Water are excluded.")]
     public LayerMask reflectMask = -1;
     [Range(0.25f, 1f)] [Tooltip("Reflection texture resolution scale (0.5 = half-res, cheaper).")]
@@ -40,6 +46,8 @@ public class PlanarReflection : MonoBehaviour
     RenderTexture rt;
     int rtW, rtH;
     bool running;
+    Transform focus;        // what we raycast under for the ground height (player, else camera)
+    int groundMask = -1;    // cached Ground layer mask (-1 = not resolved yet)
 
     static readonly int ReflectionTexID = Shader.PropertyToID("_ReflectionTex");
 
@@ -105,9 +113,34 @@ public class PlanarReflection : MonoBehaviour
             return;
         }
 
+        if (followGround) TrackGround();   // snap the mirror plane to the real ground before MirrorTo uses it
+
         EnsureResources(main);
         reflCam.gameObject.SetActive(true);
         Shader.SetGlobalTexture(ReflectionTexID, rt);
+    }
+
+    // Raycast straight down onto the Ground layer under the player (or camera) and park the mirror plane on it,
+    // so the puddle reflection always meets objects at the true floor — even if a map's ground isn't exactly Y0.
+    void TrackGround()
+    {
+        if (groundMask == -1)
+        {
+            int l = LayerMask.NameToLayer("Ground");
+            groundMask = l >= 0 ? (1 << l) : 0;
+        }
+        if (groundMask == 0) return;   // no Ground layer in this project — leave waterHeight as authored
+
+        if (focus == null)
+        {
+            var p = FindFirstObjectByType<Player3DController>();
+            focus = p != null ? p.transform : (CameraRig.Cam != null ? CameraRig.Cam.transform : null);
+        }
+        if (focus == null) return;
+
+        Vector3 origin = focus.position + Vector3.up * 100f;
+        if (Physics.Raycast(origin, Vector3.down, out var hit, 500f, groundMask, QueryTriggerInteraction.Ignore))
+            waterHeight = hit.point.y + groundOffset;
     }
 
     void EnsureResources(Camera main)

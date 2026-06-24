@@ -137,6 +137,12 @@ public partial class Player3DController : MonoBehaviour
     bool resumeAttackMove;
     AutoCombatIndicator autoIndicator;
 
+    // Click-to-pickup: a clicked item we walk to and collect on arrival; collecting then locks input briefly
+    // (gravity only) while the PickUp gesture plays, so the player can't WASD out of the animation.
+    WorldPickup pendingPickup;
+    float pickupLockUntil;
+    const float PickupLockSeconds = 0.6f;
+
     SpriteRenderer sr;
     CharacterController controller;
     Player3DAttacker attacker;
@@ -158,6 +164,10 @@ public partial class Player3DController : MonoBehaviour
     int wp; bool routing;
     float nextChaseRepath;
     Vector3 worldFacing = Vector3.back;          // last move/aim world dir; facing derived camera-relative
+
+    /// <summary>Last move/aim direction in WORLD space (XZ meaningful). Read by the minimap to orient the
+    /// player arrow. Fixed-north top-down: world +X = map right, world +Z = map up.</summary>
+    public Vector3 WorldFacing => worldFacing;
 
     void Awake()
     {
@@ -349,6 +359,30 @@ public partial class Player3DController : MonoBehaviour
             return;
         }
 
+        // Click-to-pickup: collect a clicked item once we've walked into range, then lock input for a beat while
+        // the PickUp gesture plays — gravity only, no WASD/clicks/orders.
+        TryCollectPending();
+        if (Time.time < pickupLockUntil)
+        {
+            controller.Move(Vector3.down * gravity * Time.deltaTime);
+            Animate(false);
+            ApplyIdleScale(false);
+            return;
+        }
+
+        // Locked DURING an attack swing — no movement by ANY means (WASD / click / routed orders / jump / dash are
+        // all ignored). The swing animation plays to completion and damage lands at its end. Gravity + held attack
+        // pose only; we keep facing fixed so the swing doesn't pivot.
+        if (attacker != null && attacker.Swinging)
+        {
+            controller.Move(Vector3.down * gravity * Time.deltaTime);
+            attackUntil = Time.time + attackPoseHold * Player3DAttacker.MotionScale;   // hold the (original-sprite) pose
+            facing = Facing3D.FromWorldDir(worldFacing);
+            Animate(false);
+            ApplyIdleScale(false);
+            return;
+        }
+
         // Sscary traversal abilities (Space = forward hop, E = dash burst). Handled before normal input so an
         // active hop/dash overrides movement, and a freshly-pressed one starts THIS frame (no 1-frame lag).
         if (Scary && TickScaryAbilities()) return;
@@ -443,7 +477,13 @@ public partial class Player3DController : MonoBehaviour
                 if (mob != null) BeginAttack(mob, false);
                 else if (GroundPoint(cam, out var gp)) BeginAttackMove(gp);
             }
-            else if (GroundPoint(cam, out var gp)) BeginMove(gp);
+            else
+            {
+                // Plain click: a pickup wins (walk to it + collect), else it's a move.
+                var pick = PickupUnderCursor(cam);
+                if (pick != null) BeginPickup(pick);
+                else if (GroundPoint(cam, out var gp)) BeginMove(gp);
+            }
         }
     }
 
@@ -547,6 +587,25 @@ public partial class Player3DController : MonoBehaviour
     void BeginMove(Vector3 point)       { ClearCombat(); order = Order.Move;       movePoint = point; StartRoute(point); }
     void BeginAttackMove(Vector3 point) { ClearCombat(); order = Order.AttackMove; movePoint = point; StartRoute(point); }
 
+    // Click-to-pickup: walk to the clicked item; TryCollectPending() collects it on arrival.
+    void BeginPickup(WorldPickup p)
+    {
+        ClearCombat();   // clears any combat AND a prior pendingPickup
+        pendingPickup = p;
+        order = Order.Move; movePoint = p.transform.position; StartRoute(movePoint);
+    }
+
+    void TryCollectPending()
+    {
+        if (pendingPickup == null) return;               // Unity-null once destroyed
+        Vector3 a = transform.position, b = pendingPickup.transform.position; a.y = 0f; b.y = 0f;
+        if (Vector3.Distance(a, b) > pendingPickup.collectRadius) return;
+        pendingPickup.Collect();                         // item/gold + fires WorldPickup.OnCollected (PickUp anim)
+        pickupLockUntil = Time.time + PickupLockSeconds;
+        pendingPickup = null;
+        Stop();                                          // end routing; the lock holds us through the gesture
+    }
+
     void BeginAttack(Health mob, bool resume)
     {
         if (attacker != null) attacker.Cancel();
@@ -570,7 +629,7 @@ public partial class Player3DController : MonoBehaviour
 
     void Stop()
     {
-        AttackArmed = false; order = Order.Idle;
+        AttackArmed = false; order = Order.Idle; pendingPickup = null;
         routing = false; path.Clear(); attackTarget = null; resumeAttackMove = false;
         dashing = false; dashOnArrive = null; dashTarget = null;   // a charge is cancelled by Stop / S
         if (attacker != null) attacker.Cancel();   // drop an in-flight swing's damage
@@ -622,7 +681,7 @@ public partial class Player3DController : MonoBehaviour
     void ClearCombat()
     {
         if (attacker != null) attacker.Cancel();
-        attackTarget = null; resumeAttackMove = false;
+        attackTarget = null; resumeAttackMove = false; pendingPickup = null;
         if (targetMarker != null) targetMarker.Follow(null);
     }
 
@@ -829,6 +888,14 @@ public partial class Player3DController : MonoBehaviour
 
     /// <summary>Public wrapper for the cursor→ground raycast — used by ground-targeted skills (e.g. Meteor).</summary>
     public static bool GroundUnderCursor(Camera cam, out Vector3 point) => GroundPoint(cam, out point);
+
+    /// <summary>The world pickup under the cursor (camera raycast hits its trigger sphere), or null. Drives click-to-collect.</summary>
+    static WorldPickup PickupUnderCursor(Camera cam)
+    {
+        if (cam == null) return null;
+        var ray = cam.ScreenPointToRay(MousePos());
+        return Physics.Raycast(ray, out var hit, 500f) ? hit.collider.GetComponentInParent<WorldPickup>() : null;
+    }
 
     static bool GroundPoint(Camera cam, out Vector3 point)
     {

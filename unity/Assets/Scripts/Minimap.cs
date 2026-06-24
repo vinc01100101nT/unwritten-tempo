@@ -33,8 +33,11 @@ public class Minimap : MonoBehaviour
     public float viewRadius = 20f;
     [Tooltip("How high above the player the live fallback camera sits.")]
     public float camHeight = 120f;
-    [Tooltip("Live-camera re-render rate (Hz). Blips track every frame; only the live terrain pass is throttled.")]
-    public float renderHz = 12f;
+    [Tooltip("Live-camera re-render cap (Hz). 0 = follow the game's frame rate (so the terrain pans as smoothly " +
+             "as the world moves, up to 120). Blips/baked-image pan always track every frame regardless.")]
+    public float renderHz = 0f;
+    [Tooltip("Upper bound on the live re-render rate when following the frame rate, so it never exceeds the world cap.")]
+    public float maxRenderHz = 120f;
     public int textureSize = 256;
     public KeyCode toggleKey = KeyCode.M;
 
@@ -51,10 +54,12 @@ public class Minimap : MonoBehaviour
     Camera cam;                    // live fallback only (lazy)
     RenderTexture rt;              // live fallback only (lazy)
     Transform player;
+    Player3DController playerCtrl; // cached for WorldFacing (orients the arrow)
     float nextRender;
 
     readonly List<Image> pool = new List<Image>();
     Sprite dotSprite;
+    Sprite arrowSprite;            // player blip: a triangle that points where the player faces
 
     void Start()
     {
@@ -67,6 +72,32 @@ public class Minimap : MonoBehaviour
         }
         var tex = Texture2D.whiteTexture;   // shared 1px sprite for all blips
         dotSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+        arrowSprite = BuildArrowSprite();   // the player marker — rotated to its facing each frame
+    }
+
+    // A small upward-pointing triangle (apex at top) baked once. The player blip uses this and we spin its
+    // RectTransform to the player's heading, so it reads as a directional arrow rather than a dot.
+    static Sprite BuildArrowSprite()
+    {
+        const int N = 32;
+        var tex = new Texture2D(N, N, TextureFormat.RGBA32, false) { name = "MinimapArrow", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+        var px = new Color32[N * N];
+        Color32 clear = new Color32(255, 255, 255, 0), solid = new Color32(255, 255, 255, 255);
+        for (int y = 0; y < N; y++)
+        {
+            // Widen from the apex (top, y=N-1) down to the base (bottom). A slight notch on the trailing
+            // edge would need a concave test; a clean triangle reads fine at blip size.
+            float t = 1f - (y / (float)(N - 1));          // 0 at apex → 1 at base
+            float halfW = t * (N * 0.42f);
+            for (int x = 0; x < N; x++)
+            {
+                float dx = Mathf.Abs(x - (N - 1) * 0.5f);
+                px[y * N + x] = dx <= halfW ? solid : clear;
+            }
+        }
+        tex.SetPixels32(px);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, N, N), new Vector2(0.5f, 0.5f));
     }
 
     void OnDestroy()
@@ -86,7 +117,10 @@ public class Minimap : MonoBehaviour
 
         // Re-acquire the persistent player after a scene swap.
         if (player == null && PersistentPlayer3D.Instance != null)
+        {
             player = PersistentPlayer3D.Instance.transform;
+            playerCtrl = player.GetComponent<Player3DController>();
+        }
         if (player == null) return;
 
         var data = MinimapData.Current;
@@ -121,7 +155,12 @@ public class Minimap : MonoBehaviour
 
         if (Time.unscaledTime >= nextRender)
         {
-            nextRender = Time.unscaledTime + 1f / Mathf.Max(1f, renderHz);
+            // renderHz <= 0 → match the world's frame rate (the game targets 120; -1 = display refresh), so the
+            // terrain pans in lock-step with movement instead of stepping at a fixed low rate.
+            float hz = renderHz > 0f
+                ? renderHz
+                : Mathf.Clamp(Application.targetFrameRate > 0 ? Application.targetFrameRate : maxRenderHz, 30f, maxRenderHz);
+            nextRender = Time.unscaledTime + 1f / Mathf.Max(1f, hz);
             // URP/Unity 6: manual Camera.Render() is unsupported — use a render request (with a legacy fallback).
             var req = new RenderPipeline.StandardRequest();
             if (RenderPipeline.SupportsRenderRequest(cam, req)) { req.destination = rt; RenderPipeline.SubmitRenderRequest(cam, req); }
@@ -163,11 +202,18 @@ public class Minimap : MonoBehaviour
 
         Vector3 c = player.position;
 
-        // Player blip — always dead-centre (it's the projection origin).
+        // Player marker — an arrow at dead-centre (the projection origin), spun to the player's heading.
+        // Fixed-north top-down: world +X → map right, world +Z → map up, so the heading is read straight off
+        // worldFacing's XZ. The arrow sprite points up (+Y), i.e. 90° from +X, so subtract that.
         var pb = Blip(used++);
+        pb.sprite = arrowSprite;
         pb.color = playerColor;
-        pb.rectTransform.sizeDelta = new Vector2(blipSize, blipSize);
+        float arrowSize = blipSize * 1.7f;     // a touch bigger than a dot so the heading reads clearly
+        pb.rectTransform.sizeDelta = new Vector2(arrowSize, arrowSize);
         pb.rectTransform.anchoredPosition = Vector2.zero;
+        Vector3 f = playerCtrl != null ? playerCtrl.WorldFacing : player.forward;
+        float angle = (f.x * f.x + f.z * f.z) > 1e-6f ? Mathf.Atan2(f.z, f.x) * Mathf.Rad2Deg - 90f : 0f;
+        pb.rectTransform.localRotation = Quaternion.Euler(0, 0, angle);
 
         // Mobs from the shared registry; distance-cull to the view box (cheap, no alloc).
         float r2 = viewRadius * viewRadius;

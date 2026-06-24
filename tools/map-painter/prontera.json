@@ -1,0 +1,4819 @@
+{
+  "version": 1,
+  "name": "Prontera",
+  "cellSize": 4.0,
+  "size": {
+    "x": 160.0,
+    "z": 160.0
+  },
+  "cols": 40,
+  "rows": 40,
+  "ground": [
+    {
+      "brush": "path",
+      "cx": 0,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 0
+    },
+    {
+      "brush": "path",
+      "cx": 0,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 0
+    },
+    {
+      "brush": "path",
+      "cx": 0,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 0
+    },
+    {
+      "brush": "path",
+      "cx": 0,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 0
+    },
+    {
+      "brush": "path",
+      "cx": 1,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 1
+    },
+    {
+      "brush": "path",
+      "cx": 1,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 1
+    },
+    {
+      "brush": "path",
+      "cx": 1,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 1
+    },
+    {
+      "brush": "path",
+      "cx": 1,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 1
+    },
+    {
+      "brush": "path",
+      "cx": 2,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 2
+    },
+    {
+      "brush": "path",
+      "cx": 2,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 2
+    },
+    {
+      "brush": "path",
+      "cx": 2,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 2
+    },
+    {
+      "brush": "path",
+      "cx": 2,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 2
+    },
+    {
+      "brush": "path",
+      "cx": 3,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 3
+    },
+    {
+      "brush": "path",
+      "cx": 3,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 3
+    },
+    {
+      "brush": "path",
+      "cx": 3,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 3
+    },
+    {
+      "brush": "path",
+      "cx": 3,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 3
+    },
+    {
+      "brush": "path",
+      "cx": 4,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 4
+    },
+    {
+      "brush": "path",
+      "cx": 4,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 4
+    },
+    {
+      "brush": "path",
+      "cx": 4,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 4
+    },
+    {
+      "brush": "path",
+      "cx": 4,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 4
+    },
+    {
+      "brush": "path",
+      "cx": 5,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 5
+    },
+    {
+      "brush": "path",
+      "cx": 5,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 5
+    },
+    {
+      "brush": "path",
+      "cx": 5,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 5
+    },
+    {
+      "brush": "path",
+      "cx": 5,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 5
+    },
+    {
+      "brush": "path",
+      "cx": 6,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 6
+    },
+    {
+      "brush": "path",
+      "cx": 6,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 6
+    },
+    {
+      "brush": "path",
+      "cx": 6,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 6
+    },
+    {
+      "brush": "path",
+      "cx": 6,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 6
+    },
+    {
+      "brush": "path",
+      "cx": 7,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 7
+    },
+    {
+      "brush": "path",
+      "cx": 7,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 7
+    },
+    {
+      "brush": "path",
+      "cx": 7,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 7
+    },
+    {
+      "brush": "path",
+      "cx": 7,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 7
+    },
+    {
+      "brush": "path",
+      "cx": 8,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 8
+    },
+    {
+      "brush": "path",
+      "cx": 8,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 8
+    },
+    {
+      "brush": "path",
+      "cx": 8,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 8
+    },
+    {
+      "brush": "path",
+      "cx": 8,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 8
+    },
+    {
+      "brush": "path",
+      "cx": 9,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 9
+    },
+    {
+      "brush": "path",
+      "cx": 9,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 9
+    },
+    {
+      "brush": "path",
+      "cx": 9,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 9
+    },
+    {
+      "brush": "path",
+      "cx": 9,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 9
+    },
+    {
+      "brush": "path",
+      "cx": 10,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 10
+    },
+    {
+      "brush": "path",
+      "cx": 10,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 10
+    },
+    {
+      "brush": "path",
+      "cx": 10,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 10
+    },
+    {
+      "brush": "path",
+      "cx": 10,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 10
+    },
+    {
+      "brush": "path",
+      "cx": 11,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 11
+    },
+    {
+      "brush": "path",
+      "cx": 11,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 11
+    },
+    {
+      "brush": "path",
+      "cx": 11,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 11
+    },
+    {
+      "brush": "path",
+      "cx": 11,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 11
+    },
+    {
+      "brush": "path",
+      "cx": 12,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 12
+    },
+    {
+      "brush": "path",
+      "cx": 12,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 12
+    },
+    {
+      "brush": "path",
+      "cx": 12,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 12
+    },
+    {
+      "brush": "path",
+      "cx": 12,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 12
+    },
+    {
+      "brush": "path",
+      "cx": 13,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 13
+    },
+    {
+      "brush": "path",
+      "cx": 13,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 13
+    },
+    {
+      "brush": "path",
+      "cx": 13,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 13
+    },
+    {
+      "brush": "path",
+      "cx": 13,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 13
+    },
+    {
+      "brush": "path",
+      "cx": 14,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 14
+    },
+    {
+      "brush": "path",
+      "cx": 14,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 14
+    },
+    {
+      "brush": "path",
+      "cx": 14,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 14
+    },
+    {
+      "brush": "path",
+      "cx": 14,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 14
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 25,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 25
+    },
+    {
+      "brush": "path",
+      "cx": 25,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 25
+    },
+    {
+      "brush": "path",
+      "cx": 25,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 25
+    },
+    {
+      "brush": "path",
+      "cx": 25,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 25
+    },
+    {
+      "brush": "path",
+      "cx": 26,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 26
+    },
+    {
+      "brush": "path",
+      "cx": 26,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 26
+    },
+    {
+      "brush": "path",
+      "cx": 26,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 26
+    },
+    {
+      "brush": "path",
+      "cx": 26,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 26
+    },
+    {
+      "brush": "path",
+      "cx": 27,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 27
+    },
+    {
+      "brush": "path",
+      "cx": 27,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 27
+    },
+    {
+      "brush": "path",
+      "cx": 27,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 27
+    },
+    {
+      "brush": "path",
+      "cx": 27,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 27
+    },
+    {
+      "brush": "path",
+      "cx": 28,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 28
+    },
+    {
+      "brush": "path",
+      "cx": 28,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 28
+    },
+    {
+      "brush": "path",
+      "cx": 28,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 28
+    },
+    {
+      "brush": "path",
+      "cx": 28,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 28
+    },
+    {
+      "brush": "path",
+      "cx": 29,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 29
+    },
+    {
+      "brush": "path",
+      "cx": 29,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 29
+    },
+    {
+      "brush": "path",
+      "cx": 29,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 29
+    },
+    {
+      "brush": "path",
+      "cx": 29,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 29
+    },
+    {
+      "brush": "path",
+      "cx": 30,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 30
+    },
+    {
+      "brush": "path",
+      "cx": 30,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 30
+    },
+    {
+      "brush": "path",
+      "cx": 30,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 30
+    },
+    {
+      "brush": "path",
+      "cx": 30,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 30
+    },
+    {
+      "brush": "path",
+      "cx": 31,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 31
+    },
+    {
+      "brush": "path",
+      "cx": 31,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 31
+    },
+    {
+      "brush": "path",
+      "cx": 31,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 31
+    },
+    {
+      "brush": "path",
+      "cx": 31,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 31
+    },
+    {
+      "brush": "path",
+      "cx": 32,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 32
+    },
+    {
+      "brush": "path",
+      "cx": 32,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 32
+    },
+    {
+      "brush": "path",
+      "cx": 32,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 32
+    },
+    {
+      "brush": "path",
+      "cx": 32,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 32
+    },
+    {
+      "brush": "path",
+      "cx": 33,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 33
+    },
+    {
+      "brush": "path",
+      "cx": 33,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 33
+    },
+    {
+      "brush": "path",
+      "cx": 33,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 33
+    },
+    {
+      "brush": "path",
+      "cx": 33,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 33
+    },
+    {
+      "brush": "path",
+      "cx": 34,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 34
+    },
+    {
+      "brush": "path",
+      "cx": 34,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 34
+    },
+    {
+      "brush": "path",
+      "cx": 34,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 34
+    },
+    {
+      "brush": "path",
+      "cx": 34,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 34
+    },
+    {
+      "brush": "path",
+      "cx": 35,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 35
+    },
+    {
+      "brush": "path",
+      "cx": 35,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 35
+    },
+    {
+      "brush": "path",
+      "cx": 35,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 35
+    },
+    {
+      "brush": "path",
+      "cx": 35,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 35
+    },
+    {
+      "brush": "path",
+      "cx": 36,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 36
+    },
+    {
+      "brush": "path",
+      "cx": 36,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 36
+    },
+    {
+      "brush": "path",
+      "cx": 36,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 36
+    },
+    {
+      "brush": "path",
+      "cx": 36,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 36
+    },
+    {
+      "brush": "path",
+      "cx": 37,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 37
+    },
+    {
+      "brush": "path",
+      "cx": 37,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 37
+    },
+    {
+      "brush": "path",
+      "cx": 37,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 37
+    },
+    {
+      "brush": "path",
+      "cx": 37,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 37
+    },
+    {
+      "brush": "path",
+      "cx": 38,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 38
+    },
+    {
+      "brush": "path",
+      "cx": 38,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 38
+    },
+    {
+      "brush": "path",
+      "cx": 38,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 38
+    },
+    {
+      "brush": "path",
+      "cx": 38,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 38
+    },
+    {
+      "brush": "path",
+      "cx": 39,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 39
+    },
+    {
+      "brush": "path",
+      "cx": 39,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 39
+    },
+    {
+      "brush": "path",
+      "cx": 39,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 39
+    },
+    {
+      "brush": "path",
+      "cx": 39,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 39
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 15,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 16,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 17,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 18,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 19,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 20,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 21,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 22,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 23,
+      "cz": 24
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 15
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 16
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 17
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 18
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 19
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 20
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 21
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 22
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 23
+    },
+    {
+      "brush": "path",
+      "cx": 24,
+      "cz": 24
+    },
+    {
+      "brush": "water",
+      "cx": 19,
+      "cz": 19
+    },
+    {
+      "brush": "water",
+      "cx": 19,
+      "cz": 20
+    },
+    {
+      "brush": "water",
+      "cx": 20,
+      "cz": 19
+    },
+    {
+      "brush": "water",
+      "cx": 20,
+      "cz": 20
+    }
+  ],
+  "objects": [
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 12.3,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 14.6,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 16.9,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 19.2,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 21.5,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 23.8,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 26.1,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 28.4,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 30.7,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 33.0,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 35.3,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 37.6,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 39.9,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 42.2,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 44.5,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 46.8,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 49.1,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 51.4,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 53.7,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 56.0,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 58.3,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 60.6,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 62.9,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 65.2,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 67.5,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 69.8,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 90.5,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 92.8,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 95.1,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 97.4,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 99.7,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 102.0,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 104.3,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 106.6,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 108.9,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 111.2,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 113.5,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 115.8,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 118.1,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 120.4,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 122.7,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 125.0,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 127.3,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 129.6,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 131.9,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 134.2,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 136.5,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 138.8,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 141.1,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 143.4,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 145.7,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 148.0,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 12.3,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 14.6,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 16.9,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 19.2,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 21.5,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 23.8,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 26.1,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 28.4,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 30.7,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 33.0,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 35.3,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 37.6,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 39.9,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 42.2,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 44.5,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 46.8,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 49.1,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 51.4,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 53.7,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 56.0,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 58.3,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 60.6,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 62.9,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 65.2,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 67.5,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 69.8,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 90.5,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 92.8,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 95.1,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 97.4,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 99.7,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 102.0,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 104.3,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 106.6,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 108.9,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 111.2,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 113.5,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 115.8,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 118.1,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 120.4,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 122.7,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 125.0,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 127.3,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 129.6,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 131.9,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 134.2,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 136.5,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 138.8,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 141.1,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 143.4,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 145.7,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 148.0,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 10.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 12.3,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 14.6,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 16.9,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 19.2,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 21.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 23.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 26.1,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 28.4,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 30.7,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 33.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 35.3,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 37.6,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 39.9,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 42.2,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 44.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 46.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 49.1,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 51.4,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 53.7,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 56.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 58.3,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 60.6,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 62.9,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 65.2,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 67.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 69.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 90.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 92.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 95.1,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 97.4,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 99.7,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 102.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 104.3,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 106.6,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 108.9,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 111.2,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 113.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 115.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 118.1,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 120.4,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 122.7,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 125.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 127.3,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 129.6,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 131.9,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 134.2,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 136.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 138.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 141.1,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 143.4,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 145.7,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 10.0,
+      "z": 148.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 10.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 12.3,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 14.6,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 16.9,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 19.2,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 21.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 23.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 26.1,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 28.4,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 30.7,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 33.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 35.3,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 37.6,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 39.9,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 42.2,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 44.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 46.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 49.1,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 51.4,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 53.7,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 56.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 58.3,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 60.6,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 62.9,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 65.2,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 67.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 69.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 90.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 92.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 95.1,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 97.4,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 99.7,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 102.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 104.3,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 106.6,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 108.9,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 111.2,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 113.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 115.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 118.1,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 120.4,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 122.7,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 125.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 127.3,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 129.6,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 131.9,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 134.2,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 136.5,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 138.8,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 141.1,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 143.4,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 145.7,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_part2",
+      "x": 150.0,
+      "z": 148.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_corner",
+      "x": 10.0,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_corner",
+      "x": 150.0,
+      "z": 10.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_corner",
+      "x": 10.0,
+      "z": 150.0,
+      "yaw": 270
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_corner",
+      "x": 150.0,
+      "z": 150.0,
+      "yaw": 180
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_tower1",
+      "x": 72.0,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_tower2",
+      "x": 88.0,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_tower1",
+      "x": 72.0,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_tower2",
+      "x": 88.0,
+      "z": 150.0,
+      "yaw": 0
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_tower1",
+      "x": 10.0,
+      "z": 72.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_tower2",
+      "x": 10.0,
+      "z": 88.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_tower1",
+      "x": 150.0,
+      "z": 72.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_tower2",
+      "x": 150.0,
+      "z": 88.0,
+      "yaw": 90
+    },
+    {
+      "brush": "wall",
+      "prefab": "Wall_entrance",
+      "x": 80.0,
+      "z": 10.0,
+      "yaw": 0
+    },
+    {
+      "brush": "landmark",
+      "prefab": "Tavern_LOD0",
+      "x": 80.0,
+      "z": 118,
+      "yaw": 180
+    },
+    {
+      "brush": "landmark",
+      "prefab": "Windmill_LOD0",
+      "x": 28,
+      "z": 132,
+      "yaw": 200
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 18,
+      "z": 18,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 18,
+      "z": 27,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 18,
+      "z": 36,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 18,
+      "z": 45,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 18,
+      "z": 54,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 18,
+      "z": 104,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 18,
+      "z": 113,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 18,
+      "z": 122,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 18,
+      "z": 131,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 18,
+      "z": 140,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 27,
+      "z": 18,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 27,
+      "z": 27,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 27,
+      "z": 36,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 27,
+      "z": 45,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 27,
+      "z": 54,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 27,
+      "z": 104,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 27,
+      "z": 113,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 27,
+      "z": 122,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 27,
+      "z": 131,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 27,
+      "z": 140,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 36,
+      "z": 18,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 36,
+      "z": 27,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 36,
+      "z": 36,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 36,
+      "z": 45,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 36,
+      "z": 54,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 36,
+      "z": 104,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 36,
+      "z": 113,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 36,
+      "z": 122,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 36,
+      "z": 131,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 36,
+      "z": 140,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 45,
+      "z": 18,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 45,
+      "z": 27,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 45,
+      "z": 36,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 45,
+      "z": 45,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 45,
+      "z": 54,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 45,
+      "z": 104,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 45,
+      "z": 113,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 45,
+      "z": 122,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 45,
+      "z": 131,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 45,
+      "z": 140,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 54,
+      "z": 18,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 54,
+      "z": 27,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 54,
+      "z": 36,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 54,
+      "z": 45,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 54,
+      "z": 54,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 54,
+      "z": 104,
+      "yaw": 270
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 54,
+      "z": 113,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 54,
+      "z": 122,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 54,
+      "z": 131,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 54,
+      "z": 140,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 104,
+      "z": 18,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 104,
+      "z": 27,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 104,
+      "z": 36,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 104,
+      "z": 45,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 104,
+      "z": 54,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 104,
+      "z": 104,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 104,
+      "z": 113,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 104,
+      "z": 122,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 104,
+      "z": 131,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 104,
+      "z": 140,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 113,
+      "z": 18,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 113,
+      "z": 27,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 113,
+      "z": 36,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 113,
+      "z": 45,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 113,
+      "z": 54,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 113,
+      "z": 104,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 113,
+      "z": 113,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 113,
+      "z": 122,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 113,
+      "z": 131,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 113,
+      "z": 140,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 122,
+      "z": 18,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 122,
+      "z": 27,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 122,
+      "z": 36,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 122,
+      "z": 45,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 122,
+      "z": 54,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 122,
+      "z": 104,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 122,
+      "z": 113,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 122,
+      "z": 122,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 122,
+      "z": 131,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 122,
+      "z": 140,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 131,
+      "z": 18,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 131,
+      "z": 27,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 131,
+      "z": 36,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 131,
+      "z": 45,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 131,
+      "z": 54,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 131,
+      "z": 104,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 131,
+      "z": 113,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 131,
+      "z": 122,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 131,
+      "z": 131,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 131,
+      "z": 140,
+      "yaw": 180
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 140,
+      "z": 18,
+      "yaw": 0
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 140,
+      "z": 27,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 140,
+      "z": 36,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 140,
+      "z": 45,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_3_LOD0",
+      "x": 140,
+      "z": 54,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House1",
+      "x": 140,
+      "z": 104,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House2",
+      "x": 140,
+      "z": 113,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "House3",
+      "x": 140,
+      "z": 122,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_1_LOD0",
+      "x": 140,
+      "z": 131,
+      "yaw": 90
+    },
+    {
+      "brush": "houses",
+      "prefab": "WoodenHouse_2_LOD0",
+      "x": 140,
+      "z": 140,
+      "yaw": 90
+    },
+    {
+      "brush": "trees",
+      "prefab": "Birch_tree1",
+      "x": 68,
+      "z": 16,
+      "yaw": 47
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree2",
+      "x": 92,
+      "z": 16,
+      "yaw": 94
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree2",
+      "x": 16,
+      "z": 68,
+      "yaw": 141
+    },
+    {
+      "brush": "trees",
+      "prefab": "Willow_tree1",
+      "x": 16,
+      "z": 92,
+      "yaw": 188
+    },
+    {
+      "brush": "trees",
+      "prefab": "Deciduous_tree1",
+      "x": 68,
+      "z": 25,
+      "yaw": 235
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree1",
+      "x": 92,
+      "z": 25,
+      "yaw": 282
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree1",
+      "x": 25,
+      "z": 68,
+      "yaw": 329
+    },
+    {
+      "brush": "trees",
+      "prefab": "Birch_tree1",
+      "x": 25,
+      "z": 92,
+      "yaw": 16
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree2",
+      "x": 68,
+      "z": 34,
+      "yaw": 63
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree2",
+      "x": 92,
+      "z": 34,
+      "yaw": 110
+    },
+    {
+      "brush": "trees",
+      "prefab": "Willow_tree1",
+      "x": 34,
+      "z": 68,
+      "yaw": 157
+    },
+    {
+      "brush": "trees",
+      "prefab": "Deciduous_tree1",
+      "x": 34,
+      "z": 92,
+      "yaw": 204
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree1",
+      "x": 68,
+      "z": 43,
+      "yaw": 251
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree1",
+      "x": 92,
+      "z": 43,
+      "yaw": 298
+    },
+    {
+      "brush": "trees",
+      "prefab": "Birch_tree1",
+      "x": 43,
+      "z": 68,
+      "yaw": 345
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree2",
+      "x": 43,
+      "z": 92,
+      "yaw": 32
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree2",
+      "x": 68,
+      "z": 52,
+      "yaw": 79
+    },
+    {
+      "brush": "trees",
+      "prefab": "Willow_tree1",
+      "x": 92,
+      "z": 52,
+      "yaw": 126
+    },
+    {
+      "brush": "trees",
+      "prefab": "Deciduous_tree1",
+      "x": 52,
+      "z": 68,
+      "yaw": 173
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree1",
+      "x": 52,
+      "z": 92,
+      "yaw": 220
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree1",
+      "x": 68,
+      "z": 106,
+      "yaw": 267
+    },
+    {
+      "brush": "trees",
+      "prefab": "Birch_tree1",
+      "x": 92,
+      "z": 106,
+      "yaw": 314
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree2",
+      "x": 106,
+      "z": 68,
+      "yaw": 1
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree2",
+      "x": 106,
+      "z": 92,
+      "yaw": 48
+    },
+    {
+      "brush": "trees",
+      "prefab": "Willow_tree1",
+      "x": 68,
+      "z": 115,
+      "yaw": 95
+    },
+    {
+      "brush": "trees",
+      "prefab": "Deciduous_tree1",
+      "x": 92,
+      "z": 115,
+      "yaw": 142
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree1",
+      "x": 115,
+      "z": 68,
+      "yaw": 189
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree1",
+      "x": 115,
+      "z": 92,
+      "yaw": 236
+    },
+    {
+      "brush": "trees",
+      "prefab": "Birch_tree1",
+      "x": 68,
+      "z": 124,
+      "yaw": 283
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree2",
+      "x": 92,
+      "z": 124,
+      "yaw": 330
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree2",
+      "x": 124,
+      "z": 68,
+      "yaw": 17
+    },
+    {
+      "brush": "trees",
+      "prefab": "Willow_tree1",
+      "x": 124,
+      "z": 92,
+      "yaw": 64
+    },
+    {
+      "brush": "trees",
+      "prefab": "Deciduous_tree1",
+      "x": 68,
+      "z": 133,
+      "yaw": 111
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree1",
+      "x": 92,
+      "z": 133,
+      "yaw": 158
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree1",
+      "x": 133,
+      "z": 68,
+      "yaw": 205
+    },
+    {
+      "brush": "trees",
+      "prefab": "Birch_tree1",
+      "x": 133,
+      "z": 92,
+      "yaw": 252
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree2",
+      "x": 68,
+      "z": 142,
+      "yaw": 299
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree2",
+      "x": 92,
+      "z": 142,
+      "yaw": 346
+    },
+    {
+      "brush": "trees",
+      "prefab": "Willow_tree1",
+      "x": 142,
+      "z": 68,
+      "yaw": 33
+    },
+    {
+      "brush": "trees",
+      "prefab": "Deciduous_tree1",
+      "x": 142,
+      "z": 92,
+      "yaw": 80
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree1",
+      "x": 22,
+      "z": 22,
+      "yaw": 127
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree1",
+      "x": 22,
+      "z": 28,
+      "yaw": 174
+    },
+    {
+      "brush": "trees",
+      "prefab": "Birch_tree1",
+      "x": 22,
+      "z": 34,
+      "yaw": 221
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree2",
+      "x": 28,
+      "z": 22,
+      "yaw": 268
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree2",
+      "x": 28,
+      "z": 28,
+      "yaw": 315
+    },
+    {
+      "brush": "trees",
+      "prefab": "Willow_tree1",
+      "x": 28,
+      "z": 34,
+      "yaw": 2
+    },
+    {
+      "brush": "trees",
+      "prefab": "Deciduous_tree1",
+      "x": 34,
+      "z": 22,
+      "yaw": 49
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree1",
+      "x": 34,
+      "z": 28,
+      "yaw": 96
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree1",
+      "x": 34,
+      "z": 34,
+      "yaw": 143
+    },
+    {
+      "brush": "trees",
+      "prefab": "Birch_tree1",
+      "x": 138,
+      "z": 22,
+      "yaw": 190
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree2",
+      "x": 138,
+      "z": 28,
+      "yaw": 237
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree2",
+      "x": 138,
+      "z": 34,
+      "yaw": 284
+    },
+    {
+      "brush": "trees",
+      "prefab": "Willow_tree1",
+      "x": 144,
+      "z": 22,
+      "yaw": 331
+    },
+    {
+      "brush": "trees",
+      "prefab": "Deciduous_tree1",
+      "x": 144,
+      "z": 28,
+      "yaw": 18
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree1",
+      "x": 144,
+      "z": 34,
+      "yaw": 65
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree1",
+      "x": 22,
+      "z": 138,
+      "yaw": 112
+    },
+    {
+      "brush": "trees",
+      "prefab": "Birch_tree1",
+      "x": 22,
+      "z": 144,
+      "yaw": 159
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree2",
+      "x": 28,
+      "z": 138,
+      "yaw": 206
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree2",
+      "x": 28,
+      "z": 144,
+      "yaw": 253
+    },
+    {
+      "brush": "trees",
+      "prefab": "Willow_tree1",
+      "x": 34,
+      "z": 138,
+      "yaw": 300
+    },
+    {
+      "brush": "trees",
+      "prefab": "Deciduous_tree1",
+      "x": 34,
+      "z": 144,
+      "yaw": 347
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree1",
+      "x": 138,
+      "z": 138,
+      "yaw": 34
+    },
+    {
+      "brush": "trees",
+      "prefab": "Oak_tree1",
+      "x": 138,
+      "z": 144,
+      "yaw": 81
+    },
+    {
+      "brush": "trees",
+      "prefab": "Birch_tree1",
+      "x": 144,
+      "z": 138,
+      "yaw": 128
+    },
+    {
+      "brush": "trees",
+      "prefab": "Pine_tree2",
+      "x": 144,
+      "z": 144,
+      "yaw": 175
+    }
+  ]
+}
