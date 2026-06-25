@@ -31,21 +31,33 @@ public class SfxSet
 }
 
 /// <summary>
-/// Tiny pooled one-shot SFX player living on the persistent <c>Systems</c> layer. A fixed ring of
-/// <see cref="voices"/> AudioSources is reused for every sound (no per-shot GameObject alloc), so
-/// firing hundreds of hits/footsteps stays cheap. Sounds are 2D (consistent volume, no odd panning
-/// under the orbiting 2.5D camera). Call <see cref="Play"/> from anywhere.
+/// Tiny pooled one-shot SFX player living on the persistent <c>Systems</c> layer. Two fixed rings of
+/// reused AudioSources (no per-shot GameObject alloc), so firing hundreds of hits/footsteps stays cheap:
+///   • <see cref="Play"/>   — <b>2D</b> (no position): consistent volume, no panning. Use for UI and
+///     player-self sounds (your own footsteps, your own cast/grunt) where direction is meaningless.
+///   • <see cref="PlayAt"/> — <b>3D positional</b> at a world point: pans + attenuates by distance from the
+///     listener (the player — see <see cref="AudioListenerRig"/>), so you can hear WHERE a mob died, a
+///     spell landed, etc. Use for anything happening away from the player.
 /// </summary>
 public class Sfx : MonoBehaviour
 {
     public static Sfx Instance { get; private set; }
 
-    [Tooltip("How many sounds may overlap at once. Older voices are recycled past this.")]
+    [Tooltip("How many 2D sounds may overlap at once. Older voices are recycled past this.")]
     public int voices = 16;
     [Range(0f, 1f)] public float masterVolume = 0.9f;
 
-    AudioSource[] pool;
-    int next;
+    [Header("3D positional one-shots (Sfx.PlayAt)")]
+    [Tooltip("How many positional sounds may overlap at once.")]
+    public int spatialVoices = 12;
+    [Tooltip("Fully loud within this distance of the listener (world units).")]
+    public float minDistance = 4f;
+    [Tooltip("Inaudible past this distance from the listener.")]
+    public float maxDistance = 30f;
+
+    AudioSource[] pool;     // 2D ring
+    AudioSource[] pool3d;   // 3D positional ring
+    int next, next3d;
 
     void Awake()
     {
@@ -61,14 +73,37 @@ public class Sfx : MonoBehaviour
             src.spatialBlend = 0f;   // 2D
             pool[i] = src;
         }
+
+        pool3d = new AudioSource[Mathf.Max(1, spatialVoices)];
+        for (int i = 0; i < pool3d.Length; i++)
+        {
+            var src = new GameObject("SfxVoice3D" + i).AddComponent<AudioSource>();
+            src.transform.SetParent(transform, false);
+            src.playOnAwake = false;
+            src.spatialBlend = 1f;                       // fully 3D positional
+            src.rolloffMode = AudioRolloffMode.Linear;   // predictable: loud ≤ min, silent ≥ max
+            src.minDistance = minDistance;
+            src.maxDistance = maxDistance;
+            src.dopplerLevel = 0f;                        // no pitch wobble from fast emitters / a moving listener
+            pool3d[i] = src;
+        }
     }
 
     void OnDestroy() { if (Instance == this) Instance = null; }
 
-    /// <summary>Play a random variation of the set (no-op if the set is empty or no Sfx exists yet).</summary>
+    /// <summary>Play a random variation of the set in <b>2D</b> (no-op if the set is empty or no Sfx exists
+    /// yet). For UI and player-self sounds where direction doesn't matter.</summary>
     public static void Play(SfxSet set)
     {
         if (Instance != null) Instance.PlaySet(set);
+    }
+
+    /// <summary>Play a random variation of the set as a <b>3D positional</b> one-shot at <paramref name="pos"/>
+    /// — pans + fades by distance from the player. For anything happening away from the player (a mob dying,
+    /// a spell landing, a distant door). No-op if the set is empty or no Sfx exists yet.</summary>
+    public static void PlayAt(SfxSet set, Vector3 pos)
+    {
+        if (Instance != null) Instance.PlaySetAt(set, pos);
     }
 
     void PlaySet(SfxSet set)
@@ -77,23 +112,37 @@ public class Sfx : MonoBehaviour
         var clip = set.Pick();
         if (clip == null) return;
 
-        var src = NextVoice();
+        var src = NextFree(pool, ref next);
         src.clip = clip;
         src.volume = set.volume * masterVolume;
         src.pitch = UnityEngine.Random.Range(set.pitch.x, set.pitch.y);
         src.Play();
     }
 
-    // Prefer an idle voice; if all are busy, recycle the next in the ring (steals the oldest).
-    AudioSource NextVoice()
+    void PlaySetAt(SfxSet set, Vector3 pos)
     {
-        for (int k = 0; k < pool.Length; k++)
+        if (set == null || set.Empty) return;
+        var clip = set.Pick();
+        if (clip == null) return;
+
+        var src = NextFree(pool3d, ref next3d);
+        src.transform.position = pos;   // the voice IS the emitter — engine pans/attenuates from here
+        src.clip = clip;
+        src.volume = set.volume * masterVolume;
+        src.pitch = UnityEngine.Random.Range(set.pitch.x, set.pitch.y);
+        src.Play();
+    }
+
+    // Prefer an idle voice in the ring; if all are busy, recycle the next one (steals the oldest).
+    static AudioSource NextFree(AudioSource[] ring, ref int cursor)
+    {
+        for (int k = 0; k < ring.Length; k++)
         {
-            var src = pool[(next + k) % pool.Length];
-            if (!src.isPlaying) { next = (next + k + 1) % pool.Length; return src; }
+            var src = ring[(cursor + k) % ring.Length];
+            if (!src.isPlaying) { cursor = (cursor + k + 1) % ring.Length; return src; }
         }
-        var s = pool[next];
-        next = (next + 1) % pool.Length;
+        var s = ring[cursor];
+        cursor = (cursor + 1) % ring.Length;
         return s;
     }
 }

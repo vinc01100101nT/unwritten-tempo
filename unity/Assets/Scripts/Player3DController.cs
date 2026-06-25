@@ -72,6 +72,11 @@ public partial class Player3DController : MonoBehaviour
     /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="BakedPlayerVisual"/> to
     /// choose the Walk vs Run animation.</summary>
     public bool WalkingSlow { get; private set; }
+    /// <summary>Live ratio of the player's ACTUAL move speed to its tuned baseline (1 = normal, &gt;1 = sped up by a
+    /// buff, &lt;1 = slowed). The single knob that binds gait to movement speed: the footstep cadence divides by it
+    /// and <see cref="BakedPlayerVisual"/> multiplies the Walk/Run clip fps by it, so a speed buff makes the steps and
+    /// the run/walk animation visibly faster (and a Slow ailment slower) without touching the hand-tuned baselines.</summary>
+    public float GaitSpeedMult { get; private set; } = 1f;
     public float framesPerSecond = 8f;
     public float arriveDistance = 0.12f;
     [Tooltip("Clearance kept from props when routing.")]
@@ -450,8 +455,11 @@ public partial class Player3DController : MonoBehaviour
         if (moving) worldFacing = move;
         facing = Facing3D.FromWorldDir(worldFacing);   // camera-relative — frames track the camera as it orbits
         WalkingSlow = moving && HeldShift();            // Shift = walk: slower move + Walk animation (read by BakedPlayerVisual)
-        float spd = moveSpeed * UnitScale.ForPlayer * (status != null ? status.MoveMult : 1f)   // Slow ailment + unit-size speed coupling
-                    * (WalkingSlow ? walkSpeedMult : 1f);                                        // …and the Shift-walk downshift
+        float baseSpeed = moveSpeed * UnitScale.ForPlayer * (WalkingSlow ? walkSpeedMult : 1f); // the hand-tuned baseline for this gait (run vs walk)
+        float spd = baseSpeed * (status != null ? status.MoveMult : 1f);                         // Slow ailment / speed buff layered on top
+        // Bind gait to ACTUAL speed: the buff/slow factor over the tuned baseline. Drives both the footstep
+        // cadence (below) and the Walk/Run animation fps (BakedPlayerVisual) so they speed up/slow down together.
+        GaitSpeedMult = baseSpeed > 0.0001f ? spd / baseSpeed : 1f;
         ApplyGravityAndMove(move * spd);   // accumulating free-fall (sets `falling` for the in-air pose)
 
         // Hold the attack pose while a swing is in flight (refreshed each swinging frame, with a tail).
@@ -488,7 +496,10 @@ public partial class Player3DController : MonoBehaviour
         bool onWater = waterFootstepSfx != null && !waterFootstepSfx.Empty
                        && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(transform.position);
         Sfx.Play(onWater ? waterFootstepSfx : footstepSfx);
-        nextStep = Time.time + (WalkingSlow ? walkStepInterval : stepInterval);   // slower gait → wider gap
+        // Tighten/loosen the gap with the live move speed: a speed buff (GaitSpeedMult > 1) shortens the interval
+        // so steps land more often; a Slow (< 1) widens it. At normal speed (1) this is the hand-tuned interval.
+        float interval = (WalkingSlow ? walkStepInterval : stepInterval) / Mathf.Max(0.05f, GaitSpeedMult);
+        nextStep = Time.time + interval;   // slower gait → wider gap
     }
 
     // Procedural idle breathing — a soft squash-stretch while standing still; base scale otherwise

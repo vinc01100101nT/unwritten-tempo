@@ -140,7 +140,7 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill
             Vector3 from = center + Vector3.up * fallHeight
                                   + new Vector3(Random.Range(-meteorScatter, meteorScatter), 0f,
                                                 Random.Range(-meteorScatter, meteorScatter));
-            Sfx.Play(meteorSfx);   // fireball whoosh as THIS meteor launches (staggered → one distinct sound per meteor)
+            Sfx.PlayAt(meteorSfx, center);   // 3D: fireball whoosh from where THIS meteor will land (staggered → one per meteor)
             // No impact FX on the projectile itself — DetonateTick fires one explosion pulse per meteor.
             Projectile3D.Spawn(meteorSheet, meteorFrameSize, meteorFrames, meteorFps, meteorScale,
                 from, null, land, fallSpeed, 0.4f, fallTime + 1f, () => DetonateTick(center));
@@ -168,7 +168,7 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill
                 return dealt;
             },
             c => SlashEffect.Spawn(impactSheet, impactFrameSize, impactFrames, 24f, c, impactScale),   // 1 explosion this meteor (no impact sound — fireball plays on launch)
-            () => Sfx.Play(hitSfx));                                                                    // custom hit.wav on EVERY hit beat
+            () => Sfx.PlayAt(hitSfx, center));                                                          // 3D: impact at the meteor's strike point, on EVERY hit beat
     }
 
     // ---- IHotbarSkill ----

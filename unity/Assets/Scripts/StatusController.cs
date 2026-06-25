@@ -49,6 +49,12 @@ public class StatusController : MonoBehaviour
     readonly float[] nextTick = new float[N];   // next DoT tick time (DoTs only)
     readonly float[] mag      = new float[N];   // per-ailment magnitude (DoT dmg, slow factor, or HIT loss)
 
+    // Haste — a timed move-SPEED BUFF (multiplier > 1). Separate channel from the Slow ailment (which can only
+    // ever slow, since its factor is Clamp01'd), so a buff and a slow can coexist and multiply. Folds into MoveMult.
+    float hasteUntil;
+    float hasteMult = 1f;
+    static readonly Color HasteColor = new Color(0.4f, 1f, 0.7f);
+
     Health health;          // mob: the thing DoTs damage
     MonsterAI3D ai;          // mob: the brain we delegate Stun/Freeze/Slow to
     bool isPlayer;           // player: DoTs hit Character.Instance; flags read by the controller/spells
@@ -72,8 +78,19 @@ public class StatusController : MonoBehaviour
     // ---- the flags the rest of the game reads (player side) -------------------
     /// <summary>Frozen or stunned — the player can't move or act this frame.</summary>
     public bool CannotAct => Active(Ailment.Stun) || Active(Ailment.Freeze);
-    /// <summary>Move-speed multiplier (0 while hard-CC'd, the Slow factor while slowed, else 1).</summary>
-    public float MoveMult => CannotAct ? 0f : (Active(Ailment.Slow) ? Mathf.Clamp01(mag[(int)Ailment.Slow]) : 1f);
+    /// <summary>Move-speed multiplier: 0 while hard-CC'd, else the Slow factor (≤1) × the Haste buff (≥1). So a
+    /// speed buff makes this &gt;1 (and a buff + slow multiply). Read by the controller to scale move speed, the
+    /// footstep cadence, and the Walk/Run animation fps (<see cref="Player3DController.GaitSpeedMult"/>).</summary>
+    public float MoveMult
+    {
+        get
+        {
+            if (CannotAct) return 0f;
+            float m = Active(Ailment.Slow) ? Mathf.Clamp01(mag[(int)Ailment.Slow]) : 1f;
+            if (Time.time < hasteUntil) m *= hasteMult;
+            return m;
+        }
+    }
     /// <summary>True while spell-casting is blocked.</summary>
     public bool Silenced => Active(Ailment.Silence);
     /// <summary>HIT (accuracy) points to subtract from this unit's attacks while blinded.</summary>
@@ -119,6 +136,19 @@ public class StatusController : MonoBehaviour
                 AnnounceIfNew(a, wasActive, "Blind!", BlindColor);
                 break;
         }
+    }
+
+    /// <summary>Grant (or refresh) a move-SPEED buff: multiply move speed by <paramref name="multiplier"/> (≥1 to
+    /// speed up) for <paramref name="seconds"/>. Folds into <see cref="MoveMult"/> on its own channel, so it lifts
+    /// the run/walk animation + footstep cadence (via <see cref="Player3DController.GaitSpeedMult"/>) and stacks
+    /// multiplicatively with a Slow. A new call replaces the current buff (latest wins).</summary>
+    public void Haste(float multiplier, float seconds)
+    {
+        if (seconds <= 0f) return;
+        bool wasActive = Time.time < hasteUntil;
+        hasteMult = Mathf.Max(0.01f, multiplier);
+        hasteUntil = Time.time + seconds;
+        if (!wasActive) DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Haste!", HasteColor);
     }
 
     void AnnounceIfNew(Ailment a, bool wasActive, string label, Color c)

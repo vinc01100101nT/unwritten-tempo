@@ -27,6 +27,7 @@ Shader "Unwritten/SnowGround"
         _FootRadius ("Footprint Radius", Float) = 0.28
         _FootCarve  ("Footprint Carve", Range(0,1)) = 0.85
         _FootDark   ("Footprint Shadow", Range(0,1)) = 0.4
+        _ShadowStrength ("Cast Shadow Strength", Range(0,1)) = 0.5
     }
     SubShader
     {
@@ -43,12 +44,19 @@ Shader "Unwritten/SnowGround"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            // Cast-shadow keywords: lets MainLightShadow sample the sun's shadow map so unit (BillboardShadow)
+            // shadows show on the snow. Stripped to a no-op variant when shadows are off (and _ShadowStrength gates
+            // it to 0 on low tiers in C#, so min-spec pays nothing).
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile _ _SHADOWS_SOFT
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
             float _Accum, _UpCutoff, _Coverage, _PatchScale;
             float _Thickness, _Lumpiness;
             float _FootRadius, _FootCarve, _FootDark;
+            float _ShadowStrength;
             float4 _SnowColor, _ShadowTint, _LightTint;
             float4 _Steps[16];   // footprints: xy = world XZ, z = age 0..1 (>=1 = dead slot), w = size scale
 
@@ -155,6 +163,18 @@ Shader "Unwritten/SnowGround"
                 // Day/night: this depth pass overwrites the (already-lit, dimmed-at-night) scene with snow, so it
                 // would glow white in the dark unless we dim it ourselves. Multiply by the time-of-day tint
                 // (white at noon = no change, dim cool blue at midnight) so the blanket respects the night.
+                // Cast shadows from world units: BillboardShadow proxies feed the sun's shadow map, so sample it at
+                // this pixel's reconstructed world pos and cool/dim the snow where the sun is occluded — the player
+                // and mobs get a real directional contact shadow ON the blanket. _ShadowStrength gates it (set to 0
+                // on low tiers in C# → free); the keyword variant also compiles out entirely when shadows are off.
+                #if defined(_MAIN_LIGHT_SHADOWS) || defined(_MAIN_LIGHT_SHADOWS_CASCADE)
+                if (_ShadowStrength > 0.001)
+                {
+                    float atten = MainLightRealtimeShadow(TransformWorldToShadowCoord(wp));   // 1 = lit, 0 = shadowed
+                    snow = lerp(snow, _ShadowTint.rgb * 0.7, (1.0 - atten) * _ShadowStrength);
+                }
+                #endif
+
                 snow *= _LightTint.rgb;
 
                 return half4(snow, cov);

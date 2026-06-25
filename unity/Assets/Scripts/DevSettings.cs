@@ -262,6 +262,13 @@ public class DevSettings : MonoBehaviour
         if (player != null) Status.Apply(player.gameObject, a, secs, mag);
     }
 
+    // Grant the PLAYER a temporary move-speed buff (mult > 1 = faster) — the buff twin of "Slow ME", to verify
+    // that the run/walk animation + footstep cadence speed up with the move speed (Player3DController.GaitSpeedMult).
+    void HasteMe(float mult, float secs)
+    {
+        if (player != null) Status.Of(player.gameObject).Haste(mult, secs);
+    }
+
     // ---- Calendar & Weather helpers -------------------------------------------
     // The weather-channels hub (source of truth for rain/cloud/snow/puddle), created on demand so the knobs work
     // even on a Systems scene baked before it joined the rig.
@@ -443,6 +450,7 @@ public class DevSettings : MonoBehaviour
         Act("Stun ME (2s)",        () => AfflictMe(Ailment.Stun, 2f, 0f));
         Act("Freeze ME (2s)",      () => AfflictMe(Ailment.Freeze, 2f, 0f));
         Act("Slow ME (5s)",        () => AfflictMe(Ailment.Slow, 5f, 0.4f));
+        Act("Speed buff ME ×2 (5s)", () => HasteMe(2f, 5f));
         Act("Silence ME (4s)",     () => AfflictMe(Ailment.Silence, 4f, 0f));
         Act("Blind ME (6s)",       () => AfflictMe(Ailment.Blind, 6f, 60f));
         Act("Poison ME (6s)",      () => AfflictMe(Ailment.Poison, 6f, 3f));

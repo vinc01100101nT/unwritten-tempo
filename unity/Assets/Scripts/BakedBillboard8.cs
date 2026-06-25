@@ -59,6 +59,19 @@ public class BakedBillboard8 : MonoBehaviour
     public float walkThreshold = 0.15f;
     public float runThreshold = 3.5f;
 
+    [Header("Speed-synced gait (self-drive only)")]
+    [Tooltip("When self-animating, scale the Walk/Run playback by the ACTUAL ground speed, so a faster mover " +
+             "(a quicker NPC, or one under a move-speed buff) churns its legs faster and a slower one slower — " +
+             "the NPC/mob twin of the player's GaitSpeedMult. Off = always play at the baked fps. Ignored while a " +
+             "controller drives the action (e.g. the player, which syncs its own gait explicitly).")]
+    public bool speedSyncGait = true;
+    [Tooltip("Ground speed (units/sec) at which the baked WALK fps looks natural; the walk cycle scales around this.")]
+    public float walkRefSpeed = 1.4f;
+    [Tooltip("Ground speed (units/sec) at which the baked RUN fps looks natural; the run cycle scales around this.")]
+    public float runRefSpeed = 3.5f;
+    [Tooltip("Clamp on the gait speed multiplier so extremes never churn the legs absurdly fast/slow.")]
+    public Vector2 gaitScaleClamp = new Vector2(0.4f, 3f);
+
     [Header("Grounding")]
     [Tooltip("Local units to lift the (centre-pivot) sprite so the feet sit on this transform. The baker " +
              "bottom-aligns the art, so ~0.45 × sprite height grounds it; tune if it floats/sinks.")]
@@ -155,6 +168,39 @@ public class BakedBillboard8 : MonoBehaviour
     /// <summary>Scale an action's PLAYBACK speed relative to its baked fps (1 = baked, 2 = twice as fast). Used to
     /// sync e.g. Attack to the live attack-speed so the swing animation keeps pace with the swing cadence.</summary>
     public void SetActionSpeed(CharacterAction a, float multiplier) => speedScale[a] = Mathf.Max(0.01f, multiplier);
+
+    /// <summary>The action's baked playback fps (the value the baker authored / the inspector shows), or 0 if the
+    /// action isn't baked. Lets one character read another's fine-tuned cadence to copy it.</summary>
+    public float ActionFps(CharacterAction a) => fpsByAction.TryGetValue(a, out var f) ? f : 0f;
+
+    /// <summary>Live-set an action's playback fps (updates both the runtime table and the serialized ActionSet so it
+    /// sticks). Used to push the player's tuned Walk/Run cadence onto NPCs so they don't foot-slide.</summary>
+    public void SetActionFps(CharacterAction a, float fps)
+    {
+        fps = Mathf.Max(1f, fps);
+        if (fpsByAction.ContainsKey(a)) fpsByAction[a] = fps;       // only if the action exists (don't invent strips)
+        foreach (var act in actions) if (act != null && act.action == a) act.fps = fps;
+    }
+
+    /// <summary>Make this self-driven character walk/run EXACTLY like the fine-tuned <paramref name="src"/> (the
+    /// player's billboard): copy its locomotion thresholds, per-action fps, speed-sync flag and clamp, and anchor
+    /// the speed-sync to the player's REAL Walk/Run ground speeds (<paramref name="walkRef"/>/<paramref name="runRef"/>),
+    /// so an NPC moving at the player's speed looks identical and faster/slower ones scale from the same baseline —
+    /// killing the foot-slide. Call once after spawn (cheap). No effect on the player itself (it overrides its own gait).</summary>
+    public void MatchGaitTuning(BakedBillboard8 src, float walkRef, float runRef)
+    {
+        if (src == null) return;
+        walkThreshold  = src.walkThreshold;
+        runThreshold   = src.runThreshold;
+        speedSyncGait  = src.speedSyncGait;
+        gaitScaleClamp = src.gaitScaleClamp;
+        walkRefSpeed   = walkRef > 0.01f ? walkRef : src.walkRefSpeed;
+        runRefSpeed    = runRef  > 0.01f ? runRef  : src.runRefSpeed;
+        // Inherit the player's hand-tuned leg cadence for the locomotion (and idle) clips.
+        float wf = src.ActionFps(CharacterAction.Walk); if (wf > 0f) SetActionFps(CharacterAction.Walk, wf);
+        float rf = src.ActionFps(CharacterAction.Run);  if (rf > 0f) SetActionFps(CharacterAction.Run,  rf);
+        float idf = src.ActionFps(CharacterAction.Idle); if (idf > 0f) SetActionFps(CharacterAction.Idle, idf);
+    }
 
     /// <summary>The action's natural play length in seconds at its baked fps (frame count / fps), ignoring any
     /// speed scale. 0 if the action isn't baked. Lets a caller compress a clip to fit a target window (e.g. a swing).</summary>
@@ -308,6 +354,16 @@ public class BakedBillboard8 : MonoBehaviour
 
         float fps = fpsByAction.TryGetValue(current, out var f) ? f : 12f;
         if (speedScale.TryGetValue(current, out var sc)) fps *= sc;   // attack-speed sync etc.
+
+        // Self-driven locomotion: bind the leg cadence to the ACTUAL ground speed (the NPC/mob twin of the
+        // player's GaitSpeedMult). Skipped while a controller overrides the action — the player syncs its own
+        // gait explicitly, so we don't double-apply.
+        if (speedSyncGait && !hasOverride && (current == CharacterAction.Walk || current == CharacterAction.Run))
+        {
+            float refSpd = current == CharacterAction.Run ? runRefSpeed : walkRefSpeed;
+            if (refSpd > 0.01f) fps *= Mathf.Clamp(speed / refSpd, gaitScaleClamp.x, gaitScaleClamp.y);
+        }
+
         clock += Time.deltaTime * Mathf.Max(1f, fps);
 
         // Fall pose: loop just the tail of the (Jump) clip so a free-fall holds the descent motion.

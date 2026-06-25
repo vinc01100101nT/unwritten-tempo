@@ -159,7 +159,9 @@ public static class Build25DSpike
         cam.fieldOfView = 35f;
         cam.farClipPlane = 200f;
         go.transform.SetPositionAndRotation(new Vector3(0f, 10f, -8f), Quaternion.Euler(52f, 0f, 0f));
-        go.AddComponent<AudioListener>();
+        // The listener lives on the PLAYER (AudioListenerRig), not the orbiting camera, so 3D sounds
+        // attenuate from the player. Fallback: if this camera is built without a player, keep one here.
+        if (player == null) go.AddComponent<AudioListener>();
         cam.GetUniversalAdditionalCameraData().SetRenderer(rendererIndex);   // 3D renderer, this camera only
 
         var follow = go.AddComponent<CameraFollow3D>();    // orbit (Q/E + right-drag) + zoom follow rig
@@ -583,6 +585,7 @@ public static class Build25DSpike
         ApplyBillboardLighting(sr);                  // flat art + receive/cast environment shadows
         go.AddComponent<Billboard>();
         var ctrl = go.AddComponent<Player3DController>();
+        go.AddComponent<AudioListenerRig>();         // the "ears": listener on the player, oriented to the camera (3D sound)
         go.AddComponent<PlayerHurtFlash>();          // red flash when the Character takes damage
         var atk = go.AddComponent<Player3DAttacker>();
         atk.slashSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(

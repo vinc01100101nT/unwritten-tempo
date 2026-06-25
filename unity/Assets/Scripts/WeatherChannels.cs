@@ -138,7 +138,9 @@ public class WeatherChannels : MonoBehaviour
         float dt = Time.deltaTime;
 
         // Advance the sequencer, firing every key whose time has arrived this frame (keys are sorted by `at`).
-        if (playing)
+        // Guard on a valid sequence: `playing` could be flipped on with no `seq` assigned, which used to throw an
+        // NRE here every frame (seq.keys). No sequence → nothing to play, so stop the sequencer.
+        if (playing && seq != null && seq.keys != null)
         {
             seqTime += dt;
             while (nextKey < seq.keys.Length && seq.keys[nextKey].at <= seqTime)
@@ -148,6 +150,7 @@ public class WeatherChannels : MonoBehaviour
             }
             if (nextKey >= seq.keys.Length) playing = false;   // sequence done; channels hold their last targets
         }
+        else playing = false;   // playing flagged but no valid sequence assigned — stop (avoids the per-frame NRE)
 
         // Auto-puddle: when no sequence owns the Puddle channel, drive it from rain (soak delay → spread,
         // after-rain linger → recede), so manual rain still wets the ground.

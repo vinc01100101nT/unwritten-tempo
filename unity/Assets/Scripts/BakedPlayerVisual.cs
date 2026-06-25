@@ -40,6 +40,7 @@ public class BakedPlayerVisual : MonoBehaviour
     Player3DAttacker attacker;     // for the Swinging (attack) state
     SpriteRenderer hiddenPlayerSprite;
     CharacterController cc;        // used to drop from capsule-center to the feet/ground point
+    int groundMask;               // Ground layer only — the single grounding truth shared with TownNPC
     Character subscribed;          // the Character we hooked OnDamaged on (to unhook the SAME one)
     Vector3 lastPlayerPos;
     bool wasDead;
@@ -56,6 +57,8 @@ public class BakedPlayerVisual : MonoBehaviour
         if (player == null) { Debug.LogWarning("[unwritten] BakedPlayerVisual found no Player3DController."); return; }
 
         cc = player.GetComponent<CharacterController>();
+        int gl = LayerMask.NameToLayer("Ground");
+        groundMask = gl >= 0 ? (1 << gl) : 0;   // 0 → no Ground layer; GroundedPos falls back to the capsule drop
         attacker = player.GetComponent<Player3DAttacker>();
         hiddenPlayerSprite = player.GetComponent<SpriteRenderer>();
         if (hiddenPlayerSprite != null) hiddenPlayerSprite.enabled = false;   // hide the original avatar
@@ -98,13 +101,25 @@ public class BakedPlayerVisual : MonoBehaviour
 
     void OnPickUp() => pickUpUntil = Time.time + pickUpDuration;
 
-    // The player's transform sits at the CharacterController CENTER, which rests ~half a capsule above the
-    // floor (bottom = center.y - height/2). The baked billboard's feetOffset grounds the feet only when the
-    // object origin is ON the ground (as in the sandbox), so drop to the capsule's bottom — otherwise the
-    // whole avatar floats by that fixed standoff no matter how you tune feetOffset / worldScale.
+    // Ground the avatar on the SAME truth the townsfolk use ([[TownNPC]]): raycast the Ground layer under the
+    // player and seat the visual's origin ON that surface, which is exactly the basis BakedBillboard8.feetOffset
+    // was tuned for — so the player's feet land where the NPCs' feet land. Jumps/falls are preserved without a
+    // pop: we lift the visual by how far the player's root is ABOVE its grounded resting height, so at rest the
+    // lift is 0 (feet on ground) and mid-hop it rises by the real hop height. Falls back to the old capsule
+    // drop only if there's no Ground hit (off-map) or no Ground layer exists.
     Vector3 GroundedPos(Vector3 p)
     {
-        if (cc != null) p.y += cc.center.y - cc.height * 0.5f;
+        if (cc == null) return p;
+        if (GroundSnap.TryGroundY(p, groundMask, out float groundY))   // Ground-layer foot-seat (shared truth)
+        {
+            float lossy = player != null ? player.transform.lossyScale.y : 1f;
+            // Where the root sits when the capsule rests on this ground (bottom = center.y - height/2, scaled, + skin).
+            float restingRootY = groundY + cc.skinWidth - (cc.center.y - cc.height * 0.5f) * lossy;
+            float above = Mathf.Max(0f, p.y - restingRootY);   // 0 when grounded; >0 mid-jump / when falling
+            p.y = groundY + above;
+            return p;
+        }
+        p.y += cc.center.y - cc.height * 0.5f;   // no ground found: legacy capsule-center drop
         return p;
     }
 
@@ -207,6 +222,9 @@ public class BakedPlayerVisual : MonoBehaviour
                 ? CharacterAction.Walk
                 : (baked.HasAction(CharacterAction.Run) ? CharacterAction.Run : CharacterAction.Walk);
             baked.Play(loco);
+            // Bind the clip's playback speed to the player's ACTUAL move speed (same factor the footsteps use): a
+            // move-speed buff makes the run/walk cycle visibly faster, a Slow makes it slower. 1 = the baked fps.
+            baked.SetActionSpeed(loco, player.GaitSpeedMult);
             baked.SetFacing(dir.normalized);
         }
         else

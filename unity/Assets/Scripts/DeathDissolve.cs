@@ -71,7 +71,7 @@ public class DeathDissolve : MonoBehaviour
         // Puff of smoke + sound exactly on death (smoke reuses the generic one-shot sheet player).
         if (smokeSheet != null)
             SlashEffect.Spawn(smokeSheet, smokeFrameSize, smokeFrames, smokeFps, transform.position, smokeScale);
-        Sfx.Play(deathSfx);
+        Sfx.PlayAt(deathSfx, transform.position);   // 3D: hear WHERE the mob died
 
         StartCoroutine(Run(onComplete));
     }

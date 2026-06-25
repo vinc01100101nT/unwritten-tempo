@@ -54,6 +54,11 @@ public class SnowGround : MonoBehaviour
     [Range(0f, 1f)] [Tooltip("How dark the shadow inside a print is.")]
     public float footDark = 0.4f;
 
+    [Header("Cast shadows (High tier only)")]
+    [Range(0f, 1f)] [Tooltip("How strongly the sun's CAST shadows (player/mobs via BillboardShadow) darken the snow. " +
+             "0 = snow ignores shadows (saves a shadow-map sample per pixel; auto-forced to 0 below High tier).")]
+    public float castShadowStrength = 0.5f;
+
     Material mat;
     Transform quad;
     Mesh mesh;
@@ -79,6 +84,7 @@ public class SnowGround : MonoBehaviour
     static readonly int FootCarveID  = Shader.PropertyToID("_FootCarve");
     static readonly int FootDarkID   = Shader.PropertyToID("_FootDark");
     static readonly int StepsID      = Shader.PropertyToID("_Steps");
+    static readonly int ShadowStrengthID = Shader.PropertyToID("_ShadowStrength");
 
     /// <summary>Find the live snow-ground effect, creating one if none exists (used by the DevSettings knob).</summary>
     public static SnowGround Ensure()
@@ -184,6 +190,8 @@ public class SnowGround : MonoBehaviour
         mat.SetFloat(FootRadiusID, footRadius);
         mat.SetFloat(FootCarveID, footCarve);
         mat.SetFloat(FootDarkID, footDark);
+        // Cast shadows: forced to 0 below High tier so min-spec skips the extra shadow-map sample per fullscreen pixel.
+        mat.SetFloat(ShadowStrengthID, WeatherFX.Heavy ? castShadowStrength : 0f);
 
         UpdateFootprints();
         mat.SetVectorArray(StepsID, steps);

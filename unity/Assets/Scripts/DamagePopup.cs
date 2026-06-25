@@ -21,9 +21,13 @@ using UnityEngine.UI;
 public class DamagePopup : MonoBehaviour
 {
     [Tooltip("Seconds before it disappears.")]
-    public float lifetime = 0.7f;
+    public float lifetime = DefaultLifetime;
     [Tooltip("World units it floats upward per second.")]
-    public float riseSpeed = 1.4f;
+    public float riseSpeed = DefaultRise;
+
+    // Damage-number timing. Begin() resets to these every reuse so a SpawnBubble bark (which stretches
+    // lifetime/riseSpeed) can't leak its long-lived, slow-rising timing into the next combat number.
+    const float DefaultLifetime = 0.7f, DefaultRise = 1.4f;
 
     // On-screen size = fontSize * BaseScale. We render the glyphs into a HIGH-res atlas (big fontSize) and
     // downscale with a small BaseScale — downscaling a large atlas stays crisp, where a small atlas upscaled
@@ -49,6 +53,20 @@ public class DamagePopup : MonoBehaviour
 
     /// <summary>Spawn arbitrary floating text (e.g. "+10" for heals, "MISS").</summary>
     public static void SpawnText(Vector3 worldPos, string label, Color color) => SpawnText(worldPos, label, color, 1f);
+
+    /// <summary>A speech "bark": floating text that lingers longer and barely rises — for ambient NPC chatter
+    /// (<see cref="TownNPC"/>). Reuses the SAME pooled popup as combat numbers (zero-alloc); the per-instance
+    /// timing is reset back to damage-number defaults on the next reuse, so a stretched bark can't leak its
+    /// long lifetime into a later hit number.</summary>
+    public static void SpawnBubble(Vector3 worldPos, string label, Color color, float life, float rise)
+    {
+        if (string.IsNullOrEmpty(label)) return;
+        EnsureHost();
+        var popup = pool.Count > 0 ? pool.Pop() : Create();
+        popup.Begin(worldPos, label, color, 1f);
+        popup.lifetime = Mathf.Max(0.1f, life);   // override AFTER Begin (which reset it to the default)
+        popup.riseSpeed = rise;
+    }
 
     /// <summary>As <see cref="SpawnText(Vector3,string,Color)"/> but at <paramref name="scaleMult"/>× size.</summary>
     public static void SpawnText(Vector3 worldPos, string label, Color color, float scaleMult)
@@ -146,6 +164,8 @@ public class DamagePopup : MonoBehaviour
     // (Re)activate this pooled popup at a fresh position with new text/colour/size.
     void Begin(Vector3 worldPos, string label, Color color, float mult)
     {
+        lifetime = DefaultLifetime;   // reset timing (a previous SpawnBubble may have stretched these)
+        riseSpeed = DefaultRise;
         text.text = label;
         text.color = color;
         startColor = color;
