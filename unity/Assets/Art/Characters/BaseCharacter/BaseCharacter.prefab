@@ -255,5 +255,5 @@ MonoBehaviour:
   maxFrames: 101
   walkThreshold: 0.15
   runThreshold: 3.5
-  feetOffset: 0.17
+  feetOffset: 0.234375
   castReceiveShadows: 1

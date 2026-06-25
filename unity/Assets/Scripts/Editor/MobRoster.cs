@@ -64,6 +64,7 @@ public static class MobRoster
         new MonsterArchetype {
             name = "Slime", sheet = "Slime", weight = 4, tint = None, scale = 1.0f, flash = Color.white,
             maxHealth = 12, defense = 0, magicDefense = 0, flee = 8,
+            hardDefPercent = 5, hardMagicDefPercent = 0, luk = 1,   // fodder: a sliver of DEF, no crit shield
             attackType = MonsterAI3D.AttackType.Physical, attack = 3, hit = 8, xpReward = 5,
             damageSpread = 0.25f, touchRange = 0.9f, touchInterval = 1.0f,
             moveSpeed = 2.2f, aggroRadius = 6f, leashRadius = 10f, stopDistance = 0.7f, wanderRadius = 3f,
@@ -77,6 +78,7 @@ public static class MobRoster
         new MonsterArchetype {
             name = "Bat", sheet = "BlueBat", weight = 4, tint = Cyan, scale = 0.78f, flash = Color.white,
             maxHealth = 6, defense = 0, magicDefense = 0, flee = 16,
+            hardDefPercent = 0, hardMagicDefPercent = 0, luk = 5,   // no DEF (dodges instead); lucky → some crit shield
             attackType = MonsterAI3D.AttackType.Physical, attack = 2, hit = 9, xpReward = 3,
             damageSpread = 0.3f, touchRange = 0.8f, touchInterval = 0.8f,
             moveSpeed = 3.6f, aggroRadius = 7f, leashRadius = 12f, stopDistance = 0.6f, wanderRadius = 4f,
@@ -90,6 +92,7 @@ public static class MobRoster
         new MonsterArchetype {
             name = "Kappa", sheet = "KappaGreen", weight = 2, tint = None, scale = 1.15f, flash = Color.white,
             maxHealth = 30, defense = 3, magicDefense = 1, flee = 4,
+            hardDefPercent = 25, hardMagicDefPercent = 8, luk = 2,   // TANK: % DEF cuts normal hits hard — crit builds shine here
             attackType = MonsterAI3D.AttackType.Physical, attack = 6, hit = 7, xpReward = 12,
             damageSpread = 0.2f, touchRange = 1.0f, touchInterval = 1.4f,
             moveSpeed = 1.6f, aggroRadius = 5f, leashRadius = 9f, stopDistance = 0.8f, wanderRadius = 2.5f,
@@ -105,6 +108,7 @@ public static class MobRoster
         new MonsterArchetype {
             name = "Flam", sheet = "Flam", weight = 2, tint = Arcane, scale = 0.95f, flash = Color.white,
             maxHealth = 10, defense = 0, magicDefense = 0, flee = 10,
+            hardDefPercent = 0, hardMagicDefPercent = 10, luk = 3,   // squishy to melee; a caster's own magic resist
             attackType = MonsterAI3D.AttackType.Magic, attack = 5, hit = 8, xpReward = 10,
             damageSpread = 0.2f, touchRange = 3.6f, touchInterval = 1.6f,
             moveSpeed = 2.2f, aggroRadius = 7f, leashRadius = 11f, stopDistance = 0.7f, wanderRadius = 3f,
@@ -119,6 +123,7 @@ public static class MobRoster
         new MonsterArchetype {
             name = "Cyclope", sheet = "Cyclope", weight = 2, tint = None, scale = 0.9f, flash = Color.white,
             maxHealth = 9, defense = 0, magicDefense = 0, flee = 14,
+            hardDefPercent = 5, hardMagicDefPercent = 0, luk = 8,   // evasive hit-and-run: high crit shield + dodge
             attackType = MonsterAI3D.AttackType.Physical, attack = 3, hit = 9, xpReward = 8,
             damageSpread = 0.3f, touchRange = 0.9f, touchInterval = 1.0f,
             moveSpeed = 3.2f, aggroRadius = 6f, leashRadius = 11f, stopDistance = 0.7f, wanderRadius = 4f,
@@ -140,6 +145,8 @@ public static class MobRoster
         tint = new Color(1f, 0.85f, 0.85f), scale = 2.3f, flash = new Color(1f, 0.4f, 0.3f),
         // A real wall of HP + real defenses so the whole kit (multi-hit, status, crit) matters.
         maxHealth = 600, defense = 8, magicDefense = 6, flee = 2,
+        hardDefPercent = 30, hardMagicDefPercent = 20, luk = 15,   // WALL: heavy % DEF + strong crit shield — crit/element/status all matter
+
         attackType = MonsterAI3D.AttackType.Physical, attack = 16, hit = 14, xpReward = 400,
         damageSpread = 0.2f, touchRange = 1.6f, touchInterval = 1.5f,
         // Slow and relentless: wide aggro, long leash so it commits to the chase, never flees.

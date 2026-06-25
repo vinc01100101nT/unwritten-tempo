@@ -47,7 +47,7 @@ export const Equipment: TempoStoryboard = {
     </Backdrop>
   ),
   name: "Equipment (paperdoll + cards)",
-  layout: { x: 2160, y: 0, width: 100, height: 653 },
+  layout: { x: 2160, y: 0, width: 380, height: 660 },
 };
 
 export const Character: TempoStoryboard = {
@@ -57,5 +57,5 @@ export const Character: TempoStoryboard = {
     </Backdrop>
   ),
   name: "Character (read-only readout)",
-  layout: { x: 2590, y: 0, width: 100, height: 478 },
+  layout: { x: 2780, y: 0, width: 340, height: 520 },
 };

@@ -15,12 +15,25 @@ MonoBehaviour:
   displayName: Jade Amulet
   icon: {fileID: 9090724530243979454, guid: 78323742698781443a3594e8e1de4cd9, type: 3}
   slot: 6
+  rarity: 3
+  category: 0
+  cardSlots: 1
+  weight: 10
+  zeny: 9000
   bonusHP: 6
   bonusAttack: 1
   bonusDefense: 0
   bonusMP: 0
   bonusMAtk: 0
   bonusMDef: 0
+  bonusStr: 0
+  bonusAgi: 0
+  bonusVit: 0
+  bonusInt: 0
+  bonusDex: 0
+  bonusLuk: 0
+  bonusCritPercent: 0
+  bonusAspdPercent: 0
   healAmount: 0
   attackSfx:
     clips: []

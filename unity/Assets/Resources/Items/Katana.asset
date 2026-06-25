@@ -15,12 +15,25 @@ MonoBehaviour:
   displayName: Katana
   icon: {fileID: -6251451809504726511, guid: d27d5d2c054cc8c429e42efe8824a9dc, type: 3}
   slot: 3
+  rarity: 2
+  category: 0
+  cardSlots: 3
+  weight: 110
+  zeny: 22000
   bonusHP: 0
   bonusAttack: 5
   bonusDefense: 0
   bonusMP: 0
   bonusMAtk: 0
   bonusMDef: 0
+  bonusStr: 0
+  bonusAgi: 0
+  bonusVit: 0
+  bonusInt: 0
+  bonusDex: 0
+  bonusLuk: 0
+  bonusCritPercent: 0
+  bonusAspdPercent: 0
   healAmount: 0
   attackSfx:
     clips:

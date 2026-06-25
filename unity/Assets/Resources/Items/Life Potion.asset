@@ -15,12 +15,25 @@ MonoBehaviour:
   displayName: Life Potion
   icon: {fileID: -2354079490960433704, guid: 6de0fd6ba8597874bbbb6e51be6c5acf, type: 3}
   slot: 0
+  rarity: 0
+  category: 1
+  cardSlots: 0
+  weight: 7
+  zeny: 50
   bonusHP: 0
   bonusAttack: 0
   bonusDefense: 0
   bonusMP: 0
   bonusMAtk: 0
   bonusMDef: 0
+  bonusStr: 0
+  bonusAgi: 0
+  bonusVit: 0
+  bonusInt: 0
+  bonusDex: 0
+  bonusLuk: 0
+  bonusCritPercent: 0
+  bonusAspdPercent: 0
   healAmount: 10
   attackSfx:
     clips: []

@@ -15,12 +15,25 @@ MonoBehaviour:
   displayName: Fire Scroll
   icon: {fileID: -4026627026602525782, guid: f4028c9e016c187459ce052fae35f431, type: 3}
   slot: 0
+  rarity: 1
+  category: 3
+  cardSlots: 0
+  weight: 10
+  zeny: 0
   bonusHP: 0
   bonusAttack: 0
   bonusDefense: 0
   bonusMP: 0
   bonusMAtk: 0
   bonusMDef: 0
+  bonusStr: 0
+  bonusAgi: 0
+  bonusVit: 0
+  bonusInt: 0
+  bonusDex: 0
+  bonusLuk: 0
+  bonusCritPercent: 0
+  bonusAspdPercent: 0
   healAmount: 0
   attackSfx:
     clips: []

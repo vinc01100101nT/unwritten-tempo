@@ -1,0 +1,910 @@
+fileFormatVersion: 2
+guid: f148ab71c3e8a4f4693a0451fd11947b
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -8793682606168505802
+    second: WalkCarry_SE_0
+  - first:
+      213: -7256952518874224017
+    second: WalkCarry_SE_1
+  - first:
+      213: -3748722215209268307
+    second: WalkCarry_SE_2
+  - first:
+      213: -6622785329706267164
+    second: WalkCarry_SE_3
+  - first:
+      213: -120201159795501312
+    second: WalkCarry_SE_4
+  - first:
+      213: -5474783461411328982
+    second: WalkCarry_SE_5
+  - first:
+      213: 6798297883803676529
+    second: WalkCarry_SE_6
+  - first:
+      213: 1646016016880786750
+    second: WalkCarry_SE_7
+  - first:
+      213: -6070250555666544638
+    second: WalkCarry_SE_8
+  - first:
+      213: -5652314824308573570
+    second: WalkCarry_SE_9
+  - first:
+      213: 3768002411030861138
+    second: WalkCarry_SE_10
+  - first:
+      213: -8896828369074395613
+    second: WalkCarry_SE_11
+  - first:
+      213: 1700936258485963093
+    second: WalkCarry_SE_12
+  - first:
+      213: 4898761445849321420
+    second: WalkCarry_SE_13
+  - first:
+      213: 7217493437932429220
+    second: WalkCarry_SE_14
+  - first:
+      213: 2889725436021907943
+    second: WalkCarry_SE_15
+  - first:
+      213: 5095701368902613103
+    second: WalkCarry_SE_16
+  - first:
+      213: 697546005451137334
+    second: WalkCarry_SE_17
+  - first:
+      213: 6920210151740531938
+    second: WalkCarry_SE_18
+  - first:
+      213: 7809157552279998042
+    second: WalkCarry_SE_19
+  - first:
+      213: 8376094892805626641
+    second: WalkCarry_SE_20
+  - first:
+      213: 1877364551010600857
+    second: WalkCarry_SE_21
+  - first:
+      213: 5528308043799840468
+    second: WalkCarry_SE_22
+  - first:
+      213: 3644414811393350911
+    second: WalkCarry_SE_23
+  - first:
+      213: 1316445440937139152
+    second: WalkCarry_SE_24
+  - first:
+      213: -2014776683362924174
+    second: WalkCarry_SE_25
+  - first:
+      213: 1175515489644407439
+    second: WalkCarry_SE_26
+  - first:
+      213: 5382590818173815608
+    second: WalkCarry_SE_27
+  - first:
+      213: 3550948791140990352
+    second: WalkCarry_SE_28
+  - first:
+      213: 3734848001735996254
+    second: WalkCarry_SE_29
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 8192
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: WalkCarry_SE_0
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 14
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6328bc7b24096f580800000000000000
+      internalID: -8793682606168505802
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_1
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 14
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6a20a012202a4b90800000000000000
+      internalID: -7256952518874224017
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_2
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 14
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dab06d0c10dd9fbc0800000000000000
+      internalID: -3748722215209268307
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_3
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 14
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ed8037e4d32714a0800000000000000
+      internalID: -6622785329706267164
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_4
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 15
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0079cc89ea5f45ef0800000000000000
+      internalID: -120201159795501312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_5
+      rect:
+        serializedVersion: 2
+        x: 345
+        y: 15
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a2ce460d279a504b0800000000000000
+      internalID: -5474783461411328982
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_6
+      rect:
+        serializedVersion: 2
+        x: 409
+        y: 16
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17f686908e7685e50800000000000000
+      internalID: 6798297883803676529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_7
+      rect:
+        serializedVersion: 2
+        x: 473
+        y: 16
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3d58cca8d2d7d610800000000000000
+      internalID: 1646016016880786750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_8
+      rect:
+        serializedVersion: 2
+        x: 537
+        y: 16
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 208c0ebf74322cba0800000000000000
+      internalID: -6070250555666544638
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_9
+      rect:
+        serializedVersion: 2
+        x: 601
+        y: 17
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7ab9625d91fe81b0800000000000000
+      internalID: -5652314824308573570
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_10
+      rect:
+        serializedVersion: 2
+        x: 665
+        y: 17
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2555f46aa32aa4430800000000000000
+      internalID: 3768002411030861138
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_11
+      rect:
+        serializedVersion: 2
+        x: 730
+        y: 17
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 326e3b95cbd188480800000000000000
+      internalID: -8896828369074395613
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_12
+      rect:
+        serializedVersion: 2
+        x: 794
+        y: 17
+        width: 18
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55943a0e380fa9710800000000000000
+      internalID: 1700936258485963093
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_13
+      rect:
+        serializedVersion: 2
+        x: 858
+        y: 17
+        width: 18
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ccf4a3b8495ebf340800000000000000
+      internalID: 4898761445849321420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_14
+      rect:
+        serializedVersion: 2
+        x: 921
+        y: 17
+        width: 19
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4afdca8ba00b92460800000000000000
+      internalID: 7217493437932429220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_15
+      rect:
+        serializedVersion: 2
+        x: 985
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e12f7049fd5a1820800000000000000
+      internalID: 2889725436021907943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_16
+      rect:
+        serializedVersion: 2
+        x: 1049
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6879e6956197b640800000000000000
+      internalID: 5095701368902613103
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_17
+      rect:
+        serializedVersion: 2
+        x: 1113
+        y: 16
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 631686d656e2ea900800000000000000
+      internalID: 697546005451137334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_18
+      rect:
+        serializedVersion: 2
+        x: 1178
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e4eb89d776890060800000000000000
+      internalID: 6920210151740531938
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_19
+      rect:
+        serializedVersion: 2
+        x: 1242
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a5e45ba4b63bf5c60800000000000000
+      internalID: 7809157552279998042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_20
+      rect:
+        serializedVersion: 2
+        x: 1305
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 11b94a23deddd3470800000000000000
+      internalID: 8376094892805626641
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_21
+      rect:
+        serializedVersion: 2
+        x: 1369
+        y: 16
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 997c5e8cc1dbd0a10800000000000000
+      internalID: 1877364551010600857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_22
+      rect:
+        serializedVersion: 2
+        x: 1433
+        y: 17
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d6cf9720ee78bc40800000000000000
+      internalID: 5528308043799840468
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_23
+      rect:
+        serializedVersion: 2
+        x: 1497
+        y: 17
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffcd54746ff839230800000000000000
+      internalID: 3644414811393350911
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_24
+      rect:
+        serializedVersion: 2
+        x: 1561
+        y: 17
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0db9d395724f44210800000000000000
+      internalID: 1316445440937139152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_25
+      rect:
+        serializedVersion: 2
+        x: 1625
+        y: 17
+        width: 18
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 279c96ef7431a04e0800000000000000
+      internalID: -2014776683362924174
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_26
+      rect:
+        serializedVersion: 2
+        x: 1689
+        y: 16
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8a69341c15405010800000000000000
+      internalID: 1175515489644407439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_27
+      rect:
+        serializedVersion: 2
+        x: 1753
+        y: 15
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 83b8788b4ddc2ba40800000000000000
+      internalID: 5382590818173815608
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_28
+      rect:
+        serializedVersion: 2
+        x: 1816
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 09dbf8f9c11874130800000000000000
+      internalID: 3550948791140990352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: WalkCarry_SE_29
+      rect:
+        serializedVersion: 2
+        x: 1880
+        y: 14
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e533d813878d4d330800000000000000
+      internalID: 3734848001735996254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      WalkCarry_SE_0: -8793682606168505802
+      WalkCarry_SE_1: -7256952518874224017
+      WalkCarry_SE_10: 3768002411030861138
+      WalkCarry_SE_11: -8896828369074395613
+      WalkCarry_SE_12: 1700936258485963093
+      WalkCarry_SE_13: 4898761445849321420
+      WalkCarry_SE_14: 7217493437932429220
+      WalkCarry_SE_15: 2889725436021907943
+      WalkCarry_SE_16: 5095701368902613103
+      WalkCarry_SE_17: 697546005451137334
+      WalkCarry_SE_18: 6920210151740531938
+      WalkCarry_SE_19: 7809157552279998042
+      WalkCarry_SE_2: -3748722215209268307
+      WalkCarry_SE_20: 8376094892805626641
+      WalkCarry_SE_21: 1877364551010600857
+      WalkCarry_SE_22: 5528308043799840468
+      WalkCarry_SE_23: 3644414811393350911
+      WalkCarry_SE_24: 1316445440937139152
+      WalkCarry_SE_25: -2014776683362924174
+      WalkCarry_SE_26: 1175515489644407439
+      WalkCarry_SE_27: 5382590818173815608
+      WalkCarry_SE_28: 3550948791140990352
+      WalkCarry_SE_29: 3734848001735996254
+      WalkCarry_SE_3: -6622785329706267164
+      WalkCarry_SE_4: -120201159795501312
+      WalkCarry_SE_5: -5474783461411328982
+      WalkCarry_SE_6: 6798297883803676529
+      WalkCarry_SE_7: 1646016016880786750
+      WalkCarry_SE_8: -6070250555666544638
+      WalkCarry_SE_9: -5652314824308573570
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

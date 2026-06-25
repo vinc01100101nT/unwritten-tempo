@@ -1,0 +1,1300 @@
+fileFormatVersion: 2
+guid: f0d09f67f02e43044b9b289af551bc88
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4148904628834087057
+    second: Victory_E_0
+  - first:
+      213: -6743533836446448482
+    second: Victory_E_1
+  - first:
+      213: 5441465210538468662
+    second: Victory_E_2
+  - first:
+      213: -3934056146151877821
+    second: Victory_E_3
+  - first:
+      213: -1955139461099295741
+    second: Victory_E_4
+  - first:
+      213: 7762321188177569240
+    second: Victory_E_5
+  - first:
+      213: -6272704614639594338
+    second: Victory_E_6
+  - first:
+      213: 6432326689759301058
+    second: Victory_E_7
+  - first:
+      213: -5481561921256455914
+    second: Victory_E_8
+  - first:
+      213: -1132146616520973880
+    second: Victory_E_9
+  - first:
+      213: -5809726247595018309
+    second: Victory_E_10
+  - first:
+      213: -5163546189155649388
+    second: Victory_E_11
+  - first:
+      213: -2232456636704322752
+    second: Victory_E_12
+  - first:
+      213: -5280965220842970587
+    second: Victory_E_13
+  - first:
+      213: 2478973858535686540
+    second: Victory_E_14
+  - first:
+      213: 1220181017396708095
+    second: Victory_E_15
+  - first:
+      213: -2156544798307594994
+    second: Victory_E_16
+  - first:
+      213: 4651316553390160640
+    second: Victory_E_17
+  - first:
+      213: 9160024082788987386
+    second: Victory_E_18
+  - first:
+      213: 8378531357952930422
+    second: Victory_E_19
+  - first:
+      213: -9219868692326220375
+    second: Victory_E_20
+  - first:
+      213: 2765771400120377056
+    second: Victory_E_21
+  - first:
+      213: -6271637113756190508
+    second: Victory_E_22
+  - first:
+      213: 5870359799028047313
+    second: Victory_E_23
+  - first:
+      213: -2759795136526467744
+    second: Victory_E_24
+  - first:
+      213: -1510407703378195857
+    second: Victory_E_25
+  - first:
+      213: -8640922756223161531
+    second: Victory_E_26
+  - first:
+      213: -1966247855612219397
+    second: Victory_E_27
+  - first:
+      213: 9215325574772098681
+    second: Victory_E_28
+  - first:
+      213: -52058842348983723
+    second: Victory_E_29
+  - first:
+      213: 8389511708977197599
+    second: Victory_E_30
+  - first:
+      213: -5972522702075384640
+    second: Victory_E_31
+  - first:
+      213: 7070677557637384913
+    second: Victory_E_32
+  - first:
+      213: -5644170894121821133
+    second: Victory_E_33
+  - first:
+      213: 5443043840859072875
+    second: Victory_E_34
+  - first:
+      213: 3019885245291678923
+    second: Victory_E_35
+  - first:
+      213: -8691299394970302400
+    second: Victory_E_36
+  - first:
+      213: -7342205974472057417
+    second: Victory_E_37
+  - first:
+      213: -5355496078372911346
+    second: Victory_E_38
+  - first:
+      213: 1980820894426294472
+    second: Victory_E_39
+  - first:
+      213: -9050594069190398854
+    second: Victory_E_40
+  - first:
+      213: -2123350896082196928
+    second: Victory_E_41
+  - first:
+      213: 823297816098232151
+    second: Victory_E_42
+  - first:
+      213: 2285639742317798510
+    second: Victory_E_43
+  - first:
+      213: -9021803002426186588
+    second: Victory_E_44
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 8192
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Victory_E_0
+      rect:
+        serializedVersion: 2
+        x: 24
+        y: 15
+        width: 15
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6fce5fc8312c66c0800000000000000
+      internalID: -4148904628834087057
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_1
+      rect:
+        serializedVersion: 2
+        x: 88
+        y: 15
+        width: 15
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9448cb54b72a62a0800000000000000
+      internalID: -6743533836446448482
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_2
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 15
+        width: 15
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 635aac367c7f38b40800000000000000
+      internalID: 5441465210538468662
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_3
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 15
+        width: 16
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 343dc2257cc6769c0800000000000000
+      internalID: -3934056146151877821
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_4
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 15
+        width: 16
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30ce3d6d403fdd4e0800000000000000
+      internalID: -1955139461099295741
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_5
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 15
+        width: 17
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d5efcd7efd49bb60800000000000000
+      internalID: 7762321188177569240
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_6
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 15
+        width: 18
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e94147f1360e2f8a0800000000000000
+      internalID: -6272704614639594338
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_7
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 15
+        width: 18
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cd0e5e5b07344950800000000000000
+      internalID: 6432326689759301058
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_8
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 15
+        width: 17
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6118335a9749de3b0800000000000000
+      internalID: -5481561921256455914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_9
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 15
+        width: 16
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c16b9096aec940f0800000000000000
+      internalID: -1132146616520973880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_10
+      rect:
+        serializedVersion: 2
+        x: 663
+        y: 15
+        width: 17
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb7f5d152c4bf5fa0800000000000000
+      internalID: -5809726247595018309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_11
+      rect:
+        serializedVersion: 2
+        x: 726
+        y: 15
+        width: 18
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4983e0e39166758b0800000000000000
+      internalID: -5163546189155649388
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_12
+      rect:
+        serializedVersion: 2
+        x: 790
+        y: 15
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04b86c85488b401e0800000000000000
+      internalID: -2232456636704322752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_13
+      rect:
+        serializedVersion: 2
+        x: 853
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52266748c1e36b6b0800000000000000
+      internalID: -5280965220842970587
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_14
+      rect:
+        serializedVersion: 2
+        x: 917
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c81cf751795176220800000000000000
+      internalID: 2478973858535686540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_15
+      rect:
+        serializedVersion: 2
+        x: 981
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff20b97ab24fee010800000000000000
+      internalID: 1220181017396708095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_16
+      rect:
+        serializedVersion: 2
+        x: 1045
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0dc8aa8ee96212e0800000000000000
+      internalID: -2156544798307594994
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_17
+      rect:
+        serializedVersion: 2
+        x: 1109
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00bf6b6f2cbcc8040800000000000000
+      internalID: 4651316553390160640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_18
+      rect:
+        serializedVersion: 2
+        x: 1173
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af139a41f51fe1f70800000000000000
+      internalID: 9160024082788987386
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_19
+      rect:
+        serializedVersion: 2
+        x: 1238
+        y: 15
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6727142f0e5864470800000000000000
+      internalID: 8378531357952930422
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_20
+      rect:
+        serializedVersion: 2
+        x: 1301
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ad7626f5427c0080800000000000000
+      internalID: -9219868692326220375
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_21
+      rect:
+        serializedVersion: 2
+        x: 1365
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ee1c1a4f6ef16620800000000000000
+      internalID: 2765771400120377056
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_22
+      rect:
+        serializedVersion: 2
+        x: 1429
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d8f76a064ba6f8a0800000000000000
+      internalID: -6271637113756190508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_23
+      rect:
+        serializedVersion: 2
+        x: 1493
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1dddccc7225b77150800000000000000
+      internalID: 5870359799028047313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_24
+      rect:
+        serializedVersion: 2
+        x: 1557
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06d3d7202fc33b9d0800000000000000
+      internalID: -2759795136526467744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_25
+      rect:
+        serializedVersion: 2
+        x: 1621
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f6a012e3234f90be0800000000000000
+      internalID: -1510407703378195857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_26
+      rect:
+        serializedVersion: 2
+        x: 1685
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 54baab7e886451880800000000000000
+      internalID: -8640922756223161531
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_27
+      rect:
+        serializedVersion: 2
+        x: 1749
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bff2cd13efb76b4e0800000000000000
+      internalID: -1966247855612219397
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_28
+      rect:
+        serializedVersion: 2
+        x: 1813
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9760ddd09c963ef70800000000000000
+      internalID: 9215325574772098681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_29
+      rect:
+        serializedVersion: 2
+        x: 1877
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 55aee5a32cc074ff0800000000000000
+      internalID: -52058842348983723
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_30
+      rect:
+        serializedVersion: 2
+        x: 1942
+        y: 15
+        width: 18
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f12f09423788d6470800000000000000
+      internalID: 8389511708977197599
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_31
+      rect:
+        serializedVersion: 2
+        x: 2005
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0cc27d90f365d1da0800000000000000
+      internalID: -5972522702075384640
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_32
+      rect:
+        serializedVersion: 2
+        x: 2069
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1da8d40d6c7102260800000000000000
+      internalID: 7070677557637384913
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_33
+      rect:
+        serializedVersion: 2
+        x: 2133
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33c1544d970eba1b0800000000000000
+      internalID: -5644170894121821133
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_34
+      rect:
+        serializedVersion: 2
+        x: 2197
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b696847e883998b40800000000000000
+      internalID: 5443043840859072875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_35
+      rect:
+        serializedVersion: 2
+        x: 2261
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bcccd0c61a9c8e920800000000000000
+      internalID: 3019885245291678923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_36
+      rect:
+        serializedVersion: 2
+        x: 2326
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0484a3eaf3d426780800000000000000
+      internalID: -8691299394970302400
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_37
+      rect:
+        serializedVersion: 2
+        x: 2390
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7bd97df119e3b1a90800000000000000
+      internalID: -7342205974472057417
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_38
+      rect:
+        serializedVersion: 2
+        x: 2454
+        y: 15
+        width: 20
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e07c59cf0b47da5b0800000000000000
+      internalID: -5355496078372911346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_39
+      rect:
+        serializedVersion: 2
+        x: 2519
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c863ffcb1a4d7b10800000000000000
+      internalID: 1980820894426294472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_40
+      rect:
+        serializedVersion: 2
+        x: 2584
+        y: 15
+        width: 19
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7c26ab65a4d56280800000000000000
+      internalID: -9050594069190398854
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_41
+      rect:
+        serializedVersion: 2
+        x: 2648
+        y: 15
+        width: 18
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04663892c975882e0800000000000000
+      internalID: -2123350896082196928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_42
+      rect:
+        serializedVersion: 2
+        x: 2712
+        y: 15
+        width: 17
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 757d3e07001fc6b00800000000000000
+      internalID: 823297816098232151
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_43
+      rect:
+        serializedVersion: 2
+        x: 2776
+        y: 15
+        width: 15
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e642e5d5c3938bf10800000000000000
+      internalID: 2285639742317798510
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_E_44
+      rect:
+        serializedVersion: 2
+        x: 2840
+        y: 15
+        width: 15
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a4a5d608fd1cc280800000000000000
+      internalID: -9021803002426186588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Victory_E_0: -4148904628834087057
+      Victory_E_1: -6743533836446448482
+      Victory_E_10: -5809726247595018309
+      Victory_E_11: -5163546189155649388
+      Victory_E_12: -2232456636704322752
+      Victory_E_13: -5280965220842970587
+      Victory_E_14: 2478973858535686540
+      Victory_E_15: 1220181017396708095
+      Victory_E_16: -2156544798307594994
+      Victory_E_17: 4651316553390160640
+      Victory_E_18: 9160024082788987386
+      Victory_E_19: 8378531357952930422
+      Victory_E_2: 5441465210538468662
+      Victory_E_20: -9219868692326220375
+      Victory_E_21: 2765771400120377056
+      Victory_E_22: -6271637113756190508
+      Victory_E_23: 5870359799028047313
+      Victory_E_24: -2759795136526467744
+      Victory_E_25: -1510407703378195857
+      Victory_E_26: -8640922756223161531
+      Victory_E_27: -1966247855612219397
+      Victory_E_28: 9215325574772098681
+      Victory_E_29: -52058842348983723
+      Victory_E_3: -3934056146151877821
+      Victory_E_30: 8389511708977197599
+      Victory_E_31: -5972522702075384640
+      Victory_E_32: 7070677557637384913
+      Victory_E_33: -5644170894121821133
+      Victory_E_34: 5443043840859072875
+      Victory_E_35: 3019885245291678923
+      Victory_E_36: -8691299394970302400
+      Victory_E_37: -7342205974472057417
+      Victory_E_38: -5355496078372911346
+      Victory_E_39: 1980820894426294472
+      Victory_E_4: -1955139461099295741
+      Victory_E_40: -9050594069190398854
+      Victory_E_41: -2123350896082196928
+      Victory_E_42: 823297816098232151
+      Victory_E_43: 2285639742317798510
+      Victory_E_44: -9021803002426186588
+      Victory_E_5: 7762321188177569240
+      Victory_E_6: -6272704614639594338
+      Victory_E_7: 6432326689759301058
+      Victory_E_8: -5481561921256455914
+      Victory_E_9: -1132146616520973880
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

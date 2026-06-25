@@ -15,12 +15,25 @@ MonoBehaviour:
   displayName: Leather Vest
   icon: {fileID: -2757887451555568444, guid: c6f5be1754b7b604a998a04fd37fd14c, type: 3}
   slot: 2
+  rarity: 1
+  category: 0
+  cardSlots: 1
+  weight: 120
+  zeny: 2400
   bonusHP: 8
   bonusAttack: 0
   bonusDefense: 3
   bonusMP: 0
   bonusMAtk: 0
   bonusMDef: 0
+  bonusStr: 0
+  bonusAgi: 0
+  bonusVit: 0
+  bonusInt: 0
+  bonusDex: 0
+  bonusLuk: 0
+  bonusCritPercent: 0
+  bonusAspdPercent: 0
   healAmount: 0
   attackSfx:
     clips: []

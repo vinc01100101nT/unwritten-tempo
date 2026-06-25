@@ -1,0 +1,676 @@
+fileFormatVersion: 2
+guid: 92a779df5dbf3c740a5773a109655324
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8424928380965434585
+    second: RunCarry_SE_0
+  - first:
+      213: 6743032314472401074
+    second: RunCarry_SE_1
+  - first:
+      213: 4685069431083618524
+    second: RunCarry_SE_2
+  - first:
+      213: 2118323107592859317
+    second: RunCarry_SE_3
+  - first:
+      213: 5306009351184857147
+    second: RunCarry_SE_4
+  - first:
+      213: 361502101271788626
+    second: RunCarry_SE_5
+  - first:
+      213: -6251792141946932611
+    second: RunCarry_SE_6
+  - first:
+      213: -4220225898148954167
+    second: RunCarry_SE_7
+  - first:
+      213: -1331173724146599392
+    second: RunCarry_SE_8
+  - first:
+      213: 6291094652675389504
+    second: RunCarry_SE_9
+  - first:
+      213: -8898758699398589314
+    second: RunCarry_SE_10
+  - first:
+      213: 1908018883269558497
+    second: RunCarry_SE_11
+  - first:
+      213: -4380774274855653518
+    second: RunCarry_SE_12
+  - first:
+      213: 6023453889849726063
+    second: RunCarry_SE_13
+  - first:
+      213: 8371791078421301111
+    second: RunCarry_SE_14
+  - first:
+      213: -3872391813851285139
+    second: RunCarry_SE_15
+  - first:
+      213: -8460080420133539123
+    second: RunCarry_SE_16
+  - first:
+      213: 3077383803726263064
+    second: RunCarry_SE_17
+  - first:
+      213: 3135763075780911890
+    second: RunCarry_SE_18
+  - first:
+      213: -1890357653496622838
+    second: RunCarry_SE_19
+  - first:
+      213: 8262058538586746590
+    second: RunCarry_SE_20
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 8192
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: RunCarry_SE_0
+      rect:
+        serializedVersion: 2
+        x: 27
+        y: 17
+        width: 16
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d43d8da9bb5be470800000000000000
+      internalID: 8424928380965434585
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_1
+      rect:
+        serializedVersion: 2
+        x: 91
+        y: 16
+        width: 16
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b88b15f920149d50800000000000000
+      internalID: 6743032314472401074
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_2
+      rect:
+        serializedVersion: 2
+        x: 155
+        y: 16
+        width: 17
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd0d7c333d5b40140800000000000000
+      internalID: 4685069431083618524
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_3
+      rect:
+        serializedVersion: 2
+        x: 219
+        y: 15
+        width: 17
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5bee29b94abc56d10800000000000000
+      internalID: 2118323107592859317
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_4
+      rect:
+        serializedVersion: 2
+        x: 282
+        y: 14
+        width: 18
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b383648746bb2a940800000000000000
+      internalID: 5306009351184857147
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_5
+      rect:
+        serializedVersion: 2
+        x: 346
+        y: 14
+        width: 18
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 25cbcdbee30540500800000000000000
+      internalID: 361502101271788626
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_6
+      rect:
+        serializedVersion: 2
+        x: 410
+        y: 16
+        width: 18
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d72bca99b2c2d39a0800000000000000
+      internalID: -6251792141946932611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_7
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 18
+        width: 21
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9cf7de4c7eebe65c0800000000000000
+      internalID: -4220225898148954167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_8
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 19
+        width: 21
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02a78edfc88b68de0800000000000000
+      internalID: -1331173724146599392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_9
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 19
+        width: 21
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 048731541457e4750800000000000000
+      internalID: 6291094652675389504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_10
+      rect:
+        serializedVersion: 2
+        x: 664
+        y: 19
+        width: 21
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e741e6c4c12418480800000000000000
+      internalID: -8898758699398589314
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_11
+      rect:
+        serializedVersion: 2
+        x: 728
+        y: 18
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e00502b015aa7a10800000000000000
+      internalID: 1908018883269558497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_12
+      rect:
+        serializedVersion: 2
+        x: 792
+        y: 17
+        width: 21
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27f2f02e10d5433c0800000000000000
+      internalID: -4380774274855653518
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_13
+      rect:
+        serializedVersion: 2
+        x: 855
+        y: 17
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f641071366b979350800000000000000
+      internalID: 6023453889849726063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_14
+      rect:
+        serializedVersion: 2
+        x: 919
+        y: 16
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 777061351a39e2470800000000000000
+      internalID: 8371791078421301111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_15
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 16
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6973408920824ac0800000000000000
+      internalID: -3872391813851285139
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_16
+      rect:
+        serializedVersion: 2
+        x: 1049
+        y: 17
+        width: 19
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc2f3ba6ea1c79a80800000000000000
+      internalID: -8460080420133539123
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_17
+      rect:
+        serializedVersion: 2
+        x: 1115
+        y: 18
+        width: 17
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 813f4aac34015ba20800000000000000
+      internalID: 3077383803726263064
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_18
+      rect:
+        serializedVersion: 2
+        x: 1179
+        y: 18
+        width: 17
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 21325b747e7748b20800000000000000
+      internalID: 3135763075780911890
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_19
+      rect:
+        serializedVersion: 2
+        x: 1243
+        y: 17
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0194eccab914c5e0800000000000000
+      internalID: -1890357653496622838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: RunCarry_SE_20
+      rect:
+        serializedVersion: 2
+        x: 1307
+        y: 17
+        width: 16
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ede22f1777ab8a270800000000000000
+      internalID: 8262058538586746590
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      RunCarry_SE_0: 8424928380965434585
+      RunCarry_SE_1: 6743032314472401074
+      RunCarry_SE_10: -8898758699398589314
+      RunCarry_SE_11: 1908018883269558497
+      RunCarry_SE_12: -4380774274855653518
+      RunCarry_SE_13: 6023453889849726063
+      RunCarry_SE_14: 8371791078421301111
+      RunCarry_SE_15: -3872391813851285139
+      RunCarry_SE_16: -8460080420133539123
+      RunCarry_SE_17: 3077383803726263064
+      RunCarry_SE_18: 3135763075780911890
+      RunCarry_SE_19: -1890357653496622838
+      RunCarry_SE_2: 4685069431083618524
+      RunCarry_SE_20: 8262058538586746590
+      RunCarry_SE_3: 2118323107592859317
+      RunCarry_SE_4: 5306009351184857147
+      RunCarry_SE_5: 361502101271788626
+      RunCarry_SE_6: -6251792141946932611
+      RunCarry_SE_7: -4220225898148954167
+      RunCarry_SE_8: -1331173724146599392
+      RunCarry_SE_9: 6291094652675389504
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

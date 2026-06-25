@@ -317,7 +317,7 @@ public class ProgressionWindows : MonoBehaviour
         detailStats.text = sb.ToString();
 
         int slots = def.cardSlots;
-        var sb = new System.Text.StringBuilder();
+        sb.Clear();
         sb.Append("<color=#A79E88>Cards ").Append(inst.FilledSockets).Append('/').Append(slots).Append("</color>");
         if (inst.cards != null)
             foreach (var c in inst.cards)

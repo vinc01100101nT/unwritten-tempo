@@ -1,0 +1,1300 @@
+fileFormatVersion: 2
+guid: 9ca620d1e7895d24cbee044ea63f9002
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -7021980057601050929
+    second: Victory_NE_0
+  - first:
+      213: 2883663031126247423
+    second: Victory_NE_1
+  - first:
+      213: -1534502887466930822
+    second: Victory_NE_2
+  - first:
+      213: -3259213707327823986
+    second: Victory_NE_3
+  - first:
+      213: -4933963625832504716
+    second: Victory_NE_4
+  - first:
+      213: 5692770242963026437
+    second: Victory_NE_5
+  - first:
+      213: -3456204356509060478
+    second: Victory_NE_6
+  - first:
+      213: -9217386470792353324
+    second: Victory_NE_7
+  - first:
+      213: -4841890689066935012
+    second: Victory_NE_8
+  - first:
+      213: 7121793477486703003
+    second: Victory_NE_9
+  - first:
+      213: -6844445402196265522
+    second: Victory_NE_10
+  - first:
+      213: 5092695115018589964
+    second: Victory_NE_11
+  - first:
+      213: 7749183087949980704
+    second: Victory_NE_12
+  - first:
+      213: -5152244759405119316
+    second: Victory_NE_13
+  - first:
+      213: 501046239159162729
+    second: Victory_NE_14
+  - first:
+      213: -843707558638473567
+    second: Victory_NE_15
+  - first:
+      213: -9117460303841837028
+    second: Victory_NE_16
+  - first:
+      213: 6683783278368921845
+    second: Victory_NE_17
+  - first:
+      213: -7323298476484347961
+    second: Victory_NE_18
+  - first:
+      213: -7024011299537264381
+    second: Victory_NE_19
+  - first:
+      213: 4226436400333441512
+    second: Victory_NE_20
+  - first:
+      213: -1291922906805778749
+    second: Victory_NE_21
+  - first:
+      213: -8197537343219420745
+    second: Victory_NE_22
+  - first:
+      213: -4749079566392141586
+    second: Victory_NE_23
+  - first:
+      213: -235465342414482876
+    second: Victory_NE_24
+  - first:
+      213: 1695489886933474370
+    second: Victory_NE_25
+  - first:
+      213: -7072093169597043691
+    second: Victory_NE_26
+  - first:
+      213: 8752361516910696351
+    second: Victory_NE_27
+  - first:
+      213: 8952533951753145557
+    second: Victory_NE_28
+  - first:
+      213: -3504316779483629604
+    second: Victory_NE_29
+  - first:
+      213: 3913750589358897191
+    second: Victory_NE_30
+  - first:
+      213: -8235422336760186859
+    second: Victory_NE_31
+  - first:
+      213: 2366259854650010229
+    second: Victory_NE_32
+  - first:
+      213: -4114134274403635194
+    second: Victory_NE_33
+  - first:
+      213: -1790905569809339764
+    second: Victory_NE_34
+  - first:
+      213: -8659545435635083167
+    second: Victory_NE_35
+  - first:
+      213: 6173432159453643004
+    second: Victory_NE_36
+  - first:
+      213: 6422627901780313465
+    second: Victory_NE_37
+  - first:
+      213: -7834134522632862324
+    second: Victory_NE_38
+  - first:
+      213: -3879423964288827053
+    second: Victory_NE_39
+  - first:
+      213: 5286389041711932596
+    second: Victory_NE_40
+  - first:
+      213: 36842472501062949
+    second: Victory_NE_41
+  - first:
+      213: 4833312785262350819
+    second: Victory_NE_42
+  - first:
+      213: -7925391985691358886
+    second: Victory_NE_43
+  - first:
+      213: -4650643242323517737
+    second: Victory_NE_44
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 8192
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Victory_NE_0
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 15
+        width: 18
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fc6ffc6775aec8e90800000000000000
+      internalID: -7021980057601050929
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_1
+      rect:
+        serializedVersion: 2
+        x: 87
+        y: 15
+        width: 18
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ff7c43e9f34d40820800000000000000
+      internalID: 2883663031126247423
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_2
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 15
+        width: 17
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a7de8b501c954bae0800000000000000
+      internalID: -1534502887466930822
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_3
+      rect:
+        serializedVersion: 2
+        x: 216
+        y: 15
+        width: 17
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e8f14a7b662f4c2d0800000000000000
+      internalID: -3259213707327823986
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_4
+      rect:
+        serializedVersion: 2
+        x: 280
+        y: 15
+        width: 19
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4722e8b393a078bb0800000000000000
+      internalID: -4933963625832504716
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_5
+      rect:
+        serializedVersion: 2
+        x: 344
+        y: 15
+        width: 20
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 502b9b7df58c00f40800000000000000
+      internalID: 5692770242963026437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_6
+      rect:
+        serializedVersion: 2
+        x: 408
+        y: 15
+        width: 21
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 282be1313781900d0800000000000000
+      internalID: -3456204356509060478
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_7
+      rect:
+        serializedVersion: 2
+        x: 472
+        y: 15
+        width: 21
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d92ee237d3451080800000000000000
+      internalID: -9217386470792353324
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_8
+      rect:
+        serializedVersion: 2
+        x: 535
+        y: 15
+        width: 20
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1dd4ec52162eccb0800000000000000
+      internalID: -4841890689066935012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_9
+      rect:
+        serializedVersion: 2
+        x: 599
+        y: 15
+        width: 19
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b91f9455f61b5d260800000000000000
+      internalID: 7121793477486703003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_10
+      rect:
+        serializedVersion: 2
+        x: 662
+        y: 15
+        width: 20
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec5398d8b25a301a0800000000000000
+      internalID: -6844445402196265522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_11
+      rect:
+        serializedVersion: 2
+        x: 726
+        y: 15
+        width: 20
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c07dc009933eca640800000000000000
+      internalID: 5092695115018589964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_12
+      rect:
+        serializedVersion: 2
+        x: 790
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02429b826f0aa8b60800000000000000
+      internalID: 7749183087949980704
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_13
+      rect:
+        serializedVersion: 2
+        x: 854
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca83ac760bc8f78b0800000000000000
+      internalID: -5152244759405119316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_14
+      rect:
+        serializedVersion: 2
+        x: 918
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 967902d56e214f600800000000000000
+      internalID: 501046239159162729
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_15
+      rect:
+        serializedVersion: 2
+        x: 982
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1aeaa01127c8a44f0800000000000000
+      internalID: -843707558638473567
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_16
+      rect:
+        serializedVersion: 2
+        x: 1046
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1048c7f826487180800000000000000
+      internalID: -9117460303841837028
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_17
+      rect:
+        serializedVersion: 2
+        x: 1110
+        y: 15
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5f810eeba7191cc50800000000000000
+      internalID: 6683783278368921845
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_18
+      rect:
+        serializedVersion: 2
+        x: 1174
+        y: 15
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c7bdfc06da6e5a90800000000000000
+      internalID: -7323298476484347961
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_19
+      rect:
+        serializedVersion: 2
+        x: 1238
+        y: 15
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30160c810f2b58e90800000000000000
+      internalID: -7024011299537264381
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_20
+      rect:
+        serializedVersion: 2
+        x: 1302
+        y: 15
+        width: 20
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e9c7a3738157aa30800000000000000
+      internalID: 4226436400333441512
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_21
+      rect:
+        serializedVersion: 2
+        x: 1366
+        y: 15
+        width: 20
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c6c6ae06fa221ee0800000000000000
+      internalID: -1291922906805778749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_22
+      rect:
+        serializedVersion: 2
+        x: 1430
+        y: 15
+        width: 20
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7b13860083f7c3e80800000000000000
+      internalID: -8197537343219420745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_23
+      rect:
+        serializedVersion: 2
+        x: 1494
+        y: 15
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee8512bcb41e71eb0800000000000000
+      internalID: -4749079566392141586
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_24
+      rect:
+        serializedVersion: 2
+        x: 1558
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4421874c4857bbcf0800000000000000
+      internalID: -235465342414482876
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_25
+      rect:
+        serializedVersion: 2
+        x: 1622
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24cdfeea117978710800000000000000
+      internalID: 1695489886933474370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_26
+      rect:
+        serializedVersion: 2
+        x: 1686
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51ca3b75bb0eadd90800000000000000
+      internalID: -7072093169597043691
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_27
+      rect:
+        serializedVersion: 2
+        x: 1750
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f97d2497d62a67970800000000000000
+      internalID: 8752361516910696351
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_28
+      rect:
+        serializedVersion: 2
+        x: 1814
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5dcced1523acd3c70800000000000000
+      internalID: 8952533951753145557
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_29
+      rect:
+        serializedVersion: 2
+        x: 1878
+        y: 15
+        width: 21
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd7ff6aa47a2e5fc0800000000000000
+      internalID: -3504316779483629604
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_30
+      rect:
+        serializedVersion: 2
+        x: 1942
+        y: 15
+        width: 20
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7287632dc6f605630800000000000000
+      internalID: 3913750589358897191
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_31
+      rect:
+        serializedVersion: 2
+        x: 2006
+        y: 15
+        width: 20
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 51877129407e5bd80800000000000000
+      internalID: -8235422336760186859
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_32
+      rect:
+        serializedVersion: 2
+        x: 2070
+        y: 15
+        width: 20
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 57a6ea20dc4a6d020800000000000000
+      internalID: 2366259854650010229
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_33
+      rect:
+        serializedVersion: 2
+        x: 2134
+        y: 15
+        width: 20
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60079efcca8a7e6c0800000000000000
+      internalID: -4114134274403635194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_34
+      rect:
+        serializedVersion: 2
+        x: 2198
+        y: 15
+        width: 20
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8aee357fdc6527e0800000000000000
+      internalID: -1790905569809339764
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_35
+      rect:
+        serializedVersion: 2
+        x: 2262
+        y: 15
+        width: 20
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1689d987e4d13d780800000000000000
+      internalID: -8659545435635083167
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_36
+      rect:
+        serializedVersion: 2
+        x: 2326
+        y: 15
+        width: 21
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf0053d37df6ca550800000000000000
+      internalID: 6173432159453643004
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_37
+      rect:
+        serializedVersion: 2
+        x: 2390
+        y: 15
+        width: 21
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 975c0225c02c12950800000000000000
+      internalID: 6422627901780313465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_38
+      rect:
+        serializedVersion: 2
+        x: 2454
+        y: 15
+        width: 22
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c8508df9820974390800000000000000
+      internalID: -7834134522632862324
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_39
+      rect:
+        serializedVersion: 2
+        x: 2518
+        y: 15
+        width: 23
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3514d636574892ac0800000000000000
+      internalID: -3879423964288827053
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_40
+      rect:
+        serializedVersion: 2
+        x: 2582
+        y: 15
+        width: 23
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b4e1cf23d60d5940800000000000000
+      internalID: 5286389041711932596
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_41
+      rect:
+        serializedVersion: 2
+        x: 2647
+        y: 15
+        width: 22
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52da2169804e28000800000000000000
+      internalID: 36842472501062949
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_42
+      rect:
+        serializedVersion: 2
+        x: 2711
+        y: 15
+        width: 20
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e19ae5ce50631340800000000000000
+      internalID: 4833312785262350819
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_43
+      rect:
+        serializedVersion: 2
+        x: 2775
+        y: 15
+        width: 18
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a598323caf9530290800000000000000
+      internalID: -7925391985691358886
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Victory_NE_44
+      rect:
+        serializedVersion: 2
+        x: 2839
+        y: 15
+        width: 18
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7de5c3c7c98957fb0800000000000000
+      internalID: -4650643242323517737
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Victory_NE_0: -7021980057601050929
+      Victory_NE_1: 2883663031126247423
+      Victory_NE_10: -6844445402196265522
+      Victory_NE_11: 5092695115018589964
+      Victory_NE_12: 7749183087949980704
+      Victory_NE_13: -5152244759405119316
+      Victory_NE_14: 501046239159162729
+      Victory_NE_15: -843707558638473567
+      Victory_NE_16: -9117460303841837028
+      Victory_NE_17: 6683783278368921845
+      Victory_NE_18: -7323298476484347961
+      Victory_NE_19: -7024011299537264381
+      Victory_NE_2: -1534502887466930822
+      Victory_NE_20: 4226436400333441512
+      Victory_NE_21: -1291922906805778749
+      Victory_NE_22: -8197537343219420745
+      Victory_NE_23: -4749079566392141586
+      Victory_NE_24: -235465342414482876
+      Victory_NE_25: 1695489886933474370
+      Victory_NE_26: -7072093169597043691
+      Victory_NE_27: 8752361516910696351
+      Victory_NE_28: 8952533951753145557
+      Victory_NE_29: -3504316779483629604
+      Victory_NE_3: -3259213707327823986
+      Victory_NE_30: 3913750589358897191
+      Victory_NE_31: -8235422336760186859
+      Victory_NE_32: 2366259854650010229
+      Victory_NE_33: -4114134274403635194
+      Victory_NE_34: -1790905569809339764
+      Victory_NE_35: -8659545435635083167
+      Victory_NE_36: 6173432159453643004
+      Victory_NE_37: 6422627901780313465
+      Victory_NE_38: -7834134522632862324
+      Victory_NE_39: -3879423964288827053
+      Victory_NE_4: -4933963625832504716
+      Victory_NE_40: 5286389041711932596
+      Victory_NE_41: 36842472501062949
+      Victory_NE_42: 4833312785262350819
+      Victory_NE_43: -7925391985691358886
+      Victory_NE_44: -4650643242323517737
+      Victory_NE_5: 5692770242963026437
+      Victory_NE_6: -3456204356509060478
+      Victory_NE_7: -9217386470792353324
+      Victory_NE_8: -4841890689066935012
+      Victory_NE_9: 7121793477486703003
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -15,12 +15,25 @@ MonoBehaviour:
   displayName: Iron Helm
   icon: {fileID: 309628545801974608, guid: 9740076cfdfcbb748a77dcfdf25b6baa, type: 3}
   slot: 1
+  rarity: 0
+  category: 0
+  cardSlots: 1
+  weight: 40
+  zeny: 600
   bonusHP: 4
   bonusAttack: 0
   bonusDefense: 2
   bonusMP: 0
   bonusMAtk: 0
   bonusMDef: 0
+  bonusStr: 0
+  bonusAgi: 0
+  bonusVit: 0
+  bonusInt: 0
+  bonusDex: 0
+  bonusLuk: 0
+  bonusCritPercent: 0
+  bonusAspdPercent: 0
   healAmount: 0
   attackSfx:
     clips: []

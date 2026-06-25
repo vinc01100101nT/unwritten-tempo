@@ -1,0 +1,962 @@
+fileFormatVersion: 2
+guid: bab67c5c840fd00428222d059a6e158b
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -1667724475508710404
+    second: StandUp_W_0
+  - first:
+      213: -1275807665355333952
+    second: StandUp_W_1
+  - first:
+      213: -6291614635194996817
+    second: StandUp_W_2
+  - first:
+      213: 2692897071223416142
+    second: StandUp_W_3
+  - first:
+      213: -652976137434235463
+    second: StandUp_W_4
+  - first:
+      213: 8882589260730815615
+    second: StandUp_W_5
+  - first:
+      213: 7439495450713720916
+    second: StandUp_W_6
+  - first:
+      213: 4891683476052744077
+    second: StandUp_W_7
+  - first:
+      213: -1897290497142486876
+    second: StandUp_W_8
+  - first:
+      213: 5628463573279001696
+    second: StandUp_W_9
+  - first:
+      213: 4377455084918937471
+    second: StandUp_W_10
+  - first:
+      213: -377001594779841275
+    second: StandUp_W_11
+  - first:
+      213: -5417940487695180666
+    second: StandUp_W_12
+  - first:
+      213: -6281861561330336734
+    second: StandUp_W_13
+  - first:
+      213: 6114443175416564589
+    second: StandUp_W_14
+  - first:
+      213: -2679418209905656885
+    second: StandUp_W_15
+  - first:
+      213: 832601886231299868
+    second: StandUp_W_16
+  - first:
+      213: -2801910159258076071
+    second: StandUp_W_17
+  - first:
+      213: -5991967004723840713
+    second: StandUp_W_18
+  - first:
+      213: 361650379671539672
+    second: StandUp_W_19
+  - first:
+      213: -6562523352403562659
+    second: StandUp_W_20
+  - first:
+      213: 1952267777350152747
+    second: StandUp_W_21
+  - first:
+      213: 8471997174643726616
+    second: StandUp_W_22
+  - first:
+      213: -6851916863777007054
+    second: StandUp_W_23
+  - first:
+      213: -444687761423507193
+    second: StandUp_W_24
+  - first:
+      213: 5035496621713501564
+    second: StandUp_W_25
+  - first:
+      213: -2924807602936734850
+    second: StandUp_W_26
+  - first:
+      213: 5728860917016745107
+    second: StandUp_W_27
+  - first:
+      213: 861024578998676903
+    second: StandUp_W_28
+  - first:
+      213: -7638615476805584178
+    second: StandUp_W_29
+  - first:
+      213: -2618527908277878328
+    second: StandUp_W_30
+  - first:
+      213: -3899413699176473433
+    second: StandUp_W_31
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 8192
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: StandUp_W_0
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 16
+        width: 15
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf3241eec6d0bd8e0800000000000000
+      internalID: -1667724475508710404
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_1
+      rect:
+        serializedVersion: 2
+        x: 93
+        y: 16
+        width: 16
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ce56c810bb6b4ee0800000000000000
+      internalID: -1275807665355333952
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_2
+      rect:
+        serializedVersion: 2
+        x: 157
+        y: 16
+        width: 16
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa7ad8dd2d1bfa8a0800000000000000
+      internalID: -6291614635194996817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_3
+      rect:
+        serializedVersion: 2
+        x: 221
+        y: 16
+        width: 16
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4526f26e971f5520800000000000000
+      internalID: 2692897071223416142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_4
+      rect:
+        serializedVersion: 2
+        x: 285
+        y: 16
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9bdfc61a9a920f6f0800000000000000
+      internalID: -652976137434235463
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_5
+      rect:
+        serializedVersion: 2
+        x: 349
+        y: 16
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f745f83eedb454b70800000000000000
+      internalID: 8882589260730815615
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_6
+      rect:
+        serializedVersion: 2
+        x: 413
+        y: 16
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4580def32b56e3760800000000000000
+      internalID: 7439495450713720916
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_7
+      rect:
+        serializedVersion: 2
+        x: 477
+        y: 16
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8795c74430c2e340800000000000000
+      internalID: 4891683476052744077
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_8
+      rect:
+        serializedVersion: 2
+        x: 541
+        y: 16
+        width: 16
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a8091a58587ba5e0800000000000000
+      internalID: -1897290497142486876
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_9
+      rect:
+        serializedVersion: 2
+        x: 605
+        y: 16
+        width: 15
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 06c458c8cc15c1e40800000000000000
+      internalID: 5628463573279001696
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_10
+      rect:
+        serializedVersion: 2
+        x: 668
+        y: 16
+        width: 14
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7712dcf438dfbc30800000000000000
+      internalID: 4377455084918937471
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_11
+      rect:
+        serializedVersion: 2
+        x: 732
+        y: 16
+        width: 12
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 50d44670c0f94caf0800000000000000
+      internalID: -377001594779841275
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_12
+      rect:
+        serializedVersion: 2
+        x: 795
+        y: 16
+        width: 12
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 68cd8b8f4db9fc4b0800000000000000
+      internalID: -5417940487695180666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_13
+      rect:
+        serializedVersion: 2
+        x: 858
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 22c79b4513852d8a0800000000000000
+      internalID: -6281861561330336734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_14
+      rect:
+        serializedVersion: 2
+        x: 922
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d6b040e1caddad450800000000000000
+      internalID: 6114443175416564589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_15
+      rect:
+        serializedVersion: 2
+        x: 986
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bcb3cd1955bc0dad0800000000000000
+      internalID: -2679418209905656885
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_16
+      rect:
+        serializedVersion: 2
+        x: 1050
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c170324110ffd8b00800000000000000
+      internalID: 832601886231299868
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_17
+      rect:
+        serializedVersion: 2
+        x: 1114
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 95c3dd82e8d9d19d0800000000000000
+      internalID: -2801910159258076071
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_18
+      rect:
+        serializedVersion: 2
+        x: 1178
+        y: 16
+        width: 12
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 739f29981c148dca0800000000000000
+      internalID: -5991967004723840713
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_19
+      rect:
+        serializedVersion: 2
+        x: 1242
+        y: 16
+        width: 12
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8df053daa17d40500800000000000000
+      internalID: 361650379671539672
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_20
+      rect:
+        serializedVersion: 2
+        x: 1306
+        y: 16
+        width: 12
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d5fa7cdd7cb3de4a0800000000000000
+      internalID: -6562523352403562659
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_21
+      rect:
+        serializedVersion: 2
+        x: 1370
+        y: 16
+        width: 12
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b22b56f2339d71b10800000000000000
+      internalID: 1952267777350152747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_22
+      rect:
+        serializedVersion: 2
+        x: 1434
+        y: 16
+        width: 12
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 81990c43b84929570800000000000000
+      internalID: 8471997174643726616
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_23
+      rect:
+        serializedVersion: 2
+        x: 1498
+        y: 16
+        width: 12
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23a10185ae919e0a0800000000000000
+      internalID: -6851916863777007054
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_24
+      rect:
+        serializedVersion: 2
+        x: 1562
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 701636846d624d9f0800000000000000
+      internalID: -444687761423507193
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_25
+      rect:
+        serializedVersion: 2
+        x: 1626
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7da9ec8f7da1e540800000000000000
+      internalID: 5035496621713501564
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_26
+      rect:
+        serializedVersion: 2
+        x: 1690
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e7b189e3bfef867d0800000000000000
+      internalID: -2924807602936734850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_27
+      rect:
+        serializedVersion: 2
+        x: 1754
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 394d666b6a0018f40800000000000000
+      internalID: 5728860917016745107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_28
+      rect:
+        serializedVersion: 2
+        x: 1818
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ada81eea49f2fb00800000000000000
+      internalID: 861024578998676903
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_29
+      rect:
+        serializedVersion: 2
+        x: 1882
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ecab339e1bf2ef590800000000000000
+      internalID: -7638615476805584178
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_30
+      rect:
+        serializedVersion: 2
+        x: 1946
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c186a0bdbe19abd0800000000000000
+      internalID: -2618527908277878328
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StandUp_W_31
+      rect:
+        serializedVersion: 2
+        x: 2010
+        y: 16
+        width: 12
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ac5b4c86ef72e9c0800000000000000
+      internalID: -3899413699176473433
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      StandUp_W_0: -1667724475508710404
+      StandUp_W_1: -1275807665355333952
+      StandUp_W_10: 4377455084918937471
+      StandUp_W_11: -377001594779841275
+      StandUp_W_12: -5417940487695180666
+      StandUp_W_13: -6281861561330336734
+      StandUp_W_14: 6114443175416564589
+      StandUp_W_15: -2679418209905656885
+      StandUp_W_16: 832601886231299868
+      StandUp_W_17: -2801910159258076071
+      StandUp_W_18: -5991967004723840713
+      StandUp_W_19: 361650379671539672
+      StandUp_W_2: -6291614635194996817
+      StandUp_W_20: -6562523352403562659
+      StandUp_W_21: 1952267777350152747
+      StandUp_W_22: 8471997174643726616
+      StandUp_W_23: -6851916863777007054
+      StandUp_W_24: -444687761423507193
+      StandUp_W_25: 5035496621713501564
+      StandUp_W_26: -2924807602936734850
+      StandUp_W_27: 5728860917016745107
+      StandUp_W_28: 861024578998676903
+      StandUp_W_29: -7638615476805584178
+      StandUp_W_3: 2692897071223416142
+      StandUp_W_30: -2618527908277878328
+      StandUp_W_31: -3899413699176473433
+      StandUp_W_4: -652976137434235463
+      StandUp_W_5: 8882589260730815615
+      StandUp_W_6: 7439495450713720916
+      StandUp_W_7: 4891683476052744077
+      StandUp_W_8: -1897290497142486876
+      StandUp_W_9: 5628463573279001696
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

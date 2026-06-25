@@ -15,12 +15,25 @@ MonoBehaviour:
   displayName: Sai
   icon: {fileID: -6251451809504726511, guid: f7e50abcc73a6e840931357c69859e13, type: 3}
   slot: 3
+  rarity: 1
+  category: 0
+  cardSlots: 1
+  weight: 70
+  zeny: 3200
   bonusHP: 0
   bonusAttack: 2
   bonusDefense: 1
   bonusMP: 0
   bonusMAtk: 0
   bonusMDef: 0
+  bonusStr: 0
+  bonusAgi: 0
+  bonusVit: 0
+  bonusInt: 0
+  bonusDex: 0
+  bonusLuk: 0
+  bonusCritPercent: 0
+  bonusAspdPercent: 0
   healAmount: 0
   attackSfx:
     clips:

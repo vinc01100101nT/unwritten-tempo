@@ -1,0 +1,910 @@
+fileFormatVersion: 2
+guid: 16fa8d880557e544daf6e76b00e91e40
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 5194178872554169947
+    second: PickUp_N_0
+  - first:
+      213: -6731136760494778367
+    second: PickUp_N_1
+  - first:
+      213: -9047612693547889473
+    second: PickUp_N_2
+  - first:
+      213: 3121273050703402850
+    second: PickUp_N_3
+  - first:
+      213: -9139651720007711187
+    second: PickUp_N_4
+  - first:
+      213: 5084610870540051866
+    second: PickUp_N_5
+  - first:
+      213: -1871159209835398451
+    second: PickUp_N_6
+  - first:
+      213: -4256551680772616465
+    second: PickUp_N_7
+  - first:
+      213: -5930794067555674497
+    second: PickUp_N_8
+  - first:
+      213: -5977438994845052394
+    second: PickUp_N_9
+  - first:
+      213: -4229478260920265237
+    second: PickUp_N_10
+  - first:
+      213: -6309447971676239950
+    second: PickUp_N_11
+  - first:
+      213: 8319465983608849150
+    second: PickUp_N_12
+  - first:
+      213: -3726559252482849579
+    second: PickUp_N_13
+  - first:
+      213: -1255058266313935051
+    second: PickUp_N_14
+  - first:
+      213: 3062505284446106125
+    second: PickUp_N_15
+  - first:
+      213: -8170101108701311996
+    second: PickUp_N_16
+  - first:
+      213: 7130565945870800255
+    second: PickUp_N_17
+  - first:
+      213: 1903429185040885295
+    second: PickUp_N_18
+  - first:
+      213: 1148139626825557245
+    second: PickUp_N_19
+  - first:
+      213: -2290323914775515456
+    second: PickUp_N_20
+  - first:
+      213: 6993270498904478250
+    second: PickUp_N_21
+  - first:
+      213: 3473129974066314473
+    second: PickUp_N_22
+  - first:
+      213: -4634774849171054720
+    second: PickUp_N_23
+  - first:
+      213: -3115756688602438107
+    second: PickUp_N_24
+  - first:
+      213: -2105924898505417831
+    second: PickUp_N_25
+  - first:
+      213: 6390175169633563161
+    second: PickUp_N_26
+  - first:
+      213: -5694985848057390447
+    second: PickUp_N_27
+  - first:
+      213: 7204376142426450306
+    second: PickUp_N_28
+  - first:
+      213: -3877427444687994181
+    second: PickUp_N_29
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 8192
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: PickUp_N_0
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 17
+        width: 14
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b562e662a2e651840800000000000000
+      internalID: 5194178872554169947
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_1
+      rect:
+        serializedVersion: 2
+        x: 89
+        y: 17
+        width: 14
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 108922887c23692a0800000000000000
+      internalID: -6731136760494778367
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_2
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 17
+        width: 14
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fbc43c7013c607280800000000000000
+      internalID: -9047612693547889473
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_3
+      rect:
+        serializedVersion: 2
+        x: 217
+        y: 17
+        width: 14
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2671d2a6d4df05b20800000000000000
+      internalID: 3121273050703402850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_4
+      rect:
+        serializedVersion: 2
+        x: 281
+        y: 17
+        width: 14
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2607224f2f692180800000000000000
+      internalID: -9139651720007711187
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_5
+      rect:
+        serializedVersion: 2
+        x: 345
+        y: 17
+        width: 14
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9521a7b5aa209640800000000000000
+      internalID: 5084610870540051866
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_6
+      rect:
+        serializedVersion: 2
+        x: 409
+        y: 17
+        width: 14
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dca7f8bcc9e4806e0800000000000000
+      internalID: -1871159209835398451
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_7
+      rect:
+        serializedVersion: 2
+        x: 473
+        y: 17
+        width: 14
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: feec47b6cc0bde4c0800000000000000
+      internalID: -4256551680772616465
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_8
+      rect:
+        serializedVersion: 2
+        x: 537
+        y: 17
+        width: 14
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f76995fd73691bda0800000000000000
+      internalID: -5930794067555674497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_9
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 17
+        width: 15
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61251bd67eedb0da0800000000000000
+      internalID: -5977438994845052394
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_10
+      rect:
+        serializedVersion: 2
+        x: 664
+        y: 17
+        width: 15
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be55c903eefdd45c0800000000000000
+      internalID: -4229478260920265237
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_11
+      rect:
+        serializedVersion: 2
+        x: 728
+        y: 17
+        width: 15
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b7cd67af765078a0800000000000000
+      internalID: -6309447971676239950
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_12
+      rect:
+        serializedVersion: 2
+        x: 792
+        y: 17
+        width: 15
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ef283f1db3ea47370800000000000000
+      internalID: 8319465983608849150
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_13
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 17
+        width: 15
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d48051aa1a984cc0800000000000000
+      internalID: -3726559252482849579
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_14
+      rect:
+        serializedVersion: 2
+        x: 920
+        y: 17
+        width: 15
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 537b0f70823259ee0800000000000000
+      internalID: -1255058266313935051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_15
+      rect:
+        serializedVersion: 2
+        x: 984
+        y: 17
+        width: 15
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d02ba229454308a20800000000000000
+      internalID: 3062505284446106125
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_16
+      rect:
+        serializedVersion: 2
+        x: 1048
+        y: 17
+        width: 15
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40c45d42458fd9e80800000000000000
+      internalID: -8170101108701311996
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_17
+      rect:
+        serializedVersion: 2
+        x: 1112
+        y: 17
+        width: 15
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f75502bc2fbd4f260800000000000000
+      internalID: 7130565945870800255
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_18
+      rect:
+        serializedVersion: 2
+        x: 1176
+        y: 17
+        width: 15
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f26297d42c65a6a10800000000000000
+      internalID: 1903429185040885295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_19
+      rect:
+        serializedVersion: 2
+        x: 1241
+        y: 17
+        width: 14
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df4ac7158e20fef00800000000000000
+      internalID: 1148139626825557245
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_20
+      rect:
+        serializedVersion: 2
+        x: 1305
+        y: 17
+        width: 14
+        height: 28
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0ce293fb8822730e0800000000000000
+      internalID: -2290323914775515456
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_21
+      rect:
+        serializedVersion: 2
+        x: 1369
+        y: 17
+        width: 14
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a229b6187761d0160800000000000000
+      internalID: 6993270498904478250
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_22
+      rect:
+        serializedVersion: 2
+        x: 1433
+        y: 17
+        width: 14
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ecfbfa5f49033030800000000000000
+      internalID: 3473129974066314473
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_23
+      rect:
+        serializedVersion: 2
+        x: 1497
+        y: 17
+        width: 14
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08f9e3da4d8fdafb0800000000000000
+      internalID: -4634774849171054720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_24
+      rect:
+        serializedVersion: 2
+        x: 1561
+        y: 17
+        width: 14
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 526ed49bccb92c4d0800000000000000
+      internalID: -3115756688602438107
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_25
+      rect:
+        serializedVersion: 2
+        x: 1625
+        y: 17
+        width: 14
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 99b1fe4667046c2e0800000000000000
+      internalID: -2105924898505417831
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_26
+      rect:
+        serializedVersion: 2
+        x: 1689
+        y: 17
+        width: 14
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 912b78ec5767ea850800000000000000
+      internalID: 6390175169633563161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_27
+      rect:
+        serializedVersion: 2
+        x: 1753
+        y: 17
+        width: 14
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19a99a56b8857f0b0800000000000000
+      internalID: -5694985848057390447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_28
+      rect:
+        serializedVersion: 2
+        x: 1817
+        y: 17
+        width: 14
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 289a0ad5ee51bf360800000000000000
+      internalID: 7204376142426450306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: PickUp_N_29
+      rect:
+        serializedVersion: 2
+        x: 1881
+        y: 17
+        width: 14
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb28505584c903ac0800000000000000
+      internalID: -3877427444687994181
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      PickUp_N_0: 5194178872554169947
+      PickUp_N_1: -6731136760494778367
+      PickUp_N_10: -4229478260920265237
+      PickUp_N_11: -6309447971676239950
+      PickUp_N_12: 8319465983608849150
+      PickUp_N_13: -3726559252482849579
+      PickUp_N_14: -1255058266313935051
+      PickUp_N_15: 3062505284446106125
+      PickUp_N_16: -8170101108701311996
+      PickUp_N_17: 7130565945870800255
+      PickUp_N_18: 1903429185040885295
+      PickUp_N_19: 1148139626825557245
+      PickUp_N_2: -9047612693547889473
+      PickUp_N_20: -2290323914775515456
+      PickUp_N_21: 6993270498904478250
+      PickUp_N_22: 3473129974066314473
+      PickUp_N_23: -4634774849171054720
+      PickUp_N_24: -3115756688602438107
+      PickUp_N_25: -2105924898505417831
+      PickUp_N_26: 6390175169633563161
+      PickUp_N_27: -5694985848057390447
+      PickUp_N_28: 7204376142426450306
+      PickUp_N_29: -3877427444687994181
+      PickUp_N_3: 3121273050703402850
+      PickUp_N_4: -9139651720007711187
+      PickUp_N_5: 5084610870540051866
+      PickUp_N_6: -1871159209835398451
+      PickUp_N_7: -4256551680772616465
+      PickUp_N_8: -5930794067555674497
+      PickUp_N_9: -5977438994845052394
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

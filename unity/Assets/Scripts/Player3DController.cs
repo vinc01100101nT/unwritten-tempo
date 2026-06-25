@@ -279,7 +279,7 @@ public partial class Player3DController : MonoBehaviour
     }
 
     /// <summary>Switch class at runtime (persists + re-applies). Used by the DevSettings (P) panel.</summary>
-    public void SetClass(PlayerClass c) { ClassState.Current = c; ApplyClass(c); }
+    public void SetClass(PlayerClass c) { ClassState.Current = c; ApplyClass(c); if (Character.Instance != null) Character.Instance.ReconcileVitals(); }
 
     /// <summary>Push the serialized capsule fields onto the CharacterController. Called in Awake so the
     /// tuned (short) capsule is enforced on every player — even one built before this — and re-applies

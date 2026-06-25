@@ -45,7 +45,7 @@ function Backdrop({ children }: { children: React.ReactNode }) {
 export const SkillDraft: TempoStoryboard = {
   render: () => <SkillDraftPage />,
   name: "Level-Up Skill Draft (full screen)",
-  layout: { x: 0, y: 0, width: 1280, height: 1750 },
+  layout: { x: 0, y: 0, width: 1280, height: 1887 },
 };
 
 export const GuaranteedCard: TempoStoryboard = {
@@ -90,5 +90,5 @@ export const BuildPanel: TempoStoryboard = {
     </Backdrop>
   ),
   name: "Build Panel (mid-run)",
-  layout: { x: 2150, y: 0, width: 340, height: 320 },
+  layout: { x: 2150, y: 0, width: 340, height: 331 },
 };

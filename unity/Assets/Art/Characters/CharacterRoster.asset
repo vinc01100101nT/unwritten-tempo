@@ -22,3 +22,150 @@ MonoBehaviour:
   - name: BlueSoldier_Male
     prefab: {fileID: 8827370032465570252, guid: 7fec109bc162f5149bc8def586288ad4, type: 3}
     previewStrip: {fileID: 2800000, guid: 774645a9841735840bd73b74624ddd0d, type: 3}
+  - name: Casual_Bald
+    prefab: {fileID: 6951380252707668926, guid: 5ee74e2357e040742aa6a4ffe312f1d9, type: 3}
+    previewStrip: {fileID: 2800000, guid: 1aff52a0208409345ba6de986abffc05, type: 3}
+  - name: Casual_Female
+    prefab: {fileID: 6179842788316620423, guid: 8253d7c9db58ec748a0d27201d67b0ef, type: 3}
+    previewStrip: {fileID: 2800000, guid: 0dc7b60a6e8c2ec4db407f9181a2266a, type: 3}
+  - name: Casual_Male
+    prefab: {fileID: 3187255883869082678, guid: 819d062aff894304bb6df3b68407a765, type: 3}
+    previewStrip: {fileID: 2800000, guid: f779eb940a53103448ef0d658931221f, type: 3}
+  - name: Casual2_Female
+    prefab: {fileID: 768182858134447852, guid: 0907c0e1b6dbc254ba546b55865ec775, type: 3}
+    previewStrip: {fileID: 2800000, guid: 44b9cce26cbac324eab133360ab1ff2f, type: 3}
+  - name: Casual2_Male
+    prefab: {fileID: 7469927788769691997, guid: 6f9b4b61c20502b41b698c4429a4877a, type: 3}
+    previewStrip: {fileID: 2800000, guid: 1e5cf4680a6d2d9489897a5927bf888e, type: 3}
+  - name: Casual3_Female
+    prefab: {fileID: 7860642415857936496, guid: 0f11c154f47d89840a1f936236dc89fe, type: 3}
+    previewStrip: {fileID: 2800000, guid: 8e44dde79055a7b4ea1f0a31402c138a, type: 3}
+  - name: Casual3_Male
+    prefab: {fileID: 2372006770811607669, guid: e6f87911d70a35b4bbaa9dfbc2f8c631, type: 3}
+    previewStrip: {fileID: 2800000, guid: a8a268b8e71b89d43acb58e1dd38f0c6, type: 3}
+  - name: Chef_Female
+    prefab: {fileID: 676257889443848784, guid: 1949c8aa7ab836e4c8a7113443298c3e, type: 3}
+    previewStrip: {fileID: 2800000, guid: b8897349200d2034f81a846f01668e88, type: 3}
+  - name: Chef_Hat
+    prefab: {fileID: 7063558100490823064, guid: c86ed4497af6da548831e8c0c8353d5e, type: 3}
+    previewStrip: {fileID: 2800000, guid: 7ca42e19b81b6b344a5d01c7bdd62bd9, type: 3}
+  - name: Chef_Male
+    prefab: {fileID: 5618195377041248373, guid: 819e36a54f3c7ae4bad1274eaeed970f, type: 3}
+    previewStrip: {fileID: 2800000, guid: d8e85121e624a3644bad41ffffc3b04f, type: 3}
+  - name: Cow
+    prefab: {fileID: 8458435830992734346, guid: 3ff7e2cbab8d6b24bbef5edfc64f6049, type: 3}
+    previewStrip: {fileID: 2800000, guid: ef919358c65fb8249a35dcf7745d08ea, type: 3}
+  - name: Cowboy_Female
+    prefab: {fileID: 5207220295099849109, guid: 1374887838ac7874f89ec8177e81c314, type: 3}
+    previewStrip: {fileID: 2800000, guid: ba964d99cecfa8344a9902dec58eb130, type: 3}
+  - name: Cowboy_Hair
+    prefab: {fileID: 9013290395937236440, guid: 0c44df22a9850524898394d9d6562290, type: 3}
+    previewStrip: {fileID: 2800000, guid: e54b1aad6648ecd43bfce340e12aedc6, type: 3}
+  - name: Cowboy_Male
+    prefab: {fileID: 3576710725216931578, guid: 534de7d3fa6c35f40b9df489bec206fe, type: 3}
+    previewStrip: {fileID: 2800000, guid: a5fb0b30223eac548ba70c0499e370eb, type: 3}
+  - name: Doctor_Female_Old
+    prefab: {fileID: 6740925632479681321, guid: fde45727570dcfe4b8d76ad0313b4cfc, type: 3}
+    previewStrip: {fileID: 2800000, guid: 9a8dcb9b0e1ae874ebc51b44a7c844d2, type: 3}
+  - name: Doctor_Female_Young
+    prefab: {fileID: 1377317250469994052, guid: f41735b1c27701d4da6b9428f604e33a, type: 3}
+    previewStrip: {fileID: 2800000, guid: f0e955795d0a1ca4b9ea5ca410b9629b, type: 3}
+  - name: Doctor_Male_Old
+    prefab: {fileID: 929270017763320300, guid: dd405047f80bc2b44beed35c13ad6400, type: 3}
+    previewStrip: {fileID: 2800000, guid: de2240e4c56b52b44995387913cf4761, type: 3}
+  - name: Doctor_Male_Young
+    prefab: {fileID: 8445678041755584729, guid: 14669b3c4a164af489a37b19f21e2892, type: 3}
+    previewStrip: {fileID: 2800000, guid: a3a2e5bd80c84b64c8e48e7d66b2a45b, type: 3}
+  - name: Elf
+    prefab: {fileID: 8399356574133292193, guid: 5b5261c8e3a9f46468e869e2387a3859, type: 3}
+    previewStrip: {fileID: 2800000, guid: 34045c66098bfb94bbd0823e8e459288, type: 3}
+  - name: Goblin_Female
+    prefab: {fileID: 6100058845608253822, guid: 4c58cd01e913f5644aefee88e106c926, type: 3}
+    previewStrip: {fileID: 2800000, guid: 92041fd6631394e4f8e5c098dd068384, type: 3}
+  - name: Goblin_Male
+    prefab: {fileID: 6196245515878520416, guid: 6cd1991147cdf0749a501d169ecf96ff, type: 3}
+    previewStrip: {fileID: 2800000, guid: 91013e52bccacfc43babfc929e1850f9, type: 3}
+  - name: Kimono_Female
+    prefab: {fileID: 357517943805703162, guid: 7d355e8d50687724599673e105b140a6, type: 3}
+    previewStrip: {fileID: 2800000, guid: d3362eadf00466f47a7d99c9ecf7dfdd, type: 3}
+  - name: Kimono_Male
+    prefab: {fileID: 4599121011808863326, guid: c18878b41bffcd54480010998865de1e, type: 3}
+    previewStrip: {fileID: 2800000, guid: 59120dcd23ba61049af573db7ff597f7, type: 3}
+  - name: Knight_Golden_Female
+    prefab: {fileID: 3355719262295233681, guid: 89c16c3124eaf64448c8493bf9d12013, type: 3}
+    previewStrip: {fileID: 2800000, guid: aa972b9b7ad33c1408c65dd24b661285, type: 3}
+  - name: Knight_Golden_Male
+    prefab: {fileID: 2400538430574864217, guid: dac1123c79ca3684e8d2f11c6b21296c, type: 3}
+    previewStrip: {fileID: 2800000, guid: c0be7f9afaeab184dbc4d9cf55915d6a, type: 3}
+  - name: Knight_Male
+    prefab: {fileID: 7281311944626747926, guid: 7eb0ab622ef11234a8acdfea0298312b, type: 3}
+    previewStrip: {fileID: 2800000, guid: a7a2c92d7937fe249a65b056119cd832, type: 3}
+  - name: Ninja_Female
+    prefab: {fileID: 653063443320286558, guid: 9e7245680aa5f624f919d4ec92155179, type: 3}
+    previewStrip: {fileID: 2800000, guid: 9409dbfe4a239054ea3b0f55550fc716, type: 3}
+  - name: Ninja_Male
+    prefab: {fileID: 9162069548977345539, guid: 91c335af58a03e441bf8f628862d3ca7, type: 3}
+    previewStrip: {fileID: 2800000, guid: 7a5a7b91fa66bd54493c7532a3cae0dc, type: 3}
+  - name: Ninja_Male_Hair
+    prefab: {fileID: 7732190697550721155, guid: 49067b3b23189e743bd76287f8b23b07, type: 3}
+    previewStrip: {fileID: 2800000, guid: 127a3ca27a85b2b4b94e4c4d6f267222, type: 3}
+  - name: Ninja_Sand
+    prefab: {fileID: 8710187635090613014, guid: b3da3bf4dd6214b46a5639acb447a82a, type: 3}
+    previewStrip: {fileID: 2800000, guid: 193147a215c205b4e997b03336c8866d, type: 3}
+  - name: Ninja_Sand_Female
+    prefab: {fileID: 7954791886880998955, guid: 514942dc793fda54cb807c0ca7d811b6, type: 3}
+    previewStrip: {fileID: 2800000, guid: c193e7cca9d89964397ae585d875bde7, type: 3}
+  - name: OldClassy_Female
+    prefab: {fileID: 4380002599244711567, guid: 6e8f1bb55bc64bd4dab7c2edaa56c2db, type: 3}
+    previewStrip: {fileID: 2800000, guid: 4a49a8bb7f048d34d9ac649a3a9cb0cd, type: 3}
+  - name: OldClassy_Male
+    prefab: {fileID: 6423145897913372006, guid: 5115a8f0e483fe645bfed8be59f4a1f4, type: 3}
+    previewStrip: {fileID: 2800000, guid: bc3aa2e97ff67034494550c24b39c310, type: 3}
+  - name: Pirate_Female
+    prefab: {fileID: 8696857188715872720, guid: 4cc0b9abc9ec9b8448de0f291f495199, type: 3}
+    previewStrip: {fileID: 2800000, guid: 05dd922d6f0c23f4a9e00da89286e892, type: 3}
+  - name: Pirate_Male
+    prefab: {fileID: 5596113020699522917, guid: f7968630d3bd84547adf328b93ffb435, type: 3}
+    previewStrip: {fileID: 2800000, guid: 682efb904308a04438d050480aa89e85, type: 3}
+  - name: Pug
+    prefab: {fileID: 5530551326314599844, guid: fdf050f9f0762e340b1bd886ad12fdbf, type: 3}
+    previewStrip: {fileID: 2800000, guid: e68c5b7105949a840a4133fae3ec61ed, type: 3}
+  - name: Soldier_Female
+    prefab: {fileID: 5012324047413694682, guid: c9d6e99a0bd06cd48ad63847884e97cc, type: 3}
+    previewStrip: {fileID: 2800000, guid: f0195fd60130a6a42a101a68c0adff09, type: 3}
+  - name: Soldier_Male
+    prefab: {fileID: 8202570793536903451, guid: b62b38c79e2c294408471e8cda069c32, type: 3}
+    previewStrip: {fileID: 2800000, guid: 09d1770737dac3242b765ec3783dff81, type: 3}
+  - name: Suit_Female
+    prefab: {fileID: 5314756671094080844, guid: 95e17cd6b23d94b41811216fc1cc5838, type: 3}
+    previewStrip: {fileID: 2800000, guid: 939e0e1dc26bfe94cb7a1f80de6e9bcb, type: 3}
+  - name: Suit_Male
+    prefab: {fileID: 1386088609238928926, guid: d6d6a3308fea18045b7d8af7ba75ddd2, type: 3}
+    previewStrip: {fileID: 2800000, guid: ed31fbf3e4285f540b10d5d9de8306a2, type: 3}
+  - name: Viking_Female
+    prefab: {fileID: 4728831650817982045, guid: ac5df70503c116c448283ac3284820d8, type: 3}
+    previewStrip: {fileID: 2800000, guid: a9fad226df9818f4991f11cee57d2151, type: 3}
+  - name: Viking_Male
+    prefab: {fileID: 2058130371469331776, guid: 7074d1bc342600b4f8385a275acfb77b, type: 3}
+    previewStrip: {fileID: 2800000, guid: 659dedd51a29dfb479cd827aca6ccf12, type: 3}
+  - name: VikingHelmet
+    prefab: {fileID: 101215629386064674, guid: e095dcd4929df7f48a82fa70d6106ce8, type: 3}
+    previewStrip: {fileID: 2800000, guid: b1bdb565e55873a48b86d196d347bc57, type: 3}
+  - name: Witch
+    prefab: {fileID: 9078159147478279983, guid: b37d5d7e8affc3a46a74f4d8f8a5dc9b, type: 3}
+    previewStrip: {fileID: 2800000, guid: 9780c4e3445bc93488e6ca1291a985f1, type: 3}
+  - name: Wizard
+    prefab: {fileID: 8393986756513106644, guid: f8a2b12970fd926488822bf3bc71d081, type: 3}
+    previewStrip: {fileID: 2800000, guid: 19e6c09cebccf2e42ad4477fb39c136c, type: 3}
+  - name: Worker_Female
+    prefab: {fileID: 3872394235772937883, guid: 3c02dc0df40cbb046a24db34b824562e, type: 3}
+    previewStrip: {fileID: 2800000, guid: 30b973b2258b1b94cbcbb31c5bc7da56, type: 3}
+  - name: Worker_Male
+    prefab: {fileID: 7885475651693023814, guid: 2dd1a6460e4db9048becd12ac492509a, type: 3}
+    previewStrip: {fileID: 2800000, guid: c3c61c6e043aa2c45bd6f957c0e3789c, type: 3}
+  - name: Zombie_Female
+    prefab: {fileID: 6639991985002043790, guid: 8efb122e8f8430d42860cef3e67e4984, type: 3}
+    previewStrip: {fileID: 2800000, guid: 7abc97813843cd94b8db85db9b79d3f9, type: 3}
+  - name: Zombie_Male
+    prefab: {fileID: 464954099775173161, guid: df2bd7d6a1e229b4d9ce030a25f81cfa, type: 3}
+    previewStrip: {fileID: 2800000, guid: f017ea347ede73247afca6b1e6a09eb0, type: 3}

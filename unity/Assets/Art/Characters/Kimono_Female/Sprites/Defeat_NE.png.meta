@@ -1,0 +1,1690 @@
+fileFormatVersion: 2
+guid: 4784f2fa5b6db3f49b1a02838ce94595
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 7132403481471882098
+    second: Defeat_NE_0
+  - first:
+      213: 3239661910064397051
+    second: Defeat_NE_1
+  - first:
+      213: 5776432413110416522
+    second: Defeat_NE_2
+  - first:
+      213: 455067904005003016
+    second: Defeat_NE_3
+  - first:
+      213: -4597643746135002395
+    second: Defeat_NE_4
+  - first:
+      213: 4804430039326456152
+    second: Defeat_NE_5
+  - first:
+      213: -4640416431444981489
+    second: Defeat_NE_6
+  - first:
+      213: -2707679311432755475
+    second: Defeat_NE_7
+  - first:
+      213: 7180629740188090477
+    second: Defeat_NE_8
+  - first:
+      213: 4586310732052748956
+    second: Defeat_NE_9
+  - first:
+      213: -6801244604925690104
+    second: Defeat_NE_10
+  - first:
+      213: -3158887398713876733
+    second: Defeat_NE_11
+  - first:
+      213: 6802831106277498444
+    second: Defeat_NE_12
+  - first:
+      213: -2732682608775067021
+    second: Defeat_NE_13
+  - first:
+      213: -7051718795798669742
+    second: Defeat_NE_14
+  - first:
+      213: 1315266945196757974
+    second: Defeat_NE_15
+  - first:
+      213: 7299630585353575464
+    second: Defeat_NE_16
+  - first:
+      213: -2270362808315136228
+    second: Defeat_NE_17
+  - first:
+      213: -405706772916327943
+    second: Defeat_NE_18
+  - first:
+      213: 6693846058113437891
+    second: Defeat_NE_19
+  - first:
+      213: -8227260258840921013
+    second: Defeat_NE_20
+  - first:
+      213: 5579917302283909956
+    second: Defeat_NE_21
+  - first:
+      213: 6958968131924904769
+    second: Defeat_NE_22
+  - first:
+      213: 996184545634190085
+    second: Defeat_NE_23
+  - first:
+      213: -9041952624940954200
+    second: Defeat_NE_24
+  - first:
+      213: 3609381794765741241
+    second: Defeat_NE_25
+  - first:
+      213: -8011319588329250552
+    second: Defeat_NE_26
+  - first:
+      213: -6734356341699776857
+    second: Defeat_NE_27
+  - first:
+      213: -3997966258560541143
+    second: Defeat_NE_28
+  - first:
+      213: 6585865515375967889
+    second: Defeat_NE_29
+  - first:
+      213: -1715668027407925525
+    second: Defeat_NE_30
+  - first:
+      213: 7362298002823736097
+    second: Defeat_NE_31
+  - first:
+      213: 423636691940522008
+    second: Defeat_NE_32
+  - first:
+      213: 2565033851333164029
+    second: Defeat_NE_33
+  - first:
+      213: -6815393438696771479
+    second: Defeat_NE_34
+  - first:
+      213: 399362667335672559
+    second: Defeat_NE_35
+  - first:
+      213: -260062734204534198
+    second: Defeat_NE_36
+  - first:
+      213: 7096272167528005299
+    second: Defeat_NE_37
+  - first:
+      213: 5241961570381981725
+    second: Defeat_NE_38
+  - first:
+      213: 3840459825379782129
+    second: Defeat_NE_39
+  - first:
+      213: 4711969676769049573
+    second: Defeat_NE_40
+  - first:
+      213: 3443525381079494732
+    second: Defeat_NE_41
+  - first:
+      213: -201601268200072782
+    second: Defeat_NE_42
+  - first:
+      213: -6820452696899671369
+    second: Defeat_NE_43
+  - first:
+      213: 2209683348753801396
+    second: Defeat_NE_44
+  - first:
+      213: 1213929852950264711
+    second: Defeat_NE_45
+  - first:
+      213: 3232680969297980530
+    second: Defeat_NE_46
+  - first:
+      213: 6612238526131123584
+    second: Defeat_NE_47
+  - first:
+      213: 3653958974681249444
+    second: Defeat_NE_48
+  - first:
+      213: 6968672490554537760
+    second: Defeat_NE_49
+  - first:
+      213: -5809839107367426266
+    second: Defeat_NE_50
+  - first:
+      213: 4027064593795017865
+    second: Defeat_NE_51
+  - first:
+      213: 3171620243841900681
+    second: Defeat_NE_52
+  - first:
+      213: -7319245889230475334
+    second: Defeat_NE_53
+  - first:
+      213: 4281676069326719612
+    second: Defeat_NE_54
+  - first:
+      213: -6249983625935739896
+    second: Defeat_NE_55
+  - first:
+      213: -6613227111060991242
+    second: Defeat_NE_56
+  - first:
+      213: -124298182996564441
+    second: Defeat_NE_57
+  - first:
+      213: 2549251738350415532
+    second: Defeat_NE_58
+  - first:
+      213: -4867803331391806254
+    second: Defeat_NE_59
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 8192
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Defeat_NE_0
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 16
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27314e36d236bf260800000000000000
+      internalID: 7132403481471882098
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_1
+      rect:
+        serializedVersion: 2
+        x: 89
+        y: 16
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bfa70cdb75795fc20800000000000000
+      internalID: 3239661910064397051
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_2
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a84bf74cca20a2050800000000000000
+      internalID: 5776432413110416522
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_3
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 16
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80756eef8d9b05600800000000000000
+      internalID: 455067904005003016
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_4
+      rect:
+        serializedVersion: 2
+        x: 282
+        y: 16
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5e2b3db4f53e130c0800000000000000
+      internalID: -4597643746135002395
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_5
+      rect:
+        serializedVersion: 2
+        x: 346
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 859f4427aa3cca240800000000000000
+      internalID: 4804430039326456152
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_6
+      rect:
+        serializedVersion: 2
+        x: 410
+        y: 16
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0906d177dde99fb0800000000000000
+      internalID: -4640416431444981489
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_7
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: de6506c13046c6ad0800000000000000
+      internalID: -2707679311432755475
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_8
+      rect:
+        serializedVersion: 2
+        x: 538
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d60448f34b8b6a360800000000000000
+      internalID: 7180629740188090477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_9
+      rect:
+        serializedVersion: 2
+        x: 602
+        y: 16
+        width: 19
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9ad09dbf49d5af30800000000000000
+      internalID: 4586310732052748956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_10
+      rect:
+        serializedVersion: 2
+        x: 666
+        y: 16
+        width: 19
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 80fbcdcf0102d91a0800000000000000
+      internalID: -6801244604925690104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_11
+      rect:
+        serializedVersion: 2
+        x: 730
+        y: 16
+        width: 20
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30f933ab5a06924d0800000000000000
+      internalID: -3158887398713876733
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_12
+      rect:
+        serializedVersion: 2
+        x: 794
+        y: 16
+        width: 21
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c4ed5a429d2886e50800000000000000
+      internalID: 6802831106277498444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_13
+      rect:
+        serializedVersion: 2
+        x: 858
+        y: 16
+        width: 22
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37a031c45af831ad0800000000000000
+      internalID: -2732682608775067021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_14
+      rect:
+        serializedVersion: 2
+        x: 922
+        y: 16
+        width: 22
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2569978ed13432e90800000000000000
+      internalID: -7051718795798669742
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_15
+      rect:
+        serializedVersion: 2
+        x: 986
+        y: 16
+        width: 22
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d3144d6154c04210800000000000000
+      internalID: 1315266945196757974
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_16
+      rect:
+        serializedVersion: 2
+        x: 1050
+        y: 16
+        width: 22
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82c939f975f7d4560800000000000000
+      internalID: 7299630585353575464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_17
+      rect:
+        serializedVersion: 2
+        x: 1114
+        y: 16
+        width: 21
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c173e130e0d0e70e0800000000000000
+      internalID: -2270362808315136228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_18
+      rect:
+        serializedVersion: 2
+        x: 1178
+        y: 16
+        width: 20
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9f92a5de6d3ae5af0800000000000000
+      internalID: -405706772916327943
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_19
+      rect:
+        serializedVersion: 2
+        x: 1242
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c0100b368155ec50800000000000000
+      internalID: 6693846058113437891
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_20
+      rect:
+        serializedVersion: 2
+        x: 1306
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4c391d6266e2dd80800000000000000
+      internalID: -8227260258840921013
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_21
+      rect:
+        serializedVersion: 2
+        x: 1370
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44b30b60939df6d40800000000000000
+      internalID: 5579917302283909956
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_22
+      rect:
+        serializedVersion: 2
+        x: 1434
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 14bc5a255a8339060800000000000000
+      internalID: 6958968131924904769
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_23
+      rect:
+        serializedVersion: 2
+        x: 1498
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5038245f09823dd00800000000000000
+      internalID: 996184545634190085
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_24
+      rect:
+        serializedVersion: 2
+        x: 1562
+        y: 16
+        width: 19
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8adcb727ef7848280800000000000000
+      internalID: -9041952624940954200
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_25
+      rect:
+        serializedVersion: 2
+        x: 1627
+        y: 16
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9bc16c77e99171230800000000000000
+      internalID: 3609381794765741241
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_26
+      rect:
+        serializedVersion: 2
+        x: 1691
+        y: 16
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 801a18bb74312d090800000000000000
+      internalID: -8011319588329250552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_27
+      rect:
+        serializedVersion: 2
+        x: 1755
+        y: 16
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7aee51e5692ca82a0800000000000000
+      internalID: -6734356341699776857
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_28
+      rect:
+        serializedVersion: 2
+        x: 1819
+        y: 16
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92e5086bede5488c0800000000000000
+      internalID: -3997966258560541143
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_29
+      rect:
+        serializedVersion: 2
+        x: 1883
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19eba76fac1b56b50800000000000000
+      internalID: 6585865515375967889
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_30
+      rect:
+        serializedVersion: 2
+        x: 1947
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: beefad1e409b038e0800000000000000
+      internalID: -1715668027407925525
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_31
+      rect:
+        serializedVersion: 2
+        x: 2011
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 12b60e4c6032c2660800000000000000
+      internalID: 7362298002823736097
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_32
+      rect:
+        serializedVersion: 2
+        x: 2075
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 818bfe8a35f01e500800000000000000
+      internalID: 423636691940522008
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_33
+      rect:
+        serializedVersion: 2
+        x: 2139
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dfbb09992b4d89320800000000000000
+      internalID: 2565033851333164029
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_34
+      rect:
+        serializedVersion: 2
+        x: 2203
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 96073f9e6cbda61a0800000000000000
+      internalID: -6815393438696771479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_35
+      rect:
+        serializedVersion: 2
+        x: 2267
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe26813ea32da8500800000000000000
+      internalID: 399362667335672559
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_36
+      rect:
+        serializedVersion: 2
+        x: 2331
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a420c643252146cf0800000000000000
+      internalID: -260062734204534198
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_37
+      rect:
+        serializedVersion: 2
+        x: 2395
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3be7ffe40f50b7260800000000000000
+      internalID: 7096272167528005299
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_38
+      rect:
+        serializedVersion: 2
+        x: 2459
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d18edd076403fb840800000000000000
+      internalID: 5241961570381981725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_39
+      rect:
+        serializedVersion: 2
+        x: 2523
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fdabe11ddd0c4530800000000000000
+      internalID: 3840459825379782129
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_40
+      rect:
+        serializedVersion: 2
+        x: 2587
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5eb3b38b477446140800000000000000
+      internalID: 4711969676769049573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_41
+      rect:
+        serializedVersion: 2
+        x: 2651
+        y: 16
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c40f84ae61cd9cf20800000000000000
+      internalID: 3443525381079494732
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_42
+      rect:
+        serializedVersion: 2
+        x: 2715
+        y: 16
+        width: 20
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b99aa6f6b4c33df0800000000000000
+      internalID: -201601268200072782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_43
+      rect:
+        serializedVersion: 2
+        x: 2779
+        y: 16
+        width: 20
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7baa0f19862e851a0800000000000000
+      internalID: -6820452696899671369
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_44
+      rect:
+        serializedVersion: 2
+        x: 2842
+        y: 16
+        width: 22
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4b0e09c5c4f5aae10800000000000000
+      internalID: 2209683348753801396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_45
+      rect:
+        serializedVersion: 2
+        x: 2906
+        y: 16
+        width: 22
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 78bb75305ceb8d010800000000000000
+      internalID: 1213929852950264711
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_46
+      rect:
+        serializedVersion: 2
+        x: 2970
+        y: 16
+        width: 21
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27ceb2fc63accdc20800000000000000
+      internalID: 3232680969297980530
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_47
+      rect:
+        serializedVersion: 2
+        x: 3034
+        y: 16
+        width: 20
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 085b23808e363cb50800000000000000
+      internalID: 6612238526131123584
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_48
+      rect:
+        serializedVersion: 2
+        x: 3098
+        y: 16
+        width: 20
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a6f9b5f35875b230800000000000000
+      internalID: 3653958974681249444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_49
+      rect:
+        serializedVersion: 2
+        x: 3162
+        y: 16
+        width: 18
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0273a8365b2b5b060800000000000000
+      internalID: 6968672490554537760
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_50
+      rect:
+        serializedVersion: 2
+        x: 3226
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 627213b1d1e4f5fa0800000000000000
+      internalID: -5809839107367426266
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_51
+      rect:
+        serializedVersion: 2
+        x: 3290
+        y: 16
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98c64b869e103e730800000000000000
+      internalID: 4027064593795017865
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_52
+      rect:
+        serializedVersion: 2
+        x: 3353
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 98062accecbd30c20800000000000000
+      internalID: 3171620243841900681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_53
+      rect:
+        serializedVersion: 2
+        x: 3417
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: abfedac84a0dc6a90800000000000000
+      internalID: -7319245889230475334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_54
+      rect:
+        serializedVersion: 2
+        x: 3481
+        y: 16
+        width: 17
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c7a828323b19b6b30800000000000000
+      internalID: 4281676069326719612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_55
+      rect:
+        serializedVersion: 2
+        x: 3545
+        y: 16
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 804a71c81099349a0800000000000000
+      internalID: -6249983625935739896
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_56
+      rect:
+        serializedVersion: 2
+        x: 3609
+        y: 16
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f21a3a1bf81934a0800000000000000
+      internalID: -6613227111060991242
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_57
+      rect:
+        serializedVersion: 2
+        x: 3673
+        y: 16
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 726634c0677664ef0800000000000000
+      internalID: -124298182996564441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_58
+      rect:
+        serializedVersion: 2
+        x: 3737
+        y: 16
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cae6c6313f2c06320800000000000000
+      internalID: 2549251738350415532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Defeat_NE_59
+      rect:
+        serializedVersion: 2
+        x: 3801
+        y: 16
+        width: 16
+        height: 31
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2d4adeb29a6127cb0800000000000000
+      internalID: -4867803331391806254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Defeat_NE_0: 7132403481471882098
+      Defeat_NE_1: 3239661910064397051
+      Defeat_NE_10: -6801244604925690104
+      Defeat_NE_11: -3158887398713876733
+      Defeat_NE_12: 6802831106277498444
+      Defeat_NE_13: -2732682608775067021
+      Defeat_NE_14: -7051718795798669742
+      Defeat_NE_15: 1315266945196757974
+      Defeat_NE_16: 7299630585353575464
+      Defeat_NE_17: -2270362808315136228
+      Defeat_NE_18: -405706772916327943
+      Defeat_NE_19: 6693846058113437891
+      Defeat_NE_2: 5776432413110416522
+      Defeat_NE_20: -8227260258840921013
+      Defeat_NE_21: 5579917302283909956
+      Defeat_NE_22: 6958968131924904769
+      Defeat_NE_23: 996184545634190085
+      Defeat_NE_24: -9041952624940954200
+      Defeat_NE_25: 3609381794765741241
+      Defeat_NE_26: -8011319588329250552
+      Defeat_NE_27: -6734356341699776857
+      Defeat_NE_28: -3997966258560541143
+      Defeat_NE_29: 6585865515375967889
+      Defeat_NE_3: 455067904005003016
+      Defeat_NE_30: -1715668027407925525
+      Defeat_NE_31: 7362298002823736097
+      Defeat_NE_32: 423636691940522008
+      Defeat_NE_33: 2565033851333164029
+      Defeat_NE_34: -6815393438696771479
+      Defeat_NE_35: 399362667335672559
+      Defeat_NE_36: -260062734204534198
+      Defeat_NE_37: 7096272167528005299
+      Defeat_NE_38: 5241961570381981725
+      Defeat_NE_39: 3840459825379782129
+      Defeat_NE_4: -4597643746135002395
+      Defeat_NE_40: 4711969676769049573
+      Defeat_NE_41: 3443525381079494732
+      Defeat_NE_42: -201601268200072782
+      Defeat_NE_43: -6820452696899671369
+      Defeat_NE_44: 2209683348753801396
+      Defeat_NE_45: 1213929852950264711
+      Defeat_NE_46: 3232680969297980530
+      Defeat_NE_47: 6612238526131123584
+      Defeat_NE_48: 3653958974681249444
+      Defeat_NE_49: 6968672490554537760
+      Defeat_NE_5: 4804430039326456152
+      Defeat_NE_50: -5809839107367426266
+      Defeat_NE_51: 4027064593795017865
+      Defeat_NE_52: 3171620243841900681
+      Defeat_NE_53: -7319245889230475334
+      Defeat_NE_54: 4281676069326719612
+      Defeat_NE_55: -6249983625935739896
+      Defeat_NE_56: -6613227111060991242
+      Defeat_NE_57: -124298182996564441
+      Defeat_NE_58: 2549251738350415532
+      Defeat_NE_59: -4867803331391806254
+      Defeat_NE_6: -4640416431444981489
+      Defeat_NE_7: -2707679311432755475
+      Defeat_NE_8: 7180629740188090477
+      Defeat_NE_9: 4586310732052748956
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -15,12 +15,25 @@ MonoBehaviour:
   displayName: Wooden Guard
   icon: {fileID: -7809785511404226330, guid: 4a6c997ee6699414da629ee459545ea7, type: 3}
   slot: 4
+  rarity: 0
+  category: 0
+  cardSlots: 0
+  weight: 130
+  zeny: 1100
   bonusHP: 0
   bonusAttack: 0
   bonusDefense: 2
   bonusMP: 0
   bonusMAtk: 0
   bonusMDef: 0
+  bonusStr: 0
+  bonusAgi: 0
+  bonusVit: 0
+  bonusInt: 0
+  bonusDex: 0
+  bonusLuk: 0
+  bonusCritPercent: 0
+  bonusAspdPercent: 0
   healAmount: 0
   attackSfx:
     clips: []
