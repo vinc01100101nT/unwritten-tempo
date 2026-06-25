@@ -77,9 +77,12 @@ public static class UIShellBuilder
 
         SetupEventSystem(root);
         BuildHud(root);
-        var skills   = BuildSkillsPanel(root);
-        var customize = BuildCustomizePanel(root);
-        var calendar = BuildCalendarPanel(root);
+        // All panels' hotkeys/Esc are owned by their own runtime controllers (code-driven, no rebake to change a key):
+        //   Skills (K)→SkillDraftPanel · Outfit (O)→CharacterCustomizePanel · Calendar (L)→CalendarPanel ·
+        //   Inventory (B)/Equipment (V)/Character (C)→ProgressionWindows. PanelToggle is retired.
+        BuildSkillsPanel(root);
+        BuildCustomizePanel(root);
+        BuildCalendarPanel(root);
         // Bag / Character / Equipment panels + the item tooltip were REMOVED — replaced by the new
         // ProgressionWindows trio (Inventory I · Equipment E · Character C, built via
         // Tools ▸ unwritten ▸ UI ▸ Build Progression Windows). Stat-point allocation moved into that
@@ -87,14 +90,7 @@ public static class UIShellBuilder
         // (The old UI-image sword cursor was retired — GameCursor now drives a hardware
         //  cursor from the Kenney pack, wired by Tools ▸ unwritten ▸ Setup Global Systems.)
 
-        var toggle = canvasGO.AddComponent<PanelToggle>();
-        toggle.panels = new[]
-        {
-            // Inventory (Alt+E) / Equipment (Alt+Q) / Character (Alt+A) are owned by ProgressionWindows now.
-            new PanelToggle.Binding { name = "Skills",    key = KeyCode.S, requireAlt = true, panel = skills },
-            new PanelToggle.Binding { name = "Outfit",    key = KeyCode.O, panel = customize },
-            new PanelToggle.Binding { name = "Calendar",  key = KeyCode.L, panel = calendar },
-        };
+        // (No PanelToggle: every window now owns its own hotkey + Esc in its runtime controller.)
 
         canvasGO.AddComponent<PersistentUI>();             // survives scene loads (singleton)
         canvasGO.AddComponent<CharacterUIBinder>();        // drives the HUD health/mana bars from Character
@@ -130,7 +126,7 @@ public static class UIShellBuilder
         Selection.activeGameObject = canvasGO;
         Debug.Log($"[unwritten] Built UI shell — theme '{ShortName(themeFolder)}', scale {scaler.referencePixelsPerUnit}. " +
                   $"Saved persistent prefab → {ResourcePrefabPath}. It now survives scene loads and auto-spawns " +
-                  "in any scene. Press Play: I = Bag, C = Character, K = Skills, Esc = close all.");
+                  "in any scene. Press Play: B = Inventory, V = Equipment, C = Character, K = Skills, Esc = close all.");
     }
 
     // ---- theme discovery (used by the picker window) --------------------------
@@ -265,14 +261,14 @@ public static class UIShellBuilder
     {
         // Keep the two arrays in lock-step — left column = key, right column = what it does.
         const string keys =
-            "L-Click\nR-Drag\nA\nQ\nT\nS\nC\nI\nK\nO\nL\nM\nP\nEsc";
+            "L-Click\nR-Drag\nA\nQ\nT\nS\nC\nB\nV\nK\nO\nL\nM\nP\nEsc";
         const string actions =
-            "Move\nOrbit camera\nArm attack (+click)\nCast spell\nAuto-combat\nStop\nCharacter\nInventory\nSkills\nOutfit\nCalendar\nMinimap\nDev panel\nClose / cancel";
+            "Move\nOrbit camera\nArm attack (+click)\nCast spell\nAuto-combat\nStop\nCharacter\nInventory\nEquipment\nSkills\nOutfit\nCalendar\nMinimap\nDev panel\nClose / cancel";
 
         var panel = NewSliced("HUD_Hotkeys", canvas, panelSprite);
         Anchor(panel.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);   // bottom-left
         panel.rectTransform.anchoredPosition = new Vector2(16, 74);              // above MP bar (y 48 + 18)
-        panel.rectTransform.sizeDelta = new Vector2(210, 262);
+        panel.rectTransform.sizeDelta = new Vector2(210, 278);
         panel.raycastTarget = false;
 
         var title = NewText("Title", panel.transform, "HOTKEYS", 14, FontStyle.Bold, TextAnchor.UpperCenter, true);

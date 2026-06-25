@@ -49,6 +49,19 @@ public class CalendarPanel : MonoBehaviour
     {
         if (!built) { TryBuild(); return; }
 
+        // L = toggle, Esc = close — owned here in code (no PanelToggle, no rebake to change the key).
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            bool open = !panel.activeSelf;
+            panel.SetActive(open);
+            if (open) UISounds.PlayOpen(); else UISounds.PlayClose();
+        }
+        else if (panel.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        {
+            panel.SetActive(false);
+            UISounds.PlayClose();
+        }
+
         bool active = panel.activeSelf;
         if (active && !wasActive) GoToToday();           // every time it opens, snap to the current season
         wasActive = active;

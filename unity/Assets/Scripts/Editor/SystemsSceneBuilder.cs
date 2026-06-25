@@ -67,8 +67,8 @@ public static class SystemsSceneBuilder
         Build25DSpike.BuildCamera(rendererIndex, player);
         Build25DSpike.BuildCharacter();
 
-        // Full UI shell: HP bar + Bag(I)/Character(C)/Skills(K) panels, all bound to Character.Instance
-        // (PanelToggle + CharacterUIBinder + BagSeeder live on the prefab). Falls back to the bare HUD.
+        // Full UI shell: HP bar + Inventory(B)/Equipment(V)/Character(C)/Skills(K) panels, bound to Character.Instance
+        // (each panel's controller owns its own hotkey; CharacterUIBinder lives on the prefab). Falls back to the bare HUD.
         var uiCanvas = Resources.Load<GameObject>("GameUICanvas");
         if (uiCanvas != null) PrefabUtility.InstantiatePrefab(uiCanvas, sys);
         else

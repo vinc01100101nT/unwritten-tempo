@@ -109,6 +109,23 @@ public class CharacterCustomizePanel : MonoBehaviour
             TryBuild();
             return;
         }
+
+        // O = toggle, Esc = close — owned here in code (no PanelToggle, no rebake to change the key).
+        if (panelRoot != null)
+        {
+            if (Input.GetKeyDown(KeyCode.O))
+            {
+                bool open = !panelRoot.activeSelf;
+                panelRoot.SetActive(open);
+                if (open) UISounds.PlayOpen(); else UISounds.PlayClose();
+            }
+            else if (panelRoot.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+            {
+                panelRoot.SetActive(false);
+                UISounds.PlayClose();
+            }
+        }
+
         // Keep polling for walk frames / player colour until available.
         if (walkFrames == null || walkFrames.Length == 0)
             TryGrabPlayerState();

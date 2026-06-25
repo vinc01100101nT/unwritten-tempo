@@ -6,7 +6,7 @@ using UnityEngine.UI;
 /// <summary>
 /// Builds and drives the progression window trio (Inventory · Equipment · Character) from the
 /// locked HUD spec, wired to the real <see cref="Character"/> + <see cref="InventoryStore"/>.
-/// Toggle keys: I = Inventory, E = Equipment, C = Character, Esc = close all. Each window self-builds
+/// Toggle keys: B = Inventory, V = Equipment, C = Character, Esc = close all. Each window self-builds
 /// at Start into a <see cref="UiKit.Window"/>; the shared <see cref="ItemTooltip"/> handles hover
 /// (incl. the live equip→stat-delta preview). Lives on its own canvas (the builder sets it up).
 /// </summary>
@@ -70,12 +70,12 @@ public class ProgressionWindows : MonoBehaviour
 
     void Update()
     {
-        // Window hotkeys are Alt-modified so the bare keys stay free for movement/abilities:
-        //   Alt+E = Inventory · Alt+Q = Equipment · Alt+A = Character (Alt+S = Skills, via PanelToggle).
-        bool alt = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
-        if (alt && Input.GetKeyDown(KeyCode.E)) Toggle(invRoot);
-        if (alt && Input.GetKeyDown(KeyCode.Q)) Toggle(equipRoot);
-        if (alt && Input.GetKeyDown(KeyCode.A)) Toggle(charRoot);
+        // Bare-key window hotkeys (no Alt — the Unity/OS Alt menu accelerators interfere with it):
+        //   B = Inventory · V = Equipment · C = Character (K = Skills, owned by SkillDraftPanel).
+        //   B/V chosen over I/E because E is the bare dash key.
+        if (Input.GetKeyDown(KeyCode.B)) Toggle(invRoot);
+        if (Input.GetKeyDown(KeyCode.V)) Toggle(equipRoot);
+        if (Input.GetKeyDown(KeyCode.C)) Toggle(charRoot);
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (cardDialog != null) cardDialog.SetActive(false);
@@ -236,7 +236,7 @@ public class ProgressionWindows : MonoBehaviour
         detail.rectTransform.anchorMax = new Vector2(1, 1);
         detail.raycastTarget = false;
 
-        detailName = UiKit.Label("Name", detail.transform, "Select a slot", 17, FontStyle.Bold, TextAnchor.UpperLeft);
+        detailName = UiKit.Label("Name", detail.transform, "Select a slot", 17, FontStyle.Bold, TextAnchor.UpperLeft, title: true);
         detailName.rectTransform.anchorMin = new Vector2(0, 1); detailName.rectTransform.anchorMax = new Vector2(1, 1);
         detailName.rectTransform.pivot = new Vector2(0.5f, 1);
         detailName.rectTransform.sizeDelta = new Vector2(-12, 26);
@@ -339,7 +339,7 @@ public class ProgressionWindows : MonoBehaviour
         var fill = UiKit.Img("Fill", border.transform, UiKit.PanelFill);
         UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
 
-        var title = UiKit.Label("Title", fill.transform, "Insert Card", 16, FontStyle.Bold, TextAnchor.UpperCenter);
+        var title = UiKit.Label("Title", fill.transform, "Insert Card", 16, FontStyle.Bold, TextAnchor.UpperCenter, title: true);
         title.color = UiKit.Gold;
         title.rectTransform.anchorMin = new Vector2(0, 1); title.rectTransform.anchorMax = new Vector2(1, 1);
         title.rectTransform.pivot = new Vector2(0.5f, 1); title.rectTransform.sizeDelta = new Vector2(0, 24);
@@ -495,26 +495,36 @@ public class ProgressionWindows : MonoBehaviour
         lc.sortingOrder = 200;
         var host = layer.transform;
 
+        // The gold border IS the layout root: VerticalLayoutGroup + ContentSizeFitter MUST live on
+        // the SAME object (and own the title/body children). The old setup split them — VLG on the
+        // inner fill, fitter on the border — so the panel never sized to its content and the title
+        // rendered ON TOP of the body's first line (the "doubled title / overlapping header" bug).
         var border = UiKit.Img("ItemTooltip", host, UiKit.Gold);
         var rt = border.rectTransform;
         rt.anchorMin = rt.anchorMax = new Vector2(0, 1); rt.pivot = new Vector2(0, 1);
-        rt.sizeDelta = new Vector2(264, 90);
+        rt.sizeDelta = new Vector2(264, 90);   // width is kept (horizontal fit = Unconstrained); height auto-fits
         border.raycastTarget = false;
         var cg = border.gameObject.AddComponent<CanvasGroup>();
         cg.blocksRaycasts = false; cg.interactable = false;
-        var fill = UiKit.Img("Fill", border.transform, UiKit.PanelFill);
-        UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
-        fill.raycastTarget = false;
-        var vlg = fill.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.padding = new RectOffset(12, 12, 8, 10); vlg.spacing = 2;
+        var vlg = border.gameObject.AddComponent<VerticalLayoutGroup>();
+        vlg.padding = new RectOffset(14, 14, 10, 12); vlg.spacing = 2;   // 2px gold frame + inner pad
         vlg.childControlWidth = vlg.childControlHeight = true;
         vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
         var fitter = border.gameObject.AddComponent<ContentSizeFitter>();
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        var title = UiKit.Label("Title", fill.transform, "Item", 18, FontStyle.Bold, TextAnchor.UpperLeft);
+
+        // Dark inner panel: a background that fills the gold border but is IGNORED by the layout
+        // (otherwise the VLG would try to stack it) and drawn behind the text.
+        var fill = UiKit.Img("Fill", border.transform, UiKit.PanelFill);
+        UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
+        fill.raycastTarget = false;
+        fill.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        fill.transform.SetAsFirstSibling();
+
+        var title = UiKit.Label("Title", border.transform, "Item", 18, FontStyle.Bold, TextAnchor.UpperLeft, title: true);
         title.raycastTarget = false;
-        var body = UiKit.Label("Body", fill.transform, "", 15, FontStyle.Normal, TextAnchor.UpperLeft);
+        var body = UiKit.Label("Body", border.transform, "", 15, FontStyle.Normal, TextAnchor.UpperLeft);
         body.raycastTarget = false;
         var tip = border.gameObject.AddComponent<ItemTooltip>();
         tip.panel = rt; tip.titleText = title; tip.bodyText = body;

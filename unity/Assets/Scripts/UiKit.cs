@@ -10,8 +10,18 @@ using UnityEngine.UI;
 /// </summary>
 public static class UiKit
 {
-    public static Font Font => _font != null ? _font : (_font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
-    static Font _font;
+    // HUD v2 typeface: Cinzel for titles/section heads, Inter for body/numbers (locked token sheet).
+    // Drop the TTFs at Resources/Fonts/Cinzel.ttf and Resources/Fonts/Inter.ttf (import as Font). Until
+    // they land, both fall back to the built-in legacy font so the UI still builds and runs.
+    public static Font TitleFont => _title != null ? _title : (_title = Load("Fonts/Cinzel"));
+    public static Font BodyFont  => _body  != null ? _body  : (_body  = Load("Fonts/Inter"));
+    static Font _title, _body, _fallback;
+
+    /// <summary>Back-compat alias: legacy callers using <c>UiKit.Font</c> get the body face.</summary>
+    public static Font Font => BodyFont;
+
+    static Font Fallback => _fallback != null ? _fallback : (_fallback = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
+    static Font Load(string path) { var f = Resources.Load<Font>(path); return f != null ? f : Fallback; }
 
     public static readonly Color PanelFill = new Color(0.082f, 0.086f, 0.102f, 0.98f); // #15161A
     public static readonly Color SlotFill  = new Color(0.07f, 0.075f, 0.09f, 1f);
@@ -30,12 +40,14 @@ public static class UiKit
         return img;
     }
 
-    public static Text Label(string name, Transform parent, string s, int size, FontStyle style, TextAnchor anchor)
+    /// <summary>A drop-shadowed uGUI label. Pass <paramref name="title"/>=true for the Cinzel title
+    /// face (window headers, section heads, item names); default is the Inter body face.</summary>
+    public static Text Label(string name, Transform parent, string s, int size, FontStyle style, TextAnchor anchor, bool title = false)
     {
         var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
         go.transform.SetParent(parent, false);
         var t = go.GetComponent<Text>();
-        t.font = Font; t.fontSize = size; t.fontStyle = style; t.alignment = anchor;
+        t.font = title ? TitleFont : BodyFont; t.fontSize = size; t.fontStyle = style; t.alignment = anchor;
         t.color = TextMain; t.text = s;
         t.horizontalOverflow = HorizontalWrapMode.Wrap;
         t.verticalOverflow = VerticalWrapMode.Overflow;
@@ -92,7 +104,7 @@ public static class UiKit
         header.rectTransform.sizeDelta = new Vector2(0, 32);
         header.gameObject.AddComponent<WindowDragHandle>().window = rt;
 
-        var titleT = Label("Title", header.transform, title, 17, FontStyle.Bold, TextAnchor.MiddleLeft);
+        var titleT = Label("Title", header.transform, title, 17, FontStyle.Bold, TextAnchor.MiddleLeft, title: true);
         Fill(titleT.rectTransform, new Vector2(14, 0), new Vector2(-36, 0));
         titleT.color = Gold; titleT.raycastTarget = false;
 

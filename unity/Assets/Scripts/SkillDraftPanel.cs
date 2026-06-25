@@ -17,6 +17,7 @@ using UnityEngine.UI;
 public class SkillDraftPanel : MonoBehaviour
 {
     RectTransform content;          // the panel's "Content" node we build into
+    GameObject panelRoot;           // the "SkillsPanel" root we show/hide on K (code-driven, like the window trio)
     Font font;
     DraftService.Draft? pending;    // the draft currently shown (cached so the wildcard is stable between renders)
     bool bound, animating;
@@ -35,7 +36,35 @@ public class SkillDraftPanel : MonoBehaviour
     static readonly Color RowDim     = new Color(1f, 1f, 1f, 0.5f);
 
     void Start() => TryBind();
-    void Update() { if (!bound) TryBind(); }   // Character/UI may not be ready on the very first frame
+    void Update()
+    {
+        if (!bound) TryBind();   // Character/UI may not be ready on the very first frame
+        HandleHotkey();          // K = toggle, Esc = close — owned here in code so editing the key needs no rebake
+    }
+
+    // The Skills (K) toggle lives in runtime code (mirroring ProgressionWindows' B/V/C) rather than as
+    // serialized PanelToggle data, so changing the key is a source edit — no "Build UI Shell" rebake.
+    void HandleHotkey()
+    {
+        if (panelRoot == null)
+        {
+            foreach (var t in GetComponentsInChildren<Transform>(true))
+                if (t.name == "SkillsPanel") { panelRoot = t.gameObject; break; }
+            if (panelRoot == null) return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            bool open = !panelRoot.activeSelf;
+            panelRoot.SetActive(open);
+            if (open) UISounds.PlayOpen(); else UISounds.PlayClose();
+        }
+        else if (panelRoot.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        {
+            panelRoot.SetActive(false);
+            UISounds.PlayClose();
+        }
+    }
 
     void TryBind()
     {
@@ -66,7 +95,10 @@ public class SkillDraftPanel : MonoBehaviour
     {
         foreach (var t in GetComponentsInChildren<Transform>(true))
             if (t.name == "SkillsPanel")
+            {
+                panelRoot = t.gameObject;
                 return t.Find("Content") as RectTransform;
+            }
         return null;
     }
 
