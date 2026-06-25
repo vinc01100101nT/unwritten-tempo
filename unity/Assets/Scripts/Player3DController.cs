@@ -39,11 +39,11 @@ public partial class Player3DController : MonoBehaviour
     Sprite[] attackPoses;
     float attackUntil;
 
-    [Header("NinjaGreen animated sheet (optional — richer animations)")]
-    [Tooltip("Baked, NORMALIZED NinjaGreen sheet (built by Editor/NinjaGreenPlayer). When set it DRIVES " +
-             "animated idle/walk/attack/hit + death and the legacy single-pose fields above are ignored. " +
-             "Row-major: 4 direction rows (down/up/left/right) × [idle 0-3 | walk 4-7 | attack 8-11 | hit " +
-             "12-13], death on row 4. 64px cells. Wired by Tools ▸ unwritten ▸ Player ▸ Use NinjaGreen Player.")]
+    [Header("Animated sheet (optional, legacy — richer 2D animations)")]
+    [Tooltip("DORMANT legacy path: a baked, NORMALIZED 4-row animation sheet. When set it DRIVES animated " +
+             "idle/walk/attack/hit + death and the single-pose fields above are ignored. Row-major: 4 direction " +
+             "rows (down/up/left/right) × [idle 0-3 | walk 4-7 | attack 8-11 | hit 12-13], death on row 4. 64px " +
+             "cells. Nothing wires this now — the player uses the baked Quaternius billboard (BakedPlayerVisual).")]
     public Texture2D animSheet;
     public int animCell = 64;
     [Tooltip("Pixels-per-unit for the frames. 16 = the centred ~16px character renders ~1 world unit tall.")]
@@ -66,7 +66,11 @@ public partial class Player3DController : MonoBehaviour
     int hitFrame;  float hitTimer;
     Character hurtCharacter;   // subscribed for the hit-flinch trigger (separate from PlayerHurtFlash's tint)
 
-    public float moveSpeed = 1.5f;
+    public float moveSpeed = 0.53f;   // tuned so the run cadence matches the baked locomotion (animation↔speed lock)
+    /// <summary>The player's CURRENT run speed in world units/sec — the same hand-tuned baseline the walk uses, scaled
+    /// by <see cref="UnitScale.ForPlayer"/> and the live Slow/Haste move buff (but NOT the Shift-walk slowdown). The
+    /// dodge roll (E) reads this so it's always exactly 2× whatever the player is currently running at.</summary>
+    public float CurrentRunSpeed => moveSpeed * UnitScale.ForPlayer * (status != null ? status.MoveMult : 1f);
     [Tooltip("Speed multiplier while holding Shift to walk — slower than the default run, and plays the Walk animation.")]
     public float walkSpeedMult = 0.45f;
     /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="BakedPlayerVisual"/> to
@@ -188,8 +192,8 @@ public partial class Player3DController : MonoBehaviour
     // ordinary steps/slopes don't flicker it. Driven by ApplyGravityAndMove on the normal-movement path.
     float vy;
     bool falling;
-    /// <summary>True while the player is in an accelerating free-fall (read by the Sscary animation path to
-    /// show the jump clip's descent frames). Distinct from <see cref="IsAirborne"/> (the scripted hop arc).</summary>
+    /// <summary>True while the player is in an accelerating free-fall (read by the animation path to show the
+    /// jump clip's descent frames). Distinct from <see cref="IsAirborne"/> (the scripted hop arc).</summary>
     public bool IsFalling => falling;
 
     /// <summary>Last move/aim direction in WORLD space (XZ meaningful). Read by the minimap to orient the
@@ -211,7 +215,6 @@ public partial class Player3DController : MonoBehaviour
         BuildAttackPoses();
         BuildDeadPose();
         BuildAnimClips();   // if animSheet is set, this supersedes the two single-pose builders above
-        BuildScary();       // if the Sscary 48×64 strips are wired, this supersedes BOTH paths above (Scary == true)
         targetMarker = TargetIndicator.Create();
         targetMarker.gameObject.AddComponent<Billboard>();   // face the camera so the arrow isn't edge-on when orbiting
         autoIndicator = AutoCombatIndicator.Create();        // "AUTO-COMBAT" screen tag, hidden until toggled
@@ -252,7 +255,7 @@ public partial class Player3DController : MonoBehaviour
 
     // Slice the animated clips from the baked NinjaGreen master (see animSheet's tooltip for the layout).
     // No-op when there's no sheet, leaving Animated == false so the legacy single-pose path stays in use.
-    // Slice the clips from the NORMALIZED baked sheet (built by Editor/NinjaGreenPlayer). Uniform layout:
+    // Slice the clips from the NORMALIZED baked sheet (legacy 2D path, see animSheet). Uniform layout:
     // 4 direction rows (0=down 1=up 2=left 3=right) × [idle 0-3 | walk 4-7 | attack 8-11 | hit 12-15],
     // with the 2 death frames on row 4. No-op without a sheet, leaving Animated == false (legacy path).
     void BuildAnimClips()
@@ -356,12 +359,11 @@ public partial class Player3DController : MonoBehaviour
         {
             if (order != Order.Idle) Stop();
             if (autoIndicator != null) autoIndicator.Show(false);   // dying cancels auto-combat
-            if (Scary) AnimateScary(ScaryState.Death);              // play the 6-dir death clip (+ death shadow) once, hold
-            else if (deadSprite != null) sr.sprite = deadSprite;
+            if (deadSprite != null) sr.sprite = deadSprite;
             attackUntil = 0f;   // drop any held attack pose
             dashing = false;    // death cancels a charge in progress
-            jumping = false; eDashing = false;   // …and any Sscary hop/dash in progress
-            if (Scary) SetDashInvuln(false);     // …so a dash cut short by death doesn't leave us invulnerable
+            jumping = false; eDashing = false;   // …and any hop/dash in progress
+            SetDashInvuln(false);                // …so a dash cut short by death doesn't leave us invulnerable
             transform.localScale = baseScale;
             controller.Move(Vector3.down * gravity * Time.deltaTime);
             return;
@@ -434,9 +436,9 @@ public partial class Player3DController : MonoBehaviour
             }
         }
 
-        // Sscary traversal abilities (Space = forward hop, E = dash burst). Handled before normal input so an
+        // Traversal abilities (Space = forward hop, E = dash burst). Handled before normal input so an
         // active hop/dash overrides movement, and a freshly-pressed one starts THIS frame (no 1-frame lag).
-        if (Scary && TickScaryAbilities()) return;
+        if (TickTraversalAbilities()) return;
 
         ReadInput();
 
@@ -825,7 +827,6 @@ public partial class Player3DController : MonoBehaviour
     // ---- animation ------------------------------------------------------------
     void Animate(bool moving)
     {
-        if (Scary) { AnimateScary(falling ? ScaryState.Fall : moving ? ScaryState.Walk : ScaryState.Idle); return; }
         if (Animated) { AnimateRich(moving); return; }
         AnimateLegacy(moving);
     }

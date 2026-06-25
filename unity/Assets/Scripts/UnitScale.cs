@@ -8,7 +8,7 @@ using UnityEngine;
 /// <para>Two knobs (live-tunable in the P ▸ DevSettings panel):
 ///   • <see cref="Global"/>      — scales ALL units (player + mobs) together.
 ///   • <see cref="MobRelative"/> — an extra multiplier on MOBS only, to match their on-screen size to the
-///     player (the Sscary character renders smaller than the NinjaAdventure mobs, so this defaults &lt; 1).</para>
+///     player, so this can default &lt; 1 when the mob art reads larger on screen than the player.</para>
 ///
 /// Units read these every frame — <see cref="Player3DController"/> + <see cref="BillboardAnimator3D"/> recompute
 /// their <c>baseScale</c> from a stored build scale (so the idle-breathe squash still works), and the movers

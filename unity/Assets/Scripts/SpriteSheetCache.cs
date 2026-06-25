@@ -29,8 +29,8 @@ public static class SpriteSheetCache
         = new Dictionary<(int, int, int, int, int, int), Sprite[]>();
 
     // Single horizontal strip of NON-square cells (cellW × cellH) read left→right along the BOTTOM row.
-    // Strip/Grid/Walk4 above all assume SQUARE cells; the Sscary player art is 48×64 (one strip PNG per
-    // direction), so it needs its own cut. Used by the Sscary 8-direction player (Player3DController.Scary).
+    // Strip/Grid/Walk4 above all assume SQUARE cells; tall directional strips (one PNG per direction) need
+    // their own cut. Used by the baked 8-direction billboard (BakedBillboard8).
     static readonly Dictionary<(int tex, int w, int h, int frames, int ppu), Sprite[]> rows
         = new Dictionary<(int, int, int, int, int), Sprite[]>();
 
@@ -116,7 +116,7 @@ public static class SpriteSheetCache
     /// left→right along the sheet's BOTTOM row (a single-row strip), clamped to the column count. Pivot is
     /// centred horizontally and on the CELL bottom-eighth so the character's feet sit near the transform
     /// regardless of cell height; pixels-per-unit = <paramref name="ppu"/>. Shared/read-only. This is the
-    /// non-square cousin of <see cref="Strip"/> for the Sscary 48×64 directional strips.</summary>
+    /// non-square cousin of <see cref="Strip"/> for tall directional strips (used by BakedBillboard8).</summary>
     public static Sprite[] Row(Texture2D sheet, int cellW, int cellH, int frames, int ppu)
     {
         if (sheet == null || cellW <= 0 || cellH <= 0) return System.Array.Empty<Sprite>();

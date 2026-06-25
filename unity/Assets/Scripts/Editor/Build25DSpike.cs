@@ -22,8 +22,8 @@ using UnityEngine.UI;
 /// NOT throwaway despite its name: the spike's <c>[MenuItem]</c> was removed at the 2.5D pivot, but this
 /// class is now the shared rig-builder library — its public helpers (BuildPlayer/Camera/Light/Character/
 /// HUD/Cursor/Monster, BillboardScale, FootOffsetY, EnsureUniversalRenderer, MonsterSheet) are called by
-/// SystemsSceneBuilder, RegionBuilder, RecipeGenerator, TrainingDummyTool,
-/// ScaryPlayer and NinjaGreenPlayer. Keep it; deleting it breaks the whole editor build pipeline.
+/// SystemsSceneBuilder, RegionBuilder, RecipeGenerator and TrainingDummyTool.
+/// Keep it; deleting it breaks the whole editor build pipeline.
 /// </summary>
 public static class Build25DSpike
 {
@@ -679,12 +679,44 @@ public static class Build25DSpike
             "Water Walk 1", "Water Walk 2", "Water Walk 3", "Water Walk 4", "Water Walk 5");
         ctrl.waterJumpSfx = SfxAssets.Set(0.65f, "Footsteps/Water", "Water Jump");   // splash when a hop lands in a puddle
 
-        // Make the player the Sscary Male avatar (48×64 idle/walk/jump/dash/death + Shadow/Dust). Full
-        // replacement of the older looks wired above; falls back to the animated NinjaGreen avatar (then the
-        // legacy single-pose Boy sheet) if the Sscary art is absent, so older art setups still work.
-        if (!ScaryPlayer.TryApply(go))
-            NinjaGreenPlayer.TryApply(go);
+        // The player wears a baked Quaternius character (Ninja Adventure art is mobs-only now). The baked
+        // billboard rides the controller via BakedPlayerVisual and hides the controller's own SpriteRenderer —
+        // same as Tools ▸ Player ▸ Use Baked Character, but wired here so a fresh player IS the Quaternius
+        // avatar out of the box. Swap to a different baked character anytime via "Use Baked Character".
+        ApplyDefaultBakedCharacter(go);
         return go;
+    }
+
+    /// <summary>The roster character a freshly-built player wears. Override by swapping with "Use Baked Character".</summary>
+    const string DefaultPlayerCharacter = "BaseCharacter";
+
+    /// <summary>Ride a baked Quaternius character on the player as its visual (Ninja Adventure is mobs-only).
+    /// Picks <see cref="DefaultPlayerCharacter"/> from the roster, falling back to the first usable entry. No-op
+    /// (with a warning) if the roster isn't baked yet — bake characters, then re-run Setup Systems Scene.</summary>
+    static void ApplyDefaultBakedCharacter(GameObject playerGO)
+    {
+        var ctrl = playerGO.GetComponent<Player3DController>();
+        var roster = AssetDatabase.LoadAssetAtPath<CharacterRoster>("Assets/Art/Characters/CharacterRoster.asset");
+        var entry = roster != null
+            ? (roster.Find(DefaultPlayerCharacter) ?? roster.characters.FirstOrDefault(e => e != null && e.prefab != null))
+            : null;
+        if (entry == null || entry.prefab == null)
+        {
+            Debug.LogWarning("[unwritten] No baked CharacterRoster — player has no avatar. Bake characters " +
+                             "(Tools ▸ unwritten ▸ Art ▸ Bake …), then re-run Setup Systems Scene.");
+            return;
+        }
+
+        // Drop any stale baked visual so re-running the builder doesn't stack duplicates.
+        foreach (var v in Object.FindObjectsByType<BakedPlayerVisual>(FindObjectsSortMode.None))
+            if (v != null) Object.DestroyImmediate(v.gameObject);
+
+        var vis = (GameObject)PrefabUtility.InstantiatePrefab(entry.prefab);
+        vis.name = "PlayerBakedVisual (" + entry.name + ")";
+        SceneManager.MoveGameObjectToScene(vis, playerGO.scene);
+        vis.transform.position = playerGO.transform.position;
+        var bpv = vis.GetComponent<BakedPlayerVisual>() ?? vis.AddComponent<BakedPlayerVisual>();
+        bpv.player = ctrl;
     }
 
     /// <summary>The SeparateAnim/Attack.png texture beside the player sheet (sliced into 4 directional

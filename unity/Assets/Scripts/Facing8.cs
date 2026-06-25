@@ -3,10 +3,8 @@ using UnityEngine;
 /// <summary>
 /// 8-direction cousin of <see cref="Facing3D"/>: maps a world-space move/aim direction to one of 8
 /// compass octants that are RELATIVE to the main camera, so a character's frames track the camera as it
-/// orbits. Used by the Sscary billboard player (see <see cref="Player3DController"/>'s Scary path), whose
-/// art is drawn at 6 visual angles (front, back, and the four diagonals — the left diagonals are exact
-/// mirrors of the right ones). The controller resolves these 8 octants onto the 4 drawn clips
-/// (down / up / right-down / right-up) plus a horizontal flip for the western half.
+/// orbits. Used by the baked 8-direction billboard (see <see cref="BakedBillboard8"/>) to pick the drawn
+/// angle for the current facing.
 ///
 /// Octant order (the returned int), camera-relative:
 ///   0 = N  (up / away)      1 = NE     2 = E  (screen-right)   3 = SE

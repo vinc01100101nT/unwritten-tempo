@@ -45,15 +45,15 @@ public class Sfx : MonoBehaviour
 
     [Tooltip("How many 2D sounds may overlap at once. Older voices are recycled past this.")]
     public int voices = 16;
-    [Range(0f, 1f)] public float masterVolume = 0.9f;
+    [Range(0f, 1f)] public float masterVolume = 1f;
 
     [Header("3D positional one-shots (Sfx.PlayAt)")]
     [Tooltip("How many positional sounds may overlap at once.")]
     public int spatialVoices = 12;
     [Tooltip("Fully loud within this distance of the listener (world units).")]
-    public float minDistance = 4f;
+    public float minDistance = 0f;
     [Tooltip("Inaudible past this distance from the listener.")]
-    public float maxDistance = 30f;
+    public float maxDistance = 5.19f;
 
     AudioSource[] pool;     // 2D ring
     AudioSource[] pool3d;   // 3D positional ring
@@ -90,6 +90,22 @@ public class Sfx : MonoBehaviour
     }
 
     void OnDestroy() { if (Instance == this) Instance = null; }
+
+    /// <summary>Live-retune the 3D positional range (how far from the listener a world sound can be heard).
+    /// The pool copies <see cref="minDistance"/>/<see cref="maxDistance"/> once in <see cref="Awake"/>, so this
+    /// pushes new values onto every already-created 3D voice — lets the DevSettings sliders work mid-Play.</summary>
+    public void SetSpatialRange(float min, float max)
+    {
+        minDistance = Mathf.Max(0f, min);
+        maxDistance = Mathf.Max(minDistance + 0.01f, max);
+        if (pool3d == null) return;
+        for (int i = 0; i < pool3d.Length; i++)
+        {
+            if (pool3d[i] == null) continue;
+            pool3d[i].minDistance = minDistance;
+            pool3d[i].maxDistance = maxDistance;
+        }
+    }
 
     /// <summary>Play a random variation of the set in <b>2D</b> (no-op if the set is empty or no Sfx exists
     /// yet). For UI and player-self sounds where direction doesn't matter.</summary>

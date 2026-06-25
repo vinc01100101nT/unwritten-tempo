@@ -52,6 +52,8 @@ public class TownNPC : MonoBehaviour
     float nextWander, nextBark, nextLodCheck;
     float wanderDeadline, nextProgressCheck;   // stuck-detection: time budget + periodic progress sampling
     Vector3 lastProgressPos;
+    Vector3 lastStepPos;        // footstep odometer: accumulate ground distance, emit a step each sStride
+    float stepDist;             // distance walked (horizontal) since the last footstep SFX fired
     bool simulating = true;
     bool gaitMatched;   // have we copied the player's fine-tuned walk/run cadence onto this NPC yet?
 
@@ -59,6 +61,13 @@ public class TownNPC : MonoBehaviour
     // Static so N townsfolk don't each scan; re-resolves if the cached visual was destroyed (scene reload).
     static BakedBillboard8 sPlayerVisual;
     static float sWalkRef, sRunRef;
+
+    // Footsteps: borrow the SAME clips + cadence the player walks on, so a town shares one consistent footstep
+    // voice (zero new audio assets). Resolved alongside the gait, once for the whole town. sStride is how far a
+    // unit travels per step at the player's tuned cadence (stepInterval × run speed) — driving NPC steps off
+    // DISTANCE travelled rather than a timer keeps them in sync with each NPC's own rolled speed (no foot-slide).
+    static SfxSet sPlayerFootstep;
+    static float sStride;
 
     static bool ResolvePlayerGait()
     {
@@ -71,6 +80,8 @@ public class TownNPC : MonoBehaviour
         float runSpeed = pc.moveSpeed * UnitScale.ForPlayer;     // the player's normal (run-clip) ground speed
         sRunRef  = runSpeed;
         sWalkRef = runSpeed * pc.walkSpeedMult;                  // the player's Shift-walk (walk-clip) ground speed
+        sPlayerFootstep = pc.footstepSfx;
+        sStride = Mathf.Max(0.1f, pc.stepInterval * runSpeed);   // world distance the player covers per step
         return true;
     }
 
@@ -103,6 +114,8 @@ public class TownNPC : MonoBehaviour
         nextWander = Time.time + Random.value * pauseMax;
         nextBark = Time.time + 0.5f + Random.value * 2.5f;
         nextLodCheck = Time.time + Random.value * 0.4f;
+        lastStepPos = transform.position;
+        stepDist = Random.value;   // desync first step across the crowd so they don't all stomp in lockstep
     }
 
     void Update()
@@ -157,10 +170,34 @@ public class TownNPC : MonoBehaviour
                 // White speech bubble just above the head. VisualWorldHeight is the sprite's real world height
                 // (feet ≈ this transform), so head + a small gap places the bubble's bottom over the head.
                 float head = visual != null ? visual.VisualWorldHeight : 1f;
-                SpeechBubble.Show(transform, head - 3f, line, 2.6f);   // bubble rides this unit's head
+                SpeechBubble.Show(transform, head - 0.2f, line, 2.6f);   // bubble rides this unit's head // i tuned this to 0.2 --vince
                 nextBark = Time.time + Random.Range(barkCooldownMin, barkCooldownMax);
             }
             else nextBark = Time.time + 1f;   // out of range — re-check soon, don't burn the full cooldown
+        }
+
+        Footsteps();
+    }
+
+    // Layer-1 polish: spatial footstep SFX. Drive steps off DISTANCE walked (an odometer) rather than a timer, so
+    // they stay locked to this NPC's own rolled speed and never foot-slide. Plays the player's footstep clips
+    // POSITIONALLY (Sfx.PlayAt) so you hear WHERE a townsperson is walking — and the engine fades distant ones, so
+    // a busy plaza isn't a wall of stomps. Cheap: one Vector3 subtract per moving townsperson, near the camera only.
+    void Footsteps()
+    {
+        if (sStride <= 0f || sPlayerFootstep == null || sPlayerFootstep.Empty || agent == null || !agent.Moving)
+        {
+            lastStepPos = transform.position;   // keep the odometer pinned to "now" while halted (no phantom step on resume)
+            return;
+        }
+
+        Vector3 p = transform.position;
+        stepDist += new Vector2(p.x - lastStepPos.x, p.z - lastStepPos.z).magnitude;   // horizontal travel only
+        lastStepPos = p;
+        if (stepDist >= sStride)
+        {
+            stepDist = 0f;
+            Sfx.PlayAt(sPlayerFootstep, p);
         }
     }
 
@@ -212,6 +249,7 @@ public class TownNPC : MonoBehaviour
     void SetSimulating(bool on)
     {
         simulating = on;
+        if (on) lastStepPos = transform.position;   // reset the footstep odometer so re-entering range can't fire a phantom step
         if (!on) agent.Halt();
         if (agent != null) agent.enabled = on;
         if (visual != null) visual.enabled = on;

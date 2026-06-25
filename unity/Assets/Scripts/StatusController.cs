@@ -91,6 +91,9 @@ public class StatusController : MonoBehaviour
             return m;
         }
     }
+    /// <summary>The live Haste move-speed multiplier (1 = none), or 1 once the buff has expired. Lets the dev
+    /// panel show/drive the current speed buff on a slider.</summary>
+    public float HasteMult => Time.time < hasteUntil ? hasteMult : 1f;
     /// <summary>True while spell-casting is blocked.</summary>
     public bool Silenced => Active(Ailment.Silence);
     /// <summary>HIT (accuracy) points to subtract from this unit's attacks while blinded.</summary>

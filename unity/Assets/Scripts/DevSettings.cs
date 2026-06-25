@@ -262,13 +262,6 @@ public class DevSettings : MonoBehaviour
         if (player != null) Status.Apply(player.gameObject, a, secs, mag);
     }
 
-    // Grant the PLAYER a temporary move-speed buff (mult > 1 = faster) — the buff twin of "Slow ME", to verify
-    // that the run/walk animation + footstep cadence speed up with the move speed (Player3DController.GaitSpeedMult).
-    void HasteMe(float mult, float secs)
-    {
-        if (player != null) Status.Of(player.gameObject).Haste(mult, secs);
-    }
-
     // ---- Calendar & Weather helpers -------------------------------------------
     // The weather-channels hub (source of truth for rain/cloud/snow/puddle), created on demand so the knobs work
     // even on a Systems scene baked before it joined the rig.
@@ -309,14 +302,12 @@ public class DevSettings : MonoBehaviour
         B("Idle breathing",   () => player && player.breathe,                      v => { if (player) player.breathe = v; });
         F("Breathe amount",   0f, 0.2f, () => player ? player.breatheAmount : 0f,  v => { if (player) player.breatheAmount = v; });
         F("Breathe speed",    0f, 6f,  () => player ? player.breatheSpeed : 0f,    v => { if (player) player.breatheSpeed = v; });
-        // Sscary traversal (only affect a Sscary player — SPACE = forward hop, E = dash burst).
-        F("Foot offset",      0f, 0.5f,  () => player ? player.scaryFeetBelowCenter : 0f, v => { if (player) player.SetScaryFootOffset(v); });
+        // Traversal abilities (SPACE = forward hop, E = dash burst).
         F("Jump distance",    0f, 6f,    () => player ? player.jumpDistance : 0f,  v => { if (player) player.jumpDistance = v; });
         F("Jump height",      0f, 2.5f,  () => player ? player.jumpHeight : 0f,    v => { if (player) player.jumpHeight = v; });
-        F("Dash speed",       0f, 30f,   () => player ? player.eDashSpeed : 0f,    v => { if (player) player.eDashSpeed = v; });
+        F("Roll speed (×run)", 0f, 5f,   () => player ? player.eDashSpeedMult : 0f, v => { if (player) player.eDashSpeedMult = v; });
         F("Dash duration",    0.05f, 0.6f, () => player ? player.eDashDuration : 0f, v => { if (player) player.eDashDuration = v; });
         F("Dash cooldown",    0f, 3f,    () => player ? player.eDashCooldown : 0f, v => { if (player) player.eDashCooldown = v; });
-        F("Walk anim FPS",    1f, 24f,   () => player ? player.scaryWalkFps : 0f,  v => { if (player) player.scaryWalkFps = v; });
 
         // ---- Baked Character (the 8-dir billboard riding the player via "Use Baked Character") ----
         // Live-seat the feet on the ground: higher = lift the sprite up, lower = sink it. ~0.42 grounds a
@@ -450,7 +441,12 @@ public class DevSettings : MonoBehaviour
         Act("Stun ME (2s)",        () => AfflictMe(Ailment.Stun, 2f, 0f));
         Act("Freeze ME (2s)",      () => AfflictMe(Ailment.Freeze, 2f, 0f));
         Act("Slow ME (5s)",        () => AfflictMe(Ailment.Slow, 5f, 0.4f));
-        Act("Speed buff ME ×2 (5s)", () => HasteMe(2f, 5f));
+        // Persistent move-speed buff slider (1 = none). Folds into MoveMult on the Haste channel, so it lifts the
+        // run/walk animation fps + footstep cadence with the speed (Player3DController.GaitSpeedMult) — drag it to
+        // feel the animation↔speed lock. Held effectively-permanent (re-armed each drag) until you slide back to 1.
+        F("Speed buff ME (×)", 1f, 5f,
+            () => player ? Status.Of(player.gameObject).HasteMult : 1f,
+            v => { if (player) Status.Of(player.gameObject).Haste(v, 9999f); });
         Act("Silence ME (4s)",     () => AfflictMe(Ailment.Silence, 4f, 0f));
         Act("Blind ME (6s)",       () => AfflictMe(Ailment.Blind, 6f, 60f));
         Act("Poison ME (6s)",      () => AfflictMe(Ailment.Poison, 6f, 3f));
@@ -646,6 +642,18 @@ public class DevSettings : MonoBehaviour
         F("Fog patch size",   2f, 120f,  () => fog ? fog.patchSize : 0f,       v => { if (fog) fog.patchSize = v; });
         F("Fog drift speed",  0f, 4f,    () => fog ? fog.driftSpeed : 0f,      v => { if (fog) fog.driftSpeed = v; });
         F("Fog roll in",      0f, 30f,   () => fog ? fog.rampTime : 0f,        v => { if (fog) fog.rampTime = v; });
+
+        // ---- Sound — Sfx 3D positional range (how far from the LISTENER a world sound is heard) ----
+        // The listener rides the player (AudioListenerRig). "Full volume within" = loud at any closer range;
+        // "Silent past" = inaudible beyond. Only affects Sfx.PlayAt (3D one-shots); 2D Sfx.Play ignores distance.
+        // SetSpatialRange pushes the new values onto every pooled 3D voice so the slider takes effect live.
+        Cat("Sound");
+        F("Master volume",        0f, 1f,   () => Sfx.Instance ? Sfx.Instance.masterVolume : 0f,
+            v => { if (Sfx.Instance) Sfx.Instance.masterVolume = v; });
+        F("Full volume within",   0f, 30f,  () => Sfx.Instance ? Sfx.Instance.minDistance : 0f,
+            v => { if (Sfx.Instance) Sfx.Instance.SetSpatialRange(v, Sfx.Instance.maxDistance); });
+        F("Silent past",          1f, 120f, () => Sfx.Instance ? Sfx.Instance.maxDistance : 0f,
+            v => { if (Sfx.Instance) Sfx.Instance.SetSpatialRange(Sfx.Instance.minDistance, v); });
 
         // ---- Camera — CameraFollow3D ---------------------------------------
         Cat("Camera");

@@ -191,11 +191,18 @@ public class BakedBillboard8 : MonoBehaviour
     {
         if (src == null) return;
         walkThreshold  = src.walkThreshold;
-        runThreshold   = src.runThreshold;
         speedSyncGait  = src.speedSyncGait;
         gaitScaleClamp = src.gaitScaleClamp;
         walkRefSpeed   = walkRef > 0.01f ? walkRef : src.walkRefSpeed;
         runRefSpeed    = runRef  > 0.01f ? runRef  : src.runRefSpeed;
+        // Calibrate the Walk→Run crossover to the REAL reference speeds, NOT src.runThreshold: the player never
+        // self-drives, so its runThreshold is an uncalibrated stale value (e.g. 3.5) that no self-driven NPC ever
+        // reaches — leaving townsfolk who actually move at ~run speed stuck churning the Walk clip super-fast. Cross
+        // to Run at the midpoint between the walk and run reference speeds (kept above the idle/walk line).
+        if (runRefSpeed > walkRefSpeed)
+            runThreshold = Mathf.Max(walkThreshold + 0.01f, Mathf.Lerp(walkRefSpeed, runRefSpeed, 0.5f));
+        else
+            runThreshold = src.runThreshold;   // refs unusable — fall back to the copied value
         // Inherit the player's hand-tuned leg cadence for the locomotion (and idle) clips.
         float wf = src.ActionFps(CharacterAction.Walk); if (wf > 0f) SetActionFps(CharacterAction.Walk, wf);
         float rf = src.ActionFps(CharacterAction.Run);  if (rf > 0f) SetActionFps(CharacterAction.Run,  rf);
