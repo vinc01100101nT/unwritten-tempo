@@ -19,21 +19,23 @@ public static class ItemStarterSet
     // In Resources so BagSeeder can load them at runtime (no baked prefab references).
     const string Dir = "Assets/Resources/Items";
 
-    // (asset name, sprite path, equip slot, +HP, +ATK, +DEF, heal, flavor description)
-    static readonly (string name, string sprite, EquipSlotType slot, int hp, int atk, int def, int heal, string desc)[] Defs =
+    // (asset name, sprite, slot, +HP, +ATK, +DEF, heal, rarity, cardSlots, weight, zeny, category, description)
+    static readonly (string name, string sprite, EquipSlotType slot, int hp, int atk, int def, int heal,
+                     Rarity rarity, int cards, int weight, int zeny, ItemCategory cat, string desc)[] Defs =
     {
-        ("Iron Sword",  ART + "/Items/Weapons/Sword/Sprite.png",  EquipSlotType.Weapon,  0, 3, 0, 0, "A dependable blade. Nothing fancy, always sharp."),
-        ("Katana",      ART + "/Items/Weapons/Katana/Sprite.png", EquipSlotType.Weapon,  0, 5, 0, 0, "Folded steel with a wicked edge."),
-        ("Sai",         ART + "/Items/Weapons/Sai/Sprite.png",    EquipSlotType.Weapon,  0, 2, 1, 0, "Quick to strike, quick to parry."),
-        ("Iron Helm",   ART + "/UI/Skill Icon/Items & Weapon/Helmet.png", EquipSlotType.Head,    4, 0, 2, 0, "Dented but sturdy headgear."),
-        ("Leather Vest",ART + "/UI/Skill Icon/Items & Weapon/Armor.png",  EquipSlotType.Body,    8, 0, 3, 0, "Boiled leather that turns a blow."),
-        ("Boots",       ART + "/UI/Skill Icon/Items & Weapon/Boot.png",   EquipSlotType.Boots,   2, 0, 1, 0, "Worn travelling boots."),
-        ("Wooden Guard",ART + "/UI/Skill Icon/Items & Weapon/Guard.png",  EquipSlotType.OffHand, 0, 0, 2, 0, "A simple off-hand buckler."),
-        ("Jade Amulet", ART + "/UI/Skill Icon/Items & Weapon/Amulet.png", EquipSlotType.Trinket, 6, 1, 0, 0, "A warm green stone that steadies the heart."),
-        ("Silver Ring", ART + "/UI/Skill Icon/Items & Weapon/Ring.png",   EquipSlotType.Trinket, 0, 2, 0, 0, "A plain band that sharpens your focus."),
-        ("Life Potion", ART + "/Items/Potion/LifePot.png",       EquipSlotType.None, 0, 0, 0, 10, "Bittersweet brew that knits wounds."),
-        ("Gold Coin",   ART + "/Items/Treasure/GoldCoin.png",    EquipSlotType.None, 0, 0, 0, 0, "Currency of the realm. (Shops come later.)"),
-        ("Fire Scroll", ART + "/Items/Scroll/ScrollFire.png",    EquipSlotType.None, 0, 0, 0, 0, "Crackles with unspent flame. (Usable later.)"),
+        ("Iron Sword",  ART + "/Items/Weapons/Sword/Sprite.png",  EquipSlotType.Weapon, 0, 3, 0, 0, Rarity.Common,    2,  90, 5000,  ItemCategory.Equip, "A dependable blade. Nothing fancy, always sharp."),
+        ("Katana",      ART + "/Items/Weapons/Katana/Sprite.png", EquipSlotType.Weapon, 0, 5, 0, 0, Rarity.Rare,      3, 110, 22000, ItemCategory.Equip, "Folded steel with a wicked edge."),
+        ("Sai",         ART + "/Items/Weapons/Sai/Sprite.png",    EquipSlotType.Weapon, 0, 2, 1, 0, Rarity.Uncommon,  1,  70, 3200,  ItemCategory.Equip, "Quick to strike, quick to parry."),
+        ("Iron Helm",   ART + "/UI/Skill Icon/Items & Weapon/Helmet.png", EquipSlotType.Head,    4, 0, 2, 0, Rarity.Common,   1,  40,  600,  ItemCategory.Equip, "Dented but sturdy headgear."),
+        ("Leather Vest",ART + "/UI/Skill Icon/Items & Weapon/Armor.png",  EquipSlotType.Armor,   8, 0, 3, 0, Rarity.Uncommon, 1, 120, 2400,  ItemCategory.Equip, "Boiled leather that turns a blow."),
+        ("Boots",       ART + "/UI/Skill Icon/Items & Weapon/Boot.png",   EquipSlotType.Boots,   2, 0, 1, 0, Rarity.Common,   0,  60,  900,  ItemCategory.Equip, "Worn travelling boots."),
+        ("Wooden Guard",ART + "/UI/Skill Icon/Items & Weapon/Guard.png",  EquipSlotType.Shield,  0, 0, 2, 0, Rarity.Common,   0, 130, 1100,  ItemCategory.Equip, "A simple off-hand buckler."),
+        ("Jade Amulet", ART + "/UI/Skill Icon/Items & Weapon/Amulet.png", EquipSlotType.Accessory1, 6, 1, 0, 0, Rarity.Epic, 1,  10, 9000,  ItemCategory.Equip, "A warm green stone that steadies the heart."),
+        ("Silver Ring", ART + "/UI/Skill Icon/Items & Weapon/Ring.png",   EquipSlotType.Accessory2, 0, 2, 0, 0, Rarity.Rare, 1,  10, 4200,  ItemCategory.Equip, "A plain band that sharpens your focus."),
+        ("Dawnbreaker", ART + "/Items/Weapons/Katana/Sprite.png", EquipSlotType.Weapon, 0, 9, 0, 0, Rarity.Legendary, 3, 130, 0,     ItemCategory.Equip, "Named drop from the Sunken Throne. Screenshot-worthy."),
+        ("Life Potion", ART + "/Items/Potion/LifePot.png",       EquipSlotType.None, 0, 0, 0, 10, Rarity.Common,   0,   7,   50,  ItemCategory.Use,      "Bittersweet brew that knits wounds."),
+        ("Iron Ore",    ART + "/Items/Treasure/GoldCoin.png",    EquipSlotType.None, 0, 0, 0, 0,  Rarity.Common,   0,  15,   80,  ItemCategory.Material, "Refining material."),
+        ("Fire Scroll", ART + "/Items/Scroll/ScrollFire.png",    EquipSlotType.None, 0, 0, 0, 0,  Rarity.Uncommon, 0,  10,    0,  ItemCategory.Etc,      "Crackles with unspent flame. (Usable later.)"),
     };
 
     [MenuItem("Tools/unwritten/Scene Setup/Create Starter Items", priority = 130)]
@@ -63,6 +65,11 @@ public static class ItemStarterSet
             item.bonusAttack = d.atk;
             item.bonusDefense = d.def;
             item.healAmount = d.heal;
+            item.rarity = d.rarity;
+            item.cardSlots = d.cards;
+            item.weight = d.weight;
+            item.zeny = d.zeny;
+            item.category = d.cat;
             item.description = d.desc;
 
             // Equipment-specific combat audio (overrides the player defaults while equipped).
@@ -71,7 +78,7 @@ public static class ItemStarterSet
                 item.attackSfx = SfxAssets.Set(0.8f, SfxAssets.SwordDir, "Sword Attack 1", "Sword Attack 2", "Sword Attack 3");
                 item.hitSfx    = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Impact Hit 1", "Sword Impact Hit 2", "Sword Impact Hit 3");
             }
-            else if (d.slot == EquipSlotType.OffHand)
+            else if (d.slot == EquipSlotType.Shield)
             {
                 item.guardSfx = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Blocked 1", "Sword Blocked 2", "Sword Blocked 3");
                 item.blockChance = 0.25f;   // a buckler blocks ~1 in 4 hits

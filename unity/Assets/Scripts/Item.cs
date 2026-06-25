@@ -1,7 +1,30 @@
 using UnityEngine;
 
-/// <summary>Which equipment slot an item fits. None = a bag-only item (consumable / material).</summary>
-public enum EquipSlotType { None, Head, Body, Weapon, OffHand, Boots, Trinket }
+/// <summary>Which equipment slot an item fits. None = a bag-only item (consumable / material).
+/// Integer values are PINNED so the rename from the old taxonomy (Body→Armor, OffHand→Shield,
+/// Trinket→Accessory1) doesn't shift any serialized scene/prefab/item data — only the names changed.
+/// The 7 VISIBLE slots (spec) are Head/Armor/Garment/Weapon/Shield/Accessory1/Accessory2; Boots is
+/// legacy (kept for old data, not shown); the three Costume* slots are reserved for a future cosmetic
+/// layer (also not shown in v1).</summary>
+public enum EquipSlotType
+{
+    None = 0,
+    Head = 1,
+    Armor = 2,        // was Body
+    Weapon = 3,
+    Shield = 4,       // was OffHand — still the block source in combat
+    Boots = 5,        // legacy; not a visible slot in the v1 window
+    Accessory1 = 6,   // was Trinket
+    Accessory2 = 7,
+    Garment = 8,
+    CostumeHead = 9,  // reserved cosmetic layer — not shown in v1 UI
+    CostumeBody = 10,
+    CostumeBack = 11,
+}
+
+/// <summary>Inventory tab bucket. Independent of <see cref="EquipSlotType"/>: an item with a
+/// real slot is <see cref="Equip"/>; bag-only items split into Use / Material / Etc for the tabs.</summary>
+public enum ItemCategory { Equip, Use, Material, Etc }
 
 /// <summary>
 /// A piece of gear or a bag item: an icon, which slot it fits, and (Phase F) the
@@ -18,6 +41,18 @@ public class Item : ScriptableObject
     [Tooltip("Which equipment slot this fits. None = bag-only (consumable/material).")]
     public EquipSlotType slot = EquipSlotType.None;
 
+    [Header("Identity (HUD relay spec)")]
+    [Tooltip("Drives the slot BORDER color only (rarity is one independent visual channel).")]
+    public Rarity rarity = Rarity.Common;
+    [Tooltip("Which inventory tab this falls under. Equip = has a real slot.")]
+    public ItemCategory category = ItemCategory.Etc;
+    [Tooltip("Number of card sockets (◇ pips). 0 = no sockets. Only meaningful for equipment.")]
+    public int cardSlots;
+    [Tooltip("Display-only weight (v1). Real encumbrance lands with the loot loop.")]
+    public int weight;
+    [Tooltip("Sell value in zeny.")]
+    public int zeny;
+
     [Header("Equipment bonuses (applied while equipped)")]
     public int bonusHP;
     public int bonusAttack;
@@ -27,6 +62,20 @@ public class Item : ScriptableObject
     public int bonusMP;
     public int bonusMAtk;
     public int bonusMDef;
+
+    [Header("Primary-stat bonuses (applied while equipped)")]
+    public int bonusStr;
+    public int bonusAgi;
+    public int bonusVit;
+    public int bonusInt;
+    public int bonusDex;
+    public int bonusLuk;
+
+    [Header("Derived bonuses")]
+    [Tooltip("Added to crit CHANCE, in whole percent (e.g. 5 = +5%).")]
+    public int bonusCritPercent;
+    [Tooltip("Added to attack SPEED, in whole percent (e.g. 4 = +4%). May be negative.")]
+    public int bonusAspdPercent;
 
     [Header("Consumable")]
     [Tooltip("Right-click in the bag to heal this much, then consume it. 0 = not a consumable.")]

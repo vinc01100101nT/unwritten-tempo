@@ -77,31 +77,35 @@ public static class UIShellBuilder
 
         SetupEventSystem(root);
         BuildHud(root);
-        var bag      = BuildBagPanel(root);
-        var chr      = BuildCharacterPanel(root);
         var skills   = BuildSkillsPanel(root);
         var customize = BuildCustomizePanel(root);
         var calendar = BuildCalendarPanel(root);
-        BuildTooltip(root);       // on top of every panel
+        // Bag / Character / Equipment panels + the item tooltip were REMOVED — replaced by the new
+        // ProgressionWindows trio (Inventory I · Equipment E · Character C, built via
+        // Tools ▸ unwritten ▸ UI ▸ Build Progression Windows). Stat-point allocation moved into that
+        // Character window, so StatPanel + BagSeeder are no longer added here.
         // (The old UI-image sword cursor was retired — GameCursor now drives a hardware
         //  cursor from the Kenney pack, wired by Tools ▸ unwritten ▸ Setup Global Systems.)
 
         var toggle = canvasGO.AddComponent<PanelToggle>();
         toggle.panels = new[]
         {
-            new PanelToggle.Binding { name = "Bag",       key = KeyCode.I, panel = bag },
-            new PanelToggle.Binding { name = "Character", key = KeyCode.C, panel = chr },
+            // I (Inventory) / E (Equipment) / C (Character) are owned by ProgressionWindows now.
             new PanelToggle.Binding { name = "Skills",    key = KeyCode.K, panel = skills },
             new PanelToggle.Binding { name = "Outfit",    key = KeyCode.O, panel = customize },
             new PanelToggle.Binding { name = "Calendar",  key = KeyCode.L, panel = calendar },
         };
 
         canvasGO.AddComponent<PersistentUI>();             // survives scene loads (singleton)
-        canvasGO.AddComponent<CharacterUIBinder>();        // drives HUD/stats/equip from Character
-        canvasGO.AddComponent<BagSeeder>();                // fills the bag from Resources at runtime
+        canvasGO.AddComponent<CharacterUIBinder>();        // drives the HUD health/mana bars from Character
         canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Skills (K) panel
-        canvasGO.AddComponent<StatPanel>();                // RO-style stat distribution into the Character (C) panel
         canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
+
+        // The new progression window trio (Inventory I · Equipment E · Character C) — replaces the old
+        // Bag/Character panels. Builds itself into this canvas at runtime; needs the starter Item/Card assets.
+        ItemStarterSet.EnsureStarterItems();
+        ProgressionWindowsBuilder.EnsureStarterCards();
+        canvasGO.AddComponent<ProgressionWindows>();       // also pulls in InventoryStore (RequireComponent)
         canvasGO.AddComponent<CharacterCustomizePanel>();  // O = Outfit: animated preview + cloth colour palette
         var calPanel = canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: 12-day season grid w/ per-day weather (+ click the date widget)
         // Bake in the Ninja Adventure "Meteo" weather icons (the runtime can't AssetDatabase-load, so we wire the
@@ -291,112 +295,6 @@ public static class UIShellBuilder
     }
 
     // ---- Panels ---------------------------------------------------------------
-
-    static GameObject BuildBagPanel(Transform canvas)
-    {
-        var content = NewPanel(canvas, "BagPanel", new Vector2(0.62f, 0.16f), new Vector2(0.97f, 0.84f), "Bag");
-        var grid = content.gameObject.AddComponent<GridLayoutGroup>();
-        grid.cellSize = new Vector2(48, 48);
-        grid.spacing = new Vector2(6, 6);
-        grid.padding = new RectOffset(2, 2, 2, 2);
-
-        ItemStarterSet.EnsureStarterItems();   // make sure the starter assets exist (in Resources)
-        for (int i = 0; i < 24; i++)           // slots are built empty; BagSeeder fills them at runtime
-            MakeItemSlot(NewSliced("Slot", content, cellSprite), EquipSlotType.None, null);
-        return content.parent.gameObject;
-    }
-
-    static GameObject BuildCharacterPanel(Transform canvas)
-    {
-        var content = NewPanel(canvas, "CharacterPanel", new Vector2(0.04f, 0.14f), new Vector2(0.44f, 0.86f), "Character");
-
-        var stats = NewText("Stats", content,
-            "Level   1\nHP      —\nATK     —\nDEF     —\nSPD     —",
-            16, FontStyle.Normal, TextAnchor.UpperLeft, true);
-        stats.rectTransform.anchorMin = new Vector2(0, 0);
-        stats.rectTransform.anchorMax = new Vector2(0.46f, 1);
-        stats.rectTransform.offsetMin = new Vector2(8, 8);
-        stats.rectTransform.offsetMax = new Vector2(-4, -8);
-
-        var equip = NewColor("Equipment", content, new Color(0, 0, 0, 0f));
-        equip.rectTransform.anchorMin = new Vector2(0.46f, 0);
-        equip.rectTransform.anchorMax = new Vector2(1f, 1);
-        equip.rectTransform.offsetMin = new Vector2(4, 8);
-        equip.rectTransform.offsetMax = new Vector2(-8, -8);
-        var vlg = equip.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.spacing = 6;
-        vlg.childControlWidth = vlg.childControlHeight = true;
-        vlg.childForceExpandWidth = true;
-        vlg.childForceExpandHeight = false;
-        vlg.childAlignment = TextAnchor.UpperLeft;
-        foreach (var (label, type, icon) in new (string, EquipSlotType, string)[]
-                 { ("Head",EquipSlotType.Head,"Helmet"),("Body",EquipSlotType.Body,"Armor"),
-                   ("Weapon",EquipSlotType.Weapon,"Kunai"),("Off-hand",EquipSlotType.OffHand,"Guard"),
-                   ("Boots",EquipSlotType.Boots,"Boot"),("Trinket",EquipSlotType.Trinket,"Amulet") })
-            BuildEquipRow(equip.transform, label, type, icon);
-
-        return content.parent.gameObject;
-    }
-
-    static void BuildEquipRow(Transform parent, string label, EquipSlotType type, string iconName)
-    {
-        var row = NewColor("Equip_" + label, parent, new Color(0, 0, 0, 0f));
-        row.gameObject.AddComponent<LayoutElement>().preferredHeight = 42;
-
-        var cell = NewSliced("Slot", row.transform, cellSprite);
-        cell.rectTransform.anchorMin = new Vector2(0, 0.5f);
-        cell.rectTransform.anchorMax = new Vector2(0, 0.5f);
-        cell.rectTransform.pivot = new Vector2(0, 0.5f);
-        cell.rectTransform.anchoredPosition = new Vector2(2, 0);
-        cell.rectTransform.sizeDelta = new Vector2(40, 40);
-
-        // Empty equip slots show the greyed "Disabled" icon as a hint.
-        var placeholder = AssetDatabase.LoadAssetAtPath<Sprite>($"{ITEMS}/{iconName}Disabled.png");
-        MakeItemSlot(cell, type, placeholder);
-
-        var t = NewText("Label", row.transform, label, 16, FontStyle.Normal, TextAnchor.MiddleLeft, true);
-        Fill(t.rectTransform, new Vector2(50, 0), new Vector2(-4, 0));
-    }
-
-    // A single shared item tooltip that follows the cursor (filled by ItemTooltip).
-    static void BuildTooltip(Transform canvas)
-    {
-        var panel = NewSliced("ItemTooltip", canvas, panelSprite);
-        var rt = panel.rectTransform;
-        rt.anchorMin = rt.anchorMax = new Vector2(0, 1);   // anchored top-left; ItemTooltip moves it
-        rt.pivot = new Vector2(0, 1);
-        rt.sizeDelta = new Vector2(240, 80);
-        panel.raycastTarget = false;
-
-        var cg = panel.gameObject.AddComponent<CanvasGroup>();
-        cg.blocksRaycasts = false;
-        cg.interactable = false;
-
-        var vlg = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.padding = new RectOffset(12, 12, 8, 10);
-        vlg.spacing = 1;
-        vlg.childControlWidth = vlg.childControlHeight = true;
-        vlg.childForceExpandWidth = true;
-        vlg.childForceExpandHeight = false;
-        vlg.childAlignment = TextAnchor.UpperLeft;
-
-        var fitter = panel.gameObject.AddComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;  // keep the fixed 240 width
-        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;    // grow tall enough for the text
-
-        var title = NewText("Title", panel.transform, "Item", 20, FontStyle.Bold, TextAnchor.UpperLeft, true);
-        title.raycastTarget = false;
-        var body = NewText("Body", panel.transform, "", 16, FontStyle.Normal, TextAnchor.UpperLeft, false);
-        body.raycastTarget = false;
-        body.supportRichText = true;
-
-        var tip = panel.gameObject.AddComponent<ItemTooltip>();
-        tip.panel = rt;
-        tip.titleText = title;
-        tip.bodyText = body;
-        // Stays ACTIVE (so ItemTooltip.Awake runs and registers Instance); it hides
-        // itself via the CanvasGroup alpha instead of being deactivated.
-    }
 
     static GameObject BuildSkillsPanel(Transform canvas)
     {

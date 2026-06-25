@@ -1,0 +1,20 @@
+/// <summary>
+/// An immutable readout of every derived stat the Character/Inventory windows show, computed
+/// from a given equipment loadout. The LIVE panel reads <see cref="Character.CurrentDerived"/>;
+/// the hover "equip this → ATK 220→248" preview reads <see cref="Character.DeriveWith"/> on a
+/// HYPOTHETICAL set and diffs the two. Both go through the same Character formulas, so the
+/// preview can never drift from real combat numbers.
+/// </summary>
+public struct DerivedSnapshot
+{
+    public int atkMin, atkMax;
+    public int matkMin, matkMax;
+    public int def, mdef;
+    public int hit, flee;
+    public int maxHP, maxMP;
+    public int moveSpeed;
+    public float critChance;   // 0..1
+    public float critMult;     // e.g. 1.4 = 140%
+    public float aspdMult;     // >1 = faster
+    public float castTimeMult; // 1 = full wind-up, 0 = instant cast
+}

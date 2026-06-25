@@ -77,9 +77,12 @@ public class Character : MonoBehaviour
     public int StatPoints { get; private set; }
 
     // Per-point contributions of each primary stat to the flat / derived layers (tunable).
-    const int   HpPerVit = 8, MpPerInt = 5, AtkPerStr = 1, MatkPerInt = 1;
+    const int   AtkPerStr = 1, MatkPerInt = 1;
     const int   DefPerVit = 3, MdefPerInt = 3, AtkPerDex = 2, AtkPerLuk = 4, MatkPerLuk = 4;  // these are DIVISORS
     const float AspdPerAgi = 0.005f, CritPerLuk = 0.003f, CastPerDex = 0.006f;   // pre-renewal CRIT = LUK×0.3%
+    // Pre-renewal vitals/ASPD: VIT and INT scale HP/SP as a PERCENT per point (they multiply the level-driven
+    // base, not add flat); DEX raises ASPD a fraction of what AGI does.
+    const float VitHpPercent = 0.02f, IntSpPercent = 0.015f, DexAspdShare = 0.25f;
     const float CritShieldPerLuk = 0.003f;   // pre-renewal "crit shield": the TARGET's LUK lowers our crit chance 0.3%/pt
     // Pre-renewal RO cast time: a spell's wind-up shrinks LINEARLY with DEX and reaches ZERO (instant cast)
     // at this DEX. castTime = baseCast × (1 − DEX / InstantCastDex), clamped ≥ 0 — one stat, the classic
@@ -98,7 +101,10 @@ public class Character : MonoBehaviour
     const float MinFractionPerStat  = 0.012f;  // each point closes the min→max gap (~38 → min == max)
 
     public int GetStat(PrimaryStat s) => primary[(int)s];
-    int P(PrimaryStat s) => primary[(int)s];
+    // EFFECTIVE primary stat = allocated points + equipment/card bonuses. Every derived/combat
+    // getter below reads P(), so gear that grants +STR now flows into ATK/HP/etc. (The raw
+    // allocation economy — costs, caps, GetStat — uses primary[] directly and is unaffected.)
+    int P(PrimaryStat s) => primary[(int)s] + equipBonuses.Stat(s);
 
     // ---- Pre-renewal stat economy -------------------------------------------------------------------
     /// <summary>Pre-renewal base-stat ceiling — a primary stat can't be raised past this with points.</summary>
@@ -144,6 +150,18 @@ public class Character : MonoBehaviour
     /// <summary>Grant unspent status points (dev/testing — e.g. the DevSettings panel).</summary>
     public void GrantStatPoints(int n) { if (n <= 0) return; StatPoints += n; OnStatsChanged?.Invoke(); }
 
+    /// <summary>Re-clamp current HP/MP to the (possibly changed) max and refire the UI events. Call when
+    /// something that changes <see cref="MaxHP"/>/<see cref="MaxMP"/> outside the normal getters happens —
+    /// notably a CLASS switch, since vitals are now per-class.</summary>
+    public void ReconcileVitals()
+    {
+        CurrentHP = Mathf.Min(CurrentHP, MaxHP);
+        CurrentMP = Mathf.Min(CurrentMP, MaxMP);
+        OnStatsChanged?.Invoke();
+        OnHealthChanged?.Invoke();
+        OnManaChanged?.Invoke();
+    }
+
     /// <summary>Refund every allocated stat point (all stats back to 1) and restore the full pre-renewal
     /// budget for the current level. Also the clean way to migrate a character saved under the old flat
     /// economy onto the new cost curve — or just to re-roll a build. Wired to the DevSettings respec button.</summary>
@@ -176,7 +194,17 @@ public class Character : MonoBehaviour
         return true;
     }
 
-    readonly Dictionary<EquipSlotType, Item> equipped = new Dictionary<EquipSlotType, Item>();
+    // Each slot holds a unique EquipmentInstance (def + refine + cards), not a shared Item — so
+    // a "+7 Iron Sword with 2 cards" is its own thing. Combat callers still get the Item via
+    // GetEquipped(); the instance layer adds refine/card bonuses through equipBonuses below.
+    readonly Dictionary<EquipSlotType, EquipmentInstance> equipped = new Dictionary<EquipSlotType, EquipmentInstance>();
+
+    /// <summary>Cached equipment stat contribution — recomputed ONLY when gear changes, so the hot
+    /// combat getters read a struct field instead of re-summing the dictionary per hit. The hover
+    /// preview temporarily swaps this for a hypothetical loadout; see <see cref="DeriveWith"/>.</summary>
+    EquipBonuses equipBonuses;
+
+    void RecomputeEquip() => equipBonuses = EquipBonuses.Aggregate(equipped.Values);
 
     /// <summary>The Phase G passive skill layer (Trio-Ring draft). Owns the player's ranks +
     /// banked skill points; its <see cref="PassiveRanks.Percent"/> is the % multiplier folded
@@ -213,17 +241,23 @@ public class Character : MonoBehaviour
     // Effective stat = flat layer (base + level growth + PRIMARY-STAT contribution + equipment) × (1 + passive%).
     // The passive % layer is deliberately separate so a +% never goes obsolete the way a flat bonus does (doc §7).
     // The purely-derived stats further below (Crit/Evasion/AttackSpeed/CastSpeed) have no flat base.
-    public int MaxHP   => Scale(baseMaxHP   + hpPerLevel      * (Level - 1) + P(PrimaryStat.VIT) * HpPerVit + Bonus(i => i.bonusHP),      StatId.HP);
+    // Pre-renewal vitals: the level-driven base curve is scaled by the CLASS (Swordsman = tanky/shallow SP,
+    // Mage = frail/deep SP), then by VIT/INT as a PERCENT multiplier. Equipment HP/MP add flat on top.
+    public int MaxHP   => Scale(Mathf.RoundToInt((baseMaxHP + hpPerLevel * (Level - 1))
+                                * VitalsFor(ClassState.Current).hp * (1f + P(PrimaryStat.VIT) * VitHpPercent))
+                                + equipBonuses.hp, StatId.HP);
     public int Attack  => Scale(baseAttack  + attackPerLevel  * (Level - 1) + P(PrimaryStat.STR) * AtkPerStr
                                 + StatSquareBonus(P(PrimaryStat.STR))   // pre-renewal status-ATK bonus: +⌊STR/10⌋²
-                                + P(PrimaryStat.DEX) / AtkPerDex + P(PrimaryStat.LUK) / AtkPerLuk + Bonus(i => i.bonusAttack),  StatId.Atk);
-    public int Defense => Scale(baseDefense + defensePerLevel * (Level - 1) + P(PrimaryStat.VIT) / DefPerVit + Bonus(i => i.bonusDefense), StatId.Def);
+                                + P(PrimaryStat.DEX) / AtkPerDex + P(PrimaryStat.LUK) / AtkPerLuk + equipBonuses.atk,  StatId.Atk);
+    public int Defense => Scale(baseDefense + defensePerLevel * (Level - 1) + P(PrimaryStat.VIT) / DefPerVit + equipBonuses.def, StatId.Def);
 
-    public int MaxMP        => Scale(baseMaxMP        + mpPerLevel           * (Level - 1) + P(PrimaryStat.INT) * MpPerInt + Bonus(i => i.bonusMP),   StatId.MP);
+    public int MaxMP        => Scale(Mathf.RoundToInt((baseMaxMP + mpPerLevel * (Level - 1))
+                                * VitalsFor(ClassState.Current).sp * (1f + P(PrimaryStat.INT) * IntSpPercent))
+                                + equipBonuses.mp, StatId.MP);
     public int MagicAttack  => Scale(baseMagicAttack  + magicAttackPerLevel  * (Level - 1) + P(PrimaryStat.INT) * MatkPerInt
                                 + StatSquareBonus(P(PrimaryStat.INT))   // pre-renewal status-MATK bonus: +⌊INT/10⌋²
-                                + P(PrimaryStat.LUK) / MatkPerLuk + Bonus(i => i.bonusMAtk), StatId.MAtk);
-    public int MagicDefense => Scale(baseMagicDefense + magicDefensePerLevel * (Level - 1) + P(PrimaryStat.INT) / MdefPerInt + Bonus(i => i.bonusMDef), StatId.MDef);
+                                + P(PrimaryStat.LUK) / MatkPerLuk + equipBonuses.matk, StatId.MAtk);
+    public int MagicDefense => Scale(baseMagicDefense + magicDefensePerLevel * (Level - 1) + P(PrimaryStat.INT) / MdefPerInt + equipBonuses.mdef, StatId.MDef);
 
     // Pre-renewal DEF split (player side): incoming damage is cut by HARD DEF (a % reduction, from armor)
     // FIRST, then by SOFT DEF (the flat Defense/MagicDefense above, mostly VIT/INT). Hard DEF has no item
@@ -250,6 +284,12 @@ public class Character : MonoBehaviour
     /// dumping points into one offensive stat.</summary>
     static int StatSquareBonus(int stat) { int tens = stat / 10; return tens * tens; }
 
+    /// <summary>Per-class HP/SP growth factors (multipliers on the level-driven base curve). Swordsman is
+    /// tanky with a shallow SP pool; Mage is frail with a deep one — the pre-renewal job identity.</summary>
+    readonly struct ClassVitals { public readonly float hp, sp; public ClassVitals(float hp, float sp) { this.hp = hp; this.sp = sp; } }
+    static ClassVitals VitalsFor(PlayerClass c)
+        => c == PlayerClass.Mage ? new ClassVitals(0.85f, 1.7f) : new ClassVitals(1.4f, 0.7f);   // default/Swordsman = tanky, low SP
+
     public int XPToNext => 5 + Level * 5;
     public bool IsDead => CurrentHP <= 0;
 
@@ -258,14 +298,17 @@ public class Character : MonoBehaviour
     public const float BaseCritMultiplier = 1.4f;                                     // pre-renewal: a crit deals 140%…
     public float CritMultiplier  => BaseCritMultiplier + Passives.Percent(StatId.CritDamage); // …+ CritDamage on top
     // These combine the primary-stat contribution (LUK/AGI/DEX) with the passive % layer.
-    public float CritChance01    => Mathf.Min(0.95f, P(PrimaryStat.LUK) * CritPerLuk + Passives.Percent(StatId.CritChance));
+    public float CritChance01    => Mathf.Min(0.95f, P(PrimaryStat.LUK) * CritPerLuk + Passives.Percent(StatId.CritChance) + equipBonuses.critPercent / 100f);
     // RO accuracy/evasion. HIT (DEX + level) is rolled against a target's FLEE to decide a physical hit;
     // FLEE (AGI + level, scaled by the Evasion passive) is how often incoming physical attacks whiff on us.
     // Both feed the shared HIT-vs-FLEE roll in Combat; magic ignores them. See Combat for the formula.
     public int Hit  => Level + P(PrimaryStat.DEX) * HitPerDex + P(PrimaryStat.LUK) / LukPerHit;
     public int Flee => Mathf.RoundToInt((Level + P(PrimaryStat.AGI) * FleePerAgi + P(PrimaryStat.LUK) / LukPerFlee)
                                         * (1f + Passives.Percent(StatId.Evasion)));
-    public float AttackSpeedMult => 1f + P(PrimaryStat.AGI) * AspdPerAgi + Passives.Percent(StatId.AttackSpeed);  // >1 = swing faster
+    // Pre-renewal ASPD: AGI is the primary driver, DEX contributes a fraction (DexAspdShare). Kept as a
+    // SPEED MULTIPLIER (the game's attack model) rather than the RO 0–200 scale. >1 = swing faster.
+    public float AttackSpeedMult => 1f + (P(PrimaryStat.AGI) + P(PrimaryStat.DEX) * DexAspdShare) * AspdPerAgi
+                                       + Passives.Percent(StatId.AttackSpeed) + equipBonuses.aspdPercent / 100f;
     public float CastSpeedMult   => 1f + P(PrimaryStat.DEX) * CastPerDex;             // >1 = cast faster (shortens caster cooldown)
     /// <summary>Pre-renewal cast-time multiplier applied to a spell's base wind-up: <c>1 − DEX/150</c>,
     /// clamped to [0,1]. 1 at 0 DEX, 0 (instant cast) at DEX 150. A spell's real cast time is
@@ -273,6 +316,49 @@ public class Character : MonoBehaviour
     public float CastTimeMult => Mathf.Clamp01(1f - P(PrimaryStat.DEX) / (float)InstantCastDex);
 
     int Scale(int flat, StatId stat) => Mathf.RoundToInt(flat * (1f + Passives.Percent(stat)));
+
+    // ---- Derived-stat snapshots (the pure keystone for the HUD windows) -----------------------
+    /// <summary>A readout of every derived stat for the CURRENT loadout (what the Character /
+    /// Inventory windows display live).</summary>
+    public DerivedSnapshot CurrentDerived => SnapshotNow();
+
+    // Build a snapshot from the live getters. Because every getter routes through P()+equipBonuses,
+    // swapping equipBonuses (DeriveWith) makes this reflect any hypothetical loadout — no formula
+    // is ever duplicated.
+    DerivedSnapshot SnapshotNow() => new DerivedSnapshot
+    {
+        atkMin = MinAttack,       atkMax = MaxAttack,
+        matkMin = MinMagicAttack, matkMax = MaxMagicAttack,
+        def = Defense,            mdef = MagicDefense,
+        hit = Hit,                flee = Flee,
+        maxHP = MaxHP,            maxMP = MaxMP,
+        moveSpeed = 100,
+        critChance = CritChance01, critMult = CritMultiplier,
+        aspdMult = AttackSpeedMult, castTimeMult = CastTimeMult,
+    };
+
+    /// <summary>The pure preview: derived stats AS IF <paramref name="hypothetical"/> were equipped
+    /// in <paramref name="slot"/> (pass null to preview UN-equipping it), WITHOUT mutating the
+    /// character. The hover "ATK 220 → 248 (+28)" preview diffs this against <see cref="CurrentDerived"/>;
+    /// equip-compare diffs two such calls. Synchronous + side-effect-free (the cached bonus field is
+    /// swapped and restored; no events fire, the equip dictionary is untouched).</summary>
+    public DerivedSnapshot DeriveWith(EquipSlotType slot, EquipmentInstance hypothetical)
+    {
+        // Aggregate the hypothetical set = live gear with `slot` replaced by `hypothetical`.
+        var hypo = default(EquipBonuses);
+        bool slotSeen = false;
+        foreach (var kv in equipped)
+        {
+            var inst = kv.Key == slot ? hypothetical : kv.Value;
+            if (kv.Key == slot) slotSeen = true;
+            inst?.AccumulateInto(ref hypo);
+        }
+        if (!slotSeen) hypothetical?.AccumulateInto(ref hypo);   // equipping into an empty slot
+
+        var saved = equipBonuses;
+        try { equipBonuses = hypo; return SnapshotNow(); }
+        finally { equipBonuses = saved; }
+    }
 
     /// <summary>Roll the player's outgoing hit: a random value in [<see cref="MinAttack"/>,
     /// <see cref="MaxAttack"/>], or — on a crit (probability <see cref="CritChance01"/>) — the max
@@ -313,13 +399,6 @@ public class Character : MonoBehaviour
         CurrentMP -= amount;
         OnManaChanged?.Invoke();
         return true;
-    }
-
-    int Bonus(Func<Item, int> select)
-    {
-        int total = 0;
-        foreach (var item in equipped.Values) if (item != null) total += select(item);
-        return total;
     }
 
     void Awake()
@@ -390,12 +469,24 @@ public class Character : MonoBehaviour
     }
 
     public Item GetEquipped(EquipSlotType slot)
-        => equipped.TryGetValue(slot, out var item) ? item : null;
+        => equipped.TryGetValue(slot, out var inst) && inst != null ? inst.def : null;
 
+    /// <summary>The full instance (def + refine + cards) in a slot, or null if empty.</summary>
+    public EquipmentInstance GetEquippedInstance(EquipSlotType slot)
+        => equipped.TryGetValue(slot, out var inst) ? inst : null;
+
+    /// <summary>Equip a bare <see cref="Item"/>, wrapped as a +0 / no-card instance. Kept for the
+    /// existing drag-drop equip UI; the instance overload below carries refine + cards.</summary>
     public void SetEquipped(EquipSlotType slot, Item item)
+        => SetEquipped(slot, item != null ? new EquipmentInstance(item) : null);
+
+    /// <summary>Equip (or, with a null instance, clear) a slot and refresh derived stats.</summary>
+    public void SetEquipped(EquipSlotType slot, EquipmentInstance instance)
     {
         if (slot == EquipSlotType.None) return;
-        equipped[slot] = item;
+        if (instance == null || instance.def == null) equipped.Remove(slot);
+        else equipped[slot] = instance;
+        RecomputeEquip();
         CurrentHP = Mathf.Min(CurrentHP, MaxHP);   // clamp if max dropped
         OnStatsChanged?.Invoke();
         OnHealthChanged?.Invoke();
@@ -463,7 +554,7 @@ public class Character : MonoBehaviour
         }
 
         // Off-hand block: a shield can negate the hit (and clang) before any damage applies.
-        var off = GetEquipped(EquipSlotType.OffHand);
+        var off = GetEquipped(EquipSlotType.Shield);
         if (off != null && off.blockChance > 0f && UnityEngine.Random.value < off.blockChance)
         {
             Sfx.Play(off.guardSfx != null && !off.guardSfx.Empty ? off.guardSfx : blockSfx);
