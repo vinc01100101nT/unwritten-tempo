@@ -90,8 +90,8 @@ public static class UIShellBuilder
         var toggle = canvasGO.AddComponent<PanelToggle>();
         toggle.panels = new[]
         {
-            // I (Inventory) / E (Equipment) / C (Character) are owned by ProgressionWindows now.
-            new PanelToggle.Binding { name = "Skills",    key = KeyCode.K, panel = skills },
+            // Inventory (Alt+E) / Equipment (Alt+Q) / Character (Alt+A) are owned by ProgressionWindows now.
+            new PanelToggle.Binding { name = "Skills",    key = KeyCode.S, requireAlt = true, panel = skills },
             new PanelToggle.Binding { name = "Outfit",    key = KeyCode.O, panel = customize },
             new PanelToggle.Binding { name = "Calendar",  key = KeyCode.L, panel = calendar },
         };

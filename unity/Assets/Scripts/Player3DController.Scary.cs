@@ -387,6 +387,8 @@ public partial class Player3DController
 
     static bool KeyDash()
     {
+        // Alt+E is the Inventory-window hotkey (ProgressionWindows) — don't also dash on it.
+        if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame) return true;
 #endif

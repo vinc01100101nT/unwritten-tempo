@@ -9,7 +9,7 @@ using UnityEngine;
 /// </summary>
 public static class AuthoringViewTool
 {
-    [MenuItem("Tools/unwritten/Authoring/Reset 2.5D Authoring View %#v", priority = 401)]   // Ctrl/Cmd+Shift+V
+    [MenuItem("Tools/unwritten/Authoring/Reset 2.5D Authoring View", priority = 401)]
     static void ResetView()
     {
         var sv = SceneView.lastActiveSceneView;

@@ -480,6 +480,12 @@ public class Character : MonoBehaviour
     public void SetEquipped(EquipSlotType slot, Item item)
         => SetEquipped(slot, item != null ? new EquipmentInstance(item) : null);
 
+    // Guards against an equip-event feedback loop: a UI refresh handler that writes equipment back
+    // into a slot (whose Changed event re-enters SetEquipped) would otherwise recurse until the stack
+    // overflows. While we're already inside SetEquipped notifying listeners, a re-entrant call still
+    // applies the equip but does NOT re-fire the events — so the loop can't run away.
+    bool notifyingEquip;
+
     /// <summary>Equip (or, with a null instance, clear) a slot and refresh derived stats.</summary>
     public void SetEquipped(EquipSlotType slot, EquipmentInstance instance)
     {
@@ -488,8 +494,15 @@ public class Character : MonoBehaviour
         else equipped[slot] = instance;
         RecomputeEquip();
         CurrentHP = Mathf.Min(CurrentHP, MaxHP);   // clamp if max dropped
-        OnStatsChanged?.Invoke();
-        OnHealthChanged?.Invoke();
+
+        if (notifyingEquip) return;                // re-entered from a listener — apply, but don't re-notify
+        notifyingEquip = true;
+        try
+        {
+            OnStatsChanged?.Invoke();
+            OnHealthChanged?.Invoke();
+        }
+        finally { notifyingEquip = false; }
     }
 
     // ---- Invulnerability (i-frames) ---------------------------------------------------------------

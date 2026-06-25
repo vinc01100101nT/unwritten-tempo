@@ -922,6 +922,10 @@ public partial class Player3DController : MonoBehaviour
     public static Health MonsterUnderCursor(Camera cam)
     {
         if (cam == null) return null;
+        // The cursor is over a HUD element (e.g. an open Inventory/Equipment/Character window): don't
+        // pick the mob "behind" it. This single guard makes the sword cursor (GameCursor3D), the hover
+        // panel (MobHoverPanel), and click-to-attack all ignore mobs occluded by the UI.
+        if (PointerOverUI()) return null;
         Vector2 mp = MousePos();
 
         // 1) Exact aim: a direct collider hit always wins (you're pointing right at it).

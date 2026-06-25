@@ -212,6 +212,8 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill
 
     static bool CastKey()
     {
+        // Alt+Q is the Equipment-window hotkey (ProgressionWindows) — don't also cast on it.
+        if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame) return true;
 #endif

@@ -15,11 +15,15 @@ public class PlayerInteractor : MonoBehaviour
 
     void Update()
     {
+        // Alt+E is the Inventory-window hotkey — ignore the interact key while Alt is held so opening
+        // the bag near an NPC doesn't also talk to them / advance dialogue.
+        bool alt = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
+
         // While a conversation is open: the key advances it, and the prompt hides.
         if (DialogueUI.Instance != null && DialogueUI.Instance.IsOpen)
         {
             if (InteractPrompt.Instance != null) InteractPrompt.Instance.Hide();
-            if (Input.GetKeyDown(interactKey)) DialogueUI.Instance.Advance();
+            if (!alt && Input.GetKeyDown(interactKey)) DialogueUI.Instance.Advance();
             return;
         }
 
@@ -34,7 +38,7 @@ public class PlayerInteractor : MonoBehaviour
                 InteractPrompt.Instance.Hide();
         }
 
-        if (target != null && Input.GetKeyDown(interactKey))
+        if (target != null && !alt && Input.GetKeyDown(interactKey))
             target.Interact();
     }
 

@@ -3,11 +3,14 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Wires the (persistent) UI to the (persistent) <see cref="Character"/>: drives
-/// the HUD health bar, the Character-panel stats text, and pushes equip-slot
-/// changes into the character so gear affects stats. Lives on the GameUICanvas;
-/// because both it and Character persist, it binds once and never needs to
-/// re-find anything across scene loads.
+/// Wires the (persistent) UI to the (persistent) <see cref="Character"/>: drives the HUD health/mana
+/// bars and the Character-panel stats text. Lives on the GameUICanvas; because both it and Character
+/// persist, it binds once and never needs to re-find anything across scene loads.
+///
+/// NOTE: this binder no longer pushes equip-slot changes into the character. Equipment is now owned by
+/// <see cref="ProgressionWindows"/> + <see cref="InventoryStore"/>. The old wiring (re-equipping from
+/// leftover slots on every Changed event) formed an infinite OnStatsChanged ↔ slot.Changed feedback
+/// loop with the new windows that stack-overflowed; it's intentionally gone.
 /// </summary>
 public class CharacterUIBinder : MonoBehaviour
 {
@@ -16,7 +19,6 @@ public class CharacterUIBinder : MonoBehaviour
     Image manaFill;
     Text manaLabel;
     Text statsText;
-    ItemSlot[] equipSlots;
     bool bound;
 
     void Start() => Bind();
@@ -32,14 +34,6 @@ public class CharacterUIBinder : MonoBehaviour
         manaFill    = transform.Find("HUD_ManaBar/Fill")?.GetComponent<Image>();
         manaLabel   = transform.Find("HUD_ManaBar/Label")?.GetComponent<Text>();
         statsText   = GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Stats");
-        equipSlots  = GetComponentsInChildren<ItemSlot>(true).Where(s => s.accepts != EquipSlotType.None).ToArray();
-
-        foreach (var s in equipSlots)
-        {
-            var slot = s;                                   // capture for the closure
-            c.SetEquipped(slot.accepts, slot.Item);         // sync whatever is already equipped
-            slot.Changed += () => Character.Instance?.SetEquipped(slot.accepts, slot.Item);
-        }
 
         c.OnStatsChanged  += RefreshStats;
         c.OnHealthChanged += RefreshHealth;

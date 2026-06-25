@@ -70,9 +70,12 @@ public class ProgressionWindows : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.I)) Toggle(invRoot);
-        if (Input.GetKeyDown(KeyCode.E)) Toggle(equipRoot);
-        if (Input.GetKeyDown(KeyCode.C)) Toggle(charRoot);
+        // Window hotkeys are Alt-modified so the bare keys stay free for movement/abilities:
+        //   Alt+E = Inventory · Alt+Q = Equipment · Alt+A = Character (Alt+S = Skills, via PanelToggle).
+        bool alt = Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
+        if (alt && Input.GetKeyDown(KeyCode.E)) Toggle(invRoot);
+        if (alt && Input.GetKeyDown(KeyCode.Q)) Toggle(equipRoot);
+        if (alt && Input.GetKeyDown(KeyCode.A)) Toggle(charRoot);
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (cardDialog != null) cardDialog.SetActive(false);

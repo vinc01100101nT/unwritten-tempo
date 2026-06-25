@@ -15,17 +15,20 @@ public class PanelToggle : MonoBehaviour
     {
         public string name;          // for readability in the Inspector
         public KeyCode key;
+        public bool requireAlt;      // when true, the toggle only fires while Left/Right Alt is held (e.g. Alt+S)
         public GameObject panel;
     }
 
     public Binding[] panels = new Binding[0];
     public KeyCode closeAllKey = KeyCode.Escape;
 
+    static bool AltHeld => Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt);
+
     void Update()
     {
         foreach (var b in panels)
         {
-            if (b.panel != null && Input.GetKeyDown(b.key))
+            if (b.panel != null && Input.GetKeyDown(b.key) && (!b.requireAlt || AltHeld))
             {
                 bool nowOpen = !b.panel.activeSelf;
                 b.panel.SetActive(nowOpen);
