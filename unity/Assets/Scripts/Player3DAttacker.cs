@@ -122,7 +122,10 @@ public class Player3DAttacker : MonoBehaviour
         float impactAt = swingTime * Mathf.Clamp01(hitTiming);
         yield return new WaitForSeconds(impactAt);
 
-        if (InRange(t))   // target still in reach when the blow connects (skip if it moved out / died during windup)
+        // RO-style commit: once the swing has STARTED (gated on InRange in TryAttack), the blow LANDS regardless of how
+        // far the target has since walked — the attack is animation-locked, not re-checked at impact. We only skip a
+        // target that no longer exists or already died during the windup. (Melee is decided at swing start.)
+        if (t != null && !t.IsDead)
         {
             // Roll the hit through Character so CritChance/CritDamage apply (spike has no Character → flat damage).
             bool crit = false;

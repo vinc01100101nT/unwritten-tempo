@@ -82,6 +82,7 @@ public class MonsterAI3D : MonoBehaviour
     static readonly Color StunColor     = new Color(1f, 0.9f, 0.3f);
 
     PathAgent3D agent;
+    Player3DAttacker playerAtk;   // cached once (Start) so the melee hold-distance can clamp to the player's reach without a per-frame GetComponent
     AttackLunge lunge;
     Transform player;
     Vector3 home;
@@ -127,7 +128,7 @@ public class MonsterAI3D : MonoBehaviour
         agent.moveSpeed = moveSpeed * UnitScale.ForMob;
 
         var pc = FindFirstObjectByType<Player3DController>();
-        if (pc != null) player = pc.transform;
+        if (pc != null) { player = pc.transform; playerAtk = pc.GetComponent<Player3DAttacker>(); }
 
         // Crowd avoidance: spread out from other mobs (they no longer physically block each other),
         // but NOT from the player we're chasing — so melee can still close in.
@@ -300,6 +301,10 @@ public class MonsterAI3D : MonoBehaviour
         // Melee: close to stopDistance and bite (the original behavior). Contact distance IS authored at full size,
         // so rescale it to the current size (UnitScale) — matching the melee touch range scaled in Update.
         float stop = stopDistance * UnitScale.MeleeReachFactor;
+        // INVARIANT: a melee mob must never hold farther than the PLAYER can reach, or the player whiffs every swing
+        // while the mob bites freely (authored stopDistance can exceed the player's range, e.g. 0.7 vs 0.5). Clamp the
+        // hold distance to just inside the player's effective melee reach so a halted mob is always in trading range.
+        if (playerAtk != null) stop = Mathf.Min(stop, playerAtk.EffectiveRange * 0.9f);
         if (toPlayerSqr <= stop * stop) agent.Halt();
         else agent.MoveToward(player.position);
     }
