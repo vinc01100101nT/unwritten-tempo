@@ -98,9 +98,11 @@ public class HandDrawnFX : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Boot()
     {
-        if (!BootEnabled) return;
-        Ensure();
-        UnityEngine.SceneManagement.SceneManager.sceneLoaded += (_, __) => { if (Instance == null) Ensure(); };
+        if (BootEnabled)
+        {
+            Ensure();
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += (_, __) => { if (Instance == null) Ensure(); };
+        }
     }
 
     /// <summary>Find the live hand-drawn FX, creating one if none exists yet (used by the DevSettings knobs so it
