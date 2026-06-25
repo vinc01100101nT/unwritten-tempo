@@ -19,6 +19,7 @@ public class StatPanel : MonoBehaviour
     Font font;
     Text pointsHeader, derivedText;
     readonly Text[] valueTexts = new Text[6];
+    readonly Text[] costTexts  = new Text[6];   // pre-renewal: the next-point cost shown per stat
     readonly Button[] addButtons = new Button[6];
     bool built;
 
@@ -80,6 +81,11 @@ public class StatPanel : MonoBehaviour
         var ve = valueTexts[i].gameObject.AddComponent<LayoutElement>();
         ve.flexibleWidth = 1;
 
+        // Next-point cost (pre-renewal ⌊V/10⌋+2), or "MAX" at the cap. Greyed/red when unaffordable.
+        costTexts[i] = NewText(row, "", 12, FontStyle.Normal, TextAnchor.MiddleRight);
+        costTexts[i].color = new Color(0.7f, 0.75f, 0.8f);
+        costTexts[i].gameObject.AddComponent<LayoutElement>().preferredWidth = 36;
+
         // The "+" button.
         var btnImg = NewImage(row, new Color(0.25f, 0.55f, 0.35f));
         btnImg.gameObject.AddComponent<LayoutElement>().preferredWidth = 28;
@@ -108,12 +114,21 @@ public class StatPanel : MonoBehaviour
         if (c == null || !built) return;
 
         pointsHeader.text = $"Stat Points: {c.StatPoints}";
-        bool canSpend = c.StatPoints > 0;
         for (int i = 0; i < Order.Length; i++)
         {
-            valueTexts[i].text = c.GetStat(Order[i]).ToString();
-            addButtons[i].interactable = canSpend;
-            ((Image)addButtons[i].targetGraphic).color = canSpend
+            var stat = Order[i];
+            valueTexts[i].text = c.GetStat(stat).ToString();
+
+            int cost = c.CostToRaise(stat);      // -1 once the stat hits the cap
+            bool capped = cost < 0;
+            bool can = c.CanRaise(stat);         // below cap AND the (escalating) next point is affordable
+            costTexts[i].text  = capped ? "MAX" : $"({cost})";
+            costTexts[i].color = capped ? new Color(0.85f, 0.80f, 0.45f)   // gold at the cap
+                               : can    ? new Color(0.65f, 0.85f, 0.65f)   // green when you can afford it
+                                        : new Color(0.60f, 0.45f, 0.45f);  // red-grey when you can't
+
+            addButtons[i].interactable = can;
+            ((Image)addButtons[i].targetGraphic).color = can
                 ? new Color(0.25f, 0.55f, 0.35f) : new Color(0.3f, 0.3f, 0.3f);
         }
 

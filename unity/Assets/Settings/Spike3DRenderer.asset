@@ -24,8 +24,9 @@ MonoBehaviour:
     probeSamplingDebugMesh: {fileID: 0}
     probeSamplingDebugTexture: {fileID: 0}
     probeVolumeBlendStatesCS: {fileID: 0}
-  m_RendererFeatures: []
-  m_RendererFeatureMap: 
+  m_RendererFeatures:
+  - {fileID: 1609339641441061835}
+  m_RendererFeatureMap: cb8b0c93e0855516
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 0}
@@ -54,3 +55,16 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &1609339641441061835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be0cbc0e35ea7ae4b8b7866a01a62b42, type: 3}
+  m_Name: HandDrawnGradeFeature
+  m_EditorClassIdentifier: Assembly-CSharp::HandDrawnGradeFeature
+  m_Active: 1

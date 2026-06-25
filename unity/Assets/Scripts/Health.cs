@@ -13,11 +13,21 @@ public class Health : MonoBehaviour
     [Tooltip("Starting / maximum hit points.")]
     public int maxHealth = 3;
 
-    [Tooltip("Incoming PHYSICAL attack is reduced by this; damage dealt is always at least 1.")]
+    [Tooltip("SOFT DEF (pre-renewal): a FLAT subtraction from incoming physical damage. Damage dealt is always ≥ 1.")]
     public int defense = 0;
 
-    [Tooltip("Incoming MAGIC attack is reduced by this; damage dealt is always at least 1.")]
+    [Tooltip("SOFT MDEF (pre-renewal): a FLAT subtraction from incoming magic damage. Damage dealt is always ≥ 1.")]
     public int magicDefense = 0;
+
+    [Tooltip("HARD DEF % (pre-renewal): a PERCENT reduction (0–100) on incoming physical damage, applied BEFORE the " +
+             "flat soft 'defense'. A CRIT ignores it (and soft DEF, and FLEE). This is a tanky mob's main mitigation.")]
+    [Range(0, 100)] public int hardDefPercent = 0;
+
+    [Tooltip("HARD MDEF % (pre-renewal): a PERCENT reduction (0–100) on incoming magic damage, before the flat 'magicDefense'.")]
+    [Range(0, 100)] public int hardMagicDefPercent = 0;
+
+    [Tooltip("LUK — pre-renewal CRIT SHIELD: each point lowers an attacker's crit chance against this unit (0.3%/pt).")]
+    public int luk = 0;
 
     [Tooltip("FLEE (RO evasion). A physical attacker's HIT is rolled against this; when it loses, the hit " +
              "MISSes (red) and deals no damage. Magic can't be evaded. Higher = dodges more. See Combat.")]
@@ -80,7 +90,8 @@ public class Health : MonoBehaviour
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { DamagePopup.SpawnText(transform.position, "Immune", ResistColor); return 0; }
 
-        int dmg = Mathf.Max(1, Mathf.RoundToInt((attackerAttack - defense) * mod));
+        // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod));
         Current = Mathf.Max(0, Current - dmg);
 
         DamagePopup.Spawn(transform.position, dmg, crit ? new Color(1f, 0.85f, 0.2f) : Color.white);
@@ -101,7 +112,7 @@ public class Health : MonoBehaviour
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { DamagePopup.SpawnText(transform.position, "Immune", ResistColor); return 0; }
 
-        int dmg = Mathf.Max(1, Mathf.RoundToInt((attackerMagic - magicDefense) * mod));
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod));
         Current = Mathf.Max(0, Current - dmg);
 
         DamagePopup.Spawn(transform.position, dmg, crit ? new Color(1f, 0.85f, 0.2f) : new Color(0.7f, 0.5f, 1f));
@@ -122,7 +133,7 @@ public class Health : MonoBehaviour
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { DamagePopup.SpawnText(transform.position, "Immune", ResistColor); return 0; }
 
-        int dmg = Mathf.Max(1, Mathf.RoundToInt((attackerMagic - magicDefense) * mod));
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod));
         bool wasAlive = !IsDead;
         Current = Mathf.Max(0, Current - dmg);
         DamagePopup.Spawn(transform.position, dmg, crit ? new Color(1f, 0.85f, 0.2f) : new Color(0.7f, 0.5f, 1f));

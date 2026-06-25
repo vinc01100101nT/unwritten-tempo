@@ -19,8 +19,10 @@ public struct MonsterArchetype
     public float  scale;        // size multiplier on the base billboard scale
     public Color  flash;        // hit-flash color
 
-    // Survivability.
+    // Survivability. `defense`/`magicDefense` are SOFT (flat) DEF; `hardDefPercent`/`hardMagicDefPercent`
+    // are pre-renewal HARD DEF (% reduction, applied first — a crit ignores both). `luk` = crit shield.
     public int maxHealth, defense, magicDefense, flee;
+    public int hardDefPercent, hardMagicDefPercent, luk;
 
     // Offense.
     public MonsterAI3D.AttackType attackType;

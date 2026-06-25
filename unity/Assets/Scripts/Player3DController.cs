@@ -157,6 +157,7 @@ public partial class Player3DController : MonoBehaviour
     SpriteRenderer sr;
     CharacterController controller;
     Player3DAttacker attacker;
+    Player3DCaster caster;    // bolt wind-up: we root the player while it casts and cancel it on a move order
     StatusController status;   // stun/freeze (no act), slow (speed), silence/blind — read here + by the spells/attacker
 
     // Charge / gap-closer dash state (driven by Player3DCharge via BeginDash).
@@ -196,6 +197,7 @@ public partial class Player3DController : MonoBehaviour
         controller = GetComponent<CharacterController>();
         ApplyCapsule();   // enforce the tuned (short) collision capsule so it clears overhead eaves/leaves
         attacker = GetComponent<Player3DAttacker>();
+        caster = GetComponent<Player3DCaster>();   // may be null on a player built without the bolt — all uses guard it
         status = Status.Of(gameObject);   // registers as StatusController.Player for the spells' silence check
         snapRadius = snapRadiusPixels;   // publish to the static cursor pick
         buildScale = transform.localScale;
@@ -407,6 +409,24 @@ public partial class Player3DController : MonoBehaviour
             Animate(false);
             ApplyIdleScale(false);
             return;
+        }
+
+        // Casting a spell (Player3DCaster wind-up): the player is ROOTED while the cast bar fills. Issuing a
+        // move/attack order — WASD or a left-click — CANCELS the cast (RO-style: moving interrupts) and then
+        // control falls through so that same order executes this frame. Gravity-only + idle pose while rooted.
+        if (caster != null && caster.Casting)
+        {
+            bool moveOrder = !DevSettings.Blocking
+                             && (ReadWasd().sqrMagnitude > 0.001f || (LeftDown() && !PointerOverUI()));
+            if (moveOrder) caster.Interrupt();   // cancel, then fall through to ReadInput/movement below
+            else
+            {
+                controller.Move(Vector3.down * gravity * Time.deltaTime);
+                facing = Facing3D.FromWorldDir(worldFacing);
+                Animate(false);
+                ApplyIdleScale(false);
+                return;
+            }
         }
 
         // Sscary traversal abilities (Space = forward hop, E = dash burst). Handled before normal input so an
@@ -923,8 +943,12 @@ public partial class Player3DController : MonoBehaviour
             if (ai == null) continue;
             var h = ai.Health;                                  // cached on the mob — no per-scan GetComponent
             if (h == null || h.IsDead) continue;
-            // Aim at mid-body (a bit above the feet) so the snap point matches the sprite, not the ground.
-            Vector3 sp = cam.WorldToScreenPoint(ai.transform.position + Vector3.up * 0.4f);
+            // Aim at the sprite's CENTRE. The mob's transform.position IS its visual centre (the billboard's
+            // pivot — same anchor MobNameplate/UnitTargeter use for their feet math), so we add only a small
+            // SIZE-SCALED upward nudge toward the torso. The old fixed +0.4 was authored when mobs rendered near
+            // full size; once they're shrunk (UnitScale.ForMob ≈ 0.21) that 0.4 floats ~2 body-heights above the
+            // sprite, so the snap circle barely overlapped it and you had to pixel-aim the centre. Scaling fixes it.
+            Vector3 sp = cam.WorldToScreenPoint(ai.transform.position + Vector3.up * (0.2f * ai.transform.lossyScale.y));
             if (sp.z <= 0f) continue;                               // behind the camera
             float sqr = ((Vector2)sp - mp).sqrMagnitude;
             if (sqr <= bestSqr) { bestSqr = sqr; best = h; }

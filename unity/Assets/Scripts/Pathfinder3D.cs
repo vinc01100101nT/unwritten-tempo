@@ -127,6 +127,44 @@ public static class Pathfinder3D
         return true;
     }
 
+    /// <summary>Is the straight segment a→b walkable in one shot? Dispatches by mode: a flat SphereCast when the
+    /// world is flat, or a height-aware march (below) when elevation matters. Used by both the straight-line
+    /// fast-path and the route smoother, so open ground takes a direct line in EITHER mode.</summary>
+    static bool LineClear(Vector2 a, Vector2 b, float radius)
+        => HeightAware ? HasClearWalkableLine(a, b, radius) : HasClearPath(a, b, radius);
+
+    /// <summary>Height-aware straight-line test. A flat SphereCast can't see a cliff edge (there's no collider in
+    /// the air over a drop), which is why height-aware mode used to refuse to straight-line or smooth at all —
+    /// and so the agent stair-stepped cell-to-cell even across clearly open, level ground (the "drift"). Instead
+    /// we MARCH the segment in small steps and accept it only when the ground stays continuous (no void, no rise
+    /// bigger than <see cref="MaxStep"/> between samples) AND no obstacle blocks the swept body. Cliffs/steps
+    /// still fail and fall back to the grid; flat open ground goes perfectly straight.</summary>
+    static bool HasClearWalkableLine(Vector2 a, Vector2 b, float radius)
+    {
+        Vector2 d = b - a;
+        float dist = d.magnitude;
+        if (dist < 1e-4f) return !Blocked(a, radius);
+        Vector2 dir = d / dist;
+
+        float stepLen = Mathf.Max(0.05f, CellSize * 0.5f);
+        int steps = Mathf.CeilToInt(dist / stepLen);
+
+        float prevGy = SampleGroundYWorld(a);
+        if (float.IsNaN(prevGy)) return false;              // start over a void
+
+        for (int i = 1; i <= steps; i++)
+        {
+            float along = Mathf.Min(dist, i * stepLen);
+            Vector2 p = a + dir * along;
+            float gy = SampleGroundYWorld(p);
+            if (float.IsNaN(gy)) return false;              // hole / off the edge
+            if (Mathf.Abs(gy - prevGy) > MaxStep) return false;   // cliff or step between samples
+            if (Blocked(p, radius)) return false;           // prop / wall in the way
+            prevGy = gy;
+        }
+        return true;
+    }
+
     static long Key(int x, int y) => ((long)x << 32) | (uint)y;
     static Vector2 Center(int x, int y) => new Vector2((x + 0.5f) * CellSize, (y + 0.5f) * CellSize);
     static int Floor(float v) => Mathf.FloorToInt(v / CellSize);
@@ -155,9 +193,10 @@ public static class Pathfinder3D
 
         if (HeightAware) groundCache.Clear();   // heights are per-query (terrain may have changed)
 
-        // Flat LOS fast-path: a straight spherecast can't see a cliff edge (no collider in the air),
-        // so skip it in height-aware mode and let the grid (with the step-gate) route honestly.
-        if (!HeightAware && HasClearPath(from, to, radius))
+        // Straight-line fast-path: if the direct segment is walkable (mode-aware — a flat spherecast when flat,
+        // a ground-continuity march when height-aware), take it. This is what keeps a click on open ground a
+        // single straight move instead of a grid staircase, in BOTH flat and height-aware scenes.
+        if (LineClear(from, to, radius))
         {
             LastOutcome = "clear-LOS";
             result.Add(to);
@@ -249,12 +288,10 @@ public static class Pathfinder3D
         for (int i = 1; i < cellsScratch.Count - 1; i++) ptsScratch.Add(cellsScratch[i]);
         ptsScratch.Add(endPoint);
 
-        // Smoothing uses straight-line LOS, which (like the fast-path above) can't see cliffs — so in
-        // height-aware mode keep the grid waypoints (the controller's slope handling smooths motion).
-        if (HeightAware)
-            for (int i = 1; i < ptsScratch.Count; i++) result.Add(ptsScratch[i]);
-        else
-            Smooth(ptsScratch, radius, result);
+        // Pull the grid route taut. The smoother's line-of-sight test is mode-aware (LineClear), so it can
+        // straighten runs over flat ground even in height-aware scenes while still keeping the waypoints needed
+        // to hug a cliff/step edge — no more cell-to-cell stair-stepping across open ground.
+        Smooth(ptsScratch, radius, result);
 
         LastOutcome = found ? "routed" : "partial";
         return true;
@@ -283,7 +320,7 @@ public static class Pathfinder3D
         for (int i = 1; i < pts.Count; i++)
         {
             if (i == pts.Count - 1) { outp.Add(pts[i]); break; }
-            if (!HasClearPath(pts[anchor], pts[i + 1], radius)) { outp.Add(pts[i]); anchor = i; }
+            if (!LineClear(pts[anchor], pts[i + 1], radius)) { outp.Add(pts[i]); anchor = i; }
         }
     }
 

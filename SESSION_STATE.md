@@ -6,6 +6,9 @@
 - **Effort**: model ALWAYS Opus 4.8 (never assess/print model). Assess EFFORT only; auto-GO Low/Medium; PAUSE >Medium until user GO. Tag `**EFFORT: X**`.
 - **Checkpoint**: OVERWRITE this file (never append); prune landed; keep short.
 
+## 🎨 DESIGN (parallel, no code): "unwritten" brand sheet + StatPanel stat icons
+GPT generates the logo/sheet; I give feedback + draft GPT prompts. **All decisions saved in Skill System doc §15** (`q17as16xh2gt1g058kemazjar588tvc8`): ring nodes = the 10 derived stats (logo == §5b ten-stat set); color by 3 archetype families (🔴Might Def/HP/Atk · 🔵Magic MAtk/MP/CastSpd · 🟢Finesse Accuracy/Evasion/Critical/AtkSpd; gold=neutral path); icons silhouette-first; fixing MATK vs Critical sparkle clash. ⏭️ User pastes GPT's next iteration → check crit icon + colors landed. Presentation only, no code/math impact.
+
 ## 🎯 ACTIVE (this session — COMMITTING NOW): player feel, free-fall, billboard shadows
 Visible character = the **baked 8-dir billboard** (`BakedPlayerVisual` + `BakedBillboard8`), NOT the Sscary path (Sscary to be deleted; its dead Fall code can go with it).
 

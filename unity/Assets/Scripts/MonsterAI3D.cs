@@ -216,7 +216,12 @@ public class MonsterAI3D : MonoBehaviour
         // Use TRUE 3D distance (not planar) so a mob that has fallen off a cliff/edge below the terrain —
         // same XZ as the player but far below — can't keep biting an invisible, "there are no mobs" hit.
         float touch3DSqr = playerAlive ? (player.position - pos).sqrMagnitude : Mathf.Infinity;
-        if (player != null && touch3DSqr <= touchRange * touchRange && Time.time >= nextTouch && Character.Instance != null)
+        // MELEE contact range is authored at full unit size; rescale it to the current size (UnitScale) so a shrunk
+        // mob bites at its actual body edge rather than across a fixed gap that dwarfs its sprite. RANGED mobs
+        // (preferredRange > 0) keep their authored touchRange untouched — their reach is a deliberate standoff, not
+        // a body-contact distance, so it must NOT shrink with unit size.
+        float touch = preferredRange > 0f ? touchRange : touchRange * UnitScale.MeleeReachFactor;
+        if (player != null && touch3DSqr <= touch * touch && Time.time >= nextTouch && Character.Instance != null)
         {
             // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
             int atk = Mathf.RoundToInt(attack * (1f - Random.Range(0f, damageSpread)));   // RO-style spread
@@ -281,7 +286,8 @@ public class MonsterAI3D : MonoBehaviour
         }
 
         // Ranged/caster: hold the pocket at preferredRange — kite back if too close, close in if too far,
-        // otherwise stand and let the touch-attack above fire (touchRange is set ≥ preferredRange).
+        // otherwise stand and let the touch-attack above fire (touchRange is set ≥ preferredRange). preferredRange
+        // is a deliberate standoff (their "long range"), so it is NOT rescaled by unit size — ranged stays ranged.
         if (preferredRange > 0f)
         {
             float near = preferredRange * 0.8f;
@@ -291,8 +297,10 @@ public class MonsterAI3D : MonoBehaviour
             return;
         }
 
-        // Melee: close to stopDistance and bite (the original behavior).
-        if (toPlayerSqr <= stopDistance * stopDistance) agent.Halt();
+        // Melee: close to stopDistance and bite (the original behavior). Contact distance IS authored at full size,
+        // so rescale it to the current size (UnitScale) — matching the melee touch range scaled in Update.
+        float stop = stopDistance * UnitScale.MeleeReachFactor;
+        if (toPlayerSqr <= stop * stop) agent.Halt();
         else agent.MoveToward(player.position);
     }
 

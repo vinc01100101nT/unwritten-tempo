@@ -24,4 +24,22 @@ public static class Combat
     /// <summary>Roll it: true = the hit lands, false = it's a MISS.</summary>
     public static bool Lands(int attackerHit, int defenderFlee)
         => Random.value < HitChance01(attackerHit, defenderFlee);
+
+    /// <summary>
+    /// Pre-renewal damage after DEF — the one place the split lives, shared by both directions
+    /// (player→mob in <see cref="Health"/>, mob→player in <see cref="Character"/>) so they never drift.
+    /// <b>Hard DEF</b> (<paramref name="hardDefPercent"/>, 0–100) is a PERCENT reduction applied first;
+    /// <b>soft DEF</b> (<paramref name="softDef"/>) then subtracts FLAT:
+    /// <c>dmg = atk × (1 − hard/100) − soft</c>.
+    /// A <paramref name="crit"/> hit <b>ignores BOTH</b> (RO: criticals bypass DEF and VIT-DEF; they also
+    /// bypass FLEE, which the caller handles by skipping the accuracy roll). Returns the pre-element value
+    /// (the caller applies the element modifier and the final <c>max(1, …)</c>); can be negative if soft DEF
+    /// exceeds the post-hard damage, which the caller's clamp turns into the 1-damage floor.
+    /// </summary>
+    public static float AfterDefense(float atk, int hardDefPercent, int softDef, bool crit)
+    {
+        if (crit) return atk;   // critical: no DEF at all
+        float afterHard = atk * (1f - Mathf.Clamp(hardDefPercent, 0, 100) / 100f);
+        return afterHard - softDef;
+    }
 }

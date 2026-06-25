@@ -27,6 +27,15 @@ public static class UnitScale
     /// <summary>Size+speed multiplier for mobs (global × mob-relative).</summary>
     public static float ForMob => Global * MobRelative;
 
+    /// <summary>
+    /// Blend factor for melee CONTACT distances between the player and a mob — the average of the two units'
+    /// scales. A "reach" authored at full size (factor 1 when both are at authored scale) then shrinks as the
+    /// units shrink, so melee stays glued to the resized bodies instead of swinging/biting across a visible gap.
+    /// Multiply any world-space "close enough to touch" range by this so it self-corrects at any <see cref="Global"/>
+    /// / <see cref="MobRelative"/> dial. Cheap (two reads + a multiply) — safe to call per-frame in the hot path.
+    /// </summary>
+    public static float MeleeReachFactor => 0.5f * (ForPlayer + ForMob);
+
     public static void SetGlobal(float v)      => Global      = Mathf.Clamp(v, 0.2f, 3f);
     public static void SetMobRelative(float v) => MobRelative = Mathf.Clamp(v, 0.2f, 3f);
 }

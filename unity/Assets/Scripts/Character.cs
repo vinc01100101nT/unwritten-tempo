@@ -51,11 +51,13 @@ public class Character : MonoBehaviour
     public int magicAttackPerLevel = 1;
     public int magicDefensePerLevel = 1;
 
-    [Header("Stat distribution (RO-style)")]
-    [Tooltip("Points available to spend at the start (level 1).")]
-    public int startingStatPoints = 9;
-    [Tooltip("Stat points granted each level-up.")]
-    public int statPointsPerLevel = 3;
+    [Header("Stat distribution (pre-renewal RO)")]
+    [Tooltip("Status points available at the start (base level 1) — the classic pre-renewal grant.")]
+    public int startingStatPoints = 48;
+    // Pre-renewal economy (see the StatCost / StatusPointsForLevel helpers below the stat region):
+    //   • COST to raise a stat from V to V+1 = ⌊V/10⌋ + 2  (each block of 10 gets pricier — the soft cap).
+    //   • Points GAINED on reaching base level L = ⌊L/5⌋ + 3 (grows every 5 levels to fund that curve).
+    // The old flat `statPointsPerLevel` is retired (the per-level award is now the formula above).
 
     [Header("Progression")]
     [SerializeField, Min(1)]
@@ -77,9 +79,17 @@ public class Character : MonoBehaviour
     // Per-point contributions of each primary stat to the flat / derived layers (tunable).
     const int   HpPerVit = 8, MpPerInt = 5, AtkPerStr = 1, MatkPerInt = 1;
     const int   DefPerVit = 3, MdefPerInt = 3, AtkPerDex = 2, AtkPerLuk = 4, MatkPerLuk = 4;  // these are DIVISORS
-    const float AspdPerAgi = 0.005f, CritPerLuk = 0.004f, CastPerDex = 0.006f;
-    // RO HIT/FLEE: accuracy = level + DEX, evasion = level + AGI (the latter scaled by the Evasion passive).
+    const float AspdPerAgi = 0.005f, CritPerLuk = 0.003f, CastPerDex = 0.006f;   // pre-renewal CRIT = LUK×0.3%
+    const float CritShieldPerLuk = 0.003f;   // pre-renewal "crit shield": the TARGET's LUK lowers our crit chance 0.3%/pt
+    // Pre-renewal RO cast time: a spell's wind-up shrinks LINEARLY with DEX and reaches ZERO (instant cast)
+    // at this DEX. castTime = baseCast × (1 − DEX / InstantCastDex), clamped ≥ 0 — one stat, the classic
+    // "build toward instacast" goal. (Distinct from CastSpeedMult below, which shortens the BETWEEN-casts
+    // cooldown; cast time is the wind-up BEFORE the spell fires.)
+    const int   InstantCastDex = 150;
+    // Pre-renewal HIT/FLEE: HIT = BaseLvl + DEX + ⌊LUK/3⌋, FLEE = BaseLvl + AGI + ⌊LUK/5⌋ (FLEE then scaled
+    // by the Evasion passive). LUK secondarily feeds both — the classic "a little LUK helps everything".
     const int   HitPerDex = 1, FleePerAgi = 1;
+    const int   LukPerHit = 3, LukPerFlee = 5;   // DIVISORS: LUK/3 → HIT, LUK/5 → FLEE
 
     // RO-style damage spread: a hit rolls Min…Max rather than a fixed number. Min is a fraction of Max
     // that DEX (physical) / INT (magic) raise toward 1.0 — so the relevant stat both LIFTS and STABILISES
@@ -90,12 +100,74 @@ public class Character : MonoBehaviour
     public int GetStat(PrimaryStat s) => primary[(int)s];
     int P(PrimaryStat s) => primary[(int)s];
 
-    /// <summary>Spend one stat point to raise <paramref name="s"/> by 1. No-op if no points remain.</summary>
+    // ---- Pre-renewal stat economy -------------------------------------------------------------------
+    /// <summary>Pre-renewal base-stat ceiling — a primary stat can't be raised past this with points.</summary>
+    public const int MaxStatValue = 99;
+
+    /// <summary>Points to raise a stat from its current value <paramref name="currentValue"/> to +1:
+    /// <c>⌊V/10⌋ + 2</c> (1→2 costs 2, 10→11 costs 3, 20→21 costs 4 …). The pre-renewal soft cap — each
+    /// block of ten costs one more, so the last points into a stat are the dearest.</summary>
+    public static int StatCost(int currentValue) => currentValue / 10 + 2;
+
+    /// <summary>Status points GAINED on reaching base level <paramref name="level"/>: <c>⌊L/5⌋ + 3</c>
+    /// (3 early, growing every 5 levels to keep pace with the rising <see cref="StatCost"/>).</summary>
+    static int StatusPointsForLevel(int level) => level / 5 + 3;
+
+    /// <summary>Total status points a character who legitimately reached base level <paramref name="lvl"/>
+    /// has earned — the starting grant plus every level-up award from 2..lvl.</summary>
+    int TotalStatPointsEarned(int lvl)
+    {
+        int total = startingStatPoints;
+        for (int L = 2; L <= lvl; L++) total += StatusPointsForLevel(L);
+        return total;
+    }
+
+    /// <summary>Total points it cost to have raised a stat from 1 up to <paramref name="value"/> — the
+    /// running integral of <see cref="StatCost"/>, used to reconcile the pool against an allocation.</summary>
+    static int StatPointsSpentRaising(int value)
+    {
+        int total = 0;
+        for (int v = 1; v < value; v++) total += StatCost(v);
+        return total;
+    }
+
+    /// <summary>Points needed to raise <paramref name="s"/> by one, or -1 if it's already at the cap.</summary>
+    public int CostToRaise(PrimaryStat s) => primary[(int)s] >= MaxStatValue ? -1 : StatCost(primary[(int)s]);
+
+    /// <summary>True when <paramref name="s"/> is below the cap AND the next point is affordable.</summary>
+    public bool CanRaise(PrimaryStat s)
+    {
+        int v = primary[(int)s];
+        return v < MaxStatValue && StatPoints >= StatCost(v);
+    }
+
+    /// <summary>Grant unspent status points (dev/testing — e.g. the DevSettings panel).</summary>
+    public void GrantStatPoints(int n) { if (n <= 0) return; StatPoints += n; OnStatsChanged?.Invoke(); }
+
+    /// <summary>Refund every allocated stat point (all stats back to 1) and restore the full pre-renewal
+    /// budget for the current level. Also the clean way to migrate a character saved under the old flat
+    /// economy onto the new cost curve — or just to re-roll a build. Wired to the DevSettings respec button.</summary>
+    public void RespecStats()
+    {
+        for (int i = 0; i < primary.Length; i++) primary[i] = 1;
+        StatPoints = TotalStatPointsEarned(level);
+        CurrentHP = Mathf.Min(CurrentHP, MaxHP);
+        CurrentMP = Mathf.Min(CurrentMP, MaxMP);
+        OnStatsChanged?.Invoke();
+        OnHealthChanged?.Invoke();
+        OnManaChanged?.Invoke();
+    }
+
+    /// <summary>Spend points to raise <paramref name="s"/> by 1 using the pre-renewal cost curve. No-op if
+    /// the stat is capped or there aren't enough points for the next (escalating) point.</summary>
     public bool AddStat(PrimaryStat s)
     {
-        if (StatPoints <= 0) return false;
-        StatPoints--;
-        primary[(int)s]++;
+        int v = primary[(int)s];
+        if (v >= MaxStatValue) return false;
+        int cost = StatCost(v);
+        if (StatPoints < cost) return false;
+        StatPoints -= cost;
+        primary[(int)s] = v + 1;
         CurrentHP = Mathf.Min(CurrentHP, MaxHP);   // clamp in case a max dropped (it won't here, but be safe)
         CurrentMP = Mathf.Min(CurrentMP, MaxMP);
         OnStatsChanged?.Invoke();
@@ -143,13 +215,27 @@ public class Character : MonoBehaviour
     // The purely-derived stats further below (Crit/Evasion/AttackSpeed/CastSpeed) have no flat base.
     public int MaxHP   => Scale(baseMaxHP   + hpPerLevel      * (Level - 1) + P(PrimaryStat.VIT) * HpPerVit + Bonus(i => i.bonusHP),      StatId.HP);
     public int Attack  => Scale(baseAttack  + attackPerLevel  * (Level - 1) + P(PrimaryStat.STR) * AtkPerStr
+                                + StatSquareBonus(P(PrimaryStat.STR))   // pre-renewal status-ATK bonus: +⌊STR/10⌋²
                                 + P(PrimaryStat.DEX) / AtkPerDex + P(PrimaryStat.LUK) / AtkPerLuk + Bonus(i => i.bonusAttack),  StatId.Atk);
     public int Defense => Scale(baseDefense + defensePerLevel * (Level - 1) + P(PrimaryStat.VIT) / DefPerVit + Bonus(i => i.bonusDefense), StatId.Def);
 
     public int MaxMP        => Scale(baseMaxMP        + mpPerLevel           * (Level - 1) + P(PrimaryStat.INT) * MpPerInt + Bonus(i => i.bonusMP),   StatId.MP);
     public int MagicAttack  => Scale(baseMagicAttack  + magicAttackPerLevel  * (Level - 1) + P(PrimaryStat.INT) * MatkPerInt
+                                + StatSquareBonus(P(PrimaryStat.INT))   // pre-renewal status-MATK bonus: +⌊INT/10⌋²
                                 + P(PrimaryStat.LUK) / MatkPerLuk + Bonus(i => i.bonusMAtk), StatId.MAtk);
     public int MagicDefense => Scale(baseMagicDefense + magicDefensePerLevel * (Level - 1) + P(PrimaryStat.INT) / MdefPerInt + Bonus(i => i.bonusMDef), StatId.MDef);
+
+    // Pre-renewal DEF split (player side): incoming damage is cut by HARD DEF (a % reduction, from armor)
+    // FIRST, then by SOFT DEF (the flat Defense/MagicDefense above, mostly VIT/INT). Hard DEF has no item
+    // source yet so it defaults to 0 (damage taken is unchanged) — armor hard-DEF plugs into these later.
+    [Tooltip("Pre-renewal HARD DEF %: percent reduction on incoming PHYSICAL damage (0–100), applied before soft Defense.")]
+    public int baseHardDefPercent = 0;
+    [Tooltip("Pre-renewal HARD MDEF %: percent reduction on incoming MAGIC damage (0–100), applied before soft MagicDefense.")]
+    public int baseHardMagicDefPercent = 0;
+    /// <summary>Player physical hard-DEF % (a flat percent reduction applied before soft <see cref="Defense"/>).</summary>
+    public int HardDefPercent => Mathf.Clamp(baseHardDefPercent, 0, 100);
+    /// <summary>Player magic hard-DEF % (a flat percent reduction applied before soft <see cref="MagicDefense"/>).</summary>
+    public int HardMagicDefPercent => Mathf.Clamp(baseHardMagicDefPercent, 0, 100);
 
     // The damage window each hit rolls within. MAX = the full Attack/MagicAttack above; MIN is a
     // fraction of it raised by DEX (physical) / INT (magic). See MinDmgFloorFraction / MinFractionPerStat.
@@ -159,43 +245,64 @@ public class Character : MonoBehaviour
     public int MinMagicAttack => Mathf.Clamp(Mathf.RoundToInt(MagicAttack * MinFraction(PrimaryStat.INT)), 1, MagicAttack);
     float MinFraction(PrimaryStat s) => Mathf.Clamp01(MinDmgFloorFraction + P(s) * MinFractionPerStat);
 
+    /// <summary>Pre-renewal status-point damage bonus: a stat adds <c>+⌊stat/10⌋²</c> to its damage stat
+    /// (STR→ATK, INT→MATK). Tiny early, large with heavy investment (50 → +25, 99 → +81) — the reward for
+    /// dumping points into one offensive stat.</summary>
+    static int StatSquareBonus(int stat) { int tens = stat / 10; return tens * tens; }
+
     public int XPToNext => 5 + Level * 5;
     public bool IsDead => CurrentHP <= 0;
 
     // Derived passive combat stats (Phase G). These have no flat "base" — they read the
     // passive % layer directly, so a stat with 0 ranks is simply neutral.
-    public const float BaseCritMultiplier = 1.5f;                                     // a crit deals 150%…
+    public const float BaseCritMultiplier = 1.4f;                                     // pre-renewal: a crit deals 140%…
     public float CritMultiplier  => BaseCritMultiplier + Passives.Percent(StatId.CritDamage); // …+ CritDamage on top
     // These combine the primary-stat contribution (LUK/AGI/DEX) with the passive % layer.
     public float CritChance01    => Mathf.Min(0.95f, P(PrimaryStat.LUK) * CritPerLuk + Passives.Percent(StatId.CritChance));
     // RO accuracy/evasion. HIT (DEX + level) is rolled against a target's FLEE to decide a physical hit;
     // FLEE (AGI + level, scaled by the Evasion passive) is how often incoming physical attacks whiff on us.
     // Both feed the shared HIT-vs-FLEE roll in Combat; magic ignores them. See Combat for the formula.
-    public int Hit  => Level + P(PrimaryStat.DEX) * HitPerDex;
-    public int Flee => Mathf.RoundToInt((Level + P(PrimaryStat.AGI) * FleePerAgi) * (1f + Passives.Percent(StatId.Evasion)));
+    public int Hit  => Level + P(PrimaryStat.DEX) * HitPerDex + P(PrimaryStat.LUK) / LukPerHit;
+    public int Flee => Mathf.RoundToInt((Level + P(PrimaryStat.AGI) * FleePerAgi + P(PrimaryStat.LUK) / LukPerFlee)
+                                        * (1f + Passives.Percent(StatId.Evasion)));
     public float AttackSpeedMult => 1f + P(PrimaryStat.AGI) * AspdPerAgi + Passives.Percent(StatId.AttackSpeed);  // >1 = swing faster
     public float CastSpeedMult   => 1f + P(PrimaryStat.DEX) * CastPerDex;             // >1 = cast faster (shortens caster cooldown)
+    /// <summary>Pre-renewal cast-time multiplier applied to a spell's base wind-up: <c>1 − DEX/150</c>,
+    /// clamped to [0,1]. 1 at 0 DEX, 0 (instant cast) at DEX 150. A spell's real cast time is
+    /// <c>baseCast × CastTimeMult</c>. See <see cref="Player3DCaster"/>.</summary>
+    public float CastTimeMult => Mathf.Clamp01(1f - P(PrimaryStat.DEX) / (float)InstantCastDex);
 
     int Scale(int flat, StatId stat) => Mathf.RoundToInt(flat * (1f + Passives.Percent(stat)));
 
     /// <summary>Roll the player's outgoing hit: a random value in [<see cref="MinAttack"/>,
     /// <see cref="MaxAttack"/>], or — on a crit (probability <see cref="CritChance01"/>) — the max
     /// ×<see cref="CritMultiplier"/> (crits ignore the spread, RO-style).</summary>
-    public int RollDamage(out bool crit)
+    public int RollDamage(out bool crit) => RollDamage(out crit, 0);
+
+    /// <summary>As above, but the <paramref name="targetLuk"/> applies the pre-renewal crit shield — the
+    /// defender's LUK lowers our crit chance (<see cref="CritShieldPerLuk"/> each). Pass 0 for no shield.</summary>
+    public int RollDamage(out bool crit, int targetLuk)
     {
-        crit = UnityEngine.Random.value < CritChance01;
+        crit = UnityEngine.Random.value < EffectiveCritChance(targetLuk);
         if (crit) return Mathf.RoundToInt(Attack * CritMultiplier);
         return UnityEngine.Random.Range(MinAttack, Attack + 1);   // Range(int,int) is max-EXCLUSIVE
     }
 
     /// <summary>As <see cref="RollDamage"/> but for a spell — rolls in [<see cref="MinMagicAttack"/>,
     /// <see cref="MaxMagicAttack"/>]. (Crit stats apply to magic too, so a crit build helps casters.)</summary>
-    public int RollMagicDamage(out bool crit)
+    public int RollMagicDamage(out bool crit) => RollMagicDamage(out crit, 0);
+
+    /// <summary>Spell roll with the pre-renewal crit shield (<paramref name="targetLuk"/> lowers our crit).</summary>
+    public int RollMagicDamage(out bool crit, int targetLuk)
     {
-        crit = UnityEngine.Random.value < CritChance01;
+        crit = UnityEngine.Random.value < EffectiveCritChance(targetLuk);
         if (crit) return Mathf.RoundToInt(MagicAttack * CritMultiplier);
         return UnityEngine.Random.Range(MinMagicAttack, MagicAttack + 1);
     }
+
+    /// <summary>Our crit chance against a defender with <paramref name="targetLuk"/> LUK — base
+    /// <see cref="CritChance01"/> minus the crit shield, clamped to [0, 0.95].</summary>
+    float EffectiveCritChance(int targetLuk) => Mathf.Clamp(CritChance01 - targetLuk * CritShieldPerLuk, 0f, 0.95f);
 
     /// <summary>Try to spend <paramref name="amount"/> mana; returns false (and spends nothing)
     /// if there isn't enough. Used by the caster before firing a spell.</summary>
@@ -258,10 +365,11 @@ public class Character : MonoBehaviour
     /// total simply leaves the pools at 0 — the allocations you made remain.)</summary>
     void ReconcilePointsToLevel()
     {
-        // Stat points: a starting grant at level 1, then statPointsPerLevel for every level after.
+        // Stat points: total EARNED for this level (start grant + the pre-renewal per-level awards) minus
+        // the total SPENT on the current allocation (the cost-curve integral). Idempotent up or down.
         int spentStat = 0;
-        for (int i = 0; i < primary.Length; i++) spentStat += primary[i] - 1;   // each stat starts at 1
-        StatPoints = Mathf.Max(0, startingStatPoints + statPointsPerLevel * (level - 1) - spentStat);
+        for (int i = 0; i < primary.Length; i++) spentStat += StatPointsSpentRaising(primary[i]);
+        StatPoints = Mathf.Max(0, TotalStatPointsEarned(level) - spentStat);
 
         // Skill points: 1 free start at level 1, +1 per level after = `level` granted in total.
         Passives.SetBankedPoints(level - Passives.TotalRanks());
@@ -369,7 +477,8 @@ public class Character : MonoBehaviour
         float mod = Elements.Modifier(attackElement, armorElement);
         if (mod <= 0f) { ElementCue(mod); return 0; }   // our armor fully resists this element
 
-        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt((attackerAttack - Defense) * mod)));
+        // Pre-renewal DEF split: hard-DEF % then flat soft DEF. Mobs don't crit the player → crit:false.
+        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod)));
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);                       // player hurt grunt
@@ -391,7 +500,7 @@ public class Character : MonoBehaviour
         float mod = Elements.Modifier(attackElement, armorElement);
         if (mod <= 0f) { ElementCue(mod); return 0; }
 
-        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt((attackerMagic - MagicDefense) * mod)));
+        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod)));
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);
@@ -511,7 +620,7 @@ public class Character : MonoBehaviour
             XP -= XPToNext;
             level++;
             Passives.AddPoint();              // Phase G: bank a skill point to spend in the Skills (K) panel
-            StatPoints += statPointsPerLevel; // …and stat points to distribute (STR/AGI/…)
+            StatPoints += StatusPointsForLevel(level);   // pre-renewal: ⌊L/5⌋+3 status points this level
             CurrentHP = MaxHP;                // level-up fully heals
             CurrentMP = MaxMP;                // …and refills mana
             Sfx.Play(levelUpSfx);        // triumphant sting
@@ -565,7 +674,7 @@ public class Character : MonoBehaviour
         StatPoints = Mathf.Max(0, d.statPoints);
         if (d.primary != null)
             for (int i = 0; i < primary.Length && i < d.primary.Length; i++)
-                primary[i] = Mathf.Max(1, d.primary[i]);
+                primary[i] = Mathf.Clamp(d.primary[i], 1, MaxStatValue);
 
         Passives.LoadState(d.rankStats, d.rankValues, d.leader, d.hasLeader, d.bankedPoints);
         Wallet.Restore(d.gold);

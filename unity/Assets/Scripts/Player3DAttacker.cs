@@ -11,8 +11,9 @@ using UnityEngine;
 /// </summary>
 public class Player3DAttacker : MonoBehaviour
 {
-    [Tooltip("How close (world units, XZ) you must be to land a hit.")]
-    public float range = 1.4f;
+    [Tooltip("How close (world units, XZ) you must be to land a hit. This is the FULL-SIZE reach; the live reach " +
+             "is this × UnitScale.MeleeReachFactor (see EffectiveRange), so it shrinks with resized units.")]
+    public float range = 0.5f;
     [Tooltip("Once in range, stay 'engaged' (stand & swing) until the target passes range×this. Prevents the " +
              "stand-vs-chase decision from thrashing frame-to-frame against a target that hovers at the range " +
              "edge (e.g. a kiting caster) — which otherwise machine-guns the step SFX and freezes the pose.")]
@@ -63,8 +64,14 @@ public class Player3DAttacker : MonoBehaviour
     /// only WHEN inside the window the hit connects moves.</summary>
     public float SwingTime => Mathf.Max(0.05f, cooldown * MotionScale);
 
+    /// <summary>The authored <see cref="range"/> rescaled to the CURRENT unit size (see
+    /// <see cref="UnitScale.MeleeReachFactor"/>). When both player and mobs render at authored scale this equals
+    /// <see cref="range"/> exactly; once mobs are shrunk (e.g. MobRelative 0.3) the reach shrinks with them, so the
+    /// player closes in and swings at contact instead of from a fixed 1.4-unit gap that dwarfs a tiny billboard.</summary>
+    public float EffectiveRange => range * UnitScale.MeleeReachFactor;
+
     /// <summary>Strict planar range — used to actually LAND a hit (TryAttack / the windup check).</summary>
-    public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= range;
+    public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= EffectiveRange;
 
     /// <summary>Sticky version of <see cref="InRange"/> for the controller's stand-vs-chase decision:
     /// turns true at <see cref="range"/> and stays true until the target passes range×<see cref="rangeHysteresis"/>.
@@ -73,9 +80,10 @@ public class Player3DAttacker : MonoBehaviour
     {
         if (t == null || t.IsDead) { engaged = false; engagedTarget = null; return false; }
         if (t != engagedTarget) { engaged = false; engagedTarget = t; }   // new target → must reach `range` afresh
+        float r = EffectiveRange;
         float d = PlanarDist(t);
-        if (d <= range) engaged = true;
-        else if (d > range * Mathf.Max(1f, rangeHysteresis)) engaged = false;
+        if (d <= r) engaged = true;
+        else if (d > r * Mathf.Max(1f, rangeHysteresis)) engaged = false;
         return engaged;
     }
 
@@ -118,7 +126,7 @@ public class Player3DAttacker : MonoBehaviour
         {
             // Roll the hit through Character so CritChance/CritDamage apply (spike has no Character → flat damage).
             bool crit = false;
-            int power = Character.Instance != null ? Character.Instance.RollDamage(out crit) : damage;
+            int power = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk) : damage;   // t.luk = crit shield
 
             // Slash FX at the target (a bit above its feet), billboarded by SlashEffect so it faces the camera.
             Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
@@ -157,16 +165,18 @@ public class Player3DAttacker : MonoBehaviour
         yield return new WaitForSeconds(windupTime * scale);
         swing = null;
         if (t == null || t.IsDead) yield break;
-        if (PlanarDist(t) > range * 1.6f) yield break;   // target slipped out of the skill's (extended) reach
+        if (PlanarDist(t) > EffectiveRange * 1.6f) yield break;   // target slipped out of the skill's (extended) reach
 
-        bool crit;
-        int basePower = Character.Instance != null ? Character.Instance.RollDamage(out crit) : damage;
+        bool crit = false;
+        int basePower = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk) : damage;
         int power = Mathf.RoundToInt(basePower * damageMult);
 
         Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
         SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), fxPos, slashScale * fxScale);
 
-        int dealt = t.TakeDamage(power, true, -1, meleeElement);   // skills always land; gold (crit-styled) number sells the impact
+        // Skills always LAND (no FLEE roll, hit −1), but they still respect DEF unless they actually crit —
+        // so pass the real rolled `crit` (which also colours the number gold + bypasses DEF), RO-style.
+        int dealt = t.TakeDamage(power, crit, -1, meleeElement);
         if (dealt > 0)
         {
             Sfx.Play(hitSfx != null && !hitSfx.Empty ? hitSfx : WeaponSfx(w => w.hitSfx, defaultHitSfx));
@@ -178,6 +188,6 @@ public class Player3DAttacker : MonoBehaviour
     void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(1f, 0.9f, 0.3f, 0.4f);
-        Gizmos.DrawWireSphere(transform.position, range);
+        Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? EffectiveRange : range);
     }
 }

@@ -528,8 +528,7 @@ MonoBehaviour:
   mpPerLevel: 3
   magicAttackPerLevel: 1
   magicDefensePerLevel: 1
-  startingStatPoints: 9
-  statPointsPerLevel: 3
+  startingStatPoints: 48
   level: 1
   blockSfx:
     clips:
@@ -752,6 +751,8 @@ MonoBehaviour:
   walkThreshold: 0.12
   hurtDuration: 0.4
   pickUpDuration: 0.6
+  fallPosePhase: 0.5
+  deadFeetOffset: 0.52
 --- !u!1 &1832086327
 GameObject:
   m_ObjectHideFlags: 0
@@ -1563,10 +1564,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88b3f128276c7d54e94ff74de4d671ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player3DAttacker
-  range: 1.4
+  range: 0.5
   rangeHysteresis: 1.4
   cooldown: 0.6
   windupTime: 0.18
+  hitTiming: 0.7
   damage: 3
   meleeElement: 0
   slashSheet: {fileID: 2800000, guid: 9de3f491cc08d1644885058a3d5aaa69, type: 3}
@@ -1689,10 +1691,12 @@ MonoBehaviour:
   hitFlinchTime: 0.25
   hitFps: 14
   moveSpeed: 1.5
+  walkSpeedMult: 0.45
   framesPerSecond: 8
   arriveDistance: 0.12
   agentRadius: 0.35
   gravity: 12
+  fallAnimSpeed: 1.5
   acquireRange: 5
   capsuleRadius: 0.15
   capsuleHeight: 0.5
@@ -1728,6 +1732,7 @@ MonoBehaviour:
     volume: 0.65
     pitch: {x: 0.95, y: 1.05}
   stepInterval: 0.42
+  walkStepInterval: 0.62
   roamRange: 14
 --- !u!143 &1849173073
 CharacterController:

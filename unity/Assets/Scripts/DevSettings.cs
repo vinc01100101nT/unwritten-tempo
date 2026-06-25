@@ -68,6 +68,7 @@ public class DevSettings : MonoBehaviour
     Transform groundRoot;          // the ground root moved by the "Ground height" knob (found via a Ground-layer ray)
     int groundLayerMask = -1;      // cached Ground layer mask (-1 = not resolved yet)
     Player3DAttacker attacker;
+    Player3DCaster caster;
     CameraFollow3D camRig;
     CameraOccluderFader fader;
     TimeOfDay tod;
@@ -85,6 +86,7 @@ public class DevSettings : MonoBehaviour
     SnowOverlay snow;
     SnowGround snowGround;
     FogOverlay fog;
+    HandDrawnFX ink;
     FootstepTracker foot;
     CharacterDye dye;
     MobRespawn[] respawns;
@@ -104,6 +106,7 @@ public class DevSettings : MonoBehaviour
         if (bakedVisual == null) bakedVisual = FindFirstObjectByType<BakedPlayerVisual>();
         if (bakedPlayer == null && bakedVisual != null) bakedPlayer = bakedVisual.GetComponent<BakedBillboard8>();
         if (attacker == null) attacker = FindFirstObjectByType<Player3DAttacker>();
+        if (caster == null)   caster   = FindFirstObjectByType<Player3DCaster>();
         if (camRig == null)   camRig   = FindFirstObjectByType<CameraFollow3D>();
         if (fader == null)    fader    = FindFirstObjectByType<CameraOccluderFader>();
         if (tod == null)      tod      = TimeOfDay.Instance;
@@ -121,6 +124,7 @@ public class DevSettings : MonoBehaviour
         if (snow == null)     snow     = FindFirstObjectByType<SnowOverlay>();
         if (snowGround == null) snowGround = FindFirstObjectByType<SnowGround>();
         if (fog == null)      fog      = FindFirstObjectByType<FogOverlay>();
+        if (ink == null)      ink      = FindFirstObjectByType<HandDrawnFX>();
         if (foot == null)     foot     = FindFirstObjectByType<FootstepTracker>();
         if (dye == null)      dye      = FindFirstObjectByType<CharacterDye>();
         EnsureGround();
@@ -346,6 +350,22 @@ public class DevSettings : MonoBehaviour
         Act("Reset dye", () => { if (dye) { dye.HueShift = 0f; dye.Saturation = 1f; dye.Brightness = 1f; } });
         Raw(DrawSwapSlots);
 
+        // ---- Hand-Drawn — runtime "art filter" (ink linework + paper + lowered saturation), no re-bake ----
+        // Master turns the INK on; Saturation is independent and CLAMPED so colour can mute but never go greyscale.
+        // Quad/post are off until raised, so this costs nothing when the look is off.
+        Cat("Hand-Drawn");
+        F("Ink amount",     0f, 1f,    () => ink ? ink.intensity : 0f,     v => { ink = HandDrawnFX.Ensure(); ink.intensity = v; });
+        F("Line strength",  0f, 1f,    () => ink ? ink.lineStrength : 0f,  v => { if (ink) ink.lineStrength = v; });
+        F("Outlines",       0f, 80f,   () => ink ? ink.silhouette : 0f,    v => { if (ink) ink.silhouette = v; });
+        F("Crease lines",   0f, 60f,   () => ink ? ink.crease : 0f,        v => { if (ink) ink.crease = v; });
+        F("Line thickness", 0.4f, 3f,  () => ink ? ink.thickness : 0f,     v => { if (ink) ink.thickness = v; });
+        F("Edge threshold", 0f, 0.5f,  () => ink ? ink.edgeThreshold : 0f, v => { if (ink) ink.edgeThreshold = v; });
+        F("Paper grain",    0f, 1f,    () => ink ? ink.paperGrain : 0f,    v => { if (ink) ink.paperGrain = v; });
+        // Saturation/contrast are applied by the HandDrawnGradeFeature renderer feature (run Tools ▸ unwritten ▸
+        // Setup Hand-Drawn Grade once). Min is HandDrawnFX.MinSaturation so it never reaches greyscale.
+        F("Saturation",     HandDrawnFX.MinSaturation, 1f, () => ink ? ink.saturation : 1f, v => { ink = HandDrawnFX.Ensure(); ink.saturation = v; });
+        F("Contrast",      -0.3f, 0.3f, () => ink ? ink.contrast : 0f,     v => { if (ink) ink.contrast = v; });
+
         // ---- Player Combat — Player3DAttacker ------------------------------
         Cat("Player Combat");
         F("Attack range",     0.5f, 4f, () => attacker ? attacker.range : 0f,      v => { if (attacker) attacker.range = v; });
@@ -354,6 +374,12 @@ public class DevSettings : MonoBehaviour
         I("Base damage*",     1f, 50f, () => attacker ? attacker.damage : 0f,      v => { if (attacker) attacker.damage = Mathf.RoundToInt(v); });
         F("Slash scale",      0.5f, 3f, () => attacker ? attacker.slashScale : 0f, v => { if (attacker) attacker.slashScale = v; });
         F("Slash FPS",        5f, 40f, () => attacker ? attacker.slashFps : 0f,    v => { if (attacker) attacker.slashFps = v; });
+
+        // Bolt cast (Player3DCaster) — pre-renewal cast time: actual = base × (1 − DEX/150).
+        F("Bolt base cast (s)", 0f, 4f,   () => caster ? caster.baseCastTime : 0f, v => { if (caster) caster.baseCastTime = v; });
+        F("Bolt cooldown (s)",  0.1f, 3f, () => caster ? caster.cooldown : 0f,     v => { if (caster) caster.cooldown = v; });
+        F("Bolt range",         1f, 15f,  () => caster ? caster.range : 0f,        v => { if (caster) caster.range = v; });
+        I("Bolt mana cost",     0f, 50f,  () => caster ? caster.manaCost : 0f,     v => { if (caster) caster.manaCost = Mathf.RoundToInt(v); });
 
         // ---- Player Stats — Character (effective stats recompute live) -----
         Cat("Player Stats");
@@ -364,11 +390,15 @@ public class DevSettings : MonoBehaviour
         I("Base max MP",      1f, 500f, () => Ch ? Ch.baseMaxMP : 0f,        v => { if (Ch) Ch.baseMaxMP = Mathf.RoundToInt(v); });
         I("Base magic atk",   0f, 100f, () => Ch ? Ch.baseMagicAttack : 0f,  v => { if (Ch) Ch.baseMagicAttack = Mathf.RoundToInt(v); });
         I("Base magic def",   0f, 100f, () => Ch ? Ch.baseMagicDefense : 0f, v => { if (Ch) Ch.baseMagicDefense = Mathf.RoundToInt(v); });
+        I("Hard DEF %",       0f, 100f, () => Ch ? Ch.baseHardDefPercent : 0f,      v => { if (Ch) Ch.baseHardDefPercent = Mathf.RoundToInt(v); });        // pre-renewal % phys reduction
+        I("Hard MDEF %",      0f, 100f, () => Ch ? Ch.baseHardMagicDefPercent : 0f, v => { if (Ch) Ch.baseHardMagicDefPercent = Mathf.RoundToInt(v); });   // pre-renewal % magic reduction
         F("MP regen / s",     0f, 20f,  () => Ch ? Ch.mpRegenPerSecond : 0f, v => { if (Ch) Ch.mpRegenPerSecond = v; });
         I("HP / level",       0f, 50f,  () => Ch ? Ch.hpPerLevel : 0f,       v => { if (Ch) Ch.hpPerLevel = Mathf.RoundToInt(v); });
         I("Attack / level",   0f, 20f,  () => Ch ? Ch.attackPerLevel : 0f,   v => { if (Ch) Ch.attackPerLevel = Mathf.RoundToInt(v); });
         I("Defense / level",  0f, 20f,  () => Ch ? Ch.defensePerLevel : 0f,  v => { if (Ch) Ch.defensePerLevel = Mathf.RoundToInt(v); });
-        I("Stat pts / level", 0f, 20f,  () => Ch ? Ch.statPointsPerLevel : 0f, v => { if (Ch) Ch.statPointsPerLevel = Mathf.RoundToInt(v); });
+        I("Starting stat pts", 0f, 200f, () => Ch ? Ch.startingStatPoints : 0f, v => { if (Ch) Ch.startingStatPoints = Mathf.RoundToInt(v); });
+        Act("Grant +50 stat pts", () => { if (Ch) Ch.GrantStatPoints(50); });   // pre-renewal: feel the ⌊V/10⌋+2 cost curve
+        Act("Respec stats (refund all)", () => { if (Ch) Ch.RespecStats(); });   // reset to 1s + full level budget (also migrates old saves)
 
         // ---- Mobs — every active MonsterAI3D + MobRespawn ------------------
         Cat("Mobs");
@@ -381,6 +411,11 @@ public class DevSettings : MonoBehaviour
         I("Attack",           0f, 50f, () => MobRead(m => m.attack),       v => MobForEach(m => m.attack = Mathf.RoundToInt(v)));
         F("Damage spread",    0f, 1f,  () => MobRead(m => m.damageSpread), v => MobForEach(m => m.damageSpread = v));
         I("Hit (accuracy)",   0f, 100f, () => MobRead(m => m.hit),         v => MobForEach(m => m.hit = Mathf.RoundToInt(v)));
+        // Pre-renewal DEF split (lives on Health): hard % first, then soft flat. Crit ignores both.
+        I("DEF (hard %)",     0f, 100f, () => MobRead(m => m.Health != null ? m.Health.hardDefPercent : 0),      v => MobForEach(m => { if (m.Health != null) m.Health.hardDefPercent = Mathf.RoundToInt(v); }));
+        I("DEF (soft flat)",  0f, 100f, () => MobRead(m => m.Health != null ? m.Health.defense : 0),             v => MobForEach(m => { if (m.Health != null) m.Health.defense = Mathf.RoundToInt(v); }));
+        I("MDEF (hard %)",    0f, 100f, () => MobRead(m => m.Health != null ? m.Health.hardMagicDefPercent : 0), v => MobForEach(m => { if (m.Health != null) m.Health.hardMagicDefPercent = Mathf.RoundToInt(v); }));
+        I("LUK (crit shield)", 0f, 100f, () => MobRead(m => m.Health != null ? m.Health.luk : 0),                v => MobForEach(m => { if (m.Health != null) m.Health.luk = Mathf.RoundToInt(v); }));
         I("XP reward",        0f, 100f, () => MobRead(m => m.xpReward),     v => MobForEach(m => m.xpReward = Mathf.RoundToInt(v)));
         F("Touch range",      0.2f, 3f, () => MobRead(m => m.touchRange),  v => MobForEach(m => m.touchRange = v));
         F("Touch interval",   0.2f, 3f, () => MobRead(m => m.touchInterval), v => MobForEach(m => m.touchInterval = v));

@@ -28,11 +28,13 @@ public class BakedPlayerVisual : MonoBehaviour
     [Tooltip("Free-fall pose: where in the Jump clip the looped falling frames begin (0 = whole clip, 0.5 = its " +
              "2nd/descent half, ~0.9 ≈ hold the last frame). No dedicated Fall art exists, so we reuse Jump.")]
     [Range(0f, 1f)] public float fallPosePhase = 0.5f;
-    [Tooltip("While DEAD, lift the (lying) corpse sprite to this grounding offset so the whole death pose — head " +
-             "included — stays above the ground plane. The standing feet-offset seats the cell bottom a hair " +
-             "below Y0 (fine for feet, but the lying body fills those rows, so the head clips into the ground). " +
-             "0.5 = cell bottom exactly on the ground; a touch over keeps a sliver of clearance.")]
-    public float deadFeetOffset = 0.52f;
+    [Tooltip("While DEAD, the grounding offset for the (lying) corpse sprite. It is CLAMPED so it can only ever " +
+             "SETTLE the corpse onto the floor, never RAISE it above where the player stood — set it BELOW the " +
+             "standing feet-offset to sink the lying body if its head pokes through the ground; a value at/above " +
+             "the standing offset leaves the corpse exactly on the ground (no visible lift).")]
+    public float deadFeetOffset = 0.17f;
+    [Tooltip("Seconds to ease the corpse to its dead grounding, so it settles rather than popping.")]
+    public float deadSettleTime = 0.25f;
 
     BakedBillboard8 baked;
     Player3DAttacker attacker;     // for the Swinging (attack) state
@@ -42,6 +44,7 @@ public class BakedPlayerVisual : MonoBehaviour
     Vector3 lastPlayerPos;
     bool wasDead;
     float groundedFeetOffset;      // standing grounding captured at death, restored on revive
+    float deadTargetOffset;        // clamped dead grounding (never above standing) we ease toward
     bool wasRolling;               // rising-edge guard so the dash→Roll time-fit + log fire once per dash
     float hurtUntil, pickUpUntil;  // momentary one-shot windows (event-driven, not state-driven)
 
@@ -120,9 +123,17 @@ public class BakedPlayerVisual : MonoBehaviour
         bool dead = Character.Instance != null && Character.Instance.IsDead;
         if (dead)
         {
-            // On the alive→dead edge, raise the grounding so the LYING corpse (which fills the bottom rows the
-            // standing pose leaves empty) doesn't sink its head below Y0 and get clipped by the ground plane.
-            if (!wasDead) { groundedFeetOffset = baked.FeetOffset; baked.SetFeetOffset(deadFeetOffset); }
+            // On the alive→dead edge, capture the standing grounding and pick the dead grounding. CLAMP it so the
+            // corpse can only settle DOWN onto the floor, never pop UP above where the player stood (the old code
+            // snapped it up by ~0.35u, which read as the corpse "elevating"/floating). Then EASE to it so the body
+            // settles to the ground instead of teleporting.
+            if (!wasDead)
+            {
+                groundedFeetOffset = baked.FeetOffset;
+                deadTargetOffset = Mathf.Min(deadFeetOffset, groundedFeetOffset);
+            }
+            float ease = deadSettleTime > 0.001f ? Time.deltaTime / deadSettleTime : 1f;
+            baked.SetFeetOffset(Mathf.MoveTowards(baked.FeetOffset, deadTargetOffset, Mathf.Abs(groundedFeetOffset - deadTargetOffset) * ease + 0.0001f));
             baked.Play(CharacterAction.Die);   // plays once and holds its final (lying) frame — see BakedBillboard8.HoldsLastFrame
             wasDead = true;
             return;
