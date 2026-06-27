@@ -26,6 +26,18 @@ public enum SwayMode { Auto, On, Off }
 /// <summary>Which Pxltgr ground texture the routed paths use. Maps to the matching <c>ground_*</c> prop's Base Map.</summary>
 public enum PathTile { Road, Soil, Stones, Rock }
 
+/// <summary>Theme preset for a map. Drives the ground's base + patch textures, an albedo tint, and (later) ambience —
+/// purely a ground/look layer; props &amp; mobs are still authored per recipe. <c>Grassland</c> reproduces the original
+/// look exactly (grass base, soil patches, no tint). The others recombine the existing <c>ground_*</c> textures with a
+/// colour multiply as placeholders until dedicated snow/sand/ash ground textures are authored (same code path then).</summary>
+public enum Biome { Grassland, Snow, Desert, Volcanic, Corrupted }
+
+/// <summary>How the ground base/patch/path weights are rendered. <c>Blended</c> = the seamless feathered gradient
+/// (default, today's look). <c>HardEdge</c> = snap each blend weight to 0/1 so grass↔dirt↔path meet in crisp seams
+/// (an RO-ish hard-tile feel) — same single mesh + shader, just no feathering. A full tile-grid ground would be a
+/// separate builder behind the same one call site in <c>RecipeGenerator</c>; this is the cheap in-pipeline variant.</summary>
+public enum GroundStyle { Blended, HardEdge }
+
 /// <summary>Shape of the road network. <c>Winding</c> = the default <c>pathCount</c> wandering routes through a
 /// jittered hub. <c>Cardinal</c> = a straight plaza-centred cross: one road each to N/E/S/W meeting exactly at the
 /// map centre (ignores <c>pathCount</c>/<c>pathWander</c>) — for a planned, RO-style town.</summary>
@@ -81,7 +93,7 @@ public class RecipePropGroup
 public class RecipeMobGroup
 {
     public string label = "Mobs";
-    [Tooltip("Archetype name from MobRoster (Slime, Bat, Kappa, Flam, Cyclope, or Boss). Empty = weighted mix of all.")]
+    [Tooltip("Mob id or name from MonsterCatalog (e.g. 'mob.slime' or 'Slime'), or 'Boss'. Empty = weighted mix of all field mobs.")]
     public string archetypeName = "";
     public AmountMode amountMode = AmountMode.Density;
     [Tooltip("Density mode: mobs per square world-unit (try ~0.02–0.04).")]
@@ -107,6 +119,8 @@ public class RecipeMobGroup
 public class MapRecipe : ScriptableObject
 {
     [Header("Identity")]
+    [Tooltip("Stable kebab id, e.g. 'map.field-01'. Quests/portals reference THIS, never the display name. Must be unique.")]
+    public string id = "map.new";
     [Tooltip("Scene file name — saved to Assets/Scenes/<mapName>.unity. Re-generating overwrites that scene.")]
     public string mapName = "NewMap";
     public int seed = 12345;
@@ -118,6 +132,13 @@ public class MapRecipe : ScriptableObject
     public float sizeZ = 60f;
     [Range(0f, 1f), Tooltip("0 = mostly grass, 1 = mostly dirt — controls the organic soil patches.")]
     public float dirtAmount = 0.18f;
+
+    [Tooltip("Theme preset. Picks the base + patch ground textures and a colour tint. Grassland = the original look (no tint).")]
+    public Biome biome = Biome.Grassland;
+    [Tooltip("Extra albedo multiply ON TOP of the biome's own tint (white = just the biome's tint, no override).")]
+    public Color groundTint = Color.white;
+    [Tooltip("Blended = seamless feathered gradient (default). HardEdge = crisp 0/1 seams between grass/dirt/path.")]
+    public GroundStyle groundStyle = GroundStyle.Blended;
 
     [Header("Paths")]
     [Tooltip("Winding = pathCount wandering routes through a hub. Cardinal = a straight plaza-centred cross to N/E/S/W (ignores pathCount/pathWander).")]

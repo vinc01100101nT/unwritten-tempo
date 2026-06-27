@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
   m_Name: Wooden Guard
   m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.wooden-guard
   displayName: Wooden Guard
   icon: {fileID: -7809785511404226330, guid: 4a6c997ee6699414da629ee459545ea7, type: 3}
   slot: 4

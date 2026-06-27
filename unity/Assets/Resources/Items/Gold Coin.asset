@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
   m_Name: Gold Coin
   m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.gold-coin
   displayName: Gold Coin
   icon: {fileID: -8171958947958391838, guid: d833d8d5b4847c74cab606b3b3fe8a1f, type: 3}
   slot: 0

@@ -41,6 +41,7 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 |---|---|---|
 | **World Creator…** | Window: digests a `world.json` (from the browser grid tool) → in one *Build World* bakes every map from its template `MapRecipe` and wires all paired Portal+Spawn warps + the world-map atlas. ⚠ Overwrites those scene files. | Generating/regenerating a whole multi-map world topology. (`WorldCreator.cs`) |
 | **Import Painted Map…** | Phase 3 of the Map Painter pipeline: bakes a hand-painted `map.json` (from `tools/map-painter/`) into a scene — exact roads, houses, and yaw. The intra-map complement to the recipe scatter. | You hand-painted a precise map layout and want it in Unity. (`MapPainterImporter.cs`) |
+| **Create Biome Starter Recipes** | Stamps one starter `MapRecipe` per `Biome` (Grassland/Snow/Desert/Volcanic/Corrupted) into `Assets/Recipes/Biomes/` — biome ground textures+hue + sensible starter props/mobs. *Create-if-absent (won't clobber edits).* | Seeding themed recipes to wire world-map cells to. (`BiomeRecipes.cs`) |
 | **Brush Palette…** | Window: edits the `BrushPalette` (brush→prefab/colour), auto-fills it from `Prefabs/Props` by naming convention, and exports `prop-manifest.json` (with measured footprints) into `tools/map-painter/`. | Maintenance touch-point for the Map Painter pipeline; after adding new prop prefabs. (`BrushPaletteWindow.cs`) |
 | **Apply Foliage Wind to Open Scene** | Re-materials plant props in the OPEN scene onto the `Unwritten/FoliageWind` shader (decor sways whole; trees sway leaves only). *Idempotent.* | Making foliage sway in a hand-authored map without re-baking it. (`RecipeGenerator.cs`) |
 | **Fill Ground Under Map** | Measures everything placed in the active scene and carpets a `ground_grass` tile rectangle (+ one flat Ground-layer collider) under it. *Re-runnable.* | After hand-placing props, to lay the walkable floor in one click. (`GroundFill.cs`) |
@@ -76,7 +77,7 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 |---|---|---|
 | **Spawn Training Dummy** | Spawns an inert, click-targetable mob (10M HP, no aggro/movement, full-HP reset every 5s) so you can read your damage/DPS off its HP label. *Re-runnable.* | Measuring damage/DPS. (`TrainingDummyTool.cs`) |
 | **Clear Training Dummy** | Removes the training dummy. | Cleanup after a damage test. (`TrainingDummyTool.cs`) |
-| **Spawn Field Boss (open field map)** | Hand-places a unique `MobRoster.Boss` (name+HP banner, wide aggro, 120s respawn) into the open field map (refuses to spawn in Town). | Placing a boss encounter. Run in a field/dungeon scene. (`RegionBuilder.cs`) |
+| **Spawn Field Boss (open field map)** | Hand-places the unique boss flagged in the `MonsterCatalog` (the `isBoss` `MonsterDef`; falls back to `MobRoster.Boss` if no assets) — name+HP banner, wide aggro, 120s respawn — into the open field map (refuses to spawn in Town). | Placing a boss encounter. Run in a field/dungeon scene. (`RegionBuilder.cs`) |
 | **Create NPC from selected SpriteSheet** | Builds a simple billboard NPC with an `Interactable` (editable dialogue) from a selected sliced character sheet. | Quick-dropping a talking NPC. (`WorldTools.cs`) |
 
 ---
@@ -165,5 +166,12 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
   Setup Systems Scene → Build UI Shell → generate maps (recipe / World Creator) → Bake Minimap.
 - **Removed 2026-06-25** (cleanup): *Set Melee Attack Range* and *Remove HUD Widgets Demo* (one-shot
   migrations, done), plus *Strip Missing Scripts* and *Reset Saved Class*.
+- **Mobs are data now:** the source of truth is `MonsterDef` assets in `Resources/Monsters` (Create ▸ unwritten ▸
+  Monster), surfaced via `MonsterCatalog` (lookup by stable `id` like `mob.slime`, or display name). Recipes/boss
+  spawner read the catalog; the old hardcoded `MobRoster` array is now just the migration seed + a fallback.
 - One-off "quick fix" tools are tagged `// QUICKFIX` and parked under a **Quick Fixes/** submenu so a future
-  purge is a grep (see `Scripts/CLAUDE.md`).
+  purge is a grep (see `Scripts/CLAUDE.md`). Current: **Migrate MobRoster to Assets** (materializes the seed
+  list into `Resources/Monsters/*.asset`; one-shot, delete after `MobRoster` is removed — `MobRosterMigration.cs`).
+  **Backfill Item + Map IDs** (gives pre-existing `Item`/`MapRecipe` assets that serialized before the `id`
+  field existed a stable kebab id from their display name; dedupes + warns on collisions; one-shot, delete
+  after every asset has an id — `IdBackfillTool.cs`).

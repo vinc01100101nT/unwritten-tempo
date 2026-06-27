@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee439e426eefd964bac0acbb3407f345, type: 3}
   m_Name: Prontera
   m_EditorClassIdentifier: Assembly-CSharp::MapRecipe
+  id: map.prontera
   mapName: Prontera
   seed: 73531
   randomizeSeed: 0

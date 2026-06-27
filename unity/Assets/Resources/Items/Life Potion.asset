@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
   m_Name: Life Potion
   m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.life-potion
   displayName: Life Potion
   icon: {fileID: -2354079490960433704, guid: 6de0fd6ba8597874bbbb6e51be6c5acf, type: 3}
   slot: 0

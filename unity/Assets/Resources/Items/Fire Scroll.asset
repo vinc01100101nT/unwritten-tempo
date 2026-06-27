@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
   m_Name: Fire Scroll
   m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.fire-scroll
   displayName: Fire Scroll
   icon: {fileID: -4026627026602525782, guid: f4028c9e016c187459ce052fae35f431, type: 3}
   slot: 0

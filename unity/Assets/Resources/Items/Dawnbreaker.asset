@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
   m_Name: Dawnbreaker
   m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.dawnbreaker
   displayName: Dawnbreaker
   icon: {fileID: -6251451809504726511, guid: d27d5d2c054cc8c429e42efe8824a9dc, type: 3}
   slot: 3

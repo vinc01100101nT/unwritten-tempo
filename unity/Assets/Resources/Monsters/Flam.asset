@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: Flam
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.flam
+  displayName: Flam
+  isBoss: 0
+  sheet: Flam
+  weight: 2
+  tint: {r: 0.62, g: 0.72, b: 1, a: 1}
+  scale: 0.95
+  flash: {r: 1, g: 1, b: 1, a: 1}
+  maxHealth: 10
+  defense: 0
+  magicDefense: 0
+  flee: 10
+  hardDefPercent: 0
+  hardMagicDefPercent: 10
+  luk: 3
+  attackType: 1
+  attack: 5
+  hit: 8
+  xpReward: 10
+  damageSpread: 0.2
+  touchRange: 3.6
+  touchInterval: 1.6
+  moveSpeed: 2.2
+  aggroRadius: 7
+  leashRadius: 11
+  stopDistance: 0.7
+  wanderRadius: 3
+  preferredRange: 3.2
+  fleeHpFraction: 0
+  element: 3
+  attackElement: 3
+  onHitAilment: 2
+  onHitAilmentChance: 0.4
+  onHitAilmentSeconds: 4
+  onHitAilmentMagnitude: 2
+  goldMin: 4
+  goldMax: 10
+  itemDropNames:
+  - Fire Scroll
+  itemDropChances:
+  - 0.2

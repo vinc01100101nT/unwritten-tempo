@@ -146,11 +146,15 @@ public static class RegionBuilder
             if (sp.id == "Start") { anchor = sp.transform.position; break; }
         Vector3 pos = WorldBuildUtil.SurfacePoint(anchor + new Vector3(6f, 0f, 10f), groundMask);
 
-        var boss = Build25DSpike.BuildMonster(MobRoster.Boss, pos);
+        // Prefer the data-driven boss (MonsterCatalog), fall back to the legacy MobRoster seed if no assets yet.
+        var bossDef = MonsterCatalog.Boss;
+        MonsterArchetype bossArc = bossDef != null ? bossDef.ToArchetype() : MobRoster.Boss;
+
+        var boss = Build25DSpike.BuildMonster(bossArc, pos);
         SceneManager.MoveGameObjectToScene(boss, scene);
 
         var banner = boss.AddComponent<BossBanner>();
-        banner.bossName = MobRoster.Boss.name;
+        banner.bossName = bossArc.name;
 
         // Make it a slow-respawning event, not trash: long delay + wide home so it roams.
         var respawn = boss.GetComponent<MobRespawn>();
@@ -160,10 +164,10 @@ public static class RegionBuilder
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         EditorUtility.DisplayDialog("Field Boss — spawned",
-            $"Spawned '{MobRoster.Boss.name}' in '{scene.name}' ({MobRoster.Boss.maxHealth} HP, ×{MobRoster.Boss.scale} size, " +
+            $"Spawned '{bossArc.name}' in '{scene.name}' ({bossArc.maxHealth} HP, ×{bossArc.scale} size, " +
             "name + HP banner). It roams, aggros wide, and respawns 120s after death.\n\n" +
             "Move it where you want a boss to live. Re-run to add another.", "OK");
-        Debug.Log($"[unwritten] Field boss '{MobRoster.Boss.name}' spawned in '{scene.name}'.");
+        Debug.Log($"[unwritten] Field boss '{bossArc.name}' spawned in '{scene.name}'.");
     }
 
     // ── HAND-PLACE HELPER: snap dragged-in props onto the terrain ────────────────────────────────────

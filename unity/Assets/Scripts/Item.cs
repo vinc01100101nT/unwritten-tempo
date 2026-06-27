@@ -35,6 +35,8 @@ public enum ItemCategory { Equip, Use, Material, Etc }
 [CreateAssetMenu(fileName = "Item", menuName = "unwritten/Item")]
 public class Item : ScriptableObject
 {
+    [Tooltip("Stable kebab id, e.g. 'item.life-potion'. Quests/loot/recipes reference THIS, never the display name. Must be unique.")]
+    public string id = "item.new";
     public string displayName = "Item";
     public Sprite icon;
 

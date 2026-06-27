@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
   m_Name: Jade Amulet
   m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.jade-amulet
   displayName: Jade Amulet
   icon: {fileID: 9090724530243979454, guid: 78323742698781443a3594e8e1de4cd9, type: 3}
   slot: 6

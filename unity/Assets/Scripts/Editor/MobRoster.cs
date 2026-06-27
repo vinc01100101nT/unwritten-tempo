@@ -1,56 +1,15 @@
 using UnityEngine;
 
 /// <summary>
-/// Author-time enemy roster (M1 — combat-feel + variety). Each <see cref="MonsterArchetype"/> is plain
-/// config that <see cref="Build25DSpike.BuildMonster(in MonsterArchetype, Vector3)"/> stamps onto the
-/// shared billboard-mob template — its own Ninja Adventure sprite sheet, tint, size, stats and behavior
-/// style. Nothing here runs at play time, so adding variety costs zero frame budget: the mobs differ in
-/// data, not in per-frame code.
+/// Author-time enemy SEED list (M1 — combat-feel + variety). These are the original hardcoded archetypes;
+/// the live source of truth is now <see cref="MonsterDef"/> assets in <c>Resources/Monsters</c>, surfaced
+/// through <see cref="MonsterCatalog"/>. This class is kept as (a) the data the one-click migration
+/// (<c>Tools ▸ unwritten ▸ Quick Fixes ▸ Migrate MobRoster → Assets</c>) materializes into those assets,
+/// and (b) a fallback so generation still works before the migration has been run. Once the assets are the
+/// confirmed source of truth, this can be deleted.
 ///
-/// The two behavior axes (kiting via <c>preferredRange</c>, fleeing via <c>fleeHpFraction</c>) are read by
-/// <see cref="MonsterAI3D"/>; everything else is HP / damage / senses already on Health + MonsterAI3D.
+/// The <see cref="MonsterArchetype"/> struct it returns now lives in runtime (<c>MonsterArchetype.cs</c>).
 /// </summary>
-public struct MonsterArchetype
-{
-    public string name;
-    public string sheet;        // folder under Assets/Art/NinjaAdventure/Actor/Monster (e.g. "Slime")
-    public int    weight;       // relative spawn frequency in a mixed field
-    public Color  tint;         // SpriteRenderer tint (white = none)
-    public float  scale;        // size multiplier on the base billboard scale
-    public Color  flash;        // hit-flash color
-
-    // Survivability. `defense`/`magicDefense` are SOFT (flat) DEF; `hardDefPercent`/`hardMagicDefPercent`
-    // are pre-renewal HARD DEF (% reduction, applied first — a crit ignores both). `luk` = crit shield.
-    public int maxHealth, defense, magicDefense, flee;
-    public int hardDefPercent, hardMagicDefPercent, luk;
-
-    // Offense.
-    public MonsterAI3D.AttackType attackType;
-    public int   attack, hit, xpReward;
-    public float damageSpread, touchRange, touchInterval;
-
-    // Senses / movement.
-    public float moveSpeed, aggroRadius, leashRadius, stopDistance, wanderRadius;
-
-    // Behavior style (see MonsterAI3D): 0 preferredRange = melee; fleeHpFraction 0 = never flee.
-    public float preferredRange, fleeHpFraction;
-
-    // Element & status (RO). `element` = this mob's ARMOR property (what the player's attacks are checked
-    // against — Fire vs Earth = Weak!, etc.); `attackElement` = its OUTGOING property. On-hit ailment is
-    // inflicted on the player when a hit lands (chance 0 = this mob inflicts no status).
-    public Element element, attackElement;
-    public Ailment onHitAilment;
-    public float onHitAilmentChance, onHitAilmentSeconds, onHitAilmentMagnitude;
-
-    // Loot (Zeny drop on death). goldDropChance defaults to 0.85 in LootDropper if both are 0.
-    public int goldMin, goldMax;
-
-    // Item drops: parallel arrays — name must match a Resources/Items/*.asset displayName (without .asset).
-    // Each entry is rolled independently on death. Leave null/empty for no item drops.
-    public string[] itemDropNames;
-    public float[]  itemDropChances;
-}
-
 public static class MobRoster
 {
     static readonly Color None  = Color.white;

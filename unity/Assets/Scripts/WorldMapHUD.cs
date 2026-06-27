@@ -60,7 +60,7 @@ public class WorldMapHUD : MonoBehaviour
         if (open) UpdateMarker();
     }
 
-    // ── marker = current map cell + sub-cell player position ──────────────────────────────────────────────
+    // ── marker = current map's world rect + the player's position within it ───────────────────────────────
     void UpdateMarker()
     {
         string scene = SceneManager.GetActiveScene().name;
@@ -69,19 +69,22 @@ public class WorldMapHUD : MonoBehaviour
         marker.gameObject.SetActive(true);
 
         if (player == null && PersistentPlayer3D.Instance != null) player = PersistentPlayer3D.Instance.transform;
-        float sx = 0f, sz = 0f;
+
+        float cx = e.x + e.w * 0.5f, cy = e.y + e.h * 0.5f;     // map centre in map-space (y is south-down)
+        float px = 0f, pz = 0f;
         if (player != null)
         {
-            sx = Mathf.Clamp(player.position.x / Mathf.Max(1f, data.worldSize), -0.5f, 0.5f);
-            sz = Mathf.Clamp(player.position.z / Mathf.Max(1f, data.worldSize), -0.5f, 0.5f);
+            px = Mathf.Clamp(player.position.x, -e.w * 0.5f, e.w * 0.5f);   // east offset within the map
+            pz = Mathf.Clamp(player.position.z, -e.h * 0.5f, e.h * 0.5f);   // north offset
         }
+        float worldX = cx + px;
+        float worldY = cy - pz;                                  // +z (north) → smaller y (toward the top)
 
-        float u = ((e.col - data.minCol) + 0.5f + sx) / data.cols;
-        float rowFromTop = (e.row - data.minRow) + 0.5f - sz;       // +z (north) moves up = toward the top
-        float v = 1f - rowFromTop / data.rows;
+        float u = (worldX - data.minX) / Mathf.Max(1f, data.worldW);
+        float vFromTop = (worldY - data.minY) / Mathf.Max(1f, data.worldH);
 
         Vector2 size = atlasImage.rectTransform.rect.size;
-        marker.anchoredPosition = new Vector2((u - 0.5f) * size.x, (v - 0.5f) * size.y);
+        marker.anchoredPosition = new Vector2((u - 0.5f) * size.x, (0.5f - vFromTop) * size.y);
 
         float pulse = 1f + 0.25f * Mathf.Sin(Time.unscaledTime * 6f);
         marker.localScale = new Vector3(pulse, pulse, 1f);

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
   m_Name: Leather Vest
   m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.leather-vest
   displayName: Leather Vest
   icon: {fileID: -2757887451555568444, guid: c6f5be1754b7b604a998a04fd37fd14c, type: 3}
   slot: 2

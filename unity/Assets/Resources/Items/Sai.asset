@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
   m_Name: Sai
   m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.sai
   displayName: Sai
   icon: {fileID: -6251451809504726511, guid: f7e50abcc73a6e840931357c69859e13, type: 3}
   slot: 3

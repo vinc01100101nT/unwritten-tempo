@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
   m_Name: Iron Helm
   m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.iron-helm
   displayName: Iron Helm
   icon: {fileID: 309628545801974608, guid: 9740076cfdfcbb748a77dcfdf25b6baa, type: 3}
   slot: 1
