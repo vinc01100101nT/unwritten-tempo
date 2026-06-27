@@ -44,13 +44,13 @@
   .legend .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
   .hint { position: absolute; bottom: 12px; left: 12px; z-index: 10; font-size: 12px;
     color: var(--muted); background: var(--panel); padding: 6px 10px; border-radius: 8px;
-    border: 1px solid var(--line); max-width: 520px; }
+    border: 1px solid var(--line); max-width: 620px; }
 
-  /* ── Radial-ish popup menu ─────────────────────────────── */
+  /* ── Popup menu ─────────────────────────────────────────── */
   #menu {
     position: absolute; z-index: 20; display: none; flex-direction: column;
     background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
-    box-shadow: 0 8px 28px rgba(0,0,0,.5); overflow: hidden; min-width: 150px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.5); overflow: hidden; min-width: 160px;
   }
   #menu .row {
     display: flex; align-items: center; gap: 9px; padding: 9px 13px; cursor: pointer;
@@ -61,6 +61,35 @@
   #menu .sep { height: 1px; background: var(--line); }
   #menu .row.danger { color: #ff8a8a; }
   input[type=file] { display: none; }
+
+  /* ── Export-image modal ────────────────────────────────── */
+  #export-modal {
+    position: fixed; inset: 0; z-index: 50; display: none;
+    align-items: center; justify-content: center; background: rgba(0,0,0,.72);
+  }
+  .ex-panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+    width: min(94vw, 1040px); max-height: 94vh; display: flex; flex-direction: column; gap: 10px;
+    box-shadow: 0 14px 44px rgba(0,0,0,.6);
+  }
+  .ex-head { font-weight: 700; font-size: 16px; }
+  .ex-preview {
+    flex: 1; overflow: auto; border: 1px solid var(--line); border-radius: 8px; min-height: 220px;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      linear-gradient(45deg,#202028 25%,transparent 25%,transparent 75%,#202028 75%) 0 0/22px 22px,
+      linear-gradient(45deg,#202028 25%,#16161b 25%,#16161b 75%,#202028 75%) 11px 11px/22px 22px, #16161b;
+  }
+  .ex-preview canvas { max-width: 100%; max-height: 66vh; display: block; }
+  .ex-controls { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .ex-controls label { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+  .ex-controls input[type=number] {
+    width: 92px; background: #33333b; color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 4px 6px; font-size: 13px;
+  }
+  .ex-controls input[type=range] { width: 120px; vertical-align: middle; }
+  .ex-dims { font-size: 12px; color: var(--muted); }
+  .ex-controls .spacer { flex: 1; }
 </style>
 </head>
 <body>
@@ -68,9 +97,8 @@
 
 <div id="toolbar">
   <span class="title">🗺️ World Creator</span>
-  <button class="tool" id="mode-paint">✏️ Paint</button>
+  <button class="tool" id="mode-edit">✏️ Edit</button>
   <button class="tool" id="mode-warp">🔵 Warp</button>
-  <button class="tool" id="mode-link">🔗 Link</button>
   <span class="spacer"></span>
   <div class="legend">
     <span class="chip"><span class="sw" style="background:var(--town)"></span>Town</span>
@@ -80,10 +108,34 @@
     <span class="chip"><span class="sw" style="background:var(--warp);border-radius:50%"></span>Warp</span>
   </div>
   <span class="spacer"></span>
+  <button class="tool" id="btn-bg">🖼 Background</button>
+  <button class="tool" id="btn-bg-lock" style="display:none">🔒 Locked</button>
+  <input type="range" id="bg-opacity" min="0" max="100" value="45" title="Background opacity" style="display:none; width:90px; vertical-align:middle" />
+  <button class="tool" id="btn-bg-hide" style="display:none">👁 Hide</button>
+  <button class="tool" id="btn-bg-remove" title="Remove background" style="display:none">✕</button>
+  <span class="spacer"></span>
   <button class="tool" id="btn-import">⬆️ Import</button>
-  <button class="tool primary" id="btn-export">⬇️ Export</button>
+  <button class="tool primary" id="btn-export" title="Export world.json">⬇️ JSON</button>
+  <button class="tool" id="btn-export-img" title="Export a PNG of the map">🖼️ PNG</button>
   <button class="tool" id="btn-clear">🗑 Clear</button>
   <input type="file" id="file-input" accept="application/json,.json" />
+  <input type="file" id="bg-input" accept="image/*" />
+</div>
+
+<div id="export-modal">
+  <div class="ex-panel">
+    <div class="ex-head">🖼️ Export map image</div>
+    <div class="ex-preview"><canvas id="ex-canvas"></canvas></div>
+    <div class="ex-controls">
+      <label>Cells opacity <input type="range" id="ex-opacity" min="0" max="100" value="100" /></label>
+      <label>Width <input type="number" id="ex-width" min="256" max="8192" step="1" /> px</label>
+      <label><input type="checkbox" id="ex-labels" checked /> Labels</label>
+      <span class="ex-dims" id="ex-dims"></span>
+      <span class="spacer"></span>
+      <button class="tool" id="ex-cancel">Cancel</button>
+      <button class="tool primary" id="ex-download">⬇️ Download PNG</button>
+    </div>
+  </div>
 </div>
 
 <div id="menu"></div>
@@ -93,213 +145,82 @@
 <script>
 "use strict";
 
-// ── World state ────────────────────────────────────────────────────────────
-// maps: key "c,r" -> { col, row, type, id, seed?, pathTile?, pathWidth? }
-// portals: { aKey, bKey, offset }  (internal: keyed by cell coords; exported by map id)
-const WORLD_SIZE = 60;            // world units per square map (matches Unity)
+// ── World model (v2 — free-form, rectangular) ────────────────────────────────
+// maps:    [{ id, x, y, w, h, type, seed?, pathTile?, pathWidth?, biome? }]
+//          x,y = top-left corner in WORLD UNITS (x→east, y→south); w,h = size in units (INTEGER).
+//          biome = theme the Unity generator applies to the map's ground (RecipeGenerator.BiomeOf); omitted = grassland.
+// portals: [{ aId, bId, anchorA:{edge,offset}, anchorB:{edge,offset} }]  (edge ∈ N/S/E/W, offset 0..1)
 const TYPES = ["town", "field", "dungeon", "special"];
 const COLORS = { town: "#f2c200", field: "#3fb24a", dungeon: "#8a3ffb", special: "#e23b3b" };
+// Biomes the Unity side understands (WorldCreator.TryParseBiome → RecipeGenerator.BiomeOf). Swatch colours are
+// authoring hints that loosely echo each biome's ground tint. "grassland" is the default → never written to JSON.
+const BIOMES = ["grassland", "snow", "desert", "volcanic", "corrupted"];
+const BIOME_COLORS = { grassland: "#3fb24a", snow: "#bfe3ff", desert: "#e3c878", volcanic: "#b4452f", corrupted: "#9a6cf0" };
+function biomeOf(m) { return m.biome || "grassland"; }
+const DEFAULT_SIZE = 60;   // new maps start 60×60 (one classic square)
+const MIN_SIZE = 16;       // smallest a map can be resized to
+const GRID_STEP = 10;      // faint guide grid every N world units
 
 const state = {
-  maps: new Map(),
+  maps: [],
   portals: [],
   nextIndex: { town: 0, field: 0, dungeon: 0, special: 0 },
 };
 
-// ── Camera ─────────────────────────────────────────────────────────────────
-const cam = { x: 0, y: 0, scale: 64 };   // scale = px per cell
+// ── Camera (scale = pixels per WORLD UNIT) ───────────────────────────────────
+const cam = { x: 0, y: 0, scale: 1.4 };
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-let mode = "paint";   // "paint" | "warp"
+let mode = "edit";            // "edit" | "warp"
+let selectedId = null;
+let hoverId = null;
+let linkPickA = null;         // map id chosen as endpoint A while building a warp
+let lastMouse = null;         // {x,y} screen, for rubber-bands
 
-function key(c, r) { return c + "," + r; }
-function worldToScreen(c, r) { return { x: c * cam.scale + cam.x, y: r * cam.scale + cam.y }; }
-function screenToCell(px, py) {
-  return { col: Math.floor((px - cam.x) / cam.scale), row: Math.floor((py - cam.y) / cam.scale) };
-}
+// ── Backdrop (a reference world-map image to trace maps over) ─────────────────
+// Pure authoring aid: a world-space image drawn BEHIND the grid. Browser-only (localStorage),
+// never part of world.json. Unlock it to move/scale into alignment; lock it to trace over.
+const BG_KEY = "wc_backdrop_v1";
+const backdrop = { img: null, src: null, x: 0, y: 0, w: 0, h: 0, opacity: 0.45, visible: true, locked: true };
+function bgLoaded() { return backdrop.img && backdrop.img.complete && backdrop.w > 0; }
+function bgEditable() { return mode === "edit" && bgLoaded() && backdrop.visible && !backdrop.locked; }
 
-// ── Rendering ────────────────────────────────────────────────────────────────
-function resize() {
-  canvas.width = window.innerWidth * devicePixelRatio;
-  canvas.height = window.innerHeight * devicePixelRatio;
-  canvas.style.width = window.innerWidth + "px";
-  canvas.style.height = window.innerHeight + "px";
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-  draw();
-}
+function worldToScreen(wx, wy) { return { x: wx * cam.scale + cam.x, y: wy * cam.scale + cam.y }; }
+function screenToWorld(px, py) { return { x: (px - cam.x) / cam.scale, y: (py - cam.y) / cam.scale }; }
+function mapById(id) { return state.maps.find(m => m.id === id) || null; }
 
-let hoverCell = null;   // {col,row}
-let linkPickA = null;   // map key chosen as endpoint A while building a distant warp
-let lastMouse = null;   // {x,y} screen, for the link rubber-band
-
-function draw() {
-  const W = window.innerWidth, H = window.innerHeight;
-  ctx.clearRect(0, 0, W, H);
-
-  // grid (guide only)
-  ctx.strokeStyle = "#34343c";
-  ctx.lineWidth = 1;
-  const startCol = Math.floor((0 - cam.x) / cam.scale) - 1;
-  const endCol   = Math.ceil((W - cam.x) / cam.scale) + 1;
-  const startRow = Math.floor((0 - cam.y) / cam.scale) - 1;
-  const endRow   = Math.ceil((H - cam.y) / cam.scale) + 1;
-  ctx.beginPath();
-  for (let c = startCol; c <= endCol; c++) {
-    const x = c * cam.scale + cam.x;
-    ctx.moveTo(x, 0); ctx.lineTo(x, H);
-  }
-  for (let r = startRow; r <= endRow; r++) {
-    const y = r * cam.scale + cam.y;
-    ctx.moveTo(0, y); ctx.lineTo(W, y);
-  }
-  ctx.stroke();
-
-  // painted cells
-  const pad = Math.max(3, cam.scale * 0.08);
-  for (const m of state.maps.values()) {
-    const s = worldToScreen(m.col, m.row);
-    roundRect(ctx, s.x + pad, s.y + pad, cam.scale - pad * 2, cam.scale - pad * 2, cam.scale * 0.16);
-    ctx.lineWidth = Math.max(2, cam.scale * 0.045);
-    ctx.strokeStyle = COLORS[m.type];
-    ctx.fillStyle = COLORS[m.type] + "22";
-    ctx.fill();
-    ctx.stroke();
-    // id label
-    if (cam.scale > 40) {
-      ctx.fillStyle = "#e8e8ee";
-      ctx.font = Math.round(cam.scale * 0.16) + "px system-ui, sans-serif";
-      ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText(m.id, s.x + cam.scale / 2, s.y + cam.scale / 2);
-    }
-  }
-
-  // warps: round dots for adjacent, dashed line + square caps for distant
-  const dotR = Math.max(4, cam.scale * 0.1);
-  for (const p of state.portals) {
-    if (p.distant) {
-      const a = state.maps.get(p.aKey), b = state.maps.get(p.bKey);
-      if (!a || !b) continue;
-      const pa = anchorScreenPos(a, p.anchorA), pb = anchorScreenPos(b, p.anchorB);
-      ctx.strokeStyle = "#2b6cf2";
-      ctx.lineWidth = 2;
-      ctx.setLineDash([7, 6]);
-      ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
-      ctx.setLineDash([]);
-      const sq = dotR * 1.7;
-      ctx.fillStyle = "#2b6cf2"; ctx.strokeStyle = "#cfe0ff"; ctx.lineWidth = 2;
-      for (const pt of [pa, pb]) {
-        ctx.beginPath();
-        ctx.rect(pt.x - sq / 2, pt.y - sq / 2, sq, sq);
-        ctx.fill(); ctx.stroke();
-      }
-    } else {
-      const pos = portalScreenPos(p);
-      if (!pos) continue;
-      ctx.fillStyle = "#2b6cf2"; ctx.strokeStyle = "#cfe0ff"; ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, dotR, 0, Math.PI * 2);
-      ctx.fill(); ctx.stroke();
-    }
-  }
-
-  // link-mode selection: highlight picked map A + rubber-band to cursor
-  if (mode === "link" && linkPickA) {
-    const a = state.maps.get(linkPickA);
-    if (a) {
-      const s = worldToScreen(a.col, a.row);
-      ctx.strokeStyle = "#6a9bff"; ctx.lineWidth = 3;
-      ctx.setLineDash([5, 4]);
-      ctx.strokeRect(s.x + 2, s.y + 2, cam.scale - 4, cam.scale - 4);
-      if (lastMouse) {
-        ctx.beginPath();
-        ctx.moveTo(s.x + cam.scale / 2, s.y + cam.scale / 2);
-        ctx.lineTo(lastMouse.x, lastMouse.y);
-        ctx.stroke();
-      }
-      ctx.setLineDash([]);
-    }
-  }
-
-  // hover affordance
-  if (hoverCell) {
-    const k = key(hoverCell.col, hoverCell.row);
-    const s = worldToScreen(hoverCell.col, hoverCell.row);
-    if (mode === "paint" && !state.maps.has(k)) {
-      // a "+" sign
-      ctx.strokeStyle = "#6a9bff";
-      ctx.lineWidth = Math.max(2, cam.scale * 0.04);
-      const cx = s.x + cam.scale / 2, cy = s.y + cam.scale / 2, r = cam.scale * 0.16;
-      ctx.beginPath();
-      ctx.moveTo(cx - r, cy); ctx.lineTo(cx + r, cy);
-      ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r);
-      ctx.stroke();
-    } else {
-      ctx.strokeStyle = "rgba(255,255,255,0.35)";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(s.x + 1, s.y + 1, cam.scale - 2, cam.scale - 2);
-    }
-  }
-
-  updateHint();
-}
-
-function roundRect(c, x, y, w, h, r) {
-  c.beginPath();
-  c.moveTo(x + r, y);
-  c.arcTo(x + w, y, x + w, y + h, r);
-  c.arcTo(x + w, y + h, x, y + h, r);
-  c.arcTo(x, y + h, x, y, r);
-  c.arcTo(x, y, x + w, y, r);
-  c.closePath();
-}
-
-// ── Adjacency + portal geometry ──────────────────────────────────────────────
-// Returns the screen-space point of a portal dot, or null if either end is gone.
-function portalScreenPos(p) {
-  const a = state.maps.get(p.aKey), b = state.maps.get(p.bKey);
-  if (!a || !b) return null;
-  const dc = b.col - a.col, dr = b.row - a.row;
-  const t = p.offset;
-  // shared border in cell-space, then to screen
-  let bx, by; // border point in cell coords
-  if (dc === 1 && dr === 0) { bx = a.col + 1;        by = a.row + t; }
-  else if (dc === -1 && dr === 0) { bx = a.col;      by = a.row + t; }
-  else if (dr === 1 && dc === 0) { bx = a.col + t;   by = a.row + 1; }
-  else if (dr === -1 && dc === 0) { bx = a.col + t;  by = a.row; }
-  else return null; // adjacent only; distant warps use anchors (see below)
-  return { x: bx * cam.scale + cam.x, y: by * cam.scale + cam.y };
-}
-
-// ── Distant-warp geometry (explicit edge + offset anchors) ───────────────────
-// A point on a map's named edge at offset t (0..1), in cell coords.
-function edgePointCell(m, edge, t) {
+// ── Geometry ─────────────────────────────────────────────────────────────────
+// A point on a map's named edge at offset t (0..1), in WORLD units. Mirrors WorldCreator.EdgePoint.
+function edgePointWorld(m, edge, t) {
   switch (edge) {
-    case "N": return { x: m.col + t, y: m.row };
-    case "S": return { x: m.col + t, y: m.row + 1 };
-    case "E": return { x: m.col + 1, y: m.row + t };
-    case "W": return { x: m.col,     y: m.row + t };
+    case "N": return { x: m.x + t * m.w, y: m.y };          // top
+    case "S": return { x: m.x + t * m.w, y: m.y + m.h };    // bottom
+    case "E": return { x: m.x + m.w,     y: m.y + t * m.h }; // right
+    case "W": return { x: m.x,           y: m.y + t * m.h }; // left
   }
-  return { x: m.col + 0.5, y: m.row + 0.5 };
+  return { x: m.x + m.w / 2, y: m.y + m.h / 2 };
 }
 function anchorScreenPos(m, anchor) {
-  const p = edgePointCell(m, anchor.edge, anchor.offset);
-  return { x: p.x * cam.scale + cam.x, y: p.y * cam.scale + cam.y };
+  const p = edgePointWorld(m, anchor.edge, anchor.offset);
+  return worldToScreen(p.x, p.y);
 }
-// The edge of A that faces B (dominant axis of the center-to-center vector).
+function centerOf(m) { return { x: m.x + m.w / 2, y: m.y + m.h / 2 }; }
+// The edge of A that faces B (dominant axis of the center-to-center vector). y is south.
 function facingEdge(a, b) {
-  const dx = b.col - a.col, dy = b.row - a.row;
+  const ca = centerOf(a), cb = centerOf(b);
+  const dx = cb.x - ca.x, dy = cb.y - ca.y;
   if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? "E" : "W";
   return dy >= 0 ? "S" : "N";
 }
 // Snap a screen point to the nearest edge of map m → { edge, offset }.
 function nearestEdgeAnchor(m, px, py) {
-  const s = worldToScreen(m.col, m.row), sz = cam.scale;
+  const s = worldToScreen(m.x, m.y), w = m.w * cam.scale, h = m.h * cam.scale;
   const edges = {
-    N: [{ x: s.x, y: s.y },            { x: s.x + sz, y: s.y }],
-    S: [{ x: s.x, y: s.y + sz },       { x: s.x + sz, y: s.y + sz }],
-    W: [{ x: s.x, y: s.y },            { x: s.x, y: s.y + sz }],
-    E: [{ x: s.x + sz, y: s.y },       { x: s.x + sz, y: s.y + sz }],
+    N: [{ x: s.x, y: s.y },         { x: s.x + w, y: s.y }],
+    S: [{ x: s.x, y: s.y + h },     { x: s.x + w, y: s.y + h }],
+    W: [{ x: s.x, y: s.y },         { x: s.x, y: s.y + h }],
+    E: [{ x: s.x + w, y: s.y },     { x: s.x + w, y: s.y + h }],
   };
   let best = null;
   for (const e in edges) {
@@ -308,45 +229,47 @@ function nearestEdgeAnchor(m, px, py) {
   }
   return best;
 }
-// Nearest distant-warp endpoint to a screen point → { portal, end } or null.
+
+// ── Hit testing ──────────────────────────────────────────────────────────────
+function mapAtWorld(wx, wy) {
+  for (let i = state.maps.length - 1; i >= 0; i--) {     // topmost first
+    const m = state.maps[i];
+    if (wx >= m.x && wx <= m.x + m.w && wy >= m.y && wy <= m.y + m.h) return m;
+  }
+  return null;
+}
+const HANDLES = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+function handleScreenPositions(m) {
+  const s = worldToScreen(m.x, m.y), w = m.w * cam.scale, h = m.h * cam.scale;
+  const L = s.x, R = s.x + w, T = s.y, B = s.y + h, MX = s.x + w / 2, MY = s.y + h / 2;
+  return { nw: {x:L,y:T}, n: {x:MX,y:T}, ne: {x:R,y:T}, e: {x:R,y:MY},
+           se: {x:R,y:B}, s: {x:MX,y:B}, sw: {x:L,y:B}, w: {x:L,y:MY} };
+}
+function handleAt(m, px, py) {
+  if (!m) return null;
+  const pos = handleScreenPositions(m);
+  for (const h of HANDLES) {
+    if (Math.hypot(pos[h].x - px, pos[h].y - py) <= 9) return h;
+  }
+  return null;
+}
+const HANDLE_CURSOR = {
+  nw: "nwse-resize", se: "nwse-resize", ne: "nesw-resize", sw: "nesw-resize",
+  n: "ns-resize", s: "ns-resize", e: "ew-resize", w: "ew-resize",
+};
+// Nearest warp endpoint to a screen point → { portal, end } or null.
 function nearestEndpoint(px, py) {
   let best = null, bestDist = Infinity;
   for (const p of state.portals) {
-    if (!p.distant) continue;
-    const a = state.maps.get(p.aKey), b = state.maps.get(p.bKey);
+    const a = mapById(p.aId), b = mapById(p.bId);
     if (!a || !b) continue;
     const pa = anchorScreenPos(a, p.anchorA), pb = anchorScreenPos(b, p.anchorB);
     const da = Math.hypot(pa.x - px, pa.y - py), db = Math.hypot(pb.x - px, pb.y - py);
     if (da < bestDist) { bestDist = da; best = { portal: p, end: "a" }; }
     if (db < bestDist) { bestDist = db; best = { portal: p, end: "b" }; }
   }
-  if (best && bestDist <= Math.max(12, cam.scale * 0.16)) return best;
+  if (best && bestDist <= 12) return best;
   return null;
-}
-
-// Find the nearest adjacent-cell border to a screen point. Returns {aKey,bKey,offset,dist} or null.
-function nearestBorder(px, py) {
-  let best = null;
-  for (const a of state.maps.values()) {
-    const neighbors = [[1,0],[-1,0],[0,1],[0,-1]];
-    for (const [dc, dr] of neighbors) {
-      const b = state.maps.get(key(a.col + dc, a.row + dr));
-      if (!b) continue;
-      if (a.col + "," + a.row > b.col + "," + b.row) continue; // dedupe: handle each pair once
-      // border segment endpoints in screen space
-      let p1, p2;
-      const s = worldToScreen(a.col, a.row);
-      if (dc === 1) { p1 = { x: s.x + cam.scale, y: s.y }; p2 = { x: s.x + cam.scale, y: s.y + cam.scale }; }
-      else if (dc === -1) { p1 = { x: s.x, y: s.y }; p2 = { x: s.x, y: s.y + cam.scale }; }
-      else if (dr === 1) { p1 = { x: s.x, y: s.y + cam.scale }; p2 = { x: s.x + cam.scale, y: s.y + cam.scale }; }
-      else { p1 = { x: s.x, y: s.y }; p2 = { x: s.x + cam.scale, y: s.y }; }
-      const proj = projectToSegment(px, py, p1, p2);
-      if (!best || proj.dist < best.dist) {
-        best = { aKey: key(a.col, a.row), bKey: key(b.col, b.row), offset: clamp(proj.t, 0.12, 0.88), dist: proj.dist };
-      }
-    }
-  }
-  return best;
 }
 
 function projectToSegment(px, py, p1, p2) {
@@ -359,31 +282,268 @@ function projectToSegment(px, py, p1, p2) {
 }
 function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
 
+// ── Undo / redo + clipboard ──────────────────────────────────────────────────
+// Snapshot-based history of the world (maps+portals+nextIndex). The backdrop is NOT part of it
+// (it's a separate browser-only layer). Call recordUndo(snapshot()) BEFORE any mutation.
+const HISTORY_LIMIT = 80;
+const undoStack = [], redoStack = [];
+let clipboard = null;
+function snapshot() { return JSON.stringify({ maps: state.maps, portals: state.portals, nextIndex: state.nextIndex }); }
+function recordUndo(snap) { if (!snap) return; undoStack.push(snap); if (undoStack.length > HISTORY_LIMIT) undoStack.shift(); redoStack.length = 0; }
+function applySnapshot(snap) {
+  const d = JSON.parse(snap);
+  state.maps = d.maps; state.portals = d.portals; state.nextIndex = d.nextIndex;
+  selectedId = null; linkPickA = null;
+}
+function undo() { if (!undoStack.length) { flash("Nothing to undo"); return; } redoStack.push(snapshot()); applySnapshot(undoStack.pop()); draw(); }
+function redo() { if (!redoStack.length) { flash("Nothing to redo"); return; } undoStack.push(snapshot()); applySnapshot(redoStack.pop()); draw(); }
+
+function copySelected() {
+  const m = mapById(selectedId);
+  if (!m) { flash("Select a map to copy"); return; }
+  clipboard = { type: m.type, w: m.w, h: m.h };
+  if (m.seed !== undefined) clipboard.seed = m.seed;
+  if (m.pathTile !== undefined) clipboard.pathTile = m.pathTile;
+  if (m.pathWidth !== undefined) clipboard.pathWidth = m.pathWidth;
+  if (m.biome !== undefined) clipboard.biome = m.biome;
+  flash("Copied " + m.id);
+}
+// Paste a fresh map (new id) from the clipboard. atMouse → centre on cursor; else offset from the source.
+function pasteClipboard(atMouse) {
+  if (!clipboard) { flash("Nothing to paste (Ctrl+C a map first)"); return; }
+  recordUndo(snapshot());
+  const id = clipboard.type + "_" + (state.nextIndex[clipboard.type]++);
+  let wx, wy;
+  if (atMouse && lastMouse) { const w = screenToWorld(lastMouse.x, lastMouse.y); wx = w.x - clipboard.w / 2; wy = w.y - clipboard.h / 2; }
+  else { const src = mapById(selectedId); wx = (src ? src.x : 0) + 14; wy = (src ? src.y : 0) + 14; }
+  const m = { id, type: clipboard.type, x: Math.round(wx), y: Math.round(wy), w: clipboard.w, h: clipboard.h };
+  if (clipboard.seed !== undefined) m.seed = clipboard.seed;
+  if (clipboard.pathTile !== undefined) m.pathTile = clipboard.pathTile;
+  if (clipboard.pathWidth !== undefined) m.pathWidth = clipboard.pathWidth;
+  if (clipboard.biome !== undefined) m.biome = clipboard.biome;
+  state.maps.push(m); selectedId = id; draw();
+  flash("Pasted " + id);
+}
+function duplicateSelected() {
+  if (!selectedId) { flash("Select a map to duplicate"); return; }
+  copySelected();
+  pasteClipboard(false);
+}
+
+// ── Rendering ────────────────────────────────────────────────────────────────
+function resize() {
+  canvas.width = window.innerWidth * devicePixelRatio;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  draw();
+}
+
+function draw() {
+  const W = window.innerWidth, H = window.innerHeight;
+  ctx.clearRect(0, 0, W, H);
+
+  // backdrop reference image (behind everything)
+  if (bgLoaded() && backdrop.visible) {
+    const s = worldToScreen(backdrop.x, backdrop.y);
+    ctx.save();
+    ctx.globalAlpha = backdrop.opacity;
+    ctx.drawImage(backdrop.img, s.x, s.y, backdrop.w * cam.scale, backdrop.h * cam.scale);
+    ctx.restore();
+    if (bgEditable()) {
+      ctx.strokeStyle = "#39d0e0"; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
+      ctx.strokeRect(s.x, s.y, backdrop.w * cam.scale, backdrop.h * cam.scale);
+      ctx.setLineDash([]);
+      const hp = handleScreenPositions(backdrop);
+      ctx.fillStyle = "#39d0e0"; ctx.strokeStyle = "#0a2a2e"; ctx.lineWidth = 1.5;
+      for (const hk of HANDLES) { ctx.beginPath(); ctx.rect(hp[hk].x - 4, hp[hk].y - 4, 8, 8); ctx.fill(); ctx.stroke(); }
+    }
+  }
+
+  // faint guide grid every GRID_STEP world units (only when not too dense)
+  if (cam.scale * GRID_STEP > 8) {
+    ctx.strokeStyle = "#2c2c34";
+    ctx.lineWidth = 1;
+    const w0 = screenToWorld(0, 0), w1 = screenToWorld(W, H);
+    const sc = Math.floor(w0.x / GRID_STEP) * GRID_STEP, ec = Math.ceil(w1.x / GRID_STEP) * GRID_STEP;
+    const sr = Math.floor(w0.y / GRID_STEP) * GRID_STEP, er = Math.ceil(w1.y / GRID_STEP) * GRID_STEP;
+    ctx.beginPath();
+    for (let gx = sc; gx <= ec; gx += GRID_STEP) { const x = gx * cam.scale + cam.x; ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+    for (let gy = sr; gy <= er; gy += GRID_STEP) { const y = gy * cam.scale + cam.y; ctx.moveTo(0, y); ctx.lineTo(W, y); }
+    ctx.stroke();
+  }
+
+  // maps
+  for (const m of state.maps) {
+    const s = worldToScreen(m.x, m.y), w = m.w * cam.scale, h = m.h * cam.scale;
+    const r = Math.min(w, h) * 0.12;
+    roundRect(ctx, s.x, s.y, w, h, r);
+    ctx.fillStyle = COLORS[m.type] + "22";
+    ctx.fill();
+    const biome = biomeOf(m);
+    if (biome !== "grassland") { ctx.fillStyle = BIOME_COLORS[biome] + "22"; ctx.fill(); }   // biome wash over the type fill
+    ctx.lineWidth = (m.id === selectedId) ? 3.5 : Math.max(2, Math.min(w, h) * 0.03);
+    ctx.strokeStyle = (m.id === selectedId) ? "#ffffff" : COLORS[m.type];
+    ctx.stroke();
+    // labels — bold name with a dark outline so it reads over busy backdrop art
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    const fs = clamp(Math.min(w, h) * 0.22, 13, 32);
+    const lcx = s.x + w / 2, nameY = s.y + h / 2 - fs * 0.35;
+    ctx.font = "800 " + Math.round(fs) + "px system-ui, sans-serif";
+    ctx.lineWidth = Math.max(3, fs * 0.22); ctx.strokeStyle = "rgba(0,0,0,0.78)";
+    ctx.strokeText(m.id, lcx, nameY);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(m.id, lcx, nameY);
+    const ss = Math.round(fs * 0.62);
+    const sizeY = s.y + h / 2 + fs * 0.7;
+    ctx.font = "600 " + ss + "px system-ui, sans-serif";
+    ctx.lineWidth = Math.max(2, ss * 0.22); ctx.strokeStyle = "rgba(0,0,0,0.7)";
+    ctx.strokeText(m.w + "×" + m.h, lcx, sizeY);
+    ctx.fillStyle = "#e6e6ee";
+    ctx.fillText(m.w + "×" + m.h, lcx, sizeY);
+    if (biome !== "grassland") {                                  // biome name (only when not the default)
+      const bs = Math.round(ss * 0.92), biomeY = sizeY + ss * 1.2;
+      ctx.font = "700 " + bs + "px system-ui, sans-serif";
+      ctx.lineWidth = Math.max(2, bs * 0.22); ctx.strokeStyle = "rgba(0,0,0,0.7)";
+      ctx.strokeText(biome, lcx, biomeY);
+      ctx.fillStyle = BIOME_COLORS[biome];
+      ctx.fillText(biome, lcx, biomeY);
+    }
+
+    // resize handles on the selected map (edit mode)
+    if (mode === "edit" && m.id === selectedId) {
+      const hp = handleScreenPositions(m);
+      ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#2b6cf2"; ctx.lineWidth = 1.5;
+      for (const hk of HANDLES) {
+        ctx.beginPath();
+        ctx.rect(hp[hk].x - 4, hp[hk].y - 4, 8, 8);
+        ctx.fill(); ctx.stroke();
+      }
+    }
+  }
+
+  // warps — dashed line + square caps
+  for (const p of state.portals) {
+    const a = mapById(p.aId), b = mapById(p.bId);
+    if (!a || !b) continue;
+    const pa = anchorScreenPos(a, p.anchorA), pb = anchorScreenPos(b, p.anchorB);
+    ctx.strokeStyle = "#2b6cf2"; ctx.lineWidth = 2; ctx.setLineDash([7, 6]);
+    ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.lineTo(pb.x, pb.y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#2b6cf2"; ctx.strokeStyle = "#cfe0ff"; ctx.lineWidth = 2;
+    for (const pt of [pa, pb]) {
+      ctx.beginPath(); ctx.rect(pt.x - 6, pt.y - 6, 12, 12); ctx.fill(); ctx.stroke();
+    }
+  }
+
+  // warp link-in-progress rubber band
+  if (mode === "warp" && linkPickA) {
+    const a = mapById(linkPickA);
+    if (a) {
+      const c = worldToScreen(a.x + a.w / 2, a.y + a.h / 2);
+      ctx.strokeStyle = "#6a9bff"; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+      const s = worldToScreen(a.x, a.y);
+      ctx.strokeRect(s.x + 2, s.y + 2, a.w * cam.scale - 4, a.h * cam.scale - 4);
+      if (lastMouse) { ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(lastMouse.x, lastMouse.y); ctx.stroke(); }
+      ctx.setLineDash([]);
+    }
+  }
+
+  updateHint();
+}
+
+function roundRect(c, x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+
 // ── Interaction ──────────────────────────────────────────────────────────────
-let drag = null;  // panning
-const DRAG_THRESHOLD = 5;
+let drag = null;
+const DRAG_THRESHOLD = 4;
 
 canvas.addEventListener("mousedown", (e) => {
-  if (e.button === 1 || e.button === 2 || e.shiftKey) {  // middle/right/shift = pan
-    drag = { panning: true, sx: e.clientX, sy: e.clientY, ox: cam.x, oy: cam.y, moved: false };
+  if (e.button === 1 || e.button === 2 || e.shiftKey) {     // middle/right/shift = pan
+    drag = { kind: "pan", sx: e.clientX, sy: e.clientY, ox: cam.x, oy: cam.y, moved: false };
     return;
   }
-  drag = { panning: false, sx: e.clientX, sy: e.clientY, ox: cam.x, oy: cam.y, moved: false };
-  // In link mode, grabbing a distant-warp endpoint starts a re-anchor drag.
-  if (mode === "link") {
+  const w = screenToWorld(e.clientX, e.clientY);
+  drag = { kind: "click", sx: e.clientX, sy: e.clientY, moved: false, wx: w.x, wy: w.y, hadSelection: selectedId !== null };
+
+  if (mode === "warp") {
     const ep = nearestEndpoint(e.clientX, e.clientY);
-    if (ep) drag.endpoint = ep;
+    if (ep) { drag.endpoint = ep; drag.pre = snapshot(); }
+    return;
   }
+
+  // backdrop positioning takes over while it's unlocked (maps are untouchable until you Lock)
+  if (bgEditable()) {
+    const bh = handleAt(backdrop, e.clientX, e.clientY);
+    if (bh) { drag.kind = "bg-resize"; drag.handle = bh; drag.orig = { x: backdrop.x, y: backdrop.y, w: backdrop.w, h: backdrop.h }; return; }
+    if (w.x >= backdrop.x && w.x <= backdrop.x + backdrop.w && w.y >= backdrop.y && w.y <= backdrop.y + backdrop.h) {
+      drag.kind = "bg-move"; drag.offX = w.x - backdrop.x; drag.offY = w.y - backdrop.y; return;
+    }
+    drag.kind = "bg-idle";   // clicked off the image while aligning → no-op (don't create a map)
+    return;
+  }
+
+  // edit mode: handle → resize, body → move, empty → create-on-click
+  const sel = mapById(selectedId);
+  const hh = handleAt(sel, e.clientX, e.clientY);
+  if (hh) {
+    drag.kind = "resize"; drag.handle = hh;
+    drag.orig = { x: sel.x, y: sel.y, w: sel.w, h: sel.h };
+    drag.pre = snapshot();
+    return;
+  }
+  const hit = mapAtWorld(w.x, w.y);
+  if (hit) {
+    drag.wasSelected = (hit.id === selectedId);   // menu only opens on a click while already focused
+    selectedId = hit.id;
+    drag.kind = "move"; drag.target = hit;
+    drag.offX = w.x - hit.x; drag.offY = w.y - hit.y;
+    drag.pre = snapshot();
+  } else {
+    selectedId = null;
+  }
+  draw();
 });
 
 canvas.addEventListener("mousemove", (e) => {
   lastMouse = { x: e.clientX, y: e.clientY };
-  const c = screenToCell(e.clientX, e.clientY);
-  hoverCell = c;
+  const w = screenToWorld(e.clientX, e.clientY);
+  hoverId = (mapAtWorld(w.x, w.y) || {}).id || null;
+
+  // cursor: resize arrow over a handle (or while resizing); default per mode otherwise
+  if (drag && (drag.kind === "resize" || drag.kind === "bg-resize")) canvas.style.cursor = HANDLE_CURSOR[drag.handle];
+  else if (bgEditable()) {
+    const bh = handleAt(backdrop, e.clientX, e.clientY);
+    const overBody = w.x >= backdrop.x && w.x <= backdrop.x + backdrop.w && w.y >= backdrop.y && w.y <= backdrop.y + backdrop.h;
+    canvas.style.cursor = bh ? HANDLE_CURSOR[bh] : (overBody ? "move" : "crosshair");
+  }
+  else if (mode === "edit") {
+    const hh = handleAt(mapById(selectedId), e.clientX, e.clientY);
+    canvas.style.cursor = hh ? HANDLE_CURSOR[hh] : "crosshair";
+  }
+
   if (drag) {
     const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
     if (Math.hypot(dx, dy) > DRAG_THRESHOLD) drag.moved = true;
-    if (drag.panning) { cam.x = drag.ox + dx; cam.y = drag.oy + dy; }
+    if (drag.kind === "pan") { cam.x = drag.ox + dx; cam.y = drag.oy + dy; }
+    else if (drag.kind === "move" && drag.moved) {
+      drag.target.x = Math.round(w.x - drag.offX);     // snap position to whole units
+      drag.target.y = Math.round(w.y - drag.offY);
+    }
+    else if (drag.kind === "resize" && drag.moved) applyResize(drag, w);
+    else if (drag.kind === "bg-move" && drag.moved) { backdrop.x = w.x - drag.offX; backdrop.y = w.y - drag.offY; }
+    else if (drag.kind === "bg-resize" && drag.moved) applyBackdropResize(drag, w);
     else if (drag.endpoint && drag.moved) reanchorEndpoint(drag.endpoint, e.clientX, e.clientY);
   }
   draw();
@@ -391,116 +551,156 @@ canvas.addEventListener("mousemove", (e) => {
 
 window.addEventListener("mouseup", (e) => {
   if (!drag) return;
-  const wasPan = drag.panning, moved = drag.moved, endpoint = drag.endpoint;
-  drag = null;
-  if (wasPan) { draw(); return; }
-  if (endpoint) {                                  // endpoint: drag = re-anchor, click = delete
-    if (!moved) state.portals.splice(state.portals.indexOf(endpoint.portal), 1);
+  const d = drag; drag = null;
+  if (d.kind === "pan") { draw(); return; }
+  if (d.kind === "bg-move" || d.kind === "bg-resize") { saveBackdrop(); draw(); return; }
+  if (d.kind === "bg-idle") { draw(); return; }      // aligning the backdrop; ignore map clicks
+  if (d.endpoint) {                                  // warp endpoint: drag = re-anchor, click = delete
+    recordUndo(d.pre);                               // both re-anchor and delete are real changes
+    if (!d.moved) state.portals.splice(state.portals.indexOf(d.endpoint.portal), 1);
     draw(); return;
   }
-  if (moved) { draw(); return; }                   // a drag, not a click
-  handleClick(e.clientX, e.clientY);
+  if (d.moved) { recordUndo(d.pre); draw(); return; }   // a move/resize completed → commit to history
+  // pure click
+  if (mode === "warp") { handleWarpClick(d.wx, d.wy); return; }
+  const hit = mapAtWorld(d.wx, d.wy);
+  if (hit) { if (d.wasSelected) openMapMenu(e.clientX, e.clientY, hit); }   // 1st click focuses, 2nd opens menu
+  else if (!d.hadSelection) openCreateMenu(e.clientX, e.clientY, d.wx, d.wy);   // empty click w/ a focus just deselects
 });
 
-// Snap the dragged endpoint to the nearest edge of its own map.
+function applyResize(d, w) {
+  const o = d.orig, hd = d.handle;
+  let left = o.x, right = o.x + o.w, top = o.y, bottom = o.y + o.h;
+  if (hd.includes("w")) left = w.x;
+  if (hd.includes("e")) right = w.x;
+  if (hd[0] === "n") top = w.y;
+  if (hd[0] === "s") bottom = w.y;
+  const m = d.target || mapById(selectedId);
+  if (!m) return;
+  let newW = Math.max(MIN_SIZE, Math.round(right - left));
+  let newH = Math.max(MIN_SIZE, Math.round(bottom - top));
+  m.w = newW; m.h = newH;
+  // keep the fixed edge anchored (the side opposite the dragged handle)
+  m.x = hd.includes("w") ? (o.x + o.w) - newW : o.x;
+  m.y = (hd[0] === "n")  ? (o.y + o.h) - newH : o.y;
+}
+
+// Resize the backdrop (free float; corner handles keep the image's aspect so art isn't stretched).
+function applyBackdropResize(d, w) {
+  const o = d.orig, hd = d.handle;
+  let left = o.x, right = o.x + o.w, top = o.y, bottom = o.y + o.h;
+  if (hd.includes("w")) left = w.x;
+  if (hd.includes("e")) right = w.x;
+  if (hd[0] === "n") top = w.y;
+  if (hd[0] === "s") bottom = w.y;
+  let nw = Math.max(4, right - left), nh = Math.max(4, bottom - top);
+  if (hd.length === 2) {                              // corner → uniform scale (preserve aspect)
+    const aspect = o.w / o.h;
+    if (nw / o.w >= nh / o.h) nh = nw / aspect; else nw = nh * aspect;
+  }
+  backdrop.w = nw; backdrop.h = nh;
+  backdrop.x = hd.includes("w") ? (o.x + o.w) - nw : o.x;
+  backdrop.y = (hd[0] === "n") ? (o.y + o.h) - nh : o.y;
+}
+
 function reanchorEndpoint(ep, px, py) {
-  const m = state.maps.get(ep.end === "a" ? ep.portal.aKey : ep.portal.bKey);
+  const m = mapById(ep.end === "a" ? ep.portal.aId : ep.portal.bId);
   if (!m) return;
   const na = nearestEdgeAnchor(m, px, py);
   const anchor = { edge: na.edge, offset: na.offset };
   if (ep.end === "a") ep.portal.anchorA = anchor; else ep.portal.anchorB = anchor;
 }
 
-canvas.addEventListener("contextmenu", (e) => e.preventDefault());
-
-canvas.addEventListener("wheel", (e) => {
-  e.preventDefault();
-  const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
-  const ns = clamp(cam.scale * factor, 22, 200);
-  // zoom toward cursor
-  const wx = (e.clientX - cam.x) / cam.scale, wy = (e.clientY - cam.y) / cam.scale;
-  cam.scale = ns;
-  cam.x = e.clientX - wx * cam.scale;
-  cam.y = e.clientY - wy * cam.scale;
-  draw();
-}, { passive: false });
-
-function handleClick(px, py) {
-  if (mode === "warp") { handleWarpClick(px, py); return; }
-  if (mode === "link") { handleLinkClick(px, py); return; }
-  const c = screenToCell(px, py);
-  openMenu(px, py, c);
-}
-
-// Distant warp: click map A, then map B → create a cross-map warp with auto anchors.
-function handleLinkClick(px, py) {
-  const c = screenToCell(px, py);
-  const k = key(c.col, c.row);
-  const m = state.maps.get(k);
-  if (!m) { linkPickA = null; draw(); return; }     // clicked empty space → cancel pick
-  if (!linkPickA) { linkPickA = k; draw(); return; } // first endpoint
-  if (k === linkPickA) { linkPickA = null; draw(); return; } // same map → cancel
-  const a = state.maps.get(linkPickA), b = m;
-  // already a distant warp between these two? ignore duplicate
-  const dup = state.portals.some(p => p.distant &&
-    ((p.aKey === linkPickA && p.bKey === k) || (p.aKey === k && p.bKey === linkPickA)));
-  if (!dup) {
+function handleWarpClick(wx, wy) {
+  const m = mapAtWorld(wx, wy);
+  if (!m) { linkPickA = null; draw(); return; }
+  if (!linkPickA) { linkPickA = m.id; draw(); return; }
+  if (m.id === linkPickA) { linkPickA = null; draw(); return; }
+  const a = mapById(linkPickA), b = m;
+  const dup = state.portals.some(p =>
+    (p.aId === a.id && p.bId === b.id) || (p.aId === b.id && p.bId === a.id));
+  if (dup) { flash("Those maps are already linked"); }
+  else {
+    recordUndo(snapshot());
     state.portals.push({
-      distant: true, aKey: linkPickA, bKey: k,
+      aId: a.id, bId: b.id,
       anchorA: { edge: facingEdge(a, b), offset: 0.5 },
       anchorB: { edge: facingEdge(b, a), offset: 0.5 },
     });
-  } else {
-    flash("Those maps are already linked");
   }
   linkPickA = null;
   draw();
 }
 
-function handleWarpClick(px, py) {
-  const nb = nearestBorder(px, py);
-  if (!nb || nb.dist > Math.max(14, cam.scale * 0.22)) return;
-  // existing dot near this click on the same border? -> remove it
-  const onBorder = state.portals.filter(p =>
-    (p.aKey === nb.aKey && p.bKey === nb.bKey) || (p.aKey === nb.bKey && p.bKey === nb.aKey));
-  for (const p of onBorder) {
-    const pos = portalScreenPos(p);
-    if (pos && Math.hypot(pos.x - px, pos.y - py) < Math.max(10, cam.scale * 0.14)) {
-      state.portals.splice(state.portals.indexOf(p), 1);
-      draw(); return;
-    }
-  }
-  if (onBorder.length >= 3) { flash("Max 3 warps on a border"); return; }
-  state.portals.push({ aKey: nb.aKey, bKey: nb.bKey, offset: nb.offset });
-  draw();
-}
+window.addEventListener("contextmenu", (e) => e.preventDefault());
 
-// ── Popup menu ───────────────────────────────────────────────────────────────
+canvas.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+  const ns = clamp(cam.scale * factor, 0.25, 8);
+  const w = screenToWorld(e.clientX, e.clientY);
+  cam.scale = ns;
+  cam.x = e.clientX - w.x * cam.scale;
+  cam.y = e.clientY - w.y * cam.scale;
+  draw();
+}, { passive: false });
+
+// ── Popup menus ──────────────────────────────────────────────────────────────
 const menu = document.getElementById("menu");
-function openMenu(px, py, cell) {
-  const k = key(cell.col, cell.row);
-  const existing = state.maps.get(k);
+function showMenu(px, py) {
+  menu.style.display = "flex";
+  menu.style.left = Math.min(px, window.innerWidth - 180) + "px";
+  menu.style.top = Math.min(py, window.innerHeight - menu.offsetHeight - 10) + "px";
+}
+function closeMenu() { menu.style.display = "none"; }
+
+function openCreateMenu(px, py, wx, wy) {
   menu.innerHTML = "";
   for (const t of TYPES) {
     const row = document.createElement("button");
     row.className = "row";
-    row.innerHTML = `<span class="sw" style="background:${COLORS[t]}"></span>${cap(t)}`;
-    row.onclick = () => { setCell(cell, t); closeMenu(); };
+    row.innerHTML = `<span class="sw" style="background:${COLORS[t]}"></span>New ${cap(t)}`;
+    row.onclick = () => { createMap(t, wx, wy); closeMenu(); };
     menu.appendChild(row);
   }
-  if (existing) {
-    const sep = document.createElement("div"); sep.className = "sep"; menu.appendChild(sep);
-    const del = document.createElement("button");
-    del.className = "row danger";
-    del.innerHTML = "🗑 Delete map";
-    del.onclick = () => { deleteCell(cell); closeMenu(); };
-    menu.appendChild(del);
-  }
-  menu.style.display = "flex";
-  menu.style.left = Math.min(px, window.innerWidth - 170) + "px";
-  menu.style.top = Math.min(py, window.innerHeight - menu.offsetHeight - 10) + "px";
+  showMenu(px, py);
 }
-function closeMenu() { menu.style.display = "none"; }
+function openMapMenu(px, py, m) {
+  menu.innerHTML = "";
+  for (const t of TYPES) {
+    const row = document.createElement("button");
+    row.className = "row";
+    const tag = (t === m.type) ? " ✓" : "";
+    row.innerHTML = `<span class="sw" style="background:${COLORS[t]}"></span>${cap(t)}${tag}`;
+    row.onclick = () => { if (m.type !== t) { recordUndo(snapshot()); m.type = t; } draw(); closeMenu(); };
+    menu.appendChild(row);
+  }
+  const sep0 = document.createElement("div"); sep0.className = "sep"; menu.appendChild(sep0);
+  for (const bi of BIOMES) {
+    const row = document.createElement("button");
+    row.className = "row";
+    const tag = (bi === biomeOf(m)) ? " ✓" : "";
+    row.innerHTML = `<span class="sw" style="background:${BIOME_COLORS[bi]}"></span>${cap(bi)}${tag}`;
+    row.onclick = () => {
+      const next = (bi === "grassland") ? undefined : bi;   // grassland is the default → keep it out of the JSON
+      if (biomeOf(m) !== bi) { recordUndo(snapshot()); if (next === undefined) delete m.biome; else m.biome = next; }
+      draw(); closeMenu();
+    };
+    menu.appendChild(row);
+  }
+  const sep = document.createElement("div"); sep.className = "sep"; menu.appendChild(sep);
+  const ren = document.createElement("button");
+  ren.className = "row";
+  ren.innerHTML = "✏️ Rename…";
+  ren.onclick = () => { closeMenu(); renameMap(m); };
+  menu.appendChild(ren);
+  const del = document.createElement("button");
+  del.className = "row danger";
+  del.innerHTML = "🗑 Delete map";
+  del.onclick = () => { deleteMap(m.id); closeMenu(); };
+  menu.appendChild(del);
+  showMenu(px, py);
+}
 document.addEventListener("mousedown", (e) => {
   if (menu.style.display === "flex" && !menu.contains(e.target)) closeMenu();
 }, true);
@@ -508,45 +708,61 @@ document.addEventListener("mousedown", (e) => {
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 // ── Mutations ────────────────────────────────────────────────────────────────
-function setCell(cell, type) {
-  const k = key(cell.col, cell.row);
-  const existing = state.maps.get(k);
-  if (existing) {
-    existing.type = type;   // keep id stable on retype
-  } else {
-    const id = type + "_" + (state.nextIndex[type]++);
-    state.maps.set(k, { col: cell.col, row: cell.row, type, id });
-  }
+function createMap(type, wx, wy) {
+  recordUndo(snapshot());
+  const id = type + "_" + (state.nextIndex[type]++);
+  const m = {
+    id, type,
+    x: Math.round(wx - DEFAULT_SIZE / 2),
+    y: Math.round(wy - DEFAULT_SIZE / 2),
+    w: DEFAULT_SIZE, h: DEFAULT_SIZE,
+  };
+  state.maps.push(m);
+  selectedId = id;
   draw();
 }
-function deleteCell(cell) {
-  const k = key(cell.col, cell.row);
-  state.maps.delete(k);
-  // drop any portals touching this cell
-  state.portals = state.portals.filter(p => p.aKey !== k && p.bKey !== k);
+// Rename a map's id (also its Unity scene name). Keeps it unique and rewires any warps that reference it.
+function renameMap(m) {
+  const input = prompt("Map name (becomes the Unity scene name; letters, numbers, _ -):", m.id);
+  if (input === null) return;
+  const newId = input.trim().replace(/[^A-Za-z0-9_-]/g, "_");
+  if (!newId || newId === m.id) return;
+  if (state.maps.some(o => o !== m && o.id === newId)) { flash(`A map named '${newId}' already exists`); return; }
+  recordUndo(snapshot());
+  const oldId = m.id;
+  for (const p of state.portals) { if (p.aId === oldId) p.aId = newId; if (p.bId === oldId) p.bId = newId; }
+  m.id = newId;
+  if (selectedId === oldId) selectedId = newId;
+  draw();
+  flash(`Renamed to '${newId}'`);
+}
+
+function deleteMap(id) {
+  recordUndo(snapshot());
+  state.maps = state.maps.filter(m => m.id !== id);
+  state.portals = state.portals.filter(p => p.aId !== id && p.bId !== id);
+  if (selectedId === id) selectedId = null;
   draw();
 }
 
 // ── Export / Import ──────────────────────────────────────────────────────────
+function round2(n) { return Math.round(n * 100) / 100; }
+
 function exportJSON() {
-  const maps = [...state.maps.values()].map(m => {
-    const o = { id: m.id, cell: [m.col, m.row], type: m.type };
+  const maps = state.maps.map(m => {
+    const o = { id: m.id, pos: [round2(m.x), round2(m.y)], size: [Math.round(m.w), Math.round(m.h)], type: m.type };
     if (m.seed !== undefined) o.seed = m.seed;
     if (m.pathTile !== undefined) o.pathTile = m.pathTile;
     if (m.pathWidth !== undefined) o.pathWidth = m.pathWidth;
+    if (m.biome !== undefined && m.biome !== "grassland") o.biome = m.biome;
     return o;
   });
-  const portals = state.portals.map(p => {
-    const o = { a: state.maps.get(p.aKey).id, b: state.maps.get(p.bKey).id };
-    if (p.distant) {
-      o.anchorA = { edge: p.anchorA.edge, offset: round2(p.anchorA.offset) };
-      o.anchorB = { edge: p.anchorB.edge, offset: round2(p.anchorB.offset) };
-    } else {
-      o.offset = round2(p.offset);
-    }
-    return o;
-  });
-  const data = { version: 1, worldSize: WORLD_SIZE, maps, portals };
+  const portals = state.portals.map(p => ({
+    a: p.aId, b: p.bId,
+    anchorA: { edge: p.anchorA.edge, offset: round2(p.anchorA.offset) },
+    anchorB: { edge: p.anchorB.edge, offset: round2(p.anchorB.offset) },
+  }));
+  const data = { version: 2, maps, portals };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -554,77 +770,76 @@ function exportJSON() {
   a.click();
   URL.revokeObjectURL(a.href);
 }
-function round2(n) { return Math.round(n * 100) / 100; }
 
 function importJSON(text) {
   let data;
   try { data = JSON.parse(text); } catch (e) { alert("Invalid JSON: " + e.message); return; }
   if (!data.maps) { alert("Not a world.json (no maps array)."); return; }
-  state.maps.clear();
+  if (data.maps.some(m => m.cell && !m.pos)) {
+    alert("That looks like an old grid-format world.json (v1). This tool now uses free-form 'pos'/'size' (v2) and can't import the old format.");
+    return;
+  }
+  recordUndo(snapshot());
+  state.maps = [];
   state.portals = [];
   state.nextIndex = { town: 0, field: 0, dungeon: 0, special: 0 };
-  const idToKey = new Map();
   for (const m of data.maps) {
-    const [col, row] = m.cell;
-    const k = key(col, row);
-    const cell = { col, row, type: m.type, id: m.id };
+    const pos = m.pos || [0, 0], size = m.size || [DEFAULT_SIZE, DEFAULT_SIZE];
+    const cell = { id: m.id, type: m.type, x: pos[0], y: pos[1], w: Math.round(size[0]), h: Math.round(size[1]) };
     if (m.seed !== undefined) cell.seed = m.seed;
     if (m.pathTile !== undefined) cell.pathTile = m.pathTile;
     if (m.pathWidth !== undefined) cell.pathWidth = m.pathWidth;
-    state.maps.set(k, cell);
-    idToKey.set(m.id, k);
-    // keep nextIndex ahead of any imported numeric suffix so new ids don't collide
-    const msuffix = /_(\d+)$/.exec(m.id);
+    if (m.biome !== undefined) cell.biome = m.biome;
+    state.maps.push(cell);
+    const msuffix = /_(\d+)$/.exec(m.id || "");
     if (msuffix && state.nextIndex[m.type] !== undefined)
       state.nextIndex[m.type] = Math.max(state.nextIndex[m.type], +msuffix[1] + 1);
   }
   for (const p of (data.portals || [])) {
-    const aKey = idToKey.get(p.a), bKey = idToKey.get(p.b);
-    if (!aKey || !bKey) continue;
-    if (p.anchorA && p.anchorB) {
-      state.portals.push({ distant: true, aKey, bKey,
-        anchorA: { edge: p.anchorA.edge, offset: p.anchorA.offset ?? 0.5 },
-        anchorB: { edge: p.anchorB.edge, offset: p.anchorB.offset ?? 0.5 } });
-    } else {
-      state.portals.push({ aKey, bKey, offset: p.offset ?? 0.5 });
-    }
+    if (!p.anchorA || !p.anchorB) continue;
+    if (!mapById(p.a) || !mapById(p.b)) continue;
+    state.portals.push({
+      aId: p.a, bId: p.b,
+      anchorA: { edge: p.anchorA.edge, offset: p.anchorA.offset ?? 0.5 },
+      anchorB: { edge: p.anchorB.edge, offset: p.anchorB.offset ?? 0.5 },
+    });
   }
+  selectedId = null;
   fitToContent();
   draw();
-  flash(`Imported ${state.maps.size} maps, ${state.portals.length} warps`);
+  flash(`Imported ${state.maps.length} maps, ${state.portals.length} warps`);
 }
 
 function fitToContent() {
-  if (state.maps.size === 0) return;
-  let minC = Infinity, maxC = -Infinity, minR = Infinity, maxR = -Infinity;
-  for (const m of state.maps.values()) {
-    minC = Math.min(minC, m.col); maxC = Math.max(maxC, m.col);
-    minR = Math.min(minR, m.row); maxR = Math.max(maxR, m.row);
+  if (state.maps.length === 0) return;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const m of state.maps) {
+    minX = Math.min(minX, m.x); minY = Math.min(minY, m.y);
+    maxX = Math.max(maxX, m.x + m.w); maxY = Math.max(maxY, m.y + m.h);
   }
-  const cols = maxC - minC + 1, rows = maxR - minR + 1;
+  const worldW = maxX - minX, worldH = maxY - minY;
   const W = window.innerWidth, H = window.innerHeight;
-  cam.scale = clamp(Math.min((W - 160) / cols, (H - 200) / rows), 22, 120);
-  cam.x = W / 2 - ((minC + maxC + 1) / 2) * cam.scale;
-  cam.y = H / 2 - ((minR + maxR + 1) / 2) * cam.scale;
+  cam.scale = clamp(Math.min((W - 200) / worldW, (H - 220) / worldH), 0.25, 6);
+  cam.x = W / 2 - ((minX + maxX) / 2) * cam.scale;
+  cam.y = H / 2 - ((minY + maxY) / 2) * cam.scale;
 }
 
 // ── Toolbar wiring ───────────────────────────────────────────────────────────
 function setMode(m) {
   mode = m;
-  if (m !== "link") linkPickA = null;
-  document.getElementById("mode-paint").classList.toggle("active", m === "paint");
+  if (m !== "warp") linkPickA = null;
+  document.getElementById("mode-edit").classList.toggle("active", m === "edit");
   document.getElementById("mode-warp").classList.toggle("active", m === "warp");
-  document.getElementById("mode-link").classList.toggle("active", m === "link");
-  canvas.style.cursor = (m === "warp" || m === "link") ? "pointer" : "crosshair";
+  canvas.style.cursor = (m === "warp") ? "pointer" : "crosshair";
   draw();
 }
-document.getElementById("mode-paint").onclick = () => setMode("paint");
+document.getElementById("mode-edit").onclick = () => setMode("edit");
 document.getElementById("mode-warp").onclick = () => setMode("warp");
-document.getElementById("mode-link").onclick = () => setMode("link");
 document.getElementById("btn-export").onclick = exportJSON;
 document.getElementById("btn-clear").onclick = () => {
   if (confirm("Clear the whole world?")) {
-    state.maps.clear(); state.portals = [];
+    recordUndo(snapshot());
+    state.maps = []; state.portals = []; selectedId = null;
     state.nextIndex = { town: 0, field: 0, dungeon: 0, special: 0 };
     draw();
   }
@@ -640,13 +855,173 @@ fileInput.onchange = (e) => {
   fileInput.value = "";
 };
 
-// keyboard: W warp, V/P paint
+// ── Backdrop wiring ──────────────────────────────────────────────────────────
+function setBackdropImage(src, rect) {
+  const img = new Image();
+  img.onload = () => {
+    backdrop.img = img; backdrop.src = src;
+    if (rect) { backdrop.x = rect.x; backdrop.y = rect.y; backdrop.w = rect.w; backdrop.h = rect.h; }
+    else {
+      const cwx = (window.innerWidth / 2 - cam.x) / cam.scale, cwy = (window.innerHeight / 2 - cam.y) / cam.scale;
+      const worldW = (window.innerWidth * 0.7) / cam.scale;
+      const worldH = worldW * (img.height / img.width);
+      backdrop.x = cwx - worldW / 2; backdrop.y = cwy - worldH / 2; backdrop.w = worldW; backdrop.h = worldH;
+    }
+    updateBgUI(); saveBackdrop(); draw();
+  };
+  img.src = src;
+}
+function saveBackdrop() {
+  try {
+    if (!backdrop.src) { localStorage.removeItem(BG_KEY); return; }
+    localStorage.setItem(BG_KEY, JSON.stringify({
+      src: backdrop.src, x: backdrop.x, y: backdrop.y, w: backdrop.w, h: backdrop.h,
+      opacity: backdrop.opacity, visible: backdrop.visible, locked: backdrop.locked }));
+  } catch (e) { flash("Background too large to save locally — kept for this session only"); }
+}
+function loadBackdropFromStorage() {
+  let raw; try { raw = localStorage.getItem(BG_KEY); } catch (e) { return; }
+  if (!raw) return;
+  let d; try { d = JSON.parse(raw); } catch (e) { return; }
+  if (!d || !d.src) return;
+  backdrop.opacity = d.opacity ?? 0.45;
+  backdrop.visible = d.visible !== false;
+  backdrop.locked = d.locked !== false;
+  setBackdropImage(d.src, { x: d.x, y: d.y, w: d.w, h: d.h });
+}
+function removeBackdrop() {
+  backdrop.img = null; backdrop.src = null; backdrop.w = 0; backdrop.h = 0; backdrop.locked = true;
+  saveBackdrop(); updateBgUI(); draw();
+}
+function updateBgUI() {
+  const has = bgLoaded();
+  document.getElementById("btn-bg").textContent = has ? "🖼 Replace" : "🖼 Background";
+  for (const id of ["btn-bg-lock", "bg-opacity", "btn-bg-hide", "btn-bg-remove"])
+    document.getElementById(id).style.display = has ? "" : "none";
+  const lockBtn = document.getElementById("btn-bg-lock");
+  lockBtn.textContent = backdrop.locked ? "🔒 Locked" : "🔓 Unlocked";
+  lockBtn.classList.toggle("active", !backdrop.locked);
+  document.getElementById("btn-bg-hide").textContent = backdrop.visible ? "👁 Hide" : "🚫 Show";
+  document.getElementById("bg-opacity").value = Math.round(backdrop.opacity * 100);
+}
+const bgInput = document.getElementById("bg-input");
+document.getElementById("btn-bg").onclick = () => bgInput.click();
+bgInput.onchange = (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => { backdrop.locked = false; setBackdropImage(reader.result); flash("Background loaded — drag/scale to align, then 🔒 Lock to trace over it"); };
+  reader.readAsDataURL(f);
+  bgInput.value = "";
+};
+document.getElementById("btn-bg-lock").onclick = () => { backdrop.locked = !backdrop.locked; updateBgUI(); saveBackdrop(); draw(); };
+document.getElementById("btn-bg-hide").onclick = () => { backdrop.visible = !backdrop.visible; updateBgUI(); saveBackdrop(); draw(); };
+document.getElementById("btn-bg-remove").onclick = () => { if (confirm("Remove the background image?")) removeBackdrop(); };
+const bgOpacity = document.getElementById("bg-opacity");
+bgOpacity.oninput = () => { backdrop.opacity = +bgOpacity.value / 100; draw(); };
+bgOpacity.onchange = saveBackdrop;
+
+// ── Export image (background + cells + labels) ───────────────────────────────
+// The export frame is the backdrop's world rect (the art defines the canvas); with no backdrop it's the
+// bounding box of all cells + margin. Output width in px sets the scale, so cells scale WITH the map size.
+function exportFrame() {
+  if (bgLoaded()) return { x: backdrop.x, y: backdrop.y, w: backdrop.w, h: backdrop.h };
+  if (!state.maps.length) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const m of state.maps) {
+    minX = Math.min(minX, m.x); minY = Math.min(minY, m.y);
+    maxX = Math.max(maxX, m.x + m.w); maxY = Math.max(maxY, m.y + m.h);
+  }
+  const pad = 20;
+  return { x: minX - pad, y: minY - pad, w: (maxX - minX) + pad * 2, h: (maxY - minY) + pad * 2 };
+}
+// Paint the whole composition onto context c. sc = pixels per world unit; cellOpacity 0..1.
+function paintComposite(c, frame, sc, cellOpacity, showLabels) {
+  const W = Math.round(frame.w * sc), H = Math.round(frame.h * sc);
+  if (bgLoaded()) c.drawImage(backdrop.img, (backdrop.x - frame.x) * sc, (backdrop.y - frame.y) * sc, backdrop.w * sc, backdrop.h * sc);
+  else { c.fillStyle = "#11141a"; c.fillRect(0, 0, W, H); }
+
+  c.textAlign = "center"; c.textBaseline = "middle"; c.lineJoin = "round";
+  for (const m of state.maps) {
+    const x = (m.x - frame.x) * sc, y = (m.y - frame.y) * sc, w = m.w * sc, h = m.h * sc;
+    roundRect(c, x, y, w, h, Math.min(w, h) * 0.12);
+    c.globalAlpha = cellOpacity * 0.30; c.fillStyle = COLORS[m.type]; c.fill();
+    c.globalAlpha = cellOpacity; c.lineWidth = Math.max(2, Math.min(w, h) * 0.03); c.strokeStyle = COLORS[m.type]; c.stroke();
+    c.globalAlpha = 1;
+    if (!showLabels) continue;
+    const fs = clamp(Math.min(w, h) * 0.22, 12, 400);
+    const ncx = x + w / 2, nameY = y + h / 2 - fs * 0.35;
+    c.font = "800 " + Math.round(fs) + "px system-ui, sans-serif";
+    c.lineWidth = Math.max(3, fs * 0.22); c.strokeStyle = "rgba(0,0,0,0.78)"; c.strokeText(m.id, ncx, nameY);
+    c.fillStyle = "#ffffff"; c.fillText(m.id, ncx, nameY);
+    const ss = Math.round(fs * 0.62), sizeY = y + h / 2 + fs * 0.7;
+    c.font = "600 " + ss + "px system-ui, sans-serif";
+    c.lineWidth = Math.max(2, ss * 0.22); c.strokeStyle = "rgba(0,0,0,0.7)"; c.strokeText(m.w + "×" + m.h, ncx, sizeY);
+    c.fillStyle = "#e6e6ee"; c.fillText(m.w + "×" + m.h, ncx, sizeY);
+  }
+}
+
+const exportModal = document.getElementById("export-modal");
+const exCanvas = document.getElementById("ex-canvas");
+const exCtx = exCanvas.getContext("2d");
+const exWidth = document.getElementById("ex-width");
+const exOpacity = document.getElementById("ex-opacity");
+const exLabels = document.getElementById("ex-labels");
+let exFrame = null;
+
+function openExportImage() {
+  exFrame = exportFrame();
+  if (!exFrame) { flash("Add some maps (and ideally a background) first"); return; }
+  const defW = bgLoaded() ? backdrop.img.naturalWidth : Math.round(exFrame.w * 2);
+  exWidth.value = Math.round(clamp(defW, 256, 8192));
+  exOpacity.value = 100; exLabels.checked = true;
+  exportModal.style.display = "flex";
+  renderExport();
+}
+function renderExport() {
+  if (!exFrame) return;
+  const outW = Math.round(clamp(+exWidth.value || 1000, 64, 8192));
+  const sc = outW / exFrame.w;
+  const outH = Math.max(1, Math.round(exFrame.h * sc));
+  exCanvas.width = outW; exCanvas.height = outH;
+  paintComposite(exCtx, exFrame, sc, (+exOpacity.value) / 100, exLabels.checked);
+  document.getElementById("ex-dims").textContent = `${outW} × ${outH} px`;
+}
+document.getElementById("btn-export-img").onclick = openExportImage;
+document.getElementById("ex-cancel").onclick = () => { exportModal.style.display = "none"; };
+exOpacity.oninput = renderExport;
+exLabels.onchange = renderExport;
+exWidth.oninput = renderExport;
+document.getElementById("ex-download").onclick = () => {
+  exCanvas.toBlob((blob) => {
+    if (!blob) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "world-map.png";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }, "image/png");
+};
+exportModal.addEventListener("mousedown", (e) => { if (e.target === exportModal) exportModal.style.display = "none"; });
+
+// keyboard
 window.addEventListener("keydown", (e) => {
+  if (exportModal.style.display === "flex") { if (e.key === "Escape") exportModal.style.display = "none"; return; }
   if (e.target.tagName === "INPUT") return;
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod) {
+    const k = e.key.toLowerCase();
+    if (k === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+    if (k === "y") { e.preventDefault(); redo(); return; }
+    if (k === "c") { e.preventDefault(); copySelected(); return; }
+    if (k === "v") { e.preventDefault(); pasteClipboard(true); return; }
+    if (k === "d") { e.preventDefault(); duplicateSelected(); return; }
+    return;   // leave other Ctrl combos (e.g. reload) to the browser
+  }
   if (e.key === "w" || e.key === "W") setMode("warp");
-  if (e.key === "l" || e.key === "L") setMode("link");
-  if (e.key === "p" || e.key === "P" || e.key === "v" || e.key === "V") setMode("paint");
-  if (e.key === "Escape") { closeMenu(); if (linkPickA) { linkPickA = null; draw(); } }
+  if (e.key === "e" || e.key === "E" || e.key === "v" || e.key === "V") setMode("edit");
+  if ((e.key === "Delete" || e.key === "Backspace") && selectedId) { deleteMap(selectedId); }
+  if (e.key === "Escape") { closeMenu(); if (linkPickA) { linkPickA = null; draw(); } selectedId = null; draw(); }
 });
 
 let flashTimer = null;
@@ -660,19 +1035,21 @@ function flash(msg) {
 function updateHint() {
   const h = document.getElementById("hint");
   if (h.dataset.flash) { h.textContent = "💬 " + h.dataset.flash; return; }
-  if (mode === "paint")
-    h.textContent = "✏️ Paint: click a cell to pick a type · click a painted map to retype/delete · Shift-drag or middle-drag to pan · scroll to zoom · [W] warp · [L] link";
-  else if (mode === "warp")
-    h.textContent = "🔵 Warp (adjacent): click the border between two adjacent maps to drop a dot (max 3) · click a dot to remove · [P] paint · [L] link";
+  if (bgEditable())
+    h.textContent = "🖼 Align background: drag the image to move · drag the cyan handles to scale (corners keep aspect) · adjust opacity in the toolbar · 🔒 Lock when aligned to resume placing maps";
+  else if (mode === "edit")
+    h.textContent = "✏️ Edit: click empty to add · click a map to retype/set biome/delete · drag to move · handles to resize · [Ctrl+C/V] copy/paste · [Ctrl+D] duplicate · [Ctrl+Z/Y] undo/redo · [Del] remove · Shift/middle-drag pan · scroll zoom · [W] warp";
   else
-    h.textContent = "🔗 Link (distant): click map A then map B to warp across the world · drag a square end-marker to re-anchor it · click an end-marker to delete · [Esc] cancel · [P] paint";
+    h.textContent = "🔵 Warp: click map A then map B to link them · drag a square end-marker to slide the doorway along its edge · click an end-marker to delete · [Esc] cancel · [E] edit";
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 window.addEventListener("resize", resize);
-cam.x = window.innerWidth / 2 - cam.scale * 1.5;
-cam.y = window.innerHeight / 2 - cam.scale * 1.5;
-setMode("paint");
+cam.x = window.innerWidth / 2 - DEFAULT_SIZE * cam.scale;
+cam.y = window.innerHeight / 2 - DEFAULT_SIZE * cam.scale;
+setMode("edit");
+loadBackdropFromStorage();
+updateBgUI();
 resize();
 </script>
 </body>

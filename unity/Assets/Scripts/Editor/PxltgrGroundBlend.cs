@@ -47,10 +47,30 @@ public static class PxltgrGroundBlend
     /// <param name="pathTexName">Ground prop name whose Base Map textures the path (e.g. "ground_road",
     /// "ground_soil", "ground_stones"). Falls back to the dirt texture if missing.</param>
     /// <param name="cell">Vertex spacing in world units — smaller = smoother patch edges, more verts.</param>
+    /// <param name="grassTexName">Ground prop name for the BASE surface (biome base, e.g. "ground_grass"/"ground_rock").</param>
+    /// <param name="dirtTexName">Ground prop name for the PATCH surface blended in by the dirt mask (e.g. "ground_soil").</param>
+    /// <param name="tint">Albedo multiply applied by the GroundBlend shader's <c>_Color</c> (biome hue). Null = white.</param>
+    /// <param name="hardEdge">Snap the dirt + path weights to 0/1 so the grass↔dirt↔path edges are crisp, not feathered.</param>
     public static GameObject LayPlot(Scene scene, string rootName, Vector3 center, float sizeX, float sizeZ,
                                      int groundLayer, int seed = 73,
                                      IReadOnlyList<PathRouting.Route> paths = null, float pathWidth = 0f,
-                                     string pathTexName = null, float dirtAmount = 0.3f, float cell = 0.8f)
+                                     string pathTexName = null, float dirtAmount = 0.3f, float cell = 0.8f,
+                                     string grassTexName = "ground_grass", string dirtTexName = "ground_soil",
+                                     Color? tint = null, bool hardEdge = false)
+    {
+        return LayPlotSampled(scene, rootName, center, sizeX, sizeZ, groundLayer,
+                              MakeProceduralSampler(seed, dirtAmount, paths, pathWidth, hardEdge),
+                              grassTexName, dirtTexName, pathTexName, null, null, cell, tint);
+    }
+
+    /// <summary>
+    /// The exact procedural ground sampler <see cref="LayPlot"/> bakes — two-octave noise blobs for dirt (vertex .a)
+    /// plus a feathered distance-to-route for paths (vertex .r); stone/rock (.g/.b) stay 0, the painter's domain.
+    /// Exposed so the sidecar writer (<c>MapSidecar.RasterizeGround</c>) can rasterise the SAME field into painter
+    /// cells, guaranteeing a re-imported map's ground matches the generated one. Deterministic in <paramref name="seed"/>.
+    /// </summary>
+    public static GroundSampler MakeProceduralSampler(int seed, float dirtAmount,
+        IReadOnlyList<PathRouting.Route> paths, float pathWidth, bool hardEdge)
     {
         bool hasPath = paths != null && paths.Count > 0 && pathWidth > 0f;
         float pathHalf = pathWidth * 0.5f;
@@ -62,9 +82,7 @@ public static class PxltgrGroundBlend
         float ox2 = (float)rng.NextDouble() * 1000f, oz2 = (float)rng.NextDouble() * 1000f;
         float thresh = Mathf.Lerp(0.78f, 0.40f, Mathf.Clamp01(dirtAmount));   // more dirt → lower threshold
 
-        // Procedural sampler: two-octave noise blobs for dirt + feathered distance-to-route for paths. Stone/rock
-        // (vertex .g/.b) stay 0 — those layers are the painter's domain, never the procedural recipe's.
-        void Sample(float wx, float wz, out Vector4 w)
+        return (float wx, float wz, out Vector4 w) =>
         {
             float n = Mathf.PerlinNoise(wx * 0.06f + ox1, wz * 0.06f + oz1) * 0.65f
                     + Mathf.PerlinNoise(wx * 0.13f + ox2, wz * 0.13f + oz2) * 0.35f;
@@ -75,11 +93,13 @@ public static class PxltgrGroundBlend
                 float d = PathRouting.MinDistanceXZ(new Vector2(wx, wz), paths);
                 pathW = 1f - Smooth(pathHalf - pathFeather, pathHalf + pathFeather, d);
             }
+            if (hardEdge)
+            {
+                dirtA = dirtA >= 0.5f ? 1f : 0f;
+                pathW = pathW >= 0.5f ? 1f : 0f;
+            }
             w = new Vector4(pathW, 0f, 0f, dirtA);   // (road, stone, rock, dirt)
-        }
-
-        return LayPlotSampled(scene, rootName, center, sizeX, sizeZ, groundLayer, Sample,
-                              "ground_grass", "ground_soil", pathTexName, null, null, cell);
+        };
     }
 
     /// <summary>
@@ -93,7 +113,7 @@ public static class PxltgrGroundBlend
                                             int groundLayer, GroundSampler sample,
                                             string grassTexName = "ground_grass", string dirtTexName = "ground_soil",
                                             string pathTexName = "ground_road", string stoneTexName = null,
-                                            string rockTexName = null, float cell = 0.8f)
+                                            string rockTexName = null, float cell = 0.8f, Color? tint = null)
     {
         var grassTex = GroundBaseMap(string.IsNullOrEmpty(grassTexName) ? "ground_grass" : grassTexName);
         if (grassTex == null) return null;
@@ -177,6 +197,7 @@ public static class PxltgrGroundBlend
         mat.SetFloat("_PathTiling", 0.4f);
         mat.SetFloat("_StoneTiling", 0.4f);
         mat.SetFloat("_RockTiling", 0.4f);
+        mat.SetColor("_Color", tint ?? Color.white);   // biome hue (always written so a re-bake resets a stale tint)
         EditorUtility.SetDirty(mat);
 
         // ── Scene objects ───────────────────────────────────────────────────────────────────────────────

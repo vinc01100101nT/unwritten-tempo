@@ -47,6 +47,12 @@ public static class RecipeGenerator
     static readonly Dictionary<(Material src, bool canopy), Material> _swayMats = new Dictionary<(Material, bool), Material>();
     static Shader _foliageWind;
 
+    // ── sidecar capture (see MapSidecar) ──────────────────────────────────────────────────────────────────
+    // Every placed prop is recorded here as a painter ObjectCell during a bake, then written next to the scene as
+    // <name>.map.json so the generated map can be re-opened + hand-edited in the Map Painter. Reset per Generate.
+    static List<MapSidecar.ObjectCell> _sidecarObjects;
+    static float _sidecarSizeX, _sidecarSizeZ;
+
     // PathTile → the ground_* prop whose Base Map textures the path. Falls back to dirt inside LayPlot if missing.
     static string PathTexName(PathTile t) => t switch
     {
@@ -55,6 +61,20 @@ public static class RecipeGenerator
         PathTile.Stones => "ground_stones",
         PathTile.Rock   => "ground_rock",
         _               => "ground_road",
+    };
+
+    // Biome → ground BASE texture + PATCH texture + albedo tint. Until dedicated snow/sand/ash ground textures exist,
+    // each non-grassland biome recombines the existing ground_* prefab textures (grey rock / brown soil read better
+    // under a colour multiply than green grass) with a hue. Swap the *Tex names here when real biome textures land —
+    // nothing else changes. The recipe's own pathTile still chooses the road texture; the biome only sets base/patch.
+    struct BiomeSpec { public string baseTex, patchTex; public Color tint; }
+    static BiomeSpec BiomeOf(Biome b) => b switch
+    {
+        Biome.Snow      => new BiomeSpec { baseTex = "ground_rock",  patchTex = "ground_stones", tint = new Color(1.10f, 1.15f, 1.30f) },
+        Biome.Desert    => new BiomeSpec { baseTex = "ground_soil",  patchTex = "ground_rock",   tint = new Color(1.15f, 1.00f, 0.70f) },
+        Biome.Volcanic  => new BiomeSpec { baseTex = "ground_rock",  patchTex = "ground_soil",   tint = new Color(0.70f, 0.35f, 0.30f) },
+        Biome.Corrupted => new BiomeSpec { baseTex = "ground_rock",  patchTex = "ground_soil",   tint = new Color(0.72f, 0.55f, 0.95f) },
+        _               => new BiomeSpec { baseTex = "ground_grass", patchTex = "ground_soil",   tint = Color.white },   // Grassland (original look)
     };
 
     // ── ENTRY POINTS ───────────────────────────────────────────────────────────────────────────────────
@@ -86,6 +106,8 @@ public static class RecipeGenerator
         var rng = new System.Random(seed);
 
         _swayMats.Clear();   // fresh per-bake material cache (see ApplySway)
+        _sidecarObjects = new List<MapSidecar.ObjectCell>();   // fresh per-bake prop capture (see MapSidecar)
+        _sidecarSizeX = r.sizeX; _sidecarSizeZ = r.sizeZ;
         _foliageWind = Shader.Find("Unwritten/FoliageWind");
         if (_foliageWind != null) EnsureAlwaysIncluded(_foliageWind);   // so foliage sway survives a player build
 
@@ -102,9 +124,13 @@ public static class RecipeGenerator
             : r.pathStyle == PathStyle.Cardinal
                 ? PathRouting.BuildCardinal(new Vector2(center.x, center.z), r.sizeX, r.sizeZ)
                 : PathRouting.Build(new Vector2(center.x, center.z), r.sizeX, r.sizeZ, r.pathCount, r.pathWander, seed, r.pathSmoothness);
-        // One ground style for every map: the single blended grass→dirt mesh (no tile seams; the path feathers in).
+        // Ground = one blended mesh; the biome chooses its base/patch textures + hue, the recipe can add a tint on top
+        // and opt into hard (un-feathered) edges. Grassland + white groundTint + Blended reproduces the original look.
+        var bio = BiomeOf(r.biome);
         var ground = PxltgrGroundBlend.LayPlot(scene, $"Ground_{safe}", center, r.sizeX, r.sizeZ, groundLayer, seed,
-                                               paths, r.pathWidth, PathTexName(r.pathTile), r.dirtAmount);
+                                               paths, r.pathWidth, PathTexName(r.pathTile), r.dirtAmount, 0.8f,
+                                               bio.baseTex, bio.patchTex, bio.tint * r.groundTint,
+                                               r.groundStyle == GroundStyle.HardEdge);
         if (ground == null)
         {
             EditorUtility.DisplayDialog("Generate Map",
@@ -157,6 +183,9 @@ public static class RecipeGenerator
         WorldBuildUtil.RegisterInBuildSettings(path);
         EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
         AssetDatabase.SaveAssets();
+
+        // ── SIDECAR: write the painter-editable map.json next to the scene (round-trip into the Map Painter) ──
+        WriteSidecar(safe, r, center, seed, paths);
 
         Debug.Log($"[unwritten] Generated map '{safe}' (seed {seed}) → {path}: {props} props, {mobs} mobs.");
         return (true, path, props, mobs);
@@ -241,6 +270,7 @@ public static class RecipeGenerator
         float minZ = center.z - sizeZ * 0.5f + Inset, maxZ = center.z + sizeZ * 0.5f - Inset;
         var placedAt = new List<Vector3>();
         int placed = 0;
+        BrushAndOffset(g, out string brush, out float fwd);   // painter brush id + yaw correction for the sidecar
 
         // Seat one prop at (x,z) if the spot is clear. applyAvoidPath is off for street/roadside rules (they
         // intentionally sit near the path).
@@ -268,6 +298,7 @@ public static class RecipeGenerator
             if (!g.solid) PropPlacement.StripColliders(go);                 // decor = walk-through
             if (sway) ApplySway(go, g.CanopyOnly);                          // Auto+solid (trees) = leaves only; else whole plant
 
+            RecordSidecar(go, prefab.name, brush, fwd);
             placedAt.Add(go.transform.position);
             if (g.solid)
             {
@@ -416,6 +447,7 @@ public static class RecipeGenerator
         float gateHalf = segLen * 0.6f;            // half-width of the gate opening on the south edge (~one piece wide)
         int placed = 0;
         int idx = 0;   // walks the straight-piece pool so Wall_part1/2 alternate
+        BrushAndOffset(g, out string brush, out float fwd);   // sidecar brush id (never the reserved "wall" autotile key)
 
         void Register(GameObject go)
         {
@@ -425,7 +457,7 @@ public static class RecipeGenerator
             blockers.Add((new Vector2(go.transform.position.x, go.transform.position.z), r));
         }
         void Run(GameObject pf, float x, float z, float yaw)
-        { var go = SeatPiece(pf, x, z, yaw, g.scale, g, false, parent, mask); Register(go); placed++; }
+        { var go = SeatPiece(pf, x, z, yaw, g.scale, g, false, parent, mask); Register(go); RecordSidecar(go, pf.name, brush, fwd); placed++; }
 
         // 4 corner towers
         Run(cornerPiece, minX, minZ, 0f); Run(cornerPiece, maxX, minZ, 90f);
@@ -506,14 +538,29 @@ public static class RecipeGenerator
         return placed;
     }
 
+    // Prefer the data-driven MonsterCatalog (Resources/Monsters assets, referenced by stable id or display
+    // name); fall back to the legacy MobRoster seed list when the migration hasn't been run yet (catalog empty).
     static MonsterArchetype ResolveArchetype(string name)
     {
-        if (string.IsNullOrWhiteSpace(name)) return MobRoster.WeightedPick();
-        string n = name.Trim();
-        if (string.Equals(n, "Boss", System.StringComparison.OrdinalIgnoreCase)) return MobRoster.Boss;
+        bool haveAssets = MonsterCatalog.Count > 0;
+        string n = name?.Trim();
+
+        if (string.IsNullOrWhiteSpace(n))
+        {
+            if (haveAssets) { var p = MonsterCatalog.WeightedPick(); if (p != null) return p.ToArchetype(); }
+            return MobRoster.WeightedPick();
+        }
+        if (string.Equals(n, "Boss", System.StringComparison.OrdinalIgnoreCase))
+        {
+            if (haveAssets) { var b = MonsterCatalog.Boss; if (b != null) return b.ToArchetype(); }
+            return MobRoster.Boss;
+        }
+        if (haveAssets) { var d = MonsterCatalog.Get(n); if (d != null) return d.ToArchetype(); }
         foreach (var a in MobRoster.All)
             if (string.Equals(a.name, n, System.StringComparison.OrdinalIgnoreCase)) return a;
-        Debug.LogWarning($"[unwritten] Mob archetype '{name}' not found in MobRoster; using a weighted pick.");
+
+        Debug.LogWarning($"[unwritten] Mob '{name}' not found in MonsterCatalog or MobRoster; using a weighted pick.");
+        if (haveAssets) { var p = MonsterCatalog.WeightedPick(); if (p != null) return p.ToArchetype(); }
         return MobRoster.WeightedPick();
     }
 
@@ -530,6 +577,72 @@ public static class RecipeGenerator
         amb.dayClip   = SfxAssets.Ambient("BGS Loops/Forest Day",   "Forest Day");
         amb.nightClip = SfxAssets.Ambient("BGS Loops/Forest Night", "Forest Night");
         amb.maxVolume = 0.22f;
+    }
+
+    // ── SIDECAR (painter-editable map.json) ────────────────────────────────────────────────────────────────
+    // Resolve a prop group's painter brush id + the palette yaw correction to bake into the sidecar. A group with a
+    // category inherits its palette brush (so re-import shows it under the right brush + facing); otherwise the brush
+    // is the lowercased group label. Never emit the reserved "wall" key (the importer would autotile it from cells,
+    // dropping the exact pieces) — generated walls round-trip as explicit prefab objects.
+    static void BrushAndOffset(RecipePropGroup g, out string brush, out float fwd)
+    {
+        fwd = 0f;
+        var pal = LoadPalette();
+        if (pal != null && g.category != PropCategory.None)
+        {
+            var b = pal.FindByCategory(g.category);
+            if (b != null && !string.IsNullOrEmpty(b.id)) { brush = Reserve(b.id); fwd = b.forwardOffset; return; }
+        }
+        brush = Reserve((string.IsNullOrEmpty(g.label) ? "props" : g.label).Trim().ToLowerInvariant().Replace(' ', '_'));
+    }
+
+    static string Reserve(string brush) => brush == "wall" ? "wall_pieces" : brush;
+
+    // Record one placed prop into the per-bake sidecar capture (no-op if capture is off). World yaw read back from
+    // the seated instance; MapSidecar inverts the importer's centre-translate + vertical-flip + forwardOffset.
+    static void RecordSidecar(GameObject go, string prefab, string brush, float fwd)
+    {
+        if (_sidecarObjects == null || go == null) return;
+        _sidecarObjects.Add(MapSidecar.ObjectFromWorld(brush, prefab, go.transform.position,
+                                                       go.transform.eulerAngles.y, _sidecarSizeX, _sidecarSizeZ, fwd));
+    }
+
+    // Painter ground brush id for a recipe path tile (matches MapPainterImporter.GroundChannel + GroundTex ids).
+    static string PainterRoadBrush(PathTile t) => t switch
+    {
+        PathTile.Road   => "path",
+        PathTile.Soil   => "dirt",
+        PathTile.Stones => "stone",
+        PathTile.Rock   => "rock",
+        _               => "path",
+    };
+
+    // Write <name>.map.json beside the painter: captured props (lossless layout/facing) + the ground rasterised from
+    // the SAME procedural sampler the bake used (roads + dirt patches), so the painter's Import reproduces this map.
+    static void WriteSidecar(string mapName, MapRecipe r, Vector3 center, int seed, IReadOnlyList<PathRouting.Route> paths)
+    {
+        var pal = LoadPalette();
+        float cellSize = pal != null && pal.cellSize > 0f ? pal.cellSize : 4f;
+        int cols = Mathf.Max(1, Mathf.RoundToInt(r.sizeX / cellSize));
+        int rows = Mathf.Max(1, Mathf.RoundToInt(r.sizeZ / cellSize));
+
+        var sampler = PxltgrGroundBlend.MakeProceduralSampler(seed, r.dirtAmount, paths, r.pathWidth,
+                                                              r.groundStyle == GroundStyle.HardEdge);
+        var ground = MapSidecar.RasterizeGround(sampler, center, r.sizeX, r.sizeZ, cellSize, cols, rows,
+                                                PainterRoadBrush(r.pathTile));
+
+        var doc = new MapSidecar.Doc
+        {
+            name = mapName, cellSize = cellSize,
+            size = new MapSidecar.Vec2(r.sizeX, r.sizeZ), cols = cols, rows = rows,
+            ground = ground, objects = _sidecarObjects ?? new List<MapSidecar.ObjectCell>(),
+        };
+        try
+        {
+            MapSidecar.Write(doc, mapName);
+            Debug.Log($"[unwritten] Sidecar → {MapSidecar.PathFor(mapName)} ({doc.objects.Count} props, {ground.Count} ground cells). Open it in the Map Painter (Import map…) to edit.");
+        }
+        catch (System.Exception e) { Debug.LogWarning($"[unwritten] Could not write map sidecar for '{mapName}': {e.Message}"); }
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────────────────────────────────
