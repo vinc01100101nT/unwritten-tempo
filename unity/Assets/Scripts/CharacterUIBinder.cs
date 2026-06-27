@@ -1,16 +1,19 @@
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
 /// Wires the (persistent) UI to the (persistent) <see cref="Character"/>: drives the HUD health/mana
-/// bars and the Character-panel stats text. Lives on the GameUICanvas; because both it and Character
-/// persist, it binds once and never needs to re-find anything across scene loads.
+/// bars. Lives on the GameUICanvas; because both it and Character persist, it binds once and never
+/// needs to re-find anything across scene loads.
 ///
-/// NOTE: this binder no longer pushes equip-slot changes into the character. Equipment is now owned by
-/// <see cref="ProgressionWindows"/> + <see cref="InventoryStore"/>. The old wiring (re-equipping from
-/// leftover slots on every Changed event) formed an infinite OnStatsChanged ↔ slot.Changed feedback
-/// loop with the new windows that stack-overflowed; it's intentionally gone.
+/// NOTE: this binder no longer drives a "Character-panel stats text" — that panel is gone and the
+/// character stats are now owned by <see cref="ProgressionWindows"/>. The old code grabbed the first
+/// Text named "Stats" on the canvas, which collided with the Equipment detail panel's "Stats" label
+/// and clobbered it with a character summary; that hijack is intentionally removed.
+///
+/// It also no longer pushes equip-slot changes into the character (equipment is owned by
+/// ProgressionWindows + <see cref="InventoryStore"/>); the old re-equip-on-Changed wiring formed an
+/// infinite OnStatsChanged ↔ slot.Changed loop that stack-overflowed.
 /// </summary>
 public class CharacterUIBinder : MonoBehaviour
 {
@@ -18,7 +21,6 @@ public class CharacterUIBinder : MonoBehaviour
     Text healthLabel;
     Image manaFill;
     Text manaLabel;
-    Text statsText;
     bool bound;
 
     void Start() => Bind();
@@ -33,7 +35,6 @@ public class CharacterUIBinder : MonoBehaviour
         healthLabel = transform.Find("HUD_HealthBar/Label")?.GetComponent<Text>();
         manaFill    = transform.Find("HUD_ManaBar/Fill")?.GetComponent<Image>();
         manaLabel   = transform.Find("HUD_ManaBar/Label")?.GetComponent<Text>();
-        statsText   = GetComponentsInChildren<Text>(true).FirstOrDefault(t => t.name == "Stats");
 
         c.OnStatsChanged  += RefreshStats;
         c.OnHealthChanged += RefreshHealth;
@@ -60,22 +61,10 @@ public class CharacterUIBinder : MonoBehaviour
         if (manaLabel != null) manaLabel.text = $"{c.CurrentMP} / {c.MaxMP}";
     }
 
+    // Stats feed the bars' max values (Max HP/MP shift with VIT/INT etc.), so a stat change just
+    // refreshes the bars now — the numeric stat readout lives in the Character window (ProgressionWindows).
     void RefreshStats()
     {
-        var c = Character.Instance;
-        if (c == null || statsText == null) return;
-        statsText.text =
-            $"Level   {c.Level}\n" +
-            $"XP      {c.XP} / {c.XPToNext}\n" +
-            $"HP      {c.CurrentHP} / {c.MaxHP}\n" +
-            $"MP      {c.CurrentMP} / {c.MaxMP}\n" +
-            $"ATK     {c.MinAttack}-{c.MaxAttack}\n" +
-            $"DEF     {c.Defense}\n" +
-            $"M.ATK   {c.MinMagicAttack}-{c.MaxMagicAttack}\n" +
-            $"M.DEF   {c.MagicDefense}\n" +
-            $"ASPD    +{Mathf.RoundToInt(c.Passives.Percent(StatId.AttackSpeed) * 100)}%\n" +
-            $"CRIT    {Mathf.RoundToInt(c.CritChance01 * 100)}%  ×{c.CritMultiplier:0.0}\n" +
-            $"HIT     {c.Hit}    FLEE {c.Flee}";
         RefreshHealth();
         RefreshMana();
     }

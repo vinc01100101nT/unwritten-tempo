@@ -17,6 +17,24 @@ public class ProgressionWindows : MonoBehaviour
         { EquipSlotType.Head, EquipSlotType.Armor, EquipSlotType.Garment, EquipSlotType.Weapon,
           EquipSlotType.Shield, EquipSlotType.Accessory1, EquipSlotType.Accessory2 };
 
+    // Empty equip-slot silhouettes (faint gold watermarks). Wired by UIShellBuilder from the Ninja
+    // Adventure "Items & Weapon" set so an empty paperdoll reads as labelled slots, not black holes.
+    // Runtime can't AssetDatabase-load, so these are serialized refs baked into the GameUICanvas prefab.
+    [Header("Empty equip-slot silhouettes (wired by UIShellBuilder)")]
+    public Sprite silHead, silArmor, silGarment, silWeapon, silShield, silAccessory1, silAccessory2;
+
+    Sprite SilhouetteFor(EquipSlotType s) => s switch
+    {
+        EquipSlotType.Head       => silHead,
+        EquipSlotType.Armor      => silArmor,
+        EquipSlotType.Garment    => silGarment,
+        EquipSlotType.Weapon     => silWeapon,
+        EquipSlotType.Shield     => silShield,
+        EquipSlotType.Accessory1 => silAccessory1,
+        EquipSlotType.Accessory2 => silAccessory2,
+        _                        => null,
+    };
+
     Transform canvas;
     GameObject invRoot, equipRoot, charRoot;
 
@@ -134,6 +152,7 @@ public class ProgressionWindows : MonoBehaviour
             var s = UiKit.Slot(gridGo.transform, 60);
             s.previewOnHover = true;
             s.clickOverride = e => OnBagClick(idx, e);
+            s.gameObject.AddComponent<SlotDragHandler>();   // drag-to-sort + drag-to-equip
             bagSlots[i] = s;
         }
 
@@ -179,8 +198,9 @@ public class ProgressionWindows : MonoBehaviour
                 if (entry.instance != null) bagSlots[i].SetInstance(entry.instance);
                 else bagSlots[i].SetItem(entry.def);
                 bagSlots[i].previewSlot = entry.def != null ? entry.def.slot : EquipSlotType.None;
+                bagSlots[i].boundEntry = entry;     // drag handler reorders/equips against this live entry
             }
-            else bagSlots[i].SetItem(null);
+            else { bagSlots[i].SetItem(null); bagSlots[i].boundEntry = null; }
         }
         RefreshInventoryFooter();
     }
@@ -219,16 +239,23 @@ public class ProgressionWindows : MonoBehaviour
         foreach (var st in PaperdollOrder)
         {
             var slot = UiKit.Slot(doll.transform, 64, st);
+            // Final Watermark Set v1: the Unwritten procedural ink+gold silhouette REPLACES the old borrowed
+            // Ninja sprites (a different art language). SilhouetteFor(st) is left wired but NOT applied — it
+            // stays available as a future drop-in authored-sprite override (which would then win over this).
+            SlotWatermark.Build(slot, st);
+            slot.SetItem(null);                          // re-render now so the watermark shows before any Character-gated refresh
             var rt = slot.GetComponent<RectTransform>();
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.anchoredPosition = pos[st];
             var t = st;
             slot.clickOverride = e => OnPaperClick(t, e);
+            slot.gameObject.AddComponent<SlotDragHandler>();   // drag equipped piece back to the bag
             paperdoll[st] = slot;
         }
 
-        // detail panel (right)
-        var detail = UiKit.Img("Detail", content, new Color(1, 1, 1, 0.03f));
+        // detail panel (right) — same charcoal family as the window, lifted a touch so it reads as part
+        // of the panel (not a separate gray block).
+        var detail = UiKit.Img("Detail", content, UiKit.PanelRaise);
         detail.rectTransform.anchorMin = new Vector2(0.57f, 0);
         detail.rectTransform.anchorMax = new Vector2(1, 1);
         UiKit.Fill(detail.rectTransform, Vector2.zero, Vector2.zero);
@@ -236,7 +263,8 @@ public class ProgressionWindows : MonoBehaviour
         detail.rectTransform.anchorMax = new Vector2(1, 1);
         detail.raycastTarget = false;
 
-        detailName = UiKit.Label("Name", detail.transform, "Select a slot", 17, FontStyle.Bold, TextAnchor.UpperLeft, title: true);
+        // Item names use the Cinzel face at Normal weight (one step lighter than window titles, which stay Bold).
+        detailName = UiKit.Label("Name", detail.transform, "Select a slot", 17, FontStyle.Normal, TextAnchor.UpperLeft, title: true);
         detailName.rectTransform.anchorMin = new Vector2(0, 1); detailName.rectTransform.anchorMax = new Vector2(1, 1);
         detailName.rectTransform.pivot = new Vector2(0.5f, 1);
         detailName.rectTransform.sizeDelta = new Vector2(-12, 26);
@@ -403,6 +431,13 @@ public class ProgressionWindows : MonoBehaviour
     {
         var content = UiKit.Window(canvas, "Character", new Vector2(360, 500), new Vector2(0, 0), out charRoot);
 
+        // Ornament Kit v1: a portrait/name backplate behind the identity block (placeholder — a portrait
+        // sprite drops into it later). Decorative, sits behind the stat column so it never disturbs layout.
+        var plate = Ornament.Backplate(content, new Vector2(-4, 56));
+        var prt = plate.rectTransform;
+        prt.anchorMin = new Vector2(0, 1); prt.anchorMax = new Vector2(1, 1); prt.pivot = new Vector2(0.5f, 1);
+        prt.sizeDelta = new Vector2(-4, 56); prt.anchoredPosition = new Vector2(0, 0);
+
         var col = UiKit.Img("Col", content, new Color(0, 0, 0, 0));
         col.raycastTarget = false;
         UiKit.Fill(col.rectTransform, Vector2.zero, Vector2.zero);
@@ -423,6 +458,7 @@ public class ProgressionWindows : MonoBehaviour
         div.gameObject.AddComponent<LayoutElement>().preferredHeight = 2;
 
         charDerived = UiKit.Label("Derived", col.transform, "", 14, FontStyle.Normal, TextAnchor.UpperLeft);
+        charDerived.lineSpacing = 1.4f;   // the derived block was cramped — give the stat rows room to breathe
     }
 
     void BuildStatRow(Transform parent, int i)
@@ -434,6 +470,9 @@ public class ProgressionWindows : MonoBehaviour
         h.spacing = 6; h.padding = new RectOffset(6, 6, 0, 0);
         h.childControlWidth = h.childControlHeight = true;
         h.childForceExpandHeight = true; h.childAlignment = TextAnchor.MiddleLeft;
+
+        // Stat Family Icon v1: a procedural gold emblem in the left gutter (recognition by mark, not label).
+        StatGlyph.Build(row.transform, stat);
 
         var name = UiKit.Label("Name", row.transform, stat.ToString(), 15, FontStyle.Bold, TextAnchor.MiddleLeft);
         name.gameObject.AddComponent<LayoutElement>().preferredWidth = 44;
@@ -522,7 +561,7 @@ public class ProgressionWindows : MonoBehaviour
         fill.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
         fill.transform.SetAsFirstSibling();
 
-        var title = UiKit.Label("Title", border.transform, "Item", 18, FontStyle.Bold, TextAnchor.UpperLeft, title: true);
+        var title = UiKit.Label("Title", border.transform, "Item", 18, FontStyle.Normal, TextAnchor.UpperLeft, title: true);
         title.raycastTarget = false;
         var body = UiKit.Label("Body", border.transform, "", 15, FontStyle.Normal, TextAnchor.UpperLeft);
         body.raycastTarget = false;

@@ -24,10 +24,12 @@ public static class UiKit
     static Font Load(string path) { var f = Resources.Load<Font>(path); return f != null ? f : Fallback; }
 
     public static readonly Color PanelFill = new Color(0.082f, 0.086f, 0.102f, 0.98f); // #15161A
+    public static readonly Color PanelRaise = new Color(0.130f, 0.135f, 0.155f, 0.98f);// detail/sub-panels: same charcoal family, ~6% lighter than PanelFill
     public static readonly Color SlotFill  = new Color(0.07f, 0.075f, 0.09f, 1f);
     public static readonly Color Gold      = new Color(0.784f, 0.659f, 0.384f, 1f);    // #C8A862
     public static readonly Color Cyan      = new Color(0.35f, 0.95f, 1f, 1f);
-    public static readonly Color CyanGlow  = new Color(0.30f, 0.85f, 1f, 0.45f);
+    // Hover bloom kept deliberately soft so the hierarchy stays rarity-border > select-ring > hover.
+    public static readonly Color CyanGlow  = new Color(0.30f, 0.85f, 1f, 0.22f);
     public static readonly Color TextMain  = new Color(0.906f, 0.890f, 0.835f);        // #E7E3D5
     public static readonly Color TextDim   = new Color(0.655f, 0.620f, 0.533f);        // #A79E88
 
@@ -121,6 +123,9 @@ public static class UiKit
         content.raycastTarget = false;
         Fill(content.rectTransform, new Vector2(14, 14), new Vector2(-14, -40));
 
+        // Ornament Kit v1: corner brackets + a header divider (procedural placeholders until kit art is wired).
+        Ornament.DecorateWindow(fill.rectTransform, 32f);
+
         border.gameObject.SetActive(false);
         root = border.gameObject;
         return content.rectTransform;
@@ -137,11 +142,19 @@ public static class UiKit
         border.raycastTarget = true;
 
         var glow = Img("HoverGlow", border.transform, CyanGlow);
-        Fill(glow.rectTransform, new Vector2(-6, -6), new Vector2(6, 6));
+        Fill(glow.rectTransform, new Vector2(-8, -8), new Vector2(8, 8));   // soft outer bloom (~8px spread)
         glow.raycastTarget = false; glow.gameObject.SetActive(false);
 
-        var ring = Img("SelectRing", border.transform, Cyan);
-        Fill(ring.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
+        // Green "valid drop target" halo shown only while dragging (SlotDragHandler). A touch wider and
+        // more opaque than the cyan hover bloom so targets read clearly; kept behind the icon/badges.
+        var drop = Img("DropHighlight", border.transform, new Color(0.35f, 1f, 0.45f, 0.30f));
+        Fill(drop.rectTransform, new Vector2(-9, -9), new Vector2(9, 9));
+        drop.raycastTarget = false; drop.gameObject.SetActive(false);
+
+        // Selection = a clear-but-not-shouty cyan ring INSIDE the rarity border. Inset 1 with the
+        // fill at inset 3 leaves a ~2px ring; alpha 0.78 reads as intentional without out-shouting rarity.
+        var ring = Img("SelectRing", border.transform, new Color(Cyan.r, Cyan.g, Cyan.b, 0.78f));
+        Fill(ring.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
         ring.raycastTarget = false; ring.gameObject.SetActive(false);
 
         var fill = Img("Fill", border.transform, SlotFill);
@@ -176,6 +189,7 @@ public static class UiKit
         slot.cardPips = pips;
         slot.selectRing = ring.gameObject;
         slot.hoverGlow = glow.gameObject;
+        slot.dropHighlight = drop.gameObject;
         return slot;
     }
 }

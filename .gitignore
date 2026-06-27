@@ -26,3 +26,6 @@ pnpm-debug.log*
 tempo/.tempo/
 tempo/node_modules/
 tempo/dist/
+
+# Claude Code machine-local settings (personal hooks/permissions)
+.claude/settings.local.json

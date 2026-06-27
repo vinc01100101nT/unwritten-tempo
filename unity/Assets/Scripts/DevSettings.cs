@@ -289,7 +289,8 @@ public class DevSettings : MonoBehaviour
 
         // ---- Player (movement / feel) — Player3DController -----------------
         Cat("Player");
-        F("Move speed",       0f, 12f, () => player ? player.moveSpeed : 0f,       v => { if (player) player.moveSpeed = v; });
+        F("Travel speed",     0f, 12f, () => player ? player.moveSpeed : 0f,       v => { if (player) player.moveSpeed = v; });   // base translation, no anim scaling
+        F("Gait speed (×)",   0.1f, 5f, () => player ? player.gaitSpeed : 0f,      v => { if (player) player.gaitSpeed = v; });   // scales move + animation together
         F("Anim FPS",         1f, 20f, () => player ? player.framesPerSecond : 0f, v => { if (player) player.framesPerSecond = v; });
         F("Acquire range",    0f, 15f, () => player ? player.acquireRange : 0f,    v => { if (player) player.acquireRange = v; });
         F("Roam range",       0f, 30f, () => player ? player.roamRange : 0f,       v => { if (player) player.roamRange = v; });

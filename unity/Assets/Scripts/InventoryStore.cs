@@ -91,4 +91,19 @@ public class InventoryStore : MonoBehaviour
         if (--e.count <= 0) Entries.Remove(e);
         Notify();
     }
+
+    /// <summary>Drag-to-sort: pull <paramref name="moving"/> out and re-insert it just before
+    /// <paramref name="before"/> (others shift up). A null <paramref name="before"/> appends to the
+    /// end (dropped on an empty cell). No-op if nothing actually changes.</summary>
+    public void Reorder(Entry moving, Entry before)
+    {
+        if (moving == null || moving == before) return;
+        int from = Entries.IndexOf(moving);
+        if (from < 0) return;
+        Entries.RemoveAt(from);
+        int idx = before != null ? Entries.IndexOf(before) : Entries.Count;
+        if (idx < 0) idx = Entries.Count;
+        Entries.Insert(idx, moving);
+        Notify();
+    }
 }

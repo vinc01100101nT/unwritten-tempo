@@ -190,14 +190,11 @@ public class ItemTooltip : MonoBehaviour
 
     static void AppendFooter(StringBuilder sb, Item item)
     {
-        if (item.weight > 0 || item.zeny > 0)
-        {
-            sb.Append("\n<color=#8A8F99>");
-            if (item.weight > 0) sb.Append("Weight ").Append(item.weight);
-            if (item.weight > 0 && item.zeny > 0) sb.Append("   ");
-            if (item.zeny > 0) sb.Append(item.zeny).Append("z");
-            sb.Append("</color>");
-        }
+        // Weight and value on their own lines — packed on one row they read as cramped.
+        if (item.weight > 0)
+            sb.Append("\n<color=#8A8F99>Weight ").Append(item.weight).Append("</color>");
+        if (item.zeny > 0)
+            sb.Append("\n<color=#8A8F99>Value ").Append(item.zeny).Append("z</color>");
         if (!string.IsNullOrWhiteSpace(item.description))
             sb.Append("\n\n<color=#D8D8D8>").Append(item.description).Append("</color>");
     }

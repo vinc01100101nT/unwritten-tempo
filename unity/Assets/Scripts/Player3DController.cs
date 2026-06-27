@@ -66,11 +66,16 @@ public partial class Player3DController : MonoBehaviour
     int hitFrame;  float hitTimer;
     Character hurtCharacter;   // subscribed for the hit-flinch trigger (separate from PlayerHurtFlash's tint)
 
-    public float moveSpeed = 0.53f;   // tuned so the run cadence matches the baked locomotion (animation↔speed lock)
+    [Tooltip("TRAVEL speed: base ground translation (world units, pre-UnitScale). Changing this moves you faster/slower " +
+             "WITHOUT scaling the animation — GaitSpeedMult divides it back out, so the legs keep their baked cadence.")]
+    public float moveSpeed = 1f;
+    [Tooltip("GAIT speed: a baseline multiplier that scales movement AND animation together (the permanent twin of the " +
+             "DevSettings Haste buff). Stacks multiplicatively with live Slow/Haste, so legs + footsteps churn with it.")]
+    public float gaitSpeed = 1.5f;
     /// <summary>The player's CURRENT run speed in world units/sec — the same hand-tuned baseline the walk uses, scaled
-    /// by <see cref="UnitScale.ForPlayer"/> and the live Slow/Haste move buff (but NOT the Shift-walk slowdown). The
-    /// dodge roll (E) reads this so it's always exactly 2× whatever the player is currently running at.</summary>
-    public float CurrentRunSpeed => moveSpeed * UnitScale.ForPlayer * (status != null ? status.MoveMult : 1f);
+    /// by <see cref="UnitScale.ForPlayer"/>, the <see cref="gaitSpeed"/> baseline, and the live Slow/Haste move buff
+    /// (but NOT the Shift-walk slowdown). The dodge roll (E) reads this so it's always exactly 2× the current run.</summary>
+    public float CurrentRunSpeed => moveSpeed * UnitScale.ForPlayer * gaitSpeed * (status != null ? status.MoveMult : 1f);
     [Tooltip("Speed multiplier while holding Shift to walk — slower than the default run, and plays the Walk animation.")]
     public float walkSpeedMult = 0.45f;
     /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="BakedPlayerVisual"/> to
@@ -457,9 +462,10 @@ public partial class Player3DController : MonoBehaviour
         if (moving) worldFacing = move;
         facing = Facing3D.FromWorldDir(worldFacing);   // camera-relative — frames track the camera as it orbits
         WalkingSlow = moving && HeldShift();            // Shift = walk: slower move + Walk animation (read by BakedPlayerVisual)
-        float baseSpeed = moveSpeed * UnitScale.ForPlayer * (WalkingSlow ? walkSpeedMult : 1f); // the hand-tuned baseline for this gait (run vs walk)
-        float spd = baseSpeed * (status != null ? status.MoveMult : 1f);                         // Slow ailment / speed buff layered on top
-        // Bind gait to ACTUAL speed: the buff/slow factor over the tuned baseline. Drives both the footstep
+        float baseSpeed = moveSpeed * UnitScale.ForPlayer * (WalkingSlow ? walkSpeedMult : 1f); // TRAVEL baseline (run vs walk) — NOT animation-scaling
+        float gait = gaitSpeed * (status != null ? status.MoveMult : 1f);                        // GAIT baseline × live Slow/Haste — animation-scaling
+        float spd = baseSpeed * gait;
+        // Bind gait to ACTUAL speed: the gait factor over the travel baseline. Drives both the footstep
         // cadence (below) and the Walk/Run animation fps (BakedPlayerVisual) so they speed up/slow down together.
         GaitSpeedMult = baseSpeed > 0.0001f ? spd / baseSpeed : 1f;
         ApplyGravityAndMove(move * spd);   // accumulating free-fall (sets `falling` for the in-air pose)

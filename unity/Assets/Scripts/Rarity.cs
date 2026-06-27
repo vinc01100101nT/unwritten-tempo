@@ -36,7 +36,9 @@ public static class Rarities
         new Style("Uncommon",  Rgb(70, 209, 127),  Rgb(168, 240, 197), Rgb(70, 209, 127, 0.28f)),
         new Style("Rare",      Rgb(79, 140, 255),  Rgb(188, 212, 255), Rgb(79, 140, 255, 0.30f)),
         new Style("Epic",      Rgb(168, 85, 247),  Rgb(230, 198, 255), Rgb(168, 85, 247, 0.34f)),
-        new Style("Legendary", Rgb(245, 185, 66),  Rgb(255, 226, 166), Rgb(245, 185, 66, 0.40f)),
+        // Name = warm ivory (#F1E7D0) so it doesn't merge with the GOLD rarity LABEL/border (the label
+        // carries the gold, the name carries the prestige — GPT⇄Claude HUD relay, 2026-06-25).
+        new Style("Legendary", Rgb(245, 185, 66),  Rgb(241, 231, 208), Rgb(245, 185, 66, 0.40f)),
     };
 
     public static Style Of(Rarity r) => Table[(int)r];
