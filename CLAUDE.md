@@ -29,3 +29,4 @@
 - **Bake at author time** — static/never-changing work belongs in generate/editor phase, not Play
 - **No comments unless WHY is non-obvious** — well-named identifiers carry the WHAT
 - When adding/removing a `Tools ▸ unwritten` menu item, always update `Editor/TOOLS.md` in the same change
+- **Log notable bug fixes to memory** — after fixing a non-obvious/hard bug (subtle root cause, cost real debugging time, or likely to recur), write a memory file (symptom + root cause + fix file/line + key measured values + gotchas) and index it in `MEMORY.md`. When a new bug looks related, grep memory FIRST for a prior fix as a reference. Skip trivial/obvious fixes.

@@ -57,7 +57,7 @@ Shader "Unwritten/WetGround"
             float _RipScale, _RipSpeed, _WaterImpact, _StepRadius, _StepBright, _GroundImpact, _GroundImpactStart;
             float _ReflStrength, _ReflDistort, _ReflFlipY;
             float4 _ReflectColor;
-            float4 _Steps[16];   // footstep ripples: xy = world XZ, z = age 0..1 (>=1 = dead slot)
+            float4 _Steps[24];   // footstep ripples: xy = world XZ, z = age 0..1 (>=1 = dead slot). [0,16) player, [16,24) NPCs
 
             TEXTURE2D(_ReflectionTex);   // global planar-reflection texture (black when reflections are off)
             SAMPLER(sampler_ReflectionTex);
@@ -203,7 +203,7 @@ Shader "Unwritten/WetGround"
                     // Footsteps: an expanding ring at each recent step position (dead slots have age >= 1). Kept
                     // puddle-masked so a footstep ripple is invisible off a puddle — that's how IsPuddleAt answers.
                     float steps = 0.0;
-                    for (int i = 0; i < 16; i++)
+                    for (int i = 0; i < 24; i++)
                     {
                         float4 s   = _Steps[i];
                         float  age = s.z;

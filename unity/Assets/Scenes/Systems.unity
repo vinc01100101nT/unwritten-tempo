@@ -216,7 +216,7 @@ MonoBehaviour:
   attackFps: 16
   hitFlinchTime: 0.25
   hitFps: 14
-  moveSpeed: 0.53
+  moveSpeed: 1
   walkSpeedMult: 0.45
   framesPerSecond: 8
   arriveDistance: 0.12
@@ -1276,8 +1276,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FootstepTracker
   strideDist: 0.3
-  footSpacing: 0.08
-  stepOffset: 0.2
+  footSpacing: 0.04
+  stepOffset: 0.07
   landingScale: 2.5
 --- !u!114 &819430574
 MonoBehaviour:
@@ -1399,8 +1399,8 @@ MonoBehaviour:
   groundImpact: 1.14
   groundImpactStart: 0.5
   stepLife: 0.7
-  stepRadius: 0.35
-  stepBright: 1.76
+  stepRadius: 0.12
+  stepBright: 1.85
   reflStrength: 0.9
   reflDistort: 0.04
   reflFlipY: 0

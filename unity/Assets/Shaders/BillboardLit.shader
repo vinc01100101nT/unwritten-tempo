@@ -18,6 +18,12 @@ Shader "Unwritten/BillboardLit"
         _Color ("Tint", Color) = (1,1,1,1)
         _Cutoff ("Alpha Cutoff", Range(0,1)) = 0.5
         _ShadeFloor ("Shadowed Brightness", Range(0,1)) = 0.45
+        // _SelfShadowBias is driven GLOBALLY by SpriteAddLight.cs (Shader.SetGlobalFloat), live-tunable
+        // from the DEV panel (P ▸ Shadows) — NOT per-material — so one slider tunes every billboard.
+
+        // Real-time additional-light tuning (_AddLightStrength/_AddLightShape/_AddLightBulge/_AddLightAlbedoTint)
+        // is driven GLOBALLY by SpriteAddLight.cs (Shader.SetGlobalFloat), live-tunable from the DEV panel
+        // (P ▸ Sprite Light) — NOT per-material — so one set of sliders tunes every billboard at once.
 
         // HSV dye knobs — set per-renderer via MaterialPropertyBlock (CharacterDye.cs).
         // Identity values: HueShift=0, Saturation=1, Brightness=1.
@@ -82,6 +88,8 @@ Shader "Unwritten/BillboardLit"
             #pragma fragment frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -117,6 +125,18 @@ Shader "Unwritten/BillboardLit"
             // WITHOUT N·L shading. DayNightLight seeds it white before the first frame (and in-editor),
             // so sprites are never black when no clock is present.
             half4 _SpriteEnv;
+
+            // Additional-light tuning, set GLOBALLY by SpriteAddLight.cs (live from the DEV panel). Not per-
+            // material, so one set of sliders tunes every billboard. Seeded to defaults before the first frame.
+            half _AddLightStrength;
+            half _AddLightShape;
+            half _AddLightBulge;
+            half _AddLightAlbedoTint;
+
+            // Distance (world metres) the shadow-receive sample is pushed toward the main light, so the
+            // billboard clears its OWN co-located ShadowsOnly proxy (BillboardShadow) instead of sampling
+            // it as a dark band that climbs the body. Global (SpriteAddLight.cs), live from P ▸ Shadows.
+            half _SelfShadowBias;
 
             struct Attributes
             {
@@ -239,11 +259,54 @@ Shader "Unwritten/BillboardLit"
                 // Per-pixel shadow: each pixel samples the shadowmap at its own world position, so a
                 // tree's shadow falls across the sprite accurately (half-body shade). No N·L — art
                 // colors stay true in light, dimming toward _ShadeFloor where the shadowmap says shade.
-                float4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
+                // Sample slightly toward the light (directional: _MainLightPosition.xyz is the
+                // direction TO the light) so the upright quad doesn't catch its own cast shadow,
+                // which otherwise reads as a dark band climbing from the feet.
+                float3 shadowWS = IN.positionWS + _MainLightPosition.xyz * _SelfShadowBias;
+                float4 shadowCoord = TransformWorldToShadowCoord(shadowWS);
                 Light mainLight = GetMainLight(shadowCoord);
                 half shade = lerp(_ShadeFloor, 1.0h, mainLight.shadowAttenuation);
                 // × global env light: noon = white (true art), night = dim & cool. Tracks time of day.
-                return half4(tex.rgb * shade * _SpriteEnv.rgb, 1.0h);
+                half3 lit = tex.rgb * shade * _SpriteEnv.rgb;
+
+                // Real-time additional lights (lamps/torches/portals). Added AFTER the day/night env so a
+                // warm lamp re-brightens a sprite at night. No N·L (flat billboard); instead a cheap
+                // lit-side term brightens the half of the sprite facing the light — the "angle" cue — and
+                // the add is only partly tinted by albedo so a near-black charcoal body still glows warm
+                // instead of staying black next to the lamp.
+                #if defined(_ADDITIONAL_LIGHTS)
+                uint lightCount = GetAdditionalLightsCount();
+                if (lightCount > 0u && _AddLightStrength > 0.0h)
+                {
+                    // Camera basis in world space (the billboard faces the camera, so right/up span the quad
+                    // and fwd points back toward the camera). uv runs 0→1, remapped to −1..+1 across the sprite.
+                    half3 camRight = (half3)UNITY_MATRIX_I_V._m00_m10_m20;
+                    half3 camUp    = (half3)UNITY_MATRIX_I_V._m01_m11_m21;
+                    half3 camFwd   = (half3)UNITY_MATRIX_I_V._m02_m12_m22;
+                    half  sx = (IN.uv.x - 0.5h) * 2.0h;
+                    half  sy = (IN.uv.y - 0.5h) * 2.0h;
+                    // Fake outward normal: the flat quad "bulges" toward the camera in the middle and turns to
+                    // face sideways at the silhouette, so N·L lights only the half of the sprite facing the
+                    // lamp and leaves the far side in shadow (the directional "which side is lit" cue).
+                    half3 N = normalize(sx * camRight + sy * camUp + _AddLightBulge * camFwd);
+                    half3 add = 0.0h;
+                    for (uint li = 0u; li < lightCount; li++)
+                    {
+                        Light L = GetAdditionalLight(li, IN.positionWS);
+                        half atten = L.distanceAttenuation * L.shadowAttenuation;
+                        // Half-Lambert (wrap) instead of saturate(N·L): the lamp falls off SMOOTHLY across
+                        // the sprite with no hard terminator, so the lit/unlit boundary can't read as a crisp
+                        // shadow edge that climbs the body as you move relative to the lamp.
+                        half ndl = dot(N, (half3)L.direction) * 0.5h + 0.5h;
+                        // _AddLightShape blends flat fill (0 = whole sprite lit) → soft directional (1 = wrapped N·L).
+                        add += L.color * (atten * lerp(1.0h, ndl, _AddLightShape));
+                    }
+                    half3 lampTint = lerp(half3(1.0h, 1.0h, 1.0h), tex.rgb, _AddLightAlbedoTint);
+                    lit += lampTint * add * _AddLightStrength;
+                }
+                #endif
+
+                return half4(lit, 1.0h);
             }
             ENDHLSL
         }

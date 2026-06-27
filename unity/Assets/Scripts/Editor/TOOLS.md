@@ -47,6 +47,7 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 | **Create Spawn Point** | Drops a bare `SpawnPoint` GameObject (set its Id; match it from a Portal's Spawn Id). | Hand-wiring an arrival point. (`WorldTools.cs`) |
 | **Fit Portal Triggers (active scene)** | Fixes/seats portal trigger volumes in the active scene (raycast-snaps the portal pivot to ground first). | After hand-dragging portals (which can drift onto prop colliders). (`RegionBuilder.cs`) |
 | **Add Ambient Townsfolk** | Drops an `AmbientLife` director into the open scene, wires it to the `CharacterRoster` + Ground mask → wandering, chattering townsfolk at Play. *Idempotent.* | Making a map feel alive. Run in a map scene. (`AmbientLifeTools.cs`) |
+| **Add Prop Light to Selection** | Adds a warm `PropLight` (real-time point light) as a child of each selected prop, so nearby billboard sprites brighten & take its colour. *Idempotent.* | Lighting a door/torch/portal so the player glows beside it. Retint/flicker on the new child. (`PropLightTools.cs`) |
 
 ---
 
@@ -151,6 +152,7 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 |---|---|---|
 | **Print Skill Ring + Soft-Cap Table** | Logs the Trio-Ring layout + the soft-cap percentage curve — pure logic, no Play mode. | Sanity-checking the skill maths. (`SkillSelfTest.cs`) |
 | **Simulate Skill Draft Walk (20 levels)** | Simulates a 20-level draft walk through the Trio-Ring/DraftService and logs it. | Verifying draft steering rules without Play. (`SkillSelfTest.cs`) |
+| **Recompile Scripts** (`Ctrl/Cmd+Shift+R`) | Forces an asset refresh + script recompilation. | Pushing a C# edit into the Editor without alt-tabbing to focus Unity. (`RecompileTool.cs`) |
 
 ---
 

@@ -239,7 +239,7 @@ public class PlanarReflection : MonoBehaviour
 
     Vector4 CameraSpacePlane(Matrix4x4 worldToCam, Vector3 pos, Vector3 normal, float sideSign)
     {
-        Vector3 offsetPos = pos + normal * clipPlaneOffset;
+        Vector3 offsetPos = pos - normal * clipPlaneOffset;
         Vector3 cPos = worldToCam.MultiplyPoint(offsetPos);
         Vector3 cNormal = worldToCam.MultiplyVector(normal).normalized * sideSign;
         return new Vector4(cNormal.x, cNormal.y, cNormal.z, -Vector3.Dot(cPos, cNormal));

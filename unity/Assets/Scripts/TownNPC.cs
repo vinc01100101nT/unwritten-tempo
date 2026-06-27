@@ -54,6 +54,7 @@ public class TownNPC : MonoBehaviour
     Vector3 lastProgressPos;
     Vector3 lastStepPos;        // footstep odometer: accumulate ground distance, emit a step each sStride
     float stepDist;             // distance walked (horizontal) since the last footstep SFX fired
+    bool stepLeft;              // alternating foot for the ripple zig-zag; false == RIGHT, so a fresh walk steps right first
     bool simulating = true;
     bool gaitMatched;   // have we copied the player's fine-tuned walk/run cadence onto this NPC yet?
 
@@ -67,6 +68,7 @@ public class TownNPC : MonoBehaviour
     // unit travels per step at the player's tuned cadence (stepInterval × run speed) — driving NPC steps off
     // DISTANCE travelled rather than a timer keeps them in sync with each NPC's own rolled speed (no foot-slide).
     static SfxSet sPlayerFootstep;
+    static SfxSet sWaterFootstep;   // the player's puddle-splash step, swapped in when an NPC is over a puddle
     static float sStride;
 
     static bool ResolvePlayerGait()
@@ -81,6 +83,7 @@ public class TownNPC : MonoBehaviour
         sRunRef  = runSpeed;
         sWalkRef = runSpeed * pc.walkSpeedMult;                  // the player's Shift-walk (walk-clip) ground speed
         sPlayerFootstep = pc.footstepSfx;
+        sWaterFootstep = pc.waterFootstepSfx;
         sStride = Mathf.Max(0.1f, pc.stepInterval * runSpeed);   // world distance the player covers per step
         return true;
     }
@@ -188,16 +191,32 @@ public class TownNPC : MonoBehaviour
         if (sStride <= 0f || sPlayerFootstep == null || sPlayerFootstep.Empty || agent == null || !agent.Moving)
         {
             lastStepPos = transform.position;   // keep the odometer pinned to "now" while halted (no phantom step on resume)
+            stepLeft = false;                   // resume always steps RIGHT first (matches the player)
             return;
         }
 
         Vector3 p = transform.position;
-        stepDist += new Vector2(p.x - lastStepPos.x, p.z - lastStepPos.z).magnitude;   // horizontal travel only
+        Vector3 dir = new Vector3(p.x - lastStepPos.x, 0f, p.z - lastStepPos.z);   // horizontal walk direction this slice
+        stepDist += dir.magnitude;   // horizontal travel only
         lastStepPos = p;
         if (stepDist >= sStride)
         {
             stepDist = 0f;
-            Sfx.PlayAt(sPlayerFootstep, p);
+            // Same puddle test the player uses: swap in the splash step when this NPC's feet are over a visible puddle.
+            bool onWater = sWaterFootstep != null && !sWaterFootstep.Empty
+                           && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(p);
+            Sfx.PlayAt(onWater ? sWaterFootstep : sPlayerFootstep, p);
+            // Feed the shared footstep ring so wet-ground ripples / snow prints appear under townsfolk too. Offset the
+            // print under the alternating foot (RIGHT first) like the player, so left/right ripples land consistently.
+            var tracker = FootstepTracker.Instance;
+            if (tracker != null)
+            {
+                dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.forward;
+                Vector3 perp = new Vector3(dir.z, 0f, -dir.x);   // +perp == right of the walk line
+                Vector3 foot = p + perp * (tracker.footSpacing * (stepLeft ? -1f : 1f));
+                stepLeft = !stepLeft;
+                tracker.EmitStep(foot);
+            }
         }
     }
 
@@ -249,7 +268,7 @@ public class TownNPC : MonoBehaviour
     void SetSimulating(bool on)
     {
         simulating = on;
-        if (on) lastStepPos = transform.position;   // reset the footstep odometer so re-entering range can't fire a phantom step
+        if (on) { lastStepPos = transform.position; stepLeft = false; }   // reset odometer + foot so re-entering range starts on the right
         if (!on) agent.Halt();
         if (agent != null) agent.enabled = on;
         if (visual != null) visual.enabled = on;

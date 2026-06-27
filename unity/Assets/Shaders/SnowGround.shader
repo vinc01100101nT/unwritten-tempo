@@ -5,7 +5,7 @@
 // flatness so SLOPED roofs still catch snow. Coverage is broken up by a world-XZ noise patch so edges read
 // organic.
 //
-// FOOTPRINTS: the same _Steps[16] ring buffer WetGround uses for ripples, but here each step is a PERSISTENT
+// FOOTPRINTS: the same _Steps[24] ring buffer WetGround uses for ripples, but here each step is a PERSISTENT
 // filled depression that slowly heals (age 0->1 over many seconds in C#). A print CARVES the snow (lowers
 // coverage to reveal the trodden ground) and drops a cool shadow in the dent — that's the trail in the snow.
 //
@@ -58,7 +58,7 @@ Shader "Unwritten/SnowGround"
             float _FootRadius, _FootCarve, _FootDark;
             float _ShadowStrength;
             float4 _SnowColor, _ShadowTint, _LightTint;
-            float4 _Steps[16];   // footprints: xy = world XZ, z = age 0..1 (>=1 = dead slot), w = size scale
+            float4 _Steps[24];   // footprints: xy = world XZ, z = age 0..1 (>=1 = dead slot), w = size scale. [0,16) player, [16,24) NPCs
 
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings   { float4 positionHCS : SV_POSITION; };
@@ -127,9 +127,9 @@ Shader "Unwritten/SnowGround"
                 cov = smoothstep(0.0, 0.4, cov);   // make covered snow OPAQUE — roofs read pure white, not see-through
 
                 // Footprints: persistent filled depressions that heal with age. Each carves coverage (revealing
-                // the trodden ground) and drops a cool shadow in the dent. Only the freshest 16 steps exist.
+                // the trodden ground) and drops a cool shadow in the dent. Only the freshest steps exist.
                 float carve = 0.0, dent = 0.0;
-                for (int i = 0; i < 16; i++)
+                for (int i = 0; i < 24; i++)
                 {
                     float4 s = _Steps[i];
                     if (s.z >= 1.0) continue;                            // dead slot

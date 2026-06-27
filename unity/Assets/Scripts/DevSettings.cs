@@ -328,6 +328,25 @@ public class DevSettings : MonoBehaviour
         Cat("Shadows");
         B("Billboard shadows", () => BillboardShadow.Enabled,     v => BillboardShadow.Enabled = v);
         F("Shadow cull dist",  5f, 80f, () => BillboardShadow.MaxDistance, v => BillboardShadow.MaxDistance = v);
+        // Slide the cast shadow along its length to line its root up with the feet (+ away, − under).
+        F("Shadow contact",   -2f, 2f,  () => BillboardShadow.ContactOffset, v => BillboardShadow.ContactOffset = v);
+        // Slide the cast shadow left/right (perpendicular) to centre it under the feet.
+        F("Shadow side",      -2f, 2f,  () => BillboardShadow.SideOffset,    v => BillboardShadow.SideOffset = v);
+        // Only the lamp nearest the player casts (one point-light cubemap), so this stays cheap.
+        B("Lamp shadows",       () => NightLight.GlobalShadows,        v => NightLight.GlobalShadows = v);
+        F("Lamp shadow range",  4f, 30f, () => NightLight.MaxShadowDist,       v => NightLight.MaxShadowDist = v);
+        F("Lamp shadow dark",   0f, 1f,  () => NightLight.GlobalShadowStrength, v => NightLight.GlobalShadowStrength = v);
+        // Push the sprite's shadow-receive sample toward the sun so it clears its own cast-shadow proxy
+        // (the dark band that climbed the body). Higher = cleaner self-shade, coarser tree shade.
+        F("Self-shadow bias",   0f, 3f,  () => SpriteAddLight.SelfShadowBias, v => { SpriteAddLight.SelfShadowBias = v; SpriteAddLight.Apply(); });
+
+        // ---- Sprite Light — how billboards (player/mobs) pick up real-time lamps/torches ----
+        // Global shader knobs (SpriteAddLight) — tune once, every billboard updates live.
+        Cat("Sprite Light");
+        F("Lamp pickup strength", 0f, 4f, () => SpriteAddLight.Strength,   v => { SpriteAddLight.Strength = v;   SpriteAddLight.Apply(); });
+        F("Directional split",    0f, 1f, () => SpriteAddLight.Shape,      v => { SpriteAddLight.Shape = v;      SpriteAddLight.Apply(); });
+        F("Bulge (round<->flat)", 0.05f, 2f, () => SpriteAddLight.Bulge,   v => { SpriteAddLight.Bulge = v;      SpriteAddLight.Apply(); });
+        F("Albedo tint",          0f, 1f, () => SpriteAddLight.AlbedoTint, v => { SpriteAddLight.AlbedoTint = v; SpriteAddLight.Apply(); });
 
         // ---- World — move the whole ground floor (Ground_Visual + Ground_Floor) up/down ----
         // Lifts/sinks the entire ground plot. Props/units are seated separately so they DON'T follow — this is a
@@ -584,10 +603,13 @@ public class DevSettings : MonoBehaviour
         F("Step ripples",     0f, 8f,    () => wet ? wet.stepBright : 0f,      v => { if (wet) wet.stepBright = v; });
         F("Step radius",      0.1f, 1f,  () => wet ? wet.stepRadius : 0f,      v => { if (wet) wet.stepRadius = v; });
         Sub("Footsteps");
-        // Gait (shared FootstepTracker) — gap/spacing/offset/jump-splash drive BOTH puddle ripples and snow prints.
-        F("Footstep gap",     0.12f, 1.2f, () => foot ? foot.strideDist : 0f,  v => { foot = FootstepTracker.Ensure(); foot.strideDist = v; });
+        // Gait (shared FootstepTracker) — cadence/spacing/offset/jump-splash drive BOTH puddle ripples and snow prints.
+        // Cadence is in SECONDS now (paced on gait-time like the SFX/animation), so prints track move speed correctly.
+        F("Footstep cadence", 0.1f, 0.8f, () => foot ? foot.strideSeconds : 0f, v => { foot = FootstepTracker.Ensure(); foot.strideSeconds = v; });
+        F("First step delay", 0f, 0.6f,   () => foot ? foot.firstStepDelay : 0f, v => { foot = FootstepTracker.Ensure(); foot.firstStepDelay = v; });
         F("Foot spacing",     0f, 0.6f,  () => foot ? foot.footSpacing : 0f,   v => { foot = FootstepTracker.Ensure(); foot.footSpacing = v; });
         F("Step offset",     -1f, 1f,    () => foot ? foot.stepOffset : 0f,    v => { foot = FootstepTracker.Ensure(); foot.stepOffset = v; });
+        F("Step offset (walk)", -1f, 1f, () => foot ? foot.walkStepOffset : 0f, v => { foot = FootstepTracker.Ensure(); foot.walkStepOffset = v; });
         F("Jump splash",      1f, 6f,    () => foot ? foot.landingScale : 0f,  v => { foot = FootstepTracker.Ensure(); foot.landingScale = v; });
         Sub("Reflection");
         // Planar reflection (Step 1: 3D world only) — mirror camera into puddles. Needs High tier + rain.
@@ -625,9 +647,9 @@ public class DevSettings : MonoBehaviour
         F("Footprint heal",   0.5f, 30f, () => snowGround ? snowGround.footHeal : 0f,  v => { if (snowGround) snowGround.footHeal = v; });
         F("Footprint carve",  0f, 1f,    () => snowGround ? snowGround.footCarve : 0f, v => { if (snowGround) snowGround.footCarve = v; });
         F("Footprint radius", 0.1f, 0.6f, () => snowGround ? snowGround.footRadius : 0f, v => { if (snowGround) snowGround.footRadius = v; });
-        // Footprint GAP (shared FootstepTracker — same value as the wet "Footstep gap" knob; also moves snow prints
-        // closer/farther). Lower this if steps look too far apart.
-        F("Footprint gap",    0.12f, 1.2f, () => foot ? foot.strideDist : 0f,   v => { foot = FootstepTracker.Ensure(); foot.strideDist = v; });
+        // Footprint CADENCE (shared FootstepTracker — same value as the wet "Footstep cadence" knob; also paces snow
+        // prints). Seconds between prints at normal gait; raise if steps look too frequent.
+        F("Footprint cadence",0.1f, 0.8f, () => foot ? foot.strideSeconds : 0f, v => { foot = FootstepTracker.Ensure(); foot.strideSeconds = v; });
         F("Footprint spacing",0f, 0.6f,  () => foot ? foot.footSpacing : 0f,    v => { foot = FootstepTracker.Ensure(); foot.footSpacing = v; });
         Sub("Fog");
         // Fog — DEPTH fog (all tiers, one pass), its own weather CHANNEL. Fogs by true distance from the camera so far

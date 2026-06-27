@@ -249,11 +249,15 @@ MonoBehaviour:
       - {fileID: 2800000, guid: 402d4d3a5661d6c4fbd9cae7ea83b9e7, type: 3}
       - {fileID: 2800000, guid: 9e25e53472f9d584992d7f5e6c23285a, type: 3}
     fps: 24
-  cellW: 64
-  cellH: 64
-  ppu: 64
+  cellW: 128
+  cellH: 128
+  ppu: 128
   maxFrames: 101
   walkThreshold: 0.15
   runThreshold: 3.5
-  feetOffset: 0.234375
+  speedSyncGait: 1
+  walkRefSpeed: 1.4
+  runRefSpeed: 3.5
+  gaitScaleClamp: {x: 0.4, y: 3}
+  feetOffset: 0.2265625
   castReceiveShadows: 1

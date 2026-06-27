@@ -144,6 +144,7 @@ public partial class Player3DController : MonoBehaviour
     [Tooltip("Seconds between footstep sounds while WALKING (Shift held) — usually larger than the run gap since walking is slower.")]
     public float walkStepInterval = 0.62f;
     float nextStep;
+    bool wasStepping;   // were we moving last footstep tick? — so a fresh walk can delay its first step sound to match the ripple
 
     [Header("Auto-combat (T to toggle)")]
     [Tooltip("While auto-combat roams, it engages the nearest mob within this range and walks to it. " +
@@ -497,7 +498,19 @@ public partial class Player3DController : MonoBehaviour
     // machine-gun the step SFX every other frame; steps still fire at most once per stepInterval.
     void Footsteps(bool moving)
     {
-        if (!moving || Time.time < nextStep) return;
+        if (!moving) { wasStepping = false; return; }
+
+        // Hold off the FIRST step sound of a fresh walk by the SAME gait-time the ripple delays its first print, so the
+        // sound stays glued to the splash. delay is in gait-time stride units → divide by gait for real seconds (the
+        // same scaling the interval below uses). Only when a delay is set, so the no-delay machine-gun guard is untouched.
+        if (!wasStepping)
+        {
+            wasStepping = true;
+            float delay = FootstepTracker.Instance != null ? FootstepTracker.Instance.firstStepDelay : 0f;
+            if (delay > 0f) nextStep = Time.time + delay / Mathf.Max(0.05f, GaitSpeedMult);
+        }
+
+        if (Time.time < nextStep) return;
 
         // Splash instead of the dry step when the feet are over a visible rain puddle (the WetGround shader's
         // own puddle mask answers "are we on water?" — see WetGround.IsPuddleAt). Falls back to the normal set.

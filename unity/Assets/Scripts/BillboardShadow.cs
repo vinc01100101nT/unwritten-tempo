@@ -25,6 +25,12 @@ public class BillboardShadow : MonoBehaviour
     /// <summary>Past this distance from the camera a proxy is disabled (no billboard shadow). Shared by all proxies
     /// so one DevSettings knob tunes the whole world.</summary>
     public static float MaxDistance = 32f;
+    /// <summary>Slides the cast shadow along its own length (metres) to line its root up with the feet. + pushes the
+    /// shadow away from the unit (along the light→sprite ground direction), − pulls it back under the feet.</summary>
+    public static float ContactOffset = 0f;
+    /// <summary>Slides the cast shadow left/right (metres), perpendicular to its length on the ground, to centre it
+    /// under the feet when the sprite pivot isn't horizontally centred.</summary>
+    public static float SideOffset = 0f;
 
     [Tooltip("The visible billboard sprite this shadow twins. Auto-found (self, then children) if left empty.")]
     public SpriteRenderer source;
@@ -57,21 +63,43 @@ public class BillboardShadow : MonoBehaviour
     {
         if (proxy == null || source == null) return;
 
-        // Off globally, source hidden/frameless, or no light → nothing to cast.
-        if (!Enabled || !source.enabled || source.sprite == null || !SunRig.HasSun) { proxy.enabled = false; return; }
+        // Which light casts this frame? At night the sun is dark, so a nearby NightLight (the one closest to the
+        // player — the only lamp allowed to cast) takes over; in daytime we fall back to the sun.
+        bool hasLamp = NightLight.TryGetShadowLamp(out Vector3 lampPos);
+
+        // Off globally, source hidden/frameless, or no light at all → nothing to cast.
+        if (!Enabled || !source.enabled || source.sprite == null || (!hasLamp && !SunRig.HasSun))
+        { proxy.enabled = false; return; }
 
         // Distance cull — far mobs cast no billboard shadow (saves the extra shadow-pass draw).
         var cam = CameraRig.Cam;
         if (cam != null && (source.transform.position - cam.transform.position).sqrMagnitude > MaxDistance * MaxDistance)
         { proxy.enabled = false; return; }
 
-        // Twin the current frame, turned to FULLY FACE the light (3D) so the silhouette stays full at any sun angle.
+        // Twin the current frame, turned to FULLY FACE the light (3D) so the silhouette stays full at any angle.
         var st = source.transform;
         proxy.enabled = true;
         proxy.sprite = source.sprite;
         proxy.flipX = source.flipX;
-        proxyTf.position = st.position;            // rotation doesn't move the pivot, so this is order-independent
-        proxyTf.rotation = SunRig.ShadowFacing;
+        // Ground direction the shadow travels (away from the light); used to nudge the cast root onto the feet.
+        Vector3 groundDir = hasLamp ? new Vector3(st.position.x - lampPos.x, 0f, st.position.z - lampPos.z)
+                                    : SunRig.DirXZ;
+        if (groundDir.sqrMagnitude > 1e-5f) groundDir.Normalize(); else groundDir = Vector3.zero;
+        Vector3 sideDir = Vector3.Cross(Vector3.up, groundDir);      // horizontal, perpendicular to the shadow
+        proxyTf.position = st.position + groundDir * ContactOffset + sideDir * SideOffset;   // rotation pivots here, so order-independent
+        proxyTf.rotation = hasLamp ? LampFacing(st.position, lampPos) : SunRig.ShadowFacing;
         proxyTf.localScale = st.lossyScale;        // unparented → local == world scale (tracks unit size + breathing)
+    }
+
+    // Turn the proxy broadside to a POINT lamp: quad normal along the lamp→sprite axis, so the lamp sees the
+    // full silhouette (same convention as SunRig.ShadowFacing, but per-sprite since a point light's direction
+    // differs for each unit). Cheap; only the few proxies near the casting lamp ever reach here.
+    static Quaternion LampFacing(Vector3 spritePos, Vector3 lampPos)
+    {
+        Vector3 dir = spritePos - lampPos;
+        if (dir.sqrMagnitude < 1e-5f) return Quaternion.identity;
+        dir.Normalize();
+        Vector3 refUp = Mathf.Abs(dir.y) > 0.99f ? Vector3.forward : Vector3.up;
+        return Quaternion.LookRotation(dir, refUp);
     }
 }

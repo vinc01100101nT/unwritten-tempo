@@ -77,9 +77,9 @@ public class WetGround : MonoBehaviour
              "FootstepTracker — gap/spacing/jump-splash are tuned there so puddles and snow stay in sync.)")]
     public float stepLife = 0.7f;
     [Tooltip("How far a footstep ripple expands (world units). Small = a tight little splash.")]
-    public float stepRadius = 0.35f;
+    public float stepRadius = 0.12f;
     [Range(0f, 8f)] [Tooltip("Brightness of footstep ripples (only show on puddles).")]
-    public float stepBright = 1.76f;
+    public float stepBright = 1.85f;
 
     [Header("Planar reflection")]
     [Range(0f, 2f)] [Tooltip("How strongly the mirrored scene shows in puddles. Needs a PlanarReflection in the " +
