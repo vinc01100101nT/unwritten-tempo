@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 /// One-click <b>ground filler</b> for a hand-authored map. Instead of clicking ground tiles one-by-one in the
 /// Prop Palette, this measures everything you've already placed in the ACTIVE scene, then carpets a rectangle
 /// of <c>ground_grass</c> tiles under it (with a margin) — same bounds-driven, GPU-instanced, collider-free
-/// tiling the ground builder uses (<see cref="PxltgrGround"/>), plus the single flat floor collider on the
+/// tiling the ground builder uses (<see cref="WalkableGround"/>), plus the single flat floor collider on the
 /// Ground layer that the player snaps to and the pathfinder rays against.
 ///
 /// Unlike a full map generate, this does NOT touch your hand-placed houses/trees — it only adds the ground.

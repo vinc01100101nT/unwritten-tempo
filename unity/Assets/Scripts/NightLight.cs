@@ -11,10 +11,10 @@ using UnityEngine;
 /// (the <c>Light Up Props (night)</c> editor tool does that), no hand-authored Light child required.
 ///
 /// <para><b>Shadows.</b> Point-light shadows are expensive (a cubemap per caster), so we never let every town
-/// lamp cast: only the ONE lamp nearest the player casts (re-selected on a cheap timer). That keeps us inside
-/// URP's additional-shadow budget while still grounding the player with a real cast shadow from whatever lamp
-/// they're standing next to. <see cref="BillboardShadow"/> reads <see cref="TryGetShadowLamp"/> to aim the
-/// sprite's shadow proxy at that lamp.</para>
+/// lamp cast: only the <see cref="MaxShadowCasters"/> lamps nearest the player cast (re-selected on a cheap
+/// timer). That keeps us inside URP's additional-shadow budget while still grounding the player with a real
+/// cast shadow from whatever lamps they're standing next to. <see cref="BillboardShadow"/> reads
+/// <see cref="TryGetShadowLamp"/> to aim the sprite's shadow proxy at the nearest casting lamp.</para>
 ///
 /// Tune the whole town at once, live, from the DEV panel (P ▸ Environment) via the static
 /// <see cref="GlobalEnabled"/>/<see cref="GlobalIntensity"/>/<see cref="GlobalRange"/>/<see cref="GlobalShadows"/> dials.
@@ -43,16 +43,23 @@ public class NightLight : MonoBehaviour
     public static float GlobalRange = 1f;
     /// <summary>Master switch for the nearest-lamp cast shadow (DevSettings ▸ Shadows). Off → no lamp casts.</summary>
     public static bool GlobalShadows = true;
-    /// <summary>Only lamps within this distance of the player are eligible to be the shadow caster.</summary>
+    /// <summary>Only lamps within this distance of the player are eligible to be a shadow caster.</summary>
     public static float MaxShadowDist = 12f;
     /// <summary>Darkness of the cast lamp shadow (0 = invisible, 1 = black). DevSettings ▸ Shadows.</summary>
-    public static float GlobalShadowStrength = 0.91f;
+    public static float GlobalShadowStrength = 1f;
+    /// <summary>How many lamps may cast a real point-light shadow at once. Each is a cubemap (6 face renders),
+    /// so this is the cost dial. PC-only target → 4 is comfortable. Clamped to <see cref="HardCap"/>.</summary>
+    public static int MaxShadowCasters = 4;
 
     // ── nearest-lamp shadow selection ──
-    // Only ONE lamp (the closest lit one to the player) casts a shadow at a time — point-light shadows are a
-    // cubemap each, so we stay at exactly one to respect URP's additional-shadow budget. Re-picked on a timer.
+    // Only the N closest LIT lamps to the player cast a shadow at a time — point-light shadows are a cubemap
+    // each, so we cap at MaxShadowCasters to respect URP's additional-shadow budget. Re-picked on a timer.
+    const int HardCap = 8;                                             // safety ceiling for the selection buffers
     static readonly List<NightLight> All = new List<NightLight>();
-    static NightLight current;          // the lamp currently set to cast
+    static readonly NightLight[] bestNl = new NightLight[HardCap];     // reused scratch: top-N nearest to player, ascending
+    static readonly float[] bestDist = new float[HardCap];            // their squared distances to the player
+    static readonly List<NightLight> casting = new List<NightLight>(); // lamps currently flagged to cast
+    static NightLight current;          // the NEAREST caster (BillboardShadow proxy aims at this one)
     static float nextSelect;            // unscaled time of the next nearest re-evaluation
     bool castShadow;                    // set by SelectNearest; read in Apply
 
@@ -76,34 +83,67 @@ public class NightLight : MonoBehaviour
         return false;
     }
 
-    // Pick the closest LIT lamp to the player and make only it cast. Cheap: runs at most a few times a second,
-    // off ONE shared timer regardless of how many lamps call it. No allocations.
+    // The MOVING player transform. NOT Character.Instance — that's a stationary logical object at the origin, so
+    // ranking lamps against it froze the selection (the same lamps "won" no matter where you walked). The avatar
+    // that actually moves is Player3DController; resolve it once and cache (re-resolves only if it's gone/respawned).
+    static Transform playerTf;
+    static Transform PlayerTransform()
+    {
+        if (playerTf != null) return playerTf;
+        var p3d = FindFirstObjectByType<Player3DController>();
+        if (p3d != null) playerTf = p3d.transform;
+        return playerTf;
+    }
+
+    // Pick the N closest LIT lamps to the player and make only those cast. Cheap: runs at most a few times a
+    // second off ONE shared timer regardless of how many lamps call it. No allocations (reused scratch buffers).
     static void SelectNearest()
     {
         if (Time.unscaledTime < nextSelect) return;
         nextSelect = Time.unscaledTime + 0.3f;
 
-        NightLight best = null;
-        var player = Character.Instance;
-        if (GlobalShadows && player != null)
+        int n = Mathf.Clamp(MaxShadowCasters, 0, HardCap);
+        int found = 0;                                 // how many of the top-N slots are filled
+        var playerTf = PlayerTransform();
+        if (n > 0 && GlobalShadows && playerTf != null)
         {
-            Vector3 p = player.transform.position;
-            float bestSq = MaxShadowDist * MaxShadowDist;
+            Vector3 p = playerTf.position;
+            float maxSq = MaxShadowDist * MaxShadowDist;
             for (int i = 0; i < All.Count; i++)
             {
                 var nl = All[i];
                 if (nl == null || nl.lamp == null || !nl.lamp.enabled) continue;   // only lamps that are lit
-                float d = (nl.transform.position - p).sqrMagnitude;
-                if (d < bestSq) { bestSq = d; best = nl; }
+                // Measure from the ACTUAL lamp position, not the prop root — on a big (scaled) building the root
+                // can be far from the lamp, wrongly excluding it from the nearest-caster pick.
+                // Simple rule: rank by straight distance from the PLAYER to the lamp. The nearest lamp always casts.
+                float score = (nl.lamp.transform.position - p).sqrMagnitude;
+                if (score >= maxSq) continue;                                        // outside eligibility radius
+                if (found == n && score >= bestDist[found - 1]) continue;           // worse than our current worst
+                // Insertion-sort into the ascending top-N buffer (n ≤ HardCap, so this stays tiny).
+                int at = found < n ? found : n - 1;
+                while (at > 0 && bestDist[at - 1] > score)
+                {
+                    bestDist[at] = bestDist[at - 1];
+                    bestNl[at] = bestNl[at - 1];
+                    at--;
+                }
+                bestDist[at] = score;
+                bestNl[at] = nl;
+                if (found < n) found++;
             }
         }
 
-        if (best != current)
+        // Clear last frame's casters, then flag this frame's set. (Flag churn is fine at a 0.3s cadence.)
+        for (int i = 0; i < casting.Count; i++)
+            if (casting[i] != null) casting[i].castShadow = false;
+        casting.Clear();
+        for (int i = 0; i < found; i++)
         {
-            if (current != null) current.castShadow = false;
-            current = best;
-            if (current != null) current.castShadow = true;
+            bestNl[i].castShadow = true;
+            casting.Add(bestNl[i]);
+            bestNl[i] = null;                          // release scratch ref so we don't pin a destroyed lamp
         }
+        current = found > 0 ? casting[0] : null;       // nearest caster, for the BillboardShadow proxy aim
     }
 
     void Awake()
@@ -124,8 +164,23 @@ public class NightLight : MonoBehaviour
         lamp.type = LightType.Point;
         lamp.shadows = LightShadows.None;            // off by default; SelectNearest promotes the closest lamp
         lamp.bounceIntensity = 0f;
-        lamp.transform.localPosition = localOffset;
+        PlaceLamp();
         Apply(0f);                                   // start dark; Update lights it when night falls
+    }
+
+    // Seat the lamp at its offset AND neutralize the prop's scale so the Light transform is WORLD-UNIT (lossyScale
+    // 1). A point light under a scaled parent renders its lighting fine but its SHADOW matrices get distorted/clipped
+    // (Unity's "Light has scale in its transform" gotcha) — so a lamp on a scale-4 building lit the ground but cast
+    // no shadow. Counter-scaling makes shadows correct and lets `range` be true world units regardless of prop scale.
+    void PlaceLamp()
+    {
+        if (lamp == null) return;
+        var lt = lamp.transform;
+        lt.localPosition = localOffset;
+        var ls = transform.lossyScale;
+        lt.localScale = new Vector3(1f / Mathf.Max(1e-4f, ls.x),
+                                    1f / Mathf.Max(1e-4f, ls.y),
+                                    1f / Mathf.Max(1e-4f, ls.z));
     }
 
     void Update()
@@ -162,10 +217,7 @@ public class NightLight : MonoBehaviour
 
         lamp.color = color;
         lamp.intensity = intensity * GlobalIntensity * w * fl;
-        // Light range is multiplied by the transform's lossy scale; props sit at ~0.3, so divide it back out
-        // to keep `range` meaning WORLD units regardless of how the prop was scaled when placed.
-        float s = Mathf.Max(0.0001f, transform.lossyScale.x);
-        lamp.range = range * GlobalRange / s;
-        lamp.transform.localPosition = localOffset;
+        // Lamp transform is world-unit (PlaceLamp counter-scales the prop), so range is plain world units.
+        lamp.range = range * GlobalRange;
     }
 }

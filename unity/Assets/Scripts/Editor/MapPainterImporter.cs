@@ -13,7 +13,7 @@ using UnityEngine.SceneManagement;
 ///
 /// It is a thin orchestrator over the same battle-tested building blocks the recipe uses, so the output matches:
 /// <list type="bullet">
-/// <item>Ground: <see cref="PxltgrGroundBlend.LayPlotSampled"/> — one blended grass→dirt→road mesh, but the per-vertex
+/// <item>Ground: <see cref="GroundBlendBuilder.LayPlotSampled"/> — one blended grass→dirt→road mesh, but the per-vertex
 /// path/dirt weights are sampled (bilinearly) from the painted cell grid instead of from noise + routes.</item>
 /// <item>Props: <see cref="PropPlacement.PlaceOnGround"/> — bounds-driven seating (Y0, any pivot), scaled to the
 /// palette's <c>defaultScale</c> and rotated to the painted yaw.</item>
@@ -196,7 +196,7 @@ public class MapPainterImporter : EditorWindow
                             Bilinear(rockF,  fx, fz, cols, rows), Bilinear(dirtF,  fx, fz, cols, rows));
         }
 
-        var ground = PxltgrGroundBlend.LayPlotSampled(
+        var ground = GroundBlendBuilder.LayPlotSampled(
             scene, $"Ground_{safe}", Vector3.zero, sizeX, sizeZ, groundLayer, Sample,
             GroundTex(palette, "grass", "ground_grass"),
             GroundTex(palette, "dirt",  "ground_soil"),

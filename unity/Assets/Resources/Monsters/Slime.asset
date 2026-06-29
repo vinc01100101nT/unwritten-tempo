@@ -15,41 +15,42 @@ MonoBehaviour:
   id: mob.slime
   displayName: Slime
   isBoss: 0
+  biome: 2
+  tier: 3
+  biomeAgnostic: 0
   sheet: Slime
-  weight: 4
+  weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 1
+  scale: 1.0600001
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 12
-  defense: 0
-  magicDefense: 0
-  flee: 8
-  hardDefPercent: 5
+  maxHealth: 51
+  defense: 4
+  magicDefense: 2
+  flee: 0
+  hardDefPercent: 10
   hardMagicDefPercent: 0
-  luk: 1
+  luk: 3
   attackType: 0
-  attack: 3
-  hit: 8
-  xpReward: 5
+  attack: 7
+  hit: 14
+  xpReward: 20
   damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
-  moveSpeed: 2.2
+  moveSpeed: 2.1000001
   aggroRadius: 6
-  leashRadius: 10
+  leashRadius: 11
   stopDistance: 0.7
   wanderRadius: 3
   preferredRange: 0
   fleeHpFraction: 0
-  element: 2
+  element: 4
   attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  goldMin: 2
-  goldMax: 6
-  itemDropNames:
-  - Life Potion
-  itemDropChances:
-  - 0.08
+  goldMin: 6
+  goldMax: 18
+  itemDropNames: []
+  itemDropChances: []

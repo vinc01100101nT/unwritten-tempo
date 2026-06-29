@@ -61,7 +61,7 @@ public static class MapSidecar
     /// <summary>Rasterise a continuous ground sampler into painter ground cells — one dominant brush per cell, grass
     /// (the base layer) omitted. Cells are emitted in PAINTER file space (row 0 = north): we sample at the world
     /// point the importer will map each file cell back to (it flips cz on the way in), so the round-trip is exact.</summary>
-    public static List<GroundCell> RasterizeGround(PxltgrGroundBlend.GroundSampler sample, Vector3 center,
+    public static List<GroundCell> RasterizeGround(GroundBlendBuilder.GroundSampler sample, Vector3 center,
                                                    float sizeX, float sizeZ, float cellSize, int cols, int rows,
                                                    string roadBrush)
     {

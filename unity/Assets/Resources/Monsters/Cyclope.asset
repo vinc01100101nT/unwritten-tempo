@@ -15,41 +15,42 @@ MonoBehaviour:
   id: mob.cyclope
   displayName: Cyclope
   isBoss: 0
+  biome: 0
+  tier: 3
+  biomeAgnostic: 0
   sheet: Cyclope
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
-  scale: 0.9
+  scale: 1.0600001
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 9
-  defense: 0
-  magicDefense: 0
-  flee: 14
-  hardDefPercent: 5
+  maxHealth: 51
+  defense: 4
+  magicDefense: 2
+  flee: 0
+  hardDefPercent: 10
   hardMagicDefPercent: 0
-  luk: 8
+  luk: 3
   attackType: 0
-  attack: 3
-  hit: 9
-  xpReward: 8
-  damageSpread: 0.3
+  attack: 7
+  hit: 14
+  xpReward: 20
+  damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
-  moveSpeed: 3.2
+  moveSpeed: 2.1000001
   aggroRadius: 6
   leashRadius: 11
   stopDistance: 0.7
-  wanderRadius: 4
+  wanderRadius: 3
   preferredRange: 0
-  fleeHpFraction: 0.4
-  element: 0
+  fleeHpFraction: 0
+  element: 2
   attackElement: 0
   onHitAilment: 0
-  onHitAilmentChance: 0.35
-  onHitAilmentSeconds: 5
-  onHitAilmentMagnitude: 2
-  goldMin: 3
-  goldMax: 8
-  itemDropNames:
-  - Jade Amulet
-  itemDropChances:
-  - 0.1
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 6
+  goldMax: 18
+  itemDropNames: []
+  itemDropChances: []

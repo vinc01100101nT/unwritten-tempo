@@ -93,8 +93,16 @@ public class RecipePropGroup
 public class RecipeMobGroup
 {
     public string label = "Mobs";
-    [Tooltip("Mob id or name from MonsterCatalog (e.g. 'mob.slime' or 'Slime'), or 'Boss'. Empty = weighted mix of all field mobs.")]
+    [Tooltip("Mob id or name from MonsterCatalog (e.g. 'mob.slime' or 'Slime'), or 'Boss'. " +
+             "Empty = weighted mix of this MAP's biome mobs within the tier band below.")]
     public string archetypeName = "";
+
+    [Tooltip("When Archetype Name is empty: lowest difficulty tier to draw from the map's biome (1 = weakest).")]
+    [Range(1, 4)] public int minTier = 1;
+    [Tooltip("When Archetype Name is empty: highest difficulty tier to draw (4 = elite). Set both to the same value for a single-tier zone.")]
+    [Range(1, 4)] public int maxTier = 4;
+    [Tooltip("When Archetype Name is empty: also include biome-agnostic 'common' filler mobs in the mix.")]
+    public bool includeCommons = true;
     public AmountMode amountMode = AmountMode.Density;
     [Tooltip("Density mode: mobs per square world-unit (try ~0.02–0.04).")]
     public float density = 0.02f;

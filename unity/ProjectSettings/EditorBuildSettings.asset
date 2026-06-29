@@ -59,6 +59,105 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Prontera.unity
     guid: 0098a26c566ff1442b438c8bceb8e46e
+  - enabled: 1
+    path: Assets/Scenes/town_2.unity
+    guid: 1fe83c0ea61f390439da12aa61509647
+  - enabled: 1
+    path: Assets/Scenes/town_3.unity
+    guid: 91b38365400c828428c346a34af2083c
+  - enabled: 1
+    path: Assets/Scenes/town_4.unity
+    guid: c0606d3665e66434c875bb773449363b
+  - enabled: 1
+    path: Assets/Scenes/town_5.unity
+    guid: 9b03b1e3044d7c54bb90f6fefa17ef84
+  - enabled: 1
+    path: Assets/Scenes/town_6.unity
+    guid: a2a06a3779f099c40b8d39b6b90e2f5e
+  - enabled: 1
+    path: Assets/Scenes/town_7.unity
+    guid: 774ae680dbff1f44c93ef2361483f5bb
+  - enabled: 1
+    path: Assets/Scenes/town_8.unity
+    guid: 14ad2f2777709a74ba4c9724396f9f02
+  - enabled: 1
+    path: Assets/Scenes/town_9.unity
+    guid: 458f5ecfdfdc72d4abf4685316e89b3d
+  - enabled: 1
+    path: Assets/Scenes/dungeon_0.unity
+    guid: 0b4e8268146158e4289027bbb9989947
+  - enabled: 1
+    path: Assets/Scenes/dungeon_1.unity
+    guid: 7accca62d4abf9f439f635f2449734c4
+  - enabled: 1
+    path: Assets/Scenes/dungeon_2.unity
+    guid: 69fd43dfdfa57a843b4fd61369422bee
+  - enabled: 1
+    path: Assets/Scenes/dungeon_3.unity
+    guid: be5529c5ca69f8a46a03011728ed04dc
+  - enabled: 1
+    path: Assets/Scenes/dungeon_4.unity
+    guid: 07ca174621d00bd41854d3fe05cb30ef
+  - enabled: 1
+    path: Assets/Scenes/dungeon_5.unity
+    guid: 9a038d10c08551a42a85ab7674b71e23
+  - enabled: 1
+    path: Assets/Scenes/dungeon_6.unity
+    guid: 9321fda9b3cbff34da3209724fc4fde9
+  - enabled: 1
+    path: Assets/Scenes/dungeon_7.unity
+    guid: 2ea014896aeca3e41a8b7b8e065d3d64
+  - enabled: 1
+    path: Assets/Scenes/dungeon_8.unity
+    guid: c63d9e67a2c35f345b4d5d0997266a0f
+  - enabled: 1
+    path: Assets/Scenes/dungeon_9.unity
+    guid: a42d6b2c65f89364c8b2d9dab12ec702
+  - enabled: 1
+    path: Assets/Scenes/dungeon_10.unity
+    guid: f37df9ff3e93061478df409d4089f3d9
+  - enabled: 1
+    path: Assets/Scenes/dungeon_11.unity
+    guid: c42e7325b7adc4146aaca67d4eff735c
+  - enabled: 1
+    path: Assets/Scenes/dungeon_12.unity
+    guid: dcbdc5bcaa1c31c479d3fb8920bb3973
+  - enabled: 1
+    path: Assets/Scenes/dungeon_13.unity
+    guid: d42cf69ba07ded44385adf234a542edf
+  - enabled: 1
+    path: Assets/Scenes/field_6.unity
+    guid: 96432b5a42128e849880afa5be4b5602
+  - enabled: 1
+    path: Assets/Scenes/field_7.unity
+    guid: cfa352a8c3de70a45a1b8796062df835
+  - enabled: 1
+    path: Assets/Scenes/field_8.unity
+    guid: 093cfa70c6100f94b8feb627d115b98c
+  - enabled: 1
+    path: Assets/Scenes/field_9.unity
+    guid: 116c629e6aaad3f4ba0d5b383a039cdb
+  - enabled: 1
+    path: Assets/Scenes/field_10.unity
+    guid: 10cb70a4aba453d4180d17816f87e605
+  - enabled: 1
+    path: Assets/Scenes/field_11.unity
+    guid: eef2f23dbdff40a41875abe908a17123
+  - enabled: 1
+    path: Assets/Scenes/field_12.unity
+    guid: 9ed29fe60af12fe4fb6c675ef4411dc3
+  - enabled: 1
+    path: Assets/Scenes/field_13.unity
+    guid: 000bcea45e9b9c44683b43f46c278834
+  - enabled: 1
+    path: Assets/Scenes/field_14.unity
+    guid: 2449e0a7119719c44bade6aa7c51b720
+  - enabled: 1
+    path: Assets/Scenes/field_15.unity
+    guid: 2f9b6c72a3d11e245a0a31d5b6fac717
+  - enabled: 1
+    path: Assets/Scenes/field_16.unity
+    guid: 167dacdf5eeada544a2db7c45c396271
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee439e426eefd964bac0acbb3407f345, type: 3}
+  m_Name: DungeonRecipe
+  m_EditorClassIdentifier: Assembly-CSharp::MapRecipe
+  id: map.dungeon
+  mapName: DungeonTemplate
+  seed: 24680
+  randomizeSeed: 1
+  sizeX: 40
+  sizeZ: 40
+  dirtAmount: 0.85
+  biome: 3
+  groundTint: {r: 1, g: 1, b: 1, a: 1}
+  groundStyle: 1
+  pathStyle: 1
+  pathTile: 3
+  pathCount: 2
+  pathWidth: 3
+  pathWander: 0.15
+  pathSmoothness: 0
+  propGroups:
+  - label: Walls
+    prefabs: []
+    category: 0
+    placement: 6
+    amountMode: 0
+    density: 0.02
+    count: 20
+    solid: 1
+    scale: 0.3
+    scaleJitter: 0.15
+    minSpacing: 1.5
+    clearFromCenter: 0
+    avoidPath: 0
+    randomYaw: 1
+    rowOffset: 4
+    sway: 2
+  - label: Boulders
+    prefabs: []
+    category: 3
+    placement: 0
+    amountMode: 0
+    density: 0.03
+    count: 20
+    solid: 1
+    scale: 0.35
+    scaleJitter: 0.25
+    minSpacing: 2.5
+    clearFromCenter: 4
+    avoidPath: 1
+    randomYaw: 1
+    rowOffset: 4
+    sway: 2
+  mobGroups:
+  - label: Dungeon mobs
+    archetypeName: 
+    minTier: 2
+    maxTier: 4
+    includeCommons: 0
+    amountMode: 0
+    density: 0.035
+    count: 12
+    minSpacing: 2
+    clearFromSpawn: 6
+  forestAmbience: 0

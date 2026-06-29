@@ -533,12 +533,33 @@ public static class Build25DSpike
     }
 
     /// <summary>Load a specific monster sheet by its folder name under Actor/Monster (e.g. "Slime"),
-    /// or null if that art folder doesn't exist — callers fall back to <see cref="MonsterSheet()"/>.</summary>
+    /// or null if that art folder has no usable sheet — callers fall back to <see cref="MonsterSheet()"/>.
+    /// Handles both naming conventions in the pack: <c>SpriteSheet.png</c> and a single sheet named after the
+    /// folder (e.g. <c>Slime/Slime.png</c>); else the first non-Faceset/non-Preview png.</summary>
     public static Texture2D MonsterSheet(string name)
     {
         if (string.IsNullOrEmpty(name)) return MonsterSheet();
-        string p = $"Assets/Art/NinjaAdventure/Actor/Monster/{name}/SpriteSheet.png";
-        return File.Exists(p) ? AssetDatabase.LoadAssetAtPath<Texture2D>(p) : null;
+        string sheetPath = ResolveMonsterSheetPath($"Assets/Art/NinjaAdventure/Actor/Monster/{name}", name);
+        return sheetPath == null ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
+    }
+
+    static string ResolveMonsterSheetPath(string dir, string name)
+    {
+        string preferred = $"{dir}/SpriteSheet.png";
+        if (File.Exists(preferred)) return preferred;
+        if (!Directory.Exists(dir)) return null;
+
+        string fallback = null;
+        foreach (var f in Directory.GetFiles(dir, "*.png"))
+        {
+            string fn = Path.GetFileNameWithoutExtension(f);
+            if (fn.Equals("Faceset", System.StringComparison.OrdinalIgnoreCase)) continue;
+            if (fn.EndsWith("Preview", System.StringComparison.OrdinalIgnoreCase)) continue;
+            string assetPath = f.Replace('\\', '/');
+            if (fn.Equals(name, System.StringComparison.OrdinalIgnoreCase)) return assetPath;
+            fallback ??= assetPath;
+        }
+        return fallback;
     }
 
     static string FindMonsterSheet()

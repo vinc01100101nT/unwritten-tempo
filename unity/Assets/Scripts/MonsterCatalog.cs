@@ -80,4 +80,35 @@ public static class MonsterCatalog
         }
         return null;
     }
+
+    /// <summary>Is this mob a field-spawnable candidate for a given biome + tier band? Biome-agnostic
+    /// commons match any biome (when <paramref name="includeCommons"/>); everyone else must match
+    /// <paramref name="biome"/> exactly. Bosses and zero-weight mobs are never field candidates.</summary>
+    static bool Eligible(MonsterDef m, Biome biome, int minTier, int maxTier, bool includeCommons)
+    {
+        if (m == null || m.isBoss || m.weight <= 0) return false;
+        if (m.tier < minTier || m.tier > maxTier) return false;
+        return m.biomeAgnostic ? includeCommons : m.biome == biome;
+    }
+
+    /// <summary>Weighted pick among the non-boss mobs that match <paramref name="biome"/> within the
+    /// [<paramref name="minTier"/>, <paramref name="maxTier"/>] band (commons included when asked). This is
+    /// what the map generator uses to populate a biome's maps. Falls back to the unfiltered
+    /// <see cref="WeightedPick()"/> when nothing matches, so a map never spawns empty.</summary>
+    public static MonsterDef WeightedPick(Biome biome, int minTier, int maxTier, bool includeCommons = true)
+    {
+        EnsureLoaded();
+        int total = 0;
+        foreach (var m in _all) if (Eligible(m, biome, minTier, maxTier, includeCommons)) total += m.weight;
+        if (total <= 0) return WeightedPick();
+
+        int roll = Random.Range(0, total);
+        foreach (var m in _all)
+        {
+            if (!Eligible(m, biome, minTier, maxTier, includeCommons)) continue;
+            roll -= m.weight;
+            if (roll < 0) return m;
+        }
+        return null;
+    }
 }

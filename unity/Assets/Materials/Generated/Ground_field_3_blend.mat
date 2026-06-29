@@ -24,15 +24,23 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _DirtMap:
-        m_Texture: {fileID: 2800000, guid: f8438dae1ddec03459a117a1d5a2feab, type: 3}
+        m_Texture: {fileID: 2800000, guid: ae7019b7f3de51f4dac63bb7d07b6c59, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _GrassMap:
-        m_Texture: {fileID: 2800000, guid: cb0d65403796ba6468c0b9a400b5ff98, type: 3}
+        m_Texture: {fileID: 2800000, guid: f8438dae1ddec03459a117a1d5a2feab, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _PathMap:
         m_Texture: {fileID: 2800000, guid: f8438dae1ddec03459a117a1d5a2feab, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RockMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _StoneMap:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -40,7 +48,9 @@ Material:
     - _DirtTiling: 0.4
     - _GrassTiling: 0.4
     - _PathTiling: 0.4
+    - _RockTiling: 0.4
+    - _StoneTiling: 0.4
     m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 1.15, g: 1, b: 0.7, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

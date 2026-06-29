@@ -109,8 +109,11 @@ Shader "Unwritten/FoliageWind"
             #pragma fragment frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Lib/AdditionalLights.hlsl"
 
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
@@ -156,7 +159,9 @@ Shader "Unwritten/FoliageWind"
 
                 half3 diffuse = mainLight.color * (ndl * mainLight.shadowAttenuation);
                 half3 ambient = SampleSH(n);
-                return half4(tex.rgb * (ambient + diffuse), 1.0h);
+                // Lamps/torches (additional lights) incl. cast shadows — double-sided so leaf-card backs catch light.
+                half3 addLights = ApplyAdditionalLightsDiffuse(IN.positionWS, n, true);
+                return half4(tex.rgb * (ambient + diffuse + addLights), 1.0h);
             }
             ENDHLSL
         }

@@ -15,41 +15,42 @@ MonoBehaviour:
   id: mob.flam
   displayName: Flam
   isBoss: 0
+  biome: 3
+  tier: 4
+  biomeAgnostic: 0
   sheet: Flam
-  weight: 2
-  tint: {r: 0.62, g: 0.72, b: 1, a: 1}
-  scale: 0.95
+  weight: 1
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  scale: 1.13
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 10
-  defense: 0
-  magicDefense: 0
-  flee: 10
-  hardDefPercent: 0
-  hardMagicDefPercent: 10
-  luk: 3
-  attackType: 1
-  attack: 5
-  hit: 8
-  xpReward: 10
-  damageSpread: 0.2
-  touchRange: 3.6
-  touchInterval: 1.6
-  moveSpeed: 2.2
-  aggroRadius: 7
+  maxHealth: 96
+  defense: 6
+  magicDefense: 3
+  flee: 0
+  hardDefPercent: 15
+  hardMagicDefPercent: 0
+  luk: 4
+  attackType: 0
+  attack: 10
+  hit: 17
+  xpReward: 40
+  damageSpread: 0.25
+  touchRange: 0.9
+  touchInterval: 1
+  moveSpeed: 2
+  aggroRadius: 6
   leashRadius: 11
   stopDistance: 0.7
   wanderRadius: 3
-  preferredRange: 3.2
+  preferredRange: 0
   fleeHpFraction: 0
   element: 3
-  attackElement: 3
-  onHitAilment: 2
-  onHitAilmentChance: 0.4
-  onHitAilmentSeconds: 4
-  onHitAilmentMagnitude: 2
-  goldMin: 4
-  goldMax: 10
-  itemDropNames:
-  - Fire Scroll
-  itemDropChances:
-  - 0.2
+  attackElement: 0
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 8
+  goldMax: 24
+  itemDropNames: []
+  itemDropChances: []

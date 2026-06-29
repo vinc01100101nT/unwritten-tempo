@@ -47,9 +47,12 @@ Shader "Unwritten/GroundBlend"
             #pragma fragment frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile _ _SHADOWS_SOFT
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fog
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Lib/AdditionalLights.hlsl"
 
             TEXTURE2D(_GrassMap);
             TEXTURE2D(_DirtMap);
@@ -110,7 +113,11 @@ Shader "Unwritten/GroundBlend"
                 float3 N = normalize(IN.normalWS);
                 Light ml = GetMainLight(TransformWorldToShadowCoord(IN.positionWS));
                 half  ndl = saturate(dot(N, ml.direction));
-                half3 col = albedo * (ml.color * (ndl * ml.shadowAttenuation) + SampleSH(N));
+                half3 lighting = ml.color * (ndl * ml.shadowAttenuation) + SampleSH(N);
+                // Additional lights (lamps/torches) incl. their cast shadows — shared loop, see Lib/AdditionalLights.hlsl.
+                lighting += ApplyAdditionalLightsDiffuse(IN.positionWS, N, false);
+
+                half3 col = albedo * lighting;
 
                 col = MixFog(col, IN.fogCoord);
                 return half4(col, 1);

@@ -49,6 +49,7 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 | **Fit Portal Triggers (active scene)** | Fixes/seats portal trigger volumes in the active scene (raycast-snaps the portal pivot to ground first). | After hand-dragging portals (which can drift onto prop colliders). (`RegionBuilder.cs`) |
 | **Add Ambient Townsfolk** | Drops an `AmbientLife` director into the open scene, wires it to the `CharacterRoster` + Ground mask → wandering, chattering townsfolk at Play. *Idempotent.* | Making a map feel alive. Run in a map scene. (`AmbientLifeTools.cs`) |
 | **Add Prop Light to Selection** | Adds a warm `PropLight` (real-time point light) as a child of each selected prop, so nearby billboard sprites brighten & take its colour. *Idempotent.* | Lighting a door/torch/portal so the player glows beside it. Retint/flicker on the new child. (`PropLightTools.cs`) |
+| **Decorate Selected (Foliage)** | Rule-based, hands-off foliage scatter on the selected prop: raycasts its surface and seats Pxltgr decor (Flower*/Grass*/Fern*/Bush*/Mushroom*) as a wall-hugging garden ring + a few wall-mounted accents, seeded per object name, under an `AutoDecor` child (colliders stripped, walk-through). *Idempotent — rebuilds `AutoDecor`.* | Auto-decorating a bare Hunyuan house (no hand-placing) — the detail stripped out of the gen to keep it clean. (`MeshDecorator.cs`) |
 
 ---
 
@@ -75,10 +76,19 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 
 | Menu | What | Use when |
 |---|---|---|
+| **Import NinjaAdventure Monsters** | Bulk-creates a `MonsterDef` asset in `Resources/Monsters` for every sprite folder under `Actor/Monster` (mobs) + `Actor/Boss` (bosses), pre-tagged with a `Biome` + difficulty `tier 1–4` (mobs: 3 per biome×tier cell + the remainder as biome-agnostic commons; bosses: 1 per cell, `isBoss`). Idempotent — skips assets that already exist. *Re-runnable.* | Standing up / refreshing the biome-grouped mob roster. (`MobBiomeImporter.cs`) |
 | **Spawn Training Dummy** | Spawns an inert, click-targetable mob (10M HP, no aggro/movement, full-HP reset every 5s) so you can read your damage/DPS off its HP label. *Re-runnable.* | Measuring damage/DPS. (`TrainingDummyTool.cs`) |
 | **Clear Training Dummy** | Removes the training dummy. | Cleanup after a damage test. (`TrainingDummyTool.cs`) |
 | **Spawn Field Boss (open field map)** | Hand-places the unique boss flagged in the `MonsterCatalog` (the `isBoss` `MonsterDef`; falls back to `MobRoster.Boss` if no assets) — name+HP banner, wide aggro, 120s respawn — into the open field map (refuses to spawn in Town). | Placing a boss encounter. Run in a field/dungeon scene. (`RegionBuilder.cs`) |
 | **Create NPC from selected SpriteSheet** | Builds a simple billboard NPC with an `Interactable` (editable dialogue) from a selected sliced character sheet. | Quick-dropping a talking NPC. (`WorldTools.cs`) |
+
+---
+
+## Data (table views)
+
+| Menu | What | Use when |
+|---|---|---|
+| **Mob Table** | Spreadsheet window of every `MonsterDef` in the project — one mob per row with a live front-facing thumbnail (top-left cell of its `sheet`, tinted), and the balance stats (id/name/biome/tier/flags/HP/DEF/MDEF/ATK/HIT/FLEE/element/weight/XP/gold) editable inline. Click a column header to sort, the search box to filter, **◎** to select the asset; **Save All** writes + reloads the `MonsterCatalog`. Edits are Undo-able. | Reviewing or balancing the whole mob roster in one view. (`MobTableWindow.cs`) |
 
 ---
 
@@ -104,7 +114,9 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 
 | Menu | What | Use when |
 |---|---|---|
-| **Build From Folder…** | Bakes a Kenney-style kit (one FBX per prop, shared colormap atlas) into drop-ready prefabs (material + MeshCollider). Skips characters. *Re-runnable.* | Importing a new Kenney/FBX prop kit. (`KenneyPrefabBaker.cs`) |
+| **Build From Folder…** | Bakes an FBX prop kit (one FBX per prop, shared colormap atlas) into drop-ready prefabs (material + MeshCollider). Skips characters. *Re-runnable.* | Importing a new FBX prop kit. (`FbxKitPrefabBaker.cs`) |
+| **Import GLB Prop…** | Bakes selected `.glb` model asset(s) into drop-ready prefabs in `Prefabs/Props`: forces materials to URP/Lit (keeps the GLB's baked texture), adds a MeshCollider per mesh, normalises scale to a sensible footprint, and re-pivots to bottom-centre for ground-snap. Overwrites in place. | Dropping any single self-textured GLB prop into the world (vs the FBX-kit bakers). (`GlbPropImporter.cs`) |
+| **Decimate Selection…** | Author-time mesh decimation with a measured break-point loop: select meshes, set a **target tri count**, **Preview** swaps the live mesh (non-destructive) to judge it at the iso camera, **Apply** bakes a saved low-poly `.mesh` asset, **Revert** restores. Quadric-error (UnityMeshSimplifier) with border/UV-seam preservation; solves toward the target across correction passes. Bake, not runtime. Sweet spot = B/C/D props + finding break-points; hero S-tier still wants hand retopo. | Trimming dense TRELLIS/Hunyuan meshes to budget, or finding the real tri break-point. (`MeshDecimateWindow.cs`) |
 | **Build Fantasy Assets (Pxltgr) → Props** | One-click: slices the Pxltgr Fantasy Assets multi-object FBX into per-prop prefabs in `Prefabs/Props` (preserves each child's own material; foliage left collider-free). | (Re)building the Pxltgr prop set. (`FbxPropExtractor.cs`) |
 | **Split Multi-Object FBX…** | Asset-agnostic version of the above: pick any single FBX bundling many objects → one prefab per top-level child. | Slicing a different multi-object pack. (`FbxPropExtractor.cs`) |
 | **Fix Pxltgr Materials (URP + leaf alpha)** | Re-points extracted Pxltgr materials to URP/Lit, re-binds Base Maps by name, enables alpha-clip on leaves (fixes magenta + gray leaf quads). *Idempotent.* | After an FBX *Extract Materials* / re-import turns props magenta. (`PxltgrMaterialFixer.cs`) |
@@ -154,6 +166,8 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 | **Print Skill Ring + Soft-Cap Table** | Logs the Trio-Ring layout + the soft-cap percentage curve — pure logic, no Play mode. | Sanity-checking the skill maths. (`SkillSelfTest.cs`) |
 | **Simulate Skill Draft Walk (20 levels)** | Simulates a 20-level draft walk through the Trio-Ring/DraftService and logs it. | Verifying draft steering rules without Play. (`SkillSelfTest.cs`) |
 | **Recompile Scripts** (`Ctrl/Cmd+Shift+R`) | Forces an asset refresh + script recompilation. | Pushing a C# edit into the Editor without alt-tabbing to focus Unity. (`RecompileTool.cs`) |
+| **Verify Render Settings** | Checks critical, silently-revertible project/render settings (URP Additional Lights = Per Pixel, Additional Light Shadows on, …) against a known-good table; reports drift. *Data-driven — add an invariant as one row.* | A feature "mysteriously disappeared" (lamp shadows, etc.); sanity check before a session. (`RenderSettingsGuard.cs`) |
+| **Verify & Repair Render Settings** | Same check, then writes the correct values back to disk and saves. *Commit the changed .asset afterward so it can't revert.* | Drift was found and you want it fixed + committed. (`RenderSettingsGuard.cs`) |
 
 ---
 
@@ -175,3 +189,6 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
   **Backfill Item + Map IDs** (gives pre-existing `Item`/`MapRecipe` assets that serialized before the `id`
   field existed a stable kebab id from their display name; dedupes + warns on collisions; one-shot, delete
   after every asset has an id — `IdBackfillTool.cs`).
+  **Create Starter Dungeon Recipe** (scaffolds `Assets/DungeonRecipe.asset` — a `MapRecipe` with perimeter
+  walls + scattered boulders + mid/elite biome mobs — for Build World's dungeon template slot; one-shot,
+  delete after the recipe exists and is hand-tuned — `DungeonRecipeScaffold.cs`).

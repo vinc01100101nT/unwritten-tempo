@@ -13,42 +13,255 @@ MonoBehaviour:
   m_Name: WorldAtlas
   m_EditorClassIdentifier: Assembly-CSharp::WorldAtlas
   atlas: {fileID: 2800000, guid: ba684a03f3b6c604b961a9a944207275, type: 3}
-  cols: 6
-  rows: 4
-  minCol: 1
-  minRow: -1
-  cellPixels: 256
-  worldSize: 60
+  minX: -121
+  minY: -94
+  worldW: 915
+  worldH: 659
+  ppu: 2.2382514
   maps:
   - scene: town_0
-    col: 1
-    row: 0
+    x: 262
+    y: 146
+    w: 80
+    h: 80
     type: town
+  - scene: town_1
+    x: 316
+    y: 411
+    w: 80
+    h: 80
+    type: town
+  - scene: town_2
+    x: -105
+    y: 303
+    w: 80
+    h: 80
+    type: town
+  - scene: town_3
+    x: -121
+    y: 82
+    w: 80
+    h: 80
+    type: town
+  - scene: town_4
+    x: 352
+    y: -45
+    w: 80
+    h: 80
+    type: town
+  - scene: town_5
+    x: 655
+    y: 268
+    w: 80
+    h: 80
+    type: dungeon
+  - scene: town_6
+    x: 24
+    y: -72
+    w: 40
+    h: 40
+    type: town
+  - scene: town_7
+    x: 2
+    y: 28
+    w: 40
+    h: 40
+    type: town
+  - scene: town_8
+    x: 450
+    y: 289
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: town_9
+    x: 638
+    y: -86
+    w: 80
+    h: 80
+    type: dungeon
+  - scene: dungeon_0
+    x: 397
+    y: 268
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_1
+    x: 442
+    y: 225
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_2
+    x: 722
+    y: 219
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_3
+    x: 673
+    y: 193
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_4
+    x: 725
+    y: -94
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_5
+    x: 731
+    y: -40
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_6
+    x: 754
+    y: 13
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_7
+    x: 702
+    y: 148
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_8
+    x: 692
+    y: 95
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_9
+    x: 703
+    y: 40
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_10
+    x: 462
+    y: 509
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_11
+    x: 509
+    y: 520
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_12
+    x: 556
+    y: 525
+    w: 40
+    h: 40
+    type: dungeon
+  - scene: dungeon_13
+    x: 413
+    y: 477
+    w: 40
+    h: 40
+    type: field
   - scene: field_0
-    col: 1
-    row: 1
+    x: 462
+    y: 451
+    w: 40
+    h: 40
     type: field
   - scene: field_1
-    col: 2
-    row: 0
+    x: 415
+    y: 415
+    w: 40
+    h: 40
     type: field
   - scene: field_2
-    col: 2
-    row: 1
+    x: 335
+    y: 357
+    w: 40
+    h: 40
     type: field
   - scene: field_3
-    col: 3
-    row: 1
+    x: 399
+    y: 364
+    w: 40
+    h: 40
     type: field
   - scene: field_4
-    col: 3
-    row: 2
+    x: 467
+    y: 392
+    w: 40
+    h: 40
     type: field
-  - scene: town_1
-    col: 4
-    row: 2
-    type: town
   - scene: field_5
-    col: 6
-    row: -1
+    x: 519
+    y: 379
+    w: 40
+    h: 40
+    type: field
+  - scene: field_6
+    x: 573
+    y: 351
+    w: 40
+    h: 40
+    type: field
+  - scene: field_7
+    x: 281
+    y: 345
+    w: 40
+    h: 40
+    type: field
+  - scene: field_8
+    x: 616
+    y: 315
+    w: 40
+    h: 40
+    type: field
+  - scene: field_9
+    x: 230
+    y: 316
+    w: 40
+    h: 40
+    type: field
+  - scene: field_10
+    x: 212
+    y: 264
+    w: 40
+    h: 40
+    type: field
+  - scene: field_11
+    x: 209
+    y: 211
+    w: 40
+    h: 40
+    type: field
+  - scene: field_12
+    x: 347
+    y: 107
+    w: 40
+    h: 40
+    type: field
+  - scene: field_13
+    x: 322
+    y: 59
+    w: 40
+    h: 40
+    type: field
+  - scene: field_14
+    x: 303
+    y: 9
+    w: 40
+    h: 40
+    type: field
+  - scene: field_15
+    x: 365
+    y: 213
+    w: 40
+    h: 40
+    type: field
+  - scene: field_16
+    x: 397
+    y: 161
+    w: 40
+    h: 40
     type: field

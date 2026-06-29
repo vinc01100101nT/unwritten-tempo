@@ -7,7 +7,7 @@ using UnityEngine;
 /// <summary>
 /// Splits ONE multi-object FBX (a pack where every house/tree lives inside a single .fbx as a child
 /// mesh — e.g. the Pxltgr "Fantasy Assets" pack) into <b>individual drop-ready prefabs</b>, one per
-/// top-level child. This is the counterpart to <see cref="KenneyPrefabBaker"/>: that bakes packs that
+/// top-level child. This is the counterpart to <see cref="FbxKitPrefabBaker"/>: that bakes packs that
 /// ship one FBX per prop and share ONE colormap atlas; this one slices a single FBX whose children each
 /// carry their OWN material/texture, so it <b>preserves the imported materials</b> instead of overriding.
 ///

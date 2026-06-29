@@ -1,0 +1,1178 @@
+{
+    "version": 1,
+    "name": "dungeon_0",
+    "cellSize": 4.0,
+    "size": {
+        "x": 40.0,
+        "z": 40.0
+    },
+    "cols": 10,
+    "rows": 10,
+    "ground": [
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 0,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 1,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 1,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 1,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 1,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 2,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 2,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 2,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 3,
+            "cz": 0
+        },
+        {
+            "brush": "dirt",
+            "cx": 3,
+            "cz": 1
+        },
+        {
+            "brush": "dirt",
+            "cx": 3,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 3,
+            "cz": 3
+        },
+        {
+            "brush": "dirt",
+            "cx": 4,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 4,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 4,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 4,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 6
+        },
+        {
+            "brush": "dirt",
+            "cx": 5,
+            "cz": 7
+        },
+        {
+            "brush": "dirt",
+            "cx": 6,
+            "cz": 5
+        },
+        {
+            "brush": "dirt",
+            "cx": 8,
+            "cz": 9
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 2
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 4
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 8
+        },
+        {
+            "brush": "dirt",
+            "cx": 9,
+            "cz": 9
+        }
+    ],
+    "objects": [
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 2.0,
+            "z": 37.97600173950195,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 38.02399826049805,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 38.0,
+            "z": 2.0239999294281008,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 1.9759999513626099,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 3.500999927520752,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 4.994999885559082,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 6.550000190734863,
+            "z": 37.784000396728519,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 8.050999641418457,
+            "z": 38.215999603271487,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 9.519000053405762,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 11.005999565124512,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 12.531000137329102,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 14.008000373840332,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 15.508999824523926,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 17.003000259399415,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 18.558000564575197,
+            "z": 37.784000396728519,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 21.559999465942384,
+            "z": 38.215999603271487,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 23.02899932861328,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 24.516000747680665,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 26.041000366210939,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 27.51799964904785,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 29.018999099731447,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 30.511999130249025,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 32.06700134277344,
+            "z": 37.784000396728519,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 33.56800079345703,
+            "z": 38.215999603271487,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 35.0369987487793,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 36.52399826049805,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 3.4769999980926515,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 5.001999855041504,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 6.502999782562256,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 8.01200008392334,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 9.458999633789063,
+            "z": 2.2160000801086427,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 10.960000038146973,
+            "z": 1.784000039100647,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 12.493000030517579,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 14.008000373840332,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 15.484999656677246,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 17.01099967956543,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 18.511999130249025,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 20.020000457763673,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 21.466999053955079,
+            "z": 2.2160000801086427,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 22.968000411987306,
+            "z": 1.784000039100647,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 24.50200080871582,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 26.017000198364259,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 27.493999481201173,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 29.018999099731447,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 30.520000457763673,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 32.02899932861328,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 33.47600173950195,
+            "z": 2.2160000801086427,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 34.97700119018555,
+            "z": 1.784000039100647,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 36.5099983215332,
+            "z": 2.0,
+            "yaw": 270.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 2.0,
+            "z": 36.499000549316409,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 2.0,
+            "z": 34.9739990234375,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 2.0,
+            "z": 33.49700164794922,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 2.0,
+            "z": 31.996000289916993,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 2.0,
+            "z": 30.50200080871582,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 1.784000039100647,
+            "z": 28.94700050354004,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 2.2160000801086427,
+            "z": 27.445999145507814,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 2.0,
+            "z": 25.976999282836915,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 2.0,
+            "z": 24.490999221801759,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 2.0,
+            "z": 22.96500015258789,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 2.0,
+            "z": 21.488000869750978,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 2.0,
+            "z": 19.98699951171875,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 2.0,
+            "z": 18.493999481201173,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 1.784000039100647,
+            "z": 16.93899917602539,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 2.2160000801086427,
+            "z": 15.437999725341797,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 2.0,
+            "z": 13.968999862670899,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 2.0,
+            "z": 12.482000350952149,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 2.0,
+            "z": 10.956999778747559,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 2.0,
+            "z": 9.479999542236329,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 2.0,
+            "z": 7.979000091552734,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 2.0,
+            "z": 6.486000061035156,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 1.784000039100647,
+            "z": 4.929999828338623,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 2.2160000801086427,
+            "z": 3.428999900817871,
+            "yaw": 0.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 38.0,
+            "z": 36.51300048828125,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 38.0,
+            "z": 34.99800109863281,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 38.0,
+            "z": 33.520999908447269,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 38.0,
+            "z": 31.996000289916993,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 38.0,
+            "z": 30.4950008392334,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 38.0,
+            "z": 28.986000061035158,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 38.215999603271487,
+            "z": 27.538999557495118,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 37.784000396728519,
+            "z": 26.038000106811525,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 38.0,
+            "z": 24.5049991607666,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 38.0,
+            "z": 22.989999771118165,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 38.0,
+            "z": 21.51300048828125,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 38.0,
+            "z": 19.98699951171875,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 38.0,
+            "z": 18.486000061035158,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 38.0,
+            "z": 16.97800064086914,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 38.215999603271487,
+            "z": 15.531000137329102,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateR",
+            "x": 37.784000396728519,
+            "z": 14.029999732971192,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part1",
+            "x": 38.0,
+            "z": 12.496000289916993,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_part2",
+            "x": 38.0,
+            "z": 10.980999946594239,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower1",
+            "x": 38.0,
+            "z": 9.503999710083008,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_tower2",
+            "x": 38.0,
+            "z": 7.979000091552734,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_corner",
+            "x": 38.0,
+            "z": 6.478000164031982,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 38.0,
+            "z": 4.968999862670898,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_gateL",
+            "x": 38.215999603271487,
+            "z": 3.5220000743865969,
+            "yaw": 180.0
+        },
+        {
+            "brush": "walls",
+            "prefab": "Wall_entrance",
+            "x": 19.992000579833986,
+            "z": 38.0,
+            "yaw": 90.0
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone1_LOD0",
+            "x": 29.593000411987306,
+            "z": 12.843000411987305,
+            "yaw": 140.50599670410157
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 35.724998474121097,
+            "z": 23.934999465942384,
+            "yaw": 185.50999450683595
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock3",
+            "x": 24.224000930786134,
+            "z": 13.885000228881836,
+            "yaw": 53.87200164794922
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock3",
+            "x": 23.591999053955079,
+            "z": 25.930999755859376,
+            "yaw": 346.67999267578127
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock3",
+            "x": 14.914999961853028,
+            "z": 22.26099967956543,
+            "yaw": 331.7619934082031
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone2_LOD0",
+            "x": 6.947999954223633,
+            "z": 25.124000549316408,
+            "yaw": 20.535999298095704
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 6.168000221252441,
+            "z": 33.21799850463867,
+            "yaw": 315.51800537109377
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone2_LOD0",
+            "x": 11.920000076293946,
+            "z": 30.847000122070314,
+            "yaw": 42.09299850463867
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock3",
+            "x": 11.965999603271485,
+            "z": 8.894000053405762,
+            "yaw": 242.6699981689453
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 16.777999877929689,
+            "z": 33.77899932861328,
+            "yaw": 161.58200073242188
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock3",
+            "x": 32.61800003051758,
+            "z": 30.483999252319337,
+            "yaw": 100.88999938964844
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone2_LOD0",
+            "x": 32.74700164794922,
+            "z": 10.508999824523926,
+            "yaw": 84.27200317382813
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 26.922000885009767,
+            "z": 28.1200008392334,
+            "yaw": 174.13800048828126
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone2_LOD0",
+            "x": 6.494999885559082,
+            "z": 9.680999755859375,
+            "yaw": 132.2830047607422
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock2",
+            "x": 16.05699920654297,
+            "z": 7.7789998054504398,
+            "yaw": 246.30999755859376
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock3",
+            "x": 32.540000915527347,
+            "z": 34.24599838256836,
+            "yaw": 265.1990051269531
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone3_LOD0",
+            "x": 17.714000701904298,
+            "z": 13.720999717712403,
+            "yaw": 110.1240005493164
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone3_LOD0",
+            "x": 8.46399974822998,
+            "z": 6.124000072479248,
+            "yaw": 194.0050048828125
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock2",
+            "x": 9.442999839782715,
+            "z": 17.665000915527345,
+            "yaw": 154.72300720214845
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone1_LOD0",
+            "x": 31.312000274658204,
+            "z": 4.909999847412109,
+            "yaw": 36.255001068115237
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 16.179000854492189,
+            "z": 17.458999633789064,
+            "yaw": 184.04200744628907
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone3_LOD0",
+            "x": 11.557000160217286,
+            "z": 24.621000289916993,
+            "yaw": 336.7460021972656
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone3_LOD0",
+            "x": 23.910999298095704,
+            "z": 6.813000202178955,
+            "yaw": 41.742000579833987
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone1_LOD0",
+            "x": 27.635000228881837,
+            "z": 5.785999774932861,
+            "yaw": 52.60499954223633
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone2_LOD0",
+            "x": 31.216999053955079,
+            "z": 22.941999435424806,
+            "yaw": 54.23099899291992
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 10.942999839782715,
+            "z": 28.06599998474121,
+            "yaw": 27.250999450683595
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone1_LOD0",
+            "x": 6.541999816894531,
+            "z": 15.85200023651123,
+            "yaw": 346.5369873046875
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone2_LOD0",
+            "x": 26.93899917602539,
+            "z": 16.979000091552736,
+            "yaw": 118.30699920654297
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone2_LOD0",
+            "x": 23.388999938964845,
+            "z": 33.680999755859378,
+            "yaw": 176.08700561523438
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone3_LOD0",
+            "x": 30.2810001373291,
+            "z": 25.67099952697754,
+            "yaw": 267.4939880371094
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 34.887001037597659,
+            "z": 13.645000457763672,
+            "yaw": 250.572998046875
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 5.446000099182129,
+            "z": 5.765999794006348,
+            "yaw": 140.85899353027345
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone1_LOD0",
+            "x": 29.2450008392334,
+            "z": 33.362998962402347,
+            "yaw": 264.72900390625
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone3_LOD0",
+            "x": 17.740999221801759,
+            "z": 30.961000442504884,
+            "yaw": 111.51499938964844
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone2_LOD0",
+            "x": 9.428999900817871,
+            "z": 13.458999633789063,
+            "yaw": 155.0709991455078
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone1_LOD0",
+            "x": 27.31599998474121,
+            "z": 31.113000869750978,
+            "yaw": 337.38299560546877
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone2_LOD0",
+            "x": 14.916000366210938,
+            "z": 11.534000396728516,
+            "yaw": 312.5530090332031
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone3_LOD0",
+            "x": 17.52899932861328,
+            "z": 4.284999847412109,
+            "yaw": 30.851999282836915
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock2",
+            "x": 23.8799991607666,
+            "z": 9.484999656677246,
+            "yaw": 326.92498779296877
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock2",
+            "x": 31.569000244140626,
+            "z": 17.115999221801759,
+            "yaw": 181.08999633789063
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 33.78099822998047,
+            "z": 5.459000110626221,
+            "yaw": 227.43699645996095
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock2",
+            "x": 6.625,
+            "z": 12.456999778747559,
+            "yaw": 24.878000259399415
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone1_LOD0",
+            "x": 10.39900016784668,
+            "z": 34.584999084472659,
+            "yaw": 257.9649963378906
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 5.60099983215332,
+            "z": 27.46299934387207,
+            "yaw": 31.243999481201173
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Stone2_LOD0",
+            "x": 13.154000282287598,
+            "z": 33.641998291015628,
+            "yaw": 16.040000915527345
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock3",
+            "x": 27.55299949645996,
+            "z": 22.266000747680665,
+            "yaw": 214.91299438476563
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock1",
+            "x": 28.83799934387207,
+            "z": 9.378000259399414,
+            "yaw": 21.174999237060548
+        },
+        {
+            "brush": "boulders",
+            "prefab": "Rock2",
+            "x": 12.892000198364258,
+            "z": 17.31800079345703,
+            "yaw": 171.13800048828126
+        }
+    ]
+}

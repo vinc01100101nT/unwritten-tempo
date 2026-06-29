@@ -332,8 +332,9 @@ public class DevSettings : MonoBehaviour
         F("Shadow contact",   -2f, 2f,  () => BillboardShadow.ContactOffset, v => BillboardShadow.ContactOffset = v);
         // Slide the cast shadow left/right (perpendicular) to centre it under the feet.
         F("Shadow side",      -2f, 2f,  () => BillboardShadow.SideOffset,    v => BillboardShadow.SideOffset = v);
-        // Only the lamp nearest the player casts (one point-light cubemap), so this stays cheap.
+        // Only the N lamps nearest the player cast (one point-light cubemap each), so cost = casters.
         B("Lamp shadows",       () => NightLight.GlobalShadows,        v => NightLight.GlobalShadows = v);
+        F("Lamp shadow casters", 1f, 8f, () => NightLight.MaxShadowCasters, v => NightLight.MaxShadowCasters = Mathf.RoundToInt(v));
         F("Lamp shadow range",  4f, 30f, () => NightLight.MaxShadowDist,       v => NightLight.MaxShadowDist = v);
         F("Lamp shadow dark",   0f, 1f,  () => NightLight.GlobalShadowStrength, v => NightLight.GlobalShadowStrength = v);
         // Push the sprite's shadow-receive sample toward the sun so it clears its own cast-shadow proxy

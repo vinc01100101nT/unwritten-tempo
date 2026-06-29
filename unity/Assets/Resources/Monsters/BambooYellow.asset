@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c30ad468bdf9a6e48bfea8524ba4f873, type: 3}
+  m_Name: BambooYellow
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterDef
+  id: mob.bambooyellow
+  displayName: BambooYellow
+  isBoss: 0
+  biome: 3
+  tier: 1
+  biomeAgnostic: 0
+  sheet: BambooYellow
+  weight: 3
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  scale: 0.92
+  flash: {r: 1, g: 1, b: 1, a: 1}
+  maxHealth: 14
+  defense: 0
+  magicDefense: 0
+  flee: 0
+  hardDefPercent: 0
+  hardMagicDefPercent: 0
+  luk: 1
+  attackType: 0
+  attack: 3
+  hit: 8
+  xpReward: 5
+  damageSpread: 0.25
+  touchRange: 0.9
+  touchInterval: 1
+  moveSpeed: 2.3000002
+  aggroRadius: 6
+  leashRadius: 11
+  stopDistance: 0.7
+  wanderRadius: 3
+  preferredRange: 0
+  fleeHpFraction: 0
+  element: 3
+  attackElement: 0
+  onHitAilment: 0
+  onHitAilmentChance: 0
+  onHitAilmentSeconds: 0
+  onHitAilmentMagnitude: 0
+  goldMin: 2
+  goldMax: 6
+  itemDropNames: []
+  itemDropChances: []

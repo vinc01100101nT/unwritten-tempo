@@ -9,7 +9,7 @@ using UnityEngine;
 ///
 /// The same network feeds three things, which is the whole point of computing it once:
 /// <list type="bullet">
-/// <item><b>Ground</b> — <see cref="PxltgrGroundBlend"/> bakes per-vertex distance-to-nearest-segment into the
+/// <item><b>Ground</b> — <see cref="GroundBlendBuilder"/> bakes per-vertex distance-to-nearest-segment into the
 /// mesh's vertex red channel (the feathered path weight the GroundBlend shader paints the path tile with).</item>
 /// <item><b>Placement</b> — StreetRows / Roadside walk the main route (<see cref="Walk"/>) and offset props
 /// perpendicular to it, so houses/carts curve to line the road.</item>

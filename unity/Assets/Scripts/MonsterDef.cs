@@ -21,6 +21,16 @@ public class MonsterDef : ScriptableObject
     [Tooltip("A field boss / MVP: excluded from the weighted field spawn; placed deliberately (Spawn Field Boss).")]
     public bool isBoss = false;
 
+    [Header("Biome & tier (spawn grouping)")]
+    [Tooltip("Which biome this mob belongs to. The map generator spawns a map's mobs from its recipe Biome. " +
+             "Ignored when Biome Agnostic is on.")]
+    public Biome biome = Biome.Grassland;
+    [Range(1, 4), Tooltip("Difficulty tier within the biome: 1 (weakest) … 4 (elite / mini-boss).")]
+    public int tier = 1;
+    [Tooltip("Biome-agnostic 'common' filler (rat/bat/slime): eligible in ANY biome's tier band, so the Biome " +
+             "field above is ignored. Use for the universal trash-mob layer.")]
+    public bool biomeAgnostic = false;
+
     [Header("Art")]
     [Tooltip("Sprite-sheet folder under Assets/Art/NinjaAdventure/Actor/Monster (e.g. 'Slime').")]
     public string sheet = "";

@@ -12,7 +12,7 @@ using UnityEngine.SceneManagement;
 ///
 /// It is a thin orchestrator over the existing, battle-tested building blocks:
 /// <list type="bullet">
-/// <item>Ground: <see cref="PxltgrGround"/> / <see cref="PxltgrGroundBlend"/> (tiled or blended grass→dirt).</item>
+/// <item>Ground: <see cref="WalkableGround"/> / <see cref="GroundBlendBuilder"/> (tiled or blended grass→dirt).</item>
 /// <item>Prop seating: <see cref="PropPlacement"/> (bounds-driven PlaceOnGround / StripColliders).</item>
 /// <item>Spawns &amp; portals: <see cref="RegionBuilder"/> (MakeSpawn). Warp wiring is <see cref="WorldCreator"/>'s job.</item>
 /// <item>Mobs: <see cref="Build25DSpike.BuildMonster(in MonsterArchetype, Vector3)"/> + <see cref="MobRoster"/>.</item>
@@ -127,7 +127,7 @@ public static class RecipeGenerator
         // Ground = one blended mesh; the biome chooses its base/patch textures + hue, the recipe can add a tint on top
         // and opt into hard (un-feathered) edges. Grassland + white groundTint + Blended reproduces the original look.
         var bio = BiomeOf(r.biome);
-        var ground = PxltgrGroundBlend.LayPlot(scene, $"Ground_{safe}", center, r.sizeX, r.sizeZ, groundLayer, seed,
+        var ground = GroundBlendBuilder.LayPlot(scene, $"Ground_{safe}", center, r.sizeX, r.sizeZ, groundLayer, seed,
                                                paths, r.pathWidth, PathTexName(r.pathTile), r.dirtAmount, 0.8f,
                                                bio.baseTex, bio.patchTex, bio.tint * r.groundTint,
                                                r.groundStyle == GroundStyle.HardEdge);
@@ -168,7 +168,7 @@ public static class RecipeGenerator
                 if (m == null) continue;
                 var child = new GameObject(string.IsNullOrEmpty(m.label) ? "MobGroup" : m.label);
                 child.transform.SetParent(mobsRoot.transform, false);
-                mobs += PlaceMobs(m, child.transform, center, r.sizeX, r.sizeZ, mask, spawnPos);
+                mobs += PlaceMobs(m, child.transform, center, r.sizeX, r.sizeZ, mask, spawnPos, r.biome);
             }
 
         // ── SPAWN + AMBIENCE ─────────────────────────────────────────────────────────────────────────────
@@ -507,7 +507,7 @@ public static class RecipeGenerator
 
     // ── MOB PLACEMENT ────────────────────────────────────────────────────────────────────────────────────
     static int PlaceMobs(RecipeMobGroup m, Transform parent, Vector3 center, float sizeX, float sizeZ,
-                         int mask, Vector3 spawn)
+                         int mask, Vector3 spawn, Biome biome)
     {
         if (Build25DSpike.MonsterSheet() == null)
         { Debug.LogWarning("[unwritten] No Ninja Adventure monster sheet found; mob group skipped."); return 0; }
@@ -530,7 +530,8 @@ public static class RecipeGenerator
             foreach (var s in spots) if ((s - hit.point).sqrMagnitude < m.minSpacing * m.minSpacing) { tooClose = true; break; }
             if (tooClose) continue;
 
-            var mob = Build25DSpike.BuildMonster(ResolveArchetype(m.archetypeName), hit.point);
+            var mob = Build25DSpike.BuildMonster(
+                ResolveArchetype(m.archetypeName, biome, m.minTier, m.maxTier, m.includeCommons), hit.point);
             mob.transform.SetParent(parent, true);
             spots.Add(hit.point);
             placed++;
@@ -540,14 +541,18 @@ public static class RecipeGenerator
 
     // Prefer the data-driven MonsterCatalog (Resources/Monsters assets, referenced by stable id or display
     // name); fall back to the legacy MobRoster seed list when the migration hasn't been run yet (catalog empty).
-    static MonsterArchetype ResolveArchetype(string name)
+    static MonsterArchetype ResolveArchetype(string name, Biome biome, int minTier, int maxTier, bool includeCommons)
     {
         bool haveAssets = MonsterCatalog.Count > 0;
         string n = name?.Trim();
 
         if (string.IsNullOrWhiteSpace(n))
         {
-            if (haveAssets) { var p = MonsterCatalog.WeightedPick(); if (p != null) return p.ToArchetype(); }
+            if (haveAssets)
+            {
+                var p = MonsterCatalog.WeightedPick(biome, minTier, maxTier, includeCommons);
+                if (p != null) return p.ToArchetype();
+            }
             return MobRoster.WeightedPick();
         }
         if (string.Equals(n, "Boss", System.StringComparison.OrdinalIgnoreCase))
@@ -626,7 +631,7 @@ public static class RecipeGenerator
         int cols = Mathf.Max(1, Mathf.RoundToInt(r.sizeX / cellSize));
         int rows = Mathf.Max(1, Mathf.RoundToInt(r.sizeZ / cellSize));
 
-        var sampler = PxltgrGroundBlend.MakeProceduralSampler(seed, r.dirtAmount, paths, r.pathWidth,
+        var sampler = GroundBlendBuilder.MakeProceduralSampler(seed, r.dirtAmount, paths, r.pathWidth,
                                                               r.groundStyle == GroundStyle.HardEdge);
         var ground = MapSidecar.RasterizeGround(sampler, center, r.sizeX, r.sizeZ, cellSize, cols, rows,
                                                 PainterRoadBrush(r.pathTile));
