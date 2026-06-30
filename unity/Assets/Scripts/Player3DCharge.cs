@@ -16,7 +16,7 @@ using UnityEngine.InputSystem;
 /// </summary>
 [RequireComponent(typeof(Player3DController))]
 [RequireComponent(typeof(Player3DAttacker))]
-public class Player3DCharge : MonoBehaviour, IHotbarSkill
+public class Player3DCharge : MonoBehaviour, IHotbarSkill, IModifiableSkill
 {
     [Tooltip("Hotbar icon (Skill Icon pack). Optional — the bar falls back to the text label if unset.")]
     public Sprite icon;
@@ -48,9 +48,19 @@ public class Player3DCharge : MonoBehaviour, IHotbarSkill
 
     float nextUse;
     float lastDuration;        // the cooldown actually applied last use (for the hotbar's sweep fraction)
+    int castCount;             // for the Proc-phase "every Nth cast is free" modifier
     Camera cam;
     Player3DController controller;
     Player3DAttacker attacker;
+    SkillModLoadout loadout;   // this skill's six-phase modifier loadout (lazily registered, born with one)
+
+    // Charge's modifier-eligibility identity (Charter §12): a melee, physical, single-target attack — the same
+    // pool Bash draws from, so it can roll reach/cleave/element/lifesteal/knockback etc.
+    const string SkillId = "charge";
+    static readonly string[] Tags = { SkillTag.Melee, SkillTag.Physical, SkillTag.Offense, SkillTag.SingleTarget };
+
+    public string SkillModId => SkillId;
+    public string[] SkillModTags => Tags;
 
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
 
@@ -60,12 +70,16 @@ public class Player3DCharge : MonoBehaviour, IHotbarSkill
         attacker = GetComponent<Player3DAttacker>();
     }
 
+    void EnsureRegistered()
+    {
+        if (loadout != null || Character.Instance == null) return;
+        loadout = Character.Instance.SkillMods.Register(SkillId, Tags);
+    }
+
     void Update()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
-        if (DevSettings.Blocking) return;
-        if (!Pressed() || PointerOverUI()) return;
-        Activate();
+        EnsureRegistered();   // keeps the loadout registered; triggering is via the hotbar binding (HotbarInput)
     }
 
     /// <summary>Fire Charge now — shared by the keypress and the HUD hotbar click. Returns true only if
@@ -76,9 +90,14 @@ public class Player3DCharge : MonoBehaviour, IHotbarSkill
         if (Time.time < nextUse || controller.Dashing) return false;   // off cooldown + not already charging
         if (cam == null) cam = Camera.main;
 
-        var target = Player3DController.MonsterUnderCursor(cam) ?? Nearest(acquireRange);
+        EnsureRegistered();
+        var ctx = SkillContext.Default(damageMult, fxScale, staggerSecs);
+        loadout?.ApplyAll(ref ctx);                       // fold this skill's modifiers into the cast
+        float effRange = acquireRange * ctx.RangeMult;
+
+        var target = Player3DController.MonsterUnderCursor(cam) ?? Nearest(effRange);
         if (target == null) return false;
-        if (PlanarDist(transform.position, target.transform.position) > acquireRange) return false;
+        if (PlanarDist(transform.position, target.transform.position) > effRange) return false;
 
         if (!Character.Instance.SpendMana(manaCost))
         {
@@ -88,12 +107,15 @@ public class Player3DCharge : MonoBehaviour, IHotbarSkill
             return false;
         }
 
-        nextUse = Time.time + cooldown; lastDuration = cooldown;
+        castCount++;
+        bool free = ctx.EveryNthFree > 0 && castCount % ctx.EveryNthFree == 0;   // Proc: every Nth cast skips cooldown
+        lastDuration = free ? 0f : cooldown * ctx.CooldownMult;
+        nextUse = Time.time + lastDuration;
         Sfx.Play(chargeSfx);
 
         var t = target;   // capture for the on-arrive strike
         controller.BeginDash(t.transform, dashSpeed, dashMaxTime, arriveRange,
-            () => attacker.Strike(t, damageMult, fxScale, null, hitSfx, staggerSecs));
+            () => attacker.Strike(t, ctx, null, hitSfx));   // shaped strike: element/cleave/stagger/knockback/lifesteal etc.
         return true;
     }
 
@@ -107,7 +129,6 @@ public class Player3DCharge : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => new Color(1f, 0.75f, 0.4f);   // gap-closer amber
-    public bool InClass(PlayerClass c) => c == PlayerClass.Swordsman;
 
     // Nearest living mob within radius — via the MonsterAI3D registry (cached .Health, squared distance),
     // the perf-correct target scan (NOT a fixed-buffer OverlapSphere, which drops mobs in dense scenes).

@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.leather-vest
   displayName: Leather Vest
-  icon: {fileID: -2757887451555568444, guid: c6f5be1754b7b604a998a04fd37fd14c, type: 3}
+  icon: {fileID: 0}
   slot: 2
+  weaponType: 0
   rarity: 1
   category: 0
   cardSlots: 1

@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.boots
   displayName: Boots
-  icon: {fileID: -2241300882062069919, guid: 5865a4bc2158c594f91fe4497645f398, type: 3}
+  icon: {fileID: 0}
   slot: 5
+  weaponType: 0
   rarity: 0
   category: 0
   cardSlots: 0

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid Cropper — slice a contact sheet into per-cell PNGs</title>
+<style>
+  :root { --bg:#1b1b1f; --panel:#26262c; --ink:#e8e6df; --gold:#d9b25a; --line:#3a3a42; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 system-ui,sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:14px 20px; border-bottom:1px solid var(--line); }
+  header h1 { margin:0; font-size:16px; color:var(--gold); }
+  header p { margin:4px 0 0; opacity:.7; font-size:12px; }
+  main { display:flex; gap:20px; padding:20px; flex-wrap:wrap; }
+  .controls { width:300px; flex:0 0 300px; display:flex; flex-direction:column; gap:14px; }
+  .stage { flex:1; min-width:360px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  label { display:block; font-size:12px; opacity:.85; margin-bottom:4px; }
+  .row { display:flex; gap:10px; }
+  .row > div { flex:1; }
+  input[type=number] { width:100%; padding:7px 8px; background:#15151a; border:1px solid var(--line); border-radius:6px; color:var(--ink); }
+  input[type=range] { width:100%; }
+  button { width:100%; padding:10px; background:var(--gold); color:#1b1b1f; border:0; border-radius:8px; font-weight:600; cursor:pointer; margin-top:6px; }
+  button.ghost { background:transparent; color:var(--ink); border:1px solid var(--line); }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  #drop { border:2px dashed var(--line); border-radius:10px; padding:30px; text-align:center; opacity:.8; cursor:pointer; }
+  #drop.over { border-color:var(--gold); opacity:1; }
+  #canvasWrap { position:relative; display:inline-block; max-width:100%; }
+  canvas { max-width:100%; height:auto; display:block; border:1px solid var(--line); border-radius:8px; }
+  .hint { font-size:11px; opacity:.6; }
+  .stat { font-size:12px; opacity:.8; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Grid Cropper</h1>
+  <p>Slice a contact sheet (e.g. an 8-up concept grid) into one transparent-trim PNG per cell. Local only — nothing leaves your machine.</p>
+</header>
+<main>
+  <div class="controls">
+    <div class="panel">
+      <div id="drop">Drop image here<br><span class="hint">or click to pick · or paste (Ctrl+V)</span>
+        <input id="file" type="file" accept="image/*" hidden>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="row">
+        <div><label>Columns</label><input id="cols" type="number" min="1" value="4"></div>
+        <div><label>Rows</label><input id="rows" type="number" min="1" value="2"></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div><label>Outer margin X (px)</label><input id="mx" type="number" min="0" value="0"></div>
+        <div><label>Outer margin Y (px)</label><input id="my" type="number" min="0" value="0"></div>
+      </div>
+      <div style="margin-top:10px">
+        <label>Inner trim per cell: <span id="inPad">8</span>%</label>
+        <input id="inset" type="range" min="0" max="40" value="8">
+        <div class="hint">Shaves cell edges so neighbours don't bleed in.</div>
+      </div>
+      <div style="margin-top:10px">
+        <label><input id="autotrim" type="checkbox" checked> Auto-trim background to transparent</label>
+        <label>BG tolerance: <span id="tolV">28</span></label>
+        <input id="tol" type="range" min="0" max="120" value="28">
+        <div class="hint">Samples the corner colour of each cell and knocks it out. Turn off for solid-bg sheets you want to keep.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <button id="exportAll" disabled>Download all cells (.zip)</button>
+      <button id="exportEach" class="ghost" disabled>Download each separately</button>
+      <div class="stat" id="stat" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="stage panel">
+    <div id="canvasWrap"><canvas id="cv"></canvas></div>
+    <div class="hint" style="margin-top:8px">Gold lines = cut grid · dashed = inner trim region.</div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+let img = null;
+
+const opts = () => ({
+  cols:+$('cols').value|0 || 1, rows:+$('rows').value|0 || 1,
+  mx:+$('mx').value||0, my:+$('my').value||0,
+  inset:+$('inset').value/100, autotrim:$('autotrim').checked, tol:+$('tol').value
+});
+
+function loadImg(src){
+  const i = new Image();
+  i.onload = () => { img=i; redraw(); $('exportAll').disabled=$('exportEach').disabled=false;
+    $('stat').textContent = `${i.naturalWidth}×${i.naturalHeight}px source`; };
+  i.src = src;
+}
+
+// ---- input wiring ----
+const drop = $('drop');
+drop.onclick = () => $('file').click();
+$('file').onchange = e => { const f=e.target.files[0]; if(f) fileToImg(f); };
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f) fileToImg(f); });
+window.addEventListener('paste',e=>{ for(const it of e.clipboardData.items){ if(it.type.startsWith('image/')) fileToImg(it.getAsFile()); }});
+function fileToImg(f){ const r=new FileReader(); r.onload=()=>loadImg(r.result); r.readAsDataURL(f); }
+
+['cols','rows','mx','my','inset','tol','autotrim'].forEach(id=>$(id).addEventListener('input',()=>{
+  $('inPad').textContent=$('inset').value; $('tolV').textContent=$('tol').value; redraw();
+}));
+
+// ---- geometry ----
+function cellRect(o,c,r){
+  const gw=img.naturalWidth-2*o.mx, gh=img.naturalHeight-2*o.my;
+  const cw=gw/o.cols, ch=gh/o.rows;
+  const x=o.mx+c*cw, y=o.my+r*ch;
+  const ix=cw*o.inset, iy=ch*o.inset;
+  return { x:x+ix, y:y+iy, w:cw-2*ix, h:ch-2*iy };
+}
+
+function redraw(){
+  if(!img) return;
+  cv.width=img.naturalWidth; cv.height=img.naturalHeight;
+  ctx.drawImage(img,0,0);
+  const o=opts();
+  ctx.lineWidth=Math.max(1,img.naturalWidth/600);
+  for(let r=0;r<o.rows;r++) for(let c=0;c<o.cols;c++){
+    const R=cellRect(o,c,r);
+    ctx.strokeStyle='#d9b25a'; ctx.setLineDash([]);
+    const gw=(img.naturalWidth-2*o.mx)/o.cols, gh=(img.naturalHeight-2*o.my)/o.rows;
+    ctx.strokeRect(o.mx+c*gw,o.my+r*gh,gw,gh);
+    ctx.strokeStyle='rgba(217,178,90,.5)'; ctx.setLineDash([6,6]);
+    ctx.strokeRect(R.x,R.y,R.w,R.h);
+  }
+  ctx.setLineDash([]);
+}
+
+// ---- extraction ----
+function extractCell(o,c,r){
+  const R=cellRect(o,c,r);
+  const w=Math.round(R.w), h=Math.round(R.h);
+  const tmp=document.createElement('canvas'); tmp.width=w; tmp.height=h;
+  const tc=tmp.getContext('2d');
+  tc.drawImage(img, Math.round(R.x),Math.round(R.y),w,h, 0,0,w,h);
+  if(o.autotrim){
+    const d=tc.getImageData(0,0,w,h), p=d.data;
+    // sample 4 corners as bg refs
+    const refs=[[0,0],[w-1,0],[0,h-1],[w-1,h-1]].map(([x,y])=>{const i=(y*w+x)*4;return[p[i],p[i+1],p[i+2]];});
+    for(let i=0;i<p.length;i+=4){
+      for(const ref of refs){
+        const dist=Math.abs(p[i]-ref[0])+Math.abs(p[i+1]-ref[1])+Math.abs(p[i+2]-ref[2]);
+        if(dist<=o.tol){ p[i+3]=0; break; }
+      }
+    }
+    tc.putImageData(d,0,0);
+  }
+  return tmp;
+}
+
+function cells(){
+  const o=opts(), out=[];
+  for(let r=0;r<o.rows;r++) for(let c=0;c<o.cols;c++)
+    out.push({name:`cell_r${r+1}_c${c+1}.png`, canvas:extractCell(o,c,r)});
+  return out;
+}
+const toBlob = cv => new Promise(res=>cv.toBlob(res,'image/png'));
+
+$('exportEach').onclick = async () => {
+  for(const {name,canvas} of cells()){
+    const a=document.createElement('a'); a.download=name;
+    a.href=URL.createObjectURL(await toBlob(canvas)); a.click();
+    await new Promise(r=>setTimeout(r,120));
+  }
+};
+$('exportAll').onclick = async () => {
+  const zip=new JSZip();
+  for(const {name,canvas} of cells()) zip.file(name, await toBlob(canvas));
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a'); a.download='cells.zip'; a.href=URL.createObjectURL(blob); a.click();
+};
+</script>
+</body>
+</html>

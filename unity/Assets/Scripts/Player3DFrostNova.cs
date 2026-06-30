@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 /// Implements <see cref="IHotbarSkill"/>. Collects in-range mobs FIRST, then hits them — so a kill removing
 /// a mob from <see cref="MonsterAI3D.Active"/> mid-loop can't make us skip the next one.
 /// </summary>
-public class Player3DFrostNova : MonoBehaviour, IHotbarSkill
+public class Player3DFrostNova : MonoBehaviour, IHotbarSkill, IModifiableSkill
 {
     [Tooltip("Hotbar icon (Skill Icon pack). Optional — the bar falls back to the text label if unset.")]
     public Sprite icon;
@@ -38,16 +38,30 @@ public class Player3DFrostNova : MonoBehaviour, IHotbarSkill
     public SfxSet failSfx;
 
     float nextUse, lastDuration;
+    int castCount;             // for the Proc-phase "every Nth cast is free" modifier
+    SkillModLoadout loadout;   // six-phase modifier loadout (lazily registered, born with one)
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
     static readonly Color FrostColor = new Color(0.6f, 0.85f, 1f);
     static readonly List<MonsterAI3D> targets = new List<MonsterAI3D>();
 
+    // Frost Nova's modifier-eligibility identity (Charter §12): a magic, offensive AoE — draws the magic-offense
+    // pool (cooldown/amp/element/stagger/slow/lifesteal/proc); the melee-only mods are filtered out.
+    const string SkillId = "frost_nova";
+    static readonly string[] Tags = { SkillTag.Magic, SkillTag.Offense, SkillTag.Aoe };
+
+    public string SkillModId => SkillId;
+    public string[] SkillModTags => Tags;
+
+    void EnsureRegistered()
+    {
+        if (loadout != null || Character.Instance == null) return;
+        loadout = Character.Instance.SkillMods.Register(SkillId, Tags);
+    }
+
     void Update()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
-        if (DevSettings.Blocking) return;
-        if (!Pressed() || PointerOverUI()) return;
-        Activate();
+        EnsureRegistered();   // keeps the loadout registered; triggering is via the hotbar binding (HotbarInput)
     }
 
     public bool Activate()
@@ -65,14 +79,25 @@ public class Player3DFrostNova : MonoBehaviour, IHotbarSkill
             return false;
         }
 
-        lastDuration = cooldown;
-        nextUse = Time.time + cooldown;
+        EnsureRegistered();
+        var ctx = SkillContext.Default(damageMult, 1f, 0f);
+        loadout?.ApplyAll(ref ctx);                       // fold this skill's modifiers into the cast
+
+        castCount++;
+        bool free = ctx.EveryNthFree > 0 && castCount % ctx.EveryNthFree == 0;   // Proc: every Nth cast skips cooldown
+        lastDuration = free ? 0f : cooldown * ctx.CooldownMult;
+        nextUse = Time.time + lastDuration;
         Sfx.Play(castSfx);
         DamagePopup.SpawnText(transform.position + Vector3.up * 0.6f, "Frost Nova", FrostColor);
         SlashEffect.Spawn(burstSheet, burstFrameSize, burstFrames, burstFps, transform.position + Vector3.up * 0.2f, burstScale);
 
         Vector3 me = transform.position;
-        float r2 = radius * radius;
+        float effRadius = radius * ctx.RangeMult;
+        float r2 = effRadius * effRadius;
+        Element element = ctx.ConvertElement ? ctx.NewElement : Element.Water;
+        float chillFactor = Mathf.Min(slowFactor, ctx.SlowFactor);   // the deeper chill of the skill or a slow mod
+        float chillSecs = Mathf.Max(slowSeconds, ctx.SlowSecs);
+        int totalDealt = 0;
         targets.Clear();
         var list = MonsterAI3D.Active;
         for (int i = 0; i < list.Count; i++)
@@ -89,10 +114,14 @@ public class Player3DFrostNova : MonoBehaviour, IHotbarSkill
         {
             var ai = targets[i];
             if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
-            int power = Mathf.RoundToInt(Character.Instance.RollMagicDamage(out bool crit) * damageMult);
-            ai.Health.TakeMagicDamage(power, crit, Element.Water);
-            ai.Slow(slowFactor, slowSeconds);
+            int power = Mathf.RoundToInt(Character.Instance.RollMagicDamage(out bool crit) * Mathf.Max(1f, ctx.DamageMult));
+            totalDealt += ai.Health.TakeMagicDamage(power, crit, element);
+            ai.Slow(chillFactor, chillSecs);
+            if (ctx.StaggerSecs > 0f) ai.Stagger(ctx.StaggerSecs);   // concussive
+            if (ctx.RootSecs > 0f) ai.Slow(0f, ctx.RootSecs);        // (offense-tagged root, if it ever applies)
         }
+        if (ctx.LifestealFracDealt > 0f && totalDealt > 0)
+            Character.Instance.LeechHeal(Mathf.RoundToInt(totalDealt * ctx.LifestealFracDealt));
         return true;
     }
 
@@ -106,7 +135,6 @@ public class Player3DFrostNova : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => FrostColor;
-    public bool InClass(PlayerClass c) => c == PlayerClass.Mage;
 
     static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 

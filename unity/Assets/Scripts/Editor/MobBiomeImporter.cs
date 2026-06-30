@@ -58,7 +58,7 @@ public static class MobBiomeImporter
         {
             bool common = i >= slotted;
             Biome biome; int tier;
-            if (common) { biome = Biome.Grassland; tier = 1; }
+            if (common) { biome = Biome.None; tier = 1; }
             else        { biome = Biomes[i % Biomes.Length]; tier = (i / Biomes.Length) % 4 + 1; }
 
             if (CreateDef(mobFolders[i], isBoss: false, biome, tier, common, sb)) made++; else skipped++;
@@ -123,7 +123,6 @@ public static class MobBiomeImporter
         def.isBoss = isBoss;
         def.biome = biome;
         def.tier = tier;
-        def.biomeAgnostic = common;
 
         ApplyStats(def, isBoss, tier, common, biome);
 

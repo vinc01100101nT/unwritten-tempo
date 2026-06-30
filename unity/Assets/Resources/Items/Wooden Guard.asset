@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.wooden-guard
   displayName: Wooden Guard
-  icon: {fileID: -7809785511404226330, guid: 4a6c997ee6699414da629ee459545ea7, type: 3}
+  icon: {fileID: 0}
   slot: 4
+  weaponType: 0
   rarity: 0
   category: 0
   cardSlots: 0

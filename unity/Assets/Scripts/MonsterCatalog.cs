@@ -82,13 +82,14 @@ public static class MonsterCatalog
     }
 
     /// <summary>Is this mob a field-spawnable candidate for a given biome + tier band? Biome-agnostic
-    /// commons match any biome (when <paramref name="includeCommons"/>); everyone else must match
-    /// <paramref name="biome"/> exactly. Bosses and zero-weight mobs are never field candidates.</summary>
+    /// commons (<see cref="Biome.None"/>) match any biome (when <paramref name="includeCommons"/>);
+    /// everyone else must match <paramref name="biome"/> exactly. Bosses and zero-weight mobs are never
+    /// field candidates.</summary>
     static bool Eligible(MonsterDef m, Biome biome, int minTier, int maxTier, bool includeCommons)
     {
         if (m == null || m.isBoss || m.weight <= 0) return false;
         if (m.tier < minTier || m.tier > maxTier) return false;
-        return m.biomeAgnostic ? includeCommons : m.biome == biome;
+        return m.biome == Biome.None ? includeCommons : m.biome == biome;
     }
 
     /// <summary>Weighted pick among the non-boss mobs that match <paramref name="biome"/> within the

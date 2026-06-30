@@ -234,13 +234,14 @@ public partial class Player3DController : MonoBehaviour
         if (GetComponent<Player3DGuard>() == null) gameObject.AddComponent<Player3DGuard>();
         if (GetComponent<Player3DWarcry>() == null) gameObject.AddComponent<Player3DWarcry>();
 
-        // Mage kit (class #2). Both kits live on the player; ApplyClass enables only the chosen one's
-        // skills (a baked player already has these with FX/icons; self-bootstrap adds them asset-less).
+        // The rest of the universal active-skill pool (class-agnostic — every active lives on the player and
+        // stays enabled; which ones the player has UNLOCKED and BOUND to the hotbar is the progression layer,
+        // not a class gate). A baked player already has these with FX/icons; self-bootstrap adds them asset-less.
+        if (GetComponent<Player3DCaster>()    == null) gameObject.AddComponent<Player3DCaster>();
         if (GetComponent<Player3DFireball>()  == null) gameObject.AddComponent<Player3DFireball>();
         if (GetComponent<Player3DFrostNova>() == null) gameObject.AddComponent<Player3DFrostNova>();
         if (GetComponent<Player3DMeteor>()    == null) gameObject.AddComponent<Player3DMeteor>();
-
-        ApplyClass(ClassState.Current);
+        if (GetComponent<Player3DSoulStrike>()== null) gameObject.AddComponent<Player3DSoulStrike>();
     }
 
     // Subscribe to player damage for the hit-flinch animation (mirrors PlayerHurtFlash, which only
@@ -281,19 +282,6 @@ public partial class Player3DController : MonoBehaviour
         breathe = false;   // the idle clip conveys life; skip the procedural squash so they don't fight
         if (idleClips[0].Length > 0) sr.sprite = idleClips[0][0];   // sensible frame before the first Update
     }
-
-    /// <summary>Enable only the active-skill components belonging to class <paramref name="c"/> (universal
-    /// skills stay on); disable the rest, then ask the hotbar to rebuild. This IS the class identity layer.</summary>
-    public void ApplyClass(PlayerClass c)
-    {
-        var skills = GetComponents<IHotbarSkill>();
-        for (int i = 0; i < skills.Length; i++)
-            if (skills[i] is MonoBehaviour mb) mb.enabled = skills[i].InClass(c);
-        HotbarPanel.RebuildRequested?.Invoke();   // null until the HUD exists — it builds correctly on its own then
-    }
-
-    /// <summary>Switch class at runtime (persists + re-applies). Used by the DevSettings (P) panel.</summary>
-    public void SetClass(PlayerClass c) { ClassState.Current = c; ApplyClass(c); if (Character.Instance != null) Character.Instance.ReconcileVitals(); }
 
     /// <summary>Push the serialized capsule fields onto the CharacterController. Called in Awake so the
     /// tuned (short) capsule is enforced on every player — even one built before this — and re-applies

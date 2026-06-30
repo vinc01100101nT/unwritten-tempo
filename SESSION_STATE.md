@@ -1,44 +1,31 @@
 # SESSION_STATE — resume here (keep SHORT; git holds history)
 
-*branch* `feature/map-sidecar-and-biome-html` *· dials: **Opus 4.8 always** + assess EFFORT only*
+*dials: **Opus 4.8 always** + assess EFFORT only*
 
 ## Protocols
 - Effort dial: auto-GO Low/Medium; PAUSE >Medium until user sets dial + GO. Tag every reply `**EFFORT: X**` first line.
-- No Play mode without being asked. Prefer `Tools ▸ unwritten` editor tools; update `Editor/TOOLS.md` when adding menu items.
-- Unity edits at `unity/Assets/Scripts/`. Read `PERFORMANCE.md` before runtime C#.
+- No Play mode without being asked — the USER play-tests. Editor self-tests (no Play) are fine unprompted.
+- Unity edits at `unity/Assets/Scripts/`. Read `PERFORMANCE.md` before runtime C#. Prefer `Tools ▸ unwritten` editor tools; update `Editor/TOOLS.md` when adding menu items.
+- ⚠️ Unity MCP was NOT connected last session — couldn't compile-check from here; user recompiled (`Ctrl+Shift+R`) and confirmed CLEAN.
 
-## Current task — Generated maps editable (sidecar) + biome in World Creator HTML (DONE; compiled clean, 0 errors)
-Workflow goal: World Creator owns generation (fields auto), Map Painter owns hand-edits. Generic maps fully auto;
-edit one by importing its sidecar into the painter. Towns still painted from scratch.
+## NEXT TASK — author the REAL skill sets (content)
+The §12 modifier ENGINE is built + proven (see below). Next = design + author the actual base-skill roster and the full modifier pool per class, against the proven pipeline. Open the **Active Skill Design Charter** doc `q17c22jpppnztax6q9ppndmfds89n0x5` (§13 = build status, §8 phases, §2/§6 anti-stale rules) before authoring. Run each skill through the §6 litmus + §2 non-damage-verb rule.
 
-### Feature 1 — Map Painter sidecar on every bake (round-trip)
-Every `RecipeGenerator.Generate` (and so World Creator **Build World**) writes `tools/map-painter/exports/<name>.map.json`
-(outside Assets/). Open via painter **Import map…** → edit → re-bake with `MapPainterImporter`.
-- NEW `Editor/MapSidecar.cs` — schema DTOs; `ObjectFromWorld` inverts importer transforms (`painterX=worldX+sizeX/2`,
-  `painterZ=sizeZ/2−worldZ`, `yaw=worldYaw−forwardOffset`); `RasterizeGround` samples a `GroundSampler` per painter
-  cell (inverts cz flip), dominant channel→brush, grass omitted.
-- `Editor/PxltgrGroundBlend.cs` — extracted `MakeProceduralSampler(seed,dirtAmount,paths,pathWidth,hardEdge)`; `LayPlot`
-  now just calls it → sidecar ground == baked ground exactly.
-- `Editor/RecipeGenerator.cs` — captures every placed prop (incl. wall pieces; reserved "wall"→"wall_pieces" so they
-  re-import as exact objects not autotiled) into `_sidecarObjects`; `WriteSidecar` after save. `BrushAndOffset` maps a
-  group→painter brush id + palette `forwardOffset`.
-- Lossy-by-design (painter limits, intended): no per-instance scale (re-import seats at palette `defaultScale` → flower/
-  plant scale-jitter stays randomized by the generator, NOT in the data layer — user confirmed), no mob/biome layer.
+## DONE this session — Active-skill MODIFIER system (Charter §12) BUILT + COMPILED CLEAN
+Random per-phase skill modifiers ("the dice") complementing the deterministic Trio-Ring affix draft ("the wheel"). Vertical slice proven on 2 skills + persistence + UI tooltip.
+- **Engine:** `SkillMod.cs` (`SkillPhase` 6-hook enum, `ModEffect`, `SkillTag`, immutable `SkillModifier` w/ `requires`/`excludes` `EligibleFor`, zero-alloc `SkillContext` struct + interpreter), `ModifierCatalog.cs` (~14 tagged mods, `RollFor`/`HasEligible`/`ById`), `SkillModBook.cs` (`SkillModLoadout` 6 slots + random-open-phase `RollOne`; `SkillModBook` per-Character: born-with-one on `Register`, `OnLevel` rolls EVEN levels, `Capture`/`Restore`).
+- **Wired:** `Character.SkillMods` (analog of `Passives`); rolls in AddXP level loop; persisted `SaveData` v2 (3 parallel arrays).
+- **Execution:** `Player3DAttacker.Strike` gained a `SkillContext` overload (old 6-arg sig kept → Charge unaffected) applying damage/element-convert/stagger/slow/lifesteal-on-dealt/CLEAVE. Bash `{melee,physical,offense}` + Fireball `{magic,ranged,offense}` consume their loadout, draw DIFFERENT pools.
+- **UI:** opt-in `IModifiableSkill` (only Bash+Fireball implement; other 9 actives untouched); `HotbarPanel` hover tooltip lists the 6 phase slots. Skills register in Update so tooltip populates pre-cast. NO re-bake (runtime-built).
+- **Verify (no Play):** `Tools ▸ unwritten ▸ Debug ▸ Print Modifier Catalog + Eligibility` and `… ▸ Simulate Modifier Rolls — Bash + Fireball`.
+- Also fixed pre-existing CS8321 warning in `Editor/ItemIconImporter.cs` (deleted dead `Set<T>` local fn).
 
-### Feature 2 — biome per map in World Creator HTML (`tools/world-creator/index.html`)
-Unity side was ALREADY done (`WorldCreator.MapJson.biome` + `TryParseBiome` + applies `clone.biome`). Added the only
-missing half — authoring: map context-menu **Biome** section (grassland/snow/desert/volcanic/corrupted), exported in
-`world.json` (omitted when grassland=default), carried through import/copy/paste, rendered as a fill wash + name label.
-
-### NOT done / next
-- Visual judgment (does the round-tripped map look right) — USER drives via Generate/Build World → painter Import.
-- Memory updated: `map-painter-pipeline.md`, `world-creator-pipeline.md`.
-
-## Other open threads (details in memory files — pull only if resuming)
-- **World Creator v2** (free-form rectangular maps): DONE & landed. Memory `world-creator-pipeline.md`.
-- **Mobs/items/maps → data tables** (`mob-item-map-data-tables.md`): NEXT = backfill `id` on existing Item+MapRecipe assets.
-- **Billboard additional lights** (`billboard-additional-lights.md`): DONE, TUNING pending.
+### Deferred (NOT built) — flagged in charter §13
+- **Every-10 base-skill UNLOCK gating** — kit still enables all skills at once (`ApplyClass`); modifier cadence built, but skills don't unlock 1-per-10-levels. Class-system change.
+- §12 refinements: **affix-region bias** on the roll + **re-roll valve** (gold sink).
+- Lifesteal feeds from the PRIMARY hit only (cleave secondaries don't lifesteal).
+- Tooltip placement not visually verified — may need an anchor nudge.
 
 ## Gotchas
-- Claude's external file writes don't trip Unity's watcher until focus; a NEW file needs `refresh_unity(mode=force,
-  scope=all, compile=request)` (scripts-only/if_dirty won't import it) then `read_console`. MCP connected.
+- New .cs files don't import until Unity focus; force via `Tools ▸ unwritten ▸ Debug ▸ Recompile Scripts` (`Ctrl+Shift+R`), then read Console.
+- `MEMORY.md` is OVER its size limit — keep any new index entry to one tight line.

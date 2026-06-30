@@ -14,7 +14,7 @@ using UnityEngine.InputSystem;
 /// registry + cached <c>.Health</c> (no OverlapSphere/GetComponent), and the shove is delegated to
 /// <see cref="MonsterAI3D.Knockback"/>. It fires at most every few seconds, so it's not a per-frame hot path.
 /// </summary>
-public class Player3DWarcry : MonoBehaviour, IHotbarSkill
+public class Player3DWarcry : MonoBehaviour, IHotbarSkill, IModifiableSkill
 {
     [Tooltip("Hotbar icon (Skill Icon pack). Optional — the bar falls back to the text label if unset.")]
     public Sprite icon;
@@ -50,6 +50,22 @@ public class Player3DWarcry : MonoBehaviour, IHotbarSkill
 
     float nextUse;
     float lastDuration;        // the cooldown actually applied last use (for the hotbar's sweep fraction)
+    int castCount;             // for the Proc-phase "every Nth cast is free" modifier
+    SkillModLoadout loadout;   // six-phase modifier loadout (lazily registered, born with one)
+
+    // Warcry's modifier-eligibility identity (Charter §12): a melee, physical, offensive AoE — it draws the
+    // wide melee-offense pool (damage/element/stagger/slow/root/lifesteal/cooldown/shield/proc).
+    const string SkillId = "warcry";
+    static readonly string[] Tags = { SkillTag.Melee, SkillTag.Physical, SkillTag.Offense, SkillTag.Aoe };
+
+    public string SkillModId => SkillId;
+    public string[] SkillModTags => Tags;
+
+    void EnsureRegistered()
+    {
+        if (loadout != null || Character.Instance == null) return;
+        loadout = Character.Instance.SkillMods.Register(SkillId, Tags);
+    }
 
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
     static readonly Color WarcryColor = new Color(1f, 0.7f, 0.3f);
@@ -57,9 +73,7 @@ public class Player3DWarcry : MonoBehaviour, IHotbarSkill
     void Update()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
-        if (DevSettings.Blocking) return;                 // cursor over the dev panel — don't leak the keypress
-        if (!Pressed() || PointerOverUI()) return;
-        Activate();
+        EnsureRegistered();   // keeps the loadout registered; triggering is via the hotbar binding (HotbarInput)
     }
 
     /// <summary>Let out the Warcry now — shared by the keypress and the HUD hotbar click. Damages + shoves
@@ -77,14 +91,26 @@ public class Player3DWarcry : MonoBehaviour, IHotbarSkill
             return false;
         }
 
-        lastDuration = cooldown;
-        nextUse = Time.time + cooldown;
+        EnsureRegistered();
+        var ctx = SkillContext.Default(damageMult, 1f, staggerSecs);
+        loadout?.ApplyAll(ref ctx);                       // fold this skill's modifiers into the cast
+
+        castCount++;
+        bool free = ctx.EveryNthFree > 0 && castCount % ctx.EveryNthFree == 0;   // Proc: every Nth cast skips cooldown
+        lastDuration = free ? 0f : cooldown * ctx.CooldownMult;
+        nextUse = Time.time + lastDuration;
+        if (ctx.ShieldSecs > 0f && ctx.ShieldCut > 0f)    // bulwark: brief self-shield on cast
+            Character.Instance.BeginGuard(ctx.ShieldSecs, ctx.ShieldCut);
         Sfx.Play(warcrySfx);
         DamagePopup.SpawnText(transform.position + Vector3.up * 0.6f, "Warcry!", WarcryColor);
         SlashEffect.Spawn(shockSheet, shockFrameSize, shockFrames, shockFps, transform.position + Vector3.up * 0.2f, shockScale);
 
         Vector3 me = transform.position;
-        float r2 = radius * radius;
+        float effRadius = radius * ctx.RangeMult;         // reach mods widen the shout
+        float r2 = effRadius * effRadius;
+        Element element = ctx.ConvertElement ? ctx.NewElement : Element.Neutral;
+        float shoveSpeed = Mathf.Max(knockbackSpeed, ctx.KnockbackSpeed);
+        int totalDealt = 0;
 
         // Collect every in-range mob FIRST, then hit them in a second pass. We must NOT damage while
         // iterating MonsterAI3D.Active: a one-shot kill removes the mob from Active mid-loop (Health.Die →
@@ -106,10 +132,14 @@ public class Player3DWarcry : MonoBehaviour, IHotbarSkill
         {
             var ai = targets[i];
             if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
-            int power = Mathf.RoundToInt(Character.Instance.RollDamage(out bool crit) * damageMult);
-            ai.Health.TakeDamage(power, crit, -1);   // AoE always lands (no FLEE roll)
-            ai.Knockback(me, knockbackSpeed, knockbackTime, staggerSecs);
+            int power = Mathf.RoundToInt(Character.Instance.RollDamage(out bool crit, 0, ctx.ForceCrit) * Mathf.Max(1f, ctx.DamageMult));
+            totalDealt += ai.Health.TakeDamage(power, crit, -1, element);   // AoE always lands (no FLEE roll)
+            ai.Knockback(me, shoveSpeed, knockbackTime, Mathf.Max(staggerSecs, ctx.StaggerSecs));
+            if (ctx.SlowSecs > 0f && ctx.SlowFactor < 1f) ai.Slow(ctx.SlowFactor, ctx.SlowSecs);
+            if (ctx.RootSecs > 0f) ai.Slow(0f, ctx.RootSecs);   // entangling
         }
+        if (ctx.LifestealFracDealt > 0f && totalDealt > 0)
+            Character.Instance.LeechHeal(Mathf.RoundToInt(totalDealt * ctx.LifestealFracDealt));
         return true;
     }
 
@@ -126,7 +156,6 @@ public class Player3DWarcry : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => WarcryColor;   // rallying orange
-    public bool InClass(PlayerClass c) => c == PlayerClass.Swordsman;
 
     static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 

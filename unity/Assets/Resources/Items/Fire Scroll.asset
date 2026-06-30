@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.fire-scroll
   displayName: Fire Scroll
-  icon: {fileID: -4026627026602525782, guid: f4028c9e016c187459ce052fae35f431, type: 3}
+  icon: {fileID: 0}
   slot: 0
+  weaponType: 0
   rarity: 1
   category: 3
   cardSlots: 0

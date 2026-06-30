@@ -1,18 +1,22 @@
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 /// <summary>
-/// Drives the on-screen action bar (the <c>HUD_Hotbar</c> holder baked by <see cref="UIShellBuilder"/>).
-/// It finds the player's active skills — every component implementing <see cref="IHotbarSkill"/> on the
-/// <see cref="Player3DController"/> — and decorates one baked cell per skill with: an icon (or short
-/// label), the hotkey glyph, the MP cost, a radial cooldown sweep, and a live countdown number. Clicking
-/// a slot fires the skill (same targeting as the keypress, via <see cref="IHotbarSkill.Activate"/>).
+/// Drives the on-screen action bar (the <c>HUD_Hotbar</c> holder baked by <see cref="UIShellBuilder"/>) and
+/// is the CENTRAL key router for active skills. The bar has nine slots (keys 1–9); each shows the skill the
+/// player has BOUND to it (<see cref="HotbarBindings"/>) — icon/label, hotkey glyph, MP cost, cooldown sweep,
+/// countdown — or reads as an empty slot. The class system is gone: any UNLOCKED skill can be dragged or
+/// clicked onto any slot in the Skills (K) menu; this panel decorates the slots, fires the bound skill on its
+/// slot key or a click, and accepts drops (each cell is a <see cref="HotbarSlotTarget"/>).
 ///
-/// Lives on the persistent GameUICanvas alongside the other binders. Builds once (retries until the
-/// player + holder exist), then just refreshes the cheap per-frame bits (fill amount, countdown text).
-/// Adding a new active is free: implement <see cref="IHotbarSkill"/> and it appears on the bar, ordered
-/// by <see cref="IHotbarSkill.SlotOrder"/>.
+/// Lives on the persistent GameUICanvas. Builds once (retries until the player + holder exist), refreshes the
+/// cheap per-frame bits, and fully rebuilds when bindings change (<see cref="RebuildRequested"/>).
 /// </summary>
 public class HotbarPanel : MonoBehaviour
 {
@@ -20,7 +24,8 @@ public class HotbarPanel : MonoBehaviour
     // nothing visible changed — important since Refresh runs every frame.
     class Slot
     {
-        public IHotbarSkill skill;
+        public int index;               // 0..8 → key (index+1)
+        public IHotbarSkill skill;      // the bound skill (null = empty slot)
         public Image cell, icon, cooldown;
         public Text mp, label, cdNum;
         public GameObject hideOnCd;     // the center label to hide while counting down (null when an icon shows)
@@ -30,16 +35,20 @@ public class HotbarPanel : MonoBehaviour
 
     static readonly Color CellReady = Color.white;
     static readonly Color CellDim    = new Color(0.5f, 0.5f, 0.55f, 1f);
+    static readonly Color CellEmpty  = new Color(0.32f, 0.32f, 0.37f, 0.6f);   // unbound slot
     static readonly Color KeyColor   = new Color(1f, 0.85f, 0.45f);
     static readonly Color MpColor     = new Color(0.6f, 0.78f, 1f);
     static readonly Color MpNoColor   = new Color(1f, 0.5f, 0.45f);
     static readonly Color CdShade     = new Color(0f, 0f, 0f, 0.55f);
 
+    static readonly SkillPhase[] Phases = (SkillPhase[])System.Enum.GetValues(typeof(SkillPhase));
+    readonly StringBuilder tipSb = new StringBuilder(160);   // reused on hover (not per-frame)
+
     // Pre-baked second strings so the countdown repaint never allocates (cooldowns are short).
     static readonly string[] Secs = BuildSecs();
     static string[] BuildSecs() { var a = new string[61]; for (int i = 0; i < a.Length; i++) a[i] = i.ToString(); return a; }
 
-    /// <summary>Invoke to rebuild the bar (e.g. after a class switch). Set by the live HotbarPanel.</summary>
+    /// <summary>Invoke to rebuild the bar (e.g. after a binding change). Set by the live HotbarPanel.</summary>
     public static System.Action RebuildRequested;
 
     Font font;
@@ -47,8 +56,17 @@ public class HotbarPanel : MonoBehaviour
     Player3DController player;
     Transform holder;
     readonly List<Slot> slots = new List<Slot>();
-    readonly List<IHotbarSkill> enabledSkills = new List<IHotbarSkill>();
     bool built;
+    bool cellsEnsured;
+
+    // ONE shared modifier tooltip on the canvas ROOT (not parented inside a cell). The old per-cell tooltip
+    // lived under its cell, so a neighbouring cell — drawn later — could occlude it, and a parent could clip
+    // it: that's the "sometimes the helper doesn't show" bug. A single top-sibling panel, repositioned over
+    // the hovered cell, is always drawn above everything and never clipped.
+    GameObject tipRoot;
+    Text tipText;
+    RectTransform tipRT;
+    static readonly Vector3[] cornerBuf = new Vector3[4];   // reused by GetWorldCorners (no per-hover alloc)
 
     void Start()
     {
@@ -59,11 +77,41 @@ public class HotbarPanel : MonoBehaviour
     void Update()
     {
         if (!built) { TryBuild(); return; }
+        HandleHotkeys();
         Refresh();
     }
 
-    /// <summary>Tear down the decorated cells and rebuild from the player's currently-enabled skills (the
-    /// class changed). Safe to call before the first build.</summary>
+    // Central key router: pressing a slot's number key fires whatever skill is bound there. Gated only by the
+    // dev panel (DevSettings.Blocking) — number keys aren't blocked by mouse-over-UI the way the old per-skill
+    // mouse path was, so hovering the bar doesn't swallow the key.
+    void HandleHotkeys()
+    {
+        if (Character.Instance == null || Character.Instance.IsDead) return;
+        if (DevSettings.Blocking) return;
+        if (!Character.Instance.RingEquipped) return;   // no ring → actives suppressed (diminished, not erased)
+        for (int i = 0; i < slots.Count; i++)
+        {
+            if (!SlotKeyDown(i)) continue;
+            var s = slots[i];
+            if (s.skill != null && s.skill.Activate()) UISounds.PlayClick();
+        }
+    }
+
+    /// <summary>True when active skills may fire — a ring must be worn (the gate for the whole active layer).</summary>
+    static bool SkillsEnabled => Character.Instance != null && Character.Instance.RingEquipped;
+
+    static bool SlotKeyDown(int i)
+    {
+        if (i < 0 || i > 8) return false;
+#if ENABLE_INPUT_SYSTEM
+        var kb = Keyboard.current;
+        if (kb != null) return kb[(Key)((int)Key.Digit1 + i)].wasPressedThisFrame;
+#endif
+        return Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + i));
+    }
+
+    /// <summary>Tear down the decorated cells and rebuild from the player's current bindings. Safe before
+    /// the first build.</summary>
     public void Rebuild()
     {
         if (holder != null)
@@ -71,11 +119,12 @@ public class HotbarPanel : MonoBehaviour
             {
                 var cell = holder.GetChild(i);
                 for (int c = cell.childCount - 1; c >= 0; c--) Destroy(cell.GetChild(c).gameObject);
-                var btn = cell.GetComponent<Button>();
-                if (btn != null) Destroy(btn);
+                var btn = cell.GetComponent<Button>();       if (btn != null) Destroy(btn);
+                var trig = cell.GetComponent<EventTrigger>(); if (trig != null) Destroy(trig);
             }
         slots.Clear();
-        built = false;   // Update() will TryBuild() again next frame, reading the new enabled set
+        HideTip();       // the hovered cell may be torn down — don't leave a stale tooltip floating
+        built = false;   // Update() will TryBuild() again next frame, reading the new bindings
     }
 
     void TryBuild()
@@ -84,44 +133,85 @@ public class HotbarPanel : MonoBehaviour
         if (player == null) return;
         if (holder == null) holder = FindByName("HUD_Hotbar");
         if (holder == null) return;
-
-        // Only the ENABLED skills (the current class's kit — see Player3DController.ApplyClass) get a slot.
-        var all = player.GetComponents<IHotbarSkill>();
-        if (all == null || all.Length == 0) return;
-        enabledSkills.Clear();
-        for (int i = 0; i < all.Length; i++)
-            if (all[i] is MonoBehaviour mb && mb.enabled) enabledSkills.Add(all[i]);
-        if (enabledSkills.Count == 0) return;
-        enabledSkills.Sort((a, b) => a.SlotOrder.CompareTo(b.SlotOrder));
+        if (Character.Instance == null) return;   // need the bindings
 
         font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        // 1×1 white sprite for the radial cooldown shade — avoids any built-in/Resources dependency.
         if (whiteSprite == null)
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
 
+        EnsureCells();
+        EnsureSharedTooltip();
+
         slots.Clear();
-        int n = Mathf.Min(enabledSkills.Count, holder.childCount);   // decorate the first N baked cells; extras stay empty
+        int n = Mathf.Min(HotbarBindings.SlotCount, holder.childCount);
         for (int i = 0; i < n; i++)
         {
             var cell = holder.GetChild(i).GetComponent<Image>();
-            if (cell != null) slots.Add(BuildSlot(cell, enabledSkills[i]));
+            if (cell != null) slots.Add(BuildSlot(cell, i));
         }
         built = slots.Count > 0;
     }
 
-    Slot BuildSlot(Image cell, IHotbarSkill skill)
+    // The shell bakes 6 cells; the bar now needs 9. Clone the (pristine) first cell up to nine and widen the
+    // holder — so already-baked scenes get the full bar with no editor re-bake. Runs once.
+    void EnsureCells()
     {
-        var s = new Slot { skill = skill, cell = cell };
+        if (cellsEnsured || holder == null) return;
+        cellsEnsured = true;
+        int have = holder.childCount;
+        if (have == 0) return;
+        var template = holder.GetChild(0).gameObject;
+        for (int i = have; i < HotbarBindings.SlotCount; i++)
+        {
+            var clone = Instantiate(template, holder);
+            clone.name = "Hotslot";
+            for (int c = clone.transform.childCount - 1; c >= 0; c--) Destroy(clone.transform.GetChild(c).gameObject);
+            var b = clone.GetComponent<Button>();         if (b != null) Destroy(b);
+            var t = clone.GetComponent<EventTrigger>();    if (t != null) Destroy(t);
+            var s = clone.GetComponent<HotbarSlotTarget>();if (s != null) Destroy(s);
+            var d = clone.GetComponent<HotbarSlotDragSource>(); if (d != null) Destroy(d);
+        }
+        if (holder is RectTransform rt) rt.sizeDelta = new Vector2(HotbarBindings.SlotCount * 54, 54);
+    }
 
-        // Make the cell a button that fires the skill (Activate() does its own cursor-or-nearest targeting).
+    Slot BuildSlot(Image cell, int index)
+    {
+        string id = Character.Instance.Hotbar.Get(index);
+        var skill = PlayerSkills.ById(id);
+        var s = new Slot { index = index, skill = skill, cell = cell };
+
+        // Every cell is a drop target (drag a skill from the K menu onto it) and a button (click = fire bound).
+        var target = cell.gameObject.GetComponent<HotbarSlotTarget>() ?? cell.gameObject.AddComponent<HotbarSlotTarget>();
+        target.slotIndex = index;
         cell.raycastTarget = true;
-        var btn = cell.gameObject.GetComponent<Button>() ?? cell.gameObject.AddComponent<Button>();
-        btn.transition = Selectable.Transition.None;          // we drive our own dim; no grey tint-swap
-        btn.targetGraphic = cell;
-        var captured = skill;
-        btn.onClick.AddListener(() => { if (captured.Activate()) UISounds.PlayClick(); });
 
-        // Icon (below the sweep so it greys out under it). Falls back to a centered text label if unset.
+        var btn = cell.gameObject.GetComponent<Button>() ?? cell.gameObject.AddComponent<Button>();
+        btn.transition = Selectable.Transition.None;
+        btn.targetGraphic = cell;
+        var captured = s;
+        btn.onClick.AddListener(() => { if (SkillsEnabled && captured.skill != null && captured.skill.Activate()) UISounds.PlayClick(); });
+
+        // Hotkey glyph (top-left) — the SLOT's key, always shown (bound or empty).
+        var key = NewText("Key", cell.transform, (index + 1).ToString(), 12, FontStyle.Bold, TextAnchor.UpperLeft, KeyColor);
+        Stretch(key.rectTransform, 4, 2);
+
+        if (skill == null)
+        {
+            cell.color = CellEmpty;   // dim, no icon/label/mp → reads as an open slot
+            var staleDrag = cell.gameObject.GetComponent<HotbarSlotDragSource>();   // an emptied cell isn't draggable
+            if (staleDrag != null) Destroy(staleDrag);
+            return s;
+        }
+
+        // Drag this filled slot onto another to rearrange the bar (a plain click still fires the skill).
+        var drag = cell.gameObject.GetComponent<HotbarSlotDragSource>() ?? cell.gameObject.AddComponent<HotbarSlotDragSource>();
+        drag.slotIndex = index;
+        drag.iconSprite = skill.Icon;
+        drag.tint = skill.Tint;
+
+        cell.color = CellReady;
+
+        // Icon (below the sweep so it greys under it). Falls back to a centered label if unset.
         if (skill.Icon != null)
         {
             s.icon = NewImage("Icon", cell.transform, CellReady);
@@ -142,7 +232,7 @@ public class HotbarPanel : MonoBehaviour
         s.cooldown.raycastTarget = false;
         Stretch(s.cooldown.rectTransform, 3, 3);
 
-        // Center text label — only when there's no icon (above the sweep so it reads when ready).
+        // Center label — only when there's no icon (above the sweep so it reads when ready).
         if (skill.Icon == null)
         {
             s.label = NewText("Label", cell.transform, skill.ShortLabel, 11, FontStyle.Bold, TextAnchor.MiddleCenter, skill.Tint);
@@ -150,9 +240,7 @@ public class HotbarPanel : MonoBehaviour
             s.hideOnCd = s.label.gameObject;
         }
 
-        // Corners: hotkey (top-left), MP cost (bottom-right). Always on top.
-        var key = NewText("Key", cell.transform, skill.KeyLabel, 12, FontStyle.Bold, TextAnchor.UpperLeft, KeyColor);
-        Stretch(key.rectTransform, 4, 2);
+        // MP cost (bottom-right). Always on top.
         s.mp = NewText("Mp", cell.transform, skill.ManaCost.ToString(), 10, FontStyle.Bold, TextAnchor.LowerRight, MpColor);
         Stretch(s.mp.rectTransform, 2, 3);
 
@@ -161,15 +249,86 @@ public class HotbarPanel : MonoBehaviour
         Stretch(s.cdNum.rectTransform, 2, 2);
         s.cdNum.gameObject.SetActive(false);
 
+        // Modifier loadout tooltip (every active is an IModifiableSkill).
+        if (skill is IModifiableSkill mod) BuildTooltip(cell.transform, mod);
+
         return s;
+    }
+
+    // Build the ONE shared tooltip panel on the canvas root (once). Hidden until a hover positions + shows it.
+    void EnsureSharedTooltip()
+    {
+        if (tipRoot != null) return;
+        var img = NewImage("HotbarModTip", transform, new Color(0.06f, 0.06f, 0.08f, 0.96f));
+        tipRoot = img.gameObject;
+        tipRT = img.rectTransform;
+        tipRT.anchorMin = tipRT.anchorMax = new Vector2(0.5f, 0.5f);
+        tipRT.pivot = new Vector2(0.5f, 0f);   // grows upward from the point above the cell
+        tipRT.sizeDelta = new Vector2(160f, 120f);
+        img.raycastTarget = false;
+
+        tipText = NewText("Text", tipRoot.transform, "", 11, FontStyle.Normal, TextAnchor.UpperLeft, Color.white);
+        tipText.supportRichText = true;
+        Stretch(tipText.rectTransform, 8, 7);
+
+        tipRoot.SetActive(false);
+    }
+
+    // Bind a cell's hover to the shared tooltip: populate + position over THIS cell on enter, hide on exit.
+    void BuildTooltip(Transform cell, IModifiableSkill mod)
+    {
+        var captured = mod;
+        var cellRT = (RectTransform)cell;
+        var trig = cell.gameObject.GetComponent<EventTrigger>() ?? cell.gameObject.AddComponent<EventTrigger>();
+        AddTrigger(trig, EventTriggerType.PointerEnter, () => ShowTip(cellRT, captured));
+        AddTrigger(trig, EventTriggerType.PointerExit,  HideTip);
+    }
+
+    void ShowTip(RectTransform cellRT, IModifiableSkill mod)
+    {
+        EnsureSharedTooltip();
+        PopulateTooltip(tipText, mod);
+        tipRoot.transform.SetAsLastSibling();   // above every cell — the fix for "sometimes it doesn't show"
+        tipRoot.SetActive(true);
+
+        var canvas = GetComponentInParent<Canvas>();
+        Camera cam = (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay) ? canvas.worldCamera : null;
+        cellRT.GetWorldCorners(cornerBuf);                       // [1]=top-left, [2]=top-right
+        Vector3 topCenter = (cornerBuf[1] + cornerBuf[2]) * 0.5f;
+        Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, topCenter);
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)transform, screen, cam, out var local))
+            tipRT.anchoredPosition = local + new Vector2(0f, 8f);
+    }
+
+    void HideTip() { if (tipRoot != null) tipRoot.SetActive(false); }
+
+    static void AddTrigger(EventTrigger trig, EventTriggerType type, System.Action fn)
+    {
+        var e = new EventTrigger.Entry { eventID = type };
+        e.callback.AddListener(_ => fn());
+        trig.triggers.Add(e);
+    }
+
+    void PopulateTooltip(Text txt, IModifiableSkill mod)
+    {
+        var sb = tipSb; sb.Length = 0;
+        sb.Append("<b>").Append(mod is IHotbarSkill hs ? hs.ShortLabel : "Skill").Append(" — modifiers</b>\n");
+        var loadout = Character.Instance != null ? Character.Instance.SkillMods.Get(mod.SkillModId) : null;
+        for (int i = 0; i < Phases.Length; i++)
+        {
+            var m = loadout != null ? loadout.At(Phases[i]) : null;
+            sb.Append(Phases[i]).Append(":  ").Append(m != null ? m.DisplayName : "—").Append('\n');
+        }
+        txt.text = sb.ToString();
     }
 
     void Refresh()
     {
+        bool ringOn = SkillsEnabled;   // hoist once: no ring → the whole bar reads as suppressed
         for (int i = 0; i < slots.Count; i++)
         {
             var s = slots[i];
-            if (s.skill == null) continue;
+            if (s.skill == null || s.cooldown == null) continue;   // empty slot — nothing live to refresh
 
             float frac = s.skill.CooldownFraction01;
             s.cooldown.fillAmount = frac;
@@ -180,7 +339,7 @@ public class HotbarPanel : MonoBehaviour
                 if (s.hideOnCd != null) s.hideOnCd.SetActive(onCd == 0);
                 s.cdNum.gameObject.SetActive(onCd == 1);
                 s.lastOnCd = onCd;
-                s.lastSecs = -1;                       // force the number to repaint
+                s.lastSecs = -1;
             }
             if (onCd == 1)
             {
@@ -192,12 +351,12 @@ public class HotbarPanel : MonoBehaviour
                 }
             }
 
-            sbyte aff = (sbyte)(s.skill.Affordable ? 1 : 0);
+            sbyte aff = (sbyte)(s.skill.Affordable && ringOn ? 1 : 0);
             if (aff != s.lastAff)
             {
                 s.cell.color = aff == 1 ? CellReady : CellDim;
                 if (s.icon != null) s.icon.color = aff == 1 ? CellReady : CellDim;
-                s.mp.color = aff == 1 ? MpColor : MpNoColor;
+                if (s.mp != null) s.mp.color = aff == 1 ? MpColor : MpNoColor;
                 s.lastAff = aff;
             }
         }

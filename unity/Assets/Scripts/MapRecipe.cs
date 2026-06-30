@@ -30,7 +30,11 @@ public enum PathTile { Road, Soil, Stones, Rock }
 /// purely a ground/look layer; props &amp; mobs are still authored per recipe. <c>Grassland</c> reproduces the original
 /// look exactly (grass base, soil patches, no tint). The others recombine the existing <c>ground_*</c> textures with a
 /// colour multiply as placeholders until dedicated snow/sand/ash ground textures are authored (same code path then).</summary>
-public enum Biome { Grassland, Snow, Desert, Volcanic, Corrupted }
+// NOTE: Unity serializes enums by integer position, so existing assets store the index, not the name.
+// Only ever APPEND new members at the end — inserting/reordering silently remaps every saved value.
+// `None` is the mob-side "biome-agnostic" value: a MonsterDef set to None is spawn-eligible in ANY
+// biome's tier band (see MonsterCatalog.Eligible). A MAP recipe should never be None.
+public enum Biome { Grassland, Snow, Desert, Volcanic, Corrupted, None }
 
 /// <summary>How the ground base/patch/path weights are rendered. <c>Blended</c> = the seamless feathered gradient
 /// (default, today's look). <c>HardEdge</c> = snap each blend weight to 0/1 so grass↔dirt↔path meet in crisp seams

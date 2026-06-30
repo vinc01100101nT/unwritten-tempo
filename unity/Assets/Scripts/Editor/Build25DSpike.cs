@@ -646,7 +646,8 @@ public static class Build25DSpike
         warcry.warcrySfx = SfxAssets.Set(1f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
         warcry.icon = LoadSkillIcon("Spell/Explosion");       // hotbar icon (AoE burst)
 
-        // ---- Mage kit (class #2): enabled only when ClassState.Current == Mage (Player3DController.ApplyClass).
+        // ---- The rest of the universal active pool (class-agnostic — all live on the player, enabled; the
+        // ---- unlock + hotbar-binding layer decides which the player actually has and uses).
         var fireballTex  = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Projectile/Fireball.png");
         var explosionTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Elemental/Explosion/SpriteSheet.png");
         var iceTex       = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Elemental/Ice/SpriteSheet.png");

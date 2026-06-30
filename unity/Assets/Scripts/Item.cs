@@ -20,6 +20,7 @@ public enum EquipSlotType
     CostumeHead = 9,  // reserved cosmetic layer — not shown in v1 UI
     CostumeBody = 10,
     CostumeBack = 11,
+    Ring = 12,        // the Ring of Progression vessel — holds the passive draft + active-skill ownership
 }
 
 /// <summary>Inventory tab bucket. Independent of <see cref="EquipSlotType"/>: an item with a
@@ -42,6 +43,10 @@ public class Item : ScriptableObject
 
     [Tooltip("Which equipment slot this fits. None = bag-only (consumable/material).")]
     public EquipSlotType slot = EquipSlotType.None;
+
+    [Tooltip("Weapon kind (combat feel + future class affinity + size matchup). None for non-weapons. " +
+             "Advisory in the slice — informs stat fit and the deferred WeaponSizes table, not a hard class gate.")]
+    public WeaponType weaponType = WeaponType.None;
 
     [Header("Identity (HUD relay spec)")]
     [Tooltip("Drives the slot BORDER color only (rarity is one independent visual channel).")]

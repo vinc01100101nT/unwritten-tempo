@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.jade-amulet
   displayName: Jade Amulet
-  icon: {fileID: 9090724530243979454, guid: 78323742698781443a3594e8e1de4cd9, type: 3}
+  icon: {fileID: 0}
   slot: 6
+  weaponType: 0
   rarity: 3
   category: 0
   cardSlots: 1

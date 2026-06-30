@@ -16,7 +16,7 @@ using UnityEngine.InputSystem;
 /// precise, high-commitment nukes. MP + cooldown are spent only on confirm (cancelling costs nothing), exactly
 /// like Meteor's ground-aim. Implements <see cref="IHotbarSkill"/>; travel + impact use <see cref="Projectile3D"/>.
 /// </summary>
-public class Player3DSoulStrike : MonoBehaviour, IHotbarSkill
+public class Player3DSoulStrike : MonoBehaviour, IHotbarSkill, IModifiableSkill
 {
     [Tooltip("Hotbar icon (Skill Icon pack). Optional — the bar falls back to the text label if unset.")]
     public Sprite icon;
@@ -53,15 +53,29 @@ public class Player3DSoulStrike : MonoBehaviour, IHotbarSkill
     public SfxSet failSfx;   // not enough mana
 
     float nextUse, lastDuration;
+    int castCount;             // for the Proc-phase "every Nth cast is free" modifier
+    SkillModLoadout loadout;   // six-phase modifier loadout (lazily registered, born with one)
     static readonly Color NoManaColor   = new Color(0.55f, 0.6f, 1f);
     static readonly Color SoulColor     = new Color(0.7f, 0.55f, 1f);   // arcane violet
+
+    // Soul Strike's modifier-eligibility identity (Charter §12): a magic, ranged, single-target nuke — the same
+    // magic pool Fireball draws from (cooldown/reach/amp/element/stagger/slow/lifesteal/proc).
+    const string SkillId = "soul_strike";
+    static readonly string[] Tags = { SkillTag.Magic, SkillTag.Ranged, SkillTag.Offense, SkillTag.SingleTarget };
+
+    public string SkillModId => SkillId;
+    public string[] SkillModTags => Tags;
+
+    void EnsureRegistered()
+    {
+        if (loadout != null || Character.Instance == null) return;
+        loadout = Character.Instance.SkillMods.Register(SkillId, Tags);
+    }
 
     void Update()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
-        if (DevSettings.Blocking) return;
-        if (!Pressed() || PointerOverUI()) return;
-        Activate();
+        EnsureRegistered();   // keeps the loadout registered; triggering is via the hotbar binding (HotbarInput)
     }
 
     public bool Activate()
@@ -73,8 +87,11 @@ public class Player3DSoulStrike : MonoBehaviour, IHotbarSkill
         if (UnitTargeter.Active) { UnitTargeter.Cancel(); return false; }   // re-press cancels aiming
 
         // Enter AIM mode: ring the enemy under the cursor; left-click locks + fires (CastAt), Esc cancels.
-        // MP/cooldown are only spent on confirm, so cancelling costs nothing.
-        UnitTargeter.Begin(transform, range, CastAt);
+        // MP/cooldown are only spent on confirm, so cancelling costs nothing. A reach mod widens the aim range.
+        EnsureRegistered();
+        var aimCtx = SkillContext.Default(damageMult, 1f, 0f);
+        loadout?.ApplyAll(ref aimCtx);
+        UnitTargeter.Begin(transform, range * aimCtx.RangeMult, CastAt);
         return true;
     }
 
@@ -91,18 +108,38 @@ public class Player3DSoulStrike : MonoBehaviour, IHotbarSkill
             return;
         }
 
-        lastDuration = cooldown / Mathf.Max(0.01f, Character.Instance.CastSpeedMult);   // DEX casts faster
+        EnsureRegistered();
+        var ctx = SkillContext.Default(damageMult, 1f, 0f);
+        loadout?.ApplyAll(ref ctx);                       // fold this skill's modifiers into the cast
+
+        castCount++;
+        bool free = ctx.EveryNthFree > 0 && castCount % ctx.EveryNthFree == 0;   // Proc: every Nth cast skips cooldown
+        lastDuration = free ? 0f : cooldown / Mathf.Max(0.01f, Character.Instance.CastSpeedMult) * ctx.CooldownMult;   // DEX casts faster
         nextUse = Time.time + lastDuration;
         Sfx.Play(castSfx);
 
-        var t = target;   // capture for the on-arrive detonation
+        // Capture the cast's shaped values for the on-arrive detonation (locals, not the whole struct).
+        var t = target;
+        Element element = ctx.ConvertElement ? ctx.NewElement : Element.Neutral;
+        float dmgMult = ctx.DamageMult, lifesteal = ctx.LifestealFracDealt;
+        float staggerSecs = ctx.StaggerSecs, slowFactor = ctx.SlowFactor, slowSecs = ctx.SlowSecs;
         Vector3 from = transform.position + Vector3.up * 0.5f;
         Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
             from, t.transform, t.transform.position + Vector3.up * 0.4f, projSpeed, 0.5f, 3f, () =>
             {
                 if (t == null || t.IsDead || Character.Instance == null) return;
                 int power = Character.Instance.RollMagicDamage(out bool crit);
-                t.TakeMagicDamage(Mathf.RoundToInt(power * damageMult), crit, Element.Neutral);
+                int dealt = t.TakeMagicDamage(Mathf.RoundToInt(power * dmgMult), crit, element);
+                if (!t.IsDead)
+                {
+                    var ai = t.GetComponent<MonsterAI3D>();
+                    if (ai != null)
+                    {
+                        if (staggerSecs > 0f) ai.Stagger(staggerSecs);
+                        if (slowSecs > 0f && slowFactor < 1f) ai.Slow(slowFactor, slowSecs);
+                    }
+                }
+                if (lifesteal > 0f && dealt > 0) Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * lifesteal));
                 if (!t.IsDead && Random.value < stunChance) Status.Apply(t.gameObject, Ailment.Stun, stunSeconds);
             },
             impactSheet, impactFrameSize, impactFrames, 22f, impactScale);
@@ -118,7 +155,6 @@ public class Player3DSoulStrike : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => SoulColor;
-    public bool InClass(PlayerClass c) => c == PlayerClass.Mage;
 
     static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 

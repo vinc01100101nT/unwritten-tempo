@@ -15,7 +15,7 @@ public class ProgressionWindows : MonoBehaviour
 {
     static readonly EquipSlotType[] PaperdollOrder =
         { EquipSlotType.Head, EquipSlotType.Armor, EquipSlotType.Garment, EquipSlotType.Weapon,
-          EquipSlotType.Shield, EquipSlotType.Accessory1, EquipSlotType.Accessory2 };
+          EquipSlotType.Shield, EquipSlotType.Accessory1, EquipSlotType.Ring, EquipSlotType.Accessory2 };
 
     // Empty equip-slot silhouettes (faint gold watermarks). Wired by UIShellBuilder from the Ninja
     // Adventure "Items & Weapon" set so an empty paperdoll reads as labelled slots, not black holes.
@@ -32,6 +32,7 @@ public class ProgressionWindows : MonoBehaviour
         EquipSlotType.Shield     => silShield,
         EquipSlotType.Accessory1 => silAccessory1,
         EquipSlotType.Accessory2 => silAccessory2,
+        EquipSlotType.Ring       => null,   // procedural ring watermark (SlotWatermark default) covers this slot
         _                        => null,
     };
 
@@ -233,8 +234,9 @@ public class ProgressionWindows : MonoBehaviour
             { EquipSlotType.Garment,     new Vector2(-85, -45) },
             { EquipSlotType.Weapon,      new Vector2(85, 45) },
             { EquipSlotType.Shield,      new Vector2(85, -45) },
-            { EquipSlotType.Accessory1,  new Vector2(-45, -130) },
-            { EquipSlotType.Accessory2,  new Vector2(45, -130) },
+            { EquipSlotType.Accessory1,  new Vector2(-72, -130) },
+            { EquipSlotType.Ring,        new Vector2(0, -130) },
+            { EquipSlotType.Accessory2,  new Vector2(72, -130) },
         };
         foreach (var st in PaperdollOrder)
         {
@@ -492,7 +494,7 @@ public class ProgressionWindows : MonoBehaviour
     {
         if (charIdentity == null || Character.Instance == null) return;
         var c = Character.Instance;
-        charIdentity.text = $"<color=#C8A862>{ClassState.Current}</color>\nLevel {c.Level}    XP {c.XP}/{c.XPToNext}";
+        charIdentity.text = $"<color=#C8A862>Adventurer</color>\nLevel {c.Level}    XP {c.XP}/{c.XPToNext}";
         charPoints.text = $"Stat Points: {c.StatPoints}";
 
         for (int i = 0; i < StatOrder.Length; i++)

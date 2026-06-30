@@ -80,7 +80,6 @@ public class MobTableWindow : EditorWindow
         new Col("biome", "biome",  90),
         new Col("tier",  "tier",   38),
         new Col("B",     null,     26),   // isBoss
-        new Col("A",     null,     26),   // biomeAgnostic
         new Col("HP",    "hp",     58),
         new Col("DEF",   null,     46),
         new Col("MDEF",  null,     50),
@@ -141,24 +140,28 @@ public class MobTableWindow : EditorWindow
 
     void DrawHeader()
     {
+        // Lay the header out with the SAME manual per-column rects the rows use (see DrawRow's Next()),
+        // so titles sit exactly over their values. Auto-layout (GUILayout) added padding/spacing that
+        // drifted the headers off their columns. Offset by -_hscroll.x to track the horizontal scroll.
         var style = new GUIStyle(EditorStyles.miniBoldLabel) { alignment = TextAnchor.MiddleLeft };
-        EditorGUILayout.BeginHorizontal();
-        GUILayout.Space(-_hscroll.x);   // keep header aligned with the horizontally-scrolled body
+        var bar = EditorGUILayout.GetControlRect(false, 18, GUILayout.Width(TotalWidth));
+        float x = bar.x - _hscroll.x;
         foreach (var c in Cols)
         {
+            var r = new Rect(x, bar.y, c.w - 3, bar.height);
+            x += c.w;
             string label = c.label;
             if (c.sort != null && c.sort == _sortField) label += _sortAsc ? " ▲" : " ▼";
             if (c.sort != null)
             {
-                if (GUILayout.Button(label, EditorStyles.toolbarButton, GUILayout.Width(c.w)))
+                if (GUI.Button(r, label, EditorStyles.toolbarButton))
                 {
                     if (_sortField == c.sort) _sortAsc = !_sortAsc; else { _sortField = c.sort; _sortAsc = true; }
                     Resort();
                 }
             }
-            else GUILayout.Label(label, style, GUILayout.Width(c.w));
+            else GUI.Label(r, label, style);
         }
-        EditorGUILayout.EndHorizontal();
     }
 
     void DrawRow(MonsterDef def)
@@ -178,10 +181,10 @@ public class MobTableWindow : EditorWindow
         EditorGUI.BeginChangeCheck();
         string id    = EditorGUI.TextField(VCenter(Next(), 18), def.id);
         string name  = EditorGUI.TextField(VCenter(Next(), 18), def.displayName);
+        // Biome.None = biome-agnostic (spawns in any biome); it's just another choice in the dropdown.
         var biome    = (Biome)EditorGUI.EnumPopup(VCenter(Next(), 18), def.biome);
         int tier     = EditorGUI.IntField(VCenter(Next(), 18), def.tier);
         bool boss    = EditorGUI.Toggle(VCenter(Next(), 18), def.isBoss);
-        bool agno    = EditorGUI.Toggle(VCenter(Next(), 18), def.biomeAgnostic);
         int hp       = EditorGUI.IntField(VCenter(Next(), 18), def.maxHealth);
         int dfn      = EditorGUI.IntField(VCenter(Next(), 18), def.defense);
         int mdfn     = EditorGUI.IntField(VCenter(Next(), 18), def.magicDefense);
@@ -198,7 +201,7 @@ public class MobTableWindow : EditorWindow
         {
             Undo.RecordObject(def, "Edit Mob");
             def.id = id; def.displayName = name; def.biome = biome; def.tier = Mathf.Clamp(tier, 1, 4);
-            def.isBoss = boss; def.biomeAgnostic = agno; def.maxHealth = hp; def.defense = dfn;
+            def.isBoss = boss; def.maxHealth = hp; def.defense = dfn;
             def.magicDefense = mdfn; def.attack = atk; def.hit = hit; def.flee = flee;
             def.element = elem; def.attackElement = aElem; def.weight = wt; def.xpReward = xp;
             def.goldMin = gMin; def.goldMax = gMax;

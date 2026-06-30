@@ -28,8 +28,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _GrassMap:
-        m_Texture: {fileID: 2800000, guid: cb0d65403796ba6468c0b9a400b5ff98, type: 3}
-        m_Scale: {x: 1, y: 1}
+        m_Texture: {fileID: 2800000, guid: d3b8a9a10a7b42f4981ba12e603e2db7, type: 3}
+        m_Scale: {x: 0.1, y: 0.1}
         m_Offset: {x: 0, y: 0}
     - _PathMap:
         m_Texture: {fileID: 2800000, guid: f430fa9cc1a5b5f4f9603b09347807c7, type: 3}

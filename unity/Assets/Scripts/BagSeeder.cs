@@ -21,6 +21,7 @@ public class BagSeeder : MonoBehaviour
         seeded = true;
 
         var items = Resources.LoadAll<Item>(resourcesFolder)
+            .Where(i => i.slot != EquipSlotType.Ring)   // the ring vessel is auto-equipped by Character, never bag-seeded
             .OrderBy(i => i.displayName)
             .ToArray();
         if (items.Length == 0)

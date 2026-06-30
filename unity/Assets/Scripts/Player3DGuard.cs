@@ -14,7 +14,7 @@ using UnityEngine.InputSystem;
 /// so it appears on the HUD hotbar automatically (slot 3). The actual mitigation lives in
 /// <see cref="Character.BeginGuard"/>.
 /// </summary>
-public class Player3DGuard : MonoBehaviour, IHotbarSkill
+public class Player3DGuard : MonoBehaviour, IHotbarSkill, IModifiableSkill
 {
     [Tooltip("Hotbar icon (Skill Icon pack). Optional — the bar falls back to the text label if unset.")]
     public Sprite icon;
@@ -44,7 +44,24 @@ public class Player3DGuard : MonoBehaviour, IHotbarSkill
 
     float nextUse;
     float lastDuration;        // the cooldown actually applied last use (for the hotbar's sweep fraction)
+    int castCount;             // for the Proc-phase "every Nth cast is free" modifier
     GuardShieldFX shield;
+    SkillModLoadout loadout;   // six-phase modifier loadout (lazily registered, born with one)
+
+    // Guard's modifier-eligibility identity (Charter §12): a melee support self-buff — NO offense tag, so it
+    // can never roll a damage/on-hit mod (those require offense). Its pool is the cooldown/self/heal mods:
+    // relentless (faster cd), bulwark (stronger shield), mending (heal on cast), rhythm (free cast).
+    const string SkillId = "guard";
+    static readonly string[] Tags = { SkillTag.Melee, SkillTag.Physical, SkillTag.Support };
+
+    public string SkillModId => SkillId;
+    public string[] SkillModTags => Tags;
+
+    void EnsureRegistered()
+    {
+        if (loadout != null || Character.Instance == null) return;
+        loadout = Character.Instance.SkillMods.Register(SkillId, Tags);
+    }
 
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
     static readonly Color GuardColor = new Color(0.5f, 0.8f, 1f);
@@ -52,9 +69,7 @@ public class Player3DGuard : MonoBehaviour, IHotbarSkill
     void Update()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
-        if (DevSettings.Blocking) return;                 // cursor over the dev panel — don't leak the keypress
-        if (!Pressed() || PointerOverUI()) return;
-        Activate();
+        EnsureRegistered();   // keeps the loadout registered; triggering is via the hotbar binding (HotbarInput)
     }
 
     /// <summary>Raise the Guard stance now — shared by the keypress and the HUD hotbar click. Returns
@@ -72,14 +87,26 @@ public class Player3DGuard : MonoBehaviour, IHotbarSkill
             return false;
         }
 
-        lastDuration = cooldown;
-        nextUse = Time.time + cooldown;
-        Character.Instance.BeginGuard(duration, damageReduction);
+        EnsureRegistered();
+        var ctx = SkillContext.Default(1f, 1f, 0f);
+        loadout?.ApplyAll(ref ctx);                       // fold this skill's modifiers into the cast
+
+        castCount++;
+        bool free = ctx.EveryNthFree > 0 && castCount % ctx.EveryNthFree == 0;   // rhythm: every Nth cast skips cooldown
+        lastDuration = free ? 0f : cooldown * ctx.CooldownMult;   // relentless shortens it
+        nextUse = Time.time + lastDuration;
+
+        // bulwark can only strengthen the stance (take the better of the skill's own values and the mod's).
+        float guardSecs = Mathf.Max(duration, ctx.ShieldSecs);
+        float guardCut = Mathf.Max(damageReduction, ctx.ShieldCut);
+        Character.Instance.BeginGuard(guardSecs, guardCut);
+        if (ctx.LifeFracMaxHP > 0f)                       // mending: heal on cast (the support-only mod)
+            Character.Instance.Heal(Mathf.RoundToInt(Character.Instance.MaxHP * ctx.LifeFracMaxHP));
         Sfx.Play(guardSfx);
         DamagePopup.SpawnText(transform.position + Vector3.up * 0.5f, "Guard", GuardColor);
 
         EnsureShield();
-        if (shield != null) shield.Show(duration);
+        if (shield != null) shield.Show(guardSecs);
         return true;
     }
 
@@ -101,7 +128,6 @@ public class Player3DGuard : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => GuardColor;   // defensive blue
-    public bool InClass(PlayerClass c) => c == PlayerClass.Swordsman;
 
     static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 

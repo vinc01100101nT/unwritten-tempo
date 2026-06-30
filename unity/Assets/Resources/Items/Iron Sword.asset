@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.iron-sword
   displayName: Iron Sword
-  icon: {fileID: -6251451809504726511, guid: 1d4027bd6204e294b9def6139eb3605b, type: 3}
+  icon: {fileID: 0}
   slot: 3
+  weaponType: 1
   rarity: 0
   category: 0
   cardSlots: 2

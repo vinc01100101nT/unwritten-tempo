@@ -20,16 +20,16 @@ public class MonsterDef : ScriptableObject
     public string displayName = "Monster";
     [Tooltip("A field boss / MVP: excluded from the weighted field spawn; placed deliberately (Spawn Field Boss).")]
     public bool isBoss = false;
+    [Tooltip("Body size for the DEFERRED weapon-vs-size matchup (WeaponSizes). Unused by combat in the slice; " +
+             "Medium reproduces RO's neutral '100% everywhere' baseline, so leaving it default is safe.")]
+    public MobSize size = MobSize.Medium;
 
     [Header("Biome & tier (spawn grouping)")]
-    [Tooltip("Which biome this mob belongs to. The map generator spawns a map's mobs from its recipe Biome. " +
-             "Ignored when Biome Agnostic is on.")]
+    [Tooltip("Which biome this mob spawns in. The map generator spawns a map's mobs from its recipe Biome. " +
+             "Set to None for a biome-agnostic 'common' (rat/bat/slime): eligible in ANY biome's tier band.")]
     public Biome biome = Biome.Grassland;
     [Range(1, 4), Tooltip("Difficulty tier within the biome: 1 (weakest) … 4 (elite / mini-boss).")]
     public int tier = 1;
-    [Tooltip("Biome-agnostic 'common' filler (rat/bat/slime): eligible in ANY biome's tier band, so the Biome " +
-             "field above is ignored. Use for the universal trash-mob layer.")]
-    public bool biomeAgnostic = false;
 
     [Header("Art")]
     [Tooltip("Sprite-sheet folder under Assets/Art/NinjaAdventure/Actor/Monster (e.g. 'Slime').")]

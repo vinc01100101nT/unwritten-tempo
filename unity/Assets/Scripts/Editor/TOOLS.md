@@ -130,6 +130,8 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 |---|---|---|
 | **Bake 8-Dir Sprites** | Window for a one-off 8-direction sprite bake from a rigged model + clips (offscreen ortho render → billboard strips), with an in-window rotate/play preview. | Baking a single character/model to billboard sprites. (`SpriteBaker8.cs`) |
 | **Bake All Quaternius Characters** | Batch baker for a whole folder of rigged characters with embedded anims (Quaternius pack) → 8-dir strips + `BakedBillboard8` prefabs + a `CharacterRoster`. Supports a "first N" trial run. | (Re)baking the whole character roster. (`BatchCharacterBaker.cs`) |
+| **Import Item Icons** | Scans `Assets/Art/Items` for PNGs named by item id (`item.iron-sword.png`), applies icon import settings (Sprite/Single, point, uncompressed, alpha), and assigns each to the matching `Item` asset's icon (match: id → kebab(name) → asset name). Idempotent; reports unmatched files + items lacking a stable id. | After dropping a SINGLE-icon-per-PNG into `Assets/Art/Items` (hero/legendary quality). (`ItemIconImporter.cs`) |
+| **Import Item Sheets** | Bulk path: grid-slices a sheet PNG in `Assets/Art/Items/Sheets` into per-cell sub-sprites and assigns each to an `Item` by a row-major id list. Grid size + ids live in a same-named `.txt` manifest (`cols:`/`rows:` lines + ids; `-` skips a cell), so grid size is a one-line text edit per sheet. Idempotent; reports unmatched ids + cell/id mismatches. | After dropping a GPT grid sheet + its manifest (many icons in one image). (`ItemSheetImporter.cs`) |
 
 ---
 
@@ -165,6 +167,8 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 |---|---|---|
 | **Print Skill Ring + Soft-Cap Table** | Logs the Trio-Ring layout + the soft-cap percentage curve — pure logic, no Play mode. | Sanity-checking the skill maths. (`SkillSelfTest.cs`) |
 | **Simulate Skill Draft Walk (20 levels)** | Simulates a 20-level draft walk through the Trio-Ring/DraftService and logs it. | Verifying draft steering rules without Play. (`SkillSelfTest.cs`) |
+| **Print Modifier Catalog + Eligibility** | Logs every authored skill modifier and whether it's legal on Bash (melee) vs Fireball (magic) — proving the per-skill tag filter. | Checking the modifier pool + that `requires`/`excludes` tags filter correctly per skill. (`SkillModSelfTest.cs`) |
+| **Simulate Modifier Rolls — Bash + Fireball (lvl 1->20)** | Rolls both skills' six-phase loadouts (born with one + one per even level), logs each walk, asserts the support-only mod never lands and that the two pools differ. | Verifying the §12 random modifier cadence + tag exclusion without Play. (`SkillModSelfTest.cs`) |
 | **Recompile Scripts** (`Ctrl/Cmd+Shift+R`) | Forces an asset refresh + script recompilation. | Pushing a C# edit into the Editor without alt-tabbing to focus Unity. (`RecompileTool.cs`) |
 | **Verify Render Settings** | Checks critical, silently-revertible project/render settings (URP Additional Lights = Per Pixel, Additional Light Shadows on, …) against a known-good table; reports drift. *Data-driven — add an invariant as one row.* | A feature "mysteriously disappeared" (lamp shadows, etc.); sanity check before a session. (`RenderSettingsGuard.cs`) |
 | **Verify & Repair Render Settings** | Same check, then writes the correct values back to disk and saves. *Commit the changed .asset afterward so it can't revert.* | Drift was found and you want it fixed + committed. (`RenderSettingsGuard.cs`) |

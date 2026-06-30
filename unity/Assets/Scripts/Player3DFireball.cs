@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 /// magic damage on arrival. Thin input/MP/cooldown wrapper (the caster-class template) implementing
 /// <see cref="IHotbarSkill"/>; the travel + impact are delegated to <see cref="Projectile3D"/>.
 /// </summary>
-public class Player3DFireball : MonoBehaviour, IHotbarSkill
+public class Player3DFireball : MonoBehaviour, IHotbarSkill, IModifiableSkill
 {
     [Tooltip("Hotbar icon (Skill Icon pack). Optional — the bar falls back to the text label if unset.")]
     public Sprite icon;
@@ -45,15 +45,29 @@ public class Player3DFireball : MonoBehaviour, IHotbarSkill
     public SfxSet failSfx;
 
     float nextUse, lastDuration;
+    int castCount;
+    SkillModLoadout loadout;
     Camera cam;
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
+
+    // A magic, ranged, offensive spell — so it rolls a DIFFERENT modifier pool than the melee Bash
+    // (no Long Reach/Cleave/Bloodthirst; yes Far Cast/Siphon), proving the tag filter per skill.
+    const string SkillId = "fireball";
+    static readonly string[] Tags = { SkillTag.Magic, SkillTag.Ranged, SkillTag.Offense, SkillTag.SingleTarget };
+
+    public string SkillModId => SkillId;
+    public string[] SkillModTags => Tags;
+
+    void EnsureRegistered()
+    {
+        if (loadout != null || Character.Instance == null) return;
+        loadout = Character.Instance.SkillMods.Register(SkillId, Tags);
+    }
 
     void Update()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
-        if (DevSettings.Blocking) return;
-        if (!Pressed() || PointerOverUI()) return;
-        Activate();
+        EnsureRegistered();   // keeps the loadout registered; triggering is via the hotbar binding (HotbarInput)
     }
 
     public bool Activate()
@@ -64,9 +78,14 @@ public class Player3DFireball : MonoBehaviour, IHotbarSkill
         if (Time.time < nextUse) return false;
         if (cam == null) cam = Camera.main;
 
-        var target = Player3DController.MonsterUnderCursor(cam) ?? Nearest(range);
+        EnsureRegistered();
+        var ctx = SkillContext.Default(damageMult, 1f, 0f);
+        loadout?.ApplyAll(ref ctx);                       // fold this skill's modifiers into the cast
+        float effRange = range * ctx.RangeMult;
+
+        var target = Player3DController.MonsterUnderCursor(cam) ?? Nearest(effRange);
         if (target == null) return false;
-        if (PlanarDist(transform.position, target.transform.position) > range) return false;
+        if (PlanarDist(transform.position, target.transform.position) > effRange) return false;
 
         if (!Character.Instance.SpendMana(manaCost))
         {
@@ -76,18 +95,34 @@ public class Player3DFireball : MonoBehaviour, IHotbarSkill
             return false;
         }
 
-        lastDuration = cooldown / Mathf.Max(0.01f, Character.Instance.CastSpeedMult);   // DEX casts faster
+        castCount++;
+        bool free = ctx.EveryNthFree > 0 && castCount % ctx.EveryNthFree == 0;   // Proc: every Nth cast skips cooldown
+        lastDuration = free ? 0f : cooldown / Mathf.Max(0.01f, Character.Instance.CastSpeedMult) * ctx.CooldownMult;
         nextUse = Time.time + lastDuration;
         Sfx.Play(castSfx);
 
-        var t = target;   // capture for the on-arrive detonation
+        // Capture the cast's shaped values for the on-arrive detonation (locals, not the whole struct).
+        var t = target;
+        Element element = ctx.ConvertElement ? ctx.NewElement : Element.Fire;
+        float dmgMult = ctx.DamageMult, lifesteal = ctx.LifestealFracDealt;
+        float staggerSecs = ctx.StaggerSecs, slowFactor = ctx.SlowFactor, slowSecs = ctx.SlowSecs;
         Vector3 from = transform.position + Vector3.up * 0.5f;
         Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
             from, t.transform, t.transform.position + Vector3.up * 0.4f, projSpeed, 0.5f, 3f, () =>
             {
                 if (t == null || t.IsDead || Character.Instance == null) return;
                 int power = Character.Instance.RollMagicDamage(out bool crit);
-                t.TakeMagicDamage(Mathf.RoundToInt(power * damageMult), crit, Element.Fire);
+                int dealt = t.TakeMagicDamage(Mathf.RoundToInt(power * dmgMult), crit, element);
+                if (!t.IsDead)
+                {
+                    var ai = t.GetComponent<MonsterAI3D>();
+                    if (ai != null)
+                    {
+                        if (staggerSecs > 0f) ai.Stagger(staggerSecs);
+                        if (slowSecs > 0f && slowFactor < 1f) ai.Slow(slowFactor, slowSecs);
+                    }
+                }
+                if (lifesteal > 0f && dealt > 0) Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * lifesteal));
                 if (burnSeconds > 0f && !t.IsDead) Status.Apply(t.gameObject, Ailment.Burn, burnSeconds, burnDamage);
             },
             impactSheet, impactFrameSize, impactFrames, 22f, impactScale);
@@ -121,7 +156,6 @@ public class Player3DFireball : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => new Color(1f, 0.6f, 0.35f);   // fire orange
-    public bool InClass(PlayerClass c) => c == PlayerClass.Mage;
 
     static float PlanarDist(Vector3 a, Vector3 b) { a.y = 0f; b.y = 0f; return Vector3.Distance(a, b); }
     static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();

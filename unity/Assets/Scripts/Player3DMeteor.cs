@@ -14,7 +14,7 @@ using UnityEngine.InputSystem;
 /// visual flair, not more power. The falls ARE the telegraph. Implements <see cref="IHotbarSkill"/>; the falls +
 /// impact FX use <see cref="Projectile3D"/>.
 /// </summary>
-public class Player3DMeteor : MonoBehaviour, IHotbarSkill
+public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
 {
     [Tooltip("Hotbar icon (Skill Icon pack). Optional — the bar falls back to the text label if unset.")]
     public Sprite icon;
@@ -78,15 +78,30 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill
     public SfxSet meteorSfx;
 
     float nextUse, lastDuration;
+    int castCount;             // for the Proc-phase "every Nth cast is free" modifier
+    SkillModLoadout loadout;   // six-phase modifier loadout (lazily registered, born with one)
+    SkillContext pendingCtx;   // the shaped cast captured at CastAt, consumed in DetonateTick (deferred meteor impacts)
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
     static readonly Color MeteorColor = new Color(1f, 0.55f, 0.3f);
+
+    // Meteor's modifier-eligibility identity (Charter §12): a magic, offensive AoE — draws the magic-offense pool
+    // (cooldown/amp/element/slow/lifesteal/proc); melee-only mods are filtered out.
+    const string SkillId = "meteor";
+    static readonly string[] Tags = { SkillTag.Magic, SkillTag.Offense, SkillTag.Aoe };
+
+    public string SkillModId => SkillId;
+    public string[] SkillModTags => Tags;
+
+    void EnsureRegistered()
+    {
+        if (loadout != null || Character.Instance == null) return;
+        loadout = Character.Instance.SkillMods.Register(SkillId, Tags);
+    }
 
     void Update()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
-        if (DevSettings.Blocking) return;
-        if (!Pressed() || PointerOverUI()) return;
-        Activate();
+        EnsureRegistered();   // keeps the loadout registered; triggering is via the hotbar binding (HotbarInput)
     }
 
     public bool Activate()
@@ -98,8 +113,11 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill
         if (GroundTargeter.Active) { GroundTargeter.Cancel(); return false; }   // re-press cancels aiming
 
         // Enter AIM mode: a circle follows the cursor; left-click drops the meteor (CastAt), Esc cancels.
-        // MP/cooldown are only spent on confirm, so cancelling costs nothing.
-        GroundTargeter.Begin(transform, radius, castRange, CastAt);
+        // MP/cooldown are only spent on confirm, so cancelling costs nothing. A reach mod extends the cast range.
+        EnsureRegistered();
+        var aimCtx = SkillContext.Default(damageMult, 1f, 0f);
+        loadout?.ApplyAll(ref aimCtx);
+        GroundTargeter.Begin(transform, radius, castRange * aimCtx.RangeMult, CastAt);
         return true;
     }
 
@@ -115,8 +133,14 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill
             return;
         }
 
-        lastDuration = cooldown;
-        nextUse = Time.time + cooldown;
+        EnsureRegistered();
+        pendingCtx = SkillContext.Default(damageMult, 1f, 0f);
+        loadout?.ApplyAll(ref pendingCtx);                // captured now; consumed per meteor in DetonateTick
+
+        castCount++;
+        bool free = pendingCtx.EveryNthFree > 0 && castCount % pendingCtx.EveryNthFree == 0;   // Proc: every Nth cast skips cooldown
+        lastDuration = free ? 0f : cooldown * pendingCtx.CooldownMult;
+        nextUse = Time.time + lastDuration;
         Sfx.Play(castSfx);
         DamagePopup.SpawnText(center + Vector3.up * 0.6f, "Meteor!", MeteorColor);   // once, at cast
 
@@ -157,14 +181,25 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill
 
         // Per-hit damage = the full meteor (damageMult) split across EVERY hit of ALL ticks (ticks × hitsPerTick),
         // so the 3-meteor shower deals the same total as one big strike — a visual split, not a power buff.
+        // Fold in the loadout shaped at cast: amplify (crushing/heavy), element-convert, slow, and lifesteal.
+        // ctx.DamageMult was already seeded from this skill's damageMult, then scaled by any amp mod — so it IS
+        // the full multiplier (don't multiply by damageMult again, or it squares).
+        var ctx = pendingCtx;
+        float effMult = Mathf.Max(1f, ctx.DamageMult);
+        Element element = ctx.ConvertElement ? ctx.NewElement : Element.Fire;
+        float lifesteal = ctx.LifestealFracDealt, slowFactor = ctx.SlowFactor, slowSecs = ctx.SlowSecs;
+        float extraStagger = ctx.StaggerSecs;   // concussive (a small freeze on top of the stun chance)
         int totalHits = Mathf.Max(1, ticks * hitsPerTick);
         MultiHitBurst.Run(center, radius, 1, hitsPerTick, hitInterval, 0f,   // 1 tick → inter-tick wait unused
             (ai, hitIndex) =>
             {
                 if (Character.Instance == null) return 0;
-                int power = Mathf.RoundToInt(Character.Instance.RollMagicDamage(out bool crit) * (damageMult / totalHits));
-                int dealt = ai.Health.TakeMagicDamageOverkill(power, crit, Element.Fire);
+                int power = Mathf.RoundToInt(Character.Instance.RollMagicDamage(out bool crit) * (effMult / totalHits));
+                int dealt = ai.Health.TakeMagicDamageOverkill(power, crit, element);
                 if (!ai.Health.IsDead && Random.value < stunChance) ai.Stun(stunSeconds);   // only stun the living
+                if (!ai.Health.IsDead && extraStagger > 0f) ai.Stagger(extraStagger);   // concussive
+                if (!ai.Health.IsDead && slowSecs > 0f && slowFactor < 1f) ai.Slow(slowFactor, slowSecs);   // chilling/withering
+                if (lifesteal > 0f && dealt > 0) Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * lifesteal));   // siphon
                 return dealt;
             },
             c => SlashEffect.Spawn(impactSheet, impactFrameSize, impactFrames, 24f, c, impactScale),   // 1 explosion this meteor (no impact sound — fireball plays on launch)
@@ -181,7 +216,6 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => MeteorColor;
-    public bool InClass(PlayerClass c) => c == PlayerClass.Mage;
 
     static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 

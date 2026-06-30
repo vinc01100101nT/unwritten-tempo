@@ -206,10 +206,39 @@ public class Character : MonoBehaviour
 
     void RecomputeEquip() => equipBonuses = EquipBonuses.Aggregate(equipped.Values);
 
-    /// <summary>The Phase G passive skill layer (Trio-Ring draft). Owns the player's ranks +
-    /// banked skill points; its <see cref="PassiveRanks.Percent"/> is the % multiplier folded
-    /// into the effective-stat getters below. Runtime-only (no save yet).</summary>
-    public PassiveRanks Passives { get; } = new PassiveRanks();
+    /// <summary>The Ring of Progression — the VESSEL that carries the player's life's-work: its own
+    /// level/XP plus the Trio-Ring passive draft (<see cref="RingProgress.Passives"/>) and the active-skill
+    /// ownership (<see cref="RingProgress.Skills"/>). Levels in parallel with the character (same kills feed
+    /// both — see <see cref="AddXP"/>). Its effect is GATED by <see cref="RingEquipped"/>: take the ring off
+    /// and the passive % stops applying and actives can't fire ("diminished, not erased").</summary>
+    public RingProgress Ring { get; } = new RingProgress();
+
+    /// <summary>The Phase G passive skill layer (Trio-Ring draft), living on the ring vessel. Its
+    /// <see cref="PassiveRanks.Percent"/> is the % multiplier folded into the effective-stat getters below
+    /// — but ONLY while <see cref="RingEquipped"/> (see <see cref="PassivePercent"/>).</summary>
+    public PassiveRanks Passives => Ring.Passives;
+
+    /// <summary>The active-skill MODIFIER layer (Charter §12). Owns each owned base skill's six-phase
+    /// loadout; a skill registers itself (born wearing one random mod) and gains one more every even
+    /// level. The random "dice" counterpart to the deterministic Trio-Ring affix draft. Runtime-only.</summary>
+    public SkillModBook SkillMods { get; } = new SkillModBook();
+
+    /// <summary>The active-skill OWNERSHIP layer (class-agnostic), living on the ring vessel. Which of the
+    /// shared pool of actives the player has unlocked — one earned per 10 points allocated into the ring.
+    /// Gates the skill menu + hotbar binding. Persisted.</summary>
+    public SkillRoster Skills => Ring.Skills;
+
+    /// <summary>True while a ring item occupies the <see cref="EquipSlotType.Ring"/> slot. The gate for the
+    /// whole ring layer: passive % bonuses + active-skill use are suppressed when no ring is worn.</summary>
+    public bool RingEquipped => GetEquipped(EquipSlotType.Ring) != null;
+
+    /// <summary>The passive % multiplier for a stat — but only while a ring is equipped (0 otherwise).
+    /// Every effective-stat getter folds passives in through HERE so unequipping the ring truly diminishes.</summary>
+    float PassivePercent(StatId stat) => RingEquipped ? Ring.Passives.Percent(stat) : 0f;
+
+    /// <summary>The hotbar layout — which unlocked skill is bound to each of the nine slots (keys 1–9).
+    /// Set by drag/click in the Skills (K) menu; read by the bar + the central key router. Persisted.</summary>
+    public HotbarBindings Hotbar { get; } = new HotbarBindings();
 
     static readonly Color HealColor = new Color(0.45f, 1f, 0.45f);
     Transform avatar;   // the in-scene player, located lazily for heal popups
@@ -241,10 +270,11 @@ public class Character : MonoBehaviour
     // Effective stat = flat layer (base + level growth + PRIMARY-STAT contribution + equipment) × (1 + passive%).
     // The passive % layer is deliberately separate so a +% never goes obsolete the way a flat bonus does (doc §7).
     // The purely-derived stats further below (Crit/Evasion/AttackSpeed/CastSpeed) have no flat base.
-    // Pre-renewal vitals: the level-driven base curve is scaled by the CLASS (Swordsman = tanky/shallow SP,
-    // Mage = frail/deep SP), then by VIT/INT as a PERCENT multiplier. Equipment HP/MP add flat on top.
+    // Pre-renewal vitals: the level-driven base curve is scaled by VIT/INT as a PERCENT multiplier (the game
+    // is class-agnostic, so there is no per-class HP/SP factor — your stat investment shapes bulk vs mana).
+    // Equipment HP/MP add flat on top.
     public int MaxHP   => Scale(Mathf.RoundToInt((baseMaxHP + hpPerLevel * (Level - 1))
-                                * VitalsFor(ClassState.Current).hp * (1f + P(PrimaryStat.VIT) * VitHpPercent))
+                                * (1f + P(PrimaryStat.VIT) * VitHpPercent))
                                 + equipBonuses.hp, StatId.HP);
     public int Attack  => Scale(baseAttack  + attackPerLevel  * (Level - 1) + P(PrimaryStat.STR) * AtkPerStr
                                 + StatSquareBonus(P(PrimaryStat.STR))   // pre-renewal status-ATK bonus: +⌊STR/10⌋²
@@ -252,7 +282,7 @@ public class Character : MonoBehaviour
     public int Defense => Scale(baseDefense + defensePerLevel * (Level - 1) + P(PrimaryStat.VIT) / DefPerVit + equipBonuses.def, StatId.Def);
 
     public int MaxMP        => Scale(Mathf.RoundToInt((baseMaxMP + mpPerLevel * (Level - 1))
-                                * VitalsFor(ClassState.Current).sp * (1f + P(PrimaryStat.INT) * IntSpPercent))
+                                * (1f + P(PrimaryStat.INT) * IntSpPercent))
                                 + equipBonuses.mp, StatId.MP);
     public int MagicAttack  => Scale(baseMagicAttack  + magicAttackPerLevel  * (Level - 1) + P(PrimaryStat.INT) * MatkPerInt
                                 + StatSquareBonus(P(PrimaryStat.INT))   // pre-renewal status-MATK bonus: +⌊INT/10⌋²
@@ -284,38 +314,32 @@ public class Character : MonoBehaviour
     /// dumping points into one offensive stat.</summary>
     static int StatSquareBonus(int stat) { int tens = stat / 10; return tens * tens; }
 
-    /// <summary>Per-class HP/SP growth factors (multipliers on the level-driven base curve). Swordsman is
-    /// tanky with a shallow SP pool; Mage is frail with a deep one — the pre-renewal job identity.</summary>
-    readonly struct ClassVitals { public readonly float hp, sp; public ClassVitals(float hp, float sp) { this.hp = hp; this.sp = sp; } }
-    static ClassVitals VitalsFor(PlayerClass c)
-        => c == PlayerClass.Mage ? new ClassVitals(0.85f, 1.7f) : new ClassVitals(1.4f, 0.7f);   // default/Swordsman = tanky, low SP
-
     public int XPToNext => 5 + Level * 5;
     public bool IsDead => CurrentHP <= 0;
 
     // Derived passive combat stats (Phase G). These have no flat "base" — they read the
     // passive % layer directly, so a stat with 0 ranks is simply neutral.
     public const float BaseCritMultiplier = 1.4f;                                     // pre-renewal: a crit deals 140%…
-    public float CritMultiplier  => BaseCritMultiplier + Passives.Percent(StatId.CritDamage); // …+ CritDamage on top
+    public float CritMultiplier  => BaseCritMultiplier + PassivePercent(StatId.CritDamage); // …+ CritDamage on top
     // These combine the primary-stat contribution (LUK/AGI/DEX) with the passive % layer.
-    public float CritChance01    => Mathf.Min(0.95f, P(PrimaryStat.LUK) * CritPerLuk + Passives.Percent(StatId.CritChance) + equipBonuses.critPercent / 100f);
+    public float CritChance01    => Mathf.Min(0.95f, P(PrimaryStat.LUK) * CritPerLuk + PassivePercent(StatId.CritChance) + equipBonuses.critPercent / 100f);
     // RO accuracy/evasion. HIT (DEX + level) is rolled against a target's FLEE to decide a physical hit;
     // FLEE (AGI + level, scaled by the Evasion passive) is how often incoming physical attacks whiff on us.
     // Both feed the shared HIT-vs-FLEE roll in Combat; magic ignores them. See Combat for the formula.
     public int Hit  => Level + P(PrimaryStat.DEX) * HitPerDex + P(PrimaryStat.LUK) / LukPerHit;
     public int Flee => Mathf.RoundToInt((Level + P(PrimaryStat.AGI) * FleePerAgi + P(PrimaryStat.LUK) / LukPerFlee)
-                                        * (1f + Passives.Percent(StatId.Evasion)));
+                                        * (1f + PassivePercent(StatId.Evasion)));
     // Pre-renewal ASPD: AGI is the primary driver, DEX contributes a fraction (DexAspdShare). Kept as a
     // SPEED MULTIPLIER (the game's attack model) rather than the RO 0–200 scale. >1 = swing faster.
     public float AttackSpeedMult => 1f + (P(PrimaryStat.AGI) + P(PrimaryStat.DEX) * DexAspdShare) * AspdPerAgi
-                                       + Passives.Percent(StatId.AttackSpeed) + equipBonuses.aspdPercent / 100f;
+                                       + PassivePercent(StatId.AttackSpeed) + equipBonuses.aspdPercent / 100f;
     public float CastSpeedMult   => 1f + P(PrimaryStat.DEX) * CastPerDex;             // >1 = cast faster (shortens caster cooldown)
     /// <summary>Pre-renewal cast-time multiplier applied to a spell's base wind-up: <c>1 − DEX/150</c>,
     /// clamped to [0,1]. 1 at 0 DEX, 0 (instant cast) at DEX 150. A spell's real cast time is
     /// <c>baseCast × CastTimeMult</c>. See <see cref="Player3DCaster"/>.</summary>
     public float CastTimeMult => Mathf.Clamp01(1f - P(PrimaryStat.DEX) / (float)InstantCastDex);
 
-    int Scale(int flat, StatId stat) => Mathf.RoundToInt(flat * (1f + Passives.Percent(stat)));
+    int Scale(int flat, StatId stat) => Mathf.RoundToInt(flat * (1f + PassivePercent(stat)));
 
     // ---- Derived-stat snapshots (the pure keystone for the HUD windows) -----------------------
     /// <summary>A readout of every derived stat for the CURRENT loadout (what the Character /
@@ -367,9 +391,14 @@ public class Character : MonoBehaviour
 
     /// <summary>As above, but the <paramref name="targetLuk"/> applies the pre-renewal crit shield — the
     /// defender's LUK lowers our crit chance (<see cref="CritShieldPerLuk"/> each). Pass 0 for no shield.</summary>
-    public int RollDamage(out bool crit, int targetLuk)
+    public int RollDamage(out bool crit, int targetLuk) => RollDamage(out crit, targetLuk, false);
+
+    /// <summary>As above, but <paramref name="forceCrit"/> guarantees a crit (the GuaranteedCrit skill
+    /// modifier) — using the real crit math (<see cref="Attack"/> × <see cref="CritMultiplier"/>), not a
+    /// cosmetic flag, so the bonus damage and DEF-bypass both apply.</summary>
+    public int RollDamage(out bool crit, int targetLuk, bool forceCrit)
     {
-        crit = UnityEngine.Random.value < EffectiveCritChance(targetLuk);
+        crit = forceCrit || UnityEngine.Random.value < EffectiveCritChance(targetLuk);
         if (crit) return Mathf.RoundToInt(Attack * CritMultiplier);
         return UnityEngine.Random.Range(MinAttack, Attack + 1);   // Range(int,int) is max-EXCLUSIVE
     }
@@ -418,8 +447,36 @@ public class Character : MonoBehaviour
         };
 
         StatPoints = startingStatPoints;
+        EnsureRingEquipped();        // start wearing your ring so the passive/active layer is live by default
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
+    }
+
+    /// <summary>Put a ring on if the <see cref="EquipSlotType.Ring"/> slot is empty — so a fresh (or loaded)
+    /// session always boots with the vessel worn. Prefers an authored Ring item from Resources/Items; falls
+    /// back to a runtime-built default so the feature works even before the asset is created.</summary>
+    public void EnsureRingEquipped()
+    {
+        if (GetEquipped(EquipSlotType.Ring) != null) return;
+        var def = LoadRingDef();
+        if (def != null) SetEquipped(EquipSlotType.Ring, new EquipmentInstance(def));
+    }
+
+    static Item LoadRingDef()
+    {
+        var all = Resources.LoadAll<Item>("Items");
+        for (int i = 0; i < all.Length; i++)
+            if (all[i] != null && all[i].slot == EquipSlotType.Ring) return all[i];
+
+        // Runtime fallback (no authored asset yet): a plain vessel so the slot can be filled.
+        var ring = ScriptableObject.CreateInstance<Item>();
+        ring.id = "item.ring-of-beginnings";
+        ring.displayName = "Ring of Beginnings";
+        ring.slot = EquipSlotType.Ring;
+        ring.category = ItemCategory.Equip;
+        ring.rarity = Rarity.Rare;
+        ring.description = "Your life's-work vessel. Its power grows as you walk the ring.";
+        return ring;
     }
 
     // Tuning the `level` field in the inspector (at runtime) recomputes every derived stat — MaxHP,
@@ -450,8 +507,8 @@ public class Character : MonoBehaviour
         for (int i = 0; i < primary.Length; i++) spentStat += StatPointsSpentRaising(primary[i]);
         StatPoints = Mathf.Max(0, TotalStatPointsEarned(level) - spentStat);
 
-        // Skill points: 1 free start at level 1, +1 per level after = `level` granted in total.
-        Passives.SetBankedPoints(level - Passives.TotalRanks());
+        // Passive draft points are NO LONGER tied to character level — they come from RING level-ups
+        // (see RingProgress.AddXP). Dialing the character level here only reconciles the stat-point pool.
     }
 
     /// <summary>Dev/testing: set the character level at runtime — reconciles the stat/skill point pools
@@ -718,21 +775,30 @@ public class Character : MonoBehaviour
     public void AddXP(int amount)
     {
         if (amount <= 0) return;
+
+        // The SAME kills feed both tracks: the character (flat stats) and the ring (its own level → passive
+        // draft points). Ring XP only accrues while the ring is actually worn — you can't level a ring you took off.
+        if (RingEquipped) Ring.AddXP(amount);
+
         XP += amount;
         while (XP >= XPToNext)
         {
             XP -= XPToNext;
             level++;
-            Passives.AddPoint();              // Phase G: bank a skill point to spend in the Skills (K) panel
+            SkillMods.OnLevel(level);         // Charter §12: even levels auto-roll a random skill modifier
             StatPoints += StatusPointsForLevel(level);   // pre-renewal: ⌊L/5⌋+3 status points this level
             CurrentHP = MaxHP;                // level-up fully heals
             CurrentMP = MaxMP;                // …and refills mana
             Sfx.Play(levelUpSfx);        // triumphant sting
-            OnLeveledUp?.Invoke(Level);  // drives the level-up toast / draft prompt
+            OnLeveledUp?.Invoke(Level);  // drives the level-up toast
         }
         OnStatsChanged?.Invoke();
         OnHealthChanged?.Invoke();
     }
+
+    /// <summary>Dev/testing: feed the ring XP directly (DevSettings "ring XP" action), regardless of whether
+    /// it's currently worn — so the ring track can be exercised without grinding.</summary>
+    public void AddRingXP(int amount) => Ring.AddXP(amount);
 
     // ---- Save / load (M1) -----------------------------------------------------
     // The progression spine — level, XP, HP/MP, the six primary stats + unspent points, and the
@@ -762,7 +828,11 @@ public class Character : MonoBehaviour
         d.bankedPoints = Passives.BankedPoints;
         d.leader       = Passives.Leader;
         d.hasLeader    = Passives.HasLeader;
+        Ring.Capture(out d.ringLevel, out d.ringXp);
         d.gold         = Wallet.Capture();
+        SkillMods.Capture(out d.skillModIds, out d.skillModTags, out d.skillModSlots);
+        d.ownedSkillIds = Skills.Capture();
+        d.hotbarBindings = Hotbar.Capture();
         return d;
     }
 
@@ -781,7 +851,14 @@ public class Character : MonoBehaviour
                 primary[i] = Mathf.Clamp(d.primary[i], 1, MaxStatValue);
 
         Passives.LoadState(d.rankStats, d.rankValues, d.leader, d.hasLeader, d.bankedPoints);
+        // Ring level/XP. Pre-v4 saves have no ring fields → derive the level from the points ever granted
+        // (allocated + banked), since one point == one ring level, so the walk stays consistent.
+        Ring.Restore(d.ringLevel > 0 ? d.ringLevel : Passives.TotalRanks() + Passives.BankedPoints, d.ringXp);
         Wallet.Restore(d.gold);
+        SkillMods.Restore(d.skillModIds, d.skillModTags, d.skillModSlots);
+        Skills.Restore(d.ownedSkillIds);
+        Hotbar.Restore(d.hotbarBindings);
+        EnsureRingEquipped();        // equipment isn't persisted yet — re-wear the vessel after a load
 
         // HP/MP last, against the now-restored maxima. Never load into a dead state.
         CurrentHP = Mathf.Clamp(d.currentHP <= 0 ? MaxHP : d.currentHP, 1, MaxHP);

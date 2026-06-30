@@ -1,36 +1,7 @@
 using UnityEngine;
 
-/// <summary>The player's active-skill identity. A class = which kit of <see cref="IHotbarSkill"/> components
-/// is enabled (see <see cref="ClassState"/> / Player3DController.ApplyClass). NOT a stat lock.</summary>
-public enum PlayerClass { Swordsman, Mage }
-
-/// <summary>Persists the chosen class (PlayerPrefs) so it survives restarts and is read at boot.</summary>
-public static class ClassState
-{
-    const string Key = "unwritten.class";
-    static PlayerClass? current;
-
-    /// <summary>Class a fresh install starts as (no saved choice yet) — Mage is the default kit.</summary>
-    public const PlayerClass Default = PlayerClass.Mage;
-
-    public static PlayerClass Current
-    {
-        get { if (current == null) current = (PlayerClass)PlayerPrefs.GetInt(Key, (int)Default); return current.Value; }
-        set { current = value; PlayerPrefs.SetInt(Key, (int)value); PlayerPrefs.Save(); }
-    }
-
-    /// <summary>Forget the saved class so the next read falls back to <see cref="Default"/> — i.e. simulate a
-    /// fresh install. Used by the "Reset Saved Class" editor tool to verify the default-class behaviour.</summary>
-    public static void Reset()
-    {
-        current = null;
-        PlayerPrefs.DeleteKey(Key);
-        PlayerPrefs.Save();
-    }
-}
-
 /// <summary>
-/// A player active that can show up on the HUD hotbar. Each Swordsman/class skill component
+/// A player active that can show up on the HUD hotbar. Each class-agnostic skill component
 /// (<see cref="Player3DBash"/>, <see cref="Player3DCharge"/>, <see cref="Player3DCaster"/>…)
 /// implements this so the <see cref="HotbarPanel"/> can render a slot for it — key, MP cost,
 /// a cooldown sweep — and fire it on click, WITHOUT the hotbar knowing the concrete type.
@@ -58,9 +29,18 @@ public interface IHotbarSkill
     float CooldownFraction01 { get; }
     /// <summary>Accent colour for the slot label, so the actives read as distinct.</summary>
     Color Tint { get; }
-    /// <summary>Whether this skill belongs to (shows up for) the given class. Universal skills return true
-    /// for every class; class skills return true only for their own.</summary>
-    bool InClass(PlayerClass c);
     /// <summary>Fire the skill now (same target/MP/cooldown rules as the keypress). Returns true if it fired.</summary>
     bool Activate();
+}
+
+/// <summary>Opt-in marker for an active that carries a six-phase modifier loadout (Charter §12). Only
+/// skills that actually roll modifiers implement this — the hotbar uses it to show a loadout tooltip and
+/// the skill uses its <see cref="SkillModTags"/> to register with <see cref="SkillModBook"/>. Keeping it
+/// separate from <see cref="IHotbarSkill"/> means the non-modifiable actives stay untouched.</summary>
+public interface IModifiableSkill
+{
+    /// <summary>Stable id this skill's loadout is keyed by in <see cref="SkillModBook"/> (e.g. "bash").</summary>
+    string SkillModId { get; }
+    /// <summary>The eligibility tags that decide which modifiers can roll onto this skill.</summary>
+    string[] SkillModTags { get; }
 }

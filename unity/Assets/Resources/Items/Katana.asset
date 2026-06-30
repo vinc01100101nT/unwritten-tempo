@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.katana
   displayName: Katana
-  icon: {fileID: -6251451809504726511, guid: d27d5d2c054cc8c429e42efe8824a9dc, type: 3}
+  icon: {fileID: 0}
   slot: 3
+  weaponType: 1
   rarity: 2
   category: 0
   cardSlots: 3

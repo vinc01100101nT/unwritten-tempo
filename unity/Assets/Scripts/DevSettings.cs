@@ -281,12 +281,6 @@ public class DevSettings : MonoBehaviour
 
     void BuildKnobs()
     {
-        // ---- Class (swap the active-skill kit live; persists via PlayerPrefs) ----
-        Cat("Class");
-        B("Mage (off = Swordsman)",
-            () => ClassState.Current == PlayerClass.Mage,
-            v => { if (player) player.SetClass(v ? PlayerClass.Mage : PlayerClass.Swordsman); });
-
         // ---- Player (movement / feel) — Player3DController -----------------
         Cat("Player");
         F("Travel speed",     0f, 12f, () => player ? player.moveSpeed : 0f,       v => { if (player) player.moveSpeed = v; });   // base translation, no anim scaling
@@ -418,6 +412,7 @@ public class DevSettings : MonoBehaviour
         I("Starting stat pts", 0f, 200f, () => Ch ? Ch.startingStatPoints : 0f, v => { if (Ch) Ch.startingStatPoints = Mathf.RoundToInt(v); });
         Act("Grant +50 stat pts", () => { if (Ch) Ch.GrantStatPoints(50); });   // pre-renewal: feel the ⌊V/10⌋+2 cost curve
         Act("Respec stats (refund all)", () => { if (Ch) Ch.RespecStats(); });   // reset to 1s + full level budget (also migrates old saves)
+        Act("Grant +200 ring XP", () => { if (Ch) Ch.AddRingXP(200); });   // level the ring (→ passive points; skill pick / 10 allocated)
 
         // ---- Mobs — every active MonsterAI3D + MobRespawn ------------------
         Cat("Mobs");

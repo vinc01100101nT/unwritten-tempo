@@ -21,7 +21,7 @@ using UnityEngine.InputSystem;
 /// This is deliberately a single hardcoded spell, NOT the every-10th-level actives draft (that's a
 /// later phase) — just enough of a magic path to make MAtk / MP / MDef real foundation stats.
 /// </summary>
-public class Player3DCaster : MonoBehaviour, IHotbarSkill
+public class Player3DCaster : MonoBehaviour, IHotbarSkill, IModifiableSkill
 {
     [Tooltip("Hotbar icon (Skill Icon pack). Optional — the bar falls back to the text label if unset.")]
     public Sprite icon;
@@ -59,6 +59,23 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill
     bool casting;
     float castStart, castEnd;
     Health castTarget;
+    int castCount;             // for the Proc-phase "every Nth cast is free" modifier
+    SkillModLoadout loadout;   // six-phase modifier loadout (lazily registered, born with one)
+    SkillContext pendingCtx;   // the shaped cast captured at Activate, consumed at Resolve (after the wind-up)
+
+    // Bolt's modifier-eligibility identity (Charter §12): a magic, ranged, single-target spell — draws the same
+    // magic pool as Fireball (cooldown/reach/amp/element/stagger/slow/lifesteal/proc).
+    const string SkillId = "bolt";
+    static readonly string[] Tags = { SkillTag.Magic, SkillTag.Ranged, SkillTag.Offense, SkillTag.SingleTarget };
+
+    public string SkillModId => SkillId;
+    public string[] SkillModTags => Tags;
+
+    void EnsureRegistered()
+    {
+        if (loadout != null || Character.Instance == null) return;
+        loadout = Character.Instance.SkillMods.Register(SkillId, Tags);
+    }
 
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
     static readonly Color InterruptColor = new Color(0.85f, 0.55f, 0.55f);
@@ -79,11 +96,9 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill
     void Update()
     {
         if (Character.Instance == null || Character.Instance.IsDead) { CancelSilently(); return; }
+        EnsureRegistered();                    // born-with-one as soon as the player exists (for the hotbar tooltip)
 
-        if (casting) { TickCast(); return; }   // winding up: don't read a new cast key until it resolves
-
-        if (!CastKey() || PointerOverUI()) return;
-        Activate();
+        if (casting) { TickCast(); return; }   // winding up: the cast tick still runs each frame; triggering is via the hotbar binding
     }
 
     /// <summary>Begin the bolt now — shared by the keypress and the HUD hotbar click. Returns true only if
@@ -97,9 +112,14 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill
         if (Time.time < nextCast) return false;
         if (cam == null) cam = Camera.main;
 
-        var target = Player3DController.MonsterUnderCursor(cam) ?? NearestMonsterWithin(range);
+        EnsureRegistered();
+        pendingCtx = SkillContext.Default(1f, 1f, 0f);
+        loadout?.ApplyAll(ref pendingCtx);                // captured now; consumed at Resolve (after the wind-up)
+        float effRange = range * pendingCtx.RangeMult;
+
+        var target = Player3DController.MonsterUnderCursor(cam) ?? NearestMonsterWithin(effRange);
         if (target == null) return false;                 // nothing to cast at — don't burn mana/cooldown
-        if (PlanarDist(transform.position, target.transform.position) > range) return false;
+        if (PlanarDist(transform.position, target.transform.position) > effRange) return false;
 
         if (!Character.Instance.SpendMana(manaCost))       // mana is spent up-front (RO), lost if interrupted
         {
@@ -146,7 +166,10 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill
     // instant cast). The mana was already spent in Activate.
     void Resolve(Health target)
     {
-        lastDuration = cooldown / Mathf.Max(0.01f, Character.Instance.CastSpeedMult);   // DEX shortens the cooldown
+        var ctx = pendingCtx;                             // the loadout shaped at Activate
+        castCount++;
+        bool free = ctx.EveryNthFree > 0 && castCount % ctx.EveryNthFree == 0;   // Proc: every Nth cast skips cooldown
+        lastDuration = free ? 0f : cooldown / Mathf.Max(0.01f, Character.Instance.CastSpeedMult) * ctx.CooldownMult;   // DEX shortens it
         nextCast = Time.time + lastDuration;
 
         if (target == null || target.IsDead) return;      // fizzle (cooldown still applies); no FX/damage
@@ -156,7 +179,18 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill
         SlashEffect.Spawn(boltSheet, boltFrameSize, boltFrames, boltFps, fxPos, boltScale);
 
         int power = Character.Instance.RollMagicDamage(out bool crit, target.luk);   // target.luk = pre-renewal crit shield
-        target.TakeMagicDamage(power, crit);
+        Element element = ctx.ConvertElement ? ctx.NewElement : Element.Neutral;
+        int dealt = target.TakeMagicDamage(Mathf.RoundToInt(power * Mathf.Max(1f, ctx.DamageMult)), crit, element);
+        if (!target.IsDead)
+        {
+            var ai = target.GetComponent<MonsterAI3D>();
+            if (ai != null)
+            {
+                if (ctx.StaggerSecs > 0f) ai.Stagger(ctx.StaggerSecs);
+                if (ctx.SlowSecs > 0f && ctx.SlowFactor < 1f) ai.Slow(ctx.SlowFactor, ctx.SlowSecs);
+            }
+        }
+        if (ctx.LifestealFracDealt > 0f && dealt > 0) Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * ctx.LifestealFracDealt));
     }
 
     /// <summary>Cancel an in-flight cast with feedback (popup + sound). The mana spent at cast start is LOST
@@ -188,7 +222,6 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill
     public float CooldownRemaining => Mathf.Max(0f, nextCast - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => new Color(0.55f, 0.7f, 1f);   // magic blue
-    public bool InClass(PlayerClass c) => true;        // universal basic (both classes have the bolt)
 
     static readonly Collider[] hits = new Collider[32];
 

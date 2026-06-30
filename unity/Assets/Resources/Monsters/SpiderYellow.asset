@@ -15,7 +15,8 @@ MonoBehaviour:
   id: mob.spideryellow
   displayName: SpiderYellow
   isBoss: 0
-  biome: 0
+  size: 1
+  biome: 5
   tier: 1
   biomeAgnostic: 1
   sheet: SpiderYellow

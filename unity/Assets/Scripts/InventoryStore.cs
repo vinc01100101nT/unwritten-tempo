@@ -38,6 +38,9 @@ public class InventoryStore : MonoBehaviour
         foreach (var def in Resources.LoadAll<Item>("Items"))
         {
             if (def == null) continue;
+            // The Ring of Progression vessel is auto-equipped by Character (one per player); don't also seed a
+            // duplicate into the bag. It still returns to the bag normally if you unequip it.
+            if (def.slot == EquipSlotType.Ring) continue;
             if (def.slot != EquipSlotType.None)
             {
                 // Showcase the +N enhancement channel: rarer gear arrives pre-refined.

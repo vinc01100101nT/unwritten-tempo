@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Item
   id: item.iron-ore
   displayName: Iron Ore
-  icon: {fileID: -8171958947958391838, guid: d833d8d5b4847c74cab606b3b3fe8a1f, type: 3}
+  icon: {fileID: 0}
   slot: 0
+  weaponType: 0
   rarity: 0
   category: 2
   cardSlots: 0

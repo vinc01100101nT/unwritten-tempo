@@ -226,13 +226,13 @@ public static class UIShellBuilder
         var holder = NewColor("HUD_Hotbar", canvas, new Color(0, 0, 0, 0f));
         Anchor(holder.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
         holder.rectTransform.anchoredPosition = new Vector2(0, 14);
-        holder.rectTransform.sizeDelta = new Vector2(6 * 54, 54);
+        holder.rectTransform.sizeDelta = new Vector2(9 * 54, 54);   // nine bindable slots (keys 1–9)
         var h = holder.gameObject.AddComponent<HorizontalLayoutGroup>();
         h.spacing = 6;
         h.childAlignment = TextAnchor.MiddleCenter;
         h.childControlWidth = h.childControlHeight = false;
         h.childForceExpandWidth = h.childForceExpandHeight = false;
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 9; i++)
             NewSliced("Hotslot", holder.transform, cellSprite).rectTransform.sizeDelta = new Vector2(48, 48);
     }
 

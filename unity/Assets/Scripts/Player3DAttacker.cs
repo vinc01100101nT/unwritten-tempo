@@ -156,13 +156,26 @@ public class Player3DAttacker : MonoBehaviour
     /// staggers the target. Independent of the auto-swing cooldown (the skill owns its own), but shares
     /// the <c>swing</c> flag so the controller shows the attack pose and no double-swing overlaps.</summary>
     public void Strike(Health t, float damageMult, float fxScale, SfxSet swingSfx, SfxSet hitSfx, float staggerSecs)
+        => Strike(t, SkillContext.Default(damageMult, fxScale, staggerSecs), swingSfx, hitSfx);
+
+    /// <summary>Context-aware skill strike: same windup→slash-FX→damage pipeline, but the cast's
+    /// <see cref="SkillContext"/> (built from the skill's modifier loadout) shapes damage, element, the
+    /// on-hit status (stagger/slow), lifesteal, and cleave. The plain overload above just feeds a default
+    /// context, so existing callers (e.g. Charge) are unchanged.</summary>
+    public void Strike(Health t, in SkillContext ctx, SfxSet swingSfx, SfxSet hitSfx)
     {
         if (t == null || t.IsDead || swing != null) return;
+        // SelfEffect that fires on CAST (no hit needed) — the Bulwark self-shield mod.
+        if (ctx.ShieldSecs > 0f && ctx.ShieldCut > 0f && Character.Instance != null)
+            Character.Instance.BeginGuard(ctx.ShieldSecs, ctx.ShieldCut);
         Sfx.Play(swingSfx != null && !swingSfx.Empty ? swingSfx : WeaponSfx(w => w.attackSfx, defaultAttackSfx));
-        swing = StartCoroutine(StrikeRoutine(t, Mathf.Max(1f, damageMult), Mathf.Max(0.1f, fxScale), hitSfx, staggerSecs));
+        swing = StartCoroutine(StrikeRoutine(t, ctx, hitSfx));
     }
 
-    IEnumerator StrikeRoutine(Health t, float damageMult, float fxScale, SfxSet hitSfx, float staggerSecs)
+    static readonly Collider[] cleaveBuf = new Collider[16];
+
+    // Coroutines can't take `in`/`ref` params, so the context is copied by value here (a small struct).
+    IEnumerator StrikeRoutine(Health t, SkillContext ctx, SfxSet hitSfx)
     {
         float scale = MotionScale;
         yield return new WaitForSeconds(windupTime * scale);
@@ -171,21 +184,59 @@ public class Player3DAttacker : MonoBehaviour
         if (PlanarDist(t) > EffectiveRange * 1.6f) yield break;   // target slipped out of the skill's (extended) reach
 
         bool crit = false;
-        int basePower = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk) : damage;
-        int power = Mathf.RoundToInt(basePower * damageMult);
+        int basePower = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk, ctx.ForceCrit) : damage;
+        int power = Mathf.RoundToInt(basePower * Mathf.Max(1f, ctx.DamageMult));
+        Element element = ctx.ConvertElement ? ctx.NewElement : meleeElement;
 
         Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
-        SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), fxPos, slashScale * fxScale);
+        SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), fxPos, slashScale * Mathf.Max(0.1f, ctx.FxScale));
 
         // Skills always LAND (no FLEE roll, hit −1), but they still respect DEF unless they actually crit —
         // so pass the real rolled `crit` (which also colours the number gold + bypasses DEF), RO-style.
-        int dealt = t.TakeDamage(power, crit, -1, meleeElement);
+        // MultiHit (Flurry mod) splits the strike into N hits sharing the total — visual flair, same DPS;
+        // a single TakeDamage when HitCount is 1 (the default), so the common path is unchanged.
+        int hitCount = Mathf.Max(1, ctx.HitCount);
+        int perHit = Mathf.Max(1, Mathf.RoundToInt(power / (float)hitCount));
+        int dealt = 0;
+        for (int h = 0; h < hitCount && !t.IsDead; h++)
+            dealt += t.TakeDamage(perHit, crit, -1, element);
         if (dealt > 0)
         {
             Sfx.Play(hitSfx != null && !hitSfx.Empty ? hitSfx : WeaponSfx(w => w.hitSfx, defaultHitSfx));
-            var ai = t.GetComponent<MonsterAI3D>();   // once per Bash (~every few s), not a per-frame hot path
-            if (ai != null && staggerSecs > 0f) ai.Stagger(staggerSecs);
+            ApplyOnHit(t, ctx);
+            if (ctx.LifestealFracDealt > 0f && Character.Instance != null)
+                Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * ctx.LifestealFracDealt));
         }
+
+        // Cleave (Targeting phase): also strike up to ExtraTargets OTHER mobs within CleaveRadius. Runs once
+        // per cast (~every few s), so the NonAlloc overlap + per-hit GetComponentInParent are fine here.
+        if (ctx.ExtraTargets > 0 && ctx.CleaveRadius > 0f)
+        {
+            int n = Physics.OverlapSphereNonAlloc(t.transform.position, ctx.CleaveRadius, cleaveBuf);
+            int extra = 0;
+            for (int i = 0; i < n && extra < ctx.ExtraTargets; i++)
+            {
+                var h = cleaveBuf[i].GetComponentInParent<Health>();
+                if (h == null || h == t || h.IsDead || h.GetComponent<MonsterAI3D>() == null) continue;
+                Vector3 p = h.transform.position + Vector3.up * 0.4f;
+                SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), p, slashScale * Mathf.Max(0.1f, ctx.FxScale));
+                if (h.TakeDamage(power, crit, -1, element) > 0) ApplyOnHit(h, ctx);
+                extra++;
+            }
+        }
+    }
+
+    void ApplyOnHit(Health h, in SkillContext ctx)
+    {
+        var ai = h.GetComponent<MonsterAI3D>();
+        if (ai == null) return;
+        // Knockback (Repelling mod) shoves from the player and carries its own freeze, so it subsumes the
+        // separate Stagger; a plain Stagger applies only when there's no shove.
+        if (ctx.KnockbackSpeed > 0f)
+            ai.Knockback(transform.position, ctx.KnockbackSpeed, ctx.KnockbackSecs, Mathf.Max(ctx.StaggerSecs, ctx.KnockbackSecs));
+        else if (ctx.StaggerSecs > 0f) ai.Stagger(ctx.StaggerSecs);
+        if (ctx.SlowSecs > 0f && ctx.SlowFactor < 1f) ai.Slow(ctx.SlowFactor, ctx.SlowSecs);
+        if (ctx.RootSecs > 0f) ai.Slow(0f, ctx.RootSecs);   // Root (Entangling mod) = a hard slow to ~0
     }
 
     void OnDrawGizmosSelected()
