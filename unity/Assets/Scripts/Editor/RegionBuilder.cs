@@ -190,7 +190,7 @@ public static class RegionBuilder
             if (Physics.Raycast(new Vector3(p.x, p.y + 100f, p.z), Vector3.down, out var hit, 400f, groundMask, QueryTriggerInteraction.Ignore))
             {
                 Undo.RecordObject(go.transform, "Drop to Ground");
-                go.transform.position = new Vector3(p.x, hit.point.y, p.z);   // Kenney props pivot at their base
+                go.transform.position = new Vector3(p.x, hit.point.y, p.z);   // props pivot at their base
                 moved++;
             }
         }

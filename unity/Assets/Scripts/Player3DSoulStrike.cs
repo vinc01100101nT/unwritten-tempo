@@ -35,18 +35,13 @@ public class Player3DSoulStrike : MonoBehaviour, IHotbarSkill, IModifiableSkill
     [Tooltip("Stun duration in seconds.")]
     public float stunSeconds = 1.2f;
 
-    [Header("Projectile FX (sliced off a sheet at runtime, like Fireball)")]
-    public Texture2D projectileSheet;
-    public int projFrameSize = 16;
-    public int projFrames = 4;
-    public float projFps = 18f;
+    [Header("Projectile VFX (Effect Library — a fast focused bolt, then impact)")]
+    [Tooltip("Effect-library id attached to the flying bolt. Empty = no travel visual.")]
+    public string projVfxId = "fire.magic-pro-blue";
     public float projSpeed = 16f;       // fast — it reads as a focused "snipe", not a lobbed fireball
-    public float projScale = 1.2f;
-    [Header("Impact FX (FX/Elemental/Explosion)")]
-    public Texture2D impactSheet;
-    public int impactFrameSize = 40;
-    public int impactFrames = 9;
-    public float impactScale = 1.1f;
+    public float projScale = 1f;
+    [Tooltip("Effect-library id played at the hit point on arrival. Empty = none.")]
+    public string impactVfxId = "hit.star";
 
     [Header("Audio")]
     public SfxSet castSfx;
@@ -124,7 +119,7 @@ public class Player3DSoulStrike : MonoBehaviour, IHotbarSkill, IModifiableSkill
         float dmgMult = ctx.DamageMult, lifesteal = ctx.LifestealFracDealt;
         float staggerSecs = ctx.StaggerSecs, slowFactor = ctx.SlowFactor, slowSecs = ctx.SlowSecs;
         Vector3 from = transform.position + Vector3.up * 0.5f;
-        Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
+        Projectile3D.SpawnVfx(projVfxId, impactVfxId, projScale,
             from, t.transform, t.transform.position + Vector3.up * 0.4f, projSpeed, 0.5f, 3f, () =>
             {
                 if (t == null || t.IsDead || Character.Instance == null) return;
@@ -141,8 +136,7 @@ public class Player3DSoulStrike : MonoBehaviour, IHotbarSkill, IModifiableSkill
                 }
                 if (lifesteal > 0f && dealt > 0) Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * lifesteal));
                 if (!t.IsDead && Random.value < stunChance) Status.Apply(t.gameObject, Ailment.Stun, stunSeconds);
-            },
-            impactSheet, impactFrameSize, impactFrames, 22f, impactScale);
+            });
     }
 
     // ---- IHotbarSkill ----

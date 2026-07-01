@@ -40,12 +40,10 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill, IModifiableSkill
     [Tooltip("Height above the player the cast bar floats at.")]
     public float castBarHeight = 0.9f;
 
-    [Header("Bolt FX (sliced off a horizontal sheet at runtime, like the slash)")]
-    public Texture2D boltSheet;
-    public int boltFrameSize = 16;
-    public int boltFrames = 5;
-    public float boltFps = 18f;
-    public float boltScale = 1.2f;
+    [Header("Bolt VFX (Effect Library — impact at the target)")]
+    [Tooltip("Effect-library id for the bolt impact. Empty = none.")]
+    public string boltVfxId = "hit.electro";
+    public float boltScale = 1f;
 
     [Header("Audio")]
     public SfxSet castSfx;
@@ -176,7 +174,7 @@ public class Player3DCaster : MonoBehaviour, IHotbarSkill, IModifiableSkill
 
         Sfx.Play(castSfx);
         Vector3 fxPos = target.transform.position + Vector3.up * 0.4f;
-        SlashEffect.Spawn(boltSheet, boltFrameSize, boltFrames, boltFps, fxPos, boltScale);
+        if (!string.IsNullOrEmpty(boltVfxId)) Vfx.PlayAt(boltVfxId, fxPos, Quaternion.identity, boltScale);
 
         int power = Character.Instance.RollMagicDamage(out bool crit, target.luk);   // target.luk = pre-renewal crit shield
         Element element = ctx.ConvertElement ? ctx.NewElement : Element.Neutral;

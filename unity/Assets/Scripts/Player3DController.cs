@@ -685,7 +685,10 @@ public partial class Player3DController : MonoBehaviour
     {
         if (pendingPickup == null) return;               // Unity-null once destroyed
         Vector3 a = transform.position, b = pendingPickup.transform.position; a.y = 0f; b.y = 0f;
-        if (Vector3.Distance(a, b) > pendingPickup.collectRadius) return;
+        // Loot reach == melee reach: you must be as close as you'd stand to swing (no looting from afar).
+        // The pickup's own collectRadius stays the CLICK size; this gates the actual collect.
+        float reach = attacker != null ? attacker.EffectiveRange : pendingPickup.collectRadius;
+        if (Vector3.Distance(a, b) > reach) return;
         pendingPickup.Collect();                         // item/gold + fires WorldPickup.OnCollected (PickUp anim)
         pickupLockUntil = Time.time + PickupLockSeconds;
         pendingPickup = null;
@@ -982,6 +985,9 @@ public partial class Player3DController : MonoBehaviour
     /// <summary>Public wrapper for the cursor→ground raycast — used by ground-targeted skills (e.g. Meteor).</summary>
     public static bool GroundUnderCursor(Camera cam, out Vector3 point) => GroundPoint(cam, out point);
 
+    /// <summary>Is there a collectable pickup under the cursor? Lets <see cref="GameCursor3D"/> show the grab hand.</summary>
+    public static bool PickupHovered(Camera cam) => PickupUnderCursor(cam) != null;
+
     /// <summary>The world pickup under the cursor (camera raycast hits its trigger sphere), or null. Drives click-to-collect.</summary>
     static WorldPickup PickupUnderCursor(Camera cam)
     {
@@ -1020,8 +1026,9 @@ public partial class Player3DController : MonoBehaviour
         return Input.GetMouseButtonDown(0);
     }
 
-    /// <summary>True when the cursor is over a UI element (HUD), so a click shouldn't also move the player.</summary>
-    static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+    /// <summary>True when the cursor is over a UI element (HUD), so a click shouldn't also move the player.
+    /// Delegates to <see cref="UiBlock"/> so uGUI windows AND IMGUI overlays (dev panels) both block.</summary>
+    static bool PointerOverUI() => UiBlock.PointerOverUI();
 
     static bool KeyA()
     {

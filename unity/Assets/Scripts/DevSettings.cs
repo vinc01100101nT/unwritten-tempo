@@ -385,8 +385,7 @@ public class DevSettings : MonoBehaviour
         F("Cooldown (s)",     0.1f, 2f, () => attacker ? attacker.cooldown : 0f,   v => { if (attacker) attacker.cooldown = v; });
         F("Windup (s)",       0f, 0.6f, () => attacker ? attacker.windupTime : 0f, v => { if (attacker) attacker.windupTime = v; });
         I("Base damage*",     1f, 50f, () => attacker ? attacker.damage : 0f,      v => { if (attacker) attacker.damage = Mathf.RoundToInt(v); });
-        F("Slash scale",      0.5f, 3f, () => attacker ? attacker.slashScale : 0f, v => { if (attacker) attacker.slashScale = v; });
-        F("Slash FPS",        5f, 40f, () => attacker ? attacker.slashFps : 0f,    v => { if (attacker) attacker.slashFps = v; });
+        F("Slash VFX scale",  0.2f, 3f, () => attacker ? attacker.slashVfxScale : 0f, v => { if (attacker) attacker.slashVfxScale = v; });
 
         // Bolt cast (Player3DCaster) — pre-renewal cast time: actual = base × (1 − DEX/150).
         F("Bolt base cast (s)", 0f, 4f,   () => caster ? caster.baseCastTime : 0f, v => { if (caster) caster.baseCastTime = v; });
@@ -396,7 +395,8 @@ public class DevSettings : MonoBehaviour
 
         // ---- Player Stats — Character (effective stats recompute live) -----
         Cat("Player Stats");
-        I("Level",            1f, 50f,  () => Ch ? Ch.Level : 1f,           v => { if (Ch) Ch.SetLevel(Mathf.RoundToInt(v)); });
+        I("Level",            1f, 200f, () => Ch ? Ch.Level : 1f,           v => { if (Ch) Ch.SetLevel(Mathf.RoundToInt(v)); });
+        I("Ring level",       1f, 200f, () => Ch ? Ch.Ring.Level : 1f,      v => { if (Ch) Ch.Ring.SetLevel(Mathf.RoundToInt(v)); });
         I("Base max HP",      1f, 500f, () => Ch ? Ch.baseMaxHP : 0f,        v => { if (Ch) Ch.baseMaxHP = Mathf.RoundToInt(v); });
         I("Base attack",      0f, 100f, () => Ch ? Ch.baseAttack : 0f,       v => { if (Ch) Ch.baseAttack = Mathf.RoundToInt(v); });
         I("Base defense",     0f, 100f, () => Ch ? Ch.baseDefense : 0f,      v => { if (Ch) Ch.baseDefense = Mathf.RoundToInt(v); });
@@ -720,6 +720,7 @@ public class DevSettings : MonoBehaviour
         // Block world input while the cursor is over the panel, so slider clicks don't also order the
         // player / orbit the camera. (Hover precedes the click, so this is already true on mouse-down.)
         Blocking = open && windowRect.Contains(Event.current.mousePosition);
+        if (Blocking) UiBlock.MarkImguiHot();   // route through the shared blocker so all world-input honors it
     }
 
     void DrawWindow(int id)

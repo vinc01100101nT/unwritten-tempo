@@ -27,6 +27,7 @@
 - **Prefer editor tools** over manual editor steps; extend `Tools ▸ unwritten ▸ …` for new one-click ops
 - **Enemy term is "mobs"** — never "bestiary"
 - **Name by function, not source** — general-purpose classes/files/menu items get functional names (`GlbPropImporter`, `FbxKitPrefabBaker`, `WalkableGround`), NEVER a vendor/asset prefix (`Trellis*`/`Kenney*`/`Pxltgr*`). A source name is allowed ONLY when the logic is genuinely source-specific (hardcoded to that pack's folders/quirk, e.g. `PxltgrMaterialFixer`, `MobBiomeImporter` on NinjaAdventure dirs)
+- **Pivot = base anchor (single source of truth)** — seat objects on the ground by snapping the **PIVOT** (`transform.position`) to the ground hit, NEVER the mesh-bounds bottom / lowest vertex. `Drop Selected to Ground` (`RegionBuilder.cs`) and the generator's `seatByPivot` are canonical; the bounds-based `Drop to Ground` (perched look) is retired. All new placement logic must be pivot-based
 - **Bake at author time** — static/never-changing work belongs in generate/editor phase, not Play
 - **No comments unless WHY is non-obvious** — well-named identifiers carry the WHAT
 - When adding/removing a `Tools ▸ unwritten` menu item, always update `Editor/TOOLS.md` in the same change

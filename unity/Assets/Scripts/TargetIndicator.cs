@@ -23,7 +23,7 @@ public class TargetIndicator : MonoBehaviour
         ind.sr = go.AddComponent<SpriteRenderer>();
         ind.sr.sprite = BuildArrow();
         ind.sr.sortingOrder = DepthSortRuntime.FxTarget;   // FX band: above all entities + overhead
-        go.transform.localScale = Vector3.one * 0.6f;
+        go.transform.localScale = Vector3.one * 0.3f;      // small marker, not a billboard-sized banner
         go.SetActive(false);
         return ind;
     }

@@ -150,6 +150,7 @@ public class CharacterCustomizePanel : MonoBehaviour
         var content = FindContent();
         if (content == null) return;
         panelRoot = content.parent.gameObject;   // the "CustomizePanel" window PanelToggle shows/hides
+        UiKit.ClickShield(panelRoot.transform as RectTransform);   // catch clicks over the whole window (no leak to world)
 
         selectedIdx  = PlayerPrefs.GetInt(PrefIdx, -1);
         hasSelection = selectedIdx >= 0 && selectedIdx < Palette.Length;

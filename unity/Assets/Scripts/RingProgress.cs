@@ -55,6 +55,18 @@ public sealed class RingProgress
         OnChanged?.Invoke();
     }
 
+    /// <summary>Dev/testing: set the ring's level directly (DevSettings "Ring level" knob). Each level gained
+    /// banks one passive draft point, exactly like a normal level-up, so the ring track can be exercised
+    /// without grinding XP. Lowering only sets the level (banked points are left alone).</summary>
+    public void SetLevel(int newLevel)
+    {
+        newLevel = Math.Max(1, newLevel);
+        while (Level < newLevel) { Level++; Passives.AddPoint(); OnLeveledUp?.Invoke(Level); }
+        Level = newLevel;
+        XP = 0;
+        OnChanged?.Invoke();
+    }
+
     /// <summary>Total points ALLOCATED into the ring so far — the gate for active-skill picks
     /// (<see cref="SkillRoster.EarnedPicks"/>) and the "N/10 to next skill" readout.</summary>
     public int PointsAllocated => Passives.TotalRanks();

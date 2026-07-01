@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Turns raw Kenney kit FBX meshes into <b>drop-ready prefabs</b> for the hand-place / auto-generate
+/// Turns raw kit FBX meshes into <b>drop-ready prefabs</b> for the hand-place / auto-generate
 /// 2.5D flows. A bare FBX dragged into a scene imports untextured and with no collider; each baked
 /// prefab instead has the kit colormap material applied and a <see cref="MeshCollider"/> per mesh,
 /// so the player collides with it and the 3D town baker can instantiate it directly.
@@ -15,8 +15,8 @@ using UnityEngine;
 /// </summary>
 public static class FbxKitPrefabBaker
 {
-    /// <summary>Asset-agnostic baker: pick ANY kit's FBX folder (e.g. a downloaded Kenney "Fantasy Town"
-    /// pack's <c>FBX format</c> folder placed under Assets/Art/…) and turn every FBX in it into drop-ready
+    /// <summary>Asset-agnostic baker: pick ANY kit's FBX folder (e.g. a downloaded prop pack's
+    /// <c>FBX format</c> folder placed under Assets/Art/…) and turn every FBX in it into drop-ready
     /// house/prop prefabs. Auto-detects the colormap atlas (Textures/colormap.png, else the first .png in
     /// the folder or its Textures subfolder). Output → Assets/Prefabs/&lt;folder name&gt;.</summary>
     [MenuItem("Tools/unwritten/Prefabs & Art/Build From Folder…", priority = 501)]
@@ -40,11 +40,11 @@ public static class FbxKitPrefabBaker
         BakeKit(leaf, kitDir, prefabFolder, DetectColormap(kitDir));
     }
 
-    // Find a texture atlas for a kit that doesn't follow Kenney's Textures/colormap.png convention.
+    // Find a texture atlas for a kit that doesn't follow the Textures/colormap.png convention.
     static string DetectColormap(string kitDir)
     {
-        string kenney = kitDir + "/Textures/colormap.png";
-        if (File.Exists(kenney)) return kenney;
+        string colormap = kitDir + "/Textures/colormap.png";
+        if (File.Exists(colormap)) return colormap;
         foreach (var dir in new[] { kitDir, kitDir + "/Textures" })
         {
             if (!Directory.Exists(dir)) continue;
@@ -62,13 +62,13 @@ public static class FbxKitPrefabBaker
 
     /// <summary>Bake every FBX in <paramref name="kitDir"/> into drop-ready prefabs under
     /// Assets/Prefabs/<paramref name="prefabFolder"/>, sharing one colormap material.
-    /// <paramref name="colormapPath"/> overrides the texture location (default = Kenney's
+    /// <paramref name="colormapPath"/> overrides the texture location (default =
     /// <c>&lt;kitDir&gt;/Textures/colormap.png</c>) for packs that ship their atlas elsewhere.</summary>
     public static void BakeKit(string kitName, string kitDir, string prefabFolder, string colormapPath = null)
     {
         if (!Directory.Exists(kitDir))
         {
-            EditorUtility.DisplayDialog("Kenney Prefabs",
+            EditorUtility.DisplayDialog("Build Prefabs",
                 $"Couldn't find the {kitName} kit at:\n{kitDir}\n\nPut the pack's 'FBX format' folder there and re-run.", "OK");
             return;
         }

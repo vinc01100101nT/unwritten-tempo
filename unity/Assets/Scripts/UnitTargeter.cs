@@ -151,7 +151,7 @@ public class UnitTargeter : MonoBehaviour
     }
 
     static float PlanarDist(Vector3 a, Vector3 b) { a.y = 0f; b.y = 0f; return Vector3.Distance(a, b); }
-    static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+    static bool PointerOverUI() => UiBlock.PointerOverUI();
 
     static bool LeftDown()
     {

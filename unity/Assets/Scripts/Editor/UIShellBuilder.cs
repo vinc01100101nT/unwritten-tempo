@@ -96,6 +96,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<CharacterUIBinder>();        // drives the HUD health/mana bars from Character
         canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Skills (K) panel
         canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
+        canvasGO.AddComponent<XpBarHUD>();                 // bottom-of-screen XP bars: character (left) + ring (right)
 
         // The new progression window trio (Inventory I · Equipment E · Character C) — replaces the old
         // Bag/Character panels. Builds itself into this canvas at runtime; needs the starter Item/Card assets.
@@ -169,7 +170,8 @@ public static class UIShellBuilder
     {
         var bar = NewSliced("HUD_HealthBar", canvas, barBgSprite);
         Anchor(bar.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);
-        bar.rectTransform.anchoredPosition = new Vector2(16, 16);
+        // Bottom-left stack is lifted 28px to clear the full-width XP strip (XpBarHUD) along the very bottom.
+        bar.rectTransform.anchoredPosition = new Vector2(16, 44);
         bar.rectTransform.sizeDelta = new Vector2(240, 28);
         // Filled image so CharacterUIBinder can drive fillAmount (needs a sprite + Filled type).
         var fill = NewColor("Fill", bar.transform, new Color(0.80f, 0.20f, 0.22f, 1f));
@@ -184,7 +186,7 @@ public static class UIShellBuilder
         // Mana bar, sitting just above the health bar (blue).
         var mana = NewSliced("HUD_ManaBar", canvas, barBgSprite);
         Anchor(mana.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);
-        mana.rectTransform.anchoredPosition = new Vector2(16, 48);
+        mana.rectTransform.anchoredPosition = new Vector2(16, 76);
         mana.rectTransform.sizeDelta = new Vector2(200, 18);
         var mfill = NewColor("Fill", mana.transform, new Color(0.25f, 0.45f, 0.95f, 1f));
         mfill.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
@@ -225,7 +227,7 @@ public static class UIShellBuilder
 
         var holder = NewColor("HUD_Hotbar", canvas, new Color(0, 0, 0, 0f));
         Anchor(holder.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
-        holder.rectTransform.anchoredPosition = new Vector2(0, 14);
+        holder.rectTransform.anchoredPosition = new Vector2(0, 42);   // lifted to clear the bottom XP strip (XpBarHUD)
         holder.rectTransform.sizeDelta = new Vector2(9 * 54, 54);   // nine bindable slots (keys 1–9)
         var h = holder.gameObject.AddComponent<HorizontalLayoutGroup>();
         h.spacing = 6;
@@ -278,7 +280,7 @@ public static class UIShellBuilder
 
         var panel = NewSliced("HUD_Hotkeys", canvas, panelSprite);
         Anchor(panel.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);   // bottom-left
-        panel.rectTransform.anchoredPosition = new Vector2(16, 74);              // above MP bar (y 48 + 18)
+        panel.rectTransform.anchoredPosition = new Vector2(16, 102);             // above MP bar (y 76 + 18 + gap)
         panel.rectTransform.sizeDelta = new Vector2(210, 278);
         panel.raycastTarget = false;
 

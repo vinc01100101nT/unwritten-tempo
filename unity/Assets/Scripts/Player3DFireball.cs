@@ -27,18 +27,13 @@ public class Player3DFireball : MonoBehaviour, IHotbarSkill, IModifiableSkill
     [Tooltip("Burn damage per tick.")]
     public int burnDamage = 3;
 
-    [Header("Projectile FX (FX/Projectile/Fireball)")]
-    public Texture2D projectileSheet;
-    public int projFrameSize = 16;
-    public int projFrames = 4;
-    public float projFps = 16f;
+    [Header("Projectile VFX (Effect Library — travels to the target, then impact)")]
+    [Tooltip("Effect-library id attached to the flying projectile. Empty = no travel visual.")]
+    public string projVfxId = "fire.magic-pro-orange";
     public float projSpeed = 12f;
-    public float projScale = 1.2f;
-    [Header("Impact FX (FX/Elemental/Explosion)")]
-    public Texture2D impactSheet;
-    public int impactFrameSize = 40;
-    public int impactFrames = 9;
-    public float impactScale = 1.0f;
+    public float projScale = 1f;
+    [Tooltip("Effect-library id played at the hit point on arrival. Empty = none.")]
+    public string impactVfxId = "hit.explosion";
 
     [Header("Audio")]
     public SfxSet castSfx;
@@ -107,7 +102,7 @@ public class Player3DFireball : MonoBehaviour, IHotbarSkill, IModifiableSkill
         float dmgMult = ctx.DamageMult, lifesteal = ctx.LifestealFracDealt;
         float staggerSecs = ctx.StaggerSecs, slowFactor = ctx.SlowFactor, slowSecs = ctx.SlowSecs;
         Vector3 from = transform.position + Vector3.up * 0.5f;
-        Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
+        Projectile3D.SpawnVfx(projVfxId, impactVfxId, projScale,
             from, t.transform, t.transform.position + Vector3.up * 0.4f, projSpeed, 0.5f, 3f, () =>
             {
                 if (t == null || t.IsDead || Character.Instance == null) return;
@@ -124,8 +119,7 @@ public class Player3DFireball : MonoBehaviour, IHotbarSkill, IModifiableSkill
                 }
                 if (lifesteal > 0f && dealt > 0) Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * lifesteal));
                 if (burnSeconds > 0f && !t.IsDead) Status.Apply(t.gameObject, Ailment.Burn, burnSeconds, burnDamage);
-            },
-            impactSheet, impactFrameSize, impactFrames, 22f, impactScale);
+            });
         return true;
     }
 

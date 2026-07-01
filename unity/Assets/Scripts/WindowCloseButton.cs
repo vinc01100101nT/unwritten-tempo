@@ -21,12 +21,16 @@ using UnityEngine.EventSystems;
 /// ▸ Build UI Shell after touching this so the prefab re-binds the script refs.)
 /// </summary>
 public class WindowCloseButton : MonoBehaviour,
-    IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+    IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     /// <summary>The window root to hide on click.</summary>
     public GameObject window;
 
-    public void OnPointerClick(PointerEventData e)
+    // Close on pointer DOWN, not click. A click only fires when press+release land on the same object
+    // WITHOUT crossing the EventSystem drag threshold — nudge the mouse a few pixels between press and
+    // release and the gesture becomes a drag, eligibleForClick flips false, and the click is silently
+    // lost. That was the intermittent "✕ sometimes does nothing". Acting on down can't be stolen by a drag.
+    public void OnPointerDown(PointerEventData e)
     {
         if (window == null) return;
         window.SetActive(false);

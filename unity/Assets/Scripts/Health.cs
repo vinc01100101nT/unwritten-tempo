@@ -82,6 +82,7 @@ public class Health : MonoBehaviour
         if (!crit && attackerHit >= 0 && !Combat.Lands(attackerHit, flee))
         {
             DamagePopup.SpawnText(transform.position, "MISS", MissColor);
+            CombatSfx.Miss(transform.position, PlayerRanged());   // whiff FROM the mob (spatial), melee/ranged by weapon
             return 0;
         }
 
@@ -95,6 +96,10 @@ public class Health : MonoBehaviour
         Current = Mathf.Max(0, Current - dmg);
 
         DamagePopup.Spawn(transform.position, dmg, crit ? new Color(1f, 0.85f, 0.2f) : Color.white);
+        // Impact FROM the mob (spatial). A basic attack (rolled accuracy, attackerHit ≥ 0) → hit/crit;
+        // a skill strike (always-lands, attackerHit −1) → the unified skill impact.
+        if (attackerHit >= 0) CombatSfx.Hit(transform.position, crit);
+        else CombatSfx.SkillHit(transform.position);
         ElementCue(mod);
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
@@ -116,6 +121,7 @@ public class Health : MonoBehaviour
         Current = Mathf.Max(0, Current - dmg);
 
         DamagePopup.Spawn(transform.position, dmg, crit ? new Color(1f, 0.85f, 0.2f) : new Color(0.7f, 0.5f, 1f));
+        CombatSfx.SkillHit(transform.position);   // magic = skill impact, spatial from the mob
         ElementCue(mod);
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
@@ -137,6 +143,7 @@ public class Health : MonoBehaviour
         bool wasAlive = !IsDead;
         Current = Mathf.Max(0, Current - dmg);
         DamagePopup.Spawn(transform.position, dmg, crit ? new Color(1f, 0.85f, 0.2f) : new Color(0.7f, 0.5f, 1f));
+        CombatSfx.SkillHit(transform.position);   // overkill beats still sound (throttled per frame)
         if (wasAlive)
         {
             ElementCue(mod);
@@ -175,6 +182,16 @@ public class Health : MonoBehaviour
         var ch = Character.Instance;
         if (ch == null || dmgDealt <= 0 || ch.LifeStealPct <= 0f) return;
         ch.LeechHeal(Mathf.RoundToInt(dmgDealt * ch.LifeStealPct));
+    }
+
+    // A Health MISS is always the player attacking a mob (a mob missing the PLAYER pops a white MISS in
+    // Character, not here), so read the player's equipped weapon to pick the ranged vs melee whiff.
+    static bool PlayerRanged()
+    {
+        var c = Character.Instance;
+        if (c == null) return false;
+        var w = c.GetEquipped(EquipSlotType.Weapon);
+        return w != null && (w.weaponType == WeaponType.Bow || w.weaponType == WeaponType.Firearm);
     }
 
     /// <summary>Reset to full HP and base color (used by <see cref="MobRespawn"/> to bring a mob back).</summary>

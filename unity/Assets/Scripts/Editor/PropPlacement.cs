@@ -31,14 +31,18 @@ public static class PropPlacement
         return 0f;
     }
 
-    /// <summary>Move <paramref name="go"/> so its footprint CENTRE sits at <paramref name="at"/>'s XZ and the
-    /// BOTTOM of its bounds rests on the ground under that XZ. Rotation/scale should already be set.</summary>
-    public static void PlaceOnGround(GameObject go, Vector3 at, int mask)
+    /// <summary>Move <paramref name="go"/> so its footprint CENTRE sits at <paramref name="at"/>'s XZ and it
+    /// rests on the ground under that XZ. Rotation/scale should already be set.
+    /// <para><paramref name="seatByPivot"/> false (default) seats the BOUNDS BOTTOM on the ground — the whole
+    /// mesh sits fully above the surface. true seats the PIVOT on the ground instead, so any geometry authored
+    /// below the pivot (e.g. a building's foundation lip) sinks into the ground — matching the "Drop Selected to
+    /// Ground" authoring tool and looking planted rather than perched. Use it for base-pivoted solid props.</para></summary>
+    public static void PlaceOnGround(GameObject go, Vector3 at, int mask, bool seatByPivot = false)
     {
         go.transform.position = Vector3.zero;
         float gy = GroundY(at.x, at.z, mask);
         if (TryWorldBounds(go, out var b))
-            go.transform.position = new Vector3(at.x - b.center.x, gy - b.min.y, at.z - b.center.z);
+            go.transform.position = new Vector3(at.x - b.center.x, seatByPivot ? gy : gy - b.min.y, at.z - b.center.z);
         else
             go.transform.position = new Vector3(at.x, gy, at.z);
     }

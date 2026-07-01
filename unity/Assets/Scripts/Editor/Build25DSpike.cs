@@ -10,29 +10,19 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// One-click 2.5D spike (RO-style look test). Builds <b>Assets/Scenes/Spike2D5.unity</b>: your
-/// Ninja Adventure player as a camera-facing <see cref="Billboard"/> walking a 3D Kenney town,
-/// viewed from a tilted camera — so you can judge the 2.5D style before committing to it.
+/// The shared 2.5D rig-builder library (RO-style look). Its public helpers (BuildPlayer/Camera/Light/
+/// Character/HUD/Cursor/Monster, BillboardScale, FootOffsetY, EnsureUniversalRenderer, MonsterSheet) build
+/// the camera-facing <see cref="Billboard"/> player + billboard mobs on a 3D map viewed from a tilted camera,
+/// and are called by SystemsSceneBuilder, RegionBuilder, RecipeGenerator and TrainingDummyTool.
 ///
-/// It adds a 3D (Universal) Renderer ALONGSIDE the existing 2D one and overrides it only on the
-/// spike camera, so NewTown / Systems (2D renderer, index 0) are untouched. Safe to re-run.
-///
-/// After building: open Spike2D5.unity and press Play (WASD to move).
-///
-/// NOT throwaway despite its name: the spike's <c>[MenuItem]</c> was removed at the 2.5D pivot, but this
-/// class is now the shared rig-builder library — its public helpers (BuildPlayer/Camera/Light/Character/
-/// HUD/Cursor/Monster, BillboardScale, FootOffsetY, EnsureUniversalRenderer, MonsterSheet) are called by
-/// SystemsSceneBuilder, RegionBuilder, RecipeGenerator and TrainingDummyTool.
-/// Keep it; deleting it breaks the whole editor build pipeline.
+/// It adds a 3D (Universal) Renderer ALONGSIDE the existing 2D one; index 0 (Systems) is untouched. Safe to re-run.
+/// NOT throwaway despite its name (the original one-click spike demo was retired at the 2.5D pivot):
+/// deleting this class breaks the whole editor build pipeline.
 /// </summary>
 public static class Build25DSpike
 {
-    const string ScenePath      = "Assets/Scenes/Spike2D5.unity";
     const string UrpPath        = "Assets/Settings/UniversalRP.asset";
     const string Renderer3DPath = "Assets/Settings/Spike3DRenderer.asset";
-    const string KitFbxDir      = "Assets/Art/KenneyFantasyTownKit/FBX format";
-    const string ColormapPath   = KitFbxDir + "/Textures/colormap.png";
-    const string SmokeSheetPath = "Assets/Art/NinjaAdventure/FX/Smoke/Smoke/SpriteSheet.png";
     const int CellSize = 16, WalkFrames = 4;
     // Transparent padding below the feet inside each (center-pivoted) sprite cell, in world units.
     // We drop the billboard by this and raise the CharacterController center to match, so the art's
@@ -48,68 +38,6 @@ public static class Build25DSpike
     public const float BillboardScale = 0.7f;
     // Y the billboard's transform sits at so its feet rest on ground y=0, at the current scale.
     public static float FootOffsetY => BillboardScale * (0.5f - SpriteFoot);
-
-    // Curated props (each guarded — skipped if not present in the kit).
-    static readonly string[] Props = {
-        "tree", "tree-high", "tree-crooked", "fountain-round", "cart", "cart-high",
-        "lantern", "hedge-large", "pillar-stone", "banner-red", "pillar-wood", "hedge",
-    };
-
-    // Retired from the menu (Kenney-prop demo). The public Build* helpers below are the live 2.5D rig,
-    // reused by the world bakers. This method is kept only as an internal reference for that rig.
-    static void Build()
-    {
-        if (EditorApplication.isPlayingOrWillChangePlaymode)
-        { EditorUtility.DisplayDialog("2.5D Spike", "Exit Play mode first, then re-run.", "OK"); return; }
-
-        int rendererIndex = EnsureUniversalRenderer();
-        if (rendererIndex < 0) return;   // EnsureUniversalRenderer already explained why
-
-        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-        SceneManager.SetActiveScene(scene);
-
-        BuildLight();
-        BuildGround();
-        int placed = ScatterProps();
-        var player = BuildPlayer();              // returns the player GameObject (or null)
-        BuildCamera(rendererIndex, player);      // 3D follow-camera tracks the player
-        int monsters = BuildMonsters();          // billboard mobs that wander + chase (Phase 3D-D)
-        BuildCharacter();                        // player HP/ATK/XP hub — turns on two-way combat (A)
-        BuildHUD();                              // screen-space HP / Lv / XP bar (A)
-        if (player != null) BuildCursor(player); // Dota hardware cursor (pointer / sword / crosshair)
-
-        if (!Directory.Exists("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
-
-        // If Spike2D5 is already open, close it first — Unity won't SaveScene onto a path another
-        // open scene occupies ("Overwriting the same path as another open scene is not allowed").
-        var alreadyOpen = SceneManager.GetSceneByPath(ScenePath);
-        if (alreadyOpen.IsValid() && alreadyOpen.isLoaded && alreadyOpen != scene)
-            EditorSceneManager.CloseScene(alreadyOpen, true);
-
-        EditorSceneManager.SaveScene(scene, ScenePath);
-
-        // The spike is standalone — Play must use the OPEN scene, not boot Systems.
-        EditorSceneManager.playModeStartScene = null;
-
-        // Re-open the freshly-built scene by itself so you can just press Play — no delete dance.
-        EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-
-        AssetDatabase.SaveAssets();
-        EditorUtility.DisplayDialog("2.5D Spike — built",
-            $"Built {ScenePath}\n\n" +
-            $"• {placed} Kenney props placed\n" +
-            $"• Player billboard: {(player != null ? "yes" : "MISSING — see Console")}\n" +
-            $"• Monsters: {monsters} (wander/chase; now bite back)\n" +
-            "• Player HP + HUD bar (two-way combat)\n\n" +
-            "NEXT: Spike2D5 is now open — just press Play.\n" +
-            "Controls: LEFT-click ground = move, LEFT-click a mob = attack;  A then LEFT-click = attack-move;  S = stop.\n" +
-            "Camera: scroll = zoom;  Q/E or RIGHT-drag = orbit (X/Y).\n" +
-            "The hardware cursor changes: pointer / sword (over a mob) / crosshair (after A).\n\n" +
-            "NOTE: I set Play-Mode Start Scene to None so the spike plays standalone. To go back " +
-            "to the real game, open NewTown and re-run Tools ▸ unwritten ▸ Setup Systems Scene.",
-            "OK");
-        Debug.Log($"[unwritten] 2.5D Spike built ({placed} props, renderer index {rendererIndex}). Spike2D5 is open — press Play.");
-    }
 
     /// <summary>Create a 3D Universal Renderer (once) and add it to the URP asset's renderer
     /// list; returns its index, or -1 (with a dialog) if URP's internals don't match.</summary>
@@ -187,28 +115,6 @@ public static class Build25DSpike
         return l;
     }
 
-    static void BuildGround()
-    {
-        var go = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        go.name = "Ground";
-        go.transform.localScale = new Vector3(4f, 1f, 4f);   // 40 x 40 units
-        var m = new Material(Shader.Find("Universal Render Pipeline/Lit")) { color = new Color(0.36f, 0.55f, 0.27f) };
-        m.SetFloat("_Smoothness", 0f);
-        go.GetComponent<MeshRenderer>().sharedMaterial = m;
-    }
-
-    static Material _kitMat;
-    static Material KitMaterial()
-    {
-        if (_kitMat != null) return _kitMat;
-        _kitMat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(ColormapPath);
-        if (tex != null) { _kitMat.SetTexture("_BaseMap", tex); _kitMat.mainTexture = tex; }
-        else Debug.LogWarning("[unwritten] colormap not found at " + ColormapPath + " — props will be untextured.");
-        _kitMat.SetFloat("_Smoothness", 0f);
-        return _kitMat;
-    }
-
     static Material _billboardMat;
     // Flat-shaded, shadow-RECEIVING material for the sprite billboards (Unwritten/BillboardLit).
     // One shared instance — the sprite texture is fed per-renderer by the SpriteRenderer.
@@ -236,65 +142,11 @@ public static class Build25DSpike
         sr.receiveShadows = true;
     }
 
-    static int ScatterProps()
-    {
-        var mat = KitMaterial();
-        int placed = 0;
-        float step = 360f / Props.Length;
-        for (int i = 0; i < Props.Length; i++)
-        {
-            string path = FindFbx(Props[i]);
-            if (path == null) continue;
-            var fbx = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-            if (fbx == null) continue;
-
-            var inst = (GameObject)PrefabUtility.InstantiatePrefab(fbx);
-            PrefabUtility.UnpackPrefabInstance(inst, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-
-            float a = (i * step) * Mathf.Deg2Rad;
-            float r = 5f + (i % 3);
-            inst.transform.position = new Vector3(Mathf.Cos(a) * r, 0f, Mathf.Sin(a) * r);
-            inst.transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
-
-            foreach (var mr in inst.GetComponentsInChildren<MeshRenderer>())
-            {
-                var mats = mr.sharedMaterials;
-                for (int k = 0; k < mats.Length; k++) mats[k] = mat;
-                mr.sharedMaterials = mats;
-            }
-            // Solid collision so the player can't walk through props (Phase 3D-B). Hollow props
-            // (fountain/well) get a CONVEX hull so you can't stand inside the ring — keeps the
-            // walkable footprint consistent between physical collision and the A* (3D-D fix).
-            bool hollow = inst.name.ToLowerInvariant().Contains("fountain") || inst.name.ToLowerInvariant().Contains("well");
-            foreach (var mf in inst.GetComponentsInChildren<MeshFilter>())
-                if (mf.sharedMesh != null && mf.GetComponent<Collider>() == null)
-                {
-                    var mc = mf.gameObject.AddComponent<MeshCollider>();
-                    mc.sharedMesh = mf.sharedMesh;
-                    if (hollow) mc.convex = true;
-                }
-            placed++;
-        }
-        return placed;
-    }
-
-    static string FindFbx(string baseName)
-    {
-        string exact = $"{KitFbxDir}/{baseName}.fbx";
-        if (File.Exists(exact)) return exact;
-        foreach (var g in AssetDatabase.FindAssets(baseName + " t:GameObject", new[] { KitFbxDir }))
-        {
-            string p = AssetDatabase.GUIDToAssetPath(g);
-            if (p.ToLowerInvariant().EndsWith(".fbx")) return p;
-        }
-        return null;
-    }
-
     public static void BuildCursor(GameObject host)
     {
         const string dir = "Assets/Art/KenneyCursorPack/PNG/Outline/Default";
         const string dirBig = "Assets/Art/KenneyCursorPack/PNG/Outline/Double";   // 64×64 variants
-        foreach (var n in new[] { "pointer_b", "tool_sword_a", "target_b" })
+        foreach (var n in new[] { "pointer_b", "tool_sword_a", "target_b", "hand_open" })
             AssetDatabase.ImportAsset($"{dir}/{n}.png", ImportAssetOptions.ForceUpdate);   // ensure readable Cursor textures
         AssetDatabase.ImportAsset($"{dirBig}/target_round_b.png", ImportAssetOptions.ForceUpdate);
 
@@ -303,6 +155,7 @@ public static class Build25DSpike
         cur.attackCursor     = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/tool_sword_a.png");       // hovering a mob
         cur.attackMoveCursor = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/target_b.png");           // A-armed
         cur.targetCursor     = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dirBig}/target_round_b.png");  // aiming a skill — large 64×64 reticle, drawn full-size (software cursor)
+        cur.grabCursor       = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/hand_open.png");          // hovering a collectable loot pickup
         cur.defaultHotspot   = new Vector2(3, 3);
         if (cur.defaultCursor == null)
             Debug.LogWarning("[unwritten] Kenney cursors not found under " + dir + " — using the OS cursor.");
@@ -375,7 +228,6 @@ public static class Build25DSpike
         hud.fill = fill; hud.label = label;
     }
 
-    static int BuildMonsters() => BuildMonsters(Vector3.zero, 8f);
 
     /// <summary>Spawn the wander/chase billboard mobs in a ring of <paramref name="radius"/> around
     /// <paramref name="center"/> (XZ). Reused by the town converter to drop mobs near the spawn.</summary>
@@ -471,19 +323,14 @@ public static class Build25DSpike
         ai.onHitAilmentChance     = arc.onHitAilmentChance;
         ai.onHitAilmentSeconds    = arc.onHitAilmentSeconds;
         ai.onHitAilmentMagnitude  = arc.onHitAilmentMagnitude;
-        // Magic mobs (e.g. the Flam caster) now lob a VISIBLE fireball — the hit lands on arrival.
-        // Defaults (16px × 4 frames) match this sheet; null sheet = the old instant magic touch.
-        if (ai.attackType == MonsterAI3D.AttackType.Magic)
-            ai.projectileSheet = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Projectile/Fireball.png");
-        // Stun swirl shown over the head when a status (e.g. Meteor's per-hit stun) procs (32px × 5 frames).
-        ai.stunSheet = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Spirit/SpriteSheet.png");
+        // No NinjaAdventure VFX sheets: magic mobs fall back to the instant magic touch (null projectileSheet)
+        // and the stun indicator stays off (null stunSheet) until a non-Ninja effect is wired in.
 
         go.AddComponent<BillboardAnimator3D>().sheet = tex;
         if (arc.tint.a > 0f && arc.tint != Color.white) msr.color = arc.tint;   // tint AFTER the animator sets frames
 
         go.AddComponent<AttackLunge>();              // squash-stretch "chomp" on each bite
-        var death = go.AddComponent<DeathDissolve>();   // smoke puff → remains linger → fade (no death sprite)
-        death.smokeSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(SmokeSheetPath);
+        var death = go.AddComponent<DeathDissolve>();   // remains linger → fade (no death sprite)
         death.deathSfx = SfxAssets.Set(0.7f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");  // poof (TomMusic has no creature cries)
         go.AddComponent<MobRespawn>();               // recycle the mob back into the world after it dies
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
@@ -578,7 +425,6 @@ public static class Build25DSpike
         return null;
     }
 
-    static GameObject BuildPlayer() => BuildPlayer(Vector3.zero);
 
     /// <summary>Build the billboard player standing on the ground at <paramref name="foot"/> (XZ;
     /// Y is overridden to the sprite-foot height). Reused by the town converter to drop the player
@@ -608,17 +454,12 @@ public static class Build25DSpike
         var ctrl = go.AddComponent<Player3DController>();
         go.AddComponent<AudioListenerRig>();         // the "ears": listener on the player, oriented to the camera (3D sound)
         go.AddComponent<PlayerHurtFlash>();          // red flash when the Character takes damage
-        var atk = go.AddComponent<Player3DAttacker>();
-        atk.slashSheet = AssetDatabase.LoadAssetAtPath<Texture2D>(
-            "Assets/Art/NinjaAdventure/FX/Attack/SlashCurved/SpriteSheet.png");   // slash FX on each hit
+        var atk = go.AddComponent<Player3DAttacker>();   // slash/hit VFX default to Effect Library ids on the component
         atk.defaultAttackSfx = SfxAssets.Set(0.8f, SfxAssets.SwordDir, "Sword Attack 1", "Sword Attack 2", "Sword Attack 3");
         atk.defaultHitSfx    = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Impact Hit 1", "Sword Impact Hit 2", "Sword Impact Hit 3");
 
         // Basic magic bolt (Q) — the first thing that uses MAtk / MP / MDef (Phase G magic foundation).
         var caster = go.AddComponent<Player3DCaster>();
-        var spark = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Spark/SpriteSheet.png");
-        caster.boltSheet = spark;
-        if (spark != null) { caster.boltFrameSize = spark.height; caster.boltFrames = Mathf.Max(1, spark.width / spark.height); }
         caster.castSfx = SfxAssets.Set(0.8f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
         caster.icon = LoadSkillIcon("Spell/OrbLight");        // hotbar icon (generic magic bolt; distinct from Mage Fireball)
 
@@ -636,47 +477,32 @@ public static class Build25DSpike
 
         // Swordsman defensive active — Guard (slot 3): a brief damage-reduction stance + shield bubble.
         var guard = go.AddComponent<Player3DGuard>();
-        guard.shieldSheet = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Shield/SpriteSheetBlue.png");
         guard.guardSfx = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Blocked 1", "Sword Blocked 2", "Sword Blocked 3");
         guard.icon = LoadSkillIcon("Spell/DefenseUpgrade");   // hotbar icon (defensive buff)
 
         // Swordsman AoE active — Warcry (slot 4): damages + knocks back every nearby mob.
         var warcry = go.AddComponent<Player3DWarcry>();
-        warcry.shockSheet = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Aura/SpriteSheet.png");
         warcry.warcrySfx = SfxAssets.Set(1f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
         warcry.icon = LoadSkillIcon("Spell/Explosion");       // hotbar icon (AoE burst)
 
         // ---- The rest of the universal active pool (class-agnostic — all live on the player, enabled; the
         // ---- unlock + hotbar-binding layer decides which the player actually has and uses).
-        var fireballTex  = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Projectile/Fireball.png");
-        var explosionTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Elemental/Explosion/SpriteSheet.png");
-        var iceTex       = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Elemental/Ice/SpriteSheet.png");
         var spellSfx     = SfxAssets.Set(0.85f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
 
         var fireball = go.AddComponent<Player3DFireball>();   // 1: single-target projectile nuke
-        fireball.projectileSheet = fireballTex;
-        fireball.impactSheet = explosionTex;
         fireball.castSfx = spellSfx;
         fireball.icon = LoadSkillIcon("Spell/Fireball");
 
         var frost = go.AddComponent<Player3DFrostNova>();     // 2: PBAoE magic + slow
-        frost.burstSheet = iceTex;
         frost.castSfx = spellSfx;
         frost.icon = LoadSkillIcon("Spell/BookIce");
 
         var meteor = go.AddComponent<Player3DMeteor>();       // 3: ground-targeted delayed AoE
-        meteor.meteorSheet = fireballTex;
-        meteor.impactSheet = explosionTex;
         meteor.castSfx = spellSfx;
-        meteor.hitSfx = SfxAssets.Custom(0.8f, "Assets/Audio/Customs/hit.wav");   // custom per-hit sound, every hit of the multi-hit
         meteor.meteorSfx = SfxAssets.Set(0.9f, "Spells", "Fireball 1", "Fireball 2", "Fireball 3");   // randomized fireball boom per meteor impact
         meteor.icon = LoadSkillIcon("Spell/RockSpike");
 
         var soul = go.AddComponent<Player3DSoulStrike>();     // 4: aim-first SINGLE-target nuke (pick the enemy, then fire)
-        var sparkTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/NinjaAdventure/FX/Magic/Spark/SpriteSheet.png");
-        soul.projectileSheet = sparkTex != null ? sparkTex : fireballTex;   // focused arcane bolt (falls back to fireball art)
-        if (sparkTex != null) { soul.projFrameSize = sparkTex.height; soul.projFrames = Mathf.Max(1, sparkTex.width / sparkTex.height); }
-        soul.impactSheet = explosionTex;
         soul.castSfx = spellSfx;
         soul.icon = LoadSkillIcon("Spell/OrbDarkness");      // hotbar icon (focused single-target bolt; distinct from caster's OrbLight)
 

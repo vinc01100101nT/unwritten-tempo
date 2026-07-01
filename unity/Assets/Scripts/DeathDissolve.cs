@@ -3,8 +3,8 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Billboard-mob death sequence: a puff of smoke at the moment of death, then the remains lie on the
-/// ground for <see cref="remainSeconds"/> before fading out over <see cref="fadeSeconds"/>.
+/// Billboard-mob death sequence: the remains lie on the ground for <see cref="remainSeconds"/> before
+/// fading out over <see cref="fadeSeconds"/>.
 /// <see cref="Health.Die"/> hands off here when the component is present (otherwise it removes the
 /// object instantly, the original Phase D behavior).
 ///
@@ -14,13 +14,6 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer))]
 public class DeathDissolve : MonoBehaviour
 {
-    [Header("Smoke puff (NinjaAdventure FX/Smoke)")]
-    public Texture2D smokeSheet;
-    public int smokeFrameSize = 32;
-    public int smokeFrames = 6;
-    public float smokeFps = 16f;
-    public float smokeScale = 1.2f;
-
     [Tooltip("Played once on death (a poof / death cry).")]
     public SfxSet deathSfx;
 
@@ -53,7 +46,7 @@ public class DeathDissolve : MonoBehaviour
         if (sr != null) { sr.sharedMaterial = originalMat; sr.color = originalColor; }
     }
 
-    /// <summary>Freeze the unit, puff smoke, linger, then fade out; <paramref name="onComplete"/>
+    /// <summary>Freeze the unit, linger, then fade out; <paramref name="onComplete"/>
     /// fires when done (Health passes Destroy here).</summary>
     public void Play(Action onComplete)
     {
@@ -68,9 +61,7 @@ public class DeathDissolve : MonoBehaviour
         foreach (var col in GetComponentsInChildren<Collider>())   col.enabled = false;
         foreach (var col in GetComponentsInChildren<Collider2D>()) col.enabled = false;
 
-        // Puff of smoke + sound exactly on death (smoke reuses the generic one-shot sheet player).
-        if (smokeSheet != null)
-            SlashEffect.Spawn(smokeSheet, smokeFrameSize, smokeFrames, smokeFps, transform.position, smokeScale);
+        // Sound exactly on death.
         Sfx.PlayAt(deathSfx, transform.position);   // 3D: hear WHERE the mob died
 
         StartCoroutine(Run(onComplete));

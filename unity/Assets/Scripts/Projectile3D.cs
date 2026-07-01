@@ -45,10 +45,32 @@ public class Projectile3D : MonoBehaviour
         if (p.frames.Length > 0) sr.sprite = p.frames[0];
     }
 
+    /// <summary>As <see cref="Spawn"/> but the projectile IS a particle effect from the <see cref="EffectLibrary"/>
+    /// instead of a billboard sprite: <paramref name="travelId"/> is attached to the moving object and tracks it,
+    /// and on arrival <paramref name="impactId"/> (if any) plays at the hit point. Same homing/motion/onArrive.</summary>
+    public static void SpawnVfx(string travelId, string impactId, float scale,
+                                Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
+                                float arriveRadius, float maxLife, System.Action onArrive)
+    {
+        var go = new GameObject("Projectile3D(Vfx)");
+        go.transform.position = from;
+
+        var p = go.AddComponent<Projectile3D>();
+        p.vfxImpactId = impactId;
+        p.target = target;
+        p.point = target != null ? target.position + Vector3.up * 0.4f : fallbackPoint;
+        p.speed = Mathf.Max(0.1f, speed);
+        p.arriveRadius = Mathf.Max(0.05f, arriveRadius);
+        p.die = Time.time + Mathf.Max(0.05f, maxLife);
+        p.onArrive = onArrive;
+        if (!string.IsNullOrEmpty(travelId)) p.travel = Vfx.Attach(travelId, go.transform, Vector3.zero, scale);
+    }
+
     SpriteRenderer sr; Sprite[] frames; float fps, t;
     Transform target; Vector3 point; float speed, arriveRadius, die;
     System.Action onArrive;
     Texture2D impactSheet; int impactFrameSize, impactFrames; float impactFps, impactScale;
+    Vfx.EffectHandle travel; string vfxImpactId;   // Hovl travel mode (SpawnVfx)
     bool done;
 
     void Update()
@@ -73,6 +95,8 @@ public class Projectile3D : MonoBehaviour
     void Arrive()
     {
         done = true;
+        if (travel != null) travel.Stop();                         // stop + fade the attached travel effect
+        if (!string.IsNullOrEmpty(vfxImpactId)) Vfx.PlayAt(vfxImpactId, transform.position);
         if (impactSheet != null)
             SlashEffect.Spawn(impactSheet, impactFrameSize, impactFrames, impactFps, transform.position, impactScale);
         onArrive?.Invoke();

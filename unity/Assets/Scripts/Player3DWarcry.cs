@@ -37,12 +37,10 @@ public class Player3DWarcry : MonoBehaviour, IHotbarSkill, IModifiableSkill
     [Tooltip("Seconds each hit mob is frozen (≥ knockbackTime so it doesn't fight the slide).")]
     public float staggerSecs = 0.5f;
 
-    [Header("Shockwave FX (FX/Magic/Aura, sliced at runtime)")]
-    public Texture2D shockSheet;
-    public int shockFrameSize = 24;
-    public int shockFrames = 5;
-    public float shockFps = 18f;
-    public float shockScale = 4.5f;
+    [Header("Shockwave VFX (Effect Library — the burst at the player)")]
+    [Tooltip("Effect-library id for the warcry shockwave. Empty = none.")]
+    public string shockVfxId = "aoe.red-energy-explosion";
+    public float shockScale = 1f;
 
     [Header("Audio")]
     public SfxSet warcrySfx;   // the shout / shockwave boom
@@ -103,7 +101,7 @@ public class Player3DWarcry : MonoBehaviour, IHotbarSkill, IModifiableSkill
             Character.Instance.BeginGuard(ctx.ShieldSecs, ctx.ShieldCut);
         Sfx.Play(warcrySfx);
         DamagePopup.SpawnText(transform.position + Vector3.up * 0.6f, "Warcry!", WarcryColor);
-        SlashEffect.Spawn(shockSheet, shockFrameSize, shockFrames, shockFps, transform.position + Vector3.up * 0.2f, shockScale);
+        if (!string.IsNullOrEmpty(shockVfxId)) Vfx.PlayAt(shockVfxId, transform.position + Vector3.up * 0.2f, Quaternion.identity, shockScale);
 
         Vector3 me = transform.position;
         float effRadius = radius * ctx.RangeMult;         // reach mods widen the shout

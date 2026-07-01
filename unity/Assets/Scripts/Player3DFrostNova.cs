@@ -26,12 +26,10 @@ public class Player3DFrostNova : MonoBehaviour, IHotbarSkill, IModifiableSkill
     public float slowFactor = 0.5f;
     public float slowSeconds = 3f;
 
-    [Header("Burst FX (FX/Elemental/Ice)")]
-    public Texture2D burstSheet;
-    public int burstFrameSize = 32;
-    public int burstFrames = 10;
-    public float burstFps = 22f;
-    public float burstScale = 4f;
+    [Header("Burst VFX (Effect Library — the ice nova at the player)")]
+    [Tooltip("Effect-library id for the frost burst. Empty = none.")]
+    public string burstVfxId = "aoe.snow";
+    public float burstScale = 1f;
 
     [Header("Audio")]
     public SfxSet castSfx;
@@ -89,7 +87,7 @@ public class Player3DFrostNova : MonoBehaviour, IHotbarSkill, IModifiableSkill
         nextUse = Time.time + lastDuration;
         Sfx.Play(castSfx);
         DamagePopup.SpawnText(transform.position + Vector3.up * 0.6f, "Frost Nova", FrostColor);
-        SlashEffect.Spawn(burstSheet, burstFrameSize, burstFrames, burstFps, transform.position + Vector3.up * 0.2f, burstScale);
+        if (!string.IsNullOrEmpty(burstVfxId)) Vfx.PlayAt(burstVfxId, transform.position + Vector3.up * 0.2f, Quaternion.identity, burstScale);
 
         Vector3 me = transform.position;
         float effRadius = radius * ctx.RangeMult;

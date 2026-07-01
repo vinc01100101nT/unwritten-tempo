@@ -42,6 +42,23 @@ public static class UiKit
         return img;
     }
 
+    /// <summary>
+    /// THE single click-catcher for any window/panel. Inserts a full-rect, fully transparent, raycast-blocking
+    /// Image as the BACKMOST child of <paramref name="root"/>, so the WHOLE window area counts as UI. Without
+    /// it, a click that lands in a gap (transparent margin, space between elements) falls through to the 3D
+    /// world and hits a mob behind the window — this closes every such hole in one place. Idempotent: safe to
+    /// call more than once per root. Call it once per window/panel root; every world-input script already
+    /// skips clicks when <c>EventSystem.IsPointerOverGameObject()</c> is true, which this guarantees.
+    /// </summary>
+    public static void ClickShield(RectTransform root)
+    {
+        if (root == null || root.Find("ClickShield") != null) return;
+        var img = Img("ClickShield", root, new Color(0f, 0f, 0f, 0f));   // invisible
+        Fill(img.rectTransform, Vector2.zero, Vector2.zero);            // span the entire root rect
+        img.raycastTarget = true;                                       // catch clicks anywhere over it
+        img.transform.SetAsFirstSibling();                             // sits BEHIND all real content
+    }
+
     /// <summary>A drop-shadowed uGUI label. Pass <paramref name="title"/>=true for the Cinzel title
     /// face (window headers, section heads, item names); default is the Inter body face.</summary>
     public static Text Label(string name, Transform parent, string s, int size, FontStyle style, TextAnchor anchor, bool title = false)
@@ -93,6 +110,7 @@ public static class UiKit
         rt.anchoredPosition = pos;
         var frame = border.gameObject.AddComponent<WindowFrame>();
         frame.persistKey = title;
+        ClickShield(rt);   // catch clicks over the whole window (gaps included) so none leak to the world
 
         var fill = Img("Fill", border.transform, PanelFill);
         Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));

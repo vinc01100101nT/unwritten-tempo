@@ -292,7 +292,7 @@ public static class RecipeGenerator
             float s = g.scale * (1f + (float)(rng.NextDouble() * 2 - 1) * g.scaleJitter);
             go.transform.localScale = Vector3.one * Mathf.Max(0.01f, s);
             go.transform.rotation = Quaternion.Euler(0f, g.randomYaw ? (float)rng.NextDouble() * 360f : 0f, 0f);
-            PropPlacement.PlaceOnGround(go, new Vector3(x, 0f, z), mask);   // bounds-driven seat (no float, any pivot)
+            PropPlacement.PlaceOnGround(go, new Vector3(x, 0f, z), mask, g.solid);   // solid props seat pivot-to-ground (foundation lip sinks in); decor stays bounds-on-ground
             go.transform.SetParent(parent, true);
             WorldBuildUtil.SetLayerRecursive(go, 0);                        // Default — never the Ground layer
             if (!g.solid) PropPlacement.StripColliders(go);                 // decor = walk-through
@@ -497,7 +497,7 @@ public static class RecipeGenerator
         var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
         go.transform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
         go.transform.rotation = Quaternion.Euler(0f, yawDeg, 0f);
-        PropPlacement.PlaceOnGround(go, new Vector3(x, 0f, z), mask);
+        PropPlacement.PlaceOnGround(go, new Vector3(x, 0f, z), mask, g.solid);
         go.transform.SetParent(parent, true);
         WorldBuildUtil.SetLayerRecursive(go, 0);
         if (!g.solid) PropPlacement.StripColliders(go);

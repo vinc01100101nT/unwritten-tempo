@@ -80,6 +80,7 @@ public class CalendarPanel : MonoBehaviour
         var content = FindContent();
         if (content == null) return;
         panel = content.parent.gameObject;
+        UiKit.ClickShield(panel.transform as RectTransform);   // catch clicks over the whole window (no leak to world)
         font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         // Header: [<]  Season · Year  [Today]  [>]

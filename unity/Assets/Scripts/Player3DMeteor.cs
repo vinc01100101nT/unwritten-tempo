@@ -51,17 +51,14 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
     public float fallHeight = 9f;
     public float fallSpeed = 16f;
 
-    [Header("Meteor FX (FX/Projectile/Fireball)")]
-    public Texture2D meteorSheet;
-    public int meteorFrameSize = 16;
-    public int meteorFrames = 4;
-    public float meteorFps = 14f;
-    public float meteorScale = 2.4f;
-    [Header("Impact FX (FX/Elemental/Explosion)")]
-    public Texture2D impactSheet;
-    public int impactFrameSize = 40;
-    public int impactFrames = 9;
-    public float impactScale = 2.0f;
+    [Header("Meteor VFX (Effect Library — the falling projectile)")]
+    [Tooltip("Effect-library id attached to each falling meteor. Empty = no falling visual.")]
+    public string meteorVfxId = "fire.magic-pro-orange";
+    public float meteorScale = 1f;
+    [Header("Impact VFX (Effect Library — the explosion per meteor)")]
+    [Tooltip("Effect-library id played at each meteor's impact point. Empty = none.")]
+    public string impactVfxId = "aoe.ground-explosion";
+    public float impactScale = 1f;
 
     [Header("Impact screen shake (per meteor)")]
     [Tooltip("Camera shake strength (world units) on EACH meteor's impact. 0 = off.")]
@@ -72,8 +69,7 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
     [Header("Audio")]
     public SfxSet castSfx;
     public SfxSet failSfx;
-    [Tooltip("Plays on EVERY hit of the multi-hit — once per hit beat (NOT per mob, NOT per tick). The custom hit.wav.")]
-    public SfxSet hitSfx;
+    // Per-hit impact SOUND now plays FROM each struck mob in Health (received_hit_skill) — no per-beat set here.
     [Tooltip("Plays once per METEOR as it LAUNCHES — randomized Fireball variants. A fireball whoosh per meteor.")]
     public SfxSet meteorSfx;
 
@@ -166,7 +162,7 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
                                                 Random.Range(-meteorScatter, meteorScatter));
             Sfx.PlayAt(meteorSfx, center);   // 3D: fireball whoosh from where THIS meteor will land (staggered → one per meteor)
             // No impact FX on the projectile itself — DetonateTick fires one explosion pulse per meteor.
-            Projectile3D.Spawn(meteorSheet, meteorFrameSize, meteorFrames, meteorFps, meteorScale,
+            Projectile3D.SpawnVfx(meteorVfxId, null, meteorScale,
                 from, null, land, fallSpeed, 0.4f, fallTime + 1f, () => DetonateTick(center));
             if (m < meteors - 1) yield return wait;
         }
@@ -202,8 +198,8 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
                 if (lifesteal > 0f && dealt > 0) Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * lifesteal));   // siphon
                 return dealt;
             },
-            c => SlashEffect.Spawn(impactSheet, impactFrameSize, impactFrames, 24f, c, impactScale),   // 1 explosion this meteor (no impact sound — fireball plays on launch)
-            () => Sfx.PlayAt(hitSfx, center));                                                          // 3D: impact at the meteor's strike point, on EVERY hit beat
+            c => { if (!string.IsNullOrEmpty(impactVfxId)) Vfx.PlayAt(impactVfxId, c, Quaternion.identity, impactScale); });   // 1 explosion this meteor
+            // Impact SOUND is played FROM each struck mob in Health (received_hit_skill, throttled to one/frame).
     }
 
     // ---- IHotbarSkill ----

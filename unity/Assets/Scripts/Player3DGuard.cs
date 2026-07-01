@@ -30,12 +30,10 @@ public class Player3DGuard : MonoBehaviour, IHotbarSkill, IModifiableSkill
     [Tooltip("Fraction of incoming damage prevented while the stance is up (0.6 = take 40%).")]
     public float damageReduction = 0.6f;
 
-    [Header("Shield FX (FX/Magic/Shield, sliced at runtime)")]
-    public Texture2D shieldSheet;
-    public int shieldFrameSize = 24;
-    public int shieldFrames = 6;
-    public float shieldFps = 12f;
-    public float shieldScale = 1.35f;
+    [Header("Shield VFX (Effect Library — looping bubble that tracks the player while up)")]
+    [Tooltip("Effect-library id for the shield bubble. Empty = none.")]
+    public string shieldVfxId = "shield.magic-blue";
+    public float shieldScale = 1f;
     public float shieldYOffset = 0.35f;
 
     [Header("Audio")]
@@ -45,7 +43,7 @@ public class Player3DGuard : MonoBehaviour, IHotbarSkill, IModifiableSkill
     float nextUse;
     float lastDuration;        // the cooldown actually applied last use (for the hotbar's sweep fraction)
     int castCount;             // for the Proc-phase "every Nth cast is free" modifier
-    GuardShieldFX shield;
+    Vfx.EffectHandle shield;
     SkillModLoadout loadout;   // six-phase modifier loadout (lazily registered, born with one)
 
     // Guard's modifier-eligibility identity (Charter §12): a melee support self-buff — NO offense tag, so it
@@ -105,17 +103,24 @@ public class Player3DGuard : MonoBehaviour, IHotbarSkill, IModifiableSkill
         Sfx.Play(guardSfx);
         DamagePopup.SpawnText(transform.position + Vector3.up * 0.5f, "Guard", GuardColor);
 
-        EnsureShield();
-        if (shield != null) shield.Show(guardSecs);
+        ShowShield(guardSecs);
         return true;
     }
 
-    // The shield FX is created lazily on first use (and only if a sheet was assigned by Build Player).
-    void EnsureShield()
+    // Attach a looping shield bubble that tracks the player for the stance's duration (re-activating refreshes
+    // the timer). Vfx.Attach tracks rather than parents, so it doesn't inherit the billboard's breathe/scale.
+    void ShowShield(float seconds)
     {
-        if (shield != null || shieldSheet == null) return;
-        shield = GuardShieldFX.Create(transform, shieldSheet, shieldFrameSize, shieldFrames,
-                                      shieldFps, shieldScale, shieldYOffset);
+        if (string.IsNullOrEmpty(shieldVfxId)) return;
+        if (shield != null) shield.Stop();
+        shield = Vfx.Attach(shieldVfxId, transform, new Vector3(0f, shieldYOffset, 0f), shieldScale);
+        CancelInvoke(nameof(HideShield));
+        Invoke(nameof(HideShield), Mathf.Max(0.1f, seconds));
+    }
+
+    void HideShield()
+    {
+        if (shield != null) { shield.Stop(); shield = null; }
     }
 
     // ---- IHotbarSkill (drives the HUD hotbar slot) ----

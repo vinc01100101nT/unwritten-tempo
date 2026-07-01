@@ -32,12 +32,18 @@ public class Player3DAttacker : MonoBehaviour
              "target's armor element. Neutral = no interaction; a fire sword would set this to Fire.")]
     public Element meleeElement = Element.Neutral;
 
-    [Header("Slash FX (sliced off a horizontal sheet at runtime)")]
-    public Texture2D slashSheet;
-    public int slashFrameSize = 32;
-    public int slashFrames = 4;
-    public float slashFps = 22f;
-    public float slashScale = 1.1f;
+    [Header("Slash VFX (Effect Library — the swing arc at the target)")]
+    [Tooltip("Effect-library id for the swing/slash. Empty = none.")]
+    public string slashVfxId = "";
+    public float slashVfxScale = 1f;
+
+    [Header("Impact VFX (3D particle from the Effect Library — Vfx.PlayAt)")]
+    [Tooltip("Effect-library id spawned at the target on a LANDED basic hit. Empty = none.")]
+    public string hitVfxId = "hit.holy";
+    [Tooltip("Base size of the impact VFX on a normal hit.")]
+    public float hitVfxScale = 1f;
+    [Tooltip("Size multiplier applied on a CRITICAL hit — the crit reads as a bigger burst.")]
+    public float critVfxScale = 1.7f;
 
     [Header("Audio (used when the equipped weapon has none of its own)")]
     public SfxSet defaultAttackSfx;   // swing
@@ -133,13 +139,22 @@ public class Player3DAttacker : MonoBehaviour
 
             // Slash FX at the target (a bit above its feet), billboarded by SlashEffect so it faces the camera.
             Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
-            SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), fxPos, slashScale);
+            if (!string.IsNullOrEmpty(slashVfxId)) Vfx.PlayAt(slashVfxId, fxPos, Quaternion.identity, slashVfxScale);
 
             // Pass our HIT so the target rolls it against its FLEE (RO accuracy); −1 in the Character-less spike.
             int hit = Character.Instance != null ? Character.Instance.Hit : -1;
             if (hit >= 0 && StatusController.Player != null) hit = Mathf.Max(0, hit - StatusController.Player.HitPenalty);  // Blind
             int dealt = t.TakeDamage(power, crit, hit, meleeElement);
-            if (dealt > 0) Sfx.Play(WeaponSfx(w => w.hitSfx, defaultHitSfx));   // impact — only on a landed hit, not a MISS
+            if (dealt > 0)
+            {
+                // Impact SOUND now plays FROM the mob in Health.TakeDamage (received_hit/crit, spatial) — no 2D play here.
+                // 3D impact burst at the target; a crit reads as a bigger punch (neutral element → no tint).
+                // Anchor at the raw target PIVOT (not fxPos's +0.4) so the height comes entirely from the
+                // effect's tuned def.offset — matching the EffectTuner's "Spawn on Mob" anchor. Adding fxPos's
+                // +0.4 here double-counted with the offset and floated the hit above the mob.
+                if (!string.IsNullOrEmpty(hitVfxId))
+                    Vfx.PlayAt(hitVfxId, t.transform.position, Vfx.VfxParams.Scaled(hitVfxScale * (crit ? critVfxScale : 1f)));
+            }
         }
 
         // Let the rest of the swing play out before freeing the slot, so the pose/animation completes and the next
@@ -189,7 +204,7 @@ public class Player3DAttacker : MonoBehaviour
         Element element = ctx.ConvertElement ? ctx.NewElement : meleeElement;
 
         Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
-        SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), fxPos, slashScale * Mathf.Max(0.1f, ctx.FxScale));
+        if (!string.IsNullOrEmpty(slashVfxId)) Vfx.PlayAt(slashVfxId, fxPos, Quaternion.identity, slashVfxScale * Mathf.Max(0.1f, ctx.FxScale));
 
         // Skills always LAND (no FLEE roll, hit −1), but they still respect DEF unless they actually crit —
         // so pass the real rolled `crit` (which also colours the number gold + bypasses DEF), RO-style.
@@ -202,7 +217,7 @@ public class Player3DAttacker : MonoBehaviour
             dealt += t.TakeDamage(perHit, crit, -1, element);
         if (dealt > 0)
         {
-            Sfx.Play(hitSfx != null && !hitSfx.Empty ? hitSfx : WeaponSfx(w => w.hitSfx, defaultHitSfx));
+            // Impact SOUND now plays FROM the mob in Health.TakeDamage (received_hit_skill, spatial) — no 2D play here.
             ApplyOnHit(t, ctx);
             if (ctx.LifestealFracDealt > 0f && Character.Instance != null)
                 Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * ctx.LifestealFracDealt));
@@ -219,7 +234,7 @@ public class Player3DAttacker : MonoBehaviour
                 var h = cleaveBuf[i].GetComponentInParent<Health>();
                 if (h == null || h == t || h.IsDead || h.GetComponent<MonsterAI3D>() == null) continue;
                 Vector3 p = h.transform.position + Vector3.up * 0.4f;
-                SlashEffect.Spawn(slashSheet, slashFrameSize, slashFrames, slashFps / Mathf.Max(0.01f, scale), p, slashScale * Mathf.Max(0.1f, ctx.FxScale));
+                if (!string.IsNullOrEmpty(slashVfxId)) Vfx.PlayAt(slashVfxId, p, Quaternion.identity, slashVfxScale * Mathf.Max(0.1f, ctx.FxScale));
                 if (h.TakeDamage(power, crit, -1, element) > 0) ApplyOnHit(h, ctx);
                 extra++;
             }

@@ -22,7 +22,9 @@ public class WorldPickup : MonoBehaviour
     [Tooltip("Sprite shown for a gold coin pickup. Item pickups use item.icon automatically.")]
     public Sprite coinSprite;
     [Tooltip("Size of the pickup billboard in world units.")]
-    public float displaySize = 0.35f;
+    public float displaySize = 0.2f;
+    [Tooltip("Lay the icon flat on the ground (face-up) instead of standing upright toward the camera. Flat icons don't bob.")]
+    public bool layFlat = true;
 
     [Header("Bob")]
     [Tooltip("How far up/down the pickup bobs (world units).")]
@@ -44,6 +46,22 @@ public class WorldPickup : MonoBehaviour
     SpriteRenderer sr;
     float baseY;
     float phase;          // random start phase so coins don't all bob in sync
+
+    // RO-style drop hop: the item arcs out of the dying mob and lands on the ground.
+    bool dropping;
+    float dropT, dropDur, dropArc;
+    Vector3 dropStart, dropEnd;
+
+    /// <summary>Fling this pickup out of the mob along a parabola from <paramref name="start"/> to
+    /// <paramref name="end"/> (the ground landing spot), popping up <paramref name="arc"/> world-units
+    /// at the apex — the Ragnarok-style "loot bursts out and lands" hop.</summary>
+    public void BeginDrop(Vector3 start, Vector3 end, float dur, float arc)
+    {
+        dropStart = start; dropEnd = end;
+        dropDur = Mathf.Max(0.01f, dur); dropArc = arc;
+        dropT = 0f; dropping = true;
+        transform.position = start;
+    }
 
     void Awake()
     {
@@ -71,6 +89,10 @@ public class WorldPickup : MonoBehaviour
         float scale   = displaySize * ppu / texSize;
         transform.localScale = Vector3.one * scale;
 
+        // Lay the icon face-up on the ground (sprite face is -Z; +90° about X points it at +Y).
+        // The extra yaw turns the sprite's "up" away from the camera so it reads right on the tilted RO cam.
+        if (layFlat) transform.rotation = Quaternion.Euler(90f, 180f, 0f);
+
         // Sphere trigger — sized to collectRadius (in LOCAL space we undo the scale).
         var col = GetComponent<SphereCollider>();
         col.isTrigger = true;
@@ -79,6 +101,22 @@ public class WorldPickup : MonoBehaviour
 
     void Update()
     {
+        if (dropping)
+        {
+            dropT += Time.deltaTime;
+            float u = Mathf.Clamp01(dropT / dropDur);
+            var p = transform.position;
+            p.x = Mathf.Lerp(dropStart.x, dropEnd.x, u);
+            p.z = Mathf.Lerp(dropStart.z, dropEnd.z, u);
+            // Straight-line height between start/end + a parabola that peaks (4·u·(1-u) = 1) at the midpoint.
+            p.y = Mathf.Lerp(dropStart.y, dropEnd.y, u) + dropArc * 4f * u * (1f - u);
+            transform.position = p;
+            if (u >= 1f) { dropping = false; transform.position = dropEnd; baseY = dropEnd.y; }
+            return;
+        }
+
+        if (layFlat) return;   // flat icons sit still on the ground — no bob
+
         // Gentle bob in Y.
         float y = baseY + Mathf.Sin(Time.time * bobSpeed + phase) * bobAmplitude;
         var pos = transform.position;
