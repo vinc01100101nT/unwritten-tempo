@@ -138,6 +138,7 @@ public class Player3DFrostNova : MonoBehaviour, IHotbarSkill, IModifiableSkill
 
     bool Pressed()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && key == KeyCode.Alpha2 && Keyboard.current.digit2Key.wasPressedThisFrame) return true;
 #endif

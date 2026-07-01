@@ -53,7 +53,7 @@ public class SkillDraftPanel : MonoBehaviour
             if (panelRoot == null) return;
         }
 
-        if (Input.GetKeyDown(KeyCode.K))
+        if (Hotkeys.Down(KeyCode.K))
         {
             bool open = !panelRoot.activeSelf;
             panelRoot.SetActive(open);

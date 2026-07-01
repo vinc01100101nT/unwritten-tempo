@@ -113,7 +113,7 @@ public class CharacterCustomizePanel : MonoBehaviour
         // O = toggle, Esc = close — owned here in code (no PanelToggle, no rebake to change the key).
         if (panelRoot != null)
         {
-            if (Input.GetKeyDown(KeyCode.O))
+            if (Hotkeys.Down(KeyCode.O))
             {
                 bool open = !panelRoot.activeSelf;
                 panelRoot.SetActive(open);

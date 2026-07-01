@@ -61,6 +61,10 @@ public static class Vfx
             for (int i = 0; i < systems.Length; i++)
             {
                 var m = systems[i].main;
+                // Force Hierarchy scaling so a caller's scale multiplier on the ROOT flows down to EVERY child
+                // system. Many vendor prefabs (Hovl fire) author child systems as Local, which ignores the parent
+                // scale — so scale/crit/AoE sizing silently did nothing. Set once here on the pooled instance.
+                m.scalingMode = ParticleSystemScalingMode.Hierarchy;
                 baseSpeed[i] = m.simulationSpeed;
                 baseColor[i] = m.startColor;
                 if (m.loop) looping = true;
@@ -122,17 +126,6 @@ public static class Vfx
         /// <summary>True while this instance is playing (rented from the pool). Dev tuner uses it to know whether
         /// the handle it's holding is still alive or has already auto-returned.</summary>
         public bool IsActive => gameObject.activeSelf;
-
-        /// <summary>Dev-tuner only: nudge a live ONE-SHOT's world pose + uniform scale in real time, without
-        /// replaying the particle systems — so the EffectTuner's scale / offset sliders update the burst you're
-        /// looking at instead of only the next spawn. No effect on a followed (Attach) instance, whose pose
-        /// LateUpdate owns.</summary>
-        public void TuneLive(Vector3 pos, float worldScale)
-        {
-            if (follow != null) return;
-            transform.position = pos;
-            transform.localScale = Vector3.one * Mathf.Max(0.001f, worldScale);
-        }
 
         /// <summary>Stop a looping/attached effect: stop emitting, let live particles fade, then return to the
         /// pool. Safe to call more than once; a no-op once already returned.</summary>

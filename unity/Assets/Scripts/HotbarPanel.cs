@@ -100,15 +100,7 @@ public class HotbarPanel : MonoBehaviour
     /// <summary>True when active skills may fire — a ring must be worn (the gate for the whole active layer).</summary>
     static bool SkillsEnabled => Character.Instance != null && Character.Instance.RingEquipped;
 
-    static bool SlotKeyDown(int i)
-    {
-        if (i < 0 || i > 8) return false;
-#if ENABLE_INPUT_SYSTEM
-        var kb = Keyboard.current;
-        if (kb != null) return kb[(Key)((int)Key.Digit1 + i)].wasPressedThisFrame;
-#endif
-        return Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha1 + i));
-    }
+    static bool SlotKeyDown(int i) => Hotkeys.DigitDown(i);
 
     /// <summary>Tear down the decorated cells and rebuild from the player's current bindings. Safe before
     /// the first build.</summary>

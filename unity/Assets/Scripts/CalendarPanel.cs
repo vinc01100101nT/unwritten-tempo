@@ -50,7 +50,7 @@ public class CalendarPanel : MonoBehaviour
         if (!built) { TryBuild(); return; }
 
         // L = toggle, Esc = close — owned here in code (no PanelToggle, no rebake to change the key).
-        if (Input.GetKeyDown(KeyCode.L))
+        if (Hotkeys.Down(KeyCode.L))
         {
             bool open = !panel.activeSelf;
             panel.SetActive(open);

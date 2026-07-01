@@ -139,6 +139,7 @@ public class Player3DBash : MonoBehaviour, IHotbarSkill, IModifiableSkill
 
     bool Pressed()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && key == KeyCode.Alpha1 && Keyboard.current.digit1Key.wasPressedThisFrame) return true;
 #endif

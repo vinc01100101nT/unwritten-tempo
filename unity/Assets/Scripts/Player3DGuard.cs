@@ -138,6 +138,7 @@ public class Player3DGuard : MonoBehaviour, IHotbarSkill, IModifiableSkill
 
     bool Pressed()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && key == KeyCode.Alpha3 && Keyboard.current.digit3Key.wasPressedThisFrame) return true;
 #endif

@@ -23,7 +23,7 @@ public class PlayerInteractor : MonoBehaviour
         if (DialogueUI.Instance != null && DialogueUI.Instance.IsOpen)
         {
             if (InteractPrompt.Instance != null) InteractPrompt.Instance.Hide();
-            if (!alt && Input.GetKeyDown(interactKey)) DialogueUI.Instance.Advance();
+            if (!alt && Hotkeys.Down(interactKey)) DialogueUI.Instance.Advance();
             return;
         }
 
@@ -38,7 +38,7 @@ public class PlayerInteractor : MonoBehaviour
                 InteractPrompt.Instance.Hide();
         }
 
-        if (target != null && !alt && Input.GetKeyDown(interactKey))
+        if (target != null && !alt && Hotkeys.Down(interactKey))
             target.Interact();
     }
 

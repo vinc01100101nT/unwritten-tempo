@@ -39,32 +39,20 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
     [Tooltip("Seconds between successive meteor IMPACTS — they start at staggered heights so they land this far " +
              "apart in time. ~ a tick's hit duration ((hitsPerTick−1)×hitInterval) keeps the bursts sequential.")]
     public float meteorInterval = 1.2f;
-    [Tooltip("Horizontal random spread of each meteor's drop so the salvo reads as a shower, not one column.")]
-    public float meteorScatter = 0.6f;
     [Range(0f, 1f)]
     [Tooltip("Chance PER HIT to stun a mob — independent roll each hit (so more hits = more stun chances).")]
     public float stunChance = 0.25f;
     [Tooltip("Stun duration (mob is frozen + shows a swirl).")]
     public float stunSeconds = 1.5f;
 
-    [Header("Fall")]
-    public float fallHeight = 9f;
-    public float fallSpeed = 16f;
-
-    [Header("Meteor VFX (Effect Library — the falling projectile)")]
-    [Tooltip("Effect-library id attached to each falling meteor. Empty = no falling visual.")]
-    public string meteorVfxId = "fire.magic-pro-orange";
-    public float meteorScale = 1f;
-    [Header("Impact VFX (Effect Library — the explosion per meteor)")]
-    [Tooltip("Effect-library id played at each meteor's impact point. Empty = none.")]
-    public string impactVfxId = "aoe.ground-explosion";
-    public float impactScale = 1f;
-
-    [Header("Impact screen shake (per meteor)")]
-    [Tooltip("Camera shake strength (world units) on EACH meteor's impact. 0 = off.")]
-    public float shakeStrength = 0.3f;
-    [Tooltip("Camera shake duration (seconds) per meteor impact.")]
-    public float shakeDuration = 0.18f;
+    [Header("VFX (composed in data)")]
+    [Tooltip("The composed look of ONE meteor: fall + impact explosion + screen-shake, authored as a flat " +
+             "timeline. Fires the \"impact\" event on landing, which this skill turns into a damage tick. " +
+             "Unset → loaded from Resources/VfxSequences/meteor (build it with Tools ▸ unwritten ▸ Art ▸ " +
+             "Build Default Vfx Sequences).")]
+    public VfxSequence vfxSequence;
+    [Tooltip("Height the impact point is lifted so the meteor lands ON the ground, not in it.")]
+    public float landLift = 0.3f;
 
     [Header("Audio")]
     public SfxSet castSfx;
@@ -77,6 +65,8 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
     int castCount;             // for the Proc-phase "every Nth cast is free" modifier
     SkillModLoadout loadout;   // six-phase modifier loadout (lazily registered, born with one)
     SkillContext pendingCtx;   // the shaped cast captured at CastAt, consumed in DetonateTick (deferred meteor impacts)
+    Vector3 detonateCenter;    // the shower's impact centre; each meteor's "impact" event detonates here
+    System.Action<string> onVfxEvent;   // cached hook handed to VfxDirector (no per-play delegate alloc)
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
     static readonly Color MeteorColor = new Color(1f, 0.55f, 0.3f);
 
@@ -94,10 +84,24 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
         loadout = Character.Instance.SkillMods.Register(SkillId, Tags);
     }
 
+    void Awake()
+    {
+        onVfxEvent = OnVfxEvent;
+        if (vfxSequence == null) vfxSequence = Resources.Load<VfxSequence>("VfxSequences/meteor");
+    }
+
     void Update()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
         EnsureRegistered();   // keeps the loadout registered; triggering is via the hotbar binding (HotbarInput)
+    }
+
+    // The sequence raises "impact" when a meteor lands (see the meteor VfxSequence); that's this skill's cue to
+    // deal its damage tick. Presentation (fall/explosion/shake) lives entirely in the asset — this handles the
+    // GAMEPLAY beat only. Cached as a field so handing it to VfxDirector.Play allocates nothing.
+    void OnVfxEvent(string tag)
+    {
+        if (tag == "impact") DetonateTick(detonateCenter);
     }
 
     public bool Activate()
@@ -152,18 +156,23 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
     IEnumerator MeteorShower(Vector3 center)
     {
         int meteors = Mathf.Max(1, ticks);
-        Vector3 land = center + Vector3.up * 0.3f;
-        float fallTime = fallHeight / Mathf.Max(0.1f, fallSpeed);
+        detonateCenter = center;
+        var ctx = VfxContext.At(center);
+        ctx.target = center + Vector3.up * landLift;   // meteors land ON the ground, not in it
         var wait = new WaitForSeconds(Mathf.Max(0.05f, meteorInterval));
         for (int m = 0; m < meteors; m++)
         {
-            Vector3 from = center + Vector3.up * fallHeight
-                                  + new Vector3(Random.Range(-meteorScatter, meteorScatter), 0f,
-                                                Random.Range(-meteorScatter, meteorScatter));
-            Sfx.PlayAt(meteorSfx, center);   // 3D: fireball whoosh from where THIS meteor will land (staggered → one per meteor)
-            // No impact FX on the projectile itself — DetonateTick fires one explosion pulse per meteor.
-            Projectile3D.SpawnVfx(meteorVfxId, null, meteorScale,
-                from, null, land, fallSpeed, 0.4f, fallTime + 1f, () => DetonateTick(center));
+            Sfx.PlayAt(meteorSfx, center);   // 3D: fireball whoosh per staggered meteor (gameplay-paced, stays in code)
+            // One sequence per meteor = its fall + impact explosion + shake (all data). Its "impact" event calls
+            // back into OnVfxEvent → DetonateTick, so the damage lands exactly when this meteor hits.
+            if (VfxDirector.Play(vfxSequence, ctx, onVfxEvent) == null)
+            {
+                // No sequence asset wired (build it: Tools ▸ unwritten ▸ Art ▸ Build Default Vfx Sequences).
+                // Degrade gracefully: skip the visual but still deal the damage tick so the skill isn't a dud.
+                Debug.LogWarning("[unwritten] Meteor has no VfxSequence — dealing damage without the fall/impact FX. " +
+                                 "Run Tools ▸ unwritten ▸ Art ▸ Build Default Vfx Sequences.");
+                DetonateTick(center);
+            }
             if (m < meteors - 1) yield return wait;
         }
     }
@@ -172,7 +181,6 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
     // yellow combo total (overkill-safe → numbers keep showing on a mob that died partway) + one explosion pulse.
     void DetonateTick(Vector3 center)
     {
-        CameraFollow3D.ShakeMain(shakeStrength, shakeDuration);   // screen shake on THIS meteor's impact
         if (Character.Instance == null) return;
 
         // Per-hit damage = the full meteor (damageMult) split across EVERY hit of ALL ticks (ticks × hitsPerTick),
@@ -197,9 +205,9 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
                 if (!ai.Health.IsDead && slowSecs > 0f && slowFactor < 1f) ai.Slow(slowFactor, slowSecs);   // chilling/withering
                 if (lifesteal > 0f && dealt > 0) Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * lifesteal));   // siphon
                 return dealt;
-            },
-            c => { if (!string.IsNullOrEmpty(impactVfxId)) Vfx.PlayAt(impactVfxId, c, Quaternion.identity, impactScale); });   // 1 explosion this meteor
-            // Impact SOUND is played FROM each struck mob in Health (received_hit_skill, throttled to one/frame).
+            });
+            // Explosion + shake are now the VfxSequence's "impact" step (data). Impact SOUND still plays FROM each
+            // struck mob in Health (received_hit_skill, throttled to one/frame).
     }
 
     // ---- IHotbarSkill ----
@@ -217,6 +225,7 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
 
     bool Pressed()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && key == KeyCode.Alpha3 && Keyboard.current.digit3Key.wasPressedThisFrame) return true;
 #endif

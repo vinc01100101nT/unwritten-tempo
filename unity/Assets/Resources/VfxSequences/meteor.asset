@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f3fba15f290da748ba5d1c7b1d25820, type: 3}
+  m_Name: meteor
+  m_EditorClassIdentifier: Assembly-CSharp::VfxSequence
+  steps:
+  - note: fall
+    schedule: 0
+    delay: 0
+    startEvent: 
+    kind: 2
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: fire.magic-pro-orange
+    scale: 1
+    speed: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    emitEvent: impact
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0.6
+    carrierSpeed: 16
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 1.5625
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+  - note: explosion
+    schedule: 1
+    delay: 0
+    startEvent: impact
+    kind: 0
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: aoe.ground-explosion
+    scale: 1
+    speed: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    emitEvent: 
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 16
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+  - note: shake
+    schedule: 1
+    delay: 0
+    startEvent: impact
+    kind: 3
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: 
+    scale: 1
+    speed: 1
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    emitEvent: 
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 16
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}

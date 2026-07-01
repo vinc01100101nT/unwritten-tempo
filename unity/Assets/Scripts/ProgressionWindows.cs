@@ -92,9 +92,9 @@ public class ProgressionWindows : MonoBehaviour
         // Bare-key window hotkeys (no Alt — the Unity/OS Alt menu accelerators interfere with it):
         //   B = Inventory · V = Equipment · C = Character (K = Skills, owned by SkillDraftPanel).
         //   B/V chosen over I/E because E is the bare dash key.
-        if (Input.GetKeyDown(KeyCode.B)) Toggle(invRoot);
-        if (Input.GetKeyDown(KeyCode.V)) Toggle(equipRoot);
-        if (Input.GetKeyDown(KeyCode.C)) Toggle(charRoot);
+        if (Hotkeys.Down(KeyCode.B)) Toggle(invRoot);
+        if (Hotkeys.Down(KeyCode.V)) Toggle(equipRoot);
+        if (Hotkeys.Down(KeyCode.C)) Toggle(charRoot);
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (cardDialog != null) cardDialog.SetActive(false);

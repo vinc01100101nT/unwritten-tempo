@@ -154,6 +154,7 @@ public class Player3DSoulStrike : MonoBehaviour, IHotbarSkill, IModifiableSkill
 
     bool Pressed()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && key == KeyCode.Alpha4 && Keyboard.current.digit4Key.wasPressedThisFrame) return true;
 #endif

@@ -143,6 +143,7 @@ public partial class Player3DController
 
     static bool KeyJump()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame) return true;
 #endif
@@ -152,6 +153,7 @@ public partial class Player3DController
     static bool KeyDash()
     {
         // Don't dash while a modifier is held (Alt = OS/Unity menu accelerators, Ctrl/Shift for combos).
+        if (Hotkeys.Typing) return false;
         if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt)) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame) return true;

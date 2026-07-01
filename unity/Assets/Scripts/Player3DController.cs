@@ -1032,6 +1032,7 @@ public partial class Player3DController : MonoBehaviour
 
     static bool KeyA()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.aKey.wasPressedThisFrame) return true;
 #endif
@@ -1040,6 +1041,7 @@ public partial class Player3DController : MonoBehaviour
 
     static bool KeyT()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame) return true;
 #endif
@@ -1048,6 +1050,7 @@ public partial class Player3DController : MonoBehaviour
 
     static bool KeyS()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.sKey.wasPressedThisFrame) return true;
 #endif
@@ -1066,6 +1069,7 @@ public partial class Player3DController : MonoBehaviour
     // continues for as long as the key is down.
     static bool HeldW()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.wKey.isPressed) return true;
 #endif
@@ -1074,6 +1078,7 @@ public partial class Player3DController : MonoBehaviour
 
     static bool HeldA()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.aKey.isPressed) return true;
 #endif
@@ -1082,6 +1087,7 @@ public partial class Player3DController : MonoBehaviour
 
     static bool HeldS()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.sKey.isPressed) return true;
 #endif
@@ -1090,6 +1096,7 @@ public partial class Player3DController : MonoBehaviour
 
     static bool HeldD()
     {
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null && Keyboard.current.dKey.isPressed) return true;
 #endif
