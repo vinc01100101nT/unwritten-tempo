@@ -49,6 +49,10 @@ public class StatusController : MonoBehaviour
     readonly float[] nextTick = new float[N];   // next DoT tick time (DoTs only)
     readonly float[] mag      = new float[N];   // per-ailment magnitude (DoT dmg, slow factor, or HIT loss)
 
+    // Persistent status-aura VFX per DoT — begun on apply (a looping Attach cue that tracks this unit) and stopped
+    // when the ailment expires (see the sweep in Update / OnDestroy). Non-DoT ailments use one-shot cues instead.
+    readonly VfxSequenceRunner[] aura = new VfxSequenceRunner[N];
+
     // Haste — a timed move-SPEED BUFF (multiplier > 1). Separate channel from the Slow ailment (which can only
     // ever slow, since its factor is Clamp01'd), so a buff and a slow can coexist and multiply. Folds into MoveMult.
     float hasteUntil;
@@ -70,7 +74,18 @@ public class StatusController : MonoBehaviour
         if (isPlayer) Player = this;
     }
 
-    void OnDestroy() { if (Player == this) Player = null; }
+    void OnDestroy()
+    {
+        if (Player == this) Player = null;
+        for (int i = 0; i < N; i++) StopAura(i);
+    }
+
+    void StopAura(int i)
+    {
+        if (aura[i] == null) return;
+        aura[i].Stop();
+        aura[i] = null;
+    }
 
     bool Active(Ailment a) => Time.time < until[(int)a];
     static bool IsDot(Ailment a) => a == Ailment.Poison || a == Ailment.Bleed || a == Ailment.Burn;
@@ -111,8 +126,12 @@ public class StatusController : MonoBehaviour
         if (IsDot(a))
         {
             mag[i] = Mathf.Max(1f, magnitude);
-            if (!wasActive) nextTick[i] = Time.time + DotInterval;   // first tick after one interval
-            if (!wasActive) Announce(a);
+            if (!wasActive)
+            {
+                nextTick[i] = Time.time + DotInterval;   // first tick after one interval
+                Announce(a);
+                StartAura(a);                            // persistent aura for the ailment's duration
+            }
             return;
         }
 
@@ -139,6 +158,41 @@ public class StatusController : MonoBehaviour
                 AnnounceIfNew(a, wasActive, "Blind!", BlindColor);
                 break;
         }
+
+        // One-shot cue on a NEW control/debuff (mirrors the announce gate). DoTs return above with their aura instead.
+        if (!wasActive && CcCue(a, out var cue)) VfxCue.Fire(cue, transform);
+    }
+
+    // Begin the looping aura cue for a DoT, stopping any prior one so a refresh doesn't stack two auras.
+    void StartAura(Ailment a)
+    {
+        int i = (int)a;
+        if (aura[i] != null) aura[i].Stop();
+        aura[i] = VfxCue.Begin(StartCue(a), transform);
+    }
+
+    static VfxCueId StartCue(Ailment a)
+        => a == Ailment.Poison ? VfxCueId.OnPoisonStart
+         : a == Ailment.Bleed  ? VfxCueId.OnBleedStart
+         :                        VfxCueId.OnBurnStart;
+
+    static VfxCueId TickCue(Ailment a)
+        => a == Ailment.Poison ? VfxCueId.OnPoisonTick
+         : a == Ailment.Bleed  ? VfxCueId.OnBleedTick
+         :                        VfxCueId.OnBurnTick;
+
+    // Map a control/debuff ailment to its one-shot "applied" cue. False for DoTs (they use auras).
+    static bool CcCue(Ailment a, out VfxCueId cue)
+    {
+        switch (a)
+        {
+            case Ailment.Stun:    cue = VfxCueId.OnStun;    return true;
+            case Ailment.Freeze:  cue = VfxCueId.OnFreeze;  return true;
+            case Ailment.Slow:    cue = VfxCueId.OnSlow;    return true;
+            case Ailment.Silence: cue = VfxCueId.OnSilence; return true;
+            case Ailment.Blind:   cue = VfxCueId.OnBlind;   return true;
+            default:              cue = default;            return false;
+        }
     }
 
     /// <summary>Grant (or refresh) a move-SPEED buff: multiply move speed by <paramref name="multiplier"/> (≥1 to
@@ -151,7 +205,11 @@ public class StatusController : MonoBehaviour
         bool wasActive = Time.time < hasteUntil;
         hasteMult = Mathf.Max(0.01f, multiplier);
         hasteUntil = Time.time + seconds;
-        if (!wasActive) DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Haste!", HasteColor);
+        if (!wasActive)
+        {
+            DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Haste!", HasteColor);
+            VfxCue.Fire(VfxCueId.OnHaste, transform);
+        }
     }
 
     void AnnounceIfNew(Ailment a, bool wasActive, string label, Color c)
@@ -179,6 +237,10 @@ public class StatusController : MonoBehaviour
         TickDot(Ailment.Poison);
         TickDot(Ailment.Bleed);
         TickDot(Ailment.Burn);
+
+        // Tear down any status aura whose ailment has expired (fixed small loop, no alloc; only DoT slots are ever set).
+        for (int i = 0; i < N; i++)
+            if (aura[i] != null && Time.time >= until[i]) StopAura(i);
     }
 
     void TickDot(Ailment a)
@@ -188,6 +250,7 @@ public class StatusController : MonoBehaviour
         nextTick[i] = Time.time + DotInterval;
         int dmg = Mathf.Max(1, Mathf.RoundToInt(mag[i]));
         Color c = ColorOf(a);
+        VfxCue.Fire(TickCue(a), transform);   // one-shot puff per DoT tick
 
         if (isPlayer)
         {

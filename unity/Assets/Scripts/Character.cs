@@ -334,7 +334,7 @@ public class Character : MonoBehaviour
     public float CastSpeedMult   => 1f + P(PrimaryStat.DEX) * CastPerDex;             // >1 = cast faster (shortens caster cooldown)
     /// <summary>Pre-renewal cast-time multiplier applied to a spell's base wind-up: <c>1 − DEX/150</c>,
     /// clamped to [0,1]. 1 at 0 DEX, 0 (instant cast) at DEX 150. A spell's real cast time is
-    /// <c>baseCast × CastTimeMult</c>. See <see cref="Player3DCaster"/>.</summary>
+    /// <c>baseCast × CastTimeMult</c>.</summary>
     public float CastTimeMult => Mathf.Clamp01(1f - P(PrimaryStat.DEX) / (float)InstantCastDex);
 
     int Scale(int flat, StatId stat) => Mathf.RoundToInt(flat * (1f + PassivePercent(stat)));
@@ -577,7 +577,7 @@ public class Character : MonoBehaviour
         return true;
     }
 
-    // ---- Guard (Swordsman defensive active, Player3DGuard) ----------------------------------------
+    // ---- Guard (a timed defensive stance; driven by a guard-type active) --------------------------
     // A timed damage-reduction stance: while active, incoming physical AND magic damage is cut by
     // guardReduction. Runtime-only (not saved); cleared on revive.
     float guardUntil;
@@ -589,7 +589,7 @@ public class Character : MonoBehaviour
     public float GuardRemaining => Mathf.Max(0f, guardUntil - Time.time);
 
     /// <summary>Begin a damage-reduction stance for <paramref name="seconds"/>, preventing
-    /// <paramref name="reduction"/> (0..1) of each incoming hit. Called by <see cref="Player3DGuard"/>.</summary>
+    /// <paramref name="reduction"/> (0..1) of each incoming hit. Called by a guard-type active skill.</summary>
     public void BeginGuard(float seconds, float reduction)
     {
         guardUntil = Time.time + Mathf.Max(0f, seconds);
@@ -643,8 +643,17 @@ public class Character : MonoBehaviour
         Sfx.Play(hurtSfx);                       // player hurt grunt
         OnDamaged?.Invoke(dmg);                  // drives the player hurt flash
         Reflect(dmg, source);                    // thorns: bounce a fraction back at the attacker
-        if (CurrentHP == 0) OnDied?.Invoke();   // Phase F: DeathScreen handles the death → respawn flow
+        if (CurrentHP == 0) RaiseDeath();   // Phase F: DeathScreen handles the death → respawn flow
         return dmg;
+    }
+
+    // One choke point for the player's death: the respawn flow (OnDied) + the death VFX cue. All three damage
+    // entry points route here so the cue can't be forgotten at one site.
+    void RaiseDeath()
+    {
+        OnDied?.Invoke();
+        var a = Avatar();
+        if (a != null) VfxCue.Fire(VfxCueId.OnDeath, a);
     }
 
     /// <summary>Apply an incoming MAGIC hit: reduced by <see cref="MagicDefense"/> (not
@@ -664,7 +673,7 @@ public class Character : MonoBehaviour
         Sfx.Play(hurtSfx);
         OnDamaged?.Invoke(dmg);
         Reflect(dmg, source);
-        if (CurrentHP == 0) OnDied?.Invoke();
+        if (CurrentHP == 0) RaiseDeath();
         return dmg;
     }
 
@@ -680,7 +689,7 @@ public class Character : MonoBehaviour
         var a = Avatar();
         if (a != null) DamagePopup.Spawn(a.position, dmg, color);
         OnDamaged?.Invoke(dmg);
-        if (CurrentHP == 0) OnDied?.Invoke();
+        if (CurrentHP == 0) RaiseDeath();
         return dmg;
     }
 
@@ -735,12 +744,13 @@ public class Character : MonoBehaviour
         if (amount <= 0 || IsDead) return;
         int before = CurrentHP;
         CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
-        int healed = CurrentHP - before;
-        OnHealthChanged?.Invoke();
-        if (healed > 0)
+        if (CurrentHP != before) OnHealthChanged?.Invoke();
+        // Show the green digits for the FULL intended amount, even at full HP (healed==0) — the heal still "landed".
+        var a = Avatar();
+        if (a != null)
         {
-            var a = Avatar();
-            if (a != null) DamagePopup.SpawnText(a.position, "+" + healed, HealColor);  // green = heal
+            DamagePopup.SpawnText(a.position, "+" + amount, HealColor);  // green = heal
+            VfxCue.Fire(VfxCueId.OnHeal, a);
         }
     }
 
@@ -776,6 +786,8 @@ public class Character : MonoBehaviour
             CurrentMP = MaxMP;                // …and refills mana
             Sfx.Play(levelUpSfx);        // triumphant sting
             OnLeveledUp?.Invoke(Level);  // drives the level-up toast
+            var lav = Avatar();
+            if (lav != null) VfxCue.Fire(VfxCueId.OnLevelUp, lav);
         }
         OnStatsChanged?.Invoke();
         OnHealthChanged?.Invoke();

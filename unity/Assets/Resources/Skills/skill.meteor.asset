@@ -14,18 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.meteor
   displayName: Meteor (data)
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 175b1dd4b468f2e4e99f17d5afaaa905, type: 3}
   manaCost: 16
-  cooldown: 9
+  cooldown: 3.12
   maxLevel: 10
   aim: 2
   castRange: 11
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
+  repeatCount: 10
+  repeatInterval: 0.2
   bindings:
   - tickId: meteor_ball
     targets: 2
     scope: 0
-    radius: 1.36
+    radius: 1.48
     effects:
     - kind: 0
       magic: 1

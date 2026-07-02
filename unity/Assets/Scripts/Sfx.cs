@@ -59,6 +59,13 @@ public class Sfx : MonoBehaviour
     AudioSource[] pool3d;   // 3D positional ring
     int next, next3d;
 
+    // Optional per-voice volume envelope (bound length + ease in/out). Parallel to the ring; only touched by
+    // Update while at least one voice is enveloped (activeEnvelopes gate), so plain one-shots stay free.
+    struct Voice { public bool active; public float start, dur, fadeIn, fadeOut, baseVol; }
+    Voice[] env;    // parallel to pool
+    Voice[] env3d;  // parallel to pool3d
+    int activeEnvelopes;
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -87,9 +94,43 @@ public class Sfx : MonoBehaviour
             src.dopplerLevel = 0f;                        // no pitch wobble from fast emitters / a moving listener
             pool3d[i] = src;
         }
+
+        env = new Voice[pool.Length];
+        env3d = new Voice[pool3d.Length];
     }
 
     void OnDestroy() { if (Instance == this) Instance = null; }
+
+    // Drive the volume envelopes of any bounded/faded voices. Early-out (no per-frame work) when none are active.
+    void Update()
+    {
+        if (activeEnvelopes <= 0) return;
+        float now = Time.unscaledTime;   // audio plays in real time, unaffected by timeScale/pauses
+        StepEnvelopes(env, pool, now);
+        StepEnvelopes(env3d, pool3d, now);
+    }
+
+    void StepEnvelopes(Voice[] envRing, AudioSource[] ring, float now)
+    {
+        for (int i = 0; i < ring.Length; i++)
+        {
+            if (!envRing[i].active) continue;
+            var src = ring[i];
+            float t = now - envRing[i].start;
+            if (t >= envRing[i].dur || !src.isPlaying)   // reached the bound (or the voice was stolen by a new shot)
+            {
+                if (src.isPlaying) src.Stop();
+                envRing[i].active = false;
+                activeEnvelopes--;
+                continue;
+            }
+            float mult = 1f;
+            if (envRing[i].fadeIn > 0f) mult = Mathf.SmoothStep(0f, 1f, t / envRing[i].fadeIn);            // ease in
+            if (envRing[i].fadeOut > 0f)
+                mult = Mathf.Min(mult, Mathf.SmoothStep(0f, 1f, (envRing[i].dur - t) / envRing[i].fadeOut)); // ease out
+            src.volume = envRing[i].baseVol * mult * masterVolume;
+        }
+    }
 
     /// <summary>Live-retune the 3D positional range (how far from the listener a world sound can be heard).
     /// The pool copies <see cref="minDistance"/>/<see cref="maxDistance"/> once in <see cref="Awake"/>, so this
@@ -119,7 +160,15 @@ public class Sfx : MonoBehaviour
     /// a spell landing, a distant door). No-op if the set is empty or no Sfx exists yet.</summary>
     public static void PlayAt(SfxSet set, Vector3 pos)
     {
-        if (Instance != null) Instance.PlaySetAt(set, pos);
+        if (Instance != null) Instance.PlaySetAt(set, pos, 0f, 0f, 0f);
+    }
+
+    /// <summary>3D positional variant with a volume envelope: bound the play length to <paramref name="duration"/>
+    /// seconds (0 = full clip) and ease the volume in / out over <paramref name="fadeIn"/> / <paramref name="fadeOut"/>
+    /// seconds (0 = no ramp). Bounding is how a long or looping clip is kept from bleeding past its beat.</summary>
+    public static void PlayAt(SfxSet set, Vector3 pos, float fadeIn, float fadeOut, float duration)
+    {
+        if (Instance != null) Instance.PlaySetAt(set, pos, fadeIn, fadeOut, duration);
     }
 
     void PlaySet(SfxSet set)
@@ -128,37 +177,63 @@ public class Sfx : MonoBehaviour
         var clip = set.Pick();
         if (clip == null) return;
 
-        var src = NextFree(pool, ref next);
+        int idx = NextFree(pool, ref next);
+        var src = pool[idx];
         src.clip = clip;
-        src.volume = set.volume * masterVolume;
         src.pitch = UnityEngine.Random.Range(set.pitch.x, set.pitch.y);
+        ArmVoice(env, idx, src, set.volume, 0f, 0f, 0f, clip.length);
         src.Play();
     }
 
-    void PlaySetAt(SfxSet set, Vector3 pos)
+    void PlaySetAt(SfxSet set, Vector3 pos, float fadeIn, float fadeOut, float duration)
     {
         if (set == null || set.Empty) return;
         var clip = set.Pick();
         if (clip == null) return;
 
-        var src = NextFree(pool3d, ref next3d);
+        int idx = NextFree(pool3d, ref next3d);
+        var src = pool3d[idx];
         src.transform.position = pos;   // the voice IS the emitter — engine pans/attenuates from here
         src.clip = clip;
-        src.volume = set.volume * masterVolume;
         src.pitch = UnityEngine.Random.Range(set.pitch.x, set.pitch.y);
+        ArmVoice(env3d, idx, src, set.volume, fadeIn, fadeOut, duration, clip.length);
         src.Play();
     }
 
-    // Prefer an idle voice in the ring; if all are busy, recycle the next one (steals the oldest).
-    static AudioSource NextFree(AudioSource[] ring, ref int cursor)
+    // Arm (or clear) voice idx's volume envelope. No envelope → plain one-shot at full volume, and any stale
+    // envelope on this reused voice is cleared. With an envelope → Update ramps + stops it (see StepEnvelopes).
+    void ArmVoice(Voice[] envRing, int idx, AudioSource src, float baseVol, float fadeIn, float fadeOut, float duration, float clipLen)
+    {
+        float effLen = clipLen / Mathf.Max(0.01f, src.pitch);   // a pitched clip finishes sooner
+        bool enveloped = fadeIn > 0f || fadeOut > 0f || duration > 0f;
+        if (enveloped)
+        {
+            if (!envRing[idx].active) activeEnvelopes++;
+            envRing[idx].active = true;
+            envRing[idx].start = Time.unscaledTime;
+            envRing[idx].dur = duration > 0f ? Mathf.Min(duration, effLen) : effLen;
+            envRing[idx].fadeIn = fadeIn;
+            envRing[idx].fadeOut = fadeOut;
+            envRing[idx].baseVol = baseVol;
+            src.volume = (fadeIn > 0f ? 0f : baseVol) * masterVolume;
+        }
+        else
+        {
+            if (envRing[idx].active) { envRing[idx].active = false; activeEnvelopes--; }   // clear a stolen envelope
+            src.volume = baseVol * masterVolume;
+        }
+    }
+
+    // Prefer an idle voice in the ring; if all are busy, recycle the next one (steals the oldest). Returns its index.
+    static int NextFree(AudioSource[] ring, ref int cursor)
     {
         for (int k = 0; k < ring.Length; k++)
         {
-            var src = ring[(cursor + k) % ring.Length];
-            if (!src.isPlaying) { cursor = (cursor + k + 1) % ring.Length; return src; }
+            int idx = (cursor + k) % ring.Length;
+            if (!ring[idx].isPlaying) { cursor = (idx + 1) % ring.Length; return idx; }
         }
-        var s = ring[cursor];
+        int steal = cursor;
         cursor = (cursor + 1) % ring.Length;
-        return s;
+        return steal;
     }
 }

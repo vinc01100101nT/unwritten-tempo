@@ -6,7 +6,7 @@ using UnityEngine.UI;
 /// The RO-style spell <b>cast bar</b> — a small bar that floats over the caster's head and FILLS
 /// left→right as a spell winds up, then vanishes the instant the cast completes or is interrupted.
 /// There is exactly ONE in the game (the player only casts one spell at a time), so this is a static,
-/// lazily-built singleton driven by <see cref="Player3DCaster"/>: it calls <see cref="Set"/> every
+/// lazily-built singleton driven by a cast-time skill: it calls <see cref="Set"/> every
 /// casting frame and <see cref="Hide"/> when the cast ends.
 ///
 /// PERFORMANCE (see PERFORMANCE.md): one shared world-space <see cref="Canvas"/>, built once and reused

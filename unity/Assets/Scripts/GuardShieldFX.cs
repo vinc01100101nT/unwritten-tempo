@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// A looping shield bubble shown around the player while the <see cref="Player3DGuard"/> stance is up.
+/// A looping shield bubble shown around the player while a guard/defensive stance is up.
 /// Created once per player and reused: <see cref="Show"/> reveals it for a duration, then it hides
 /// itself. It FOLLOWS the player transform (rather than parenting) so it doesn't inherit the player's
 /// billboard/idle-breathe scale — its own world scale stays constant. Frames are sliced through

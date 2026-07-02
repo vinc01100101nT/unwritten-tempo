@@ -15,7 +15,7 @@ public class UseBakedCharacter : EditorWindow
     CharacterRoster roster;
     Vector2 scroll;
 
-    [MenuItem("Tools/unwritten/Player/Use Baked Character", priority = 605)]
+    [MenuItem("Tools/unwritten/Player/Use Baked Character (Systems scene)", priority = 605)]
     static void Open() => GetWindow<UseBakedCharacter>(true, "Use Baked Character");
 
     void OnEnable() => roster = AssetDatabase.LoadAssetAtPath<CharacterRoster>(RosterPath);

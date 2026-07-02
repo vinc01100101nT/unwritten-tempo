@@ -458,53 +458,10 @@ public static class Build25DSpike
         atk.defaultAttackSfx = SfxAssets.Set(0.8f, SfxAssets.SwordDir, "Sword Attack 1", "Sword Attack 2", "Sword Attack 3");
         atk.defaultHitSfx    = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Impact Hit 1", "Sword Impact Hit 2", "Sword Impact Hit 3");
 
-        // Basic magic bolt (Q) — the first thing that uses MAtk / MP / MDef (Phase G magic foundation).
-        var caster = go.AddComponent<Player3DCaster>();
-        caster.castSfx = SfxAssets.Set(0.8f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
-        caster.icon = LoadSkillIcon("Spell/OrbLight");        // hotbar icon (generic magic bolt; distinct from Mage Fireball)
-
-        // Swordsman signature active — Bash (slot 1): a heavy, always-landing strike that staggers the target.
-        var bash = go.AddComponent<Player3DBash>();
-        bash.bashSfx = SfxAssets.Set(0.95f, SfxAssets.SwordDir, "Sword Attack 1", "Sword Attack 2", "Sword Attack 3");
-        bash.hitSfx  = SfxAssets.Set(1f,    SfxAssets.SwordDir, "Sword Impact Hit 1", "Sword Impact Hit 2", "Sword Impact Hit 3");
-        bash.icon = LoadSkillIcon("Spell/Cut");               // hotbar icon (heavy slash)
-
-        // Swordsman active 2 — Charge (slot 2): gap-closer dash to a target, then a staggering hit.
-        var charge = go.AddComponent<Player3DCharge>();
-        charge.chargeSfx = SfxAssets.Set(0.8f, SfxAssets.SwordDir, "Sword Attack 1", "Sword Attack 2", "Sword Attack 3");
-        charge.hitSfx    = SfxAssets.Set(1f,   SfxAssets.SwordDir, "Sword Impact Hit 1", "Sword Impact Hit 2", "Sword Impact Hit 3");
-        charge.icon = LoadSkillIcon("Spell/Counter");         // hotbar icon (forceful lunge)
-
-        // Swordsman defensive active — Guard (slot 3): a brief damage-reduction stance + shield bubble.
-        var guard = go.AddComponent<Player3DGuard>();
-        guard.guardSfx = SfxAssets.Set(0.9f, SfxAssets.SwordDir, "Sword Blocked 1", "Sword Blocked 2", "Sword Blocked 3");
-        guard.icon = LoadSkillIcon("Spell/DefenseUpgrade");   // hotbar icon (defensive buff)
-
-        // Swordsman AoE active — Warcry (slot 4): damages + knocks back every nearby mob.
-        var warcry = go.AddComponent<Player3DWarcry>();
-        warcry.warcrySfx = SfxAssets.Set(1f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
-        warcry.icon = LoadSkillIcon("Spell/Explosion");       // hotbar icon (AoE burst)
-
-        // ---- The rest of the universal active pool (class-agnostic — all live on the player, enabled; the
-        // ---- unlock + hotbar-binding layer decides which the player actually has and uses).
-        var spellSfx     = SfxAssets.Set(0.85f, "Spells", "Spell Impact 1", "Spell Impact 2", "Spell Impact 3");
-
-        var fireball = go.AddComponent<Player3DFireball>();   // 1: single-target projectile nuke
-        fireball.castSfx = spellSfx;
-        fireball.icon = LoadSkillIcon("Spell/Fireball");
-
-        var frost = go.AddComponent<Player3DFrostNova>();     // 2: PBAoE magic + slow
-        frost.castSfx = spellSfx;
-        frost.icon = LoadSkillIcon("Spell/BookIce");
-
-        var meteor = go.AddComponent<Player3DMeteor>();       // 3: ground-targeted delayed AoE
-        meteor.castSfx = spellSfx;
-        meteor.meteorSfx = SfxAssets.Set(0.9f, "Spells", "Fireball 1", "Fireball 2", "Fireball 3");   // randomized fireball boom per meteor impact
-        meteor.icon = LoadSkillIcon("Spell/RockSpike");
-
-        var soul = go.AddComponent<Player3DSoulStrike>();     // 4: aim-first SINGLE-target nuke (pick the enemy, then fire)
-        soul.castSfx = spellSfx;
-        soul.icon = LoadSkillIcon("Spell/OrbDarkness");      // hotbar icon (focused single-target bolt; distinct from caster's OrbLight)
+        // Active skills are now DATA (composed SkillDef assets under Resources/Skills, interpreted by a
+        // SkillRunner). Player3DController.Awake attaches one runner per authored skill, so Build Player no
+        // longer bakes the retired hand-written Player3D* skill classes. Only the basic auto-attack
+        // (Player3DAttacker, above) stays baked here.
 
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
         // go.AddComponent<CharacterDye>();          // live HSV palette control — DISABLED for now (no color-palette dye on the character)

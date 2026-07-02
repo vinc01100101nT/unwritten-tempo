@@ -37,7 +37,7 @@ public static class UIShellBuilder
     static Font uiFont;
     static Sprite panelSprite, cellSprite, barBgSprite;
 
-    [MenuItem("Tools/unwritten/Scene Setup/Build UI Shell", priority = 110)]
+    [MenuItem("Tools/unwritten/Scene Setup/Build UI Shell (Systems scene)", priority = 110)]
     static void BuildUIShellMenu()
     {
         Build(EditorPrefs.GetString(PrefTheme, DefaultTheme),
@@ -95,6 +95,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<PersistentUI>();             // survives scene loads (singleton)
         canvasGO.AddComponent<CharacterUIBinder>();        // drives the HUD health/mana bars from Character
         canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Skills (K) panel
+        canvasGO.AddComponent<SkillBookPanel>();           // Grimoire (J): browse all composed skills + bind to the hotbar
         canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
         canvasGO.AddComponent<XpBarHUD>();                 // bottom-of-screen XP bars: character (left) + ring (right)
 

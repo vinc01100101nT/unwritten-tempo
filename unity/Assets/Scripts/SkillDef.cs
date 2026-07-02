@@ -77,6 +77,15 @@ public class SkillDef : ScriptableObject
     [Tooltip("The composed look from the Vfx Composer. Its exposed ticks are what the bindings below map to.")]
     public VfxSequence vfx;
 
+    [Tooltip("How many times to replay the WHOLE composed cycle per cast (e.g. 5 = a 5-meteor shower). Each cycle " +
+             "is an independent play at the same cast point — its own carrier falls and multi-hits via the VFX's " +
+             "per-component tickCount. 1 = play once. Repetition of the whole effect lives HERE (the gameplay layer), " +
+             "not in the Vfx Composer — the composer stays WYSIWYG (one cycle = one meteor).")]
+    [Min(1)] public int repeatCount = 1;
+    [Tooltip("Seconds between the start of each cycle when repeatCount > 1. 0 = fall back to the VFX sequence's " +
+             "RestartInterval (its loop-end marker). Cycles overlap freely; a still-playing cycle keeps rendering.")]
+    [Min(0f)] public float repeatInterval = 0f;
+
     [Header("Gameplay — one binding per tickId you want to matter")]
     public List<SkillTickBinding> bindings = new List<SkillTickBinding>();
 

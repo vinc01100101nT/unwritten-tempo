@@ -138,6 +138,9 @@ public class VfxStep
     [Tooltip("Seconds between ticks (0 = all at once). tickCount × tickInterval = the component's active window. " +
              "This is the 'repeat over time' owner — the skill applies ONE burst per tick.")]
     public float tickInterval = 0f;
+    [Tooltip("Auto-fill tickCount from the effect's duration: tickCount = floor(duration / tickInterval). Keeps a " +
+             "lingering component ticking for its whole visible lifetime without hand-counting.")]
+    public bool spreadTicks = false;
 
     [Header("Carrier")]
     [Tooltip("Launch point offset from the anchor (e.g. (0,9,0) = fall from 9 units up).")]
@@ -158,6 +161,15 @@ public class VfxStep
 
     [Header("Sound")]
     public SfxSet sound;
+    [Tooltip("Seconds to play the sound before it's faded/cut out — BOUNDS a long or looping clip (e.g. a " +
+             "waterfall loop) so it ends with the beat instead of bleeding past the loop / overlapping into the " +
+             "next repeat. 0 = play the full clip (previous behaviour).")]
+    public float soundDuration;
+    [Tooltip("Ease-IN: seconds to ramp the sound up from silence at the start (smoothstep). 0 = start at full volume.")]
+    public float soundFadeIn;
+    [Tooltip("Ease-OUT: seconds to ramp the sound down to silence at the end (smoothstep), landing on soundDuration " +
+             "(or the clip end). 0 = hard cut / natural end.")]
+    public float soundFadeOut;
 
     /// <summary>True if this step exposes a gameplay tick a <see cref="SkillDef"/> can bind to.</summary>
     public bool HasTick => !string.IsNullOrEmpty(tickId) && tickCount > 0;

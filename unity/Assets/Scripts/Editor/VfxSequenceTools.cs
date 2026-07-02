@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// Builds the built-in <see cref="VfxSequence"/> assets under <c>Resources/VfxSequences/</c> so skills that
-/// load a sequence by name (e.g. <see cref="Player3DMeteor"/>) work out of the box. Idempotent: re-running
+/// load a sequence by name (e.g. the meteor sequence) work out of the box. Idempotent: re-running
 /// rebuilds the default step list. Hand-tuning on the asset will be overwritten — tune skills' OWN copies, or
 /// edit here if a new default is wanted.
 /// </summary>
@@ -28,8 +28,7 @@ public static class VfxSequenceTools
 
         // 1) The falling meteor — a carrier that drops from 9 units up onto the impact point and raises "impact"
         //    on arrival (fallSpeed 16, ~0.56s fall + 1s safety). Scatter reads the salvo as a shower. Exposes the
-        //    "meteor_ball" TICK (one-shot on land) that a SkillDef binds the impact damage onto. Keeps the "impact"
-        //    emit-event too, so the legacy Player3DMeteor code path still fires.
+        //    "meteor_ball" TICK (one-shot on land) that a SkillDef binds the impact damage onto.
         seq.steps.Add(new VfxStep
         {
             note = "fall",

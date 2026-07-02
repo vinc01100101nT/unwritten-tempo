@@ -45,20 +45,6 @@ MonoBehaviour:
       clips: []
       volume: 1
       pitch: {x: 0.95, y: 1.05}
-    touchTargets: 2
-    touchScope: 0
-    touchRadius: 1.36
-    touchInterval: 0
-    touchDuration: 0
-    effects:
-    - kind: 0
-      magic: 1
-      damageMult: 8
-      element: 3
-      amount: 10
-      ailment: 2
-      seconds: 4
-      magnitude: 3
   - note: explosion
     schedule: 1
     delay: 0
@@ -76,6 +62,9 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     emitEventOnStart: 
     emitEventOnEnd: 
+    tickId: 
+    tickCount: 1
+    tickInterval: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
     carrierSpeed: 16
@@ -88,12 +77,6 @@ MonoBehaviour:
       clips: []
       volume: 1
       pitch: {x: 0.95, y: 1.05}
-    touchTargets: 0
-    touchScope: 0
-    touchRadius: 1.5
-    touchInterval: 0
-    touchDuration: 0
-    effects: []
   - note: shake
     schedule: 1
     delay: 0
@@ -111,6 +94,9 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     emitEventOnStart: 
     emitEventOnEnd: 
+    tickId: 
+    tickCount: 1
+    tickInterval: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
     carrierSpeed: 16
@@ -123,12 +109,6 @@ MonoBehaviour:
       clips: []
       volume: 1
       pitch: {x: 0.95, y: 1.05}
-    touchTargets: 0
-    touchScope: 0
-    touchRadius: 1.5
-    touchInterval: 0
-    touchDuration: 0
-    effects: []
   - note: launch sfx
     schedule: 1
     delay: 0
@@ -146,6 +126,9 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     emitEventOnStart: 
     emitEventOnEnd: 
+    tickId: 
+    tickCount: 1
+    tickInterval: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
     carrierSpeed: 16
@@ -159,12 +142,6 @@ MonoBehaviour:
       - {fileID: 8300000, guid: 422bcaf49cfa415428defd393821254e, type: 3}
       volume: 1
       pitch: {x: 0.95, y: 1.05}
-    touchTargets: 0
-    touchScope: 0
-    touchRadius: 1.5
-    touchInterval: 0
-    touchDuration: 0
-    effects: []
   - note: impact vfx
     schedule: 1
     delay: 0
@@ -182,6 +159,9 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     emitEventOnStart: 
     emitEventOnEnd: 
+    tickId: 
+    tickCount: 1
+    tickInterval: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
     carrierSpeed: 16
@@ -194,12 +174,6 @@ MonoBehaviour:
       clips: []
       volume: 1
       pitch: {x: 0.95, y: 1.05}
-    touchTargets: 0
-    touchScope: 0
-    touchRadius: 1.5
-    touchInterval: 0
-    touchDuration: 0
-    effects: []
   - note: after burn vfx
     schedule: 1
     delay: 0
@@ -217,6 +191,9 @@ MonoBehaviour:
     tint: {r: 1, g: 1, b: 1, a: 1}
     emitEventOnStart: 
     emitEventOnEnd: 
+    tickId: fire_pillar
+    tickCount: 10
+    tickInterval: 0.372
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
     carrierSpeed: 16
@@ -229,21 +206,4 @@ MonoBehaviour:
       clips: []
       volume: 1
       pitch: {x: 0.95, y: 1.05}
-    tickId: fire_pillar
-    tickCount: 5
-    tickInterval: 0.372
-    touchTargets: 2
-    touchScope: 0
-    touchRadius: 1.14
-    touchInterval: 0.372
-    touchDuration: 0
-    effects:
-    - kind: 0
-      magic: 1
-      damageMult: 0.51
-      element: 3
-      amount: 10
-      ailment: 2
-      seconds: 4
-      magnitude: 3
   loopEnd: 0.8455911

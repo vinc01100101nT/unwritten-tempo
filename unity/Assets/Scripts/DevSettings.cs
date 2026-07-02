@@ -68,7 +68,6 @@ public class DevSettings : MonoBehaviour
     Transform groundRoot;          // the ground root moved by the "Ground height" knob (found via a Ground-layer ray)
     int groundLayerMask = -1;      // cached Ground layer mask (-1 = not resolved yet)
     Player3DAttacker attacker;
-    Player3DCaster caster;
     CameraFollow3D camRig;
     CameraOccluderFader fader;
     TimeOfDay tod;
@@ -106,7 +105,6 @@ public class DevSettings : MonoBehaviour
         if (bakedVisual == null) bakedVisual = FindFirstObjectByType<BakedPlayerVisual>();
         if (bakedPlayer == null && bakedVisual != null) bakedPlayer = bakedVisual.GetComponent<BakedBillboard8>();
         if (attacker == null) attacker = FindFirstObjectByType<Player3DAttacker>();
-        if (caster == null)   caster   = FindFirstObjectByType<Player3DCaster>();
         if (camRig == null)   camRig   = FindFirstObjectByType<CameraFollow3D>();
         if (fader == null)    fader    = FindFirstObjectByType<CameraOccluderFader>();
         if (tod == null)      tod      = TimeOfDay.Instance;
@@ -386,12 +384,6 @@ public class DevSettings : MonoBehaviour
         F("Windup (s)",       0f, 0.6f, () => attacker ? attacker.windupTime : 0f, v => { if (attacker) attacker.windupTime = v; });
         I("Base damage*",     1f, 50f, () => attacker ? attacker.damage : 0f,      v => { if (attacker) attacker.damage = Mathf.RoundToInt(v); });
         F("Slash VFX scale",  0.2f, 3f, () => attacker ? attacker.slashVfxScale : 0f, v => { if (attacker) attacker.slashVfxScale = v; });
-
-        // Bolt cast (Player3DCaster) — pre-renewal cast time: actual = base × (1 − DEX/150).
-        F("Bolt base cast (s)", 0f, 4f,   () => caster ? caster.baseCastTime : 0f, v => { if (caster) caster.baseCastTime = v; });
-        F("Bolt cooldown (s)",  0.1f, 3f, () => caster ? caster.cooldown : 0f,     v => { if (caster) caster.cooldown = v; });
-        F("Bolt range",         1f, 15f,  () => caster ? caster.range : 0f,        v => { if (caster) caster.range = v; });
-        I("Bolt mana cost",     0f, 50f,  () => caster ? caster.manaCost : 0f,     v => { if (caster) caster.manaCost = Mathf.RoundToInt(v); });
 
         // ---- Player Stats — Character (effective stats recompute live) -----
         Cat("Player Stats");

@@ -107,6 +107,7 @@ public class Player3DAttacker : MonoBehaviour
         // so the visible swing keeps pace with the cadence instead of lagging at high ASPD.
         nextSwing = Time.time + cooldown * MotionScale;
         Sfx.Play(WeaponSfx(w => w.attackSfx, defaultAttackSfx));   // swing
+        VfxCue.Fire(VfxCueId.OnAttack, transform);
         swing = StartCoroutine(SwingThenHit(t));
     }
 
@@ -154,6 +155,7 @@ public class Player3DAttacker : MonoBehaviour
                 // +0.4 here double-counted with the offset and floated the hit above the mob.
                 if (!string.IsNullOrEmpty(hitVfxId))
                     Vfx.PlayAt(hitVfxId, t.transform.position, Vfx.VfxParams.Scaled(hitVfxScale * (crit ? critVfxScale : 1f)));
+                VfxCue.Fire(crit ? VfxCueId.OnCrit : VfxCueId.OnHit, transform, t.transform);
             }
         }
 

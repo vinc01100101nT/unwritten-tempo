@@ -20,6 +20,7 @@ public class SkillComposerWindow : EditorWindow
     readonly List<SkillDef> all = new List<SkillDef>();
     SkillDef sel;
     Vector2 listScroll, bodyScroll;
+    bool listCollapsed;
     const string Dir = "Assets/Resources/Skills";
 
     void OnEnable() => Refresh();
@@ -47,8 +48,19 @@ public class SkillComposerWindow : EditorWindow
     // ---- left: asset list ---------------------------------------------------
     void DrawList()
     {
+        if (listCollapsed)
+        {
+            EditorGUILayout.BeginVertical(GUILayout.Width(20));
+            if (GUILayout.Button("▶", GUILayout.Width(20), GUILayout.Height(40))) listCollapsed = false;
+            EditorGUILayout.EndVertical();
+            return;
+        }
+
         EditorGUILayout.BeginVertical(GUILayout.Width(200));
+        EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Skills", EditorStyles.boldLabel);
+        if (GUILayout.Button("◀", GUILayout.Width(24))) listCollapsed = true;
+        EditorGUILayout.EndHorizontal();
         listScroll = EditorGUILayout.BeginScrollView(listScroll);
         foreach (var s in all)
         {
@@ -136,6 +148,12 @@ public class SkillComposerWindow : EditorWindow
         EditorGUILayout.LabelField("Presentation", EditorStyles.boldLabel);
         sel.vfx = (VfxSequence)EditorGUILayout.ObjectField(new GUIContent("vfx sequence",
             "The composed look from the Vfx Composer. Its exposed ticks appear below."), sel.vfx, typeof(VfxSequence), false);
+        sel.repeatCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("repeat count",
+            "Replay the WHOLE cycle N times per cast (e.g. 5 = a 5-meteor shower). Each cycle is an independent play " +
+            "at the same cast point; per-fall hits still come from the VFX's per-component tickCount. 1 = play once."), sel.repeatCount));
+        using (new EditorGUI.DisabledScope(sel.repeatCount <= 1))
+            sel.repeatInterval = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("repeat interval (s)",
+                "Seconds between cycle starts. 0 = use the VFX sequence's RestartInterval (its loop-end marker)."), sel.repeatInterval));
 
         EditorGUILayout.Space(6);
         DrawTickBindings();

@@ -15,13 +15,11 @@ using UnityEngine;
 /// </summary>
 public sealed class SkillRoster
 {
-    /// <summary>Every active skill in the shared pool, by stable id (matches each skill's <c>SkillModId</c>).
-    /// This is the menu/display order — NOT a forced unlock order; the player picks which to take each milestone.</summary>
-    public static readonly string[] AllIds =
-    {
-        "bash", "charge", "guard", "warcry",
-        "bolt", "fireball", "frost_nova", "meteor", "soul_strike",
-    };
+    /// <summary>Every active skill in the shared pool, by stable id — now the COMPOSED skills authored in the
+    /// Skill Composer (<see cref="SkillCatalog.OrderedIds"/>), which replaced the hand-written legacy skill
+    /// classes. This is the menu/display order — NOT a forced unlock order; the player picks which to take each
+    /// milestone. Derived live from the catalog, so authoring a new skill grows the pool with no code change.</summary>
+    public static string[] AllIds => SkillCatalog.OrderedIds();
 
     /// <summary>One active-skill pick is earned for every this-many points ALLOCATED into the ring.</summary>
     public const int PointsPerUnlock = 10;

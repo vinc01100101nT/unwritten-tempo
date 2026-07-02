@@ -6,7 +6,7 @@ using UnityEngine;
 /// Builds the built-in <see cref="SkillDef"/> assets under <c>Resources/Skills/</c> (so the game can load them by
 /// id via <see cref="SkillCatalog"/>) and wires <see cref="SkillRunner"/>s onto the player for play-testing. This
 /// is the PROOF of the data-driven skill pipeline: it authors Meteor entirely as data (a referenced VfxSequence +
-/// tick bindings) — no hand-written skill class — leaving the legacy <see cref="Player3DMeteor"/> untouched.
+/// tick bindings) — no hand-written skill class (the legacy Player3D* skill classes were retired).
 /// Idempotent: re-running rebuilds the default bindings.
 /// </summary>
 public static class SkillDefTools
@@ -66,7 +66,7 @@ public static class SkillDefTools
         EditorUtility.SetDirty(def);
     }
 
-    [MenuItem("Tools/unwritten/Skills/Attach Data Skills To Player")]
+    [MenuItem("Tools/unwritten/Skills/Attach Data Skills To Player (Systems scene)")]
     public static void AttachToPlayer()
     {
         SkillCatalog.Reload();
@@ -92,9 +92,7 @@ public static class SkillDefTools
     static GameObject ResolvePlayer()
     {
         var ctrl = Object.FindFirstObjectByType<Player3DController>();
-        if (ctrl != null) return ctrl.gameObject;
-        var meteor = Object.FindFirstObjectByType<Player3DMeteor>();
-        return meteor != null ? meteor.gameObject : null;
+        return ctrl != null ? ctrl.gameObject : null;
     }
 
     static SkillDef LoadOrCreate(string id)

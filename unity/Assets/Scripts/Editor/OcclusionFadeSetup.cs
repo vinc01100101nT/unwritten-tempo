@@ -9,7 +9,7 @@ using UnityEngine;
 /// </summary>
 public static class OcclusionFadeSetup
 {
-    [MenuItem("Tools/unwritten/Scene Setup/Add Camera Occlusion Fade", priority = 120)]
+    [MenuItem("Tools/unwritten/Scene Setup/Add Camera Occlusion Fade (Systems scene)", priority = 120)]
     static void Add()
     {
         var follow = Object.FindObjectOfType<CameraFollow3D>();

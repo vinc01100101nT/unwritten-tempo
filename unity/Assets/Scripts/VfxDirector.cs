@@ -209,7 +209,8 @@ public class VfxSequenceRunner : MonoBehaviour
                 break;
 
             case VfxStepKind.Sound:
-                if (st.sound != null && !st.sound.Empty) Sfx.PlayAt(st.sound, point);
+                if (st.sound != null && !st.sound.Empty)
+                    Sfx.PlayAt(st.sound, point, st.soundFadeIn, st.soundFadeOut, st.soundDuration);
                 ScheduleEnd(i, Time.time);   // one-shot cue: end ≈ start
                 break;
         }

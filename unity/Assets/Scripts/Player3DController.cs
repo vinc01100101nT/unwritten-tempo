@@ -172,10 +172,9 @@ public partial class Player3DController : MonoBehaviour
     SpriteRenderer sr;
     CharacterController controller;
     Player3DAttacker attacker;
-    Player3DCaster caster;    // bolt wind-up: we root the player while it casts and cancel it on a move order
     StatusController status;   // stun/freeze (no act), slow (speed), silence/blind — read here + by the spells/attacker
 
-    // Charge / gap-closer dash state (driven by Player3DCharge via BeginDash).
+    // Charge / gap-closer dash state (driven via BeginDash — a reusable controller API for dash skills).
     bool dashing;
     Transform dashTarget;
     float dashSpeed, dashEndTime, dashArriveRange;
@@ -212,7 +211,6 @@ public partial class Player3DController : MonoBehaviour
         controller = GetComponent<CharacterController>();
         ApplyCapsule();   // enforce the tuned (short) collision capsule so it clears overhead eaves/leaves
         attacker = GetComponent<Player3DAttacker>();
-        caster = GetComponent<Player3DCaster>();   // may be null on a player built without the bolt — all uses guard it
         status = Status.Of(gameObject);   // registers as StatusController.Player for the spells' silence check
         snapRadius = snapRadiusPixels;   // publish to the static cursor pick
         buildScale = transform.localScale;
@@ -226,22 +224,32 @@ public partial class Player3DController : MonoBehaviour
         autoIndicator = AutoCombatIndicator.Create();        // "AUTO-COMBAT" screen tag, hidden until toggled
         UnitCrowd.Register(gameObject);                      // pass through mobs (so we can't hop on top of them)
 
-        // Swordsman kit: ensure Bash (slot 1) exists even on a player built before this skill, so it works
-        // without re-running Build Player. A fresh Build Player run configures its SFX; the defaults +
-        // Strike's fallback to the attacker's swing sounds make it functional either way.
-        if (GetComponent<Player3DBash>() == null) gameObject.AddComponent<Player3DBash>();
-        if (GetComponent<Player3DCharge>() == null) gameObject.AddComponent<Player3DCharge>();
-        if (GetComponent<Player3DGuard>() == null) gameObject.AddComponent<Player3DGuard>();
-        if (GetComponent<Player3DWarcry>() == null) gameObject.AddComponent<Player3DWarcry>();
+        // The active-skill pool is now DATA: every composed SkillDef (Skill Composer output, under
+        // Resources/Skills) gets a SkillRunner on the player. The legacy hand-written Player3D* skill classes
+        // were retired — one runner interprets any skill. Which the player has UNLOCKED and BOUND to the hotbar
+        // is still the progression layer (SkillRoster/HotbarBindings), not a class gate.
+        EnsureComposedSkills();
+    }
 
-        // The rest of the universal active-skill pool (class-agnostic — every active lives on the player and
-        // stays enabled; which ones the player has UNLOCKED and BOUND to the hotbar is the progression layer,
-        // not a class gate). A baked player already has these with FX/icons; self-bootstrap adds them asset-less.
-        if (GetComponent<Player3DCaster>()    == null) gameObject.AddComponent<Player3DCaster>();
-        if (GetComponent<Player3DFireball>()  == null) gameObject.AddComponent<Player3DFireball>();
-        if (GetComponent<Player3DFrostNova>() == null) gameObject.AddComponent<Player3DFrostNova>();
-        if (GetComponent<Player3DMeteor>()    == null) gameObject.AddComponent<Player3DMeteor>();
-        if (GetComponent<Player3DSoulStrike>()== null) gameObject.AddComponent<Player3DSoulStrike>();
+    // Attach one SkillRunner per authored SkillDef (idempotent — skips defs already carried). Runs on Awake so
+    // a player built before a skill was composed still picks it up without a re-bake. Cold path (once per spawn).
+    void EnsureComposedSkills()
+    {
+        var have = new HashSet<SkillDef>();
+        foreach (var r in GetComponents<SkillRunner>()) if (r.def != null) have.Add(r.def);
+
+        bool added = false;
+        var pool = SkillCatalog.All;
+        for (int i = 0; i < pool.Count; i++)
+        {
+            var def = pool[i];
+            if (def == null || have.Contains(def)) continue;
+            var runner = gameObject.AddComponent<SkillRunner>();
+            runner.def = def;
+            runner.level = 1;
+            added = true;
+        }
+        if (added) PlayerSkills.Refresh();   // re-resolve id → runner so the hotbar/menu see the new actives
     }
 
     // Subscribe to player damage for the hit-flinch animation (mirrors PlayerHurtFlash, which only
@@ -410,24 +418,6 @@ public partial class Player3DController : MonoBehaviour
             Animate(false);
             ApplyIdleScale(false);
             return;
-        }
-
-        // Casting a spell (Player3DCaster wind-up): the player is ROOTED while the cast bar fills. Issuing a
-        // move/attack order — WASD or a left-click — CANCELS the cast (RO-style: moving interrupts) and then
-        // control falls through so that same order executes this frame. Gravity-only + idle pose while rooted.
-        if (caster != null && caster.Casting)
-        {
-            bool moveOrder = !DevSettings.Blocking
-                             && (ReadWasd().sqrMagnitude > 0.001f || (LeftDown() && !PointerOverUI()));
-            if (moveOrder) caster.Interrupt();   // cancel, then fall through to ReadInput/movement below
-            else
-            {
-                controller.Move(Vector3.down * gravity * Time.deltaTime);
-                facing = Facing3D.FromWorldDir(worldFacing);
-                Animate(false);
-                ApplyIdleScale(false);
-                return;
-            }
         }
 
         // Traversal abilities (Space = forward hop, E = dash burst). Handled before normal input so an
@@ -729,8 +719,8 @@ public partial class Player3DController : MonoBehaviour
 
     /// <summary>Start a charge/gap-closer dash toward <paramref name="target"/> at <paramref name="speed"/>.
     /// Overrides the current order; on arrival (within <paramref name="arriveRange"/>) or after
-    /// <paramref name="maxTime"/> it fires <paramref name="onArrive"/> (the skill's strike). Used by
-    /// <see cref="Player3DCharge"/>.</summary>
+    /// <paramref name="maxTime"/> it fires <paramref name="onArrive"/> (the skill's strike). A reusable
+    /// gap-closer primitive for dash-type skills.</summary>
     public void BeginDash(Transform target, float speed, float maxTime, float arriveRange, System.Action onArrive)
     {
         if (target == null) return;

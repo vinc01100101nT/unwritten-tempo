@@ -101,6 +101,11 @@ public sealed class HotbarBindings
     public void Restore(string[] saved)
     {
         for (int i = 0; i < slots.Length; i++)
-            slots[i] = (saved != null && i < saved.Length && saved[i] != null) ? saved[i] : "";
+        {
+            var id = (saved != null && i < saved.Length && saved[i] != null) ? saved[i] : "";
+            // Drop ids that are no longer a known skill (e.g. retired legacy skills from an old save) so a
+            // stale binding can't linger as a dead slot — the pool is the composed SkillCatalog now.
+            slots[i] = SkillRoster.IsKnownId(id) ? id : "";
+        }
     }
 }

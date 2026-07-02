@@ -38,6 +38,7 @@ public class VfxComposerWindow : EditorWindow
     readonly List<VfxSequence> all = new List<VfxSequence>();
     VfxSequence sel;
     Vector2 listScroll, stepScroll;
+    bool listCollapsed;
     string listFilter = "";
 
     // ---- layout ----
@@ -62,7 +63,10 @@ public class VfxComposerWindow : EditorWindow
     GUIStyle compassStyle;
     bool showRuler = true;
     float rulerHeight = 1.8f;    // human height in world units — the size reference
-    GameObject ruler, capsule, ground;
+    bool showRadiusRing;
+    float radiusRingR = 1.5f;    // world-unit AoE radius ring — size the effect to match a Skill Composer radius
+    GameObject ruler, capsule, ground, radiusRing;
+    LineRenderer radiusRingLr;
     SpriteRenderer rulerSr;      // real baked-character billboard (falls back to the capsule if none found)
     float rulerAspect = 0.6f;    // sprite width / height, so the quad isn't stretched
     float rulerContentFrac = 1f; // fraction of the cell height the ART actually fills (rest is transparent padding)
@@ -80,6 +84,7 @@ public class VfxComposerWindow : EditorWindow
     }
     const int PreviewSlots = 4;   // overlapping copies a PlayAt step can show across the loop-end marker
     readonly List<PreviewInst> preview = new List<PreviewInst>();
+    bool previewHasMeshParticles;   // any previewed effect uses Mesh render mode (won't draw under Simulate) → show a hint
     string previewSig;
     float[] starts;
     readonly Dictionary<string, float> evTimes = new Dictionary<string, float>();
@@ -104,6 +109,7 @@ public class VfxComposerWindow : EditorWindow
     void OnDisable()
     {
         EditorApplication.update -= Tick;
+        StopPreviewSounds();
         TeardownPreview();
         if (pru != null) { pru.Cleanup(); pru = null; }
         if (gridTex != null) { Object.DestroyImmediate(gridTex); gridTex = null; }
@@ -181,6 +187,25 @@ public class VfxComposerWindow : EditorWindow
         audioPreview.Invoke(null, args);
     }
 
+    // Edit-mode audio-preview transport, tied to the timeline (reflection into UnityEditor.AudioUtil).
+    //   Pause/Resume  = true pause-from-position: the clip freezes and continues where it left off (⏸ / ▶).
+    //   Stop          = cut everything (restart ⏮ / window close), so the next play starts clean.
+    static MethodInfo audioPause, audioResume, audioStopAll;
+    static bool audioTransportResolved;
+    static void ResolveAudioTransport()
+    {
+        if (audioTransportResolved) return;
+        audioTransportResolved = true;
+        var t = typeof(AudioImporter).Assembly.GetType("UnityEditor.AudioUtil");
+        audioPause = t?.GetMethod("PausePreviewClip", System.Type.EmptyTypes);
+        audioResume = t?.GetMethod("ResumePreviewClip", System.Type.EmptyTypes);
+        audioStopAll = t?.GetMethod("StopAllPreviewClips", System.Type.EmptyTypes)
+                    ?? t?.GetMethod("StopAllClips", System.Type.EmptyTypes);
+    }
+    static void PausePreviewSounds() { ResolveAudioTransport(); audioPause?.Invoke(null, null); }
+    static void ResumePreviewSounds() { ResolveAudioTransport(); audioResume?.Invoke(null, null); }
+    static void StopPreviewSounds() { ResolveAudioTransport(); audioStopAll?.Invoke(null, null); }
+
     // ---------------------------------------------------------------- assets
     void LoadAssets()
     {
@@ -234,6 +259,19 @@ public class VfxComposerWindow : EditorWindow
         Select(AssetDatabase.LoadAssetAtPath<VfxSequence>(path));
     }
 
+    // Rename the selected composition's asset file (the name IS the id skills/events reference it by).
+    void RenameSelected(string newName)
+    {
+        if (sel == null) return;
+        newName = newName?.Trim();
+        if (string.IsNullOrEmpty(newName) || newName == sel.name) return;
+        string err = AssetDatabase.RenameAsset(AssetDatabase.GetAssetPath(sel), newName);
+        if (!string.IsNullOrEmpty(err)) { Debug.LogWarning($"Vfx Composer: rename failed — {err}"); return; }
+        AssetDatabase.SaveAssets();
+        LoadAssets();
+        RebuildIdOptions();
+    }
+
     void DeleteAsset(VfxSequence s)
     {
         if (s == null) return;
@@ -265,8 +303,19 @@ public class VfxComposerWindow : EditorWindow
 
     void DrawAssetList()
     {
+        if (listCollapsed)
+        {
+            EditorGUILayout.BeginVertical(GUILayout.Width(20));
+            if (GUILayout.Button("▶", GUILayout.Width(20), GUILayout.Height(40))) listCollapsed = false;
+            EditorGUILayout.EndVertical();
+            return;
+        }
+
         EditorGUILayout.BeginVertical(GUILayout.Width(220));
+        EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("Compositions", EditorStyles.boldLabel);
+        if (GUILayout.Button("◀", GUILayout.Width(24))) listCollapsed = true;
+        EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.BeginHorizontal();
         listFilter = EditorGUILayout.TextField(listFilter);
@@ -309,6 +358,14 @@ public class VfxComposerWindow : EditorWindow
             return;
         }
 
+        // --- name (rename the asset by typing here + Enter) ---
+        EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+        GUILayout.Label("Name", GUILayout.Width(40));
+        EditorGUI.BeginChangeCheck();
+        string typed = EditorGUILayout.DelayedTextField(sel.name);
+        if (EditorGUI.EndChangeCheck()) RenameSelected(typed);
+        EditorGUILayout.EndHorizontal();
+
         // --- preview panel (height controlled by the splitter below it) ---
         var previewRect = GUILayoutUtility.GetRect(100, previewHeight, GUILayout.ExpandWidth(true), GUILayout.Height(previewHeight));
         DrawPreview(previewRect);
@@ -317,8 +374,11 @@ public class VfxComposerWindow : EditorWindow
         // --- transport ---
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
         if (GUILayout.Button(playing ? "⏸ Pause" : "▶ Play", EditorStyles.toolbarButton, GUILayout.Width(80)))
+        {
             playing = !playing;
-        if (GUILayout.Button("⏮", EditorStyles.toolbarButton, GUILayout.Width(30))) clock = 0f;
+            if (playing) ResumePreviewSounds(); else PausePreviewSounds();   // clock and sound pause/resume together
+        }
+        if (GUILayout.Button("⏮", EditorStyles.toolbarButton, GUILayout.Width(30))) { clock = 0f; StopPreviewSounds(); }
         GUILayout.Label($"{clock:0.00} / {previewDuration:0.00}s", GUILayout.Width(110));
         clock = GUILayout.HorizontalSlider(clock, 0f, Mathf.Max(0.01f, previewDuration));
         GUILayout.Space(8);
@@ -336,6 +396,8 @@ public class VfxComposerWindow : EditorWindow
         showRuler = GUILayout.Toggle(showRuler, "Ruler", EditorStyles.toolbarButton, GUILayout.Width(50));
         GUILayout.Label("h", GUILayout.Width(12));
         rulerHeight = EditorGUILayout.FloatField(rulerHeight, GUILayout.Width(40));
+        showRadiusRing = GUILayout.Toggle(showRadiusRing, "Radius", EditorStyles.toolbarButton, GUILayout.Width(56));
+        radiusRingR = EditorGUILayout.FloatField(radiusRingR, GUILayout.Width(40));
         EditorGUI.BeginChangeCheck();
         characterPrefab = (GameObject)EditorGUILayout.ObjectField(characterPrefab, typeof(GameObject), false, GUILayout.Width(140));
         if (EditorGUI.EndChangeCheck()) BuildRulerSprite();
@@ -546,6 +608,10 @@ public class VfxComposerWindow : EditorWindow
             case VfxStepKind.Attach:
                 st.effectId = IdPopup("effect", st.effectId);
                 st.scale = EditorGUILayout.Slider("scale", st.scale <= 0f ? 1f : st.scale, 0.05f, 5f);
+                if (st.tint.a <= 0f) st.tint = Color.white;   // unset/legacy → no tint
+                st.tint = EditorGUILayout.ColorField(new GUIContent("tint",
+                    "Multiplies the effect's authored colour (white = original). Recolour a blue burst to red/green, etc."),
+                    st.tint);
                 if (st.kind == VfxStepKind.PlayAt)
                 {
                     st.speed = EditorGUILayout.Slider("speed", st.speed <= 0f ? 1f : st.speed, 0.1f, 3f);
@@ -597,13 +663,23 @@ public class VfxComposerWindow : EditorWindow
                         st.sound.clips = n;
                     }
                 EditorGUILayout.EndHorizontal();
+                float clipLen = (st.sound.clips != null && st.sound.clips.Length > 0 && st.sound.clips[0] != null)
+                    ? st.sound.clips[0].length : 0f;
+                float durMax = Mathf.Max(0.1f, clipLen > 0f ? clipLen : 10f);
+                st.soundDuration = EditorGUILayout.Slider(new GUIContent("duration (s)",
+                    "Play length before fade/cut. 0 = full clip. Bounds a long/looping clip so it ends with the beat."),
+                    Mathf.Clamp(st.soundDuration, 0f, durMax), 0f, durMax);
+                st.soundFadeIn = EditorGUILayout.Slider(new GUIContent("ease in (s)",
+                    "Ramp the sound up from silence at the start (smoothstep)."), st.soundFadeIn, 0f, durMax);
+                st.soundFadeOut = EditorGUILayout.Slider(new GUIContent("ease out (s)",
+                    "Ramp the sound down to silence at the end (smoothstep)."), st.soundFadeOut, 0f, durMax);
                 break;
         }
 
         // Tick (gameplay HANDOFF) — expose a named beat the Skill Composer binds damage/heal/status onto. Only the
         // spawning kinds tick; this window never sets WHAT the tick does (that's the Skill Composer's job).
         if (st.kind == VfxStepKind.PlayAt || st.kind == VfxStepKind.Attach || st.kind == VfxStepKind.Carrier)
-            DrawTick(st);
+            DrawTick(st, StepWindow(i, st));
 
         st.emitEventOnStart = EmitField("emit event on start", st.emitEventOnStart, st, isEnd: false);
         st.emitEventOnEnd = EmitField(
@@ -615,7 +691,7 @@ public class VfxComposerWindow : EditorWindow
     // The per-step "Tick (gameplay handoff)" block: name a beat and its cadence. This is the ONLY join between the
     // VFX and the Skill Composer — leave the id empty for a pure-visual step. WHAT the tick does (damage/element/
     // multiplier) is authored in the Skill Composer against this id, never here (separation of concerns).
-    void DrawTick(VfxStep st)
+    void DrawTick(VfxStep st, float stepDuration)
     {
         EditorGUILayout.Space(2);
         st.tickId = EditorGUILayout.TextField(new GUIContent("tick id",
@@ -623,13 +699,29 @@ public class VfxComposerWindow : EditorWindow
             "Empty = pure-visual step (no gameplay)."), st.tickId);
         if (string.IsNullOrEmpty(st.tickId)) return;
 
-        st.tickCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("  ticks",
-            "How many times this component fires its beat. 1 = one-shot (a meteor's land). N = a lingering " +
-            "component (a fire pillar's repeated damage)."), st.tickCount <= 0 ? 1 : st.tickCount));
-        using (new EditorGUI.DisabledScope(st.tickCount <= 1))
+        st.spreadTicks = EditorGUILayout.Toggle(new GUIContent("  spread ticks",
+            "Auto-fill ticks from this effect's duration: ticks = floor(duration / interval). " +
+            "The component ticks for its whole visible lifetime; you only set the interval."), st.spreadTicks);
+
+        if (st.spreadTicks)
+        {
             st.tickInterval = EditorGUILayout.Slider(new GUIContent("  interval (s)",
-                "Seconds between ticks (ticks × interval = the active window). Only used when ticks > 1."),
-                st.tickInterval, 0f, 3f);
+                "Seconds between ticks. ticks = floor(duration / interval)."), st.tickInterval, 0.01f, 3f);
+            st.tickCount = Mathf.Max(1, Mathf.FloorToInt(stepDuration / Mathf.Max(0.01f, st.tickInterval)));
+            using (new EditorGUI.DisabledScope(true))
+                EditorGUILayout.IntField(new GUIContent("  ticks",
+                    "Computed from duration ÷ interval."), st.tickCount);
+        }
+        else
+        {
+            st.tickCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("  ticks",
+                "How many times this component fires its beat. 1 = one-shot (a meteor's land). N = a lingering " +
+                "component (a fire pillar's repeated damage)."), st.tickCount <= 0 ? 1 : st.tickCount));
+            using (new EditorGUI.DisabledScope(st.tickCount <= 1))
+                st.tickInterval = EditorGUILayout.Slider(new GUIContent("  interval (s)",
+                    "Seconds between ticks (ticks × interval = the active window). Only used when ticks > 1."),
+                    st.tickInterval, 0f, 3f);
+        }
     }
 
     // Effect-id dropdown built from the EffectLibrary — pick a valid id (no typos → no silent no-op).
@@ -737,12 +829,28 @@ public class VfxComposerWindow : EditorWindow
         ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
         ground.transform.localScale = Vector3.one * 0.6f;         // Plane primitive is 10 m at scale 1 → 6 m here
         Object.DestroyImmediate(ground.GetComponent<Collider>());
-        var groundShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Texture");
+        // Built-in Unlit/Texture (opaque + depth-writing) over URP/Unlit: URP shaders can render magenta inside a
+        // PreviewRenderUtility (their pipeline globals aren't set up in a preview scene), especially after a domain
+        // reload. The built-in unlit is reliable here and still occludes by real depth.
+        var groundShader = Shader.Find("Unlit/Texture") ?? Shader.Find("Universal Render Pipeline/Unlit");
         var gm = new Material(groundShader);
         gm.mainTexture = gridTex;
         if (gm.HasProperty("_BaseMap")) gm.SetTexture("_BaseMap", gridTex);   // URP/Unlit samples _BaseMap
         ground.GetComponent<Renderer>().sharedMaterial = gm;
         pru.AddSingleGO(ground);
+
+        // World-unit AoE radius ring: a flat circle on the floor whose radius is a real meter count, so the artist
+        // can size a VFX's scale until its footprint fills the ring == the number they'll type into Skill radius.
+        radiusRing = new GameObject("RadiusRing");
+        radiusRingLr = radiusRing.AddComponent<LineRenderer>();
+        radiusRingLr.useWorldSpace = false;
+        radiusRingLr.loop = true;
+        radiusRingLr.widthMultiplier = 0.03f;
+        radiusRingLr.numCornerVertices = 0;
+        radiusRingLr.alignment = LineAlignment.View;
+        radiusRingLr.sharedMaterial = new Material(sprite) { color = new Color(1f, 0.45f, 0.15f, 0.95f) };
+        radiusRingLr.startColor = radiusRingLr.endColor = new Color(1f, 0.45f, 0.15f, 0.95f);
+        pru.AddSingleGO(radiusRing);
 
         // Capsule fallback ruler (used only if no baked character is found/assigned).
         capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -860,6 +968,18 @@ public class VfxComposerWindow : EditorWindow
         return t;
     }
 
+    void UpdateRadiusRing()
+    {
+        const int seg = 64;
+        float rr = Mathf.Max(0.05f, radiusRingR);
+        if (radiusRingLr.positionCount != seg) radiusRingLr.positionCount = seg;
+        for (int i = 0; i < seg; i++)
+        {
+            float a = (i / (float)seg) * Mathf.PI * 2f;
+            radiusRingLr.SetPosition(i, new Vector3(Mathf.Cos(a) * rr, 0.02f, Mathf.Sin(a) * rr));
+        }
+    }
+
     void DrawPreview(Rect r)
     {
         EnsurePru();
@@ -892,6 +1012,12 @@ public class VfxComposerWindow : EditorWindow
             capsule.transform.position = new Vector3(0f, rulerHeight * 0.5f, 0f);
         }
 
+        if (radiusRing != null)
+        {
+            radiusRing.SetActive(showRadiusRing);
+            if (showRadiusRing) UpdateRadiusRing();
+        }
+
         EnsurePreview();
         RenderPreviewAt(clock);
 
@@ -906,6 +1032,17 @@ public class VfxComposerWindow : EditorWindow
         GUI.DrawTexture(r, tex, ScaleMode.StretchToFill, false);
 
         DrawCompass(r);
+
+        // Mesh render-mode particles don't draw under the Simulate()-based preview (they DO in-game). Warn so a
+        // missing ring/torus in the preview reads as a known tool limitation, not a broken effect.
+        if (previewHasMeshParticles)
+        {
+            var note = new GUIContent("⚠ Mesh-particle parts (e.g. rings) don't show in preview — they render in-game.");
+            var style = new GUIStyle(EditorStyles.miniLabel) { normal = { textColor = new Color(1f, 0.85f, 0.4f) } };
+            var size = style.CalcSize(note);
+            EditorGUI.DrawRect(new Rect(r.x + 6f, r.yMax - size.y - 8f, size.x + 8f, size.y + 4f), new Color(0f, 0f, 0f, 0.55f));
+            GUI.Label(new Rect(r.x + 10f, r.yMax - size.y - 6f, size.x, size.y), note, style);
+        }
     }
 
     // Reset the orbit camera to its default framing.
@@ -964,7 +1101,7 @@ public class VfxComposerWindow : EditorWindow
         {
             var st = sel.steps[i];
             if (st == null) { sb.Append("n;"); continue; }
-            sb.Append((int)st.kind).Append(':').Append(st.effectId).Append(';');
+            sb.Append((int)st.kind).Append(':').Append(st.effectId).Append(':').Append(ColorUtility.ToHtmlStringRGBA(st.tint)).Append(';');
         }
         return sb.ToString();
     }
@@ -977,6 +1114,7 @@ public class VfxComposerWindow : EditorWindow
     void RebuildPreview()
     {
         TeardownPreview();
+        previewHasMeshParticles = false;
         for (int i = 0; i < sel.steps.Count; i++)
         {
             var st = sel.steps[i];
@@ -991,6 +1129,20 @@ public class VfxComposerWindow : EditorWindow
             for (int slot = 0; slot < slots; slot++) AddPreviewInst(i, st, def, slot);
         }
         previewSig = Signature();
+    }
+
+    // Multiply a particle system's startColor by a tint (mirrors Vfx.Multiply so the preview matches the runtime recolour).
+    static ParticleSystem.MinMaxGradient MultiplyTint(ParticleSystem.MinMaxGradient g, Color tint)
+    {
+        switch (g.mode)
+        {
+            case ParticleSystemGradientMode.Color:
+                return new ParticleSystem.MinMaxGradient(g.color * tint);
+            case ParticleSystemGradientMode.TwoColors:
+                return new ParticleSystem.MinMaxGradient(g.colorMin * tint, g.colorMax * tint);
+            default:
+                return g;
+        }
     }
 
     void AddPreviewInst(int i, VfxStep st, EffectDef def, int slot)
@@ -1008,11 +1160,16 @@ public class VfxComposerWindow : EditorWindow
             // Identical seed across ALL slots: as a clip ages it is handed slot0→slot1→… on each loop restart, and
             // that handoff is only seamless if every slot renders the SAME pattern at the SAME age (else it pops/cuts).
             ps.randomSeed = 0x5EED + (uint)j;
+            var psr = ps.GetComponent<ParticleSystemRenderer>();
+            // Mesh render-mode particles don't draw under the editor's Simulate()-based preview (they DO in-game via
+            // real Play). Flag it so the preview can warn instead of silently hiding e.g. a flat ring/torus mesh.
+            if (psr != null && psr.renderMode == ParticleSystemRenderMode.Mesh) previewHasMeshParticles = true;
             var m = ps.main;
             m.scalingMode = ParticleSystemScalingMode.Hierarchy;   // root localScale must resize children
             // PlayAt is a one-shot: kill looping so it emits a single clip (matches the runtime one-shot). Attach
             // (auras) and Carrier (trails) keep their authored looping.
             if (st.kind == VfxStepKind.PlayAt) { var mm = ps.main; mm.loop = false; }
+            if (st.tint.a > 0f && st.tint != Color.white) { var mc = ps.main; mc.startColor = MultiplyTint(mc.startColor, st.tint); }
             if (def.lifetime <= 0f) natural = Mathf.Max(natural, m.duration + m.startLifetime.constantMax);
             if (!HasParentSystem(ps.transform, go.transform)) roots.Add(ps);
         }

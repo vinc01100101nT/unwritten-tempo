@@ -11,6 +11,7 @@ public static class SkillCatalog
     const string Dir = "Skills";   // Resources/Skills
     static Dictionary<string, SkillDef> byId;
     static SkillDef[] all;
+    static string[] orderedIds;
 
     static void EnsureLoaded()
     {
@@ -34,6 +35,23 @@ public static class SkillCatalog
     /// <summary>All authored skills (unordered). Never null.</summary>
     public static IReadOnlyList<SkillDef> All { get { EnsureLoaded(); return all; } }
 
+    /// <summary>Every composed skill's stable id, ordered by <see cref="SkillDef.slotOrder"/> then id — the
+    /// canonical menu/roster order now that composed skills ARE the skill pool (see <see cref="SkillRoster.AllIds"/>).
+    /// Cached; rebuilt on <see cref="Reload"/>. Never null (empty when nothing is authored).</summary>
+    public static string[] OrderedIds()
+    {
+        EnsureLoaded();
+        if (orderedIds != null) return orderedIds;
+        var list = new List<SkillDef>(all.Length);
+        foreach (var s in all)
+            if (s != null && !string.IsNullOrEmpty(s.id)) list.Add(s);
+        list.Sort((a, b) => a.slotOrder != b.slotOrder ? a.slotOrder.CompareTo(b.slotOrder)
+                                                       : string.CompareOrdinal(a.id, b.id));
+        orderedIds = new string[list.Count];
+        for (int i = 0; i < list.Count; i++) orderedIds[i] = list[i].id;
+        return orderedIds;
+    }
+
     /// <summary>Drop the cache so a freshly built/edited asset is picked up (editor tools call this).</summary>
-    public static void Reload() { byId = null; all = null; }
+    public static void Reload() { byId = null; all = null; orderedIds = null; }
 }

@@ -1,9 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// A player active that can show up on the HUD hotbar. Each class-agnostic skill component
-/// (<see cref="Player3DBash"/>, <see cref="Player3DCharge"/>, <see cref="Player3DCaster"/>…)
-/// implements this so the <see cref="HotbarPanel"/> can render a slot for it — key, MP cost,
+/// A player active that can show up on the HUD hotbar. The composed-skill interpreter
+/// (<see cref="SkillRunner"/>, one per authored <see cref="SkillDef"/>) implements this so the
+/// <see cref="HotbarPanel"/> can render a slot for it — key, MP cost,
 /// a cooldown sweep — and fire it on click, WITHOUT the hotbar knowing the concrete type.
 ///
 /// This is the legibility layer for the kit: add a new active component that implements this

@@ -65,7 +65,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (!Spend()) return;
         lastCtx = VfxContext.At(center);
-        VfxDirector.Play(def.vfx, lastCtx, onTick);
+        PlayCycles();
     }
 
     // Target confirm: origin = caster, target/single-unit = the chosen mob.
@@ -80,7 +80,29 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             targetUnit = mob.transform,
             scaleMult = 1f,
         };
+        PlayCycles();
+    }
+
+    // Play the composed VFX once, then (if the def asks for a shower) replay the WHOLE cycle repeatCount times,
+    // repeatInterval apart, at the SAME cast-time context — carrierScatter spreads the individual falls. Repetition
+    // of the whole effect is owned HERE (gameplay), not the Vfx Composer (which stays WYSIWYG: one cycle = one fall).
+    void PlayCycles()
+    {
         VfxDirector.Play(def.vfx, lastCtx, onTick);
+        int extra = Mathf.Max(0, def.repeatCount - 1);
+        if (extra > 0 && isActiveAndEnabled) StartCoroutine(PlayExtraCycles(extra, lastCtx));
+    }
+
+    System.Collections.IEnumerator PlayExtraCycles(int extra, VfxContext ctx)
+    {
+        float interval = def.repeatInterval > 0f ? def.repeatInterval
+                       : (def.vfx != null && def.vfx.RestartInterval > 0f ? def.vfx.RestartInterval : 0.35f);
+        var wait = new WaitForSeconds(interval);
+        for (int i = 0; i < extra; i++)
+        {
+            yield return wait;
+            VfxDirector.Play(def.vfx, ctx, onTick);
+        }
     }
 
     bool Spend()
@@ -112,11 +134,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // Largest bound radius, so the ground reticle previews the skill's real footprint.
     float PreviewRadius()
     {
-        float r = 1.5f;
+        float r = 0f;
         if (def.bindings != null)
             for (int i = 0; i < def.bindings.Count; i++)
                 if (def.bindings[i] != null && def.bindings[i].scope == SkillScope.Area) r = Mathf.Max(r, def.bindings[i].radius);
-        return r;
+        return r > 0f ? r : 1.5f;
     }
 
     static MonsterAI3D NearestMob(Vector3 from, float maxRange)

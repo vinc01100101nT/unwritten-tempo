@@ -38,9 +38,11 @@ public static class Vfx
         float[] baseSpeed;                       // authored simulationSpeed per system — the reset baseline
         ParticleSystem.MinMaxGradient[] baseColor; // authored startColor per system — the tint baseline
         bool[] isRoot;                           // system has no ParticleSystem ancestor in this instance → drives children
+        bool[] baseLoop;                         // authored loop flag per system — restored for attached auras, forced off for one-shots
         int poolKey;
         bool looping;          // any child system loops → won't auto-return; the caller must Stop() it
         float oneShotDuration; // longest system's (duration + max start-lifetime), for the auto-return timer
+        float fadeTail;        // longest system's particle lifetime — the fade window after emission stops
         float returnAt;        // Time.time to auto-return at; 0 = never (attached loop, until Stop)
         bool stopping;         // in the fade-out tail after Stop() → next returnAt hits Return, not another Stop
         Transform follow;      // tracked target for Attach (auras/shields); null for a fixed-point one-shot
@@ -60,8 +62,10 @@ public static class Vfx
             baseSpeed = new float[systems.Length];
             baseColor = new ParticleSystem.MinMaxGradient[systems.Length];
             isRoot = new bool[systems.Length];
+            baseLoop = new bool[systems.Length];
             looping = false;
             oneShotDuration = 0f;
+            fadeTail = 0f;
             for (int i = 0; i < systems.Length; i++)
             {
                 var m = systems[i].main;
@@ -80,12 +84,15 @@ public static class Vfx
                     if (ap != null && System.Array.IndexOf(systems, ap) >= 0) { root = false; break; }
                 }
                 isRoot[i] = root;
+                baseLoop[i] = m.loop;
                 if (m.loop) looping = true;
                 float speed = Mathf.Max(0.01f, m.simulationSpeed);
                 float life = m.duration + m.startLifetime.constantMax;
                 oneShotDuration = Mathf.Max(oneShotDuration, life / speed);
+                fadeTail = Mathf.Max(fadeTail, m.startLifetime.constantMax / speed);
             }
             oneShotDuration = Mathf.Min(oneShotDuration + 0.15f, MaxOneShot);
+            fadeTail = Mathf.Min(fadeTail + 0.15f, MaxOneShot);
         }
 
         // (Re)activate at a world pose with a caller scale/speed/tint. followTarget != null → track it each
@@ -109,6 +116,9 @@ public static class Vfx
             {
                 var m = systems[i].main;
                 m.simulationSpeed = baseSpeed[i] * speed;             // reset from baseline, then apply
+                // A one-shot plays exactly ONE clip — no restart at the loop boundary (mirrors the Vfx Composer
+                // preview, which forces loop off for PlayAt). Attached auras keep their authored looping.
+                m.loop = oneShot ? false : baseLoop[i];
                 m.startColor = tinted ? Multiply(baseColor[i], tint) : baseColor[i];
                 systems[i].Clear(true);
                 systems[i].Play(true);
@@ -126,7 +136,9 @@ public static class Vfx
 
             if (lifetimeOverride > 0f) returnAt = Time.time + Mathf.Max(0.05f, lifetimeOverride - tailTrim - clipStart);
             else if (looping && !oneShot) returnAt = 0f;              // attached loop: lives until Stop()
-            else returnAt = Time.time + Mathf.Max(0.05f, oneShotDuration / speed - tailTrim - clipStart);   // one-shot: bounded, tail-trimmed, clip-shifted
+            // One-shot window = the Composer's WYSIWYG length (naturalLife/speed − trimEnd). A looping sub-emitter
+            // takes the SAME window (matches the preview), then Stop() fades the tail for one particle lifetime.
+            else returnAt = Time.time + Mathf.Max(0.05f, oneShotDuration / speed - tailTrim - clipStart);
         }
 
         // Tint an authored startColor by multiplying. Handles the common solid / two-colour modes; an authored
@@ -162,7 +174,7 @@ public static class Vfx
                 systems[i].Stop(true, ParticleSystemStopBehavior.StopEmitting);
             follow = null;
             stopping = true;
-            returnAt = Time.time + oneShotDuration;   // let live particles fade, then Return picks it up
+            returnAt = Time.time + fadeTail;   // let live particles fade for one particle lifetime, then Return picks it up
         }
 
         void LateUpdate()
