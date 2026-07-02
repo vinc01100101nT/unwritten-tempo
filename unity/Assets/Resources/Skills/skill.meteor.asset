@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
+  m_Name: skill.meteor
+  m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  id: skill.meteor
+  displayName: Meteor (data)
+  icon: {fileID: 0}
+  manaCost: 16
+  cooldown: 9
+  maxLevel: 10
+  aim: 2
+  castRange: 11
+  vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
+  bindings:
+  - tickId: meteor_ball
+    targets: 2
+    scope: 0
+    radius: 1.36
+    effects:
+    - kind: 0
+      magic: 1
+      damageMult: 8
+      element: 3
+      amount: 10
+      ailment: 2
+      seconds: 4
+      magnitude: 3
+    scale:
+      damageMultPerLevel: 0.5
+      flatBonusPerLevel: 0
+  - tickId: fire_pillar
+    targets: 2
+    scope: 0
+    radius: 1.14
+    effects:
+    - kind: 0
+      magic: 1
+      damageMult: 0.51
+      element: 3
+      amount: 10
+      ailment: 2
+      seconds: 4
+      magnitude: 3
+    scale:
+      damageMultPerLevel: 0.1
+      flatBonusPerLevel: 0
+  shortLabel: Meteor*
+  keyLabel: 
+  slotOrder: 20
+  tint: {r: 1, g: 0.55, b: 0.3, a: 1}

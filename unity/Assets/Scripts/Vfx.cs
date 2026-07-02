@@ -23,6 +23,8 @@ public static class Vfx
         public float scale;   // ≤0 → authored scale (×1)
         public float speed;   // ≤0 → authored playback speed (×1)
         public Color tint;    // (0,0,0,0) → no tint; otherwise multiplies startColor
+        public float tailTrim; // >0 → return this many seconds EARLY (cut trailing dead time)
+        public float clipStart; // >0 → fast-forward this many seconds INTO the clip on spawn (skip the intro)
 
         public static VfxParams Scaled(float scale) => new VfxParams { scale = scale };
     }
@@ -35,6 +37,7 @@ public static class Vfx
         AudioSource[] audioSources;
         float[] baseSpeed;                       // authored simulationSpeed per system — the reset baseline
         ParticleSystem.MinMaxGradient[] baseColor; // authored startColor per system — the tint baseline
+        bool[] isRoot;                           // system has no ParticleSystem ancestor in this instance → drives children
         int poolKey;
         bool looping;          // any child system loops → won't auto-return; the caller must Stop() it
         float oneShotDuration; // longest system's (duration + max start-lifetime), for the auto-return timer
@@ -56,6 +59,7 @@ public static class Vfx
             audioSources = GetComponentsInChildren<AudioSource>(true);
             baseSpeed = new float[systems.Length];
             baseColor = new ParticleSystem.MinMaxGradient[systems.Length];
+            isRoot = new bool[systems.Length];
             looping = false;
             oneShotDuration = 0f;
             for (int i = 0; i < systems.Length; i++)
@@ -67,6 +71,15 @@ public static class Vfx
                 m.scalingMode = ParticleSystemScalingMode.Hierarchy;
                 baseSpeed[i] = m.simulationSpeed;
                 baseColor[i] = m.startColor;
+                // A system is a root if no ancestor transform carries another of our systems — only roots get the
+                // clip-start Simulate (with children), so children aren't fast-forwarded twice.
+                bool root = true;
+                for (Transform pt = systems[i].transform.parent; pt != null; pt = pt.parent)
+                {
+                    var ap = pt.GetComponent<ParticleSystem>();
+                    if (ap != null && System.Array.IndexOf(systems, ap) >= 0) { root = false; break; }
+                }
+                isRoot[i] = root;
                 if (m.loop) looping = true;
                 float speed = Mathf.Max(0.01f, m.simulationSpeed);
                 float life = m.duration + m.startLifetime.constantMax;
@@ -80,7 +93,8 @@ public static class Vfx
         // oneShot = fire-and-forget (PlayAt): ALWAYS time-bounded, even if a sub-emitter loops — the loop is just
         // texture, not a request to live forever. Only an ATTACHED loop (Attach, oneShot=false) waits for Stop().
         internal void Begin(Vector3 pos, Quaternion rot, float authoredScale, float callerScale, float speedMult,
-                            Color tint, float lifetimeOverride, bool oneShot, Transform followTarget, Vector3 followOffset)
+                            Color tint, float lifetimeOverride, bool oneShot, Transform followTarget, Vector3 followOffset,
+                            float tailTrim = 0f, float clipStart = 0f)
         {
             follow = followTarget;
             offset = followOffset;
@@ -99,13 +113,20 @@ public static class Vfx
                 systems[i].Clear(true);
                 systems[i].Play(true);
             }
+            // Clip-start: fast-forward each root (with its children) into the clip, then Play() to resume live from
+            // that state — so the effect appears already mid-animation instead of from frame 0. Runs after the whole
+            // Clear/Play loop so a child isn't wiped by a later root's Clear(true).
+            if (clipStart > 0f)
+                for (int i = 0; i < systems.Length; i++)
+                    if (isRoot[i]) { systems[i].Simulate(clipStart, true, false); systems[i].Play(); }
+
             if (audioSources != null)
                 for (int i = 0; i < audioSources.Length; i++)
                     if (audioSources[i].playOnAwake && audioSources[i].clip != null) audioSources[i].Play();
 
-            if (lifetimeOverride > 0f) returnAt = Time.time + lifetimeOverride;
+            if (lifetimeOverride > 0f) returnAt = Time.time + Mathf.Max(0.05f, lifetimeOverride - tailTrim - clipStart);
             else if (looping && !oneShot) returnAt = 0f;              // attached loop: lives until Stop()
-            else returnAt = Time.time + oneShotDuration / speed;      // one-shot: bounded (faster playback → shorter)
+            else returnAt = Time.time + Mathf.Max(0.05f, oneShotDuration / speed - tailTrim - clipStart);   // one-shot: bounded, tail-trimmed, clip-shifted
         }
 
         // Tint an authored startColor by multiplying. Handles the common solid / two-colour modes; an authored
@@ -126,6 +147,11 @@ public static class Vfx
         /// <summary>True while this instance is playing (rented from the pool). Dev tuner uses it to know whether
         /// the handle it's holding is still alive or has already auto-returned.</summary>
         public bool IsActive => gameObject.activeSelf;
+
+        /// <summary>Absolute <see cref="Time.time"/> this one-shot will auto-return at (i.e. when its visual is
+        /// done). 0 = never (an attached loop that lives until <see cref="Stop"/>). Lets a sequence schedule an
+        /// "on end" event at the real finish time instead of guessing.</summary>
+        public float ReturnAt => returnAt;
 
         /// <summary>Stop a looping/attached effect: stop emitting, let live particles fade, then return to the
         /// pool. Safe to call more than once; a no-op once already returned.</summary>
@@ -226,7 +252,7 @@ public static class Vfx
         float scale = p.scale <= 0f ? 1f : p.scale;
         float speed = p.speed <= 0f ? 1f : p.speed;
         Color tint = p.tint == default ? Color.white : p.tint;   // unset (0,0,0,0) → no tint
-        h.Begin(pos + def.offset, rot, def.scale, scale, speed, tint, def.lifetime, true, null, Vector3.zero);
+        h.Begin(pos + def.offset, rot, def.scale, scale, speed, tint, def.lifetime, true, null, Vector3.zero, p.tailTrim, p.clipStart);
         return h;
     }
 
@@ -234,13 +260,13 @@ public static class Vfx
     /// each frame without parenting (so it never inherits a billboard's breathe/scale). Looping effects live
     /// until you call <see cref="EffectHandle.Stop"/> on the returned handle; a fixed-lifetime effect returns
     /// itself. Null if the id is unknown.</summary>
-    public static EffectHandle Attach(string id, Transform target, Vector3 offset = default, float scaleMult = 1f)
+    public static EffectHandle Attach(string id, Transform target, Vector3 offset = default, float scaleMult = 1f, float clipStart = 0f)
     {
         var def = EffectCatalog.Get(id);
         if (def == null || target == null) return null;
         var h = Rent(def);
         Vector3 total = offset + def.offset;
-        h.Begin(target.position + total, Quaternion.identity, def.scale, scaleMult, 1f, Color.white, def.lifetime, false, target, total);
+        h.Begin(target.position + total, Quaternion.identity, def.scale, scaleMult, 1f, Color.white, def.lifetime, false, target, total, 0f, clipStart);
         return h;
     }
 

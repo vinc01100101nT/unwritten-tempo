@@ -27,7 +27,9 @@ public static class VfxSequenceTools
         seq.steps.Clear();
 
         // 1) The falling meteor — a carrier that drops from 9 units up onto the impact point and raises "impact"
-        //    on arrival (fallSpeed 16, ~0.56s fall + 1s safety). Scatter reads the salvo as a shower.
+        //    on arrival (fallSpeed 16, ~0.56s fall + 1s safety). Scatter reads the salvo as a shower. Exposes the
+        //    "meteor_ball" TICK (one-shot on land) that a SkillDef binds the impact damage onto. Keeps the "impact"
+        //    emit-event too, so the legacy Player3DMeteor code path still fires.
         seq.steps.Add(new VfxStep
         {
             note = "fall",
@@ -36,16 +38,20 @@ public static class VfxSequenceTools
             effectId = "fire.magic-pro-orange", scale = 1f,
             carrierFrom = new Vector3(0f, 9f, 0f), carrierScatter = 0.6f,
             carrierSpeed = 16f, carrierArriveRadius = 0.4f, carrierMaxLife = 9f / 16f + 1f,
-            emitEvent = "impact",
+            emitEventOnEnd = "impact",
+            tickId = "meteor_ball", tickCount = 1, tickInterval = 0f,
         });
 
-        // 2) Ground explosion — fires ON the "impact" event (i.e. when the meteor lands).
+        // 2) Ground explosion — fires ON the "impact" event (i.e. when the meteor lands). Exposes the "fire_pillar"
+        //    TICK: 5 lingering damage beats at the impact point (0.35s apart) — the multi-tick example. The visual
+        //    is one burst; the gameplay cadence is owned here (option #1), the SkillDef says what each beat does.
         seq.steps.Add(new VfxStep
         {
             note = "explosion",
             schedule = VfxSchedule.OnEvent, startEvent = "impact",
             kind = VfxStepKind.PlayAt, anchor = VfxAnchor.Target,
             effectId = "aoe.ground-explosion", scale = 1f,
+            tickId = "fire_pillar", tickCount = 5, tickInterval = 0.35f,
         });
 
         // 3) Screen-shake — also on impact.

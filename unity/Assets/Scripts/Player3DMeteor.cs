@@ -36,8 +36,9 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
     public int hitsPerTick = 5;
     [Tooltip("Seconds between hits within a tick.")]
     public float hitInterval = 0.2f;
-    [Tooltip("Seconds between successive meteor IMPACTS — they start at staggered heights so they land this far " +
-             "apart in time. ~ a tick's hit duration ((hitsPerTick−1)×hitInterval) keeps the bursts sequential.")]
+    [Tooltip("FALLBACK cadence (seconds between successive meteors) — used ONLY when the VfxSequence has no loop-end " +
+             "set. The authored restart point on the meteor composition (Vfx Composer) is the real source of truth; " +
+             "shorten it there to make the shower rain faster.")]
     public float meteorInterval = 1.2f;
     [Range(0f, 1f)]
     [Tooltip("Chance PER HIT to stun a mob — independent roll each hit (so more hits = more stun chances).")]
@@ -66,7 +67,7 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
     SkillModLoadout loadout;   // six-phase modifier loadout (lazily registered, born with one)
     SkillContext pendingCtx;   // the shaped cast captured at CastAt, consumed in DetonateTick (deferred meteor impacts)
     Vector3 detonateCenter;    // the shower's impact centre; each meteor's "impact" event detonates here
-    System.Action<string> onVfxEvent;   // cached hook handed to VfxDirector (no per-play delegate alloc)
+    System.Action<VfxTick> onVfxEvent;   // cached hook handed to VfxDirector (no per-play delegate alloc)
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
     static readonly Color MeteorColor = new Color(1f, 0.55f, 0.3f);
 
@@ -99,9 +100,9 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
     // The sequence raises "impact" when a meteor lands (see the meteor VfxSequence); that's this skill's cue to
     // deal its damage tick. Presentation (fall/explosion/shake) lives entirely in the asset — this handles the
     // GAMEPLAY beat only. Cached as a field so handing it to VfxDirector.Play allocates nothing.
-    void OnVfxEvent(string tag)
+    void OnVfxEvent(VfxTick tick)
     {
-        if (tag == "impact") DetonateTick(detonateCenter);
+        if (tick.tickId == "impact") DetonateTick(detonateCenter);
     }
 
     public bool Activate()
@@ -159,7 +160,11 @@ public class Player3DMeteor : MonoBehaviour, IHotbarSkill, IModifiableSkill
         detonateCenter = center;
         var ctx = VfxContext.At(center);
         ctx.target = center + Vector3.up * landLift;   // meteors land ON the ground, not in it
-        var wait = new WaitForSeconds(Mathf.Max(0.05f, meteorInterval));
+        // Cadence is authored in the VFX composition (its loop-end restart point) — shorten it there to make the
+        // shower rain faster. Single source of truth: the code-side meteorInterval is only the fallback when the
+        // sequence has no loop-end set. Built once per cast (cooldown-gated), not per frame.
+        float gap = vfxSequence != null && vfxSequence.RestartInterval > 0f ? vfxSequence.RestartInterval : meteorInterval;
+        var wait = new WaitForSeconds(Mathf.Max(0.05f, gap));
         for (int m = 0; m < meteors; m++)
         {
             Sfx.PlayAt(meteorSfx, center);   // 3D: fireball whoosh per staggered meteor (gameplay-paced, stays in code)

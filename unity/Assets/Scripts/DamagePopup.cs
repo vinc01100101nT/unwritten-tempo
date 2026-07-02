@@ -196,7 +196,9 @@ public class DamagePopup : MonoBehaviour
         transform.position += Vector3.up * (riseSpeed * Time.deltaTime);
 
         var c = startColor;
-        c.a = Mathf.Clamp01(1f - age / lifetime);     // fade out over its lifetime
+        // Fade out over its lifetime, SCALED by the colour's own alpha so a caller can pass a translucent
+        // colour (e.g. an element-resisted hit at 70% / an immune hit at 30%) and have that cap honoured.
+        c.a = startColor.a * Mathf.Clamp01(1f - age / lifetime);
         text.color = c;
 
         // a quick "pop": briefly larger at spawn, then settle to the base size

@@ -264,8 +264,6 @@ public class Character : MonoBehaviour
     static readonly Color GuardColor = new Color(0.78f, 0.85f, 1f);
     static readonly Color MonsterMissColor = Color.white;   // a monster's swing whiffed the player → white MISS
     static readonly Color ReflectColor = new Color(0.85f, 0.85f, 0.95f);   // thorns damage bounced back at a mob
-    static readonly Color ElemWeakColor = new Color(1f, 0.55f, 0.2f);      // incoming element super-effective on us
-    static readonly Color ElemResistColor = new Color(0.7f, 0.85f, 1f);    // incoming element resisted by our armor
 
     // Effective stat = flat layer (base + level growth + PRIMARY-STAT contribution + equipment) × (1 + passive%).
     // The passive % layer is deliberately separate so a +% never goes obsolete the way a flat bonus does (doc §7).
@@ -636,14 +634,13 @@ public class Character : MonoBehaviour
 
         // Element property: the incoming attack's element vs our armor element scales the damage (RO chart).
         float mod = Elements.Modifier(attackElement, armorElement);
-        if (mod <= 0f) { ElementCue(mod); return 0; }   // our armor fully resists this element
+        if (mod <= 0f) return 0;   // our armor fully resists this element
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF. Mobs don't crit the player → crit:false.
         int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod)));
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);                       // player hurt grunt
-        ElementCue(mod);
         OnDamaged?.Invoke(dmg);                  // drives the player hurt flash
         Reflect(dmg, source);                    // thorns: bounce a fraction back at the attacker
         if (CurrentHP == 0) OnDied?.Invoke();   // Phase F: DeathScreen handles the death → respawn flow
@@ -659,13 +656,12 @@ public class Character : MonoBehaviour
         if (DodgedByInvuln()) return 0;   // i-frames (dodge-dash) dodge magic too
 
         float mod = Elements.Modifier(attackElement, armorElement);
-        if (mod <= 0f) { ElementCue(mod); return 0; }
+        if (mod <= 0f) return 0;
 
         int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod)));
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);
-        ElementCue(mod);
         OnDamaged?.Invoke(dmg);
         Reflect(dmg, source);
         if (CurrentHP == 0) OnDied?.Invoke();
@@ -686,17 +682,6 @@ public class Character : MonoBehaviour
         OnDamaged?.Invoke(dmg);
         if (CurrentHP == 0) OnDied?.Invoke();
         return dmg;
-    }
-
-    // Pop a Weak!/Resist cue over the avatar when an incoming attack's element matters (the damage number
-    // already changed; this just makes WHY legible). Immune (mod ≤ 0) shows "Immune".
-    void ElementCue(float mod)
-    {
-        var a = Avatar();
-        if (a == null) return;
-        if (mod <= 0f) DamagePopup.SpawnText(a.position, "Immune", ElemResistColor);
-        else if (Elements.IsStrong(mod)) DamagePopup.SpawnText(a.position + Vector3.up * 0.3f, "Weak!", ElemWeakColor);
-        else if (Elements.IsWeak(mod)) DamagePopup.SpawnText(a.position + Vector3.up * 0.3f, "Resist", ElemResistColor);
     }
 
     // Damage reflect (thorns card): bounce a fraction of damage taken back at the attacking mob as true

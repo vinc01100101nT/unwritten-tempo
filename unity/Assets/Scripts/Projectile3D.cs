@@ -50,7 +50,8 @@ public class Projectile3D : MonoBehaviour
     /// and on arrival <paramref name="impactId"/> (if any) plays at the hit point. Same homing/motion/onArrive.</summary>
     public static void SpawnVfx(string travelId, string impactId, float scale,
                                 Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
-                                float arriveRadius, float maxLife, System.Action onArrive)
+                                float arriveRadius, float maxLife, System.Action onArrive, bool faceTravel = false,
+                                float travelClipStart = 0f)
     {
         var go = new GameObject("Projectile3D(Vfx)");
         go.transform.position = from;
@@ -63,7 +64,16 @@ public class Projectile3D : MonoBehaviour
         p.arriveRadius = Mathf.Max(0.05f, arriveRadius);
         p.die = Time.time + Mathf.Max(0.05f, maxLife);
         p.onArrive = onArrive;
-        if (!string.IsNullOrEmpty(travelId)) p.travel = Vfx.Attach(travelId, go.transform, Vector3.zero, scale);
+        if (!string.IsNullOrEmpty(travelId)) p.travel = Vfx.Attach(travelId, go.transform, Vector3.zero, scale, travelClipStart);
+        // Aim the effect down its flight path. Map DOWN → travel dir so a pure vertical drop is unchanged (identity)
+        // and only an angled launch tilts. Attach copies position each frame but not rotation, so setting it once on
+        // the handle holds for the straight-line flight.
+        if (faceTravel && p.travel != null)
+        {
+            Vector3 dir = p.point - from;
+            if (dir.sqrMagnitude > 1e-6f)
+                p.travel.transform.rotation = Quaternion.FromToRotation(Vector3.down, dir.normalized);
+        }
     }
 
     SpriteRenderer sr; Sprite[] frames; float fps, t;

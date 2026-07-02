@@ -6,27 +6,28 @@ using UnityEngine;
 /// building blocks (<see cref="Vfx"/>, <see cref="Projectile3D"/>, <see cref="CameraFollow3D.ShakeMain"/>,
 /// <see cref="Sfx"/>). It is the ONLY thing that "runs" a sequence; the asset itself is inert data.
 ///
-/// <para>The event relay is the crux of the code/data split: a step can RAISE a named tag (a carrier on arrival,
-/// or any step on start). When one fires, the director (1) invokes the skill's <c>onEvent(tag)</c> callback —
-/// where the skill runs damage — and (2) starts any <see cref="VfxSchedule.OnEvent"/> steps keyed to that tag.
-/// The asset never touches gameplay; it only labels beats.</para>
+/// <para>The tick relay is the crux of the code/data split: a step can expose a gameplay <see cref="VfxStep.tickId"/>
+/// that fires <see cref="VfxStep.tickCount"/> times, <see cref="VfxStep.tickInterval"/> apart, at the step's
+/// gameplay moment (a Carrier's arrival, or any step's start). Each tick (and each visual emit-event) is relayed to
+/// the skill's <c>onTick(VfxTick)</c> callback — where the skill runs damage — carrying WHERE it happened. The
+/// asset never touches gameplay; it only labels beats. Repeat-over-time is owned HERE (the tick schedule), so the
+/// skill just applies one burst per tick.</para>
 ///
 /// PERFORMANCE: runners are POOLED (like <see cref="Vfx"/> / <see cref="DamagePopup"/>) and driven by their own
 /// Update — no per-play coroutine or <c>WaitForSeconds</c>. Sequences are cooldown-gated (cast-frequency, not
-/// per-frame/per-hit), so the only remaining allocation is a tiny per-carrier arrival closure, which is off the
-/// steady-combat hot path.
+/// per-frame/per-hit), so the only remaining allocation is a tiny per-carrier arrival closure, off the steady hot path.
 /// </summary>
 public static class VfxDirector
 {
-    /// <summary>Play <paramref name="seq"/> at <paramref name="ctx"/>. <paramref name="onEvent"/> (optional) is
-    /// the skill's hook: it fires with each raised event tag (e.g. "impact") so the skill can land damage on the
-    /// exact beat. Returns the runner handle (rarely needed; for an attached/looping sequence call
-    /// <see cref="VfxSequenceRunner.Stop"/>). No-op / null if the sequence is empty.</summary>
-    public static VfxSequenceRunner Play(VfxSequence seq, VfxContext ctx, System.Action<string> onEvent = null)
+    /// <summary>Play <paramref name="seq"/> at <paramref name="ctx"/>. <paramref name="onTick"/> (optional) is
+    /// the skill's hook: it fires with each raised tick / event (as a <see cref="VfxTick"/>) so the skill can land
+    /// damage on the exact beat, at the exact point. Returns the runner handle (rarely needed; for an attached/
+    /// looping sequence call <see cref="VfxSequenceRunner.Stop"/>). No-op / null if the sequence is empty.</summary>
+    public static VfxSequenceRunner Play(VfxSequence seq, VfxContext ctx, System.Action<VfxTick> onTick = null)
     {
         if (seq == null || seq.steps == null || seq.steps.Count == 0) return null;
         var r = Rent();
-        r.Begin(seq, ctx, onEvent);
+        r.Begin(seq, ctx, onTick);
         return r;
     }
 
@@ -65,27 +66,34 @@ public class VfxSequenceRunner : MonoBehaviour
 {
     VfxSequence seq;
     VfxContext ctx;
-    System.Action<string> onEvent;
+    System.Action<VfxTick> onTick;
     bool[] started;                 // per-step, reused across plays (grown as needed)
+    float[] endAt;                  // per-step absolute Time.time to raise emitEventOnEnd (∞ = none/handled)
+    // Gameplay tick schedule, per-step (reused/grown). A step raises its tickId tickCount times, tickInterval apart,
+    // starting when the step becomes gameplay-active (a Carrier's arrival, or another step's start).
+    int[] tickLeft;
+    float[] tickAt;
+    Vector3[] tickPoint;
     readonly List<Vfx.EffectHandle> attached = new List<Vfx.EffectHandle>();
     float startTime, endBy;
     int gen;                        // bumped each Begin/Finish → stale carrier callbacks are ignored
     bool active;
 
-    internal void Begin(VfxSequence s, VfxContext c, System.Action<string> cb)
+    internal void Begin(VfxSequence s, VfxContext c, System.Action<VfxTick> cb)
     {
-        seq = s; ctx = c; onEvent = cb;
+        seq = s; ctx = c; onTick = cb;
         gen++;
         startTime = Time.time;
         active = true;
         attached.Clear();
 
         int n = seq.steps.Count;
-        if (started == null || started.Length < n) started = new bool[n];
-        for (int i = 0; i < n; i++) started[i] = false;
+        if (started == null || started.Length < n) { started = new bool[n]; endAt = new float[n]; tickLeft = new int[n]; tickAt = new float[n]; tickPoint = new Vector3[n]; }
+        for (int i = 0; i < n; i++) { started[i] = false; endAt[i] = float.PositiveInfinity; tickLeft[i] = 0; }
 
         // Upper bound on when the last step can possibly fire: the latest timed delay, plus a carrier's full
-        // flight time (an OnEvent step may be chained to an arrival), plus a pad. Then Finish tears down.
+        // flight time (an OnEvent step may be chained to an arrival), plus a pad. Then Finish tears down. Tick
+        // schedules extend this further when they start (see ScheduleTicks).
         float maxDelay = 0f, maxCarrier = 0f;
         for (int i = 0; i < n; i++)
         {
@@ -106,6 +114,7 @@ public class VfxSequenceRunner : MonoBehaviour
     {
         if (!active) return;
         float t = Time.time - startTime;
+        float now = Time.time;
 
         var steps = seq.steps;
         for (int i = 0; i < steps.Count && i < started.Length; i++)   // bound: a tuner may add steps mid-play
@@ -115,23 +124,56 @@ public class VfxSequenceRunner : MonoBehaviour
             if (st.schedule == VfxSchedule.AtTime && t >= st.delay) Execute(i);
         }
 
+        // Drain any due gameplay ticks (raise the tickId, tickCount times, tickInterval apart). interval 0 = all now.
+        for (int i = 0; i < steps.Count && i < tickLeft.Length; i++)
+        {
+            if (tickLeft[i] <= 0) continue;
+            float iv = steps[i].tickInterval;
+            while (tickLeft[i] > 0 && (iv <= 0f || now >= tickAt[i]))
+            {
+                Emit(steps[i].tickId, tickPoint[i], true);
+                tickLeft[i]--;
+                if (iv > 0f) tickAt[i] += iv;
+            }
+        }
+
+        // Fire any pending "on end" events whose effect has now finished (PlayAt lifetime, Shake duration, …).
+        for (int i = 0; i < steps.Count && i < endAt.Length; i++)
+        {
+            if (float.IsInfinity(endAt[i]) || now < endAt[i]) continue;
+            endAt[i] = float.PositiveInfinity;
+            Emit(steps[i].emitEventOnEnd, ctx.target, false);
+        }
+
         if (t >= (endBy - startTime)) Finish();
     }
 
-    // Fire a step's action. Carriers raise their event on ARRIVAL (async); everything else raises on start.
-    void Execute(int i)
+    // Fire a step's action. emitEventOnStart raises the instant the step begins; emitEventOnEnd raises when the
+    // visual FINISHES — a Carrier on arrival (async), a PlayAt/Shake when its scheduled end time is reached (see
+    // Update), an Attach when the sequence stops (see Finish). A step's gameplay tick starts here (non-carrier) or
+    // on arrival (carrier).
+    void Execute(int i, bool fromEvent = false, Vector3 eventPoint = default, bool hasEventPoint = false)
     {
         started[i] = true;
         var st = seq.steps[i];
-        Vector3 point = (st.anchor == VfxAnchor.Origin ? ctx.origin : ctx.target) + st.offset;
+        // An OnEvent step can snap to the exact point the emitter reported (e.g. a Carrier's scattered landing)
+        // instead of re-resolving the plain anchor. Opt-in per step via snapToEventPoint.
+        Vector3 anchorPoint = (fromEvent && hasEventPoint && st.snapToEventPoint)
+            ? eventPoint
+            : (st.anchor == VfxAnchor.Origin ? ctx.origin : ctx.target);
+        Vector3 point = anchorPoint + st.offset;
         float scale = st.scale * (ctx.scaleMult <= 0f ? 1f : ctx.scaleMult);
+
+        Emit(st.emitEventOnStart, point, false);
 
         switch (st.kind)
         {
             case VfxStepKind.PlayAt:
-                Vfx.PlayAt(st.effectId, point, Quaternion.Euler(st.rotationEuler),
-                           new Vfx.VfxParams { scale = scale, speed = st.speed, tint = st.tint });
-                Emit(st.emitEvent);
+                var ph = Vfx.PlayAt(st.effectId, point, Quaternion.Euler(st.rotationEuler),
+                           new Vfx.VfxParams { scale = scale, speed = st.speed, tint = st.tint, tailTrim = st.trimEnd, clipStart = st.clipStart });
+                float endT = (ph != null && ph.ReturnAt > 0f) ? ph.ReturnAt : Time.time + 0.5f;
+                ScheduleEnd(i, endT);
+                ScheduleTicks(i, point);   // non-carrier: gameplay ticks start at spawn
                 break;
 
             case VfxStepKind.Attach:
@@ -139,44 +181,75 @@ public class VfxSequenceRunner : MonoBehaviour
                 {
                     var h = Vfx.Attach(st.effectId, ctx.follow, st.offset, scale);
                     if (h != null) attached.Add(h);
+                    ScheduleTicks(i, point);   // ticks fire at the followed unit's current point (resolved each raise below)
                 }
-                Emit(st.emitEvent);
                 break;
 
             case VfxStepKind.Carrier:
+                // Scatter both ends independently: the impact spreads around the anchor (a shower) and the launch
+                // origin jitters too. The event/ticks still fire on arrival at the scattered landing.
+                Vector3 land = point;
                 Vector3 from = point + st.carrierFrom;
                 if (st.carrierScatter > 0f)
-                    from += new Vector3(Random.Range(-st.carrierScatter, st.carrierScatter), 0f,
-                                        Random.Range(-st.carrierScatter, st.carrierScatter));
-                int g = gen; string tag = st.emitEvent;
-                Projectile3D.SpawnVfx(st.effectId, null, scale, from, null, point,
+                {
+                    float sc = st.carrierScatter;
+                    land += new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
+                    from = land + st.carrierFrom + new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
+                }
+                int g = gen; string tag = st.emitEventOnEnd; Vector3 landing = land; int idx = i;
+                Projectile3D.SpawnVfx(st.effectId, null, scale, from, null, land,
                     st.carrierSpeed, st.carrierArriveRadius, st.carrierMaxLife,
-                    () => { if (gen == g) Emit(tag); });   // arrival → raise the event on THIS play only
+                    () => { if (gen == g) { Emit(tag, landing, true); ScheduleTicks(idx, landing); } },   // arrival == end → raise + tick on THIS play only, at the real landing
+                    st.carrierFaceTravel, st.clipStart);
                 break;
 
             case VfxStepKind.Shake:
                 CameraFollow3D.ShakeMain(st.shakeStrength, st.shakeDuration);
-                Emit(st.emitEvent);
+                ScheduleEnd(i, Time.time + st.shakeDuration);
                 break;
 
             case VfxStepKind.Sound:
                 if (st.sound != null && !st.sound.Empty) Sfx.PlayAt(st.sound, point);
-                Emit(st.emitEvent);
+                ScheduleEnd(i, Time.time);   // one-shot cue: end ≈ start
                 break;
         }
     }
 
-    // Relay a raised event: hand it to the skill (damage), then start any OnEvent steps keyed to it.
-    void Emit(string tag)
+    // Arm an "on end" event for step i at absolute time t (no-op if the step has no on-end tag). Extends the
+    // teardown deadline so a late end-event (and anything it chains) still fires before Finish.
+    void ScheduleEnd(int i, float t)
+    {
+        if (string.IsNullOrEmpty(seq.steps[i].emitEventOnEnd)) return;
+        endAt[i] = t;
+        if (t + 1f > endBy) endBy = t + 1f;
+    }
+
+    // Arm step i's gameplay ticks: tickCount raises of tickId, tickInterval apart, starting now at `point`. No-op
+    // for a pure-visual step. Extends the teardown deadline to outlive the last tick.
+    void ScheduleTicks(int i, Vector3 point)
+    {
+        var st = seq.steps[i];
+        if (!st.HasTick) return;
+        tickLeft[i] = st.tickCount;
+        tickAt[i] = Time.time;
+        tickPoint[i] = point;
+        float last = Time.time + Mathf.Max(0f, st.tickInterval) * Mathf.Max(0, st.tickCount - 1);
+        if (last + 1f > endBy) endBy = last + 1f;
+    }
+
+    // Relay a raised tag+point: hand it to the skill (VfxTick → damage), then start any OnEvent steps keyed to it.
+    // hasPoint carries the emitter's exact world point (e.g. a Carrier's real landing / a tick point) so an OnEvent
+    // step opted into snapToEventPoint can anchor there instead of the plain context anchor.
+    void Emit(string tag, Vector3 point, bool hasPoint)
     {
         if (string.IsNullOrEmpty(tag)) return;
-        onEvent?.Invoke(tag);
+        onTick?.Invoke(new VfxTick(tag, point));
         var steps = seq.steps;
         for (int i = 0; i < steps.Count && i < started.Length; i++)   // bound: a tuner may add steps mid-play
         {
             var st = steps[i];
             if (st == null || started[i]) continue;
-            if (st.schedule == VfxSchedule.OnEvent && st.startEvent == tag) Execute(i);
+            if (st.schedule == VfxSchedule.OnEvent && st.startEvent == tag) Execute(i, true, point, hasPoint);
         }
     }
 
@@ -184,11 +257,20 @@ public class VfxSequenceRunner : MonoBehaviour
     {
         if (!active) return;
         active = false;
+
+        // Attach steps "end" when the sequence stops — raise their on-end tag to the skill (damage hook) before
+        // teardown. Direct callback only (we're tearing down, so we don't start fresh OnEvent steps here).
+        var steps = seq.steps;
+        for (int i = 0; i < steps.Count && i < started.Length; i++)
+            if (started[i] && steps[i] != null && steps[i].kind == VfxStepKind.Attach
+                && !string.IsNullOrEmpty(steps[i].emitEventOnEnd))
+                onTick?.Invoke(new VfxTick(steps[i].emitEventOnEnd, ctx.follow != null ? ctx.follow.position : ctx.target));
+
         gen++;   // fence any carrier still in flight from this play
         for (int i = 0; i < attached.Count; i++)
             if (attached[i] != null) attached[i].Stop();
         attached.Clear();
-        onEvent = null;
+        onTick = null;
         VfxDirector.Return(this);
     }
 }

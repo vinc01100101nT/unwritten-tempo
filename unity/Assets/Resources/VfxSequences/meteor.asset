@@ -17,42 +17,69 @@ MonoBehaviour:
     schedule: 0
     delay: 0
     startEvent: 
+    snapToEventPoint: 0
     kind: 2
     anchor: 1
     offset: {x: 0, y: 0, z: 0}
     rotationEuler: {x: 0, y: 0, z: 0}
     effectId: fire.magic-pro-orange
-    scale: 1
+    scale: 2.575
     speed: 1
+    trimEnd: 0
+    clipStart: 1.553
     tint: {r: 1, g: 1, b: 1, a: 1}
-    emitEvent: impact
-    carrierFrom: {x: 0, y: 9, z: 0}
-    carrierScatter: 0.6
-    carrierSpeed: 16
+    emitEventOnStart: launch start
+    emitEventOnEnd: impact
+    tickId: meteor_ball
+    tickCount: 1
+    tickInterval: 0
+    carrierFrom: {x: 4, y: 10, z: 0}
+    carrierScatter: 0.633
+    carrierSpeed: 27.63
+    carrierFaceTravel: 1
     carrierArriveRadius: 0.4
-    carrierMaxLife: 1.5625
+    carrierMaxLife: 5.2481546
     shakeStrength: 0.3
     shakeDuration: 0.18
     sound:
       clips: []
       volume: 1
       pitch: {x: 0.95, y: 1.05}
+    touchTargets: 2
+    touchScope: 0
+    touchRadius: 1.36
+    touchInterval: 0
+    touchDuration: 0
+    effects:
+    - kind: 0
+      magic: 1
+      damageMult: 8
+      element: 3
+      amount: 10
+      ailment: 2
+      seconds: 4
+      magnitude: 3
   - note: explosion
     schedule: 1
     delay: 0
     startEvent: impact
+    snapToEventPoint: 1
     kind: 0
     anchor: 1
     offset: {x: 0, y: 0, z: 0}
     rotationEuler: {x: 0, y: 0, z: 0}
     effectId: aoe.ground-explosion
-    scale: 1
-    speed: 1
+    scale: 0.817
+    speed: 1.448
+    trimEnd: 1.587
+    clipStart: 0
     tint: {r: 1, g: 1, b: 1, a: 1}
-    emitEvent: 
+    emitEventOnStart: 
+    emitEventOnEnd: 
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
     carrierSpeed: 16
+    carrierFaceTravel: 0
     carrierArriveRadius: 0.4
     carrierMaxLife: 3
     shakeStrength: 0.3
@@ -61,10 +88,17 @@ MonoBehaviour:
       clips: []
       volume: 1
       pitch: {x: 0.95, y: 1.05}
+    touchTargets: 0
+    touchScope: 0
+    touchRadius: 1.5
+    touchInterval: 0
+    touchDuration: 0
+    effects: []
   - note: shake
     schedule: 1
     delay: 0
     startEvent: impact
+    snapToEventPoint: 0
     kind: 3
     anchor: 1
     offset: {x: 0, y: 0, z: 0}
@@ -72,11 +106,86 @@ MonoBehaviour:
     effectId: 
     scale: 1
     speed: 1
+    trimEnd: 0
+    clipStart: 0
     tint: {r: 1, g: 1, b: 1, a: 1}
-    emitEvent: 
+    emitEventOnStart: 
+    emitEventOnEnd: 
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
     carrierSpeed: 16
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    shakeStrength: 0.439
+    shakeDuration: 0.186
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    touchTargets: 0
+    touchScope: 0
+    touchRadius: 1.5
+    touchInterval: 0
+    touchDuration: 0
+    effects: []
+  - note: launch sfx
+    schedule: 1
+    delay: 0
+    startEvent: launch start
+    snapToEventPoint: 0
+    kind: 4
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: 
+    scale: 1
+    speed: 1
+    trimEnd: 0
+    clipStart: 0
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    emitEventOnStart: 
+    emitEventOnEnd: 
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 16
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips:
+      - {fileID: 8300000, guid: 422bcaf49cfa415428defd393821254e, type: 3}
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    touchTargets: 0
+    touchScope: 0
+    touchRadius: 1.5
+    touchInterval: 0
+    touchDuration: 0
+    effects: []
+  - note: impact vfx
+    schedule: 1
+    delay: 0
+    startEvent: impact
+    snapToEventPoint: 1
+    kind: 0
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: fire.explosion
+    scale: 2.501
+    speed: 1
+    trimEnd: 2.375
+    clipStart: 0
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    emitEventOnStart: 
+    emitEventOnEnd: 
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 16
+    carrierFaceTravel: 0
     carrierArriveRadius: 0.4
     carrierMaxLife: 3
     shakeStrength: 0.3
@@ -85,3 +194,56 @@ MonoBehaviour:
       clips: []
       volume: 1
       pitch: {x: 0.95, y: 1.05}
+    touchTargets: 0
+    touchScope: 0
+    touchRadius: 1.5
+    touchInterval: 0
+    touchDuration: 0
+    effects: []
+  - note: after burn vfx
+    schedule: 1
+    delay: 0
+    startEvent: impact
+    snapToEventPoint: 1
+    kind: 0
+    anchor: 1
+    offset: {x: 0, y: 0, z: 0}
+    rotationEuler: {x: 0, y: 0, z: 0}
+    effectId: fire.magic-pro-orange
+    scale: 0.36
+    speed: 1.128
+    trimEnd: 0
+    clipStart: 0
+    tint: {r: 1, g: 1, b: 1, a: 1}
+    emitEventOnStart: 
+    emitEventOnEnd: 
+    carrierFrom: {x: 0, y: 9, z: 0}
+    carrierScatter: 0
+    carrierSpeed: 16
+    carrierFaceTravel: 0
+    carrierArriveRadius: 0.4
+    carrierMaxLife: 3
+    shakeStrength: 0.3
+    shakeDuration: 0.18
+    sound:
+      clips: []
+      volume: 1
+      pitch: {x: 0.95, y: 1.05}
+    tickId: fire_pillar
+    tickCount: 5
+    tickInterval: 0.372
+    touchTargets: 2
+    touchScope: 0
+    touchRadius: 1.14
+    touchInterval: 0.372
+    touchDuration: 0
+    effects:
+    - kind: 0
+      magic: 1
+      damageMult: 0.51
+      element: 3
+      amount: 10
+      ailment: 2
+      seconds: 4
+      magnitude: 3
+  loopEnd: 0.8455911

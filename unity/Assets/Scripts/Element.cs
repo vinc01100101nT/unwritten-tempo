@@ -55,6 +55,15 @@ public static class Elements
     /// <summary>True if the matchup is resisted or immune (pops a "Resist"/"Immune" cue).</summary>
     public static bool IsWeak(float mod) => mod < 0.95f;
 
+    /// <summary>Opacity for the floating DAMAGE NUMBER, used INSTEAD of a word cue to read the matchup:
+    /// strong/normal hits are full opaque, a resisted hit is dimmed to 70%, an immune (0×) hit to 30%.</summary>
+    public static float DamageAlpha(float mod)
+    {
+        if (mod <= 0f) return 0.30f;   // immune
+        if (IsWeak(mod)) return 0.70f; // resisted
+        return 1.0f;                   // normal / super-effective
+    }
+
     public static Color Tint(Element e)
     {
         switch (e)

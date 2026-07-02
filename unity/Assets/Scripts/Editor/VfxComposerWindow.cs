@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -29,6 +30,10 @@ public class VfxComposerWindow : EditorWindow
         w.Show();
     }
 
+    // "Vfx Composer — Knob Reference" doc in Tempo Docs. If this URL scheme is wrong, replace it with the doc's
+    // actual share link (docId: q177cgr85qm4kgaj3taq96yfzx89qcy9).
+    const string GuideUrl = "https://app.tempo.new/docs/q177cgr85qm4kgaj3taq96yfzx89qcy9";
+
     // ---- asset list ----
     readonly List<VfxSequence> all = new List<VfxSequence>();
     VfxSequence sel;
@@ -42,13 +47,19 @@ public class VfxComposerWindow : EditorWindow
     // ---- transport ----
     bool playing = true;
     float clock;                 // the single time everything renders at
-    float previewDuration = 1f;
+    float previewDuration = 1f;  // the loop length: where the clock resets (= loop-end marker, or autoDuration if unset)
+    float autoDuration = 1f;     // full content length (all clips finished) — the timeline's x-scale
+    bool draggingLoopMark;
     double lastUpdate;
+    int loopSeed;                // bumped each loop → carrier scatter re-rolls per playback cycle
 
     // ---- preview ----
     PreviewRenderUtility pru;
-    float camYaw = 35f, camPitch = 30f, camDist = 6f;
-    Vector3 camPivot = new Vector3(0f, 1f, 0f);
+    const float DefYaw = 35f, DefPitch = 30f, DefDist = 6f;
+    static readonly Vector3 DefPivot = new Vector3(0f, 1f, 0f);
+    float camYaw = DefYaw, camPitch = DefPitch, camDist = DefDist;
+    Vector3 camPivot = DefPivot;
+    GUIStyle compassStyle;
     bool showRuler = true;
     float rulerHeight = 1.8f;    // human height in world units — the size reference
     GameObject ruler, capsule, ground;
@@ -61,11 +72,13 @@ public class VfxComposerWindow : EditorWindow
     class PreviewInst
     {
         public int stepIndex;
+        public int slot;          // 0 = this loop's spawn; k>0 = the occurrence spawned k loops ago (its still-playing tail)
         public EffectDef def;
         public GameObject go;
         public ParticleSystem[] roots;
         public float naturalLife;
     }
+    const int PreviewSlots = 4;   // overlapping copies a PlayAt step can show across the loop-end marker
     readonly List<PreviewInst> preview = new List<PreviewInst>();
     string previewSig;
     float[] starts;
@@ -73,6 +86,11 @@ public class VfxComposerWindow : EditorWindow
 
     // id picker cache
     string[] idOptions;
+
+    // scratch reused by the emit-id dedup + "On Event" dropdown (editor-only; alloc here is fine)
+    readonly List<string> emitIdScratch = new List<string>();
+    readonly List<string> eventValScratch = new List<string>();
+    readonly List<string> eventLabelScratch = new List<string>();
 
     void OnEnable()
     {
@@ -102,10 +120,65 @@ public class VfxComposerWindow : EditorWindow
         if (sel == null) return;
         if (playing)
         {
+            float prev = clock;
             clock += dt;
-            if (clock > previewDuration) clock = 0f;   // loop the composition
+            // Fire Sound steps whose start time we just crossed (edge-triggered), so you actually hear the sfx while
+            // the preview plays. Only when playing forward — scrubbing the slider stays silent.
+            if (clock > previewDuration) { TriggerPreviewSounds(prev, previewDuration); clock = 0f; loopSeed++; }
+            else TriggerPreviewSounds(prev, clock);
             Repaint();
         }
+    }
+
+    // Play any Sound step whose scheduled start falls in (a, b]. Uses the editor's built-in audio preview so it
+    // works in edit mode (no Play). A random clip from the set, mirroring the runtime's pick.
+    void TriggerPreviewSounds(float a, float b)
+    {
+        if (sel == null) return;
+        ResolveStarts(sel);
+        for (int i = 0; i < sel.steps.Count && i < starts.Length; i++)
+        {
+            var st = sel.steps[i];
+            if (st == null || st.kind != VfxStepKind.Sound) continue;
+            if (st.sound == null || st.sound.clips == null || st.sound.clips.Length == 0) continue;
+            float s = starts[i];
+            if (float.IsInfinity(s) || s < a || s >= b) continue;   // half-open [a,b) so a step at t=0 fires
+            var clips = st.sound.clips;
+            PlayClipPreview(clips[Random.Range(0, clips.Length)]);
+        }
+    }
+
+    // Reflection into UnityEditor.AudioUtil (internal) to audition a clip in edit mode. Method name differs across
+    // Unity versions, so try the known ones.
+    static MethodInfo audioPreview;
+    static bool audioPreviewResolved;
+    static void PlayClipPreview(AudioClip clip)
+    {
+        if (clip == null) return;
+        if (!audioPreviewResolved)
+        {
+            audioPreviewResolved = true;
+            var t = typeof(AudioImporter).Assembly.GetType("UnityEditor.AudioUtil");
+            audioPreview = t?.GetMethod("PlayPreviewClip", new[] { typeof(AudioClip), typeof(int), typeof(bool) })
+                        ?? t?.GetMethod("PlayClip", new[] { typeof(AudioClip), typeof(int), typeof(bool) })
+                        ?? t?.GetMethod("PlayClip", new[] { typeof(AudioClip) });
+            // Version-agnostic fallback: any static Play* whose first parameter is an AudioClip.
+            if (audioPreview == null && t != null)
+                foreach (var m in t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
+                {
+                    var ps = m.GetParameters();
+                    if (m.Name.StartsWith("Play") && ps.Length >= 1 && ps[0].ParameterType == typeof(AudioClip))
+                    { audioPreview = m; break; }
+                }
+            if (audioPreview == null) Debug.LogWarning("VfxComposer: couldn't find UnityEditor.AudioUtil play method — sound preview disabled.");
+        }
+        if (audioPreview == null) return;
+        var pars = audioPreview.GetParameters();
+        var args = new object[pars.Length];
+        args[0] = clip;
+        for (int i = 1; i < pars.Length; i++)                      // fill remaining params with sane defaults
+            args[i] = pars[i].ParameterType == typeof(bool) ? (object)false : System.Activator.CreateInstance(pars[i].ParameterType);
+        audioPreview.Invoke(null, args);
     }
 
     // ---------------------------------------------------------------- assets
@@ -221,6 +294,7 @@ public class VfxComposerWindow : EditorWindow
             if (GUILayout.Button("Dup")) Duplicate(sel);
             if (GUILayout.Button("Del")) DeleteAsset(sel);
         }
+        if (GUILayout.Button("?", GUILayout.Width(24))) Application.OpenURL(GuideUrl);
         EditorGUILayout.EndHorizontal();
         EditorGUILayout.EndVertical();
     }
@@ -248,6 +322,17 @@ public class VfxComposerWindow : EditorWindow
         GUILayout.Label($"{clock:0.00} / {previewDuration:0.00}s", GUILayout.Width(110));
         clock = GUILayout.HorizontalSlider(clock, 0f, Mathf.Max(0.01f, previewDuration));
         GUILayout.Space(8);
+        GUILayout.Label("loop end", GUILayout.Width(52));
+        EditorGUI.BeginChangeCheck();
+        float loopField = EditorGUILayout.FloatField(sel.loopEnd <= 0f ? autoDuration : sel.loopEnd, GUILayout.Width(45));
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(sel, "Set loop end");
+            sel.loopEnd = loopField >= autoDuration - 1e-3f ? 0f : Mathf.Max(0f, loopField);
+            EditorUtility.SetDirty(sel);
+        }
+        GUILayout.Space(8);
+        if (GUILayout.Button("Reset View", EditorStyles.toolbarButton, GUILayout.Width(80))) ResetView();
         showRuler = GUILayout.Toggle(showRuler, "Ruler", EditorStyles.toolbarButton, GUILayout.Width(50));
         GUILayout.Label("h", GUILayout.Width(12));
         rulerHeight = EditorGUILayout.FloatField(rulerHeight, GUILayout.Width(40));
@@ -255,6 +340,9 @@ public class VfxComposerWindow : EditorWindow
         characterPrefab = (GameObject)EditorGUILayout.ObjectField(characterPrefab, typeof(GameObject), false, GUILayout.Width(140));
         if (EditorGUI.EndChangeCheck()) BuildRulerSprite();
         EditorGUILayout.EndHorizontal();
+
+        // --- timeline ---
+        DrawTimeline();
 
         // --- steps ---
         EditorGUILayout.Space(2);
@@ -325,6 +413,79 @@ public class VfxComposerWindow : EditorWindow
         }
     }
 
+    // A Gantt-style timeline under the transport: one colored bar per effect (tint matches its block) spanning its
+    // start → end over [0, previewDuration], with a live playhead. Click/drag to scrub. Uses starts[]/previewDuration
+    // computed by RenderPreviewAt earlier this frame.
+    void DrawTimeline()
+    {
+        int n = sel.steps.Count;
+        if (n == 0) return;
+        const float rowH = 15f;
+        var area = GUILayoutUtility.GetRect(10, n * rowH + 6, GUILayout.ExpandWidth(true));
+        EditorGUI.DrawRect(area, new Color(0f, 0f, 0f, 0.25f));
+
+        float viewDur = Mathf.Max(0.01f, autoDuration);   // x-scale spans ALL content, so tails past the loop show
+        float loopLen = Mathf.Clamp(previewDuration, 0.05f, viewDur);
+        float x0 = area.x + 4f, w = area.width - 8f;
+
+        // Shade the region past the loop-end marker: this is "next loop" time where overlapping tails live.
+        float loopX = x0 + (loopLen / viewDur) * w;
+        if (loopLen < viewDur - 1e-3f)
+            EditorGUI.DrawRect(new Rect(loopX, area.y, x0 + w - loopX, area.height), new Color(1f, 0.5f, 0.1f, 0.07f));
+
+        for (int i = 0; i < n; i++)
+        {
+            var st = sel.steps[i];
+            if (st == null) continue;
+            float rowY = area.y + 3f + i * rowH;
+            var tint = StepTints[i % StepTints.Length];
+            string label = string.IsNullOrEmpty(st.note) ? st.kind.ToString() : st.note;
+
+            float s = (starts != null && i < starts.Length) ? starts[i] : 0f;
+            if (float.IsInfinity(s))   // waits on an event that never fires
+            {
+                GUI.Label(new Rect(x0, rowY, w, rowH), $"{label}  (unscheduled)", EditorStyles.miniLabel);
+                continue;
+            }
+
+            float len = StepWindow(i, st);
+            float bx = x0 + (s / viewDur) * w;
+            float bw = Mathf.Max(3f, (len / viewDur) * w);
+            EditorGUI.DrawRect(new Rect(bx, rowY + 1f, bw, rowH - 3f), tint * 1.5f);
+            GUI.Label(new Rect(bx + 3f, rowY - 1f, w, rowH), label, EditorStyles.miniLabel);
+        }
+
+        // playhead (sweeps 0..loopLen)
+        float px = x0 + (Mathf.Clamp(clock, 0f, loopLen) / viewDur) * w;
+        EditorGUI.DrawRect(new Rect(px, area.y, 1.5f, area.height), new Color(1f, 0.9f, 0.3f, 0.95f));
+
+        // loop-end marker (draggable). Orange line + a grab handle spanning the row height.
+        EditorGUI.DrawRect(new Rect(loopX - 1f, area.y, 2f, area.height), new Color(1f, 0.55f, 0.1f, 0.95f));
+        var handle = new Rect(loopX - 4f, area.y, 8f, area.height);
+        EditorGUIUtility.AddCursorRect(handle, MouseCursor.ResizeHorizontal);
+
+        var e = Event.current;
+        if (e.type == EventType.MouseDown && handle.Contains(e.mousePosition)) { draggingLoopMark = true; e.Use(); }
+        else if (draggingLoopMark)
+        {
+            if (e.type == EventType.MouseDrag)
+            {
+                float v = Mathf.Clamp(Mathf.Clamp01((e.mousePosition.x - x0) / w) * viewDur, 0.05f, viewDur);
+                Undo.RecordObject(sel, "Set loop end");
+                sel.loopEnd = v >= viewDur - 1e-3f ? 0f : v;   // snapping to the far end = auto (no early loop)
+                EditorUtility.SetDirty(sel);
+                e.Use(); Repaint();
+            }
+            else if (e.type == EventType.MouseUp) { draggingLoopMark = false; e.Use(); }
+        }
+        // click / drag elsewhere to scrub (clamped to the loop range)
+        else if ((e.type == EventType.MouseDown || e.type == EventType.MouseDrag) && area.Contains(e.mousePosition))
+        {
+            clock = Mathf.Min(Mathf.Clamp01((e.mousePosition.x - x0) / w) * viewDur, loopLen);
+            e.Use(); Repaint();
+        }
+    }
+
     // Distinct, low-saturation tints cycled per effect so each block's parameters read as one group. Kept dark so
     // the default control skin stays legible on top.
     static readonly Color[] StepTints =
@@ -352,6 +513,8 @@ public class VfxComposerWindow : EditorWindow
         st.note = EditorGUILayout.TextField(st.note ?? "", GUILayout.Width(140));
         st.kind = (VfxStepKind)EditorGUILayout.EnumPopup(st.kind, GUILayout.Width(90));
         GUILayout.FlexibleSpace();
+        float stepDur = StepWindow(i, st);   // this effect's own length in seconds (flight / clip / shake duration)
+        GUILayout.Label(new GUIContent($"{stepDur:0.00}s", "This effect's duration in seconds"), EditorStyles.miniLabel, GUILayout.Width(48));
         if (GUILayout.Button("↑", GUILayout.Width(24))) moveUp = i;
         if (GUILayout.Button("↓", GUILayout.Width(24))) moveDown = i;
         if (GUILayout.Button("✕", GUILayout.Width(24))) remove = i;
@@ -363,8 +526,15 @@ public class VfxComposerWindow : EditorWindow
         if (st.schedule == VfxSchedule.AtTime)
             st.delay = EditorGUILayout.Slider("start (s)", st.delay, 0f, 6f);
         else
-            st.startEvent = EditorGUILayout.TextField("on event", st.startEvent ?? "");
+            st.startEvent = EventPopup("on event", st.startEvent);
         EditorGUILayout.EndHorizontal();
+
+        // OnEvent steps can snap to the exact point the emitter reported (e.g. a Carrier's scattered landing).
+        if (st.schedule == VfxSchedule.OnEvent)
+            st.snapToEventPoint = EditorGUILayout.Toggle(
+                new GUIContent("snap to landing", "Anchor this step to the EXACT point the emitter reported " +
+                    "(e.g. a Carrier's real scattered landing) instead of the plain anchor. Off = use anchor/offset."),
+                st.snapToEventPoint);
 
         // anchor + offset
         st.anchor = (VfxAnchor)EditorGUILayout.EnumPopup("anchor", st.anchor);
@@ -379,6 +549,13 @@ public class VfxComposerWindow : EditorWindow
                 if (st.kind == VfxStepKind.PlayAt)
                 {
                     st.speed = EditorGUILayout.Slider("speed", st.speed <= 0f ? 1f : st.speed, 0.1f, 3f);
+                    float naturalReal = 1f;
+                    for (int k = 0; k < preview.Count; k++)
+                        if (preview[k].stepIndex == i) { naturalReal = preview[k].naturalLife / (st.speed <= 0f ? 1f : st.speed); break; }
+                    st.trimEnd = EditorGUILayout.Slider("trim end (s)", Mathf.Clamp(st.trimEnd, 0f, naturalReal), 0f, Mathf.Max(0.05f, naturalReal));
+                    st.clipStart = EditorGUILayout.Slider(new GUIContent("clip start (s)",
+                        "Fast-forward into the clip on spawn — starts already mid-animation instead of frame 0."),
+                        Mathf.Clamp(st.clipStart, 0f, naturalReal), 0f, Mathf.Max(0.05f, naturalReal));
                     st.rotationEuler = EditorGUILayout.Vector3Field("rotation", st.rotationEuler);
                 }
                 break;
@@ -386,7 +563,11 @@ public class VfxComposerWindow : EditorWindow
                 st.effectId = IdPopup("effect", st.effectId);
                 st.scale = EditorGUILayout.Slider("scale", st.scale <= 0f ? 1f : st.scale, 0.05f, 5f);
                 st.carrierFrom = EditorGUILayout.Vector3Field("launch from", st.carrierFrom);
+                st.carrierFaceTravel = EditorGUILayout.Toggle("rotate to travel", st.carrierFaceTravel);
                 st.carrierScatter = EditorGUILayout.Slider("scatter", st.carrierScatter, 0f, 3f);
+                st.clipStart = EditorGUILayout.Slider(new GUIContent("clip start (s)",
+                    "Fast-forward the travel effect into its clip on launch (skip the intro / desync a salvo)."),
+                    st.clipStart, 0f, 3f);
                 st.carrierSpeed = EditorGUILayout.Slider("fly speed", st.carrierSpeed, 1f, 40f);
                 st.carrierMaxLife = EditorGUILayout.Slider("safety cap (s)", st.carrierMaxLife, 0.2f, 6f);
                 break;
@@ -419,8 +600,36 @@ public class VfxComposerWindow : EditorWindow
                 break;
         }
 
-        st.emitEvent = EditorGUILayout.TextField("emit event", st.emitEvent ?? "");
+        // Tick (gameplay HANDOFF) — expose a named beat the Skill Composer binds damage/heal/status onto. Only the
+        // spawning kinds tick; this window never sets WHAT the tick does (that's the Skill Composer's job).
+        if (st.kind == VfxStepKind.PlayAt || st.kind == VfxStepKind.Attach || st.kind == VfxStepKind.Carrier)
+            DrawTick(st);
+
+        st.emitEventOnStart = EmitField("emit event on start", st.emitEventOnStart, st, isEnd: false);
+        st.emitEventOnEnd = EmitField(
+            st.kind == VfxStepKind.Carrier ? "emit event on end (arrival)" : "emit event on end",
+            st.emitEventOnEnd, st, isEnd: true);
         EditorGUILayout.EndVertical();
+    }
+
+    // The per-step "Tick (gameplay handoff)" block: name a beat and its cadence. This is the ONLY join between the
+    // VFX and the Skill Composer — leave the id empty for a pure-visual step. WHAT the tick does (damage/element/
+    // multiplier) is authored in the Skill Composer against this id, never here (separation of concerns).
+    void DrawTick(VfxStep st)
+    {
+        EditorGUILayout.Space(2);
+        st.tickId = EditorGUILayout.TextField(new GUIContent("tick id",
+            "Stable component name the Skill Composer binds gameplay onto (e.g. \"meteor_ball\", \"fire_pillar\"). " +
+            "Empty = pure-visual step (no gameplay)."), st.tickId);
+        if (string.IsNullOrEmpty(st.tickId)) return;
+
+        st.tickCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("  ticks",
+            "How many times this component fires its beat. 1 = one-shot (a meteor's land). N = a lingering " +
+            "component (a fire pillar's repeated damage)."), st.tickCount <= 0 ? 1 : st.tickCount));
+        using (new EditorGUI.DisabledScope(st.tickCount <= 1))
+            st.tickInterval = EditorGUILayout.Slider(new GUIContent("  interval (s)",
+                "Seconds between ticks (ticks × interval = the active window). Only used when ticks > 1."),
+                st.tickInterval, 0f, 3f);
     }
 
     // Effect-id dropdown built from the EffectLibrary — pick a valid id (no typos → no silent no-op).
@@ -435,6 +644,74 @@ public class VfxComposerWindow : EditorWindow
         }
         int picked = EditorGUILayout.Popup(label, idx, idOptions);
         return picked <= 0 ? "" : idOptions[picked];
+    }
+
+    // An emit-event text field that keeps every event id UNIQUE across the composition: if you type a name that's
+    // already emitted elsewhere, it auto-suffixes (impact → impact-2). This makes each id a single-source event, so
+    // the "On Event" dropdown has no ambiguous entries.
+    string EmitField(string label, string current, VfxStep owner, bool isEnd)
+    {
+        string typed = EditorGUILayout.TextField(label, current ?? "");
+        if (typed == current) return current;                 // unchanged → don't churn
+        string result = MakeUniqueEmit(typed, owner, isEnd);
+        // Renaming an event id updates every listener that referenced it (single source of truth). Clearing the
+        // field is treated as deletion, not a rename — listeners are left dangling (shown as "(missing)").
+        if (!string.IsNullOrEmpty(current) && !string.IsNullOrEmpty(result) && result != current)
+            foreach (var st in sel.steps)
+                if (st != null && st.schedule == VfxSchedule.OnEvent && st.startEvent == current)
+                    st.startEvent = result;
+        return result;
+    }
+
+    string MakeUniqueEmit(string desired, VfxStep owner, bool isEnd)
+    {
+        if (string.IsNullOrEmpty(desired)) return "";
+        // Collect every OTHER emit id in the composition (skip only the exact field being edited).
+        emitIdScratch.Clear();
+        foreach (var st in sel.steps)
+        {
+            if (st == null) continue;
+            if (!(st == owner && !isEnd) && !string.IsNullOrEmpty(st.emitEventOnStart)) emitIdScratch.Add(st.emitEventOnStart);
+            if (!(st == owner && isEnd) && !string.IsNullOrEmpty(st.emitEventOnEnd)) emitIdScratch.Add(st.emitEventOnEnd);
+        }
+        if (!emitIdScratch.Contains(desired)) return desired;
+        for (int k = 2; ; k++)
+        {
+            string cand = $"{desired}-{k}";
+            if (!emitIdScratch.Contains(cand)) return cand;
+        }
+    }
+
+    // Every emit-event id declared anywhere in the composition (start + end), deduped — the vocabulary an
+    // "On Event" step can listen for. Returns the shared scratch list; don't hold the reference across calls.
+    List<string> CollectEmitIds()
+    {
+        emitIdScratch.Clear();
+        foreach (var st in sel.steps)
+        {
+            if (st == null) continue;
+            if (!string.IsNullOrEmpty(st.emitEventOnStart) && !emitIdScratch.Contains(st.emitEventOnStart)) emitIdScratch.Add(st.emitEventOnStart);
+            if (!string.IsNullOrEmpty(st.emitEventOnEnd) && !emitIdScratch.Contains(st.emitEventOnEnd)) emitIdScratch.Add(st.emitEventOnEnd);
+        }
+        return emitIdScratch;
+    }
+
+    // Dropdown for the "On Event" (startEvent) field: pick from the emit ids declared in the composition, so a
+    // listener can't reference a mistyped/nonexistent event. A stale value (its producer was renamed/removed) is
+    // shown as "… (missing)" so it isn't silently lost.
+    string EventPopup(string label, string current)
+    {
+        eventValScratch.Clear(); eventLabelScratch.Clear();
+        eventValScratch.Add(""); eventLabelScratch.Add("(none)");
+        foreach (var id in CollectEmitIds()) { eventValScratch.Add(id); eventLabelScratch.Add(id); }
+        if (!string.IsNullOrEmpty(current) && !eventValScratch.Contains(current))
+        {
+            eventValScratch.Add(current);
+            eventLabelScratch.Add(current + "  (missing)");
+        }
+        int idx = Mathf.Max(0, eventValScratch.IndexOf(current ?? ""));
+        int picked = EditorGUILayout.Popup(label, idx, eventLabelScratch.ToArray());
+        return eventValScratch[picked];
     }
 
     // ---------------------------------------------------------------- preview engine
@@ -516,6 +793,12 @@ public class VfxComposerWindow : EditorWindow
         }
         rulerSr.sprite = Sprite.Create(tex, new Rect(0, 0, cw, ch), new Vector2(0.5f, pivotY), ppu);
         rulerAspect = (float)cw / ch;
+
+        // Match the IN-GAME size: BakedBillboard8 renders the sprite at its native ppu scale (localScale 1), so the
+        // character's real world height is (content rows / ppu) — NOT a fixed 1.8. Seat the ruler-height knob on that
+        // measured value so the preview stands the same size as it does in play (user can still override to eyeball).
+        float nativeArtH = rulerSr.sprite.bounds.size.y * rulerContentFrac;
+        if (nativeArtH > 1e-4f) rulerHeight = nativeArtH;
     }
 
     BakedBillboard8 ResolveCharacter()
@@ -612,10 +895,47 @@ public class VfxComposerWindow : EditorWindow
         EnsurePreview();
         RenderPreviewAt(clock);
 
+        // Apply any active Shake step as a decaying camera jitter, so a shake beat is visible in the preview
+        // (mirrors CameraFollow3D: linear decay, strongest active shake wins, screen-plane offset).
+        Vector3 shake = PreviewShakeOffset(clock, camRot);
+        if (shake != Vector3.zero) pru.camera.transform.position += shake;
+
         pru.BeginPreview(r, GUIStyle.none);
         pru.camera.Render();
         var tex = pru.EndPreview();
         GUI.DrawTexture(r, tex, ScaleMode.StretchToFill, false);
+
+        DrawCompass(r);
+    }
+
+    // Reset the orbit camera to its default framing.
+    void ResetView()
+    {
+        camYaw = DefYaw; camPitch = DefPitch; camDist = DefDist; camPivot = DefPivot;
+        Repaint();
+    }
+
+    // Overlay N/S/E/W labels at the ground's edges by projecting those world points through the preview camera —
+    // so orientation is legible no matter how the view is orbited. +Z = North, +X = East (grid is 6 m → edge ≈3 m).
+    void DrawCompass(Rect r)
+    {
+        if (pru == null) return;
+        if (compassStyle == null)
+            compassStyle = new GUIStyle(EditorStyles.boldLabel)
+            { alignment = TextAnchor.MiddleCenter, normal = { textColor = new Color(1f, 0.85f, 0.35f) } };
+        DrawCompassLabel(r, new Vector3(0f, 0f, 3f), "N");
+        DrawCompassLabel(r, new Vector3(0f, 0f, -3f), "S");
+        DrawCompassLabel(r, new Vector3(3f, 0f, 0f), "E");
+        DrawCompassLabel(r, new Vector3(-3f, 0f, 0f), "W");
+    }
+
+    void DrawCompassLabel(Rect r, Vector3 world, string s)
+    {
+        Vector3 vp = pru.camera.WorldToViewportPoint(world);
+        if (vp.z <= 0f) return;                                   // behind the camera
+        float x = r.x + vp.x * r.width;
+        float y = r.y + (1f - vp.y) * r.height;
+        GUI.Label(new Rect(x - 9f, y - 9f, 18f, 18f), s, compassStyle);
     }
 
     void HandleCameraInput(Rect r)
@@ -625,7 +945,7 @@ public class VfxComposerWindow : EditorWindow
         if (e.type == EventType.MouseDrag && e.button == 0)
         {
             camYaw += e.delta.x * 0.5f;
-            camPitch = Mathf.Clamp(camPitch - e.delta.y * 0.5f, -20f, 80f);
+            camPitch = Mathf.Clamp(camPitch + e.delta.y * 0.5f, -20f, 80f);
             e.Use(); Repaint();
         }
         else if (e.type == EventType.ScrollWheel)
@@ -665,28 +985,41 @@ public class VfxComposerWindow : EditorWindow
             var def = EffectCatalog.Get(st.effectId);
             if (def == null || def.prefab == null) continue;
 
-            var go = Object.Instantiate(def.prefab);
-            go.hideFlags = HideFlags.HideAndDontSave;
-            var systems = go.GetComponentsInChildren<ParticleSystem>(true);
-            var roots = new List<ParticleSystem>();
-            float natural = def.lifetime > 0f ? def.lifetime : 0f;
-            for (int j = 0; j < systems.Length; j++)
-            {
-                var ps = systems[j];
-                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-                ps.useAutoRandomSeed = false;          // deterministic: same T → same frame (no churn when frozen)
-                ps.randomSeed = 0x5EED + (uint)j;
-                var m = ps.main;
-                m.scalingMode = ParticleSystemScalingMode.Hierarchy;   // root localScale must resize children
-                if (def.lifetime <= 0f) natural = Mathf.Max(natural, m.duration + m.startLifetime.constantMax);
-                if (!HasParentSystem(ps.transform, go.transform)) roots.Add(ps);
-            }
-            if (natural <= 0f) natural = 1f;
-
-            pru.AddSingleGO(go);   // move into the preview scene
-            preview.Add(new PreviewInst { stepIndex = i, def = def, go = go, roots = roots.ToArray(), naturalLife = natural });
+            // Only a one-shot PlayAt can spill past the loop-end marker and overlap its next spawn, so it gets a small
+            // pool of instances (one per still-playing copy). Attach (continuous aura) / Carrier (short flight) need one.
+            int slots = st.kind == VfxStepKind.PlayAt ? PreviewSlots : 1;
+            for (int slot = 0; slot < slots; slot++) AddPreviewInst(i, st, def, slot);
         }
         previewSig = Signature();
+    }
+
+    void AddPreviewInst(int i, VfxStep st, EffectDef def, int slot)
+    {
+        var go = Object.Instantiate(def.prefab);
+        go.hideFlags = HideFlags.HideAndDontSave;
+        var systems = go.GetComponentsInChildren<ParticleSystem>(true);
+        var roots = new List<ParticleSystem>();
+        float natural = def.lifetime > 0f ? def.lifetime : 0f;
+        for (int j = 0; j < systems.Length; j++)
+        {
+            var ps = systems[j];
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            ps.useAutoRandomSeed = false;          // deterministic: same T → same frame (no churn when frozen)
+            // Identical seed across ALL slots: as a clip ages it is handed slot0→slot1→… on each loop restart, and
+            // that handoff is only seamless if every slot renders the SAME pattern at the SAME age (else it pops/cuts).
+            ps.randomSeed = 0x5EED + (uint)j;
+            var m = ps.main;
+            m.scalingMode = ParticleSystemScalingMode.Hierarchy;   // root localScale must resize children
+            // PlayAt is a one-shot: kill looping so it emits a single clip (matches the runtime one-shot). Attach
+            // (auras) and Carrier (trails) keep their authored looping.
+            if (st.kind == VfxStepKind.PlayAt) { var mm = ps.main; mm.loop = false; }
+            if (def.lifetime <= 0f) natural = Mathf.Max(natural, m.duration + m.startLifetime.constantMax);
+            if (!HasParentSystem(ps.transform, go.transform)) roots.Add(ps);
+        }
+        if (natural <= 0f) natural = 1f;
+
+        pru.AddSingleGO(go);   // move into the preview scene
+        preview.Add(new PreviewInst { stepIndex = i, slot = slot, def = def, go = go, roots = roots.ToArray(), naturalLife = natural });
     }
 
     static bool HasParentSystem(Transform t, Transform stop)
@@ -710,6 +1043,75 @@ public class VfxComposerWindow : EditorWindow
         return Mathf.Min(dist / Mathf.Max(0.1f, st.carrierSpeed), st.carrierMaxLife);
     }
 
+    // Deterministic pseudo-random in [0,1) from two ints (loop seed + step channel) — a stable, alloc-free stand-in
+    // for Random so the preview's carrier scatter is repeatable within a loop.
+    static float Hash01(int a, int b)
+    {
+        unchecked
+        {
+            int h = a * 73856093 ^ b * 19349663;
+            h = (h ^ (h >> 13)) * 1274126177;
+            return ((h >> 8) & 0xFFFF) / 65535f;
+        }
+    }
+
+    // On-screen length of a preview instance: Carrier = flight time; PlayAt = clip / playback speed (faster → shorter,
+    // always one full clip); Attach/others = the raw clip lifetime.
+    // The (scattered) landing of the Carrier that raises `tag`, as of loop `seed`. Mirrors the carrier render math
+    // so a snap-to-landing PlayAt sits exactly where that loop's carrier landed. Passing an earlier seed (loopSeed -
+    // slot) pins a still-playing tail to its own birth loop instead of the current one.
+    bool TryCarrierLanding(string tag, int seed, out Vector3 land)
+    {
+        land = default;
+        if (string.IsNullOrEmpty(tag)) return false;
+        for (int k = 0; k < preview.Count; k++)
+        {
+            var ci = preview[k];
+            if (ci.go == null || ci.stepIndex >= sel.steps.Count) continue;
+            var cst = sel.steps[ci.stepIndex];
+            if (cst == null || cst.kind != VfxStepKind.Carrier || cst.emitEventOnEnd != tag) continue;
+            land = cst.offset + ci.def.offset;
+            if (cst.carrierScatter > 0f)
+            {
+                float sc = cst.carrierScatter;
+                land.x += (Hash01(seed, ci.stepIndex * 4 + 0) * 2f - 1f) * sc;
+                land.z += (Hash01(seed, ci.stepIndex * 4 + 1) * 2f - 1f) * sc;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    static float InstWindow(VfxStep st, PreviewInst inst)
+    {
+        if (st.kind == VfxStepKind.Carrier) return CarrierFlight(st);
+        if (st.kind == VfxStepKind.PlayAt)
+            return Mathf.Max(0.05f, inst.naturalLife / (st.speed <= 0f ? 1f : st.speed) - st.trimEnd);
+        return inst.naturalLife;
+    }
+
+    // Record an event tag's earliest fire time (min-wins). Returns true if it changed the table (drives the
+    // settle loop in ResolveStarts). No-op for an empty tag.
+    bool RegisterEvent(string tag, float time)
+    {
+        if (string.IsNullOrEmpty(tag)) return false;
+        if (evTimes.TryGetValue(tag, out var cur) && time >= cur) return false;
+        evTimes[tag] = time;
+        return true;
+    }
+
+    // How long after its start a step's "end" event fires: a Carrier on arrival (flight), a Shake after its
+    // duration, a Sound ≈ instantly, a PlayAt/Attach after the effect's natural lifetime (from the preview).
+    float StepWindow(int stepIndex, VfxStep st)
+    {
+        if (st.kind == VfxStepKind.Carrier) return CarrierFlight(st);
+        if (st.kind == VfxStepKind.Shake) return st.shakeDuration;
+        if (st.kind == VfxStepKind.Sound) return 0f;
+        for (int k = 0; k < preview.Count; k++)
+            if (preview[k].stepIndex == stepIndex) return InstWindow(st, preview[k]);
+        return 0f;
+    }
+
     // Resolve each step's absolute start time (AtTime = delay; OnEvent = when its tag fires; a carrier emits on
     // arrival = start + flight). Iterated so event chains settle.
     void ResolveStarts(VfxSequence seq)
@@ -731,14 +1133,38 @@ public class VfxComposerWindow : EditorWindow
                 else s = (!string.IsNullOrEmpty(st.startEvent) && evTimes.TryGetValue(st.startEvent, out var et))
                          ? et : float.PositiveInfinity;
                 if (s < starts[i]) { starts[i] = s; changed = true; }
-                if (!float.IsInfinity(s) && !string.IsNullOrEmpty(st.emitEvent))
+                if (!float.IsInfinity(s))
                 {
-                    float ev = s + (st.kind == VfxStepKind.Carrier ? CarrierFlight(st) : 0f);
-                    if (!evTimes.TryGetValue(st.emitEvent, out var cur) || ev < cur) { evTimes[st.emitEvent] = ev; changed = true; }
+                    if (RegisterEvent(st.emitEventOnStart, s)) changed = true;
+                    if (RegisterEvent(st.emitEventOnEnd, s + StepWindow(i, st))) changed = true;
                 }
             }
             if (!changed) break;
         }
+    }
+
+    // Camera jitter for any Shake step active at time T. Strongest active shake wins (bounded, like the runtime),
+    // decaying linearly to 0 over its duration. Noise is a deterministic function of T so scrubbing is stable
+    // (not random per repaint). Offset lives in the camera's screen plane. Needs starts[] (set by ResolveStarts).
+    Vector3 PreviewShakeOffset(float T, Quaternion camRot)
+    {
+        if (sel == null || starts == null) return Vector3.zero;
+        float amp = 0f;
+        for (int i = 0; i < sel.steps.Count && i < starts.Length; i++)
+        {
+            var st = sel.steps[i];
+            if (st == null || st.kind != VfxStepKind.Shake) continue;
+            float s = starts[i];
+            if (float.IsInfinity(s)) continue;
+            float dur = Mathf.Max(1e-4f, st.shakeDuration);
+            float age = T - s;
+            if (age < 0f || age > dur) continue;
+            amp = Mathf.Max(amp, st.shakeStrength * (1f - age / dur));
+        }
+        if (amp <= 1e-5f) return Vector3.zero;
+        float nx = Mathf.PerlinNoise(T * 40f, 0.3f) * 2f - 1f;
+        float ny = Mathf.PerlinNoise(0.7f, T * 40f) * 2f - 1f;
+        return (camRot * Vector3.right * nx + camRot * Vector3.up * ny) * amp;
     }
 
     // Render the whole composition frozen at absolute time T (re-baked every call, so edits show live). Anchor is
@@ -752,15 +1178,27 @@ public class VfxComposerWindow : EditorWindow
         for (int k = 0; k < preview.Count; k++)
         {
             var inst = preview[k];
-            if (inst.stepIndex >= n) continue;
+            if (inst.slot != 0 || inst.stepIndex >= n) continue;   // slot>0 is the same clip a loop later — no new length
             var st = sel.steps[inst.stepIndex];
             if (st == null) continue;
             float s = starts[inst.stepIndex];
             if (float.IsInfinity(s)) continue;
-            float window = st.kind == VfxStepKind.Carrier ? CarrierFlight(st) : inst.naturalLife;
-            dur = Mathf.Max(dur, s + window);
+            dur = Mathf.Max(dur, s + InstWindow(st, inst));
         }
-        previewDuration = Mathf.Max(0.01f, dur);
+        // Non-particle steps (Shake) aren't in the preview list but still occupy time — count them so the clip
+        // length (and scrub range) covers them.
+        for (int i = 0; i < n; i++)
+        {
+            var st = sel.steps[i];
+            if (st == null || st.kind != VfxStepKind.Shake) continue;
+            float s = starts[i];
+            if (!float.IsInfinity(s)) dur = Mathf.Max(dur, s + st.shakeDuration);
+        }
+        autoDuration = Mathf.Max(0.01f, dur);
+        // The loop restarts at the user's marker (clamped within the content), else at the full length. Clips still
+        // playing past this point keep rendering via the extra slots below.
+        float loopLen = sel.loopEnd > 0.001f ? Mathf.Clamp(sel.loopEnd, 0.05f, autoDuration) : autoDuration;
+        previewDuration = loopLen;
         T = Mathf.Clamp(T, 0f, previewDuration);
 
         for (int k = 0; k < preview.Count; k++)
@@ -772,8 +1210,10 @@ public class VfxComposerWindow : EditorWindow
             if (st == null) { if (inst.go.activeSelf) inst.go.SetActive(false); continue; }
 
             float s = starts[inst.stepIndex];
-            float window = st.kind == VfxStepKind.Carrier ? CarrierFlight(st) : inst.naturalLife;
-            float age = T - s;
+            float window = InstWindow(st, inst);
+            // slot k = this clip as spawned k loops ago, so its tail keeps playing past the loop-end marker and
+            // overlaps the fresh spawn (slot 0). previewDuration is the loop length.
+            float age = (T - s) + inst.slot * previewDuration;
             if (float.IsInfinity(s) || age < 0f || age > window)
             {
                 if (inst.go.activeSelf) inst.go.SetActive(false);
@@ -781,23 +1221,48 @@ public class VfxComposerWindow : EditorWindow
             }
 
             Vector3 anchorPt = st.offset + inst.def.offset;   // origin == target == world 0 in the composer
+            // Snap-to-landing: rebase onto the emitter carrier's landing. A still-playing tail (slot>0) keeps the
+            // landing from the loop it was BORN in (seed = loopSeed - slot) — so it stays put instead of jumping to
+            // the new loop's scatter. Slot 0 uses the current loop's landing.
+            if (st.schedule == VfxSchedule.OnEvent && st.snapToEventPoint
+                && TryCarrierLanding(st.startEvent, loopSeed - inst.slot, out var landPt))
+                anchorPt = landPt + st.offset + inst.def.offset;
             float scale = inst.def.scale * (st.scale <= 0f ? 1f : st.scale);
             float speed = st.kind == VfxStepKind.PlayAt ? (st.speed <= 0f ? 1f : st.speed) : 1f;
 
             Vector3 pos = anchorPt;
+            Quaternion rot = Quaternion.Euler(st.rotationEuler);
             if (st.kind == VfxStepKind.Carrier)
             {
                 float flight = Mathf.Max(0.0001f, window);
+                // Mirror the runtime: scatter both the landing (spread around the anchor) and the launch, independently.
+                // Deterministic per (loop, step) — stable while scrubbing a loop, re-rolls each cycle so you SEE it.
+                Vector3 land = anchorPt;
                 Vector3 from = anchorPt + st.carrierFrom;
-                pos = Vector3.Lerp(from, anchorPt, Mathf.Clamp01(age / flight));
+                if (st.carrierScatter > 0f)
+                {
+                    float sc = st.carrierScatter;
+                    land.x += (Hash01(loopSeed, inst.stepIndex * 4 + 0) * 2f - 1f) * sc;
+                    land.z += (Hash01(loopSeed, inst.stepIndex * 4 + 1) * 2f - 1f) * sc;
+                    from = land + st.carrierFrom;
+                    from.x += (Hash01(loopSeed, inst.stepIndex * 4 + 2) * 2f - 1f) * sc;
+                    from.z += (Hash01(loopSeed, inst.stepIndex * 4 + 3) * 2f - 1f) * sc;
+                }
+                pos = Vector3.Lerp(from, land, Mathf.Clamp01(age / flight));
+                // Face the actual travel direction (down → dir, so a pure vertical drop stays upright).
+                if (st.carrierFaceTravel)
+                {
+                    Vector3 dir = land - from;
+                    if (dir.sqrMagnitude > 1e-6f) rot = Quaternion.FromToRotation(Vector3.down, dir.normalized);
+                }
             }
 
             if (!inst.go.activeSelf) inst.go.SetActive(true);
             inst.go.transform.position = pos;
-            inst.go.transform.rotation = Quaternion.Euler(st.rotationEuler);
+            inst.go.transform.rotation = rot;
             inst.go.transform.localScale = Vector3.one * Mathf.Max(0.001f, scale);
 
-            float simT = Mathf.Max(0.0001f, age * speed);
+            float simT = Mathf.Max(0.0001f, age * speed + Mathf.Max(0f, st.clipStart));
             for (int j = 0; j < inst.roots.Length; j++)
                 if (inst.roots[j] != null) inst.roots[j].Simulate(simT, true, true, true);
         }
