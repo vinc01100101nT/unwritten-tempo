@@ -32,19 +32,6 @@ public class Player3DAttacker : MonoBehaviour
              "target's armor element. Neutral = no interaction; a fire sword would set this to Fire.")]
     public Element meleeElement = Element.Neutral;
 
-    [Header("Slash VFX (Effect Library — the swing arc at the target)")]
-    [Tooltip("Effect-library id for the swing/slash. Empty = none.")]
-    public string slashVfxId = "";
-    public float slashVfxScale = 1f;
-
-    [Header("Impact VFX (3D particle from the Effect Library — Vfx.PlayAt)")]
-    [Tooltip("Effect-library id spawned at the target on a LANDED basic hit. Empty = none.")]
-    public string hitVfxId = "hit.holy";
-    [Tooltip("Base size of the impact VFX on a normal hit.")]
-    public float hitVfxScale = 1f;
-    [Tooltip("Size multiplier applied on a CRITICAL hit — the crit reads as a bigger burst.")]
-    public float critVfxScale = 1.7f;
-
     [Header("Audio (used when the equipped weapon has none of its own)")]
     public SfxSet defaultAttackSfx;   // swing
     public SfxSet defaultHitSfx;      // impact
@@ -138,10 +125,6 @@ public class Player3DAttacker : MonoBehaviour
             bool crit = false;
             int power = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk) : damage;   // t.luk = crit shield
 
-            // Slash FX at the target (a bit above its feet), billboarded by SlashEffect so it faces the camera.
-            Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
-            if (!string.IsNullOrEmpty(slashVfxId)) Vfx.PlayAt(slashVfxId, fxPos, Quaternion.identity, slashVfxScale);
-
             // Pass our HIT so the target rolls it against its FLEE (RO accuracy); −1 in the Character-less spike.
             int hit = Character.Instance != null ? Character.Instance.Hit : -1;
             if (hit >= 0 && StatusController.Player != null) hit = Mathf.Max(0, hit - StatusController.Player.HitPenalty);  // Blind
@@ -149,12 +132,8 @@ public class Player3DAttacker : MonoBehaviour
             if (dealt > 0)
             {
                 // Impact SOUND now plays FROM the mob in Health.TakeDamage (received_hit/crit, spatial) — no 2D play here.
-                // 3D impact burst at the target; a crit reads as a bigger punch (neutral element → no tint).
-                // Anchor at the raw target PIVOT (not fxPos's +0.4) so the height comes entirely from the
-                // effect's tuned def.offset — matching the EffectTuner's "Spawn on Mob" anchor. Adding fxPos's
-                // +0.4 here double-counted with the offset and floated the hit above the mob.
-                if (!string.IsNullOrEmpty(hitVfxId))
-                    Vfx.PlayAt(hitVfxId, t.transform.position, Vfx.VfxParams.Scaled(hitVfxScale * (crit ? critVfxScale : 1f)));
+                // Impact BURST is authored as the OnHit / OnCrit cue (Vfx Cue Composer), anchored to the target pivot —
+                // the crit's bigger punch lives in the basic_crit sequence (×1.7), not a caller-side scale fudge.
                 VfxCue.Fire(crit ? VfxCueId.OnCrit : VfxCueId.OnHit, transform, t.transform);
             }
         }
@@ -205,9 +184,7 @@ public class Player3DAttacker : MonoBehaviour
         int power = Mathf.RoundToInt(basePower * Mathf.Max(1f, ctx.DamageMult));
         Element element = ctx.ConvertElement ? ctx.NewElement : meleeElement;
 
-        Vector3 fxPos = t.transform.position + Vector3.up * 0.4f;
-        if (!string.IsNullOrEmpty(slashVfxId)) Vfx.PlayAt(slashVfxId, fxPos, Quaternion.identity, slashVfxScale * Mathf.Max(0.1f, ctx.FxScale));
-
+        // Skill strike VFX is authored in the skill's own composed sequence (SkillDef.vfx → VfxDirector), not here.
         // Skills always LAND (no FLEE roll, hit −1), but they still respect DEF unless they actually crit —
         // so pass the real rolled `crit` (which also colours the number gold + bypasses DEF), RO-style.
         // MultiHit (Flurry mod) splits the strike into N hits sharing the total — visual flair, same DPS;
@@ -235,8 +212,6 @@ public class Player3DAttacker : MonoBehaviour
             {
                 var h = cleaveBuf[i].GetComponentInParent<Health>();
                 if (h == null || h == t || h.IsDead || h.GetComponent<MonsterAI3D>() == null) continue;
-                Vector3 p = h.transform.position + Vector3.up * 0.4f;
-                if (!string.IsNullOrEmpty(slashVfxId)) Vfx.PlayAt(slashVfxId, p, Quaternion.identity, slashVfxScale * Mathf.Max(0.1f, ctx.FxScale));
                 if (h.TakeDamage(power, crit, -1, element) > 0) ApplyOnHit(h, ctx);
                 extra++;
             }

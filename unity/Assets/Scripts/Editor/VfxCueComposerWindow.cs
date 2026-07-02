@@ -48,7 +48,7 @@ public class VfxCueComposerWindow : EditorWindow
     {
         foreach (VfxCueId id in Enum.GetValues(typeof(VfxCueId)))
             if (Find(id) == null)
-                lib.cues.Add(new VfxCueBinding { id = id, anchor = DefaultAnchor(id), scale = 1f });
+                lib.cues.Add(new VfxCueBinding { id = id, scale = 1f });
     }
 
     VfxCueBinding Find(VfxCueId id)
@@ -57,10 +57,6 @@ public class VfxCueComposerWindow : EditorWindow
             if (lib.cues[i] != null && lib.cues[i].id == id) return lib.cues[i];
         return null;
     }
-
-    // Sensible starting anchor: a landed hit reads at the target; everything else is on the actor.
-    static CueAnchor DefaultAnchor(VfxCueId id)
-        => (id == VfxCueId.OnHit || id == VfxCueId.OnCrit) ? CueAnchor.Target : CueAnchor.Self;
 
     void OnGUI()
     {
@@ -123,7 +119,6 @@ public class VfxCueComposerWindow : EditorWindow
         {
             EditorGUILayout.LabelField(id.ToString(), GUILayout.Width(120));
             b.vfx = (VfxSequence)EditorGUILayout.ObjectField(b.vfx, typeof(VfxSequence), false);
-            b.anchor = (CueAnchor)EditorGUILayout.EnumPopup(b.anchor, GUILayout.Width(80));
             EditorGUIUtility.labelWidth = 34;
             b.scale = EditorGUILayout.FloatField("×", b.scale, GUILayout.Width(70));
             EditorGUIUtility.labelWidth = 0;

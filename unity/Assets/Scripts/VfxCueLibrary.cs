@@ -30,17 +30,6 @@ public enum VfxCueId
     OnStun, OnFreeze, OnSlow, OnHaste, OnSilence, OnBlind,
 }
 
-/// <summary>Where a cue's VFX anchors, resolved from the fire site's actor (and optional target).</summary>
-public enum CueAnchor
-{
-    /// <summary>On the actor (the afflicted/healed/casting unit). origin == target == actor. Default.</summary>
-    Self,
-    /// <summary>At the target (e.g. the mob a hit landed on). origin = actor, target = the target.</summary>
-    Target,
-    /// <summary>Halfway between actor and target.</summary>
-    Midpoint,
-}
-
 /// <summary>Binds ONE <see cref="VfxCueId"/> to the composed look it should play — the status/verb analog of a
 /// <see cref="SkillTickBinding"/>, but with no gameplay (the event already fired). Authored in the Vfx Cue
 /// Composer. A cue with a null <see cref="vfx"/> is a silent no-op.</summary>
@@ -51,9 +40,7 @@ public class VfxCueBinding
     [Tooltip("The composed look from the Vfx Composer. *Start cues should be an Attach/looping sequence so the " +
              "aura lives for the ailment's duration; everything else is one-shot.")]
     public VfxSequence vfx;
-    [Tooltip("Where it plays relative to the fire site.")]
-    public CueAnchor anchor = CueAnchor.Self;
-    [Tooltip("World-space nudge from the anchor point (one-shot cues only; attached auras use the sequence's own step offset).")]
+    [Tooltip("World-space nudge applied to both reference points (one-shot cues only; attached auras use the sequence's own step offset).")]
     public Vector3 offset;
     [Tooltip("Uniform scale multiplier on the whole sequence (1 = authored).")]
     public float scale = 1f;

@@ -383,7 +383,6 @@ public class DevSettings : MonoBehaviour
         F("Cooldown (s)",     0.1f, 2f, () => attacker ? attacker.cooldown : 0f,   v => { if (attacker) attacker.cooldown = v; });
         F("Windup (s)",       0f, 0.6f, () => attacker ? attacker.windupTime : 0f, v => { if (attacker) attacker.windupTime = v; });
         I("Base damage*",     1f, 50f, () => attacker ? attacker.damage : 0f,      v => { if (attacker) attacker.damage = Mathf.RoundToInt(v); });
-        F("Slash VFX scale",  0.2f, 3f, () => attacker ? attacker.slashVfxScale : 0f, v => { if (attacker) attacker.slashVfxScale = v; });
 
         // ---- Player Stats — Character (effective stats recompute live) -----
         Cat("Player Stats");

@@ -21,8 +21,8 @@ MonoBehaviour:
   aim: 2
   castRange: 11
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
-  repeatCount: 10
-  repeatInterval: 0.2
+  repeatCount: 5
+  repeatInterval: 1
   bindings:
   - tickId: meteor_ball
     targets: 2

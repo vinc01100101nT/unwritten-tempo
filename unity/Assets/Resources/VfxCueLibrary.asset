@@ -19,12 +19,12 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 1
-    vfx: {fileID: 0}
+    vfx: {fileID: 11400000, guid: 39640073e8571594d99ef845d91cdec1, type: 2}
     anchor: 1
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 2
-    vfx: {fileID: 0}
+    vfx: {fileID: 11400000, guid: 89bf7a4a6f61bdf4294f77cc8b1e8c15, type: 2}
     anchor: 1
     offset: {x: 0, y: 0, z: 0}
     scale: 1
@@ -34,7 +34,7 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 4
-    vfx: {fileID: 0}
+    vfx: {fileID: 11400000, guid: 35f5dd631e344104bb32ca06473b69ae, type: 2}
     anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1

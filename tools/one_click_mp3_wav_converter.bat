@@ -1,0 +1,1 @@
+powershell -File mp3-to-wav.ps1 -Folder "D:\tempo\projects\roguelike-mmo\unity\Assets\Audio\Customs" -Delete

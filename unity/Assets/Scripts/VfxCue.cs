@@ -18,8 +18,10 @@ using UnityEngine;
 /// </summary>
 public static class VfxCue
 {
-    /// <summary>Play a cue's one-shot look at <paramref name="actor"/> (and optionally toward <paramref name="target"/>
-    /// for a Target/Midpoint anchor). Fire-and-forget: nothing to hold. No-op if the cue is unbound or actor is null.</summary>
+    /// <summary>Play a cue's one-shot look. <paramref name="actor"/> is the sequence's Origin; the optional
+    /// <paramref name="target"/> is its Target (falls back to the actor when null). WHERE each piece spawns is the
+    /// sequence's own per-step "Place at" choice — the cue only supplies the two points. Fire-and-forget: nothing to
+    /// hold. No-op if the cue is unbound or actor is null.</summary>
     public static void Fire(VfxCueId id, Transform actor, Transform target = null)
     {
         if (actor == null) return;
@@ -42,22 +44,16 @@ public static class VfxCue
         return VfxDirector.Play(b.vfx, ctx, null);
     }
 
-    // Resolve the cue's anchor into a VfxContext. Struct return → no allocation.
+    // Feed the two reference points; the sequence's own steps decide which one each piece spawns at.
+    // Struct return → no allocation.
     static VfxContext BuildCtx(VfxCueBinding b, Transform actor, Transform target)
     {
         Vector3 a = actor.position;
         Vector3 t = target != null ? target.position : a;
-        Vector3 origin, tgt;
-        switch (b.anchor)
-        {
-            case CueAnchor.Target:   origin = a; tgt = t; break;
-            case CueAnchor.Midpoint: origin = a; tgt = (a + t) * 0.5f; break;
-            default:                 origin = a; tgt = a; break;   // Self
-        }
         return new VfxContext
         {
-            origin = origin + b.offset,
-            target = tgt + b.offset,
+            origin = a + b.offset,
+            target = t + b.offset,
             follow = null,
             targetUnit = target,
             scaleMult = b.scale <= 0f ? 1f : b.scale,
