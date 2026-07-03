@@ -63,7 +63,7 @@ public class Projectile3D : MonoBehaviour
         p.arriveRadius = Mathf.Max(0.05f, arriveRadius);
         p.die = Time.time + Mathf.Max(0.05f, maxLife);
         p.onArrive = onArrive;
-        if (!string.IsNullOrEmpty(travelId)) p.travel = Vfx.Attach(travelId, go.transform, Vector3.zero, scale, travelClipStart);
+        if (!string.IsNullOrEmpty(travelId)) p.travel = Vfx.Attach(travelId, go.transform, Vector3.zero, scale, clipStart: travelClipStart);
         // Aim the effect down its flight path. Map DOWN → travel dir so a pure vertical drop is unchanged (identity)
         // and only an angled launch tilts. Attach copies position each frame but not rotation, so setting it once on
         // the handle holds for the straight-line flight.

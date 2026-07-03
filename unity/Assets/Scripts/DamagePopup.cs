@@ -48,7 +48,20 @@ public class DamagePopup : MonoBehaviour
     public static void Spawn(Vector3 worldPos, int amount, Color color, float scaleMult)
     {
         if (amount <= 0) return;
-        SpawnText(worldPos, amount.ToString(), color, scaleMult);
+        SpawnText(worldPos, Format(amount), color, scaleMult);
+    }
+
+    // RuneScape-style number: full digits up to 10k, then abbreviated with a GREEN suffix (10.3K / 4.2M / 1.1B).
+    // Rich-text tints only the suffix; the number inherits Text.color (the caller's damage/element/heal colour).
+    const string SuffixColor = "#86E01E";   // OSRS-ish lime for the K/M/B tail
+    static string Format(int amount)
+    {
+        if (amount < 10000) return amount.ToString();
+        string s; char suf;
+        if (amount < 1_000_000)          { s = (amount / 1000f).ToString("0.#");         suf = 'K'; }
+        else if (amount < 1_000_000_000) { s = (amount / 1_000_000f).ToString("0.#");    suf = 'M'; }
+        else                             { s = (amount / 1_000_000_000f).ToString("0.#"); suf = 'B'; }
+        return s + "<color=" + SuffixColor + ">" + suf + "</color>";
     }
 
     /// <summary>Spawn arbitrary floating text (e.g. "+10" for heals, "MISS").</summary>
@@ -124,7 +137,8 @@ public class DamagePopup : MonoBehaviour
         host = go.transform;
     }
 
-    static Font Font => font != null ? font : (font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
+    // Pixel bitmap font for the RO/OSRS look. Falls back to the builtin font if the asset is missing.
+    static Font Font => font != null ? font : (font = Resources.Load<Font>("Fonts/PixelFont") ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
 
     // Build one reusable popup (Text + dark outline) parented under the shared canvas.
     static DamagePopup Create()
@@ -138,15 +152,19 @@ public class DamagePopup : MonoBehaviour
         var t = go.GetComponent<Text>();
         t.font = Font;
         t.fontSize = 64;   // high-res glyph atlas; BaseScale downscales it to the small on-screen size (stays crisp)
-        t.fontStyle = FontStyle.Bold;
+        t.fontStyle = FontStyle.Normal;
         t.alignment = TextAnchor.MiddleCenter;
         t.horizontalOverflow = HorizontalWrapMode.Overflow;
         t.verticalOverflow = VerticalWrapMode.Overflow;
         t.raycastTarget = false;
+        t.supportRichText = true;                             // lets the K/M/B suffix render in its own colour
 
-        var outline = go.GetComponent<Outline>();             // dark edge so it reads on any background
-        outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
-        outline.effectDistance = new Vector2(1.5f, -1.5f);
+        // Thick, fully-opaque black edge for the chunky RuneScape/OSRS hitsplat look. The Outline effect
+        // stamps the glyph at each ±distance corner, so a larger distance = a heavier border. Paired with the
+        // 64px atlas this reads as a solid black keyline around each digit.
+        var outline = go.GetComponent<Outline>();
+        outline.effectColor = new Color(0f, 0f, 0f, 1f);
+        outline.effectDistance = new Vector2(3.5f, -3.5f);
 
         var popup = go.GetComponent<DamagePopup>();
         popup.text = t;

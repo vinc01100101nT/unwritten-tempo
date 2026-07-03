@@ -103,4 +103,32 @@ public class SkillDef : ScriptableObject
             if (bindings[i] != null && bindings[i].tickId == tickId) return bindings[i];
         return null;
     }
+
+    /// <summary>True if ANY binding is Single scope — the skill must land on ONE chosen unit, so it can't be
+    /// ground-cast (a ground point isn't a valid target). Drives the single-target aim path in <see cref="SkillRunner"/>.</summary>
+    public bool IsSingleTarget
+    {
+        get
+        {
+            if (bindings == null) return false;
+            for (int i = 0; i < bindings.Count; i++)
+                if (bindings[i] != null && bindings[i].scope == SkillScope.Single) return true;
+            return false;
+        }
+    }
+
+    /// <summary>The union of every Single-scope binding's <see cref="SkillTickBinding.targets"/> — the set of unit
+    /// KINDS a single-target cast may legally land on. The reticle validates the hovered unit against this; the
+    /// bindings are the single source of truth for who a skill can hit (no separate "target type" field).</summary>
+    public SkillTargets SingleTargetMask
+    {
+        get
+        {
+            SkillTargets mask = SkillTargets.None;
+            if (bindings != null)
+                for (int i = 0; i < bindings.Count; i++)
+                    if (bindings[i] != null && bindings[i].scope == SkillScope.Single) mask |= bindings[i].targets;
+            return mask;
+        }
+    }
 }

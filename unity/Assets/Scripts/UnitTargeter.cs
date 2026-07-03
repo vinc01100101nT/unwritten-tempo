@@ -30,19 +30,26 @@ public class UnitTargeter : MonoBehaviour
 
     Transform player;
     float castRange;
-    System.Action<Health> onConfirm;
+    SkillTargets mask;                      // which unit KINDS this cast may legally land on (from the skill's bindings)
+    System.Action<Transform> onConfirm;     // fires with the chosen unit's transform (a mob, or the player)
     Camera cam;
     LineRenderer ring;
-    Health hover;        // the current valid hovered target (within range), else null
+    Transform hoverUnit;                     // unit currently under the cursor (mob or player), else null
+    bool hoverIsPlayer;                      // is hoverUnit the player? (else a mob)
+    bool hoverAllowed;                       // is hoverUnit's KIND in the mask?
+    bool hoverInRange;                       // within castRange (player/self is always in range)
     float ringRadius = 0.5f;
+    const float PlayerPickPx = 60f;          // cursor-to-player screen distance that counts as "hovering yourself"
 
     static readonly Color ValidColor   = new Color(0.40f, 1f, 0.55f, 0.95f);   // green: a legal target
     static readonly Color InvalidColor = new Color(1f, 0.30f, 0.25f, 0.90f);   // red: out of range / illegal
 
-    /// <summary>Enter aim mode: pick a single enemy within <paramref name="castRange"/> of
-    /// <paramref name="player"/>. On left-click confirm, calls <paramref name="onConfirm"/> with the chosen
-    /// living target. Re-call to retarget a fresh cast.</summary>
-    public static void Begin(Transform player, float castRange, System.Action<Health> onConfirm)
+    /// <summary>Enter aim mode for a single-target skill. <paramref name="mask"/> is the set of unit KINDS the
+    /// skill may legally hit (from its Single-scope bindings): the reticle rings a hovered unit GREEN only when its
+    /// kind is in the mask AND it's in range, else RED. On a valid left-click it calls <paramref name="onConfirm"/>
+    /// with the chosen unit's transform (a mob, or the player for a self-cast); clicking an illegal target instead
+    /// pops an in-game warning. Re-call to retarget a fresh cast.</summary>
+    public static void Begin(Transform player, float castRange, SkillTargets mask, System.Action<Transform> onConfirm)
     {
         if (inst == null)
         {
@@ -52,10 +59,11 @@ public class UnitTargeter : MonoBehaviour
         }
         inst.player = player;
         inst.castRange = Mathf.Max(0f, castRange);
+        inst.mask = mask;
         inst.onConfirm = onConfirm;
-        inst.hover = null;
+        inst.hoverUnit = null;
         active = true;
-        inst.ring.enabled = false;   // the ring appears only once an enemy is hovered
+        inst.ring.enabled = false;   // the ring appears only once a unit is hovered
     }
 
     public static void Cancel()
@@ -63,7 +71,7 @@ public class UnitTargeter : MonoBehaviour
         active = false;
         if (inst == null) return;
         inst.onConfirm = null;
-        inst.hover = null;
+        inst.hoverUnit = null;
         if (inst.ring != null) inst.ring.enabled = false;
     }
 
@@ -90,35 +98,46 @@ public class UnitTargeter : MonoBehaviour
 
         if (EscDown() || RightDown()) { Cancel(); return; }   // Esc or right-click bails out of aim mode
 
-        // Hover pick: the magnetised cursor→mob resolve, and if the cursor is over bare GROUND, fall back to
-        // the nearest mob to that ground point — so you can aim loosely and it auto-snaps to the closest enemy.
-        var h = PickTarget();
+        // Hover pick: a unit (mob or the player) under/near the cursor. Classify its KIND against the mask so the
+        // ring reads GREEN only for a legal, in-range target — RED for an illegal kind or out of range.
+        hoverUnit = PickUnit(out hoverIsPlayer);
+        hoverAllowed = hoverUnit != null &&
+                       (hoverIsPlayer ? (mask & SkillTargets.Player) != 0 : (mask & SkillTargets.Mobs) != 0);
         Vector3 me = player != null ? player.position : Vector3.zero;
-        bool inRange = h != null && (castRange <= 0f || PlanarDist(me, h.transform.position) <= castRange);
-        hover = inRange ? h : null;
+        hoverInRange = hoverUnit != null && (hoverIsPlayer || castRange <= 0f ||
+                       PlanarDist(me, hoverUnit.position) <= castRange);
 
-        if (h != null)
+        if (hoverUnit != null)
         {
             ring.enabled = true;
-            ring.startColor = ring.endColor = inRange ? ValidColor : InvalidColor;
-            DrawRing(h);
+            ring.startColor = ring.endColor = (hoverAllowed && hoverInRange) ? ValidColor : InvalidColor;
+            DrawRing(hoverUnit, hoverIsPlayer);
         }
         else if (ring.enabled) ring.enabled = false;
 
-        if (LeftDown() && !PointerOverUI() && hover != null && !hover.IsDead)
+        if (LeftDown() && !PointerOverUI() && hoverUnit != null)
         {
-            var cb = onConfirm; var target = hover;
+            // Illegal kind → the exact warning the design asks for; out of range → a range warning. No spend either way.
+            if (!hoverAllowed)
+            {
+                BattleNotice.Warn(hoverIsPlayer ? "Can't target yourself" : "Can't target mobs");
+                return;
+            }
+            if (!hoverInRange) { BattleNotice.Warn("Out of range"); return; }
+
+            var cb = onConfirm; var target = hoverUnit;
             Cancel();              // leave aim mode BEFORE firing so the skill's cooldown sweep starts cleanly
             cb?.Invoke(target);
         }
     }
 
-    // Ring at the target's FEET (centre − ~0.4×height, matching MobNameplate's feet math), so it reads as a
-    // ground marker under the billboard rather than a halo through its chest.
-    void DrawRing(Health target)
+    // Ring at the unit's FEET (centre − ~0.4×height, matching MobNameplate's feet math), so it reads as a ground
+    // marker under the billboard rather than a halo through its chest.
+    void DrawRing(Transform unit, bool isPlayer)
     {
-        Vector3 p = target.transform.position;
-        float footY = p.y - 0.4f * Mathf.Max(0.0001f, target.transform.lossyScale.y) + 0.06f;
+        Vector3 p = unit.position;
+        float footDrop = isPlayer ? 0f : 0.4f * Mathf.Max(0.0001f, unit.lossyScale.y);   // player pivot already ~feet
+        float footY = p.y - footDrop + 0.06f;
         for (int i = 0; i < Segments; i++)
         {
             float a = (i / (float)Segments) * Mathf.PI * 2f;
@@ -126,32 +145,43 @@ public class UnitTargeter : MonoBehaviour
         }
     }
 
-    // The enemy to highlight: 1) the mob directly under / magnetised to the cursor; else 2) when the cursor is
-    // over bare ground, the LIVING mob nearest that ground point (registry scan, no per-frame GetComponent —
-    // .Health is cached on each mob). Lets the player aim roughly at a cluster and auto-lock the closest one.
-    Health PickTarget()
+    // The unit DIRECTLY under the cursor — a mob or the player — else null (no ring). EXACT only: no magnetism / no
+    // "nearest mob to the ground" auto-lock, so the ring appears strictly while you're actually pointing at a unit.
+    // A single cursor raycast classifies the first collider it hits; a screen-distance fallback catches the player's
+    // own billboard when its slim capsule is missed. Kind is reported via isPlayer; the mask decides if it's legal.
+    Transform PickUnit(out bool isPlayer)
     {
-        var h = Player3DController.MonsterUnderCursor(cam);
-        if (h != null) return h;
-        if (!Player3DController.GroundUnderCursor(cam, out Vector3 gp)) return null;
+        isPlayer = false;
+        if (cam == null || PointerOverUI()) return null;
 
-        Health best = null; float bestSqr = float.MaxValue;
-        var list = MonsterAI3D.Active;
-        for (int i = 0; i < list.Count; i++)
+        var ray = cam.ScreenPointToRay(MousePos());
+        if (Physics.Raycast(ray, out var hit, 500f))
         {
-            var ai = list[i];
-            if (ai == null) continue;
-            var hh = ai.Health;
-            if (hh == null || hh.IsDead) continue;
-            Vector3 d = hh.transform.position - gp; d.y = 0f;
-            float sqr = d.sqrMagnitude;
-            if (sqr < bestSqr) { bestSqr = sqr; best = hh; }
+            var mob = hit.collider.GetComponentInParent<MonsterAI3D>();
+            if (mob != null && mob.Health != null && !mob.Health.IsDead) return mob.transform;
+            if (player != null && hit.collider.GetComponentInParent<Player3DController>() != null)
+            { isPlayer = true; return player; }
         }
-        return best;
+
+        // Fallback: the player's billboard body (the CharacterController capsule is slim and easy to miss on a sprite).
+        if (player != null)
+        {
+            Vector3 sp = cam.WorldToScreenPoint(player.position + Vector3.up * 0.2f);
+            if (sp.z > 0f && ((Vector2)sp - MousePos()).magnitude <= PlayerPickPx) { isPlayer = true; return player; }
+        }
+        return null;
     }
 
     static float PlanarDist(Vector3 a, Vector3 b) { a.y = 0f; b.y = 0f; return Vector3.Distance(a, b); }
     static bool PointerOverUI() => UiBlock.PointerOverUI();
+
+    static Vector2 MousePos()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Mouse.current != null) return Mouse.current.position.ReadValue();
+#endif
+        return Input.mousePosition;
+    }
 
     static bool LeftDown()
     {

@@ -62,11 +62,17 @@ public class VfxComposerWindow : EditorWindow
     Vector3 camPivot = DefPivot;
     GUIStyle compassStyle;
     bool showRuler = true;
-    float rulerHeight = 1.8f;    // human height in world units — the size reference
+    float rulerHeight = 0.3f;    // visible in-game character height in world units — the size reference
     bool showRadiusRing;
-    float radiusRingR = 1.5f;    // world-unit AoE radius ring — size the effect to match a Skill Composer radius
+    // SINGLE SOURCE OF TRUTH: the AoE radius is owned by SkillTickBinding.radius (Skill Composer). This window does
+    // NOT hold its own gameplay radius — it READS every authoritative radius of the SkillDefs that reference the
+    // previewed sequence and draws a ring per value, so the artist sizes the VFX against the real number, never a
+    // hand-typed copy. `manualRingR` is only a fallback ruler for a sequence no skill references yet.
+    float manualRingR = 1.5f;
+    readonly List<float> skillRadii = new List<float>();   // distinct radii read from referencing SkillDefs (read-only mirror)
     GameObject ruler, capsule, ground, radiusRing;
-    LineRenderer radiusRingLr;
+    readonly List<LineRenderer> radiusRingLrs = new List<LineRenderer>();
+    Material ringMat;
     SpriteRenderer rulerSr;      // real baked-character billboard (falls back to the capsule if none found)
     float rulerAspect = 0.6f;    // sprite width / height, so the quad isn't stretched
     float rulerContentFrac = 1f; // fraction of the cell height the ART actually fills (rest is transparent padding)
@@ -113,8 +119,13 @@ public class VfxComposerWindow : EditorWindow
         TeardownPreview();
         if (pru != null) { pru.Cleanup(); pru = null; }
         if (gridTex != null) { Object.DestroyImmediate(gridTex); gridTex = null; }
-        rulerSr = null; ruler = capsule = ground = null;
+        if (ringMat != null) { Object.DestroyImmediate(ringMat); ringMat = null; }
+        rulerSr = null; ruler = capsule = ground = radiusRing = null;
+        radiusRingLrs.Clear();
     }
+
+    // Re-read the authoritative radii when returning to this window (they may have been edited in the Skill Composer).
+    void OnFocus() => RefreshSkillRadii();
 
     // Advance the clock off the editor's own update loop (edit mode has no Time.deltaTime), then repaint so the
     // preview animates continuously — this is what lets an aura/loop play without entering Play.
@@ -233,6 +244,29 @@ public class VfxComposerWindow : EditorWindow
         sel = s;
         clock = 0f;
         previewSig = null;   // force preview rebuild
+        RefreshSkillRadii();
+    }
+
+    // Read the authoritative AoE radii (SkillTickBinding.radius) from every SkillDef that references the previewed
+    // sequence. The Skill Composer OWNS this number; here we only mirror it, so the preview ring can never disagree
+    // with the gameplay radius. Area-scope bindings only (Single ignores radius). Cheap editor-time asset scan; the
+    // ring is a design aid, not a runtime path.
+    void RefreshSkillRadii()
+    {
+        skillRadii.Clear();
+        if (sel == null) return;
+        foreach (var guid in AssetDatabase.FindAssets("t:SkillDef"))
+        {
+            var sd = AssetDatabase.LoadAssetAtPath<SkillDef>(AssetDatabase.GUIDToAssetPath(guid));
+            if (sd == null || sd.vfx != sel || sd.bindings == null) continue;
+            foreach (var b in sd.bindings)
+            {
+                if (b == null || b.scope != SkillScope.Area) continue;
+                float rr = b.radius <= 0f ? 1.5f : b.radius;
+                if (!skillRadii.Contains(rr)) skillRadii.Add(rr);
+            }
+        }
+        skillRadii.Sort();
     }
 
     const string Dir = "Assets/Resources/VfxSequences";
@@ -397,7 +431,18 @@ public class VfxComposerWindow : EditorWindow
         GUILayout.Label("h", GUILayout.Width(12));
         rulerHeight = EditorGUILayout.FloatField(rulerHeight, GUILayout.Width(40));
         showRadiusRing = GUILayout.Toggle(showRadiusRing, "Radius", EditorStyles.toolbarButton, GUILayout.Width(56));
-        radiusRingR = EditorGUILayout.FloatField(radiusRingR, GUILayout.Width(40));
+        if (skillRadii.Count > 0)
+        {
+            // Read-only mirror of the authoritative SkillTickBinding.radius values — edit them in the Skill Composer.
+            GUILayout.Label("⟵ skill " + string.Join(", ", skillRadii.ConvertAll(r => r.ToString("0.##"))),
+                            EditorStyles.miniLabel, GUILayout.Width(120));
+        }
+        else
+        {
+            // No skill references this sequence yet → a plain measuring ruler (NOT a gameplay value).
+            GUILayout.Label("ruler", EditorStyles.miniLabel, GUILayout.Width(32));
+            manualRingR = EditorGUILayout.FloatField(manualRingR, GUILayout.Width(40));
+        }
         EditorGUI.BeginChangeCheck();
         characterPrefab = (GameObject)EditorGUILayout.ObjectField(characterPrefab, typeof(GameObject), false, GUILayout.Width(140));
         if (EditorGUI.EndChangeCheck()) BuildRulerSprite();
@@ -839,18 +884,28 @@ public class VfxComposerWindow : EditorWindow
         ground.GetComponent<Renderer>().sharedMaterial = gm;
         pru.AddSingleGO(ground);
 
-        // World-unit AoE radius ring: a flat circle on the floor whose radius is a real meter count, so the artist
-        // can size a VFX's scale until its footprint fills the ring == the number they'll type into Skill radius.
-        radiusRing = new GameObject("RadiusRing");
-        radiusRingLr = radiusRing.AddComponent<LineRenderer>();
-        radiusRingLr.useWorldSpace = false;
-        radiusRingLr.loop = true;
-        radiusRingLr.widthMultiplier = 0.03f;
-        radiusRingLr.numCornerVertices = 0;
-        radiusRingLr.alignment = LineAlignment.View;
-        radiusRingLr.sharedMaterial = new Material(sprite) { color = new Color(1f, 0.45f, 0.15f, 0.95f) };
-        radiusRingLr.startColor = radiusRingLr.endColor = new Color(1f, 0.45f, 0.15f, 0.95f);
+        // World-unit AoE radius rings: flat circles on the floor at the REAL SkillTickBinding.radius values (read via
+        // RefreshSkillRadii) — one ring per distinct authoritative radius, so the artist sizes the VFX to the number
+        // the Skill Composer owns, never a hand-typed copy. Parent + a shared material; rings are pooled on demand.
+        ringMat = new Material(sprite) { color = new Color(1f, 0.45f, 0.15f, 0.95f) };
+        radiusRing = new GameObject("RadiusRings");
         pru.AddSingleGO(radiusRing);
+        radiusRingLrs.Clear();
+        for (int k = 0; k < 8; k++)   // fixed pool (registered with the preview scene up front); enabled per drawn radius
+        {
+            var go = new GameObject("RadiusRing" + k);
+            var lr = go.AddComponent<LineRenderer>();
+            lr.useWorldSpace = false;
+            lr.loop = true;
+            lr.widthMultiplier = 0.03f;
+            lr.numCornerVertices = 0;
+            lr.alignment = LineAlignment.View;
+            lr.sharedMaterial = ringMat;
+            lr.startColor = lr.endColor = new Color(1f, 0.45f, 0.15f, 0.95f);
+            go.SetActive(false);
+            pru.AddSingleGO(go);
+            radiusRingLrs.Add(lr);
+        }
 
         // Capsule fallback ruler (used only if no baked character is found/assigned).
         capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
@@ -968,15 +1023,23 @@ public class VfxComposerWindow : EditorWindow
         return t;
     }
 
+    // Draw one ring per authoritative skill radius (or the manual fallback if no skill references this sequence).
     void UpdateRadiusRing()
     {
         const int seg = 64;
-        float rr = Mathf.Max(0.05f, radiusRingR);
-        if (radiusRingLr.positionCount != seg) radiusRingLr.positionCount = seg;
-        for (int i = 0; i < seg; i++)
+        for (int idx = 0; idx < radiusRingLrs.Count; idx++)
         {
-            float a = (i / (float)seg) * Mathf.PI * 2f;
-            radiusRingLr.SetPosition(i, new Vector3(Mathf.Cos(a) * rr, 0.02f, Mathf.Sin(a) * rr));
+            bool draw = skillRadii.Count > 0 ? idx < skillRadii.Count : idx == 0;
+            var lr = radiusRingLrs[idx];
+            lr.gameObject.SetActive(draw);
+            if (!draw) continue;
+            float rr = Mathf.Max(0.05f, skillRadii.Count > 0 ? skillRadii[idx] : manualRingR);
+            if (lr.positionCount != seg) lr.positionCount = seg;
+            for (int i = 0; i < seg; i++)
+            {
+                float a = (i / (float)seg) * Mathf.PI * 2f;
+                lr.SetPosition(i, new Vector3(Mathf.Cos(a) * rr, 0.02f, Mathf.Sin(a) * rr));
+            }
         }
     }
 
@@ -1016,6 +1079,7 @@ public class VfxComposerWindow : EditorWindow
         {
             radiusRing.SetActive(showRadiusRing);
             if (showRadiusRing) UpdateRadiusRing();
+            else for (int i = 0; i < radiusRingLrs.Count; i++) radiusRingLrs[i].gameObject.SetActive(false);
         }
 
         EnsurePreview();

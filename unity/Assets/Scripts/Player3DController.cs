@@ -986,12 +986,19 @@ public partial class Player3DController : MonoBehaviour
         return Physics.Raycast(ray, out var hit, 500f) ? hit.collider.GetComponentInParent<WorldPickup>() : null;
     }
 
+    static int groundMask = -1;   // cached "Ground" layer mask (-1 = unresolved, 0 = no Ground layer in scene)
+
     static bool GroundPoint(Camera cam, out Vector3 point)
     {
         point = default;
         if (cam == null) return false;
         var ray = cam.ScreenPointToRay(MousePos());
-        if (Physics.Raycast(ray, out var hit, 500f)) { point = hit.point; return true; }
+        if (groundMask == -1) { int l = LayerMask.NameToLayer("Ground"); groundMask = l >= 0 ? (1 << l) : 0; }
+        // Raycast the GROUND layer ONLY. Hitting every collider let the cursor point snap onto a mob's
+        // floating billboard quad (e.g. a dead mob) — placing a ground-targeted skill high + offset while it
+        // still looked grounded from the top-down camera, so its frozen AoE ticks never reached the player.
+        if (groundMask != 0 && Physics.Raycast(ray, out var hit, 500f, groundMask, QueryTriggerInteraction.Ignore))
+        { point = hit.point; return true; }
         if (Mathf.Abs(ray.direction.y) > 1e-4f)         // fallback: flat ground plane at y≈0
         {
             float t = -ray.origin.y / ray.direction.y;

@@ -27,7 +27,9 @@ public static class VfxCue
         if (actor == null) return;
         var b = VfxCueCatalog.Get(id);
         if (b == null || b.vfx == null) return;
-        VfxDirector.Play(b.vfx, BuildCtx(b, actor, target), null);
+        var ctx = BuildCtx(b, actor, target);
+        ctx.follow = actor;   // let one-shot cues use Attach steps too (they auto-stop when the sequence ends)
+        VfxDirector.Play(b.vfx, ctx, null);
     }
 
     /// <summary>Begin a PERSISTENT cue that TRACKS <paramref name="actor"/> (a status aura) and return the runner
@@ -40,16 +42,18 @@ public static class VfxCue
         var b = VfxCueCatalog.Get(id);
         if (b == null || b.vfx == null) return null;
         var ctx = BuildCtx(b, actor, actor);
-        ctx.follow = actor;   // the aura's Attach step tracks the unit
+        ctx.follow = actor;      // the aura's Attach step tracks the unit
+        ctx.persistent = true;   // caller holds it alive and Stops it when the state ends
         return VfxDirector.Play(b.vfx, ctx, null);
     }
 
-    // Feed the two reference points; the sequence's own steps decide which one each piece spawns at.
-    // Struct return → no allocation.
+    // Feed the two reference points; the sequence's own steps decide which one each piece spawns at. A character's
+    // transform.position is its billboard VISUAL CENTRE, but the Composer authors from the ground — so we drop the
+    // anchor Y to the floor under each point (matches the ruler standing on the floor). Struct return → no allocation.
     static VfxContext BuildCtx(VfxCueBinding b, Transform actor, Transform target)
     {
-        Vector3 a = actor.position;
-        Vector3 t = target != null ? target.position : a;
+        Vector3 a = actor.position; a.y = GroundY(a);
+        Vector3 t = target != null ? target.position : actor.position; t.y = GroundY(t);
         return new VfxContext
         {
             origin = a + b.offset,
@@ -57,6 +61,19 @@ public static class VfxCue
             follow = null,
             targetUnit = target,
             scaleMult = b.scale <= 0f ? 1f : b.scale,
+            groundY = a.y,
         };
+    }
+
+    static int groundMask = -1;   // cached Ground-layer mask (-1 unresolved, 0 = no Ground layer)
+
+    // World Y of the floor under a point. Single non-alloc raycast (cues are event-driven, not per-frame). Falls
+    // back to the point's own Y if there's no Ground layer / no hit, so an off-floor actor isn't yanked down.
+    static float GroundY(Vector3 p)
+    {
+        if (groundMask == -1) { int l = LayerMask.NameToLayer("Ground"); groundMask = l >= 0 ? 1 << l : 0; }
+        if (groundMask != 0 && Physics.Raycast(p + Vector3.up * 2f, Vector3.down, out var hit, 12f, groundMask))
+            return hit.point.y;
+        return p.y;
     }
 }

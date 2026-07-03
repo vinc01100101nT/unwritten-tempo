@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
+  m_Name: skill.new 1
+  m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  id: skill.single_heal
+  displayName: Heal
+  icon: {fileID: 2903848411162822477, guid: 4bae3342ecf8e1c4ca8a5e2eb9f81491, type: 3}
+  manaCost: 5
+  cooldown: 0.7
+  maxLevel: 10
+  aim: 2
+  castRange: 11
+  vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
+  repeatCount: 1
+  repeatInterval: 0
+  bindings:
+  - tickId: follow_hit
+    targets: 1
+    scope: 1
+    radius: 0.97
+    effects:
+    - kind: 1
+      magic: 1
+      damageMult: 1
+      element: 0
+      amount: 50
+      ailment: 2
+      seconds: 4
+      magnitude: 3
+    scale:
+      damageMultPerLevel: 0.2
+      flatBonusPerLevel: 0
+  shortLabel: Heal
+  keyLabel: 
+  slotOrder: 10
+  tint: {r: 1, g: 1, b: 1, a: 1}

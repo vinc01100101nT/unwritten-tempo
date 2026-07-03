@@ -272,13 +272,15 @@ public static class Vfx
     /// each frame without parenting (so it never inherits a billboard's breathe/scale). Looping effects live
     /// until you call <see cref="EffectHandle.Stop"/> on the returned handle; a fixed-lifetime effect returns
     /// itself. Null if the id is unknown.</summary>
-    public static EffectHandle Attach(string id, Transform target, Vector3 offset = default, float scaleMult = 1f, float clipStart = 0f)
+    public static EffectHandle Attach(string id, Transform target, Vector3 offset = default, float scaleMult = 1f,
+                                      Color tint = default, bool oneShot = false, float clipStart = 0f)
     {
         var def = EffectCatalog.Get(id);
         if (def == null || target == null) return null;
         var h = Rent(def);
         Vector3 total = offset + def.offset;
-        h.Begin(target.position + total, Quaternion.identity, def.scale, scaleMult, 1f, Color.white, def.lifetime, false, target, total, 0f, clipStart);
+        Color t = tint == default ? Color.white : tint;   // unset (0,0,0,0) → no tint
+        h.Begin(target.position + total, Quaternion.identity, def.scale, scaleMult, 1f, t, def.lifetime, oneShot, target, total, 0f, clipStart);
         return h;
     }
 

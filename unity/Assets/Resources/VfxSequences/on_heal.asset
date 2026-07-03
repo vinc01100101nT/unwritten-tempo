@@ -18,16 +18,16 @@ MonoBehaviour:
     delay: 0
     startEvent: 
     snapToEventPoint: 0
-    kind: 0
-    anchor: 1
+    kind: 1
+    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     rotationEuler: {x: 0, y: 0, z: 0}
     effectId: aura.buff
-    scale: 0.4
+    scale: 0.212
     speed: 1
     trimEnd: 0
     clipStart: 0
-    tint: {r: 0.14676584, g: 0.6377357, b: 0.032488372, a: 1}
+    tint: {r: 0.15780035, g: 0.690566, b: 0.035179723, a: 1}
     emitEventOnStart: 
     emitEventOnEnd: 
     tickId: 

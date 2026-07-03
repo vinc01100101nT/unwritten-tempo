@@ -23,12 +23,14 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     VfxContext lastCtx;                 // captured per cast so OnTick can read the Single-scope target unit
     System.Action<VfxTick> onTick;      // cached hook (no per-play delegate alloc)
     System.Action<Vector3> onGround;    // cached ground-confirm hook
+    System.Action<Transform> onUnit;    // cached single-target confirm hook
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
 
     void Awake()
     {
         onTick = OnTick;
         onGround = Cast;
+        onUnit = CastTargeted;
     }
 
     // ---- activation ---------------------------------------------------------
@@ -38,8 +40,22 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (def == null || def.vfx == null) return false;
         if (Character.Instance == null || Character.Instance.IsDead) return false;
         if (StatusController.Player != null && StatusController.Player.Silenced)
-        { DamagePopup.SpawnText(transform.position, "Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
+        { BattleNotice.Warn("Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
         if (Time.time < nextUse) return false;
+
+        // Single-target skills must land on ONE valid unit — they can NEVER be ground-cast (a ground point is not a
+        // target). This overrides the authored aim: enter the unified reticle, which validates the hovered unit's
+        // KIND against the skill's target mask (and warns in-game on an illegal pick). The bindings are the single
+        // source of truth for who a skill can hit, so targeting is derived from them, not a separate aim field.
+        if (def.IsSingleTarget)
+        {
+            var mask = def.SingleTargetMask;
+            if (mask == SkillTargets.None)
+            { BattleNotice.Warn("No valid target"); return false; }
+            if (UnitTargeter.Active) { UnitTargeter.Cancel(); return false; }   // re-press cancels aiming
+            UnitTargeter.Begin(transform, def.castRange, mask, onUnit);
+            return true;   // MP/cooldown spent on confirm (CastTargeted), so cancelling costs nothing
+        }
 
         switch (def.aim)
         {
@@ -51,7 +67,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             case SkillAim.Target:
                 var mob = NearestMob(transform.position, def.castRange);
                 if (mob == null) return false;
-                CastTargeted(mob);
+                CastTargeted(mob.transform);
                 return true;
 
             default: // Self
@@ -68,16 +84,16 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         PlayCycles();
     }
 
-    // Target confirm: origin = caster, target/single-unit = the chosen mob.
-    void CastTargeted(MonsterAI3D mob)
+    // Target confirm: origin = caster, target/single-unit = the chosen unit (a mob, or the player for a self-cast).
+    void CastTargeted(Transform unit)
     {
-        if (!Spend()) return;
+        if (unit == null || !Spend()) return;
         lastCtx = new VfxContext
         {
             origin = transform.position,
-            target = mob.transform.position,
+            target = unit.position,
             follow = null,
-            targetUnit = mob.transform,
+            targetUnit = unit,
             scaleMult = 1f,
         };
         PlayCycles();
@@ -110,7 +126,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (Character.Instance == null || Character.Instance.IsDead || Time.time < nextUse) return false;
         if (!Character.Instance.SpendMana(def.manaCost))
         {
-            DamagePopup.SpawnText(transform.position, "No MP", NoManaColor);
+            BattleNotice.Warn("No MP", NoManaColor);
             return false;
         }
         lastDuration = def.cooldown;

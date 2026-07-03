@@ -78,6 +78,7 @@ public class VfxSequenceRunner : MonoBehaviour
     float startTime, endBy;
     int gen;                        // bumped each Begin/Finish → stale carrier callbacks are ignored
     bool active;
+    bool hasLiveAura;               // a persistent (Begin) Attach is running → never auto-tear-down; wait for Stop()
 
     internal void Begin(VfxSequence s, VfxContext c, System.Action<VfxTick> cb)
     {
@@ -85,6 +86,7 @@ public class VfxSequenceRunner : MonoBehaviour
         gen++;
         startTime = Time.time;
         active = true;
+        hasLiveAura = false;
         attached.Clear();
 
         int n = seq.steps.Count;
@@ -145,7 +147,7 @@ public class VfxSequenceRunner : MonoBehaviour
             Emit(steps[i].emitEventOnEnd, ctx.target, false);
         }
 
-        if (t >= (endBy - startTime)) Finish();
+        if (!hasLiveAura && t >= (endBy - startTime)) Finish();
     }
 
     // Fire a step's action. emitEventOnStart raises the instant the step begins; emitEventOnEnd raises when the
@@ -179,8 +181,18 @@ public class VfxSequenceRunner : MonoBehaviour
             case VfxStepKind.Attach:
                 if (ctx.follow != null)
                 {
-                    var h = Vfx.Attach(st.effectId, ctx.follow, st.offset, scale);
-                    if (h != null) attached.Add(h);
+                    // Persistent (Begin) → loop until the caller Stops it. One-shot (Fire) → play the effect's
+                    // authored lifetime once, and extend teardown so the sequence doesn't cut the aura short.
+                    // Anchor at the grounded ctx.origin (feet), not the raw follow pivot (visual centre), and keep
+                    // tracking the unit's x/z — otherwise a ground-authored aura rides up to the character's head.
+                    Vector3 followOff = st.offset + (ctx.origin - ctx.follow.position);
+                    var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !ctx.persistent);
+                    if (h != null)
+                    {
+                        attached.Add(h);
+                        if (ctx.persistent) hasLiveAura = true;
+                        else if (h.ReturnAt + 0.5f > endBy) endBy = h.ReturnAt + 0.5f;
+                    }
                     ScheduleTicks(i, point);   // ticks fire at the followed unit's current point (resolved each raise below)
                 }
                 break;

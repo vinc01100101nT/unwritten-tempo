@@ -190,6 +190,16 @@ public struct VfxContext
     public Transform targetUnit;
     /// <summary>Uniform scale applied to every effect in the sequence (1 = authored).</summary>
     public float scaleMult;
+    /// <summary>World Y of the FLOOR under the actor. A character's <c>transform.position</c> is its billboard
+    /// VISUAL CENTRE, but the Vfx Composer authors every effect from the ground (the ruler stands on the floor),
+    /// so cues resolve this and anchor there — otherwise a ground-authored aura rides up to the character's head.
+    /// 0 by default (world ground standard is Y0); <c>VfxCue</c> raycasts the real floor and fills it.</summary>
+    public float groundY;
+    /// <summary>True when the caller holds this play alive (a status aura via <c>VfxCue.Begin</c>) and will
+    /// <c>Stop()</c> it explicitly. An <see cref="VfxStepKind.Attach"/> step then loops until stopped and the
+    /// runner never auto-tears-down. False (the default, one-shot <c>Fire</c>) = the Attach plays its authored
+    /// lifetime once, then ends with the sequence.</summary>
+    public bool persistent;
 
     /// <summary>A fixed-point context (origin == target == point, scale 1).</summary>
     public static VfxContext At(Vector3 point) =>
