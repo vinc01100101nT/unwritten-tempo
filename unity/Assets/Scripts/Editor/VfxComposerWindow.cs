@@ -657,6 +657,10 @@ public class VfxComposerWindow : EditorWindow
                 st.tint = EditorGUILayout.ColorField(new GUIContent("tint",
                     "Multiplies the effect's authored colour (white = original). Recolour a blue burst to red/green, etc."),
                     st.tint);
+                st.scatter = EditorGUILayout.Toggle(new GUIContent("scatter",
+                    "Jitter the spawn point by a random amount per axis (magnitude up to 0.2 units on x/y/z) each " +
+                    "play, so repeats don't stack in the exact same spot. The composer preview stays deterministic."),
+                    st.scatter);
                 if (st.kind == VfxStepKind.PlayAt)
                 {
                     st.speed = EditorGUILayout.Slider("speed", st.speed <= 0f ? 1f : st.speed, 0.1f, 3f);

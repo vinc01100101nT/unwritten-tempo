@@ -34,8 +34,9 @@ public static class Build3DCharacterSpike
     const string ControllerPath = OutDir + "/QuatSpikeController.controller";
     const string ScenePath     = "Assets/Scenes/Spike3DCharacters.unity";
 
-    // Quaternius FBX import several units tall (~3.3u); the game's characters read ~1.4u. Auto-fit to this.
-    const float TargetHeight = 1.5f;
+    // Quaternius FBX import several units tall (~3.3u); auto-fit every model to this world height instead.
+    // 0.327u = the hand-tuned size (Ninja_Female at 0.1 scale) that reads right against the game's world.
+    const float TargetHeight = 0.327f;
 
     // Clips looped so the locomotion blend tree cycles; everything else plays once (Attack/Jump/etc.).
     static readonly HashSet<string> LoopClips = new HashSet<string>

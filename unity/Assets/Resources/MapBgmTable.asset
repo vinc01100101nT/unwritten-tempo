@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: MapBgmTable
   m_EditorClassIdentifier: Assembly-CSharp::MapBgmTable
   entries:
+  - sceneName: Spike3DCharacters
+    track: {fileID: 0}
   - sceneName: dungeon_0
     track: {fileID: 0}
   - sceneName: dungeon_1

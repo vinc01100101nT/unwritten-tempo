@@ -64,7 +64,7 @@ public class DevSettings : MonoBehaviour
     // ---- lazily-resolved targets (re-found after map swaps destroy/recreate them) ----
     Player3DController player;
     BakedBillboard8 bakedPlayer;   // the baked 8-dir visual riding the player (if "Use Baked Character" is active)
-    BakedPlayerVisual bakedVisual; // the driver on top of bakedPlayer (owns the fall-pose phase)
+    BakedPlayerVisual bakedVisual; // the animation brain on top of bakedPlayer (used to locate the billboard)
     Transform groundRoot;          // the ground root moved by the "Ground height" knob (found via a Ground-layer ray)
     int groundLayerMask = -1;      // cached Ground layer mask (-1 = not resolved yet)
     Player3DAttacker attacker;
@@ -310,9 +310,11 @@ public class DevSettings : MonoBehaviour
         F("Feet offset", -0.5f, 1f, () => bakedPlayer ? bakedPlayer.FeetOffset : 0f,
             v => { if (bakedPlayer) bakedPlayer.SetFeetOffset(v); });
         // Where in the Jump clip the looped FALLING frames start (0 = whole clip, 0.5 = 2nd/descent half,
-        // ~0.9 ≈ hold the last frame). Reuses Jump because there's no dedicated Fall bake.
-        F("Fall pose phase", 0f, 1f, () => bakedVisual ? bakedVisual.fallPosePhase : 0f,
-            v => { if (bakedVisual) bakedVisual.fallPosePhase = v; });
+        // ~0.9 ≈ hold the last frame). Lives on the Fall stance binding now (its single owner); live-tune it here,
+        // then persist in the Stance Composer. Reuses Jump because there's no dedicated Fall bake.
+        F("Fall pose phase", 0f, 1f,
+            () => { var b = StanceCatalog.Get(StanceId.Fall); return b != null ? b.fallPhase : 0f; },
+            v => { var b = StanceCatalog.Get(StanceId.Fall); if (b != null) b.fallPhase = v; });
 
         // ---- Shadows — light-facing billboard cast shadows (player + mobs) -------
         // The proxy turns to fully face the sun so the silhouette shadow survives any light angle (side-on AND

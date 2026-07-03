@@ -133,6 +133,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (dur > 0f)
         {
             castAura = VfxCue.Begin(VfxCueId.OnCastStart, transform);
+            if (StanceController.Player != null) StanceController.Player.Push(StanceId.Casting);   // hold the cast pose for the wind-up
             var sc = StatusController.Player;
             string label = def.displayName;
             for (float t = 0f; t < dur; t += Time.deltaTime)
@@ -154,6 +155,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     void EndCast()
     {
         if (castAura != null) { castAura.Stop(); castAura = null; }
+        if (StanceController.Player != null) StanceController.Player.Pop(StanceId.Casting);   // release the cast pose (complete/interrupt/OnDisable)
         CastBar.Hide();
         castRoutine = null;
     }

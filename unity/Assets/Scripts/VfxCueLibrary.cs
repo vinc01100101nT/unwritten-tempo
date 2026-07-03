@@ -11,13 +11,22 @@ using UnityEngine;
 /// </summary>
 public enum VfxCueId
 {
-    // --- verbs (one-shot) ---
-    OnAttack,     // a swing starts
-    OnHit,        // a basic hit lands
-    OnCrit,       // a basic hit lands as a critical
-    OnHeal,       // HP restored (potion, heal skill, regen)
-    OnLevelUp,    // character gained a level
-    OnDeath,      // the unit died
+    // --- Active Verbs (attacker-side; NOT built yet) ---
+    // OnAttack fires on the ACTOR when a swing starts. Currently DORMANT — its call site is commented out; it's
+    // reserved for future per-weapon swing vfx/sfx. Kept here at index 0 so every stored cue index below stays put
+    // (the int is serialized in VfxCueLibrary.asset; this enum is APPEND-ONLY / never-reorder). When Active Verbs
+    // are built, this is their first member.
+    OnAttack,
+
+    // --- Passive Verbs (receiver-side, one-shot) ---
+    // Every cue below fires on the UNIT THAT RECEIVES the event, with no attacker and no direction (Origin ==
+    // Target == receiver), exactly like OnReceiveHeal. That receiver-only rule is the whole point of the "passive"
+    // grouping — it keeps the mental model simple: these are things that happen TO a unit.
+    OnHitByNormalAttack,   // took a basic (non-crit) auto-attack hit
+    OnHitByCriticalAttack, // took a critical auto-attack hit
+    OnReceiveHeal,         // HP restored (potion, heal skill, regen)
+    OnLevelUp,             // gained a level
+    OnDeath,               // died
 
     // --- status lifecycle ---
     // *Start = a PERSISTENT aura begun on apply and stopped on expiry (author as an Attach/looping sequence).
@@ -31,6 +40,12 @@ public enum VfxCueId
 
     // --- skill lifecycle ---
     OnCastStart,  // a skill begins casting (fired once at the caster the instant a cast is confirmed)
+
+    // Passive Verb (receiver-side): fired at the VICTIM when any damage-dealing skill lands on it (physical skill
+    // strike or magic — NOT a basic auto-attack, which is OnHitByNormalAttack / OnHitByCriticalAttack). Grouped
+    // with the Passive Verbs in the composer UI, but the enum is append-only so the int index lives at the end.
+    // See Health's skill-damage choke point.
+    OnHitBySkill,
 }
 
 /// <summary>Binds ONE <see cref="VfxCueId"/> to the composed look it should play — the status/verb analog of a

@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4336336bf8aa7884e830c777cb833fb7, type: 3}
+  m_Name: StanceLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::StanceLibrary
+  stances:
+  - id: 0
+    action: 0
+    speedSource: 1
+    speedMult: 1
+    priority: 10
+    playMode: 0
+    fallPhase: 0.5
+  - id: 1
+    action: 0
+    speedSource: 0
+    speedMult: 1
+    priority: 20
+    playMode: 0
+    fallPhase: 0.5
+  - id: 2
+    action: 2
+    speedSource: 2
+    speedMult: 1
+    priority: 30
+    playMode: 0
+    fallPhase: 0.5
+  - id: 3
+    action: 7
+    speedSource: 0
+    speedMult: 1
+    priority: 5
+    playMode: 0
+    fallPhase: 0.5
+  - id: 4
+    action: 0
+    speedSource: 0
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 5
+    action: 1
+    speedSource: 3
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 6
+    action: 2
+    speedSource: 3
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 7
+    action: 3
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 8
+    action: 9
+    speedSource: 0
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 9
+    action: 12
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 10
+    action: 5
+    speedSource: 0
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 11
+    action: 15
+    speedSource: 0
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 12
+    action: 6
+    speedSource: 0
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 13
+    action: 9
+    speedSource: 0
+    speedMult: 1
+    priority: 0
+    playMode: 1
+    fallPhase: 0.5

@@ -750,7 +750,7 @@ public class Character : MonoBehaviour
         if (a != null)
         {
             DamagePopup.SpawnText(a.position, "+" + amount, HealColor);  // green = heal
-            VfxCue.Fire(VfxCueId.OnHeal, a);
+            VfxCue.Fire(VfxCueId.OnReceiveHeal, a);
         }
     }
 

@@ -99,6 +99,9 @@ public class VfxStep
     public VfxAnchor anchor = VfxAnchor.Target;
     [Tooltip("World-space nudge from the anchor point.")]
     public Vector3 offset;
+    [Tooltip("PlayAt / Attach: jitter the spawn point by a random amount per axis (magnitude up to " +
+             "0.2 units on x/y/z) so repeated plays don't stack in the exact same spot. Off = deterministic.")]
+    public bool scatter;
     [Tooltip("Euler rotation for the spawned effect (PlayAt).")]
     public Vector3 rotationEuler;
 

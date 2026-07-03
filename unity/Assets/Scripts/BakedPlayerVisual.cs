@@ -13,8 +13,14 @@ using UnityEngine;
 ///
 /// Wire it with <c>Tools ▸ unwritten ▸ Player ▸ Use Baked Character</c>. Reversible — remove this object (or run
 /// the revert tool) and the original player sprite comes back.
+///
+/// <para>This is the player's animation BRAIN, but not its hands: it computes WHICH action/pose to show and routes
+/// every drive through a <see cref="StanceController"/> (the single choke point that actually touches
+/// <see cref="BakedBillboard8.Play"/>), so nothing else can fight it for the billboard. Runs at execution order −100
+/// so its intent is fed before the controller resolves (−50) and the sprite renders (0).</para>
 /// </summary>
 [RequireComponent(typeof(BakedBillboard8))]
+[DefaultExecutionOrder(-100)]
 public class BakedPlayerVisual : MonoBehaviour
 {
     [Tooltip("The real player to ride. Auto-found at Start if left empty.")]
@@ -25,9 +31,6 @@ public class BakedPlayerVisual : MonoBehaviour
     public float hurtDuration = 0.4f;
     [Tooltip("Seconds the PickUp action plays when collecting loot.")]
     public float pickUpDuration = 0.6f;
-    [Tooltip("Free-fall pose: where in the Jump clip the looped falling frames begin (0 = whole clip, 0.5 = its " +
-             "2nd/descent half, ~0.9 ≈ hold the last frame). No dedicated Fall art exists, so we reuse Jump.")]
-    [Range(0f, 1f)] public float fallPosePhase = 0.5f;
     [Tooltip("While DEAD, the grounding offset for the (lying) corpse sprite. It is CLAMPED so it can only ever " +
              "SETTLE the corpse onto the floor, never RAISE it above where the player stood — set it BELOW the " +
              "standing feet-offset to sink the lying body if its head pokes through the ground; a value at/above " +
@@ -37,6 +40,7 @@ public class BakedPlayerVisual : MonoBehaviour
     public float deadSettleTime = 0.25f;
 
     BakedBillboard8 baked;
+    StanceController stance;       // the single choke point we route every Play/pose through (auto-added)
     Player3DAttacker attacker;     // for the Swinging (attack) state
     SpriteRenderer hiddenPlayerSprite;
     CharacterController cc;        // used to drop from capsule-center to the feet/ground point
@@ -46,10 +50,15 @@ public class BakedPlayerVisual : MonoBehaviour
     bool wasDead;
     float groundedFeetOffset;      // standing grounding captured at death, restored on revive
     float deadTargetOffset;        // clamped dead grounding (never above standing) we ease toward
-    bool wasRolling;               // rising-edge guard so the dash→Roll time-fit + log fire once per dash
     float hurtUntil, pickUpUntil;  // momentary one-shot windows (event-driven, not state-driven)
 
-    void Awake() => baked = GetComponent<BakedBillboard8>();
+    void Awake()
+    {
+        baked = GetComponent<BakedBillboard8>();
+        stance = GetComponent<StanceController>();
+        if (stance == null) stance = gameObject.AddComponent<StanceController>();
+        stance.BecomePlayer();   // register as StanceController.Player + hold Idle (never self-sample movement)
+    }
 
     void Start()
     {
@@ -60,6 +69,7 @@ public class BakedPlayerVisual : MonoBehaviour
         int gl = LayerMask.NameToLayer("Ground");
         groundMask = gl >= 0 ? (1 << gl) : 0;   // 0 → no Ground layer; GroundedPos falls back to the capsule drop
         attacker = player.GetComponent<Player3DAttacker>();
+        stance.SetGaitSource(player);   // MoveGait stances resolve against the real controller (on the player, not this visual)
         hiddenPlayerSprite = player.GetComponent<SpriteRenderer>();
         if (hiddenPlayerSprite != null) hiddenPlayerSprite.enabled = false;   // hide the original avatar
 
@@ -149,11 +159,11 @@ public class BakedPlayerVisual : MonoBehaviour
             }
             float ease = deadSettleTime > 0.001f ? Time.deltaTime / deadSettleTime : 1f;
             baked.SetFeetOffset(Mathf.MoveTowards(baked.FeetOffset, deadTargetOffset, Mathf.Abs(groundedFeetOffset - deadTargetOffset) * ease + 0.0001f));
-            baked.Play(CharacterAction.Die);   // plays once and holds its final (lying) frame — see BakedBillboard8.HoldsLastFrame
+            stance.DriveStance(StanceId.Die);   // its action (Die) plays once and holds its final (lying) frame — see BakedBillboard8.HoldsLastFrame
             wasDead = true;
             return;
         }
-        if (wasDead) { baked.SetFeetOffset(groundedFeetOffset); baked.StopOverride(); wasDead = false; }   // revived → stand back up on the normal feet
+        if (wasDead) { baked.SetFeetOffset(groundedFeetOffset); stance.ClearAction(); wasDead = false; }   // revived → stand back up on the normal feet
 
         Vector3 dir = player.WorldFacing; dir.y = 0f;
 
@@ -162,77 +172,61 @@ public class BakedPlayerVisual : MonoBehaviour
         // clears IsFalling during the hop/dash/swing frames. Beats locomotion so you don't "run" through the air.
         if (player.IsFalling && baked.HasAction(CharacterAction.Jump))
         {
-            wasRolling = false;
-            baked.PlayFall(CharacterAction.Jump, fallPosePhase);
+            stance.DriveStance(StanceId.Fall);   // Fall stance reuses the Jump clip's tail (StancePlayMode.FallTail)
             if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);
             return;
         }
 
-        // One-shot / action overrides, highest priority first. While one is active we feed only FACING (not
-        // velocity) so movement can't cancel it — a swing/jump/dash on the run keeps playing its action.
-        // Hurt is the EXCEPTION: it only flinches when fully idle (not moving/jumping/attacking/etc.), so a hit
-        // never interrupts an action or a run.
-        CharacterAction ov;
-        bool hasOverride = true;
-        if (attacker != null && attacker.Swinging)          ov = CharacterAction.Attack;
-        else if (player.IsAirborne)                         ov = CharacterAction.Jump;
-        else if (player.Dashing || player.EDashing)         ov = baked.HasAction(CharacterAction.Roll) ? CharacterAction.Roll : CharacterAction.Dash;
-        else if (Time.time < pickUpUntil)                   ov = CharacterAction.PickUp;
-        else if (Time.time < hurtUntil && speed < walkThreshold) ov = CharacterAction.Hurt;
-        else { ov = CharacterAction.Idle; hasOverride = false; }
-
-        if (hasOverride)
+        // One-shot / action overrides, highest priority first — all routed through the stance controller's action
+        // layer (it beats any held stance). While one is active we feed only FACING (not velocity) so movement can't
+        // cancel it — a swing/jump/dash on the run keeps playing. Hurt is the EXCEPTION: it only flinches when fully
+        // idle (not moving/jumping/attacking/etc.), so a hit never interrupts an action or a run. FitWindow stances
+        // (Attack/Roll) are fed the RUNTIME window seconds; the controller fits the clip to it (SwingTime itself
+        // scales with Character.AttackSpeedMult, so the swing animation keeps pace with attack-speed).
+        if (attacker != null && attacker.Swinging)
         {
-            // Speed the Attack clip so the WHOLE animation plays exactly within the swing window (which scales with
-            // attack-speed), and damage lands as it finishes. speed = naturalClipLength / swingTime.
-            if (ov == CharacterAction.Attack && attacker != null)
-            {
-                float swing = attacker.SwingTime;
-                float natural = baked.NaturalDuration(CharacterAction.Attack);
-                if (swing > 0.01f && natural > 0.01f)
-                    baked.SetActionSpeed(CharacterAction.Attack, natural / swing);
-            }
-
-            // Dash → Roll: compress the Roll clip to play in full within the (short) dash window so it reads as a
-            // dodge-roll, not a 2-frame flash. Done once on the rising edge.
-            if (ov == CharacterAction.Roll)
-            {
-                if (!wasRolling)
-                {
-                    wasRolling = true;
-                    float dashLen = player.EDashing ? player.eDashDuration : 0.4f;
-                    float natural = baked.NaturalDuration(CharacterAction.Roll);
-                    if (dashLen > 0.01f && natural > 0.01f) baked.SetActionSpeed(CharacterAction.Roll, natural / dashLen);
-                }
-            }
-            else wasRolling = false;
-
-            baked.Play(ov);                                              // missing action falls back to Idle internally
-            if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);          // keep aiming without clearing the override
-            return;
+            stance.DriveStance(StanceId.Attack, attacker.SwingTime);
         }
-
-        // Locomotion — facing from the player's INTENT (stable even when blocked). Normal movement RUNS;
-        // holding Shift (player.WalkingSlow) downshifts to WALK (+ slower speed, set in the controller). We
-        // force the locomotion action rather than letting speed thresholds pick it, so a "run" reads as Run
-        // even at the modest player move speed. Falls back to Walk if no Run strip was baked.
-        if (speed >= walkThreshold && dir.sqrMagnitude > 1e-4f)
+        else if (player.IsAirborne)
         {
-            CharacterAction loco = player.WalkingSlow
-                ? CharacterAction.Walk
-                : (baked.HasAction(CharacterAction.Run) ? CharacterAction.Run : CharacterAction.Walk);
-            baked.Play(loco);
-            // Bind the clip's playback speed to the player's ACTUAL move speed (same factor the footsteps use): a
-            // move-speed buff makes the run/walk cycle visibly faster, a Slow makes it slower. 1 = the baked fps.
-            baked.SetActionSpeed(loco, player.GaitSpeedMult);
-            baked.SetFacing(dir.normalized);
+            stance.DriveStance(StanceId.Jump);
+        }
+        else if (player.Dashing || player.EDashing)
+        {
+            float dashLen = player.EDashing ? player.eDashDuration : 0.4f;
+            stance.DriveStance(StanceId.Roll, dashLen);
+        }
+        else if (Time.time < pickUpUntil)
+        {
+            stance.DriveStance(StanceId.PickUp);
+        }
+        else if (Time.time < hurtUntil && speed < walkThreshold)
+        {
+            stance.DriveStance(StanceId.Hurt);
         }
         else
         {
-            baked.StopOverride();
-            baked.SetVelocity(Vector3.zero);
-            if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);
+            // No action — locomotion, or hand off to a held stance / Idle. Facing from the player's INTENT (stable
+            // even when blocked). Normal movement RUNS; holding Shift (WalkingSlow) downshifts to WALK. The Walk/Run
+            // stances read the live gait via their MoveGait source, so a move-speed buff visibly quickens the cycle.
+            if (speed >= walkThreshold && dir.sqrMagnitude > 1e-4f)
+            {
+                StanceId loco = player.WalkingSlow
+                    ? StanceId.Walk
+                    : (baked.HasAction(CharacterAction.Run) ? StanceId.Run : StanceId.Walk);
+                stance.DriveStance(loco);
+                baked.SetFacing(dir.normalized);
+            }
+            else
+            {
+                // Idle: drop the action so a held stance (Combat/Guard/…) shows, else the controller plays the Idle stance.
+                stance.ClearAction();
+                if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);
+            }
+            return;
         }
+
+        if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);   // action branches: keep aiming without cancelling the action
     }
 
     void OnDestroy()

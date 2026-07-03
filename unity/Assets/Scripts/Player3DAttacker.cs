@@ -94,7 +94,8 @@ public class Player3DAttacker : MonoBehaviour
         // so the visible swing keeps pace with the cadence instead of lagging at high ASPD.
         nextSwing = Time.time + cooldown * MotionScale;
         Sfx.Play(WeaponSfx(w => w.attackSfx, defaultAttackSfx));   // swing
-        VfxCue.Fire(VfxCueId.OnAttack, transform);
+        // OnAttack (attacker-side "Active Verb") is dormant — re-enable once we compose per-weapon swing vfx/sfx.
+        // VfxCue.Fire(VfxCueId.OnAttack, transform);
         swing = StartCoroutine(SwingThenHit(t));
     }
 
@@ -132,9 +133,10 @@ public class Player3DAttacker : MonoBehaviour
             if (dealt > 0)
             {
                 // Impact SOUND now plays FROM the mob in Health.TakeDamage (received_hit/crit, spatial) — no 2D play here.
-                // Impact BURST is authored as the OnHit / OnCrit cue (Vfx Cue Composer), anchored to the target pivot —
+                // Impact BURST is a receiver-side Passive Verb cue (Vfx Cue Composer), fired AT the target with no
+                // attacker/direction (Origin == Target == receiver), just like OnReceiveHeal / OnHitBySkill —
                 // the crit's bigger punch lives in the basic_crit sequence (×1.7), not a caller-side scale fudge.
-                VfxCue.Fire(crit ? VfxCueId.OnCrit : VfxCueId.OnHit, transform, t.transform);
+                VfxCue.Fire(crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack, t.transform);
             }
         }
 

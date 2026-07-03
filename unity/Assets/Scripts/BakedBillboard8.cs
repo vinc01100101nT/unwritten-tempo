@@ -16,7 +16,10 @@ using UnityEngine;
 /// <see cref="feetOffset"/> to ground the feet. Strips are sliced ONCE in Awake via
 /// <see cref="SpriteSheetCache.Row"/> (shared/read-only); the per-frame path allocates nothing.
 /// </summary>
+// Renders at the default order 0 — AFTER a StanceController (−50) has set this frame's override, which is itself
+// after the gameplay brain (BakedPlayerVisual, −100). Explicit so that ordering contract can't silently drift.
 [DisallowMultipleComponent]
+[DefaultExecutionOrder(0)]
 public class BakedBillboard8 : MonoBehaviour
 {
     /// <summary>Eight directional strips in <see cref="Facing8"/> octant order:

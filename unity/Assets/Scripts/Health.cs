@@ -99,7 +99,7 @@ public class Health : MonoBehaviour
         // Impact FROM the mob (spatial). A basic attack (rolled accuracy, attackerHit ≥ 0) → hit/crit;
         // a skill strike (always-lands, attackerHit −1) → the unified skill impact.
         if (attackerHit >= 0) CombatSfx.Hit(transform.position, crit);
-        else CombatSfx.SkillHit(transform.position);
+        else { CombatSfx.SkillHit(transform.position); VfxCue.Fire(VfxCueId.OnHitBySkill, transform); }
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
         ApplyLeech(dmg);
@@ -121,6 +121,7 @@ public class Health : MonoBehaviour
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
         CombatSfx.SkillHit(transform.position);   // magic = skill impact, spatial from the mob
+        VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
         ApplyLeech(dmg);
@@ -144,6 +145,7 @@ public class Health : MonoBehaviour
         CombatSfx.SkillHit(transform.position);   // overkill beats still sound (throttled per frame)
         if (wasAlive)
         {
+            VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
             if (isActiveAndEnabled) StartCoroutine(Flash());
             ApplyLeech(dmg);
             if (IsDead) Die();

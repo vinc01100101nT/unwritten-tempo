@@ -163,7 +163,9 @@ public class VfxSequenceRunner : MonoBehaviour
         Vector3 anchorPoint = (fromEvent && hasEventPoint && st.snapToEventPoint)
             ? eventPoint
             : (st.anchor == VfxAnchor.Origin ? ctx.origin : ctx.target);
-        Vector3 point = anchorPoint + st.offset;
+        // Optional random spawn jitter (PlayAt/Attach) so repeated plays don't stack in the exact same spot.
+        Vector3 jitter = (st.scatter && (st.kind == VfxStepKind.PlayAt || st.kind == VfxStepKind.Attach)) ? ScatterJitter() : Vector3.zero;
+        Vector3 point = anchorPoint + st.offset + jitter;
         float scale = st.scale * (ctx.scaleMult <= 0f ? 1f : ctx.scaleMult);
 
         Emit(st.emitEventOnStart, point, false);
@@ -185,7 +187,7 @@ public class VfxSequenceRunner : MonoBehaviour
                     // authored lifetime once, and extend teardown so the sequence doesn't cut the aura short.
                     // Anchor at the grounded ctx.origin (feet), not the raw follow pivot (visual centre), and keep
                     // tracking the unit's x/z — otherwise a ground-authored aura rides up to the character's head.
-                    Vector3 followOff = st.offset + (ctx.origin - ctx.follow.position);
+                    Vector3 followOff = st.offset + jitter + (ctx.origin - ctx.follow.position);
                     var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !ctx.persistent);
                     if (h != null)
                     {
@@ -227,6 +229,10 @@ public class VfxSequenceRunner : MonoBehaviour
                 break;
         }
     }
+
+    // A random per-axis nudge (magnitude up to 0.2 units) for a step's "scatter" option.
+    static Vector3 ScatterJitter() =>
+        new Vector3(Random.Range(-0.2f, 0.2f), Random.Range(-0.2f, 0.2f), Random.Range(-0.2f, 0.2f));
 
     // Arm an "on end" event for step i at absolute time t (no-op if the step has no on-end tag). Extends the
     // teardown deadline so a late end-event (and anything it chains) still fires before Finish.

@@ -21,6 +21,7 @@ MonoBehaviour:
     kind: 0
     anchor: 1
     offset: {x: 0, y: 0, z: 0}
+    scatter: 0
     rotationEuler: {x: 0, y: 0, z: 0}
     effectId: 
     scale: 1
