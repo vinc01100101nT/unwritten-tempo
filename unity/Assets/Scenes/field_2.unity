@@ -540,7 +540,7 @@ Transform:
   m_GameObject: {fileID: 75027615}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.6305504, y: 0.29680002, z: 9.246111}
+  m_LocalPosition: {x: 3.6305504, y: 0, z: 9.246111}
   m_LocalScale: {x: 0.74200004, y: 0.74200004, z: 0.74200004}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -604,11 +604,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -767,7 +762,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &75027627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4511,7 +4506,7 @@ Transform:
   m_GameObject: {fileID: 521968367}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 13.576977, y: 0.224, z: -6.1229835}
+  m_LocalPosition: {x: 13.576977, y: 0, z: -6.1229835}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4575,11 +4570,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -4738,7 +4728,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &521968379
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5198,7 +5188,7 @@ Transform:
   m_GameObject: {fileID: 606146211}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 11.178842, y: 0.224, z: 2.8146648}
+  m_LocalPosition: {x: 11.178842, y: 0, z: 2.8146648}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5262,11 +5252,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -5425,7 +5410,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &606146223
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5536,7 +5521,7 @@ Transform:
   m_GameObject: {fileID: 606192339}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 9.036658, y: 0.2576, z: -10.540909}
+  m_LocalPosition: {x: 9.036658, y: 0, z: -10.540909}
   m_LocalScale: {x: 0.644, y: 0.644, z: 0.644}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5600,11 +5585,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -5763,7 +5743,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &606192351
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6346,7 +6326,7 @@ Transform:
   m_GameObject: {fileID: 692147971}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6.655455, y: 0.2576, z: 12.017391}
+  m_LocalPosition: {x: -6.655455, y: 0, z: 12.017391}
   m_LocalScale: {x: 0.644, y: 0.644, z: 0.644}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6410,11 +6390,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -6573,7 +6548,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &692147983
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6684,7 +6659,7 @@ Transform:
   m_GameObject: {fileID: 694363215}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -11.336685, y: 0.29680002, z: -10.060421}
+  m_LocalPosition: {x: -11.336685, y: 0, z: -10.060421}
   m_LocalScale: {x: 0.74200004, y: 0.74200004, z: 0.74200004}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6748,11 +6723,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -6911,7 +6881,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &694363227
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7022,7 +6992,7 @@ Transform:
   m_GameObject: {fileID: 706022952}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 14.556881, y: 0.224, z: -17.016338}
+  m_LocalPosition: {x: 14.556881, y: 0, z: -17.016338}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7086,11 +7056,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -7249,7 +7214,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &706022964
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7438,7 +7403,7 @@ Transform:
   m_GameObject: {fileID: 712846605}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 8.428234, y: 0.2576, z: 6.7508063}
+  m_LocalPosition: {x: 8.428234, y: 0, z: 6.7508063}
   m_LocalScale: {x: 0.644, y: 0.644, z: 0.644}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7502,11 +7467,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -7665,7 +7625,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &712846617
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8086,7 +8046,7 @@ Transform:
   m_GameObject: {fileID: 752305046}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -11.311413, y: 0.2772, z: -6.2000675}
+  m_LocalPosition: {x: -11.311413, y: 0, z: -6.2000675}
   m_LocalScale: {x: 0.693, y: 0.693, z: 0.693}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8150,11 +8110,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -8313,7 +8268,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &752305058
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9755,7 +9710,7 @@ Transform:
   m_GameObject: {fileID: 893744189}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 14.961872, y: 0.224, z: 13.823916}
+  m_LocalPosition: {x: 14.961872, y: 0, z: 13.823916}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9819,11 +9774,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -9982,7 +9932,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &893744201
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10379,7 +10329,7 @@ Transform:
   m_GameObject: {fileID: 912695935}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 9.588026, y: 0.224, z: -5.092371}
+  m_LocalPosition: {x: 9.588026, y: 0, z: -5.092371}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10443,11 +10393,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -10606,7 +10551,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &912695947
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11398,7 +11343,7 @@ Transform:
   m_GameObject: {fileID: 1013767263}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 11.137282, y: 0.224, z: -0.110235214}
+  m_LocalPosition: {x: 11.137282, y: 0, z: -0.110235214}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11462,11 +11407,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -11625,7 +11565,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1013767275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12289,7 +12229,7 @@ Transform:
   m_GameObject: {fileID: 1126659916}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -7.658039, y: 0.29680002, z: -9.675371}
+  m_LocalPosition: {x: -7.658039, y: 0, z: -9.675371}
   m_LocalScale: {x: 0.74200004, y: 0.74200004, z: 0.74200004}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12353,11 +12293,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -12516,7 +12451,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1126659928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12744,7 +12679,7 @@ Transform:
   m_GameObject: {fileID: 1159598762}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.3197174, y: 0.3164, z: 8.718951}
+  m_LocalPosition: {x: -0.3197174, y: -0.000000029802322, z: 8.718951}
   m_LocalScale: {x: 0.791, y: 0.791, z: 0.791}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12808,11 +12743,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -12971,7 +12901,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1159598774
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13477,7 +13407,7 @@ Transform:
   m_GameObject: {fileID: 1197276601}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 15.836006, y: 0.224, z: -10.757198}
+  m_LocalPosition: {x: 15.836006, y: 0, z: -10.757198}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -13541,11 +13471,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -13704,7 +13629,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1197276613
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13894,7 +13819,7 @@ Transform:
   m_GameObject: {fileID: 1216920744}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 12.031094, y: 0.224, z: -7.575346}
+  m_LocalPosition: {x: 12.031094, y: 0, z: -7.575346}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -13958,11 +13883,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -14121,7 +14041,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1216920756
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14469,7 +14389,7 @@ Transform:
   m_GameObject: {fileID: 1240724788}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.8096466, y: 0.224, z: 12.574282}
+  m_LocalPosition: {x: -0.8096466, y: 0, z: 12.574282}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14533,11 +14453,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -14696,7 +14611,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1240724800
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14807,7 +14722,7 @@ Transform:
   m_GameObject: {fileID: 1256852912}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -17.590527, y: 0.2772, z: -14.562721}
+  m_LocalPosition: {x: -17.590527, y: 0, z: -14.562721}
   m_LocalScale: {x: 0.693, y: 0.693, z: 0.693}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14871,11 +14786,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -15034,7 +14944,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1256852924
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15224,7 +15134,7 @@ Transform:
   m_GameObject: {fileID: 1272295598}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -16.097408, y: 0.224, z: 6.406925}
+  m_LocalPosition: {x: -16.097408, y: 0, z: 6.406925}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15288,11 +15198,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -15451,7 +15356,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1272295610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16223,7 +16128,7 @@ Transform:
   m_GameObject: {fileID: 1347433693}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 12.84397, y: 0.224, z: -11.210651}
+  m_LocalPosition: {x: 12.84397, y: 0, z: -11.210651}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16287,11 +16192,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -16450,7 +16350,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1347433705
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16594,7 +16494,7 @@ Transform:
   m_GameObject: {fileID: 1377346073}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -17.82545, y: 0.2772, z: -4.293682}
+  m_LocalPosition: {x: -17.82545, y: 0, z: -4.293682}
   m_LocalScale: {x: 0.693, y: 0.693, z: 0.693}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16658,11 +16558,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -16821,7 +16716,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1377346085
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17567,7 +17462,7 @@ Transform:
   m_GameObject: {fileID: 1447353825}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 15.440392, y: 0.2772, z: -2.999823}
+  m_LocalPosition: {x: 15.440392, y: 0, z: -2.999823}
   m_LocalScale: {x: 0.693, y: 0.693, z: 0.693}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -17631,11 +17526,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -17794,7 +17684,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1447353837
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18514,7 +18404,7 @@ Transform:
   m_GameObject: {fileID: 1556793668}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.347584, y: 0.29680002, z: -8.885736}
+  m_LocalPosition: {x: 4.347584, y: 0, z: -8.885736}
   m_LocalScale: {x: 0.74200004, y: 0.74200004, z: 0.74200004}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18578,11 +18468,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -18741,7 +18626,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1556793680
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18931,7 +18816,7 @@ Transform:
   m_GameObject: {fileID: 1602421607}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -12.611591, y: 0.3164, z: 0.61027145}
+  m_LocalPosition: {x: -12.611591, y: -0.000000029802322, z: 0.61027145}
   m_LocalScale: {x: 0.791, y: 0.791, z: 0.791}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18995,11 +18880,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -19158,7 +19038,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1602421619
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19585,7 +19465,7 @@ Transform:
   m_GameObject: {fileID: 1685124876}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -10.06612, y: 0.2576, z: 8.879511}
+  m_LocalPosition: {x: -10.06612, y: 0, z: 8.879511}
   m_LocalScale: {x: 0.644, y: 0.644, z: 0.644}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -19649,11 +19529,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -19812,7 +19687,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1685124888
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20465,7 +20340,7 @@ Transform:
   m_GameObject: {fileID: 1751367858}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -14.806836, y: 0.2772, z: 2.5315652}
+  m_LocalPosition: {x: -14.806836, y: 0, z: 2.5315652}
   m_LocalScale: {x: 0.693, y: 0.693, z: 0.693}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -20529,11 +20404,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -20692,7 +20562,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1751367870
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20961,7 +20831,7 @@ Transform:
   m_GameObject: {fileID: 1770828092}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -8.498871, y: 0.29680002, z: -15.8484955}
+  m_LocalPosition: {x: -8.498871, y: 0, z: -15.8484955}
   m_LocalScale: {x: 0.74200004, y: 0.74200004, z: 0.74200004}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -21025,11 +20895,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -21188,7 +21053,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1770828104
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22050,7 +21915,7 @@ Transform:
   m_GameObject: {fileID: 1883355739}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -15.26606, y: 0.2772, z: -7.483923}
+  m_LocalPosition: {x: -15.26606, y: 0, z: -7.483923}
   m_LocalScale: {x: 0.693, y: 0.693, z: 0.693}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22114,11 +21979,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -22277,7 +22137,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1883355751
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22775,7 +22635,7 @@ Transform:
   m_GameObject: {fileID: 1923994599}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -8.306589, y: 0.2576, z: 7.1080165}
+  m_LocalPosition: {x: -8.306589, y: 0, z: 7.1080165}
   m_LocalScale: {x: 0.644, y: 0.644, z: 0.644}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22839,11 +22699,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -23002,7 +22857,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1923994611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23474,7 +23329,7 @@ Transform:
   m_GameObject: {fileID: 1989781184}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -7.59746, y: 0.2772, z: 9.023638}
+  m_LocalPosition: {x: -7.59746, y: 0, z: 9.023638}
   m_LocalScale: {x: 0.693, y: 0.693, z: 0.693}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -23538,11 +23393,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -23701,7 +23551,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &1989781196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24248,7 +24098,7 @@ Transform:
   m_GameObject: {fileID: 2018751066}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2.9330425, y: 0.224, z: -11.836039}
+  m_LocalPosition: {x: -2.9330425, y: 0, z: -11.836039}
   m_LocalScale: {x: 0.56, y: 0.56, z: 0.56}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -24312,11 +24162,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -24475,7 +24320,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &2018751078
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24901,7 +24746,7 @@ Transform:
   m_GameObject: {fileID: 2086251168}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5.374737, y: 0.3164, z: 8.055828}
+  m_LocalPosition: {x: -5.374737, y: -0.000000029802322, z: 8.055828}
   m_LocalScale: {x: 0.791, y: 0.791, z: 0.791}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -24965,11 +24810,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b2c4ba1c4b903a49b395bb6a33850a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathDissolve
-  smokeSheet: {fileID: 2800000, guid: b0f781dc05219df46a81219567c10a84, type: 3}
-  smokeFrameSize: 32
-  smokeFrames: 6
-  smokeFps: 16
-  smokeScale: 1.2
   deathSfx:
     clips:
     - {fileID: 8300000, guid: a0458e0f283b79c4d9bbca198a778808, type: 3}
@@ -25128,7 +24968,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &2086251180
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -164,6 +164,14 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 
 ---
 
+## Audio
+
+| Menu | What | Use when |
+| --- | --- | --- |
+| **Map BGM Table** | Assign a `BgmTrack` to each map (scene→track) in the `Resources/MapBgmTable` asset; `MusicDirector` reads it on map load. No re-generate needed. *Keeper.* | Attaching / changing per-map background music. (`MapBgmTableWindow.cs`) |
+
+---
+
 ## Save
 
 | Menu | What | Use when |
@@ -194,4 +202,4 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 - **Setup order for a fresh project:** Build From Folder / Build Fantasy Assets (prefabs) → Bake characters → Setup Systems Scene → Build UI Shell → generate maps (recipe / World Creator) → Bake Minimap.
 - **Removed 2026-06-25** (cleanup): *Set Melee Attack Range* and *Remove HUD Widgets Demo* (one-shot migrations, done), plus *Strip Missing Scripts* and *Reset Saved Class*.
 - **Mobs are data now:** the source of truth is `MonsterDef` assets in `Resources/Monsters` (Create ▸ unwritten ▸ Monster), surfaced via `MonsterCatalog` (lookup by stable `id` like `mob.slime`, or display name). Recipes/boss spawner read the catalog; the old hardcoded `MobRoster` array is now just the migration seed + a fallback.
-- One-off "quick fix" tools are tagged `// QUICKFIX` and parked under a **Quick Fixes/** submenu so a future purge is a grep (see `Scripts/CLAUDE.md`). Current: **Migrate MobRoster to Assets** (materializes the seed list into `Resources/Monsters/*.asset`; one-shot, delete after `MobRoster` is removed — `MobRosterMigration.cs`). **Backfill Item + Map IDs** (gives pre-existing `Item`/`MapRecipe` assets that serialized before the `id`field existed a stable kebab id from their display name; dedupes + warns on collisions; one-shot, delete after every asset has an id — `IdBackfillTool.cs`). **Create Starter Dungeon Recipe** (scaffolds `Assets/DungeonRecipe.asset` — a `MapRecipe` with perimeter walls + scattered boulders + mid/elite biome mobs — for Build World's dungeon template slot; one-shot, delete after the recipe exists and is hand-tuned — `DungeonRecipeScaffold.cs`).
+- One-off "quick fix" tools are tagged `// QUICKFIX` and parked under a **Quick Fixes/** submenu so a future purge is a grep (see `Scripts/CLAUDE.md`). Current: **Migrate MobRoster to Assets** (materializes the seed list into `Resources/Monsters/*.asset`; one-shot, delete after `MobRoster` is removed — `MobRosterMigration.cs`). **Backfill Item + Map IDs** (gives pre-existing `Item`/`MapRecipe` assets that serialized before the `id`field existed a stable kebab id from their display name; dedupes + warns on collisions; one-shot, delete after every asset has an id — `IdBackfillTool.cs`). **Create Starter Dungeon Recipe** (scaffolds `Assets/DungeonRecipe.asset` — a `MapRecipe` with perimeter walls + scattered boulders + mid/elite biome mobs — for Build World's dungeon template slot; one-shot, delete after the recipe exists and is hand-tuned — `DungeonRecipeScaffold.cs`). **Reground Baked Mobs** (drops mobs baked BEFORE the feet-pivot convention onto the ground + stacks their capsule up from the feet; idempotent — skips mobs already migrated; run once per hand-finished map to adopt the convention without a full regenerate — `RegroundBakedMobs.cs`).

@@ -8,8 +8,8 @@ using UnityEngine;
 /// </summary>
 public class TargetIndicator : MonoBehaviour
 {
-    [Tooltip("Height above the target's origin.")]
-    public float headOffset = 0.85f;
+    [Tooltip("Gap above the target's HEAD (UnitAnchor.Head) — small, since it's measured from the sprite top, not the feet.")]
+    public float headOffset = 0.12f;
     public float bobAmount = 0.1f;
     public float bobSpeed = 5f;
 
@@ -38,7 +38,7 @@ public class TargetIndicator : MonoBehaviour
     {
         if (target == null) { if (gameObject.activeSelf) gameObject.SetActive(false); return; }
         float y = headOffset + Mathf.Sin(Time.time * bobSpeed) * bobAmount;
-        transform.position = target.position + Vector3.up * y;
+        transform.position = UnitAnchor.Head(target) + Vector3.up * y;   // hug the head at any unit size
     }
 
     // A filled gold triangle pointing DOWN, with a 1px dark outline for contrast.

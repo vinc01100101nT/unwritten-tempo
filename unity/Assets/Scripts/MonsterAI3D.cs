@@ -170,7 +170,7 @@ public class MonsterAI3D : MonoBehaviour
             if (stunFx == null) stunFx = StatusFX.Create(transform, stunSheet, stunFrameSize, stunFrames, 12f, 0.7f, 1.15f);
             stunFx.Show(seconds);
         }
-        if (!wasStunned) DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Stun!", StunColor);
+        if (!wasStunned) DamagePopup.SpawnText(UnitAnchor.Head(transform), "Stun!", StunColor);
     }
 
     /// <summary>Shove this mob directly away from <paramref name="worldFrom"/> at <paramref name="speed"/>
@@ -232,9 +232,9 @@ public class MonsterAI3D : MonoBehaviour
                 int dmg = atk;            // capture for the on-arrive callback
                 Element elem = attackElement;
                 var self = this;          // for damage-reflect on arrival (guarded if we've since died)
-                Vector3 from = pos + Vector3.up * 0.5f;
+                Vector3 from = UnitAnchor.Center(transform);   // cast from the mob's mid-body (feet-pivoted)
                 Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
-                    from, player, player.position + Vector3.up * 0.4f, projSpeed, 0.45f, 3f, () =>
+                    from, player, UnitAnchor.Center(player), projSpeed, 0.45f, 3f, () =>
                     {
                         if (Character.Instance == null || Character.Instance.IsDead) return;
                         int d = Character.Instance.TakeMagicDamage(dmg, elem, self);

@@ -60,8 +60,9 @@ public class PathAgent3D : MonoBehaviour
         // A CharacterController rests with its capsule bottom skinWidth ABOVE the floor. For these small
         // billboard units the capsule geometry makes the sprite's feet float by exactly that skinWidth, so
         // Unity's default 0.08 leaves mobs/NPCs "obviously elevated" while the player (own tuned controller)
-        // looks planted. Shrink it so the feet sit on the ground. 0.02 stays well clear of collision jitter.
-        cc.skinWidth = 0.02f;
+        // looks planted. Shrink it so the feet sit on the ground. Reads the single owner constant so every
+        // unit shares one skin-width value (see Player3DController.DefaultCapsuleSkinWidth).
+        cc.skinWidth = Player3DController.DefaultCapsuleSkinWidth;
     }
 
     /// <summary>Shove this agent in <paramref name="worldDir"/> at <paramref name="speed"/>, easing out

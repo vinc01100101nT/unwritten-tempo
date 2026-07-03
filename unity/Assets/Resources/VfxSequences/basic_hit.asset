@@ -20,7 +20,7 @@ MonoBehaviour:
     snapToEventPoint: 0
     kind: 0
     anchor: 1
-    offset: {x: 0, y: 0, z: 0}
+    offset: {x: 0, y: 0.2, z: 0}
     rotationEuler: {x: 0, y: 0, z: 0}
     effectId: hit.holy
     scale: 1

@@ -39,7 +39,6 @@ public class UnitTargeter : MonoBehaviour
     bool hoverAllowed;                       // is hoverUnit's KIND in the mask?
     bool hoverInRange;                       // within castRange (player/self is always in range)
     float ringRadius = 0.5f;
-    const float PlayerPickPx = 60f;          // cursor-to-player screen distance that counts as "hovering yourself"
 
     static readonly Color ValidColor   = new Color(0.40f, 1f, 0.55f, 0.95f);   // green: a legal target
     static readonly Color InvalidColor = new Color(1f, 0.30f, 0.25f, 0.90f);   // red: out of range / illegal
@@ -111,7 +110,7 @@ public class UnitTargeter : MonoBehaviour
         {
             ring.enabled = true;
             ring.startColor = ring.endColor = (hoverAllowed && hoverInRange) ? ValidColor : InvalidColor;
-            DrawRing(hoverUnit, hoverIsPlayer);
+            DrawRing(hoverUnit);
         }
         else if (ring.enabled) ring.enabled = false;
 
@@ -131,24 +130,22 @@ public class UnitTargeter : MonoBehaviour
         }
     }
 
-    // Ring at the unit's FEET (centre − ~0.4×height, matching MobNameplate's feet math), so it reads as a ground
-    // marker under the billboard rather than a halo through its chest.
-    void DrawRing(Transform unit, bool isPlayer)
+    // Ring at the unit's FEET, so it reads as a ground marker under the billboard rather than a halo through
+    // its chest. Both mobs and the player are feet-pivoted now (UnitAnchor invariant), so the feet ARE the
+    // transform; the player still prefers its real sprite bounds when available (exact rendered bottom).
+    void DrawRing(Transform unit)
     {
-        Vector3 p = unit.position;
-        float footDrop = isPlayer ? 0f : 0.4f * Mathf.Max(0.0001f, unit.lossyScale.y);   // player pivot already ~feet
-        float footY = p.y - footDrop + 0.06f;
+        Vector3 p = unit.position;   // pivot = feet (UnitAnchor invariant): just lay the ring at the pivot level
         for (int i = 0; i < Segments; i++)
         {
             float a = (i / (float)Segments) * Mathf.PI * 2f;
-            ring.SetPosition(i, new Vector3(p.x + Mathf.Cos(a) * ringRadius, footY, p.z + Mathf.Sin(a) * ringRadius));
+            ring.SetPosition(i, new Vector3(p.x + Mathf.Cos(a) * ringRadius, p.y, p.z + Mathf.Sin(a) * ringRadius));
         }
     }
 
-    // The unit DIRECTLY under the cursor — a mob or the player — else null (no ring). EXACT only: no magnetism / no
-    // "nearest mob to the ground" auto-lock, so the ring appears strictly while you're actually pointing at a unit.
-    // A single cursor raycast classifies the first collider it hits; a screen-distance fallback catches the player's
-    // own billboard when its slim capsule is missed. Kind is reported via isPlayer; the mask decides if it's legal.
+    // The unit DIRECTLY under the cursor — a mob or the player — else null (no ring). EXACT only: a single cursor
+    // raycast classifies the first collider it hits, so the ring shows strictly while you're pointing at a unit's
+    // collider (no magnetism, no screen-distance fudge). Kind is reported via isPlayer; the mask decides if it's legal.
     Transform PickUnit(out bool isPlayer)
     {
         isPlayer = false;
@@ -161,13 +158,6 @@ public class UnitTargeter : MonoBehaviour
             if (mob != null && mob.Health != null && !mob.Health.IsDead) return mob.transform;
             if (player != null && hit.collider.GetComponentInParent<Player3DController>() != null)
             { isPlayer = true; return player; }
-        }
-
-        // Fallback: the player's billboard body (the CharacterController capsule is slim and easy to miss on a sprite).
-        if (player != null)
-        {
-            Vector3 sp = cam.WorldToScreenPoint(player.position + Vector3.up * 0.2f);
-            if (sp.z > 0f && ((Vector2)sp - MousePos()).magnitude <= PlayerPickPx) { isPlayer = true; return player; }
         }
         return null;
     }

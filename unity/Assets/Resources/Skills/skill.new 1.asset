@@ -17,6 +17,7 @@ MonoBehaviour:
   icon: {fileID: 2903848411162822477, guid: 4bae3342ecf8e1c4ca8a5e2eb9f81491, type: 3}
   manaCost: 5
   cooldown: 0.7
+  castTime: 0
   maxLevel: 10
   aim: 2
   castRange: 11

@@ -67,6 +67,9 @@ public class SkillDef : ScriptableObject
     [Header("Cost / cadence")]
     public int manaCost = 10;
     public float cooldown = 5f;
+    [Tooltip("Base cast wind-up in seconds BEFORE the skill fires (the cast bar fills over this). 0 = instant. " +
+             "The caster's DEX shortens it at runtime via Character.CastTimeMult (instacast at 150 DEX).")]
+    [Min(0f)] public float castTime = 0f;
     [Range(1, 20)] public int maxLevel = 10;
     [Tooltip("How the skill picks where it lands.")]
     public SkillAim aim = SkillAim.Ground;

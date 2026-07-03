@@ -28,6 +28,9 @@ public enum VfxCueId
 
     // control / debuff applied (one-shot on apply)
     OnStun, OnFreeze, OnSlow, OnHaste, OnSilence, OnBlind,
+
+    // --- skill lifecycle ---
+    OnCastStart,  // a skill begins casting (fired once at the caster the instant a cast is confirmed)
 }
 
 /// <summary>Binds ONE <see cref="VfxCueId"/> to the composed look it should play — the status/verb analog of a

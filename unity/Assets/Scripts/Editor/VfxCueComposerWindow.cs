@@ -86,6 +86,9 @@ public class VfxCueComposerWindow : EditorWindow
         Row(VfxCueId.OnStun); Row(VfxCueId.OnFreeze); Row(VfxCueId.OnSlow);
         Row(VfxCueId.OnHaste); Row(VfxCueId.OnSilence); Row(VfxCueId.OnBlind);
 
+        Section("Skill lifecycle (one-shot)");
+        Row(VfxCueId.OnCastStart);
+
         if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(lib);
 
         EditorGUILayout.EndScrollView();

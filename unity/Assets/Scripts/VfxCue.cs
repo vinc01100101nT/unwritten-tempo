@@ -47,9 +47,10 @@ public static class VfxCue
         return VfxDirector.Play(b.vfx, ctx, null);
     }
 
-    // Feed the two reference points; the sequence's own steps decide which one each piece spawns at. A character's
-    // transform.position is its billboard VISUAL CENTRE, but the Composer authors from the ground — so we drop the
-    // anchor Y to the floor under each point (matches the ruler standing on the floor). Struct return → no allocation.
+    // Feed the two reference points; the sequence's own steps decide which one each piece spawns at. The Composer
+    // authors from the ground, so we raycast the floor under each point and anchor there (matches the ruler standing
+    // on the floor). Robust to the unit's pivot — units are feet-pivoted now, but this still finds true ground either
+    // way. Struct return → no allocation.
     static VfxContext BuildCtx(VfxCueBinding b, Transform actor, Transform target)
     {
         Vector3 a = actor.position; a.y = GroundY(a);

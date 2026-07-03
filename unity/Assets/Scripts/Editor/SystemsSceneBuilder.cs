@@ -85,7 +85,8 @@ public static class SystemsSceneBuilder
         Build25DSpike.BuildCursor(gameSystems);         // hardware GameCursor3D (pointer / sword / crosshair)
         gameSystems.AddComponent<DeathScreen>();        // Phase F: "YOU DIED" overlay + respawn (builds its own canvas)
         gameSystems.AddComponent<Sfx>();                // pooled one-shot SFX player (attack/hit/block/footsteps)
-        WireCombatSfx(gameSystems.AddComponent<CombatSfx>());   // "received" impact/whiff cues, played 3D from the receiver
+        gameSystems.AddComponent<CombatSfx>();   // "received" impact/whiff cues — clips assigned by hand in the Inspector (no baked defaults)
+        gameSystems.AddComponent<MusicDirector>();      // persistent BGM: crossfades to each map's BgmTrack, survives map swaps
         gameSystems.AddComponent<TimeOfDay>();          // real-UTC-anchored day/night clock (2-hour cycle, 12×) + DayIndex + live tuner
         gameSystems.AddComponent<GameCalendar>();       // 4-season / 48-day calendar derived from TimeOfDay.DayIndex (+ OnNewDay/OnSeasonChange)
         gameSystems.AddComponent<WeatherChannels>();    // the 4 independent weather channels (rain/cloud/snow/puddle) every renderer follows
@@ -136,22 +137,4 @@ public static class SystemsSceneBuilder
             "If you haven't yet: run World ▸ New Field (Pxltgr grass) to (re)build the content-only field.", "OK");
     }
 
-    // The "received" impact/whiff cues (custom clips in Assets/Audio/Customs), baked onto the Systems-layer
-    // CombatSfx service. Health plays these 3D FROM the struck unit; SfxAssets.Custom forces DecompressOnLoad.
-    const string CustomSfxDir = "Assets/Audio/Customs/";
-    static void WireCombatSfx(CombatSfx c)
-    {
-        // Per-cue pitch spread: wider on the spammy impacts (continuous attacks never sound copy-pasted),
-        // subtle on the rarer whiffs. Each Play/PlayAt rolls a fresh pitch inside the range (see SfxSet).
-        c.hit        = SfxAssets.Custom(1f,   CustomSfxDir + "received_hit.wav");
-        c.hit.pitch  = new Vector2(0.88f, 1.12f);   // ±12% — the most-repeated sound, so the most variation
-        c.crit       = SfxAssets.Custom(1f,   CustomSfxDir + "received_crit.wav");
-        c.crit.pitch = new Vector2(0.92f, 1.08f);   // ±8% — a crit should stay recognisably "the crit sound"
-        c.skillHit       = SfxAssets.Custom(1f, CustomSfxDir + "received_hit_skill.wav");
-        c.skillHit.pitch = new Vector2(0.90f, 1.10f);   // ±10%
-        c.missMelee        = SfxAssets.Custom(0.9f, CustomSfxDir + "received_miss_melee.wav");
-        c.missMelee.pitch  = new Vector2(0.94f, 1.06f);   // ±6% — subtle
-        c.missRanged       = SfxAssets.Custom(0.9f, CustomSfxDir + "received_miss_range.wav");
-        c.missRanged.pitch = new Vector2(0.94f, 1.06f);   // ±6% — subtle
-    }
 }

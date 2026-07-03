@@ -14,6 +14,12 @@ using UnityEngine;
 /// </summary>
 public static class SpriteSheetCache
 {
+    // Normalized height of the transparent foot-padding at the BOTTOM of a mob cell — i.e. how far up the
+    // cell the character's feet actually sit. The Walk4 pivot is placed here so a mob's rendered feet land
+    // ON its (ground-seated) transform, with the padding hanging below to be alpha-clipped by the ground.
+    // SINGLE OWNER of this value: Build25DSpike.SpriteFoot (editor/build side) reads it from here.
+    public const float MobFootPivotY = 0.1f;
+
     // Horizontal strip: N square frames along the BOTTOM row (y = 0). Used by slash/bolt/smoke FX and
     // the player's 4 attack poses (which are a 1-row strip).
     static readonly Dictionary<(int tex, int size, int count), Sprite[]> strips
@@ -76,7 +82,9 @@ public static class SpriteSheetCache
             {
                 // Unity texture origin is bottom-left; row 0 is the TOP of the sheet.
                 var rect = new Rect(c * cell, sheet.height - (r + 1) * cell, cell, cell);
-                arr[r] = Sprite.Create(sheet, rect, new Vector2(0.5f, 0.5f), cell);
+                // Foot-line pivot: the sprite renders UP from the transform, which sits on the ground
+                // (feet-pivot invariant — see UnitAnchor). Mobs are the only Walk4 consumer.
+                arr[r] = Sprite.Create(sheet, rect, new Vector2(0.5f, MobFootPivotY), cell);
             }
             return arr;
         }

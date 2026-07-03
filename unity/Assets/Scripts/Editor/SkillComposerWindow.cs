@@ -132,6 +132,9 @@ public class SkillComposerWindow : EditorWindow
         EditorGUILayout.LabelField("Cost / cadence", EditorStyles.boldLabel);
         sel.manaCost = EditorGUILayout.IntField("mana cost", sel.manaCost);
         sel.cooldown = EditorGUILayout.Slider("cooldown (s)", sel.cooldown, 0f, 30f);
+        sel.castTime = EditorGUILayout.Slider(
+            new GUIContent("cast time (s)", "Wind-up before the skill fires (0 = instant). DEX shortens it at runtime."),
+            sel.castTime, 0f, 10f);
         sel.maxLevel = EditorGUILayout.IntSlider("max level", sel.maxLevel, 1, 20);
         sel.aim = (SkillAim)EditorGUILayout.EnumPopup(new GUIContent("aim", "How the cast point is picked."), sel.aim);
         using (new EditorGUI.DisabledScope(sel.aim == SkillAim.Self))

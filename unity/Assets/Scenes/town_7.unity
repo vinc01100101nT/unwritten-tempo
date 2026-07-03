@@ -9446,54 +9446,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5612940469564745698, guid: 7ca041a7b86c1c049a27a49f4f0ebc25, type: 3}
   m_PrefabInstance: {fileID: 1483694339}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1492951469
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1492951471}
-  - component: {fileID: 1492951470}
-  m_Layer: 0
-  m_Name: Ambient
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1492951470
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1492951469}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47748f870ea260541aeacc7d22c73369, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DayNightAmbience
-  dayClip: {fileID: 8300000, guid: fe627048581f1a745998906351b07151, type: 3}
-  nightClip: {fileID: 8300000, guid: bfd72bb9f72ac9a479b328fa465de7ac, type: 3}
-  maxVolume: 0.22
-  fallbackCycleSeconds: 240
---- !u!4 &1492951471
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1492951469}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1494063475
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13768,4 +13720,3 @@ SceneRoots:
   - {fileID: 1892464347}
   - {fileID: 1647918263}
   - {fileID: 242024680}
-  - {fileID: 1492951471}

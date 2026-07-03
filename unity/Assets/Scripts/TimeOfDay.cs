@@ -3,8 +3,8 @@ using UnityEngine;
 
 /// <summary>
 /// The game's single day/night clock, <b>anchored to real-world UTC</b>. Lives on the persistent
-/// <c>Systems</c> layer so the light (<see cref="DayNightLight"/>) and ambience (<see cref="DayNightAmbience"/>)
-/// share ONE source of time instead of each running its own. The cycle is split evenly:
+/// <c>Systems</c> layer so the light (<see cref="DayNightLight"/>) and the audio beds (<see cref="MusicDirector"/>
+/// surroundings, <see cref="RainAudio"/>) share ONE source of time instead of each running its own. The cycle is split evenly:
 /// <see cref="halfCycleSeconds"/> of day (incl. sunrise) then the same of night (incl. sunset) — default
 /// 3600s each = a 1-hour day + a 1-hour night = a <b>2-hour full cycle (12× real)</b>.
 ///

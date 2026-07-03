@@ -109,13 +109,19 @@ public partial class Player3DController : MonoBehaviour
     public const float DefaultCapsuleHeight = 0.5f;
     public const float DefaultCapsuleStepOffset = 0.3f;
     public const float DefaultCapsuleSlopeLimit = 45f;
-    public const float DefaultCapsuleSkinWidth = 0.08f;
-    public static readonly Vector3 DefaultCapsuleCenter = new Vector3(0f, 0f, 0f);
+
+    // set skin width to 0.02f --vince
+    public const float DefaultCapsuleSkinWidth = 0.02f;   // low so the capsule bottom rests ~on the ground (min hover)
+    // Centered capsule (center.y = 0). The VISUAL is feet-seated by BakedPlayerVisual regardless; the CC is kept
+    // centered on the root by choice. Lowering skinWidth (above) is what keeps the capsule bottom touching ground.
+
+    // i changed collider Y to 0.25f, blame me here when encountering weird collisions with props. -vince
+    public static readonly Vector3 DefaultCapsuleCenter = new Vector3(0f, 0.25f, 0f);
 
     [Header("Collision capsule (applied in Awake — tuned to clear overhead leaves/eaves)")]
     public float capsuleRadius = DefaultCapsuleRadius;
     public float capsuleHeight = DefaultCapsuleHeight;
-    public Vector3 capsuleCenter = new Vector3(0f, 0f, 0f);
+    public Vector3 capsuleCenter = DefaultCapsuleCenter;   // single source: mirror the const, don't re-type
     public float capsuleStepOffset = DefaultCapsuleStepOffset;
     public float capsuleSlopeLimit = DefaultCapsuleSlopeLimit;
     public float capsuleSkinWidth = DefaultCapsuleSkinWidth;
@@ -305,6 +311,15 @@ public partial class Player3DController : MonoBehaviour
         controller.slopeLimit = capsuleSlopeLimit;
         controller.skinWidth = capsuleSkinWidth;
     }
+
+#if UNITY_EDITOR
+    // Live-apply the serialized capsule fields to the CharacterController as you tune them in the Inspector —
+    // including in Play mode (Awake ran once and won't re-read them). Editor-only; no runtime cost.
+    void OnValidate()
+    {
+        if (GetComponent<CharacterController>() != null) ApplyCapsule();
+    }
+#endif
 
     /// <summary>Write the canonical tuned capsule onto a CharacterController — the one place the player
     /// builders (Build Player / NinjaGreen / Sscary) call so a freshly-built player matches the runtime
@@ -959,12 +974,10 @@ public partial class Player3DController : MonoBehaviour
             if (ai == null) continue;
             var h = ai.Health;                                  // cached on the mob — no per-scan GetComponent
             if (h == null || h.IsDead) continue;
-            // Aim at the sprite's CENTRE. The mob's transform.position IS its visual centre (the billboard's
-            // pivot — same anchor MobNameplate/UnitTargeter use for their feet math), so we add only a small
-            // SIZE-SCALED upward nudge toward the torso. The old fixed +0.4 was authored when mobs rendered near
-            // full size; once they're shrunk (UnitScale.ForMob ≈ 0.21) that 0.4 floats ~2 body-heights above the
-            // sprite, so the snap circle barely overlapped it and you had to pixel-aim the centre. Scaling fixes it.
-            Vector3 sp = cam.WorldToScreenPoint(ai.transform.position + Vector3.up * (0.2f * ai.transform.lossyScale.y));
+            // Aim at the sprite's CENTRE (mid-body). The mob's transform.position is its FEET on the ground;
+            // UnitAnchor owns the feet→centre offset (size-scaled), so the snap circle overlaps the body at
+            // any mob scale instead of demanding pixel-aim on the centre.
+            Vector3 sp = cam.WorldToScreenPoint(UnitAnchor.Center(ai.transform));
             if (sp.z <= 0f) continue;                               // behind the camera
             float sqr = ((Vector2)sp - mp).sqrMagnitude;
             if (sqr <= bestSqr) { bestSqr = sqr; best = h; }

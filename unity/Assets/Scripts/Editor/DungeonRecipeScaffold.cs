@@ -39,8 +39,6 @@ public static class DungeonRecipeScaffold
         r.pathWander = 0.15f;
         r.pathSmoothness = 0;
 
-        r.forestAmbience = false;        // no chirping birds underground
-
         // Walls hugging the plot edge (the wall kit is loaded by name, no prefabs to assign).
         r.propGroups.Add(new RecipePropGroup
         {

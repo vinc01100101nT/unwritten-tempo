@@ -92,6 +92,10 @@ public class BakedBillboard8 : MonoBehaviour
     SpriteRenderer sr;
     Transform spriteTf;
 
+    /// <summary>The visible BODY sprite renderer (the "BakedSprite" child) — NOT the cast-shadow proxy. Read this
+    /// for hover-picks / feet-Y so callers don't blindly grab the flat ground shadow via GetComponentInChildren.</summary>
+    public SpriteRenderer Body => sr;
+
     // ---- drive state ----
     Vector3 lastPos, facingDir = Vector3.back;   // default: face the camera (S) when idle
     bool externallyDriven, moving;

@@ -170,7 +170,4 @@ public class MapRecipe : ScriptableObject
     public List<RecipePropGroup> propGroups = new List<RecipePropGroup>();
     public List<RecipeMobGroup> mobGroups = new List<RecipeMobGroup>();
 
-    [Header("Ambience")]
-    [Tooltip("Add the looping day/night forest ambience to the map.")]
-    public bool forestAmbience = true;
 }

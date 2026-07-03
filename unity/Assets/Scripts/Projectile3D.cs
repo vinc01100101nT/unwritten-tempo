@@ -35,7 +35,7 @@ public class Projectile3D : MonoBehaviour
         p.frames = SpriteSheetCache.Strip(body, frameSize, frameCount);   // shared/read-only
         p.fps = Mathf.Max(1f, fps);
         p.target = target;
-        p.point = target != null ? target.position + Vector3.up * 0.4f : fallbackPoint;
+        p.point = target != null ? UnitAnchor.Center(target) : fallbackPoint;   // home onto mid-body (feet-pivoted)
         p.speed = Mathf.Max(0.1f, speed);
         p.arriveRadius = Mathf.Max(0.05f, arriveRadius);
         p.die = Time.time + Mathf.Max(0.05f, maxLife);
@@ -58,7 +58,7 @@ public class Projectile3D : MonoBehaviour
 
         var p = go.AddComponent<Projectile3D>();
         p.target = target;
-        p.point = target != null ? target.position + Vector3.up * 0.4f : fallbackPoint;
+        p.point = target != null ? UnitAnchor.Center(target) : fallbackPoint;   // home onto mid-body (feet-pivoted)
         p.speed = Mathf.Max(0.1f, speed);
         p.arriveRadius = Mathf.Max(0.05f, arriveRadius);
         p.die = Time.time + Mathf.Max(0.05f, maxLife);
@@ -92,7 +92,7 @@ public class Projectile3D : MonoBehaviour
             sr.sprite = frames[(int)t % frames.Length];
         }
 
-        if (target != null) point = target.position + Vector3.up * 0.4f;   // home onto mid-body
+        if (target != null) point = UnitAnchor.Center(target);   // home onto mid-body (feet-pivoted)
         Vector3 to = point - transform.position;
         float d = to.magnitude;
         float step = speed * Time.deltaTime;

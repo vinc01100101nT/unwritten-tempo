@@ -15,91 +15,77 @@ MonoBehaviour:
   cues:
   - id: 0
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 1
     vfx: {fileID: 11400000, guid: 39640073e8571594d99ef845d91cdec1, type: 2}
-    anchor: 1
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 2
     vfx: {fileID: 11400000, guid: 89bf7a4a6f61bdf4294f77cc8b1e8c15, type: 2}
-    anchor: 1
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 3
     vfx: {fileID: 11400000, guid: 75313ed239aef614cb85e5fc51c37f3d, type: 2}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 4
     vfx: {fileID: 11400000, guid: 35f5dd631e344104bb32ca06473b69ae, type: 2}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 5
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 6
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 7
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 8
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 9
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 10
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 11
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 12
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 13
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 14
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 15
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 16
     vfx: {fileID: 0}
-    anchor: 0
     offset: {x: 0, y: 0, z: 0}
     scale: 1
   - id: 17
     vfx: {fileID: 0}
-    anchor: 0
+    offset: {x: 0, y: 0, z: 0}
+    scale: 1
+  - id: 18
+    vfx: {fileID: 11400000, guid: 84547903cd6d8514dbd4648362886110, type: 2}
     offset: {x: 0, y: 0, z: 0}
     scale: 1

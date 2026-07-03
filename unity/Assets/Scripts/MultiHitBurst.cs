@@ -81,7 +81,7 @@ public class MultiHitBurst : MonoBehaviour
                     anyHit = true;
                     totals[i] += dealt;
 
-                    Vector3 tp = ai.transform.position + Vector3.up * 0.2f;   // live total over the mob
+                    Vector3 tp = UnitAnchor.Center(ai.transform);   // live total over the mob (feet-pivoted)
                     // First hit of THIS tick spawns the yellow total; later hits just bump it up.
                     if (totalPopups[i] == null) totalPopups[i] = DamagePopup.SpawnHeld(tp, totals[i], TotalColor, 1.7f);
                     else totalPopups[i].SetHeld(totals[i], tp);

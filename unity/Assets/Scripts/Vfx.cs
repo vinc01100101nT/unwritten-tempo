@@ -172,7 +172,8 @@ public static class Vfx
             if (!gameObject.activeSelf || stopping) return;
             for (int i = 0; i < systems.Length; i++)
                 systems[i].Stop(true, ParticleSystemStopBehavior.StopEmitting);
-            follow = null;
+            // Keep tracking `follow` through the fade-out tail so the ease-out stays glued to a MOVING caster
+            // (cleared on Return once the tail is done). Nulling it here left the tail behind at the Stop position.
             stopping = true;
             returnAt = Time.time + fadeTail;   // let live particles fade for one particle lifetime, then Return picks it up
         }

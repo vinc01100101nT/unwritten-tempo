@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 /// <summary>
 /// The shared 2.5D rig-builder library (RO-style look). Its public helpers (BuildPlayer/Camera/Light/
-/// Character/HUD/Cursor/Monster, BillboardScale, FootOffsetY, EnsureUniversalRenderer, MonsterSheet) build
+/// Character/HUD/Cursor/Monster, BillboardScale, EnsureUniversalRenderer, MonsterSheet) build
 /// the camera-facing <see cref="Billboard"/> player + billboard mobs on a 3D map viewed from a tilted camera,
 /// and are called by SystemsSceneBuilder, RegionBuilder, RecipeGenerator and TrainingDummyTool.
 ///
@@ -24,20 +24,17 @@ public static class Build25DSpike
     const string UrpPath        = "Assets/Settings/UniversalRP.asset";
     const string Renderer3DPath = "Assets/Settings/Spike3DRenderer.asset";
     const int CellSize = 16, WalkFrames = 4;
-    // Transparent padding below the feet inside each (center-pivoted) sprite cell, in world units.
-    // We drop the billboard by this and raise the CharacterController center to match, so the art's
-    // feet sit near the ground instead of floating. Kept slightly UNDER the true padding on purpose:
-    // sprites now write depth (alpha-clip), so any pixels below the ground plane get clipped by it —
-    // a small residual float is safe, dropping too far hides the feet. Tune: lower if feet clip,
-    // raise if they float. (Sheets are isReadable:0, so we can't auto-measure the padding.)
-    public const float SpriteFoot = 0.1f;
+    // Normalized foot-padding at the bottom of a mob cell (how far up the cell the feet sit). The mob
+    // sprite is now FOOT-PIVOTED here (SpriteSheetCache.Walk4), so the transform sits on the ground and
+    // the sprite renders up from it — the padding hangs below and is alpha-clipped by the ground plane.
+    // Single owner is SpriteSheetCache.MobFootPivotY; mirror it, don't re-type it. Tune there if feet
+    // clip (raise) or float (lower). (Sheets are isReadable:0, so we can't auto-measure the padding.)
+    public const float SpriteFoot = SpriteSheetCache.MobFootPivotY;
 
     // Size of the 2D billboards (player / mobs / NPCs) RELATIVE to the 3D map. 1 = one world cell tall;
     // 0.7 = 30% smaller than that. One shared knob so every billboard builder matches. ONLY affects the
     // 2.5D scenes built here (the legacy 2D game has been removed).
     public const float BillboardScale = 0.7f;
-    // Y the billboard's transform sits at so its feet rest on ground y=0, at the current scale.
-    public static float FootOffsetY => BillboardScale * (0.5f - SpriteFoot);
 
     /// <summary>Create a 3D Universal Renderer (once) and add it to the URP asset's renderer
     /// list; returns its index, or -1 (with a dialog) if URP's internals don't match.</summary>
@@ -279,7 +276,7 @@ public static class Build25DSpike
         float scale = arc.scale <= 0f ? 1f : arc.scale;
         var go = new GameObject("Monster_" + (string.IsNullOrEmpty(arc.name) ? tex.name : arc.name));
         go.transform.localScale = Vector3.one * BillboardScale * scale;
-        go.transform.position = new Vector3(foot.x, foot.y + FootOffsetY * scale, foot.z);   // scale the foot offset too
+        go.transform.position = foot;   // pivot = feet on the ground (foot-pivoted sprite renders up from here)
 
         var msr = go.AddComponent<SpriteRenderer>();
         ApplyBillboardLighting(msr);   // flat art + receive/cast shadows
@@ -288,7 +285,7 @@ public static class Build25DSpike
         var agent = go.AddComponent<PathAgent3D>();         // auto-adds CharacterController
         agent.moveSpeed = arc.moveSpeed; agent.agentRadius = 0.3f;
         var cc = go.GetComponent<CharacterController>();
-        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, SpriteFoot, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // walk gentle slopes
+        cc.radius = 0.3f; cc.height = 1f; cc.center = new Vector3(0f, 0.5f, 0f); cc.stepOffset = 0.3f; cc.slopeLimit = 45f;   // capsule STACKS UP from the feet pivot (bottom at y=0), walks gentle slopes
         int crowd = WorldBuildUtil.EnsureLayer(UnitCrowd.LayerName);   // mobs pass through each other (no stacking/hopping)
         if (crowd >= 0) go.layer = crowd;
 
@@ -446,7 +443,7 @@ public static class Build25DSpike
 
         var go = new GameObject("Player3D");
         go.transform.localScale = Vector3.one * BillboardScale;
-        go.transform.position = new Vector3(foot.x, FootOffsetY, foot.z);
+        go.transform.position = foot;   // pivot = feet; the CharacterController rests here (capsule stacks up)
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = frames[0];
         ApplyBillboardLighting(sr);                  // flat art + receive/cast environment shadows

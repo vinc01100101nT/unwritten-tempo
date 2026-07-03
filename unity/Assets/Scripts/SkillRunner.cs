@@ -20,6 +20,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public int level = 1;
 
     float nextUse, lastDuration;
+    Coroutine castRoutine;              // active cast wind-up (null = not casting); blocks re-cast + drives the CastBar
+    VfxSequenceRunner castAura;         // the OnCastStart aura looping for this wind-up; MUST be Stopped at every exit
     VfxContext lastCtx;                 // captured per cast so OnTick can read the Single-scope target unit
     System.Action<VfxTick> onTick;      // cached hook (no per-play delegate alloc)
     System.Action<Vector3> onGround;    // cached ground-confirm hook
@@ -33,6 +35,13 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         onUnit = CastTargeted;
     }
 
+    // If we're torn down mid-cast (disabled, scene swap, death), Unity stops the coroutine but won't run its cleanup,
+    // so drop the shared bar + kill the looping aura here or they'd hang on screen.
+    void OnDisable()
+    {
+        if (castRoutine != null || castAura != null) EndCast();
+    }
+
     // ---- activation ---------------------------------------------------------
 
     public bool Activate()
@@ -41,6 +50,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (Character.Instance == null || Character.Instance.IsDead) return false;
         if (StatusController.Player != null && StatusController.Player.Silenced)
         { BattleNotice.Warn("Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
+        if (castRoutine != null) return false;   // already winding up a cast — ignore until it resolves
         if (Time.time < nextUse) return false;
 
         // Single-target skills must land on ONE valid unit — they can NEVER be ground-cast (a ground point is not a
@@ -81,7 +91,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (!Spend()) return;
         lastCtx = VfxContext.At(center);
-        PlayCycles();
+        StartCastOrPlay();
     }
 
     // Target confirm: origin = caster, target/single-unit = the chosen unit (a mob, or the player for a self-cast).
@@ -96,7 +106,56 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             targetUnit = unit,
             scaleMult = 1f,
         };
+        StartCastOrPlay();
+    }
+
+    // The single fork between an instant skill and one with a wind-up. A castTime of 0 fires immediately — NO cast
+    // bar and NO OnCastStart cue (the cue marks a real wind-up). Otherwise a coroutine winds up first, then plays.
+    void StartCastOrPlay()
+    {
+        if (def.castTime > 0f && isActiveAndEnabled)
+            castRoutine = StartCoroutine(CastWindup());
+        else
+            PlayCycles();
+    }
+
+    // Wind up for castTime × the caster's DEX-driven CastTimeMult (instacast at 150 DEX), filling the shared CastBar
+    // over the caster's head each frame. The OnCastStart cue is Begun as a PERSISTENT aura that loops for the whole
+    // wind-up and is Stopped the instant it ends (complete or interrupt) — so its cue sequence should be authored as an
+    // Attach/looping effect (a one-shot bound there would just flash). Interrupted by death / silence / hard-CC — MP is
+    // already spent (RO-style, an interrupted cast is a wasted cast). No per-frame alloc: the CastBar is a cached
+    // singleton and the label is a stable reference (it only rewrites the Text on change).
+    System.Collections.IEnumerator CastWindup()
+    {
+        float mult = Character.Instance != null ? Character.Instance.CastTimeMult : 1f;
+        float dur = def.castTime * mult;
+
+        if (dur > 0f)
+        {
+            castAura = VfxCue.Begin(VfxCueId.OnCastStart, transform);
+            var sc = StatusController.Player;
+            string label = def.displayName;
+            for (float t = 0f; t < dur; t += Time.deltaTime)
+            {
+                if (Character.Instance == null || Character.Instance.IsDead ||
+                    (sc != null && (sc.Silenced || sc.CannotAct)))
+                { EndCast(); yield break; }
+                CastBar.Set(UnitAnchor.Head(transform), t / dur, label, def.tint);
+                yield return null;
+            }
+        }
+
+        EndCast();
         PlayCycles();
+    }
+
+    // The ONE cast-teardown choke point: stop the looping aura, hide the bar, clear the casting guard. Called on
+    // completion, on interrupt, and on OnDisable — so the aura can never outlive its wind-up.
+    void EndCast()
+    {
+        if (castAura != null) { castAura.Stop(); castAura = null; }
+        CastBar.Hide();
+        castRoutine = null;
     }
 
     // Play the composed VFX once, then (if the def asks for a shower) replay the WHOLE cycle repeatCount times,

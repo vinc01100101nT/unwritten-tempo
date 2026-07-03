@@ -171,9 +171,8 @@ public static class RecipeGenerator
                 mobs += PlaceMobs(m, child.transform, center, r.sizeX, r.sizeZ, mask, spawnPos, r.biome);
             }
 
-        // ── SPAWN + AMBIENCE ─────────────────────────────────────────────────────────────────────────────
+        // ── SPAWN ──────────────────────────────────────────────────────────────────────────────────────────
         RegionBuilder.MakeSpawn(scene, "Start", spawnPos);   // boot/arrival point (World Creator adds warp spawns later)
-        if (r.forestAmbience) EnsureForestAmbience(scene);
 
         // ── SAVE + REGISTER ──────────────────────────────────────────────────────────────────────────────
         if (!Directory.Exists(ScenesDir)) AssetDatabase.CreateFolder("Assets", "Scenes");
@@ -569,20 +568,6 @@ public static class RecipeGenerator
         return MobRoster.WeightedPick();
     }
 
-    // ── AMBIENCE (migrated from the retired PxltgrFieldBuilder) ─────────────────────────────────────────────
-    static void EnsureForestAmbience(Scene scene)
-    {
-        GameObject go = null;
-        foreach (var root in scene.GetRootGameObjects()) if (root.name == "Ambient") { go = root; break; }
-        if (go == null) { go = new GameObject("Ambient"); SceneManager.MoveGameObjectToScene(go, scene); }
-        else foreach (var old in go.GetComponents<AudioSource>()) Object.DestroyImmediate(old);
-
-        var amb = go.GetComponent<DayNightAmbience>();
-        if (amb == null) amb = go.AddComponent<DayNightAmbience>();
-        amb.dayClip   = SfxAssets.Ambient("BGS Loops/Forest Day",   "Forest Day");
-        amb.nightClip = SfxAssets.Ambient("BGS Loops/Forest Night", "Forest Night");
-        amb.maxVolume = 0.22f;
-    }
 
     // ── SIDECAR (painter-editable map.json) ────────────────────────────────────────────────────────────────
     // Resolve a prop group's painter brush id + the palette yaw correction to bake into the sidecar. A group with a

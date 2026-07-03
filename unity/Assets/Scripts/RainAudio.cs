@@ -6,8 +6,9 @@ using UnityEditor;
 /// <summary>
 /// Rain ambience: crossfades the <b>Forest Day Storm</b> and <b>Forest Night Storm</b> loops by time-of-day and
 /// scales the whole thing by the live rain amount (<see cref="RainOverlay.Instance"/>). Two looping 2D
-/// <see cref="AudioSource"/>s whose volumes are blended — no hard cuts, no per-frame allocation — mirroring
-/// <see cref="DayNightAmbience"/>. Tied to rain intensity (NOT the heavy quality tier), so audio plays whenever
+/// <see cref="AudioSource"/>s whose volumes are blended — no hard cuts, no per-frame allocation — the same day/night
+/// crossfade pattern the <see cref="MusicDirector"/> surroundings layer uses. Tied to rain intensity (NOT the heavy
+/// quality tier), so audio plays whenever
 /// it's raining on any quality setting; silent (volume 0) when dry.
 /// </summary>
 [DisallowMultipleComponent]

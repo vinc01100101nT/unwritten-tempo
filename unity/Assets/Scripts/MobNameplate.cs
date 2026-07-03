@@ -45,7 +45,7 @@ public class MobNameplate : MonoBehaviour
     Transform camT;
     RectTransform root;
     Image fill;
-    float feetOffset;            // world units below the mob's centre to hang the plate (its feet)
+    float feetOffset;            // world units below the mob's feet-pivot to hang the plate (a small gap)
     int lastShownHP = int.MinValue;
     bool shown = false;   // nothing is shown until the plate is first built (on first damage)
 
@@ -63,9 +63,9 @@ public class MobNameplate : MonoBehaviour
             displayName = gameObject.name.StartsWith("Monster_") ? gameObject.name.Substring("Monster_".Length)
                                                                  : gameObject.name;
 
-        // The sprite is one world cell tall and centre-pivoted, so the feet sit ~0.4 of its (uniform) world
-        // scale below the transform centre (0.5 cell − ~0.1 foot padding; see Build25DSpike.SpriteFoot).
-        feetOffset = -0.4f * Mathf.Max(0.0001f, transform.lossyScale.y) - gap;
+        // The mob is foot-pivoted (UnitAnchor invariant): transform.position IS the feet, so the plate just
+        // drops the small gap below it — no centre→feet correction needed.
+        feetOffset = -gap;
     }
 
     void OnDestroy()

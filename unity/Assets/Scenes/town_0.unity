@@ -421,7 +421,7 @@ CharacterController:
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.1, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &15493040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -504,7 +504,7 @@ Transform:
   m_GameObject: {fileID: 15493030}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.003, y: 0.28, z: 0.344}
+  m_LocalPosition: {x: -1.003, y: -0.120000005, z: 0.344}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22132,54 +22132,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6179804365399744090, guid: 4af723ab9f5dd4b419c68d8df8e311df, type: 3}
   m_PrefabInstance: {fileID: 891372147}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &895376308
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 895376310}
-  - component: {fileID: 895376309}
-  m_Layer: 0
-  m_Name: Ambient
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &895376309
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 895376308}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47748f870ea260541aeacc7d22c73369, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DayNightAmbience
-  dayClip: {fileID: 8300000, guid: fe627048581f1a745998906351b07151, type: 3}
-  nightClip: {fileID: 8300000, guid: bfd72bb9f72ac9a479b328fa465de7ac, type: 3}
-  maxVolume: 0.22
-  fallbackCycleSeconds: 240
---- !u!4 &895376310
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 895376308}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &895406517
 GameObject:
   m_ObjectHideFlags: 0
@@ -52396,7 +52348,6 @@ SceneRoots:
   - {fileID: 183073915}
   - {fileID: 2083137309}
   - {fileID: 840779410}
-  - {fileID: 895376310}
   - {fileID: 860515445}
   - {fileID: 1548291702}
   - {fileID: 2137975644}
