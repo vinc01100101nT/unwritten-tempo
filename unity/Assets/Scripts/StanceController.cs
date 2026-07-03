@@ -35,7 +35,9 @@ public class StanceController : MonoBehaviour
     /// <see cref="Character.Instance"/> / <c>StatusController.Player</c>.</summary>
     public static StanceController Player { get; private set; }
 
-    BakedBillboard8 baked;
+    // The presentation sink this choke point drives — a baked billboard OR a live-3D Character3DPose. Resolved
+    // via the IStancePose interface so swapping the visual backend doesn't touch this resolver.
+    IStancePose pose;
     Player3DController playerCtrl;   // optional — resolves the MoveGait source
 
     // Active held stances in push order (oldest first). Push/Pop mutate on transitions, not per frame; the per-frame
@@ -57,8 +59,8 @@ public class StanceController : MonoBehaviour
 
     void Awake()
     {
-        baked = GetComponent<BakedBillboard8>();
-        if (baked == null) baked = GetComponentInChildren<BakedBillboard8>();
+        pose = GetComponent<IStancePose>();
+        if (pose == null) pose = GetComponentInChildren<IStancePose>();
         playerCtrl = GetComponent<Player3DController>();
     }
 
@@ -103,7 +105,7 @@ public class StanceController : MonoBehaviour
 
     void LateUpdate()
     {
-        if (baked == null) return;
+        if (pose == null) return;
 
         // 1) Action stance beats everything.
         if (hasAction)
@@ -119,7 +121,7 @@ public class StanceController : MonoBehaviour
         for (int i = 0; i < active.Count; i++)
         {
             var b = StanceCatalog.Get(active[i]);
-            if (b == null || !baked.HasAction(b.action)) continue;
+            if (b == null || !pose.HasAction(b.action)) continue;
             if (b.priority >= bestPri) { bestPri = b.priority; best = b; }
         }
         if (best != null)
@@ -132,12 +134,12 @@ public class StanceController : MonoBehaviour
         // 3) Nothing active — hand back to the fallback.
         if (selfDrive)
         {
-            if (driving) { baked.ResumeSelfDrive(); driving = false; }   // ONCE — ResumeSelfDrive re-bases movement sampling
+            if (driving) { pose.ResumeSelfDrive(); driving = false; }   // ONCE — ResumeSelfDrive re-bases movement sampling
         }
         else
         {
             var idle = StanceCatalog.Get(StanceId.Idle);
-            if (idle != null) ApplyStance(idle, 0f); else baked.Play(CharacterAction.Idle);
+            if (idle != null) ApplyStance(idle, 0f); else pose.Play(CharacterAction.Idle);
             currentResolved = StanceId.Idle;
             driving = false;
         }
@@ -146,9 +148,9 @@ public class StanceController : MonoBehaviour
     // Play a resolved binding on the billboard: its action, its playback mode, and its live-modulated speed.
     void ApplyStance(StanceBinding b, float window)
     {
-        if (b.playMode == StancePlayMode.FallTail) { baked.PlayFall(b.action, b.fallPhase); return; }
+        if (b.playMode == StancePlayMode.FallTail) { pose.PlayFall(b.action, b.fallPhase); return; }
 
-        baked.Play(b.action);
+        pose.Play(b.action);
         float m = b.speedMult;
         switch (b.speedSource)
         {
@@ -156,10 +158,10 @@ public class StanceController : MonoBehaviour
             case StanceSpeedSource.CastSpeed:   m *= Character.Instance != null ? Character.Instance.CastSpeedMult   : 1f; break;
             case StanceSpeedSource.MoveGait:    m *= playerCtrl != null ? playerCtrl.GaitSpeedMult : 1f; break;
             case StanceSpeedSource.FitWindow:
-                float n = baked.NaturalDuration(b.action);
+                float n = pose.NaturalDuration(b.action);
                 if (window > 0.01f && n > 0.01f) m *= n / window;
                 break;
         }
-        baked.SetActionSpeed(b.action, Mathf.Max(0.01f, m));
+        pose.SetActionSpeed(b.action, Mathf.Max(0.01f, m));
     }
 }

@@ -20,7 +20,7 @@ using UnityEngine;
 // after the gameplay brain (BakedPlayerVisual, −100). Explicit so that ordering contract can't silently drift.
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(0)]
-public class BakedBillboard8 : MonoBehaviour
+public class BakedBillboard8 : MonoBehaviour, IStancePose
 {
     /// <summary>Eight directional strips in <see cref="Facing8"/> octant order:
     /// 0=N 1=NE 2=E 3=SE 4=S 5=SW 6=W 7=NW. A null/short entry falls back to S (index 4).</summary>

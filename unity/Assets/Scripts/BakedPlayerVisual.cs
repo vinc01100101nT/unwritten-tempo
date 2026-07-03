@@ -165,68 +165,15 @@ public class BakedPlayerVisual : MonoBehaviour
         }
         if (wasDead) { baked.SetFeetOffset(groundedFeetOffset); stance.ClearAction(); wasDead = false; }   // revived → stand back up on the normal feet
 
-        Vector3 dir = player.WorldFacing; dir.y = 0f;
-
-        // Free-fall (walked/ran off higher ground): reuse the Jump clip's descent half as the falling pose,
-        // looped while airborne. Mutually exclusive with the scripted hop (IsAirborne) below — the controller
-        // clears IsFalling during the hop/dash/swing frames. Beats locomotion so you don't "run" through the air.
-        if (player.IsFalling && baked.HasAction(CharacterAction.Jump))
-        {
-            stance.DriveStance(StanceId.Fall);   // Fall stance reuses the Jump clip's tail (StancePlayMode.FallTail)
-            if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);
-            return;
-        }
-
-        // One-shot / action overrides, highest priority first — all routed through the stance controller's action
-        // layer (it beats any held stance). While one is active we feed only FACING (not velocity) so movement can't
-        // cancel it — a swing/jump/dash on the run keeps playing. Hurt is the EXCEPTION: it only flinches when fully
-        // idle (not moving/jumping/attacking/etc.), so a hit never interrupts an action or a run. FitWindow stances
-        // (Attack/Roll) are fed the RUNTIME window seconds; the controller fits the clip to it (SwingTime itself
-        // scales with Character.AttackSpeedMult, so the swing animation keeps pace with attack-speed).
-        if (attacker != null && attacker.Swinging)
-        {
-            stance.DriveStance(StanceId.Attack, attacker.SwingTime);
-        }
-        else if (player.IsAirborne)
-        {
-            stance.DriveStance(StanceId.Jump);
-        }
-        else if (player.Dashing || player.EDashing)
-        {
-            float dashLen = player.EDashing ? player.eDashDuration : 0.4f;
-            stance.DriveStance(StanceId.Roll, dashLen);
-        }
-        else if (Time.time < pickUpUntil)
-        {
-            stance.DriveStance(StanceId.PickUp);
-        }
-        else if (Time.time < hurtUntil && speed < walkThreshold)
-        {
-            stance.DriveStance(StanceId.Hurt);
-        }
-        else
-        {
-            // No action — locomotion, or hand off to a held stance / Idle. Facing from the player's INTENT (stable
-            // even when blocked). Normal movement RUNS; holding Shift (WalkingSlow) downshifts to WALK. The Walk/Run
-            // stances read the live gait via their MoveGait source, so a move-speed buff visibly quickens the cycle.
-            if (speed >= walkThreshold && dir.sqrMagnitude > 1e-4f)
-            {
-                StanceId loco = player.WalkingSlow
-                    ? StanceId.Walk
-                    : (baked.HasAction(CharacterAction.Run) ? StanceId.Run : StanceId.Walk);
-                stance.DriveStance(loco);
-                baked.SetFacing(dir.normalized);
-            }
-            else
-            {
-                // Idle: drop the action so a held stance (Combat/Guard/…) shows, else the controller plays the Idle stance.
-                stance.ClearAction();
-                if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);
-            }
-            return;
-        }
-
-        if (dir.sqrMagnitude > 1e-4f) baked.SetFacing(dir);   // action branches: keep aiming without cancelling the action
+        // Decide the action stance via the SHARED brain — the SAME logic the 3D visual (Character3DVisual) uses, so
+        // "swinging → Attack", "airborne → Jump", "hit → Hurt" lives in ONE place and can't drift between the two
+        // presentations. Feed it this billboard's clip capabilities (Walk↔Run choice, Fall-reuses-Jump gate); the
+        // controller fits FitWindow stances (Attack/Roll) to the runtime window it returns.
+        var d = PlayerStanceBrain.Decide(player, attacker, speed, walkThreshold, hurtUntil, pickUpUntil,
+                                         baked.HasAction(CharacterAction.Run), baked.HasAction(CharacterAction.Jump));
+        if (d.hasAction) stance.DriveStance(d.id, d.window);
+        else stance.ClearAction();
+        if (d.applyFacing) baked.SetFacing(d.facing);
     }
 
     void OnDestroy()

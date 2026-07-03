@@ -36,7 +36,7 @@ public static class Build3DCharacterSpike
 
     // Quaternius FBX import several units tall (~3.3u); auto-fit every model to this world height instead.
     // 0.327u = the hand-tuned size (Ninja_Female at 0.1 scale) that reads right against the game's world.
-    const float TargetHeight = 0.327f;
+    internal const float TargetHeight = 0.327f;
 
     // Clips looped so the locomotion blend tree cycles; everything else plays once (Attack/Jump/etc.).
     static readonly HashSet<string> LoopClips = new HashSet<string>
@@ -84,7 +84,7 @@ public static class Build3DCharacterSpike
     // cleanly, and forcing it drops the embedded clips (import error). All Quat models share one skeleton,
     // so each plays its OWN embedded Generic takes perfectly — which is all the spike needs. Humanoid only
     // becomes necessary when we wire Mixamo (retargeting foreign clips); that's a later step.
-    static void EnsureAnimations(string modelPath)
+    internal static void EnsureAnimations(string modelPath)
     {
         var imp = AssetImporter.GetAtPath(modelPath) as ModelImporter;
         if (imp == null) return;
@@ -175,7 +175,7 @@ public static class Build3DCharacterSpike
     // Quaternius names its takes "CharacterArmature|Idle" (armature prefix) — CleanName strips that so
     // callers look up "Idle"/"Walk"/etc. The controller wires clips by OBJECT reference, so the prefix
     // only matters for these dictionary keys.
-    static Dictionary<string, AnimationClip> LoadClips(string modelPath)
+    internal static Dictionary<string, AnimationClip> LoadClips(string modelPath)
     {
         var dict = new Dictionary<string, AnimationClip>();
         foreach (var o in AssetDatabase.LoadAllAssetRepresentationsAtPath(modelPath))
@@ -191,7 +191,7 @@ public static class Build3DCharacterSpike
         return bar >= 0 ? n.Substring(bar + 1) : n;
     }
 
-    static Avatar LoadAvatar(string modelPath)
+    internal static Avatar LoadAvatar(string modelPath)
     {
         foreach (var o in AssetDatabase.LoadAllAssetRepresentationsAtPath(modelPath))
             if (o is Avatar a) return a;
@@ -199,7 +199,7 @@ public static class Build3DCharacterSpike
     }
 
     // World-space rendered height (union of all renderer bounds) — measured at the caller's current scale.
-    static float MeasureHeight(GameObject go)
+    internal static float MeasureHeight(GameObject go)
     {
         var rends = go.GetComponentsInChildren<Renderer>();
         if (rends.Length == 0) return 0f;
