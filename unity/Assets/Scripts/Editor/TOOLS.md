@@ -196,6 +196,14 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 
 ---
 
+## Spike (experimental — throwaway)
+
+| Menu | What | Use when |
+| --- | --- | --- |
+| **Build 3D Character Spike** | Stands up a LIVE 3D skinned Quaternius character (the "true 3D" alternative to baked billboards): keeps the selected `Assets/Art/Quat/FBX` model's (default Knight_Male) native **Generic** rig, loops its embedded Idle/Walk/Run takes, generates `Quat/Spike3D/QuatSpikeController.controller` (1-D blend-tree locomotion on a `Speed` float + `Attack`/`Jump` trigger states), then builds + opens `Assets/Scenes/Spike3DCharacters.unity` (ground + light + follow cam + model wired with a `CharacterController` and `Character3DDriver`). Press Play: WASD move, left-click SwordSlash, Space jump, Shift walk. Does NOT force Humanoid (that breaks the Quat rig; only needed later for Mixamo retargeting). *Tagged `// QUICKFIX`; on `experiment/3d-characters`.* | Comparing live 3D characters against the shipped billboard pipeline. (`Build3DCharacterSpike.cs`) |
+
+---
+
 ## Notes & related
 
 - **Map generation** proper is driven by `MapRecipe` assets (Create ▸ unwritten ▸ Map Recipe) with a **Generate** button on the asset's inspector — that's `RecipeGenerator`, not a menu item. The menu's *World Creator…* / *Import Painted Map…* sit on top of it for whole-world / hand-painted flows.
