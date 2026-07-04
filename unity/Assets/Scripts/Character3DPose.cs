@@ -23,6 +23,9 @@ public class Character3DPose : MonoBehaviour, IStancePose
     public float speedSmooth = 0.1f;
     [Tooltip("CrossFade time into a one-shot state (Attack/Jump/…).")]
     public float crossFade = 0.08f;
+    [Tooltip("Clip names sourced from Mixamo (set by 'Use 3D Caster'). Lets grounding tweaks target ONLY Mixamo " +
+             "one-shots and leave the model's own Quaternius clips alone. See Character3DVisual.mixamoFootOffsetY.")]
+    public List<string> mixamoClipNames = new List<string>();
 
     Animator anim;
     static readonly int Loco = Animator.StringToHash("Locomotion");
@@ -32,6 +35,29 @@ public class Character3DPose : MonoBehaviour, IStancePose
     // builder names each one-shot state after its clip, so the composer's clip string is the CrossFade key.
     readonly Dictionary<string, int> stateHash = new Dictionary<string, int>();
     readonly Dictionary<string, float> clipLen = new Dictionary<string, float>();
+    readonly HashSet<string> mixamoNameSet = new HashSet<string>();
+    readonly List<AnimatorClipInfo> clipInfoBuf = new List<AnimatorClipInfo>();
+
+    /// <summary>True while the DOMINANT clip currently playing (highest blend weight) came from Mixamo. Scoped by the
+    /// actual clip, not the state name, because controller states are named by ACTION and a Mixamo clip can play from
+    /// a one-shot state OR the locomotion blend tree. Lets the visual apply a Mixamo-only grounding offset without
+    /// touching the model's own Quaternius clips. No alloc: fills a reused buffer.</summary>
+    public bool CurrentIsMixamo
+    {
+        get
+        {
+            if (mixamoNameSet.Count == 0 || anim == null) return false;
+            anim.GetCurrentAnimatorClipInfo(0, clipInfoBuf);
+            float best = 0f; string bestName = null;
+            for (int i = 0; i < clipInfoBuf.Count; i++)
+            {
+                var ci = clipInfoBuf[i];
+                if (ci.clip == null) continue;
+                if (ci.weight > best) { best = ci.weight; bestName = Clean(ci.clip.name); }
+            }
+            return bestName != null && mixamoNameSet.Contains(bestName);
+        }
+    }
 
     Vector3 facing = Vector3.forward;
     float speedTarget, speedVel;
@@ -62,6 +88,10 @@ public class Character3DPose : MonoBehaviour, IStancePose
                 int h = Animator.StringToHash(name);
                 if (anim.HasState(0, h)) stateHash[name] = h;
             }
+
+        mixamoNameSet.Clear();
+        foreach (var n in mixamoClipNames)
+            if (!string.IsNullOrEmpty(n)) mixamoNameSet.Add(Clean(n));
     }
 
     static string Clean(string n)

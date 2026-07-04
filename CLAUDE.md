@@ -23,6 +23,7 @@
 ## Standing rules
 
 - **User is new to Unity, strong in JS/TS** — explain C#/Unity by analogy; give click-by-click UI steps
+- **One-step walkthrough style** — during interactive click-by-click UI guidance (Blender/Mixamo/Unity/etc.), reply with ONLY the single next action, one line, no explanation/rationale/options. User asks one question at a time and wants one answer; expand only if asked
 - **No Play mode without being asked** — hand off play-testing to the user
 - **Prefer editor tools** over manual editor steps; extend `Tools ▸ unwritten ▸ …` for new one-click ops
 - **Enemy term is "mobs"** — never "bestiary"

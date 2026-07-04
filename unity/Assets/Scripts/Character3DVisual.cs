@@ -21,6 +21,10 @@ public class Character3DVisual : MonoBehaviour
     public float hurtDuration = 0.4f;
     [Tooltip("Seconds the PickUp action plays when collecting loot.")]
     public float pickUpDuration = 0.6f;
+    [Tooltip("Extra world-Y offset applied ONLY while a Mixamo one-shot clip plays (Quaternius clips unaffected). " +
+             "Negative sinks the model so the Mixamo rig's stretched foot hides UNDER the floor, like Mixamo's own " +
+             "preview. Tune live in Play; one value grounds every Mixamo clip because they share one baked baseline.")]
+    public float mixamoFootOffsetY = 0f;
 
     StanceController stance;
     Character3DPose pose;
@@ -93,7 +97,9 @@ public class Character3DVisual : MonoBehaviour
         if (player == null || pose == null) return;
 
         Vector3 pos = player.transform.position;
-        transform.position = GroundedPos(pos);
+        Vector3 grounded = GroundedPos(pos);
+        if (pose.CurrentIsMixamo) grounded.y += mixamoFootOffsetY;
+        transform.position = grounded;
 
         float dt = Mathf.Max(Time.deltaTime, 1e-4f);
         float speed = (pos - lastPlayerPos).magnitude / dt;
