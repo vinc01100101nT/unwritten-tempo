@@ -14,7 +14,7 @@ using UnityEngine;
 /// </summary>
 public class SkillComposerWindow : EditorWindow
 {
-    [MenuItem("Tools/unwritten/Skills/Skill Composer")]
+    [MenuItem("Tools/unwritten/Composers/Skill Composer")]
     public static void Open() => GetWindow<SkillComposerWindow>("Skill Composer");
 
     readonly List<SkillDef> all = new List<SkillDef>();
@@ -158,6 +158,10 @@ public class SkillComposerWindow : EditorWindow
             sel.repeatInterval = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("repeat interval (s)",
                 "Seconds between cycle starts. 0 = use the VFX sequence's RestartInterval (its loop-end marker)."), sel.repeatInterval));
 
+        DrawCastCircle();
+
+        DrawSkillType();
+
         EditorGUILayout.Space(6);
         DrawTickBindings();
 
@@ -168,6 +172,77 @@ public class SkillComposerWindow : EditorWindow
 
         EditorGUILayout.EndScrollView();
         EditorGUILayout.EndVertical();
+    }
+
+    // The "skill type" dropdown: pick which release cue plays when the skill fires. Index 0 = None (no release
+    // animation); the rest are the SkillReleaseStances subset (the single owner of that list). Assign each cue a clip
+    // in the Stance Composer. Labels are built once and cached — editor-only, but no reason to rebuild per repaint.
+    static GUIContent[] _skillTypeLabels;
+    static GUIContent[] SkillTypeLabels()
+    {
+        if (_skillTypeLabels != null) return _skillTypeLabels;
+        var all = SkillReleaseStances.All;
+        _skillTypeLabels = new GUIContent[all.Length + 1];
+        _skillTypeLabels[0] = new GUIContent("None (no release anim)");
+        for (int i = 0; i < all.Length; i++) _skillTypeLabels[i + 1] = new GUIContent(SkillReleaseStances.Label(all[i]));
+        return _skillTypeLabels;
+    }
+
+    // The cast-circle picker: choose a ground circle shown during the wind-up, tint it, and calibrate its size. The
+    // radius itself is NOT authored here — it's shown read-only from LargestAreaRadius (the bindings own it), so the
+    // circle can't drift from the skill's real footprint. Ids are read live from the EffectLibrary each draw (editor
+    // window, not a hot path) so a fresh Rebuild Effect Library shows up without reopening.
+    void DrawCastCircle()
+    {
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("Cast circle (wind-up only)", EditorStyles.boldLabel);
+        if (sel.castTime <= 0f)
+        { EditorGUILayout.HelpBox("Set a cast time > 0 to show a casting circle.", MessageType.Info); return; }
+
+        var all = EffectCatalog.All;
+        var ids = new List<string> { "" };
+        for (int i = 0; i < all.Count; i++)
+            if (all[i] != null && !string.IsNullOrEmpty(all[i].id)) ids.Add(all[i].id);
+        var labels = new GUIContent[ids.Count];
+        labels[0] = new GUIContent("(none — use global cue)");
+        for (int i = 1; i < ids.Count; i++) labels[i] = new GUIContent(ids[i]);
+
+        int cur = Mathf.Max(0, ids.IndexOf(sel.castCircleId ?? ""));
+        int next = EditorGUILayout.Popup(new GUIContent("cast circle",
+            "Ground circle shown WHILE this skill winds up. Auto-sized to the skill's largest AoE radius. " +
+            "Pick an EffectLibrary id (add packs via Art ▸ Rebuild Effect Library)."), cur, labels);
+        sel.castCircleId = next <= 0 ? "" : ids[next];
+
+        using (new EditorGUI.DisabledScope(string.IsNullOrEmpty(sel.castCircleId)))
+        {
+            sel.castCircleTint = EditorGUILayout.ColorField(new GUIContent("circle tint",
+                "Recolour the circle (white = the prefab's own colours)."), sel.castCircleTint);
+            sel.castCircleScaleMult = Mathf.Max(0.01f, EditorGUILayout.FloatField(new GUIContent("circle size ×",
+                "Calibration on the auto radius (largest AoE radius × this). 1 = exact for a 1-unit-radius prefab; " +
+                "tweak until the ring matches the ground reticle."), sel.castCircleScaleMult));
+            EditorGUILayout.HelpBox(
+                $"Auto radius = {sel.LargestAreaRadius:0.##} (largest AoE binding) × {sel.castCircleScaleMult:0.##} " +
+                $"= {sel.LargestAreaRadius * sel.castCircleScaleMult:0.##} units. Radius is owned by the bindings below.",
+                MessageType.None);
+        }
+    }
+
+    void DrawSkillType()
+    {
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("Skill type", EditorStyles.boldLabel);
+        var all = SkillReleaseStances.All;
+        int cur = 0;   // None
+        if (sel.hasReleaseStance)
+        {
+            int i = System.Array.IndexOf(all, sel.releaseStance);
+            cur = i >= 0 ? i + 1 : 0;
+        }
+        int next = EditorGUILayout.Popup(new GUIContent("skill type",
+            "The release animation played when this skill fires (after any cast wind-up). Bind each cue to a clip in " +
+            "the Stance Composer."), cur, SkillTypeLabels());
+        if (next == 0) sel.hasReleaseStance = false;
+        else { sel.hasReleaseStance = true; sel.releaseStance = all[next - 1]; }
     }
 
     // The tick list read live from the chosen sequence: bind gameplay to each exposed tickId. Orphan bindings

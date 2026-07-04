@@ -107,7 +107,7 @@ public class Character3DVisual : MonoBehaviour
 
         // Death overrides everything: Die plays once and holds its final (lying) frame (non-looping state).
         bool dead = Character.Instance != null && Character.Instance.IsDead;
-        if (dead) { stance.DriveStance(StanceId.Die); wasDead = true; return; }
+        if (dead) { stance.CancelActionOverride(); stance.DriveStance(StanceId.Die); wasDead = true; return; }
         if (wasDead) { stance.ClearAction(); wasDead = false; }
 
         // Shared brain: same decision the billboard uses. A full 3D controller always supports Run/Jump beats (the

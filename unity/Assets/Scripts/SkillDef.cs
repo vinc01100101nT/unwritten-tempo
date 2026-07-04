@@ -76,6 +76,18 @@ public class SkillDef : ScriptableObject
     [Tooltip("Ground/Target aim: max distance from the caster the impact point can be.")]
     public float castRange = 11f;
 
+    [Header("Cast circle (shown ONLY during the wind-up, needs castTime > 0)")]
+    [Tooltip("EffectLibrary id of the ground casting circle shown WHILE this skill winds up. Empty = no per-skill " +
+             "circle (the global OnCastStart cue plays instead). It's a wind-up visual, separate from the release " +
+             "vfx below. Author a LOOPING circle prefab; add packs via Art ▸ Rebuild Effect Library.")]
+    public string castCircleId = "";
+    [Tooltip("Tint for the casting circle (white = the prefab's own colours). Recolour per element without a new prefab.")]
+    public Color castCircleTint = Color.white;
+    [Tooltip("Calibration on the AUTO radius: the circle sizes to the skill's largest AoE radius (LargestAreaRadius) × " +
+             "this. 1 = exact for a 1-unit-radius prefab; tweak until the ring matches the ground reticle. Radius itself " +
+             "is NOT stored here — it's read live from the bindings (single source of truth).")]
+    [Min(0.01f)] public float castCircleScaleMult = 1f;
+
     [Header("Presentation (referenced, never copied)")]
     [Tooltip("The composed look from the Vfx Composer. Its exposed ticks are what the bindings below map to.")]
     public VfxSequence vfx;
@@ -88,6 +100,13 @@ public class SkillDef : ScriptableObject
     [Tooltip("Seconds between the start of each cycle when repeatCount > 1. 0 = fall back to the VFX sequence's " +
              "RestartInterval (its loop-end marker). Cycles overlap freely; a still-playing cycle keeps rendering.")]
     [Min(0f)] public float repeatInterval = 0f;
+
+    [Header("Skill type (release animation)")]
+    [Tooltip("Play a skill-release stance when this skill FIRES (after any cast wind-up). false = no release pose.")]
+    public bool hasReleaseStance = false;
+    [Tooltip("Which release cue to play — the caster's chosen 'skill type'. Only the SkillReleaseStances subset is " +
+             "valid; assign each cue a clip in the Stance Composer. Ignored when hasReleaseStance is false.")]
+    public StanceId releaseStance = StanceId.AoeSpell1;
 
     [Header("Gameplay — one binding per tickId you want to matter")]
     public List<SkillTickBinding> bindings = new List<SkillTickBinding>();
@@ -105,6 +124,21 @@ public class SkillDef : ScriptableObject
         for (int i = 0; i < bindings.Count; i++)
             if (bindings[i] != null && bindings[i].tickId == tickId) return bindings[i];
         return null;
+    }
+
+    /// <summary>The largest Area-scope binding radius — the skill's real ground footprint. The SINGLE OWNER of that
+    /// value: the ground reticle (<see cref="SkillRunner.PreviewRadius"/>) and the cast circle both READ it, so a
+    /// radius change in one place can never drift from the visual. 1.5 fallback when no Area binding exists.</summary>
+    public float LargestAreaRadius
+    {
+        get
+        {
+            float r = 0f;
+            if (bindings != null)
+                for (int i = 0; i < bindings.Count; i++)
+                    if (bindings[i] != null && bindings[i].scope == SkillScope.Area) r = Mathf.Max(r, bindings[i].radius);
+            return r > 0f ? r : 1.5f;
+        }
     }
 
     /// <summary>True if ANY binding is Single scope — the skill must land on ONE chosen unit, so it can't be

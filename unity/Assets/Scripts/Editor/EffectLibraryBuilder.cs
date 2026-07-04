@@ -15,20 +15,40 @@ using UnityEngine;
 /// </summary>
 public static class EffectLibraryBuilder
 {
-    // A prefab folder to scan. FixedPrefix != null → every prefab under it gets that id prefix (a flat pack);
-    // FixedPrefix == null → the prefix comes from each prefab's immediate parent folder via CategoryPrefix (a
-    // pack nested by category). Source-specific by design — add a root here per effect pack imported.
+    // A prefab folder to scan. Prefix modes (checked in this order):
+    //   FixedPrefix != null           → every prefab under it gets that id prefix (a flat vendor pack).
+    //   ByFirstSubfolder == true       → the id prefix is the FIRST subfolder under Path (the drop-in CONVENTION root:
+    //                                     Assets/Art/VFX/<prefix>/… → "<prefix>.*", any depth below that). No code edit
+    //                                     per pack — just drop prefabs into a prefix-named folder and Rebuild.
+    //   otherwise                      → the prefix is each prefab's IMMEDIATE parent folder via CategoryPrefix (a
+    //                                     vendor pack pre-nested by category, e.g. Hovl).
+    // The vendor roots are source-specific by design — add one per pack imported. The convention root below means
+    // most new packs need NO code change at all.
     struct ScanRoot
     {
         public string Path;
         public string FixedPrefix;
-        public ScanRoot(string path, string fixedPrefix = null) { Path = path; FixedPrefix = fixedPrefix; }
+        public string[] ExtraDrop;   // extra kebab tokens to strip from generated ids (source-specific naming noise, e.g. "fx")
+        public bool ByFirstSubfolder; // prefix = first subfolder under Path (the drop-in convention root)
+        public ScanRoot(string path, string fixedPrefix = null, string[] extraDrop = null, bool byFirstSubfolder = false)
+        { Path = path; FixedPrefix = fixedPrefix; ExtraDrop = extraDrop; ByFirstSubfolder = byFirstSubfolder; }
     }
+
+    // Universal naming noise stripped from generated ids everywhere (art tools name files "FX_…"/"VFX_…").
+    static readonly string[] NoiseTokens = { "fx", "vfx" };
 
     static readonly ScanRoot[] Roots =
     {
+        // ── The drop-in convention root: NO code edit needed for new packs. ─────────────────────────────
+        // Make a subfolder named for the id prefix you want (e.g. Assets/Art/VFX/circle/), drop the pack's
+        // prefabs in (any depth below it), then run Rebuild Effect Library → ids read "circle.<name>".
+        new ScanRoot("Assets/Art/VFX", byFirstSubfolder: true, extraDrop: NoiseTokens),
+
+        // ── Vendor packs left in their imported location (one line per pack). ──────────────────────────
         new ScanRoot("Assets/Art/Hovl Studio/Magic effects pack/Prefabs"),          // nested by category
         new ScanRoot("Assets/Art/Hovl Studio/Procedural fire/Prefabs", "fire"),     // flat → all "fire.*"
+        // Eric VFX ground circles — flat pack; drop the "FX_"/"MagicCircle" naming noise so ids read "circle.icearrow01".
+        new ScanRoot("Assets/Eric VFX Studio/Game VFX - Magic Circle(Free)/Prefabs", "circle", new[] { "fx", "magiccircle" }),
     };
 
     const string LibraryPath = "Assets/Resources/EffectLibrary.asset";
@@ -99,7 +119,7 @@ public static class EffectLibraryBuilder
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 if (prefab == null || byPrefab.ContainsKey(prefab)) continue;
 
-                string id = Unique(MakeId(path, root.FixedPrefix), usedIds);
+                string id = Unique(MakeId(path, root), usedIds);
                 usedIds.Add(id);
                 byPrefab[prefab] = null;   // guard against the same prefab matching two overlapping roots
                 kept.Add(new EffectDef { id = id, prefab = prefab, scale = 1f, lifetime = 0f });
@@ -126,40 +146,53 @@ public static class EffectLibraryBuilder
     // "…/Hits and explosions/Explosion.prefab" → "hit.explosion". Prefix is the root's FixedPrefix (flat pack)
     // or, for a nested root, the immediate parent folder mapped via CategoryPrefix. The name is kebab-cased with
     // any token equal to the prefix stripped (so "AoE slash blue" → "aoe.slash-blue").
-    static string MakeId(string assetPath, string fixedPrefix)
+    static string MakeId(string assetPath, ScanRoot root)
     {
         string prefix;
-        if (!string.IsNullOrEmpty(fixedPrefix)) prefix = fixedPrefix;
+        if (!string.IsNullOrEmpty(root.FixedPrefix)) prefix = root.FixedPrefix;
+        else if (root.ByFirstSubfolder)
+        {
+            // Prefix = the first path segment under the convention root. A prefab dropped straight into the root
+            // with no prefix folder falls back to "vfx" (still valid; just un-namespaced).
+            string rel = assetPath.Substring(root.Path.Length).TrimStart('/');
+            int slash = rel.IndexOf('/');
+            string sub = slash > 0 ? rel.Substring(0, slash) : null;
+            prefix = string.IsNullOrEmpty(sub) ? "vfx"
+                   : CategoryPrefix.TryGetValue(sub, out var sp) ? sp : Kebab(sub);
+        }
         else
         {
             string category = Path.GetFileName(Path.GetDirectoryName(assetPath));
             prefix = CategoryPrefix.TryGetValue(category, out var p) ? p : Kebab(category);
         }
+        // Drop the prefix token (so "aoe slash" → "aoe.slash") plus any source-specific naming noise for this root.
+        var drop = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase) { prefix };
+        if (root.ExtraDrop != null) foreach (var d in root.ExtraDrop) drop.Add(d);
         string name = Path.GetFileNameWithoutExtension(assetPath);
-        string body = Kebab(name, dropToken: prefix);
+        string body = Kebab(name, drop);
         return string.IsNullOrEmpty(body) ? prefix : $"{prefix}.{body}";
     }
 
-    // Lowercase, split on non-alphanumerics, drop tokens equal to dropToken, join with '-'.
-    static string Kebab(string s, string dropToken = null)
+    // Lowercase, split on non-alphanumerics, drop any token in `drop`, join with '-'.
+    static string Kebab(string s, HashSet<string> drop = null)
     {
         var tokens = new List<string>();
         var cur = new StringBuilder();
         foreach (char c in s)
         {
             if (char.IsLetterOrDigit(c)) cur.Append(char.ToLowerInvariant(c));
-            else if (cur.Length > 0) { Flush(cur, tokens, dropToken); }
+            else if (cur.Length > 0) { Flush(cur, tokens, drop); }
         }
-        Flush(cur, tokens, dropToken);
+        Flush(cur, tokens, drop);
         return string.Join("-", tokens);
     }
 
-    static void Flush(StringBuilder cur, List<string> tokens, string dropToken)
+    static void Flush(StringBuilder cur, List<string> tokens, HashSet<string> drop)
     {
         if (cur.Length == 0) return;
         string t = cur.ToString();
         cur.Clear();
-        if (!string.Equals(t, dropToken, System.StringComparison.OrdinalIgnoreCase)) tokens.Add(t);
+        if (drop == null || !drop.Contains(t)) tokens.Add(t);
     }
 
     static string Unique(string id, HashSet<string> used)

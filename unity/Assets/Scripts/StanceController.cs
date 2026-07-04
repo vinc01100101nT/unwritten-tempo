@@ -40,14 +40,31 @@ public class StanceController : MonoBehaviour
     IStancePose pose;
     Player3DController playerCtrl;   // optional — resolves the MoveGait source
 
+    // One held stance: its id + the FitWindow duration its clip is fit to (0 = none). Kept as a single unit so the id
+    // and its window can't drift apart.
+    struct Held { public StanceId id; public float window; }
+
     // Active held stances in push order (oldest first). Push/Pop mutate on transitions, not per frame; the per-frame
     // resolve only INDEX-reads this list, so the hot path allocates nothing.
-    readonly List<StanceId> active = new List<StanceId>();
+    readonly List<Held> active = new List<Held>();
+
+    int IndexOf(StanceId id)
+    {
+        for (int i = 0; i < active.Count; i++) if (active[i].id == id) return i;
+        return -1;
+    }
 
     // Transient action-stance layer — beats every held stance. Set each frame it holds; ClearAction drops it.
     bool hasAction;
     StanceId actionId;
     float actionWindow;              // runtime window seconds for a FitWindow action (0 = none)
+
+    // Self-expiring action OVERRIDE — a fire-and-forget one-shot (a skill release) that outranks even the brain's
+    // per-frame action, so it can't be stomped by locomotion mid-play. Set once via PlayActionFor; auto-clears when
+    // Time.time passes overrideUntil. overrideWindow is the FitWindow length its clip is fit to (plays through once).
+    StanceId overrideId;
+    float overrideUntil;
+    float overrideWindow;
 
     bool driving;                    // a stance is overriding self-drive — so we hand back to it ONCE
     StanceId currentResolved;
@@ -87,13 +104,50 @@ public class StanceController : MonoBehaviour
     /// <summary>Drop the action stance so the held-stance layer (or the fallback) resolves.</summary>
     public void ClearAction() { hasAction = false; }
 
+    /// <summary>Fire a one-shot action OVERRIDE that plays once and outranks the per-frame brain action (used for a
+    /// skill's release cue). <paramref name="seconds"/> ≤ 0 auto-derives the clip's natural length so it plays through
+    /// exactly once. Call ONCE at the release moment — it self-expires; no per-frame calls, no allocation.
+    /// Returns the resolved play duration so the caller can root the caster for exactly that long (aftercast delay) —
+    /// the clip length stays the single source of truth for both the visual and the lock.
+    /// <paramref name="durationScale"/> stretches (&gt;1) or compresses (&lt;1) the whole beat — pass the attack-speed
+    /// motion scale so a faster caster's release animation AND its recovery both shorten together. Since release
+    /// stances are FitWindow, feeding the scaled window makes the clip actually play at that speed, so the visible
+    /// animation and the returned lock length can never drift apart.</summary>
+    public float PlayActionFor(StanceId id, float seconds = 0f, float durationScale = 1f)
+    {
+        float dur = seconds;
+        if (dur <= 0f && pose != null)
+        {
+            var b = StanceCatalog.Get(id);
+            if (b != null) dur = pose.NaturalDuration(b.action, b.clip);
+        }
+        if (dur <= 0.05f) dur = 0.6f;   // clip missing/absent → a sane default beat
+        dur *= Mathf.Max(0.01f, durationScale);
+        overrideId = id; overrideWindow = dur; overrideUntil = Time.time + dur;
+        return dur;
+    }
+
+    /// <summary>Cancel any active one-shot action override (e.g. death must beat a lingering release cue).</summary>
+    public void CancelActionOverride() { overrideUntil = 0f; }
+
     // ---- held-stance layer ----
 
-    /// <summary>Enter a held stance (idempotent). Participates in the priority resolve until <see cref="Pop"/>.</summary>
-    public void Push(StanceId id) { if (!active.Contains(id)) active.Add(id); }
+    /// <summary>Enter a held stance (idempotent). Participates in the priority resolve until <see cref="Pop"/>.
+    /// <paramref name="window"/> is the FitWindow duration the stance's clip is fit to (e.g. the cast-bar length for
+    /// Casting); ignored by non-FitWindow sources. Re-pushing an active stance refreshes its window.</summary>
+    public void Push(StanceId id, float window = 0f)
+    {
+        int i = IndexOf(id);
+        if (i < 0) active.Add(new Held { id = id, window = window });
+        else active[i] = new Held { id = id, window = window };
+    }
 
     /// <summary>Leave a held stance (idempotent).</summary>
-    public void Pop(StanceId id) => active.Remove(id);
+    public void Pop(StanceId id)
+    {
+        int i = IndexOf(id);
+        if (i >= 0) active.RemoveAt(i);
+    }
 
     /// <summary>Push or pop by a bool — the natural call for a condition (e.g. Set(Combat, attacker.Engaged)).</summary>
     public void Set(StanceId id, bool on) { if (on) Push(id); else Pop(id); }
@@ -101,11 +155,18 @@ public class StanceController : MonoBehaviour
     /// <summary>Drop every held stance.</summary>
     public void Clear() => active.Clear();
 
-    public bool IsActive(StanceId id) => active.Contains(id);
+    public bool IsActive(StanceId id) => IndexOf(id) >= 0;
 
     void LateUpdate()
     {
         if (pose == null) return;
+
+        // 0) One-shot action override (skill release) — beats even the brain's per-frame action until it expires.
+        if (Time.time < overrideUntil)
+        {
+            var ob = StanceCatalog.Get(overrideId);
+            if (ob != null) { driving = true; currentResolved = overrideId; ApplyStance(ob, overrideWindow); return; }
+        }
 
         // 1) Action stance beats everything.
         if (hasAction)
@@ -117,17 +178,18 @@ public class StanceController : MonoBehaviour
         // 2) Highest-priority active, BAKED held stance. Ties break toward the most-recently pushed (active is in push
         // order, so scanning with >= keeps the later one). Zero-alloc index loop.
         StanceBinding best = null;
+        float bestWindow = 0f;
         int bestPri = int.MinValue;
         for (int i = 0; i < active.Count; i++)
         {
-            var b = StanceCatalog.Get(active[i]);
+            var b = StanceCatalog.Get(active[i].id);
             if (b == null || !pose.HasAction(b.action, b.clip)) continue;
-            if (b.priority >= bestPri) { bestPri = b.priority; best = b; }
+            if (b.priority >= bestPri) { bestPri = b.priority; best = b; bestWindow = active[i].window; }
         }
         if (best != null)
         {
             driving = true; currentResolved = best.id;
-            ApplyStance(best, 0f);
+            ApplyStance(best, bestWindow);
             return;
         }
 

@@ -123,6 +123,26 @@ MonoBehaviour:
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
+  - id: circle.icearrow01
+    prefab: {fileID: 1902839626373450777, guid: 377bd8e4df08cc444b8742609e5ebd73, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+  - id: circle.icearrow02
+    prefab: {fileID: 8883919025765829949, guid: 3a85ce5ea8efb714b81e4fb07c66a9b6, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+  - id: circle.icearrow03
+    prefab: {fileID: 348291441642749557, guid: 72ed267a04bf396419f3230844bb29f1, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+  - id: circle.icearrow04
+    prefab: {fileID: 7568505782868795063, guid: fc9179e31f338a34580c281aec328cc9, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
   - id: circle.magic
     prefab: {fileID: 3744133877081091469, guid: a2a060732547fe64581bb0cb3c2bdf1d, type: 3}
     scale: 1

@@ -36,6 +36,14 @@ public enum StanceId
     PickUp,   // collected loot
     Die,      // death (its action plays once and holds the final lying frame)
     Fall,     // free-fall pose (reuses the Jump clip's descent tail — see StancePlayMode.FallTail)
+
+    // --- Skill-release cues (transient one-shots; driven by SkillRunner at the RELEASE of a skill, AFTER any cast
+    // wind-up). A SkillDef picks ONE of these as its "skill type" and this plays once when the skill fires. Three
+    // variants per family so different skills can look distinct. Bind each to a clip in the Stance Composer.
+    // The curated subset a skill may choose lives in SkillReleaseStances (the single owner of that list).
+    AoeSpell1, AoeSpell2, AoeSpell3,                 // wide area-of-effect spell release
+    SingleSpell1, SingleSpell2, SingleSpell3,        // single-target bolt/beam spell release
+    PhysicalSkill1, PhysicalSkill2, PhysicalSkill3,  // weapon / physical skill swing
 }
 
 /// <summary>
@@ -112,7 +120,7 @@ public static class StanceDefaults
         {
             case StanceId.Combat:  b.action = CharacterAction.Idle;   b.speedSource = StanceSpeedSource.AttackSpeed; b.priority = 10; break;
             case StanceId.Guard:   b.action = CharacterAction.Idle;   b.priority = 20; break;
-            case StanceId.Casting: b.action = CharacterAction.Cast;   b.speedSource = StanceSpeedSource.CastSpeed;   b.priority = 30; break;
+            case StanceId.Casting: b.action = CharacterAction.Cast;   b.speedSource = StanceSpeedSource.FitWindow;  b.priority = 30; break;
             case StanceId.Sit:     b.action = CharacterAction.Sit;    b.priority = 5;  break;
             case StanceId.Idle:    b.action = CharacterAction.Idle;   break;
             case StanceId.Walk:    b.action = CharacterAction.Walk;   b.speedSource = StanceSpeedSource.MoveGait;  break;
@@ -124,6 +132,14 @@ public static class StanceDefaults
             case StanceId.PickUp:  b.action = CharacterAction.PickUp; break;
             case StanceId.Die:     b.action = CharacterAction.Die;    break;
             case StanceId.Fall:    b.action = CharacterAction.Jump;   b.playMode = StancePlayMode.FallTail; b.fallPhase = 0.5f; break;
+
+            // Skill-release cues: fit the clip to the runtime release window (SkillRunner feeds the natural length,
+            // so it plays through exactly once). Spells default to the Cast action, physical skills to Attack.
+            case StanceId.AoeSpell1: case StanceId.AoeSpell2: case StanceId.AoeSpell3:
+            case StanceId.SingleSpell1: case StanceId.SingleSpell2: case StanceId.SingleSpell3:
+                b.action = CharacterAction.Cast;   b.speedSource = StanceSpeedSource.FitWindow; break;
+            case StanceId.PhysicalSkill1: case StanceId.PhysicalSkill2: case StanceId.PhysicalSkill3:
+                b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.FitWindow; break;
         }
         return b;
     }

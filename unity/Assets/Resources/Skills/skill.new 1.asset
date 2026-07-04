@@ -21,9 +21,14 @@ MonoBehaviour:
   maxLevel: 10
   aim: 1
   castRange: 11
+  castCircleId: 
+  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  castCircleScaleMult: 1
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
   repeatInterval: 0.4
+  hasReleaseStance: 1
+  releaseStance: 17
   bindings:
   - tickId: follow_hit
     targets: 1

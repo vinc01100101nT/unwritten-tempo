@@ -21,11 +21,13 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
     float nextUse, lastDuration;
     Coroutine castRoutine;              // active cast wind-up (null = not casting); blocks re-cast + drives the CastBar
-    VfxSequenceRunner castAura;         // the OnCastStart aura looping for this wind-up; MUST be Stopped at every exit
+    VfxSequenceRunner castAura;         // the global OnCastStart aura looping for this wind-up; MUST be Stopped at every exit
+    Vfx.EffectHandle castCircle;        // the per-skill cast circle (def.castCircleId) for this wind-up; MUST be Stopped at every exit
     VfxContext lastCtx;                 // captured per cast so OnTick can read the Single-scope target unit
     System.Action<VfxTick> onTick;      // cached hook (no per-play delegate alloc)
     System.Action<Vector3> onGround;    // cached ground-confirm hook
     System.Action<Transform> onUnit;    // cached single-target confirm hook
+    Player3DController body;            // caster's mover — turned to face the cast point on release
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
 
     void Awake()
@@ -33,13 +35,14 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         onTick = OnTick;
         onGround = Cast;
         onUnit = CastTargeted;
+        body = GetComponent<Player3DController>();
     }
 
     // If we're torn down mid-cast (disabled, scene swap, death), Unity stops the coroutine but won't run its cleanup,
     // so drop the shared bar + kill the looping aura here or they'd hang on screen.
     void OnDisable()
     {
-        if (castRoutine != null || castAura != null) EndCast();
+        if (castRoutine != null || castAura != null || castCircle != null) EndCast();
     }
 
     // ---- activation ---------------------------------------------------------
@@ -50,6 +53,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (Character.Instance == null || Character.Instance.IsDead) return false;
         if (StatusController.Player != null && StatusController.Player.Silenced)
         { BattleNotice.Warn("Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
+        if (StatusController.Player != null && StatusController.Player.ActionLocked) return false;   // stunned / frozen / casting / mid-aftercast — can't start another skill
         if (castRoutine != null) return false;   // already winding up a cast — ignore until it resolves
         if (Time.time < nextUse) return false;
 
@@ -71,7 +75,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         {
             case SkillAim.Ground:
                 if (GroundTargeter.Active) { GroundTargeter.Cancel(); return false; }   // re-press cancels aiming
-                GroundTargeter.Begin(transform, PreviewRadius(), def.castRange, onGround);
+                GroundTargeter.Begin(transform, def.castRange, onGround,
+                                     def.castCircleId, def.castCircleTint, CastCircleScale());
                 return true;   // MP/cooldown are spent on confirm (Cast), so cancelling costs nothing
 
             case SkillAim.Target:
@@ -113,6 +118,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // bar and NO OnCastStart cue (the cue marks a real wind-up). Otherwise a coroutine winds up first, then plays.
     void StartCastOrPlay()
     {
+        // Turn the caster to face where it aimed — for every skill regardless of scope (ground/target/aoe).
+        // A self-cast aims at the caster's own feet, so FaceWorldPoint no-ops (planar dir ~0): no exception needed.
+        if (body != null) body.FaceWorldPoint(lastCtx.target);
+
         if (def.castTime > 0f && isActiveAndEnabled)
             castRoutine = StartCoroutine(CastWindup());
         else
@@ -132,9 +141,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
         if (dur > 0f)
         {
-            castAura = VfxCue.Begin(VfxCueId.OnCastStart, transform);
-            if (StanceController.Player != null) StanceController.Player.Push(StanceId.Casting);   // hold the cast pose for the wind-up
+            BeginCastVisuals();
+            if (StanceController.Player != null) StanceController.Player.Push(StanceId.Casting, dur);   // hold the cast pose, stretched to span the whole wind-up (FitWindow)
             var sc = StatusController.Player;
+            if (sc != null) sc.LockActions(dur);   // fully root for the wind-up (no move/attack/other skills); freed in EndCast on complete or interrupt
             string label = def.displayName;
             for (float t = 0f; t < dur; t += Time.deltaTime)
             {
@@ -150,12 +160,29 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         PlayCycles();
     }
 
-    // The ONE cast-teardown choke point: stop the looping aura, hide the bar, clear the casting guard. Called on
-    // completion, on interrupt, and on OnDisable — so the aura can never outlive its wind-up.
+    // The ONE cast-SETUP choke point (paired with EndCast): begin BOTH wind-up visuals together.
+    //   • OnCastStart aura — on the CASTER (body charge-up glow), the global cue authored in the Vfx Cue Composer.
+    //   • Cast circle — on the GROUND at the impact point (lastCtx.target), the per-skill effect from the Skill
+    //     Composer. For a ground skill it lands exactly where the aim reticle was (one continuous ring); for a Self
+    //     cast the target IS the caster's feet, so the offset is ~0. The caster is rooted here, so the offset holds.
+    // They are INDEPENDENT (two anchors, both optional) but share ONE lifecycle — held for the wind-up, stopped
+    // together in EndCast. Never the release sequence.
+    void BeginCastVisuals()
+    {
+        castAura = VfxCue.Begin(VfxCueId.OnCastStart, transform);
+        if (!string.IsNullOrEmpty(def.castCircleId))
+            castCircle = Vfx.Attach(def.castCircleId, transform, lastCtx.target - transform.position,
+                                    CastCircleScale(), def.castCircleTint);
+    }
+
+    // The ONE cast-teardown choke point: stop the looping aura + circle, hide the bar, clear the casting guard.
+    // Called on completion, on interrupt, and on OnDisable — so neither visual can outlive its wind-up.
     void EndCast()
     {
         if (castAura != null) { castAura.Stop(); castAura = null; }
+        if (castCircle != null) { castCircle.Stop(); castCircle = null; }
         if (StanceController.Player != null) StanceController.Player.Pop(StanceId.Casting);   // release the cast pose (complete/interrupt/OnDisable)
+        if (StatusController.Player != null) StatusController.Player.Unlock();   // free the wind-up root; on completion PlayCycles re-locks for the aftercast beat
         CastBar.Hide();
         castRoutine = null;
     }
@@ -165,6 +192,18 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // of the whole effect is owned HERE (gameplay), not the Vfx Composer (which stays WYSIWYG: one cycle = one fall).
     void PlayCycles()
     {
+        // The RELEASE moment: any cast wind-up (and its Casting pose) has already finished, so the release cue plays
+        // now — casting first, release second. Instant skills reach here immediately.
+        if (def.hasReleaseStance && StanceController.Player != null)
+        {
+            // Scale the release beat by the SAME attack-speed motion scale swings use (1 / AttackSpeedMult): a faster
+            // caster plays the release animation faster AND is rooted for less time — one number drives both.
+            float releaseDur = StanceController.Player.PlayActionFor(def.releaseStance, 0f, Player3DAttacker.MotionScale);
+            // RO-style aftercast: fully root the caster for the (attack-speed-scaled) release animation's length.
+            // Stacks on top of the skill's own cooldown; a skill with no release stance roots for nothing.
+            if (StatusController.Player != null) StatusController.Player.LockActions(releaseDur);
+        }
+
         VfxDirector.Play(def.vfx, lastCtx, onTick);
         int extra = Mathf.Max(0, def.repeatCount - 1);
         if (extra > 0 && isActiveAndEnabled) StartCoroutine(PlayExtraCycles(extra, lastCtx));
@@ -208,15 +247,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                                       lastCtx.targetUnit, extraMult, extraFlat);
     }
 
-    // Largest bound radius, so the ground reticle previews the skill's real footprint.
-    float PreviewRadius()
-    {
-        float r = 0f;
-        if (def.bindings != null)
-            for (int i = 0; i < def.bindings.Count; i++)
-                if (def.bindings[i] != null && def.bindings[i].scope == SkillScope.Area) r = Mathf.Max(r, def.bindings[i].radius);
-        return r > 0f ? r : 1.5f;
-    }
+    // The cast-circle's visual scale: the skill's real footprint (LargestAreaRadius, owned by the bindings) × the
+    // author's calibration. ONE owner, used by BOTH the aim reticle and the wind-up circle so they can't drift.
+    float CastCircleScale() => def.LargestAreaRadius * def.castCircleScaleMult;
 
     static MonsterAI3D NearestMob(Vector3 from, float maxRange)
     {

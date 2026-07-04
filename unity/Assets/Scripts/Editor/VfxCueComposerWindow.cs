@@ -20,7 +20,7 @@ public class VfxCueComposerWindow : EditorWindow
     VfxCueLibrary lib;
     Vector2 scroll;
 
-    [MenuItem("Tools/unwritten/Art/Vfx Cue Composer")]
+    [MenuItem("Tools/unwritten/Composers/Vfx Cue Composer")]
     public static void Open()
     {
         var w = GetWindow<VfxCueComposerWindow>("Vfx Cue Composer");

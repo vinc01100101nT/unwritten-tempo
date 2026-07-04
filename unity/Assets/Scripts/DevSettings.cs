@@ -295,7 +295,7 @@ public class DevSettings : MonoBehaviour
         F("Jump distance",    0f, 6f,    () => player ? player.jumpDistance : 0f,  v => { if (player) player.jumpDistance = v; });
         F("Jump height",      0f, 2.5f,  () => player ? player.jumpHeight : 0f,    v => { if (player) player.jumpHeight = v; });
         F("Roll speed (×run)", 0f, 5f,   () => player ? player.eDashSpeedMult : 0f, v => { if (player) player.eDashSpeedMult = v; });
-        F("Dash duration",    0.05f, 0.6f, () => player ? player.eDashDuration : 0f, v => { if (player) player.eDashDuration = v; });
+        F("Dash duration",    0.05f, 3f, () => player ? player.eDashDuration : 0f, v => { if (player) player.eDashDuration = v; });
         F("Dash cooldown",    0f, 3f,    () => player ? player.eDashCooldown : 0f, v => { if (player) player.eDashCooldown = v; });
 
         // ---- 3D Character (the live-3D model riding the player) ----

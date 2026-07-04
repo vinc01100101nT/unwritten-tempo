@@ -62,6 +62,7 @@ public class StatusController : MonoBehaviour
     Health health;          // mob: the thing DoTs damage
     MonsterAI3D ai;          // mob: the brain we delegate Stun/Freeze/Slow to
     bool isPlayer;           // player: DoTs hit Character.Instance; flags read by the controller/spells
+    float recoverUntil;      // aftercast root: fully action-locked until a skill's release animation finishes (folds into CannotAct)
 
     /// <summary>The player's status host, so spells/attacker can check Silence/Blind without a lookup.</summary>
     public static StatusController Player { get; private set; }
@@ -91,16 +92,37 @@ public class StatusController : MonoBehaviour
     static bool IsDot(Ailment a) => a == Ailment.Poison || a == Ailment.Bleed || a == Ailment.Burn;
 
     // ---- the flags the rest of the game reads (player side) -------------------
-    /// <summary>Frozen or stunned — the player can't move or act this frame.</summary>
+    /// <summary>HARD crowd-control — frozen or stunned. This is the flag that INTERRUPTS a cast in progress, so it must
+    /// NOT include a skill's own self-root (cast wind-up / aftercast) or the cast would abort itself. Use
+    /// <see cref="ActionLocked"/> for the "can I move / start a skill?" gate.</summary>
     public bool CannotAct => Active(Ailment.Stun) || Active(Ailment.Freeze);
-    /// <summary>Move-speed multiplier: 0 while hard-CC'd, else the Slow factor (≤1) × the Haste buff (≥1). So a
-    /// speed buff makes this &gt;1 (and a buff + slow multiply). Read by the controller to scale move speed, the
-    /// footstep cadence, and the Walk/Run animation fps (<see cref="Player3DController.GaitSpeedMult"/>).</summary>
+
+    /// <summary>The universal "the player can't do anything this frame" gate: hard-CC OR a self-imposed skill root (cast
+    /// wind-up + aftercast recovery). Movement, MoveMult and skill activation all read THIS from one place — no
+    /// scattered "am I casting / recovering?" checks. The cast-interrupt check deliberately reads <see cref="CannotAct"/>
+    /// (hard-CC only) instead, so a cast never interrupts itself.</summary>
+    public bool ActionLocked => CannotAct || Time.time < recoverUntil;
+
+    /// <summary>Root the unit for <paramref name="seconds"/> as a skill's self-imposed lock (cast wind-up or RO-style
+    /// aftercast delay). Pure gate: no popup, no VFX — unlike an Ailment. Extends (never shortens) any active lock.</summary>
+    public void LockActions(float seconds)
+    {
+        if (seconds <= 0f) return;
+        recoverUntil = Mathf.Max(recoverUntil, Time.time + seconds);
+    }
+
+    /// <summary>Release the self-imposed skill root immediately (does NOT touch hard-CC). Called when a cast wind-up
+    /// ends — completion hands off to the aftercast lock, interruption frees the player at once.</summary>
+    public void Unlock() => recoverUntil = 0f;
+
+    /// <summary>Move-speed multiplier: 0 while rooted (hard-CC or skill lock), else the Slow factor (≤1) × the Haste
+    /// buff (≥1). So a speed buff makes this &gt;1 (and a buff + slow multiply). Read by the controller to scale move
+    /// speed, the footstep cadence, and the Walk/Run animation fps (<see cref="Player3DController.GaitSpeedMult"/>).</summary>
     public float MoveMult
     {
         get
         {
-            if (CannotAct) return 0f;
+            if (ActionLocked) return 0f;
             float m = Active(Ailment.Slow) ? Mathf.Clamp01(mag[(int)Ailment.Slow]) : 1f;
             if (Time.time < hasteUntil) m *= hasteMult;
             return m;

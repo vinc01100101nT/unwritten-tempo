@@ -22,7 +22,7 @@ using UnityEngine;
 /// </summary>
 public class VfxComposerWindow : EditorWindow
 {
-    [MenuItem("Tools/unwritten/Art/Vfx Composer")]
+    [MenuItem("Tools/unwritten/Composers/Vfx Composer")]
     public static void Open()
     {
         var w = GetWindow<VfxComposerWindow>("Vfx Composer");

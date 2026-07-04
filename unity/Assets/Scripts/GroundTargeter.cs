@@ -6,13 +6,15 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// A reusable ground-target reticle for placed AoE skills (e.g. the Mage's Meteor). <see cref="Begin"/>
-/// puts the player into AIM mode: a circle (drawn with a LineRenderer) follows the cursor on the ground,
-/// clamped to <c>castRange</c> from the player and sized to the skill's AoE <c>radius</c>. <b>Left-click</b>
-/// confirms (fires the skill's callback with the point); <b>Esc</b> (or re-pressing the skill) cancels.
+/// puts the player into AIM mode: the skill's CAST-CIRCLE effect follows the cursor on the ground, clamped
+/// to <c>castRange</c> from the player. <b>Left-click</b> confirms (fires the skill's callback with the point);
+/// <b>Esc</b> (or re-pressing the skill) cancels. The circle telegraph is the SAME effect the wind-up shows,
+/// so aim → wind-up → fire reads as one continuous ring at the impact point (no separate outline).
 ///
-/// While aiming, <see cref="Active"/> is true and <see cref="Player3DController"/> skips its click/move
-/// input that frame (same pattern as <see cref="DevSettings.Blocking"/>) so the confirm click doesn't also
-/// order a move. Self-boots a single hidden instance on first use.
+/// If the caller passes no circle id (an un-authored skill), aiming still works — there's just no visible
+/// reticle. While aiming, <see cref="Active"/> is true and <see cref="Player3DController"/> skips its
+/// click/move input that frame (same pattern as <see cref="DevSettings.Blocking"/>) so the confirm click
+/// doesn't also order a move. Self-boots a single hidden instance on first use.
 /// </summary>
 public class GroundTargeter : MonoBehaviour
 {
@@ -22,34 +24,42 @@ public class GroundTargeter : MonoBehaviour
 
     static bool active;
     static GroundTargeter inst;
-    const int Segments = 56;
 
     Transform player;
-    float radius, castRange;
+    float castRange;
     System.Action<Vector3> onConfirm;
     Camera cam;
-    LineRenderer ring;
     Vector3 point;
     bool hasPoint;
 
-    /// <summary>Enter aim mode for an AoE of <paramref name="radius"/>, placeable within
-    /// <paramref name="castRange"/> of <paramref name="player"/>. On left-click confirm, calls
-    /// <paramref name="onConfirm"/> with the chosen ground point.</summary>
-    public static void Begin(Transform player, float radius, float castRange, System.Action<Vector3> onConfirm)
+    // The circle telegraph: the skill's cast-circle effect, spawned lazily on the first valid ground point (so it
+    // never flashes at world origin) and moved with the cursor via this object's transform (the Attach follows it).
+    string circleId;
+    Color circleTint;
+    float circleScale;
+    Vfx.EffectHandle circle;
+    static readonly Vector3 CircleLift = new Vector3(0f, 0.05f, 0f);   // hover just above the ground (avoid z-fighting)
+
+    /// <summary>Enter aim mode, placeable within <paramref name="castRange"/> of <paramref name="player"/>. On
+    /// left-click confirm, calls <paramref name="onConfirm"/> with the chosen ground point. The reticle is the
+    /// cast-circle effect <paramref name="circleId"/> (empty = no visible reticle), tinted and scaled to the
+    /// skill's footprint by the caller.</summary>
+    public static void Begin(Transform player, float castRange, System.Action<Vector3> onConfirm,
+                             string circleId, Color circleTint, float circleScale)
     {
         if (inst == null)
         {
             var go = new GameObject("GroundTargeter");
             inst = go.AddComponent<GroundTargeter>();
-            inst.Build();
         }
         inst.player = player;
-        inst.radius = Mathf.Max(0.1f, radius);
         inst.castRange = Mathf.Max(0f, castRange);
         inst.onConfirm = onConfirm;
         inst.hasPoint = false;
+        inst.circleId = circleId;
+        inst.circleTint = circleTint;
+        inst.circleScale = circleScale <= 0f ? 1f : circleScale;
         active = true;
-        inst.ring.enabled = true;
     }
 
     public static void Cancel()
@@ -57,24 +67,12 @@ public class GroundTargeter : MonoBehaviour
         active = false;
         if (inst == null) return;
         inst.onConfirm = null;
-        if (inst.ring != null) inst.ring.enabled = false;
+        inst.StopCircle();
     }
 
-    void Build()
+    void StopCircle()
     {
-        ring = gameObject.AddComponent<LineRenderer>();
-        ring.useWorldSpace = true;
-        ring.loop = true;
-        ring.positionCount = Segments;
-        ring.widthMultiplier = 0.09f;
-        ring.numCornerVertices = 0;
-        ring.numCapVertices = 0;
-        ring.textureMode = LineTextureMode.Stretch;
-        ring.alignment = LineAlignment.View;
-        ring.material = new Material(Shader.Find("Sprites/Default"));   // always-included, URP-friendly
-        ring.startColor = ring.endColor = new Color(1f, 0.45f, 0.15f, 0.95f);
-        ring.sortingOrder = DepthSortRuntime.FxSlash;                   // draw over the ground
-        ring.enabled = false;
+        if (circle != null) { circle.Stop(); circle = null; }
     }
 
     void Update()
@@ -92,7 +90,10 @@ public class GroundTargeter : MonoBehaviour
             if (castRange > 0f && off.magnitude > castRange)
                 p = me + off.normalized * castRange + Vector3.up * (p.y - me.y);
             point = p; hasPoint = true;
-            DrawRing(p);
+            // Park this object at the cursor point so the attached circle tracks it; spawn the circle on first use.
+            transform.position = p;
+            if (circle == null && !string.IsNullOrEmpty(circleId))
+                circle = Vfx.Attach(circleId, transform, CircleLift, circleScale, circleTint);
         }
 
         if (LeftDown() && !PointerOverUI() && hasPoint)
@@ -100,16 +101,6 @@ public class GroundTargeter : MonoBehaviour
             var cb = onConfirm; var pt = point;
             Cancel();          // leave aim mode BEFORE firing so the skill's cooldown sweep starts cleanly
             cb?.Invoke(pt);
-        }
-    }
-
-    void DrawRing(Vector3 center)
-    {
-        float y = center.y + 0.06f;   // hover just above the ground
-        for (int i = 0; i < Segments; i++)
-        {
-            float a = (i / (float)Segments) * Mathf.PI * 2f;
-            ring.SetPosition(i, new Vector3(center.x + Mathf.Cos(a) * radius, y, center.z + Mathf.Sin(a) * radius));
         }
     }
 

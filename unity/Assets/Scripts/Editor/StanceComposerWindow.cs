@@ -26,7 +26,7 @@ public class StanceComposerWindow : EditorWindow
     string[] clipPalette = { "" };
     GUIContent[] clipLabels = { new GUIContent("(none — stands)") };
 
-    [MenuItem("Tools/unwritten/Art/Stance Composer")]
+    [MenuItem("Tools/unwritten/Composers/Stance Composer")]
     public static void Open()
     {
         var w = GetWindow<StanceComposerWindow>("Stance Composer");
@@ -129,6 +129,9 @@ public class StanceComposerWindow : EditorWindow
         Section("Action one-shots (driven by the player brain)");
         Row(StanceId.Attack); Row(StanceId.Jump); Row(StanceId.Roll);
         Row(StanceId.Hurt); Row(StanceId.PickUp); Row(StanceId.Die); Row(StanceId.Fall);
+
+        Section("Skill-release cues (a SkillDef's 'skill type' — plays once at release)");
+        foreach (var id in SkillReleaseStances.All) Row(id);
 
         if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(lib);
 

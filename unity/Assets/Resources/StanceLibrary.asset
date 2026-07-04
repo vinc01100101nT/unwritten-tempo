@@ -31,7 +31,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 2
     action: 0
-    clip: 
+    clip: Cast
     speedSource: 2
     speedMult: 1
     priority: 30
@@ -47,15 +47,15 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 4
     action: 0
-    clip: Idle
+    clip: Idle2
     speedSource: 0
     speedMult: 1
-    priority: 100
+    priority: 0
     playMode: 0
     fallPhase: 0.5
   - id: 5
     action: 0
-    clip: 
+    clip: Walk
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -63,7 +63,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 6
     action: 2
-    clip: Run2
+    clip: Run
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -87,8 +87,8 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 9
     action: 12
-    clip: Dash2
-    speedSource: 0
+    clip: Roll
+    speedSource: 4
     speedMult: 1
     priority: 0
     playMode: 0
@@ -124,4 +124,76 @@ MonoBehaviour:
     speedMult: 1
     priority: 0
     playMode: 1
+    fallPhase: 0.5
+  - id: 14
+    action: 4
+    clip: ReleaseAOESkill
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 15
+    action: 4
+    clip: ReleaseAOESkill2
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 16
+    action: 4
+    clip: ReleaseAOESkill4
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 17
+    action: 4
+    clip: ReleaseSingleSkill
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 18
+    action: 4
+    clip: 
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 19
+    action: 4
+    clip: 
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 20
+    action: 3
+    clip: 
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 21
+    action: 3
+    clip: 
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
+    fallPhase: 0.5
+  - id: 22
+    action: 3
+    clip: 
+    speedSource: 4
+    speedMult: 1
+    priority: 0
+    playMode: 0
     fallPhase: 0.5

@@ -211,6 +211,14 @@ public partial class Player3DController : MonoBehaviour
     /// player arrow. Fixed-north top-down: world +X = map right, world +Z = map up.</summary>
     public Vector3 WorldFacing => worldFacing;
 
+    /// <summary>Turn the player to look at a world point on the XZ plane (skills call this so the caster faces
+    /// where it cast). A point on top of the player (self-cast) is a no-op — the planar direction is ~zero.</summary>
+    public void FaceWorldPoint(Vector3 point)
+    {
+        Vector3 d = point - transform.position; d.y = 0f;
+        if (d.sqrMagnitude > 1e-4f) worldFacing = d;   // facing derived camera-relative in Update
+    }
+
     void Awake()
     {
         sr = GetComponent<SpriteRenderer>();
@@ -386,9 +394,9 @@ public partial class Player3DController : MonoBehaviour
             return;
         }
 
-        // Hard-CC (stun / freeze): no input, no orders, no movement — gravity only — until it lifts.
-        // Cancels an in-flight swing and any charge dash so nothing fires while we're locked.
-        if (status != null && status.CannotAct)
+        // Rooted: hard-CC (stun / freeze) OR a skill's self-root (cast wind-up + aftercast) — no input, no orders, no
+        // movement — gravity only — until it lifts. Cancels an in-flight swing and any charge dash so nothing fires.
+        if (status != null && status.ActionLocked)
         {
             if (attacker != null && attacker.Swinging) attacker.Cancel();
             dashing = false; dashOnArrive = null; dashTarget = null;

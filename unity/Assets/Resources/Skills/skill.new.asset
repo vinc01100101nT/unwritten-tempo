@@ -21,9 +21,14 @@ MonoBehaviour:
   maxLevel: 10
   aim: 2
   castRange: 11
+  castCircleId: circle.icearrow02
+  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  castCircleScaleMult: 1
   vfx: {fileID: 11400000, guid: d6535b57215ae2c479e8c6dff7e958df, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  hasReleaseStance: 1
+  releaseStance: 14
   bindings:
   - tickId: heal
     targets: 1
