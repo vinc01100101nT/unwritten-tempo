@@ -83,11 +83,6 @@ public class SkillDef : ScriptableObject
     public string castCircleId = "";
     [Tooltip("Tint for the casting circle (white = the prefab's own colours). Recolour per element without a new prefab.")]
     public Color castCircleTint = Color.white;
-    [Tooltip("Calibration on the AUTO radius: the circle sizes to the skill's largest AoE radius (LargestAreaRadius) × " +
-             "this. 1 = exact for a 1-unit-radius prefab; tweak until the ring matches the ground reticle. Radius itself " +
-             "is NOT stored here — it's read live from the bindings (single source of truth).")]
-    [Min(0.01f)] public float castCircleScaleMult = 1f;
-
     [Header("Presentation (referenced, never copied)")]
     [Tooltip("The composed look from the Vfx Composer. Its exposed ticks are what the bindings below map to.")]
     public VfxSequence vfx;

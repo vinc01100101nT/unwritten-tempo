@@ -217,12 +217,10 @@ public class SkillComposerWindow : EditorWindow
         {
             sel.castCircleTint = EditorGUILayout.ColorField(new GUIContent("circle tint",
                 "Recolour the circle (white = the prefab's own colours)."), sel.castCircleTint);
-            sel.castCircleScaleMult = Mathf.Max(0.01f, EditorGUILayout.FloatField(new GUIContent("circle size ×",
-                "Calibration on the auto radius (largest AoE radius × this). 1 = exact for a 1-unit-radius prefab; " +
-                "tweak until the ring matches the ground reticle."), sel.castCircleScaleMult));
             EditorGUILayout.HelpBox(
-                $"Auto radius = {sel.LargestAreaRadius:0.##} (largest AoE binding) × {sel.castCircleScaleMult:0.##} " +
-                $"= {sel.LargestAreaRadius * sel.castCircleScaleMult:0.##} units. Radius is owned by the bindings below.",
+                $"Auto-sized to {sel.LargestAreaRadius:0.##} units (the largest AoE binding radius). The ring's edge " +
+                "lands on the AoE via each circle prefab's groundRingRadius (set once in the Effect Library). " +
+                "Radius is owned by the bindings below.",
                 MessageType.None);
         }
     }

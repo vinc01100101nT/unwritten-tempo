@@ -76,7 +76,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             case SkillAim.Ground:
                 if (GroundTargeter.Active) { GroundTargeter.Cancel(); return false; }   // re-press cancels aiming
                 GroundTargeter.Begin(transform, def.castRange, onGround,
-                                     def.castCircleId, def.castCircleTint, CastCircleScale());
+                                     def.castCircleId, def.castCircleTint, def.LargestAreaRadius);
                 return true;   // MP/cooldown are spent on confirm (Cast), so cancelling costs nothing
 
             case SkillAim.Target:
@@ -171,8 +171,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         castAura = VfxCue.Begin(VfxCueId.OnCastStart, transform);
         if (!string.IsNullOrEmpty(def.castCircleId))
-            castCircle = Vfx.Attach(def.castCircleId, transform, lastCtx.target - transform.position,
-                                    CastCircleScale(), def.castCircleTint);
+            castCircle = Vfx.AttachGroundCircle(def.castCircleId, transform, lastCtx.target - transform.position,
+                                                def.LargestAreaRadius, def.castCircleTint);
     }
 
     // The ONE cast-teardown choke point: stop the looping aura + circle, hide the bar, clear the casting guard.
@@ -246,10 +246,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         SkillEffectApplier.ApplyBurst(tick.point, b.radius, b.scope, b.targets, b.effects,
                                       lastCtx.targetUnit, extraMult, extraFlat);
     }
-
-    // The cast-circle's visual scale: the skill's real footprint (LargestAreaRadius, owned by the bindings) × the
-    // author's calibration. ONE owner, used by BOTH the aim reticle and the wind-up circle so they can't drift.
-    float CastCircleScale() => def.LargestAreaRadius * def.castCircleScaleMult;
 
     static MonsterAI3D NearestMob(Vector3 from, float maxRange)
     {

@@ -20,6 +20,11 @@ public class EffectDef
     [Tooltip("Forced lifetime in seconds before auto-return. 0 = automatic (plays for the particle system's " +
              "own duration). Set this to cap a one-shot that contains a looping sub-emitter.")]
     public float lifetime = 0f;
+    [Tooltip("GROUND-CIRCLE telegraphs only: the VISIBLE ring's world radius when this effect spawns at its " +
+             "authored size (caller scale 1). A cast/aim reticle sizes itself to skillRadius / this, so the drawn " +
+             "ring lands exactly on the AoE. Eyeball it ONCE per circle prefab — auto-measuring catches stray sparks, " +
+             "not the ring. 0 = not a ground circle (telegraph falls back to raw scale).")]
+    public float groundRingRadius = 0f;
 }
 
 /// <summary>

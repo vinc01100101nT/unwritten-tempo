@@ -36,7 +36,7 @@ public class GroundTargeter : MonoBehaviour
     // never flashes at world origin) and moved with the cursor via this object's transform (the Attach follows it).
     string circleId;
     Color circleTint;
-    float circleScale;
+    float circleRadius;   // the skill's real AoE world radius; the telegraph is sized to land its ring here
     Vfx.EffectHandle circle;
     static readonly Vector3 CircleLift = new Vector3(0f, 0.05f, 0f);   // hover just above the ground (avoid z-fighting)
 
@@ -45,7 +45,7 @@ public class GroundTargeter : MonoBehaviour
     /// cast-circle effect <paramref name="circleId"/> (empty = no visible reticle), tinted and scaled to the
     /// skill's footprint by the caller.</summary>
     public static void Begin(Transform player, float castRange, System.Action<Vector3> onConfirm,
-                             string circleId, Color circleTint, float circleScale)
+                             string circleId, Color circleTint, float circleRadius)
     {
         if (inst == null)
         {
@@ -58,7 +58,7 @@ public class GroundTargeter : MonoBehaviour
         inst.hasPoint = false;
         inst.circleId = circleId;
         inst.circleTint = circleTint;
-        inst.circleScale = circleScale <= 0f ? 1f : circleScale;
+        inst.circleRadius = circleRadius <= 0f ? 1.5f : circleRadius;
         active = true;
     }
 
@@ -93,7 +93,7 @@ public class GroundTargeter : MonoBehaviour
             // Park this object at the cursor point so the attached circle tracks it; spawn the circle on first use.
             transform.position = p;
             if (circle == null && !string.IsNullOrEmpty(circleId))
-                circle = Vfx.Attach(circleId, transform, CircleLift, circleScale, circleTint);
+                circle = Vfx.AttachGroundCircle(circleId, transform, CircleLift, circleRadius, circleTint);
         }
 
         if (LeftDown() && !PointerOverUI() && hasPoint)

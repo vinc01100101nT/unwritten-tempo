@@ -285,6 +285,19 @@ public static class Vfx
         return h;
     }
 
+    /// <summary>Attach a GROUND-CIRCLE telegraph sized so its visible ring lands exactly on <paramref name="worldRadius"/>
+    /// (the skill's real AoE radius). Uses the prefab's hand-tuned <see cref="EffectDef.groundRingRadius"/> (the ring's
+    /// size at authored scale) to back-compute the caller scale — so the SHARED <c>def.scale</c> (which release
+    /// VfxSequences also read) is never touched. This is the ONE telegraph sizing path; the aim reticle and the
+    /// wind-up circle both use it, so they can't drift from each other OR from the actual AoE. Loops until Stop().</summary>
+    public static EffectHandle AttachGroundCircle(string id, Transform target, Vector3 offset, float worldRadius, Color tint)
+    {
+        var def = EffectCatalog.Get(id);
+        if (def == null || target == null) return null;
+        float ring = def.groundRingRadius > 0f ? def.groundRingRadius : 1f;   // 0 = uncalibrated → treat scale as 1:1
+        return Attach(id, target, offset, worldRadius / ring, tint);
+    }
+
     /// <summary>Pre-instantiate <paramref name="count"/> instances of an effect into the pool so the first
     /// combat use doesn't hitch. Call from a load/scene-setup step, never per frame.</summary>
     public static void Prewarm(string id, int count)
