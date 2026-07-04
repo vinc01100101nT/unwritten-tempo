@@ -106,11 +106,8 @@ public static class Character3DControllerBuilder
         var anim = pose.GetComponent<Animator>();
         if (anim == null) return null;
 
-        string curPath = anim.runtimeAnimatorController != null
-            ? AssetDatabase.GetAssetPath(anim.runtimeAnimatorController) : "";
-        AnimatorController ctrl = curPath == Use3DCaster.ControllerPath
-            ? Use3DCaster.BuildController()
-            : Use3DCharacter.BuildFullController(AssetDatabase.GetAssetPath(anim.avatar));
+        // Single committed path: rebuild the shared Humanoid player controller from the authored library.
+        AnimatorController ctrl = Player3DVisualBuilder.BuildController();
         if (ctrl == null) return null;
 
         anim.runtimeAnimatorController = ctrl;   // reattach (CreateAnimatorControllerAtPath returns a fresh asset ref)

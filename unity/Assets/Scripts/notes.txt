@@ -1,0 +1,36 @@
+<div class="autorig-overlay"><div class="autorig-symmetry"></div><div class="marker-label" id="marker-label-chin">Chin</div><div class="marker-label" id="marker-label-arm">Wrists</div><div class="marker-label" id="marker-label-elbow">Elbows</div><div class="marker-label" id="marker-label-knee">Knees</div><div class="marker-label" id="marker-label-groin">Groin</div><span class="autorig-marker" id="chin" data-cooltip="Chin" data-cooltip-click-hide="true" style="position: absolute; left: 345px; top: 149.8px;"></span><span class="autorig-marker" id="larm" data-partner="rarm" data-cooltip="Left Wrist" data-cooltip-click-hide="true" style="position: absolute; left: 160.4px; top: 199.8px;"></span><span class="autorig-marker" id="rarm" data-partner="larm" data-cooltip="Right Wrist" data-cooltip-click-hide="true" style="position: absolute; left: 529.6px; top: 199.8px;"></span><span class="autorig-marker" id="lelbow" data-partner="relbow" data-cooltip="Left Elbow" data-cooltip-click-hide="true" style="position: absolute; left: 231.4px; top: 200.8px;"></span><span class="autorig-marker" id="relbow" data-partner="lelbow" data-cooltip="Right Elbow" data-cooltip-click-hide="true" style="position: absolute; left: 458.6px; top: 200.8px;"></span><span class="autorig-marker" id="lknee" data-partner="rknee" data-cooltip="Left Knee" data-cooltip-click-hide="true" style="position: absolute; left: 305.4px; top: 415.8px;"></span><span class="autorig-marker" id="rknee" data-partner="lknee" data-cooltip="Right Knee" data-cooltip-click-hide="true" style="position: absolute; left: 384.6px; top: 415.8px;"></span><span class="autorig-marker" id="groin" data-cooltip="Groin" data-cooltip-click-hide="true" style="position: absolute; left: 345px; top: 329.8px;"></span></div>
+
+
+D:\tempo\projects\roguelike-mmo\unity\Assets\Art\Quat\Anim\Humanoid
+
+
+"C:\Program Files\Blender Foundation\Blender 5.1\blender.exe" --background --python export_mesh_for_rigging.py -- --in ..\unity\Assets\Art\Quat\FBX --out ..\MixamoUpload
+
+// batch rigging command
+python tools\mixamo_batch_rig.py --in MixamoUpload --out unity\Assets\Art\Quat\Rigged
+
+// batch rig reporter
+python tools\mixamo_batch_rig.py --in MixamoUpload --out unity\Assets\Art\Quat\Rigged --report
+
+fetch("https://www.mixamo.com/api/v1/characters/a72cf4df-ceb8-424a-bb70-fbf650aa5473/rig", {
+  "headers": {
+    "accept": "application/json, text/javascript, */*; q=0.01",
+    "accept-language": "en-US,en;q=0.5",
+    "authorization": "Bearer eyJhbGciOiJSUzI1NiIsIng1dSI6Imltc19uYTEta2V5LWF0LTEuY2VyIiwia2lkIjoiaW1zX25hMS1rZXktYXQtMSIsIml0dCI6ImF0In0.eyJpZCI6IjE3ODMwOTAxOTk0MTJfNDczZjZmYTgtNTI0My00Njg4LTk5NTUtMTUyYTI1YTE2MzBmX3V3MiIsInR5cGUiOiJhY2Nlc3NfdG9rZW4iLCJjbGllbnRfaWQiOiJtaXhhbW8xIiwidXNlcl9pZCI6IkMyMUQ4MTY0NkEzQjA1QkIwQTQ5NUNDQkBBZG9iZUlEIiwic3RhdGUiOiIiLCJhcyI6Imltcy1uYTEiLCJhYV9pZCI6IkMyMUQ4MTY0NkEzQjA1QkIwQTQ5NUNDQkBBZG9iZUlEIiwiY3RwIjowLCJmZyI6IjJTMlhUWTJQVkxNNUFEVUtGQVFWSUhBQUU0PT09PT09Iiwic2lkIjoiMTc4MzA5MDE5NjY5MV9lZWVlYjUwMi1lY2RmLTRhNjktYWUyYi0yZDg2YjNkMWIwZDJfdXcyIiwicnRpZCI6IjE3ODMwOTAxOTk0MTJfNGE4ZjFiODgtMmVmZS00NTZiLTg0YTItZTU2OGJmMDA4Zjc4X3V3MiIsIm1vaSI6IjJmYzViNDMyIiwicGJhIjoiTWVkU2VjTm9FVixMb3dTZWMiLCJydGVhIjoiMTc4NDI5OTc5OTQxMiIsImV4cGlyZXNfaW4iOiI4NjQwMDAwMCIsInNjb3BlIjoib3BlbmlkLEFkb2JlSUQiLCJjcmVhdGVkX2F0IjoiMTc4MzA5MDE5OTQxMiJ9.Plh4Pqqaz3Zi_lVWm1R7x52TpAv_9t13HsFbVtkqbEioDGbdCXlrnjzNRf62Cc7McztN7A_go1Jk931ap3P0MOB6f-XKqAxwEUQ_kgohyh47E9DQL8E7e8LIXIQ7sscL7pox79uzNl9pwvUozCdf2-6ib0eonoyhKypbdkcCdz4lfknoV8ZKgIgz257jgzVAdoN85xj4kHEVOV979DYahH4tIHZ7n5FOspmvLIUTkzRHuR7ZjKXjs_3-JAclM9p-OQ4aU9hpJSa-VHNjfSTx6VogqNOOIMbFtFydYvn3db1QLKom40SMxE1gwuZdY3GzNE57VQgsIPxSzGRRRfRP6w",
+    "content-type": "application/json; charset=UTF-8",
+    "sec-ch-ua": "\"Not;A=Brand\";v=\"8\", \"Chromium\";v=\"150\", \"Brave\";v=\"150\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "sec-gpc": "1",
+    "x-api-key": "mixamo2",
+    "x-requested-with": "XMLHttpRequest"
+  },
+  "referrer": "https://www.mixamo.com/",
+  "body": "{\"rigging_inputs\":{\"chin\":{\"x\":0,\"y\":222.77879071088623,\"z\":524.6832360734485},\"larm\":{\"x\":-120.20789502999402,\"y\":188.2439235674303,\"z\":524.6832360734485},\"rarm\":{\"x\":120.20789502999402,\"y\":188.2439235674303,\"z\":524.6832360734485},\"lelbow\":{\"x\":-84.34476612601792,\"y\":187.57979150697923,\"z\":524.6832360734485},\"relbow\":{\"x\":84.34476612601792,\"y\":187.57979150697923,\"z\":524.6832360734485},\"lknee\":{\"x\":-27.229412686352248,\"y\":54.75337941676412,\"z\":524.6832360734485},\"rknee\":{\"x\":27.22941268635222,\"y\":54.75337941676412,\"z\":524.6832360734485},\"groin\":{\"x\":0,\"y\":101.2426236483394,\"z\":524.6832360734485},\"orientation\":{\"x\":0,\"y\":0,\"z\":0,\"w\":1},\"symmetric\":true,\"for\":\"both\",\"skeleton-lod\":\"\"}}",
+  "method": "PUT",
+  "mode": "cors",
+  "credentials": "include"
+});

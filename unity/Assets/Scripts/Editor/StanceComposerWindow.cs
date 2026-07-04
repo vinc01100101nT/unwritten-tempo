@@ -56,6 +56,12 @@ public class StanceComposerWindow : EditorWindow
     void BuildClipPalette()
     {
         var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        // The committed animation source: shared Humanoid clips (Assets/Art/Quat/Anim/Humanoid) that retarget onto
+        // every rigged avatar. These are what the live-3D player/NPCs actually play.
+        foreach (var n in HumanoidClipResolver.ClipNames()) names.Add(n);
+
+        // Legacy sources kept for the caster experiment: the Quaternius body's embedded takes + the Mixamo dir.
         if (File.Exists(CasterRig.CasterBodyPath))
             foreach (var k in Build3DCharacterSpike.LoadClips(CasterRig.CasterBodyPath).Keys) names.Add(k);
         string mixDir = Path.GetDirectoryName(CasterRig.CasterBodyPath);
@@ -141,7 +147,7 @@ public class StanceComposerWindow : EditorWindow
                 string applied = Character3DControllerBuilder.RebuildActiveFromLibrary();
                 Debug.Log(applied != null
                     ? $"[unwritten] Saved StanceLibrary, reloaded catalog, rebuilt + applied to '{applied}'. Press Play (or it's already live)."
-                    : "[unwritten] Saved StanceLibrary + reloaded catalog. No live-3D visual in the open scenes to rebuild — open Systems and run Use 3D Caster/Character once.");
+                    : "[unwritten] Saved StanceLibrary + reloaded catalog. No live-3D player in the open scenes to rebuild — open the Systems scene (it owns the player), then click Save + Apply to 3D again.");
             }
             if (GUILayout.Button("Refresh Clips", GUILayout.Width(110), GUILayout.Height(26)))
                 BuildClipPalette();

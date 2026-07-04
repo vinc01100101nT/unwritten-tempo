@@ -56,35 +56,27 @@ public class TownNPC : MonoBehaviour
     float stepDist;             // distance walked (horizontal) since the last footstep SFX fired
     bool stepLeft;              // alternating foot for the ripple zig-zag; false == RIGHT, so a fresh walk steps right first
     bool simulating = true;
-    bool gaitMatched;   // have we copied the player's fine-tuned walk/run cadence onto this NPC yet?
-
-    // Player gait tuning, resolved ONCE for the whole town (the player's billboard + its real Walk/Run speeds).
-    // Static so N townsfolk don't each scan; re-resolves if the cached visual was destroyed (scene reload).
-    static BakedBillboard8 sPlayerVisual;
-    static float sWalkRef, sRunRef;
 
     // Footsteps: borrow the SAME clips + cadence the player walks on, so a town shares one consistent footstep
-    // voice (zero new audio assets). Resolved alongside the gait, once for the whole town. sStride is how far a
-    // unit travels per step at the player's tuned cadence (stepInterval × run speed) — driving NPC steps off
-    // DISTANCE travelled rather than a timer keeps them in sync with each NPC's own rolled speed (no foot-slide).
+    // voice (zero new audio assets). Resolved once for the whole town straight off Player3DController (the player's
+    // visual is now live-3D — no billboard to read). sStride is how far a unit travels per step at the player's
+    // tuned cadence (stepInterval × run speed); driving NPC steps off DISTANCE rather than a timer keeps them in
+    // sync with each NPC's own rolled speed (no foot-slide).
+    static bool sGaitResolved;
     static SfxSet sPlayerFootstep;
     static SfxSet sWaterFootstep;   // the player's puddle-splash step, swapped in when an NPC is over a puddle
     static float sStride;
 
     static bool ResolvePlayerGait()
     {
-        if (sPlayerVisual != null) return true;
-        var pv = FindFirstObjectByType<BakedPlayerVisual>();
+        if (sGaitResolved) return true;
         var pc = FindFirstObjectByType<Player3DController>();
-        if (pv == null || pc == null) return false;
-        sPlayerVisual = pv.GetComponent<BakedBillboard8>();
-        if (sPlayerVisual == null) return false;
-        float runSpeed = pc.moveSpeed * UnitScale.ForPlayer;     // the player's normal (run-clip) ground speed
-        sRunRef  = runSpeed;
-        sWalkRef = runSpeed * pc.walkSpeedMult;                  // the player's Shift-walk (walk-clip) ground speed
+        if (pc == null) return false;
+        float runSpeed = pc.moveSpeed * UnitScale.ForPlayer;     // the player's normal (run) ground speed
         sPlayerFootstep = pc.footstepSfx;
         sWaterFootstep = pc.waterFootstepSfx;
         sStride = Mathf.Max(0.1f, pc.stepInterval * runSpeed);   // world distance the player covers per step
+        sGaitResolved = true;
         return true;
     }
 
@@ -137,13 +129,10 @@ public class TownNPC : MonoBehaviour
                 if (pc != null) player = pc.transform;
             }
 
-            // Inherit the player's fine-tuned Walk/Run cadence so townsfolk don't foot-slide. Once, lazily, the
-            // first time the player is available — load order can spawn NPCs before the (additive) player exists.
-            if (!gaitMatched && visual != null && ResolvePlayerGait())
-            {
-                visual.MatchGaitTuning(sPlayerVisual, sWalkRef, sRunRef);
-                gaitMatched = true;
-            }
+            // Resolve the shared footstep cadence once the player exists (load order can spawn NPCs before the
+            // additive player). No billboard gait-fps matching now — the player is live-3D and NPC billboards
+            // self-animate at their baked cadence.
+            if (!sGaitResolved) ResolvePlayerGait();
 
             bool near = player == null ||
                         (player.position - transform.position).sqrMagnitude <= simulateRadius * simulateRadius;

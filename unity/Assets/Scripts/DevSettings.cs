@@ -63,8 +63,6 @@ public class DevSettings : MonoBehaviour
 
     // ---- lazily-resolved targets (re-found after map swaps destroy/recreate them) ----
     Player3DController player;
-    BakedBillboard8 bakedPlayer;   // the baked 8-dir visual riding the player (if "Use Baked Character" is active)
-    BakedPlayerVisual bakedVisual; // the animation brain on top of bakedPlayer (used to locate the billboard)
     Transform groundRoot;          // the ground root moved by the "Ground height" knob (found via a Ground-layer ray)
     int groundLayerMask = -1;      // cached Ground layer mask (-1 = not resolved yet)
     Player3DAttacker attacker;
@@ -102,8 +100,6 @@ public class DevSettings : MonoBehaviour
     void EnsureRefs()
     {
         if (player == null)   player   = FindFirstObjectByType<Player3DController>();
-        if (bakedVisual == null) bakedVisual = FindFirstObjectByType<BakedPlayerVisual>();
-        if (bakedPlayer == null && bakedVisual != null) bakedPlayer = bakedVisual.GetComponent<BakedBillboard8>();
         if (attacker == null) attacker = FindFirstObjectByType<Player3DAttacker>();
         if (camRig == null)   camRig   = FindFirstObjectByType<CameraFollow3D>();
         if (fader == null)    fader    = FindFirstObjectByType<CameraOccluderFader>();
@@ -302,13 +298,8 @@ public class DevSettings : MonoBehaviour
         F("Dash duration",    0.05f, 0.6f, () => player ? player.eDashDuration : 0f, v => { if (player) player.eDashDuration = v; });
         F("Dash cooldown",    0f, 3f,    () => player ? player.eDashCooldown : 0f, v => { if (player) player.eDashCooldown = v; });
 
-        // ---- Baked Character (the 8-dir billboard riding the player via "Use Baked Character") ----
-        // Live-seat the feet on the ground: higher = lift the sprite up, lower = sink it. ~0.42 grounds a
-        // standard bake; once you like a value, write it into the prefab's BakedBillboard8.feetOffset (or set
-        // the matching "Feet nudge" in the batch baker) so it sticks. Only does anything while a baked char is active.
-        Cat("Baked Character");
-        F("Feet offset", -0.5f, 1f, () => bakedPlayer ? bakedPlayer.FeetOffset : 0f,
-            v => { if (bakedPlayer) bakedPlayer.SetFeetOffset(v); });
+        // ---- 3D Character (the live-3D model riding the player) ----
+        Cat("3D Character");
         // Where in the Jump clip the looped FALLING frames start (0 = whole clip, 0.5 = 2nd/descent half,
         // ~0.9 ≈ hold the last frame). Lives on the Fall stance binding now (its single owner); live-tune it here,
         // then persist in the Stance Composer. Reuses Jump because there's no dedicated Fall bake.

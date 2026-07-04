@@ -139,6 +139,23 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 
 ---
 
+## Rigs (Mixamo auto-rig pipeline)
+
+The Unity side of the batch Mixamo auto-rig flow (see the `mixamo-batch-autorig-api` memory). The upstream steps are Python: `tools/export_mesh_for_rigging.py` (strip to mesh-only FBX) → `tools/mixamo_batch_rig.py` (upload→rig→download; `--report` for done-vs-pending). These two make the downloaded rigs Humanoid + verify them.
+
+| Menu | What | Use when |
+| --- | --- | --- |
+| **Bulk Set Humanoid (Rigged Mixamo)** | Sets Animation Type = Humanoid + Avatar = Create From This Model on every selected FBX (or, with nothing selected, all under `Assets/Art/Quat/Rigged`) and reimports. Skips already-correct ones. The one-click complement to `tools/mixamo_batch_rig.py` — no per-file Rig tab. *Idempotent.* | After batch-rigging FBX through Mixamo, to make them Humanoid in one click. (`BulkHumanoidRig.cs`) |
+| **Validate Humanoid Avatars (Rigged Mixamo)** | Read-only pass over the same FBX set: loads each Avatar sub-asset and asserts `isValid && isHuman` (Unity only builds a valid+human avatar when every REQUIRED bone mapped — i.e. the mapping diagram is all green). Logs ✅ if all pass, else a warning listing each failing file. | Auto-checking a whole batch's rigs are green without opening Configure per file. (`BulkHumanoidRig.cs`) |
+| **Fix Humanoid Clip Roots (Anim folder)** | For every animation FBX in `Assets/Art/Quat/Anim/Humanoid` (or the selection): sets Animation Type = Humanoid, then on each clip bakes Root Transform Rotation (Body Orientation) + Position Y (**Based Upon = Feet** — the un-bury fix) + Position XZ into the pose, and enables Loop Time. One click instead of the per-clip Animation-tab foldouts. *Idempotent.* | After dropping Mixamo animation FBX into the Humanoid clip folder, so they retarget cleanly and the character's feet sit on the ground (not half-buried). (`BulkHumanoidRig.cs`) |
+| **Set 3D Player Model (Systems scene)** | Seats a rigged Humanoid model as the live-3D player visual: instantiates the selected FBX (or `Rigged/BaseCharacter.fbx`), builds the shared Humanoid AnimatorController (StanceLibrary × `HumanoidClipResolver`), and adds the `Character3DPose`+`StanceController`+`Character3DVisual` rig. Needs **Systems.unity open**. | Changing which rigged character the player wears (the player is live-3D by default — `Setup Systems Scene` seats `BaseCharacter`). (`Player3DVisualBuilder.cs`) |
+
+> **Animation source:** live-3D player/NPC clips are shared **Humanoid** clips in `Assets/Art/Quat/Anim/Humanoid/` (`HumanoidClipResolver`), matched to Stance Composer clip strings by cleaned name. Drop clips named `Idle`/`Walk`/`Run`/`SwordSlash`/… there; they retarget onto every rigged avatar automatically. Empty folder → the character rests/T-poses.
+>
+> **Auto-import:** `HumanoidClipPostprocessor` (an `AssetPostprocessor`) watches that folder — any FBX dropped in is forced to Humanoid + feet-planted/looped clip roots **on import, zero clicks**. The *Fix Humanoid Clip Roots* menu item is just the manual re-fixer for clips imported before the postprocessor existed; both share `BulkHumanoidRig.ApplyClipRoots`.
+
+---
+
 ## Skills (data-driven skills)
 
 | Menu | What | Use when |
@@ -153,10 +170,7 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 
 | Menu | What | Use when |
 | --- | --- | --- |
-| **Use Baked Character (Systems scene)** | Window: swap the real player's visuals to any baked roster character (via `BakedPlayerVisual`) without touching movement/combat. Fully reversible. Needs **Systems.unity open** (targets the live player). | Playing as a different baked character in the real game. (`UseBakedCharacter.cs`) |
-| **Use 3D Character (Systems scene)** | Swaps the real player to a LIVE 3D skinned Quaternius model (default Ninja_Female, or a selected Quat FBX). Builds `Quat/Player3D/QuatPlayerController.controller` (locomotion blend + a state per action from the shared `Character3DClipMap`) and drops a `Character3DVisual` rig on the player, so attack/jump/roll/hurt/pickup/cast/die all play as 3D clips through the SAME `StanceController` choke point the billboard uses (via the `IStancePose` seam + shared `PlayerStanceBrain`). Movement/combat stay the real player's. Needs **Systems.unity open**. *Tagged `// QUICKFIX`; on `experiment/3d-characters`.* | Playing the real game with a live-3D character instead of billboards. (`Use3DCharacter.cs`) |
-| **Use 3D Caster (Systems scene)** | Swaps the real player to a live-3D **caster**: same `Character3DVisual` rig as *Use 3D Character*, but the controller (`Mixamo/CasterPlayerController.controller`) mixes Quaternius locomotion/jump/roll with **Mixamo** idle/cast/melee-attack/death clips (Generic, same skeleton). Uses the isolated `Caster_NinjaFemale` body + its Generic avatar. Needs **Systems.unity open**. *Tagged `// QUICKFIX`; on `experiment/3d-characters`.* | Playing the real game as a Mixamo-animated caster. (`Use3DCaster.cs`) |
-| **Revert 3D Character (back to billboard)** | Removes the 3D/caster visual rig and restores the player's own sprite. Then re-run *Use Baked Character* for the billboard. | Undoing the 3D swap. (`Use3DCharacter.cs`) |
+> **The player is now LIVE-3D by default** (committed 2026-07-04; mobs stay billboards). `Setup Systems Scene` seats a rigged Mixamo-Humanoid model on the player via `Player3DVisualBuilder` — there's no billboard-player swap anymore. To change WHICH rigged model the player wears, use **Tools ▸ unwritten ▸ Rigs ▸ Set 3D Player Model** (see the Rigs section). The retired billboard-player tools (`Use Baked Character`, `Use 3D Character`, `Use 3D Caster`, `Revert 3D Character`) and `BakedPlayerVisual` were deleted in this commit.
 
 ---
 

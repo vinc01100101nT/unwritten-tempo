@@ -31,7 +31,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 2
     action: 0
-    clip: Wide Arm Spell Casting
+    clip: 
     speedSource: 2
     speedMult: 1
     priority: 30
@@ -47,7 +47,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 4
     action: 0
-    clip: Standing Death Forward 01
+    clip: Idle
     speedSource: 0
     speedMult: 1
     priority: 100
@@ -55,7 +55,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 5
     action: 0
-    clip: Walk
+    clip: 
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -63,7 +63,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 6
     action: 2
-    clip: Run
+    clip: Run2
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -71,7 +71,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 7
     action: 3
-    clip: Punching
+    clip: Punch
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -79,7 +79,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 8
     action: 9
-    clip: Jump
+    clip: 
     speedSource: 0
     speedMult: 1
     priority: 0
@@ -87,15 +87,15 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 9
     action: 12
-    clip: Roll
-    speedSource: 4
+    clip: Dash2
+    speedSource: 0
     speedMult: 1
     priority: 0
     playMode: 0
     fallPhase: 0.5
   - id: 10
     action: 5
-    clip: RecieveHit
+    clip: 
     speedSource: 0
     speedMult: 1
     priority: 0
@@ -103,7 +103,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 11
     action: 15
-    clip: PickUp
+    clip: 
     speedSource: 0
     speedMult: 1
     priority: 0
@@ -111,7 +111,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 12
     action: 6
-    clip: Death
+    clip: 
     speedSource: 0
     speedMult: 1
     priority: 0

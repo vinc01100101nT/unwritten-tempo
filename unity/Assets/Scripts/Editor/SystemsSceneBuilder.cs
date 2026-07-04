@@ -128,7 +128,7 @@ public static class SystemsSceneBuilder
 
         AssetDatabase.SaveAssets();
         Debug.Log("[unwritten] Setup Systems Scene (2.5D) ✓ — " + SystemsPath +
-                  " holds the billboard player + 3D camera + HUD + cursor + Character + GameRoot, set as Build " +
+                  " holds the live-3D player + 3D camera + HUD + cursor + Character + GameRoot, set as Build " +
                   "index 0 and the editor Play-start scene.");
         EditorUtility.DisplayDialog("Setup Systems Scene — done",
             "Built the persistent 2.5D Systems layer.\n\n" +
