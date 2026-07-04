@@ -98,6 +98,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<SkillBookPanel>();           // Grimoire (J): browse all composed skills + bind to the hotbar
         canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
         canvasGO.AddComponent<XpBarHUD>();                 // bottom-of-screen XP bars: character (left) + ring (right)
+        canvasGO.AddComponent<ChatController>();            // in-game chat window (Enter) + /command console (GmCommands)
 
         // The new progression window trio (Inventory I · Equipment E · Character C) — replaces the old
         // Bag/Character panels. Builds itself into this canvas at runtime; needs the starter Item/Card assets.

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,11 +21,16 @@ public class StanceComposerWindow : EditorWindow
     StanceLibrary lib;
     Vector2 scroll;
 
+    // The clip palette for the Clip dropdown — the live-3D model's animation names (Quaternius embedded takes +
+    // Mixamo clips). Cached; rebuilt on load or via the Refresh button. Index 0 is "" = no clip (the char stands).
+    string[] clipPalette = { "" };
+    GUIContent[] clipLabels = { new GUIContent("(none — stands)") };
+
     [MenuItem("Tools/unwritten/Art/Stance Composer")]
     public static void Open()
     {
         var w = GetWindow<StanceComposerWindow>("Stance Composer");
-        w.minSize = new Vector2(760, 420);
+        w.minSize = new Vector2(980, 420);
         w.LoadOrCreate();
     }
 
@@ -40,6 +47,31 @@ public class StanceComposerWindow : EditorWindow
             AssetDatabase.SaveAssets();
         }
         Reconcile();
+        BuildClipPalette();
+    }
+
+    // Gather the animation names a live-3D character can play: the Quaternius body's embedded takes (clean suffix)
+    // plus the Mixamo clips (file name = the clip string). This is the dropdown of the model's clips — pick one per
+    // stance. Editor-only; runs on load / Refresh, not per-frame.
+    void BuildClipPalette()
+    {
+        var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (File.Exists(CasterRig.CasterBodyPath))
+            foreach (var k in Build3DCharacterSpike.LoadClips(CasterRig.CasterBodyPath).Keys) names.Add(k);
+        string mixDir = Path.GetDirectoryName(CasterRig.CasterBodyPath);
+        if (AssetDatabase.IsValidFolder(mixDir))
+            foreach (var guid in AssetDatabase.FindAssets("t:Model", new[] { mixDir }))
+            {
+                string file = Path.GetFileNameWithoutExtension(AssetDatabase.GUIDToAssetPath(guid));
+                if (!file.StartsWith("Caster_")) names.Add(file);
+            }
+
+        var opts = new List<string> { "" };
+        opts.AddRange(names);
+        clipPalette = opts.ToArray();
+        clipLabels = new GUIContent[clipPalette.Length];
+        for (int i = 0; i < clipPalette.Length; i++)
+            clipLabels[i] = new GUIContent(clipPalette[i] == "" ? "(none — stands)" : clipPalette[i]);
     }
 
     // Ensure one binding row per enum id (add missing with a sensible default; the enum is append-only so we never
@@ -66,6 +98,10 @@ public class StanceComposerWindow : EditorWindow
             "Every character pose is a stance. HELD stances (Combat/Guard/Casting/Sit) are pushed/popped on a " +
             "StanceController and the highest priority wins. ACTION stances (locomotion + one-shots) are driven one " +
             "at a time by the gameplay brain and beat held stances.\n\n" +
+            "Clip (3D) = the animation a live-3D character plays for this stance — the SINGLE owner of that choice " +
+            "(no hardcoded map). Empty = the character just stands. Idle/Walk/Run clips feed the locomotion blend; " +
+            "every other stance's clip becomes its own state. Action (2D) still selects the baked sprite set for " +
+            "billboard characters. After adding/importing model clips, hit 'Refresh Clips'.\n\n" +
             "Speed source = where the LIVE fps multiplier is read from (the stance never stores the stat): AttackSpeed/" +
             "CastSpeed read Character.Instance; MoveGait reads move speed; FitWindow fits the clip to a runtime window " +
             "(Attack = swing time, Roll = dash length); Baked = the action's authored fps. × mult is a constant on top.\n\n" +
@@ -95,13 +131,20 @@ public class StanceComposerWindow : EditorWindow
         EditorGUILayout.Space(6);
         using (new EditorGUILayout.HorizontalScope())
         {
-            if (GUILayout.Button("Save + Reload Catalog", GUILayout.Height(26)))
+            if (GUILayout.Button("Save + Apply to 3D", GUILayout.Height(26)))
             {
                 EditorUtility.SetDirty(lib);
                 AssetDatabase.SaveAssets();
                 StanceCatalog.Reload();
-                Debug.Log("[unwritten] Saved StanceLibrary + reloaded StanceCatalog.");
+                // Rebuild the live-3D visual's controller from these clips + reassign it, so the change applies now
+                // (no manual Use-3D-Character/Caster). No-op with a friendly note if the player is a billboard.
+                string applied = Character3DControllerBuilder.RebuildActiveFromLibrary();
+                Debug.Log(applied != null
+                    ? $"[unwritten] Saved StanceLibrary, reloaded catalog, rebuilt + applied to '{applied}'. Press Play (or it's already live)."
+                    : "[unwritten] Saved StanceLibrary + reloaded catalog. No live-3D visual in the open scenes to rebuild — open Systems and run Use 3D Caster/Character once.");
             }
+            if (GUILayout.Button("Refresh Clips", GUILayout.Width(110), GUILayout.Height(26)))
+                BuildClipPalette();
             if (GUILayout.Button("Ping Asset", GUILayout.Width(90), GUILayout.Height(26)))
                 EditorGUIUtility.PingObject(lib);
         }
@@ -112,7 +155,8 @@ public class StanceComposerWindow : EditorWindow
         using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
         {
             EditorGUILayout.LabelField("Stance", EditorStyles.miniBoldLabel, GUILayout.Width(80));
-            EditorGUILayout.LabelField("Action", EditorStyles.miniBoldLabel, GUILayout.Width(100));
+            EditorGUILayout.LabelField("Clip (3D)", EditorStyles.miniBoldLabel, GUILayout.Width(200));
+            EditorGUILayout.LabelField("Action (2D)", EditorStyles.miniBoldLabel, GUILayout.Width(100));
             EditorGUILayout.LabelField("Speed source", EditorStyles.miniBoldLabel, GUILayout.Width(110));
             EditorGUILayout.LabelField("× mult", EditorStyles.miniBoldLabel, GUILayout.Width(55));
             EditorGUILayout.LabelField("Priority", EditorStyles.miniBoldLabel, GUILayout.Width(55));
@@ -134,6 +178,7 @@ public class StanceComposerWindow : EditorWindow
         using (new EditorGUILayout.HorizontalScope())
         {
             EditorGUILayout.LabelField(id.ToString(), GUILayout.Width(80));
+            ClipField(b);
             b.action = (CharacterAction)EditorGUILayout.EnumPopup(b.action, GUILayout.Width(100));
             b.speedSource = (StanceSpeedSource)EditorGUILayout.EnumPopup(b.speedSource, GUILayout.Width(110));
             b.speedMult = EditorGUILayout.FloatField(b.speedMult, GUILayout.Width(55));
@@ -146,9 +191,32 @@ public class StanceComposerWindow : EditorWindow
             {
                 var d = StanceDefaults.For(id);
                 b.action = d.action; b.speedSource = d.speedSource; b.speedMult = d.speedMult;
-                b.priority = d.priority; b.playMode = d.playMode; b.fallPhase = d.fallPhase;
+                b.priority = d.priority; b.playMode = d.playMode; b.fallPhase = d.fallPhase; b.clip = d.clip;
                 GUI.changed = true;
             }
         }
+    }
+
+    // The Clip dropdown: the single owner of a stance's 3D animation. Options are the model's clips (BuildClipPalette)
+    // plus "" = none (stands). If a stance already names a clip that isn't in the palette (authored for another model,
+    // or the file was removed), it's shown appended with a "(?)" so it's never silently lost.
+    void ClipField(StanceBinding b)
+    {
+        string cur = b.clip ?? "";
+        string[] opts = clipPalette;
+        GUIContent[] labels = clipLabels;
+        int idx = Array.IndexOf(opts, cur);
+        if (idx < 0)
+        {
+            opts = new string[clipPalette.Length + 1];
+            clipPalette.CopyTo(opts, 0);
+            opts[opts.Length - 1] = cur;
+            labels = new GUIContent[opts.Length];
+            Array.Copy(clipLabels, labels, clipLabels.Length);
+            labels[labels.Length - 1] = new GUIContent(cur + "  (?)");
+            idx = opts.Length - 1;
+        }
+        int sel = EditorGUILayout.Popup(idx, labels, GUILayout.Width(200));
+        b.clip = opts[Mathf.Clamp(sel, 0, opts.Length - 1)];
     }
 }

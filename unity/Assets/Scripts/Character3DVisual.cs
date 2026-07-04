@@ -104,9 +104,10 @@ public class Character3DVisual : MonoBehaviour
         if (dead) { stance.DriveStance(StanceId.Die); wasDead = true; return; }
         if (wasDead) { stance.ClearAction(); wasDead = false; }
 
-        // Shared brain: same decision the billboard uses. hasRun/hasJump are always true for a full 3D controller.
+        // Shared brain: same decision the billboard uses. A full 3D controller always supports Run/Jump beats (the
+        // clip a beat plays is authored per-stance in the Stance Composer; capability here is structural, not clip).
         var d = PlayerStanceBrain.Decide(player, attacker, speed, walkThreshold, hurtUntil, pickUpUntil,
-                                         pose.HasAction(CharacterAction.Run), pose.HasAction(CharacterAction.Jump));
+                                         hasRun: true, hasJump: true);
         if (d.hasAction) stance.DriveStance(d.id, d.window);
         else stance.ClearAction();
         if (d.applyFacing) pose.SetFacing(d.facing);

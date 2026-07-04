@@ -1,0 +1,192 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+/// <summary>
+/// The in-game <b>chat</b> window — a scrolling message log plus a one-line input box, self-built onto the
+/// persistent GameUICanvas (added by <see cref="Editor.UIShellBuilder"/>). Press <b>Enter</b> to open + focus
+/// the box; type and Enter again to send; Esc closes.
+///
+/// <para>Input focus rides the shared typing guard: while the box is focused, <see cref="Hotkeys.Typing"/> is
+/// true, so every gameplay/HUD key (WASD, hotbar, window toggles) is suppressed automatically — no per-site
+/// "am I typing?" checks. Plain lines echo as chat; lines starting with '/' route to <see cref="GmCommands"/>,
+/// the single command dispatcher (gameplay commands are declared there later).</para>
+/// </summary>
+public class ChatController : MonoBehaviour
+{
+    const int MaxLines = 200;   // oldest lines are trimmed past this so the log can't grow unbounded
+
+    static readonly Color SayColor   = new Color(0.62f, 0.70f, 0.80f);   // "You:" prefix
+    static readonly Color EchoColor  = new Color(0.784f, 0.659f, 0.384f); // a command you typed (echoed back)
+    static readonly Color InputFill  = new Color(0.05f, 0.055f, 0.07f, 1f);
+
+    GameObject root;             // the window we show/hide
+    RectTransform logContent;    // vertical list of message rows
+    ScrollRect scroll;
+    InputField input;
+    Font font;
+    bool built;
+
+    void Update()
+    {
+        if (!built) { TryBuild(); return; }
+        if (root == null) return;
+        HandleKeys();
+    }
+
+    void HandleKeys()
+    {
+        bool enter = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
+        // Open + focus on Enter — but only when NOT already typing (a submit press has Hotkeys.Typing == true,
+        // so this branch is skipped and the InputField's own submit handles it instead).
+        if (enter && !Hotkeys.Typing)
+        {
+            if (!root.activeSelf) { root.SetActive(true); UISounds.PlayOpen(); }
+            FocusInput();
+            return;
+        }
+        if (root.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (input != null) input.DeactivateInputField();
+            root.SetActive(false);
+            UISounds.PlayClose();
+        }
+    }
+
+    // ---- build (once) ---------------------------------------------------------
+
+    void TryBuild()
+    {
+        var canvas = GetComponentInParent<Canvas>();
+        if (canvas == null) return;
+
+        font = UiKit.BodyFont;
+        // Lower-left of the 1280×720 reference canvas; draggable via the window header afterwards.
+        var content = UiKit.Window(canvas.transform, "Chat", new Vector2(430, 250), new Vector2(-405, -205), out root);
+
+        BuildInput(content);
+        BuildLog(content);
+
+        built = true;   // starts hidden (UiKit.Window inactivates root); opens on the first Enter
+    }
+
+    // One-line input box pinned to the bottom of the content area.
+    void BuildInput(RectTransform content)
+    {
+        var bg = UiKit.Img("Input", content, InputFill);
+        bg.raycastTarget = true;
+        bg.rectTransform.anchorMin = new Vector2(0, 0);
+        bg.rectTransform.anchorMax = new Vector2(1, 0);
+        bg.rectTransform.pivot = new Vector2(0.5f, 0);
+        bg.rectTransform.sizeDelta = new Vector2(0, 28);
+        bg.rectTransform.anchoredPosition = Vector2.zero;
+
+        var text = UiKit.Label("Text", bg.transform, "", 14, FontStyle.Normal, TextAnchor.MiddleLeft);
+        text.supportRichText = false;   // typed text is literal, never markup
+        UiKit.Fill(text.rectTransform, new Vector2(8, 0), new Vector2(-8, 0));
+
+        var placeholder = UiKit.Label("Placeholder", bg.transform, "Say something, or /help…", 14, FontStyle.Italic, TextAnchor.MiddleLeft);
+        placeholder.color = UiKit.TextDim;
+        UiKit.Fill(placeholder.rectTransform, new Vector2(8, 0), new Vector2(-8, 0));
+
+        input = bg.gameObject.AddComponent<InputField>();
+        input.targetGraphic = bg;
+        input.textComponent = text;
+        input.placeholder = placeholder;
+        input.lineType = InputField.LineType.SingleLine;
+        input.onEndEdit.AddListener(OnEndEdit);
+    }
+
+    // Scrolling message log filling the content area above the input box.
+    void BuildLog(RectTransform content)
+    {
+        var view = UiKit.Img("Log", content, new Color(0, 0, 0, 0.15f));
+        view.raycastTarget = true;   // a graphic for the scroll wheel to land on
+        UiKit.Fill(view.rectTransform, new Vector2(0, 34), new Vector2(0, 0));   // sit above the 28px input (+ gap)
+        view.gameObject.AddComponent<RectMask2D>();
+
+        scroll = view.gameObject.AddComponent<ScrollRect>();
+        scroll.horizontal = false; scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 22f;
+
+        var sc = new GameObject("LogContent", typeof(RectTransform));
+        logContent = (RectTransform)sc.transform;
+        logContent.SetParent(view.rectTransform, false);
+        logContent.anchorMin = new Vector2(0, 0); logContent.anchorMax = new Vector2(1, 0); logContent.pivot = new Vector2(0.5f, 0);
+        logContent.offsetMin = logContent.offsetMax = Vector2.zero;
+
+        var vlg = sc.AddComponent<VerticalLayoutGroup>();
+        vlg.spacing = 2;
+        vlg.padding = new RectOffset(6, 6, 4, 4);
+        vlg.childControlWidth = true; vlg.childControlHeight = true;
+        vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
+        vlg.childAlignment = TextAnchor.LowerLeft;
+        sc.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        scroll.viewport = view.rectTransform;
+        scroll.content = logContent;
+
+        AddLine("<color=#A79E88>Chat ready. Enter to type · /help for commands · Esc to close.</color>");
+    }
+
+    // ---- submit + log ---------------------------------------------------------
+
+    void OnEndEdit(string value)
+    {
+        // onEndEdit also fires on focus-loss; only act on an actual Enter press.
+        if (!(Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))) return;
+
+        var text = value != null ? value.Trim() : "";
+        input.text = "";
+        if (text.Length == 0) { input.DeactivateInputField(); return; }
+
+        Submit(text);
+        FocusInput();   // keep the box focused for rapid entry
+    }
+
+    void Submit(string text)
+    {
+        if (GmCommands.IsCommand(text))
+        {
+            AddLine($"<color=#C8A862>{Sanitize(text)}</color>");
+            GmCommands.Execute(text, AddLine);
+        }
+        else
+        {
+            AddLine($"<color=#9FB4CC>You:</color> {Sanitize(text)}");
+        }
+    }
+
+    void AddLine(string message)
+    {
+        if (logContent == null) return;
+
+        var go = new GameObject("Line", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
+        go.transform.SetParent(logContent, false);
+        var t = go.GetComponent<Text>();
+        t.font = font != null ? font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        t.fontSize = 14; t.alignment = TextAnchor.UpperLeft; t.color = UiKit.TextMain;
+        t.horizontalOverflow = HorizontalWrapMode.Wrap;
+        t.verticalOverflow = VerticalWrapMode.Overflow;
+        t.supportRichText = true;
+        t.text = message;
+
+        // Trim the oldest rows so the log stays bounded.
+        while (logContent.childCount > MaxLines) Destroy(logContent.GetChild(0).gameObject);
+
+        // Snap to the newest line (force a layout pass first so the scroll clamps correctly).
+        Canvas.ForceUpdateCanvases();
+        if (scroll != null) scroll.verticalNormalizedPosition = 0f;
+    }
+
+    void FocusInput()
+    {
+        if (input == null) return;
+        input.ActivateInputField();
+        input.Select();
+    }
+
+    // Neutralize rich-text markup in user/echoed text so a stray '<' can't corrupt the log's formatting.
+    static string Sanitize(string s) => string.IsNullOrEmpty(s) ? s : s.Replace("<", "<​");
+}

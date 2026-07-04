@@ -52,6 +52,24 @@ public class InventoryStore : MonoBehaviour
         }
     }
 
+    /// <summary>Drop <paramref name="count"/> of an item into the bag (GM/testing + future loot). Equipment
+    /// adds one entry per copy (each its own <see cref="EquipmentInstance"/>); stackables merge into an existing
+    /// non-equip stack. The single add-item path — callers never poke <see cref="Entries"/> directly.</summary>
+    public void Give(Item def, int count)
+    {
+        if (def == null || count <= 0) return;
+        if (def.slot != EquipSlotType.None)
+            for (int i = 0; i < count; i++)
+                Entries.Add(new Entry { def = def, count = 1, instance = new EquipmentInstance(def, 0), isNew = true });
+        else
+        {
+            var e = Entries.Find(x => x.def == def && !x.IsEquip);
+            if (e != null) e.count += count;
+            else Entries.Add(new Entry { def = def, count = count, isNew = true });
+        }
+        Notify();
+    }
+
     public int TotalWeight
     {
         get

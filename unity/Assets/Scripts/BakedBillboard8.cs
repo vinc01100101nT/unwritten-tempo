@@ -218,8 +218,9 @@ public class BakedBillboard8 : MonoBehaviour, IStancePose
 
     /// <summary>The action's natural play length in seconds at its baked fps (frame count / fps), ignoring any
     /// speed scale. 0 if the action isn't baked. Lets a caller compress a clip to fit a target window (e.g. a swing).</summary>
-    public float NaturalDuration(CharacterAction a)
+    public float NaturalDuration(CharacterAction a, string clip = null)
     {
+        // 2D billboards key on the baked action; the 3D clip name is unused here.
         if (!clips.TryGetValue(a, out var dirs) || dirs == null) return 0f;
         var s = dirs[4];                                            // South strip
         int n = s != null ? s.Length : 0;
@@ -279,7 +280,7 @@ public class BakedBillboard8 : MonoBehaviour, IStancePose
 
     /// <summary>True if the given action has baked strips, so a caller can fall back when it's missing
     /// (e.g. use Dash when Roll wasn't baked, or Walk when there's no Run).</summary>
-    public bool HasAction(CharacterAction a) => Has(a);
+    public bool HasAction(CharacterAction a, string clip = null) => Has(a);   // 2D keys on action; clip unused
 
     /// <summary>The current sprite's world-space height (sprite bounds × lossy scale), or 0 before the first
     /// frame is set. Used to size gameplay thresholds to the VISIBLE character — e.g. the player's max
@@ -296,11 +297,11 @@ public class BakedBillboard8 : MonoBehaviour, IStancePose
 
     // ---- AI / controller hooks ----
     /// <summary>Force a specific action (e.g. Attack) until <see cref="StopOverride"/>. Switches off self-drive.</summary>
-    public void Play(CharacterAction a) { externallyDriven = true; hasOverride = true; overrideAction = a; fallMode = false; }
+    public void Play(CharacterAction a, string clip = null) { externallyDriven = true; hasOverride = true; overrideAction = a; fallMode = false; }
     /// <summary>Play <paramref name="src"/> as a FALL pose: loop only the clip's tail (from <paramref name="startFrac"/>
     /// of its length to the end), so reusing the Jump clip reads as a sustained descent while airborne. Cleared by
     /// any other Play / StopOverride. <paramref name="startFrac"/> ~0.5 = its 2nd half; near 1 ≈ hold the last frame.</summary>
-    public void PlayFall(CharacterAction src, float startFrac)
+    public void PlayFall(CharacterAction src, string clip, float startFrac)
     {
         Play(src);                       // sets the override; Play cleared fallMode, so re-arm it below
         fallMode = true; fallSource = src; fallStartFrac = Mathf.Clamp01(startFrac);

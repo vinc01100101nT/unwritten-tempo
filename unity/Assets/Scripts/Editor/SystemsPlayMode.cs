@@ -41,9 +41,10 @@ static class SystemsPlayMode
 
         var active = SceneManager.GetActiveScene();
 
-        // The character sandbox owns its OWN camera and isn't part of the game, so don't force Systems —
-        // clear the override and let it boot itself. (Re-pinned automatically next time a real map is played.)
-        if (active.IsValid() && active.name == SandboxScene)
+        // The character sandbox and any *Spike* scene own their OWN camera and aren't part of the game, so don't
+        // force Systems — clear the override and let them boot themselves. (Re-pinned automatically next time a
+        // real map is played.) This is why pressing Play in a spike scene no longer errors on a missing boot-map.
+        if (active.IsValid() && (active.name == SandboxScene || active.name.Contains("Spike")))
         {
             EditorSceneManager.playModeStartScene = null;
             return;

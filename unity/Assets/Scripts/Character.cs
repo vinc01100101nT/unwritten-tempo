@@ -565,11 +565,18 @@ public class Character : MonoBehaviour
     /// dodge-dash. Incoming physical AND magic hits are fully negated and pop a "Dodge" cue. Runtime-only.</summary>
     public bool Invulnerable { get; set; }
 
+    /// <summary>Persistent GM invincibility (the <c>/invuln</c> command). Unlike <see cref="Invulnerable"/>
+    /// (transient dash i-frames the controller re-arms each frame), this stays until toggled off, and negates
+    /// hits SILENTLY (no "Dodge" spam). Folded into the one <see cref="DodgedByInvuln"/> choke so both the
+    /// physical and magic damage paths honor it. Runtime-only.</summary>
+    public bool Invincible { get; set; }
+
     static readonly Color DodgeColor = new Color(0.55f, 0.9f, 1f);
 
     // Negate an incoming hit because we're dashing through it; pop a small "Dodge" cue over the avatar.
     bool DodgedByInvuln()
     {
+        if (Invincible) return true;   // GM invuln: silently eat the hit
         if (!Invulnerable) return false;
         var a = Avatar();
         if (a != null) DamagePopup.SpawnText(a.position, "Dodge", DodgeColor);

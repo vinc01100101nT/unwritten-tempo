@@ -75,6 +75,11 @@ public class StanceBinding
              "If the unit hasn't baked it, BakedBillboard8 falls back to Idle.")]
     public CharacterAction action = CharacterAction.Idle;
 
+    [Tooltip("3D ONLY: the exact animation clip this stance plays on a live-3D character (Character3DPose). This is " +
+             "the single owner of a stance's 3D clip — there is NO hardcoded action->clip fallback. Empty = the 3D " +
+             "character just stands (no clip). 2D billboards ignore this and use 'action' (baked sprite sets).")]
+    public string clip = "";
+
     [Tooltip("Where the LIVE playback-speed multiplier is read from each frame. Baked = the action's authored fps; " +
              "AttackSpeed/CastSpeed read Character.Instance; MoveGait reads GaitSpeedMult; FitWindow fits the clip to " +
              "a runtime window (Attack = swing time, Roll = dash length).")]

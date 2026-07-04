@@ -8,8 +8,9 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Swaps the REAL player to a live-3D skinned Quaternius character — the 3D counterpart of
-/// <c>Use Baked Character</c>. It builds a full AnimatorController (locomotion blend + a state per action from the
-/// shared <see cref="Character3DClipMap"/>) and drops a <see cref="Character3DVisual"/> rig onto the player, so
+/// <c>Use Baked Character</c>. It builds a full AnimatorController (locomotion blend + a state per authored stance
+/// clip, straight from the Stance Composer's <see cref="StanceLibrary"/>) and drops a <see cref="Character3DVisual"/>
+/// rig onto the player, so
 /// every action the animation brain drives (attack/jump/roll/hurt/pickup/cast/die/…) plays as a 3D clip through
 /// the same <see cref="StanceController"/> choke point the billboard uses. Movement/combat stay the real player's.
 ///
@@ -76,52 +77,13 @@ public static class Use3DCharacter
         return DefaultModel;
     }
 
-    // Full player controller: 1-D locomotion blend (Idle/Walk/Run on "Speed") + one non-looping state per
-    // action in the shared clip map. No transitions — Character3DPose CrossFades to states explicitly, so the
-    // controller is just a bag of clips the pose plays by name.
-    static AnimatorController BuildFullController(string modelPath)
+    // Full player controller: built straight from the authored StanceLibrary (the Stance Composer owns every clip
+    // choice — no hardcoded action→clip map). Quaternius embedded clips are the only source here (no Mixamo
+    // resolver). Character3DPose CrossFades to states by the clip name, so the controller is just a bag of clips.
+    internal static AnimatorController BuildFullController(string modelPath)
     {
-        Directory.CreateDirectory(OutDir);
         var clips = Build3DCharacterSpike.LoadClips(modelPath);   // keyed by clean suffix: Idle, Walk, SwordSlash, …
-
-        foreach (var need in new[] { "Idle", "Walk", "Run" })
-            if (!clips.ContainsKey(need))
-            {
-                EditorUtility.DisplayDialog("Use 3D Character",
-                    $"Locomotion clip '{need}' not found in {Path.GetFileName(modelPath)}. Is it a Quaternius model?", "OK");
-                return null;
-            }
-
-        var ctrl = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
-        ctrl.AddParameter("Speed", AnimatorControllerParameterType.Float);
-        var sm = ctrl.layers[0].stateMachine;
-
-        var loco = sm.AddState("Locomotion");
-        var blend = new BlendTree
-        {
-            name = "Locomotion", blendType = BlendTreeType.Simple1D,
-            blendParameter = "Speed", useAutomaticThresholds = false,
-        };
-        AssetDatabase.AddObjectToAsset(blend, ctrl);
-        blend.AddChild(clips["Idle"], 0f);
-        blend.AddChild(clips["Walk"], 0.5f);
-        blend.AddChild(clips["Run"], 1f);
-        loco.motion = blend;
-        sm.defaultState = loco;
-
-        // One state per one-shot action, NAMED by the CharacterAction (Character3DPose hashes that name to
-        // CrossFade). Skips actions whose clip the model doesn't have.
-        foreach (var kv in Character3DClipMap.ClipFor)
-        {
-            if (Character3DClipMap.IsLocomotion(kv.Key)) continue;
-            if (!clips.TryGetValue(kv.Value, out var clip) || clip == null) continue;
-            var st = sm.AddState(kv.Key.ToString());
-            st.motion = clip;
-        }
-
-        EditorUtility.SetDirty(ctrl);
-        AssetDatabase.SaveAssets();
-        return ctrl;
+        return Character3DControllerBuilder.Build(ControllerPath, clips, resolver: null, writeDefaultsOff: false);
     }
 
     static void Apply(Player3DController player, string modelPath, AnimatorController controller)

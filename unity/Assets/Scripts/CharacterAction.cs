@@ -31,3 +31,12 @@ public enum CharacterAction
     WalkCarry,
     RunCarry,
 }
+
+/// <summary>Action-domain helpers. <see cref="IsLocomotion"/> classifies the three actions that resolve to the
+/// 1-D locomotion blend tree (Idle/Walk/Run) rather than a one-shot clip state. This is action→STRUCTURE (which
+/// playback mechanism), NOT action→clip — the clip a stance plays is authored in the Stance Composer.</summary>
+public static class CharacterActions
+{
+    public static bool IsLocomotion(CharacterAction a) =>
+        a == CharacterAction.Idle || a == CharacterAction.Walk || a == CharacterAction.Run;
+}

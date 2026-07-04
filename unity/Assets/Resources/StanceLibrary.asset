@@ -15,6 +15,7 @@ MonoBehaviour:
   stances:
   - id: 0
     action: 0
+    clip: 
     speedSource: 1
     speedMult: 1
     priority: 10
@@ -22,13 +23,15 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 1
     action: 0
+    clip: 
     speedSource: 0
     speedMult: 1
     priority: 20
     playMode: 0
     fallPhase: 0.5
   - id: 2
-    action: 2
+    action: 0
+    clip: Standing Idle 03
     speedSource: 2
     speedMult: 1
     priority: 30
@@ -36,6 +39,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 3
     action: 7
+    clip: 
     speedSource: 0
     speedMult: 1
     priority: 5
@@ -43,13 +47,15 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 4
     action: 0
+    clip: Idle
     speedSource: 0
     speedMult: 1
-    priority: 0
+    priority: 100
     playMode: 0
     fallPhase: 0.5
   - id: 5
-    action: 1
+    action: 0
+    clip: Walk
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -57,6 +63,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 6
     action: 2
+    clip: Run
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -64,6 +71,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 7
     action: 3
+    clip: SwordSlash
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -71,6 +79,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 8
     action: 9
+    clip: Jump
     speedSource: 0
     speedMult: 1
     priority: 0
@@ -78,6 +87,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 9
     action: 12
+    clip: Roll
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -85,6 +95,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 10
     action: 5
+    clip: RecieveHit
     speedSource: 0
     speedMult: 1
     priority: 0
@@ -92,6 +103,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 11
     action: 15
+    clip: PickUp
     speedSource: 0
     speedMult: 1
     priority: 0
@@ -99,6 +111,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 12
     action: 6
+    clip: Death
     speedSource: 0
     speedMult: 1
     priority: 0
@@ -106,6 +119,7 @@ MonoBehaviour:
     fallPhase: 0.5
   - id: 13
     action: 9
+    clip: 
     speedSource: 0
     speedMult: 1
     priority: 0

@@ -8,8 +8,10 @@ using UnityEngine;
 /// 1-D <c>Speed</c> tree, one-shots (Attack/Jump/Roll/Hurt/PickUp/Die/Cast/Sit) CrossFade to their own state.
 ///
 /// <para>Because StanceController drives this directly, there's no second "what action?" decision here — it only
-/// renders. State names come from <see cref="Character3DClipMap"/> (the shared action→clip SSOT), so they match
-/// whatever the AnimatorController builder authored. No per-frame allocation: hashes + clip lengths cached in Awake.</para>
+/// renders. Each drive carries the authored CLIP NAME (owned by the Stance Composer — there is NO hardcoded
+/// action→clip map); one-shot states are named by that clip, so the pose CrossFades to the state named exactly
+/// like the clip. An empty/unknown clip → the character just rests (locomotion idle), never a substituted clip.
+/// No per-frame allocation: state hashes + clip lengths cached by name in Awake.</para>
 /// </summary>
 [RequireComponent(typeof(Animator))]
 [DefaultExecutionOrder(0)]
@@ -26,38 +28,39 @@ public class Character3DPose : MonoBehaviour, IStancePose
     static readonly int Loco = Animator.StringToHash("Locomotion");
     static readonly int PSpeed = Animator.StringToHash("Speed");
 
-    // Cached: which one-shot actions actually have a state, their state hash, and every action's clip length.
-    readonly Dictionary<CharacterAction, int> stateHash = new Dictionary<CharacterAction, int>();
-    readonly Dictionary<CharacterAction, float> clipLen = new Dictionary<CharacterAction, float>();
+    // Cached BY CLIP NAME: which clips actually have a one-shot state (+ its hash) and every clip's length. The
+    // builder names each one-shot state after its clip, so the composer's clip string is the CrossFade key.
+    readonly Dictionary<string, int> stateHash = new Dictionary<string, int>();
+    readonly Dictionary<string, float> clipLen = new Dictionary<string, float>();
 
     Vector3 facing = Vector3.forward;
     float speedTarget, speedVel;
     int currentState;     // the state hash we last CrossFaded to (Loco or a one-shot)
 
-    void Awake()
+    void Awake() => Reinitialize();
+
+    /// <summary>(Re)build the state-hash + clip-length caches from the CURRENT controller. Called on Awake, and by the
+    /// Stance Composer after it rebuilds the controller so a clip change reflects live without leaving Play.</summary>
+    public void Reinitialize()
     {
-        anim = GetComponent<Animator>();
+        if (anim == null) anim = GetComponent<Animator>();
         currentState = Loco;
+        stateHash.Clear();
+        clipLen.Clear();
 
-        // Discover one-shot states by name (CharacterAction.ToString(), matching the builder) — a state only
-        // counts if the controller actually has it, so a missing action silently falls back to Idle/Locomotion.
-        foreach (var kv in Character3DClipMap.ClipFor)
-        {
-            if (Character3DClipMap.IsLocomotion(kv.Key)) continue;
-            int h = Animator.StringToHash(kv.Key.ToString());
-            if (anim.HasState(0, h)) stateHash[kv.Key] = h;
-        }
-
-        // Clip lengths for NaturalDuration (FitWindow fit). Match each imported clip to an action by its
-        // Quaternius suffix via the shared map, so Attack/Roll can be fit to their runtime window.
+        // Discover states + clip lengths straight from the controller, keyed by the CLIP NAME. A one-shot state is
+        // named after its clip (the builder does this), so a clip counts as a one-shot only if a state with that
+        // name exists — the locomotion clips (blend-tree children, no same-named state) are length-cached but never
+        // become one-shot states. clipLen feeds NaturalDuration (FitWindow fit) for every clip.
         var rac = anim.runtimeAnimatorController;
         if (rac != null)
             foreach (var clip in rac.animationClips)
             {
                 if (clip == null) continue;
-                string suffix = Clean(clip.name);
-                foreach (var kv in Character3DClipMap.ClipFor)
-                    if (kv.Value == suffix) clipLen[kv.Key] = clip.length;
+                string name = Clean(clip.name);
+                clipLen[name] = clip.length;
+                int h = Animator.StringToHash(name);
+                if (anim.HasState(0, h)) stateHash[name] = h;
             }
     }
 
@@ -69,33 +72,33 @@ public class Character3DPose : MonoBehaviour, IStancePose
 
     // ---- IStancePose ----
 
-    public void Play(CharacterAction a)
+    public void Play(CharacterAction a, string clip)
     {
-        if (Character3DClipMap.IsLocomotion(a))
-        {
-            speedTarget = a == CharacterAction.Run ? 1f : a == CharacterAction.Walk ? 0.5f : 0f;
-            anim.speed = 1f;
-            GoTo(Loco);
-            return;
-        }
-        // One-shot: CrossFade to its state (guarded so re-driving the same action each frame doesn't restart it).
-        if (stateHash.TryGetValue(a, out int h)) GoTo(h);
-        else { speedTarget = 0f; anim.speed = 1f; GoTo(Loco); }   // no state for it → idle rather than freeze
+        // The AUTHORED clip wins: if it has its own state, CrossFade to it — even for a stance whose 2D 'action' is a
+        // locomotion one (e.g. a held Casting/Combat/Guard pose parked on action Idle). Guarded so re-driving the same
+        // clip each frame doesn't restart it. Only clips WITHOUT a dedicated state — the Idle/Walk/Run locomotion
+        // clips (they live in the blend tree, not a one-shot state) or an unassigned stance — fall through to the
+        // blend at the action's speed (unassigned → rests at idle, never a substituted clip).
+        if (!string.IsNullOrEmpty(clip) && stateHash.TryGetValue(clip, out int h)) { GoTo(h); return; }
+        speedTarget = a == CharacterAction.Run ? 1f : a == CharacterAction.Walk ? 0.5f : 0f;
+        anim.speed = 1f;
+        GoTo(Loco);
     }
 
-    public void PlayFall(CharacterAction src, float startFrac) => Play(src);   // 3D just holds the Jump/fall state
+    public void PlayFall(CharacterAction src, string clip, float startFrac) => Play(src, clip);   // 3D just holds the fall state
 
     public void SetActionSpeed(CharacterAction a, float multiplier)
     {
-        // Locomotion speed is the blend param, not clip speed; only one-shots (Attack/Roll FitWindow, stat sync)
-        // scale the Animator's playback so the clip fits its window. Play() resets anim.speed for locomotion.
-        if (!Character3DClipMap.IsLocomotion(a)) anim.speed = Mathf.Max(0.01f, multiplier);
+        // Scale playback only while on a one-shot clip state (Attack/Cast/… FitWindow or stat sync). On the locomotion
+        // blend, speed is the blend param not clip speed — Play() already reset anim.speed there.
+        if (currentState != Loco) anim.speed = Mathf.Max(0.01f, multiplier);
     }
 
-    public bool HasAction(CharacterAction a) =>
-        Character3DClipMap.IsLocomotion(a) || stateHash.ContainsKey(a);
+    public bool HasAction(CharacterAction a, string clip) =>
+        CharacterActions.IsLocomotion(a) || (!string.IsNullOrEmpty(clip) && stateHash.ContainsKey(clip));
 
-    public float NaturalDuration(CharacterAction a) => clipLen.TryGetValue(a, out float l) ? l : 0f;
+    public float NaturalDuration(CharacterAction a, string clip) =>
+        !string.IsNullOrEmpty(clip) && clipLen.TryGetValue(clip, out float l) ? l : 0f;
 
     public void ResumeSelfDrive() { speedTarget = 0f; anim.speed = 1f; GoTo(Loco); }
 

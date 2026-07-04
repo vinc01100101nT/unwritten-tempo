@@ -121,7 +121,7 @@ public class StanceController : MonoBehaviour
         for (int i = 0; i < active.Count; i++)
         {
             var b = StanceCatalog.Get(active[i]);
-            if (b == null || !pose.HasAction(b.action)) continue;
+            if (b == null || !pose.HasAction(b.action, b.clip)) continue;
             if (b.priority >= bestPri) { bestPri = b.priority; best = b; }
         }
         if (best != null)
@@ -139,7 +139,7 @@ public class StanceController : MonoBehaviour
         else
         {
             var idle = StanceCatalog.Get(StanceId.Idle);
-            if (idle != null) ApplyStance(idle, 0f); else pose.Play(CharacterAction.Idle);
+            if (idle != null) ApplyStance(idle, 0f); else pose.Play(CharacterAction.Idle, "");
             currentResolved = StanceId.Idle;
             driving = false;
         }
@@ -148,9 +148,9 @@ public class StanceController : MonoBehaviour
     // Play a resolved binding on the billboard: its action, its playback mode, and its live-modulated speed.
     void ApplyStance(StanceBinding b, float window)
     {
-        if (b.playMode == StancePlayMode.FallTail) { pose.PlayFall(b.action, b.fallPhase); return; }
+        if (b.playMode == StancePlayMode.FallTail) { pose.PlayFall(b.action, b.clip, b.fallPhase); return; }
 
-        pose.Play(b.action);
+        pose.Play(b.action, b.clip);
         float m = b.speedMult;
         switch (b.speedSource)
         {
@@ -158,7 +158,7 @@ public class StanceController : MonoBehaviour
             case StanceSpeedSource.CastSpeed:   m *= Character.Instance != null ? Character.Instance.CastSpeedMult   : 1f; break;
             case StanceSpeedSource.MoveGait:    m *= playerCtrl != null ? playerCtrl.GaitSpeedMult : 1f; break;
             case StanceSpeedSource.FitWindow:
-                float n = pose.NaturalDuration(b.action);
+                float n = pose.NaturalDuration(b.action, b.clip);
                 if (window > 0.01f && n > 0.01f) m *= n / window;
                 break;
         }
