@@ -3,6 +3,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -27,7 +28,7 @@ public class HotbarPanel : MonoBehaviour
         public int index;               // 0..8 → key (index+1)
         public IHotbarSkill skill;      // the bound skill (null = empty slot)
         public Image cell, icon, cooldown;
-        public Text mp, label, cdNum;
+        public TMP_Text mp, label, cdNum;
         public GameObject hideOnCd;     // the center label to hide while counting down (null when an icon shows)
         public int lastSecs = -1;
         public sbyte lastOnCd = -1, lastAff = -1;
@@ -51,7 +52,6 @@ public class HotbarPanel : MonoBehaviour
     /// <summary>Invoke to rebuild the bar (e.g. after a binding change). Set by the live HotbarPanel.</summary>
     public static System.Action RebuildRequested;
 
-    Font font;
     Sprite whiteSprite;
     Player3DController player;
     Transform holder;
@@ -64,7 +64,7 @@ public class HotbarPanel : MonoBehaviour
     // it: that's the "sometimes the helper doesn't show" bug. A single top-sibling panel, repositioned over
     // the hovered cell, is always drawn above everything and never clipped.
     GameObject tipRoot;
-    Text tipText;
+    TMP_Text tipText;
     RectTransform tipRT;
     static readonly Vector3[] cornerBuf = new Vector3[4];   // reused by GetWorldCorners (no per-hover alloc)
 
@@ -127,7 +127,6 @@ public class HotbarPanel : MonoBehaviour
         if (holder == null) return;
         if (Character.Instance == null) return;   // need the bindings
 
-        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         if (whiteSprite == null)
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
 
@@ -260,7 +259,7 @@ public class HotbarPanel : MonoBehaviour
         img.raycastTarget = false;
 
         tipText = NewText("Text", tipRoot.transform, "", 11, FontStyle.Normal, TextAnchor.UpperLeft, Color.white);
-        tipText.supportRichText = true;
+        tipText.richText = true;
         Stretch(tipText.rectTransform, 8, 7);
 
         tipRoot.SetActive(false);
@@ -301,7 +300,7 @@ public class HotbarPanel : MonoBehaviour
         trig.triggers.Add(e);
     }
 
-    void PopulateTooltip(Text txt, IModifiableSkill mod)
+    void PopulateTooltip(TMP_Text txt, IModifiableSkill mod)
     {
         var sb = tipSb; sb.Length = 0;
         sb.Append("<b>").Append(mod is IHotbarSkill hs ? hs.ShortLabel : "Skill").Append(" — modifiers</b>\n");
@@ -362,19 +361,10 @@ public class HotbarPanel : MonoBehaviour
     }
 
     // ---- UI primitives (match StatPanel's style) ----
-    Text NewText(string name, Transform parent, string str, int size, FontStyle style, TextAnchor anchor, Color color)
+    TMP_Text NewText(string name, Transform parent, string str, int size, FontStyle style, TextAnchor anchor, Color color)
     {
-        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(parent, false);
-        var t = go.GetComponent<Text>();
-        t.font = font; t.fontSize = size; t.fontStyle = style; t.alignment = anchor;
-        t.color = color; t.raycastTarget = false; t.supportRichText = false;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.text = str;
-        var sh = go.AddComponent<Shadow>();
-        sh.effectColor = new Color(0, 0, 0, 0.85f);
-        sh.effectDistance = new Vector2(1, -1);
+        var t = UiKit.MakeText(name, parent, str, size, style, anchor, wrap: false);
+        t.color = color; t.raycastTarget = false; t.richText = false;
         return t;
     }
 

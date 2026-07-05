@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Screen-space panel (top-right) that shows the hovered mob's HP bar, name, and element
@@ -15,10 +16,10 @@ public class MobHoverPanel : MonoBehaviour
 
     CanvasGroup group;
     Image       fill;
-    Text        nameLabel;
-    Text        hpLabel;
+    TMP_Text    nameLabel;
+    TMP_Text    hpLabel;
     Image       elementBadge;
-    Text        elementLabel;
+    TMP_Text    elementLabel;
 
     Health  tracked;
     Camera  cam;
@@ -26,7 +27,6 @@ public class MobHoverPanel : MonoBehaviour
 
     // shared one-time resources (same discipline as MobNameplate)
     static Sprite white;
-    static Font   font;
 
     // ── lifecycle ──────────────────────────────────────────────────────────────
 
@@ -141,7 +141,7 @@ public class MobHoverPanel : MonoBehaviour
         hpLabel = NewText("HPLabel", track.rectTransform, 9, FontStyle.Normal,
                           new Color(0.85f, 0.85f, 0.85f));
         StretchFull(hpLabel.rectTransform);
-        hpLabel.alignment = TextAnchor.MiddleCenter;
+        hpLabel.alignment = TextAlignmentOptions.Center;
         hpLabel.text      = "";
 
         y -= BarH + 2f;
@@ -149,11 +149,8 @@ public class MobHoverPanel : MonoBehaviour
         // ── name ──────────────────────────────────────────────────────────────
         nameLabel = NewText("Name", panel, 13, FontStyle.Bold, new Color(0.97f, 0.97f, 0.99f));
         PlaceTopLeft(nameLabel.rectTransform, new Vector2(Pad, y), new Vector2(W - Pad * 2f, 18f));
-        nameLabel.alignment = TextAnchor.UpperLeft;
+        nameLabel.alignment = TextAlignmentOptions.TopLeft;
         nameLabel.text      = "";
-        var outline = nameLabel.gameObject.AddComponent<Outline>();
-        outline.effectColor    = new Color(0f, 0f, 0f, 0.75f);
-        outline.effectDistance = new Vector2(1f, -1f);
 
         y -= 20f;
 
@@ -163,7 +160,7 @@ public class MobHoverPanel : MonoBehaviour
 
         elementLabel = NewText("ElementLabel", elementBadge.rectTransform, 9, FontStyle.Bold, Color.white);
         StretchFull(elementLabel.rectTransform);
-        elementLabel.alignment = TextAnchor.MiddleCenter;
+        elementLabel.alignment = TextAlignmentOptions.Center;
         elementLabel.text      = "";
 
         elementBadge.gameObject.SetActive(false);   // hidden until a non-neutral mob is hovered
@@ -173,9 +170,6 @@ public class MobHoverPanel : MonoBehaviour
 
     static Sprite White => white != null ? white
         : (white = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f)));
-
-    static Font Font => font != null ? font
-        : (font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
 
     static RectTransform NewRect(string name, Transform parent)
     {
@@ -195,18 +189,11 @@ public class MobHoverPanel : MonoBehaviour
         return img;
     }
 
-    static Text NewText(string name, Transform parent, int size, FontStyle style, Color color)
+    static TMP_Text NewText(string name, Transform parent, int size, FontStyle style, Color color)
     {
-        var go = new GameObject(name, typeof(RectTransform));
-        go.transform.SetParent(parent, false);
-        var t = go.AddComponent<Text>();
-        t.font              = Font;
-        t.fontSize          = size;
-        t.fontStyle         = style;
-        t.color             = color;
-        t.raycastTarget     = false;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-        t.verticalOverflow  = VerticalWrapMode.Overflow;
+        var t = UiKit.MakeText(name, parent, "", size, style, TextAnchor.UpperLeft, wrap: false);
+        t.color = color;
+        t.raycastTarget = false;
         return t;
     }
 

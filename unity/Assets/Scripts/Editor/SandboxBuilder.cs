@@ -14,7 +14,7 @@ public static class SandboxBuilder
     const string ScenePath = "Assets/Scenes/CharacterSandbox.unity";
     const string RosterPath = "Assets/Art/Characters/CharacterRoster.asset";
 
-    [MenuItem("Tools/unwritten/Create Character Sandbox Scene", priority = 622)]
+    [MenuItem("Tools/unwritten/Scene Setup/Create Character Sandbox Scene", priority = 622)]
     static void Create()
     {
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;

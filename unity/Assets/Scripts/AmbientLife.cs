@@ -67,7 +67,7 @@ public class AmbientLife : MonoBehaviour
         var go = Instantiate(entry.prefab, p, Quaternion.identity);
         go.name = "Townsfolk_" + entry.name;
 
-        // Mirror the mob movement stack (Build25DSpike.BuildMonster): PathAgent3D auto-adds a CharacterController,
+        // Mirror the mob movement stack (RigBuilder25D.BuildMonster): PathAgent3D auto-adds a CharacterController,
         // which we size to the baked character (its root localScale is the worldScale, so these are LOCAL units —
         // height 1 ≈ 1.7u tall, capsule foot at 0 sits on the spawn point).
         var agent = go.AddComponent<PathAgent3D>();

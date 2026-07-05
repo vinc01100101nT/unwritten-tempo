@@ -8,7 +8,7 @@ using UnityEngine;
 /// Resolves a Stance Composer clip NAME to a shared <b>Humanoid</b> animation clip, so every live-3D character
 /// retargets the SAME clip library onto its own avatar (Humanoid→Humanoid retarget is automatic in Unity). This
 /// is the animation source for the committed live-3D player/NPCs — the Quaternius-embedded-Generic path
-/// (<see cref="Build3DCharacterSpike.LoadClips"/>) was for the spike; Mixamo-rigged bodies carry no embedded clips.
+/// (<see cref="Character3DRigBuilder.LoadClips"/>) was the Generic-rig path; Mixamo-rigged bodies carry no embedded clips.
 ///
 /// <para>Clips live in <see cref="ClipDir"/> as Humanoid-imported FBX/anim assets. A clip matches a composer string
 /// by cleaned name (case-insensitive, spaces/underscores stripped, any "mixamo.com" dropped), so naming a file

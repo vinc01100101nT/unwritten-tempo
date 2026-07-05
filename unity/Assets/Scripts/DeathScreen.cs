@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Phase F death → respawn flow. Lives on the persistent <c>Systems</c> layer (never unloaded) and
@@ -22,9 +23,9 @@ public class DeathScreen : MonoBehaviour
     public float fadeTime = 0.8f;
 
     CanvasGroup group;     // drives the fade + blocks clicks while shown
-    Text countdown;
+    TMP_Text countdown;
     Button respawnButton;
-    Text respawnLabel;
+    TMP_Text respawnLabel;
     Character character;
     bool building;
 
@@ -135,6 +136,7 @@ public class DeathScreen : MonoBehaviour
         var scaler = canvasGO.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280, 720);
+        UiKit.ApplyTextCrispness(scaler);
 
         group = canvasGO.GetComponent<CanvasGroup>();
 
@@ -179,22 +181,10 @@ public class DeathScreen : MonoBehaviour
         return img;
     }
 
-    static Text NewText(string name, Transform parent, string content, int size, FontStyle style, Color color)
+    static TMP_Text NewText(string name, Transform parent, string content, int size, FontStyle style, Color color)
     {
-        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(parent, false);
-        var t = go.GetComponent<Text>();
-        t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        t.fontSize = size;
-        t.fontStyle = style;
-        t.alignment = TextAnchor.MiddleCenter;
+        var t = UiKit.MakeText(name, parent, content, size, style, TextAnchor.MiddleCenter, wrap: false);
         t.color = color;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.text = content;
-        var sh = go.AddComponent<Shadow>();
-        sh.effectColor = new Color(0, 0, 0, 0.8f);
-        sh.effectDistance = new Vector2(2, -2);
         return t;
     }
 

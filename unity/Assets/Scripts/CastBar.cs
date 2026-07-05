@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// The RO-style spell <b>cast bar</b> — a small bar that floats over the caster's head and FILLS
@@ -32,12 +33,11 @@ public class CastBar : MonoBehaviour
     Transform camT;
     RectTransform root;
     Image fill;
-    Text label;
+    TMP_Text label;
     string shownLabel;                // last label written (so we only touch the Text when it changes)
 
     // ---- shared resources (one each, across the whole game) -------------------
     static Sprite whiteSprite;
-    static Font font;
     static Material onTopMat;         // UI/Default with ZTest Always so the bar draws over terrain/props
 
     /// <summary>Show/refresh the cast bar at <paramref name="worldPos"/> (the caster's head), filled to
@@ -125,25 +125,19 @@ public class CastBar : MonoBehaviour
         lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 1f); lrt.pivot = new Vector2(0.5f, 0f);
         lrt.anchoredPosition = new Vector2(0f, 2f);
         lrt.sizeDelta = new Vector2(BarWidth * 3f, LabelFontSize + 4);
-        label = labelGO.AddComponent<Text>();
-        label.font = Font;
+        label = labelGO.AddComponent<TextMeshProUGUI>();
+        label.font = UiKit.BodyFont;
+        label.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.BodyFont);   // dark edge + draws over terrain
         label.fontSize = LabelFontSize;
-        label.fontStyle = FontStyle.Bold;
-        label.alignment = TextAnchor.LowerCenter;
-        label.horizontalOverflow = HorizontalWrapMode.Overflow;
-        label.verticalOverflow = VerticalWrapMode.Overflow;
+        label.fontStyle = FontStyles.Bold;
+        label.alignment = TextAlignmentOptions.Bottom;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
         label.raycastTarget = false;
         label.color = new Color(0.95f, 0.95f, 0.99f);
-        if (OnTop != null) label.material = OnTop;
-        var outline = labelGO.AddComponent<Outline>();
-        outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
-        outline.effectDistance = new Vector2(1.1f, -1.1f);
         shownLabel = null;
     }
 
     // ---- shared resources (mirrors MobNameplate) ------------------------------
-    static Font Font => font != null ? font : (font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
-
     static Material OnTop
     {
         get

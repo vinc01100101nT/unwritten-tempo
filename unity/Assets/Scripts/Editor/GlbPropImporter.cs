@@ -23,7 +23,7 @@ public static class GlbPropImporter
     const string PropDir = "Assets/Prefabs/Props";
     const string MatDir = "Assets/Prefabs/Props/Materials";
 
-    [MenuItem("Tools/unwritten/Prefabs & Art/Import GLB Prop…", priority = 505)]
+    [MenuItem("Tools/unwritten/Props/Import GLB Prop…", priority = 505)]
     static void Import()
     {
         var lit = Shader.Find("Universal Render Pipeline/Lit");

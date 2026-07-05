@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// The ONE place a "you can't do that" BATTLE WARNING is shown — a dedicated notification strip that hovers above
@@ -47,7 +48,6 @@ public class BattleNotice : MonoBehaviour
 
     // ---- singleton + shared canvas -------------------------------------------
     static BattleNotice inst;
-    static Font font;
     Transform camT, player;
     Transform host;                  // the shared world-space canvas
 
@@ -71,10 +71,8 @@ public class BattleNotice : MonoBehaviour
         host = canvasGo.transform;
     }
 
-    static Font Font => font != null ? font : (font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
-
     // ---- line pool ------------------------------------------------------------
-    class Line { public GameObject go; public Text text; public float age; public string msg; public float slotY; }
+    class Line { public GameObject go; public TMP_Text text; public float age; public string msg; public float slotY; }
     readonly List<Line> active = new List<Line>(MaxLines);
     readonly Stack<Line> pool = new Stack<Line>();
 
@@ -96,24 +94,19 @@ public class BattleNotice : MonoBehaviour
 
     Line Create()
     {
-        var go = new GameObject("BattleNoticeLine",
-            typeof(RectTransform), typeof(CanvasRenderer), typeof(Text), typeof(Outline));
+        var go = new GameObject("BattleNoticeLine", typeof(RectTransform));
         go.transform.SetParent(host, false);
         go.layer = host.gameObject.layer;
         ((RectTransform)go.transform).sizeDelta = new Vector2(220, 40);
 
-        var t = go.GetComponent<Text>();
-        t.font = Font;
+        var t = go.AddComponent<TextMeshProUGUI>();
+        t.font = UiKit.BodyFont;
+        t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.BodyFont);   // dark edge, reads on any backdrop
         t.fontSize = 64;
-        t.fontStyle = FontStyle.Bold;
-        t.alignment = TextAnchor.MiddleCenter;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
+        t.fontStyle = FontStyles.Bold;
+        t.alignment = TextAlignmentOptions.Center;
+        t.textWrappingMode = TextWrappingModes.NoWrap;
         t.raycastTarget = false;
-
-        var outline = go.GetComponent<Outline>();
-        outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
-        outline.effectDistance = new Vector2(1.5f, -1.5f);
 
         return new Line { go = go, text = t };
     }

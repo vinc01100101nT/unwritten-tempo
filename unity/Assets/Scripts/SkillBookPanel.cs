@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// The <b>Grimoire</b> (J) — a HUD window listing every skill authored in the <b>Skill Composer</b>
@@ -22,7 +23,6 @@ public class SkillBookPanel : MonoBehaviour
 
     GameObject root;                 // the window we show/hide on J
     RectTransform scrollContent;     // where rows are built
-    Font font;
     bool built;
 
     void Update()
@@ -36,13 +36,12 @@ public class SkillBookPanel : MonoBehaviour
         if (root == null) return;
         if (Hotkeys.Down(ToggleKey))
         {
-            bool open = !root.activeSelf;
-            root.SetActive(open);
+            bool open = UiAnim.Toggle(root);
             if (open) { Rebuild(); UISounds.PlayOpen(); } else UISounds.PlayClose();
         }
-        else if (root.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        else if (UiAnim.IsOpen(root) && Input.GetKeyDown(KeyCode.Escape))
         {
-            root.SetActive(false);
+            UiAnim.Close(root);
             UISounds.PlayClose();
         }
     }
@@ -52,7 +51,6 @@ public class SkillBookPanel : MonoBehaviour
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
 
-        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         var content = UiKit.Window(canvas.transform, "Grimoire", new Vector2(360, 440), Vector2.zero, out root);
         scrollContent = EnsureScroll(content);
 
@@ -179,17 +177,10 @@ public class SkillBookPanel : MonoBehaviour
 
     // ---- tiny UI helpers (match SkillDraftPanel's style) --------------------
 
-    Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
+    TMP_Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
     {
-        var go = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(parent, false);
-        var t = go.GetComponent<Text>();
-        t.font = font != null ? font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        t.fontSize = size; t.fontStyle = style; t.alignment = anchor;
-        t.color = Color.white; t.supportRichText = true;
-        t.horizontalOverflow = HorizontalWrapMode.Wrap;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.text = str;
+        var t = UiKit.MakeText("Text", parent, str, size, style, anchor);
+        t.color = Color.white;
         return t;
     }
 

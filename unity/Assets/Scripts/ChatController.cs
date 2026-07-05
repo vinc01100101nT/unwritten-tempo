@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// The in-game <b>chat</b> window — a scrolling message log plus a one-line input box, self-built onto the
@@ -23,8 +24,7 @@ public class ChatController : MonoBehaviour
     GameObject root;             // the window we show/hide
     RectTransform logContent;    // vertical list of message rows
     ScrollRect scroll;
-    InputField input;
-    Font font;
+    TMP_InputField input;
     bool built;
 
     void Update()
@@ -41,14 +41,14 @@ public class ChatController : MonoBehaviour
         // so this branch is skipped and the InputField's own submit handles it instead).
         if (enter && !Hotkeys.Typing)
         {
-            if (!root.activeSelf) { root.SetActive(true); UISounds.PlayOpen(); }
+            if (!UiAnim.IsOpen(root)) { UiAnim.Open(root); UISounds.PlayOpen(); }
             FocusInput();
             return;
         }
-        if (root.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        if (UiAnim.IsOpen(root) && Input.GetKeyDown(KeyCode.Escape))
         {
             if (input != null) input.DeactivateInputField();
-            root.SetActive(false);
+            UiAnim.Close(root);
             UISounds.PlayClose();
         }
     }
@@ -60,7 +60,6 @@ public class ChatController : MonoBehaviour
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
 
-        font = UiKit.BodyFont;
         // Lower-left of the 1280×720 reference canvas; draggable via the window header afterwards.
         var content = UiKit.Window(canvas.transform, "Chat", new Vector2(430, 250), new Vector2(-405, -205), out root);
 
@@ -82,18 +81,18 @@ public class ChatController : MonoBehaviour
         bg.rectTransform.anchoredPosition = Vector2.zero;
 
         var text = UiKit.Label("Text", bg.transform, "", 14, FontStyle.Normal, TextAnchor.MiddleLeft);
-        text.supportRichText = false;   // typed text is literal, never markup
+        text.richText = false;   // typed text is literal, never markup
         UiKit.Fill(text.rectTransform, new Vector2(8, 0), new Vector2(-8, 0));
 
         var placeholder = UiKit.Label("Placeholder", bg.transform, "Say something, or /help…", 14, FontStyle.Italic, TextAnchor.MiddleLeft);
         placeholder.color = UiKit.TextDim;
         UiKit.Fill(placeholder.rectTransform, new Vector2(8, 0), new Vector2(-8, 0));
 
-        input = bg.gameObject.AddComponent<InputField>();
+        input = bg.gameObject.AddComponent<TMP_InputField>();
         input.targetGraphic = bg;
         input.textComponent = text;
         input.placeholder = placeholder;
-        input.lineType = InputField.LineType.SingleLine;
+        input.lineType = TMP_InputField.LineType.SingleLine;
         input.onEndEdit.AddListener(OnEndEdit);
     }
 
@@ -162,15 +161,8 @@ public class ChatController : MonoBehaviour
     {
         if (logContent == null) return;
 
-        var go = new GameObject("Line", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(logContent, false);
-        var t = go.GetComponent<Text>();
-        t.font = font != null ? font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        t.fontSize = 14; t.alignment = TextAnchor.UpperLeft; t.color = UiKit.TextMain;
-        t.horizontalOverflow = HorizontalWrapMode.Wrap;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.supportRichText = true;
-        t.text = message;
+        var t = UiKit.MakeText("Line", logContent, message, 14, FontStyle.Normal, TextAnchor.UpperLeft);
+        t.color = UiKit.TextMain;
 
         // Trim the oldest rows so the log stays bounded.
         while (logContent.childCount > MaxLines) Destroy(logContent.GetChild(0).gameObject);

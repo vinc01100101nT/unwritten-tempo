@@ -20,13 +20,13 @@ using UnityEngine;
 public static class FbxPropExtractor
 {
     /// <summary>One-click: slice the Pxltgr Fantasy Assets pack straight into Assets/Prefabs/Props.</summary>
-    [MenuItem("Tools/unwritten/Prefabs & Art/Build Fantasy Assets (Pxltgr) → Props", priority = 502)]
+    [MenuItem("Tools/unwritten/Props/Build Fantasy Assets (Pxltgr) → Props", priority = 502)]
     static void ExtractFantasyAssets() =>
         ExtractFbx("Assets/Art/Pxltgr/fantasy-assets/source/Fantasy_Assets/Assets.fbx", "Assets/Prefabs/Props");
 
     /// <summary>Asset-agnostic: pick ANY single FBX that bundles many objects and split each top-level
     /// child into its own prefab under Assets/Prefabs/&lt;fbx name&gt;.</summary>
-    [MenuItem("Tools/unwritten/Prefabs & Art/Split Multi-Object FBX…", priority = 503)]
+    [MenuItem("Tools/unwritten/Props/Split Multi-Object FBX…", priority = 503)]
     static void ExtractPicked()
     {
         string abs = EditorUtility.OpenFilePanel("Pick a multi-object FBX (must be inside Assets)", Application.dataPath, "fbx");

@@ -1,15 +1,16 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Minimal screen-space HP / level / XP readout for the 2.5D slice — reads
 /// <see cref="Character.Instance"/> and refreshes on its events. The first slice of the real
-/// HUD coming into 3D (Phase 3D-D "A"). Built by Build25DSpike.
+/// HUD coming into 3D (Phase 3D-D "A"). Built by RigBuilder25D.
 /// </summary>
 public class HealthBarHUD : MonoBehaviour
 {
     public Image fill;
-    public Text label;
+    public TMP_Text label;
 
     Character ch;
 

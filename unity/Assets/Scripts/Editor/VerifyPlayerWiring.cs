@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// One-click sanity check for the baked player rig. The player is GENERATED into the saved
-/// <c>Systems.unity</c> by <see cref="Build25DSpike.BuildPlayer"/> — sheets, icons, stats and SFX are all
+/// <c>Systems.unity</c> by <see cref="RigBuilder25D.BuildPlayer"/> — sheets, icons, stats and SFX are all
 /// frozen into the scene at author-time. If that scene drifts from the code (re-baked before some wiring
 /// existed, or before an asset was importable) the references go EMPTY with no error — just missing sound /
 /// invisible FX. This tool surfaces that class of rot loudly:

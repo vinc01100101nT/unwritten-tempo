@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// The Phase G Skills (K) panel — the Trio-Ring passive draft, presented as <b>bankable
@@ -18,13 +19,12 @@ public class SkillDraftPanel : MonoBehaviour
 {
     RectTransform content;          // the panel's "Content" node we build into
     GameObject panelRoot;           // the "SkillsPanel" root we show/hide on K (code-driven, like the window trio)
-    Font font;
     DraftService.Draft? pending;    // the draft currently shown (cached so the wildcard is stable between renders)
     bool bound, animating;
 
     // Persistent sub-pieces so a pick can refresh the header/ring without nuking the animating cards.
     // cardViewport clips the sliding TRIO (cardSet); wildcardRow is the static wildcard slot beside it.
-    Text headerText;
+    TMP_Text headerText;
     RectTransform cardViewport, cardSet, wildcardRow, ringContainer;
     Coroutine toastCo;
 
@@ -55,13 +55,12 @@ public class SkillDraftPanel : MonoBehaviour
 
         if (Hotkeys.Down(KeyCode.K))
         {
-            bool open = !panelRoot.activeSelf;
-            panelRoot.SetActive(open);
+            bool open = UiAnim.Toggle(panelRoot);
             if (open) { Render(); UISounds.PlayOpen(); } else UISounds.PlayClose();   // refresh live ring XP on open
         }
-        else if (panelRoot.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        else if (UiAnim.IsOpen(panelRoot) && Input.GetKeyDown(KeyCode.Escape))
         {
-            panelRoot.SetActive(false);
+            UiAnim.Close(panelRoot);
             UISounds.PlayClose();
         }
     }
@@ -71,8 +70,6 @@ public class SkillDraftPanel : MonoBehaviour
         if (Character.Instance == null) return;
         var viewport = FindContent();
         if (viewport == null) return;
-
-        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         // The panel can hold more than its height (ring header + draft + the 10-row walk + the skills grid),
         // so the build target is a SCROLLING child clipped to the panel — never spilling past the frame.
@@ -97,11 +94,11 @@ public class SkillDraftPanel : MonoBehaviour
 
     // Ring XP ticks every kill — rebuilding the panel each time would be wasteful, so only refresh the live
     // XP bar while the panel is actually open (you only see it then).
-    void OnRingChanged() { if (panelRoot != null && panelRoot.activeSelf) Render(); }
+    void OnRingChanged() { if (panelRoot != null && UiAnim.IsOpen(panelRoot)) Render(); }
 
     // The ring being equipped/unequipped arrives as a stat change (SetEquipped fires OnStatsChanged). Re-render
     // while open so the panel flips between its active and "ring unequipped" states immediately.
-    void OnStatsChanged() { if (panelRoot != null && panelRoot.activeSelf) Render(); }
+    void OnStatsChanged() { if (panelRoot != null && UiAnim.IsOpen(panelRoot)) Render(); }
 
     // Turn the panel's fixed-size "Content" node into a vertical ScrollRect viewport (mask + scroll) and
     // return the inner scrolling content (the build target). Idempotent — reuses the child on a rebind.
@@ -555,7 +552,7 @@ public class SkillDraftPanel : MonoBehaviour
             for (int i = 0; i < SkillRing.Count; i++)
             {
                 var row = NewText(ringContainer, "", 15, FontStyle.Normal, TextAnchor.MiddleLeft);
-                row.supportRichText = false;
+                row.richText = false;
                 SetHeight(row.gameObject, 18);
             }
         }
@@ -567,10 +564,10 @@ public class SkillDraftPanel : MonoBehaviour
             bool isLeader = p.HasLeader && stat == p.Leader;
             bool inTrio = p.HasLeader && SkillRing.InTrio(p.Leader, stat);
 
-            var row = ringContainer.GetChild(i).GetComponent<Text>();
+            var row = ringContainer.GetChild(i).GetComponent<TMP_Text>();
             if (row == null) continue;
             row.text = $"{(isLeader ? "▶ " : "  ")}{SkillRing.ShortName(stat),-6}  ×{r,-2}   +{Mathf.RoundToInt(p.Percent(stat) * 100)}%";
-            row.fontStyle = isLeader ? FontStyle.Bold : FontStyle.Normal;
+            row.fontStyle = isLeader ? FontStyles.Bold : FontStyles.Normal;
             row.color = isLeader ? LeaderEdge : inTrio ? Color.white : RowDim;
         }
     }
@@ -673,7 +670,7 @@ public class SkillDraftPanel : MonoBehaviour
         if (ringContainer == null || !p.HasLeader) yield break;
         int idx = SkillRing.IndexOf(p.Leader);
         if (idx < 0 || idx >= ringContainer.childCount) yield break;
-        var t = ringContainer.GetChild(idx).GetComponent<Text>();
+        var t = ringContainer.GetChild(idx).GetComponent<TMP_Text>();
         if (t == null) yield break;
 
         for (float e = 0; e < 0.35f; e += Time.unscaledDeltaTime)
@@ -708,20 +705,13 @@ public class SkillDraftPanel : MonoBehaviour
 
     IEnumerator ToastRoutine(string message)
     {
-        var go = new GameObject("LevelToast", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(transform, false);
-        var rt = (RectTransform)go.transform;
+        var t = UiKit.MakeText("LevelToast", transform, message, 22, FontStyle.Bold, TextAnchor.MiddleCenter);
+        var rt = t.rectTransform;
         rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.78f);
         rt.pivot = new Vector2(0.5f, 0.5f);
         rt.sizeDelta = new Vector2(520, 40);
-        var t = go.GetComponent<Text>();
-        t.font = font != null ? font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        t.fontSize = 22; t.fontStyle = FontStyle.Bold;
-        t.alignment = TextAnchor.MiddleCenter;
-        t.text = message;
         t.raycastTarget = false;
-        var sh = go.AddComponent<Shadow>();
-        sh.effectColor = new Color(0, 0, 0, 0.8f); sh.effectDistance = new Vector2(1, -1);
+        var go = t.gameObject;
 
         const float hold = 1.4f, fade = 0.8f;
         var gold = new Color(1f, 0.92f, 0.5f);
@@ -738,7 +728,7 @@ public class SkillDraftPanel : MonoBehaviour
 
     // ---- tiny UI helpers ------------------------------------------------------
 
-    Text NewLabel(Transform parent, string str)
+    TMP_Text NewLabel(Transform parent, string str)
     {
         var t = NewText(parent, str, 14, FontStyle.Italic, TextAnchor.MiddleCenter);
         t.color = new Color(1, 1, 1, 0.75f);
@@ -746,17 +736,10 @@ public class SkillDraftPanel : MonoBehaviour
         return t;
     }
 
-    Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
+    TMP_Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
     {
-        var go = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(parent, false);
-        var t = go.GetComponent<Text>();
-        t.font = font != null ? font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        t.fontSize = size; t.fontStyle = style; t.alignment = anchor;
-        t.color = Color.white; t.supportRichText = true;
-        t.horizontalOverflow = HorizontalWrapMode.Wrap;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.text = str;
+        var t = UiKit.MakeText("Text", parent, str, size, style, anchor);
+        t.color = Color.white;
         return t;
     }
 

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// A UI slot that holds one <see cref="Item"/>. A bag slot (accepts = None) takes
@@ -27,9 +28,9 @@ public class ItemSlot : MonoBehaviour, IDropHandler, IPointerClickHandler, IPoin
     [Tooltip("Soft rarity glow (Legendary etc.); tinted by rarity, hidden for Common.")]
     public Image rarityGlow;
     [Tooltip("\"+N\" enhancement badge; hidden at +0. Never tints the rarity border.")]
-    public Text upgradeBadge;
+    public TMP_Text upgradeBadge;
     [Tooltip("Card sockets as ◇ (filled) / □ (empty) in a NEUTRAL color; hidden when no sockets.")]
-    public Text cardPips;
+    public TMP_Text cardPips;
     [Tooltip("Cyan INNER ring shown while this slot is selected (never a rarity color).")]
     public GameObject selectRing;
     [Tooltip("Cyan OUTER bloom shown while hovered (never a rarity color).")]

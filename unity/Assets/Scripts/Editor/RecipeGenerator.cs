@@ -15,7 +15,7 @@ using UnityEngine.SceneManagement;
 /// <item>Ground: <see cref="WalkableGround"/> / <see cref="GroundBlendBuilder"/> (tiled or blended grass→dirt).</item>
 /// <item>Prop seating: <see cref="PropPlacement"/> (bounds-driven PlaceOnGround / StripColliders).</item>
 /// <item>Spawns &amp; portals: <see cref="RegionBuilder"/> (MakeSpawn). Warp wiring is <see cref="WorldCreator"/>'s job.</item>
-/// <item>Mobs: <see cref="Build25DSpike.BuildMonster(in MonsterArchetype, Vector3)"/> + <see cref="MobRoster"/>.</item>
+/// <item>Mobs: <see cref="RigBuilder25D.BuildMonster(in MonsterArchetype, Vector3)"/> + <see cref="MobRoster"/>.</item>
 /// </list>
 /// All randomness flows from <see cref="MapRecipe.seed"/>, so a recipe + seed reproduces a map exactly.
 /// </summary>
@@ -113,7 +113,7 @@ public static class RecipeGenerator
 
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
         SceneManager.SetActiveScene(scene);
-        Build25DSpike.BuildLight();   // authoring Sun (disabled at Play; Systems owns the runtime light)
+        RigBuilder25D.BuildLight();   // authoring Sun (disabled at Play; Systems owns the runtime light)
 
         Vector3 center = Vector3.zero;
         // Route the path network ONCE: it drives the ground bake, follow-path placement, and prop clearance.
@@ -508,7 +508,7 @@ public static class RecipeGenerator
     static int PlaceMobs(RecipeMobGroup m, Transform parent, Vector3 center, float sizeX, float sizeZ,
                          int mask, Vector3 spawn, Biome biome)
     {
-        if (Build25DSpike.MonsterSheet() == null)
+        if (RigBuilder25D.MonsterSheet() == null)
         { Debug.LogWarning("[unwritten] No Ninja Adventure monster sheet found; mob group skipped."); return 0; }
 
         int target = m.amountMode == AmountMode.Count ? m.count : Mathf.Max(0, Mathf.RoundToInt(sizeX * sizeZ * m.density));
@@ -529,7 +529,7 @@ public static class RecipeGenerator
             foreach (var s in spots) if ((s - hit.point).sqrMagnitude < m.minSpacing * m.minSpacing) { tooClose = true; break; }
             if (tooClose) continue;
 
-            var mob = Build25DSpike.BuildMonster(
+            var mob = RigBuilder25D.BuildMonster(
                 ResolveArchetype(m.archetypeName, biome, m.minTier, m.maxTier, m.includeCommons), hit.point);
             mob.transform.SetParent(parent, true);
             spots.Add(hit.point);

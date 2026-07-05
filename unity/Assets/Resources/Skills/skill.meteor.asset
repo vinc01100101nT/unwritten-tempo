@@ -21,9 +21,8 @@ MonoBehaviour:
   maxLevel: 10
   aim: 2
   castRange: 11
-  castCircleId: circle.icearrow01
-  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
-  castCircleScaleMult: 1
+  castCircleId: circle.magic
+  castCircleTint: {r: 0.86415094, g: 0.29302153, b: 0.11576363, a: 1}
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
   repeatCount: 5
   repeatInterval: 1

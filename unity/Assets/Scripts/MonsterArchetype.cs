@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// Plain config the mob builder stamps onto the shared billboard-mob template — its own sprite sheet,
 /// tint, size, stats and behavior style. This is a runtime value type (not an asset): it's the DTO the
-/// editor builders pass into <c>Build25DSpike.BuildMonster</c>. The authoring/table layer is
+/// editor builders pass into <c>RigBuilder25D.BuildMonster</c>. The authoring/table layer is
 /// <see cref="MonsterDef"/> (a ScriptableObject) which converts to one of these via
 /// <see cref="MonsterDef.ToArchetype"/>; the legacy seed list lives in <c>MobRoster</c> (Editor).
 ///

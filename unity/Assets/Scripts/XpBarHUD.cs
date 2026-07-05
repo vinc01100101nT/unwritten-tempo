@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// The two progression bars pinned to the very bottom of the screen: CHARACTER level + XP on the left,
@@ -19,10 +20,9 @@ public class XpBarHUD : MonoBehaviour
     const float CenterGap = 3f;    // half-gap where the two bars meet in the middle
     const float BottomY = 4f;      // lift off the very bottom edge
 
-    Font font;
     Character ch;
     RectTransform charFill, ringFill;
-    Text charLabel, ringLabel;
+    TMP_Text charLabel, ringLabel;
     bool built;
 
     // change-detection so the text is only rewritten (alloc + canvas rebuild) when a number actually moves
@@ -38,7 +38,6 @@ public class XpBarHUD : MonoBehaviour
     void TryBuild()
     {
         if (Character.Instance == null) return;
-        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         charFill = BuildBar(true,  CharFill, out charLabel);    // left half
         ringFill = BuildBar(false, RingFill, out ringLabel);    // right half — meets the left bar at centre
@@ -51,7 +50,7 @@ public class XpBarHUD : MonoBehaviour
     // One labelled bar filling half the screen width along the very bottom: the left bar runs from the left
     // edge to just short of centre, the right bar from just past centre to the right edge — so they meet in
     // the middle. Returns the fill RectTransform (width scaled to the XP fraction in Refresh).
-    RectTransform BuildBar(bool leftSide, Color fillColor, out Text label)
+    RectTransform BuildBar(bool leftSide, Color fillColor, out TMP_Text label)
     {
         var bg = NewImage("XpBar", transform, BarBg);
         var brt = bg.rectTransform;
@@ -129,19 +128,10 @@ public class XpBarHUD : MonoBehaviour
         return img;
     }
 
-    Text NewText(string name, Transform parent, string str, int size, FontStyle style, TextAnchor anchor, Color color)
+    static TMP_Text NewText(string name, Transform parent, string str, int size, FontStyle style, TextAnchor anchor, Color color)
     {
-        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(parent, false);
-        var t = go.GetComponent<Text>();
-        t.font = font; t.fontSize = size; t.fontStyle = style; t.alignment = anchor;
+        var t = UiKit.MakeText(name, parent, str, size, style, anchor, wrap: false);
         t.color = color; t.raycastTarget = false;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.text = str;
-        var sh = go.AddComponent<Shadow>();
-        sh.effectColor = new Color(0, 0, 0, 0.85f);
-        sh.effectDistance = new Vector2(1, -1);
         return t;
     }
 }

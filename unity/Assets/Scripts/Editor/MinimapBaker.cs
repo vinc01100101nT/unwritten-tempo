@@ -23,7 +23,7 @@ public static class MinimapBaker
     const int Resolution = 1024;        // baked PNG edge (px)
     const float MarginFrac = 0.04f;     // breathing room around the map bounds
 
-    [MenuItem("Tools/unwritten/Bake Minimap (active map)", priority = 130)]
+    [MenuItem("Tools/unwritten/World/Bake Minimap (active map)", priority = 130)]
     public static void BakeActiveScene()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode)

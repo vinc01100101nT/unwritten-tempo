@@ -33,7 +33,7 @@ public class MeshDecimateWindow : EditorWindow
     // previously-decimated mesh (which would compound error).
     static readonly Dictionary<MeshFilter, Mesh> s_originals = new();
 
-    [MenuItem("Tools/unwritten/Prefabs & Art/Decimate Selection…", priority = 506)]
+    [MenuItem("Tools/unwritten/Props/Decimate Selection…", priority = 506)]
     static void Open() => GetWindow<MeshDecimateWindow>(true, "Decimate Selection", true).minSize = new Vector2(360, 340);
 
     void OnSelectionChange() => Repaint();

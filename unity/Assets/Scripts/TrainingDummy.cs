@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// A combat test dummy: a huge-HP, immobile target that resets to full HP on a timer so you can
@@ -17,7 +18,7 @@ public class TrainingDummy : MonoBehaviour
     public float labelHeight = 1.3f;
 
     Health health;
-    Text label;
+    TMP_Text label;
     float timer;
     int lastShownHP = int.MinValue;   // only rebuild the label string when HP actually changes
 
@@ -62,19 +63,15 @@ public class TrainingDummy : MonoBehaviour
         canvas.sortingOrder = DepthSortRuntime.FxPopup;
         ((RectTransform)go.transform).sizeDelta = new Vector2(260, 56);
 
-        label = go.AddComponent<Text>();
-        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        label = go.AddComponent<TextMeshProUGUI>();
+        label.font = UiKit.BodyFont;
+        label.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.BodyFont);   // dark edge + draws over terrain
         label.fontSize = 22;
-        label.fontStyle = FontStyle.Bold;
-        label.alignment = TextAnchor.MiddleCenter;
-        label.horizontalOverflow = HorizontalWrapMode.Overflow;
-        label.verticalOverflow = VerticalWrapMode.Overflow;
+        label.fontStyle = FontStyles.Bold;
+        label.alignment = TextAlignmentOptions.Center;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
         label.raycastTarget = false;
         label.color = new Color(1f, 0.95f, 0.6f);
-
-        var outline = go.AddComponent<Outline>();
-        outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
-        outline.effectDistance = new Vector2(1.5f, -1.5f);
 
         go.AddComponent<Billboard>();   // face the camera in 2.5D
     }

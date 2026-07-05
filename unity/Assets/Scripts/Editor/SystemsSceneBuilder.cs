@@ -16,7 +16,7 @@ using UnityEngine.SceneManagement;
 /// boots Systems first and loads that map underneath via <see cref="GameRoot"/> / <see cref="MapManager"/>;
 /// the player arrives at the map's <see cref="SpawnPoint"/> (see <see cref="PersistentPlayer3D"/>). Maps
 /// (built by the <see cref="RecipeGenerator"/>) only carry terrain + props + mobs + a SpawnPoint.
-/// Safe to re-run (rebuilds Systems.unity from the 2.5D rig). Reuses <see cref="Build25DSpike"/> helpers.
+/// Safe to re-run (rebuilds Systems.unity from the 2.5D rig). Reuses <see cref="RigBuilder25D"/> helpers.
 /// </summary>
 public static class SystemsSceneBuilder
 {
@@ -30,7 +30,7 @@ public static class SystemsSceneBuilder
         if (EditorApplication.isPlayingOrWillChangePlaymode)
         { EditorUtility.DisplayDialog("Setup Systems Scene", "Exit Play mode first, then re-run.", "OK"); return; }
 
-        int rendererIndex = Build25DSpike.EnsureUniversalRenderer();
+        int rendererIndex = RigBuilder25D.EnsureUniversalRenderer();
         if (rendererIndex < 0) return;   // EnsureUniversalRenderer already explained why
         WorldBuildUtil.EnsureGroundLayer();   // so the arrival snap has a Ground layer to ray against
 
@@ -46,7 +46,7 @@ public static class SystemsSceneBuilder
         SceneManager.SetActiveScene(sys);
 
         // The persistent 2.5D rig.
-        var sun = Build25DSpike.BuildLight();
+        var sun = RigBuilder25D.BuildLight();
         sun.gameObject.AddComponent<DayNightLight>();   // sun color/intensity/angle + ambient by time-of-day
         sun.gameObject.AddComponent<CloudShadows>();    // drifting full-screen cloud shadows (DayNightLight also self-adds)
         sun.gameObject.AddComponent<SkyboxSky>();        // procedural wrap-around sky (gradient + sun + drifting clouds); DayNightLight also self-adds
@@ -62,10 +62,10 @@ public static class SystemsSceneBuilder
         const string bgs = "Assets/Audio/TomMusic/WAV Files/BGS Loops";
         rainAudio.dayStorm   = AssetDatabase.LoadAssetAtPath<AudioClip>(bgs + "/Forest Day/Forest Day Storm.wav");
         rainAudio.nightStorm = AssetDatabase.LoadAssetAtPath<AudioClip>(bgs + "/Forest Night/Forest Night Storm.wav");
-        var player = Build25DSpike.BuildPlayer(Vector3.zero);
+        var player = RigBuilder25D.BuildPlayer(Vector3.zero);
         if (player != null) player.AddComponent<PersistentPlayer3D>();
-        Build25DSpike.BuildCamera(rendererIndex, player);
-        Build25DSpike.BuildCharacter();
+        RigBuilder25D.BuildCamera(rendererIndex, player);
+        RigBuilder25D.BuildCharacter();
 
         // Full UI shell: HP bar + Inventory(B)/Equipment(V)/Character(C)/Skills(K) panels, bound to Character.Instance
         // (each panel's controller owns its own hotkey; CharacterUIBinder lives on the prefab). Falls back to the bare HUD.
@@ -73,7 +73,7 @@ public static class SystemsSceneBuilder
         if (uiCanvas != null) PrefabUtility.InstantiatePrefab(uiCanvas, sys);
         else
         {
-            Build25DSpike.BuildHUD();
+            RigBuilder25D.BuildHUD();
             Debug.LogWarning("[unwritten] GameUICanvas prefab missing — using the bare HP bar. " +
                              "Run Tools ▸ unwritten ▸ Build UI Shell to get the I/C/K panels, then re-run this.");
         }
@@ -82,7 +82,7 @@ public static class SystemsSceneBuilder
 
         var gameSystems = new GameObject("GameSystems");
         gameSystems.AddComponent<GameSystems>();        // global services host + frame-rate cap (120 FPS, VSync off)
-        Build25DSpike.BuildCursor(gameSystems);         // hardware GameCursor3D (pointer / sword / crosshair)
+        RigBuilder25D.BuildCursor(gameSystems);         // hardware GameCursor3D (pointer / sword / crosshair)
         gameSystems.AddComponent<DeathScreen>();        // Phase F: "YOU DIED" overlay + respawn (builds its own canvas)
         gameSystems.AddComponent<Sfx>();                // pooled one-shot SFX player (attack/hit/block/footsteps)
         gameSystems.AddComponent<CombatSfx>();   // "received" impact/whiff cues — clips assigned by hand in the Inspector (no baked defaults)

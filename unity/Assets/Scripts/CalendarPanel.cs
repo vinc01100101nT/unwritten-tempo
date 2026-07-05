@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using Season = GameCalendar.Season;
 using Preset = WeatherDirector.Preset;
 
@@ -29,15 +30,14 @@ public class CalendarPanel : MonoBehaviour
     public Sprite rainIcon;      // LightRain / Thunderstorm
     public Sprite snowIcon;      // Snow
 
-    Font font;
     GameObject panel;            // the CalendarPanel root (toggled by PanelToggle / the widget button)
-    Text titleText;
+    TMP_Text titleText;
     Button prevBtn, nextBtn;
     readonly Image[] cellBg     = new Image[Days];
     readonly Outline[] cellRing = new Outline[Days];
     readonly Image[] cellIcon   = new Image[Days];
-    readonly Text[] cellDay     = new Text[Days];
-    readonly Text[] cellTag     = new Text[Days];
+    readonly TMP_Text[] cellDay = new TMP_Text[Days];
+    readonly TMP_Text[] cellTag = new TMP_Text[Days];
 
     long viewDayStart;           // DayIndex of day-of-season 0 for the page currently shown
     long lastTodayShown = long.MinValue;
@@ -52,17 +52,16 @@ public class CalendarPanel : MonoBehaviour
         // L = toggle, Esc = close — owned here in code (no PanelToggle, no rebake to change the key).
         if (Hotkeys.Down(KeyCode.L))
         {
-            bool open = !panel.activeSelf;
-            panel.SetActive(open);
+            bool open = UiAnim.Toggle(panel);
             if (open) UISounds.PlayOpen(); else UISounds.PlayClose();
         }
-        else if (panel.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        else if (UiAnim.IsOpen(panel) && Input.GetKeyDown(KeyCode.Escape))
         {
-            panel.SetActive(false);
+            UiAnim.Close(panel);
             UISounds.PlayClose();
         }
 
-        bool active = panel.activeSelf;
+        bool active = UiAnim.IsOpen(panel);
         if (active && !wasActive) GoToToday();           // every time it opens, snap to the current season
         wasActive = active;
 
@@ -81,7 +80,6 @@ public class CalendarPanel : MonoBehaviour
         if (content == null) return;
         panel = content.parent.gameObject;
         UiKit.ClickShield(panel.transform as RectTransform);   // catch clicks over the whole window (no leak to world)
-        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         // Header: [<]  Season · Year  [Today]  [>]
         var header = NewImage(content, new Color(0, 0, 0, 0)).rectTransform;
@@ -136,8 +134,7 @@ public class CalendarPanel : MonoBehaviour
             btn.targetGraphic = img;
             btn.onClick.AddListener(() =>
             {
-                bool nowOpen = !panel.activeSelf;
-                panel.SetActive(nowOpen);
+                bool nowOpen = UiAnim.Toggle(panel);
                 if (nowOpen) UISounds.PlayOpen(); else UISounds.PlayClose();
             });
             break;
@@ -267,20 +264,10 @@ public class CalendarPanel : MonoBehaviour
         return btn;
     }
 
-    Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
+    TMP_Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
     {
-        var go = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(parent, false);
-        var t = go.GetComponent<Text>();
-        t.font = font != null ? font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        t.fontSize = size; t.fontStyle = style; t.alignment = anchor;
-        t.color = Color.white; t.supportRichText = true;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.text = str;
-        var sh = go.AddComponent<Shadow>();
-        sh.effectColor = new Color(0, 0, 0, 0.7f);
-        sh.effectDistance = new Vector2(1, -1);
+        var t = UiKit.MakeText("Text", parent, str, size, style, anchor, wrap: false);
+        t.color = Color.white;
         return t;
     }
 

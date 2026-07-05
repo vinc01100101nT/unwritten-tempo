@@ -37,7 +37,7 @@ public class Character3DDriver : MonoBehaviour
     float vy;
     float attackUntil;
 
-    // Hashed once — these names MUST match the AnimatorController that Build3DCharacterSpike generates.
+    // Hashed once — these names MUST match the AnimatorController that Character3DRigBuilder generates.
     static readonly int PSpeed  = Animator.StringToHash("Speed");
     static readonly int PAttack = Animator.StringToHash("Attack");
     static readonly int PJump   = Animator.StringToHash("Jump");

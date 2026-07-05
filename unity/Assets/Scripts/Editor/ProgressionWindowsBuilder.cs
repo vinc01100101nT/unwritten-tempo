@@ -32,6 +32,7 @@ public static class ProgressionWindowsBuilder
         var scaler = go.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280, 720);
+        UiKit.ApplyTextCrispness(scaler);
 
         if (Object.FindFirstObjectByType<EventSystem>() == null)
         {

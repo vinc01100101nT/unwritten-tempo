@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Phase 4 HUD widget: shows the in-game date + today's weather, e.g. "Spring · Day 4 / Light Rain".
@@ -14,15 +15,15 @@ using UnityEngine.UI;
 /// incl. the enum's <c>ToString</c> — when one of them actually changes (≈ once per in-game day at runtime).
 /// No string work, no <c>GetComponent</c>, no <c>Find*</c> on the steady-state frame.</para>
 /// </summary>
-[RequireComponent(typeof(Text))]
+[RequireComponent(typeof(TMP_Text))]
 public class CalendarWeatherHUD : MonoBehaviour
 {
-    Text label;
+    TMP_Text label;
     bool seeded;
     long lastDay;
     WeatherDirector.Preset lastWeather;
 
-    void Awake() => label = GetComponent<Text>();
+    void Awake() => label = GetComponent<TMP_Text>();
 
     void Update()
     {

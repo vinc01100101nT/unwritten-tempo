@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// One-click combat test target. Spawns a <see cref="TrainingDummy"/>: a billboard mob built the
-/// normal way (<see cref="Build25DSpike.BuildMonster"/>) so it's click-targetable and takes hits,
+/// normal way (<see cref="RigBuilder25D.BuildMonster"/>) so it's click-targetable and takes hits,
 /// then made completely inert — 10,000,000 HP, no movement, no aggro, no touch-damage — and set to
 /// reset to full HP every 5 s. Stand next to it and swing (or cast Q) to read your damage / DPS off
 /// the floating HP label before the regen wipes it. Re-runnable; replaces any prior dummy.
@@ -20,7 +20,7 @@ public static class TrainingDummyTool
         if (EditorApplication.isPlayingOrWillChangePlaymode)
         { EditorUtility.DisplayDialog("Training Dummy", "Exit Play mode first, then re-run.", "OK"); return; }
 
-        var tex = Build25DSpike.MonsterSheet();
+        var tex = RigBuilder25D.MonsterSheet();
         if (tex == null)
         { EditorUtility.DisplayDialog("Training Dummy",
             "No Ninja Adventure monster sprite sheet found under Assets/Art/NinjaAdventure/Actor/Monster.", "OK"); return; }
@@ -29,7 +29,7 @@ public static class TrainingDummyTool
         if (prev != null) Object.DestroyImmediate(prev);
 
         Vector3 foot = ChooseSpot();
-        var go = Build25DSpike.BuildMonster(tex, foot, false);   // a normal mob: targetable + takes hits…
+        var go = RigBuilder25D.BuildMonster(tex, foot, false);   // a normal mob: targetable + takes hits…
         go.name = Name;
         go.transform.localScale = Vector3.one * 1.0f;            // a touch bigger than mobs (0.7) so it reads as a fixture
         Undo.RegisterCreatedObjectUndo(go, "Spawn Training Dummy");

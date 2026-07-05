@@ -9,7 +9,7 @@ using UnityEngine;
 /// route through here so the offset lives in ONE place and can't drift between call sites.
 ///
 /// <see cref="HalfHeight"/> owns the old scattered <c>0.4f * lossyScale.y</c> constant (0.5 cell − ~0.1 foot
-/// padding; see Build25DSpike.SpriteFoot). It was typed independently in MobNameplate, UnitTargeter, etc.;
+/// padding; see RigBuilder25D.SpriteFoot). It was typed independently in MobNameplate, UnitTargeter, etc.;
 /// now they read it here.
 ///
 /// Cheap value math only (multiply + Vector3 add) — no alloc / GetComponent — so it's safe in the per-frame
@@ -19,7 +19,7 @@ public static class UnitAnchor
 {
     // Feet→centre distance in world units. A billboard is ~one world cell tall at its uniform scale; the
     // usable body is ~0.8 of that (the rest is transparent foot/head padding), so half-height ≈ 0.4 × scale.
-    // lossyScale.y already folds in Build25DSpike.BillboardScale, so this tracks per-mob scale automatically.
+    // lossyScale.y already folds in RigBuilder25D.BillboardScale, so this tracks per-mob scale automatically.
     public const float HalfHeightFactor = 0.4f;
 
     // Feet→centre distance (world units) for this unit, scaled to its size.

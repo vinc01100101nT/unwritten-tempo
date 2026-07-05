@@ -29,7 +29,7 @@ public class ItemDropEntry
 
 /// <summary>
 /// Hooks <see cref="Health.onDeath"/> and spawns <see cref="WorldPickup"/> objects (Zeny coins and/or
-/// items) at the mob's death position. Configured per-archetype by <see cref="Build25DSpike"/>.
+/// items) at the mob's death position. Configured per-archetype by <see cref="RigBuilder25D"/>.
 /// </summary>
 [RequireComponent(typeof(Health))]
 public class LootDropper : MonoBehaviour

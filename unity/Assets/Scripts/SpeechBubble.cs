@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Pooled world-space WHITE speech bubble for ambient NPC chatter (<see cref="TownNPC"/> barks). A rounded white
@@ -22,12 +23,11 @@ public class SpeechBubble : MonoBehaviour
     // ---- shared pool ----
     static Transform host;
     static readonly Stack<SpeechBubble> pool = new Stack<SpeechBubble>();
-    static Font font;
     static Transform camT;
     static Sprite bubbleSprite, tailSprite;
 
     Image bg, tail;
-    Text text;
+    TMP_Text text;
     RectTransform rt;
     float age, lifetime;
     Transform follow;        // the unit this bubble belongs to — the bubble rides its head each frame
@@ -60,7 +60,6 @@ public class SpeechBubble : MonoBehaviour
         host = go.transform;
     }
 
-    static Font Font => font != null ? font : (font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
 
     static SpeechBubble Create()
     {
@@ -93,18 +92,10 @@ public class SpeechBubble : MonoBehaviour
         tlrt.anchoredPosition = new Vector2(0f, 1f);               // overlap the seam by 1px so no gap shows
 
         // Dark text, parented to the bubble and inset by the padding.
-        var t = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        t.transform.SetParent(go.transform, false);
-        b.text = t.GetComponent<Text>();
-        b.text.font = Font;
-        b.text.fontSize = FontSize;
-        b.text.fontStyle = FontStyle.Bold;
-        b.text.alignment = TextAnchor.MiddleCenter;
-        b.text.horizontalOverflow = HorizontalWrapMode.Overflow;
-        b.text.verticalOverflow = VerticalWrapMode.Overflow;
+        b.text = UiKit.MakeText("Text", go.transform, "", FontSize, FontStyle.Bold, TextAnchor.MiddleCenter, wrap: false);
         b.text.color = new Color(0.12f, 0.12f, 0.14f);
         b.text.raycastTarget = false;
-        var trt = (RectTransform)t.transform;
+        var trt = b.text.rectTransform;
         trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;
         trt.offsetMin = new Vector2(PadX, PadY); trt.offsetMax = new Vector2(-PadX, -PadY);
         return b;

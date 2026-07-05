@@ -150,7 +150,7 @@ public static class RegionBuilder
         var bossDef = MonsterCatalog.Boss;
         MonsterArchetype bossArc = bossDef != null ? bossDef.ToArchetype() : MobRoster.Boss;
 
-        var boss = Build25DSpike.BuildMonster(bossArc, pos);
+        var boss = RigBuilder25D.BuildMonster(bossArc, pos);
         SceneManager.MoveGameObjectToScene(boss, scene);
 
         var banner = boss.AddComponent<BossBanner>();

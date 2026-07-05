@@ -6,6 +6,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Builds the Phase E UI shell (HUD + Bag/Character/Skills toggle panels) skinned
@@ -34,10 +35,9 @@ public static class UIShellBuilder
     public const string DefaultTheme = WOOD;
     public const int DefaultScale = 32;     // referencePixelsPerUnit; lower = thicker frame
 
-    static Font uiFont;
     static Sprite panelSprite, cellSprite, barBgSprite;
 
-    [MenuItem("Tools/unwritten/Scene Setup/Build UI Shell (Systems scene)", priority = 110)]
+    [MenuItem("Tools/unwritten/UI/Build UI Shell (Systems scene)", priority = 110)]
     static void BuildUIShellMenu()
     {
         Build(EditorPrefs.GetString(PrefTheme, DefaultTheme),
@@ -48,9 +48,6 @@ public static class UIShellBuilder
     /// frame scale (= CanvasScaler.referencePixelsPerUnit; lower → chunkier).</summary>
     public static void Build(string themeFolder, int refPixelsPerUnit)
     {
-        // The pack's NormalFont.ttf is a pixel font that renders blurry when scaled and
-        // collapses spaces ("Leather Vest" -> "LeatherVest"); use the crisp built-in font.
-        uiFont      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         panelSprite = SlicedSprite(themeFolder + "/nine_path_panel.png", new Vector4(6, 6, 6, 6));
         cellSprite  = SlicedSprite(FirstExisting(themeFolder + "/inventory_cell.png", WOOD + "/inventory_cell.png"), new Vector4(3, 3, 3, 3));
         barBgSprite = SlicedSprite(FirstExisting(themeFolder + "/nine_path_bg.png",    WOOD + "/nine_path_bg.png"),    new Vector4(2, 2, 2, 2));
@@ -73,6 +70,7 @@ public static class UIShellBuilder
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280, 720);
         scaler.referencePixelsPerUnit = Mathf.Clamp(refPixelsPerUnit, 8, 96);
+        UiKit.ApplyTextCrispness(scaler);
         var root = canvasGO.transform;
 
         SetupEventSystem(root);
@@ -199,9 +197,6 @@ public static class UIShellBuilder
         var mp = NewText("Label", mana.transform, "MP", 13, FontStyle.Bold, TextAnchor.MiddleCenter, true);
         Fill(mp.rectTransform, Vector2.zero, Vector2.zero);
 
-        // Hotkey legend, sitting just above the mana bar (lower-left stack: hotkeys ▸ MP ▸ HP).
-        BuildHotkeyLegend(canvas);
-
         // Minimap — top-right corner (terrain RT + player/mob blips). Sits above the gold counter.
         BuildMinimap(canvas);
 
@@ -269,41 +264,6 @@ public static class UIShellBuilder
         minimap.blipRoot = blipGo.GetComponent<RectTransform>();
     }
 
-    // A small always-on controls cheat-sheet in the lower-left, just above the HP/MP bars.
-    // Two text columns (keys + actions) inside a themed panel; purely informational, so it
-    // never eats clicks (raycastTarget off on every graphic).
-    static void BuildHotkeyLegend(Transform canvas)
-    {
-        // Keep the two arrays in lock-step — left column = key, right column = what it does.
-        const string keys =
-            "L-Click\nR-Drag\nA\nQ\nT\nS\nC\nB\nV\nK\nO\nL\nM\nP\nEsc";
-        const string actions =
-            "Move\nOrbit camera\nArm attack (+click)\nCast spell\nAuto-combat\nStop\nCharacter\nInventory\nEquipment\nSkills\nOutfit\nCalendar\nMinimap\nDev panel\nClose / cancel";
-
-        var panel = NewSliced("HUD_Hotkeys", canvas, panelSprite);
-        Anchor(panel.rectTransform, Vector2.zero, Vector2.zero, Vector2.zero);   // bottom-left
-        panel.rectTransform.anchoredPosition = new Vector2(16, 102);             // above MP bar (y 76 + 18 + gap)
-        panel.rectTransform.sizeDelta = new Vector2(210, 278);
-        panel.raycastTarget = false;
-
-        var title = NewText("Title", panel.transform, "HOTKEYS", 14, FontStyle.Bold, TextAnchor.UpperCenter, true);
-        title.rectTransform.anchorMin = new Vector2(0, 1);
-        title.rectTransform.anchorMax = new Vector2(1, 1);
-        title.rectTransform.pivot = new Vector2(0.5f, 1);
-        title.rectTransform.sizeDelta = new Vector2(0, 22);
-        title.rectTransform.anchoredPosition = new Vector2(0, -8);
-        title.color = new Color(1f, 0.88f, 0.5f);   // warm accent
-        title.raycastTarget = false;
-
-        var keyText = NewText("Keys", panel.transform, keys, 13, FontStyle.Bold, TextAnchor.UpperLeft, true);
-        Fill(keyText.rectTransform, new Vector2(14, 10), new Vector2(-118, -32));
-        keyText.color = new Color(1f, 0.85f, 0.45f);   // keys stand out in amber
-        keyText.raycastTarget = false;
-
-        var actText = NewText("Actions", panel.transform, actions, 13, FontStyle.Normal, TextAnchor.UpperLeft, true);
-        Fill(actText.rectTransform, new Vector2(92, 10), new Vector2(-10, -32));
-        actText.raycastTarget = false;
-    }
 
     // ---- Panels ---------------------------------------------------------------
 
@@ -379,19 +339,30 @@ public static class UIShellBuilder
         titleText.rectTransform.offsetMax = new Vector2(-(HeaderH + 4), 0);   // leave room for the ✕ on the right
         titleText.raycastTarget = false;   // let clicks fall through to the drag handle
 
-        // ✕ close button — a square red cell pinned to the right edge of the header.
-        var close = NewColor("Close", header.transform, new Color(0.62f, 0.14f, 0.14f, 0.95f));
+        // ✕ close button — a generous transparent hit area (full header height) pinned to the header's
+        // right edge carries the raycast + WindowCloseButton; the visible red cell + X are non-raycast
+        // children centered inside it. Decoupling the hit box from the small square keeps the clickable
+        // region centered on the glyph with margin, so it can't drift off the icon.
+        var close = NewColor("Close", header.transform, new Color(0, 0, 0, 0));
         close.raycastTarget = true;   // must catch the click (WindowCloseButton listens here)
         close.rectTransform.anchorMin = new Vector2(1, 0.5f);
         close.rectTransform.anchorMax = new Vector2(1, 0.5f);
         close.rectTransform.pivot = new Vector2(1, 0.5f);
-        close.rectTransform.sizeDelta = new Vector2(HeaderH - 8, HeaderH - 8);
-        close.rectTransform.anchoredPosition = new Vector2(-5, 0);
+        close.rectTransform.sizeDelta = new Vector2(HeaderH + 6, HeaderH);
+        close.rectTransform.anchoredPosition = Vector2.zero;
         close.gameObject.AddComponent<WindowCloseButton>().window = bg.gameObject;
 
-        var x = NewText("X", close.transform, "X", 16, FontStyle.Bold, TextAnchor.MiddleCenter, true);
+        var closeVis = NewColor("CloseVis", close.transform, new Color(0.62f, 0.14f, 0.14f, 0.95f));
+        closeVis.raycastTarget = false;
+        closeVis.rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        closeVis.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        closeVis.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        closeVis.rectTransform.sizeDelta = new Vector2(HeaderH - 8, HeaderH - 8);
+        closeVis.rectTransform.anchoredPosition = new Vector2(-3, 0);
+
+        var x = NewText("X", closeVis.transform, "X", 16, FontStyle.Bold, TextAnchor.MiddleCenter, true);
         Fill(x.rectTransform, Vector2.zero, Vector2.zero);
-        x.raycastTarget = false;   // the parent cell catches the click
+        x.raycastTarget = false;   // the visual cell is non-raycast; the transparent hit area catches the click
     }
 
     // ---- primitives -----------------------------------------------------------
@@ -430,25 +401,12 @@ public static class UIShellBuilder
         return img;
     }
 
-    static Text NewText(string name, Transform parent, string content, int size, FontStyle style, TextAnchor anchor, bool shadow)
+    // Delegates to the one central TMP factory. `shadow` is kept for call-site compatibility but is a no-op:
+    // SDF text is crisp on its own and HUD elements sit on backing plates, so no drop shadow is needed.
+    static TextMeshProUGUI NewText(string name, Transform parent, string content, int size, FontStyle style, TextAnchor anchor, bool shadow)
     {
-        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(parent, false);
-        var t = go.GetComponent<Text>();
-        t.font = uiFont != null ? uiFont : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        t.fontSize = size;
-        t.fontStyle = style;
-        t.alignment = anchor;
+        var t = UiKit.MakeText(name, parent, content, size, style, anchor);
         t.color = Color.white;
-        t.horizontalOverflow = HorizontalWrapMode.Wrap;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.text = content;
-        if (shadow)
-        {
-            var sh = go.AddComponent<Shadow>();
-            sh.effectColor = new Color(0, 0, 0, 0.7f);
-            sh.effectDistance = new Vector2(1, -1);
-        }
         return t;
     }
 

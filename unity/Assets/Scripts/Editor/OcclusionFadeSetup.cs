@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// One-click: drop a <see cref="CameraOccluderFader"/> onto the existing follow camera so props between the
 /// camera and the player fade out — without rebuilding the whole Systems scene. (New cameras built by
-/// <see cref="Build25DSpike.BuildCamera"/> already include it.)
+/// <see cref="RigBuilder25D.BuildCamera"/> already include it.)
 /// </summary>
 public static class OcclusionFadeSetup
 {

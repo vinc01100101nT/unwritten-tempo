@@ -63,13 +63,13 @@ public static class Player3DVisualBuilder
         SceneManager.MoveGameObjectToScene(go, player.gameObject.scene);
         go.transform.position = player.transform.position;
 
-        float nativeH = Build3DCharacterSpike.MeasureHeight(go);
-        float s = nativeH > 1e-3f ? Build3DCharacterSpike.TargetHeight / nativeH : 1f;
+        float nativeH = Character3DRigBuilder.MeasureHeight(go);
+        float s = nativeH > 1e-3f ? Character3DRigBuilder.TargetHeight / nativeH : 1f;
         go.transform.localScale = Vector3.one * s;
 
         var anim = go.GetComponent<Animator>() ?? go.AddComponent<Animator>();
         anim.runtimeAnimatorController = BuildController();
-        var avatar = Build3DCharacterSpike.LoadAvatar(modelPath);   // the model's own Humanoid avatar (retarget target)
+        var avatar = Character3DRigBuilder.LoadAvatar(modelPath);   // the model's own Humanoid avatar (retarget target)
         if (avatar != null) anim.avatar = avatar;
         anim.applyRootMotion = false;
 

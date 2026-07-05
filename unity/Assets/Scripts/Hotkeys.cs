@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -32,7 +33,9 @@ public static class Hotkeys
             var go = es != null ? es.currentSelectedGameObject : null;
             if (go == null) return false;
             var input = go.GetComponent<InputField>();
-            return input != null && input.isFocused;
+            if (input != null && input.isFocused) return true;
+            var tmp = go.GetComponent<TMP_InputField>();      // chat + any TMP input field
+            return tmp != null && tmp.isFocused;
         }
     }
 

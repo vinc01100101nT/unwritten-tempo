@@ -1,6 +1,7 @@
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// A single shared tooltip that shows an item's name + stats while you hover an
@@ -17,8 +18,8 @@ public class ItemTooltip : MonoBehaviour
 
     [Tooltip("The tooltip's own RectTransform (moved to follow the cursor).")]
     public RectTransform panel;
-    public Text titleText;
-    public Text bodyText;
+    public TMP_Text titleText;
+    public TMP_Text bodyText;
 
     [Tooltip("Pixel offset from the cursor, before screen clamping.")]
     public Vector2 cursorOffset = new Vector2(18, -18);

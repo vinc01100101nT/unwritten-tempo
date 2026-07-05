@@ -150,7 +150,7 @@ public class BakedBillboard8 : MonoBehaviour, IStancePose
         return r;
     }
 
-    // Runtime twin of Build25DSpike.ApplyBillboardLighting (which lives in the editor assembly and can't be
+    // Runtime twin of RigBuilder25D.ApplyBillboardLighting (which lives in the editor assembly and can't be
     // called from Play): light the flat sprite like the rest of the 3D world so it throws a clean cutout
     // shadow (cast from both faces of the thin quad) and darkens in shade — exactly what regular mobs get.
     static Material _billboardMat;

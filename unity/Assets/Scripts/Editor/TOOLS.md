@@ -16,9 +16,6 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 | Menu | What | Use when |
 | --- | --- | --- |
 | **Build Game (Windows .exe)** | `npm run build` for the game. Collects enabled Build-Settings scenes (forces `Systems.unity` first), builds a StandaloneWindows64 player into `Builds/Windows/`, opens the folder. | You want a shippable `.exe` without opening the Build Profiles window. (`BuildGame.cs`) |
-| **Create Character Sandbox Scene** | Builds a standalone `CharacterSandbox.unity` (checkered ground + light + camera + `CharacterSelectSandbox` wired to the baked roster). | You want to pick/walk any baked character in isolation, no real game involved. (`SandboxBuilder.cs`) |
-| **Setup Hand-Drawn Grade** | Registers `HandDrawnGradeFeature` on every URP renderer in the project (as a sub-asset). *Idempotent.* | After importing/resetting URP renderers, so the DevSettings ▸ Hand-Drawn Saturation/Contrast knobs take effect. (`SetupHandDrawnGrade.cs`) |
-| **Bake Minimap (active map)** | Snapshots the active map from straight above into `Assets/Art/Minimaps/<Scene>.png` and writes `MinimapData` onto the scene, so the HUD minimap is a static chart (no live 2nd camera). | After a map's layout changes. (`MinimapBaker.cs`) |
 
 ---
 
@@ -27,8 +24,8 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 | Menu | What | Use when |
 | --- | --- | --- |
 | **Setup Systems Scene** | Builds the persistent `Systems.unity` (Sun + billboard Player + follow Camera + Character + HUD + GameSystems + GameRoot), makes it Build index 0 + the Play-start scene. Maps then load additively under it. *Re-runnable.* | First-time setup, or after changing the player rig / global systems. (`SystemsSceneBuilder.cs`) |
-| **Build UI Shell (Systems scene)** | Rebuilds the in-scene UI shell (HUD + Bag/Character/Skills panels) skinned with the last-chosen Ninja Adventure theme; saves `Resources/GameUICanvas.prefab`. Also seeds starter items. Run with **Systems.unity open** so the canvas is replaced in place (not stranded in a map scene). | After changing UI, icons, or theme. (`UIShellBuilder.cs`) |
-| **UI Shell Theme… (Systems scene)** | Window: pick a UI theme + frame thickness with a live preview, then build. Choice is saved so plain *Build UI Shell* reuses it. Build with **Systems.unity open**. | You want to change the HUD skin. (`UIShellWindow.cs`) |
+| **Create Character Sandbox Scene** | Builds a standalone `CharacterSandbox.unity` (checkered ground + light + camera + `CharacterSelectSandbox` wired to the baked roster). | You want to pick/walk any baked character in isolation, no real game involved. (`SandboxBuilder.cs`) |
+| **Setup Hand-Drawn Grade** | Registers `HandDrawnGradeFeature` on every URP renderer in the project (as a sub-asset). *Idempotent.* | After importing/resetting URP renderers, so the DevSettings ▸ Hand-Drawn Saturation/Contrast knobs take effect. (`SetupHandDrawnGrade.cs`) |
 | **Add Camera Occlusion Fade (Systems scene)** | Drops a `CameraOccluderFader` onto the existing follow camera (props between camera & player fade out) without rebuilding Systems. Needs **Systems.unity open** (the follow camera lives there). | Retrofitting occlusion fade onto an older Systems scene. (`OcclusionFadeSetup.cs`) |
 | **Create Starter Items** | Generates a small set of `Item` assets in `Resources/Items` (weapons/consumables/armour) so the bag has draggable content. *Idempotent.* | Seeding the inventory; also called automatically by Build UI Shell. (`ItemStarterSet.cs`) |
 
@@ -49,25 +46,21 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 | **Add Ambient Townsfolk** | Drops an `AmbientLife` director into the open scene, wires it to the `CharacterRoster` + Ground mask → wandering, chattering townsfolk at Play. *Idempotent.* | Making a map feel alive. Run in a map scene. (`AmbientLifeTools.cs`) |
 | **Add Prop Light to Selection** | Adds a warm `PropLight` (real-time point light) as a child of each selected prop, so nearby billboard sprites brighten & take its colour. *Idempotent.* | Lighting a door/torch/portal so the player glows beside it. Retint/flicker on the new child. (`PropLightTools.cs`) |
 | **Decorate Selected (Foliage)** | Rule-based, hands-off foliage scatter on the selected prop: raycasts its surface and seats Pxltgr decor (Flower\*/Grass\*/Fern\*/Bush\*/Mushroom\*) as a wall-hugging garden ring + a few wall-mounted accents, seeded per object name, under an `AutoDecor` child (colliders stripped, walk-through). *Idempotent — rebuilds* `AutoDecor`*.* | Auto-decorating a bare Hunyuan house (no hand-placing) — the detail stripped out of the gen to keep it clean. (`MeshDecorator.cs`) |
+| **Bake Minimap (active map)** | Snapshots the active map from straight above into `Assets/Art/Minimaps/<Scene>.png` and writes `MinimapData` onto the scene, so the HUD minimap is a static chart (no live 2nd camera). | After a map's layout changes. (`MinimapBaker.cs`) |
 
 ---
 
-## World UI (global, persistent)
+## UI (HUD, windows & global prompts)
 
 | Menu | What | Use when |
 | --- | --- | --- |
+| **Build UI Shell (Systems scene)** | Rebuilds the in-scene UI shell (HUD + Bag/Character/Skills panels) skinned with the last-chosen Ninja Adventure theme; saves `Resources/GameUICanvas.prefab`. Also seeds starter items. Run with **Systems.unity open** so the canvas is replaced in place (not stranded in a map scene). | After changing UI, icons, or theme. (`UIShellBuilder.cs`) |
+| **UI Shell Theme… (Systems scene)** | Window: pick a UI theme + frame thickness with a live preview, then build. Choice is saved so plain *Build UI Shell* reuses it. Build with **Systems.unity open**. | You want to change the HUD skin. (`UIShellWindow.cs`) |
+| **Build Progression Windows** | Ensures starter Items + Cards exist, then drops a `ProgressionWindows` canvas (Inventory/Equipment/Character, toggled I/E/C) into the open scene, reading the live `Character`. | Testing the inventory/equip/character window trio. (`ProgressionWindowsBuilder.cs`) |
 | **Build Dialogue UI** | Builds the global screen-space dialogue box → `Resources/DialogueCanvas.prefab`. Systems pulls it in. | (Re)building the global dialogue box. (`WorldTools.cs`) |
 | **Build Interact Prompt** | Builds the global "press to interact" badge → `Resources/InteractPromptCanvas.prefab`. | (Re)building the interact prompt. (`WorldTools.cs`) |
 
-> After either, run **Setup Systems Scene** to pull the prefab into the persistent layer.
-
----
-
-## UI
-
-| Menu | What | Use when |
-| --- | --- | --- |
-| **Build Progression Windows** | Ensures starter Items + Cards exist, then drops a `ProgressionWindows` canvas (Inventory/Equipment/Character, toggled I/E/C) into the open scene, reading the live `Character`. | Testing the inventory/equip/character window trio. (`ProgressionWindowsBuilder.cs`) |
+> After Build Dialogue UI / Build Interact Prompt, run **Setup Systems Scene** to pull the prefab into the persistent layer.
 
 ---
 
@@ -80,13 +73,6 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 | **Clear Training Dummy** | Removes the training dummy. | Cleanup after a damage test. (`TrainingDummyTool.cs`) |
 | **Spawn Field Boss (open field map)** | Hand-places the unique boss flagged in the `MonsterCatalog` (the `isBoss` `MonsterDef`; falls back to `MobRoster.Boss` if no assets) — name+HP banner, wide aggro, 120s respawn — into the open field map (refuses to spawn in Town). | Placing a boss encounter. Run in a field/dungeon scene. (`RegionBuilder.cs`) |
 | **Create NPC from selected SpriteSheet** | Builds a simple billboard NPC with an `Interactable` (editable dialogue) from a selected sliced character sheet. | Quick-dropping a talking NPC. (`WorldTools.cs`) |
-
----
-
-## Data (table views)
-
-| Menu | What | Use when |
-| --- | --- | --- |
 | **Mob Table** | Spreadsheet window of every `MonsterDef` in the project — one mob per row with a live front-facing thumbnail (top-left cell of its `sheet`, tinted), and the balance stats (id/name/biome/tier/flags/HP/DEF/MDEF/ATK/HIT/FLEE/element/weight/XP/gold) editable inline. Click a column header to sort, the search box to filter, **◎** to select the asset; **Save All** writes + reloads the `MonsterCatalog`. Edits are Undo-able. | Reviewing or balancing the whole mob roster in one view. (`MobTableWindow.cs`) |
 
 ---
@@ -109,7 +95,7 @@ The keyboard-friendly companions to the Prop Palette. All bounds-aware (via `Pro
 
 ---
 
-## Prefabs & Art (asset → prefab pipelines)
+## Props (asset → prefab pipelines)
 
 | Menu | What | Use when |
 | --- | --- | --- |
@@ -177,8 +163,6 @@ The Unity side of the batch Mixamo auto-rig flow (see the `mixamo-batch-autorig-
 
 ## Player
 
-| Menu | What | Use when |
-| --- | --- | --- |
 > **The player is now LIVE-3D by default** (committed 2026-07-04; mobs stay billboards). `Setup Systems Scene` seats a rigged Mixamo-Humanoid model on the player via `Player3DVisualBuilder` — there's no billboard-player swap anymore. To change WHICH rigged model the player wears, use **Tools ▸ unwritten ▸ Rigs ▸ Set 3D Player Model** (see the Rigs section). The retired billboard-player tools (`Use Baked Character`, `Use 3D Character`, `Use 3D Caster`, `Revert 3D Character`) and `BakedPlayerVisual` were deleted in this commit.
 
 ---
@@ -223,18 +207,11 @@ The Unity side of the batch Mixamo auto-rig flow (see the `mixamo-batch-autorig-
 
 ---
 
-## Spike (experimental — throwaway)
-
-| Menu | What | Use when |
-| --- | --- | --- |
-| **Build 3D Character Spike** | Stands up a LIVE 3D skinned Quaternius character (the "true 3D" alternative to baked billboards): keeps the selected `Assets/Art/Quat/FBX` model's (default Knight_Male) native **Generic** rig, loops its embedded Idle/Walk/Run takes, generates `Quat/Spike3D/QuatSpikeController.controller` (1-D blend-tree locomotion on a `Speed` float + `Attack`/`Jump` trigger states), then builds + opens `Assets/Scenes/Spike3DCharacters.unity` (ground + light + follow cam + model wired with a `CharacterController` and `Character3DDriver`). Press Play: WASD move, left-click SwordSlash, Space jump, Shift walk. Does NOT force Humanoid (that breaks the Quat rig; only needed later for Mixamo retargeting). *Tagged `// QUICKFIX`; on `experiment/3d-characters`.* | Comparing live 3D characters against the shipped billboard pipeline. (`Build3DCharacterSpike.cs`) |
-
----
-
 ## Notes & related
 
 - **Map generation** proper is driven by `MapRecipe` assets (Create ▸ unwritten ▸ Map Recipe) with a **Generate** button on the asset's inspector — that's `RecipeGenerator`, not a menu item. The menu's *World Creator…* / *Import Painted Map…* sit on top of it for whole-world / hand-painted flows.
 - **Setup order for a fresh project:** Build From Folder / Build Fantasy Assets (prefabs) → Bake characters → Setup Systems Scene → Build UI Shell → generate maps (recipe / World Creator) → Bake Minimap.
 - **Removed 2026-06-25** (cleanup): *Set Melee Attack Range* and *Remove HUD Widgets Demo* (one-shot migrations, done), plus *Strip Missing Scripts* and *Reset Saved Class*.
+- **Removed 2026-07-05** (cleanup): *Backfill Item + Map IDs* (every asset now has an id) and *Create Starter Dungeon Recipe* (`DungeonRecipe.asset` exists) — both one-shots, done.
 - **Mobs are data now:** the source of truth is `MonsterDef` assets in `Resources/Monsters` (Create ▸ unwritten ▸ Monster), surfaced via `MonsterCatalog` (lookup by stable `id` like `mob.slime`, or display name). Recipes/boss spawner read the catalog; the old hardcoded `MobRoster` array is now just the migration seed + a fallback.
-- One-off "quick fix" tools are tagged `// QUICKFIX` and parked under a **Quick Fixes/** submenu so a future purge is a grep (see `Scripts/CLAUDE.md`). Current: **Migrate MobRoster to Assets** (materializes the seed list into `Resources/Monsters/*.asset`; one-shot, delete after `MobRoster` is removed — `MobRosterMigration.cs`). **Backfill Item + Map IDs** (gives pre-existing `Item`/`MapRecipe` assets that serialized before the `id`field existed a stable kebab id from their display name; dedupes + warns on collisions; one-shot, delete after every asset has an id — `IdBackfillTool.cs`). **Create Starter Dungeon Recipe** (scaffolds `Assets/DungeonRecipe.asset` — a `MapRecipe` with perimeter walls + scattered boulders + mid/elite biome mobs — for Build World's dungeon template slot; one-shot, delete after the recipe exists and is hand-tuned — `DungeonRecipeScaffold.cs`). **Reground Baked Mobs** (drops mobs baked BEFORE the feet-pivot convention onto the ground + stacks their capsule up from the feet; idempotent — skips mobs already migrated; run once per hand-finished map to adopt the convention without a full regenerate — `RegroundBakedMobs.cs`).
+- One-off "quick fix" tools are tagged `// QUICKFIX` and parked under a **Quick Fixes/** submenu so a future purge is a grep (see `Scripts/CLAUDE.md`). Current: **Migrate MobRoster to Assets** (materializes the seed list into `Resources/Monsters/*.asset`; one-shot, delete after `MobRoster` is removed — `MobRosterMigration.cs`). **Reground Baked Mobs** (drops mobs baked BEFORE the feet-pivot convention onto the ground + stacks their capsule up from the feet; idempotent — skips mobs already migrated; run once per hand-finished map to adopt the convention without a full regenerate — `RegroundBakedMobs.cs`).

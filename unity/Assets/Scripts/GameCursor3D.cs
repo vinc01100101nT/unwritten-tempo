@@ -9,7 +9,11 @@ using UnityEngine;
 /// </summary>
 public class GameCursor3D : MonoBehaviour
 {
-    public Texture2D defaultCursor;    public Vector2 defaultHotspot = new Vector2(3, 3);
+    // Hotspot = the click pixel INSIDE the art, and the single source of truth for it (RigBuilder25D
+    // reads this default rather than re-typing a value). pointer_b.png is 32×32 with the arrow tip at
+    // (9,6), measured from its alpha bbox. Must be the tip, not the top-left padding, or the visible
+    // arrow and the real click point diverge (~6px) → HUD clicks land on the wrong pixel.
+    public Texture2D defaultCursor;    public Vector2 defaultHotspot = new Vector2(9, 6);
     public Texture2D attackCursor;     public Vector2 attackHotspot = Vector2.zero;       // (0,0) => centered
     public Texture2D attackMoveCursor; public Vector2 attackMoveHotspot = Vector2.zero;   // (0,0) => centered
     public Texture2D targetCursor;     public Vector2 targetHotspot = Vector2.zero;       // (0,0) => centered; shown while aiming a skill

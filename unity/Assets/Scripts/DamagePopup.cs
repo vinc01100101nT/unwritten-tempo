@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// A floating combat number that rises from a unit's head and fades out. Call <see cref="Spawn"/> /
@@ -37,7 +38,6 @@ public class DamagePopup : MonoBehaviour
     // ---- shared pool ----------------------------------------------------------
     static Transform host;                                   // the one canvas everything parents under
     static readonly Stack<DamagePopup> pool = new Stack<DamagePopup>();
-    static Font font;                                        // builtin font, fetched once
     static Transform camT;                                   // cached camera transform for billboarding
 
     /// <summary>Spawn a number at a world position (a head offset is added for you).</summary>
@@ -137,41 +137,33 @@ public class DamagePopup : MonoBehaviour
         host = go.transform;
     }
 
-    // Pixel bitmap font for the RO/OSRS look. Falls back to the builtin font if the asset is missing.
-    static Font Font => font != null ? font : (font = Resources.Load<Font>("Fonts/PixelFont") ?? Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
-
-    // Build one reusable popup (Text + dark outline) parented under the shared canvas.
+    // Build one reusable popup (TMP text + shared dark-outline material) parented under the shared canvas.
     static DamagePopup Create()
     {
         var go = new GameObject("DamagePopup",
-            typeof(RectTransform), typeof(CanvasRenderer), typeof(Text), typeof(Outline), typeof(DamagePopup));
+            typeof(RectTransform), typeof(DamagePopup));
         go.transform.SetParent(host, false);
         go.layer = host.gameObject.layer;   // inherit TransparentFX so popups stay out of water reflections
         ((RectTransform)go.transform).sizeDelta = new Vector2(100, 40);
 
-        var t = go.GetComponent<Text>();
-        t.font = Font;
-        t.fontSize = 64;   // high-res glyph atlas; BaseScale downscales it to the small on-screen size (stays crisp)
-        t.fontStyle = FontStyle.Normal;
-        t.alignment = TextAnchor.MiddleCenter;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
+        var t = go.AddComponent<TextMeshProUGUI>();
+        t.font = UiKit.PixelFont;
+        // Thick black keyline for the chunky RuneScape/OSRS hitsplat look. ONE shared outlined material
+        // across every pooled number, so thousands of them still batch into a single draw call.
+        t.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.PixelFont, 0.3f);
+        t.fontSize = 64;   // BaseScale downscales it on screen; SDF keeps it crisp at any size
+        t.fontStyle = FontStyles.Normal;
+        t.alignment = TextAlignmentOptions.Center;
+        t.textWrappingMode = TextWrappingModes.NoWrap;
         t.raycastTarget = false;
-        t.supportRichText = true;                             // lets the K/M/B suffix render in its own colour
-
-        // Thick, fully-opaque black edge for the chunky RuneScape/OSRS hitsplat look. The Outline effect
-        // stamps the glyph at each ±distance corner, so a larger distance = a heavier border. Paired with the
-        // 64px atlas this reads as a solid black keyline around each digit.
-        var outline = go.GetComponent<Outline>();
-        outline.effectColor = new Color(0f, 0f, 0f, 1f);
-        outline.effectDistance = new Vector2(3.5f, -3.5f);
+        t.richText = true;                                    // lets the K/M/B suffix render in its own colour
 
         var popup = go.GetComponent<DamagePopup>();
         popup.text = t;
         return popup;
     }
 
-    Text text;
+    TMP_Text text;
     Color startColor;
     float age;
     float scaleMult = 1f;

@@ -11,7 +11,7 @@ using UnityEngine.Rendering.Universal;
 /// </summary>
 public static class SetupHandDrawnGrade
 {
-    [MenuItem("Tools/unwritten/Setup Hand-Drawn Grade", priority = 122)]
+    [MenuItem("Tools/unwritten/Scene Setup/Setup Hand-Drawn Grade", priority = 122)]
     public static void Setup()
     {
         var guids = AssetDatabase.FindAssets("t:UniversalRendererData");

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Minimal dialogue box. One instance lives on the DialogueCanvas (built by
@@ -14,13 +15,13 @@ public class DialogueUI : MonoBehaviour
 
     [Tooltip("The dialogue box root — hidden when no conversation is active.")]
     public GameObject panel;
-    public Text speakerText;
-    public Text bodyText;
+    public TMP_Text speakerText;
+    public TMP_Text bodyText;
 
     string[] lines;
     int index;
 
-    public bool IsOpen => panel != null && panel.activeSelf;
+    public bool IsOpen => panel != null && UiAnim.IsOpen(panel);
 
     void Awake()
     {
@@ -34,7 +35,7 @@ public class DialogueUI : MonoBehaviour
         lines = newLines;
         index = 0;
         if (speakerText != null) speakerText.text = speaker;
-        if (panel != null) panel.SetActive(true);
+        if (panel != null) UiAnim.Open(panel);
         ShowCurrent();
     }
 
@@ -52,7 +53,7 @@ public class DialogueUI : MonoBehaviour
 
     void Close()
     {
-        if (panel != null) panel.SetActive(false);
+        if (panel != null) UiAnim.Close(panel);
         lines = null;
     }
 }

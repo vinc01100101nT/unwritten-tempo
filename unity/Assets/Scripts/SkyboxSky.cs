@@ -144,7 +144,7 @@ public class SkyboxSky : MonoBehaviour
         if (RenderSettings.defaultReflectionMode != UnityEngine.Rendering.DefaultReflectionMode.Custom)
             RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Custom;
 
-        // Make sure the cameras actually render the skybox (Build25DSpike defaults them to a solid colour).
+        // Make sure the cameras actually render the skybox (RigBuilder25D defaults them to a solid colour).
         var cam = CameraRig.Cam;
         TeachCameraSkybox(cam);
 

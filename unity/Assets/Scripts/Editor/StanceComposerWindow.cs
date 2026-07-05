@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -60,17 +59,6 @@ public class StanceComposerWindow : EditorWindow
         // The committed animation source: shared Humanoid clips (Assets/Art/Quat/Anim/Humanoid) that retarget onto
         // every rigged avatar. These are what the live-3D player/NPCs actually play.
         foreach (var n in HumanoidClipResolver.ClipNames()) names.Add(n);
-
-        // Legacy sources kept for the caster experiment: the Quaternius body's embedded takes + the Mixamo dir.
-        if (File.Exists(CasterRig.CasterBodyPath))
-            foreach (var k in Build3DCharacterSpike.LoadClips(CasterRig.CasterBodyPath).Keys) names.Add(k);
-        string mixDir = Path.GetDirectoryName(CasterRig.CasterBodyPath);
-        if (AssetDatabase.IsValidFolder(mixDir))
-            foreach (var guid in AssetDatabase.FindAssets("t:Model", new[] { mixDir }))
-            {
-                string file = Path.GetFileNameWithoutExtension(AssetDatabase.GUIDToAssetPath(guid));
-                if (!file.StartsWith("Caster_")) names.Add(file);
-            }
 
         var opts = new List<string> { "" };
         opts.AddRange(names);

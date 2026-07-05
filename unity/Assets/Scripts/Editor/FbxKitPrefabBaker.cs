@@ -19,7 +19,7 @@ public static class FbxKitPrefabBaker
     /// <c>FBX format</c> folder placed under Assets/Art/…) and turn every FBX in it into drop-ready
     /// house/prop prefabs. Auto-detects the colormap atlas (Textures/colormap.png, else the first .png in
     /// the folder or its Textures subfolder). Output → Assets/Prefabs/&lt;folder name&gt;.</summary>
-    [MenuItem("Tools/unwritten/Prefabs & Art/Build From Folder…", priority = 501)]
+    [MenuItem("Tools/unwritten/Props/Build From Folder…", priority = 501)]
     static void BuildFromFolder()
     {
         string abs = EditorUtility.OpenFolderPanel("Pick the kit's FBX folder (must be inside Assets)", Application.dataPath, "");

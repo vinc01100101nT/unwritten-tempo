@@ -13,7 +13,7 @@ using UnityEngine;
 /// </summary>
 public class MobTableWindow : EditorWindow
 {
-    const string MenuPath = "Tools/unwritten/Data/Mob Table";
+    const string MenuPath = "Tools/unwritten/Mobs & NPCs/Mob Table";
     const int Cell = 16;                 // Ninja Adventure mob sheets are 16px square cells
     const float RowHeight = 38f;
 
@@ -65,7 +65,7 @@ public class MobTableWindow : EditorWindow
     Texture2D SheetFor(MonsterDef def)
     {
         if (_sheets.TryGetValue(def, out var t)) return t;
-        t = string.IsNullOrEmpty(def.sheet) ? null : Build25DSpike.MonsterSheet(def.sheet);
+        t = string.IsNullOrEmpty(def.sheet) ? null : RigBuilder25D.MonsterSheet(def.sheet);
         _sheets[def] = t;
         return t;
     }

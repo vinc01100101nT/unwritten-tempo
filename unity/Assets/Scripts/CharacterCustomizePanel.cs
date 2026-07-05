@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Builds and drives the Outfit panel (hotkey <c>O</c>):
@@ -115,13 +116,12 @@ public class CharacterCustomizePanel : MonoBehaviour
         {
             if (Hotkeys.Down(KeyCode.O))
             {
-                bool open = !panelRoot.activeSelf;
-                panelRoot.SetActive(open);
+                bool open = UiAnim.Toggle(panelRoot);
                 if (open) UISounds.PlayOpen(); else UISounds.PlayClose();
             }
-            else if (panelRoot.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+            else if (UiAnim.IsOpen(panelRoot) && Input.GetKeyDown(KeyCode.Escape))
             {
-                panelRoot.SetActive(false);
+                UiAnim.Close(panelRoot);
                 UISounds.PlayClose();
             }
         }
@@ -163,8 +163,6 @@ public class CharacterCustomizePanel : MonoBehaviour
             previewMat = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
         }
 
-        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-
         // ── Content: HorizontalLayoutGroup with two columns ──────────────────
         var hlg = content.gameObject.AddComponent<HorizontalLayoutGroup>();
         hlg.spacing            = 16;
@@ -187,7 +185,7 @@ public class CharacterCustomizePanel : MonoBehaviour
         leftVlg.childForceExpandHeight = false;
 
         // Sub-label.
-        var lbl = MakeText("CharLabel", leftGO.transform, "Character", 14, FontStyle.Bold, font);
+        var lbl = MakeText("CharLabel", leftGO.transform, "Character", 14, FontStyle.Bold);
         var lblLe = lbl.gameObject.AddComponent<LayoutElement>();
         lblLe.preferredHeight = 20;
         lblLe.flexibleWidth   = 1;
@@ -223,7 +221,7 @@ public class CharacterCustomizePanel : MonoBehaviour
         rightVlg.childForceExpandHeight  = false;
 
         // Sub-label.
-        var clbl = MakeText("ColLabel", rightGO.transform, "Cloth Color", 14, FontStyle.Bold, font);
+        var clbl = MakeText("ColLabel", rightGO.transform, "Cloth Color", 14, FontStyle.Bold);
         var clblLe = clbl.gameObject.AddComponent<LayoutElement>();
         clblLe.preferredHeight = 20;
         clblLe.flexibleWidth   = 1;
@@ -375,19 +373,9 @@ public class CharacterCustomizePanel : MonoBehaviour
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
-    Sprite[] GetWalkFrames()
-    {
-        if (PersistentPlayer3D.Instance == null) return null;
-        var ctrl = PersistentPlayer3D.Instance.GetComponent<Player3DController>();
-        if (ctrl == null) return null;
-
-        // Animated sheet (richer): row 0 = down direction; cols 4-7 = walk frames.
-        if (ctrl.animSheet != null && ctrl.animCell > 0)
-            return SpriteSheetCache.Grid(ctrl.animSheet, ctrl.animCell, 0, 4, 4, ctrl.animPpu);
-
-        // Legacy sprite array fallback.
-        return (ctrl.down != null && ctrl.down.Length > 0) ? ctrl.down : null;
-    }
+    // The player is a live-3D character (no sprite sheet), so there are no 2D walk frames to preview.
+    // Returns null → the preview image simply doesn't animate (dye/color customization is unaffected).
+    Sprite[] GetWalkFrames() => null;
 
     // Decompose a palette swatch into HSV (its authored sRGB value) — the exact H/S/V the gamma-space
     // shader lands on, so the recolored cloth matches the swatch.
@@ -431,23 +419,11 @@ public class CharacterCustomizePanel : MonoBehaviour
         return img;
     }
 
-    static Text MakeText(string name, Transform parent, string content, int size, FontStyle style, Font font)
+    static TMP_Text MakeText(string name, Transform parent, string content, int size, FontStyle style)
     {
-        var go = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(parent, false);
-        var t = go.GetComponent<Text>();
-        t.font            = font;
-        t.fontSize        = size;
-        t.fontStyle       = style;
-        t.alignment       = TextAnchor.MiddleCenter;
-        t.color           = Color.white;
-        t.text            = content;
-        t.raycastTarget   = false;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-        t.verticalOverflow   = VerticalWrapMode.Overflow;
-        var sh = go.AddComponent<Shadow>();
-        sh.effectColor    = new Color(0, 0, 0, 0.6f);
-        sh.effectDistance = new Vector2(1, -1);
+        var t = UiKit.MakeText(name, parent, content, size, style, TextAnchor.MiddleCenter, wrap: false);
+        t.color = Color.white;
+        t.raycastTarget = false;
         return t;
     }
 }

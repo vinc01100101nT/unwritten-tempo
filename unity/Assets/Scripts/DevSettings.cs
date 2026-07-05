@@ -279,7 +279,6 @@ public class DevSettings : MonoBehaviour
         Cat("Player");
         F("Travel speed",     0f, 12f, () => player ? player.moveSpeed : 0f,       v => { if (player) player.moveSpeed = v; });   // base translation, no anim scaling
         F("Gait speed (×)",   0.1f, 5f, () => player ? player.gaitSpeed : 0f,      v => { if (player) player.gaitSpeed = v; });   // scales move + animation together
-        F("Anim FPS",         1f, 20f, () => player ? player.framesPerSecond : 0f, v => { if (player) player.framesPerSecond = v; });
         F("Acquire range",    0f, 15f, () => player ? player.acquireRange : 0f,    v => { if (player) player.acquireRange = v; });
         F("Roam range",       0f, 30f, () => player ? player.roamRange : 0f,       v => { if (player) player.roamRange = v; });
         F("Snap radius (px)", 0f, 200f, () => player ? player.snapRadiusPixels : 0f, v => { if (player) { player.snapRadiusPixels = v; player.ApplySnapRadius(); } });
@@ -288,9 +287,6 @@ public class DevSettings : MonoBehaviour
         F("Fall pose @ speed", 0f, 10f, () => player ? player.fallAnimSpeed : 0f,  v => { if (player) player.fallAnimSpeed = v; });   // min downward speed before the falling pose plays
         F("Run step gap (s)",  0.1f, 1.5f, () => player ? player.stepInterval : 0f,     v => { if (player) player.stepInterval = v; });
         F("Walk step gap (s)", 0.1f, 1.5f, () => player ? player.walkStepInterval : 0f, v => { if (player) player.walkStepInterval = v; });
-        B("Idle breathing",   () => player && player.breathe,                      v => { if (player) player.breathe = v; });
-        F("Breathe amount",   0f, 0.2f, () => player ? player.breatheAmount : 0f,  v => { if (player) player.breatheAmount = v; });
-        F("Breathe speed",    0f, 6f,  () => player ? player.breatheSpeed : 0f,    v => { if (player) player.breatheSpeed = v; });
         // Traversal abilities (SPACE = forward hop, E = dash burst).
         F("Jump distance",    0f, 6f,    () => player ? player.jumpDistance : 0f,  v => { if (player) player.jumpDistance = v; });
         F("Jump height",      0f, 2.5f,  () => player ? player.jumpHeight : 0f,    v => { if (player) player.jumpHeight = v; });
@@ -898,6 +894,8 @@ public class DevSettings : MonoBehaviour
 
     static bool Pressed()
     {
+        // suppressed while typing into a text box (chat, dev tuners)
+        if (Hotkeys.Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null) return Keyboard.current.pKey.wasPressedThisFrame;
 #endif

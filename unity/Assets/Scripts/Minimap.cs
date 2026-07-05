@@ -112,7 +112,7 @@ public class Minimap : MonoBehaviour
     {
         if (view == null) return;
 
-        if (Hotkeys.Down(toggleKey)) Panel.SetActive(!Panel.activeSelf);
+        if (Hotkeys.Down(toggleKey)) UiAnim.Toggle(Panel);
         if (!Panel.activeInHierarchy) return;
 
         // Re-acquire the persistent player after a scene swap.

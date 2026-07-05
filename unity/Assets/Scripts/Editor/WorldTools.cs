@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Editor helpers for Phase C world-building: a one-click screen-space dialogue
@@ -15,7 +16,7 @@ public static class WorldTools
     const string DialoguePrefabPath = "Assets/Resources/DialogueCanvas.prefab";
     const string PromptPrefabPath   = "Assets/Resources/InteractPromptCanvas.prefab";
 
-    [MenuItem("Tools/unwritten/World UI/Build Dialogue UI", priority = 700)]
+    [MenuItem("Tools/unwritten/UI/Build Dialogue UI", priority = 700)]
     static void BuildDialogueUI()
     {
         if (System.IO.File.Exists(DialoguePrefabPath) &&
@@ -31,6 +32,7 @@ public static class WorldTools
         var scaler = canvasGO.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1280, 720);
+        UiKit.ApplyTextCrispness(scaler);
 
         // Bottom dialogue panel.
         var panel = new GameObject("Panel", typeof(Image));
@@ -59,8 +61,8 @@ public static class WorldTools
 
         var ui = canvasGO.AddComponent<DialogueUI>();
         ui.panel = panel;
-        ui.speakerText = speaker.GetComponent<Text>();
-        ui.bodyText = body.GetComponent<Text>();
+        ui.speakerText = speaker.GetComponent<TMP_Text>();
+        ui.bodyText = body.GetComponent<TMP_Text>();
         panel.SetActive(false);
 
         SaveAsResourcesPrefab(canvasGO, DialoguePrefabPath);
@@ -68,7 +70,7 @@ public static class WorldTools
                   "Run Setup Systems Scene to pull it into the persistent layer (it no longer lives per-map).");
     }
 
-    [MenuItem("Tools/unwritten/World UI/Build Interact Prompt", priority = 701)]
+    [MenuItem("Tools/unwritten/UI/Build Interact Prompt", priority = 701)]
     static void BuildInteractPrompt()
     {
         if (System.IO.File.Exists(PromptPrefabPath) &&
@@ -102,10 +104,9 @@ public static class WorldTools
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         var labelGO = CreateText("Label", promptGO.transform, 20, FontStyle.Bold);
-        var t = labelGO.GetComponent<Text>();
-        t.alignment = TextAnchor.MiddleCenter;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
+        var t = labelGO.GetComponent<TMP_Text>();
+        t.alignment = TextAlignmentOptions.Center;
+        t.textWrappingMode = TextWrappingModes.NoWrap;
 
         var ip = canvasGO.AddComponent<InteractPrompt>();
         ip.root = prt;       // move/show the badge; the text rides along as its child
@@ -185,18 +186,9 @@ public static class WorldTools
 
     static GameObject CreateText(string name, Transform parent, int size, FontStyle style)
     {
-        var go = new GameObject(name, typeof(Text));
-        go.transform.SetParent(parent, false);
-        var t = go.GetComponent<Text>();
-        t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");   // Unity 6 built-in font
-        t.fontSize = size;
-        t.fontStyle = style;
+        var t = UiKit.MakeText(name, parent, name, size, style, TextAnchor.UpperLeft);
         t.color = Color.white;
-        t.alignment = TextAnchor.UpperLeft;
-        t.horizontalOverflow = HorizontalWrapMode.Wrap;
-        t.verticalOverflow = VerticalWrapMode.Truncate;
-        t.text = name;
-        return go;
+        return t.gameObject;
     }
 
     static int FrameIndex(Sprite s)

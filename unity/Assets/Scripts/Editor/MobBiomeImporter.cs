@@ -21,7 +21,7 @@ using UnityEngine;
 ///
 /// Sprites don't matter yet: a mob folder's <c>SpriteSheet.png</c> renders directly; boss folders have no
 /// single sheet, so a boss <see cref="MonsterDef.sheet"/> stores its real folder name but rendering falls back
-/// to the default monster sheet today (Build25DSpike.BuildMonster: <c>MonsterSheet(sheet) ?? MonsterSheet()</c>).
+/// to the default monster sheet today (RigBuilder25D.BuildMonster: <c>MonsterSheet(sheet) ?? MonsterSheet()</c>).
 /// Boss art is a deferred pass.
 /// </summary>
 public static class MobBiomeImporter
@@ -33,7 +33,7 @@ public static class MobBiomeImporter
     // The 5 biomes mob/boss cells cycle through (same enum the map ground uses).
     static readonly Biome[] Biomes = { Biome.Grassland, Biome.Snow, Biome.Desert, Biome.Volcanic, Biome.Corrupted };
 
-    [MenuItem("Tools/unwritten/Mobs/Import NinjaAdventure Monsters", priority = 1200)]
+    [MenuItem("Tools/unwritten/Mobs & NPCs/Import NinjaAdventure Monsters", priority = 1200)]
     static void Import()
     {
         EnsureFolder(ResourceDir);

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Wires the (persistent) UI to the (persistent) <see cref="Character"/>: drives the HUD health/mana
@@ -18,9 +19,9 @@ using UnityEngine.UI;
 public class CharacterUIBinder : MonoBehaviour
 {
     Image healthFill;
-    Text healthLabel;
+    TMP_Text healthLabel;
     Image manaFill;
-    Text manaLabel;
+    TMP_Text manaLabel;
     bool bound;
 
     void Start() => Bind();
@@ -32,9 +33,9 @@ public class CharacterUIBinder : MonoBehaviour
         if (c == null) return;
 
         healthFill  = transform.Find("HUD_HealthBar/Fill")?.GetComponent<Image>();
-        healthLabel = transform.Find("HUD_HealthBar/Label")?.GetComponent<Text>();
+        healthLabel = transform.Find("HUD_HealthBar/Label")?.GetComponent<TMP_Text>();
         manaFill    = transform.Find("HUD_ManaBar/Fill")?.GetComponent<Image>();
-        manaLabel   = transform.Find("HUD_ManaBar/Label")?.GetComponent<Text>();
+        manaLabel   = transform.Find("HUD_ManaBar/Label")?.GetComponent<TMP_Text>();
 
         c.OnStatsChanged  += RefreshStats;
         c.OnHealthChanged += RefreshHealth;

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// A small floating HP bar + name that sits at the BOTTOM of a billboard mob's sprite (RO/MMO style):
@@ -52,7 +53,6 @@ public class MobNameplate : MonoBehaviour
     // ---- shared across ALL mobs: one canvas, one white sprite, the builtin font, one on-top material ----
     static Transform host;
     static Sprite whiteSprite;
-    static Font font;
     static Material onTopMat;     // UI/Default with ZTest Always, so a feet-level plate isn't hidden by terrain
 
     void Awake()
@@ -141,20 +141,17 @@ public class MobNameplate : MonoBehaviour
             lrt.anchorMin = lrt.anchorMax = new Vector2(0.5f, 1f); lrt.pivot = new Vector2(0.5f, 1f);
             lrt.anchoredPosition = new Vector2(0f, -barHeight - 2f);
             lrt.sizeDelta = new Vector2(barWidth * 3f, nameFontSize + 4);
-            var label = labelGO.AddComponent<Text>();
-            label.font = Font;
+            var label = labelGO.AddComponent<TextMeshProUGUI>();
+            label.font = UiKit.BodyFont;
+            // Shared outlined material = dark edge (reads on any terrain) + ZTest-Always (draws over the ground).
+            label.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.BodyFont);
             label.fontSize = nameFontSize;
-            label.fontStyle = FontStyle.Bold;
-            label.alignment = TextAnchor.UpperCenter;
-            label.horizontalOverflow = HorizontalWrapMode.Overflow;
-            label.verticalOverflow = VerticalWrapMode.Overflow;
+            label.fontStyle = FontStyles.Bold;
+            label.alignment = TextAlignmentOptions.Top;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
             label.raycastTarget = false;
             label.color = new Color(0.97f, 0.97f, 0.99f);
             label.text = displayName;
-            if (OnTop != null) label.material = OnTop;
-            var outline = labelGO.AddComponent<Outline>();  // dark edge so the name reads on any terrain
-            outline.effectColor = new Color(0f, 0f, 0f, 0.85f);
-            outline.effectDistance = new Vector2(1.2f, -1.2f);
         }
 
         lastShownHP = int.MinValue;                         // force the first fill refresh in LateUpdate
@@ -172,8 +169,6 @@ public class MobNameplate : MonoBehaviour
         go.transform.localScale = Vector3.one;
         host = go.transform;
     }
-
-    static Font Font => font != null ? font : (font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
 
     // One shared UI material that ignores the depth buffer, so a plate sitting at the mob's feet draws on
     // top of the terrain it stands on instead of being clipped into it.

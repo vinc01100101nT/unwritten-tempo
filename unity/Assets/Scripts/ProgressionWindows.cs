@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Builds and drives the progression window trio (Inventory · Equipment · Character) from the
@@ -43,22 +44,22 @@ public class ProgressionWindows : MonoBehaviour
     ItemSlot[] bagSlots;
     readonly List<InventoryStore.Entry> filtered = new List<InventoryStore.Entry>();
     bool useFilter; ItemCategory tab; // useFilter=false => "All"
-    Text invFooter;
+    TMP_Text invFooter;
     readonly List<Button> tabButtons = new List<Button>();
 
     // Equipment
     readonly Dictionary<EquipSlotType, ItemSlot> paperdoll = new Dictionary<EquipSlotType, ItemSlot>();
     EquipSlotType selectedSlot = EquipSlotType.None;
-    Text detailName, detailStats, detailCards;
+    TMP_Text detailName, detailStats, detailCards;
     GameObject cardDialog; Transform cardListRoot;
 
     // Character
     static ProgressionWindows active;   // singleton guard (avoid a doubled build if two canvases carry it)
     static readonly PrimaryStat[] StatOrder =
         { PrimaryStat.STR, PrimaryStat.AGI, PrimaryStat.VIT, PrimaryStat.INT, PrimaryStat.DEX, PrimaryStat.LUK };
-    Text charIdentity, charPoints, charDerived;
-    readonly Text[] statValue = new Text[6];
-    readonly Text[] statCost = new Text[6];
+    TMP_Text charIdentity, charPoints, charDerived;
+    readonly TMP_Text[] statValue = new TMP_Text[6];
+    readonly TMP_Text[] statCost = new TMP_Text[6];
     readonly Button[] statPlus = new Button[6];
 
     void Start()
@@ -92,17 +93,15 @@ public class ProgressionWindows : MonoBehaviour
         // Bare-key window hotkeys (no Alt — the Unity/OS Alt menu accelerators interfere with it):
         //   B = Inventory · V = Equipment · C = Character (K = Skills, owned by SkillDraftPanel).
         //   B/V chosen over I/E because E is the bare dash key.
-        if (Hotkeys.Down(KeyCode.B)) Toggle(invRoot);
-        if (Hotkeys.Down(KeyCode.V)) Toggle(equipRoot);
-        if (Hotkeys.Down(KeyCode.C)) Toggle(charRoot);
+        if (Hotkeys.Down(KeyCode.B)) UiAnim.Toggle(invRoot);
+        if (Hotkeys.Down(KeyCode.V)) UiAnim.Toggle(equipRoot);
+        if (Hotkeys.Down(KeyCode.C)) UiAnim.Toggle(charRoot);
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (cardDialog != null) cardDialog.SetActive(false);
-            invRoot.SetActive(false); equipRoot.SetActive(false); charRoot.SetActive(false);
+            if (cardDialog != null) UiAnim.Close(cardDialog);
+            UiAnim.Close(invRoot); UiAnim.Close(equipRoot); UiAnim.Close(charRoot);
         }
     }
-
-    static void Toggle(GameObject go) { if (go != null) go.SetActive(!go.activeSelf); }
 
     void RefreshAll()
     {
@@ -383,7 +382,7 @@ public class ProgressionWindows : MonoBehaviour
         vl.childForceExpandWidth = true; vl.childForceExpandHeight = false;
         cardListRoot = list.transform;
 
-        var close = UiKit.Btn("Close", fill.transform, () => cardDialog.SetActive(false));
+        var close = UiKit.Btn("Close", fill.transform, () => UiAnim.Close(cardDialog));
         var crt = (RectTransform)close.transform;
         crt.anchorMin = new Vector2(0, 0); crt.anchorMax = new Vector2(1, 0);
         crt.pivot = new Vector2(0.5f, 0); crt.sizeDelta = new Vector2(-16, 26);
@@ -414,7 +413,7 @@ public class ProgressionWindows : MonoBehaviour
             }
 
         cardDialog.transform.SetAsLastSibling();
-        cardDialog.SetActive(true);
+        UiAnim.Open(cardDialog);
     }
 
     void InsertCard(Card card)
@@ -423,7 +422,7 @@ public class ProgressionWindows : MonoBehaviour
         if (inst == null || card == null || !inst.HasFreeSocket) return;
         inst.cards.Add(card);
         Character.Instance.SetEquipped(selectedSlot, inst);   // re-aggregate + fire stat events
-        cardDialog.SetActive(false);
+        UiAnim.Close(cardDialog);
         RefreshAll();
     }
 

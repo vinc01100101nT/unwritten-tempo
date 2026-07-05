@@ -15,57 +15,14 @@ using UnityEngine.InputSystem;
 /// NOTE: the old A (arm attack-click → ATTACK-MOVE) and S (STOP) keyboard hotkeys are currently
 /// commented out in <see cref="ReadInput"/> because WASD reclaimed those keys — the Stop() /
 /// attack-arm functions are kept intact so they can be re-bound later.
-/// Movement routes via <see cref="Pathfinder3D"/> + a CharacterController; 4-dir billboard
-/// animation from motion. Exposes <see cref="AttackArmed"/> and a static
+/// Movement routes via <see cref="Pathfinder3D"/> + a CharacterController. This is the movement/combat
+/// BRAIN only — presentation is the live-3D <see cref="Character3DVisual"/> that rides it (it reads this
+/// controller's state and hides nothing here). Exposes <see cref="AttackArmed"/> and a static
 /// <see cref="MonsterUnderCursor"/> for <see cref="GameCursor3D"/>.
 /// </summary>
-[RequireComponent(typeof(SpriteRenderer), typeof(CharacterController))]
+[RequireComponent(typeof(CharacterController))]
 public partial class Player3DController : MonoBehaviour
 {
-    [Header("Walk frames (column = facing), filled by Build 2.5D Spike")]
-    public Sprite[] down, up, left, right;
-
-    [Header("Death pose (SeparateAnim/Dead.png) — shown while the player is dead")]
-    [Tooltip("Single defeated-pose texture; sliced in Awake (like attackSheet) so it serializes as an asset ref.")]
-    public Texture2D deadSheet;
-    Sprite deadSprite;
-
-    [Header("Attack pose strip (SeparateAnim/Attack.png) — sliced at runtime [down,up,left,right]")]
-    [Tooltip("The 4-direction attack-pose texture; sliced in Awake so the art's (often broken) auto-slices don't matter.")]
-    public Texture2D attackSheet;
-    public int attackCell = 16;
-    [Tooltip("Seconds to hold the attack pose after a swing starts.")]
-    public float attackPoseHold = 0.22f;
-    Sprite[] attackPoses;
-    float attackUntil;
-
-    [Header("Animated sheet (optional, legacy — richer 2D animations)")]
-    [Tooltip("DORMANT legacy path: a baked, NORMALIZED 4-row animation sheet. When set it DRIVES animated " +
-             "idle/walk/attack/hit + death and the single-pose fields above are ignored. Row-major: 4 direction " +
-             "rows (down/up/left/right) × [idle 0-3 | walk 4-7 | attack 8-11 | hit 12-13], death on row 4. 64px " +
-             "cells. Nothing wires this now — the player uses the baked Quaternius billboard (BakedPlayerVisual).")]
-    public Texture2D animSheet;
-    public int animCell = 64;
-    [Tooltip("Pixels-per-unit for the frames. 16 = the centred ~16px character renders ~1 world unit tall.")]
-    public int animPpu = 16;
-    [Tooltip("Idle loop speed (frames/sec) for the animated sheet.")]
-    public float idleFps = 5f;
-    [Tooltip("Attack-swing speed (frames/sec); also scaled by attack-speed so it keeps pace with the swing cadence.")]
-    public float attackFps = 16f;
-    [Tooltip("Seconds the flinch animation shows after taking damage (an in-progress attack still takes priority).")]
-    public float hitFlinchTime = 0.25f;
-    public float hitFps = 14f;
-
-    // Built from animSheet in Awake; null when there's no sheet → the legacy single-pose path runs instead.
-    // dir index: 0=down 1=up 2=left 3=right (baked sheet row order).
-    Sprite[][] idleClips, walkClips, atkClips, hitClips;
-    bool Animated => walkClips != null;
-    float hitUntil;
-    int atkFrame; float atkTimer; bool wasAttacking;
-    int idleFrame; float idleTimer;
-    int hitFrame;  float hitTimer;
-    Character hurtCharacter;   // subscribed for the hit-flinch trigger (separate from PlayerHurtFlash's tint)
-
     [Tooltip("TRAVEL speed: base ground translation (world units, pre-UnitScale). Changing this moves you faster/slower " +
              "WITHOUT scaling the animation — GaitSpeedMult divides it back out, so the legs keep their baked cadence.")]
     public float moveSpeed = 1f;
@@ -78,15 +35,14 @@ public partial class Player3DController : MonoBehaviour
     public float CurrentRunSpeed => moveSpeed * UnitScale.ForPlayer * gaitSpeed * (status != null ? status.MoveMult : 1f);
     [Tooltip("Speed multiplier while holding Shift to walk — slower than the default run, and plays the Walk animation.")]
     public float walkSpeedMult = 0.45f;
-    /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="BakedPlayerVisual"/> to
+    /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="Character3DVisual"/>'s stance brain to
     /// choose the Walk vs Run animation.</summary>
     public bool WalkingSlow { get; private set; }
     /// <summary>Live ratio of the player's ACTUAL move speed to its tuned baseline (1 = normal, &gt;1 = sped up by a
     /// buff, &lt;1 = slowed). The single knob that binds gait to movement speed: the footstep cadence divides by it
-    /// and <see cref="BakedPlayerVisual"/> multiplies the Walk/Run clip fps by it, so a speed buff makes the steps and
-    /// the run/walk animation visibly faster (and a Slow ailment slower) without touching the hand-tuned baselines.</summary>
+    /// and the stance visual multiplies the Walk/Run clip fps by it, so a speed buff makes the steps and the run/walk
+    /// animation visibly faster (and a Slow ailment slower) without touching the hand-tuned baselines.</summary>
     public float GaitSpeedMult { get; private set; } = 1f;
-    public float framesPerSecond = 8f;
     public float arriveDistance = 0.12f;
     [Tooltip("Clearance kept from props when routing.")]
     public float agentRadius = 0.35f;
@@ -99,7 +55,7 @@ public partial class Player3DController : MonoBehaviour
     [Tooltip("During attack-move, auto-engage a mob within this range.")]
     public float acquireRange = 5f;
 
-    // ── Collision capsule (CharacterController) — hand-tuned for the 2.5D billboard ──────────────────
+    // ── Collision capsule (CharacterController) — hand-tuned for the 2.5D avatar ──────────────────
     // Deliberately SHORT so the capsule's top clears overhead prop geometry (overhanging roof eaves,
     // tree leaves) while the bottom still bumps + climbs ground-level geometry (walls, stairs, tree
     // roots). Applied in Awake so every player gets it without a rebuild and it survives map loads;
@@ -112,7 +68,7 @@ public partial class Player3DController : MonoBehaviour
 
     // set skin width to 0.02f --vince
     public const float DefaultCapsuleSkinWidth = 0.02f;   // low so the capsule bottom rests ~on the ground (min hover)
-    // Centered capsule (center.y = 0). The VISUAL is feet-seated by BakedPlayerVisual regardless; the CC is kept
+    // Centered capsule (center.y = 0). The VISUAL is feet-seated by Character3DVisual regardless; the CC is kept
     // centered on the root by choice. Lowering skinWidth (above) is what keeps the capsule bottom touching ground.
 
     // i changed collider Y to 0.25f, blame me here when encountering weird collisions with props. -vince
@@ -131,11 +87,6 @@ public partial class Player3DController : MonoBehaviour
              "clickable, so you don't have to pixel-aim a small billboard. 0 = off (exact aim only).")]
     public float snapRadiusPixels = 72f;
     static float snapRadius = 72f;   // static mirror so the static MonsterUnderCursor can read it
-
-    [Header("Idle breathing (procedural)")]
-    public bool breathe = true;
-    public float breatheAmount = 0.03f;
-    public float breatheSpeed = 2.5f;
 
     [Header("Footsteps")]
     public SfxSet footstepSfx;
@@ -175,7 +126,6 @@ public partial class Player3DController : MonoBehaviour
     float pickupLockUntil;
     const float PickupLockSeconds = 0.6f;
 
-    SpriteRenderer sr;
     CharacterController controller;
     Player3DAttacker attacker;
     StatusController status;   // stun/freeze (no act), slow (speed), silence/blind — read here + by the spells/attacker
@@ -187,11 +137,8 @@ public partial class Player3DController : MonoBehaviour
     System.Action dashOnArrive;
     TargetIndicator targetMarker;
     Camera cam;
-    Vector2 facing = Vector2.down;
-    float timer; int frame;
     Vector3 buildScale;   // authored localScale; UnitScale.ForPlayer is applied on top each frame
     Vector3 baseScale;
-    float breathePhase;
     readonly List<Vector2> path = new List<Vector2>();
     int wp; bool routing;
     float nextChaseRepath;
@@ -203,12 +150,12 @@ public partial class Player3DController : MonoBehaviour
     // ordinary steps/slopes don't flicker it. Driven by ApplyGravityAndMove on the normal-movement path.
     float vy;
     bool falling;
-    /// <summary>True while the player is in an accelerating free-fall (read by the animation path to show the
+    /// <summary>True while the player is in an accelerating free-fall (read by the visual to show the
     /// jump clip's descent frames). Distinct from <see cref="IsAirborne"/> (the scripted hop arc).</summary>
     public bool IsFalling => falling;
 
     /// <summary>Last move/aim direction in WORLD space (XZ meaningful). Read by the minimap to orient the
-    /// player arrow. Fixed-north top-down: world +X = map right, world +Z = map up.</summary>
+    /// player arrow, and by the stance visual for facing. Fixed-north top-down: world +X = map right, world +Z = map up.</summary>
     public Vector3 WorldFacing => worldFacing;
 
     /// <summary>Turn the player to look at a world point on the XZ plane (skills call this so the caster faces
@@ -221,7 +168,6 @@ public partial class Player3DController : MonoBehaviour
 
     void Awake()
     {
-        sr = GetComponent<SpriteRenderer>();
         controller = GetComponent<CharacterController>();
         ApplyCapsule();   // enforce the tuned (short) collision capsule so it clears overhead eaves/leaves
         attacker = GetComponent<Player3DAttacker>();
@@ -229,10 +175,6 @@ public partial class Player3DController : MonoBehaviour
         snapRadius = snapRadiusPixels;   // publish to the static cursor pick
         buildScale = transform.localScale;
         baseScale = buildScale;
-        breathePhase = Random.value * Mathf.PI * 2f;
-        BuildAttackPoses();
-        BuildDeadPose();
-        BuildAnimClips();   // if animSheet is set, this supersedes the two single-pose builders above
         targetMarker = TargetIndicator.Create();
         targetMarker.gameObject.AddComponent<Billboard>();   // face the camera so the arrow isn't edge-on when orbiting
         autoIndicator = AutoCombatIndicator.Create();        // "AUTO-COMBAT" screen tag, hidden until toggled
@@ -264,45 +206,6 @@ public partial class Player3DController : MonoBehaviour
             added = true;
         }
         if (added) PlayerSkills.Refresh();   // re-resolve id → runner so the hotbar/menu see the new actives
-    }
-
-    // Subscribe to player damage for the hit-flinch animation (mirrors PlayerHurtFlash, which only
-    // tints — the sprite itself is owned here, so the flinch frame swap must live in the controller).
-    // Character.Instance is set on Play, so we bind in Start like PlayerHurtFlash does.
-    void Start()
-    {
-        hurtCharacter = Character.Instance;
-        if (hurtCharacter != null) hurtCharacter.OnDamaged += OnDamaged;
-    }
-
-    void OnDamaged(int dmg)
-    {
-        if (!isActiveAndEnabled) return;
-        hitUntil = Time.time + hitFlinchTime;
-        hitTimer = 0f; hitFrame = 0;   // restart the flinch clip
-    }
-
-    // Slice the animated clips from the baked NinjaGreen master (see animSheet's tooltip for the layout).
-    // No-op when there's no sheet, leaving Animated == false so the legacy single-pose path stays in use.
-    // Slice the clips from the NORMALIZED baked sheet (legacy 2D path, see animSheet). Uniform layout:
-    // 4 direction rows (0=down 1=up 2=left 3=right) × [idle 0-3 | walk 4-7 | attack 8-11 | hit 12-15],
-    // with the 2 death frames on row 4. No-op without a sheet, leaving Animated == false (legacy path).
-    void BuildAnimClips()
-    {
-        if (animSheet == null || animCell <= 0) return;
-        int c = animCell, p = animPpu > 0 ? animPpu : animCell;
-        idleClips = new Sprite[4][]; walkClips = new Sprite[4][]; atkClips = new Sprite[4][]; hitClips = new Sprite[4][];
-        for (int d = 0; d < 4; d++)
-        {
-            idleClips[d] = SpriteSheetCache.Grid(animSheet, c, d, 0,  4, p);
-            walkClips[d] = SpriteSheetCache.Grid(animSheet, c, d, 4,  4, p);
-            atkClips[d]  = SpriteSheetCache.Grid(animSheet, c, d, 8,  4, p);
-            hitClips[d]  = SpriteSheetCache.Grid(animSheet, c, d, 12, 2, p);   // hit/flinch is 2 frames
-        }
-        var dead = SpriteSheetCache.Grid(animSheet, c, 4, 1, 1, p);   // row 4, col 1 = lying pose
-        if (dead.Length > 0) deadSprite = dead[0];
-        breathe = false;   // the idle clip conveys life; skip the procedural squash so they don't fight
-        if (idleClips[0].Length > 0) sr.sprite = idleClips[0][0];   // sensible frame before the first Update
     }
 
     /// <summary>Push the serialized capsule fields onto the CharacterController. Called in Awake so the
@@ -343,30 +246,11 @@ public partial class Player3DController : MonoBehaviour
         cc.skinWidth = DefaultCapsuleSkinWidth;
     }
 
-    // Slice the 4 directional attack poses straight from the texture (16px columns), ignoring the art's
-    // auto-slices which are often broken on Ninja Adventure SeparateAnim sheets. Mirrors CharacterAnimator2D.
-    void BuildAttackPoses()
-    {
-        if (attackSheet == null || attackCell <= 0) return;
-        // The 4 poses are a 1-row strip [down,up,left,right] — share them via the slice cache.
-        attackPoses = SpriteSheetCache.Strip(attackSheet, attackCell, 4);   // pivot centre, ppu = cell
-    }
-
-    // Slice the single defeated-pose frame from the Dead.png texture (top-left cell), like the
-    // attack poses — so the field can serialize as a plain Texture2D asset reference.
-    void BuildDeadPose()
-    {
-        if (deadSheet == null) return;
-        int size = Mathf.Min(attackCell, Mathf.Min(deadSheet.width, deadSheet.height));
-        deadSprite = Sprite.Create(deadSheet,
-            new Rect(0, deadSheet.height - size, size, size),
-            new Vector2(0.5f, 0.5f), size);
-    }
-
     void Update()
     {
         if (cam == null) cam = Camera.main;
-        baseScale = buildScale * UnitScale.ForPlayer;   // live: track the global unit-size dial (breathe/idle squash around this)
+        baseScale = buildScale * UnitScale.ForPlayer;   // live: track the global unit-size dial
+        transform.localScale = baseScale;               // the 3D visual rides this root; keep it on the size dial
 
         // The CharacterController is momentarily disabled during teleports/respawns. Never call Move() while it's
         // off — otherwise a controller left disabled (bad spawn, duplicate rig) spams "Move called on inactive
@@ -378,18 +262,15 @@ public partial class Player3DController : MonoBehaviour
         // it, so locked/dash/jump states below can't leave a stale in-air pose showing.
         falling = false;
 
-        // Dead: no input, no orders — show the defeated pose and keep the corpse pinned to the
-        // ground (gravity) until the death screen respawns us.
+        // Dead: no input, no orders — keep the corpse pinned to the ground (gravity) until the death screen
+        // respawns us. The lying pose is played by the stance visual.
         if (Character.Instance != null && Character.Instance.IsDead)
         {
             if (order != Order.Idle) Stop();
             if (autoIndicator != null) autoIndicator.Show(false);   // dying cancels auto-combat
-            if (deadSprite != null) sr.sprite = deadSprite;
-            attackUntil = 0f;   // drop any held attack pose
             dashing = false;    // death cancels a charge in progress
             jumping = false; eDashing = false;   // …and any hop/dash in progress
             SetDashInvuln(false);                // …so a dash cut short by death doesn't leave us invulnerable
-            transform.localScale = baseScale;
             controller.Move(Vector3.down * gravity * Time.deltaTime);
             return;
         }
@@ -401,8 +282,6 @@ public partial class Player3DController : MonoBehaviour
             if (attacker != null && attacker.Swinging) attacker.Cancel();
             dashing = false; dashOnArrive = null; dashTarget = null;
             controller.Move(Vector3.down * gravity * Time.deltaTime);
-            Animate(false);
-            ApplyIdleScale(false);
             return;
         }
 
@@ -411,10 +290,6 @@ public partial class Player3DController : MonoBehaviour
         if (dashing)
         {
             bool dashMoving = StepDash();
-            facing = Facing3D.FromWorldDir(worldFacing);
-            if (attacker != null && attacker.Swinging) attackUntil = Time.time + attackPoseHold * Player3DAttacker.MotionScale;
-            Animate(dashMoving);
-            ApplyIdleScale(dashMoving);
             Footsteps(dashMoving);
             return;
         }
@@ -425,21 +300,15 @@ public partial class Player3DController : MonoBehaviour
         if (Time.time < pickupLockUntil)
         {
             controller.Move(Vector3.down * gravity * Time.deltaTime);
-            Animate(false);
-            ApplyIdleScale(false);
             return;
         }
 
         // Locked DURING an attack swing — no movement by ANY means (WASD / click / routed orders / jump / dash are
-        // all ignored). The swing animation plays to completion and damage lands at its end. Gravity + held attack
-        // pose only; we keep facing fixed so the swing doesn't pivot.
+        // all ignored). The swing animation plays to completion and damage lands at its end. Gravity only; we keep
+        // facing fixed so the swing doesn't pivot.
         if (attacker != null && attacker.Swinging)
         {
             controller.Move(Vector3.down * gravity * Time.deltaTime);
-            attackUntil = Time.time + attackPoseHold * Player3DAttacker.MotionScale;   // hold the (original-sprite) pose
-            facing = Facing3D.FromWorldDir(worldFacing);
-            Animate(false);
-            ApplyIdleScale(false);
             return;
         }
 
@@ -462,22 +331,15 @@ public partial class Player3DController : MonoBehaviour
 
         bool moving = move.sqrMagnitude > 0.001f;
         if (moving) worldFacing = move;
-        facing = Facing3D.FromWorldDir(worldFacing);   // camera-relative — frames track the camera as it orbits
-        WalkingSlow = moving && HeldShift();            // Shift = walk: slower move + Walk animation (read by BakedPlayerVisual)
+        WalkingSlow = moving && HeldShift();            // Shift = walk: slower move + Walk animation (read by the stance visual)
         float baseSpeed = moveSpeed * UnitScale.ForPlayer * (WalkingSlow ? walkSpeedMult : 1f); // TRAVEL baseline (run vs walk) — NOT animation-scaling
         float gait = gaitSpeed * (status != null ? status.MoveMult : 1f);                        // GAIT baseline × live Slow/Haste — animation-scaling
         float spd = baseSpeed * gait;
         // Bind gait to ACTUAL speed: the gait factor over the travel baseline. Drives both the footstep
-        // cadence (below) and the Walk/Run animation fps (BakedPlayerVisual) so they speed up/slow down together.
+        // cadence (below) and the Walk/Run animation fps (stance visual) so they speed up/slow down together.
         GaitSpeedMult = baseSpeed > 0.0001f ? spd / baseSpeed : 1f;
         ApplyGravityAndMove(move * spd);   // accumulating free-fall (sets `falling` for the in-air pose)
 
-        // Hold the attack pose while a swing is in flight (refreshed each swinging frame, with a tail).
-        // The hold scales with attack speed (same MotionScale as the swing) so the pose snaps back
-        // faster at high ASPD instead of bleeding into the next swing.
-        if (attacker != null && attacker.Swinging) attackUntil = Time.time + attackPoseHold * Player3DAttacker.MotionScale;
-        Animate(moving);
-        ApplyIdleScale(moving);
         Footsteps(moving && !falling);   // no footsteps while free-falling through the air
         if (autoIndicator != null) autoIndicator.Show(AutoActive);   // show the "AUTO" tag only while roaming
     }
@@ -522,22 +384,6 @@ public partial class Player3DController : MonoBehaviour
         // so steps land more often; a Slow (< 1) widens it. At normal speed (1) this is the hand-tuned interval.
         float interval = (WalkingSlow ? walkStepInterval : stepInterval) / Mathf.Max(0.05f, GaitSpeedMult);
         nextStep = Time.time + interval;   // slower gait → wider gap
-    }
-
-    // Procedural idle breathing — a soft squash-stretch while standing still; base scale otherwise
-    // (moving or mid-swing). Matches the mob breathing in BillboardAnimator3D.
-    void ApplyIdleScale(bool moving)
-    {
-        bool attacking = Time.time < attackUntil;
-        if (breathe && !moving && !attacking)
-        {
-            float e = Mathf.Sin(Time.time * breatheSpeed + breathePhase);
-            transform.localScale = new Vector3(
-                baseScale.x * (1f + breatheAmount * e),
-                baseScale.y * (1f - breatheAmount * e),
-                baseScale.z);
-        }
-        else transform.localScale = baseScale;
     }
 
     // ---- input: Dota controls -------------------------------------------------
@@ -726,7 +572,6 @@ public partial class Player3DController : MonoBehaviour
     void OnDestroy()
     {
         if (autoIndicator != null) Destroy(autoIndicator.gameObject);   // its own canvas — clean it up
-        if (hurtCharacter != null) hurtCharacter.OnDamaged -= OnDamaged;
     }
 
     void Stop()
@@ -845,111 +690,6 @@ public partial class Player3DController : MonoBehaviour
         Vector2 c = path[wp];
         Vector3 d = new Vector3(c.x, transform.position.y, c.y) - transform.position; d.y = 0f;
         return d;
-    }
-
-    // ---- animation ------------------------------------------------------------
-    void Animate(bool moving)
-    {
-        if (Animated) { AnimateRich(moving); return; }
-        AnimateLegacy(moving);
-    }
-
-    // Full animated player (baked NinjaGreen sheet). Priority: attack > hit-flinch > walk > idle (death is
-    // handled earlier in Update). Each non-loop state (attack/hit) plays once and holds its last frame.
-    void AnimateRich(bool moving)
-    {
-        int dir = DirIndex(facing);
-
-        // Attack swing — plays the 4-frame clip once, sped up with attack-speed so it tracks the cadence.
-        if (Time.time < attackUntil)
-        {
-            if (!wasAttacking) { wasAttacking = true; atkTimer = 0f; atkFrame = 0; }
-            var clip = atkClips[dir];
-            if (clip.Length > 0)
-            {
-                atkTimer += Time.deltaTime;
-                float fps = attackFps / Mathf.Max(0.01f, Player3DAttacker.MotionScale);
-                atkFrame = Mathf.Min(clip.Length - 1, Mathf.FloorToInt(atkTimer * fps));
-                sr.sprite = clip[atkFrame];
-            }
-            return;
-        }
-        wasAttacking = false;
-
-        // Hit flinch — brief recoil after taking damage (4 directions; left/right baked from the down clip).
-        if (Time.time < hitUntil)
-        {
-            var clip = hitClips[dir];
-            if (clip != null && clip.Length > 0)
-            {
-                hitTimer += Time.deltaTime;
-                hitFrame = Mathf.Min(clip.Length - 1, Mathf.FloorToInt(hitTimer * hitFps));
-                sr.sprite = clip[hitFrame];
-                return;
-            }
-        }
-
-        // Walk (while moving) or idle (standing) — both loop.
-        if (moving)
-        {
-            idleTimer = 0f; idleFrame = 0;
-            Step(walkClips[dir], framesPerSecond, ref timer, ref frame);
-        }
-        else
-        {
-            timer = 0f; frame = 0;
-            Step(idleClips[dir], idleFps, ref idleTimer, ref idleFrame);
-        }
-    }
-
-    // Advance a looping clip and show the current frame (shared by walk + idle).
-    void Step(Sprite[] clip, float fps, ref float t, ref int f)
-    {
-        if (clip == null || clip.Length == 0) return;
-        t += Time.deltaTime;
-        float ft = 1f / Mathf.Max(fps, 0.01f);
-        while (t >= ft) { t -= ft; f = (f + 1) % clip.Length; }
-        sr.sprite = clip[Mathf.Min(f, clip.Length - 1)];
-    }
-
-    // facing → dir index (0=down 1=up 2=left 3=right), matching the master sheet's row order.
-    static int DirIndex(Vector2 f) => f.y > 0f ? 1 : f.y < 0f ? 0 : f.x < 0f ? 2 : 3;
-
-    void AnimateLegacy(bool moving)
-    {
-        // Attacking: hold the directional attack pose (overrides walk/idle), like the old 2D animator.
-        if (Time.time < attackUntil)
-        {
-            var pose = AttackPoseFor(facing);
-            if (pose != null) { sr.sprite = pose; frame = 0; timer = 0f; return; }
-        }
-
-        var clip = ClipFor(facing);
-        if (clip == null || clip.Length == 0) return;
-        if (moving)
-        {
-            timer += Time.deltaTime;
-            float ft = 1f / Mathf.Max(framesPerSecond, 0.01f);
-            while (timer >= ft) { timer -= ft; frame = (frame + 1) % clip.Length; }
-        }
-        else { frame = 0; timer = 0f; }
-        sr.sprite = clip[Mathf.Min(frame, clip.Length - 1)];
-    }
-
-    Sprite[] ClipFor(Vector2 f)
-    {
-        if (f.y > 0f) return up;
-        if (f.y < 0f) return down;
-        if (f.x < 0f) return left;
-        return right;
-    }
-
-    // attackPoses order matches the sliced Attack.png: [0]=down [1]=up [2]=left [3]=right.
-    Sprite AttackPoseFor(Vector2 f)
-    {
-        if (attackPoses == null || attackPoses.Length < 4) return null;
-        int i = f.y > 0f ? 1 : f.y < 0f ? 0 : f.x < 0f ? 2 : 3;
-        return attackPoses[i];
     }
 
     // ---- raycast + input helpers (new Input System OR legacy) -----------------

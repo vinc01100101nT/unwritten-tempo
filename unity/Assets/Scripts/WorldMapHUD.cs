@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// Full-screen world-map overlay. Shows the baked <see cref="WorldAtlas"/> (a top-down snapshot of every map
@@ -33,7 +34,7 @@ public class WorldMapHUD : MonoBehaviour
     GameObject panel;
     RawImage atlasImage;
     RectTransform marker;
-    Text whereLabel;
+    TMP_Text whereLabel;
     Transform player;
 
     void Start()
@@ -110,6 +111,7 @@ public class WorldMapHUD : MonoBehaviour
         var scaler = canvasGo.GetComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920, 1080);
+        UiKit.ApplyTextCrispness(scaler);
 
         panel = new GameObject("WorldMapPanel", typeof(RectTransform));
         panel.transform.SetParent(canvasGo.transform, false);
@@ -161,15 +163,10 @@ public class WorldMapHUD : MonoBehaviour
         return img;
     }
 
-    static Text NewText(string name, Transform parent, string s, int size, TextAnchor anchor)
+    static TMP_Text NewText(string name, Transform parent, string s, int size, TextAnchor anchor)
     {
-        var t = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Text)).GetComponent<Text>();
-        t.transform.SetParent(parent, false);
-        t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
-        t.fontSize = size;
-        t.alignment = anchor;
+        var t = UiKit.MakeText(name, parent, s, size, FontStyle.Normal, anchor);
         t.color = Color.white;
-        t.text = s;
         t.raycastTarget = false;
         return t;
     }

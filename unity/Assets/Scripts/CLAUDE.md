@@ -37,9 +37,7 @@ Run **`/perf-checkup`** (scan → measure → fix → re-measure → log). Appen
 merging — regressions follow code changes, not the calendar.
 
 ## Other house rules
-- User is new to Unity / strong in JS-TS — explain C#/Unity by analogy when surfacing changes.
-- Prefer one-click editor tools (`Tools ▸ unwritten ▸ …`) over manual editor steps.
-- Keep static/never-changing work baked at author/generate time, not in Play.
+(new-to-Unity explain-by-analogy, prefer editor tools, bake at author time — see project `CLAUDE.md` standing rules; not repeated here.)
 
 ## Throwaway "quick fix" editor tools — tag them so they're purgeable
 
@@ -53,7 +51,8 @@ helper, a spike) — i.e. something we'll want to delete once it's served its pu
    `[MenuItem("Tools/unwritten/Quick Fixes/<name>")]`.
 
 To purge later: `grep -rl "QUICKFIX" Assets/Scripts/Editor/`, delete each hit **plus its `.meta`**, then
-re-check references first (a "spike" can quietly become load-bearing — `Build25DSpike` is the cautionary
-tale: self-labelled "throwaway", now the shared rig-builder used by ~15 files). Do **not** tag recurring,
+re-check references first (a "spike" can quietly become load-bearing — `RigBuilder25D` is the cautionary
+tale: it was self-labelled "throwaway" as `Build25DSpike`, became the shared rig-builder used by ~15 files,
+and was renamed to reflect that). Do **not** tag recurring,
 idempotent maintenance tools that you re-run on every re-import (e.g. `Fix Pxltgr Materials`) — those are
 keepers, not quick fixes.

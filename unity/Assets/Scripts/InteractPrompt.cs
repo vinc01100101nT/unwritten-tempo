@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// A single floating marker (e.g. "▽ Talk · E") that the <see cref="PlayerInteractor"/>
@@ -15,7 +16,7 @@ public class InteractPrompt : MonoBehaviour
 
     [Tooltip("The marker's RectTransform — this is what gets moved + shown/hidden.")]
     public RectTransform root;
-    public Text label;
+    public TMP_Text label;
 
     [Tooltip("How far above the target (world units) the marker floats.")]
     public float worldYOffset = 0.7f;

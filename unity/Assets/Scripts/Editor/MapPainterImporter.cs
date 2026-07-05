@@ -165,7 +165,7 @@ public class MapPainterImporter : EditorWindow
         // ── new scene ────────────────────────────────────────────────────────────────────────────────
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
         SceneManager.SetActiveScene(scene);
-        Build25DSpike.BuildLight();   // authoring Sun (disabled at Play; Systems owns the runtime light)
+        RigBuilder25D.BuildLight();   // authoring Sun (disabled at Play; Systems owns the runtime light)
 
         // ── GROUND: rasterise the painted cells into per-channel weight fields, then sample them per vertex ─
         var pathF  = new float[cols, rows];   // .r road

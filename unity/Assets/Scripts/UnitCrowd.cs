@@ -7,7 +7,7 @@ using UnityEngine;
 /// another's capsules (the "hopping on heads" bug), pass-through is the clean fix; <see cref="PathAgent3D"/>'s
 /// avoidance steering then spreads mobs out so they don't occupy the same spot.
 ///
-/// The "Crowd" layer is CREATED at bake time (editor, in Build25DSpike via WorldBuildUtil.EnsureLayer);
+/// The "Crowd" layer is CREATED at bake time (editor, in RigBuilder25D via WorldBuildUtil.EnsureLayer);
 /// at runtime this just looks it up and assigns it. If the project hasn't been re-baked yet the layer won't
 /// exist and this safely no-ops (units keep the old solid-collision behavior).
 /// </summary>

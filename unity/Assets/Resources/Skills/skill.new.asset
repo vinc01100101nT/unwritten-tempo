@@ -22,7 +22,7 @@ MonoBehaviour:
   aim: 2
   castRange: 11
   castCircleId: circle.magic
-  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  castCircleTint: {r: 0.4278216, g: 0.93207544, b: 0.22334634, a: 1}
   vfx: {fileID: 11400000, guid: d6535b57215ae2c479e8c6dff7e958df, type: 2}
   repeatCount: 1
   repeatInterval: 0

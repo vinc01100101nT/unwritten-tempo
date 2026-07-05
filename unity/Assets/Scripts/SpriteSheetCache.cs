@@ -17,7 +17,7 @@ public static class SpriteSheetCache
     // Normalized height of the transparent foot-padding at the BOTTOM of a mob cell — i.e. how far up the
     // cell the character's feet actually sit. The Walk4 pivot is placed here so a mob's rendered feet land
     // ON its (ground-seated) transform, with the padding hanging below to be alpha-clipped by the ground.
-    // SINGLE OWNER of this value: Build25DSpike.SpriteFoot (editor/build side) reads it from here.
+    // SINGLE OWNER of this value: RigBuilder25D.SpriteFoot (editor/build side) reads it from here.
     public const float MobFootPivotY = 0.1f;
 
     // Horizontal strip: N square frames along the BOTTOM row (y = 0). Used by slash/bolt/smoke FX and

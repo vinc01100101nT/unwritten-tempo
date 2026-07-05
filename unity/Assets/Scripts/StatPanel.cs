@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// The RO-style stat-distribution UI for the Character (C) panel. Shows the six primary stats
@@ -16,10 +17,9 @@ public class StatPanel : MonoBehaviour
     static readonly PrimaryStat[] Order =
         { PrimaryStat.STR, PrimaryStat.AGI, PrimaryStat.VIT, PrimaryStat.INT, PrimaryStat.DEX, PrimaryStat.LUK };
 
-    Font font;
-    Text pointsHeader, derivedText;
-    readonly Text[] valueTexts = new Text[6];
-    readonly Text[] costTexts  = new Text[6];   // pre-renewal: the next-point cost shown per stat
+    TMP_Text pointsHeader, derivedText;
+    readonly TMP_Text[] valueTexts = new TMP_Text[6];
+    readonly TMP_Text[] costTexts  = new TMP_Text[6];   // pre-renewal: the next-point cost shown per stat
     readonly Button[] addButtons = new Button[6];
     bool built;
 
@@ -31,8 +31,6 @@ public class StatPanel : MonoBehaviour
         if (Character.Instance == null) return;
         var content = FindCharacterContent();
         if (content == null) return;
-
-        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
         // Retire the old static "Stats" text — this panel owns the stat display now.
         var oldStats = content.Find("Stats");
@@ -160,17 +158,10 @@ public class StatPanel : MonoBehaviour
     }
 
     // ---- helpers ----
-    Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
+    TMP_Text NewText(Transform parent, string str, int size, FontStyle style, TextAnchor anchor)
     {
-        var go = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-        go.transform.SetParent(parent, false);
-        var t = go.GetComponent<Text>();
-        t.font = font != null ? font : Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        t.fontSize = size; t.fontStyle = style; t.alignment = anchor;
-        t.color = Color.white; t.supportRichText = true;
-        t.horizontalOverflow = HorizontalWrapMode.Overflow;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.text = str;
+        var t = UiKit.MakeText("Text", parent, str, size, style, anchor, wrap: false);
+        t.color = Color.white;
         return t;
     }
 

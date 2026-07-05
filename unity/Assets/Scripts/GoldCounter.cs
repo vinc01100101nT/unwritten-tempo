@@ -1,19 +1,20 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// HUD component that keeps a UI Text in sync with the player's Zeny balance.
 /// Attach to the "HUD_Gold" Text object built by <see cref="UIShellBuilder"/>.
 /// Subscribes to <see cref="Wallet.OnChanged"/> — zero per-frame overhead.
 /// </summary>
-[RequireComponent(typeof(Text))]
+[RequireComponent(typeof(TMP_Text))]
 public class GoldCounter : MonoBehaviour
 {
-    Text label;
+    TMP_Text label;
 
     void Awake()
     {
-        label = GetComponent<Text>();
+        label = GetComponent<TMP_Text>();
         Refresh(Wallet.Gold);
         Wallet.OnChanged += Refresh;
     }
