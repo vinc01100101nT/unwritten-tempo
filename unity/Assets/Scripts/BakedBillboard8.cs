@@ -104,9 +104,9 @@ public class BakedBillboard8 : MonoBehaviour, IStancePose
     bool externallyDriven, moving;
     float extSpeed;
     bool hasOverride; CharacterAction overrideAction;
-    // Fall pose: loop only the LATTER part of a source clip (no dedicated Fall art exists, so we reuse the
-    // Jump clip's descent half as the free-fall pose). fallStartFrac picks where the looped window begins.
-    bool fallMode; CharacterAction fallSource; float fallStartFrac = 0.5f;
+    // Jump/Fall clip-phase drive (no dedicated Fall art — reuse the Jump clip): play up to phaseFreezeSeconds and
+    // HOLD that frame (airborne), or once phaseRelease play from it to the end (landing tail). Seconds→frame via fps.
+    bool phaseMode; CharacterAction phaseSource; float phaseFreezeSeconds = 1.5f; bool phaseRelease;
     CharacterAction current;
     float clock; int frame;
 
@@ -229,6 +229,15 @@ public class BakedBillboard8 : MonoBehaviour, IStancePose
         return n / Mathf.Max(1f, fps);
     }
 
+    /// <summary>The action's baked FRAME COUNT (South strip length), 0 if not baked. Lets a caller map an authored
+    /// frame index to a normalized point in the action.</summary>
+    public int NaturalFrameCount(CharacterAction a, string clip = null)
+    {
+        if (!clips.TryGetValue(a, out var dirs) || dirs == null) return 0;
+        var s = dirs[4];                                            // South strip
+        return s != null ? s.Length : 0;
+    }
+
     /// <summary>Current grounding lift (local units). See <see cref="SetFeetOffset"/>.</summary>
     public float FeetOffset => feetOffset;
 
@@ -297,20 +306,20 @@ public class BakedBillboard8 : MonoBehaviour, IStancePose
 
     // ---- AI / controller hooks ----
     /// <summary>Force a specific action (e.g. Attack) until <see cref="StopOverride"/>. Switches off self-drive.</summary>
-    public void Play(CharacterAction a, string clip = null) { externallyDriven = true; hasOverride = true; overrideAction = a; fallMode = false; }
-    /// <summary>Play <paramref name="src"/> as a FALL pose: loop only the clip's tail (from <paramref name="startFrac"/>
-    /// of its length to the end), so reusing the Jump clip reads as a sustained descent while airborne. Cleared by
-    /// any other Play / StopOverride. <paramref name="startFrac"/> ~0.5 = its 2nd half; near 1 ≈ hold the last frame.</summary>
-    public void PlayFall(CharacterAction src, string clip, float startFrac)
+    public void Play(CharacterAction a, string clip = null) { externallyDriven = true; hasOverride = true; overrideAction = a; phaseMode = false; }
+    /// <summary>Drive <paramref name="src"/> as a jump/fall clip with a freeze point (in SECONDS): <paramref name="releaseToEnd"/>
+    /// false = play up to <paramref name="freezeSeconds"/> then HOLD that frame (airborne); true = play from it to the
+    /// end once (landing tail). Cleared by any other Play / StopOverride.</summary>
+    public void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd)
     {
-        Play(src);                       // sets the override; Play cleared fallMode, so re-arm it below
-        fallMode = true; fallSource = src; fallStartFrac = Mathf.Clamp01(startFrac);
+        Play(src);                       // sets the override; Play cleared phaseMode, so re-arm it below
+        phaseMode = true; phaseSource = src; phaseFreezeSeconds = Mathf.Max(0f, freezeSeconds); phaseRelease = releaseToEnd;
     }
     /// <summary>Return to movement-driven Idle/Walk/Run selection (still under explicit facing/moving if set).</summary>
-    public void StopOverride() { hasOverride = false; fallMode = false; }
+    public void StopOverride() { hasOverride = false; phaseMode = false; }
     /// <summary>Hand control fully back to the built-in self-drive (movement-sampled facing + Idle/Walk/Run).
     /// Clears any override and re-bases the movement sampler so the first frame doesn't see a stale jump.</summary>
-    public void ResumeSelfDrive() { externallyDriven = false; hasOverride = false; fallMode = false; lastPos = transform.position; }
+    public void ResumeSelfDrive() { externallyDriven = false; hasOverride = false; phaseMode = false; lastPos = transform.position; }
     /// <summary>Set the world-space facing/move direction (XZ). Switches off self-drive movement sampling.</summary>
     public void SetFacing(Vector3 worldDir) { externallyDriven = true; worldDir.y = 0f; if (worldDir.sqrMagnitude > 1e-6f) facingDir = worldDir; }
     /// <summary>Set whether the character is moving (drives Walk/Run vs Idle). Switches off self-drive.</summary>
@@ -381,12 +390,22 @@ public class BakedBillboard8 : MonoBehaviour, IStancePose
 
         clock += Time.deltaTime * Mathf.Max(1f, fps);
 
-        // Fall pose: loop just the tail of the (Jump) clip so a free-fall holds the descent motion.
-        if (fallMode && current == fallSource)
+        // Jump/Fall clip phase: play up to the freeze frame and HOLD it (airborne), or once releasing play it to the
+        // end (landing tail). freeze seconds → frame via the current fps; clock is clamped so the hold can resume cleanly.
+        if (phaseMode && current == phaseSource)
         {
-            int start = Mathf.Clamp(Mathf.FloorToInt(clip.Length * fallStartFrac), 0, clip.Length - 1);
-            int span = Mathf.Max(1, clip.Length - start);
-            sr.sprite = clip[start + ((int)clock % span)];
+            int freezeFrame = Mathf.Clamp(Mathf.RoundToInt(phaseFreezeSeconds * fps), 0, clip.Length - 1);
+            if (phaseRelease)
+            {
+                if (clock < freezeFrame) clock = freezeFrame;      // short hop: snap up to the freeze frame, then play out
+                frame = Mathf.Min((int)clock, clip.Length - 1);    // play to the end, hold the last frame
+            }
+            else
+            {
+                if (clock > freezeFrame) clock = freezeFrame;       // hold on the freeze frame while airborne
+                frame = (int)clock;
+            }
+            sr.sprite = clip[Mathf.Clamp(frame, 0, clip.Length - 1)];
             return;
         }
 

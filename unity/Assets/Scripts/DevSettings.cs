@@ -296,12 +296,12 @@ public class DevSettings : MonoBehaviour
 
         // ---- 3D Character (the live-3D model riding the player) ----
         Cat("3D Character");
-        // Where in the Jump clip the looped FALLING frames start (0 = whole clip, 0.5 = 2nd/descent half,
-        // ~0.9 ≈ hold the last frame). Lives on the Fall stance binding now (its single owner); live-tune it here,
-        // then persist in the Stance Composer. Reuses Jump because there's no dedicated Fall bake.
-        F("Fall pose phase", 0f, 1f,
-            () => { var b = StanceCatalog.Get(StanceId.Fall); return b != null ? b.fallPhase : 0f; },
-            v => { var b = StanceCatalog.Get(StanceId.Fall); if (b != null) b.fallPhase = v; });
+        // Seconds into the Jump clip where the airborne pose FREEZES (holds that frame for the whole fall; on landing
+        // it resumes from here to the end). The Jump binding owns it; the Fall/ledge-walk-off pose reuses it. Live-tune
+        // here, then persist in the Stance Composer (the Jump row's timing button).
+        F("Jump freeze (s)", 0f, 3f,
+            () => { var b = StanceCatalog.Get(StanceId.Jump); return b != null ? b.airborneFreeze : 0f; },
+            v => { var b = StanceCatalog.Get(StanceId.Jump); if (b != null) b.airborneFreeze = v; });
 
         // ---- Shadows — light-facing billboard cast shadows (player + mobs) -------
         // The proxy turns to fully face the sun so the silhouette shadow survives any light angle (side-on AND

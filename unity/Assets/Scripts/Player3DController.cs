@@ -269,7 +269,7 @@ public partial class Player3DController : MonoBehaviour
             if (order != Order.Idle) Stop();
             if (autoIndicator != null) autoIndicator.Show(false);   // dying cancels auto-combat
             dashing = false;    // death cancels a charge in progress
-            jumping = false; eDashing = false;   // …and any hop/dash in progress
+            jumping = false; jumpPhase = JumpPhase.None; jumpRollQueued = false; eDashing = false;   // …and any hop/dash in progress
             SetDashInvuln(false);                // …so a dash cut short by death doesn't leave us invulnerable
             controller.Move(Vector3.down * gravity * Time.deltaTime);
             return;

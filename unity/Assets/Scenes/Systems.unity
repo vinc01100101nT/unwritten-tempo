@@ -1243,9 +1243,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Player3DController
   jumpDistance: 2.4
   jumpHeight: 0.8
-  eDashSpeedMult: 2
-  eDashDuration: 0.5
-  eDashCooldown: 0.7
+  eDashSpeedMult: 0.85
+  eDashDuration: 1
+  eDashCooldown: 2
   moveSpeed: 1
   gaitSpeed: 1.5
   walkSpeedMult: 0.45

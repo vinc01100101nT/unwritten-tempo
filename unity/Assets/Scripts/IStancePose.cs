@@ -15,8 +15,10 @@ public interface IStancePose
     /// <summary>Play (hold) this action / clip. Called every frame the action is active; idempotent per frame.</summary>
     void Play(CharacterAction a, string clip);
 
-    /// <summary>Play <paramref name="src"/>/<paramref name="clip"/> as a sustained FALL pose (loop its tail from <paramref name="startFrac"/>).</summary>
-    void PlayFall(CharacterAction src, string clip, float startFrac);
+    /// <summary>Drive a jump/fall clip with a freeze point (in SECONDS into the clip). <paramref name="releaseToEnd"/>
+    /// false = play forward but HOLD once the clip reaches <paramref name="freezeSeconds"/> (the airborne pose); true =
+    /// resume from that frame and play to the end once (the landing tail). Used for the Jump + Fall stances.</summary>
+    void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd);
 
     /// <summary>Scale the current action's playback speed (1 = natural). Used for FitWindow / stat-synced stances.</summary>
     void SetActionSpeed(CharacterAction a, float multiplier);
@@ -26,6 +28,10 @@ public interface IStancePose
 
     /// <summary>The clip's natural play length in seconds (0 if absent) — so a FitWindow stance can fit it.</summary>
     float NaturalDuration(CharacterAction a, string clip);
+
+    /// <summary>The clip's authored FRAME COUNT (0 if absent) — so a caller can turn an authored frame index into a
+    /// normalized point in the clip (frame ÷ this), independent of any FitWindow time-rescale.</summary>
+    int NaturalFrameCount(CharacterAction a, string clip);
 
     /// <summary>Hand back to the visual's own movement-sampled Idle/Walk/Run (self-driving units).</summary>
     void ResumeSelfDrive();

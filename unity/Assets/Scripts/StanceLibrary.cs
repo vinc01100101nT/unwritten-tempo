@@ -35,7 +35,7 @@ public enum StanceId
     Hurt,     // damage flinch
     PickUp,   // collected loot
     Die,      // death (its action plays once and holds the final lying frame)
-    Fall,     // free-fall pose (reuses the Jump clip's descent tail — see StancePlayMode.FallTail)
+    Fall,     // free-fall pose (walked off a ledge) — holds the Jump clip frozen at Jump's airborneFreeze frame
 
     // --- Skill-release cues (transient one-shots; driven by SkillRunner at the RELEASE of a skill, AFTER any cast
     // wind-up). A SkillDef picks ONE of these as its "skill type" and this plays once when the skill fires. Three
@@ -61,13 +61,6 @@ public enum StanceSpeedSource
     FitWindow,    // fps fits the clip to a RUNTIME window: clipNaturalLength / window (window fed at drive time).
                   // For a swing/dodge whose duration is gameplay-driven (Attack = swing time, Roll = dash length),
                   // so the whole clip plays exactly within it. The window stays runtime (not stored) → SSOT-safe.
-}
-
-/// <summary>How a stance's clip is played back.</summary>
-public enum StancePlayMode
-{
-    Normal,     // loop the clip (or, for Die's action, BakedBillboard8 auto-holds the last frame)
-    FallTail,   // loop only the clip's TAIL (from fallPhase→end) as a sustained free-fall — reuses the Jump clip
 }
 
 /// <summary>Binds ONE <see cref="StanceId"/> to the baked pose it plays — the stance analog of a
@@ -100,11 +93,19 @@ public class StanceBinding
              "stances are driven one at a time, so their priority is unused.")]
     public int priority;
 
-    [Tooltip("Normal = loop (Die auto-holds its last frame); FallTail = loop the clip's tail as a free-fall pose.")]
-    public StancePlayMode playMode = StancePlayMode.Normal;
+    [Tooltip("JUMP only: seconds into the jump clip where the crouch/push-off ends. The player is ROOTED (no move) " +
+             "from 0 to here, then launches. 0 = launch instantly.")]
+    public float crouchEnd = 0f;
 
-    [Tooltip("FallTail only: where in the clip the looped falling frames begin (0 = whole clip, 0.5 = its descent half).")]
-    [Range(0f, 1f)] public float fallPhase = 0.5f;
+    [Tooltip("JUMP only: seconds into the jump clip where the airborne pose FREEZES. The clip plays 0→here then holds " +
+             "on this frame for the whole airborne time (however long the fall lasts); on landing it resumes here→end " +
+             "as the landing tail (player rooted for that tail). The Fall stance (ledge walk-off) reuses THIS value.")]
+    public float airborneFreeze = 1.5f;
+
+    [Tooltip("ROLL only: the clip FRAME from which the player is ROOTED (no move) until the clip ends — the roll's " +
+             "recovery. Runtime turns this into a normalized point (frame ÷ the clip's own frame count) so it survives " +
+             "the FitWindow time-rescale. 0 = no rooting (the player moves for the whole roll).")]
+    [Min(0)] public int rootFromFrame = 0;
 }
 
 /// <summary>The built-in starting point for each stance — the SINGLE owner of stance defaults, shared by the Stance
@@ -126,12 +127,12 @@ public static class StanceDefaults
             case StanceId.Walk:    b.action = CharacterAction.Walk;   b.speedSource = StanceSpeedSource.MoveGait;  break;
             case StanceId.Run:     b.action = CharacterAction.Run;    b.speedSource = StanceSpeedSource.MoveGait;  break;
             case StanceId.Attack:  b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.FitWindow; break;
-            case StanceId.Jump:    b.action = CharacterAction.Jump;   break;
+            case StanceId.Jump:    b.action = CharacterAction.Jump;   b.crouchEnd = 0.25f; b.airborneFreeze = 1.5f; break;
             case StanceId.Roll:    b.action = CharacterAction.Roll;   b.speedSource = StanceSpeedSource.FitWindow; break;
             case StanceId.Hurt:    b.action = CharacterAction.Hurt;   break;
             case StanceId.PickUp:  b.action = CharacterAction.PickUp; break;
             case StanceId.Die:     b.action = CharacterAction.Die;    break;
-            case StanceId.Fall:    b.action = CharacterAction.Jump;   b.playMode = StancePlayMode.FallTail; b.fallPhase = 0.5f; break;
+            case StanceId.Fall:    b.action = CharacterAction.Jump;   break;   // freeze frame read live from the Jump binding's airborneFreeze
 
             // Skill-release cues: fit the clip to the runtime release window (SkillRunner feeds the natural length,
             // so it plays through exactly once). Spells default to the Cast action, physical skills to Attack.

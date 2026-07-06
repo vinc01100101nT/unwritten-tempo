@@ -26,18 +26,37 @@ public partial class Player3DController
     [Header("Dash (E) — facing-direction burst")]
     [Tooltip("Roll speed as a multiple of the player's CURRENT run speed (CurrentRunSpeed). 2 = roll twice as fast " +
              "as you're currently running, so it always tracks move-speed buffs/slows.")]
-    public float eDashSpeedMult = 2f;
-    public float eDashDuration = 0.50f;
-    public float eDashCooldown = 0.7f;
+    public float eDashSpeedMult = 0.85f;
+    public float eDashDuration = 1f;
+    public float eDashCooldown = 2f;
 
     // ---- runtime state -------------------------------------------------------------------------------
     bool jumping; float jumpStart; Vector3 jumpDir;
 
-    /// <summary>True while a hop arc is in progress (takeoff → land). Read by FX like wet-ground footstep
-    /// ripples so they pause mid-air and splash on landing, and by the baked visual to play its Jump clip.</summary>
+    // The jump plays in three phases keyed to the Jump clip's authored timestamps (Stance Composer → the Jump
+    // binding's crouchEnd / airborneFreeze, the single owner). Crouch + Land ROOT the player (gravity only, WASD
+    // ignored); Air is the free-directional arc. The clip freezes at airborneFreeze all through Air, then plays its
+    // tail during Land.
+    enum JumpPhase { None, Crouch, Air, Land }
+    JumpPhase jumpPhase;
+    float jumpPhaseStart;                    // Time.time the current phase began
+    bool jumpRollQueued;                     // E pressed mid-air → roll-cancel the landing (if the dash is off cooldown)
+    float jumpCrouchEnd, jumpFreeze, jumpTailDur;   // cached from the Jump binding (+ its clip length) at takeoff
+
+    /// <summary>True while a jump is in progress (crouch → air → landing recovery). Read by FX like wet-ground
+    /// footstep ripples so they pause mid-air and splash on landing, and by the visual to play its Jump clip.</summary>
     public bool IsAirborne => jumping;
+    /// <summary>Seconds into the Jump clip where the airborne pose freezes (the Jump binding owns it). The stance
+    /// brain feeds this to the pose so the clip holds that frame for the whole fall.</summary>
+    public float JumpClipFreeze => jumpFreeze;
+    /// <summary>True only during the landing-recovery phase — tells the pose to release the frozen clip and play its
+    /// landing tail once.</summary>
+    public bool JumpClipReleasing => jumpPhase == JumpPhase.Land;
     float jumpBaseY;       // ground Y captured at takeoff — the arc returns here, then gravity falls to land
     bool eDashing; float eDashStart; Vector3 eDashDir; float eDashReadyAt;
+    // Time.time at which the roll becomes ROOTED (no move) for the rest of the dash — derived from the Roll binding's
+    // rootFromFrame at takeoff. Equals dash end (never roots) when no root frame is authored.
+    float eDashRootAt;
 
     /// <summary>True during the E-key dash burst. Exposed so the baked visual can play Roll for it
     /// (the charge gap-closer uses <see cref="Dashing"/>; this is the free traversal dash).</summary>
@@ -54,15 +73,22 @@ public partial class Player3DController
 
         if (KeyDash() && Time.time >= eDashReadyAt)
         {
-            eDashDir = AbilityDir(); eDashing = true; eDashStart = Time.time;
-            SetDashInvuln(true);   // i-frames for the whole dash burst — roll THROUGH incoming hits
+            BeginEDash(AbilityDir());
             StepEDash(); transform.localScale = baseScale; return true;
         }
         if (KeyJump())
         {
-            // Direction is steered LIVE in StepJump (re-reads WASD each frame), so we only latch the takeoff
-            // height/time here. Fully free-directional in the air; no key held = static up-and-down hop.
-            jumping = true; jumpStart = Time.time; jumpBaseY = transform.position.y;
+            // Latch the Jump clip's timestamps ONCE (cold path, per jump): crouchEnd + airborneFreeze from the Jump
+            // binding, plus the clip length for the landing-tail root. The binding is the single owner.
+            var jb = StanceCatalog.Get(StanceId.Jump);
+            jumpCrouchEnd = jb != null ? Mathf.Max(0f, jb.crouchEnd) : 0f;
+            jumpFreeze    = jb != null ? Mathf.Max(0f, jb.airborneFreeze) : 0f;
+            float clipLen = StanceController.Player != null ? StanceController.Player.NaturalDurationOf(StanceId.Jump) : 0f;
+            jumpTailDur   = Mathf.Max(0f, clipLen - jumpFreeze);
+
+            // Begin in the CROUCH phase (rooted). StepJump launches into the arc once crouchEnd elapses. Direction is
+            // steered LIVE in StepJump (re-reads WASD each air frame), so nothing to latch here.
+            jumping = true; jumpPhase = JumpPhase.Crouch; jumpPhaseStart = Time.time; jumpRollQueued = false;
             StepJump(); transform.localScale = baseScale; return true;
         }
         return false;
@@ -82,8 +108,35 @@ public partial class Player3DController
 
     void StepJump()
     {
+        float now = Time.time;
+
+        // ---- CROUCH: rooted on the ground (gravity only, WASD ignored) while the clip plays its take-off wind-up. ----
+        if (jumpPhase == JumpPhase.Crouch)
+        {
+            controller.Move(Vector3.down * gravity * Time.deltaTime);
+            if (now - jumpPhaseStart >= jumpCrouchEnd)
+            {
+                jumpPhase = JumpPhase.Air; jumpPhaseStart = now;
+                jumpStart = now; jumpBaseY = transform.position.y;   // launch: latch the arc's takeoff time + height
+            }
+            return;
+        }
+
+        // ---- LAND: rooted (gravity only) while the clip plays its landing tail; ends after the tail's length. ----
+        if (jumpPhase == JumpPhase.Land)
+        {
+            controller.Move(Vector3.down * gravity * Time.deltaTime);
+            if (now - jumpPhaseStart >= jumpTailDur) { jumping = false; jumpPhase = JumpPhase.None; }
+            return;
+        }
+
+        // ---- AIR: the free-directional arc (steered live by WASD every frame). ----
+        // Buffer an E press so touchdown can roll-cancel the landing. We latch INTENT only (regardless of cooldown);
+        // whether it becomes a roll is decided against the cooldown at the moment we'd start it (touchdown).
+        if (KeyDash()) jumpRollQueued = true;
+
         float air = JumpAirTime;
-        float elapsed = Time.time - jumpStart;
+        float elapsed = now - jumpStart;
 
         // FULLY free-directional, even mid-air: re-read WASD EVERY frame so releasing or switching keys steers
         // the hop live (release W mid-air -> stops forward; tap A mid-air -> moves and faces left). No key held
@@ -95,8 +148,8 @@ public partial class Player3DController
 
         if (elapsed < air)
         {
-            // Phase 1 — scripted arc: the vertical lift is driven DIRECTLY (no gravity) as a symmetric parabola
-            // back to takeoff height. The engine's cast shadow tracks the lifted body for a natural jump shadow.
+            // Scripted arc: the vertical lift is driven DIRECTLY (no gravity) as a symmetric parabola back to takeoff
+            // height. The engine's cast shadow tracks the lifted body for a natural jump shadow.
             float u = Mathf.Clamp01(elapsed / air);
             float h = jumpHeight * UnitScale.ForPlayer * 4f * u * (1f - u);   // 0 -> peak (u=0.5) -> 0
             delta.y = (jumpBaseY + h) - transform.position.y;
@@ -104,12 +157,24 @@ public partial class Player3DController
         }
         else
         {
-            // Phase 2 — the arc is done but we may still be high in the air (hopped off a tall tree/ledge).
-            // Keep FALLING under gravity, holding the last jump frame, until we actually touch the ground —
-            // so the walk/idle pose can't play mid-fall. Horizontal steering stays live.
+            // The arc is done but we may still be high in the air (hopped off a tall tree/ledge). Keep FALLING under
+            // gravity until we actually touch the ground, then enter the rooted landing recovery.
             delta.y = -gravity * Time.deltaTime;
             controller.Move(delta);
-            if (controller.isGrounded) { jumping = false; OnJumpLand(); }   // landed -> hand control back to normal movement
+            if (controller.isGrounded)
+            {
+                OnJumpLand();   // impact splash regardless of what follows
+
+                // Roll-cancel: an E buffered mid-air replaces the landing recovery with the actual Roll — but only if
+                // the dash is off cooldown. Exactly one of {roll, land} runs; they never overlap. End the jump and hand
+                // to the E-dash (its own stance/physics/i-frames take over next frame via TickTraversalAbilities).
+                if (jumpRollQueued && Time.time >= eDashReadyAt)
+                {
+                    jumping = false; jumpPhase = JumpPhase.None; jumpRollQueued = false;
+                    BeginEDash(AbilityDir());   // i-frames for the roll burst, same as a grounded dash
+                }
+                else { jumpPhase = JumpPhase.Land; jumpPhaseStart = now; }
+            }
         }
 
         if (jumpDir.sqrMagnitude > 1e-4f) worldFacing = jumpDir;   // re-face toward live input; no input keeps facing
@@ -124,11 +189,34 @@ public partial class Player3DController
             Sfx.Play(waterJumpSfx);
     }
 
+    // Start a roll/dash in `dir`: latch the burst state, i-frames, and WHEN it becomes rooted. The single owner of the
+    // dash-start sequence (both the E-press and the mid-air roll-cancel route through here), so the root latch can't be
+    // forgotten at one site. The Roll binding's rootFromFrame → a normalized point in the roll clip → dash time (the
+    // clip is FitWindow-fit to eDashDuration, so a clip fraction is that fraction of the dash). 0/absent → never roots.
+    void BeginEDash(Vector3 dir)
+    {
+        eDashDir = dir; eDashing = true; eDashStart = Time.time;
+        SetDashInvuln(true);   // i-frames for the whole dash burst — roll THROUGH incoming hits
+
+        var rb = StanceCatalog.Get(StanceId.Roll);
+        int frame = rb != null ? rb.rootFromFrame : 0;
+        int total = StanceController.Player != null ? StanceController.Player.NaturalFrameCountOf(StanceId.Roll) : 0;
+        eDashRootAt = (frame > 0 && total > 0)
+            ? eDashStart + Mathf.Clamp01((float)frame / total) * eDashDuration
+            : eDashStart + eDashDuration;   // no root frame authored → move for the whole dash (rooting off)
+    }
+
     void StepEDash()
     {
-        float spd = eDashSpeedMult * CurrentRunSpeed;   // roll = 2× the player's CURRENT run speed (scales with size + buffs)
-        controller.Move((eDashDir * spd + Vector3.down * gravity) * Time.deltaTime);
-        worldFacing = eDashDir;
+        // Root phase: from the authored frame to the clip's end the player can't move (recovery). Gravity only.
+        if (Time.time >= eDashRootAt)
+            controller.Move(Vector3.down * gravity * Time.deltaTime);
+        else
+        {
+            float spd = eDashSpeedMult * CurrentRunSpeed;   // roll = 2× the player's CURRENT run speed (scales with size + buffs)
+            controller.Move((eDashDir * spd + Vector3.down * gravity) * Time.deltaTime);
+            worldFacing = eDashDir;
+        }
         if (Time.time - eDashStart >= eDashDuration)
         {
             eDashing = false; eDashReadyAt = Time.time + eDashCooldown;

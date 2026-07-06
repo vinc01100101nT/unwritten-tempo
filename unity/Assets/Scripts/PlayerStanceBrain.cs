@@ -17,7 +17,8 @@ public static class PlayerStanceBrain
     {
         public bool hasAction;      // false → StanceController.ClearAction()
         public StanceId id;         // the action stance to drive when hasAction
-        public float window;        // FitWindow seconds (Attack = swing time, Roll = dash length); 0 otherwise
+        public float window;        // FitWindow seconds (Attack = swing time, Roll = dash length); for Jump/Fall = clip freeze seconds
+        public bool release;        // Jump/Fall only: release the frozen clip and play the landing tail
         public Vector3 facing;      // world XZ intent (may be zero)
         public bool applyFacing;    // whether facing is meaningful this frame
     }
@@ -32,13 +33,18 @@ public static class PlayerStanceBrain
         Vector3 dir = player.WorldFacing; dir.y = 0f;
         d.facing = dir; d.applyFacing = dir.sqrMagnitude > 1e-4f;
 
-        // Free-fall (walked/ran off a ledge): reuse the Jump clip's descent tail, looped while airborne.
-        if (player.IsFalling && hasJump) { d.hasAction = true; d.id = StanceId.Fall; return d; }
+        // Free-fall (walked/ran off a ledge): hold the Jump clip frozen at the Jump binding's airborneFreeze frame.
+        if (player.IsFalling && hasJump)
+        {
+            var jb = StanceCatalog.Get(StanceId.Jump);
+            d.hasAction = true; d.id = StanceId.Fall; d.window = jb != null ? jb.airborneFreeze : 0f;
+            return d;
+        }
 
         // One-shot / action overrides, highest priority first. While one is active we feed only FACING (not
         // velocity) so movement can't cancel it — a swing/jump/dash on the run keeps playing.
         if (attacker != null && attacker.Swinging) { d.hasAction = true; d.id = StanceId.Attack; d.window = attacker.SwingTime; return d; }
-        if (player.IsAirborne)                      { d.hasAction = true; d.id = StanceId.Jump;   return d; }
+        if (player.IsAirborne)                      { d.hasAction = true; d.id = StanceId.Jump;   d.window = player.JumpClipFreeze; d.release = player.JumpClipReleasing; return d; }
         if (player.Dashing || player.EDashing)      { d.hasAction = true; d.id = StanceId.Roll;   d.window = player.EDashing ? player.eDashDuration : 0.4f; return d; }
         if (Time.time < pickUpUntil)                { d.hasAction = true; d.id = StanceId.PickUp; return d; }
         // Hurt only flinches when fully idle — a hit never interrupts an action or a run.

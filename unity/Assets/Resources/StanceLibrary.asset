@@ -19,181 +19,204 @@ MonoBehaviour:
     speedSource: 1
     speedMult: 1
     priority: 10
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 1
     action: 0
     clip: 
     speedSource: 0
     speedMult: 1
     priority: 20
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 2
     action: 0
     clip: Cast
     speedSource: 2
     speedMult: 1
     priority: 30
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 3
     action: 7
     clip: 
     speedSource: 0
     speedMult: 1
     priority: 5
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 4
     action: 0
     clip: Idle2
     speedSource: 0
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 5
     action: 0
     clip: Walk
     speedSource: 3
-    speedMult: 1
+    speedMult: 2
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 6
     action: 2
     clip: Run
     speedSource: 3
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 7
     action: 3
     clip: Punch
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 8
     action: 9
     clip: Jump
-    speedSource: 0
+    speedSource: 3
     speedMult: 1
-    priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    priority: 10
+    crouchEnd: 0.5
+    airborneFreeze: 1.0666667
+    rootFromFrame: 0
   - id: 9
     action: 12
     clip: Roll
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 31
   - id: 10
     action: 5
     clip: 
     speedSource: 0
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 11
     action: 15
     clip: 
     speedSource: 0
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 12
     action: 6
     clip: 
     speedSource: 0
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 13
     action: 9
     clip: 
     speedSource: 0
     speedMult: 1
     priority: 0
-    playMode: 1
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 14
     action: 4
     clip: ReleaseAOESkill
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 15
     action: 4
     clip: ReleaseAOESkill2
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 16
     action: 4
     clip: ReleaseAOESkill4
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 17
     action: 4
     clip: ReleaseSingleSkill
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 18
     action: 4
     clip: 
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 19
     action: 4
     clip: 
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 20
     action: 3
     clip: 
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 21
     action: 3
     clip: 
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
   - id: 22
     action: 3
     clip: 
     speedSource: 4
     speedMult: 1
     priority: 0
-    playMode: 0
-    fallPhase: 0.5
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0

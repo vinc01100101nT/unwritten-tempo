@@ -35,6 +35,7 @@ public class Character3DPose : MonoBehaviour, IStancePose
     // builder names each one-shot state after its clip, so the composer's clip string is the CrossFade key.
     readonly Dictionary<string, int> stateHash = new Dictionary<string, int>();
     readonly Dictionary<string, float> clipLen = new Dictionary<string, float>();
+    readonly Dictionary<string, int> clipFrames = new Dictionary<string, int>();
     readonly HashSet<string> mixamoNameSet = new HashSet<string>();
     readonly List<AnimatorClipInfo> clipInfoBuf = new List<AnimatorClipInfo>();
 
@@ -63,6 +64,11 @@ public class Character3DPose : MonoBehaviour, IStancePose
     float speedTarget, speedVel;
     int currentState;     // the state hash we last CrossFaded to (Loco or a one-shot)
 
+    // The Walk/Run locomotion CLIP names (from the authored library, via StanceCatalog) — the 3D loco blend picks its
+    // Speed position by matching the driven clip to these, so Clip(3D) is the SOLE owner of what 3D locomotion plays.
+    // (CharacterAction is billboard-only and never touches the 3D blend.) Idle is the default 0, so it needs no name.
+    string walkClip = "", runClip = "";
+
     void Awake() => Reinitialize();
 
     /// <summary>(Re)build the state-hash + clip-length caches from the CURRENT controller. Called on Awake, and by the
@@ -73,6 +79,7 @@ public class Character3DPose : MonoBehaviour, IStancePose
         currentState = Loco;
         stateHash.Clear();
         clipLen.Clear();
+        clipFrames.Clear();
 
         // Discover states + clip lengths straight from the controller, keyed by the CLIP NAME. A one-shot state is
         // named after its clip (the builder does this), so a clip counts as a one-shot only if a state with that
@@ -85,6 +92,7 @@ public class Character3DPose : MonoBehaviour, IStancePose
                 if (clip == null) continue;
                 string name = Clean(clip.name);
                 clipLen[name] = clip.length;
+                clipFrames[name] = Mathf.Max(1, Mathf.RoundToInt(clip.length * clip.frameRate));
                 int h = Animator.StringToHash(name);
                 if (anim.HasState(0, h)) stateHash[name] = h;
             }
@@ -92,6 +100,10 @@ public class Character3DPose : MonoBehaviour, IStancePose
         mixamoNameSet.Clear();
         foreach (var n in mixamoClipNames)
             if (!string.IsNullOrEmpty(n)) mixamoNameSet.Add(Clean(n));
+
+        // Cache the loco clip names the same authored library fed into the blend tree, so Play matches by CLIP.
+        var w = StanceCatalog.Get(StanceId.Walk); walkClip = w != null ? w.clip ?? "" : "";
+        var r = StanceCatalog.Get(StanceId.Run);  runClip  = r != null ? r.clip ?? "" : "";
     }
 
     static string Clean(string n)
@@ -108,20 +120,62 @@ public class Character3DPose : MonoBehaviour, IStancePose
         // locomotion one (e.g. a held Casting/Combat/Guard pose parked on action Idle). Guarded so re-driving the same
         // clip each frame doesn't restart it. Only clips WITHOUT a dedicated state — the Idle/Walk/Run locomotion
         // clips (they live in the blend tree, not a one-shot state) or an unassigned stance — fall through to the
-        // blend at the action's speed (unassigned → rests at idle, never a substituted clip).
+        // blend, positioned by the CLIP (unassigned → rests at idle, never a substituted clip).
         if (!string.IsNullOrEmpty(clip) && stateHash.TryGetValue(clip, out int h)) { GoTo(h); return; }
-        speedTarget = a == CharacterAction.Run ? 1f : a == CharacterAction.Walk ? 0.5f : 0f;
+        // Loco blend position from the CLIP (Clip(3D) is the SSOT) — NOT the 2D CharacterAction (billboard-only).
+        // An unknown/empty clip → rests at idle (0), never a substituted clip.
+        speedTarget = !string.IsNullOrEmpty(clip) && clip == runClip ? 1f
+                    : !string.IsNullOrEmpty(clip) && clip == walkClip ? 0.5f : 0f;
         anim.speed = 1f;
         GoTo(Loco);
     }
 
-    public void PlayFall(CharacterAction src, string clip, float startFrac) => Play(src, clip);   // 3D just holds the fall state
+    // Jump/Fall clip-phase driver: play the clip and either HOLD it at `freezeSeconds` (airborne pose) or, once
+    // `releaseToEnd`, resume from that frame and play the landing tail to the end. Works by scaling anim.speed to 0
+    // at the freeze frame (freeze) or back to 1 and snapping past it (release). No allocation — struct state info +
+    // cached clip length. Falls back to a plain hold if the clip has no dedicated one-shot state.
+    public void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd)
+    {
+        if (string.IsNullOrEmpty(clip) || !stateHash.TryGetValue(clip, out int h)) { Play(src, clip); return; }
+
+        float len = clipLen.TryGetValue(clip, out float l) && l > 0.01f ? l : 1f;
+        float freezeN = Mathf.Clamp01(freezeSeconds / len);
+
+        // First frame in this state: CrossFade in at the start, playing forward.
+        if (currentState != h)
+        {
+            anim.CrossFadeInFixedTime(h, crossFade, 0);
+            currentState = h;
+            anim.speed = 1f;
+            return;
+        }
+
+        // Still crossfading INTO the jump state (or the animator's current state isn't the jump clip yet): keep
+        // playing at full speed and DON'T freeze. Reading normalizedTime here returns the OUTGOING state (e.g. the
+        // looping Run, whose accumulated time is far past freezeN) — zeroing speed on that would pause the animator
+        // mid-transition and stick us on a run frame forever. This is the fix for that stuck-frame bug.
+        var st = anim.GetCurrentAnimatorStateInfo(0);
+        if (anim.IsInTransition(0) || st.shortNameHash != h) { anim.speed = 1f; return; }
+
+        float t = st.normalizedTime;
+        if (releaseToEnd)
+        {
+            if (t < freezeN) anim.Play(h, 0, freezeN);   // short hop: snap up to the freeze frame before playing the tail
+            anim.speed = 1f;                             // play out the landing tail to the end (non-looping holds last frame)
+        }
+        else
+        {
+            anim.speed = t >= freezeN ? 0f : 1f;         // hold on the freeze frame while airborne; play up to it before that
+        }
+    }
 
     public void SetActionSpeed(CharacterAction a, float multiplier)
     {
-        // Scale playback only while on a one-shot clip state (Attack/Cast/… FitWindow or stat sync). On the locomotion
-        // blend, speed is the blend param not clip speed — Play() already reset anim.speed there.
-        if (currentState != Loco) anim.speed = Mathf.Max(0.01f, multiplier);
+        // Scale clip PLAYBACK by the live multiplier — for one-shot states (Attack/Cast/… FitWindow or stat sync) AND
+        // for the locomotion blend (Walk/Run MoveGait). On the blend, anim.speed is the CADENCE (how fast the legs
+        // churn) and is orthogonal to PSpeed (which only picks the walk↔run pose), so a Slow/Haste gait mult belongs
+        // here. Play() resets anim.speed to 1 each frame right before this, so this is the sole live speed owner.
+        anim.speed = Mathf.Max(0.01f, multiplier);
     }
 
     public bool HasAction(CharacterAction a, string clip) =>
@@ -129,6 +183,9 @@ public class Character3DPose : MonoBehaviour, IStancePose
 
     public float NaturalDuration(CharacterAction a, string clip) =>
         !string.IsNullOrEmpty(clip) && clipLen.TryGetValue(clip, out float l) ? l : 0f;
+
+    public int NaturalFrameCount(CharacterAction a, string clip) =>
+        !string.IsNullOrEmpty(clip) && clipFrames.TryGetValue(clip, out int n) ? n : 0;
 
     public void ResumeSelfDrive() { speedTarget = 0f; anim.speed = 1f; GoTo(Loco); }
 

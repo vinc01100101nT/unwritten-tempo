@@ -25,6 +25,10 @@ public class StanceComposerWindow : EditorWindow
     string[] clipPalette = { "" };
     GUIContent[] clipLabels = { new GUIContent("(none — stands)") };
 
+    // Resolves a composer clip name → its Humanoid AnimationClip, so a row can read the clip's real frame count
+    // (length × frameRate) for frame-based authoring. Cached; rebuilt with the palette (each build rescans the folder).
+    Func<string, Motion> clipResolver;
+
     [MenuItem("Tools/unwritten/Composers/Stance Composer")]
     public static void Open()
     {
@@ -66,6 +70,34 @@ public class StanceComposerWindow : EditorWindow
         clipLabels = new GUIContent[clipPalette.Length];
         for (int i = 0; i < clipPalette.Length; i++)
             clipLabels[i] = new GUIContent(clipPalette[i] == "" ? "(none — stands)" : clipPalette[i]);
+
+        clipResolver = HumanoidClipResolver.Resolver();
+    }
+
+    // The playing clip's frame count = length × authored fps, resolved from its name. 0 when there's no clip or the
+    // name doesn't match a file in the Humanoid folder (then the row falls back to normalized 0–1 authoring).
+    int ClipFrameCount(string clip)
+    {
+        var c = ResolveClip(clip);
+        return c != null ? Mathf.Max(1, Mathf.RoundToInt(c.length * c.frameRate)) : 0;
+    }
+
+    // The playing clip's authored frame rate (fps), for converting a seconds timestamp ↔ a frame index. 0 when the clip
+    // can't be resolved (no clip assigned / name doesn't match a file).
+    float ClipFps(string clip)
+    {
+        var c = ResolveClip(clip);
+        return c != null ? c.frameRate : 0f;
+    }
+
+    // Resolve a composer clip name → its AnimationClip. The resolver is a non-serialized delegate, so it's null after a
+    // domain reload (recompile) even though the palette survived — lazily rebuild it here so callers never silently see
+    // "no clip" (that mis-fed frame edits as seconds before). Null when the name genuinely doesn't match a file.
+    AnimationClip ResolveClip(string clip)
+    {
+        if (string.IsNullOrEmpty(clip)) return null;
+        if (clipResolver == null) clipResolver = HumanoidClipResolver.Resolver();
+        return clipResolver(clip) as AnimationClip;
     }
 
     // Ensure one binding row per enum id (add missing with a sensible default; the enum is append-only so we never
@@ -93,13 +125,15 @@ public class StanceComposerWindow : EditorWindow
             "StanceController and the highest priority wins. ACTION stances (locomotion + one-shots) are driven one " +
             "at a time by the gameplay brain and beat held stances.\n\n" +
             "Clip (3D) = the animation a live-3D character plays for this stance — the SINGLE owner of that choice " +
-            "(no hardcoded map). Empty = the character just stands. Idle/Walk/Run clips feed the locomotion blend; " +
-            "every other stance's clip becomes its own state. Action (2D) still selects the baked sprite set for " +
-            "billboard characters. After adding/importing model clips, hit 'Refresh Clips'.\n\n" +
+            "(no hardcoded map). Empty = the character just stands. Idle/Walk/Run clips feed the locomotion blend " +
+            "(the driven clip alone picks Idle/Walk/Run — no 2D action involved); every other stance's clip becomes " +
+            "its own state. After adding/importing model clips, hit 'Refresh Clips'.\n\n" +
             "Speed source = where the LIVE fps multiplier is read from (the stance never stores the stat): AttackSpeed/" +
             "CastSpeed read Character.Instance; MoveGait reads move speed; FitWindow fits the clip to a runtime window " +
             "(Attack = swing time, Roll = dash length); Baked = the action's authored fps. × mult is a constant on top.\n\n" +
-            "Play mode: Normal loops (Die auto-holds its last frame); FallTail loops the clip's tail as a free-fall pose.",
+            "Jump timing (the button on the Jump row): crouchEnd / airborneFreeze, authored in clip FRAMES. 0→crouchEnd the player is " +
+            "rooted (crouch/push-off); crouchEnd→airborneFreeze plays then FREEZES for the whole airborne time; on landing " +
+            "it plays airborneFreeze→end (rooted) as the landing tail. The Fall stance (ledge walk-off) reuses airborneFreeze.",
             MessageType.Info);
 
         EditorGUILayout.Space(4);
@@ -153,12 +187,9 @@ public class StanceComposerWindow : EditorWindow
         {
             EditorGUILayout.LabelField("Stance", EditorStyles.miniBoldLabel, GUILayout.Width(80));
             EditorGUILayout.LabelField("Clip (3D)", EditorStyles.miniBoldLabel, GUILayout.Width(200));
-            EditorGUILayout.LabelField("Action (2D)", EditorStyles.miniBoldLabel, GUILayout.Width(100));
             EditorGUILayout.LabelField("Speed source", EditorStyles.miniBoldLabel, GUILayout.Width(110));
             EditorGUILayout.LabelField("× mult", EditorStyles.miniBoldLabel, GUILayout.Width(55));
             EditorGUILayout.LabelField("Priority", EditorStyles.miniBoldLabel, GUILayout.Width(55));
-            EditorGUILayout.LabelField("Play mode", EditorStyles.miniBoldLabel, GUILayout.Width(90));
-            EditorGUILayout.LabelField("Fall phase", EditorStyles.miniBoldLabel, GUILayout.Width(90));
         }
     }
 
@@ -176,20 +207,119 @@ public class StanceComposerWindow : EditorWindow
         {
             EditorGUILayout.LabelField(id.ToString(), GUILayout.Width(80));
             ClipField(b);
-            b.action = (CharacterAction)EditorGUILayout.EnumPopup(b.action, GUILayout.Width(100));
+            // Jump owns two clip timestamps (crouchEnd / airborneFreeze); Roll owns one (rootFromFrame) — each edited via a
+            // small button beside the 3D clip dropdown. A same-width blank keeps every other row's columns aligned.
+            if (id == StanceId.Jump) JumpTimingButton(b);
+            else if (id == StanceId.Roll) RollRootButton(b);
+            else GUILayout.Space(94);
             b.speedSource = (StanceSpeedSource)EditorGUILayout.EnumPopup(b.speedSource, GUILayout.Width(110));
             b.speedMult = EditorGUILayout.FloatField(b.speedMult, GUILayout.Width(55));
             b.priority = EditorGUILayout.IntField(b.priority, GUILayout.Width(55));
-            b.playMode = (StancePlayMode)EditorGUILayout.EnumPopup(b.playMode, GUILayout.Width(90));
-            using (new EditorGUI.DisabledScope(b.playMode != StancePlayMode.FallTail))
-                b.fallPhase = EditorGUILayout.Slider(b.fallPhase, 0f, 1f, GUILayout.Width(90));
             // Reset this row to its built-in default (StanceDefaults) — for rows saved before the defaults existed.
             if (GUILayout.Button(new GUIContent("↺", "Reset this stance to its default"), GUILayout.Width(24)))
             {
                 var d = StanceDefaults.For(id);
                 b.action = d.action; b.speedSource = d.speedSource; b.speedMult = d.speedMult;
-                b.priority = d.priority; b.playMode = d.playMode; b.fallPhase = d.fallPhase; b.clip = d.clip;
+                b.priority = d.priority; b.crouchEnd = d.crouchEnd; b.airborneFreeze = d.airborneFreeze;
+                b.rootFromFrame = d.rootFromFrame; b.clip = d.clip;
                 GUI.changed = true;
+            }
+        }
+    }
+
+    // The Jump row's timing button: label shows the two timestamps as FRAMES out of the clip's frame count (e.g.
+    // "8/45/60") — crouchEnd / airborneFreeze / total. Jump is Baked (no FitWindow), so seconds↔frames is a stable
+    // map via the clip's fps; the timestamps stay STORED as seconds (the runtime contract). Falls back to seconds
+    // (e.g. "0.25/1.50") when the clip can't be resolved to a frame rate.
+    void JumpTimingButton(StanceBinding b)
+    {
+        float fps = ClipFps(b.clip);
+        int total = ClipFrameCount(b.clip);
+        string text = fps > 0f
+            ? $"{Mathf.RoundToInt(b.crouchEnd * fps)}/{Mathf.RoundToInt(b.airborneFreeze * fps)}/{total}"
+            : $"{b.crouchEnd:0.##}/{b.airborneFreeze:0.##}";
+        var label = new GUIContent(text, "Jump clip timing: crouchEnd / airborneFreeze (frames, of total). Click to edit.");
+        var rect = GUILayoutUtility.GetRect(label, EditorStyles.miniButton, GUILayout.Width(90));
+        if (GUI.Button(rect, label, EditorStyles.miniButton))
+            PopupWindow.Show(rect, new JumpTimingPopup(b, fps, total, () => { EditorUtility.SetDirty(lib); Repaint(); }));
+    }
+
+    // The Roll row's timing button: label shows the root-start FRAME (e.g. "f31/60" when the clip's frame count is
+    // known, else just "f31"); from that frame until the clip ends the player is rooted. Always frame-authored — no
+    // dependency on resolving the clip (unlike Jump, which needs fps to convert its stored seconds).
+    void RollRootButton(StanceBinding b)
+    {
+        int total = ClipFrameCount(b.clip);
+        string text = total > 0 ? $"f{b.rootFromFrame}/{total}" : $"f{b.rootFromFrame}";
+        var label = new GUIContent(text, "Roll root start: rooted from this frame until the clip ends. Click to edit.");
+        var rect = GUILayoutUtility.GetRect(label, EditorStyles.miniButton, GUILayout.Width(90));
+        if (GUI.Button(rect, label, EditorStyles.miniButton))
+            PopupWindow.Show(rect, new RollRootPopup(b, total, () => { EditorUtility.SetDirty(lib); Repaint(); }));
+    }
+
+    // Attached popup for the Roll root-start frame — a plain frame IntField. When the clip's frame count is known it
+    // clamps to it and shows the total as a hint; otherwise it still accepts any frame. Mutates the binding in place.
+    class RollRootPopup : PopupWindowContent
+    {
+        readonly StanceBinding b;
+        readonly int total;
+        readonly Action onChange;
+        public RollRootPopup(StanceBinding binding, int totalFrames, Action changed) { b = binding; total = totalFrames; onChange = changed; }
+
+        public override Vector2 GetWindowSize() => new Vector2(260, total > 0 ? 92 : 72);
+
+        public override void OnGUI(Rect r)
+        {
+            EditorGUILayout.LabelField("Roll root start", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            int frame = EditorGUILayout.IntField(new GUIContent("Root from frame", "Rooted from this frame until the clip ends (the roll's recovery). 0 = no rooting (moves the whole roll)."), b.rootFromFrame);
+            if (total > 0) EditorGUILayout.LabelField(" ", $"of {total} frames");
+            if (EditorGUI.EndChangeCheck())
+            {
+                frame = Mathf.Max(0, frame);
+                if (total > 0) frame = Mathf.Min(frame, total);
+                b.rootFromFrame = frame;
+                onChange?.Invoke();
+            }
+        }
+    }
+
+    // Attached popup for the Jump row's two timestamps. Authors them as FRAMES when the clip's fps is known (converting
+    // to/from the seconds the binding STORES), else as raw seconds. Clamps airborneFreeze ≥ crouchEnd so the phases
+    // can't invert. Mutates the binding in place; onChange marks the asset dirty + repaints the table.
+    class JumpTimingPopup : PopupWindowContent
+    {
+        readonly StanceBinding b;
+        readonly float fps;
+        readonly int total;
+        readonly Action onChange;
+        public JumpTimingPopup(StanceBinding binding, float clipFps, int totalFrames, Action changed)
+        { b = binding; fps = clipFps; total = totalFrames; onChange = changed; }
+
+        public override Vector2 GetWindowSize() => new Vector2(260, fps > 0f ? 112 : 84);
+
+        public override void OnGUI(Rect r)
+        {
+            if (fps > 0f) { FrameFields(); return; }
+            // No fps → don't silently accept seconds (that's how frame edits got stored as seconds). Say what's missing.
+            EditorGUILayout.LabelField("Jump clip timing (frames)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Assign the Jump row's Clip (3D) to edit timing in frames.", EditorStyles.wordWrappedMiniLabel);
+        }
+
+        void FrameFields()
+        {
+            EditorGUILayout.LabelField("Jump clip timing (frames)", EditorStyles.boldLabel);
+            EditorGUI.BeginChangeCheck();
+            int crouch = EditorGUILayout.IntField(new GUIContent("Crouch end frame", "Rooted from frame 0 to here (crouch/push-off), then launch."), Mathf.RoundToInt(b.crouchEnd * fps));
+            int freeze = EditorGUILayout.IntField(new GUIContent("Freeze at frame", "Airborne pose freezes here; landing tail plays here→clip end."), Mathf.RoundToInt(b.airborneFreeze * fps));
+            EditorGUILayout.LabelField(" ", $"of {total} frames  ({fps:0.#} fps)");
+            if (EditorGUI.EndChangeCheck())
+            {
+                crouch = Mathf.Max(0, crouch);
+                freeze = Mathf.Max(crouch, freeze);   // freeze can't precede the crouch/launch
+                b.crouchEnd = crouch / fps;
+                b.airborneFreeze = freeze / fps;
+                onChange?.Invoke();
             }
         }
     }

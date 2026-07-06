@@ -114,7 +114,7 @@ public class Character3DVisual : MonoBehaviour
         // clip a beat plays is authored per-stance in the Stance Composer; capability here is structural, not clip).
         var d = PlayerStanceBrain.Decide(player, attacker, speed, walkThreshold, hurtUntil, pickUpUntil,
                                          hasRun: true, hasJump: true);
-        if (d.hasAction) stance.DriveStance(d.id, d.window);
+        if (d.hasAction) stance.DriveStance(d.id, d.window, d.release);
         else stance.ClearAction();
         if (d.applyFacing) pose.SetFacing(d.facing);
     }

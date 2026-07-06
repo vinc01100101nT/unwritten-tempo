@@ -57,7 +57,8 @@ public class StanceController : MonoBehaviour
     // Transient action-stance layer — beats every held stance. Set each frame it holds; ClearAction drops it.
     bool hasAction;
     StanceId actionId;
-    float actionWindow;              // runtime window seconds for a FitWindow action (0 = none)
+    float actionWindow;              // runtime window seconds for a FitWindow action (0 = none); for Jump/Fall = clip freeze seconds
+    bool actionRelease;             // Jump/Fall only: release the frozen clip and play the landing tail (see PlayClipPhase)
 
     // Self-expiring action OVERRIDE — a fire-and-forget one-shot (a skill release) that outranks even the brain's
     // per-frame action, so it can't be stomped by locomotion mid-play. Set once via PlayActionFor; auto-clears when
@@ -96,9 +97,9 @@ public class StanceController : MonoBehaviour
     /// <summary>Drive an action stance THIS frame (overrides any held stance). <paramref name="window"/> is the
     /// runtime duration a FitWindow stance fits its clip to (e.g. attacker.SwingTime, dash length); ignored for other
     /// sources. Call every frame the action holds; <see cref="ClearAction"/> when it ends.</summary>
-    public void DriveStance(StanceId id, float window = 0f)
+    public void DriveStance(StanceId id, float window = 0f, bool release = false)
     {
-        hasAction = true; actionId = id; actionWindow = window;
+        hasAction = true; actionId = id; actionWindow = window; actionRelease = release;
     }
 
     /// <summary>Drop the action stance so the held-stance layer (or the fallback) resolves.</summary>
@@ -157,6 +158,22 @@ public class StanceController : MonoBehaviour
 
     public bool IsActive(StanceId id) => IndexOf(id) >= 0;
 
+    /// <summary>The natural clip length (seconds) of a stance on THIS visual, 0 if absent. Lets the jump controller
+    /// size the landing-tail root to the actual clip (clipLen − airborneFreeze) without owning a copy of the length.</summary>
+    public float NaturalDurationOf(StanceId id)
+    {
+        var b = StanceCatalog.Get(id);
+        return b != null && pose != null ? pose.NaturalDuration(b.action, b.clip) : 0f;
+    }
+
+    /// <summary>The authored FRAME COUNT of a stance's clip on THIS visual, 0 if absent. Lets a caller turn an authored
+    /// frame index (e.g. the Roll binding's rootFromFrame) into a normalized point in the clip.</summary>
+    public int NaturalFrameCountOf(StanceId id)
+    {
+        var b = StanceCatalog.Get(id);
+        return b != null && pose != null ? pose.NaturalFrameCount(b.action, b.clip) : 0;
+    }
+
     void LateUpdate()
     {
         if (pose == null) return;
@@ -172,7 +189,7 @@ public class StanceController : MonoBehaviour
         if (hasAction)
         {
             var b = StanceCatalog.Get(actionId);
-            if (b != null) { driving = true; currentResolved = actionId; ApplyStance(b, actionWindow); return; }
+            if (b != null) { driving = true; currentResolved = actionId; ApplyStance(b, actionWindow, actionRelease); return; }
         }
 
         // 2) Highest-priority active, BAKED held stance. Ties break toward the most-recently pushed (active is in push
@@ -208,9 +225,11 @@ public class StanceController : MonoBehaviour
     }
 
     // Play a resolved binding on the billboard: its action, its playback mode, and its live-modulated speed.
-    void ApplyStance(StanceBinding b, float window)
+    void ApplyStance(StanceBinding b, float window, bool release = false)
     {
-        if (b.playMode == StancePlayMode.FallTail) { pose.PlayFall(b.action, b.clip, b.fallPhase); return; }
+        // Jump + Fall drive the clip in phases: `window` carries the freeze point (seconds), `release` plays the
+        // landing tail. Fall (ledge walk-off) reuses the Jump binding's airborneFreeze — the brain feeds it here.
+        if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release); return; }
 
         pose.Play(b.action, b.clip);
         float m = b.speedMult;

@@ -148,7 +148,7 @@ The Unity side of the batch Mixamo auto-rig flow (see the `mixamo-batch-autorig-
 
 > **Animation source:** live-3D player/NPC clips are shared **Humanoid** clips in `Assets/Art/Quat/Anim/Humanoid/` (`HumanoidClipResolver`), matched to Stance Composer clip strings by cleaned name. Drop clips named `Idle`/`Walk`/`Run`/`SwordSlash`/… there; they retarget onto every rigged avatar automatically. Empty folder → the character rests/T-poses.
 >
-> **Auto-import:** `HumanoidClipPostprocessor` (an `AssetPostprocessor`) watches that folder — any FBX dropped in is forced to Humanoid + feet-planted/looped clip roots **on import, zero clicks**. The *Fix Humanoid Clip Roots* menu item is just the manual re-fixer for clips imported before the postprocessor existed; both share `BulkHumanoidRig.ApplyClipRoots`.
+> **Auto-import:** `HumanoidClipPostprocessor` (an `AssetPostprocessor`) watches that folder — any FBX dropped in is forced to Humanoid + feet-planted/looped clip roots **on its FIRST import only, zero clicks** (gated on `assetImporter.importSettingsMissing`). It deliberately does **not** re-run on later reimports, so **hand-editing a clip's Root Transform in the importer and hitting Apply STICKS** instead of being clobbered back to canonical every time. To force a clip back to canonical on purpose, run the *Fix Humanoid Clip Roots* menu item (the manual re-fixer). Both share `BulkHumanoidRig.ApplyClipRoots`. ⚠️ General trap: an `AssetPostprocessor` that runs on *every* import silently overwrites hand-edited import settings — gate seeding on `importSettingsMissing` (first-import-only) for any future importer tool.
 
 ---
 
