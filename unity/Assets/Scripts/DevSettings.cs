@@ -237,14 +237,6 @@ public class DevSettings : MonoBehaviour
             DamagePopup.SpawnText(player.transform.position + Vector3.up * 1.1f, "Armor: " + Ch.armorElement, Elements.Tint(Ch.armorElement));
     }
 
-    void CycleWeaponElement()
-    {
-        if (attacker == null) return;
-        attacker.meleeElement = NextElement(attacker.meleeElement);
-        if (player != null)
-            DamagePopup.SpawnText(player.transform.position + Vector3.up * 1.1f, "Weapon: " + attacker.meleeElement, Elements.Tint(attacker.meleeElement));
-    }
-
     void Afflict(Ailment a, float secs, float mag)
     {
         var m = NearestMob();
@@ -426,7 +418,6 @@ public class DevSettings : MonoBehaviour
         F("Reflect %",   0f, 1f, () => Ch ? Ch.reflectPct : 0f,   v => { if (Ch) Ch.reflectPct = v; });
         Act(MobElementLabel, CycleMobElement);
         Act(() => "My armor: " + (Ch != null ? Ch.armorElement.ToString() : "-") + "   ▶ cycle", CyclePlayerElement);
-        Act(() => "Weapon: " + (attacker != null ? attacker.meleeElement.ToString() : "-") + "   ▶ cycle", CycleWeaponElement);
         Act("Poison nearest (5s)", () => Afflict(Ailment.Poison, 5f, 4f));
         Act("Bleed nearest (5s)",  () => Afflict(Ailment.Bleed, 5f, 4f));
         Act("Burn nearest (5s)",   () => Afflict(Ailment.Burn, 5f, 4f));

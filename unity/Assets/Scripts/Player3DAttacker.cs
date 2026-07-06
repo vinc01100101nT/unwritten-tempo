@@ -28,10 +28,16 @@ public class Player3DAttacker : MonoBehaviour
     [Range(0.1f, 1f)] public float hitTiming = 0.70f;
     [Tooltip("Fallback damage when there's no Character (e.g. the standalone spike).")]
     public int damage = 3;
-    [Tooltip("The weapon's attack ELEMENT (RO property), applied to basic swings and skill strikes vs the " +
-             "target's armor element. Neutral = no interaction; a fire sword would set this to Fire.")]
-    public Element meleeElement = Element.Neutral;
-
+    [Header("Ranged (Bow / Firearm) — arrow projectile")]
+    [Tooltip("Sprite-sheet for the arrow that flies to the target when a ranged weapon is equipped. Null = " +
+             "the blow lands instantly (no visible projectile), same as melee.")]
+    public Texture2D arrowSheet;
+    public int arrowFrameSize = 16;
+    public int arrowFrames = 1;
+    public float arrowFps = 12f;
+    [Tooltip("Arrow travel speed (world units/s). Higher = the hit connects sooner after the release frame.")]
+    public float arrowSpeed = 14f;
+    public float arrowScale = 1f;
     [Header("Audio (used when the equipped weapon has none of its own)")]
     public SfxSet defaultAttackSfx;   // swing
     public SfxSet defaultHitSfx;      // impact
@@ -57,11 +63,51 @@ public class Player3DAttacker : MonoBehaviour
     /// only WHEN inside the window the hit connects moves.</summary>
     public float SwingTime => Mathf.Max(0.05f, cooldown * MotionScale);
 
-    /// <summary>The authored <see cref="range"/> rescaled to the CURRENT unit size (see
+    /// <summary>The FULL-SIZE reach before unit-scaling: the equipped weapon's <see cref="Item.attackRange"/> when it
+    /// sets one (Weapon slot, &gt; 0 — a bow/spear reaches farther than a fist), else the attacker's own default
+    /// <see cref="range"/> (unarmed / the standalone spike with no Character). Read at use-time from the equipped
+    /// weapon — same pattern as <see cref="MeleeElement"/>, the audio lookup, and the stance brain — so there's no per-equip copy to
+    /// keep in sync; the Item stays the single owner of weapon reach.</summary>
+    public float BaseRange
+    {
+        get
+        {
+            var w = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
+            return w != null && w.attackRange > 0f ? w.attackRange : range;
+        }
+    }
+
+    /// <summary>The <see cref="BaseRange"/> rescaled to the CURRENT unit size (see
     /// <see cref="UnitScale.MeleeReachFactor"/>). When both player and mobs render at authored scale this equals
-    /// <see cref="range"/> exactly; once mobs are shrunk (e.g. MobRelative 0.3) the reach shrinks with them, so the
+    /// <see cref="BaseRange"/> exactly; once mobs are shrunk (e.g. MobRelative 0.3) the reach shrinks with them, so the
     /// player closes in and swings at contact instead of from a fixed 1.4-unit gap that dwarfs a tiny billboard.</summary>
-    public float EffectiveRange => range * UnitScale.MeleeReachFactor;
+    public float EffectiveRange => BaseRange * UnitScale.MeleeReachFactor;
+
+    /// <summary>The attack ELEMENT applied to basic swings and (as the default) skill strikes: the equipped weapon's
+    /// <see cref="Item.element"/> — the weapon is the single owner of its element — or Neutral when unarmed / there's
+    /// no Character (the standalone spike). Read at use-time from the equipped weapon, same pattern as
+    /// <see cref="BaseRange"/> and the audio/stance lookups, so there's no per-equip copy to keep in sync.</summary>
+    public Element MeleeElement
+    {
+        get
+        {
+            var w = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
+            return w != null ? w.element : Element.Neutral;
+        }
+    }
+
+    /// <summary>True when the equipped weapon is a physical RANGED type (Bow/Firearm), so a basic attack lobs a
+    /// visible arrow that carries the blow to the target instead of connecting instantly. Read at use-time from the
+    /// equipped weapon — same pattern as <see cref="MeleeElement"/>/<see cref="BaseRange"/> — so there's no per-equip
+    /// copy to keep in sync; the Item's <see cref="Item.weaponType"/> stays the single owner.</summary>
+    public bool IsRanged
+    {
+        get
+        {
+            var w = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
+            return w != null && (w.weaponType == WeaponType.Bow || w.weaponType == WeaponType.Firearm);
+        }
+    }
 
     /// <summary>Strict planar range — used to actually LAND a hit (TryAttack / the windup check).</summary>
     public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= EffectiveRange;
@@ -122,22 +168,16 @@ public class Player3DAttacker : MonoBehaviour
         // target that no longer exists or already died during the windup. (Melee is decided at swing start.)
         if (t != null && !t.IsDead)
         {
-            // Roll the hit through Character so CritChance/CritDamage apply (spike has no Character → flat damage).
-            bool crit = false;
-            int power = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk) : damage;   // t.luk = crit shield
-
-            // Pass our HIT so the target rolls it against its FLEE (RO accuracy); −1 in the Character-less spike.
-            int hit = Character.Instance != null ? Character.Instance.Hit : -1;
-            if (hit >= 0 && StatusController.Player != null) hit = Mathf.Max(0, hit - StatusController.Player.HitPenalty);  // Blind
-            int dealt = t.TakeDamage(power, crit, hit, meleeElement);
-            if (dealt > 0)
+            if (IsRanged)
             {
-                // Impact SOUND now plays FROM the mob in Health.TakeDamage (received_hit/crit, spatial) — no 2D play here.
-                // Impact BURST is a receiver-side Passive Verb cue (Vfx Cue Composer), fired AT the target with no
-                // attacker/direction (Origin == Target == receiver), just like OnReceiveHeal / OnHitBySkill —
-                // the crit's bigger punch lives in the basic_crit sequence (×1.7), not a caller-side scale fudge.
-                VfxCue.Fire(crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack, t.transform);
+                // Ranged weapon: release an arrow that homes onto the target; the blow lands when it arrives (which
+                // re-checks validity — the target may die mid-flight). Same per-shot spawn pattern as the mob casters.
+                Health tgt = t;
+                Vector3 from = UnitAnchor.Center(transform);   // release from mid-body (feet-pivoted)
+                Projectile3D.Spawn(arrowSheet, arrowFrameSize, arrowFrames, arrowFps, arrowScale,
+                    from, t.transform, UnitAnchor.Center(t.transform), arrowSpeed, 0.35f, 3f, () => LandBasicHit(tgt));
             }
+            else LandBasicHit(t);
         }
 
         // Let the rest of the swing play out before freeing the slot, so the pose/animation completes and the next
@@ -145,6 +185,31 @@ public class Player3DAttacker : MonoBehaviour
         float rest = swingTime - impactAt;
         if (rest > 0f) yield return new WaitForSeconds(rest);
         swing = null;
+    }
+
+    /// <summary>Apply one basic-attack hit to <paramref name="t"/>: roll damage/crit/HIT through Character (spike
+    /// falls back to flat <see cref="damage"/>), deal it, and fire the receiver-side impact cue. Called directly at
+    /// the melee contact moment, or from the arrow's on-arrive for ranged weapons — so it re-checks validity (the
+    /// target may have died during windup or arrow flight).</summary>
+    void LandBasicHit(Health t)
+    {
+        if (t == null || t.IsDead) return;
+        // Roll the hit through Character so CritChance/CritDamage apply (spike has no Character → flat damage).
+        bool crit = false;
+        int power = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk) : damage;   // t.luk = crit shield
+
+        // Pass our HIT so the target rolls it against its FLEE (RO accuracy); −1 in the Character-less spike.
+        int hit = Character.Instance != null ? Character.Instance.Hit : -1;
+        if (hit >= 0 && StatusController.Player != null) hit = Mathf.Max(0, hit - StatusController.Player.HitPenalty);  // Blind
+        int dealt = t.TakeDamage(power, crit, hit, MeleeElement);
+        if (dealt > 0)
+        {
+            // Impact SOUND plays FROM the mob in Health.TakeDamage (received_hit/crit, spatial) — no 2D play here.
+            // Impact BURST is a receiver-side Passive Verb cue (Vfx Cue Composer), fired AT the target with no
+            // attacker/direction (Origin == Target == receiver), just like OnReceiveHeal / OnHitBySkill —
+            // the crit's bigger punch lives in the basic_crit sequence (×1.7), not a caller-side scale fudge.
+            VfxCue.Fire(crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack, t.transform);
+        }
     }
 
     public void Cancel() { if (swing != null) { StopCoroutine(swing); swing = null; } engaged = false; engagedTarget = null; }
@@ -184,7 +249,7 @@ public class Player3DAttacker : MonoBehaviour
         bool crit = false;
         int basePower = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk, ctx.ForceCrit) : damage;
         int power = Mathf.RoundToInt(basePower * Mathf.Max(1f, ctx.DamageMult));
-        Element element = ctx.ConvertElement ? ctx.NewElement : meleeElement;
+        Element element = ctx.ConvertElement ? ctx.NewElement : MeleeElement;
 
         // Skill strike VFX is authored in the skill's own composed sequence (SkillDef.vfx → VfxDirector), not here.
         // Skills always LAND (no FLEE roll, hit −1), but they still respect DEF unless they actually crit —

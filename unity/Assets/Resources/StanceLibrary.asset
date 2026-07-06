@@ -323,7 +323,7 @@ MonoBehaviour:
     footPlants: []
   - id: 30
     action: 3
-    clip: 
+    clip: AttackBow
     speedSource: 4
     speedMult: 1
     priority: 0

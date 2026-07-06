@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
+  m_Name: Bow Epic
+  m_EditorClassIdentifier: Assembly-CSharp::Item
+  id: item.bow-epic
+  displayName: Bow Epic
+  icon: {fileID: 0}
+  slot: 3
+  weaponType: 9
+  attackRange: 5
+  equipModel: {fileID: 1198998981114754527, guid: d0c32318984847e428ac1bce4ea19377, type: 3}
+  element: 0
+  rarity: 0
+  category: 3
+  cardSlots: 0
+  weight: 0
+  zeny: 0
+  bonusHP: 0
+  bonusAttack: 3000
+  bonusDefense: 0
+  bonusMP: 0
+  bonusMAtk: 0
+  bonusMDef: 0
+  bonusStr: 0
+  bonusAgi: 100
+  bonusVit: 0
+  bonusInt: 0
+  bonusDex: 0
+  bonusLuk: 0
+  bonusCritPercent: 0
+  bonusAspdPercent: 0
+  healAmount: 0
+  attackSfx:
+    clips:
+    - {fileID: 8300000, guid: 2c07351db97c3db46bdbbcac4cb54e86, type: 3}
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  hitSfx:
+    clips:
+    - {fileID: 8300000, guid: 1bbafb80233098340940fcf3bb0c7f26, type: 3}
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  guardSfx:
+    clips:
+    - {fileID: 8300000, guid: 750d863a5bb33b34a91cac93754c1d19, type: 3}
+    volume: 1
+    pitch: {x: 0.95, y: 1.05}
+  blockChance: 0
+  description: 

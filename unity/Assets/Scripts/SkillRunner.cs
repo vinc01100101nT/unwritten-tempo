@@ -20,6 +20,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public int level = 1;
 
     float nextUse, lastDuration;
+    float comboDamageMult = 1f;         // ×ramp for the CURRENT cast when fired from a combo chain (1 = solo). Set per
+                                        // combo step; solo Cast/CastTargeted reset it to 1 so a normal cast is unscaled.
     Coroutine castRoutine;              // active cast wind-up (null = not casting); blocks re-cast + drives the CastBar
     VfxSequenceRunner castAura;         // the global OnCastStart aura looping for this wind-up; MUST be Stopped at every exit
     Vfx.EffectHandle castCircle;        // the per-skill cast circle (def.castCircleId) for this wind-up; MUST be Stopped at every exit
@@ -51,6 +53,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (def == null || def.vfx == null) return false;
         if (Character.Instance == null || Character.Instance.IsDead) return false;
+        // A skill committed to a combo chain is spent there — it can't be cast solo from the hotbar (the chain owns
+        // it, and its cadence is the chain's shared cooldown). Character.Combos is the single owner of "who's committed".
+        if (Character.Instance.Combos.IsCommitted(def.id))
+        { BattleNotice.Warn("In a combo chain"); return false; }
         if (StatusController.Player != null && StatusController.Player.Silenced)
         { BattleNotice.Warn("Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
         if (StatusController.Player != null && StatusController.Player.ActionLocked) return false;   // stunned / frozen / casting / mid-aftercast — can't start another skill
@@ -95,6 +101,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     void Cast(Vector3 center)
     {
         if (!Spend()) return;
+        comboDamageMult = 1f;               // solo cast — no combo ramp
         lastCtx = VfxContext.At(center);
         StartCastOrPlay();
     }
@@ -103,6 +110,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     void CastTargeted(Transform unit)
     {
         if (unit == null || !Spend()) return;
+        comboDamageMult = 1f;               // solo cast — no combo ramp
         lastCtx = new VfxContext
         {
             origin = transform.position,
@@ -112,6 +120,49 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             scaleMult = 1f,
         };
         StartCastOrPlay();
+    }
+
+    // ---- combo-chain firing -------------------------------------------------
+    // A ComboRunner drives a chain by firing each member skill here at ONE pre-resolved aim (no per-skill reticle),
+    // bypassing the per-skill cooldown (the chain owns cadence via its shared cooldown) while STILL paying mana and
+    // respecting hard-CC / silence. `dmgMult` is the slot's position ramp (1×/1.5×/2.5×/4×) applied to this cast's hits.
+
+    /// <summary>Fire this skill from a combo at a ground point (Ground/Self members). Returns true if it fired.</summary>
+    public bool ComboCastGround(Vector3 center, float dmgMult)
+    {
+        if (!ComboSpend()) return false;
+        comboDamageMult = Mathf.Max(0f, dmgMult);
+        lastCtx = VfxContext.At(center);
+        StartCastOrPlay();
+        return true;
+    }
+
+    /// <summary>Fire this skill from a combo onto a chosen unit (Single/Target members). Returns true if it fired.</summary>
+    public bool ComboCastUnit(Transform unit, float dmgMult)
+    {
+        if (unit == null || !ComboSpend()) return false;
+        comboDamageMult = Mathf.Max(0f, dmgMult);
+        lastCtx = new VfxContext
+        {
+            origin = transform.position,
+            target = unit.position,
+            follow = null,
+            targetUnit = unit,
+            scaleMult = 1f,
+        };
+        StartCastOrPlay();
+        return true;
+    }
+
+    // Combo spend: mana only — NO per-skill cooldown gate (the chain's shared cooldown is the real gate) and it does
+    // not touch nextUse. Still refuses under death / hard-CC / silence, and warns + fails on empty MP (fizzling the chain).
+    bool ComboSpend()
+    {
+        if (def == null || def.vfx == null || Character.Instance == null || Character.Instance.IsDead) return false;
+        var sc = StatusController.Player;
+        if (sc != null && (sc.CannotAct || sc.Silenced)) return false;
+        if (!Character.Instance.SpendMana(def.manaCost)) { BattleNotice.Warn("No MP", NoManaColor); return false; }
+        return true;
     }
 
     // The single fork between an instant skill and one with a wind-up. A castTime of 0 fires immediately — NO cast
@@ -244,7 +295,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         float extraMult = b.scale != null ? b.scale.damageMultPerLevel * over : 0f;
         int extraFlat = b.scale != null ? b.scale.flatBonusPerLevel * over : 0;
         SkillEffectApplier.ApplyBurst(tick.point, b.radius, b.scope, b.targets, b.effects,
-                                      lastCtx.targetUnit, extraMult, extraFlat);
+                                      lastCtx.targetUnit, extraMult, extraFlat, comboDamageMult);
     }
 
     static MonsterAI3D NearestMob(Vector3 from, float maxRange)

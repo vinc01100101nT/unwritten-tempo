@@ -19,9 +19,13 @@ public static class SkillEffectApplier
     /// <paramref name="point"/> (Area), or straight onto the cast's designated target (Single). This is the
     /// instantaneous "one burst per tick" — the repeat-over-time cadence lives in the VFX tick schedule, not here.
     /// Zero-alloc: a squared-distance sweep over the small Active list, no physics / Find / GetComponent.</summary>
+    /// <param name="comboMult">Multiplicative damage scale from a chained-skill combo's position ramp (1 = solo cast,
+    /// e.g. 4 = the combo finisher). Multiplies the FINAL rolled hit — distinct from <paramref name="extraMult"/>,
+    /// which is the ADDITIVE per-level growth on the effect's own multiplier. 1 leaves every non-combo caller
+    /// unchanged. See <see cref="ComboRunner"/>.</param>
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
-                                  float extraMult = 0f, int extraFlat = 0)
+                                  float extraMult = 0f, int extraFlat = 0, float comboMult = 1f)
     {
         if (targets == SkillTargets.None || effects == null || effects.Count == 0) return;
 
@@ -33,10 +37,10 @@ public static class SkillEffectApplier
             if (mob != null)
             {
                 if ((targets & SkillTargets.Mobs) != 0 && mob.Health != null && !mob.Health.IsDead)
-                    for (int k = 0; k < effects.Count; k++) ApplyToMob(effects[k], mob, extraMult, extraFlat);
+                    for (int k = 0; k < effects.Count; k++) ApplyToMob(effects[k], mob, extraMult, extraFlat, comboMult);
             }
             else if ((targets & SkillTargets.Player) != 0)
-                for (int k = 0; k < effects.Count; k++) ApplyToPlayer(effects[k], extraMult, extraFlat);
+                for (int k = 0; k < effects.Count; k++) ApplyToPlayer(effects[k], extraMult, extraFlat, comboMult);
             return;
         }
 
@@ -51,7 +55,7 @@ public static class SkillEffectApplier
                 if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
                 Vector3 d = ai.transform.position - point; d.y = 0f;
                 if (d.sqrMagnitude > r2) continue;
-                for (int k = 0; k < effects.Count; k++) ApplyToMob(effects[k], ai, extraMult, extraFlat);
+                for (int k = 0; k < effects.Count; k++) ApplyToMob(effects[k], ai, extraMult, extraFlat, comboMult);
             }
         }
 
@@ -62,13 +66,13 @@ public static class SkillEffectApplier
             {
                 Vector3 d = p.transform.position - point; d.y = 0f;
                 if (d.sqrMagnitude <= r2)
-                    for (int k = 0; k < effects.Count; k++) ApplyToPlayer(effects[k], extraMult, extraFlat);
+                    for (int k = 0; k < effects.Count; k++) ApplyToPlayer(effects[k], extraMult, extraFlat, comboMult);
             }
         }
     }
 
     /// <summary>Apply <paramref name="e"/> to a MOB via its cached <see cref="Health"/>.</summary>
-    public static void ApplyToMob(SkillEffect e, MonsterAI3D ai, float extraMult = 0f, int extraFlat = 0)
+    public static void ApplyToMob(SkillEffect e, MonsterAI3D ai, float extraMult = 0f, int extraFlat = 0, float comboMult = 1f)
     {
         if (e == null || ai == null) return;
         var h = ai.Health;
@@ -76,7 +80,7 @@ public static class SkillEffectApplier
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
-                int power = RollPower(e, extraMult, extraFlat, out bool crit);
+                int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit);
                 if (e.magic) h.TakeMagicDamage(power, crit, e.element);
                 else h.TakeDamage(power, crit, -1, e.element);   // −1 HIT = always-lands skill hit (no accuracy roll)
                 break;
@@ -94,14 +98,14 @@ public static class SkillEffectApplier
     }
 
     /// <summary>Apply <paramref name="e"/> to the PLAYER (<see cref="Character.Instance"/>).</summary>
-    public static void ApplyToPlayer(SkillEffect e, float extraMult = 0f, int extraFlat = 0)
+    public static void ApplyToPlayer(SkillEffect e, float extraMult = 0f, int extraFlat = 0, float comboMult = 1f)
     {
         var ch = Character.Instance;
         if (e == null || ch == null) return;
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
-                int power = RollPower(e, extraMult, extraFlat, out _);
+                int power = RollPower(e, extraMult, extraFlat, comboMult, out _);
                 if (e.magic) ch.TakeMagicDamage(power, e.element);
                 else ch.TakeDamage(power, -1, e.element);        // −1 HIT = always-lands (skill/environmental hit)
                 break;
@@ -117,16 +121,17 @@ public static class SkillEffectApplier
         }
     }
 
-    // Damage value = the caster's rolled hit × (the effect's multiplier + per-level growth) + a per-level flat
-    // bonus. Sourced from the player (the only caster in the current slice); the crit-aware rolls mean a tick crits
-    // like any other skill. No allocation.
-    static int RollPower(SkillEffect e, float extraMult, int extraFlat, out bool crit)
+    // Damage value = the caster's rolled hit × (the effect's multiplier + per-level growth) × the combo ramp,
+    // + a per-level flat bonus. Sourced from the player (the only caster in the current slice); the crit-aware
+    // rolls mean a tick crits like any other skill. The combo ramp is MULTIPLICATIVE on the final so a chained
+    // finisher (×4) scales the whole hit, while per-level growth stays ADDITIVE on the base multiplier. No allocation.
+    static int RollPower(SkillEffect e, float extraMult, int extraFlat, float comboMult, out bool crit)
     {
         crit = false;
         var ch = Character.Instance;
         if (ch == null) return 1;
         float mult = (e.damageMult <= 0f ? 1f : e.damageMult) + Mathf.Max(0f, extraMult);
         int roll = e.magic ? ch.RollMagicDamage(out crit) : ch.RollDamage(out crit);
-        return Mathf.Max(1, Mathf.RoundToInt(roll * mult) + Mathf.Max(0, extraFlat));
+        return Mathf.Max(1, Mathf.RoundToInt(roll * mult * Mathf.Max(0f, comboMult)) + Mathf.Max(0, extraFlat));
     }
 }

@@ -181,6 +181,9 @@ public partial class Player3DController : MonoBehaviour
         // were retired — one runner interprets any skill. Which the player has UNLOCKED and BOUND to the hotbar
         // is still the progression layer (SkillRoster/HotbarBindings), not a class gate.
         EnsureComposedSkills();
+        // The combo executor rides on the player too (reads Character.Combos). Auto-attach so a player built before
+        // combos existed picks it up with no re-bake — same idempotent pattern as the skills above.
+        if (GetComponent<ComboRunner>() == null) gameObject.AddComponent<ComboRunner>();
     }
 
     // The footstep sound rides the ONE central player-step signal (fired on the real foot-plant frame) instead of a

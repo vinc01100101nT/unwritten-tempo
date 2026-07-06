@@ -12,6 +12,8 @@ using UnityEngine;
 public class WeaponGripTuner : EditorWindow
 {
     GameObject weaponPrefab;
+    GameObject seededFrom;   // prefab the hand popup was last seeded from (re-seed whenever this changes)
+    WeaponHand hand = WeaponHand.Right;
     GameObject previewRig;
     GameObject weaponInstance;
     Transform handBone;
@@ -29,6 +31,16 @@ public class WeaponGripTuner : EditorWindow
             MessageType.Info);
 
         weaponPrefab = (GameObject)EditorGUILayout.ObjectField("Weapon Prefab", weaponPrefab, typeof(GameObject), false);
+        // Re-seed the hand popup from the prefab's authored grip whenever the assigned prefab changes (covers first
+        // assign, window reopen, and domain reload) — so it reflects the SAVED hand, never a stale default.
+        if (weaponPrefab != seededFrom)
+        {
+            seededFrom = weaponPrefab;
+            var g = weaponPrefab != null ? weaponPrefab.GetComponent<WeaponGrip>() : null;
+            if (g != null) hand = g.hand;
+        }
+
+        hand = (WeaponHand)EditorGUILayout.EnumPopup("Hand", hand);
 
         using (new EditorGUI.DisabledScope(weaponPrefab == null))
             if (GUILayout.Button("Spawn Preview")) SpawnPreview();
@@ -57,7 +69,7 @@ public class WeaponGripTuner : EditorWindow
         if (avatar != null) anim.avatar = avatar;
 
         var grip = weaponPrefab.GetComponent<WeaponGrip>();
-        handBone = HandSocketResolver.Find(anim, grip != null ? grip.hand : WeaponHand.Right);
+        handBone = HandSocketResolver.Find(anim, hand);
         if (handBone == null)
         {
             EditorUtility.DisplayDialog("Weapon Grip Tuner", "Could not find a hand bone on the preview rig.", "OK");
@@ -66,6 +78,9 @@ public class WeaponGripTuner : EditorWindow
         }
 
         weaponInstance = (GameObject)PrefabUtility.InstantiatePrefab(weaponPrefab);
+        // Stamp the chosen hand on the instance so Bake writes it back (the runtime socket reads grip.hand to pick the bone).
+        var instGrip = weaponInstance.GetComponent<WeaponGrip>() ?? weaponInstance.AddComponent<WeaponGrip>();
+        instGrip.hand = hand;
         var t = weaponInstance.transform;
         t.SetParent(handBone, false);
         t.localPosition = grip != null ? grip.localPosition : Vector3.zero;

@@ -240,6 +240,11 @@ public class Character : MonoBehaviour
     /// Set by drag/click in the Skills (K) menu; read by the bar + the central key router. Persisted.</summary>
     public HotbarBindings Hotbar { get; } = new HotbarBindings();
 
+    /// <summary>The player's combo chains (4 skills each, one hotkey each) — the single owner of which skill is
+    /// committed to which chain. Edited in the Combo Composer; read by the combo bar + <see cref="ComboRunner"/>.
+    /// Persisted alongside the hotbar.</summary>
+    public ComboBook Combos { get; } = new ComboBook();
+
     static readonly Color HealColor = new Color(0.45f, 1f, 0.45f);
     Transform avatar;   // the in-scene player, located lazily for heal popups
 
@@ -837,6 +842,7 @@ public class Character : MonoBehaviour
         SkillMods.Capture(out d.skillModIds, out d.skillModTags, out d.skillModSlots);
         d.ownedSkillIds = Skills.Capture();
         d.hotbarBindings = Hotbar.Capture();
+        d.comboChains = Combos.Capture();
         return d;
     }
 
@@ -862,6 +868,7 @@ public class Character : MonoBehaviour
         SkillMods.Restore(d.skillModIds, d.skillModTags, d.skillModSlots);
         Skills.Restore(d.ownedSkillIds);
         Hotbar.Restore(d.hotbarBindings);
+        Combos.Restore(d.comboChains);
         EnsureRingEquipped();        // equipment isn't persisted yet — re-wear the vessel after a load
 
         // HP/MP last, against the now-restored maxima. Never load into a dead state.

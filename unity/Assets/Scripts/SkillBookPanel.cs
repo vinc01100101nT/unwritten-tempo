@@ -113,10 +113,12 @@ public class SkillBookPanel : MonoBehaviour
         caption.color = SubColor;
         SetHeight(caption.gameObject, 22);
 
+        var combos = Character.Instance != null ? Character.Instance.Combos : null;
         for (int i = 0; i < pool.Length; i++)
         {
             var def = SkillCatalog.Get(pool[i]);
-            if (def != null) BuildRow(def);
+            // A skill committed to a combo chain has left solo use — don't offer it for hotbar binding here.
+            if (def != null && (combos == null || !combos.IsCommitted(def.id))) BuildRow(def);
         }
     }
 

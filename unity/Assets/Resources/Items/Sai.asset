@@ -17,6 +17,9 @@ MonoBehaviour:
   icon: {fileID: 0}
   slot: 3
   weaponType: 3
+  attackRange: 0
+  equipModel: {fileID: 0}
+  element: 0
   rarity: 1
   category: 0
   cardSlots: 1

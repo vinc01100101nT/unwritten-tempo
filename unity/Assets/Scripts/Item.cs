@@ -48,6 +48,11 @@ public class Item : ScriptableObject
              "Advisory in the slice — informs stat fit and the deferred WeaponSizes table, not a hard class gate.")]
     public WeaponType weaponType = WeaponType.None;
 
+    [Tooltip("Weapon only (Weapon slot): the FULL-SIZE melee/attack reach in world units this weapon grants while " +
+             "equipped — a bow/spear reaches farther than a dagger. Drives Player3DAttacker.range on the wielder. " +
+             "0 = leave the attacker's default range unchanged. Ignored for non-weapon items.")]
+    public float attackRange;
+
     [Tooltip("The 3D model wielded in-hand while this weapon is equipped (live-3D characters mount it on the hand " +
              "bone via WeaponSocket). Its root WeaponGrip authors how it sits in the hand. None = no visible weapon. " +
              "Author the grip with Tools ▸ unwritten ▸ Weapons ▸ Weapon Grip Tuner.")]
