@@ -565,3 +565,81 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
+  - id: water.ball-explosion
+    prefab: {fileID: 6261345114989098648, guid: f66e2be959a7d4e4e8b050df54d1af73, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.beam
+    prefab: {fileID: 5551718882146614446, guid: ca5678a67971360408484fc2051d9d2e, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.bubble-explosion
+    prefab: {fileID: 5056385361940353899, guid: 5831d4dc964245b4d935906496064f8f, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.bubbles-burst
+    prefab: {fileID: 3381772053132140057, guid: 673dd86dc0590e84a976de2f8dc35a63, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.bubbles-vertical-loop
+    prefab: {fileID: 2485276936549234680, guid: a500764f1a0d3654db7718249e73c3d3, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.explosion
+    prefab: {fileID: 8294947810415399850, guid: 7a16f43b4abbc0846a15aa17f7ba39bd, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.hit-01
+    prefab: {fileID: 6042243990886550057, guid: af44cbf49172b8d42b452221c9638892, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.hit-02
+    prefab: {fileID: 8866987181904549775, guid: 8c8d8385f96bd054a88a3df780d77bcc, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.impact
+    prefab: {fileID: 5911893088733641442, guid: f6573a110c1967643a98d0efdba24be8, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.splash
+    prefab: {fileID: 811279206364260445, guid: 67368ac46d9b5f14bb1df8009e324d28, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.splash-a
+    prefab: {fileID: 8585649807550039280, guid: 224c4574d4d272a4b92df19ede61b338, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.splash-b
+    prefab: {fileID: 3323387954473017891, guid: 0b912e9003fba894faa88cf964a6fb8a, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+  - id: water.splash-multiple
+    prefab: {fileID: 2586947100091486788, guid: bf97aaa7a02fd834782d32dcc497cbef, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0

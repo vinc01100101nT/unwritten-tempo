@@ -48,6 +48,15 @@ public class Item : ScriptableObject
              "Advisory in the slice — informs stat fit and the deferred WeaponSizes table, not a hard class gate.")]
     public WeaponType weaponType = WeaponType.None;
 
+    [Tooltip("The 3D model wielded in-hand while this weapon is equipped (live-3D characters mount it on the hand " +
+             "bone via WeaponSocket). Its root WeaponGrip authors how it sits in the hand. None = no visible weapon. " +
+             "Author the grip with Tools ▸ unwritten ▸ Weapons ▸ Weapon Grip Tuner.")]
+    public GameObject equipModel;
+
+    [Tooltip("Damage element for a weapon (what element its attacks deal); defensive/affinity element for gear. " +
+             "Neutral = no special element. Feeds the Elements damage table when combat consumes it.")]
+    public Element element = Element.Neutral;
+
     [Header("Identity (HUD relay spec)")]
     [Tooltip("Drives the slot BORDER color only (rarity is one independent visual channel).")]
     public Rarity rarity = Rarity.Common;

@@ -73,6 +73,7 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 | **Clear Training Dummy** | Removes the training dummy. | Cleanup after a damage test. (`TrainingDummyTool.cs`) |
 | **Spawn Field Boss (open field map)** | Hand-places the unique boss flagged in the `MonsterCatalog` (the `isBoss` `MonsterDef`; falls back to `MobRoster.Boss` if no assets) — name+HP banner, wide aggro, 120s respawn — into the open field map (refuses to spawn in Town). | Placing a boss encounter. Run in a field/dungeon scene. (`RegionBuilder.cs`) |
 | **Create NPC from selected SpriteSheet** | Builds a simple billboard NPC with an `Interactable` (editable dialogue) from a selected sliced character sheet. | Quick-dropping a talking NPC. (`WorldTools.cs`) |
+| **Item Table** (`Items ▸`) | Spreadsheet window of every `Item` in the project — one row per item with an icon preview and the balance fields editable inline: id/name, **Type** (Weapon/Armor/Consumable/Misc — DERIVED from slot+category via `ItemTypes`, editing remaps them), **Kind** (weaponType for weapons, equip slot for armor, blank else), element, rarity, ATK/DEF/MATK/MDEF/HP, weight, zeny, heal. Click a header to sort, search to filter, **◎** to select the asset; **Save All** writes to disk. Edits are Undo-able. The item sibling of the Mob Table. (`ItemTableWindow.cs`) |
 | **Mob Table** | Spreadsheet window of every `MonsterDef` in the project — one mob per row with a live front-facing thumbnail (top-left cell of its `sheet`, tinted), and the balance stats (id/name/biome/tier/flags/HP/DEF/MDEF/ATK/HIT/FLEE/element/weight/XP/gold) editable inline. Click a column header to sort, the search box to filter, **◎** to select the asset; **Save All** writes + reloads the `MonsterCatalog`. Edits are Undo-able. | Reviewing or balancing the whole mob roster in one view. (`MobTableWindow.cs`) |
 
 ---
@@ -164,6 +165,17 @@ The Unity side of the batch Mixamo auto-rig flow (see the `mixamo-batch-autorig-
 ## Player
 
 > **The player is now LIVE-3D by default** (committed 2026-07-04; mobs stay billboards). `Setup Systems Scene` seats a rigged Mixamo-Humanoid model on the player via `Player3DVisualBuilder` — there's no billboard-player swap anymore. To change WHICH rigged model the player wears, use **Tools ▸ unwritten ▸ Rigs ▸ Set 3D Player Model** (see the Rigs section). The retired billboard-player tools (`Use Baked Character`, `Use 3D Character`, `Use 3D Caster`, `Revert 3D Character`) and `BakedPlayerVisual` were deleted in this commit.
+
+---
+
+## Weapons
+
+| Menu | What | Use when |
+| --- | --- | --- |
+| **Fix Blink Weapon Materials (URP)** | Converts every material under `Assets/Blink` from built-in **Standard** (renders magenta in URP) to **URP/Lit** in one click, carrying albedo/normal/metallic/emission across the property rename. Idempotent. (`BlinkWeaponMaterialFixer.cs`) |
+| **Weapon Grip Tuner** | Window: WYSIWYG authoring of a weapon prefab's `WeaponGrip` (how the mesh sits in the hand). *Spawn Preview* drops a rigged character with the weapon mounted on the SAME hand bone the runtime uses (`HandSocketResolver`); drag the weapon into the palm with Scene handles; *Bake Grip → Prefab* writes the offset onto the prefab. Then assign that prefab to an `Item`'s **Equip Model**. Author-time only. (`WeaponGripTuner.cs`) |
+
+> **How wielded weapons work:** a weapon `Item` carries an `equipModel` (3D prefab); its root `WeaponGrip` is the single source of truth for the hand offset. At runtime `WeaponSocket` (added to the live-3D visual by `Player3DVisualBuilder`) watches `Character`'s Weapon slot and parents the model under the Humanoid hand bone — the skinned rig then carries it through every animation. Equip-driven: swapping the equipped weapon swaps the model. One-hand (right) for now; left/off-hand is reserved in `WeaponHand`.
 
 ---
 

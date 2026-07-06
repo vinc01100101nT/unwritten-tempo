@@ -187,6 +187,25 @@ public class Character3DPose : MonoBehaviour, IStancePose
     public int NaturalFrameCount(CharacterAction a, string clip) =>
         !string.IsNullOrEmpty(clip) && clipFrames.TryGetValue(clip, out int n) ? n : 0;
 
+    /// <summary>Report WHERE in the Walk/Run cycle the animation currently is, so the footstep detector can fire on
+    /// the real foot-plant FRAME instead of a timer. Returns false whenever a one-shot state (Attack/Jump/…) is
+    /// playing or we're mid-CrossFade — i.e. only true while the locomotion blend is the live state.
+    /// <paramref name="frac"/> is the 0→1 position within the (looping) cycle (a plant frame lands at
+    /// frame ÷ totalFrames); <paramref name="speed01"/> is the smoothed Idle(0)→Walk(0.5)→Run(1) blend value, so the
+    /// caller can pick the walk vs run plant frames and gate out standing still. Frame-locked, so it already tracks
+    /// gait speed / Haste (anim.speed scales normalizedTime) with nothing to hand-sync.</summary>
+    public bool TryGetLocoPhase(out float frac, out float speed01)
+    {
+        frac = 0f; speed01 = 0f;
+        if (anim == null) return false;
+        var st = anim.GetCurrentAnimatorStateInfo(0);
+        if (st.shortNameHash != Loco) return false;   // a one-shot (or the transition into one) is playing → no steps
+        float nt = st.normalizedTime;
+        frac = nt - Mathf.Floor(nt);
+        speed01 = anim.GetFloat(PSpeed);
+        return true;
+    }
+
     public void ResumeSelfDrive() { speedTarget = 0f; anim.speed = 1f; GoTo(Loco); }
 
     /// <summary>World-space facing/aim (XZ) — the model yaws toward it. Called by the 3D visual brain.</summary>

@@ -52,8 +52,12 @@ public static class SystemsSceneBuilder
         sun.gameObject.AddComponent<SkyboxSky>();        // procedural wrap-around sky (gradient + sun + drifting clouds); DayNightLight also self-adds
         sun.gameObject.AddComponent<WindGlobals>();     // feeds _GlobalWind for foliage sway (DayNightLight also self-adds)
         sun.gameObject.AddComponent<RainOverlay>();     // screen-space rain overlay (intensity 0 = dry/zero-cost until raised)
-        sun.gameObject.AddComponent<WetGround>();       // HEAVY: wet/puddle screen-space pass + rain-impact rings (High tier, follows rain)
-        sun.gameObject.AddComponent<PlanarReflection>();// HEAVY: mirror-camera reflection of the 3D world into puddles
+        // Water FX get their OWN named object so the tunable knobs are findable (not buried in the Sun's pile).
+        var waterFx = new GameObject("WaterFX");
+        waterFx.transform.SetParent(sun.transform.parent, false);
+        waterFx.AddComponent<WetGround>();              // HEAVY: wet/puddle screen-space pass + rain-impact rings (High tier, follows rain)
+        waterFx.AddComponent<PlanarReflection>();       // HEAVY: mirror-camera reflection of the 3D world into puddles
+        waterFx.AddComponent<WaterStep>();              // puddle FOOTSTEP SPLASH — droplet burst when a foot lands in standing water (Scale knob lives here)
         sun.gameObject.AddComponent<SnowOverlay>();     // screen-space drifting-flake overlay (intensity 0 = clear/zero-cost)
         sun.gameObject.AddComponent<SnowGround>();      // snow build-up on roofs/ground (all tiers) + footprints (High only)
         sun.gameObject.AddComponent<FogOverlay>();      // screen-space drifting fog haze (all tiers; fog 0 = clear/zero-cost)

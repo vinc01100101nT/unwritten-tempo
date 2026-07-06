@@ -77,6 +77,7 @@ public static class Player3DVisualBuilder
         if (go.GetComponent<StanceController>() == null) go.AddComponent<StanceController>();
         var vis = go.GetComponent<Character3DVisual>() ?? go.AddComponent<Character3DVisual>();
         vis.player = player;
+        if (go.GetComponent<WeaponSocket>() == null) go.AddComponent<WeaponSocket>();
 
         EditorSceneManager.MarkSceneDirty(player.gameObject.scene);
         return go;

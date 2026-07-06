@@ -44,6 +44,17 @@ public enum StanceId
     AoeSpell1, AoeSpell2, AoeSpell3,                 // wide area-of-effect spell release
     SingleSpell1, SingleSpell2, SingleSpell3,        // single-target bolt/beam spell release
     PhysicalSkill1, PhysicalSkill2, PhysicalSkill3,  // weapon / physical skill swing
+
+    // --- Attack variants by equipped weapon (the player brain picks ONE per basic attack via WeaponStances.AttackFor;
+    // all play CharacterAction.Attack so billboards are unaffected). Author a clip per weapon in the Stance Composer.
+    AttackBareHands,   // unarmed / fist / knuckle
+    AttackSword,       // one/two-hand sword, axe, mace (generic melee swing)
+    AttackDagger,      // dagger / katar
+    AttackStaff,       // staff (magic bonk / channel jab)
+    AttackLance,       // spear / polearm thrust
+    AttackHandGun,     // pistol (reserved — Firearm currently maps to AttackRifle)
+    AttackRifle,       // rifle / musket
+    AttackBow,         // bow draw + loose
 }
 
 /// <summary>
@@ -106,6 +117,26 @@ public class StanceBinding
              "recovery. Runtime turns this into a normalized point (frame ÷ the clip's own frame count) so it survives " +
              "the FitWindow time-rescale. 0 = no rooting (the player moves for the whole roll).")]
     [Min(0)] public int rootFromFrame = 0;
+
+    [Tooltip("WALK/RUN only: every foot-plant in the cycle — ONE entry per footfall (as many as the cycle has), each " +
+             "carrying the FRAME the foot goes flat AND which foot it is. FootstepTracker fires a footstep (SFX + " +
+             "puddle ripple + snow print) each time the animation crosses a plant's frame (turned into a 0→1 phase = " +
+             "frame ÷ the clip's frame count), and offsets the print to that foot's side. The foot is AUTHORED (not " +
+             "guessed by alternation) so the very first plant of the cycle lands on the correct side. This binding is " +
+             "the SINGLE OWNER of where feet land; FootstepTracker only reads it.")]
+    public List<FootPlant> footPlants = new List<FootPlant>();
+}
+
+/// <summary>One foot-plant in a walk/run cycle: the clip FRAME the foot goes flat, and WHICH foot it is. Authoring the
+/// foot (rather than alternating blindly) is what lets the print land on the correct side from the very first step —
+/// cycles don't always start on the left, and a stop/restart mustn't flip the sides.</summary>
+[System.Serializable]
+public class FootPlant
+{
+    [Min(0)] [Tooltip("Frame in the walk/run clip where this foot is flat on the ground.")]
+    public int frame;
+    [Tooltip("Which foot plants here — OFF = left (print offsets to the left of travel), ON = right.")]
+    public bool right;
 }
 
 /// <summary>The built-in starting point for each stance — the SINGLE owner of stance defaults, shared by the Stance
@@ -140,6 +171,12 @@ public static class StanceDefaults
             case StanceId.SingleSpell1: case StanceId.SingleSpell2: case StanceId.SingleSpell3:
                 b.action = CharacterAction.Cast;   b.speedSource = StanceSpeedSource.FitWindow; break;
             case StanceId.PhysicalSkill1: case StanceId.PhysicalSkill2: case StanceId.PhysicalSkill3:
+                b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.FitWindow; break;
+
+            // Weapon attack variants — same shape as the base Attack (swing fit to the attack-speed-scaled window).
+            case StanceId.AttackBareHands: case StanceId.AttackSword: case StanceId.AttackDagger:
+            case StanceId.AttackStaff:     case StanceId.AttackLance: case StanceId.AttackHandGun:
+            case StanceId.AttackRifle:     case StanceId.AttackBow:
                 b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.FitWindow; break;
         }
         return b;

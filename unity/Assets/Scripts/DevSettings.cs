@@ -285,8 +285,8 @@ public class DevSettings : MonoBehaviour
         F("Agent radius",     0.1f, 1f, () => player ? player.agentRadius : 0f,    v => { if (player) player.agentRadius = v; });
         F("Gravity",          0f, 30f, () => player ? player.gravity : 0f,         v => { if (player) player.gravity = v; });
         F("Fall pose @ speed", 0f, 10f, () => player ? player.fallAnimSpeed : 0f,  v => { if (player) player.fallAnimSpeed = v; });   // min downward speed before the falling pose plays
-        F("Run step gap (s)",  0.1f, 1.5f, () => player ? player.stepInterval : 0f,     v => { if (player) player.stepInterval = v; });
-        F("Walk step gap (s)", 0.1f, 1.5f, () => player ? player.walkStepInterval : 0f, v => { if (player) player.walkStepInterval = v; });
+        // (Footstep-sound timing knobs removed — the step SFX now fires on the walk/run animation's foot-plant FRAME,
+        //  authored as plant phases on FootstepTracker, not a per-second gap.)
         // Traversal abilities (SPACE = forward hop, E = dash burst).
         F("Jump distance",    0f, 6f,    () => player ? player.jumpDistance : 0f,  v => { if (player) player.jumpDistance = v; });
         F("Jump height",      0f, 2.5f,  () => player ? player.jumpHeight : 0f,    v => { if (player) player.jumpHeight = v; });
@@ -579,10 +579,9 @@ public class DevSettings : MonoBehaviour
         F("Step ripples",     0f, 8f,    () => wet ? wet.stepBright : 0f,      v => { if (wet) wet.stepBright = v; });
         F("Step radius",      0.1f, 1f,  () => wet ? wet.stepRadius : 0f,      v => { if (wet) wet.stepRadius = v; });
         Sub("Footsteps");
-        // Gait (shared FootstepTracker) — cadence/spacing/offset/jump-splash drive BOTH puddle ripples and snow prints.
-        // Cadence is in SECONDS now (paced on gait-time like the SFX/animation), so prints track move speed correctly.
-        F("Footstep cadence", 0.1f, 0.8f, () => foot ? foot.strideSeconds : 0f, v => { foot = FootstepTracker.Ensure(); foot.strideSeconds = v; });
-        F("First step delay", 0f, 0.6f,   () => foot ? foot.firstStepDelay : 0f, v => { foot = FootstepTracker.Ensure(); foot.firstStepDelay = v; });
+        // Gait (shared FootstepTracker) — spacing/offset/jump-splash drive BOTH puddle ripples and snow prints. There
+        // is NO cadence knob anymore: prints fire on the real foot-plant FRAME of the walk/run animation (authored on
+        // the Walk/Run rows in the Stance Composer's "L#/R#" button), so they can't drift from the legs at any speed.
         F("Foot spacing",     0f, 0.6f,  () => foot ? foot.footSpacing : 0f,   v => { foot = FootstepTracker.Ensure(); foot.footSpacing = v; });
         F("Step offset",     -1f, 1f,    () => foot ? foot.stepOffset : 0f,    v => { foot = FootstepTracker.Ensure(); foot.stepOffset = v; });
         F("Step offset (walk)", -1f, 1f, () => foot ? foot.walkStepOffset : 0f, v => { foot = FootstepTracker.Ensure(); foot.walkStepOffset = v; });
@@ -623,9 +622,8 @@ public class DevSettings : MonoBehaviour
         F("Footprint heal",   0.5f, 30f, () => snowGround ? snowGround.footHeal : 0f,  v => { if (snowGround) snowGround.footHeal = v; });
         F("Footprint carve",  0f, 1f,    () => snowGround ? snowGround.footCarve : 0f, v => { if (snowGround) snowGround.footCarve = v; });
         F("Footprint radius", 0.1f, 0.6f, () => snowGround ? snowGround.footRadius : 0f, v => { if (snowGround) snowGround.footRadius = v; });
-        // Footprint CADENCE (shared FootstepTracker — same value as the wet "Footstep cadence" knob; also paces snow
-        // prints). Seconds between prints at normal gait; raise if steps look too frequent.
-        F("Footprint cadence",0.1f, 0.8f, () => foot ? foot.strideSeconds : 0f, v => { foot = FootstepTracker.Ensure(); foot.strideSeconds = v; });
+        // Snow prints share the FootstepTracker's frame-locked plant detection (no cadence knob — plant frames are
+        // authored on the tracker). Only the spacing is tunable from here.
         F("Footprint spacing",0f, 0.6f,  () => foot ? foot.footSpacing : 0f,    v => { foot = FootstepTracker.Ensure(); foot.footSpacing = v; });
         Sub("Fog");
         // Fog — DEPTH fog (all tiers, one pass), its own weather CHANNEL. Fogs by true distance from the camera so far

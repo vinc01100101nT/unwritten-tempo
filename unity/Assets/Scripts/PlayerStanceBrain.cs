@@ -43,7 +43,7 @@ public static class PlayerStanceBrain
 
         // One-shot / action overrides, highest priority first. While one is active we feed only FACING (not
         // velocity) so movement can't cancel it — a swing/jump/dash on the run keeps playing.
-        if (attacker != null && attacker.Swinging) { d.hasAction = true; d.id = StanceId.Attack; d.window = attacker.SwingTime; return d; }
+        if (attacker != null && attacker.Swinging) { d.hasAction = true; d.id = WeaponStances.AttackFor(EquippedWeapon()); d.window = attacker.SwingTime; return d; }
         if (player.IsAirborne)                      { d.hasAction = true; d.id = StanceId.Jump;   d.window = player.JumpClipFreeze; d.release = player.JumpClipReleasing; return d; }
         if (player.Dashing || player.EDashing)      { d.hasAction = true; d.id = StanceId.Roll;   d.window = player.EDashing ? player.eDashDuration : 0.4f; return d; }
         if (Time.time < pickUpUntil)                { d.hasAction = true; d.id = StanceId.PickUp; return d; }
@@ -62,5 +62,13 @@ public static class PlayerStanceBrain
         // Idle: clear the action so a held stance (Combat/Guard/…) shows, else the controller plays Idle.
         d.hasAction = false;
         return d;
+    }
+
+    // The player's equipped weapon TYPE (None when unarmed) — picks which Attack* variant the swing plays. Reads the
+    // single owner (Character.Instance's Weapon slot); no allocation.
+    static WeaponType EquippedWeapon()
+    {
+        var it = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
+        return it != null ? it.weaponType : WeaponType.None;
     }
 }

@@ -4,8 +4,16 @@ using UnityEngine;
 /// The single SOURCE OF TRUTH for where the player's feet land. There is only one character, so the gait —
 /// alternating left/right prints, the sideways zig-zag, the jump-landing splash — is computed ONCE here and
 /// shared by every effect that reacts to footsteps (<see cref="WetGround"/> puddle ripples,
-/// <see cref="SnowGround"/> snow prints, and anything added later). Before this existed each effect re-found
-/// the player and re-ran its own stride loop, which was duplicated work and could drift out of sync.
+/// <see cref="SnowGround"/> snow prints, the footstep SFX, and anything added later). Before this existed each
+/// effect re-found the player and re-ran its own stride loop, which was duplicated work and could drift out of sync.
+///
+/// <para><b>Detection is FRAME-LOCKED, not time-based.</b> A step fires the moment the live Walk/Run ANIMATION
+/// crosses an authored foot-plant frame — the left/right plant frames are OWNED by the Walk/Run
+/// <see cref="StanceBinding"/> (authored in the Stance Composer) and this only mirrors them into 0→1 cycle phases
+/// (frame ÷ total frames), read against <see cref="Character3DPose.TryGetLocoPhase"/>. Because it rides the
+/// animation's own clock, a Haste/Slow gait (which scales <c>anim.speed</c>, hence the animation's normalizedTime)
+/// churns the prints exactly with the visible legs — with nothing to hand-sync. The old gait-TIME cadence
+/// (strideSeconds) was a stand-in for this real signal and has been retired.</para>
 ///
 /// <para>It stores footstep EVENTS — world position + the real time it was stamped + a size scale — in a
 /// 24-slot ring split into a player region [0,16) and an NPC region [16,24) so townsfolk steps never evict the
@@ -14,20 +22,15 @@ using UnityEngine;
 /// the same print is still healing in 8s of snow. That's how one set of positions feeds effects with totally
 /// different durations.</para>
 ///
-/// Zero per-frame allocation: the ring buffer is reused, the player ref is cached, and <see cref="Tick"/> is
+/// Zero per-frame allocation: the ring buffer is reused, the player/pose refs are cached, and <see cref="Tick"/> is
 /// frame-guarded so it runs once regardless of how many effects sample it or what script order they run in.
 /// </summary>
 [DisallowMultipleComponent]
 public class FootstepTracker : MonoBehaviour
 {
-    [Tooltip("Seconds (at normal gait) between RUN footprints — the cadence of the feet, NOT a ground distance. " +
-             "Stamps are paced on gait-time scaled by the player's GaitSpeedMult (exactly like the footstep SFX and the " +
-             "walk/run animation fps), so a Haste/Slow churns the prints with the legs AND — crucially — a TRAVEL-only " +
-             "speed change (moveSpeed) leaves the cadence alone, just like the legs, so ripples stay glued to the feet.")]
-    public float strideSeconds = 0.42f;
-    [Tooltip("Seconds between WALK footprints (Shift held) — wider than the run cadence since the walk cycle plants " +
-             "slower. Mirrors the SFX walk/run step-interval split so prints match whichever gait is playing.")]
-    public float walkStrideSeconds = 0.62f;
+    // The foot-plant frames are NOT owned here — they live on the Walk/Run StanceBinding (authored in the Stance
+    // Composer's "L#/R#" button) so there's one owner of where feet land. This tracker only MIRRORS them into 0→1
+    // cycle phases (frame ÷ the clip's frame count) via ResolvePhases; edit the frames in the composer, not here.
     [Tooltip("Sideways offset of each print from the walk line — left/right feet alternate by this (the zig-zag).")]
     public float footSpacing = 0.04f;
     [Tooltip("Forward/back nudge along the RUN direction — raise to pull prints up under the feet (less trailing).")]
@@ -36,10 +39,6 @@ public class FootstepTracker : MonoBehaviour
     public float walkStepOffset = 0.09f;
     [Range(1f, 6f)] [Tooltip("Size multiplier of the centred splash-print stamped when the player LANDS from a jump.")]
     public float landingScale = 2.5f;
-    [Range(0f, 0.6f)] [Tooltip("Gait-time delay (in stride units) held off before the FIRST ripple of a fresh walk. " +
-             "0 = the old behaviour (the first print fires instantly on the first moving frame); raise it to let the leg " +
-             "swing forward before the splash lands. Only delays the first step after a stop — the cadence is unchanged.")]
-    public float firstStepDelay = 0.14f;
 
     // The ring is split into two DISJOINT regions so NPC steps can never evict the player's: slots [0,PlayerSteps)
     // are the player's own ring (its full budget, unchanged), slots [PlayerSteps,MaxSteps) are shared by all NPCs.
@@ -50,6 +49,16 @@ public class FootstepTracker : MonoBehaviour
     /// <summary>Most-recent tracker, so effects can grab it without a hard reference.</summary>
     public static FootstepTracker Instance { get; private set; }
 
+    /// <summary>The ONE central footstep signal: fires (world position, size scale) every time a foot lands —
+    /// player OR NPC, from the same <see cref="Stamp"/>/<see cref="EmitStep"/> that feed the ring. Effects that
+    /// react per-step (splashes, VFX, …) subscribe here instead of re-running gait logic. Y is 0 (ground XZ).</summary>
+    public static event System.Action<Vector3, float> Stepped;
+
+    /// <summary>The PLAYER-ONLY step signal: fires only on the player's real foot plants (NOT NPC steps, and NOT the
+    /// jump-landing splash). The footstep SFX rides this so the sound lands on the visible foot-plant frame; NPC steps
+    /// don't machine-gun the player's ears. World position (Y=0) + size.</summary>
+    public static event System.Action<Vector3, float> PlayerStepped;
+
     // Each event: (worldX, worldZ, stampTime, sizeScale). Unstamped slots use a far-past stamp so they read dead.
     readonly Vector4[] events = new Vector4[MaxSteps];
     int head;        // player write cursor, wraps within [0, PlayerSteps)
@@ -57,14 +66,58 @@ public class FootstepTracker : MonoBehaviour
 
     Transform player;
     Player3DController playerCtrl;
+    Character3DPose pose;          // owns the Animator whose Walk/Run frame we read for plant detection
     Vector3 lastStepPos;
     Vector3 prevPos;
-    float stepPhase;   // gait-scaled time accumulator: advances by GaitSpeedMult·dt while moving, fires a stamp at stride
-    bool hasLast, hasPrev, wasMoving, leftFoot, wasAirborne;
+    float prevFrac;    // last frame's position in the loco cycle — a plant fires when the cycle crosses a plant phase
+    bool hasLast, hasPrev, havePhase, wasAirborne;
     float nextFind;
     int lastTickFrame = -1;
 
-    const float MoveEps = 0.05f;   // world u/s under which the player counts as standing still (no prints)
+    // Plant data MIRRORED from the Walk/Run bindings (the owner) — ONE entry per authored footfall: its 0→1 cycle
+    // phase (frame ÷ clip frames) plus which foot (true = right). Rebuilt (allocated) only in ResolvePhases
+    // (author-time / on refresh), never per frame. Defaults (before authoring) are a left→right pair.
+    static readonly float[] DefaultRunPhase = { 0.1f, 0.6f };
+    static readonly float[] DefaultWalkPhase = { 0.15f, 0.65f };
+    static readonly bool[] DefaultRight = { false, true };   // first plant = left, second = right
+    float[] runPhases = DefaultRunPhase;
+    float[] walkPhases = DefaultWalkPhase;
+    bool[] runRight = DefaultRight;
+    bool[] walkRight = DefaultRight;
+    bool phasesReady;
+
+    /// <summary>Re-read the foot-plants from the Walk/Run stance bindings (call after re-authoring them in the
+    /// Stance Composer while in Play, so the change takes without a restart).</summary>
+    public void RefreshPlantPhases() { phasesReady = false; }
+
+    // Pull the foot-plants from the Walk/Run stance bindings (their single owner) and convert EACH frame to a 0→1
+    // cycle phase via the clip's frame count, mirroring its authored foot alongside. If a clip/frame count can't be
+    // resolved yet, or nothing is authored, fall back to a sane default pair so footsteps work before authoring.
+    void ResolvePhases()
+    {
+        if (pose == null) return;
+        Build(StanceId.Run, ref runPhases, ref runRight, DefaultRunPhase);
+        Build(StanceId.Walk, ref walkPhases, ref walkRight, DefaultWalkPhase);
+        phasesReady = true;
+    }
+
+    void Build(StanceId id, ref float[] phases, ref bool[] right, float[] fallbackPhase)
+    {
+        var b = StanceCatalog.Get(id);
+        int total = b != null ? pose.NaturalFrameCount(b.action, b.clip) : 0;
+        var plants = b != null ? b.footPlants : null;
+        if (total <= 0 || plants == null || plants.Count == 0) { phases = fallbackPhase; right = DefaultRight; return; }
+        phases = new float[plants.Count];
+        right = new bool[plants.Count];
+        for (int i = 0; i < plants.Count; i++)
+        {
+            var pl = plants[i];
+            phases[i] = pl != null ? Mathf.Clamp01(pl.frame / (float)total) : 0f;
+            right[i] = pl != null && pl.right;
+        }
+    }
+
+    const float MoveSpeed01 = 0.05f;   // loco blend value under which the player counts as standing still (no prints)
 
     /// <summary>Find the live tracker, creating one if none exists (used on demand by the effects/DevSettings).</summary>
     public static FootstepTracker Ensure()
@@ -100,102 +153,115 @@ public class FootstepTracker : MonoBehaviour
         }
     }
 
-    void LateUpdate() { Tick(); }   // self-drive too, so the gait advances even with no consumers this frame
+    void LateUpdate() { Tick(); }   // self-drive too, so detection advances even with no consumers this frame
 
-    // Advance the gait at most once per frame: detect strides by distance and stamp a print under the
-    // alternating foot; handle jump take-off (no prints airborne) and landing (one big centred splash).
+    // Advance detection at most once per frame: fire a print each time the Walk/Run animation crosses a foot-plant
+    // frame, under the alternating foot; handle jump take-off (no prints airborne) and landing (one big centred splash).
     void Tick()
     {
         if (Time.frameCount == lastTickFrame) return;
         lastTickFrame = Time.frameCount;
 
-        if (playerCtrl == null && Time.time >= nextFind)
+        if ((playerCtrl == null || pose == null) && Time.time >= nextFind)
         {
-            playerCtrl = FindFirstObjectByType<Player3DController>();
-            player = playerCtrl != null ? playerCtrl.transform : null;
+            if (playerCtrl == null)
+            {
+                playerCtrl = FindFirstObjectByType<Player3DController>();
+                player = playerCtrl != null ? playerCtrl.transform : null;
+            }
+            if (pose == null) pose = FindFirstObjectByType<Character3DPose>();
             nextFind = Time.time + 1f;
         }
         if (player == null) return;
 
         Vector3 p = player.position;
 
-        // Airborne: feet are off the ground → no prints. Hold the stride anchors so air travel doesn't bank up
-        // into a step, reset the cadence, and remember we left the ground (for the landing splash on touchdown).
+        // Airborne: feet are off the ground → no prints. Hold the anchors so air travel doesn't skew the next print's
+        // direction, reset detection, and remember we left the ground (for the landing splash on touchdown).
         if (playerCtrl != null && playerCtrl.IsAirborne)
         {
             lastStepPos = p; prevPos = p; hasLast = true; hasPrev = true;
-            wasMoving = false; stepPhase = 0f; wasAirborne = true;
+            havePhase = false; wasAirborne = true;
             return;
         }
 
-        // Just landed → one big, player-CENTRED splash-print (no foot offset).
+        // Just landed → one big, player-CENTRED splash-print (no foot offset). State-driven, not a foot plant, so it
+        // stamps the VFX ring but does NOT fire PlayerStepped (no extra step SFX on touchdown).
         if (wasAirborne)
         {
             wasAirborne = false;
-            lastStepPos = p; prevPos = p; wasMoving = false; stepPhase = 0f;
-            Stamp(p.x, p.z, Mathf.Max(1f, landingScale));
+            lastStepPos = p; prevPos = p; havePhase = false;
+            Stamp(p.x, p.z, Mathf.Max(1f, landingScale), sfx: false);
             return;
         }
 
         if (!hasLast) { lastStepPos = p; hasLast = true; }
         if (!hasPrev) { prevPos = p; hasPrev = true; }
 
-        // Pace the prints on GAIT-TIME, not ground distance: this is the same clock the footstep SFX and the
-        // walk/run animation fps run on, so the splashes stay locked to the visibly-stepping feet. A travel-only
-        // speed change (moveSpeed) raises ground speed WITHOUT touching GaitSpeedMult — and the legs keep their
-        // baked cadence — so the ripples must too. (The old distance odometer fired faster the faster you slid,
-        // which is exactly the drift being fixed.)
-        float dt = Time.deltaTime;
         Vector3 frameDelta = p - prevPos; frameDelta.y = 0f; prevPos = p;
-        float speed = dt > 1e-5f ? frameDelta.magnitude / dt : 0f;
-        bool moving = speed > MoveEps;
 
-        // Standing still resets the gait AND the foot, so every fresh walk after a pause starts on the RIGHT foot
-        // (leftFoot == false → +perp). Keeps the player's first ripple consistent with the NPCs'.
-        if (!moving) { wasMoving = false; stepPhase = 0f; leftFoot = false; return; }
-
-        float gait = playerCtrl != null ? Mathf.Max(0.05f, playerCtrl.GaitSpeedMult) : 1f;
-        float stride = (playerCtrl != null && playerCtrl.WalkingSlow ? walkStrideSeconds : strideSeconds);
-        stride = Mathf.Max(0.02f, stride);
-
-        // Fire immediately on the first moving frame after a pause so a step isn't swallowed; thereafter advance
-        // the gait phase and stamp each time it laps the stride (keeping the remainder for a steady cadence).
-        // On a FRESH walk, seed the phase short of the stride by firstStepDelay so the first ripple is held off that
-        // much gait-time (0 → fires instantly, the old behaviour); thereafter the phase advances normally.
-        stepPhase = wasMoving ? stepPhase + dt * gait : stride - Mathf.Clamp(firstStepDelay, 0f, stride);
-        wasMoving = true;
-        if (stepPhase >= stride)
+        // Real foot-plant detection: the print fires when the walk/run ANIMATION passes an authored plant frame. This
+        // is the same clock the animator legs run on, so the splash is glued to the visibly-planting foot at any gait
+        // speed — and a one-shot (attack/jump) suspends detection (TryGetLocoPhase returns false), so swinging in place
+        // never stamps prints.
+        if (pose == null || !pose.TryGetLocoPhase(out float frac, out float speed01) || speed01 <= MoveSpeed01)
         {
-            stepPhase -= stride;
-
-            // Drop the print under the LEFT or RIGHT foot, alternating, offset sideways from the walk line — so
-            // the trail zig-zags like real footsteps instead of a single centred furrow.
-            Vector3 dir = p - lastStepPos; dir.y = 0f;
-            if (dir.sqrMagnitude <= 1e-6f) dir = frameDelta;
-            dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.forward;
-            Vector3 perp = new Vector3(dir.z, 0f, -dir.x);                       // 90° in the ground plane
-            float fwd = (playerCtrl != null && playerCtrl.WalkingSlow) ? walkStepOffset : stepOffset;
-            Vector3 foot = p + dir * fwd + perp * (footSpacing * (leftFoot ? -1f : 1f));
-            leftFoot = !leftFoot;
-
-            lastStepPos = p;
-            Stamp(foot.x, foot.z, 1f);
+            havePhase = false;
+            return;
         }
+        // Need a previous sample before we can detect a crossing; seed it on the first moving frame.
+        if (!havePhase) { prevFrac = frac; havePhase = true; return; }
+
+        if (!phasesReady) ResolvePhases();   // mirror the authored plant frames the first time (pose is now known)
+        bool run = speed01 >= 0.5f;
+        float[] phases = run ? runPhases : walkPhases;
+        bool[] sides = run ? runRight : walkRight;
+        for (int i = 0; i < phases.Length; i++)
+            if (Crossed(prevFrac, frac, phases[i])) StampFoot(p, frameDelta, i < sides.Length && sides[i]);
+        prevFrac = frac;
+    }
+
+    // Did the looping cycle move past plant phase p this frame? Handles the 0.98→0.02 wrap at the loop point.
+    static bool Crossed(float a, float b, float p)
+    {
+        if (a <= b) return p > a && p <= b;   // no wrap: fired if p is in (a, b]
+        return p > a || p <= b;               // wrapped past 1→0: p in (a, 1] or [0, b]
+    }
+
+    // Stamp a print under the planting foot — offset sideways from the walk line to the AUTHORED side (right/left, not
+    // a blind alternation) so the trail zig-zags on the correct sides from the first step. Fires the player step signals.
+    void StampFoot(Vector3 p, Vector3 frameDelta, bool rightFoot)
+    {
+        Vector3 dir = p - lastStepPos; dir.y = 0f;
+        if (dir.sqrMagnitude <= 1e-6f) dir = frameDelta;
+        dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.forward;
+        Vector3 perp = new Vector3(dir.z, 0f, -dir.x);                       // 90° in the ground plane (right of travel)
+        float fwd = (playerCtrl != null && playerCtrl.WalkingSlow) ? walkStepOffset : stepOffset;
+        Vector3 foot = p + dir * fwd + perp * (footSpacing * (rightFoot ? 1f : -1f));
+
+        lastStepPos = p;
+        Stamp(foot.x, foot.z, 1f, sfx: true);
     }
 
     /// <summary>Stamp a footstep from a NON-player walker (e.g. a town NPC) into the SAME shared ring, so
     /// wet-ground ripples and snow prints appear under townsfolk too — not just the player. NPCs run their own
     /// stride odometer (see <see cref="TownNPC"/>), so they just hand us the world position; everyone shares
-    /// the one 16-slot buffer, which self-LODs to whoever stepped most recently.</summary>
+    /// the NPC region of the ring, which self-LODs to whoever stepped most recently. Fires <see cref="Stepped"/>
+    /// (general VFX) but NOT <see cref="PlayerStepped"/> — NPC steps must not trigger the player's footstep SFX.</summary>
     public void EmitStep(Vector3 world, float size = 1f)
     {
         events[npcHead] = new Vector4(world.x, world.z, Time.time, size);
         npcHead = PlayerSteps + (npcHead - PlayerSteps + 1) % (MaxSteps - PlayerSteps);
+        world.y = 0f;
+        Stepped?.Invoke(world, size);
     }
 
-    void Stamp(float x, float z, float size)
+    void Stamp(float x, float z, float size, bool sfx)
     {
         events[head] = new Vector4(x, z, Time.time, size);
         head = (head + 1) % PlayerSteps;
+        Vector3 w = new Vector3(x, 0f, z);
+        Stepped?.Invoke(w, size);
+        if (sfx) PlayerStepped?.Invoke(w, size);
     }
 }

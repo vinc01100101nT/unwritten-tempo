@@ -96,12 +96,8 @@ public partial class Player3DController : MonoBehaviour
     [Tooltip("One-shot splash played when a jump LANDS in a rain puddle (same puddle test as the water step). " +
              "Leave empty for a silent landing.")]
     public SfxSet waterJumpSfx;
-    [Tooltip("Seconds between footstep sounds while RUNNING (normal movement).")]
-    public float stepInterval = 0.42f;
-    [Tooltip("Seconds between footstep sounds while WALKING (Shift held) — usually larger than the run gap since walking is slower.")]
-    public float walkStepInterval = 0.62f;
-    float nextStep;
-    bool wasStepping;   // were we moving last footstep tick? — so a fresh walk can delay its first step sound to match the ripple
+    // No step INTERVAL fields anymore: the footstep sound fires on the real foot-plant FRAME via
+    // FootstepTracker.PlayerStepped (frame-locked to the walk/run animation), not a per-second timer. See OnPlayerStep.
 
     [Header("Auto-combat (T to toggle)")]
     [Tooltip("While auto-combat roams, it engages the nearest mob within this range and walks to it. " +
@@ -186,6 +182,11 @@ public partial class Player3DController : MonoBehaviour
         // is still the progression layer (SkillRoster/HotbarBindings), not a class gate.
         EnsureComposedSkills();
     }
+
+    // The footstep sound rides the ONE central player-step signal (fired on the real foot-plant frame) instead of a
+    // local timer, so the sound, the puddle ripple and the snow print all land on the same frame from one source.
+    void OnEnable()  { FootstepTracker.PlayerStepped += OnPlayerStep; }
+    void OnDisable() { FootstepTracker.PlayerStepped -= OnPlayerStep; }
 
     // Attach one SkillRunner per authored SkillDef (idempotent — skips defs already carried). Runs on Awake so
     // a player built before a skill was composed still picks it up without a re-bake. Cold path (once per spawn).
@@ -289,8 +290,7 @@ public partial class Player3DController : MonoBehaviour
         // callback strikes. Skips input/orders until it lands (or times out).
         if (dashing)
         {
-            bool dashMoving = StepDash();
-            Footsteps(dashMoving);
+            StepDash();   // footstep SFX/prints ride the animation via FootstepTracker — no explicit tick here
             return;
         }
 
@@ -335,12 +335,10 @@ public partial class Player3DController : MonoBehaviour
         float baseSpeed = moveSpeed * UnitScale.ForPlayer * (WalkingSlow ? walkSpeedMult : 1f); // TRAVEL baseline (run vs walk) — NOT animation-scaling
         float gait = gaitSpeed * (status != null ? status.MoveMult : 1f);                        // GAIT baseline × live Slow/Haste — animation-scaling
         float spd = baseSpeed * gait;
-        // Bind gait to ACTUAL speed: the gait factor over the travel baseline. Drives both the footstep
-        // cadence (below) and the Walk/Run animation fps (stance visual) so they speed up/slow down together.
+        // Bind gait to ACTUAL speed: the gait factor over the travel baseline. Drives the Walk/Run animation fps
+        // (stance visual) — and, through it, the frame-locked footstep prints/SFX — so they speed up/slow down together.
         GaitSpeedMult = baseSpeed > 0.0001f ? spd / baseSpeed : 1f;
         ApplyGravityAndMove(move * spd);   // accumulating free-fall (sets `falling` for the in-air pose)
-
-        Footsteps(moving && !falling);   // no footsteps while free-falling through the air
         if (autoIndicator != null) autoIndicator.Show(AutoActive);   // show the "AUTO" tag only while roaming
     }
 
@@ -356,34 +354,16 @@ public partial class Player3DController : MonoBehaviour
         falling = !controller.isGrounded && vy < -fallAnimSpeed;
     }
 
-    // Tick footstep sounds while walking. nextStep is a persistent cooldown — we DON'T reset it when
-    // momentarily stopped, so a stand/chase stutter (e.g. pacing a kiting mob at range-edge) can't
-    // machine-gun the step SFX every other frame; steps still fire at most once per stepInterval.
-    void Footsteps(bool moving)
+    // Play the footstep sound on the REAL foot-plant. FootstepTracker fires PlayerStepped the instant the walk/run
+    // animation crosses an authored plant frame (frame-locked, so it tracks gait speed for free) — no per-second timer,
+    // no machine-gun guard needed, and the sound lands exactly with the visible foot and its puddle ripple.
+    void OnPlayerStep(Vector3 world, float size)
     {
-        if (!moving) { wasStepping = false; return; }
-
-        // Hold off the FIRST step sound of a fresh walk by the SAME gait-time the ripple delays its first print, so the
-        // sound stays glued to the splash. delay is in gait-time stride units → divide by gait for real seconds (the
-        // same scaling the interval below uses). Only when a delay is set, so the no-delay machine-gun guard is untouched.
-        if (!wasStepping)
-        {
-            wasStepping = true;
-            float delay = FootstepTracker.Instance != null ? FootstepTracker.Instance.firstStepDelay : 0f;
-            if (delay > 0f) nextStep = Time.time + delay / Mathf.Max(0.05f, GaitSpeedMult);
-        }
-
-        if (Time.time < nextStep) return;
-
-        // Splash instead of the dry step when the feet are over a visible rain puddle (the WetGround shader's
-        // own puddle mask answers "are we on water?" — see WetGround.IsPuddleAt). Falls back to the normal set.
+        // Splash instead of the dry step when the foot lands over a visible rain puddle (the WetGround shader's own
+        // puddle mask answers "are we on water?" — see WetGround.IsPuddleAt). Falls back to the normal set.
         bool onWater = waterFootstepSfx != null && !waterFootstepSfx.Empty
-                       && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(transform.position);
+                       && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(world);
         Sfx.Play(onWater ? waterFootstepSfx : footstepSfx);
-        // Tighten/loosen the gap with the live move speed: a speed buff (GaitSpeedMult > 1) shortens the interval
-        // so steps land more often; a Slow (< 1) widens it. At normal speed (1) this is the hand-tuned interval.
-        float interval = (WalkingSlow ? walkStepInterval : stepInterval) / Mathf.Max(0.05f, GaitSpeedMult);
-        nextStep = Time.time + interval;   // slower gait → wider gap
     }
 
     // ---- input: Dota controls -------------------------------------------------

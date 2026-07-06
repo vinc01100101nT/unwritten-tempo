@@ -57,11 +57,12 @@ public class TownNPC : MonoBehaviour
     bool stepLeft;              // alternating foot for the ripple zig-zag; false == RIGHT, so a fresh walk steps right first
     bool simulating = true;
 
-    // Footsteps: borrow the SAME clips + cadence the player walks on, so a town shares one consistent footstep
-    // voice (zero new audio assets). Resolved once for the whole town straight off Player3DController (the player's
-    // visual is now live-3D — no billboard to read). sStride is how far a unit travels per step at the player's
-    // tuned cadence (stepInterval × run speed); driving NPC steps off DISTANCE rather than a timer keeps them in
-    // sync with each NPC's own rolled speed (no foot-slide).
+    // Footsteps: borrow the SAME clips the player walks on, so a town shares one consistent footstep voice (zero new
+    // audio assets). Resolved once for the whole town straight off Player3DController. NPCs are BILLBOARDS with no
+    // real loco Animator, so — unlike the player's frame-locked prints — they keep a DISTANCE odometer: sStride is how
+    // far a unit travels per step, which stays in sync with each NPC's own rolled speed (no foot-slide). The player no
+    // longer owns a step-interval (its sound is frame-driven now), so the stride derives from a local cadence const.
+    const float NpcStepCadence = 0.42f;   // seconds/step the NPC stride distance is derived from (was the player's old run interval)
     static bool sGaitResolved;
     static SfxSet sPlayerFootstep;
     static SfxSet sWaterFootstep;   // the player's puddle-splash step, swapped in when an NPC is over a puddle
@@ -75,7 +76,7 @@ public class TownNPC : MonoBehaviour
         float runSpeed = pc.moveSpeed * UnitScale.ForPlayer;     // the player's normal (run) ground speed
         sPlayerFootstep = pc.footstepSfx;
         sWaterFootstep = pc.waterFootstepSfx;
-        sStride = Mathf.Max(0.1f, pc.stepInterval * runSpeed);   // world distance the player covers per step
+        sStride = Mathf.Max(0.1f, NpcStepCadence * runSpeed);    // world distance an NPC covers per step
         sGaitResolved = true;
         return true;
     }

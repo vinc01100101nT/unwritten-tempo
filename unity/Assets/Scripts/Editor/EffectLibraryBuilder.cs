@@ -49,6 +49,9 @@ public static class EffectLibraryBuilder
         new ScanRoot("Assets/Art/Hovl Studio/Procedural fire/Prefabs", "fire"),     // flat → all "fire.*"
         // Eric VFX ground circles — flat pack; drop the "FX_"/"MagicCircle" naming noise so ids read "circle.icearrow01".
         new ScanRoot("Assets/Eric VFX Studio/Game VFX - Magic Circle(Free)/Prefabs", "circle", new[] { "fx", "magiccircle" }),
+        // NamuFX stylized water — flat pack, all water FX → "water.*" (e.g. Water_Splash_A → water.splash-a, the
+        // puddle step splash WaterStep resolves by default).
+        new ScanRoot("Assets/NamuFX/StylizedWaterEffects/Prefabs", "water"),
     };
 
     const string LibraryPath = "Assets/Resources/EffectLibrary.asset";
