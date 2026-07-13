@@ -87,6 +87,7 @@ public class DevSettings : MonoBehaviour
     FootstepTracker foot;
     MobRespawn[] respawns;
     float nextRespawnRefresh;
+    float nextEnsureRefs;
 
     bool open;
     Vector2 scroll;
@@ -668,14 +669,17 @@ public class DevSettings : MonoBehaviour
             if (open) { EnsureRefs(); if (!built) { BuildKnobs(); built = true; } }
             else Blocking = false;
         }
-        if (open) EnsureRefs();
-#if UNITY_EDITOR
-        // [ / ] cycle the player's rigged model without opening the panel (suppressed while typing).
-        if (!Hotkeys.Typing)
+        // Re-resolve on a cadence, not per frame: any system ABSENT from this scene keeps its ref null,
+        // so a per-frame EnsureRefs would re-run that FindFirstObjectByType every frame while the panel is open.
+        if (open && Time.unscaledTime >= nextEnsureRefs)
         {
-            if (Input.GetKeyDown(KeyCode.LeftBracket))  PlayerModelSwap.Cycle(-1);
-            if (Input.GetKeyDown(KeyCode.RightBracket)) PlayerModelSwap.Cycle(1);
+            nextEnsureRefs = Time.unscaledTime + 0.5f;
+            EnsureRefs();
         }
+#if UNITY_EDITOR
+        // [ / ] cycle the player's rigged model without opening the panel (Hotkeys = suppressed while typing).
+        if (Hotkeys.Down(KeyCode.LeftBracket))  PlayerModelSwap.Cycle(-1);
+        if (Hotkeys.Down(KeyCode.RightBracket)) PlayerModelSwap.Cycle(1);
 #endif
     }
 
@@ -823,13 +827,5 @@ public class DevSettings : MonoBehaviour
         valueStyle.normal.textColor = new Color(0.7f, 1f, 0.7f);
     }
 
-    static bool Pressed()
-    {
-        // suppressed while typing into a text box (chat, dev tuners)
-        if (Hotkeys.Typing) return false;
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null) return Keyboard.current.pKey.wasPressedThisFrame;
-#endif
-        return Input.GetKeyDown(KeyCode.P);
-    }
+    static bool Pressed() => Hotkeys.Down(KeyCode.P);
 }

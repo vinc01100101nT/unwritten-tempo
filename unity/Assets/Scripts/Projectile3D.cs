@@ -21,8 +21,53 @@ public class Projectile3D : MonoBehaviour
                              Texture2D impactSheet = null, int impactFrameSize = 0, int impactFrames = 0,
                              float impactFps = 20f, float impactScale = 1f)
     {
-        if (body == null) { onArrive?.Invoke(); return; }   // no art → apply the effect immediately
+        // no art → apply the effect immediately
+        if (body == null) { onArrive?.Invoke(); return; }
 
+        var p = Create(body, frameSize, frameCount, fps, scale, from, target, fallbackPoint, speed, arriveRadius, maxLife);
+        p.onArrive = onArrive;
+        p.impactSheet = impactSheet; p.impactFrameSize = impactFrameSize; p.impactFrames = impactFrames;
+        p.impactFps = impactFps; p.impactScale = impactScale;
+    }
+
+    /// <summary>The hit state a zero-alloc on-arrive handler needs, carried BY VALUE on the projectile
+    /// instead of captured in a per-shot closure (PERFORMANCE.md: no `new` per combat event).
+    /// <c>at</c> is the arrival position (for popups/FX); <c>homing</c> is the tracked target transform.</summary>
+    public struct HitPayload
+    {
+        public Component source;
+        public Health target;
+        public Transform homing;
+        public int amount;
+        public Element element;
+        public Vector3 at;
+    }
+
+    /// <summary>As <see cref="Spawn"/> but zero-alloc per shot: the hit's state rides in a
+    /// <see cref="HitPayload"/> handed back to <paramref name="onArrive"/> — pass a CACHED
+    /// (static readonly) handler so nothing is allocated per launch.</summary>
+    public static void Spawn(Texture2D body, int frameSize, int frameCount, float fps, float scale,
+                             Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
+                             float arriveRadius, float maxLife, System.Action<HitPayload> onArrive,
+                             Component source, Health hitTarget, int amount, Element element)
+    {
+        var payload = new HitPayload
+        {
+            source = source, target = hitTarget, homing = target,
+            amount = amount, element = element, at = fallbackPoint
+        };
+        // no art → the blow lands instantly, same as the closure overload's null-body path
+        if (body == null) { onArrive?.Invoke(payload); return; }
+
+        var p = Create(body, frameSize, frameCount, fps, scale, from, target, fallbackPoint, speed, arriveRadius, maxLife);
+        p.onArriveWith = onArrive;
+        p.payload = payload;
+    }
+
+    static Projectile3D Create(Texture2D body, int frameSize, int frameCount, float fps, float scale,
+                               Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
+                               float arriveRadius, float maxLife)
+    {
         var go = new GameObject("Projectile3D");
         go.transform.position = from;
         go.transform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
@@ -39,10 +84,8 @@ public class Projectile3D : MonoBehaviour
         p.speed = Mathf.Max(0.1f, speed);
         p.arriveRadius = Mathf.Max(0.05f, arriveRadius);
         p.die = Time.time + Mathf.Max(0.05f, maxLife);
-        p.onArrive = onArrive;
-        p.impactSheet = impactSheet; p.impactFrameSize = impactFrameSize; p.impactFrames = impactFrames;
-        p.impactFps = impactFps; p.impactScale = impactScale;
         if (p.frames.Length > 0) sr.sprite = p.frames[0];
+        return p;
     }
 
     /// <summary>As <see cref="Spawn"/> but the projectile IS a particle effect from the <see cref="EffectLibrary"/>
@@ -78,6 +121,9 @@ public class Projectile3D : MonoBehaviour
     SpriteRenderer sr; Sprite[] frames; float fps, t;
     Transform target; Vector3 point; float speed, arriveRadius, die;
     System.Action onArrive;
+    // typed twin of onArrive: the payload rides here so callers can pass a cached handler (no closure)
+    System.Action<HitPayload> onArriveWith;
+    HitPayload payload;
     Texture2D impactSheet; int impactFrameSize, impactFrames; float impactFps, impactScale;
     Vfx.EffectHandle travel;   // Hovl travel mode (SpawnVfx)
     bool done;
@@ -108,6 +154,11 @@ public class Projectile3D : MonoBehaviour
         if (impactSheet != null)
             SlashEffect.Spawn(impactSheet, impactFrameSize, impactFrames, impactFps, transform.position, impactScale);
         onArrive?.Invoke();
+        if (onArriveWith != null)
+        {
+            payload.at = transform.position;
+            onArriveWith(payload);
+        }
         Destroy(gameObject);
     }
 }

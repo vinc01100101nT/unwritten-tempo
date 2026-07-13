@@ -45,7 +45,7 @@ public class ComboComposerPanel : MonoBehaviour
             bool open = UiAnim.Toggle(root);
             if (open) { ClearSelection(); Rebuild(); UISounds.PlayOpen(); } else UISounds.PlayClose();
         }
-        else if (UiAnim.IsOpen(root) && Input.GetKeyDown(KeyCode.Escape))
+        else if (UiAnim.IsOpen(root) && Hotkeys.CancelDown())
         {
             UiAnim.Close(root); UISounds.PlayClose();
         }

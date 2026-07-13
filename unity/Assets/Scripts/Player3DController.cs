@@ -676,8 +676,22 @@ public partial class Player3DController : MonoBehaviour
     }
 
     // ---- raycast + input helpers (new Input System OR legacy) -----------------
-    /// <summary>The living mob under the cursor (camera raycast), or null. Static so GameCursor3D shares it.</summary>
+    static int cursorPickFrame = -1;
+    static Health cursorPick;
+
+    /// <summary>The living mob under the cursor (camera raycast), or null. Static so GameCursor3D shares it.
+    /// Frame-memoized: it's read up to 3× per frame (GameCursor3D, MobHoverPanel, click/target handlers), so the
+    /// raycast + snap scan runs ONCE and the rest of the frame reads the cached pick. All callers pass the one
+    /// gameplay camera, so the memo doesn't key on <paramref name="cam"/>.</summary>
     public static Health MonsterUnderCursor(Camera cam)
+    {
+        if (Time.frameCount == cursorPickFrame) return cursorPick;
+        cursorPickFrame = Time.frameCount;
+        cursorPick = PickMonsterUnderCursor(cam);
+        return cursorPick;
+    }
+
+    static Health PickMonsterUnderCursor(Camera cam)
     {
         if (cam == null) return null;
         // The cursor is over a HUD element (e.g. an open Inventory/Equipment/Character window): don't
@@ -771,87 +785,22 @@ public partial class Player3DController : MonoBehaviour
     /// Delegates to <see cref="UiBlock"/> so uGUI windows AND IMGUI overlays (dev panels) both block.</summary>
     static bool PointerOverUI() => UiBlock.PointerOverUI();
 
-    static bool KeyA()
-    {
-        if (Hotkeys.Typing) return false;
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.aKey.wasPressedThisFrame) return true;
-#endif
-        return Input.GetKeyDown(KeyCode.A);
-    }
+    // All key reads route through Hotkeys — the ONE input choke point (typing guard + the new-or-legacy
+    // backend dance live there, not per key here). Esc uses CancelDown: cancel must work while typing.
+    static bool KeyA()   => Hotkeys.Down(KeyCode.A);
+    static bool KeyT()   => Hotkeys.Down(KeyCode.T);
+    static bool KeyS()   => Hotkeys.Down(KeyCode.S);
+    static bool KeyEsc() => Hotkeys.CancelDown();
 
-    static bool KeyT()
-    {
-        if (Hotkeys.Typing) return false;
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame) return true;
-#endif
-        return Input.GetKeyDown(KeyCode.T);
-    }
+    // WASD movement uses HELD reads, not the edge reads above, so motion continues while the key is down.
+    static bool HeldW() => Hotkeys.Held(KeyCode.W);
+    static bool HeldA() => Hotkeys.Held(KeyCode.A);
+    static bool HeldS() => Hotkeys.Held(KeyCode.S);
+    static bool HeldD() => Hotkeys.Held(KeyCode.D);
 
-    static bool KeyS()
-    {
-        if (Hotkeys.Typing) return false;
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.sKey.wasPressedThisFrame) return true;
-#endif
-        return Input.GetKeyDown(KeyCode.S);
-    }
-
-    static bool KeyEsc()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) return true;
-#endif
-        return Input.GetKeyDown(KeyCode.Escape);
-    }
-
-    // WASD movement uses HELD reads (isPressed / GetKey), not the edge reads above, so motion
-    // continues for as long as the key is down.
-    static bool HeldW()
-    {
-        if (Hotkeys.Typing) return false;
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.wKey.isPressed) return true;
-#endif
-        return Input.GetKey(KeyCode.W);
-    }
-
-    static bool HeldA()
-    {
-        if (Hotkeys.Typing) return false;
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.aKey.isPressed) return true;
-#endif
-        return Input.GetKey(KeyCode.A);
-    }
-
-    static bool HeldS()
-    {
-        if (Hotkeys.Typing) return false;
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.sKey.isPressed) return true;
-#endif
-        return Input.GetKey(KeyCode.S);
-    }
-
-    static bool HeldD()
-    {
-        if (Hotkeys.Typing) return false;
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.dKey.isPressed) return true;
-#endif
-        return Input.GetKey(KeyCode.D);
-    }
-
-    // Shift = walk (held). Either Shift key downshifts run → walk.
-    static bool HeldShift()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && (Keyboard.current.leftShiftKey.isPressed || Keyboard.current.rightShiftKey.isPressed)) return true;
-#endif
-        return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-    }
+    // Shift = walk (held). Either Shift key downshifts run → walk. (Typing-guarded now like the rest —
+    // harmless, since Shift only modifies movement and the movement keys are already suppressed.)
+    static bool HeldShift() => Hotkeys.Held(KeyCode.LeftShift) || Hotkeys.Held(KeyCode.RightShift);
 
     void OnDrawGizmosSelected()
     {

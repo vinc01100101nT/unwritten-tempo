@@ -96,7 +96,7 @@ public class ProgressionWindows : MonoBehaviour
         if (Hotkeys.Down(KeyCode.B)) UiAnim.Toggle(invRoot);
         if (Hotkeys.Down(KeyCode.V)) UiAnim.Toggle(equipRoot);
         if (Hotkeys.Down(KeyCode.C)) UiAnim.Toggle(charRoot);
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Hotkeys.CancelDown())
         {
             if (cardDialog != null) UiAnim.Close(cardDialog);
             UiAnim.Close(invRoot); UiAnim.Close(equipRoot); UiAnim.Close(charRoot);

@@ -55,7 +55,7 @@ public class CalendarPanel : MonoBehaviour
             bool open = UiAnim.Toggle(panel);
             if (open) UISounds.PlayOpen(); else UISounds.PlayClose();
         }
-        else if (UiAnim.IsOpen(panel) && Input.GetKeyDown(KeyCode.Escape))
+        else if (UiAnim.IsOpen(panel) && Hotkeys.CancelDown())
         {
             UiAnim.Close(panel);
             UISounds.PlayClose();

@@ -33,6 +33,42 @@ or the Profiler ▸ Hierarchy for the precise per-system number.
 
 ---
 
+## 2026-07-14 — Zero-alloc sweep + dead-code purge; PerfHud at/below the known editor floor
+
+Checkup after a full-codebase review session: alloc fixes applied first, then measured.
+
+- **Mobs in test:** 32 (gathered), then 17 after an auto-attack (T) wipe; rain active in the second read.
+- **Combat alloc:** PerfHud only this run — `GC/s 3.3 MB / peak 150.5 KB` @32 mobs, `GC/s 2.6 MB /
+  peak 354.6 KB` @17 post-wipe. Both at/below the documented editor floor (baseline 2026-06-20 read
+  `4.5 MB/s / 666 KB` while Hierarchy proved gameplay ~0), so **no regression signal**. The higher
+  post-wipe `peak` is max-since-F4 catching one-time transients (mass DeathDissolve/respawn/loot from
+  the wipe + rain starting), not steady-state churn. **Profiler ▸ Hierarchy rows were NOT captured** —
+  no authoritative per-script 0 B this run; capture them next checkup after an F4 reset mid-fight.
+- **Frame time:** 9.5–9.6 ms at 104–106 FPS in-editor (editor-inflated) — healthy.
+- **Found (static scan):** the 12 unchecked commits since the last entry (humanoid migration, stances,
+  3D weapons, palette customization) grep clean — dye re-bakes are event-time, stance/pose tables are
+  Awake-built. Review-level allocators found and fixed before measuring (below).
+- **Fixed (pre-measure, this session):**
+  - `Player3DAttacker` swing/strike + `SkillRunner` repeat-cycles → manual timer loops (was
+    `new WaitForSeconds` per swing/cast); `PlayerHurtFlash` → cached wait (the `Health.flashWait` pattern).
+  - `Projectile3D` → `HitPayload` + cached static handlers (`MonsterAI3D.LandRangedHit`,
+    `Player3DAttacker.LandArrow`); no more closure per ranged shot.
+  - `Player3DController.MonsterUnderCursor` → frame-memoized (was up to 3 raycast+snap-scans per frame
+    across GameCursor3D / MobHoverPanel / click handlers).
+  - `DevSettings.EnsureRefs` → 0.5 s cadence while open (was per-frame `FindFirstObjectByType` for any
+    system absent from the scene).
+  - `Hotkeys` now owns the dual input-backend reads + `CancelDown()`; ~10 per-key wrappers and 10
+    scattered Escape reads collapsed into it.
+  - Dead code deleted: `Character3DDriver`, `ClickMarker`, `DevGui`, `FriendlyUnit`, `SpriteFactory`,
+    `PlayerInteractor`, `Interactable` (+ WorldTools `Create NPC` tool). `MultiHitBurst` kept (planned
+    Meteor multi-hit revival); `DialogueUI`/`InteractPrompt` kept as dormant reusable UI halves.
+- **New rule added to PERFORMANCE.md?** no — every fix applies existing rules.
+- **Verdict:** no regression; the alloc fixes are in and the editor-floor numbers match the known-clean
+  baseline. Next checkup: F4-reset mid-fight (past the transients) and capture Profiler ▸ Hierarchy for
+  the authoritative per-script 0 B, including a ranged-caster pack to exercise the new projectile path.
+
+---
+
 ## 2026-06-20 — RO-combat systems checkup: clean (PerfHud editor-inflation clarified)
 
 Checkup after the RO-combat batch (animated NinjaGreen player, `MobNameplate`, `StatusController`,

@@ -81,6 +81,21 @@ public class MonsterAI3D : MonoBehaviour
     static readonly Color PhysHitColor  = new Color(1f, 0.35f, 0.35f);
     static readonly Color StunColor     = new Color(1f, 0.9f, 0.3f);
 
+    // Cached on-arrive for the ranged-caster projectile — allocated once, shared by every shot from every
+    // mob. The shot's damage/element/source travel in the HitPayload; `homing` is the player transform
+    // (guarded: the projectile only lands on a live Character, same as the old closure).
+    static readonly System.Action<Projectile3D.HitPayload> LandRangedHit = p =>
+    {
+        if (Character.Instance == null || Character.Instance.IsDead) return;
+        var mob = (MonsterAI3D)p.source;
+        int d = Character.Instance.TakeMagicDamage(p.amount, p.element, mob);
+        if (d > 0)
+        {
+            DamagePopup.Spawn(p.homing != null ? p.homing.position : p.at, d, MagicHitColor);
+            mob.TryInflictOnHit();
+        }
+    };
+
     PathAgent3D agent;
     Player3DAttacker playerAtk;   // cached once (Start) so the melee hold-distance can clamp to the player's reach without a per-frame GetComponent
     AttackLunge lunge;
@@ -229,17 +244,13 @@ public class MonsterAI3D : MonoBehaviour
             if (attackType == AttackType.Magic && projectileSheet != null)
             {
                 // Ranged caster: lob a VISIBLE projectile at the player; the magic damage lands on arrival.
-                int dmg = atk;            // capture for the on-arrive callback
-                Element elem = attackElement;
-                var self = this;          // for damage-reflect on arrival (guarded if we've since died)
-                Vector3 from = UnitAnchor.Center(transform);   // cast from the mob's mid-body (feet-pivoted)
+                // The hit state (damage/element/this) rides the projectile's HitPayload into the CACHED
+                // LandRangedHit handler — no per-shot closure (PERFORMANCE.md: no `new` per combat event).
+                // cast from the mob's mid-body (feet-pivoted)
+                Vector3 from = UnitAnchor.Center(transform);
                 Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
-                    from, player, UnitAnchor.Center(player), projSpeed, 0.45f, 3f, () =>
-                    {
-                        if (Character.Instance == null || Character.Instance.IsDead) return;
-                        int d = Character.Instance.TakeMagicDamage(dmg, elem, self);
-                        if (d > 0) { DamagePopup.Spawn(player.position, d, MagicHitColor); self.TryInflictOnHit(); }
-                    });
+                    from, player, UnitAnchor.Center(player), projSpeed, 0.45f, 3f, LandRangedHit,
+                    this, null, atk, attackElement);
             }
             else
             {

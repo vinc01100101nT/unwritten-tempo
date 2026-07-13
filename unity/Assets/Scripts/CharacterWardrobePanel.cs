@@ -64,7 +64,7 @@ public class CharacterWardrobePanel : MonoBehaviour
             if (open) { EnsureParts(); UISounds.PlayOpen(); }
             else UISounds.PlayClose();
         }
-        else if (UiAnim.IsOpen(panelRoot) && Input.GetKeyDown(KeyCode.Escape))
+        else if (UiAnim.IsOpen(panelRoot) && Hotkeys.CancelDown())
         {
             UiAnim.Close(panelRoot);
             UISounds.PlayClose();

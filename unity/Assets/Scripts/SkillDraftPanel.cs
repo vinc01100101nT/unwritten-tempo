@@ -58,7 +58,7 @@ public class SkillDraftPanel : MonoBehaviour
             bool open = UiAnim.Toggle(panelRoot);
             if (open) { Render(); UISounds.PlayOpen(); } else UISounds.PlayClose();   // refresh live ring XP on open
         }
-        else if (UiAnim.IsOpen(panelRoot) && Input.GetKeyDown(KeyCode.Escape))
+        else if (UiAnim.IsOpen(panelRoot) && Hotkeys.CancelDown())
         {
             UiAnim.Close(panelRoot);
             UISounds.PlayClose();

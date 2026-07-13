@@ -161,7 +161,9 @@ public class Player3DAttacker : MonoBehaviour
         float scale = MotionScale;
         float swingTime = SwingTime;
         float impactAt = swingTime * Mathf.Clamp01(hitTiming);
-        yield return new WaitForSeconds(impactAt);
+        // Manual timer, not `new WaitForSeconds`: this coroutine starts EVERY swing during auto-combat,
+        // and the duration varies with attack speed so a cached wait can't cover it (PERFORMANCE.md).
+        for (float el = 0f; el < impactAt; el += Time.deltaTime) yield return null;
 
         // RO-style commit: once the swing has STARTED (gated on InRange in TryAttack), the blow LANDS regardless of how
         // far the target has since walked — the attack is animation-locked, not re-checked at impact. We only skip a
@@ -171,11 +173,13 @@ public class Player3DAttacker : MonoBehaviour
             if (IsRanged)
             {
                 // Ranged weapon: release an arrow that homes onto the target; the blow lands when it arrives (which
-                // re-checks validity — the target may die mid-flight). Same per-shot spawn pattern as the mob casters.
-                Health tgt = t;
-                Vector3 from = UnitAnchor.Center(transform);   // release from mid-body (feet-pivoted)
+                // re-checks validity — the target may die mid-flight). The target rides the projectile's HitPayload
+                // into the CACHED LandArrow handler — no per-shot closure.
+                // release from mid-body (feet-pivoted)
+                Vector3 from = UnitAnchor.Center(transform);
                 Projectile3D.Spawn(arrowSheet, arrowFrameSize, arrowFrames, arrowFps, arrowScale,
-                    from, t.transform, UnitAnchor.Center(t.transform), arrowSpeed, 0.35f, 3f, () => LandBasicHit(tgt));
+                    from, t.transform, UnitAnchor.Center(t.transform), arrowSpeed, 0.35f, 3f, LandArrow,
+                    this, t, 0, Element.Neutral);
             }
             else LandBasicHit(t);
         }
@@ -183,7 +187,7 @@ public class Player3DAttacker : MonoBehaviour
         // Let the rest of the swing play out before freeing the slot, so the pose/animation completes and the next
         // swing still starts one SwingTime after this one began (DPS unchanged).
         float rest = swingTime - impactAt;
-        if (rest > 0f) yield return new WaitForSeconds(rest);
+        for (float el = 0f; el < rest; el += Time.deltaTime) yield return null;
         swing = null;
     }
 
@@ -235,13 +239,20 @@ public class Player3DAttacker : MonoBehaviour
         swing = StartCoroutine(StrikeRoutine(t, ctx, hitSfx));
     }
 
+    // Cached arrow on-arrive — one delegate ever; the shot's attacker + target travel in the HitPayload.
+    // LandBasicHit re-rolls damage/crit at arrival and re-checks the target, exactly as the old closure did.
+    static readonly System.Action<Projectile3D.HitPayload> LandArrow = p =>
+        ((Player3DAttacker)p.source).LandBasicHit(p.target);
+
     static readonly Collider[] cleaveBuf = new Collider[16];
 
     // Coroutines can't take `in`/`ref` params, so the context is copied by value here (a small struct).
     IEnumerator StrikeRoutine(Health t, SkillContext ctx, SfxSet hitSfx)
     {
         float scale = MotionScale;
-        yield return new WaitForSeconds(windupTime * scale);
+        // manual timer for the same reason as SwingThenHit: per-cast coroutine, variable duration
+        float windup = windupTime * scale;
+        for (float el = 0f; el < windup; el += Time.deltaTime) yield return null;
         swing = null;
         if (t == null || t.IsDead) yield break;
         if (PlanarDist(t) > EffectiveRange * 1.6f) yield break;   // target slipped out of the skill's (extended) reach

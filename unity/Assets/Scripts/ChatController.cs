@@ -45,7 +45,7 @@ public class ChatController : MonoBehaviour
             FocusInput();
             return;
         }
-        if (UiAnim.IsOpen(root) && Input.GetKeyDown(KeyCode.Escape))
+        if (UiAnim.IsOpen(root) && Hotkeys.CancelDown())
         {
             if (input != null) input.DeactivateInputField();
             UiAnim.Close(root);

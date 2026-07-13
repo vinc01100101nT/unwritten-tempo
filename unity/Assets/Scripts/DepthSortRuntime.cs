@@ -136,8 +136,7 @@ public static class DepthSortRuntime
     public static bool IsUnit(SpriteRenderer sr)
     {
         var go = sr.gameObject;
-        return go.GetComponent<Interactable>() != null   // live NPCs (dialogue/interact)
-            || go.GetComponent<Player3DController>() != null
+        return go.GetComponent<Player3DController>() != null
             || go.GetComponent<MonsterAI3D>() != null;
     }
 

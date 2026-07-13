@@ -1,4 +1,3 @@
-using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -6,8 +5,10 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Editor helpers for Phase C world-building: a one-click screen-space dialogue
-/// box, and a one-click NPC built from a selected (sliced) character sheet.
+/// Editor helpers for Phase C world-building: a one-click screen-space dialogue box and interact-prompt
+/// badge (kept as the reusable UI half for a future 3D press-to-talk system), plus spawn-point creation.
+/// The 2D-era Interactable/PlayerInteractor finder half was retired — NPC discovery must be rebuilt on the
+/// registry pattern (see TownNPC) when dialogue returns.
 /// </summary>
 public static class WorldTools
 {
@@ -132,45 +133,6 @@ public static class WorldTools
         EditorGUIUtility.PingObject(asset);
     }
 
-    [MenuItem("Tools/unwritten/Mobs & NPCs/Create NPC from selected SpriteSheet", priority = 330)]
-    static void CreateNpc()
-    {
-        Sprite sprite = null;
-        string srcName = null;
-        if (Selection.activeObject is Texture2D tex)
-        {
-            string path = AssetDatabase.GetAssetPath(tex);
-            sprite = AssetDatabase.LoadAllAssetsAtPath(path)
-                .OfType<Sprite>().OrderBy(FrameIndex).FirstOrDefault();
-            srcName = tex.name;
-        }
-
-        var go = new GameObject("NPC");
-        var sr = go.AddComponent<SpriteRenderer>();
-        sr.sortingOrder = 0;                       // shared "units" band — depth is by Y (transparency axis)
-        if (sprite != null) sr.sprite = sprite;
-
-        var box = go.AddComponent<BoxCollider2D>();
-        box.size = Vector2.one * 0.8f;
-
-        var it = go.AddComponent<Interactable>();
-        it.speaker = "Villager";
-        it.lines = new[]
-        {
-            "Welcome to the field, traveler.",
-            "The trees don't move — but out there, other things do.",
-        };
-
-        go.transform.position = new Vector3(2f, 0f, 0f);
-
-        Undo.RegisterCreatedObjectUndo(go, "Create NPC");
-        EditorSceneManager.MarkSceneDirty(go.scene);
-        Selection.activeGameObject = go;
-        Debug.Log(sprite != null
-            ? $"[unwritten] Created NPC from '{srcName}'. Move it, and edit its dialogue on the Interactable."
-            : "[unwritten] Created NPC (no sprite — select a sliced character sheet first, or assign one in its SpriteRenderer).");
-    }
-
     [MenuItem("Tools/unwritten/World/Create Spawn Point", priority = 231)]
     static void CreateSpawnPoint()
     {
@@ -189,11 +151,5 @@ public static class WorldTools
         var t = UiKit.MakeText(name, parent, name, size, style, TextAnchor.UpperLeft);
         t.color = Color.white;
         return t.gameObject;
-    }
-
-    static int FrameIndex(Sprite s)
-    {
-        int u = s.name.LastIndexOf('_');
-        return (u >= 0 && int.TryParse(s.name.Substring(u + 1), out int n)) ? n : 0;
     }
 }

@@ -264,10 +264,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         float interval = def.repeatInterval > 0f ? def.repeatInterval
                        : (def.vfx != null && def.vfx.RestartInterval > 0f ? def.vfx.RestartInterval : 0.35f);
-        var wait = new WaitForSeconds(interval);
         for (int i = 0; i < extra; i++)
         {
-            yield return wait;
+            // manual timer, not `new WaitForSeconds`: this coroutine starts per cast and the interval varies per skill
+            for (float t = 0f; t < interval; t += Time.deltaTime) yield return null;
             VfxDirector.Play(def.vfx, ctx, onTick);
         }
     }

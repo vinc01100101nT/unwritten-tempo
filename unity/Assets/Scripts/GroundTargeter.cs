@@ -114,11 +114,5 @@ public class GroundTargeter : MonoBehaviour
         return Input.GetMouseButtonDown(0);
     }
 
-    static bool EscDown()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) return true;
-#endif
-        return Input.GetKeyDown(KeyCode.Escape);
-    }
+    static bool EscDown() => Hotkeys.CancelDown();
 }

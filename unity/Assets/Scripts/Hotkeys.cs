@@ -39,11 +39,77 @@ public static class Hotkeys
         }
     }
 
-    /// <summary>Key pressed this frame — suppressed while typing.</summary>
-    public static bool Down(KeyCode key) => !Typing && Input.GetKeyDown(key);
+    /// <summary>Key pressed this frame — suppressed while typing. Reads the new Input System when it's
+    /// active AND the legacy manager (an OR, matching the per-key wrappers this replaced), so every
+    /// Hotkeys-routed key works under either backend — the backend dance lives HERE, nowhere else.</summary>
+    public static bool Down(KeyCode key)
+    {
+        if (Typing) return false;
+#if ENABLE_INPUT_SYSTEM
+        var kb = Keyboard.current;
+        if (kb != null)
+        {
+            var k = ToKey(key);
+            if (k != Key.None && kb[k].wasPressedThisFrame) return true;
+        }
+#endif
+        return Input.GetKeyDown(key);
+    }
 
     /// <summary>Key held — suppressed while typing (so WASD doesn't walk the avatar while you type).</summary>
-    public static bool Held(KeyCode key) => !Typing && Input.GetKey(key);
+    public static bool Held(KeyCode key)
+    {
+        if (Typing) return false;
+#if ENABLE_INPUT_SYSTEM
+        var kb = Keyboard.current;
+        if (kb != null)
+        {
+            var k = ToKey(key);
+            if (k != Key.None && kb[k].isPressed) return true;
+        }
+#endif
+        return Input.GetKey(key);
+    }
+
+    /// <summary>Escape pressed this frame. Deliberately NOT typing-guarded: cancel/close-window must
+    /// still work while a text box is focused (e.g. Esc closes the chat). The one shared front door for
+    /// every panel's close-on-Escape, so the "Esc works while typing" rule can't fork per panel.</summary>
+    public static bool CancelDown()
+    {
+#if ENABLE_INPUT_SYSTEM
+        var kb = Keyboard.current;
+        if (kb != null && kb.escapeKey.wasPressedThisFrame) return true;
+#endif
+        return Input.GetKeyDown(KeyCode.Escape);
+    }
+
+#if ENABLE_INPUT_SYSTEM
+    // Legacy KeyCode → new-Input-System Key, for the keys this game binds. Key.None = no mapping
+    // (the caller then relies on the legacy read alone).
+    static Key ToKey(KeyCode k)
+    {
+        if (k >= KeyCode.A && k <= KeyCode.Z) return Key.A + (k - KeyCode.A);
+        if (k >= KeyCode.Alpha1 && k <= KeyCode.Alpha9) return Key.Digit1 + (k - KeyCode.Alpha1);
+        if (k >= KeyCode.F1 && k <= KeyCode.F12) return Key.F1 + (k - KeyCode.F1);
+        switch (k)
+        {
+            case KeyCode.Alpha0:       return Key.Digit0;
+            case KeyCode.Space:        return Key.Space;
+            case KeyCode.Escape:       return Key.Escape;
+            case KeyCode.Return:       return Key.Enter;
+            case KeyCode.Tab:          return Key.Tab;
+            case KeyCode.LeftShift:    return Key.LeftShift;
+            case KeyCode.RightShift:   return Key.RightShift;
+            case KeyCode.LeftAlt:      return Key.LeftAlt;
+            case KeyCode.RightAlt:     return Key.RightAlt;
+            case KeyCode.LeftControl:  return Key.LeftCtrl;
+            case KeyCode.RightControl: return Key.RightCtrl;
+            case KeyCode.LeftBracket:  return Key.LeftBracket;
+            case KeyCode.RightBracket: return Key.RightBracket;
+            default:                   return Key.None;
+        }
+    }
+#endif
 
     /// <summary>Digit 1–9 for hotbar slot <paramref name="i"/> (0-based) pressed this frame. Suppressed while typing.</summary>
     public static bool DigitDown(int i)

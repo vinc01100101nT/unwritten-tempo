@@ -33,6 +33,8 @@ Performance is a **hard constraint** for this game (3D world + many billboard mo
 | Static scenery depth (trees/houses) | **Baked once** in `DepthSortRuntime` (fixed `sortingOrder` from foot-Y) | Only **moving** units carry a per-frame sorter (`CameraDepthSorter`). Never add a per-frame sorter to a static prop. |
 | Physics overlap/raycast queries | `*NonAlloc` **variants with a reused buffer** | e.g. `Physics.OverlapSphereNonAlloc(..., overlapBuf, ...)`. No garbage per query. |
 | Recycling dead mobs | `MobRespawn` re-enables the same object | Don't `Destroy`/`Instantiate` mobs on a cadence — recycle. |
+| Handing state to an on-arrive / on-complete callback (projectiles, delayed hits) | `Projectile3D.HitPayload` + a **cached** `static readonly Action<HitPayload>` handler | A lambda that captures locals allocates a closure **per shot**. Instead the state rides the carrier in a by-value struct and one shared handler reads it back (see `MonsterAI3D.LandRangedHit`, `Player3DAttacker.LandArrow`). Reuse the pattern for any per-event callback. |
+| The same expensive question asked by several systems in one frame | **Frame memo**: stamp `Time.frameCount`, compute once, share the result | The cursor pick (raycast + mob snap-scan) was computed up to 3×/frame by `GameCursor3D`, `MobHoverPanel`, and click handlers. A two-field memo (`Player3DController.MonsterUnderCursor`) makes N callers cost one scan. Sibling of rule 2 — this is the idiom for *queries*, `CameraRig` is the idiom for *values*. |
 
 ---
 
@@ -44,7 +46,8 @@ Performance is a **hard constraint** for this game (3D world + many billboard mo
 - ❌ `Sprite.Create` / `new Texture2D` per spawn. → `SpriteSheetCache`.
 - ❌ Building a `GameObject` + `Canvas` per UI element that spawns repeatedly. → Pool under one canvas.
 - ❌ **Returning a** `new List`**/array from a hot, repeatedly-called API.** → Fill a **caller-owned buffer** passed in (see `Pathfinder3D.FindPath(..., List<Vector2> result)`). This was the single biggest combat allocator — mobs repath constantly, and each call newed several lists.
-- ❌ `new WaitForSeconds(x)` every coroutine start. → Cache the `WaitForSeconds` in a field.
+- ❌ `new WaitForSeconds(x)` every coroutine start. → **Fixed** duration: cache the `WaitForSeconds` in a field (`Health.flashWait`). **Variable** duration (anything scaled by attack speed / per-skill config — a field can't cover it): zero-alloc manual timer, `for (float el = 0f; el < dur; el += Time.deltaTime) yield return null;` (see `Player3DAttacker`; don't name the counter `t` — it collides with the conventional `Health t` parameter, CS0136).
+- ❌ A lazy `if (x == null) x = FindFirstObjectByType<T>()` fallback **inside a per-frame path** when `x` can be legitimately ABSENT (system not in this scene, player between scenes). The "runs once" intent silently becomes a `Find` every frame, forever. → Resolve at open/scene-load, or throttle the retry to a cadence (see `DevSettings.EnsureRefs`, 0.5 s).
 - ❌ `Vector3.Distance` / `.magnitude` when you only need to compare. → `sqrMagnitude` vs `r*r`.
 - ❌ Writing `RenderSettings.*` or other globals every frame. → Only when the value actually changed (see `DayNightLight` early-out).
 - ❌ Per-frame `string` interpolation for the inspector/debug. → `#if UNITY_EDITOR` it, or only on change.

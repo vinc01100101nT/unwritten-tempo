@@ -5,9 +5,10 @@ using TMPro;
 /// <summary>
 /// Minimal dialogue box. One instance lives on the DialogueCanvas (built by
 /// Tools ▸ unwritten ▸ Build Dialogue UI). Code calls
-/// <c>DialogueUI.Instance.Begin(speaker, lines)</c>; the player's
-/// <see cref="PlayerInteractor"/> calls <see cref="Advance"/> to step through the
-/// lines and close at the end.
+/// <c>DialogueUI.Instance.Begin(speaker, lines)</c> and steps lines with <see cref="Advance"/>.
+/// DORMANT (kept for reuse): the 2D-era finder that drove it (PlayerInteractor/Interactable)
+/// was retired; a future 3D press-to-talk system should rediscover NPCs via a registry scan
+/// (see TownNPC) and call Begin/Advance here — the box itself is world-agnostic.
 /// </summary>
 public class DialogueUI : MonoBehaviour
 {

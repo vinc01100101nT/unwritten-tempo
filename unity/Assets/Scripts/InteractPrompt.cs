@@ -3,9 +3,10 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// A single floating marker (e.g. "▽ Talk · E") that the <see cref="PlayerInteractor"/>
-/// parks above whichever <see cref="Interactable"/> is currently nearest, and hides
-/// otherwise. Reusable for any interactable — the verb comes from Interactable.prompt.
+/// A single floating marker (e.g. "▽ Talk · E") parked above a world target via
+/// <see cref="ShowAbove"/>, hidden with <see cref="Hide"/>. DORMANT (kept for reuse):
+/// its 2D-era driver (PlayerInteractor/Interactable) was retired; a future 3D
+/// press-to-talk system supplies the nearest-NPC transform and the verb text.
 ///
 /// Lives on a screen-space-overlay canvas; each frame it projects the target's
 /// world position to a screen point and moves the marker there.

@@ -108,14 +108,6 @@ public class PerfHud : MonoBehaviour
         return (b / 1048576f).ToString("0.0") + " MB";
     }
 
-    static bool Pressed(KeyCode key)
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Keyboard.current != null)
-            return key == KeyCode.F3 ? Keyboard.current.f3Key.wasPressedThisFrame
-                 : key == KeyCode.F4 && Keyboard.current.f4Key.wasPressedThisFrame;
-#endif
-        return Input.GetKeyDown(key);
-    }
+    static bool Pressed(KeyCode key) => Hotkeys.Down(key);
 }
 #endif

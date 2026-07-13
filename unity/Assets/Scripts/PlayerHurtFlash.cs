@@ -16,8 +16,14 @@ public class PlayerHurtFlash : MonoBehaviour
     SpriteRenderer sr;
     Character ch;
     Coroutine co;
+    // cached: Flash() runs per hit taken, and flashTime is fixed (same pattern as Health.flashWait)
+    WaitForSeconds flashWait;
 
-    void Awake() => sr = GetComponent<SpriteRenderer>();
+    void Awake()
+    {
+        sr = GetComponent<SpriteRenderer>();
+        flashWait = new WaitForSeconds(flashTime);
+    }
 
     void Start()
     {
@@ -37,7 +43,7 @@ public class PlayerHurtFlash : MonoBehaviour
     IEnumerator Flash()
     {
         sr.color = flashColor;
-        yield return new WaitForSeconds(flashTime);
+        yield return flashWait;
         sr.color = Color.white;
         co = null;
     }
