@@ -25,7 +25,7 @@ public partial class Player3DController : MonoBehaviour
 {
     [Tooltip("TRAVEL speed: base ground translation (world units, pre-UnitScale). Changing this moves you faster/slower " +
              "WITHOUT scaling the animation — GaitSpeedMult divides it back out, so the legs keep their baked cadence.")]
-    public float moveSpeed = 1f;
+    public float moveSpeed = 2f;
     [Tooltip("GAIT speed: a baseline multiplier that scales movement AND animation together (the permanent twin of the " +
              "DevSettings Haste buff). Stacks multiplicatively with live Slow/Haste, so legs + footsteps churn with it.")]
     public float gaitSpeed = 1.5f;
@@ -34,7 +34,7 @@ public partial class Player3DController : MonoBehaviour
     /// (but NOT the Shift-walk slowdown). The dodge roll (E) reads this so it's always exactly 2× the current run.</summary>
     public float CurrentRunSpeed => moveSpeed * UnitScale.ForPlayer * gaitSpeed * (status != null ? status.MoveMult : 1f);
     [Tooltip("Speed multiplier while holding Shift to walk — slower than the default run, and plays the Walk animation.")]
-    public float walkSpeedMult = 0.45f;
+    public float walkSpeedMult = 0.2f;
     /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="Character3DVisual"/>'s stance brain to
     /// choose the Walk vs Run animation.</summary>
     public bool WalkingSlow { get; private set; }

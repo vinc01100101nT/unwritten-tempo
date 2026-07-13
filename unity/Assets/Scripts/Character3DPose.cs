@@ -17,6 +17,12 @@ using UnityEngine;
 [DefaultExecutionOrder(0)]
 public class Character3DPose : MonoBehaviour, IStancePose
 {
+    /// <summary>Which locomotion gait the pose is currently driving, decided PURELY by the clip pushed in via
+    /// <see cref="Play"/> (Walk clip → Walk, Run clip → Run, anything else → None). The footstep detector reads this
+    /// to pick the authored L/R plants of the gait that's actually playing — no move-speed or blend-value guess.</summary>
+    public enum LocoGait { None, Walk, Run }
+    public LocoGait Gait { get; private set; }
+
     [Tooltip("How fast the model yaws to face its travel/aim direction (deg/sec).")]
     public float turnSpeed = 900f;
     [Tooltip("Seconds to ease the locomotion Speed blend (Idle↔Walk↔Run).")]
@@ -124,17 +130,21 @@ public class Character3DPose : MonoBehaviour, IStancePose
         if (!string.IsNullOrEmpty(clip) && stateHash.TryGetValue(clip, out int h)) { GoTo(h); return; }
         // Loco blend position from the CLIP (Clip(3D) is the SSOT) — NOT the 2D CharacterAction (billboard-only).
         // An unknown/empty clip → rests at idle (0), never a substituted clip.
-        speedTarget = !string.IsNullOrEmpty(clip) && clip == runClip ? 1f
-                    : !string.IsNullOrEmpty(clip) && clip == walkClip ? 0.5f : 0f;
+        bool isRun  = !string.IsNullOrEmpty(clip) && clip == runClip;
+        bool isWalk = !string.IsNullOrEmpty(clip) && clip == walkClip;
+        speedTarget = isRun ? 1f : isWalk ? 0.5f : 0f;
+        Gait = isRun ? LocoGait.Run : isWalk ? LocoGait.Walk : LocoGait.None;
         anim.speed = 1f;
         GoTo(Loco);
     }
 
     // Jump/Fall clip-phase driver: play the clip and either HOLD it at `freezeSeconds` (airborne pose) or, once
     // `releaseToEnd`, resume from that frame and play the landing tail to the end. Works by scaling anim.speed to 0
-    // at the freeze frame (freeze) or back to 1 and snapping past it (release). No allocation — struct state info +
-    // cached clip length. Falls back to a plain hold if the clip has no dedicated one-shot state.
-    public void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd)
+    // at the freeze frame (freeze) or to `mult` and snapping past it (release). `mult` is the stance's × mult — the
+    // takeoff crouch and landing tail play at that speed, while the airborne HOLD stays a hard 0 regardless. The
+    // freeze POINT (freezeN) is a normalized clip fraction, so it's unaffected by mult. No allocation — struct state
+    // info + cached clip length. Falls back to a plain hold if the clip has no dedicated one-shot state.
+    public void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd, float mult = 1f)
     {
         if (string.IsNullOrEmpty(clip) || !stateHash.TryGetValue(clip, out int h)) { Play(src, clip); return; }
 
@@ -146,26 +156,26 @@ public class Character3DPose : MonoBehaviour, IStancePose
         {
             anim.CrossFadeInFixedTime(h, crossFade, 0);
             currentState = h;
-            anim.speed = 1f;
+            anim.speed = mult;
             return;
         }
 
         // Still crossfading INTO the jump state (or the animator's current state isn't the jump clip yet): keep
-        // playing at full speed and DON'T freeze. Reading normalizedTime here returns the OUTGOING state (e.g. the
+        // playing at speed and DON'T freeze. Reading normalizedTime here returns the OUTGOING state (e.g. the
         // looping Run, whose accumulated time is far past freezeN) — zeroing speed on that would pause the animator
         // mid-transition and stick us on a run frame forever. This is the fix for that stuck-frame bug.
         var st = anim.GetCurrentAnimatorStateInfo(0);
-        if (anim.IsInTransition(0) || st.shortNameHash != h) { anim.speed = 1f; return; }
+        if (anim.IsInTransition(0) || st.shortNameHash != h) { anim.speed = mult; return; }
 
         float t = st.normalizedTime;
         if (releaseToEnd)
         {
             if (t < freezeN) anim.Play(h, 0, freezeN);   // short hop: snap up to the freeze frame before playing the tail
-            anim.speed = 1f;                             // play out the landing tail to the end (non-looping holds last frame)
+            anim.speed = mult;                           // play out the landing tail to the end (non-looping holds last frame)
         }
         else
         {
-            anim.speed = t >= freezeN ? 0f : 1f;         // hold on the freeze frame while airborne; play up to it before that
+            anim.speed = t >= freezeN ? 0f : mult;       // hold on the freeze frame while airborne; play up to it at mult before that
         }
     }
 
@@ -191,18 +201,19 @@ public class Character3DPose : MonoBehaviour, IStancePose
     /// the real foot-plant FRAME instead of a timer. Returns false whenever a one-shot state (Attack/Jump/…) is
     /// playing or we're mid-CrossFade — i.e. only true while the locomotion blend is the live state.
     /// <paramref name="frac"/> is the 0→1 position within the (looping) cycle (a plant frame lands at
-    /// frame ÷ totalFrames); <paramref name="speed01"/> is the smoothed Idle(0)→Walk(0.5)→Run(1) blend value, so the
-    /// caller can pick the walk vs run plant frames and gate out standing still. Frame-locked, so it already tracks
-    /// gait speed / Haste (anim.speed scales normalizedTime) with nothing to hand-sync.</summary>
-    public bool TryGetLocoPhase(out float frac, out float speed01)
+    /// frame ÷ totalFrames); <paramref name="gait"/> is the ACTIVE locomotion gait (Walk/Run, or None when idle), so
+    /// the caller picks that gait's authored plant frames and gates out standing still WITHOUT reading any move-speed
+    /// or blend threshold. Frame-locked, so it already tracks gait speed / Haste (anim.speed scales normalizedTime)
+    /// with nothing to hand-sync. Returns false while a one-shot (Attack/Jump/…) or its transition is playing.</summary>
+    public bool TryGetLocoPhase(out float frac, out LocoGait gait)
     {
-        frac = 0f; speed01 = 0f;
+        frac = 0f; gait = LocoGait.None;
         if (anim == null) return false;
         var st = anim.GetCurrentAnimatorStateInfo(0);
         if (st.shortNameHash != Loco) return false;   // a one-shot (or the transition into one) is playing → no steps
         float nt = st.normalizedTime;
         frac = nt - Mathf.Floor(nt);
-        speed01 = anim.GetFloat(PSpeed);
+        gait = Gait;
         return true;
     }
 

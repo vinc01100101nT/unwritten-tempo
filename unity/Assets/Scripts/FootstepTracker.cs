@@ -117,8 +117,6 @@ public class FootstepTracker : MonoBehaviour
         }
     }
 
-    const float MoveSpeed01 = 0.05f;   // loco blend value under which the player counts as standing still (no prints)
-
     /// <summary>Find the live tracker, creating one if none exists (used on demand by the effects/DevSettings).</summary>
     public static FootstepTracker Ensure()
     {
@@ -204,7 +202,8 @@ public class FootstepTracker : MonoBehaviour
         // is the same clock the animator legs run on, so the splash is glued to the visibly-planting foot at any gait
         // speed — and a one-shot (attack/jump) suspends detection (TryGetLocoPhase returns false), so swinging in place
         // never stamps prints.
-        if (pose == null || !pose.TryGetLocoPhase(out float frac, out float speed01) || speed01 <= MoveSpeed01)
+        if (pose == null || !pose.TryGetLocoPhase(out float frac, out Character3DPose.LocoGait gait)
+            || gait == Character3DPose.LocoGait.None)
         {
             havePhase = false;
             return;
@@ -213,7 +212,10 @@ public class FootstepTracker : MonoBehaviour
         if (!havePhase) { prevFrac = frac; havePhase = true; return; }
 
         if (!phasesReady) ResolvePhases();   // mirror the authored plant frames the first time (pose is now known)
-        bool run = speed01 >= 0.5f;
+        // Which plants to detect against is decided by the gait CLIP that's actually playing (Character3DPose.Gait),
+        // NOT a move-speed / blend threshold — so the SFX follows whatever Walk/Run clips are authored and their L/R
+        // frames, at any speed, with nothing to retune when animations change.
+        bool run = gait == Character3DPose.LocoGait.Run;
         float[] phases = run ? runPhases : walkPhases;
         bool[] sides = run ? runRight : walkRight;
         for (int i = 0; i < phases.Length; i++)

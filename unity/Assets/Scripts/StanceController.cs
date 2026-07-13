@@ -229,7 +229,7 @@ public class StanceController : MonoBehaviour
     {
         // Jump + Fall drive the clip in phases: `window` carries the freeze point (seconds), `release` plays the
         // landing tail. Fall (ledge walk-off) reuses the Jump binding's airborneFreeze — the brain feeds it here.
-        if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release); return; }
+        if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release, Mathf.Max(0.01f, b.speedMult)); return; }
 
         pose.Play(b.action, b.clip);
         float m = b.speedMult;

@@ -137,8 +137,10 @@ public class StanceComposerWindow : EditorWindow
             MessageType.Info);
 
         EditorGUILayout.Space(4);
-        Header();
         scroll = EditorGUILayout.BeginScrollView(scroll);
+        // Header lives INSIDE the scroll view so it pans horizontally in lockstep with the rows — drawn outside, it
+        // stayed pinned while the content scrolled and the titles drifted off their columns.
+        Header();
 
         EditorGUI.BeginChangeCheck();
 
@@ -191,6 +193,9 @@ public class StanceComposerWindow : EditorWindow
         {
             EditorGUILayout.LabelField("Stance", EditorStyles.miniBoldLabel, GUILayout.Width(80));
             EditorGUILayout.LabelField("Clip (3D)", EditorStyles.miniBoldLabel, GUILayout.Width(200));
+            // Rows render a 94px column here (Walk/Run L/R step frames, Jump/Roll timing, or a blank spacer) — the
+            // header must reserve the SAME width or every column to its right drifts left of its content.
+            EditorGUILayout.LabelField("Timing", EditorStyles.miniBoldLabel, GUILayout.Width(94));
             EditorGUILayout.LabelField("Speed source", EditorStyles.miniBoldLabel, GUILayout.Width(110));
             EditorGUILayout.LabelField("× mult", EditorStyles.miniBoldLabel, GUILayout.Width(55));
             EditorGUILayout.LabelField("Priority", EditorStyles.miniBoldLabel, GUILayout.Width(55));

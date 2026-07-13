@@ -17,8 +17,9 @@ public interface IStancePose
 
     /// <summary>Drive a jump/fall clip with a freeze point (in SECONDS into the clip). <paramref name="releaseToEnd"/>
     /// false = play forward but HOLD once the clip reaches <paramref name="freezeSeconds"/> (the airborne pose); true =
-    /// resume from that frame and play to the end once (the landing tail). Used for the Jump + Fall stances.</summary>
-    void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd);
+    /// resume from that frame and play to the end once (the landing tail). Used for the Jump + Fall stances.
+    /// <paramref name="mult"/> is the stance's × mult — the crouch/landing play at that speed; the airborne HOLD stays 0.</summary>
+    void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd, float mult = 1f);
 
     /// <summary>Scale the current action's playback speed (1 = natural). Used for FitWindow / stat-synced stances.</summary>
     void SetActionSpeed(CharacterAction a, float multiplier);

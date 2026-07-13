@@ -81,10 +81,15 @@ public partial class Player3DController
             // Latch the Jump clip's timestamps ONCE (cold path, per jump): crouchEnd + airborneFreeze from the Jump
             // binding, plus the clip length for the landing-tail root. The binding is the single owner.
             var jb = StanceCatalog.Get(StanceId.Jump);
-            jumpCrouchEnd = jb != null ? Mathf.Max(0f, jb.crouchEnd) : 0f;
+            // The × mult speeds up the CLIP playback (Character3DPose.PlayClipPhase), so the rooted CROUCH and LAND
+            // phases must shrink by the same factor to stay glued to the visible wind-up/tail — otherwise the sped-up
+            // clip finishes early and the player stands frozen while the phase timer runs out. Freeze stays in NATURAL
+            // seconds: the pose normalizes it (freezeN), which is mult-independent, and Air is physics-driven.
+            float jumpMult = jb != null ? Mathf.Max(0.01f, jb.speedMult) : 1f;
+            jumpCrouchEnd = (jb != null ? Mathf.Max(0f, jb.crouchEnd) : 0f) / jumpMult;
             jumpFreeze    = jb != null ? Mathf.Max(0f, jb.airborneFreeze) : 0f;
             float clipLen = StanceController.Player != null ? StanceController.Player.NaturalDurationOf(StanceId.Jump) : 0f;
-            jumpTailDur   = Mathf.Max(0f, clipLen - jumpFreeze);
+            jumpTailDur   = Mathf.Max(0f, clipLen - jumpFreeze) / jumpMult;
 
             // Begin in the CROUCH phase (rooted). StepJump launches into the arc once crouchEnd elapses. Direction is
             // steered LIVE in StepJump (re-reads WASD each air frame), so nothing to latch here.

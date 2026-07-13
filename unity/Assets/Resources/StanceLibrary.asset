@@ -56,7 +56,7 @@ MonoBehaviour:
   - id: 4
     action: 0
     clip: Idle2
-    speedSource: 0
+    speedSource: 3
     speedMult: 1
     priority: 0
     crouchEnd: 0
@@ -67,12 +67,16 @@ MonoBehaviour:
     action: 0
     clip: Walk
     speedSource: 3
-    speedMult: 2
+    speedMult: 1
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
     rootFromFrame: 0
-    footPlants: []
+    footPlants:
+    - frame: 8
+      right: 0
+    - frame: 30
+      right: 1
   - id: 6
     action: 2
     clip: Run
@@ -105,7 +109,7 @@ MonoBehaviour:
     action: 9
     clip: Jump
     speedSource: 3
-    speedMult: 1
+    speedMult: 2
     priority: 10
     crouchEnd: 0.5
     airborneFreeze: 1.0666667

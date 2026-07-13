@@ -310,7 +310,7 @@ public class BakedBillboard8 : MonoBehaviour, IStancePose
     /// <summary>Drive <paramref name="src"/> as a jump/fall clip with a freeze point (in SECONDS): <paramref name="releaseToEnd"/>
     /// false = play up to <paramref name="freezeSeconds"/> then HOLD that frame (airborne); true = play from it to the
     /// end once (landing tail). Cleared by any other Play / StopOverride.</summary>
-    public void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd)
+    public void PlayClipPhase(CharacterAction src, string clip, float freezeSeconds, bool releaseToEnd, float mult = 1f)
     {
         Play(src);                       // sets the override; Play cleared phaseMode, so re-arm it below
         phaseMode = true; phaseSource = src; phaseFreezeSeconds = Mathf.Max(0f, freezeSeconds); phaseRelease = releaseToEnd;
