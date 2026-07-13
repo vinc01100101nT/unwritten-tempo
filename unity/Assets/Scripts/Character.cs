@@ -257,6 +257,26 @@ public class Character : MonoBehaviour
     public event Action OnEvaded;          // Evasion dodged a hit entirely (no damage taken)
     public event Action OnDied;            // HP hit 0 — the death screen takes over (Phase F)
     public event Action OnRevived;         // came back to life (respawn)
+    public event Action OnAppearanceChanged; // cosmetic dye changed (or loaded) — CharacterDye3D re-bakes, save marks dirty
+
+    // Per-cloth-part dye (persisted): parallel authored-sRGB hex arrays, source part-color → chosen color.
+    // Character is the single owner; CharacterDye3D is a computed view that reads these and writes back via SetDye.
+    public string[] DyeSources { get; private set; }
+    public string[] DyeTargets { get; private set; }
+
+    // Signature of the model the dye was authored for — CharacterDye3D drops the dye when this stops matching
+    // the worn model, so a color-keyed dye can't bleed onto a different character sharing a base color.
+    public string DyeModel { get; private set; }
+
+    /// <summary>Replace the outfit dye map (from the dye UI / CharacterDye3D) and notify listeners.
+    /// <paramref name="model"/> stamps which model the map belongs to.</summary>
+    public void SetDye(string[] sources, string[] targets, string model)
+    {
+        DyeSources = sources;
+        DyeTargets = targets;
+        DyeModel   = model;
+        OnAppearanceChanged?.Invoke();
+    }
 
     [Header("Audio")]
     [Tooltip("Default block sound when the equipped off-hand has none of its own.")]
@@ -809,11 +829,11 @@ public class Character : MonoBehaviour
     /// it's currently worn — so the ring track can be exercised without grinding.</summary>
     public void AddRingXP(int amount) => Ring.AddXP(amount);
 
-    // ---- Save / load (M1) -----------------------------------------------------
-    // The progression spine — level, XP, HP/MP, the six primary stats + unspent points, and the
-    // Trio-Ring passive walk. Equipment/bag persistence is deliberately out of scope here (it lives
-    // in the UI layer and lands with the inventory milestone, M3). These two methods are the only
-    // place that touches the private fields, so SaveSystem stays free of Character internals.
+    // ---- Save / load ----------------------------------------------------------
+    // The progression spine — level, XP, HP/MP, the six primary stats + unspent points, the Trio-Ring
+    // passive walk, and (v6+) equipped gear. The BAG is owned by InventoryStore, not here; SaveManager
+    // stitches it into the same SaveData. These methods are the only place that touches the private
+    // fields, so SaveSystem stays free of Character internals.
 
     /// <summary>Snapshot the character's progression into a serializable <see cref="SaveData"/>.</summary>
     public SaveData CaptureSave()
@@ -843,7 +863,58 @@ public class Character : MonoBehaviour
         d.ownedSkillIds = Skills.Capture();
         d.hotbarBindings = Hotbar.Capture();
         d.comboChains = Combos.Capture();
+        CaptureEquipment(d);
+        d.outfitDyeSources = DyeSources;
+        d.outfitDyeTargets = DyeTargets;
+        d.outfitDyeModel   = DyeModel;
         return d;
+    }
+
+    // Every occupied slot EXCEPT the Ring vessel (auto-worn on load by EnsureRingEquipped, and never a
+    // normal bag item). Allocates a few small lists — fine, this runs only on save, not a hot path.
+    void CaptureEquipment(SaveData d)
+    {
+        var slots = new List<int>();
+        var ids = new List<string>();
+        var refines = new List<int>();
+        var cards = new List<string>();
+        foreach (var kv in equipped)
+        {
+            if (kv.Key == EquipSlotType.Ring) continue;
+            var inst = kv.Value;
+            if (inst == null || inst.def == null) continue;
+            slots.Add((int)kv.Key);
+            ids.Add(inst.def.id);
+            refines.Add(inst.upgrade);
+            cards.Add(ItemCatalog.EncodeCards(inst.cards));
+        }
+        d.equipSlots   = slots.ToArray();
+        d.equipItemIds = ids.ToArray();
+        d.equipRefines = refines.ToArray();
+        d.equipCards   = cards.ToArray();
+    }
+
+    // Rebuild the equip dictionary from the saved arrays (Ring excluded — EnsureRingEquipped re-wears it).
+    // Unknown item/card ids are dropped so a removed asset can't break a load.
+    void RestoreEquipment(SaveData d)
+    {
+        equipped.Clear();
+        if (d.equipSlots != null && d.equipItemIds != null)
+        {
+            for (int i = 0; i < d.equipSlots.Length && i < d.equipItemIds.Length; i++)
+            {
+                var slot = (EquipSlotType)d.equipSlots[i];
+                if (slot == EquipSlotType.Ring) continue;
+                var def = ItemCatalog.Resolve(d.equipItemIds[i]);
+                if (def == null) continue;
+                int refine = (d.equipRefines != null && i < d.equipRefines.Length) ? d.equipRefines[i] : 0;
+                var inst = new EquipmentInstance(def, refine);
+                if (d.equipCards != null && i < d.equipCards.Length)
+                    ItemCatalog.DecodeCards(d.equipCards[i], inst.cards);
+                equipped[slot] = inst;
+            }
+        }
+        RecomputeEquip();
     }
 
     /// <summary>Apply a loaded <see cref="SaveData"/>, overwriting the current runtime progression.
@@ -869,7 +940,11 @@ public class Character : MonoBehaviour
         Skills.Restore(d.ownedSkillIds);
         Hotbar.Restore(d.hotbarBindings);
         Combos.Restore(d.comboChains);
-        EnsureRingEquipped();        // equipment isn't persisted yet — re-wear the vessel after a load
+        RestoreEquipment(d);         // v6+: rebuild worn gear from the save (Ring excluded)
+        EnsureRingEquipped();        // re-wear the Ring vessel (auto-managed, never serialized)
+        DyeSources = d.outfitDyeSources;   // v6+: outfit dye (CharacterDye3D re-bakes off OnAppearanceChanged below)
+        DyeTargets = d.outfitDyeTargets;
+        DyeModel   = d.outfitDyeModel;     // CharacterDye3D drops the dye if this doesn't match the worn model
 
         // HP/MP last, against the now-restored maxima. Never load into a dead state.
         CurrentHP = Mathf.Clamp(d.currentHP <= 0 ? MaxHP : d.currentHP, 1, MaxHP);
@@ -878,5 +953,6 @@ public class Character : MonoBehaviour
         OnStatsChanged?.Invoke();
         OnHealthChanged?.Invoke();
         OnManaChanged?.Invoke();
+        OnAppearanceChanged?.Invoke();   // apply the loaded outfit dye
     }
 }

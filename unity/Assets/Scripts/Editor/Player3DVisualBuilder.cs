@@ -22,6 +22,16 @@ public static class Player3DVisualBuilder
     const string OutDir = "Assets/Art/Quat/Player3D";
     public const string ControllerPath = OutDir + "/HumanoidPlayerController.controller";
 
+    // Wire the runtime editor-Play model swapper (PlayerModelSwap) to THIS builder's Attach — the single
+    // place a player visual is built. PlayerModelSwap lives in the runtime assembly and can't reference this
+    // Editor-assembly class, so we push the delegate down to it on editor load instead.
+    [InitializeOnLoadMethod]
+    static void HookRuntimeModelSwap()
+    {
+        PlayerModelSwap.Attacher = AttachRuntimeSwap;
+        PlayerModelSwap.RiggedDir = RiggedDir;
+    }
+
     /// <summary>Build (or rebuild) the shared Humanoid player controller from the StanceLibrary + Humanoid clip folder.
     /// Write-defaults OFF (Mixamo-style) so no state re-writes the root and clobbers the model's facing.</summary>
     public static AnimatorController BuildController()
@@ -34,9 +44,13 @@ public static class Player3DVisualBuilder
                                                   resolver: HumanoidClipResolver.Resolver(), writeDefaultsOff: true);
     }
 
-    /// <summary>Attach a fresh live-3D visual onto the given player GameObject, removing any prior player visual first.
-    /// Shared by Setup Systems Scene (default build) and the menu tool.</summary>
-    public static GameObject Attach(Player3DController player, string modelPath)
+    /// <summary>Attach a fresh live-3D visual onto the given player GameObject.
+    /// Shared by Setup Systems Scene (default build) and the menu tool.
+    /// <para><paramref name="controllerOverride"/> lets a caller REUSE an already-loaded shared Humanoid controller
+    /// instead of rebuilding it (which writes an asset to disk) — the runtime editor-Play swapper passes the live
+    /// player's controller so it never touches the AssetDatabase mid-swap. Null → build it (the menu/setup path).</para></summary>
+    public static GameObject Attach(Player3DController player, string modelPath,
+                                    UnityEditor.Animations.AnimatorController controllerOverride = null)
     {
         if (player == null) return null;
         if (!File.Exists(modelPath)) modelPath = DefaultModel;
@@ -47,7 +61,7 @@ public static class Player3DVisualBuilder
             return null;
         }
 
-        // Validate the model BEFORE removing the current visual, so a bad pick never leaves the player bare.
+        // Validate the model BEFORE touching the current visual, so a bad pick never leaves the player bare.
         var model = AssetDatabase.LoadAssetAtPath<GameObject>(modelPath);
         if (model == null || model.GetComponentInChildren<SkinnedMeshRenderer>(true) == null)
         {
@@ -56,7 +70,10 @@ public static class Player3DVisualBuilder
             return null;
         }
 
-        RemoveExistingPlayerVisual();
+        // Snapshot the visuals to replace, but DON'T remove them yet — build the new one FIRST, so if any step below
+        // throws (e.g. an AssetDatabase write in Play), the player keeps its working visual instead of going bare.
+        var toRemove = Object.FindObjectsByType<Character3DVisual>(FindObjectsSortMode.None);
+
         var go = (GameObject)PrefabUtility.InstantiatePrefab(model);
         string charName = Path.GetFileNameWithoutExtension(modelPath);
         go.name = "Player3DVisual (" + charName + ")";
@@ -68,7 +85,7 @@ public static class Player3DVisualBuilder
         go.transform.localScale = Vector3.one * s;
 
         var anim = go.GetComponent<Animator>() ?? go.AddComponent<Animator>();
-        anim.runtimeAnimatorController = BuildController();
+        anim.runtimeAnimatorController = controllerOverride != null ? controllerOverride : BuildController();
         var avatar = Character3DRigBuilder.LoadAvatar(modelPath);   // the model's own Humanoid avatar (retarget target)
         if (avatar != null) anim.avatar = avatar;
         anim.applyRootMotion = false;
@@ -78,9 +95,27 @@ public static class Player3DVisualBuilder
         var vis = go.GetComponent<Character3DVisual>() ?? go.AddComponent<Character3DVisual>();
         vis.player = player;
         if (go.GetComponent<WeaponSocket>() == null) go.AddComponent<WeaponSocket>();
+        if (go.GetComponent<CharacterDye3D>() == null) go.AddComponent<CharacterDye3D>();   // per-part outfit dye
 
-        EditorSceneManager.MarkSceneDirty(player.gameObject.scene);
+        // New visual is fully built — now retire the old one(s). (Skip the new go in case it was already matched.)
+        foreach (var v in toRemove) if (v != null && v.gameObject != go) Object.DestroyImmediate(v.gameObject);
+
+        // Author-time only: dirty the scene so the swap persists on save. ILLEGAL in Play (throws
+        // InvalidOperationException) — the runtime editor-Play swapper is transient, nothing to persist.
+        if (!Application.isPlaying) EditorSceneManager.MarkSceneDirty(player.gameObject.scene);
         return go;
+    }
+
+    /// <summary>Runtime editor-Play model swap (driven by <see cref="PlayerModelSwap"/>). Reuses the live player's
+    /// already-loaded shared Humanoid controller so the swap never rebuilds a controller asset on disk — that
+    /// AssetDatabase write is unreliable mid-frame in Play and was leaving the player bare. Falls back to building
+    /// the controller once if there's no live visual to borrow it from.</summary>
+    public static GameObject AttachRuntimeSwap(Player3DController player, string modelPath)
+    {
+        var live = Object.FindFirstObjectByType<Character3DVisual>();
+        var anim = live != null ? live.GetComponent<Animator>() : null;
+        var shared = anim != null ? anim.runtimeAnimatorController as UnityEditor.Animations.AnimatorController : null;
+        return Attach(player, modelPath, shared != null ? shared : BuildController());
     }
 
     /// <summary>Remove any existing player visual (live-3D) so we never stack two.</summary>

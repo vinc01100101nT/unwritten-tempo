@@ -137,9 +137,9 @@ MonoBehaviour:
     footPlants: []
   - id: 11
     action: 15
-    clip: 
-    speedSource: 0
-    speedMult: 1
+    clip: PickUp
+    speedSource: 4
+    speedMult: 3
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5

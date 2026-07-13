@@ -85,7 +85,6 @@ public class DevSettings : MonoBehaviour
     FogOverlay fog;
     HandDrawnFX ink;
     FootstepTracker foot;
-    CharacterDye dye;
     MobRespawn[] respawns;
     float nextRespawnRefresh;
 
@@ -95,7 +94,7 @@ public class DevSettings : MonoBehaviour
     bool built, rectInit;
     const int WinId = 920411;
 
-    GUIStyle headerStyle, labelStyle, valueStyle, swatchStyle;
+    GUIStyle headerStyle, labelStyle, valueStyle;
 
     void EnsureRefs()
     {
@@ -120,7 +119,6 @@ public class DevSettings : MonoBehaviour
         if (fog == null)      fog      = FindFirstObjectByType<FogOverlay>();
         if (ink == null)      ink      = FindFirstObjectByType<HandDrawnFX>();
         if (foot == null)     foot     = FindFirstObjectByType<FootstepTracker>();
-        if (dye == null)      dye      = FindFirstObjectByType<CharacterDye>();
         EnsureGround();
     }
 
@@ -294,6 +292,10 @@ public class DevSettings : MonoBehaviour
         F("Jump freeze (s)", 0f, 3f,
             () => { var b = StanceCatalog.Get(StanceId.Jump); return b != null ? b.airborneFreeze : 0f; },
             v => { var b = StanceCatalog.Get(StanceId.Jump); if (b != null) b.airborneFreeze = v; });
+#if UNITY_EDITOR
+        // Editor-Play only: hot-swap the player's rigged model to eyeball any character. [ / ] cycle it too.
+        Raw(DrawModelSwap);
+#endif
 
         // ---- Shadows — light-facing billboard cast shadows (player + mobs) -------
         // The proxy turns to fully face the sun so the silhouette shadow survives any light angle (side-on AND
@@ -333,14 +335,6 @@ public class DevSettings : MonoBehaviour
         Cat("Units");
         F("Unit size (global)", 0.3f, 2.5f, () => UnitScale.Global,      v => UnitScale.SetGlobal(v));
         F("Mob size (rel)",     0.3f, 2f,   () => UnitScale.MobRelative, v => UnitScale.SetMobRelative(v));
-
-        // ---- Appearance — CharacterDye HSV knobs ---------------------------
-        Cat("Appearance");
-        F("Hue shift",   0f, 1f,  () => dye ? dye.HueShift   : 0f, v => { if (dye) dye.HueShift   = v; });
-        F("Saturation",  0f, 2f,  () => dye ? dye.Saturation  : 1f, v => { if (dye) dye.Saturation  = v; });
-        F("Brightness",  0f, 2f,  () => dye ? dye.Brightness  : 1f, v => { if (dye) dye.Brightness  = v; });
-        Act("Reset dye", () => { if (dye) { dye.HueShift = 0f; dye.Saturation = 1f; dye.Brightness = 1f; } });
-        Raw(DrawSwapSlots);
 
         // ---- Hand-Drawn — runtime "art filter" (ink linework + paper + lowered saturation), no re-bake ----
         // Master turns the INK on; Saturation is independent and CLAMPED so colour can mute but never go greyscale.
@@ -675,6 +669,14 @@ public class DevSettings : MonoBehaviour
             else Blocking = false;
         }
         if (open) EnsureRefs();
+#if UNITY_EDITOR
+        // [ / ] cycle the player's rigged model without opening the panel (suppressed while typing).
+        if (!Hotkeys.Typing)
+        {
+            if (Input.GetKeyDown(KeyCode.LeftBracket))  PlayerModelSwap.Cycle(-1);
+            if (Input.GetKeyDown(KeyCode.RightBracket)) PlayerModelSwap.Cycle(1);
+        }
+#endif
     }
 
     // ---- IMGUI ----------------------------------------------------------------
@@ -759,99 +761,39 @@ public class DevSettings : MonoBehaviour
         GUILayout.EndHorizontal();
     }
 
-    // ── Palette swap UI (called as a Raw knob from the Appearance group) ──────
+#if UNITY_EDITOR
+    Vector2 modelScroll;
 
-    // A white-backgrounded box style so GUI.backgroundColor gives accurate color swatches.
-    GUIStyle SwatchStyle
+    // ── 3D model swap UI (Raw knob under "3D Character") — editor Play only ─────
+    // Cycle with the Prev/Next buttons or the [ / ] keys; click a name to jump straight to it. The actual
+    // re-skin routes through PlayerModelSwap → Player3DVisualBuilder.Attach (the single visual-build path).
+    void DrawModelSwap()
     {
-        get
-        {
-            if (swatchStyle != null) return swatchStyle;
-            swatchStyle = new GUIStyle();
-            swatchStyle.normal.background = Texture2D.whiteTexture;
-            return swatchStyle;
-        }
-    }
-
-    void DrawSwapSlots()
-    {
-        if (dye == null) { GUILayout.Label("  (no CharacterDye)", labelStyle); return; }
-
+        var paths = PlayerModelSwap.Paths;
         GUILayout.Space(2f);
-        GUILayout.Label("Palette Swaps", labelStyle);
+        GUILayout.Label("Swap Model  ( [ / ] )", labelStyle);
+        if (paths.Count == 0) { GUILayout.Label("  (no rigged models found)", labelStyle); return; }
 
-        for (int i = 0; i < CharacterDye.SwapCount; i++)
-        {
-            var  slot    = dye.swaps[i];
-            bool picking = dye.EyedropperActive && dye.EyedropperSlot == i;
-            bool changed = false;
-
-            // ── row 1: enable toggle + src swatch → dst swatch + Pick button ──
-            GUILayout.BeginHorizontal();
-
-            bool en = GUILayout.Toggle(slot.enabled, " " + (i + 1), GUILayout.Width(42));
-            if (en != slot.enabled) { slot.enabled = en; changed = true; }
-
-            var prevBg = GUI.backgroundColor;
-            GUI.backgroundColor = slot.source;
-            GUILayout.Box(GUIContent.none, SwatchStyle, GUILayout.Width(20), GUILayout.Height(14));
-            GUI.backgroundColor = prevBg;
-
-            GUILayout.Label("→", GUILayout.Width(16));
-
-            GUI.backgroundColor = slot.target;
-            GUILayout.Box(GUIContent.none, SwatchStyle, GUILayout.Width(20), GUILayout.Height(14));
-            GUI.backgroundColor = prevBg;
-
-            GUILayout.FlexibleSpace();
-
-            if (picking)
-            {
-                GUI.backgroundColor = new Color(1f, 0.85f, 0.2f);
-                if (GUILayout.Button("◉ cancel", GUILayout.Width(70))) dye.CancelEyedropper();
-                GUI.backgroundColor = prevBg;
-            }
-            else
-            {
-                if (GUILayout.Button("Pick src", GUILayout.Width(64))) dye.StartEyedropper(i);
-            }
-            GUILayout.EndHorizontal();
-
-            // ── row 2: target R / G / B ──────────────────────────────────────
-            Color tgt = slot.target;
-            float nr = DrawMiniSlider("R", tgt.r);
-            float ng = DrawMiniSlider("G", tgt.g);
-            float nb = DrawMiniSlider("B", tgt.b);
-            if (!Mathf.Approximately(nr, tgt.r) || !Mathf.Approximately(ng, tgt.g) || !Mathf.Approximately(nb, tgt.b))
-            {
-                slot.target = new Color(nr, ng, nb);
-                changed = true;
-            }
-
-            // ── row 3: tolerance ─────────────────────────────────────────────
-            float ntol = DrawMiniSlider("Tol", slot.tolerance, 0.01f, 0.5f);
-            if (!Mathf.Approximately(ntol, slot.tolerance)) { slot.tolerance = ntol; changed = true; }
-
-            if (changed) dye.Apply();
-            GUILayout.Space(3f);
-        }
-
-        if (GUILayout.Button("Clear all swaps", GUILayout.Width(152)))
-        {
-            foreach (var s in dye.swaps) s.enabled = false;
-            dye.Apply();
-        }
-    }
-
-    float DrawMiniSlider(string lbl, float v, float min = 0f, float max = 1f)
-    {
         GUILayout.BeginHorizontal();
-        GUILayout.Label(lbl, labelStyle, GUILayout.Width(26));
-        float nv = GUILayout.HorizontalSlider(v, min, max, GUILayout.Width(84));
-        GUILayout.Label(nv.ToString("0.00"), valueStyle, GUILayout.Width(34));
+        if (GUILayout.Button("◀ Prev", GUILayout.Width(74))) PlayerModelSwap.Cycle(-1);
+        int cur = PlayerModelSwap.Index;
+        GUILayout.Label(cur >= 0 ? PlayerModelSwap.NameAt(cur) : "(baked default)", valueStyle);
+        if (GUILayout.Button("Next ▶", GUILayout.Width(74))) PlayerModelSwap.Cycle(1);
         GUILayout.EndHorizontal();
-        return nv;
+
+        modelScroll = GUILayout.BeginScrollView(modelScroll, GUILayout.Height(150));
+        for (int i = 0; i < paths.Count; i++)
+        {
+            bool sel = i == cur;
+            var prev = GUI.backgroundColor;
+            if (sel) GUI.backgroundColor = new Color(0.3f, 0.7f, 1f);
+            if (GUILayout.Button((sel ? "● " : "   ") + PlayerModelSwap.NameAt(i), GUILayout.Width(320)))
+                PlayerModelSwap.Apply(i);
+            GUI.backgroundColor = prev;
+        }
+        GUILayout.EndScrollView();
     }
+#endif
 
     void ResetAll()
     {

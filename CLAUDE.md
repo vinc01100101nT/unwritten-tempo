@@ -1,5 +1,30 @@
 # CLAUDE.md — roguelike-mmo (unwritten)
 
+## Bugfix confidence protocol (ALWAYS)
+
+At the END of every bugfix response, state your confidence that the bug is ALREADY fixed, as a percentage
+(0%–100%) on its own final line, e.g. `**Fix confidence: 75%**`. Be honest — reflect whether the fix was
+verified live, only reasoned about, or blocked (e.g. Unity unreachable). Do not inflate.
+
+## Second-fix rule: after ONE failed fix, stop hypothesizing — go get GROUND TRUTH
+
+If a fix attempt doesn't resolve the bug, do NOT ship a second fix built on more reasoning about how the
+system "probably" works. The next move is to MEASURE: read the real data and replay the real math, then fix
+from evidence. Reasoning-only fixes on a bug that already survived one round burn many turns and usually miss
+a deeper cause. (This wardrobe bug ate ~4 rounds of plausible-but-wrong fixes; it was cracked in one pass the
+moment I decoded the actual save + PNG + FBX bytes and re-ran detection offline — the true cause, a dark-color
+gamma mismatch, was invisible to reasoning but obvious in the numbers.)
+
+Ground-truth sources for THIS project (cheap, no Unity needed — a plain Python/Bash script reads them):
+- **Save file** = the persisted state that's actually loaded: `%USERPROFILE%\AppData\LocalLow\DefaultCompany\unwritten\unwritten_save.json`.
+- **Textures** = decode the PNG bytes (pure-Python zlib/PNG, no PIL) to get exact per-pixel colors/coverage.
+- **Meshes/rigs** = parse the binary FBX (zlib-compressed node arrays: Vertices / PolygonVertexIndex / UV) to get real UVs, tris, verts.
+- **Scenes/prefabs/.meta** = YAML/text — grep them directly for the actual wired values (renderer names, import flags).
+- **Live engine values** = Unity MCP `execute_code` when the bridge is up. A connected MCP bridge beats raising model effort — most stalls here are missing observation, not missing intelligence.
+
+Escalate EFFORT/model only once the evidence is in hand and the remaining hard part is genuinely synthesis —
+not as a substitute for looking. Missing information is fixed by looking, not by thinking harder.
+
 ## Project layout
 
 - `unity/Assets/Scripts/` — all game C# (Unity 6 + URP); see `unity/Assets/Scripts/CLAUDE.md`

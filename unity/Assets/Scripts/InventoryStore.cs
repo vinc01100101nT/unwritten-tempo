@@ -6,8 +6,9 @@ using UnityEngine;
 /// The runtime inventory model behind the new Inventory + Equipment windows: a flat list of
 /// entries (equipment carries a unique <see cref="EquipmentInstance"/>; stackables carry a count).
 /// Equipping/unequipping routes through <see cref="Character"/> so gear affects real combat stats.
-/// Seeded from the starter <see cref="Item"/> assets in Resources/Items. Lives on the windows'
-/// canvas; not saved yet (equipment persistence lands with the save milestone).
+/// Lives on the windows' canvas. On first-ever run it seeds from the starter <see cref="Item"/> assets
+/// in Resources/Items; once a save carries a bag, it restores from that instead (v6+). SaveManager owns
+/// the capture/restore stitching (this store is created lazily when the bag window first opens).
 /// </summary>
 public class InventoryStore : MonoBehaviour
 {
@@ -29,7 +30,70 @@ public class InventoryStore : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
-        Seed();
+
+        // Restore the saved bag if one exists; otherwise seed the starter items (first-ever run). Gate on
+        // SaveManager being initialized so a startup race can't seed over an existing save. In practice this
+        // store is built only when the player opens the bag window, long after SaveManager has loaded.
+        var loaded = (SaveManager.Instance != null && SaveManager.Instance.Initialized)
+            ? SaveManager.Instance.Loaded : null;
+        if (loaded != null && loaded.bagItemIds != null) LoadFrom(loaded);
+        else Seed();
+    }
+
+    /// <summary>Snapshot the current bag into a <see cref="SaveData"/> (parallel arrays — see the schema).
+    /// Equipment stacks carry refine + cards; stackables carry a count. Save-time only, not a hot path.</summary>
+    public void CaptureInto(SaveData d)
+    {
+        var ids = new List<string>();
+        var counts = new List<int>();
+        var refines = new List<int>();
+        var cards = new List<string>();
+        foreach (var e in Entries)
+        {
+            if (e == null || e.def == null) continue;
+            // The Ring vessel is auto-worn on load (EnsureRingEquipped) and never a real bag item — don't
+            // persist a bag copy, or a load would restore it here AND re-equip a fresh one (duplicate).
+            if (e.def.slot == EquipSlotType.Ring) continue;
+            ids.Add(e.def.id);
+            counts.Add(Mathf.Max(1, e.count));
+            if (e.IsEquip && e.instance != null)
+            {
+                refines.Add(e.instance.upgrade);
+                cards.Add(ItemCatalog.EncodeCards(e.instance.cards));
+            }
+            else { refines.Add(0); cards.Add(""); }
+        }
+        d.bagItemIds = ids.ToArray();
+        d.bagCounts  = counts.ToArray();
+        d.bagRefines = refines.ToArray();
+        d.bagCards   = cards.ToArray();
+    }
+
+    /// <summary>Rebuild the bag from a saved <see cref="SaveData"/>. Unknown item ids are dropped so a
+    /// removed asset can't break a load.</summary>
+    public void LoadFrom(SaveData d)
+    {
+        Entries.Clear();
+        if (d.bagItemIds != null)
+        {
+            for (int i = 0; i < d.bagItemIds.Length; i++)
+            {
+                var def = ItemCatalog.Resolve(d.bagItemIds[i]);
+                if (def == null) continue;
+                int count = (d.bagCounts != null && i < d.bagCounts.Length) ? d.bagCounts[i] : 1;
+                var entry = new Entry { def = def, count = Mathf.Max(1, count) };
+                if (def.slot != EquipSlotType.None)
+                {
+                    int refine = (d.bagRefines != null && i < d.bagRefines.Length) ? d.bagRefines[i] : 0;
+                    entry.count = 1;
+                    entry.instance = new EquipmentInstance(def, refine);
+                    if (d.bagCards != null && i < d.bagCards.Length)
+                        ItemCatalog.DecodeCards(d.bagCards[i], entry.instance.cards);
+                }
+                Entries.Add(entry);
+            }
+        }
+        Notify();
     }
 
     void Seed()
@@ -80,7 +144,13 @@ public class InventoryStore : MonoBehaviour
         }
     }
 
-    public void Notify() => OnChanged?.Invoke();
+    public void Notify()
+    {
+        OnChanged?.Invoke();
+        // Bag-only changes (give/consume/reorder) don't touch Character's stat events, so flag the autosave
+        // here too; equip/unequip already mark dirty via Character.OnStatsChanged.
+        SaveManager.Instance?.MarkDirty();
+    }
 
     /// <summary>Equip an inventory entry; any item already in that slot returns to the bag.</summary>
     public void Equip(Entry e)

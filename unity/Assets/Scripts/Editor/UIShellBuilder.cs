@@ -76,7 +76,7 @@ public static class UIShellBuilder
         SetupEventSystem(root);
         BuildHud(root);
         // All panels' hotkeys/Esc are owned by their own runtime controllers (code-driven, no rebake to change a key):
-        //   Skills (K)→SkillDraftPanel · Outfit (O)→CharacterCustomizePanel · Calendar (L)→CalendarPanel ·
+        //   Skills (K)→SkillDraftPanel · Wardrobe (O)→CharacterWardrobePanel · Calendar (L)→CalendarPanel ·
         //   Inventory (B)/Equipment (V)/Character (C)→ProgressionWindows. PanelToggle is retired.
         BuildSkillsPanel(root);
         BuildCustomizePanel(root);
@@ -116,7 +116,7 @@ public static class UIShellBuilder
         prog.silShield     = SlotIcon("Guard");
         prog.silAccessory1 = SlotIcon("Ring");
         prog.silAccessory2 = SlotIcon("Amulet");
-        canvasGO.AddComponent<CharacterCustomizePanel>();  // O = Outfit: animated preview + cloth colour palette
+        canvasGO.AddComponent<CharacterWardrobePanel>();   // O = Wardrobe: per-part runtime clothing dye (live-3D)
         var calPanel = canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: 12-day season grid w/ per-day weather (+ click the date widget)
         // Bake in the Ninja Adventure "Meteo" weather icons (the runtime can't AssetDatabase-load, so we wire the
         // Sprite refs into the prefab now — same pattern as the skill-icon Sprites the hotbar reads).
@@ -280,13 +280,13 @@ public static class UIShellBuilder
     }
 
     // Centre-wide panel — leaves room for the left preview + right swatch palette.
-    // CharacterCustomizePanel.TryBuild() populates the Content area at runtime.
+    // CharacterWardrobePanel populates the Content area at runtime.
     static GameObject BuildCustomizePanel(Transform canvas)
     {
         var content = NewPanel(canvas, "CustomizePanel",
-            new Vector2(0.22f, 0.18f), new Vector2(0.78f, 0.84f), "Outfit");
-        // Content is intentionally left empty here — CharacterCustomizePanel builds
-        // the animated preview + colour palette into it at runtime.
+            new Vector2(0.22f, 0.18f), new Vector2(0.78f, 0.84f), "Wardrobe");
+        // Content is intentionally left empty here — CharacterWardrobePanel builds
+        // the parts list + colour palette into it at runtime.
         return content.parent.gameObject;
     }
 

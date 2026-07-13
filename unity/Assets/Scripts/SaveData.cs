@@ -9,13 +9,14 @@ using System;
 /// (<see cref="rankStats"/> / <see cref="rankValues"/>). Every field has a safe default so an older or
 /// partial save still loads.
 ///
-/// Out of scope for this slice: equipment + bag (UI-layer; lands with the inventory milestone, M3).
+/// Equipment + bag land in v6 (below). A pre-v6 save simply leaves those arrays null → the character
+/// loads with no gear and the bag re-seeds from the starter items, exactly as before.
 /// Bump <see cref="CurrentVersion"/> and branch in RestoreSave if the shape ever changes.
 /// </summary>
 [Serializable]
 public class SaveData
 {
-    public const int CurrentVersion = 5;
+    public const int CurrentVersion = 6;
 
     public int version = CurrentVersion;
 
@@ -60,4 +61,29 @@ public class SaveData
     // Combo chains (v5+): one entry per chain, encoded "<hotkeyKeyCodeInt>|id0,id1,id2,id3" (empty slot = ""),
     // owned by ComboBook. Null on an older save → no chains yet.
     public string[] comboChains;
+
+    // Equipped gear (v6+): parallel arrays, one entry per occupied slot EXCEPT the Ring vessel (auto-worn on
+    // load by EnsureRingEquipped). Owned by Character. Null on a pre-v6 save → nothing equipped, ring re-worn.
+    public int[]    equipSlots;     // (int)EquipSlotType
+    public string[] equipItemIds;   // Item.id, resolved via ItemCatalog
+    public int[]    equipRefines;   // +N enhancement
+    public string[] equipCards;     // comma-joined card asset names ("" = none)
+
+    // Bag (v6+): parallel arrays, one entry per stack. Owned by InventoryStore (canvas-scoped); captured/
+    // restored by SaveManager. Null on a pre-v6 save (or before the bag window is ever opened) → re-seed.
+    // Equipment stacks carry refine/cards and count 1; stackables carry a count and refine 0 / cards "".
+    public string[] bagItemIds;
+    public int[]    bagCounts;
+    public int[]    bagRefines;
+    public string[] bagCards;
+
+    // Per-cloth-part outfit dye (v6+): parallel authored-sRGB hex arrays — the atlas source part-color and the
+    // chosen color. Owned by Character, applied by CharacterDye3D. Null on an older save → no dye (art colors).
+    public string[] outfitDyeSources;
+    public string[] outfitDyeTargets;
+
+    // Which character model the dye above was authored for (a signature of the worn mesh names). Lets
+    // CharacterDye3D drop the dye when the model changes, so a color-keyed dye can't bleed onto a different
+    // character that happens to share a base color. Null on an older save → adopted by the current model.
+    public string outfitDyeModel;
 }
