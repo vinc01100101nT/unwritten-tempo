@@ -22,11 +22,12 @@ public static class GlbPropImporter
     const float TargetFootprint = 1.5f;   // tune via "Scale ×0.3" / Prop Palette afterwards if needed
     const string PropDir = "Assets/Prefabs/Props";
     const string MatDir = "Assets/Prefabs/Props/Materials";
+    const string MeshDir = "Assets/Prefabs/Props/Meshes";
 
     [MenuItem("Tools/unwritten/Props/Import GLB Prop…", priority = 505)]
     static void Import()
     {
-        var lit = Shader.Find("Universal Render Pipeline/Lit");
+        var lit = FindLit();
         if (lit == null)
         { EditorUtility.DisplayDialog("Import GLB Prop", "URP/Lit shader not found — is this a URP project?", "OK"); return; }
 
@@ -65,7 +66,10 @@ public static class GlbPropImporter
             "Footprint not right? Use Tools ▸ unwritten ▸ Authoring ▸ Scale ×0.3 or the Prop Palette to tune.", "OK");
     }
 
-    static bool BakeOne(string glbPath, Shader lit)
+    // The URP/Lit shader every baked prop is re-pointed onto (null if not a URP project).
+    internal static Shader FindLit() => Shader.Find("Universal Render Pipeline/Lit");
+
+    internal static bool BakeOne(string glbPath, Shader lit)
     {
         var glb = AssetDatabase.LoadAssetAtPath<GameObject>(glbPath);
         if (glb == null) { Debug.LogWarning($"[unwritten] Couldn't load GLB at {glbPath}"); return false; }
@@ -79,7 +83,7 @@ public static class GlbPropImporter
 
         ForceUrpMaterials(inst, name, lit);
         AddColliders(inst);
-        NormalizeScaleAndPivot(inst);
+        NormalizeScaleAndPivot(inst, name);
 
         var prefab = PrefabUtility.SaveAsPrefabAsset(inst, $"{PropDir}/{name}.prefab");
         Object.DestroyImmediate(inst);
@@ -136,30 +140,90 @@ public static class GlbPropImporter
             }
     }
 
-    // Scale so the larger ground (X/Z) extent ≈ TargetFootprint, and shift visual children so the
-    // pivot sits at bottom-centre (base on Y0, centred in X/Z) for clean ground-snapping.
-    static void NormalizeScaleAndPivot(GameObject inst)
+    // Scale so the larger ground (X/Z) extent ≈ TargetFootprint, and re-seat the pivot to bottom-centre
+    // (base on Y0, centred in X/Z) for clean ground-snapping — WITHOUT adding a wrapper GameObject, so the
+    // prop stays a single selectable node.
+    // A flattened/optimized GLB imports as a SINGLE node (mesh on the root itself). We can't move the root's
+    // own pivot by transform, so we bake the offset into a copy of that mesh's vertices (a new .mesh asset,
+    // since the source mesh is a read-only sub-asset of the .glb). Meshes that live on CHILD transforms are
+    // re-seated the cheap way — shift the child transform.
+    // NOTE: bounds come from each MeshFilter.sharedMesh.bounds (the mesh asset's own bounds), NOT
+    // Renderer.bounds — the latter is stale/half for a freshly-instantiated glTFast QUANTIZED mesh (the
+    // dequant scale isn't reflected until a later update), which under-shifted the pivot. Called with the root
+    // at position 0 / rotation identity / scale 1, so root-local == world (and == mesh-local for a root mesh).
+    static void NormalizeScaleAndPivot(GameObject inst, string name)
     {
-        var rends = inst.GetComponentsInChildren<Renderer>();
-        if (rends.Length == 0) return;
+        var w2l = inst.transform.worldToLocalMatrix;
+        bool has = false;
+        Bounds b = default;
+        foreach (var mf in inst.GetComponentsInChildren<MeshFilter>())
+        {
+            var mesh = mf.sharedMesh;
+            if (mesh == null) continue;
+            var m = w2l * mf.transform.localToWorldMatrix;   // mesh-local → root-local
+            var mb = mesh.bounds;
+            for (int i = 0; i < 8; i++)
+            {
+                var corner = mb.center + Vector3.Scale(mb.extents,
+                    new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                var p = m.MultiplyPoint3x4(corner);
+                if (!has) { b = new Bounds(p, Vector3.zero); has = true; }
+                else b.Encapsulate(p);
+            }
+        }
+        if (!has) return;
 
-        var b = rends[0].bounds;
-        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
-
-        // Recentre by moving direct children (can't move the root pivot itself).
         var offset = new Vector3(b.center.x, b.min.y, b.center.z);
         if (offset.sqrMagnitude > 1e-8f)
-            foreach (Transform child in inst.transform) child.position -= offset;
+        {
+            int idx = 0;
+            foreach (var mf in inst.GetComponentsInChildren<MeshFilter>())
+            {
+                if (mf.transform == inst.transform)   // mesh on the root: bake the offset into its vertices
+                {
+                    var shifted = BakePivotIntoMesh(mf.sharedMesh, offset, name, idx++);
+                    if (shifted != null)
+                    {
+                        mf.sharedMesh = shifted;
+                        var mc = mf.GetComponent<MeshCollider>();
+                        if (mc != null) mc.sharedMesh = shifted;
+                    }
+                }
+            }
+            foreach (Transform child in inst.transform) child.localPosition -= offset;   // meshes under children
+        }
 
         float footprint = Mathf.Max(b.size.x, b.size.z);
         if (footprint > 1e-4f)
             inst.transform.localScale = Vector3.one * (TargetFootprint / footprint);
     }
 
-    static void EnsureFolders()
+    // Save a copy of the mesh with every vertex shifted by -offset (base → Y0), so a mesh sitting on the prop
+    // root gives the root a bottom-centre pivot without a wrapper. Returns null if the source can't be read.
+    static Mesh BakePivotIntoMesh(Mesh src, Vector3 offset, string name, int idx)
+    {
+        if (src == null || !src.isReadable)
+        {
+            Debug.LogWarning($"[unwritten] '{name}' root mesh isn't readable — pivot left at mesh centre. " +
+                             "Enable Read/Write on the GLB import, or the mesh must live on a child.");
+            return null;
+        }
+        var m = Object.Instantiate(src);
+        var verts = m.vertices;
+        for (int i = 0; i < verts.Length; i++) verts[i] -= offset;
+        m.vertices = verts;
+        m.RecalculateBounds();
+        m.name = $"{name}_based";
+        string path = AssetDatabase.GenerateUniqueAssetPath($"{MeshDir}/{name}{(idx > 0 ? "_" + idx : "")}.mesh");
+        AssetDatabase.CreateAsset(m, path);
+        return m;
+    }
+
+    internal static void EnsureFolders()
     {
         if (!AssetDatabase.IsValidFolder("Assets/Prefabs")) AssetDatabase.CreateFolder("Assets", "Prefabs");
         if (!AssetDatabase.IsValidFolder(PropDir)) AssetDatabase.CreateFolder("Assets/Prefabs", "Props");
         if (!AssetDatabase.IsValidFolder(MatDir)) AssetDatabase.CreateFolder(PropDir, "Materials");
+        if (!AssetDatabase.IsValidFolder(MeshDir)) AssetDatabase.CreateFolder(PropDir, "Meshes");
     }
 }

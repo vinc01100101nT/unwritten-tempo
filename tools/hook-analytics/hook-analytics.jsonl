@@ -1470,3 +1470,5 @@
 {"ts": "2026-07-14T05:39:04+08:00", "session_id": "03a09163-330e-4068-a637-2b6b0e261990", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\DepthSortRuntime.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-07-14T05:40:39+08:00", "session_id": "03a09163-330e-4068-a637-2b6b0e261990", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\DialogueUI.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
 {"ts": "2026-07-14T05:40:43+08:00", "session_id": "03a09163-330e-4068-a637-2b6b0e261990", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\InteractPrompt.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
+{"ts": "2026-07-14T18:38:45+08:00", "session_id": "df3823ce-85c8-451d-88ba-7c4afb79cb38", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\SelectionRoot.cs", "outcome": "blocked", "doc": "PERFORMANCE.md"}
+{"ts": "2026-07-14T18:38:59+08:00", "session_id": "df3823ce-85c8-451d-88ba-7c4afb79cb38", "file": "D:\\tempo\\projects\\roguelike-mmo\\unity\\Assets\\Scripts\\SelectionRoot.cs", "outcome": "passed", "doc": "PERFORMANCE.md"}
