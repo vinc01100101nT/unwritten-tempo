@@ -465,6 +465,8 @@ public static class RigBuilder25D
         // rides the controller via Character3DVisual — wired here so a fresh player IS the 3D avatar out of the box.
         // Swap models anytime via Tools ▸ Rigs ▸ Set 3D Player Model.
         ApplyDefault3DCharacter(go);
+        // NOTE: the occlusion-silhouette marker goes on the VISUAL object (a separate object built by
+        // Player3DVisualBuilder.Attach), NOT here on the player root — the root only holds the hidden sprite.
         return go;
     }
 

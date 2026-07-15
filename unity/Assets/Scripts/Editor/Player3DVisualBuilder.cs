@@ -96,6 +96,10 @@ public static class Player3DVisualBuilder
         vis.player = player;
         if (go.GetComponent<WeaponSocket>() == null) go.AddComponent<WeaponSocket>();
         if (go.GetComponent<CharacterDye3D>() == null) go.AddComponent<CharacterDye3D>();   // per-part outfit dye
+        // The x-ray occlusion silhouette flags THIS object's renderers (the visible model) — it lives here, not on
+        // the player root, because the model is a SEPARATE object riding the controller (the root only holds the
+        // hidden sprite). A model swap rebuilds this object, so the fresh renderers are re-tagged automatically.
+        if (go.GetComponent<OccludedSilhouetteTarget>() == null) go.AddComponent<OccludedSilhouetteTarget>();
 
         // New visual is fully built — now retire the old one(s). (Skip the new go in case it was already matched.)
         foreach (var v in toRemove) if (v != null && v.gameObject != go) Object.DestroyImmediate(v.gameObject);

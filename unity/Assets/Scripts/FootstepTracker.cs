@@ -39,6 +39,10 @@ public class FootstepTracker : MonoBehaviour
     public float walkStepOffset = 0.09f;
     [Range(1f, 6f)] [Tooltip("Size multiplier of the centred splash-print stamped when the player LANDS from a jump.")]
     public float landingScale = 2.5f;
+    [Range(0.05f, 6f)] [Tooltip("Size multiplier of each foot-plant print/splash while WALKING (Shift held).")]
+    public float walkStepScale = 1f;
+    [Range(0.05f, 6f)] [Tooltip("Size multiplier of each foot-plant print/splash while RUNNING.")]
+    public float runStepScale = 1f;
 
     // The ring is split into two DISJOINT regions so NPC steps can never evict the player's: slots [0,PlayerSteps)
     // are the player's own ring (its full budget, unchanged), slots [PlayerSteps,MaxSteps) are shared by all NPCs.
@@ -175,8 +179,10 @@ public class FootstepTracker : MonoBehaviour
         Vector3 p = player.position;
 
         // Airborne: feet are off the ground → no prints. Hold the anchors so air travel doesn't skew the next print's
-        // direction, reset detection, and remember we left the ground (for the landing splash on touchdown).
-        if (playerCtrl != null && playerCtrl.IsAirborne)
+        // direction, reset detection, and remember we left the ground (for the landing splash on touchdown). The rooted
+        // LAND-recovery phase (JumpClipReleasing) already has the feet DOWN — exclude it so the splash stamps the frame
+        // of touchdown, not after the landing-animation tail finishes.
+        if (playerCtrl != null && playerCtrl.IsAirborne && !playerCtrl.JumpClipReleasing)
         {
             lastStepPos = p; prevPos = p; hasLast = true; hasPrev = true;
             havePhase = false; wasAirborne = true;
@@ -218,8 +224,9 @@ public class FootstepTracker : MonoBehaviour
         bool run = gait == Character3DPose.LocoGait.Run;
         float[] phases = run ? runPhases : walkPhases;
         bool[] sides = run ? runRight : walkRight;
+        float stepScale = Mathf.Max(0.05f, run ? runStepScale : walkStepScale);
         for (int i = 0; i < phases.Length; i++)
-            if (Crossed(prevFrac, frac, phases[i])) StampFoot(p, frameDelta, i < sides.Length && sides[i]);
+            if (Crossed(prevFrac, frac, phases[i])) StampFoot(p, frameDelta, i < sides.Length && sides[i], stepScale);
         prevFrac = frac;
     }
 
@@ -232,7 +239,7 @@ public class FootstepTracker : MonoBehaviour
 
     // Stamp a print under the planting foot — offset sideways from the walk line to the AUTHORED side (right/left, not
     // a blind alternation) so the trail zig-zags on the correct sides from the first step. Fires the player step signals.
-    void StampFoot(Vector3 p, Vector3 frameDelta, bool rightFoot)
+    void StampFoot(Vector3 p, Vector3 frameDelta, bool rightFoot, float sizeScale)
     {
         Vector3 dir = p - lastStepPos; dir.y = 0f;
         if (dir.sqrMagnitude <= 1e-6f) dir = frameDelta;
@@ -242,7 +249,7 @@ public class FootstepTracker : MonoBehaviour
         Vector3 foot = p + dir * fwd + perp * (footSpacing * (rightFoot ? 1f : -1f));
 
         lastStepPos = p;
-        Stamp(foot.x, foot.z, 1f, sfx: true);
+        Stamp(foot.x, foot.z, sizeScale, sfx: true);
     }
 
     /// <summary>Stamp a footstep from a NON-player walker (e.g. a town NPC) into the SAME shared ring, so

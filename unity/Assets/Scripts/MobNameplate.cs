@@ -161,7 +161,7 @@ public class MobNameplate : MonoBehaviour
     static void EnsureHost()
     {
         if (host != null) return;                           // alive (Unity-null check); recreated after a scene unload
-        var go = new GameObject("MobNameplateSystem");
+        var go = new GameObject("MobNameplateSystem") { hideFlags = HideFlags.DontSaveInEditor };   // runtime-only pool host — never serialize into a scene
         var canvas = go.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;
         canvas.sortingOrder = DepthSortRuntime.FxPopup;     // FX band: above all entities + overhead

@@ -39,7 +39,7 @@ public static class VfxDirector
     {
         if (host != null) return;
         pool.Clear();   // a scene unload destroyed the old host + its pooled children; drop stale refs
-        host = new GameObject("VfxDirector").transform;
+        host = new GameObject("VfxDirector") { hideFlags = HideFlags.DontSaveInEditor }.transform;   // runtime-only pool host — never serialize into a scene
     }
 
     static VfxSequenceRunner Rent()

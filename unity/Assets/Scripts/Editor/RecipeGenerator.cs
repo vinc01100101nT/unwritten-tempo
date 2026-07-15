@@ -47,6 +47,11 @@ public static class RecipeGenerator
     static readonly Dictionary<(Material src, bool canopy), Material> _swayMats = new Dictionary<(Material, bool), Material>();
     static Shader _foliageWind;
 
+    // Solid sibling of the sway shader (Unwritten/StylizedLit): re-materials a solid prop (house/wall/rock) onto
+    // the clean storybook lighting WITHOUT wind. Cached per source material within one invocation so instances
+    // stay batched. See ApplyStylizedLitToSelected.
+    static Shader _stylizedLit;
+
     // ── sidecar capture (see MapSidecar) ──────────────────────────────────────────────────────────────────
     // Every placed prop is recorded here as a painter ObjectCell during a bake, then written next to the scene as
     // <name>.map.json so the generated map can be re-opened + hand-edited in the Map Painter. Reset per Generate.
@@ -225,6 +230,143 @@ public static class RecipeGenerator
             $"Applied wind sway in '{scene.name}':\n• {decor} decor renderer(s) (whole-plant)\n• {trees} tree renderer(s) (leaves only)\n\n"
             + "Make sure Systems has the WindGlobals driver (Setup Systems Scene adds it), then press Play.\n"
             + "Save the scene (Ctrl+S) to keep the change.", "OK");
+    }
+
+    // Sway the SELECTED object(s) as a whole tree — for hand-dropped single-mesh trees (GPT/Trellis exports whose
+    // one baked material isn't named "*leaves", so "Apply Foliage Wind to Open Scene" can't tell trunk from crown).
+    // Swaps EVERY material on the selection onto the wind shader, with params auto-sized to each object's height so
+    // the trunk base stays planted and only the crown rustles. Re-runnable. Save the scene (Ctrl+S) to keep it.
+    [MenuItem("Tools/unwritten/World/Sway Selected Tree", priority = 193)]
+    static void SwaySelectedTree()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+        { EditorUtility.DisplayDialog("Sway Selected Tree", "Exit Play mode first, then re-run.", "OK"); return; }
+
+        _foliageWind = Shader.Find("Unwritten/FoliageWind");
+        if (_foliageWind == null)
+        { EditorUtility.DisplayDialog("Sway Selected Tree", "Shader 'Unwritten/FoliageWind' not found — is Assets/Shaders/FoliageWind.shader imported?", "OK"); return; }
+
+        var sel = Selection.gameObjects;
+        if (sel == null || sel.Length == 0)
+        { EditorUtility.DisplayDialog("Sway Selected Tree", "Select the tree object(s) in the Hierarchy first, then re-run.", "OK"); return; }
+
+        _swayMats.Clear();
+        EnsureAlwaysIncluded(_foliageWind);
+
+        int objs = 0, mats = 0;
+        var local = new Dictionary<Material, Material>();
+        foreach (var go in sel)
+        {
+            var rends = go.GetComponentsInChildren<MeshRenderer>(true);
+            if (rends.Length == 0) continue;
+
+            // Full-bend height = the object's own height so only the top third of ANY tree really moves.
+            var b = new Bounds(go.transform.position, Vector3.zero);
+            foreach (var r in rends) b.Encapsulate(r.bounds);
+            float h = Mathf.Max(b.size.y, 0.5f);
+
+            bool touched = false;
+            foreach (var rend in rends)
+            {
+                var arr = rend.sharedMaterials;
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    var src = arr[i];
+                    if (src == null || src.shader == _foliageWind) continue;
+                    if (!local.TryGetValue(src, out var m) || m == null)
+                    {
+                        m = GetSwayMaterial(src, true);                 // canopy clone (copies Base Map/tint/cutout)
+                        m.SetFloat("_SwayHeight", h);                    // size the bend to THIS tree
+                        m.SetFloat("_SwayStiffness", 2.2f);             // high = trunk base stays rigid
+                        m.SetFloat("_SwayAmount", 0.06f);
+                        m.SetFloat("_SwaySpeed", 0.8f);
+                        local[src] = m;
+                    }
+                    arr[i] = m; mats++; touched = true;
+                }
+                rend.sharedMaterials = arr;
+            }
+            if (touched) objs++;
+        }
+
+        if (objs > 0) UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(sel[0].scene);
+        EditorUtility.DisplayDialog("Sway Selected Tree",
+            $"Swayed {objs} object(s), {mats} material(s).\n\nPress Play to see it move (the wind driver runs at runtime).\n"
+            + "Save the scene (Ctrl+S) to keep it.", "OK");
+    }
+
+    // Re-material the SELECTED solid prop(s) — houses, walls, rocks — onto Unwritten/StylizedLit, the clean
+    // storybook lighting (flat lambert + soft shadow + SH ambient + lamps, no specular sheen) WITHOUT wind. This
+    // is the solid counterpart to "Sway Selected Tree": use it on raw Trellis/GPT buildings that look like a
+    // muddy glossy blob on URP/Lit. Swaps EVERY material on the selection. Re-runnable. Save the scene to keep it.
+    [MenuItem("Tools/unwritten/World/Stylize Selected Solid Prop", priority = 194)]
+    static void ApplyStylizedLitToSelected()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+        { EditorUtility.DisplayDialog("Stylize Solid Prop", "Exit Play mode first, then re-run.", "OK"); return; }
+
+        _stylizedLit = Shader.Find("Unwritten/StylizedLit");
+        if (_stylizedLit == null)
+        { EditorUtility.DisplayDialog("Stylize Solid Prop", "Shader 'Unwritten/StylizedLit' not found — is Assets/Shaders/StylizedLit.shader imported?", "OK"); return; }
+
+        var sel = Selection.gameObjects;
+        if (sel == null || sel.Length == 0)
+        { EditorUtility.DisplayDialog("Stylize Solid Prop", "Select the solid prop(s) in the Hierarchy first, then re-run.", "OK"); return; }
+
+        EnsureAlwaysIncluded(_stylizedLit);
+
+        // One undo step for the whole op — Ctrl+Z restores every renderer's original material array in one press.
+        Undo.IncrementCurrentGroup();
+        Undo.SetCurrentGroupName("Stylize Solid Prop");
+        int group = Undo.GetCurrentGroup();
+
+        int objs = 0, mats = 0;
+        var local = new Dictionary<Material, Material>();
+        foreach (var go in sel)
+        {
+            var rends = go.GetComponentsInChildren<MeshRenderer>(true);
+            if (rends.Length == 0) continue;
+
+            bool touched = false;
+            foreach (var rend in rends)
+            {
+                var arr = rend.sharedMaterials;
+                bool rendTouched = false;
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    var src = arr[i];
+                    if (src == null || src.shader == _stylizedLit) continue;
+                    if (!local.TryGetValue(src, out var m) || m == null)
+                    {
+                        m = new Material(_stylizedLit) { name = src.name + " (stylized)" };
+                        if      (src.HasProperty("_BaseMap")) m.SetTexture("_BaseMap", src.GetTexture("_BaseMap"));
+                        else if (src.HasProperty("_MainTex")) m.SetTexture("_BaseMap", src.GetTexture("_MainTex"));
+                        if      (src.HasProperty("_BaseColor")) m.SetColor("_BaseColor", src.GetColor("_BaseColor"));
+                        else if (src.HasProperty("_Color"))     m.SetColor("_BaseColor", src.GetColor("_Color"));
+                        local[src] = m;
+                    }
+                    arr[i] = m; mats++; touched = true; rendTouched = true;
+                }
+                if (rendTouched)
+                {
+                    Undo.RecordObject(rend, "Stylize Solid Prop");   // capture original array so Ctrl+Z restores it
+                    rend.sharedMaterials = arr;
+                    // Most props are prefab instances; the material swap becomes a prefab OVERRIDE. RecordObject
+                    // alone makes undo work but NOT redo — the override change isn't in the redo diff. Registering
+                    // the instance modification puts it on the undo stack properly so Ctrl+Y re-applies. (Measured:
+                    // without this, redo on a prefab-instance renderer leaves it on the original material.)
+                    if (PrefabUtility.IsPartOfPrefabInstance(rend))
+                        PrefabUtility.RecordPrefabInstancePropertyModifications(rend);
+                }
+            }
+            if (touched) objs++;
+        }
+        Undo.CollapseUndoOperations(group);
+
+        if (objs > 0) UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(sel[0].scene);
+        EditorUtility.DisplayDialog("Stylize Solid Prop",
+            $"Stylized {objs} object(s), {mats} material(s) onto Unwritten/StylizedLit.\n\n"
+            + "Solid, single-sided, no sway — the clean storybook wash for buildings.\nSave the scene (Ctrl+S) to keep it.", "OK");
     }
 
     // Classify a renderer by its name (or any ancestor's, e.g. its prop-group node): 2 = tree/bush (sway leaves

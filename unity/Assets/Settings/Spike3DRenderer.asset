@@ -26,7 +26,8 @@ MonoBehaviour:
     probeVolumeBlendStatesCS: {fileID: 0}
   m_RendererFeatures:
   - {fileID: 1609339641441061835}
-  m_RendererFeatureMap: cb8b0c93e0855516
+  - {fileID: 6415156278703607063}
+  m_RendererFeatureMap: cb8b0c93e085551617cdbe82a5360759
   m_UseNativeRenderPass: 0
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 0}
@@ -68,3 +69,17 @@ MonoBehaviour:
   m_Name: HandDrawnGradeFeature
   m_EditorClassIdentifier: Assembly-CSharp::HandDrawnGradeFeature
   m_Active: 1
+--- !u!114 &6415156278703607063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a38aa802f0232e4f9c169e8a01453c7, type: 3}
+  m_Name: OccludedSilhouetteFeature
+  m_EditorClassIdentifier: Assembly-CSharp::OccludedSilhouetteFeature
+  m_Active: 1
+  silhouetteColor: {r: 0.55, g: 0.8, b: 1, a: 1}

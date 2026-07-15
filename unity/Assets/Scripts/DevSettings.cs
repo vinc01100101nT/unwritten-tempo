@@ -572,6 +572,8 @@ public class DevSettings : MonoBehaviour
         F("Step offset",     -1f, 1f,    () => foot ? foot.stepOffset : 0f,    v => { foot = FootstepTracker.Ensure(); foot.stepOffset = v; });
         F("Step offset (walk)", -1f, 1f, () => foot ? foot.walkStepOffset : 0f, v => { foot = FootstepTracker.Ensure(); foot.walkStepOffset = v; });
         F("Jump splash",      1f, 6f,    () => foot ? foot.landingScale : 0f,  v => { foot = FootstepTracker.Ensure(); foot.landingScale = v; });
+        F("Walk splash",      0.05f, 6f, () => foot ? foot.walkStepScale : 0f, v => { foot = FootstepTracker.Ensure(); foot.walkStepScale = v; });
+        F("Run splash",       0.05f, 6f, () => foot ? foot.runStepScale : 0f,  v => { foot = FootstepTracker.Ensure(); foot.runStepScale = v; });
         Sub("Reflection");
         // Planar reflection (Step 1: 3D world only) — mirror camera into puddles. Needs High tier + rain.
         B("Water reflection", () => refl && refl.enabled && wet && wet.reflStrength > 0f,

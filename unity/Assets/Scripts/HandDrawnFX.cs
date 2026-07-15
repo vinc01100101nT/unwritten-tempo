@@ -28,9 +28,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class HandDrawnFX : MonoBehaviour
 {
-    // Defaults below are the dialled-in look (DevSettings ▸ Hand-Drawn, 2026-06-25). Ink is ON by default and the
-    // filter self-boots (see Boot) so the game launches with the hand-drawn look. Saturation/contrast are left
-    // neutral so colour is untouched until you lower them.
+    // Defaults below are the dialled-in look (DevSettings ▸ Hand-Drawn, 2026-07-14). Ink is ON by default and the
+    // filter self-boots (see Boot) so the game launches with the hand-drawn look. The grade is OFF by default
+    // (saturation 1, contrast 0 → untouched colour, feature skips its blit); the look comes purely from the ink.
     [Header("Master")]
     [Range(0f, 1f)] [Tooltip("Overall strength of the INK linework + paper. 0 = ink off (quad disabled). " +
              "Saturation below is independent of this.")]
@@ -38,21 +38,21 @@ public class HandDrawnFX : MonoBehaviour
 
     [Header("Ink linework")]
     [Range(0f, 1f)] [Tooltip("Opacity of the ink outlines.")]
-    public float lineStrength = 0.97f;
+    public float lineStrength = 1f;
     [Tooltip("How readily SILHOUETTE edges (object outlines) are inked. Higher = more outlines.")]
-    public float silhouette = 2.37f;
+    public float silhouette = 0f;
     [Tooltip("How readily CREASE edges (surface folds/kinks) are inked. Higher = busier interior lines.")]
-    public float crease = 2.78f;
+    public float crease = 60f;
     [Range(0.4f, 3f)] [Tooltip("Line thickness in pixels (neighbour sample distance).")]
-    public float thickness = 2.14f;
+    public float thickness = 1.57f;
     [Range(0f, 0.5f)] [Tooltip("Edge threshold — raise to ink only the strongest edges (less noise on detailed meshes).")]
-    public float edgeThreshold = 0.50f;
+    public float edgeThreshold = 0f;
     [Tooltip("Ink tint. Slightly warm off-black reads as ink rather than a hard black key-line.")]
     public Color inkColor = new Color(0.08f, 0.07f, 0.06f, 1f);
 
     [Header("Paper")]
     [Range(0f, 1f)] [Tooltip("Faint paper-fibre grain over the whole frame (subtle).")]
-    public float paperGrain = 0.31f;
+    public float paperGrain = 0.25f;
 
     [Header("Colour (HandDrawnGrade renderer feature)")]
     [Range(MinSaturation, 1f)] [Tooltip("1 = untouched colour. Lower = muted, illustrated palette. Clamped at " +

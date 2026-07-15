@@ -127,7 +127,7 @@ public class DamagePopup : MonoBehaviour
         if (host != null) return;        // alive (Unity-null check)
         pool.Clear();                    // stale refs from a previous scene's destroyed host — drop them
 
-        var go = new GameObject("DamagePopupSystem");
+        var go = new GameObject("DamagePopupSystem") { hideFlags = HideFlags.DontSaveInEditor };   // runtime-only pool host — never serialize into a scene
         go.layer = LayerMask.NameToLayer("TransparentFX");   // excluded from the planar-reflection camera (no mirrored numbers)
         var canvas = go.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;

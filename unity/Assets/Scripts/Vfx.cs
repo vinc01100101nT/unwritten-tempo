@@ -210,8 +210,23 @@ public static class Vfx
     {
         if (host != null) return;
         pools.Clear();
-        host = new GameObject("VfxSystem").transform;
+        // DontSaveInEditor: this is a RUNTIME-ONLY pool host — it must NEVER be serialized into a scene.
+        // Without this, instantiating the pool in edit mode (e.g. a Prewarm run via MCP while Systems.unity
+        // is open) baked the host + all its clones into the scene, spawning phantom effects on every load.
+        host = new GameObject("VfxSystem") { hideFlags = HideFlags.DontSaveInEditor }.transform;
         host.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+    }
+
+    // The one place a pooled instance is born (Rent pool-miss + Prewarm). Tags it DontSaveInEditor so a pool
+    // object can never be baked into a saved scene, then caches its components once via Prepare.
+    static EffectHandle NewInstance(EffectDef def, int key)
+    {
+        var go = Object.Instantiate(def.prefab, host);
+        go.hideFlags = HideFlags.DontSaveInEditor;
+        var h = go.GetComponent<EffectHandle>();
+        if (h == null) h = go.AddComponent<EffectHandle>();
+        h.Prepare(key);
+        return h;
     }
 
     static Stack<EffectHandle> GetPool(int key)
@@ -227,12 +242,7 @@ public static class Vfx
         int key = def.prefab.GetInstanceID();
         var pool = GetPool(key);
         if (pool.Count > 0) return pool.Pop();
-
-        var go = Object.Instantiate(def.prefab, host);
-        var h = go.GetComponent<EffectHandle>();
-        if (h == null) h = go.AddComponent<EffectHandle>();
-        h.Prepare(key);
-        return h;
+        return NewInstance(def, key);
     }
 
     /// <summary>Play a one-shot effect at a world position (prefab's own orientation). Returns null if the id
@@ -309,11 +319,8 @@ public static class Vfx
         var pool = GetPool(key);
         for (int i = 0; i < count; i++)
         {
-            var go = Object.Instantiate(def.prefab, host);
-            var h = go.GetComponent<EffectHandle>();
-            if (h == null) h = go.AddComponent<EffectHandle>();
-            h.Prepare(key);
-            go.SetActive(false);
+            var h = NewInstance(def, key);
+            h.gameObject.SetActive(false);
             pool.Push(h);
         }
     }

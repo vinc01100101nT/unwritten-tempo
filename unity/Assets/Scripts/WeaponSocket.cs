@@ -65,5 +65,10 @@ public class WeaponSocket : MonoBehaviour
         t.localPosition = grip != null ? grip.localPosition : Vector3.zero;
         t.localRotation = grip != null ? Quaternion.Euler(grip.localEuler) : Quaternion.identity;
         t.localScale    = grip != null ? grip.localScale : Vector3.one;
+
+        // The weapon mounts after OccludedSilhouetteTarget already flagged the body, so re-flag now: the new gear
+        // gets the coverage bit (so it hides the body behind it) but never the paint bit (it must not x-ray itself).
+        var silhouette = GetComponentInParent<OccludedSilhouetteTarget>();
+        if (silhouette != null) silhouette.Refresh();
     }
 }

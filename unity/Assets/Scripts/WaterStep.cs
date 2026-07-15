@@ -29,8 +29,11 @@ public class WaterStep : MonoBehaviour
     public float scale = 1f;
     [Tooltip("World-space lift so the splash sits on the water surface rather than buried in the ground.")]
     public float yOffset = 0.02f;
-    [Range(0, 32)] [Tooltip("Instances to pre-warm into the pool at start so the first splash doesn't hitch.")]
-    public int prewarm = 6;
+    [Range(0, 64)] [Tooltip("Instances to pre-warm into the pool at start. Must cover PEAK overlap (splashes alive " +
+             "at once while running fast through puddles ≈ spawnRate × lifetime, observed ~6–8). If the pool runs dry " +
+             "mid-run, each extra step pays a ~1.6ms Instantiate of the whole splash — the measured cause of the " +
+             "walking-near-water frame hitch — so keep this comfortably above peak, not at it.")]
+    public int prewarm = 16;
 
     // Self-bootstrap so nobody has to hand-add this to a scene: if the game starts and no WaterStep exists yet,
     // spawn one that survives scene loads. Mirrors FootstepTracker.Ensure / WetGround.Ensure. No-ops when the
@@ -44,13 +47,18 @@ public class WaterStep : MonoBehaviour
         go.AddComponent<WaterStep>();
     }
 
+    // DISABLED for now — the footstep water splash is turned off (it added nothing the wet-ground ripple shader
+    // doesn't already convey, and every spawn built a fresh 7-system splash). The spawn path below is left INTACT on
+    // purpose: we may revive this as a generic FOOTSTEP MAGIC VFX (glowing runes / sparkle trail under the feet) —
+    // just point splashId at the new effect and re-enable the two lines below (prewarm in Start + the Stepped
+    // subscription in OnEnable). Keep prewarm covering peak overlap (see field note) so re-enabling doesn't hitch.
     void Start()
     {
-        if (prewarm > 0 && EffectCatalog.Has(splashId)) Vfx.Prewarm(splashId, prewarm);
+        // if (prewarm > 0 && EffectCatalog.Has(splashId)) Vfx.Prewarm(splashId, prewarm);
     }
 
-    void OnEnable()  { FootstepTracker.Stepped += OnStep; }
-    void OnDisable() { FootstepTracker.Stepped -= OnStep; }
+    void OnEnable()  { /* FootstepTracker.Stepped += OnStep; */ }
+    void OnDisable() { /* FootstepTracker.Stepped -= OnStep; */ }
 
     // Cold path: fires a few times/second per walker, never per-frame. Zero-GC — IsPuddleAt is a single fbm
     // (no alloc), VfxParams is a struct, and the spawn is pooled.
