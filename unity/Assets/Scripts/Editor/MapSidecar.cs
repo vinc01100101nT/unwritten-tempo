@@ -16,7 +16,7 @@ using UnityEngine;
 /// world positions, facings and ground.</para>
 ///
 /// <para><b>Lossy by design (painter limits, not bugs):</b> the painter has no per-instance scale (re-import seats
-/// everything at the palette's <c>defaultScale</c>, so per-prop scale jitter is dropped) and no mob/biome layer
+/// every prop at its native prefab size, so per-prop scale jitter is dropped) and no mob/biome layer
 /// (mobs and the map's biome tint aren't represented). Layout, prefab choice, facing, roads and dirt round-trip.</para>
 /// </summary>
 public static class MapSidecar

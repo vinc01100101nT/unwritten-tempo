@@ -46,8 +46,8 @@ public class BrushPalette : ScriptableObject
 {
     [Tooltip("World size of one painter grid cell (≈ one building plot).")]
     public float cellSize = 4f;
-    [Tooltip("Scale prefabs are measured at for the manifest and placed at by the importer (matches the recipe's 0.3).")]
-    public float defaultScale = 0.3f;
+    // No prop scale knob: props are placed at their NATIVE prefab size (the prefab owns its size, single source of
+    // truth). Set each prop's real size on the prefab itself; nothing here multiplies it.
     public List<MapBrush> brushes = new List<MapBrush>();
 
     /// <summary>The brush whose <see cref="MapBrush.category"/> matches <paramref name="c"/> and has resolved

@@ -63,7 +63,8 @@ public partial class Player3DController : MonoBehaviour
     // stay the exact visible mesh — the oversize-collision feel was THIS capsule being full-height.
     public const float DefaultCapsuleRadius = 0.15f;
     public const float DefaultCapsuleHeight = 0.5f;
-    public const float DefaultCapsuleStepOffset = 0.3f;
+    // Single-sourced with the pathfinder's cliff/stair threshold so player + mobs agree on what's climbable.
+    public const float DefaultCapsuleStepOffset = GroundElevation.MaxClimbStep;
     public const float DefaultCapsuleSlopeLimit = 45f;
 
     // set skin width to 0.02f --vince

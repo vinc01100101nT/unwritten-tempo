@@ -15,8 +15,8 @@ using UnityEngine.SceneManagement;
 /// <list type="bullet">
 /// <item>Ground: <see cref="GroundBlendBuilder.LayPlotSampled"/> — one blended grass→dirt→road mesh, but the per-vertex
 /// path/dirt weights are sampled (bilinearly) from the painted cell grid instead of from noise + routes.</item>
-/// <item>Props: <see cref="PropPlacement.PlaceOnGround"/> — bounds-driven seating (Y0, any pivot), scaled to the
-/// palette's <c>defaultScale</c> and rotated to the painted yaw.</item>
+/// <item>Props: <see cref="PropPlacement.PlaceOnGround"/> — bounds-driven seating (Y0, any pivot), at the prop's
+/// NATIVE prefab size (nothing rescales it) and rotated to the painted yaw.</item>
 /// <item>Spawn: <see cref="RegionBuilder.MakeSpawn"/>. Warp wiring stays <see cref="WorldCreator"/>/MapLinker's job.</item>
 /// </list>
 ///
@@ -29,10 +29,14 @@ public class MapPainterImporter : EditorWindow
 {
     const string PropsDir  = "Assets/Prefabs/Props";
     const string ScenesDir = "Assets/Scenes";
+    // Props are placed at their NATIVE prefab size (nothing rescales them). The modular WALL kit is the one
+    // exception: it's tiled to fill grid cells, so it keeps its own structural fit-scale — unrelated to prop sizing.
+    const float WallKitScale = 0.3f;
 
     // ── painter JSON schema (matches the exporter in tools/map-painter/index.html) ───────────────────────
     [System.Serializable] class Vec2     { public float x, z; }
     [System.Serializable] class GroundCell { public string brush; public int cx, cz; }
+    [System.Serializable] class HeightCell { public int cx, cz, level; }
     [System.Serializable] class ObjectCell { public string brush, prefab; public float x, z, yaw; }
     [System.Serializable] class PaintedMap
     {
@@ -42,13 +46,12 @@ public class MapPainterImporter : EditorWindow
         public Vec2 size;
         public int cols, rows;
         public GroundCell[] ground;
+        public HeightCell[] heights;
         public ObjectCell[] objects;
     }
 
     string _jsonPath;
     string _mapName = "Prontera";
-    float  _scale = 0.3f;
-    bool   _scaleFromPalette = true;
 
     [MenuItem("Tools/unwritten/World/Import Painted Map…", priority = 181)]
     static void Open()
@@ -56,7 +59,6 @@ public class MapPainterImporter : EditorWindow
         var w = GetWindow<MapPainterImporter>(true, "Import Painted Map");
         w.minSize = new Vector2(440, 230);
         w._jsonPath = DefaultJsonPath();
-        w.SyncScaleFromPalette();
         w.Show();
     }
 
@@ -65,13 +67,6 @@ public class MapPainterImporter : EditorWindow
     {
         string p = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "tools", "map-painter", "map.json"));
         return File.Exists(p) ? p : "";
-    }
-
-    void SyncScaleFromPalette()
-    {
-        if (!_scaleFromPalette) return;
-        var pal = LoadPalette();
-        if (pal != null) _scale = pal.defaultScale;
     }
 
     void OnGUI()
@@ -93,12 +88,6 @@ public class MapPainterImporter : EditorWindow
         }
 
         _mapName = EditorGUILayout.TextField(new GUIContent("Scene name", "Saved as Assets/Scenes/<name>.unity"), _mapName);
-
-        _scaleFromPalette = EditorGUILayout.Toggle(new GUIContent("Scale from palette",
-            "Use the Brush Palette's defaultScale (the size props were measured + painted at)."), _scaleFromPalette);
-        using (new EditorGUI.DisabledScope(_scaleFromPalette))
-            _scale = EditorGUILayout.FloatField("Prop scale", _scale);
-        if (_scaleFromPalette) SyncScaleFromPalette();
 
         EditorGUILayout.Space();
         using (new EditorGUI.DisabledScope(string.IsNullOrEmpty(_jsonPath) || !File.Exists(_jsonPath) || string.IsNullOrWhiteSpace(_mapName)))
@@ -150,6 +139,8 @@ public class MapPainterImporter : EditorWindow
             foreach (var o in map.objects) if (o != null) o.z = sizeZ - o.z;
         if (map.ground != null)
             foreach (var c in map.ground) if (c != null) c.cz = (rows - 1) - c.cz;
+        if (map.heights != null)
+            foreach (var h in map.heights) if (h != null) h.cz = (rows - 1) - h.cz;
 
         int groundLayer = WorldBuildUtil.EnsureGroundLayer();
         if (groundLayer < 0)
@@ -160,7 +151,6 @@ public class MapPainterImporter : EditorWindow
         string scenePath = $"{ScenesDir}/{safe}.unity";
 
         var palette = LoadPalette();
-        float scale = Mathf.Max(0.01f, _scale);
 
         // ── new scene ────────────────────────────────────────────────────────────────────────────────
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
@@ -196,13 +186,33 @@ public class MapPainterImporter : EditorWindow
                             Bilinear(rockF,  fx, fz, cols, rows), Bilinear(dirtF,  fx, fz, cols, rows));
         }
 
-        var ground = GroundBlendBuilder.LayPlotSampled(
-            scene, $"Ground_{safe}", Vector3.zero, sizeX, sizeZ, groundLayer, Sample,
-            GroundTex(palette, "grass", "ground_grass"),
-            GroundTex(palette, "dirt",  "ground_soil"),
-            GroundTex(palette, "path",  "ground_road"),
-            GroundTex(palette, "stone", "ground_stones"),
-            GroundTex(palette, "rock",  "ground_rock"));
+        // ── ELEVATION: read the painted per-cell height notches (gutter = −1, raised = +1, …) ───────────────
+        var levels = new int[cols, rows];
+        bool hasElevation = false;
+        if (map.heights != null)
+            foreach (var h in map.heights)
+            {
+                if (h == null || h.cx < 0 || h.cx >= cols || h.cz < 0 || h.cz >= rows) continue;
+                levels[h.cx, h.cz] = h.level;
+                if (h.level != 0) hasElevation = true;
+            }
+
+        var ground = hasElevation
+            ? GroundBlendBuilder.LayPlotSampledElevated(
+                scene, $"Ground_{safe}", Vector3.zero, sizeX, sizeZ, groundLayer, Sample,
+                levels, cols, rows, cellSize,
+                GroundTex(palette, "grass", "ground_grass"),
+                GroundTex(palette, "dirt",  "ground_soil"),
+                GroundTex(palette, "path",  "ground_road"),
+                GroundTex(palette, "stone", "ground_stones"),
+                GroundTex(palette, "rock",  "ground_rock"))
+            : GroundBlendBuilder.LayPlotSampled(
+                scene, $"Ground_{safe}", Vector3.zero, sizeX, sizeZ, groundLayer, Sample,
+                GroundTex(palette, "grass", "ground_grass"),
+                GroundTex(palette, "dirt",  "ground_soil"),
+                GroundTex(palette, "path",  "ground_road"),
+                GroundTex(palette, "stone", "ground_stones"),
+                GroundTex(palette, "rock",  "ground_rock"));
         if (ground == null)
         {
             EditorUtility.DisplayDialog("Import Painted Map",
@@ -252,7 +262,7 @@ public class MapPainterImporter : EditorWindow
                 }
 
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-                go.transform.localScale = Vector3.one * scale;
+                // Leave localScale as the prefab's own — the prefab owns its size (eyeballed + applied); nothing here rescales it.
                 float off = (!string.IsNullOrEmpty(o.brush) && fwdOffset.TryGetValue(o.brush, out var fo)) ? fo : 0f;
                 go.transform.rotation = Quaternion.Euler(0f, o.yaw + off, 0f);
                 PropPlacement.PlaceOnGround(go, new Vector3(o.x - sizeX * 0.5f, 0f, o.z - sizeZ * 0.5f), mask);
@@ -263,7 +273,7 @@ public class MapPainterImporter : EditorWindow
             }
 
         // ── WALLS: autotile the painted wall cells into the modular kit (straights + corner/end towers + gates) ─
-        int walls = AutotileWalls(wallCells, pathF, propsRoot.transform, sizeX, sizeZ, cellSize, cols, rows, mask, scale);
+        int walls = AutotileWalls(wallCells, pathF, propsRoot.transform, sizeX, sizeZ, cellSize, cols, rows, mask, WallKitScale);
 
         // ── SPAWN (boot/arrival point; warps added later via MapLinker) ──────────────────────────────────
         RegionBuilder.MakeSpawn(scene, "Start", WorldBuildUtil.SurfacePoint(Vector3.zero, mask));
@@ -277,7 +287,8 @@ public class MapPainterImporter : EditorWindow
         EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
         AssetDatabase.SaveAssets();
 
-        var msg = $"Imported '{safe}':\n• {placed} props ({decor} walk-through)\n• {walls} autotiled wall piece(s)\n• ground {cols}×{rows} cells ({sizeX}×{sizeZ} u)\n→ {scenePath}";
+        string elevMsg = hasElevation ? " · elevated (gutters/steps + cliff collision)" : " · flat";
+        var msg = $"Imported '{safe}':\n• {placed} props ({decor} walk-through)\n• {walls} autotiled wall piece(s)\n• ground {cols}×{rows} cells ({sizeX}×{sizeZ} u){elevMsg}\n→ {scenePath}";
         if (missing.Count  > 0) msg += "\n\n⚠ Missing prefabs (skipped): " + string.Join(", ", missing);
         if (unmapped.Count > 0) msg += "\n\n⚠ Ground brushes with no shader channel (drawn as dirt): " + string.Join(", ", unmapped);
         Debug.Log("[unwritten] " + msg.Replace("\n", " "));

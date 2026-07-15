@@ -1,0 +1,17 @@
+---
+name: billboard-additional-lights
+description: Billboard sprites now receive real-time point/spot (lamp/torch/portal) lights via BillboardLit + PropLight; URP set to per-pixel additional lights
+metadata: 
+  node_type: memory
+  type: project
+  originSessionId: 6571803c-3318-4368-b190-e6b3a02e724e
+---
+
+Built 2026-06-27. Billboard sprites (player/mobs) now pick up real-time **additional lights** (lamps, torches, portals, door glows) — previously they only saw the sun + the global day/night `_SpriteEnv` tint, so a character beside a lamp stayed dark.
+
+- **`Unwritten/BillboardLit.shader`** (`unity/Assets/Shaders/`) — ForwardLit pass loops `GetAdditionalLightsCount()`/`GetAdditionalLight()` and ADDS the result AFTER `_SpriteEnv` (so a lamp re-brightens a sprite at night). Directional shading via a **fake billboard normal** `N = normalize(sx·camRight + sy·camUp + _AddLightBulge·camFwd)` (sx/sy = uv remapped −1..1, cam basis from `UNITY_MATRIX_I_V`), then `N·L` so only the side facing the lamp lights up. **4 knobs are GLOBAL shader floats** (not per-material) driven by `SpriteAddLight.cs` via `Shader.SetGlobalFloat` + seeded at init (like `_SpriteEnv`), live-tunable in **DevSettings P ▸ Sprite Light**: `_AddLightStrength` (0=legacy off), `_AddLightShape` (0 flat fill → 1 fully directional, def 0.85), `_AddLightBulge` (round↔flat, def 0.7), `_AddLightAlbedoTint` (def 0.5 — key fix for the **charcoal characters** [[character-art-quaternius-charcoal]]: pure-albedo light × near-black body stays black, so the add is half pure lamp colour). ⚠️ first version used a weak `±0.5` modulation → looked "fully lit"; the N·L rewrite fixed it. Pragmas: `_ADDITIONAL_LIGHTS_VERTEX/_ADDITIONAL_LIGHTS` + `_ADDITIONAL_LIGHT_SHADOWS`. Both passes' `UnityPerMaterial` CBUFFER carry the 4 knobs (SRP-batcher layout must match).
+- **`UniversalRP.asset`** — `m_AdditionalLightsRenderingMode` 1→**2 (PerPixel)**; `m_AdditionalLightShadowsSupported` 0→**1** + `m_PrefilteringModeAdditionalLightShadows` 0→4 (keep variant). Renderer is plain **Forward** (not Forward+); per-object limit 4. ⚠️ **editing the .asset on disk while Unity is open didn't reimport** — user had to flip Additional Lights→Per Pixel (and the Cast Shadows tick) in the inspector by hand.
+- **Lamp cast shadows** (perf-sensitive, deliberately scoped): point-light shadows are a cubemap each, so **only the ONE `NightLight` lamp nearest the player casts**. `NightLight.cs` got a registry + `SelectNearest()` (0.3 s timer) that promotes the closest lit lamp to `LightShadows.Hard` and `TryGetShadowLamp(out pos)`; `BillboardShadow.cs` aims its ShadowsOnly proxy at that lamp (`LampFacing`) at night instead of the (dark) sun. DevSettings ▸ Shadows: **Lamp shadows** toggle (`NightLight.GlobalShadows`) + range. The pre-existing `NightLight` was the warm-pool source all along (NOT something added this session); my `PropLight` is a parallel/redundant lamp.
+- **`PropLight.cs`** (runtime) — reusable warm point light for emissive props; optional alloc-free flicker (torch). `PropLight.Attach(parent, offset, color, range, intensity)` for generators. **Editor tool** `Tools ▸ unwritten ▸ World ▸ Add Prop Light to Selection` (`Editor/PropLightTools.cs`), in `TOOLS.md`.
+
+GPU cost gated: light loop early-outs when no nearby lights (open daytime field ≈ free); only one lamp ever casts a shadow. Relates to [[weather-system]] day/night ([[direction-2p5d-pivot]]).

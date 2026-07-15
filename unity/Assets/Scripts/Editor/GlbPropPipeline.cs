@@ -15,8 +15,8 @@ using Debug = UnityEngine.Debug;
 /// quadric simplify + texture downsize + meshopt compression), so the source GLB's GUID is preserved and the
 /// heavy TRELLIS/Hunyuan mesh shrinks to game budget. Originals are backed up to <c>tools/glb_backups/</c>.</item>
 /// <item><b>Reimport</b> the now-optimized bytes, then <b>bake</b> each into a URP-materialed, collider'd,
-/// footprint-scaled, base-pivoted prop prefab — reusing <see cref="GlbPropImporter"/> (the single owner of
-/// the bake logic; this tool never re-implements it).</item>
+/// base-pivoted prop prefab at the GLB's <b>native size</b> (no auto-scaling) — reusing <see cref="GlbPropImporter"/>
+/// (the single owner of the bake logic; this tool never re-implements it).</item>
 /// </list>
 /// Select the raw <c>.glb</c> model asset(s) in the Project window and run. Needs Git Bash + Node (the
 /// script calls <c>npx @gltf-transform/cli</c>). Keeper — the standing bulk GLB pipeline.

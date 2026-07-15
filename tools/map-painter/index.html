@@ -69,6 +69,11 @@
       <div id="gndBrushes"></div>
     </div>
     <div class="group">
+      <h2>Elevation</h2>
+      <button id="raiseBtn" class="brush">⬆️ Raise <span class="meta">L +1 · R −1</span></button>
+      <button id="lowerBtn" class="brush" style="margin-top:4px">⬇️ Lower <span class="meta">L −1 · R +1</span></button>
+    </div>
+    <div class="group">
       <h2>Tools</h2>
       <button id="eraseBtn" class="brush">🩹 Eraser <span class="meta">right-drag</span></button>
       <button id="fitBtn" class="brush" style="margin-top:6px">🔍 Fit view</button>
@@ -87,7 +92,7 @@
   </main>
 
   <footer>
-    <span id="hint">Left-drag paint · Right-drag erase · <kbd>Alt</kbd>+drag move · <kbd>R</kbd> rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
+    <span id="hint">Left-drag paint · Right-drag erase · Elevation: L +1 / R −1 per cell · <kbd>Alt</kbd>+drag move · <kbd>R</kbd> rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
     <span class="sp" style="flex:1"></span>
     <span id="stat"></span>
   </footer>
@@ -104,6 +109,8 @@ const S = {
   activeVariant:"",            // chosen prefab name within the active brush ("" = random)
   yaw:0,                       // current placement yaw, degrees (0 = up/north)
   ground:{},                   // "cx,cz" -> brushId  (ground-paint layer)
+  heights:{},                  // "cx,cz" -> integer elevation level (gutter −1, raised +1); absent = 0
+  strokeCells:null,            // cells already bumped THIS elevation stroke (one delta per cell per drag)
   objects:[],                  // { brush, prefab, x, z, yaw }  (world units; origin = top-left corner)
   view:{ x:40, y:40, zoom:1 }, // pan px + zoom
   basePx:26,                   // px per cell at zoom 1
@@ -121,8 +128,8 @@ const worldW = () => S.cols * S.cellSize, worldH = () => S.rows * S.cellSize;
 // start of each paint/erase/drag/clear, capturing the PRE-mutation state, so one Ctrl+Z reverts a whole stroke.
 const HIST_MAX = 100;
 let undoStack = [], redoStack = [];
-const snapshot = () => ({ ground:{ ...S.ground }, objects:S.objects.map(o => ({ ...o })) });
-function restore(s) { S.ground = { ...s.ground }; S.objects = s.objects.map(o => ({ ...o })); }
+const snapshot = () => ({ ground:{ ...S.ground }, heights:{ ...S.heights }, objects:S.objects.map(o => ({ ...o })) });
+function restore(s) { S.ground = { ...s.ground }; S.heights = { ...(s.heights || {}) }; S.objects = s.objects.map(o => ({ ...o })); }
 function commitHistory() { undoStack.push(snapshot()); if (undoStack.length > HIST_MAX) undoStack.shift(); redoStack = []; S.dirty = true; }
 function clearHistory() { undoStack = []; redoStack = []; }
 function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); restore(undoStack.pop()); S.dirty = true; saveDraft(); updateStat(); render(); }
@@ -181,6 +188,8 @@ function refreshPaletteSel() {
   document.querySelectorAll(".brush[data-id]").forEach(e =>
     e.classList.toggle("on", e.dataset.id === S.active));
   document.getElementById("eraseBtn").classList.toggle("on", S.active === "erase");
+  document.getElementById("raiseBtn").classList.toggle("on", S.active === "raise");
+  document.getElementById("lowerBtn").classList.toggle("on", S.active === "lower");
 }
 // Variant strip: pick a specific prefab (drawn + placed at its OWN footprint) or 🎲 Random for a mixed look.
 function buildVariants() {
@@ -241,6 +250,8 @@ function objFoot(o) {
   return (b && b.hasFootprint) ? { x:b.footprint.x, z:b.footprint.z } : { x:S.cellSize, z:S.cellSize };
 }
 function paintAt(wx, wz, erase) {
+  // Elevation brushes bump a cell one notch, once per stroke; the right button applies the opposite direction.
+  if (S.active === "raise" || S.active === "lower") { paintHeight(wx, wz, erase); return; }
   const b = S.brushById[S.active];
   if (erase || S.active === "erase") { eraseAt(wx, wz); return; }
   if (!b) return;
@@ -271,11 +282,24 @@ function topObjectIndexAt(wx, wz) {
   return -1;
 }
 function eraseAt(wx, wz) {
-  // erase the topmost object whose footprint contains the point; else clear the ground cell.
+  // erase the topmost object whose footprint contains the point; else clear the ground + elevation of the cell.
   const i = topObjectIndexAt(wx, wz);
   if (i >= 0) { S.objects.splice(i, 1); return; }
   const { cx, cz } = cellOf(wx, wz);
   delete S.ground[cx + "," + cz];
+  delete S.heights[cx + "," + cz];
+}
+// Elevation paint: bump a cell one notch in the brush's direction (right button = opposite). Deduped per stroke via
+// S.strokeCells so a single drag over a cell changes it ONCE, not once per mousemove. Level 0 is stored as absent.
+function paintHeight(wx, wz, flip) {
+  const { cx, cz } = cellOf(wx, wz);
+  if (!inBounds(cx, cz)) return;
+  const key = cx + "," + cz;
+  if (S.strokeCells) { if (S.strokeCells.has(key)) return; S.strokeCells.add(key); }
+  let dir = S.active === "raise" ? 1 : -1;
+  if (flip) dir = -dir;
+  const lvl = (S.heights[key] || 0) + dir;
+  if (lvl === 0) delete S.heights[key]; else S.heights[key] = lvl;
 }
 // Move the object currently grabbed by Alt+drag to the cursor (cell-snapped in grid mode / for cell objects).
 function dragObjectTo(wx, wz) {
@@ -328,6 +352,9 @@ function render() {
 
   // objects (true footprint, brush colour, facing arrow)
   for (const ob of S.objects) drawObject(ob, p);
+
+  // elevation overlay (raised = warm/light, sunken = cool/dark) + the level number
+  drawHeights(p);
 
   // hover preview
   drawHover(p);
@@ -414,7 +441,36 @@ function drawWallGlyph(ob, p, ghost) {
   ctx.restore();
 }
 
+// Overlay each non-zero elevation cell: a translucent tint (warmer/lighter as it rises, cooler/darker as it sinks)
+// plus the signed level number, so the height map reads at a glance alongside the ground paint.
+function drawHeights(p) {
+  const cp = S.cellSize * p;
+  for (const k in S.heights) {
+    const lvl = S.heights[k]; if (!lvl) continue;
+    const [cx, cz] = k.split(",").map(Number);
+    const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
+    ctx.globalAlpha = Math.min(0.12 + 0.13 * Math.abs(lvl), 0.62);
+    ctx.fillStyle = lvl > 0 ? "#eadfa0" : "#22304c";
+    ctx.fillRect(s.x, s.y, cp, cp);
+    ctx.globalAlpha = 1;
+    if (cp >= 14) {
+      ctx.fillStyle = lvl > 0 ? "#3a2f00" : "#cfe0ff";
+      ctx.font = "bold 11px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText((lvl > 0 ? "+" : "") + lvl, s.x + cp / 2, s.y + cp / 2);
+      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    }
+  }
+}
+
 function drawHover(p) {
+  // Elevation brushes: outline the target cell (green raise / red lower) since they have no palette swatch.
+  if (S.active === "raise" || S.active === "lower") {
+    const { cx, cz } = cellOf(S.mouse.wx, S.mouse.wz); if (!inBounds(cx, cz)) return;
+    const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
+    ctx.globalAlpha = 0.6; ctx.strokeStyle = S.active === "raise" ? "#8fd694" : "#d69a8f"; ctx.lineWidth = 2;
+    ctx.strokeRect(s.x, s.y, S.cellSize * p, S.cellSize * p); ctx.globalAlpha = 1;
+    return;
+  }
   if (S.dragObj || S.active === "erase" || !S.brushById[S.active]) return;
   const b = S.brushById[S.active];
   let { wx, wz } = S.mouse;
@@ -440,6 +496,7 @@ cv.addEventListener("mousedown", e => {
     return;
   }
   commitHistory();                  // one undo step per stroke (captured before the first cell is painted)
+  S.strokeCells = new Set();         // elevation: one notch per cell per drag (reset each stroke)
   S.paint = e.button === 2 ? 2 : 1;
   doPaint(e);
 });
@@ -490,7 +547,9 @@ document.getElementById("rotBtn").onclick = () => window.dispatchEvent(new Keybo
 document.getElementById("cols").onchange = e => { S.cols = +e.target.value; S.dirty = true; saveDraft(); render(); };
 document.getElementById("rows").onchange = e => { S.rows = +e.target.value; S.dirty = true; saveDraft(); render(); };
 document.getElementById("eraseBtn").onclick = () => { S.active = "erase"; refreshPaletteSel(); };
-document.getElementById("clearBtn").onclick = () => { if (confirm("Clear all painted ground + objects?")) { commitHistory(); S.ground = {}; S.objects = []; saveDraft(); render(); } };
+document.getElementById("raiseBtn").onclick = () => { S.active = "raise"; S.activeVariant = ""; refreshPaletteSel(); buildVariants(); };
+document.getElementById("lowerBtn").onclick = () => { S.active = "lower"; S.activeVariant = ""; refreshPaletteSel(); buildVariants(); };
+document.getElementById("clearBtn").onclick = () => { if (confirm("Clear all painted ground + objects?")) { commitHistory(); S.ground = {}; S.heights = {}; S.objects = []; saveDraft(); render(); } };
 document.getElementById("fitBtn").onclick = fitView;
 document.getElementById("reloadMani").onclick = loadManifest;
 document.getElementById("loadManiFile").onclick = () => document.getElementById("fileMani").click();
@@ -513,6 +572,7 @@ function buildMap() {
     version:1, name:"PaintedMap", cellSize:S.cellSize,
     size:{ x:worldW(), z:worldH() }, cols:S.cols, rows:S.rows,
     ground:Object.entries(S.ground).map(([k, brush]) => { const [cx, cz] = k.split(",").map(Number); return { brush, cx, cz }; }),
+    heights:Object.entries(S.heights).map(([k, level]) => { const [cx, cz] = k.split(",").map(Number); return { cx, cz, level }; }),
     objects:S.objects.map(o => ({ brush:o.brush, prefab:o.prefab, x:+o.x.toFixed(3), z:+o.z.toFixed(3), yaw:o.yaw })),
   };
 }
@@ -529,6 +589,7 @@ function importMap(m) {
   S.rows = m.rows || Math.round((m.size?.z || worldH()) / S.cellSize);
   document.getElementById("cols").value = S.cols; document.getElementById("rows").value = S.rows;
   S.ground = {}; (m.ground || []).forEach(g => S.ground[g.cx + "," + g.cz] = g.brush);
+  S.heights = {}; (m.heights || []).forEach(h => { if (h.level) S.heights[h.cx + "," + h.cz] = h.level; });
   S.objects = (m.objects || []).map(o => ({ brush:o.brush, prefab:o.prefab || "", x:o.x, z:o.z, yaw:o.yaw || 0 }));
   clearHistory();   // a freshly loaded map starts a new undo timeline (grid size also changes)
   S.dirty = false; saveDraft();   // loaded map is the new baseline
@@ -545,7 +606,7 @@ function readJSON(ev, cb) {
 function updateStat() {
   const { cx, cz } = cellOf(S.mouse.wx, S.mouse.wz);
   document.getElementById("stat").textContent =
-    `cell ${cx},${cz} · ${S.objects.length} objects · ${Object.keys(S.ground).length} ground · zoom ${S.view.zoom.toFixed(2)}`;
+    `cell ${cx},${cz} · ${S.objects.length} objects · ${Object.keys(S.ground).length} ground · ${Object.keys(S.heights).length} elev · zoom ${S.view.zoom.toFixed(2)}`;
 }
 function resize() {
   const m = document.querySelector("main").getBoundingClientRect();
@@ -565,7 +626,7 @@ window.addEventListener("beforeunload", e => {
 loadManifest().then(() => {
   fitView();
   const d = loadDraft();
-  const hasContent = d && (((d.objects && d.objects.length) || (d.ground && d.ground.length)));
+  const hasContent = d && ((d.objects && d.objects.length) || (d.ground && d.ground.length) || (d.heights && d.heights.length));
   if (hasContent && confirm("Restore your unsaved map from the previous session?")) {
     importMap(d);
     S.dirty = true;   // restored draft is unsaved work → keep guarding until exported

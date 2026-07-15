@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// A Figma/Storybook-style <b>prop palette</b> for hand-authoring 2.5D maps. Open it, pick a prefab from the
-/// thumbnail grid, then <b>click in the Scene view to place it</b> — auto-scaled, dropped onto the ground by
+/// thumbnail grid, then <b>click in the Scene view to place it</b> — at its native prefab size, dropped onto the ground by
 /// its measured bounds (no floating), optionally grid-snapped, parented under a "Handmade" root in the active
 /// scene, and fully Undo-able. Hold and keep clicking to place many; <b>Q/E</b> rotate the next one;
 /// <b>Esc</b> or right-click stops placing.
@@ -22,7 +22,6 @@ public class PropPalette : EditorWindow
     static void Open() => GetWindow<PropPalette>("Prop Palette").minSize = new Vector2(260, 360);
 
     // settings
-    float scale = 0.3f;
     bool snapGrid = true;
     float gridSize = 0.5f;
     bool randomYaw = false;
@@ -80,7 +79,6 @@ public class PropPalette : EditorWindow
             "Pick a prop, then CLICK in the Scene view to place it on the ground.\nQ/E rotate · Esc or right-click stops.",
             MessageType.Info);
 
-        scale = EditorGUILayout.FloatField(new GUIContent("Scale", "Placement scale. The Pxltgr pack matches our units at 0.3."), scale);
         using (new EditorGUILayout.HorizontalScope())
         {
             snapGrid = EditorGUILayout.ToggleLeft("Snap to grid", snapGrid, GUILayout.Width(110));
@@ -201,7 +199,7 @@ public class PropPalette : EditorWindow
     {
         var go = (GameObject)PrefabUtility.InstantiatePrefab(armed);
         Undo.RegisterCreatedObjectUndo(go, "Place Prop");
-        go.transform.localScale = Vector3.one * scale;
+        // Leave localScale as the prefab's own — the prefab owns its size (eyeballed + applied); nothing here rescales it.
         go.transform.rotation = Quaternion.Euler(0f, randomYaw ? Random.Range(0f, 360f) : yaw, 0f);
         PropPlacement.PlaceOnGround(go, at, PropPlacement.GroundMask());
         go.transform.SetParent(HandmadeRoot(), true);

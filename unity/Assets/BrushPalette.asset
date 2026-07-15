@@ -21,13 +21,8 @@ MonoBehaviour:
     kind: 0
     category: 9
     prefabNames:
-    - House1
-    - House2
-    - House3
-    - WoodenHouse_1_LOD0
-    - WoodenHouse_2_LOD0
-    - WoodenHouse_3_LOD0
-    groundTex:
+    - House_B
+    groundTex: 
     forwardOffset: 180
   - id: trees
     label: Trees
@@ -35,46 +30,25 @@ MonoBehaviour:
     kind: 0
     category: 1
     prefabNames:
-    - Birch_tree1
-    - Birch_tree2
-    - Birch_tree3
-    - Deciduous_tree1
-    - Deciduous_tree2
-    - Deciduous_tree3
-    - Deciduous_tree4
-    - Oak_tree1
-    - Oak_tree2
-    - Oak_tree3
-    - Pine_tree1
-    - Pine_tree2
-    - Pine_tree3
-    - Willow_tree1
-    - Willow_tree2
+    - Oak_Tree
     groundTex: 
+    forwardOffset: 0
   - id: wall
     label: Wall
     colorHex: '#8A8A8A'
     kind: 0
     category: 0
-    prefabNames:
-    - Wall_corner
-    - Wall_entrance
-    - Wall_gateL
-    - Wall_gateR
-    - Wall_part1
-    - Wall_part2
-    - Wall_tower1
-    - Wall_tower2
+    prefabNames: []
     groundTex: 
+    forwardOffset: 0
   - id: landmark
     label: Landmark
     colorHex: '#C8922B'
     kind: 0
     category: 10
-    prefabNames:
-    - Tavern_LOD0
-    - Windmill_LOD0
+    prefabNames: []
     groundTex: 
+    forwardOffset: 0
   - id: grass
     label: Grass
     colorHex: '#7CB342'
@@ -82,6 +56,7 @@ MonoBehaviour:
     category: 0
     prefabNames: []
     groundTex: ground_grass
+    forwardOffset: 0
   - id: path
     label: Path
     colorHex: '#E8D44D'
@@ -89,6 +64,7 @@ MonoBehaviour:
     category: 0
     prefabNames: []
     groundTex: ground_road
+    forwardOffset: 0
   - id: stone
     label: Stone
     colorHex: '#9C8F6E'
@@ -96,6 +72,7 @@ MonoBehaviour:
     category: 0
     prefabNames: []
     groundTex: ground_stones
+    forwardOffset: 0
   - id: rock
     label: Rock
     colorHex: '#6E7479'
@@ -103,6 +80,7 @@ MonoBehaviour:
     category: 0
     prefabNames: []
     groundTex: ground_rock
+    forwardOffset: 0
   - id: dirt
     label: Dirt
     colorHex: '#8B5A2B'
@@ -110,6 +88,7 @@ MonoBehaviour:
     category: 0
     prefabNames: []
     groundTex: ground_soil
+    forwardOffset: 0
   - id: water
     label: Water
     colorHex: '#3E7FD4'
@@ -117,3 +96,4 @@ MonoBehaviour:
     category: 0
     prefabNames: []
     groundTex: 
+    forwardOffset: 0

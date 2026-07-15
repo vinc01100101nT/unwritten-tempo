@@ -15,9 +15,6 @@ public static class PlacementTools
     [MenuItem("Tools/unwritten/Authoring/Drop to Ground", priority = 410)]
     static void DropToGround() => Apply("Drop to Ground", go => PropPlacement.DropToGround(go, PropPlacement.GroundMask()));
 
-    [MenuItem("Tools/unwritten/Authoring/Scale ×0.3 (pack scale)", priority = 412)]
-    static void Scale03() => Apply("Scale ×0.3", go => go.transform.localScale = Vector3.one * 0.3f);
-
     [MenuItem("Tools/unwritten/Authoring/Snap to Grid (0.5)", priority = 413)]
     static void SnapGrid() => Apply("Snap to Grid", go => go.transform.position = PropPlacement.SnapToGrid(go.transform.position, 0.5f));
 

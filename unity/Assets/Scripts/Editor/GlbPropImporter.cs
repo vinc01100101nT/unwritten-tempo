@@ -11,15 +11,16 @@ using UnityEngine;
 /// <list type="bullet">
 /// <item>forces every material to <b>URP/Lit</b>, preserving the GLB's own baked texture + colour;</item>
 /// <item>adds a <see cref="MeshCollider"/> per mesh (solid static scenery);</item>
-/// <item>normalises scale so the prop's largest ground footprint ≈ <see cref="TargetFootprint"/> units;</item>
 /// <item>re-seats the pivot to <b>bottom-centre</b> so it ground-snaps cleanly (world Y0 standard).</item>
 /// </list>
+/// The prop keeps the GLB's <b>native size</b> (no auto-scaling) — so dragging the prefab in gives its real
+/// exported dimensions, which you then set deliberately per prop (eyeball against a human) rather than having a
+/// one-size-fits-all footprint guess flatten every house, tree, and barrel to the same width.
 /// Select the GLB model asset(s) in the Project window and run. Idempotent-ish: overwrites the prefab in
 /// place so already-placed instances keep their link. Keeper (this is the standing GLB → prop pipeline).
 /// </summary>
 public static class GlbPropImporter
 {
-    const float TargetFootprint = 1.5f;   // tune via "Scale ×0.3" / Prop Palette afterwards if needed
     const string PropDir = "Assets/Prefabs/Props";
     const string MatDir = "Assets/Prefabs/Props/Materials";
     const string MeshDir = "Assets/Prefabs/Props/Meshes";
@@ -61,9 +62,9 @@ public static class GlbPropImporter
         Debug.Log($"[unwritten] Imported {built}/{models.Length} GLB prop(s) into {PropDir}.");
         EditorUtility.DisplayDialog("Import GLB Prop — done",
             $"Baked {built} drop-ready prop prefab(s) into:\n{PropDir}\n\n" +
-            "Each is URP-materialed, collider'd, scaled to a sensible footprint, and pivoted at its base.\n" +
+            "Each is URP-materialed, collider'd, and pivoted at its base — at the GLB's NATIVE size (no auto-scaling).\n" +
             "Drag the prefab into the scene (it ground-snaps), or place it with the Prop Palette.\n\n" +
-            "Footprint not right? Use Tools ▸ unwritten ▸ Authoring ▸ Scale ×0.3 or the Prop Palette to tune.", "OK");
+            "Set each prop's real size deliberately (eyeball against a human); the prefab's size is then the truth.", "OK");
     }
 
     // The URP/Lit shader every baked prop is re-pointed onto (null if not a URP project).
@@ -83,7 +84,7 @@ public static class GlbPropImporter
 
         ForceUrpMaterials(inst, name, lit);
         AddColliders(inst);
-        NormalizeScaleAndPivot(inst, name);
+        RepivotToBase(inst, name);
 
         var prefab = PrefabUtility.SaveAsPrefabAsset(inst, $"{PropDir}/{name}.prefab");
         Object.DestroyImmediate(inst);
@@ -140,9 +141,9 @@ public static class GlbPropImporter
             }
     }
 
-    // Scale so the larger ground (X/Z) extent ≈ TargetFootprint, and re-seat the pivot to bottom-centre
-    // (base on Y0, centred in X/Z) for clean ground-snapping — WITHOUT adding a wrapper GameObject, so the
-    // prop stays a single selectable node.
+    // Re-seat the pivot to bottom-centre (base on Y0, centred in X/Z) for clean ground-snapping — WITHOUT adding
+    // a wrapper GameObject, so the prop stays a single selectable node. Does NOT touch scale: the prop keeps the
+    // GLB's native exported size (per-prop sizing is a deliberate author step, not an auto-guess).
     // A flattened/optimized GLB imports as a SINGLE node (mesh on the root itself). We can't move the root's
     // own pivot by transform, so we bake the offset into a copy of that mesh's vertices (a new .mesh asset,
     // since the source mesh is a read-only sub-asset of the .glb). Meshes that live on CHILD transforms are
@@ -151,7 +152,7 @@ public static class GlbPropImporter
     // Renderer.bounds — the latter is stale/half for a freshly-instantiated glTFast QUANTIZED mesh (the
     // dequant scale isn't reflected until a later update), which under-shifted the pivot. Called with the root
     // at position 0 / rotation identity / scale 1, so root-local == world (and == mesh-local for a root mesh).
-    static void NormalizeScaleAndPivot(GameObject inst, string name)
+    static void RepivotToBase(GameObject inst, string name)
     {
         var w2l = inst.transform.worldToLocalMatrix;
         bool has = false;
@@ -192,10 +193,6 @@ public static class GlbPropImporter
             }
             foreach (Transform child in inst.transform) child.localPosition -= offset;   // meshes under children
         }
-
-        float footprint = Mathf.Max(b.size.x, b.size.z);
-        if (footprint > 1e-4f)
-            inst.transform.localScale = Vector3.one * (TargetFootprint / footprint);
     }
 
     // Save a copy of the mesh with every vertex shifted by -offset (base → Y0), so a mesh sitting on the prop

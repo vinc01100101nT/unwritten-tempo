@@ -25,6 +25,35 @@ Ground-truth sources for THIS project (cheap, no Unity needed — a plain Python
 Escalate EFFORT/model only once the evidence is in hand and the remaining hard part is genuinely synthesis —
 not as a substitute for looking. Missing information is fixed by looking, not by thinking harder.
 
+## Handoff protocol — the phrase "do a handoff" (covers tasks AND unsolved bugs)
+
+When the user says **"do a handoff"** (or "handoff this" / "hand off the task"), treat it as a command: WITHOUT
+further prompting, write a handoff file so the NEXT session can resume cold. This ONE protocol covers both a
+general in-progress task and an unsolved hard bug — both live in the same folder.
+
+1. Derive a short **kebab-case name** for the CURRENT task/bug (what this session has been working on).
+2. Write it to **`handoffs/<name>.md`** (create the `handoffs/` folder if it doesn't exist yet).
+3. After writing, tell the user the exact path.
+
+The file MUST contain, in this order:
+- **Task/bug** — one line: what it is + any Tempo issue/doc id.
+- **Status** — DONE / IN PROGRESS / BLOCKED / NOT FIXED — honest. If a fix/build is unverified (e.g. Unity not
+  recompiled) or the bug survived attempts, say so explicitly and add **"don't trust prior 'it works' claims"**.
+- **What's done** — plain bullets of what was built + the exact files/functions touched.
+- **Uncommitted working-tree changes** — what's still unstaged/revertible, so the next session sees the real
+  state (this file references working-tree state, so it lives in the repo, not memory).
+- **What's left** — the remaining steps, concrete.
+- **Dead ends** — for a bug, THE highest-value part: what was tried and did NOT work (the dead-end ledger). Keep
+  **proven facts** (traces/measurements) SEPARATE from **hypotheses**.
+- **Next single step** — the one thing to do next; for a bug, the single discriminating test that would isolate it.
+- **How to resume** — a paste-ready line for a fresh session (points at this file).
+
+Rules:
+- One file per task/bug, kebab-case; if a handoff for the same one already exists, UPDATE it in place (don't fork).
+- When a new task/bug looks related, `ls handoffs/` FIRST for a prior handoff to build on.
+- On resolution: collapse the durable lesson into a memory (per "Log notable bug fixes"), then DELETE the
+  handoff — no stale handoffs.
+
 ## Project layout
 
 - `unity/Assets/Scripts/` — all game C# (Unity 6 + URP); see `unity/Assets/Scripts/CLAUDE.md`
@@ -64,4 +93,4 @@ not as a substitute for looking. Missing information is fixed by looking, not by
 - **No comments unless WHY is non-obvious** — well-named identifiers carry the WHAT
 - When adding/removing a `Tools ▸ unwritten` menu item, always update `Editor/TOOLS.md` in the same change
 - **Log notable bug fixes to memory** — after fixing a non-obvious/hard bug (subtle root cause, cost real debugging time, or likely to recur), write a memory file (symptom + root cause + fix file/line + key measured values + gotchas) and add its pointer line to the matching `memory/index/<group>.md` sub-index (NOT to `MEMORY.md` root — that holds only always-on top-level facts + the group pointers). If no group fits, add a new sub-index + a group pointer in `MEMORY.md`. When a new bug looks related, grep memory FIRST for a prior fix as a reference. Skip trivial/obvious fixes.
-- **Handoff unsolved hard bugs** — when a bug ate real debugging time (multiple hypotheses tried) and you're stopping WITHOUT a fix, write a repo-root `DEBUGGING_<bug>_HANDOFF.md` before ending (sibling of "Log notable bug fixes"; that rule = closed bug, this = open bug). Must contain: (1) status = NOT FIXED + "don't trust prior 'it works' claims"; (2) changes still in the working tree (so they're revertible); (3) **what was tried and did NOT work** — the dead-end ledger (highest-value part); (4) proven facts (traces/measurements) kept SEPARATE from hypotheses; (5) the single discriminating test to run next. Lives in the repo, NOT memory — it references uncommitted working-tree state. When a new bug looks related, `ls DEBUGGING_*_HANDOFF.md` FIRST. On resolution: collapse its lesson into a memory (per "Log notable bug fixes") and DELETE the handoff — no stale handoffs at root.
+- **Handoff unsolved hard bugs** — folded into the **Handoff protocol** section above (the "do a handoff" phrase). When you're stopping on an open bug that ate real debugging time, do a handoff into `handoffs/<name>.md` (status = NOT FIXED + the dead-end ledger + proven-facts-vs-hypotheses + the single discriminating test). Same folder, same protocol as a task handoff.

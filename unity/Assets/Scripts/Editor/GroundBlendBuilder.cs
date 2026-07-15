@@ -18,9 +18,15 @@ using UnityEngine.SceneManagement;
 /// (see PERFORMANCE.md; one mesh + one draw beats hundreds of feathered transparent tiles).
 ///
 /// Produces the surface at y=0 + a flat floor collider + a <see cref="Pathfinder3DConfig"/> via
-/// <see cref="WalkableGround.AddWalkableFloor"/>, so scatter/mobs/pathfinding
-/// all work unchanged. Textures are pulled from the pack's own <c>ground_grass</c> / <c>ground_soil</c> prefab
-/// materials, so it tracks <c>Fix Pxltgr Materials</c> with no extra wiring.
+/// <see cref="WalkableGround.AddWalkableFloor"/>, so scatter/mobs/pathfinding all work unchanged. Textures are
+/// pulled from the pack's own <c>ground_grass</c> / <c>ground_soil</c> prefab materials, so it tracks
+/// <c>Fix Pxltgr Materials</c> with no extra wiring.
+///
+/// <para><b>Elevated variant</b> (<see cref="LayPlotSampledElevated"/>): when a map paints per-cell heights, the
+/// ground becomes real terrain — each painter cell is a flat top at its level's height, with TRUE vertical walls
+/// (curbs / gutter sides / cliffs) between cells of differing levels and a skirt down the map border. It carries a
+/// <see cref="MeshCollider"/> instead of the flat box, so the player capsule bumps cliffs + climbs curbs and the
+/// height-aware pathfinder routes around drops — all off the SAME shaped surface.</para>
 /// </summary>
 public static class GroundBlendBuilder
 {
@@ -115,17 +121,8 @@ public static class GroundBlendBuilder
                                             string pathTexName = "ground_road", string stoneTexName = null,
                                             string rockTexName = null, float cell = 0.8f, Color? tint = null)
     {
-        var grassTex = GroundBaseMap(string.IsNullOrEmpty(grassTexName) ? "ground_grass" : grassTexName);
-        if (grassTex == null) return null;
-        var dirtTex = (!string.IsNullOrEmpty(dirtTexName) ? GroundBaseMap(dirtTexName) : null)
-                      ?? GroundBaseMap("ground_soil") ?? GroundBaseMap("ground_road");
-        var pathTex  = (!string.IsNullOrEmpty(pathTexName)  ? GroundBaseMap(pathTexName)  : null) ?? dirtTex;
-        var stoneTex = (!string.IsNullOrEmpty(stoneTexName) ? GroundBaseMap(stoneTexName) : null);
-        var rockTex  = (!string.IsNullOrEmpty(rockTexName)  ? GroundBaseMap(rockTexName)  : null);
-
-        var shader = Shader.Find("Unwritten/GroundBlend");
-        if (shader == null)
-        { Debug.LogError("[unwritten] Shader 'Unwritten/GroundBlend' not found (Assets/Shaders/GroundBlend.shader)."); return null; }
+        var mat = MakeGroundMaterial(rootName, grassTexName, dirtTexName, pathTexName, stoneTexName, rockTexName, tint);
+        if (mat == null) return null;
 
         // ── Build the subdivided plane, painting each vertex's path/dirt weight from the sampler ──────────
         int nx = Mathf.Clamp(Mathf.CeilToInt(sizeX / Mathf.Max(0.1f, cell)), 2, 240);
@@ -175,30 +172,7 @@ public static class GroundBlendBuilder
         mesh.colors   = cols;
         mesh.triangles = tris;
         mesh.RecalculateBounds();
-
-        // ── Persist the mesh + material as assets (so the saved scene keeps a stable reference) ──────────
-        EnsureFolder(MeshDir);
-        EnsureFolder(MatDir);
-        string meshPath = $"{MeshDir}/{Sanitize(rootName)}_ground.asset";
-        AssetDatabase.DeleteAsset(meshPath);
-        AssetDatabase.CreateAsset(mesh, meshPath);
-
-        string matPath = $"{MatDir}/{Sanitize(rootName)}_blend.mat";
-        var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
-        if (mat == null) { mat = new Material(shader); AssetDatabase.CreateAsset(mat, matPath); }
-        else mat.shader = shader;
-        mat.SetTexture("_GrassMap", grassTex);
-        if (dirtTex  != null) mat.SetTexture("_DirtMap",  dirtTex);
-        if (pathTex  != null) mat.SetTexture("_PathMap",  pathTex);
-        if (stoneTex != null) mat.SetTexture("_StoneMap", stoneTex);
-        if (rockTex  != null) mat.SetTexture("_RockMap",  rockTex);
-        mat.SetFloat("_GrassTiling", 0.4f);   // ~one tile per 2.5 units → matches the old tiled texel density
-        mat.SetFloat("_DirtTiling", 0.4f);
-        mat.SetFloat("_PathTiling", 0.4f);
-        mat.SetFloat("_StoneTiling", 0.4f);
-        mat.SetFloat("_RockTiling", 0.4f);
-        mat.SetColor("_Color", tint ?? Color.white);   // biome hue (always written so a re-bake resets a stale tint)
-        EditorUtility.SetDirty(mat);
+        PersistMesh(mesh, rootName);
 
         // ── Scene objects ───────────────────────────────────────────────────────────────────────────────
         var root = new GameObject(rootName);
@@ -220,11 +194,208 @@ public static class GroundBlendBuilder
         return root;
     }
 
+    /// <summary>
+    /// As <see cref="LayPlotSampled"/>, but the ground carries real ELEVATION: <paramref name="levels"/> gives each
+    /// painter cell an integer height notch (0 = base, +N = raised, −N = sunken). Each cell becomes a flat top at
+    /// <c>level ×</c> <see cref="GroundElevation.LevelHeight"/>, with a TRUE vertical wall dropped on any edge whose
+    /// neighbour sits lower (curb / gutter side / cliff) and a skirt around the map border. The blend look is
+    /// preserved — every top and wall vertex still colours from <paramref name="sample"/>. Collision is a
+    /// <see cref="MeshCollider"/> on the shaped mesh (not the flat box), so the player + height-aware pathfinder act
+    /// off the same surface. Grid is <paramref name="cols"/>×<paramref name="rows"/> cells of
+    /// <paramref name="cellSize"/> world units, centred on origin. Returns the ground root, or <c>null</c> on a
+    /// missing grass prop / shader.
+    /// </summary>
+    public static GameObject LayPlotSampledElevated(Scene scene, string rootName, Vector3 center,
+                                                    float sizeX, float sizeZ, int groundLayer, GroundSampler sample,
+                                                    int[,] levels, int cols, int rows, float cellSize,
+                                                    string grassTexName = "ground_grass", string dirtTexName = "ground_soil",
+                                                    string pathTexName = "ground_road", string stoneTexName = null,
+                                                    string rockTexName = null, Color? tint = null)
+    {
+        var mat = MakeGroundMaterial(rootName, grassTexName, dirtTexName, pathTexName, stoneTexName, rockTexName, tint);
+        if (mat == null) return null;
+
+        // Sub-cells per painter cell → keep the grass/dirt blend as fine as the flat mesh's ~0.8u vertex grid.
+        int sub = Mathf.Clamp(Mathf.RoundToInt(cellSize / 0.8f), 1, 8);
+        float lh = GroundElevation.LevelHeight;
+        float ox = center.x - sizeX * 0.5f, oz = center.z - sizeZ * 0.5f;   // plot's −X/−Z corner in world
+
+        // Border skirt drops to just under the lowest painted level so the map edge isn't a paper-thin cliff.
+        int minLevel = 0; bool any = false;
+        for (int cz = 0; cz < rows; cz++)
+            for (int cx = 0; cx < cols; cx++) { int L = levels[cx, cz]; if (!any || L < minLevel) { minLevel = L; any = true; } }
+        float skirtBottomY = minLevel * lh - 0.5f;
+
+        var verts = new List<Vector3>();
+        var norms = new List<Vector3>();
+        var uvs   = new List<Vector2>();
+        var cols4 = new List<Color>();
+        var tris  = new List<int>();
+
+        int Push(Vector3 pos, Vector3 nrm, Vector2 uv, Color col)
+        { verts.Add(pos); norms.Add(nrm); uvs.Add(uv); cols4.Add(col); return verts.Count - 1; }
+
+        Color SampleCol(float wx, float wz)
+        {
+            sample(wx, wz, out Vector4 w);
+            return new Color(Mathf.Clamp01(w.x), Mathf.Clamp01(w.y), Mathf.Clamp01(w.z), Mathf.Clamp01(w.w));
+        }
+
+        // Emit a vertical wall quad (double-sided so it reads whichever way the camera orbits), coloured from the
+        // higher cell's blend and UV'd (along-edge, worldY) so the texture tiles down the face instead of streaking.
+        void AddWall(Vector3 tA, Vector3 tB, Vector3 bA, Vector3 bB, Vector3 outward)
+        {
+            float alongA = 0f, alongB = Vector3.Distance(new Vector3(tA.x, 0, tA.z), new Vector3(tB.x, 0, tB.z));
+            Color cA = SampleCol(tA.x, tA.z), cB = SampleCol(tB.x, tB.z);
+            int itA = Push(tA, outward, new Vector2(alongA, tA.y), cA);
+            int itB = Push(tB, outward, new Vector2(alongB, tB.y), cB);
+            int ibA = Push(bA, outward, new Vector2(alongA, bA.y), cA);
+            int ibB = Push(bB, outward, new Vector2(alongB, bB.y), cB);
+            // Double-sided (both windings) so the face reads whichever side the camera orbits to.
+            AddTri(itA, ibA, itB); AddTri(itB, ibA, ibB);
+            AddTri(itA, itB, ibA); AddTri(itB, ibB, ibA);
+        }
+        void AddTri(int a, int b, int c) { tris.Add(a); tris.Add(b); tris.Add(c); }
+
+        for (int cz = 0; cz < rows; cz++)
+            for (int cx = 0; cx < cols; cx++)
+            {
+                int L = levels[cx, cz];
+                float topY = L * lh;
+                float x0 = ox + cx * cellSize, x1 = x0 + cellSize;
+                float z0 = oz + cz * cellSize, z1 = z0 + cellSize;
+
+                // TOP: a flat sub×sub patch at topY, per-vertex coloured from the blend field (own verts per cell
+                // so nothing interpolates across a level seam — colours still match because they sample one field).
+                var idx = new int[sub + 1, sub + 1];
+                for (int j = 0; j <= sub; j++)
+                    for (int i = 0; i <= sub; i++)
+                    {
+                        float wx = Mathf.Lerp(x0, x1, i / (float)sub);
+                        float wz = Mathf.Lerp(z0, z1, j / (float)sub);
+                        idx[i, j] = Push(new Vector3(wx, topY, wz), Vector3.up, new Vector2(wx, wz), SampleCol(wx, wz));
+                    }
+                for (int j = 0; j < sub; j++)
+                    for (int i = 0; i < sub; i++)
+                    {
+                        int v0 = idx[i, j], v1 = idx[i + 1, j], v2 = idx[i, j + 1], v3 = idx[i + 1, j + 1];
+                        AddTri(v0, v2, v1); AddTri(v1, v2, v3);   // +Y up
+                    }
+
+                // WALLS: one per edge whose neighbour is lower (or the map border). Each boundary is owned by the
+                // HIGHER cell, so a wall is emitted exactly once. Border edges always skirt.
+                // West (−X), neighbour (cx-1, cz)
+                if (WallBottom(levels, cols, rows, cx - 1, cz, L, lh, skirtBottomY, out float byW))
+                    AddWall(new Vector3(x0, topY, z0), new Vector3(x0, topY, z1),
+                            new Vector3(x0, byW, z0),  new Vector3(x0, byW, z1),  Vector3.left);
+                // East (+X), neighbour (cx+1, cz)
+                if (WallBottom(levels, cols, rows, cx + 1, cz, L, lh, skirtBottomY, out float byE))
+                    AddWall(new Vector3(x1, topY, z0), new Vector3(x1, topY, z1),
+                            new Vector3(x1, byE, z0),  new Vector3(x1, byE, z1),  Vector3.right);
+                // South (−Z), neighbour (cx, cz-1)
+                if (WallBottom(levels, cols, rows, cx, cz - 1, L, lh, skirtBottomY, out float byS))
+                    AddWall(new Vector3(x0, topY, z0), new Vector3(x1, topY, z0),
+                            new Vector3(x0, byS, z0),  new Vector3(x1, byS, z0),  Vector3.back);
+                // North (+Z), neighbour (cx, cz+1)
+                if (WallBottom(levels, cols, rows, cx, cz + 1, L, lh, skirtBottomY, out float byN))
+                    AddWall(new Vector3(x0, topY, z1), new Vector3(x1, topY, z1),
+                            new Vector3(x0, byN, z1),  new Vector3(x1, byN, z1),  Vector3.forward);
+            }
+
+        var mesh = new Mesh { name = Sanitize(rootName) + "_ground" };
+        mesh.indexFormat = verts.Count > 65000 ? IndexFormat.UInt32 : IndexFormat.UInt16;
+        mesh.SetVertices(verts);
+        mesh.SetNormals(norms);
+        mesh.SetUVs(0, uvs);
+        mesh.SetColors(cols4);
+        mesh.SetTriangles(tris, 0);
+        mesh.RecalculateBounds();
+        PersistMesh(mesh, rootName);
+
+        var root = new GameObject(rootName);
+        SceneManager.MoveGameObjectToScene(root, scene);
+
+        var vis = new GameObject("Ground_Visual");
+        vis.transform.SetParent(root.transform, false);
+        vis.transform.position = Vector3.zero;   // elevated verts are already in world XZ (centred on origin)
+        vis.AddComponent<MeshFilter>().sharedMesh = mesh;
+        var mr = vis.AddComponent<MeshRenderer>();
+        mr.sharedMaterial = mat;
+        mr.shadowCastingMode = ShadowCastingMode.Off;
+        mr.receiveShadows = true;
+        vis.AddComponent<MeshCollider>().sharedMesh = mesh;   // the shaped surface IS the collider (player + pathfinder)
+
+        WorldBuildUtil.SetLayerRecursive(root, groundLayer);
+        WalkableGround.EnsurePathfinderConfig(scene, groundLayer);
+        Physics.SyncTransforms();   // so the importer's prop drop-rays hit the shaped ground
+
+        AssetDatabase.SaveAssets();
+        return root;
+    }
+
+    // A wall is needed on an edge when the neighbour cell is LOWER (bottom = neighbour's top) or off the map
+    // (bottom = the border skirt). Returns false (no wall) when the neighbour is the same height or higher —
+    // that boundary is owned by the taller side, so we never double a wall. `L` is this (higher) cell's level.
+    static bool WallBottom(int[,] levels, int cols, int rows, int nx, int nz, int L, float lh, float skirtBottomY, out float bottomY)
+    {
+        if (nx < 0 || nx >= cols || nz < 0 || nz >= rows) { bottomY = skirtBottomY; return true; }
+        int nL = levels[nx, nz];
+        if (nL < L) { bottomY = nL * lh; return true; }
+        bottomY = 0f; return false;
+    }
+
     // smoothstep(a,b,x) — soft 0→1 ramp, the source of the feathered grass↔dirt edge.
     static float Smooth(float a, float b, float x)
     {
         x = Mathf.Clamp01((x - a) / Mathf.Max(1e-5f, b - a));
         return x * x * (3f - 2f * x);
+    }
+
+    // Resolve the ground textures + create/update the shared GroundBlend material asset. Returns null (and logs)
+    // if the grass texture (the required base) or the shader is missing. The one place both the flat and elevated
+    // builders make their material, so they stay identical.
+    static Material MakeGroundMaterial(string rootName, string grassTexName, string dirtTexName, string pathTexName,
+                                       string stoneTexName, string rockTexName, Color? tint)
+    {
+        var grassTex = GroundBaseMap(string.IsNullOrEmpty(grassTexName) ? "ground_grass" : grassTexName);
+        if (grassTex == null) return null;
+        var dirtTex = (!string.IsNullOrEmpty(dirtTexName) ? GroundBaseMap(dirtTexName) : null)
+                      ?? GroundBaseMap("ground_soil") ?? GroundBaseMap("ground_road");
+        var pathTex  = (!string.IsNullOrEmpty(pathTexName)  ? GroundBaseMap(pathTexName)  : null) ?? dirtTex;
+        var stoneTex = (!string.IsNullOrEmpty(stoneTexName) ? GroundBaseMap(stoneTexName) : null);
+        var rockTex  = (!string.IsNullOrEmpty(rockTexName)  ? GroundBaseMap(rockTexName)  : null);
+
+        var shader = Shader.Find("Unwritten/GroundBlend");
+        if (shader == null)
+        { Debug.LogError("[unwritten] Shader 'Unwritten/GroundBlend' not found (Assets/Shaders/GroundBlend.shader)."); return null; }
+
+        EnsureFolder(MatDir);
+        string matPath = $"{MatDir}/{Sanitize(rootName)}_blend.mat";
+        var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+        if (mat == null) { mat = new Material(shader); AssetDatabase.CreateAsset(mat, matPath); }
+        else mat.shader = shader;
+        mat.SetTexture("_GrassMap", grassTex);
+        if (dirtTex  != null) mat.SetTexture("_DirtMap",  dirtTex);
+        if (pathTex  != null) mat.SetTexture("_PathMap",  pathTex);
+        if (stoneTex != null) mat.SetTexture("_StoneMap", stoneTex);
+        if (rockTex  != null) mat.SetTexture("_RockMap",  rockTex);
+        mat.SetFloat("_GrassTiling", 0.4f);   // ~one tile per 2.5 units → matches the old tiled texel density
+        mat.SetFloat("_DirtTiling", 0.4f);
+        mat.SetFloat("_PathTiling", 0.4f);
+        mat.SetFloat("_StoneTiling", 0.4f);
+        mat.SetFloat("_RockTiling", 0.4f);
+        mat.SetColor("_Color", tint ?? Color.white);   // biome hue (always written so a re-bake resets a stale tint)
+        EditorUtility.SetDirty(mat);
+        return mat;
+    }
+
+    // Persist the mesh as an asset (so the saved scene keeps a stable reference), replacing any prior bake.
+    static void PersistMesh(Mesh mesh, string rootName)
+    {
+        EnsureFolder(MeshDir);
+        string meshPath = $"{MeshDir}/{Sanitize(rootName)}_ground.asset";
+        AssetDatabase.DeleteAsset(meshPath);
+        AssetDatabase.CreateAsset(mesh, meshPath);
     }
 
     // Pull a ground prop's Base Map so the blend uses the SAME textures the tiled ground does (tracks Fix Materials).

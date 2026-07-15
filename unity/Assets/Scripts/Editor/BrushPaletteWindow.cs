@@ -45,7 +45,6 @@ public class BrushPaletteWindow : EditorWindow
         var so = new SerializedObject(_palette);
         so.Update();
         EditorGUILayout.PropertyField(so.FindProperty("cellSize"));
-        EditorGUILayout.PropertyField(so.FindProperty("defaultScale"));
         so.ApplyModifiedProperties();
 
         EditorGUILayout.Space();
@@ -97,7 +96,6 @@ public class BrushPaletteWindow : EditorWindow
     {
         var pal = CreateInstance<BrushPalette>();
         pal.cellSize = 4f;
-        pal.defaultScale = 0.3f;
         pal.brushes = DefaultBrushes();
         AssetDatabase.CreateAsset(pal, DefaultPalettePath);
         AssetDatabase.SaveAssets();
@@ -194,7 +192,6 @@ public class BrushPaletteWindow : EditorWindow
             version = 1,
             exportedAt = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
             cellSize = _palette.cellSize,
-            defaultScale = _palette.defaultScale,
         };
 
         int measured = 0;
@@ -215,7 +212,7 @@ public class BrushPaletteWindow : EditorWindow
                 float maxX = 0f, maxZ = 0f;
                 foreach (var n in names)
                 {
-                    if (!Footprint(n, _palette.defaultScale, out float fx, out float fz)) continue;
+                    if (!Footprint(n, 1f, out float fx, out float fz)) continue;   // native prefab size (no scaling)
                     mb.prefabs.Add(new MfPrefab { name = n, path = $"{PropsDir}/{n}.prefab", x = fx, z = fz });
                     maxX = Mathf.Max(maxX, fx); maxZ = Mathf.Max(maxZ, fz);
                     measured++;
@@ -282,7 +279,7 @@ public class BrushPaletteWindow : EditorWindow
     {
         public int version;
         public string exportedAt;
-        public float cellSize, defaultScale;
+        public float cellSize;
         public List<MfBrush> brushes = new List<MfBrush>();
     }
 }

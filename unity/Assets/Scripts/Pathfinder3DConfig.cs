@@ -19,7 +19,7 @@ public class Pathfinder3DConfig : MonoBehaviour
     public LayerMask groundMask;
 
     [Tooltip("Max walkable height change between adjacent cells (stair/ramp rise). Bigger = cliff = blocked.")]
-    public float maxStep = 0.6f;
+    public float maxStep = GroundElevation.MaxClimbStep;
 
     void Awake() => Apply();
     void OnEnable() => Apply();
