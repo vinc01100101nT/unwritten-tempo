@@ -36,6 +36,9 @@ Shader "Unwritten/InkScreen"
             ZWrite Off
             ZTest Always                       // full-screen overlay; depth comes from the sampled texture
             Cull Off
+            // Skip GROUND pixels: GroundBlend stamps stencil bit 32, so the ink never draws on the ground (kills the
+            // far-ground black band at the horizon). NotEqual → discard where the bit is set, draw everywhere else.
+            Stencil { Ref 32 ReadMask 32 Comp NotEqual }
 
             HLSLPROGRAM
             #pragma vertex vert

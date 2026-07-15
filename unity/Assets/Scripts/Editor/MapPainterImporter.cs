@@ -249,7 +249,7 @@ public class MapPainterImporter : EditorWindow
                     continue;
                 }
                 if (string.IsNullOrEmpty(o.prefab)) continue;
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PropsDir}/{o.prefab}.prefab");
+                var prefab = PropResolver.Load(o.prefab);
                 if (prefab == null) { missing.Add(o.prefab); continue; }
 
                 string groupName = string.IsNullOrEmpty(o.brush) ? "Props" : Capitalize(o.brush);
@@ -339,7 +339,7 @@ public class MapPainterImporter : EditorWindow
         return guids.Length > 0 ? AssetDatabase.LoadAssetAtPath<BrushPalette>(AssetDatabase.GUIDToAssetPath(guids[0])) : null;
     }
 
-    static GameObject LoadProp(string name) => AssetDatabase.LoadAssetAtPath<GameObject>($"{PropsDir}/{name}.prefab");
+    static GameObject LoadProp(string name) => PropResolver.Load(name);   // resolves by name across Props subfolders
 
     // ── WALL AUTOTILING ──────────────────────────────────────────────────────────────────────────────────
     // The modular Pxltgr wall kit. Straights tile the runs; towers cap corners/ends/junctions (dodging the kit's

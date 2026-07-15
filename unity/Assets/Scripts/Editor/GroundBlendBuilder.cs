@@ -401,7 +401,7 @@ public static class GroundBlendBuilder
     // Pull a ground prop's Base Map so the blend uses the SAME textures the tiled ground does (tracks Fix Materials).
     static Texture GroundBaseMap(string prefabName)
     {
-        var p = AssetDatabase.LoadAssetAtPath<GameObject>($"{PropsDir}/{prefabName}.prefab");
+        var p = PropResolver.Load(prefabName);
         if (p == null) return null;
         var r = p.GetComponentInChildren<MeshRenderer>();
         var m = r != null ? r.sharedMaterial : null;

@@ -213,7 +213,7 @@ public class BrushPaletteWindow : EditorWindow
                 foreach (var n in names)
                 {
                     if (!Footprint(n, 1f, out float fx, out float fz)) continue;   // native prefab size (no scaling)
-                    mb.prefabs.Add(new MfPrefab { name = n, path = $"{PropsDir}/{n}.prefab", x = fx, z = fz });
+                    mb.prefabs.Add(new MfPrefab { name = n, path = PropResolver.PathFor(n) ?? $"{PropsDir}/{n}.prefab", x = fx, z = fz });
                     maxX = Mathf.Max(maxX, fx); maxZ = Mathf.Max(maxZ, fz);
                     measured++;
                 }
@@ -241,7 +241,7 @@ public class BrushPaletteWindow : EditorWindow
         return list;
     }
 
-    static GameObject LoadProp(string name) => AssetDatabase.LoadAssetAtPath<GameObject>($"{PropsDir}/{name}.prefab");
+    static GameObject LoadProp(string name) => PropResolver.Load(name);   // resolves by name across Props subfolders
 
     static bool ContainsAny(string s, string[] tokens)
     {

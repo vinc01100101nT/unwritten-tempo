@@ -25,15 +25,15 @@ public class CameraFollow3D : MonoBehaviour
     public float distance = 4f;        // pull-back (zoom)
     public float height = 10f;         // Y above the target (right-drag adjusts this)
     public float yaw = 0f;             // orbit angle (degrees)
-    public float lookAtHeight = 0.1f;
+    public float lookAtHeight = 0.18f;
     public float smoothTime = 0.12f;
 
     [Header("Limits")]
-    public float minDistance = 1f, maxDistance = 7f;
+    public float minDistance = 0.4f, maxDistance = 7f;
     // minHeight lets right-drag tilt all the way down to a near-horizontal, ground-level view.
-    public float minHeight = 2f, maxHeight = 4f;
+    public float minHeight = 0.1f, maxHeight = 10f;
     [Tooltip("Cap the camera's downward tilt (degrees from horizontal) so right-drag can't reach a full top-down view.")]
-    public float maxPitch = 30f;
+    public float maxPitch = 50f;
 
     [Header("Sensitivity")]
     public float zoomStep = 1f;             // world-units of pull-back per scroll notch

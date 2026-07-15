@@ -32,7 +32,11 @@ Shader "Unwritten/GroundBlend"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "Queue"="Geometry" "RenderPipeline"="UniversalPipeline" }
+        // Queue = end of the opaque range (Geometry+500 = 2500, still opaque) so the ground draws AFTER all other
+        // solid objects. That's what makes the ink's ground stencil mask (bit 32, stamped in ForwardLit below)
+        // order-independent: at any pixel a nearer object covers, the ground now fails the depth test and never
+        // stamps it — so the stamp lands ONLY on genuinely-visible ground, never on the character/props in front.
+        Tags { "RenderType"="Opaque" "Queue"="Geometry+500" "RenderPipeline"="UniversalPipeline" }
 
         // ── Main lit pass ────────────────────────────────────────────────────────────────────────────────
         Pass
@@ -41,6 +45,10 @@ Shader "Unwritten/GroundBlend"
             Tags { "LightMode"="UniversalForward" }
             ZWrite On
             Cull Back
+            // Stamp stencil bit 32 on every ground pixel so the hand-drawn INK overlay (Unwritten/InkScreen) can skip
+            // the ground entirely — the far ground viewed edge-on otherwise smears into a solid black ink band, and
+            // the ground carries no linework worth keeping. (Bit 64 is owned by Unwritten/OccludedSilhouette; 32 is free.)
+            Stencil { Ref 32 WriteMask 32 Comp Always Pass Replace }
 
             HLSLPROGRAM
             #pragma vertex vert

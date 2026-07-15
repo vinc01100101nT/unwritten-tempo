@@ -39,7 +39,7 @@ public static class LightUpProps
 
         foreach (var kv in Targets)
         {
-            string path = $"{PropsDir}/{kv.Key}.prefab";
+            string path = PropResolver.PathFor(kv.Key) ?? $"{PropsDir}/{kv.Key}.prefab";
             var asset = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (asset == null) { missing++; Debug.LogWarning($"[LightUpProps] not found: {path}"); continue; }
 

@@ -96,7 +96,7 @@ public static class RigBuilder25D
         follow.distance = 4f;
         follow.height = 10f;
         follow.yaw = 0f;
-        follow.minHeight = 0f;   // allow right-drag down to a near-horizontal, ground-level view
+        follow.minHeight = 0.1f;   // allow right-drag down to a near-horizontal, ground-level view
         if (player != null) follow.target = player.transform;
 
         var fader = go.AddComponent<CameraOccluderFader>();   // fade props that block the view of the player

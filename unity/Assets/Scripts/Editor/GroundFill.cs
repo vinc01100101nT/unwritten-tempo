@@ -141,5 +141,5 @@ public static class GroundFill
         return b;
     }
 
-    static GameObject Prefab(string name) => AssetDatabase.LoadAssetAtPath<GameObject>($"{PropsDir}/{name}.prefab");
+    static GameObject Prefab(string name) => PropResolver.Load(name);   // resolves by name across Props subfolders
 }

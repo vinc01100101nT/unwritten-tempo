@@ -97567,13 +97567,13 @@ MonoBehaviour:
   distance: 4
   height: 10
   yaw: 0
-  lookAtHeight: 0.1
+  lookAtHeight: 0.18
   smoothTime: 0.12
-  minDistance: 1
+  minDistance: 0.4
   maxDistance: 7
-  minHeight: 2
-  maxHeight: 4
-  maxPitch: 30
+  minHeight: 0.1
+  maxHeight: 10
+  maxPitch: 50
   zoomStep: 1
   dragYawSpeed: 0.25
   dragHeightSpeed: 0.04

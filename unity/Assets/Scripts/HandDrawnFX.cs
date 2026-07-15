@@ -44,7 +44,7 @@ public class HandDrawnFX : MonoBehaviour
     [Tooltip("How readily CREASE edges (surface folds/kinks) are inked. Higher = busier interior lines.")]
     public float crease = 60f;
     [Range(0.4f, 3f)] [Tooltip("Line thickness in pixels (neighbour sample distance).")]
-    public float thickness = 1.57f;
+    public float thickness = 2.19f;
     [Range(0f, 0.5f)] [Tooltip("Edge threshold — raise to ink only the strongest edges (less noise on detailed meshes).")]
     public float edgeThreshold = 0f;
     [Tooltip("Ink tint. Slightly warm off-black reads as ink rather than a hard black key-line.")]
@@ -52,7 +52,7 @@ public class HandDrawnFX : MonoBehaviour
 
     [Header("Paper")]
     [Range(0f, 1f)] [Tooltip("Faint paper-fibre grain over the whole frame (subtle).")]
-    public float paperGrain = 0.25f;
+    public float paperGrain = 0.30f;
 
     [Header("Colour (HandDrawnGrade renderer feature)")]
     [Range(MinSaturation, 1f)] [Tooltip("1 = untouched colour. Lower = muted, illustrated palette. Clamped at " +

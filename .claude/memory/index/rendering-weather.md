@@ -8,3 +8,4 @@
 - [Weather system (rain/wet/reflection)](../weather-system.md) — storm gated behind `WeatherFX.Quality>=High`.
 - [Snow weather](../snow-weather.md) — `SnowOverlay`/`SnowGround`/`FootstepTracker`+`SnowCapBaker`; shader-only volume DEAD-END.
 - [X-ray occlusion silhouette](../occluded-silhouette-stencil.md) — stencil AREA mask (per-fragment depth self-occludes); two-bit `CoverBit` so held gear doesn't x-ray the body.
+- [Ink ground black band → stencil exclude](../ink-ground-black-band-stencil.md) — crease×60 saturates far ground; exclude via stencil bit 32, ground drawn LAST so it can't stamp the character.

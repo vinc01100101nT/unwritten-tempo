@@ -312,6 +312,119 @@ public static class RecipeGenerator
                 : "Save the scene (Ctrl+S) to keep it."), "OK");
     }
 
+    // Folder-driven sway: the FOLDER a prefab lives in declares its intent, so we never guess "tree vs plant" from
+    // the prop's name (the flaky old path). Run these after adding new foliage prefabs — they bake the wind material
+    // straight into each PREFAB asset in the folder (persisted .mat, so every placed instance inherits it).
+    //   • Trees folder  → canopy profile: sway ONLY each tree's leaf material (bark stays rigid), base planted.
+    //                     A tree with no leaf-named material (a single-mesh export) falls back to swaying WHOLE so it
+    //                     still visibly moves instead of silently doing nothing — and it's reported as a fallback.
+    //   • Plants folder → whole-plant decor profile: sway EVERY material (no leaf/bark split needed).
+    const string TreesDir  = PropsDir + "/Trees";
+    const string PlantsDir = PropsDir + "/Plants";
+
+    [MenuItem("Tools/unwritten/World/Sway Trees Folder (leaves only)", priority = 195)]
+    static void SwayTreesFolder() => SwayPrefabFolder("Sway Trees Folder", TreesDir, treeMode: true);
+
+    [MenuItem("Tools/unwritten/World/Sway Plants Folder (whole plant)", priority = 196)]
+    static void SwayPlantsFolder() => SwayPrefabFolder("Sway Plants Folder", PlantsDir, treeMode: false);
+
+    // Bake wind sway into every prefab in a folder. treeMode = canopy (leaves-only, base-rigid params sized to each
+    // tree's height); !treeMode = whole-plant decor. Reuses the exact same GetSwayMaterial/PersistSwayMaterial path
+    // as Sway Selected Tree, so there's ONE material-baking code path. Re-runnable / idempotent.
+    static void SwayPrefabFolder(string title, string folder, bool treeMode)
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+        { EditorUtility.DisplayDialog(title, "Exit Play mode first, then re-run.", "OK"); return; }
+
+        _foliageWind = Shader.Find("Unwritten/FoliageWind");
+        if (_foliageWind == null)
+        { EditorUtility.DisplayDialog(title, "Shader 'Unwritten/FoliageWind' not found — is Assets/Shaders/FoliageWind.shader imported?", "OK"); return; }
+
+        if (!AssetDatabase.IsValidFolder(folder))
+        { EditorUtility.DisplayDialog(title, $"Folder not found:\n{folder}\n\nMove the prefabs there first.", "OK"); return; }
+
+        var guids = AssetDatabase.FindAssets("t:Prefab", new[] { folder });
+        if (guids.Length == 0)
+        { EditorUtility.DisplayDialog(title, $"No prefabs in:\n{folder}", "OK"); return; }
+
+        _swayMats.Clear();
+        EnsureAlwaysIncluded(_foliageWind);
+
+        int prefabs = 0, mats = 0, fellBack = 0, skipped = 0;
+        var fallbackNames = new List<string>();
+        foreach (var guid in guids)
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (go == null) continue;
+            var rends = go.GetComponentsInChildren<MeshRenderer>(true);
+            if (rends.Length == 0) { skipped++; continue; }
+
+            // Full-bend height = the prefab's own height so only the crown really moves (trees only).
+            var b = new Bounds(go.transform.position, Vector3.zero);
+            foreach (var r in rends) b.Encapsulate(r.bounds);
+            float h = Mathf.Max(b.size.y, 0.5f);
+
+            // A tree with a leaf-named material sways leaves-only; one without falls back to swaying the whole tree.
+            bool anyFoliage = false;
+            if (treeMode)
+                foreach (var r in rends) foreach (var src in r.sharedMaterials)
+                    if (IsFoliageMat(src)) { anyFoliage = true; break; }
+            bool filterToFoliage = treeMode && anyFoliage;     // which materials: leaves only, or all
+            bool canopyParams    = treeMode;                   // tree feel (base rigid, sized to height) vs decor feel
+            if (treeMode && !anyFoliage) { fellBack++; fallbackNames.Add(go.name); }
+
+            int matsThis = 0;
+            foreach (var rend in rends)
+            {
+                var arr = rend.sharedMaterials;
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    var src = arr[i];
+                    if (src == null || src.shader == _foliageWind) continue;
+                    if (filterToFoliage && !IsFoliageMat(src)) continue;   // trees: leave the bark rigid
+
+                    if (!_swayMats.TryGetValue((src, canopyParams), out var m) || m == null)
+                    {
+                        m = GetSwayMaterial(src, canopyParams);            // clone (copies Base Map/tint/cutout)
+                        if (canopyParams)
+                        {
+                            m.SetFloat("_SwayHeight", h);                  // size the bend to THIS tree
+                            m.SetFloat("_SwayStiffness", 2.2f);           // high = trunk base stays rigid
+                            m.SetFloat("_SwayAmount", 0.06f);
+                            m.SetFloat("_SwaySpeed", 0.8f);
+                        }
+                    }
+                    // A material written into a PREFAB asset must be a saved .mat (an in-memory one serializes to a
+                    // null slot → pink). Persist once and reuse the persisted asset for the rest of the folder.
+                    if (!EditorUtility.IsPersistent(m))
+                    {
+                        m = PersistSwayMaterial(m);
+                        _swayMats[(src, canopyParams)] = m;
+                    }
+                    arr[i] = m; matsThis++;
+                }
+                rend.sharedMaterials = arr;
+            }
+
+            if (matsThis == 0) { skipped++; continue; }
+            PrefabUtility.SavePrefabAsset(go);
+            prefabs++; mats += matsThis;
+        }
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        string msg = $"{folder}:\n• {prefabs} prefab(s) swayed, {mats} material(s) (saved to disk).\n"
+                   + $"• {skipped} skipped (no mesh / nothing to sway).";
+        if (treeMode)
+        {
+            msg += $"\n• {fellBack} tree(s) had no leaf material → swayed WHOLE as a fallback.";
+            if (fallbackNames.Count > 0) msg += "\n   " + string.Join(", ", fallbackNames);
+        }
+        msg += "\n\nSway materials written under Prefabs/Props/Materials. Press Play to see it move.";
+        EditorUtility.DisplayDialog(title, msg, "OK");
+    }
+
     // Re-material the SELECTED solid prop(s) — houses, walls, rocks — onto Unwritten/StylizedLit, the clean
     // storybook lighting (flat lambert + soft shadow + SH ambient + lamps, no specular sheen) WITHOUT wind. This
     // is the solid counterpart to "Sway Selected Tree": use it on raw Trellis/GPT buildings that look like a
@@ -800,7 +913,7 @@ public static class RecipeGenerator
 
     static float RangeF(System.Random r, float a, float b) => a + (float)r.NextDouble() * (b - a);
 
-    static GameObject LoadProp(string name) => AssetDatabase.LoadAssetAtPath<GameObject>($"{PropsDir}/{name}.prefab");
+    static GameObject LoadProp(string name) => PropResolver.Load(name);   // resolves by name across Props subfolders
 
     // ── WIND SWAY ──────────────────────────────────────────────────────────────────────────────────────────
     // Re-material a prop's renderers onto Unwritten/FoliageWind so its vertices bend with the world wind, reusing
