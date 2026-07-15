@@ -15,3 +15,4 @@
 - [Dead-code proof = 2-step scan](../dead-code-guid-scan.md) — code-ref grep AND .meta-guid grep of scenes/prefabs; scan by declared TYPE names (partial classes / multi-type files lie).
 - [Dormant-but-KEPT scripts](../dormant-kept-systems.md) — MultiHitBurst (Meteor revival), DialogueUI/InteractPrompt (future 3D press-to-talk); zero refs on purpose, don't re-flag.
 - [Editor tool + prefab-instance undo/redo](../editor-tool-prefab-instance-undo-redo.md) — Ctrl+Y silently no-ops without `RecordPrefabInstancePropertyModifications`; RecordObject alone only does undo.
+- [Project memory lives IN the repo via junction](../project-memory-in-repo-junction.md) — `.claude/memory/` committed; harness path junctions to it; re-link per machine with `scripts/link-memory-*`.

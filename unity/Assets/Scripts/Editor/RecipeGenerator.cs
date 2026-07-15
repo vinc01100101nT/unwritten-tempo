@@ -235,7 +235,9 @@ public static class RecipeGenerator
     // Sway the SELECTED object(s) as a whole tree — for hand-dropped single-mesh trees (GPT/Trellis exports whose
     // one baked material isn't named "*leaves", so "Apply Foliage Wind to Open Scene" can't tell trunk from crown).
     // Swaps EVERY material on the selection onto the wind shader, with params auto-sized to each object's height so
-    // the trunk base stays planted and only the crown rustles. Re-runnable. Save the scene (Ctrl+S) to keep it.
+    // the trunk base stays planted and only the crown rustles. Works on both a scene instance AND a prefab asset
+    // picked in the Project window (a prefab gets its sway material saved to disk + the prefab re-saved, so it isn't
+    // left pointing at a runtime-only material that would serialize to null → pink). Re-runnable / idempotent.
     [MenuItem("Tools/unwritten/World/Sway Selected Tree", priority = 193)]
     static void SwaySelectedTree()
     {
@@ -248,17 +250,18 @@ public static class RecipeGenerator
 
         var sel = Selection.gameObjects;
         if (sel == null || sel.Length == 0)
-        { EditorUtility.DisplayDialog("Sway Selected Tree", "Select the tree object(s) in the Hierarchy first, then re-run.", "OK"); return; }
+        { EditorUtility.DisplayDialog("Sway Selected Tree", "Select the tree object(s) — a scene instance or a prefab in the Project window — first, then re-run.", "OK"); return; }
 
         _swayMats.Clear();
         EnsureAlwaysIncluded(_foliageWind);
 
-        int objs = 0, mats = 0;
+        int objs = 0, mats = 0, prefabs = 0;
         var local = new Dictionary<Material, Material>();
         foreach (var go in sel)
         {
             var rends = go.GetComponentsInChildren<MeshRenderer>(true);
             if (rends.Length == 0) continue;
+            bool isAsset = EditorUtility.IsPersistent(go);   // a prefab picked in the Project window (not a scene instance)
 
             // Full-bend height = the object's own height so only the top third of ANY tree really moves.
             var b = new Bounds(go.transform.position, Vector3.zero);
@@ -282,17 +285,31 @@ public static class RecipeGenerator
                         m.SetFloat("_SwaySpeed", 0.8f);
                         local[src] = m;
                     }
+                    // A material written into a PREFAB asset must itself be a saved .mat asset — an in-memory
+                    // material serializes as a NULL slot and the prop renders pink. Persist on demand (scene
+                    // objects keep the cheap in-memory clone, embedded in the scene file as before).
+                    if (isAsset && !EditorUtility.IsPersistent(m))
+                    {
+                        m = PersistSwayMaterial(m);
+                        local[src] = m;
+                        _swayMats[(src, true)] = m;
+                    }
                     arr[i] = m; mats++; touched = true;
                 }
                 rend.sharedMaterials = arr;
             }
-            if (touched) objs++;
+            if (!touched) continue;
+            objs++;
+            if (isAsset) { PrefabUtility.SavePrefabAsset(go); prefabs++; }
+            else UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(go.scene);
         }
+        if (prefabs > 0) { AssetDatabase.SaveAssets(); AssetDatabase.Refresh(); }
 
-        if (objs > 0) UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(sel[0].scene);
         EditorUtility.DisplayDialog("Sway Selected Tree",
             $"Swayed {objs} object(s), {mats} material(s).\n\nPress Play to see it move (the wind driver runs at runtime).\n"
-            + "Save the scene (Ctrl+S) to keep it.", "OK");
+            + (prefabs > 0
+                ? $"{prefabs} prefab asset(s) saved to disk (sway materials written under Prefabs/Props/Materials)."
+                : "Save the scene (Ctrl+S) to keep it."), "OK");
     }
 
     // Re-material the SELECTED solid prop(s) — houses, walls, rocks — onto Unwritten/StylizedLit, the clean
@@ -852,6 +869,26 @@ public static class RecipeGenerator
         }
 
         _swayMats[key] = m;
+        return m;
+    }
+
+    // Save a runtime sway material as a real .mat asset so it survives being assigned to a PREFAB asset (an
+    // in-memory material written into a prefab serializes as a NULL slot → the prop turns pink). Deterministic
+    // path under Prefabs/Props/Materials, so re-running REPLACES the same asset in place rather than piling up copies.
+    static Material PersistSwayMaterial(Material m)
+    {
+        if (EditorUtility.IsPersistent(m)) return m;
+        const string dir = "Assets/Prefabs/Props/Materials";
+        if (!AssetDatabase.IsValidFolder(dir))
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/Prefabs")) AssetDatabase.CreateFolder("Assets", "Prefabs");
+            if (!AssetDatabase.IsValidFolder("Assets/Prefabs/Props")) AssetDatabase.CreateFolder("Assets/Prefabs", "Props");
+            AssetDatabase.CreateFolder("Assets/Prefabs/Props", "Materials");
+        }
+        string path = $"{dir}/{m.name}.mat";
+        var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (existing != null) { EditorUtility.CopySerialized(m, existing); return existing; }
+        AssetDatabase.CreateAsset(m, path);
         return m;
     }
 

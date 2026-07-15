@@ -9,7 +9,7 @@
 # Usage:
 #   tools/optimize-glb.sh                 # optimize every .glb in Assets/Prefabs -> *_opt.glb (SAFE, non-destructive)
 #   tools/optimize-glb.sh path/to/x.glb   # optimize a single file
-#   INPLACE=1 tools/optimize-glb.sh       # overwrite originals in place (keeps prefab GUID refs); backs up to tools/glb_backups/
+#   INPLACE=1 tools/optimize-glb.sh       # overwrite originals in place (keeps prefab GUID refs)
 #
 # Tunables (env override, e.g. RATIO=0.5 tools/optimize-glb.sh):
 RATIO="${RATIO:-0.3}"          # fraction of verts to KEEP (0.3 = ~30%). Higher = more detail, less reduction.
@@ -42,13 +42,11 @@ for f in "${FILES[@]}"; do
   [ -f "$f" ] || { echo "skip (missing): $f"; continue; }
   before=$(stat -c%s "$f")
   if [ "$INPLACE" = "1" ]; then
-    mkdir -p "$ROOT/tools/glb_backups"
-    cp -n "$f" "$ROOT/tools/glb_backups/$(basename "$f")"   # -n: never clobber an existing backup
     tmp="$(dirname "$f")/.__opt_tmp.glb"
     opt "$f" "$tmp"
     mv -f "$tmp" "$f"
     after=$(stat -c%s "$f")
-    echo ">> $(basename "$f")  $((before/1024/1024))MB -> $((after/1024/1024))MB  (in place; backup in tools/glb_backups/)"
+    echo ">> $(basename "$f")  $((before/1024/1024))MB -> $((after/1024/1024))MB  (in place)"
   else
     out="${f%.glb}_opt.glb"
     opt "$f" "$out"

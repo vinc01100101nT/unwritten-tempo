@@ -13,7 +13,7 @@ using Debug = UnityEngine.Debug;
 /// <list type="number">
 /// <item><b>Optimize</b> — shells out to <c>tools/optimize-glb.sh</c> (in place, <c>INPLACE=1</c>: weld +
 /// quadric simplify + texture downsize + meshopt compression), so the source GLB's GUID is preserved and the
-/// heavy TRELLIS/Hunyuan mesh shrinks to game budget. Originals are backed up to <c>tools/glb_backups/</c>.</item>
+/// heavy TRELLIS/Hunyuan mesh shrinks to game budget.</item>
 /// <item><b>Reimport</b> the now-optimized bytes, then <b>bake</b> each into a URP-materialed, collider'd,
 /// base-pivoted prop prefab at the GLB's <b>native size</b> (no auto-scaling) — reusing <see cref="GlbPropImporter"/>
 /// (the single owner of the bake logic; this tool never re-implements it).</item>
@@ -101,7 +101,7 @@ public static class GlbPropPipeline
         if (!EditorUtility.DisplayDialog("Optimize + Import GLB Prop",
                 $"Process {scope} into prop prefabs?\n\n" +
                 skips +
-                (toOptimize.Length > 0 ? "• optimize IN PLACE (originals backed up to tools/glb_backups/)\n• needs Node (npx @gltf-transform/cli) on PATH\n" : "") +
+                (toOptimize.Length > 0 ? "• optimize IN PLACE (overwrites originals)\n• needs Node (npx @gltf-transform/cli) on PATH\n" : "") +
                 "\nThis can take a while for dense meshes.", "Run", "Cancel"))
             return;
 
@@ -130,11 +130,14 @@ public static class GlbPropPipeline
 
         int built = 0;
         GlbPropImporter.EnsureFolders();   // once, BEFORE batching — CreateFolder isn't visible mid-StartAssetEditing
+        // Extract embedded textures to standalone PNGs AFTER the optimize+reimport above (so we grab the downsized
+        // texture) and BEFORE the batch (a mid-StartAssetEditing import would defer). Repoints materials off the .glb.
+        var texMap = GlbPropImporter.ExtractTextures(glbs);
         try
         {
             AssetDatabase.StartAssetEditing();
             foreach (var glb in glbs)
-                if (GlbPropImporter.BakeOne(glb, lit)) built++;
+                if (GlbPropImporter.BakeOne(glb, lit, texMap)) built++;
         }
         finally
         {
@@ -146,7 +149,6 @@ public static class GlbPropPipeline
         Debug.Log($"[unwritten] Optimize + Import: baked {built}/{glbs.Length} GLB prop(s) into Assets/Prefabs/Props.");
         EditorUtility.DisplayDialog("Optimize + Import GLB Prop — done",
             $"Optimized + baked {built} drop-ready prop prefab(s) into:\nAssets/Prefabs/Props\n\n" +
-            "Originals were backed up to tools/glb_backups/.\n" +
             "Drag a prefab into the scene (it ground-snaps) or place it with the Prop Palette.", "OK");
     }
 

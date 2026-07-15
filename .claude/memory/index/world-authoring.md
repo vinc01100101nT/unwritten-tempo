@@ -10,3 +10,4 @@
 - [Map painter pipeline](../map-painter-pipeline.md) — Phase 1 DONE (`BrushPalette`); Phase 2 HTML, Phase 3 importer.
 - [⭐ MapRecipe + RecipeGenerator (the ONE generator)](../recipe-generator.md) — every map = `MapRecipe` SO; old per-kind generators DELETED.
 - [Floor autotiling via RuleTiles](../floor-autotile-ruletiles.md) — `Build Floor RuleTiles` → 8 corner-correct RuleTiles.
+- [Runtime material on a PREFAB → null/pink](../runtime-material-on-prefab-null-pink.md) — `new Material()` into a prefab serializes to `fileID:0`; persist as .mat first (Sway Selected Tree).

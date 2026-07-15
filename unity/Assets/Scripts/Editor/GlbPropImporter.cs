@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -10,20 +11,24 @@ using UnityEngine;
 /// a proper prop prefab in <c>Assets/Prefabs/Props/</c>:
 /// <list type="bullet">
 /// <item>forces every material to <b>URP/Lit</b>, preserving the GLB's own baked texture + colour;</item>
+/// <item><b>extracts</b> the embedded texture to a standalone <c>Props/Textures/*.png</c> and points the material
+/// at that — so the baked prop no longer references the <c>.glb</c> and the raw GLBs become safe to delete;</item>
 /// <item>adds a <see cref="MeshCollider"/> per mesh (solid static scenery);</item>
 /// <item>re-seats the pivot to <b>bottom-centre</b> so it ground-snaps cleanly (world Y0 standard).</item>
 /// </list>
 /// The prop keeps the GLB's <b>native size</b> (no auto-scaling) — so dragging the prefab in gives its real
 /// exported dimensions, which you then set deliberately per prop (eyeball against a human) rather than having a
 /// one-size-fits-all footprint guess flatten every house, tree, and barrel to the same width.
-/// Select the GLB model asset(s) in the Project window and run. Idempotent-ish: overwrites the prefab in
-/// place so already-placed instances keep their link. Keeper (this is the standing GLB → prop pipeline).
+/// Select the GLB model asset(s) in the Project window and run. Fully idempotent: re-importing the same GLB
+/// REPLACES the prefab, materials, meshes, and textures in place (deterministic paths, GUIDs preserved) — it
+/// never accumulates _1/_2 duplicate copies. Keeper (this is the standing GLB → prop pipeline).
 /// </summary>
 public static class GlbPropImporter
 {
     const string PropDir = "Assets/Prefabs/Props";
     const string MatDir = "Assets/Prefabs/Props/Materials";
     const string MeshDir = "Assets/Prefabs/Props/Meshes";
+    const string TexDir = "Assets/Prefabs/Props/Textures";
 
     [MenuItem("Tools/unwritten/Props/Import GLB Prop…", priority = 505)]
     static void Import()
@@ -45,12 +50,13 @@ public static class GlbPropImporter
         }
 
         EnsureFolders();
+        var texMap = ExtractTextures(models);   // BEFORE the batch (import can't run mid-StartAssetEditing)
         int built = 0;
         try
         {
             AssetDatabase.StartAssetEditing();
             foreach (var path in models)
-                if (BakeOne(path, lit)) built++;
+                if (BakeOne(path, lit, texMap)) built++;
         }
         finally
         {
@@ -70,7 +76,7 @@ public static class GlbPropImporter
     // The URP/Lit shader every baked prop is re-pointed onto (null if not a URP project).
     internal static Shader FindLit() => Shader.Find("Universal Render Pipeline/Lit");
 
-    internal static bool BakeOne(string glbPath, Shader lit)
+    internal static bool BakeOne(string glbPath, Shader lit, Dictionary<Texture, Texture2D> texMap = null)
     {
         var glb = AssetDatabase.LoadAssetAtPath<GameObject>(glbPath);
         if (glb == null) { Debug.LogWarning($"[unwritten] Couldn't load GLB at {glbPath}"); return false; }
@@ -82,7 +88,7 @@ public static class GlbPropImporter
         inst.transform.rotation = Quaternion.identity;
         inst.transform.localScale = Vector3.one;
 
-        ForceUrpMaterials(inst, name, lit);
+        ForceUrpMaterials(inst, name, lit, texMap);
         AddColliders(inst);
         RepivotToBase(inst, name);
 
@@ -91,8 +97,10 @@ public static class GlbPropImporter
         return prefab != null;
     }
 
-    // Re-point every material to URP/Lit, carrying over the GLB's baked base texture + colour.
-    static void ForceUrpMaterials(GameObject inst, string name, Shader lit)
+    // Re-point every material to URP/Lit, carrying over the GLB's baked base texture + colour. When texMap has a
+    // standalone PNG extracted for the source texture, use THAT instead of the GLB's embedded sub-asset — so the
+    // baked prop no longer depends on the .glb and the raw GLBs become deletable.
+    static void ForceUrpMaterials(GameObject inst, string name, Shader lit, Dictionary<Texture, Texture2D> texMap)
     {
         int slot = 0;
         foreach (var mr in inst.GetComponentsInChildren<MeshRenderer>())
@@ -106,18 +114,24 @@ public static class GlbPropImporter
                     continue;   // already a URP material — leave it (e.g. glTFast output)
 
                 var tex = src != null ? FindBaseTexture(src) : null;
+                if (tex != null && texMap != null && texMap.TryGetValue(tex, out var standalone) && standalone != null)
+                    tex = standalone;   // use the extracted PNG, not the GLB's embedded texture
                 var col = src != null && src.HasProperty("_Color") ? src.color
                         : src != null && src.HasProperty("_BaseColor") ? src.GetColor("_BaseColor")
                         : Color.white;
 
-                var urp = new Material(lit);
+                // Deterministic path so a re-import REPLACES the same material asset (preserving its GUID)
+                // instead of spawning a _1/_2 copy. Reuse the existing asset in place when present.
+                string matPath = $"{MatDir}/{name}_{slot++}.mat";
+                var urp = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+                if (urp == null) { urp = new Material(lit); AssetDatabase.CreateAsset(urp, matPath); }
+                else urp.shader = lit;
+
                 if (tex != null) { urp.SetTexture("_BaseMap", tex); urp.mainTexture = tex; }
                 urp.SetColor("_BaseColor", col);
                 urp.SetFloat("_Smoothness", 0f);   // flat stylized look, kill PBR sheen
                 urp.SetFloat("_Metallic", 0f);
-
-                string matPath = AssetDatabase.GenerateUniqueAssetPath($"{MatDir}/{name}_{slot++}.mat");
-                AssetDatabase.CreateAsset(urp, matPath);
+                EditorUtility.SetDirty(urp);
                 mats[k] = urp;
             }
             mr.sharedMaterials = mats;
@@ -129,6 +143,60 @@ public static class GlbPropImporter
         foreach (var prop in new[] { "_BaseMap", "_MainTex", "_BaseColorMap", "baseColorTexture" })
             if (m.HasProperty(prop) && m.GetTexture(prop) != null) return m.GetTexture(prop);
         return m.mainTexture;
+    }
+
+    // Pull each GLB's embedded base texture out to a standalone PNG under Props/Textures/, returning a map from the
+    // source (embedded, .glb sub-asset) texture → the freestanding PNG. MUST run BEFORE StartAssetEditing: the batch
+    // suspends the import pipeline, so a mid-batch ImportAsset would defer and LoadAssetAtPath would return null.
+    // Keyed by texture reference (the same shared sub-asset object the material carries), so one PNG per unique image.
+    internal static Dictionary<Texture, Texture2D> ExtractTextures(IEnumerable<string> glbPaths)
+    {
+        EnsureFolders();
+        var map = new Dictionary<Texture, Texture2D>();
+        foreach (var glbPath in glbPaths)
+        {
+            var glb = AssetDatabase.LoadAssetAtPath<GameObject>(glbPath);
+            if (glb == null) continue;
+            string name = Path.GetFileNameWithoutExtension(glbPath);
+            int slot = 0;
+            foreach (var mr in glb.GetComponentsInChildren<MeshRenderer>(true))
+                foreach (var src in mr.sharedMaterials)
+                {
+                    if (src == null) continue;
+                    var tex = FindBaseTexture(src);
+                    if (tex == null || map.ContainsKey(tex)) continue;
+                    var png = ExtractToPng(tex, name, slot++);
+                    if (png != null) map[tex] = png;
+                }
+        }
+        return map;
+    }
+
+    // Copy an arbitrary (possibly non-readable, e.g. glTFast-imported) texture to a real PNG asset. Blits through an
+    // sRGB RenderTexture so the pixels come back regardless of Read/Write, then imports the file synchronously.
+    static Texture2D ExtractToPng(Texture src, string name, int slot)
+    {
+        int w = Mathf.Max(1, src.width), h = Mathf.Max(1, src.height);
+        var rt = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+        var prev = RenderTexture.active;
+        Graphics.Blit(src, rt);
+        RenderTexture.active = rt;
+        var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+        tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+        tex.Apply();
+        RenderTexture.active = prev;
+        RenderTexture.ReleaseTemporary(rt);
+
+        byte[] png = tex.EncodeToPNG();
+        Object.DestroyImmediate(tex);
+        if (png == null) return null;
+
+        // Deterministic path: overwriting the PNG bytes + reimporting REPLACES the same texture asset
+        // (its .meta/GUID survives) rather than making a _1/_2 duplicate on every re-import.
+        string path = $"{TexDir}/{name}{(slot > 0 ? "_" + slot : "")}.png";
+        File.WriteAllBytes(Application.dataPath + path.Substring("Assets".Length), png);
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }
 
     static void AddColliders(GameObject inst)
@@ -211,7 +279,17 @@ public static class GlbPropImporter
         m.vertices = verts;
         m.RecalculateBounds();
         m.name = $"{name}_based";
-        string path = AssetDatabase.GenerateUniqueAssetPath($"{MeshDir}/{name}{(idx > 0 ? "_" + idx : "")}.mesh");
+
+        // Deterministic path so a re-import REPLACES the same mesh asset instead of making a _1/_2 copy.
+        // Copy the new geometry onto the existing asset (preserving its GUID) when one is already there.
+        string path = $"{MeshDir}/{name}{(idx > 0 ? "_" + idx : "")}.mesh";
+        var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+        if (existing != null)
+        {
+            EditorUtility.CopySerialized(m, existing);
+            Object.DestroyImmediate(m);
+            return existing;
+        }
         AssetDatabase.CreateAsset(m, path);
         return m;
     }
@@ -222,5 +300,6 @@ public static class GlbPropImporter
         if (!AssetDatabase.IsValidFolder(PropDir)) AssetDatabase.CreateFolder("Assets/Prefabs", "Props");
         if (!AssetDatabase.IsValidFolder(MatDir)) AssetDatabase.CreateFolder(PropDir, "Materials");
         if (!AssetDatabase.IsValidFolder(MeshDir)) AssetDatabase.CreateFolder(PropDir, "Meshes");
+        if (!AssetDatabase.IsValidFolder(TexDir)) AssetDatabase.CreateFolder(PropDir, "Textures");
     }
 }
