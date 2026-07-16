@@ -24,7 +24,7 @@ public static class PlayerModelSwap
     /// <summary>Set by <see cref="Player3DVisualBuilder"/> on editor load: (player, modelPath) → the new visual.</summary>
     public static System.Func<Player3DController, string, GameObject> Attacher;
     /// <summary>The rigged-model folder, mirrored from <see cref="Player3DVisualBuilder"/>.RiggedDir on editor load.</summary>
-    public static string RiggedDir = "Assets/Art/Quat/Rigged";
+    public static string RiggedDir = "Assets/1_Authored/Art/Characters/Models";
 
     static List<string> paths;      // rigged FBX asset paths, sorted by name — built lazily once, then cached
     static int index = -1;          // index of the model last applied (−1 = unknown / matches whatever was baked)

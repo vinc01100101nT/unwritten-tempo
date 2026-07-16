@@ -1,63 +1,136 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>Is a brush a placed PROP (house/tree/wall) or a GROUND texture (path/dirt/water)? Splits the painter
-/// into two layers: ground paint underneath, objects on top — and means ground brushes have no footprint problem.</summary>
-public enum BrushKind { Object, GroundPaint }
+/// <summary>Where a palette entry paints: a placed PROP on top (Object), the autotiled modular WALL kit, or a
+/// GROUND texture underneath. Replaces the old preset-brush model — you drag your own assets and pick the role.</summary>
+public enum BrushRole { Object, Wall, Ground }
 
 /// <summary>
-/// One painter brush. The <b>single source of truth</b> shared by the Map Painter (via the exported manifest) and
-/// the recipe generator: a colour-coded category that resolves to real Pxltgr prefabs (object brushes) or a
-/// <c>ground_*</c> texture (ground brushes). New assets are folded in by the palette window's Auto-fill.
+/// One row in the palette: some assets you dragged in + the role that says where they go. IDs, swatch colours and
+/// ground blend-channels are all DERIVED (see <see cref="BrushPalette.Resolve"/>) — you never hand-type them.
 /// </summary>
 [System.Serializable]
-public class MapBrush
+public class PaletteEntry
 {
-    [Tooltip("Stable key written into map JSON (e.g. 'houses'). Lowercase, no spaces.")]
-    public string id = "houses";
-    public string label = "Houses";
-    [Tooltip("Swatch colour shown in the painter, hex like #CC3B3B.")]
-    public string colorHex = "#CC3B3B";
-    public BrushKind kind = BrushKind.Object;
+    public BrushRole role = BrushRole.Object;
+    [Tooltip("Optional display name shown in the painter. Blank = derived from the first asset.")]
+    public string label = "";
+    [Tooltip("Optional swatch colour (hex). Blank = auto-generated from the label so every brush looks distinct.")]
+    public string colorHex = "";
 
-    [Tooltip("Object brushes: which Pxltgr category these prefabs belong to (auto-fill classifies by this).")]
-    public PropCategory category = PropCategory.None;
-    [Tooltip("Resolved prefab names in Assets/Prefabs/Props (filled by Auto-fill; overrides Category when set). " +
-             "This is the editable source the recipe + manifest both read.")]
-    public List<string> prefabNames = new List<string>();
+    [Tooltip("Object / Wall: the prefab(s) this brush places. Multiple = a group that scatters a random variant.")]
+    public List<GameObject> prefabs = new List<GameObject>();
 
-    [Tooltip("GroundPaint brushes only: the ground_* texture prop this paints (e.g. ground_road). " +
-             "Empty = placeholder with no asset yet (e.g. water).")]
-    public string groundTex = "";
+    [Tooltip("Ground: the texture (or material/sprite/ground prop) this slot paints. Order among Ground rows picks " +
+             "its blend channel (first = the default underlayer, the next four = paintable overlays; max 5).")]
+    public Object groundAsset;
 
-    [Tooltip("Object brushes: yaw (degrees) added on import to align the prefab's real FRONT with the painter's " +
-             "facing arrow. The painter arrow = 'where I want the front'; meshes whose local front isn't +Z need a " +
-             "correction here (e.g. Pxltgr houses front −Z → 180). Per prop-pack, not per painted instance.")]
+    [Tooltip("Object: yaw (degrees) added on import so the mesh's real FRONT lines up with the painter's facing " +
+             "arrow (e.g. a house whose front faces −Z needs 180). Per asset-source, not per painted instance.")]
     public float forwardOffset = 0f;
 }
 
+/// <summary>The fully-derived brush the painter manifest + the map importer consume — the ONE place ids, colours and
+/// the ground blend-channel are computed from the raw <see cref="PaletteEntry"/> rows, so both sides always agree.</summary>
+public class ResolvedBrush
+{
+    public string id, label, colorHex, groundTex = "";
+    public BrushRole role;
+    public int channel = -1;                         // Ground only: 0 = base underlayer, 1..4 = blend overlays
+    public List<string> prefabNames = new List<string>();
+    public float forwardOffset;
+    public bool IsGround => role == BrushRole.Ground;
+    public bool IsWall   => role == BrushRole.Wall;
+}
+
 /// <summary>
-/// The brush set for the Map Painter pipeline (Assets ▸ Create ▸ unwritten ▸ Brush Palette, or the
-/// <c>Tools ▸ unwritten ▸ World ▸ Brush Palette…</c> window). Edited in Unity, exported to the web painter as
-/// <c>prop-manifest.json</c>, and read by <see cref="RecipeGenerator"/> so category→prefab lists live in ONE place.
+/// The Map Painter's palette: the assets you chose, tagged by role. Edited in the
+/// <c>Tools ▸ unwritten ▸ World ▸ Brush Palette…</c> window, exported to the web painter as <c>prop-manifest.json</c>,
+/// and read by <see cref="MapPainterImporter"/> on import. Ground rendering is a fixed 5-texture blend, so at most
+/// five Ground rows are used — the extras are ignored (the window warns).
 /// </summary>
 [CreateAssetMenu(fileName = "BrushPalette", menuName = "unwritten/Brush Palette", order = 1)]
 public class BrushPalette : ScriptableObject
 {
     [Tooltip("World size of one painter grid cell (≈ one building plot).")]
     public float cellSize = 4f;
-    // No prop scale knob: props are placed at their NATIVE prefab size (the prefab owns its size, single source of
-    // truth). Set each prop's real size on the prefab itself; nothing here multiplies it.
-    public List<MapBrush> brushes = new List<MapBrush>();
+    // Props are placed at their NATIVE prefab size (the prefab owns its size, single source of truth) — no scale knob.
+    public List<PaletteEntry> entries = new List<PaletteEntry>();
 
-    /// <summary>The brush whose <see cref="MapBrush.category"/> matches <paramref name="c"/> and has resolved
-    /// prefab names, or null. Used by the recipe generator to read the palette as the source of truth.</summary>
-    public MapBrush FindByCategory(PropCategory c)
+    public const int MaxGroundChannels = 5;   // GroundBlend.shader = 1 base + 4 blend layers
+
+    /// <summary>Derive the final brush list: assign ground blend-channels by row order, generate stable ids and
+    /// swatch colours, collect prefab names. The single source of truth both the exporter and importer read.</summary>
+    public List<ResolvedBrush> Resolve()
     {
-        if (brushes == null) return null;
-        foreach (var b in brushes)
-            if (b != null && b.kind == BrushKind.Object && b.category == c && b.prefabNames != null && b.prefabNames.Count > 0)
-                return b;
-        return null;
+        var outList = new List<ResolvedBrush>();
+        var usedIds = new HashSet<string>();
+        int groundCount = 0;
+
+        foreach (var e in entries)
+        {
+            if (e == null) continue;
+
+            var rb = new ResolvedBrush { role = e.role, forwardOffset = e.forwardOffset };
+
+            if (e.role == BrushRole.Ground)
+            {
+                if (groundCount >= MaxGroundChannels || e.groundAsset == null) continue;   // over the shader's 5 slots → dropped
+                rb.channel = groundCount++;
+                rb.groundTex = e.groundAsset.name;
+                rb.label = string.IsNullOrWhiteSpace(e.label) ? e.groundAsset.name : e.label.Trim();
+            }
+            else
+            {
+                foreach (var pf in e.prefabs)
+                    if (pf != null) rb.prefabNames.Add(pf.name);
+                if (rb.prefabNames.Count == 0) continue;
+                rb.label = string.IsNullOrWhiteSpace(e.label)
+                    ? (e.role == BrushRole.Wall ? "Wall" : rb.prefabNames[0])
+                    : e.label.Trim();
+            }
+
+            // Wall keeps the reserved "wall" id the painter + importer autotile on; everything else is name-derived + unique.
+            rb.id = e.role == BrushRole.Wall ? "wall" : UniqueId(rb.label, usedIds);
+            usedIds.Add(rb.id);
+            rb.colorHex = string.IsNullOrWhiteSpace(e.colorHex) ? AutoColor(rb.id) : e.colorHex.Trim();
+            outList.Add(rb);
+        }
+        return outList;
+    }
+
+    /// <summary>The painter ground-brush id bound to a blend channel (0 base … 4), or "" if that channel is unused.
+    /// Lets the recipe generator's sidecar name ground cells to match whatever ground assets the author picked.</summary>
+    public string GroundIdForChannel(int channel)
+    {
+        foreach (var rb in Resolve())
+            if (rb.IsGround && rb.channel == channel) return rb.id;
+        return "";
+    }
+
+    static string UniqueId(string label, HashSet<string> used)
+    {
+        string baseId = Sanitize(label);
+        if (string.IsNullOrEmpty(baseId)) baseId = "brush";
+        string id = baseId;
+        for (int i = 2; used.Contains(id); i++) id = baseId + i;
+        return id;
+    }
+
+    static string Sanitize(string s)
+    {
+        var sb = new System.Text.StringBuilder(s.Length);
+        foreach (char c in s.ToLowerInvariant())
+            sb.Append(char.IsLetterOrDigit(c) ? c : '_');
+        return sb.ToString().Trim('_');
+    }
+
+    // Deterministic pleasant swatch from the id's hash → stable per brush, distinct across brushes, no manual picking.
+    static string AutoColor(string id)
+    {
+        int h = 0; foreach (char c in id) h = h * 31 + c;
+        float hue = (h & 0x7fffffff) % 360 / 360f;
+        Color c2 = Color.HSVToRGB(hue, 0.55f, 0.85f);
+        return "#" + ColorUtility.ToHtmlStringRGB(c2);
     }
 }

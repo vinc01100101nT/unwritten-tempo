@@ -22,12 +22,12 @@ using TMPro;
 public static class UIShellBuilder
 {
     const string CanvasName = "GameUICanvas";
-    const string UIRoot = "Assets/Art/NinjaAdventure/UI";
+    const string UIRoot = "Assets/1_Authored/Art/Billboards/UI";
     const string WOOD   = UIRoot + "/Theme/Theme Wood";
     const string ITEMS  = UIRoot + "/Skill Icon/Items & Weapon";
     const string METEO  = UIRoot + "/Skill Icon/Meteo";   // weather icons (Sun/Rain/Snow) for the calendar
     const string FontPath = UIRoot + "/Font/NormalFont.ttf";
-    const string ResourcePrefabPath = "Assets/Resources/GameUICanvas.prefab";
+    const string ResourcePrefabPath = "Assets/3_Data/Resources/GameUICanvas.prefab";
 
     // EditorPrefs keys (shared with the picker window).
     public const string PrefTheme = "unwritten.ui.theme";
@@ -133,7 +133,7 @@ public static class UIShellBuilder
         Undo.RegisterCreatedObjectUndo(canvasGO, "Build UI Shell");
 
         // Save as a Resources prefab so the UI auto-spawns in any scene and persists.
-        EnsureFolder("Assets/Resources");
+        EnsureFolder("Assets/3_Data/Resources");
         PrefabUtility.SaveAsPrefabAssetAndConnect(canvasGO, ResourcePrefabPath, InteractionMode.AutomatedAction);
 
         EditorSceneManager.MarkSceneDirty(canvasGO.scene);

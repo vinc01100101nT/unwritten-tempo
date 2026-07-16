@@ -12,14 +12,14 @@ using UnityEngine.SceneManagement;
 ///
 /// Flow: encapsulate every renderer's bounds → square them up (+margin) → fly a temporary orthographic
 /// camera over the centre looking down → render to a RenderTexture (URP render-request) → read back to a
-/// Texture2D → save <c>Assets/Art/Minimaps/&lt;Scene&gt;.png</c> → import it (clamp, no mips) → write the
+/// Texture2D → save <c>Assets/2_Generated/Minimaps/&lt;Scene&gt;.png</c> → import it (clamp, no mips) → write the
 /// image + world rect onto the scene's <see cref="MinimapData"/> → save the scene.
 ///
 /// The map's own player isn't in the scene at author-time (it lives in Systems), so the snapshot is clean.
 /// </summary>
 public static class MinimapBaker
 {
-    const string OutDir = "Assets/Art/Minimaps";
+    const string OutDir = "Assets/2_Generated/Minimaps";
     const int Resolution = 1024;        // baked PNG edge (px)
     const float MarginFrac = 0.04f;     // breathing room around the map bounds
 
@@ -117,8 +117,8 @@ public static class MinimapBaker
 
     static string SaveTexture(Texture2D tex, string sceneName)
     {
-        if (!AssetDatabase.IsValidFolder("Assets/Art")) AssetDatabase.CreateFolder("Assets", "Art");
-        if (!AssetDatabase.IsValidFolder(OutDir)) AssetDatabase.CreateFolder("Assets/Art", "Minimaps");
+        if (!AssetDatabase.IsValidFolder("Assets/2_Generated")) AssetDatabase.CreateFolder("Assets", "2_Generated");
+        if (!AssetDatabase.IsValidFolder(OutDir)) AssetDatabase.CreateFolder("Assets/2_Generated", "Minimaps");
 
         string path = $"{OutDir}/{sceneName}.png";
         File.WriteAllBytes(path, tex.EncodeToPNG());

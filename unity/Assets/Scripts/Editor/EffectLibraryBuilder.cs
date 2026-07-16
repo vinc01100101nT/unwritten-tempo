@@ -18,7 +18,7 @@ public static class EffectLibraryBuilder
     // A prefab folder to scan. Prefix modes (checked in this order):
     //   FixedPrefix != null           → every prefab under it gets that id prefix (a flat vendor pack).
     //   ByFirstSubfolder == true       → the id prefix is the FIRST subfolder under Path (the drop-in CONVENTION root:
-    //                                     Assets/Art/VFX/<prefix>/… → "<prefix>.*", any depth below that). No code edit
+    //                                     Assets/1_Authored/Art/VFX/<prefix>/… → "<prefix>.*", any depth below that). No code edit
     //                                     per pack — just drop prefabs into a prefix-named folder and Rebuild.
     //   otherwise                      → the prefix is each prefab's IMMEDIATE parent folder via CategoryPrefix (a
     //                                     vendor pack pre-nested by category, e.g. Hovl).
@@ -40,21 +40,21 @@ public static class EffectLibraryBuilder
     static readonly ScanRoot[] Roots =
     {
         // ── The drop-in convention root: NO code edit needed for new packs. ─────────────────────────────
-        // Make a subfolder named for the id prefix you want (e.g. Assets/Art/VFX/circle/), drop the pack's
+        // Make a subfolder named for the id prefix you want (e.g. Assets/1_Authored/Art/VFX/circle/), drop the pack's
         // prefabs in (any depth below it), then run Rebuild Effect Library → ids read "circle.<name>".
-        new ScanRoot("Assets/Art/VFX", byFirstSubfolder: true, extraDrop: NoiseTokens),
+        new ScanRoot("Assets/1_Authored/Art/VFX", byFirstSubfolder: true, extraDrop: NoiseTokens),
 
         // ── Vendor packs left in their imported location (one line per pack). ──────────────────────────
-        new ScanRoot("Assets/Art/Hovl Studio/Magic effects pack/Prefabs"),          // nested by category
-        new ScanRoot("Assets/Art/Hovl Studio/Procedural fire/Prefabs", "fire"),     // flat → all "fire.*"
+        new ScanRoot("Assets/0_Raw/Hovl Studio/Magic effects pack/Prefabs"),          // nested by category
+        new ScanRoot("Assets/0_Raw/Hovl Studio/Procedural fire/Prefabs", "fire"),     // flat → all "fire.*"
         // Eric VFX ground circles — flat pack; drop the "FX_"/"MagicCircle" naming noise so ids read "circle.icearrow01".
-        new ScanRoot("Assets/Eric VFX Studio/Game VFX - Magic Circle(Free)/Prefabs", "circle", new[] { "fx", "magiccircle" }),
+        new ScanRoot("Assets/0_Raw/Eric VFX Studio/Game VFX - Magic Circle(Free)/Prefabs", "circle", new[] { "fx", "magiccircle" }),
         // NamuFX stylized water — flat pack, all water FX → "water.*" (e.g. Water_Splash_A → water.splash-a, the
         // puddle step splash WaterStep resolves by default).
-        new ScanRoot("Assets/NamuFX/StylizedWaterEffects/Prefabs", "water"),
+        new ScanRoot("Assets/0_Raw/NamuFX/StylizedWaterEffects/Prefabs", "water"),
     };
 
-    const string LibraryPath = "Assets/Resources/EffectLibrary.asset";
+    const string LibraryPath = "Assets/3_Data/Resources/EffectLibrary.asset";
 
     // Category subfolder → id prefix (for nested roots). A folder not listed falls back to the kebab of its name.
     static readonly Dictionary<string, string> CategoryPrefix = new Dictionary<string, string>

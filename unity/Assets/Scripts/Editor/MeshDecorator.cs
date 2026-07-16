@@ -19,7 +19,7 @@ using UnityEngine;
 /// </summary>
 public static class MeshDecorator
 {
-    const string PropsDir = "Assets/Prefabs/Props";
+    const string PropsDir = "Assets/1_Authored/Prefabs/Props";
     const string DecorParent = "AutoDecor";
 
     // Tunables — sensible chunky-village defaults. Counts scale with the wall perimeter so big and small

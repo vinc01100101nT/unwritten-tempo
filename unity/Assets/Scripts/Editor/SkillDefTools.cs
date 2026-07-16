@@ -11,7 +11,7 @@ using UnityEngine;
 /// </summary>
 public static class SkillDefTools
 {
-    const string Dir = "Assets/Resources/Skills";
+    const string Dir = "Assets/3_Data/Resources/Skills";
 
     [MenuItem("Tools/unwritten/Skills/Build Default Skills")]
     public static void BuildDefaults()
@@ -38,7 +38,7 @@ public static class SkillDefTools
         def.keyLabel = "";
         def.slotOrder = 20;
         def.tint = new Color(1f, 0.55f, 0.3f);
-        def.vfx = AssetDatabase.LoadAssetAtPath<VfxSequence>("Assets/Resources/VfxSequences/meteor.asset");
+        def.vfx = AssetDatabase.LoadAssetAtPath<VfxSequence>("Assets/3_Data/Resources/VfxSequences/meteor.asset");
         if (def.vfx == null)
             Debug.LogWarning("[unwritten] skill.meteor: meteor VfxSequence not found — run Tools ▸ unwritten ▸ Art ▸ Build Default Vfx Sequences first.");
 
@@ -109,9 +109,9 @@ public static class SkillDefTools
 
     static void EnsureFolder()
     {
-        if (!AssetDatabase.IsValidFolder("Assets/Resources"))
-            AssetDatabase.CreateFolder("Assets", "Resources");
+        if (!AssetDatabase.IsValidFolder("Assets/3_Data/Resources"))
+            AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
         if (!AssetDatabase.IsValidFolder(Dir))
-            AssetDatabase.CreateFolder("Assets/Resources", "Skills");
+            AssetDatabase.CreateFolder("Assets/3_Data/Resources", "Skills");
     }
 }

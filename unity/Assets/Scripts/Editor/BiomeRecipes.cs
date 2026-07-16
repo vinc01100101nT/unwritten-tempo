@@ -5,7 +5,7 @@ using UnityEngine;
 
 /// <summary>
 /// One-click author helper: stamps a STARTER <see cref="MapRecipe"/> asset for each <see cref="Biome"/> into
-/// <c>Assets/Recipes/Biomes/</c> so you can wire world-map cells immediately instead of hand-building every recipe.
+/// <c>Assets/3_Data/Recipes/Biomes/</c> so you can wire world-map cells immediately instead of hand-building every recipe.
 /// Each starter sets the biome (ground base/patch textures + hue come from <c>RecipeGenerator.BiomeOf</c>), a sensible
 /// <c>dirtAmount</c>, and a couple of generic prop/mob groups you then tune. Create-if-absent: it never clobbers a
 /// recipe you've already edited — delete one to re-stamp it fresh.
@@ -14,7 +14,7 @@ using UnityEngine;
 /// </summary>
 public static class BiomeRecipes
 {
-    const string Dir = "Assets/Recipes/Biomes";
+    const string Dir = "Assets/3_Data/Recipes/Biomes";
 
     [MenuItem("Tools/unwritten/World/Create Biome Starter Recipes", priority = 189)]
     static void Create()
@@ -51,7 +51,7 @@ public static class BiomeRecipes
             + "cell's template at it (or set the cell's biome). Grassland reproduces the original look exactly.", "OK");
     }
 
-    // Biome-appropriate starter content. Categories auto-fill from Assets/Prefabs/Props; empty mob archetype = a
+    // Biome-appropriate starter content. Categories auto-fill from Assets/1_Authored/Prefabs/Props; empty mob archetype = a
     // weighted mix of all field mobs. Densities lean sparse for harsh biomes, lush for grassland.
     static void Configure(MapRecipe r, Biome b)
     {

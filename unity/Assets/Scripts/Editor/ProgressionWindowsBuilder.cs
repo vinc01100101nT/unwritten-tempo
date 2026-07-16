@@ -14,7 +14,7 @@ using UnityEngine.UI;
 public static class ProgressionWindowsBuilder
 {
     const string CanvasName = "ProgressionWindowsCanvas";
-    const string CardDir = "Assets/Resources/Cards";
+    const string CardDir = "Assets/3_Data/Resources/Cards";
 
     [MenuItem("Tools/unwritten/UI/Build Progression Windows", priority = 121)]
     static void Build()

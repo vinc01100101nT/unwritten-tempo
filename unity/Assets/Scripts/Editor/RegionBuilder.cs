@@ -221,7 +221,7 @@ public static class RegionBuilder
 
     // The visible warp marker: Hovl Studio's UPRIGHT "Portal" rings, colour-coded BY DESTINATION so a
     // doorway's colour tells you where it goes (see WarpKind / PortalPrefabFor below).
-    const string PortalsDir   = "Assets/Art/Hovl Studio/Magic effects pack/Prefabs/Portals/";
+    const string PortalsDir   = "Assets/0_Raw/Hovl Studio/Magic effects pack/Prefabs/Portals/";
     const float  WarpFxScale  = 0.5f;   // tune live in-scene; Hovl portals are ~2 units tall at scale 1
     const float  WarpFxHeight = 1.0f;   // lift the ring so it stands ON the ground at ~doorway height
 

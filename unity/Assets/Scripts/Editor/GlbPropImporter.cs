@@ -8,7 +8,7 @@ using UnityEngine;
 /// One-click "make a GLB drop-ready". A raw <c>.glb</c> dragged in (from the prop-gen pipeline or any
 /// other source) imports as a <i>model</i> (not a prefab), often on a non-URP shader (→ magenta), with no
 /// collider, an arbitrary export scale, and its pivot wherever the generator left it. This bakes it into
-/// a proper prop prefab in <c>Assets/Prefabs/Props/</c>:
+/// a proper prop prefab in <c>Assets/1_Authored/Prefabs/Props/</c>:
 /// <list type="bullet">
 /// <item>forces every material to <b>URP/Lit</b>, preserving the GLB's own baked texture + colour;</item>
 /// <item><b>extracts</b> the embedded texture to a standalone <c>Props/Textures/*.png</c> and points the material
@@ -25,10 +25,10 @@ using UnityEngine;
 /// </summary>
 public static class GlbPropImporter
 {
-    const string PropDir = "Assets/Prefabs/Props";
-    const string MatDir = "Assets/Prefabs/Props/Materials";
-    const string MeshDir = "Assets/Prefabs/Props/Meshes";
-    const string TexDir = "Assets/Prefabs/Props/Textures";
+    const string PropDir = "Assets/1_Authored/Prefabs/Props";
+    const string MatDir = "Assets/1_Authored/Prefabs/Props/Materials";
+    const string MeshDir = "Assets/1_Authored/Prefabs/Props/Meshes";
+    const string TexDir = "Assets/1_Authored/Prefabs/Props/Textures";
 
     [MenuItem("Tools/unwritten/Props/Import GLB Prop…", priority = 505)]
     static void Import()
@@ -296,8 +296,8 @@ public static class GlbPropImporter
 
     internal static void EnsureFolders()
     {
-        if (!AssetDatabase.IsValidFolder("Assets/Prefabs")) AssetDatabase.CreateFolder("Assets", "Prefabs");
-        if (!AssetDatabase.IsValidFolder(PropDir)) AssetDatabase.CreateFolder("Assets/Prefabs", "Props");
+        if (!AssetDatabase.IsValidFolder("Assets/1_Authored/Prefabs")) AssetDatabase.CreateFolder("Assets/1_Authored", "Prefabs");
+        if (!AssetDatabase.IsValidFolder(PropDir)) AssetDatabase.CreateFolder("Assets/1_Authored/Prefabs", "Props");
         if (!AssetDatabase.IsValidFolder(MatDir)) AssetDatabase.CreateFolder(PropDir, "Materials");
         if (!AssetDatabase.IsValidFolder(MeshDir)) AssetDatabase.CreateFolder(PropDir, "Meshes");
         if (!AssetDatabase.IsValidFolder(TexDir)) AssetDatabase.CreateFolder(PropDir, "Textures");

@@ -17,9 +17,9 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public static class Player3DVisualBuilder
 {
-    public const string RiggedDir   = "Assets/Art/Quat/Rigged";
+    public const string RiggedDir   = "Assets/1_Authored/Art/Characters/Models";
     public const string DefaultModel = RiggedDir + "/BaseCharacter.fbx";
-    const string OutDir = "Assets/Art/Quat/Player3D";
+    const string OutDir = "Assets/1_Authored/Art/Characters/Animators";
     public const string ControllerPath = OutDir + "/HumanoidPlayerController.controller";
 
     // Wire the runtime editor-Play model swapper (PlayerModelSwap) to THIS builder's Attach — the single

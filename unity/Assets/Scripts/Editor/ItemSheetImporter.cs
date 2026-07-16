@@ -34,8 +34,8 @@ using UnityEngine;
 /// </summary>
 public static class ItemSheetImporter
 {
-    const string SheetDir = "Assets/Art/Items/Sheets";   // sheets + their manifests live here
-    const string ItemsDir = "Assets/Resources/Items";    // the Item data assets
+    const string SheetDir = "Assets/1_Authored/Art/Items/Sheets";   // sheets + their manifests live here
+    const string ItemsDir = "Assets/3_Data/Resources/Items";    // the Item data assets
     const int Ppu = 256;
 
     [MenuItem("Tools/unwritten/Art/Import Item Sheets", priority = 623)]

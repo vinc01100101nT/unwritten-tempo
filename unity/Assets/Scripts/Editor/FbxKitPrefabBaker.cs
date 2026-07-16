@@ -9,16 +9,16 @@ using UnityEngine;
 /// prefab instead has the kit colormap material applied and a <see cref="MeshCollider"/> per mesh,
 /// so the player collides with it and the 3D town baker can instantiate it directly.
 ///
-/// Output: <c>Assets/Prefabs/&lt;PrefabFolder&gt;/&lt;name&gt;.prefab</c> + a shared material asset per kit.
+/// Output: <c>Assets/1_Authored/Prefabs/&lt;PrefabFolder&gt;/&lt;name&gt;.prefab</c> + a shared material asset per kit.
 /// Characters (<c>character-*</c>) are skipped — players/mobs/NPCs are 2D billboards here (see the
 /// 2.5D direction decision). Safe to re-run; overwrites prefabs in place so placed instances keep links.
 /// </summary>
 public static class FbxKitPrefabBaker
 {
     /// <summary>Asset-agnostic baker: pick ANY kit's FBX folder (e.g. a downloaded prop pack's
-    /// <c>FBX format</c> folder placed under Assets/Art/…) and turn every FBX in it into drop-ready
+    /// <c>FBX format</c> folder placed under Assets/1_Authored/Art/…) and turn every FBX in it into drop-ready
     /// house/prop prefabs. Auto-detects the colormap atlas (Textures/colormap.png, else the first .png in
-    /// the folder or its Textures subfolder). Output → Assets/Prefabs/&lt;folder name&gt;.</summary>
+    /// the folder or its Textures subfolder). Output → Assets/1_Authored/Prefabs/&lt;folder name&gt;.</summary>
     [MenuItem("Tools/unwritten/Props/Build From Folder…", priority = 501)]
     static void BuildFromFolder()
     {
@@ -28,7 +28,7 @@ public static class FbxKitPrefabBaker
         abs = abs.Replace('\\', '/');
         string root = Application.dataPath.Replace('\\', '/');   // <project>/Assets
         if (!abs.StartsWith(root))
-        { EditorUtility.DisplayDialog("Build Prefabs", "That folder isn't inside this project's Assets folder.\nMove the kit under Assets/Art and re-run.", "OK"); return; }
+        { EditorUtility.DisplayDialog("Build Prefabs", "That folder isn't inside this project's Assets folder.\nMove the kit under Assets/1_Authored/Art and re-run.", "OK"); return; }
 
         string kitDir = "Assets" + abs.Substring(root.Length);     // project-relative
         string leaf = Path.GetFileName(kitDir.TrimEnd('/'));
@@ -61,7 +61,7 @@ public static class FbxKitPrefabBaker
     }
 
     /// <summary>Bake every FBX in <paramref name="kitDir"/> into drop-ready prefabs under
-    /// Assets/Prefabs/<paramref name="prefabFolder"/>, sharing one colormap material.
+    /// Assets/1_Authored/Prefabs/<paramref name="prefabFolder"/>, sharing one colormap material.
     /// <paramref name="colormapPath"/> overrides the texture location (default =
     /// <c>&lt;kitDir&gt;/Textures/colormap.png</c>) for packs that ship their atlas elsewhere.</summary>
     public static void BakeKit(string kitName, string kitDir, string prefabFolder, string colormapPath = null)
@@ -75,7 +75,7 @@ public static class FbxKitPrefabBaker
 
         string colormap = colormapPath ?? kitDir + "/Textures/colormap.png";
         string matPath = kitDir + "/" + prefabFolder + ".mat";
-        string prefabDir = "Assets/Prefabs/" + prefabFolder;
+        string prefabDir = "Assets/1_Authored/Prefabs/" + prefabFolder;
 
         var mat = EnsureMaterial(colormap, matPath);
         EnsurePrefabFolder(prefabFolder);
@@ -160,8 +160,8 @@ public static class FbxKitPrefabBaker
 
     static void EnsurePrefabFolder(string prefabFolder)
     {
-        if (!AssetDatabase.IsValidFolder("Assets/Prefabs")) AssetDatabase.CreateFolder("Assets", "Prefabs");
-        if (!AssetDatabase.IsValidFolder("Assets/Prefabs/" + prefabFolder))
-            AssetDatabase.CreateFolder("Assets/Prefabs", prefabFolder);
+        if (!AssetDatabase.IsValidFolder("Assets/1_Authored/Prefabs")) AssetDatabase.CreateFolder("Assets/1_Authored", "Prefabs");
+        if (!AssetDatabase.IsValidFolder("Assets/1_Authored/Prefabs/" + prefabFolder))
+            AssetDatabase.CreateFolder("Assets/1_Authored/Prefabs", prefabFolder);
     }
 }

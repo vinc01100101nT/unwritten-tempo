@@ -16,7 +16,7 @@ using UnityEngine;
 /// </summary>
 public static class HumanoidClipResolver
 {
-    public const string ClipDir = "Assets/Art/Quat/Anim/Humanoid";
+    public const string ClipDir = "Assets/1_Authored/Art/Characters/Animations";
 
     /// <summary>All Humanoid clips in <see cref="ClipDir"/>, keyed by the FILE name (not the clip's internal name —
     /// Mixamo clips are often internally called "mixamo.com"; the file name is what the author controls, e.g.

@@ -21,7 +21,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public static class RecipeGenerator
 {
-    const string PropsDir = "Assets/Prefabs/Props";
+    const string PropsDir = "Assets/1_Authored/Prefabs/Props";
     const string ScenesDir = "Assets/Scenes";
     const float  Inset = 2f;       // pull placement in from the plot edge
     const float  PathMargin = 0.75f;   // extra clearance a solid prop keeps from a path edge
@@ -139,7 +139,7 @@ public static class RecipeGenerator
         if (ground == null)
         {
             EditorUtility.DisplayDialog("Generate Map",
-                "Couldn't build the ground — need the Pxltgr 'ground_grass' prefab in Assets/Prefabs/Props "
+                "Couldn't build the ground — need the Pxltgr 'ground_grass' prefab in Assets/1_Authored/Prefabs/Props "
                 + "(and, for the blended style, the 'Unwritten/GroundBlend' shader).\n\n"
                 + "Run Build Prefabs ▸ Fantasy Assets (Pxltgr) → Props first.", "OK");
             EditorSceneManager.CloseScene(scene, true);
@@ -842,21 +842,19 @@ public static class RecipeGenerator
 
 
     // ── SIDECAR (painter-editable map.json) ────────────────────────────────────────────────────────────────
-    // Resolve a prop group's painter brush id + the palette yaw correction to bake into the sidecar. A group with a
-    // category inherits its palette brush (so re-import shows it under the right brush + facing); otherwise the brush
-    // is the lowercased group label. Never emit the reserved "wall" key (the importer would autotile it from cells,
-    // dropping the exact pieces) — generated walls round-trip as explicit prefab objects.
+    // Resolve a prop group's painter brush id + the yaw correction to bake into the sidecar. Brush = the group's
+    // label (or its category name), lowercased; facing correction from the per-category seed. Never emit the reserved
+    // "wall" key (the importer would autotile it from cells, dropping the exact pieces) — generated walls round-trip
+    // as explicit prefab objects.
     static void BrushAndOffset(RecipePropGroup g, out string brush, out float fwd)
     {
-        fwd = 0f;
-        var pal = LoadPalette();
-        if (pal != null && g.category != PropCategory.None)
-        {
-            var b = pal.FindByCategory(g.category);
-            if (b != null && !string.IsNullOrEmpty(b.id)) { brush = Reserve(b.id); fwd = b.forwardOffset; return; }
-        }
-        brush = Reserve((string.IsNullOrEmpty(g.label) ? "props" : g.label).Trim().ToLowerInvariant().Replace(' ', '_'));
+        fwd = ForwardOffsetSeed(g.category);
+        string src = string.IsNullOrEmpty(g.label) ? g.category.ToString() : g.label;
+        brush = Reserve(src.Trim().ToLowerInvariant().Replace(' ', '_'));
     }
+
+    // The mesh-front facing correction per prop family (the only non-zero source pack quirk: Pxltgr houses face −Z).
+    static float ForwardOffsetSeed(PropCategory c) => c == PropCategory.Houses ? 180f : 0f;
 
     static string Reserve(string brush) => brush == "wall" ? "wall_pieces" : brush;
 
@@ -869,15 +867,23 @@ public static class RecipeGenerator
                                                        go.transform.eulerAngles.y, _sidecarSizeX, _sidecarSizeZ, fwd));
     }
 
-    // Painter ground brush id for a recipe path tile (matches MapPainterImporter.GroundChannel + GroundTex ids).
-    static string PainterRoadBrush(PathTile t) => t switch
+    // Painter ground-brush id for a recipe path tile: ask the palette which brush it bound to that blend channel
+    // (1 road · 2 stone · 3 rock · 4 soil), so the sidecar names ground cells the same way the author's palette does.
+    // Falls back to the default ground_* ids when there's no palette or that channel is unfilled.
+    static string PainterRoadBrush(PathTile t)
     {
-        PathTile.Road   => "path",
-        PathTile.Soil   => "dirt",
-        PathTile.Stones => "stone",
-        PathTile.Rock   => "rock",
-        _               => "path",
-    };
+        int ch = t switch { PathTile.Road => 1, PathTile.Stones => 2, PathTile.Rock => 3, PathTile.Soil => 4, _ => 1 };
+        string id = LoadPalette()?.GroundIdForChannel(ch);
+        if (!string.IsNullOrEmpty(id)) return id;
+        return t switch
+        {
+            PathTile.Road   => "ground_road",
+            PathTile.Stones => "ground_stones",
+            PathTile.Rock   => "ground_rock",
+            PathTile.Soil   => "ground_soil",
+            _               => "ground_road",
+        };
+    }
 
     // Write <name>.map.json beside the painter: captured props (lossless layout/facing) + the ground rasterised from
     // the SAME procedural sampler the bake used (roads + dirt patches), so the painter's Import reproduces this map.
@@ -991,12 +997,12 @@ public static class RecipeGenerator
     static Material PersistSwayMaterial(Material m)
     {
         if (EditorUtility.IsPersistent(m)) return m;
-        const string dir = "Assets/Prefabs/Props/Materials";
+        const string dir = "Assets/1_Authored/Prefabs/Props/Materials";
         if (!AssetDatabase.IsValidFolder(dir))
         {
-            if (!AssetDatabase.IsValidFolder("Assets/Prefabs")) AssetDatabase.CreateFolder("Assets", "Prefabs");
-            if (!AssetDatabase.IsValidFolder("Assets/Prefabs/Props")) AssetDatabase.CreateFolder("Assets/Prefabs", "Props");
-            AssetDatabase.CreateFolder("Assets/Prefabs/Props", "Materials");
+            if (!AssetDatabase.IsValidFolder("Assets/1_Authored/Prefabs")) AssetDatabase.CreateFolder("Assets/1_Authored", "Prefabs");
+            if (!AssetDatabase.IsValidFolder("Assets/1_Authored/Prefabs/Props")) AssetDatabase.CreateFolder("Assets/1_Authored/Prefabs", "Props");
+            AssetDatabase.CreateFolder("Assets/1_Authored/Prefabs/Props", "Materials");
         }
         string path = $"{dir}/{m.name}.mat";
         var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -1026,10 +1032,10 @@ public static class RecipeGenerator
         return s.Replace(' ', '_');
     }
 
-    // ── BRUSH PALETTE (single source of truth) ───────────────────────────────────────────────────────────
-    // The BrushPalette asset (edited in Unity, exported to the web painter) is the canonical category→prefab map.
-    // When present, CategoryNames reads it; otherwise it falls back to the hardcoded seed list below. Cached per
-    // domain reload (statics reset on recompile); editing the asset in-session keeps the same live reference.
+    // ── BRUSH PALETTE ────────────────────────────────────────────────────────────────────────────────────
+    // The BrushPalette asset (edited in Unity, exported to the web painter) supplies the painter ground-brush ids
+    // for the sidecar round-trip + the cell size. The procedural prop lists live in CategoryNamesSeed below (the
+    // painter palette is now freeform assets, no longer a category→prefab map). Cached per domain reload.
     static BrushPalette _palette; static bool _paletteSearched;
     internal static BrushPalette LoadPalette()
     {
@@ -1040,16 +1046,8 @@ public static class RecipeGenerator
         return _palette;
     }
 
-    // Canonical Pxltgr prefab names per family (LOD0 where the pack ships LODs). The palette (if any) wins; this
-    // hardcoded list is the seed/fallback (and what Auto-fill classification starts from). Exposed internal so the
-    // Brush Palette window can seed brushes from it.
-    internal static string[] CategoryNames(PropCategory c)
-    {
-        var pal = LoadPalette();
-        var brush = pal != null ? pal.FindByCategory(c) : null;
-        if (brush != null) return brush.prefabNames.ToArray();
-        return CategoryNamesSeed(c);
-    }
+    // Canonical Pxltgr prefab names per family (LOD0 where the pack ships LODs) — the procedural generator's source.
+    internal static string[] CategoryNames(PropCategory c) => CategoryNamesSeed(c);
 
     static string[] CategoryNamesSeed(PropCategory c) => c switch
     {

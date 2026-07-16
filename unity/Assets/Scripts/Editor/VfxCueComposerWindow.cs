@@ -9,13 +9,13 @@ using UnityEngine;
 /// Skill Composer, but far simpler: a flat table of every <see cref="VfxCueId"/> with the sequence + anchor it
 /// plays at — no tick→effect bindings, because a cue carries no gameplay (the event already happened).
 ///
-/// Writes <c>Assets/Resources/VfxCueLibrary.asset</c> (created on demand) and reloads the runtime
+/// Writes <c>Assets/3_Data/Resources/VfxCueLibrary.asset</c> (created on demand) and reloads the runtime
 /// <see cref="VfxCueCatalog"/> on save so changes show without a domain reload.
 /// </summary>
 public class VfxCueComposerWindow : EditorWindow
 {
-    const string Dir = "Assets/Resources";
-    const string AssetPath = "Assets/Resources/VfxCueLibrary.asset";
+    const string Dir = "Assets/3_Data/Resources";
+    const string AssetPath = "Assets/3_Data/Resources/VfxCueLibrary.asset";
 
     VfxCueLibrary lib;
     Vector2 scroll;
@@ -35,7 +35,7 @@ public class VfxCueComposerWindow : EditorWindow
         lib = AssetDatabase.LoadAssetAtPath<VfxCueLibrary>(AssetPath);
         if (lib == null)
         {
-            if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets", "Resources");
+            if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
             lib = CreateInstance<VfxCueLibrary>();
             AssetDatabase.CreateAsset(lib, AssetPath);
             AssetDatabase.SaveAssets();

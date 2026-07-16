@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>Known Pxltgr prop families. Used to auto-fill a group's prefabs from Assets/Prefabs/Props when its
+/// <summary>Known Pxltgr prop families. Used to auto-fill a group's prefabs from Assets/1_Authored/Prefabs/Props when its
 /// explicit prefab list is empty — so you can say "Trees" without dragging each one in.</summary>
 public enum PropCategory { None, Trees, Stumps, Rocks, Bushes, Grass, Flowers, Ferns, Mushrooms, Houses, Landmarks, Carts }
 
@@ -55,7 +55,7 @@ public class RecipePropGroup
     [Tooltip("Exact prefabs to place. If this is empty, the Category below is used to auto-fill from the pack.")]
     public List<GameObject> prefabs = new List<GameObject>();
 
-    [Tooltip("Used ONLY when Prefabs is empty — pulls the known Pxltgr prefabs of this kind from Assets/Prefabs/Props.")]
+    [Tooltip("Used ONLY when Prefabs is empty — pulls the known Pxltgr prefabs of this kind from Assets/1_Authored/Prefabs/Props.")]
     public PropCategory category = PropCategory.None;
 
     public PlacementRule placement = PlacementRule.Scatter;

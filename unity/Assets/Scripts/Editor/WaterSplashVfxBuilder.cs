@@ -6,7 +6,7 @@ using UnityEngine;
 /// Authors a PLACEHOLDER puddle-splash particle prefab and registers it in the EffectLibrary as
 /// <c>water.splash</c> — the droplet spray <see cref="WaterStep"/> kicks up when a foot lands in a puddle.
 /// It's deliberately a starting point: a small upward burst of soft droplets under gravity, tinted watery
-/// blue. Swap it any time by dropping a nicer splash prefab into <c>Assets/Art/VFX/water/</c> and running
+/// blue. Swap it any time by dropping a nicer splash prefab into <c>Assets/1_Authored/Art/VFX/water/</c> and running
 /// <b>Rebuild Effect Library</b> — the id stays <c>water.&lt;name&gt;</c> and no runtime code changes.
 ///
 /// <para>The flat expanding RIPPLE ring is NOT built here — the WetGround shader already draws that on the
@@ -17,7 +17,7 @@ using UnityEngine;
 /// </summary>
 public static class WaterSplashVfxBuilder
 {
-    const string Dir      = "Assets/Art/VFX/water";
+    const string Dir      = "Assets/1_Authored/Art/VFX/water";
     const string TexPath  = Dir + "/WaterSplashDot.png";
     const string MatPath  = Dir + "/WaterSplash.mat";
     const string PrefPath = Dir + "/Splash.prefab";
@@ -30,7 +30,7 @@ public static class WaterSplashVfxBuilder
         var mat = BuildMaterial(tex);
         BuildPrefab(mat);
 
-        // Register it (id = water.splash via the "Assets/Art/VFX/<prefix>" convention root) so Vfx can resolve it.
+        // Register it (id = water.splash via the "Assets/1_Authored/Art/VFX/<prefix>" convention root) so Vfx can resolve it.
         string summary = EffectLibraryBuilder.RebuildCore();
 
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefPath);

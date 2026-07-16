@@ -16,7 +16,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "WeatherSequenceLibrary", menuName = "unwritten/Weather/Sequence Library", order = 1)]
 public class WeatherSequenceLibrary : ScriptableObject
 {
-    /// <summary>The Resources path the runtime loads the live library from (must sit at <c>Assets/Resources/&lt;this&gt;</c>).</summary>
+    /// <summary>The Resources path the runtime loads the live library from (must sit at <c>Assets/3_Data/Resources/&lt;this&gt;</c>).</summary>
     public const string ResourcePath = "WeatherSequenceLibrary";
 
     [Tooltip("Every authored timeline. Resolution is by each asset's own 'preset' field, so order here doesn't matter; " +

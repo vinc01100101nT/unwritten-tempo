@@ -209,7 +209,7 @@ public class TreeColliderBaker : EditorWindow
     static string MeshAssetPath(Mesh src)
     {
         string srcPath = AssetDatabase.GetAssetPath(src);
-        string dir = string.IsNullOrEmpty(srcPath) ? "Assets/Prefabs/Props/Meshes" : System.IO.Path.GetDirectoryName(srcPath);
+        string dir = string.IsNullOrEmpty(srcPath) ? "Assets/1_Authored/Prefabs/Props/Meshes" : System.IO.Path.GetDirectoryName(srcPath);
         return $"{dir.Replace('\\', '/')}/{src.name}_col.mesh";
     }
 

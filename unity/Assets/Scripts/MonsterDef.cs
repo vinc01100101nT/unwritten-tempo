@@ -32,7 +32,7 @@ public class MonsterDef : ScriptableObject
     public int tier = 1;
 
     [Header("Art")]
-    [Tooltip("Sprite-sheet folder under Assets/Art/NinjaAdventure/Actor/Monster (e.g. 'Slime').")]
+    [Tooltip("Sprite-sheet folder under Assets/1_Authored/Art/Billboards/Actor/Monster (e.g. 'Slime').")]
     public string sheet = "";
     [Tooltip("Relative spawn frequency in a mixed field (commons higher). Bosses use 0.")]
     public int weight = 1;

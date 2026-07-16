@@ -19,7 +19,7 @@ Why bake?
 Run headless (no Blender UI):
 
     blender --background --python tools/export_mesh_for_rigging.py -- \
-        --in  unity/Assets/Art/Quat/FBX \
+        --in  unity/Assets/0_Raw/Quat/FBX \
         --out MixamoUpload \
         --size 512
 

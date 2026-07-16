@@ -3,11 +3,11 @@ using UnityEngine;
 
 /// <summary>
 /// Auto-applies crisp pixel-art import settings to every texture under
-/// <c>Assets/Art/</c> so you never hand-fix import settings again. Runs on every
+/// <c>Assets/1_Authored/Art/</c> so you never hand-fix import settings again. Runs on every
 /// import / reimport.
 ///
 /// NOTE: art that was imported BEFORE this script existed won't pick up the
-/// settings until you reimport it — right-click <c>Assets/Art</c> → Reimport.
+/// settings until you reimport it — right-click <c>Assets/1_Authored/Art</c> → Reimport.
 ///
 /// It does NOT slice multi-sprite sheets. For a character/tileset sheet, set
 /// Sprite Mode = Multiple in the Inspector and grid-slice it in the Sprite
@@ -41,6 +41,21 @@ public class PixelArtImportPostprocessor : AssetPostprocessor
             importer.alphaIsTransparency = true;
             importer.npotScale = TextureImporterNPOTScale.None;
             importer.wrapMode = TextureWrapMode.Clamp;
+            return;
+        }
+
+        // Ground TILE textures are tiled across 3D ground meshes (blended ground, curb/border strips), NOT pixel-art
+        // sprites. Import them as REPEATING Default textures with mipmaps so a plain material tiles them seamlessly and
+        // they don't shimmer at distance. (GroundBlend uses its own inline repeat sampler, so this never affects it —
+        // it only fixes materials, like the curb's URP/Lit, that honour the texture's own wrap mode.)
+        if (path.Contains("/GroundTiles/"))
+        {
+            importer.textureType = TextureImporterType.Default;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.mipmapEnabled = true;
+            importer.wrapMode = TextureWrapMode.Repeat;
+            importer.npotScale = TextureImporterNPOTScale.None;        // keep the exact painted pixels (NPOT ok on desktop)
             return;
         }
 

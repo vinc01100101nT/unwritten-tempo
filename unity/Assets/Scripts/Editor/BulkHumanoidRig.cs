@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 public static class BulkHumanoidRig
 {
-    const string DefaultFolder = "Assets/Art/Quat/Rigged";
+    const string DefaultFolder = "Assets/1_Authored/Art/Characters/Models";
 
     [MenuItem("Tools/unwritten/Rigs/Bulk Set Humanoid (Rigged Mixamo)", priority = 621)]
     public static void SetHumanoid()

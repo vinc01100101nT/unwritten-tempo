@@ -30,15 +30,22 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public static class GroundBlendBuilder
 {
-    const string PropsDir = "Assets/Prefabs/Props";
-    const string MeshDir  = "Assets/Meshes/Generated";
-    const string MatDir   = "Assets/Materials/Generated";
+    const string PropsDir      = "Assets/1_Authored/Prefabs/Props";
+    const string MeshDir       = "Assets/2_Generated/Meshes";
+    const string MatDir        = "Assets/2_Generated/Materials";
+    const string GroundTilesDir = "Assets/1_Authored/Art/GroundTiles";
 
     /// <summary>Per-vertex ground sampler: given a world XZ, return the four blend weights as a Vector4 mapped to the
     /// mesh vertex-colour channels — <c>x</c>=road (.r), <c>y</c>=stone (.g), <c>z</c>=rock (.b), <c>w</c>=dirt (.a),
     /// all 0..1. The procedural <see cref="LayPlot"/> overload feeds a noise-dirt + routed-path sampler (stone/rock
     /// left 0); the Map Painter importer feeds one that reads its painted cell grid.</summary>
     public delegate void GroundSampler(float worldX, float worldZ, out Vector4 weights);
+
+    /// <summary>Elevation-aware ground sampler used by the elevated builder: same as <see cref="GroundSampler"/> but
+    /// also told the height <paramref name="refLevel"/> of the cell whose top/wall this vertex belongs to — so the
+    /// sampler can refuse to blend in cells at a DIFFERENT level (a hard texture cut at a step, soft blend within a
+    /// level) instead of feathering across the cliff.</summary>
+    public delegate void GroundSamplerLeveled(float worldX, float worldZ, int refLevel, out Vector4 weights);
 
     /// <summary>
     /// Lay a single blended grass→dirt ground mesh ~<paramref name="sizeX"/>×<paramref name="sizeZ"/> world units
@@ -206,7 +213,7 @@ public static class GroundBlendBuilder
     /// missing grass prop / shader.
     /// </summary>
     public static GameObject LayPlotSampledElevated(Scene scene, string rootName, Vector3 center,
-                                                    float sizeX, float sizeZ, int groundLayer, GroundSampler sample,
+                                                    float sizeX, float sizeZ, int groundLayer, GroundSamplerLeveled sample,
                                                     int[,] levels, int cols, int rows, float cellSize,
                                                     string grassTexName = "ground_grass", string dirtTexName = "ground_soil",
                                                     string pathTexName = "ground_road", string stoneTexName = null,
@@ -214,6 +221,18 @@ public static class GroundBlendBuilder
     {
         var mat = MakeGroundMaterial(rootName, grassTexName, dirtTexName, pathTexName, stoneTexName, rockTexName, tint);
         if (mat == null) return null;
+        levels = FillCornerNotches(levels, cols, rows);   // fill concave corner notches so path turns read solid
+        var curbMat = MakeCurbMaterial();                 // null → 1-notch walls just stay in the ground-blend submesh
+        const float CurbWorldPerTexture = 2.0f;           // one full curb strip spans this many world units along the edge
+
+        // Flat BORDER-RING trim: a strip of the same curb texture laid flat on the raised top along each curb edge.
+        // Width = one texture-row scaled so the stones stay SQUARE (read the texture's real aspect, so new art can't
+        // stretch them). BorderRows widens the trim in whole rows; a hair of Y-lift stops it z-fighting the top.
+        const int   BorderRows  = 1;
+        const float BorderLift  = 0.003f;
+        var   curbTex   = curbMat != null ? curbMat.GetTexture("_BaseMap") as Texture2D : null;
+        float texAspect = curbTex != null ? curbTex.width / (float)curbTex.height : 6f;
+        float borderWidth = BorderRows * (CurbWorldPerTexture / texAspect);   // world width of BorderRows square rows
 
         // Sub-cells per painter cell → keep the grass/dirt blend as fine as the flat mesh's ~0.8u vertex grid.
         int sub = Mathf.Clamp(Mathf.RoundToInt(cellSize / 0.8f), 1, 8);
@@ -230,32 +249,73 @@ public static class GroundBlendBuilder
         var norms = new List<Vector3>();
         var uvs   = new List<Vector2>();
         var cols4 = new List<Color>();
-        var tris  = new List<int>();
+        var trisTop  = new List<int>();
+        var trisWall = new List<int>();   // 1-notch curbs → own submesh + curb material (rest of the ground → trisTop)
 
         int Push(Vector3 pos, Vector3 nrm, Vector2 uv, Color col)
         { verts.Add(pos); norms.Add(nrm); uvs.Add(uv); cols4.Add(col); return verts.Count - 1; }
 
-        Color SampleCol(float wx, float wz)
+        Color SampleCol(float wx, float wz, int refLevel)
         {
-            sample(wx, wz, out Vector4 w);
+            sample(wx, wz, refLevel, out Vector4 w);
             return new Color(Mathf.Clamp01(w.x), Mathf.Clamp01(w.y), Mathf.Clamp01(w.z), Mathf.Clamp01(w.w));
         }
 
         // Emit a vertical wall quad (double-sided so it reads whichever way the camera orbits), coloured from the
-        // higher cell's blend and UV'd (along-edge, worldY) so the texture tiles down the face instead of streaking.
-        void AddWall(Vector3 tA, Vector3 tB, Vector3 bA, Vector3 bB, Vector3 outward)
+        // higher cell's blend. A 1-notch INTERIOR drop is a decorative CURB: its quad goes to the curb submesh and is
+        // UV'd from WORLD position (U along the edge, V = height in notches) so the stone strip flows unbroken across
+        // adjacent cells and one row exactly fills each 0.2 step. Taller cliffs + the border skirt stay in the
+        // ground-blend submesh with the legacy (along-edge, worldY) UV — GroundBlend samples world-XZ so it streaks.
+        void AddWall(Vector3 tA, Vector3 tB, Vector3 bA, Vector3 bB, Vector3 outward, bool isCurb, int refLevel)
         {
-            float alongA = 0f, alongB = Vector3.Distance(new Vector3(tA.x, 0, tA.z), new Vector3(tB.x, 0, tB.z));
-            Color cA = SampleCol(tA.x, tA.z), cB = SampleCol(tB.x, tB.z);
-            int itA = Push(tA, outward, new Vector2(alongA, tA.y), cA);
-            int itB = Push(tB, outward, new Vector2(alongB, tB.y), cB);
-            int ibA = Push(bA, outward, new Vector2(alongA, bA.y), cA);
-            int ibB = Push(bB, outward, new Vector2(alongB, bB.y), cB);
+            bool haveCurb = isCurb && curbMat != null;
+            Color cA = SampleCol(tA.x, tA.z, refLevel), cB = SampleCol(tB.x, tB.z, refLevel);
+            Vector2 uTA, uTB, uBA, uBB;
+            if (haveCurb)
+            {
+                bool alongZ = Mathf.Abs(tA.x - tB.x) < 1e-4f;             // wall runs along Z (else along X)
+                float sA = (alongZ ? tA.z : tA.x) / CurbWorldPerTexture;
+                float sB = (alongZ ? tB.z : tB.x) / CurbWorldPerTexture;
+                float vTop = (tA.y - bA.y) / lh;                          // notches of height → one strip row per 0.2 step
+                uTA = new Vector2(sA, vTop); uTB = new Vector2(sB, vTop);
+                uBA = new Vector2(sA, 0f);   uBB = new Vector2(sB, 0f);
+            }
+            else
+            {
+                float alongB = Vector3.Distance(new Vector3(tA.x, 0, tA.z), new Vector3(tB.x, 0, tB.z));
+                uTA = new Vector2(0f, tA.y); uTB = new Vector2(alongB, tB.y);
+                uBA = new Vector2(0f, bA.y); uBB = new Vector2(alongB, bB.y);
+            }
+            int itA = Push(tA, outward, uTA, cA);
+            int itB = Push(tB, outward, uTB, cB);
+            int ibA = Push(bA, outward, uBA, cA);
+            int ibB = Push(bB, outward, uBB, cB);
+            var t = haveCurb ? trisWall : trisTop;
             // Double-sided (both windings) so the face reads whichever side the camera orbits to.
-            AddTri(itA, ibA, itB); AddTri(itB, ibA, ibB);
-            AddTri(itA, itB, ibA); AddTri(itB, ibB, ibA);
+            AddTriTo(t, itA, ibA, itB); AddTriTo(t, itB, ibA, ibB);
+            AddTriTo(t, itA, itB, ibA); AddTriTo(t, itB, ibB, ibA);
         }
-        void AddTri(int a, int b, int c) { tris.Add(a); tris.Add(b); tris.Add(c); }
+        void AddTriTo(List<int> t, int a, int b, int c) { t.Add(a); t.Add(b); t.Add(c); }
+
+        // Flat trim quad laid ON TOP along a curb edge: <eA,eB> are the edge endpoints on the raised top; <inward> is
+        // the unit direction into the raised cell. Runs the same world-U as the curb below (so trim + curb align) and
+        // V across the strip width. Double-sided + normal-up, into the curb submesh (same material as the vertical curb).
+        void AddBorder(Vector3 eA, Vector3 eB, Vector3 inward)
+        {
+            if (curbMat == null) return;
+            Vector3 up = Vector3.up * BorderLift;
+            Vector3 oA = eA + up, oB = eB + up;
+            Vector3 iA = eA + inward * borderWidth + up, iB = eB + inward * borderWidth + up;
+            bool alongZ = Mathf.Abs(eA.x - eB.x) < 1e-4f;
+            float uA = (alongZ ? eA.z : eA.x) / CurbWorldPerTexture;
+            float uB = (alongZ ? eB.z : eB.x) / CurbWorldPerTexture;
+            int voA = Push(oA, Vector3.up, new Vector2(uA, 0f),         Color.white);
+            int voB = Push(oB, Vector3.up, new Vector2(uB, 0f),         Color.white);
+            int viA = Push(iA, Vector3.up, new Vector2(uA, BorderRows), Color.white);
+            int viB = Push(iB, Vector3.up, new Vector2(uB, BorderRows), Color.white);
+            AddTriTo(trisWall, voA, viA, voB); AddTriTo(trisWall, voB, viA, viB);
+            AddTriTo(trisWall, voA, voB, viA); AddTriTo(trisWall, voB, viB, viA);
+        }
 
         for (int cz = 0; cz < rows; cz++)
             for (int cx = 0; cx < cols; cx++)
@@ -273,33 +333,45 @@ public static class GroundBlendBuilder
                     {
                         float wx = Mathf.Lerp(x0, x1, i / (float)sub);
                         float wz = Mathf.Lerp(z0, z1, j / (float)sub);
-                        idx[i, j] = Push(new Vector3(wx, topY, wz), Vector3.up, new Vector2(wx, wz), SampleCol(wx, wz));
+                        idx[i, j] = Push(new Vector3(wx, topY, wz), Vector3.up, new Vector2(wx, wz), SampleCol(wx, wz, L));
                     }
                 for (int j = 0; j < sub; j++)
                     for (int i = 0; i < sub; i++)
                     {
                         int v0 = idx[i, j], v1 = idx[i + 1, j], v2 = idx[i, j + 1], v3 = idx[i + 1, j + 1];
-                        AddTri(v0, v2, v1); AddTri(v1, v2, v3);   // +Y up
+                        AddTriTo(trisTop, v0, v2, v1); AddTriTo(trisTop, v1, v2, v3);   // +Y up
                     }
 
                 // WALLS: one per edge whose neighbour is lower (or the map border). Each boundary is owned by the
                 // HIGHER cell, so a wall is emitted exactly once. Border edges always skirt.
                 // West (−X), neighbour (cx-1, cz)
-                if (WallBottom(levels, cols, rows, cx - 1, cz, L, lh, skirtBottomY, out float byW))
+                if (WallBottom(levels, cols, rows, cx - 1, cz, L, lh, skirtBottomY, out float byW, out bool curbW))
+                {
                     AddWall(new Vector3(x0, topY, z0), new Vector3(x0, topY, z1),
-                            new Vector3(x0, byW, z0),  new Vector3(x0, byW, z1),  Vector3.left);
+                            new Vector3(x0, byW, z0),  new Vector3(x0, byW, z1),  Vector3.left, curbW, L);
+                    if (curbW) AddBorder(new Vector3(x0, topY, z0), new Vector3(x0, topY, z1), Vector3.right);
+                }
                 // East (+X), neighbour (cx+1, cz)
-                if (WallBottom(levels, cols, rows, cx + 1, cz, L, lh, skirtBottomY, out float byE))
+                if (WallBottom(levels, cols, rows, cx + 1, cz, L, lh, skirtBottomY, out float byE, out bool curbE))
+                {
                     AddWall(new Vector3(x1, topY, z0), new Vector3(x1, topY, z1),
-                            new Vector3(x1, byE, z0),  new Vector3(x1, byE, z1),  Vector3.right);
+                            new Vector3(x1, byE, z0),  new Vector3(x1, byE, z1),  Vector3.right, curbE, L);
+                    if (curbE) AddBorder(new Vector3(x1, topY, z0), new Vector3(x1, topY, z1), Vector3.left);
+                }
                 // South (−Z), neighbour (cx, cz-1)
-                if (WallBottom(levels, cols, rows, cx, cz - 1, L, lh, skirtBottomY, out float byS))
+                if (WallBottom(levels, cols, rows, cx, cz - 1, L, lh, skirtBottomY, out float byS, out bool curbS))
+                {
                     AddWall(new Vector3(x0, topY, z0), new Vector3(x1, topY, z0),
-                            new Vector3(x0, byS, z0),  new Vector3(x1, byS, z0),  Vector3.back);
+                            new Vector3(x0, byS, z0),  new Vector3(x1, byS, z0),  Vector3.back, curbS, L);
+                    if (curbS) AddBorder(new Vector3(x0, topY, z0), new Vector3(x1, topY, z0), Vector3.forward);
+                }
                 // North (+Z), neighbour (cx, cz+1)
-                if (WallBottom(levels, cols, rows, cx, cz + 1, L, lh, skirtBottomY, out float byN))
+                if (WallBottom(levels, cols, rows, cx, cz + 1, L, lh, skirtBottomY, out float byN, out bool curbN))
+                {
                     AddWall(new Vector3(x0, topY, z1), new Vector3(x1, topY, z1),
-                            new Vector3(x0, byN, z1),  new Vector3(x1, byN, z1),  Vector3.forward);
+                            new Vector3(x0, byN, z1),  new Vector3(x1, byN, z1),  Vector3.forward, curbN, L);
+                    if (curbN) AddBorder(new Vector3(x0, topY, z1), new Vector3(x1, topY, z1), Vector3.back);
+                }
             }
 
         var mesh = new Mesh { name = Sanitize(rootName) + "_ground" };
@@ -308,7 +380,10 @@ public static class GroundBlendBuilder
         mesh.SetNormals(norms);
         mesh.SetUVs(0, uvs);
         mesh.SetColors(cols4);
-        mesh.SetTriangles(tris, 0);
+        bool twoMat = curbMat != null && trisWall.Count > 0;
+        mesh.subMeshCount = twoMat ? 2 : 1;
+        mesh.SetTriangles(trisTop, 0);
+        if (twoMat) mesh.SetTriangles(trisWall, 1);
         mesh.RecalculateBounds();
         PersistMesh(mesh, rootName);
 
@@ -320,7 +395,8 @@ public static class GroundBlendBuilder
         vis.transform.position = Vector3.zero;   // elevated verts are already in world XZ (centred on origin)
         vis.AddComponent<MeshFilter>().sharedMesh = mesh;
         var mr = vis.AddComponent<MeshRenderer>();
-        mr.sharedMaterial = mat;
+        if (twoMat) mr.sharedMaterials = new[] { mat, curbMat };   // submesh 0 = tops (blend), 1 = curbs (strip)
+        else mr.sharedMaterial = mat;
         mr.shadowCastingMode = ShadowCastingMode.Off;
         mr.receiveShadows = true;
         vis.AddComponent<MeshCollider>().sharedMesh = mesh;   // the shaped surface IS the collider (player + pathfinder)
@@ -333,14 +409,40 @@ public static class GroundBlendBuilder
         return root;
     }
 
+    // Close CORNER NOTCHES: a cell that has two PERPENDICULAR neighbours both higher than it is the concave inner
+    // corner of an L-turn (or the pinch where two paths kiss diagonally) — grass shows through it. Raise it to the
+    // LOWER of the two arms so the corner reads solid, no gap peeks through, and the path connects for collision +
+    // pathfinding. This catches turns even when the crook holds a TALLER tile (an earlier version wrongly required
+    // BOTH sides to be lower and so skipped exactly those joints). Single pass off the ORIGINAL grid (writes to a
+    // clone) so one fill can't cascade into a new one this pass; out-of-bounds counts as level 0 (never an arm).
+    static int[,] FillCornerNotches(int[,] levels, int cols, int rows)
+    {
+        var outLv = (int[,])levels.Clone();
+        int Lvl(int x, int z) => (x >= 0 && x < cols && z >= 0 && z < rows) ? levels[x, z] : int.MinValue;
+        for (int z = 0; z < rows; z++)
+            for (int x = 0; x < cols; x++)
+            {
+                int L = levels[x, z];
+                int w = Lvl(x - 1, z), e = Lvl(x + 1, z), n = Lvl(x, z + 1), s = Lvl(x, z - 1);
+                int fill = L;
+                if (w > L && n > L) fill = Mathf.Max(fill, Mathf.Min(w, n));
+                if (e > L && n > L) fill = Mathf.Max(fill, Mathf.Min(e, n));
+                if (w > L && s > L) fill = Mathf.Max(fill, Mathf.Min(w, s));
+                if (e > L && s > L) fill = Mathf.Max(fill, Mathf.Min(e, s));
+                outLv[x, z] = fill;
+            }
+        return outLv;
+    }
+
     // A wall is needed on an edge when the neighbour cell is LOWER (bottom = neighbour's top) or off the map
     // (bottom = the border skirt). Returns false (no wall) when the neighbour is the same height or higher —
     // that boundary is owned by the taller side, so we never double a wall. `L` is this (higher) cell's level.
-    static bool WallBottom(int[,] levels, int cols, int rows, int nx, int nz, int L, float lh, float skirtBottomY, out float bottomY)
+    static bool WallBottom(int[,] levels, int cols, int rows, int nx, int nz, int L, float lh, float skirtBottomY, out float bottomY, out bool isCurb)
     {
-        if (nx < 0 || nx >= cols || nz < 0 || nz >= rows) { bottomY = skirtBottomY; return true; }
+        isCurb = false;
+        if (nx < 0 || nx >= cols || nz < 0 || nz >= rows) { bottomY = skirtBottomY; return true; }   // border skirt (not a curb)
         int nL = levels[nx, nz];
-        if (nL < L) { bottomY = nL * lh; return true; }
+        if (nL < L) { bottomY = nL * lh; isCurb = (L - nL == 1); return true; }   // exactly one notch down = decorative curb
         bottomY = 0f; return false;
     }
 
@@ -389,6 +491,29 @@ public static class GroundBlendBuilder
         return mat;
     }
 
+    // The decorative CURB material for 1-notch drops (raised-sidewalk lip / gutter side): a plain lit strip of
+    // ground_curb.png, tiled by the wall's world-space UVs (baked in AddWall). Returns null (walls then stay in the
+    // ground-blend submesh) if the texture or URP/Lit shader is missing. Idempotent — reuses the asset across bakes.
+    static Material MakeCurbMaterial()
+    {
+        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>($"{GroundTilesDir}/ground_curb.png");
+        if (tex == null) return null;
+        var shader = Shader.Find("Universal Render Pipeline/Lit");
+        if (shader == null) return null;
+        EnsureFolder(MatDir);
+        string matPath = $"{MatDir}/ground_curb.mat";
+        var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+        if (mat == null) { mat = new Material(shader); AssetDatabase.CreateAsset(mat, matPath); }
+        else mat.shader = shader;
+        mat.SetTexture("_BaseMap", tex);
+        mat.SetTexture("_MainTex", tex);
+        mat.SetColor("_BaseColor", Color.white);
+        mat.SetFloat("_Smoothness", 0f);   // matte stone — no plastic sheen
+        mat.SetFloat("_Metallic", 0f);
+        EditorUtility.SetDirty(mat);
+        return mat;
+    }
+
     // Persist the mesh as an asset (so the saved scene keeps a stable reference), replacing any prior bake.
     static void PersistMesh(Mesh mesh, string rootName)
     {
@@ -399,14 +524,37 @@ public static class GroundBlendBuilder
     }
 
     // Pull a ground prop's Base Map so the blend uses the SAME textures the tiled ground does (tracks Fix Materials).
-    static Texture GroundBaseMap(string prefabName)
+    static Texture GroundBaseMap(string name)
     {
-        var p = PropResolver.Load(prefabName);
-        if (p == null) return null;
-        var r = p.GetComponentInChildren<MeshRenderer>();
-        var m = r != null ? r.sharedMaterial : null;
-        if (m == null) return null;
-        return m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") != null ? m.GetTexture("_BaseMap") : m.mainTexture;
+        var p = PropResolver.Load(name);
+        if (p != null)
+        {
+            var r = p.GetComponentInChildren<MeshRenderer>();
+            var m = r != null ? r.sharedMaterial : null;
+            if (m != null)
+                return m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") != null ? m.GetTexture("_BaseMap") : m.mainTexture;
+        }
+        // Not a prop — the palette pointed at a raw texture (or material) asset, e.g. the GroundTiles art. Resolve by name.
+        return FindTextureAsset(name);
+    }
+
+    // Locate a ground texture the palette references directly: a Texture2D by that exact name, else a Material's base map.
+    static Texture FindTextureAsset(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return null;
+        foreach (var guid in AssetDatabase.FindAssets($"{name} t:Texture2D"))
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            if (Path.GetFileNameWithoutExtension(path) == name) return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+        foreach (var guid in AssetDatabase.FindAssets($"{name} t:Material"))
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            if (Path.GetFileNameWithoutExtension(path) != name) continue;
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m != null) return m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") != null ? m.GetTexture("_BaseMap") : m.mainTexture;
+        }
+        return null;
     }
 
     static void EnsureFolder(string path)

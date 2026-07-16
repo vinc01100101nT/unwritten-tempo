@@ -17,12 +17,12 @@ using UnityEngine;
 /// </summary>
 public static class PxltgrMaterialFixer
 {
-    const string MatDir = "Assets/Art/Pxltgr/fantasy-assets-extracted";
+    const string MatDir = "Assets/0_Raw/Pxltgr/fantasy-assets-extracted";
     static readonly string[] TexDirs =
     {
         // Prefer the model's own textures (mipmapped, 3D import) over the Sprite-imported copy.
-        "Assets/Art/Pxltgr/fantasy-assets/source/Fantasy_Assets/Textures",
-        "Assets/Art/Pxltgr/fantasy-assets/textures",
+        "Assets/0_Raw/Pxltgr/fantasy-assets/source/Fantasy_Assets/Textures",
+        "Assets/0_Raw/Pxltgr/fantasy-assets/textures",
     };
 
     [MenuItem("Tools/unwritten/Props/Fix Pxltgr Materials (URP + leaf alpha)", priority = 510)]

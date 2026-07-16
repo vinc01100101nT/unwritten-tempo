@@ -12,7 +12,7 @@ using UnityEngine.SceneManagement;
 public static class SandboxBuilder
 {
     const string ScenePath = "Assets/Scenes/CharacterSandbox.unity";
-    const string RosterPath = "Assets/Art/Characters/CharacterRoster.asset";
+    const string RosterPath = "Assets/1_Authored/Art/Characters/CharacterRoster.asset";
 
     [MenuItem("Tools/unwritten/Scene Setup/Create Character Sandbox Scene", priority = 622)]
     static void Create()

@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Central prop-prefab resolver: looks up a prop prefab BY NAME anywhere under <c>Assets/Prefabs/Props</c>
+/// Central prop-prefab resolver: looks up a prop prefab BY NAME anywhere under <c>Assets/1_Authored/Prefabs/Props</c>
 /// — recursively, across subfolders like <c>Trees/</c>, <c>Plants/</c>, <c>Indoor/</c>, <c>Outdoor/</c> —
 /// instead of assuming it sits at the flat top level (<c>Props/&lt;name&gt;.prefab</c>).
 ///
@@ -16,7 +16,7 @@ using UnityEngine;
 /// </summary>
 public static class PropResolver
 {
-    public const string PropsDir = "Assets/Prefabs/Props";
+    public const string PropsDir = "Assets/1_Authored/Prefabs/Props";
 
     static Dictionary<string, string> _pathByName;   // prop name -> asset path (cached; Invalidate() after moves)
 

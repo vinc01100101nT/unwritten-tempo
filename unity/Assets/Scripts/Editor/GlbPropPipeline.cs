@@ -35,11 +35,11 @@ public static class GlbPropPipeline
             .Where(p => !string.IsNullOrEmpty(p) && p.EndsWith(".glb", StringComparison.OrdinalIgnoreCase))
             .Distinct().ToArray();
 
-        // Empty selection → the mass path: every raw .glb under Assets/Prefabs (skip already-optimized copies).
+        // Empty selection → the mass path: every raw .glb under Assets/1_Authored/Prefabs (skip already-optimized copies).
         bool wholeFolder = glbs.Length == 0;
         if (wholeFolder)
         {
-            const string root = "Assets/Prefabs";
+            const string root = "Assets/1_Authored/Prefabs";
             string absRoot = Application.dataPath + "/Prefabs";   // dataPath = …/unity/Assets
             if (!Directory.Exists(absRoot))
             { EditorUtility.DisplayDialog("Optimize + Import GLB Prop", $"Nothing selected and no {root} folder to scan.", "OK"); return; }
@@ -70,7 +70,7 @@ public static class GlbPropPipeline
             if (glbs.Length == 0)
             {
                 EditorUtility.DisplayDialog("Optimize + Import GLB Prop",
-                    $"All {alreadyBaked} GLB(s) under Assets/Prefabs are already baked into props — nothing to do.\n\n" +
+                    $"All {alreadyBaked} GLB(s) under Assets/1_Authored/Prefabs are already baked into props — nothing to do.\n\n" +
                     "Select specific GLB(s) in the Project window to force re-processing.", "OK");
                 return;
             }
@@ -95,7 +95,7 @@ public static class GlbPropPipeline
         var toOptimize = glbs.Where(p => !IsQuantized(AbsPath(p))).ToArray();
         int alreadyOptimized = glbs.Length - toOptimize.Length;
 
-        string scope = wholeFolder ? $"{glbs.Length} unbaked GLB(s) under Assets/Prefabs" : $"{glbs.Length} selected GLB(s)";
+        string scope = wholeFolder ? $"{glbs.Length} unbaked GLB(s) under Assets/1_Authored/Prefabs" : $"{glbs.Length} selected GLB(s)";
         string skips = (alreadyBaked > 0 ? $"• {alreadyBaked} already-baked → skipped entirely\n" : "")
                      + (alreadyOptimized > 0 ? $"• {alreadyOptimized} already-optimized → bake only (no re-optimize)\n" : "");
         if (!EditorUtility.DisplayDialog("Optimize + Import GLB Prop",
@@ -146,9 +146,9 @@ public static class GlbPropPipeline
             AssetDatabase.Refresh();
         }
 
-        Debug.Log($"[unwritten] Optimize + Import: baked {built}/{glbs.Length} GLB prop(s) into Assets/Prefabs/Props.");
+        Debug.Log($"[unwritten] Optimize + Import: baked {built}/{glbs.Length} GLB prop(s) into Assets/1_Authored/Prefabs/Props.");
         EditorUtility.DisplayDialog("Optimize + Import GLB Prop — done",
-            $"Optimized + baked {built} drop-ready prop prefab(s) into:\nAssets/Prefabs/Props\n\n" +
+            $"Optimized + baked {built} drop-ready prop prefab(s) into:\nAssets/1_Authored/Prefabs/Props\n\n" +
             "Drag a prefab into the scene (it ground-snaps) or place it with the Prop Palette.", "OK");
     }
 
@@ -205,7 +205,7 @@ public static class GlbPropPipeline
     static string AbsPath(string assetPath) => Application.dataPath + assetPath.Substring("Assets".Length);
 
     // Where GlbPropImporter bakes a given GLB's prop prefab (same naming it uses).
-    static string PropPrefabPath(string glbAssetPath) => $"Assets/Prefabs/Props/{Path.GetFileNameWithoutExtension(glbAssetPath)}.prefab";
+    static string PropPrefabPath(string glbAssetPath) => $"Assets/1_Authored/Prefabs/Props/{Path.GetFileNameWithoutExtension(glbAssetPath)}.prefab";
 
     // True if the GLB already carries KHR_mesh_quantization (i.e. it's been through the optimizer before).
     // Reads only the binary GLB's JSON chunk — no import, no allocation of the whole file.

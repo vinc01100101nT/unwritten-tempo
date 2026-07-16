@@ -19,13 +19,13 @@ using UnityEngine;
 /// </summary>
 public static class FbxPropExtractor
 {
-    /// <summary>One-click: slice the Pxltgr Fantasy Assets pack straight into Assets/Prefabs/Props.</summary>
+    /// <summary>One-click: slice the Pxltgr Fantasy Assets pack straight into Assets/1_Authored/Prefabs/Props.</summary>
     [MenuItem("Tools/unwritten/Props/Build Fantasy Assets (Pxltgr) → Props", priority = 502)]
     static void ExtractFantasyAssets() =>
-        ExtractFbx("Assets/Art/Pxltgr/fantasy-assets/source/Fantasy_Assets/Assets.fbx", "Assets/Prefabs/Props");
+        ExtractFbx("Assets/0_Raw/Pxltgr/fantasy-assets/source/Fantasy_Assets/Assets.fbx", "Assets/1_Authored/Prefabs/Props");
 
     /// <summary>Asset-agnostic: pick ANY single FBX that bundles many objects and split each top-level
-    /// child into its own prefab under Assets/Prefabs/&lt;fbx name&gt;.</summary>
+    /// child into its own prefab under Assets/1_Authored/Prefabs/&lt;fbx name&gt;.</summary>
     [MenuItem("Tools/unwritten/Props/Split Multi-Object FBX…", priority = 503)]
     static void ExtractPicked()
     {
@@ -35,10 +35,10 @@ public static class FbxPropExtractor
         abs = abs.Replace('\\', '/');
         string root = Application.dataPath.Replace('\\', '/');   // <project>/Assets
         if (!abs.StartsWith(root))
-        { EditorUtility.DisplayDialog("Split FBX", "That FBX isn't inside this project's Assets folder.\nMove it under Assets/Art and re-run.", "OK"); return; }
+        { EditorUtility.DisplayDialog("Split FBX", "That FBX isn't inside this project's Assets folder.\nMove it under Assets/1_Authored/Art and re-run.", "OK"); return; }
 
         string fbxPath = "Assets" + abs.Substring(root.Length);
-        ExtractFbx(fbxPath, "Assets/Prefabs/" + Sanitize(Path.GetFileNameWithoutExtension(fbxPath)));
+        ExtractFbx(fbxPath, "Assets/1_Authored/Prefabs/" + Sanitize(Path.GetFileNameWithoutExtension(fbxPath)));
     }
 
     /// <summary>Slice <paramref name="fbxPath"/>'s top-level children into one prefab each under

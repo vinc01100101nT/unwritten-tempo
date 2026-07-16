@@ -14,7 +14,7 @@ using UnityEngine;
 /// already gated to High tier + visible coverage), so dry ground and Low/Medium tiers cost nothing but the
 /// event hop. The splash prefab is resolved by id from the EffectLibrary and spawned through the pooled
 /// <see cref="Vfx"/> choke, scaled by the step size (a jump-landing throws a bigger splash). Drop ANY splash
-/// prefab into <c>Assets/Art/VFX/water/</c> + Rebuild Effect Library and it's picked up as <c>water.&lt;name&gt;</c>
+/// prefab into <c>Assets/1_Authored/Art/VFX/water/</c> + Rebuild Effect Library and it's picked up as <c>water.&lt;name&gt;</c>
 /// — no code edit. Until the id is registered this component is simply inert (no errors).</para>
 /// </summary>
 [DisallowMultipleComponent]

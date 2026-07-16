@@ -4,19 +4,26 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Options window for the Map Painter pipeline: edits the <see cref="BrushPalette"/> (the brush→prefab/colour map),
-/// <b>Auto-fills</b> it from the Props folder by naming convention (so new assets need ~zero manual work), and
-/// <b>Exports</b> <c>prop-manifest.json</c> (brushes + measured prefab footprints) into <c>tools/map-painter/</c>
-/// so the web painter always knows the real, current prefab sizes. This is the single maintenance touch-point.
+/// Options window for the Map Painter pipeline. You DRAG your own assets into rows and pick each row's role
+/// (Object / Wall / Ground) — no preset brushes, no hard-coded grass/path/stone. It <b>Exports</b>
+/// <c>prop-manifest.json</c> (+ optional top-down thumbnails) into <c>tools/map-painter/</c> so the web painter
+/// shows the real props and always knows current sizes. Ids, swatch colours and ground blend-channels are derived
+/// by <see cref="BrushPalette.Resolve"/>, the single source of truth the importer reads too.
 /// </summary>
 public class BrushPaletteWindow : EditorWindow
 {
-    const string PropsDir = "Assets/Prefabs/Props";
-    const string DefaultPalettePath = "Assets/BrushPalette.asset";
+    const string PropsDir = "Assets/1_Authored/Prefabs/Props";
+    const string DefaultPalettePath = "Assets/3_Data/ScriptableObjects/BrushPalette.asset";
 
     BrushPalette _palette;
     Vector2 _scroll;
     string _status = "";
+    // When on, Export Manifest also snaps a top-down PNG cutout of every prefab into tools/map-painter/thumbnails/
+    // so the web painter can draw the real prop instead of a flat colour block. Off = manifest only (faster).
+    bool _renderThumbnails = true;
+
+    const int ThumbPx = 128;
+    const string ThumbsSubdir = "thumbnails";
 
     [MenuItem("Tools/unwritten/World/Brush Palette…", priority = 190)]
     static void Open() => GetWindow<BrushPaletteWindow>("Brush Palette");
@@ -36,8 +43,8 @@ public class BrushPaletteWindow : EditorWindow
 
         if (_palette == null)
         {
-            EditorGUILayout.HelpBox("No Brush Palette found. Create the default one to get started.", MessageType.Info);
-            if (GUILayout.Button("Create Default Palette", GUILayout.Height(28))) CreateDefaultPalette();
+            EditorGUILayout.HelpBox("No Brush Palette found. Create one, then drag your assets in.", MessageType.Info);
+            if (GUILayout.Button("Create Palette (auto-filled from Props)", GUILayout.Height(28))) CreateDefaultPalette();
             if (!string.IsNullOrEmpty(_status)) EditorGUILayout.HelpBox(_status, MessageType.None);
             return;
         }
@@ -48,140 +55,207 @@ public class BrushPaletteWindow : EditorWindow
         so.ApplyModifiedProperties();
 
         EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Brushes", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Brushes — drag assets in, pick where each goes", EditorStyles.boldLabel);
+
         _scroll = EditorGUILayout.BeginScrollView(_scroll);
-        foreach (var b in _palette.brushes)
+        int groundOrdinal = 0;
+        int removeAt = -1, moveFrom = -1, moveTo = -1;
+        for (int i = 0; i < _palette.entries.Count; i++)
         {
-            if (b == null) continue;
-            EditorGUILayout.BeginHorizontal("box");
-            var swatch = GUILayoutUtility.GetRect(18, 18, GUILayout.Width(18));
-            if (ColorUtility.TryParseHtmlString(b.colorHex, out var col)) EditorGUI.DrawRect(swatch, col);
-            string detail = b.kind == BrushKind.Object
-                ? $"{b.kind} · {b.category} · {b.prefabNames?.Count ?? 0} prefab(s)"
-                : $"{b.kind} · tex '{(string.IsNullOrEmpty(b.groundTex) ? "—" : b.groundTex)}'";
-            EditorGUILayout.LabelField($"{b.label}  ({b.id})", detail);
-            EditorGUILayout.EndHorizontal();
+            var e = _palette.entries[i];
+            if (e == null) continue;
+            // Match Resolve(): only ground rows with an asset consume a blend channel, in order.
+            int myGround = (e.role == BrushRole.Ground && e.groundAsset != null) ? groundOrdinal++ : -1;
+
+            if (DrawEntry(e, i, myGround, ref moveFrom, ref moveTo)) removeAt = i;
+            EditorGUILayout.Space(2);
         }
         EditorGUILayout.EndScrollView();
 
+        if (removeAt >= 0) { RecordUndo("Remove Brush"); _palette.entries.RemoveAt(removeAt); Save(); }
+        if (moveFrom >= 0 && moveTo >= 0 && moveTo < _palette.entries.Count)
+        {
+            RecordUndo("Reorder Brush");
+            var it = _palette.entries[moveFrom]; _palette.entries.RemoveAt(moveFrom); _palette.entries.Insert(moveTo, it); Save();
+        }
+
         EditorGUILayout.Space();
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("🔄 Auto-fill from Props", GUILayout.Height(30))) AutoFill();
+        if (GUILayout.Button("＋ Object group")) AddEntry(BrushRole.Object);
+        if (GUILayout.Button("＋ Wall"))         AddEntry(BrushRole.Wall);
+        if (GUILayout.Button("＋ Ground"))       AddEntry(BrushRole.Ground);
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.Space();
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("🔄 Auto-fill from Props", GUILayout.Height(30))) { PopulateDefaults(); }
         if (GUILayout.Button("📤 Export Manifest", GUILayout.Height(30))) ExportManifest();
         EditorGUILayout.EndHorizontal();
-        if (GUILayout.Button("➕ Add Missing Default Brushes", GUILayout.Height(24))) AddMissingDefaultBrushes();
-        EditorGUILayout.LabelField("Tip: edit the palette asset directly for fine control (Inspector).", EditorStyles.miniLabel);
+        _renderThumbnails = EditorGUILayout.ToggleLeft(
+            new GUIContent("Render prop thumbnails on export",
+                "Snap a top-down PNG of each prefab into tools/map-painter/thumbnails/ so the painter shows the real prop, not a colour block. Slower export."),
+            _renderThumbnails);
+
+        int grounds = 0; foreach (var e in _palette.entries) if (e != null && e.role == BrushRole.Ground) grounds++;
+        if (grounds > BrushPalette.MaxGroundChannels)
+            EditorGUILayout.HelpBox($"{grounds} Ground rows, but the blend shader supports only {BrushPalette.MaxGroundChannels}. " +
+                                    "The extras (greyed out) are ignored on export.", MessageType.Warning);
 
         if (!string.IsNullOrEmpty(_status)) EditorGUILayout.HelpBox(_status, MessageType.None);
     }
 
-    // The canonical default brush set — the single source for both "Create Default Palette" and the idempotent
-    // "Add Missing Default Brushes" merge (so an existing palette gains new brushes without being recreated).
-    static List<MapBrush> DefaultBrushes() => new List<MapBrush>
+    // Draw one brush row; returns true if its ✕ (remove) was clicked. Populates moveFrom/moveTo when ▲/▼ pressed.
+    bool DrawEntry(PaletteEntry e, int index, int groundOrdinal, ref int moveFrom, ref int moveTo)
     {
-        new MapBrush { id = "houses",   label = "Houses",   colorHex = "#CC3B3B", kind = BrushKind.Object,      category = PropCategory.Houses },
-        new MapBrush { id = "trees",    label = "Trees",    colorHex = "#3FAF47", kind = BrushKind.Object,      category = PropCategory.Trees },
-        new MapBrush { id = "wall",     label = "Wall",     colorHex = "#8A8A8A", kind = BrushKind.Object,      category = PropCategory.None },
-        new MapBrush { id = "landmark", label = "Landmark", colorHex = "#C8922B", kind = BrushKind.Object,      category = PropCategory.Landmarks },
-        new MapBrush { id = "grass",    label = "Grass",    colorHex = "#7CB342", kind = BrushKind.GroundPaint, groundTex = "ground_grass" },
-        new MapBrush { id = "path",     label = "Path",     colorHex = "#E8D44D", kind = BrushKind.GroundPaint, groundTex = "ground_road" },
-        new MapBrush { id = "stone",    label = "Stone",    colorHex = "#9C8F6E", kind = BrushKind.GroundPaint, groundTex = "ground_stones" },
-        new MapBrush { id = "rock",     label = "Rock",     colorHex = "#6E7479", kind = BrushKind.GroundPaint, groundTex = "ground_rock" },
-        new MapBrush { id = "dirt",     label = "Dirt",     colorHex = "#8B5A2B", kind = BrushKind.GroundPaint, groundTex = "ground_soil" },
-        new MapBrush { id = "water",    label = "Water",    colorHex = "#3E7FD4", kind = BrushKind.GroundPaint, groundTex = "" },
-    };
+        bool remove = false;
+        bool overLimit = groundOrdinal >= BrushPalette.MaxGroundChannels;   // ground beyond slot 5 → ignored
+        using (new EditorGUILayout.VerticalScope("box"))
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUI.BeginChangeCheck();
+            var role = (BrushRole)EditorGUILayout.EnumPopup(e.role, GUILayout.Width(90));
+            e.label = EditorGUILayout.TextField(e.label, GUILayout.MinWidth(70));
+            if (EditorGUI.EndChangeCheck()) { RecordUndo("Edit Brush"); e.role = role; Save(); }
 
-    // ── create the default palette ───────────────────────────────────────────────────────────────────────
+            // Swatch: effective colour (auto if the field is blank), editable — a change pins an explicit colour.
+            Color eff = ColorUtility.TryParseHtmlString(string.IsNullOrWhiteSpace(e.colorHex) ? "#888888" : e.colorHex, out var c) ? c : Color.grey;
+            EditorGUI.BeginChangeCheck();
+            var picked = EditorGUILayout.ColorField(GUIContent.none, eff, false, false, false, GUILayout.Width(40));
+            if (EditorGUI.EndChangeCheck()) { RecordUndo("Brush Colour"); e.colorHex = "#" + ColorUtility.ToHtmlStringRGB(picked); Save(); }
+
+            if (GUILayout.Button("▲", GUILayout.Width(22)) && index > 0) { moveFrom = index; moveTo = index - 1; }
+            if (GUILayout.Button("▼", GUILayout.Width(22))) { moveFrom = index; moveTo = index + 1; }
+            if (GUILayout.Button("✕", GUILayout.Width(22))) remove = true;
+            EditorGUILayout.EndHorizontal();
+
+            if (e.role == BrushRole.Ground) DrawGroundField(e, groundOrdinal, overLimit);
+            else DrawPrefabList(e);
+        }
+        return remove;
+    }
+
+    void DrawGroundField(PaletteEntry e, int groundOrdinal, bool overLimit)
+    {
+        EditorGUILayout.BeginHorizontal();
+        EditorGUI.BeginChangeCheck();
+        var ga = EditorGUILayout.ObjectField(GUIContent.none, e.groundAsset, typeof(Object), false);   // texture / material / prop
+        if (EditorGUI.EndChangeCheck()) { RecordUndo("Ground Asset"); e.groundAsset = ga; Save(); }
+        string slot = groundOrdinal < 0 ? "— pick an asset —"
+                    : overLimit ? "over limit — ignored"
+                    : groundOrdinal == 0 ? "channel 0 · base layer" : $"channel {groundOrdinal} · overlay";
+        EditorGUILayout.LabelField(slot, EditorStyles.miniLabel, GUILayout.Width(150));
+        EditorGUILayout.EndHorizontal();
+    }
+
+    // Object/Wall: a drop zone that accepts one-or-many dragged prefabs + the current list with per-item remove.
+    void DrawPrefabList(PaletteEntry e)
+    {
+        var drop = GUILayoutUtility.GetRect(0, 26, GUILayout.ExpandWidth(true));
+        GUI.Box(drop, e.prefabs.Count == 0 ? "Drag prefab(s) here" : $"{e.prefabs.Count} asset(s) — drag more here", EditorStyles.helpBox);
+        var ev = Event.current;
+        if ((ev.type == EventType.DragUpdated || ev.type == EventType.DragPerform) && drop.Contains(ev.mousePosition))
+        {
+            DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+            if (ev.type == EventType.DragPerform)
+            {
+                DragAndDrop.AcceptDrag();
+                RecordUndo("Add Prefabs");
+                foreach (var obj in DragAndDrop.objectReferences)
+                    if (obj is GameObject go && !e.prefabs.Contains(go)) e.prefabs.Add(go);
+                Save();
+            }
+            ev.Use();
+        }
+
+        int rm = -1;
+        for (int k = 0; k < e.prefabs.Count; k++)
+        {
+            EditorGUILayout.BeginHorizontal();
+            EditorGUI.BeginChangeCheck();
+            var pf = (GameObject)EditorGUILayout.ObjectField(e.prefabs[k], typeof(GameObject), false);
+            if (EditorGUI.EndChangeCheck()) { RecordUndo("Edit Prefab"); e.prefabs[k] = pf; Save(); }
+            if (GUILayout.Button("✕", GUILayout.Width(22))) rm = k;
+            EditorGUILayout.EndHorizontal();
+        }
+        if (rm >= 0) { RecordUndo("Remove Prefab"); e.prefabs.RemoveAt(rm); Save(); }
+
+        if (e.role == BrushRole.Object)
+        {
+            EditorGUI.BeginChangeCheck();
+            float fo = EditorGUILayout.FloatField(new GUIContent("Facing offset°", "Yaw added on import so the mesh's front matches the painter arrow (e.g. 180 for a house whose front faces −Z)."), e.forwardOffset);
+            if (EditorGUI.EndChangeCheck()) { RecordUndo("Facing Offset"); e.forwardOffset = fo; Save(); }
+        }
+    }
+
+    void AddEntry(BrushRole role)
+    {
+        RecordUndo("Add Brush");
+        _palette.entries.Add(new PaletteEntry { role = role, label = role == BrushRole.Wall ? "Wall" : "" });
+        Save();
+    }
+
+    void RecordUndo(string label) { if (_palette != null) Undo.RecordObject(_palette, label); }
+    void Save() { EditorUtility.SetDirty(_palette); }
+
+    // ── create + auto-fill ─────────────────────────────────────────────────────────────────────────────────
     void CreateDefaultPalette()
     {
         var pal = CreateInstance<BrushPalette>();
         pal.cellSize = 4f;
-        pal.brushes = DefaultBrushes();
         AssetDatabase.CreateAsset(pal, DefaultPalettePath);
         AssetDatabase.SaveAssets();
         _palette = pal;
-        _status = $"Created {DefaultPalettePath}. Now click Auto-fill, then Export Manifest.";
-        AutoFill();   // seed prefab names immediately
+        PopulateDefaults();
+        _status = $"Created {DefaultPalettePath} and auto-filled it. Tweak the rows, then Export Manifest.";
     }
 
-    // Add any default brush whose id isn't already in the palette (preserves the order of the default set). Lets an
-    // existing palette gain new brushes (e.g. stone/rock) without recreating it and losing edits/auto-fill.
-    void AddMissingDefaultBrushes()
+    // Build a working starter palette from the Props folder by naming convention: object groups (houses/trees/wall/
+    // landmark) + the five ground textures. You then drag/drop to customise. Replaces the whole entry list.
+    void PopulateDefaults()
     {
-        var defaults = DefaultBrushes();
-        var defaultIds = new HashSet<string>();
-        foreach (var d in defaults) defaultIds.Add(d.id);
+        RecordUndo("Auto-fill Palette");
+        var names = AllPropNames();
+        var entries = new List<PaletteEntry>
+        {
+            ObjectGroup("Houses",   Match(names, new[] { "house" }, new[] { "door", "fireplace", "shutter" }), 180f),
+            ObjectGroup("Trees",    Match(names, new[] { "tree" },  new[] { "stump" }), 0f),
+            ObjectGroup("Landmark", Match(names, new[] { "tavern", "windmill" }, new[] { "door", "interior", "blade", "curtain", "chandelier" }), 0f),
+        };
+        var wall = new PaletteEntry { role = BrushRole.Wall, label = "Wall" };
+        foreach (var n in Match(names, new[] { "wall_part", "wall_tower", "wall_corner", "wall_gate", "wall_entrance" }, new[] { "woodenwall", "village" }))
+        { var go = LoadProp(n); if (go != null) wall.prefabs.Add(go); }
+        entries.Add(wall);
 
-        // Existing brushes keyed by id (so we preserve the user's edits + auto-filled prefab names).
-        var byId = new Dictionary<string, MapBrush>();
-        foreach (var b in _palette.brushes) if (b != null && !byId.ContainsKey(b.id)) byId[b.id] = b;
+        foreach (var g in new[] { "ground_grass", "ground_road", "ground_stones", "ground_rock", "ground_soil" })
+        { var asset = FindGroundAsset(g); if (asset != null) entries.Add(new PaletteEntry { role = BrushRole.Ground, groundAsset = asset }); }
 
-        int added = 0;
-        var merged = new List<MapBrush>();
-        foreach (var d in defaults)                       // default order first, reusing existing where present
-            if (byId.TryGetValue(d.id, out var ex)) merged.Add(ex);
-            else { merged.Add(d); added++; }
-        foreach (var b in _palette.brushes)               // then any custom brushes the user added beyond the defaults
-            if (b != null && !defaultIds.Contains(b.id)) merged.Add(b);
-
-        _palette.brushes = merged;
-        EditorUtility.SetDirty(_palette);
+        _palette.entries = entries;
+        Save();
         AssetDatabase.SaveAssets();
-        _status = added > 0
-            ? $"Added {added} missing brush(es). Now click Export Manifest to update the painter."
-            : "Palette already has every default brush.";
+        int props = 0; foreach (var e in entries) props += e.prefabs.Count;
+        _status = $"Auto-filled {entries.Count} brush(es), {props} prop(s). Tweak, then Export Manifest.";
     }
 
-    // ── auto-fill: classify Props by naming convention ───────────────────────────────────────────────────
-    // Global excludes: collision hulls (UCX_) and non-LOD0 LODs. Per-brush keyword/exclude sets below.
     static readonly string[] GlobalExclude = { "ucx_", "_lod1", "_lod2", "_lod3" };
 
-    void AutoFill()
+    PaletteEntry ObjectGroup(string label, List<string> propNames, float fwd)
     {
-        var names = AllPropNames();
-        int filled = 0;
-        foreach (var b in _palette.brushes)
-        {
-            if (b == null || b.kind != BrushKind.Object) continue;
-            var (keys, extraExclude) = KeywordsFor(b);
-            if (keys.Length == 0) continue;
-
-            var matched = new List<string>();
-            foreach (var n in names)
-            {
-                string low = n.ToLowerInvariant();
-                if (ContainsAny(low, GlobalExclude) || ContainsAny(low, extraExclude)) continue;
-                if (ContainsAny(low, keys)) matched.Add(n);
-            }
-            matched.Sort();
-            b.prefabNames = matched;
-            filled += matched.Count;
-        }
-        EditorUtility.SetDirty(_palette);
-        AssetDatabase.SaveAssets();
-        _status = $"Auto-fill: classified {filled} prefab(s) across {_palette.brushes.Count} brush(es). Now Export Manifest.";
+        var e = new PaletteEntry { role = BrushRole.Object, label = label, forwardOffset = fwd };
+        foreach (var n in propNames) { var go = LoadProp(n); if (go != null) e.prefabs.Add(go); }
+        return e;
     }
 
-    // Keyword + extra-exclude sets per brush (object brushes only). The wall kit is matched by id; the rest by
-    // their PropCategory. Anything without a rule (rocks/carts/etc.) is just left uncovered — add a brush for it.
-    static (string[] keys, string[] exclude) KeywordsFor(MapBrush b)
+    static List<string> Match(List<string> names, string[] keys, string[] extraExclude)
     {
-        if (b.id == "wall")
-            // Stone Wall_* kit only — exclude the separate WoodenWall_* palisade set (and its 001 duplicates),
-            // whose names ("WoodenWall_Corner", "WoodenWall_TowerCorner") otherwise match wall_corner/wall_tower.
-            return (new[] { "wall_part", "wall_tower", "wall_corner", "wall_gate", "wall_entrance" },
-                    new[] { "woodenwall", "village" });
-        switch (b.category)
+        var matched = new List<string>();
+        foreach (var n in names)
         {
-            case PropCategory.Houses:    return (new[] { "house" }, new[] { "door", "fireplace", "shutter" });
-            case PropCategory.Trees:     return (new[] { "tree" },  new[] { "stump" });
-            case PropCategory.Landmarks: return (new[] { "tavern", "windmill" },
-                                                 new[] { "door", "interior", "blade", "curtain", "chandelier" });
-            case PropCategory.Rocks:     return (new[] { "rock", "stone" }, new string[0]);
-            case PropCategory.Bushes:    return (new[] { "bush" }, new string[0]);
-            case PropCategory.Carts:     return (new[] { "cart" }, new string[0]);
-            default:                     return (new string[0], new string[0]);
+            string low = n.ToLowerInvariant();
+            if (ContainsAny(low, GlobalExclude) || ContainsAny(low, extraExclude)) continue;
+            if (ContainsAny(low, keys)) matched.Add(n);
         }
+        matched.Sort();
+        return matched;
     }
 
     // ── export the manifest the web painter reads ────────────────────────────────────────────────────────
@@ -194,42 +268,156 @@ public class BrushPaletteWindow : EditorWindow
             cellSize = _palette.cellSize,
         };
 
-        int measured = 0;
-        foreach (var b in _palette.brushes)
-        {
-            if (b == null) continue;
-            var mb = new MfBrush
-            {
-                id = b.id, label = b.label, color = b.colorHex,
-                kind = b.kind == BrushKind.Object ? "object" : "ground",
-                groundTex = b.groundTex ?? "",
-            };
-            if (b.kind == BrushKind.Object)
-            {
-                var names = (b.prefabNames != null && b.prefabNames.Count > 0)
-                    ? b.prefabNames
-                    : new List<string>(RecipeGenerator.CategoryNames(b.category));
-                float maxX = 0f, maxZ = 0f;
-                foreach (var n in names)
-                {
-                    if (!Footprint(n, 1f, out float fx, out float fz)) continue;   // native prefab size (no scaling)
-                    mb.prefabs.Add(new MfPrefab { name = n, path = PropResolver.PathFor(n) ?? $"{PropsDir}/{n}.prefab", x = fx, z = fz });
-                    maxX = Mathf.Max(maxX, fx); maxZ = Mathf.Max(maxZ, fz);
-                    measured++;
-                }
-                mb.hasFootprint = mb.prefabs.Count > 0;
-                mb.footprint = new MfFoot { x = maxX, z = maxZ };
-            }
-            mf.brushes.Add(mb);
-        }
-
         string dir = Path.GetFullPath(Path.Combine(Application.dataPath, "../../tools/map-painter"));
         Directory.CreateDirectory(dir);
+        string thumbsDir = Path.Combine(dir, ThumbsSubdir);
+        if (_renderThumbnails) Directory.CreateDirectory(thumbsDir);
+
+        int measured = 0, thumbs = 0;
+        try
+        {
+            foreach (var rb in _palette.Resolve())
+            {
+                var mb = new MfBrush
+                {
+                    id = rb.id, label = rb.label, color = rb.colorHex,
+                    kind = rb.IsGround ? "ground" : "object",
+                    groundTex = rb.groundTex ?? "",
+                    channel = rb.channel,
+                };
+                if (!rb.IsGround)
+                {
+                    float maxX = 0f, maxZ = 0f;
+                    foreach (var n in rb.prefabNames)
+                    {
+                        if (!Footprint(n, 1f, out float fx, out float fz)) continue;   // native prefab size (no scaling)
+                        string thumb = "";
+                        if (_renderThumbnails)
+                        {
+                            if (EditorUtility.DisplayCancelableProgressBar("Export Manifest",
+                                    $"Rendering thumbnail: {n}", Mathf.Clamp01(thumbs / 64f)))
+                                break;
+                            thumb = RenderThumbnail(n, thumbsDir);
+                            if (!string.IsNullOrEmpty(thumb)) thumbs++;
+                        }
+                        mb.prefabs.Add(new MfPrefab { name = n, path = PropResolver.PathFor(n) ?? $"{PropsDir}/{n}.prefab", x = fx, z = fz, thumb = thumb });
+                        maxX = Mathf.Max(maxX, fx); maxZ = Mathf.Max(maxZ, fz);
+                        measured++;
+                    }
+                    mb.hasFootprint = mb.prefabs.Count > 0;
+                    mb.footprint = new MfFoot { x = maxX, z = maxZ };
+                }
+                else if (_renderThumbnails && !string.IsNullOrEmpty(rb.groundTex))
+                {
+                    // Ground's "thumbnail" is just its tile texture — write it out so the painter can draw the real ground.
+                    var tex = FindGroundTexture(rb.groundTex);
+                    byte[] png = tex != null ? TextureToPng(tex) : null;
+                    if (png != null)
+                    {
+                        File.WriteAllBytes(Path.Combine(thumbsDir, rb.groundTex + ".png"), png);
+                        mb.thumb = $"{ThumbsSubdir}/{rb.groundTex}.png";
+                        thumbs++;
+                    }
+                }
+                mf.brushes.Add(mb);
+            }
+        }
+        finally { EditorUtility.ClearProgressBar(); }
+
         string outPath = Path.Combine(dir, "prop-manifest.json");
         File.WriteAllText(outPath, JsonUtility.ToJson(mf, true));
         AssetDatabase.Refresh();
-        _status = $"Exported {mf.brushes.Count} brush(es), {measured} measured prefab(s) →\n{outPath}";
-        Debug.Log($"[unwritten] Brush manifest exported: {outPath} ({mf.brushes.Count} brushes, {measured} prefabs).");
+        string thumbMsg = _renderThumbnails ? $", {thumbs} thumbnail(s)" : "";
+        _status = $"Exported {mf.brushes.Count} brush(es), {measured} measured prefab(s){thumbMsg} →\n{outPath}";
+        Debug.Log($"[unwritten] Brush manifest exported: {outPath} ({mf.brushes.Count} brushes, {measured} prefabs{thumbMsg}).");
+    }
+
+    // ── top-down thumbnail render ─────────────────────────────────────────────────────────────────────────
+    // Snap a top-down PNG cutout of a prop into <thumbsDir>/<name>.png; returns the manifest-relative path
+    // ("thumbnails/<name>.png") or "" on failure. Uses an isolated PreviewRenderUtility scene (never touches the
+    // open scene), orthographic straight-down so there's no perspective skew, +Z aligned to image-up so the picture
+    // agrees with the painter's facing arrow. Alpha is extracted by rendering the prop over BLACK and over WHITE and
+    // solving the compositing equation per pixel — a clean cutout regardless of how URP writes the background alpha.
+    static string RenderThumbnail(string name, string thumbsDir)
+    {
+        var pf = LoadProp(name);
+        if (pf == null) return "";
+
+        var pru = new PreviewRenderUtility();
+        GameObject inst = null;
+        try
+        {
+            inst = Object.Instantiate(pf);
+            inst.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+            inst.transform.localScale = Vector3.one;
+            if (!PropPlacement.TryWorldBounds(inst, out var bnds) || bnds.size.x <= 0f || bnds.size.z <= 0f)
+                return "";
+
+            pru.AddSingleGO(inst);
+
+            var cam = pru.camera;
+            cam.orthographic = true;
+            cam.orthographicSize = Mathf.Max(0.05f, Mathf.Max(bnds.size.x, bnds.size.z) * 0.5f * 1.06f);   // square + tiny margin
+            cam.transform.position = new Vector3(bnds.center.x, bnds.max.y + 10f, bnds.center.z);
+            cam.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);               // look down; +Z = up in image
+            cam.nearClipPlane = 0.01f;
+            cam.farClipPlane = bnds.size.y + 100f;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+
+            pru.lights[0].intensity = 1.1f; pru.lights[0].transform.rotation = Quaternion.Euler(50f, 40f, 0f);
+            pru.lights[1].intensity = 0.5f; pru.lights[1].transform.rotation = Quaternion.Euler(-20f, -140f, 0f);
+            pru.ambientColor = new Color(0.55f, 0.55f, 0.55f, 1f);
+
+            var onBlack = RenderOnce(pru, Color.black);
+            var onWhite = RenderOnce(pru, Color.white);
+            var cut = ExtractAlpha(onBlack, onWhite);
+            Object.DestroyImmediate(onBlack);
+            Object.DestroyImmediate(onWhite);
+
+            byte[] png = cut.EncodeToPNG();
+            Object.DestroyImmediate(cut);
+            File.WriteAllBytes(Path.Combine(thumbsDir, name + ".png"), png);
+            return $"{ThumbsSubdir}/{name}.png";
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[unwritten] Thumbnail render failed for '{name}': {ex.Message}");
+            return "";
+        }
+        finally
+        {
+            if (inst != null) Object.DestroyImmediate(inst);
+            pru.Cleanup();
+        }
+    }
+
+    static Texture2D RenderOnce(PreviewRenderUtility pru, Color bg)
+    {
+        pru.camera.backgroundColor = bg;
+        pru.BeginStaticPreview(new Rect(0, 0, ThumbPx, ThumbPx));
+        pru.Render(true);
+        return pru.EndStaticPreview();   // readable Texture2D, opaque fill = bg
+    }
+
+    // Solve straight alpha from the two backdrops: over-black gives premultiplied colour (a·c); over-white adds (1−a).
+    // So (white − black) = (1 − a) per channel → a = 1 − mean(white − black); then un-premultiply the colour by a.
+    static Texture2D ExtractAlpha(Texture2D black, Texture2D white)
+    {
+        int w = black.width, h = black.height;
+        var pb = black.GetPixels();
+        var pw = white.GetPixels();
+        var po = new Color[pb.Length];
+        for (int i = 0; i < pb.Length; i++)
+        {
+            float a = Mathf.Clamp01(1f - ((pw[i].r - pb[i].r) + (pw[i].g - pb[i].g) + (pw[i].b - pb[i].b)) / 3f);
+            po[i] = a > 0.0001f
+                ? new Color(pb[i].r / a, pb[i].g / a, pb[i].b / a, a)
+                : new Color(0f, 0f, 0f, 0f);
+        }
+        var outT = new Texture2D(w, h, TextureFormat.RGBA32, false);
+        outT.SetPixels(po);
+        outT.Apply();
+        return outT;
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────────────────────────────────
@@ -242,6 +430,60 @@ public class BrushPaletteWindow : EditorWindow
     }
 
     static GameObject LoadProp(string name) => PropResolver.Load(name);   // resolves by name across Props subfolders
+
+    // Find a ground asset by name for the starter set: prefer a Texture2D (the GroundTiles art), else a ground prop.
+    static Object FindGroundAsset(string name)
+    {
+        foreach (var guid in AssetDatabase.FindAssets($"{name} t:Texture2D"))
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            if (Path.GetFileNameWithoutExtension(path) == name) return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+        return LoadProp(name);
+    }
+
+    // The tile texture a ground brush paints with, resolved by name: a Texture2D, else a Material's base map, else a
+    // ground prop's base map. Same resolution order the ground builder uses at import time.
+    static Texture FindGroundTexture(string name)
+    {
+        foreach (var guid in AssetDatabase.FindAssets($"{name} t:Texture2D"))
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            if (Path.GetFileNameWithoutExtension(path) == name) return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+        foreach (var guid in AssetDatabase.FindAssets($"{name} t:Material"))
+        {
+            var path = AssetDatabase.GUIDToAssetPath(guid);
+            if (Path.GetFileNameWithoutExtension(path) != name) continue;
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            var t = m != null ? (m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") != null ? m.GetTexture("_BaseMap") : m.mainTexture) : null;
+            if (t != null) return t;
+        }
+        var prop = LoadProp(name);
+        var r = prop != null ? prop.GetComponentInChildren<MeshRenderer>() : null;
+        var mat = r != null ? r.sharedMaterial : null;
+        return mat != null ? (mat.HasProperty("_BaseMap") && mat.GetTexture("_BaseMap") != null ? mat.GetTexture("_BaseMap") : mat.mainTexture) : null;
+    }
+
+    // Encode any texture to a ThumbPx PNG via a RenderTexture blit — works even if the source isn't marked readable.
+    static byte[] TextureToPng(Texture src)
+    {
+        var rt = RenderTexture.GetTemporary(ThumbPx, ThumbPx, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+        var prev = RenderTexture.active;
+        try
+        {
+            Graphics.Blit(src, rt);
+            RenderTexture.active = rt;
+            var tex = new Texture2D(ThumbPx, ThumbPx, TextureFormat.RGBA32, false);
+            tex.ReadPixels(new Rect(0, 0, ThumbPx, ThumbPx), 0, 0);
+            tex.Apply();
+            byte[] png = tex.EncodeToPNG();
+            Object.DestroyImmediate(tex);
+            return png;
+        }
+        catch (System.Exception e) { Debug.LogWarning($"[unwritten] Ground thumbnail failed: {e.Message}"); return null; }
+        finally { RenderTexture.active = prev; RenderTexture.ReleaseTemporary(rt); }
+    }
 
     static bool ContainsAny(string s, string[] tokens)
     {
@@ -267,10 +509,11 @@ public class BrushPaletteWindow : EditorWindow
 
     // ── manifest DTOs (JsonUtility-serializable) ─────────────────────────────────────────────────────────
     [System.Serializable] class MfFoot   { public float x; public float z; }
-    [System.Serializable] class MfPrefab { public string name; public string path; public float x; public float z; }
+    [System.Serializable] class MfPrefab { public string name; public string path; public float x; public float z; public string thumb; }
     [System.Serializable] class MfBrush
     {
-        public string id, label, color, kind, groundTex;
+        public string id, label, color, kind, groundTex, thumb;
+        public int channel = -1;                 // ground blend channel (0 base … 4); -1 for objects
         public bool hasFootprint;
         public MfFoot footprint = new MfFoot();
         public List<MfPrefab> prefabs = new List<MfPrefab>();

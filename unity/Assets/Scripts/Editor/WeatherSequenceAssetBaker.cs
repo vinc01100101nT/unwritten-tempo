@@ -18,8 +18,8 @@ using Preset = WeatherDirector.Preset;
 public static class WeatherSequenceAssetBaker
 {
     // The library MUST live directly under a Resources folder so WeatherSequenceLibrary.Active() can load it by name.
-    const string Dir = "Assets/Resources/Weather";
-    const string LibPath = "Assets/Resources/" + WeatherSequenceLibrary.ResourcePath + ".asset";
+    const string Dir = "Assets/3_Data/Resources/Weather";
+    const string LibPath = "Assets/3_Data/Resources/" + WeatherSequenceLibrary.ResourcePath + ".asset";
 
     [MenuItem("Tools/unwritten/Weather/Generate Sequence Assets from Code", priority = 200)]
     static void Generate()

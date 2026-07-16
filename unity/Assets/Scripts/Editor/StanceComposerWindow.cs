@@ -9,13 +9,13 @@ using UnityEngine;
 /// <see cref="CharacterAction"/> it plays, plus how the pose's speed is modulated (a live source + a hand-tuned
 /// multiplier), how it ranks against other held stances, and how it plays back (loop / fall-tail).
 ///
-/// Writes <c>Assets/Resources/StanceLibrary.asset</c> (created on demand) and reloads the runtime
+/// Writes <c>Assets/3_Data/Resources/StanceLibrary.asset</c> (created on demand) and reloads the runtime
 /// <see cref="StanceCatalog"/> on save. Drive stances at runtime on a <see cref="StanceController"/>.
 /// </summary>
 public class StanceComposerWindow : EditorWindow
 {
-    const string Dir = "Assets/Resources";
-    const string AssetPath = "Assets/Resources/StanceLibrary.asset";
+    const string Dir = "Assets/3_Data/Resources";
+    const string AssetPath = "Assets/3_Data/Resources/StanceLibrary.asset";
 
     StanceLibrary lib;
     Vector2 scroll;
@@ -44,7 +44,7 @@ public class StanceComposerWindow : EditorWindow
         lib = AssetDatabase.LoadAssetAtPath<StanceLibrary>(AssetPath);
         if (lib == null)
         {
-            if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets", "Resources");
+            if (!AssetDatabase.IsValidFolder(Dir)) AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
             lib = CreateInstance<StanceLibrary>();
             AssetDatabase.CreateAsset(lib, AssetPath);
             AssetDatabase.SaveAssets();
@@ -60,7 +60,7 @@ public class StanceComposerWindow : EditorWindow
     {
         var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // The committed animation source: shared Humanoid clips (Assets/Art/Quat/Anim/Humanoid) that retarget onto
+        // The committed animation source: shared Humanoid clips (Assets/1_Authored/Art/Characters/Animations) that retarget onto
         // every rigged avatar. These are what the live-3D player/NPCs actually play.
         foreach (var n in HumanoidClipResolver.ClipNames()) names.Add(n);
 

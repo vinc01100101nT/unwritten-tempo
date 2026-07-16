@@ -7,7 +7,7 @@
 # package installed in Unity, else the mesh imports EMPTY (undraggable). See com.unity.cloud.gltfast README.
 #
 # Usage:
-#   tools/optimize-glb.sh                 # optimize every .glb in Assets/Prefabs -> *_opt.glb (SAFE, non-destructive)
+#   tools/optimize-glb.sh                 # optimize every .glb in Assets/1_Authored/Prefabs -> *_opt.glb (SAFE, non-destructive)
 #   tools/optimize-glb.sh path/to/x.glb   # optimize a single file
 #   INPLACE=1 tools/optimize-glb.sh       # overwrite originals in place (keeps prefab GUID refs)
 #
@@ -19,7 +19,7 @@ COMPRESS="${COMPRESS:-quantize}" # geometry compression: quantize (glTFast-nativ
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PREFABS="$ROOT/unity/Assets/Prefabs"
+PREFABS="$ROOT/unity/Assets/1_Authored/Prefabs"
 INPLACE="${INPLACE:-0}"
 
 # Build the file list: explicit arg, or every .glb under Prefabs (excluding already-optimized copies).

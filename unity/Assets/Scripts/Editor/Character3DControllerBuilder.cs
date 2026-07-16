@@ -18,7 +18,7 @@ using UnityEngine;
 /// </summary>
 public static class Character3DControllerBuilder
 {
-    const string LibPath = "Assets/Resources/StanceLibrary.asset";
+    const string LibPath = "Assets/3_Data/Resources/StanceLibrary.asset";
 
     /// <summary>Resolve a composer clip NAME to a playable Motion: Quaternius embedded clip by clean suffix, else the
     /// optional per-model resolver (Mixamo). Null if the name matches nothing (the caller skips + warns).</summary>

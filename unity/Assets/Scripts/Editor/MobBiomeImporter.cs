@@ -26,9 +26,9 @@ using UnityEngine;
 /// </summary>
 public static class MobBiomeImporter
 {
-    const string MonsterArtDir = "Assets/Art/NinjaAdventure/Actor/Monster";
-    const string BossArtDir     = "Assets/Art/NinjaAdventure/Actor/Boss";
-    const string ResourceDir    = "Assets/Resources/Monsters";
+    const string MonsterArtDir = "Assets/1_Authored/Art/Billboards/Actor/Monster";
+    const string BossArtDir     = "Assets/1_Authored/Art/Billboards/Actor/Boss";
+    const string ResourceDir    = "Assets/3_Data/Resources/Monsters";
 
     // The 5 biomes mob/boss cells cycle through (same enum the map ground uses).
     static readonly Biome[] Biomes = { Biome.Grassland, Biome.Snow, Biome.Desert, Biome.Volcanic, Biome.Corrupted };
@@ -195,8 +195,8 @@ public static class MobBiomeImporter
     static void EnsureFolder(string path)
     {
         if (AssetDatabase.IsValidFolder(path)) return;
-        if (!AssetDatabase.IsValidFolder("Assets/Resources")) AssetDatabase.CreateFolder("Assets", "Resources");
-        AssetDatabase.CreateFolder("Assets/Resources", "Monsters");
+        if (!AssetDatabase.IsValidFolder("Assets/3_Data/Resources")) AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
+        AssetDatabase.CreateFolder("Assets/3_Data/Resources", "Monsters");
     }
 
     static string Kebab(string s)

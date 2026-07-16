@@ -92,7 +92,7 @@
   </main>
 
   <footer>
-    <span id="hint">Left-drag paint · Right-drag erase · Elevation: L +1 / R −1 per cell · <kbd>Alt</kbd>+drag move · <kbd>R</kbd> rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
+    <span id="hint">Left-drag paint · Right-drag erase · Elevation: L +1 / R −1 per cell · <kbd>Alt</kbd>+drag move · <kbd>R</kbd> rotate · Free: drag after placing to rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
     <span class="sp" style="flex:1"></span>
     <span id="stat"></span>
   </footer>
@@ -102,7 +102,7 @@
 "use strict";
 // ── State ───────────────────────────────────────────────────────────────────────────────────────────────
 const S = {
-  manifest:null, brushes:[], brushById:{}, prefabById:{},
+  manifest:null, brushes:[], brushById:{}, prefabById:{}, thumbById:{},
   cellSize:4, cols:30, rows:16,
   mode:"grid",                 // "grid" | "free"
   active:null,                 // brush id or "erase"
@@ -116,6 +116,7 @@ const S = {
   basePx:26,                   // px per cell at zoom 1
   pan:false, panStart:null, paint:0, // paint: 0 none, 1 left, 2 right
   dragObj:null,                // object being moved via Alt+left-drag
+  rotObj:null,                 // free-mode: object just placed, dragging rotates it to face the cursor
   dirty:false,                 // unsaved edits since last export → guards reload (beforeunload) + autosaves
   mouse:{ x:0, y:0, wx:0, wz:0 },
 };
@@ -155,16 +156,32 @@ function applyManifest(m) {
   S.manifest = m;
   S.cellSize = m.cellSize || 4;
   S.brushes = m.brushes || [];
-  S.brushById = {}; S.prefabById = {};
+  S.brushById = {}; S.prefabById = {}; S.thumbById = {};
   S.brushes.forEach(b => {
     S.brushById[b.id] = b;
-    (b.prefabs || []).forEach(pf => S.prefabById[pf.name] = { x:pf.x, z:pf.z, brush:b.id });
+    if (b.thumb) loadThumb(b.id, b.thumb);          // ground tile texture (keyed by brush id)
+    (b.prefabs || []).forEach(pf => {
+      S.prefabById[pf.name] = { x:pf.x, z:pf.z, brush:b.id, thumb:pf.thumb || "" };
+      if (pf.thumb) loadThumb(pf.name, pf.thumb);   // preload the top-down PNG cutout (served over http; file:// may block canvas draw)
+    });
   });
   if (!S.active && S.brushes.length) S.active = S.brushes[0].id;
   document.getElementById("maniInfo").textContent =
     `${S.brushes.length} brushes · ${m.brushes.reduce((n,b)=>n+(b.prefabs?b.prefabs.length:0),0)} prefabs · ${m.exportedAt||""}`;
   buildPalette();
   resize();
+}
+// Preload a prefab's top-down thumbnail. Re-render once it decodes so props pop in without a manual refresh.
+function loadThumb(name, src) {
+  const img = new Image();
+  img.onload = () => { buildPalette(); render(); };    // swatches + variants + canvas all pick up the decoded image
+  img.onerror = () => { delete S.thumbById[name]; };   // fall back to the colour block
+  img.src = src;
+  S.thumbById[name] = img;
+}
+function thumbFor(name) {
+  const img = S.thumbById[name];
+  return (img && img.complete && img.naturalWidth > 0) ? img : null;
 }
 
 // ── Palette UI ──────────────────────────────────────────────────────────────────────────────────────────
@@ -176,8 +193,13 @@ function buildPalette() {
     el.className = "brush" + (b.id === S.active ? " on" : "");
     el.dataset.id = b.id;
     const fp = b.kind === "object" && b.hasFootprint ? `${b.footprint.x.toFixed(1)}×${b.footprint.z.toFixed(1)}` : "ground";
-    el.innerHTML = `<span class="sw" style="background:${b.color}"></span>${b.label}
-                    <span class="meta">${fp}</span>`;
+    // Swatch: the ground tile / first prop cutout when we have a thumbnail, else the flat colour.
+    const isG = b.kind !== "object";
+    const swImg = thumbFor(b.id) || (!isG && b.prefabs && b.prefabs[0] ? thumbFor(b.prefabs[0].name) : null);
+    const sw = swImg
+      ? `<span class="sw" style="background:#0000 center/${isG ? "cover" : "contain"} no-repeat url('${swImg.src}')"></span>`
+      : `<span class="sw" style="background:${b.color}"></span>`;
+    el.innerHTML = `${sw}${b.label}<span class="meta">${fp}</span>`;
     el.onclick = () => { S.active = b.id; S.activeVariant = ""; refreshPaletteSel(); buildVariants(); };
     (b.kind === "object" ? obj : gnd).appendChild(el);
   }
@@ -203,7 +225,12 @@ function buildVariants() {
     const el = document.createElement("button");
     el.className = "brush" + (S.activeVariant === id ? " on" : "");
     el.dataset.var = id;
-    el.innerHTML = `<span class="sw" style="background:${b.color}"></span>${label}<span class="meta">${meta}</span>`;
+    // Show the real prop cutout as the swatch when we have one; else the flat brush colour.
+    const img = id ? thumbFor(id) : null;
+    const sw = img
+      ? `<span class="sw" style="background:#0000 center/contain no-repeat url('${img.src}')"></span>`
+      : `<span class="sw" style="background:${b.color}"></span>`;
+    el.innerHTML = `${sw}${label}<span class="meta">${meta}</span>`;
     el.onclick = () => { S.activeVariant = id; document.querySelectorAll("[data-var]").forEach(e => e.classList.toggle("on", e.dataset.var === id)); render(); };
     box.appendChild(el);
   };
@@ -301,6 +328,15 @@ function paintHeight(wx, wz, flip) {
   const lvl = (S.heights[key] || 0) + dir;
   if (lvl === 0) delete S.heights[key]; else S.heights[key] = lvl;
 }
+// Free mode: rotate the just-placed object so its facing arrow points from its centre toward the cursor.
+// yaw is measured clockwise from "up" (north / −z), matching drawObject's ctx.rotate. A cursor sitting on the
+// object's centre keeps the current facing (no angle to derive).
+function rotateObjectTo(wx, wz) {
+  const o = S.rotObj; if (!o) return;
+  const dx = wx - o.x, dz = wz - o.z;
+  if (dx * dx + dz * dz < 1e-4) return;
+  o.yaw = Math.atan2(dx, -dz) * 180 / Math.PI;
+}
 // Move the object currently grabbed by Alt+drag to the cursor (cell-snapped in grid mode / for cell objects).
 function dragObjectTo(wx, wz) {
   const o = S.dragObj; if (!o) return;
@@ -327,9 +363,14 @@ function render() {
     const [cx, cz] = k.split(",").map(Number);
     const b = S.brushById[S.ground[k]]; if (!b) continue;
     const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
-    ctx.fillStyle = b.color; ctx.globalAlpha = 0.5;
-    ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p);
-    ctx.globalAlpha = 1;
+    const img = thumbFor(b.id);
+    if (img) {
+      ctx.drawImage(img, s.x, s.y, S.cellSize * p, S.cellSize * p);   // real tile texture
+    } else {
+      ctx.fillStyle = b.color; ctx.globalAlpha = 0.5;
+      ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p);
+      ctx.globalAlpha = 1;
+    }
   }
 
   // grid lines
@@ -389,14 +430,21 @@ function drawObject(ob, p, ghost) {
   const f = objFoot(ob);
   const fx = f.x * p, fz = f.z * p;
   const s = worldToScreen(ob.x, ob.z);
+  const img = thumbFor(ob.prefab);
   ctx.save();
   ctx.translate(s.x, s.y);
   ctx.rotate(ob.yaw * Math.PI / 180);
-  ctx.globalAlpha = ghost ? 0.45 : 0.92;
-  ctx.fillStyle = b.color;
-  ctx.fillRect(-fx / 2, -fz / 2, fx, fz);
+  ctx.globalAlpha = ghost ? 0.5 : 1;
+  if (img) {
+    ctx.drawImage(img, -fx / 2, -fz / 2, fx, fz);        // real prop cutout (+Z already points up in the image)
+  } else {
+    ctx.globalAlpha = ghost ? 0.45 : 0.92;
+    ctx.fillStyle = b.color;
+    ctx.fillRect(-fx / 2, -fz / 2, fx, fz);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = "#0008"; ctx.lineWidth = 1; ctx.strokeRect(-fx / 2, -fz / 2, fx, fz);
+  }
   ctx.globalAlpha = 1;
-  ctx.strokeStyle = "#0008"; ctx.lineWidth = 1; ctx.strokeRect(-fx / 2, -fz / 2, fx, fz);
   // facing arrow (points "up" = +yaw from north) — skipped for autotiled cell objects (wall), which have no yaw
   if (!isCellObject(b)) {
     const a = Math.min(fx, fz) * 0.32 + 4;
@@ -499,20 +547,29 @@ cv.addEventListener("mousedown", e => {
   S.strokeCells = new Set();         // elevation: one notch per cell per drag (reset each stroke)
   S.paint = e.button === 2 ? 2 : 1;
   doPaint(e);
+  // Free mode: keep the object we just placed grabbed so dragging rotates it in place (release drops it facing the cursor).
+  if (S.paint === 1 && S.mode !== "grid") {
+    const b = S.brushById[S.active];
+    if (b && b.kind === "object" && !isCellObject(b)) {
+      const o = S.objects[S.objects.length - 1];
+      if (o && o.brush === b.id) S.rotObj = o;
+    }
+  }
 });
 window.addEventListener("mousemove", e => {
   const r = cv.getBoundingClientRect();
   S.mouse.x = e.clientX - r.left; S.mouse.y = e.clientY - r.top;
   const w = screenToWorld(S.mouse.x, S.mouse.y); S.mouse.wx = w.wx; S.mouse.wz = w.wz;
-  cv.style.cursor = S.dragObj ? "grabbing" : (e.altKey && !S.pan ? "move" : "");
-  if (S.dragObj) dragObjectTo(w.wx, w.wz);
+  cv.style.cursor = (S.dragObj || S.rotObj) ? "grabbing" : (e.altKey && !S.pan ? "move" : "");
+  if (S.rotObj) rotateObjectTo(w.wx, w.wz);
+  else if (S.dragObj) dragObjectTo(w.wx, w.wz);
   else if (S.pan) { S.view.x = e.clientX - S.panStart.x; S.view.y = e.clientY - S.panStart.y; }
-  else if (S.paint) doPaint(e);
+  else if (S.paint && dragRepaintAllowed()) doPaint(e);
   updateStat(); render();
 });
 window.addEventListener("mouseup", () => {
-  const edited = S.paint !== 0 || S.dragObj !== null;   // a real paint/erase/drag just ended → persist it
-  S.paint = 0; S.pan = false; S.dragObj = null;
+  const edited = S.paint !== 0 || S.dragObj !== null || S.rotObj !== null;   // a real paint/erase/drag/rotate just ended → persist it
+  S.paint = 0; S.pan = false; S.dragObj = null; S.rotObj = null;
   if (edited) saveDraft();
 });
 cv.addEventListener("contextmenu", e => e.preventDefault());
@@ -525,6 +582,14 @@ cv.addEventListener("wheel", e => {
   S.view.x += (after.wx - before.wx) * p; S.view.y += (after.wz - before.wz) * p;
   render();
 }, { passive:false });
+// Free mode (snap-to-grid off) places one object per click; dragging there would stack many objects at nearly the
+// same spot (grid mode dedupes per cell, free mode can't), so object paint fires only on mousedown, not on drag.
+// Ground, elevation and erase still paint continuously while the button is held.
+function dragRepaintAllowed() {
+  if (S.paint === 2 || S.active === "erase") return true;     // erase always drag-erases
+  const b = S.brushById[S.active];
+  return !(S.mode !== "grid" && b && b.kind === "object");
+}
 function doPaint(e) {
   const r = cv.getBoundingClientRect();
   const w = screenToWorld(e.clientX - r.left, e.clientY - r.top);

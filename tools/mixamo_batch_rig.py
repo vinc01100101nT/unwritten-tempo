@@ -33,7 +33,7 @@ Usage:
     export MIXAMO_TOKEN='eyJhbGci...'          # or pass --token
     python tools/mixamo_batch_rig.py \
         --in  MixamoUpload \
-        --out unity/Assets/Art/Quat/Rigged \
+        --out unity/Assets/0_Raw/Quat/Rigged \
         --markers tools/mixamo_markers.json     # optional; omit to use EMBEDDED default
 """
 

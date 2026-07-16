@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 public class BagSeeder : MonoBehaviour
 {
-    [Tooltip("Resources subfolder holding the Item assets to seed (Assets/Resources/<this>).")]
+    [Tooltip("Resources subfolder holding the Item assets to seed (Assets/3_Data/Resources/<this>).")]
     public string resourcesFolder = "Items";
 
     bool seeded;

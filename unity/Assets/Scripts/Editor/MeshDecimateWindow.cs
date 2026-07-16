@@ -20,7 +20,7 @@ using UnityMeshSimplifier;
 /// </summary>
 public class MeshDecimateWindow : EditorWindow
 {
-    const string MeshDir = "Assets/Meshes/Decimated";
+    const string MeshDir = "Assets/2_Generated/Decimated";
 
     int targetTris = 6000;
     bool preserveBorders = true;
@@ -174,7 +174,7 @@ public class MeshDecimateWindow : EditorWindow
 
     static void EnsureFolder()
     {
-        if (!AssetDatabase.IsValidFolder("Assets/Meshes")) AssetDatabase.CreateFolder("Assets", "Meshes");
-        if (!AssetDatabase.IsValidFolder(MeshDir)) AssetDatabase.CreateFolder("Assets/Meshes", "Decimated");
+        if (!AssetDatabase.IsValidFolder("Assets/2_Generated")) AssetDatabase.CreateFolder("Assets", "2_Generated");
+        if (!AssetDatabase.IsValidFolder(MeshDir)) AssetDatabase.CreateFolder("Assets/2_Generated", "Decimated");
     }
 }

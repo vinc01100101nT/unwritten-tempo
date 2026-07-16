@@ -14,7 +14,7 @@ using UnityEngine;
 /// </summary>
 public static class LightUpProps
 {
-    const string PropsDir = "Assets/Prefabs/Props";
+    const string PropsDir = "Assets/1_Authored/Prefabs/Props";
 
     // Per-prop tuning: name (without extension) → warm colour, base intensity, range bonus on top of the
     // prop's own size. Houses get a big warm spill; candles/lamps a small focused flame.

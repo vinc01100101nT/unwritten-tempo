@@ -8,7 +8,7 @@ using UnityEngine;
 /// (re)bakes every action's 8-direction strips next to this asset and (re)writes a ready-to-drop
 /// <see cref="BakedBillboard8"/> prefab. Same SO + button flow as the map recipe pipeline.
 ///
-/// Convention: create one of these inside <c>Assets/Art/Characters/&lt;Name&gt;/</c> so the asset, its
+/// Convention: create one of these inside <c>Assets/1_Authored/Art/Characters/&lt;Name&gt;/</c> so the asset, its
 /// <c>Sprites/</c> folder, and the built prefab all live together.
 /// </summary>
 [CreateAssetMenu(fileName = "New Character", menuName = "unwritten/Character", order = 30)]

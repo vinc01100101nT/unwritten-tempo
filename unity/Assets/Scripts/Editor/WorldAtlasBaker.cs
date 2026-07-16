@@ -22,9 +22,9 @@ public static class WorldAtlasBaker
     // World-space rect of one map. (x,y) = top-left corner; x→east, y→south. w,h in world units.
     public struct Entry { public string scene; public float x, y, w, h; public string type; }
 
-    const string ResourcesDir = "Assets/Resources";
-    const string AtlasAssetPath = "Assets/Resources/WorldAtlas.asset";
-    const string AtlasPngPath = "Assets/Resources/WorldMap/atlas.png";
+    const string ResourcesDir = "Assets/3_Data/Resources";
+    const string AtlasAssetPath = "Assets/3_Data/Resources/WorldAtlas.asset";
+    const string AtlasPngPath = "Assets/3_Data/Resources/WorldMap/atlas.png";
     const int TargetLongSidePx = 2048;     // aim the longest world axis at ~this many pixels
     const int MaxAtlasPx = 4096;           // hard cap on either atlas dimension
     const int MinMapPx = 8;                // smallest thumbnail edge
@@ -157,8 +157,8 @@ public static class WorldAtlasBaker
 
     static Texture2D SaveAtlasPng(Texture2D atlas)
     {
-        if (!AssetDatabase.IsValidFolder(ResourcesDir)) AssetDatabase.CreateFolder("Assets", "Resources");
-        if (!AssetDatabase.IsValidFolder("Assets/Resources/WorldMap")) AssetDatabase.CreateFolder(ResourcesDir, "WorldMap");
+        if (!AssetDatabase.IsValidFolder(ResourcesDir)) AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
+        if (!AssetDatabase.IsValidFolder("Assets/3_Data/Resources/WorldMap")) AssetDatabase.CreateFolder(ResourcesDir, "WorldMap");
 
         File.WriteAllBytes(AtlasPngPath, atlas.EncodeToPNG());
         AssetDatabase.ImportAsset(AtlasPngPath, ImportAssetOptions.ForceUpdate | ImportAssetOptions.ForceSynchronousImport);

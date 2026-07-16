@@ -43,7 +43,7 @@ Compile-correctness is reasoned-only; visuals + collision feel + the elevated me
 ## Uncommitted working-tree changes (all unstaged, revertible)
 NEW: `unity/Assets/Scripts/GroundElevation.cs` (+ .meta)
 Modified: `CLAUDE.md`, `tools/map-painter/index.html`, `tools/map-painter/prop-manifest.json`,
-`unity/Assets/BrushPalette.asset`, `Scripts/BrushPalette.cs`, `Scripts/Pathfinder3DConfig.cs`,
+`unity/Assets/3_Data/ScriptableObjects/BrushPalette.asset`, `Scripts/BrushPalette.cs`, `Scripts/Pathfinder3DConfig.cs`,
 `Scripts/Player3DController.cs`, `Editor/{BrushPaletteWindow, GlbPropImporter, GlbPropPipeline, GroundBlendBuilder,
 MapPainterImporter, MapSidecar, PlacementTools, PropPalette, WalkableGround, TOOLS.md}.cs`.
 (Note: `prop-manifest.json` + `BrushPalette.asset` show as modified from earlier work — the asset's now-removed

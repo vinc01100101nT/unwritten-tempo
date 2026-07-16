@@ -5,7 +5,7 @@ using UnityEngine;
 /// The registry of every baked character built by the batch baker — name, ready-to-spawn
 /// <see cref="BakedBillboard8"/> prefab, and a preview sprite (the Idle/South first frame). The runtime
 /// character-select sandbox reads this to populate its picker; gameplay can also use it to look a character
-/// up by name. The batch baker creates/updates one asset at <c>Assets/Art/Characters/CharacterRoster.asset</c>.
+/// up by name. The batch baker creates/updates one asset at <c>Assets/1_Authored/Art/Characters/CharacterRoster.asset</c>.
 /// </summary>
 [CreateAssetMenu(fileName = "CharacterRoster", menuName = "unwritten/Character Roster", order = 31)]
 public class CharacterRoster : ScriptableObject

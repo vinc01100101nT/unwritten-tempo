@@ -14,8 +14,8 @@ public static class WorldTools
 {
     // The dialogue box and interact prompt are GLOBAL singletons — they live in the persistent Systems
     // layer, not per-map. These tools build them as Resources prefabs; Setup Systems Scene pulls them in.
-    const string DialoguePrefabPath = "Assets/Resources/DialogueCanvas.prefab";
-    const string PromptPrefabPath   = "Assets/Resources/InteractPromptCanvas.prefab";
+    const string DialoguePrefabPath = "Assets/3_Data/Resources/DialogueCanvas.prefab";
+    const string PromptPrefabPath   = "Assets/3_Data/Resources/InteractPromptCanvas.prefab";
 
     [MenuItem("Tools/unwritten/UI/Build Dialogue UI", priority = 700)]
     static void BuildDialogueUI()
@@ -124,7 +124,7 @@ public static class WorldTools
     /// in a map scene. Mirrors how Build UI Shell makes GameUICanvas.prefab.</summary>
     static void SaveAsResourcesPrefab(GameObject go, string path)
     {
-        if (!AssetDatabase.IsValidFolder("Assets/Resources")) AssetDatabase.CreateFolder("Assets", "Resources");
+        if (!AssetDatabase.IsValidFolder("Assets/3_Data/Resources")) AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
         PrefabUtility.SaveAsPrefabAsset(go, path);
         Object.DestroyImmediate(go);   // the prefab is the artifact; don't leave a copy in the open scene
         AssetDatabase.SaveAssets();

@@ -269,7 +269,7 @@ public class VfxComposerWindow : EditorWindow
         skillRadii.Sort();
     }
 
-    const string Dir = "Assets/Resources/VfxSequences";
+    const string Dir = "Assets/3_Data/Resources/VfxSequences";
 
     void CreateNew()
     {
@@ -320,10 +320,10 @@ public class VfxComposerWindow : EditorWindow
 
     static void EnsureFolder()
     {
-        if (!AssetDatabase.IsValidFolder("Assets/Resources"))
-            AssetDatabase.CreateFolder("Assets", "Resources");
+        if (!AssetDatabase.IsValidFolder("Assets/3_Data/Resources"))
+            AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
         if (!AssetDatabase.IsValidFolder(Dir))
-            AssetDatabase.CreateFolder("Assets/Resources", "VfxSequences");
+            AssetDatabase.CreateFolder("Assets/3_Data/Resources", "VfxSequences");
     }
 
     // ---------------------------------------------------------------- GUI

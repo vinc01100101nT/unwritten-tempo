@@ -5,9 +5,9 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Generates a small set of <see cref="Item"/> assets in Assets/Resources/Items so the bag has
+/// Generates a small set of <see cref="Item"/> assets in Assets/3_Data/Resources/Items so the bag has
 /// something to drag — this is the DATA table (id/slot/stats/rarity). Icons are supplied SEPARATELY
-/// by <see cref="ItemIconImporter"/> from GPT-authored PNGs in Assets/Art/Items (no vendor art baked
+/// by <see cref="ItemIconImporter"/> from GPT-authored PNGs in Assets/1_Authored/Art/Items (no vendor art baked
 /// in here). Idempotent: re-running refreshes stats on existing assets and leaves their icons alone.
 ///
 /// Menu: Tools ▸ unwritten ▸ Create Starter Items. Build UI Shell also calls this
@@ -16,7 +16,7 @@ using UnityEngine;
 public static class ItemStarterSet
 {
     // In Resources so BagSeeder can load them at runtime (no baked prefab references).
-    const string Dir = "Assets/Resources/Items";
+    const string Dir = "Assets/3_Data/Resources/Items";
 
     // (asset name, id, slot, +HP, +ATK, +DEF, heal, rarity, cardSlots, weight, zeny, category, description)
     static readonly (string name, string id, EquipSlotType slot, WeaponType weapon, int hp, int atk, int def, int heal,

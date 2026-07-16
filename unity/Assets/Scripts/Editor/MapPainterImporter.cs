@@ -27,7 +27,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class MapPainterImporter : EditorWindow
 {
-    const string PropsDir  = "Assets/Prefabs/Props";
+    const string PropsDir  = "Assets/1_Authored/Prefabs/Props";
     const string ScenesDir = "Assets/Scenes";
     // Props are placed at their NATIVE prefab size (nothing rescales them). The modular WALL kit is the one
     // exception: it's tiled to fill grid cells, so it keeps its own structural fit-scale — unrelated to prop sizing.
@@ -53,6 +53,13 @@ public class MapPainterImporter : EditorWindow
     string _jsonPath;
     string _mapName = "Prontera";
 
+    // Where the painted content lands: a brand-new scene, or merged into the scene already open in Unity.
+    enum Target { NewScene, OpenScene }
+    Target _target = Target.NewScene;
+    // When merging into the open scene, each category the author ticks is WIPED (its prior import) and rebuilt from the
+    // JSON; unticked categories are left exactly as they are. Lets you re-import just the ground and keep hand-placed props.
+    bool _impGround = true, _impProps = true, _impWalls = true, _impSpawn = true;
+
     [MenuItem("Tools/unwritten/World/Import Painted Map…", priority = 181)]
     static void Open()
     {
@@ -71,7 +78,7 @@ public class MapPainterImporter : EditorWindow
 
     void OnGUI()
     {
-        EditorGUILayout.LabelField("Bake a hand-painted map.json into Assets/Scenes/<name>.unity.", EditorStyles.wordWrappedLabel);
+        EditorGUILayout.LabelField("Bake a hand-painted map.json into a new scene, or merge it into the open scene.", EditorStyles.wordWrappedLabel);
         EditorGUILayout.Space();
 
         using (new EditorGUILayout.HorizontalScope())
@@ -87,11 +94,37 @@ public class MapPainterImporter : EditorWindow
             }
         }
 
-        _mapName = EditorGUILayout.TextField(new GUIContent("Scene name", "Saved as Assets/Scenes/<name>.unity"), _mapName);
+        EditorGUILayout.Space();
+        _target = (Target)EditorGUILayout.EnumPopup(new GUIContent("Import into"), _target);
+
+        var active = SceneManager.GetActiveScene();
+        bool openSaved = _target == Target.OpenScene && active.IsValid() && !string.IsNullOrEmpty(active.path);
+
+        if (_target == Target.NewScene)
+        {
+            _mapName = EditorGUILayout.TextField(new GUIContent("Scene name", "Saved as Assets/Scenes/<name>.unity"), _mapName);
+        }
+        else
+        {
+            EditorGUILayout.LabelField("Open scene", active.IsValid() && !string.IsNullOrEmpty(active.path)
+                ? active.name + "  (" + active.path + ")" : "— none saved —");
+            if (!openSaved)
+                EditorGUILayout.HelpBox("Open and SAVE a scene in Unity first — then it becomes the merge target.", MessageType.Warning);
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Overwrite (ticked = wiped & rebuilt · unticked = left as-is):", EditorStyles.boldLabel);
+            _impGround = EditorGUILayout.ToggleLeft(new GUIContent("Ground", "Replace the blended ground mesh (Ground_*)"), _impGround);
+            _impProps  = EditorGUILayout.ToggleLeft(new GUIContent("Props", "Replace the painted props (the 'Props' group)"), _impProps);
+            _impWalls  = EditorGUILayout.ToggleLeft(new GUIContent("Walls", "Replace the autotiled wall kit (the 'Wall' group)"), _impWalls);
+            _impSpawn  = EditorGUILayout.ToggleLeft(new GUIContent("Spawn point", "Replace the 'Start' arrival point"), _impSpawn);
+        }
 
         EditorGUILayout.Space();
-        using (new EditorGUI.DisabledScope(string.IsNullOrEmpty(_jsonPath) || !File.Exists(_jsonPath) || string.IsNullOrWhiteSpace(_mapName)))
-            if (GUILayout.Button("Import & Bake Scene", GUILayout.Height(34)))
+        bool jsonOk = !string.IsNullOrEmpty(_jsonPath) && File.Exists(_jsonPath);
+        bool ready = jsonOk && (_target == Target.NewScene ? !string.IsNullOrWhiteSpace(_mapName)
+                                                           : openSaved && (_impGround || _impProps || _impWalls || _impSpawn));
+        using (new EditorGUI.DisabledScope(!ready))
+            if (GUILayout.Button(_target == Target.NewScene ? "Import & Bake Scene" : "Merge Into Open Scene", GUILayout.Height(34)))
                 Import();
 
         EditorGUILayout.Space();
@@ -147,15 +180,49 @@ public class MapPainterImporter : EditorWindow
         { EditorUtility.DisplayDialog("Import Painted Map", "No free layer slot for 'Ground'. Free one in Project Settings ▸ Tags and Layers.", "OK"); return; }
         int mask = 1 << groundLayer;
 
-        string safe = Sanitize(string.IsNullOrWhiteSpace(_mapName) ? "PaintedMap" : _mapName);
-        string scenePath = $"{ScenesDir}/{safe}.unity";
-
         var palette = LoadPalette();
+        // Resolve the palette ONCE: painted ground-brush id → its blend channel (0 base … 4), and channel → the
+        // ground texture the author assigned. Object/wall brush id → its facing correction. Single source of truth.
+        var resolved = palette != null ? palette.Resolve() : new List<ResolvedBrush>();
+        var groundChannel = new Dictionary<string, int>();
+        var chTex = new string[BrushPalette.MaxGroundChannels];
+        var fwdOffset = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
+        foreach (var rb in resolved)
+        {
+            if (rb.IsGround && rb.channel >= 0 && rb.channel < chTex.Length)
+            { groundChannel[rb.id] = rb.channel; chTex[rb.channel] = rb.groundTex; }
+            if (!string.IsNullOrEmpty(rb.id)) fwdOffset[rb.id] = rb.forwardOffset;
+        }
+        string GroundTexFor(int ch, string fallback) => !string.IsNullOrEmpty(chTex[ch]) ? chTex[ch] : fallback;
 
-        // ── new scene ────────────────────────────────────────────────────────────────────────────────
-        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
-        SceneManager.SetActiveScene(scene);
-        RigBuilder25D.BuildLight();   // authoring Sun (disabled at Play; Systems owns the runtime light)
+        // ── TARGET SCENE: brand-new, or merge into the scene already open ──────────────────────────────
+        // In OpenScene mode each ticked category is a REPLACE — wipe its prior import from the scene, then rebuild the
+        // ticked ones; unticked categories are never touched. NewScene mode builds everything into a fresh empty scene.
+        bool open = _target == Target.OpenScene;
+        bool doGround = !open || _impGround;
+        bool doProps  = !open || _impProps;
+        bool doWalls  = !open || _impWalls;
+        bool doSpawn  = !open || _impSpawn;
+
+        string safe, scenePath;
+        Scene scene;
+        if (open)
+        {
+            scene = SceneManager.GetActiveScene();
+            if (!scene.IsValid() || string.IsNullOrEmpty(scene.path))
+            { EditorUtility.DisplayDialog("Import Painted Map", "Open and save a scene in Unity first, then re-run — that scene is the merge target.", "OK"); return; }
+            scenePath = scene.path;
+            safe = Sanitize(scene.name);
+            ClearImported(scene, doGround, doProps, doWalls, doSpawn);
+        }
+        else
+        {
+            safe = Sanitize(string.IsNullOrWhiteSpace(_mapName) ? "PaintedMap" : _mapName);
+            scenePath = $"{ScenesDir}/{safe}.unity";
+            scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            SceneManager.SetActiveScene(scene);
+            RigBuilder25D.BuildLight();   // authoring Sun (disabled at Play; Systems owns the runtime light)
+        }
 
         // ── GROUND: rasterise the painted cells into per-channel weight fields, then sample them per vertex ─
         var pathF  = new float[cols, rows];   // .r road
@@ -167,14 +234,15 @@ public class MapPainterImporter : EditorWindow
             foreach (var c in map.ground)
             {
                 if (c == null || c.cx < 0 || c.cx >= cols || c.cz < 0 || c.cz >= rows) continue;
-                switch (GroundChannel(c.brush))
+                int ch = groundChannel.TryGetValue(c.brush, out var cc) ? cc : -1;
+                switch (ch)
                 {
-                    case 1: pathF [c.cx, c.cz] = 1f; break;   // road/path → RED
-                    case 3: stoneF[c.cx, c.cz] = 1f; break;   // stone     → GREEN
-                    case 4: rockF [c.cx, c.cz] = 1f; break;   // rock      → BLUE
-                    case 2: dirtF [c.cx, c.cz] = 1f; break;   // dirt/water → ALPHA
-                    case 0: break;                            // grass → base layer
-                    default: unmapped.Add(c.brush); dirtF[c.cx, c.cz] = 1f; break;
+                    case 1: pathF [c.cx, c.cz] = 1f; break;   // overlay 1 → RED
+                    case 2: stoneF[c.cx, c.cz] = 1f; break;   // overlay 2 → GREEN
+                    case 3: rockF [c.cx, c.cz] = 1f; break;   // overlay 3 → BLUE
+                    case 4: dirtF [c.cx, c.cz] = 1f; break;   // overlay 4 → ALPHA
+                    case 0: break;                            // base underlayer
+                    default: unmapped.Add(c.brush); break;    // unknown brush → left as the base layer
                 }
             }
 
@@ -197,128 +265,162 @@ public class MapPainterImporter : EditorWindow
                 if (h.level != 0) hasElevation = true;
             }
 
-        var ground = hasElevation
-            ? GroundBlendBuilder.LayPlotSampledElevated(
-                scene, $"Ground_{safe}", Vector3.zero, sizeX, sizeZ, groundLayer, Sample,
-                levels, cols, rows, cellSize,
-                GroundTex(palette, "grass", "ground_grass"),
-                GroundTex(palette, "dirt",  "ground_soil"),
-                GroundTex(palette, "path",  "ground_road"),
-                GroundTex(palette, "stone", "ground_stones"),
-                GroundTex(palette, "rock",  "ground_rock"))
-            : GroundBlendBuilder.LayPlotSampled(
-                scene, $"Ground_{safe}", Vector3.zero, sizeX, sizeZ, groundLayer, Sample,
-                GroundTex(palette, "grass", "ground_grass"),
-                GroundTex(palette, "dirt",  "ground_soil"),
-                GroundTex(palette, "path",  "ground_road"),
-                GroundTex(palette, "stone", "ground_stones"),
-                GroundTex(palette, "rock",  "ground_rock"));
-        if (ground == null)
+        // Elevation-aware weights: a cell at a DIFFERENT height than refLevel doesn't feather in, so the ground
+        // texture cuts hard at a step (a raised plaza keeps its own tile up to the cliff edge) but still blends softly
+        // between same-level cells. refLevel = the height of the cell whose top/wall this vertex belongs to.
+        void SampleLeveled(float wx, float wz, int refLevel, out Vector4 w)
         {
-            EditorUtility.DisplayDialog("Import Painted Map",
-                "Couldn't build the ground — need the Pxltgr 'ground_grass' prefab in Assets/Prefabs/Props and the "
-                + "'Unwritten/GroundBlend' shader. Run Build Prefabs ▸ Fantasy Assets (Pxltgr) → Props first.", "OK");
-            EditorSceneManager.CloseScene(scene, true);
-            return;
+            float fx = (wx + sizeX * 0.5f) / cellSize - 0.5f;
+            float fz = (wz + sizeZ * 0.5f) / cellSize - 0.5f;
+            w = new Vector4(
+                BilinearMasked(pathF,  fx, fz, cols, rows, levels, refLevel),
+                BilinearMasked(stoneF, fx, fz, cols, rows, levels, refLevel),
+                BilinearMasked(rockF,  fx, fz, cols, rows, levels, refLevel),
+                BilinearMasked(dirtF,  fx, fz, cols, rows, levels, refLevel));
         }
-        Physics.SyncTransforms();   // make the floor queryable for the prop drop-rays
 
-        // ── OBJECTS: one parent node per brush; seat each prop at its painted XZ + yaw ────────────────────
-        var propsRoot = new GameObject("Props");
-        SceneManager.MoveGameObjectToScene(propsRoot, scene);
-        var groups = new Dictionary<string, Transform>();
-        var missing = new HashSet<string>();
-        // Per-brush front correction: the painter's facing arrow is "where the front should point", but a mesh whose
-        // local front isn't +Z lands rotated. The palette's forwardOffset aligns the real front to the painted arrow.
-        var fwdOffset = new Dictionary<string, float>(System.StringComparer.OrdinalIgnoreCase);
-        if (palette != null && palette.brushes != null)
-            foreach (var br in palette.brushes)
-                if (br != null && !string.IsNullOrEmpty(br.id)) fwdOffset[br.id] = br.forwardOffset;
-        var wallCells = new HashSet<(int cx, int cz)>();   // every painted wall cell → autotiled below
-        int placed = 0, decor = 0;
+        if (doGround)
+        {
+            var ground = hasElevation
+                ? GroundBlendBuilder.LayPlotSampledElevated(
+                    scene, $"Ground_{safe}", Vector3.zero, sizeX, sizeZ, groundLayer, SampleLeveled,
+                    levels, cols, rows, cellSize,
+                    GroundTexFor(0, "ground_grass"),
+                    GroundTexFor(4, "ground_soil"),
+                    GroundTexFor(1, "ground_road"),
+                    GroundTexFor(2, "ground_stones"),
+                    GroundTexFor(3, "ground_rock"))
+                : GroundBlendBuilder.LayPlotSampled(
+                    scene, $"Ground_{safe}", Vector3.zero, sizeX, sizeZ, groundLayer, Sample,
+                    GroundTexFor(0, "ground_grass"),
+                    GroundTexFor(4, "ground_soil"),
+                    GroundTexFor(1, "ground_road"),
+                    GroundTexFor(2, "ground_stones"),
+                    GroundTexFor(3, "ground_rock"));
+            if (ground == null)
+            {
+                EditorUtility.DisplayDialog("Import Painted Map",
+                    "Couldn't build the ground — need the Pxltgr 'ground_grass' prefab in Assets/1_Authored/Prefabs/Props and the "
+                    + "'Unwritten/GroundBlend' shader. Run Build Prefabs ▸ Fantasy Assets (Pxltgr) → Props first.", "OK");
+                if (!open) EditorSceneManager.CloseScene(scene, true);
+                return;
+            }
+        }
+        // Make the floor queryable for the prop/wall drop-rays — the just-built ground, or (props-only merge) the existing one.
+        Physics.SyncTransforms();
 
+        // ── WALL CELLS: collect the painted wall-brush cells first (autotiled below) — done even when props are skipped,
+        //    since the wall kit and its gate openings both read this set. Wall brush ignores the painted prefab/yaw.
+        var wallCells = new HashSet<(int cx, int cz)>();
         if (map.objects != null)
             foreach (var o in map.objects)
             {
-                if (o == null) continue;
-                // Wall brush is AUTOTILED: collect its cells (ignore the painted prefab/yaw) and assemble the kit later.
-                if (!string.IsNullOrEmpty(o.brush) && o.brush.ToLowerInvariant() == "wall")
-                {
-                    int wcx = Mathf.FloorToInt(o.x / cellSize), wcz = Mathf.FloorToInt(o.z / cellSize);
-                    if (wcx >= 0 && wcx < cols && wcz >= 0 && wcz < rows) wallCells.Add((wcx, wcz));
-                    continue;
-                }
-                if (string.IsNullOrEmpty(o.prefab)) continue;
-                var prefab = PropResolver.Load(o.prefab);
-                if (prefab == null) { missing.Add(o.prefab); continue; }
-
-                string groupName = string.IsNullOrEmpty(o.brush) ? "Props" : Capitalize(o.brush);
-                if (!groups.TryGetValue(groupName, out var parent))
-                {
-                    var g = new GameObject(groupName);
-                    g.transform.SetParent(propsRoot.transform, false);
-                    parent = g.transform;
-                    groups[groupName] = parent;
-                }
-
-                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-                // Leave localScale as the prefab's own — the prefab owns its size (eyeballed + applied); nothing here rescales it.
-                float off = (!string.IsNullOrEmpty(o.brush) && fwdOffset.TryGetValue(o.brush, out var fo)) ? fo : 0f;
-                go.transform.rotation = Quaternion.Euler(0f, o.yaw + off, 0f);
-                PropPlacement.PlaceOnGround(go, new Vector3(o.x - sizeX * 0.5f, 0f, o.z - sizeZ * 0.5f), mask);
-                go.transform.SetParent(parent, true);
-                WorldBuildUtil.SetLayerRecursive(go, 0);                 // Default — never the Ground layer
-                if (PropPlacement.IsWalkThroughDecor(o.prefab)) { PropPlacement.StripColliders(go); decor++; }
-                placed++;
+                if (o == null || string.IsNullOrEmpty(o.brush) || o.brush.ToLowerInvariant() != "wall") continue;
+                int wcx = Mathf.FloorToInt(o.x / cellSize), wcz = Mathf.FloorToInt(o.z / cellSize);
+                if (wcx >= 0 && wcx < cols && wcz >= 0 && wcz < rows) wallCells.Add((wcx, wcz));
             }
 
-        // ── WALLS: autotile the painted wall cells into the modular kit (straights + corner/end towers + gates) ─
-        int walls = AutotileWalls(wallCells, pathF, propsRoot.transform, sizeX, sizeZ, cellSize, cols, rows, mask, WallKitScale);
+        // ── PROPS: one parent node per brush; seat each prop at its painted XZ + yaw ───────────────────────
+        var missing = new HashSet<string>();
+        int placed = 0, decor = 0;
+        if (doProps)
+        {
+            var propsRoot = new GameObject("Props");
+            SceneManager.MoveGameObjectToScene(propsRoot, scene);
+            var groups = new Dictionary<string, Transform>();
+            // fwdOffset (the palette's per-brush facing correction that aligns a mesh's real front to the painted
+            // arrow) was resolved once up top alongside the ground channels.
+
+            if (map.objects != null)
+                foreach (var o in map.objects)
+                {
+                    if (o == null) continue;
+                    if (!string.IsNullOrEmpty(o.brush) && o.brush.ToLowerInvariant() == "wall") continue;   // → wall kit
+                    if (string.IsNullOrEmpty(o.prefab)) continue;
+                    var prefab = PropResolver.Load(o.prefab);
+                    if (prefab == null) { missing.Add(o.prefab); continue; }
+
+                    string groupName = string.IsNullOrEmpty(o.brush) ? "Props" : Capitalize(o.brush);
+                    if (!groups.TryGetValue(groupName, out var parent))
+                    {
+                        var g = new GameObject(groupName);
+                        g.transform.SetParent(propsRoot.transform, false);
+                        parent = g.transform;
+                        groups[groupName] = parent;
+                    }
+
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+                    // Leave localScale as the prefab's own — the prefab owns its size (eyeballed + applied); nothing here rescales it.
+                    float off = (!string.IsNullOrEmpty(o.brush) && fwdOffset.TryGetValue(o.brush, out var fo)) ? fo : 0f;
+                    go.transform.rotation = Quaternion.Euler(0f, o.yaw + off, 0f);
+                    PropPlacement.PlaceOnGround(go, new Vector3(o.x - sizeX * 0.5f, 0f, o.z - sizeZ * 0.5f), mask);
+                    go.transform.SetParent(parent, true);
+                    WorldBuildUtil.SetLayerRecursive(go, 0);                 // Default — never the Ground layer
+                    if (PropPlacement.IsWalkThroughDecor(o.prefab)) { PropPlacement.StripColliders(go); decor++; }
+                    placed++;
+                }
+        }
+
+        // ── WALLS: autotile the painted wall cells into the modular kit (straights + corner/end towers + gates). Its own
+        //    top-level "Wall" group (sibling of Props) so it can be re-imported independently of props.
+        int walls = 0;
+        if (doWalls && wallCells.Count > 0)
+        {
+            var wallsRoot = new GameObject("Wall");
+            SceneManager.MoveGameObjectToScene(wallsRoot, scene);
+            walls = AutotileWalls(wallCells, pathF, wallsRoot.transform, sizeX, sizeZ, cellSize, cols, rows, mask, WallKitScale);
+        }
 
         // ── SPAWN (boot/arrival point; warps added later via MapLinker) ──────────────────────────────────
-        RegionBuilder.MakeSpawn(scene, "Start", WorldBuildUtil.SurfacePoint(Vector3.zero, mask));
+        if (doSpawn)
+            RegionBuilder.MakeSpawn(scene, "Start", WorldBuildUtil.SurfacePoint(Vector3.zero, mask));
 
         // ── SAVE + REGISTER ──────────────────────────────────────────────────────────────────────────────
-        if (!Directory.Exists(ScenesDir)) AssetDatabase.CreateFolder("Assets", "Scenes");
-        var open = SceneManager.GetSceneByPath(scenePath);
-        if (open.IsValid() && open.isLoaded && open != scene) EditorSceneManager.CloseScene(open, true);
-        EditorSceneManager.SaveScene(scene, scenePath);
-        WorldBuildUtil.RegisterInBuildSettings(scenePath);
-        EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        if (open)
+        {
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+        }
+        else
+        {
+            if (!Directory.Exists(ScenesDir)) AssetDatabase.CreateFolder("Assets", "Scenes");
+            var dup = SceneManager.GetSceneByPath(scenePath);
+            if (dup.IsValid() && dup.isLoaded && dup != scene) EditorSceneManager.CloseScene(dup, true);
+            EditorSceneManager.SaveScene(scene, scenePath);
+            WorldBuildUtil.RegisterInBuildSettings(scenePath);
+            EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+        }
         AssetDatabase.SaveAssets();
 
-        string elevMsg = hasElevation ? " · elevated (gutters/steps + cliff collision)" : " · flat";
-        var msg = $"Imported '{safe}':\n• {placed} props ({decor} walk-through)\n• {walls} autotiled wall piece(s)\n• ground {cols}×{rows} cells ({sizeX}×{sizeZ} u){elevMsg}\n→ {scenePath}";
+        // Only report categories that were actually (re)built, so a partial merge doesn't imply it touched everything.
+        var parts = new List<string>();
+        if (doProps)  parts.Add($"{placed} props ({decor} walk-through)");
+        if (doWalls)  parts.Add($"{walls} autotiled wall piece(s)");
+        if (doGround) parts.Add($"ground {cols}×{rows} cells ({sizeX}×{sizeZ} u)" + (hasElevation ? " · elevated (gutters/steps + cliff collision)" : " · flat"));
+        if (doSpawn)  parts.Add("spawn point");
+        string verb = open ? "Merged into" : "Imported";
+        var msg = $"{verb} '{safe}':\n• " + string.Join("\n• ", parts) + $"\n→ {scenePath}";
         if (missing.Count  > 0) msg += "\n\n⚠ Missing prefabs (skipped): " + string.Join(", ", missing);
-        if (unmapped.Count > 0) msg += "\n\n⚠ Ground brushes with no shader channel (drawn as dirt): " + string.Join(", ", unmapped);
+        if (doGround && unmapped.Count > 0) msg += "\n\n⚠ Ground brushes not in the palette (left as base layer): " + string.Join(", ", unmapped);
         Debug.Log("[unwritten] " + msg.Replace("\n", " "));
         EditorUtility.DisplayDialog("Import Painted Map", msg, "OK");
     }
 
+    // Remove a prior import's category objects from the scene so the ticked ones can be rebuilt cleanly. Matches by the
+    // names the importer bakes: ground mesh = "Ground_*", props group = "Props", wall kit = "Wall", spawn = "Start".
+    static void ClearImported(Scene scene, bool ground, bool props, bool walls, bool spawn)
+    {
+        foreach (var go in scene.GetRootGameObjects())
+        {
+            string n = go.name;
+            if (ground && n.StartsWith("Ground_")) { Object.DestroyImmediate(go); continue; }
+            if (props && n == "Props")             { Object.DestroyImmediate(go); continue; }
+            if (walls && n == "Wall")              { Object.DestroyImmediate(go); continue; }
+            if (spawn && n == "Start")             { Object.DestroyImmediate(go); continue; }
+        }
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────────────────────────────────
-    // Which GroundBlend layer a painted ground brush drives:
-    //   0 = grass base · 1 = road (.r) · 2 = dirt (.a) · 3 = stone (.g) · 4 = rock (.b)
-    static int GroundChannel(string brush)
-    {
-        if (string.IsNullOrEmpty(brush)) return 0;
-        string b = brush.ToLowerInvariant();
-        if (b == "grass") return 0;
-        if (b.Contains("path") || b.Contains("road")) return 1;
-        if (b.Contains("stone")) return 3;
-        if (b.Contains("rock")) return 4;
-        if (b == "dirt" || b == "soil" || b == "water") return 2;
-        return -1;   // unknown → caller routes to dirt + warns
-    }
-
-    // Resolve the ground_* texture prop name for a painter brush id from the palette, else the supplied fallback.
-    static string GroundTex(BrushPalette pal, string brushId, string fallback)
-    {
-        if (pal != null && pal.brushes != null)
-            foreach (var br in pal.brushes)
-                if (br != null && br.id == brushId && !string.IsNullOrEmpty(br.groundTex)) return br.groundTex;
-        return fallback;
-    }
-
     // Bilinear sample of a cell-resolution weight field at fractional cell coords; clamps to the grid edge so the
     // border feathers out cleanly. Cell pitch (≈4u) becomes the gradient width → soft road/dirt edges like the recipe.
     static float Bilinear(float[,] f, float fx, float fz, int cols, int rows)
@@ -330,6 +432,34 @@ public class MapPainterImporter : EditorWindow
         float tx = Mathf.Clamp01(fx - x0), tz = Mathf.Clamp01(fz - z0);
         float a = Mathf.Lerp(f[x0, z0], f[x1, z0], tx);
         float b = Mathf.Lerp(f[x0, z1], f[x1, z1], tx);
+        return Mathf.Lerp(a, b, tz);
+    }
+
+    // Like Bilinear, but any of the 4 corner cells at a level ≠ refLevel is replaced by the nearest SAME-level corner's
+    // value before interpolating. Effect: weights never bleed across a height step (hard cut at the cliff), while
+    // same-level cells still feather smoothly. refLevel is the height of the cell that owns this vertex.
+    static float BilinearMasked(float[,] f, float fx, float fz, int cols, int rows, int[,] levels, int refLevel)
+    {
+        int x0 = Mathf.Clamp(Mathf.FloorToInt(fx), 0, cols - 1);
+        int z0 = Mathf.Clamp(Mathf.FloorToInt(fz), 0, rows - 1);
+        int x1 = Mathf.Clamp(x0 + 1, 0, cols - 1);
+        int z1 = Mathf.Clamp(z0 + 1, 0, rows - 1);
+        float tx = Mathf.Clamp01(fx - x0), tz = Mathf.Clamp01(fz - z0);
+
+        // Bilinear influence of each corner → pick the same-level corner with the most influence as the fallback value.
+        float w00 = (1 - tx) * (1 - tz), w10 = tx * (1 - tz), w01 = (1 - tx) * tz, w11 = tx * tz;
+        float refVal = f[x0, z0]; float bestW = -1f; bool found = false;
+        void Consider(int cx, int cz, float ww)
+        { if (levels[cx, cz] == refLevel && ww > bestW) { bestW = ww; refVal = f[cx, cz]; found = true; } }
+        Consider(x0, z0, w00); Consider(x1, z0, w10); Consider(x0, z1, w01); Consider(x1, z1, w11);
+        if (!found) return Bilinear(f, fx, fz, cols, rows);   // no same-level corner (shouldn't happen) → plain blend
+
+        float v00 = levels[x0, z0] == refLevel ? f[x0, z0] : refVal;
+        float v10 = levels[x1, z0] == refLevel ? f[x1, z0] : refVal;
+        float v01 = levels[x0, z1] == refLevel ? f[x0, z1] : refVal;
+        float v11 = levels[x1, z1] == refLevel ? f[x1, z1] : refVal;
+        float a = Mathf.Lerp(v00, v10, tx);
+        float b = Mathf.Lerp(v01, v11, tx);
         return Mathf.Lerp(a, b, tz);
     }
 
@@ -353,7 +483,7 @@ public class MapPainterImporter : EditorWindow
     //   • a straight cell that's ALSO a road cell → a GATE (entrance) — i.e. paint a road through the wall
     //   • anything else (corner / end / T / cross / isolated) → a TOWER post
     // Pieces seat bottom-on-ground (Y0) and stay SOLID so they block the player + pathfinder. Returns the count.
-    static int AutotileWalls(HashSet<(int cx, int cz)> cells, float[,] pathF, Transform propsRoot,
+    static int AutotileWalls(HashSet<(int cx, int cz)> cells, float[,] pathF, Transform wallRoot,
                              float sizeX, float sizeZ, float cellSize, int cols, int rows, int mask, float baseScale)
     {
         if (cells == null || cells.Count == 0) return 0;
@@ -361,7 +491,7 @@ public class MapPainterImporter : EditorWindow
         GameObject tower    = null; foreach (var n in WallTowerNames)    { tower    = LoadProp(n); if (tower != null) break; }
         var entrance = LoadProp(WallEntranceName);
         if (straight == null && tower == null)
-        { Debug.LogWarning("[unwritten] Wall kit not found (Wall_part*/Wall_tower* in Assets/Prefabs/Props); walls skipped."); return 0; }
+        { Debug.LogWarning("[unwritten] Wall kit not found (Wall_part*/Wall_tower* in Assets/1_Authored/Prefabs/Props); walls skipped."); return 0; }
 
         // Measure one straight piece at base scale → run length + which local axis it runs along, so we can scale it
         // to fill a cell and yaw it along the run (same trick as RecipeGenerator.BuildPerimeterWall).
@@ -380,9 +510,6 @@ public class MapPainterImporter : EditorWindow
         float scale = baseScale * Mathf.Clamp(cellSize / segLen, 1f, 2.2f);
         float yawX = runAxisIsX ? 0f : 90f;   // run along world X (east-west)
         float yawZ = runAxisIsX ? 90f : 0f;   // run along world Z (north-south)
-
-        var wallRoot = new GameObject("Wall");
-        wallRoot.transform.SetParent(propsRoot, false);
 
         // Classify a wall cell by its 4-neighbour pattern: 1 = straight run along X (E+W), 2 = straight along Z (N+S),
         // 3 = tower (corner / end / junction / isolated), 0 = not a wall cell. Used both to pick the piece AND to decide
@@ -410,8 +537,8 @@ public class MapPainterImporter : EditorWindow
                 float yaw = runX ? yawX : yawZ;
 
                 // Road through the wall → swap the straight for a gate opening (centred, no reach-out).
-                if (entrance != null && pathF[cx, cz] > 0.5f) { SeatWall(entrance, wx, wz, yaw, scale, wallRoot.transform, mask); placed++; continue; }
-                if (straight == null) { SeatWall(tower, wx, wz, 0f, scale, wallRoot.transform, mask); placed++; continue; }
+                if (entrance != null && pathF[cx, cz] > 0.5f) { SeatWall(entrance, wx, wz, yaw, scale, wallRoot, mask); placed++; continue; }
+                if (straight == null) { SeatWall(tower, wx, wz, 0f, scale, wallRoot, mask); placed++; continue; }
 
                 // A one-cell straight is centred in its cell and abuts its straight neighbours perfectly. But a TOWER
                 // sits small in the middle of ITS cell, so a straight that merely fills its own cell stops a half-cell
@@ -423,14 +550,14 @@ public class MapPainterImporter : EditorWindow
                 float extPos = KindOf(pcx, pcz) != kind ? cellSize * 0.5f : 0f;
                 float extNeg = KindOf(ncx, ncz) != kind ? cellSize * 0.5f : 0f;
 
-                SeatStraight(straight, runX, runAxisIsX, extPos, extNeg, wx, wz, yaw, scale, cellSize, wallRoot.transform, mask);
+                SeatStraight(straight, runX, runAxisIsX, extPos, extNeg, wx, wz, yaw, scale, cellSize, wallRoot, mask);
                 placed++;
             }
             else
             {
                 var piece = tower != null ? tower : straight;             // corner / end / junction / isolated → post
                 if (piece == null) continue;
-                SeatWall(piece, wx, wz, 0f, scale, wallRoot.transform, mask);
+                SeatWall(piece, wx, wz, 0f, scale, wallRoot, mask);
                 placed++;
             }
         }

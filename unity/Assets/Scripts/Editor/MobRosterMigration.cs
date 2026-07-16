@@ -6,7 +6,7 @@ using UnityEngine;
 // assets in Resources/Monsters. Delete after the assets are confirmed the source of truth and MobRoster is removed.
 public static class MobRosterMigration
 {
-    const string ResourceDir = "Assets/Resources/Monsters";
+    const string ResourceDir = "Assets/3_Data/Resources/Monsters";
 
     [MenuItem("Tools/unwritten/Quick Fixes/Migrate MobRoster to Assets", priority = 2000)]
     static void Migrate()
@@ -84,8 +84,8 @@ public static class MobRosterMigration
     static void EnsureFolder(string path)
     {
         if (AssetDatabase.IsValidFolder(path)) return;
-        if (!AssetDatabase.IsValidFolder("Assets/Resources")) AssetDatabase.CreateFolder("Assets", "Resources");
-        AssetDatabase.CreateFolder("Assets/Resources", "Monsters");
+        if (!AssetDatabase.IsValidFolder("Assets/3_Data/Resources")) AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
+        AssetDatabase.CreateFolder("Assets/3_Data/Resources", "Monsters");
     }
 
     static string Kebab(string s)

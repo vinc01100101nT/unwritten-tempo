@@ -14,7 +14,7 @@ using UnityEngine;
 public struct MonsterArchetype
 {
     public string name;
-    public string sheet;        // folder under Assets/Art/NinjaAdventure/Actor/Monster (e.g. "Slime")
+    public string sheet;        // folder under Assets/1_Authored/Art/Billboards/Actor/Monster (e.g. "Slime")
     public int    weight;       // relative spawn frequency in a mixed field
     public Color  tint;         // SpriteRenderer tint (white = none)
     public float  scale;        // size multiplier on the base billboard scale

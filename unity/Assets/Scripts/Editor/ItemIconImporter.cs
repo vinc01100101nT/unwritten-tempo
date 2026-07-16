@@ -21,9 +21,9 @@ using UnityEngine;
 public static class ItemIconImporter
 {
     // Source PNGs go here (named by item id). Kept OUT of Resources — only the Item assets need to ship.
-    const string SourceDir = "Assets/Art/Items";
+    const string SourceDir = "Assets/1_Authored/Art/Items";
     // Where the Item assets live (BagSeeder loads them at runtime).
-    const string ItemsDir = "Assets/Resources/Items";
+    const string ItemsDir = "Assets/3_Data/Resources/Items";
     const int Ppu = 256;
 
     [MenuItem("Tools/unwritten/Art/Import Item Icons", priority = 622)]

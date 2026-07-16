@@ -15,7 +15,7 @@ using UnityEngine;
 /// </summary>
 public static class TreeBarkColliderBaker
 {
-    const string TreesFolder = "Assets/Prefabs/Props/Trees";
+    const string TreesFolder = "Assets/1_Authored/Prefabs/Props/Trees";
     const int BarkSubMesh = 0;   // material slot 0 = bark, slot 1 = leaves (consistent across the Pxltgr set)
 
     [MenuItem("Tools/unwritten/Props/Bake Bark-Only Tree Colliders", priority = 508)]

@@ -23,7 +23,7 @@ public static class TrainingDummyTool
         var tex = RigBuilder25D.MonsterSheet();
         if (tex == null)
         { EditorUtility.DisplayDialog("Training Dummy",
-            "No Ninja Adventure monster sprite sheet found under Assets/Art/NinjaAdventure/Actor/Monster.", "OK"); return; }
+            "No Ninja Adventure monster sprite sheet found under Assets/1_Authored/Art/Billboards/Actor/Monster.", "OK"); return; }
 
         var prev = GameObject.Find(Name);
         if (prev != null) Object.DestroyImmediate(prev);

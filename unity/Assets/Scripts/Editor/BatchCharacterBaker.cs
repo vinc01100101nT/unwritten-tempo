@@ -9,12 +9,12 @@ using UnityEngine;
 /// name onto <see cref="CharacterAction"/>, bakes 8-direction sprite strips via the shared
 /// <see cref="SpriteBakeCore"/>, writes a <see cref="BakedBillboard8"/> prefab, and registers it in a
 /// <see cref="CharacterRoster"/>. Start with a small <b>first N</b> to sanity-check before committing to the
-/// full (long) batch. Output → <c>Assets/Art/Characters/&lt;name&gt;/</c>.
+/// full (long) batch. Output → <c>Assets/1_Authored/Art/Characters/&lt;name&gt;/</c>.
 /// </summary>
 public class BatchCharacterBaker : EditorWindow
 {
-    string fbxFolder = "Assets/Art/Quat/FBX";
-    string outputRoot = "Assets/Art/Characters";
+    string fbxFolder = "Assets/1_Authored/Art/Characters/Models";
+    string outputRoot = "Assets/1_Authored/Art/Characters";
     // yawOffset 0 = correct for the Quaternius pack (faces the opposite way from Mixamo's +Z-forward, which needs 180).
     // framePadding 1.2 (NOT 1.0): the cell is framed around the UNION of all poses, and the jump apex is the
     // tallest — at padding 1.0 it sat flush with the cell's top edge and the head got CLIPPED. 1.2 leaves ~8.5%

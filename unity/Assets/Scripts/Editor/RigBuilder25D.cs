@@ -144,8 +144,8 @@ public static class RigBuilder25D
 
     public static void BuildCursor(GameObject host)
     {
-        const string dir = "Assets/Art/KenneyCursorPack/PNG/Outline/Default";
-        const string dirBig = "Assets/Art/KenneyCursorPack/PNG/Outline/Double";   // 64×64 variants
+        const string dir = "Assets/0_Raw/KenneyCursorPack/PNG/Outline/Default";
+        const string dirBig = "Assets/0_Raw/KenneyCursorPack/PNG/Outline/Double";   // 64×64 variants
         foreach (var n in new[] { "pointer_b", "tool_sword_a", "target_b", "hand_open" })
             AssetDatabase.ImportAsset($"{dir}/{n}.png", ImportAssetOptions.ForceUpdate);   // ensure readable Cursor textures
         AssetDatabase.ImportAsset($"{dirBig}/target_round_b.png", ImportAssetOptions.ForceUpdate);
@@ -342,7 +342,7 @@ public static class RigBuilder25D
             dropper.goldMin = arc.goldMin;
             dropper.goldMax = arc.goldMax;
             // GoldCoin.png is a Multiple-sprite sheet — LoadAllAssetsAtPath picks the first Sprite.
-            foreach (var obj in AssetDatabase.LoadAllAssetsAtPath("Assets/Art/NinjaAdventure/Items/Treasure/GoldCoin.png"))
+            foreach (var obj in AssetDatabase.LoadAllAssetsAtPath("Assets/1_Authored/Art/Billboards/Items/Treasure/GoldCoin.png"))
                 if (obj is Sprite s) { dropper.coinSprite = s; break; }
 
             if (hasItems)
@@ -384,7 +384,7 @@ public static class RigBuilder25D
     public static Texture2D MonsterSheet(string name)
     {
         if (string.IsNullOrEmpty(name)) return MonsterSheet();
-        string sheetPath = ResolveMonsterSheetPath($"Assets/Art/NinjaAdventure/Actor/Monster/{name}", name);
+        string sheetPath = ResolveMonsterSheetPath($"Assets/1_Authored/Art/Billboards/Actor/Monster/{name}", name);
         return sheetPath == null ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
     }
 
@@ -409,7 +409,7 @@ public static class RigBuilder25D
 
     static string FindMonsterSheet()
     {
-        const string dir = "Assets/Art/NinjaAdventure/Actor/Monster";
+        const string dir = "Assets/1_Authored/Art/Billboards/Actor/Monster";
         foreach (var n in new[] { "Slime", "KappaGreen", "Cyclope", "BlueBat", "Flam" })
         {
             string p = $"{dir}/{n}/SpriteSheet.png";
@@ -485,7 +485,7 @@ public static class RigBuilder25D
     /// Inspector.</summary>
     static Sprite LoadSkillIcon(string relativeNoExt)
     {
-        string path = $"Assets/Art/NinjaAdventure/UI/Skill Icon/{relativeNoExt}.png";
+        string path = $"Assets/1_Authored/Art/Billboards/UI/Skill Icon/{relativeNoExt}.png";
         var importer = AssetImporter.GetAtPath(path) as TextureImporter;
         if (importer == null) { Debug.LogWarning($"[unwritten] Hotbar icon not found: {path}"); return null; }
         // The pack ships these icons as Sprite/Multiple (one 24×24 sub-sprite each), which

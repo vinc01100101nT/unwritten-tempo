@@ -18,7 +18,7 @@ using UnityEngine;
 public class AmbientLife : MonoBehaviour
 {
     [Header("Cast")]
-    [Tooltip("Baked characters to draw townsfolk from (Assets/Art/Characters/CharacterRoster.asset). " +
+    [Tooltip("Baked characters to draw townsfolk from (Assets/1_Authored/Art/Characters/CharacterRoster.asset). " +
              "Assigned for you by the editor tool.")]
     public CharacterRoster roster;
 

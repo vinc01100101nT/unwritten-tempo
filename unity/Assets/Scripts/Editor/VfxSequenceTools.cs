@@ -9,7 +9,7 @@ using UnityEngine;
 /// </summary>
 public static class VfxSequenceTools
 {
-    const string Dir = "Assets/Resources/VfxSequences";
+    const string Dir = "Assets/3_Data/Resources/VfxSequences";
 
     [MenuItem("Tools/unwritten/Art/Build Default Vfx Sequences")]
     public static void BuildDefaults()
@@ -78,9 +78,9 @@ public static class VfxSequenceTools
 
     static void EnsureFolder()
     {
-        if (!AssetDatabase.IsValidFolder("Assets/Resources"))
-            AssetDatabase.CreateFolder("Assets", "Resources");
+        if (!AssetDatabase.IsValidFolder("Assets/3_Data/Resources"))
+            AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
         if (!AssetDatabase.IsValidFolder(Dir))
-            AssetDatabase.CreateFolder("Assets/Resources", "VfxSequences");
+            AssetDatabase.CreateFolder("Assets/3_Data/Resources", "VfxSequences");
     }
 }

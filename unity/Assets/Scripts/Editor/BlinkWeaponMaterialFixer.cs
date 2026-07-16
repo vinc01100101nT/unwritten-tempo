@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Re-points every material in the Blink weapon pack (<c>Assets/Blink</c>) from the built-in <b>Standard</b> shader
+/// Re-points every material in the Blink weapon pack (<c>Assets/0_Raw/Blink</c>) from the built-in <b>Standard</b> shader
 /// (which a URP project renders MAGENTA) onto <b>Universal Render Pipeline/Lit</b>, carrying the albedo/normal/
 /// metallic/emission maps across the Standard→URP property rename. One click for the whole pack instead of Unity's
 /// select-a-folder converter. Idempotent — re-running on already-URP materials is a no-op. Source-named because it's
@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 public static class BlinkWeaponMaterialFixer
 {
-    const string Root = "Assets/Blink";
+    const string Root = "Assets/0_Raw/Blink";
 
     [MenuItem("Tools/unwritten/Weapons/Fix Blink Weapon Materials (URP)", priority = 661)]
     static void Fix()

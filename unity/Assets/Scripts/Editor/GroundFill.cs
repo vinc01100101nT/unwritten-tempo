@@ -16,7 +16,7 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public static class GroundFill
 {
-    const string PropsDir = "Assets/Prefabs/Props";
+    const string PropsDir = "Assets/1_Authored/Prefabs/Props";
     const string RootName = "Ground_Fill";
 
     const float TileTarget = 2.5f;   // world-unit size per ground tile (a few big tiles, not thousands of tiny)

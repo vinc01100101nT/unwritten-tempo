@@ -21,7 +21,7 @@ public class SkillComposerWindow : EditorWindow
     SkillDef sel;
     Vector2 listScroll, bodyScroll;
     bool listCollapsed;
-    const string Dir = "Assets/Resources/Skills";
+    const string Dir = "Assets/3_Data/Resources/Skills";
 
     void OnEnable() => Refresh();
 
@@ -364,9 +364,9 @@ public class SkillComposerWindow : EditorWindow
 
     static void EnsureFolder()
     {
-        if (!AssetDatabase.IsValidFolder("Assets/Resources"))
-            AssetDatabase.CreateFolder("Assets", "Resources");
+        if (!AssetDatabase.IsValidFolder("Assets/3_Data/Resources"))
+            AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
         if (!AssetDatabase.IsValidFolder(Dir))
-            AssetDatabase.CreateFolder("Assets/Resources", "Skills");
+            AssetDatabase.CreateFolder("Assets/3_Data/Resources", "Skills");
     }
 }

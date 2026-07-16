@@ -11,7 +11,7 @@ using UnityEngine;
 public class MapBgmTableWindow : EditorWindow
 {
     const string ScenesDir = "Assets/Scenes";
-    const string ResourcesDir = "Assets/Resources";
+    const string ResourcesDir = "Assets/3_Data/Resources";
     const string TablePath = ResourcesDir + "/MapBgmTable.asset";
 
     MapBgmTable table;
@@ -76,7 +76,7 @@ public class MapBgmTableWindow : EditorWindow
     {
         var t = AssetDatabase.LoadAssetAtPath<MapBgmTable>(TablePath);
         if (t != null) return t;
-        if (!Directory.Exists(ResourcesDir)) AssetDatabase.CreateFolder("Assets", "Resources");
+        if (!Directory.Exists(ResourcesDir)) AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
         t = CreateInstance<MapBgmTable>();
         AssetDatabase.CreateAsset(t, TablePath);
         AssetDatabase.SaveAssets();

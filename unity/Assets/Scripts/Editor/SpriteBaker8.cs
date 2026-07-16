@@ -9,7 +9,7 @@ using UnityEngine;
 /// this is just the UI, the rotate/play preview, and a spawn-test-character helper.
 ///
 /// Action names are picked from the <see cref="CharacterAction"/> enum (a closed contract set) rather than
-/// typed, so a baked strip's name always matches what the runtime looks up. Output → <c>Assets/Art/BakedChars/&lt;name&gt;/</c>.
+/// typed, so a baked strip's name always matches what the runtime looks up. Output → <c>Assets/2_Generated/BakedChars/&lt;name&gt;/</c>.
 /// </summary>
 public class SpriteBaker8 : EditorWindow
 {
@@ -59,7 +59,7 @@ public class SpriteBaker8 : EditorWindow
         if (previewPlaying && previewFrames != null) { previewTime += dt; Repaint(); }
     }
 
-    string OutDir => "Assets/Art/BakedChars/" + SpriteBakeCore.Sanitize(charName);
+    string OutDir => "Assets/2_Generated/BakedChars/" + SpriteBakeCore.Sanitize(charName);
 
     // Build the core's action list from the window rows that have a clip assigned.
     List<SpriteBakeCore.Action> CoreActions()
