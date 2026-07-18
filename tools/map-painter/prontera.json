@@ -6960,6 +6960,36 @@
       "wall": "Wall_part2",
       "tower": "Wall_tower1",
       "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 6.5,
+      "z": 25.5,
+      "yaw": 0,
+      "wall": "Wall_part2",
+      "tower": "Wall_tower1",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 5.5,
+      "z": 24.5,
+      "yaw": 0,
+      "wall": "Wall_part2",
+      "tower": "Wall_tower1",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 4.5,
+      "z": 23.5,
+      "yaw": 0,
+      "wall": "Wall_part2",
+      "tower": "Wall_tower1",
+      "thickness": 1
     }
   ]
 }
