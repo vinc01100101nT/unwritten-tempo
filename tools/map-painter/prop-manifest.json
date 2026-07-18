@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "exportedAt": "2026-07-18 08:30:39",
+    "exportedAt": "2026-07-18 14:48:34",
     "cellSize": 1.0,
     "groundTexWorldSize": 2.5,
     "brushes": [
@@ -89,57 +89,57 @@
             "channel": -1,
             "hasFootprint": true,
             "footprint": {
-                "x": 9.444990158081055,
-                "z": 3.2684011459350588
+                "x": 2.8334970474243166,
+                "z": 0.9805203676223755
             },
             "prefabs": [
                 {
                     "name": "Wall_part2",
                     "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_part2.prefab",
-                    "x": 7.814701080322266,
-                    "z": 1.9415531158447266,
+                    "x": 2.3444104194641115,
+                    "z": 0.5824659466743469,
                     "thumb": "thumbnails/Wall_part2.png"
                 },
                 {
                     "name": "Wall_part1",
                     "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_part1.prefab",
-                    "x": 3.9073486328125,
-                    "z": 2.036309242248535,
+                    "x": 1.172204613685608,
+                    "z": 0.6108927726745606,
                     "thumb": "thumbnails/Wall_part1.png"
                 },
                 {
                     "name": "Wall_entrance",
                     "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_entrance.prefab",
-                    "x": 9.444990158081055,
-                    "z": 3.2684011459350588,
+                    "x": 2.8334970474243166,
+                    "z": 0.9805203676223755,
                     "thumb": "thumbnails/Wall_entrance.png"
                 },
                 {
                     "name": "Wall_gateR",
                     "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_gateR.prefab",
-                    "x": 1.551121711730957,
-                    "z": 0.4819532632827759,
+                    "x": 0.46533653140068056,
+                    "z": 0.144585981965065,
                     "thumb": "thumbnails/Wall_gateR.png"
                 },
                 {
                     "name": "Wall_gateL",
                     "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_gateL.prefab",
-                    "x": 1.551121711730957,
-                    "z": 0.48195338249206545,
+                    "x": 0.46533653140068056,
+                    "z": 0.14458602666854859,
                     "thumb": "thumbnails/Wall_gateL.png"
                 },
                 {
                     "name": "Wall_tower2",
                     "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_tower2.prefab",
-                    "x": 2.8497562408447267,
-                    "z": 2.8541698455810549,
+                    "x": 0.8549268841743469,
+                    "z": 0.8562510013580322,
                     "thumb": "thumbnails/Wall_tower2.png"
                 },
                 {
                     "name": "Wall_tower1",
                     "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_tower1.prefab",
-                    "x": 2.0156612396240236,
-                    "z": 2.723012924194336,
+                    "x": 0.6046984195709229,
+                    "z": 0.8169038891792297,
                     "thumb": "thumbnails/Wall_tower1.png"
                 }
             ]
@@ -154,8 +154,8 @@
             "channel": -1,
             "hasFootprint": true,
             "footprint": {
-                "x": 21.81745147705078,
-                "z": 20.976228713989259
+                "x": 6.545235633850098,
+                "z": 6.2928690910339359
             },
             "prefabs": [
                 {
@@ -189,106 +189,106 @@
                 {
                     "name": "Birch_tree1",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Birch_tree1.prefab",
-                    "x": 12.521060943603516,
-                    "z": 12.640932083129883,
+                    "x": 3.7563183307647707,
+                    "z": 3.7922797203063967,
                     "thumb": "thumbnails/Birch_tree1.png"
                 },
                 {
                     "name": "Birch_tree2",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Birch_tree2.prefab",
-                    "x": 8.45737075805664,
-                    "z": 8.288402557373047,
+                    "x": 2.5372114181518556,
+                    "z": 2.486520767211914,
                     "thumb": "thumbnails/Birch_tree2.png"
                 },
                 {
                     "name": "Birch_tree3",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Birch_tree3.prefab",
-                    "x": 8.261550903320313,
-                    "z": 8.919342994689942,
+                    "x": 2.4784653186798097,
+                    "z": 2.6758029460906984,
                     "thumb": "thumbnails/Birch_tree3.png"
                 },
                 {
                     "name": "Deciduous_tree1",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Deciduous_tree1.prefab",
-                    "x": 16.318241119384767,
-                    "z": 13.089559555053711,
+                    "x": 4.895472526550293,
+                    "z": 3.926867961883545,
                     "thumb": "thumbnails/Deciduous_tree1.png"
                 },
                 {
                     "name": "Deciduous_tree2",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Deciduous_tree2.prefab",
-                    "x": 21.81745147705078,
-                    "z": 20.976228713989259,
+                    "x": 6.545235633850098,
+                    "z": 6.2928690910339359,
                     "thumb": "thumbnails/Deciduous_tree2.png"
                 },
                 {
                     "name": "Deciduous_tree3",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Deciduous_tree3.prefab",
-                    "x": 12.824241638183594,
-                    "z": 12.606486320495606,
+                    "x": 3.8472726345062258,
+                    "z": 3.7819459438323976,
                     "thumb": "thumbnails/Deciduous_tree3.png"
                 },
                 {
                     "name": "Deciduous_tree4",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Deciduous_tree4.prefab",
-                    "x": 15.884498596191407,
-                    "z": 14.289379119873047,
+                    "x": 4.765349864959717,
+                    "z": 4.286813735961914,
                     "thumb": "thumbnails/Deciduous_tree4.png"
                 },
                 {
                     "name": "Oak_tree1",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Oak_tree1.prefab",
-                    "x": 20.955707550048829,
-                    "z": 20.17801284790039,
+                    "x": 6.286712646484375,
+                    "z": 6.053404331207275,
                     "thumb": "thumbnails/Oak_tree1.png"
                 },
                 {
                     "name": "Oak_tree2",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Oak_tree2.prefab",
-                    "x": 16.152355194091798,
-                    "z": 19.37970733642578,
+                    "x": 4.845706939697266,
+                    "z": 5.813912391662598,
                     "thumb": "thumbnails/Oak_tree2.png"
                 },
                 {
                     "name": "Oak_tree3",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Oak_tree3.prefab",
-                    "x": 15.884498596191407,
-                    "z": 15.023685455322266,
+                    "x": 4.765349864959717,
+                    "z": 4.507105827331543,
                     "thumb": "thumbnails/Oak_tree3.png"
                 },
                 {
                     "name": "Pine_tree1",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Pine_tree1.prefab",
-                    "x": 11.654243469238282,
-                    "z": 11.841659545898438,
+                    "x": 3.4962732791900636,
+                    "z": 3.5524981021881105,
                     "thumb": "thumbnails/Pine_tree1.png"
                 },
                 {
                     "name": "Pine_tree2",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Pine_tree2.prefab",
-                    "x": 11.956146240234375,
-                    "z": 11.841651916503907,
+                    "x": 3.586843967437744,
+                    "z": 3.5524957180023195,
                     "thumb": "thumbnails/Pine_tree2.png"
                 },
                 {
                     "name": "Pine_tree3",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Pine_tree3.prefab",
-                    "x": 5.195198059082031,
-                    "z": 4.959409713745117,
+                    "x": 1.558559536933899,
+                    "z": 1.4878230094909669,
                     "thumb": "thumbnails/Pine_tree3.png"
                 },
                 {
                     "name": "Willow_tree1",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Willow_tree1.prefab",
-                    "x": 15.788318634033204,
-                    "z": 17.58961296081543,
+                    "x": 4.7364959716796879,
+                    "z": 5.276884078979492,
                     "thumb": "thumbnails/Willow_tree1.png"
                 },
                 {
                     "name": "Willow_tree2",
                     "path": "Assets/1_Authored/Prefabs/Props/Trees/Willow_tree2.prefab",
-                    "x": 12.521059036254883,
-                    "z": 12.785322189331055,
+                    "x": 3.7563178539276125,
+                    "z": 3.835596799850464,
                     "thumb": "thumbnails/Willow_tree2.png"
                 }
             ]

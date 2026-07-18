@@ -8,6 +8,7 @@
 - [Maps HAND-AUTHORED via Prop Palette](../authoring-toolkit-prop-palette.md) — `PropPalette` + Authoring menu; DON'T write per-map bakers.
 - [World Creator pipeline (HTML→world.json→Unity)](../world-creator-pipeline.md) — Part 1 HTML DONE; spec q176qkd22qmbk4r5t9g7fcc30n895whr.
 - [Map painter pipeline](../map-painter-pipeline.md) — Phase 1 DONE (`BrushPalette`); Phase 2 HTML, Phase 3 importer.
+- [Map painter WALL pipeline + 3 bugs](../map-painter-wall-pipeline.md) — diagonal runs, thickness, piece pickers, vector-sum tower facing; removed auto road→gate; fixed piece z-fight (scale-to-fit, no min clamp); diagnose via baked scene + Editor.log + offline dotnet compile.
 - [⭐ MapRecipe + RecipeGenerator (the ONE generator)](../recipe-generator.md) — every map = `MapRecipe` SO; old per-kind generators DELETED.
 - [Floor autotiling via RuleTiles](../floor-autotile-ruletiles.md) — `Build Floor RuleTiles` → 8 corner-correct RuleTiles.
 - [Runtime material on a PREFAB → null/pink](../runtime-material-on-prefab-null-pink.md) — `new Material()` into a prefab serializes to `fileID:0`; persist as .mat first (Sway Selected Tree).
@@ -15,4 +16,7 @@
 - [Ground blend washes out paths at small cellSize](../ground-blend-small-cellsize-washed-paths.md) — `sub=round(cellSize/0.8)` hit 1 at cellSize=1 → only cell-corner samples → 1-cell paths peak at 0.5; floor `sub` at even≥2.
 - [Map painter ground density mismatch](../map-painter-ground-density-mismatch.md) — painter stretched 1 texture repeat per CELL vs game's fixed 2.5u/repeat; SSOT = `GroundBlendBuilder.GroundTexWorldSize` → manifest `groundTexWorldSize` → painter CanvasPattern.
 - [Map painter thumbnail aspect squash](../map-painter-thumbnail-aspect-squash.md) — square thumb (long axis + margin) stretched into non-square footprint → elongated props squashed; render viewport AT footprint aspect, zero margin.
+- [Map painter footprint ignored authored scale](../map-painter-footprint-ignored-authored-scale.md) — exporter forced localScale=1, discarding trees' authored 0.3 root scale → drew ~3.3× oversized; measure as PLACED (`localScale *=`), regen manifest.
+- [Diagonal half-cells (📏 line tool)](../map-painter-diagonal-cuts.md) — cut = KEPT corner nw/ne/se/sw, layered `under`, n↔s flip on import, per-edge neighbour levels; trim-along-diagonal deferred.
+- [Painted elevation = EXACT, no corner-fill](../painted-elevation-exact-no-cornerfill.md) — FillCornerNotches auto-fattened painted zigzags (2-wide→3-wide); disabled, painted levels are authoritative.
 - [Sunken path corners shredded into diagonal](../ground-blend-sunken-path-corners-shredded.md) — `FillCornerNotches` raised −1 lane turns to base level → zigzag path broke into diagonal; skip `L<0`.

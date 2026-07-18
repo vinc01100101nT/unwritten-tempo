@@ -500,7 +500,10 @@ public class BrushPaletteWindow : EditorWindow
         return false;
     }
 
-    // Measure a prefab's world XZ footprint at the given scale (identity rotation), via the shared bounds helper.
+    // Measure a prefab's world XZ footprint as it will actually be PLACED (identity rotation), via the shared bounds
+    // helper. The prefab owns its size: the importer seats props at the prefab's OWN authored root scale and never
+    // rescales, so we must measure at that scale too — `scale` is an extra multiplier on top (1 = as-authored).
+    // (Bug: forcing localScale = 1 ignored trees' authored 0.3 root scale, so the painter drew them ~3.3× oversized.)
     static bool Footprint(string name, float scale, out float fx, out float fz)
     {
         fx = fz = 0f;
@@ -509,7 +512,7 @@ public class BrushPaletteWindow : EditorWindow
         var go = (GameObject)PrefabUtility.InstantiatePrefab(pf);
         go.transform.position = Vector3.zero;
         go.transform.rotation = Quaternion.identity;
-        go.transform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
+        go.transform.localScale *= Mathf.Max(0.01f, scale);
         bool ok = PropPlacement.TryWorldBounds(go, out var bnds);
         if (ok) { fx = bnds.size.x; fz = bnds.size.z; }
         Object.DestroyImmediate(go);

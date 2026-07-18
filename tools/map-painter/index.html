@@ -75,6 +75,16 @@
       <h2>Variant — <span id="variantBrush"></span></h2>
       <div id="variants"></div>
     </div>
+    <div class="group" id="wallGroup" hidden>
+      <h2>Wall piece</h2>
+      <div id="wallPieces"></div>
+      <h2 style="margin-top:10px">Tower piece</h2>
+      <div id="towerPieces"></div>
+      <label class="fld" style="margin-top:8px">Thickness
+        <input id="wallThick" type="range" min="0.4" max="2" step="0.1" value="1" style="flex:1">
+        <span id="wallThickTxt">1.0×</span>
+      </label>
+    </div>
     <div class="group">
       <h2>Ground brushes</h2>
       <div id="gndBrushes"></div>
@@ -83,11 +93,13 @@
       <h2>Elevation</h2>
       <button id="raiseBtn" class="brush">⬆️ Raise <span class="meta">L +1 · R −1</span></button>
       <button id="lowerBtn" class="brush" style="margin-top:4px">⬇️ Lower <span class="meta">L −1 · R +1</span></button>
+      <button id="flattenBtn" class="brush" style="margin-top:6px">🎚️ Flatten all <span class="meta">clear elevations</span></button>
     </div>
     <div class="group">
       <h2>Tools</h2>
       <button id="eraseBtn" class="brush">🩹 Eraser <span class="meta">right-drag</span></button>
       <button id="fillBtn" class="brush" style="margin-top:6px">🪣 Fill <span class="meta">flood ground</span></button>
+      <button id="lineBtn" class="brush" style="margin-top:6px">📏 Line <span class="meta">45° halves</span></button>
       <button id="fitBtn" class="brush" style="margin-top:6px">🔍 Fit view</button>
       <button id="clearBtn" class="brush" style="margin-top:6px">🗑️ Clear map</button>
     </div>
@@ -104,7 +116,7 @@
   </main>
 
   <footer>
-    <span id="hint">Left-drag paint · Right-drag erase · 🪣 Fill = act on whole matching-tile region (paint / raise / lower / erase) · Elevation: L +1 / R −1 per cell · <kbd>Alt</kbd> peek levels / +drag move · <kbd>R</kbd> rotate · Free: drag after placing to rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
+    <span id="hint">Left-drag paint · Right-drag erase · 🪣 Fill = act on whole matching-tile region (paint / raise / lower / erase, half-cells included) · 📏 Line = drag a 1-tile stroke, 45° edges become half-cells; with the Wall brush it lays diagonal wall runs (<kbd>Esc</kbd> aborts) · Elevation: L +1 / R −1 per cell · <kbd>Alt</kbd> peek levels / +drag move · <kbd>R</kbd> rotate · Free: drag after placing to rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
     <span class="sp" style="flex:1"></span>
     <span id="stat"></span>
   </footer>
@@ -122,9 +134,13 @@ const S = {
   activeVariant:"",            // chosen prefab name within the active brush ("" = random)
   yaw:0,                       // current placement yaw, degrees (0 = up/north)
   fillMode:false,              // 🪣 bucket: a ground click floods the contiguous same-tile region instead of one cell
-  ground:{},                   // "cx,cz" -> brushId  (ground-paint layer)
-  heights:{},                  // "cx,cz" -> integer elevation level (gutter −1, raised +1); absent = 0
+  lineMode:false,              // 📏 line: drag a 45°-snapped 1-tile-wide stroke; its diagonal edges land as half-cut cells
+  wallSel:{ wall:"", tower:"", thickness:1 },   // per-STROKE wall settings, stamped onto each painted wall cell ("" = kit default)
+  lineStart:null, lineEnd:null,// cell anchors of the line drag in progress (null = not dragging)
+  ground:{},                   // "cx,cz" -> brushId | { brush, cut, under } — cut = KEPT corner (nw/ne/se/sw), under = tile left on the cut-away half
+  heights:{},                  // "cx,cz" -> level | { level, cut, under } — kept-half level; under = cut-away half's level; absent = 0
   strokeCells:null,            // cells already bumped THIS elevation stroke (one delta per cell per drag)
+  eraseCells:null,             // cells whose object was erased THIS drag → their ground is spared (object-first eraser)
   objects:[],                  // { brush, prefab, x, z, yaw }  (world units; origin = top-left corner)
   view:{ x:40, y:40, zoom:1 }, // pan px + zoom
   basePx:26,                   // px per cell at zoom 1
@@ -249,10 +265,12 @@ function buildPreview() {
     : b.color;
 }
 // Variant strip: pick a specific prefab (drawn + placed at its OWN footprint) or 🎲 Random for a mixed look.
+// The wall brush is special-cased to its own panel (wall/tower piece + thickness) — autotile ignores variants.
 function buildVariants() {
   const grp = document.getElementById("variantGroup"), box = document.getElementById("variants");
   const b = S.brushById[S.active];
-  if (!b || b.kind !== "object" || !(b.prefabs && b.prefabs.length)) { grp.hidden = true; return; }
+  buildWallPanel(b);
+  if (!b || b.kind !== "object" || isCellObject(b) || !(b.prefabs && b.prefabs.length)) { grp.hidden = true; return; }
   grp.hidden = false;
   document.getElementById("variantBrush").textContent = b.label;
   box.innerHTML = "";
@@ -273,6 +291,47 @@ function buildVariants() {
   for (const pf of b.prefabs) add(pf.name, pf.name, `${pf.x.toFixed(1)}×${pf.z.toFixed(1)}`);
 }
 
+// ── Wall panel: pick the straight WALL piece + corner TOWER piece + thickness for the NEXT strokes ─────────
+// Settings are per-stroke: they're stamped onto each wall cell as it's painted, so one map can mix wall styles.
+// Gate/entrance pieces are excluded — the importer swaps those in automatically where a road crosses the wall.
+function wallPiecesOf(b, wantTower) {
+  return (b && b.prefabs || []).filter(pf => {
+    const n = pf.name.toLowerCase();
+    if (n.includes("gate") || n.includes("entrance")) return false;
+    return n.includes("tower") === wantTower;
+  });
+}
+function buildWallPanel(b) {
+  const grp = document.getElementById("wallGroup");
+  if (!b || !isCellObject(b)) { grp.hidden = true; return; }
+  grp.hidden = false;
+  const strip = (boxId, list, get, set) => {
+    const box = document.getElementById(boxId);
+    box.innerHTML = "";
+    if (!get() && list.length) set(list[0].name);   // default = first kit piece
+    for (const pf of list) {
+      const el = document.createElement("button");
+      el.className = "brush" + (get() === pf.name ? " on" : "");
+      const img = thumbFor(pf.name);
+      const sw = img
+        ? `<span class="sw" style="background:#0000 center/contain no-repeat url('${img.src}')"></span>`
+        : `<span class="sw" style="background:${b.color}"></span>`;
+      el.innerHTML = `${sw}${pf.name}<span class="meta">${pf.x.toFixed(1)}×${pf.z.toFixed(1)}</span>`;
+      el.onclick = () => { set(pf.name); buildWallPanel(b); render(); };
+      box.appendChild(el);
+    }
+  };
+  strip("wallPieces",  wallPiecesOf(b, false), () => S.wallSel.wall,  v => S.wallSel.wall  = v);
+  strip("towerPieces", wallPiecesOf(b, true),  () => S.wallSel.tower, v => S.wallSel.tower = v);
+  document.getElementById("wallThick").value = S.wallSel.thickness;
+  document.getElementById("wallThickTxt").textContent = S.wallSel.thickness.toFixed(1) + "×";
+}
+document.getElementById("wallThick").oninput = e => {
+  S.wallSel.thickness = +e.target.value;
+  document.getElementById("wallThickTxt").textContent = S.wallSel.thickness.toFixed(1) + "×";
+  render();
+};
+
 // ── Coordinate helpers ──────────────────────────────────────────────────────────────────────────────────
 function screenToWorld(sx, sy) {
   const p = pxPerWorld();
@@ -287,15 +346,67 @@ const inBounds = (cx, cz) => cx >= 0 && cz >= 0 && cx < S.cols && cz < S.rows;
 // Autotiled object brushes are painted as plain grid cells (the importer assembles the kit from neighbours), so
 // they snap one-per-cell, fill the cell square, and ignore yaw. Wall is the one such brush today.
 const isCellObject = b => !!b && b.id === "wall";
-// Wall-cell lookup, rebuilt each render() so the preview can classify each cell by its neighbours EXACTLY like the
-// Unity importer (straight run / tower post / gate) — see drawWallGlyph.
-let _wallSet = new Set();
+// Wall-cell lookup (cell key → painted wall object), rebuilt each render() so the preview can classify each cell
+// by its neighbours EXACTLY like the Unity importer (straight / diagonal / tower / gate) — see drawWallGlyph.
+let _wallSet = new Map();
 const wallKey = (cx, cz) => cx + "," + cz;
 const wallAt = (cx, cz) => _wallSet.has(wallKey(cx, cz));
+
+// ── Wall autotile classification (must mirror MapPainterImporter.KindOf) ─────────────────────────────────
+// A wall cell's piece from its neighbours: two opposite ORTHOGONAL neighbours → straight run ("x"/"z"); two
+// opposite DIAGONAL neighbours (and nothing else touching) → diagonal run ("ne" = NE–SW, "nw" = NW–SE);
+// anything else (corner / end / T / cross / isolated) → "tower". Orthogonal rules ignore diagonal neighbours
+// on purpose — two parallel runs one cell apart must not demote each other's straights to towers.
+function wallKindAt(cx, cz) {
+  if (!wallAt(cx, cz)) return "";
+  const n = wallAt(cx, cz - 1), s = wallAt(cx, cz + 1), e = wallAt(cx + 1, cz), w = wallAt(cx - 1, cz);
+  if (e && w && !n && !s) return "x";
+  if (n && s && !e && !w) return "z";
+  if (!n && !s && !e && !w) {
+    const ne = wallAt(cx + 1, cz - 1), nw = wallAt(cx - 1, cz - 1), se = wallAt(cx + 1, cz + 1), sw = wallAt(cx - 1, cz + 1);
+    if (ne && sw && !nw && !se) return "ne";
+    if (nw && se && !ne && !sw) return "nw";
+  }
+  return "tower";
+}
+// Tower facing = the "average" of the walls it supports, computed by VECTOR SUM of the unit directions toward
+// each wall neighbour — never (a+b)/2 on raw angles (0° & 350° would average to a bogus 175°). Corner N+E walls
+// → 45°. When the sum cancels (a tower BETWEEN two colinear walls, or a 4-way cross), the bisector is undefined,
+// so face perpendicular to the first neighbour's run axis — a mid-run tower then faces the same way as the wall
+// itself (two walls "facing 0°" → tower faces 0°, per spec). Screen coords: north = −z(row), yaw 0 = north, CW.
+// Neighbour scan order is FIXED (N,NE,E,SE,S,SW,W,NW) so the degenerate fallback is deterministic and matches
+// the importer, which iterates the same compass order.
+function towerYawAt(cx, cz) {
+  const dirs = [[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1]];   // N,NE,E,SE,S,SW,W,NW (screen z-down)
+  let vx = 0, vz = 0, first = null;
+  for (const [dx, dz] of dirs)
+    if (wallAt(cx + dx, cz + dz)) { vx += dx; vz += dz; if (!first) first = [dx, dz]; }
+  if (!first) return 0;                                                   // isolated post
+  if (Math.abs(vx) > 1e-6 || Math.abs(vz) > 1e-6) return Math.atan2(vx, -vz) * 180 / Math.PI;
+  return Math.atan2(first[1], first[0]) * 180 / Math.PI;                  // perp of run axis: (dx,dz) → (dz,−dx), yaw = atan2(x,−z)
+}
+// ── Diagonal half-cells ─────────────────────────────────────────────────────────────────────────────────
+// A cell value is either a plain brush id / level number (full cell) or an object carrying `cut` — which CORNER's
+// half-triangle is KEPT (nw / ne / se / sw). These accessors are the ONE place both forms are read.
+const gBrush = g => typeof g === "string" ? g : (g ? g.brush : "");        // kept-half tile of a ground cell
+const gCut   = g => (g && typeof g === "object" && g.cut) ? g.cut : "";    // "" = full cell
+const hLevel = h => typeof h === "number" ? h : (h ? h.level || 0 : 0);    // kept-half level of a heights cell
+const oppositeCut = c => ({ nw:"se", se:"nw", ne:"sw", sw:"ne" }[c]);
+// Trace the kept half-triangle of a cut cell (right angle at the kept corner, hypotenuse across the diagonal).
+function triPath(sx, sy, cp, cut) {
+  const c = { nw:[[0,0],[1,0],[0,1]], ne:[[1,0],[1,1],[0,0]], se:[[1,1],[0,1],[1,0]], sw:[[0,1],[0,0],[1,1]] }[cut];
+  ctx.beginPath();
+  ctx.moveTo(sx + c[0][0] * cp, sy + c[0][1] * cp);
+  ctx.lineTo(sx + c[1][0] * cp, sy + c[1][1] * cp);
+  ctx.lineTo(sx + c[2][0] * cp, sy + c[2][1] * cp);
+  ctx.closePath();
+}
 // A ground cell that reads as a road (matches the importer's GroundChannel: ids containing "path"/"road").
-const isRoadCell = (cx, cz) => { const g = S.ground[wallKey(cx, cz)]; return !!g && (g.includes("path") || g.includes("road")); };
+const isRoadCell = (cx, cz) => { const id = gBrush(S.ground[wallKey(cx, cz)]); return !!id && (id.includes("path") || id.includes("road")); };
 
 // ── Painting ────────────────────────────────────────────────────────────────────────────────────────────
+// The current wall-stroke settings, stamped onto each wall cell as it's painted (per-stroke, so styles can mix).
+const wallStamp = () => ({ wall:S.wallSel.wall, tower:S.wallSel.tower, thickness:S.wallSel.thickness });
 function pickPrefab(b) {
   // A chosen variant (belonging to this brush) wins; otherwise pick a random variant for a mixed look.
   if (S.activeVariant && S.prefabById[S.activeVariant] && S.prefabById[S.activeVariant].brush === b.id) return S.activeVariant;
@@ -315,14 +426,14 @@ function paintAt(wx, wz, erase) {
   // Elevation brushes bump a cell one notch, once per stroke; the right button applies the opposite direction.
   // 🪣 Fill spreads the notch across the whole contiguous same-tile region under the cursor instead of one cell.
   if (S.active === "raise" || S.active === "lower") {
-    if (S.fillMode) { for (const k of fillRegion(wx, wz)) { const [cx, cz] = k.split(",").map(Number); bumpHeight(cx, cz, erase); } }
+    if (S.fillMode) { for (const [k, part] of fillRegion(wx, wz)) { const [cx, cz] = k.split(",").map(Number); bumpHeight(cx, cz, erase, part); } }
     else paintHeight(wx, wz, erase);
     return;
   }
   const b = S.brushById[S.active];
   if (erase || S.active === "erase") {
-    // 🪣 Fill + Eraser: clear the ground + elevation of the whole contiguous same-tile region in one click.
-    if (S.fillMode && S.active === "erase") { for (const k of fillRegion(wx, wz)) { delete S.ground[k]; delete S.heights[k]; } }
+    // 🪣 Fill + Eraser: clear the contiguous same-tile region (per surface, so a diagonal edge erases cleanly).
+    if (S.fillMode && S.active === "erase") { for (const [k, part] of fillRegion(wx, wz)) eraseSurface(k, part); }
     else eraseAt(wx, wz);
     return;
   }
@@ -343,30 +454,142 @@ function paintAt(wx, wz, erase) {
       if (S.objects.some(o => o.brush === b.id && Math.abs(o.x - x) < 1e-3 && Math.abs(o.z - z) < 1e-3)) return;
     }
     // Wall is autotiled on import (the importer picks straight/corner/tower/gate from neighbours), so paint it as a
-    // plain cell — yaw is ignored. Everything else keeps the chosen facing.
-    S.objects.push({ brush:b.id, prefab:pickPrefab(b), x, z, yaw:isCellObject(b) ? 0 : S.yaw });
+    // plain cell — yaw is ignored — stamped with the CURRENT stroke settings (wall/tower piece + thickness).
+    // Everything else keeps the chosen facing.
+    if (isCellObject(b)) S.objects.push({ brush:b.id, prefab:"", x, z, yaw:0, ...wallStamp() });
+    else S.objects.push({ brush:b.id, prefab:pickPrefab(b), x, z, yaw:S.yaw });
   }
 }
-// 🪣 Bucket fill (ground layer only): the set of cells 4-connected to the clicked cell that share its ORIGINAL
-// tile ("" = unpainted counts as its own region), computed without mutating. Reused for both the live hover
-// preview and the actual fill so the highlighted region is exactly what a click paints (single source of truth).
+// Which triangle half of a diagonally-cut cell a point falls in (u,v ∈ 0..1, v=0 = north/top): true = the KEPT half.
+function cutKeptSide(cut, u, v) {
+  return { nw:u + v < 1, ne:(1 - u) + v < 1, se:(1 - u) + (1 - v) < 1, sw:u + (1 - v) < 1 }[cut];
+}
+// The ground SURFACE under a world point: which tile shows there, and which part of the cell it is — "whole" for a
+// plain cell, or "kept"/"cut" for the two triangle halves of a diagonally-cut cell (kept = the tile the cut names,
+// cut = the layered `under` tile on the other half).
+function surfaceAt(wx, wz) {
+  const { cx, cz } = cellOf(wx, wz);
+  const g = S.ground[cx + "," + cz], cut = gCut(g);
+  if (!cut) return { tile:gBrush(g), part:"whole" };
+  const u = wx / S.cellSize - cx, v = wz / S.cellSize - cz;
+  return cutKeptSide(cut, u, v) ? { tile:g.brush, part:"kept" } : { tile:g.under || "", part:"cut" };
+}
+// 🪣 Bucket region: the cells 4-connected to the clicked SURFACE that show the same tile. Returns a Map k→part where
+// part is "whole" (plain cell) or "kept"/"cut" (one triangle half of a cut cell). Because a diagonally-cut cell holds
+// TWO tiles, filling/raising the prontera OUTSIDE a grass band now flows into the grass cells' cut-away halves and
+// reads as a clean 45° edge — not a staircase. Computed without mutating; drives BOTH the hover preview and the fill.
 function fillRegion(wx, wz) {
-  const start = cellOf(wx, wz), region = new Set();
+  const start = cellOf(wx, wz), region = new Map();
   if (!inBounds(start.cx, start.cz)) return region;
-  const target = S.ground[start.cx + "," + start.cz] || "";
+  const target = surfaceAt(wx, wz).tile;
+  const partOf = k => {
+    const g = S.ground[k], cut = gCut(g);
+    if (!cut) return gBrush(g) === target ? "whole" : null;
+    if (g.brush === target) return "kept";
+    if ((g.under || "") === target) return "cut";
+    return null;
+  };
   const stack = [[start.cx, start.cz]];
   while (stack.length) {
     const [cx, cz] = stack.pop();
     if (!inBounds(cx, cz)) continue;
     const k = cx + "," + cz;
-    if (region.has(k) || (S.ground[k] || "") !== target) continue;
-    region.add(k);
+    if (region.has(k)) continue;
+    const part = partOf(k);
+    if (part === null) continue;
+    region.set(k, part);
     stack.push([cx + 1, cz], [cx - 1, cz], [cx, cz + 1], [cx, cz - 1]);
   }
   return region;
 }
 function floodFillGround(wx, wz, brushId) {
-  for (const k of fillRegion(wx, wz)) S.ground[k] = brushId;
+  for (const [k, part] of fillRegion(wx, wz)) {
+    const g = S.ground[k];
+    if (part === "whole") S.ground[k] = brushId;
+    else if (part === "kept") S.ground[k] = { brush:brushId, cut:g.cut, under:g.under || "" };
+    else S.ground[k] = { brush:g.brush, cut:g.cut, under:brushId };   // "cut" → repaint only the cut-away half
+  }
+}
+// 🪣 Eraser fill on one region surface: a whole plain cell is removed; a single targeted half collapses the cell to
+// its OTHER tile/level (drop the kept half → the cell is now fully its cut-away tile, and vice-versa).
+function eraseSurface(k, part) {
+  const g = S.ground[k], h = S.heights[k];
+  if (part === "whole" || !gCut(g)) { delete S.ground[k]; delete S.heights[k]; return; }
+  const keptL = hLevel(h), unL = (h && typeof h === "object") ? (h.under || 0) : hLevel(h);
+  if (part === "kept") {
+    if (g.under) S.ground[k] = g.under; else delete S.ground[k];
+    if (unL) S.heights[k] = unL; else delete S.heights[k];
+  } else {
+    S.ground[k] = g.brush;
+    if (keptL) S.heights[k] = keptL; else delete S.heights[k];
+  }
+}
+
+// ── 📏 Line tool: a 45°-snapped, one-tile-wide stroke of the active ground brush ───────────────────────────
+// Horizontal / vertical drags lay a straight run of full cells. A diagonal drag lays the RO look: a staircase of
+// full cells with a HALF cell flanking each step on both sides, so the stroke's edges are straight 45° lines.
+function lineCells(a, b) {
+  const dx = b.cx - a.cx, dz = b.cz - a.cz;
+  const fulls = [], halves = [];
+  const push = (arr, cx, cz, cut) => { if (inBounds(cx, cz)) arr.push(cut ? { cx, cz, cut } : { cx, cz }); };
+  if (Math.abs(dx) >= 2 * Math.abs(dz)) {              // snapped horizontal
+    const s = Math.sign(dx) || 1;
+    for (let x = 0; x !== dx + s; x += s) push(fulls, a.cx + x, a.cz);
+  } else if (Math.abs(dz) >= 2 * Math.abs(dx)) {       // snapped vertical
+    const s = Math.sign(dz) || 1;
+    for (let z = 0; z !== dz + s; z += s) push(fulls, a.cx, a.cz + z);
+  } else {                                             // snapped 45° diagonal
+    const sx = Math.sign(dx) || 1, sz = Math.sign(dz) || 1;
+    const n = Math.round((Math.abs(dx) + Math.abs(dz)) / 2);
+    const cutA = (sz > 0 ? "s" : "n") + (sx > 0 ? "w" : "e");   // flank whose kept triangle hugs the two step cells
+    const cutB = (sz > 0 ? "n" : "s") + (sx > 0 ? "e" : "w");
+    for (let k = 0; k <= n; k++) {
+      const x = a.cx + k * sx, z = a.cz + k * sz;
+      push(fulls, x, z);
+      if (k < n) { push(halves, x + sx, z, cutA); push(halves, x, z + sz, cutB); }
+    }
+  }
+  return { fulls, halves };
+}
+function applyLine(cells) {
+  const id = S.active;
+  for (const c of cells.fulls) S.ground[c.cx + "," + c.cz] = id;
+  for (const c of cells.halves) {
+    const k = c.cx + "," + c.cz, prev = S.ground[k];
+    if (gBrush(prev) === id && !gCut(prev)) continue;                        // already fully this tile
+    if (prev && typeof prev === "object" && prev.brush === id) {
+      if (prev.cut === c.cut) continue;
+      if (prev.cut === oppositeCut(c.cut)) { S.ground[k] = id; continue; }   // the two halves complete the square
+      S.ground[k] = { brush:id, cut:c.cut, under:prev.under || "" };
+      continue;
+    }
+    S.ground[k] = { brush:id, cut:c.cut, under:gBrush(prev) };               // layered: the old tile stays on the cut-away half
+  }
+}
+// The 📏 Line tool on the WALL brush lays a connected run of wall cells (reusing lineCells' 45°-snapped stepping):
+// only the `fulls` — the diagonal branch's staircase — become wall cells, giving a clean 1-cell-thick diagonal
+// chain the importer reads as a 45° run (its NE–SW / NW–SE neighbours). Halves (ground-only) are ignored.
+function applyLineWall(cells) {
+  for (const c of cells.fulls) {
+    const x = (c.cx + 0.5) * S.cellSize, z = (c.cz + 0.5) * S.cellSize;
+    if (S.objects.some(o => o.brush === "wall" && Math.abs(o.x - x) < 1e-3 && Math.abs(o.z - z) < 1e-3)) continue;
+    S.objects.push({ brush:"wall", prefab:"", x, z, yaw:0, ...wallStamp() });
+  }
+}
+function drawLinePreview(p) {
+  if (!S.lineStart || !S.lineEnd) return;
+  const b = S.brushById[S.active]; if (!b) return;
+  const cells = lineCells(S.lineStart, S.lineEnd), cp = S.cellSize * p;
+  if (isCellObject(b)) {   // wall run preview: just the full-cell chain (no ground half-triangles)
+    ctx.globalAlpha = 0.4; ctx.fillStyle = b.color;
+    for (const c of cells.fulls) { const s = worldToScreen(c.cx * S.cellSize, c.cz * S.cellSize); ctx.fillRect(s.x, s.y, cp, cp); }
+    ctx.globalAlpha = 1;
+    return;
+  }
+  ctx.globalAlpha = 0.5; ctx.fillStyle = b.color;
+  for (const c of cells.fulls) { const s = worldToScreen(c.cx * S.cellSize, c.cz * S.cellSize); ctx.fillRect(s.x, s.y, cp, cp); }
+  for (const c of cells.halves) { const s = worldToScreen(c.cx * S.cellSize, c.cz * S.cellSize); triPath(s.x, s.y, cp, c.cut); ctx.fill(); }
+  ctx.globalAlpha = 1;
 }
 // Index of the topmost object whose (axis-aligned) footprint contains the point, else -1. Shared by erase + drag.
 function topObjectIndexAt(wx, wz) {
@@ -378,26 +601,46 @@ function topObjectIndexAt(wx, wz) {
 }
 function eraseAt(wx, wz) {
   // erase the topmost object whose footprint contains the point; else clear the ground + elevation of the cell.
-  const i = topObjectIndexAt(wx, wz);
-  if (i >= 0) { S.objects.splice(i, 1); return; }
+  // Object always wins, and a cell that gave up an object THIS stroke keeps its ground — so one eraser pass never
+  // wipes both object and ground from the same cell (drag over object+ground = object only; ground needs a 2nd pass).
   const { cx, cz } = cellOf(wx, wz);
-  delete S.ground[cx + "," + cz];
-  delete S.heights[cx + "," + cz];
+  const key = cx + "," + cz;
+  const i = topObjectIndexAt(wx, wz);
+  if (i >= 0) { S.objects.splice(i, 1); if (S.eraseCells) S.eraseCells.add(key); return; }
+  if (S.eraseCells && S.eraseCells.has(key)) return;   // an object here was erased earlier this stroke → spare the ground
+  delete S.ground[key];
+  delete S.heights[key];
 }
 // Elevation paint: bump a cell one notch in the brush's direction (right button = opposite). Deduped per stroke via
 // S.strokeCells so a single drag over a cell changes it ONCE, not once per mousemove. Level 0 is stored as absent.
-function bumpHeight(cx, cz, flip) {
+// Bump a cell's elevation one notch. `part` picks which surface moves: "whole" (plain cell — the whole thing),
+// "kept" (a cut cell's tile half), or "cut" (the layered cut-away half). Half-raising a cut cell keeps its diagonal;
+// when the two halves meet again the cell collapses back to a plain flat level. One notch per cell per stroke.
+function bumpHeight(cx, cz, flip, part) {
   const key = cx + "," + cz;
-  if (S.strokeCells) { if (S.strokeCells.has(key)) return; S.strokeCells.add(key); }   // one notch per cell per stroke
+  if (S.strokeCells) { if (S.strokeCells.has(key)) return; S.strokeCells.add(key); }
   let dir = S.active === "raise" ? 1 : -1;
   if (flip) dir = -dir;
-  const lvl = (S.heights[key] || 0) + dir;
-  if (lvl === 0) delete S.heights[key]; else S.heights[key] = lvl;
+  const h = S.heights[key];
+  const cut = gCut(S.ground[key]) || ((h && typeof h === "object") ? h.cut : "");
+  if (!cut) {
+    const lvl = hLevel(h) + dir;
+    if (lvl === 0) delete S.heights[key]; else S.heights[key] = lvl;
+    return;
+  }
+  let keptL = hLevel(h);
+  let unL = (h && typeof h === "object") ? (h.under || 0) : keptL;
+  if (part === "cut") unL += dir;
+  else if (part === "whole") { keptL += dir; unL += dir; }   // move both halves (keeps the cut, no step created)
+  else keptL += dir;                                         // "kept" (default)
+  if (keptL === unL) { if (keptL === 0) delete S.heights[key]; else S.heights[key] = keptL; }
+  else S.heights[key] = { level:keptL, cut, under:unL };
 }
+// Single-cell elevation paint targets the HALF under the cursor (grass side vs prontera side of a diagonal cell).
 function paintHeight(wx, wz, flip) {
   const { cx, cz } = cellOf(wx, wz);
   if (!inBounds(cx, cz)) return;
-  bumpHeight(cx, cz, flip);
+  bumpHeight(cx, cz, flip, surfaceAt(wx, wz).part);
 }
 // Free mode: rotate the just-placed object so its facing arrow points from its centre toward the cursor.
 // yaw is measured clockwise from "up" (north / −z), matching drawObject's ctx.rotate. A cursor sitting on the
@@ -443,20 +686,23 @@ function render() {
   ctx.fillStyle = "#2a3a26";
   ctx.fillRect(o.x, o.y, worldW() * p, worldH() * p);
 
-  // ground cells
+  // ground cells (full, or half-cut: the cut-away tile first, kept tile clipped to its triangle on top)
   for (const k in S.ground) {
     const [cx, cz] = k.split(",").map(Number);
-    const b = S.brushById[S.ground[k]]; if (!b) continue;
+    const g = S.ground[k], cut = gCut(g);
     const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
-    const pat = groundPattern(thumbFor(b.id), p);
-    if (pat) {
-      ctx.fillStyle = pat;
-      ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p);   // real tile texture at in-game density
-    } else {
-      ctx.fillStyle = b.color; ctx.globalAlpha = 0.5;
-      ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p);
-      ctx.globalAlpha = 1;
-    }
+    const cp = S.cellSize * p;
+    const fillWith = id => {
+      const b = S.brushById[id]; if (!b) return;
+      const pat = groundPattern(thumbFor(b.id), p);
+      if (pat) { ctx.fillStyle = pat; ctx.fillRect(s.x, s.y, cp, cp); }   // real tile texture at in-game density
+      else { ctx.fillStyle = b.color; ctx.globalAlpha = 0.5; ctx.fillRect(s.x, s.y, cp, cp); ctx.globalAlpha = 1; }
+    };
+    if (!cut) { fillWith(gBrush(g)); continue; }
+    if (g.under) fillWith(g.under);
+    ctx.save(); triPath(s.x, s.y, cp, cut); ctx.clip();
+    fillWith(g.brush);
+    ctx.restore();
   }
 
   // grid lines
@@ -473,9 +719,9 @@ function render() {
   // row / column index labels (match the cx,cz cell coords + JSON), with level-of-detail
   drawLabels(o, p);
 
-  // wall-cell lookup for the autotile preview (cell coords of every wall object)
-  _wallSet = new Set();
-  for (const ob of S.objects) if (ob.brush === "wall") _wallSet.add(wallKey(Math.floor(ob.x / S.cellSize), Math.floor(ob.z / S.cellSize)));
+  // wall-cell lookup for the autotile preview (cell coords → the painted wall object with its stroke settings)
+  _wallSet = new Map();
+  for (const ob of S.objects) if (ob.brush === "wall") _wallSet.set(wallKey(Math.floor(ob.x / S.cellSize), Math.floor(ob.z / S.cellSize)), ob);
 
   // objects (true footprint, brush colour, facing arrow)
   for (const ob of S.objects) drawObject(ob, p);
@@ -483,7 +729,8 @@ function render() {
   // elevation overlay (raised = warm/light, sunken = cool/dark) + the level number
   drawHeights(p);
 
-  // hover preview
+  // line-tool drag preview, then hover preview
+  drawLinePreview(p);
   drawHover(p);
 
   // N indicator
@@ -540,16 +787,19 @@ function drawObject(ob, p, ghost) {
   }
   ctx.restore();
 }
-// Preview the piece the Unity importer's AutotileWalls will choose for this wall cell, from its 4 neighbours:
-//   • 2 opposite neighbours → STRAIGHT run (bar along the run)   • +road cell → GATE (split bar, accent colour)
-//   • anything else (corner / end / T / cross / isolated) → TOWER post (circle)
+// Preview the piece the Unity importer's AutotileWalls will choose for this wall cell (via wallKindAt):
+//   • straight run → bar along the run (orthogonal OR 45° diagonal) · +road cell → GATE (split bar, accent colour)
+//   • anything else → TOWER post (circle + facing tick at towerYawAt's bisector)
+// Bar width scales with the cell's painted thickness so a thick rampart reads on the canvas.
 function drawWallGlyph(ob, p, ghost) {
   const cx = Math.floor(ob.x / S.cellSize), cz = Math.floor(ob.z / S.cellSize);
-  const n = wallAt(cx, cz - 1), s = wallAt(cx, cz + 1), e = wallAt(cx + 1, cz), w = wallAt(cx - 1, cz);
-  const straightX = e && w && !n && !s, straightZ = n && s && !e && !w;
-  const straight = straightX || straightZ;
-  const gate = straight && isRoadCell(cx, cz);
-  const c = worldToScreen(ob.x, ob.z), cp = S.cellSize * p, bar = cp * 0.42, half = cp / 2;
+  const kind = wallKindAt(cx, cz) || "tower";
+  const diag = kind === "ne" || kind === "nw";
+  const straight = kind === "x" || kind === "z" || diag;
+  const thick = ob.thickness || 1;
+  const c = worldToScreen(ob.x, ob.z), cp = S.cellSize * p, half = cp / 2;
+  const bar = Math.min(cp * 0.42 * thick, cp * 0.95);
+  const len = diag ? cp * Math.SQRT2 : cp;           // a diagonal bar spans corner-to-corner
 
   ctx.save();
   ctx.globalAlpha = ghost ? 0.5 : 0.95;
@@ -558,54 +808,110 @@ function drawWallGlyph(ob, p, ghost) {
   ctx.fillRect(c.x - half, c.y - half, cp, cp);
   ctx.globalAlpha = ghost ? 0.6 : 1;
 
-  if (gate) {
-    ctx.fillStyle = "#6cc070";                       // gate = opening on a road
-    const g = cp * 0.34;
-    if (straightX) { ctx.fillRect(c.x - half, c.y - bar / 2, half - g / 2, bar); ctx.fillRect(c.x + g / 2, c.y - bar / 2, half - g / 2, bar); }
-    else           { ctx.fillRect(c.x - bar / 2, c.y - half, bar, half - g / 2); ctx.fillRect(c.x - bar / 2, c.y + g / 2, bar, half - g / 2); }
-  } else if (straightX) {
-    ctx.fillStyle = "#b8bdc4"; ctx.fillRect(c.x - half, c.y - bar / 2, cp, bar);
-  } else if (straightZ) {
-    ctx.fillStyle = "#b8bdc4"; ctx.fillRect(c.x - bar / 2, c.y - half, bar, cp);
+  if (straight) {
+    // Rotate the canvas so every run draws as a horizontal bar: "x" 0° · "z" 90° · "ne" −45° · "nw" +45°.
+    ctx.translate(c.x, c.y);
+    ctx.rotate({ x:0, z:Math.PI / 2, ne:-Math.PI / 4, nw:Math.PI / 4 }[kind]);
+    ctx.fillStyle = "#b8bdc4"; ctx.fillRect(-len / 2, -bar / 2, len, bar);   // solid wall run (no auto-gate)
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
   } else {
     ctx.fillStyle = "#e0e3e8";                       // tower post (corner / end / junction / isolated)
-    ctx.beginPath(); ctx.arc(c.x, c.y, cp * 0.3, 0, Math.PI * 2); ctx.fill();
+    const r = cp * 0.3 * Math.min(thick, 1.6);
+    ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2); ctx.fill();
+    // facing tick: the bisector of the supported walls (towerYawAt) — what the importer will yaw the prefab to
+    const a = towerYawAt(cx, cz) * Math.PI / 180;
+    const dx = Math.sin(a), dy = -Math.cos(a);       // screen: yaw 0 = north = −y
+    ctx.strokeStyle = "#4a5160"; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(c.x + dx * r * 0.3, c.y + dy * r * 0.3); ctx.lineTo(c.x + dx * (r + 3), c.y + dy * (r + 3));
+    ctx.stroke();
   }
   ctx.strokeStyle = "#0007"; ctx.lineWidth = 1; ctx.strokeRect(c.x - half, c.y - half, cp, cp);
   ctx.restore();
 }
 
-// Overlay each non-zero elevation cell: a translucent tint (warmer/lighter as it rises, cooler/darker as it sinks)
-// plus the signed level number, so the height map reads at a glance alongside the ground paint.
+// The level a cell READS as: its kept-half notch if that's non-zero, else the cut-away notch. Half-cut cells store
+// {level, under}; plain cells a bare number. Used both to tint and to group same-level cells under one label.
+function heightRep(k) {
+  const h = S.heights[k];
+  if (h === undefined) return 0;
+  const cut = (typeof h === "object") ? h.cut : "";
+  const lvl = hLevel(h), un = cut ? (h.under || 0) : lvl;
+  return lvl || un;
+}
+// Overlay each non-zero elevation cell: a translucent tint (warmer/lighter as it rises, cooler/darker as it sinks).
+// The signed level NUMBER is drawn once per contiguous same-level GROUP (not per cell) so a diagonal band reads as one
+// "+1" instead of a misleading "+1" on every edge cell (whose cut-away half is actually at a different level).
 function drawHeights(p) {
   const cp = S.cellSize * p;
-  // Numbers are visual clutter when you're not editing elevation: show them only while a Raise/Lower brush is
-  // active, or while Alt is held as a peek. The colour tint always stays so the height map still reads.
   const showNums = S.active === "raise" || S.active === "lower" || S.altDown;
+  // 1) TINT — per cell, split into its two half-triangles when the cell is diagonally cut.
   for (const k in S.heights) {
-    const lvl = S.heights[k]; if (!lvl) continue;
+    const h = S.heights[k];
+    const cut = (h && typeof h === "object") ? h.cut : "";
+    const lvl = hLevel(h), un = cut ? (h.under || 0) : lvl;
+    if (!lvl && !un) continue;
     const [cx, cz] = k.split(",").map(Number);
     const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
-    ctx.globalAlpha = Math.min(0.12 + 0.13 * Math.abs(lvl), 0.62);
-    ctx.fillStyle = lvl > 0 ? "#eadfa0" : "#22304c";
-    ctx.fillRect(s.x, s.y, cp, cp);
-    ctx.globalAlpha = 1;
-    if (cp >= 14 && showNums) {
-      ctx.fillStyle = lvl > 0 ? "#3a2f00" : "#cfe0ff";
-      ctx.font = "bold 11px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.fillText((lvl > 0 ? "+" : "") + lvl, s.x + cp / 2, s.y + cp / 2);
-      ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    const tint = (v, path) => {
+      if (!v) return;
+      ctx.globalAlpha = Math.min(0.12 + 0.13 * Math.abs(v), 0.62);
+      ctx.fillStyle = v > 0 ? "#eadfa0" : "#22304c";
+      if (path) { path(); ctx.fill(); } else ctx.fillRect(s.x, s.y, cp, cp);
+      ctx.globalAlpha = 1;
+    };
+    if (!cut) tint(lvl, null);
+    else { tint(lvl, () => triPath(s.x, s.y, cp, cut)); tint(un, () => triPath(s.x, s.y, cp, oppositeCut(cut))); }
+  }
+  // 2) LABELS — one per 4-connected group of cells sharing the same read-level, placed on the group cell nearest its
+  // centroid (so the number sits in the solid interior, not on a half-raised diagonal edge).
+  if (!showNums || cp < 14) return;
+  const seen = new Set();
+  for (const start in S.heights) {
+    if (seen.has(start)) continue;
+    const lv = heightRep(start);
+    if (!lv) { seen.add(start); continue; }
+    const comp = [], stack = [start];
+    while (stack.length) {
+      const c = stack.pop();
+      if (seen.has(c) || heightRep(c) !== lv) continue;
+      seen.add(c); comp.push(c);
+      const [cx, cz] = c.split(",").map(Number);
+      for (const nk of [(cx + 1) + "," + cz, (cx - 1) + "," + cz, cx + "," + (cz + 1), cx + "," + (cz - 1)])
+        if (S.heights[nk] !== undefined && !seen.has(nk)) stack.push(nk);
     }
+    let ax = 0, az = 0;
+    for (const c of comp) { const [cx, cz] = c.split(",").map(Number); ax += cx + 0.5; az += cz + 0.5; }
+    ax /= comp.length; az /= comp.length;
+    let best = comp[0], bd = Infinity;
+    for (const c of comp) { const [cx, cz] = c.split(",").map(Number); const d = (cx + 0.5 - ax) ** 2 + (cz + 0.5 - az) ** 2; if (d < bd) { bd = d; best = c; } }
+    const [bx, bz] = best.split(",").map(Number);
+    const s = worldToScreen(bx * S.cellSize, bz * S.cellSize);
+    ctx.fillStyle = lv > 0 ? "#3a2f00" : "#cfe0ff";
+    ctx.font = "bold 13px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText((lv > 0 ? "+" : "") + lv, s.x + cp / 2, s.y + cp / 2);
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
   }
 }
 
+// Highlight one region surface: the whole cell ("whole"), the kept triangle ("kept"), or the cut-away triangle ("cut")
+// — so the preview traces exactly the surface a fill/raise/erase will touch, diagonal edges included.
+function highlightRegionCell(k, p, part) {
+  const [cx, cz] = k.split(",").map(Number);
+  const s = worldToScreen(cx * S.cellSize, cz * S.cellSize), cp = S.cellSize * p;
+  if (part === "whole") { ctx.fillRect(s.x, s.y, cp, cp); return; }
+  const cut = gCut(S.ground[k]);
+  triPath(s.x, s.y, cp, part === "kept" ? cut : oppositeCut(cut));
+  ctx.fill();
+}
+
 function drawHover(p) {
+  if (S.lineStart) return;   // a line drag is in progress — its own preview owns the canvas
   // 🪣 Fill preview for elevation / eraser: tint the whole region a click would affect (ground brushes handled below).
   if (S.fillMode && (S.active === "raise" || S.active === "lower" || S.active === "erase")) {
     const region = fillRegion(S.mouse.wx, S.mouse.wz);
     ctx.globalAlpha = 0.35;
     ctx.fillStyle = S.active === "raise" ? "#8fd694" : S.active === "lower" ? "#d69a8f" : "#e05050";
-    for (const k of region) { const [cx, cz] = k.split(",").map(Number); const s = worldToScreen(cx * S.cellSize, cz * S.cellSize); ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p); }
+    for (const [k, part] of region) highlightRegionCell(k, p, part);
     ctx.globalAlpha = 1;
     return;
   }
@@ -625,12 +931,16 @@ function drawHover(p) {
     // Ghost a CONCRETE variant (chosen, else the first) — the brush-level fallback is the group's MAX footprint,
     // wildly oversized for mixed groups (e.g. houses + trees in one brush).
     const ghostPrefab = S.activeVariant || (b.prefabs && b.prefabs[0] ? b.prefabs[0].name : "");
-    drawObject({ brush:b.id, prefab:ghostPrefab, x:wx, z:wz, yaw:isCellObject(b) ? 0 : S.yaw }, p, true);
+    const ghost = isCellObject(b)
+      ? { brush:b.id, prefab:"", x:wx, z:wz, yaw:0, ...wallStamp() }   // preview the wall bar at the chosen thickness
+      : { brush:b.id, prefab:ghostPrefab, x:wx, z:wz, yaw:S.yaw };
+    drawObject(ghost, p, true);
   } else if (S.fillMode) {
-    // 🪣 highlight the whole contiguous region that a click would flood, in the selected tile's colour
+    // 🪣 highlight the contiguous region a click would flood, in the selected tile's colour — tracing each surface
+    // (whole cell, or one triangle half of a diagonally-cut cell) so the flood edge follows the diagonal cleanly.
     const region = fillRegion(wx, wz);
     ctx.globalAlpha = 0.35; ctx.fillStyle = b.color;
-    for (const k of region) { const [cx, cz] = k.split(",").map(Number); const s = worldToScreen(cx * S.cellSize, cz * S.cellSize); ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p); }
+    for (const [k, part] of region) highlightRegionCell(k, p, part);
     ctx.globalAlpha = 1;
   } else {
     const { cx, cz } = cellOf(wx, wz); if (!inBounds(cx, cz)) return;
@@ -650,8 +960,18 @@ cv.addEventListener("mousedown", e => {
     if (i >= 0) { commitHistory(); S.dragObj = S.objects[i]; render(); }
     return;
   }
+  // 📏 Line tool: left-drag anchors a 45°-snapped stroke of the active ground brush — OR a run of the wall brush
+  // (diagonal walls). Committed on mouseup (history captured there, so an aborted drag never pushes a no-op undo).
+  const lb = S.brushById[S.active];
+  if (e.button === 0 && S.lineMode && lb && (lb.kind === "ground" || isCellObject(lb))) {
+    const r = cv.getBoundingClientRect(), w = screenToWorld(e.clientX - r.left, e.clientY - r.top);
+    const c = cellOf(w.wx, w.wz);
+    if (inBounds(c.cx, c.cz)) { S.lineStart = c; S.lineEnd = c; render(); }
+    return;
+  }
   commitHistory();                  // one undo step per stroke (captured before the first cell is painted)
   S.strokeCells = new Set();         // elevation: one notch per cell per drag (reset each stroke)
+  S.eraseCells = new Set();          // eraser: cells that gave up an object this drag keep their ground (no dual-erase)
   S.paint = e.button === 2 ? 2 : 1;
   doPaint(e);
   // Free mode: keep the object we just placed grabbed so dragging rotates it in place (release drops it facing the cursor).
@@ -671,10 +991,19 @@ window.addEventListener("mousemove", e => {
   if (S.rotObj) rotateObjectTo(w.wx, w.wz);
   else if (S.dragObj) dragObjectTo(w.wx, w.wz);
   else if (S.pan) { S.view.x = e.clientX - S.panStart.x; S.view.y = e.clientY - S.panStart.y; }
+  else if (S.lineStart) S.lineEnd = cellOf(w.wx, w.wz);
   else if (S.paint && dragRepaintAllowed()) doPaint(e);
   updateStat(); render();
 });
 window.addEventListener("mouseup", () => {
+  if (S.lineStart && S.lineEnd) {   // commit the line stroke (fulls + 45° half-cells) as ONE undo step
+    const cells = lineCells(S.lineStart, S.lineEnd);
+    const wall = isCellObject(S.brushById[S.active]);
+    if (cells.fulls.length || cells.halves.length) { commitHistory(); wall ? applyLineWall(cells) : applyLine(cells); saveDraft(); }
+    S.lineStart = S.lineEnd = null;
+    updateStat(); render();
+    return;
+  }
   const edited = S.paint !== 0 || S.dragObj !== null || S.rotObj !== null;   // a real paint/erase/drag/rotate just ended → persist it
   S.paint = 0; S.pan = false; S.dragObj = null; S.rotObj = null;
   if (edited) saveDraft();
@@ -709,6 +1038,7 @@ window.addEventListener("keydown", e => {
   if (ctrl && z && !e.shiftKey) { e.preventDefault(); undo(); return; }   // Ctrl+Z
   if (ctrl && (y || (z && e.shiftKey))) { e.preventDefault(); redo(); return; }   // Ctrl+Y or Ctrl+Shift+Z
   if (e.code === "Space") { S.spaceDown = true; }
+  if (e.key === "Escape" && S.lineStart) { S.lineStart = S.lineEnd = null; render(); }   // abort the line drag
   if (e.key === "Alt" && !S.altDown) { S.altDown = true; render(); }   // peek elevation numbers while held
   if (e.key === "r" || e.key === "R") { S.yaw = (S.yaw + (S.mode === "grid" ? 90 : 15)) % 360; document.getElementById("yawTxt").textContent = S.yaw + "°"; render(); }
 });
@@ -725,9 +1055,17 @@ document.getElementById("rotBtn").onclick = () => window.dispatchEvent(new Keybo
 document.getElementById("cols").onchange = e => { S.cols = +e.target.value; S.dirty = true; saveDraft(); render(); };
 document.getElementById("rows").onchange = e => { S.rows = +e.target.value; S.dirty = true; saveDraft(); render(); };
 document.getElementById("eraseBtn").onclick = () => { S.active = "erase"; refreshPaletteSel(); };
-document.getElementById("fillBtn").onclick = e => { S.fillMode = !S.fillMode; e.currentTarget.classList.toggle("on", S.fillMode); render(); };
+// Fill and Line are mutually exclusive (different, non-composable stroke shapes) — turning one on turns the other off.
+document.getElementById("fillBtn").onclick = e => { S.fillMode = !S.fillMode; if (S.fillMode) S.lineMode = false; syncToolToggles(); render(); };
+document.getElementById("lineBtn").onclick = e => { S.lineMode = !S.lineMode; if (S.lineMode) S.fillMode = false; syncToolToggles(); render(); };
+function syncToolToggles() {
+  document.getElementById("fillBtn").classList.toggle("on", S.fillMode);
+  document.getElementById("lineBtn").classList.toggle("on", S.lineMode);
+}
 document.getElementById("raiseBtn").onclick = () => { S.active = "raise"; S.activeVariant = ""; refreshPaletteSel(); buildVariants(); };
 document.getElementById("lowerBtn").onclick = () => { S.active = "lower"; S.activeVariant = ""; refreshPaletteSel(); buildVariants(); };
+// Flatten: wipe every cell's elevation back to level 0 in one click (leaves ground + objects + diagonal cuts intact).
+document.getElementById("flattenBtn").onclick = () => { if (confirm("Remove all elevations (flatten every cell to level 0)?")) { commitHistory(); S.heights = {}; saveDraft(); render(); } };
 document.getElementById("clearBtn").onclick = () => { if (confirm("Clear all painted ground + objects?")) { commitHistory(); S.ground = {}; S.heights = {}; S.objects = []; saveDraft(); render(); } };
 document.getElementById("fitBtn").onclick = fitView;
 document.getElementById("reloadMani").onclick = loadManifest;
@@ -750,9 +1088,21 @@ function buildMap() {
   return {
     version:1, name:"PaintedMap", cellSize:S.cellSize,
     size:{ x:worldW(), z:worldH() }, cols:S.cols, rows:S.rows,
-    ground:Object.entries(S.ground).map(([k, brush]) => { const [cx, cz] = k.split(",").map(Number); return { brush, cx, cz }; }),
-    heights:Object.entries(S.heights).map(([k, level]) => { const [cx, cz] = k.split(",").map(Number); return { cx, cz, level }; }),
-    objects:S.objects.map(o => ({ brush:o.brush, prefab:o.prefab, x:+o.x.toFixed(3), z:+o.z.toFixed(3), yaw:o.yaw })),
+    ground:Object.entries(S.ground).map(([k, g]) => {
+      const [cx, cz] = k.split(",").map(Number);
+      return typeof g === "string" ? { brush:g, cx, cz } : { brush:g.brush, cx, cz, cut:g.cut, under:g.under || "" };
+    }),
+    heights:Object.entries(S.heights).map(([k, h]) => {
+      const [cx, cz] = k.split(",").map(Number);
+      return typeof h === "number" ? { cx, cz, level:h } : { cx, cz, level:h.level || 0, cut:h.cut, under:h.under || 0 };
+    }),
+    // Wall cells carry their per-stroke settings (wall/tower piece + thickness) so the importer can render each run
+    // as the author chose; non-wall objects omit them (absent = kit default, keeps old maps + non-walls clean).
+    objects:S.objects.map(o => {
+      const base = { brush:o.brush, prefab:o.prefab, x:+o.x.toFixed(3), z:+o.z.toFixed(3), yaw:o.yaw };
+      if (o.brush === "wall") { base.wall = o.wall || ""; base.tower = o.tower || ""; base.thickness = o.thickness || 1; }
+      return base;
+    }),
   };
 }
 function exportMap() {
@@ -767,9 +1117,17 @@ function importMap(m) {
   S.cols = m.cols || Math.round((m.size?.x || worldW()) / S.cellSize);
   S.rows = m.rows || Math.round((m.size?.z || worldH()) / S.cellSize);
   document.getElementById("cols").value = S.cols; document.getElementById("rows").value = S.rows;
-  S.ground = {}; (m.ground || []).forEach(g => S.ground[g.cx + "," + g.cz] = g.brush);
-  S.heights = {}; (m.heights || []).forEach(h => { if (h.level) S.heights[h.cx + "," + h.cz] = h.level; });
-  S.objects = (m.objects || []).map(o => ({ brush:o.brush, prefab:o.prefab || "", x:o.x, z:o.z, yaw:o.yaw || 0 }));
+  S.ground = {}; (m.ground || []).forEach(g =>
+    S.ground[g.cx + "," + g.cz] = g.cut ? { brush:g.brush, cut:g.cut, under:g.under || "" } : g.brush);
+  S.heights = {}; (m.heights || []).forEach(h => {
+    if (h.cut && (h.level || h.under)) S.heights[h.cx + "," + h.cz] = { level:h.level || 0, cut:h.cut, under:h.under || 0 };
+    else if (h.level) S.heights[h.cx + "," + h.cz] = h.level;
+  });
+  S.objects = (m.objects || []).map(o => {
+    const obj = { brush:o.brush, prefab:o.prefab || "", x:o.x, z:o.z, yaw:o.yaw || 0 };
+    if (o.brush === "wall") { obj.wall = o.wall || ""; obj.tower = o.tower || ""; obj.thickness = o.thickness || 1; }
+    return obj;
+  });
   clearHistory();   // a freshly loaded map starts a new undo timeline (grid size also changes)
   S.dirty = false; saveDraft();   // loaded map is the new baseline
   fitView();

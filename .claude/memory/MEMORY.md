@@ -13,6 +13,7 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 - [Performance is a hard constraint — pre-bake](performance-first-prebake.md) — merge static colliders; work at author time.
 - [Runtime hot-path perf patterns](perf-runtime-hotpath-patterns.md) — canonical=`PERFORMANCE.md`; reuse CameraRig, pooled DamagePopup.
 - [Apply review fixes, don't gatekeep](apply-review-fixes-dont-gatekeep.md) — fix ALL listed findings or label skips explicitly; silent "not worth it" triage reads as refusal.
+- [Don't agree reflexively](dont-agree-reflexively.md) — critique on merits even when user says "I like this"; reflexive agreement kills the value of a second opinion.
 
 ## Grouped sub-indexes (open on demand)
 - 🗂 [Character / rig / stance / animation](index/character-rig-stance.md) — Mixamo/Quaternius rigging, stance system, IStancePose, gait, caster grounding (11).

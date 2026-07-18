@@ -29,7 +29,10 @@ Shader "Unwritten/FogScreen"
     }
     SubShader
     {
-        Tags { "RenderType"="Transparent" "Queue"="Overlay" "RenderPipeline"="UniversalPipeline" "IgnoreProjector"="True" }
+        // Queue "Overlay+100" (later than the ink's plain "Overlay") so the fog veil draws AFTER the hand-drawn INK
+        // quad — the same depth-based haze that washes out the world then also washes out the ink outlines/paper by
+        // their true distance (near ink untouched, far ink dissolves into the mist). No per-line fog math needed.
+        Tags { "RenderType"="Transparent" "Queue"="Overlay+100" "RenderPipeline"="UniversalPipeline" "IgnoreProjector"="True" }
 
         Pass
         {

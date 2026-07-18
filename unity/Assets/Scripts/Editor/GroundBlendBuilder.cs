@@ -40,6 +40,45 @@ public static class GroundBlendBuilder
     /// export both read it, so the map painter's preview tiles ground at the exact in-game scale.</summary>
     public const float GroundTexWorldSize = 2.5f;
 
+    /// <summary>Per-cell diagonal cuts painted with the map painter's 📏 line tool. <c>dir</c> names the KEPT corner
+    /// in world orientation (0 none · 1 nw · 2 ne · 3 se · 4 sw; n = +Z, e = +X). The kept half sits at the cell's
+    /// levels-grid notch, the cut-away half at <c>underLevel</c>; <c>keptCh</c>/<c>underCh</c> hold each half's blend
+    /// channel (0 base, 1..4 overlays). Consumed by <see cref="LayPlotSampledElevated"/>.</summary>
+    public class DiagonalCuts
+    {
+        public readonly int[,] dir, keptCh, underCh, underLevel;
+        public bool any;
+        public DiagonalCuts(int cols, int rows)
+        { dir = new int[cols, rows]; keptCh = new int[cols, rows]; underCh = new int[cols, rows]; underLevel = new int[cols, rows]; }
+    }
+
+    /// <summary>Which half of a cut cell owns an edge (edge: 0=W 1=E 2=S 3=N): the kept corner's two adjacent
+    /// edges belong to the kept half, the other two to the cut-away half.</summary>
+    public static bool EdgeIsKept(int dir, int edge)
+    {
+        switch (dir)
+        {
+            case 1: return edge == 0 || edge == 3;   // nw → W + N
+            case 2: return edge == 1 || edge == 3;   // ne → E + N
+            case 3: return edge == 1 || edge == 2;   // se → E + S
+            case 4: return edge == 0 || edge == 2;   // sw → W + S
+            default: return true;
+        }
+    }
+
+    // One-hot vertex colour for a blend channel: (r,g,b,a) = (road, stone, rock, dirt); base/unknown = all zero.
+    static Color ChannelCol(int ch)
+    {
+        switch (ch)
+        {
+            case 1: return new Color(1, 0, 0, 0);
+            case 2: return new Color(0, 1, 0, 0);
+            case 3: return new Color(0, 0, 1, 0);
+            case 4: return new Color(0, 0, 0, 1);
+            default: return new Color(0, 0, 0, 0);
+        }
+    }
+
     /// <summary>Per-vertex ground sampler: given a world XZ, return the four blend weights as a Vector4 mapped to the
     /// mesh vertex-colour channels — <c>x</c>=road (.r), <c>y</c>=stone (.g), <c>z</c>=rock (.b), <c>w</c>=dirt (.a),
     /// all 0..1. The procedural <see cref="LayPlot"/> overload feeds a noise-dirt + routed-path sampler (stone/rock
@@ -50,8 +89,8 @@ public static class GroundBlendBuilder
     /// also told the <paramref name="refLevel"/> — the ORIGINAL painted notch of the cell this vertex belongs to (NOT
     /// its corner-filled geometry level) — so the sampler can refuse to blend in cells painted at a DIFFERENT level (a
     /// hard texture cut at a step, soft blend within a level) instead of feathering across the cliff. The elevated
-    /// builder feeds the ORIGINAL painted level (not the FillCornerNotches-filled geometry level); a cell the fill
-    /// lifted into a higher region is instead coloured SOLID from that higher region (see <c>RaisedRegionCol</c>), so a
+    /// builder feeds the ORIGINAL painted level; a cell that a corner-fill lifts into a higher region would instead be
+    /// coloured SOLID from that higher region (see <c>RaisedRegionCol</c>) — dormant now that painted levels are exact — so a
     /// raised concave corner reads as the elevated tile with a hard edge rather than smearing the two regions.</summary>
     public delegate void GroundSamplerLeveled(float worldX, float worldZ, int refLevel, out Vector4 weights);
 
@@ -225,19 +264,17 @@ public static class GroundBlendBuilder
                                                     int[,] levels, int cols, int rows, float cellSize,
                                                     string grassTexName = "ground_grass", string dirtTexName = "ground_soil",
                                                     string pathTexName = "ground_road", string stoneTexName = null,
-                                                    string rockTexName = null, Color? tint = null)
+                                                    string rockTexName = null, Color? tint = null, DiagonalCuts cuts = null)
     {
         var mat = MakeGroundMaterial(rootName, grassTexName, dirtTexName, pathTexName, stoneTexName, rockTexName, tint);
         if (mat == null) return null;
-        // Two level grids, deliberately kept apart. `paintLevels` = the ORIGINAL painted notches → the reference the
-        // blend uses to decide which cells share a region (colour). `levels` = the corner-filled notches → drives ONLY
-        // the geometry (top heights, walls, collision). Colouring off the FILLED grid was the corner-blend bug: a
-        // concave-corner cell that FillCornerNotches raises to match the higher region then counted as the SAME level
-        // as that region and feathered the two textures together. Fix: colour NON-raised cells off their own painted
-        // level, and colour a RAISED cell SOLID from the region it was lifted into (RaisedRegionCol) — so the corner
-        // reads as the elevated tile with a hard edge, while its geometry still fills the notch for pathing.
+        // EXACT REPRODUCTION: a hand-painted map is authoritative — every cell renders at the height the author
+        // painted, no more. `paintLevels` (colour reference) and `levels` (geometry) are therefore the SAME grid;
+        // they're kept as two names only so the raised-cell colour path below stays a harmless no-op (a cell is
+        // never "raised above its painted level" now). No auto corner-fill runs: an earlier pass raised concave-corner
+        // cells to hide a background gap, but it silently FATTENED the author's shape (a 2-wide zigzag became 3-wide).
+        // Concave corners are now the author's to fill (e.g. with the 📏 diagonal tool).
         var paintLevels = levels;
-        levels = FillCornerNotches(levels, cols, rows);   // fill concave corner notches so path turns read solid
         var curbMat = MakeCurbMaterial();                 // null → 1-notch walls just stay in the ground-blend submesh
         var cornerMat = MakeCornerMaterial();             // single square stone dropped at every border corner (null → skip)
         const float CurbWorldPerTexture = 0.5f;           // one full curb strip spans this many world units along the edge
@@ -283,7 +320,8 @@ public static class GroundBlendBuilder
             return new Color(Mathf.Clamp01(w.x), Mathf.Clamp01(w.y), Mathf.Clamp01(w.z), Mathf.Clamp01(w.w));
         }
 
-        // Colour for a cell that FillCornerNotches lifted into a higher region: sample the tile of an orthogonal
+        // Colour for a cell that a corner-fill lifted into a higher region (dormant now — painted levels are exact):
+        // sample the tile of an orthogonal
         // neighbour PAINTED at the lifted level (an arm of the filled notch) at its cell centre, so the raised corner
         // reads as that elevated region's tile SOLID — not its own (lower) tile, and not a smear of the two. Falls back
         // to this cell's own centre if somehow no such neighbour exists.
@@ -354,6 +392,42 @@ public static class GroundBlendBuilder
             AddTriTo(trisWall, voA, voB, viA); AddTriTo(trisWall, voB, viB, viA);
         }
 
+        // A 45° step edge (the hypotenuse of a diagonally-cut cell): the checker CURB face + the flat border STRIP,
+        // the diagonal analogue of AddWall(isCurb)+AddBorder. UVs run ALONG the edge (absolute projection onto the edge
+        // direction) so stones stay square and tile seamlessly across colinear cut cells; V = notches on the face,
+        // rows across the strip. <A,B> = hypotenuse ends (XZ); <yTop,yBot> the step; <inward> points onto the raised top.
+        void AddDiagonalCurb(Vector3 A, Vector3 B, float yTop, float yBot, Vector3 inward, Color faceCol)
+        {
+            if (curbMat == null) return;
+            Vector3 dir = new Vector3(B.x - A.x, 0f, B.z - A.z).normalized;
+            float Uof(float x, float z) => (x * dir.x + z * dir.z) / CurbWorldPerTexture;   // absolute → seamless across cells
+            float vTop = (yTop - yBot) / lh;                                                 // one curb row per 0.2 notch
+            Vector3 nrm = Vector3.Cross(Vector3.up, dir);                                     // face normal (double-sided anyway)
+
+            // vertical curb face
+            Vector3 tA = new Vector3(A.x, yTop, A.z), tB = new Vector3(B.x, yTop, B.z);
+            Vector3 bA = new Vector3(A.x, yBot, A.z), bB = new Vector3(B.x, yBot, B.z);
+            int itA = Push(tA, nrm, new Vector2(Uof(A.x, A.z), vTop), faceCol);
+            int itB = Push(tB, nrm, new Vector2(Uof(B.x, B.z), vTop), faceCol);
+            int ibA = Push(bA, nrm, new Vector2(Uof(A.x, A.z), 0f),   faceCol);
+            int ibB = Push(bB, nrm, new Vector2(Uof(B.x, B.z), 0f),   faceCol);
+            AddTriTo(trisWall, itA, ibA, itB); AddTriTo(trisWall, itB, ibA, ibB);
+            AddTriTo(trisWall, itA, itB, ibA); AddTriTo(trisWall, itB, ibB, ibA);   // double-sided
+
+            // flat border strip on the raised top, offset inward by one square-row width. Lifted a hair HIGHER than
+            // the straight border's BorderLift so where the diagonal strip overlaps a straight strip at a corner it
+            // wins cleanly instead of z-fighting (the extra ~6mm is imperceptible from the 2.5D camera).
+            Vector3 up = Vector3.up * (BorderLift * 3f);
+            Vector3 oA = new Vector3(A.x, yTop, A.z) + up, oB = new Vector3(B.x, yTop, B.z) + up;
+            Vector3 iA = oA + inward * borderWidth, iB = oB + inward * borderWidth;
+            int voA = Push(oA, Vector3.up, new Vector2(Uof(oA.x, oA.z), 0f),         Color.white);
+            int voB = Push(oB, Vector3.up, new Vector2(Uof(oB.x, oB.z), 0f),         Color.white);
+            int viA = Push(iA, Vector3.up, new Vector2(Uof(iA.x, iA.z), BorderRows), Color.white);
+            int viB = Push(iB, Vector3.up, new Vector2(Uof(iB.x, iB.z), BorderRows), Color.white);
+            AddTriTo(trisWall, voA, viA, voB); AddTriTo(trisWall, voB, viA, viB);
+            AddTriTo(trisWall, voA, voB, viA); AddTriTo(trisWall, voB, viB, viA);   // double-sided
+        }
+
         // One flat borderWidth-square STONE dropped into a cell corner where two borders meet — the shared corner
         // treatment for BOTH corner kinds. INWARD (concave L): the two arm strips live on different cells and meet
         // only at a point, leaving this diagonal cell's corner bare (the old "one-block gap" / 1/3-stone sliver);
@@ -393,12 +467,103 @@ public static class GroundBlendBuilder
         }
         int LvlAt(int x, int z) => (x >= 0 && x < cols && z >= 0 && z < rows) ? levels[x, z] : 0;
 
+        // Level of (x,z)'s half that owns its <edge> side (0=W 1=E 2=S 3=N): a diagonally-cut cell presents its KEPT
+        // level on the kept corner's two edges and its UNDER level on the other two; uncut cells present their level.
+        int CellEdgeLevel(int x, int z, int edge)
+            => (cuts == null || cuts.dir[x, z] == 0) ? levels[x, z]
+             : EdgeIsKept(cuts.dir[x, z], edge) ? levels[x, z] : cuts.underLevel[x, z];
+
+        // Wall check against the neighbour's PER-EDGE level (nEdge = the edge of the NEIGHBOUR facing us), so walls
+        // sit right beside diagonally-cut cells too. Off-map → the border skirt. 1-notch drop = decorative curb.
+        bool WallB(int nx, int nz, int nEdge, int L, out float bottomY, out bool isCurb)
+        {
+            isCurb = false;
+            if (nx < 0 || nx >= cols || nz < 0 || nz >= rows) { bottomY = skirtBottomY; return true; }
+            int nL = CellEdgeLevel(nx, nz, nEdge);
+            if (nL < L) { bottomY = nL * lh; isCurb = L - nL == 1; return true; }
+            bottomY = 0f; return false;
+        }
+
+        // One raw triangle top: own verts, SOLID colour, wound so the face points up (+Y) like the quad tops.
+        void PushTri(Vector3 a, Vector3 b, Vector3 c, float y, Color col)
+        {
+            a.y = y; b.y = y; c.y = y;
+            if (Vector3.Cross(b - a, c - a).y < 0f) { var t = b; b = c; c = t; }
+            int ia = Push(a, Vector3.up, new Vector2(a.x, a.z), col);
+            int ib = Push(b, Vector3.up, new Vector2(b.x, b.z), col);
+            int ic = Push(c, Vector3.up, new Vector2(c.x, c.z), col);
+            AddTriTo(trisTop, ia, ib, ic);
+        }
+
+        // A diagonally-CUT cell (painter 📏 line tool): two flat half-triangles — the KEPT corner's half at the
+        // cell's levels-grid notch, the cut-away half at its own underLevel — with a vertical step along the
+        // hypotenuse when they differ. Both halves are coloured SOLID from their painted tile (the same hard-cut
+        // style level seams already use). Straight edges AND the 45° step get the normal checker curb + border trim
+        // (a 1-notch drop → AddDiagonalCurb; a taller cliff → plain wall), against per-edge neighbour levels.
+        void EmitCutCell(int cx, int cz)
+        {
+            int dir = cuts.dir[cx, cz];
+            int Lk = levels[cx, cz], Lu = cuts.underLevel[cx, cz];
+            float yK = Lk * lh, yU = Lu * lh;
+            Color colK = ChannelCol(cuts.keptCh[cx, cz]);
+            Color colU = ChannelCol(cuts.underCh[cx, cz]);
+            float x0 = ox + cx * cellSize, x1 = x0 + cellSize;
+            float z0 = oz + cz * cellSize, z1 = z0 + cellSize;
+            // world corners (+Z = the painter's north): nw / ne / se / sw
+            Vector3 nw = new Vector3(x0, 0f, z1), ne = new Vector3(x1, 0f, z1);
+            Vector3 se = new Vector3(x1, 0f, z0), sw = new Vector3(x0, 0f, z0);
+            Vector3 K, O, A, B;   // kept corner, opposite corner, hypotenuse ends
+            switch (dir)
+            {
+                case 1:  K = nw; O = se; A = sw; B = ne; break;
+                case 2:  K = ne; O = sw; A = nw; B = se; break;
+                case 3:  K = se; O = nw; A = ne; B = sw; break;
+                default: K = sw; O = ne; A = se; B = nw; break;
+            }
+            PushTri(K, A, B, yK, colK);   // kept half
+            PushTri(O, A, B, yU, colU);   // cut-away half
+
+            if (Lk != Lu)   // step along the hypotenuse, faced from the higher half toward the lower
+            {
+                bool keptHigh = Lk > Lu;
+                float yT = keptHigh ? yK : yU, yB = keptHigh ? yU : yK;
+                Vector3 raised = keptHigh ? K : O;               // the corner on the RAISED side of the diagonal
+                Vector3 mid = (A + B) * 0.5f;
+                Vector3 inward = raised - mid; inward.y = 0f; inward.Normalize();   // edge → onto the raised top
+                Color faceCol = keptHigh ? colK : colU;
+                if (Mathf.Abs(Lk - Lu) == 1 && curbMat != null)  // 1-notch drop → checker curb + border strip
+                    AddDiagonalCurb(A, B, yT, yB, inward, faceCol);
+                else                                             // taller cliff → plain blend-textured wall
+                    AddWall(new Vector3(A.x, yT, A.z), new Vector3(B.x, yT, B.z),
+                            new Vector3(A.x, yB, A.z), new Vector3(B.x, yB, B.z),
+                            -inward, false, paintLevels[cx, cz], faceCol);
+            }
+
+            // straight edges: each belongs wholly to one half — wall it against the neighbour's facing half
+            void Edge(int edge, int nx, int nz, int nEdge, Vector3 eA, Vector3 eB, Vector3 outwardE)
+            {
+                bool kept = EdgeIsKept(dir, edge);
+                int L = kept ? Lk : Lu;
+                if (!WallB(nx, nz, nEdge, L, out float by, out bool curb)) return;
+                float topY = L * lh;
+                AddWall(new Vector3(eA.x, topY, eA.z), new Vector3(eB.x, topY, eB.z),
+                        new Vector3(eA.x, by, eA.z),   new Vector3(eB.x, by, eB.z),
+                        outwardE, curb, paintLevels[cx, cz], kept ? colK : colU);
+                if (curb) AddBorder(new Vector3(eA.x, topY, eA.z), new Vector3(eB.x, topY, eB.z), -outwardE);
+            }
+            Edge(0, cx - 1, cz, 1, new Vector3(x0, 0f, z0), new Vector3(x0, 0f, z1), Vector3.left);
+            Edge(1, cx + 1, cz, 0, new Vector3(x1, 0f, z0), new Vector3(x1, 0f, z1), Vector3.right);
+            Edge(2, cx, cz - 1, 3, new Vector3(x0, 0f, z0), new Vector3(x1, 0f, z0), Vector3.back);
+            Edge(3, cx, cz + 1, 2, new Vector3(x0, 0f, z1), new Vector3(x1, 0f, z1), Vector3.forward);
+        }
+
         for (int cz = 0; cz < rows; cz++)
             for (int cx = 0; cx < cols; cx++)
             {
+                if (cuts != null && cuts.dir[cx, cz] != 0) { EmitCutCell(cx, cz); continue; }   // diagonal half-cell
                 int L = levels[cx, cz];         // filled level → geometry (top height, walls, collision)
                 int Lp = paintLevels[cx, cz];   // original painted level → blend-region reference (colour only)
-                bool raised = L > Lp;           // FillCornerNotches lifted this concave-corner cell into a higher region
+                bool raised = L > Lp;           // always false now (levels == paintLevels); kept as a harmless no-op
                 // When lifted, colour the WHOLE cell (top + its curbs) from that higher region so the corner reads as
                 // the elevated tile SOLID. Otherwise colour off the cell's own painted level (soft blend within a level).
                 Color raisedCol = raised ? RaisedRegionCol(cx, cz, L) : default;
@@ -427,10 +592,10 @@ public static class GroundBlendBuilder
                 // WALLS: one per edge whose neighbour is lower (or the map border). Each boundary is owned by the
                 // HIGHER cell, so a wall is emitted exactly once. Border edges always skirt. All four are resolved up
                 // front so a border strip can be trimmed back at whichever ends land on an OUTWARD (convex) corner.
-                bool wW = WallBottom(levels, cols, rows, cx - 1, cz, L, lh, skirtBottomY, out float byW, out bool curbW);
-                bool wE = WallBottom(levels, cols, rows, cx + 1, cz, L, lh, skirtBottomY, out float byE, out bool curbE);
-                bool wS = WallBottom(levels, cols, rows, cx, cz - 1, L, lh, skirtBottomY, out float byS, out bool curbS);
-                bool wN = WallBottom(levels, cols, rows, cx, cz + 1, L, lh, skirtBottomY, out float byN, out bool curbN);
+                bool wW = WallB(cx - 1, cz, 1, L, out float byW, out bool curbW);   // vs the neighbour's E-facing half
+                bool wE = WallB(cx + 1, cz, 0, L, out float byE, out bool curbE);
+                bool wS = WallB(cx, cz - 1, 3, L, out float byS, out bool curbS);
+                bool wN = WallB(cx, cz + 1, 2, L, out float byN, out bool curbN);
                 float bwT = borderWidth;
                 if (wW)   // West (−X)
                 {
@@ -501,6 +666,7 @@ public static class GroundBlendBuilder
         for (int cz = 0; cz < rows; cz++)
             for (int cx = 0; cx < cols; cx++)
             {
+                if (cuts != null && cuts.dir[cx, cz] != 0) continue;   // diagonal half-cells manage their own edges
                 int L = levels[cx, cz];
                 if (L < 0) continue;   // the higher side owns the stone; base plane (L=0) too, so a SUNKEN lane's
                                        // concave turns (diagonal = L−1) get bridged — not just raised features (L>0)
@@ -552,51 +718,6 @@ public static class GroundBlendBuilder
 
         AssetDatabase.SaveAssets();
         return root;
-    }
-
-    // Close CORNER NOTCHES: a cell that has two PERPENDICULAR neighbours both higher than it is the concave inner
-    // corner of an L-turn (or the pinch where two paths kiss diagonally) — grass shows through it. Raise it to the
-    // LOWER of the two arms so the corner reads solid, no gap peeks through, and the path connects for collision +
-    // pathfinding. This catches turns even when the crook holds a TALLER tile (an earlier version wrongly required
-    // BOTH sides to be lower and so skipped exactly those joints). Single pass off the ORIGINAL grid (writes to a
-    // clone) so one fill can't cascade into a new one this pass; out-of-bounds counts as level 0 (never an arm).
-    //
-    // Only BASE-plane cells (level ≥ 0) are eligible: filling was ever only meant to close background GRASS gaps in
-    // the crook of a RAISED feature. A cell the user deliberately SANK (level < 0 — a road/gutter/moat lane) is a
-    // channel, and every diagonal TURN of that lane sits in the crook of two higher (base-level) neighbours — so the
-    // old unconditional fill lifted every zigzag-lane corner up to the base and re-coloured it solid, shredding the
-    // painted path into a diagonal smear. Skipping sunken cells keeps the lane exactly as painted (crisp corners),
-    // while grass-gap fills between raised arms are unaffected.
-    static int[,] FillCornerNotches(int[,] levels, int cols, int rows)
-    {
-        var outLv = (int[,])levels.Clone();
-        int Lvl(int x, int z) => (x >= 0 && x < cols && z >= 0 && z < rows) ? levels[x, z] : int.MinValue;
-        for (int z = 0; z < rows; z++)
-            for (int x = 0; x < cols; x++)
-            {
-                int L = levels[x, z];
-                if (L < 0) continue;   // never auto-raise a user-sunken lane cell — its corners stay crisp as painted
-                int w = Lvl(x - 1, z), e = Lvl(x + 1, z), n = Lvl(x, z + 1), s = Lvl(x, z - 1);
-                int fill = L;
-                if (w > L && n > L) fill = Mathf.Max(fill, Mathf.Min(w, n));
-                if (e > L && n > L) fill = Mathf.Max(fill, Mathf.Min(e, n));
-                if (w > L && s > L) fill = Mathf.Max(fill, Mathf.Min(w, s));
-                if (e > L && s > L) fill = Mathf.Max(fill, Mathf.Min(e, s));
-                outLv[x, z] = fill;
-            }
-        return outLv;
-    }
-
-    // A wall is needed on an edge when the neighbour cell is LOWER (bottom = neighbour's top) or off the map
-    // (bottom = the border skirt). Returns false (no wall) when the neighbour is the same height or higher —
-    // that boundary is owned by the taller side, so we never double a wall. `L` is this (higher) cell's level.
-    static bool WallBottom(int[,] levels, int cols, int rows, int nx, int nz, int L, float lh, float skirtBottomY, out float bottomY, out bool isCurb)
-    {
-        isCurb = false;
-        if (nx < 0 || nx >= cols || nz < 0 || nz >= rows) { bottomY = skirtBottomY; return true; }   // border skirt (not a curb)
-        int nL = levels[nx, nz];
-        if (nL < L) { bottomY = nL * lh; isCurb = (L - nL == 1); return true; }   // exactly one notch down = decorative curb
-        bottomY = 0f; return false;
     }
 
     // smoothstep(a,b,x) — soft 0→1 ramp, the source of the feathered grass↔dirt edge.
