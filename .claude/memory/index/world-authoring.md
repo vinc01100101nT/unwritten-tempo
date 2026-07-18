@@ -11,3 +11,8 @@
 - [⭐ MapRecipe + RecipeGenerator (the ONE generator)](../recipe-generator.md) — every map = `MapRecipe` SO; old per-kind generators DELETED.
 - [Floor autotiling via RuleTiles](../floor-autotile-ruletiles.md) — `Build Floor RuleTiles` → 8 corner-correct RuleTiles.
 - [Runtime material on a PREFAB → null/pink](../runtime-material-on-prefab-null-pink.md) — `new Material()` into a prefab serializes to `fileID:0`; persist as .mat first (Sway Selected Tree).
+- [Ground blend corner smear](../ground-blend-corner-smear.md) — elevated tops coloured off FILLED level → concave corners smear two tiles; colour off PAINTED level (`Lp`), geometry off filled.
+- [Ground blend washes out paths at small cellSize](../ground-blend-small-cellsize-washed-paths.md) — `sub=round(cellSize/0.8)` hit 1 at cellSize=1 → only cell-corner samples → 1-cell paths peak at 0.5; floor `sub` at even≥2.
+- [Map painter ground density mismatch](../map-painter-ground-density-mismatch.md) — painter stretched 1 texture repeat per CELL vs game's fixed 2.5u/repeat; SSOT = `GroundBlendBuilder.GroundTexWorldSize` → manifest `groundTexWorldSize` → painter CanvasPattern.
+- [Map painter thumbnail aspect squash](../map-painter-thumbnail-aspect-squash.md) — square thumb (long axis + margin) stretched into non-square footprint → elongated props squashed; render viewport AT footprint aspect, zero margin.
+- [Sunken path corners shredded into diagonal](../ground-blend-sunken-path-corners-shredded.md) — `FillCornerNotches` raised −1 lane turns to base level → zigzag path broke into diagonal; skip `L<0`.

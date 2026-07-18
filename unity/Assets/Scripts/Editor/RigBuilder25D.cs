@@ -100,6 +100,7 @@ public static class RigBuilder25D
         if (player != null) follow.target = player.transform;
 
         var fader = go.AddComponent<CameraOccluderFader>();   // fade props that block the view of the player
+        fader.enabled = false;                                // disabled by default; opt in via Dev Settings ▸ Occlusion Fade
         if (player != null) fader.target = player.transform;
     }
 

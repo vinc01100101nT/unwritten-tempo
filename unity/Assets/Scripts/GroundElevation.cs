@@ -14,12 +14,12 @@ using UnityEngine;
 public static class GroundElevation
 {
     /// <summary>World-units of rise per painted elevation notch (gutter = −1, raised sidewalk = +1, …).</summary>
-    public const float LevelHeight = 0.2f;
+    public const float LevelHeight = 0.05f;
 
     /// <summary>Max rise between adjacent ground a unit will walk up (auto-climb / stair); a bigger rise is a
-    /// cliff and blocks. Sits between one notch (0.2, walkable) and two (0.4, a cliff). The player capsule's
+    /// cliff and blocks. Sits between one notch (0.05, walkable) and two (0.1, a cliff). The player capsule's
     /// stepOffset and the pathfinder's maxStep both read THIS so they can never drift apart.</summary>
-    public const float MaxClimbStep = 0.3f;
+    public const float MaxClimbStep = 0.075f;
 
     /// <summary>World-Y for an integer elevation level.</summary>
     public static float LevelToY(int level) => level * LevelHeight;

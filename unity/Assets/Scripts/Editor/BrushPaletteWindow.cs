@@ -266,6 +266,7 @@ public class BrushPaletteWindow : EditorWindow
             version = 1,
             exportedAt = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
             cellSize = _palette.cellSize,
+            groundTexWorldSize = GroundBlendBuilder.GroundTexWorldSize,
         };
 
         string dir = Path.GetFullPath(Path.Combine(Application.dataPath, "../../tools/map-painter"));
@@ -355,9 +356,17 @@ public class BrushPaletteWindow : EditorWindow
 
             pru.AddSingleGO(inst);
 
+            // The painter stretches this image over the prop's EXACT footprint rect (bounds x × z) — so the render
+            // must cover exactly that rect. The old SQUARE render (sized to the long axis + margin) left empty
+            // margin along the short axis, and stretching that square into the non-square footprint squashed and
+            // shrank every elongated prop (House_D drew at half height). Viewport pixel aspect = footprint aspect,
+            // ortho half-height = half the Z extent, no margin → image edge == bounds edge, painter maps it 1:1.
+            float fx = bnds.size.x, fz = bnds.size.z;
+            int pxW = fx >= fz ? ThumbPx : Mathf.Max(8, Mathf.RoundToInt(ThumbPx * fx / fz));
+            int pxH = fz >= fx ? ThumbPx : Mathf.Max(8, Mathf.RoundToInt(ThumbPx * fz / fx));
             var cam = pru.camera;
             cam.orthographic = true;
-            cam.orthographicSize = Mathf.Max(0.05f, Mathf.Max(bnds.size.x, bnds.size.z) * 0.5f * 1.06f);   // square + tiny margin
+            cam.orthographicSize = Mathf.Max(0.025f, fz * 0.5f);
             cam.transform.position = new Vector3(bnds.center.x, bnds.max.y + 10f, bnds.center.z);
             cam.transform.rotation = Quaternion.LookRotation(Vector3.down, Vector3.forward);               // look down; +Z = up in image
             cam.nearClipPlane = 0.01f;
@@ -368,8 +377,8 @@ public class BrushPaletteWindow : EditorWindow
             pru.lights[1].intensity = 0.5f; pru.lights[1].transform.rotation = Quaternion.Euler(-20f, -140f, 0f);
             pru.ambientColor = new Color(0.55f, 0.55f, 0.55f, 1f);
 
-            var onBlack = RenderOnce(pru, Color.black);
-            var onWhite = RenderOnce(pru, Color.white);
+            var onBlack = RenderOnce(pru, Color.black, pxW, pxH);
+            var onWhite = RenderOnce(pru, Color.white, pxW, pxH);
             var cut = ExtractAlpha(onBlack, onWhite);
             Object.DestroyImmediate(onBlack);
             Object.DestroyImmediate(onWhite);
@@ -391,10 +400,10 @@ public class BrushPaletteWindow : EditorWindow
         }
     }
 
-    static Texture2D RenderOnce(PreviewRenderUtility pru, Color bg)
+    static Texture2D RenderOnce(PreviewRenderUtility pru, Color bg, int w, int h)
     {
         pru.camera.backgroundColor = bg;
-        pru.BeginStaticPreview(new Rect(0, 0, ThumbPx, ThumbPx));
+        pru.BeginStaticPreview(new Rect(0, 0, w, h));
         pru.Render(true);
         return pru.EndStaticPreview();   // readable Texture2D, opaque fill = bg
     }
@@ -523,6 +532,7 @@ public class BrushPaletteWindow : EditorWindow
         public int version;
         public string exportedAt;
         public float cellSize;
+        public float groundTexWorldSize;   // world units one ground-texture repeat spans in-game (painter preview density)
         public List<MfBrush> brushes = new List<MfBrush>();
     }
 }

@@ -1,8 +1,149 @@
 {
     "version": 1,
-    "exportedAt": "2026-07-17 04:41:20",
-    "cellSize": 4.0,
+    "exportedAt": "2026-07-18 08:30:39",
+    "cellSize": 1.0,
+    "groundTexWorldSize": 2.5,
     "brushes": [
+        {
+            "id": "prontera_tile",
+            "label": "prontera_tile",
+            "color": "#6279D9",
+            "kind": "ground",
+            "groundTex": "prontera_tile",
+            "thumb": "thumbnails/prontera_tile.png",
+            "channel": 0,
+            "hasFootprint": false,
+            "footprint": {
+                "x": 0.0,
+                "z": 0.0
+            },
+            "prefabs": []
+        },
+        {
+            "id": "ground_sidewalk",
+            "label": "ground_sidewalk",
+            "color": "#A1D962",
+            "kind": "ground",
+            "groundTex": "ground_sidewalk",
+            "thumb": "thumbnails/ground_sidewalk.png",
+            "channel": 1,
+            "hasFootprint": false,
+            "footprint": {
+                "x": 0.0,
+                "z": 0.0
+            },
+            "prefabs": []
+        },
+        {
+            "id": "ground_grass",
+            "label": "ground_grass",
+            "color": "#D96285",
+            "kind": "ground",
+            "groundTex": "ground_grass",
+            "thumb": "thumbnails/ground_grass.png",
+            "channel": 2,
+            "hasFootprint": false,
+            "footprint": {
+                "x": 0.0,
+                "z": 0.0
+            },
+            "prefabs": []
+        },
+        {
+            "id": "ground_road",
+            "label": "ground_road",
+            "color": "#81D962",
+            "kind": "ground",
+            "groundTex": "ground_road",
+            "thumb": "thumbnails/ground_road.png",
+            "channel": 3,
+            "hasFootprint": false,
+            "footprint": {
+                "x": 0.0,
+                "z": 0.0
+            },
+            "prefabs": []
+        },
+        {
+            "id": "ground_soil",
+            "label": "ground_soil",
+            "color": "#9F62D9",
+            "kind": "ground",
+            "groundTex": "ground_soil",
+            "thumb": "thumbnails/ground_soil.png",
+            "channel": 4,
+            "hasFootprint": false,
+            "footprint": {
+                "x": 0.0,
+                "z": 0.0
+            },
+            "prefabs": []
+        },
+        {
+            "id": "wall",
+            "label": "Wall",
+            "color": "#D9B562",
+            "kind": "object",
+            "groundTex": "",
+            "thumb": "",
+            "channel": -1,
+            "hasFootprint": true,
+            "footprint": {
+                "x": 9.444990158081055,
+                "z": 3.2684011459350588
+            },
+            "prefabs": [
+                {
+                    "name": "Wall_part2",
+                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_part2.prefab",
+                    "x": 7.814701080322266,
+                    "z": 1.9415531158447266,
+                    "thumb": "thumbnails/Wall_part2.png"
+                },
+                {
+                    "name": "Wall_part1",
+                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_part1.prefab",
+                    "x": 3.9073486328125,
+                    "z": 2.036309242248535,
+                    "thumb": "thumbnails/Wall_part1.png"
+                },
+                {
+                    "name": "Wall_entrance",
+                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_entrance.prefab",
+                    "x": 9.444990158081055,
+                    "z": 3.2684011459350588,
+                    "thumb": "thumbnails/Wall_entrance.png"
+                },
+                {
+                    "name": "Wall_gateR",
+                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_gateR.prefab",
+                    "x": 1.551121711730957,
+                    "z": 0.4819532632827759,
+                    "thumb": "thumbnails/Wall_gateR.png"
+                },
+                {
+                    "name": "Wall_gateL",
+                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_gateL.prefab",
+                    "x": 1.551121711730957,
+                    "z": 0.48195338249206545,
+                    "thumb": "thumbnails/Wall_gateL.png"
+                },
+                {
+                    "name": "Wall_tower2",
+                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_tower2.prefab",
+                    "x": 2.8497562408447267,
+                    "z": 2.8541698455810549,
+                    "thumb": "thumbnails/Wall_tower2.png"
+                },
+                {
+                    "name": "Wall_tower1",
+                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_tower1.prefab",
+                    "x": 2.0156612396240236,
+                    "z": 2.723012924194336,
+                    "thumb": "thumbnails/Wall_tower1.png"
+                }
+            ]
+        },
         {
             "id": "house_a",
             "label": "House_A",
@@ -149,146 +290,6 @@
                     "x": 12.521059036254883,
                     "z": 12.785322189331055,
                     "thumb": "thumbnails/Willow_tree2.png"
-                }
-            ]
-        },
-        {
-            "id": "prontera_tile",
-            "label": "prontera_tile",
-            "color": "#6279D9",
-            "kind": "ground",
-            "groundTex": "prontera_tile",
-            "thumb": "thumbnails/prontera_tile.png",
-            "channel": 0,
-            "hasFootprint": false,
-            "footprint": {
-                "x": 0.0,
-                "z": 0.0
-            },
-            "prefabs": []
-        },
-        {
-            "id": "ground_sidewalk",
-            "label": "ground_sidewalk",
-            "color": "#A1D962",
-            "kind": "ground",
-            "groundTex": "ground_sidewalk",
-            "thumb": "thumbnails/ground_sidewalk.png",
-            "channel": 1,
-            "hasFootprint": false,
-            "footprint": {
-                "x": 0.0,
-                "z": 0.0
-            },
-            "prefabs": []
-        },
-        {
-            "id": "ground_grass",
-            "label": "ground_grass",
-            "color": "#D96285",
-            "kind": "ground",
-            "groundTex": "ground_grass",
-            "thumb": "thumbnails/ground_grass.png",
-            "channel": 2,
-            "hasFootprint": false,
-            "footprint": {
-                "x": 0.0,
-                "z": 0.0
-            },
-            "prefabs": []
-        },
-        {
-            "id": "ground_road",
-            "label": "ground_road",
-            "color": "#81D962",
-            "kind": "ground",
-            "groundTex": "ground_road",
-            "thumb": "thumbnails/ground_road.png",
-            "channel": 3,
-            "hasFootprint": false,
-            "footprint": {
-                "x": 0.0,
-                "z": 0.0
-            },
-            "prefabs": []
-        },
-        {
-            "id": "ground_soil",
-            "label": "ground_soil",
-            "color": "#9F62D9",
-            "kind": "ground",
-            "groundTex": "ground_soil",
-            "thumb": "thumbnails/ground_soil.png",
-            "channel": 4,
-            "hasFootprint": false,
-            "footprint": {
-                "x": 0.0,
-                "z": 0.0
-            },
-            "prefabs": []
-        },
-        {
-            "id": "wall",
-            "label": "Wall",
-            "color": "#D9B562",
-            "kind": "object",
-            "groundTex": "",
-            "thumb": "",
-            "channel": -1,
-            "hasFootprint": true,
-            "footprint": {
-                "x": 9.444990158081055,
-                "z": 3.2684011459350588
-            },
-            "prefabs": [
-                {
-                    "name": "Wall_part2",
-                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_part2.prefab",
-                    "x": 7.814701080322266,
-                    "z": 1.9415531158447266,
-                    "thumb": "thumbnails/Wall_part2.png"
-                },
-                {
-                    "name": "Wall_part1",
-                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_part1.prefab",
-                    "x": 3.9073486328125,
-                    "z": 2.036309242248535,
-                    "thumb": "thumbnails/Wall_part1.png"
-                },
-                {
-                    "name": "Wall_entrance",
-                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_entrance.prefab",
-                    "x": 9.444990158081055,
-                    "z": 3.2684011459350588,
-                    "thumb": "thumbnails/Wall_entrance.png"
-                },
-                {
-                    "name": "Wall_gateR",
-                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_gateR.prefab",
-                    "x": 1.551121711730957,
-                    "z": 0.4819532632827759,
-                    "thumb": "thumbnails/Wall_gateR.png"
-                },
-                {
-                    "name": "Wall_gateL",
-                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_gateL.prefab",
-                    "x": 1.551121711730957,
-                    "z": 0.48195338249206545,
-                    "thumb": "thumbnails/Wall_gateL.png"
-                },
-                {
-                    "name": "Wall_tower2",
-                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_tower2.prefab",
-                    "x": 2.8497562408447267,
-                    "z": 2.8541698455810549,
-                    "thumb": "thumbnails/Wall_tower2.png"
-                },
-                {
-                    "name": "Wall_tower1",
-                    "path": "Assets/1_Authored/Prefabs/Props/Outdoor/Wall_tower1.prefab",
-                    "x": 2.0156612396240236,
-                    "z": 2.723012924194336,
-                    "thumb": "thumbnails/Wall_tower1.png"
                 }
             ]
         }

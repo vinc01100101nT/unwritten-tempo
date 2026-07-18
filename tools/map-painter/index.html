@@ -34,6 +34,13 @@
   .layerTag { font-size:10px; padding:1px 5px; border-radius:3px; background:#0004; color:var(--muted); }
   kbd { background:#0006; border:1px solid var(--line); border-radius:4px; padding:1px 5px; font-size:11px; }
   .warn { color:#e0a050; }
+  /* Big preview of the currently selected brush/variant — checkerboard shows through transparent prop cutouts. */
+  #previewBox { width:100%; aspect-ratio:1/1; border:1px solid var(--line); border-radius:6px;
+                background-color:#1a1c20;
+                background-image:linear-gradient(45deg,#0003 25%,#0000 25%,#0000 75%,#0003 75%),
+                                 linear-gradient(45deg,#0003 25%,#0000 25%,#0000 75%,#0003 75%);
+                background-size:16px 16px; background-position:0 0,8px 8px; }
+  #previewImg { width:100%; height:100%; background:center/contain no-repeat; }
 </style>
 </head>
 <body>
@@ -56,6 +63,10 @@
   </header>
 
   <aside>
+    <div class="group" id="previewGroup" hidden>
+      <h2>Selected — <span id="previewName"></span></h2>
+      <div id="previewBox"><div id="previewImg"></div></div>
+    </div>
     <div class="group">
       <h2>Object brushes</h2>
       <div id="objBrushes"></div>
@@ -76,6 +87,7 @@
     <div class="group">
       <h2>Tools</h2>
       <button id="eraseBtn" class="brush">🩹 Eraser <span class="meta">right-drag</span></button>
+      <button id="fillBtn" class="brush" style="margin-top:6px">🪣 Fill <span class="meta">flood ground</span></button>
       <button id="fitBtn" class="brush" style="margin-top:6px">🔍 Fit view</button>
       <button id="clearBtn" class="brush" style="margin-top:6px">🗑️ Clear map</button>
     </div>
@@ -92,7 +104,7 @@
   </main>
 
   <footer>
-    <span id="hint">Left-drag paint · Right-drag erase · Elevation: L +1 / R −1 per cell · <kbd>Alt</kbd>+drag move · <kbd>R</kbd> rotate · Free: drag after placing to rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
+    <span id="hint">Left-drag paint · Right-drag erase · 🪣 Fill = act on whole matching-tile region (paint / raise / lower / erase) · Elevation: L +1 / R −1 per cell · <kbd>Alt</kbd> peek levels / +drag move · <kbd>R</kbd> rotate · Free: drag after placing to rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
     <span class="sp" style="flex:1"></span>
     <span id="stat"></span>
   </footer>
@@ -104,16 +116,19 @@
 const S = {
   manifest:null, brushes:[], brushById:{}, prefabById:{}, thumbById:{},
   cellSize:4, cols:30, rows:16,
+  groundTexWorldSize:2.5,      // world units one ground-texture repeat spans IN-GAME (from the manifest)
   mode:"grid",                 // "grid" | "free"
   active:null,                 // brush id or "erase"
   activeVariant:"",            // chosen prefab name within the active brush ("" = random)
   yaw:0,                       // current placement yaw, degrees (0 = up/north)
+  fillMode:false,              // 🪣 bucket: a ground click floods the contiguous same-tile region instead of one cell
   ground:{},                   // "cx,cz" -> brushId  (ground-paint layer)
   heights:{},                  // "cx,cz" -> integer elevation level (gutter −1, raised +1); absent = 0
   strokeCells:null,            // cells already bumped THIS elevation stroke (one delta per cell per drag)
   objects:[],                  // { brush, prefab, x, z, yaw }  (world units; origin = top-left corner)
   view:{ x:40, y:40, zoom:1 }, // pan px + zoom
   basePx:26,                   // px per cell at zoom 1
+  altDown:false,               // Alt held → reveal elevation numbers even when an elevation brush isn't active
   pan:false, panStart:null, paint:0, // paint: 0 none, 1 left, 2 right
   dragObj:null,                // object being moved via Alt+left-drag
   rotObj:null,                 // free-mode: object just placed, dragging rotates it to face the cursor
@@ -155,6 +170,7 @@ async function loadManifest() {
 function applyManifest(m) {
   S.manifest = m;
   S.cellSize = m.cellSize || 4;
+  S.groundTexWorldSize = m.groundTexWorldSize || 2.5;   // in-game ground texture density (GroundBlend tiling)
   S.brushes = m.brushes || [];
   S.brushById = {}; S.prefabById = {}; S.thumbById = {};
   S.brushes.forEach(b => {
@@ -212,6 +228,25 @@ function refreshPaletteSel() {
   document.getElementById("eraseBtn").classList.toggle("on", S.active === "erase");
   document.getElementById("raiseBtn").classList.toggle("on", S.active === "raise");
   document.getElementById("lowerBtn").classList.toggle("on", S.active === "lower");
+  buildPreview();
+}
+// Large thumbnail of what's currently selected: the chosen prop variant (or first prefab) for object brushes, the
+// tile texture for ground brushes. Hidden for the toolbar brushes (erase / raise / lower), which have no thumbnail.
+function buildPreview() {
+  const grp = document.getElementById("previewGroup");
+  const b = S.brushById[S.active];
+  if (!b) { grp.hidden = true; return; }
+  grp.hidden = false;
+  const isObj = b.kind === "object";
+  const thumbName = isObj
+    ? (S.activeVariant || (b.prefabs && b.prefabs[0] && b.prefabs[0].name))
+    : b.id;
+  document.getElementById("previewName").textContent = isObj ? (S.activeVariant || b.label) : b.label;
+  const img = thumbName ? thumbFor(thumbName) : null;
+  const el = document.getElementById("previewImg");
+  el.style.background = img
+    ? `#0000 center/${isObj ? "contain" : "cover"} no-repeat url('${img.src}')`
+    : b.color;
 }
 // Variant strip: pick a specific prefab (drawn + placed at its OWN footprint) or 🎲 Random for a mixed look.
 function buildVariants() {
@@ -231,7 +266,7 @@ function buildVariants() {
       ? `<span class="sw" style="background:#0000 center/contain no-repeat url('${img.src}')"></span>`
       : `<span class="sw" style="background:${b.color}"></span>`;
     el.innerHTML = `${sw}${label}<span class="meta">${meta}</span>`;
-    el.onclick = () => { S.activeVariant = id; document.querySelectorAll("[data-var]").forEach(e => e.classList.toggle("on", e.dataset.var === id)); render(); };
+    el.onclick = () => { S.activeVariant = id; document.querySelectorAll("[data-var]").forEach(e => e.classList.toggle("on", e.dataset.var === id)); buildPreview(); render(); };
     box.appendChild(el);
   };
   add("", "🎲 Random", `${b.prefabs.length} variants`);
@@ -278,13 +313,25 @@ function objFoot(o) {
 }
 function paintAt(wx, wz, erase) {
   // Elevation brushes bump a cell one notch, once per stroke; the right button applies the opposite direction.
-  if (S.active === "raise" || S.active === "lower") { paintHeight(wx, wz, erase); return; }
+  // 🪣 Fill spreads the notch across the whole contiguous same-tile region under the cursor instead of one cell.
+  if (S.active === "raise" || S.active === "lower") {
+    if (S.fillMode) { for (const k of fillRegion(wx, wz)) { const [cx, cz] = k.split(",").map(Number); bumpHeight(cx, cz, erase); } }
+    else paintHeight(wx, wz, erase);
+    return;
+  }
   const b = S.brushById[S.active];
-  if (erase || S.active === "erase") { eraseAt(wx, wz); return; }
+  if (erase || S.active === "erase") {
+    // 🪣 Fill + Eraser: clear the ground + elevation of the whole contiguous same-tile region in one click.
+    if (S.fillMode && S.active === "erase") { for (const k of fillRegion(wx, wz)) { delete S.ground[k]; delete S.heights[k]; } }
+    else eraseAt(wx, wz);
+    return;
+  }
   if (!b) return;
   if (b.kind === "ground") {
     const { cx, cz } = cellOf(wx, wz);
-    if (inBounds(cx, cz)) S.ground[cx + "," + cz] = b.id;
+    if (!inBounds(cx, cz)) return;
+    if (S.fillMode) floodFillGround(wx, wz, b.id);       // 🪣 flood the contiguous same-tile region
+    else S.ground[cx + "," + cz] = b.id;
   } else {
     // object: snap to cell centre in grid mode, free position otherwise
     let x = wx, z = wz;
@@ -299,6 +346,27 @@ function paintAt(wx, wz, erase) {
     // plain cell — yaw is ignored. Everything else keeps the chosen facing.
     S.objects.push({ brush:b.id, prefab:pickPrefab(b), x, z, yaw:isCellObject(b) ? 0 : S.yaw });
   }
+}
+// 🪣 Bucket fill (ground layer only): the set of cells 4-connected to the clicked cell that share its ORIGINAL
+// tile ("" = unpainted counts as its own region), computed without mutating. Reused for both the live hover
+// preview and the actual fill so the highlighted region is exactly what a click paints (single source of truth).
+function fillRegion(wx, wz) {
+  const start = cellOf(wx, wz), region = new Set();
+  if (!inBounds(start.cx, start.cz)) return region;
+  const target = S.ground[start.cx + "," + start.cz] || "";
+  const stack = [[start.cx, start.cz]];
+  while (stack.length) {
+    const [cx, cz] = stack.pop();
+    if (!inBounds(cx, cz)) continue;
+    const k = cx + "," + cz;
+    if (region.has(k) || (S.ground[k] || "") !== target) continue;
+    region.add(k);
+    stack.push([cx + 1, cz], [cx - 1, cz], [cx, cz + 1], [cx, cz - 1]);
+  }
+  return region;
+}
+function floodFillGround(wx, wz, brushId) {
+  for (const k of fillRegion(wx, wz)) S.ground[k] = brushId;
 }
 // Index of the topmost object whose (axis-aligned) footprint contains the point, else -1. Shared by erase + drag.
 function topObjectIndexAt(wx, wz) {
@@ -318,15 +386,18 @@ function eraseAt(wx, wz) {
 }
 // Elevation paint: bump a cell one notch in the brush's direction (right button = opposite). Deduped per stroke via
 // S.strokeCells so a single drag over a cell changes it ONCE, not once per mousemove. Level 0 is stored as absent.
-function paintHeight(wx, wz, flip) {
-  const { cx, cz } = cellOf(wx, wz);
-  if (!inBounds(cx, cz)) return;
+function bumpHeight(cx, cz, flip) {
   const key = cx + "," + cz;
-  if (S.strokeCells) { if (S.strokeCells.has(key)) return; S.strokeCells.add(key); }
+  if (S.strokeCells) { if (S.strokeCells.has(key)) return; S.strokeCells.add(key); }   // one notch per cell per stroke
   let dir = S.active === "raise" ? 1 : -1;
   if (flip) dir = -dir;
   const lvl = (S.heights[key] || 0) + dir;
   if (lvl === 0) delete S.heights[key]; else S.heights[key] = lvl;
+}
+function paintHeight(wx, wz, flip) {
+  const { cx, cz } = cellOf(wx, wz);
+  if (!inBounds(cx, cz)) return;
+  bumpHeight(cx, cz, flip);
 }
 // Free mode: rotate the just-placed object so its facing arrow points from its centre toward the cursor.
 // yaw is measured clockwise from "up" (north / −z), matching drawObject's ctx.rotate. A cursor sitting on the
@@ -349,6 +420,20 @@ function dragObjectTo(wx, wz) {
 }
 
 // ── Rendering ───────────────────────────────────────────────────────────────────────────────────────────
+// Ground textures tile at the GAME's density — one repeat per S.groundTexWorldSize world units (the GroundBlend
+// shader's world-XZ tiling), NOT one stretched repeat per cell: a cell only chooses WHICH texture shows there.
+// Patterns are anchored at the map centre (= the game's world origin after import) so repeat seams land where the
+// shader puts them. Cache one CanvasPattern per decoded tile image; the transform is refreshed every render.
+const _patCache = new WeakMap();
+function groundPattern(img, p) {
+  if (!img) return null;
+  let pat = _patCache.get(img);
+  if (!pat) { pat = ctx.createPattern(img, "repeat"); if (!pat) return null; _patCache.set(img, pat); }
+  const rep = S.groundTexWorldSize * p;                  // screen px one texture repeat spans
+  const c = worldToScreen(worldW() / 2, worldH() / 2);   // map centre = the game's world origin
+  pat.setTransform(new DOMMatrix().translate(c.x, c.y).scale(rep / img.width, rep / img.height));
+  return pat;
+}
 function render() {
   const w = cv.width, h = cv.height, p = pxPerWorld();
   ctx.clearRect(0, 0, w, h);
@@ -363,9 +448,10 @@ function render() {
     const [cx, cz] = k.split(",").map(Number);
     const b = S.brushById[S.ground[k]]; if (!b) continue;
     const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
-    const img = thumbFor(b.id);
-    if (img) {
-      ctx.drawImage(img, s.x, s.y, S.cellSize * p, S.cellSize * p);   // real tile texture
+    const pat = groundPattern(thumbFor(b.id), p);
+    if (pat) {
+      ctx.fillStyle = pat;
+      ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p);   // real tile texture at in-game density
     } else {
       ctx.fillStyle = b.color; ctx.globalAlpha = 0.5;
       ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p);
@@ -493,6 +579,9 @@ function drawWallGlyph(ob, p, ghost) {
 // plus the signed level number, so the height map reads at a glance alongside the ground paint.
 function drawHeights(p) {
   const cp = S.cellSize * p;
+  // Numbers are visual clutter when you're not editing elevation: show them only while a Raise/Lower brush is
+  // active, or while Alt is held as a peek. The colour tint always stays so the height map still reads.
+  const showNums = S.active === "raise" || S.active === "lower" || S.altDown;
   for (const k in S.heights) {
     const lvl = S.heights[k]; if (!lvl) continue;
     const [cx, cz] = k.split(",").map(Number);
@@ -501,7 +590,7 @@ function drawHeights(p) {
     ctx.fillStyle = lvl > 0 ? "#eadfa0" : "#22304c";
     ctx.fillRect(s.x, s.y, cp, cp);
     ctx.globalAlpha = 1;
-    if (cp >= 14) {
+    if (cp >= 14 && showNums) {
       ctx.fillStyle = lvl > 0 ? "#3a2f00" : "#cfe0ff";
       ctx.font = "bold 11px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText((lvl > 0 ? "+" : "") + lvl, s.x + cp / 2, s.y + cp / 2);
@@ -511,6 +600,15 @@ function drawHeights(p) {
 }
 
 function drawHover(p) {
+  // 🪣 Fill preview for elevation / eraser: tint the whole region a click would affect (ground brushes handled below).
+  if (S.fillMode && (S.active === "raise" || S.active === "lower" || S.active === "erase")) {
+    const region = fillRegion(S.mouse.wx, S.mouse.wz);
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = S.active === "raise" ? "#8fd694" : S.active === "lower" ? "#d69a8f" : "#e05050";
+    for (const k of region) { const [cx, cz] = k.split(",").map(Number); const s = worldToScreen(cx * S.cellSize, cz * S.cellSize); ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p); }
+    ctx.globalAlpha = 1;
+    return;
+  }
   // Elevation brushes: outline the target cell (green raise / red lower) since they have no palette swatch.
   if (S.active === "raise" || S.active === "lower") {
     const { cx, cz } = cellOf(S.mouse.wx, S.mouse.wz); if (!inBounds(cx, cz)) return;
@@ -524,7 +622,16 @@ function drawHover(p) {
   let { wx, wz } = S.mouse;
   if (b.kind === "object") {
     if (S.mode === "grid") { const { cx, cz } = cellOf(wx, wz); if (!inBounds(cx, cz)) return; wx = (cx + 0.5) * S.cellSize; wz = (cz + 0.5) * S.cellSize; }
-    drawObject({ brush:b.id, prefab:S.activeVariant, x:wx, z:wz, yaw:isCellObject(b) ? 0 : S.yaw }, p, true);
+    // Ghost a CONCRETE variant (chosen, else the first) — the brush-level fallback is the group's MAX footprint,
+    // wildly oversized for mixed groups (e.g. houses + trees in one brush).
+    const ghostPrefab = S.activeVariant || (b.prefabs && b.prefabs[0] ? b.prefabs[0].name : "");
+    drawObject({ brush:b.id, prefab:ghostPrefab, x:wx, z:wz, yaw:isCellObject(b) ? 0 : S.yaw }, p, true);
+  } else if (S.fillMode) {
+    // 🪣 highlight the whole contiguous region that a click would flood, in the selected tile's colour
+    const region = fillRegion(wx, wz);
+    ctx.globalAlpha = 0.35; ctx.fillStyle = b.color;
+    for (const k of region) { const [cx, cz] = k.split(",").map(Number); const s = worldToScreen(cx * S.cellSize, cz * S.cellSize); ctx.fillRect(s.x, s.y, S.cellSize * p, S.cellSize * p); }
+    ctx.globalAlpha = 1;
   } else {
     const { cx, cz } = cellOf(wx, wz); if (!inBounds(cx, cz)) return;
     const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
@@ -602,9 +709,15 @@ window.addEventListener("keydown", e => {
   if (ctrl && z && !e.shiftKey) { e.preventDefault(); undo(); return; }   // Ctrl+Z
   if (ctrl && (y || (z && e.shiftKey))) { e.preventDefault(); redo(); return; }   // Ctrl+Y or Ctrl+Shift+Z
   if (e.code === "Space") { S.spaceDown = true; }
+  if (e.key === "Alt" && !S.altDown) { S.altDown = true; render(); }   // peek elevation numbers while held
   if (e.key === "r" || e.key === "R") { S.yaw = (S.yaw + (S.mode === "grid" ? 90 : 15)) % 360; document.getElementById("yawTxt").textContent = S.yaw + "°"; render(); }
 });
-window.addEventListener("keyup", e => { if (e.code === "Space") S.spaceDown = false; });
+window.addEventListener("keyup", e => {
+  if (e.code === "Space") S.spaceDown = false;
+  if (e.key === "Alt" && S.altDown) { S.altDown = false; render(); }
+});
+// Alt can be "stuck" if the window loses focus mid-hold (Alt+Tab) — clear the peek so numbers don't linger.
+window.addEventListener("blur", () => { if (S.altDown) { S.altDown = false; render(); } });
 
 // ── Toolbar ─────────────────────────────────────────────────────────────────────────────────────────────
 document.getElementById("modeBtn").onclick = e => { S.mode = S.mode === "grid" ? "free" : "grid"; e.target.textContent = S.mode === "grid" ? "Grid" : "Free"; render(); };
@@ -612,6 +725,7 @@ document.getElementById("rotBtn").onclick = () => window.dispatchEvent(new Keybo
 document.getElementById("cols").onchange = e => { S.cols = +e.target.value; S.dirty = true; saveDraft(); render(); };
 document.getElementById("rows").onchange = e => { S.rows = +e.target.value; S.dirty = true; saveDraft(); render(); };
 document.getElementById("eraseBtn").onclick = () => { S.active = "erase"; refreshPaletteSel(); };
+document.getElementById("fillBtn").onclick = e => { S.fillMode = !S.fillMode; e.currentTarget.classList.toggle("on", S.fillMode); render(); };
 document.getElementById("raiseBtn").onclick = () => { S.active = "raise"; S.activeVariant = ""; refreshPaletteSel(); buildVariants(); };
 document.getElementById("lowerBtn").onclick = () => { S.active = "lower"; S.activeVariant = ""; refreshPaletteSel(); buildVariants(); };
 document.getElementById("clearBtn").onclick = () => { if (confirm("Clear all painted ground + objects?")) { commitHistory(); S.ground = {}; S.heights = {}; S.objects = []; saveDraft(); render(); } };

@@ -1,0 +1,12 @@
+**Symptom:** on generated/imported elevated maps, two different ground tiles (e.g. grey brick vs beige mosaic) meeting at a curbed/gutter seam stayed a hard edge along straight runs but showed a soft texture SMEAR at some concave corners — one region bled diagonally into the other.
+
+**Root cause:** `GroundBlendBuilder.LayPlotSampledElevated` colours each cell's top by sampling the blend field with the cell's level as the "which cells share a region" reference. It was passing the `FillCornerNotches`**-filled** level. `FillCornerNotches` raises a concave-corner cell to match the higher region around it (needed so path turns read solid for collision/pathfinding). Once raised, that cell counted as the SAME level as the higher region, so `BilinearMasked` happily feathered the higher region's texture across it → 3 corners one texture + 1 the other = GPU smear. Proven by replaying `FillCornerNotches` + `BilinearMasked` offline: filled-level ref left the crook cell with mixed corner weights; painted-level ref made all 4 corners solid.
+
+**Fix:** decouple the two level grids in `GroundBlendBuilder.cs`. Keep `paintLevels` (original notches) alongside the corner-filled `levels` (geometry only: heights/walls/collision). A cell is `raised` when `levels[cx,cz] > paintLevels[cx,cz]`. Then:
+
+- NON-raised cell → colour off its own painted level (`SampleCol(..., Lp)`), soft blend within a level as before.
+- RAISED cell → colour the WHOLE cell (top + its curb walls) SOLID from the region it was lifted INTO, via `RaisedRegionCol(cx,cz,L)`: find an orthogonal neighbour PAINTED at the lifted level `L` and sample its cell centre. `AddWall` got an optional `Color? solid` arg used for these.
+
+First attempt colored the raised cell off its OWN painted (lower) level — that killed the smear but painted the elevated corner with the LOWER area's tile (a grey patch in the beige plaza + broken border). The correct rule is: raised corner takes the ELEVATED region's tile, solid. See \[\[recipe-generator\]\], \[\[map-painter-pipeline\]\].
+
+**Gotcha:** the importer's `SampleLeveled` closure (`MapPainterImporter.cs`) masks with the ORIGINAL `levels` grid it captured; the builder clones inside `FillCornerNotches`, so the caller's array stays original — that's why passing `Lp` (original) keeps refLevel and mask grid consistent.

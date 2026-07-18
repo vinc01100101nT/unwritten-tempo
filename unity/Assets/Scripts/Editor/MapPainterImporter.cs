@@ -406,8 +406,10 @@ public class MapPainterImporter : EditorWindow
         EditorUtility.DisplayDialog("Import Painted Map", msg, "OK");
     }
 
-    // Remove a prior import's category objects from the scene so the ticked ones can be rebuilt cleanly. Matches by the
-    // names the importer bakes: ground mesh = "Ground_*", props group = "Props", wall kit = "Wall", spawn = "Start".
+    // Remove a prior import's category objects from the scene so the ticked ones can be rebuilt cleanly. Ground mesh =
+    // "Ground_*", props group = "Props", wall kit = "Wall". The spawn is matched by its SpawnPoint COMPONENT id, NOT the
+    // GameObject name — MakeSpawn names it "SpawnPoint_Start" (the name check "Start" never matched, so old Start spawns
+    // piled up on every re-import). Only the "Start" arrival is wiped; portal arrival spawns (w{i}_from_*) are left.
     static void ClearImported(Scene scene, bool ground, bool props, bool walls, bool spawn)
     {
         foreach (var go in scene.GetRootGameObjects())
@@ -416,7 +418,7 @@ public class MapPainterImporter : EditorWindow
             if (ground && n.StartsWith("Ground_")) { Object.DestroyImmediate(go); continue; }
             if (props && n == "Props")             { Object.DestroyImmediate(go); continue; }
             if (walls && n == "Wall")              { Object.DestroyImmediate(go); continue; }
-            if (spawn && n == "Start")             { Object.DestroyImmediate(go); continue; }
+            if (spawn) { var sp = go.GetComponent<SpawnPoint>(); if (sp != null && sp.id == "Start") { Object.DestroyImmediate(go); continue; } }
         }
     }
 

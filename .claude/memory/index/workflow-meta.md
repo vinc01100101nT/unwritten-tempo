@@ -20,3 +20,4 @@
 - [Asset move breaks hardcoded tool paths](../asset-move-breaks-hardcoded-tool-paths.md) — after promoting out of 0_Raw, grep .cs for old path string & repoint; Setup Systems Scene SAVES OVER Systems.unity so a stale path wipes the player. 7 SaveScene tools need abort+backup guards.
 - [.shadergraph guids are BARE hex, not `guid:`](../shadergraph-guids-are-bare-hex.md) — JSON shader graphs reference subgraphs/textures as raw 32-hex; a YAML-only dep parser misses them (broke NamuFX water on a 0_Raw promote).
 - [Project memory lives IN the repo via junction](../project-memory-in-repo-junction.md) — `.claude/memory/` committed; harness path junctions to it; re-link per machine with `scripts/link-memory-*`.
+- [Debug trap: interpretation smuggled in as observation](../debug-symptom-composition-not-interpretation.md) — a report names a CAUSE as fact; classify what the symptom is MADE OF / which layer; ≥2 failed fixes ⇒ attack the shared premise; screenshot/bytes first.

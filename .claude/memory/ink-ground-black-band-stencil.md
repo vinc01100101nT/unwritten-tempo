@@ -34,6 +34,15 @@ ink at some camera angles** but kept it at others.
 **Files:** `unity/Assets/Shaders/GroundBlend.shader` (Queue + `Stencil ... Pass Replace` write),
 `unity/Assets/Shaders/InkScreen.shader` (`Stencil ... Comp NotEqual` test).
 
+**Extension 2026-07-18 — curb/gutter trim also got the black band.** The elevated-path vertical CURB walls +
+corner stones (baked by `GroundBlendBuilder` `MakeCurbMaterial`/`MakeCornerMaterial`) used stock `URP/Lit`, which
+does NOT stamp bit 32 → same edge-on black smear on the gutter side. Fix: new shader `Unwritten/GroundTrim`
+(`unity/Assets/Shaders/GroundTrim.shader`, guid `b7d2e4a1c9f34e58a6b0c1d2e3f40515`) — a single-`_BaseMap` lit
+clone of GroundBlend that samples mesh **UV0** (GroundBlend samples world-XZ, which streaks a vertical wall) with
+the SAME bit-32 stamp + `Queue=Geometry+500`. Both curb materials now use it (builder + the two generated
+`.mat` GUIDs re-pointed so the already-baked scene fixes without a re-bake). Any future surface that must escape
+the ink → give it GroundTrim (or stamp bit 32 at queue+500).
+
 **Gotcha to remember:** a stencil "exclude this surface" mask only works if the writer is drawn LAST (or via a
 ZTest-Equal after-opaque pass) — otherwise everything in front of it inherits the bit. See
 [[occluded-silhouette-stencil]] for the after-opaque re-draw pattern (the heavier alternative).
