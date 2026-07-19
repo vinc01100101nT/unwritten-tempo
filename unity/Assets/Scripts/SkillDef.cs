@@ -13,6 +13,18 @@ public enum SkillAim
     Ground,
 }
 
+/// <summary>The SCALE of a skill (orthogonal to its category/role). An Ultimate is a normal skill stamped with
+/// this tier — it fires from a dedicated slot, gated by a charge meter that fills in combat. Zero new architecture.</summary>
+public enum SkillTier { Base, Ultimate }
+
+/// <summary>The battlefield-role archetype (the skill's TAG) — the coherence family from the design doc. Drives the
+/// tooltip chip + color; elements are deferred, so this is the identity that matters.</summary>
+public enum SkillArchetype { Burst, Tempo, Fortress, Sustain, Empower, Corrupt }
+
+/// <summary>The role CATEGORY shown on the card (orthogonal to <see cref="SkillTier"/> — an Ultimate is a tier, not a
+/// category).</summary>
+public enum SkillCategory { Attack, Utility, Buff }
+
 /// <summary>Per-level growth for one binding. Kept to a couple of linear knobs for now (swap to a curve later if
 /// non-linear scaling is wanted). Level 1 = the authored values; each level over 1 adds these.</summary>
 [System.Serializable]
@@ -64,6 +76,15 @@ public class SkillDef : ScriptableObject
     [Tooltip("Hotbar icon (Skill Icon pack). Null → the bar falls back to the short label.")]
     public Sprite icon;
 
+    [Header("Codex (hover tooltip)")]
+    [TextArea(2, 4)]
+    [Tooltip("Flavor + mechanics blurb shown in the hover card.")]
+    public string description = "";
+    [Tooltip("Battlefield-role archetype (the skill's TAG) — drives the tooltip chip + color.")]
+    public SkillArchetype archetype = SkillArchetype.Burst;
+    [Tooltip("Role category on the card (Attack / Utility / Buff). Ultimate is the separate tier flag, not a category.")]
+    public SkillCategory category = SkillCategory.Attack;
+
     [Header("Cost / cadence")]
     public int manaCost = 10;
     public float cooldown = 5f;
@@ -75,6 +96,16 @@ public class SkillDef : ScriptableObject
     public SkillAim aim = SkillAim.Ground;
     [Tooltip("Ground/Target aim: max distance from the caster the impact point can be.")]
     public float castRange = 11f;
+
+    [Header("Ultimate (tier, not a category)")]
+    [Tooltip("Base = a normal hotbar skill (keys 1–9). Ultimate = fires from the dedicated ULT slot, gated by the " +
+             "shared ult-charge meter instead of a plain cooldown.")]
+    public SkillTier tier = SkillTier.Base;
+    [Tooltip("Ult-charge required to cast (Ultimate tier only). Spent from Character's shared meter, which fills " +
+             "during combat (dealing/taking damage, casting).")]
+    [Min(0f)] public float chargeCost = 100f;
+    /// <summary>True when this skill occupies the dedicated ULT slot and spends charge rather than riding keys 1–9.</summary>
+    public bool IsUltimate => tier == SkillTier.Ultimate;
 
     [Header("Cast circle (shown ONLY during the wind-up, needs castTime > 0)")]
     [Tooltip("EffectLibrary id of the ground casting circle shown WHILE this skill winds up. Empty = no per-skill " +

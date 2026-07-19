@@ -21,7 +21,7 @@ public static class SkillSelfTest
         sb.Append("\nSoft-cap curve  passive% = Cap·R/(R+K)  (ATK: Cap 80% K 40 · CRIT: Cap 50%):\n");
         foreach (int r in new[] { 1, 5, 10, 20, 40, 80, 160 })
             sb.Append($"  R={r,-4} ATK +{SkillRing.Percent(StatId.Atk, r) * 100,5:0.0}%   " +
-                      $"CRIT +{SkillRing.Percent(StatId.CritChance, r) * 100,5:0.0}%\n");
+                      $"CRIT +{SkillRing.Percent(StatId.Critical, r) * 100,5:0.0}%\n");
         Debug.Log(sb.ToString());
     }
 

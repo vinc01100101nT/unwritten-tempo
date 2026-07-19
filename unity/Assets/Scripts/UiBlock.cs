@@ -43,7 +43,7 @@ public static class UiBlock
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void EnsureShield()
     {
-        var go = new GameObject("ImguiClickShield");
+        var go = new GameObject("ImguiClickShield") { hideFlags = HideFlags.DontSaveInEditor };
         Object.DontDestroyOnLoad(go);
         go.AddComponent<ImguiClickShield>();
     }

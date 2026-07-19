@@ -14,7 +14,7 @@ public class AutoCombatIndicator : MonoBehaviour
 
     public static AutoCombatIndicator Create()
     {
-        var go = new GameObject("AutoCombatIndicator");
+        var go = new GameObject("AutoCombatIndicator") { hideFlags = HideFlags.DontSaveInEditor };
         var canvas = go.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 500;                       // above the world, fine under modal panels

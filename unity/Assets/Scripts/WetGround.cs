@@ -135,7 +135,7 @@ public class WetGround : MonoBehaviour
     public static WetGround Ensure()
     {
         var w = Instance != null ? Instance : FindFirstObjectByType<WetGround>();
-        if (w == null) w = new GameObject("WetGround").AddComponent<WetGround>();
+        if (w == null) w = new GameObject("WetGround") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<WetGround>();
         return w;
     }
 

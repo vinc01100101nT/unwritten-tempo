@@ -188,11 +188,10 @@ public static class GmCommands
         var id = c.Arg(0);
         if (id == null) { c.Reply("Usage: /bind <skillId>"); return; }
         if (c.Ch == null) { c.Reply("No character."); return; }
-        int slot = c.Ch.Hotbar.BindToFirstEmpty(id);
-        if (slot < 0) { c.Reply($"Couldn't bind '{id}' (unknown, already bound, or bar full)."); return; }
+        if (!c.Ch.Hotbar.AutoBind(id)) { c.Reply($"Couldn't bind '{id}' (unknown, already bound, or bar full)."); return; }
         HotbarPanel.RebuildRequested?.Invoke();
         if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
-        c.Reply($"Bound {id} → slot {slot + 1}.");
+        c.Reply($"Bound {id} (ultimates → ult slot).");
     }
 
     static void CmdKill(GmContext c)
@@ -225,7 +224,8 @@ public static class GmCommands
         for (int i = 0; i < count; i++)
         {
             Vector2 r = UnityEngine.Random.insideUnitCircle * 2f;
-            UnityEngine.Object.Instantiate(near.gameObject, basePos + new Vector3(r.x, 0f, r.y), near.transform.rotation);
+            UnityEngine.Object.Instantiate(near.gameObject, basePos + new Vector3(r.x, 0f, r.y), near.transform.rotation)
+                .hideFlags = HideFlags.DontSaveInEditor;
         }
         c.Reply($"Spawned {count}× {near.name}.");
     }

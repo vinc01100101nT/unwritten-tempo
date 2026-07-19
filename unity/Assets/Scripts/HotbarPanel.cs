@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -32,6 +31,8 @@ public class HotbarPanel : MonoBehaviour
         public GameObject hideOnCd;     // the center label to hide while counting down (null when an icon shows)
         public int lastSecs = -1;
         public sbyte lastOnCd = -1, lastAff = -1;
+        public bool isUlt;              // the dedicated ULT cell — driven by the charge meter, not a cooldown
+        public float chargeCost;        // (ult) charge required to fire, read once at build
     }
 
     static readonly Color CellReady = Color.white;
@@ -41,9 +42,8 @@ public class HotbarPanel : MonoBehaviour
     static readonly Color MpColor     = new Color(0.6f, 0.78f, 1f);
     static readonly Color MpNoColor   = new Color(1f, 0.5f, 0.45f);
     static readonly Color CdShade     = new Color(0f, 0f, 0f, 0.55f);
-
-    static readonly SkillPhase[] Phases = (SkillPhase[])System.Enum.GetValues(typeof(SkillPhase));
-    readonly StringBuilder tipSb = new StringBuilder(160);   // reused on hover (not per-frame)
+    static readonly Color UltKeyColor    = new Color(1f, 0.55f, 0.95f);   // ult slot's "R" glyph — distinct from 1–9
+    static readonly Color UltChargeShade = new Color(0.05f, 0f, 0.1f, 0.7f);   // shade that CLEARS as the meter charges
 
     // Pre-baked second strings so the countdown repaint never allocates (cooldowns are short).
     static readonly string[] Secs = BuildSecs();
@@ -56,6 +56,7 @@ public class HotbarPanel : MonoBehaviour
     Player3DController player;
     Transform holder;
     readonly List<Slot> slots = new List<Slot>();
+    Slot ult;                       // the dedicated ULT cell (last child), built + refreshed separately
     bool built;
     bool cellsEnsured;
 
@@ -66,11 +67,15 @@ public class HotbarPanel : MonoBehaviour
     GameObject tipRoot;
     TMP_Text tipText;
     RectTransform tipRT;
+    Image tipIcon;
     static readonly Vector3[] cornerBuf = new Vector3[4];   // reused by GetWorldCorners (no per-hover alloc)
 
     void Start()
     {
         RebuildRequested = Rebuild;
+        // Ensure the buff bar exists even on a GameUICanvas built BEFORE it was added to the shell (so it appears
+        // without a Build UI Shell rebuild). Idempotent — skips if the shell already added one.
+        if (GetComponent<BuffBarPanel>() == null) gameObject.AddComponent<BuffBarPanel>();
         TryBuild();
     }
 
@@ -95,6 +100,8 @@ public class HotbarPanel : MonoBehaviour
             var s = slots[i];
             if (s.skill != null && s.skill.Activate()) UISounds.PlayClick();
         }
+        // Dedicated ULT key (R) — fires the one equipped ultimate (charge-gated inside Activate).
+        if (ult != null && ult.skill != null && Hotkeys.Down(KeyCode.R) && ult.skill.Activate()) UISounds.PlayClick();
     }
 
     /// <summary>True when active skills may fire — a ring must be worn (the gate for the whole active layer).</summary>
@@ -115,6 +122,7 @@ public class HotbarPanel : MonoBehaviour
                 var trig = cell.GetComponent<EventTrigger>(); if (trig != null) Destroy(trig);
             }
         slots.Clear();
+        ult = null;      // the ult cell is torn down with the rest — rebuilt in TryBuild
         HideTip();       // the hovered cell may be torn down — don't leave a stale tooltip floating
         built = false;   // Update() will TryBuild() again next frame, reading the new bindings
     }
@@ -140,6 +148,13 @@ public class HotbarPanel : MonoBehaviour
             var cell = holder.GetChild(i).GetComponent<Image>();
             if (cell != null) slots.Add(BuildSlot(cell, i));
         }
+        // The dedicated ULT cell is the extra child past the nine numbered slots (added by EnsureCells).
+        ult = null;
+        if (holder.childCount > HotbarBindings.SlotCount)
+        {
+            var ultCell = holder.GetChild(HotbarBindings.SlotCount).GetComponent<Image>();
+            if (ultCell != null) ult = BuildUltSlot(ultCell);
+        }
         built = slots.Count > 0;
     }
 
@@ -152,17 +167,19 @@ public class HotbarPanel : MonoBehaviour
         int have = holder.childCount;
         if (have == 0) return;
         var template = holder.GetChild(0).gameObject;
-        for (int i = have; i < HotbarBindings.SlotCount; i++)
+        // Nine numbered slots + one dedicated ult cell = SlotCount + 1 cells total.
+        int wanted = HotbarBindings.SlotCount + 1;
+        for (int i = have; i < wanted; i++)
         {
             var clone = Instantiate(template, holder);
-            clone.name = "Hotslot";
+            clone.name = i < HotbarBindings.SlotCount ? "Hotslot" : "UltSlot";
             for (int c = clone.transform.childCount - 1; c >= 0; c--) Destroy(clone.transform.GetChild(c).gameObject);
             var b = clone.GetComponent<Button>();         if (b != null) Destroy(b);
             var t = clone.GetComponent<EventTrigger>();    if (t != null) Destroy(t);
             var s = clone.GetComponent<HotbarSlotTarget>();if (s != null) Destroy(s);
             var d = clone.GetComponent<HotbarSlotDragSource>(); if (d != null) Destroy(d);
         }
-        if (holder is RectTransform rt) rt.sizeDelta = new Vector2(HotbarBindings.SlotCount * 54, 54);
+        if (holder is RectTransform rt) rt.sizeDelta = new Vector2(wanted * 54, 54);
     }
 
     Slot BuildSlot(Image cell, int index)
@@ -240,45 +257,118 @@ public class HotbarPanel : MonoBehaviour
         Stretch(s.cdNum.rectTransform, 2, 2);
         s.cdNum.gameObject.SetActive(false);
 
-        // Modifier loadout tooltip (every active is an IModifiableSkill).
-        if (skill is IModifiableSkill mod) BuildTooltip(cell.transform, mod);
+        // Skill-info hover card (icon, tags, cost, description, effects).
+        if (skill is SkillRunner sr && sr.def != null) AttachSkillTooltip(cell.transform, sr.def);
 
         return s;
     }
 
-    // Build the ONE shared tooltip panel on the canvas root (once). Hidden until a hover positions + shows it.
+    // The dedicated ULT cell: display + fire only (its binding is separate from keys 1–9, so no drop-target/drag).
+    // Its radial shade is driven by the CHARGE meter (clears as it fills), not a cooldown.
+    Slot BuildUltSlot(Image cell)
+    {
+        string id = Character.Instance.Hotbar.Ult;
+        var skill = PlayerSkills.ById(id);
+        var s = new Slot { index = -1, skill = skill, cell = cell, isUlt = true };
+        if (skill is SkillRunner sr && sr.def != null) s.chargeCost = sr.def.chargeCost;
+
+        var btn = cell.gameObject.GetComponent<Button>() ?? cell.gameObject.AddComponent<Button>();
+        btn.transition = Selectable.Transition.None;
+        btn.targetGraphic = cell;
+        btn.onClick.RemoveAllListeners();
+        var captured = s;
+        btn.onClick.AddListener(() => { if (SkillsEnabled && captured.skill != null && captured.skill.Activate()) UISounds.PlayClick(); });
+        cell.raycastTarget = true;
+
+        var key = NewText("Key", cell.transform, "R", 12, FontStyle.Bold, TextAnchor.UpperLeft, UltKeyColor);
+        Stretch(key.rectTransform, 4, 2);
+
+        if (skill == null) { cell.color = CellEmpty; return s; }
+
+        cell.color = CellReady;
+        if (skill.Icon != null)
+        {
+            s.icon = NewImage("Icon", cell.transform, CellReady);
+            s.icon.sprite = skill.Icon; s.icon.preserveAspect = true; s.icon.raycastTarget = false;
+            Stretch(s.icon.rectTransform, 5, 5);
+        }
+
+        // Charge shade: full at empty, clears as the meter fills (fillAmount = 1 − charge01, set in Refresh).
+        s.cooldown = NewImage("Charge", cell.transform, UltChargeShade);
+        s.cooldown.sprite = whiteSprite;
+        s.cooldown.type = Image.Type.Filled;
+        s.cooldown.fillMethod = Image.FillMethod.Radial360;
+        s.cooldown.fillOrigin = (int)Image.Origin360.Bottom;
+        s.cooldown.fillClockwise = false;
+        s.cooldown.fillAmount = 1f;
+        s.cooldown.raycastTarget = false;
+        Stretch(s.cooldown.rectTransform, 3, 3);
+
+        if (skill.Icon == null)
+        {
+            s.label = NewText("Label", cell.transform, skill.ShortLabel, 11, FontStyle.Bold, TextAnchor.MiddleCenter, skill.Tint);
+            Stretch(s.label.rectTransform, 2, 2);
+        }
+
+        s.mp = NewText("Mp", cell.transform, skill.ManaCost.ToString(), 10, FontStyle.Bold, TextAnchor.LowerRight, MpColor);
+        Stretch(s.mp.rectTransform, 2, 3);
+
+        if (skill is SkillRunner sr2 && sr2.def != null) AttachSkillTooltip(cell.transform, sr2.def);
+        return s;
+    }
+
+    // Build the ONE shared skill-info card on the canvas root (once). Fixed width, auto height via ContentSizeFitter;
+    // the skill icon is pinned top-right (out of the vertical layout). Hidden until a hover positions + shows it.
     void EnsureSharedTooltip()
     {
         if (tipRoot != null) return;
-        var img = NewImage("HotbarModTip", transform, new Color(0.06f, 0.06f, 0.08f, 0.96f));
+        var img = NewImage("SkillInfoCard", transform, new Color(0.06f, 0.06f, 0.08f, 0.97f));
         tipRoot = img.gameObject;
         tipRT = img.rectTransform;
         tipRT.anchorMin = tipRT.anchorMax = new Vector2(0.5f, 0.5f);
         tipRT.pivot = new Vector2(0.5f, 0f);   // grows upward from the point above the cell
-        tipRT.sizeDelta = new Vector2(160f, 120f);
+        tipRT.sizeDelta = new Vector2(288f, 120f);   // width fixed; height is driven by the fitter below
         img.raycastTarget = false;
 
-        tipText = NewText("Text", tipRoot.transform, "", 11, FontStyle.Normal, TextAnchor.UpperLeft, Color.white);
+        var vlg = tipRoot.AddComponent<VerticalLayoutGroup>();
+        vlg.padding = new RectOffset(10, 10, 8, 8);
+        vlg.childControlWidth = vlg.childControlHeight = true;
+        vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
+        var fit = tipRoot.AddComponent<ContentSizeFitter>();
+        fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fit.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+        tipText = NewText("Text", tipRoot.transform, "", 12, FontStyle.Normal, TextAnchor.UpperLeft, Color.white);
         tipText.richText = true;
-        Stretch(tipText.rectTransform, 8, 7);
+        tipText.enableWordWrapping = true;
+
+        tipIcon = NewImage("Icon", tipRoot.transform, Color.white);
+        tipIcon.preserveAspect = true; tipIcon.raycastTarget = false;
+        var le = tipIcon.gameObject.AddComponent<LayoutElement>(); le.ignoreLayout = true;   // pinned, not in the flow
+        var irt = tipIcon.rectTransform;
+        irt.anchorMin = irt.anchorMax = new Vector2(1f, 1f); irt.pivot = new Vector2(1f, 1f);
+        irt.anchoredPosition = new Vector2(-8f, -8f); irt.sizeDelta = new Vector2(34f, 34f);
 
         tipRoot.SetActive(false);
     }
 
-    // Bind a cell's hover to the shared tooltip: populate + position over THIS cell on enter, hide on exit.
-    void BuildTooltip(Transform cell, IModifiableSkill mod)
+    // Bind a cell's hover to the shared card: populate from the skill's def + position over THIS cell on enter, hide on exit.
+    void AttachSkillTooltip(Transform cell, SkillDef def)
     {
-        var captured = mod;
+        if (def == null) return;
+        var captured = def;
         var cellRT = (RectTransform)cell;
         var trig = cell.gameObject.GetComponent<EventTrigger>() ?? cell.gameObject.AddComponent<EventTrigger>();
-        AddTrigger(trig, EventTriggerType.PointerEnter, () => ShowTip(cellRT, captured));
+        AddTrigger(trig, EventTriggerType.PointerEnter, () => ShowSkillTip(cellRT, captured));
         AddTrigger(trig, EventTriggerType.PointerExit,  HideTip);
     }
 
-    void ShowTip(RectTransform cellRT, IModifiableSkill mod)
+    void ShowSkillTip(RectTransform cellRT, SkillDef def)
     {
+        if (def == null) return;
         EnsureSharedTooltip();
-        PopulateTooltip(tipText, mod);
+        tipText.text = SkillTooltip.Build(def);
+        if (tipIcon != null) { tipIcon.sprite = def.icon; tipIcon.enabled = def.icon != null; }
         tipRoot.transform.SetAsLastSibling();   // above every cell — the fix for "sometimes it doesn't show"
         tipRoot.SetActive(true);
 
@@ -298,19 +388,6 @@ public class HotbarPanel : MonoBehaviour
         var e = new EventTrigger.Entry { eventID = type };
         e.callback.AddListener(_ => fn());
         trig.triggers.Add(e);
-    }
-
-    void PopulateTooltip(TMP_Text txt, IModifiableSkill mod)
-    {
-        var sb = tipSb; sb.Length = 0;
-        sb.Append("<b>").Append(mod is IHotbarSkill hs ? hs.ShortLabel : "Skill").Append(" — modifiers</b>\n");
-        var loadout = Character.Instance != null ? Character.Instance.SkillMods.Get(mod.SkillModId) : null;
-        for (int i = 0; i < Phases.Length; i++)
-        {
-            var m = loadout != null ? loadout.At(Phases[i]) : null;
-            sb.Append(Phases[i]).Append(":  ").Append(m != null ? m.DisplayName : "—").Append('\n');
-        }
-        txt.text = sb.ToString();
     }
 
     void Refresh()
@@ -349,6 +426,23 @@ public class HotbarPanel : MonoBehaviour
                 if (s.icon != null) s.icon.color = aff == 1 ? CellReady : CellDim;
                 if (s.mp != null) s.mp.color = aff == 1 ? MpColor : MpNoColor;
                 s.lastAff = aff;
+            }
+        }
+
+        // The dedicated ult cell: shade recedes as the charge meter fills; bright + affordable only when fully charged.
+        if (ult != null && ult.skill != null && ult.cooldown != null)
+        {
+            var ch = Character.Instance;
+            float charge01 = ch != null ? ch.UltCharge01 : 0f;
+            ult.cooldown.fillAmount = 1f - charge01;
+            bool ready = ch != null && ch.UltReady(ult.chargeCost) && ringOn && ult.skill.Affordable;
+            sbyte aff = (sbyte)(ready ? 1 : 0);
+            if (aff != ult.lastAff)
+            {
+                ult.cell.color = ready ? CellReady : CellDim;
+                if (ult.icon != null) ult.icon.color = ready ? CellReady : CellDim;
+                if (ult.mp != null) ult.mp.color = ready ? MpColor : MpNoColor;
+                ult.lastAff = aff;
             }
         }
     }

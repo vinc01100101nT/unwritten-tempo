@@ -99,7 +99,7 @@ public class MobHoverPanel : MonoBehaviour
     void Build()
     {
         // Dedicated ScreenSpaceOverlay canvas so this never conflicts with the game HUD.
-        var cvGO   = new GameObject("MobHoverCanvas");
+        var cvGO   = new GameObject("MobHoverCanvas") { hideFlags = HideFlags.DontSaveInEditor };
         var canvas = cvGO.AddComponent<Canvas>();
         canvas.renderMode  = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 60;   // above HUD (MobNameplate sits at FxPopup; we want on top)

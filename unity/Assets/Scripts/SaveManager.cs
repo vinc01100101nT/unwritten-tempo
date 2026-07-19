@@ -36,7 +36,7 @@ public class SaveManager : MonoBehaviour
     static void Bootstrap()
     {
         if (Instance != null) return;
-        var go = new GameObject("SaveManager");
+        var go = new GameObject("SaveManager") { hideFlags = HideFlags.DontSaveInEditor };
         DontDestroyOnLoad(go);
         go.AddComponent<SaveManager>();
     }

@@ -31,7 +31,7 @@ public class MultiHitBurst : MonoBehaviour
                            System.Action onHitBeat = null)
     {
         if (onHit == null) return;
-        var go = new GameObject("MultiHitBurst");
+        var go = new GameObject("MultiHitBurst") { hideFlags = HideFlags.DontSaveInEditor };
         go.AddComponent<MultiHitBurst>().StartCoroutine(Routine(go, center, radius,
             Mathf.Max(1, ticks), Mathf.Max(1, hitsPerTick),
             Mathf.Max(0.01f, hitInterval), Mathf.Max(0.01f, tickInterval), onHit, onTick, onHitBeat));

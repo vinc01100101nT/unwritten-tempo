@@ -60,7 +60,7 @@ public class RainOverlay : MonoBehaviour
     public static RainOverlay Ensure()
     {
         var r = FindFirstObjectByType<RainOverlay>();
-        if (r == null) r = new GameObject("RainOverlay").AddComponent<RainOverlay>();
+        if (r == null) r = new GameObject("RainOverlay") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<RainOverlay>();
         return r;
     }
 

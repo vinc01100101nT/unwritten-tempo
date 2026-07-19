@@ -62,6 +62,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (StatusController.Player != null && StatusController.Player.ActionLocked) return false;   // stunned / frozen / casting / mid-aftercast — can't start another skill
         if (castRoutine != null) return false;   // already winding up a cast — ignore until it resolves
         if (Time.time < nextUse) return false;
+        // Ultimate: refuse (with a notice) before entering the reticle if the shared meter isn't charged — MP/charge
+        // are only spent on confirm, so this early-out costs nothing.
+        if (def.IsUltimate && !Character.Instance.UltReady(def.chargeCost))
+        { BattleNotice.Warn("Not charged"); return false; }
 
         // Single-target skills must land on ONE valid unit — they can NEVER be ground-cast (a ground point is not a
         // target). This overrides the authored aim: enter the unified reticle, which validates the hovered unit's
@@ -275,11 +279,16 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     bool Spend()
     {
         if (Character.Instance == null || Character.Instance.IsDead || Time.time < nextUse) return false;
+        // Ultimate gates on the shared charge meter (checked again here — the reticle may have taken time to confirm).
+        if (def.IsUltimate && !Character.Instance.UltReady(def.chargeCost))
+        { BattleNotice.Warn("Not charged"); return false; }
         if (!Character.Instance.SpendMana(def.manaCost))
         {
             BattleNotice.Warn("No MP", NoManaColor);
             return false;
         }
+        if (def.IsUltimate) Character.Instance.SpendUltCharge(def.chargeCost);   // ults SPEND charge…
+        else Character.Instance.AddUltCharge(Character.UltChargePerCast);        // …every other cast BUILDS it
         lastDuration = def.cooldown;
         nextUse = Time.time + lastDuration;
         return true;
@@ -295,7 +304,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         float extraMult = b.scale != null ? b.scale.damageMultPerLevel * over : 0f;
         int extraFlat = b.scale != null ? b.scale.flatBonusPerLevel * over : 0;
         SkillEffectApplier.ApplyBurst(tick.point, b.radius, b.scope, b.targets, b.effects,
-                                      lastCtx.targetUnit, extraMult, extraFlat, comboDamageMult);
+                                      lastCtx.targetUnit, extraMult, extraFlat, comboDamageMult,
+                                      def.icon, def.displayName);   // buff bar tags entries with this skill's icon + name
     }
 
     static MonsterAI3D NearestMob(Vector3 from, float maxRange)

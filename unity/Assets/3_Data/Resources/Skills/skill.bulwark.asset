@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
+  m_Name: skill.bulwark
+  m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  id: skill.bulwark
+  displayName: Bulwark
+  icon: {fileID: -7809785511404226330, guid: 4a6c997ee6699414da629ee459545ea7, type: 3}
+  description: "Brace behind a guard that cuts incoming damage and forces nearby foes to attack you."
+  archetype: 2
+  category: 2
+  manaCost: 12
+  cooldown: 14
+  castTime: 0
+  maxLevel: 10
+  aim: 0
+  castRange: 6
+  tier: 0
+  chargeCost: 100
+  castCircleId:
+  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
+  repeatCount: 1
+  repeatInterval: 0
+  hasReleaseStance: 0
+  releaseStance: 16
+  bindings:
+  - tickId: meteor_ball
+    targets: 3
+    scope: 0
+    radius: 5
+    effects:
+    - kind: 4
+      magic: 1
+      damageMult: 1
+      element: 0
+      amount: 10
+      ailment: 2
+      seconds: 5
+      magnitude: 0.5
+      hitCount: 1
+      executeAmp: 0
+      stunChance: 0
+      stunSeconds: 0.75
+      buffStat: 0
+      affinity:
+      - stat: 4
+        weight: 70
+      - stat: 2
+        weight: 30
+      durationAffinity:
+      - stat: 2
+        weight: 70
+      - stat: 4
+        weight: 30
+    - kind: 5
+      magic: 1
+      damageMult: 1
+      element: 0
+      amount: 10
+      ailment: 2
+      seconds: 5
+      magnitude: 1
+      hitCount: 1
+      executeAmp: 0
+      stunChance: 0
+      stunSeconds: 0.75
+      buffStat: 0
+      affinity: []
+      durationAffinity:
+      - stat: 4
+        weight: 100
+    scale:
+      damageMultPerLevel: 0
+      flatBonusPerLevel: 0
+  shortLabel: Bulwark
+  keyLabel:
+  slotOrder: 12
+  tint: {r: 0.8, g: 0.85, b: 1, a: 1}

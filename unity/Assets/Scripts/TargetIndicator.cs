@@ -18,7 +18,7 @@ public class TargetIndicator : MonoBehaviour
 
     public static TargetIndicator Create()
     {
-        var go = new GameObject("TargetIndicator");
+        var go = new GameObject("TargetIndicator") { hideFlags = HideFlags.DontSaveInEditor };
         var ind = go.AddComponent<TargetIndicator>();
         ind.sr = go.AddComponent<SpriteRenderer>();
         ind.sr.sprite = BuildArrow();

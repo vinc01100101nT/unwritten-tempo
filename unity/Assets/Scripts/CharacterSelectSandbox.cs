@@ -79,6 +79,7 @@ public class CharacterSelectSandbox : MonoBehaviour
         if (e == null || e.prefab == null) return;
         if (current != null) Destroy(current);
         current = Instantiate(e.prefab, Vector3.zero, Quaternion.identity);
+        current.hideFlags = HideFlags.DontSaveInEditor;
         currentBB = current.GetComponent<BakedBillboard8>();
         pickerOpen = false;
     }

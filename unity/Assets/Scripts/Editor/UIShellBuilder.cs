@@ -22,7 +22,7 @@ using TMPro;
 public static class UIShellBuilder
 {
     const string CanvasName = "GameUICanvas";
-    const string UIRoot = "Assets/1_Authored/Art/Billboards/UI";
+    const string UIRoot = "Assets/1_Authored/Art/Billboards/Ui";
     const string WOOD   = UIRoot + "/Theme/Theme Wood";
     const string ITEMS  = UIRoot + "/Skill Icon/Items & Weapon";
     const string METEO  = UIRoot + "/Skill Icon/Meteo";   // weather icons (Sun/Rain/Snow) for the calendar
@@ -49,6 +49,17 @@ public static class UIShellBuilder
     public static void Build(string themeFolder, int refPixelsPerUnit)
     {
         panelSprite = SlicedSprite(themeFolder + "/nine_path_panel.png", new Vector4(6, 6, 6, 6));
+
+        // Self-heal a STALE saved theme (e.g. a pre-reorg EditorPrefs path that no longer exists): fall back to the
+        // default Wood theme and re-save it, instead of aborting. Only the resave clears the bad pref for next time.
+        if (panelSprite == null && themeFolder != DefaultTheme)
+        {
+            Debug.LogWarning($"[unwritten] UI theme '{themeFolder}' has no nine_path_panel.png — falling back to '{DefaultTheme}'.");
+            themeFolder = DefaultTheme;
+            EditorPrefs.SetString(PrefTheme, themeFolder);
+            panelSprite = SlicedSprite(themeFolder + "/nine_path_panel.png", new Vector4(6, 6, 6, 6));
+        }
+
         cellSprite  = SlicedSprite(FirstExisting(themeFolder + "/inventory_cell.png", WOOD + "/inventory_cell.png"), new Vector4(3, 3, 3, 3));
         barBgSprite = SlicedSprite(FirstExisting(themeFolder + "/nine_path_bg.png",    WOOD + "/nine_path_bg.png"),    new Vector4(2, 2, 2, 2));
 
@@ -97,6 +108,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
         canvasGO.AddComponent<ComboComposerPanel>();       // Combo Composer (N): assign 4 skills per chain + bind a hotkey
         canvasGO.AddComponent<ComboBarPanel>();            // HUD combo bar: one cell per complete chain (icons + shared CD)
+        canvasGO.AddComponent<BuffBarPanel>();             // HUD buff bar (right edge): active self-buffs w/ icon + countdown
         canvasGO.AddComponent<XpBarHUD>();                 // bottom-of-screen XP bars: character (left) + ring (right)
         canvasGO.AddComponent<ChatController>();            // in-game chat window (Enter) + /command console (GmCommands)
 

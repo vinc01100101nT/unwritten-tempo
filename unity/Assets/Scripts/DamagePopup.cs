@@ -141,7 +141,7 @@ public class DamagePopup : MonoBehaviour
     static DamagePopup Create()
     {
         var go = new GameObject("DamagePopup",
-            typeof(RectTransform), typeof(DamagePopup));
+            typeof(RectTransform), typeof(DamagePopup)) { hideFlags = HideFlags.DontSaveInEditor };   // pooled clone — never serialize into a scene (matches the host tag above)
         go.transform.SetParent(host, false);
         go.layer = host.gameObject.layer;   // inherit TransparentFX so popups stay out of water reflections
         ((RectTransform)go.transform).sizeDelta = new Vector2(100, 40);

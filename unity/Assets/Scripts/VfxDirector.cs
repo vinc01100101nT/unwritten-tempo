@@ -39,14 +39,14 @@ public static class VfxDirector
     {
         if (host != null) return;
         pool.Clear();   // a scene unload destroyed the old host + its pooled children; drop stale refs
-        host = new GameObject("VfxDirector") { hideFlags = HideFlags.DontSaveInEditor }.transform;   // runtime-only pool host — never serialize into a scene
+        host = new GameObject("VfxDirector") { hideFlags = HideFlags.DontSaveInEditor }.transform;
     }
 
     static VfxSequenceRunner Rent()
     {
         EnsureHost();
         if (pool.Count > 0) return pool.Pop();
-        var go = new GameObject("VfxSequenceRunner");
+        var go = new GameObject("VfxSequenceRunner") { hideFlags = HideFlags.DontSaveInEditor };
         go.transform.SetParent(host, false);
         return go.AddComponent<VfxSequenceRunner>();
     }

@@ -12,6 +12,28 @@ public sealed class HotbarBindings
     // slot → skill id ("" = empty). Fixed-length; never reallocated after construction.
     readonly string[] slots = new string[SlotCount];
 
+    // The ONE equipped Ultimate (its own dedicated slot, separate from keys 1–9). "" = no ult equipped.
+    string ultSkillId = "";
+
+    /// <summary>The skill id in the dedicated ULT slot ("" = none).</summary>
+    public string Ult => ultSkillId ?? "";
+
+    /// <summary>Equip an ultimate into the dedicated slot (replaces whatever was there). Returns true if it changed.</summary>
+    public bool BindUlt(string id)
+    {
+        if (string.IsNullOrEmpty(id) || ultSkillId == id) return false;
+        ultSkillId = id;
+        return true;
+    }
+
+    /// <summary>Clear the ult slot. Returns true if it had something.</summary>
+    public bool ClearUlt()
+    {
+        if (string.IsNullOrEmpty(ultSkillId)) return false;
+        ultSkillId = "";
+        return true;
+    }
+
     public HotbarBindings()
     {
         for (int i = 0; i < slots.Length; i++) slots[i] = "";
@@ -53,6 +75,17 @@ public sealed class HotbarBindings
         return true;
     }
 
+    /// <summary>Auto-place a freshly learned skill: an Ultimate goes to the dedicated ULT slot, everything else
+    /// to the first empty numbered slot. The single entry point every unlock/grant path calls, so an ultimate
+    /// never lands on keys 1–9. Returns true if it bound anywhere (false = already bound / bar full).</summary>
+    public bool AutoBind(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return false;
+        var def = SkillCatalog.Get(id);
+        if (def != null && def.IsUltimate) return BindUlt(id);
+        return BindToFirstEmpty(id) >= 0;
+    }
+
     /// <summary>Bind to the first empty slot (the click-to-bind / auto-bind-on-unlock path). No-op if the
     /// skill is already bound or the bar is full. Returns the slot used, or −1.</summary>
     public int BindToFirstEmpty(string id)
@@ -91,10 +124,13 @@ public sealed class HotbarBindings
     }
 
     // ---- save / load ----------------------------------------------------------
+    // The ult id rides as one extra trailing element (index SlotCount), so the save shape stays a flat string[]
+    // and older length-9 saves simply load with no ult.
     public string[] Capture()
     {
-        var arr = new string[slots.Length];
+        var arr = new string[slots.Length + 1];
         System.Array.Copy(slots, arr, slots.Length);
+        arr[slots.Length] = ultSkillId ?? "";
         return arr;
     }
 
@@ -107,5 +143,7 @@ public sealed class HotbarBindings
             // stale binding can't linger as a dead slot — the pool is the composed SkillCatalog now.
             slots[i] = SkillRoster.IsKnownId(id) ? id : "";
         }
+        string ult = (saved != null && saved.Length > slots.Length && saved[slots.Length] != null) ? saved[slots.Length] : "";
+        ultSkillId = SkillRoster.IsKnownId(ult) ? ult : "";
     }
 }

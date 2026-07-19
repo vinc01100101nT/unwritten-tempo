@@ -74,7 +74,7 @@ public class Sfx : MonoBehaviour
         pool = new AudioSource[Mathf.Max(1, voices)];
         for (int i = 0; i < pool.Length; i++)
         {
-            var src = new GameObject("SfxVoice" + i).AddComponent<AudioSource>();
+            var src = new GameObject("SfxVoice" + i) { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<AudioSource>();
             src.transform.SetParent(transform, false);
             src.playOnAwake = false;
             src.spatialBlend = 0f;   // 2D
@@ -84,7 +84,7 @@ public class Sfx : MonoBehaviour
         pool3d = new AudioSource[Mathf.Max(1, spatialVoices)];
         for (int i = 0; i < pool3d.Length; i++)
         {
-            var src = new GameObject("SfxVoice3D" + i).AddComponent<AudioSource>();
+            var src = new GameObject("SfxVoice3D" + i) { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<AudioSource>();
             src.transform.SetParent(transform, false);
             src.playOnAwake = false;
             src.spatialBlend = 1f;                       // fully 3D positional

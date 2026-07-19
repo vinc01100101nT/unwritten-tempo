@@ -78,7 +78,7 @@ public class CloudShadows : MonoBehaviour
     public static CloudShadows Ensure()
     {
         var c = FindFirstObjectByType<CloudShadows>();
-        if (c == null) c = new GameObject("CloudShadows").AddComponent<CloudShadows>();
+        if (c == null) c = new GameObject("CloudShadows") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<CloudShadows>();
         return c;
     }
 

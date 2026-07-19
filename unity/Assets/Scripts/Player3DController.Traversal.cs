@@ -198,6 +198,17 @@ public partial class Player3DController
     // dash-start sequence (both the E-press and the mid-air roll-cancel route through here), so the root latch can't be
     // forgotten at one site. The Roll binding's rootFromFrame → a normalized point in the roll clip → dash time (the
     // clip is FitWindow-fit to eDashDuration, so a clip fraction is that fraction of the dash). 0/absent → never roots.
+    /// <summary>Skill-driven INSTANT teleport (Blink Step): relocate the player straight to <paramref name="dest"/>
+    /// — no roll, no travel. Cancels any in-progress dash, then uses the CharacterController-safe disable/move/enable
+    /// so the capsule doesn't fight the reposition. The destination is already range-clamped by the ground reticle.</summary>
+    public void Teleport(Vector3 dest)
+    {
+        if (eDashing) { eDashing = false; SetDashInvuln(false); }
+        if (controller != null) controller.enabled = false;
+        transform.position = dest;
+        if (controller != null) controller.enabled = true;
+    }
+
     void BeginEDash(Vector3 dir)
     {
         eDashDir = dir; eDashing = true; eDashStart = Time.time;

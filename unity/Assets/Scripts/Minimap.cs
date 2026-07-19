@@ -176,7 +176,7 @@ public class Minimap : MonoBehaviour
         { name = "MinimapRT", useMipMap = false, autoGenerateMips = false };
         rt.Create();
 
-        var camGo = new GameObject("MinimapCamera");
+        var camGo = new GameObject("MinimapCamera") { hideFlags = HideFlags.DontSaveInEditor };
         cam = camGo.AddComponent<Camera>();
         cam.orthographic = true;
         cam.orthographicSize = viewRadius;
@@ -277,7 +277,7 @@ public class Minimap : MonoBehaviour
     {
         while (pool.Count <= i)
         {
-            var go = new GameObject("Blip", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            var go = new GameObject("Blip", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
             go.transform.SetParent(blipRoot, false);
             var img = go.GetComponent<Image>();
             img.sprite = dotSprite;

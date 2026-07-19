@@ -127,6 +127,12 @@ public class SkillComposerWindow : EditorWindow
         sel.id = EditorGUILayout.TextField(new GUIContent("id", "Stable kebab id (e.g. skill.meteor). Don't rename once shipped."), sel.id);
         sel.displayName = EditorGUILayout.TextField("display name", sel.displayName);
         sel.icon = (Sprite)EditorGUILayout.ObjectField("icon", sel.icon, typeof(Sprite), false);
+        sel.archetype = (SkillArchetype)EditorGUILayout.EnumPopup(new GUIContent("archetype (tag)",
+            "Battlefield-role family — drives the hover card chip + color (Burst/Tempo/Fortress/Sustain/Empower/Corrupt)."), sel.archetype);
+        sel.category = (SkillCategory)EditorGUILayout.EnumPopup(new GUIContent("category",
+            "Role shown on the card (Attack / Utility / Buff). Ultimate is the separate 'tier' below, not a category."), sel.category);
+        EditorGUILayout.LabelField(new GUIContent("description", "Flavor + mechanics blurb shown in the hover card."));
+        sel.description = EditorGUILayout.TextArea(sel.description ?? "", GUILayout.Height(42));
 
         EditorGUILayout.Space(4);
         EditorGUILayout.LabelField("Cost / cadence", EditorStyles.boldLabel);
@@ -139,6 +145,14 @@ public class SkillComposerWindow : EditorWindow
         sel.aim = (SkillAim)EditorGUILayout.EnumPopup(new GUIContent("aim", "How the cast point is picked."), sel.aim);
         using (new EditorGUI.DisabledScope(sel.aim == SkillAim.Self))
             sel.castRange = EditorGUILayout.Slider("cast range", sel.castRange, 1f, 30f);
+
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField("Ultimate (tier, not a category)", EditorStyles.boldLabel);
+        sel.tier = (SkillTier)EditorGUILayout.EnumPopup(new GUIContent("tier",
+            "Base = a normal hotbar skill (keys 1–9). Ultimate = fires from the dedicated ULT slot, charge-gated."), sel.tier);
+        using (new EditorGUI.DisabledScope(sel.tier != SkillTier.Ultimate))
+            sel.chargeCost = EditorGUILayout.Slider(new GUIContent("charge cost",
+                "Ult-meter charge spent per cast. The meter fills in combat (dealing/taking damage, casting)."), sel.chargeCost, 0f, 200f);
 
         EditorGUILayout.Space(4);
         EditorGUILayout.LabelField("Hotbar", EditorStyles.boldLabel);
@@ -321,24 +335,143 @@ public class SkillComposerWindow : EditorWindow
                     ef.magic = EditorGUILayout.Toggle("magic", ef.magic);
                     ef.damageMult = EditorGUILayout.Slider("× caster dmg", ef.damageMult <= 0f ? 1f : ef.damageMult, 0.1f, 8f);
                     ef.element = (Element)EditorGUILayout.EnumPopup("element", ef.element);
+                    ef.hitCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("hits",
+                        "Strikes per landing. Each hit is the TRIGGER for this binding's proc effects (a Status or Execute with a chance)."), ef.hitCount));
                     break;
                 case SkillEffectKind.Heal:
                     ef.amount = EditorGUILayout.IntField("HP", ef.amount);
                     break;
                 case SkillEffectKind.Status:
                     ef.ailment = (Ailment)EditorGUILayout.EnumPopup("ailment", ef.ailment);
+                    ef.chance = EditorGUILayout.Slider(new GUIContent("chance",
+                        "PROC chance rolled PER HIT of the binding's multi-hit Damage (e.g. a stun proc). 0 = not a proc — applies ONCE per landing. The 'affinity (chance)' channel below scales this."), ef.chance, 0f, 1f);
                     ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 20f);
-                    ef.magnitude = EditorGUILayout.FloatField(new GUIContent("magnitude", "DoT dmg/tick, Slow factor (0..1), or Blind HIT loss."), ef.magnitude);
+                    // magnitude is only meaningful for DoTs (dmg/tick), Slow (speed factor) and Blind (HIT loss).
+                    // Pure CC (Stun/Freeze/Silence) is binary — no magnitude, so hide it to avoid the confusion.
+                    if (ef.ailment != Ailment.Stun && ef.ailment != Ailment.Freeze && ef.ailment != Ailment.Silence)
+                        ef.magnitude = EditorGUILayout.FloatField(new GUIContent("magnitude", "DoT dmg/tick, Slow factor (0..1), or Blind HIT loss."), ef.magnitude);
+                    break;
+                case SkillEffectKind.Execute:
+                    ef.magic = EditorGUILayout.Toggle("magic", ef.magic);
+                    ef.chance = EditorGUILayout.Slider(new GUIContent("chance",
+                        "PROC chance rolled PER HIT of the binding's multi-hit Damage. 1 = executes on every hit."), ef.chance, 0f, 1f);
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("execute power ×",
+                        "Bonus damage = roll × this × (target's missing HP). Huge near death, ~0 at full HP."), ef.magnitude <= 0f ? 1f : ef.magnitude, 0.1f, 5f);
+                    ef.element = (Element)EditorGUILayout.EnumPopup("element", ef.element);
                     break;
                 case SkillEffectKind.Haste:
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("speed ×", "Move-speed multiplier (>1 = faster)."), ef.magnitude <= 0f ? 1.3f : ef.magnitude, 0.2f, 3f);
                     ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 20f);
                     break;
+                case SkillEffectKind.Guard:
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage cut", "Fraction of incoming damage prevented (0..1)."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
+                    ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 20f);
+                    break;
+                case SkillEffectKind.Taunt:
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long mobs are forced onto the caster."), ef.seconds, 0.5f, 20f);
+                    EditorGUILayout.HelpBox("Applies to mobs in the binding's radius — include Mobs in 'targets'.", MessageType.None);
+                    break;
+                case SkillEffectKind.Teleport:
+                    EditorGUILayout.HelpBox("Blinks the caster to the cast point (Ground aim). No fields — destination is the aimed point.", MessageType.None);
+                    break;
+                case SkillEffectKind.Buff:
+                    ef.buffStat = (BuffStat)EditorGUILayout.EnumPopup(new GUIContent("stat", "Which self-stat is buffed."), ef.buffStat);
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("multiplier ×", "1.3 = +30%."), ef.magnitude <= 0f ? 1.3f : ef.magnitude, 1f, 3f);
+                    ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 30f);
+                    break;
+                case SkillEffectKind.Regen:
+                    ef.magnitude = EditorGUILayout.FloatField(new GUIContent("HP / tick", "Healed every 0.8s while active."), ef.magnitude);
+                    ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 30f);
+                    break;
+                case SkillEffectKind.Cleanse:
+                    ef.amount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("debuffs removed", "How many active debuffs to strip."), ef.amount));
+                    break;
+                case SkillEffectKind.Vulnerability:
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("+damage taken", "Extra damage fraction (0.3 = +30%)."), ef.magnitude, 0f, 2f);
+                    ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 20f);
+                    break;
             }
+
+            // Affinity channels, each labeled by WHAT it boosts. The first scales the effect's main output (damage,
+            // heal amount, proc chance, slow amount, …); the second scales its duration. A channel that scales nothing
+            // (a pure stun has no output number) is hidden. Weights are relative; empty = ×1 (no scaling).
+            string affLabel = AffinityOutputLabel(ef);
+            if (affLabel != null) DrawAffinity(affLabel, ref ef.affinity);
+            if (HasDurationChannel(ef)) DrawAffinity("boosts DURATION", ref ef.durationAffinity);
             EditorGUILayout.EndVertical();
         }
         if (rm >= 0) b.effects.RemoveAt(rm);
         if (GUILayout.Button("  + effect", GUILayout.Width(90))) b.effects.Add(new SkillEffect());
+    }
+
+    // The label for an effect's main affinity channel — names exactly what it boosts. null = it scales nothing (a pure
+    // stun has no output number), so the channel is hidden.
+    static string AffinityOutputLabel(SkillEffect e)
+    {
+        switch (e.kind)
+        {
+            case SkillEffectKind.Damage:        return "boosts DAMAGE";
+            case SkillEffectKind.Execute:       return "boosts EXECUTE DAMAGE";
+            case SkillEffectKind.Heal:          return "boosts HEAL AMOUNT";
+            case SkillEffectKind.Guard:         return "boosts DAMAGE REDUCTION";
+            case SkillEffectKind.Buff:          return "boosts BUFF AMOUNT";
+            case SkillEffectKind.Regen:         return "boosts HEAL / SEC";
+            case SkillEffectKind.Vulnerability: return "boosts DAMAGE TAKEN";
+            case SkillEffectKind.Haste:         return "boosts MOVE SPEED";
+            case SkillEffectKind.Status:
+                if (e.chance > 0f) return "boosts PROC CHANCE";
+                switch (e.ailment)
+                {
+                    case Ailment.Burn: case Ailment.Poison: case Ailment.Bleed: return "boosts DAMAGE / TICK";
+                    case Ailment.Slow:  return "boosts SLOW AMOUNT";
+                    case Ailment.Blind: return "boosts ACCURACY LOSS";
+                    default:            return null;   // stun / freeze / silence: applied for sure, nothing to scale
+                }
+            default: return null;   // Taunt / Teleport / Cleanse have no scalable output
+        }
+    }
+
+    // Which effects have a duration worth scaling (the second affinity channel).
+    static bool HasDurationChannel(SkillEffect e)
+    {
+        switch (e.kind)
+        {
+            case SkillEffectKind.Status:
+            case SkillEffectKind.Buff:
+            case SkillEffectKind.Guard:
+            case SkillEffectKind.Regen:
+            case SkillEffectKind.Vulnerability:
+            case SkillEffectKind.Haste:
+            case SkillEffectKind.Taunt:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    // One weighted stat-list (an effect's affinity channel): rows of (stat, weight) + add/remove. Weights are
+    // relative — the runtime normalises by their sum, so 70/20/10 just means "mostly the first stat".
+    static void DrawAffinity(string label, ref List<StatWeight> list)
+    {
+        if (list == null) list = new List<StatWeight>();
+        EditorGUILayout.LabelField("  " + label, EditorStyles.miniBoldLabel);
+        int rm = -1;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var w = list[i];
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Space(16);
+            w.stat = (StatId)EditorGUILayout.EnumPopup(w.stat, GUILayout.Width(120));
+            w.weight = EditorGUILayout.FloatField(w.weight, GUILayout.Width(55));
+            list[i] = w;
+            if (GUILayout.Button("✕", GUILayout.Width(22))) rm = i;
+            EditorGUILayout.EndHorizontal();
+        }
+        if (rm >= 0) list.RemoveAt(rm);
+        EditorGUILayout.BeginHorizontal();
+        GUILayout.Space(16);
+        if (GUILayout.Button("+ weight", GUILayout.Width(90))) list.Add(new StatWeight { stat = StatId.MAtk, weight = 50f });
+        EditorGUILayout.EndHorizontal();
     }
 
     struct TickInfo { public string id; public int count; public float interval; }

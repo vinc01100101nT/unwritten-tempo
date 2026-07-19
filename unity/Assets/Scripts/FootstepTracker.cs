@@ -125,7 +125,7 @@ public class FootstepTracker : MonoBehaviour
     public static FootstepTracker Ensure()
     {
         var t = Instance != null ? Instance : FindFirstObjectByType<FootstepTracker>();
-        if (t == null) t = new GameObject("FootstepTracker").AddComponent<FootstepTracker>();
+        if (t == null) t = new GameObject("FootstepTracker") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<FootstepTracker>();
         return t;
     }
 

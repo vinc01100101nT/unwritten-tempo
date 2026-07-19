@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "exportedAt": "2026-07-18 14:48:34",
+    "exportedAt": "2026-07-19 00:57:15",
     "cellSize": 1.0,
     "groundTexWorldSize": 2.5,
     "brushes": [
@@ -168,22 +168,22 @@
                 {
                     "name": "House_B",
                     "path": "Assets/1_Authored/Prefabs/Props/Outdoor/House_B.prefab",
-                    "x": 1.1849726438522339,
-                    "z": 1.2233039140701295,
+                    "x": 1.6589616537094117,
+                    "z": 1.712625503540039,
                     "thumb": "thumbnails/House_B.png"
                 },
                 {
                     "name": "House_C",
                     "path": "Assets/1_Authored/Prefabs/Props/Outdoor/House_C.prefab",
-                    "x": 1.9792474508285523,
-                    "z": 1.9960936307907105,
+                    "x": 2.9688711166381838,
+                    "z": 2.994140386581421,
                     "thumb": "thumbnails/House_C.png"
                 },
                 {
                     "name": "House_D",
                     "path": "Assets/1_Authored/Prefabs/Props/Outdoor/House_D.prefab",
-                    "x": 2.0,
-                    "z": 1.0829187631607056,
+                    "x": 3.4000000953674318,
+                    "z": 1.8409619331359864,
                     "thumb": "thumbnails/House_D.png"
                 },
                 {

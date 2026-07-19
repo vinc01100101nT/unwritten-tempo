@@ -67,7 +67,7 @@ public class PlanarReflection : MonoBehaviour
     public static PlanarReflection Ensure()
     {
         var p = FindFirstObjectByType<PlanarReflection>();
-        if (p == null) p = new GameObject("PlanarReflection").AddComponent<PlanarReflection>();
+        if (p == null) p = new GameObject("PlanarReflection") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<PlanarReflection>();
         return p;
     }
 

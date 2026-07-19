@@ -102,7 +102,7 @@ public class LootDropper : MonoBehaviour
 
     void SpawnCoin(int amount, Vector3 body)
     {
-        var go = new GameObject("GoldPickup");
+        var go = new GameObject("GoldPickup") { hideFlags = HideFlags.DontSaveInEditor };
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sortingLayerName = "Default";
         var mat = PickupMaterial.Get();
@@ -118,7 +118,7 @@ public class LootDropper : MonoBehaviour
 
     void SpawnItem(Item item, Vector3 body)
     {
-        var go = new GameObject($"ItemPickup_{item.displayName}");
+        var go = new GameObject($"ItemPickup_{item.displayName}") { hideFlags = HideFlags.DontSaveInEditor };
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sortingLayerName = "Default";
         var mat = PickupMaterial.Get();

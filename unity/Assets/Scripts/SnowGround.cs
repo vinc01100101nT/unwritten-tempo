@@ -90,7 +90,7 @@ public class SnowGround : MonoBehaviour
     public static SnowGround Ensure()
     {
         var s = FindFirstObjectByType<SnowGround>();
-        if (s == null) s = new GameObject("SnowGround").AddComponent<SnowGround>();
+        if (s == null) s = new GameObject("SnowGround") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<SnowGround>();
         return s;
     }
 

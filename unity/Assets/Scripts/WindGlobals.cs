@@ -59,7 +59,7 @@ public class WindGlobals : MonoBehaviour
     public static WindGlobals Ensure()
     {
         var w = Instance != null ? Instance : FindFirstObjectByType<WindGlobals>();
-        if (w == null) w = new GameObject("WindGlobals").AddComponent<WindGlobals>();
+        if (w == null) w = new GameObject("WindGlobals") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<WindGlobals>();
         return w;
     }
 

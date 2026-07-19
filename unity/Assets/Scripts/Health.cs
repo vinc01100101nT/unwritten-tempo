@@ -47,6 +47,19 @@ public class Health : MonoBehaviour
     public int Current { get; private set; }
     public bool IsDead => Current <= 0;
 
+    // Vulnerability mark (Hex Field): while active, every incoming hit is multiplied up. Runtime-only, no alloc.
+    float vulnUntil; float vulnMult = 1f;
+    float VulnMult => Time.time < vulnUntil ? vulnMult : 1f;
+
+    /// <summary>Mark this unit to TAKE +<paramref name="extraFraction"/> more damage (0.3 = +30%) for
+    /// <paramref name="seconds"/>. Refreshes to the latest mark. Reusable armor-fray for skills like Hex Field.</summary>
+    public void BeginVulnerable(float extraFraction, float seconds)
+    {
+        if (seconds <= 0f) return;
+        vulnMult = 1f + Mathf.Max(0f, extraFraction);
+        vulnUntil = Time.time + seconds;
+    }
+
     static readonly Color MissColor = new Color(1f, 0.3f, 0.3f);   // a player-dealt hit whiffed → red MISS
     static readonly Color CritColor = new Color(1f, 0.85f, 0.2f);  // a crit pops a gold number
     static readonly Color MagicColor = new Color(0.7f, 0.5f, 1f);  // magic damage is purple
@@ -92,13 +105,17 @@ public class Health : MonoBehaviour
         if (mod <= 0f) { SpawnElementNumber(0, mod, Color.white); return 0; }
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod));
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod * VulnMult));
         Current = Mathf.Max(0, Current - dmg);
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
         // Impact FROM the mob (spatial). A basic attack (rolled accuracy, attackerHit ≥ 0) → hit/crit;
         // a skill strike (always-lands, attackerHit −1) → the unified skill impact.
-        if (attackerHit >= 0) CombatSfx.Hit(transform.position, crit);
+        if (attackerHit >= 0)
+        {
+            CombatSfx.Hit(transform.position, crit);
+            VfxCue.Fire(crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack, transform);
+        }
         else { CombatSfx.SkillHit(transform.position); VfxCue.Fire(VfxCueId.OnHitBySkill, transform); }
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
@@ -116,7 +133,7 @@ public class Health : MonoBehaviour
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
 
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod));
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult));
         Current = Mathf.Max(0, Current - dmg);
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
@@ -138,7 +155,7 @@ public class Health : MonoBehaviour
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
 
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod));
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult));
         bool wasAlive = !IsDead;
         Current = Mathf.Max(0, Current - dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
@@ -181,7 +198,9 @@ public class Health : MonoBehaviour
     static void ApplyLeech(int dmgDealt)
     {
         var ch = Character.Instance;
-        if (ch == null || dmgDealt <= 0 || ch.LifeStealPct <= 0f) return;
+        if (ch == null || dmgDealt <= 0) return;
+        ch.AddUltCharge(dmgDealt * Character.UltChargePerDamageDealt);   // this is the one player-dealt-damage choke — dealing damage builds ult charge
+        if (ch.LifeStealPct <= 0f) return;
         ch.LeechHeal(Mathf.RoundToInt(dmgDealt * ch.LifeStealPct));
     }
 
@@ -195,6 +214,10 @@ public class Health : MonoBehaviour
         return w != null && (w.weaponType == WeaponType.Bow || w.weaponType == WeaponType.Firearm);
     }
 
+    /// <summary>Refill to full HP silently — no popup, no color reset (used on a mob LEVEL-UP, which fully
+    /// heals like the player's, but shouldn't spam a giant green heal number or clear a hit flash).</summary>
+    public void RefillToMax() => Current = maxHealth;
+
     /// <summary>Reset to full HP and base color (used by <see cref="MobRespawn"/> to bring a mob back).</summary>
     public void Revive()
     {
@@ -206,10 +229,10 @@ public class Health : MonoBehaviour
     public void Heal(int amount)
     {
         if (amount <= 0 || IsDead) return;
-        int before = Current;
         Current = Mathf.Min(maxHealth, Current + amount);
-        int healed = Current - before;
-        if (healed > 0) DamagePopup.SpawnText(transform.position, "+" + healed, new Color(0.45f, 1f, 0.45f));
+        // Show the green digits for the FULL intended amount, even at full HP — the heal still "landed" (player parity).
+        DamagePopup.SpawnText(transform.position, "+" + amount, new Color(0.45f, 1f, 0.45f));
+        VfxCue.Fire(VfxCueId.OnReceiveHeal, transform);
     }
 
     IEnumerator Flash()
@@ -221,6 +244,7 @@ public class Health : MonoBehaviour
 
     void Die()
     {
+        VfxCue.Fire(VfxCueId.OnDeath, transform);   // receiver-side death cue (mirrors Character.RaiseDeath)
         onDeath?.Invoke();
         // Play the "poof" death animation if one is attached, and once it finishes either RECYCLE the mob
         // (if it has a MobRespawn) or remove it (the original Phase D behavior). With no FX, do the same

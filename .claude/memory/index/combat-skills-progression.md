@@ -11,6 +11,7 @@
 - [Ring of Progression — concept](../ring-of-progression-concept.md) — doc q17122jsbff6fpvswcg3ht7w6989ka3m; tradeable Ring holds progression.
 - [Active Skill Design Charter](../active-skill-design-charter.md) — doc q17c22jpppnztax6q9ppndmfds89n0x5; anti-stale; §8 hooks §9 currencies §10 PvP.
 - [Active-skill archetype↔ring backbone](../active-skill-archetype-ring-mapping.md) — LOCKED 2026-07-18; 6 verbs hard/soft-mapped to stat ring; Light=Defense pole, Dark=MAtk pole; doc q170cz40rsxav6kq0r6pe431bn89me24.
+- [Active-skill MVP built + ring REVAMPED 2026-07-19](../active-skill-mvp-ring-revamp-2026-07.md) — StatId now 10-node doc ring (old StatId STALE); affinity on SkillEffect; new effect kinds; Ultimate tier/charge/slot; 6 skills w/ PLACEHOLDER meteor VFX.
 - [Conservation as universal balance driver](../conservation-as-balance-driver.md) — every gain pays a cost; Charter §10.
 - [Ring of Progression IMPLEMENTED](../ring-of-progression-implemented.md) — RingProgress on Ring (slot 12); pick per 10 pts; SaveData v4.
 - [Loot & melee reach](../loot-and-melee-reach.md) — reach = `Player3DAttacker.EffectiveRange`; click→route→collect.

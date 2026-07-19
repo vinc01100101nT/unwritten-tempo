@@ -29,7 +29,7 @@ public class PerfHud : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
     {
-        var go = new GameObject("PerfHud");
+        var go = new GameObject("PerfHud") { hideFlags = HideFlags.DontSaveInEditor };
         DontDestroyOnLoad(go);   // dev tool only — intentionally exempt from the no-DontDestroyOnLoad rule
         go.AddComponent<PerfHud>();
     }

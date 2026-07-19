@@ -39,7 +39,7 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         ItemSlot.HighlightDropTargets(slot);    // green halos on every valid target
 
         // Floating ghost icon: a copy of this slot's sprite that follows the cursor above the windows.
-        ghost = new GameObject("DragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        ghost = new GameObject("DragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
         ghost.transform.SetParent(canvas.transform, false);
         ghost.transform.SetAsLastSibling();
         var gi = ghost.GetComponent<Image>();

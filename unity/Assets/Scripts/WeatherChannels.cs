@@ -62,7 +62,7 @@ public class WeatherChannels : MonoBehaviour
     public static WeatherChannels Ensure()
     {
         var w = Instance != null ? Instance : FindFirstObjectByType<WeatherChannels>();
-        if (w == null) w = new GameObject("WeatherChannels").AddComponent<WeatherChannels>();
+        if (w == null) w = new GameObject("WeatherChannels") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<WeatherChannels>();
         return w;
     }
 

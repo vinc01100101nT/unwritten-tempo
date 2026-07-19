@@ -67,7 +67,7 @@ public class FogOverlay : MonoBehaviour
     public static FogOverlay Ensure()
     {
         var f = Instance != null ? Instance : FindFirstObjectByType<FogOverlay>();
-        if (f == null) f = new GameObject("FogOverlay").AddComponent<FogOverlay>();
+        if (f == null) f = new GameObject("FogOverlay") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<FogOverlay>();
         return f;
     }
 

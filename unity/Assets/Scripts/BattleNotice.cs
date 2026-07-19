@@ -54,7 +54,7 @@ public class BattleNotice : MonoBehaviour
     static void Ensure()
     {
         if (inst != null) return;
-        var go = new GameObject("BattleNotice");
+        var go = new GameObject("BattleNotice") { hideFlags = HideFlags.DontSaveInEditor };
         inst = go.AddComponent<BattleNotice>();
         inst.Build();
     }

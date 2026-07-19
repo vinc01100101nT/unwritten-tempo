@@ -9,7 +9,7 @@
   * { box-sizing:border-box; }
   html,body { margin:0; height:100%; background:var(--bg); color:var(--text);
               font:13px/1.4 system-ui,Segoe UI,Roboto,sans-serif; overflow:hidden; }
-  #app { display:grid; grid-template-columns:240px 1fr; grid-template-rows:46px 1fr 26px; height:100%; }
+  #app { display:grid; grid-template-columns:240px 1fr; grid-template-rows:46px 1fr auto; height:100%; }
   header { grid-column:1 / 3; display:flex; align-items:center; gap:10px; padding:0 12px;
            background:var(--panel); border-bottom:1px solid var(--line); }
   header h1 { font-size:14px; margin:0 12px 0 0; font-weight:600; letter-spacing:.3px; }
@@ -17,8 +17,9 @@
   aside { background:var(--panel); border-right:1px solid var(--line); padding:10px; overflow-y:auto; }
   main { position:relative; overflow:hidden; background:#15171b; }
   canvas { position:absolute; inset:0; display:block; }
-  footer { grid-column:1 / 3; display:flex; align-items:center; gap:16px; padding:0 12px;
+  footer { grid-column:1 / 3; display:flex; align-items:center; gap:16px; padding:6px 12px; min-height:26px;
            background:var(--panel); border-top:1px solid var(--line); color:var(--muted); font-size:12px; }
+  #hint { flex:1; }
   button, select, input[type=number] { background:var(--panel2); color:var(--text); border:1px solid var(--line);
            border-radius:6px; padding:6px 10px; font:inherit; cursor:pointer; }
   button:hover { border-color:var(--accent); }
@@ -116,7 +117,7 @@
   </main>
 
   <footer>
-    <span id="hint">Left-drag paint · Right-drag erase · 🪣 Fill = act on whole matching-tile region (paint / raise / lower / erase, half-cells included) · 📏 Line = drag a 1-tile stroke, 45° edges become half-cells; with the Wall brush it lays diagonal wall runs (<kbd>Esc</kbd> aborts) · Elevation: L +1 / R −1 per cell · <kbd>Alt</kbd> peek levels / +drag move · <kbd>R</kbd> rotate · Free: drag after placing to rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
+    <span id="hint">Left-drag paint · Right-drag erase · 🪣 Fill = act on whole matching-tile region (paint / raise / lower / erase, half-cells included) · 📏 Line = drag a 1-tile stroke, 45° edges become half-cells; with the Wall brush it lays diagonal wall runs (<kbd>Esc</kbd> aborts) · Elevation: L +1 / R −1 per cell · <kbd>Ctrl</kbd>+click a wall selects the whole connected run+towers (drawer edits restamp it) · <kbd>Alt</kbd> peek levels / +drag move · <kbd>R</kbd> rotate · Free: drag after placing to rotate · <kbd>Ctrl</kbd>+<kbd>Z</kbd>/<kbd>Y</kbd> undo/redo · Wheel zoom · <kbd>Space</kbd>+drag pan</span>
     <span class="sp" style="flex:1"></span>
     <span id="stat"></span>
   </footer>
@@ -136,6 +137,7 @@ const S = {
   fillMode:false,              // 🪣 bucket: a ground click floods the contiguous same-tile region instead of one cell
   lineMode:false,              // 📏 line: drag a 45°-snapped 1-tile-wide stroke; its diagonal edges land as half-cut cells
   wallSel:{ wall:"", tower:"", thickness:1 },   // per-STROKE wall settings, stamped onto each painted wall cell ("" = kit default)
+  wallSelection:null,          // Ctrl+click: Set of "cx,cz" keys = the selected connected wall network (null = none)
   lineStart:null, lineEnd:null,// cell anchors of the line drag in progress (null = not dragging)
   ground:{},                   // "cx,cz" -> brushId | { brush, cut, under } — cut = KEPT corner (nw/ne/se/sw), under = tile left on the cut-away half
   heights:{},                  // "cx,cz" -> level | { level, cut, under } — kept-half level; under = cut-away half's level; absent = 0
@@ -232,7 +234,7 @@ function buildPalette() {
       ? `<span class="sw" style="background:#0000 center/${isG ? "cover" : "contain"} no-repeat url('${swImg.src}')"></span>`
       : `<span class="sw" style="background:${b.color}"></span>`;
     el.innerHTML = `${sw}${b.label}<span class="meta">${fp}</span>`;
-    el.onclick = () => { S.active = b.id; S.activeVariant = ""; refreshPaletteSel(); buildVariants(); };
+    el.onclick = () => { S.active = b.id; S.activeVariant = ""; clearWallSelection(); refreshPaletteSel(); buildVariants(); };
     (b.kind === "object" ? obj : gnd).appendChild(el);
   }
   refreshPaletteSel();
@@ -317,7 +319,7 @@ function buildWallPanel(b) {
         ? `<span class="sw" style="background:#0000 center/contain no-repeat url('${img.src}')"></span>`
         : `<span class="sw" style="background:${b.color}"></span>`;
       el.innerHTML = `${sw}${pf.name}<span class="meta">${pf.x.toFixed(1)}×${pf.z.toFixed(1)}</span>`;
-      el.onclick = () => { set(pf.name); buildWallPanel(b); render(); };
+      el.onclick = () => { set(pf.name); applyWallEditToSelection(); buildWallPanel(b); render(); };
       box.appendChild(el);
     }
   };
@@ -326,10 +328,20 @@ function buildWallPanel(b) {
   document.getElementById("wallThick").value = S.wallSel.thickness;
   document.getElementById("wallThickTxt").textContent = S.wallSel.thickness.toFixed(1) + "×";
 }
+// Thickness drag: one undo step for the WHOLE drag (commit on the first input), live-restamped onto the selection.
+let _thickDragging = false;
 document.getElementById("wallThick").oninput = e => {
   S.wallSel.thickness = +e.target.value;
   document.getElementById("wallThickTxt").textContent = S.wallSel.thickness.toFixed(1) + "×";
+  if (S.wallSelection && S.wallSelection.size) {
+    if (!_thickDragging) { commitHistory(); _thickDragging = true; }
+    rebuildWallSet();
+    for (const k of S.wallSelection) { const o = _wallSet.get(k); if (o) o.thickness = S.wallSel.thickness; }
+  }
   render();
+};
+document.getElementById("wallThick").onchange = () => {
+  if (_thickDragging) { _thickDragging = false; saveDraft(); }
 };
 
 // ── Coordinate helpers ──────────────────────────────────────────────────────────────────────────────────
@@ -351,6 +363,55 @@ const isCellObject = b => !!b && b.id === "wall";
 let _wallSet = new Map();
 const wallKey = (cx, cz) => cx + "," + cz;
 const wallAt = (cx, cz) => _wallSet.has(wallKey(cx, cz));
+function rebuildWallSet() {
+  _wallSet = new Map();
+  for (const ob of S.objects) if (ob.brush === "wall") _wallSet.set(wallKey(Math.floor(ob.x / S.cellSize), Math.floor(ob.z / S.cellSize)), ob);
+}
+const wallObjAt = (cx, cz) => _wallSet.get(wallKey(cx, cz)) || null;
+
+// ── Wall network selection (Ctrl+click) ────────────────────────────────────────────────────────────────────
+// Ctrl+left-click on any wall cell selects the ENTIRE connected wall structure (8-connected, so diagonal runs and
+// their corner towers all join one network); its clicked-cell settings load into the wall drawer, and editing the
+// drawer (piece / thickness) restamps every cell in the selection. Held as a Set of "cx,cz" keys (null = none).
+function connectedWalls(cx, cz) {
+  const sel = new Set();
+  if (!wallAt(cx, cz)) return sel;
+  const dirs8 = [[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1]];
+  const stack = [[cx, cz]];
+  while (stack.length) {
+    const [x, z] = stack.pop(), k = wallKey(x, z);
+    if (sel.has(k) || !wallAt(x, z)) continue;
+    sel.add(k);
+    for (const [dx, dz] of dirs8) stack.push([x + dx, z + dz]);
+  }
+  return sel;
+}
+function clearWallSelection() { S.wallSelection = null; }
+// Ctrl+click entry point: pick the connected network under the cursor, mirror the clicked cell's settings into the
+// drawer, and switch to the wall brush so the panel is visible. Clicking off any wall clears the selection.
+function selectWallNetworkAt(wx, wz) {
+  rebuildWallSet();
+  const { cx, cz } = cellOf(wx, wz);
+  if (!inBounds(cx, cz) || !wallAt(cx, cz)) { clearWallSelection(); render(); return; }
+  S.wallSelection = connectedWalls(cx, cz);
+  const o = wallObjAt(cx, cz);
+  if (o) S.wallSel = { wall:o.wall || "", tower:o.tower || "", thickness:o.thickness || 1 };
+  S.active = "wall"; S.activeVariant = "";
+  refreshPaletteSel(); buildVariants();   // buildVariants → buildWallPanel repaints the drawer with the selection's settings
+  render();
+}
+// Restamp the current drawer settings (S.wallSel) onto every wall cell in the active selection, as one undo step.
+// No-op when nothing is selected (the drawer then only sets the default for FUTURE strokes, as before).
+function applyWallEditToSelection() {
+  if (!S.wallSelection || !S.wallSelection.size) return;
+  commitHistory();
+  rebuildWallSet();
+  for (const k of S.wallSelection) {
+    const o = _wallSet.get(k);
+    if (o) { o.wall = S.wallSel.wall; o.tower = S.wallSel.tower; o.thickness = S.wallSel.thickness; }
+  }
+  saveDraft();
+}
 
 // ── Wall autotile classification (must mirror MapPainterImporter.KindOf) ─────────────────────────────────
 // A wall cell's piece from its neighbours: two opposite ORTHOGONAL neighbours → straight run ("x"/"z"); two
@@ -389,7 +450,9 @@ function towerYawAt(cx, cz) {
 // A cell value is either a plain brush id / level number (full cell) or an object carrying `cut` — which CORNER's
 // half-triangle is KEPT (nw / ne / se / sw). These accessors are the ONE place both forms are read.
 const gBrush = g => typeof g === "string" ? g : (g ? g.brush : "");        // kept-half tile of a ground cell
-const gCut   = g => (g && typeof g === "object" && g.cut) ? g.cut : "";    // "" = full cell
+// "" = full cell. A cut whose two halves hold the SAME tile is not a diagonal at all → treat it as a full cell, so a
+// fill that made both halves match doesn't leave a phantom diagonal that staircases the next hover/fill region.
+const gCut   = g => (g && typeof g === "object" && g.cut && g.brush !== (g.under || "")) ? g.cut : "";
 const hLevel = h => typeof h === "number" ? h : (h ? h.level || 0 : 0);    // kept-half level of a heights cell
 const oppositeCut = c => ({ nw:"se", se:"nw", ne:"sw", sw:"ne" }[c]);
 // Trace the kept half-triangle of a cut cell (right angle at the kept corner, hypotenuse across the diagonal).
@@ -505,9 +568,10 @@ function fillRegion(wx, wz) {
 function floodFillGround(wx, wz, brushId) {
   for (const [k, part] of fillRegion(wx, wz)) {
     const g = S.ground[k];
-    if (part === "whole") S.ground[k] = brushId;
-    else if (part === "kept") S.ground[k] = { brush:brushId, cut:g.cut, under:g.under || "" };
-    else S.ground[k] = { brush:g.brush, cut:g.cut, under:brushId };   // "cut" → repaint only the cut-away half
+    if (part === "whole") { S.ground[k] = brushId; continue; }
+    const kept  = part === "kept" ? brushId : g.brush;
+    const under = part === "cut"  ? brushId : (g.under || "");
+    S.ground[k] = kept === under ? kept : { brush:kept, cut:g.cut, under };   // both halves now equal → collapse to a full cell
   }
 }
 // 🪣 Eraser fill on one region surface: a whole plain cell is removed; a single targeted half collapses the cell to
@@ -558,9 +622,8 @@ function applyLine(cells) {
     const k = c.cx + "," + c.cz, prev = S.ground[k];
     if (gBrush(prev) === id && !gCut(prev)) continue;                        // already fully this tile
     if (prev && typeof prev === "object" && prev.brush === id) {
-      if (prev.cut === c.cut) continue;
-      if (prev.cut === oppositeCut(c.cut)) { S.ground[k] = id; continue; }   // the two halves complete the square
-      S.ground[k] = { brush:id, cut:c.cut, under:prev.under || "" };
+      if (prev.cut === c.cut) continue;                                      // same coverage already
+      S.ground[k] = id;                                                      // any other same-tile cut: union ⊇ either triangle → fill solid (never carve the crossing diagonal). opposite cuts also complete the square.
       continue;
     }
     S.ground[k] = { brush:id, cut:c.cut, under:gBrush(prev) };               // layered: the old tile stays on the cut-away half
@@ -720,11 +783,13 @@ function render() {
   drawLabels(o, p);
 
   // wall-cell lookup for the autotile preview (cell coords → the painted wall object with its stroke settings)
-  _wallSet = new Map();
-  for (const ob of S.objects) if (ob.brush === "wall") _wallSet.set(wallKey(Math.floor(ob.x / S.cellSize), Math.floor(ob.z / S.cellSize)), ob);
+  rebuildWallSet();
 
   // objects (true footprint, brush colour, facing arrow)
   for (const ob of S.objects) drawObject(ob, p);
+
+  // Ctrl+click wall-network selection highlight (drawn over the wall glyphs)
+  drawWallSelection(p);
 
   // elevation overlay (raised = warm/light, sunken = cool/dark) + the level number
   drawHeights(p);
@@ -737,24 +802,39 @@ function render() {
   ctx.fillStyle = "#ffffff66"; ctx.font = "11px system-ui";
   ctx.fillText("N ↑", o.x + 6, o.y + 14);
 }
+// Which indices count as "middle": the single centre when the count is odd, the two centre cells when even.
+const midIdx = n => n % 2 ? new Set([(n - 1) / 2]) : new Set([n / 2 - 1, n / 2]);
 function drawLabels(o, p) {
   const cellPx = S.cellSize * p;
   if (cellPx < 9) return;                                   // too small to read — skip entirely
   const step = cellPx >= 22 ? 1 : cellPx >= 13 ? 5 : 10;    // thin out as we zoom out
-  ctx.fillStyle = "#aeb6c4"; ctx.font = "11px system-ui";
+  const midC = midIdx(S.cols), midR = midIdx(S.rows);
+  // Cell under the cursor — its row & column labels light up green.
+  const h = cellOf(S.mouse.wx, S.mouse.wz);
+  const inb = inBounds(h.cx, h.cz);
+  const hoverC = inb ? h.cx : -1, hoverR = inb ? h.cz : -1;
+  const paint = (isHover, isMid) => {
+    ctx.fillStyle = isHover ? "#5fd66a" : "#aeb6c4";
+    ctx.font = isMid ? "bold 17px system-ui" : "11px system-ui";   // centre labels 1.5x larger
+  };
   ctx.textBaseline = "middle";
-  // columns (cx) along the top
+  // columns (cx) along the top — labelled from 1
   ctx.textAlign = "center";
   for (let c = 0; c < S.cols; c++) {
-    if (c % step !== 0 && c !== S.cols - 1) continue;
-    ctx.fillText(c, o.x + (c + 0.5) * cellPx, o.y - 10);
+    const isMid = midC.has(c), isHover = c === hoverC;
+    if (c % step !== 0 && c !== S.cols - 1 && !isMid && !isHover) continue;
+    paint(isHover, isMid);
+    ctx.fillText(c + 1, o.x + (c + 0.5) * cellPx, o.y - 10);
   }
-  // rows (cz) down the left
+  // rows (cz) down the left — labelled from 1
   ctx.textAlign = "right";
   for (let r = 0; r < S.rows; r++) {
-    if (r % step !== 0 && r !== S.rows - 1) continue;
-    ctx.fillText(r, o.x - 8, o.y + (r + 0.5) * cellPx);
+    const isMid = midR.has(r), isHover = r === hoverR;
+    if (r % step !== 0 && r !== S.rows - 1 && !isMid && !isHover) continue;
+    paint(isHover, isMid);
+    ctx.fillText(r + 1, o.x - 8, o.y + (r + 0.5) * cellPx);
   }
+  ctx.font = "11px system-ui";                              // restore
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";  // restore defaults for other text
 }
 function drawObject(ob, p, ghost) {
@@ -826,6 +906,23 @@ function drawWallGlyph(ob, p, ghost) {
     ctx.stroke();
   }
   ctx.strokeStyle = "#0007"; ctx.lineWidth = 1; ctx.strokeRect(c.x - half, c.y - half, cp, cp);
+  ctx.restore();
+}
+
+// Ctrl+click selection highlight: a translucent accent fill + border on every cell in the selected wall network
+// (towers included), so the whole connected structure being edited by the drawer reads at a glance.
+function drawWallSelection(p) {
+  if (!S.wallSelection || !S.wallSelection.size) return;
+  const cp = S.cellSize * p;
+  ctx.save();
+  for (const k of S.wallSelection) {
+    const [cx, cz] = k.split(",").map(Number);
+    const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
+    ctx.fillStyle = "#5b9bd5"; ctx.globalAlpha = 0.28;
+    ctx.fillRect(s.x, s.y, cp, cp);
+    ctx.globalAlpha = 0.95; ctx.strokeStyle = "#8fc4ff"; ctx.lineWidth = 2;
+    ctx.strokeRect(s.x + 1, s.y + 1, cp - 2, cp - 2);
+  }
   ctx.restore();
 }
 
@@ -960,6 +1057,13 @@ cv.addEventListener("mousedown", e => {
     if (i >= 0) { commitHistory(); S.dragObj = S.objects[i]; render(); }
     return;
   }
+  // Ctrl+left click: select the whole connected wall network under the cursor and mirror its settings into the drawer.
+  if (e.button === 0 && (e.ctrlKey || e.metaKey)) {
+    const r = cv.getBoundingClientRect(), w = screenToWorld(e.clientX - r.left, e.clientY - r.top);
+    selectWallNetworkAt(w.wx, w.wz);
+    return;
+  }
+  clearWallSelection();             // any paint/line/erase gesture invalidates a standing wall selection
   // 📏 Line tool: left-drag anchors a 45°-snapped stroke of the active ground brush — OR a run of the wall brush
   // (diagonal walls). Committed on mouseup (history captured there, so an aborted drag never pushes a no-op undo).
   const lb = S.brushById[S.active];
@@ -1039,6 +1143,7 @@ window.addEventListener("keydown", e => {
   if (ctrl && (y || (z && e.shiftKey))) { e.preventDefault(); redo(); return; }   // Ctrl+Y or Ctrl+Shift+Z
   if (e.code === "Space") { S.spaceDown = true; }
   if (e.key === "Escape" && S.lineStart) { S.lineStart = S.lineEnd = null; render(); }   // abort the line drag
+  if (e.key === "Escape" && S.wallSelection) { clearWallSelection(); render(); }          // drop the wall selection
   if (e.key === "Alt" && !S.altDown) { S.altDown = true; render(); }   // peek elevation numbers while held
   if (e.key === "r" || e.key === "R") { S.yaw = (S.yaw + (S.mode === "grid" ? 90 : 15)) % 360; document.getElementById("yawTxt").textContent = S.yaw + "°"; render(); }
 });
@@ -1066,7 +1171,7 @@ document.getElementById("raiseBtn").onclick = () => { S.active = "raise"; S.acti
 document.getElementById("lowerBtn").onclick = () => { S.active = "lower"; S.activeVariant = ""; refreshPaletteSel(); buildVariants(); };
 // Flatten: wipe every cell's elevation back to level 0 in one click (leaves ground + objects + diagonal cuts intact).
 document.getElementById("flattenBtn").onclick = () => { if (confirm("Remove all elevations (flatten every cell to level 0)?")) { commitHistory(); S.heights = {}; saveDraft(); render(); } };
-document.getElementById("clearBtn").onclick = () => { if (confirm("Clear all painted ground + objects?")) { commitHistory(); S.ground = {}; S.heights = {}; S.objects = []; saveDraft(); render(); } };
+document.getElementById("clearBtn").onclick = () => { if (confirm("Clear all painted ground + objects?")) { commitHistory(); S.ground = {}; S.heights = {}; S.objects = []; clearWallSelection(); saveDraft(); render(); } };
 document.getElementById("fitBtn").onclick = fitView;
 document.getElementById("reloadMani").onclick = loadManifest;
 document.getElementById("loadManiFile").onclick = () => document.getElementById("fileMani").click();
@@ -1090,7 +1195,7 @@ function buildMap() {
     size:{ x:worldW(), z:worldH() }, cols:S.cols, rows:S.rows,
     ground:Object.entries(S.ground).map(([k, g]) => {
       const [cx, cz] = k.split(",").map(Number);
-      return typeof g === "string" ? { brush:g, cx, cz } : { brush:g.brush, cx, cz, cut:g.cut, under:g.under || "" };
+      return gCut(g) ? { brush:g.brush, cx, cz, cut:g.cut, under:g.under || "" } : { brush:gBrush(g), cx, cz };
     }),
     heights:Object.entries(S.heights).map(([k, h]) => {
       const [cx, cz] = k.split(",").map(Number);
@@ -1128,6 +1233,7 @@ function importMap(m) {
     if (o.brush === "wall") { obj.wall = o.wall || ""; obj.tower = o.tower || ""; obj.thickness = o.thickness || 1; }
     return obj;
   });
+  clearWallSelection();   // stale cell keys don't survive a map swap
   clearHistory();   // a freshly loaded map starts a new undo timeline (grid size also changes)
   S.dirty = false; saveDraft();   // loaded map is the new baseline
   fitView();

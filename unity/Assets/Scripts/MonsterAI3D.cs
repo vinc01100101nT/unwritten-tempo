@@ -54,6 +54,19 @@ public class MonsterAI3D : MonoBehaviour
     public float touchRange = 0.9f;
     public float touchInterval = 1f;
 
+    [Header("Leveling (mob progression — mirrors the player)")]
+    [Min(1)]
+    [Tooltip("Current mob level. Grows in combat; each level-up scales attack + max HP and fires the OnLevelUp cue.")]
+    public int level = 1;
+    [Tooltip("XP this mob earns per point of damage it deals to the player (the mob's mirror of the player earning " +
+             "XP from combat). 0 = this mob never levels.")]
+    public float xpPerDamageDealt = 1f;
+    [Tooltip("XP for the FIRST level-up; the bar for each subsequent level is this × the current level.")]
+    public int xpToFirstLevel = 20;
+    [Range(0f, 2f)]
+    [Tooltip("Per level-up, attack, max HP, and the XP the player gets for killing it grow by this fraction (0.15 = +15%).")]
+    public float perLevelGrowth = 0.15f;
+
     [Header("Behavior style")]
     [Tooltip("0 = melee (close in and bite). >0 = HOLD this far from the player and attack from range " +
              "(a caster/archer kites). For ranged mobs set touchRange ≥ this so they can land hits while holding.")]
@@ -80,6 +93,7 @@ public class MonsterAI3D : MonoBehaviour
     static readonly Color MagicHitColor = new Color(0.7f, 0.5f, 1f);
     static readonly Color PhysHitColor  = new Color(1f, 0.35f, 0.35f);
     static readonly Color StunColor     = new Color(1f, 0.9f, 0.3f);
+    static readonly Color LevelUpColor  = new Color(1f, 0.85f, 0.35f);   // mob level-up toast
 
     // Cached on-arrive for the ranged-caster projectile — allocated once, shared by every shot from every
     // mob. The shot's damage/element/source travel in the HitPayload; `homing` is the player transform
@@ -93,6 +107,7 @@ public class MonsterAI3D : MonoBehaviour
         {
             DamagePopup.Spawn(p.homing != null ? p.homing.position : p.at, d, MagicHitColor);
             mob.TryInflictOnHit();
+            mob.GainCombatXp(d);
         }
     };
 
@@ -107,6 +122,8 @@ public class MonsterAI3D : MonoBehaviour
     float stunnedUntil;   // hit by a stagger (e.g. the Swordsman's Bash) — frozen until this time
     float slowUntil;      // chilled (e.g. Frost Nova) — moves at slowFactor speed until this time
     float slowFactor = 1f;
+    float tauntUntil;     // taunted (e.g. Bulwark) — forced to chase the player and can't leash/flee until this time
+    float mobXp;          // XP toward this mob's next level (earned from damage dealt to the player)
     StatusFX stunFx;      // looping swirl shown over the head while stunned (created on first stun)
     StatusController status;   // poison/bleed/burn/blind host (Stun/Slow still delegate to the fields above)
 
@@ -156,6 +173,39 @@ public class MonsterAI3D : MonoBehaviour
         nextWander = Time.time + Random.value;
     }
 
+    // XP needed for the next level-up — the first bar (xpToFirstLevel) scaled by the current level.
+    int XpToNext => Mathf.Max(1, xpToFirstLevel * level);
+
+    /// <summary>Award combat XP for <paramref name="damageDealt"/> the mob just landed on the player, and level
+    /// up (possibly several times) once the bar is reached — the mob's mirror of the player's progression.
+    /// Called per-hit (not per-frame); alloc-free.</summary>
+    public void GainCombatXp(int damageDealt)
+    {
+        if (damageDealt <= 0 || xpPerDamageDealt <= 0f) return;
+        mobXp += damageDealt * xpPerDamageDealt;
+        while (mobXp >= XpToNext)
+        {
+            mobXp -= XpToNext;
+            LevelUp();
+        }
+    }
+
+    // One choke point for a mob level-up: scale stats, fully heal, announce, and fire the OnLevelUp cue.
+    void LevelUp()
+    {
+        level++;
+        float g = 1f + Mathf.Max(0f, perLevelGrowth);
+        attack = Mathf.Max(attack + 1, Mathf.RoundToInt(attack * g));
+        xpReward = Mathf.Max(xpReward + 1, Mathf.RoundToInt(xpReward * g));   // a higher-level mob is worth more
+        if (Health != null)
+        {
+            Health.maxHealth = Mathf.Max(Health.maxHealth + 1, Mathf.RoundToInt(Health.maxHealth * g));
+            Health.RefillToMax();   // level-up fully heals (player parity), silently
+        }
+        DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Level Up!", LevelUpColor);
+        VfxCue.Fire(VfxCueId.OnLevelUp, transform);
+    }
+
     /// <summary>Briefly freeze this mob (chase + touch-attack) — a reusable stagger/crowd-control hook for
     /// skills like the Swordsman's Bash. Stacks by taking the later end time, not by adding.</summary>
     public void Stagger(float seconds)
@@ -187,6 +237,17 @@ public class MonsterAI3D : MonoBehaviour
         }
         if (!wasStunned) DamagePopup.SpawnText(UnitAnchor.Head(transform), "Stun!", StunColor);
     }
+
+    /// <summary>Force this mob to fixate on the player for <paramref name="seconds"/> — it chases and can't leash
+    /// off or flee while taunted (a reusable aggro-lock for guard skills like Bulwark). Stacks by later end time.</summary>
+    public void Taunt(float seconds)
+    {
+        if (seconds <= 0f) return;
+        tauntUntil = Mathf.Max(tauntUntil, Time.time + seconds);
+        chasing = true;
+    }
+
+    bool Taunted => Time.time < tauntUntil;
 
     /// <summary>Shove this mob directly away from <paramref name="worldFrom"/> at <paramref name="speed"/>
     /// for <paramref name="time"/>s and stagger it for <paramref name="stagger"/>s (so its AI doesn't fight
@@ -225,7 +286,8 @@ public class MonsterAI3D : MonoBehaviour
         float toPlayerSqr = playerAlive ? PlanarSqr(pos, player.position) : Mathf.Infinity;
 
         bool was = chasing;
-        if (chasing && toPlayerSqr > leashRadius * leashRadius) chasing = false;
+        if (Taunted && playerAlive) chasing = true;   // taunt overrides leash — locked onto the player
+        else if (chasing && toPlayerSqr > leashRadius * leashRadius) chasing = false;
         else if (!chasing && toPlayerSqr <= aggroRadius * aggroRadius) chasing = true;
 
         // Touch damage (Phase F parity). No-op in the spike: Character.Instance is null without Systems.
@@ -241,6 +303,8 @@ public class MonsterAI3D : MonoBehaviour
         {
             // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
             int atk = Mathf.RoundToInt(attack * (1f - Random.Range(0f, damageSpread)));   // RO-style spread
+            // A magic mob's attack IS its cast — fire the cast cue at the caster (player-parity OnCastStart).
+            if (attackType == AttackType.Magic) VfxCue.Fire(VfxCueId.OnCastStart, transform);
             if (attackType == AttackType.Magic && projectileSheet != null)
             {
                 // Ranged caster: lob a VISIBLE projectile at the player; the magic damage lands on arrival.
@@ -264,6 +328,7 @@ public class MonsterAI3D : MonoBehaviour
                     DamagePopup.Spawn(player.position, dealt,
                         attackType == AttackType.Magic ? MagicHitColor : PhysHitColor);
                     TryInflictOnHit();
+                    GainCombatXp(dealt);
                 }
             }
             nextTouch = Time.time + touchInterval;
@@ -290,8 +355,8 @@ public class MonsterAI3D : MonoBehaviour
     // in Update — no extra Find/GetComponent/alloc (PERFORMANCE.md: nothing new in the per-mob hot path).
     void Pursue(Vector3 pos, float toPlayerSqr)
     {
-        // Skittish: wounded enough → break off and run from the player.
-        if (fleeHpFraction > 0f && Health != null && Health.Current <= Health.maxHealth * fleeHpFraction)
+        // Skittish: wounded enough → break off and run from the player (unless taunted, which pins it in the fight).
+        if (!Taunted && fleeHpFraction > 0f && Health != null && Health.Current <= Health.maxHealth * fleeHpFraction)
         {
             agent.MoveToward(AwayPoint(pos));
             return;

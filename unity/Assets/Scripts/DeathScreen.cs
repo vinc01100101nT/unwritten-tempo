@@ -126,7 +126,7 @@ public class DeathScreen : MonoBehaviour
     void Build()
     {
         var canvasGO = new GameObject("DeathScreenCanvas",
-            typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(CanvasGroup));
+            typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(CanvasGroup)) { hideFlags = HideFlags.DontSaveInEditor };
         canvasGO.transform.SetParent(transform, false);
 
         var canvas = canvasGO.GetComponent<Canvas>();

@@ -167,7 +167,7 @@ public static class DepthSortRuntime
 
             if (root == null)
             {
-                root = new GameObject("ObstacleProps").transform;
+                root = new GameObject("ObstacleProps") { hideFlags = HideFlags.DontSaveInEditor }.transform;
                 // Keep baked props in the SAME scene as the tilemap, so an additively-loaded map's
                 // props unload with that map (not with whatever scene happens to be active).
                 SceneManager.MoveGameObjectToScene(root.gameObject, tm.gameObject.scene);

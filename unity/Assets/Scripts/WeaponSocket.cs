@@ -61,6 +61,7 @@ public class WeaponSocket : MonoBehaviour
 
         mounted = Instantiate(model, hand, false);
         mounted.name = model.name;
+        mounted.hideFlags = HideFlags.DontSaveInEditor;   // runtime child of the SAVED player rig — needs its own tag
         var t = mounted.transform;
         t.localPosition = grip != null ? grip.localPosition : Vector3.zero;
         t.localRotation = grip != null ? Quaternion.Euler(grip.localEuler) : Quaternion.identity;

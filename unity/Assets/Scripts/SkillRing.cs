@@ -16,12 +16,12 @@ public enum StatId
     MAtk,
     HP,
     MP,
-    Def,
-    MDef,
+    Def,          // dual: its ring % scales BOTH physical Defense and MagicDefense (no separate MDef node)
+    Accuracy,     // % lift on Hit
+    CastSpeed,    // % lift on CastSpeedMult
     Evasion,
     AttackSpeed,
-    CritChance,
-    CritDamage,
+    Critical,     // one node → % to BOTH crit rate and crit damage
 }
 
 /// <summary>
@@ -35,23 +35,22 @@ public enum StatId
 public static class SkillRing
 {
     /// <summary>
-    /// The closed loop, clockwise. A stat's Trio = itself + its two array neighbors
-    /// (wrapping at the ends, because it's a ring, not a line). One graceful transition
-    /// (Def→Atk) and one deliberate seam (Evasion→MAtk) where the physical-offense arc
-    /// meets the magic pole — see doc §5.
+    /// The closed loop, clockwise from the top. Poles sit dead-opposite (index 0 vs 5):
+    /// Def (top, "Light") ↔ MAtk (bottom, "Dark"). Accuracy/CastSpeed bridge the physical→magic
+    /// transition; Critical/AtkSpd close the loop back to the top — the ring-harmonized layout.
     /// </summary>
     public static readonly StatId[] Ring =
     {
-        StatId.Atk,
-        StatId.AttackSpeed,
-        StatId.CritChance,
-        StatId.CritDamage,
-        StatId.Evasion,
-        StatId.MAtk,
-        StatId.MDef,
-        StatId.MP,
-        StatId.HP,
         StatId.Def,
+        StatId.HP,
+        StatId.Atk,
+        StatId.Accuracy,
+        StatId.CastSpeed,
+        StatId.MAtk,
+        StatId.MP,
+        StatId.Evasion,
+        StatId.Critical,
+        StatId.AttackSpeed,
     };
 
     public static int Count => Ring.Length;
@@ -68,9 +67,9 @@ public static class SkillRing
     {
         switch (stat)
         {
-            case StatId.CritChance: return 0.50f;   // crit rate near 100% would trivialise combat
-            case StatId.Evasion:    return 0.60f;    // dodge is strong defensively — keep it under a hard wall
-            default:                return DefaultCap;
+            case StatId.Critical: return 0.50f;   // one cap governs both crit-rate and crit-damage %; near-100% crit would trivialise combat
+            case StatId.Evasion:  return 0.60f;    // dodge is strong defensively — keep it under a hard wall
+            default:              return DefaultCap;
         }
     }
 
@@ -127,11 +126,11 @@ public static class SkillRing
             case StatId.HP:          return "HP";
             case StatId.MP:          return "MP";
             case StatId.Def:         return "DEF";
-            case StatId.MDef:        return "M.DEF";
+            case StatId.Accuracy:    return "ACC";
+            case StatId.CastSpeed:   return "CAST";
             case StatId.Evasion:     return "EVA";
             case StatId.AttackSpeed: return "ASPD";
-            case StatId.CritChance:  return "CRIT";
-            case StatId.CritDamage:  return "C.DMG";
+            case StatId.Critical:    return "CRIT";
             default:                 return stat.ToString();
         }
     }
@@ -144,13 +143,13 @@ public static class SkillRing
         switch (stat)
         {
             case StatId.Atk:
+            case StatId.Accuracy:
+            case StatId.Critical:
             case StatId.AttackSpeed:
-            case StatId.CritChance:
-            case StatId.CritDamage:
             case StatId.Evasion:
                 return new Color(0.95f, 0.55f, 0.35f);   // physical-offense arc — warm
             case StatId.MAtk:
-            case StatId.MDef:
+            case StatId.CastSpeed:
             case StatId.MP:
                 return new Color(0.45f, 0.6f, 0.95f);     // magic arc — blue
             default: // HP, Def

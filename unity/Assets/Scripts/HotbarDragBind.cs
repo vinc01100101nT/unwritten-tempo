@@ -32,7 +32,7 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
 
-        ghost = new GameObject("HotbarDragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        ghost = new GameObject("HotbarDragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
         ghost.transform.SetParent(canvas.transform, false);
         ghost.transform.SetAsLastSibling();
         var img = ghost.GetComponent<Image>();
@@ -99,7 +99,7 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
 
-        ghost = new GameObject("SkillDragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        ghost = new GameObject("SkillDragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
         ghost.transform.SetParent(canvas.transform, false);
         ghost.transform.SetAsLastSibling();
         var img = ghost.GetComponent<Image>();

@@ -14,18 +14,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.meteor
   displayName: Meteor
-  icon: {fileID: 21300000, guid: 175b1dd4b468f2e4e99f17d5afaaa905, type: 3}
-  manaCost: 16
+  icon: {fileID: 5986030973748356752, guid: 9c71065b39d57034db33fd7201c9baf4, type: 3}
+  description: Call down a shower of meteors, a screen-wide fire storm that stuns
+    and burns everything and strikes hardest against the weak.
+  archetype: 0
+  category: 0
+  manaCost: 40
   cooldown: 3.12
-  castTime: 10
+  castTime: 1.5
   maxLevel: 10
   aim: 2
-  castRange: 11
+  castRange: 13
+  tier: 1
+  chargeCost: 100
   castCircleId: circle.magic
   castCircleTint: {r: 0.86415094, g: 0.29302153, b: 0.11576363, a: 1}
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
   repeatCount: 5
-  repeatInterval: 1
+  repeatInterval: 0.5
   hasReleaseStance: 1
   releaseStance: 16
   bindings:
@@ -42,6 +48,70 @@ MonoBehaviour:
       ailment: 2
       seconds: 4
       magnitude: 3
+      hitCount: 3
+      chance: 0
+      buffStat: 0
+      affinity:
+      - stat: 1
+        weight: 70
+      - stat: 6
+        weight: 20
+      - stat: 3
+        weight: 10
+      durationAffinity: []
+    - kind: 2
+      magic: 1
+      damageMult: 1
+      element: 3
+      amount: 10
+      ailment: 2
+      seconds: 4
+      magnitude: 3
+      hitCount: 1
+      chance: 0
+      buffStat: 0
+      affinity:
+      - stat: 1
+        weight: 80
+      durationAffinity:
+      - stat: 3
+        weight: 70
+      - stat: 1
+        weight: 30
+    - kind: 2
+      magic: 1
+      damageMult: 1
+      element: 3
+      amount: 10
+      ailment: 3
+      seconds: 0.75
+      magnitude: 0
+      hitCount: 1
+      chance: 0.25
+      buffStat: 0
+      affinity:
+      - stat: 5
+        weight: 100
+      durationAffinity:
+      - stat: 1
+        weight: 60
+      - stat: 3
+        weight: 40
+    - kind: 11
+      magic: 1
+      damageMult: 1
+      element: 3
+      amount: 10
+      ailment: 2
+      seconds: 4
+      magnitude: 1
+      hitCount: 1
+      chance: 0
+      buffStat: 0
+      affinity:
+      - stat: 9
+        weight: 100
+      durationAffinity: []
     scale:
       damageMultPerLevel: 0.5
       flatBonusPerLevel: 0
@@ -58,10 +128,17 @@ MonoBehaviour:
       ailment: 2
       seconds: 4
       magnitude: 3
+      hitCount: 1
+      chance: 0
+      buffStat: 0
+      affinity:
+      - stat: 1
+        weight: 100
+      durationAffinity: []
     scale:
       damageMultPerLevel: 0.1
       flatBonusPerLevel: 0
   shortLabel: Meteor
   keyLabel: 
   slotOrder: 20
-  tint: {r: 1, g: 1, b: 1, a: 1}
+  tint: {r: 1, g: 0.55, b: 0.25, a: 1}

@@ -110,7 +110,7 @@ public class HandDrawnFX : MonoBehaviour
     public static HandDrawnFX Ensure()
     {
         var f = Instance != null ? Instance : FindFirstObjectByType<HandDrawnFX>();
-        if (f == null) f = new GameObject("HandDrawnFX").AddComponent<HandDrawnFX>();
+        if (f == null) f = new GameObject("HandDrawnFX") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<HandDrawnFX>();
         return f;
     }
 

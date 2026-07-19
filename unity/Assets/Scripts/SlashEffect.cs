@@ -11,7 +11,7 @@ public class SlashEffect : MonoBehaviour
     public static void Spawn(Texture2D sheet, int frameSize, int frameCount, float fps, Vector3 worldPos, float scale)
     {
         if (sheet == null || frameSize <= 0) return;
-        var go = new GameObject("SlashEffect");
+        var go = new GameObject("SlashEffect") { hideFlags = HideFlags.DontSaveInEditor };
         go.transform.position = worldPos;
         go.transform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
         var sr = go.AddComponent<SpriteRenderer>();

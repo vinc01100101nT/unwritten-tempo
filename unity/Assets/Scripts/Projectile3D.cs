@@ -68,7 +68,7 @@ public class Projectile3D : MonoBehaviour
                                Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
                                float arriveRadius, float maxLife)
     {
-        var go = new GameObject("Projectile3D");
+        var go = new GameObject("Projectile3D") { hideFlags = HideFlags.DontSaveInEditor };
         go.transform.position = from;
         go.transform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
         var sr = go.AddComponent<SpriteRenderer>();
@@ -96,7 +96,7 @@ public class Projectile3D : MonoBehaviour
                                 float arriveRadius, float maxLife, System.Action onArrive, bool faceTravel = false,
                                 float travelClipStart = 0f)
     {
-        var go = new GameObject("Projectile3D(Vfx)");
+        var go = new GameObject("Projectile3D(Vfx)") { hideFlags = HideFlags.DontSaveInEditor };
         go.transform.position = from;
 
         var p = go.AddComponent<Projectile3D>();

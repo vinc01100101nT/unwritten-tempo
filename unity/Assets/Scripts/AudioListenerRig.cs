@@ -22,7 +22,7 @@ public class AudioListenerRig : MonoBehaviour
 
     void Awake()
     {
-        var go = new GameObject("Ears");
+        var go = new GameObject("Ears") { hideFlags = HideFlags.DontSaveInEditor };   // runtime child of the SAVED player rig — needs its own tag
         ears = go.transform;
         ears.SetParent(transform, false);   // local zero → sits exactly at the player
         go.AddComponent<AudioListener>();

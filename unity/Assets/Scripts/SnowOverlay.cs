@@ -66,7 +66,7 @@ public class SnowOverlay : MonoBehaviour
     public static SnowOverlay Ensure()
     {
         var s = FindFirstObjectByType<SnowOverlay>();
-        if (s == null) s = new GameObject("SnowOverlay").AddComponent<SnowOverlay>();
+        if (s == null) s = new GameObject("SnowOverlay") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<SnowOverlay>();
         return s;
     }
 

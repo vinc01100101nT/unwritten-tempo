@@ -486,7 +486,7 @@ public static class RigBuilder25D
     /// Inspector.</summary>
     static Sprite LoadSkillIcon(string relativeNoExt)
     {
-        string path = $"Assets/1_Authored/Art/Billboards/UI/Skill Icon/{relativeNoExt}.png";
+        string path = $"Assets/1_Authored/Art/Billboards/Ui/Skill Icon/{relativeNoExt}.png";
         var importer = AssetImporter.GetAtPath(path) as TextureImporter;
         if (importer == null) { Debug.LogWarning($"[unwritten] Hotbar icon not found: {path}"); return null; }
         // The pack ships these icons as Sprite/Multiple (one 24×24 sub-sprite each), which

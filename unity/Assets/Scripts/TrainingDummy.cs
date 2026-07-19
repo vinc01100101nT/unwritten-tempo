@@ -52,7 +52,7 @@ public class TrainingDummy : MonoBehaviour
     // text is a readable size regardless of how the dummy is scaled; Billboard keeps it facing the camera.
     void BuildLabel()
     {
-        var go = new GameObject("DummyHP", typeof(RectTransform), typeof(Canvas));
+        var go = new GameObject("DummyHP", typeof(RectTransform), typeof(Canvas)) { hideFlags = HideFlags.DontSaveInEditor };
         go.transform.SetParent(transform, false);
         go.transform.localPosition = new Vector3(0f, labelHeight, 0f);
         float worldScale = Mathf.Max(0.0001f, transform.lossyScale.x);

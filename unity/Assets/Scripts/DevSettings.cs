@@ -32,7 +32,7 @@ public class DevSettings : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
     {
-        var go = new GameObject("DevSettings");
+        var go = new GameObject("DevSettings") { hideFlags = HideFlags.DontSaveInEditor };
         DontDestroyOnLoad(go);   // dev tool only — intentionally exempt from the no-DontDestroyOnLoad rule
         go.AddComponent<DevSettings>();
     }

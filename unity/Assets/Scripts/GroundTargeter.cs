@@ -49,7 +49,7 @@ public class GroundTargeter : MonoBehaviour
     {
         if (inst == null)
         {
-            var go = new GameObject("GroundTargeter");
+            var go = new GameObject("GroundTargeter") { hideFlags = HideFlags.DontSaveInEditor };
             inst = go.AddComponent<GroundTargeter>();
         }
         inst.player = player;

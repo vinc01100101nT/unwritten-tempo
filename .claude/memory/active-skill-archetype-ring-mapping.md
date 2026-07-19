@@ -28,4 +28,15 @@ Poles Defense↔MAtk are opposite on the ring = the Light/Dark axis falls out of
 
 **Open (flagged, not blockers):** Burst is widest (4 nodes) → most skills; HP is the one split node (Endure+Restore); magic arc (MAtk) is verb-dense (nuke+heal+buff+curse gravitate to INT) vs raw-stat physical arc.
 
-**Next step:** GPT v2 critique packet is in the doc awaiting its reply; then fill the archetype×category matrix, MVP ≈ 1 skill per archetype first (each needs a hand-authored VfxSequence — the real bottleneck, see [[legacy-skills-retired-composed-pool]]).
+**FINAL ARCHITECTURE — 3-brain consensus reached 2026-07-18** (Claude+GPT+user, doc convergence log entry (d)). The hard/soft ring-map above is superseded by a weighted-affinity model + a clean ownership stack:
+- **Effect instance** owns SCALING — affinity is per output-channel (damage / burn-duration / shield / knockback…), weighted (e.g. Meteor damage = 70% MAtk/20% CastSpeed/10% MP; burn-duration = 70% MP). Maps to a NEW field on `SkillEffect` (SkillDef is already `bindings → List<SkillEffect>`). Effect TYPE gives an overridable default.
+- **Skill** owns COMPOSITION (which effects it fires).
+- **Tag** (the 6 archetype verbs) owns IDENTITY only — litmus, signature weakness, authored synergy motifs, category, UI. NEVER in the damage math (a tag can't own a damage-stat: Burst spans both Atk & MAtk).
+- **Template** (per tag × damage-type) speeds authoring — defaults only, never constrains (a Holy skill scaling off Defense is legal).
+- **Affinity Heatmap** (renamed from "gravity") = DERIVED analytics only; never drives gameplay; NOT shown as authored numbers (would be false). Only each skill's own affinity shows on its card.
+
+Balance pillars: **signature weakness** per archetype (every gain pays a cost) via TWO levers — encounter variety (primary) + resource pressure (always-on backup). **Synergy = cross-tag ONLY**, authored MOTIFS each with a "gameplay sentence" (Restore→Burst = "bank resources to unleash"), never same-tag, never arbitrary.
+
+**MVP MATRIX v1 drafted + committed to the doc (2026-07-18):** 6 skills, one per archetype — Ember Bolt (Burst/Attack/base, renamed fireball) + Meteor (PROMOTED to Burst/Attack/ULTIMATE, reuses existing skill.meteor VFX), Blink Step (Tempo/Utility), Bulwark (Fortress/Buff), Mending Tide (Sustain/Buff), War Banner (Empower/Buff/Light), Hex Field (Corrupt/Utility/Dark). Motif package demoed: Hex Field softens → Meteor executes. **Ultimate = a TIER** (not a category) on any skill: charge-meter gated (fills in combat) + one dedicated ult slot; adds `tier`+`chargeCost` to SkillDef, meter+slot to hotbar — no new architecture.
+
+**Next step (build):** author the 5 missing VfxSequences (Meteor done; Ember Bolt likely reuses an existing bolt/spark), then composed `SkillDef` assets under `Resources/Skills/`; add per-effect affinity field to `SkillEffect` + `tier`/`chargeCost` to `SkillDef` + ult meter/slot. VfxSequence per skill = the real bottleneck ([[legacy-skills-retired-composed-pool]]).

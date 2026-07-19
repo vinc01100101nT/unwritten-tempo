@@ -171,7 +171,7 @@ public class SkillBookPanel : MonoBehaviour
     void BindFirstEmpty(string id)
     {
         var c = Character.Instance;
-        if (c == null || c.Hotbar.BindToFirstEmpty(id) < 0) return;   // unknown, already bound, or bar full
+        if (c == null || !c.Hotbar.AutoBind(id)) return;   // unknown, already bound, or bar full (ultimates → ult slot)
         if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
         HotbarPanel.RebuildRequested?.Invoke();
         UISounds.PlayClick();

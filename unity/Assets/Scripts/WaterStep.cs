@@ -42,7 +42,7 @@ public class WaterStep : MonoBehaviour
     static void Bootstrap()
     {
         if (FindFirstObjectByType<WaterStep>() != null) return;
-        var go = new GameObject("WaterStep");
+        var go = new GameObject("WaterStep") { hideFlags = HideFlags.DontSaveInEditor };
         DontDestroyOnLoad(go);
         go.AddComponent<WaterStep>();
     }

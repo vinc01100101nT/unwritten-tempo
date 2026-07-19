@@ -66,6 +66,7 @@ public class AmbientLife : MonoBehaviour
 
         var go = Instantiate(entry.prefab, p, Quaternion.identity);
         go.name = "Townsfolk_" + entry.name;
+        go.hideFlags = HideFlags.DontSaveInEditor;   // runtime spawn — a stray copy was once baked into town_0
 
         // Mirror the mob movement stack (RigBuilder25D.BuildMonster): PathAgent3D auto-adds a CharacterController,
         // which we size to the baked character (its root localScale is the worldScale, so these are LOCAL units —

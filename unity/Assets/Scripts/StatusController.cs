@@ -234,6 +234,23 @@ public class StatusController : MonoBehaviour
         }
     }
 
+    /// <summary>Remove up to <paramref name="count"/> active ailments (DoTs and control/debuffs) — clears their
+    /// timers and tears down any DoT aura. The Haste buff is left alone (it isn't an ailment). Returns how many
+    /// were cleared. Reusable "cleanse" hook for skills like Mending Tide.</summary>
+    public int Cleanse(int count)
+    {
+        if (count <= 0) return 0;
+        int cleared = 0;
+        for (int i = 0; i < N && cleared < count; i++)
+        {
+            if (Time.time >= until[i]) continue;   // not active
+            until[i] = 0f;
+            StopAura(i);
+            cleared++;
+        }
+        return cleared;
+    }
+
     void AnnounceIfNew(Ailment a, bool wasActive, string label, Color c)
     {
         if (!wasActive) DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, label, c);

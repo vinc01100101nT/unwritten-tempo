@@ -29,7 +29,7 @@ public class RainAudio : MonoBehaviour
     public static RainAudio Ensure()
     {
         var a = FindFirstObjectByType<RainAudio>();
-        if (a == null) a = new GameObject("RainAudio").AddComponent<RainAudio>();
+        if (a == null) a = new GameObject("RainAudio") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<RainAudio>();
         return a;
     }
 

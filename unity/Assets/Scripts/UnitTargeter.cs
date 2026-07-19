@@ -52,7 +52,7 @@ public class UnitTargeter : MonoBehaviour
     {
         if (inst == null)
         {
-            var go = new GameObject("UnitTargeter");
+            var go = new GameObject("UnitTargeter") { hideFlags = HideFlags.DontSaveInEditor };
             inst = go.AddComponent<UnitTargeter>();
             inst.Build();
         }

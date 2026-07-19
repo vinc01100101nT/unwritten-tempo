@@ -64,7 +64,7 @@ public class SfxWiringCheck : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
     {
-        var go = new GameObject("SfxWiringCheck");
+        var go = new GameObject("SfxWiringCheck") { hideFlags = HideFlags.DontSaveInEditor };
         DontDestroyOnLoad(go);   // dev tool only — intentionally exempt from the no-DontDestroyOnLoad rule
         go.AddComponent<SfxWiringCheck>();
     }

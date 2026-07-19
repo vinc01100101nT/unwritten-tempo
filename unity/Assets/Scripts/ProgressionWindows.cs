@@ -527,7 +527,7 @@ public class ProgressionWindows : MonoBehaviour
         // Always build our own tooltip on a TOP-sorting nested canvas: an existing tooltip from the
         // old GameUICanvas sits at a lower sort order and would render BEHIND these windows. Building
         // ours (its Awake claims ItemTooltip.Instance) keeps hover visible above everything.
-        var layer = new GameObject("TooltipLayer", typeof(RectTransform), typeof(Canvas));
+        var layer = new GameObject("TooltipLayer", typeof(RectTransform), typeof(Canvas)) { hideFlags = HideFlags.DontSaveInEditor };
         layer.transform.SetParent(canvas, false);
         UiKit.Fill((RectTransform)layer.transform, Vector2.zero, Vector2.zero);
         var lc = layer.GetComponent<Canvas>();

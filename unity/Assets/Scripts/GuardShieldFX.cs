@@ -19,7 +19,7 @@ public class GuardShieldFX : MonoBehaviour
     public static GuardShieldFX Create(Transform follow, Texture2D sheet, int frameSize, int frameCount,
                                        float fps, float worldScale, float yOffset)
     {
-        var go = new GameObject("GuardShield");
+        var go = new GameObject("GuardShield") { hideFlags = HideFlags.DontSaveInEditor };
         go.transform.localScale = Vector3.one * Mathf.Max(0.01f, worldScale);
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sortingOrder = DepthSortRuntime.FxSlash;   // FX band: in front of entities

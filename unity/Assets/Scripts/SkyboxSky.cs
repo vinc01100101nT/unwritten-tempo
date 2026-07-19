@@ -103,7 +103,7 @@ public class SkyboxSky : MonoBehaviour
     public static SkyboxSky Ensure()
     {
         var s = FindFirstObjectByType<SkyboxSky>();
-        if (s == null) s = new GameObject("SkyboxSky").AddComponent<SkyboxSky>();
+        if (s == null) s = new GameObject("SkyboxSky") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<SkyboxSky>();
         return s;
     }
 

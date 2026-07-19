@@ -50,7 +50,7 @@ public class SpeechBubble : MonoBehaviour
     {
         if (host != null) return;
         pool.Clear();
-        var go = new GameObject("SpeechBubbleSystem");
+        var go = new GameObject("SpeechBubbleSystem") { hideFlags = HideFlags.DontSaveInEditor };
         go.layer = LayerMask.NameToLayer("TransparentFX");   // out of the planar-reflection camera
         var canvas = go.AddComponent<Canvas>();
         canvas.renderMode = RenderMode.WorldSpace;

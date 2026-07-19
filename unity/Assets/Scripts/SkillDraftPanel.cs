@@ -357,7 +357,7 @@ public class SkillDraftPanel : MonoBehaviour
         if (animating) return;
         var c = Character.Instance;
         if (c == null || !c.RingEquipped || !c.Skills.HasPendingPick(c.Ring.PointsAllocated) || !c.Skills.Unlock(id)) return;
-        c.Hotbar.BindToFirstEmpty(id);                 // a freshly learned skill is immediately usable
+        c.Hotbar.AutoBind(id);                          // a freshly learned skill is immediately usable (ultimates → ult slot)
         if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
         HotbarPanel.RebuildRequested?.Invoke();
         UISounds.PlayClick();
@@ -368,7 +368,7 @@ public class SkillDraftPanel : MonoBehaviour
     {
         if (animating) return;
         var c = Character.Instance;
-        if (c == null || c.Hotbar.BindToFirstEmpty(id) < 0) return;   // already bound or bar full → no-op
+        if (c == null || !c.Hotbar.AutoBind(id)) return;   // already bound or bar full → no-op (ultimates → ult slot)
         if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
         HotbarPanel.RebuildRequested?.Invoke();
         UISounds.PlayClick();
