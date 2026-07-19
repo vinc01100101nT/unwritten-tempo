@@ -20,7 +20,7 @@ public class ItemTableWindow : EditorWindow
     static void Open()
     {
         var w = GetWindow<ItemTableWindow>("Item Table");
-        w.minSize = new Vector2(900, 320);
+        w.minSize = new Vector2(40, 320);
         w.Reload();
     }
 
@@ -108,15 +108,18 @@ public class ItemTableWindow : EditorWindow
 
     void DrawToolbar()
     {
-        EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-        GUILayout.Label($"{_items.Count} items", EditorStyles.miniLabel, GUILayout.Width(70));
-        GUILayout.Space(6);
-        GUILayout.Label("Search", EditorStyles.miniLabel, GUILayout.Width(44));
-        _search = GUILayout.TextField(_search, EditorStyles.toolbarSearchField, GUILayout.Width(180));
-        GUILayout.FlexibleSpace();
-        if (GUILayout.Button("Save All", EditorStyles.toolbarButton, GUILayout.Width(70))) AssetDatabase.SaveAssets();
-        if (GUILayout.Button("Reload", EditorStyles.toolbarButton, GUILayout.Width(60))) Reload();
-        EditorGUILayout.EndHorizontal();
+        using (var flow = new EditorLayoutFlow.Flow(position.width, EditorStyles.toolbar))
+        {
+            flow.Item(70);
+            GUILayout.Label($"{_items.Count} items", EditorStyles.miniLabel, GUILayout.Width(70));
+            flow.Item(44 + 180);   // "Search" label + field kept together
+            GUILayout.Label("Search", EditorStyles.miniLabel, GUILayout.Width(44));
+            _search = GUILayout.TextField(_search, EditorStyles.toolbarSearchField, GUILayout.Width(180));
+            flow.Item(70);
+            if (GUILayout.Button("Save All", EditorStyles.toolbarButton, GUILayout.Width(70))) AssetDatabase.SaveAssets();
+            flow.Item(60);
+            if (GUILayout.Button("Reload", EditorStyles.toolbarButton, GUILayout.Width(60))) Reload();
+        }
     }
 
     void DrawHeader()

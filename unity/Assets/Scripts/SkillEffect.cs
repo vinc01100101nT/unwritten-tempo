@@ -134,4 +134,7 @@ public class SkillEffect
     public List<StatWeight> affinity = new List<StatWeight>();
     [Tooltip("Scales this effect's DURATION (its seconds) by ring investment. Empty = duration unscaled (×1).")]
     public List<StatWeight> durationAffinity = new List<StatWeight>();
+    [Tooltip("Damage kind only: scales the number of STRIKES (hitCount) by ring investment — more investment = more " +
+             "hits in the flurry. hits = round(hitCount × mult). Empty = hit count unscaled (×1).")]
+    public List<StatWeight> hitCountAffinity = new List<StatWeight>();
 }

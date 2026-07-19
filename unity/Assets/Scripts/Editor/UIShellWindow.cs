@@ -23,7 +23,7 @@ public class UIShellWindow : EditorWindow
     static void Open()
     {
         var w = GetWindow<UIShellWindow>(true, "unwritten — UI Shell");
-        w.minSize = new Vector2(360, 360);
+        w.minSize = new Vector2(40, 360);
         w.Refresh();
     }
 

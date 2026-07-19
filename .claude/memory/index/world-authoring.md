@@ -2,6 +2,7 @@
 
 - [Biome-agnostic mobs = Biome.None](../biome-none-agnostic.md) — spawns any tier band; `Biome` enum APPEND-ONLY.
 - [Mobs/items/maps as data tables](../mob-item-map-data-tables.md) — `MonsterDef` SO in `Resources/Monsters`, kebab `id` via `MonsterCatalog`.
+- [Runtime mob spawn via Addressables + pooled field spawner](../mob-summon-addressables.md) — `MobSpawner.Spawn` async loads baked `Mobs/<name>` prefabs (`Bake Mob Prefabs`); `/summon`; `FieldMobSpawner` = RO-style pooled data-driven population vs baked recycle; `MobRespawn.Reactivate` SSOT; `Health.Die` PooledMob branch.
 - [Portal/warp color by destination](../portal-color-convention.md) — town=yellow, field=green, dungeon=blue, special=red; `ClassifyDestination`.
 - [World liveliness / ambient life](../world-liveliness-ambient-npcs.md) — SIMULATION: `AmbientLife`→`TownNPC` on `PathAgent3D` + `NpcBarks`.
 - [Hand-authored world content](../hand-authored-world-content.md) — user authors ART by hand; generator automates LAYOUT.

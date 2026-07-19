@@ -15,6 +15,12 @@ using UnityEngine;
 /// </summary>
 public static class SkillEffectApplier
 {
+    // Seconds between the strikes of a multi-hit (hitCount > 1) flurry — the RO cascade timing.
+    const float MultiHitInterval = 0.2f;
+    // Reused snapshot of the mobs a burst reaches, so a multi-hit flurry can be handed to MultiHitBurst without a
+    // per-cast scan alloc. Cleared at the start of each ApplyBurst; MultiHitBurst copies it before the caller reuses it.
+    static readonly List<MonsterAI3D> burstTargets = new List<MonsterAI3D>(32);
+
     /// <summary>Apply the binding's effects to whoever the tick reaches — an AoE scan (Area) or the cast's designated
     /// unit (Single). Zero-alloc: a squared-distance sweep over the small Active list, no physics / Find / GetComponent.</summary>
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
@@ -31,7 +37,10 @@ public static class SkillEffectApplier
             if (mob != null)
             {
                 if ((targets & SkillTargets.Mobs) != 0 && mob.Health != null && !mob.Health.IsDead)
-                    ApplyEffectsToMob(effects, mob, extraMult, extraFlat, comboMult);
+                {
+                    burstTargets.Clear(); burstTargets.Add(mob);
+                    DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult);
+                }
             }
             else if ((targets & SkillTargets.Player) != 0)
                 ApplyEffectsToPlayer(effects, point, extraMult, extraFlat, comboMult, srcIcon, srcName);
@@ -42,6 +51,7 @@ public static class SkillEffectApplier
 
         if ((targets & SkillTargets.Mobs) != 0)
         {
+            burstTargets.Clear();
             var list = MonsterAI3D.Active;
             for (int i = 0; i < list.Count; i++)
             {
@@ -49,8 +59,9 @@ public static class SkillEffectApplier
                 if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
                 Vector3 d = ai.transform.position - point; d.y = 0f;
                 if (d.sqrMagnitude > r2) continue;
-                ApplyEffectsToMob(effects, ai, extraMult, extraFlat, comboMult);
+                burstTargets.Add(ai);
             }
+            DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult);
         }
 
         if ((targets & SkillTargets.Player) != 0)
@@ -72,9 +83,62 @@ public static class SkillEffectApplier
         for (int i = 0; i < effects.Count; i++)
         {
             var e = effects[i];
-            if (e != null && e.kind == SkillEffectKind.Damage) loops = Mathf.Max(loops, Mathf.Max(1, e.hitCount));
+            if (e != null && e.kind == SkillEffectKind.Damage) loops = Mathf.Max(loops, EffectiveHits(e));
         }
         return loops;
+    }
+
+    // A Damage effect's strike count = authored hitCount scaled by its hit-count affinity (ring investment).
+    // hits = round(hitCount × mult). The ONE source of truth for both the flurry length (HitLoops) and each Damage's
+    // per-strike cap, so they can't disagree. AffinityMult is stable within a cast (ring investment doesn't change).
+    // Public so the tooltip shows the SAME live count the runtime will land (no parallel formula).
+    public static int EffectiveHits(SkillEffect e)
+        => Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, e.hitCount) * AffinityMult(e.hitCountAffinity)));
+
+    // Single hit (the common case): apply instantly to each mob, unchanged. Multi-hit (hitCount > 1): hand the mob
+    // snapshot to MultiHitBurst so the strikes CASCADE over time and each mob shows ONE rising yellow combo total,
+    // exactly like RO — instead of N overlapping numbers dumped in a single frame.
+    static void DispatchMobHits(List<SkillEffect> effects, List<MonsterAI3D> mobs,
+                                float extraMult, int extraFlat, float comboMult)
+    {
+        if (mobs.Count == 0) return;
+        if (HitLoops(effects) <= 1)
+        {
+            for (int i = 0; i < mobs.Count; i++)
+                ApplyEffectsToMob(effects, mobs[i], extraMult, extraFlat, comboMult);
+            return;
+        }
+        MultiHitBurst.Run(mobs, HitLoops(effects), MultiHitInterval,
+            (ai, hit) => ApplyHitToMob(effects, ai, hit, extraMult, extraFlat, comboMult));
+    }
+
+    // One beat of a multi-hit flurry on ONE mob: land every Damage effect (overkill-safe so the running total keeps
+    // climbing even past the kill, RO-style) and roll the binding's procs THIS hit. Returns the damage dealt so the
+    // yellow combo total can accumulate it.
+    static int ApplyHitToMob(List<SkillEffect> effects, MonsterAI3D ai, int hit,
+                             float extraMult, int extraFlat, float comboMult)
+    {
+        if (ai == null) return 0;
+        var h = ai.Health;
+        if (h == null) return 0;
+        int dealt = 0;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            var e = effects[i];
+            if (e == null) continue;
+            if (e.kind == SkillEffectKind.Damage)
+            {
+                if (hit >= EffectiveHits(e)) continue;
+                int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit);
+                // Both magic and physical use an overkill-safe sink here, so a multi-hit flurry keeps its numbers,
+                // hit sparks AND per-strike sound climbing past the kill — the whole count runs to the end, RO-style.
+                dealt += e.magic ? h.TakeMagicDamageOverkill(power, crit, e.element)
+                                 : h.TakeDamageOverkill(power, crit, e.element);
+            }
+            else
+                ApplyOneToMob(e, ai, h, hit, extraMult, extraFlat, comboMult);   // procs / status / one-shots, unchanged
+        }
+        return dealt;
     }
 
     // A proc-type effect (chance > 0) rolls PER HIT; a non-proc effect (chance == 0) applies ONCE, on the first hit.
@@ -109,7 +173,7 @@ public static class SkillEffectApplier
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
-                if (hit >= Mathf.Max(1, e.hitCount)) return;   // this Damage's strikes are spent
+                if (hit >= EffectiveHits(e)) return;   // this Damage's strikes are spent
                 int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit);
                 if (e.magic) h.TakeMagicDamage(power, crit, e.element);
                 else h.TakeDamage(power, crit, -1, e.element);   // −1 HIT = always-lands skill hit (no accuracy roll)
@@ -172,7 +236,7 @@ public static class SkillEffectApplier
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
-                if (hit >= Mathf.Max(1, e.hitCount)) return;
+                if (hit >= EffectiveHits(e)) return;
                 int power = RollPower(e, extraMult, extraFlat, comboMult, out _);
                 if (e.magic) ch.TakeMagicDamage(power, e.element);
                 else ch.TakeDamage(power, -1, e.element);        // −1 HIT = always-lands (skill/environmental hit)
@@ -248,7 +312,7 @@ public static class SkillEffectApplier
     // ---- affinity (ring-investment scaling) ---------------------------------
     // The multiplier for ONE affinity channel = 1 + Σ(normalised weight × the caster's gated ring % in that stat).
     // Empty/absent list ⇒ 1 (no scaling). Zero-alloc: one pass over the small authored list, no LINQ / temp collections.
-    static float AffinityMult(List<StatWeight> weights)
+    public static float AffinityMult(List<StatWeight> weights)
     {
         if (weights == null || weights.Count == 0) return 1f;
         var ch = Character.Instance;

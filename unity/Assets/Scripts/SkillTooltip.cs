@@ -104,10 +104,13 @@ public static class SkillTooltip
                 string s = "Deals " + Hl(mult.ToString("0.##") + "×") + (e.magic ? " magic" : " physical") + " damage";
                 if (ch != null)
                 {
-                    int est = Mathf.RoundToInt((e.magic ? ch.MaxMagicAttack : ch.MaxAttack) * mult);
+                    // Mirror the runtime roll: base attack × mult × the damage-affinity scaling (ring investment).
+                    float aff = SkillEffectApplier.AffinityMult(e.affinity);
+                    int est = Mathf.RoundToInt((e.magic ? ch.MaxMagicAttack : ch.MaxAttack) * mult * aff);
                     if (est > 0) s += " (~" + Hl(est.ToString()) + ")";
                 }
-                if (e.hitCount > 1) s += ", " + Hl(e.hitCount + "×") + " hits";
+                int hits = SkillEffectApplier.EffectiveHits(e);   // affinity-scaled, matches what actually lands
+                if (hits > 1) s += ", " + Hl(hits + "×") + " hits";
                 return s;
             }
             case SkillEffectKind.Status:

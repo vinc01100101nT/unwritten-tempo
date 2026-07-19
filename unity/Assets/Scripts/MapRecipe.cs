@@ -114,6 +114,12 @@ public class RecipeMobGroup
     public float minSpacing = 1.8f;
     [Tooltip("Keep mobs this far from the player spawn so you don't arrive in a swarm.")]
     public float clearFromSpawn = 8f;
+
+    [Header("Runtime spawner (RO-style respawn)")]
+    [Tooltip("Base seconds after a mob dies before its replacement appears (the map runs a pooled FieldMobSpawner).")]
+    public float respawnDelay = 5f;
+    [Tooltip("Extra 0..this random seconds per respawn so a pack doesn't pop back in lockstep.")]
+    public float respawnJitter = 3f;
 }
 
 /// <summary>

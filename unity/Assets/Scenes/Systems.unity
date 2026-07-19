@@ -788,7 +788,7 @@ MonoBehaviour:
     pitch: {x: 0.7, y: 0.85}
   baseHardDefPercent: 0
   baseHardMagicDefPercent: 0
-  ultChargeMax: 100
+  ultChargeMax: 200
 --- !u!4 &763514985
 Transform:
   m_ObjectHideFlags: 0

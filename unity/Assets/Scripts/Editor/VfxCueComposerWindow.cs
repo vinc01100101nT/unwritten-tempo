@@ -24,7 +24,7 @@ public class VfxCueComposerWindow : EditorWindow
     public static void Open()
     {
         var w = GetWindow<VfxCueComposerWindow>("Vfx Cue Composer");
-        w.minSize = new Vector2(520, 400);
+        w.minSize = new Vector2(40, 400);
         w.LoadOrCreate();
     }
 

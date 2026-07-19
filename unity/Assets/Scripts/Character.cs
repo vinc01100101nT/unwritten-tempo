@@ -468,15 +468,24 @@ public class Character : MonoBehaviour
     // damage (the TakeDamage sinks), and casting any skill (SkillRunner.Spend). An Ultimate spends it instead of
     // riding a plain cooldown, so it's a earned MOMENT, not a rotation button.
     [Header("Ultimate charge")]
-    [Tooltip("Full ult meter. An Ultimate's chargeCost is spent from this.")]
-    public float ultChargeMax = 100f;
+    [Tooltip("Charge-accumulation ceiling used ONLY while no ultimate is equipped. When an ult IS equipped the meter caps at THAT ult's chargeCost (see UltMeterCap), so any cost — 300, 1000, a million — always fills to READY.")]
+    public float ultChargeMax = 200f;
     /// <summary>Charge added per point of damage DEALT / TAKEN, and a flat amount per non-ult cast — the combat fill rate.</summary>
     public const float UltChargePerDamageDealt = 0.2f, UltChargePerDamageTaken = 0.3f, UltChargePerCast = 6f;
 
-    /// <summary>Current ult charge (0..<see cref="ultChargeMax"/>).</summary>
+    /// <summary>Current ult charge (0..<see cref="UltMeterCap"/>).</summary>
     public float UltCharge { get; private set; }
-    /// <summary>Ult charge as a 0..1 fill for the HUD.</summary>
-    public float UltCharge01 => ultChargeMax > 0f ? Mathf.Clamp01(UltCharge / ultChargeMax) : 0f;
+
+    /// <summary>Charge needed to FIRE the equipped ultimate (0 = none equipped). THE single source of truth for
+    /// "full": the meter cap and every HUD fill derive from it, so there's no fixed max to keep in sync — raise
+    /// an ult's chargeCost to any value and the meter still reaches it.</summary>
+    public float EquippedUltCost => PlayerSkills.ById(Hotbar.Ult) is SkillRunner sr && sr.def != null ? sr.def.chargeCost : 0f;
+
+    /// <summary>The live meter cap: the equipped ult's cost, or (nothing equipped) the fallback accumulation ceiling.</summary>
+    float UltMeterCap { get { float c = EquippedUltCost; return c > 0f ? c : ultChargeMax; } }
+
+    /// <summary>Ult charge as a 0..1 fill for the HUD (progress toward firing the equipped ult).</summary>
+    public float UltCharge01 { get { float c = UltMeterCap; return c > 0f ? Mathf.Clamp01(UltCharge / c) : 0f; } }
     /// <summary>True when the meter holds at least <paramref name="cost"/>.</summary>
     public bool UltReady(float cost) => UltCharge >= cost;
     /// <summary>Fired whenever the meter changes — drives the ult slot's fill.</summary>
@@ -487,7 +496,7 @@ public class Character : MonoBehaviour
     {
         if (amount <= 0f || IsDead) return;
         float before = UltCharge;
-        UltCharge = Mathf.Min(ultChargeMax, UltCharge + amount);
+        UltCharge = Mathf.Min(UltMeterCap, UltCharge + amount);
         if (UltCharge != before) OnUltChargeChanged?.Invoke();
     }
 

@@ -89,6 +89,7 @@ public static class GmCommands
         Register(new GmCommand("kill", "kill", "Kill the mob nearest the player.", CmdKill));
         Register(new GmCommand("killall", "killall", "Kill every active mob.", CmdKillAll));
         Register(new GmCommand("spawn", "spawn [count]", "Clone the nearest mob near the player.", CmdSpawn));
+        Register(new GmCommand("summon", "summon <count> <normal|boss>", "Summon N random mobs near you (clones live mobs of that tier).", CmdSummon));
 
         // --- World & weather ---
         Register(new GmCommand("tp", "tp <scene> [spawnId]", "Travel to another map.", CmdTp, "warp", "goto"));
@@ -228,6 +229,55 @@ public static class GmCommands
                 .hideFlags = HideFlags.DontSaveInEditor;
         }
         c.Reply($"Spawned {count}× {near.name}.");
+    }
+
+    // "random mobs" = pull random defs from the mob catalog and spawn them from their Addressable prefabs
+    // (see MobSpawner / Bake Mob Prefabs). Normal = weighted field pick; boss = a random boss-flagged def.
+    // Spawning is async (Addressables loads the prefab), so we count completions and reply once all land.
+    static void CmdSummon(GmContext c)
+    {
+        if (!c.TryInt(0, out var count) || count <= 0) { c.Reply("Usage: /summon <count> <normal|boss>"); return; }
+        count = Mathf.Clamp(count, 1, 50);
+
+        var type = c.Arg(1);
+        bool wantBoss;
+        switch (type != null ? type.ToLowerInvariant() : null)
+        {
+            case "boss": case "mvp": wantBoss = true; break;
+            case "normal": case "mob": wantBoss = false; break;
+            default: c.Reply("Usage: /summon <count> <normal|boss>"); return;
+        }
+
+        var defs = new List<MonsterDef>(count);
+        for (int i = 0; i < count; i++)
+        {
+            var def = wantBoss ? MonsterCatalog.RandomBoss() : MonsterCatalog.WeightedPick();
+            if (def == null) break;
+            defs.Add(def);
+        }
+        if (defs.Count == 0)
+        { c.Reply(wantBoss ? "No boss-flagged mobs in the catalog." : "No summonable mobs in the catalog."); return; }
+
+        var reply = c.reply;   // capture the chat channel; the GmContext is transient but this Action persists
+        var p = c.Player;
+        Vector3 basePos = p != null ? p.position : Vector3.zero;
+        int pending = defs.Count, done = 0, spawned = 0, missing = 0;
+
+        foreach (var def in defs)
+        {
+            Vector2 r = UnityEngine.Random.insideUnitCircle * 2f;
+            MobSpawner.Spawn(def, basePos + new Vector3(r.x, 0f, r.y), go =>
+            {
+                if (go != null) spawned++; else missing++;
+                if (++done < pending) return;
+
+                if (spawned == 0)
+                    reply?.Invoke("Couldn't summon — mob prefabs aren't built yet. Run Tools ▸ unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs, then retry.");
+                else
+                    reply?.Invoke($"Summoned {spawned} random {(wantBoss ? "boss" : "normal")} mob(s)" +
+                                  (missing > 0 ? $" ({missing} skipped — no Addressable prefab)" : "") + ".");
+            });
+        }
     }
 
     static void CmdTp(GmContext c)

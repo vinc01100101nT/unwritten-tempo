@@ -61,6 +61,7 @@ public class StatusController : MonoBehaviour
 
     Health health;          // mob: the thing DoTs damage
     MonsterAI3D ai;          // mob: the brain we delegate Stun/Freeze/Slow to
+    Player3DController player;// player: the mover — so the cast-start gate can see a mid-jump (no casting in the air)
     bool isPlayer;           // player: DoTs hit Character.Instance; flags read by the controller/spells
     float recoverUntil;      // aftercast root: fully action-locked until a skill's release animation finishes (folds into CannotAct)
 
@@ -71,7 +72,8 @@ public class StatusController : MonoBehaviour
     {
         health = GetComponent<Health>();
         ai     = GetComponent<MonsterAI3D>();
-        isPlayer = GetComponent<Player3DController>() != null;
+        player = GetComponent<Player3DController>();
+        isPlayer = player != null;
         if (isPlayer) Player = this;
     }
 
@@ -102,6 +104,13 @@ public class StatusController : MonoBehaviour
     /// scattered "am I casting / recovering?" checks. The cast-interrupt check deliberately reads <see cref="CannotAct"/>
     /// (hard-CC only) instead, so a cast never interrupts itself.</summary>
     public bool ActionLocked => CannotAct || Time.time < recoverUntil;
+
+    /// <summary>The gate for STARTING a skill or combo: <see cref="ActionLocked"/> PLUS being mid-jump — you can't
+    /// cast in the air. Kept SEPARATE from <see cref="ActionLocked"/> on purpose: the movement Update roots on
+    /// ActionLocked BEFORE it runs the jump arc (<see cref="Player3DController"/>), so folding "airborne" into
+    /// ActionLocked would freeze the jump. Only the cast/combo START paths read this; movement, MoveMult and the
+    /// mid-cast wait keep reading ActionLocked.</summary>
+    public bool CannotStartSkill => ActionLocked || (player != null && player.IsAirborne);
 
     /// <summary>Root the unit for <paramref name="seconds"/> as a skill's self-imposed lock (cast wind-up or RO-style
     /// aftercast delay). Pure gate: no popup, no VFX — unlike an Ailment. Extends (never shortens) any active lock.</summary>

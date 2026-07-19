@@ -76,6 +76,9 @@ public class HotbarPanel : MonoBehaviour
         // Ensure the buff bar exists even on a GameUICanvas built BEFORE it was added to the shell (so it appears
         // without a Build UI Shell rebuild). Idempotent — skips if the shell already added one.
         if (GetComponent<BuffBarPanel>() == null) gameObject.AddComponent<BuffBarPanel>();
+        // The standalone ult charge gauge — added here (like the buff bar) so a GameUICanvas built before it
+        // existed still gets it without a Build UI Shell rebuild. Idempotent.
+        if (GetComponent<UltChargeBar>() == null) gameObject.AddComponent<UltChargeBar>();
         TryBuild();
     }
 
@@ -280,10 +283,27 @@ public class HotbarPanel : MonoBehaviour
         btn.onClick.AddListener(() => { if (SkillsEnabled && captured.skill != null && captured.skill.Activate()) UISounds.PlayClick(); });
         cell.raycastTarget = true;
 
+        // Drop target for the dedicated ULT slot — sentinel slotIndex −1 tells HotbarBindings.BindFromDrag this
+        // is the ult cell (only an Ultimate-tier skill may land here). This is what lets you DRAG an ult onto R.
+        var ultTarget = cell.gameObject.GetComponent<HotbarSlotTarget>() ?? cell.gameObject.AddComponent<HotbarSlotTarget>();
+        ultTarget.slotIndex = -1;
+
         var key = NewText("Key", cell.transform, "R", 12, FontStyle.Bold, TextAnchor.UpperLeft, UltKeyColor);
         Stretch(key.rectTransform, 4, 2);
 
-        if (skill == null) { cell.color = CellEmpty; return s; }
+        if (skill == null)
+        {
+            cell.color = CellEmpty;
+            var staleDrag = cell.gameObject.GetComponent<HotbarSlotDragSource>();   // an emptied ult cell isn't draggable
+            if (staleDrag != null) Destroy(staleDrag);
+            return s;
+        }
+
+        // Drag the equipped ult OFF the cell to remove it (sentinel slotIndex −1 → HotbarBindings.ClearUlt).
+        var drag = cell.gameObject.GetComponent<HotbarSlotDragSource>() ?? cell.gameObject.AddComponent<HotbarSlotDragSource>();
+        drag.slotIndex = -1;
+        drag.iconSprite = skill.Icon;
+        drag.tint = skill.Tint;
 
         cell.color = CellReady;
         if (skill.Icon != null)

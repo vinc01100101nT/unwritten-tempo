@@ -46,26 +46,32 @@ public class MobRespawn : MonoBehaviour
         Respawn();
     }
 
-    void Respawn()
-    {
-        transform.position = PickSpot();
+    void Respawn() => Reactivate(gameObject, PickSpot());
 
-        var dd = GetComponent<DeathDissolve>(); if (dd != null) dd.ResetAfterRespawn();   // restore lit material + alpha
-        GetComponent<Health>().Revive();                                                   // full HP again
+    /// <summary>Bring a dead/hidden mob back to a live state at <paramref name="pos"/>: restore its death
+    /// visuals, refill HP, and re-enable movement/AI/colliders. THE single source of truth for "revive a mob
+    /// object" — used by this in-place recycle AND by the pooled <see cref="FieldMobSpawner"/> when it reuses
+    /// an object, so the tricky re-enable order + stepOffset clamp can't drift between the two paths.</summary>
+    public static void Reactivate(GameObject mob, Vector3 pos)
+    {
+        mob.transform.position = pos;
+
+        var dd = mob.GetComponent<DeathDissolve>(); if (dd != null) dd.ResetAfterRespawn();   // restore lit material + alpha
+        var health = mob.GetComponent<Health>(); if (health != null) health.Revive();          // full HP again
 
         // Re-enable everything DeathDissolve disabled when it became "remains".
-        var sr = GetComponent<SpriteRenderer>(); if (sr != null) sr.enabled = true;
-        Enable<MonsterAI3D>(); Enable<BillboardAnimator3D>(); Enable<AttackLunge>();
+        var sr = mob.GetComponent<SpriteRenderer>(); if (sr != null) sr.enabled = true;
+        Enable<MonsterAI3D>(mob); Enable<BillboardAnimator3D>(mob); Enable<AttackLunge>(mob);
         // Enable the controller BEFORE its mover so PathAgent3D never runs a frame against a disabled cc.
         // Clamp stepOffset FIRST: BillboardAnimator3D scales mobs by UnitScale.ForMob, and once a mob is small
         // enough the authored 0.3 step exceeds the capsule's climbable height (see ClampStepOffset for the exact
         // bound). Unity then rejects the enable and logs "Step Offset must be ≤ …" every respawn (floods during
         // auto-combat) — and a controller left disabled also spams "Move called on inactive controller". Fitting
         // the step to the live scale stops both.
-        var cc = GetComponent<CharacterController>();
+        var cc = mob.GetComponent<CharacterController>();
         if (cc != null) { ClampStepOffset(cc); cc.enabled = true; }
-        var agent = GetComponent<PathAgent3D>(); if (agent != null) agent.enabled = true;
-        foreach (var col in GetComponentsInChildren<Collider>(true)) col.enabled = true;
+        var agent = mob.GetComponent<PathAgent3D>(); if (agent != null) agent.enabled = true;
+        foreach (var col in mob.GetComponentsInChildren<Collider>(true)) col.enabled = true;
     }
 
     // A ground point within homeRadius of home, kept clear of the player; falls back to home.
@@ -89,7 +95,7 @@ public class MobRespawn : MonoBehaviour
         return home;
     }
 
-    void Enable<T>() where T : MonoBehaviour { var c = GetComponent<T>(); if (c != null) c.enabled = true; }
+    static void Enable<T>(GameObject go) where T : MonoBehaviour { var c = go.GetComponent<T>(); if (c != null) c.enabled = true; }
 
     // Unity rejects a CharacterController enable when stepOffset exceeds the capsule's climbable height, and our
     // billboard mobs shrink at runtime (UnitScale.ForMob), so the authored 0.3 step overshoots once they're small.

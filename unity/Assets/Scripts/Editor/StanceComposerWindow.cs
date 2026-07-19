@@ -33,7 +33,7 @@ public class StanceComposerWindow : EditorWindow
     public static void Open()
     {
         var w = GetWindow<StanceComposerWindow>("Stance Composer");
-        w.minSize = new Vector2(980, 420);
+        w.minSize = new Vector2(40, 420);
         w.LoadOrCreate();
     }
 

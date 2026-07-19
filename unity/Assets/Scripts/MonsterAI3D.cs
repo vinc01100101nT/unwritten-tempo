@@ -135,6 +135,10 @@ public class MonsterAI3D : MonoBehaviour
     /// per-frame <c>FindObjectsByType</c>. Maintained on enable/disable (so it respects MobRespawn pooling).</summary>
     public static readonly System.Collections.Generic.List<MonsterAI3D> Active = new System.Collections.Generic.List<MonsterAI3D>();
 
+    /// <summary>Move this mob's wander anchor to <paramref name="p"/>. Used when a pooled mob is reused at a
+    /// new spot (<see cref="FieldMobSpawner"/>) so it wanders around where it reappeared, not its first spawn.</summary>
+    public void SetHome(Vector3 p) => home = p;
+
     void Awake()
     {
         agent = GetComponent<PathAgent3D>();

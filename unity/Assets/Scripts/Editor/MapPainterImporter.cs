@@ -70,7 +70,7 @@ public class MapPainterImporter : EditorWindow
     static void Open()
     {
         var w = GetWindow<MapPainterImporter>(true, "Import Painted Map");
-        w.minSize = new Vector2(440, 230);
+        w.minSize = new Vector2(40, 230);
         w._jsonPath = DefaultJsonPath();
         w.Show();
     }

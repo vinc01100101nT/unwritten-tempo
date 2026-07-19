@@ -99,4 +99,50 @@ public class MultiHitBurst : MonoBehaviour
 
         Object.Destroy(self);
     }
+
+    /// <summary>Single-flurry variant driven by an EXPLICIT target snapshot (the skill-composer path already scanned
+    /// the mobs). Deals <paramref name="hits"/> hits over time to each mob; <paramref name="onHit"/>(mob, hitIndex)
+    /// applies one hit and returns its damage; a per-mob yellow combo total accumulates then rises + fades at the end.
+    /// Copies the list so the caller can reuse its buffer immediately.</summary>
+    public static void Run(List<MonsterAI3D> targets, int hits, float hitInterval,
+                           System.Func<MonsterAI3D, int, int> onHit, System.Action onHitBeat = null)
+    {
+        if (onHit == null || targets == null || targets.Count == 0) return;
+        var go = new GameObject("MultiHitBurst") { hideFlags = HideFlags.DontSaveInEditor };
+        go.AddComponent<MultiHitBurst>().StartCoroutine(RoutineList(go, new List<MonsterAI3D>(targets),
+            Mathf.Max(1, hits), Mathf.Max(0.01f, hitInterval), onHit, onHitBeat));
+    }
+
+    static IEnumerator RoutineList(GameObject self, List<MonsterAI3D> targets, int hits, float hitInterval,
+                                   System.Func<MonsterAI3D, int, int> onHit, System.Action onHitBeat)
+    {
+        int n = targets.Count;
+        var totals = new int[n];
+        var popups = new DamagePopup[n];
+        var hitWait = new WaitForSeconds(hitInterval);
+
+        for (int hit = 0; hit < hits; hit++)
+        {
+            bool anyHit = false;
+            for (int i = 0; i < n; i++)
+            {
+                var ai = targets[i];
+                if (ai == null || ai.Health == null) continue;   // fully destroyed → can't show more (no IsDead skip: overkill shows)
+                int dealt = onHit(ai, hit);
+                anyHit = true;
+                totals[i] += dealt;
+
+                Vector3 tp = UnitAnchor.Center(ai.transform);
+                if (popups[i] == null) popups[i] = DamagePopup.SpawnHeld(tp, totals[i], TotalColor, 1.7f);
+                else popups[i].SetHeld(totals[i], tp);
+            }
+            if (anyHit) onHitBeat?.Invoke();
+            if (hit < hits - 1) yield return hitWait;
+        }
+
+        for (int i = 0; i < n; i++)
+            if (popups[i] != null) popups[i].Release();   // release → each total rises + fades
+
+        Object.Destroy(self);
+    }
 }

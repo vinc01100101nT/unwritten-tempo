@@ -59,7 +59,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         { BattleNotice.Warn("In a combo chain"); return false; }
         if (StatusController.Player != null && StatusController.Player.Silenced)
         { BattleNotice.Warn("Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
-        if (StatusController.Player != null && StatusController.Player.ActionLocked) return false;   // stunned / frozen / casting / mid-aftercast — can't start another skill
+        if (StatusController.Player != null && StatusController.Player.CannotStartSkill) return false;   // stunned / frozen / casting / mid-aftercast / mid-jump — can't start another skill
         if (castRoutine != null) return false;   // already winding up a cast — ignore until it resolves
         if (Time.time < nextUse) return false;
         // Ultimate: refuse (with a notice) before entering the reticle if the shared meter isn't charged — MP/charge

@@ -94,7 +94,7 @@ public class Projectile3D : MonoBehaviour
     public static void SpawnVfx(string travelId, float scale,
                                 Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
                                 float arriveRadius, float maxLife, System.Action onArrive, bool faceTravel = false,
-                                float travelClipStart = 0f)
+                                float travelClipStart = 0f, Color travelTint = default)
     {
         var go = new GameObject("Projectile3D(Vfx)") { hideFlags = HideFlags.DontSaveInEditor };
         go.transform.position = from;
@@ -106,7 +106,7 @@ public class Projectile3D : MonoBehaviour
         p.arriveRadius = Mathf.Max(0.05f, arriveRadius);
         p.die = Time.time + Mathf.Max(0.05f, maxLife);
         p.onArrive = onArrive;
-        if (!string.IsNullOrEmpty(travelId)) p.travel = Vfx.Attach(travelId, go.transform, Vector3.zero, scale, clipStart: travelClipStart);
+        if (!string.IsNullOrEmpty(travelId)) p.travel = Vfx.Attach(travelId, go.transform, Vector3.zero, scale, tint: travelTint, clipStart: travelClipStart);
         // Aim the effect down its flight path. Map DOWN → travel dir so a pure vertical drop is unchanged (identity)
         // and only an angled launch tilts. Attach copies position each frame but not rotation, so setting it once on
         // the handle holds for the straight-line flight.

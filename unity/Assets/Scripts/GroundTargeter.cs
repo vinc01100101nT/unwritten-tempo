@@ -72,7 +72,10 @@ public class GroundTargeter : MonoBehaviour
 
     void StopCircle()
     {
-        if (circle != null) { circle.Stop(); circle = null; }
+        // Immediate hard-clear (no fade tail): a targeting reticle must vanish the instant aim ends — on confirm AND
+        // on any FAILED release (no MP / cooldown / silence). A soft fade here is masked by the wind-up circle on a
+        // successful cast, but on a failed cast it lingers with nothing replacing it (reads as "stuck").
+        if (circle != null) { circle.Stop(true); circle = null; }
     }
 
     void Update()

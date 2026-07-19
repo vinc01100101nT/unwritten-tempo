@@ -160,9 +160,36 @@ public class Health : MonoBehaviour
         Current = Mathf.Max(0, Current - dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
         CombatSfx.SkillHit(transform.position);   // overkill beats still sound (throttled per frame)
+        // Hit spark + impact SOUND fire on EVERY strike, including overkill beats past death — the per-hit
+        // multi-hit SFX must run to the end of the flurry, not cut off the instant the mob's HP hits 0.
+        VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
         if (wasAlive)
         {
-            VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
+            if (isActiveAndEnabled) StartCoroutine(Flash());
+            ApplyLeech(dmg);
+            if (IsDead) Die();
+        }
+        return dmg;
+    }
+
+    /// <summary>Like <see cref="TakeMagicDamageOverkill"/> but for a PHYSICAL skill strike: always registers the
+    /// number + hit spark/sound even past death, so a physical multi-hit flurry keeps sounding to the end of the
+    /// count instead of cutting off the instant the mob's HP hits 0. Always-lands (skill hit, no FLEE roll). HP
+    /// floors at 0; death fires exactly once. Returns the hit's value so a combo total keeps climbing past the kill.</summary>
+    public int TakeDamageOverkill(int attackerAttack, bool crit, Element attackElement = Element.Neutral)
+    {
+        float mod = Elements.Modifier(attackElement, element);
+        if (mod <= 0f) { SpawnElementNumber(0, mod, Color.white); return 0; }
+
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod * VulnMult));
+        bool wasAlive = !IsDead;
+        Current = Mathf.Max(0, Current - dmg);
+        SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
+        CombatSfx.SkillHit(transform.position);   // always-lands skill strike → the unified skill impact
+        // Hit spark + impact SOUND on EVERY strike, incl. overkill beats past death — same as the magic path.
+        VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
+        if (wasAlive)
+        {
             if (isActiveAndEnabled) StartCoroutine(Flash());
             ApplyLeech(dmg);
             if (IsDead) Die();
@@ -249,9 +276,13 @@ public class Health : MonoBehaviour
         // Play the "poof" death animation if one is attached, and once it finishes either RECYCLE the mob
         // (if it has a MobRespawn) or remove it (the original Phase D behavior). With no FX, do the same
         // immediately.
+        // A pooled mob (owned by a FieldMobSpawner) returns to its pool instead of self-recycling in place
+        // (MobRespawn) or being destroyed. Checked first so a spawner-owned mob always takes the pool path.
+        var pooled = GetComponent<PooledMob>();
         var respawn = GetComponent<MobRespawn>();
         System.Action done;
-        if (respawn != null) done = respawn.OnFadedOut;
+        if (pooled != null) done = pooled.OnFadedOut;
+        else if (respawn != null) done = respawn.OnFadedOut;
         else done = () => Destroy(gameObject);
         var fx = GetComponent<DeathDissolve>();
         if (fx != null && gameObject.activeInHierarchy) fx.Play(done);

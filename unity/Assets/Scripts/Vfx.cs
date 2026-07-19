@@ -59,6 +59,14 @@ public static class Vfx
             poolKey = key;
             systems = GetComponentsInChildren<ParticleSystem>(true);
             audioSources = GetComponentsInChildren<AudioSource>(true);
+            // The x-ray silhouette bits are RESERVED for the player. Vendor VFX prefabs ship with
+            // renderingLayerMask "Everything" (all bits set), which spuriously matches the silhouette
+            // feature's filter and paints the effect flat blue when it passes behind scenery. Strip those
+            // two bits here — the one place every pooled effect is born — so no combat VFX can be x-rayed.
+            const uint reserved = OccludedSilhouetteTarget.Bit | OccludedSilhouetteTarget.CoverBit;
+            var renderers = GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+                renderers[i].renderingLayerMask &= ~reserved;
             baseSpeed = new float[systems.Length];
             baseColor = new ParticleSystem.MinMaxGradient[systems.Length];
             isRoot = new bool[systems.Length];
@@ -167,9 +175,22 @@ public static class Vfx
 
         /// <summary>Stop a looping/attached effect: stop emitting, let live particles fade, then return to the
         /// pool. Safe to call more than once; a no-op once already returned.</summary>
-        public void Stop()
+        public void Stop() => Stop(false);
+
+        /// <summary>Stop this effect. <paramref name="immediate"/> = clear live particles and return to the pool THIS
+        /// frame (no fade tail) — for a targeting reticle that must vanish the instant aim ends, not linger. Default
+        /// (false) = the normal soft stop: stop emitting, let particles fade, then return.</summary>
+        public void Stop(bool immediate)
         {
-            if (!gameObject.activeSelf || stopping) return;
+            if (!gameObject.activeSelf) return;
+            if (immediate)
+            {
+                for (int i = 0; i < systems.Length; i++)
+                    systems[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                Return();
+                return;
+            }
+            if (stopping) return;
             for (int i = 0; i < systems.Length; i++)
                 systems[i].Stop(true, ParticleSystemStopBehavior.StopEmitting);
             // Keep tracking `follow` through the fade-out tail so the ease-out stays glued to a MOVING caster

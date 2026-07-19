@@ -203,18 +203,22 @@ public class VfxSequenceRunner : MonoBehaviour
                 // Scatter both ends independently: the impact spreads around the anchor (a shower) and the launch
                 // origin jitters too. The event/ticks still fire on arrival at the scattered landing.
                 Vector3 land = point;
-                Vector3 from = point + st.carrierFrom;
+                Vector3 fromBase = st.carrierFromCaster ? ctx.origin : point;
+                Vector3 from = fromBase + st.carrierFrom;
                 if (st.carrierScatter > 0f)
                 {
                     float sc = st.carrierScatter;
                     land += new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
-                    from = land + st.carrierFrom + new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
+                    // Off caster: launch re-bases on the scattered landing (a straight-down shower). From caster:
+                    // launch stays at the fixed caster, only the impact spreads.
+                    Vector3 fb = st.carrierFromCaster ? fromBase : land;
+                    from = fb + st.carrierFrom + new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
                 }
                 int g = gen; string tag = st.emitEventOnEnd; Vector3 landing = land; int idx = i;
                 Projectile3D.SpawnVfx(st.effectId, scale, from, null, land,
                     st.carrierSpeed, st.carrierArriveRadius, st.carrierMaxLife,
                     () => { if (gen == g) { Emit(tag, landing, true); ScheduleTicks(idx, landing); } },   // arrival == end → raise + tick on THIS play only, at the real landing
-                    st.carrierFaceTravel, st.clipStart);
+                    st.carrierFaceTravel, st.clipStart, st.tint);
                 break;
 
             case VfxStepKind.Shake:

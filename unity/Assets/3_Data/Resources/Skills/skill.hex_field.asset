@@ -48,13 +48,9 @@ MonoBehaviour:
       seconds: 4
       magnitude: 3
       hitCount: 1
-      executeAmp: 0
-      stunChance: 0
-      stunSeconds: 0.75
+      chance: 0
       buffStat: 0
       affinity:
-      - stat: 1
-        weight: 50
       - stat: 1
         weight: 50
       durationAffinity: []
@@ -67,9 +63,7 @@ MonoBehaviour:
       seconds: 4
       magnitude: 3
       hitCount: 1
-      executeAmp: 0
-      stunChance: 0
-      stunSeconds: 0.75
+      chance: 0
       buffStat: 0
       affinity: []
       durationAffinity: []

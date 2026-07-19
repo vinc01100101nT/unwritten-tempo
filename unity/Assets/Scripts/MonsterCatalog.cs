@@ -62,6 +62,22 @@ public static class MonsterCatalog
         }
     }
 
+    /// <summary>A RANDOM boss-flagged mob (uniform among all bosses), or null if the catalog has none.
+    /// Unlike <see cref="Boss"/> (always the first) this varies the pick, so /summon boss isn't always the
+    /// same MVP.</summary>
+    public static MonsterDef RandomBoss()
+    {
+        EnsureLoaded();
+        int total = 0;
+        foreach (var m in _all) if (m != null && m.isBoss) total++;
+        if (total == 0) return null;
+
+        int roll = Random.Range(0, total);
+        foreach (var m in _all)
+            if (m != null && m.isBoss && roll-- == 0) return m;
+        return null;
+    }
+
     /// <summary>Pick a field-spawnable mob (non-boss, weight &gt; 0) weighted by <see cref="MonsterDef.weight"/>,
     /// or null if none are loaded.</summary>
     public static MonsterDef WeightedPick()

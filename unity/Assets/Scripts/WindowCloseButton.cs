@@ -33,7 +33,9 @@ public class WindowCloseButton : MonoBehaviour,
     public void OnPointerDown(PointerEventData e)
     {
         if (window == null) return;
-        window.SetActive(false);
+        // Route through the state owner (matches Esc). A bare SetActive(false) left UiAnim.open stuck true,
+        // so IsOpen() reported "already open" and the window (e.g. chat) never reopened.
+        UiAnim.Close(window);
         UISounds.PlayClose();
     }
 

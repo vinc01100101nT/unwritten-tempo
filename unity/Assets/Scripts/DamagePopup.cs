@@ -29,6 +29,8 @@ public class DamagePopup : MonoBehaviour
     // Damage-number timing. Begin() resets to these every reuse so a SpawnBubble bark (which stretches
     // lifetime/riseSpeed) can't leak its long-lived, slow-rising timing into the next combat number.
     const float DefaultLifetime = 0.7f, DefaultRise = 1.4f;
+    // A released multi-hit combo total lingers this long and fades IN PLACE (no rise) — see Release().
+    const float HeldFadeSeconds = 2f;
 
     // On-screen size = fontSize * BaseScale. We render the glyphs into a HIGH-res atlas (big fontSize) and
     // downscale with a small BaseScale — downscaling a large atlas stays crisp, where a small atlas upscaled
@@ -112,12 +114,16 @@ public class DamagePopup : MonoBehaviour
         holdAge = 0f;
     }
 
-    /// <summary>Stop holding — the popup now rises + fades like a normal number.</summary>
+    /// <summary>Stop holding — the combo total now stays PUT and just fades out over <see cref="HeldFadeSeconds"/>
+    /// (no upward drift), unlike a normal per-hit number which rises as it fades. Begin() resets riseSpeed/lifetime
+    /// on the next pooled reuse, so this only affects THIS released total.</summary>
     public void Release()
     {
         if (!held) return;
         held = false;
-        age = 0f;   // fresh fade starting now
+        age = 0f;                     // fresh fade starting now
+        riseSpeed = 0f;               // hold position — fade in place, don't drift up
+        lifetime = HeldFadeSeconds;   // linger ~2s before it's gone
     }
 
     // The shared canvas. Recreated lazily if a scene unload destroyed it (the pool is cleared then, since

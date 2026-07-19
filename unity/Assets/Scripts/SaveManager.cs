@@ -66,7 +66,16 @@ public class SaveManager : MonoBehaviour
         // and the first checkpoint below seeds the file. Read through the profile store (local disk today,
         // a server backend later) so the source of truth is a one-line swap.
         Loaded = ProfileStore.Current.Read();
-        if (Loaded != null) character.RestoreSave(Loaded);
+        if (Loaded != null)
+        {
+            character.RestoreSave(Loaded);
+            // The persistent HUD panels may have already built from the fresh (empty) character earlier this
+            // frame — they only reflect saved layout when told to rebuild, so nudge the ones that mirror it.
+            // The data restored correctly; this is purely the post-load visual refresh (else the hotbar reads
+            // as empty until the next manual bind).
+            HotbarPanel.RebuildRequested?.Invoke();
+            ComboBarPanel.RebuildRequested?.Invoke();
+        }
 
         // Subscribe AFTER restoring, so loading doesn't immediately mark us dirty.
         character.OnLeveledUp       += OnLeveledUp;         // biggest checkpoints

@@ -34,7 +34,7 @@ public class MeshDecimateWindow : EditorWindow
     static readonly Dictionary<MeshFilter, Mesh> s_originals = new();
 
     [MenuItem("Tools/unwritten/Props/Decimate Selection…", priority = 506)]
-    static void Open() => GetWindow<MeshDecimateWindow>(true, "Decimate Selection", true).minSize = new Vector2(360, 340);
+    static void Open() => GetWindow<MeshDecimateWindow>(true, "Decimate Selection", true).minSize = new Vector2(40, 340);
 
     void OnSelectionChange() => Repaint();
 

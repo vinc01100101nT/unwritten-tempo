@@ -28,7 +28,7 @@ public class TreeColliderBaker : EditorWindow
     static readonly Dictionary<MeshCollider, Mesh> s_originals = new();
 
     [MenuItem("Tools/unwritten/Props/Bake Tree Collider…", priority = 507)]
-    static void Open() => GetWindow<TreeColliderBaker>(true, "Bake Tree Collider", true).minSize = new Vector2(440, 300);
+    static void Open() => GetWindow<TreeColliderBaker>(true, "Bake Tree Collider", true).minSize = new Vector2(40, 300);
 
     void OnSelectionChange() => Repaint();
 

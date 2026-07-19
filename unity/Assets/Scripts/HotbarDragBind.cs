@@ -12,9 +12,11 @@ public class HotbarSlotTarget : MonoBehaviour
 
 /// <summary>
 /// Makes a FILLED hotbar cell draggable so the player can rearrange the bar: drag one slot onto another and
-/// the two swap (drop onto an empty slot = move). A translucent ghost follows the cursor. Dropping away from
-/// any slot is a no-op (the skill stays put). Added to each occupied cell by <see cref="HotbarPanel"/>; the
-/// cell's <see cref="Button"/> still fires the skill on a plain click (a drag won't trip the click).
+/// the two swap (drop onto an empty slot = move). A translucent ghost follows the cursor. Dropping AWAY from
+/// every hotbar cell UNBINDS the skill (drag it off the bar to remove it). Added to each occupied cell by
+/// <see cref="HotbarPanel"/>; a <see cref="slotIndex"/> of −1 marks the dedicated ULT cell (removes via
+/// <see cref="HotbarBindings.ClearUlt"/>). The cell's <see cref="Button"/> still fires the skill on a plain
+/// click (a drag won't trip the click).
 /// </summary>
 public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -25,10 +27,13 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
     GameObject ghost;
     static readonly List<RaycastResult> raycastBuf = new List<RaycastResult>(16);
 
+    // The skill id this cell currently holds (−1 = the dedicated ULT slot).
+    string DraggedId => slotIndex < 0 ? Character.Instance.Hotbar.Ult : Character.Instance.Hotbar.Get(slotIndex);
+
     public void OnBeginDrag(PointerEventData e)
     {
         if (Character.Instance == null) return;
-        if (string.IsNullOrEmpty(Character.Instance.Hotbar.Get(slotIndex))) return;   // empty slot — nothing to drag
+        if (string.IsNullOrEmpty(DraggedId)) return;   // empty slot — nothing to drag
         var canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
 
@@ -57,14 +62,21 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
         {
             var target = raycastBuf[i].gameObject.GetComponentInParent<HotbarSlotTarget>();
             if (target == null) continue;
-            if (Character.Instance.Hotbar.Swap(slotIndex, target.slotIndex))
-            {
-                HotbarPanel.RebuildRequested?.Invoke();
-                if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
-                UISounds.PlayClick();
-            }
+            // Dropped ON a hotbar cell: swap (rearrange). An ult↔numbered swap is rejected by Swap (invalid
+            // slot), so it's a harmless no-op — either way the drop landed on the bar, never a removal.
+            if (Character.Instance.Hotbar.Swap(slotIndex, target.slotIndex)) Commit();
             return;
         }
+        // Dropped AWAY from every hotbar cell → take the skill off the bar.
+        bool removed = slotIndex < 0 ? Character.Instance.Hotbar.ClearUlt() : Character.Instance.Hotbar.Clear(slotIndex);
+        if (removed) Commit();
+    }
+
+    static void Commit()
+    {
+        HotbarPanel.RebuildRequested?.Invoke();
+        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
+        UISounds.PlayClick();
     }
 
     void Position(PointerEventData e)
@@ -124,7 +136,7 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         {
             var target = raycastBuf[i].gameObject.GetComponentInParent<HotbarSlotTarget>();
             if (target == null) continue;
-            if (Character.Instance.Hotbar.Bind(target.slotIndex, skillId))
+            if (Character.Instance.Hotbar.BindFromDrag(target.slotIndex, skillId))
             {
                 HotbarPanel.RebuildRequested?.Invoke();
                 if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();

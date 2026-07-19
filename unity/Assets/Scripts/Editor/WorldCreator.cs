@@ -61,7 +61,7 @@ public class WorldCreator : EditorWindow
     static void Open()
     {
         var w = GetWindow<WorldCreator>(false, "World Creator");
-        w.minSize = new Vector2(440f, 460f);
+        w.minSize = new Vector2(40f, 460f);
         w.LoadTemplatePrefs();
         w.Show();
     }

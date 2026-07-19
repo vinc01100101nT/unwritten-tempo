@@ -109,6 +109,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<ComboComposerPanel>();       // Combo Composer (N): assign 4 skills per chain + bind a hotkey
         canvasGO.AddComponent<ComboBarPanel>();            // HUD combo bar: one cell per complete chain (icons + shared CD)
         canvasGO.AddComponent<BuffBarPanel>();             // HUD buff bar (right edge): active self-buffs w/ icon + countdown
+        canvasGO.AddComponent<UltChargeBar>();             // HUD ult charge gauge: slim bar above the hotbar, fills to READY
         canvasGO.AddComponent<XpBarHUD>();                 // bottom-of-screen XP bars: character (left) + ring (right)
         canvasGO.AddComponent<ChatController>();            // in-game chat window (Enter) + /command console (GmCommands)
 

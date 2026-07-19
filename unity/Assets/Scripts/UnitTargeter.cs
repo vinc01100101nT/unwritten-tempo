@@ -143,22 +143,39 @@ public class UnitTargeter : MonoBehaviour
         }
     }
 
-    // The unit DIRECTLY under the cursor — a mob or the player — else null (no ring). EXACT only: a single cursor
-    // raycast classifies the first collider it hits, so the ring shows strictly while you're pointing at a unit's
-    // collider (no magnetism, no screen-distance fudge). Kind is reported via isPlayer; the mask decides if it's legal.
+    // The unit under the cursor — a mob or the player — else null (no ring). The MOB pick goes through the
+    // canonical, snap-magnetised Player3DController.MonsterUnderCursor (the SAME pick the sword cursor / hover
+    // panel / click-to-attack use), NOT a bespoke first-hit raycast. That matters with a crowd: a plain ray
+    // returns the FIRST collider it meets, so a mob standing behind the player (or behind another mob) on screen
+    // gets shadowed by that nearer capsule and can't be targeted — the exact "can't target with 2+ mobs" bug.
+    // Magnetism also means clustered small billboards don't demand a pixel-perfect hit on their feet-capsule.
+    // The player (self-cast) is still found by a direct ray, since MonsterUnderCursor only reports mobs. Mask
+    // priority decides which kind wins when both are under the cursor; kind is reported via isPlayer.
     Transform PickUnit(out bool isPlayer)
     {
         isPlayer = false;
         if (cam == null || PointerOverUI()) return null;
 
-        var ray = cam.ScreenPointToRay(MousePos());
-        if (Physics.Raycast(ray, out var hit, 500f))
+        bool wantMobs   = (mask & SkillTargets.Mobs) != 0;
+        bool wantPlayer = (mask & SkillTargets.Player) != 0;
+
+        var mob = Player3DController.MonsterUnderCursor(cam);   // magnetised, dead-filtered, frame-memoized
+
+        Transform self = null;
+        if (player != null)
         {
-            var mob = hit.collider.GetComponentInParent<MonsterAI3D>();
-            if (mob != null && mob.Health != null && !mob.Health.IsDead) return mob.transform;
-            if (player != null && hit.collider.GetComponentInParent<Player3DController>() != null)
-            { isPlayer = true; return player; }
+            var ray = cam.ScreenPointToRay(MousePos());
+            if (Physics.Raycast(ray, out var hit, 500f) &&
+                hit.collider.GetComponentInParent<Player3DController>() != null)
+                self = player;
         }
+
+        // Prefer the kind THIS skill can actually land on; fall back to the other only so an illegal hover still
+        // shows the red ring + the right warning ("Can't target mobs" / "Can't target yourself").
+        if (wantMobs && mob != null) return mob.transform;
+        if (wantPlayer && self != null) { isPlayer = true; return self; }
+        if (mob != null) return mob.transform;
+        if (self != null) { isPlayer = true; return self; }
         return null;
     }
 

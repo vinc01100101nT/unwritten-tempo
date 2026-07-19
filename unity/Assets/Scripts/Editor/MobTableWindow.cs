@@ -21,7 +21,7 @@ public class MobTableWindow : EditorWindow
     static void Open()
     {
         var w = GetWindow<MobTableWindow>("Mob Table");
-        w.minSize = new Vector2(720, 320);
+        w.minSize = new Vector2(40, 320);
         w.Reload();
     }
 
@@ -123,19 +123,22 @@ public class MobTableWindow : EditorWindow
 
     void DrawToolbar()
     {
-        EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-        GUILayout.Label($"{_defs.Count} mobs", EditorStyles.miniLabel, GUILayout.Width(70));
-        GUILayout.Space(6);
-        GUILayout.Label("Search", EditorStyles.miniLabel, GUILayout.Width(44));
-        _search = GUILayout.TextField(_search, EditorStyles.toolbarSearchField, GUILayout.Width(180));
-        GUILayout.FlexibleSpace();
-        if (GUILayout.Button("Save All", EditorStyles.toolbarButton, GUILayout.Width(70)))
+        using (var flow = new EditorLayoutFlow.Flow(position.width, EditorStyles.toolbar))
         {
-            AssetDatabase.SaveAssets();
-            MonsterCatalog.Reload();
+            flow.Item(70);
+            GUILayout.Label($"{_defs.Count} mobs", EditorStyles.miniLabel, GUILayout.Width(70));
+            flow.Item(44 + 180);   // "Search" label + field kept together
+            GUILayout.Label("Search", EditorStyles.miniLabel, GUILayout.Width(44));
+            _search = GUILayout.TextField(_search, EditorStyles.toolbarSearchField, GUILayout.Width(180));
+            flow.Item(70);
+            if (GUILayout.Button("Save All", EditorStyles.toolbarButton, GUILayout.Width(70)))
+            {
+                AssetDatabase.SaveAssets();
+                MonsterCatalog.Reload();
+            }
+            flow.Item(60);
+            if (GUILayout.Button("Reload", EditorStyles.toolbarButton, GUILayout.Width(60))) Reload();
         }
-        if (GUILayout.Button("Reload", EditorStyles.toolbarButton, GUILayout.Width(60))) Reload();
-        EditorGUILayout.EndHorizontal();
     }
 
     void DrawHeader()

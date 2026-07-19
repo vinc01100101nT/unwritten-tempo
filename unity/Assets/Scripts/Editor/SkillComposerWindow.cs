@@ -21,9 +21,31 @@ public class SkillComposerWindow : EditorWindow
     SkillDef sel;
     Vector2 listScroll, bodyScroll;
     bool listCollapsed;
+    float listWidth = 200f;
+    bool draggingSplitter;
     const string Dir = "Assets/3_Data/Resources/Skills";
 
-    void OnEnable() => Refresh();
+    // Last-saved snapshot of the selected skill, used by "Discard changes". A dirty ScriptableObject can't be
+    // reverted by re-importing (Unity keeps the in-memory edits), so we keep our own saved-state copy and copy it
+    // back on discard. Captured on selection change and after each Save.
+    SkillDef snapshot;
+    SkillDef snapshotOwner;
+
+    // A word-wrapping text-area style. The default TextArea doesn't wrap, so a long unbroken line reports its
+    // full one-line width and blows out the panel (forcing a horizontal scrollbar); wrapping keeps it narrow.
+    static GUIStyle _wrapTextArea;
+    static GUIStyle WrapTextArea => _wrapTextArea ??= new GUIStyle(EditorStyles.textArea) { wordWrap = true };
+
+    void OnEnable()
+    {
+        minSize = new Vector2(40f, 120f);
+        Refresh();
+    }
+
+    void OnDisable()
+    {
+        if (snapshot != null) DestroyImmediate(snapshot);
+    }
 
     void Refresh()
     {
@@ -41,6 +63,7 @@ public class SkillComposerWindow : EditorWindow
     {
         EditorGUILayout.BeginHorizontal();
         DrawList();
+        if (!listCollapsed) DrawSplitter();
         DrawBody();
         EditorGUILayout.EndHorizontal();
     }
@@ -56,9 +79,9 @@ public class SkillComposerWindow : EditorWindow
             return;
         }
 
-        EditorGUILayout.BeginVertical(GUILayout.Width(200));
+        EditorGUILayout.BeginVertical(GUILayout.Width(listWidth), GUILayout.MinWidth(0f), GUILayout.MaxWidth(listWidth));
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Skills", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Skills", EditorStyles.boldLabel, GUILayout.MinWidth(0f));
         if (GUILayout.Button("◀", GUILayout.Width(24))) listCollapsed = true;
         EditorGUILayout.EndHorizontal();
         listScroll = EditorGUILayout.BeginScrollView(listScroll);
@@ -67,20 +90,27 @@ public class SkillComposerWindow : EditorWindow
             if (s == null) continue;
             bool on = s == sel;
             var style = on ? EditorStyles.helpBox : EditorStyles.label;
-            if (GUILayout.Button($"{s.displayName}\n{s.id}", style, GUILayout.Height(34))) sel = s;
+            if (GUILayout.Button($"{s.displayName}\n{s.id}", style, GUILayout.Height(34), GUILayout.MinWidth(0f))) sel = s;
         }
         EditorGUILayout.EndScrollView();
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("New")) Create();
+        if (GUILayout.Button("New", GUILayout.MinWidth(0f))) Create();
         using (new EditorGUI.DisabledScope(sel == null))
         {
-            if (GUILayout.Button("Dupe")) Duplicate(sel);
-            if (GUILayout.Button("Del")) DeleteAsset(sel);
+            if (GUILayout.Button("Dupe", GUILayout.MinWidth(0f))) Duplicate(sel);
+            if (GUILayout.Button("Del", GUILayout.MinWidth(0f))) DeleteAsset(sel);
         }
         EditorGUILayout.EndHorizontal();
-        if (GUILayout.Button("Refresh")) Refresh();
+        if (GUILayout.Button("Refresh", GUILayout.MinWidth(0f))) Refresh();
         EditorGUILayout.EndVertical();
+    }
+
+    // Draggable divider between the list and the body — drag to resize, no minimum width.
+    void DrawSplitter()
+    {
+        float w = EditorLayoutFlow.VerticalSplitter(listWidth, ref draggingSplitter);
+        if (w != listWidth) { listWidth = w; Repaint(); }
     }
 
     void Create()
@@ -94,6 +124,36 @@ public class SkillComposerWindow : EditorWindow
         AssetDatabase.SaveAssets();
         Refresh();
         sel = AssetDatabase.LoadAssetAtPath<SkillDef>(path);
+    }
+
+    // Capture the current (assumed last-saved) state of sel into the scratch snapshot. Called on selection change
+    // and right after a Save, so the snapshot always mirrors what's on disk.
+    void CaptureSnapshot()
+    {
+        if (sel == null) { snapshotOwner = null; return; }
+        if (snapshot == null)
+        {
+            snapshot = CreateInstance<SkillDef>();
+            snapshot.hideFlags = HideFlags.HideAndDontSave;
+        }
+        EditorUtility.CopySerialized(sel, snapshot);
+        snapshotOwner = sel;
+    }
+
+    // Revert the selected skill to its last-saved state, throwing away in-memory (unsaved) edits. A dirty
+    // ScriptableObject can't be reverted by re-importing (Unity keeps the edits), so we copy our saved snapshot back.
+    void DiscardSkillEdits()
+    {
+        if (sel == null || snapshot == null || snapshotOwner != sel) return;
+        if (!EditorUtility.DisplayDialog("Discard changes",
+            $"Revert '{sel.displayName}' to the last saved version? Unsaved edits will be lost.", "Discard", "Cancel"))
+            return;
+        GUI.FocusControl(null);   // drop focus so an in-progress text field can't re-commit its value
+        Undo.RecordObject(sel, "Discard skill changes");
+        EditorUtility.CopySerialized(snapshot, sel);
+        EditorUtility.ClearDirty(sel);
+        SkillCatalog.Reload();
+        Repaint();
     }
 
     void Duplicate(SkillDef s)
@@ -120,7 +180,15 @@ public class SkillComposerWindow : EditorWindow
         EditorGUILayout.BeginVertical();
         if (sel == null) { EditorGUILayout.HelpBox("Select or create a skill.", MessageType.Info); EditorGUILayout.EndVertical(); return; }
 
+        if (snapshotOwner != sel) CaptureSnapshot();   // freshly-selected skill → snapshot its saved state
+
+        float contentWidth = position.width - (listCollapsed ? 20f : listWidth) - 5f;
         bodyScroll = EditorGUILayout.BeginScrollView(bodyScroll);
+        // Pin the scroll content to the viewport width so the fields SHRINK to fit instead of the scroll view
+        // laying them out at their preferred width and adding a horizontal scrollbar (the "won't shrink" symptom).
+        float viewport = Mathf.Max(0f, contentWidth - 18f);   // minus the vertical scrollbar gutter
+        EditorGUILayout.BeginVertical(GUILayout.Width(viewport));
+        EditorLayoutFlow.ResponsiveLabelWidth(viewport, 130f);
         EditorGUI.BeginChangeCheck();
 
         EditorGUILayout.LabelField("Identity", EditorStyles.boldLabel);
@@ -132,7 +200,7 @@ public class SkillComposerWindow : EditorWindow
         sel.category = (SkillCategory)EditorGUILayout.EnumPopup(new GUIContent("category",
             "Role shown on the card (Attack / Utility / Buff). Ultimate is the separate 'tier' below, not a category."), sel.category);
         EditorGUILayout.LabelField(new GUIContent("description", "Flavor + mechanics blurb shown in the hover card."));
-        sel.description = EditorGUILayout.TextArea(sel.description ?? "", GUILayout.Height(42));
+        sel.description = EditorGUILayout.TextArea(sel.description ?? "", WrapTextArea, GUILayout.Height(42), GUILayout.ExpandWidth(true));
 
         EditorGUILayout.Space(4);
         EditorGUILayout.LabelField("Cost / cadence", EditorStyles.boldLabel);
@@ -151,8 +219,8 @@ public class SkillComposerWindow : EditorWindow
         sel.tier = (SkillTier)EditorGUILayout.EnumPopup(new GUIContent("tier",
             "Base = a normal hotbar skill (keys 1–9). Ultimate = fires from the dedicated ULT slot, charge-gated."), sel.tier);
         using (new EditorGUI.DisabledScope(sel.tier != SkillTier.Ultimate))
-            sel.chargeCost = EditorGUILayout.Slider(new GUIContent("charge cost",
-                "Ult-meter charge spent per cast. The meter fills in combat (dealing/taking damage, casting)."), sel.chargeCost, 0f, 200f);
+            sel.chargeCost = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("charge cost",
+                "Ult-meter charge spent per cast. The meter fills in combat (dealing/taking damage, casting)."), sel.chargeCost));
 
         EditorGUILayout.Space(4);
         EditorGUILayout.LabelField("Hotbar", EditorStyles.boldLabel);
@@ -182,8 +250,13 @@ public class SkillComposerWindow : EditorWindow
         if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(sel);
 
         EditorGUILayout.Space(6);
-        if (GUILayout.Button("Save")) { AssetDatabase.SaveAssets(); SkillCatalog.Reload(); }
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Save")) { AssetDatabase.SaveAssets(); SkillCatalog.Reload(); CaptureSnapshot(); }
+        using (new EditorGUI.DisabledScope(!EditorUtility.IsDirty(sel)))
+            if (GUILayout.Button("Discard changes")) DiscardSkillEdits();
+        EditorGUILayout.EndHorizontal();
 
+        EditorGUILayout.EndVertical();
         EditorGUILayout.EndScrollView();
         EditorGUILayout.EndVertical();
     }
@@ -273,7 +346,7 @@ public class SkillComposerWindow : EditorWindow
         foreach (var t in seqTicks)
         {
             var b = sel.BindingFor(t.id);
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.ExpandWidth(true));
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField($"{t.id}   ({t.count}× @ {t.interval:0.##}s)", EditorStyles.boldLabel);
             if (b == null)
@@ -298,7 +371,7 @@ public class SkillComposerWindow : EditorWindow
         {
             var b = sel.bindings[i];
             if (b == null || TicksContain(seqTicks, b.tickId)) continue;
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.ExpandWidth(true));
             EditorGUILayout.HelpBox($"Binding '{b.tickId}' has no matching tick in the sequence (renamed/removed?).", MessageType.Warning);
             if (GUILayout.Button("remove orphan", GUILayout.Width(120))) { sel.bindings.RemoveAt(i); i--; }
             EditorGUILayout.EndVertical();
@@ -324,7 +397,7 @@ public class SkillComposerWindow : EditorWindow
         {
             if (b.effects[e] == null) b.effects[e] = new SkillEffect();
             var ef = b.effects[e];
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.ExpandWidth(true));
             EditorGUILayout.BeginHorizontal();
             ef.kind = (SkillEffectKind)EditorGUILayout.EnumPopup(ef.kind);
             if (GUILayout.Button("✕", GUILayout.Width(22))) rm = e;
@@ -398,6 +471,7 @@ public class SkillComposerWindow : EditorWindow
             string affLabel = AffinityOutputLabel(ef);
             if (affLabel != null) DrawAffinity(affLabel, ref ef.affinity);
             if (HasDurationChannel(ef)) DrawAffinity("boosts DURATION", ref ef.durationAffinity);
+            if (ef.kind == SkillEffectKind.Damage) DrawAffinity("boosts HITS COUNT", ref ef.hitCountAffinity);
             EditorGUILayout.EndVertical();
         }
         if (rm >= 0) b.effects.RemoveAt(rm);

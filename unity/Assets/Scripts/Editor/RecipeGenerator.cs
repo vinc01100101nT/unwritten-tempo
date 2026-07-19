@@ -161,19 +161,19 @@ public static class RecipeGenerator
                 props += PlaceGroup(g, child.transform, center, r.sizeX, r.sizeZ, rng, mask, paths, r.pathWidth, blockers);
             }
 
-        // ── MOBS ───────────────────────────────────────────────────────────────────────────────────────
+        // ── MOBS (runtime pooled spawners, RO-style — replaces baked-in mobs) ────────────────────────────
+        // Each recipe mob group becomes a FieldMobSpawner that keeps its population alive and respawns from an
+        // object pool (Addressable mobs). Nothing is baked into the scene, so the map file stays light and mobs
+        // are data-driven at Play. Needs Bake Mob Prefabs run so the spawners have Addressable mobs to draw.
         var mobsRoot = new GameObject("Mobs");
         SceneManager.MoveGameObjectToScene(mobsRoot, scene);
-        Random.InitState(seed ^ unchecked((int)0x9E3779B9));   // deterministic mobs, decorrelated from props
         Vector3 spawnPos = WorldBuildUtil.SurfacePoint(center, mask);
         int mobs = 0;
         if (r.mobGroups != null)
             foreach (var m in r.mobGroups)
             {
                 if (m == null) continue;
-                var child = new GameObject(string.IsNullOrEmpty(m.label) ? "MobGroup" : m.label);
-                child.transform.SetParent(mobsRoot.transform, false);
-                mobs += PlaceMobs(m, child.transform, center, r.sizeX, r.sizeZ, mask, spawnPos, r.biome);
+                mobs += PlaceMobSpawner(m, mobsRoot.transform, center, r.sizeX, r.sizeZ, r.biome);
             }
 
         // ── SPAWN ──────────────────────────────────────────────────────────────────────────────────────────
@@ -776,68 +776,30 @@ public static class RecipeGenerator
         return go;
     }
 
-    // ── MOB PLACEMENT ────────────────────────────────────────────────────────────────────────────────────
-    static int PlaceMobs(RecipeMobGroup m, Transform parent, Vector3 center, float sizeX, float sizeZ,
-                         int mask, Vector3 spawn, Biome biome)
+    // ── MOB PLACEMENT (runtime pooled spawner) ─────────────────────────────────────────────────────────────
+    /// <summary>Place a configured <see cref="FieldMobSpawner"/> for one recipe mob group at the map centre,
+    /// covering the whole plot. Returns the intended population (for the generate report). This is how a freshly
+    /// generated map gets its runtime mobs; existing maps are converted scene-side by <c>MobSpawnerMigration</c>.</summary>
+    public static int PlaceMobSpawner(RecipeMobGroup m, Transform parent, Vector3 center, float sizeX, float sizeZ, Biome biome)
     {
-        if (RigBuilder25D.MonsterSheet() == null)
-        { Debug.LogWarning("[unwritten] No Ninja Adventure monster sheet found; mob group skipped."); return 0; }
+        int pop = m.amountMode == AmountMode.Count ? m.count : Mathf.Max(0, Mathf.RoundToInt(sizeX * sizeZ * m.density));
 
-        int target = m.amountMode == AmountMode.Count ? m.count : Mathf.Max(0, Mathf.RoundToInt(sizeX * sizeZ * m.density));
-        if (target <= 0) return 0;
+        var go = new GameObject((string.IsNullOrEmpty(m.label) ? "Mobs" : m.label) + " Spawner");
+        go.transform.SetParent(parent, true);
+        go.transform.position = center;
 
-        float minX = center.x - sizeX * 0.5f + Inset, maxX = center.x + sizeX * 0.5f - Inset;
-        float minZ = center.z - sizeZ * 0.5f + Inset, maxZ = center.z + sizeZ * 0.5f - Inset;
-        var spots = new List<Vector3>();
-        int placed = 0, attempts = 0, max = target * 16;
-        while (placed < target && attempts < max)
-        {
-            attempts++;
-            float x = Random.Range(minX, maxX), z = Random.Range(minZ, maxZ);
-            if (!Physics.Raycast(new Vector3(x, center.y + 60f, z), Vector3.down, out var hit, 200f, mask, QueryTriggerInteraction.Ignore))
-                continue;
-            if (new Vector2(hit.point.x - spawn.x, hit.point.z - spawn.z).magnitude < m.clearFromSpawn) continue;
-            bool tooClose = false;
-            foreach (var s in spots) if ((s - hit.point).sqrMagnitude < m.minSpacing * m.minSpacing) { tooClose = true; break; }
-            if (tooClose) continue;
-
-            var mob = RigBuilder25D.BuildMonster(
-                ResolveArchetype(m.archetypeName, biome, m.minTier, m.maxTier, m.includeCommons), hit.point);
-            mob.transform.SetParent(parent, true);
-            spots.Add(hit.point);
-            placed++;
-        }
-        return placed;
-    }
-
-    // Prefer the data-driven MonsterCatalog (Resources/Monsters assets, referenced by stable id or display
-    // name); fall back to the legacy MobRoster seed list when the migration hasn't been run yet (catalog empty).
-    static MonsterArchetype ResolveArchetype(string name, Biome biome, int minTier, int maxTier, bool includeCommons)
-    {
-        bool haveAssets = MonsterCatalog.Count > 0;
-        string n = name?.Trim();
-
-        if (string.IsNullOrWhiteSpace(n))
-        {
-            if (haveAssets)
-            {
-                var p = MonsterCatalog.WeightedPick(biome, minTier, maxTier, includeCommons);
-                if (p != null) return p.ToArchetype();
-            }
-            return MobRoster.WeightedPick();
-        }
-        if (string.Equals(n, "Boss", System.StringComparison.OrdinalIgnoreCase))
-        {
-            if (haveAssets) { var b = MonsterCatalog.Boss; if (b != null) return b.ToArchetype(); }
-            return MobRoster.Boss;
-        }
-        if (haveAssets) { var d = MonsterCatalog.Get(n); if (d != null) return d.ToArchetype(); }
-        foreach (var a in MobRoster.All)
-            if (string.Equals(a.name, n, System.StringComparison.OrdinalIgnoreCase)) return a;
-
-        Debug.LogWarning($"[unwritten] Mob '{name}' not found in MonsterCatalog or MobRoster; using a weighted pick.");
-        if (haveAssets) { var p = MonsterCatalog.WeightedPick(); if (p != null) return p.ToArchetype(); }
-        return MobRoster.WeightedPick();
+        var s = go.AddComponent<FieldMobSpawner>();
+        s.population        = pop;
+        s.radius            = 0.5f * Mathf.Max(sizeX, sizeZ);   // circle that reaches the plot edges; off-map probes just retry
+        s.biome             = biome;
+        s.minTier           = m.minTier;
+        s.maxTier           = m.maxTier;
+        s.includeCommons    = m.includeCommons;
+        s.fixedMobId        = m.archetypeName;                  // empty = weighted biome mix; a mob id or "Boss" = fixed
+        s.playerClearRadius = m.clearFromSpawn;
+        s.respawnDelay      = m.respawnDelay;
+        s.respawnJitter     = m.respawnJitter;
+        return pop;
     }
 
 

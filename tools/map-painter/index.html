@@ -793,6 +793,8 @@ function render() {
 
   // elevation overlay (raised = warm/light, sunken = cool/dark) + the level number
   drawHeights(p);
+  // gutter rim (top view of the curb the map generator drops around every sunken cell)
+  drawGutterBorders(p);
 
   // line-tool drag preview, then hover preview
   drawLinePreview(p);
@@ -988,6 +990,79 @@ function drawHeights(p) {
     ctx.fillText((lv > 0 ? "+" : "") + lv, s.x + cp / 2, s.y + cp / 2);
     ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
   }
+}
+
+// Gutter border (top view). In-game GroundBlendBuilder drops a curb + flat border-ring trim on the HIGHER side of
+// EVERY 1-notch-or-more step between two cells (raise OR lower — a "gutter" is just the seam where levels differ), and
+// runs it along the 45° HYPOTENUSE where the step is a diagonally-cut cell instead of stepping it like a staircase.
+// This mirrors both: the curb sits on whichever side is higher, and a cut cell whose two halves differ in level gets a
+// diagonal band along its cut. Width tracks the game's borderWidth (CURB_WORLD ÷ curb-texture aspect, world units),
+// floored so it stays visible zoomed out. Only border style for now — a border-style picker (that the generator will
+// reference) comes later.
+const GUTTER_BORDER = { fill:"#c9c1b0cc", edge:"#6f685c", curbWorld:0.5 / 6 };
+const DIRS = { W:[-1, 0], E:[1, 0], N:[0, -1], S:[0, 1] };
+const OPP_DIR = { W:"E", E:"W", N:"S", S:"N" };
+// A diagonally-cut heights cell splits into two triangles; these two straight edges belong to the KEPT (level) half,
+// the other two to the UNDER half. (Kept corner = the cut name; its two adjacent edges are kept.)
+const KEPT_EDGES = { nw:{ N:1, W:1 }, ne:{ N:1, E:1 }, se:{ S:1, E:1 }, sw:{ S:1, W:1 } };
+// Hypotenuse of a cut cell (normalised endpoints) + the unit normal pointing INTO the kept half.
+const HYP = { nw:{ a:[1,0], b:[0,1], n:[-1,-1] }, se:{ a:[1,0], b:[0,1], n:[1,1] },
+              ne:{ a:[0,0], b:[1,1], n:[1,-1] },  sw:{ a:[0,0], b:[1,1], n:[-1,1] } };
+// The level of a cell's surface ALONG one straight edge: a cut cell shows its kept half on two edges, its under half on
+// the other two; a plain/absent cell is one flat level (0 when unpainted).
+function edgeLevel(cx, cz, dir) {
+  const h = S.heights[cx + "," + cz];
+  if (h === undefined) return 0;
+  if (typeof h !== "object" || !h.cut) return hLevel(h);
+  return KEPT_EDGES[h.cut] && KEPT_EDGES[h.cut][dir] ? hLevel(h) : (h.under || 0);
+}
+function drawGutterBorders(p) {
+  const cp = S.cellSize * p;
+  const bw = Math.max(cp * (GUTTER_BORDER.curbWorld / S.cellSize), 2);
+  ctx.fillStyle = GUTTER_BORDER.fill;
+  ctx.strokeStyle = GUTTER_BORDER.edge;
+  ctx.lineWidth = 1;
+  const band = (x, y, w, h) => { ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h); };
+  // Candidates: every elevated cell + its 4 neighbours (the HIGHER side of a seam can be an unpainted level-0 cell).
+  const cand = new Set();
+  for (const k in S.heights) {
+    const [cx, cz] = k.split(",").map(Number);
+    cand.add(k);
+    for (const d in DIRS) { const nx = cx + DIRS[d][0], nz = cz + DIRS[d][1]; if (inBounds(nx, nz)) cand.add(nx + "," + nz); }
+  }
+  for (const k of cand) {
+    const [cx, cz] = k.split(",").map(Number);
+    const s = worldToScreen(cx * S.cellSize, cz * S.cellSize);
+    const h = S.heights[k];
+    const cut = (h && typeof h === "object") ? h.cut : "";
+    // Straight edges: the higher side of any on-map seam owns the curb (strict > → drawn once). Sign-agnostic.
+    for (const d in DIRS) {
+      const nx = cx + DIRS[d][0], nz = cz + DIRS[d][1];
+      if (!inBounds(nx, nz)) continue;                                      // seams BETWEEN cells only (not the plot edge)
+      if (edgeLevel(cx, cz, d) <= edgeLevel(nx, nz, OPP_DIR[d])) continue;  // neighbour is higher/equal → its curb, not ours
+      if (d === "W") band(s.x, s.y, bw, cp);
+      else if (d === "E") band(s.x + cp - bw, s.y, bw, cp);
+      else if (d === "N") band(s.x, s.y, cp, bw);
+      else band(s.x, s.y + cp - bw, cp, bw);
+    }
+    // Internal diagonal seam: a cut cell whose two halves differ in level → curb runs along the hypotenuse (no stairs).
+    if (cut) {
+      const lvl = hLevel(h), un = h.under || 0;
+      if (lvl !== un) drawDiagBand(s.x, s.y, cp, cut, lvl > un, bw);
+    }
+  }
+}
+// One curb strip along a cut cell's hypotenuse, offset toward whichever half is HIGHER, with the seam edge stroked.
+function drawDiagBand(sx, sy, cp, cut, keptHigher, bw) {
+  const H = HYP[cut]; if (!H) return;
+  const sgn = (keptHigher ? 1 : -1) * (bw / Math.SQRT2);
+  const ax = sx + H.a[0] * cp, ay = sy + H.a[1] * cp;
+  const bx = sx + H.b[0] * cp, by = sy + H.b[1] * cp;
+  const ox = H.n[0] * sgn, oy = H.n[1] * sgn;
+  ctx.beginPath();
+  ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.lineTo(bx + ox, by + oy); ctx.lineTo(ax + ox, ay + oy); ctx.closePath();
+  ctx.fill();
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
 }
 
 // Highlight one region surface: the whole cell ("whole"), the kept triangle ("kept"), or the cut-away triangle ("cut")

@@ -14,9 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.meteor
   displayName: Meteor
-  icon: {fileID: 5986030973748356752, guid: 9c71065b39d57034db33fd7201c9baf4, type: 3}
-  description: Call down a shower of meteors, a screen-wide fire storm that stuns
-    and burns everything and strikes hardest against the weak.
+  icon: {fileID: -748796600851884618, guid: e332629eb48b6454a8278a39bd5d6b5a, type: 3}
+  description: asdasd
   archetype: 0
   category: 0
   manaCost: 40
@@ -26,7 +25,7 @@ MonoBehaviour:
   aim: 2
   castRange: 13
   tier: 1
-  chargeCost: 100
+  chargeCost: 5000
   castCircleId: circle.magic
   castCircleTint: {r: 0.86415094, g: 0.29302153, b: 0.11576363, a: 1}
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
@@ -59,6 +58,7 @@ MonoBehaviour:
       - stat: 3
         weight: 10
       durationAffinity: []
+      hitCountAffinity: []
     - kind: 2
       magic: 1
       damageMult: 1
@@ -78,6 +78,7 @@ MonoBehaviour:
         weight: 70
       - stat: 1
         weight: 30
+      hitCountAffinity: []
     - kind: 2
       magic: 1
       damageMult: 1
@@ -91,27 +92,13 @@ MonoBehaviour:
       buffStat: 0
       affinity:
       - stat: 5
-        weight: 100
+        weight: 50
       durationAffinity:
       - stat: 1
         weight: 60
       - stat: 3
         weight: 40
-    - kind: 11
-      magic: 1
-      damageMult: 1
-      element: 3
-      amount: 10
-      ailment: 2
-      seconds: 4
-      magnitude: 1
-      hitCount: 1
-      chance: 0
-      buffStat: 0
-      affinity:
-      - stat: 9
-        weight: 100
-      durationAffinity: []
+      hitCountAffinity: []
     scale:
       damageMultPerLevel: 0.5
       flatBonusPerLevel: 0
@@ -135,6 +122,7 @@ MonoBehaviour:
       - stat: 1
         weight: 100
       durationAffinity: []
+      hitCountAffinity: []
     scale:
       damageMultPerLevel: 0.1
       flatBonusPerLevel: 0

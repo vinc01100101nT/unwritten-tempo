@@ -19,7 +19,7 @@ public class PropPalette : EditorWindow
     const string PropsDir = "Assets/1_Authored/Prefabs/Props";
 
     [MenuItem("Tools/unwritten/Authoring/Prop Palette", priority = 400)]
-    static void Open() => GetWindow<PropPalette>("Prop Palette").minSize = new Vector2(260, 360);
+    static void Open() => GetWindow<PropPalette>("Prop Palette").minSize = new Vector2(40, 360);
 
     // settings
     bool snapGrid = true;

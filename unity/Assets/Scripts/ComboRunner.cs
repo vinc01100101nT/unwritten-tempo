@@ -65,8 +65,8 @@ public class ComboRunner : MonoBehaviour
     {
         if (running != null || Dead()) return;
         var sc = StatusController.Player;
-        // Can't launch a combo while already casting/recovering (ActionLocked) or unable to cast (silenced).
-        if (sc != null && (sc.ActionLocked || sc.Silenced)) return;
+        // Can't launch a combo while already casting/recovering or mid-jump (CannotStartSkill) or unable to cast (silenced).
+        if (sc != null && (sc.CannotStartSkill || sc.Silenced)) return;
         if (!c.Ready) { BattleNotice.Warn("Combo cooling down"); return; }
 
         pendingChain = c;

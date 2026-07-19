@@ -26,7 +26,7 @@ public class VfxComposerWindow : EditorWindow
     public static void Open()
     {
         var w = GetWindow<VfxComposerWindow>("Vfx Composer");
-        w.minSize = new Vector2(880, 520);
+        w.minSize = new Vector2(40, 520);
         w.Show();
     }
 
@@ -40,6 +40,8 @@ public class VfxComposerWindow : EditorWindow
     Vector2 listScroll, stepScroll;
     bool listCollapsed;
     string listFilter = "";
+    float listWidth = 220f;
+    bool draggingListSplitter;
 
     // ---- layout ----
     float previewHeight = 260f;   // draggable via the splitter under the preview
@@ -331,6 +333,7 @@ public class VfxComposerWindow : EditorWindow
     {
         EditorGUILayout.BeginHorizontal();
         DrawAssetList();                 // left column
+        if (!listCollapsed) DrawListSplitter();
         DrawRight();                     // preview + step editor
         EditorGUILayout.EndHorizontal();
     }
@@ -345,9 +348,9 @@ public class VfxComposerWindow : EditorWindow
             return;
         }
 
-        EditorGUILayout.BeginVertical(GUILayout.Width(220));
+        EditorGUILayout.BeginVertical(GUILayout.Width(listWidth), GUILayout.MinWidth(0f), GUILayout.MaxWidth(listWidth));
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField("Compositions", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Compositions", EditorStyles.boldLabel, GUILayout.MinWidth(0f));
         if (GUILayout.Button("◀", GUILayout.Width(24))) listCollapsed = true;
         EditorGUILayout.EndHorizontal();
 
@@ -365,26 +368,33 @@ public class VfxComposerWindow : EditorWindow
             var style = isSel ? EditorStyles.whiteLabel : EditorStyles.label;
             var bg = GUI.backgroundColor;
             if (isSel) GUI.backgroundColor = new Color(0.3f, 0.5f, 0.9f);
-            if (GUILayout.Button(s.name, style)) Select(s);
+            if (GUILayout.Button(s.name, style, GUILayout.MinWidth(0f))) Select(s);
             GUI.backgroundColor = bg;
         }
         EditorGUILayout.EndScrollView();
 
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("New")) CreateNew();
+        if (GUILayout.Button("New", GUILayout.MinWidth(0f))) CreateNew();
         using (new EditorGUI.DisabledScope(sel == null))
         {
-            if (GUILayout.Button("Dup")) Duplicate(sel);
-            if (GUILayout.Button("Del")) DeleteAsset(sel);
+            if (GUILayout.Button("Dup", GUILayout.MinWidth(0f))) Duplicate(sel);
+            if (GUILayout.Button("Del", GUILayout.MinWidth(0f))) DeleteAsset(sel);
         }
         if (GUILayout.Button("?", GUILayout.Width(24))) Application.OpenURL(GuideUrl);
         EditorGUILayout.EndHorizontal();
         EditorGUILayout.EndVertical();
     }
 
+    // Draggable divider between the list and the body — drag to resize, no minimum width.
+    void DrawListSplitter()
+    {
+        float w = EditorLayoutFlow.VerticalSplitter(listWidth, ref draggingListSplitter);
+        if (w != listWidth) { listWidth = w; Repaint(); }
+    }
+
     void DrawRight()
     {
-        EditorGUILayout.BeginVertical();
+        EditorGUILayout.BeginVertical(GUILayout.MinWidth(0f), GUILayout.ExpandWidth(true));
         if (sel == null)
         {
             EditorGUILayout.HelpBox("Pick a composition on the left, or press New.", MessageType.Info);
@@ -392,9 +402,14 @@ public class VfxComposerWindow : EditorWindow
             return;
         }
 
+        // Scale the label column with the available content width so labelled rows shrink instead of the label
+        // column holding a fixed ~150px floor.
+        float contentWidth = position.width - (listCollapsed ? 20f : listWidth) - 5f;
+        EditorLayoutFlow.ResponsiveLabelWidth(contentWidth);
+
         // --- name (rename the asset by typing here + Enter) ---
         EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-        GUILayout.Label("Name", GUILayout.Width(40));
+        GUILayout.Label("Name", GUILayout.MinWidth(0f), GUILayout.MaxWidth(40));
         EditorGUI.BeginChangeCheck();
         string typed = EditorGUILayout.DelayedTextField(sel.name);
         if (EditorGUI.EndChangeCheck()) RenameSelected(typed);
@@ -405,48 +420,61 @@ public class VfxComposerWindow : EditorWindow
         DrawPreview(previewRect);
         DrawSplitter();
 
-        // --- transport ---
-        EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-        if (GUILayout.Button(playing ? "⏸ Pause" : "▶ Play", EditorStyles.toolbarButton, GUILayout.Width(80)))
+        // --- transport (flex-wrap; see EditorLayoutFlow.Flow) ---
+        using (var flow = new EditorLayoutFlow.Flow(contentWidth, EditorStyles.toolbar))
         {
-            playing = !playing;
-            if (playing) ResumePreviewSounds(); else PausePreviewSounds();   // clock and sound pause/resume together
+            flow.Item(80);
+            if (GUILayout.Button(playing ? "⏸ Pause" : "▶ Play", EditorStyles.toolbarButton, GUILayout.Width(80)))
+            {
+                playing = !playing;
+                if (playing) ResumePreviewSounds(); else PausePreviewSounds();   // clock and sound pause/resume together
+            }
+            flow.Item(30);
+            if (GUILayout.Button("⏮", EditorStyles.toolbarButton, GUILayout.Width(30))) { clock = 0f; StopPreviewSounds(); }
+            flow.Item(110);
+            GUILayout.Label($"{clock:0.00} / {previewDuration:0.00}s", GUILayout.Width(110));
+            flow.Item(140);
+            clock = GUILayout.HorizontalSlider(clock, 0f, Mathf.Max(0.01f, previewDuration), GUILayout.Width(140));
+
+            flow.Item(52 + 45);   // "loop end" label + field kept together
+            GUILayout.Label("loop end", GUILayout.Width(52));
+            EditorGUI.BeginChangeCheck();
+            float loopField = EditorGUILayout.FloatField(sel.loopEnd <= 0f ? autoDuration : sel.loopEnd, GUILayout.Width(45));
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(sel, "Set loop end");
+                sel.loopEnd = loopField >= autoDuration - 1e-3f ? 0f : Mathf.Max(0f, loopField);
+                EditorUtility.SetDirty(sel);
+            }
+
+            flow.Item(80);
+            if (GUILayout.Button("Reset View", EditorStyles.toolbarButton, GUILayout.Width(80))) ResetView();
+            flow.Item(50);
+            showRuler = GUILayout.Toggle(showRuler, "Ruler", EditorStyles.toolbarButton, GUILayout.Width(50));
+            flow.Item(12 + 40);   // "h" label + height field kept together
+            GUILayout.Label("h", GUILayout.Width(12));
+            rulerHeight = EditorGUILayout.FloatField(rulerHeight, GUILayout.Width(40));
+            flow.Item(56);
+            showRadiusRing = GUILayout.Toggle(showRadiusRing, "Radius", EditorStyles.toolbarButton, GUILayout.Width(56));
+            if (skillRadii.Count > 0)
+            {
+                // Read-only mirror of the authoritative SkillTickBinding.radius values — edit them in the Skill Composer.
+                flow.Item(120);
+                GUILayout.Label("⟵ skill " + string.Join(", ", skillRadii.ConvertAll(r => r.ToString("0.##"))),
+                                EditorStyles.miniLabel, GUILayout.Width(120));
+            }
+            else
+            {
+                // No skill references this sequence yet → a plain measuring ruler (NOT a gameplay value).
+                flow.Item(32 + 40);   // "ruler" label + field kept together
+                GUILayout.Label("ruler", EditorStyles.miniLabel, GUILayout.Width(32));
+                manualRingR = EditorGUILayout.FloatField(manualRingR, GUILayout.Width(40));
+            }
+            flow.Item(140);
+            EditorGUI.BeginChangeCheck();
+            characterPrefab = (GameObject)EditorGUILayout.ObjectField(characterPrefab, typeof(GameObject), false, GUILayout.Width(140));
+            if (EditorGUI.EndChangeCheck()) BuildRulerSprite();
         }
-        if (GUILayout.Button("⏮", EditorStyles.toolbarButton, GUILayout.Width(30))) { clock = 0f; StopPreviewSounds(); }
-        GUILayout.Label($"{clock:0.00} / {previewDuration:0.00}s", GUILayout.Width(110));
-        clock = GUILayout.HorizontalSlider(clock, 0f, Mathf.Max(0.01f, previewDuration));
-        GUILayout.Space(8);
-        GUILayout.Label("loop end", GUILayout.Width(52));
-        EditorGUI.BeginChangeCheck();
-        float loopField = EditorGUILayout.FloatField(sel.loopEnd <= 0f ? autoDuration : sel.loopEnd, GUILayout.Width(45));
-        if (EditorGUI.EndChangeCheck())
-        {
-            Undo.RecordObject(sel, "Set loop end");
-            sel.loopEnd = loopField >= autoDuration - 1e-3f ? 0f : Mathf.Max(0f, loopField);
-            EditorUtility.SetDirty(sel);
-        }
-        GUILayout.Space(8);
-        if (GUILayout.Button("Reset View", EditorStyles.toolbarButton, GUILayout.Width(80))) ResetView();
-        showRuler = GUILayout.Toggle(showRuler, "Ruler", EditorStyles.toolbarButton, GUILayout.Width(50));
-        GUILayout.Label("h", GUILayout.Width(12));
-        rulerHeight = EditorGUILayout.FloatField(rulerHeight, GUILayout.Width(40));
-        showRadiusRing = GUILayout.Toggle(showRadiusRing, "Radius", EditorStyles.toolbarButton, GUILayout.Width(56));
-        if (skillRadii.Count > 0)
-        {
-            // Read-only mirror of the authoritative SkillTickBinding.radius values — edit them in the Skill Composer.
-            GUILayout.Label("⟵ skill " + string.Join(", ", skillRadii.ConvertAll(r => r.ToString("0.##"))),
-                            EditorStyles.miniLabel, GUILayout.Width(120));
-        }
-        else
-        {
-            // No skill references this sequence yet → a plain measuring ruler (NOT a gameplay value).
-            GUILayout.Label("ruler", EditorStyles.miniLabel, GUILayout.Width(32));
-            manualRingR = EditorGUILayout.FloatField(manualRingR, GUILayout.Width(40));
-        }
-        EditorGUI.BeginChangeCheck();
-        characterPrefab = (GameObject)EditorGUILayout.ObjectField(characterPrefab, typeof(GameObject), false, GUILayout.Width(140));
-        if (EditorGUI.EndChangeCheck()) BuildRulerSprite();
-        EditorGUILayout.EndHorizontal();
 
         // --- timeline ---
         DrawTimeline();
@@ -617,19 +645,19 @@ public class VfxComposerWindow : EditorWindow
         var chip = GUILayoutUtility.GetRect(26, 16, GUILayout.Width(26));
         EditorGUI.DrawRect(chip, tint * 1.6f);
         EditorGUI.LabelField(chip, $"#{i}", EditorStyles.whiteBoldLabel);
-        st.note = EditorGUILayout.TextField(st.note ?? "", GUILayout.Width(140));
-        st.kind = (VfxStepKind)EditorGUILayout.EnumPopup(st.kind, GUILayout.Width(90));
+        st.note = EditorGUILayout.TextField(st.note ?? "", GUILayout.MinWidth(0f), GUILayout.MaxWidth(140));
+        st.kind = (VfxStepKind)EditorGUILayout.EnumPopup(st.kind, GUILayout.MinWidth(0f), GUILayout.MaxWidth(90));
         GUILayout.FlexibleSpace();
         float stepDur = StepWindow(i, st);   // this effect's own length in seconds (flight / clip / shake duration)
-        GUILayout.Label(new GUIContent($"{stepDur:0.00}s", "This effect's duration in seconds"), EditorStyles.miniLabel, GUILayout.Width(48));
-        if (GUILayout.Button("↑", GUILayout.Width(24))) moveUp = i;
-        if (GUILayout.Button("↓", GUILayout.Width(24))) moveDown = i;
-        if (GUILayout.Button("✕", GUILayout.Width(24))) remove = i;
+        GUILayout.Label(new GUIContent($"{stepDur:0.00}s", "This effect's duration in seconds"), EditorStyles.miniLabel, GUILayout.MinWidth(0f), GUILayout.MaxWidth(48));
+        if (GUILayout.Button("↑", GUILayout.MinWidth(0f), GUILayout.MaxWidth(24))) moveUp = i;
+        if (GUILayout.Button("↓", GUILayout.MinWidth(0f), GUILayout.MaxWidth(24))) moveDown = i;
+        if (GUILayout.Button("✕", GUILayout.MinWidth(0f), GUILayout.MaxWidth(24))) remove = i;
         EditorGUILayout.EndHorizontal();
 
         // schedule
         EditorGUILayout.BeginHorizontal();
-        st.schedule = (VfxSchedule)EditorGUILayout.EnumPopup(st.schedule, GUILayout.Width(90));
+        st.schedule = (VfxSchedule)EditorGUILayout.EnumPopup(st.schedule, GUILayout.MinWidth(0f), GUILayout.MaxWidth(90));
         if (st.schedule == VfxSchedule.AtTime)
             st.delay = EditorGUILayout.Slider("start (s)", st.delay, 0f, 6f);
         else
@@ -677,7 +705,13 @@ public class VfxComposerWindow : EditorWindow
             case VfxStepKind.Carrier:
                 st.effectId = IdPopup("effect", st.effectId);
                 st.scale = EditorGUILayout.Slider("scale", st.scale <= 0f ? 1f : st.scale, 0.05f, 5f);
-                st.carrierFrom = EditorGUILayout.Vector3Field("launch from", st.carrierFrom);
+                st.carrierFromCaster = EditorGUILayout.Toggle(new GUIContent("launch from caster",
+                    "On: fly from the caster's live position to the target across the real (variable) gap — set anchor " +
+                    "to Target. Off: fall-in from a fixed offset above where it lands (meteor/drop)."), st.carrierFromCaster);
+                st.carrierFrom = EditorGUILayout.Vector3Field(new GUIContent(
+                    st.carrierFromCaster ? "launch offset (from caster)" : "launch from (above target)",
+                    st.carrierFromCaster ? "Offset from the caster, e.g. (0,1,0) leaves the hand 1 unit up."
+                                         : "Offset from the landing, e.g. (0,9,0) falls from 9 units up."), st.carrierFrom);
                 st.carrierFaceTravel = EditorGUILayout.Toggle("rotate to travel", st.carrierFaceTravel);
                 st.carrierScatter = EditorGUILayout.Slider("scatter", st.carrierScatter, 0f, 3f);
                 st.clipStart = EditorGUILayout.Slider(new GUIContent("clip start (s)",
@@ -685,6 +719,10 @@ public class VfxComposerWindow : EditorWindow
                     st.clipStart, 0f, 3f);
                 st.carrierSpeed = EditorGUILayout.Slider("fly speed", st.carrierSpeed, 1f, 40f);
                 st.carrierMaxLife = EditorGUILayout.Slider("safety cap (s)", st.carrierMaxLife, 0.2f, 6f);
+                if (st.tint.a <= 0f) st.tint = Color.white;   // unset/legacy → no tint
+                st.tint = EditorGUILayout.ColorField(new GUIContent("tint",
+                    "Multiplies the flying effect's authored colour (white = original). Recolour a fire bolt to green/purple, etc."),
+                    st.tint);
                 break;
             case VfxStepKind.Shake:
                 st.shakeStrength = EditorGUILayout.Slider("strength", st.shakeStrength, 0f, 2f);
@@ -1262,9 +1300,14 @@ public class VfxComposerWindow : EditorWindow
         previewSig = null;
     }
 
+    // Preview-only stand-in for the caster: the composer collapses origin==target==world 0, so a "launch from
+    // caster" carrier would have zero flight. Place the caster this far from the impact so its flight is visible.
+    // Runtime uses the real (variable) ctx.origin — this is purely to give the editor something to animate.
+    static readonly Vector3 PreviewCasterOffset = new Vector3(-6f, 0f, 0f);
+
     static float CarrierFlight(VfxStep st)
     {
-        float dist = st.carrierFrom.magnitude;
+        float dist = (st.carrierFromCaster ? PreviewCasterOffset + st.carrierFrom : st.carrierFrom).magnitude;
         return Mathf.Min(dist / Mathf.Max(0.1f, st.carrierSpeed), st.carrierMaxLife);
     }
 
@@ -1463,13 +1506,15 @@ public class VfxComposerWindow : EditorWindow
                 // Mirror the runtime: scatter both the landing (spread around the anchor) and the launch, independently.
                 // Deterministic per (loop, step) — stable while scrubbing a loop, re-rolls each cycle so you SEE it.
                 Vector3 land = anchorPt;
-                Vector3 from = anchorPt + st.carrierFrom;
+                Vector3 fromBase = st.carrierFromCaster ? anchorPt + PreviewCasterOffset : anchorPt;
+                Vector3 from = fromBase + st.carrierFrom;
                 if (st.carrierScatter > 0f)
                 {
                     float sc = st.carrierScatter;
                     land.x += (Hash01(loopSeed, inst.stepIndex * 4 + 0) * 2f - 1f) * sc;
                     land.z += (Hash01(loopSeed, inst.stepIndex * 4 + 1) * 2f - 1f) * sc;
-                    from = land + st.carrierFrom;
+                    Vector3 fb = st.carrierFromCaster ? fromBase : land;
+                    from = fb + st.carrierFrom;
                     from.x += (Hash01(loopSeed, inst.stepIndex * 4 + 2) * 2f - 1f) * sc;
                     from.z += (Hash01(loopSeed, inst.stepIndex * 4 + 3) * 2f - 1f) * sc;
                 }

@@ -75,6 +75,20 @@ public sealed class HotbarBindings
         return true;
     }
 
+    /// <summary>Drop-binding from a drag: routes by the skill's TIER so an Ultimate always lands in the
+    /// dedicated ULT slot and a base skill never can. <paramref name="slot"/> &lt; 0 means the ULT cell was the
+    /// drop target. THE single place the tier→slot rule lives, so drag and click-to-bind agree. Returns true if
+    /// anything changed.</summary>
+    public bool BindFromDrag(int slot, string id)
+    {
+        if (string.IsNullOrEmpty(id)) return false;
+        var def = SkillCatalog.Get(id);
+        bool isUlt = def != null && def.IsUltimate;
+        if (isUlt) return BindUlt(id);          // ultimates always route to the dedicated slot, never keys 1–9
+        if (slot < 0) return false;             // a base skill can't sit in the ULT cell
+        return Bind(slot, id);
+    }
+
     /// <summary>Auto-place a freshly learned skill: an Ultimate goes to the dedicated ULT slot, everything else
     /// to the first empty numbered slot. The single entry point every unlock/grant path calls, so an ultimate
     /// never lands on keys 1–9. Returns true if it bound anywhere (false = already bound / bar full).</summary>

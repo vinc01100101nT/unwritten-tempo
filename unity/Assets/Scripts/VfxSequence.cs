@@ -146,7 +146,13 @@ public class VfxStep
     public bool spreadTicks = false;
 
     [Header("Carrier")]
-    [Tooltip("Launch point offset from the anchor (e.g. (0,9,0) = fall from 9 units up).")]
+    [Tooltip("Launch from the CASTER's live position (ctx.origin) instead of a fixed offset above the landing. " +
+             "On = a real projectile that leaves the caster and flies the actual (variable) gap to the target — set " +
+             "anchor to Target so it LANDS on the impact. Off = fall-in / drop model (launch is a fixed offset from " +
+             "where it lands, e.g. a meteor from straight above).")]
+    public bool carrierFromCaster;
+    [Tooltip("Launch point offset. Off carrierFromCaster: offset from the LANDING anchor (e.g. (0,9,0) = fall from " +
+             "9 units up). On carrierFromCaster: offset from the CASTER (e.g. (0,1,0) = leave the hand 1 unit up).")]
     public Vector3 carrierFrom = new Vector3(0f, 9f, 0f);
     [Tooltip("Random horizontal spread of the launch point, so a salvo reads as a shower.")]
     public float carrierScatter;
