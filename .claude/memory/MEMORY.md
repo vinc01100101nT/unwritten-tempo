@@ -15,6 +15,7 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 - [Apply review fixes, don't gatekeep](apply-review-fixes-dont-gatekeep.md) — fix ALL listed findings or label skips explicitly; silent "not worth it" triage reads as refusal.
 - [Don't agree reflexively](dont-agree-reflexively.md) — critique on merits even when user says "I like this"; reflexive agreement kills the value of a second opinion.
 - [Name knobs concretely, one job, no dead knobs](name-knobs-concretely-one-job.md) — HARD: label every field/effect by the exact thing it changes (never "potency"/"magnitude"); one responsibility each; hide fields that mean nothing in a case.
+- [Peer-to-peer GPT replies](peer-to-peer-gpt-replies.md) — when user pastes a GPT design reply, respond in peer voice addressed to GPT, paste-ready, grounded in real code.
 
 ## Grouped sub-indexes (open on demand)
 - 🗂 [Character / rig / stance / animation](index/character-rig-stance.md) — Mixamo/Quaternius rigging, stance system, IStancePose, gait, caster grounding (11).

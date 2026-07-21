@@ -19,22 +19,25 @@ public enum SkillTier { Base, Ultimate }
 
 /// <summary>The battlefield-role archetype (the skill's TAG) — the coherence family from the design doc. Drives the
 /// tooltip chip + color; elements are deferred, so this is the identity that matters.</summary>
-public enum SkillArchetype { Burst, Tempo, Fortress, Sustain, Empower, Corrupt }
+public enum SkillArchetype { Burst, Tempo, Fortress, Buff, Curse }
 
-/// <summary>The role CATEGORY shown on the card (orthogonal to <see cref="SkillTier"/> — an Ultimate is a tier, not a
-/// category).</summary>
-public enum SkillCategory { Attack, Utility, Buff }
+/// <summary>The attribute FAMILY a skill belongs to — the RPS-triangle cluster the player steers into (design doc
+/// "Combat Ontology"). Orthogonal to <see cref="SkillArchetype"/> (a verb can live in any family). Also the DEFAULT
+/// source for a damage effect's <see cref="DamageType"/> (Might→Physical, Arcane→Magic, Finesse→Crit) — but any
+/// effect may override that per-effect.</summary>
+public enum SkillFamily { Might, Arcane, Finesse }
 
-/// <summary>Per-level growth for one binding. Kept to a couple of linear knobs for now (swap to a curve later if
-/// non-linear scaling is wanted). Level 1 = the authored values; each level over 1 adds these.</summary>
-[System.Serializable]
-public class SkillLevelScale
-{
-    [Tooltip("Added to every Damage effect's × multiplier per level over 1 (e.g. 0.2 → +0.2× per level).")]
-    public float damageMultPerLevel = 0.2f;
-    [Tooltip("Flat damage added per level over 1 (before element/DEF). 0 = pure multiplier scaling.")]
-    public int flatBonusPerLevel = 0;
-}
+/// <summary>The spatial DELIVERY of a skill (design doc: single / area / aura / self / dash). Duration and aim are
+/// separate properties, NOT shapes (AoE-vs-zone was merged into <see cref="Area"/>).</summary>
+public enum SkillShape { Single, Area, Aura, Self, Dash }
+
+/// <summary>Designer-facing production metadata (NOT gameplay, never shown to players) — lets "give the early player
+/// another simple Burst" be a searchable query when the library grows to ~80 skills.</summary>
+public enum SkillComplexity { Low, Medium, High }
+
+/// <summary>Designer-facing organisation metadata (NOT gameplay) — keeps early and late skills from intermixing in
+/// the authoring lists.</summary>
+public enum AcquisitionTier { Early, Mid, Late }
 
 /// <summary>Binds ONE exposed <see cref="VfxStep.tickId"/> to the gameplay it should do. The tickId matches a
 /// step in the skill's <see cref="SkillDef.vfx"/>; every time that component ticks, the runner applies these
@@ -52,8 +55,6 @@ public class SkillTickBinding
     public float radius = 1.5f;
     [Tooltip("What each tick does — applied through the shared SkillEffectApplier (the one damage path).")]
     public List<SkillEffect> effects = new List<SkillEffect>();
-    [Tooltip("Per-level growth applied to this binding's damage effects.")]
-    public SkillLevelScale scale = new SkillLevelScale();
 }
 
 /// <summary>
@@ -80,10 +81,17 @@ public class SkillDef : ScriptableObject
     [TextArea(2, 4)]
     [Tooltip("Flavor + mechanics blurb shown in the hover card.")]
     public string description = "";
-    [Tooltip("Battlefield-role archetype (the skill's TAG) — drives the tooltip chip + color.")]
+    [Tooltip("Battlefield-role VERB (the skill's TAG) — drives the tooltip chip + color. One of the 5 verbs.")]
     public SkillArchetype archetype = SkillArchetype.Burst;
-    [Tooltip("Role category on the card (Attack / Utility / Buff). Ultimate is the separate tier flag, not a category.")]
-    public SkillCategory category = SkillCategory.Attack;
+    [Tooltip("Attribute FAMILY (Might/Arcane/Finesse) — the RPS-triangle cluster; also the default source of a damage " +
+             "effect's damage type. Orthogonal to the verb above.")]
+    public SkillFamily family = SkillFamily.Might;
+    [Tooltip("Spatial DELIVERY (single / area / aura / self / dash).")]
+    public SkillShape shape = SkillShape.Single;
+    [Tooltip("Designer metadata (not gameplay): authoring complexity, for library search.")]
+    public SkillComplexity complexity = SkillComplexity.Low;
+    [Tooltip("Designer metadata (not gameplay): when in progression this skill is meant to surface.")]
+    public AcquisitionTier acquisitionTier = AcquisitionTier.Early;
 
     [Header("Cost / cadence")]
     public int manaCost = 10;
@@ -91,7 +99,6 @@ public class SkillDef : ScriptableObject
     [Tooltip("Base cast wind-up in seconds BEFORE the skill fires (the cast bar fills over this). 0 = instant. " +
              "The caster's DEX shortens it at runtime via Character.CastTimeMult (instacast at 150 DEX).")]
     [Min(0f)] public float castTime = 0f;
-    [Range(1, 20)] public int maxLevel = 10;
     [Tooltip("How the skill picks where it lands.")]
     public SkillAim aim = SkillAim.Ground;
     [Tooltip("Ground/Target aim: max distance from the caster the impact point can be.")]

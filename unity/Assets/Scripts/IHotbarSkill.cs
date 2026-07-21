@@ -32,15 +32,3 @@ public interface IHotbarSkill
     /// <summary>Fire the skill now (same target/MP/cooldown rules as the keypress). Returns true if it fired.</summary>
     bool Activate();
 }
-
-/// <summary>Opt-in marker for an active that carries a six-phase modifier loadout (Charter §12). Only
-/// skills that actually roll modifiers implement this — the hotbar uses it to show a loadout tooltip and
-/// the skill uses its <see cref="SkillModTags"/> to register with <see cref="SkillModBook"/>. Keeping it
-/// separate from <see cref="IHotbarSkill"/> means the non-modifiable actives stay untouched.</summary>
-public interface IModifiableSkill
-{
-    /// <summary>Stable id this skill's loadout is keyed by in <see cref="SkillModBook"/> (e.g. "bash").</summary>
-    string SkillModId { get; }
-    /// <summary>The eligibility tags that decide which modifiers can roll onto this skill.</summary>
-    string[] SkillModTags { get; }
-}

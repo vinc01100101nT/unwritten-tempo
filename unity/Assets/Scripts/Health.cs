@@ -133,7 +133,7 @@ public class Health : MonoBehaviour
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
 
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult));
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult * Combat.MagicGlanceMult(flee)));
         Current = Mathf.Max(0, Current - dmg);
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
@@ -155,7 +155,7 @@ public class Health : MonoBehaviour
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
 
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult));
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult * Combat.MagicGlanceMult(flee)));
         bool wasAlive = !IsDead;
         Current = Mathf.Max(0, Current - dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
@@ -227,6 +227,7 @@ public class Health : MonoBehaviour
         var ch = Character.Instance;
         if (ch == null || dmgDealt <= 0) return;
         ch.AddUltCharge(dmgDealt * Character.UltChargePerDamageDealt);   // this is the one player-dealt-damage choke — dealing damage builds ult charge
+        if (ch.WeaponManaLeechPct > 0f) ch.GainMana(Mathf.RoundToInt(dmgDealt * ch.WeaponManaLeechPct));   // weapon Mana-Leech affix
         if (ch.LifeStealPct <= 0f) return;
         ch.LeechHeal(Mathf.RoundToInt(dmgDealt * ch.LifeStealPct));
     }

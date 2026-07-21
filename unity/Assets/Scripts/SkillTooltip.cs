@@ -25,9 +25,8 @@ public static class SkillTooltip
             case SkillArchetype.Burst:    return "Burst";
             case SkillArchetype.Tempo:    return "Tempo";
             case SkillArchetype.Fortress: return "Fortress";
-            case SkillArchetype.Sustain:  return "Sustain";
-            case SkillArchetype.Empower:  return "Empower";
-            case SkillArchetype.Corrupt:  return "Corrupt";
+            case SkillArchetype.Buff:     return "Buff";
+            case SkillArchetype.Curse:    return "Curse";
             default:                      return a.ToString();
         }
     }
@@ -39,14 +38,16 @@ public static class SkillTooltip
             case SkillArchetype.Burst:    return new Color(0.95f, 0.48f, 0.29f);
             case SkillArchetype.Tempo:    return new Color(0.95f, 0.82f, 0.29f);
             case SkillArchetype.Fortress: return new Color(0.56f, 0.70f, 1f);
-            case SkillArchetype.Sustain:  return new Color(0.37f, 0.88f, 0.55f);
-            case SkillArchetype.Empower:  return new Color(1f, 0.88f, 0.54f);
-            case SkillArchetype.Corrupt:  return new Color(0.70f, 0.48f, 0.85f);
+            case SkillArchetype.Buff:     return new Color(0.37f, 0.88f, 0.55f);
+            case SkillArchetype.Curse:    return new Color(0.70f, 0.48f, 0.85f);
             default:                      return Color.white;
         }
     }
 
     static string Hex(Color c) => "#" + ColorUtility.ToHtmlStringRGB(c);
+
+    // Damage-resolution word for the card (Physical / Magic / Crit — the RPS-triangle axis).
+    static string DmgWord(DamageType t) => t == DamageType.Magic ? "magic" : t == DamageType.Crit ? "crit" : "physical";
 
     /// <summary>The full rich-text card body for <paramref name="def"/> (title through effects).</summary>
     public static string Build(SkillDef def)
@@ -62,7 +63,7 @@ public static class SkillTooltip
         // Tag (archetype) + category chips.
         sb.Append("<color=").Append(Hex(ArchetypeColor(def.archetype))).Append("><b>")
           .Append(ArchetypeName(def.archetype)).Append("</b></color>")
-          .Append("  <color=").Append(Chip).Append('>').Append(def.category).Append("</color>\n");
+          .Append("  <color=").Append(Chip).Append('>').Append(def.family).Append("</color>\n");
 
         // Cost / cadence line.
         sb.Append("<color=").Append(Chip).Append(">MP </color>").Append(Hl(def.manaCost.ToString()));
@@ -89,10 +90,22 @@ public static class SkillTooltip
                     if (!string.IsNullOrEmpty(line)) sb.Append("\n• ").Append(line);
                 }
             }
+
+        // Live ring/weapon reshapers — reads current investment + equipped weapon, so the card is always up to
+        // date. The section header is dropped entirely when nothing is active (no empty "Ring & Weapon" heading).
+        int mark = sb.Length;
+        sb.Append("\n\n<color=").Append(Chip).Append("><b>Ring & Weapon</b></color>");
+        int afterHeader = sb.Length;
+        WeaponAffixes.AppendSummary(Character.Instance, sb, def);
+        RingVoices.AppendSummary(Character.Instance, sb, def);
+        if (sb.Length == afterHeader) sb.Length = mark;
+
         return sb.ToString();
     }
 
-    static string DescribeEffect(SkillEffect e)
+    /// <summary>One human-readable line for a single effect ("Reduces damage taken 30% for 6s", "+20% move speed
+    /// for 5s"), with its variable numbers highlighted. Shared by the skill card AND the buff-bar hover card.</summary>
+    public static string DescribeEffect(SkillEffect e)
     {
         if (e == null) return null;
         switch (e.kind)
@@ -101,12 +114,12 @@ public static class SkillTooltip
             {
                 var ch = Character.Instance;
                 float mult = e.damageMult <= 0f ? 1f : e.damageMult;
-                string s = "Deals " + Hl(mult.ToString("0.##") + "×") + (e.magic ? " magic" : " physical") + " damage";
+                string s = "Deals " + Hl(mult.ToString("0.##") + "×") + " " + DmgWord(e.damageType) + " damage";
                 if (ch != null)
                 {
                     // Mirror the runtime roll: base attack × mult × the damage-affinity scaling (ring investment).
                     float aff = SkillEffectApplier.AffinityMult(e.affinity);
-                    int est = Mathf.RoundToInt((e.magic ? ch.MaxMagicAttack : ch.MaxAttack) * mult * aff);
+                    int est = Mathf.RoundToInt((e.damageType == DamageType.Magic ? ch.MaxMagicAttack : ch.MaxAttack) * mult * aff);
                     if (est > 0) s += " (~" + Hl(est.ToString()) + ")";
                 }
                 int hits = SkillEffectApplier.EffectiveHits(e);   // affinity-scaled, matches what actually lands
@@ -130,7 +143,7 @@ public static class SkillTooltip
             }
             case SkillEffectKind.Execute:
                 return (e.chance > 0f ? Pct(e.chance) + " per hit: " : "")
-                     + "execute — bonus " + (e.magic ? "magic" : "physical") + " damage scaling with the target's missing HP (×" + Hl(e.magnitude.ToString("0.##")) + ")";
+                     + "execute — bonus " + DmgWord(e.damageType) + " damage scaling with the target's missing HP (×" + Hl(e.magnitude.ToString("0.##")) + ")";
             case SkillEffectKind.Heal:          return "Heals " + Hl(e.amount.ToString()) + " HP";
             case SkillEffectKind.Guard:         return "Reduces damage taken " + Pct(Mathf.Clamp01(e.magnitude)) + " for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Taunt:         return "Taunts nearby enemies for " + Hl(e.seconds.ToString("0.#") + "s");

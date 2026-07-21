@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: War Banner
   icon: {fileID: 6969427886737629405, guid: 3964ad93b5f03fc4d8bc30d5f55a7756, type: 3}
   description: "Raise a rallying banner so you and nearby allies deal more damage for a while."
-  archetype: 4
+  archetype: 3
   category: 2
   manaCost: 20
   cooldown: 18

@@ -17,6 +17,7 @@ public class PlayerBuffs
     {
         public Sprite icon;
         public string name;
+        public string description;   // short "what it does" line for the hover card (from the source effect)
         public float startTime;
         public float endTime;
         public Color tint;
@@ -35,7 +36,7 @@ public class PlayerBuffs
 
     /// <summary>Apply/refresh a display buff: <paramref name="seconds"/> from now, under <paramref name="name"/>
     /// (re-casting the same skill just extends its cell). No-op for a non-positive window or a null name.</summary>
-    public void Add(Sprite icon, string name, float seconds, Color tint)
+    public void Add(Sprite icon, string name, float seconds, Color tint, string description = null)
     {
         if (seconds <= 0f || string.IsNullOrEmpty(name)) return;
         float now = Time.time;
@@ -43,13 +44,14 @@ public class PlayerBuffs
         {
             if (active[i].name != name) continue;
             active[i].icon = icon;
+            active[i].description = description;
             active[i].startTime = now;
             active[i].endTime = now + seconds;
             active[i].tint = tint;
             OnChanged?.Invoke();
             return;
         }
-        active.Add(new Buff { icon = icon, name = name, startTime = now, endTime = now + seconds, tint = tint });
+        active.Add(new Buff { icon = icon, name = name, description = description, startTime = now, endTime = now + seconds, tint = tint });
         OnChanged?.Invoke();
     }
 

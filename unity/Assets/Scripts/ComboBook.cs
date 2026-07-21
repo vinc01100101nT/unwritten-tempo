@@ -138,7 +138,7 @@ public class ComboBook
             for (int s = 0; s < ComboChain.Slots; s++)
             {
                 string id = s < parts.Length ? parts[s] : "";
-                ch.skillIds[s] = SkillRoster.IsKnownId(id) ? id : "";   // drop retired skills, like Hotbar.Restore
+                ch.skillIds[s] = SkillCatalog.IsKnown(id) ? id : "";   // drop retired skills, like Hotbar.Restore
             }
             chains.Add(ch);
         }

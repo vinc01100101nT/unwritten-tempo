@@ -28184,7 +28184,7 @@
       "z": 33.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28194,7 +28194,7 @@
       "z": 34.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28204,7 +28204,7 @@
       "z": 35.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28214,7 +28214,7 @@
       "z": 36.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28224,7 +28224,7 @@
       "z": 37.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28234,7 +28234,7 @@
       "z": 38.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28244,7 +28244,7 @@
       "z": 39.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28254,7 +28254,7 @@
       "z": 40.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28264,7 +28264,7 @@
       "z": 41.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28274,7 +28274,7 @@
       "z": 42.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28284,7 +28284,7 @@
       "z": 43.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28294,7 +28294,7 @@
       "z": 44.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28304,7 +28304,7 @@
       "z": 45.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28314,7 +28314,7 @@
       "z": 46.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28324,7 +28324,7 @@
       "z": 46.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28334,7 +28334,7 @@
       "z": 46.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28344,7 +28344,7 @@
       "z": 46.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28354,7 +28354,7 @@
       "z": 46.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28364,7 +28364,7 @@
       "z": 46.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -28374,7 +28374,7 @@
       "z": 46.5,
       "yaw": 0,
       "wall": "Wall_part1",
-      "tower": "Wall_tower1",
+      "tower": "Wall_tower2",
       "thickness": 1
     },
     {
@@ -29243,6 +29243,2146 @@
       "x": 16.5,
       "z": 33.5,
       "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 16.5,
+      "z": 29.5,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 14.5,
+      "z": 29.5,
+      "yaw": 180
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 12.5,
+      "z": 29.5,
+      "yaw": 270
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_C",
+      "x": 14.029,
+      "z": 26.935,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_D",
+      "x": 14.783,
+      "z": 20.369,
+      "yaw": 135.61605990839922
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_D",
+      "x": 31.318,
+      "z": 19.609,
+      "yaw": 180
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_C",
+      "x": 35.186,
+      "z": 25.45,
+      "yaw": -90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_C",
+      "x": 14.033,
+      "z": 39.025,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 12.5,
+      "z": 24.5,
+      "yaw": 105
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 12.5,
+      "z": 22.5,
+      "yaw": 195
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 36.5,
+      "z": 22.5,
+      "yaw": 195
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 34.5,
+      "z": 20.5,
+      "yaw": 285
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 36.5,
+      "z": 29.5,
+      "yaw": 285
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 34.5,
+      "z": 29.5,
+      "yaw": 15
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 32.5,
+      "z": 29.5,
+      "yaw": 105
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 28.5,
+      "z": 18.5,
+      "yaw": 195
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 28.5,
+      "z": 20.5,
+      "yaw": 285
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 20.5,
+      "z": 18.5,
+      "yaw": 285
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 20.5,
+      "z": 20.5,
+      "yaw": 15
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 18.5,
+      "z": 18.5,
+      "yaw": 15
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 16.5,
+      "z": 18.5,
+      "yaw": 105
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 18.5,
+      "z": 20.5,
+      "yaw": 195
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_B",
+      "x": 22.084,
+      "z": 37.644,
+      "yaw": 91.75340486007146
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_B",
+      "x": 26.898,
+      "z": 37.565,
+      "yaw": -89.06080905426452
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 33.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 34.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 35.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 36.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 37.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 38.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 39.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 40.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 41.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 42.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 43.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 44.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 45.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 46.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 47.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 48.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 49.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 50.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 51.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 52.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 53.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 54.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 55.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 56.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 57.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 3.5,
+      "z": 58.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 4.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 5.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 6.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 7.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 8.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 9.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 10.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 11.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 12.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 13.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 14.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 15.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 16.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 17.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 18.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 19.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 20.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 21.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 22.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 26.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 27.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 28.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 29.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 30.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 31.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 32.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 33.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 34.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 35.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 36.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 37.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 38.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 39.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 40.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 41.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 42.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 43.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 44.5,
+      "z": 59.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 45.5,
+      "z": 58.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 57.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 56.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 55.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 54.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 53.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 52.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 51.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 50.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 49.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 48.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 47.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 46.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 45.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 44.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 43.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 42.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 41.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 40.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 39.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 38.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 37.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 36.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 35.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 34.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 33.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 29.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 28.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 27.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 26.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 25.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 24.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 23.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 22.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 21.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 20.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 19.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 18.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 17.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 16.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 15.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 14.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 13.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 12.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 11.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 10.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 9.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 8.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 7.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 6.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 5.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 46.5,
+      "z": 4.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 45.5,
+      "z": 3.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 44.5,
+      "z": 2.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 43.5,
+      "z": 2.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 42.5,
+      "z": 2.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 41.5,
+      "z": 2.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 35.5,
+      "z": 8.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 36.5,
+      "z": 7.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 37.5,
+      "z": 6.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 38.5,
+      "z": 5.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 39.5,
+      "z": 4.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 40.5,
+      "z": 3.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 14.5,
+      "z": 8.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 13.5,
+      "z": 7.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 12.5,
+      "z": 6.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 11.5,
+      "z": 5.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 10.5,
+      "z": 4.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 9.5,
+      "z": 3.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 8.5,
+      "z": 2.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 7.5,
+      "z": 2.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 6.5,
+      "z": 2.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 5.5,
+      "z": 2.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 4.5,
+      "z": 2.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 3.5,
+      "z": 3.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 4.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 5.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 6.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 7.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 8.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 9.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 10.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 11.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 12.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 13.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 14.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 15.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 16.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 17.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 18.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 19.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 20.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 21.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 22.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 23.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 24.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 25.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 26.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 27.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 28.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "wall",
+      "prefab": "",
+      "x": 2.5,
+      "z": 29.5,
+      "yaw": 0,
+      "wall": "Wall_part1",
+      "tower": "Wall_tower2",
+      "thickness": 1
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_C",
+      "x": 5.127,
+      "z": 6.213,
+      "yaw": 134.99999999999997
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_D",
+      "x": 7.918,
+      "z": 26.939,
+      "yaw": 91.29022735206046
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_D",
+      "x": 9.272,
+      "z": 53.502,
+      "yaw": 46.218875235131335
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_A",
+      "x": 12.233,
+      "z": 8.751,
+      "yaw": 180
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_A",
+      "x": 4.45,
+      "z": 38.528,
+      "yaw": 90.7440592028887
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_C",
+      "x": 4.873,
+      "z": 35.144,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_C",
+      "x": 10.287,
+      "z": 47.495,
+      "yaw": 43.55587446906419
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_D",
+      "x": 4.111,
+      "z": 43.942,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_A",
+      "x": 4.281,
+      "z": 47.58,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_A",
+      "x": 4.582,
+      "z": 57.102,
+      "yaw": 46.974934010881974
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_A",
+      "x": 4.302,
+      "z": 54.655,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_C",
+      "x": 4.721,
+      "z": 51.019,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 3.5,
+      "z": 56.5,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 5.5,
+      "z": 58.5,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 4.5,
+      "z": 55.5,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 3.5,
+      "z": 53.5,
+      "yaw": 180
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 3.5,
+      "z": 48.5,
+      "yaw": 270
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Willow_tree2",
+      "x": 8.5,
+      "z": 57.5,
+      "yaw": 270
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_C",
+      "x": 12.5,
+      "z": 57.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_A",
+      "x": 15.418,
+      "z": 57.941,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_A",
+      "x": 18.914,
+      "z": 57.871,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_B",
+      "x": 17.166,
+      "z": 58.081,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_C",
+      "x": 21.221,
+      "z": 57.381,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_C",
+      "x": 20.662,
+      "z": 51.369,
+      "yaw": 90
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 22.5,
+      "z": 58.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 22.5,
+      "z": 55.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 22.5,
+      "z": 53.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 14.5,
+      "z": 58.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 14.5,
+      "z": 57.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 10.5,
+      "z": 58.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 12.5,
+      "z": 52.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 13.5,
+      "z": 51.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 14.5,
+      "z": 50.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 17.5,
+      "z": 49.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 19.5,
+      "z": 49.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 12.5,
+      "z": 47.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 11.5,
+      "z": 48.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 10.5,
+      "z": 49.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 9.5,
+      "z": 50.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 8.5,
+      "z": 48.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 5.5,
+      "z": 48.5,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 3.603,
+      "z": 46.335,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 3.813,
+      "z": 41.441,
+      "yaw": 0
+    },
+    {
+      "brush": "house_a",
+      "prefab": "Pine_tree3",
+      "x": 4.092,
+      "z": 40.113,
+      "yaw": 15
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_A",
+      "x": 7.937,
+      "z": 40.113,
+      "yaw": 2.2906100426385425
+    },
+    {
+      "brush": "house_a",
+      "prefab": "House_A",
+      "x": 7.518,
+      "z": 44.238,
+      "yaw": 47.290610042638484
     }
   ]
 }

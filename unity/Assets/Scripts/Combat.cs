@@ -42,4 +42,15 @@ public static class Combat
         float afterHard = atk * (1f - Mathf.Clamp(hardDefPercent, 0, 100) / 100f);
         return afterHard - softDef;
     }
+
+    // Magic can't be dodged, but an evasive (high-FLEE) defender takes GLANCING magic — a PARTIAL reduction, never a
+    // miss (design "Combat Ontology": magic is dodge-RESISTANT, not undodgeable). This is the Arcane→Finesse edge of
+    // the RPS triangle. The rule is final; these two numbers are PLACEHOLDERS — tune in balance, don't rewrite logic.
+    public const float MagicGlancePerFlee = 0.004f;     // damage fraction shaved per point of defender FLEE
+    public const float MagicGlanceMaxReduction = 0.5f;  // cap — a spell always keeps at least half its bite
+
+    /// <summary>Damage multiplier a spell keeps against a defender with <paramref name="defenderFlee"/> FLEE:
+    /// 1 at zero evasion, falling to <c>1 − <see cref="MagicGlanceMaxReduction"/></c>. Never a full miss.</summary>
+    public static float MagicGlanceMult(int defenderFlee)
+        => 1f - Mathf.Clamp(defenderFlee * MagicGlancePerFlee, 0f, MagicGlanceMaxReduction);
 }

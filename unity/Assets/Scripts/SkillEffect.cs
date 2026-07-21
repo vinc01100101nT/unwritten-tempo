@@ -20,7 +20,8 @@ public struct StatWeight
 public enum SkillTargets
 {
     None   = 0,
-    Player = 1 << 0,
+    Player = 1 << 0,   // the caster (self). TODO(party): ALLY targeting for support cross-buffing needs a party
+                       // system first — until allies exist, buffs land on the caster only (design "Support Scaling").
     Mobs   = 1 << 1,
     Npc    = 1 << 2,   // reserved: wired once NPCs become damageable
 }
@@ -84,6 +85,14 @@ public enum SkillEffectKind
 /// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window.</summary>
 public enum BuffStat { Damage, AttackSpeed, CastSpeed, MoveSpeed }
 
+/// <summary>How a Damage/Execute effect RESOLVES — the RPS-triangle axis (design doc "Combat Ontology"). Serialized
+/// by int, so order is load-bearing: <c>Physical=0, Magic=1, Crit=2</c> (a legacy <c>magic:1</c> bool migrates to
+/// Magic for free — same int, so old assets keep their behaviour with no data patch). Physical → ATK vs armour;
+/// Magic → MATK, unmissable, glances vs Evasion, cannot crit; Crit → physical that PIERCES armour and always crits.
+/// NOTE: the full pierce/glance math lands in a later combat pass (it touches <c>Health</c>); for now Physical/Magic
+/// behave exactly as the old bool and Crit routes the physical roll with a forced crit.</summary>
+public enum DamageType { Physical, Magic, Crit }
+
 /// <summary>One gameplay OUTCOME a skill tick applies. Presentation-neutral INTENT — the central
 /// <see cref="SkillEffectApplier"/> maps it onto the SAME combat sinks skills already call (no second damage
 /// path). Damage scales off the caster so a tick tracks the caster's stats/crit like every other skill. This is
@@ -94,9 +103,11 @@ public class SkillEffect
     public SkillEffectKind kind = SkillEffectKind.Damage;
 
     [Header("Damage")]
-    [Tooltip("Magic (MATK vs MDEF, unmissable) vs physical (ATK vs DEF, as an always-lands skill hit).")]
-    public bool magic = true;
-    [Tooltip("Damage = the caster's rolled ATK/MATK × this. 1 = one normal hit. (Level scaling is added on top.)")]
+    [Tooltip("How the hit resolves: Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (physical " +
+             "that pierces armour & always crits). Default Magic — matches every pre-migration bool-magic skill.")]
+    public DamageType damageType = DamageType.Magic;
+    [Tooltip("BASE POWER — the skill's inherent strength (1 = one normal hit; a heavy nuke is higher). Affinity picks " +
+             "WHICH stats scale it; this sets HOW BIG. Final = caster ATK/MATK × base power × affinity. No skill levels.")]
     public float damageMult = 1f;
     [Tooltip("Attack element (RO property), checked against the target's armor element.")]
     public Element element = Element.Neutral;
@@ -125,8 +136,22 @@ public class SkillEffect
     [Range(0f, 1f)] public float chance = 0f;
 
     [Header("Buff (Buff kind)")]
-    [Tooltip("Which self-stat the Buff kind lifts for its window (magnitude = multiplier, seconds = duration).")]
+    [Tooltip("Which self-stat the Buff kind lifts for its window. magnitude = the FLAT multiplier (AMPLIFY buffs " +
+             "are NOT affinity-scaled — support value comes from uptime, not a bigger number); seconds = duration " +
+             "(this DOES scale off sustain stats via durationAffinity).")]
     public BuffStat buffStat = BuffStat.Damage;
+
+    [Header("Buff RAMP (Damage buff only — EXPERIMENTAL, design 'Support Scaling')")]
+    [Tooltip("Seconds before the ramp begins. 0 (with rampPerStep 0) = a plain flat buff, no ramp. Only the Damage " +
+             "buffStat ramps for now (War Banner prototype).")]
+    [Min(0f)] public float rampDelay = 0f;
+    [Tooltip("Multiplier ADDED each interval once ramping (0.05 = +5% Atk per step). 0 = no ramp.")]
+    [Min(0f)] public float rampPerStep = 0f;
+    [Tooltip("Seconds between ramp steps.")]
+    [Min(0.1f)] public float rampInterval = 5f;
+    [Tooltip("Ceiling for the ramped multiplier (1.5 = caps at +50%). 0 = uncapped. Longer duration (more MP) reaches " +
+             "a higher point on the ramp before it ends — that's the support's contribution.")]
+    [Min(0f)] public float rampCap = 0f;
 
     [Header("Affinity (ring-investment scaling)")]
     [Tooltip("Scales this effect's main OUTPUT by ring investment — its damage / heal amount / DoT damage / buff " +

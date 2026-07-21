@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +21,10 @@ public class ItemTooltip : MonoBehaviour
     public RectTransform panel;
     public TMP_Text titleText;
     public TMP_Text bodyText;
+
+    [Tooltip("Horizontal strip (HorizontalLayoutGroup) filled with the weapon's granted-skill icons. Optional.")]
+    public RectTransform skillRow;
+    readonly List<Image> skillIcons = new List<Image>();   // lazily-grown pool of icon cells under skillRow
 
     [Tooltip("Pixel offset from the cursor, before screen clamping.")]
     public Vector2 cursorOffset = new Vector2(18, -18);
@@ -63,6 +68,7 @@ public class ItemTooltip : MonoBehaviour
         titleText.text = item.displayName;
         titleText.color = Rarities.Text(item.rarity);
         bodyText.text = Describe(item);
+        ShowSkillIcons(item);
         group.alpha = 1f;
         Follow();   // place it now so it doesn't flash at the previous spot for a frame
     }
@@ -74,6 +80,7 @@ public class ItemTooltip : MonoBehaviour
         titleText.text = (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + def.displayName;
         titleText.color = Rarities.Text(def.rarity);
         bodyText.text = DescribeInstance(inst);
+        ShowSkillIcons(def);
         group.alpha = 1f;
         Follow();
     }
@@ -110,8 +117,42 @@ public class ItemTooltip : MonoBehaviour
             AppendDeltaPct(sb, "CRIT", before.critChance, after.critChance);
         }
         bodyText.text = sb.ToString();
+        ShowSkillIcons(def);
         group.alpha = 1f;
         Follow();
+    }
+
+    // Fill the icon strip with the weapon's granted-skill icons (V2), or hide it for items that grant none.
+    void ShowSkillIcons(Item item)
+    {
+        if (skillRow == null) return;
+        var ids = item != null ? item.grantedSkillIds : null;
+        int shown = 0;
+        if (ids != null)
+            for (int i = 0; i < ids.Count; i++)
+            {
+                var def = SkillCatalog.Get(ids[i]);
+                if (def == null || def.icon == null) continue;
+                GetIcon(shown++).sprite = def.icon;
+            }
+        for (int i = 0; i < skillIcons.Count; i++) skillIcons[i].gameObject.SetActive(i < shown);
+        skillRow.gameObject.SetActive(shown > 0);
+    }
+
+    // Pooled icon cell i under skillRow — grows the pool on demand (only on hover, so no hot-path alloc).
+    Image GetIcon(int i)
+    {
+        while (skillIcons.Count <= i)
+        {
+            var go = new GameObject("SkillIcon", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(skillRow, false);
+            var im = go.GetComponent<Image>();
+            im.preserveAspect = true; im.raycastTarget = false;
+            var le = go.AddComponent<LayoutElement>();
+            le.preferredWidth = le.preferredHeight = 22;
+            skillIcons.Add(im);
+        }
+        return skillIcons[i];
     }
 
     void Update() { if (group.alpha > 0f) Follow(); }
@@ -133,6 +174,7 @@ public class ItemTooltip : MonoBehaviour
         var sb = new StringBuilder();
         AppendHeader(sb, item);
         AppendItemStats(sb, item);
+        AppendGrantedSkills(sb, item);
         if (item.healAmount > 0)
             sb.Append("\n<color=#7FD1C9>Heals ").Append(item.healAmount).Append(" HP  (right-click)</color>");
         AppendFooter(sb, item);
@@ -145,6 +187,7 @@ public class ItemTooltip : MonoBehaviour
         var def = inst.def;
         AppendHeader(sb, def);
         AppendItemStats(sb, def);
+        AppendGrantedSkills(sb, def);
         if (inst.upgrade > 0)
             sb.Append("\n<color=#F5B942>Enhancement +").Append(inst.upgrade).Append("</color>");
 
@@ -187,6 +230,19 @@ public class ItemTooltip : MonoBehaviour
         AppendStat(sb, "LUK", item.bonusLuk);
         AppendStat(sb, "CRIT", item.bonusCritPercent, "%");
         AppendStat(sb, "ASPD", item.bonusAspdPercent, "%");
+    }
+
+    // "Grants skills" block — the weapon's kit (V2: the weapon owns its skills). Resolves each id to its display name.
+    static void AppendGrantedSkills(StringBuilder sb, Item item)
+    {
+        var ids = item.grantedSkillIds;
+        if (ids == null || ids.Count == 0) return;
+        sb.Append("\n<color=#B9B9B9>Grants skills</color>");
+        for (int i = 0; i < ids.Count; i++)
+        {
+            var def = SkillCatalog.Get(ids[i]);
+            sb.Append("\n  <color=#8FB7E0>◈ ").Append(def != null ? def.displayName : ids[i]).Append("</color>");
+        }
     }
 
     static void AppendFooter(StringBuilder sb, Item item)

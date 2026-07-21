@@ -96,7 +96,6 @@ public class HotbarPanel : MonoBehaviour
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
         if (DevSettings.Blocking) return;
-        if (!Character.Instance.RingEquipped) return;   // no ring → actives suppressed (diminished, not erased)
         for (int i = 0; i < slots.Count; i++)
         {
             if (!SlotKeyDown(i)) continue;
@@ -107,8 +106,9 @@ public class HotbarPanel : MonoBehaviour
         if (ult != null && ult.skill != null && Hotkeys.Down(KeyCode.R) && ult.skill.Activate()) UISounds.PlayClick();
     }
 
-    /// <summary>True when active skills may fire — a ring must be worn (the gate for the whole active layer).</summary>
-    static bool SkillsEnabled => Character.Instance != null && Character.Instance.RingEquipped;
+    /// <summary>True when active skills may fire. Skills come from the equipped weapon now, so they're no longer
+    /// gated by the ring — a bound skill just works (the bar is empty anyway without a weapon/Grimoire binding).</summary>
+    static bool SkillsEnabled => Character.Instance != null;
 
     static bool SlotKeyDown(int i) => Hotkeys.DigitDown(i);
 

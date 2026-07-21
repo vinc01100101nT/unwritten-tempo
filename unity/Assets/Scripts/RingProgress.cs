@@ -2,14 +2,13 @@ using System;
 
 /// <summary>
 /// The Ring of Progression — the player's life's-work VESSEL. It carries its OWN level + XP
-/// (separate from the character's), and OWNS the two systems that hang off ring progress:
-///   • <see cref="Passives"/> — the Trio-Ring passive draft (the % multiplier layer), and
-///   • <see cref="Skills"/>   — the class-agnostic active-skill ownership.
+/// (separate from the character's), and OWNS the Trio-Ring passive draft that hangs off ring progress:
+///   • <see cref="Passives"/> — the Trio-Ring passive draft (the % multiplier layer).
+/// (Active skills no longer live on the ring — they're owned by the equipped WEAPON.)
 ///
 /// Design (see the "Ring of Progression" design doc): the ring levels in PARALLEL with the
 /// character (the same kills feed both — see <see cref="Character.AddXP"/>). Every RING level-up
-/// banks one passive draft point (the grant moved OFF character level). Active-skill picks are
-/// earned per 10 points ALLOCATED into the ring (see <see cref="SkillRoster.EarnedPicks"/>).
+/// banks one passive draft point (the grant moved OFF character level).
 ///
 /// A plain C# class (not a MonoBehaviour): <see cref="Character"/> owns one as <c>Character.Ring</c>.
 /// Its effect on the character is GATED by whether a ring item is equipped (<see cref="Character.RingEquipped"/>):
@@ -20,9 +19,6 @@ public sealed class RingProgress
 {
     /// <summary>The Trio-Ring passive draft state (ranks + banked points). Lives on the ring.</summary>
     public PassiveRanks Passives { get; } = new PassiveRanks();
-
-    /// <summary>Which shared active skills the ring has unlocked. Lives on the ring.</summary>
-    public SkillRoster Skills { get; } = new SkillRoster();
 
     /// <summary>The ring's own level (starts at 1). Independent of <see cref="Character.Level"/>.</summary>
     public int Level { get; private set; } = 1;
@@ -67,8 +63,7 @@ public sealed class RingProgress
         OnChanged?.Invoke();
     }
 
-    /// <summary>Total points ALLOCATED into the ring so far — the gate for active-skill picks
-    /// (<see cref="SkillRoster.EarnedPicks"/>) and the "N/10 to next skill" readout.</summary>
+    /// <summary>Total points ALLOCATED into the ring so far (the passive draft's spent ranks).</summary>
     public int PointsAllocated => Passives.TotalRanks();
 
     /// <summary>Points the player still has banked but not yet spent on the ring.</summary>

@@ -26,7 +26,7 @@ public static class SkillEffectApplier
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   float extraMult = 0f, int extraFlat = 0, float comboMult = 1f,
-                                  Sprite srcIcon = null, string srcName = null)
+                                  Sprite srcIcon = null, string srcName = null, in CastMods mods = default)
     {
         if (targets == SkillTargets.None || effects == null || effects.Count == 0) return;
 
@@ -40,6 +40,7 @@ public static class SkillEffectApplier
                 {
                     burstTargets.Clear(); burstTargets.Add(mob);
                     DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult);
+                    ApplyOutgoing(burstTargets, effects, mods, comboMult, point);
                 }
             }
             else if ((targets & SkillTargets.Player) != 0)
@@ -47,7 +48,8 @@ public static class SkillEffectApplier
             return;
         }
 
-        float r2 = Mathf.Max(0.05f, radius); r2 *= r2;
+        // MATK · Expand folds in here — a wider gather radius (never below the base). Single scope ignores radius.
+        float r2 = Mathf.Max(0.05f, radius * (1f + mods.radiusBonus)); r2 *= r2;
 
         if ((targets & SkillTargets.Mobs) != 0)
         {
@@ -62,6 +64,7 @@ public static class SkillEffectApplier
                 burstTargets.Add(ai);
             }
             DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult);
+            ApplyOutgoing(burstTargets, effects, mods, comboMult, point);
         }
 
         if ((targets & SkillTargets.Player) != 0)
@@ -132,8 +135,9 @@ public static class SkillEffectApplier
                 int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit);
                 // Both magic and physical use an overkill-safe sink here, so a multi-hit flurry keeps its numbers,
                 // hit sparks AND per-strike sound climbing past the kill — the whole count runs to the end, RO-style.
-                dealt += e.magic ? h.TakeMagicDamageOverkill(power, crit, e.element)
-                                 : h.TakeDamageOverkill(power, crit, e.element);
+                dealt += e.damageType == DamageType.Magic
+                    ? h.TakeMagicDamageOverkill(power, crit, e.element)
+                    : h.TakeDamageOverkill(power, crit, e.element);
             }
             else
                 ApplyOneToMob(e, ai, h, hit, extraMult, extraFlat, comboMult);   // procs / status / one-shots, unchanged
@@ -175,7 +179,7 @@ public static class SkillEffectApplier
             case SkillEffectKind.Damage:
                 if (hit >= EffectiveHits(e)) return;   // this Damage's strikes are spent
                 int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit);
-                if (e.magic) h.TakeMagicDamage(power, crit, e.element);
+                if (e.damageType == DamageType.Magic) h.TakeMagicDamage(power, crit, e.element);
                 else h.TakeDamage(power, crit, -1, e.element);   // −1 HIT = always-lands skill hit (no accuracy roll)
                 break;
             case SkillEffectKind.Execute:
@@ -210,8 +214,87 @@ public static class SkillEffectApplier
         int roll = RollPower(e, extraMult, extraFlat, comboMult, out bool crit);
         int bonus = Mathf.RoundToInt(roll * e.magnitude * missing);
         if (bonus <= 0) return;
-        if (e.magic) h.TakeMagicDamage(bonus, crit, e.element);
+        if (e.damageType == DamageType.Magic) h.TakeMagicDamage(bonus, crit, e.element);
         else h.TakeDamage(bonus, crit, -1, e.element);
+    }
+
+    // ---- ring/weapon outgoing reshapers (CastMods) --------------------------
+    // Applied AFTER the binding's own hits land, once over the gathered mobs: extra damage echoes (Repeat) and a
+    // low-HP finisher (Execute), folded from the equipped weapon's affixes + the ring's voices. Radius (Expand) is
+    // handled in the scan above. No-op on a plain cast (mods.Any == false), so a normal skill is unchanged.
+    static void ApplyOutgoing(List<MonsterAI3D> mobs, List<SkillEffect> effects, in CastMods mods, float comboMult, Vector3 point)
+    {
+        if (mobs.Count == 0 || !mods.Any) return;
+
+        // Weapon control affixes — applied to every mob the hit reached.
+        for (int i = 0; i < mobs.Count; i++)
+        {
+            var m = mobs[i];
+            if (m == null) continue;
+            if (mods.slowFactor > 0f && mods.slowSecs > 0f) m.Slow(mods.slowFactor, mods.slowSecs);
+            if (mods.rootSecs > 0f) m.Slow(0.02f, mods.rootSecs);                         // root = a hard stop
+            if (mods.stunSecs > 0f) m.Stun(mods.stunSecs);
+            if (mods.pushSpeed > 0f && mods.pushSecs > 0f) m.Knockback(point, mods.pushSpeed, mods.pushSecs, 0f);
+            if (mods.pullSpeed > 0f && mods.pullSecs > 0f)
+                m.Knockback(2f * m.transform.position - point, mods.pullSpeed, mods.pullSecs, 0f);   // shove away from the MIRRORED point = toward the cast
+        }
+
+        for (int r = 0; r < mods.extraHits; r++)
+            for (int i = 0; i < mobs.Count; i++)
+                EchoDamage(effects, mobs[i], comboMult);
+
+        if (mods.executePower > 0f)
+        {
+            // Borrow the hit's damage type so the finisher rolls off the matching stat (MATK for a magic skill).
+            DamageType dt = DamageType.Physical;
+            for (int i = 0; i < effects.Count; i++)
+            {
+                var e = effects[i];
+                if (e != null && e.kind == SkillEffectKind.Damage) { dt = e.damageType; break; }
+            }
+            for (int i = 0; i < mobs.Count; i++)
+            {
+                var h = mobs[i] != null ? mobs[i].Health : null;
+                if (h != null) ExecuteFinisher(h, mods.executePower, dt, comboMult);
+            }
+        }
+    }
+
+    // One extra strike of just the binding's DAMAGE effects (an echo hit — deliberately not re-rolling status/heal,
+    // which aren't "another hit").
+    static void EchoDamage(List<SkillEffect> effects, MonsterAI3D ai, float comboMult)
+    {
+        var h = ai != null ? ai.Health : null;
+        if (h == null) return;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            var e = effects[i];
+            if (e == null || e.kind != SkillEffectKind.Damage) continue;
+            int power = RollPower(e, 0f, 0, comboMult, out bool crit);
+            if (e.damageType == DamageType.Magic) h.TakeMagicDamage(power, crit, e.element);
+            else h.TakeDamage(power, crit, -1, e.element);
+        }
+    }
+
+    // Orange so a finisher reads as CLEARLY separate from the normal white/purple/gold hit numbers.
+    static readonly Color ExecuteColor = new Color(1f, 0.55f, 0.1f);
+
+    // Source-agnostic execute finisher — the ring's Crit voice and a weapon affix both feed the same power. Bonus =
+    // caster roll × power × missing-HP fraction (tiny at full HP, big near death), landed as raw damage with its own
+    // orange number so it's unmistakable on screen.
+    static void ExecuteFinisher(Health h, float power, DamageType dtype, float comboMult)
+    {
+        if (h == null || h.maxHealth <= 0 || power <= 0f) return;
+        float missing = 1f - Mathf.Clamp01((float)h.Current / h.maxHealth);
+        if (missing <= 0f) return;
+        var ch = Character.Instance;
+        if (ch == null) return;
+        bool crit;
+        int roll = dtype == DamageType.Magic ? ch.RollMagicDamage(out crit)
+                                             : ch.RollDamage(out crit, 0, dtype == DamageType.Crit);
+        int bonus = Mathf.RoundToInt(roll * power * missing * Mathf.Max(0f, comboMult));
+        if (bonus <= 0) return;
+        h.TakeTrueDamage(bonus, ExecuteColor);   // raw bonus + its own orange number
     }
 
     // ---- player -------------------------------------------------------------
@@ -238,7 +321,7 @@ public static class SkillEffectApplier
             case SkillEffectKind.Damage:
                 if (hit >= EffectiveHits(e)) return;
                 int power = RollPower(e, extraMult, extraFlat, comboMult, out _);
-                if (e.magic) ch.TakeMagicDamage(power, e.element);
+                if (e.damageType == DamageType.Magic) ch.TakeMagicDamage(power, e.element);
                 else ch.TakeDamage(power, -1, e.element);        // −1 HIT = always-lands (skill/environmental hit)
                 break;
             case SkillEffectKind.Heal:
@@ -248,10 +331,10 @@ public static class SkillEffectApplier
                 if (Fires(e, hit) && StatusController.Player != null) StatusController.Player.Apply(e.ailment, ScaledSeconds(e), ScaledMagnitude(e));
                 break;
             case SkillEffectKind.Haste:
-                if (hit == 0 && StatusController.Player != null) { StatusController.Player.Haste(ScaledMagnitude(e), ScaledSeconds(e)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e)); }
+                if (hit == 0 && StatusController.Player != null) { StatusController.Player.Haste(ScaledMagnitude(e), ScaledSeconds(e)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
                 break;
             case SkillEffectKind.Guard:
-                if (hit == 0) { ch.BeginGuard(ScaledSeconds(e), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e)); }
+                if (hit == 0) { ch.BeginGuard(ScaledSeconds(e), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
                 break;
             case SkillEffectKind.Teleport:
                 if (hit == 0)
@@ -261,10 +344,10 @@ public static class SkillEffectApplier
                 }
                 break;
             case SkillEffectKind.Buff:
-                if (hit == 0) { ApplyBuff(e, ch); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e)); }
+                if (hit == 0) { ApplyBuff(e, ch); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
                 break;
             case SkillEffectKind.Regen:
-                if (hit == 0) { ch.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e))), ScaledSeconds(e)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e)); }
+                if (hit == 0) { ch.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e))), ScaledSeconds(e)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
                 break;
             case SkillEffectKind.Cleanse:
                 if (hit == 0 && StatusController.Player != null) StatusController.Player.Cleanse(Mathf.Max(1, e.amount));
@@ -275,21 +358,24 @@ public static class SkillEffectApplier
 
     // Mirror a just-applied self-buff onto the on-screen buff bar, tagged with the SOURCE SKILL's icon + name so a
     // re-cast refreshes the same cell. Skipped when the skill provided no identity (e.g. a combo-fired effect).
-    static void RegisterBuff(Character ch, Sprite srcIcon, string srcName, float seconds)
+    static void RegisterBuff(Character ch, Sprite srcIcon, string srcName, float seconds, SkillEffect e)
     {
         if (ch == null || string.IsNullOrEmpty(srcName)) return;
-        ch.Buffs.Add(srcIcon, srcName, seconds, Color.white);
+        ch.Buffs.Add(srcIcon, srcName, seconds, Color.white, SkillTooltip.DescribeEffect(e));
     }
 
     // Route a self-buff onto the right timed channel. The buff amount (multiplier) scales off the affinity list; the
     // seconds off the duration list. MoveSpeed reuses the existing Haste system.
     static void ApplyBuff(SkillEffect e, Character ch)
     {
-        float mult = ScaledMagnitude(e);
+        // AMPLIFY buffs use a FLAT magnitude (NOT affinity-scaled): a DPS can't out-buff via their own offense. The
+        // support's contribution is UPTIME (duration scales off sustain stats) and, on the Damage buff, the RAMP
+        // ceiling (a longer buff climbs higher). See design "Support Scaling".
+        float mult = e.magnitude <= 0f ? 1f : e.magnitude;
         float sec  = ScaledSeconds(e);
         switch (e.buffStat)
         {
-            case BuffStat.Damage:      ch.BuffDamage(mult, sec); break;
+            case BuffStat.Damage:      ch.BuffDamage(mult, sec, e.rampDelay, e.rampPerStep, e.rampInterval, e.rampCap); break;
             case BuffStat.AttackSpeed: ch.BuffAttackSpeed(mult, sec); break;
             case BuffStat.CastSpeed:   ch.BuffCastSpeed(mult, sec); break;
             case BuffStat.MoveSpeed:   if (StatusController.Player != null) StatusController.Player.Haste(mult, sec); break;
@@ -305,7 +391,11 @@ public static class SkillEffectApplier
         if (ch == null) return 1;
         float mult = (e.damageMult <= 0f ? 1f : e.damageMult) + Mathf.Max(0f, extraMult);
         float aff = AffinityMult(e.affinity);   // ring-investment scaling term, layered on the base-stat roll
-        int roll = e.magic ? ch.RollMagicDamage(out crit) : ch.RollDamage(out crit);
+        // Magic → MATK roll (unmissable). Physical → ATK roll. Crit type → ATK roll with a FORCED crit (its
+        // armour-pierce is the deferred combat-pass TODO; the forced crit is the part we can honour now).
+        int roll = e.damageType == DamageType.Magic
+            ? ch.RollMagicDamage(out crit)
+            : ch.RollDamage(out crit, 0, e.damageType == DamageType.Crit);
         return Mathf.Max(1, Mathf.RoundToInt(roll * mult * aff * Mathf.Max(0f, comboMult)) + Mathf.Max(0, extraFlat));
     }
 

@@ -14,4 +14,5 @@
 - [Footstep walk/run gait selection](../footstep-walk-run-threshold-bug.md) — walk SFX/prints desynced; gait must key off active CLIP (`Character3DPose.Gait`/`LocoGait`), never a move-speed/blend threshold.
 - [Character art = Quaternius charcoal pack](../character-art-quaternius-charcoal.md) — players+NPCs+mobs = Quaternius Ultimate Animated.
 - [Animator CrossFade + stale normalizedTime](../animator-crossfade-stale-normalizedtime.md) — reading state info same-frame as CrossFade returns OUTGOING (looping Run) time; froze jump on a run frame. Guard `IsInTransition(0)` + `shortNameHash`.
+- [Quaternius NPC reuse plan (+ combat-NPC later)](../quaternius-npc-reuse-plan.md) — 3D body 100% shared (`StanceController`+`Character3DPose`+`selfDrive`); brain per-role. Town NPC = tiny walk/idle driver `TownNPC3DVisual`; combat NPCs reuse Attack/Hurt/Die, brain like `MonsterAI3D`, need own stat source for speed mults.
 - [Generic-import models T-pose on shared Humanoid controller](../humanoid-import-type-tpose.md) — player needs FBX `animationType:3` Humanoid + valid biped avatar; fix = Bulk Set Humanoid; `PlayerModelSwap` filters non-Humanoid.

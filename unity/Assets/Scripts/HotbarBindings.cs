@@ -1,6 +1,8 @@
+using System.Collections.Generic;
+
 /// <summary>
 /// The player's HOTBAR layout — which active skill (by stable id) sits in each of the nine slots (keys 1–9).
-/// Class-agnostic: any UNLOCKED skill (see <see cref="SkillRoster"/>) can be bound to any slot, by drag or
+/// Class-agnostic: any known skill (see <see cref="SkillCatalog"/>) can be bound to any slot, by drag or
 /// click, in the Skills (K) menu. A skill occupies at most ONE slot — binding it somewhere new vacates its
 /// old slot. Pure data, owned by <see cref="Character"/>, persisted via <see cref="Capture"/>/<see cref="Restore"/>.
 /// The central key router + the visual bar both read this (see <see cref="HotbarPanel"/>).
@@ -137,6 +139,32 @@ public sealed class HotbarBindings
         return true;
     }
 
+    /// <summary>Replace the ENTIRE bar — numbered keys 1–9 AND the dedicated ULT slot — with exactly this weapon kit
+    /// (V2: the weapon owns its whole kit). Clears every numbered slot AND the ult first, then fills from index 0;
+    /// any Ultimate in the list routes to the ULT slot, everything else to numbered keys. Unknown/duplicate ids are
+    /// skipped. Pass null/empty to clear the whole bar (a weapon was removed). Returns true if anything changed.</summary>
+    public bool SetWeaponKit(IReadOnlyList<string> ids)
+    {
+        bool changed = false;
+        for (int i = 0; i < slots.Length; i++)
+            if (!string.IsNullOrEmpty(slots[i])) { slots[i] = ""; changed = true; }
+        if (ClearUlt()) changed = true;   // the ult is part of the weapon's kit — it leaves with the weapon too
+
+        if (ids != null)
+        {
+            int next = 0;
+            for (int k = 0; k < ids.Count && next < slots.Length; k++)
+            {
+                var id = ids[k];
+                var def = SkillCatalog.Get(id);
+                if (def == null || SlotOf(id) >= 0 || id == ultSkillId) continue;   // unknown or already placed (dedupe)
+                if (def.IsUltimate) { if (BindUlt(id)) changed = true; continue; }
+                slots[next++] = id; changed = true;
+            }
+        }
+        return changed;
+    }
+
     // ---- save / load ----------------------------------------------------------
     // The ult id rides as one extra trailing element (index SlotCount), so the save shape stays a flat string[]
     // and older length-9 saves simply load with no ult.
@@ -155,9 +183,9 @@ public sealed class HotbarBindings
             var id = (saved != null && i < saved.Length && saved[i] != null) ? saved[i] : "";
             // Drop ids that are no longer a known skill (e.g. retired legacy skills from an old save) so a
             // stale binding can't linger as a dead slot — the pool is the composed SkillCatalog now.
-            slots[i] = SkillRoster.IsKnownId(id) ? id : "";
+            slots[i] = SkillCatalog.IsKnown(id) ? id : "";
         }
         string ult = (saved != null && saved.Length > slots.Length && saved[slots.Length] != null) ? saved[slots.Length] : "";
-        ultSkillId = SkillRoster.IsKnownId(ult) ? ult : "";
+        ultSkillId = SkillCatalog.IsKnown(ult) ? ult : "";
     }
 }

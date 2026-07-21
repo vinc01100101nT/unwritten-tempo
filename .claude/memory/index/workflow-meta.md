@@ -1,8 +1,10 @@
 # Workflow / tooling / meta (Tempo, MCP, extractors, logs)
 
 - [In-game chat + GM slash-commands](../chat-and-gm-command-system.md) — `ChatController`+`GmCommands`; add via `Register` in `EnsureBootstrap`.
+- [PerfHud IMGUI self-pollutes GC/s (~15KB/frame)](../perfhud-imgui-self-pollution.md) — F3 overlay's OnGUI dominated its own reading; measured mobs add only ~2KB; FindObjectsByType omits DontSaveInEditor.
 - [Canvas validate false-positives on @/ aliases](../canvas-alias-validator-false-positive.md) — "missing_package @/..." harmless; trust render.
 - [Tempo docs drop markdown tables on edit](../tempo-docs-no-markdown-tables.md) — GFM tables vanish on docs_edit; use bullet lists.
+- [Overwrite docs, don't append history](../docs-overwrite-not-append.md) — on doc revisions replace stale claims in place + fix title; keep docs lean (v1 skill doc hit ~65k chars/overflow).
 - [Reading ChatGPT share links](../chatgpt-share-extractor.md) — run tools/extract_chatgpt_share.py, NOT WebFetch.
 - [Unity MCP bridge](../unity-mcp-bridge.md) — `com.coplaydev.unity-mcp` → HTTP localhost:8080/mcp; Unity must be OPEN.
 - [Run editor actions YOURSELF via MCP](../act-editor-actions-via-mcp.md) — NEVER tell user to click Tools ▸ unwritten / add a component; `execute_code` the dialog-free `*Core()`; still no refresh_unity.

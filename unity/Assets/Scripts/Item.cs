@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>Which equipment slot an item fits. None = a bag-only item (consumable / material).
@@ -57,6 +58,18 @@ public class Item : ScriptableObject
              "bone via WeaponSocket). Its root WeaponGrip authors how it sits in the hand. None = no visible weapon. " +
              "Author the grip with Tools ▸ unwritten ▸ Weapons ▸ Weapon Grip Tuner.")]
     public GameObject equipModel;
+
+    [Header("Weapon skills (V2: the weapon owns its kit)")]
+    [Tooltip("Stable SkillDef ids this weapon GRANTS while equipped (attached, not learned) — resolved via " +
+             "SkillCatalog.Get(id). Drawn from the family's shared skill pool; this list IS the equipped kit that " +
+             "fills the hotbar. The ring shapes these skills (scaling + mutations); the weapon owns them. Empty for " +
+             "non-weapons.")]
+    public List<string> grantedSkillIds = new List<string>();
+
+    [Tooltip("Weapon-BOUND mutation affixes (ids resolved via WeaponAffixes) — the 'loot surprise' half of the V2 " +
+             "mutation model: baked onto THIS weapon, they reshape its skills and vanish when it's unequipped " +
+             "(distinct from the ring's build-wide voices). Seeded by hand for now; loot-roll assignment is later.")]
+    public List<string> weaponAffixIds = new List<string>();
 
     [Tooltip("Damage element for a weapon (what element its attacks deal); defensive/affinity element for gear. " +
              "Neutral = no special element. Feeds the Elements damage table when combat consumes it.")]

@@ -1,7 +1,9 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Text;
+using TMPro;
 using Unity.Profiling;
 using UnityEngine;
+using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -15,14 +17,15 @@ using UnityEngine.InputSystem;
 /// combat), the worst single-frame GC since reset (allocations are bursty, so peak catches them), and
 /// the live mob count.
 ///
-/// The measurement itself is allocation-free (Unity's <see cref="ProfilerRecorder"/>). The only thing
-/// the HUD allocates is rebuilding its little text 4×/sec, which adds a small steady floor to the GC/s
-/// reading — so treat the HUD as a "roughly 0, or clearly not?" indicator. For the precise per-system
-/// number, use Profiler ▸ Hierarchy: the HUD is its own marker and never pollutes the
-/// <c>MonsterAI3D.Update</c> row you actually trust.
+/// Rendered with a <b>uGUI + TextMeshPro</b> label, NOT IMGUI: the text is rewritten only 4×/sec, and the
+/// canvas draws every frame with ZERO per-frame C# allocation. (The old IMGUI <c>OnGUI</c> version allocated
+/// ~15 KB/frame in its own draw — enough to swamp the very GC/s number it reports; see memory
+/// perfhud-imgui-self-pollution.) The measurement itself is allocation-free (<see cref="ProfilerRecorder"/>),
+/// so the HUD is now an honest "~0 or clearly not?" indicator.
 ///
-/// Compiled ONLY into the editor / development builds (a release player carries zero overhead). Self-
-/// boots with no scene wiring. Toggle with F3; reset the peak with F4.
+/// Compiled ONLY into the editor / development builds (a release player carries zero overhead). Self-boots
+/// with no scene wiring, its own overlay canvas on top of everything and non-interactive (no raycaster, so it
+/// never eats game clicks). Toggle with F3; reset the peak with F4.
 /// </summary>
 public class PerfHud : MonoBehaviour
 {
@@ -34,19 +37,29 @@ public class PerfHud : MonoBehaviour
         go.AddComponent<PerfHud>();
     }
 
+    static readonly Color CleanColor = new Color(0.6f, 1f, 0.6f);   // green: near-0 GC
+    static readonly Color BusyColor  = new Color(1f, 0.8f, 0.3f);   // amber: GC/s climbed past ~4 KB
+
     ProfilerRecorder gcRecorder;
     bool show = true;
 
     float avgMs;
     long allocThisFrame, peakFrame, secAccum, gcPerSec;
     float secTimer, textTimer;
+    bool lastBusy;
 
     readonly StringBuilder sb = new StringBuilder(160);
-    string cached = "";
-    GUIStyle style;
+    GameObject canvasGo;
+    TextMeshProUGUI label;
 
     void OnEnable() => gcRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
     void OnDisable() => gcRecorder.Dispose();
+
+    void Start()
+    {
+        BuildUi();
+        Rebuild();
+    }
 
     void Update()
     {
@@ -63,16 +76,19 @@ public class PerfHud : MonoBehaviour
         secTimer += Time.unscaledDeltaTime;
         if (secTimer >= 1f) { gcPerSec = secAccum; secAccum = 0; secTimer = 0f; }   // roll up to bytes/sec
 
-        if (Pressed(KeyCode.F3)) show = !show;
+        if (Pressed(KeyCode.F3)) { show = !show; if (canvasGo != null) canvasGo.SetActive(show); }
         if (Pressed(KeyCode.F4)) peakFrame = 0;
 
-        // Rebuild the display text only 4×/sec, so the HUD's own allocation stays a small steady trickle.
+        // Rewrite the label only 4×/sec (a uGUI text assignment allocates + rebuilds its mesh, so we keep it
+        // off the per-frame path); the canvas itself renders every frame allocation-free.
+        if (!show) return;
         textTimer += Time.unscaledDeltaTime;
         if (textTimer >= 0.25f) { textTimer = 0f; Rebuild(); }
     }
 
     void Rebuild()
     {
+        if (label == null) return;
         int mobs = MonsterAI3D.Active != null ? MonsterAI3D.Active.Count : 0;
         float fps = avgMs > 0.0001f ? 1000f / avgMs : 0f;
         sb.Clear();
@@ -81,23 +97,44 @@ public class PerfHud : MonoBehaviour
         sb.Append("GC/s ").Append(Bytes(gcPerSec)).Append('\n');
         sb.Append("peak ").Append(Bytes(peakFrame)).Append(" /frame\n");
         sb.Append("mobs ").Append(mobs);
-        cached = sb.ToString();
+        label.SetText(sb);   // SetText(StringBuilder) writes into TMP's char buffer without allocating a string
+
+        bool busy = gcPerSec > 4096;
+        if (busy != lastBusy) { label.color = busy ? BusyColor : CleanColor; lastBusy = busy; }
     }
 
-    void OnGUI()
+    // Build the overlay canvas + panel + label once. Non-interactive (no GraphicRaycaster) so it can't steal clicks.
+    void BuildUi()
     {
-        if (!show || cached.Length == 0) return;
-        if (style == null)
-            style = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperLeft };
+        canvasGo = new GameObject("PerfHudCanvas") { hideFlags = HideFlags.DontSaveInEditor };
+        canvasGo.transform.SetParent(transform, false);
+        var canvas = canvasGo.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 32760;   // above the game HUD
 
-        // Green = clean; amber once GC/s climbs past ~4 KB during play (worth opening the Profiler).
-        style.normal.textColor = gcPerSec > 4096 ? new Color(1f, 0.8f, 0.3f) : new Color(0.6f, 1f, 0.6f);
+        var panel = new GameObject("Panel", typeof(RectTransform)) { hideFlags = HideFlags.DontSaveInEditor };
+        panel.transform.SetParent(canvasGo.transform, false);
+        var pr = (RectTransform)panel.transform;
+        pr.anchorMin = pr.anchorMax = new Vector2(0f, 1f);   // top-left corner
+        pr.pivot = new Vector2(0f, 1f);
+        pr.anchoredPosition = new Vector2(8f, -8f);
+        pr.sizeDelta = new Vector2(210f, 92f);
+        var bg = panel.AddComponent<Image>();
+        bg.color = new Color(0f, 0f, 0f, 0.6f);
+        bg.raycastTarget = false;
 
-        var rect = new Rect(8, 8, 210, 92);
-        GUI.color = new Color(0f, 0f, 0f, 0.6f);
-        GUI.DrawTexture(rect, Texture2D.whiteTexture);
-        GUI.color = Color.white;
-        GUI.Label(new Rect(rect.x + 8, rect.y + 5, rect.width - 12, rect.height - 8), cached, style);
+        var textGo = new GameObject("Text", typeof(RectTransform)) { hideFlags = HideFlags.DontSaveInEditor };
+        textGo.transform.SetParent(panel.transform, false);
+        var tr = (RectTransform)textGo.transform;
+        tr.anchorMin = Vector2.zero; tr.anchorMax = Vector2.one;
+        tr.offsetMin = new Vector2(8f, 5f); tr.offsetMax = new Vector2(-4f, -3f);
+        label = textGo.AddComponent<TextMeshProUGUI>();
+        label.fontSize = 15f;
+        label.fontStyle = FontStyles.Bold;
+        label.alignment = TextAlignmentOptions.TopLeft;
+        label.color = CleanColor;
+        label.raycastTarget = false;
+        label.richText = false;
     }
 
     static string Bytes(long b)

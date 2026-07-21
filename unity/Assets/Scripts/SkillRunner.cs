@@ -6,7 +6,7 @@ using UnityEngine;
 /// <see cref="VfxSequence"/> and, on each gameplay <see cref="VfxTick"/> the sequence raises, looks up the matching
 /// <see cref="SkillTickBinding"/> and applies its effects through <see cref="SkillEffectApplier"/> — the shared
 /// combat path. The FINAL numbers are rolled off the live caster stats there, so this class stores no damage; the
-/// asset only says WHAT each tick does and by how much (× multiplier + per-level growth).
+/// asset only says WHAT each tick does; the power scales off the live caster stats (the ring), NOT a skill level.
 ///
 /// <para>Attach one per skill on the player (a build tool does this). It implements <see cref="IHotbarSkill"/> so
 /// the bar shows it automatically. Aim mode (<see cref="SkillDef.aim"/>) decides how the cast point is picked.</para>
@@ -15,9 +15,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 {
     [Tooltip("The authored skill this runner plays. Set by the build tool or in the inspector.")]
     public SkillDef def;
-    [Range(1, 20)]
-    [Tooltip("Current skill level (drives per-binding damage growth). 1 = authored base values.")]
-    public int level = 1;
 
     float nextUse, lastDuration;
     float comboDamageMult = 1f;         // ×ramp for the CURRENT cast when fired from a combo chain (1 = solo). Set per
@@ -166,6 +163,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         var sc = StatusController.Player;
         if (sc != null && (sc.CannotAct || sc.Silenced)) return false;
         if (!Character.Instance.SpendMana(def.manaCost)) { BattleNotice.Warn("No MP", NoManaColor); return false; }
+        if (Character.Instance.WeaponRefundPct > 0f && def.manaCost > 0)
+            Character.Instance.GainMana(Mathf.RoundToInt(def.manaCost * Character.Instance.WeaponRefundPct));   // weapon Refund affix
         return true;
     }
 
@@ -176,6 +175,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // Turn the caster to face where it aimed — for every skill regardless of scope (ground/target/aoe).
         // A self-cast aims at the caster's own feet, so FaceWorldPoint no-ops (planar dir ~0): no exception needed.
         if (body != null) body.FaceWorldPoint(lastCtx.target);
+
+        // The ring's self-voices (Fortify / Leech / Accelerate) trigger on every cast, self-gated on investment.
+        RingVoices.ApplyCast(Character.Instance);
 
         if (def.castTime > 0f && isActiveAndEnabled)
             castRoutine = StartCoroutine(CastWindup());
@@ -287,6 +289,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             BattleNotice.Warn("No MP", NoManaColor);
             return false;
         }
+        if (Character.Instance.WeaponRefundPct > 0f && def.manaCost > 0)
+            Character.Instance.GainMana(Mathf.RoundToInt(def.manaCost * Character.Instance.WeaponRefundPct));   // weapon Refund affix
         if (def.IsUltimate) Character.Instance.SpendUltCharge(def.chargeCost);   // ults SPEND charge…
         else Character.Instance.AddUltCharge(Character.UltChargePerCast);        // …every other cast BUILDS it
         lastDuration = def.cooldown;
@@ -295,17 +299,21 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     }
 
     // The heart of the code/data split: each tick the sequence raises, resolve its binding and apply — through the
-    // ONE shared combat path. Unbound ticks (pure-visual beats) are ignored. Per-level growth rides in as extras.
+    // ONE shared combat path. Unbound ticks (pure-visual beats) are ignored. Skills DON'T level — power comes from
+    // the ring (affinity), so there's no per-level extra to add here (extraMult/extraFlat pass 0).
     void OnTick(VfxTick tick)
     {
         var b = def.BindingFor(tick.tickId);
         if (b == null) return;
-        int over = Mathf.Max(0, level - 1);
-        float extraMult = b.scale != null ? b.scale.damageMultPerLevel * over : 0f;
-        int extraFlat = b.scale != null ? b.scale.flatBonusPerLevel * over : 0;
+        // Fold the outgoing reshapers for this hit: weapon affixes first, then the ring's voices on top
+        // (the design's fold order). Both self-gate, so this is a no-op struct on a plain build.
+        CastMods mods = default;
+        WeaponAffixes.AddOutgoing(Character.Instance, ref mods);
+        RingVoices.AddOutgoing(Character.Instance, ref mods);
+        SkillReshape.GateTo(b, ref mods);   // drop reshapers this binding can't use (e.g. Repeat on a non-damaging tick)
         SkillEffectApplier.ApplyBurst(tick.point, b.radius, b.scope, b.targets, b.effects,
-                                      lastCtx.targetUnit, extraMult, extraFlat, comboDamageMult,
-                                      def.icon, def.displayName);   // buff bar tags entries with this skill's icon + name
+                                      lastCtx.targetUnit, mods.rawDamageMult, 0, comboDamageMult,
+                                      def.icon, def.displayName, mods);   // rawDamageMult rides the existing damage-mult param; buff bar tags entries with skill icon+name
     }
 
     static MonsterAI3D NearestMob(Vector3 from, float maxRange)

@@ -1,5 +1,7 @@
 # Combat / skills / progression / stats design
 
+- [Weapon affixes ≠ ring voices — never duplicate](../weapon-affix-vs-ring-voice-separation.md) — weapon=control/targeting/util (Slow live), ring=stat voices; library in V2 doc; don't put Execute/Repeat/Expand on a weapon.
+
 - [Multi-hit yellow total was never wired](../multihit-yellow-total-never-wired.md) — `MultiHitBurst` dead code; `hitCount>1` now cascades via `SkillEffectApplier.DispatchMobHits`.
 - [Cast reticle "persisted" on failed release](../cast-reticle-soft-fade-persists-on-fail.md) — GroundTargeter soft-fade masked on success; fix = `EffectHandle.Stop(true)` hard-clear.
 - [Single-target aim couldn't hit mobs in a crowd](../unittargeter-mob-shadowed-by-player.md) — UnitTargeter's own first-hit raycast let the player capsule shadow mobs behind it; fix = route mob pick through magnetised `MonsterUnderCursor`.

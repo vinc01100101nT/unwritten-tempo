@@ -32,11 +32,15 @@ public static class SkillCatalog
         return id != null && byId.TryGetValue(id, out var s) ? s : null;
     }
 
+    /// <summary>True if <paramref name="id"/> is a known composed skill (exists in the catalog). Replaces the old
+    /// SkillRoster.IsKnownId now that skills live on weapons, not a ring-owned roster.</summary>
+    public static bool IsKnown(string id) => Get(id) != null;
+
     /// <summary>All authored skills (unordered). Never null.</summary>
     public static IReadOnlyList<SkillDef> All { get { EnsureLoaded(); return all; } }
 
     /// <summary>Every composed skill's stable id, ordered by <see cref="SkillDef.slotOrder"/> then id — the
-    /// canonical menu/roster order now that composed skills ARE the skill pool (see <see cref="SkillRoster.AllIds"/>).
+    /// canonical menu/roster order; composed skills ARE the skill pool.
     /// Cached; rebuilt on <see cref="Reload"/>. Never null (empty when nothing is authored).</summary>
     public static string[] OrderedIds()
     {

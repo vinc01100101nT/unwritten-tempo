@@ -200,8 +200,6 @@ public class SkillDraftPanel : MonoBehaviour
         }
 
         BuildRingReadout(p);
-
-        BuildActiveSkillsSection();   // class-agnostic active-skill menu: choose unlocks + drag/click to bind
     }
 
     // The "Your ring" divider + the 10 ring rows (the walk). Shared by the equipped and unequipped states.
@@ -244,137 +242,7 @@ public class SkillDraftPanel : MonoBehaviour
         xpLabel.raycastTarget = false;
         var xrt = xpLabel.rectTransform;
         xrt.anchorMin = Vector2.zero; xrt.anchorMax = Vector2.one; xrt.offsetMin = xrt.offsetMax = Vector2.zero;
-
-        // Points → next active-skill pick (the new gate: 1 pick per 10 ring points ALLOCATED).
-        int toNext = c.Skills.PointsToNextPick(r.PointsAllocated);
-        bool allOwned = c.Skills.OwnedCount >= SkillRoster.AllIds.Length;
-        string pickLine = allOwned ? "All active skills unlocked"
-                        : c.Skills.HasPendingPick(r.PointsAllocated) ? "<color=#D98CFF>New active skill ready to choose!</color>"
-                        : $"{toNext} ring point{(toNext == 1 ? "" : "s")} to your next active skill";
-        var pl = NewText(content, pickLine, 12, FontStyle.Normal, TextAnchor.MiddleCenter);
-        pl.color = new Color(1, 1, 1, 0.8f);
-        SetHeight(pl.gameObject, 18);
     }
-
-    // ---- active-skill menu (class-agnostic) -----------------------------------
-    // Below the passive ring: the active-skill ownership + hotbar-binding surface. When a 10-level milestone
-    // grants a pick, the still-locked skills appear as "learn me" cards; owned skills are a grid you drag onto
-    // a hotbar slot (SkillDragSource) or click to bind to the first empty slot.
-
-    static readonly List<string> ownedBuf  = new List<string>();
-    static readonly List<string> lockedBuf = new List<string>();
-    static readonly Color SkillCardBg = new Color(0.16f, 0.16f, 0.20f, 0.95f);
-
-    void BuildActiveSkillsSection()
-    {
-        var c = Character.Instance;
-        if (c == null) return;
-
-        SetHeight(NewImage(content, new Color(1, 1, 1, 0.12f)).gameObject, 2);   // divider
-        NewLabel(content, "Active skills");
-
-        int allocated = c.Ring.PointsAllocated;
-        int pending = c.Skills.PendingPicks(allocated);
-        if (pending > 0)
-        {
-            NewLabel(content, $"Choose a new skill — {pending} pick{(pending == 1 ? "" : "s")} (click to learn):");
-            c.Skills.LockedIds(lockedBuf);
-            BuildSkillGrid(lockedBuf, true);
-        }
-
-        c.Skills.OwnedIds(ownedBuf);
-        if (ownedBuf.Count == 0)
-        {
-            if (pending == 0) NewLabel(content, $"Allocate {SkillRoster.PointsPerUnlock} ring points to unlock your first skill.");
-        }
-        else
-        {
-            NewLabel(content, "Your skills — drag onto a slot, or click to bind:");
-            BuildSkillGrid(ownedBuf, false);
-        }
-    }
-
-    void BuildSkillGrid(List<string> ids, bool isChoice)
-    {
-        var grid = NewImage(content, new Color(0, 0, 0, 0)).rectTransform;
-        grid.GetComponent<Image>().raycastTarget = false;
-        var g = grid.gameObject.AddComponent<GridLayoutGroup>();
-        g.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        g.constraintCount = 3;
-        g.spacing = new Vector2(6, 6);
-        g.cellSize = new Vector2(108, 44);
-        g.childAlignment = TextAnchor.UpperLeft;
-        grid.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        for (int i = 0; i < ids.Count; i++) BuildSkillCard(grid, ids[i], isChoice);
-    }
-
-    void BuildSkillCard(Transform parent, string id, bool isChoice)
-    {
-        var skill = PlayerSkills.ById(id);
-        string label = skill != null ? skill.ShortLabel : id;
-        Color tint = skill != null ? skill.Tint : Color.white;
-        Sprite icon = skill != null ? skill.Icon : null;
-
-        var card = NewImage(parent, SkillCardBg);
-        card.raycastTarget = true;
-
-        if (icon != null)
-        {
-            var im = NewImage(card.transform, Color.white);
-            im.sprite = icon; im.preserveAspect = true; im.raycastTarget = false;
-            var irt = im.rectTransform;
-            irt.anchorMin = irt.anchorMax = new Vector2(0f, 0.5f);
-            irt.pivot = new Vector2(0f, 0.5f);
-            irt.anchoredPosition = new Vector2(5f, 0f);
-            irt.sizeDelta = new Vector2(34f, 34f);
-        }
-
-        var t = NewText(card.transform, label + (isChoice ? "  <size=9><color=#D98CFF>NEW</color></size>" : ""),
-                        12, FontStyle.Bold, TextAnchor.MiddleLeft);
-        t.color = tint; t.raycastTarget = false;
-        var trt = t.rectTransform;
-        trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;
-        trt.offsetMin = new Vector2(icon != null ? 44f : 8f, 0f);
-        trt.offsetMax = new Vector2(-4f, 0f);
-
-        var btn = card.gameObject.AddComponent<Button>();
-        btn.targetGraphic = card;
-        var sid = id;
-        if (isChoice)
-        {
-            btn.onClick.AddListener(() => OnChooseSkill(sid));
-        }
-        else
-        {
-            btn.onClick.AddListener(() => OnBindFirstEmpty(sid));
-            var drag = card.gameObject.AddComponent<SkillDragSource>();   // drag this card onto a hotbar slot
-            drag.skillId = sid; drag.iconSprite = icon; drag.tint = tint;
-        }
-    }
-
-    void OnChooseSkill(string id)
-    {
-        if (animating) return;
-        var c = Character.Instance;
-        if (c == null || !c.RingEquipped || !c.Skills.HasPendingPick(c.Ring.PointsAllocated) || !c.Skills.Unlock(id)) return;
-        c.Hotbar.AutoBind(id);                          // a freshly learned skill is immediately usable (ultimates → ult slot)
-        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
-        HotbarPanel.RebuildRequested?.Invoke();
-        UISounds.PlayClick();
-        BuildContent();                                // reflect the new owned/pending state
-    }
-
-    void OnBindFirstEmpty(string id)
-    {
-        if (animating) return;
-        var c = Character.Instance;
-        if (c == null || !c.Hotbar.AutoBind(id)) return;   // already bound or bar full → no-op (ultimates → ult slot)
-        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
-        HotbarPanel.RebuildRequested?.Invoke();
-        UISounds.PlayClick();
-        BuildContent();
-    }
-
     static string HeaderString(PassiveRanks p) => p.BankedPoints > 0
         ? $"<b>{p.BankedPoints}</b> skill point{(p.BankedPoints == 1 ? "" : "s")} to spend"
         : "No points to spend — level up to earn one.";
@@ -692,13 +560,7 @@ public class SkillDraftPanel : MonoBehaviour
     // while the ring is worn (RingProgress only levels when equipped) — so the prompt is always actionable.
     void ShowRingLevelToast(int ringLevel)
     {
-        var c = Character.Instance;
-        // "A new skill is within reach" = the points still needed for the next pick are already in the bank.
-        bool skillSoon = c != null && c.Skills.OwnedCount < SkillRoster.AllIds.Length
-                                   && c.Skills.PointsToNextPick(c.Ring.PointsAllocated) <= c.Ring.BankedPoints;
-        string msg = skillSoon
-            ? $"RING LEVEL {ringLevel}!  +1 skill point  ·  a NEW SKILL is within reach  —  press K"
-            : $"RING LEVEL {ringLevel}!  +1 skill point  —  press K";
+        string msg = $"RING LEVEL {ringLevel}!  +1 skill point  —  press K";
         if (toastCo != null) StopCoroutine(toastCo);   // don't StopAllCoroutines — it'd kill a pick animation
         toastCo = StartCoroutine(ToastRoutine(msg));
     }

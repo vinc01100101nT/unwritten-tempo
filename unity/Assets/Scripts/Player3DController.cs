@@ -179,8 +179,8 @@ public partial class Player3DController : MonoBehaviour
 
         // The active-skill pool is now DATA: every composed SkillDef (Skill Composer output, under
         // Resources/Skills) gets a SkillRunner on the player. The legacy hand-written Player3D* skill classes
-        // were retired — one runner interprets any skill. Which the player has UNLOCKED and BOUND to the hotbar
-        // is still the progression layer (SkillRoster/HotbarBindings), not a class gate.
+        // were retired — one runner interprets any skill. Which skills are BOUND to the hotbar comes from the
+        // equipped weapon (Item.grantedSkillIds) / the Grimoire, via HotbarBindings — not a class gate.
         EnsureComposedSkills();
         // The combo executor rides on the player too (reads Character.Combos). Auto-attach so a player built before
         // combos existed picks it up with no re-bake — same idempotent pattern as the skills above.
@@ -207,7 +207,6 @@ public partial class Player3DController : MonoBehaviour
             if (def == null || have.Contains(def)) continue;
             var runner = gameObject.AddComponent<SkillRunner>();
             runner.def = def;
-            runner.level = 1;
             added = true;
         }
         if (added) PlayerSkills.Refresh();   // re-resolve id → runner so the hotbar/menu see the new actives

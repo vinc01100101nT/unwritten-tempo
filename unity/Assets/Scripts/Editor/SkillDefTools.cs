@@ -31,7 +31,6 @@ public static class SkillDefTools
         def.displayName = "Meteor (data)";
         def.manaCost = 16;
         def.cooldown = 9f;
-        def.maxLevel = 10;
         def.aim = SkillAim.Ground;
         def.castRange = 11f;
         def.shortLabel = "Meteor*";
@@ -51,16 +50,14 @@ public static class SkillDefTools
             {
                 tickId = "meteor_ball",
                 targets = SkillTargets.Mobs, scope = SkillScope.Area, radius = 1.36f,
-                effects = new List<SkillEffect> { new SkillEffect { kind = SkillEffectKind.Damage, magic = true, damageMult = 8f, element = Element.Fire } },
-                scale = new SkillLevelScale { damageMultPerLevel = 0.5f },
+                effects = new List<SkillEffect> { new SkillEffect { kind = SkillEffectKind.Damage, damageType = DamageType.Magic, damageMult = 8f, element = Element.Fire } },
             },
             // The lingering fire (5 beats, 0.372s apart) = a small repeated tick — the multi-tick demonstration.
             new SkillTickBinding
             {
                 tickId = "fire_pillar",
                 targets = SkillTargets.Mobs, scope = SkillScope.Area, radius = 1.14f,
-                effects = new List<SkillEffect> { new SkillEffect { kind = SkillEffectKind.Damage, magic = true, damageMult = 0.51f, element = Element.Fire } },
-                scale = new SkillLevelScale { damageMultPerLevel = 0.1f },
+                effects = new List<SkillEffect> { new SkillEffect { kind = SkillEffectKind.Damage, damageType = DamageType.Magic, damageMult = 0.51f, element = Element.Fire } },
             },
         };
         EditorUtility.SetDirty(def);
@@ -82,7 +79,6 @@ public static class SkillDefTools
             if (def == null || existing.Contains(def)) continue;
             var runner = host.AddComponent<SkillRunner>();
             runner.def = def;
-            runner.level = 1;
             added++;
         }
         EditorUtility.SetDirty(host);

@@ -566,8 +566,19 @@ public class ProgressionWindows : MonoBehaviour
         title.raycastTarget = false;
         var body = UiKit.Label("Body", border.transform, "", 15, FontStyle.Normal, TextAnchor.UpperLeft);
         body.raycastTarget = false;
+
+        // Horizontal strip that ItemTooltip fills with the weapon's granted-skill icons (V2: weapon owns its kit).
+        // A layout child of the same VLG so it stacks under the body and the panel auto-sizes to include it.
+        var skillRow = new GameObject("SkillIcons", typeof(RectTransform)).GetComponent<RectTransform>();
+        skillRow.SetParent(border.transform, false);
+        var hlg = skillRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+        hlg.spacing = 3; hlg.childAlignment = TextAnchor.MiddleLeft;
+        hlg.childControlWidth = hlg.childControlHeight = true;
+        hlg.childForceExpandWidth = hlg.childForceExpandHeight = false;
+        skillRow.gameObject.SetActive(false);
+
         var tip = border.gameObject.AddComponent<ItemTooltip>();
-        tip.panel = rt; tip.titleText = title; tip.bodyText = body;
+        tip.panel = rt; tip.titleText = title; tip.bodyText = body; tip.skillRow = skillRow;
     }
 
     // Green/red "+v LABEL" stat line; skipped when zero.

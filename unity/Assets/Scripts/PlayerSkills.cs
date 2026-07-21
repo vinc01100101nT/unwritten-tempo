@@ -6,8 +6,7 @@ using UnityEngine;
 /// The class-agnostic active pool all lives on the <see cref="Player3DController"/> (see its self-bootstrap),
 /// so this maps "skill.meteor" → the <see cref="SkillRunner"/> playing that composed <see cref="SkillDef"/>:
 /// the hotbar, the key router, and the skill menu fetch a skill's icon/label/tint and fire it without knowing
-/// concrete types. The id is the composed skill's <see cref="SkillDef.id"/> (a legacy IModifiableSkill still
-/// resolves by its <see cref="IModifiableSkill.SkillModId"/> if present). Cached; <see cref="Refresh"/> on
+/// concrete types. The id is the composed skill's <see cref="SkillDef.id"/>. Cached; <see cref="Refresh"/> on
 /// player rebuild.
 /// </summary>
 public static class PlayerSkills
@@ -27,14 +26,9 @@ public static class PlayerSkills
         var comps = player.GetComponents<IHotbarSkill>();
         for (int i = 0; i < comps.Length; i++)
         {
-            // Composed skills (the data-driven pool) key off their SkillDef id; the legacy IModifiableSkill
-            // path is kept so any still-present hand-written active resolves too (harmless once unwired).
-            if (comps[i] is SkillRunner sr)
-            {
-                if (sr.def != null && !string.IsNullOrEmpty(sr.def.id)) byId[sr.def.id] = comps[i];
-            }
-            else if (comps[i] is IModifiableSkill m && !string.IsNullOrEmpty(m.SkillModId))
-                byId[m.SkillModId] = comps[i];
+            // Composed skills (the data-driven pool) key off their SkillDef id.
+            if (comps[i] is SkillRunner sr && sr.def != null && !string.IsNullOrEmpty(sr.def.id))
+                byId[sr.def.id] = comps[i];
         }
     }
 

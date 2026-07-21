@@ -204,7 +204,17 @@ public class Character : MonoBehaviour
     /// preview temporarily swaps this for a hypothetical loadout; see <see cref="DeriveWith"/>.</summary>
     EquipBonuses equipBonuses;
 
-    void RecomputeEquip() => equipBonuses = EquipBonuses.Aggregate(equipped.Values);
+    // Weapon-affix EQUIP-PASSIVES (always-on while the weapon is worn) — recomputed on equip. Distinct from the
+    // per-cast reshapers (CastMods): steady-state, so they live as Character state read by the combat sinks.
+    float weaponManaLeechPct, weaponRefundPct, weaponReflectPct;
+    public float WeaponManaLeechPct => weaponManaLeechPct;
+    public float WeaponRefundPct => weaponRefundPct;
+
+    void RecomputeEquip()
+    {
+        equipBonuses = EquipBonuses.Aggregate(equipped.Values);
+        WeaponAffixes.GetPassives(this, out weaponManaLeechPct, out weaponRefundPct, out weaponReflectPct);
+    }
 
     /// <summary>The Ring of Progression — the VESSEL that carries the player's life's-work: its own
     /// level/XP plus the Trio-Ring passive draft (<see cref="RingProgress.Passives"/>) and the active-skill
@@ -218,18 +228,9 @@ public class Character : MonoBehaviour
     /// — but ONLY while <see cref="RingEquipped"/> (see <see cref="PassivePercent"/>).</summary>
     public PassiveRanks Passives => Ring.Passives;
 
-    /// <summary>The active-skill MODIFIER layer (Charter §12). Owns each owned base skill's six-phase
-    /// loadout; a skill registers itself (born wearing one random mod) and gains one more every even
-    /// level. The random "dice" counterpart to the deterministic Trio-Ring affix draft. Runtime-only.</summary>
-    public SkillModBook SkillMods { get; } = new SkillModBook();
-
-    /// <summary>The active-skill OWNERSHIP layer (class-agnostic), living on the ring vessel. Which of the
-    /// shared pool of actives the player has unlocked — one earned per 10 points allocated into the ring.
-    /// Gates the skill menu + hotbar binding. Persisted.</summary>
-    public SkillRoster Skills => Ring.Skills;
-
     /// <summary>True while a ring item occupies the <see cref="EquipSlotType.Ring"/> slot. The gate for the
-    /// whole ring layer: passive % bonuses + active-skill use are suppressed when no ring is worn.</summary>
+    /// ring's passive % bonuses (suppressed when no ring is worn). Active skills are NOT gated by the ring —
+    /// they come from the equipped weapon now.</summary>
     public bool RingEquipped => GetEquipped(EquipSlotType.Ring) != null;
 
     /// <summary>The passive % multiplier for a stat — but only while a ring is equipped (0 otherwise).
@@ -436,15 +437,17 @@ public class Character : MonoBehaviour
     }
 
     /// <summary>As <see cref="RollDamage"/> but for a spell — rolls in [<see cref="MinMagicAttack"/>,
-    /// <see cref="MaxMagicAttack"/>]. (Crit stats apply to magic too, so a crit build helps casters.)</summary>
+    /// <see cref="MaxMagicAttack"/>]. Magic NEVER crits (RPS triangle — crit is the Finesse armour-piercer).</summary>
     public int RollMagicDamage(out bool crit) => RollMagicDamage(out crit, 0);
 
-    /// <summary>Spell roll with the pre-renewal crit shield (<paramref name="targetLuk"/> lowers our crit).</summary>
+    /// <summary>Spell roll. <paramref name="targetLuk"/> is ignored — magic can't crit, so no crit shield applies;
+    /// the param is kept only for call-site signature compatibility.</summary>
     public int RollMagicDamage(out bool crit, int targetLuk)
     {
-        crit = UnityEngine.Random.value < EffectiveCritChance(targetLuk);
-        float b = DamageBuffMult;   // timed damage buff (War Banner) lifts magic rolls too
-        if (crit) return Mathf.RoundToInt(MagicAttack * CritMultiplier * b);
+        // Magic NEVER crits: crit is the Finesse armour-piercer; a critting spell would pierce armour too and
+        // collapse the Might>Arcane>Finesse triangle (design "Combat Ontology").
+        crit = false;
+        float b = DamageBuffMult;   // timed damage buff (War Banner) still lifts magic rolls
         return Mathf.RoundToInt(UnityEngine.Random.Range(MinMagicAttack, MagicAttack + 1) * b);
     }
 
@@ -461,6 +464,15 @@ public class Character : MonoBehaviour
         CurrentMP -= amount;
         OnManaChanged?.Invoke();
         return true;
+    }
+
+    /// <summary>Restore <paramref name="amount"/> MP (clamped to max). Used by weapon Mana-Leech (on damage
+    /// dealt) and Refund (part of a skill's cost back on cast). No-op for ≤0.</summary>
+    public void GainMana(int amount)
+    {
+        if (amount <= 0 || CurrentMP >= MaxMP) return;
+        CurrentMP = Mathf.Min(MaxMP, CurrentMP + amount);
+        OnManaChanged?.Invoke();
     }
 
     // ---- Ultimate charge (shared meter) -----------------------------------------------------------
@@ -639,6 +651,14 @@ public class Character : MonoBehaviour
             OnHealthChanged?.Invoke();
         }
         finally { notifyingEquip = false; }
+
+        // V2: the weapon owns its skill kit — equipping (or removing) a weapon replaces the numbered hotbar with its
+        // granted skills. Only fires on a real equip action, not on load (RestoreEquipment writes the dict directly).
+        if (slot == EquipSlotType.Weapon)
+        {
+            var kit = (instance != null && instance.def != null) ? instance.def.grantedSkillIds : null;
+            if (Hotbar.SetWeaponKit(kit)) HotbarPanel.RebuildRequested?.Invoke();
+        }
     }
 
     // ---- Invulnerability (i-frames) ---------------------------------------------------------------
@@ -691,6 +711,10 @@ public class Character : MonoBehaviour
     // Each buff is a multiplier live until its expiry; the getters/rolls below fold in the current value (1 when
     // expired). Latest call replaces the current buff on that channel (no stacking) — matches the Haste model.
     float dmgBuffUntil;  float dmgBuffMult  = 1f;
+    // War Banner RAMP (experimental): the damage buff can GROW over its life — duration becomes magnitude, and since
+    // duration scales off MP, a high-MP support drives it higher (design "Support Scaling"). Refreshing a still-live
+    // buff KEEPS the ramp progress; letting it fully lapse RESETS to base. All zero ⇒ a plain flat buff (no ramp).
+    float dmgBuffStart; float dmgRampDelay; float dmgRampPerStep; float dmgRampInterval = 5f; float dmgRampCap;
     float aspdBuffUntil; float aspdBuffMult = 1f;
     float castBuffUntil; float castBuffMult = 1f;
     float regenUntil;    float regenNextTick; int regenPerTick;
@@ -702,12 +726,44 @@ public class Character : MonoBehaviour
 
     /// <summary>The live outgoing-damage buff multiplier (1 = none) — folded into every damage roll, so it lifts
     /// basic attacks and skills alike (War Banner's damage-up aura).</summary>
-    public float DamageBuffMult => Time.time < dmgBuffUntil  ? dmgBuffMult  : 1f;
+    public float DamageBuffMult
+    {
+        get
+        {
+            if (Time.time >= dmgBuffUntil) return 1f;
+            float m = dmgBuffMult;
+            if (dmgRampPerStep > 0f)   // ramping buff: base + perStep for each interval elapsed past the delay
+            {
+                float el = Time.time - dmgBuffStart - dmgRampDelay;
+                if (el > 0f)
+                {
+                    m += dmgRampPerStep * Mathf.FloorToInt(el / dmgRampInterval);
+                    if (dmgRampCap > 0f) m = Mathf.Min(m, dmgRampCap);
+                }
+            }
+            return m;
+        }
+    }
     float AspdBuffMult          => Time.time < aspdBuffUntil ? aspdBuffMult : 1f;
     float CastBuffMult          => Time.time < castBuffUntil ? castBuffMult : 1f;
 
-    /// <summary>Timed outgoing-damage buff ×<paramref name="mult"/> for <paramref name="seconds"/>.</summary>
-    public void BuffDamage(float mult, float seconds)      { if (seconds <= 0f) return; dmgBuffMult  = Mathf.Max(0.01f, mult); dmgBuffUntil  = Time.time + seconds; }
+    /// <summary>Timed outgoing-damage buff ×<paramref name="mult"/> for <paramref name="seconds"/>. Optional RAMP
+    /// (<paramref name="rampPerStep"/> &gt; 0) grows the multiplier by that much every <paramref name="rampInterval"/>s
+    /// after <paramref name="rampDelay"/>s, capped at <paramref name="rampCap"/> (0 = uncapped). Refreshing a live buff
+    /// keeps the ramp's progress; a lapsed one restarts from base (the "keep it up to reach the ceiling" support loop).</summary>
+    public void BuffDamage(float mult, float seconds, float rampDelay = 0f, float rampPerStep = 0f,
+                           float rampInterval = 5f, float rampCap = 0f)
+    {
+        if (seconds <= 0f) return;
+        bool active = Time.time < dmgBuffUntil;   // refresh of a live buff keeps the ramp; a fresh cast restarts it
+        dmgBuffMult = Mathf.Max(0.01f, mult);
+        if (!active) dmgBuffStart = Time.time;
+        dmgBuffUntil = Time.time + seconds;
+        dmgRampDelay = Mathf.Max(0f, rampDelay);
+        dmgRampPerStep = Mathf.Max(0f, rampPerStep);
+        dmgRampInterval = Mathf.Max(0.1f, rampInterval);
+        dmgRampCap = rampCap;
+    }
     /// <summary>Timed attack-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
     public void BuffAttackSpeed(float mult, float seconds) { if (seconds <= 0f) return; aspdBuffMult = Mathf.Max(0.01f, mult); aspdBuffUntil = Time.time + seconds; }
     /// <summary>Timed cast-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
@@ -781,9 +837,9 @@ public class Character : MonoBehaviour
         if (a != null) VfxCue.Fire(VfxCueId.OnDeath, a);
     }
 
-    /// <summary>Apply an incoming MAGIC hit: reduced by <see cref="MagicDefense"/> (not
-    /// <see cref="Defense"/>), and NOT avoidable by Evasion (dodge is physical only). Returns the
-    /// damage dealt.</summary>
+    /// <summary>Apply an incoming MAGIC hit: reduced by <see cref="MagicDefense"/> (not <see cref="Defense"/>).
+    /// Magic can't be fully dodged, but our <see cref="Flee"/> makes it GLANCE (a partial reduction via
+    /// <see cref="Combat.MagicGlanceMult"/>) — the Arcane→Finesse edge of the triangle. Returns the damage dealt.</summary>
     public int TakeMagicDamage(int attackerMagic, Element attackElement = Element.Neutral, MonsterAI3D source = null)
     {
         if (IsDead) return 0;
@@ -792,7 +848,7 @@ public class Character : MonoBehaviour
         float mod = Elements.Modifier(attackElement, armorElement);
         if (mod <= 0f) return 0;
 
-        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod)));
+        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod * Combat.MagicGlanceMult(Flee))));
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);
@@ -823,10 +879,11 @@ public class Character : MonoBehaviour
     // damage (bypasses its defense, can't itself be reflected — TakeTrueDamage never calls back here).
     void Reflect(int dmgTaken, MonsterAI3D source)
     {
-        if (reflectPct <= 0f || dmgTaken <= 0 || source == null) return;
+        float pct = reflectPct + weaponReflectPct;   // thorns card + weapon Reflect affix
+        if (pct <= 0f || dmgTaken <= 0 || source == null) return;
         var h = source.Health;
         if (h == null || h.IsDead) return;
-        int r = Mathf.RoundToInt(dmgTaken * reflectPct);
+        int r = Mathf.RoundToInt(dmgTaken * pct);
         if (r > 0) h.TakeTrueDamage(r, ReflectColor);
     }
 
@@ -918,7 +975,6 @@ public class Character : MonoBehaviour
         {
             XP -= XPToNext;
             level++;
-            SkillMods.OnLevel(level);         // Charter §12: even levels auto-roll a random skill modifier
             StatPoints += StatusPointsForLevel(level);   // pre-renewal: ⌊L/5⌋+3 status points this level
             CurrentHP = MaxHP;                // level-up fully heals
             CurrentMP = MaxMP;                // …and refills mana
@@ -965,8 +1021,6 @@ public class Character : MonoBehaviour
         d.hasLeader    = Passives.HasLeader;
         Ring.Capture(out d.ringLevel, out d.ringXp);
         d.gold         = Wallet.Capture();
-        SkillMods.Capture(out d.skillModIds, out d.skillModTags, out d.skillModSlots);
-        d.ownedSkillIds = Skills.Capture();
         d.hotbarBindings = Hotbar.Capture();
         d.comboChains = Combos.Capture();
         CaptureEquipment(d);
@@ -1042,8 +1096,6 @@ public class Character : MonoBehaviour
         // (allocated + banked), since one point == one ring level, so the walk stays consistent.
         Ring.Restore(d.ringLevel > 0 ? d.ringLevel : Passives.TotalRanks() + Passives.BankedPoints, d.ringXp);
         Wallet.Restore(d.gold);
-        SkillMods.Restore(d.skillModIds, d.skillModTags, d.skillModSlots);
-        Skills.Restore(d.ownedSkillIds);
         Hotbar.Restore(d.hotbarBindings);
         Combos.Restore(d.comboChains);
         RestoreEquipment(d);         // v6+: rebuild worn gear from the save (Ring excluded)

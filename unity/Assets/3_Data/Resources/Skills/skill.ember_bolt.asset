@@ -20,11 +20,13 @@ MonoBehaviour:
     target, leaving a
     burning wound.'
   archetype: 0
-  category: 0
+  family: 0
+  shape: 0
+  complexity: 0
+  acquisitionTier: 0
   manaCost: 8
   cooldown: 1.5
   castTime: 0.4
-  maxLevel: 10
   aim: 1
   castRange: 11
   tier: 0
@@ -43,7 +45,7 @@ MonoBehaviour:
     radius: 1.5
     effects:
     - kind: 0
-      magic: 1
+      damageType: 0
       damageMult: 1
       element: 3
       amount: 10
@@ -53,16 +55,17 @@ MonoBehaviour:
       hitCount: 5
       chance: 0
       buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
       affinity:
       - stat: 1
-        weight: 2
+        weight: 100
       durationAffinity: []
       hitCountAffinity:
       - stat: 1
-        weight: 50
-    scale:
-      damageMultPerLevel: 0.2
-      flatBonusPerLevel: 0
+        weight: 100
   shortLabel: Ember
   keyLabel: 
   slotOrder: 10
