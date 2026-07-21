@@ -219,6 +219,23 @@ public class Character3DPose : MonoBehaviour, IStancePose
 
     public void ResumeSelfDrive() { speedTarget = 0f; anim.speed = 1f; GoTo(Loco); }
 
+    float cachedHeight;
+    // World-space rendered height (union of this model's renderer bounds), cached on first successful read. Height
+    // barely varies with pose and callers ask rarely (once per NPC bark), so computing it once is enough.
+    public float VisualWorldHeight
+    {
+        get
+        {
+            if (cachedHeight > 0f) return cachedHeight;
+            var rends = GetComponentsInChildren<Renderer>();
+            if (rends.Length == 0) return 0f;
+            var b = rends[0].bounds;
+            for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
+            cachedHeight = b.size.y;
+            return cachedHeight;
+        }
+    }
+
     /// <summary>World-space facing/aim (XZ) — the model yaws toward it. Called by the 3D visual brain.</summary>
     public void SetFacing(Vector3 worldDir)
     {

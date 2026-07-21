@@ -79,6 +79,20 @@ public class CameraFollow3D : MonoBehaviour
         return (transform.right * Random.Range(-1f, 1f) + transform.up * Random.Range(-1f, 1f)) * amp;
     }
 
+    // ---- cinematic framing (F-interact side view) --------------------------------------------------
+    bool cineWant;
+    Vector3 cinePos, cineLook;
+    float cineBlend;          // 0 = normal follow, 1 = full cinematic pose; eased both ways
+    [Tooltip("Seconds to ease into / out of a cinematic (F-interact) side view.")]
+    public float cineTime = 0.5f;
+
+    /// <summary>Frame a fixed cinematic pose (position + look-at), easing over <see cref="cineTime"/>. Call each
+    /// frame to update the pose while active; <see cref="ExitCinematic"/> eases back to the normal follow.</summary>
+    public void EnterCinematic(Vector3 camPos, Vector3 lookAt) { cineWant = true; cinePos = camPos; cineLook = lookAt; }
+    public void ExitCinematic() { cineWant = false; }
+    /// <summary>True while a cinematic is engaged or still easing back out.</summary>
+    public bool Cinematic => cineWant || cineBlend > 0.001f;
+
     void LateUpdate()
     {
         // Undo last frame's shake so the follow smoothing always works from the CLEAN base position
@@ -86,15 +100,33 @@ public class CameraFollow3D : MonoBehaviour
         transform.position -= shakeOffset;
         shakeOffset = Vector3.zero;
 
-        HandleInput();
+        if (!Cinematic) HandleInput();   // no zoom/orbit while a cinematic is framing
         if (target == null) return;
 
         Vector3 offset = Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, height, -distance);
-        Vector3 desired = target.position + offset;
-        transform.position = smoothTime > 0f
-            ? Vector3.SmoothDamp(transform.position, desired, ref vel, smoothTime)
-            : desired;
-        transform.LookAt(target.position + Vector3.up * lookAtHeight);
+        Vector3 followPos = target.position + offset;
+        Vector3 followLook = target.position + Vector3.up * lookAtHeight;
+
+        float targetBlend = cineWant ? 1f : 0f;
+        cineBlend = Mathf.MoveTowards(cineBlend, targetBlend, Time.deltaTime / Mathf.Max(0.01f, cineTime));
+
+        if (cineBlend <= 0.0001f)
+        {
+            // Pure follow (unchanged behaviour).
+            transform.position = smoothTime > 0f
+                ? Vector3.SmoothDamp(transform.position, followPos, ref vel, smoothTime)
+                : followPos;
+            transform.LookAt(followLook);
+        }
+        else
+        {
+            // Blend the live follow pose ↔ the cinematic side view. The LOOK POINT lerps too, so LookAt eases the
+            // rotation smoothly both in and out. SmoothStep gives an ease-in/out feel.
+            float k = Mathf.SmoothStep(0f, 1f, cineBlend);
+            transform.position = Vector3.Lerp(followPos, cinePos, k);
+            transform.LookAt(Vector3.Lerp(followLook, cineLook, k));
+            vel = Vector3.zero;   // keep SmoothDamp clean for the frame we hand back to pure follow
+        }
 
         shakeOffset = CurrentShakeOffset();   // re-apply on TOP of the smoothed base (after LookAt set rotation)
         transform.position += shakeOffset;

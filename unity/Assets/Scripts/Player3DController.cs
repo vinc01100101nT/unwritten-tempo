@@ -185,6 +185,8 @@ public partial class Player3DController : MonoBehaviour
         // The combo executor rides on the player too (reads Character.Combos). Auto-attach so a player built before
         // combos existed picks it up with no re-bake — same idempotent pattern as the skills above.
         if (GetComponent<ComboRunner>() == null) gameObject.AddComponent<ComboRunner>();
+        // Press-to-talk (F) with ambient townsfolk. Same idempotent self-attach pattern — every player gets it.
+        if (GetComponent<PlayerInteractor>() == null) gameObject.AddComponent<PlayerInteractor>();
     }
 
     // The footstep sound rides the ONE central player-step signal (fired on the real foot-plant frame) instead of a
@@ -325,7 +327,13 @@ public partial class Player3DController : MonoBehaviour
         // click-to-move / attack / auto order (cancelling it once) so the two schemes don't fight.
         Vector3 wasd = ReadWasd();
         Vector3 move;
-        if (wasd.sqrMagnitude > 0.001f)
+        if (PlayerInteractor.Talking)
+        {
+            // Frozen in a townsfolk conversation (F-interact): hold position (gravity still applies below) and let
+            // PlayerInteractor own the facing toward the NPC. Any WASD press ends the chat via PlayerInteractor.
+            move = Vector3.zero;
+        }
+        else if (wasd.sqrMagnitude > 0.001f)
         {
             if (order != Order.Idle) Stop();   // drop any routed move/attack/auto so WASD wins
             move = wasd;

@@ -55,10 +55,21 @@ public class PerfHud : MonoBehaviour
     void OnEnable() => gcRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
     void OnDisable() => gcRecorder.Dispose();
 
+    static PerfHud sInstance;
+    static bool sHidden;   // externally suppressed (e.g. hidden during an NPC dialogue) — ANDed with the F3 `show` state
+
+    /// <summary>Hide/show the perf overlay from outside (e.g. while an NPC conversation hides the HUD). Restores to
+    /// whatever the F3 toggle last left it when un-hidden.</summary>
+    public static void SetHidden(bool h) { sHidden = h; if (sInstance != null) sInstance.Apply(); }
+
+    void Apply() { if (canvasGo != null) canvasGo.SetActive(show && !sHidden); }
+
     void Start()
     {
+        sInstance = this;
         BuildUi();
         Rebuild();
+        Apply();
     }
 
     void Update()
@@ -76,7 +87,7 @@ public class PerfHud : MonoBehaviour
         secTimer += Time.unscaledDeltaTime;
         if (secTimer >= 1f) { gcPerSec = secAccum; secAccum = 0; secTimer = 0f; }   // roll up to bytes/sec
 
-        if (Pressed(KeyCode.F3)) { show = !show; if (canvasGo != null) canvasGo.SetActive(show); }
+        if (Pressed(KeyCode.F3)) { show = !show; Apply(); }
         if (Pressed(KeyCode.F4)) peakFrame = 0;
 
         // Rewrite the label only 4×/sec (a uGUI text assignment allocates + rebuilds its mesh, so we keep it

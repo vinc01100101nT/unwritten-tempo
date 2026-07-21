@@ -40,6 +40,12 @@ public class StanceController : MonoBehaviour
     IStancePose pose;
     Player3DController playerCtrl;   // optional — resolves the MoveGait source
 
+    /// <summary>Gait multiplier for a unit that has NO <see cref="Player3DController"/> to read one from (an AI NPC).
+    /// The <see cref="StanceSpeedSource.MoveGait"/> case uses this when <see cref="playerCtrl"/> is null, so an NPC
+    /// driver (e.g. <see cref="TownNPC3DVisual"/>) can scale Walk cadence to its own ground speed. 1 = clip's natural
+    /// cadence. Ignored for the player (its live controller owns the gait).</summary>
+    public float externalGaitMult = 1f;
+
     // One held stance: its id + the FitWindow duration its clip is fit to (0 = none). Kept as a single unit so the id
     // and its window can't drift apart.
     struct Held { public StanceId id; public float window; }
@@ -237,7 +243,7 @@ public class StanceController : MonoBehaviour
         {
             case StanceSpeedSource.AttackSpeed: m *= Character.Instance != null ? Character.Instance.AttackSpeedMult : 1f; break;
             case StanceSpeedSource.CastSpeed:   m *= Character.Instance != null ? Character.Instance.CastSpeedMult   : 1f; break;
-            case StanceSpeedSource.MoveGait:    m *= playerCtrl != null ? playerCtrl.GaitSpeedMult : 1f; break;
+            case StanceSpeedSource.MoveGait:    m *= playerCtrl != null ? playerCtrl.GaitSpeedMult : externalGaitMult; break;
             case StanceSpeedSource.FitWindow:
                 float n = pose.NaturalDuration(b.action, b.clip);
                 if (window > 0.01f && n > 0.01f) m *= n / window;

@@ -1,3 +1,5 @@
+using UnityEngine;
+
 /// <summary>
 /// The presentation SINK that <see cref="StanceController"/> drives — the seam that lets ONE choke point
 /// pose either a baked billboard (<see cref="BakedBillboard8"/>) or a live 3D skinned model
@@ -36,4 +38,12 @@ public interface IStancePose
 
     /// <summary>Hand back to the visual's own movement-sampled Idle/Walk/Run (self-driving units).</summary>
     void ResumeSelfDrive();
+
+    /// <summary>The character's current rendered world-space height (0 before it's renderable) — lets gameplay place
+    /// head-anchored UI (e.g. an NPC speech bubble) without caring whether the visual is a billboard or a 3D model.</summary>
+    float VisualWorldHeight { get; }
+
+    /// <summary>Aim the visual at a world-space XZ direction (a billboard picks its octant; a 3D model yaws toward it).
+    /// Lets gameplay turn a unit to face something — e.g. a talked-to townsperson turning to the player.</summary>
+    void SetFacing(Vector3 worldDir);
 }

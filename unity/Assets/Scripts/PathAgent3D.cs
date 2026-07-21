@@ -36,6 +36,10 @@ public class PathAgent3D : MonoBehaviour
     public LayerMask avoidMask;
     [Tooltip("One unit to NOT spread away from — the chase target (player) — so melee still reaches it.")]
     public Transform avoidIgnore;
+    [Tooltip("While IDLE (no active path) keep drifting apart from nearby crowd units. Mobs want this so a halted " +
+             "cluster un-stacks; ambient townsfolk DON'T — with it on, a paused NPC slides away when the player " +
+             "stands beside it (it's on the Crowd layer too). Off = a halted agent holds its ground (gravity only).")]
+    public bool separateWhenIdle = true;
 
     public Vector2 Facing { get; private set; } = Vector2.down;   // cardinal (x, z)
     public bool Moving { get; private set; }
@@ -155,7 +159,9 @@ public class PathAgent3D : MonoBehaviour
         }
         else
         {
-            Vector3 push = Steer(transform.position, Vector3.zero);   // separation-only (no desired heading)
+            // Separation-only (no desired heading) — but only if this agent un-stacks while idle. Townsfolk turn
+            // this off so a paused NPC isn't shoved by the player standing next to it (the idle-slide bug).
+            Vector3 push = separateWhenIdle ? Steer(transform.position, Vector3.zero) : Vector3.zero;
             if (push.sqrMagnitude > 1e-4f)
                 cc.Move((push * moveSpeed * 0.6f + Vector3.down * gravity) * Time.deltaTime);
             else

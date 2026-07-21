@@ -23,7 +23,6 @@ public class TownNPC : MonoBehaviour
     // ---- configured by AmbientLife at spawn (see Init) ----
     Vector3 home;
     float wanderRadius = 6f;
-    string[] barkPool;
     bool barksEnabled;
     Transform player;
     LayerMask groundMask;   // Ground layer only — what we raycast-snap the feet to (see ClampToGround)
@@ -48,8 +47,16 @@ public class TownNPC : MonoBehaviour
     public float maxWanderSeconds = 5f;
 
     PathAgent3D agent;
-    BakedBillboard8 visual;
+    // The visual is resolved through the IStancePose seam, so a townsperson works with EITHER a baked billboard
+    // (BakedBillboard8) or a live-3D model (Character3DPose) with no code change here. visualBehaviour is the same
+    // object typed as a Behaviour (for the LOD enable/disable); visualAnimator + visualDriver are the extra 3D-only
+    // pieces to freeze when far (null for a billboard).
+    IStancePose visual;
+    Behaviour visualBehaviour;
+    Animator visualAnimator;
+    Behaviour visualDriver;
     float nextWander, nextBark, nextLodCheck;
+    bool paused;                               // true while lingering at an arrived spot (waiting out the pause before the next stroll)
     float wanderDeadline, nextProgressCheck;   // stuck-detection: time budget + periodic progress sampling
     Vector3 lastProgressPos;
     Vector3 lastStepPos;        // footstep odometer: accumulate ground distance, emit a step each sStride
@@ -81,26 +88,67 @@ public class TownNPC : MonoBehaviour
         return true;
     }
 
+    Transform talkTarget;   // set while the player is talking to us (F-interact): hold still + face them, no wander/bark
+
+    // Live registry of townsfolk for the press-to-talk lookup. FindObjectsByType can't be used — townsfolk are
+    // spawned with HideFlags.DontSaveInEditor, which that call silently omits — so we keep our own list.
+    static readonly System.Collections.Generic.List<TownNPC> Active = new System.Collections.Generic.List<TownNPC>();
+
     void Awake()
     {
         agent = GetComponent<PathAgent3D>();
-        visual = GetComponentInChildren<BakedBillboard8>(true) ?? GetComponent<BakedBillboard8>();
+        visual = GetComponentInChildren<IStancePose>(true);
+        visualBehaviour = visual as Behaviour;
+        visualAnimator = GetComponentInChildren<Animator>(true);   // 3D only; null for a billboard NPC
+        visualDriver = GetComponent<TownNPC3DVisual>();            // 3D only; null for a billboard NPC
     }
+
+    void OnEnable() { if (!Active.Contains(this)) Active.Add(this); }
+    void OnDisable() { Active.Remove(this); }
+
+    /// <summary>The nearest townsperson to <paramref name="pos"/> within <paramref name="maxDist"/> (world units),
+    /// or null. Scans the small live registry (≈ town population) — called on a keypress, never per frame.</summary>
+    public static TownNPC Nearest(Vector3 pos, float maxDist)
+    {
+        TownNPC best = null;
+        float bestSq = maxDist * maxDist;
+        for (int i = 0; i < Active.Count; i++)
+        {
+            var n = Active[i];
+            if (n == null) continue;
+            float d = (n.transform.position - pos).sqrMagnitude;
+            if (d <= bestSq) { bestSq = d; best = n; }
+        }
+        return best;
+    }
+
+    /// <summary>Enter a conversation: stop where we are and turn to face <paramref name="speaker"/> (the player).
+    /// While talking we don't wander or bark — <see cref="EndTalk"/> resumes normal ambient life.</summary>
+    public void BeginTalk(Transform speaker)
+    {
+        talkTarget = speaker;
+        paused = false;
+        if (agent != null) agent.Halt();
+    }
+
+    public void EndTalk() => talkTarget = null;
 
     /// <summary>Set this townsperson up. Called by <see cref="AmbientLife"/> right after spawn so all the
     /// per-NPC randomization (speed, home, pools, phase offsets) lives in one place.</summary>
-    public void Init(Vector3 homePoint, float wander, float moveSpeed, string[] barks, bool barksOn, Transform playerT, LayerMask ground)
+    public void Init(Vector3 homePoint, float wander, float moveSpeed, bool barksOn, Transform playerT, LayerMask ground)
     {
         home = homePoint;
         wanderRadius = Mathf.Max(0.5f, wander);
-        barkPool = barks;
-        barksEnabled = barksOn && barks != null && barks.Length > 0;
+        barksEnabled = barksOn;
         player = playerT;
         groundMask = ground;
 
         agent.moveSpeed = moveSpeed;
-        // Spread apart from other units, but townsfolk don't chase anyone — no avoidIgnore target.
+        // Spread apart from other units WHILE WALKING, but townsfolk don't chase anyone — no avoidIgnore target.
         agent.avoidMask = UnitCrowd.Mask;
+        // Don't drift while paused: the player is on the Crowd layer, so idle separation would shove a standing
+        // townsperson away when the player steps beside it (sliding in the Idle pose). Hold ground when halted.
+        agent.separateWhenIdle = false;
         UnitCrowd.Register(gameObject);   // player + mobs pass through townsfolk (no stacking / getting stuck)
 
         // Desync the herd: random first-step delay + random LOD phase, so a freshly spawned crowd doesn't all
@@ -141,17 +189,37 @@ public class TownNPC : MonoBehaviour
         }
         if (!simulating) return;
 
-        // --- Layer 1: wander. Stroll to a random point near home, then pause. Same verb the mobs use. ---
-        // Pick a fresh target when we've arrived and rested, OR when we're plainly stuck (pushing a wall): a
-        // blocked goal makes PathAgent3D straight-line into geometry and never "arrive", so without this an NPC
-        // would shove the wall forever (the bug in the screenshot).
-        if (agent.Arrived && Time.time >= nextWander)
+        // --- Talking to the player (F-interact): hold still, turn to face them, skip wander/barks/footsteps. ---
+        if (talkTarget != null)
         {
-            WanderTo(home + RandomOffset(wanderRadius));   // free roam anywhere near home
+            Vector3 toSpeaker = talkTarget.position - transform.position; toSpeaker.y = 0f;
+            if (toSpeaker.sqrMagnitude > 1e-4f && visual != null) visual.SetFacing(toSpeaker);
+            return;
         }
-        else if (!agent.Arrived && IsStuck())
+
+        // --- Layer 1: wander → pause → wander. Stroll to a random point near home, stand a moment, then pick a new
+        // one. The pause is timed from ARRIVAL (not departure): when the agent reports Arrived we start the linger
+        // clock once, stand Idle through it, then set off again — so the pause always happens no matter how long the
+        // walk took. Same verb the mobs use.
+        if (agent.Arrived)
         {
-            WanderTo(home + RandomOffset(wanderRadius * 0.35f));   // unstick: head back toward open home ground
+            if (!paused)
+            {
+                paused = true;
+                nextWander = Time.time + Random.Range(pauseMin, pauseMax);   // just arrived → linger this long
+            }
+            else if (Time.time >= nextWander)
+            {
+                paused = false;
+                WanderTo(home + RandomOffset(wanderRadius));   // pause over → free roam anywhere near home
+            }
+        }
+        else if (IsStuck())
+        {
+            // Pushing a wall (a blocked goal makes PathAgent3D straight-line into geometry and never "arrive") —
+            // bail to open home ground instead of shoving forever.
+            paused = false;
+            WanderTo(home + RandomOffset(wanderRadius * 0.35f));
         }
 
         // --- Layer 3: reactive barks when the player passes by ---
@@ -159,11 +227,8 @@ public class TownNPC : MonoBehaviour
         {
             if ((player.position - transform.position).sqrMagnitude <= barkRadius * barkRadius)
             {
-                string line = barkPool[Random.Range(0, barkPool.Length)];
-                // White speech bubble just above the head. VisualWorldHeight is the sprite's real world height
-                // (feet ≈ this transform), so head + a small gap places the bubble's bottom over the head.
-                float head = visual != null ? visual.VisualWorldHeight : 1f;
-                SpeechBubble.Show(transform, head - 0.2f, line, 2.6f);   // bubble rides this unit's head // i tuned this to 0.2 --vince
+                string line = NpcBarks.PickTownLine();   // time-of-day aware: morning / day / evening / night pool
+                SpeechBubble.Show(transform, BubbleAnchorY(), line, 2.6f);   // bubble bottom just above the head
                 nextBark = Time.time + Random.Range(barkCooldownMin, barkCooldownMax);
             }
             else nextBark = Time.time + 1f;   // out of range — re-check soon, don't burn the full cooldown
@@ -216,11 +281,30 @@ public class TownNPC : MonoBehaviour
         return new Vector3(r.x, 0f, r.y);
     }
 
+    /// <summary>World-up offset (from this unit's feet origin) at which a speech bubble's BOTTOM sits just above the
+    /// head. VisualWorldHeight is the model's full feet-to-crown height, so head + a small gap clears it. Shared by
+    /// ambient barks and the F-interact dialog so both anchor identically.</summary>
+    public float BubbleAnchorY()
+    {
+        float head = visual != null ? visual.VisualWorldHeight : 1f;
+        return head + 0.05f;
+    }
+
+    /// <summary>The model's rendered world height (feet to crown) — used to size the F-interact camera framing so it
+    /// scales with the character instead of a hard-coded distance.</summary>
+    public float HeadHeight => visual != null ? visual.VisualWorldHeight : 0.3f;
+
+    /// <summary>A short multi-line, time-of-day-appropriate conversation for the F-interact dialog box.</summary>
+    public string[] DialogueLines() => NpcBarks.PickTownConversation();
+
+    /// <summary>Name shown in the dialog box's speaker slot.</summary>
+    public string SpeakerName => "Villager";
+
     // Issue a new stroll target and (re)arm the stuck watchdog: a time budget to reach it + a progress baseline.
     void WanderTo(Vector3 target)
     {
         agent.MoveTo(target);
-        nextWander = Time.time + Random.Range(pauseMin, pauseMax);
+        // NOTE: the linger clock (nextWander) is armed on ARRIVAL, not here — see the wander block in Update.
         wanderDeadline = Time.time + maxWanderSeconds;
         lastProgressPos = transform.position;
         nextProgressCheck = Time.time + 0.7f;
@@ -261,6 +345,8 @@ public class TownNPC : MonoBehaviour
         if (on) { lastStepPos = transform.position; stepLeft = false; }   // reset odometer + foot so re-entering range starts on the right
         if (!on) agent.Halt();
         if (agent != null) agent.enabled = on;
-        if (visual != null) visual.enabled = on;
+        if (visualBehaviour != null) visualBehaviour.enabled = on;   // BakedBillboard8 sprite anim / Character3DPose pose driver
+        if (visualAnimator != null) visualAnimator.enabled = on;     // 3D: stop the skinned-mesh animator (the real cost) when far
+        if (visualDriver != null) visualDriver.enabled = on;         // 3D: stop feeding Walk/Idle intent when far
     }
 }
