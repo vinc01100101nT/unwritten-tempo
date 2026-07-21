@@ -71,12 +71,25 @@ public class FootstepTracker : MonoBehaviour
     Transform player;
     Player3DController playerCtrl;
     Character3DPose pose;          // owns the Animator whose Walk/Run frame we read for plant detection
-    Vector3 lastStepPos;
-    Vector3 prevPos;
-    float prevFrac;    // last frame's position in the loco cycle — a plant fires when the cycle crosses a plant phase
-    bool hasLast, hasPrev, havePhase, wasAirborne;
+    readonly Gait playerGait = new Gait();
+    System.Action<Vector3, float> onPlayerPlant;   // cached (zero per-frame alloc) sink for the player's plants
+    bool wasAirborne;
     float nextFind;
     int lastTickFrame = -1;
+
+    /// <summary>Per-character gait state for frame-locked foot-plant detection — the PLAYER keeps one and every
+    /// NPC keeps its own. Fed to <see cref="DetectPlants"/> each frame so the identical "the Walk/Run animation
+    /// crossed an authored plant frame → stamp a step under that foot" logic drives every walker, with no
+    /// per-character copy of the stride math. <see cref="Seed"/> it when the walker stops/teleports/re-enables so
+    /// the next step re-seeds cleanly instead of firing a phantom print from a stale position.</summary>
+    public sealed class Gait
+    {
+        internal float prevFrac;              // last frame's position in the loco cycle — a plant fires on crossing a plant phase
+        internal Vector3 prevPos, lastStepPos;
+        internal bool havePhase, hasPrev, hasLast;
+        public void Reset() { havePhase = hasPrev = hasLast = false; }
+        public void Seed(Vector3 p) { lastStepPos = prevPos = p; hasLast = hasPrev = true; havePhase = false; }
+    }
 
     // Plant data MIRRORED from the Walk/Run bindings (the owner) — ONE entry per authored footfall: its 0→1 cycle
     // phase (frame ÷ clip frames) plus which foot (true = right). Rebuilt (allocated) only in ResolvePhases
@@ -86,8 +99,10 @@ public class FootstepTracker : MonoBehaviour
     static readonly bool[] DefaultRight = { false, true };   // first plant = left, second = right
     float[] runPhases = DefaultRunPhase;
     float[] walkPhases = DefaultWalkPhase;
+    float[] sprintPhases = DefaultRunPhase;   // sprint is a fast run; defaults to the run plant pair until authored
     bool[] runRight = DefaultRight;
     bool[] walkRight = DefaultRight;
+    bool[] sprintRight = DefaultRight;
     bool phasesReady;
 
     /// <summary>Re-read the foot-plants from the Walk/Run stance bindings (call after re-authoring them in the
@@ -102,6 +117,7 @@ public class FootstepTracker : MonoBehaviour
         if (pose == null) return;
         Build(StanceId.Run, ref runPhases, ref runRight, DefaultRunPhase);
         Build(StanceId.Walk, ref walkPhases, ref walkRight, DefaultWalkPhase);
+        Build(StanceId.Sprint, ref sprintPhases, ref sprintRight, DefaultRunPhase);
         phasesReady = true;
     }
 
@@ -132,9 +148,13 @@ public class FootstepTracker : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        onPlayerPlant = OnPlayerPlant;   // cache once so the per-frame detection path allocates no closure
         // Mark every slot dead (stamped far in the past) so nothing draws until the player actually steps.
         for (int i = 0; i < MaxSteps; i++) events[i] = new Vector4(0f, 0f, -1e9f, 0f);
     }
+
+    // The player's plant sink: stamp under the planting foot into the player region and fire the player SFX signal.
+    void OnPlayerPlant(Vector3 foot, float sizeScale) => Stamp(foot.x, foot.z, sizeScale, sfx: true);
 
     void OnDestroy() { if (Instance == this) Instance = null; }
 
@@ -178,14 +198,14 @@ public class FootstepTracker : MonoBehaviour
 
         Vector3 p = player.position;
 
-        // Airborne: feet are off the ground → no prints. Hold the anchors so air travel doesn't skew the next print's
-        // direction, reset detection, and remember we left the ground (for the landing splash on touchdown). The rooted
-        // LAND-recovery phase (JumpClipReleasing) already has the feet DOWN — exclude it so the splash stamps the frame
-        // of touchdown, not after the landing-animation tail finishes.
+        // Airborne: feet are off the ground → no prints. Seed the anchors so air travel doesn't skew the next print's
+        // direction, and remember we left the ground (for the landing splash on touchdown). The rooted LAND-recovery
+        // phase (JumpClipReleasing) already has the feet DOWN — exclude it so the splash stamps the frame of touchdown,
+        // not after the landing-animation tail finishes.
         if (playerCtrl != null && playerCtrl.IsAirborne && !playerCtrl.JumpClipReleasing)
         {
-            lastStepPos = p; prevPos = p; hasLast = true; hasPrev = true;
-            havePhase = false; wasAirborne = true;
+            playerGait.Seed(p);
+            wasAirborne = true;
             return;
         }
 
@@ -194,40 +214,70 @@ public class FootstepTracker : MonoBehaviour
         if (wasAirborne)
         {
             wasAirborne = false;
-            lastStepPos = p; prevPos = p; havePhase = false;
+            playerGait.Seed(p);
             Stamp(p.x, p.z, Mathf.Max(1f, landingScale), sfx: false);
             return;
         }
 
-        if (!hasLast) { lastStepPos = p; hasLast = true; }
-        if (!hasPrev) { prevPos = p; hasPrev = true; }
+        // Frame-locked foot-plant detection — the SAME shared path every NPC runs. A print fires when the walk/run
+        // ANIMATION passes an authored plant frame, so the splash is glued to the visibly-planting foot at any gait
+        // speed; a one-shot (attack/jump) suspends detection (TryGetLocoPhase returns false), so swinging never stamps.
+        DetectPlants(pose, p, playerGait, onPlayerPlant);
+    }
 
-        Vector3 frameDelta = p - prevPos; frameDelta.y = 0f; prevPos = p;
+    /// <summary>Run the player's OWN frame-locked plant detection for any live-3D character (the player or an NPC),
+    /// firing each detected foot-plant back through <paramref name="onPlant"/>(footWorld, sizeScale). This is the
+    /// SINGLE source of truth for "the Walk/Run animation crossed an authored plant frame → step here, under this
+    /// foot" — NPCs route through it instead of a distance odometer, so their footstep SFX and puddle ripple land on
+    /// the visibly-planting foot exactly like the player's. <paramref name="charPose"/> is that character's own
+    /// self-animating <see cref="Character3DPose"/>; the plant frames + foot offsets are OWNED here (shared by all).
+    /// Pass a CACHED delegate for <paramref name="onPlant"/> (a field, not a lambda) to keep this zero-alloc.</summary>
+    public void DetectPlants(Character3DPose charPose, Vector3 pos, Gait g, System.Action<Vector3, float> onPlant)
+    {
+        if (charPose == null) return;
+        if (!g.hasLast) { g.lastStepPos = pos; g.hasLast = true; }
+        if (!g.hasPrev) { g.prevPos = pos; g.hasPrev = true; }
+        Vector3 frameDelta = pos - g.prevPos; frameDelta.y = 0f; g.prevPos = pos;
 
-        // Real foot-plant detection: the print fires when the walk/run ANIMATION passes an authored plant frame. This
-        // is the same clock the animator legs run on, so the splash is glued to the visibly-planting foot at any gait
-        // speed — and a one-shot (attack/jump) suspends detection (TryGetLocoPhase returns false), so swinging in place
-        // never stamps prints.
-        if (pose == null || !pose.TryGetLocoPhase(out float frac, out Character3DPose.LocoGait gait)
+        // The gait CLIP that's actually playing (Character3DPose.Gait) decides which plants to detect against — NOT a
+        // move-speed / blend threshold — so steps follow whatever Walk/Run clips are authored and their L/R frames, at
+        // any speed. A one-shot (attack/jump) returns false here, so swinging in place never stamps a print.
+        if (!charPose.TryGetLocoPhase(out float frac, out Character3DPose.LocoGait gait)
             || gait == Character3DPose.LocoGait.None)
         {
-            havePhase = false;
+            g.havePhase = false;
             return;
         }
         // Need a previous sample before we can detect a crossing; seed it on the first moving frame.
-        if (!havePhase) { prevFrac = frac; havePhase = true; return; }
+        if (!g.havePhase) { g.prevFrac = frac; g.havePhase = true; return; }
 
         if (!phasesReady) ResolvePhases();   // mirror the authored plant frames the first time (pose is now known)
-        // Which plants to detect against is decided by the gait CLIP that's actually playing (Character3DPose.Gait),
-        // NOT a move-speed / blend threshold — so the SFX follows whatever Walk/Run clips are authored and their L/R
-        // frames, at any speed, with nothing to retune when animations change.
+        bool sprint = gait == Character3DPose.LocoGait.Sprint;
         bool run = gait == Character3DPose.LocoGait.Run;
-        float[] phases = run ? runPhases : walkPhases;
-        bool[] sides = run ? runRight : walkRight;
-        float stepScale = Mathf.Max(0.05f, run ? runStepScale : walkStepScale);
+        bool runFamily = run || sprint;   // sprint shares run's forward nudge + print scale (it's a fast run)
+        float[] phases = sprint ? sprintPhases : run ? runPhases : walkPhases;
+        bool[] sides = sprint ? sprintRight : run ? runRight : walkRight;
+        float stepScale = Mathf.Max(0.05f, runFamily ? runStepScale : walkStepScale);
+        float fwd = runFamily ? stepOffset : walkStepOffset;
         for (int i = 0; i < phases.Length; i++)
-            if (Crossed(prevFrac, frac, phases[i])) StampFoot(p, frameDelta, i < sides.Length && sides[i], stepScale);
-        prevFrac = frac;
+            if (Crossed(g.prevFrac, frac, phases[i]))
+            {
+                Vector3 foot = FootOffset(pos, frameDelta, g.lastStepPos, i < sides.Length && sides[i], fwd);
+                g.lastStepPos = pos;
+                onPlant(foot, stepScale);
+            }
+        g.prevFrac = frac;
+    }
+
+    // Offset a print under the planting foot — forward along travel by fwd, and sideways from the walk line to the
+    // AUTHORED side (right/left, not a blind alternation) so the trail zig-zags on the correct sides from the first step.
+    Vector3 FootOffset(Vector3 p, Vector3 frameDelta, Vector3 lastStep, bool rightFoot, float fwd)
+    {
+        Vector3 dir = p - lastStep; dir.y = 0f;
+        if (dir.sqrMagnitude <= 1e-6f) dir = frameDelta;
+        dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.forward;
+        Vector3 perp = new Vector3(dir.z, 0f, -dir.x);                       // 90° in the ground plane (right of travel)
+        return p + dir * fwd + perp * (footSpacing * (rightFoot ? 1f : -1f));
     }
 
     // Did the looping cycle move past plant phase p this frame? Handles the 0.98→0.02 wrap at the loop point.
@@ -235,21 +285,6 @@ public class FootstepTracker : MonoBehaviour
     {
         if (a <= b) return p > a && p <= b;   // no wrap: fired if p is in (a, b]
         return p > a || p <= b;               // wrapped past 1→0: p in (a, 1] or [0, b]
-    }
-
-    // Stamp a print under the planting foot — offset sideways from the walk line to the AUTHORED side (right/left, not
-    // a blind alternation) so the trail zig-zags on the correct sides from the first step. Fires the player step signals.
-    void StampFoot(Vector3 p, Vector3 frameDelta, bool rightFoot, float sizeScale)
-    {
-        Vector3 dir = p - lastStepPos; dir.y = 0f;
-        if (dir.sqrMagnitude <= 1e-6f) dir = frameDelta;
-        dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.forward;
-        Vector3 perp = new Vector3(dir.z, 0f, -dir.x);                       // 90° in the ground plane (right of travel)
-        float fwd = (playerCtrl != null && playerCtrl.WalkingSlow) ? walkStepOffset : stepOffset;
-        Vector3 foot = p + dir * fwd + perp * (footSpacing * (rightFoot ? 1f : -1f));
-
-        lastStepPos = p;
-        Stamp(foot.x, foot.z, sizeScale, sfx: true);
     }
 
     /// <summary>Stamp a footstep from a NON-player walker (e.g. a town NPC) into the SAME shared ring, so

@@ -148,6 +148,7 @@ public static class SkillTooltip
             case SkillEffectKind.Guard:         return "Reduces damage taken " + Pct(Mathf.Clamp01(e.magnitude)) + " for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Taunt:         return "Taunts nearby enemies for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Teleport:      return "Blinks to the target location";
+            case SkillEffectKind.Dash:          return "Dashes to the target location";
             case SkillEffectKind.Buff:          return "+" + Pct(Mathf.Max(0f, e.magnitude - 1f)) + " " + BuffStatName(e.buffStat) + " for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Regen:         return "Restores " + Hl(e.magnitude.ToString("0.#")) + " HP/sec for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Cleanse:       return "Removes " + Hl(Mathf.Max(1, e.amount).ToString()) + " debuff(s)";
@@ -164,7 +165,6 @@ public static class SkillTooltip
             case BuffStat.Damage:      return "damage";
             case BuffStat.AttackSpeed: return "attack speed";
             case BuffStat.CastSpeed:   return "cast speed";
-            case BuffStat.MoveSpeed:   return "move speed";
             default:                   return s.ToString();
         }
     }

@@ -56,20 +56,24 @@ public static class Character3DControllerBuilder
 
         // Locomotion blend tree from the Idle/Walk/Run STANCE clips (author-picked). A missing clip is left out of
         // the blend (unassigned Idle → the tree rests on whatever remains, or the bind pose).
-        string idleClip = ClipFor(lib, StanceId.Idle), walkClip = ClipFor(lib, StanceId.Walk), runClip = ClipFor(lib, StanceId.Run);
+        string idleClip = ClipFor(lib, StanceId.Idle), walkClip = ClipFor(lib, StanceId.Walk),
+               runClip = ClipFor(lib, StanceId.Run), sprintClip = ClipFor(lib, StanceId.Sprint);
         var loco = sm.AddState("Locomotion");
         var blend = new BlendTree { name = "Locomotion", blendType = BlendTreeType.Simple1D,
                                     blendParameter = "Speed", useAutomaticThresholds = false };
         AssetDatabase.AddObjectToAsset(blend, ctrl);
-        AddLoco(blend, Resolve(idleClip, quat, resolver), 0f);
-        AddLoco(blend, Resolve(walkClip, quat, resolver), 0.5f);
-        AddLoco(blend, Resolve(runClip,  quat, resolver), 1f);
+        AddLoco(blend, Resolve(idleClip,   quat, resolver), 0f);
+        AddLoco(blend, Resolve(walkClip,   quat, resolver), 0.5f);
+        AddLoco(blend, Resolve(runClip,    quat, resolver), 1f);
+        // Sprint is a 4th loco gait (Speed=2) — like Walk/Run it lives in the blend, matched by the composer clip
+        // STRING (Character3DPose.sprintClip), NOT a dedicated state. This is why a distinct Sprint clip animates.
+        AddLoco(blend, Resolve(sprintClip, quat, resolver), 2f);
         loco.motion = blend;
         sm.defaultState = loco;
 
         // One state per DISTINCT non-empty stance clip that isn't already a locomotion clip, NAMED by the clip so the
         // pose CrossFades to the state whose name == the composer string.
-        var locoClips = new HashSet<string> { idleClip, walkClip, runClip };
+        var locoClips = new HashSet<string> { idleClip, walkClip, runClip, sprintClip };
         var made = new HashSet<string>();
         if (lib != null && lib.stances != null)
             foreach (var b in lib.stances)

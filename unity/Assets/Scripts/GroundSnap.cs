@@ -4,8 +4,8 @@ using UnityEngine;
 /// The one runtime way to ask "where is the GROUND directly under this point?" — a downward raycast against the
 /// Ground layer ONLY (never props / snow caps / triggers), matching the project's world-ground standard so every
 /// unit seats its feet on the same surface. It's the per-frame twin of the build-time
-/// <c>WorldBuildUtil.SurfacePoint</c>: <see cref="BakedPlayerVisual"/> (the player avatar) and
-/// <see cref="TownNPC"/> (townsfolk) both ground themselves through it, so the foot-on-floor truth lives in ONE
+/// <c>WorldBuildUtil.SurfacePoint</c>: the live-3D player (<see cref="Character3DVisual"/>) and townsfolk
+/// (<see cref="TownNPC3DVisual"/>) both ground themselves through it, so the foot-on-floor truth lives in ONE
 /// place instead of drifting between hand-copied raycasts.
 ///
 /// <para>PERFORMANCE (PERFORMANCE.md): a plain stack-only <see cref="Physics.Raycast"/> — no allocation — safe to

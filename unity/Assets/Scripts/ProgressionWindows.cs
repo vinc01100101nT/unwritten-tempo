@@ -7,7 +7,8 @@ using TMPro;
 /// <summary>
 /// Builds and drives the progression window trio (Inventory · Equipment · Character) from the
 /// locked HUD spec, wired to the real <see cref="Character"/> + <see cref="InventoryStore"/>.
-/// Toggle keys: B = Inventory, V = Equipment, C = Character, Esc = close all. Each window self-builds
+/// Toggle keys: B = Bag (Inventory + docked Equipment, opened together), C = Character, Esc = close all. (V is now
+/// the Sprint key on Player3DController — Equipment no longer has its own key.) Each window self-builds
 /// at Start into a <see cref="UiKit.Window"/>; the shared <see cref="ItemTooltip"/> handles hover
 /// (incl. the live equip→stat-delta preview). Lives on its own canvas (the builder sets it up).
 /// </summary>
@@ -67,6 +68,7 @@ public class ProgressionWindows : MonoBehaviour
         if (active != null && active != this) { enabled = false; return; }
         active = this;
         canvas = GetComponentInParent<Canvas>() != null ? GetComponentInParent<Canvas>().transform : transform;
+        ResetDockedWindowPositionsOnce();   // must run BEFORE the windows build (WindowFrame loads its saved pos on enable)
         EnsureTooltip();
         BuildInventory();
         BuildEquipment();
@@ -86,15 +88,30 @@ public class ProgressionWindows : MonoBehaviour
         Wallet.OnChanged -= OnGold;
     }
 
+    // One-time migration: the Equipment window is now DOCKED to the bag's left (new default positions in
+    // BuildInventory/BuildEquipment). Clear any position saved by the OLD free-floating layout so the docked default
+    // takes effect once; the user's later drags persist normally after that. WindowFrame keys are "win_<title>_x/y".
+    static void ResetDockedWindowPositionsOnce()
+    {
+        if (PlayerPrefs.HasKey("pw_dock_v1")) return;
+        PlayerPrefs.DeleteKey("win_Inventory_x"); PlayerPrefs.DeleteKey("win_Inventory_y");
+        PlayerPrefs.DeleteKey("win_Equipment_x"); PlayerPrefs.DeleteKey("win_Equipment_y");
+        PlayerPrefs.SetInt("pw_dock_v1", 1);
+    }
+
     void OnGold(int _) => RefreshInventoryFooter();
 
     void Update()
     {
         // Bare-key window hotkeys (no Alt — the Unity/OS Alt menu accelerators interfere with it):
-        //   B = Inventory · V = Equipment · C = Character (K = Skills, owned by SkillDraftPanel).
-        //   B/V chosen over I/E because E is the bare dash key.
-        if (Hotkeys.Down(KeyCode.B)) UiAnim.Toggle(invRoot);
-        if (Hotkeys.Down(KeyCode.V)) UiAnim.Toggle(equipRoot);
+        //   B = Bag (Inventory + the docked Equipment panel, opened together) · C = Character (K = Skills, owned by
+        //   SkillDraftPanel). V is now the Sprint key (Player3DController) — Equipment no longer has its own key.
+        if (Hotkeys.Down(KeyCode.B))
+        {
+            bool open = UiAnim.Toggle(invRoot);
+            // Equipment is docked to the bag's left side — mirror the bag's state so they open/close as one panel.
+            if (open) UiAnim.Open(equipRoot); else UiAnim.Close(equipRoot);
+        }
         if (Hotkeys.Down(KeyCode.C)) UiAnim.Toggle(charRoot);
         if (Hotkeys.CancelDown())
         {
@@ -116,7 +133,9 @@ public class ProgressionWindows : MonoBehaviour
 
     void BuildInventory()
     {
-        var content = UiKit.Window(canvas, "Inventory", new Vector2(520, 480), new Vector2(-360, 0), out invRoot);
+        // Bag sits right-of-centre; the Equipment window docks flush to its LEFT edge (see BuildEquipment), so the two
+        // read as one panel that opens together on B. Pair is centred: bag right edge +560, equip left edge -576.
+        var content = UiKit.Window(canvas, "Inventory", new Vector2(520, 480), new Vector2(300, 0), out invRoot);
 
         // tabs
         var tabRow = UiKit.Img("Tabs", content, new Color(0, 0, 0, 0));
@@ -216,7 +235,9 @@ public class ProgressionWindows : MonoBehaviour
 
     void BuildEquipment()
     {
-        var content = UiKit.Window(canvas, "Equipment", new Vector2(620, 440), new Vector2(180, 0), out equipRoot);
+        // Docked to the LEFT of the bag (Inventory at x=300, width 520 → left edge x=40). Equipment (width 620) is
+        // centred at -266 so its right edge (x=44) meets the bag with a ~10px gap — one combined panel opened on B.
+        var content = UiKit.Window(canvas, "Equipment", new Vector2(620, 440), new Vector2(-266, 0), out equipRoot);
 
         // paperdoll (left)
         var doll = UiKit.Img("Paperdoll", content, new Color(0, 0, 0, 0));

@@ -1,7 +1,6 @@
 /// <summary>
-/// The canonical, PRE-DECLARED set of character animation actions — the contract key that ties together
-/// the bake tool, the per-character <see cref="CharacterDef"/>, the baked PNG filenames (<c>Idle_N.png</c>),
-/// and the runtime <see cref="BakedBillboard8"/> / gameplay lookup.
+/// The canonical, PRE-DECLARED set of character animation actions — the contract key that ties together the
+/// authored <see cref="StanceLibrary"/> bindings, the live-3D <see cref="Character3DPose"/> sink, and gameplay lookup.
 ///
 /// <para>It's an enum (not free text) on purpose: a name like "Run" vs "Running" vs "run" would bake fine but
 /// silently miss at lookup time. As an enum, the compiler and every consumer agree by definition, renames

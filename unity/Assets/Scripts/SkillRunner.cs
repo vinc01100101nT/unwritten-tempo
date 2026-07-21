@@ -103,7 +103,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (!Spend()) return;
         comboDamageMult = 1f;               // solo cast — no combo ramp
-        lastCtx = VfxContext.At(center);
+        // origin = the CASTER (Origin anchor), target = the aimed point (Target anchor). Self cast: center IS the
+        // caster, so they coincide. Ground cast: they DIFFER, so an Origin-anchored step (e.g. Blink's departure
+        // flash before the teleport) plays at the caster's spot, not the destination. VfxContext.At collapsed both.
+        lastCtx = new VfxContext { origin = transform.position, target = center, follow = null, scaleMult = 1f };
         StartCastOrPlay();
     }
 
@@ -133,7 +136,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (!ComboSpend()) return false;
         comboDamageMult = Mathf.Max(0f, dmgMult);
-        lastCtx = VfxContext.At(center);
+        // origin = caster, target = aimed point (see Cast) — keeps Origin/Target distinct on a ground combo member.
+        lastCtx = new VfxContext { origin = transform.position, target = center, follow = null, scaleMult = 1f };
         StartCastOrPlay();
         return true;
     }
@@ -313,7 +317,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         SkillReshape.GateTo(b, ref mods);   // drop reshapers this binding can't use (e.g. Repeat on a non-damaging tick)
         SkillEffectApplier.ApplyBurst(tick.point, b.radius, b.scope, b.targets, b.effects,
                                       lastCtx.targetUnit, mods.rawDamageMult, 0, comboDamageMult,
-                                      def.icon, def.displayName, mods);   // rawDamageMult rides the existing damage-mult param; buff bar tags entries with skill icon+name
+                                      def.icon, def.displayName, mods,
+                                      aimPoint: lastCtx.target);   // Teleport/Dash go to the AIM point, not the tick's VFX anchor
     }
 
     static MonsterAI3D NearestMob(Vector3 from, float maxRange)

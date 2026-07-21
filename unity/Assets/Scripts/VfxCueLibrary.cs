@@ -46,6 +46,10 @@ public enum VfxCueId
     // with the Passive Verbs in the composer UI, but the enum is append-only so the int index lives at the end.
     // See Health's skill-damage choke point.
     OnHitBySkill,
+
+    // Active Verb (actor-side, one-shot): fired ONCE on the player the moment V-sprint engages. Grouped under
+    // "Movement" in the composer UI; appended here to keep the enum APPEND-ONLY (the int index is serialized).
+    OnSprint,
 }
 
 /// <summary>Binds ONE <see cref="VfxCueId"/> to the composed look it should play — the status/verb analog of a

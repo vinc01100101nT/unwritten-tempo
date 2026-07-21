@@ -1,5 +1,7 @@
 # Combat / skills / progression / stats design
 
+- [Dash skill + aftercast root gotcha](../dash-skill-and-aftercast-root.md) — `SkillEffectKind.Dash`→`BeginDashToPoint` (visible gap-close to aimed point); skill movement must survive its OWN aftercast (`!CannotAct`) but die to hard-CC.
+
 - [Weapon affixes ≠ ring voices — never duplicate](../weapon-affix-vs-ring-voice-separation.md) — weapon=control/targeting/util (Slow live), ring=stat voices; library in V2 doc; don't put Execute/Repeat/Expand on a weapon.
 
 - [Multi-hit yellow total was never wired](../multihit-yellow-total-never-wired.md) — `MultiHitBurst` dead code; `hitCount>1` now cascades via `SkillEffectApplier.DispatchMobHits`.

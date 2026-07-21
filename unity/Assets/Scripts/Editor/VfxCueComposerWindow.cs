@@ -91,6 +91,9 @@ public class VfxCueComposerWindow : EditorWindow
         Section("Skill lifecycle (one-shot)");
         Row(VfxCueId.OnCastStart);
 
+        Section("Movement (actor-side, one-shot)");
+        Row(VfxCueId.OnSprint);
+
         if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(lib);
 
         EditorGUILayout.EndScrollView();

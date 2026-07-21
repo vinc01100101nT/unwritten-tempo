@@ -11,8 +11,8 @@ using UnityEngine.Rendering;
 /// always full and never breaks into pieces. The visible quad stops casting (<see cref="ShadowCastingMode.Off"/>)
 /// so we never double-cast.
 ///
-/// <para>Self-bootstrapped onto every mob (<see cref="BillboardAnimator3D"/>) and the baked player
-/// (<see cref="BakedBillboard8"/>), so no re-bake is needed. The proxy is only rendered into shadow maps, never
+/// <para>Self-bootstrapped onto every mob (<see cref="BillboardAnimator3D"/>), so no setup is needed. The proxy
+/// twins any camera-facing sprite; only mobs are billboards now. The proxy is only rendered into shadow maps, never
 /// to the camera, and is DISTANCE-CULLED (disabled past <see cref="MaxDistance"/> from the camera) so a screen
 /// full of mobs doesn't pay for far-away shadow draws. Allocation-free per frame (one GameObject in Awake, then
 /// only reference/transform writes).</para>

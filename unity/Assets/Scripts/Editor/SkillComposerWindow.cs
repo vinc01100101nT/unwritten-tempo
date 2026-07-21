@@ -206,45 +206,55 @@ public class SkillComposerWindow : EditorWindow
         if (Section("Identity", ref foId))
         {
             sel.id = EditorGUILayout.TextField(new GUIContent("id", "Stable kebab id (e.g. skill.meteor). Don't rename once shipped."), sel.id);
-            sel.displayName = EditorGUILayout.TextField("display name", sel.displayName);
-            sel.icon = (Sprite)EditorGUILayout.ObjectField("icon", sel.icon, typeof(Sprite), false);
+            sel.displayName = EditorGUILayout.TextField(new GUIContent("display name",
+                "The skill's name shown to the player (hotbar hover, tooltips)."), sel.displayName);
+            sel.icon = (Sprite)EditorGUILayout.ObjectField(new GUIContent("icon",
+                "Hotbar icon. Leave empty to fall back to the short text label."), sel.icon, typeof(Sprite), false);
             EditorGUILayout.LabelField(new GUIContent("description", "Flavor + mechanics blurb shown in the hover card."));
             sel.description = EditorGUILayout.TextArea(sel.description ?? "", WrapTextArea, GUILayout.Height(42), GUILayout.ExpandWidth(true));
         }
 
-        // 2) CLASSIFICATION — the 4 authoring axes (verb · family · shape · tier) + designer metadata, all in one place.
-        if (Section("Classification  (verb · family · shape · tier)", ref foClass))
+        // 2) CLASSIFICATION — the gameplay axes (verb · family · tier) + designer-only metadata (shape/complexity/acq).
+        if (Section("Classification  (verb · family · tier)", ref foClass))
         {
             sel.archetype = (SkillArchetype)EditorGUILayout.EnumPopup(new GUIContent("archetype (verb)",
                 "Battlefield-role VERB — what the skill DOES. Drives the hover card chip + color (Burst / Tempo / Fortress / Buff / Curse)."), sel.archetype);
             sel.family = (SkillFamily)EditorGUILayout.EnumPopup(new GUIContent("family",
                 "Attribute CLUSTER (Might / Arcane / Finesse) — the RPS-triangle side; also the default damage-type source. Orthogonal to the verb."), sel.family);
-            sel.shape = (SkillShape)EditorGUILayout.EnumPopup(new GUIContent("shape",
-                "Spatial DELIVERY (Single / Area / Aura / Self / Dash)."), sel.shape);
             sel.tier = (SkillTier)EditorGUILayout.EnumPopup(new GUIContent("tier",
                 "Base = a normal hotbar skill (keys 1–9). Ultimate = fires from the dedicated ULT slot, charge-gated."), sel.tier);
-            using (new EditorGUI.DisabledScope(sel.tier != SkillTier.Ultimate))
+            if (sel.tier == SkillTier.Ultimate)   // charge cost only exists for an Ultimate; a Base skill uses cooldown
                 sel.chargeCost = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("charge cost",
                     "Ult-meter charge spent per cast. The meter fills in combat (dealing/taking damage, casting)."), sel.chargeCost));
+
             EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("Designer metadata (not gameplay)", EditorStyles.miniLabel);
             sel.complexity = (SkillComplexity)EditorGUILayout.EnumPopup(new GUIContent("complexity (meta)",
                 "Designer metadata only (not gameplay) — authoring complexity, for library search."), sel.complexity);
             sel.acquisitionTier = (AcquisitionTier)EditorGUILayout.EnumPopup(new GUIContent("acq. tier (meta)",
                 "Designer metadata only (not gameplay) — early / mid / late progression bucket."), sel.acquisitionTier);
+            sel.shape = (SkillShape)EditorGUILayout.EnumPopup(new GUIContent("shape (meta)",
+                "LABEL ONLY — no gameplay reads it. Real spatial behavior comes from 'aim' + each tick's 'applies to' / scope / radius. Kept for library filtering."), sel.shape);
         }
 
-        // 3) COST & CADENCE — what it costs to fire and how it aims.
-        if (Section("Cost & Cadence", ref foCost))
+        // 3) COST · CADENCE · AIM — what it costs to fire and WHERE it lands (aim is the cast gesture; each tick's
+        //    'applies to' below is WHO it affects there — kept distinct on purpose).
+        if (Section("Cost · Cadence · Aim", ref foCost))
         {
-            sel.manaCost = EditorGUILayout.IntField("mana cost", sel.manaCost);
+            sel.manaCost = EditorGUILayout.IntField(new GUIContent("mana cost",
+                "MP spent each time the skill is cast. The cast is blocked if you don't have enough."), sel.manaCost);
             if (sel.tier != SkillTier.Ultimate)   // an Ultimate is gated by its charge meter, not a cooldown
-                sel.cooldown = EditorGUILayout.Slider("cooldown (s)", sel.cooldown, 0f, 30f);
+                sel.cooldown = EditorGUILayout.Slider(new GUIContent("cooldown (s)",
+                    "Seconds before the skill can be used again after casting."), sel.cooldown, 0f, 30f);
             sel.castTime = EditorGUILayout.Slider(
                 new GUIContent("cast time (s)", "Wind-up before the skill fires (0 = instant). DEX shortens it at runtime."),
                 sel.castTime, 0f, 10f);
-            sel.aim = (SkillAim)EditorGUILayout.EnumPopup(new GUIContent("aim", "How the cast point is picked."), sel.aim);
-            using (new EditorGUI.DisabledScope(sel.aim == SkillAim.Self))
-                sel.castRange = EditorGUILayout.Slider("cast range", sel.castRange, 1f, 30f);
+            sel.aim = (SkillAim)EditorGUILayout.EnumPopup(new GUIContent("aim",
+                "WHERE the skill lands (the cast gesture): Self (on you) · Target (auto-lock nearest enemy) · Ground (place a reticle). " +
+                "Separate from each tick's 'applies to' below, which is WHO it affects at that spot."), sel.aim);
+            if (sel.aim != SkillAim.Self)   // Self casts on the caster — a range would mean nothing
+                sel.castRange = EditorGUILayout.Slider(new GUIContent("cast range",
+                    "Max distance from the caster the aim point can be."), sel.castRange, 1f, 30f);
         }
 
         // 4) PRESENTATION & HOTBAR — how it looks + where it sits on the bar.
@@ -255,7 +265,7 @@ public class SkillComposerWindow : EditorWindow
             sel.repeatCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("repeat count",
                 "Replay the WHOLE cycle N times per cast (e.g. 5 = a 5-meteor shower). Each cycle is an independent play " +
                 "at the same cast point; per-fall hits still come from the VFX's per-component tickCount. 1 = play once."), sel.repeatCount));
-            using (new EditorGUI.DisabledScope(sel.repeatCount <= 1))
+            if (sel.repeatCount > 1)   // only meaningful when the cycle actually repeats
                 sel.repeatInterval = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("repeat interval (s)",
                     "Seconds between cycle starts. 0 = use the VFX sequence's RestartInterval (its loop-end marker)."), sel.repeatInterval));
 
@@ -418,13 +428,33 @@ public class SkillComposerWindow : EditorWindow
 
     void DrawBinding(SkillTickBinding b)
     {
-        b.targets = (SkillTargets)EditorGUILayout.EnumFlagsField("  targets", b.targets);
-        b.scope = (SkillScope)EditorGUILayout.EnumPopup(new GUIContent("  scope",
-            "Area = everyone in the radius. Single = only the cast's target (always lands, radius ignored)."), b.scope);
-        using (new EditorGUI.DisabledScope(b.scope == SkillScope.Single))
-            b.radius = EditorGUILayout.Slider("  radius", b.radius <= 0f ? 1.5f : b.radius, 0.1f, 12f);
-
         if (b.effects == null) b.effects = new List<SkillEffect>();
+
+        // Contextual targeting. Self verbs (Dash/Blink/Buff/Heal/Guard/Regen/Cleanse) ALWAYS land on the caster, so
+        // when every effect here is a self verb the whole target/area block is noise → collapse it to a "Self" line
+        // and pin targets = Player (what the runtime needs). Otherwise show 'applies to', and only reveal scope/radius
+        // when the tick actually gathers enemies (scope/radius gate the MOB scan only — the self path ignores them).
+        if (AllSelfEffects(b.effects))
+        {
+            b.targets = SkillTargets.Player;
+            EditorGUILayout.LabelField(new GUIContent("  applies to",
+                "These effects always land on the caster (self) — no target or area needed."), new GUIContent("Self (the caster)"));
+        }
+        else
+        {
+            b.targets = (SkillTargets)EditorGUILayout.EnumFlagsField(new GUIContent("  applies to",
+                "WHO the effects land on: Player (yourself) and/or Mobs (enemies gathered in the area below). Separate " +
+                "from the skill's 'aim' above, which picks WHERE it lands."), b.targets);
+            if ((b.targets & (SkillTargets.Mobs | SkillTargets.Npc)) != 0)   // scope/radius only gate the enemy gather
+            {
+                b.scope = (SkillScope)EditorGUILayout.EnumPopup(new GUIContent("  scope",
+                    "Area = every enemy inside the radius. Single = only the one targeted enemy (always lands, radius ignored)."), b.scope);
+                if (b.scope == SkillScope.Area)
+                    b.radius = EditorGUILayout.Slider(new GUIContent("  radius",
+                        "Size of the circle (world units) around the hit point that catches enemies."), b.radius <= 0f ? 1.5f : b.radius, 0.1f, 12f);
+            }
+        }
+
         EditorGUILayout.LabelField($"  effects ({b.effects.Count})", EditorStyles.miniBoldLabel);
         int rm = -1;
         for (int e = 0; e < b.effects.Count; e++)
@@ -436,6 +466,8 @@ public class SkillComposerWindow : EditorWindow
             ef.kind = (SkillEffectKind)EditorGUILayout.EnumPopup(ef.kind);
             if (GUILayout.Button("✕", GUILayout.Width(22))) rm = e;
             EditorGUILayout.EndHorizontal();
+            // Plain-English summary of what THIS effect does — directly under the kind dropdown, above its fields.
+            EditorGUILayout.HelpBox(EffectSummary(ef.kind), MessageType.None);
             switch (ef.kind)
             {
                 case SkillEffectKind.Damage:
@@ -443,18 +475,20 @@ public class SkillComposerWindow : EditorWindow
                         "Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (pierces armour, always crits)."), ef.damageType);
                     ef.damageMult = EditorGUILayout.Slider(new GUIContent("base power ×",
                         "The skill's INHERENT strength (Ember ~1×, Meteor ~8×). Affinity picks WHICH stats scale it; this sets HOW BIG. Final = caster ATK/MATK × base power × affinity."), ef.damageMult <= 0f ? 1f : ef.damageMult, 0.1f, 8f);
-                    ef.element = (Element)EditorGUILayout.EnumPopup("element", ef.element);
+                    ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
+                        "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
                     ef.hitCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("hits",
                         "Strikes per landing. Each hit is the TRIGGER for this binding's proc effects (a Status or Execute with a chance)."), ef.hitCount));
                     break;
                 case SkillEffectKind.Heal:
-                    ef.amount = EditorGUILayout.IntField("HP", ef.amount);
+                    ef.amount = EditorGUILayout.IntField(new GUIContent("HP", "Flat HP restored to the caster."), ef.amount);
                     break;
                 case SkillEffectKind.Status:
-                    ef.ailment = (Ailment)EditorGUILayout.EnumPopup("ailment", ef.ailment);
+                    ef.ailment = (Ailment)EditorGUILayout.EnumPopup(new GUIContent("ailment",
+                        "What to inflict: Burn/Poison/Bleed = damage over time; Stun/Freeze/Silence = disable; Slow; Blind = accuracy loss."), ef.ailment);
                     ef.chance = EditorGUILayout.Slider(new GUIContent("chance",
                         "PROC chance rolled PER HIT of the binding's multi-hit Damage (e.g. a stun proc). 0 = not a proc — applies ONCE per landing. The 'affinity (chance)' channel below scales this."), ef.chance, 0f, 1f);
-                    ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 20f);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the ailment lasts."), ef.seconds, 0.5f, 20f);
                     // magnitude is only meaningful for DoTs (dmg/tick), Slow (speed factor) and Blind (HIT loss).
                     // Pure CC (Stun/Freeze/Silence) is binary — no magnitude, so hide it to avoid the confusion.
                     if (ef.ailment != Ailment.Stun && ef.ailment != Ailment.Freeze && ef.ailment != Ailment.Silence)
@@ -467,23 +501,23 @@ public class SkillComposerWindow : EditorWindow
                         "PROC chance rolled PER HIT of the binding's multi-hit Damage. 1 = executes on every hit."), ef.chance, 0f, 1f);
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("execute power ×",
                         "Bonus damage = roll × this × (target's missing HP). Huge near death, ~0 at full HP."), ef.magnitude <= 0f ? 1f : ef.magnitude, 0.1f, 5f);
-                    ef.element = (Element)EditorGUILayout.EnumPopup("element", ef.element);
+                    ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
+                        "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
                     break;
                 case SkillEffectKind.Haste:
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("speed ×", "Move-speed multiplier (>1 = faster)."), ef.magnitude <= 0f ? 1.3f : ef.magnitude, 0.2f, 3f);
-                    ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 20f);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the speed boost lasts."), ef.seconds, 0.5f, 20f);
                     break;
                 case SkillEffectKind.Guard:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage cut", "Fraction of incoming damage prevented (0..1)."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
-                    ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 20f);
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage cut", "Fraction of incoming damage prevented (0..1). 0.4 = take 40% less damage."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the damage reduction lasts."), ef.seconds, 0.5f, 20f);
                     break;
                 case SkillEffectKind.Taunt:
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long mobs are forced onto the caster."), ef.seconds, 0.5f, 20f);
-                    EditorGUILayout.HelpBox("Applies to mobs in the binding's radius — include Mobs in 'targets'.", MessageType.None);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long enemies are forced to attack the caster."), ef.seconds, 0.5f, 20f);
                     break;
                 case SkillEffectKind.Teleport:
-                    EditorGUILayout.HelpBox("Blinks the caster to the cast point (Ground aim). No fields — destination is the aimed point.", MessageType.None);
-                    break;
+                case SkillEffectKind.Dash:
+                    break;   // no fields — the destination is the aimed point (see the summary below)
                 case SkillEffectKind.Buff:
                     ef.buffStat = (BuffStat)EditorGUILayout.EnumPopup(new GUIContent("stat",
                         "Which self-stat is buffed. AMPLIFY buffs are FLAT — magnitude is NOT affinity-scaled, so a DPS can't out-buff via their offense."), ef.buffStat);
@@ -506,15 +540,15 @@ public class SkillComposerWindow : EditorWindow
                     }
                     break;
                 case SkillEffectKind.Regen:
-                    ef.magnitude = EditorGUILayout.FloatField(new GUIContent("HP / tick", "Healed every 0.8s while active."), ef.magnitude);
-                    ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 30f);
+                    ef.magnitude = EditorGUILayout.FloatField(new GUIContent("HP / tick", "HP healed every 0.8s while active."), ef.magnitude);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the heal-over-time lasts."), ef.seconds, 0.5f, 30f);
                     break;
                 case SkillEffectKind.Cleanse:
                     ef.amount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("debuffs removed", "How many active debuffs to strip."), ef.amount));
                     break;
                 case SkillEffectKind.Vulnerability:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("+damage taken", "Extra damage fraction (0.3 = +30%)."), ef.magnitude, 0f, 2f);
-                    ef.seconds = EditorGUILayout.Slider("seconds", ef.seconds, 0.5f, 20f);
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("+damage taken", "Extra damage the marked enemy takes (0.3 = +30%)."), ef.magnitude, 0f, 2f);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long enemies stay marked as vulnerable."), ef.seconds, 0.5f, 20f);
                     break;
             }
 
@@ -529,6 +563,46 @@ public class SkillComposerWindow : EditorWindow
         }
         if (rm >= 0) b.effects.RemoveAt(rm);
         if (GUILayout.Button("  + effect", GUILayout.Width(90))) b.effects.Add(new SkillEffect());
+    }
+
+    // One plain-English sentence per effect kind, shown as the grey note at the bottom of every effect so the author
+    // always sees what it DOES without decoding the fields. Keep these simple and jargon-free.
+    static string EffectSummary(SkillEffectKind k)
+    {
+        switch (k)
+        {
+            case SkillEffectKind.Damage:        return "Deals damage to whoever this tick hits. Scales off your ATK/MATK × base power.";
+            case SkillEffectKind.Heal:          return "Restores a flat chunk of HP to the caster.";
+            case SkillEffectKind.Status:        return "Inflicts an ailment (damage-over-time, stun, slow, …) for its duration.";
+            case SkillEffectKind.Haste:         return "Temporarily speeds up movement.";
+            case SkillEffectKind.Guard:         return "Temporarily reduces incoming damage to the caster.";
+            case SkillEffectKind.Taunt:         return "Forces enemies in range to attack the caster for a while.";
+            case SkillEffectKind.Teleport:      return "Blinks the caster INSTANTLY to the aimed point (use Ground aim). No fields — the destination is the aimed point.";
+            case SkillEffectKind.Dash:          return "Rushes the caster FAST to the aimed point (use Ground aim) — visible travel, blocked by walls. No fields — the skill's range is the max distance.";
+            case SkillEffectKind.Buff:          return "Temporarily raises one of the caster's stats.";
+            case SkillEffectKind.Regen:         return "Heals the caster a little every tick for a while (heal-over-time).";
+            case SkillEffectKind.Cleanse:       return "Removes active debuffs from the caster.";
+            case SkillEffectKind.Vulnerability: return "Marks enemies to take extra damage for a while.";
+            case SkillEffectKind.Execute:       return "Bonus damage that grows as the target's HP drops — a finisher, tiny at full HP.";
+            default:                            return "";
+        }
+    }
+
+    // A "self verb": an effect that ALWAYS lands on the caster and ignores the tick's targets/scope/radius gather
+    // (SkillEffectApplier applies these via ApplyEffectsToPlayer, un-gated by radius). When a binding is ALL self
+    // verbs, the composer hides the whole target/area block and pins targets = Player. Haste is intentionally NOT here
+    // (it can also debuff-haste mobs), so a standalone Haste keeps its targeting controls.
+    static bool IsSelfEffect(SkillEffectKind k) =>
+        k == SkillEffectKind.Heal || k == SkillEffectKind.Guard || k == SkillEffectKind.Teleport ||
+        k == SkillEffectKind.Dash || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
+        k == SkillEffectKind.Cleanse;
+
+    static bool AllSelfEffects(List<SkillEffect> effects)
+    {
+        if (effects == null || effects.Count == 0) return false;
+        for (int i = 0; i < effects.Count; i++)
+            if (effects[i] == null || !IsSelfEffect(effects[i].kind)) return false;
+        return true;
     }
 
     // The label for an effect's main affinity channel — names exactly what it boosts. null = it scales nothing (a pure

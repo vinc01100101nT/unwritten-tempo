@@ -1,16 +1,15 @@
 using UnityEngine;
 
 /// <summary>
-/// The presentation SINK that <see cref="StanceController"/> drives — the seam that lets ONE choke point
-/// pose either a baked billboard (<see cref="BakedBillboard8"/>) or a live 3D skinned model
-/// (<see cref="Character3DPose"/>). StanceController resolves WHICH <see cref="CharacterAction"/> + which clip +
-/// speed the character is in and pushes it here every frame; the implementer just renders it. Swapping billboard ⇄ 3D
-/// is then a matter of which IStancePose component sits on the visual — the brain and the choke point don't change.
+/// The presentation SINK that <see cref="StanceController"/> drives — the seam the choke point poses. The live-3D
+/// skinned-model sink <see cref="Character3DPose"/> implements it (players + townsfolk; mobs self-animate through
+/// <see cref="BillboardAnimator3D"/> and don't go through here). StanceController resolves WHICH
+/// <see cref="CharacterAction"/> + which clip + speed the character is in and pushes it here every frame; the
+/// implementer just renders it. Kept an interface so the brain and choke point stay decoupled from the render tech.
 ///
-/// <para>Each call carries BOTH the <see cref="CharacterAction"/> and the authored <c>clip</c> name because the two
-/// sinks key differently: the 2D billboard selects a baked sprite set by <see cref="CharacterAction"/> (ignores
-/// clip), while the live-3D sink CrossFades to the Animator state named by <c>clip</c> (the Stance Composer owns it,
-/// no hardcoded action→clip map). An empty/unknown clip on the 3D sink means "no clip" — it just stands.</para>
+/// <para>Each call carries BOTH the <see cref="CharacterAction"/> and the authored <c>clip</c> name: the live-3D sink
+/// CrossFades to the Animator state named by <c>clip</c> (the Stance Composer owns it, no hardcoded action→clip map).
+/// An empty/unknown clip means "no clip" — it just stands.</para>
 /// </summary>
 public interface IStancePose
 {
@@ -40,10 +39,10 @@ public interface IStancePose
     void ResumeSelfDrive();
 
     /// <summary>The character's current rendered world-space height (0 before it's renderable) — lets gameplay place
-    /// head-anchored UI (e.g. an NPC speech bubble) without caring whether the visual is a billboard or a 3D model.</summary>
+    /// head-anchored UI (e.g. an NPC speech bubble) without caring how the visual renders.</summary>
     float VisualWorldHeight { get; }
 
-    /// <summary>Aim the visual at a world-space XZ direction (a billboard picks its octant; a 3D model yaws toward it).
+    /// <summary>Aim the visual at a world-space XZ direction (the 3D model yaws toward it).
     /// Lets gameplay turn a unit to face something — e.g. a talked-to townsperson turning to the player.</summary>
     void SetFacing(Vector3 worldDir);
 }

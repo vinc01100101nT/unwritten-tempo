@@ -12,6 +12,8 @@
 - [Stance system (held poses + single driver)](../stance-system.md) — Composer→`StanceLibrary.asset`; `StanceController` single `baked.Play` choke.
 - [Gait speed-sync](../gait-speed-sync.md) — fps+steps scale w/ speed; `GaitSpeedMult` + `StatusController.Haste`.
 - [Footstep walk/run gait selection](../footstep-walk-run-threshold-bug.md) — walk SFX/prints desynced; gait must key off active CLIP (`Character3DPose.Gait`/`LocoGait`), never a move-speed/blend threshold.
+- [Sprint anim idle → make it a loco-blend gait](../sprint-loco-blend-gait.md) — distinct Sprint clip went idle (dedicated-state path keys stateHash by clip.name, not composer string); fixed by adding Sprint as 4th blend node (Speed=2) + `LocoGait.Sprint` + sprint footPlants.
+- [NPC footsteps frame-locked (shared detector)](../npc-footsteps-frame-locked.md) — NPC step SFX/ripple was a stale odometer; centralized onto player's `FootstepTracker.DetectPlants` + per-char `Gait`.
 - [Character art = Quaternius charcoal pack](../character-art-quaternius-charcoal.md) — players+NPCs+mobs = Quaternius Ultimate Animated.
 - [Animator CrossFade + stale normalizedTime](../animator-crossfade-stale-normalizedtime.md) — reading state info same-frame as CrossFade returns OUTGOING (looping Run) time; froze jump on a run frame. Guard `IsInTransition(0)` + `shortNameHash`.
 - [Quaternius NPC reuse plan (+ combat-NPC later)](../quaternius-npc-reuse-plan.md) — 3D body 100% shared (`StanceController`+`Character3DPose`+`selfDrive`); brain per-role. Town NPC = tiny walk/idle driver `TownNPC3DVisual`; combat NPCs reuse Attack/Hurt/Die, brain like `MonsterAI3D`, need own stat source for speed mults.

@@ -8,7 +8,7 @@ using UnityEngine;
 ///
 /// Reuse, not reinvention:
 ///   • Movement rides the SAME <see cref="PathAgent3D"/> the mobs use (routes around props, crowd-spreads,
-///     gravity-grounded), so the visual <see cref="BakedBillboard8"/> self-animates Walk/Idle from the motion.
+///     gravity-grounded); the live-3D <see cref="Character3DPose"/> self-animates Walk/Idle from that motion.
 ///   • Barks reuse the pooled <see cref="DamagePopup.SpawnBubble"/> (zero per-bark allocation).
 ///   • Crowd pass-through reuses <see cref="UnitCrowd"/> so the player walks THROUGH townsfolk (no getting stuck).
 ///
@@ -25,7 +25,6 @@ public class TownNPC : MonoBehaviour
     float wanderRadius = 6f;
     bool barksEnabled;
     Transform player;
-    LayerMask groundMask;   // Ground layer only — what we raycast-snap the feet to (see ClampToGround)
 
     [Header("Wander")]
     [Tooltip("Seconds to linger at a spot before strolling to the next one.")]
@@ -47,10 +46,9 @@ public class TownNPC : MonoBehaviour
     public float maxWanderSeconds = 5f;
 
     PathAgent3D agent;
-    // The visual is resolved through the IStancePose seam, so a townsperson works with EITHER a baked billboard
-    // (BakedBillboard8) or a live-3D model (Character3DPose) with no code change here. visualBehaviour is the same
-    // object typed as a Behaviour (for the LOD enable/disable); visualAnimator + visualDriver are the extra 3D-only
-    // pieces to freeze when far (null for a billboard).
+    // The visual is resolved through the IStancePose seam — a townsperson's live-3D model (Character3DPose) with no
+    // hardcoded type here. visualBehaviour is that same object typed as a Behaviour (for the LOD enable/disable);
+    // visualAnimator + visualDriver are the 3D pieces to freeze when far.
     IStancePose visual;
     Behaviour visualBehaviour;
     Animator visualAnimator;
@@ -59,32 +57,30 @@ public class TownNPC : MonoBehaviour
     bool paused;                               // true while lingering at an arrived spot (waiting out the pause before the next stroll)
     float wanderDeadline, nextProgressCheck;   // stuck-detection: time budget + periodic progress sampling
     Vector3 lastProgressPos;
-    Vector3 lastStepPos;        // footstep odometer: accumulate ground distance, emit a step each sStride
-    float stepDist;             // distance walked (horizontal) since the last footstep SFX fired
-    bool stepLeft;              // alternating foot for the ripple zig-zag; false == RIGHT, so a fresh walk steps right first
     bool simulating = true;
 
-    // Footsteps: borrow the SAME clips the player walks on, so a town shares one consistent footstep voice (zero new
-    // audio assets). Resolved once for the whole town straight off Player3DController. NPCs are BILLBOARDS with no
-    // real loco Animator, so — unlike the player's frame-locked prints — they keep a DISTANCE odometer: sStride is how
-    // far a unit travels per step, which stays in sync with each NPC's own rolled speed (no foot-slide). The player no
-    // longer owns a step-interval (its sound is frame-driven now), so the stride derives from a local cadence const.
-    const float NpcStepCadence = 0.42f;   // seconds/step the NPC stride distance is derived from (was the player's old run interval)
-    static bool sGaitResolved;
+    // Footsteps run through the SAME frame-locked plant detector the player uses (FootstepTracker.DetectPlants):
+    // townsfolk are live-3D (a self-animating Character3DPose), so each NPC's steps fire on its OWN walk/run animation
+    // crossing an authored foot-plant frame — never a distance odometer — so its SFX + ripple land on the visibly-
+    // planting foot with no foot-slide. Per-NPC gait state + a cached (zero-alloc) plant sink.
+    Character3DPose pose3d;
+    readonly FootstepTracker.Gait npcGait = new FootstepTracker.Gait();
+    System.Action<Vector3, float> onFootPlant;
+
+    // Borrow the SAME clips the player walks on, so a town shares one consistent footstep voice (zero new audio
+    // assets). Resolved once for the whole town straight off Player3DController.
+    static bool sSfxResolved;
     static SfxSet sPlayerFootstep;
     static SfxSet sWaterFootstep;   // the player's puddle-splash step, swapped in when an NPC is over a puddle
-    static float sStride;
 
-    static bool ResolvePlayerGait()
+    static bool ResolveFootstepSfx()
     {
-        if (sGaitResolved) return true;
+        if (sSfxResolved) return true;
         var pc = FindFirstObjectByType<Player3DController>();
         if (pc == null) return false;
-        float runSpeed = pc.moveSpeed * UnitScale.ForPlayer;     // the player's normal (run) ground speed
         sPlayerFootstep = pc.footstepSfx;
         sWaterFootstep = pc.waterFootstepSfx;
-        sStride = Mathf.Max(0.1f, NpcStepCadence * runSpeed);    // world distance an NPC covers per step
-        sGaitResolved = true;
+        sSfxResolved = true;
         return true;
     }
 
@@ -101,6 +97,8 @@ public class TownNPC : MonoBehaviour
         visualBehaviour = visual as Behaviour;
         visualAnimator = GetComponentInChildren<Animator>(true);   // 3D only; null for a billboard NPC
         visualDriver = GetComponent<TownNPC3DVisual>();            // 3D only; null for a billboard NPC
+        pose3d = GetComponentInChildren<Character3DPose>(true);    // the self-animating pose we read foot-plants from
+        onFootPlant = OnFootPlant;                                 // cache once → per-frame detection allocates no closure
     }
 
     void OnEnable() { if (!Active.Contains(this)) Active.Add(this); }
@@ -135,13 +133,12 @@ public class TownNPC : MonoBehaviour
 
     /// <summary>Set this townsperson up. Called by <see cref="AmbientLife"/> right after spawn so all the
     /// per-NPC randomization (speed, home, pools, phase offsets) lives in one place.</summary>
-    public void Init(Vector3 homePoint, float wander, float moveSpeed, bool barksOn, Transform playerT, LayerMask ground)
+    public void Init(Vector3 homePoint, float wander, float moveSpeed, bool barksOn, Transform playerT)
     {
         home = homePoint;
         wanderRadius = Mathf.Max(0.5f, wander);
         barksEnabled = barksOn;
         player = playerT;
-        groundMask = ground;
 
         agent.moveSpeed = moveSpeed;
         // Spread apart from other units WHILE WALKING, but townsfolk don't chase anyone — no avoidIgnore target.
@@ -158,8 +155,7 @@ public class TownNPC : MonoBehaviour
         nextWander = Time.time + Random.value * pauseMax;
         nextBark = Time.time + 0.5f + Random.value * 2.5f;
         nextLodCheck = Time.time + Random.value * 0.4f;
-        lastStepPos = transform.position;
-        stepDist = Random.value;   // desync first step across the crowd so they don't all stomp in lockstep
+        npcGait.Seed(transform.position);
     }
 
     void Update()
@@ -178,10 +174,10 @@ public class TownNPC : MonoBehaviour
                 if (pc != null) player = pc.transform;
             }
 
-            // Resolve the shared footstep cadence once the player exists (load order can spawn NPCs before the
-            // additive player). No billboard gait-fps matching now — the player is live-3D and NPC billboards
-            // self-animate at their baked cadence.
-            if (!sGaitResolved) ResolvePlayerGait();
+            // Resolve the shared footstep SFX once the player exists (load order can spawn NPCs before the
+            // additive player). The step CADENCE isn't resolved here anymore — it comes from each NPC's own walk/run
+            // animation via FootstepTracker.DetectPlants, exactly like the player.
+            if (!sSfxResolved) ResolveFootstepSfx();
 
             bool near = player == null ||
                         (player.position - transform.position).sqrMagnitude <= simulateRadius * simulateRadius;
@@ -228,7 +224,7 @@ public class TownNPC : MonoBehaviour
             if ((player.position - transform.position).sqrMagnitude <= barkRadius * barkRadius)
             {
                 string line = NpcBarks.PickTownLine();   // time-of-day aware: morning / day / evening / night pool
-                SpeechBubble.Show(transform, BubbleAnchorY(), line, 2.6f);   // bubble bottom just above the head
+                SpeechBubble.ShowOverHead(visual, line, 2.6f);   // shared anchor: bubble bottom just above the head
                 nextBark = Time.time + Random.Range(barkCooldownMin, barkCooldownMax);
             }
             else nextBark = Time.time + 1f;   // out of range — re-check soon, don't burn the full cooldown
@@ -237,57 +233,34 @@ public class TownNPC : MonoBehaviour
         Footsteps();
     }
 
-    // Layer-1 polish: spatial footstep SFX. Drive steps off DISTANCE walked (an odometer) rather than a timer, so
-    // they stay locked to this NPC's own rolled speed and never foot-slide. Plays the player's footstep clips
-    // POSITIONALLY (Sfx.PlayAt) so you hear WHERE a townsperson is walking — and the engine fades distant ones, so
-    // a busy plaza isn't a wall of stomps. Cheap: one Vector3 subtract per moving townsperson, near the camera only.
+    // Layer-1 polish: spatial footstep SFX + puddle ripple, fired the instant this NPC's OWN walk/run animation
+    // crosses an authored foot-plant frame — the SAME FootstepTracker.DetectPlants the player runs, so a townsperson's
+    // steps are glued to its visibly-planting feet at any speed (no foot-slide, no timer to retune). The per-plant
+    // work happens in OnFootPlant. Cheap: near the camera only, and detection is a couple of subtracts + a phase read.
     void Footsteps()
     {
-        if (sStride <= 0f || sPlayerFootstep == null || sPlayerFootstep.Empty || agent == null || !agent.Moving)
-        {
-            lastStepPos = transform.position;   // keep the odometer pinned to "now" while halted (no phantom step on resume)
-            stepLeft = false;                   // resume always steps RIGHT first (matches the player)
-            return;
-        }
+        var tracker = FootstepTracker.Instance;
+        if (pose3d == null || tracker == null) return;
+        tracker.DetectPlants(pose3d, transform.position, npcGait, onFootPlant);
+    }
 
-        Vector3 p = transform.position;
-        Vector3 dir = new Vector3(p.x - lastStepPos.x, 0f, p.z - lastStepPos.z);   // horizontal walk direction this slice
-        stepDist += dir.magnitude;   // horizontal travel only
-        lastStepPos = p;
-        if (stepDist >= sStride)
-        {
-            stepDist = 0f;
-            // Same puddle test the player uses: swap in the splash step when this NPC's feet are over a visible puddle.
-            bool onWater = sWaterFootstep != null && !sWaterFootstep.Empty
-                           && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(p);
-            Sfx.PlayAt(onWater ? sWaterFootstep : sPlayerFootstep, p);
-            // Feed the shared footstep ring so wet-ground ripples / snow prints appear under townsfolk too. Offset the
-            // print under the alternating foot (RIGHT first) like the player, so left/right ripples land consistently.
-            var tracker = FootstepTracker.Instance;
-            if (tracker != null)
-            {
-                dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.forward;
-                Vector3 perp = new Vector3(dir.z, 0f, -dir.x);   // +perp == right of the walk line
-                Vector3 foot = p + perp * (tracker.footSpacing * (stepLeft ? -1f : 1f));
-                stepLeft = !stepLeft;
-                tracker.EmitStep(foot);
-            }
-        }
+    // One foot-plant: feed the shared ring (wet-ground ripples / snow prints under townsfolk too), then play the
+    // player's footstep clip POSITIONALLY (Sfx.PlayAt) so you hear WHERE the townsperson stepped — the engine fades
+    // distant ones, so a busy plaza isn't a wall of stomps. Swaps in the splash step when the foot is over a puddle,
+    // the same test the player uses. Zero-GC: IsPuddleAt is a single fbm, the SFX voice + ripple slot are pooled.
+    void OnFootPlant(Vector3 foot, float sizeScale)
+    {
+        FootstepTracker.Instance?.EmitStep(foot, sizeScale);
+        if (sPlayerFootstep == null || sPlayerFootstep.Empty) return;
+        bool onWater = sWaterFootstep != null && !sWaterFootstep.Empty
+                       && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(foot);
+        Sfx.PlayAt(onWater ? sWaterFootstep : sPlayerFootstep, foot);
     }
 
     static Vector3 RandomOffset(float radius)
     {
         Vector2 r = Random.insideUnitCircle * radius;
         return new Vector3(r.x, 0f, r.y);
-    }
-
-    /// <summary>World-up offset (from this unit's feet origin) at which a speech bubble's BOTTOM sits just above the
-    /// head. VisualWorldHeight is the model's full feet-to-crown height, so head + a small gap clears it. Shared by
-    /// ambient barks and the F-interact dialog so both anchor identically.</summary>
-    public float BubbleAnchorY()
-    {
-        float head = visual != null ? visual.VisualWorldHeight : 1f;
-        return head + 0.05f;
     }
 
     /// <summary>The model's rendered world height (feet to crown) — used to size the F-interact camera framing so it
@@ -322,30 +295,15 @@ public class TownNPC : MonoBehaviour
         return moved2 < 0.18f * 0.18f;   // <0.18u in 0.7s while "walking" → not actually getting anywhere
     }
 
-    // Pin the feet to the GROUND surface (Ground layer only — never props/snow caps), matching the project's
-    // world-ground standard so townsfolk sit on the floor exactly like the player. Runs in LateUpdate (after
-    // PathAgent3D's gravity Move) and only while walking — when idle the Y is already settled, so this costs
-    // one raycast per *moving* townsperson per frame, near the camera only.
-    void LateUpdate()
-    {
-        if (!simulating || groundMask.value == 0 || agent == null || !agent.enabled || !agent.Moving) return;
-        Vector3 p = transform.position;
-        if (GroundSnap.TryGroundY(p, groundMask, out float groundY))   // shared Ground-layer foot-seat
-        {
-            p.y = groundY;              // root ON the ground = the sandbox basis feetOffset was tuned for
-            transform.position = p;
-        }
-    }
-
     // Flip between full simulation and frozen. Freezing disables the mover + the billboard animator so a
     // distant town is nearly free; re-entering range re-enables them (Awake already ran, so it just resumes).
     void SetSimulating(bool on)
     {
         simulating = on;
-        if (on) { lastStepPos = transform.position; stepLeft = false; }   // reset odometer + foot so re-entering range starts on the right
+        if (on) npcGait.Seed(transform.position);   // re-seed so re-entering range doesn't fire a phantom step from a stale pos
         if (!on) agent.Halt();
         if (agent != null) agent.enabled = on;
-        if (visualBehaviour != null) visualBehaviour.enabled = on;   // BakedBillboard8 sprite anim / Character3DPose pose driver
+        if (visualBehaviour != null) visualBehaviour.enabled = on;   // Character3DPose pose driver
         if (visualAnimator != null) visualAnimator.enabled = on;     // 3D: stop the skinned-mesh animator (the real cost) when far
         if (visualDriver != null) visualDriver.enabled = on;         // 3D: stop feeding Walk/Idle intent when far
     }

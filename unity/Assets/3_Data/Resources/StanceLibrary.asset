@@ -87,14 +87,10 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants:
-    - frame: 4
-      right: 1
-    - frame: 12
+    - frame: 5
       right: 0
-    - frame: 20
+    - frame: 15
       right: 1
-    - frame: 28
-      right: 0
   - id: 7
     action: 3
     clip: Punch
@@ -207,7 +203,7 @@ MonoBehaviour:
     footPlants: []
   - id: 18
     action: 4
-    clip: 
+    clip: ReleaseSingleSkill2
     speedSource: 4
     speedMult: 1
     priority: 0
@@ -335,3 +331,21 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants: []
+  - id: 31
+    action: 2
+    clip: Sprint
+    speedSource: 3
+    speedMult: 1
+    priority: 0
+    crouchEnd: 0
+    airborneFreeze: 1.5
+    rootFromFrame: 0
+    footPlants:
+    - frame: 4
+      right: 1
+    - frame: 12
+      right: 0
+    - frame: 20
+      right: 1
+    - frame: 28
+      right: 0

@@ -64,8 +64,8 @@ public enum SkillEffectKind
     /// Applied to the caster regardless of the tick radius (the destination IS the point). (Blink Step.)</summary>
     Teleport,
     /// <summary>Timed self stat-buff (which stat = <see cref="SkillEffect.buffStat"/>) ×<see cref="SkillEffect.magnitude"/>
-    /// for <see cref="SkillEffect.seconds"/>. Damage / AttackSpeed / CastSpeed ride <c>Character</c>; MoveSpeed reuses
-    /// Haste. (Blink Step haste, War Banner damage-up.)</summary>
+    /// for <see cref="SkillEffect.seconds"/>. Damage / AttackSpeed / CastSpeed ride <c>Character</c>. Move speed is NOT
+    /// here — use the <see cref="Haste"/> kind (the single move-speed path; it can also debuff mobs). (War Banner damage-up.)</summary>
     Buff,
     /// <summary>Heal-over-time on the caster: <see cref="SkillEffect.magnitude"/> HP per tick for
     /// <see cref="SkillEffect.seconds"/> → <c>Character.BeginRegen</c>. (Mending Tide.)</summary>
@@ -80,10 +80,17 @@ public enum SkillEffectKind
     /// deals <c>roll × magnitude × (1 − target HP fraction)</c>, hitting hardest as the target nears death. Its own
     /// self-contained effect, sitting alongside the Damage effect it triggers off. (Meteor.)</summary>
     Execute,
+    /// <summary>Rush the caster to the cast point — same aimed, range-clamped destination as <see cref="Teleport"/>,
+    /// but the player VISIBLY travels there fast (a gap-close glide) instead of blinking instantly →
+    /// <c>Player3DController.BeginDashToPoint</c>. Speed is the player's tunable <c>skillDashSpeedMult</c> × current
+    /// run speed; blocked by geometry (unlike Blink). No fields — the skill's range is the max distance. (Dash.)</summary>
+    Dash,
 }
 
-/// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window.</summary>
-public enum BuffStat { Damage, AttackSpeed, CastSpeed, MoveSpeed }
+/// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window. Move speed is
+/// deliberately absent — the <see cref="SkillEffectKind.Haste"/> kind is the one authoring path for move speed
+/// (it also targets mobs), so Buff owns only the character-combat stats Haste can't do.</summary>
+public enum BuffStat { Damage, AttackSpeed, CastSpeed }
 
 /// <summary>How a Damage/Execute effect RESOLVES — the RPS-triangle axis (design doc "Combat Ontology"). Serialized
 /// by int, so order is load-bearing: <c>Physical=0, Magic=1, Crit=2</c> (a legacy <c>magic:1</c> bool migrates to

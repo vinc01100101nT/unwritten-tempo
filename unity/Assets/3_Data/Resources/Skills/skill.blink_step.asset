@@ -15,70 +15,52 @@ MonoBehaviour:
   id: skill.blink_step
   displayName: Blink Step
   icon: {fileID: -7000909238271953471, guid: 917698938644be74ba433767b1707b03, type: 3}
-  description: "Instantly teleport to the aimed spot and surge with attack and cast speed for a few seconds."
+  description: Instantly teleport to the aimed spot and surge with attack and cast
+    speed for a few seconds.
   archetype: 1
-  category: 1
+  family: 0
+  shape: 0
+  complexity: 0
+  acquisitionTier: 0
   manaCost: 6
   cooldown: 6
   castTime: 0
-  maxLevel: 10
   aim: 2
   castRange: 6
   tier: 0
   chargeCost: 100
-  castCircleId:
+  castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
-  vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
+  vfx: {fileID: 11400000, guid: a535d95e7c522b94bbd81c2e5605af33, type: 2}
   repeatCount: 1
   repeatInterval: 0
-  hasReleaseStance: 0
-  releaseStance: 16
+  hasReleaseStance: 1
+  releaseStance: 17
   bindings:
-  - tickId: meteor_ball
+  - tickId: teleport
     targets: 1
     scope: 0
-    radius: 1
+    radius: 1.5
     effects:
     - kind: 6
-      magic: 1
+      damageType: 1
       damageMult: 1
       element: 0
       amount: 10
       ailment: 2
-      seconds: 3
+      seconds: 4
       magnitude: 1
       hitCount: 1
-      executeAmp: 0
-      stunChance: 0
-      stunSeconds: 0.75
+      chance: 0
       buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
       affinity: []
       durationAffinity: []
-    - kind: 7
-      magic: 1
-      damageMult: 1
-      element: 0
-      amount: 10
-      ailment: 2
-      seconds: 3
-      magnitude: 1.5
-      hitCount: 1
-      executeAmp: 0
-      stunChance: 0
-      stunSeconds: 0.75
-      buffStat: 1
-      affinity:
-      - stat: 8
-        weight: 100
-      durationAffinity:
-      - stat: 8
-        weight: 60
-      - stat: 6
-        weight: 40
-    scale:
-      damageMultPerLevel: 0
-      flatBonusPerLevel: 0
+      hitCountAffinity: []
   shortLabel: Blink
-  keyLabel:
+  keyLabel: 
   slotOrder: 11
   tint: {r: 0.6, g: 0.9, b: 1, a: 1}

@@ -21,11 +21,14 @@ public class ChatController : MonoBehaviour
     static readonly Color EchoColor  = new Color(0.784f, 0.659f, 0.384f); // a command you typed (echoed back)
     static readonly Color InputFill  = new Color(0.05f, 0.055f, 0.07f, 1f);
 
+    const float BubbleLife = 4f;   // seconds a said line floats over the player's head
+
     GameObject root;             // the window we show/hide
     RectTransform logContent;    // vertical list of message rows
     ScrollRect scroll;
     TMP_InputField input;
     bool built;
+    Character3DVisual playerVisual;   // resolved lazily on first say — its feet-seated pose anchors the chat bubble
 
     void Update()
     {
@@ -154,7 +157,17 @@ public class ChatController : MonoBehaviour
         else
         {
             AddLine($"<color=#9FB4CC>You:</color> {Sanitize(text)}");
+            ShowOverheadBubble(text);
         }
+    }
+
+    // Float the said line over the player's head in the same white bubble the NPCs use for their barks, through the
+    // exact same anchor path (SpeechBubble.ShowOverHead) so it sits identically. Cold path: once per sent line.
+    void ShowOverheadBubble(string line)
+    {
+        if (playerVisual == null) playerVisual = FindFirstObjectByType<Character3DVisual>();
+        if (playerVisual == null) return;
+        SpeechBubble.ShowOverHead(playerVisual.Pose, line, BubbleLife);
     }
 
     void AddLine(string message)

@@ -78,6 +78,37 @@ public static class RingVoices
         if (aspd >= ActivateAt) mods.extraHits += 1;
     }
 
+    /// <summary>One read-only reference row per ring voice (stat, verb name, scope, human effect, activation %) — the
+    /// data source for the editor Affix &amp; Ring Voice Table. Effect text is built from the SAME tuning consts the
+    /// live voices use, so the reference view can't drift from the real numbers. Editor/author-time only (allocs).</summary>
+    public readonly struct VoiceRow
+    {
+        public readonly string Stat, Name, Scope, Effect;
+        public readonly float ActivatePercent;
+        public VoiceRow(string stat, string name, string scope, string effect, float activate)
+        { Stat = stat; Name = name; Scope = scope; Effect = effect; ActivatePercent = activate; }
+    }
+
+    public static VoiceRow[] AllVoices()
+    {
+        float a = ActivateAt * 100f;
+        return new[]
+        {
+            new VoiceRow("DEF", "Fortify", "Self · every cast",
+                $"Shield up to {FortifyMaxReduction * 100f:0}% damage-cut for {FortifySeconds:0.#}s (strength = Def invest)", a),
+            new VoiceRow("HP", "Leech", "Self · every cast",
+                $"Regen {LeechMaxHpPerTick * 100f:0}% of Max HP per tick for {LeechSeconds:0.#}s", a),
+            new VoiceRow("CastSpeed", "Accelerate", "Self · every cast",
+                $"+(CastSpeed invest)% cast speed for {AccelerateSeconds:0.#}s", a),
+            new VoiceRow("Critical", "Execute", "Outgoing · damage skills only",
+                $"Low-HP finisher, power = {ExecutePerCrit:0.#} × Crit invest", a),
+            new VoiceRow("MATK", "Expand", "Outgoing · mob-area skills only",
+                "+(MAtk invest)% area radius", a),
+            new VoiceRow("AttackSpeed", "Repeat", "Outgoing · damage skills only",
+                "+1 extra damage echo (hit) — hidden on no-damage skills like Blink", a),
+        };
+    }
+
     /// <summary>Append a live, human-readable line per ACTIVE ring voice (reads current investment, so a tooltip
     /// that calls this is always up to date). Self-gated: only voices past their threshold show. Rich-text bold
     /// on the numbers; the caller owns the surrounding section header.</summary>

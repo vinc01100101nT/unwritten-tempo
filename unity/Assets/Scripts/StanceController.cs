@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// The single runtime CHOKE POINT that drives a <see cref="BakedBillboard8"/>'s pose from the data-authored
-/// <see cref="StanceLibrary"/> — the persistent-state sibling of <see cref="VfxCue"/>. Nothing else calls
-/// <see cref="BakedBillboard8.Play"/> for a unit that has one; callers feed intent here and this resolves it every
-/// frame, so two systems can never fight over the billboard (the dual-path bug).
+/// The single runtime CHOKE POINT that drives a unit's <see cref="IStancePose"/> (the live-3D
+/// <see cref="Character3DPose"/>) from the data-authored <see cref="StanceLibrary"/> — the persistent-state sibling
+/// of <see cref="VfxCue"/>. Nothing else calls <see cref="IStancePose.Play"/> for a unit that has one; callers feed
+/// intent here and this resolves it every frame, so two systems can never fight over the pose (the dual-path bug).
 ///
 /// <para>Two layers, highest first:
 /// <list type="number">
@@ -15,23 +15,22 @@ using UnityEngine;
 /// <item><b>Held stance</b> (<see cref="Push"/>/<see cref="Pop"/>) — persistent baselines (Combat/Guard/Casting/Sit);
 /// the highest-<see cref="StanceBinding.priority"/> active one wins.</item>
 /// </list>
-/// Fallback when neither is set: a self-driving unit (<see cref="selfDrive"/> = true) hands back to
-/// <see cref="BakedBillboard8"/>'s movement-sampled Idle/Walk/Run; the player (<see cref="selfDrive"/> = false) plays
-/// the authored Idle stance.</para>
+/// Fallback when neither is set: a self-driving unit (<see cref="selfDrive"/> = true) hands back to the sink's
+/// movement-sampled Idle/Walk/Run; the player (<see cref="selfDrive"/> = false) plays the authored Idle stance.</para>
 ///
 /// <para>Resolves in <c>LateUpdate</c> at execution order −50 — after gameplay brains that feed it
-/// (<see cref="BakedPlayerVisual"/> at −100) and before <see cref="BakedBillboard8"/>'s render at 0.</para>
+/// (<see cref="Character3DVisual"/> at −100) and before <see cref="Character3DPose"/>'s render at 0.</para>
 /// </summary>
 [DisallowMultipleComponent]
 [DefaultExecutionOrder(-50)]
 public class StanceController : MonoBehaviour
 {
-    [Tooltip("Fallback when NO action or held stance is active. true = hand back to BakedBillboard8 self-drive " +
-             "(NPCs/mobs sample their own movement); false = play the authored Idle stance (the player).")]
+    [Tooltip("Fallback when NO action or held stance is active. true = hand back to the sink's self-drive " +
+             "(NPCs sample their own movement); false = play the authored Idle stance (the player).")]
     public bool selfDrive = true;
 
     /// <summary>The player's stance controller — the one gameplay systems (cast, combat, sit) push held stances onto.
-    /// Set when <see cref="BakedPlayerVisual"/> claims its controller via <see cref="BecomePlayer"/>. Mirrors
+    /// Set when <see cref="Character3DVisual"/> claims its controller via <see cref="BecomePlayer"/>. Mirrors
     /// <see cref="Character.Instance"/> / <c>StatusController.Player</c>.</summary>
     public static StanceController Player { get; private set; }
 

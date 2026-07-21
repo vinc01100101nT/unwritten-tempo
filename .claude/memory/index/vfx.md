@@ -1,6 +1,7 @@
 # VFX (particle/effect layer, cue choke, composer/tuner, gotchas)
 
 - [VfxCue — event→VFX choke point](../vfx-cue-system.md) — `VfxCue.Fire`/`Begin`→`VfxCueCatalog`→`VfxCueLibrary.asset`.
+- [Ground-cast Origin anchor collapse](../vfx-ground-cast-origin-collapse.md) — `VfxContext.At` set origin==target, so a ground skill's Origin anchor played at the impact; fixed to origin=caster/target=aim in `SkillRunner.Cast`.
 - [One-shot VFX re-looped at runtime](../vfx-looping-oneshot-double-play.md) — fix `m.loop = oneShot ? false : baseLoop[i]`.
 - [Vfx particle-effect layer](../vfx-effect-library.md) — `Vfx.PlayAt`/`Attach`→`EffectCatalog`→`EffectLibrary.asset` (pooled).
 - [Vfx Composer window](../vfx-composer-window.md) — `VfxComposerWindow.cs` (Art ▸ Vfx Composer); reuses `VfxSequence`/`VfxStep`.

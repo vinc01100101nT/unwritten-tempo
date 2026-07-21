@@ -58,7 +58,7 @@ public class Player3DAttacker : MonoBehaviour
         Character.Instance != null ? 1f / Mathf.Max(0.01f, Character.Instance.AttackSpeedMult) : 1f;
 
     /// <summary>How long one whole swing lasts (start → next swing can begin), scaled by attack-speed. The attack
-    /// animation is sped to play fully within this window (see BakedPlayerVisual); the hit lands partway through at
+    /// animation is sped to play fully within this window (see Character3DPose); the hit lands partway through at
     /// <see cref="hitTiming"/> (default 70%) — the contact moment. Equals the swing interval, so DPS is unchanged —
     /// only WHEN inside the window the hit connects moves.</summary>
     public float SwingTime => Mathf.Max(0.05f, cooldown * MotionScale);
@@ -155,7 +155,7 @@ public class Player3DAttacker : MonoBehaviour
 
     IEnumerator SwingThenHit(Health t)
     {
-        // The whole swing spans SwingTime (scales with attack-speed; BakedPlayerVisual speeds the clip to fill it).
+        // The whole swing spans SwingTime (scales with attack-speed; Character3DPose speeds the clip to fill it).
         // The hit lands at hitTiming OF that window — the contact moment, ~70% in — not at the very end. We then
         // hold `swing` for the remainder so the animation finishes and cadence (= SwingTime) is unchanged.
         float scale = MotionScale;

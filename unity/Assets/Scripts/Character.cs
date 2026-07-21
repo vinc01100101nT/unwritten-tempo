@@ -521,10 +521,33 @@ public class Character : MonoBehaviour
         return true;
     }
 
+    // ── Stamina (sprint pool) ─────────────────────────────────────────────────
+    // The resource V-sprint drains and every non-sprint stance recharges. This is the SINGLE owner of the value +
+    // its max; Player3DController owns only the drain/recharge RATES and drives the changes (it knows the stance).
+    [Tooltip("Max stamina — the sprint pool size. Player3DController drains this while V-sprinting and refills it by stance.")]
+    public float maxStamina = 100f;
+    /// <summary>Current stamina (0..<see cref="maxStamina"/>). Starts full.</summary>
+    public float Stamina { get; private set; }
+    /// <summary>Stamina as a 0..1 fill for the HUD stamina bar.</summary>
+    public float Stamina01 => maxStamina > 0f ? Mathf.Clamp01(Stamina / maxStamina) : 0f;
+    /// <summary>Fired whenever stamina changes — drives the HUD stamina bar.</summary>
+    public event Action OnStaminaChanged;
+
+    /// <summary>Set stamina (clamped to 0..max). Fires <see cref="OnStaminaChanged"/> only on a real change. The
+    /// sole mutation point — Player3DController computes the per-frame drain/recharge and pushes the result here.</summary>
+    public void SetStamina(float value)
+    {
+        value = Mathf.Clamp(value, 0f, maxStamina);
+        if (value == Stamina) return;
+        Stamina = value;
+        OnStaminaChanged?.Invoke();
+    }
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        Stamina = maxStamina;   // sprint pool starts full
 
         // Spending a skill point changes both the displayed stats and (for HP) the max —
         // re-fire the existing UI events so the HUD/Character panel/Skills panel all refresh.

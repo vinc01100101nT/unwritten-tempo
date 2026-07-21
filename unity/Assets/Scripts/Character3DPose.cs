@@ -3,7 +3,7 @@ using UnityEngine;
 
 /// <summary>
 /// The 3D presentation SINK: implements <see cref="IStancePose"/> by driving an <see cref="Animator"/> (and
-/// yawing the model) — the live-3D twin of <see cref="BakedBillboard8"/>. <see cref="StanceController"/> pushes
+/// yawing the model) — the sole stance sink for players + townsfolk. <see cref="StanceController"/> pushes
 /// the resolved <see cref="CharacterAction"/> + speed here every frame; locomotion (Idle/Walk/Run) blends via a
 /// 1-D <c>Speed</c> tree, one-shots (Attack/Jump/Roll/Hurt/PickUp/Die/Cast/Sit) CrossFade to their own state.
 ///
@@ -18,9 +18,9 @@ using UnityEngine;
 public class Character3DPose : MonoBehaviour, IStancePose
 {
     /// <summary>Which locomotion gait the pose is currently driving, decided PURELY by the clip pushed in via
-    /// <see cref="Play"/> (Walk clip → Walk, Run clip → Run, anything else → None). The footstep detector reads this
-    /// to pick the authored L/R plants of the gait that's actually playing — no move-speed or blend-value guess.</summary>
-    public enum LocoGait { None, Walk, Run }
+    /// <see cref="Play"/> (Walk clip → Walk, Run clip → Run, Sprint clip → Sprint, anything else → None). The footstep
+    /// detector reads this to pick the authored L/R plants of the gait that's actually playing — no move-speed guess.</summary>
+    public enum LocoGait { None, Walk, Run, Sprint }
     public LocoGait Gait { get; private set; }
 
     [Tooltip("How fast the model yaws to face its travel/aim direction (deg/sec).")]
@@ -73,7 +73,7 @@ public class Character3DPose : MonoBehaviour, IStancePose
     // The Walk/Run locomotion CLIP names (from the authored library, via StanceCatalog) — the 3D loco blend picks its
     // Speed position by matching the driven clip to these, so Clip(3D) is the SOLE owner of what 3D locomotion plays.
     // (CharacterAction is billboard-only and never touches the 3D blend.) Idle is the default 0, so it needs no name.
-    string walkClip = "", runClip = "";
+    string walkClip = "", runClip = "", sprintClip = "";
 
     void Awake() => Reinitialize();
 
@@ -108,8 +108,9 @@ public class Character3DPose : MonoBehaviour, IStancePose
             if (!string.IsNullOrEmpty(n)) mixamoNameSet.Add(Clean(n));
 
         // Cache the loco clip names the same authored library fed into the blend tree, so Play matches by CLIP.
-        var w = StanceCatalog.Get(StanceId.Walk); walkClip = w != null ? w.clip ?? "" : "";
-        var r = StanceCatalog.Get(StanceId.Run);  runClip  = r != null ? r.clip ?? "" : "";
+        var w = StanceCatalog.Get(StanceId.Walk);   walkClip   = w != null ? w.clip ?? "" : "";
+        var r = StanceCatalog.Get(StanceId.Run);    runClip    = r != null ? r.clip ?? "" : "";
+        var sp = StanceCatalog.Get(StanceId.Sprint); sprintClip = sp != null ? sp.clip ?? "" : "";
     }
 
     static string Clean(string n)
@@ -130,10 +131,11 @@ public class Character3DPose : MonoBehaviour, IStancePose
         if (!string.IsNullOrEmpty(clip) && stateHash.TryGetValue(clip, out int h)) { GoTo(h); return; }
         // Loco blend position from the CLIP (Clip(3D) is the SSOT) — NOT the 2D CharacterAction (billboard-only).
         // An unknown/empty clip → rests at idle (0), never a substituted clip.
-        bool isRun  = !string.IsNullOrEmpty(clip) && clip == runClip;
-        bool isWalk = !string.IsNullOrEmpty(clip) && clip == walkClip;
-        speedTarget = isRun ? 1f : isWalk ? 0.5f : 0f;
-        Gait = isRun ? LocoGait.Run : isWalk ? LocoGait.Walk : LocoGait.None;
+        bool isSprint = !string.IsNullOrEmpty(clip) && clip == sprintClip;
+        bool isRun  = !isSprint && !string.IsNullOrEmpty(clip) && clip == runClip;
+        bool isWalk = !isSprint && !isRun && !string.IsNullOrEmpty(clip) && clip == walkClip;
+        speedTarget = isSprint ? 2f : isRun ? 1f : isWalk ? 0.5f : 0f;
+        Gait = isSprint ? LocoGait.Sprint : isRun ? LocoGait.Run : isWalk ? LocoGait.Walk : LocoGait.None;
         anim.speed = 1f;
         GoTo(Loco);
     }

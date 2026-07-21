@@ -9,11 +9,11 @@ using UnityEngine;
 ///
 /// <para>"Type" is the coarse bucket DERIVED from slot/category (<see cref="ItemTypes"/>) — editing it maps back onto
 /// the real fields, so there's no duplicated value to hand-sync. "Kind" is context-sensitive: the weapon type for a
-/// weapon, the equip slot for armor, blank otherwise. Open via <c>Tools ▸ unwritten ▸ Items ▸ Item Table</c>.</para>
+/// weapon, the equip slot for armor, blank otherwise. Open via <c>Tools ▸ unwritten ▸ Catalogs ▸ Item Table</c>.</para>
 /// </summary>
 public class ItemTableWindow : EditorWindow
 {
-    const string MenuPath = "Tools/unwritten/Items/Item Table";
+    const string MenuPath = "Tools/unwritten/Catalogs/Item Table";
     const float RowHeight = 34f;
 
     [MenuItem(MenuPath)]

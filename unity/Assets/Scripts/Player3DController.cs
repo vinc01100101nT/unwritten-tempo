@@ -43,6 +43,27 @@ public partial class Player3DController : MonoBehaviour
     /// and the stance visual multiplies the Walk/Run clip fps by it, so a speed buff makes the steps and the run/walk
     /// animation visibly faster (and a Slow ailment slower) without touching the hand-tuned baselines.</summary>
     public float GaitSpeedMult { get; private set; } = 1f;
+
+    // ── Sprint (V) + stamina ──────────────────────────────────────────────────
+    [Tooltip("Run gear as a fraction of Sprint — both its travel speed AND its leg cadence. 0.5 = normal Run is a " +
+             "half-speed jog; Sprint (V) is the full-speed run the old default used.")]
+    [Range(0.1f, 1f)] public float runSpeedMult = 0.5f;
+    [Tooltip("Stamina drained per second while V-sprinting.")]
+    public float sprintDrainPerSec = 25f;
+    [Tooltip("Stamina recharged per second while standing idle (fast).")]
+    public float staminaRegenIdle = 30f;
+    [Tooltip("Stamina recharged per second while walking (Shift) — normal.")]
+    public float staminaRegenWalk = 18f;
+    [Tooltip("Stamina recharged per second while running / attacking / anything that isn't idle-or-walk — slow.")]
+    public float staminaRegenOther = 8f;
+    [Tooltip("After draining to empty, sprint stays LOCKED until stamina climbs back to this fraction of max.")]
+    [Range(0f, 1f)] public float sprintUnlockFrac = 0.2f;
+    /// <summary>True while the fast Sprint gear is engaged (V toggled on, moving, stamina left). Read by the stance
+    /// brain to drive the Sprint pose and by the speed calc for the full-speed gear.</summary>
+    public bool Sprinting { get; private set; }
+    bool sprintToggled;   // V desire (toggle); cleared when stamina empties
+    bool sprintLocked;    // drained to 0 → blocked until stamina recovers to sprintUnlockFrac
+
     public float arriveDistance = 0.12f;
     [Tooltip("Clearance kept from props when routing.")]
     public float agentRadius = 0.35f;
@@ -127,11 +148,18 @@ public partial class Player3DController : MonoBehaviour
     Player3DAttacker attacker;
     StatusController status;   // stun/freeze (no act), slow (speed), silence/blind — read here + by the spells/attacker
 
-    // Charge / gap-closer dash state (driven via BeginDash — a reusable controller API for dash skills).
+    // Charge / gap-closer dash state (driven via BeginDash / BeginDashToPoint — a reusable controller API for dash skills).
     bool dashing;
-    Transform dashTarget;
+    Transform dashTarget;          // a moving target (charge into a mob); null when dashing to a fixed point
+    Vector3 dashPoint;             // fixed world destination (Dash skill); used when dashToPoint
+    bool dashToPoint;
     float dashSpeed, dashEndTime, dashArriveRange;
     System.Action dashOnArrive;
+    [Tooltip("Dash SKILL travel speed as a multiple of the player's CURRENT run speed — the visible fast glide to the " +
+             "aimed point (Blink teleports; Dash rushes there). Scales with move-speed buffs/slows via CurrentRunSpeed.")]
+    public float skillDashSpeedMult = 8f;
+    [Tooltip("Dash SKILL safety cap (seconds) — the dash ends even if it can't reach the point (blocked by a wall).")]
+    public float skillDashMaxTime = 1f;
     TargetIndicator targetMarker;
     Camera cam;
     Vector3 buildScale;   // authored localScale; UnitScale.ForPlayer is applied on top each frame
@@ -285,8 +313,12 @@ public partial class Player3DController : MonoBehaviour
         // movement — gravity only — until it lifts. Cancels an in-flight swing and any charge dash so nothing fires.
         if (status != null && status.ActionLocked)
         {
+            // A Dash SKILL rushes the caster during the very aftercast root the skill just set (PlayCycles locks, THEN
+            // ticks the effect), so let a dash-to-point finish here — it IS the aftercast movement. A hard-CC
+            // (stun/freeze) still cancels it, like any other action, via CannotAct.
+            if (dashing && dashToPoint && !status.CannotAct) { StepDash(); return; }
             if (attacker != null && attacker.Swinging) attacker.Cancel();
-            dashing = false; dashOnArrive = null; dashTarget = null;
+            dashing = false; dashOnArrive = null; dashTarget = null; dashToPoint = false;
             controller.Move(Vector3.down * gravity * Time.deltaTime);
             return;
         }
@@ -342,15 +374,55 @@ public partial class Player3DController : MonoBehaviour
 
         bool moving = move.sqrMagnitude > 0.001f;
         if (moving) worldFacing = move;
-        WalkingSlow = moving && HeldShift();            // Shift = walk: slower move + Walk animation (read by the stance visual)
-        float baseSpeed = moveSpeed * UnitScale.ForPlayer * (WalkingSlow ? walkSpeedMult : 1f); // TRAVEL baseline (run vs walk) — NOT animation-scaling
+        // Sprint gear (V toggle, stamina-gated) decided FIRST so it wins over Shift-walk; also drains/refills stamina.
+        UpdateSprintAndStamina(moving);
+        WalkingSlow = moving && HeldShift() && !Sprinting;   // Shift = walk (unless sprinting); read by the stance visual
+        // THREE gears: Sprint = full (old run), Run = runSpeedMult (jog), Walk = walkSpeedMult.
+        float travelTier = Sprinting ? 1f : (WalkingSlow ? walkSpeedMult : runSpeedMult);
+        float baseSpeed = moveSpeed * UnitScale.ForPlayer * travelTier;                           // TRAVEL baseline per gear
         float gait = gaitSpeed * (status != null ? status.MoveMult : 1f);                        // GAIT baseline × live Slow/Haste — animation-scaling
         float spd = baseSpeed * gait;
-        // Bind gait to ACTUAL speed: the gait factor over the travel baseline. Drives the Walk/Run animation fps
-        // (stance visual) — and, through it, the frame-locked footstep prints/SFX — so they speed up/slow down together.
-        GaitSpeedMult = baseSpeed > 0.0001f ? spd / baseSpeed : 1f;
+        // Animation cadence per gear: Sprint & Walk keep the full gait feel; Run jogs (legs churn at runSpeedMult so the
+        // half-speed travel doesn't foot-skate). Buffs/Slows ride on top via `gait`. Drives Walk/Run fps + footsteps.
+        float animTier = (Sprinting || WalkingSlow) ? 1f : runSpeedMult;
+        GaitSpeedMult = gait * animTier;
         ApplyGravityAndMove(move * spd);   // accumulating free-fall (sets `falling` for the in-air pose)
         if (autoIndicator != null) autoIndicator.Show(AutoActive);   // show the "AUTO" tag only while roaming
+    }
+
+    // Sprint desire (V toggle) + the stamina it spends/regenerates. Runs once per frame for the single player — no
+    // allocation. Sprint engages only while moving with stamina left and not locked; draining to 0 forces Run and
+    // locks re-sprint until stamina recovers to sprintUnlockFrac. Recharge rate depends on the current gear:
+    // idle = fast, walk = normal, everything else (run/attack/etc.) = slow.
+    void UpdateSprintAndStamina(bool moving)
+    {
+        if (Hotkeys.Down(KeyCode.V)) sprintToggled = !sprintToggled;   // the ONE sprint input site
+
+        var ch = Character.Instance;
+        float stam = ch != null ? ch.Stamina : 0f;
+        float max = ch != null ? ch.maxStamina : 0f;
+
+        bool wasSprinting = Sprinting;
+        Sprinting = sprintToggled && moving && !sprintLocked && stam > 0f;
+
+        float dt = Time.deltaTime;
+        if (Sprinting)
+        {
+            stam -= sprintDrainPerSec * dt;
+            if (stam <= 0f) { stam = 0f; sprintLocked = true; sprintToggled = false; Sprinting = false; }
+        }
+        else
+        {
+            float rate = !moving ? staminaRegenIdle
+                       : (moving && HeldShift()) ? staminaRegenWalk
+                       : staminaRegenOther;
+            stam += rate * dt;
+        }
+        if (ch != null) ch.SetStamina(stam);
+        if (sprintLocked && max > 0f && stam >= max * sprintUnlockFrac) sprintLocked = false;
+
+        // Fire the OnSprint cue once, the frame sprinting kicks on (not per-frame).
+        if (Sprinting && !wasSprinting) VfxCue.Fire(VfxCueId.OnSprint, transform);
     }
 
     // Move horizontally while applying ACCUMULATING gravity, so stepping off higher ground free-falls with
@@ -569,7 +641,7 @@ public partial class Player3DController : MonoBehaviour
     {
         AttackArmed = false; order = Order.Idle; pendingPickup = null;
         routing = false; path.Clear(); attackTarget = null; resumeAttackMove = false;
-        dashing = false; dashOnArrive = null; dashTarget = null;   // a charge is cancelled by Stop / S
+        dashing = false; dashOnArrive = null; dashTarget = null; dashToPoint = false;   // a charge is cancelled by Stop / S
         if (attacker != null) attacker.Cancel();   // drop an in-flight swing's damage
         if (targetMarker != null) targetMarker.Follow(null);
     }
@@ -585,18 +657,35 @@ public partial class Player3DController : MonoBehaviour
         if (target == null) return;
         ClearCombat();
         order = Order.Idle; routing = false; path.Clear();
-        dashing = true; dashTarget = target; dashSpeed = speed;
+        dashing = true; dashTarget = target; dashToPoint = false; dashSpeed = speed;
         dashEndTime = Time.time + maxTime; dashArriveRange = arriveRange; dashOnArrive = onArrive;
+    }
+
+    /// <summary>Dash SKILL (Blink's visible sibling): rush the player to a FIXED world <paramref name="dest"/> — the
+    /// aimed, range-clamped cast point — at <c>skillDashSpeedMult × CurrentRunSpeed</c>, arriving at the spot instead
+    /// of blinking there. Travels via the CharacterController so walls block it (that's the difference from Teleport).
+    /// No on-arrive callback (pure relocation). Shares the charge dash's step/state so cancels can't be forgotten.</summary>
+    public void BeginDashToPoint(Vector3 dest)
+    {
+        ClearCombat();
+        order = Order.Idle; routing = false; path.Clear();
+        dashing = true; dashToPoint = true; dashTarget = null; dashPoint = dest; dashOnArrive = null;
+        dashSpeed = Mathf.Max(0.01f, skillDashSpeedMult) * CurrentRunSpeed;
+        dashEndTime = Time.time + Mathf.Max(0.05f, skillDashMaxTime);
+        dashArriveRange = 0.15f;
     }
 
     // Advance the charge one frame. Returns true while still dashing; on arrival/timeout it stops and
     // fires the on-arrive callback (the strike). Exactly one controller.Move per frame, never two.
     bool StepDash()
     {
-        bool arrived = dashTarget == null || Time.time >= dashEndTime;
+        // Destination is either a moving target (charge into a mob) or a fixed point (Dash skill).
+        bool haveDest = dashToPoint || dashTarget != null;
+        bool arrived = !haveDest || Time.time >= dashEndTime;
         if (!arrived)
         {
-            Vector3 to = dashTarget.position - transform.position; to.y = 0f;
+            Vector3 destPos = dashToPoint ? dashPoint : dashTarget.position;
+            Vector3 to = destPos - transform.position; to.y = 0f;
             float dist = to.magnitude;
             if (dist <= dashArriveRange) arrived = true;
             else
@@ -608,7 +697,7 @@ public partial class Player3DController : MonoBehaviour
         }
         if (arrived)
         {
-            dashing = false;
+            dashing = false; dashToPoint = false;
             var cb = dashOnArrive; dashOnArrive = null; dashTarget = null;
             cb?.Invoke();
             return false;

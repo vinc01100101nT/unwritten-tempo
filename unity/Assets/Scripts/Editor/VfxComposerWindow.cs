@@ -72,13 +72,9 @@ public class VfxComposerWindow : EditorWindow
     // hand-typed copy. `manualRingR` is only a fallback ruler for a sequence no skill references yet.
     float manualRingR = 1.5f;
     readonly List<float> skillRadii = new List<float>();   // distinct radii read from referencing SkillDefs (read-only mirror)
-    GameObject ruler, capsule, ground, radiusRing;
+    GameObject capsule, ground, radiusRing;
     readonly List<LineRenderer> radiusRingLrs = new List<LineRenderer>();
     Material ringMat;
-    SpriteRenderer rulerSr;      // real baked-character billboard (falls back to the capsule if none found)
-    float rulerAspect = 0.6f;    // sprite width / height, so the quad isn't stretched
-    float rulerContentFrac = 1f; // fraction of the cell height the ART actually fills (rest is transparent padding)
-    GameObject characterPrefab;  // source of the ruler sprite (a BakedBillboard8 prefab); auto-picked, user-overridable
     Texture2D gridTex;
 
     class PreviewInst
@@ -122,7 +118,7 @@ public class VfxComposerWindow : EditorWindow
         if (pru != null) { pru.Cleanup(); pru = null; }
         if (gridTex != null) { Object.DestroyImmediate(gridTex); gridTex = null; }
         if (ringMat != null) { Object.DestroyImmediate(ringMat); ringMat = null; }
-        rulerSr = null; ruler = capsule = ground = radiusRing = null;
+        capsule = ground = radiusRing = null;
         radiusRingLrs.Clear();
     }
 
@@ -470,10 +466,6 @@ public class VfxComposerWindow : EditorWindow
                 GUILayout.Label("ruler", EditorStyles.miniLabel, GUILayout.Width(32));
                 manualRingR = EditorGUILayout.FloatField(manualRingR, GUILayout.Width(40));
             }
-            flow.Item(140);
-            EditorGUI.BeginChangeCheck();
-            characterPrefab = (GameObject)EditorGUILayout.ObjectField(characterPrefab, typeof(GameObject), false, GUILayout.Width(140));
-            if (EditorGUI.EndChangeCheck()) BuildRulerSprite();
         }
 
         // --- timeline ---
@@ -949,103 +941,11 @@ public class VfxComposerWindow : EditorWindow
             radiusRingLrs.Add(lr);
         }
 
-        // Capsule fallback ruler (used only if no baked character is found/assigned).
+        // Capsule ruler at true human height — the size reference effects are eyeballed against.
         capsule = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         Object.DestroyImmediate(capsule.GetComponent<Collider>());
         capsule.GetComponent<Renderer>().sharedMaterial = new Material(sprite) { color = new Color(0.5f, 0.55f, 0.6f, 1f) };
         pru.AddSingleGO(capsule);
-
-        // Real character billboard: a bottom-pivoted quad showing a baked character's South (camera-facing) frame.
-        ruler = new GameObject("CharacterRuler");
-        rulerSr = ruler.AddComponent<SpriteRenderer>();
-        pru.AddSingleGO(ruler);
-        BuildRulerSprite();
-    }
-
-    // Auto-pick a baked character (first prefab with a BakedBillboard8 that has usable strips) unless the user
-    // assigned one. Slices its Idle→South frame 0 into a bottom-pivoted sprite so feet sit on the ground.
-    void BuildRulerSprite()
-    {
-        if (rulerSr == null) return;
-        var bb = ResolveCharacter();
-        if (bb == null) { rulerSr.sprite = null; return; }
-
-        BakedBillboard8.ActionSet set = null;
-        foreach (var a in bb.actions)
-        {
-            if (a == null || !a.dirs.Any) continue;
-            if (a.action == CharacterAction.Idle) { set = a; break; }
-            set ??= a;
-        }
-        if (set == null) { rulerSr.sprite = null; return; }
-
-        var strips = set.dirs.strips;
-        Texture2D tex = (strips != null && strips.Length > 4) ? strips[4] : null;   // 4 = South (faces camera)
-        if (tex == null) for (int i = 0; strips != null && i < strips.Length && tex == null; i++) tex = strips[i];
-        if (tex == null) { rulerSr.sprite = null; return; }
-
-        int cw = Mathf.Max(1, bb.cellW), ch = Mathf.Max(1, bb.cellH), ppu = bb.ppu > 0 ? bb.ppu : ch;
-        cw = Mathf.Min(cw, tex.width);
-
-        // Ground on the ART, not the padded cell: find the lowest/highest opaque rows in frame 0 and pivot at the
-        // feet, scaling to the real content height. Uses a GPU readback (a temp RenderTexture) so it works even
-        // when the baked strip isn't Read/Write-enabled.
-        float pivotY = 0f; rulerContentFrac = 1f;
-        if (TryOpaqueRows(tex, cw, ch, out int feet, out int head))
-        {
-            pivotY = feet / (float)ch;                        // transform origin at the feet row → feet at y=0
-            rulerContentFrac = (head - feet + 1) / (float)ch; // scale the ART (not padding) to rulerHeight
-        }
-        rulerSr.sprite = Sprite.Create(tex, new Rect(0, 0, cw, ch), new Vector2(0.5f, pivotY), ppu);
-        rulerAspect = (float)cw / ch;
-
-        // Match the IN-GAME size: BakedBillboard8 renders the sprite at its native ppu scale (localScale 1), so the
-        // character's real world height is (content rows / ppu) — NOT a fixed 1.8. Seat the ruler-height knob on that
-        // measured value so the preview stands the same size as it does in play (user can still override to eyeball).
-        float nativeArtH = rulerSr.sprite.bounds.size.y * rulerContentFrac;
-        if (nativeArtH > 1e-4f) rulerHeight = nativeArtH;
-    }
-
-    BakedBillboard8 ResolveCharacter()
-    {
-        if (characterPrefab != null)
-        {
-            var c = characterPrefab.GetComponent<BakedBillboard8>();
-            if (c != null) return c;
-        }
-        foreach (var guid in AssetDatabase.FindAssets("t:Prefab"))
-        {
-            var go = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid));
-            var bb = go != null ? go.GetComponent<BakedBillboard8>() : null;
-            if (bb == null) continue;
-            foreach (var a in bb.actions) if (a != null && a.dirs.Any) { characterPrefab = go; return bb; }
-        }
-        return null;
-    }
-
-    // Lowest (feet) and highest (head) opaque pixel rows of the frame-0 block, via a GPU readback so it works on
-    // non-readable baked strips. Rows counted from the bottom. False if the frame is fully transparent/failed.
-    static bool TryOpaqueRows(Texture2D tex, int cw, int ch, out int feet, out int head)
-    {
-        feet = -1; head = -1;
-        var rt = RenderTexture.GetTemporary(tex.width, tex.height, 0, RenderTextureFormat.ARGB32);
-        var prev = RenderTexture.active;
-        try
-        {
-            Graphics.Blit(tex, rt);
-            RenderTexture.active = rt;
-            var tmp = new Texture2D(cw, ch, TextureFormat.RGBA32, false);
-            tmp.ReadPixels(new Rect(0, 0, cw, ch), 0, 0);   // frame 0 sits at the strip's bottom-left
-            tmp.Apply();
-            var px = tmp.GetPixels();
-            for (int y = 0; y < ch; y++)
-                for (int x = 0; x < cw; x++)
-                    if (px[y * cw + x].a > 0.15f) { if (feet < 0) feet = y; head = y; break; }
-            Object.DestroyImmediate(tmp);
-        }
-        catch { }
-        finally { RenderTexture.active = prev; RenderTexture.ReleaseTemporary(rt); }
-        return feet >= 0 && head >= feet;
     }
 
     // A grid image drawn once: dark cells, lighter 1-px lines on the shared edges (so N lines = N cells across).
@@ -1095,24 +995,10 @@ public class VfxComposerWindow : EditorWindow
         pru.camera.transform.position = camPivot - (camRot * Vector3.forward) * camDist;
         pru.camera.transform.rotation = camRot;
 
-        // Ruler at true human height. Prefer the real character billboard; fall back to the capsule if none.
-        bool haveChar = rulerSr != null && rulerSr.sprite != null;
-        if (ruler != null)
-        {
-            ruler.SetActive(showRuler && haveChar);
-            if (showRuler && haveChar)
-            {
-                float nativeH = rulerSr.sprite.bounds.size.y * rulerContentFrac; // world height of the ART at 1× scale
-                float s = nativeH > 1e-4f ? rulerHeight / nativeH : 1f;
-                ruler.transform.localScale = Vector3.one * s;                 // bottom pivot → feet stay at y=0
-                ruler.transform.position = Vector3.zero;
-                Vector3 toCam = pru.camera.transform.position - ruler.transform.position; toCam.y = 0f;
-                if (toCam.sqrMagnitude > 1e-6f) ruler.transform.rotation = Quaternion.LookRotation(toCam);
-            }
-        }
+        // Ruler at true human height — a plain capsule sized to rulerHeight (user-overridable).
         if (capsule != null)
         {
-            capsule.SetActive(showRuler && !haveChar);
+            capsule.SetActive(showRuler);
             capsule.transform.localScale = new Vector3(rulerHeight * 0.28f, rulerHeight * 0.5f, rulerHeight * 0.28f);
             capsule.transform.position = new Vector3(0f, rulerHeight * 0.5f, 0f);
         }

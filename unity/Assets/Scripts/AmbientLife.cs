@@ -135,7 +135,7 @@ public class AmbientLife : MonoBehaviour
         // 3D animation driver + wander brain, both on the root (added last so they resolve their siblings).
         root.AddComponent<TownNPC3DVisual>();
         var npc = root.AddComponent<TownNPC>();
-        npc.Init(p, wanderRadius, walkSpeed, barks, player, groundMask);
+        npc.Init(p, wanderRadius, walkSpeed, barks, player);
     }
 
     // World-space rendered height (union of all renderer bounds) at the object's CURRENT scale. Called right after

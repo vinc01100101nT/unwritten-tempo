@@ -79,6 +79,8 @@ public class HotbarPanel : MonoBehaviour
         // The standalone ult charge gauge — added here (like the buff bar) so a GameUICanvas built before it
         // existed still gets it without a Build UI Shell rebuild. Idempotent.
         if (GetComponent<UltChargeBar>() == null) gameObject.AddComponent<UltChargeBar>();
+        // The stamina gauge sits just above the ult bar — added the same way so it appears without a shell rebuild. Idempotent.
+        if (GetComponent<StaminaBar>() == null) gameObject.AddComponent<StaminaBar>();
         TryBuild();
     }
 

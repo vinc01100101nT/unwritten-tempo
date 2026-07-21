@@ -23,6 +23,9 @@ public class SpeechBubble : MonoBehaviour
     // ---- shared pool ----
     static Transform host;
     static readonly Stack<SpeechBubble> pool = new Stack<SpeechBubble>();
+    // One bubble per character: the live bubble each owner currently has, so a new line REPLACES it instead of
+    // stacking a second bubble over the same head. Keyed by the follow transform (a character's feet-seated visual).
+    static readonly Dictionary<Transform, SpeechBubble> active = new Dictionary<Transform, SpeechBubble>();
     static Transform camT;
     static Sprite bubbleSprite, tailSprite;
 
@@ -31,8 +34,22 @@ public class SpeechBubble : MonoBehaviour
     RectTransform rt;
     float age, lifetime;
     Transform follow;        // the unit this bubble belongs to — the bubble rides its head each frame
+    Transform regKey;        // the `active` registry key (== owner) so Recycle can drop this owner's entry
     float followYOffset;     // world-up offset from the owner's origin to the bubble's anchor (its bottom)
     Vector3 lastFollowPos;   // fallback position if the owner is destroyed mid-bark
+
+    // Gap between the model's crown and the bubble's bottom edge — shared by every unit so NPCs and the player anchor
+    // identically. VisualWorldHeight is feet-to-crown, so crown + this small clearance clears the head.
+    public const float HeadClearance = 0.05f;
+
+    /// <summary>THE one anchor path for an overhead bubble on any live unit (NPC bark or player chat). Rides the
+    /// <paramref name="pose"/>'s OWN transform — which is feet-seated for both the townsfolk root and the player's
+    /// separate feet-riding visual — and lifts by the model's crown height, so both sit at exactly the same head
+    /// clearance. Use this instead of hand-computing a per-caller offset.</summary>
+    public static void ShowOverHead(IStancePose pose, string label, float life)
+    {
+        if (pose is Component c) Show(c.transform, pose.VisualWorldHeight + HeadClearance, label, life);
+    }
 
     /// <summary>Show a bark line in a white bubble that RIDES <paramref name="owner"/> at
     /// <paramref name="yOffset"/> above its origin (pass the head height). Reuses a pooled bubble; zero
@@ -41,7 +58,14 @@ public class SpeechBubble : MonoBehaviour
     {
         if (string.IsNullOrEmpty(label) || owner == null) return;
         EnsureHost();
+        // Reuse this owner's existing bubble if it still has one live — one bubble per character, no overlap.
+        if (active.TryGetValue(owner, out var existing) && existing != null)
+        {
+            existing.Begin(owner, yOffset, label, life);
+            return;
+        }
         var b = pool.Count > 0 ? pool.Pop() : Create();
+        active[owner] = b;
         b.Begin(owner, yOffset, label, life);
     }
 
@@ -50,6 +74,7 @@ public class SpeechBubble : MonoBehaviour
     {
         if (host != null) return;
         pool.Clear();
+        active.Clear();   // a scene unload destroyed the old bubbles with the host; drop their stale registry entries
         var go = new GameObject("SpeechBubbleSystem") { hideFlags = HideFlags.DontSaveInEditor };
         go.layer = LayerMask.NameToLayer("TransparentFX");   // out of the planar-reflection camera
         var canvas = go.AddComponent<Canvas>();
@@ -95,6 +120,7 @@ public class SpeechBubble : MonoBehaviour
         b.text = UiKit.MakeText("Text", go.transform, "", FontSize, FontStyle.Bold, TextAnchor.MiddleCenter, wrap: false);
         b.text.color = new Color(0.12f, 0.12f, 0.14f);
         b.text.raycastTarget = false;
+        b.text.richText = false;   // player chat is arbitrary text — a stray '<' must stay literal, never markup
         var trt = b.text.rectTransform;
         trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;
         trt.offsetMin = new Vector2(PadX, PadY); trt.offsetMax = new Vector2(-PadX, -PadY);
@@ -109,6 +135,7 @@ public class SpeechBubble : MonoBehaviour
         lifetime = Mathf.Max(0.2f, life);
         age = 0f;
         follow = owner;
+        regKey = owner;
         followYOffset = yOffset;
         lastFollowPos = owner.position + Vector3.up * yOffset;
         SetAlpha(1f);
@@ -148,6 +175,8 @@ public class SpeechBubble : MonoBehaviour
 
     void Recycle()
     {
+        if (regKey != null) active.Remove(regKey);
+        regKey = null;
         follow = null;
         gameObject.SetActive(false);
         pool.Push(this);

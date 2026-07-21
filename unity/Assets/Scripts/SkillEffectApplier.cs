@@ -26,9 +26,15 @@ public static class SkillEffectApplier
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   float extraMult = 0f, int extraFlat = 0, float comboMult = 1f,
-                                  Sprite srcIcon = null, string srcName = null, in CastMods mods = default)
+                                  Sprite srcIcon = null, string srcName = null, in CastMods mods = default,
+                                  Vector3? aimPoint = null)
     {
         if (targets == SkillTargets.None || effects == null || effects.Count == 0) return;
+
+        // Where a self-relocation (Teleport / Dash) sends the caster: the AIM point, NOT the tick's VFX anchor point.
+        // The two differ once a ground cast keeps origin(caster) ≠ target(aim), and a teleport must always go to the
+        // aimed spot regardless of which anchor the VFX author chose for the visual. Defaults to point for old callers.
+        Vector3 selfPoint = aimPoint ?? point;
 
         // SINGLE scope: ignore the radius, land straight on the cast's designated unit. Falls back to Area if unset.
         if (scope == SkillScope.Single && singleTarget != null)
@@ -44,7 +50,7 @@ public static class SkillEffectApplier
                 }
             }
             else if ((targets & SkillTargets.Player) != 0)
-                ApplyEffectsToPlayer(effects, point, extraMult, extraFlat, comboMult, srcIcon, srcName);
+                ApplyEffectsToPlayer(effects, selfPoint, extraMult, extraFlat, comboMult, srcIcon, srcName);
             return;
         }
 
@@ -74,7 +80,7 @@ public static class SkillEffectApplier
             // the caster is by definition NOT standing on it). No skill is a "hazard zone that hits the player if
             // inside", so there's nothing the radius gate legitimately guarded here.
             if (Character.Instance != null && !Character.Instance.IsDead)
-                ApplyEffectsToPlayer(effects, point, extraMult, extraFlat, comboMult, srcIcon, srcName);
+                ApplyEffectsToPlayer(effects, selfPoint, extraMult, extraFlat, comboMult, srcIcon, srcName);
         }
     }
 
@@ -200,7 +206,7 @@ public static class SkillEffectApplier
             case SkillEffectKind.Vulnerability:
                 if (hit == 0) h.BeginVulnerable(e.magnitude, ScaledSeconds(e));
                 break;
-            // Guard / Teleport / Buff / Regen / Cleanse are self-only (they land on the caster, not a mob) — no-op here.
+            // Guard / Teleport / Dash / Buff / Regen / Cleanse are self-only (they land on the caster, not a mob) — no-op here.
         }
     }
 
@@ -343,6 +349,13 @@ public static class SkillEffectApplier
                     if (pc != null) pc.Teleport(point);   // instant blink to the aimed (range-clamped) point
                 }
                 break;
+            case SkillEffectKind.Dash:
+                if (hit == 0)
+                {
+                    var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
+                    if (pc != null) pc.BeginDashToPoint(point);   // visibly rush to the aimed (range-clamped) point
+                }
+                break;
             case SkillEffectKind.Buff:
                 if (hit == 0) { ApplyBuff(e, ch); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
                 break;
@@ -365,7 +378,7 @@ public static class SkillEffectApplier
     }
 
     // Route a self-buff onto the right timed channel. The buff amount (multiplier) scales off the affinity list; the
-    // seconds off the duration list. MoveSpeed reuses the existing Haste system.
+    // seconds off the duration list. Move speed is NOT a buffStat — the Haste kind owns move speed (no dual path).
     static void ApplyBuff(SkillEffect e, Character ch)
     {
         // AMPLIFY buffs use a FLAT magnitude (NOT affinity-scaled): a DPS can't out-buff via their own offense. The
@@ -378,7 +391,6 @@ public static class SkillEffectApplier
             case BuffStat.Damage:      ch.BuffDamage(mult, sec, e.rampDelay, e.rampPerStep, e.rampInterval, e.rampCap); break;
             case BuffStat.AttackSpeed: ch.BuffAttackSpeed(mult, sec); break;
             case BuffStat.CastSpeed:   ch.BuffCastSpeed(mult, sec); break;
-            case BuffStat.MoveSpeed:   if (StatusController.Player != null) StatusController.Player.Haste(mult, sec); break;
         }
     }
 

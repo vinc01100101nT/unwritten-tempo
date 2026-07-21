@@ -8,12 +8,12 @@ using UnityEngine;
 /// with a live front-facing thumbnail and the balance-relevant stats editable inline. Edits write straight
 /// back to the asset (Undo-able, marked dirty, saved on demand), so this doubles as a balancing table.
 ///
-/// Open via <c>Tools ▸ unwritten ▸ Data ▸ Mob Table</c>. Click a column header to sort; click the asset
+/// Open via <c>Tools ▸ unwritten ▸ Catalogs ▸ Mob Table</c>. Click a column header to sort; click the asset
 /// name's select button (or a row's ◎) to ping/select the underlying asset for the full Inspector.
 /// </summary>
 public class MobTableWindow : EditorWindow
 {
-    const string MenuPath = "Tools/unwritten/Mobs & NPCs/Mob Table";
+    const string MenuPath = "Tools/unwritten/Catalogs/Mob Table";
     const int Cell = 16;                 // Ninja Adventure mob sheets are 16px square cells
     const float RowHeight = 38f;
 

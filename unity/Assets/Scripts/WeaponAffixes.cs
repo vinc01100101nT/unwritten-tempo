@@ -42,6 +42,23 @@ public static class WeaponAffixes
     public static string NameOf(string affixId)
         => affixId != null && Catalog.TryGetValue(affixId, out var a) ? a.DisplayName : null;
 
+    /// <summary>One read-only reference row per authored affix (id, name, kind, human effect) — the data source for
+    /// the editor Affix &amp; Ring Voice Table. Reads the live <see cref="Catalog"/> and reuses <see cref="Behavior"/>,
+    /// so the reference view can never drift from the real affix data. Editor/author-time only (allocs a list).</summary>
+    public readonly struct AffixRow
+    {
+        public readonly string Id, Name, Kind, Effect;
+        public AffixRow(string id, string name, string kind, string effect) { Id = id; Name = name; Kind = kind; Effect = effect; }
+    }
+
+    public static List<AffixRow> AllAffixes()
+    {
+        var rows = new List<AffixRow>(Catalog.Count);
+        foreach (var kv in Catalog)
+            rows.Add(new AffixRow(kv.Key, kv.Value.DisplayName, kv.Value.kind.ToString(), Behavior(kv.Value)));
+        return rows;
+    }
+
     /// <summary>Sum the equipped weapon's EQUIP-PASSIVE affixes (always-on while worn) — read by
     /// <see cref="Character"/> on equip. These are steady-state (mana leech / cost refund / thorns), not per-cast
     /// reshapers, so they live as Character state instead of <see cref="CastMods"/>.</summary>

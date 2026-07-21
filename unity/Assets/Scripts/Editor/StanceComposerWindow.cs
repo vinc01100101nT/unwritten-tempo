@@ -148,7 +148,7 @@ public class StanceComposerWindow : EditorWindow
         Row(StanceId.Combat); Row(StanceId.Guard); Row(StanceId.Casting); Row(StanceId.Sit);
 
         Section("Locomotion (driven by the player brain)");
-        Row(StanceId.Idle); Row(StanceId.Walk); Row(StanceId.Run);
+        Row(StanceId.Idle); Row(StanceId.Walk); Row(StanceId.Run); Row(StanceId.Sprint);
 
         Section("Action one-shots (driven by the player brain)");
         Row(StanceId.Jump); Row(StanceId.Roll);
@@ -220,7 +220,7 @@ public class StanceComposerWindow : EditorWindow
             // small button beside the 3D clip dropdown. A same-width blank keeps every other row's columns aligned.
             if (id == StanceId.Jump) JumpTimingButton(b);
             else if (id == StanceId.Roll) RollRootButton(b);
-            else if (id == StanceId.Walk || id == StanceId.Run) StepFramesButton(b);
+            else if (id == StanceId.Walk || id == StanceId.Run || id == StanceId.Sprint) StepFramesButton(b);
             else GUILayout.Space(94);
             b.speedSource = (StanceSpeedSource)EditorGUILayout.EnumPopup(b.speedSource, GUILayout.Width(110));
             b.speedMult = EditorGUILayout.FloatField(b.speedMult, GUILayout.Width(55));

@@ -88,7 +88,7 @@ public static class UIShellBuilder
         BuildHud(root);
         // All panels' hotkeys/Esc are owned by their own runtime controllers (code-driven, no rebake to change a key):
         //   Skills (K)→SkillDraftPanel · Wardrobe (O)→CharacterWardrobePanel · Calendar (L)→CalendarPanel ·
-        //   Inventory (B)/Equipment (V)/Character (C)→ProgressionWindows. PanelToggle is retired.
+        //   Bag (B, Inventory+docked Equipment)/Character (C)→ProgressionWindows. PanelToggle is retired. (V=Sprint.)
         BuildSkillsPanel(root);
         BuildCustomizePanel(root);
         BuildCalendarPanel(root);
@@ -153,7 +153,7 @@ public static class UIShellBuilder
         Selection.activeGameObject = canvasGO;
         Debug.Log($"[unwritten] Built UI shell — theme '{ShortName(themeFolder)}', scale {scaler.referencePixelsPerUnit}. " +
                   $"Saved persistent prefab → {ResourcePrefabPath}. It now survives scene loads and auto-spawns " +
-                  "in any scene. Press Play: B = Inventory, V = Equipment, C = Character, K = Skills, Esc = close all.");
+                  "in any scene. Press Play: B = Bag (Inventory + Equipment), C = Character, K = Skills, V = Sprint, Esc = close all.");
     }
 
     // ---- theme discovery (used by the picker window) --------------------------

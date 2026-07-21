@@ -1,9 +1,9 @@
 using UnityEngine;
 
 /// <summary>
-/// The player's animation BRAIN, extracted from <see cref="BakedPlayerVisual"/> so it isn't glued to the
-/// billboard: given the player's live state it decides WHICH <see cref="StanceId"/> to drive this frame. Both the
-/// billboard visual and the 3D visual (<see cref="Character3DVisual"/>) call this, so "player is swinging → Attack",
+/// The player's animation BRAIN, kept separate from the visual so it isn't glued to render tech: given the player's
+/// live state it decides WHICH <see cref="StanceId"/> to drive this frame. The live-3D visual
+/// (<see cref="Character3DVisual"/>) calls this, so "player is swinging → Attack",
 /// "airborne → Jump", "took a hit → Hurt" is authored ONCE and can't drift between the two presentations.
 ///
 /// <para>Pure decision — no side effects, no allocation (returns a value struct). The caller feeds it the
@@ -24,10 +24,11 @@ public static class PlayerStanceBrain
     }
 
     /// <summary>Decide the player's action stance. <paramref name="speed"/> is the measured ground speed;
-    /// <paramref name="hasRun"/>/<paramref name="hasJump"/> are the visual's clip capabilities (Walk↔Run choice,
+    /// <paramref name="hasRun"/>/<paramref name="hasJump"/>/<paramref name="hasSprint"/> are the visual's clip capabilities (Walk↔Run choice,
     /// Fall-reuses-Jump gate). Death is handled by the CALLER (each visual grounds its corpse differently).</summary>
     public static Decision Decide(Player3DController player, Player3DAttacker attacker, float speed,
-                                  float walkThreshold, float hurtUntil, float pickUpUntil, bool hasRun, bool hasJump)
+                                  float walkThreshold, float hurtUntil, float pickUpUntil, bool hasRun, bool hasJump,
+                                  bool hasSprint)
     {
         var d = new Decision();
         Vector3 dir = player.WorldFacing; dir.y = 0f;
@@ -50,11 +51,14 @@ public static class PlayerStanceBrain
         // Hurt only flinches when fully idle — a hit never interrupts an action or a run.
         if (Time.time < hurtUntil && speed < walkThreshold) { d.hasAction = true; d.id = StanceId.Hurt; return d; }
 
-        // Locomotion: RUN by default; Shift (WalkingSlow) downshifts to WALK. Facing from the player's INTENT.
+        // Locomotion: RUN by default; V (Sprinting) upshifts to SPRINT, Shift (WalkingSlow) downshifts to WALK.
+        // Sprint falls back to the Run clip until a distinct Sprint clip is authored. Facing from the player's INTENT.
         if (speed >= walkThreshold && dir.sqrMagnitude > 1e-4f)
         {
             d.hasAction = true;
-            d.id = player.WalkingSlow ? StanceId.Walk : (hasRun ? StanceId.Run : StanceId.Walk);
+            d.id = player.Sprinting ? (hasSprint ? StanceId.Sprint : StanceId.Run)
+                 : player.WalkingSlow ? StanceId.Walk
+                 : (hasRun ? StanceId.Run : StanceId.Walk);
             d.facing = dir.normalized; d.applyFacing = true;
             return d;
         }

@@ -12,7 +12,7 @@ using UnityEngine;
 /// transient beats the gameplay brain drives one at a time (they beat any held stance while active).</item>
 /// </list>
 /// Both are authored in the <b>Stance Composer</b> and resolved by <see cref="StanceController"/> — the single choke
-/// point that drives <see cref="BakedBillboard8"/>.
+/// point that drives the <see cref="IStancePose"/> sink (<see cref="Character3DPose"/>).
 ///
 /// APPEND-ONLY (like <see cref="VfxCueId"/> / <see cref="CharacterAction"/> / Biome): the int index is stored in the
 /// <see cref="StanceLibrary"/> asset, so add new ids at the END and never reorder.
@@ -55,13 +55,18 @@ public enum StanceId
     AttackHandGun,     // pistol (reserved — Firearm currently maps to AttackRifle)
     AttackRifle,       // rifle / musket
     AttackBow,         // bow draw + loose
+
+    // --- Sprint (V) — the fast locomotion gear above Run. Appended here to keep the enum APPEND-ONLY (stored int
+    // index); the Stance Composer lists it in the Locomotion group. Defaults to the Run action/clip so it looks like
+    // the old full-speed run out of the box; author a distinct clip to differentiate it. Paced by MoveGait like Walk/Run.
+    Sprint,
 }
 
 /// <summary>
 /// WHERE a stance's live playback-speed multiplier comes from — the answer to "how do stat-dependent stances stay in
 /// sync?". The stance NEVER stores the stat/window value (that would be a hand-synced copy — the SSOT bug); it names
 /// only which OWNER to read, and <see cref="StanceController"/> reads the live value each frame. Final playback = the
-/// baked action fps (owned by <see cref="BakedBillboard8"/>) × this source × the binding's <see cref="StanceBinding.speedMult"/>.
+/// clip's natural fps (owned by the <see cref="Character3DPose"/> Animator) × this source × the binding's <see cref="StanceBinding.speedMult"/>.
 /// </summary>
 public enum StanceSpeedSource
 {
@@ -76,15 +81,15 @@ public enum StanceSpeedSource
 
 /// <summary>Binds ONE <see cref="StanceId"/> to the baked pose it plays — the stance analog of a
 /// <see cref="VfxCueBinding"/>. Authored in the Stance Composer. Owns only COMPOSITION (which action, how its speed is
-/// modulated, how it ranks, how it plays back); the fps stays owned by the baked
-/// <see cref="BakedBillboard8.ActionSet"/> and any stat/window stays owned by its live source.</summary>
+/// modulated, how it ranks, how it plays back); the fps stays owned by the animation clip
+/// (<see cref="Character3DPose"/>) and any stat/window stays owned by its live source.</summary>
 [System.Serializable]
 public class StanceBinding
 {
     public StanceId id;
 
-    [Tooltip("Which baked CharacterAction this stance plays (e.g. Combat -> Idle, Attack -> Attack, Fall -> Jump). " +
-             "If the unit hasn't baked it, BakedBillboard8 falls back to Idle.")]
+    [Tooltip("Which CharacterAction this stance plays (e.g. Combat -> Idle, Attack -> Attack, Fall -> Jump). " +
+             "If the sink has no clip for it, it falls back to Idle.")]
     public CharacterAction action = CharacterAction.Idle;
 
     [Tooltip("3D ONLY: the exact animation clip this stance plays on a live-3D character (Character3DPose). This is " +
@@ -157,6 +162,7 @@ public static class StanceDefaults
             case StanceId.Idle:    b.action = CharacterAction.Idle;   break;
             case StanceId.Walk:    b.action = CharacterAction.Walk;   b.speedSource = StanceSpeedSource.MoveGait;  break;
             case StanceId.Run:     b.action = CharacterAction.Run;    b.speedSource = StanceSpeedSource.MoveGait;  break;
+            case StanceId.Sprint:  b.action = CharacterAction.Run;    b.speedSource = StanceSpeedSource.MoveGait;  break;   // clip defaults to Run; author a distinct sprint clip to differentiate
             case StanceId.Attack:  b.action = CharacterAction.Attack; b.speedSource = StanceSpeedSource.FitWindow; break;
             case StanceId.Jump:    b.action = CharacterAction.Jump;   b.crouchEnd = 0.25f; b.airborneFreeze = 1.5f; break;
             case StanceId.Roll:    b.action = CharacterAction.Roll;   b.speedSource = StanceSpeedSource.FitWindow; break;

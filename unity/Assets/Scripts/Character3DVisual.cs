@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// The live-3D player visual — the Animator-driven twin of <see cref="BakedPlayerVisual"/>. It rides the real
+/// The live-3D player visual — Animator-driven. It rides the real
 /// <see cref="Player3DController"/> (snaps to its feet each frame, hides the player's own sprite) and, using the
 /// SHARED <see cref="PlayerStanceBrain"/>, decides the action stance and routes it through the single choke point
 /// <see cref="StanceController"/> — which drives this object's <see cref="Character3DPose"/> (an
@@ -28,6 +28,10 @@ public class Character3DVisual : MonoBehaviour
 
     StanceController stance;
     Character3DPose pose;
+    /// <summary>The player's stance pose (feet-seated) — the anchor for its overhead chat bubble, so chat sits at the
+    /// same head clearance as the NPCs' barks. This visual is unique to the player, so it's the reliable way to reach
+    /// the PLAYER's pose (a bare Character3DPose search could hit a townsperson once NPCs spawn).</summary>
+    public IStancePose Pose => pose;
     Player3DAttacker attacker;
     CharacterController cc;
     SpriteRenderer hiddenPlayerSprite;
@@ -74,7 +78,7 @@ public class Character3DVisual : MonoBehaviour
 
     void OnPickUp() => pickUpUntil = Time.time + pickUpDuration;
 
-    // Seat the model's feet on the Ground layer (same truth BakedPlayerVisual + TownNPC use). The Quaternius
+    // Seat the model's feet on the Ground layer (same truth the townsfolk use). The Quaternius
     // pivot is at the feet, so grounding places the origin on the surface; a jump/fall lifts by how far the
     // player's root sits above its grounded resting height (0 at rest).
     Vector3 GroundedPos(Vector3 p)
@@ -112,8 +116,12 @@ public class Character3DVisual : MonoBehaviour
 
         // Shared brain: same decision the billboard uses. A full 3D controller always supports Run/Jump beats (the
         // clip a beat plays is authored per-stance in the Stance Composer; capability here is structural, not clip).
+        // hasSprint = a distinct Sprint clip is authored; otherwise the brain sprints on the Run clip (the old
+        // full-speed run "moved" to the Sprint gear). StanceCatalog.Get is a cheap array index — no per-frame alloc.
+        var sprintBinding = StanceCatalog.Get(StanceId.Sprint);
+        bool hasSprint = sprintBinding != null && !string.IsNullOrEmpty(sprintBinding.clip);
         var d = PlayerStanceBrain.Decide(player, attacker, speed, walkThreshold, hurtUntil, pickUpUntil,
-                                         hasRun: true, hasJump: true);
+                                         hasRun: true, hasJump: true, hasSprint: hasSprint);
         if (d.hasAction) stance.DriveStance(d.id, d.window, d.release);
         else stance.ClearAction();
         if (d.applyFacing) pose.SetFacing(d.facing);
