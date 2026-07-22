@@ -85,13 +85,12 @@ Every one-click editor tool the project ships, grouped by its submenu. This is t
 
 ## Catalogs (whole-table reference/balancing views — `Tools ▸ unwritten ▸ Catalogs`)
 
-One spreadsheet per data domain — open one to review or balance a whole table at once. The Mob/Item tables edit their ScriptableObject assets inline; the Affix & Ring Voice table is read-only (that data is hardcoded in C#).
+One spreadsheet per data domain — open one to review or balance a whole table at once. The Mob/Item tables edit their ScriptableObject assets inline.
 
 | Menu | What | Use when |
 | --- | --- | --- |
 | **Mob Table** | Spreadsheet window of every `MonsterDef` in the project — one mob per row with a live front-facing thumbnail (top-left cell of its `sheet`, tinted), and the balance stats (id/name/biome/tier/flags/HP/DEF/MDEF/ATK/HIT/FLEE/element/weight/XP/gold) editable inline. Click a column header to sort, the search box to filter, **◎** to select the asset; **Save All** writes + reloads the `MonsterCatalog`. Edits are Undo-able. | Reviewing or balancing the whole mob roster in one view. (`MobTableWindow.cs`) |
 | **Item Table** | Spreadsheet window of every `Item` in the project — one row per item with an icon preview and the balance fields editable inline: id/name, **Type** (Weapon/Armor/Consumable/Misc — DERIVED from slot+category via `ItemTypes`, editing remaps them), **Kind** (weaponType for weapons, equip slot for armor, blank else), element, rarity, ATK/DEF/MATK/MDEF/HP, weight, zeny, heal. Click a header to sort, search to filter, **◎** to select the asset; **Save All** writes to disk. Edits are Undo-able. The item sibling of the Mob Table. (`ItemTableWindow.cs`) |
-| **Affix & Ring Voice Table** | Read-only reference window listing the two skill-mutation systems side by side: **ring voices** (stat-investment, build-wide — DEF·Fortify / HP·Leech / CastSpeed·Accelerate / Crit·Execute / MATK·Expand / AttackSpeed·Repeat, with scope + activation %) and **weapon affixes** (loot-baked, weapon-bound — Frostbite/Honed/Thrifty/etc. with their effect). Reads the live `RingVoices`/`WeaponAffixes` catalogs so it can't drift; nothing editable (the data is hardcoded in C#, not assets). | Checking what each affix/voice does + the affix-vs-voice separation. (`AffixVoiceTableWindow.cs`) |
 
 ---
 

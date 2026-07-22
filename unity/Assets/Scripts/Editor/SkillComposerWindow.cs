@@ -208,8 +208,22 @@ public class SkillComposerWindow : EditorWindow
             sel.id = EditorGUILayout.TextField(new GUIContent("id", "Stable kebab id (e.g. skill.meteor). Don't rename once shipped."), sel.id);
             sel.displayName = EditorGUILayout.TextField(new GUIContent("display name",
                 "The skill's name shown to the player (hotbar hover, tooltips)."), sel.displayName);
-            sel.icon = (Sprite)EditorGUILayout.ObjectField(new GUIContent("icon",
-                "Hotbar icon. Leave empty to fall back to the short text label."), sel.icon, typeof(Sprite), false);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                sel.icon = (Sprite)EditorGUILayout.ObjectField(new GUIContent("icon",
+                    "Hotbar icon. Leave empty to fall back to the short text label."), sel.icon, typeof(Sprite), false);
+                var pickRect = GUILayoutUtility.GetRect(new GUIContent("Skill Icons ▾"), EditorStyles.miniButton, GUILayout.Width(96));
+                if (GUI.Button(pickRect, new GUIContent("Skill Icons ▾", "Pick from " + SkillIconPicker.Folder), EditorStyles.miniButton))
+                {
+                    var target = sel;   // capture the edited def; the popup callback fires after this GUI pass
+                    PopupWindow.Show(pickRect, new SkillIconPicker(s =>
+                    {
+                        Undo.RecordObject(target, "Set Skill Icon");
+                        target.icon = s;
+                        EditorUtility.SetDirty(target);
+                    }));
+                }
+            }
             EditorGUILayout.LabelField(new GUIContent("description", "Flavor + mechanics blurb shown in the hover card."));
             sel.description = EditorGUILayout.TextArea(sel.description ?? "", WrapTextArea, GUILayout.Height(42), GUILayout.ExpandWidth(true));
         }
@@ -550,6 +564,19 @@ public class SkillComposerWindow : EditorWindow
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("+damage taken", "Extra damage the marked enemy takes (0.3 = +30%)."), ef.magnitude, 0f, 2f);
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long enemies stay marked as vulnerable."), ef.seconds, 0.5f, 20f);
                     break;
+                case SkillEffectKind.Knockback:
+                case SkillEffectKind.Pull:
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("shove speed", "How fast the enemy is pushed away / pulled in (world units per second)."), ef.magnitude <= 0f ? 10f : ef.magnitude, 1f, 30f);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the shove lasts."), ef.seconds <= 0f ? 0.25f : ef.seconds, 0.05f, 2f);
+                    break;
+                case SkillEffectKind.ManaLeech:
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("MP leech", "Fraction of the damage you deal returned to you as MP (0..1). 0.15 = 15%."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the leech window lasts."), ef.seconds, 0.5f, 30f);
+                    break;
+                case SkillEffectKind.Reflect:
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("reflect", "Fraction of the damage you take bounced back at the attacker (0..1). 0.3 = 30%."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the reflect window lasts."), ef.seconds, 0.5f, 30f);
+                    break;
             }
 
             // Affinity channels, each labeled by WHAT it boosts. The first scales the effect's main output (damage,
@@ -584,6 +611,10 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Cleanse:       return "Removes active debuffs from the caster.";
             case SkillEffectKind.Vulnerability: return "Marks enemies to take extra damage for a while.";
             case SkillEffectKind.Execute:       return "Bonus damage that grows as the target's HP drops — a finisher, tiny at full HP.";
+            case SkillEffectKind.Knockback:     return "Shoves enemies AWAY from the caster on hit.";
+            case SkillEffectKind.Pull:          return "Drags enemies TOWARD the caster on hit.";
+            case SkillEffectKind.ManaLeech:     return "For a while, part of the damage the caster deals comes back as MP.";
+            case SkillEffectKind.Reflect:       return "For a while, part of the damage the caster takes is bounced back at the attacker.";
             default:                            return "";
         }
     }
@@ -595,7 +626,7 @@ public class SkillComposerWindow : EditorWindow
     static bool IsSelfEffect(SkillEffectKind k) =>
         k == SkillEffectKind.Heal || k == SkillEffectKind.Guard || k == SkillEffectKind.Teleport ||
         k == SkillEffectKind.Dash || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
-        k == SkillEffectKind.Cleanse;
+        k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect;
 
     static bool AllSelfEffects(List<SkillEffect> effects)
     {
@@ -645,6 +676,8 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Vulnerability:
             case SkillEffectKind.Haste:
             case SkillEffectKind.Taunt:
+            case SkillEffectKind.ManaLeech:
+            case SkillEffectKind.Reflect:
                 return true;
             default:
                 return false;

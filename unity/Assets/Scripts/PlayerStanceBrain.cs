@@ -46,6 +46,9 @@ public static class PlayerStanceBrain
         // velocity) so movement can't cancel it — a swing/jump/dash on the run keeps playing.
         if (attacker != null && attacker.Swinging) { d.hasAction = true; d.id = WeaponStances.AttackFor(EquippedWeapon()); d.window = attacker.SwingTime; return d; }
         if (player.IsAirborne)                      { d.hasAction = true; d.id = StanceId.Jump;   d.window = player.JumpClipFreeze; d.release = player.JumpClipReleasing; return d; }
+        // A Dash SKILL is a pure A→B glide, NOT locomotion — it plays NO animation (no Roll, no Run). Return no
+        // action AND skip the velocity check below, so the character just slides while holding its idle/held pose.
+        if (player.SkillGliding)                    { d.hasAction = false; return d; }
         if (player.Dashing || player.EDashing)      { d.hasAction = true; d.id = StanceId.Roll;   d.window = player.EDashing ? player.eDashDuration : 0.4f; return d; }
         if (Time.time < pickUpUntil)                { d.hasAction = true; d.id = StanceId.PickUp; return d; }
         // Hurt only flinches when fully idle — a hit never interrupts an action or a run.

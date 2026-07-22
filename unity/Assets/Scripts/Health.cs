@@ -227,7 +227,7 @@ public class Health : MonoBehaviour
         var ch = Character.Instance;
         if (ch == null || dmgDealt <= 0) return;
         ch.AddUltCharge(dmgDealt * Character.UltChargePerDamageDealt);   // this is the one player-dealt-damage choke — dealing damage builds ult charge
-        if (ch.WeaponManaLeechPct > 0f) ch.GainMana(Mathf.RoundToInt(dmgDealt * ch.WeaponManaLeechPct));   // weapon Mana-Leech affix
+        if (ch.ActiveManaLeechPct > 0f) ch.GainMana(Mathf.RoundToInt(dmgDealt * ch.ActiveManaLeechPct));   // ManaLeech skill window (V3)
         if (ch.LifeStealPct <= 0f) return;
         ch.LeechHeal(Mathf.RoundToInt(dmgDealt * ch.LifeStealPct));
     }

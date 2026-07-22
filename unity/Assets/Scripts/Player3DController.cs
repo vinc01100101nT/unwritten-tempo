@@ -33,6 +33,10 @@ public partial class Player3DController : MonoBehaviour
     /// by <see cref="UnitScale.ForPlayer"/>, the <see cref="gaitSpeed"/> baseline, and the live Slow/Haste move buff
     /// (but NOT the Shift-walk slowdown). The dodge roll (E) reads this so it's always exactly 2× the current run.</summary>
     public float CurrentRunSpeed => moveSpeed * UnitScale.ForPlayer * gaitSpeed * (status != null ? status.MoveMult : 1f);
+    /// <summary>Run speed WITHOUT the movement gate (<see cref="StatusController.MoveMult"/> drops to 0 under an
+    /// aftercast root and to &lt;1 under Slow). A skill glide captures its speed from THIS so its own
+    /// release-animation lock can't zero it — the glide is a fixed A→B move, not gated locomotion.</summary>
+    public float RawRunSpeed => moveSpeed * UnitScale.ForPlayer * gaitSpeed;
     [Tooltip("Speed multiplier while holding Shift to walk — slower than the default run, and plays the Walk animation.")]
     public float walkSpeedMult = 0.2f;
     /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="Character3DVisual"/>'s stance brain to
@@ -148,13 +152,16 @@ public partial class Player3DController : MonoBehaviour
     Player3DAttacker attacker;
     StatusController status;   // stun/freeze (no act), slow (speed), silence/blind — read here + by the spells/attacker
 
-    // Charge / gap-closer dash state (driven via BeginDash / BeginDashToPoint — a reusable controller API for dash skills).
+    // Charge / gap-closer dash state (driven via BeginDash / BeginGlideTo — a reusable controller API for dash skills).
     bool dashing;
     Transform dashTarget;          // a moving target (charge into a mob); null when dashing to a fixed point
     Vector3 dashPoint;             // fixed world destination (Dash skill); used when dashToPoint
     bool dashToPoint;
     float dashSpeed, dashEndTime, dashArriveRange;
     System.Action dashOnArrive;
+    /// <summary>True while a Dash SKILL is gliding the player A→B (vs a charge/E-dash roll). The stance brain reads
+    /// this to play NO animation — a skill glide is pure movement, not a roll or a run.</summary>
+    public bool SkillGliding => dashing && dashToPoint;
     [Tooltip("Dash SKILL travel speed as a multiple of the player's CURRENT run speed — the visible fast glide to the " +
              "aimed point (Blink teleports; Dash rushes there). Scales with move-speed buffs/slows via CurrentRunSpeed.")]
     public float skillDashSpeedMult = 8f;
@@ -665,12 +672,14 @@ public partial class Player3DController : MonoBehaviour
     /// aimed, range-clamped cast point — at <c>skillDashSpeedMult × CurrentRunSpeed</c>, arriving at the spot instead
     /// of blinking there. Travels via the CharacterController so walls block it (that's the difference from Teleport).
     /// No on-arrive callback (pure relocation). Shares the charge dash's step/state so cancels can't be forgotten.</summary>
-    public void BeginDashToPoint(Vector3 dest)
+    public void BeginGlideTo(Vector3 dest)
     {
         ClearCombat();
         order = Order.Idle; routing = false; path.Clear();
         dashing = true; dashToPoint = true; dashTarget = null; dashPoint = dest; dashOnArrive = null;
-        dashSpeed = Mathf.Max(0.01f, skillDashSpeedMult) * CurrentRunSpeed;
+        // RawRunSpeed (not CurrentRunSpeed): a release-animation aftercast root sets MoveMult=0, which would zero the
+        // glide's speed. The glide is a fixed A→B move, so it must ignore that gate and always travel.
+        dashSpeed = Mathf.Max(0.01f, skillDashSpeedMult) * RawRunSpeed;
         dashEndTime = Time.time + Mathf.Max(0.05f, skillDashMaxTime);
         dashArriveRange = 0.15f;
     }

@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
+  m_Name: skill.new 2
+  m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  id: skill.dash
+  displayName: Dash
+  icon: {fileID: -2812528802495159281, guid: 6cc824c29321438408138dbb62104f13, type: 3}
+  description: 
+  archetype: 1
+  family: 2
+  shape: 4
+  complexity: 0
+  acquisitionTier: 0
+  manaCost: 0
+  cooldown: 0.1
+  castTime: 0
+  aim: 2
+  castRange: 11
+  tier: 0
+  chargeCost: 100
+  castCircleId: 
+  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  vfx: {fileID: 11400000, guid: d2894bf833c371843b778e0ad6cf1427, type: 2}
+  repeatCount: 1
+  repeatInterval: 0
+  hasReleaseStance: 1
+  releaseStance: 17
+  bindings:
+  - tickId: dash
+    targets: 1
+    scope: 0
+    radius: 1.5
+    effects:
+    - kind: 12
+      damageType: 1
+      damageMult: 1
+      element: 0
+      amount: 10
+      ailment: 2
+      seconds: 4
+      magnitude: 3
+      hitCount: 1
+      chance: 0
+      buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
+      affinity: []
+      durationAffinity: []
+      hitCountAffinity: []
+  shortLabel: Skill
+  keyLabel: 
+  slotOrder: 10
+  tint: {r: 1, g: 1, b: 1, a: 1}

@@ -79,7 +79,7 @@ MonoBehaviour:
       right: 1
   - id: 6
     action: 2
-    clip: Run
+    clip: Run2
     speedSource: 3
     speedMult: 1
     priority: 0
@@ -87,9 +87,9 @@ MonoBehaviour:
     airborneFreeze: 1.5
     rootFromFrame: 0
     footPlants:
-    - frame: 5
+    - frame: 7
       right: 0
-    - frame: 15
+    - frame: 17
       right: 1
   - id: 7
     action: 3

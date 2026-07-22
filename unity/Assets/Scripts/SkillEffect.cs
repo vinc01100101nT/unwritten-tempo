@@ -82,9 +82,24 @@ public enum SkillEffectKind
     Execute,
     /// <summary>Rush the caster to the cast point — same aimed, range-clamped destination as <see cref="Teleport"/>,
     /// but the player VISIBLY travels there fast (a gap-close glide) instead of blinking instantly →
-    /// <c>Player3DController.BeginDashToPoint</c>. Speed is the player's tunable <c>skillDashSpeedMult</c> × current
-    /// run speed; blocked by geometry (unlike Blink). No fields — the skill's range is the max distance. (Dash.)</summary>
+    /// <c>Player3DController.BeginGlideTo</c> — a pure A→B glide with NO character animation (not a roll or run).
+    /// Speed is the player's tunable <c>skillDashSpeedMult</c> × current run speed; blocked by geometry (unlike
+    /// Blink). No fields — the skill's range is the max distance. (Dash.)</summary>
     Dash,
+
+    /// <summary>Knock a mob back — shove it AWAY from the caster at <see cref="SkillEffect.magnitude"/> speed for
+    /// <see cref="SkillEffect.seconds"/> → <c>MonsterAI3D.Knockback</c>. (The old weapon Push affix, rehomed onto
+    /// the skill — V3: control is authored on the skill, not a weapon affix.)</summary>
+    Knockback,
+    /// <summary>Drag a mob TOWARD the caster at <see cref="SkillEffect.magnitude"/> speed for
+    /// <see cref="SkillEffect.seconds"/> → <c>MonsterAI3D.Knockback</c> from a mirrored origin. (The old Pull affix.)</summary>
+    Pull,
+    /// <summary>Self, timed window: for <see cref="SkillEffect.seconds"/>, restore <see cref="SkillEffect.magnitude"/>
+    /// fraction (0..1) of the damage you deal as MP → <c>Character.BeginManaLeech</c>. (The old weapon Mana-Leech affix.)</summary>
+    ManaLeech,
+    /// <summary>Self, timed window: for <see cref="SkillEffect.seconds"/>, reflect <see cref="SkillEffect.magnitude"/>
+    /// fraction (0..1) of the damage you TAKE back at the attacker → <c>Character.BeginReflect</c>. (The old Reflect affix.)</summary>
+    Reflect,
 }
 
 /// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window. Move speed is
@@ -129,7 +144,8 @@ public class SkillEffect
     [Tooltip("Duration in seconds (Status / Haste).")]
     public float seconds = 4f;
     [Tooltip("Status: DoT damage-per-tick, Slow factor (0..1), or Blind HIT loss. Haste/Buff: multiplier (>1). " +
-             "Guard: damage-cut fraction (0..1). Regen: HP per tick. Vulnerability: extra-damage fraction (0.3 = +30%).")]
+             "Guard: damage-cut fraction (0..1). Regen: HP per tick. Vulnerability: extra-damage fraction (0.3 = +30%). " +
+             "Knockback/Pull: shove speed. ManaLeech/Reflect: fraction of damage dealt/taken (0..1).")]
     public float magnitude = 3f;
 
     [Header("Multi-hit (Damage kind)")]

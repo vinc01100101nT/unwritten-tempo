@@ -26,7 +26,7 @@ public static class SkillEffectApplier
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   float extraMult = 0f, int extraFlat = 0, float comboMult = 1f,
-                                  Sprite srcIcon = null, string srcName = null, in CastMods mods = default,
+                                  Sprite srcIcon = null, string srcName = null,
                                   Vector3? aimPoint = null)
     {
         if (targets == SkillTargets.None || effects == null || effects.Count == 0) return;
@@ -46,7 +46,6 @@ public static class SkillEffectApplier
                 {
                     burstTargets.Clear(); burstTargets.Add(mob);
                     DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult);
-                    ApplyOutgoing(burstTargets, effects, mods, comboMult, point);
                 }
             }
             else if ((targets & SkillTargets.Player) != 0)
@@ -54,8 +53,7 @@ public static class SkillEffectApplier
             return;
         }
 
-        // MATK · Expand folds in here — a wider gather radius (never below the base). Single scope ignores radius.
-        float r2 = Mathf.Max(0.05f, radius * (1f + mods.radiusBonus)); r2 *= r2;
+        float r2 = Mathf.Max(0.05f, radius); r2 *= r2;
 
         if ((targets & SkillTargets.Mobs) != 0)
         {
@@ -70,7 +68,6 @@ public static class SkillEffectApplier
                 burstTargets.Add(ai);
             }
             DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult);
-            ApplyOutgoing(burstTargets, effects, mods, comboMult, point);
         }
 
         if ((targets & SkillTargets.Player) != 0)
@@ -206,7 +203,16 @@ public static class SkillEffectApplier
             case SkillEffectKind.Vulnerability:
                 if (hit == 0) h.BeginVulnerable(e.magnitude, ScaledSeconds(e));
                 break;
-            // Guard / Teleport / Dash / Buff / Regen / Cleanse are self-only (they land on the caster, not a mob) — no-op here.
+            case SkillEffectKind.Knockback:
+                // Shove the mob AWAY from the caster (magnitude = speed). Caster position is the origin so no cast
+                // point needs threading through the hit loop; falls back to the mob's own spot if there's no caster.
+                if (hit == 0) { var kc = Character.Instance; Vector3 kf = kc != null ? kc.transform.position : ai.transform.position; ai.Knockback(kf, e.magnitude, ScaledSeconds(e), 0f); }
+                break;
+            case SkillEffectKind.Pull:
+                // Drag the mob TOWARD the caster: shove it away from a point mirrored through the mob = toward the caster.
+                if (hit == 0) { var kc = Character.Instance; Vector3 kf = kc != null ? kc.transform.position : ai.transform.position; ai.Knockback(2f * ai.transform.position - kf, e.magnitude, ScaledSeconds(e), 0f); }
+                break;
+            // Guard / Teleport / Dash / Buff / Regen / Cleanse / ManaLeech / Reflect are self-only (they land on the caster, not a mob) — no-op here.
         }
     }
 
@@ -222,85 +228,6 @@ public static class SkillEffectApplier
         if (bonus <= 0) return;
         if (e.damageType == DamageType.Magic) h.TakeMagicDamage(bonus, crit, e.element);
         else h.TakeDamage(bonus, crit, -1, e.element);
-    }
-
-    // ---- ring/weapon outgoing reshapers (CastMods) --------------------------
-    // Applied AFTER the binding's own hits land, once over the gathered mobs: extra damage echoes (Repeat) and a
-    // low-HP finisher (Execute), folded from the equipped weapon's affixes + the ring's voices. Radius (Expand) is
-    // handled in the scan above. No-op on a plain cast (mods.Any == false), so a normal skill is unchanged.
-    static void ApplyOutgoing(List<MonsterAI3D> mobs, List<SkillEffect> effects, in CastMods mods, float comboMult, Vector3 point)
-    {
-        if (mobs.Count == 0 || !mods.Any) return;
-
-        // Weapon control affixes — applied to every mob the hit reached.
-        for (int i = 0; i < mobs.Count; i++)
-        {
-            var m = mobs[i];
-            if (m == null) continue;
-            if (mods.slowFactor > 0f && mods.slowSecs > 0f) m.Slow(mods.slowFactor, mods.slowSecs);
-            if (mods.rootSecs > 0f) m.Slow(0.02f, mods.rootSecs);                         // root = a hard stop
-            if (mods.stunSecs > 0f) m.Stun(mods.stunSecs);
-            if (mods.pushSpeed > 0f && mods.pushSecs > 0f) m.Knockback(point, mods.pushSpeed, mods.pushSecs, 0f);
-            if (mods.pullSpeed > 0f && mods.pullSecs > 0f)
-                m.Knockback(2f * m.transform.position - point, mods.pullSpeed, mods.pullSecs, 0f);   // shove away from the MIRRORED point = toward the cast
-        }
-
-        for (int r = 0; r < mods.extraHits; r++)
-            for (int i = 0; i < mobs.Count; i++)
-                EchoDamage(effects, mobs[i], comboMult);
-
-        if (mods.executePower > 0f)
-        {
-            // Borrow the hit's damage type so the finisher rolls off the matching stat (MATK for a magic skill).
-            DamageType dt = DamageType.Physical;
-            for (int i = 0; i < effects.Count; i++)
-            {
-                var e = effects[i];
-                if (e != null && e.kind == SkillEffectKind.Damage) { dt = e.damageType; break; }
-            }
-            for (int i = 0; i < mobs.Count; i++)
-            {
-                var h = mobs[i] != null ? mobs[i].Health : null;
-                if (h != null) ExecuteFinisher(h, mods.executePower, dt, comboMult);
-            }
-        }
-    }
-
-    // One extra strike of just the binding's DAMAGE effects (an echo hit — deliberately not re-rolling status/heal,
-    // which aren't "another hit").
-    static void EchoDamage(List<SkillEffect> effects, MonsterAI3D ai, float comboMult)
-    {
-        var h = ai != null ? ai.Health : null;
-        if (h == null) return;
-        for (int i = 0; i < effects.Count; i++)
-        {
-            var e = effects[i];
-            if (e == null || e.kind != SkillEffectKind.Damage) continue;
-            int power = RollPower(e, 0f, 0, comboMult, out bool crit);
-            if (e.damageType == DamageType.Magic) h.TakeMagicDamage(power, crit, e.element);
-            else h.TakeDamage(power, crit, -1, e.element);
-        }
-    }
-
-    // Orange so a finisher reads as CLEARLY separate from the normal white/purple/gold hit numbers.
-    static readonly Color ExecuteColor = new Color(1f, 0.55f, 0.1f);
-
-    // Source-agnostic execute finisher — the ring's Crit voice and a weapon affix both feed the same power. Bonus =
-    // caster roll × power × missing-HP fraction (tiny at full HP, big near death), landed as raw damage with its own
-    // orange number so it's unmistakable on screen.
-    static void ExecuteFinisher(Health h, float power, DamageType dtype, float comboMult)
-    {
-        if (h == null || h.maxHealth <= 0 || power <= 0f) return;
-        float missing = 1f - Mathf.Clamp01((float)h.Current / h.maxHealth);
-        if (missing <= 0f) return;
-        var ch = Character.Instance;
-        if (ch == null) return;
-        bool crit;
-        int roll = dtype == DamageType.Magic ? ch.RollMagicDamage(out crit)
-                                             : ch.RollDamage(out crit, 0, dtype == DamageType.Crit);
-        int bonus = Mathf.RoundToInt(roll * power * missing * Mathf.Max(0f, comboMult));
-        if (bonus <= 0) return;
-        h.TakeTrueDamage(bonus, ExecuteColor);   // raw bonus + its own orange number
     }
 
     // ---- player -------------------------------------------------------------
@@ -353,7 +280,7 @@ public static class SkillEffectApplier
                 if (hit == 0)
                 {
                     var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
-                    if (pc != null) pc.BeginDashToPoint(point);   // visibly rush to the aimed (range-clamped) point
+                    if (pc != null) pc.BeginGlideTo(point);   // pure A→B glide to the aimed (range-clamped) point — no animation
                 }
                 break;
             case SkillEffectKind.Buff:
@@ -365,7 +292,13 @@ public static class SkillEffectApplier
             case SkillEffectKind.Cleanse:
                 if (hit == 0 && StatusController.Player != null) StatusController.Player.Cleanse(Mathf.Max(1, e.amount));
                 break;
-            // Execute / Taunt / Vulnerability are aimed at mobs — no-op on the player.
+            case SkillEffectKind.ManaLeech:
+                if (hit == 0) { ch.BeginManaLeech(ScaledSeconds(e), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
+                break;
+            case SkillEffectKind.Reflect:
+                if (hit == 0) { ch.BeginReflect(ScaledSeconds(e), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
+                break;
+            // Execute / Taunt / Vulnerability / Knockback / Pull are aimed at mobs — no-op on the player.
         }
     }
 

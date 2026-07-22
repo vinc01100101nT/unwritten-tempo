@@ -91,15 +91,6 @@ public static class SkillTooltip
                 }
             }
 
-        // Live ring/weapon reshapers — reads current investment + equipped weapon, so the card is always up to
-        // date. The section header is dropped entirely when nothing is active (no empty "Ring & Weapon" heading).
-        int mark = sb.Length;
-        sb.Append("\n\n<color=").Append(Chip).Append("><b>Ring & Weapon</b></color>");
-        int afterHeader = sb.Length;
-        WeaponAffixes.AppendSummary(Character.Instance, sb, def);
-        RingVoices.AppendSummary(Character.Instance, sb, def);
-        if (sb.Length == afterHeader) sb.Length = mark;
-
         return sb.ToString();
     }
 
@@ -154,6 +145,10 @@ public static class SkillTooltip
             case SkillEffectKind.Cleanse:       return "Removes " + Hl(Mathf.Max(1, e.amount).ToString()) + " debuff(s)";
             case SkillEffectKind.Vulnerability: return "Enemies take +" + Pct(e.magnitude) + " damage for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Haste:         return "+" + Pct(Mathf.Max(0f, e.magnitude - 1f)) + " move speed for " + Hl(e.seconds.ToString("0.#") + "s");
+            case SkillEffectKind.Knockback:     return "Knocks enemies back";
+            case SkillEffectKind.Pull:          return "Pulls enemies in";
+            case SkillEffectKind.ManaLeech:     return "Restores " + Pct(Mathf.Clamp01(e.magnitude)) + " of damage dealt as MP for " + Hl(e.seconds.ToString("0.#") + "s");
+            case SkillEffectKind.Reflect:       return "Reflects " + Pct(Mathf.Clamp01(e.magnitude)) + " of damage taken for " + Hl(e.seconds.ToString("0.#") + "s");
             default:                            return null;
         }
     }

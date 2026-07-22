@@ -7,9 +7,10 @@ using UnityEngine;
 ///
 /// <para>Historically this was ALSO the output of a six-phase "SkillMod" modifier system (SkillModifier /
 /// ModifierCatalog / SkillModBook), which was authored + unit-tested but never wired into a live cast — that dead
-/// vessel was removed 2026-07-20. The ring's real behavioral layer now lives in <see cref="RingVoices"/> (driven
-/// off ring-stat investment through the live combat sinks). This struct stays because basic attacks still use it
-/// as their by-value carrier — every current strike simply passes <see cref="Default"/> (no modifiers).</para>
+/// vessel was removed 2026-07-20. Its V2 successor (the RingVoices / WeaponAffixes reshaper "fold") was in turn
+/// retired for V3 (2026-07-22): the ring now only SCALES via affinity, and every behavior is authored on the skill
+/// as a <see cref="SkillEffect"/>. This struct stays because basic attacks still use it as their by-value carrier —
+/// every current strike simply passes <see cref="Default"/> (no modifiers).</para>
 /// </summary>
 public struct SkillContext
 {

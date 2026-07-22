@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.blink_step
   displayName: Blink Step
-  icon: {fileID: -7000909238271953471, guid: 917698938644be74ba433767b1707b03, type: 3}
+  icon: {fileID: -6454969007074664543, guid: c4bce261683a10b42bf52bb46da9e0de, type: 3}
   description: Instantly teleport to the aimed spot and surge with attack and cast
     speed for a few seconds.
   archetype: 1
@@ -48,7 +48,7 @@ MonoBehaviour:
       element: 0
       amount: 10
       ailment: 2
-      seconds: 4
+      seconds: 2
       magnitude: 1
       hitCount: 1
       chance: 0
@@ -63,4 +63,4 @@ MonoBehaviour:
   shortLabel: Blink
   keyLabel: 
   slotOrder: 11
-  tint: {r: 0.6, g: 0.9, b: 1, a: 1}
+  tint: {r: 0.50823647, g: 0.1940547, b: 0.89433956, a: 1}

@@ -23,14 +23,6 @@ MonoBehaviour:
   - skill.bulwark
   - skill.war_banner
   - skill.blink_step
-  weaponAffixIds:
-  - affix.frostbite
-  - affix.concussive
-  - affix.repelling
-  - affix.honed
-  - affix.siphon
-  - affix.thrifty
-  - affix.thornmail
   element: 0
   rarity: 0
   category: 0

@@ -66,11 +66,6 @@ public class Item : ScriptableObject
              "non-weapons.")]
     public List<string> grantedSkillIds = new List<string>();
 
-    [Tooltip("Weapon-BOUND mutation affixes (ids resolved via WeaponAffixes) — the 'loot surprise' half of the V2 " +
-             "mutation model: baked onto THIS weapon, they reshape its skills and vanish when it's unequipped " +
-             "(distinct from the ring's build-wide voices). Seeded by hand for now; loot-roll assignment is later.")]
-    public List<string> weaponAffixIds = new List<string>();
-
     [Tooltip("Damage element for a weapon (what element its attacks deal); defensive/affinity element for gear. " +
              "Neutral = no special element. Feeds the Elements damage table when combat consumes it.")]
     public Element element = Element.Neutral;

@@ -204,16 +204,9 @@ public class Character : MonoBehaviour
     /// preview temporarily swaps this for a hypothetical loadout; see <see cref="DeriveWith"/>.</summary>
     EquipBonuses equipBonuses;
 
-    // Weapon-affix EQUIP-PASSIVES (always-on while the weapon is worn) — recomputed on equip. Distinct from the
-    // per-cast reshapers (CastMods): steady-state, so they live as Character state read by the combat sinks.
-    float weaponManaLeechPct, weaponRefundPct, weaponReflectPct;
-    public float WeaponManaLeechPct => weaponManaLeechPct;
-    public float WeaponRefundPct => weaponRefundPct;
-
     void RecomputeEquip()
     {
         equipBonuses = EquipBonuses.Aggregate(equipped.Values);
-        WeaponAffixes.GetPassives(this, out weaponManaLeechPct, out weaponRefundPct, out weaponReflectPct);
     }
 
     /// <summary>The Ring of Progression — the VESSEL that carries the player's life's-work: its own
@@ -802,6 +795,36 @@ public class Character : MonoBehaviour
         regenNextTick = Time.time + RegenInterval;
     }
 
+    // Timed skill windows (V3: the old weapon Mana-Leech / Reflect affixes, rehomed as skill effects). Lazy — no
+    // Update tick; the combat sinks read the fraction and see 0 once the window lapses. Latest call replaces (no stack).
+    float leechUntil; float leechFrac;
+    float reflectBonusUntil; float reflectBonus;
+
+    /// <summary>The live mana-leech fraction (0 when no window active) — read where the player's damage is dealt
+    /// (<see cref="Health"/>), converting that fraction of damage into MP.</summary>
+    public float ActiveManaLeechPct => Time.time < leechUntil ? leechFrac : 0f;
+    /// <summary>The live extra damage-reflect fraction from a skill window (0 when inactive), added on top of the
+    /// permanent thorns-card <c>reflectPct</c> where incoming damage is bounced back.</summary>
+    public float ActiveReflectBonus => Time.time < reflectBonusUntil ? reflectBonus : 0f;
+
+    /// <summary>Open a mana-leech window: for <paramref name="seconds"/>, <paramref name="fraction"/> (0..1) of the
+    /// damage you deal returns as MP.</summary>
+    public void BeginManaLeech(float seconds, float fraction)
+    {
+        if (seconds <= 0f || fraction <= 0f) return;
+        leechFrac = Mathf.Clamp01(fraction);
+        leechUntil = Time.time + seconds;
+    }
+
+    /// <summary>Open a damage-reflect window: for <paramref name="seconds"/>, reflect an extra <paramref name="fraction"/>
+    /// (0..1) of the damage you take back at the attacker (adds to the thorns card's permanent reflect).</summary>
+    public void BeginReflect(float seconds, float fraction)
+    {
+        if (seconds <= 0f || fraction <= 0f) return;
+        reflectBonus = Mathf.Clamp01(fraction);
+        reflectBonusUntil = Time.time + seconds;
+    }
+
     public int TakeDamage(int attackerAttack) => TakeDamage(attackerAttack, -1);
 
     /// <summary>Apply an incoming PHYSICAL hit: damage = max(1, attackerAttack − Defense), then scaled by the
@@ -902,7 +925,7 @@ public class Character : MonoBehaviour
     // damage (bypasses its defense, can't itself be reflected — TakeTrueDamage never calls back here).
     void Reflect(int dmgTaken, MonsterAI3D source)
     {
-        float pct = reflectPct + weaponReflectPct;   // thorns card + weapon Reflect affix
+        float pct = reflectPct + ActiveReflectBonus;   // permanent thorns card + a timed skill reflect window
         if (pct <= 0f || dmgTaken <= 0 || source == null) return;
         var h = source.Health;
         if (h == null || h.IsDead) return;

@@ -106,7 +106,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // origin = the CASTER (Origin anchor), target = the aimed point (Target anchor). Self cast: center IS the
         // caster, so they coincide. Ground cast: they DIFFER, so an Origin-anchored step (e.g. Blink's departure
         // flash before the teleport) plays at the caster's spot, not the destination. VfxContext.At collapsed both.
-        lastCtx = new VfxContext { origin = transform.position, target = center, follow = null, scaleMult = 1f };
+        // follow = the CASTER so an Attach step (a self aura / dash trail) RIDES the player and fires its gameplay
+        // tick — like VfxCue sets follow = actor. PlayAt/Carrier steps ignore follow, so ground AoEs are unaffected.
+        lastCtx = new VfxContext { origin = transform.position, target = center, follow = transform, scaleMult = 1f };
         StartCastOrPlay();
     }
 
@@ -119,7 +121,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         {
             origin = transform.position,
             target = unit.position,
-            follow = null,
+            follow = transform,
             targetUnit = unit,
             scaleMult = 1f,
         };
@@ -137,7 +139,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (!ComboSpend()) return false;
         comboDamageMult = Mathf.Max(0f, dmgMult);
         // origin = caster, target = aimed point (see Cast) — keeps Origin/Target distinct on a ground combo member.
-        lastCtx = new VfxContext { origin = transform.position, target = center, follow = null, scaleMult = 1f };
+        lastCtx = new VfxContext { origin = transform.position, target = center, follow = transform, scaleMult = 1f };
         StartCastOrPlay();
         return true;
     }
@@ -151,7 +153,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         {
             origin = transform.position,
             target = unit.position,
-            follow = null,
+            follow = transform,
             targetUnit = unit,
             scaleMult = 1f,
         };
@@ -167,8 +169,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         var sc = StatusController.Player;
         if (sc != null && (sc.CannotAct || sc.Silenced)) return false;
         if (!Character.Instance.SpendMana(def.manaCost)) { BattleNotice.Warn("No MP", NoManaColor); return false; }
-        if (Character.Instance.WeaponRefundPct > 0f && def.manaCost > 0)
-            Character.Instance.GainMana(Mathf.RoundToInt(def.manaCost * Character.Instance.WeaponRefundPct));   // weapon Refund affix
         return true;
     }
 
@@ -179,9 +179,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // Turn the caster to face where it aimed — for every skill regardless of scope (ground/target/aoe).
         // A self-cast aims at the caster's own feet, so FaceWorldPoint no-ops (planar dir ~0): no exception needed.
         if (body != null) body.FaceWorldPoint(lastCtx.target);
-
-        // The ring's self-voices (Fortify / Leech / Accelerate) trigger on every cast, self-gated on investment.
-        RingVoices.ApplyCast(Character.Instance);
 
         if (def.castTime > 0f && isActiveAndEnabled)
             castRoutine = StartCoroutine(CastWindup());
@@ -293,8 +290,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             BattleNotice.Warn("No MP", NoManaColor);
             return false;
         }
-        if (Character.Instance.WeaponRefundPct > 0f && def.manaCost > 0)
-            Character.Instance.GainMana(Mathf.RoundToInt(def.manaCost * Character.Instance.WeaponRefundPct));   // weapon Refund affix
         if (def.IsUltimate) Character.Instance.SpendUltCharge(def.chargeCost);   // ults SPEND charge…
         else Character.Instance.AddUltCharge(Character.UltChargePerCast);        // …every other cast BUILDS it
         lastDuration = def.cooldown;
@@ -309,15 +304,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         var b = def.BindingFor(tick.tickId);
         if (b == null) return;
-        // Fold the outgoing reshapers for this hit: weapon affixes first, then the ring's voices on top
-        // (the design's fold order). Both self-gate, so this is a no-op struct on a plain build.
-        CastMods mods = default;
-        WeaponAffixes.AddOutgoing(Character.Instance, ref mods);
-        RingVoices.AddOutgoing(Character.Instance, ref mods);
-        SkillReshape.GateTo(b, ref mods);   // drop reshapers this binding can't use (e.g. Repeat on a non-damaging tick)
         SkillEffectApplier.ApplyBurst(tick.point, b.radius, b.scope, b.targets, b.effects,
-                                      lastCtx.targetUnit, mods.rawDamageMult, 0, comboDamageMult,
-                                      def.icon, def.displayName, mods,
+                                      lastCtx.targetUnit, 0f, 0, comboDamageMult,
+                                      def.icon, def.displayName,
                                       aimPoint: lastCtx.target);   // Teleport/Dash go to the AIM point, not the tick's VFX anchor
     }
 
