@@ -102,7 +102,7 @@ public class MonsterAI3D : MonoBehaviour
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
         var mob = (MonsterAI3D)p.source;
-        int d = Character.Instance.TakeMagicDamage(p.amount, p.element, mob);
+        int d = CombatAuthority.Apply(Character.Instance, new DamageInfo(p.amount, p.element, isMagic: true, source: mob));
         if (d > 0)
         {
             DamagePopup.Spawn(p.homing != null ? p.homing.position : p.at, d, MagicHitColor);
@@ -271,7 +271,7 @@ public class MonsterAI3D : MonoBehaviour
     {
         if (onHitAilmentChance <= 0f) return;
         var ps = StatusController.Player;
-        if (ps != null && Random.value < onHitAilmentChance)
+        if (ps != null && CombatRng.Chance(onHitAilmentChance))
             ps.Apply(onHitAilment, onHitAilmentSeconds, onHitAilmentMagnitude);
     }
 
@@ -306,7 +306,7 @@ public class MonsterAI3D : MonoBehaviour
         if (player != null && touch3DSqr <= touch * touch && Time.time >= nextTouch && Character.Instance != null)
         {
             // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
-            int atk = Mathf.RoundToInt(attack * (1f - Random.Range(0f, damageSpread)));   // RO-style spread
+            int atk = Mathf.RoundToInt(attack * (1f - CombatRng.Range(0f, damageSpread)));   // RO-style spread
             // A magic mob's attack IS its cast — fire the cast cue at the caster (player-parity OnCastStart).
             if (attackType == AttackType.Magic) VfxCue.Fire(VfxCueId.OnCastStart, transform);
             if (attackType == AttackType.Magic && projectileSheet != null)
@@ -324,9 +324,9 @@ public class MonsterAI3D : MonoBehaviour
             {
                 // Blind cuts our accuracy: physical attacks roll a reduced HIT against the player's FLEE.
                 int effHit = Mathf.Max(0, hit - (status != null ? status.HitPenalty : 0));
-                int dealt = attackType == AttackType.Magic
-                    ? Character.Instance.TakeMagicDamage(atk, attackElement, this)        // magic: MATK vs MDEF + element
-                    : Character.Instance.TakeDamage(atk, effHit, attackElement, this);    // physical: HIT vs FLEE + element
+                int dealt = CombatAuthority.Apply(Character.Instance, attackType == AttackType.Magic
+                    ? new DamageInfo(atk, attackElement, isMagic: true, source: this)                 // magic: MATK vs MDEF + element
+                    : new DamageInfo(atk, attackElement, attackerHit: effHit, source: this));         // physical: HIT vs FLEE + element
                 if (dealt > 0)
                 {
                     DamagePopup.Spawn(player.position, dealt,

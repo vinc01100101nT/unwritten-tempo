@@ -343,7 +343,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, b.effects,
                                       lastCtx.targetUnit, 0f, 0, comboDamageMult,
                                       def.icon, def.displayName,
-                                      aimPoint: lastCtx.target);   // Teleport/Dash go to the AIM point, not the tick's VFX anchor
+                                      aimPoint: lastCtx.target,   // Teleport/Dash go to the AIM point, not the tick's VFX anchor
+                                      caster: Character.Instance); // explicit caster (local player today; a per-connection entity once server-authoritative)
     }
 
     // ---- IHotbarSkill -------------------------------------------------------

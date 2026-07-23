@@ -23,7 +23,7 @@ public static class Combat
 
     /// <summary>Roll it: true = the hit lands, false = it's a MISS.</summary>
     public static bool Lands(int attackerHit, int defenderFlee)
-        => Random.value < HitChance01(attackerHit, defenderFlee);
+        => CombatRng.Chance(HitChance01(attackerHit, defenderFlee));
 
     /// <summary>
     /// Pre-renewal damage after DEF — the one place the split lives, shared by both directions

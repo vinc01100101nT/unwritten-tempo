@@ -12,6 +12,11 @@ using UnityEngine;
 /// one strike, and every PROC effect in the binding (a Status or Execute with <see cref="SkillEffect.chance"/> &gt; 0)
 /// rolls its chance THAT hit. Non-proc effects (chance == 0 — buffs, heals, a guaranteed status) apply once, on hit 0.
 /// So a stun-proc or execute never lives INSIDE the Damage effect; it's its own effect that triggers off the multi-hit.</para>
+///
+/// <para><b>Caster threading (network-readiness).</b> The acting caster is resolved ONCE at <see cref="ApplyBurst"/>
+/// and threaded through the whole resolve, so no inner method reaches for the <c>Character.Instance</c> global. Today
+/// the caster IS the local player; once combat is server-authoritative the net layer passes the acting connection's
+/// entity and the entire burst scales off THAT entity's stats. Callers may omit it — it falls back to the local player.</para>
 /// </summary>
 public static class SkillEffectApplier
 {
@@ -22,14 +27,19 @@ public static class SkillEffectApplier
     static readonly List<MonsterAI3D> burstTargets = new List<MonsterAI3D>(32);
 
     /// <summary>Apply the binding's effects to whoever the tick reaches — an AoE scan (Area) or the cast's designated
-    /// unit (Single). Zero-alloc: a squared-distance sweep over the small Active list, no physics / Find / GetComponent.</summary>
+    /// unit (Single). Zero-alloc: a squared-distance sweep over the small Active list, no physics / Find / GetComponent.
+    /// <paramref name="caster"/> is the acting entity whose stats scale the roll (defaults to the local player).</summary>
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   float extraMult = 0f, int extraFlat = 0, float comboMult = 1f,
                                   Sprite srcIcon = null, string srcName = null,
-                                  Vector3? aimPoint = null)
+                                  Vector3? aimPoint = null, Character caster = null)
     {
         if (targets == SkillTargets.None || effects == null || effects.Count == 0) return;
+
+        // Resolve the acting caster ONCE here (the local player today; a per-connection entity once server-authoritative),
+        // so nothing downstream reaches for the Character.Instance global — the whole burst scales off THIS entity.
+        var ch = caster ?? Character.Instance;
 
         // Where a self-relocation (Teleport / Dash) sends the caster: the AIM point, NOT the tick's VFX anchor point.
         // The two differ once a ground cast keeps origin(caster) ≠ target(aim), and a teleport must always go to the
@@ -45,11 +55,11 @@ public static class SkillEffectApplier
                 if ((targets & SkillTargets.Mobs) != 0 && mob.Health != null && !mob.Health.IsDead)
                 {
                     burstTargets.Clear(); burstTargets.Add(mob);
-                    DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult);
+                    DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult, ch);
                 }
             }
             else if ((targets & SkillTargets.Player) != 0)
-                ApplyEffectsToPlayer(effects, selfPoint, extraMult, extraFlat, comboMult, srcIcon, srcName);
+                ApplyEffectsToPlayer(effects, selfPoint, extraMult, extraFlat, comboMult, srcIcon, srcName, ch);
             return;
         }
 
@@ -67,7 +77,7 @@ public static class SkillEffectApplier
                 if (d.sqrMagnitude > r2) continue;
                 burstTargets.Add(ai);
             }
-            DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult);
+            DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult, ch);
         }
 
         if ((targets & SkillTargets.Player) != 0)
@@ -76,20 +86,20 @@ public static class SkillEffectApplier
             // caster regardless of where a ground cast dropped its point (a teleport's destination IS the point, and
             // the caster is by definition NOT standing on it). No skill is a "hazard zone that hits the player if
             // inside", so there's nothing the radius gate legitimately guarded here.
-            if (Character.Instance != null && !Character.Instance.IsDead)
-                ApplyEffectsToPlayer(effects, selfPoint, extraMult, extraFlat, comboMult, srcIcon, srcName);
+            if (ch != null && !ch.IsDead)
+                ApplyEffectsToPlayer(effects, selfPoint, extraMult, extraFlat, comboMult, srcIcon, srcName, ch);
         }
     }
 
     // The binding's strike count = the largest Damage hitCount (min 1). Each iteration is the trigger point where
     // proc effects roll.
-    static int HitLoops(List<SkillEffect> effects)
+    static int HitLoops(List<SkillEffect> effects, Character caster)
     {
         int loops = 1;
         for (int i = 0; i < effects.Count; i++)
         {
             var e = effects[i];
-            if (e != null && e.kind == SkillEffectKind.Damage) loops = Mathf.Max(loops, EffectiveHits(e));
+            if (e != null && e.kind == SkillEffectKind.Damage) loops = Mathf.Max(loops, EffectiveHits(e, caster));
         }
         return loops;
     }
@@ -97,32 +107,33 @@ public static class SkillEffectApplier
     // A Damage effect's strike count = authored hitCount scaled by its hit-count affinity (ring investment).
     // hits = round(hitCount × mult). The ONE source of truth for both the flurry length (HitLoops) and each Damage's
     // per-strike cap, so they can't disagree. AffinityMult is stable within a cast (ring investment doesn't change).
-    // Public so the tooltip shows the SAME live count the runtime will land (no parallel formula).
-    public static int EffectiveHits(SkillEffect e)
-        => Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, e.hitCount) * AffinityMult(e.hitCountAffinity)));
+    // Public so the tooltip shows the SAME live count the runtime will land (no parallel formula) — it omits the
+    // caster, falling back to the local player, which is exactly whose tooltip it is.
+    public static int EffectiveHits(SkillEffect e, Character caster = null)
+        => Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, e.hitCount) * AffinityMult(e.hitCountAffinity, caster)));
 
     // Single hit (the common case): apply instantly to each mob, unchanged. Multi-hit (hitCount > 1): hand the mob
     // snapshot to MultiHitBurst so the strikes CASCADE over time and each mob shows ONE rising yellow combo total,
     // exactly like RO — instead of N overlapping numbers dumped in a single frame.
     static void DispatchMobHits(List<SkillEffect> effects, List<MonsterAI3D> mobs,
-                                float extraMult, int extraFlat, float comboMult)
+                                float extraMult, int extraFlat, float comboMult, Character caster)
     {
         if (mobs.Count == 0) return;
-        if (HitLoops(effects) <= 1)
+        if (HitLoops(effects, caster) <= 1)
         {
             for (int i = 0; i < mobs.Count; i++)
-                ApplyEffectsToMob(effects, mobs[i], extraMult, extraFlat, comboMult);
+                ApplyEffectsToMob(effects, mobs[i], extraMult, extraFlat, comboMult, caster);
             return;
         }
-        MultiHitBurst.Run(mobs, HitLoops(effects), MultiHitInterval,
-            (ai, hit) => ApplyHitToMob(effects, ai, hit, extraMult, extraFlat, comboMult));
+        MultiHitBurst.Run(mobs, HitLoops(effects, caster), MultiHitInterval,
+            (ai, hit) => ApplyHitToMob(effects, ai, hit, extraMult, extraFlat, comboMult, caster));
     }
 
     // One beat of a multi-hit flurry on ONE mob: land every Damage effect (overkill-safe so the running total keeps
     // climbing even past the kill, RO-style) and roll the binding's procs THIS hit. Returns the damage dealt so the
     // yellow combo total can accumulate it.
     static int ApplyHitToMob(List<SkillEffect> effects, MonsterAI3D ai, int hit,
-                             float extraMult, int extraFlat, float comboMult)
+                             float extraMult, int extraFlat, float comboMult, Character caster)
     {
         if (ai == null) return 0;
         var h = ai.Health;
@@ -134,16 +145,14 @@ public static class SkillEffectApplier
             if (e == null) continue;
             if (e.kind == SkillEffectKind.Damage)
             {
-                if (hit >= EffectiveHits(e)) continue;
-                int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit);
+                if (hit >= EffectiveHits(e, caster)) continue;
+                int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit, caster);
                 // Both magic and physical use an overkill-safe sink here, so a multi-hit flurry keeps its numbers,
                 // hit sparks AND per-strike sound climbing past the kill — the whole count runs to the end, RO-style.
-                dealt += e.damageType == DamageType.Magic
-                    ? h.TakeMagicDamageOverkill(power, crit, e.element)
-                    : h.TakeDamageOverkill(power, crit, e.element);
+                dealt += CombatAuthority.Apply(h, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit, overkill: true));
             }
             else
-                ApplyOneToMob(e, ai, h, hit, extraMult, extraFlat, comboMult);   // procs / status / one-shots, unchanged
+                ApplyOneToMob(e, ai, h, hit, extraMult, extraFlat, comboMult, caster);   // procs / status / one-shots, unchanged
         }
         return dealt;
     }
@@ -152,65 +161,65 @@ public static class SkillEffectApplier
     // A STATUS proc puts its affinity on its CHANCE (a stun has no magnitude — its only strength is how often it lands,
     // e.g. Accuracy investment → higher stun chance). Other procs (Execute) put affinity on their own output (damage),
     // so their chance stays the authored value.
-    static bool Fires(SkillEffect e, int hitIndex)
+    static bool Fires(SkillEffect e, int hitIndex, Character caster)
     {
         if (e.chance <= 0f) return hitIndex == 0;
-        float c = e.kind == SkillEffectKind.Status ? Mathf.Clamp01(e.chance * AffinityMult(e.affinity)) : e.chance;
-        return UnityEngine.Random.value < c;
+        float c = e.kind == SkillEffectKind.Status ? Mathf.Clamp01(e.chance * AffinityMult(e.affinity, caster)) : e.chance;
+        return CombatRng.Chance(c);
     }
 
     // ---- mob ----------------------------------------------------------------
     /// <summary>Run the hit loop for one MOB: each hit lands the Damage strike + rolls the binding's procs.</summary>
     public static void ApplyEffectsToMob(List<SkillEffect> effects, MonsterAI3D ai,
-                                         float extraMult = 0f, int extraFlat = 0, float comboMult = 1f)
+                                         float extraMult = 0f, int extraFlat = 0, float comboMult = 1f, Character caster = null)
     {
         if (effects == null || ai == null) return;
         var h = ai.Health;
         if (h == null) return;
-        int loops = HitLoops(effects);
+        int loops = HitLoops(effects, caster);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
-                ApplyOneToMob(effects[i], ai, h, n, extraMult, extraFlat, comboMult);
+                ApplyOneToMob(effects[i], ai, h, n, extraMult, extraFlat, comboMult, caster);
     }
 
     static void ApplyOneToMob(SkillEffect e, MonsterAI3D ai, Health h, int hit,
-                              float extraMult, int extraFlat, float comboMult)
+                              float extraMult, int extraFlat, float comboMult, Character caster)
     {
         if (e == null) return;
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
-                if (hit >= EffectiveHits(e)) return;   // this Damage's strikes are spent
-                int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit);
-                if (e.damageType == DamageType.Magic) h.TakeMagicDamage(power, crit, e.element);
-                else h.TakeDamage(power, crit, -1, e.element);   // −1 HIT = always-lands skill hit (no accuracy roll)
+                if (hit >= EffectiveHits(e, caster)) return;   // this Damage's strikes are spent
+                int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit, caster);
+                // −1 HIT = always-lands skill hit (no accuracy roll); DamageInfo defaults attackerHit to −1.
+                CombatAuthority.Apply(h, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit));
                 break;
             case SkillEffectKind.Execute:
-                if (Fires(e, hit)) ApplyExecute(e, h, extraMult, extraFlat, comboMult);
+                if (Fires(e, hit, caster)) ApplyExecute(e, h, extraMult, extraFlat, comboMult, caster);
                 break;
             case SkillEffectKind.Status:
-                if (Fires(e, hit)) Status.Apply(ai.gameObject, e.ailment, ScaledSeconds(e), ScaledMagnitude(e));
+                if (Fires(e, hit, caster)) Status.Apply(ai.gameObject, e.ailment, ScaledSeconds(e, caster), ScaledMagnitude(e, caster));
                 break;
             case SkillEffectKind.Heal:
-                if (hit == 0) h.Heal(ScaledAmount(e));
+                if (hit == 0) h.Heal(ScaledAmount(e, caster));
                 break;
             case SkillEffectKind.Haste:
-                if (Fires(e, hit)) { var s = Status.Of(ai.gameObject); if (s != null) s.Haste(ScaledMagnitude(e), ScaledSeconds(e)); }
+                if (Fires(e, hit, caster)) { var s = Status.Of(ai.gameObject); if (s != null) s.Haste(ScaledMagnitude(e, caster), ScaledSeconds(e, caster)); }
                 break;
             case SkillEffectKind.Taunt:
-                if (hit == 0) ai.Taunt(ScaledSeconds(e));
+                if (hit == 0) ai.Taunt(ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.Vulnerability:
-                if (hit == 0) h.BeginVulnerable(e.magnitude, ScaledSeconds(e));
+                if (hit == 0) h.BeginVulnerable(e.magnitude, ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.Knockback:
                 // Shove the mob AWAY from the caster (magnitude = speed). Caster position is the origin so no cast
                 // point needs threading through the hit loop; falls back to the mob's own spot if there's no caster.
-                if (hit == 0) { var kc = Character.Instance; Vector3 kf = kc != null ? kc.transform.position : ai.transform.position; ai.Knockback(kf, e.magnitude, ScaledSeconds(e), 0f); }
+                if (hit == 0) { Vector3 kf = caster != null ? caster.transform.position : ai.transform.position; ai.Knockback(kf, e.magnitude, ScaledSeconds(e, caster), 0f); }
                 break;
             case SkillEffectKind.Pull:
                 // Drag the mob TOWARD the caster: shove it away from a point mirrored through the mob = toward the caster.
-                if (hit == 0) { var kc = Character.Instance; Vector3 kf = kc != null ? kc.transform.position : ai.transform.position; ai.Knockback(2f * ai.transform.position - kf, e.magnitude, ScaledSeconds(e), 0f); }
+                if (hit == 0) { Vector3 kf = caster != null ? caster.transform.position : ai.transform.position; ai.Knockback(2f * ai.transform.position - kf, e.magnitude, ScaledSeconds(e, caster), 0f); }
                 break;
             // Guard / Teleport / Dash / Buff / Regen / Cleanse / ManaLeech / Reflect are self-only (they land on the caster, not a mob) — no-op here.
         }
@@ -218,28 +227,28 @@ public static class SkillEffectApplier
 
     // Execute: a self-contained bonus hit scaled by the target's MISSING HP (proc'd per hit by the caller). magnitude =
     // execute power: bonus = roll × magnitude × (1 − HP fraction), so it's tiny at full HP and huge near death.
-    static void ApplyExecute(SkillEffect e, Health h, float extraMult, int extraFlat, float comboMult)
+    static void ApplyExecute(SkillEffect e, Health h, float extraMult, int extraFlat, float comboMult, Character caster)
     {
         if (h.maxHealth <= 0 || e.magnitude <= 0f) return;
         float missing = 1f - Mathf.Clamp01((float)h.Current / h.maxHealth);
         if (missing <= 0f) return;
-        int roll = RollPower(e, extraMult, extraFlat, comboMult, out bool crit);
+        int roll = RollPower(e, extraMult, extraFlat, comboMult, out bool crit, caster);
         int bonus = Mathf.RoundToInt(roll * e.magnitude * missing);
         if (bonus <= 0) return;
-        if (e.damageType == DamageType.Magic) h.TakeMagicDamage(bonus, crit, e.element);
-        else h.TakeDamage(bonus, crit, -1, e.element);
+        CombatAuthority.Apply(h, new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic, crit));
     }
 
     // ---- player -------------------------------------------------------------
     /// <summary>Run the hit loop for the PLAYER. <paramref name="point"/> is the tick's world point — the teleport
-    /// destination for a <see cref="SkillEffectKind.Teleport"/> effect.</summary>
+    /// destination for a <see cref="SkillEffectKind.Teleport"/> effect. <paramref name="caster"/> is the acting
+    /// entity (its own self-cast target); defaults to the local player.</summary>
     public static void ApplyEffectsToPlayer(List<SkillEffect> effects, Vector3 point,
                                             float extraMult = 0f, int extraFlat = 0, float comboMult = 1f,
-                                            Sprite srcIcon = null, string srcName = null)
+                                            Sprite srcIcon = null, string srcName = null, Character caster = null)
     {
-        var ch = Character.Instance;
+        var ch = caster ?? Character.Instance;
         if (effects == null || ch == null) return;
-        int loops = HitLoops(effects);
+        int loops = HitLoops(effects, ch);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
                 ApplyOneToPlayer(effects[i], ch, point, n, extraMult, extraFlat, comboMult, srcIcon, srcName);
@@ -252,22 +261,22 @@ public static class SkillEffectApplier
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
-                if (hit >= EffectiveHits(e)) return;
-                int power = RollPower(e, extraMult, extraFlat, comboMult, out _);
-                if (e.damageType == DamageType.Magic) ch.TakeMagicDamage(power, e.element);
-                else ch.TakeDamage(power, -1, e.element);        // −1 HIT = always-lands (skill/environmental hit)
+                if (hit >= EffectiveHits(e, ch)) return;
+                int power = RollPower(e, extraMult, extraFlat, comboMult, out _, ch);
+                // −1 HIT = always-lands (skill/environmental hit); DamageInfo defaults attackerHit to −1.
+                CombatAuthority.Apply(ch, new DamageInfo(power, e.element, e.damageType == DamageType.Magic));
                 break;
             case SkillEffectKind.Heal:
-                if (hit == 0) ch.Heal(ScaledAmount(e));
+                if (hit == 0) ch.Heal(ScaledAmount(e, ch));
                 break;
             case SkillEffectKind.Status:
-                if (Fires(e, hit) && StatusController.Player != null) StatusController.Player.Apply(e.ailment, ScaledSeconds(e), ScaledMagnitude(e));
+                if (Fires(e, hit, ch) && StatusController.Player != null) StatusController.Player.Apply(e.ailment, ScaledSeconds(e, ch), ScaledMagnitude(e, ch));
                 break;
             case SkillEffectKind.Haste:
-                if (hit == 0 && StatusController.Player != null) { StatusController.Player.Haste(ScaledMagnitude(e), ScaledSeconds(e)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
+                if (hit == 0 && StatusController.Player != null) { StatusController.Player.Haste(ScaledMagnitude(e, ch), ScaledSeconds(e, ch)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
                 break;
             case SkillEffectKind.Guard:
-                if (hit == 0) { ch.BeginGuard(ScaledSeconds(e), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
+                if (hit == 0) { ch.BeginGuard(ScaledSeconds(e, ch), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
                 break;
             case SkillEffectKind.Teleport:
                 if (hit == 0)
@@ -284,19 +293,19 @@ public static class SkillEffectApplier
                 }
                 break;
             case SkillEffectKind.Buff:
-                if (hit == 0) { ApplyBuff(e, ch); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
+                if (hit == 0) { ApplyBuff(e, ch); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
                 break;
             case SkillEffectKind.Regen:
-                if (hit == 0) { ch.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e))), ScaledSeconds(e)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
+                if (hit == 0) { ch.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, ch))), ScaledSeconds(e, ch)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
                 break;
             case SkillEffectKind.Cleanse:
                 if (hit == 0 && StatusController.Player != null) StatusController.Player.Cleanse(Mathf.Max(1, e.amount));
                 break;
             case SkillEffectKind.ManaLeech:
-                if (hit == 0) { ch.BeginManaLeech(ScaledSeconds(e), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
+                if (hit == 0) { ch.BeginManaLeech(ScaledSeconds(e, ch), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
                 break;
             case SkillEffectKind.Reflect:
-                if (hit == 0) { ch.BeginReflect(ScaledSeconds(e), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e), e); }
+                if (hit == 0) { ch.BeginReflect(ScaledSeconds(e, ch), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
                 break;
             // Execute / Taunt / Vulnerability / Knockback / Pull are aimed at mobs — no-op on the player.
         }
@@ -318,7 +327,7 @@ public static class SkillEffectApplier
         // support's contribution is UPTIME (duration scales off sustain stats) and, on the Damage buff, the RAMP
         // ceiling (a longer buff climbs higher). See design "Support Scaling".
         float mult = e.magnitude <= 0f ? 1f : e.magnitude;
-        float sec  = ScaledSeconds(e);
+        float sec  = ScaledSeconds(e, ch);
         switch (e.buffStat)
         {
             case BuffStat.Damage:      ch.BuffDamage(mult, sec, e.rampDelay, e.rampPerStep, e.rampInterval, e.rampCap); break;
@@ -329,13 +338,13 @@ public static class SkillEffectApplier
 
     // Damage value = the caster's rolled hit × (the effect's multiplier + per-level growth) × ring affinity × the combo
     // ramp, + a per-level flat bonus. Crit-aware so a tick crits like any other skill. No allocation.
-    static int RollPower(SkillEffect e, float extraMult, int extraFlat, float comboMult, out bool crit)
+    static int RollPower(SkillEffect e, float extraMult, int extraFlat, float comboMult, out bool crit, Character caster)
     {
         crit = false;
-        var ch = Character.Instance;
+        var ch = caster ?? Character.Instance;
         if (ch == null) return 1;
         float mult = (e.damageMult <= 0f ? 1f : e.damageMult) + Mathf.Max(0f, extraMult);
-        float aff = AffinityMult(e.affinity);   // ring-investment scaling term, layered on the base-stat roll
+        float aff = AffinityMult(e.affinity, ch);   // ring-investment scaling term, layered on the base-stat roll
         // Magic → MATK roll (unmissable). Physical → ATK roll. Crit type → ATK roll with a FORCED crit (its
         // armour-pierce is the deferred combat-pass TODO; the forced crit is the part we can honour now).
         int roll = e.damageType == DamageType.Magic
@@ -347,10 +356,11 @@ public static class SkillEffectApplier
     // ---- affinity (ring-investment scaling) ---------------------------------
     // The multiplier for ONE affinity channel = 1 + Σ(normalised weight × the caster's gated ring % in that stat).
     // Empty/absent list ⇒ 1 (no scaling). Zero-alloc: one pass over the small authored list, no LINQ / temp collections.
-    public static float AffinityMult(List<StatWeight> weights)
+    // The caster defaults to the local player, so the tooltip (which has no caster) reads the local ring investment.
+    public static float AffinityMult(List<StatWeight> weights, Character caster = null)
     {
         if (weights == null || weights.Count == 0) return 1f;
-        var ch = Character.Instance;
+        var ch = caster ?? Character.Instance;
         if (ch == null) return 1f;
         float sum = 0f, acc = 0f;
         for (int i = 0; i < weights.Count; i++)
@@ -366,7 +376,7 @@ public static class SkillEffectApplier
     // The affinity list scales the effect's main output (heal amount, DoT damage, buff amount, slow amount); the
     // duration list scales its seconds. A Status PROC spends its affinity on the CHANCE (see Fires), so its magnitude
     // stays raw. Everything falls back to ×1 when no weights are authored.
-    static int   ScaledAmount(SkillEffect e)    => Mathf.Max(0, Mathf.RoundToInt(e.amount * AffinityMult(e.affinity)));
-    static float ScaledMagnitude(SkillEffect e) => e.magnitude * (e.kind == SkillEffectKind.Status && e.chance > 0f ? 1f : AffinityMult(e.affinity));
-    static float ScaledSeconds(SkillEffect e)   => e.seconds   * AffinityMult(e.durationAffinity);
+    static int   ScaledAmount(SkillEffect e, Character caster)    => Mathf.Max(0, Mathf.RoundToInt(e.amount * AffinityMult(e.affinity, caster)));
+    static float ScaledMagnitude(SkillEffect e, Character caster) => e.magnitude * (e.kind == SkillEffectKind.Status && e.chance > 0f ? 1f : AffinityMult(e.affinity, caster));
+    static float ScaledSeconds(SkillEffect e, Character caster)   => e.seconds   * AffinityMult(e.durationAffinity, caster);
 }

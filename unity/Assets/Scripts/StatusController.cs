@@ -302,11 +302,11 @@ public class StatusController : MonoBehaviour
 
         if (isPlayer)
         {
-            if (Character.Instance != null) Character.Instance.TakeTrueDamage(dmg, c);
+            if (Character.Instance != null) CombatAuthority.ApplyTrue(Character.Instance, dmg, c);
         }
         else if (health != null)
         {
-            health.TakeTrueDamage(dmg, c);
+            CombatAuthority.ApplyTrue(health, dmg, c);
         }
     }
 }

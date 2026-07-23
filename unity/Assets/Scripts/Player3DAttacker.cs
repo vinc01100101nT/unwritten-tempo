@@ -205,7 +205,7 @@ public class Player3DAttacker : MonoBehaviour
         // Pass our HIT so the target rolls it against its FLEE (RO accuracy); −1 in the Character-less spike.
         int hit = Character.Instance != null ? Character.Instance.Hit : -1;
         if (hit >= 0 && StatusController.Player != null) hit = Mathf.Max(0, hit - StatusController.Player.HitPenalty);  // Blind
-        int dealt = t.TakeDamage(power, crit, hit, MeleeElement);
+        int dealt = CombatAuthority.Apply(t, new DamageInfo(power, MeleeElement, false, crit, attackerHit: hit));
         if (dealt > 0)
         {
             // Impact SOUND plays FROM the mob in Health.TakeDamage (received_hit/crit, spatial) — no 2D play here.
@@ -271,7 +271,7 @@ public class Player3DAttacker : MonoBehaviour
         int perHit = Mathf.Max(1, Mathf.RoundToInt(power / (float)hitCount));
         int dealt = 0;
         for (int h = 0; h < hitCount && !t.IsDead; h++)
-            dealt += t.TakeDamage(perHit, crit, -1, element);
+            dealt += CombatAuthority.Apply(t, new DamageInfo(perHit, element, false, crit, attackerHit: -1));
         if (dealt > 0)
         {
             // Impact SOUND now plays FROM the mob in Health.TakeDamage (received_hit_skill, spatial) — no 2D play here.
@@ -290,7 +290,7 @@ public class Player3DAttacker : MonoBehaviour
             {
                 var h = cleaveBuf[i].GetComponentInParent<Health>();
                 if (h == null || h == t || h.IsDead || h.GetComponent<MonsterAI3D>() == null) continue;
-                if (h.TakeDamage(power, crit, -1, element) > 0) ApplyOnHit(h, ctx);
+                if (CombatAuthority.Apply(h, new DamageInfo(power, element, false, crit, attackerHit: -1)) > 0) ApplyOnHit(h, ctx);
                 extra++;
             }
         }

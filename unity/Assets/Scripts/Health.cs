@@ -8,7 +8,7 @@ using UnityEngine;
 /// raises <see cref="onDeath"/> then removes the GameObject.
 /// </summary>
 [RequireComponent(typeof(SpriteRenderer))]
-public class Health : MonoBehaviour
+public class Health : MonoBehaviour, IDamageable
 {
     [Tooltip("Starting / maximum hit points.")]
     public int maxHealth = 3;
@@ -46,6 +46,19 @@ public class Health : MonoBehaviour
 
     public int Current { get; private set; }
     public bool IsDead => Current <= 0;
+
+    // IDamageable seam (network-readiness): one type + one apply-entry a future net layer targets for any damageable
+    // entity. Routes into the existing concrete sinks — no behavior change; consumed by the Step D authority seam.
+    public Vector3 DamagePosition => transform.position;
+    public int ApplyDamage(in DamageInfo info)
+    {
+        if (info.overkill)   // multi-hit flurry: keep numbers/sound climbing past the kill (RO cascade)
+            return info.isMagic ? TakeMagicDamageOverkill(info.amount, info.isCrit, info.element)
+                                : TakeDamageOverkill(info.amount, info.isCrit, info.element);
+        return info.isMagic ? TakeMagicDamage(info.amount, info.isCrit, info.element)
+                            : TakeDamage(info.amount, info.isCrit, info.attackerHit, info.element);
+    }
+    public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
 
     // Vulnerability mark (Hex Field): while active, every incoming hit is multiplied up. Runtime-only, no alloc.
     float vulnUntil; float vulnMult = 1f;

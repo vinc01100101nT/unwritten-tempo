@@ -14,7 +14,7 @@ public enum PrimaryStat { STR, AGI, VIT, INT, DEX, LUK }
 ///
 /// (No save-to-disk yet — a fresh session starts at level 1.)
 /// </summary>
-public class Character : MonoBehaviour
+public class Character : MonoBehaviour, IDamageable
 {
     public static Character Instance { get; private set; }
 
@@ -340,6 +340,15 @@ public class Character : MonoBehaviour
     public int XPToNext => 5 + Level * 5;
     public bool IsDead => CurrentHP <= 0;
 
+    // IDamageable seam (network-readiness): same one apply-entry a mob's Health exposes, so a future net layer targets
+    // player and mob through ONE type. Routes into the existing player sinks (mobs don't crit the player, so isCrit is
+    // ignored here) — no behavior change; consumed by the Step D authority seam.
+    public Vector3 DamagePosition { get { var a = Avatar(); return a != null ? a.position : transform.position; } }
+    public int ApplyDamage(in DamageInfo info)
+        => info.isMagic ? TakeMagicDamage(info.amount, info.element, info.source)
+                        : TakeDamage(info.amount, info.attackerHit, info.element, info.source);
+    public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
+
     // Derived passive combat stats (Phase G). These have no flat "base" — they read the
     // passive % layer directly, so a stat with 0 ranks is simply neutral.
     public const float BaseCritMultiplier = 1.4f;                                     // pre-renewal: a crit deals 140%…
@@ -423,10 +432,10 @@ public class Character : MonoBehaviour
     /// cosmetic flag, so the bonus damage and DEF-bypass both apply.</summary>
     public int RollDamage(out bool crit, int targetLuk, bool forceCrit)
     {
-        crit = forceCrit || UnityEngine.Random.value < EffectiveCritChance(targetLuk);
+        crit = forceCrit || CombatRng.Chance(EffectiveCritChance(targetLuk));
         float b = DamageBuffMult;   // timed damage buff (War Banner) lifts every roll
         if (crit) return Mathf.RoundToInt(Attack * CritMultiplier * b);
-        return Mathf.RoundToInt(UnityEngine.Random.Range(MinAttack, Attack + 1) * b);
+        return Mathf.RoundToInt(CombatRng.Range(MinAttack, Attack + 1) * b);
     }
 
     /// <summary>As <see cref="RollDamage"/> but for a spell — rolls in [<see cref="MinMagicAttack"/>,
@@ -441,7 +450,7 @@ public class Character : MonoBehaviour
         // collapse the Might>Arcane>Finesse triangle (design "Combat Ontology").
         crit = false;
         float b = DamageBuffMult;   // timed damage buff (War Banner) still lifts magic rolls
-        return Mathf.RoundToInt(UnityEngine.Random.Range(MinMagicAttack, MagicAttack + 1) * b);
+        return Mathf.RoundToInt(CombatRng.Range(MinMagicAttack, MagicAttack + 1) * b);
     }
 
     /// <summary>Our crit chance against a defender with <paramref name="targetLuk"/> LUK — base
@@ -849,7 +858,7 @@ public class Character : MonoBehaviour
 
         // Off-hand block: a shield can negate the hit (and clang) before any damage applies.
         var off = GetEquipped(EquipSlotType.Shield);
-        if (off != null && off.blockChance > 0f && UnityEngine.Random.value < off.blockChance)
+        if (off != null && off.blockChance > 0f && CombatRng.Chance(off.blockChance))
         {
             Sfx.Play(off.guardSfx != null && !off.guardSfx.Empty ? off.guardSfx : blockSfx);
             var av = Avatar();
@@ -930,7 +939,7 @@ public class Character : MonoBehaviour
         var h = source.Health;
         if (h == null || h.IsDead) return;
         int r = Mathf.RoundToInt(dmgTaken * pct);
-        if (r > 0) h.TakeTrueDamage(r, ReflectColor);
+        if (r > 0) CombatAuthority.ApplyTrue(h, r, ReflectColor);
     }
 
     /// <summary>Heal from lifesteal — like <see cref="Heal"/> but SILENT (no green popup), so multi-hit leech
