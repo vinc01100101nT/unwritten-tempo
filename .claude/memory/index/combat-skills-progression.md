@@ -25,3 +25,4 @@
 - [Conservation as universal balance driver](../conservation-as-balance-driver.md) — every gain pays a cost; Charter §10.
 - [Ring of Progression IMPLEMENTED](../ring-of-progression-implemented.md) — RingProgress on Ring (slot 12); pick per 10 pts; SaveData v4.
 - [Loot & melee reach](../loot-and-melee-reach.md) — reach = `Player3DAttacker.EffectiveRange`; click→route→collect.
+- [Combat network-readiness seams](../combat-network-readiness-seams.md) — ALL combat damage routes `CombatAuthority.Apply`/`ApplyTrue`, all rolls `CombatRng`; caster threaded in `SkillEffectApplier`; committed `9f393fac`. Networking DEFERRED until vertical slice proves fun (don't re-fork direct `TakeDamage`/`Random`).
