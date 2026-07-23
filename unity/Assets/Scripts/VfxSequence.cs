@@ -59,7 +59,10 @@ public enum VfxStepKind
 /// <summary>Where a step is anchored in the world (plus its own <see cref="VfxStep.offset"/>).</summary>
 public enum VfxAnchor
 {
-    /// <summary>The caster / spawn origin (<see cref="VfxContext.origin"/>).</summary>
+    /// <summary>The caster's position — sampled LIVE at the moment the step fires (the caster's live transform,
+    /// <see cref="VfxContext.follow"/>), so a delayed step during a moving cast (dash, knockback) stamps where the
+    /// caster is NOW, not where they cast. Falls back to the cast-time <see cref="VfxContext.origin"/> for
+    /// point-only contexts with no follow transform.</summary>
     Origin,
     /// <summary>The impact / aim point (<see cref="VfxContext.target"/>).</summary>
     Target,
@@ -188,7 +191,8 @@ public class VfxStep
 /// per-step anchors resolve against it. <see cref="scaleMult"/> scales every effect (e.g. a crit punch, AoE sizing).</summary>
 public struct VfxContext
 {
-    /// <summary>Caster / spawn origin (anchor <see cref="VfxAnchor.Origin"/>).</summary>
+    /// <summary>Caster / spawn origin at CAST time — the fallback for anchor <see cref="VfxAnchor.Origin"/> when
+    /// no <see cref="follow"/> transform is present. When follow IS present, Origin samples it live at fire time.</summary>
     public Vector3 origin;
     /// <summary>Impact / aim point (anchor <see cref="VfxAnchor.Target"/>).</summary>
     public Vector3 target;

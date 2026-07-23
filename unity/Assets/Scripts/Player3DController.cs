@@ -158,6 +158,11 @@ public partial class Player3DController : MonoBehaviour
     Vector3 dashPoint;             // fixed world destination (Dash skill); used when dashToPoint
     bool dashToPoint;
     float dashSpeed, dashEndTime, dashArriveRange;
+    // Dash-SKILL easing (BeginGlideTo only): shape the glide speed. dashTotalDist = the full A→B distance captured at
+    // launch; dashEaseSeconds = how long each accelerate/decelerate ramp lasts (time-based → a fixed-feel window at
+    // any distance, converted to a world-distance window via the dash speed).
+    bool dashEaseIn, dashEaseOut;
+    float dashTotalDist, dashEaseSeconds;
     System.Action dashOnArrive;
     /// <summary>True while a Dash SKILL is gliding the player A→B (vs a charge/E-dash roll). The stance brain reads
     /// this to play NO animation — a skill glide is pure movement, not a roll or a run.</summary>
@@ -666,22 +671,38 @@ public partial class Player3DController : MonoBehaviour
         order = Order.Idle; routing = false; path.Clear();
         dashing = true; dashTarget = target; dashToPoint = false; dashSpeed = speed;
         dashEndTime = Time.time + maxTime; dashArriveRange = arriveRange; dashOnArrive = onArrive;
+        dashEaseIn = dashEaseOut = false;   // easing is a Dash-skill (glide) knob only; a charge runs at constant speed
     }
 
     /// <summary>Dash SKILL (Blink's visible sibling): rush the player to a FIXED world <paramref name="dest"/> — the
-    /// aimed, range-clamped cast point — at <c>skillDashSpeedMult × CurrentRunSpeed</c>, arriving at the spot instead
-    /// of blinking there. Travels via the CharacterController so walls block it (that's the difference from Teleport).
-    /// No on-arrive callback (pure relocation). Shares the charge dash's step/state so cancels can't be forgotten.</summary>
-    public void BeginGlideTo(Vector3 dest)
+    /// aimed, range-clamped cast point — at <paramref name="speedMult"/> × current run speed, arriving at the spot
+    /// instead of blinking there. Travels via the CharacterController so walls block it (that's the difference from
+    /// Teleport). <paramref name="speedMult"/> ≤ 0 falls back to the player's <c>skillDashSpeedMult</c> default.
+    /// No on-arrive callback (pure relocation). Shares the charge dash's step/state so cancels can't be forgotten.
+    /// <paramref name="easeIn"/> starts the glide slow and accelerates; <paramref name="easeOut"/> decelerates to a
+    /// gentle stop at the destination (both on = slow-fast-slow). Off = constant full speed (the previous behaviour).</summary>
+    public void BeginGlideTo(Vector3 dest, float speedMult = 0f, bool easeIn = false, bool easeOut = false, float easeSeconds = 0.3f)
     {
         ClearCombat();
         order = Order.Idle; routing = false; path.Clear();
         dashing = true; dashToPoint = true; dashTarget = null; dashPoint = dest; dashOnArrive = null;
+        dashEaseIn = easeIn; dashEaseOut = easeOut; dashEaseSeconds = Mathf.Max(0.01f, easeSeconds);
+        Vector3 flat = dest - transform.position; flat.y = 0f;
+        dashTotalDist = Mathf.Max(flat.magnitude, 1e-4f);
+        // Per-skill dash speed wins; skillDashSpeedMult is the fallback default when the effect authors none (≤ 0).
+        float mult = speedMult > 0f ? speedMult : skillDashSpeedMult;
         // RawRunSpeed (not CurrentRunSpeed): a release-animation aftercast root sets MoveMult=0, which would zero the
         // glide's speed. The glide is a fixed A→B move, so it must ignore that gate and always travel.
-        dashSpeed = Mathf.Max(0.01f, skillDashSpeedMult) * RawRunSpeed;
-        dashEndTime = Time.time + Mathf.Max(0.05f, skillDashMaxTime);
-        dashArriveRange = 0.15f;
+        dashSpeed = Mathf.Max(0.01f, mult) * RawRunSpeed;
+        // Safety cap (stops a wall-blocked dash). Easing slows the glide, so a fixed 1s cap would chop a legit long
+        // eased dash short of arrival — size the cap to the trip (2× the un-eased time + pad is a safe upper bound on
+        // the eased time) when easing is on; otherwise keep the plain skillDashMaxTime.
+        float nominal = dashTotalDist / Mathf.Max(dashSpeed, 0.01f);
+        float cap = (easeIn || easeOut) ? Mathf.Max(skillDashMaxTime, 2f * nominal + 0.4f) : skillDashMaxTime;
+        dashEndTime = Time.time + Mathf.Max(0.05f, cap);
+        // Small arrive snap so the ease-OUT curve can play to its slow tail before the dash ends. At 0.15 the dash
+        // stopped while still at ~0.9 speed on a short trip (the whole 0.2→0.5 tail lived inside the snap = hard stop).
+        dashArriveRange = 0.05f;
     }
 
     // Advance the charge one frame. Returns true while still dashing; on arrival/timeout it stops and
@@ -701,7 +722,7 @@ public partial class Player3DController : MonoBehaviour
             {
                 Vector3 dir = to / Mathf.Max(dist, 1e-4f);
                 worldFacing = dir;
-                controller.Move((dir * dashSpeed + Vector3.down * gravity) * Time.deltaTime);
+                controller.Move((dir * DashStepSpeed(dist) + Vector3.down * gravity) * Time.deltaTime);
             }
         }
         if (arrived)
@@ -712,6 +733,22 @@ public partial class Player3DController : MonoBehaviour
             return false;
         }
         return true;
+    }
+
+    // The glide's speed this frame, shaped by the Dash-skill ease flags. dist = remaining horizontal distance to the
+    // destination. Each ramp spans dashEaseSeconds of travel (TIME-based → same feel at any distance): the window in
+    // world units = dashEaseSeconds × dashSpeed, clamped to the trip so a dash shorter than the window just eases the
+    // whole way. Ease-in accelerates over the first window, ease-out decelerates over the last; a floor keeps it moving
+    // so easing can never stall short of arrival. No easing = constant dashSpeed.
+    float DashStepSpeed(float dist)
+    {
+        if (!dashToPoint || (!dashEaseIn && !dashEaseOut)) return dashSpeed;
+        const float floor = 0.2f;
+        float d = Mathf.Clamp(dashEaseSeconds * dashSpeed, 1e-4f, dashTotalDist);   // ramp length = the ease-window's worth of travel
+        float f = 1f;
+        if (dashEaseIn)  f = Mathf.Min(f, Mathf.Lerp(floor, 1f, Mathf.SmoothStep(0f, 1f, (dashTotalDist - dist) / d)));
+        if (dashEaseOut) f = Mathf.Min(f, Mathf.Lerp(floor, 1f, Mathf.SmoothStep(0f, 1f, dist / d)));
+        return dashSpeed * f;
     }
 
     void ClearCombat()

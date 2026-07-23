@@ -1,6 +1,7 @@
 # Combat / skills / progression / stats design
 
 - [Dash skill + aftercast root gotcha](../dash-skill-and-aftercast-root.md) — `SkillEffectKind.Dash`→`BeginDashToPoint` (visible gap-close to aimed point); skill movement must survive its OWN aftercast (`!CannotAct`) but die to hard-CC.
+- [Dash ease-out killed by duplicate tickId](../dash-easeout-tick-reset.md) — 3 trail-puff steps all had `tickId: dash` → Dash effect fired 3× → `BeginGlideTo` restart reset `dashTotalDist` → ease baseline wiped. Real fix = CONFIG (unique tickId; trail puffs pure-visual); guardrail = composer warns on duplicate tickId. tickIds must be unique.
 
 - [Weapon affixes ≠ ring voices — never duplicate](../weapon-affix-vs-ring-voice-separation.md) — weapon=control/targeting/util (Slow live), ring=stat voices; library in V2 doc; don't put Execute/Repeat/Expand on a weapon.
 

@@ -259,7 +259,7 @@ public class VfxComposerWindow : EditorWindow
             if (sd == null || sd.vfx != sel || sd.bindings == null) continue;
             foreach (var b in sd.bindings)
             {
-                if (b == null || b.scope != SkillScope.Area) continue;
+                if (b == null || b.targetMode != TargetMode.Ground || b.groundDelivery != GroundDelivery.Aoe) continue;
                 float rr = b.radius <= 0f ? 1.5f : b.radius;
                 if (!skillRadii.Contains(rr)) skillRadii.Add(rr);
             }
@@ -477,12 +477,12 @@ public class VfxComposerWindow : EditorWindow
 
         EditorGUI.BeginChangeCheck();
         stepScroll = EditorGUILayout.BeginScrollView(stepScroll);
-        int remove = -1, moveUp = -1, moveDown = -1;
+        int remove = -1, moveUp = -1, moveDown = -1, duplicate = -1;
         for (int i = 0; i < sel.steps.Count; i++)
         {
             var st = sel.steps[i];
             if (st == null) continue;
-            DrawStep(i, st, ref remove, ref moveUp, ref moveDown);
+            DrawStep(i, st, ref remove, ref moveUp, ref moveDown, ref duplicate);
         }
         EditorGUILayout.EndScrollView();
 
@@ -492,6 +492,13 @@ public class VfxComposerWindow : EditorWindow
             EditorUtility.SetDirty(sel);
         }
 
+        if (duplicate >= 0)
+        {
+            Undo.RecordObject(sel, "Duplicate effect");
+            var copy = JsonUtility.FromJson<VfxStep>(JsonUtility.ToJson(sel.steps[duplicate]));
+            if (copy != null) sel.steps.Insert(duplicate + 1, copy);
+            EditorUtility.SetDirty(sel);
+        }
         if (remove >= 0) { Undo.RecordObject(sel, "Remove effect"); sel.steps.RemoveAt(remove); EditorUtility.SetDirty(sel); }
         if (moveUp > 0) { Undo.RecordObject(sel, "Reorder"); (sel.steps[moveUp], sel.steps[moveUp - 1]) = (sel.steps[moveUp - 1], sel.steps[moveUp]); EditorUtility.SetDirty(sel); }
         if (moveDown >= 0 && moveDown < sel.steps.Count - 1) { Undo.RecordObject(sel, "Reorder"); (sel.steps[moveDown], sel.steps[moveDown + 1]) = (sel.steps[moveDown + 1], sel.steps[moveDown]); EditorUtility.SetDirty(sel); }
@@ -625,7 +632,7 @@ public class VfxComposerWindow : EditorWindow
         new Color(0.22f, 0.36f, 0.38f), // teal
     };
 
-    void DrawStep(int i, VfxStep st, ref int remove, ref int moveUp, ref int moveDown)
+    void DrawStep(int i, VfxStep st, ref int remove, ref int moveUp, ref int moveDown, ref int duplicate)
     {
         var tint = StepTints[i % StepTints.Length];
         var prevBg = GUI.backgroundColor;
@@ -644,6 +651,7 @@ public class VfxComposerWindow : EditorWindow
         GUILayout.Label(new GUIContent($"{stepDur:0.00}s", "This effect's duration in seconds"), EditorStyles.miniLabel, GUILayout.MinWidth(0f), GUILayout.MaxWidth(48));
         if (GUILayout.Button("↑", GUILayout.MinWidth(0f), GUILayout.MaxWidth(24))) moveUp = i;
         if (GUILayout.Button("↓", GUILayout.MinWidth(0f), GUILayout.MaxWidth(24))) moveDown = i;
+        if (GUILayout.Button(new GUIContent("⧉", "Duplicate this effect (insert a copy below)"), GUILayout.MinWidth(0f), GUILayout.MaxWidth(24))) duplicate = i;
         if (GUILayout.Button("✕", GUILayout.MinWidth(0f), GUILayout.MaxWidth(24))) remove = i;
         EditorGUILayout.EndHorizontal();
 
@@ -664,7 +672,10 @@ public class VfxComposerWindow : EditorWindow
                 st.snapToEventPoint);
 
         // anchor + offset
-        st.anchor = (VfxAnchor)EditorGUILayout.EnumPopup("anchor", st.anchor);
+        st.anchor = (VfxAnchor)EditorGUILayout.EnumPopup(new GUIContent("anchor",
+            "Where this step stamps. Origin = the caster's LIVE position at the moment this step fires — a delayed " +
+            "step during a dash/knockback lands where the caster is NOW (a fresh one-shot snapshot, not a follow). " +
+            "Target = the aim / impact point."), st.anchor);
         st.offset = EditorGUILayout.Vector3Field("offset", st.offset);
 
         switch (st.kind)
@@ -778,6 +789,13 @@ public class VfxComposerWindow : EditorWindow
             "Empty = pure-visual step (no gameplay)."), st.tickId);
         if (string.IsNullOrEmpty(st.tickId)) return;
 
+        // A tick id is an ID: it must be UNIQUE across the composition. Two steps sharing one id both fire the same
+        // gameplay binding, so the effect runs once PER duplicate (e.g. a Dash re-started per trail puff). Warn so the
+        // author gives extra visual steps their own id or leaves them empty (pure-visual).
+        if (CountTickId(st.tickId) > 1)
+            EditorGUILayout.HelpBox($"Tick id \"{st.tickId}\" is used by more than one step — its bound gameplay will " +
+                "fire once per step. Tick ids must be unique; clear this on pure-visual steps or rename it.", MessageType.Warning);
+
         st.spreadTicks = EditorGUILayout.Toggle(new GUIContent("  spread ticks",
             "Auto-fill ticks from this effect's duration: ticks = floor(duration / interval). " +
             "The component ticks for its whole visible lifetime; you only set the interval."), st.spreadTicks);
@@ -801,6 +819,16 @@ public class VfxComposerWindow : EditorWindow
                     "Seconds between ticks (ticks × interval = the active window). Only used when ticks > 1."),
                     st.tickInterval, 0f, 3f);
         }
+    }
+
+    // How many steps in the current composition carry this exact (non-empty) tick id. >1 ⇒ a duplicate-id clash.
+    int CountTickId(string id)
+    {
+        if (sel == null || sel.steps == null || string.IsNullOrEmpty(id)) return 0;
+        int n = 0;
+        for (int i = 0; i < sel.steps.Count; i++)
+            if (sel.steps[i] != null && sel.steps[i].tickId == id) n++;
+        return n;
     }
 
     // Effect-id dropdown built from the EffectLibrary — pick a valid id (no typos → no silent no-op).

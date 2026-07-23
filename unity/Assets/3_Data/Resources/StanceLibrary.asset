@@ -16,7 +16,7 @@ MonoBehaviour:
   - id: 0
     action: 0
     clip: 
-    speedSource: 1
+    speedSource: 0
     speedMult: 1
     priority: 10
     crouchEnd: 0
@@ -36,7 +36,7 @@ MonoBehaviour:
   - id: 2
     action: 0
     clip: Cast
-    speedSource: 2
+    speedSource: 4
     speedMult: 1
     priority: 30
     crouchEnd: 0
@@ -164,7 +164,7 @@ MonoBehaviour:
   - id: 14
     action: 4
     clip: ReleaseAOESkill
-    speedSource: 4
+    speedSource: 3
     speedMult: 1
     priority: 0
     crouchEnd: 0
@@ -174,7 +174,7 @@ MonoBehaviour:
   - id: 15
     action: 4
     clip: ReleaseAOESkill2
-    speedSource: 4
+    speedSource: 3
     speedMult: 1
     priority: 0
     crouchEnd: 0
@@ -184,7 +184,7 @@ MonoBehaviour:
   - id: 16
     action: 4
     clip: ReleaseAOESkill4
-    speedSource: 4
+    speedSource: 3
     speedMult: 1
     priority: 0
     crouchEnd: 0
@@ -194,7 +194,7 @@ MonoBehaviour:
   - id: 17
     action: 4
     clip: ReleaseSingleSkill
-    speedSource: 4
+    speedSource: 3
     speedMult: 1
     priority: 0
     crouchEnd: 0
@@ -204,7 +204,7 @@ MonoBehaviour:
   - id: 18
     action: 4
     clip: ReleaseSingleSkill2
-    speedSource: 4
+    speedSource: 3
     speedMult: 1
     priority: 0
     crouchEnd: 0
@@ -213,9 +213,9 @@ MonoBehaviour:
     footPlants: []
   - id: 19
     action: 4
-    clip: 
-    speedSource: 4
-    speedMult: 1
+    clip: Slide
+    speedSource: 3
+    speedMult: 2
     priority: 0
     crouchEnd: 0
     airborneFreeze: 1.5
@@ -224,7 +224,7 @@ MonoBehaviour:
   - id: 20
     action: 3
     clip: 
-    speedSource: 4
+    speedSource: 3
     speedMult: 1
     priority: 0
     crouchEnd: 0
@@ -234,7 +234,7 @@ MonoBehaviour:
   - id: 21
     action: 3
     clip: 
-    speedSource: 4
+    speedSource: 3
     speedMult: 1
     priority: 0
     crouchEnd: 0
@@ -244,7 +244,7 @@ MonoBehaviour:
   - id: 22
     action: 3
     clip: 
-    speedSource: 4
+    speedSource: 3
     speedMult: 1
     priority: 0
     crouchEnd: 0

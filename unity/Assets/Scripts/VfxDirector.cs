@@ -74,6 +74,7 @@ public class VfxSequenceRunner : MonoBehaviour
     int[] tickLeft;
     float[] tickAt;
     Vector3[] tickPoint;
+    Transform[] tickFollow;         // a flying Carrier's live mover — while non-null, its spread ticks fire at its CURRENT position
     readonly List<Vfx.EffectHandle> attached = new List<Vfx.EffectHandle>();
     float startTime, endBy;
     int gen;                        // bumped each Begin/Finish → stale carrier callbacks are ignored
@@ -90,8 +91,8 @@ public class VfxSequenceRunner : MonoBehaviour
         attached.Clear();
 
         int n = seq.steps.Count;
-        if (started == null || started.Length < n) { started = new bool[n]; endAt = new float[n]; tickLeft = new int[n]; tickAt = new float[n]; tickPoint = new Vector3[n]; }
-        for (int i = 0; i < n; i++) { started[i] = false; endAt[i] = float.PositiveInfinity; tickLeft[i] = 0; }
+        if (started == null || started.Length < n) { started = new bool[n]; endAt = new float[n]; tickLeft = new int[n]; tickAt = new float[n]; tickPoint = new Vector3[n]; tickFollow = new Transform[n]; }
+        for (int i = 0; i < n; i++) { started[i] = false; endAt[i] = float.PositiveInfinity; tickLeft[i] = 0; tickFollow[i] = null; }
 
         // Upper bound on when the last step can possibly fire: the latest timed delay, plus a carrier's full
         // flight time (an OnEvent step may be chained to an arrival), plus a pad. Then Finish tears down. Tick
@@ -130,6 +131,10 @@ public class VfxSequenceRunner : MonoBehaviour
         for (int i = 0; i < steps.Count && i < tickLeft.Length; i++)
         {
             if (tickLeft[i] <= 0) continue;
+            // A flying Carrier's ticks track the projectile LIVE — each tick lands where the projectile is NOW, so a
+            // spread of ticks damages along the whole flight path (not locked to spawn/landing). When it arrives the
+            // mover is destroyed → the reference goes null and remaining ticks fire at its last point.
+            if (tickFollow[i] != null) tickPoint[i] = tickFollow[i].position;
             float iv = steps[i].tickInterval;
             while (tickLeft[i] > 0 && (iv <= 0f || now >= tickAt[i]))
             {
@@ -160,9 +165,13 @@ public class VfxSequenceRunner : MonoBehaviour
         var st = seq.steps[i];
         // An OnEvent step can snap to the exact point the emitter reported (e.g. a Carrier's scattered landing)
         // instead of re-resolving the plain anchor. Opt-in per step via snapToEventPoint.
+        // Origin samples the caster's LIVE position at the moment THIS step fires (ctx.follow), so a DELAYED step
+        // during a moving cast (dash, knockback) stamps where the caster is NOW — a fresh snapshot, not a follow.
+        // Falls back to the cast-time ctx.origin for point contexts that carry no follow transform.
+        Vector3 originPoint = ctx.follow != null ? ctx.follow.position : ctx.origin;
         Vector3 anchorPoint = (fromEvent && hasEventPoint && st.snapToEventPoint)
             ? eventPoint
-            : (st.anchor == VfxAnchor.Origin ? ctx.origin : ctx.target);
+            : (st.anchor == VfxAnchor.Origin ? originPoint : ctx.target);
         // Optional random spawn jitter (PlayAt/Attach) so repeated plays don't stack in the exact same spot.
         Vector3 jitter = (st.scatter && (st.kind == VfxStepKind.PlayAt || st.kind == VfxStepKind.Attach)) ? ScatterJitter() : Vector3.zero;
         Vector3 point = anchorPoint + st.offset + jitter;
@@ -215,10 +224,15 @@ public class VfxSequenceRunner : MonoBehaviour
                     from = fb + st.carrierFrom + new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
                 }
                 int g = gen; string tag = st.emitEventOnEnd; Vector3 landing = land; int idx = i;
-                Projectile3D.SpawnVfx(st.effectId, scale, from, null, land,
+                // A carrier with SPREAD ticks (tickCount > 1) damages ALONG its flight: schedule the ticks at launch and
+                // track the live mover (the drain loop reads its position each frame). A single-tick carrier keeps the
+                // classic behaviour — the one tick fires on ARRIVAL at the landing (a meteor's impact).
+                bool alongFlight = st.HasTick && st.tickCount > 1;
+                var mover = Projectile3D.SpawnVfx(st.effectId, scale, from, null, land,
                     st.carrierSpeed, st.carrierArriveRadius, st.carrierMaxLife,
-                    () => { if (gen == g) { Emit(tag, landing, true); ScheduleTicks(idx, landing); } },   // arrival == end → raise + tick on THIS play only, at the real landing
+                    () => { if (gen == g) { Emit(tag, landing, true); if (!alongFlight) ScheduleTicks(idx, landing); } },
                     st.carrierFaceTravel, st.clipStart, st.tint);
+                if (alongFlight) { tickFollow[i] = mover; ScheduleTicks(i, from); }
                 break;
 
             case VfxStepKind.Shake:

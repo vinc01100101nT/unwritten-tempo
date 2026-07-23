@@ -12,15 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.new
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  targetingMigrated: 1
   id: skill.heal_circle
   displayName: Sanctuary
   icon: {fileID: -7148899402789621793, guid: 6a4837e8d7a3aab44b6d6e0ef020be4c, type: 3}
+  description: 
+  archetype: 0
+  family: 0
+  shape: 0
+  complexity: 0
+  acquisitionTier: 0
   manaCost: 10
   cooldown: 4.5
   castTime: 2.03
-  maxLevel: 10
   aim: 2
   castRange: 11
+  tier: 0
+  chargeCost: 100
   castCircleId: circle.magic
   castCircleTint: {r: 0.4278216, g: 0.93207544, b: 0.22334634, a: 1}
   vfx: {fileID: 11400000, guid: d6535b57215ae2c479e8c6dff7e958df, type: 2}
@@ -30,21 +38,38 @@ MonoBehaviour:
   releaseStance: 14
   bindings:
   - tickId: heal
-    targets: 1
-    scope: 0
+    targetMode: 2
+    groundDelivery: 1
+    affects: 3
+    playerFaction: 0
     radius: 1
+    projectileCount: 1
+    projectileSpreadAngle: 0
     effects:
     - kind: 1
-      magic: 1
+      damageType: 1
       damageMult: 1
       element: 0
       amount: 100
       ailment: 2
       seconds: 4
       magnitude: 3
-    scale:
-      damageMultPerLevel: 0.2
-      flatBonusPerLevel: 0
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
+      hitCount: 1
+      chance: 0
+      buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
+      affinity: []
+      durationAffinity: []
+      hitCountAffinity: []
+    targets: 1
+    scope: 0
   shortLabel: Sanctuaryy
   keyLabel: a
   slotOrder: 10

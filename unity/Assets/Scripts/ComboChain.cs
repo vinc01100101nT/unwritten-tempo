@@ -118,8 +118,8 @@ public class ComboChain
             {
                 var d = Def(i);
                 if (d == null) continue;
-                if (d.IsSingleTarget) return ComboAim.Unit;   // most demanding — short-circuit
-                if (d.aim == SkillAim.Ground) hasGround = true;
+                if (d.Reticle == CastReticle.Unit) return ComboAim.Unit;   // most demanding — short-circuit
+                if (d.Reticle == CastReticle.Ground) hasGround = true;
             }
             return hasGround ? ComboAim.Ground : ComboAim.None;
         }
@@ -148,7 +148,7 @@ public class ComboChain
         get
         {
             float r = 0f;
-            for (int i = 0; i < Slots; i++) { var d = Def(i); if (d != null && d.aim == SkillAim.Ground) r = Mathf.Max(r, d.LargestAreaRadius); }
+            for (int i = 0; i < Slots; i++) { var d = Def(i); if (d != null && d.Reticle == CastReticle.Ground) r = Mathf.Max(r, d.LargestAreaRadius); }
             return r > 0f ? r : 1.5f;
         }
     }

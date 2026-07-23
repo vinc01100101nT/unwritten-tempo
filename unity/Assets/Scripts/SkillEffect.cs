@@ -83,8 +83,8 @@ public enum SkillEffectKind
     /// <summary>Rush the caster to the cast point — same aimed, range-clamped destination as <see cref="Teleport"/>,
     /// but the player VISIBLY travels there fast (a gap-close glide) instead of blinking instantly →
     /// <c>Player3DController.BeginGlideTo</c> — a pure A→B glide with NO character animation (not a roll or run).
-    /// Speed is the player's tunable <c>skillDashSpeedMult</c> × current run speed; blocked by geometry (unlike
-    /// Blink). No fields — the skill's range is the max distance. (Dash.)</summary>
+    /// Speed = <see cref="SkillEffect.dashSpeedMult"/> × current run speed; blocked by geometry (unlike Blink). The
+    /// skill's range is the max distance. (Dash.)</summary>
     Dash,
 
     /// <summary>Knock a mob back — shove it AWAY from the caster at <see cref="SkillEffect.magnitude"/> speed for
@@ -148,6 +148,20 @@ public class SkillEffect
              "Knockback/Pull: shove speed. ManaLeech/Reflect: fraction of damage dealt/taken (0..1).")]
     public float magnitude = 3f;
 
+    [Header("Dash")]
+    [Tooltip("Dash travel speed as a multiple of the caster's CURRENT run speed (8 = 8× run speed) — the visible fast " +
+             "glide to the aimed point. Higher = snappier gap-close. Only the Dash kind uses this.")]
+    public float dashSpeedMult = 8f;
+    [Tooltip("Dash: ease IN — accelerate from a slow start up to full speed over the ease-window seconds. Off = full speed instantly.")]
+    public bool dashEaseIn = false;
+    [Tooltip("Dash: ease OUT — decelerate to a gentle stop over the ease-window seconds before arrival. Off = full speed " +
+             "until arrival. (Both on = slow-fast-slow.)")]
+    public bool dashEaseOut = false;
+    [Tooltip("Dash: how long (seconds) each ease ramp lasts — the accelerate / decelerate window. TIME-based, so the " +
+             "ramp reads the same at any distance; on a dash shorter than the window the ramps fill the whole trip. " +
+             "Only used when ease in / out is on.")]
+    [Min(0.05f)] public float dashEaseSeconds = 0.3f;
+
     [Header("Multi-hit (Damage kind)")]
     [Tooltip("How many times a Damage effect strikes per landing. Each strike is the TRIGGER POINT for the binding's " +
              "PROC effects (a Status or Execute with a chance) — they roll once per hit. 1 = single hit.")]
@@ -185,4 +199,17 @@ public class SkillEffect
     [Tooltip("Damage kind only: scales the number of STRIKES (hitCount) by ring investment — more investment = more " +
              "hits in the flurry. hits = round(hitCount × mult). Empty = hit count unscaled (×1).")]
     public List<StatWeight> hitCountAffinity = new List<StatWeight>();
+
+    /// <summary>A "self verb" ALWAYS acts on the caster, never on a gathered entity. Canonical list (runtime + editor
+    /// share it — no duplicate). Heal is intentionally NOT here anymore: it can target others, so its landing is
+    /// decided by the tick's <see cref="TargetMode"/> like any normal effect.</summary>
+    public static bool IsSelfVerb(SkillEffectKind k) =>
+        k == SkillEffectKind.Guard || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
+        k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect ||
+        IsSelfPointVerb(k);
+
+    /// <summary>A self verb that still needs a GROUND POINT to aim at — the caster relocates there (Dash / Blink).
+    /// These migrate to Ground → Point, everything else self migrates to Self.</summary>
+    public static bool IsSelfPointVerb(SkillEffectKind k) =>
+        k == SkillEffectKind.Dash || k == SkillEffectKind.Teleport;
 }

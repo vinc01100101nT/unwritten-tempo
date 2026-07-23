@@ -71,7 +71,7 @@ public static class SkillTooltip
         else                sb.Append("  <color=").Append(Chip).Append(">CD </color>").Append(Hl(def.cooldown.ToString("0.#") + "s"));
         if (def.castTime > 0f) sb.Append("  <color=").Append(Chip).Append(">Cast </color>").Append(Hl(def.castTime.ToString("0.#") + "s"));
         else                   sb.Append("  <color=").Append(Chip).Append(">Instant</color>");
-        if (def.aim != SkillAim.Self) sb.Append("  <color=").Append(Chip).Append(">Range </color>").Append(Hl(def.castRange.ToString("0.#")));
+        if (def.Reticle != CastReticle.Instant) sb.Append("  <color=").Append(Chip).Append(">Range </color>").Append(Hl(def.castRange.ToString("0.#")));
         sb.Append('\n');
 
         // Description.

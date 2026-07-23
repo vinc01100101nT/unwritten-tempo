@@ -152,22 +152,19 @@ public class ComboRunner : MonoBehaviour
     {
         if (def == null) return StepResult.Break;
 
-        if (def.IsSingleTarget)
+        // Targeting is derived from the ticks (def.Reticle) — a combo pre-resolves ONE aim, so a Unit member auto-picks
+        // the chain's unit (or the nearest mob), a Ground member lands at the chain point, a Self member on the caster.
+        switch (def.Reticle)
         {
-            if (unit == null) return StepResult.SkipNoTarget;               // chosen unit gone → soft skip
-            return sr.ComboCastUnit(unit, mult) ? StepResult.Fired : StepResult.Break;
+            case CastReticle.Unit:
+                Transform t = unit != null ? unit : NearestMob(transform.position, def.castRange);
+                if (t == null) return StepResult.SkipNoTarget;
+                return sr.ComboCastUnit(t, mult) ? StepResult.Fired : StepResult.Break;
+            case CastReticle.Ground:
+                return sr.ComboCastGround(unit != null ? unit.position : point, mult) ? StepResult.Fired : StepResult.Break;
+            default: // Instant / self
+                return sr.ComboCastGround(transform.position, mult) ? StepResult.Fired : StepResult.Break;
         }
-        if (def.aim == SkillAim.Target)
-        {
-            Transform t = unit != null ? unit : NearestMob(transform.position, def.castRange);
-            if (t == null) return StepResult.SkipNoTarget;
-            return sr.ComboCastUnit(t, mult) ? StepResult.Fired : StepResult.Break;
-        }
-        if (def.aim == SkillAim.Ground)
-            return sr.ComboCastGround(unit != null ? unit.position : point, mult) ? StepResult.Fired : StepResult.Break;
-
-        // Self
-        return sr.ComboCastGround(transform.position, mult) ? StepResult.Fired : StepResult.Break;
     }
 
     static bool Dead() => Character.Instance == null || Character.Instance.IsDead;

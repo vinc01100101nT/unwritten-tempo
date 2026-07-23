@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.new 2
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  targetingMigrated: 1
   id: skill.dash
   displayName: Dash
   icon: {fileID: -2812528802495159281, guid: 6cc824c29321438408138dbb62104f13, type: 3}
@@ -25,7 +26,7 @@ MonoBehaviour:
   cooldown: 0.1
   castTime: 0
   aim: 2
-  castRange: 11
+  castRange: 4
   tier: 0
   chargeCost: 100
   castCircleId: 
@@ -34,31 +35,19 @@ MonoBehaviour:
   repeatCount: 1
   repeatInterval: 0
   hasReleaseStance: 1
-  releaseStance: 17
+  releaseStance: 19
   bindings:
   - tickId: dash
+    targetMode: 2
+    groundDelivery: 0
+    affects: 1
+    playerFaction: 0
+    radius: 1.5
+    projectileCount: 1
+    projectileSpreadAngle: 0
+    effects: []
     targets: 1
     scope: 0
-    radius: 1.5
-    effects:
-    - kind: 12
-      damageType: 1
-      damageMult: 1
-      element: 0
-      amount: 10
-      ailment: 2
-      seconds: 4
-      magnitude: 3
-      hitCount: 1
-      chance: 0
-      buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
-      affinity: []
-      durationAffinity: []
-      hitCountAffinity: []
   shortLabel: Skill
   keyLabel: 
   slotOrder: 10

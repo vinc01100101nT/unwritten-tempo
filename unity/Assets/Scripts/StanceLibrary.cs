@@ -20,9 +20,9 @@ using UnityEngine;
 public enum StanceId
 {
     // --- Held stances (persistent baselines; pushed/popped; priority-resolved) ---
-    Combat,   // weapon-ready idle held while a target is engaged (breathes with AttackSpeed)
+    Combat,   // weapon-ready idle held while a target is engaged (Baked idle cadence)
     Guard,    // defensive / blocking hold
-    Casting,  // channel pose held during a cast wind-up (paced by CastSpeed)
+    Casting,  // channel pose held during a cast wind-up (FitWindow → fits the cast-bar length)
     Sit,      // resting / seated
 
     // --- Action stances (transient; the gameplay brain drives one at a time; beat held stances) ---
@@ -70,13 +70,14 @@ public enum StanceId
 /// </summary>
 public enum StanceSpeedSource
 {
-    Baked,        // the baked action's authored fps (× speedMult) — no live link
-    AttackSpeed,  // × Character.Instance.AttackSpeedMult  (>1 = faster; a combat/attack stance)
-    CastSpeed,    // × Character.Instance.CastSpeedMult    (>1 = faster)
-    MoveGait,     // × the player's GaitSpeedMult          (locomotion stances)
-    FitWindow,    // fps fits the clip to a RUNTIME window: clipNaturalLength / window (window fed at drive time).
-                  // For a swing/dodge whose duration is gameplay-driven (Attack = swing time, Roll = dash length),
-                  // so the whole clip plays exactly within it. The window stays runtime (not stored) → SSOT-safe.
+    Baked = 0,      // the baked action's authored fps (× speedMult) — no live link
+    // 1,2 (was AttackSpeed / CastSpeed) retired: the actual swing / cast stances use FitWindow (they fit the
+    // gameplay swing time / cast-bar window). The ASPD & CastSpeed STATS are unchanged (Character.AttackSpeedMult /
+    // CastSpeedMult) — only the stance-animation source is gone. Ints kept stable so MoveGait/FitWindow assets survive.
+    MoveGait = 3,   // × the player's GaitSpeedMult (locomotion stances)
+    FitWindow = 4,  // fps fits the clip to a RUNTIME window: clipNaturalLength / window (window fed at drive time).
+                    // For a swing/dodge whose duration is gameplay-driven (Attack = swing time, Roll = dash length),
+                    // so the whole clip plays exactly within it. The window stays runtime (not stored) → SSOT-safe.
 }
 
 /// <summary>Binds ONE <see cref="StanceId"/> to the baked pose it plays — the stance analog of a
@@ -98,8 +99,8 @@ public class StanceBinding
     public string clip = "";
 
     [Tooltip("Where the LIVE playback-speed multiplier is read from each frame. Baked = the action's authored fps; " +
-             "AttackSpeed/CastSpeed read Character.Instance; MoveGait reads GaitSpeedMult; FitWindow fits the clip to " +
-             "a runtime window (Attack = swing time, Roll = dash length).")]
+             "MoveGait reads GaitSpeedMult; FitWindow fits the clip to a runtime window (Attack = swing time, " +
+             "Roll = dash length, Casting = cast-bar length).")]
     public StanceSpeedSource speedSource = StanceSpeedSource.Baked;
 
     [Tooltip("Hand-tuned constant multiplier on top of the live source (1 = just the source).")]
@@ -155,7 +156,7 @@ public static class StanceDefaults
         var b = new StanceBinding { id = id, action = CharacterAction.Idle, speedMult = 1f };
         switch (id)
         {
-            case StanceId.Combat:  b.action = CharacterAction.Idle;   b.speedSource = StanceSpeedSource.AttackSpeed; b.priority = 10; break;
+            case StanceId.Combat:  b.action = CharacterAction.Idle;   b.speedSource = StanceSpeedSource.Baked; b.priority = 10; break;
             case StanceId.Guard:   b.action = CharacterAction.Idle;   b.priority = 20; break;
             case StanceId.Casting: b.action = CharacterAction.Cast;   b.speedSource = StanceSpeedSource.FitWindow;  b.priority = 30; break;
             case StanceId.Sit:     b.action = CharacterAction.Sit;    b.priority = 5;  break;

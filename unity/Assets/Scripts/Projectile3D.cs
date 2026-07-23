@@ -91,7 +91,7 @@ public class Projectile3D : MonoBehaviour
     /// <summary>As <see cref="Spawn"/> but the projectile IS a particle effect from the <see cref="EffectLibrary"/>
     /// instead of a billboard sprite: <paramref name="travelId"/> is attached to the moving object and tracks it,
     /// and on arrival <paramref name="impactId"/> (if any) plays at the hit point. Same homing/motion/onArrive.</summary>
-    public static void SpawnVfx(string travelId, float scale,
+    public static Transform SpawnVfx(string travelId, float scale,
                                 Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
                                 float arriveRadius, float maxLife, System.Action onArrive, bool faceTravel = false,
                                 float travelClipStart = 0f, Color travelTint = default)
@@ -116,6 +116,7 @@ public class Projectile3D : MonoBehaviour
             if (dir.sqrMagnitude > 1e-6f)
                 p.travel.transform.rotation = Quaternion.FromToRotation(Vector3.down, dir.normalized);
         }
+        return go.transform;   // the live mover — a Carrier with spread ticks reads its position each frame
     }
 
     SpriteRenderer sr; Sprite[] frames; float fps, t;

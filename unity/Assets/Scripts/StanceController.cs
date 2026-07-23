@@ -121,14 +121,22 @@ public class StanceController : MonoBehaviour
     /// animation and the returned lock length can never drift apart.</summary>
     public float PlayActionFor(StanceId id, float seconds = 0f, float durationScale = 1f)
     {
-        float dur = seconds;
-        if (dur <= 0f && pose != null)
-        {
-            var b = StanceCatalog.Get(id);
-            if (b != null) dur = pose.NaturalDuration(b.action, b.clip);
-        }
-        if (dur <= 0.05f) dur = 0.6f;   // clip missing/absent → a sane default beat
-        dur *= Mathf.Max(0.01f, durationScale);
+        var b = StanceCatalog.Get(id);
+        float natural = (pose != null && b != null) ? pose.NaturalDuration(b.action, b.clip) : 0f;
+        if (natural <= 0.05f) natural = 0.6f;   // clip missing/absent → a sane default beat
+
+        float dur;
+        if (b != null && b.speedSource != StanceSpeedSource.FitWindow)
+            // Intrinsic-speed stance (MoveGait / AttackSpeed / CastSpeed / Baked): the clip plays at its OWN resolved
+            // speed, so the lock must equal its real play time = natural / that speed. durationScale (an attack-speed
+            // hint for FitWindow) does NOT apply — the speed source already owns the timing. This is what stops a
+            // MoveGait release stance from over-rooting: the lock now ends exactly when the animation does.
+            dur = natural / ResolveSpeedMult(b, 0f);
+        else
+            // FitWindow release stance: the caller feeds the window (seconds, or the natural length), scaled by
+            // durationScale; the clip is fit to it, so play time == the window.
+            dur = (seconds > 0f ? seconds : natural) * Mathf.Max(0.01f, durationScale);
+
         overrideId = id; overrideWindow = dur; overrideUntil = Time.time + dur;
         return dur;
     }
@@ -237,17 +245,23 @@ public class StanceController : MonoBehaviour
         if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release, Mathf.Max(0.01f, b.speedMult)); return; }
 
         pose.Play(b.action, b.clip);
+        pose.SetActionSpeed(b.action, ResolveSpeedMult(b, window));
+    }
+
+    // The live playback-speed multiplier for a stance, resolved from its speedSource. SINGLE OWNER used by BOTH the
+    // per-frame drive (ApplyStance) and the aftercast-lock duration (PlayActionFor), so the visible animation length
+    // and the lock length can never drift apart — whatever the speed source. `window` is only read for FitWindow.
+    float ResolveSpeedMult(StanceBinding b, float window)
+    {
         float m = b.speedMult;
         switch (b.speedSource)
         {
-            case StanceSpeedSource.AttackSpeed: m *= Character.Instance != null ? Character.Instance.AttackSpeedMult : 1f; break;
-            case StanceSpeedSource.CastSpeed:   m *= Character.Instance != null ? Character.Instance.CastSpeedMult   : 1f; break;
             case StanceSpeedSource.MoveGait:    m *= playerCtrl != null ? playerCtrl.GaitSpeedMult : externalGaitMult; break;
             case StanceSpeedSource.FitWindow:
                 float n = pose.NaturalDuration(b.action, b.clip);
                 if (window > 0.01f && n > 0.01f) m *= n / window;
                 break;
         }
-        pose.SetActionSpeed(b.action, Mathf.Max(0.01f, m));
+        return Mathf.Max(0.01f, m);
     }
 }

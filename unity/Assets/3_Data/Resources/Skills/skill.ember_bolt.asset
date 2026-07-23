@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.ember_bolt
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  targetingMigrated: 1
   id: skill.ember_bolt
   displayName: Ember Bolt
   icon: {fileID: 21300000, guid: 175b1dd4b468f2e4e99f17d5afaaa905, type: 3}
@@ -36,12 +37,16 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: 4c60782cfebfe8447b9e7eeb807bf7bf, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  projectileCount: 1
+  projectileSpread: 0
   hasReleaseStance: 1
   releaseStance: 17
   bindings:
   - tickId: projectile_fire
-    targets: 2
-    scope: 1
+    targetMode: 2
+    groundDelivery: 0
+    affects: 1
+    playerFaction: 0
     radius: 1.5
     effects:
     - kind: 0
@@ -52,6 +57,10 @@ MonoBehaviour:
       ailment: 2
       seconds: 4
       magnitude: 3
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
       hitCount: 5
       chance: 0
       buffStat: 0
@@ -66,6 +75,8 @@ MonoBehaviour:
       hitCountAffinity:
       - stat: 1
         weight: 100
+    targets: 2
+    scope: 1
   shortLabel: Ember
   keyLabel: 
   slotOrder: 10

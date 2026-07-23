@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.blink_step
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  targetingMigrated: 1
   id: skill.blink_step
   displayName: Blink Step
   icon: {fileID: -6454969007074664543, guid: c4bce261683a10b42bf52bb46da9e0de, type: 3}
@@ -38,9 +39,13 @@ MonoBehaviour:
   releaseStance: 17
   bindings:
   - tickId: teleport
-    targets: 1
-    scope: 0
+    targetMode: 2
+    groundDelivery: 0
+    affects: 1
+    playerFaction: 0
     radius: 1.5
+    projectileCount: 1
+    projectileSpreadAngle: 0
     effects:
     - kind: 6
       damageType: 1
@@ -50,6 +55,10 @@ MonoBehaviour:
       ailment: 2
       seconds: 2
       magnitude: 1
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0
       buffStat: 0
@@ -60,6 +69,8 @@ MonoBehaviour:
       affinity: []
       durationAffinity: []
       hitCountAffinity: []
+    targets: 1
+    scope: 0
   shortLabel: Blink
   keyLabel: 
   slotOrder: 11

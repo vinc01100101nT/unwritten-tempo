@@ -280,7 +280,7 @@ public static class SkillEffectApplier
                 if (hit == 0)
                 {
                     var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
-                    if (pc != null) pc.BeginGlideTo(point);   // pure A→B glide to the aimed (range-clamped) point — no animation
+                    if (pc != null) pc.BeginGlideTo(point, e.dashSpeedMult, e.dashEaseIn, e.dashEaseOut, e.dashEaseSeconds);   // pure A→B glide to the aimed (range-clamped) point — no animation
                 }
                 break;
             case SkillEffectKind.Buff:

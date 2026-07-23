@@ -64,35 +64,27 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (def.IsUltimate && !Character.Instance.UltReady(def.chargeCost))
         { BattleNotice.Warn("Not charged"); return false; }
 
-        // Single-target skills must land on ONE valid unit — they can NEVER be ground-cast (a ground point is not a
-        // target). This overrides the authored aim: enter the unified reticle, which validates the hovered unit's
-        // KIND against the skill's target mask (and warns in-game on an illegal pick). The bindings are the single
-        // source of truth for who a skill can hit, so targeting is derived from them, not a separate aim field.
-        if (def.IsSingleTarget)
+        // The cast reticle is DERIVED from the ticks (def.Reticle), not a separate aim field: any Single-target tick ⇒
+        // pick a unit; else any Ground tick ⇒ a ground reticle; else Instant (self / no aim).
+        switch (def.Reticle)
         {
-            var mask = def.SingleTargetMask;
-            if (mask == SkillTargets.None)
-            { BattleNotice.Warn("No valid target"); return false; }
-            if (UnitTargeter.Active) { UnitTargeter.Cancel(); return false; }   // re-press cancels aiming
-            UnitTargeter.Begin(transform, def.castRange, mask, onUnit);
-            return true;   // MP/cooldown spent on confirm (CastTargeted), so cancelling costs nothing
-        }
+            case CastReticle.Unit:
+                // Single-target: land on ONE valid unit, validated against the union of the single-target ticks'
+                // affect kinds (warns in-game on an illegal / absent pick).
+                var mask = def.SingleTargetMask;
+                if (mask == SkillTargets.None)
+                { BattleNotice.Warn("No valid target"); return false; }
+                if (UnitTargeter.Active) { UnitTargeter.Cancel(); return false; }   // re-press cancels aiming
+                UnitTargeter.Begin(transform, def.castRange, mask, onUnit);
+                return true;   // MP/cooldown spent on confirm (CastTargeted), so cancelling costs nothing
 
-        switch (def.aim)
-        {
-            case SkillAim.Ground:
+            case CastReticle.Ground:
                 if (GroundTargeter.Active) { GroundTargeter.Cancel(); return false; }   // re-press cancels aiming
                 GroundTargeter.Begin(transform, def.castRange, onGround,
-                                     def.castCircleId, def.castCircleTint, def.LargestAreaRadius);
+                                     def.castCircleId, def.castCircleTint, def.LargestAreaRadius, def.IsProjectileAim);
                 return true;   // MP/cooldown are spent on confirm (Cast), so cancelling costs nothing
 
-            case SkillAim.Target:
-                var mob = NearestMob(transform.position, def.castRange);
-                if (mob == null) return false;
-                CastTargeted(mob.transform);
-                return true;
-
-            default: // Self
+            default: // Instant (self / no aim)
                 Cast(transform.position);
                 return true;
         }
@@ -262,9 +254,34 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             if (StatusController.Player != null) StatusController.Player.LockActions(releaseDur);
         }
 
-        VfxDirector.Play(def.vfx, lastCtx, onTick);
+        // A projectile skill fans N copies of its ONE composed projectile around the aim direction (authored skill-side,
+        // like repeat). Non-projectile skills, or count 1, just play once.
+        int fan = def.IsProjectileAim ? Mathf.Max(1, def.projectileCount) : 1;
+        if (fan <= 1) VfxDirector.Play(def.vfx, lastCtx, onTick);
+        else PlayFan(fan, def.projectileSpread);
+
         int extra = Mathf.Max(0, def.repeatCount - 1);
         if (extra > 0 && isActiveAndEnabled) StartCoroutine(PlayExtraCycles(extra, lastCtx));
+    }
+
+    // Play the VFX N times at once, each aimed along a different cone direction centred on the original aim — so one
+    // composed projectile becomes a fanned volley. Each copy's Carrier flies its own line and spread-ticks along it.
+    void PlayFan(int n, float spreadDeg)
+    {
+        Vector3 me = transform.position;
+        Vector3 baseDir = lastCtx.target - me; baseDir.y = 0f;
+        float dist = baseDir.magnitude;
+        if (dist < 0.05f) { VfxDirector.Play(def.vfx, lastCtx, onTick); return; }
+        Vector3 nrm = baseDir / dist;
+        float half = Mathf.Max(0f, spreadDeg) * 0.5f;
+        for (int i = 0; i < n; i++)
+        {
+            float ang = n <= 1 ? 0f : Mathf.Lerp(-half, half, i / (float)(n - 1));
+            Vector3 dir = Quaternion.AngleAxis(ang, Vector3.up) * nrm;
+            var c = lastCtx;                 // struct copy — rotate only this shot's aim point
+            c.target = me + dir * dist;
+            VfxDirector.Play(def.vfx, c, onTick);
+        }
     }
 
     System.Collections.IEnumerator PlayExtraCycles(int extra, VfxContext ctx)
@@ -304,25 +321,29 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         var b = def.BindingFor(tick.tickId);
         if (b == null) return;
-        SkillEffectApplier.ApplyBurst(tick.point, b.radius, b.scope, b.targets, b.effects,
+
+        // Map the consolidated per-tick targeting onto the shared burst params (scope/targets/radius). The applier
+        // already routes each effect kind to the right sink per WHO is gathered, so nothing downstream changes.
+        SkillScope scope; SkillTargets targets; float radius = b.radius;
+        switch (b.targetMode)
+        {
+            case TargetMode.Self:
+                scope = SkillScope.Area; targets = SkillTargets.Player; break;
+            case TargetMode.SingleTarget:
+                scope = SkillScope.Single; targets = b.affects; break;
+            default: // Ground
+                scope = SkillScope.Area; targets = b.affects;
+                // Point = the caster acts AT the aimed spot (Dash goes there; an accompanying Heal lands on the caster).
+                if (b.groundDelivery == GroundDelivery.Point) targets = SkillTargets.Player;
+                // Projectile = the flying VFX step (authored in the VFX composer) raises its SPREAD TICKS along its
+                // path; each tick lands here as an AoE gather at the tick's point — hit detection is DERIVED from the
+                // ticks, not a hard-coded scan. radius = the projectile's hit width.
+                break;
+        }
+        SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, b.effects,
                                       lastCtx.targetUnit, 0f, 0, comboDamageMult,
                                       def.icon, def.displayName,
                                       aimPoint: lastCtx.target);   // Teleport/Dash go to the AIM point, not the tick's VFX anchor
-    }
-
-    static MonsterAI3D NearestMob(Vector3 from, float maxRange)
-    {
-        var list = MonsterAI3D.Active;
-        MonsterAI3D best = null; float bestSq = maxRange * maxRange;
-        for (int i = 0; i < list.Count; i++)
-        {
-            var ai = list[i];
-            if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
-            Vector3 d = ai.transform.position - from; d.y = 0f;
-            float sq = d.sqrMagnitude;
-            if (sq <= bestSq) { bestSq = sq; best = ai; }
-        }
-        return best;
     }
 
     // ---- IHotbarSkill -------------------------------------------------------

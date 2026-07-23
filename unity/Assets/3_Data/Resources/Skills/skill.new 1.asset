@@ -12,16 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.new 1
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  targetingMigrated: 1
   id: skill.single_heal
   displayName: Heal
   icon: {fileID: 2903848411162822477, guid: 4bae3342ecf8e1c4ca8a5e2eb9f81491, type: 3}
   description: 
   archetype: 0
-  category: 0
+  family: 0
+  shape: 0
+  complexity: 0
+  acquisitionTier: 0
   manaCost: 5
   cooldown: 0.7
   castTime: 0
-  maxLevel: 10
   aim: 1
   castRange: 11
   tier: 0
@@ -35,28 +38,38 @@ MonoBehaviour:
   releaseStance: 17
   bindings:
   - tickId: follow_hit
-    targets: 3
-    scope: 1
+    targetMode: 2
+    groundDelivery: 1
+    affects: 3
+    playerFaction: 0
     radius: 0.97
+    projectileCount: 1
+    projectileSpreadAngle: 0
     effects:
     - kind: 1
-      magic: 1
+      damageType: 1
       damageMult: 1
       element: 0
       amount: 50
       ailment: 2
       seconds: 4
       magnitude: 3
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
       hitCount: 1
-      executeAmp: 0
-      stunChance: 0
-      stunSeconds: 0.75
+      chance: 0
       buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
       affinity: []
       durationAffinity: []
-    scale:
-      damageMultPerLevel: 0.2
-      flatBonusPerLevel: 0
+      hitCountAffinity: []
+    targets: 3
+    scope: 1
   shortLabel: Heal
   keyLabel: 
   slotOrder: 10

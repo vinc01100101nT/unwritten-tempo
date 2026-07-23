@@ -2,16 +2,51 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>How a skill picks WHERE it plays — decides how the <see cref="SkillRunner"/> builds the
-/// <see cref="VfxContext"/> before playing the composed VFX.</summary>
+/// <see cref="VfxContext"/> before playing the composed VFX. LEGACY: superseded by the per-tick
+/// <see cref="SkillTickBinding.targetMode"/>; kept only so old assets migrate (the cast reticle is now DERIVED
+/// from the ticks — see <see cref="SkillDef.Reticle"/>).</summary>
 public enum SkillAim
 {
-    /// <summary>Cast on the caster (self buffs, nova-from-me). origin == target == the player.</summary>
     Self,
-    /// <summary>Cast on the current locked/nearest mob. origin = player, target = that mob (also the Single-scope unit).</summary>
     Target,
-    /// <summary>Ground-targeted: a reticle follows the cursor (clamped to <see cref="castRange"/>); confirm drops it.</summary>
     Ground,
 }
+
+/// <summary>The ONE targeting decision, per tick — the single knob that replaces the old skill-level <c>aim</c> +
+/// per-tick <c>scope</c>. Each option means exactly one thing; the composer reveals sub-options beneath it.</summary>
+public enum TargetMode
+{
+    /// <summary>No aiming — the effects land on the caster. (Self buffs / heal-self / self-dash-in-place.)</summary>
+    Self,
+    /// <summary>Hover-pick ONE entity, validated against <see cref="SkillTickBinding.affects"/> (must be a matching
+    /// kind). The effects land on that entity. (A single-target nuke, a targeted heal.)</summary>
+    SingleTarget,
+    /// <summary>Aim a point on the GROUND (no entity validation — aiming over a unit just takes the ground under it).
+    /// How the point is used is the <see cref="SkillTickBinding.groundDelivery"/> sub-option.</summary>
+    Ground,
+}
+
+/// <summary>For a <see cref="TargetMode.Ground"/> tick: how the aimed point is delivered.</summary>
+public enum GroundDelivery
+{
+    /// <summary>Exactly the clicked spot — no entity gather. The caster/effect resolves AT the point (Dash / Blink go
+    /// there; a placed hazard spawns there).</summary>
+    Point,
+    /// <summary>Splash: hit every <see cref="SkillTickBinding.affects"/>-matching entity within <see
+    /// cref="SkillTickBinding.radius"/> of the point (the existing AoE circle). A PROJECTILE skill also uses this —
+    /// its flying VFX (a Carrier with spread ticks) raises ticks along its path, each landing here as a small AoE at
+    /// the projectile's live position. The fan (how MANY projectiles) is authored skill-level, like repeat.</summary>
+    Aoe,
+}
+
+/// <summary>PvP faction filter, used when <see cref="SkillTargets.Player"/> is an affected kind. Enemy-player tagging
+/// is future work — for now every player reads as <see cref="Ally"/>; the tag is authored NOW so PvP can switch it on
+/// later without touching authored skills.</summary>
+public enum PlayerFaction { Ally, Enemy }
+
+/// <summary>The per-cast reticle the player uses — DERIVED from the skill's ticks, never authored. Any Single-target
+/// tick ⇒ pick a Unit; else any Ground tick ⇒ a Ground reticle; else Instant (self / no aim).</summary>
+public enum CastReticle { Instant, Ground, Unit }
 
 /// <summary>The SCALE of a skill (orthogonal to its category/role). An Ultimate is a normal skill stamped with
 /// this tier — it fires from a dedicated slot, gated by a charge meter that fills in combat. Zero new architecture.</summary>
@@ -47,14 +82,26 @@ public class SkillTickBinding
 {
     [Tooltip("MUST match a VfxStep.tickId in the referenced VfxSequence (the Skill Composer lists them for you).")]
     public string tickId;
-    [Tooltip("Who this tick hits.")]
-    public SkillTargets targets = SkillTargets.Mobs;
-    [Tooltip("Area = everyone in the radius. Single = only the cast's designated target (always lands, radius ignored).")]
-    public SkillScope scope = SkillScope.Area;
-    [Tooltip("AoE radius (world units) centred on the tick point. Ignored in Single scope.")]
+
+    [Header("Targeting (the ONE targeting knob)")]
+    [Tooltip("Self = lands on the caster. Single target = pick one matching entity. Ground = aim a spot on the floor.")]
+    public TargetMode targetMode = TargetMode.Ground;
+    [Tooltip("Ground only: Point = the exact spot (Dash/placed). AoE = splash in a radius. Projectile = fire toward the spot.")]
+    public GroundDelivery groundDelivery = GroundDelivery.Aoe;
+    [Tooltip("WHICH entity kinds this tick affects (Single = the pick must be one of these; AoE/Projectile = who it hits). " +
+             "Mobs and/or Players; NPC reserved.")]
+    public SkillTargets affects = SkillTargets.Mobs;
+    [Tooltip("When Players are affected: Ally (default) or Enemy — the PvP faction filter. Enemy tagging is wired later.")]
+    public PlayerFaction playerFaction = PlayerFaction.Ally;
+    [Tooltip("AoE radius (world units) around the point. Used by Ground → AoE (and a projectile's per-tick hit width).")]
     public float radius = 1.5f;
+
     [Tooltip("What each tick does — applied through the shared SkillEffectApplier (the one damage path).")]
     public List<SkillEffect> effects = new List<SkillEffect>();
+
+    // ---- LEGACY (pre-consolidation) — read ONLY by MigrateLegacy to seed the fields above; never by runtime now. ----
+    [HideInInspector] public SkillTargets targets = SkillTargets.Mobs;
+    [HideInInspector] public SkillScope scope = SkillScope.Area;
 }
 
 /// <summary>
@@ -68,8 +115,12 @@ public class SkillTickBinding
 /// <c>Resources/Skills/</c> so the game can load it by <see cref="id"/> via <see cref="SkillCatalog"/>.</para>
 /// </summary>
 [CreateAssetMenu(menuName = "unwritten/Skill", fileName = "Skill")]
-public class SkillDef : ScriptableObject
+public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
 {
+    // Set once the ticks carry the consolidated targeting fields. Old assets (no such field) load as false → auto-
+    // migrate on load (idempotent); saving from the new composer persists true, so migration never runs again.
+    [HideInInspector] public bool targetingMigrated = false;
+
     [Header("Identity")]
     [Tooltip("Stable kebab id, e.g. \"skill.meteor\". Keyed by SkillCatalog; don't rename once shipped.")]
     public string id;
@@ -134,6 +185,13 @@ public class SkillDef : ScriptableObject
              "RestartInterval (its loop-end marker). Cycles overlap freely; a still-playing cycle keeps rendering.")]
     [Min(0f)] public float repeatInterval = 0f;
 
+    [Header("Projectile fan (compose ONE projectile in the Vfx Composer; multiply here, like repeat)")]
+    [Tooltip("Fire this many copies of the projectile at once, fanned into a cone around the aim direction. 1 = single. " +
+             "Only does anything when the VFX launches a projectile (has a Carrier step).")]
+    [Min(1)] public int projectileCount = 1;
+    [Tooltip("Total cone angle (degrees) the fan spreads across. 0 = all straight at the aim point.")]
+    [Min(0f)] public float projectileSpread = 0f;
+
     [Header("Skill type (release animation)")]
     [Tooltip("Play a skill-release stance when this skill FIRES (after any cast wind-up). false = no release pose.")]
     public bool hasReleaseStance = false;
@@ -150,6 +208,50 @@ public class SkillDef : ScriptableObject
     public int slotOrder = 10;
     public Color tint = Color.white;
 
+    public void OnBeforeSerialize() { }
+
+    /// <summary>One-time migration of the pre-consolidation targeting (skill <c>aim</c> + per-tick <c>scope</c>/
+    /// <c>targets</c>) into the new per-tick <see cref="TargetMode"/> model. Runs on load for un-migrated assets; the
+    /// new composer saves <see cref="targetingMigrated"/> = true so it never runs on already-migrated data.</summary>
+    public void OnAfterDeserialize()
+    {
+        if (targetingMigrated || bindings == null) return;
+        for (int i = 0; i < bindings.Count; i++) MigrateBindingFromLegacy(bindings[i]);
+        targetingMigrated = true;
+    }
+
+    void MigrateBindingFromLegacy(SkillTickBinding b)
+    {
+        if (b == null) return;
+        b.affects = b.targets == SkillTargets.None ? SkillTargets.Mobs : b.targets;
+
+        bool anyPointSelf = false, allSelf = true;   // any Dash/Blink present? are ALL effects self-only?
+        if (b.effects != null && b.effects.Count > 0)
+            for (int i = 0; i < b.effects.Count; i++)
+            {
+                var e = b.effects[i];
+                if (e == null) continue;
+                if (SkillEffect.IsSelfPointVerb(e.kind)) anyPointSelf = true;
+                if (!SkillEffect.IsSelfVerb(e.kind)) allSelf = false;
+            }
+
+        // Honor the LEGACY aim first (it was the authoritative cast gesture), then refine with scope/effects.
+        if (aim == SkillAim.Self)
+        {
+            b.targetMode = TargetMode.Self; b.affects = SkillTargets.Player;
+        }
+        else if (aim == SkillAim.Target || b.scope == SkillScope.Single)
+        {
+            b.targetMode = TargetMode.SingleTarget;
+        }
+        else   // aim == Ground
+        {
+            b.targetMode = TargetMode.Ground;
+            if (anyPointSelf || allSelf) { b.groundDelivery = GroundDelivery.Point; b.affects = SkillTargets.Player; }
+            else                          { b.groundDelivery = GroundDelivery.Aoe; }
+        }
+    }
+
     /// <summary>The binding for <paramref name="tickId"/>, or null if this tick is purely visual (unbound).</summary>
     public SkillTickBinding BindingFor(string tickId)
     {
@@ -159,9 +261,27 @@ public class SkillDef : ScriptableObject
         return null;
     }
 
-    /// <summary>The largest Area-scope binding radius — the skill's real ground footprint. The SINGLE OWNER of that
-    /// value: the ground reticle (<see cref="SkillRunner.PreviewRadius"/>) and the cast circle both READ it, so a
-    /// radius change in one place can never drift from the visual. 1.5 fallback when no Area binding exists.</summary>
+    /// <summary>The per-cast reticle, DERIVED from the ticks (no authored aim). Any Single-target tick ⇒ Unit pick;
+    /// else any Ground tick ⇒ Ground reticle; else Instant. This is the single source of truth the runner reads.</summary>
+    public CastReticle Reticle
+    {
+        get
+        {
+            bool anyGround = false;
+            if (bindings != null)
+                for (int i = 0; i < bindings.Count; i++)
+                {
+                    var b = bindings[i];
+                    if (b == null) continue;
+                    if (b.targetMode == TargetMode.SingleTarget) return CastReticle.Unit;
+                    if (b.targetMode == TargetMode.Ground) anyGround = true;
+                }
+            return anyGround ? CastReticle.Ground : CastReticle.Instant;
+        }
+    }
+
+    /// <summary>The largest Ground→AoE binding radius — the skill's real ground footprint. SINGLE OWNER of that value:
+    /// the ground reticle (<see cref="SkillRunner.PreviewRadius"/>) and the cast circle both READ it. 1.5 fallback.</summary>
     public float LargestAreaRadius
     {
         get
@@ -169,27 +289,45 @@ public class SkillDef : ScriptableObject
             float r = 0f;
             if (bindings != null)
                 for (int i = 0; i < bindings.Count; i++)
-                    if (bindings[i] != null && bindings[i].scope == SkillScope.Area) r = Mathf.Max(r, bindings[i].radius);
+                {
+                    var b = bindings[i];
+                    if (b != null && b.targetMode == TargetMode.Ground && b.groundDelivery == GroundDelivery.Aoe)
+                        r = Mathf.Max(r, b.radius);
+                }
             return r > 0f ? r : 1.5f;
         }
     }
 
-    /// <summary>True if ANY binding is Single scope — the skill must land on ONE chosen unit, so it can't be
-    /// ground-cast (a ground point isn't a valid target). Drives the single-target aim path in <see cref="SkillRunner"/>.</summary>
+    /// <summary>True if the VFX launches a projectile (has a Carrier step) — so the skill aims a DIRECTION: the ground
+    /// reticle shows a line-arrow toward the aim, and <see cref="projectileCount"/> fans copies of it.</summary>
+    public bool IsProjectileAim
+    {
+        get
+        {
+            if (vfx == null || vfx.steps == null) return false;
+            for (int i = 0; i < vfx.steps.Count; i++)
+            {
+                var s = vfx.steps[i];
+                if (s != null && s.kind == VfxStepKind.Carrier) return true;
+            }
+            return false;
+        }
+    }
+
+    /// <summary>True if ANY tick is Single-target — the cast must land on one chosen unit (the Unit reticle).</summary>
     public bool IsSingleTarget
     {
         get
         {
             if (bindings == null) return false;
             for (int i = 0; i < bindings.Count; i++)
-                if (bindings[i] != null && bindings[i].scope == SkillScope.Single) return true;
+                if (bindings[i] != null && bindings[i].targetMode == TargetMode.SingleTarget) return true;
             return false;
         }
     }
 
-    /// <summary>The union of every Single-scope binding's <see cref="SkillTickBinding.targets"/> — the set of unit
-    /// KINDS a single-target cast may legally land on. The reticle validates the hovered unit against this; the
-    /// bindings are the single source of truth for who a skill can hit (no separate "target type" field).</summary>
+    /// <summary>The union of every Single-target tick's <see cref="SkillTickBinding.affects"/> — the entity KINDS a
+    /// single-target cast may legally land on. The Unit reticle validates the hovered unit against this.</summary>
     public SkillTargets SingleTargetMask
     {
         get
@@ -197,7 +335,7 @@ public class SkillDef : ScriptableObject
             SkillTargets mask = SkillTargets.None;
             if (bindings != null)
                 for (int i = 0; i < bindings.Count; i++)
-                    if (bindings[i] != null && bindings[i].scope == SkillScope.Single) mask |= bindings[i].targets;
+                    if (bindings[i] != null && bindings[i].targetMode == TargetMode.SingleTarget) mask |= bindings[i].affects;
             return mask;
         }
     }
