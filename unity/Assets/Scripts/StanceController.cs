@@ -179,6 +179,16 @@ public class StanceController : MonoBehaviour
         return b != null && pose != null ? pose.NaturalDuration(b.action, b.clip) : 0f;
     }
 
+    /// <summary>The gait/stat-resolved PLAYBACK multiplier for a stance on THIS unit — the exact value ApplyStance feeds
+    /// the pose. The jump brain reads it to shrink its rooted crouch/land timers by the same factor the clip is sped up,
+    /// so the root and the visible wind-up/tail can't drift (single owner of the multiplier). Respects the stance's
+    /// speedSource: a MoveGait Jump scales with GaitSpeedMult, a Baked one stays at 1×.</summary>
+    public float ResolvedSpeedMultOf(StanceId id)
+    {
+        var b = StanceCatalog.Get(id);
+        return b != null && pose != null ? ResolveSpeedMult(b, 0f) : 1f;
+    }
+
     /// <summary>The authored FRAME COUNT of a stance's clip on THIS visual, 0 if absent. Lets a caller turn an authored
     /// frame index (e.g. the Roll binding's rootFromFrame) into a normalized point in the clip.</summary>
     public int NaturalFrameCountOf(StanceId id)
@@ -242,7 +252,7 @@ public class StanceController : MonoBehaviour
     {
         // Jump + Fall drive the clip in phases: `window` carries the freeze point (seconds), `release` plays the
         // landing tail. Fall (ledge walk-off) reuses the Jump binding's airborneFreeze — the brain feeds it here.
-        if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release, Mathf.Max(0.01f, b.speedMult)); return; }
+        if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release, ResolveSpeedMult(b, window)); return; }
 
         pose.Play(b.action, b.clip);
         pose.SetActionSpeed(b.action, ResolveSpeedMult(b, window));

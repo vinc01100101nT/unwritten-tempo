@@ -84,8 +84,12 @@ public partial class Player3DController
             // The × mult speeds up the CLIP playback (Character3DPose.PlayClipPhase), so the rooted CROUCH and LAND
             // phases must shrink by the same factor to stay glued to the visible wind-up/tail — otherwise the sped-up
             // clip finishes early and the player stands frozen while the phase timer runs out. Freeze stays in NATURAL
-            // seconds: the pose normalizes it (freezeN), which is mult-independent, and Air is physics-driven.
-            float jumpMult = jb != null ? Mathf.Max(0.01f, jb.speedMult) : 1f;
+            // seconds: the pose normalizes it (freezeN), which is mult-independent, and Air is physics-driven — so gait
+            // scales the wind-up + landing while the airborne hold stays neutral. Read the SAME resolved mult the pose
+            // uses (gait-inclusive when the Jump stance is MoveGait), so root and clip can't drift.
+            float jumpMult = StanceController.Player != null
+                ? StanceController.Player.ResolvedSpeedMultOf(StanceId.Jump)
+                : (jb != null ? Mathf.Max(0.01f, jb.speedMult) : 1f);
             jumpCrouchEnd = (jb != null ? Mathf.Max(0f, jb.crouchEnd) : 0f) / jumpMult;
             jumpFreeze    = jb != null ? Mathf.Max(0f, jb.airborneFreeze) : 0f;
             float clipLen = StanceController.Player != null ? StanceController.Player.NaturalDurationOf(StanceId.Jump) : 0f;

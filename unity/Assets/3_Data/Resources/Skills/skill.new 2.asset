@@ -34,6 +34,8 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: d2894bf833c371843b778e0ad6cf1427, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  projectileCount: 1
+  projectileSpread: 0
   hasReleaseStance: 1
   releaseStance: 19
   bindings:
@@ -43,9 +45,29 @@ MonoBehaviour:
     affects: 1
     playerFaction: 0
     radius: 1.5
-    projectileCount: 1
-    projectileSpreadAngle: 0
-    effects: []
+    effects:
+    - kind: 12
+      damageType: 1
+      damageMult: 1
+      element: 0
+      amount: 10
+      ailment: 2
+      seconds: 4
+      magnitude: 3
+      dashSpeedMult: 4.5
+      dashEaseIn: 0
+      dashEaseOut: 1
+      dashEaseSeconds: 0.3
+      hitCount: 1
+      chance: 0
+      buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
+      affinity: []
+      durationAffinity: []
+      hitCountAffinity: []
     targets: 1
     scope: 0
   shortLabel: Skill

@@ -32,13 +32,13 @@ MonoBehaviour:
     emitEventOnStart: 
     emitEventOnEnd: landed
     tickId: projectile_fire
-    tickCount: 3
-    tickInterval: 0.28
+    tickCount: 5
+    tickInterval: 0.22
     spreadTicks: 1
     carrierFromCaster: 1
     carrierFrom: {x: 0, y: 0, z: 0}
-    carrierScatter: 0.511
-    carrierSpeed: 6.9
+    carrierScatter: 0
+    carrierSpeed: 4.6
     carrierFaceTravel: 1
     carrierArriveRadius: 0.4
     carrierMaxLife: 3
