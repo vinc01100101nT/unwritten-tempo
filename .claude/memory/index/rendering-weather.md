@@ -6,6 +6,7 @@
 - [Ground shader must loop additional lights](../ground-shader-additional-lights.md) — add `_ADDITIONAL_LIGHTS` loop; needs URP Per-Pixel.
 - [Billboard sprites receive lamp/torch lights](../billboard-additional-lights.md) — `BillboardLit` loops add-lights; `PropLight.cs`.
 - [Weather system (rain/wet/reflection)](../weather-system.md) — storm gated behind `WeatherFX.Quality>=High`.
+- [Rain scatter freezes over time](../rain-scatter-phase-precision.md) — unbounded `_Phase` overflows float32 in `hash21`; fix = wrap scroll+cell.y by `PERIOD 1024` in shader + `Mathf.Repeat(phase,10240)` in `RainOverlay`.
 - [Snow weather](../snow-weather.md) — `SnowOverlay`/`SnowGround`/`FootstepTracker`+`SnowCapBaker`; shader-only volume DEAD-END.
 - [X-ray occlusion silhouette](../occluded-silhouette-stencil.md) — stencil AREA mask (per-fragment depth self-occludes); two-bit `CoverBit` so held gear doesn't x-ray the body.
 - [Ink ground black band → stencil exclude](../ink-ground-black-band-stencil.md) — crease×60 saturates far ground; exclude via stencil bit 32, ground drawn LAST so it can't stamp the character.

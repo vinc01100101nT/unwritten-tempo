@@ -259,7 +259,7 @@ public class VfxComposerWindow : EditorWindow
             if (sd == null || sd.vfx != sel || sd.bindings == null) continue;
             foreach (var b in sd.bindings)
             {
-                if (b == null || b.targetMode != TargetMode.Ground || b.groundDelivery != GroundDelivery.Aoe) continue;
+                if (b == null || b.targetMode != TargetMode.Ground || b.groundDelivery == GroundDelivery.Point) continue;
                 float rr = b.radius <= 0f ? 1.5f : b.radius;
                 if (!skillRadii.Contains(rr)) skillRadii.Add(rr);
             }
@@ -692,6 +692,10 @@ public class VfxComposerWindow : EditorWindow
                     "Jitter the spawn point by a random amount per axis (magnitude up to 0.2 units on x/y/z) each " +
                     "play, so repeats don't stack in the exact same spot. The composer preview stays deterministic."),
                     st.scatter);
+                st.looping = EditorGUILayout.Toggle(new GUIContent("looping",
+                    "On: keep this effect playing (looping) until the skill's STAY DURATION elapses (set per-skill in " +
+                    "the Skill Composer; fallback 3s). Off: play once for the effect's natural length, then end."),
+                    st.looping);
                 if (st.kind == VfxStepKind.PlayAt)
                 {
                     st.speed = EditorGUILayout.Slider("speed", st.speed <= 0f ? 1f : st.speed, 0.1f, 3f);
@@ -769,7 +773,7 @@ public class VfxComposerWindow : EditorWindow
         // Tick (gameplay HANDOFF) — expose a named beat the Skill Composer binds damage/heal/status onto. Only the
         // spawning kinds tick; this window never sets WHAT the tick does (that's the Skill Composer's job).
         if (st.kind == VfxStepKind.PlayAt || st.kind == VfxStepKind.Attach || st.kind == VfxStepKind.Carrier)
-            DrawTick(st, StepWindow(i, st));
+            DrawTick(st);
 
         st.emitEventOnStart = EmitField("emit event on start", st.emitEventOnStart, st, isEnd: false);
         st.emitEventOnEnd = EmitField(
@@ -778,10 +782,12 @@ public class VfxComposerWindow : EditorWindow
         EditorGUILayout.EndVertical();
     }
 
-    // The per-step "Tick (gameplay handoff)" block: name a beat and its cadence. This is the ONLY join between the
+    // The per-step "Tick (gameplay handoff)" block: name a beat and its placement (Start/End/Interval). The ONLY join between the
     // VFX and the Skill Composer — leave the id empty for a pure-visual step. WHAT the tick does (damage/element/
     // multiplier) is authored in the Skill Composer against this id, never here (separation of concerns).
-    void DrawTick(VfxStep st, float stepDuration)
+    static readonly string[] TickWhenLabels = { "Start Tick", "End Tick", "Interval Ticks" };
+
+    void DrawTick(VfxStep st)
     {
         EditorGUILayout.Space(2);
         st.tickId = EditorGUILayout.TextField(new GUIContent("tick id",
@@ -796,28 +802,25 @@ public class VfxComposerWindow : EditorWindow
             EditorGUILayout.HelpBox($"Tick id \"{st.tickId}\" is used by more than one step — its bound gameplay will " +
                 "fire once per step. Tick ids must be unique; clear this on pure-visual steps or rename it.", MessageType.Warning);
 
-        st.spreadTicks = EditorGUILayout.Toggle(new GUIContent("  spread ticks",
-            "Auto-fill ticks from this effect's duration: ticks = floor(duration / interval). " +
-            "The component ticks for its whole visible lifetime; you only set the interval."), st.spreadTicks);
-
-        if (st.spreadTicks)
+        // WHEN the tick fires — three mutually-exclusive placements (radio row). The LENGTH is never authored here:
+        // it comes from the flight (Carrier) or the Stay Duration (looping PlayAt/Attach), so one VFX fits every skill.
+        EditorGUILayout.LabelField("  tick placement", EditorStyles.miniLabel);
+        st.tickWhen = (TickTiming)GUILayout.Toolbar((int)st.tickWhen, TickWhenLabels);
+        switch (st.tickWhen)
         {
-            st.tickInterval = EditorGUILayout.Slider(new GUIContent("  interval (s)",
-                "Seconds between ticks. ticks = floor(duration / interval)."), st.tickInterval, 0.01f, 3f);
-            st.tickCount = Mathf.Max(1, Mathf.FloorToInt(stepDuration / Mathf.Max(0.01f, st.tickInterval)));
-            using (new EditorGUI.DisabledScope(true))
-                EditorGUILayout.IntField(new GUIContent("  ticks",
-                    "Computed from duration ÷ interval."), st.tickCount);
-        }
-        else
-        {
-            st.tickCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("  ticks",
-                "How many times this component fires its beat. 1 = one-shot (a meteor's land). N = a lingering " +
-                "component (a fire pillar's repeated damage)."), st.tickCount <= 0 ? 1 : st.tickCount));
-            using (new EditorGUI.DisabledScope(st.tickCount <= 1))
+            case TickTiming.Start:
+                EditorGUILayout.HelpBox("Fires ONCE at the START of this step (a PlayAt/Attach spawn, or a Carrier's launch).", MessageType.None);
+                break;
+            case TickTiming.End:
+                EditorGUILayout.HelpBox("Fires ONCE at the END of this step (a Carrier's arrival, or a PlayAt/Attach's " +
+                    "natural end — or its Stay Duration when looping).", MessageType.None);
+                break;
+            case TickTiming.Interval:
                 st.tickInterval = EditorGUILayout.Slider(new GUIContent("  interval (s)",
-                    "Seconds between ticks (ticks × interval = the active window). Only used when ticks > 1."),
-                    st.tickInterval, 0f, 3f);
+                    "Seconds between ticks while this step is active (the Carrier's flight, or a PlayAt/Attach's " +
+                    "lifetime / Stay Duration). More flight/stay = more ticks — the same rule holds for every skill."),
+                    st.tickInterval, 0.02f, 3f);
+                break;
         }
     }
 

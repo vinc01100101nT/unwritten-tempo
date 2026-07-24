@@ -63,9 +63,19 @@ Shader "Unwritten/RainScreen"
             // regenerates invisibly as the grid scrolls — no popping.
             float sheet(float2 uv, float cols, float rows, float speed, float seed, float narrow, float sparse)
             {
-                float2 g    = float2(uv.x * cols, uv.y * rows + _Phase * speed);   // scrolling cell grid
+                // Wrap the vertical scroll into an integer-length period so the hash inputs stay small. Without this,
+                // _Phase grows unbounded (advanced forever in RainOverlay.cs) and cell.y climbs into the tens of
+                // thousands; float32 frac() then loses all fractional precision (product exceeds ~8M), the per-row
+                // random freezes, and the scattered drops collapse into fixed aligned columns after some minutes.
+                // The grid is exactly periodic, so subtracting an integer multiple of PERIOD is bit-seamless (no pop).
+                const float PERIOD = 1024.0;   // ~34-85s per-sheet loop (incommensurate across sheets → no visible repeat)
+                float scroll = _Phase * speed;
+                scroll -= PERIOD * floor(scroll / PERIOD);
+
+                float2 g    = float2(uv.x * cols, uv.y * rows + scroll);           // scrolling cell grid
                 float2 cell = floor(g);
                 float2 f    = frac(g);
+                cell.y -= PERIOD * floor(cell.y / PERIOD);   // hash the wrapped row to match the scroll wrap
 
                 float exists = step(sparse, hash21(cell + float2(seed + 11.0, seed)));     // gaps
                 float rx     = hash21(cell + float2(seed,       seed + 3.0));               // random x in cell

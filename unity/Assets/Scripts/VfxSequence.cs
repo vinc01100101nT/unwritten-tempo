@@ -9,9 +9,9 @@ using UnityEngine.Serialization;
 /// owns PRESENTATION only (particles, screen-shake, sound) — NEVER damage, element, or multipliers.
 ///
 /// <para>The GAMEPLAY meets the sequence at named <b>ticks</b>. A step can expose a <see cref="VfxStep.tickId"/>
-/// — a stable component name (e.g. "meteor_ball", "fire_pillar") that fires <see cref="VfxStep.tickCount"/> times,
-/// <see cref="VfxStep.tickInterval"/> apart, at the step's gameplay moment (a Carrier's arrival, or any other
-/// step's start). A <see cref="SkillDef"/> in the Skill Composer binds each tickId to WHAT it does
+/// — a stable component name (e.g. "meteor_ball", "fire_pillar") that fires per its <see cref="VfxStep.tickWhen"/>
+/// rule (Start / End / every <see cref="VfxStep.tickInterval"/> across the step's active window — a Carrier's flight
+/// or a looping effect's Stay Duration). A <see cref="SkillDef"/> in the Skill Composer binds each tickId to WHAT it does
 /// (damage/heal/status, element, multiplier). The Vfx Composer only composes the look + exposes the ticks.</para>
 ///
 /// <para>Play one with <see cref="VfxDirector.Play"/>, passing a <see cref="VfxContext"/> (where in the world)
@@ -77,6 +77,21 @@ public enum VfxSchedule
     OnEvent,
 }
 
+/// <summary>WHEN a step raises its gameplay tick. The single knob for tick placement (replaces the old
+/// count/spread model): the flight/effect length comes from elsewhere (the Carrier's arrival, or a looping
+/// PlayAt/Attach's Stay Duration), so the VFX only declares the RULE, never a per-skill count.</summary>
+public enum TickTiming
+{
+    /// <summary>Exactly one tick the instant the step starts (a PlayAt/Attach spawn, or a Carrier's launch).</summary>
+    Start,
+    /// <summary>Exactly one tick when the step ends (a Carrier's arrival; a PlayAt/Attach's natural end, or its
+    /// Stay Duration when looping).</summary>
+    End,
+    /// <summary>A tick every <see cref="VfxStep.tickInterval"/> seconds for as long as the step is active (a Carrier's
+    /// whole flight; a PlayAt/Attach's natural lifetime, or its Stay Duration when looping).</summary>
+    Interval,
+}
+
 /// <summary>One entry on a <see cref="VfxSequence"/> timeline. Gameplay-neutral: it can only spawn a library
 /// effect, shake the camera, or play a sound — and optionally RAISE a named event (visual chaining) and/or a
 /// gameplay <b>tick</b> that a <see cref="SkillDef"/> binds damage/heal/status onto.</summary>
@@ -123,6 +138,10 @@ public class VfxStep
     public float clipStart;
     [Tooltip("Colour tint (white = no tint).")]
     public Color tint = Color.white;
+    [Tooltip("Play At / Attach only: keep the effect LOOPING until the skill's Stay Duration elapses (fallback 3s, " +
+             "set in the Skill Composer). Off = play once for the effect's natural length, then end. Carrier ignores " +
+             "this — it always ends on arrival.")]
+    public bool looping = false;
 
     [Header("Event (visual chaining — gameplay-neutral)")]
     [Tooltip("Raise this event tag the moment the step STARTS (the effect is spawned / launched). OnEvent steps " +
@@ -138,15 +157,13 @@ public class VfxStep
     [Tooltip("Stable tick name the Skill Composer binds gameplay onto (e.g. \"meteor_ball\", \"fire_pillar\"). " +
              "Empty = pure-visual step (no gameplay). This is the ONLY join key between VFX and Skill.")]
     public string tickId;
-    [Tooltip("How many times this step raises its tick. 1 = one-shot (a meteor's single land). N = a lingering " +
-             "component's beats (a fire pillar ticking damage). 0 or empty tickId = no gameplay tick.")]
-    public int tickCount = 1;
-    [Tooltip("Seconds between ticks (0 = all at once). tickCount × tickInterval = the component's active window. " +
-             "This is the 'repeat over time' owner — the skill applies ONE burst per tick.")]
-    public float tickInterval = 0f;
-    [Tooltip("Auto-fill tickCount from the effect's duration: tickCount = floor(duration / tickInterval). Keeps a " +
-             "lingering component ticking for its whole visible lifetime without hand-counting.")]
-    public bool spreadTicks = false;
+    [Tooltip("WHEN this step raises its gameplay tick. Start = once at the start; End = once at the end (Carrier " +
+             "arrival, or a PlayAt/Attach's natural end / Stay Duration); Interval = every tickInterval seconds while " +
+             "the step is active. Empty tickId = no gameplay tick. The length is NOT authored here — it comes from " +
+             "the flight (Carrier) or the Stay Duration (looping PlayAt/Attach), so one VFX suits every skill.")]
+    public TickTiming tickWhen = TickTiming.Start;
+    [Tooltip("Interval mode only: seconds between ticks while the step is active. The skill applies ONE burst per tick.")]
+    public float tickInterval = 0.2f;
 
     [Header("Carrier")]
     [Tooltip("Launch from the CASTER's live position (ctx.origin) instead of a fixed offset above the landing. " +
@@ -184,7 +201,10 @@ public class VfxStep
     public float soundFadeOut;
 
     /// <summary>True if this step exposes a gameplay tick a <see cref="SkillDef"/> can bind to.</summary>
-    public bool HasTick => !string.IsNullOrEmpty(tickId) && tickCount > 0;
+    public bool HasTick => !string.IsNullOrEmpty(tickId);
+    /// <summary>True for step kinds whose lifetime CAN loop (and therefore honour <see cref="looping"/> +
+    /// the skill's Stay Duration). A Carrier ends on arrival, so it's never a looping kind.</summary>
+    public bool CanLoop => kind == VfxStepKind.PlayAt || kind == VfxStepKind.Attach;
 }
 
 /// <summary>Where in the world a <see cref="VfxSequence"/> plays. The skill fills this per cast; the sequence's
@@ -213,6 +233,11 @@ public struct VfxContext
     /// runner never auto-tears-down. False (the default, one-shot <c>Fire</c>) = the Attach plays its authored
     /// lifetime once, then ends with the sequence.</summary>
     public bool persistent;
+    /// <summary>Skill-supplied PER-STEP cap (seconds) for a LOOPING PlayAt/Attach step, keyed by the step's tickId:
+    /// how long it stays before it ends and its End tick fires. Returns ≤0 → use the runtime's default fallback
+    /// (3s). Null → all looping steps use the fallback. The VFX owns the loop RULE; the skill owns HOW LONG each use
+    /// of it lasts (per step) — so one VFX serves every skill.</summary>
+    public System.Func<string, float> stayForTick;
 
     /// <summary>A fixed-point context (origin == target == point, scale 1).</summary>
     public static VfxContext At(Vector3 point) =>

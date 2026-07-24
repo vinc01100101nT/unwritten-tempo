@@ -174,7 +174,7 @@ MonoBehaviour:
     scale: 1
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
-    groundRingRadius: 0
+    groundRingRadius: 1.5
   - id: circle.magic-2
     prefab: {fileID: 3377181292992421420, guid: 48c5715f9603c3842a353516a8baefbb, type: 3}
     scale: 1

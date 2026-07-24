@@ -26,6 +26,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     System.Action<VfxTick> onTick;      // cached hook (no per-play delegate alloc)
     System.Action<Vector3> onGround;    // cached ground-confirm hook
     System.Action<Transform> onUnit;    // cached single-target confirm hook
+    System.Func<string, float> stayFor; // cached per-tickId Stay Duration resolver (built once; no per-cast alloc)
+    // Resolve a looping step's Stay Duration from its tick binding (by tickId). Handed to the VFX context so the
+    // runner supplies each step its own stay; the VFX never stores this per-use gameplay number.
+    System.Func<string, float> StayFor => stayFor ??= tid => { var b = def.BindingFor(tid); return b != null ? b.stayDuration : 0f; };
     Player3DController body;            // caster's mover — turned to face the cast point on release
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
 
@@ -100,7 +104,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // flash before the teleport) plays at the caster's spot, not the destination. VfxContext.At collapsed both.
         // follow = the CASTER so an Attach step (a self aura / dash trail) RIDES the player and fires its gameplay
         // tick — like VfxCue sets follow = actor. PlayAt/Carrier steps ignore follow, so ground AoEs are unaffected.
-        lastCtx = new VfxContext { origin = transform.position, target = center, follow = transform, scaleMult = 1f };
+        lastCtx = new VfxContext { origin = transform.position, target = center, follow = transform, scaleMult = 1f, stayForTick = StayFor };
         StartCastOrPlay();
     }
 
@@ -116,6 +120,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             follow = transform,
             targetUnit = unit,
             scaleMult = 1f,
+            stayForTick = StayFor,
         };
         StartCastOrPlay();
     }
@@ -131,7 +136,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (!ComboSpend()) return false;
         comboDamageMult = Mathf.Max(0f, dmgMult);
         // origin = caster, target = aimed point (see Cast) — keeps Origin/Target distinct on a ground combo member.
-        lastCtx = new VfxContext { origin = transform.position, target = center, follow = transform, scaleMult = 1f };
+        lastCtx = new VfxContext { origin = transform.position, target = center, follow = transform, scaleMult = 1f, stayForTick = StayFor };
         StartCastOrPlay();
         return true;
     }
@@ -148,6 +153,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             follow = transform,
             targetUnit = unit,
             scaleMult = 1f,
+            stayForTick = StayFor,
         };
         StartCastOrPlay();
         return true;
@@ -254,6 +260,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             if (StatusController.Player != null) StatusController.Player.LockActions(releaseDur);
         }
 
+        // A projectile aims a DIRECTION, not a landing spot: the shot flies a FIXED travel distance (the reused
+        // castRange = "travel range"), NOT to the cursor. Project the aim onto that range so the Carrier flies the
+        // full distance and its spread-ticks hit along the whole path. Fan copies inherit this (PlayFan spreads at the
+        // projected radius); repeat cycles inherit it via lastCtx.
+        if (def.IsProjectileAim) lastCtx.target = ProjectToTravelRange(lastCtx.target);
+
         // A projectile skill fans N copies of its ONE composed projectile around the aim direction (authored skill-side,
         // like repeat). Non-projectile skills, or count 1, just play once.
         int fan = def.IsProjectileAim ? Mathf.Max(1, def.projectileCount) : 1;
@@ -262,6 +274,19 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
         int extra = Mathf.Max(0, def.repeatCount - 1);
         if (extra > 0 && isActiveAndEnabled) StartCoroutine(PlayExtraCycles(extra, lastCtx));
+    }
+
+    // Push the aim point out to the skill's travel range (reused castRange) along the aim direction — a projectile
+    // flies the full distance regardless of where the cursor sits. Falls back to the caster's facing if the cursor is
+    // right on top of the caster, and to the raw aim distance if no range is set.
+    Vector3 ProjectToTravelRange(Vector3 aim)
+    {
+        Vector3 me = transform.position;
+        Vector3 dir = aim - me; dir.y = 0f;
+        float d = dir.magnitude;
+        Vector3 nrm = d < 0.05f ? new Vector3(transform.forward.x, 0f, transform.forward.z).normalized : dir / d;
+        float range = def.castRange > 0f ? def.castRange : d;
+        return new Vector3(me.x + nrm.x * range, aim.y, me.z + nrm.z * range);
     }
 
     // Play the VFX N times at once, each aimed along a different cone direction centred on the original aim — so one

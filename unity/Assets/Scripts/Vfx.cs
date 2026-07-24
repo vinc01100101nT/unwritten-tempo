@@ -25,6 +25,8 @@ public static class Vfx
         public Color tint;    // (0,0,0,0) → no tint; otherwise multiplies startColor
         public float tailTrim; // >0 → return this many seconds EARLY (cut trailing dead time)
         public float clipStart; // >0 → fast-forward this many seconds INTO the clip on spawn (skip the intro)
+        public bool loop;      // true → keep the particle loop ON and live for `lifetime` (a looping PlayAt); false → one-shot
+        public float lifetime; // >0 → force this exact on-screen lifetime (a looping PlayAt's Stay Duration); ≤0 → authored/natural
 
         public static VfxParams Scaled(float scale) => new VfxParams { scale = scale };
     }
@@ -296,7 +298,10 @@ public static class Vfx
         float scale = p.scale <= 0f ? 1f : p.scale;
         float speed = p.speed <= 0f ? 1f : p.speed;
         Color tint = p.tint == default ? Color.white : p.tint;   // unset (0,0,0,0) → no tint
-        h.Begin(pos + def.offset, rot, def.scale, scale, speed, tint, def.lifetime, true, null, Vector3.zero, p.tailTrim, p.clipStart);
+        // loop=true keeps the particle loop on and lives for `lifetime` (a looping PlayAt capped by the skill's Stay
+        // Duration); the default (loop=false) is the classic one-shot that plays once for its authored length.
+        float life = p.lifetime > 0f ? p.lifetime : def.lifetime;
+        h.Begin(pos + def.offset, rot, def.scale, scale, speed, tint, life, !p.loop, null, Vector3.zero, p.tailTrim, p.clipStart);
         return h;
     }
 
@@ -305,14 +310,17 @@ public static class Vfx
     /// until you call <see cref="EffectHandle.Stop"/> on the returned handle; a fixed-lifetime effect returns
     /// itself. Null if the id is unknown.</summary>
     public static EffectHandle Attach(string id, Transform target, Vector3 offset = default, float scaleMult = 1f,
-                                      Color tint = default, bool oneShot = false, float clipStart = 0f)
+                                      Color tint = default, bool oneShot = false, float clipStart = 0f, float lifetime = 0f)
     {
         var def = EffectCatalog.Get(id);
         if (def == null || target == null) return null;
         var h = Rent(def);
         Vector3 total = offset + def.offset;
         Color t = tint == default ? Color.white : tint;   // unset (0,0,0,0) → no tint
-        h.Begin(target.position + total, Quaternion.identity, def.scale, scaleMult, 1f, t, def.lifetime, oneShot, target, total, 0f, clipStart);
+        // lifetime > 0 → a looping aura capped at that many seconds (a skill's Stay Duration); 0 → the authored
+        // lifetime (which for a looping effect means "until Stop()", the persistent-aura path).
+        float life = lifetime > 0f ? lifetime : def.lifetime;
+        h.Begin(target.position + total, Quaternion.identity, def.scale, scaleMult, 1f, t, life, oneShot, target, total, 0f, clipStart);
         return h;
     }
 

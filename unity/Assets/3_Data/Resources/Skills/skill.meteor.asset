@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.meteor
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  targetingMigrated: 1
   id: skill.meteor
   displayName: Meteor
   icon: {fileID: -748796600851884618, guid: e332629eb48b6454a8278a39bd5d6b5a, type: 3}
@@ -33,13 +34,18 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
   repeatCount: 5
   repeatInterval: 0.5
+  projectileCount: 1
+  projectileSpread: 0
   hasReleaseStance: 1
   releaseStance: 16
   bindings:
   - tickId: meteor_ball
-    targets: 2
-    scope: 0
-    radius: 1.48
+    targetMode: 2
+    groundDelivery: 1
+    affects: 2
+    playerFaction: 0
+    radius: 4.75
+    stayDuration: 0
     effects:
     - kind: 0
       damageType: 1
@@ -49,6 +55,10 @@ MonoBehaviour:
       ailment: 2
       seconds: 4
       magnitude: 3
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
       hitCount: 3
       chance: 0
       buffStat: 0
@@ -64,7 +74,9 @@ MonoBehaviour:
       - stat: 3
         weight: 15
       durationAffinity: []
-      hitCountAffinity: []
+      hitCountAffinity:
+      - stat: 1
+        weight: 100
     - kind: 2
       damageType: 1
       damageMult: 1
@@ -73,6 +85,10 @@ MonoBehaviour:
       ailment: 2
       seconds: 4
       magnitude: 3
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0
       buffStat: 0
@@ -97,6 +113,10 @@ MonoBehaviour:
       ailment: 3
       seconds: 0.75
       magnitude: 0
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0.25
       buffStat: 0
@@ -113,10 +133,15 @@ MonoBehaviour:
       - stat: 3
         weight: 40
       hitCountAffinity: []
-  - tickId: fire_pillar
     targets: 2
     scope: 0
-    radius: 1.14
+  - tickId: fire_pillar
+    targetMode: 2
+    groundDelivery: 1
+    affects: 2
+    playerFaction: 0
+    radius: 1
+    stayDuration: 1
     effects:
     - kind: 0
       damageType: 1
@@ -126,6 +151,10 @@ MonoBehaviour:
       ailment: 2
       seconds: 4
       magnitude: 3
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0
       buffStat: 0
@@ -138,6 +167,8 @@ MonoBehaviour:
         weight: 100
       durationAffinity: []
       hitCountAffinity: []
+    targets: 2
+    scope: 0
   shortLabel: Meteor
   keyLabel: 
   slotOrder: 20

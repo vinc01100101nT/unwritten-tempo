@@ -140,7 +140,11 @@ public class RainOverlay : MonoBehaviour
         var cam = CameraRig.Cam;
         if (cam != null && quad != null) quad.position = cam.transform.position;   // park on camera so it never culls
 
-        phase += Time.deltaTime * fallSpeed;
+        // Keep the scroll clock small so it never loses float precision on a marathon session. 10240 is an exact
+        // multiple of the shader's per-sheet repeat length (1024) for every rain layer's speed, so the wrap is
+        // bit-seamless — no visible jump. Without this the counter would grow unbounded and, after ~1000h of
+        // continuous on-screen rain, hit float's 2^23 ceiling and freeze mid-fall (see RainScreen.shader PERIOD).
+        phase = Mathf.Repeat(phase + Time.deltaTime * fallSpeed, 10240f);
         mat.SetColor(ColorID, color);
         mat.SetFloat(IntensityID, shown);
         mat.SetFloat(PhaseID, phase);

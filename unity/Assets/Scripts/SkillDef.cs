@@ -33,10 +33,15 @@ public enum GroundDelivery
     /// there; a placed hazard spawns there).</summary>
     Point,
     /// <summary>Splash: hit every <see cref="SkillTickBinding.affects"/>-matching entity within <see
-    /// cref="SkillTickBinding.radius"/> of the point (the existing AoE circle). A PROJECTILE skill also uses this —
-    /// its flying VFX (a Carrier with spread ticks) raises ticks along its path, each landing here as a small AoE at
-    /// the projectile's live position. The fan (how MANY projectiles) is authored skill-level, like repeat.</summary>
+    /// cref="SkillTickBinding.radius"/> of the aimed spot (the cast-circle reticle). Effect lands AT the spot the
+    /// player picks.</summary>
     Aoe,
+    /// <summary>A directional projectile: the reticle is a line-arrow (aim a DIRECTION, not a landing spot) and the
+    /// skill fans <see cref="SkillDef.projectileCount"/> copies. The flying VFX (a Carrier with spread ticks) raises
+    /// ticks along its path, each landing as a small AoE (<see cref="SkillTickBinding.radius"/> = hit width) at the
+    /// projectile's live position. This — NOT the VFX's Carrier step — is the single owner of "this skill is a
+    /// projectile" (see <see cref="SkillDef.IsProjectileAim"/>).</summary>
+    Projectile,
 }
 
 /// <summary>PvP faction filter, used when <see cref="SkillTargets.Player"/> is an affected kind. Enemy-player tagging
@@ -95,6 +100,10 @@ public class SkillTickBinding
     public PlayerFaction playerFaction = PlayerFaction.Ally;
     [Tooltip("AoE radius (world units) around the point. Used by Ground → AoE (and a projectile's per-tick hit width).")]
     public float radius = 1.5f;
+    [Tooltip("Only when THIS tick's VFX step is a LOOPING Play At / Attach: how long that loop stays before it ends " +
+             "(and, for an End tick, when it lands). Per-step, so a VFX with two looping steps can give each its own " +
+             "length. 0 = default 3s. The VFX owns the loop rule; this skill owns how long THIS use of it lasts.")]
+    public float stayDuration = 0f;
 
     [Tooltip("What each tick does — applied through the shared SkillEffectApplier (the one damage path).")]
     public List<SkillEffect> effects = new List<SkillEffect>();
@@ -178,7 +187,7 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
 
     [Tooltip("How many times to replay the WHOLE composed cycle per cast (e.g. 5 = a 5-meteor shower). Each cycle " +
              "is an independent play at the same cast point — its own carrier falls and multi-hits via the VFX's " +
-             "per-component tickCount. 1 = play once. Repetition of the whole effect lives HERE (the gameplay layer), " +
+             "per-component tick rule. 1 = play once. Repetition of the whole effect lives HERE (the gameplay layer), " +
              "not in the Vfx Composer — the composer stays WYSIWYG (one cycle = one meteor).")]
     [Min(1)] public int repeatCount = 1;
     [Tooltip("Seconds between the start of each cycle when repeatCount > 1. 0 = fall back to the VFX sequence's " +
@@ -298,17 +307,34 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
         }
     }
 
-    /// <summary>True if the VFX launches a projectile (has a Carrier step) — so the skill aims a DIRECTION: the ground
-    /// reticle shows a line-arrow toward the aim, and <see cref="projectileCount"/> fans copies of it.</summary>
+    /// <summary>True if the VFX step carrying <paramref name="tickId"/> is a LOOPING Play At / Attach — the one case
+    /// where a binding's <see cref="SkillTickBinding.stayDuration"/> matters (it caps how long that loop stays). A
+    /// Carrier never loops (it ends on arrival).</summary>
+    public bool TickStepLoops(string tickId)
+    {
+        if (vfx == null || vfx.steps == null || string.IsNullOrEmpty(tickId)) return false;
+        for (int i = 0; i < vfx.steps.Count; i++)
+        {
+            var s = vfx.steps[i];
+            if (s != null && s.tickId == tickId && s.looping && s.CanLoop) return true;
+        }
+        return false;
+    }
+
+    /// <summary>True if any ground tick is authored as <see cref="GroundDelivery.Projectile"/> — so the skill aims a
+    /// DIRECTION: the ground reticle shows a line-arrow toward the aim, and <see cref="projectileCount"/> fans copies
+    /// of it. SINGLE OWNER of "this skill is a projectile" — derived from the authored delivery, NOT from whether the
+    /// VFX happens to have a Carrier step (a Carrier that drops from ABOVE is a fall-in AoE, e.g. a meteor).</summary>
     public bool IsProjectileAim
     {
         get
         {
-            if (vfx == null || vfx.steps == null) return false;
-            for (int i = 0; i < vfx.steps.Count; i++)
+            if (bindings == null) return false;
+            for (int i = 0; i < bindings.Count; i++)
             {
-                var s = vfx.steps[i];
-                if (s != null && s.kind == VfxStepKind.Carrier) return true;
+                var b = bindings[i];
+                if (b != null && b.targetMode == TargetMode.Ground && b.groundDelivery == GroundDelivery.Projectile)
+                    return true;
             }
             return false;
         }

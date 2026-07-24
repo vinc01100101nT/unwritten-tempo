@@ -27,7 +27,7 @@ MonoBehaviour:
   acquisitionTier: 0
   manaCost: 8
   cooldown: 1.5
-  castTime: 0.4
+  castTime: 1.07
   aim: 1
   castRange: 11
   tier: 0
@@ -37,14 +37,14 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: 4c60782cfebfe8447b9e7eeb807bf7bf, type: 2}
   repeatCount: 1
   repeatInterval: 0
-  projectileCount: 7
+  projectileCount: 1
   projectileSpread: 90
   hasReleaseStance: 1
   releaseStance: 17
   bindings:
   - tickId: projectile_fire
     targetMode: 2
-    groundDelivery: 1
+    groundDelivery: 2
     affects: 2
     playerFaction: 1
     radius: 1.5

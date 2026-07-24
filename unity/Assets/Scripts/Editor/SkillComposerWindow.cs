@@ -265,9 +265,13 @@ public class SkillComposerWindow : EditorWindow
                 sel.castTime, 0f, 10f);
             // Aim is DERIVED from each tick's targeting (see Gameplay below) — no field here. Cast range only matters
             // when the skill actually aims at something (a ground point or a unit); an instant self-cast has none.
+            // castRange is reused as the projectile's TRAVEL distance (a projectile aims a direction, not a spot) —
+            // one number, relabeled by context so there's no parallel field to keep in sync.
             if (sel.Reticle != CastReticle.Instant)
-                sel.castRange = EditorGUILayout.Slider(new GUIContent("cast range",
-                    "Max distance from the caster the aim point / target can be."), sel.castRange, 1f, 30f);
+                sel.castRange = EditorGUILayout.Slider(sel.IsProjectileAim
+                    ? new GUIContent("travel range", "How far the projectile flies from the caster along the aim direction. The aim arrow is only a direction hint — the shot always travels this full distance.")
+                    : new GUIContent("cast range", "Max distance from the caster the aim point / target can be."),
+                    sel.castRange, 1f, 30f);
         }
 
         // 4) PRESENTATION & HOTBAR — how it looks + where it sits on the bar.
@@ -277,10 +281,11 @@ public class SkillComposerWindow : EditorWindow
                 "The composed look from the Vfx Composer. Its exposed ticks appear in Gameplay below."), sel.vfx, typeof(VfxSequence), false);
             sel.repeatCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("repeat count",
                 "Replay the WHOLE cycle N times per cast (e.g. 5 = a 5-meteor shower). Each cycle is an independent play " +
-                "at the same cast point; per-fall hits still come from the VFX's per-component tickCount. 1 = play once."), sel.repeatCount));
+                "at the same cast point; per-fall hits still come from the VFX's tick rule. 1 = play once."), sel.repeatCount));
             if (sel.repeatCount > 1)   // only meaningful when the cycle actually repeats
                 sel.repeatInterval = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("repeat interval (s)",
                     "Seconds between cycle starts. 0 = use the VFX sequence's RestartInterval (its loop-end marker)."), sel.repeatInterval));
+
 
             // Projectile fan — only when the VFX actually launches a projectile (a Carrier step). Compose ONE projectile
             // in the Vfx Composer; multiply it here, like repeat.
@@ -307,15 +312,19 @@ public class SkillComposerWindow : EditorWindow
 
         if (EditorGUI.EndChangeCheck()) EditorUtility.SetDirty(sel);
 
-        EditorGUILayout.Space(6);
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Save")) { NormalizeAllAffinities(sel); EditorUtility.SetDirty(sel); AssetDatabase.SaveAssets(); SkillCatalog.Reload(); CaptureSnapshot(); }
-        using (new EditorGUI.DisabledScope(!EditorUtility.IsDirty(sel)))
-            if (GUILayout.Button("Discard changes")) DiscardSkillEdits();
-        EditorGUILayout.EndHorizontal();
-
         EditorGUILayout.EndVertical();
         EditorGUILayout.EndScrollView();
+
+        // Pinned action bar — lives OUTSIDE the scroll view so Save / Discard stay at the window bottom no matter how
+        // far the content scrolls (no scrolling to the end just to save).
+        EditorGUILayout.Space(4);
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Save", GUILayout.Height(24))) { NormalizeAllAffinities(sel); EditorUtility.SetDirty(sel); AssetDatabase.SaveAssets(); SkillCatalog.Reload(); CaptureSnapshot(); }
+        using (new EditorGUI.DisabledScope(!EditorUtility.IsDirty(sel)))
+            if (GUILayout.Button("Discard changes", GUILayout.Height(24))) DiscardSkillEdits();
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.Space(2);
+
         EditorGUILayout.EndVertical();
     }
 
@@ -409,7 +418,8 @@ public class SkillComposerWindow : EditorWindow
             EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.ExpandWidth(true));
             GUI.backgroundColor = prevBg;            // restore immediately so the inner controls aren't tinted
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField($"{t.id}   ({t.count}× @ {t.interval:0.##}s)", EditorStyles.boldLabel);
+            string whenLabel = t.when == TickTiming.Interval ? $"every {t.interval:0.##}s" : t.when.ToString().ToLower();
+            EditorGUILayout.LabelField($"{t.id}   ({whenLabel})", EditorStyles.boldLabel);
             if (b == null)
             {
                 if (GUILayout.Button("+ bind", GUILayout.Width(70)))
@@ -479,9 +489,35 @@ public class SkillComposerWindow : EditorWindow
                 switch (b.groundDelivery)
                 {
                     case GroundDelivery.Point: return "aim a spot — the caster acts there";
+                    case GroundDelivery.Projectile: return "aim a direction — a shot flies out, hitting " + AffectsWord(b) + " within " + b.radius.ToString("0.#") + " units along its path";
                     default: return "hits " + AffectsWord(b) + " within " + b.radius.ToString("0.#") + " units of the spot";
                 }
         }
+    }
+
+    // The delivery dropdown is the SINGLE SOURCE OF TRUTH for "is this a projectile" — but the VFX's Carrier step has
+    // its own visual "launch from caster" flag, and the two should agree (from-caster ⇒ Projectile; from-above ⇒ AoE).
+    // We only READ the VFX here to warn on a mismatch — we never let it drive gameplay.
+    void WarnDeliveryVfxMismatch(GroundDelivery delivery)
+    {
+        bool hasCarrier = false, fromCaster = false;
+        if (sel.vfx != null && sel.vfx.steps != null)
+            for (int i = 0; i < sel.vfx.steps.Count; i++)
+            {
+                var s = sel.vfx.steps[i];
+                if (s != null && s.kind == VfxStepKind.Carrier) { hasCarrier = true; fromCaster = s.carrierFromCaster; break; }
+            }
+
+        if (delivery == GroundDelivery.Projectile && !(hasCarrier && fromCaster))
+            EditorGUILayout.HelpBox(
+                "Projectile delivery, but this skill's VFX doesn't launch a projectile from the caster. Turn ON " +
+                "'launch from caster' on the VFX's Carrier step so the shot visually flies from the caster.",
+                MessageType.Warning);
+        else if (delivery != GroundDelivery.Projectile && hasCarrier && fromCaster)
+            EditorGUILayout.HelpBox(
+                "This skill's VFX launches from the caster (a projectile), but delivery is " + delivery +
+                ". Set delivery to Projectile, or turn OFF 'launch from caster' on the VFX's Carrier step.",
+                MessageType.Warning);
     }
 
     static string AffectsWord(SkillTickBinding b)
@@ -511,8 +547,10 @@ public class SkillComposerWindow : EditorWindow
             if (b.targetMode == TargetMode.Ground)
             {
                 b.groundDelivery = (GroundDelivery)EditorGUILayout.EnumPopup(new GUIContent("    delivery",
-                    "Point = the exact spot (the caster acts there — dash/place). AoE = splash in a radius (also how a projectile's per-tick hit lands)."), b.groundDelivery);
-                if (b.groundDelivery == GroundDelivery.Aoe)
+                    "Point = the exact spot (the caster acts there — dash/place). AoE = splash in a radius at the aimed spot (cast-circle reticle). " +
+                    "Projectile = aim a DIRECTION (line-arrow reticle); the shot flies and hits along its path."), b.groundDelivery);
+                WarnDeliveryVfxMismatch(b.groundDelivery);
+                if (b.groundDelivery != GroundDelivery.Point)
                 {
                     b.radius = EditorGUILayout.Slider(new GUIContent("    radius",
                         "Circle size (world units) around the spot that catches entities. For a projectile skill this is its per-tick hit width."), b.radius <= 0f ? 1.5f : b.radius, 0.1f, 12f);
@@ -527,6 +565,13 @@ public class SkillComposerWindow : EditorWindow
         }
 
         EditorGUILayout.LabelField("  → " + TargetingSummary(b), EditorStyles.miniLabel);
+
+        // Stay duration — only when THIS tick's VFX step is a looping Play At / Attach. Per-step, keyed by tickId:
+        // the VFX owns the loop rule, the skill owns how long this step's loop lasts (fallback 3s at runtime).
+        if (sel.TickStepLoops(b.tickId))
+            b.stayDuration = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  stay duration (s)",
+                "This tick's VFX step is a LOOPING Play At / Attach — how long that loop stays before it ends " +
+                "(and, for an End tick, when it lands). 0 = default 3s."), b.stayDuration));
 
         EditorGUILayout.LabelField($"  effects ({b.effects.Count})", EditorStyles.miniBoldLabel);
         int rm = -1;
@@ -961,7 +1006,7 @@ public class SkillComposerWindow : EditorWindow
         }
     }
 
-    struct TickInfo { public string id; public int count; public float interval; }
+    struct TickInfo { public string id; public TickTiming when; public float interval; }
 
     static List<TickInfo> CollectTicks(VfxSequence seq)
     {
@@ -971,7 +1016,7 @@ public class SkillComposerWindow : EditorWindow
         {
             if (st == null || !st.HasTick) continue;
             if (TicksContain(result, st.tickId)) continue;   // one row per distinct id
-            result.Add(new TickInfo { id = st.tickId, count = st.tickCount, interval = st.tickInterval });
+            result.Add(new TickInfo { id = st.tickId, when = st.tickWhen, interval = st.tickInterval });
         }
         return result;
     }

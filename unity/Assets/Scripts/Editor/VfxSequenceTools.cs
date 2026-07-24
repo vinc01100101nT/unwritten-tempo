@@ -38,19 +38,20 @@ public static class VfxSequenceTools
             carrierFrom = new Vector3(0f, 9f, 0f), carrierScatter = 0.6f,
             carrierSpeed = 16f, carrierArriveRadius = 0.4f, carrierMaxLife = 9f / 16f + 1f,
             emitEventOnEnd = "impact",
-            tickId = "meteor_ball", tickCount = 1, tickInterval = 0f,
+            tickId = "meteor_ball", tickWhen = TickTiming.End,   // one hit on arrival (the meteor's land)
         });
 
         // 2) Ground explosion — fires ON the "impact" event (i.e. when the meteor lands). Exposes the "fire_pillar"
-        //    TICK: 5 lingering damage beats at the impact point (0.35s apart) — the multi-tick example. The visual
-        //    is one burst; the gameplay cadence is owned here (option #1), the SkillDef says what each beat does.
+        //    TICK: lingering damage beats at the impact point every 0.35s for the effect's lifetime — the Interval
+        //    example. The visual is one burst; the SkillDef says what each beat does. (Set looping + a Stay Duration
+        //    on the skill for a fixed window instead of the effect's natural length.)
         seq.steps.Add(new VfxStep
         {
             note = "explosion",
             schedule = VfxSchedule.OnEvent, startEvent = "impact",
             kind = VfxStepKind.PlayAt, anchor = VfxAnchor.Target,
             effectId = "aoe.ground-explosion", scale = 1f,
-            tickId = "fire_pillar", tickCount = 5, tickInterval = 0.35f,
+            tickId = "fire_pillar", tickWhen = TickTiming.Interval, tickInterval = 0.35f,
         });
 
         // 3) Screen-shake — also on impact.
