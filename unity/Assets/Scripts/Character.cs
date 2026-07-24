@@ -698,6 +698,8 @@ public class Character : MonoBehaviour, IDamageable
     public bool Invincible { get; set; }
 
     static readonly Color DodgeColor = new Color(0.55f, 0.9f, 1f);
+    // The soaked-by-barrier number (Shield skill) — a pale cyan so an absorbed hit reads distinct from HP loss.
+    static readonly Color ShieldAbsorbColor = new Color(0.5f, 0.8f, 1f);
 
     // Negate an incoming hit because we're dashing through it; pop a small "Dodge" cue over the avatar.
     bool DodgedByInvuln()
@@ -834,6 +836,38 @@ public class Character : MonoBehaviour, IDamageable
         reflectBonusUntil = Time.time + seconds;
     }
 
+    // Absorb pool (Shield skill): a timed barrier that eats incoming HIT damage before it reaches CurrentHP. Bypassed by
+    // DoT true damage, exactly like Guard (see TakeTrueDamage). Latest BeginShield replaces (no stacking) — matches Haste.
+    float shieldUntil; int shieldPool;
+
+    /// <summary>Remaining barrier HP from an active Shield window (0 when none/expired) — for a HUD shield pip.</summary>
+    public int ShieldRemaining => Time.time < shieldUntil ? shieldPool : 0;
+
+    /// <summary>Raise a damage-absorbing barrier of <paramref name="amount"/> HP for <paramref name="seconds"/> (Aegis /
+    /// Barrier skills). It soaks incoming hits until drained or the window lapses. Latest call replaces (no stacking).</summary>
+    public void BeginShield(int amount, float seconds)
+    {
+        if (amount <= 0 || seconds <= 0f) return;
+        shieldPool = amount;
+        shieldUntil = Time.time + seconds;
+    }
+
+    // Drain the barrier first, then HP. Pops a pale-cyan number for the soaked part so the absorb is visible. No alloc
+    // (int math + the pooled DamagePopup). The two hit intakes route through here; DoT keeps its own line (shield bypass).
+    void ApplyHitToHP(int dmg)
+    {
+        if (dmg <= 0) return;
+        if (Time.time < shieldUntil && shieldPool > 0)
+        {
+            int soaked = Mathf.Min(shieldPool, dmg);
+            shieldPool -= soaked;
+            dmg -= soaked;
+            var a = Avatar();
+            if (a != null) DamagePopup.Spawn(a.position, soaked, ShieldAbsorbColor);
+        }
+        if (dmg > 0) CurrentHP = Mathf.Max(0, CurrentHP - dmg);
+    }
+
     public int TakeDamage(int attackerAttack) => TakeDamage(attackerAttack, -1);
 
     /// <summary>Apply an incoming PHYSICAL hit: damage = max(1, attackerAttack − Defense), then scaled by the
@@ -873,7 +907,7 @@ public class Character : MonoBehaviour, IDamageable
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF. Mobs don't crit the player → crit:false.
         int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod)));
-        CurrentHP = Mathf.Max(0, CurrentHP - dmg);
+        ApplyHitToHP(dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);                       // player hurt grunt
         OnDamaged?.Invoke(dmg);                  // drives the player hurt flash
@@ -904,7 +938,7 @@ public class Character : MonoBehaviour, IDamageable
         if (mod <= 0f) return 0;
 
         int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod * Combat.MagicGlanceMult(Flee))));
-        CurrentHP = Mathf.Max(0, CurrentHP - dmg);
+        ApplyHitToHP(dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);
         OnDamaged?.Invoke(dmg);
@@ -981,6 +1015,7 @@ public class Character : MonoBehaviour, IDamageable
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
         guardUntil = 0f;                          // a Guard stance doesn't carry across death
+        shieldPool = 0; shieldUntil = 0f;         // …nor a barrier
         regenUntil = 0f;                          // …nor a heal-over-time
         dmgBuffUntil = aspdBuffUntil = castBuffUntil = 0f;   // …nor timed self-buffs
         Buffs.Clear();                            // …and clear the buff bar

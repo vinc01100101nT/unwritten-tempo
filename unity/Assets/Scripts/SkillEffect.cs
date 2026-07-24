@@ -100,6 +100,13 @@ public enum SkillEffectKind
     /// <summary>Self, timed window: for <see cref="SkillEffect.seconds"/>, reflect <see cref="SkillEffect.magnitude"/>
     /// fraction (0..1) of the damage you TAKE back at the attacker → <c>Character.BeginReflect</c>. (The old Reflect affix.)</summary>
     Reflect,
+
+    /// <summary>Raise a timed absorbing BARRIER on the caster: soaks <see cref="SkillEffect.amount"/> HP of incoming HIT
+    /// damage for <see cref="SkillEffect.seconds"/> → <c>Character.BeginShield</c>. Distinct from <see cref="Guard"/> (a %
+    /// damage CUT): Shield is a finite HP pool that depletes as it eats hits, then lapses. Bypassed by DoT, like Guard.
+    /// Barrier HP scales off sustain stats via <see cref="SkillEffect.affinity"/> (kept off offense to stay a support
+    /// tool). MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</summary>
+    Shield,
 }
 
 /// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window. Move speed is
@@ -206,7 +213,7 @@ public class SkillEffect
     public static bool IsSelfVerb(SkillEffectKind k) =>
         k == SkillEffectKind.Guard || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
         k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect ||
-        IsSelfPointVerb(k);
+        k == SkillEffectKind.Shield || IsSelfPointVerb(k);
 
     /// <summary>A self verb that still needs a GROUND POINT to aim at — the caster relocates there (Dash / Blink).
     /// These migrate to Ground → Point, everything else self migrates to Self.</summary>

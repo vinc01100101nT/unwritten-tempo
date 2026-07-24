@@ -210,7 +210,7 @@ public static class SkillEffectApplier
                 if (hit == 0) ai.Taunt(ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.Vulnerability:
-                if (hit == 0) h.BeginVulnerable(e.magnitude, ScaledSeconds(e, caster));
+                if (hit == 0) h.BeginVulnerable(ScaledMagnitude(e, caster), ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.Knockback:
                 // Shove the mob AWAY from the caster (magnitude = speed). Caster position is the origin so no cast
@@ -276,7 +276,7 @@ public static class SkillEffectApplier
                 if (hit == 0 && StatusController.Player != null) { StatusController.Player.Haste(ScaledMagnitude(e, ch), ScaledSeconds(e, ch)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
                 break;
             case SkillEffectKind.Guard:
-                if (hit == 0) { ch.BeginGuard(ScaledSeconds(e, ch), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
+                if (hit == 0) { ch.BeginGuard(ScaledSeconds(e, ch), ScaledMagnitude(e, ch)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
                 break;
             case SkillEffectKind.Teleport:
                 if (hit == 0)
@@ -306,6 +306,9 @@ public static class SkillEffectApplier
                 break;
             case SkillEffectKind.Reflect:
                 if (hit == 0) { ch.BeginReflect(ScaledSeconds(e, ch), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
+                break;
+            case SkillEffectKind.Shield:
+                if (hit == 0) { ch.BeginShield(ScaledAmount(e, ch), ScaledSeconds(e, ch)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
                 break;
             // Execute / Taunt / Vulnerability / Knockback / Pull are aimed at mobs — no-op on the player.
         }

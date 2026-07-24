@@ -693,6 +693,11 @@ public class SkillComposerWindow : EditorWindow
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("reflect", "Fraction of the damage you take bounced back at the attacker (0..1). 0.3 = 30%."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the reflect window lasts."), ef.seconds, 0.5f, 30f);
                     break;
+                case SkillEffectKind.Shield:
+                    ef.amount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("barrier HP",
+                        "Incoming HIT damage the shield soaks before it breaks (a finite pool, unlike Guard's %). Scales UP via the affinity channel below (sustain stats)."), ef.amount));
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the barrier lasts if not broken first."), ef.seconds, 0.5f, 30f);
+                    break;
             }
 
             // Affinity channels, each labeled by WHAT it boosts. The first scales the effect's main output (damage,
@@ -731,6 +736,7 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Pull:          return "Drags enemies TOWARD the caster on hit.";
             case SkillEffectKind.ManaLeech:     return "For a while, part of the damage the caster deals comes back as MP.";
             case SkillEffectKind.Reflect:       return "For a while, part of the damage the caster takes is bounced back at the attacker.";
+            case SkillEffectKind.Shield:        return "Raises a barrier that soaks a set amount of incoming damage before it breaks.";
             default:                            return "";
         }
     }
@@ -745,6 +751,7 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Execute:       return "boosts EXECUTE DAMAGE";
             case SkillEffectKind.Heal:          return "boosts HEAL AMOUNT (sustain: HP/MP/Def)";
             case SkillEffectKind.Guard:         return "boosts DAMAGE REDUCTION (sustain: HP/Def)";
+            case SkillEffectKind.Shield:        return "boosts BARRIER HP (sustain: HP/Def/MP)";
             // AMPLIFY buff magnitude is FLAT — no affinity channel (round-7 rule); only its DURATION scales (off sustain).
             case SkillEffectKind.Buff:          return null;
             case SkillEffectKind.Regen:         return "boosts HEAL / SEC (sustain: HP/MP)";
@@ -771,6 +778,7 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Status:
             case SkillEffectKind.Buff:
             case SkillEffectKind.Guard:
+            case SkillEffectKind.Shield:
             case SkillEffectKind.Regen:
             case SkillEffectKind.Vulnerability:
             case SkillEffectKind.Haste:

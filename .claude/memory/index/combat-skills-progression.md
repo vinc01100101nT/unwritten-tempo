@@ -1,5 +1,7 @@
 # Combat / skills / progression / stats design
 
+- [Affinity channel must scale in applier](../affinity-channel-must-scale-applier.md) — a composer "boosts X" channel is a DEAD KNOB unless the applier passes ScaledMagnitude; Guard/Vulnerability were raw (fixed 2026-07-24). Catalogs window flags it (⚠).
+
 - [Dash skill + aftercast root gotcha](../dash-skill-and-aftercast-root.md) — `SkillEffectKind.Dash`→`BeginDashToPoint` (visible gap-close to aimed point); skill movement must survive its OWN aftercast (`!CannotAct`) but die to hard-CC.
 - [Dash ease-out killed by duplicate tickId](../dash-easeout-tick-reset.md) — 3 trail-puff steps all had `tickId: dash` → Dash effect fired 3× → `BeginGlideTo` restart reset `dashTotalDist` → ease baseline wiped. Real fix = CONFIG (unique tickId; trail puffs pure-visual); guardrail = composer warns on duplicate tickId. tickIds must be unique.
 
