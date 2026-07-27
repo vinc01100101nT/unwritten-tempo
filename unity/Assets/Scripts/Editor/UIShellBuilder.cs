@@ -114,8 +114,7 @@ public static class UIShellBuilder
         canvasGO.AddComponent<ChatController>();            // in-game chat window (Enter) + /command console (GmCommands)
 
         // The new progression window trio (Inventory I · Equipment E · Character C) — replaces the old
-        // Bag/Character panels. Builds itself into this canvas at runtime; needs the starter Item/Card assets.
-        ItemStarterSet.EnsureStarterItems();
+        // Bag/Character panels. Builds itself into this canvas at runtime; needs the starter Card assets.
         ProgressionWindowsBuilder.EnsureStarterCards();
         var prog = canvasGO.AddComponent<ProgressionWindows>();   // also pulls in InventoryStore (RequireComponent)
         // Bake the empty equip-slot silhouettes (faint gold watermarks) from the Ninja "Items & Weapon" set —

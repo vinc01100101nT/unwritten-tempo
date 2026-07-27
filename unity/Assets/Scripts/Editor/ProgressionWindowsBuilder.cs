@@ -19,7 +19,6 @@ public static class ProgressionWindowsBuilder
     [MenuItem("Tools/unwritten/UI/Build Progression Windows", priority = 121)]
     static void Build()
     {
-        ItemStarterSet.EnsureStarterItems();
         EnsureStarterCards();
 
         var existing = GameObject.Find(CanvasName);

@@ -1,0 +1,39 @@
+# The World of Unwritten
+
+*The setting, the catastrophe that shaped it, and why the world looks the way it does.*
+
+## The Truth, and the Un-writing
+
+In ancient history, one person wrote down the **truth of the world** — a complete record of everything that was and is. It was the definitive account of reality itself.
+
+Then a **negative entity** found the book and **un-wrote it**: it tore the truth apart. The record was destroyed, and its pages were **scattered across the world**. Wherever a page came to rest, it did not stay paper — it **transformed into a monster**.
+
+The world has been called *Unwritten* ever since: a world whose record was un-written.
+
+## What the Un-writing did to people
+
+When the truth was destroyed, **people lost their identities.** Their color, their sense of self — all of it drained away, leaving behind **charcoal-like husks**. A body still stands: present, real, solid. But the ink is gone.
+
+The husks did not simply give up. They wander a seemingly endless journey across the world, **hunting the scattered pages** — trying to reconstruct the evidence of the past and recover the truth that was taken. You are one of them.
+
+## The world is its art
+
+Nothing about how Unwritten looks is arbitrary. The visual style *is* the story:
+
+- **The flat, papery monsters are the corrupted pages.** They are literally paper — fragments of the torn book given hostile form. Their flatness isn't an art choice; it's what they are.
+- **The colorless, charcoal heroes are people who lost their identity.** The body is 3D and fully present, but the ink has drained — no color, no self. A faint trace of who they were still clings on: a hint of colored hair, an inked eye.
+- **The pages you recover are fragments of the true text.** To defeat a monster is, in a sense, to *read* the page it came from — to recover a piece of what was un-written.
+
+## Recovering your color
+
+Progression in Unwritten is the story of **getting your color back.** As a husk reconstructs the truth — growing stronger, journeying further, uncovering story — **color returns to them**, identity leaking back in. A fully realized hero is one who has won back a great deal of what the entity took.
+
+## The great powers of the world
+
+- **The entity** — the un-writer itself, the force that tore the truth apart. The most concentrated corruption in the world.
+- **Bosses** — larger, reassembled clusters of false pages: corruption gathered into something powerful and deliberate.
+- **The scattered pages** — the ordinary monsters of the world, and the reason to keep walking.
+
+---
+
+*Canon reference: this page is drawn from the game's canon lore. Story beats, the entity's history, and the codex of recovered pages will be expanded as they are designed.*

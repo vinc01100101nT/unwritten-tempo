@@ -7,6 +7,9 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 - [Changes MUST persist in repo, not runtime](changes-must-persist-in-repo.md) — bake in code/saved asset + read back; never leave a change in bare execute_code/runtime state.
 - [DIRECTION: RO-style 2.5D](direction-2p5d-pivot.md) — PLAYER+NPC live-3D, MOBS billboard; player LIVE-3D 2026-07-04.
 - [Baked-character billboards DELETED](baked-character-billboards-removed.md) — only MOBS billboard now; BakedBillboard8/Facing8/CharacterDef/Roster/bakers gone 2026-07-21.
+- [Weapons are 3D, no 2D weapons](weapons-are-3d-no-2d.md) — a weapon Item is real only with a 3D equipModel; kept: Iron Sword + Bow Epic; Katana/Sai/Dawnbreaker retired.
+- [NO classes — weapons+skills define gameplay](no-classes-weapons-define-gameplay.md) — class system doc is stale/deleted; identity = equipped weapon's skill kit + ring build; rosters are per-weapon.
+- [Ring stats: always LOOP order](ring-stats-canonical-order.md) — list the 10 ring stats as Def→HP→Atk→Accuracy→CastSpeed→MAtk→MP→Evasion→Critical→AttackSpeed (from SkillRing.Ring), never enum order.
 - [Unity game lives in unity/ of THIS repo](unity-2d-direction.md) — game C# at `unity/Assets/Scripts/`.
 - [unwritten: foundation-first + Ninja art](unwritten-foundation-first.md) — world before skill-draft; CC0 pack, PPU 16.
 - [Project layout & tech facts](project-layout.md) — Unity 6 + URP, PPU 16; Field/Town scenes; MonsterSpawner.
