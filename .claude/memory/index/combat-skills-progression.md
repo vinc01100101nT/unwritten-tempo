@@ -1,5 +1,8 @@
 # Combat / skills / progression / stats design
 
+- [Weapon roster — 12 locked identities](../weapon-roster-12-identities.md) — the 12 weapons + one-sentence identity each (litmus test for every skill); doc q17d4q80p9rj4exmezrxhnkc8h8bad3x; Scythe/Shield need new WeaponTypes; Whirlwind belongs on Greatsword not Sword.
+- Skill Numbers & Balance Baseline LOCKED 2026-07-28 (doc q17b9j3cjpvwf271kvdz0qf1s98bdrbz, under V3 parent). Measured anchors: L1 player HP20/MP10/Atk4/MAtk3/Def1; damage ≈ Attack×damageMult×affinity; normal damageMult ~1, ULT (meteor) =8 + multi-hit, chargeCost 5000 vs 100, tier 1. **Scaling defaults LOCKED** (closes V3 "Still open"): damage→Atk/MAtk; heal/regen/shield→MP; Guard dmg_reduction→Def; dot_damage→its own damage type; offense debuffs (vuln/slow/blind)→caster offense stat; buff_mult FLAT; Haste move_mult FLAT; ALL durations→MP; shove/leech/reflect raw. Composer starter-weights not yet updated to match.
+
 - [Affinity channel must scale in applier](../affinity-channel-must-scale-applier.md) — a composer "boosts X" channel is a DEAD KNOB unless the applier passes ScaledMagnitude; Guard/Vulnerability were raw (fixed 2026-07-24). Catalogs window flags it (⚠).
 
 - [Dash skill + aftercast root gotcha](../dash-skill-and-aftercast-root.md) — `SkillEffectKind.Dash`→`BeginDashToPoint` (visible gap-close to aimed point); skill movement must survive its OWN aftercast (`!CannotAct`) but die to hard-CC.

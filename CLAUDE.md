@@ -77,6 +77,7 @@ When an editor tool writes assets, its output path must point at the correct buc
 
 ## Standing rules
 
+- **"Copy-ready" / "paste-ready" = wrap it in a fenced code block** — whenever the user asks for copy-ready / paste-ready content (a GPT or peer message, a prompt, a snippet to paste elsewhere), output that content INSIDE a fenced code block so Tempo renders a one-click **copy** button. Use a non-shell language tag (` ```text ` or ` ```markdown `) so it gets the copy button, NOT the Run button that ` ```bash `/` ```sh ` triggers. Plain prose the user must hand-select is NOT copy-ready — it fails the request.
 - **User is new to Unity, strong in JS/TS** — explain C#/Unity by analogy; give click-by-click UI steps
 - **One-step walkthrough style** — during interactive click-by-click UI guidance (Blender/Mixamo/Unity/etc.), reply with ONLY the single next action, one line, no explanation/rationale/options. User asks one question at a time and wants one answer; expand only if asked
 - **No Play mode without being asked** — hand off play-testing to the user

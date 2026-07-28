@@ -6,6 +6,14 @@
 
 In Unwritten, **your equipped weapon carries its own kit of active skills.** Equip a sword and your hotbar fills with that sword's abilities; swap to a bow and the bar becomes the bow's kit. There are no classes in Unwritten — your weapon is what defines your abilities, and changing weapons is how you change your loadout.
 
+## Every weapon rolls its own kit
+
+Each weapon *type* has a **pool of 12 skills** — **3 ultimates** and **9 normal skills**. No single weapon gives you all of them; a weapon holds up to **1 ultimate + 3 normals**, and what it drops with depends on its **rarity** — higher rarity means more skills already filled in and a better chance of carrying an ultimate. (A common weapon might drop with a single skill; a legendary can arrive nearly complete.) You can then **craft** the rest — see *Crafting & Recycling*.
+
+**Your ultimate points at your build.** Each weapon's three ultimates each steer toward a different playstyle — and which Ring stats to invest in — so the ultimate you roll is a hint at how to build that weapon.
+
+So two of the same weapon can play very differently, and chasing the weapon (and the ultimate) *you* want is part of the hunt. Every skill in a weapon's pool reinforces that weapon's identity — so whatever you roll, it still plays like that weapon.
+
 ## Skills don't level — your Ring powers them
 
 A skill's raw strength doesn't come from ranking the skill up. Instead, **your Ring stats scale it** (see *Stats & the Ring*). The same skill is stronger in the hands of someone who invested the right stats. This is what keeps roles honest: a heal only pays off if you invested MP; a damage skill only hits hard if you invested Attack or Magic Attack.
@@ -35,6 +43,6 @@ Skills are built from a catalog of effects. The common ones:
 - **Execute** — bonus damage that grows huge against low-health enemies.
 - **Dash / Teleport** — close distance in a rush, or blink to a target spot.
 
-**Ultimate skills** are a special tier that charge up during combat and cost that charge to unleash.
+**Ultimate skills** are a special tier that charge up during combat and cost that charge to unleash — every weapon's pool holds **3** of them, and a weapon can carry **one** (higher-rarity drops are far more likely to come with it).
 
-> *Status: the skill framework above is in place. Exact numbers, cooldowns, and each weapon's specific skill list are still being tuned and drafted.*
+> *Status: the skill framework above is in place. Exact numbers, cooldowns, and each weapon's 12-skill pool are still being tuned and drafted.*
