@@ -1,0 +1,65 @@
+# Weapon Roster — 12 Identities (V3)
+
+Locked 2026-07-27 after a diversity pass. This is the **canonical weapon lineup** for the V3 skill system. The one-sentence identity per weapon is the **litmus test for every authored skill**: *if a proposed skill doesn't reinforce its weapon's sentence, it belongs on another weapon.* Companion to the **Active Skill System — V3** design doc (that owns the channels/effects/scaling rules; this owns the weapon identities).
+
+## 1. The litmus test — one sentence per weapon
+
+| Weapon         | Identity (every skill must reinforce this)                        |
+| -------------- | ----------------------------------------------------------------- |
+| **Sword**      | Win duels through precise single-target bursts and timed defense. |
+| **Greatsword** | Delete groups with huge cleaves.                                  |
+| **Axe**        | Snowball through relentless aggression.                           |
+| **Warhammer**  | Control enemies by denying their actions.                         |
+| **Spear**      | Control enemy positioning.                                        |
+| **Shield**     | Protect allies by absorbing attention.                            |
+| **Bow**        | Win through mobility and spacing.                                 |
+| **Dagger**     | Eliminate weakened targets.                                       |
+| **Firearm**    | Land devastating single shots.                                    |
+| **Staff**      | Dominate areas with destructive magic.                            |
+| **Wand**       | Keep allies alive.                                                |
+| **Scythe**     | Slowly overwhelm enemies with curses.                             |
+
+## 2. Full identity map
+
+| Weapon     | Family / scales    | Archetype       | Uniquely owns                                                  | Feel          |
+| ---------- | ------------------ | --------------- | -------------------------------------------------------------- | ------------- |
+| Sword      | Might / Atk        | Burst           | single-target spike + self-Guard                               | duelist       |
+| Greatsword | Might / Atk        | Burst (AoE)     | melee AoE cleave                                               | crowd-clearer |
+| Axe        | Might / Atk        | Buff (self)     | Bleed + self-Haste + ramping-damage snowball, no defense       | berserker     |
+| Warhammer  | Might / Atk        | Tempo (CC)      | hard Stun + Knockback stagger                                  | disabler      |
+| Spear      | Might / Atk        | Tempo           | Pull + Dash-through + Vulnerability                            | wrangler      |
+| Shield     | Might / Def        | Fortress        | Taunt + Guard + Shield + Reflect, ~no damage                   | wall          |
+| Bow        | Finesse / Atk-crit | Tempo           | mobile kite: Slow + Dash spacing                               | skirmisher    |
+| Dagger     | Finesse / Atk-crit | Burst           | Execute finisher + blink out                                   | assassin      |
+| Firearm    | Finesse / Atk-crit | Burst           | biggest single crit spike on a reload rhythm, immobile         | sniper        |
+| Staff      | Arcane / MAtk      | Burst (AoE)     | ranged magic AoE nuke + Burn + Freeze/Slow lockdown            | artillery     |
+| Wand       | Arcane / MP        | Fortress / Buff | Heal / Regen / Shield / Buff / Cleanse — ally uptime           | lifeline      |
+| Scythe     | Arcane / MAtk      | Curse           | stacked Poison + Vulnerability + Silence attrition + ManaLeech | reaper        |
+
+## 3. The three control weapons — each owns a distinct battlefield question
+
+- **Shield → "Hit me."** — draws fire via Taunt, absorbs and reflects.
+- **Warhammer → "You don't get to act."** — Stun + Knockback, no Taunt (Taunt is the Shield's; keeping them apart is what makes the split clean).
+- **Spear → "Stand over there."** — Pull + Dash-through + Vulnerability; rearranges, doesn't disable.
+
+## 4. Magic AoE is split three ways (no Staff monopoly)
+
+- **Staff = burst AoE** (delete the pack now).
+- **Scythe = attrition AoE** — a DoT curse-field (the existing `hex_field` skill is exactly this shape).
+- **Wand = support AoE** — party heal.
+
+Three completely different reasons to bring magic AoE.
+
+## 5. Weapon-type & engine mapping (kept honest)
+
+Real `WeaponType` enum today: **Sword, TwoHandSword, Dagger, Axe, TwoHandAxe, Mace, Spear, Staff, Bow, Katar, Knuckle, Firearm**.
+
+- **Maps to an existing type + attack clips we already have (KayKit):** Sword→Sword, Greatsword→TwoHandSword, Axe→Axe (Berserker; *dual-wield is animation only, not a separate type*), Spear→Spear, Dagger→Dagger/Katar, Bow→Bow, Firearm→Firearm, Staff→Staff, Wand→short Staff.
+- **Needs a NEW `WeaponType` + a new attack-animation bucket:** **Scythe**; **Shield** (also **off-hand / left-hand** — opens Sword+Shield, Mace+Shield dual setups later).
+- **Firearm:** the "reload rhythm" is approximated by a **long per-skill cooldown** for v1 (already a channel); a true ammo/reload state machine is deferred — the sniper feel survives without it.
+
+## 6. Authoring plan & open items
+
+- **Grid = 12 weapons, each with a 12-skill POOL** — 3 ultimates + 9 normals (144 pool skills total). A dropped weapon grants a **random 4-skill kit**: always **1 ultimate + 3 normals** from its pool. This resolves V3's "loot surprise source" open item — the surprise IS the rolled kit.
+- **Scaling role-lock is load-bearing** (Heal→MP, Damage→Atk/MAtk) — self-check affinity weights on every skill.
+- **No rosters authored yet** — all 12 pools start fresh. Author each weapon's 12 skills straight from its one-sentence identity (§1) + the channels/effects/scaling rules in the V3 docs.

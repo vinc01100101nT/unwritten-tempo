@@ -1,0 +1,39 @@
+# unwritten — Docs
+
+Native markdown docs for the **unwritten** project, migrated out of Tempo Docs on 2026-07-30. This folder is now the source of truth for design/spec/notes; edit these files directly.
+
+## Planning & production
+
+- [Roadmap to Launch](roadmap-to-launch.md) — how far from a shippable game; Tier 1 (Steam ARPG) vs Tier 2 (MMO), milestones M1–M5.
+- [Dev Contribution Log](dev-contribution-log.md) — gamified record of the dev's design/diagnosis contributions.
+- [Performance Checkup — My Routine](performance-checkup-routine.md) — the recurring `/perf-checkup` routine.
+- [YouTube Update Format Template](youtube-update-template.md) — the lowercase progress-update template.
+
+## Systems & combat design
+
+- [Active Skill System — V3](active-skill-system-v3/README.md) — channels + role-locked scaling (design source of truth). Folder:
+  - [Implementation Notes](active-skill-system-v3/implementation-notes.md) — code-facing companion.
+  - [Weapon Roster — 12 Identities](active-skill-system-v3/weapon-roster-12-identities.md)
+  - [Weapon Crafting & Economy](active-skill-system-v3/weapon-crafting-economy.md)
+  - [Skill Numbers & Balance Baseline](active-skill-system-v3/skill-numbers-balance-baseline.md)
+  - [State System — Buffs, Debuffs & Combo Marks](active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md)
+- [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — the stat-growth engine, source of truth.
+- [Crafting & Recycling](crafting-and-recycling.md) — player-facing weapon crafting loop.
+- [Pre-Renewal RO Port — Phase Plan & Formulas](pre-renewal-ro-port.md) — combat/stat math port.
+- [Network-Readiness — Combat Audit & Refactor Plan](network-readiness-audit.md) — multiplayer seam prep.
+- [HUD/UI System — Design & Relay](hud-ui-system.md) — the HUD/UI workstream.
+
+## World & content
+
+- [World Creator — Spec](world-creator-spec.md) — browser graph-editor → JSON → Unity orchestrator pipeline.
+- [Biome Mob Families — Tiered Spawning](biome-mob-families.md) — biome × tier mob data + generator wiring.
+- [Story & Setting (Canon)](story-setting-canon.md) — the anchor lore doc.
+
+## Art & animation pipeline
+
+- [GPT Concept Prompts — Paste-Me](gpt-concept-prompts.md) — props + weapons image-generation prompt sets.
+- [Mixamo Animation Integration — Workflow](mixamo-animation-workflow.md) — no-code animation import.
+
+## Player wiki
+
+- [Unwritten Wiki](wiki/README.md) — the player-facing guide (lore, character, combat, bestiary). See the folder for all pages.

@@ -18,7 +18,7 @@ Control-weapon split (kept clean): Shield="Hit me", Warhammer="You don't act", S
 
 Engine backlog from this roster: **Scythe** and **Shield** each need a NEW `WeaponType` + attack-animation bucket (Shield is OFF-HAND/left). **Firearm** reload approximated by a long per-skill cooldown for v1 (true ammo state deferred). Everything else maps to an existing `WeaponType` and rides KayKit attack clips already in-repo.
 
-Kit-size model LOCKED: each weapon type has a **12-skill pool** (3 ultimates + 9 normals = 144 total). Each weapon DROP rolls a random **4-skill kit** = strictly **1 ult + 3 normals** from that pool (this IS the "loot surprise source"). Existing Sword/Wand drafts were ~5 fixed skills — re-slot them into the pool model. Also RE-AUDIT drafts vs identity — the Sword draft's **Whirlwind** (AoE) belongs on **Greatsword**, not Sword.
+Kit-size model LOCKED: each weapon type has a **12-skill pool** (3 ultimates + 9 normals = 144 total). Each weapon DROP rolls a random **4-skill kit** = strictly **1 ult + 3 normals** from that pool (this IS the "loot surprise source"). No rosters authored yet — all 12 pools start fresh, composed from each weapon's identity + the V3 channels/effects/scaling rules.
 
 Player-facing wiki updated 2026-07-27: `wiki/content/weapons.md` (source doc q170dqg8b6pe370nj8sj3wwnmn8bb88q) + `wiki/content/skills.md` (source doc q176a4jkptgq6j4xwjp7ymh92x8ba9dw) carry the 12 identities + pool/drop rule.
 
