@@ -50,4 +50,4 @@ Applying any buff/debuff **automatically marks its target with that state.** The
 
 ## First consumer
 
-Sword **Parry** (self Def-Guard buff, Private, non-stacking) → **Riposte** (Require State = that Guard buff, Consume, Track Owner). No new mark type; Riposte just requires Parry's buff.
+Sword **Parry** — one self-contained skill (not split into a separate Riposte). On a successful block it applies a **Private, non-stacking** self "counter-ready" damage buff; the player's **next strike consumes it** for +50%. This exercises the same machinery a two-skill combo would (Owner = Private, Consume, Track Owner) without a second skill — the state's own timer + consume-on-use carry it. It stays the state system's first consumer; later weapons (Warhammer, Spear, Dagger, Scythe) add the genuine two-skill setup→payoff pairs.

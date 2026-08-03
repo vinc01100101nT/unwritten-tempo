@@ -26,7 +26,7 @@ This is a **functionality-first** effort. We do **not** care which sprite a mob 
 - `**MonsterDef**` (`unwritten/Monster`) — full mob stat block keyed by stable kebab `id` (e.g. `mob.slime`); has `sheet` (folder under `Actor/Monster`), `weight`, `isBoss`, element/status/loot. **No biome or tier field yet.**
 - `**MonsterCatalog**` — load-once cache over `Resources/Monsters`; `Get(id)` / `Boss` / `WeightedPick`.
 - `**MapRecipe**` — already has a `Biome biome` field (`Grassland, Snow, Desert, Volcanic, Corrupted`), used today only for ground look. `RecipeMobGroup` references a **single** mob by name/id, or empty = weighted mix of all field mobs.
-- **No `Boss/` art folder** — "bosses" are ordinary mobs flagged `isBoss`. Tier 4 can map onto that.
+- **No** `Boss/` **art folder** — "bosses" are ordinary mobs flagged `isBoss`. Tier 4 can map onto that.
 
 ## Decision: reuse the existing `Biome` enum
 
@@ -56,7 +56,7 @@ Tier = difficulty. Each mob def carries its own stats, so a tier is just a tag w
 
 ## Biome × tier assignment (arbitrary first pass)
 
-Every Monster sheet gets dropped into one of the 5 biomes and a tier 1–4. **Assignment is arbitrary for now** — purely to populate the data so the generator has something to spread. We re-tag freely once the pipeline works. (~40 sheets available: Butterfly, Mouse, Racoon, Bear, Cyclope, Bat, Skull, Spirit, Spider, Axolot, Fish, Octopus, Kappa, Flam, Dragon, TRex, Lantern, Heart, etc.)
+Every Monster sheet gets dropped into one of the 5 biomes and a tier 1–4. **Assignment is arbitrary for now** — purely to populate the data so the generator has something to spread. We re-tag freely once the pipeline works. (\~40 sheets available: Butterfly, Mouse, Racoon, Bear, Cyclope, Bat, Skull, Spirit, Spider, Axolot, Fish, Octopus, Kappa, Flam, Dragon, TRex, Lantern, Heart, etc.)
 
 ## Counts & division (actual)
 
@@ -75,7 +75,7 @@ Every Monster sheet gets dropped into one of the 5 biomes and a tier 1–4. **As
 
 ## Next step (verify)
 
-vince clicks **Import NinjaAdventure Monsters** → ~86 assets appear in `Resources/Monsters`. Then generate any recipe (its `Biome` is already set) and the spawned mobs should be that biome's set. Legacy MobRoster-migration assets (Slime/Bat/Kappa/Flam/Cyclope/Dragon by display name), if present, can be deleted — the folder-based set supersedes them.
+vince clicks **Import NinjaAdventure Monsters** → \~86 assets appear in `Resources/Monsters`. Then generate any recipe (its `Biome` is already set) and the spawned mobs should be that biome's set. Legacy MobRoster-migration assets (Slime/Bat/Kappa/Flam/Cyclope/Dragon by display name), if present, can be deleted — the folder-based set supersedes them.
 
 ## Related
 

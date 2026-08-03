@@ -83,6 +83,9 @@ public class Character : MonoBehaviour, IDamageable
     // Pre-renewal vitals/ASPD: VIT and INT scale HP/SP as a PERCENT per point (they multiply the level-driven
     // base, not add flat); DEX raises ASPD a fraction of what AGI does.
     const float VitHpPercent = 0.02f, IntSpPercent = 0.015f, DexAspdShare = 0.25f;
+    // Hard ceiling on the attack-speed multiplier. Sword's Momentum settles at ~(attack rate × stack duration),
+    // so an uncapped aspd would turn into uncapped Momentum (and Deathblow) scaling. Bounds the equilibrium.
+    const float MaxAttackSpeedMult = 3f;
     const float CritShieldPerLuk = 0.003f;   // pre-renewal "crit shield": the TARGET's LUK lowers our crit chance 0.3%/pt
     // Pre-renewal RO cast time: a spell's wind-up shrinks LINEARLY with DEX and reaches ZERO (instant cast)
     // at this DEX. castTime = baseCast × (1 − DEX / InstantCastDex), clamped ≥ 0 — one stat, the classic
@@ -364,8 +367,9 @@ public class Character : MonoBehaviour, IDamageable
                                         * (1f + PassivePercent(StatId.Evasion)));
     // Pre-renewal ASPD: AGI is the primary driver, DEX contributes a fraction (DexAspdShare). Kept as a
     // SPEED MULTIPLIER (the game's attack model) rather than the RO 0–200 scale. >1 = swing faster.
-    public float AttackSpeedMult => (1f + (P(PrimaryStat.AGI) + P(PrimaryStat.DEX) * DexAspdShare) * AspdPerAgi
-                                       + PassivePercent(StatId.AttackSpeed) + equipBonuses.aspdPercent / 100f) * AspdBuffMult;
+    public float AttackSpeedMult => Mathf.Min(MaxAttackSpeedMult,
+                                    (1f + (P(PrimaryStat.AGI) + P(PrimaryStat.DEX) * DexAspdShare) * AspdPerAgi
+                                       + PassivePercent(StatId.AttackSpeed) + equipBonuses.aspdPercent / 100f) * AspdBuffMult);
     public float CastSpeedMult   => (1f + P(PrimaryStat.DEX) * CastPerDex + PassivePercent(StatId.CastSpeed)) * CastBuffMult;   // >1 = cast faster; CastSpeed ring node + Blink haste lift it
 
     /// <summary>Pre-renewal cast-time multiplier applied to a spell's base wind-up: <c>1 − DEX/150</c>,

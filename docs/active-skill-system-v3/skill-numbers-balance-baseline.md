@@ -65,6 +65,10 @@ The default ring stat each channel scales off, **unless a skill deliberately ove
 2. This doc decides *how much* — start from the band for its role, nudge for feel.
 3. The **scaling-default table** decides *what stat grows it* — follow it unless the skill has a deliberate reason not to (and note the reason).
 
+## Attack Speed cap — REQUIRED (locked 2026-08-01)
+
+`Character.AttackSpeedMult` (`Character.cs:367`) is currently an **uncapped** sum (stats + passives + equip) × buff — measured, no clamp. Sword's **Momentum** (uncapped stacks, generated per basic attack) has an equilibrium of *attack rate × stack duration*, so an uncapped attack speed makes Momentum — and Deathblow's +40%/stack — scale without bound. **Add a hard Attack Speed ceiling** (pre-renewal RO-style, ~190-equivalent) so the equilibrium is bounded. This is a general combat fix, not Sword-specific. **Code TODO — not yet implemented.**
+
 ## Open / to measure before mass-tuning
 
 - **Charge-gain rate** (sets ult cadence) — measure in a real fight.

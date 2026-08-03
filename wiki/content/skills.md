@@ -8,7 +8,7 @@ In Unwritten, **your equipped weapon carries its own kit of active skills.** Equ
 
 ## Every weapon rolls its own kit
 
-Each weapon *type* has a **pool of 12 skills** — **3 ultimates** and **9 normal skills**. No single weapon gives you all of them; a weapon holds up to **1 ultimate + 3 normals**, and what it drops with depends on its **rarity** — higher rarity means more skills already filled in and a better chance of carrying an ultimate. (A common weapon might drop with a single skill; a legendary can arrive nearly complete.) You can then **craft** the rest — see *Crafting & Recycling*.
+Each weapon *type* has its own **pool of skills** — **3 ultimates** plus a set of normal skills (how many depends on the weapon; the pool is only as large as the weapon's identity naturally supports). No single weapon gives you all of them; a weapon holds up to **1 ultimate + 3 normals**, and what it drops with depends on its **rarity** — higher rarity means more skills already filled in and a better chance of carrying an ultimate. (A common weapon might drop with a single skill; a legendary can arrive nearly complete.) You can then **craft** the rest — see *Crafting & Recycling*.
 
 **Your ultimate points at your build.** Each weapon's three ultimates each steer toward a different playstyle — and which Ring stats to invest in — so the ultimate you roll is a hint at how to build that weapon.
 

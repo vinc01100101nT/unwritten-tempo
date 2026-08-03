@@ -1,6 +1,6 @@
 {
   "title": "Unwritten Wiki",
-  "note": "GENERATED FROM TEMPO DOCS — do not hand-edit page bodies here. Edit the source doc in Tempo, then re-export. Each page's docId is recorded for re-sync.",
+  "note": "SINGLE SOURCE of the player wiki (Tempo docs retired 2026-08-01, docs/wiki collapsed into here). Hand-edit page bodies in content/*.md and register each page in this manifest. Legacy docId fields are stale historical refs — safe to ignore.",
   "groups": [
     {
       "title": "Lore & World",
@@ -24,6 +24,7 @@
       "pages": [
         { "id": "combat",  "title": "Combat Mechanics",    "file": "combat.md",  "docId": "q17afjhjntpkkq18c01gqwxbjs8bbt2y" },
         { "id": "weapons",  "title": "Weapons & Equipment", "file": "weapons.md",  "docId": "q170dqg8b6pe370nj8sj3wwnmn8bb88q" },
+        { "id": "sword",    "title": "The Sword",           "file": "sword.md" },
         { "id": "crafting", "title": "Crafting & Recycling", "file": "crafting.md", "docId": "q17cy3qese3w2k7hjcpz0nw91h8bdgr7" },
         { "id": "cards",    "title": "Cards",               "file": "cards.md",    "docId": "q176aha2yer0b8xcg7e7zns7498bbtpx", "tag": "planned" }
       ]

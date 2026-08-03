@@ -12,29 +12,29 @@ Every weapon owns a **distinct playstyle** — one clear reason to wield it. The
 
 ### Might — physical power, up close
 
-| Weapon | What it's for |
-| --- | --- |
-| **Sword** | Win duels with precise single-target bursts and timed defense. |
-| **Greatsword** | Delete whole groups with huge cleaves. |
-| **Axe** | Snowball through relentless aggression. |
-| **Warhammer** | Deny enemies their turn — stun and knock them back. |
-| **Spear** | Reposition the fight — pull enemies in and impale them. |
-| **Shield** | Protect your allies by absorbing all the attention. *(off-hand — pair it with a one-handed weapon)* |
+| Weapon         | What it's for                                                                                       |
+| -------------- | --------------------------------------------------------------------------------------------------- |
+| **Sword**      | Win duels with precise single-target bursts and timed defense.                                      |
+| **Greatsword** | Delete whole groups with huge cleaves.                                                              |
+| **Axe**        | Snowball through relentless aggression.                                                             |
+| **Warhammer**  | Deny enemies their turn — stun and knock them back.                                                 |
+| **Spear**      | Reposition the fight — pull enemies in and impale them.                                             |
+| **Shield**     | Protect your allies by absorbing all the attention. *(off-hand — pair it with a one-handed weapon)* |
 
 ### Finesse — precision & mobility
 
-| Weapon | What it's for |
-| --- | --- |
-| **Bow** | Win through mobility and spacing — kite and never get touched. |
-| **Dagger** | Eliminate weakened targets, then vanish. |
-| **Firearm** | Land one devastating shot, then reload. |
+| Weapon      | What it's for                                                  |
+| ----------- | -------------------------------------------------------------- |
+| **Bow**     | Win through mobility and spacing — kite and never get touched. |
+| **Dagger**  | Eliminate weakened targets, then vanish.                       |
+| **Firearm** | Land one devastating shot, then reload.                        |
 
 ### Arcane — magic
 
-| Weapon | What it's for |
-| --- | --- |
-| **Staff** | Dominate whole areas with destructive magic. |
-| **Wand** | Keep your allies alive. |
+| Weapon     | What it's for                                  |
+| ---------- | ---------------------------------------------- |
+| **Staff**  | Dominate whole areas with destructive magic.   |
+| **Wand**   | Keep your allies alive.                        |
 | **Scythe** | Slowly overwhelm enemies with stacking curses. |
 
 Each weapon type has a deep pool of skills, and **every weapon that drops rolls its own kit** from that pool — how full it arrives, and whether it carries an ultimate, scales with its **rarity**, so no two of the same weapon play exactly alike. You can then shape it further at the forge. See *Skills* for how kits roll, and *Crafting & Recycling* for reforging, refining, transmog, and turning unwanted weapons into Essence.
@@ -63,6 +63,6 @@ Gear comes in rarity tiers — **Common, Uncommon, Rare, Epic, Legendary** — w
 
 ## Cards
 
-Higher-rarity gear has **card slots** you can socket with cards for monster-matchup bonuses. See **[Cards](#)**.
+Higher-rarity gear has **card slots** you can socket with cards for monster-matchup bonuses. See **Cards**.
 
 > *Status: the 12-weapon roster and each weapon's one-line identity are locked in design; every weapon's exact 12-skill pool and stats are being authored. Slots and the refinement rule are set.*

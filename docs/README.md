@@ -2,6 +2,10 @@
 
 Native markdown docs for the **unwritten** project, migrated out of Tempo Docs on 2026-07-30. This folder is now the source of truth for design/spec/notes; edit these files directly.
 
+## Process
+
+- [The Three-Brain Design Process](design-process.md) — the standing Claude+Vince+GPT workflow for designing any system (frame → ideate → filter → co-design → validate → stress-test → review → lock+document). Reuse for every design unit.
+
 ## Planning & production
 
 - [Roadmap to Launch](roadmap-to-launch.md) — how far from a shippable game; Tier 1 (Steam ARPG) vs Tier 2 (MMO), milestones M1–M5.
@@ -17,6 +21,7 @@ Native markdown docs for the **unwritten** project, migrated out of Tempo Docs o
   - [Weapon Crafting & Economy](active-skill-system-v3/weapon-crafting-economy.md)
   - [Skill Numbers & Balance Baseline](active-skill-system-v3/skill-numbers-balance-baseline.md)
   - [State System — Buffs, Debuffs & Combo Marks](active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md)
+  - [Sword — Skill Roster](active-skill-system-v3/sword-skill-roster.md) — first fully-authored weapon (3 ults + 4 actives + Momentum passive; incl. the universal-but-specialized authoring rule).
 - [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — the stat-growth engine, source of truth.
 - [Crafting & Recycling](crafting-and-recycling.md) — player-facing weapon crafting loop.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](pre-renewal-ro-port.md) — combat/stat math port.
@@ -36,4 +41,4 @@ Native markdown docs for the **unwritten** project, migrated out of Tempo Docs o
 
 ## Player wiki
 
-- [Unwritten Wiki](wiki/README.md) — the player-facing guide (lore, character, combat, bestiary). See the folder for all pages.
+- [Unwritten Wiki](../wiki/) — the player-facing guide (lore, character, combat, bestiary). It's a **served website** at repo-root `wiki/` (viewer `index.html` + `content/*.md`, nav in `content/manifest.json`) — NOT under `docs/`. Edit wiki pages there, not here.

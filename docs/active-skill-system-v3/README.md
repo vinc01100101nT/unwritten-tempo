@@ -145,7 +145,7 @@ For these to fire, each skill still carries a **damage type as real data** — *
 
 | System                | Single responsibility                                                                                                             |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Weapon                | Grants skills — a rarity-scaled roll from the weapon's 12-skill pool (see **Weapon Crafting & Economy**); defines weapon identity |
+| Weapon                | Grants skills — a rarity-scaled roll from the weapon's skill pool (see **Weapon Crafting & Economy**); defines weapon identity |
 | Channels (§1)         | The skill's numeric outputs ("how much?")                                                                                         |
 | Effects (§2)          | The skill's natural behaviors ("what happens?")                                                                                   |
 | Ring                  | Numeric scaling of channels; scaling weights lock roles                                                                           |
