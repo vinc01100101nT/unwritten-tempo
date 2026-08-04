@@ -1,0 +1,116 @@
+{
+  "title": "Combat Mechanics",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "*Damage types, elements, and matchups. Unwritten uses a pre-Renewal Ragnarok-style combat model.*"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The three damage types"
+    },
+    {
+      "type": "paragraph",
+      "text": "Every hit is one of three types, and each behaves differently:"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Physical** — uses your **Attack** against the target's **Defense**. Can miss, can crit.",
+        "**Magic** — uses your **Magic Attack** against **Magic Defense**. **Never misses**, and **cannot crit**.",
+        "**Critical** — a forced critical hit that **ignores Defense**."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Three always-on rules"
+    },
+    {
+      "type": "paragraph",
+      "text": "These are hard rules the combat math always honors:"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        "**Critical hits ignore Defense** — armor doesn't save you from a crit.",
+        "**Magic never misses** — accuracy and dodge don't apply to spells.",
+        "**Tanks resist mages** — high Defense and HP hold up well against the magic arc, so a durable build is the natural answer to casters."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The archetype triangle *(design intent)*"
+    },
+    {
+      "type": "paragraph",
+      "text": "Builds are meant to settle into a rock-paper-scissors of three archetypes:"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**AGI / LUK (crit)** beats **STR / VIT (tank)** — crit partly bypasses Defense.",
+        "**STR / VIT (tank)** beats **INT / DEX (mage)** — HP and Magic Defense soak the burst.",
+        "**INT / DEX (mage)** beats **AGI / LUK (crit)** — magic ignores dodge."
+      ]
+    },
+    {
+      "type": "quote",
+      "text": [
+        "These are intended tendencies (not absolute counters), and the exact numbers are still being tuned."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Elements"
+    },
+    {
+      "type": "paragraph",
+      "text": "Attacks and monsters carry an **element**, and element-vs-element interactions modify damage — the classic Ragnarok matchup web. The elements are:"
+    },
+    {
+      "type": "paragraph",
+      "text": "**Neutral · Water · Earth · Fire · Wind · Poison · Holy · Shadow · Ghost · Undead**"
+    },
+    {
+      "type": "paragraph",
+      "text": "For example, Fire is strong into Earth, Water is strong into Fire, and Holy bites hardest into Undead and Shadow. *(The full multiplier table is being tuned.)*"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Monster sizes *(planned matchup)*"
+    },
+    {
+      "type": "paragraph",
+      "text": "Monsters come in **Small, Medium, and Large** sizes, and weapon types are intended to matter against size — a dagger shines against small swarms, while heavy two-handers are built to bite into large foes. *(This size-vs-weapon matchup is designed but not yet switched on in combat.)*"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Status ailments"
+    },
+    {
+      "type": "paragraph",
+      "text": "Skills can inflict lasting conditions:"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Damage over time:** Burn, Poison, Bleed",
+        "**Control:** Stun, Freeze, Silence",
+        "**Weakening:** Slow (movement), Blind (accuracy), Vulnerability (takes extra damage)"
+      ]
+    },
+    {
+      "type": "quote",
+      "text": [
+        "*Status: the model and rules above are set; specific numbers, the element table, and the size matchup are in tuning.*"
+      ]
+    }
+  ]
+}

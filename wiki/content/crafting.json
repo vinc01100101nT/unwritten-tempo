@@ -1,0 +1,84 @@
+{
+  "title": "Crafting & Recycling",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "*Turn the weapons you find into the weapon you want.*"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Every drop is a starting point"
+    },
+    {
+      "type": "paragraph",
+      "text": "A weapon you find is rarely finished. What it arrives with depends on its **rarity**: higher-rarity weapons drop with more of their skills already filled in, a better chance of carrying an **Ultimate**, and more **Potential** to craft with. A common weapon might show up with a single skill; a legendary can drop nearly complete."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Potential — a weapon's crafting budget"
+    },
+    {
+      "type": "paragraph",
+      "text": "Every weapon has a **Potential** score — its personal, one-time crafting budget. You spend Potential to change its skills (**Add** and **Reforge**). Potential does **not** refill: once a weapon's Potential is gone, its skills are locked in for good — though you can still use, refine, and re-skin that weapon forever. A weapon with lots of Potential is simply a better canvas to invest in."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Shaping your skills"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Add** — fill an empty skill slot with a random skill from that weapon's pool.",
+        "**Reforge** — re-roll a weapon's normal skills, locking the ones you want to keep.",
+        "Your **Ultimate is never crafted** — it only ever comes from a drop. Hunting for the Ultimate you want is part of the chase, because **your Ultimate points at your build** (see *Skills*)."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Refining (+N)"
+    },
+    {
+      "type": "paragraph",
+      "text": "Separately, you can **refine** a weapon to raise its Attack (and any gear's Defense). Refining doesn't cost Potential — just materials."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Weapon Essence & recycling — nothing is wasted"
+    },
+    {
+      "type": "paragraph",
+      "text": "The weapons you don't want aren't trash:"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Recycle** them into **Weapon Essence** — a powder that fuels every kind of weapon crafting. Better weapons recycle into more Essence.",
+        "Or keep one for its **look**: **Transmog** lets you wear any same-type weapon's appearance on your own (a Sword's look on a Sword), without changing its skills or stats."
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "What everything costs"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Add / Reforge** — Potential + Weapon Essence + Gold.",
+        "**Refine** — Weapon Essence + a Refinement Stone + Gold.",
+        "**Transmog** — Weapon Essence + Gold."
+      ]
+    },
+    {
+      "type": "quote",
+      "text": [
+        "*Status: the crafting loop above is designed; exact costs, drop rates, and Potential values are still being tuned.*"
+      ]
+    }
+  ]
+}

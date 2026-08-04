@@ -6,10 +6,10 @@
 <title>Unwritten Wiki</title>
 <!--
   CONTENT-FREE VIEWER.
-  This file holds ZERO wiki text — only structure, styling, and a markdown renderer.
-  All page content lives in ./content/*.md, exported verbatim from the Tempo docs
-  (see content/manifest.json for each page's source docId). To update the wiki,
-  edit the source doc in Tempo and re-export the .md file; this shell never changes.
+  This file holds ZERO wiki text — only structure, styling, and the renderers.
+  Page content lives in ./content/ as JSON block documents ({ title, blocks:[] }) —
+  the one content format (see content/manifest.json for the page list). Block types:
+  lede, heading, paragraph, list, table, quote/callout, image, skillTable, hr.
 -->
 <style>
   :root{
@@ -69,6 +69,25 @@
     padding:12px 16px;border-radius:6px;margin:20px 0;font-size:14px;color:var(--ink-dim);font-style:italic}
   #content blockquote p{margin:4px 0}
   #content hr{border:none;border-top:1px solid var(--rule);margin:34px 0}
+  /* skill cards (JSON skillTable block) */
+  #content .skill-sub{font-style:italic;color:var(--ink-dim);font-size:15px;margin:0 0 14px}
+  .skillgrid{display:grid;gap:12px;margin:16px 0 26px}
+  .skillcard{display:grid;grid-template-columns:60px 1fr;gap:14px;align-items:start;
+    background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:13px 16px}
+  .skillcard .icon{width:60px;height:60px;border-radius:8px;background:var(--panel-2);
+    border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;
+    color:var(--gold);font-size:24px;font-weight:600;overflow:hidden}
+  .skillcard .icon img{width:100%;height:100%;object-fit:cover;display:block}
+  .skillcard .body{min-width:0}
+  .skillcard .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .skillcard .name{font-size:17px;font-weight:600;color:#f4eedd}
+  .skillcard .cost{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--gold)}
+  .skillcard .flavor{font-style:italic;color:var(--ink-dim);font-size:14px;margin:3px 0 6px}
+  .skillcard .effect{font-size:14.5px;color:var(--ink);line-height:1.55}
+  .skillcard .effect strong{color:var(--gold-bright)}
+  #content figure.fig{margin:20px 0;text-align:center}
+  #content figure.fig img{max-width:100%;border:1px solid var(--rule);border-radius:8px}
+  #content figure.fig figcaption{font-size:13px;color:var(--ink-faint);font-style:italic;margin-top:8px}
   .loading{color:var(--ink-faint);font-style:italic;padding:40px 0}
   footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--rule);color:var(--ink-faint);font-size:12px;font-style:italic}
   @media(max-width:820px){
@@ -90,12 +109,12 @@
   </aside>
   <main>
     <div id="content"><div class="loading">Loading…</div></div>
-    <footer>Unwritten Wiki — content served from <code>./content/*.md</code>, exported from the Tempo docs. This page holds no text of its own.</footer>
+    <footer>Unwritten Wiki — content served from <code>./content/</code> as JSON block documents. This page holds no text of its own.</footer>
   </main>
 </div>
 
 <script>
-// ---- tiny markdown renderer (headings, bold/italic/code/links, lists, tables, quotes, hr) ----
+// ---- inline markdown (bold/italic/code/links) used inside block text fields ----
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function inline(s){
   return esc(s)
@@ -104,52 +123,49 @@ function inline(s){
     .replace(/\*([^*]+)\*/g,'<em>$1</em>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2">$1</a>');
 }
-function md(src){
-  const lines=src.replace(/\r/g,'').split('\n');
-  let html='',i=0,firstPara=true;
-  const isTableRow=l=>/^\s*\|.*\|\s*$/.test(l);
-  while(i<lines.length){
-    let l=lines[i];
-    if(!l.trim()){i++;continue;}
-    // heading
-    let h=l.match(/^(#{1,6})\s+(.*)$/);
-    if(h){const n=h[1].length;html+=`<h${n}>${inline(h[2])}</h${n}>`;i++;firstPara=false;continue;}
-    // hr
-    if(/^(\*\*\*|---|___)\s*$/.test(l)){html+='<hr>';i++;continue;}
-    // blockquote (consecutive >)
-    if(/^>\s?/.test(l)){let b=[];while(i<lines.length&&/^>\s?/.test(lines[i])){b.push(lines[i].replace(/^>\s?/,''));i++;}
-      html+='<blockquote>'+b.filter(x=>x.trim()).map(x=>`<p>${inline(x)}</p>`).join('')+'</blockquote>';continue;}
-    // table
-    if(isTableRow(l)&&i+1<lines.length&&/^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i+1])){
-      const cells=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
-      const head=cells(l);i+=2;let rows=[];
-      while(i<lines.length&&isTableRow(lines[i])){rows.push(cells(lines[i]));i++;}
-      html+='<table><thead><tr>'+head.map(c=>`<th>${inline(c)}</th>`).join('')+'</tr></thead><tbody>'+
-        rows.map(r=>'<tr>'+r.map(c=>`<td>${inline(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
-      continue;
-    }
-    // unordered list
-    if(/^\s*[-*]\s+/.test(l)){let items=[];while(i<lines.length&&/^\s*[-*]\s+/.test(lines[i])){items.push(lines[i].replace(/^\s*[-*]\s+/,''));i++;}
-      html+='<ul>'+items.map(x=>`<li>${inline(x)}</li>`).join('')+'</ul>';continue;}
-    // ordered list
-    if(/^\s*\d+\.\s+/.test(l)){let items=[];while(i<lines.length&&/^\s*\d+\.\s+/.test(lines[i])){items.push(lines[i].replace(/^\s*\d+\.\s+/,''));i++;}
-      html+='<ol>'+items.map(x=>`<li>${inline(x)}</li>`).join('')+'</ol>';continue;}
-    // paragraph (gather until blank)
-    let para=[l];i++;
-    while(i<lines.length&&lines[i].trim()&&!/^(#{1,6}\s|>|\s*[-*]\s|\s*\d+\.\s)/.test(lines[i])&&!isTableRow(lines[i])){para.push(lines[i]);i++;}
-    let text=para.join(' ').trim();
-    // first fully-italic paragraph = lede subtitle
-    if(firstPara && /^\*[^*].*[^*]\*$/.test(text) && !text.startsWith('**')){
-      html+=`<p class="lede">${inline(text.slice(1,-1))}</p>`;
-    } else {
-      html+=`<p>${inline(text)}</p>`;
-    }
-    firstPara=false;
+
+// ---- JSON block-document renderer (the canonical and only content format) ----
+function skillIcon(s){
+  if(s.icon) return `<span class="icon"><img src="${esc(s.icon)}" alt="${esc(s.name||'')}"></span>`;
+  return `<span class="icon">${esc((s.name||'?').trim().slice(0,1))}</span>`;
+}
+function skillTable(b){
+  let h='';
+  if(b.subtitle) h+=`<p class="skill-sub">${inline(b.subtitle)}</p>`;
+  h+='<div class="skillgrid">';
+  (b.skills||[]).forEach(s=>{
+    h+='<div class="skillcard">'+skillIcon(s)+'<div class="body">'+
+       `<div class="head"><span class="name">${inline(s.name||'')}</span>`+
+       (s.cost?`<span class="cost">${inline(s.cost)}</span>`:'')+'</div>'+
+       (s.flavor?`<div class="flavor">${inline(s.flavor)}</div>`:'')+
+       (s.effect?`<div class="effect">${inline(s.effect)}</div>`:'')+
+       '</div></div>';
+  });
+  return h+'</div>';
+}
+function block(b){
+  switch(b&&b.type){
+    case 'lede':      return `<p class="lede">${inline(b.text)}</p>`;
+    case 'heading':   {const n=Math.min(6,Math.max(2,b.level||2));return `<h${n}>${inline(b.text)}</h${n}>`;}
+    case 'paragraph': return `<p>${inline(b.text)}</p>`;
+    case 'hr':        return '<hr>';
+    case 'quote':
+    case 'callout':   {const t=Array.isArray(b.text)?b.text:[b.text];return '<blockquote>'+t.map(x=>`<p>${inline(x)}</p>`).join('')+'</blockquote>';}
+    case 'list':      {const tag=b.ordered?'ol':'ul';return `<${tag}>`+(b.items||[]).map(x=>`<li>${inline(x)}</li>`).join('')+`</${tag}>`;}
+    case 'table':     return '<table><thead><tr>'+(b.headers||[]).map(h=>`<th>${inline(h)}</th>`).join('')+'</tr></thead><tbody>'+
+                             (b.rows||[]).map(r=>'<tr>'+r.map(c=>`<td>${inline(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+    case 'image':     return `<figure class="fig"><img src="${esc(b.src)}" alt="${esc(b.alt||'')}">`+(b.caption?`<figcaption>${inline(b.caption)}</figcaption>`:'')+'</figure>';
+    case 'skillTable':return skillTable(b);
+    default:          return '';
   }
+}
+function renderDoc(doc){
+  let html = doc.title ? `<h1>${inline(doc.title)}</h1>` : '';
+  (doc.blocks||[]).forEach(b=>{ html+=block(b); });
   return html;
 }
 
-// ---- app: build nav from manifest, load pages from .md files ----
+// ---- app: build nav from manifest, load pages (JSON block documents) ----
 let PAGES={};
 async function load(id){
   const p=PAGES[id]; if(!p) return;
@@ -158,8 +174,7 @@ async function load(id){
   try{
     const res=await fetch('content/'+p.file,{cache:'no-store'});
     if(!res.ok) throw new Error(res.status);
-    const text=await res.text();
-    el.innerHTML=md(text);
+    el.innerHTML=renderDoc(await res.json());
   }catch(e){
     el.innerHTML=`<h1>Couldn't load page</h1><p class="lede">${p.file} — ${e.message}</p>`;
   }

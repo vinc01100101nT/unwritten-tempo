@@ -20,6 +20,7 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 - [Don't agree reflexively](dont-agree-reflexively.md) — critique on merits even when user says "I like this"; reflexive agreement kills the value of a second opinion.
 - [Name knobs concretely, one job, no dead knobs](name-knobs-concretely-one-job.md) — HARD: label every field/effect by the exact thing it changes (never "potency"/"magnitude"); one responsibility each; hide fields that mean nothing in a case.
 - [Peer-to-peer GPT replies](peer-to-peer-gpt-replies.md) — when user pastes a GPT design reply, respond in peer voice addressed to GPT, paste-ready, grounded in real code.
+- [Skill tooltip voice](skill-tooltip-voice.md) — wiki/doc skill descriptions read as in-game tooltips (table, declarative rules, bold numbers), NOT article prose or designer meta-commentary.
 - [Never blame recompilation](assume-compiled-never-blame-recompile.md) — user ALWAYS recompiles; treat code as live+running, diagnose runtime, never suspect stale compile.
 
 ## Grouped sub-indexes (open on demand)

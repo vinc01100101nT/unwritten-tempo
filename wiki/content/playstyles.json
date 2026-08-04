@@ -1,0 +1,92 @@
+{
+  "title": "Playstyles & Builds",
+  "blocks": [
+    {
+      "type": "paragraph",
+      "text": "*Unwritten has **no fixed classes.** You are what you wield and where you invest.*"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Two levers, not a class"
+    },
+    {
+      "type": "paragraph",
+      "text": "There are no Swordsmen or Mages to pick from. Instead, your gameplay identity emerges from two things you fully control:"
+    },
+    {
+      "type": "list",
+      "ordered": true,
+      "items": [
+        "**Your equipped weapon** — it grants your active skill kit.",
+        "**Your ring build** — where you pour your stat growth."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Change either and your character plays differently. Nothing boxes you into a preset template."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Your weapon = your abilities"
+    },
+    {
+      "type": "paragraph",
+      "text": "The weapon in your hand decides which **active skills** fill your hotbar. Equip a staff and you cast its spells; pick up a bow and you gain its shots. **Swap the weapon, swap the whole kit.** The weapon's type (sword, staff, bow, dagger…) also sets your attack feel and animation — but it does **not** gate what you're allowed to be. See **Weapons & Equipment** and **Skills**."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Your ring = your role"
+    },
+    {
+      "type": "paragraph",
+      "text": "Your power scales off your **ring stats**, and that scaling is role-bound: **healing grows with MP**, **damage grows with Attack / Magic Attack**. Because ring investment is slow to change, it's what truly commits you to a role — a healer is someone who poured into MP, a damage-dealer someone who poured into Attack. See **Stats & the Ring**."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Your playstyle = weapon × ring"
+    },
+    {
+      "type": "paragraph",
+      "text": "Put the two together and you get your character:"
+    },
+    {
+      "type": "list",
+      "items": [
+        "The **weapon** is the fast, swappable half — change your abilities on the fly.",
+        "The **ring** is the slow, committed half — your accumulated power and role."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "A staff in the hands of an MP build heals and casts; the same staff on an Attack build barely tickles. That interplay is the whole build system."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Example playstyles *(emergent, not presets)*"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Front-line bruiser** — a melee weapon + a STR/VIT ring",
+        "**Ranged damage** — a bow + an Attack/DEX ring",
+        "**Battle-mage** — a staff + a Magic Attack ring",
+        "**Healer / support** — a support weapon + an MP ring"
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "These are just illustrations of what the two levers can produce — you can rebuild toward any of them by changing your weapon and steering your ring; none of them is a locked class."
+    },
+    {
+      "type": "quote",
+      "text": [
+        "*This replaces an earlier \"classes\" concept that is no longer part of the design. Identity in Unwritten is weapon + ring, full stop.*"
+      ]
+    }
+  ]
+}

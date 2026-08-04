@@ -40,7 +40,7 @@ Sword's spine: **Momentum → Deathblow · Parry → Retribution · Overclock �
 
 ## Pool status
 
-**8 actives + 9 passives agreed & LOCKED.** **1 active slot still open** (single-purpose texture). The full 9+9 pool still owes a **Stage-7 stress-test** (per the Three-Brain design process) and a Stage-9 review before the player-facing **wiki** is updated — the wiki currently reflects only the earlier core.
+**8 actives + 9 passives LOCKED.** **1 active slot still open** (single-purpose texture — the Path-1 "complete at 8" vs. Pinpoint call is unresolved). **Opening reworked** 2026-08-03 from a telegraph-reveal read-setter into a **Feint-combo damage payoff** (chance-to-grant an *Opening* consumed for +200% ATK). The pool has had its **Stage-7 stress-test** — findings are folded into the implementation items below (per-hit state order, OnBasicAttack recursion guard, Lock-Blades pursue definition). The player-facing **wiki** (`wiki/content/sword.json`) reflects the current pool.
 
 ## Active skills (target 9 — 8 locked, 1 open)
 
@@ -63,7 +63,7 @@ Two are **spine partners** (carry an ult); the rest are single-purpose texture.
 
 **Guard Stance** — *Weather it.* Take **50% less damage for 5s** (Guard, Def-scaled). 12 MP · 10s cd. **Intentionally the weakest slot** (dominated by Parry/Bladedance, anti-synergizes Retribution) — kept as the always-available sustain floor and a deliberate "not every roll is optimal" slot.
 
-**Feint** — *Punish the wind-up.* A quick strike; landing it on an enemy **mid-attack-windup** staggers/punishes the opening. The telegraph-read verb — distinct from Parry (which negates the hit). *Needs mob telegraph lead-time (see impl items).*
+**Feint** — *Strike between heartbeats.* A quick strike; landing it on an enemy **mid-attack-windup** **interrupts and staggers** the attack. The telegraph-read verb — distinct from Parry (which negates the hit). **Combo:** if you also rolled **Opening**, a successful Feint has a chance to grant an *Opening* state (see passives) — Feint becomes a setup→payoff verb. *Needs mob telegraph lead-time (see impl items).*
 
 **Committed Strike** — *Wind up and commit.* A slow, telegraphed **heavy single hit** — the pool's one true **damage-typed** skill (Physical `damageMult`). Pairs with **Unwavering** (guard up so nothing shoves you out of the wind-up).
 
@@ -83,7 +83,7 @@ Behavioral, event-triggered (via the trigger system Momentum proves). **Each ult
 - **Last Stand** *(Retribution partner)* — **OnLowHP**: while below the HP threshold, Retribution's **parry-chain doesn't decay** (75/75/75… instead of 75/50/25) — a real low-HP comeback, no added numbers.
 - **Composure** — **OnParrySuccess** → your next skill costs **0 MP**.
 - **Unwavering** — **while Guard Stance active** → immune to knockback/interrupt (pairs with Committed Strike's long wind-up).
-- **Opening** — **OnHit vs a full-HP target** (first hit on a fresh foe) → **reveal / lengthen that target's next attack telegraph once**. A read-setter — no damage, no Momentum. *Needs mob telegraphs.*
+- **Opening** *(combos with Feint)* — **OnFeintSuccess** → **chance to grant a private *Opening* state**; your **next damaging strike consumes it for +200% ATK** (a bonus single-target **Physical** hit — no crit, no pierce, ban-clean). The proc **chance scales with the Accuracy ring stat** (authored as a `chance`-channel affinity weight — data-layer only, deliberately **not** shown in the player tooltip). A combo passive (needs Feint rolled to fire), turning Feint into a setup→payoff verb. **State order:** an existing Opening is **consumed before** Feint rolls a new one (see impl items) — a hit can't self-consume the Opening it just created. *(Replaces the old telegraph-reveal Opening — no longer depends on mob telegraphs.)*
 - **Pressure** — **OnHit** (consecutive, same target) → **delays that target's HP regeneration**. *Depends on the mob-regen system (see impl items).*
 - **Lock Blades** *(combos with Lunge)* — **OnLunge** → mark the target with a **pin** for ~**2/3 of Lunge's cd** (tunable): while marked, **your basic attacks auto-pursue it** if it tries to leave melee (you stay glued to the duel). **No Slow, no root** — the stickiness is on *you*, not a debuff on them. A combo passive (needs Lunge rolled to fire); leans **Deathblow** (denies disengage while you build/cash Momentum).
 
@@ -95,12 +95,15 @@ Behavioral, event-triggered (via the trigger system Momentum proves). **Each ult
 
 ## Balance & implementation items (before/at build)
 
-1. **Attack Speed HARD CAP — REQUIRED (code TODO).** Measured: `Character.AttackSpeedMult` (`Character.cs:367`) is currently an **uncapped** sum × buff. Uncapped aspd → uncapped Momentum equilibrium → runaway Deathblow. Add an engine clamp (RO-style ceiling, ~190-equivalent) so Momentum's equilibrium is bounded. This is a general combat fix, not Momentum-specific.
+1. **Attack Speed HARD CAP — DONE (2026-08-04).** `Character.AttackSpeedMult` (`Character.cs:370`) is now clamped by `MaxAttackSpeedMult = 3f` (`Character.cs:88`), whose comment cites Sword's Momentum as the reason. Momentum's equilibrium (attack rate × stack duration) is therefore bounded and Deathblow can't run away. Retune the `3f` value in playtest if the ceiling feels wrong.
 2. **Momentum tuning:** stack **duration** vs base attack interval so low-aspd settles ~3–4 stacks and capped-aspd lands at the target ceiling; **% attack per stack** (~3% start).
 3. **Auto-parry telegraph VFX** (S6).
 4. **Retribution:** brace costs HP and banks it; release uncapped.
-5. **Mob attack telegraph lead-time — NEW (code TODO).** Measured: billboard mobs' `AttackLunge` squash currently fires *at* impact. **Feint**, **Opening**, and reactive defense need mobs to telegraph ~0.2–0.3s **before** the hit — shift the tell earlier.
+5. **Mob attack telegraph lead-time — NEW (code TODO).** Measured: billboard mobs' `AttackLunge` squash currently fires *at* impact. **Feint** and reactive defense need mobs to telegraph ~0.2–0.3s **before** the hit — shift the tell earlier. *(Opening no longer needs this — it keys off Feint's success, not a mob tell.)*
 6. **Mob HP regen + healer mobs — NEW SYSTEM (code TODO).** Measured: mobs have no regen today (only `leashRadius`). **Pressure** requires a mob HP-regen system (and some mobs with heal skills) to have anything to delay. Build it, then Pressure activates.
 7. **Lock Blades ↔ Lunge combo (code TODO).** `OnLunge` applies the Lock Blades pin for ~2/3 of Lunge's cd (tune ratio). Cross-skill combo — only fires if both are rolled. "Pin" = the *caster* auto-pursues the marked target on melee break; it is NOT a Slow/root on the target.
+8. **Per-hit state/trigger order — LOCKED (from stress test).** One canonical order so combos resolve predictably every time: **(1)** hit lands → **(2)** **consume** one-shot states (Opening, Composure's 0-MP flag, Parry's next-strike empower) → **(3)** apply damage/effects → **(4)** roll new procs → **(5)** apply newly-granted states. Consequence (the Opening case): consume-before-grant means a strike **can't self-consume** the Opening it just created.
+9. **OnBasicAttack recursion guard (code TODO).** Onslaught and Momentum both key off basic attacks; a basic attack **generated** by another (Onslaught's flurry, Lock Blades' auto-pursue) must **not** recursively spawn more basics unless explicitly flagged — cap the chain at one level or the flurry feeds itself.
+10. **Lock Blades "auto-pursue" — define ONE mechanism, engine-wide (code TODO).** "Your basic attacks automatically pursue" must resolve to a single behavior — **attack-lunge only** / **pathfind to target** / **forced facing** — chosen once so every future weapon reusing the primitive behaves identically. (Ties to #7.)
 
-**Playtest watch-items (from stress test):** Overclock trending universally-best (S3) · Retribution value swinging with enemy attack profile / biome (S5) · every build maxing Momentum — verify the 3 ults still play differently (S7) · Guard Stance dead-slot confirmation (S4).
+**Playtest watch-items (from stress test):** Overclock trending universally-best (S3) · Retribution value swinging with enemy attack profile / biome (S5) · every build maxing Momentum — verify the 3 ults still play differently (S7) · Guard Stance dead-slot confirmation (S4) · **Feint→Opening 200% spike — watch it doesn't rival the ult burst path (new).**

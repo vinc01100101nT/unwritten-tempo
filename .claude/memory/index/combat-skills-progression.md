@@ -30,4 +30,5 @@
 - [Conservation as universal balance driver](../conservation-as-balance-driver.md) — every gain pays a cost; Charter §10.
 - [Ring of Progression IMPLEMENTED](../ring-of-progression-implemented.md) — RingProgress on Ring (slot 12); pick per 10 pts; SaveData v4.
 - [Loot & melee reach](../loot-and-melee-reach.md) — reach = `Player3DAttacker.EffectiveRange`; click→route→collect.
+- [Passives must be COMPOSABLE (not hardcoded)](../sword-momentum-foundation.md) — passives = Skill Composer `SkillDef`s with a trigger, NOT C# classes (hardcoded Momentum reverted 2026-08-04); kept `CombatEvents.cs` trigger bus; composable plan (SkillTrigger + SkillRunner passive mode + grant routing + stacking Buff) in `handoffs/sword-skill-implementation.md`; aspd cap + ult-charge already existed (docs corrected).
 - [Combat network-readiness seams](../combat-network-readiness-seams.md) — ALL combat damage routes `CombatAuthority.Apply`/`ApplyTrue`, all rolls `CombatRng`; caster threaded in `SkillEffectApplier`; committed `9f393fac`. Networking DEFERRED until vertical slice proves fun (don't re-fork direct `TakeDamage`/`Random`).
