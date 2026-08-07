@@ -21,7 +21,7 @@
     { "type": "skillTable", "tier": "active",
       "skills": [
         { "name": "Lunge", "cost": "8 MP · CD 5s · Range 8", "flavor": "Close the distance.",
-          "effect": "Dashes to the target and strikes for **100% Attack**. With **Lock Blades**, also pins the target." },
+          "effect": "Dashes to the target and strikes for **100% Attack**. With **Lock Blades**, also grants **3 charges**." },
         { "name": "Parry", "cost": "12 MP · CD 8s · Window 1.5s", "flavor": "Read the blow.",
           "effect": "Braces **1.5s**, fully blocking the next hit (**0 damage**) and granting **+50%** to the next strike. During Retribution, blocks for **0 HP** while banking full value; the counter gains **+100%** on the first parry, **+25%** per parry after. Begins an auto-parry chain: **75% → 50% → 25%**." },
         { "name": "Guard Stance", "cost": "12 MP · CD 10s", "flavor": "Weather it.",
@@ -60,7 +60,7 @@
         { "name": "Pressure", "flavor": "Never let them recover.",
           "effect": "Consecutive hits on the same target **delay its health regeneration**." },
         { "name": "Lock Blades", "flavor": "No escape.",
-          "effect": "After Lunge, the target is **pinned** briefly; if it leaves melee range, basic attacks **automatically pursue**. Requires Lunge." }
+          "effect": "Casting Lunge grants **3 charges**. Each hit you land spends one to **automatically lunge** at the target again. Auto-lunges don't spend further charges of their own. With no charges left, nothing fires. Requires Lunge." }
       ]
     }
   ]

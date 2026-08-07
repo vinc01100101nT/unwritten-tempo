@@ -56,7 +56,7 @@
       "items": [
         "**Playstyles & Builds** — how weapon + ring define your character (no fixed classes)",
         "**Stats & the Ring** — how you grow, and the ring that carries your life's work",
-        "**Skills** — how active abilities work and where they come from"
+        "**Skills** — actives, passives, and where they come from"
       ]
     },
     {
@@ -69,6 +69,8 @@
       "items": [
         "**Combat Mechanics** — damage types, elements, and matchups",
         "**Weapons & Equipment** — gear, weapon types, and refinement",
+        "**The Sword** — the first fully-authored weapon's skill list",
+        "**Crafting & Recycling** — reshape a weapon's skills, refine, and recycle",
         "**Cards** — monster-matchup specialization *(planned feature)*"
       ]
     },

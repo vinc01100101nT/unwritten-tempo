@@ -3,7 +3,7 @@
   "blocks": [
     {
       "type": "paragraph",
-      "text": "*How active abilities work, and where they come from.*"
+      "text": "*How your abilities work, and where they come from.*"
     },
     {
       "type": "heading",
@@ -59,6 +59,34 @@
     {
       "type": "heading",
       "level": 2,
+      "text": "Active and passive skills"
+    },
+    {
+      "type": "paragraph",
+      "text": "Most skills are **active**: they take a hotbar slot, and you press them. They cost mana and use the cooldown, cast time, range, and area above."
+    },
+    {
+      "type": "paragraph",
+      "text": "Some are **passive**. A passive takes **no hotbar slot and is never pressed** — it waits for a specific moment in the fight and fires on its own. The moment it waits for is part of the skill:"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**After you finish casting a particular skill** — uninterrupted. This is how one skill rides another: Lock Blades off Lunge, Opening off Feint.",
+        "**When a basic attack of yours lands.**",
+        "**When you kill something.**",
+        "**When you drop to low health.**",
+        "**When you're hit.**",
+        "**When you successfully parry.**"
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "A passive **fires as a full skill** — the same visuals and the same effects an active would play. Only the trigger is different. It aims itself, too: a skill that needs a target lands on whatever set it off, and a skill that targets you always lands on you."
+    },
+    {
+      "type": "heading",
+      "level": 2,
       "text": "What skills can do"
     },
     {
@@ -90,7 +118,7 @@
     {
       "type": "quote",
       "text": [
-        "*Status: the skill framework above is in place. Exact numbers, cooldowns, and each weapon's 12-skill pool are still being tuned and drafted.*"
+        "*Status: the skill framework above is in place. Exact numbers, cooldowns, and each weapon's skill pool are still being tuned and drafted.*"
       ]
     }
   ]

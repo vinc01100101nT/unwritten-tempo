@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Unwritten Wiki</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="assets/unwritten-logo.png">
 <!--
   CONTENT-FREE VIEWER.
   This file holds ZERO wiki text — only structure, styling, and the renderers.
@@ -29,12 +31,11 @@
   .wrap{display:flex;min-height:100vh}
   .sidebar{width:300px;flex:0 0 300px;background:linear-gradient(180deg,var(--charcoal-2),#100f0c);
     border-right:1px solid var(--rule);padding:0 0 40px;position:sticky;top:0;height:100vh;overflow-y:auto}
-  .brand{padding:26px 24px 18px;border-bottom:1px solid var(--rule);text-align:center}
-  .brand .ring{width:64px;height:64px;margin:0 auto 12px;border-radius:50%;border:3px solid var(--gold);
-    box-shadow:0 0 0 4px rgba(200,162,74,0.12),inset 0 0 22px rgba(200,162,74,0.25);
-    display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--gold-bright)}
-  .brand h1{font-size:22px;margin:0;letter-spacing:3px;text-transform:uppercase;font-weight:600;color:var(--ink)}
-  .brand .sub{font-size:11px;color:var(--ink-faint);letter-spacing:1px;margin-top:4px;font-style:italic}
+  .brand{padding:18px 20px 16px;border-bottom:1px solid var(--rule);text-align:center}
+  /* Logo art is on a black field with no alpha; screen blending drops that field into the sidebar. */
+  .brand .logo{display:block;width:236px;max-width:100%;margin:0 auto;mix-blend-mode:screen}
+  .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+    clip:rect(0 0 0 0);white-space:nowrap;border:0}
   nav{padding:16px 12px 0}
   .navgroup{margin-bottom:18px}
   .navgroup h3{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);
@@ -101,9 +102,9 @@
 <div class="wrap">
   <aside class="sidebar">
     <div class="brand">
-      <div class="ring">◍</div>
-      <h1>Unwritten</h1>
-      <div class="sub">the world's un-written record</div>
+      <img class="logo" src="assets/unwritten-logo.png"
+           alt="Unwritten — your story, your destiny, unwritten">
+      <h1 class="sr-only">Unwritten</h1>
     </div>
     <nav id="nav"></nav>
   </aside>

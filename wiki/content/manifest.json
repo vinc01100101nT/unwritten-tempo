@@ -1,38 +1,211 @@
 {
   "title": "Unwritten Wiki",
   "note": "SINGLE SOURCE of the player wiki (Tempo docs retired 2026-08-01, docs/wiki collapsed into here). Page bodies are JSON block documents in content/*.json ({ title, blocks:[] }); register each page in this manifest. Legacy docId fields are stale historical refs — safe to ignore.",
+  "syncNote": "sourceDocs = the design docs a page is written from; syncedAt = the doc commit it was last written against. Run `python3 tools/wiki-sync-check.py` (or /sync-wiki in Claude) to find pages that fell behind. The renderer ignores both fields.",
   "groups": [
     {
       "title": "Lore & World",
       "pages": [
-        { "id": "home",  "title": "Home",                 "file": "home.json",           "docId": "q177drps7d34bed8yawcj4byh98bbvw8" },
-        { "id": "world", "title": "The World of Unwritten","file": "world.json",          "docId": "q179p4hqphaxjbsz3k6n9g2avn8barx5" },
-        { "id": "start", "title": "Getting Started",       "file": "getting-started.json","docId": "q172wgwr5m7e9zrbgw86ydsych8ba70z", "tag": "wip" },
-        { "id": "maps",  "title": "World & Maps",          "file": "world-maps.json",     "docId": "q17cqtsgm410vbjaw08k2rwcnx8bapcb" }
+        {
+          "id": "home",
+          "title": "Home",
+          "file": "home.json",
+          "docId": "q177drps7d34bed8yawcj4byh98bbvw8",
+          "sourceDocs": [
+            "docs/story-setting-canon.md"
+          ],
+          "syncedAt": {
+            "docs/story-setting-canon.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+          }
+        },
+        {
+          "id": "world",
+          "title": "The World of Unwritten",
+          "file": "world.json",
+          "docId": "q179p4hqphaxjbsz3k6n9g2avn8barx5",
+          "sourceDocs": [
+            "docs/story-setting-canon.md"
+          ],
+          "syncedAt": {
+            "docs/story-setting-canon.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+          }
+        },
+        {
+          "id": "start",
+          "title": "Getting Started",
+          "file": "getting-started.json",
+          "docId": "q172wgwr5m7e9zrbgw86ydsych8ba70z",
+          "tag": "wip",
+          "sourceDocs": [
+            "docs/story-setting-canon.md",
+            "docs/active-skill-system-v3/README.md",
+            "docs/ring-system-trio-ring.md"
+          ],
+          "syncedAt": {
+            "docs/story-setting-canon.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
+            "docs/active-skill-system-v3/README.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
+            "docs/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+          }
+        },
+        {
+          "id": "maps",
+          "title": "World & Maps",
+          "file": "world-maps.json",
+          "docId": "q17cqtsgm410vbjaw08k2rwcnx8bapcb",
+          "sourceDocs": [
+            "docs/biome-mob-families.md",
+            "docs/story-setting-canon.md"
+          ],
+          "syncedAt": {
+            "docs/biome-mob-families.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb",
+            "docs/story-setting-canon.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+          }
+        }
       ]
     },
     {
       "title": "Your Character",
       "pages": [
-        { "id": "playstyles", "title": "Playstyles & Builds", "file": "playstyles.json", "docId": "q173dsj7jmv4d6x1zqnqxy35yd8bawcf" },
-        { "id": "stats",      "title": "Stats & the Ring",    "file": "stats.json",      "docId": "q171723wqm1t6v9qa96258w06h8bag4d" },
-        { "id": "skills",     "title": "Skills",              "file": "skills.json",     "docId": "q176a4jkptgq6j4xwjp7ymh92x8ba9dw" }
+        {
+          "id": "playstyles",
+          "title": "Playstyles & Builds",
+          "file": "playstyles.json",
+          "docId": "q173dsj7jmv4d6x1zqnqxy35yd8bawcf",
+          "sourceDocs": [
+            "docs/active-skill-system-v3/README.md",
+            "docs/active-skill-system-v3/weapon-roster-12-identities.md",
+            "docs/ring-system-trio-ring.md"
+          ],
+          "syncedAt": {
+            "docs/active-skill-system-v3/README.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
+            "docs/active-skill-system-v3/weapon-roster-12-identities.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb",
+            "docs/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+          }
+        },
+        {
+          "id": "stats",
+          "title": "Stats & the Ring",
+          "file": "stats.json",
+          "docId": "q171723wqm1t6v9qa96258w06h8bag4d",
+          "sourceDocs": [
+            "docs/ring-system-trio-ring.md",
+            "docs/pre-renewal-ro-port.md",
+            "docs/active-skill-system-v3/README.md"
+          ],
+          "syncedAt": {
+            "docs/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
+            "docs/pre-renewal-ro-port.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
+            "docs/active-skill-system-v3/README.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f"
+          }
+        },
+        {
+          "id": "skills",
+          "title": "Skills",
+          "file": "skills.json",
+          "docId": "q176a4jkptgq6j4xwjp7ymh92x8ba9dw",
+          "sourceDocs": [
+            "docs/active-skill-system-v3/README.md",
+            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md"
+          ],
+          "syncedAt": {
+            "docs/active-skill-system-v3/README.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
+            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md": "163baa640b7374224835426bb52d62c839213d35"
+          }
+        }
       ]
     },
     {
       "title": "Combat",
       "pages": [
-        { "id": "combat",  "title": "Combat Mechanics",    "file": "combat.json",  "docId": "q17afjhjntpkkq18c01gqwxbjs8bbt2y" },
-        { "id": "weapons",  "title": "Weapons & Equipment", "file": "weapons.json",  "docId": "q170dqg8b6pe370nj8sj3wwnmn8bb88q" },
-        { "id": "sword",    "title": "The Sword",           "file": "sword.json" },
-        { "id": "crafting", "title": "Crafting & Recycling", "file": "crafting.json", "docId": "q17cy3qese3w2k7hjcpz0nw91h8bdgr7" },
-        { "id": "cards",    "title": "Cards",               "file": "cards.json",    "docId": "q176aha2yer0b8xcg7e7zns7498bbtpx", "tag": "planned" }
+        {
+          "id": "combat",
+          "title": "Combat Mechanics",
+          "file": "combat.json",
+          "docId": "q17afjhjntpkkq18c01gqwxbjs8bbt2y",
+          "sourceDocs": [
+            "docs/active-skill-system-v3/README.md",
+            "docs/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md",
+            "docs/pre-renewal-ro-port.md"
+          ],
+          "syncedAt": {
+            "docs/active-skill-system-v3/README.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
+            "docs/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
+            "docs/pre-renewal-ro-port.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+          }
+        },
+        {
+          "id": "weapons",
+          "title": "Weapons & Equipment",
+          "file": "weapons.json",
+          "docId": "q170dqg8b6pe370nj8sj3wwnmn8bb88q",
+          "sourceDocs": [
+            "docs/active-skill-system-v3/weapon-roster-12-identities.md",
+            "docs/active-skill-system-v3/weapon-crafting-economy.md"
+          ],
+          "syncedAt": {
+            "docs/active-skill-system-v3/weapon-roster-12-identities.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb",
+            "docs/active-skill-system-v3/weapon-crafting-economy.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+          }
+        },
+        {
+          "id": "sword",
+          "title": "The Sword",
+          "file": "sword.json",
+          "sourceDocs": [
+            "docs/active-skill-system-v3/sword-skill-roster.md",
+            "docs/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md",
+            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md"
+          ],
+          "syncedAt": {
+            "docs/active-skill-system-v3/sword-skill-roster.md": "163baa640b7374224835426bb52d62c839213d35",
+            "docs/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
+            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md": "163baa640b7374224835426bb52d62c839213d35"
+          }
+        },
+        {
+          "id": "crafting",
+          "title": "Crafting & Recycling",
+          "file": "crafting.json",
+          "docId": "q17cy3qese3w2k7hjcpz0nw91h8bdgr7",
+          "sourceDocs": [
+            "docs/crafting-and-recycling.md",
+            "docs/active-skill-system-v3/weapon-crafting-economy.md"
+          ],
+          "syncedAt": {
+            "docs/crafting-and-recycling.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
+            "docs/active-skill-system-v3/weapon-crafting-economy.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+          }
+        },
+        {
+          "id": "cards",
+          "title": "Cards",
+          "file": "cards.json",
+          "docId": "q176aha2yer0b8xcg7e7zns7498bbtpx",
+          "tag": "planned",
+          "sourceDocs": [
+            "docs/active-skill-system-v3/README.md"
+          ],
+          "syncedAt": {
+            "docs/active-skill-system-v3/README.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f"
+          }
+        }
       ]
     },
     {
       "title": "Bestiary",
       "pages": [
-        { "id": "monsters", "title": "Monsters", "file": "monsters.json", "docId": "q1706w4tf9wtc9wngjvnh1r8rh8bamx2" }
+        {
+          "id": "monsters",
+          "title": "Monsters",
+          "file": "monsters.json",
+          "docId": "q1706w4tf9wtc9wngjvnh1r8rh8bamx2",
+          "sourceDocs": [
+            "docs/biome-mob-families.md"
+          ],
+          "syncedAt": {
+            "docs/biome-mob-families.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb"
+          }
+        }
       ]
     }
   ]

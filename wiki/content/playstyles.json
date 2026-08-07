@@ -18,7 +18,7 @@
       "type": "list",
       "ordered": true,
       "items": [
-        "**Your equipped weapon** — it grants your active skill kit.",
+        "**Your equipped weapon** — it grants your skill kit: the actives you press, and the passives that fire on their own.",
         "**Your ring build** — where you pour your stat growth."
       ]
     },
@@ -72,8 +72,8 @@
     {
       "type": "list",
       "items": [
-        "**Front-line bruiser** — a melee weapon + a STR/VIT ring",
-        "**Ranged damage** — a bow + an Attack/DEX ring",
+        "**Front-line bruiser** — a melee weapon + an Attack / HP / Defense ring",
+        "**Ranged damage** — a bow + an Attack / Accuracy ring",
         "**Battle-mage** — a staff + a Magic Attack ring",
         "**Healer / support** — a support weapon + an MP ring"
       ]
