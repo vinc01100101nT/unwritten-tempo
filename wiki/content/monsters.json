@@ -3,7 +3,7 @@
   "blocks": [
     {
       "type": "paragraph",
-      "text": "*The bestiary — the corrupted pages you hunt.*"
+      "text": "*The corrupted pages you hunt.*"
     },
     {
       "type": "heading",
@@ -42,7 +42,7 @@
     {
       "type": "quote",
       "text": [
-        "*Status: the bestiary structure is set. The full monster roster — names, stats, drops, and art — is still being assembled and will be listed here.*"
+        "*Status: the monster structure is set. The full monster roster — names, stats, drops, and art — is still being assembled and will be listed here.*"
       ]
     }
   ]

@@ -41,4 +41,4 @@ Native markdown docs for the **unwritten** project, migrated out of Tempo Docs o
 
 ## Player wiki
 
-- [Unwritten Wiki](../wiki/) — the player-facing guide (lore, character, combat, bestiary). It's a **served website** at repo-root `wiki/` (viewer `index.html` + `content/*.md`, nav in `content/manifest.json`) — NOT under `docs/`. Edit wiki pages there, not here.
+- [Unwritten Wiki](../wiki/) — the player-facing guide (lore, character, combat, monsters). It's a **served website** at repo-root `wiki/` (viewer `index.html` + `content/*.json` JSON block documents, nav in `content/manifest.json`) — NOT under `docs/`. Edit wiki pages there, not here. Run `python3 tools/wiki-sync-check.py` (or `/sync-wiki`) to find pages that have fallen behind their design docs.
