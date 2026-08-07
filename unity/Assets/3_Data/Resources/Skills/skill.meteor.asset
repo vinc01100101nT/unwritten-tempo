@@ -19,9 +19,11 @@ MonoBehaviour:
   description: Meat balls
   archetype: 0
   family: 1
-  shape: 0
+  shape: 1
   complexity: 0
   acquisitionTier: 0
+  trigger: 0
+  triggerSkillId: 
   manaCost: 40
   cooldown: 3.12
   castTime: 1.5
@@ -36,7 +38,7 @@ MonoBehaviour:
   repeatInterval: 0.5
   projectileCount: 1
   projectileSpread: 0
-  hasReleaseStance: 1
+  hasReleaseStance: 0
   releaseStance: 16
   bindings:
   - tickId: meteor_ball
@@ -53,7 +55,7 @@ MonoBehaviour:
       element: 3
       amount: 10
       ailment: 2
-      seconds: 4
+      seconds: 0
       magnitude: 3
       dashSpeedMult: 8
       dashEaseIn: 0
@@ -149,7 +151,7 @@ MonoBehaviour:
       element: 3
       amount: 10
       ailment: 2
-      seconds: 4
+      seconds: 0
       magnitude: 3
       dashSpeedMult: 8
       dashEaseIn: 0

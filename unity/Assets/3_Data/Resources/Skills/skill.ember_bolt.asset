@@ -25,6 +25,8 @@ MonoBehaviour:
   shape: 0
   complexity: 0
   acquisitionTier: 0
+  trigger: 0
+  triggerSkillId: skill.meteor
   manaCost: 8
   cooldown: 1.5
   castTime: 1.07
@@ -39,7 +41,7 @@ MonoBehaviour:
   repeatInterval: 0
   projectileCount: 1
   projectileSpread: 90
-  hasReleaseStance: 1
+  hasReleaseStance: 0
   releaseStance: 17
   bindings:
   - tickId: projectile_fire
@@ -47,7 +49,8 @@ MonoBehaviour:
     groundDelivery: 2
     affects: 2
     playerFaction: 1
-    radius: 1.5
+    radius: 1
+    stayDuration: 0
     effects:
     - kind: 0
       damageType: 1
@@ -55,7 +58,7 @@ MonoBehaviour:
       element: 3
       amount: 10
       ailment: 2
-      seconds: 4
+      seconds: 0
       magnitude: 3
       dashSpeedMult: 8
       dashEaseIn: 0

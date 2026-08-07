@@ -33,6 +33,16 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     Player3DController body;            // caster's mover — turned to face the cast point on release
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
 
+    // ---- state gate + no-self-feeding chain -----------------------------------------------------------------------
+    // castChain = the causal chain this cast belongs to (0 for a player-pressed active — a press starts a fresh chain).
+    // A passive receives its chain from the dispatch and stamps it onto everything its effects cause, so the brake can
+    // see "this passive is already upstream of me" no matter how many frames later the damage lands.
+    ulong castChain;
+    bool consumedThisCast;              // the gate spends ONCE per cast, right after the effects have computed
+
+    /// <summary>The caster's unified state store — the ONE store the gate reads and spends from.</summary>
+    public UnitStates CasterStates => Character.Instance != null ? Character.Instance.States : null;
+
     void Awake()
     {
         onTick = OnTick;
@@ -41,10 +51,20 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         body = GetComponent<Player3DController>();
     }
 
+    // Every runner registers with the ONE dispatch (PassiveEvents) while it lives on the player — so a runner exists ⇔
+    // the player owns that skill, no separate list to hand-sync. We register unconditionally (not just passives)
+    // because `def` may be assigned AFTER OnEnable (runtime AddComponent then set-def); PassiveEvents.Fire filters to
+    // the matching passive at dispatch, so a registered active is simply never matched. Cheap: the list is tiny.
+    void OnEnable()
+    {
+        PassiveEvents.Register(this);
+    }
+
     // If we're torn down mid-cast (disabled, scene swap, death), Unity stops the coroutine but won't run its cleanup,
-    // so drop the shared bar + kill the looping aura here or they'd hang on screen.
+    // so drop the shared bar + kill the looping aura here or they'd hang on screen. Also drop any passive registration.
     void OnDisable()
     {
+        PassiveEvents.Unregister(this);
         if (castRoutine != null || castAura != null || castCircle != null) EndCast();
     }
 
@@ -53,6 +73,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public bool Activate()
     {
         if (def == null || def.vfx == null) return false;
+        if (def.IsPassive) return false;   // passives never cast from the bar — they fire via PassiveEvents on their trigger
         if (Character.Instance == null || Character.Instance.IsDead) return false;
         // A skill committed to a combo chain is spent there — it can't be cast solo from the hotbar (the chain owns
         // it, and its cadence is the chain's shared cooldown). Character.Combos is the single owner of "who's committed".
@@ -248,6 +269,15 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // of the whole effect is owned HERE (gameplay), not the Vfx Composer (which stays WYSIWYG: one cycle = one fall).
     void PlayCycles()
     {
+        consumedThisCast = false;   // this cast hasn't paid its state cost yet — it pays once, after its effects compute
+        if (!def.IsPassive) castChain = 0UL;   // a player-pressed cast starts a FRESH chain (nothing caused it)
+
+        // The cast finished UNINTERRUPTED (an interrupt runs EndCast + bails before here) — announce it so any passive
+        // keyed to this skill via OnSkillCastComplete<skill> fires. Only ACTIVES emit this: a passive isn't a
+        // player-driven cast, and emitting here would let passives chain off one another's fires.
+        if (!def.IsPassive)
+            PassiveEvents.Fire(SkillTrigger.OnSkillCastComplete, def.id);
+
         // The RELEASE moment: any cast wind-up (and its Casting pose) has already finished, so the release cue plays
         // now — casting first, release second. Instant skills reach here immediately.
         if (def.hasReleaseStance && StanceController.Player != null)
@@ -324,6 +354,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     bool Spend()
     {
         if (Character.Instance == null || Character.Instance.IsDead || Time.time < nextUse) return false;
+        // The combo gate: a skill that requires a state doesn't run at all when unmet — checked BEFORE any cost is paid.
+        if (!StateGate.IsMet(def, CasterStates)) { BattleNotice.Warn("Not ready"); return false; }
         // Ultimate gates on the shared charge meter (checked again here — the reticle may have taken time to confirm).
         if (def.IsUltimate && !Character.Instance.UltReady(def.chargeCost))
         { BattleNotice.Warn("Not charged"); return false; }
@@ -365,11 +397,64 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                 // ticks, not a hard-coded scan. radius = the projectile's hit width.
                 break;
         }
-        SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, b.effects,
-                                      lastCtx.targetUnit, 0f, 0, comboDamageMult,
-                                      def.icon, def.displayName,
-                                      aimPoint: lastCtx.target,   // Teleport/Dash go to the AIM point, not the tick's VFX anchor
-                                      caster: Character.Instance); // explicit caster (local player today; a per-connection entity once server-authoritative)
+        // Stamp this cast's causal chain for the whole burst, so any trigger the damage raises (OnHit / OnKill fire
+        // synchronously inside the applier) can see which passives are already upstream and refuse to re-fire them.
+        ulong prevChain = PassiveEvents.PushChain(castChain);
+        try
+        {
+            SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, b.effects,
+                                          lastCtx.targetUnit, 0f, 0, comboDamageMult,
+                                          def.icon, def.displayName,
+                                          aimPoint: lastCtx.target,   // Teleport/Dash go to the AIM point, not the tick's VFX anchor
+                                          caster: Character.Instance); // explicit caster (local player today; a per-connection entity once server-authoritative)
+        }
+        finally { PassiveEvents.PopChain(prevChain); }
+
+        // COMPUTE BEFORE CONSUME: the effects above read the LIVE store (Deathblow sees the whole Momentum pile while
+        // rolling its damage); only now is the cost paid. Once per cast, not per tick.
+        if (!consumedThisCast)
+        {
+            consumedThisCast = true;
+            StateGate.Consume(def, CasterStates);
+        }
+    }
+
+    // ---- passive firing -----------------------------------------------------
+
+    /// <summary>Fire this passive as a FULL skill NOW — called by <see cref="PassiveEvents"/> when its trigger matches.
+    /// A passive is authored exactly like an active (same VFX, ticks, effects); ONLY the trigger differs. So it runs the
+    /// same cast path (<see cref="PlayCycles"/> → VFX → ticks → applier), with the aim resolved from the trigger context
+    /// instead of a reticle:
+    /// <list type="bullet">
+    /// <item>Single-target skill (<see cref="CastReticle.Unit"/>) → lands on the triggering <paramref name="victim"/>
+    /// entity (skipped if there's none this moment).</item>
+    /// <item>Ground / AoE / projectile skill (<see cref="CastReticle.Ground"/>) → casts AT the victim's location (or the
+    /// caster's spot if the moment has no victim, e.g. OnLowHP).</item>
+    /// <item>SELF skill (<see cref="CastReticle.Instant"/>) → ALWAYS casts on the caster; the victim is ignored (a self
+    /// buff must never be flung onto the mob).</item>
+    /// </list>
+    /// No mana / cooldown / wind-up — the trigger IS the gesture. It's a real cast, so its cost/cadence knobs stay ignored.</summary>
+    public void FireAsPassive(Transform victim, ulong chain = 0UL)
+    {
+        if (def == null || def.vfx == null || Character.Instance == null || Character.Instance.IsDead) return;
+        comboDamageMult = 1f;   // passive fire — no combo ramp
+        castChain = chain;      // this passive is in the chain; everything its effects cause carries that forward
+
+        Vector3 aim; Transform unit = null;
+        switch (def.Reticle)
+        {
+            case CastReticle.Unit:                    // single-target — needs an entity to land on
+                if (victim == null) return;
+                unit = victim; aim = victim.position; break;
+            case CastReticle.Ground:                  // AoE / projectile — cast AT the trigger's location (caster if none)
+                aim = victim != null ? victim.position : transform.position; break;
+            default:                                  // Instant / SELF — self is ALWAYS self; the victim is ignored
+                aim = transform.position; break;
+        }
+
+        lastCtx = new VfxContext { origin = transform.position, target = aim, follow = transform, targetUnit = unit, scaleMult = 1f, stayForTick = StayFor };
+        if (body != null) body.FaceWorldPoint(aim);   // face the auto-target, like a manual cast
+        PlayCycles();                                 // the full active path: VFX + ticks + effects
     }
 
     // ---- IHotbarSkill -------------------------------------------------------

@@ -55,7 +55,7 @@ public static class SkillEffectApplier
                 if ((targets & SkillTargets.Mobs) != 0 && mob.Health != null && !mob.Health.IsDead)
                 {
                     burstTargets.Clear(); burstTargets.Add(mob);
-                    DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult, ch);
+                    DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult, ch, srcIcon, srcName);
                 }
             }
             else if ((targets & SkillTargets.Player) != 0)
@@ -77,7 +77,7 @@ public static class SkillEffectApplier
                 if (d.sqrMagnitude > r2) continue;
                 burstTargets.Add(ai);
             }
-            DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult, ch);
+            DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult, ch, srcIcon, srcName);
         }
 
         if ((targets & SkillTargets.Player) != 0)
@@ -116,24 +116,34 @@ public static class SkillEffectApplier
     // snapshot to MultiHitBurst so the strikes CASCADE over time and each mob shows ONE rising yellow combo total,
     // exactly like RO — instead of N overlapping numbers dumped in a single frame.
     static void DispatchMobHits(List<SkillEffect> effects, List<MonsterAI3D> mobs,
-                                float extraMult, int extraFlat, float comboMult, Character caster)
+                                float extraMult, int extraFlat, float comboMult, Character caster,
+                                Sprite srcIcon = null, string srcName = null)
     {
         if (mobs.Count == 0) return;
         if (HitLoops(effects, caster) <= 1)
         {
             for (int i = 0; i < mobs.Count; i++)
-                ApplyEffectsToMob(effects, mobs[i], extraMult, extraFlat, comboMult, caster);
+                ApplyEffectsToMob(effects, mobs[i], extraMult, extraFlat, comboMult, caster, srcIcon, srcName);
             return;
         }
+        // A flurry's later strikes land on LATER FRAMES, outside the caster's tick — so the causal chain must ride the
+        // callback, or a passive's cascade hits would arrive "unowned" and could re-fire the very passive that caused them.
+        ulong chain = PassiveEvents.CurrentChain;
         MultiHitBurst.Run(mobs, HitLoops(effects, caster), MultiHitInterval,
-            (ai, hit) => ApplyHitToMob(effects, ai, hit, extraMult, extraFlat, comboMult, caster));
+            (ai, hit) =>
+            {
+                ulong prev = PassiveEvents.PushChain(chain);
+                try { return ApplyHitToMob(effects, ai, hit, extraMult, extraFlat, comboMult, caster, srcIcon, srcName); }
+                finally { PassiveEvents.PopChain(prev); }   // the damage dealt feeds the mob's rising combo total
+            });
     }
 
     // One beat of a multi-hit flurry on ONE mob: land every Damage effect (overkill-safe so the running total keeps
     // climbing even past the kill, RO-style) and roll the binding's procs THIS hit. Returns the damage dealt so the
     // yellow combo total can accumulate it.
     static int ApplyHitToMob(List<SkillEffect> effects, MonsterAI3D ai, int hit,
-                             float extraMult, int extraFlat, float comboMult, Character caster)
+                             float extraMult, int extraFlat, float comboMult, Character caster,
+                             Sprite srcIcon = null, string srcName = null)
     {
         if (ai == null) return 0;
         var h = ai.Health;
@@ -152,7 +162,7 @@ public static class SkillEffectApplier
                 dealt += CombatAuthority.Apply(h, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit, overkill: true));
             }
             else
-                ApplyOneToMob(e, ai, h, hit, extraMult, extraFlat, comboMult, caster);   // procs / status / one-shots, unchanged
+                ApplyOneToMob(e, ai, h, hit, extraMult, extraFlat, comboMult, caster, srcIcon, srcName);   // procs / status / one-shots, unchanged
         }
         return dealt;
     }
@@ -171,7 +181,8 @@ public static class SkillEffectApplier
     // ---- mob ----------------------------------------------------------------
     /// <summary>Run the hit loop for one MOB: each hit lands the Damage strike + rolls the binding's procs.</summary>
     public static void ApplyEffectsToMob(List<SkillEffect> effects, MonsterAI3D ai,
-                                         float extraMult = 0f, int extraFlat = 0, float comboMult = 1f, Character caster = null)
+                                         float extraMult = 0f, int extraFlat = 0, float comboMult = 1f, Character caster = null,
+                                         Sprite srcIcon = null, string srcName = null)
     {
         if (effects == null || ai == null) return;
         var h = ai.Health;
@@ -179,13 +190,19 @@ public static class SkillEffectApplier
         int loops = HitLoops(effects, caster);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
-                ApplyOneToMob(effects[i], ai, h, n, extraMult, extraFlat, comboMult, caster);
+                ApplyOneToMob(effects[i], ai, h, n, extraMult, extraFlat, comboMult, caster, srcIcon, srcName);
     }
 
     static void ApplyOneToMob(SkillEffect e, MonsterAI3D ai, Health h, int hit,
-                              float extraMult, int extraFlat, float comboMult, Character caster)
+                              float extraMult, int extraFlat, float comboMult, Character caster,
+                              Sprite srcIcon = null, string srcName = null)
     {
         if (e == null) return;
+        // A durational debuff (Status / Haste / Vulnerability writes a state entry) carries the source skill's icon for
+        // the mob's nameplate AND that effect's stacking rules. Set BEFORE the switch (the store's Apply reads this
+        // context), cleared AFTER. Description is null (the nameplate has no hover card) — no per-mob string alloc.
+        bool tagDisplay = e.kind == SkillEffectKind.Status || e.kind == SkillEffectKind.Haste || e.kind == SkillEffectKind.Vulnerability;
+        if (tagDisplay) h.States.SetApplyContext(srcIcon, srcName, null, e.stacking, e.stacksPerApply, e.stackLimit);
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
@@ -215,14 +232,15 @@ public static class SkillEffectApplier
             case SkillEffectKind.Knockback:
                 // Shove the mob AWAY from the caster (magnitude = speed). Caster position is the origin so no cast
                 // point needs threading through the hit loop; falls back to the mob's own spot if there's no caster.
-                if (hit == 0) { Vector3 kf = caster != null ? caster.transform.position : ai.transform.position; ai.Knockback(kf, e.magnitude, ScaledSeconds(e, caster), 0f); }
+                if (hit == 0) { Vector3 kf = caster != null ? caster.transform.position : ai.transform.position; ai.Knockback(kf, e.magnitude, e.shoveSeconds, 0f); }
                 break;
             case SkillEffectKind.Pull:
                 // Drag the mob TOWARD the caster: shove it away from a point mirrored through the mob = toward the caster.
-                if (hit == 0) { Vector3 kf = caster != null ? caster.transform.position : ai.transform.position; ai.Knockback(2f * ai.transform.position - kf, e.magnitude, ScaledSeconds(e, caster), 0f); }
+                if (hit == 0) { Vector3 kf = caster != null ? caster.transform.position : ai.transform.position; ai.Knockback(2f * ai.transform.position - kf, e.magnitude, e.shoveSeconds, 0f); }
                 break;
             // Guard / Teleport / Dash / Buff / Regen / Cleanse / ManaLeech / Reflect are self-only (they land on the caster, not a mob) — no-op here.
         }
+        if (tagDisplay) h.States.ClearApplyContext();
     }
 
     // Execute: a self-contained bonus hit scaled by the target's MISSING HP (proc'd per hit by the caller). magnitude =
@@ -258,10 +276,18 @@ public static class SkillEffectApplier
                                  float extraMult, int extraFlat, float comboMult, Sprite srcIcon, string srcName)
     {
         if (e == null) return;
+        // A durational self-effect (seconds > 0) landing this cast tags its state entry with the SOURCE skill's icon +
+        // name + "what it does", so the buff tray shows the same icon the hotbar uses, counting down. Set BEFORE the
+        // gameplay call (the store's Apply reads the latch), clear AFTER — the store is the single display source now.
+        // Set for EVERY hit, not just the first: a Status PROC can land on any hit of a flurry, and it must carry the
+        // same stacking rules each time (a proc that stacks must stack on hit 3 exactly as it would on hit 0).
+        bool tagDisplay = e.seconds > 0f;
+        if (tagDisplay) ch.States.SetApplyContext(srcIcon, srcName, SkillTooltip.DescribeEffect(e),
+                                                  e.stacking, e.stacksPerApply, e.stackLimit);
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
-                if (hit >= EffectiveHits(e, ch)) return;
+                if (hit >= EffectiveHits(e, ch)) { if (tagDisplay) ch.States.ClearApplyContext(); return; }
                 int power = RollPower(e, extraMult, extraFlat, comboMult, out _, ch);
                 // −1 HIT = always-lands (skill/environmental hit); DamageInfo defaults attackerHit to −1.
                 CombatAuthority.Apply(ch, new DamageInfo(power, e.element, e.damageType == DamageType.Magic));
@@ -273,10 +299,10 @@ public static class SkillEffectApplier
                 if (Fires(e, hit, ch) && StatusController.Player != null) StatusController.Player.Apply(e.ailment, ScaledSeconds(e, ch), ScaledMagnitude(e, ch));
                 break;
             case SkillEffectKind.Haste:
-                if (hit == 0 && StatusController.Player != null) { StatusController.Player.Haste(ScaledMagnitude(e, ch), ScaledSeconds(e, ch)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
+                if (hit == 0 && StatusController.Player != null) StatusController.Player.Haste(ScaledMagnitude(e, ch), ScaledSeconds(e, ch));
                 break;
             case SkillEffectKind.Guard:
-                if (hit == 0) { ch.BeginGuard(ScaledSeconds(e, ch), ScaledMagnitude(e, ch)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
+                if (hit == 0) ch.BeginGuard(ScaledSeconds(e, ch), ScaledMagnitude(e, ch));
                 break;
             case SkillEffectKind.Teleport:
                 if (hit == 0)
@@ -293,33 +319,26 @@ public static class SkillEffectApplier
                 }
                 break;
             case SkillEffectKind.Buff:
-                if (hit == 0) { ApplyBuff(e, ch); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
+                if (hit == 0) ApplyBuff(e, ch);
                 break;
             case SkillEffectKind.Regen:
-                if (hit == 0) { ch.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, ch))), ScaledSeconds(e, ch)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
+                if (hit == 0) ch.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, ch))), ScaledSeconds(e, ch));
                 break;
             case SkillEffectKind.Cleanse:
                 if (hit == 0 && StatusController.Player != null) StatusController.Player.Cleanse(Mathf.Max(1, e.amount));
                 break;
             case SkillEffectKind.ManaLeech:
-                if (hit == 0) { ch.BeginManaLeech(ScaledSeconds(e, ch), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
+                if (hit == 0) ch.BeginManaLeech(ScaledSeconds(e, ch), e.magnitude);
                 break;
             case SkillEffectKind.Reflect:
-                if (hit == 0) { ch.BeginReflect(ScaledSeconds(e, ch), e.magnitude); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
+                if (hit == 0) ch.BeginReflect(ScaledSeconds(e, ch), e.magnitude);
                 break;
             case SkillEffectKind.Shield:
-                if (hit == 0) { ch.BeginShield(ScaledAmount(e, ch), ScaledSeconds(e, ch)); RegisterBuff(ch, srcIcon, srcName, ScaledSeconds(e, ch), e); }
+                if (hit == 0) ch.BeginShield(ScaledAmount(e, ch), ScaledSeconds(e, ch));
                 break;
             // Execute / Taunt / Vulnerability / Knockback / Pull are aimed at mobs — no-op on the player.
         }
-    }
-
-    // Mirror a just-applied self-buff onto the on-screen buff bar, tagged with the SOURCE SKILL's icon + name so a
-    // re-cast refreshes the same cell. Skipped when the skill provided no identity (e.g. a combo-fired effect).
-    static void RegisterBuff(Character ch, Sprite srcIcon, string srcName, float seconds, SkillEffect e)
-    {
-        if (ch == null || string.IsNullOrEmpty(srcName)) return;
-        ch.Buffs.Add(srcIcon, srcName, seconds, Color.white, SkillTooltip.DescribeEffect(e));
+        if (tagDisplay) ch.States.ClearApplyContext();
     }
 
     // Route a self-buff onto the right timed channel. The buff amount (multiplier) scales off the affinity list; the

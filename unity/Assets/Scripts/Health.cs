@@ -60,17 +60,21 @@ public class Health : MonoBehaviour, IDamageable
     }
     public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
 
-    // Vulnerability mark (Hex Field): while active, every incoming hit is multiplied up. Runtime-only, no alloc.
-    float vulnUntil; float vulnMult = 1f;
-    float VulnMult => Time.time < vulnUntil ? vulnMult : 1f;
+    // The unified per-unit state store (buffs/debuffs) — single source for gameplay queries AND the nameplate icons.
+    // Lazily created so every mob gets one without editing prefabs; cached after first touch (no per-hit GetComponent).
+    UnitStates states;
+    public UnitStates States => states != null ? states : (states = GetComponent<UnitStates>() ?? gameObject.AddComponent<UnitStates>());
+
+    // Vulnerability mark (Hex Field): while active, every incoming hit is multiplied up. Now read from the unified
+    // state store (V3 unified-state migration) — was a local vulnUntil/vulnMult timer.
+    float VulnMult => States.VulnMult;
 
     /// <summary>Mark this unit to TAKE +<paramref name="extraFraction"/> more damage (0.3 = +30%) for
-    /// <paramref name="seconds"/>. Refreshes to the latest mark. Reusable armor-fray for skills like Hex Field.</summary>
+    /// <paramref name="seconds"/>. Refreshes to the latest mark (newest-wins). Reusable armor-fray for skills like Hex Field.</summary>
     public void BeginVulnerable(float extraFraction, float seconds)
     {
         if (seconds <= 0f) return;
-        vulnMult = 1f + Mathf.Max(0f, extraFraction);
-        vulnUntil = Time.time + seconds;
+        States.Apply(StateId.Vulnerability, seconds, Mathf.Max(0f, extraFraction));
     }
 
     static readonly Color MissColor = new Color(1f, 0.3f, 0.3f);   // a player-dealt hit whiffed → red MISS
@@ -132,7 +136,7 @@ public class Health : MonoBehaviour, IDamageable
         else { CombatSfx.SkillHit(transform.position); VfxCue.Fire(VfxCueId.OnHitBySkill, transform); }
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
-        ApplyLeech(dmg);
+        ApplyLeech(this, dmg);
         if (IsDead) Die();
         return dmg;
     }
@@ -154,7 +158,7 @@ public class Health : MonoBehaviour, IDamageable
         VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
-        ApplyLeech(dmg);
+        ApplyLeech(this, dmg);
         if (IsDead) Die();
         return dmg;
     }
@@ -179,7 +183,7 @@ public class Health : MonoBehaviour, IDamageable
         if (wasAlive)
         {
             if (isActiveAndEnabled) StartCoroutine(Flash());
-            ApplyLeech(dmg);
+            ApplyLeech(this, dmg);
             if (IsDead) Die();
         }
         return dmg;
@@ -204,7 +208,7 @@ public class Health : MonoBehaviour, IDamageable
         if (wasAlive)
         {
             if (isActiveAndEnabled) StartCoroutine(Flash());
-            ApplyLeech(dmg);
+            ApplyLeech(this, dmg);
             if (IsDead) Die();
         }
         return dmg;
@@ -235,11 +239,13 @@ public class Health : MonoBehaviour, IDamageable
 
     // Lifesteal: a fraction of damage dealt to this mob heals the player (RO leech, the mechanical core of
     // a lifesteal card). Silent heal — a green "+N" per hit would spam during multi-hit; the HP bar is the cue.
-    static void ApplyLeech(int dmgDealt)
+    static void ApplyLeech(Health victim, int dmgDealt)
     {
         var ch = Character.Instance;
         if (ch == null || dmgDealt <= 0) return;
-        ch.AddUltCharge(dmgDealt * Character.UltChargePerDamageDealt);   // this is the one player-dealt-damage choke — dealing damage builds ult charge
+        // The ONE player-dealt-damage choke (basics + skills both funnel here) → also the OnHit fire-site (victim = the mob just hit).
+        PassiveEvents.Fire(SkillTrigger.OnHit, null, victim != null ? victim.transform : null);
+        ch.AddUltCharge(dmgDealt * Character.UltChargePerDamageDealt);   // dealing damage builds ult charge
         if (ch.ActiveManaLeechPct > 0f) ch.GainMana(Mathf.RoundToInt(dmgDealt * ch.ActiveManaLeechPct));   // ManaLeech skill window (V3)
         if (ch.LifeStealPct <= 0f) return;
         ch.LeechHeal(Mathf.RoundToInt(dmgDealt * ch.LifeStealPct));
@@ -285,6 +291,9 @@ public class Health : MonoBehaviour, IDamageable
 
     void Die()
     {
+        // A mob died (mobs only die to the player here) — announce OnKill with the dying mob as victim NOW, before it's
+        // pooled/destroyed below (FireAsPassive reads victim.position synchronously).
+        PassiveEvents.Fire(SkillTrigger.OnKill, null, transform);
         VfxCue.Fire(VfxCueId.OnDeath, transform);   // receiver-side death cue (mirrors Character.RaiseDeath)
         onDeath?.Invoke();
         // Play the "poof" death animation if one is attached, and once it finishes either RECYCLE the mob

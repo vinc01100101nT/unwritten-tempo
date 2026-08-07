@@ -141,6 +141,22 @@ Families are a soft authoring lens, but the RPS combat behaviors they're meant t
 
 For these to fire, each skill still carries a **damage type as real data** — **physical / magic / crit** — because the armor / accuracy / crit math reads it every hit. **Damage type is data on the skill; family is only the guide that helped pick it.** Keep the two distinct: dropping family-as-a-tag must never drop damage typing.
 
+## 6. Skill triggers — active vs passive — LOCKED
+
+A skill's **trigger** (`SkillDef.trigger`) decides what makes it run — one authored property:
+
+- **OnCast** — a normal active the player presses (default). Takes a hotbar slot; uses the cost / cadence / aim of §Tier B.
+- **Passive** (any other trigger) — no slot, never casts; it runs its authored effects when a combat moment fires.
+
+Passive triggers come in **two shapes, each matched to the space it names:**
+
+- **`OnSkillCastComplete<skill>` — parameterized** (pick the target active from a dropdown): fires when that active finishes casting **uninterrupted**. The skill set is **open-ended**, so a parameter — not one enum value per skill — is the only clean fit. This is how a passive rides another skill (e.g. Lock Blades off Lunge, Opening off Feint).
+- **Natural events — flat** (`OnBasicAttackLanded`, `OnKill`, `OnLowHP`, `OnHit`, `OnParry`): a **small, closed** set, listed directly with no wrapper. **`OnParry` is the deliberate exception** to the skill-parameterized scheme — a parry's success is a *game* event (you blocked a hit), not "you cast a skill."
+
+All triggers route through **one dispatch handler** (`PassiveEvents.Fire`) — the single place a trigger's rule is applied, so no fire-site can forget one. A passive **fires as a full skill** — the same VFX, ticks, and effects an active plays; only the trigger differs. Its aim is auto-resolved from the trigger: an aimed skill (single-target / AoE / projectile) lands on the triggering entity or its location; a **self** skill always casts on the caster (never the victim).
+
+The trigger is only **when** a passive runs. **What** it sets or reads (stacks, marks, owner) is the **State System** doc's job — kept there as the single source so the two don't duplicate.
+
 ## Resulting separation (the whole point)
 
 | System                | Single responsibility                                                                                                             |
@@ -148,6 +164,7 @@ For these to fire, each skill still carries a **damage type as real data** — *
 | Weapon                | Grants skills — a rarity-scaled roll from the weapon's skill pool (see **Weapon Crafting & Economy**); defines weapon identity |
 | Channels (§1)         | The skill's numeric outputs ("how much?")                                                                                         |
 | Effects (§2)          | The skill's natural behaviors ("what happens?")                                                                                   |
+| Trigger (§6)          | WHEN a skill runs — an active press vs a passive's combat-moment (dispatched via one handler)                                     |
 | Ring                  | Numeric scaling of channels; scaling weights lock roles                                                                           |
 | Cards *(later)*       | Matchup specialization vs. enemy categories                                                                                       |
 | Ring Voices *(later)* | New behaviors added by ring investment                                                                                            |

@@ -5,11 +5,11 @@ using UnityEngine.EventSystems;
 using TMPro;
 
 /// <summary>
-/// The HUD <b>buff bar</b> — a vertical stack of the player's active timed self-buffs on the RIGHT edge of the screen
-/// (<see cref="Character.Buffs"/>). Each cell shows the source skill's icon (the same icon the hotbar uses) with its
-/// remaining seconds and a shade that fills in as the buff runs down. Hovering a cell pops a shared info card with the
-/// buff's name, a one-line "what it does" (from the source effect), and its live remaining time. Read-only mirror:
-/// buffs are registered by the skill system when a Buff / Guard / Regen effect lands (see <see cref="SkillEffectApplier"/>).
+/// The HUD <b>status bar</b> — a vertical stack of the player's active timed states (buffs AND debuffs) on the RIGHT
+/// edge of the screen, read straight from the unified <see cref="UnitStates"/> store (<see cref="Character.States"/>).
+/// Each cell shows the source skill's icon (the same icon the hotbar uses) with its remaining seconds and a shade that
+/// fills in as it runs down. Hovering a cell pops a shared info card with the state's name, a one-line "what it does",
+/// and its live remaining time. The store is the single source: an effect lands, writes a state, and this reads it.
 ///
 /// <para>Self-builds its holder on the persistent GameUICanvas (added by <c>UIShellBuilder</c>); rebuilds its cells
 /// only when the set of buffs changes (a new buff or a prune), and the per-frame refresh only rewrites the number on a
@@ -19,11 +19,24 @@ public class BuffBarPanel : MonoBehaviour
 {
     class Cell
     {
-        public PlayerBuffs.Buff buff;
+        public UnitStates.State buff;
         public RectTransform rt;      // the 44×44 frame — hover anchor for the info card
         public Image fill;
         public TMP_Text time;
+        public TMP_Text stacks;       // "x3" badge, top-left; hidden while the state holds a single stack
         public int lastSecs = -1;
+        public int lastStacks = -1;
+    }
+
+    static readonly Color StackColor = new Color(1f, 0.87f, 0.45f);   // warm gold — reads as "count", distinct from the white timer
+    // Pre-built "x1".."x99" labels: the count changes on every stack gain/expiry, and building the string there would
+    // allocate during combat. Indexed by count, so a refresh is a lookup (PERFORMANCE.md: no per-frame/per-hit strings).
+    static readonly string[] StackLabels = BuildStackLabels();
+    static string[] BuildStackLabels()
+    {
+        var a = new string[UnitStates.MaxStacks + 1];
+        for (int i = 0; i < a.Length; i++) a[i] = i > 1 ? "x" + i : "";
+        return a;
     }
 
     static readonly Color CellBg = new Color(0.10f, 0.10f, 0.13f, 0.9f);
@@ -36,7 +49,7 @@ public class BuffBarPanel : MonoBehaviour
     readonly List<Cell> cells = new List<Cell>();
     bool built;
     bool dirty;
-    PlayerBuffs subscribed;
+    UnitStates subscribed;
 
     // Shared hover card (one instance, reused by every cell): title + "what it does" body + live remaining time.
     RectTransform tipRoot;
@@ -51,17 +64,17 @@ public class BuffBarPanel : MonoBehaviour
         if (!built) { TryBuild(); return; }
         var ch = Character.Instance;
         if (ch == null) return;
-        EnsureSubscribed(ch.Buffs);
-        ch.Buffs.Prune();                       // drop expired entries (fires OnChanged → dirty)
+        EnsureSubscribed(ch.States);
+        ch.States.Prune();                      // drop expired entries (fires OnChanged → dirty)
         if (dirty) { dirty = false; Rebuild(); }
         Refresh();
     }
 
-    void EnsureSubscribed(PlayerBuffs buffs)
+    void EnsureSubscribed(UnitStates states)
     {
-        if (subscribed == buffs) return;
+        if (subscribed == states) return;
         if (subscribed != null) subscribed.OnChanged -= MarkDirty;
-        subscribed = buffs;
+        subscribed = states;
         if (subscribed != null) subscribed.OnChanged += MarkDirty;
         dirty = true;
     }
@@ -104,11 +117,11 @@ public class BuffBarPanel : MonoBehaviour
 
         var ch = Character.Instance;
         if (ch == null) return;
-        var list = ch.Buffs.Active;
+        var list = ch.States.Active;
         for (int i = 0; i < list.Count; i++) cells.Add(BuildCell(list[i]));
     }
 
-    Cell BuildCell(PlayerBuffs.Buff buff)
+    Cell BuildCell(UnitStates.State buff)
     {
         var frame = UiKit.Img("Buff", holder, CellBg);
         frame.rectTransform.sizeDelta = new Vector2(44f, 44f);
@@ -124,7 +137,7 @@ public class BuffBarPanel : MonoBehaviour
         }
         else
         {
-            var lbl = UiKit.MakeText("Label", frame.transform, buff.name, 9, FontStyle.Bold, TextAnchor.MiddleCenter);
+            var lbl = UiKit.MakeText("Label", frame.transform, string.IsNullOrEmpty(buff.name) ? buff.id.ToString() : buff.name, 9, FontStyle.Bold, TextAnchor.MiddleCenter);
             lbl.color = Color.white; lbl.raycastTarget = false;
             UiKit.Fill(lbl.rectTransform, Vector2.zero, Vector2.zero);
         }
@@ -140,7 +153,12 @@ public class BuffBarPanel : MonoBehaviour
         time.color = Color.white; time.raycastTarget = false;
         UiKit.Fill(time.rectTransform, new Vector2(2, 1), new Vector2(-2, -1));
 
-        var cell = new Cell { buff = buff, rt = frame.rectTransform, fill = fill, time = time };
+        // Stack count (top-LEFT, opposite the timer so they never collide). Blank at one stack — a lone "x1" is noise.
+        var stacks = UiKit.MakeText("Stacks", frame.transform, "", 11, FontStyle.Bold, TextAnchor.UpperLeft);
+        stacks.color = StackColor; stacks.raycastTarget = false;
+        UiKit.Fill(stacks.rectTransform, new Vector2(2, 1), new Vector2(-2, -1));
+
+        var cell = new Cell { buff = buff, rt = frame.rectTransform, fill = fill, time = time, stacks = stacks };
 
         // Hover → show the shared info card over this cell; exit → hide it.
         var trig = frame.gameObject.AddComponent<EventTrigger>();
@@ -165,6 +183,13 @@ public class BuffBarPanel : MonoBehaviour
             c.fill.fillAmount = 1f - c.buff.Fraction01;   // dark ring grows as the buff expires
             int secs = Mathf.CeilToInt(c.buff.Remaining);
             if (secs != c.lastSecs) { c.time.text = secs > 0 ? secs.ToString() : ""; c.lastSecs = secs; }
+            // Stack badge — rewritten only when the count actually moves, from the pre-built label table (no alloc).
+            int n = c.buff.StackCount;
+            if (n != c.lastStacks && c.stacks != null)
+            {
+                c.stacks.text = n >= 0 && n < StackLabels.Length ? StackLabels[n] : "";
+                c.lastStacks = n;
+            }
         }
 
         // Keep the open card's remaining-time line ticking (rewrite only on a whole-second change — no per-frame alloc).
@@ -210,7 +235,7 @@ public class BuffBarPanel : MonoBehaviour
         if (tipRoot == null) return;
 
         hovered = c;
-        tipBody.text = "<b>" + c.buff.name + "</b>"
+        tipBody.text = "<b>" + (string.IsNullOrEmpty(c.buff.name) ? c.buff.id.ToString() : c.buff.name) + "</b>"
                      + (string.IsNullOrEmpty(c.buff.description) ? "" : "\n" + c.buff.description);
         tipLastSecs = -1;                       // force the time line to write this frame
         tipRoot.gameObject.SetActive(true);

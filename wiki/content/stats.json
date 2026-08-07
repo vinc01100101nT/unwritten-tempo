@@ -100,6 +100,64 @@
     {
       "type": "heading",
       "level": 2,
+      "text": "Reading your character sheet"
+    },
+    {
+      "type": "paragraph",
+      "text": "Press **C** to open your character sheet. It lists every number that decides how you fight, and it updates **live** — buffs and debuffs appear the moment they land and vanish when they run out."
+    },
+    {
+      "type": "paragraph",
+      "text": "The big number is always **your own stat**. Anything a buff or debuff is doing to it sits in **parentheses** right after it:"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Green** — something is helping you, e.g. `ATK 120-140 (+24)`",
+        "**Red** — something is hurting you, e.g. `HIT 82 (-30)` while blinded",
+        "**No parentheses** — nothing is affecting that stat right now"
+      ]
+    },
+    {
+      "type": "callout",
+      "text": "The sheet reads from the same numbers combat does, so what you see is exactly what you hit for — never an estimate."
+    },
+    {
+      "type": "paragraph",
+      "text": "What you'll find on it:"
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Group",
+        "Stats"
+      ],
+      "rows": [
+        [
+          "Offense",
+          "ATK · M.ATK · CRIT chance and crit damage · HIT"
+        ],
+        [
+          "Defense",
+          "DEF and M.DEF (plus their flat damage cut) · FLEE · GUARD · BARRIER"
+        ],
+        [
+          "Speed",
+          "ASPD (attack speed) · CAST (between casts) · WIND-UP (cast time) · MOVE and RUN speed"
+        ],
+        [
+          "Sustain",
+          "LEECH (HP from damage) · MP LEECH · REFLECT"
+        ],
+        [
+          "Resources",
+          "HP · MP · Stamina · Ult charge"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
       "text": "The Ring as your life's work *(proposed — not committed)*"
     },
     {

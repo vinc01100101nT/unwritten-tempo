@@ -384,6 +384,41 @@ public class Character : MonoBehaviour, IDamageable
     /// Inventory windows display live).</summary>
     public DerivedSnapshot CurrentDerived => SnapshotNow();
 
+    // ---- states ON vs OFF: the two views the Character window diffs to show "(+N)" ---------------
+    // Buffs/debuffs land in DIFFERENT places at runtime — some inside a getter (attack/cast speed), some at swing
+    // time (the damage buff scales the roll; Blind subtracts HIT). So a plain snapshot mixes "some states included,
+    // some not". These two views make it explicit and uniform: BaseDerived is the character with NO states, and
+    // DerivedWithStates is what they're actually fighting at. Diff them for the per-line bonus.
+    bool ignoreStates;   // while set, the buff multipliers read neutral — the SAME formulas, minus the states
+
+    /// <summary>Derived stats with every buff/debuff EXCLUDED — the character's own baseline.</summary>
+    public DerivedSnapshot BaseDerived
+    {
+        get { ignoreStates = true; try { return SnapshotNow(); } finally { ignoreStates = false; } }
+    }
+
+    /// <summary>Derived stats with the live states folded in — what the player is actually fighting at right now.
+    /// Applies each state where it really lands at runtime, so the window can't disagree with combat:
+    /// the damage buff scales the attack rolls (as <see cref="RollDamage"/> does), Blind subtracts HIT (as the
+    /// attacker does), Slow/Haste scale move speed; attack/cast speed already carry their buffs in the getters.</summary>
+    public DerivedSnapshot DerivedWithStates
+    {
+        get
+        {
+            var d = SnapshotNow();               // aspd + cast speed already include their buffs
+            float b = DamageBuffMult;            // the same multiplier the damage rolls apply
+            if (b != 1f)
+            {
+                d.atkMin = Mathf.RoundToInt(d.atkMin * b);   d.atkMax = Mathf.RoundToInt(d.atkMax * b);
+                d.matkMin = Mathf.RoundToInt(d.matkMin * b); d.matkMax = Mathf.RoundToInt(d.matkMax * b);
+            }
+            d.hit = Mathf.Max(0, d.hit - States.HitPenalty);                  // Blind
+            d.moveSpeed = Mathf.RoundToInt(d.moveSpeed * States.MoveMult);    // Slow x Haste (NOT the cast/aftercast
+                                                                             // root — that's a momentary lock, not a stat)
+            return d;
+        }
+    }
+
     // Build a snapshot from the live getters. Because every getter routes through P()+equipBonuses,
     // swapping equipBonuses (DeriveWith) makes this reflect any hypothetical loadout — no formula
     // is ever duplicated.
@@ -396,8 +431,19 @@ public class Character : MonoBehaviour, IDamageable
         maxHP = MaxHP,            maxMP = MaxMP,
         moveSpeed = 100,
         critChance = CritChance01, critMult = CritMultiplier,
-        aspdMult = AttackSpeedMult, castTimeMult = CastTimeMult,
+        aspdMult = AttackSpeedMult, castSpeedMult = CastSpeedMult, castTimeMult = CastTimeMult,
+        hardDefPct = HardDefPercent, hardMdefPct = HardMagicDefPercent,
+        guardCutPct = GuardCutNow, lifeStealPct = LifeStealPct,
+        reflectPct = ReflectPctNow, manaLeechPct = ManaLeechPctNow, barrierHP = BarrierNow,
     };
+
+    // State-sourced readouts, neutral while BaseDerived is snapshotting — so each reads 0 on the baseline and shows its
+    // real value in the live view, giving the window a clean "0 (+25)" bonus line instead of a silently-mixed number.
+    float GuardCutNow     => ignoreStates ? 0f : States.GuardCut;
+    float ManaLeechPctNow => ignoreStates ? 0f : States.ManaLeechPct;
+    int   BarrierNow      => ignoreStates ? 0  : States.ShieldPool;
+    // Reflect has BOTH a permanent source (the thorns card) and a timed one — the baseline keeps the permanent part.
+    float ReflectPctNow   => reflectPct + (ignoreStates ? 0f : States.ReflectBonus);
 
     /// <summary>The pure preview: derived stats AS IF <paramref name="hypothetical"/> were equipped
     /// in <paramref name="slot"/> (pass null to preview UN-equipping it), WITHOUT mutating the
@@ -716,44 +762,38 @@ public class Character : MonoBehaviour, IDamageable
         return true;
     }
 
+    // The unified per-unit state store (buffs/debuffs) — single source for gameplay queries AND the buff-tray icons.
+    // Lazily created on the player's GameObject; cached after first touch (no per-hit GetComponent).
+    UnitStates states;
+    public UnitStates States => states != null ? states : (states = GetComponent<UnitStates>() ?? gameObject.AddComponent<UnitStates>());
+
     // ---- Guard (a timed defensive stance; driven by a guard-type active) --------------------------
-    // A timed damage-reduction stance: while active, incoming physical AND magic damage is cut by
-    // guardReduction. Runtime-only (not saved); cleared on revive.
-    float guardUntil;
-    float guardReduction;
+    // A timed damage-reduction stance: while active, incoming physical AND magic damage is cut by the Guard state's
+    // magnitude. Stored in the unified state store (V3 unified-state migration); runtime-only, cleared on revive.
 
     /// <summary>True while the Guard stance is mitigating incoming damage.</summary>
-    public bool GuardActive => Time.time < guardUntil && guardReduction > 0f;
+    public bool GuardActive => States.GuardCut > 0f;
     /// <summary>Seconds left on the Guard stance (0 when inactive).</summary>
-    public float GuardRemaining => Mathf.Max(0f, guardUntil - Time.time);
+    public float GuardRemaining => States.Remaining(StateId.Guard);
 
     /// <summary>Begin a damage-reduction stance for <paramref name="seconds"/>, preventing
     /// <paramref name="reduction"/> (0..1) of each incoming hit. Called by a guard-type active skill.</summary>
     public void BeginGuard(float seconds, float reduction)
     {
-        guardUntil = Time.time + Mathf.Max(0f, seconds);
-        guardReduction = Mathf.Clamp01(reduction);
+        if (seconds <= 0f) return;
+        States.Apply(StateId.Guard, seconds, Mathf.Clamp01(reduction));
     }
 
     // Apply the Guard reduction to a post-defense damage figure (min 1 so a hit still registers).
-    int Guarded(int dmg) => GuardActive ? Mathf.Max(1, Mathf.RoundToInt(dmg * (1f - guardReduction))) : dmg;
+    int Guarded(int dmg) { float cut = States.GuardCut; return cut > 0f ? Mathf.Max(1, Mathf.RoundToInt(dmg * (1f - cut))) : dmg; }
 
     // ---- Timed offensive self-buffs + regen (skill-driven; runtime-only, cleared on revive) -------
     // Each buff is a multiplier live until its expiry; the getters/rolls below fold in the current value (1 when
     // expired). Latest call replaces the current buff on that channel (no stacking) — matches the Haste model.
-    float dmgBuffUntil;  float dmgBuffMult  = 1f;
-    // War Banner RAMP (experimental): the damage buff can GROW over its life — duration becomes magnitude, and since
-    // duration scales off MP, a high-MP support drives it higher (design "Support Scaling"). Refreshing a still-live
-    // buff KEEPS the ramp progress; letting it fully lapse RESETS to base. All zero ⇒ a plain flat buff (no ramp).
-    float dmgBuffStart; float dmgRampDelay; float dmgRampPerStep; float dmgRampInterval = 5f; float dmgRampCap;
-    float aspdBuffUntil; float aspdBuffMult = 1f;
-    float castBuffUntil; float castBuffMult = 1f;
-    float regenUntil;    float regenNextTick; int regenPerTick;
+    // War Banner RAMP (experimental): the DamageBuff can GROW over its life (ramp params live on the DamageBuff state
+    // entry). Refreshing a still-live buff KEEPS the ramp progress; letting it fully lapse RESETS to base — that parity
+    // comes free from UnitStates.Apply (keeps startTime on a refresh, resets it on a lapsed re-cast). Stored in the store.
     const float RegenInterval = 0.8f;
-
-    /// <summary>Active timed self-buffs for the on-screen buff bar (icon + countdown). A display mirror written when
-    /// a buff is applied; the mechanical timers above stay the source of truth for the numbers.</summary>
-    public PlayerBuffs Buffs { get; } = new PlayerBuffs();
 
     /// <summary>The live outgoing-damage buff multiplier (1 = none) — folded into every damage roll, so it lifts
     /// basic attacks and skills alike (War Banner's damage-up aura).</summary>
@@ -761,22 +801,24 @@ public class Character : MonoBehaviour, IDamageable
     {
         get
         {
-            if (Time.time >= dmgBuffUntil) return 1f;
-            float m = dmgBuffMult;
-            if (dmgRampPerStep > 0f)   // ramping buff: base + perStep for each interval elapsed past the delay
+            if (ignoreStates) return 1f;   // BaseDerived: the pre-buff baseline, through this same formula
+            var s = States.Get(StateId.DamageBuff);
+            if (s == null) return 1f;
+            float m = s.Mult;   // State.Mult owns the stacking encoding (per-stack bonuses vs an outright multiplier)
+            if (s.rampPerStep > 0f)   // ramping buff: base + perStep for each interval elapsed past the delay
             {
-                float el = Time.time - dmgBuffStart - dmgRampDelay;
+                float el = Time.time - s.startTime - s.rampDelay;
                 if (el > 0f)
                 {
-                    m += dmgRampPerStep * Mathf.FloorToInt(el / dmgRampInterval);
-                    if (dmgRampCap > 0f) m = Mathf.Min(m, dmgRampCap);
+                    m += s.rampPerStep * Mathf.FloorToInt(el / s.rampInterval);
+                    if (s.rampCap > 0f) m = Mathf.Min(m, s.rampCap);
                 }
             }
             return m;
         }
     }
-    float AspdBuffMult          => Time.time < aspdBuffUntil ? aspdBuffMult : 1f;
-    float CastBuffMult          => Time.time < castBuffUntil ? castBuffMult : 1f;
+    float AspdBuffMult          => ignoreStates ? 1f : States.AttackSpeedBuffMult;   // unified state store (neutral for BaseDerived)
+    float CastBuffMult          => ignoreStates ? 1f : States.CastSpeedBuffMult;     // unified state store (neutral for BaseDerived)
 
     /// <summary>Timed outgoing-damage buff ×<paramref name="mult"/> for <paramref name="seconds"/>. Optional RAMP
     /// (<paramref name="rampPerStep"/> &gt; 0) grows the multiplier by that much every <paramref name="rampInterval"/>s
@@ -786,49 +828,44 @@ public class Character : MonoBehaviour, IDamageable
                            float rampInterval = 5f, float rampCap = 0f)
     {
         if (seconds <= 0f) return;
-        bool active = Time.time < dmgBuffUntil;   // refresh of a live buff keeps the ramp; a fresh cast restarts it
-        dmgBuffMult = Mathf.Max(0.01f, mult);
-        if (!active) dmgBuffStart = Time.time;
-        dmgBuffUntil = Time.time + seconds;
-        dmgRampDelay = Mathf.Max(0f, rampDelay);
-        dmgRampPerStep = Mathf.Max(0f, rampPerStep);
-        dmgRampInterval = Mathf.Max(0.1f, rampInterval);
-        dmgRampCap = rampCap;
+        // Apply keeps startTime on a refresh of a live buff (ramp progress preserved) and resets it on a lapsed re-cast.
+        var s = States.Apply(StateId.DamageBuff, seconds, Mathf.Max(0.01f, mult));
+        if (s == null) return;
+        s.rampDelay = Mathf.Max(0f, rampDelay);
+        s.rampPerStep = Mathf.Max(0f, rampPerStep);
+        s.rampInterval = Mathf.Max(0.1f, rampInterval);
+        s.rampCap = rampCap;
     }
     /// <summary>Timed attack-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
-    public void BuffAttackSpeed(float mult, float seconds) { if (seconds <= 0f) return; aspdBuffMult = Mathf.Max(0.01f, mult); aspdBuffUntil = Time.time + seconds; }
+    public void BuffAttackSpeed(float mult, float seconds) { if (seconds <= 0f) return; States.Apply(StateId.AttackSpeedBuff, seconds, Mathf.Max(0.01f, mult)); }
     /// <summary>Timed cast-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
-    public void BuffCastSpeed(float mult, float seconds)   { if (seconds <= 0f) return; castBuffMult = Mathf.Max(0.01f, mult); castBuffUntil = Time.time + seconds; }
+    public void BuffCastSpeed(float mult, float seconds)   { if (seconds <= 0f) return; States.Apply(StateId.CastSpeedBuff, seconds, Mathf.Max(0.01f, mult)); }
 
     /// <summary>Start (or refresh) a heal-over-time: <paramref name="perTick"/> HP every <see cref="RegenInterval"/>s
     /// for <paramref name="seconds"/> (Mending Tide). Ticked in <see cref="Update"/>.</summary>
     public void BeginRegen(int perTick, float seconds)
     {
         if (perTick <= 0 || seconds <= 0f) return;
-        regenPerTick = perTick;
-        regenUntil = Time.time + seconds;
-        regenNextTick = Time.time + RegenInterval;
+        var s = States.Apply(StateId.Regen, seconds, 0f, perTick);   // intAmount = HP per tick
+        if (s != null) s.nextTick = Time.time + RegenInterval;
     }
 
-    // Timed skill windows (V3: the old weapon Mana-Leech / Reflect affixes, rehomed as skill effects). Lazy — no
-    // Update tick; the combat sinks read the fraction and see 0 once the window lapses. Latest call replaces (no stack).
-    float leechUntil; float leechFrac;
-    float reflectBonusUntil; float reflectBonus;
+    // Timed skill windows (V3: the old weapon Mana-Leech / Reflect affixes, rehomed as skill effects) — now stored in
+    // the unified state store. The combat sinks read the fraction via States and see 0 once the window lapses.
 
     /// <summary>The live mana-leech fraction (0 when no window active) — read where the player's damage is dealt
     /// (<see cref="Health"/>), converting that fraction of damage into MP.</summary>
-    public float ActiveManaLeechPct => Time.time < leechUntil ? leechFrac : 0f;
+    public float ActiveManaLeechPct => States.ManaLeechPct;
     /// <summary>The live extra damage-reflect fraction from a skill window (0 when inactive), added on top of the
     /// permanent thorns-card <c>reflectPct</c> where incoming damage is bounced back.</summary>
-    public float ActiveReflectBonus => Time.time < reflectBonusUntil ? reflectBonus : 0f;
+    public float ActiveReflectBonus => States.ReflectBonus;
 
     /// <summary>Open a mana-leech window: for <paramref name="seconds"/>, <paramref name="fraction"/> (0..1) of the
     /// damage you deal returns as MP.</summary>
     public void BeginManaLeech(float seconds, float fraction)
     {
         if (seconds <= 0f || fraction <= 0f) return;
-        leechFrac = Mathf.Clamp01(fraction);
-        leechUntil = Time.time + seconds;
+        States.Apply(StateId.ManaLeech, seconds, Mathf.Clamp01(fraction));
     }
 
     /// <summary>Open a damage-reflect window: for <paramref name="seconds"/>, reflect an extra <paramref name="fraction"/>
@@ -836,40 +873,49 @@ public class Character : MonoBehaviour, IDamageable
     public void BeginReflect(float seconds, float fraction)
     {
         if (seconds <= 0f || fraction <= 0f) return;
-        reflectBonus = Mathf.Clamp01(fraction);
-        reflectBonusUntil = Time.time + seconds;
+        States.Apply(StateId.Reflect, seconds, Mathf.Clamp01(fraction));
     }
 
     // Absorb pool (Shield skill): a timed barrier that eats incoming HIT damage before it reaches CurrentHP. Bypassed by
-    // DoT true damage, exactly like Guard (see TakeTrueDamage). Latest BeginShield replaces (no stacking) — matches Haste.
-    float shieldUntil; int shieldPool;
+    // DoT true damage, exactly like Guard (see TakeTrueDamage). Stored in the unified state store (intAmount = pool).
 
     /// <summary>Remaining barrier HP from an active Shield window (0 when none/expired) — for a HUD shield pip.</summary>
-    public int ShieldRemaining => Time.time < shieldUntil ? shieldPool : 0;
+    public int ShieldRemaining => States.ShieldPool;
 
     /// <summary>Raise a damage-absorbing barrier of <paramref name="amount"/> HP for <paramref name="seconds"/> (Aegis /
     /// Barrier skills). It soaks incoming hits until drained or the window lapses. Latest call replaces (no stacking).</summary>
     public void BeginShield(int amount, float seconds)
     {
         if (amount <= 0 || seconds <= 0f) return;
-        shieldPool = amount;
-        shieldUntil = Time.time + seconds;
+        States.Apply(StateId.Shield, seconds, 0f, amount);   // intAmount = barrier HP pool
     }
 
     // Drain the barrier first, then HP. Pops a pale-cyan number for the soaked part so the absorb is visible. No alloc
     // (int math + the pooled DamagePopup). The two hit intakes route through here; DoT keeps its own line (shield bypass).
+    // Fraction of MaxHP at/under which the player counts as "low HP" — the OnLowHP falling-edge threshold.
+    const float LowHpFrac = 0.3f;
+
     void ApplyHitToHP(int dmg)
     {
         if (dmg <= 0) return;
-        if (Time.time < shieldUntil && shieldPool > 0)
+        int soaked = States.DrainShield(dmg);   // barrier soaks first (drops + clears its icon when it breaks)
+        if (soaked > 0)
         {
-            int soaked = Mathf.Min(shieldPool, dmg);
-            shieldPool -= soaked;
             dmg -= soaked;
             var a = Avatar();
             if (a != null) DamagePopup.Spawn(a.position, soaked, ShieldAbsorbColor);
         }
-        if (dmg > 0) CurrentHP = Mathf.Max(0, CurrentHP - dmg);
+        if (dmg > 0)
+        {
+            int before = CurrentHP;
+            CurrentHP = Mathf.Max(0, CurrentHP - dmg);
+            // Falling-edge into low HP: this hit crossed the threshold and left the player alive → fire OnLowHP (Last
+            // Stand). Computed locally (before vs after), so it re-arms after any heal with no persisted flag. DoT-only
+            // crossings bypass this line and aren't covered — fine until OnLowHP becomes a queried state.
+            int thr = Mathf.CeilToInt(MaxHP * LowHpFrac);
+            if (before > thr && CurrentHP > 0 && CurrentHP <= thr)
+                PassiveEvents.Fire(SkillTrigger.OnLowHP);
+        }
     }
 
     public int TakeDamage(int attackerAttack) => TakeDamage(attackerAttack, -1);
@@ -995,11 +1041,13 @@ public class Character : MonoBehaviour, IDamageable
     {
         if (IsDead) return;
 
-        // Skill heal-over-time (Mending Tide): tick fixed HP on its own cadence while active. No alloc.
-        if (Time.time < regenUntil && Time.time >= regenNextTick)
+        // Skill heal-over-time (Mending Tide): tick fixed HP on its own cadence while active. Reads the Regen state
+        // entry (null once it lapses → no tick). No alloc.
+        var rg = States.Get(StateId.Regen);
+        if (rg != null && Time.time >= rg.nextTick)
         {
-            regenNextTick = Time.time + RegenInterval;
-            Heal(regenPerTick);
+            rg.nextTick = Time.time + RegenInterval;
+            Heal(rg.intAmount);
         }
 
         if (mpRegenPerSecond <= 0f) return;
@@ -1018,11 +1066,7 @@ public class Character : MonoBehaviour, IDamageable
     {
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
-        guardUntil = 0f;                          // a Guard stance doesn't carry across death
-        shieldPool = 0; shieldUntil = 0f;         // …nor a barrier
-        regenUntil = 0f;                          // …nor a heal-over-time
-        dmgBuffUntil = aspdBuffUntil = castBuffUntil = 0f;   // …nor timed self-buffs
-        Buffs.Clear();                            // …and clear the buff bar
+        States.Clear();                           // buffs/debuffs/barriers don't carry across death — the tray reads States, so this clears it too
         OnHealthChanged?.Invoke();
         OnManaChanged?.Invoke();
         OnRevived?.Invoke();

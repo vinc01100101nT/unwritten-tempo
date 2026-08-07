@@ -46,7 +46,7 @@ MonoBehaviour:
       element: 0
       amount: 10
       ailment: 2
-      seconds: 4
+      seconds: 0
       magnitude: 3
       hitCount: 1
       chance: 0

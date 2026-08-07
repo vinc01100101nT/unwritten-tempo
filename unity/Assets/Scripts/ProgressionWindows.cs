@@ -118,7 +118,40 @@ public class ProgressionWindows : MonoBehaviour
             if (cardDialog != null) UiAnim.Close(cardDialog);
             UiAnim.Close(invRoot); UiAnim.Close(equipRoot); UiAnim.Close(charRoot);
         }
+
+        KeepDerivedLive();
     }
+
+    // Keep the Character sheet honest while a buff runs, expires, or ramps. Only while the window is actually OPEN, and
+    // the text is rebuilt ONLY when a value really moved — the per-frame cost is a struct build + an int compare, no
+    // string work and no allocation (PERFORMANCE.md: nothing per-frame may allocate).
+    DerivedSnapshot lastLive;
+    bool lastLiveValid;
+    int lastSta = -1, lastUlt = -1;   // resources drain/fill outside the snapshot, so they're watched separately
+    void KeepDerivedLive()
+    {
+        if (charRoot == null || !UiAnim.IsOpen(charRoot) || Character.Instance == null) return;
+        var c = Character.Instance;
+        var now = c.DerivedWithStates;
+        // Compare the DISPLAYED (rounded) resource values, not the raw floats — otherwise a draining stamina bar would
+        // rebuild the text every single frame instead of only when the number on screen actually changes.
+        int sta = Mathf.RoundToInt(c.Stamina), ult = Mathf.RoundToInt(c.UltCharge01 * 100);
+        if (lastLiveValid && sta == lastSta && ult == lastUlt && Same(now, lastLive)) return;
+        lastLive = now; lastLiveValid = true; lastSta = sta; lastUlt = ult;
+        RefreshCharacter();
+    }
+
+    // Field-by-field so the compare stays allocation-free (a struct's default Equals can box/reflect).
+    static bool Same(in DerivedSnapshot a, in DerivedSnapshot b) =>
+        a.atkMin == b.atkMin && a.atkMax == b.atkMax && a.matkMin == b.matkMin && a.matkMax == b.matkMax &&
+        a.def == b.def && a.mdef == b.mdef && a.hit == b.hit && a.flee == b.flee &&
+        a.maxHP == b.maxHP && a.maxMP == b.maxMP && a.moveSpeed == b.moveSpeed &&
+        a.hardDefPct == b.hardDefPct && a.hardMdefPct == b.hardMdefPct && a.barrierHP == b.barrierHP &&
+        Mathf.Approximately(a.critChance, b.critChance) && Mathf.Approximately(a.critMult, b.critMult) &&
+        Mathf.Approximately(a.aspdMult, b.aspdMult) && Mathf.Approximately(a.castTimeMult, b.castTimeMult) &&
+        Mathf.Approximately(a.castSpeedMult, b.castSpeedMult) && Mathf.Approximately(a.guardCutPct, b.guardCutPct) &&
+        Mathf.Approximately(a.lifeStealPct, b.lifeStealPct) && Mathf.Approximately(a.reflectPct, b.reflectPct) &&
+        Mathf.Approximately(a.manaLeechPct, b.manaLeechPct);
 
     void RefreshAll()
     {
@@ -451,7 +484,9 @@ public class ProgressionWindows : MonoBehaviour
 
     void BuildCharacter()
     {
-        var content = UiKit.Window(canvas, "Character", new Vector2(360, 500), new Vector2(0, 0), out charRoot);
+        // Taller than the old 500: the derived block now lists every stat (offence, defence, speed, sustain, resources)
+        // instead of five summary lines, and a fixed-height window would clip the tail silently.
+        var content = UiKit.Window(canvas, "Character", new Vector2(360, 660), new Vector2(0, 0), out charRoot);
 
         // Ornament Kit v1: a portrait/name backplate behind the identity block (placeholder — a portrait
         // sprite drops into it later). Decorative, sits behind the stat column so it never disturbs layout.
@@ -479,8 +514,8 @@ public class ProgressionWindows : MonoBehaviour
         var div = UiKit.Img("Div", col.transform, new Color(1, 1, 1, 0.12f));
         div.gameObject.AddComponent<LayoutElement>().preferredHeight = 2;
 
-        charDerived = UiKit.Label("Derived", col.transform, "", 14, FontStyle.Normal, TextAnchor.UpperLeft);
-        charDerived.lineSpacing = 1.4f;   // the derived block was cramped — give the stat rows room to breathe
+        charDerived = UiKit.Label("Derived", col.transform, "", 13, FontStyle.Normal, TextAnchor.UpperLeft);
+        charDerived.lineSpacing = 1.1f;   // many more lines now than the old 5-line summary — tighter so they all fit
     }
 
     void BuildStatRow(Transform parent, int i)
@@ -531,14 +566,74 @@ public class ProgressionWindows : MonoBehaviour
             statPlus[i].interactable = can;
         }
 
-        var d = c.CurrentDerived;
+        // The number shown is the character's OWN value; whatever buffs/debuffs add or take sits in parentheses after
+        // it (green = better, red = worse). Diffing the two views keeps every line honest — no line can silently
+        // include a buff while its neighbour doesn't.
+        var b = c.BaseDerived;
+        var d = c.DerivedWithStates;
+        var pc = PlayerBody();
+        // Hard DEF/M.DEF ride their DEF line as a "+N%" suffix — they're the same defence read two ways (flat
+        // subtraction, then a percentage), so pairing them beats giving each its own row.
         charDerived.text =
             "<color=#A79E88>DERIVED</color>\n" +
-            $"ATK   {d.atkMin}-{d.atkMax}    M.ATK {d.matkMin}-{d.matkMax}\n" +
-            $"DEF   {d.def}    M.DEF {d.mdef}\n" +
-            $"HIT   {d.hit}    FLEE {d.flee}\n" +
-            $"CRIT  {Mathf.RoundToInt(d.critChance * 100)}%    ASPD ×{d.aspdMult:0.00}\n" +
-            $"Move  {d.moveSpeed}    HP {c.MaxHP}  MP {c.MaxMP}";
+            $"ATK   {b.atkMin}-{b.atkMax}{Delta(d.atkMin - b.atkMin, d.atkMax - b.atkMax)}    M.ATK {b.matkMin}-{b.matkMax}{Delta(d.matkMin - b.matkMin, d.matkMax - b.matkMax)}\n" +
+            $"DEF   {b.def}{Hard(b.hardDefPct)}{Delta(d.def - b.def)}    M.DEF {b.mdef}{Hard(b.hardMdefPct)}{Delta(d.mdef - b.mdef)}\n" +
+            $"HIT   {b.hit}{Delta(d.hit - b.hit)}    FLEE {b.flee}{Delta(d.flee - b.flee)}\n" +
+            $"CRIT  {Pct(b.critChance)}{DeltaPct(d.critChance - b.critChance)}  ×{b.critMult:0.00}{Delta(d.critMult - b.critMult)}\n" +
+            $"ASPD  ×{b.aspdMult:0.00}{Delta(d.aspdMult - b.aspdMult)}    CAST ×{b.castSpeedMult:0.00}{Delta(d.castSpeedMult - b.castSpeedMult)}\n" +
+            $"WIND-UP ×{b.castTimeMult:0.00}{Delta(d.castTimeMult - b.castTimeMult)}\n" +
+            $"MOVE  {b.moveSpeed}{Delta(d.moveSpeed - b.moveSpeed)}{Gait(pc)}\n" +
+            $"GUARD {Pct(b.guardCutPct)}{DeltaPct(d.guardCutPct - b.guardCutPct)}    BARRIER {b.barrierHP}{Delta(d.barrierHP - b.barrierHP)}\n" +
+            $"LEECH {Pct(b.lifeStealPct)}{DeltaPct(d.lifeStealPct - b.lifeStealPct)}    MP LEECH {Pct(b.manaLeechPct)}{DeltaPct(d.manaLeechPct - b.manaLeechPct)}\n" +
+            $"REFLECT {Pct(b.reflectPct)}{DeltaPct(d.reflectPct - b.reflectPct)}\n" +
+            $"HP {c.MaxHP}  MP {c.MaxMP}  STA {Mathf.RoundToInt(c.Stamina)}/{Mathf.RoundToInt(c.maxStamina)}  ULT {Pct(c.UltCharge01)}";
+    }
+
+    static string Pct(float f01) => Mathf.RoundToInt(f01 * 100) + "%";
+    static string Hard(int pct) => pct > 0 ? $" <color=#A79E88>+{pct}%</color>" : "";
+
+    // Sprint/run gear lives on the player's BODY, not the character sheet — surfaced here because it's a speed the
+    // player feels. Shown as the real run speed so it reads next to MOVE.
+    static string Gait(Player3DController pc) => pc == null ? "" : $"    RUN {pc.CurrentRunSpeed:0.0}";
+
+    Player3DController playerBody;   // cached: resolved once, re-resolved only if the body was rebuilt
+    Player3DController PlayerBody()
+    {
+        if (playerBody != null) return playerBody;
+        var sc = StatusController.Player;
+        return playerBody = sc != null ? sc.GetComponent<Player3DController>() : null;
+    }
+
+    static readonly string BonusHex = "#6FD46F";   // green = a buff is helping
+    static readonly string MalusHex = "#E06A6A";   // red   = a debuff is hurting
+
+    // " (+3)" / " (−2)", coloured; empty when nothing is modifying the stat (no parentheses noise on a clean sheet).
+    static string Delta(int diff) => diff == 0 ? "" : $" <color={(diff > 0 ? BonusHex : MalusHex)}>({(diff > 0 ? "+" : "−")}{Mathf.Abs(diff)})</color>";
+
+    // A ranged stat (ATK min-max) shows ONE bonus when both ends move together, and "min-max" when they differ.
+    static string Delta(int lo, int hi)
+    {
+        if (lo == 0 && hi == 0) return "";
+        if (lo == hi) return Delta(lo);
+        bool up = hi > 0;
+        string hex = up ? BonusHex : MalusHex;
+        string sign = up ? "+" : "−";
+        return $" <color={hex}>({sign}{Mathf.Abs(lo)}-{Mathf.Abs(hi)})</color>";
+    }
+
+    // Multiplier stats (ASPD, CAST) read as a ×delta rather than a flat number.
+    static string Delta(float diff)
+    {
+        if (Mathf.Abs(diff) < 0.005f) return "";
+        return $" <color={(diff > 0 ? BonusHex : MalusHex)}>({(diff > 0 ? "+" : "−")}{Mathf.Abs(diff):0.00})</color>";
+    }
+
+    // Fraction stats (guard cut, leech, reflect, crit chance) read as a percentage-point delta.
+    static string DeltaPct(float diff)
+    {
+        int pts = Mathf.RoundToInt(diff * 100);
+        if (pts == 0) return "";
+        return $" <color={(pts > 0 ? BonusHex : MalusHex)}>({(pts > 0 ? "+" : "−")}{Mathf.Abs(pts)}%)</color>";
     }
 
     // ---- helpers --------------------------------------------------------------

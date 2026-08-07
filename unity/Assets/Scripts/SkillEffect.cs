@@ -148,12 +148,30 @@ public class SkillEffect
     [Header("Status / Haste")]
     [Tooltip("Which ailment to inflict (Status kind).")]
     public Ailment ailment = Ailment.Burn;
-    [Tooltip("Duration in seconds (Status / Haste).")]
-    public float seconds = 4f;
+    [Tooltip("Duration in seconds — 0 for an instant/action effect. Only durational STATE kinds (Status/Haste/Guard/" +
+             "Buff/Regen/…) use it; the composer keeps it 0 for everything else. The buff tray / nameplate shows an icon " +
+             "iff this is > 0 — i.e. only for ongoing CONDITIONS, never for movement actions.")]
+    public float seconds = 0f;
+    [Tooltip("Knockback / Pull ONLY: how long the shove MOVEMENT lasts (seconds). This is movement time, NOT a state " +
+             "duration — a shove isn't a tracked condition, so it never shows a buff/nameplate icon.")]
+    public float shoveSeconds = 0.25f;
     [Tooltip("Status: DoT damage-per-tick, Slow factor (0..1), or Blind HIT loss. Haste/Buff: multiplier (>1). " +
              "Guard: damage-cut fraction (0..1). Regen: HP per tick. Vulnerability: extra-damage fraction (0.3 = +30%). " +
              "Knockback/Pull: shove speed. ManaLeech/Reflect: fraction of damage dealt/taken (0..1).")]
     public float magnitude = 3f;
+
+    [Header("Stacking (STATE effects only)")]
+    [Tooltip("OFF = one instance; re-applying REPLACES it (newest wins) — today's behaviour. ON = each application ADDS " +
+             "stacks, every stack carrying its own duration and its own magnitude; the total is their SUM.\n\n" +
+             "IMPORTANT: a stacking effect's magnitude is the PER-STACK amount, and for multiplier-style channels " +
+             "(Haste / Stat Buff) it is the BONUS, not the multiplier — author 0.03 for '+3% per stack', so 10 stacks " +
+             "read as +30%. A non-stacking effect keeps using the absolute value (1.5 = x1.5).")]
+    public bool stacking = false;
+    [Tooltip("Max stacks held at once. Past it, the OLDEST stack drops. Hard-capped by the store's safety ceiling.")]
+    [Min(1)] public int stackLimit = 5;
+    [Tooltip("How many stacks ONE application grants — this is the 'charges' knob. 3 = a cast hands out 3 charges that " +
+             "share one window and are spent one at a time.")]
+    [Min(1)] public int stacksPerApply = 1;
 
     [Header("Dash")]
     [Tooltip("Dash travel speed as a multiple of the caster's CURRENT run speed (8 = 8× run speed) — the visible fast " +

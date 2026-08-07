@@ -178,12 +178,43 @@ public class SkillComposerWindow : EditorWindow
 
     // Collapsible section headers — group the editor so it reads top-to-bottom (what it IS → how it's classified →
     // what it costs → how it looks → what it does). State is static so a section stays open/closed across repaints.
-    static bool foId = true, foClass = true, foCost = true, foPresent = false, foGameplay = true;
+    static bool foId = true, foClass = true, foTrigger = true, foCost = true, foPresent = false, foGameplay = true;
     static bool Section(string title, ref bool open)
     {
         EditorGUILayout.Space(6);
         open = EditorGUILayout.Foldout(open, title, true);
         return open;
+    }
+
+    // Dropdown of every OnCast ACTIVE skill's id (passives + this skill excluded), returning the chosen id — the target
+    // of an OnSkillCastComplete<skill> trigger. Reads SkillCatalog (saved Resources/Skills assets); a stale/unsaved pick
+    // stays visible so it isn't silently blanked.
+    string DrawSkillPicker(string label, string current)
+    {
+        var ids = SkillCatalog.OrderedIds();
+        var choices = new List<string> { "" };
+        for (int i = 0; i < ids.Length; i++)
+        {
+            var d = SkillCatalog.Get(ids[i]);
+            if (d == null || d.IsPassive) continue;                 // a passive can't be the cast target
+            if (sel != null && ids[i] == sel.id) continue;          // a skill can't trigger off its own cast
+            choices.Add(ids[i]);
+        }
+        if (!string.IsNullOrEmpty(current) && !choices.Contains(current)) choices.Add(current);
+
+        var labels = new string[choices.Count];
+        for (int i = 0; i < choices.Count; i++)
+        {
+            if (string.IsNullOrEmpty(choices[i])) { labels[i] = "(none)"; continue; }
+            var d = SkillCatalog.Get(choices[i]);
+            labels[i] = d != null ? $"{d.displayName}  ({choices[i]})" : choices[i];
+        }
+
+        int idx = Mathf.Max(0, choices.IndexOf(current ?? ""));
+        int next = EditorGUILayout.Popup(new GUIContent(label,
+            "The active skill whose successful (uninterrupted) cast fires this passive. Lists saved skills under Resources/Skills."),
+            idx, labels);
+        return choices[next];
     }
 
     void DrawBody()
@@ -249,6 +280,50 @@ public class SkillComposerWindow : EditorWindow
                 "Designer metadata only (not gameplay) — early / mid / late progression bucket."), sel.acquisitionTier);
             sel.shape = (SkillShape)EditorGUILayout.EnumPopup(new GUIContent("shape (meta)",
                 "LABEL ONLY — no gameplay reads it. Real targeting is each tick's 'targets' dropdown below. Kept for library filtering."), sel.shape);
+        }
+
+        // 2b) TRIGGER — OnCast (a normal active) vs a passive that fires on a moment. A passive has no slot and ignores
+        //     cost/cadence/aim; OnSkillCastComplete is parameterized by a picked active (that active finishing its cast).
+        if (Section("Trigger", ref foTrigger))
+        {
+            sel.trigger = (SkillTrigger)EditorGUILayout.EnumPopup(new GUIContent("trigger",
+                "OnCast = a normal active the player presses. Anything else = a PASSIVE: no hotbar slot, it runs its " +
+                "effect bindings when that moment fires (dispatched via the one PassiveEvents handler). " +
+                "OnSkillCastComplete fires when the picked active finishes casting UNINTERRUPTED; the rest are natural " +
+                "game events (a basic landing, a kill, low HP, a hit, a parry)."), sel.trigger);
+
+            if (sel.trigger == SkillTrigger.OnSkillCastComplete)
+                sel.triggerSkillId = DrawSkillPicker("  on cast complete of", sel.triggerSkillId);
+
+            if (sel.IsPassive)
+                EditorGUILayout.HelpBox("PASSIVE — no hotbar slot / cast gesture. It runs its tick bindings' effects " +
+                    "each time the trigger fires (Self bindings land on the caster; Single/Ground land on the triggering " +
+                    "mob). Cost / cadence / aim below are IGNORED — author the payload in the Gameplay section.\n\n" +
+                    "A passive never fires off a chain it's already part of, so it can't feed itself — but unrelated " +
+                    "passives can still react to what it does.", MessageType.Info);
+
+            EditorGUILayout.Space(4);
+            sel.requiresState = EditorGUILayout.Toggle(new GUIContent("requires a state",
+                "ON = this skill only runs while the caster carries the state below. It gates the WHOLE skill: when " +
+                "unmet nothing happens — no VFX, no cast, no cost."), sel.requiresState);
+            if (sel.requiresState)
+            {
+                EditorGUI.indentLevel++;
+                sel.requireState = (StateId)EditorGUILayout.EnumPopup(new GUIContent("  state",
+                    "The state the caster must be carrying."), sel.requireState);
+                sel.requireMinStacks = EditorGUILayout.IntSlider(new GUIContent("  min stacks",
+                    "How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state."),
+                    Mathf.Max(1, sel.requireMinStacks), 1, UnitStates.MaxStacks);
+                sel.consumeAllStacks = EditorGUILayout.Toggle(new GUIContent("  consume ALL",
+                    "Spend every stack on use — a finisher cashing a whole pile."), sel.consumeAllStacks);
+                if (!sel.consumeAllStacks)
+                    sel.consumeStacks = EditorGUILayout.IntSlider(new GUIContent("  consume",
+                        "How many stacks this use spends. 0 = spends nothing (a pure 'while X' condition)."),
+                        Mathf.Max(0, sel.consumeStacks), 0, UnitStates.MaxStacks);
+                EditorGUILayout.HelpBox("Stacks are spent AFTER the skill's effects have computed, so its damage always " +
+                    "reads the live count (a finisher sees the whole pile it's about to cash).", MessageType.Info);
+                EditorGUI.indentLevel--;
+            }
         }
 
         // 3) COST · CADENCE · AIM — what it costs to fire and WHERE it lands (aim is the cast gesture; each tick's
@@ -529,6 +604,102 @@ public class SkillComposerWindow : EditorWindow
         return "mobs";
     }
 
+    // ---- effect-kind cascading picker (State ▸ Buffs / Debuffs) --------------------------------------------------
+    // A purely PRESENTATIONAL grouping over the flat SkillEffectKind (+ Ailment for the 8 Status debuffs). Rules:
+    // "State" = any durational effect; Buffs are self-castable, Debuffs never self. This is organizational ONLY —
+    // targeting stays on the affects checkboxes, unchanged. Order in each array = display order. No data-model change.
+    // Top-level (non-STATE) effects: true instants + movement ACTIONS (Dash/Knockback/Pull). Their timer is MOVEMENT
+    // time, not an ongoing condition, so they're not states and never show a tray/nameplate icon. Order = display order.
+    static readonly SkillEffectKind[] InstantKinds =
+        { SkillEffectKind.Damage, SkillEffectKind.Heal, SkillEffectKind.Execute, SkillEffectKind.Teleport,
+          SkillEffectKind.Cleanse, SkillEffectKind.Dash, SkillEffectKind.Knockback, SkillEffectKind.Pull };
+    static readonly SkillEffectKind[] BuffKinds =
+        { SkillEffectKind.Buff, SkillEffectKind.Haste, SkillEffectKind.Guard, SkillEffectKind.Regen,
+          SkillEffectKind.Shield, SkillEffectKind.ManaLeech, SkillEffectKind.Reflect };
+
+    // A debuff entry is either its own kind (Vulnerability/Taunt/Knockback/Pull) or a Status ailment (the 8 ailments
+    // all share kind = Status, differing only by Ailment) — so picking "Burn" sets kind=Status, ailment=Burn.
+    struct DebuffOption
+    {
+        public string label; public SkillEffectKind kind; public bool isAilment; public Ailment ailment;
+        public DebuffOption(string l, SkillEffectKind k) { label = l; kind = k; isAilment = false; ailment = default; }
+        public DebuffOption(string l, Ailment a) { label = l; kind = SkillEffectKind.Status; isAilment = true; ailment = a; }
+    }
+    static readonly DebuffOption[] DebuffOptions =
+    {
+        new DebuffOption("Vulnerability", SkillEffectKind.Vulnerability),
+        new DebuffOption("Taunt", SkillEffectKind.Taunt),
+        new DebuffOption("Poison", Ailment.Poison), new DebuffOption("Bleed", Ailment.Bleed),
+        new DebuffOption("Burn", Ailment.Burn),     new DebuffOption("Slow", Ailment.Slow),
+        new DebuffOption("Stun", Ailment.Stun),     new DebuffOption("Freeze", Ailment.Freeze),
+        new DebuffOption("Silence", Ailment.Silence), new DebuffOption("Blind", Ailment.Blind),
+    };
+
+    static string[] topLabels, typeLabels, buffLabels, debuffLabels;
+    static void EnsureKindLabels()
+    {
+        if (topLabels != null) return;
+        topLabels = new string[InstantKinds.Length + 1];
+        for (int i = 0; i < InstantKinds.Length; i++) topLabels[i] = ObjectNames.NicifyVariableName(InstantKinds[i].ToString());
+        topLabels[InstantKinds.Length] = "State ▸";
+        typeLabels = new[] { "Buffs", "Debuffs" };
+        buffLabels = new string[BuffKinds.Length];
+        for (int i = 0; i < BuffKinds.Length; i++)
+            buffLabels[i] = BuffKinds[i] == SkillEffectKind.Buff ? "Stat Buff" : ObjectNames.NicifyVariableName(BuffKinds[i].ToString());
+        debuffLabels = new string[DebuffOptions.Length];
+        for (int i = 0; i < DebuffOptions.Length; i++) debuffLabels[i] = DebuffOptions[i].label;
+    }
+
+    static bool IsInstantKind(SkillEffectKind k) { for (int i = 0; i < InstantKinds.Length; i++) if (InstantKinds[i] == k) return true; return false; }
+    static bool IsBuffKind(SkillEffectKind k) { for (int i = 0; i < BuffKinds.Length; i++) if (BuffKinds[i] == k) return true; return false; }
+    static int IndexOfDebuff(SkillEffect ef)
+    {
+        for (int i = 0; i < DebuffOptions.Length; i++)
+        {
+            var o = DebuffOptions[i];
+            if (o.isAilment ? (ef.kind == SkillEffectKind.Status && ef.ailment == o.ailment) : ef.kind == o.kind) return i;
+        }
+        return 0;
+    }
+
+    // Top-level popup (the instant kinds + "State ▸"), drawn inline on the effect header row.
+    void DrawEffectKindTop(SkillEffect ef)
+    {
+        EnsureKindLabels();
+        bool isState = !IsInstantKind(ef.kind);
+        int idx = isState ? InstantKinds.Length : System.Array.IndexOf(InstantKinds, ef.kind);
+        if (idx < 0) idx = 0;
+        int next = EditorGUILayout.Popup(idx, topLabels);
+        if (next == idx) return;
+        ef.kind = next < InstantKinds.Length ? InstantKinds[next] : SkillEffectKind.Buff;   // → State defaults to the first Buff (Stat Buff)
+    }
+
+    // For a State effect, the Type (Buffs/Debuffs) + specific popups on their own rows.
+    void DrawEffectStateBranch(SkillEffect ef)
+    {
+        if (IsInstantKind(ef.kind)) return;
+        EnsureKindLabels();
+        bool isBuff = IsBuffKind(ef.kind);
+        int typeIdx = isBuff ? 0 : 1;
+        int typeNext = EditorGUILayout.Popup(new GUIContent("  type",
+            "Buff = beneficial state (can land on self). Debuff = harmful state (never self). Organizational only — targeting stays on the affects checkboxes."),
+            typeIdx, typeLabels);
+        if (typeNext != typeIdx) { ef.kind = typeNext == 0 ? SkillEffectKind.Buff : SkillEffectKind.Vulnerability; isBuff = typeNext == 0; }
+
+        if (isBuff)
+        {
+            int i = System.Array.IndexOf(BuffKinds, ef.kind); if (i < 0) i = 0;
+            int n = EditorGUILayout.Popup(new GUIContent("  state", "Which buff to apply."), i, buffLabels);
+            if (n != i) ef.kind = BuffKinds[n];
+        }
+        else
+        {
+            int i = IndexOfDebuff(ef);
+            int n = EditorGUILayout.Popup(new GUIContent("  state", "Which debuff to apply."), i, debuffLabels);
+            if (n != i) { var o = DebuffOptions[n]; ef.kind = o.kind; if (o.isAilment) ef.ailment = o.ailment; }
+        }
+    }
+
     void DrawBinding(SkillTickBinding b)
     {
         if (b.effects == null) b.effects = new List<SkillEffect>();
@@ -581,9 +752,10 @@ public class SkillComposerWindow : EditorWindow
             var ef = b.effects[e];
             EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.ExpandWidth(true));
             EditorGUILayout.BeginHorizontal();
-            ef.kind = (SkillEffectKind)EditorGUILayout.EnumPopup(ef.kind);
+            DrawEffectKindTop(ef);
             if (GUILayout.Button("✕", GUILayout.Width(22))) rm = e;
             EditorGUILayout.EndHorizontal();
+            DrawEffectStateBranch(ef);   // State ▸ Buffs / Debuffs cascade (only for durational "state" effects)
             // Plain-English summary of what THIS effect does — directly under the kind dropdown, above its fields.
             EditorGUILayout.HelpBox(EffectSummary(ef.kind), MessageType.None);
             switch (ef.kind)
@@ -602,8 +774,7 @@ public class SkillComposerWindow : EditorWindow
                     ef.amount = EditorGUILayout.IntField(new GUIContent("HP", "Flat HP restored to the caster."), ef.amount);
                     break;
                 case SkillEffectKind.Status:
-                    ef.ailment = (Ailment)EditorGUILayout.EnumPopup(new GUIContent("ailment",
-                        "What to inflict: Burn/Poison/Bleed = damage over time; Stun/Freeze/Silence = disable; Slow; Blind = accuracy loss."), ef.ailment);
+                    // The ailment is chosen in the State ▸ Debuffs picker above — not repeated here (no double-knob).
                     ef.chance = EditorGUILayout.Slider(new GUIContent("chance",
                         "PROC chance rolled PER HIT of the binding's multi-hit Damage (e.g. a stun proc). 0 = not a proc — applies ONCE per landing. The 'affinity (chance)' channel below scales this."), ef.chance, 0f, 1f);
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the ailment lasts."), ef.seconds, 0.5f, 20f);
@@ -683,7 +854,7 @@ public class SkillComposerWindow : EditorWindow
                 case SkillEffectKind.Knockback:
                 case SkillEffectKind.Pull:
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("shove speed", "How fast the enemy is pushed away / pulled in (world units per second)."), ef.magnitude <= 0f ? 10f : ef.magnitude, 1f, 30f);
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the shove lasts."), ef.seconds <= 0f ? 0.25f : ef.seconds, 0.05f, 2f);
+                    ef.shoveSeconds = EditorGUILayout.Slider(new GUIContent("shove time (s)", "How long the shove MOVEMENT lasts — movement time, NOT a state duration (so it shows no icon)."), ef.shoveSeconds <= 0f ? 0.25f : ef.shoveSeconds, 0.05f, 2f);
                     break;
                 case SkillEffectKind.ManaLeech:
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("MP leech", "Fraction of the damage you deal returned to you as MP (0..1). 0.15 = 15%."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
@@ -705,12 +876,40 @@ public class SkillComposerWindow : EditorWindow
             // (a pure stun has no output number) is hidden. Weights are relative; empty = ×1 (no scaling).
             string affLabel = AffinityOutputLabel(ef);
             if (affLabel != null) DrawAffinity(affLabel, ref ef.affinity);
+            // An instant effect has NO duration — keep seconds 0 so the buff tray (which validates by duration) never
+            // shows a phantom icon for it, and so switching a durational kind to an instant one clears the leftover.
+            if (!HasDurationChannel(ef)) ef.seconds = 0f;
             if (HasDurationChannel(ef)) DrawAffinity("boosts DURATION", ref ef.durationAffinity);
+            DrawStacking(ef);
             if (ef.kind == SkillEffectKind.Damage) DrawAffinity("boosts HITS COUNT", ref ef.hitCountAffinity);
             EditorGUILayout.EndVertical();
         }
         if (rm >= 0) b.effects.RemoveAt(rm);
         if (GUILayout.Button("  + effect", GUILayout.Width(90))) b.effects.Add(new SkillEffect());
+    }
+
+    // Stacking knobs — only meaningful for a STATE (something with a duration), so they're hidden entirely for instant
+    // effects rather than shown as dead fields. Stacks-per-apply IS the "charges" knob: 3 = one cast hands out 3.
+    static void DrawStacking(SkillEffect ef)
+    {
+        if (!HasDurationChannel(ef)) { ef.stacking = false; return; }   // an instant effect can't be a stacking condition
+
+        ef.stacking = EditorGUILayout.Toggle(new GUIContent("stacking",
+            "OFF = one instance; re-applying replaces it (newest wins). ON = each application ADDS stacks, each with " +
+            "its own duration and its own magnitude; the total is their SUM."), ef.stacking);
+        if (!ef.stacking) return;
+
+        EditorGUI.indentLevel++;
+        ef.stackLimit = EditorGUILayout.IntSlider(new GUIContent("  max stacks",
+            "Held at once. Past this the OLDEST stack drops."), Mathf.Max(1, ef.stackLimit), 1, UnitStates.MaxStacks);
+        ef.stacksPerApply = EditorGUILayout.IntSlider(new GUIContent("  stacks per use",
+            "How many stacks ONE application grants — the 'charges' knob. 3 = a cast hands out 3 charges sharing one " +
+            "window, spent one at a time."), Mathf.Max(1, ef.stacksPerApply), 1, Mathf.Max(1, ef.stackLimit));
+        EditorGUILayout.HelpBox(
+            "Magnitude above is PER STACK, and the total is the SUM.\n" +
+            "For Haste and Stat Buff, author the BONUS, not the multiplier: 0.03 = \"+3% per stack\", so 10 stacks read " +
+            "as +30%. (A non-stacking effect still uses the absolute value, e.g. 1.5 = x1.5.)", MessageType.Info);
+        EditorGUI.indentLevel--;
     }
 
     // One plain-English sentence per effect kind, shown as the grey note at the bottom of every effect so the author

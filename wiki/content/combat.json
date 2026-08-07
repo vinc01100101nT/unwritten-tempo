@@ -107,6 +107,41 @@
       ]
     },
     {
+      "type": "heading",
+      "level": 2,
+      "text": "Buffs, debuffs & stacks"
+    },
+    {
+      "type": "paragraph",
+      "text": "Anything lasting that sits on you or an enemy is a **state** — buffs and debuffs work the same way underneath. Your own states show as icons on the right edge of the screen, counting down; a monster's show above its health bar."
+    },
+    {
+      "type": "paragraph",
+      "text": "Some states **stack**. Each stack carries its own strength and its own timer, and the total is simply the sum — ten stacks of +3% attack is +30% attack. When a stack expires, only that one drops; the rest keep running. An icon shows its count when it's holding more than one."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Charges"
+    },
+    {
+      "type": "paragraph",
+      "text": "A few skills hand you a burst of **charges** at once — several stacks sharing one window, spent one at a time. Casting a skill might grant 3 charges, and each qualifying hit spends one until they're gone or the window closes."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Combo skills"
+    },
+    {
+      "type": "paragraph",
+      "text": "Some skills **require** a state before they'll do anything. If you don't have it, the skill simply doesn't fire — no animation, no cooldown, no mana spent. Skills that cash in a state always calculate their power from what you're carrying **before** spending it, so a finisher gets full value from every stack it consumes."
+    },
+    {
+      "type": "callout",
+      "text": "A skill that triggers off your hits can never chain into itself, so a combo can't spiral out of control — its charges are its budget, and that's the ceiling."
+    },
+    {
       "type": "quote",
       "text": [
         "*Status: the model and rules above are set; specific numbers, the element table, and the size matchup are in tuning.*"

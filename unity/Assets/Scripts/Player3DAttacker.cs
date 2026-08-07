@@ -213,6 +213,8 @@ public class Player3DAttacker : MonoBehaviour
             // attacker/direction (Origin == Target == receiver), just like OnReceiveHeal / OnHitBySkill —
             // the crit's bigger punch lives in the basic_crit sequence (×1.7), not a caller-side scale fudge.
             VfxCue.Fire(crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack, t.transform);
+            // A real basic attack connected — announce it for OnBasicAttackLanded passives (Momentum, Perfect Form).
+            PassiveEvents.Fire(SkillTrigger.OnBasicAttackLanded, null, t.transform);
         }
     }
 
@@ -305,8 +307,10 @@ public class Player3DAttacker : MonoBehaviour
         if (ctx.KnockbackSpeed > 0f)
             ai.Knockback(transform.position, ctx.KnockbackSpeed, ctx.KnockbackSecs, Mathf.Max(ctx.StaggerSecs, ctx.KnockbackSecs));
         else if (ctx.StaggerSecs > 0f) ai.Stagger(ctx.StaggerSecs);
-        if (ctx.SlowSecs > 0f && ctx.SlowFactor < 1f) ai.Slow(ctx.SlowFactor, ctx.SlowSecs);
-        if (ctx.RootSecs > 0f) ai.Slow(0f, ctx.RootSecs);   // Root (Entangling mod) = a hard slow to ~0
+        // Slow / Root write the unified store's Slow state (drives MoveMult, the single mob-speed source). Explicit
+        // factors bypass the ailment default (0 = a hard root to full stop, exactly the old ai.Slow(0f,…) behaviour).
+        if (ctx.SlowSecs > 0f && ctx.SlowFactor < 1f) h.States.Apply(StateId.Slow, ctx.SlowSecs, ctx.SlowFactor);
+        if (ctx.RootSecs > 0f) h.States.Apply(StateId.Slow, ctx.RootSecs, 0f);   // Root (Entangling mod) = a hard slow to ~0
     }
 
     void OnDrawGizmosSelected()

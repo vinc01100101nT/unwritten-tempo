@@ -16,5 +16,12 @@ public struct DerivedSnapshot
     public float critChance;   // 0..1
     public float critMult;     // e.g. 1.4 = 140%
     public float aspdMult;     // >1 = faster
+    public float castSpeedMult;// >1 = shorter gap BETWEEN casts
     public float castTimeMult; // 1 = full wind-up, 0 = instant cast
+    public int hardDefPct, hardMdefPct;   // flat % of incoming damage ignored, on top of the DEF subtraction
+    public float guardCutPct;  // 0..1 incoming-damage cut while Guard is up (a state; 0 at rest)
+    public float lifeStealPct; // fraction of damage dealt returned as HP
+    public float reflectPct;   // permanent thorns + any timed reflect window
+    public float manaLeechPct; // fraction of damage dealt returned as MP (a state; 0 at rest)
+    public int barrierHP;      // remaining Shield pool (a state; 0 at rest)
 }

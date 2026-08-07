@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
@@ -50,6 +51,16 @@ public class MobNameplate : MonoBehaviour
     int lastShownHP = int.MinValue;
     bool shown = false;   // nothing is shown until the plate is first built (on first damage)
 
+    // Debuff-icon row (above the bar), read from the mob's unified UnitStates store. Pooled Images reused across
+    // rebuilds; rebuilt ONLY when the state SET changes (OnChanged) or a state silently expires (prune) — never per
+    // frame (many-mobs perf rule). Icons only show while the plate is visible (i.e. once the mob's been damaged).
+    UnitStates states;
+    bool iconsDirty;
+    readonly List<Image> iconSlots = new List<Image>(4);
+    readonly List<TextMeshProUGUI> iconCounts = new List<TextMeshProUGUI>(4);   // "3" badge under each stacked icon
+    const float IconSize = 11f, IconGap = 1.5f, IconRowGap = 2f;   // UI px (before worldScale)
+    static readonly Color StackColor = new Color(1f, 0.87f, 0.45f);
+
     // ---- shared across ALL mobs: one canvas, one white sprite, the builtin font, one on-top material ----
     static Transform host;
     static Sprite whiteSprite;
@@ -70,6 +81,7 @@ public class MobNameplate : MonoBehaviour
 
     void OnDestroy()
     {
+        if (states != null) states.OnChanged -= OnStatesChanged;
         // The widget lives under the shared canvas, not under the mob, so it must be cleaned up by hand
         // (a no-op if the canvas — and with it the child — was already torn down on scene unload).
         if (root != null) Destroy(root.gameObject);
@@ -84,7 +96,7 @@ public class MobNameplate : MonoBehaviour
         if (!show) { if (root != null && shown) { shown = false; root.gameObject.SetActive(false); } return; }
 
         if (root == null) Build();                 // lazy: build the widget only the first time it needs to show
-        if (!shown) { shown = true; root.gameObject.SetActive(true); }
+        if (!shown) { shown = true; iconsDirty = true; root.gameObject.SetActive(true); }
 
         // Follow the mob (after it has moved this frame) and yaw to face the camera — same as DamagePopup.
         root.position = transform.position + new Vector3(0f, feetOffset, 0f);
@@ -96,6 +108,12 @@ public class MobNameplate : MonoBehaviour
             float frac = Mathf.Clamp01((float)health.Current / Mathf.Max(1, health.maxHealth));
             fill.fillAmount = frac;
             fill.color = HpColor(frac);
+        }
+
+        if (states != null)
+        {
+            states.Prune();                        // clear silently-expired states (fires OnChanged → iconsDirty)
+            if (iconsDirty) { iconsDirty = false; RebuildIcons(); }
         }
     }
 
@@ -155,6 +173,86 @@ public class MobNameplate : MonoBehaviour
         }
 
         lastShownHP = int.MinValue;                         // force the first fill refresh in LateUpdate
+
+        if (states == null) states = health.States;         // the mob's unified state store (shared with Health/StatusController)
+        if (states != null) { states.OnChanged -= OnStatesChanged; states.OnChanged += OnStatesChanged; }
+        iconsDirty = true;
+    }
+
+    void OnStatesChanged() => iconsDirty = true;
+
+    // Rebuild the debuff-icon row from the live states. Reuses pooled Images (no alloc after warmup), skips states with
+    // no icon (nothing to draw on a tiny plate), and centres the row above the bar. Runs only on a set change / expiry.
+    void RebuildIcons()
+    {
+        if (root == null || states == null) return;
+        var list = states.Active;
+        int n = 0;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var s = list[i];
+            if (s.icon == null) continue;
+            var img = IconSlot(n);
+            img.sprite = s.icon;
+            img.preserveAspect = true;
+            img.color = s.tint == default ? Color.white : s.tint;
+            if (!img.gameObject.activeSelf) img.gameObject.SetActive(true);
+            // Stack count sits on the icon; blank at a single stack. Rebuilds only on a state change, never per frame.
+            var cnt = iconCounts[n];
+            int stacks = s.StackCount;
+            if (stacks > 1) { cnt.text = stacks.ToString(); if (!cnt.gameObject.activeSelf) cnt.gameObject.SetActive(true); }
+            else if (cnt.gameObject.activeSelf) cnt.gameObject.SetActive(false);
+            n++;
+        }
+        for (int i = n; i < iconSlots.Count; i++)
+        {
+            if (iconSlots[i].gameObject.activeSelf) iconSlots[i].gameObject.SetActive(false);
+            if (iconCounts[i].gameObject.activeSelf) iconCounts[i].gameObject.SetActive(false);
+        }
+
+        if (n == 0) return;
+        float total = n * IconSize + (n - 1) * IconGap;     // centre the row on the plate, sitting just above the bar
+        float x = -total * 0.5f + IconSize * 0.5f;
+        for (int i = 0; i < n; i++)
+        {
+            iconSlots[i].rectTransform.anchoredPosition = new Vector2(x, IconRowGap);
+            x += IconSize + IconGap;
+        }
+    }
+
+    // Pooled icon slot: grow the pool on demand (rare — only when a mob carries more debuffs than ever before), then
+    // reuse. Each icon anchors to the plate's top-centre (the feet line) with a bottom pivot so it grows UP over the bar.
+    Image IconSlot(int i)
+    {
+        while (iconSlots.Count <= i)
+        {
+            var img = NewImage("StateIcon", root, Color.white);
+            var rt = img.rectTransform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.pivot = new Vector2(0.5f, 0f);
+            rt.sizeDelta = new Vector2(IconSize, IconSize);
+            img.gameObject.SetActive(false);
+            iconSlots.Add(img);
+
+            // Its stack-count badge, parented to the icon so it rides along when the row re-lays out.
+            var go = new GameObject("Count", typeof(RectTransform));
+            var crt = (RectTransform)go.transform;
+            crt.SetParent(rt, false);
+            crt.anchorMin = Vector2.zero; crt.anchorMax = Vector2.one;
+            crt.offsetMin = Vector2.zero; crt.offsetMax = Vector2.zero;
+            var txt = go.AddComponent<TextMeshProUGUI>();
+            txt.font = UiKit.BodyFont;
+            txt.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.BodyFont);
+            txt.fontSize = IconSize * 0.8f;
+            txt.fontStyle = FontStyles.Bold;
+            txt.alignment = TextAlignmentOptions.BottomRight;
+            txt.textWrappingMode = TextWrappingModes.NoWrap;
+            txt.raycastTarget = false;
+            txt.color = StackColor;
+            go.SetActive(false);
+            iconCounts.Add(txt);
+        }
+        return iconSlots[i];
     }
 
     // ---- shared resources --------------------------------------------------------------------------

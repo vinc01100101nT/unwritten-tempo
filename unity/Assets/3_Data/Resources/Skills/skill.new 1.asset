@@ -22,6 +22,13 @@ MonoBehaviour:
   shape: 0
   complexity: 0
   acquisitionTier: 0
+  trigger: 0
+  triggerSkillId: 
+  requiresState: 0
+  requireState: 12
+  requireMinStacks: 1
+  consumeAllStacks: 0
+  consumeStacks: 0
   manaCost: 5
   cooldown: 0.7
   castTime: 0
@@ -34,26 +41,31 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
   repeatInterval: 0.4
+  projectileCount: 1
+  projectileSpread: 0
   hasReleaseStance: 1
   releaseStance: 17
   bindings:
   - tickId: follow_hit
-    targetMode: 2
-    groundDelivery: 1
+    targetMode: 1
+    groundDelivery: 0
     affects: 3
     playerFaction: 0
     radius: 0.97
-    projectileCount: 1
-    projectileSpreadAngle: 0
+    stayDuration: 0
     effects:
-    - kind: 1
+    - kind: 7
       damageType: 1
       damageMult: 1
       element: 0
       amount: 50
-      ailment: 2
-      seconds: 4
-      magnitude: 3
+      ailment: 0
+      seconds: 20.2
+      shoveSeconds: 0.25
+      magnitude: 1
+      stacking: 1
+      stackLimit: 5
+      stacksPerApply: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0

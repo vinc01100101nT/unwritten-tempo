@@ -79,6 +79,28 @@ public enum SkillComplexity { Low, Medium, High }
 /// the authoring lists.</summary>
 public enum AcquisitionTier { Early, Mid, Late }
 
+/// <summary>What makes a skill RUN. <see cref="OnCast"/> = a normal active the player presses (default; it takes a
+/// hotbar slot and uses the cost/cadence below). Anything else = a PASSIVE: no slot, it runs its bindings when that
+/// combat moment fires, dispatched through the ONE <see cref="PassiveEvents"/> choke point.
+///
+/// <para><b>Two shapes of trigger, on purpose:</b> <see cref="OnSkillCastComplete"/> is PARAMETERIZED by
+/// <see cref="SkillDef.triggerSkillId"/> — it fires when THAT specific active finishes casting uninterrupted (this
+/// one value replaces a per-skill event like "OnLunge", because the skill set is open-ended). The remaining values are
+/// the NATURAL game events — a small, fixed, closed set — so they're listed flat, no parameter.</para>
+///
+/// <para><b>Serialized by int</b>: <see cref="OnCast"/> MUST stay 0 (old assets have no <c>trigger</c> field → they
+/// deserialize as 0 = OnCast), and new values MUST be appended, never inserted.</para></summary>
+public enum SkillTrigger
+{
+    OnCast = 0,
+    OnSkillCastComplete,   // parameterized by triggerSkillId: that active finished casting (not interrupted)
+    OnBasicAttackLanded,   // natural — a basic attack connected
+    OnKill,                // natural — a mob died to the player
+    OnLowHP,               // natural — the player dropped below the low-HP threshold
+    OnHit,                 // natural — the player landed a damaging hit
+    OnParry,               // natural — a successful block (fired by the parry system, NOT on cast)
+}
+
 /// <summary>Binds ONE exposed <see cref="VfxStep.tickId"/> to the gameplay it should do. The tickId matches a
 /// step in the skill's <see cref="SkillDef.vfx"/>; every time that component ticks, the runner applies these
 /// effects to the targets in <see cref="radius"/> at the tick point.</summary>
@@ -153,6 +175,30 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     [Tooltip("Designer metadata (not gameplay): when in progression this skill is meant to surface.")]
     public AcquisitionTier acquisitionTier = AcquisitionTier.Early;
 
+    [Header("Trigger (OnCast = a normal active; anything else = a passive)")]
+    [Tooltip("OnCast = a normal active the player presses (takes a hotbar slot + the cost/cadence below). Anything " +
+             "else = a PASSIVE: no slot, it runs its bindings when that moment fires (dispatched via PassiveEvents). " +
+             "For a passive, cost / cadence / aim below are IGNORED.")]
+    public SkillTrigger trigger = SkillTrigger.OnCast;
+    [Tooltip("Only for OnSkillCastComplete: the id of the ACTIVE skill whose successful (uninterrupted) cast fires " +
+             "this passive. Set it via the Skill Composer's trigger dropdown, not by hand.")]
+    public string triggerSkillId = "";
+
+    [Header("Requires a state (the combo gate)")]
+    [Tooltip("ON = this skill only runs while the caster carries the required state. It gates the WHOLE skill: when " +
+             "unmet nothing happens at all — no VFX, no cast, no cost. Works for a pressed active and a passive alike.")]
+    public bool requiresState = false;
+    [Tooltip("The state the caster must be carrying. NOTE: this is SERIALIZED, so the StateId list is append-only from " +
+             "here on — inserting a value mid-list would silently repoint every skill saved after it.")]
+    public StateId requireState = StateId.Haste;
+    [Tooltip("How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state at all.")]
+    [Min(1)] public int requireMinStacks = 1;
+    [Tooltip("Spend ALL stacks on use (Deathblow cashing a Momentum pile). Overrides the per-use count below.")]
+    public bool consumeAllStacks = false;
+    [Tooltip("How many stacks this use spends. 0 = spends nothing (a pure condition, e.g. 'while Enraged'). " +
+             "Consumption ALWAYS happens after the skill's effects have computed, so the damage sees the live stacks.")]
+    [Min(0)] public int consumeStacks = 0;
+
     [Header("Cost / cadence")]
     public int manaCost = 10;
     public float cooldown = 5f;
@@ -173,6 +219,10 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     [Min(0f)] public float chargeCost = 100f;
     /// <summary>True when this skill occupies the dedicated ULT slot and spends charge rather than riding keys 1–9.</summary>
     public bool IsUltimate => tier == SkillTier.Ultimate;
+
+    /// <summary>True when this skill runs on a <see cref="SkillTrigger"/> instead of a hotbar press — it takes no slot,
+    /// never casts, and its bindings fire through <see cref="PassiveEvents"/> when its trigger moment happens.</summary>
+    public bool IsPassive => trigger != SkillTrigger.OnCast;
 
     [Header("Cast circle (shown ONLY during the wind-up, needs castTime > 0)")]
     [Tooltip("EffectLibrary id of the ground casting circle shown WHILE this skill winds up. Empty = no per-skill " +

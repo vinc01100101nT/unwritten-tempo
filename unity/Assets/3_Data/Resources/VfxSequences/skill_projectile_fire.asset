@@ -29,12 +29,12 @@ MonoBehaviour:
     trimEnd: 0
     clipStart: 0
     tint: {r: 0.83396226, g: 0.50126487, b: 0.2438945, a: 1}
+    looping: 0
     emitEventOnStart: 
     emitEventOnEnd: landed
     tickId: projectile_fire
-    tickCount: 9
+    tickWhen: 2
     tickInterval: 0.14
-    spreadTicks: 1
     carrierFromCaster: 1
     carrierFrom: {x: 0, y: 0, z: 0}
     carrierScatter: 0
@@ -67,12 +67,12 @@ MonoBehaviour:
     trimEnd: 0
     clipStart: 0
     tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
     emitEventOnStart: 
     emitEventOnEnd: 
     tickId: 
-    tickCount: 1
+    tickWhen: 0
     tickInterval: 0
-    spreadTicks: 0
     carrierFromCaster: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
@@ -105,12 +105,12 @@ MonoBehaviour:
     trimEnd: 0
     clipStart: 0
     tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
     emitEventOnStart: 
     emitEventOnEnd: 
     tickId: 
-    tickCount: 1
+    tickWhen: 0
     tickInterval: 0
-    spreadTicks: 0
     carrierFromCaster: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
@@ -144,12 +144,12 @@ MonoBehaviour:
     trimEnd: 0
     clipStart: 0
     tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
     emitEventOnStart: 
     emitEventOnEnd: 
     tickId: 
-    tickCount: 1
+    tickWhen: 0
     tickInterval: 0
-    spreadTicks: 0
     carrierFromCaster: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0

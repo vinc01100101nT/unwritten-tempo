@@ -70,7 +70,7 @@ MonoBehaviour:
       element: 0
       amount: 1
       ailment: 2
-      seconds: 6
+      seconds: 0
       magnitude: 1
       hitCount: 1
       executeAmp: 0

@@ -45,18 +45,31 @@ public class StatusController : MonoBehaviour
     static readonly Color SilenceColor= new Color(0.7f, 0.5f, 1f);
     static readonly Color BlindColor  = new Color(0.7f, 0.7f, 0.75f);
 
-    readonly float[] until    = new float[N];   // when each ailment expires
-    readonly float[] nextTick = new float[N];   // next DoT tick time (DoTs only)
-    readonly float[] mag      = new float[N];   // per-ailment magnitude (DoT dmg, slow factor, or HIT loss)
+    // Ailment + Haste STATE (which are active, their timers + magnitudes) now lives in the unified per-unit
+    // UnitStates store (V3). This controller keeps the VFX auras, the mob-AI delegation, the DoT ticking, and the
+    // action-lock — but reads/writes state through `states`. Ailment i maps 1:1 to StateId i (matching enum order);
+    // Haste is StateId.Haste. Newest-wins overwrite (the store's policy — the intended change from the old Max timer).
+    UnitStates statesCache;
+    /// <summary>The unit's ONE state store — the single source that BOTH gameplay and the buff tray read, so no state
+    /// can be visible to one and not the other. The PLAYER is built from TWO GameObjects (the persistent Character data
+    /// object + the spawned body that carries THIS controller), so the player shares <see cref="Character"/>'s store;
+    /// otherwise a state written here (Haste, poison, slow…) would land in a store the tray + combat math never read.
+    /// Mobs are one GameObject, so they own their store. Resolved lazily because the two player GameObjects' Awake order
+    /// isn't guaranteed — by the first Update (all Awakes done) <see cref="Character.Instance"/> is set. Null only in the
+    /// pre-Character load window, when no state can yet have been applied.</summary>
+    UnitStates states
+    {
+        get
+        {
+            if (statesCache != null) return statesCache;
+            if (isPlayer) { var c = Character.Instance; return c == null ? null : (statesCache = c.States); }
+            return statesCache = GetComponent<UnitStates>() ?? gameObject.AddComponent<UnitStates>();
+        }
+    }
 
     // Persistent status-aura VFX per DoT — begun on apply (a looping Attach cue that tracks this unit) and stopped
     // when the ailment expires (see the sweep in Update / OnDestroy). Non-DoT ailments use one-shot cues instead.
     readonly VfxSequenceRunner[] aura = new VfxSequenceRunner[N];
-
-    // Haste — a timed move-SPEED BUFF (multiplier > 1). Separate channel from the Slow ailment (which can only
-    // ever slow, since its factor is Clamp01'd), so a buff and a slow can coexist and multiply. Folds into MoveMult.
-    float hasteUntil;
-    float hasteMult = 1f;
     static readonly Color HasteColor = new Color(0.4f, 1f, 0.7f);
 
     Health health;          // mob: the thing DoTs damage
@@ -75,6 +88,9 @@ public class StatusController : MonoBehaviour
         player = GetComponent<Player3DController>();
         isPlayer = player != null;
         if (isPlayer) Player = this;
+        // `states` resolves lazily (see the property) — for the player it shares Character's store, which may not exist
+        // yet this Awake. A mob resolves its own store on first touch. Nothing reads state before the first Update.
+        if (!isPlayer) { var _ = states; }   // warm the mob's own store now (no Character dependency)
     }
 
     void OnDestroy()
@@ -90,7 +106,7 @@ public class StatusController : MonoBehaviour
         aura[i] = null;
     }
 
-    bool Active(Ailment a) => Time.time < until[(int)a];
+    bool Active(Ailment a) { var st = states; return st != null && st.Has((StateId)(int)a); }   // Ailment i ↔ StateId i (matching enum order)
     static bool IsDot(Ailment a) => a == Ailment.Poison || a == Ailment.Bleed || a == Ailment.Burn;
 
     // ---- the flags the rest of the game reads (player side) -------------------
@@ -127,44 +143,40 @@ public class StatusController : MonoBehaviour
     /// <summary>Move-speed multiplier: 0 while rooted (hard-CC or skill lock), else the Slow factor (≤1) × the Haste
     /// buff (≥1). So a speed buff makes this &gt;1 (and a buff + slow multiply). Read by the controller to scale move
     /// speed, the footstep cadence, and the Walk/Run animation fps (<see cref="Player3DController.GaitSpeedMult"/>).</summary>
-    public float MoveMult
-    {
-        get
-        {
-            if (ActionLocked) return 0f;
-            float m = Active(Ailment.Slow) ? Mathf.Clamp01(mag[(int)Ailment.Slow]) : 1f;
-            if (Time.time < hasteUntil) m *= hasteMult;
-            return m;
-        }
-    }
+    public float MoveMult { get { if (ActionLocked) return 0f; var st = states; return st != null ? st.MoveMult : 1f; } }   // store folds Slow × Haste; the action-lock still zeroes it
     /// <summary>The live Haste move-speed multiplier (1 = none), or 1 once the buff has expired. Lets the dev
     /// panel show/drive the current speed buff on a slider.</summary>
-    public float HasteMult => Time.time < hasteUntil ? hasteMult : 1f;
+    public float HasteMult { get { var st = states; var h = st != null ? st.Get(StateId.Haste) : null; return h != null ? h.Mult : 1f; } }
     /// <summary>True while spell-casting is blocked.</summary>
-    public bool Silenced => Active(Ailment.Silence);
+    public bool Silenced { get { var st = states; return st != null && st.Silenced; } }
     /// <summary>HIT (accuracy) points to subtract from this unit's attacks while blinded.</summary>
-    public int HitPenalty => Active(Ailment.Blind) ? Mathf.RoundToInt(mag[(int)Ailment.Blind]) : 0;
+    public int HitPenalty { get { var st = states; return st != null ? st.HitPenalty : 0; } }
 
     /// <summary>Inflict (or refresh) an ailment for <paramref name="seconds"/>. <paramref name="magnitude"/>
     /// means: damage-per-tick for DoTs, the speed multiplier (0..1) for Slow, or HIT lost for Blind.</summary>
     public void Apply(Ailment a, float seconds, float magnitude)
     {
-        if (seconds <= 0f) return;
-        int i = (int)a;
-        bool wasActive = Active(a);
-        until[i] = Mathf.Max(until[i], Time.time + seconds);
+        if (seconds <= 0f || states == null) return;
+        var id = (StateId)(int)a;
+        bool wasActive = states.Has(id);
 
         if (IsDot(a))
         {
-            mag[i] = Mathf.Max(1f, magnitude);
-            if (!wasActive)
+            var s = states.Apply(id, seconds, Mathf.Max(1f, magnitude));   // magnitude = damage per tick
+            if (s != null && !wasActive)
             {
-                nextTick[i] = Time.time + DotInterval;   // first tick after one interval
+                s.nextTick = Time.time + DotInterval;   // first tick after one interval
                 Announce(a);
-                StartAura(a);                            // persistent aura for the ailment's duration
+                StartAura(a);                           // persistent aura for the ailment's duration
             }
             return;
         }
+
+        // Control / debuff: compute the per-ailment magnitude (Slow factor / Blind HIT loss; the rest are binary).
+        float mg = a == Ailment.Slow  ? Mathf.Clamp01(magnitude <= 0f ? 0.5f : magnitude)
+                 : a == Ailment.Blind ? Mathf.Max(1f, magnitude <= 0f ? 30f : magnitude)
+                 : 0f;
+        states.Apply(id, seconds, mg);
 
         switch (a)
         {
@@ -177,15 +189,14 @@ public class StatusController : MonoBehaviour
                 AnnounceIfNew(a, wasActive, "Frozen!", FreezeColor);
                 break;
             case Ailment.Slow:
-                mag[i] = Mathf.Clamp01(magnitude <= 0f ? 0.5f : magnitude);
-                if (ai != null) ai.Slow(mag[i], seconds);            // mob: reuse the chill
+                // No mob delegation: the store's Slow entry (written above) drives move speed via MoveMult, which the
+                // mob mover now reads — one source for player AND mob. Stun/Freeze still delegate (they gate the AI brain).
                 AnnounceIfNew(a, wasActive, "Slow!", FreezeColor);
                 break;
             case Ailment.Silence:
                 AnnounceIfNew(a, wasActive, "Silenced!", SilenceColor);
                 break;
             case Ailment.Blind:
-                mag[i] = Mathf.Max(1f, magnitude <= 0f ? 30f : magnitude);
                 AnnounceIfNew(a, wasActive, "Blind!", BlindColor);
                 break;
         }
@@ -232,10 +243,9 @@ public class StatusController : MonoBehaviour
     /// multiplicatively with a Slow. A new call replaces the current buff (latest wins).</summary>
     public void Haste(float multiplier, float seconds)
     {
-        if (seconds <= 0f) return;
-        bool wasActive = Time.time < hasteUntil;
-        hasteMult = Mathf.Max(0.01f, multiplier);
-        hasteUntil = Time.time + seconds;
+        if (seconds <= 0f || states == null) return;
+        bool wasActive = states.Has(StateId.Haste);
+        states.Apply(StateId.Haste, seconds, Mathf.Max(0.01f, multiplier));
         if (!wasActive)
         {
             DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Haste!", HasteColor);
@@ -248,12 +258,13 @@ public class StatusController : MonoBehaviour
     /// were cleared. Reusable "cleanse" hook for skills like Mending Tide.</summary>
     public int Cleanse(int count)
     {
-        if (count <= 0) return 0;
+        if (count <= 0 || states == null) return 0;
         int cleared = 0;
-        for (int i = 0; i < N && cleared < count; i++)
+        for (int i = 0; i < N && cleared < count; i++)   // N = the 8 ailments (StateId 0..7); Haste/buffs aren't cleansed
         {
-            if (Time.time >= until[i]) continue;   // not active
-            until[i] = 0f;
+            var id = (StateId)i;
+            if (!states.Has(id)) continue;   // not active
+            states.Remove(id);
             StopAura(i);
             cleared++;
         }
@@ -280,23 +291,25 @@ public class StatusController : MonoBehaviour
 
     void Update()
     {
+        if (states == null) return;   // player pre-Character load window — nothing can be active yet
         // Only the damage-over-time ailments need per-frame attention; the rest are read on demand via the
         // flags above. Tick each live DoT on its own cadence and apply it to whatever we're attached to.
         TickDot(Ailment.Poison);
         TickDot(Ailment.Bleed);
         TickDot(Ailment.Burn);
 
-        // Tear down any status aura whose ailment has expired (fixed small loop, no alloc; only DoT slots are ever set).
+        // Tear down a DoT's aura once its state has lapsed (aura[i] != null gates it, so states.Has is only hit for
+        // the handful of active DoT slots — cheap, no alloc; only DoT slots ever hold an aura).
         for (int i = 0; i < N; i++)
-            if (aura[i] != null && Time.time >= until[i]) StopAura(i);
+            if (aura[i] != null && !states.Has((StateId)i)) StopAura(i);
     }
 
     void TickDot(Ailment a)
     {
-        int i = (int)a;
-        if (Time.time >= until[i] || Time.time < nextTick[i]) return;
-        nextTick[i] = Time.time + DotInterval;
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(mag[i]));
+        var s = states.Get((StateId)(int)a);
+        if (s == null || Time.time < s.nextTick) return;   // not active (Get returns null once lapsed) or not yet due
+        s.nextTick = Time.time + DotInterval;
+        int dmg = Mathf.Max(1, Mathf.RoundToInt(s.magnitude));
         Color c = ColorOf(a);
         VfxCue.Fire(TickCue(a), transform);   // one-shot puff per DoT tick
 

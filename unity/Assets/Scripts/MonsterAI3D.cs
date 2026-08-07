@@ -120,8 +120,6 @@ public class MonsterAI3D : MonoBehaviour
     bool chasing;
     float nextTouch;
     float stunnedUntil;   // hit by a stagger (e.g. the Swordsman's Bash) — frozen until this time
-    float slowUntil;      // chilled (e.g. Frost Nova) — moves at slowFactor speed until this time
-    float slowFactor = 1f;
     float tauntUntil;     // taunted (e.g. Bulwark) — forced to chase the player and can't leash/flee until this time
     float mobXp;          // XP toward this mob's next level (earned from damage dealt to the player)
     StatusFX stunFx;      // looping swirl shown over the head while stunned (created on first stun)
@@ -217,15 +215,6 @@ public class MonsterAI3D : MonoBehaviour
         if (seconds > 0f) stunnedUntil = Mathf.Max(stunnedUntil, Time.time + seconds);
     }
 
-    /// <summary>Chill this mob to <paramref name="factor"/>× move speed (0..1) for <paramref name="seconds"/>s —
-    /// a reusable slow for skills like the Mage's Frost Nova. Stacks by the later end time + stronger factor.</summary>
-    public void Slow(float factor, float seconds)
-    {
-        if (seconds <= 0f) return;
-        slowFactor = Mathf.Min(slowFactor < 1f && Time.time < slowUntil ? slowFactor : 1f, Mathf.Clamp01(factor));
-        slowUntil = Mathf.Max(slowUntil, Time.time + seconds);
-    }
-
     /// <summary>Stun this mob for <paramref name="seconds"/> — freezes it (reusing the <see cref="Stagger"/>
     /// freeze) and shows a spinning swirl over its head. A reusable status hook for per-hit procs (e.g. the
     /// Mage's multi-hit Meteor). Re-stunning while already stunned just refreshes the duration (no popup spam).</summary>
@@ -279,9 +268,10 @@ public class MonsterAI3D : MonoBehaviour
     {
         if (Time.time < stunnedUntil) { if (agent != null) agent.Halt(); return; }   // staggered — frozen
 
-        // Chill (Frost Nova): scale move speed while slowed; full speed once it expires. UnitScale.ForMob
-        // couples speed to size (smaller mob = slower) so it keeps the same body-lengths/sec at any size.
-        agent.moveSpeed = ((Time.time < slowUntil) ? moveSpeed * slowFactor : moveSpeed) * UnitScale.ForMob;
+        // Move-speed states (Slow × Haste) come from the unified store's MoveMult — the SINGLE source, same as the
+        // player reads. A Slow makes it <1, a Haste >1; 1 when neither is active. UnitScale.ForMob couples speed to
+        // size (smaller mob = slower) so it keeps the same body-lengths/sec at any size.
+        agent.moveSpeed = (Health != null ? Health.States.MoveMult : 1f) * moveSpeed * UnitScale.ForMob;
 
         Vector3 pos = transform.position;
         // A dead player is no target: leash off and resume wandering until they respawn.

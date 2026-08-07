@@ -52,7 +52,7 @@ MonoBehaviour:
       element: 0
       amount: 100
       ailment: 2
-      seconds: 4
+      seconds: 0
       magnitude: 3
       dashSpeedMult: 8
       dashEaseIn: 0
