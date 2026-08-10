@@ -164,7 +164,10 @@ public static class RegionBuilder
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         EditorUtility.DisplayDialog("Field Boss — spawned",
-            $"Spawned '{bossArc.name}' in '{scene.name}' ({bossArc.maxHealth} HP, ×{bossArc.scale} size, " +
+            // HP is DERIVED from the stat block, not carried on the archetype — compute it the same way the spawned
+            // mob will, so the dialog can't quote a number the mob won't actually have.
+            $"Spawned '{bossArc.name}' in '{scene.name}' (Lv{bossArc.stats.level}, " +
+            $"{UnitStatMath.MaxHP(bossArc.stats, default, 0f)} HP, ×{bossArc.scale} size, " +
             "name + HP banner). It roams, aggros wide, and respawns 120s after death.\n\n" +
             "Move it where you want a boss to live. Re-run to add another.", "OK");
         Debug.Log($"[unwritten] Field boss '{bossArc.name}' spawned in '{scene.name}'.");

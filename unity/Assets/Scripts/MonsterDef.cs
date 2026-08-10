@@ -149,23 +149,15 @@ public class MonsterDef : ScriptableObject
     public MonsterArchetype ToArchetype()
     {
         var u = StatInputs;
-        var noGear = default(EquipBonuses);
-        int atk = UnitStatMath.Attack(u, noGear, 0f);
         return new MonsterArchetype
         {
-            stats = u,   // carried through so the spawned mob can re-derive on level-up
+            // The stat block is ALL that's carried for combat numbers — UnitStatBlock derives HP/ATK/DEF/HIT/FLEE
+            // from it on the spawned mob, and re-derives on every level-up and gear change. Nothing is snapshotted
+            // here, so there is no second copy able to disagree with the formulas.
+            stats = u,
             startingGear = startingGear,
             ringRankStats = ringRankStats,
             ringRankValues = ringRankValues,
-            maxHealth = UnitStatMath.MaxHP(u, noGear, 0f),
-            defense = UnitStatMath.Defense(u, noGear, 0f),
-            magicDefense = UnitStatMath.MagicDefense(u, noGear, 0f),
-            flee = UnitStatMath.Flee(u, 0f),
-            attack = atk,
-            hit = UnitStatMath.Hit(u, 0f),
-            // The spread is DEX-driven for everyone now (was a hand-authored 0..1 per mob): min = the same
-            // stabilising fraction the player's swing uses, expressed as the archetype's 0..1 spread.
-            damageSpread = 1f - UnitStatMath.MinFraction(u.dex),
             name = string.IsNullOrEmpty(displayName) ? name : displayName,
             sheet = sheet,
             weight = weight,
@@ -174,7 +166,6 @@ public class MonsterDef : ScriptableObject
             flash = flash,
             hardDefPercent = hardDefPercent,
             hardMagicDefPercent = hardMagicDefPercent,
-            luk = luk,
             attackType = attackType,
             xpReward = xpReward,
             touchRange = touchRange,

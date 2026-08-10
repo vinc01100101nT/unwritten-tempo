@@ -58,6 +58,24 @@ public class UnitStatBlock : MonoBehaviour
 
     public int Level => inputs.level;
 
+    // The level this unit was AUTHORED at — captured once, before any in-combat level-up. A pooled/respawned mob
+    // returns to this rather than keeping the levels it earned last life; without it, farming one spot would ratchet
+    // a zone permanently upward as recycled objects accumulate levels they never lose. -1 = not captured yet.
+    int spawnLevel = -1;
+
+    /// <summary>Put this unit back to the level it spawned at and re-derive — the mob half of "a respawn is a fresh
+    /// creature, not the same one carrying its old career". Called from <c>MobRespawn.Reactivate</c>, the one choke
+    /// point for reviving a mob, so the in-place recycle and the pooled spawner can't disagree.</summary>
+    public void ResetToSpawnLevel()
+    {
+        if (spawnLevel > 0 && inputs.level != spawnLevel)
+        {
+            inputs.level = spawnLevel;
+            Rederive(healToFull: true);
+        }
+        CurrentMP = MaxMP;   // a fresh creature comes back with a full pool, like its HP
+    }
+
     // MP, on the same footing as the player's. Mobs don't spend it on anything yet (they have no cost-bearing
     // skills), but it EXISTS so an MP-touching effect — ManaLeech landing on a mob — has a real pool to move,
     // instead of being a knob that silently does nothing on half the units in the game.
@@ -83,7 +101,9 @@ public class UnitStatBlock : MonoBehaviour
     {
         health = GetComponent<Health>();
         ai = GetComponent<MonsterAI3D>();
+        if (spawnLevel < 0) spawnLevel = Mathf.Max(1, inputs.level);   // remember the authored level, for respawns
         Rederive(healToFull: true);
+        CurrentMP = MaxMP;
     }
 
     /// <summary>Raise the level by one and re-derive everything from the shared formulas — the mob's mirror of a

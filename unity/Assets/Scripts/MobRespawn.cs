@@ -57,6 +57,13 @@ public class MobRespawn : MonoBehaviour
         mob.transform.position = pos;
 
         var dd = mob.GetComponent<DeathDissolve>(); if (dd != null) dd.ResetAfterRespawn();   // restore lit material + alpha
+
+        // A respawn is a FRESH creature, not the same one resuming its career: drop back to the authored level so a
+        // recycled object can't keep the levels it earned last life. Without this, farming one spot ratchets the zone
+        // permanently upward (pooled objects accumulate levels they never lose). Runs BEFORE Revive so the refill
+        // clamps to the reset level's max HP, not the higher one it died with.
+        var block = mob.GetComponent<UnitStatBlock>(); if (block != null) block.ResetToSpawnLevel();
+        var brain = mob.GetComponent<MonsterAI3D>(); if (brain != null) brain.ResetCombatXp();   // and its banked XP
         var health = mob.GetComponent<Health>(); if (health != null) health.Revive();          // full HP again
 
         // Re-enable everything DeathDissolve disabled when it became "remains".

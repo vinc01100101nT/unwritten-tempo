@@ -32,15 +32,15 @@ public struct MonsterArchetype
     public StatId[] ringRankStats;
     public int[] ringRankValues;
 
-    // Survivability. `defense`/`magicDefense` are SOFT (flat) DEF; `hardDefPercent`/`hardMagicDefPercent`
-    // are pre-renewal HARD DEF (% reduction, applied first — a crit ignores both). `luk` = crit shield.
-    public int maxHealth, defense, magicDefense, flee;
-    public int hardDefPercent, hardMagicDefPercent, luk;
+    // ARMOUR-sourced survivability, still authored: pre-renewal HARD DEF (% reduction, applied first — a crit
+    // ignores it). Everything else defensive (maxHealth / defense / magicDefense / flee / luk) is DERIVED from
+    // `stats` by UnitStatBlock on the spawned mob, so it isn't carried here — one owner, no snapshot to drift.
+    public int hardDefPercent, hardMagicDefPercent;
 
-    // Offense.
+    // Offense. `attack` / `hit` / damage spread are likewise derived from `stats`, not carried.
     public MonsterAI3D.AttackType attackType;
-    public int   attack, hit, xpReward;
-    public float damageSpread, touchRange, touchInterval;
+    public int   xpReward;
+    public float touchRange, touchInterval;
 
     // Senses / movement.
     public float moveSpeed, aggroRadius, leashRadius, stopDistance, wanderRadius;

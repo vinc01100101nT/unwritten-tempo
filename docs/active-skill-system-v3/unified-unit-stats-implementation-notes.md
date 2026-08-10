@@ -14,7 +14,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 | --- | --- |
 | `UnitStatMath.cs` | **Every** formula and constant, plus the stat-point economy. Static, no Unity objects. |
 | `UnitStatBlock.cs` | A mob's LIVE block: level + primaries + ring ranks + MP. Derives and writes onto `Health`/`MonsterAI3D`. |
-| `UnitEquipment.cs` | The worn set (shared shape with the player), aggregated through `EquipBonuses.Aggregate`. |
+| `UnitEquipment.cs` | The worn set for EVERY unit — `Character` and mobs both hold one. Aggregated through `EquipBonuses.Aggregate`. |
 | `UnitMitigation.cs` | Guard cut + Shield absorb for mobs — the states `Health` stored but ignored. |
 | `MonsterDef.cs` | Authoring: level, six primaries, `startingGear`, ring ranks. Derives via `ToArchetype`. |
 | `Editor/MobTableWindow.cs` | The full authoring surface (see below). |
@@ -23,6 +23,12 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 **`Character` computes nothing.** Every derived getter delegates to `UnitStatMath`. The formulas were *moved*, not copied — if you add a stat, add it there or the two sides drift.
 
+**A respawn is a fresh creature.** `MobRespawn.Reactivate` — the one choke both the in-place recycle and the pooled `FieldMobSpawner` reuse go through — calls `UnitStatBlock.ResetToSpawnLevel()` and `MonsterAI3D.ResetCombatXp()` before `Health.Revive()`. Without it a recycled object keeps the levels and banked XP it earned last life, so farming one spot would ratchet a zone permanently upward. The pool is per-type, so the remembered `spawnLevel` always belongs to that mob's own def.
+
+**The training dummy opts OUT of the model.** `TrainingDummyTool` destroys the `UnitStatBlock` after building, because the block would re-derive over its hand-set 10M HP / 0 attack and turn the punching bag into an ordinary level-1 mob. It's a measuring instrument, not a unit.
+
+**Dev Settings tunes the CAUSE.** The mob sliders drive Level + the six primaries and re-derive; they no longer write derived stats, which the block would silently overwrite on the next level-up.
+
 **Level-up RE-DERIVES, it never scales.** `UnitStatBlock.LevelUp()` raises the level and recomputes. `MonsterAI3D.perLevelGrowth` (a flat 1.15× on attack/HP) is **deleted**. A mob's level-20 numbers are simply what level 20 produces.
 
 **Primaries are a budget, not free numbers.** `PointsEarnedByLevel(L)` = 48 + Σ`⌊L/5⌋+3`; `PointsSpent` charges the same rising `StatCost` curve the player pays. A mob at level L may carry exactly what a player who reached L could have bought — that, not a multiplier, is what keeps the sides comparable. `Allocate` spends a whole budget across a weighted spread (verified on-budget L1→L99; 0–4 points can remain unspendable when the next point costs more than what's left).
@@ -30,6 +36,12 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 **There is no tier and no throttle.** Difficulty is level. The spawn band is a **level** band (`MonsterCatalog.Eligible`, `MapRecipe.minLevel/maxLevel`, `FieldMobSpawner`, `RecipeGenerator`). `MonsterDef.tier` is gone. Deliberately no global dial — retuning means editing a mob's level, spread or gear.
 
 **A ring IS equipment.** There is no separate `ring` field: the ring is the piece of `startingGear` whose `slot == Ring` (`MonsterDef.Ring` derives it). The percentage layer is **gated on wearing it**, same rule as `Character.RingEquipped`, so the thing that grants the power is the thing that can drop. Ranks resolve through `PassiveRanks` → `SkillRing.Percent` — the player's own soft-cap curve (+80% asymptote, k=40), no mob-side copy.
+
+**One equipment holder, player included.** `Character` has no equip dictionary of its own — it lazily attaches a `UnitEquipment` (`Character.Gear`) and routes get/equip/save/load through it. The equip-hover preview no longer mutates a cached field: `Gear.BonusesWith(slot, hypothetical)` returns a pure aggregate and `Character.previewBonuses` overrides the getter for the duration of the snapshot.
+
+**The mob builder does NOT stamp derived stats.** `RigBuilder25D` sets only armour percentages and presentation; `UnitStatBlock` is the single writer of `maxHealth`/`defense`/`magicDefense`/`flee`/`luk` and `attack`/`hit`/`damageSpread`. `MonsterArchetype` carries the stat block, not a snapshot of its outputs — there is no second copy to drift. The legacy `MobRoster` fallback entries carry a level + `UnitStatMath.Allocate` spread for the same reason.
+
+**The only surviving growth rate is a REWARD, not a stat.** `MonsterAI3D.XpRewardGrowthPerLevel` (0.15) scales what killing a mob is worth. Named so nobody mistakes it for a stat multiplier.
 
 **Worn gear is serialized on the component, not the dictionary.** `UnitEquipment.startingGear` is the serialized half; the live dictionary is runtime-only. Gear is equipped **lazily on first access**, not in `Awake`, so component wake order between `UnitEquipment` and `UnitStatBlock` cannot matter. Getting this wrong makes mob rings silently do nothing.
 

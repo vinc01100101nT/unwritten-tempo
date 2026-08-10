@@ -63,8 +63,12 @@ public class MonsterAI3D : MonoBehaviour
     public float xpPerDamageDealt = 1f;
     [Tooltip("XP for the FIRST level-up; the bar for each subsequent level is this × the current level.")]
     public int xpToFirstLevel = 20;
-    // (Removed 2026-08-10: perLevelGrowth. A mob's stats are RE-DERIVED at each level through the same formulas the
-    //  player uses — there is no mob-only growth rate to drift.)
+    // (Removed 2026-08-10: perLevelGrowth. A mob's STATS are RE-DERIVED at each level through the same formulas the
+    //  player uses — there is no mob-only stat growth rate to drift.)
+
+    /// <summary>How much more XP this mob is worth per level it gains (0.15 = +15%). A payout curve, NOT a stat
+    /// multiplier — the unit model has none. Kept as one named constant so raising the reward curve is a single edit.</summary>
+    public const float XpRewardGrowthPerLevel = 0.15f;
 
     [Header("Behavior style")]
     [Tooltip("0 = melee (close in and bite). >0 = HOLD this far from the player and attack from range " +
@@ -205,10 +209,18 @@ public class MonsterAI3D : MonoBehaviour
             level++;
             if (Health != null) Health.RefillToMax();
         }
-        xpReward = Mathf.Max(xpReward + 1, Mathf.RoundToInt(xpReward * 1.15f));   // a higher-level mob is worth more to kill
+        // The one thing that DOES still grow by a rate — and legitimately so: xpReward is a REWARD, not a stat. It
+        // says what killing this mob is worth to the player, which is a payout curve, not part of the unit model the
+        // player and mobs share. Named so it can't be mistaken for a surviving stat multiplier.
+        xpReward = Mathf.Max(xpReward + 1, Mathf.RoundToInt(xpReward * (1f + XpRewardGrowthPerLevel)));
         DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Level Up!", LevelUpColor);
         VfxCue.Fire(VfxCueId.OnLevelUp, transform);
     }
+
+    /// <summary>Clear the progress toward this mob's next level. Part of "a respawn is a fresh creature": without it a
+    /// recycled object keeps last life's banked XP and can level up on its first hit back. Paired with
+    /// <c>UnitStatBlock.ResetToSpawnLevel</c> from the one revive choke (<c>MobRespawn.Reactivate</c>).</summary>
+    public void ResetCombatXp() => mobXp = 0f;
 
     UnitStatBlock statBlock;
     /// <summary>This mob's live stat block (level + primaries → every derived number). Cached; may be null on a

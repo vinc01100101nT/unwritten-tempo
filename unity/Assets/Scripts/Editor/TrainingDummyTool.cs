@@ -35,6 +35,13 @@ public static class TrainingDummyTool
         Undo.RegisterCreatedObjectUndo(go, "Spawn Training Dummy");
 
         // …then neuter it into an immobile punching bag.
+        // FIRST drop the stat block: it is the single writer of maxHealth/defense/flee/attack on a normal mob and
+        // re-derives them from level+primaries on Awake, which would wipe every hand-set number below and turn the
+        // dummy into an ordinary level-1 mob that dies instantly and hits back. The dummy is deliberately NOT a unit
+        // that follows the shared model — it's a measuring instrument, so it opts out rather than fighting it.
+        var block = go.GetComponent<UnitStatBlock>();
+        if (block != null) Object.DestroyImmediate(block);
+
         var health = go.GetComponent<Health>();
         health.maxHealth = DummyHP;     // Health.Awake copies this into Current on Play
         health.defense = 0;             // measure raw weapon/skill output, not post-mitigation

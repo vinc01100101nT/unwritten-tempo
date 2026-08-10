@@ -29,6 +29,10 @@ MonoBehaviour:
   intel: 4
   dex: 6
   luk: 4
+  startingGear:
+  - {fileID: 11400000, guid: ea2bd669dfef0234385f07c6767e927b, type: 2}
+  ringRankStats: 
+  ringRankValues: 
   hardDefPercent: 0
   hardMagicDefPercent: 0
   attackType: 0

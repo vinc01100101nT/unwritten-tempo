@@ -164,20 +164,22 @@ public class Character : MonoBehaviour, IDamageable
         return true;
     }
 
-    // Each slot holds a unique EquipmentInstance (def + refine + cards), not a shared Item — so
-    // a "+7 Iron Sword with 2 cards" is its own thing. Combat callers still get the Item via
-    // GetEquipped(); the instance layer adds refine/card bonuses through equipBonuses below.
-    readonly Dictionary<EquipSlotType, EquipmentInstance> equipped = new Dictionary<EquipSlotType, EquipmentInstance>();
+    // The worn set lives in the SHARED holder every unit uses (UnitEquipment) — the player does not get its own
+    // equipment system. Each slot holds a unique EquipmentInstance (def + refine + cards), not a shared Item, so a
+    // "+7 Iron Sword with 2 cards" is its own thing; combat callers still get the Item via GetEquipped().
+    // Lazily attached so no scene or prefab needs editing to gain it.
+    UnitEquipment gear;
+    /// <summary>What the player is wearing — the same component a mob wears.</summary>
+    public UnitEquipment Gear =>
+        gear != null ? gear : (gear = GetComponent<UnitEquipment>() ?? gameObject.AddComponent<UnitEquipment>());
 
-    /// <summary>Cached equipment stat contribution — recomputed ONLY when gear changes, so the hot
-    /// combat getters read a struct field instead of re-summing the dictionary per hit. The hover
-    /// preview temporarily swaps this for a hypothetical loadout; see <see cref="DeriveWith"/>.</summary>
-    EquipBonuses equipBonuses;
+    // Non-null ONLY inside DeriveWith, where a hypothetical loadout is previewed. Every stat getter reads
+    // `equipBonuses`, so overriding it here makes the whole snapshot reflect the preview without mutating any gear.
+    EquipBonuses? previewBonuses;
 
-    void RecomputeEquip()
-    {
-        equipBonuses = EquipBonuses.Aggregate(equipped.Values);
-    }
+    /// <summary>Equipment's stat contribution. Cached inside <see cref="UnitEquipment"/> (recomputed only when gear
+    /// changes), so the hot combat getters don't re-sum the worn set per hit.</summary>
+    EquipBonuses equipBonuses => previewBonuses ?? Gear.Bonuses;
 
     /// <summary>The Ring of Progression — the VESSEL that carries the player's life's-work: its own
     /// level/XP plus the Trio-Ring passive draft (<see cref="RingProgress.Passives"/>) and the active-skill
@@ -416,20 +418,11 @@ public class Character : MonoBehaviour, IDamageable
     /// swapped and restored; no events fire, the equip dictionary is untouched).</summary>
     public DerivedSnapshot DeriveWith(EquipSlotType slot, EquipmentInstance hypothetical)
     {
-        // Aggregate the hypothetical set = live gear with `slot` replaced by `hypothetical`.
-        var hypo = default(EquipBonuses);
-        bool slotSeen = false;
-        foreach (var kv in equipped)
-        {
-            var inst = kv.Key == slot ? hypothetical : kv.Value;
-            if (kv.Key == slot) slotSeen = true;
-            inst?.AccumulateInto(ref hypo);
-        }
-        if (!slotSeen) hypothetical?.AccumulateInto(ref hypo);   // equipping into an empty slot
-
-        var saved = equipBonuses;
-        try { equipBonuses = hypo; return SnapshotNow(); }
-        finally { equipBonuses = saved; }
+        // Aggregate the hypothetical set = live gear with `slot` replaced by `hypothetical`. Pure — the worn set is
+        // never touched; only this snapshot sees the swap.
+        previewBonuses = Gear.BonusesWith(slot, hypothetical);
+        try { return SnapshotNow(); }
+        finally { previewBonuses = null; }
     }
 
     /// <summary>Roll the player's outgoing hit: a random value in [<see cref="MinAttack"/>,
@@ -656,11 +649,13 @@ public class Character : MonoBehaviour, IDamageable
     }
 
     public Item GetEquipped(EquipSlotType slot)
-        => equipped.TryGetValue(slot, out var inst) && inst != null ? inst.def : null;
+    {
+        var inst = Gear.Get(slot);
+        return inst != null ? inst.def : null;
+    }
 
     /// <summary>The full instance (def + refine + cards) in a slot, or null if empty.</summary>
-    public EquipmentInstance GetEquippedInstance(EquipSlotType slot)
-        => equipped.TryGetValue(slot, out var inst) ? inst : null;
+    public EquipmentInstance GetEquippedInstance(EquipSlotType slot) => Gear.Get(slot);
 
     /// <summary>Equip a bare <see cref="Item"/>, wrapped as a +0 / no-card instance. Kept for the
     /// existing drag-drop equip UI; the instance overload below carries refine + cards.</summary>
@@ -677,9 +672,7 @@ public class Character : MonoBehaviour, IDamageable
     public void SetEquipped(EquipSlotType slot, EquipmentInstance instance)
     {
         if (slot == EquipSlotType.None) return;
-        if (instance == null || instance.def == null) equipped.Remove(slot);
-        else equipped[slot] = instance;
-        RecomputeEquip();
+        Gear.Equip(slot, instance != null && instance.def != null ? instance : null);
         CurrentHP = Mathf.Min(CurrentHP, MaxHP);   // clamp if max dropped
 
         if (notifyingEquip) return;                // re-entered from a listener — apply, but don't re-notify
@@ -1136,11 +1129,10 @@ public class Character : MonoBehaviour, IDamageable
         var ids = new List<string>();
         var refines = new List<int>();
         var cards = new List<string>();
-        foreach (var kv in equipped)
+        foreach (var kv in Gear.Worn)
         {
             if (kv.Key == EquipSlotType.Ring) continue;
             var inst = kv.Value;
-            if (inst == null || inst.def == null) continue;
             slots.Add((int)kv.Key);
             ids.Add(inst.def.id);
             refines.Add(inst.upgrade);
@@ -1156,7 +1148,7 @@ public class Character : MonoBehaviour, IDamageable
     // Unknown item/card ids are dropped so a removed asset can't break a load.
     void RestoreEquipment(SaveData d)
     {
-        equipped.Clear();
+        Gear.Clear();
         if (d.equipSlots != null && d.equipItemIds != null)
         {
             for (int i = 0; i < d.equipSlots.Length && i < d.equipItemIds.Length; i++)
@@ -1169,10 +1161,9 @@ public class Character : MonoBehaviour, IDamageable
                 var inst = new EquipmentInstance(def, refine);
                 if (d.equipCards != null && i < d.equipCards.Length)
                     ItemCatalog.DecodeCards(d.equipCards[i], inst.cards);
-                equipped[slot] = inst;
+                Gear.Equip(slot, inst);
             }
         }
-        RecomputeEquip();
     }
 
     /// <summary>Apply a loaded <see cref="SaveData"/>, overwriting the current runtime progression.

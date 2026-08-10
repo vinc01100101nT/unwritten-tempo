@@ -89,7 +89,7 @@ public static class GmCommands
         Register(new GmCommand("kill", "kill", "Kill the mob nearest the player.", CmdKill));
         Register(new GmCommand("killall", "killall", "Kill every active mob.", CmdKillAll));
         Register(new GmCommand("spawn", "spawn [count]", "Clone the nearest mob near the player.", CmdSpawn));
-        Register(new GmCommand("summon", "summon <count> <normal|boss>", "Summon N random mobs near you (clones live mobs of that tier).", CmdSummon));
+        Register(new GmCommand("summon", "summon <count> <normal|boss>", "Summon N random mobs near you (clones live mobs of that KIND — normal or boss).", CmdSummon));
 
         // --- World & weather ---
         Register(new GmCommand("tp", "tp <scene> [spawnId]", "Travel to another map.", CmdTp, "warp", "goto"));

@@ -292,22 +292,19 @@ public static class RigBuilder25D
         if (crowd >= 0) go.layer = crowd;
 
         var mh = go.AddComponent<Health>();
-        mh.maxHealth    = arc.maxHealth;
-        mh.defense      = arc.defense;                       // SOFT DEF (flat)
-        mh.magicDefense = arc.magicDefense;                  // SOFT MDEF (flat)
+        // NOTE: maxHealth / defense / magicDefense / flee / luk are deliberately NOT stamped here — UnitStatBlock
+        // below is their single writer, deriving them from level + primaries + gear (and again on every level-up).
+        // Setting them here too would be a second source for the same numbers, free to drift the moment the two
+        // disagree. Only the ARMOUR-sourced percentages and presentation stay authored.
         mh.hardDefPercent      = arc.hardDefPercent;         // pre-renewal HARD DEF % (applied first; a crit ignores it)
         mh.hardMagicDefPercent = arc.hardMagicDefPercent;    // pre-renewal HARD MDEF %
-        mh.luk          = arc.luk;                            // pre-renewal crit shield (lowers attacker crit)
-        mh.flee         = arc.flee;                          // RO FLEE: dodges some of the player's swings (red MISS)
         mh.flashColor   = arc.flash.a > 0f ? arc.flash : Color.white;
         mh.element      = arc.element;                        // armor PROPERTY — what the player's spells/melee hit
 
         var ai = go.AddComponent<MonsterAI3D>();
         ai.attackType     = arc.attackType;
-        ai.attack         = arc.attack;
-        ai.hit            = arc.hit;
+        // attack / hit / damageSpread: same story — derived, written by UnitStatBlock, not stamped here.
         ai.xpReward       = arc.xpReward;
-        ai.damageSpread   = arc.damageSpread;
         ai.touchRange     = arc.touchRange;
         ai.touchInterval  = arc.touchInterval;
         ai.moveSpeed      = arc.moveSpeed;
@@ -317,9 +314,9 @@ public static class RigBuilder25D
         if (arc.wanderRadius > 0f) ai.wanderRadius = arc.wanderRadius;
         ai.preferredRange = arc.preferredRange;             // >0 = caster/archer kites at range
         ai.fleeHpFraction = arc.fleeHpFraction;             // >0 = skittish: flees when wounded
-        // The LIVE stat block + the worn set. Every derived number above is a snapshot of what these produce at the
-        // spawn level; the block re-derives them whenever the mob levels or its gear changes, so a mob never drifts
-        // onto a growth curve of its own. Equipment starts empty — an unarmed mob aggregates to zero bonuses.
+        // The LIVE stat block + the worn set — the SINGLE writer of every derived combat number on this mob. It fills
+        // Health.maxHealth/defense/magicDefense/flee/luk and MonsterAI3D.attack/hit/damageSpread on Awake, and again
+        // on every level-up and gear change, so a mob can never drift onto a curve of its own.
         var equip = go.AddComponent<UnitEquipment>();
         if (arc.startingGear != null) equip.startingGear = arc.startingGear;   // worn gear is also the drop table
         var block = go.AddComponent<UnitStatBlock>();

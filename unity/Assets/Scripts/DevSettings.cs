@@ -164,6 +164,36 @@ public class DevSettings : MonoBehaviour
         var list = MonsterAI3D.Active;
         for (int i = 0; i < list.Count; i++) if (list[i] != null) act(list[i]);
     }
+    static int Clamp99(float v) => Mathf.Clamp(Mathf.RoundToInt(v), 1, UnitStatMath.MaxStatValue);
+
+    delegate void StatEdit(ref UnitStatInputs u);
+
+    // Read one stat-block value off the first live mob that has a block (0 when none are spawned).
+    static float MobStat(Func<UnitStatBlock, int> read)
+    {
+        var list = MonsterAI3D.Active;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var b = list[i] != null ? list[i].Stats : null;
+            if (b != null) return read(b);
+        }
+        return 0f;
+    }
+
+    // Edit every live mob's stat inputs and RE-DERIVE, so the change lands on the same path a level-up uses and
+    // survives the next one. Debug-only — walks the small Active list, never per-frame.
+    static void MobSetStat(StatEdit edit)
+    {
+        var list = MonsterAI3D.Active;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var b = list[i] != null ? list[i].Stats : null;
+            if (b == null) continue;
+            edit(ref b.inputs);
+            b.Rederive();
+        }
+    }
+
     static float MobRead(Func<MonsterAI3D, float> read)
     {
         var list = MonsterAI3D.Active;
@@ -389,14 +419,19 @@ public class DevSettings : MonoBehaviour
         F("Leash radius",     0f, 30f, () => MobRead(m => m.leashRadius),  v => MobForEach(m => m.leashRadius = v));
         F("Stop distance",    0.2f, 3f, () => MobRead(m => m.stopDistance), v => MobForEach(m => m.stopDistance = v));
         F("Wander radius",    0f, 10f, () => MobRead(m => m.wanderRadius), v => MobForEach(m => m.wanderRadius = v));
-        I("Attack",           0f, 50f, () => MobRead(m => m.attack),       v => MobForEach(m => m.attack = Mathf.RoundToInt(v)));
-        F("Damage spread",    0f, 1f,  () => MobRead(m => m.damageSpread), v => MobForEach(m => m.damageSpread = v));
-        I("Hit (accuracy)",   0f, 100f, () => MobRead(m => m.hit),         v => MobForEach(m => m.hit = Mathf.RoundToInt(v)));
-        // Pre-renewal DEF split (lives on Health): hard % first, then soft flat. Crit ignores both.
+        // A mob's combat numbers are DERIVED (UnitStatBlock), so tuning ATK/HIT/DEF/LUK directly would be silently
+        // ephemeral — the block overwrites them on the next level-up or gear change. These sliders therefore drive the
+        // CAUSE, exactly as the Mob Table authors it: level + the six primaries, then re-derive.
+        I("Level",            1f, 99f, () => MobStat(b => b.inputs.level),  v => MobSetStat((ref UnitStatInputs u) => u.level = Mathf.Max(1, Mathf.RoundToInt(v))));
+        I("STR",              1f, 99f, () => MobStat(b => b.inputs.str),    v => MobSetStat((ref UnitStatInputs u) => u.str   = Clamp99(v)));
+        I("AGI",              1f, 99f, () => MobStat(b => b.inputs.agi),    v => MobSetStat((ref UnitStatInputs u) => u.agi   = Clamp99(v)));
+        I("VIT",              1f, 99f, () => MobStat(b => b.inputs.vit),    v => MobSetStat((ref UnitStatInputs u) => u.vit   = Clamp99(v)));
+        I("INT",              1f, 99f, () => MobStat(b => b.inputs.intel),  v => MobSetStat((ref UnitStatInputs u) => u.intel = Clamp99(v)));
+        I("DEX",              1f, 99f, () => MobStat(b => b.inputs.dex),    v => MobSetStat((ref UnitStatInputs u) => u.dex   = Clamp99(v)));
+        I("LUK",              1f, 99f, () => MobStat(b => b.inputs.luk),    v => MobSetStat((ref UnitStatInputs u) => u.luk   = Clamp99(v)));
+        // Armour-sourced percentages ARE authored (not derived), so they stay directly tunable.
         I("DEF (hard %)",     0f, 100f, () => MobRead(m => m.Health != null ? m.Health.hardDefPercent : 0),      v => MobForEach(m => { if (m.Health != null) m.Health.hardDefPercent = Mathf.RoundToInt(v); }));
-        I("DEF (soft flat)",  0f, 100f, () => MobRead(m => m.Health != null ? m.Health.defense : 0),             v => MobForEach(m => { if (m.Health != null) m.Health.defense = Mathf.RoundToInt(v); }));
         I("MDEF (hard %)",    0f, 100f, () => MobRead(m => m.Health != null ? m.Health.hardMagicDefPercent : 0), v => MobForEach(m => { if (m.Health != null) m.Health.hardMagicDefPercent = Mathf.RoundToInt(v); }));
-        I("LUK (crit shield)", 0f, 100f, () => MobRead(m => m.Health != null ? m.Health.luk : 0),                v => MobForEach(m => { if (m.Health != null) m.Health.luk = Mathf.RoundToInt(v); }));
         I("XP reward",        0f, 100f, () => MobRead(m => m.xpReward),     v => MobForEach(m => m.xpReward = Mathf.RoundToInt(v)));
         F("Touch range",      0.2f, 3f, () => MobRead(m => m.touchRange),  v => MobForEach(m => m.touchRange = v));
         F("Touch interval",   0.2f, 3f, () => MobRead(m => m.touchInterval), v => MobForEach(m => m.touchInterval = v));

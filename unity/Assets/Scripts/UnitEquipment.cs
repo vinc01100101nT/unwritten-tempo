@@ -78,6 +78,43 @@ public class UnitEquipment : MonoBehaviour
 
     public EquipmentInstance Unequip(EquipSlotType slot) => Equip(slot, null);
 
+    /// <summary>Strip every slot. Used when a save load rebuilds the whole worn set from scratch — the caller then
+    /// re-equips piece by piece. Also consumes the starting-gear step, so a load can't be re-seeded behind it.</summary>
+    public void Clear()
+    {
+        spawned = true;      // a deliberate wipe must not be undone by lazy starting-gear seeding afterwards
+        equipped.Clear();
+        dirty = true;
+    }
+
+    /// <summary>Every worn (slot, piece) pair — what a save walks. Skips empty slots.</summary>
+    public IEnumerable<KeyValuePair<EquipSlotType, EquipmentInstance>> Worn
+    {
+        get
+        {
+            EnsureSpawnedGear();
+            foreach (var kv in equipped)
+                if (kv.Value != null && kv.Value.def != null) yield return kv;
+        }
+    }
+
+    /// <summary>Aggregate the worn set with ONE slot swapped for <paramref name="hypothetical"/> (null = preview
+    /// taking that slot off) — the equip-hover "ATK 220 → 248" preview. Pure: nothing is mutated.</summary>
+    public EquipBonuses BonusesWith(EquipSlotType slot, EquipmentInstance hypothetical)
+    {
+        EnsureSpawnedGear();
+        var hypo = default(EquipBonuses);
+        bool slotSeen = false;
+        foreach (var kv in equipped)
+        {
+            var inst = kv.Key == slot ? hypothetical : kv.Value;
+            if (kv.Key == slot) slotSeen = true;
+            inst?.AccumulateInto(ref hypo);
+        }
+        if (!slotSeen) hypothetical?.AccumulateInto(ref hypo);   // equipping into an empty slot
+        return hypo;
+    }
+
     /// <summary>Every worn piece. Used by the derived-stat math and by death drops.</summary>
     public IEnumerable<EquipmentInstance> All { get { EnsureSpawnedGear(); return equipped.Values; } }
 

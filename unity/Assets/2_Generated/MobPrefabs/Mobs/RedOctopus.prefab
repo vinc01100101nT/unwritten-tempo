@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 7385257344342425959}
   - component: {fileID: 9205274066913315198}
   - component: {fileID: 661689948055636219}
+  - component: {fileID: 5029382756646268177}
+  - component: {fileID: 1386387839689594826}
   - component: {fileID: 247692960291086917}
   - component: {fileID: 2309872712046681684}
   - component: {fileID: 3576174789006486974}
@@ -166,6 +168,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   avoidIgnore: {fileID: 0}
+  separateWhenIdle: 1
 --- !u!114 &9205274066913315198
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -178,13 +181,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10ce3323c7a546645a038dd42e862dad, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
-  maxHealth: 27
-  defense: 2
-  magicDefense: 1
+  maxHealth: 174
+  defense: 25
+  magicDefense: 22
   hardDefPercent: 5
   hardMagicDefPercent: 0
-  luk: 2
-  flee: 0
+  luk: 7
+  flee: 33
   element: 4
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   flashTime: 0.08
@@ -211,21 +214,20 @@ MonoBehaviour:
   wanderPauseMin: 1
   wanderPauseMax: 3
   attackType: 0
-  attack: 4
+  attack: 46
   attackElement: 0
   onHitAilment: 0
   onHitAilmentChance: 0
   onHitAilmentSeconds: 0
   onHitAilmentMagnitude: 0
-  damageSpread: 0.25
-  hit: 11
+  damageSpread: 0.306
+  hit: 34
   xpReward: 10
   touchRange: 0.9
   touchInterval: 1
   level: 1
   xpPerDamageDealt: 1
   xpToFirstLevel: 20
-  perLevelGrowth: 0.15
   preferredRange: 0
   fleeHpFraction: 0
   projectileSheet: {fileID: 0}
@@ -237,6 +239,33 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
+--- !u!114 &5029382756646268177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6386674244952926794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bf9dddf805e5421c871a961b1d0cfbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
+  startingGear: []
+--- !u!114 &1386387839689594826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6386674244952926794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c8dd4dbdac794c368d4f75e4937aa66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UnitStatBlock
+  ringRankStats: 
+  ringRankValues: 
 --- !u!114 &247692960291086917
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -337,3 +366,4 @@ MonoBehaviour:
   lootTable: []
   scatterRadius: 0.5
   coinSprite: {fileID: -8171958947958391838, guid: d833d8d5b4847c74cab606b3b3fe8a1f, type: 3}
+  wornDropChance: 0.15
