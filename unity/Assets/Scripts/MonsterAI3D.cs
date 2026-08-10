@@ -63,9 +63,8 @@ public class MonsterAI3D : MonoBehaviour
     public float xpPerDamageDealt = 1f;
     [Tooltip("XP for the FIRST level-up; the bar for each subsequent level is this × the current level.")]
     public int xpToFirstLevel = 20;
-    [Range(0f, 2f)]
-    [Tooltip("Per level-up, attack, max HP, and the XP the player gets for killing it grow by this fraction (0.15 = +15%).")]
-    public float perLevelGrowth = 0.15f;
+    // (Removed 2026-08-10: perLevelGrowth. A mob's stats are RE-DERIVED at each level through the same formulas the
+    //  player uses — there is no mob-only growth rate to drift.)
 
     [Header("Behavior style")]
     [Tooltip("0 = melee (close in and bite). >0 = HOLD this far from the player and attack from range " +
@@ -192,21 +191,29 @@ public class MonsterAI3D : MonoBehaviour
         }
     }
 
-    // One choke point for a mob level-up: scale stats, fully heal, announce, and fire the OnLevelUp cue.
+    // One choke point for a mob level-up: RE-DERIVE stats from the shared formulas, fully heal, announce, cue.
+    // There is deliberately NO growth multiplier here — a mob's level-20 numbers are whatever level 20 produces
+    // through UnitStatMath, exactly as they are for the player. (Before 2026-08-10 this scaled attack/HP by a flat
+    // 1.15×, a mob-only curve that drifted away from the player's the longer a mob lived.)
     void LevelUp()
     {
-        level++;
-        float g = 1f + Mathf.Max(0f, perLevelGrowth);
-        attack = Mathf.Max(attack + 1, Mathf.RoundToInt(attack * g));
-        xpReward = Mathf.Max(xpReward + 1, Mathf.RoundToInt(xpReward * g));   // a higher-level mob is worth more
-        if (Health != null)
+        var block = Stats;
+        if (block != null) block.LevelUp();      // level++ then re-derive; writes maxHealth/attack/hit/etc. back here
+        else
         {
-            Health.maxHealth = Mathf.Max(Health.maxHealth + 1, Mathf.RoundToInt(Health.maxHealth * g));
-            Health.RefillToMax();   // level-up fully heals (player parity), silently
+            // No stat block (a hand-placed legacy mob): still level, but nothing to re-derive from.
+            level++;
+            if (Health != null) Health.RefillToMax();
         }
+        xpReward = Mathf.Max(xpReward + 1, Mathf.RoundToInt(xpReward * 1.15f));   // a higher-level mob is worth more to kill
         DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Level Up!", LevelUpColor);
         VfxCue.Fire(VfxCueId.OnLevelUp, transform);
     }
+
+    UnitStatBlock statBlock;
+    /// <summary>This mob's live stat block (level + primaries → every derived number). Cached; may be null on a
+    /// legacy hand-placed mob that predates the block.</summary>
+    public UnitStatBlock Stats => statBlock != null ? statBlock : (statBlock = GetComponent<UnitStatBlock>());
 
     /// <summary>Briefly freeze this mob (chase + touch-attack) — a reusable stagger/crowd-control hook for
     /// skills like the Swordsman's Bash. Stacks by taking the later end time, not by adding.</summary>

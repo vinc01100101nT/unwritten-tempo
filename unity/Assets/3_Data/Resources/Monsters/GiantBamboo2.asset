@@ -15,26 +15,24 @@ MonoBehaviour:
   id: mob.giantbamboo2
   displayName: GiantBamboo2
   isBoss: 1
+  size: 1
   biome: 0
-  tier: 2
-  biomeAgnostic: 0
   sheet: GiantBamboo2
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.3
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 374
-  defense: 8
-  magicDefense: 6
-  flee: 0
+  level: 15
+  str: 13
+  agi: 6
+  vit: 16
+  intel: 5
+  dex: 10
+  luk: 5
   hardDefPercent: 26
   hardMagicDefPercent: 16
-  luk: 12
   attackType: 0
-  attack: 20
-  hit: 16
   xpReward: 400
-  damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
   moveSpeed: 1.7

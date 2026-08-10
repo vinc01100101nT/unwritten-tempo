@@ -24,12 +24,12 @@ public class MonsterDef : ScriptableObject
              "Medium reproduces RO's neutral '100% everywhere' baseline, so leaving it default is safe.")]
     public MobSize size = MobSize.Medium;
 
-    [Header("Biome & tier (spawn grouping)")]
+    [Header("Biome (spawn grouping)")]
     [Tooltip("Which biome this mob spawns in. The map generator spawns a map's mobs from its recipe Biome. " +
-             "Set to None for a biome-agnostic 'common' (rat/bat/slime): eligible in ANY biome's tier band.")]
+             "Set to None for a biome-agnostic 'common' (rat/bat/slime): eligible in ANY biome's level band.")]
     public Biome biome = Biome.Grassland;
-    [Range(1, 4), Tooltip("Difficulty tier within the biome: 1 (weakest) … 4 (elite / mini-boss).")]
-    public int tier = 1;
+    // Difficulty is LEVEL — there is no separate tier. A zone draws mobs from a level band, and how dangerous a mob
+    // is falls out of its level + stats through the shared formulas, exactly as it does for the player.
 
     [Header("Art")]
     [Tooltip("Sprite-sheet folder under Assets/1_Authored/Art/Billboards/Actor/Monster (e.g. 'Slime').")]
@@ -43,27 +43,45 @@ public class MonsterDef : ScriptableObject
     [Tooltip("Hit-flash color.")]
     public Color flash = Color.white;
 
-    [Header("Survivability")]
-    public int maxHealth = 12;
-    [Tooltip("SOFT (flat) physical DEF.")]
-    public int defense = 0;
-    [Tooltip("SOFT (flat) magic DEF.")]
-    public int magicDefense = 0;
-    [Tooltip("RO FLEE: dodges some of the player's swings (red MISS).")]
-    public int flee = 0;
-    [Tooltip("Pre-renewal HARD DEF % (applied first; a crit ignores it).")]
+    // ---- THE stat block: identical in shape and formula to the player's (design doc "Unified Unit Stats") -----------
+    // A mob is authored as a LEVEL and six PRIMARIES; every combat number below is DERIVED from them through
+    // UnitStatMath — the same functions Character runs. There is no mob-only tier or multiplier: a mob is dangerous
+    // for the same reasons a player is (its level, its stats, and eventually its gear).
+    [Header("Stats (level + primaries — derived exactly like the player)")]
+    [Tooltip("Character level. Drives the base HP/ATK curve and feeds HIT/FLEE directly, exactly as it does for the player.")]
+    public int level = 1;
+    [Range(1, UnitStatMath.MaxStatValue)] public int str = 1;
+    [Range(1, UnitStatMath.MaxStatValue)] public int agi = 1;
+    [Range(1, UnitStatMath.MaxStatValue)] public int vit = 1;
+    [Range(1, UnitStatMath.MaxStatValue)] public int intel = 1;
+    [Range(1, UnitStatMath.MaxStatValue)] public int dex = 1;
+    [Tooltip("LUK — feeds crit chance, and doubles as the pre-renewal CRIT SHIELD against attackers.")]
+    [Range(1, UnitStatMath.MaxStatValue)] public int luk = 1;
+
+    [Header("Equipment — the SAME items the player wears")]
+    [Tooltip("Gear this mob spawns wearing, one piece per slot (the slot comes from the Item itself). A ring here is " +
+             "what switches on the rank percentages below — the same gate the player has. Each worn piece can drop.")]
+    public Item[] startingGear = System.Array.Empty<Item>();
+    [Tooltip("Which stats this mob's ring has invested in. Parallel to Ring Rank Values.")]
+    public StatId[] ringRankStats = System.Array.Empty<StatId>();
+    [Tooltip("Ranks invested in each stat above. Converted to a % through the SAME soft-cap curve the player's ring " +
+             "uses (SkillRing.Percent), so a mob's ring is worth exactly what a player's ring of equal ranks is worth.")]
+    public int[] ringRankValues = System.Array.Empty<int>();
+
+    [Header("Survivability (armour-sourced; not derived from primaries)")]
+    [Tooltip("Pre-renewal HARD DEF % (applied first; a crit ignores it). Comes from armour, so it stays authored.")]
     public int hardDefPercent = 0;
     [Tooltip("Pre-renewal HARD MDEF %.")]
     public int hardMagicDefPercent = 0;
-    [Tooltip("Crit shield (lowers attacker crit).")]
-    public int luk = 0;
+
+    // (Removed 2026-08-10: the hand-authored maxHealth/attack/defense/magicDefense/hit/flee/damageSpread fields.
+    //  Every one of them is now DERIVED in ToArchetype through UnitStatMath from the level + primaries above, so
+    //  storing them was a second copy that could disagree with the formulas. The reset migration doesn't preserve
+    //  old values, so there was nothing left for them to carry.)
 
     [Header("Offense")]
     public MonsterAI3D.AttackType attackType = MonsterAI3D.AttackType.Physical;
-    public int attack = 3;
-    public int hit = 8;
     public int xpReward = 5;
-    [Range(0f, 1f)] public float damageSpread = 0.25f;
     public float touchRange = 0.9f;
     public float touchInterval = 1.0f;
 
@@ -99,46 +117,85 @@ public class MonsterDef : ScriptableObject
     [Tooltip("Drop chance (0–1) parallel to Item Drop Names.")]
     public float[] itemDropChances = System.Array.Empty<float>();
 
-    /// <summary>Produce the runtime DTO the mob builders consume. The asset is the source of truth; this is
-    /// a plain copy, so authoring a mob in the Inspector changes nothing about how it's stamped into a scene.</summary>
-    public MonsterArchetype ToArchetype() => new MonsterArchetype
+    /// <summary>The ring this mob wears, if any — simply the worn piece whose slot is Ring. There is no separate
+    /// "ring" field: a ring IS equipment, so it lives in <see cref="startingGear"/> like everything else and can't
+    /// drift out of sync with what the mob is actually wearing.</summary>
+    public Item Ring
     {
-        name = string.IsNullOrEmpty(displayName) ? name : displayName,
-        sheet = sheet,
-        weight = weight,
-        tint = tint,
-        scale = scale,
-        flash = flash,
-        maxHealth = maxHealth,
-        defense = defense,
-        magicDefense = magicDefense,
-        flee = flee,
-        hardDefPercent = hardDefPercent,
-        hardMagicDefPercent = hardMagicDefPercent,
-        luk = luk,
-        attackType = attackType,
-        attack = attack,
-        hit = hit,
-        xpReward = xpReward,
-        damageSpread = damageSpread,
-        touchRange = touchRange,
-        touchInterval = touchInterval,
-        moveSpeed = moveSpeed,
-        aggroRadius = aggroRadius,
-        leashRadius = leashRadius,
-        stopDistance = stopDistance,
-        wanderRadius = wanderRadius,
-        preferredRange = preferredRange,
-        fleeHpFraction = fleeHpFraction,
-        element = element,
-        attackElement = attackElement,
-        onHitAilment = onHitAilment,
-        onHitAilmentChance = onHitAilmentChance,
-        onHitAilmentSeconds = onHitAilmentSeconds,
-        onHitAilmentMagnitude = onHitAilmentMagnitude,
-        goldMin = goldMin,
-        goldMax = goldMax,
-        itemDropNames = itemDropNames,
-        itemDropChances = itemDropChances,
-    };
+        get
+        {
+            if (startingGear == null) return null;
+            for (int i = 0; i < startingGear.Length; i++)
+                if (startingGear[i] != null && startingGear[i].slot == EquipSlotType.Ring) return startingGear[i];
+            return null;
+        }
+    }
+
+    /// <summary>This mob's stat inputs — level, primaries and the shared base/growth curve. The ONE thing its combat
+    /// numbers are computed from, and the same struct the player fills.</summary>
+    public UnitStatInputs StatInputs
+    {
+        get
+        {
+            var u = UnitStatInputs.Default(level);
+            u.str = str; u.agi = agi; u.vit = vit; u.intel = intel; u.dex = dex; u.luk = luk;
+            return u;
+        }
+    }
+
+    /// <summary>Produce the runtime DTO the mob builders consume. Combat numbers are DERIVED here through
+    /// <see cref="UnitStatMath"/> — the player's formulas — so a mob and a player of the same level and primaries
+    /// have the same stats. A mob wears no gear yet, so equipment aggregates to zero and the ring % is 0.</summary>
+    public MonsterArchetype ToArchetype()
+    {
+        var u = StatInputs;
+        var noGear = default(EquipBonuses);
+        int atk = UnitStatMath.Attack(u, noGear, 0f);
+        return new MonsterArchetype
+        {
+            stats = u,   // carried through so the spawned mob can re-derive on level-up
+            startingGear = startingGear,
+            ringRankStats = ringRankStats,
+            ringRankValues = ringRankValues,
+            maxHealth = UnitStatMath.MaxHP(u, noGear, 0f),
+            defense = UnitStatMath.Defense(u, noGear, 0f),
+            magicDefense = UnitStatMath.MagicDefense(u, noGear, 0f),
+            flee = UnitStatMath.Flee(u, 0f),
+            attack = atk,
+            hit = UnitStatMath.Hit(u, 0f),
+            // The spread is DEX-driven for everyone now (was a hand-authored 0..1 per mob): min = the same
+            // stabilising fraction the player's swing uses, expressed as the archetype's 0..1 spread.
+            damageSpread = 1f - UnitStatMath.MinFraction(u.dex),
+            name = string.IsNullOrEmpty(displayName) ? name : displayName,
+            sheet = sheet,
+            weight = weight,
+            tint = tint,
+            scale = scale,
+            flash = flash,
+            hardDefPercent = hardDefPercent,
+            hardMagicDefPercent = hardMagicDefPercent,
+            luk = luk,
+            attackType = attackType,
+            xpReward = xpReward,
+            touchRange = touchRange,
+            touchInterval = touchInterval,
+            moveSpeed = moveSpeed,
+            aggroRadius = aggroRadius,
+            leashRadius = leashRadius,
+            stopDistance = stopDistance,
+            wanderRadius = wanderRadius,
+            preferredRange = preferredRange,
+            fleeHpFraction = fleeHpFraction,
+            element = element,
+            attackElement = attackElement,
+            onHitAilment = onHitAilment,
+            onHitAilmentChance = onHitAilmentChance,
+            onHitAilmentSeconds = onHitAilmentSeconds,
+            onHitAilmentMagnitude = onHitAilmentMagnitude,
+            goldMin = goldMin,
+            goldMax = goldMax,
+            itemDropNames = itemDropNames,
+            itemDropChances = itemDropChances,
+        };
+    }
 }

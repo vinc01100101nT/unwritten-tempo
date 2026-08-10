@@ -15,26 +15,24 @@ MonoBehaviour:
   id: mob.mole2
   displayName: Mole2
   isBoss: 0
+  size: 1
   biome: 4
-  tier: 3
-  biomeAgnostic: 0
   sheet: Mole2
   weight: 2
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 1.0600001
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 51
-  defense: 4
-  magicDefense: 2
-  flee: 0
+  level: 36
+  str: 25
+  agi: 19
+  vit: 25
+  intel: 12
+  dex: 19
+  luk: 11
   hardDefPercent: 10
   hardMagicDefPercent: 0
-  luk: 3
   attackType: 0
-  attack: 7
-  hit: 14
   xpReward: 20
-  damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
   moveSpeed: 2.1000001

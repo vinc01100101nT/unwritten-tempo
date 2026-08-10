@@ -59,6 +59,7 @@ public static class VfxCue
         {
             origin = a + b.offset,
             target = t + b.offset,
+            effectPoint = t + b.offset,   // a cue has no aim stage; the target spot is the only point it knows
             follow = null,
             targetUnit = target,
             scaleMult = b.scale <= 0f ? 1f : b.scale,

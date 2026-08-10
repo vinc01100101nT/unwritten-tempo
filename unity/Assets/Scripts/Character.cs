@@ -76,32 +76,9 @@ public class Character : MonoBehaviour, IDamageable
     readonly int[] primary = { 1, 1, 1, 1, 1, 1 };
     public int StatPoints { get; private set; }
 
-    // Per-point contributions of each primary stat to the flat / derived layers (tunable).
-    const int   AtkPerStr = 1, MatkPerInt = 1;
-    const int   DefPerVit = 3, MdefPerInt = 3, AtkPerDex = 2, AtkPerLuk = 4, MatkPerLuk = 4;  // these are DIVISORS
-    const float AspdPerAgi = 0.005f, CritPerLuk = 0.003f, CastPerDex = 0.006f;   // pre-renewal CRIT = LUK×0.3%
-    // Pre-renewal vitals/ASPD: VIT and INT scale HP/SP as a PERCENT per point (they multiply the level-driven
-    // base, not add flat); DEX raises ASPD a fraction of what AGI does.
-    const float VitHpPercent = 0.02f, IntSpPercent = 0.015f, DexAspdShare = 0.25f;
-    // Hard ceiling on the attack-speed multiplier. Sword's Momentum settles at ~(attack rate × stack duration),
-    // so an uncapped aspd would turn into uncapped Momentum (and Deathblow) scaling. Bounds the equilibrium.
-    const float MaxAttackSpeedMult = 3f;
-    const float CritShieldPerLuk = 0.003f;   // pre-renewal "crit shield": the TARGET's LUK lowers our crit chance 0.3%/pt
-    // Pre-renewal RO cast time: a spell's wind-up shrinks LINEARLY with DEX and reaches ZERO (instant cast)
-    // at this DEX. castTime = baseCast × (1 − DEX / InstantCastDex), clamped ≥ 0 — one stat, the classic
-    // "build toward instacast" goal. (Distinct from CastSpeedMult below, which shortens the BETWEEN-casts
-    // cooldown; cast time is the wind-up BEFORE the spell fires.)
-    const int   InstantCastDex = 150;
-    // Pre-renewal HIT/FLEE: HIT = BaseLvl + DEX + ⌊LUK/3⌋, FLEE = BaseLvl + AGI + ⌊LUK/5⌋ (FLEE then scaled
-    // by the Evasion passive). LUK secondarily feeds both — the classic "a little LUK helps everything".
-    const int   HitPerDex = 1, FleePerAgi = 1;
-    const int   LukPerHit = 3, LukPerFlee = 5;   // DIVISORS: LUK/3 → HIT, LUK/5 → FLEE
-
-    // RO-style damage spread: a hit rolls Min…Max rather than a fixed number. Min is a fraction of Max
-    // that DEX (physical) / INT (magic) raise toward 1.0 — so the relevant stat both LIFTS and STABILISES
-    // damage (high DEX = bigger, more consistent melee). A crit ignores the spread and always lands max.
-    const float MinDmgFloorFraction = 0.55f;   // 0 DEX/INT → a swing can drop to 55% of max
-    const float MinFractionPerStat  = 0.012f;  // each point closes the min→max gap (~38 → min == max)
+    // The per-point contributions, caps and curve constants all live in UnitStatMath — the ONE copy players and
+    // mobs share. Aliased here only where this class's own logic (crit shield, stat economy) reads them.
+    const float CritShieldPerLuk = UnitStatMath.CritShieldPerLuk;
 
     public int GetStat(PrimaryStat s) => primary[(int)s];
     // EFFECTIVE primary stat = allocated points + equipment/card bonuses. Every derived/combat
@@ -111,34 +88,24 @@ public class Character : MonoBehaviour, IDamageable
 
     // ---- Pre-renewal stat economy -------------------------------------------------------------------
     /// <summary>Pre-renewal base-stat ceiling — a primary stat can't be raised past this with points.</summary>
-    public const int MaxStatValue = 99;
+    public const int MaxStatValue = UnitStatMath.MaxStatValue;
 
     /// <summary>Points to raise a stat from its current value <paramref name="currentValue"/> to +1:
     /// <c>⌊V/10⌋ + 2</c> (1→2 costs 2, 10→11 costs 3, 20→21 costs 4 …). The pre-renewal soft cap — each
     /// block of ten costs one more, so the last points into a stat are the dearest.</summary>
-    public static int StatCost(int currentValue) => currentValue / 10 + 2;
+    public static int StatCost(int currentValue) => UnitStatMath.StatCost(currentValue);
 
-    /// <summary>Status points GAINED on reaching base level <paramref name="level"/>: <c>⌊L/5⌋ + 3</c>
-    /// (3 early, growing every 5 levels to keep pace with the rising <see cref="StatCost"/>).</summary>
-    static int StatusPointsForLevel(int level) => level / 5 + 3;
+    /// <summary>Status points GAINED on reaching base level <paramref name="level"/> — the shared economy every
+    /// unit uses (see <see cref="UnitStatMath.PointsGainedAtLevel"/>).</summary>
+    static int StatusPointsForLevel(int level) => UnitStatMath.PointsGainedAtLevel(level);
 
     /// <summary>Total status points a character who legitimately reached base level <paramref name="lvl"/>
     /// has earned — the starting grant plus every level-up award from 2..lvl.</summary>
-    int TotalStatPointsEarned(int lvl)
-    {
-        int total = startingStatPoints;
-        for (int L = 2; L <= lvl; L++) total += StatusPointsForLevel(L);
-        return total;
-    }
+    int TotalStatPointsEarned(int lvl) => UnitStatMath.PointsEarnedByLevel(lvl, startingStatPoints);
 
     /// <summary>Total points it cost to have raised a stat from 1 up to <paramref name="value"/> — the
     /// running integral of <see cref="StatCost"/>, used to reconcile the pool against an allocation.</summary>
-    static int StatPointsSpentRaising(int value)
-    {
-        int total = 0;
-        for (int v = 1; v < value; v++) total += StatCost(v);
-        return total;
-    }
+    static int StatPointsSpentRaising(int value) => UnitStatMath.PointsToRaise(value);
 
     /// <summary>Points needed to raise <paramref name="s"/> by one, or -1 if it's already at the cap.</summary>
     public int CostToRaise(PrimaryStat s) => primary[(int)s] >= MaxStatValue ? -1 : StatCost(primary[(int)s]);
@@ -298,22 +265,30 @@ public class Character : MonoBehaviour, IDamageable
     // Pre-renewal vitals: the level-driven base curve is scaled by VIT/INT as a PERCENT multiplier (the game
     // is class-agnostic, so there is no per-class HP/SP factor — your stat investment shapes bulk vs mana).
     // Equipment HP/MP add flat on top.
-    public int MaxHP   => Scale(Mathf.RoundToInt((baseMaxHP + hpPerLevel * (Level - 1))
-                                * (1f + P(PrimaryStat.VIT) * VitHpPercent))
-                                + equipBonuses.hp, StatId.HP);
-    public int Attack  => Scale(baseAttack  + attackPerLevel  * (Level - 1) + P(PrimaryStat.STR) * AtkPerStr
-                                + StatSquareBonus(P(PrimaryStat.STR))   // pre-renewal status-ATK bonus: +⌊STR/10⌋²
-                                + P(PrimaryStat.DEX) / AtkPerDex + P(PrimaryStat.LUK) / AtkPerLuk + equipBonuses.atk,  StatId.Atk);
-    public int Defense => Scale(baseDefense + defensePerLevel * (Level - 1) + P(PrimaryStat.VIT) / DefPerVit + equipBonuses.def, StatId.Def);
+    // Every derived stat below is computed by UnitStatMath — the SHARED formulas mobs run too (design doc
+    // "Unified Unit Stats"). This class supplies the three inputs and owns nothing about the arithmetic:
+    // its level+primaries+curve (Inputs), its aggregated gear (equipBonuses), and its ring % per channel.
+    UnitStatInputs Inputs => new UnitStatInputs
+    {
+        level = Level,
+        str = P(PrimaryStat.STR), agi = P(PrimaryStat.AGI), vit = P(PrimaryStat.VIT),
+        intel = P(PrimaryStat.INT), dex = P(PrimaryStat.DEX), luk = P(PrimaryStat.LUK),
+        baseMaxHP = baseMaxHP, hpPerLevel = hpPerLevel,
+        baseAttack = baseAttack, attackPerLevel = attackPerLevel,
+        baseDefense = baseDefense, defensePerLevel = defensePerLevel,
+        baseMaxMP = baseMaxMP, mpPerLevel = mpPerLevel,
+        baseMagicAttack = baseMagicAttack, magicAttackPerLevel = magicAttackPerLevel,
+        baseMagicDefense = baseMagicDefense, magicDefensePerLevel = magicDefensePerLevel,
+    };
 
-    public int MaxMP        => Scale(Mathf.RoundToInt((baseMaxMP + mpPerLevel * (Level - 1))
-                                * (1f + P(PrimaryStat.INT) * IntSpPercent))
-                                + equipBonuses.mp, StatId.MP);
-    public int MagicAttack  => Scale(baseMagicAttack  + magicAttackPerLevel  * (Level - 1) + P(PrimaryStat.INT) * MatkPerInt
-                                + StatSquareBonus(P(PrimaryStat.INT))   // pre-renewal status-MATK bonus: +⌊INT/10⌋²
-                                + P(PrimaryStat.LUK) / MatkPerLuk + equipBonuses.matk, StatId.MAtk);
+    public int MaxHP   => UnitStatMath.MaxHP(Inputs, equipBonuses, PassivePercent(StatId.HP));
+    public int Attack  => UnitStatMath.Attack(Inputs, equipBonuses, PassivePercent(StatId.Atk));
+    public int Defense => UnitStatMath.Defense(Inputs, equipBonuses, PassivePercent(StatId.Def));
+
+    public int MaxMP        => UnitStatMath.MaxMP(Inputs, equipBonuses, PassivePercent(StatId.MP));
+    public int MagicAttack  => UnitStatMath.MagicAttack(Inputs, equipBonuses, PassivePercent(StatId.MAtk));
     // The ring has no separate M.DEF node — the Def node is dual, so MagicDefense reads the Def passive %.
-    public int MagicDefense => Scale(baseMagicDefense + magicDefensePerLevel * (Level - 1) + P(PrimaryStat.INT) / MdefPerInt + equipBonuses.mdef, StatId.Def);
+    public int MagicDefense => UnitStatMath.MagicDefense(Inputs, equipBonuses, PassivePercent(StatId.Def));
 
     // Pre-renewal DEF split (player side): incoming damage is cut by HARD DEF (a % reduction, from armor)
     // FIRST, then by SOFT DEF (the flat Defense/MagicDefense above, mostly VIT/INT). Hard DEF has no item
@@ -330,15 +305,9 @@ public class Character : MonoBehaviour, IDamageable
     // The damage window each hit rolls within. MAX = the full Attack/MagicAttack above; MIN is a
     // fraction of it raised by DEX (physical) / INT (magic). See MinDmgFloorFraction / MinFractionPerStat.
     public int MaxAttack      => Attack;
-    public int MinAttack      => Mathf.Clamp(Mathf.RoundToInt(Attack      * MinFraction(PrimaryStat.DEX)), 1, Attack);
+    public int MinAttack      => UnitStatMath.MinAttack(Attack, P(PrimaryStat.DEX));
     public int MaxMagicAttack => MagicAttack;
-    public int MinMagicAttack => Mathf.Clamp(Mathf.RoundToInt(MagicAttack * MinFraction(PrimaryStat.INT)), 1, MagicAttack);
-    float MinFraction(PrimaryStat s) => Mathf.Clamp01(MinDmgFloorFraction + P(s) * MinFractionPerStat);
-
-    /// <summary>Pre-renewal status-point damage bonus: a stat adds <c>+⌊stat/10⌋²</c> to its damage stat
-    /// (STR→ATK, INT→MATK). Tiny early, large with heavy investment (50 → +25, 99 → +81) — the reward for
-    /// dumping points into one offensive stat.</summary>
-    static int StatSquareBonus(int stat) { int tens = stat / 10; return tens * tens; }
+    public int MinMagicAttack => UnitStatMath.MinMagicAttack(MagicAttack, P(PrimaryStat.INT));
 
     public int XPToNext => 5 + Level * 5;
     public bool IsDead => CurrentHP <= 0;
@@ -354,30 +323,25 @@ public class Character : MonoBehaviour, IDamageable
 
     // Derived passive combat stats (Phase G). These have no flat "base" — they read the
     // passive % layer directly, so a stat with 0 ranks is simply neutral.
-    public const float BaseCritMultiplier = 1.4f;                                     // pre-renewal: a crit deals 140%…
+    public const float BaseCritMultiplier = UnitStatMath.BaseCritMultiplier;          // pre-renewal: a crit deals 140%…
     // The single Critical ring node drives BOTH crit rate and crit damage — both read PassivePercent(StatId.Critical).
-    public float CritMultiplier  => BaseCritMultiplier + PassivePercent(StatId.Critical);   // …+ the Critical node's % on top
+    public float CritMultiplier  => UnitStatMath.CritMultiplier(PassivePercent(StatId.Critical));   // …+ the Critical node's % on top
     // These combine the primary-stat contribution (LUK/AGI/DEX) with the passive % layer.
-    public float CritChance01    => Mathf.Min(0.95f, P(PrimaryStat.LUK) * CritPerLuk + PassivePercent(StatId.Critical) + equipBonuses.critPercent / 100f);
+    public float CritChance01    => UnitStatMath.CritChance01(Inputs, equipBonuses, PassivePercent(StatId.Critical));
     // RO accuracy/evasion. HIT (DEX + level) is rolled against a target's FLEE to decide a physical hit;
     // FLEE (AGI + level, scaled by the Evasion passive) is how often incoming physical attacks whiff on us.
     // Both feed the shared HIT-vs-FLEE roll in Combat; magic ignores them. See Combat for the formula.
-    public int Hit  => Scale(Level + P(PrimaryStat.DEX) * HitPerDex + P(PrimaryStat.LUK) / LukPerHit, StatId.Accuracy);
-    public int Flee => Mathf.RoundToInt((Level + P(PrimaryStat.AGI) * FleePerAgi + P(PrimaryStat.LUK) / LukPerFlee)
-                                        * (1f + PassivePercent(StatId.Evasion)));
+    public int Hit  => UnitStatMath.Hit(Inputs, PassivePercent(StatId.Accuracy));
+    public int Flee => UnitStatMath.Flee(Inputs, PassivePercent(StatId.Evasion));
     // Pre-renewal ASPD: AGI is the primary driver, DEX contributes a fraction (DexAspdShare). Kept as a
     // SPEED MULTIPLIER (the game's attack model) rather than the RO 0–200 scale. >1 = swing faster.
-    public float AttackSpeedMult => Mathf.Min(MaxAttackSpeedMult,
-                                    (1f + (P(PrimaryStat.AGI) + P(PrimaryStat.DEX) * DexAspdShare) * AspdPerAgi
-                                       + PassivePercent(StatId.AttackSpeed) + equipBonuses.aspdPercent / 100f) * AspdBuffMult);
-    public float CastSpeedMult   => (1f + P(PrimaryStat.DEX) * CastPerDex + PassivePercent(StatId.CastSpeed)) * CastBuffMult;   // >1 = cast faster; CastSpeed ring node + Blink haste lift it
+    public float AttackSpeedMult => UnitStatMath.AttackSpeedMult(Inputs, equipBonuses, PassivePercent(StatId.AttackSpeed), AspdBuffMult);
+    public float CastSpeedMult   => UnitStatMath.CastSpeedMult(Inputs, PassivePercent(StatId.CastSpeed), CastBuffMult);   // >1 = cast faster; CastSpeed ring node + Blink haste lift it
 
     /// <summary>Pre-renewal cast-time multiplier applied to a spell's base wind-up: <c>1 − DEX/150</c>,
     /// clamped to [0,1]. 1 at 0 DEX, 0 (instant cast) at DEX 150. A spell's real cast time is
     /// <c>baseCast × CastTimeMult</c>.</summary>
-    public float CastTimeMult => Mathf.Clamp01(1f - P(PrimaryStat.DEX) / (float)InstantCastDex);
-
-    int Scale(int flat, StatId stat) => Mathf.RoundToInt(flat * (1f + PassivePercent(stat)));
+    public float CastTimeMult => UnitStatMath.CastTimeMult(Inputs);
 
     // ---- Derived-stat snapshots (the pure keystone for the HUD windows) -----------------------
     /// <summary>A readout of every derived stat for the CURRENT loadout (what the Character /
@@ -784,8 +748,9 @@ public class Character : MonoBehaviour, IDamageable
         States.Apply(StateId.Guard, seconds, Mathf.Clamp01(reduction));
     }
 
-    // Apply the Guard reduction to a post-defense damage figure (min 1 so a hit still registers).
-    int Guarded(int dmg) { float cut = States.GuardCut; return cut > 0f ? Mathf.Max(1, Mathf.RoundToInt(dmg * (1f - cut))) : dmg; }
+    // Apply the Guard reduction to a post-defense damage figure. Routed through the shared unit primitive so a mob
+    // wearing Guard is mitigated by the exact same rule (one implementation, no player/mob copy to hand-sync).
+    int Guarded(int dmg) => UnitMitigation.Guarded(States, dmg);
 
     // ---- Timed offensive self-buffs + regen (skill-driven; runtime-only, cleared on revive) -------
     // Each buff is a multiplier live until its expiry; the getters/rolls below fold in the current value (1 when
@@ -898,13 +863,8 @@ public class Character : MonoBehaviour, IDamageable
     void ApplyHitToHP(int dmg)
     {
         if (dmg <= 0) return;
-        int soaked = States.DrainShield(dmg);   // barrier soaks first (drops + clears its icon when it breaks)
-        if (soaked > 0)
-        {
-            dmg -= soaked;
-            var a = Avatar();
-            if (a != null) DamagePopup.Spawn(a.position, soaked, ShieldAbsorbColor);
-        }
+        var av = Avatar();   // barrier soaks first, via the shared unit primitive (same rule mobs get)
+        dmg = UnitMitigation.AfterShield(States, dmg, av != null ? av.position : transform.position);
         if (dmg > 0)
         {
             int before = CurrentHP;

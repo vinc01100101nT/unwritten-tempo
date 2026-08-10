@@ -20,6 +20,18 @@ public struct MonsterArchetype
     public float  scale;        // size multiplier on the base billboard scale
     public Color  flash;        // hit-flash color
 
+    // THE stat block, carried through to the spawned mob so it can RE-DERIVE on level-up instead of being scaled
+    // by a mob-only growth rate. The derived fields below are the values at THIS level — a convenience snapshot for
+    // the builder; UnitStatBlock recomputes them from these inputs whenever level or gear changes.
+    public UnitStatInputs stats;
+
+    // What the mob SPAWNS WEARING, plus its ring's invested ranks. A ring is just the piece in the Ring slot;
+    // wearing it gates the percentage layer (same rule as the player) and it's also what can drop
+    // — see LootDropper.RingDropChance.
+    public Item[] startingGear;
+    public StatId[] ringRankStats;
+    public int[] ringRankValues;
+
     // Survivability. `defense`/`magicDefense` are SOFT (flat) DEF; `hardDefPercent`/`hardMagicDefPercent`
     // are pre-renewal HARD DEF (% reduction, applied first — a crit ignores both). `luk` = crit shield.
     public int maxHealth, defense, magicDefense, flee;

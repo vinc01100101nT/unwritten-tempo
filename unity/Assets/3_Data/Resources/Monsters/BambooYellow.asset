@@ -15,26 +15,24 @@ MonoBehaviour:
   id: mob.bambooyellow
   displayName: BambooYellow
   isBoss: 0
+  size: 1
   biome: 3
-  tier: 1
-  biomeAgnostic: 0
   sheet: BambooYellow
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.92
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 14
-  defense: 0
-  magicDefense: 0
-  flee: 0
+  level: 28
+  str: 21
+  agi: 15
+  vit: 20
+  intel: 9
+  dex: 15
+  luk: 9
   hardDefPercent: 0
   hardMagicDefPercent: 0
-  luk: 1
   attackType: 0
-  attack: 3
-  hit: 8
   xpReward: 5
-  damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
   moveSpeed: 2.3000002

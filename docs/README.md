@@ -21,6 +21,8 @@ Native markdown docs for the **unwritten** project, migrated out of Tempo Docs o
   - [Weapon Crafting & Economy](active-skill-system-v3/weapon-crafting-economy.md)
   - [Skill Numbers & Balance Baseline](active-skill-system-v3/skill-numbers-balance-baseline.md)
   - [State System — Buffs, Debuffs & Combo Marks](active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md)
+  - [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — players and mobs 1:1: one stat model, shared formulas + point budget; mobs wear gear/rings and drop what they wear. No tier, no multiplier.
+    - […Implementation Notes](active-skill-system-v3/unified-unit-stats-implementation-notes.md) — code-facing companion.
   - [Sword — Skill Roster](active-skill-system-v3/sword-skill-roster.md) — first fully-authored weapon (3 ults + 4 actives + Momentum passive; incl. the universal-but-specialized authoring rule).
 - [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — the stat-growth engine, source of truth.
 - [Crafting & Recycling](crafting-and-recycling.md) — player-facing weapon crafting loop.
@@ -32,7 +34,7 @@ Native markdown docs for the **unwritten** project, migrated out of Tempo Docs o
 
 - [World Creator — Spec](world-creator-spec.md) — browser graph-editor → JSON → Unity orchestrator pipeline.
 - [Biome Mob Families — Tiered Spawning](biome-mob-families.md) — biome × tier mob data + generator wiring.
-- [Story & Setting (Canon)](story-setting-canon.md) — the anchor lore doc.
+- [Story & Setting (Canon)](story-setting-canon.md) — the anchor lore doc; premise + the Twelve Unwritten (one per weapon).
 
 ## Art & animation pipeline
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // Cached at runtime so every pickup reuses one material instance (no per-spawn alloc).
@@ -92,12 +93,47 @@ public class LootDropper : MonoBehaviour
             if (amount > 0) SpawnCoin(amount, body);
         }
 
-        // Items — each entry is an independent roll.
+        // Items — each entry is an independent roll. The table carries MATERIALS and other non-worn drops.
         foreach (var entry in lootTable)
         {
             if (entry.item == null) continue;
             if (Random.value <= entry.chance) SpawnItem(entry.item, body);
         }
+
+        DropWornGear(body);
+    }
+
+    [Header("Worn gear")]
+    [Tooltip("Chance (0–1) that each EQUIPPED piece drops when this unit dies. Its worn set IS its gear drop table — " +
+             "there's no separate list to keep in sync, so a mob can never advertise gear it isn't actually carrying.")]
+    [Range(0f, 1f)] public float wornDropChance = 0.15f;
+
+    /// <summary>Chance a worn RING drops — deliberately its own number, and vanishingly small (0.001% = 1 in 100,000).
+    /// A ring is the percentage passive layer, i.e. the single most valuable thing a unit can carry, so it's the
+    /// MVP-card-tier prize rather than ordinary gear. Not a serialized field: this is a game-wide rule, not per-mob
+    /// tuning, so there's one place it can ever be changed.</summary>
+    public const float RingDropChance = 0.00001f;
+
+    static readonly List<EquipmentInstance> wornScratch = new List<EquipmentInstance>(8);
+
+    // A unit drops what it WEARS: the equipment that made it dangerous is the equipment you take off its corpse.
+    // Rolled per piece, independently, like the loot table. Reuses one static scratch list — death is not a hot path,
+    // but this runs per kill and there's no reason to allocate.
+    void DropWornGear(Vector3 body)
+    {
+        var gear = GetComponent<UnitEquipment>();
+        if (gear == null || gear.Count == 0) return;
+
+        gear.CopyWornInto(wornScratch);
+        for (int i = 0; i < wornScratch.Count; i++)
+        {
+            var inst = wornScratch[i];
+            if (inst?.def == null) continue;
+            // A ring rolls on its own vanishingly-small chance; everything else uses this mob's normal gear rate.
+            float chance = inst.def.slot == EquipSlotType.Ring ? RingDropChance : wornDropChance;
+            if (chance > 0f && Random.value <= chance) SpawnItem(inst.def, body);
+        }
+        wornScratch.Clear();
     }
 
     void SpawnCoin(int amount, Vector3 body)

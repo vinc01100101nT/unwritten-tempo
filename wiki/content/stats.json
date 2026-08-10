@@ -1,168 +1,185 @@
 {
-  "title": "Stats & the Ring",
-  "blocks": [
-    {
-      "type": "paragraph",
-      "text": "*How you grow — the six base stats, and the Ring that scales your power.*"
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Primary stats"
-    },
-    {
-      "type": "paragraph",
-      "text": "Six base stats you allocate as you level — **anyone can raise any of them** (there are no classes):"
-    },
-    {
-      "type": "list",
-      "items": [
-        "**STR** — physical attack power",
-        "**AGI** — attack speed and dodge",
-        "**VIT** — health and defense",
-        "**INT** — magic power and mana",
-        "**DEX** — accuracy and cast speed",
-        "**LUK** — critical chance and luck"
-      ]
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "The Ring — your growth engine"
-    },
-    {
-      "type": "paragraph",
-      "text": "The Ring is a **closed loop of ten percentage-based passive stats** that you build up as you level. It's a separate layer from your weapon: your **weapon grants your skills**, and the **Ring scales their power**. Your progress on the Ring is saved with your character."
-    },
-    {
-      "type": "heading",
-      "level": 3,
-      "text": "The ten Ring stats"
-    },
-    {
-      "type": "paragraph",
-      "text": "Going clockwise around the loop:"
-    },
-    {
-      "type": "paragraph",
-      "text": "**Defense → HP → Attack → Accuracy → Cast Speed → Magic Attack → MP → Evasion → Critical → Attack Speed →** *(back to Defense)*"
-    },
-    {
-      "type": "paragraph",
-      "text": "The two **poles sit dead-opposite: Defense (top) and Magic Attack (bottom)**, with the survival stats bridging them — so drifting from a physical toward a magic build naturally carries you across the defenses in between."
-    },
-    {
-      "type": "paragraph",
-      "text": "Two stats do double duty: **Defense** raises both your physical *and* magic defense (there is no separate magic-defense stat), and **Critical** raises both your crit rate *and* your crit damage."
-    },
-    {
-      "type": "heading",
-      "level": 3,
-      "text": "The draft — a steering wheel"
-    },
-    {
-      "type": "paragraph",
-      "text": "Every level-up you pick **one of four** options:"
-    },
-    {
-      "type": "list",
-      "items": [
-        "**Three known** — your current stat plus its **two neighbors** on the ring (a sliding window of three).",
-        "**One wildcard** — a random stat from elsewhere on the ring."
-      ]
-    },
-    {
-      "type": "paragraph",
-      "text": "Picking the center keeps stacking that stat; picking a neighbor slides your window that way; the wildcard jumps you across the ring."
-    },
-    {
-      "type": "heading",
-      "level": 3,
-      "text": "Percentage growth with a soft cap"
-    },
-    {
-      "type": "paragraph",
-      "text": "Ring stats give **percentage multipliers**, not flat points, so they never go obsolete as your gear grows. Growth follows a **soft cap**: most stats climb toward a **+80% ceiling**, while **Critical caps at +50%** and **Evasion at +60%** (both would break combat if left uncapped). Because each extra rank is worth a little less, the math **rewards spreading out** — though single-stacking is always allowed."
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Your Ring locks your role"
-    },
-    {
-      "type": "paragraph",
-      "text": "**Skills don't level up** — their power comes entirely from your Ring. And that scaling is role-bound: **healing scales off MP**, **damage scales off Attack / Magic Attack**. So a support who invested MP hits like wet paper with a damage weapon, and a damage build heals for crumbs with a staff. **Swapping weapons swaps your skills — never your power**, which stays bound to the stats you chose."
-    },
-    {
-      "type": "paragraph",
-      "text": "*(Ring upgrades that add whole new behaviors from investment are a planned future addition — for now the Ring only scales numbers.)*"
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "Reading your character sheet"
-    },
-    {
-      "type": "paragraph",
-      "text": "Press **C** to open your character sheet. It lists every number that decides how you fight, and it updates **live** — buffs and debuffs appear the moment they land and vanish when they run out."
-    },
-    {
-      "type": "paragraph",
-      "text": "The big number is always **your own stat**. Anything a buff or debuff is doing to it sits in **parentheses** right after it:"
-    },
-    {
-      "type": "list",
-      "items": [
-        "**Green** — something is helping you, e.g. `ATK 120-140 (+24)`",
-        "**Red** — something is hurting you, e.g. `HIT 82 (-30)` while blinded",
-        "**No parentheses** — nothing is affecting that stat right now"
-      ]
-    },
-    {
-      "type": "callout",
-      "text": "The sheet reads from the same numbers combat does, so what you see is exactly what you hit for — never an estimate."
-    },
-    {
-      "type": "paragraph",
-      "text": "What you'll find on it:"
-    },
-    {
-      "type": "table",
-      "headers": [
-        "Group",
-        "Stats"
-      ],
-      "rows": [
-        [
-          "Offense",
-          "ATK · M.ATK · CRIT chance and crit damage · HIT"
-        ],
-        [
-          "Defense",
-          "DEF and M.DEF (plus their flat damage cut) · FLEE · GUARD · BARRIER"
-        ],
-        [
-          "Speed",
-          "ASPD (attack speed) · CAST (between casts) · WIND-UP (cast time) · MOVE and RUN speed"
-        ],
-        [
-          "Sustain",
-          "LEECH (HP from damage) · MP LEECH · REFLECT"
-        ],
-        [
-          "Resources",
-          "HP · MP · Stamina · Ult charge"
-        ]
-      ]
-    },
-    {
-      "type": "heading",
-      "level": 2,
-      "text": "The Ring as your life's work *(proposed — not committed)*"
-    },
-    {
-      "type": "paragraph",
-      "text": "A larger direction under consideration — **not final** — would make the Ring an actual **tradeable in-world item** that holds your whole progression, carrying a visible **lineage of past bearers**. It is a design concept only, not in the game today."
-    }
-  ]
+ "title": "Stats & the Ring",
+ "blocks": [
+  {
+   "type": "paragraph",
+   "text": "*How you grow — the six base stats, and the Ring that scales your power.*"
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Primary stats"
+  },
+  {
+   "type": "paragraph",
+   "text": "Six base stats you allocate as you level — **anyone can raise any of them** (there are no classes):"
+  },
+  {
+   "type": "list",
+   "items": [
+    "**STR** — physical attack power",
+    "**AGI** — attack speed and dodge",
+    "**VIT** — health and defense",
+    "**INT** — magic power and mana",
+    "**DEX** — accuracy and cast speed",
+    "**LUK** — critical chance and luck"
+   ]
+  },
+  {
+   "type": "paragraph",
+   "text": "You get points to spend as you level, and **each point into a stat costs more the higher that stat already is** — every block of ten gets pricier. So a lopsided build is genuinely expensive: going all-in on one stat buys fewer total points than spreading out. What you can afford is fixed by your level; nothing else grants stat points."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "The Ring — your growth engine"
+  },
+  {
+   "type": "paragraph",
+   "text": "The Ring is a **closed loop of ten percentage-based passive stats** that you build up as you level. It's a separate layer from your weapon: your **weapon grants your skills**, and the **Ring scales their power**. Your progress on the Ring is saved with your character."
+  },
+  {
+   "type": "heading",
+   "level": 3,
+   "text": "The ten Ring stats"
+  },
+  {
+   "type": "paragraph",
+   "text": "Going clockwise around the loop:"
+  },
+  {
+   "type": "paragraph",
+   "text": "**Defense → HP → Attack → Accuracy → Cast Speed → Magic Attack → MP → Evasion → Critical → Attack Speed →** *(back to Defense)*"
+  },
+  {
+   "type": "paragraph",
+   "text": "The two **poles sit dead-opposite: Defense (top) and Magic Attack (bottom)**, with the survival stats bridging them — so drifting from a physical toward a magic build naturally carries you across the defenses in between."
+  },
+  {
+   "type": "paragraph",
+   "text": "Two stats do double duty: **Defense** raises both your physical *and* magic defense (there is no separate magic-defense stat), and **Critical** raises both your crit rate *and* your crit damage."
+  },
+  {
+   "type": "heading",
+   "level": 3,
+   "text": "The draft — a steering wheel"
+  },
+  {
+   "type": "paragraph",
+   "text": "Every level-up you pick **one of four** options:"
+  },
+  {
+   "type": "list",
+   "items": [
+    "**Three known** — your current stat plus its **two neighbors** on the ring (a sliding window of three).",
+    "**One wildcard** — a random stat from elsewhere on the ring."
+   ]
+  },
+  {
+   "type": "paragraph",
+   "text": "Picking the center keeps stacking that stat; picking a neighbor slides your window that way; the wildcard jumps you across the ring."
+  },
+  {
+   "type": "heading",
+   "level": 3,
+   "text": "Percentage growth with a soft cap"
+  },
+  {
+   "type": "paragraph",
+   "text": "Ring stats give **percentage multipliers**, not flat points, so they never go obsolete as your gear grows. Growth follows a **soft cap**: most stats climb toward a **+80% ceiling**, while **Critical caps at +50%** and **Evasion at +60%** (both would break combat if left uncapped). Because each extra rank is worth a little less, the math **rewards spreading out** — though single-stacking is always allowed."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Your Ring locks your role"
+  },
+  {
+   "type": "paragraph",
+   "text": "**Skills don't level up** — their power comes entirely from your Ring. And that scaling is role-bound: **healing scales off MP**, **damage scales off Attack / Magic Attack**. So a support who invested MP hits like wet paper with a damage weapon, and a damage build heals for crumbs with a staff. **Swapping weapons swaps your skills — never your power**, which stays bound to the stats you chose."
+  },
+  {
+   "type": "paragraph",
+   "text": "*(Ring upgrades that add whole new behaviors from investment are a planned future addition — for now the Ring only scales numbers.)*"
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Monsters use this exact system"
+  },
+  {
+   "type": "paragraph",
+   "text": "Everything on this page describes **monsters too**. They have the same six stats, the same formulas behind them, the same rising cost per point, and the same level-based budget — a level 20 monster carries what a level 20 player could have bought. They wear real equipment, and they can wear a **Ring** that scales them on this same soft-cap curve."
+  },
+  {
+   "type": "callout",
+   "text": "There is no difficulty multiplier anywhere. A monster is hard because of its level, its stats, and its gear — the same three things that make you hard. See *Monsters*."
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "Reading your character sheet"
+  },
+  {
+   "type": "paragraph",
+   "text": "Press **C** to open your character sheet. It lists every number that decides how you fight, and it updates **live** — buffs and debuffs appear the moment they land and vanish when they run out."
+  },
+  {
+   "type": "paragraph",
+   "text": "The big number is always **your own stat**. Anything a buff or debuff is doing to it sits in **parentheses** right after it:"
+  },
+  {
+   "type": "list",
+   "items": [
+    "**Green** — something is helping you, e.g. `ATK 120-140 (+24)`",
+    "**Red** — something is hurting you, e.g. `HIT 82 (-30)` while blinded",
+    "**No parentheses** — nothing is affecting that stat right now"
+   ]
+  },
+  {
+   "type": "callout",
+   "text": "The sheet reads from the same numbers combat does, so what you see is exactly what you hit for — never an estimate."
+  },
+  {
+   "type": "paragraph",
+   "text": "What you'll find on it:"
+  },
+  {
+   "type": "table",
+   "headers": [
+    "Group",
+    "Stats"
+   ],
+   "rows": [
+    [
+     "Offense",
+     "ATK · M.ATK · CRIT chance and crit damage · HIT"
+    ],
+    [
+     "Defense",
+     "DEF and M.DEF (plus their flat damage cut) · FLEE · GUARD · BARRIER"
+    ],
+    [
+     "Speed",
+     "ASPD (attack speed) · CAST (between casts) · WIND-UP (cast time) · MOVE and RUN speed"
+    ],
+    [
+     "Sustain",
+     "LEECH (HP from damage) · MP LEECH · REFLECT"
+    ],
+    [
+     "Resources",
+     "HP · MP · Stamina · Ult charge"
+    ]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 2,
+   "text": "The Ring as your life's work *(proposed — not committed)*"
+  },
+  {
+   "type": "paragraph",
+   "text": "A larger direction under consideration — **not final** — would make the Ring an actual **tradeable in-world item** that holds your whole progression, carrying a visible **lineage of past bearers**. It is a design concept only, not in the game today."
+  }
+ ]
 }

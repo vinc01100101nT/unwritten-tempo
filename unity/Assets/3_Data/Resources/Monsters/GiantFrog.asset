@@ -15,26 +15,24 @@ MonoBehaviour:
   id: mob.giantfrog
   displayName: GiantFrog
   isBoss: 1
+  size: 1
   biome: 3
-  tier: 2
-  biomeAgnostic: 0
   sheet: GiantFrog
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.3
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 374
-  defense: 8
-  magicDefense: 6
-  flee: 0
+  level: 38
+  str: 26
+  agi: 12
+  vit: 32
+  intel: 12
+  dex: 20
+  luk: 12
   hardDefPercent: 26
   hardMagicDefPercent: 16
-  luk: 12
   attackType: 0
-  attack: 20
-  hit: 16
   xpReward: 400
-  damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
   moveSpeed: 1.7

@@ -15,26 +15,24 @@ MonoBehaviour:
   id: mob.mollusc2
   displayName: Mollusc2
   isBoss: 0
+  size: 1
   biome: 1
-  tier: 4
-  biomeAgnostic: 0
   sheet: Mollusc2
   weight: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 1.13
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 96
-  defense: 6
-  magicDefense: 3
-  flee: 0
+  level: 12
+  str: 12
+  agi: 8
+  vit: 12
+  intel: 5
+  dex: 8
+  luk: 5
   hardDefPercent: 15
   hardMagicDefPercent: 0
-  luk: 4
   attackType: 0
-  attack: 10
-  hit: 17
   xpReward: 40
-  damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
   moveSpeed: 2

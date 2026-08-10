@@ -554,19 +554,50 @@ public class SkillComposerWindow : EditorWindow
     }
 
     // Plain-English readout of a tick's targeting — shown live under the control so nothing is ever hidden.
-    static string TargetingSummary(SkillTickBinding b)
+    // hasTargetFx = this tick has effects that land on gathered targets. Without them the tick hits nobody, so the
+    // readout must say the aim gesture only instead of promising hits that can't happen.
+    static string TargetingSummary(SkillTickBinding b, bool hasTargetFx)
     {
         switch (b.targetMode)
         {
-            case TargetMode.Self:         return "lands on the caster";
-            case TargetMode.SingleTarget: return "click one " + AffectsWord(b) + " to hit it";
+            case TargetMode.Self:         return "no aiming — lands on the caster";
+            case TargetMode.SingleTarget: return hasTargetFx ? "click one " + AffectsWord(b) + " to hit it"
+                                                            : "click one " + AffectsWord(b) + " — it isn't hit, it's just the aimed spot";
             default:
                 switch (b.groundDelivery)
                 {
                     case GroundDelivery.Point: return "aim a spot — the caster acts there";
-                    case GroundDelivery.Projectile: return "aim a direction — a shot flies out, hitting " + AffectsWord(b) + " within " + b.radius.ToString("0.#") + " units along its path";
-                    default: return "hits " + AffectsWord(b) + " within " + b.radius.ToString("0.#") + " units of the spot";
+                    case GroundDelivery.Projectile: return hasTargetFx
+                        ? "aim a direction — a shot flies out, hitting " + AffectsWord(b) + " within " + b.radius.ToString("0.#") + " units along its path"
+                        : "aim a direction — a shot flies out, hitting nobody (no target effects on this tick)";
+                    default: return hasTargetFx
+                        ? "hits " + AffectsWord(b) + " within " + b.radius.ToString("0.#") + " units of the spot"
+                        : "aim a spot — nobody is hit (no target effects on this tick)";
                 }
+        }
+    }
+
+    // Two caster effects of the same kind on one tick = it happens twice (two dashes, two shields). Legitimate only for
+    // Stat Buff, where each entry lifts a DIFFERENT stat — so that one is keyed by stat, not just kind.
+    static void WarnDuplicateCasterEffects(SkillTickBinding b)
+    {
+        for (int i = 0; i < b.effects.Count; i++)
+        {
+            var a = b.effects[i];
+            if (a == null || !SkillEffect.IsSelfVerb(a.kind)) continue;
+            for (int j = i + 1; j < b.effects.Count; j++)
+            {
+                var c = b.effects[j];
+                if (c == null || c.kind != a.kind) continue;
+                if (a.kind == SkillEffectKind.Buff && a.buffStat != c.buffStat) continue;
+                string label = a.kind == SkillEffectKind.Buff
+                    ? "Stat Buff (" + ObjectNames.NicifyVariableName(a.buffStat.ToString()) + ")"
+                    : ObjectNames.NicifyVariableName(a.kind.ToString());
+                EditorGUILayout.HelpBox(
+                    label + " is on this tick twice. Caster effects apply once EACH, so this one fires twice on every " +
+                    "cast — delete one unless that's really the intent.", MessageType.Warning);
+                return;
+            }
         }
     }
 
@@ -635,21 +666,46 @@ public class SkillComposerWindow : EditorWindow
         new DebuffOption("Silence", Ailment.Silence), new DebuffOption("Blind", Ailment.Blind),
     };
 
-    static string[] topLabels, typeLabels, buffLabels, debuffLabels;
+    // The menus above are split by SIDE, so each section only offers kinds it can actually run — one array pair per
+    // side, filtered once through the same SkillEffect.IsSelfVerb the runtime uses. Debuffs are all target-side, so
+    // the caster section's State cascade skips the Buffs/Debuffs step entirely (there'd be one choice).
+    static SkillEffectKind[][] sideInstants, sideBuffs;     // [0] = target side, [1] = caster side
+    static string[][] sideTopLabels, sideBuffLabels;
+    static string[] typeLabels, debuffLabels;
+
+    static SkillEffectKind[] FilterSide(SkillEffectKind[] src, bool caster)
+    {
+        var keep = new List<SkillEffectKind>(src.Length);
+        for (int i = 0; i < src.Length; i++) if (SkillEffect.IsSelfVerb(src[i]) == caster) keep.Add(src[i]);
+        return keep.ToArray();
+    }
+
     static void EnsureKindLabels()
     {
-        if (topLabels != null) return;
-        topLabels = new string[InstantKinds.Length + 1];
-        for (int i = 0; i < InstantKinds.Length; i++) topLabels[i] = ObjectNames.NicifyVariableName(InstantKinds[i].ToString());
-        topLabels[InstantKinds.Length] = "State ▸";
+        if (sideInstants != null) return;
+        sideInstants = new SkillEffectKind[2][]; sideBuffs = new SkillEffectKind[2][];
+        sideTopLabels = new string[2][]; sideBuffLabels = new string[2][];
+        for (int s = 0; s < 2; s++)
+        {
+            bool caster = s == 1;
+            var ins = FilterSide(InstantKinds, caster);
+            var bfs = FilterSide(BuffKinds, caster);
+            sideInstants[s] = ins; sideBuffs[s] = bfs;
+            var top = new string[ins.Length + (bfs.Length > 0 ? 1 : 0)];
+            for (int i = 0; i < ins.Length; i++) top[i] = ObjectNames.NicifyVariableName(ins[i].ToString());
+            if (bfs.Length > 0) top[ins.Length] = "State ▸";
+            sideTopLabels[s] = top;
+            var bl = new string[bfs.Length];
+            for (int i = 0; i < bfs.Length; i++)
+                bl[i] = bfs[i] == SkillEffectKind.Buff ? "Stat Buff" : ObjectNames.NicifyVariableName(bfs[i].ToString());
+            sideBuffLabels[s] = bl;
+        }
         typeLabels = new[] { "Buffs", "Debuffs" };
-        buffLabels = new string[BuffKinds.Length];
-        for (int i = 0; i < BuffKinds.Length; i++)
-            buffLabels[i] = BuffKinds[i] == SkillEffectKind.Buff ? "Stat Buff" : ObjectNames.NicifyVariableName(BuffKinds[i].ToString());
         debuffLabels = new string[DebuffOptions.Length];
         for (int i = 0; i < DebuffOptions.Length; i++) debuffLabels[i] = DebuffOptions[i].label;
     }
 
+    static int Side(bool caster) => caster ? 1 : 0;
     static bool IsInstantKind(SkillEffectKind k) { for (int i = 0; i < InstantKinds.Length; i++) if (InstantKinds[i] == k) return true; return false; }
     static bool IsBuffKind(SkillEffectKind k) { for (int i = 0; i < BuffKinds.Length; i++) if (BuffKinds[i] == k) return true; return false; }
     static int IndexOfDebuff(SkillEffect ef)
@@ -662,35 +718,46 @@ public class SkillComposerWindow : EditorWindow
         return 0;
     }
 
-    // Top-level popup (the instant kinds + "State ▸"), drawn inline on the effect header row.
-    void DrawEffectKindTop(SkillEffect ef)
+    // Top-level popup (this side's instant kinds + "State ▸"), drawn inline on the effect header row. Restricted to
+    // the section's own side, so an effect can never hop sections from under the author — to move one, delete and
+    // re-add it in the other section.
+    void DrawEffectKindTop(SkillEffect ef, bool casterSide)
     {
         EnsureKindLabels();
+        int s = Side(casterSide);
+        var kinds = sideInstants[s];
         bool isState = !IsInstantKind(ef.kind);
-        int idx = isState ? InstantKinds.Length : System.Array.IndexOf(InstantKinds, ef.kind);
+        int idx = isState ? kinds.Length : System.Array.IndexOf(kinds, ef.kind);
         if (idx < 0) idx = 0;
-        int next = EditorGUILayout.Popup(idx, topLabels);
+        int next = EditorGUILayout.Popup(idx, sideTopLabels[s]);
         if (next == idx) return;
-        ef.kind = next < InstantKinds.Length ? InstantKinds[next] : SkillEffectKind.Buff;   // → State defaults to the first Buff (Stat Buff)
+        ef.kind = next < kinds.Length ? kinds[next] : sideBuffs[s][0];   // → State defaults to this side's first state
     }
 
-    // For a State effect, the Type (Buffs/Debuffs) + specific popups on their own rows.
-    void DrawEffectStateBranch(SkillEffect ef)
+    // For a State effect, the Type (Buffs/Debuffs) + specific popups on their own rows. The caster side has no
+    // debuffs at all, so it drops straight to the state picker instead of showing a one-option Type row.
+    void DrawEffectStateBranch(SkillEffect ef, bool casterSide)
     {
         if (IsInstantKind(ef.kind)) return;
         EnsureKindLabels();
+        int s = Side(casterSide);
+        var buffs = sideBuffs[s];
         bool isBuff = IsBuffKind(ef.kind);
-        int typeIdx = isBuff ? 0 : 1;
-        int typeNext = EditorGUILayout.Popup(new GUIContent("  type",
-            "Buff = beneficial state (can land on self). Debuff = harmful state (never self). Organizational only — targeting stays on the affects checkboxes."),
-            typeIdx, typeLabels);
-        if (typeNext != typeIdx) { ef.kind = typeNext == 0 ? SkillEffectKind.Buff : SkillEffectKind.Vulnerability; isBuff = typeNext == 0; }
+
+        if (!casterSide)
+        {
+            int typeIdx = isBuff ? 0 : 1;
+            int typeNext = EditorGUILayout.Popup(new GUIContent("  type",
+                "Buff = beneficial state. Debuff = harmful state. Organizational only — WHO it lands on is the targeting above."),
+                typeIdx, typeLabels);
+            if (typeNext != typeIdx) { ef.kind = typeNext == 0 ? buffs[0] : SkillEffectKind.Vulnerability; isBuff = typeNext == 0; }
+        }
 
         if (isBuff)
         {
-            int i = System.Array.IndexOf(BuffKinds, ef.kind); if (i < 0) i = 0;
-            int n = EditorGUILayout.Popup(new GUIContent("  state", "Which buff to apply."), i, buffLabels);
-            if (n != i) ef.kind = BuffKinds[n];
+            int i = System.Array.IndexOf(buffs, ef.kind); if (i < 0) i = 0;
+            int n = EditorGUILayout.Popup(new GUIContent("  state", "Which state to apply."), i, sideBuffLabels[s]);
+            if (n != i) ef.kind = buffs[n];
         }
         else
         {
@@ -700,13 +767,47 @@ public class SkillComposerWindow : EditorWindow
         }
     }
 
+    // A tick is authored as TWO composable lists: what it does to the CASTER and what it does to whoever it catches.
+    // Both can be filled on the same tick (Lunge = dash yourself + strike the mob you clicked). The split is the same
+    // partition the runtime resolves by (SkillEffect.IsSelfVerb), so what you see grouped here is exactly what runs in
+    // each pass. Targeting lives INSIDE the target section, because that's the only thing it decides — the caster
+    // section needs no "who", only (for a Dash/Teleport) the aimed point the cast asks for anyway.
     void DrawBinding(SkillTickBinding b)
     {
         if (b.effects == null) b.effects = new List<SkillEffect>();
 
-        // TARGETING — ONE control, everything else reveals beneath it. No hidden rules.
+        // Stay duration is the TICK's own knob (how long its looping VFX step lives), not either side's — so it sits
+        // above both sections. Only shown when this tick's VFX step actually loops.
+        if (sel.TickStepLoops(b.tickId))
+            b.stayDuration = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  stay duration (s)",
+                "This tick's VFX step is a LOOPING Play At / Attach — how long that loop stays before it ends " +
+                "(and, for an End tick, when it lands). 0 = default 3s."), b.stayDuration));
+
+        DrawCasterSection(b);
+        DrawTargetSection(b);
+    }
+
+    // ---- section 1: what this tick does to the CASTER --------------------------------------------------------------
+    void DrawCasterSection(SkillTickBinding b)
+    {
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField($"  ▾ To the caster  ({CountSide(b, true)})", EditorStyles.miniBoldLabel);
+        if (b.HasPointEffects)
+            EditorGUILayout.LabelField("      → the cast asks you to aim a point; the caster is sent there",
+                                       EditorStyles.miniLabel);
+        DrawEffectList(b, true);
+    }
+
+    // ---- section 2: what this tick does to whoever it CATCHES ------------------------------------------------------
+    void DrawTargetSection(SkillTickBinding b)
+    {
+        EditorGUILayout.Space(4);
+        EditorGUILayout.LabelField($"  ▾ To the target  ({CountSide(b, false)})", EditorStyles.miniBoldLabel);
+
+        // TARGETING — ONE control, everything else reveals beneath it. No hidden rules. It belongs to THIS section:
+        // it decides who the effects below land on, and nothing else.
         b.targetMode = (TargetMode)EditorGUILayout.EnumPopup(new GUIContent("  targets",
-            "Self = lands on the caster (no aiming). Single Target = click one matching entity. Ground = aim a spot on the floor."), b.targetMode);
+            "Self = lands on the caster. Single Target = click one matching entity. Ground = aim a spot on the floor."), b.targetMode);
 
         if (b.targetMode == TargetMode.Self)
         {
@@ -735,27 +836,34 @@ public class SkillComposerWindow : EditorWindow
             if (needsAffects) DrawAffects(b);
         }
 
-        EditorGUILayout.LabelField("  → " + TargetingSummary(b), EditorStyles.miniLabel);
+        EditorGUILayout.LabelField("  → " + TargetingSummary(b, b.HasTargetEffects), EditorStyles.miniLabel);
+        DrawEffectList(b, false);
+    }
 
-        // Stay duration — only when THIS tick's VFX step is a looping Play At / Attach. Per-step, keyed by tickId:
-        // the VFX owns the loop rule, the skill owns how long this step's loop lasts (fallback 3s at runtime).
-        if (sel.TickStepLoops(b.tickId))
-            b.stayDuration = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  stay duration (s)",
-                "This tick's VFX step is a LOOPING Play At / Attach — how long that loop stays before it ends " +
-                "(and, for an End tick, when it lands). 0 = default 3s."), b.stayDuration));
+    static int CountSide(SkillTickBinding b, bool casterSide)
+    {
+        int n = 0;
+        for (int i = 0; i < b.effects.Count; i++)
+            if (b.effects[i] != null && SkillEffect.IsSelfVerb(b.effects[i].kind) == casterSide) n++;
+        return n;
+    }
 
-        EditorGUILayout.LabelField($"  effects ({b.effects.Count})", EditorStyles.miniBoldLabel);
+    // ONE effect list, drawn twice — filtered to the side that owns it. The underlying data stays a single
+    // b.effects list (what the runtime iterates), so the two sections can never disagree with what actually fires.
+    void DrawEffectList(SkillTickBinding b, bool casterSide)
+    {
         int rm = -1;
         for (int e = 0; e < b.effects.Count; e++)
         {
             if (b.effects[e] == null) b.effects[e] = new SkillEffect();
             var ef = b.effects[e];
+            if (SkillEffect.IsSelfVerb(ef.kind) != casterSide) continue;   // drawn by the other section
             EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.ExpandWidth(true));
             EditorGUILayout.BeginHorizontal();
-            DrawEffectKindTop(ef);
+            DrawEffectKindTop(ef, casterSide);
             if (GUILayout.Button("✕", GUILayout.Width(22))) rm = e;
             EditorGUILayout.EndHorizontal();
-            DrawEffectStateBranch(ef);   // State ▸ Buffs / Debuffs cascade (only for durational "state" effects)
+            DrawEffectStateBranch(ef, casterSide);   // State ▸ Buffs / Debuffs cascade (only for durational "state" effects)
             // Plain-English summary of what THIS effect does — directly under the kind dropdown, above its fields.
             EditorGUILayout.HelpBox(EffectSummary(ef.kind), MessageType.None);
             switch (ef.kind)
@@ -885,7 +993,10 @@ public class SkillComposerWindow : EditorWindow
             EditorGUILayout.EndVertical();
         }
         if (rm >= 0) b.effects.RemoveAt(rm);
-        if (GUILayout.Button("  + effect", GUILayout.Width(90))) b.effects.Add(new SkillEffect());
+        if (casterSide) WarnDuplicateCasterEffects(b);
+        // A new effect is born on the side whose button made it, so it can't appear in the other section.
+        if (GUILayout.Button(casterSide ? "  + caster effect" : "  + target effect", GUILayout.Width(120)))
+            b.effects.Add(new SkillEffect { kind = casterSide ? SkillEffectKind.Guard : SkillEffectKind.Damage });
     }
 
     // Stacking knobs — only meaningful for a STATE (something with a duration), so they're hidden entirely for instant

@@ -792,8 +792,8 @@ public static class RecipeGenerator
         s.population        = pop;
         s.radius            = 0.5f * Mathf.Max(sizeX, sizeZ);   // circle that reaches the plot edges; off-map probes just retry
         s.biome             = biome;
-        s.minTier           = m.minTier;
-        s.maxTier           = m.maxTier;
+        s.minLevel          = m.minLevel;
+        s.maxLevel          = m.maxLevel;
         s.includeCommons    = m.includeCommons;
         s.fixedMobId        = m.archetypeName;                  // empty = weighted biome mix; a mob id or "Boss" = fixed
         s.playerClearRadius = m.clearFromSpawn;

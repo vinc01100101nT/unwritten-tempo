@@ -221,6 +221,11 @@ public struct VfxContext
     /// <summary>The cast's designated target for a single-target tick binding (the one entity it lands on,
     /// range-independent). Null = single-scope bindings fall back to Area.</summary>
     public Transform targetUnit;
+    /// <summary>Stage 2 of the aim: where a RELOCATING effect (Dash / Teleport) sends whoever it lands on. Its own
+    /// field, deliberately NOT <see cref="target"/> — once a cast can pick an entity AND a point ("dash the mob I
+    /// clicked over there"), the thing aimed AT and the spot it's sent TO are two different values. <see cref="target"/>
+    /// keeps its one meaning: where the VFX plays.</summary>
+    public Vector3 effectPoint;
     /// <summary>Uniform scale applied to every effect in the sequence (1 = authored).</summary>
     public float scaleMult;
     /// <summary>World Y of the FLOOR under the actor. A character's <c>transform.position</c> is its billboard
@@ -241,7 +246,7 @@ public struct VfxContext
 
     /// <summary>A fixed-point context (origin == target == point, scale 1).</summary>
     public static VfxContext At(Vector3 point) =>
-        new VfxContext { origin = point, target = point, follow = null, scaleMult = 1f };
+        new VfxContext { origin = point, target = point, effectPoint = point, follow = null, scaleMult = 1f };
 }
 
 /// <summary>One gameplay beat raised by a <see cref="VfxSequence"/> at runtime — the join between the VFX

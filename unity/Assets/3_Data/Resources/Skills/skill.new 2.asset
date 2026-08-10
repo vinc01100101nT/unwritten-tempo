@@ -13,17 +13,27 @@ MonoBehaviour:
   m_Name: skill.new 2
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   targetingMigrated: 1
-  id: skill.dash
-  displayName: Dash
+  id: skill.sword.lunge
+  displayName: Lunge
   icon: {fileID: -2812528802495159281, guid: 6cc824c29321438408138dbb62104f13, type: 3}
-  description: 
+  description: 'Close the distance.
+
+    Dashes to the target and strikes for 100%
+    Attack. With Lock Blades, also grants 3 charges.'
   archetype: 1
   family: 2
   shape: 4
   complexity: 0
   acquisitionTier: 0
+  trigger: 0
+  triggerSkillId: 
+  requiresState: 0
+  requireState: 12
+  requireMinStacks: 1
+  consumeAllStacks: 0
+  consumeStacks: 0
   manaCost: 0
-  cooldown: 0.1
+  cooldown: 1
   castTime: 0
   aim: 2
   castRange: 4
@@ -36,15 +46,16 @@ MonoBehaviour:
   repeatInterval: 0
   projectileCount: 1
   projectileSpread: 0
-  hasReleaseStance: 1
+  hasReleaseStance: 0
   releaseStance: 19
   bindings:
   - tickId: dash
-    targetMode: 2
+    targetMode: 1
     groundDelivery: 0
     affects: 1
-    playerFaction: 0
+    playerFaction: 1
     radius: 1.5
+    stayDuration: 0
     effects:
     - kind: 12
       damageType: 1
@@ -53,10 +64,14 @@ MonoBehaviour:
       amount: 10
       ailment: 2
       seconds: 0
+      shoveSeconds: 0.25
       magnitude: 3
-      dashSpeedMult: 4.5
+      stacking: 0
+      stackLimit: 5
+      stacksPerApply: 1
+      dashSpeedMult: 14
       dashEaseIn: 0
-      dashEaseOut: 1
+      dashEaseOut: 0
       dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0
@@ -69,6 +84,42 @@ MonoBehaviour:
       durationAffinity: []
       hitCountAffinity: []
     targets: 1
+    scope: 0
+  - tickId: dash_tick
+    targetMode: 2
+    groundDelivery: 1
+    affects: 2
+    playerFaction: 0
+    radius: 1.5
+    stayDuration: 0
+    effects:
+    - kind: 12
+      damageType: 1
+      damageMult: 1
+      element: 0
+      amount: 10
+      ailment: 2
+      seconds: 0
+      shoveSeconds: 0.25
+      magnitude: 2
+      stacking: 0
+      stackLimit: 5
+      stacksPerApply: 1
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
+      hitCount: 1
+      chance: 0
+      buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
+      affinity: []
+      durationAffinity: []
+      hitCountAffinity: []
+    targets: 2
     scope: 0
   shortLabel: Skill
   keyLabel: 

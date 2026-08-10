@@ -8,14 +8,14 @@ using UnityEngine;
 /// <summary>
 /// One-click bulk creator: turns every Ninja Adventure sprite folder under <c>Actor/Monster</c> (mobs) and
 /// <c>Actor/Boss</c> (bosses) into an editable <see cref="MonsterDef"/> asset in <c>Resources/Monsters</c>,
-/// pre-tagged with a <see cref="Biome"/> + difficulty <c>tier</c> so the map generator can spread them by
+/// pre-tagged with a <see cref="Biome"/> + a difficulty LEVEL so the map generator can spread them by
 /// biome (see <see cref="MonsterCatalog.WeightedPick(Biome,int,int,bool)"/>).
 ///
-/// Division (functionality-first — the actual biome/tier choice is ARBITRARY for now, re-tag freely later):
+/// Division (functionality-first — the actual biome/level choice is ARBITRARY for now, re-tag freely later):
 /// <list type="bullet">
-/// <item>Mobs: 5 biomes × 4 tiers × <b>3</b> = 60 placed evenly into the cells; any remainder (the 6 of 66)
-///   become biome-agnostic <b>commons</b> (eligible in every biome's low tier — the universal trash layer).</item>
-/// <item>Bosses: 5 biomes × 4 tiers × <b>1</b> = 20, one per cell, flagged <see cref="MonsterDef.isBoss"/>.</item>
+/// <item>Mobs: 5 biomes × 4 level bands × <b>3</b> = 60 placed evenly into the cells; any remainder (the 6 of 66)
+///   become biome-agnostic <b>commons</b> (eligible in every biome's low level band — the universal trash layer).</item>
+/// <item>Bosses: 5 biomes × 4 level bands × <b>1</b> = 20, one per cell, flagged <see cref="MonsterDef.isBoss"/>.</item>
 /// </list>
 /// Idempotent: an asset that already exists is left untouched, so hand edits + re-runs are safe.
 ///
@@ -51,25 +51,25 @@ public static class MobBiomeImporter
         var sb = new StringBuilder();
         int made = 0, skipped = 0;
 
-        // ── MOBS: fill 20 cells (5 biomes × 4 tiers) with 3 each; the remainder become biome-agnostic commons.
+        // ── MOBS: fill 20 cells (5 biomes × 4 level bands) with 3 each; the remainder become biome-agnostic commons.
         int cellCount = Biomes.Length * 4;          // 20
         int slotted   = Mathf.Min(mobFolders.Count, cellCount * 3);   // up to 60 go into cells
         for (int i = 0; i < mobFolders.Count; i++)
         {
             bool common = i >= slotted;
-            Biome biome; int tier;
-            if (common) { biome = Biome.None; tier = 1; }
-            else        { biome = Biomes[i % Biomes.Length]; tier = (i / Biomes.Length) % 4 + 1; }
+            Biome biome; int band;
+            if (common) { biome = Biome.None; band = 1; }
+            else        { biome = Biomes[i % Biomes.Length]; band = (i / Biomes.Length) % 4 + 1; }
 
-            if (CreateDef(mobFolders[i], isBoss: false, biome, tier, common, sb)) made++; else skipped++;
+            if (CreateDef(mobFolders[i], isBoss: false, biome, band, common, sb)) made++; else skipped++;
         }
 
-        // ── BOSSES: one per (biome, tier) cell.
+        // ── BOSSES: one per (biome, level band) cell.
         for (int j = 0; j < bossFolders.Count; j++)
         {
             Biome biome = Biomes[j % Biomes.Length];
-            int tier = Mathf.Clamp(j / Biomes.Length + 1, 1, 4);
-            if (CreateDef(bossFolders[j], isBoss: true, biome, tier, common: false, sb)) made++; else skipped++;
+            int band = Mathf.Clamp(j / Biomes.Length + 1, 1, 4);
+            if (CreateDef(bossFolders[j], isBoss: true, biome, band, common: false, sb)) made++; else skipped++;
         }
 
         AssetDatabase.SaveAssets();
@@ -80,7 +80,7 @@ public static class MobBiomeImporter
         EditorUtility.DisplayDialog("Import NinjaAdventure Monsters",
             $"{mobFolders.Count} mob folders + {bossFolders.Count} boss folders scanned.\n\n" +
             $"{made} MonsterDef asset(s) created in {ResourceDir}\n{skipped} already existed (left untouched).\n\n" +
-            "Tagged with Biome + tier — the map generator now spreads a map's mobs from its recipe Biome. " +
+            "Tagged with Biome + level — the map generator now spreads a map's mobs from its recipe Biome. " +
             "Re-tag any in the Inspector; re-running this never clobbers your edits.", "OK");
     }
 
@@ -110,7 +110,7 @@ public static class MobBiomeImporter
         return false;
     }
 
-    static bool CreateDef(string folder, bool isBoss, Biome biome, int tier, bool common, StringBuilder log)
+    static bool CreateDef(string folder, bool isBoss, Biome biome, int band, bool common, StringBuilder log)
     {
         string path = $"{ResourceDir}/{Sanitize(folder)}.asset";
         if (AssetDatabase.LoadAssetAtPath<MonsterDef>(path) != null)
@@ -122,26 +122,30 @@ public static class MobBiomeImporter
         def.sheet = folder;
         def.isBoss = isBoss;
         def.biome = biome;
-        def.tier = tier;
 
-        ApplyStats(def, isBoss, tier, common, biome);
+        ApplyStats(def, isBoss, band, common, biome);
 
         AssetDatabase.CreateAsset(def, path);
-        string tag = isBoss ? $"BOSS {biome}/T{tier}" : common ? "COMMON" : $"{biome}/T{tier}";
+        string tag = isBoss ? $"BOSS {biome}/Lv{def.level}" : common ? $"COMMON Lv{def.level}" : $"{biome}/Lv{def.level}";
         log.AppendLine($"  • {def.id} [{tag}] → {path}");
         return true;
     }
 
-    /// <summary>Difficulty that actually ramps with tier (so a tier-4 zone bites). Arbitrary-but-sane starting
-    /// numbers; balance later. Bosses get a wall of HP and never join the weighted field pick (weight 0).</summary>
-    static void ApplyStats(MonsterDef def, bool isBoss, int tier, bool common, Biome biome)
+    // Difficulty is LEVEL. The four old "tiers" become four LEVEL BANDS; everything that used to be hand-scaled
+    // per tier (HP, ATK, DEF, FLEE) now falls out of the level + stat spread through UnitStatMath, exactly as it
+    // does for the player. Starting numbers to tune, not gospel.
+    static readonly int[] BandLevel     = { 1, 10, 20, 32 };   // normal mobs, by band
+    static readonly int[] BossBandLevel = { 8, 18, 30, 45 };   // a boss is simply a much higher-level unit
+
+    /// <summary>Author one mob: its level comes from the band, its primaries are the FULL point budget that level
+    /// earns, spent in a role-appropriate spread. A boss differs by level and bulk, not by a special stat rule.</summary>
+    static void ApplyStats(MonsterDef def, bool isBoss, int band, bool common, Biome biome)
     {
         def.element = BiomeElement(biome);
         def.attackElement = Element.Neutral;
         def.flash = Color.white;
         def.tint = Color.white;
         def.attackType = MonsterAI3D.AttackType.Physical;
-        def.damageSpread = 0.25f;
         def.touchRange = 0.9f;
         def.touchInterval = 1.0f;
         def.aggroRadius = 6f;
@@ -149,38 +153,42 @@ public static class MobBiomeImporter
         def.stopDistance = 0.7f;
         def.wanderRadius = 3f;
 
+        int b = Mathf.Clamp(band, 1, 4) - 1;
+
         if (isBoss)
         {
+            def.level = BossBandLevel[b];
+            // Bulk-first spread: heavy VIT/STR, enough AGI/DEX to stay accurate.
+            var u = UnitStatMath.Allocate(def.level, wStr: 3f, wAgi: 1f, wVit: 4f, wInt: 1f, wDex: 2f, wLuk: 1f);
+            WriteStats(def, u);
             def.weight = 0;   // never rolled by the field spawner; placed deliberately
-            def.scale = 2.0f + tier * 0.15f;
-            def.maxHealth = Mathf.RoundToInt(220f * Mathf.Pow(1.7f, tier - 1));
-            def.defense = 4 + tier * 2;
-            def.magicDefense = 2 + tier * 2;
-            def.hardDefPercent = 20 + tier * 3;
-            def.hardMagicDefPercent = 12 + tier * 2;
-            def.luk = 8 + tier * 2;
-            def.attack = 12 + tier * 4;
-            def.hit = 12 + tier * 2;
-            def.xpReward = 200 * tier;
-            def.goldMin = 250 * tier;
-            def.goldMax = 500 * tier;
+            def.scale = 2.0f + b * 0.15f;
+            def.hardDefPercent = 20 + b * 3;          // armour-sourced, still authored
+            def.hardMagicDefPercent = 12 + b * 2;
+            def.xpReward = 200 * (b + 1);
+            def.goldMin = 250 * (b + 1);
+            def.goldMax = 500 * (b + 1);
             def.moveSpeed = 1.7f;
             return;
         }
 
-        def.weight = common ? 4 : (tier <= 1 ? 3 : tier == 2 ? 3 : tier == 3 ? 2 : 1);
-        def.scale = common ? 0.8f : 0.85f + tier * 0.07f;
-        def.maxHealth = Mathf.RoundToInt(14f * Mathf.Pow(1.9f, tier - 1));
-        def.defense = (tier - 1) * 2;
-        def.magicDefense = (tier - 1);
-        def.hardDefPercent = (tier - 1) * 5;
-        def.luk = tier;
-        def.attack = Mathf.RoundToInt(3f * Mathf.Pow(1.5f, tier - 1));
-        def.hit = 8 + (tier - 1) * 3;
-        def.xpReward = Mathf.RoundToInt(5f * Mathf.Pow(2f, tier - 1));
-        def.goldMin = 2 * tier;
-        def.goldMax = 6 * tier;
-        def.moveSpeed = 2.4f - tier * 0.1f;
+        def.level = common ? BandLevel[0] : BandLevel[b];
+        // Balanced field-mob spread, tilted to STR/VIT so early mobs hit and survive believably.
+        var n = UnitStatMath.Allocate(def.level, wStr: 3f, wAgi: 2f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f);
+        WriteStats(def, n);
+        def.weight = common ? 4 : (b <= 1 ? 3 : b == 2 ? 2 : 1);
+        def.scale = common ? 0.8f : 0.85f + b * 0.07f;
+        def.hardDefPercent = b * 5;
+        def.xpReward = Mathf.RoundToInt(5f * Mathf.Pow(2f, b));
+        def.goldMin = 2 * (b + 1);
+        def.goldMax = 6 * (b + 1);
+        def.moveSpeed = 2.4f - b * 0.1f;
+    }
+
+    static void WriteStats(MonsterDef def, in UnitStatInputs u)
+    {
+        def.str = u.str; def.agi = u.agi; def.vit = u.vit;
+        def.intel = u.intel; def.dex = u.dex; def.luk = u.luk;
     }
 
     static Element BiomeElement(Biome b) => b switch

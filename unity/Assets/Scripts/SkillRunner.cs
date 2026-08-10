@@ -26,6 +26,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     System.Action<VfxTick> onTick;      // cached hook (no per-play delegate alloc)
     System.Action<Vector3> onGround;    // cached ground-confirm hook
     System.Action<Transform> onUnit;    // cached single-target confirm hook
+    Transform pendingUnit;              // stage-1 pick, held while stage 2 (the point) is being aimed. A field, not a
+                                        // closure, so the confirm hooks above stay cached (no per-cast delegate alloc).
+                                        // Cleared on every Activate and on teardown — a targeter's Cancel never calls back.
     System.Func<string, float> stayFor; // cached per-tickId Stay Duration resolver (built once; no per-cast alloc)
     // Resolve a looping step's Stay Duration from its tick binding (by tickId). Handed to the VFX context so the
     // runner supplies each step its own stay; the VFX never stores this per-use gameplay number.
@@ -65,6 +68,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     void OnDisable()
     {
         PassiveEvents.Unregister(this);
+        pendingUnit = null;   // a half-aimed cast dies with the runner; never resume stage 2 against a stale pick
         if (castRoutine != null || castAura != null || castCircle != null) EndCast();
     }
 
@@ -89,62 +93,80 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (def.IsUltimate && !Character.Instance.UltReady(def.chargeCost))
         { BattleNotice.Warn("Not charged"); return false; }
 
-        // The cast reticle is DERIVED from the ticks (def.Reticle), not a separate aim field: any Single-target tick ⇒
-        // pick a unit; else any Ground tick ⇒ a ground reticle; else Instant (self / no aim).
-        switch (def.Reticle)
+        // The aim is a SEQUENCE derived from the ticks (SkillDef.NeedsUnitPick / NeedsAimPoint), never an authored
+        // field: pick an entity (only when target effects need one), then pick a point (only when a ground tick or a
+        // relocating effect needs one). Either stage can be absent — a self-dash asks only for the point, a plain nuke
+        // only for the entity, "dash the mob I clicked over there" asks for both, in that order.
+        // A re-press mid-aim cancels the whole sequence, including a stage-1 pick already banked.
+        if (UnitTargeter.Active) { UnitTargeter.Cancel(); pendingUnit = null; return false; }
+        if (GroundTargeter.Active) { GroundTargeter.Cancel(); pendingUnit = null; return false; }
+        pendingUnit = null;
+
+        if (def.NeedsUnitPick)
         {
-            case CastReticle.Unit:
-                // Single-target: land on ONE valid unit, validated against the union of the single-target ticks'
-                // affect kinds (warns in-game on an illegal / absent pick).
-                var mask = def.SingleTargetMask;
-                if (mask == SkillTargets.None)
-                { BattleNotice.Warn("No valid target"); return false; }
-                if (UnitTargeter.Active) { UnitTargeter.Cancel(); return false; }   // re-press cancels aiming
-                UnitTargeter.Begin(transform, def.castRange, mask, onUnit);
-                return true;   // MP/cooldown spent on confirm (CastTargeted), so cancelling costs nothing
-
-            case CastReticle.Ground:
-                if (GroundTargeter.Active) { GroundTargeter.Cancel(); return false; }   // re-press cancels aiming
-                GroundTargeter.Begin(transform, def.castRange, onGround,
-                                     def.castCircleId, def.castCircleTint, def.LargestAreaRadius, def.IsProjectileAim);
-                return true;   // MP/cooldown are spent on confirm (Cast), so cancelling costs nothing
-
-            default: // Instant (self / no aim)
-                Cast(transform.position);
-                return true;
+            // Stage 1: land on ONE valid unit, validated against the union of the single-target ticks' affect kinds
+            // (warns in-game on an illegal / absent pick).
+            var mask = def.SingleTargetMask;
+            if (mask == SkillTargets.None)
+            { BattleNotice.Warn("No valid target"); return false; }
+            UnitTargeter.Begin(transform, def.castRange, mask, onUnit);
+            return true;   // MP/cooldown spent on the FINAL confirm, so cancelling any stage costs nothing
         }
+        if (def.NeedsAimPoint) { BeginPointAim(); return true; }
+
+        CastResolved(null, transform.position);   // no aim at all (a pure self buff)
+        return true;
     }
 
-    // Ground/Self confirm: spend, gate cooldown, play the sequence centred on `center`.
-    void Cast(Vector3 center)
+    // Stage 2 of the aim. Entered straight from Activate (no entity to pick) or from the stage-1 confirm below.
+    void BeginPointAim() =>
+        GroundTargeter.Begin(transform, def.castRange, onGround,
+                             def.castCircleId, def.castCircleTint, def.LargestAreaRadius, def.IsProjectileAim);
+
+    // Stage-1 confirm: bank the entity, then either ask for the point or fire straight away.
+    void CastTargeted(Transform unit)
+    {
+        if (unit == null) return;
+        if (def.NeedsAimPoint) { pendingUnit = unit; BeginPointAim(); return; }
+        CastResolved(unit, unit.position);
+    }
+
+    // Stage-2 confirm (also the only confirm for a point-only cast): fire with whatever stage 1 banked.
+    void Cast(Vector3 point)
+    {
+        var unit = pendingUnit; pendingUnit = null;
+        CastResolved(unit, point);
+    }
+
+    // The ONE solo-cast resolve: spend, gate cooldown, play the sequence. `unit` = the stage-1 pick (null when the
+    // cast asked for no entity), `point` = the stage-2 point (the caster's own spot when it asked for none).
+    void CastResolved(Transform unit, Vector3 point)
     {
         if (!Spend()) return;
         comboDamageMult = 1f;               // solo cast — no combo ramp
-        // origin = the CASTER (Origin anchor), target = the aimed point (Target anchor). Self cast: center IS the
-        // caster, so they coincide. Ground cast: they DIFFER, so an Origin-anchored step (e.g. Blink's departure
-        // flash before the teleport) plays at the caster's spot, not the destination. VfxContext.At collapsed both.
-        // follow = the CASTER so an Attach step (a self aura / dash trail) RIDES the player and fires its gameplay
-        // tick — like VfxCue sets follow = actor. PlayAt/Carrier steps ignore follow, so ground AoEs are unaffected.
-        lastCtx = new VfxContext { origin = transform.position, target = center, follow = transform, scaleMult = 1f, stayForTick = StayFor };
+        lastCtx = BuildCtx(unit, point);
         StartCastOrPlay();
     }
 
-    // Target confirm: origin = caster, target/single-unit = the chosen unit (a mob, or the player for a self-cast).
-    void CastTargeted(Transform unit)
+    // The ONE place a cast's VfxContext is built — solo, combo and passive all come through here so no path can
+    // forget a field (a missed effectPoint would silently dash the caster to the world origin).
+    //   origin = the CASTER (Origin anchor).
+    //   target = where the VFX plays (Target anchor): the picked entity if there is one, else the aimed point. A
+    //            self cast collapses both onto the caster; a ground cast keeps them apart, so an Origin-anchored step
+    //            (Blink's departure flash) plays at the caster's spot, not the destination.
+    //   effectPoint = where a relocating effect SENDS what it caught — a separate question from where the VFX plays.
+    //   follow = the CASTER so an Attach step (a self aura / dash trail) RIDES the player and fires its gameplay
+    //            tick, like VfxCue sets follow = actor. PlayAt/Carrier steps ignore follow, so ground AoEs are unaffected.
+    VfxContext BuildCtx(Transform unit, Vector3 point) => new VfxContext
     {
-        if (unit == null || !Spend()) return;
-        comboDamageMult = 1f;               // solo cast — no combo ramp
-        lastCtx = new VfxContext
-        {
-            origin = transform.position,
-            target = unit.position,
-            follow = transform,
-            targetUnit = unit,
-            scaleMult = 1f,
-            stayForTick = StayFor,
-        };
-        StartCastOrPlay();
-    }
+        origin = transform.position,
+        target = unit != null ? unit.position : point,
+        effectPoint = point,
+        follow = transform,
+        targetUnit = unit,
+        scaleMult = 1f,
+        stayForTick = StayFor,
+    };
 
     // ---- combo-chain firing -------------------------------------------------
     // A ComboRunner drives a chain by firing each member skill here at ONE pre-resolved aim (no per-skill reticle),
@@ -156,26 +178,20 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (!ComboSpend()) return false;
         comboDamageMult = Mathf.Max(0f, dmgMult);
-        // origin = caster, target = aimed point (see Cast) — keeps Origin/Target distinct on a ground combo member.
-        lastCtx = new VfxContext { origin = transform.position, target = center, follow = transform, scaleMult = 1f, stayForTick = StayFor };
+        // A combo resolves ONE aim for the whole chain, so a relocating member sends its catch to that same spot.
+        lastCtx = BuildCtx(null, center);
         StartCastOrPlay();
         return true;
     }
 
-    /// <summary>Fire this skill from a combo onto a chosen unit (Single/Target members). Returns true if it fired.</summary>
+    /// <summary>Fire this skill from a combo onto a chosen unit (Single/Target members). Returns true if it fired.
+    /// A chain pre-resolves ONE aim, so there's no second stage here: a relocating member sends its catch to the
+    /// picked unit's spot rather than asking the player for a separate point mid-chain.</summary>
     public bool ComboCastUnit(Transform unit, float dmgMult)
     {
         if (unit == null || !ComboSpend()) return false;
         comboDamageMult = Mathf.Max(0f, dmgMult);
-        lastCtx = new VfxContext
-        {
-            origin = transform.position,
-            target = unit.position,
-            follow = transform,
-            targetUnit = unit,
-            scaleMult = 1f,
-            stayForTick = StayFor,
-        };
+        lastCtx = BuildCtx(unit, unit.position);
         StartCastOrPlay();
         return true;
     }
@@ -405,7 +421,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, b.effects,
                                           lastCtx.targetUnit, 0f, 0, comboDamageMult,
                                           def.icon, def.displayName,
-                                          aimPoint: lastCtx.target,   // Teleport/Dash go to the AIM point, not the tick's VFX anchor
+                                          aimPoint: lastCtx.effectPoint,   // Dash/Teleport go where stage 2 aimed, not to the tick's VFX anchor
                                           caster: Character.Instance); // explicit caster (local player today; a per-connection entity once server-authoritative)
         }
         finally { PassiveEvents.PopChain(prevChain); }
@@ -440,20 +456,18 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         comboDamageMult = 1f;   // passive fire — no combo ramp
         castChain = chain;      // this passive is in the chain; everything its effects cause carries that forward
 
-        Vector3 aim; Transform unit = null;
-        switch (def.Reticle)
+        // Same two stages as a manual cast, answered by the trigger instead of by clicks: the entity is the victim,
+        // the point is wherever the moment happened (the caster's own spot when the moment had no victim).
+        Transform unit = null;
+        if (def.NeedsUnitPick)
         {
-            case CastReticle.Unit:                    // single-target — needs an entity to land on
-                if (victim == null) return;
-                unit = victim; aim = victim.position; break;
-            case CastReticle.Ground:                  // AoE / projectile — cast AT the trigger's location (caster if none)
-                aim = victim != null ? victim.position : transform.position; break;
-            default:                                  // Instant / SELF — self is ALWAYS self; the victim is ignored
-                aim = transform.position; break;
+            if (victim == null) return;               // single-target — needs an entity to land on
+            unit = victim;
         }
+        Vector3 point = def.NeedsAimPoint && victim != null ? victim.position : transform.position;
 
-        lastCtx = new VfxContext { origin = transform.position, target = aim, follow = transform, targetUnit = unit, scaleMult = 1f, stayForTick = StayFor };
-        if (body != null) body.FaceWorldPoint(aim);   // face the auto-target, like a manual cast
+        lastCtx = BuildCtx(unit, point);
+        if (body != null) body.FaceWorldPoint(lastCtx.target);   // face the auto-target, like a manual cast
         PlayCycles();                                 // the full active path: VFX + ticks + effects
     }
 

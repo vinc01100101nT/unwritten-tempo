@@ -90,7 +90,8 @@
           "sourceDocs": [
             "docs/ring-system-trio-ring.md",
             "docs/pre-renewal-ro-port.md",
-            "docs/active-skill-system-v3/README.md"
+            "docs/active-skill-system-v3/README.md",
+            "docs/active-skill-system-v3/unified-unit-stats.md"
           ],
           "syncedAt": {
             "docs/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
@@ -200,7 +201,8 @@
           "file": "monsters.json",
           "docId": "q1706w4tf9wtc9wngjvnh1r8rh8bamx2",
           "sourceDocs": [
-            "docs/biome-mob-families.md"
+            "docs/biome-mob-families.md",
+            "docs/active-skill-system-v3/unified-unit-stats.md"
           ],
           "syncedAt": {
             "docs/biome-mob-families.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb"

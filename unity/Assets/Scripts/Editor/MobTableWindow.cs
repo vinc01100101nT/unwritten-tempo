@@ -29,6 +29,11 @@ public class MobTableWindow : EditorWindow
     readonly Dictionary<MonsterDef, Texture2D> _sheets = new Dictionary<MonsterDef, Texture2D>();
     Vector2 _scroll, _hscroll;
     string _search = "";
+    readonly HashSet<MonsterDef> _expanded = new HashSet<MonsterDef>();
+    // Toggling an expander CHANGES how many layout groups the window draws. IMGUI requires the Layout pass and the
+    // Repaint pass of one frame to agree on that count, so the click is recorded here and applied after the loop —
+    // flipping it mid-draw is the classic "GUILayout: Mismatched LayoutGroup" console spam.
+    MonsterDef _pendingToggle;
     string _sortField = "id";
     bool _sortAsc = true;
 
@@ -51,9 +56,14 @@ public class MobTableWindow : EditorWindow
         {
             "name"   => (a, b) => string.Compare(a.displayName, b.displayName, System.StringComparison.OrdinalIgnoreCase),
             "biome"  => (a, b) => a.biome.CompareTo(b.biome),
-            "tier"   => (a, b) => a.tier.CompareTo(b.tier),
-            "hp"     => (a, b) => a.maxHealth.CompareTo(b.maxHealth),
-            "atk"    => (a, b) => a.attack.CompareTo(b.attack),
+            "lvl"    => (a, b) => a.level.CompareTo(b.level),
+            "gear"   => (a, b) => GearCount(a).CompareTo(GearCount(b)),
+            // Sort by how far off-budget a mob is, so the mis-authored ones surface together.
+            "pts"    => (a, b) => (UnitStatMath.PointsSpent(a.StatInputs) - UnitStatMath.PointsEarnedByLevel(a.level))
+                        .CompareTo(UnitStatMath.PointsSpent(b.StatInputs) - UnitStatMath.PointsEarnedByLevel(b.level)),
+            // Sort by the DERIVED value the column shows, not the superseded stored field.
+            "hp"     => (a, b) => Derived(a, DerivedStat.HP).CompareTo(Derived(b, DerivedStat.HP)),
+            "atk"    => (a, b) => Derived(a, DerivedStat.Atk).CompareTo(Derived(b, DerivedStat.Atk)),
             "weight" => (a, b) => a.weight.CompareTo(b.weight),
             "xp"     => (a, b) => a.xpReward.CompareTo(b.xpReward),
             "elem"   => (a, b) => a.element.CompareTo(b.element),
@@ -74,18 +84,31 @@ public class MobTableWindow : EditorWindow
     struct Col { public string label, sort; public float w; public Col(string l, string s, float wi) { label = l; sort = s; w = wi; } }
     static readonly Col[] Cols =
     {
+        new Col("",      null,     20),   // expand toggle
         new Col("",      null,     42),   // preview
         new Col("id",    "id",     150),
         new Col("name",  "name",   120),
         new Col("biome", "biome",  90),
-        new Col("tier",  "tier",   38),
         new Col("B",     null,     26),   // isBoss
-        new Col("HP",    "hp",     58),
-        new Col("DEF",   null,     46),
-        new Col("MDEF",  null,     50),
-        new Col("ATK",   "atk",    46),
-        new Col("HIT",   null,     46),
-        new Col("FLEE",  null,     46),
+        // The AUTHORED stat block — a mob is a level and six primaries, exactly like the player.
+        new Col("LVL",   "lvl",    38),
+        new Col("STR",   null,     38),
+        new Col("AGI",   null,     38),
+        new Col("VIT",   null,     38),
+        new Col("INT",   null,     38),
+        new Col("DEX",   null,     38),
+        new Col("LUK",   null,     38),
+        // The level's point BUDGET vs what this spread costs — red when a mob carries stats its level can't afford.
+        new Col("pts",   "pts",    74),
+        // Worn gear + the ring's ranks, at a glance. Both are EDITED in the expander row (click ▸) — a spreadsheet
+        // row can't hold 12 slots and 10 rank sliders without becoming unreadable.
+        new Col("gear",  "gear",   120),
+        // DERIVED readouts (read-only): what UnitStatMath actually produces from the block on the left, so a
+        // designer edits the cause and immediately sees the effect. Never editable — these have no storage.
+        new Col("=HP",   "hp",     52),
+        new Col("=ATK",  "atk",    46),
+        new Col("=DEF",  null,     44),
+        new Col("=FLEE", null,     46),
         new Col("elem",  "elem",   84),
         new Col("aElem", null,     84),
         new Col("wt",    "weight", 38),
@@ -107,9 +130,18 @@ public class MobTableWindow : EditorWindow
         {
             if (!string.IsNullOrEmpty(_search) && !MatchesSearch(def)) continue;
             DrawRow(def);
+            if (_expanded.Contains(def)) DrawGearAndRingEditor(def);
         }
         GUILayout.EndScrollView();
         EditorGUILayout.EndScrollView();
+
+        // Apply a queued expander click now that the whole layout pass is done, then repaint with the new shape.
+        if (_pendingToggle != null)
+        {
+            if (!_expanded.Remove(_pendingToggle)) _expanded.Add(_pendingToggle);
+            _pendingToggle = null;
+            Repaint();
+        }
     }
 
     bool MatchesSearch(MonsterDef d)
@@ -177,6 +209,10 @@ public class MobTableWindow : EditorWindow
         int ci = 0;
         Rect Next() { var r = new Rect(x, rect.y + 3, Cols[ci].w - 3, RowHeight - 6); x += Cols[ci].w; ci++; return r; }
 
+        // expander — opens the gear + ring-ranks editor beneath this row
+        bool open = _expanded.Contains(def);
+        if (GUI.Button(VCenter(Next(), 18), open ? "▾" : "▸", EditorStyles.label)) _pendingToggle = def;
+
         // preview
         var pr = Next();
         DrawPreview(new Rect(pr.x, rect.y + 2, 34, 34), def);
@@ -186,14 +222,21 @@ public class MobTableWindow : EditorWindow
         string name  = EditorGUI.TextField(VCenter(Next(), 18), def.displayName);
         // Biome.None = biome-agnostic (spawns in any biome); it's just another choice in the dropdown.
         var biome    = (Biome)EditorGUI.EnumPopup(VCenter(Next(), 18), def.biome);
-        int tier     = EditorGUI.IntField(VCenter(Next(), 18), def.tier);
         bool boss    = EditorGUI.Toggle(VCenter(Next(), 18), def.isBoss);
-        int hp       = EditorGUI.IntField(VCenter(Next(), 18), def.maxHealth);
-        int dfn      = EditorGUI.IntField(VCenter(Next(), 18), def.defense);
-        int mdfn     = EditorGUI.IntField(VCenter(Next(), 18), def.magicDefense);
-        int atk      = EditorGUI.IntField(VCenter(Next(), 18), def.attack);
-        int hit      = EditorGUI.IntField(VCenter(Next(), 18), def.hit);
-        int flee     = EditorGUI.IntField(VCenter(Next(), 18), def.flee);
+        int lvl      = EditorGUI.IntField(VCenter(Next(), 18), def.level);
+        int str      = EditorGUI.IntField(VCenter(Next(), 18), def.str);
+        int agi      = EditorGUI.IntField(VCenter(Next(), 18), def.agi);
+        int vit      = EditorGUI.IntField(VCenter(Next(), 18), def.vit);
+        int itl      = EditorGUI.IntField(VCenter(Next(), 18), def.intel);
+        int dex      = EditorGUI.IntField(VCenter(Next(), 18), def.dex);
+        int luk      = EditorGUI.IntField(VCenter(Next(), 18), def.luk);
+        DrawPoints(Next(), def);
+        DrawGearSummary(Next(), def);
+        // Derived readouts — computed live from the block just edited, never stored and never editable.
+        DrawDerived(Next(), Derived(def, DerivedStat.HP));
+        DrawDerived(Next(), Derived(def, DerivedStat.Atk));
+        DrawDerived(Next(), Derived(def, DerivedStat.Def));
+        DrawDerived(Next(), Derived(def, DerivedStat.Flee));
         var elem     = (Element)EditorGUI.EnumPopup(VCenter(Next(), 18), def.element);
         var aElem    = (Element)EditorGUI.EnumPopup(VCenter(Next(), 18), def.attackElement);
         int wt       = EditorGUI.IntField(VCenter(Next(), 18), def.weight);
@@ -203,9 +246,17 @@ public class MobTableWindow : EditorWindow
         if (EditorGUI.EndChangeCheck())
         {
             Undo.RecordObject(def, "Edit Mob");
-            def.id = id; def.displayName = name; def.biome = biome; def.tier = Mathf.Clamp(tier, 1, 4);
-            def.isBoss = boss; def.maxHealth = hp; def.defense = dfn;
-            def.magicDefense = mdfn; def.attack = atk; def.hit = hit; def.flee = flee;
+            def.id = id; def.displayName = name; def.biome = biome;
+            def.isBoss = boss;
+            def.level = Mathf.Max(1, lvl);
+            // Budget guard: an entry the level can't afford SNAPS to the highest value that fits, rather than being
+            // stored as an over-budget spread. Each stat is checked against what's left once the other five are paid
+            // for, in field order — so typing 99 into STR spends the remainder and leaves the rest untouched.
+            var typed = new[] { str, agi, vit, itl, dex, luk };
+            var prior = new[] { def.str, def.agi, def.vit, def.intel, def.dex, def.luk };
+            FitSpreadToBudget(def.level, typed, prior);
+            def.str = typed[0]; def.agi = typed[1]; def.vit = typed[2];
+            def.intel = typed[3]; def.dex = typed[4]; def.luk = typed[5];
             def.element = elem; def.attackElement = aElem; def.weight = wt; def.xpReward = xp;
             def.goldMin = gMin; def.goldMax = gMax;
             EditorUtility.SetDirty(def);
@@ -219,6 +270,205 @@ public class MobTableWindow : EditorWindow
     }
 
     static Rect VCenter(Rect r, float h) => new Rect(r.x, r.y + (r.height - h) * 0.5f, r.width, h);
+
+    static int Clamp99(int v) => Mathf.Clamp(v, 1, UnitStatMath.MaxStatValue);
+
+    /// <summary>Force a typed spread inside the level's point budget, IN PLACE. Only a stat the user actually EDITED
+    /// is capped — it absorbs whatever points the others leave over, so typing 99 into STR at level 9 becomes 27
+    /// rather than dragging the untouched stats down with it. Stats left alone are never modified, which is why this
+    /// needs <paramref name="prior"/>: the committed values are what the edited stat is measured against.
+    ///
+    /// <para>Result always satisfies <c>PointsSpent ≤ PointsEarnedByLevel</c>, so the table cannot write a mob
+    /// stronger than its level allows. (Lowering the LEVEL doesn't retro-clamp a spread — nothing was typed into a
+    /// stat, so the pts column just turns red and the choice of what to give up stays the designer's.)</para></summary>
+    static void FitSpreadToBudget(int level, int[] s, int[] prior)
+    {
+        int budget = UnitStatMath.PointsEarnedByLevel(level);
+        for (int i = 0; i < s.Length; i++)
+        {
+            s[i] = Clamp99(s[i]);
+            if (s[i] == prior[i]) continue;   // untouched this edit — leave it exactly as authored
+            // What the rest cost: already-resolved values to the left, still-committed values to the right.
+            int others = 0;
+            for (int j = 0; j < s.Length; j++)
+                if (j != i) others += UnitStatMath.PointsToRaise(j < i ? s[j] : prior[j]);
+            s[i] = Mathf.Min(s[i], UnitStatMath.MaxAffordableStat(budget - others));
+        }
+    }
+
+    enum DerivedStat { HP, Atk, Def, Flee }
+
+    // The table's derived columns read the SAME functions the game runs (UnitStatMath), through the def's own
+    // StatInputs — so what a designer sees here is what the mob will actually have, not a parallel estimate.
+    // A mob wears no gear and no ring yet, so both contribute nothing.
+    static int Derived(MonsterDef def, DerivedStat which)
+    {
+        var u = def.StatInputs;
+        var noGear = default(EquipBonuses);
+        switch (which)
+        {
+            case DerivedStat.HP:   return UnitStatMath.MaxHP(u, noGear, 0f);
+            case DerivedStat.Atk:  return UnitStatMath.Attack(u, noGear, 0f);
+            case DerivedStat.Def:  return UnitStatMath.Defense(u, noGear, 0f);
+            default:               return UnitStatMath.Flee(u, 0f);
+        }
+    }
+
+    static int GearCount(MonsterDef d)
+    {
+        if (d.startingGear == null) return 0;
+        int n = 0;
+        for (int i = 0; i < d.startingGear.Length; i++) if (d.startingGear[i] != null) n++;
+        return n;
+    }
+
+    static GUIStyle gearStyle;
+    // At-a-glance: how many pieces worn, and the ring's total ranks when one is on. Editing happens in the expander.
+    static void DrawGearSummary(Rect r, MonsterDef def)
+    {
+        int worn = GearCount(def);
+        var ring = def.Ring;
+        int ranks = 0;
+        if (def.ringRankValues != null) for (int i = 0; i < def.ringRankValues.Length; i++) ranks += Mathf.Max(0, def.ringRankValues[i]);
+
+        gearStyle ??= new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleLeft };
+        gearStyle.normal.textColor = worn > 0 ? new Color(0.75f, 0.7f, 1f) : new Color(0.45f, 0.45f, 0.45f);
+        string label = worn == 0 ? "—" : ring != null ? $"{worn} worn · ring +{ranks}" : $"{worn} worn";
+        GUI.Label(VCenter(r, 18), label, gearStyle);
+    }
+
+    // Every slot a unit can fill. Cosmetic layers are omitted — they carry no stats, so authoring them here would be
+    // a knob that changes nothing.
+    static readonly EquipSlotType[] GearSlots =
+    {
+        EquipSlotType.Weapon, EquipSlotType.Shield, EquipSlotType.Head, EquipSlotType.Armor,
+        EquipSlotType.Garment, EquipSlotType.Boots, EquipSlotType.Accessory1, EquipSlotType.Accessory2,
+        EquipSlotType.Ring,
+    };
+
+    /// <summary>The per-mob detail editor: what it WEARS (one object field per slot) and, when a ring is worn, that
+    /// ring's invested ranks. Kept out of the row itself so the table stays scannable; everything here writes straight
+    /// back to the asset, Undo-able, exactly like the inline columns.</summary>
+    void DrawGearAndRingEditor(MonsterDef def)
+    {
+        var box = EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.Width(TotalWidth - 20));
+        GUILayout.Space(2);
+
+        EditorGUILayout.LabelField($"   {def.displayName} — equipment", EditorStyles.miniBoldLabel);
+
+        EditorGUI.BeginChangeCheck();
+
+        // --- worn gear, one field per slot ---
+        var worn = new Dictionary<EquipSlotType, Item>();
+        if (def.startingGear != null)
+            foreach (var it in def.startingGear)
+                if (it != null && it.slot != EquipSlotType.None) worn[it.slot] = it;
+
+        int perRow = 3;
+        for (int i = 0; i < GearSlots.Length; i++)
+        {
+            if (i % perRow == 0) EditorGUILayout.BeginHorizontal();
+            var slot = GearSlots[i];
+            worn.TryGetValue(slot, out var cur);
+            EditorGUILayout.LabelField(slot.ToString(), EditorStyles.miniLabel, GUILayout.Width(74));
+            var picked = (Item)EditorGUILayout.ObjectField(cur, typeof(Item), false, GUILayout.Width(150));
+            // Only accept an item that actually belongs in this slot — otherwise the "worn set" would lie about
+            // where a piece sits, and the ring gate (slot == Ring) would stop meaning anything.
+            if (picked != null && picked.slot != slot) picked = cur;
+            if (picked != null) worn[slot] = picked; else worn.Remove(slot);
+            GUILayout.Space(8);
+            if (i % perRow == perRow - 1 || i == GearSlots.Length - 1) EditorGUILayout.EndHorizontal();
+        }
+
+        // --- ring ranks, only when a ring is actually worn (the gate) ---
+        bool hasRing = worn.ContainsKey(EquipSlotType.Ring);
+        var stats = new List<StatId>();
+        var vals  = new List<int>();
+        if (hasRing)
+        {
+            GUILayout.Space(4);
+            EditorGUILayout.LabelField("   ring ranks  (same soft-cap curve as the player's ring)", EditorStyles.miniBoldLabel);
+            for (int i = 0; i < RingStatOrder.Length; i++)
+            {
+                var st = RingStatOrder[i];
+                int cur = RanksIn(def, st);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(st.ToString(), EditorStyles.miniLabel, GUILayout.Width(90));
+                int next = Mathf.Max(0, EditorGUILayout.IntField(cur, GUILayout.Width(50)));
+                // Show what that rank count is actually WORTH, so a designer tunes the effect, not the raw number.
+                EditorGUILayout.LabelField(next > 0 ? $"+{SkillRing.Percent(st, next) * 100f:0.#}%" : "—",
+                                           EditorStyles.miniLabel, GUILayout.Width(60));
+                EditorGUILayout.EndHorizontal();
+                if (next > 0) { stats.Add(st); vals.Add(next); }
+            }
+        }
+        else
+        {
+            GUILayout.Space(2);
+            EditorGUILayout.LabelField("   no ring worn — rank percentages are off (same gate the player has)",
+                                       EditorStyles.miniLabel);
+        }
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(def, "Edit Mob Equipment");
+            var gear = new List<Item>();
+            foreach (var kv in worn) if (kv.Value != null) gear.Add(kv.Value);
+            def.startingGear = gear.ToArray();
+            // Ranks are only meaningful with a ring on; dropping the ring drops them rather than leaving dead data.
+            def.ringRankStats  = hasRing ? stats.ToArray() : System.Array.Empty<StatId>();
+            def.ringRankValues = hasRing ? vals.ToArray()  : System.Array.Empty<int>();
+            EditorUtility.SetDirty(def);
+        }
+
+        GUILayout.Space(2);
+        EditorGUILayout.EndVertical();
+    }
+
+    // Ring stats in the canonical LOOP order (SkillRing.Ring), never enum order.
+    static readonly StatId[] RingStatOrder =
+    {
+        StatId.Def, StatId.HP, StatId.Atk, StatId.Accuracy, StatId.CastSpeed,
+        StatId.MAtk, StatId.MP, StatId.Evasion, StatId.Critical, StatId.AttackSpeed,
+    };
+
+    static int RanksIn(MonsterDef def, StatId stat)
+    {
+        if (def.ringRankStats == null || def.ringRankValues == null) return 0;
+        for (int i = 0; i < def.ringRankStats.Length && i < def.ringRankValues.Length; i++)
+            if (def.ringRankStats[i] == stat) return def.ringRankValues[i];
+        return 0;
+    }
+
+    static GUIStyle pointsStyle;
+    // "spent/budget" against the SAME economy the player spends from: a mob at level L may carry exactly the stats
+    // a player who reached L could have bought. Red = over-budget (this mob is stronger than its level allows);
+    // amber = a meaningful chunk unspent (weaker than its level implies). Green = on budget.
+    static void DrawPoints(Rect r, MonsterDef def)
+    {
+        var u = def.StatInputs;
+        int spent = UnitStatMath.PointsSpent(u);
+        int budget = UnitStatMath.PointsEarnedByLevel(def.level);
+        pointsStyle ??= new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleRight };
+        // A few points can always be unspendable (the next point costs more than what's left), so only flag a real gap.
+        pointsStyle.normal.textColor =
+            spent > budget            ? new Color(1f, 0.45f, 0.45f) :
+            spent < budget - 10       ? new Color(0.95f, 0.8f, 0.4f) :
+                                        new Color(0.62f, 0.72f, 0.62f);
+        GUI.Label(VCenter(r, 18), $"{spent}/{budget}", pointsStyle);
+    }
+
+    static GUIStyle derivedStyle;
+    // Greyed + right-aligned so a derived number reads as a readout, not a field you can type into.
+    static void DrawDerived(Rect r, int value)
+    {
+        derivedStyle ??= new GUIStyle(EditorStyles.label)
+        {
+            alignment = TextAnchor.MiddleRight,
+            normal = { textColor = new Color(0.62f, 0.72f, 0.62f) },
+        };
+        GUI.Label(VCenter(r, 18), value.ToString(), derivedStyle);
+    }
 
     void DrawPreview(Rect r, MonsterDef def)
     {

@@ -15,26 +15,24 @@ MonoBehaviour:
   id: mob.giantslime
   displayName: GiantSlime
   isBoss: 1
+  size: 1
   biome: 3
-  tier: 3
-  biomeAgnostic: 0
   sheet: GiantSlime
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.45
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 636
-  defense: 10
-  magicDefense: 8
-  flee: 0
+  level: 38
+  str: 26
+  agi: 12
+  vit: 32
+  intel: 12
+  dex: 20
+  luk: 12
   hardDefPercent: 29
   hardMagicDefPercent: 18
-  luk: 14
   attackType: 0
-  attack: 24
-  hit: 18
   xpReward: 600
-  damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
   moveSpeed: 1.7

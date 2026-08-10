@@ -1,8 +1,7 @@
 # Active Skill System — V3 (Channels + Role-Locked Scaling)
 
 > # :no_entry: ULTIMATE PRIORITY — HOW TO EDIT THIS DOC (read this FIRST, every time)
->
-> **NEVER APPEND. ALWAYS UPDATE IN PLACE.** This doc is the single source of truth — it must read as ONE current voice with **zero** outdated lines, **zero** contradictions, and **zero** duplicate lists/catalogs (each fact lives in exactly one section).
+> ****NEVER APPEND. ALWAYS UPDATE IN PLACE.** This doc is the single source of truth — it must read as ONE current voice with **zero** outdated lines, **zero** contradictions, and **zero** duplicate lists/catalogs (each fact lives in exactly one section).
 >
 > When a decision changes something: **find every stale/contradictory passage and REWRITE it.** Do **not** bolt a new "Update / SETTLED (date)" section onto the end and leave the old text rotting above it — that creates exactly the contradictions and duplicate catalogs this rule exists to kill. If new intent supersedes an older passage, **edit that passage directly**; never leave both versions in the doc.
 >
@@ -13,9 +12,10 @@
 > - **Weapon** = grants skills (+ weapon identity: damage type, animation). *Family is a composing guide, not stamped on the weapon — see §5.*
 > - **Skill** = its own numbers (the **Channels**, §1) **+** its own natural effects (the **Effects**, §2).
 > - **Ring** = **numeric scaling only**, and the per-skill scaling weights are what lock roles.
+> - **Every unit** = **one** stat model. A player and a mob are 1:1 — same primaries, same formulas, same point budget, no tier and no mob-only multiplier — so an effect never has to ask what kind of thing it hit. See the companion *Unified Unit Stats*.
 > - **Later:** ring behavioral *voices* → v-next; **Cards** (enemy matchup) → v3-content, with mob categories.
 
-***This doc is the single source of truth for the skill / weapon / ring / card design.** Any older doc (V2, the Fresh Brainstorm, the Anti-Stale Charter, etc.) that conflicts with V3 **loses** — V3 wins. The only companion that isn't overridden is the mutable, code-facing **"Active Skill System — Implementation Notes"** — it tracks what the code does today; on a disagreement V3 wins on intent, the Notes win on current code.*
+***This doc is the single source of truth for the skill / weapon / ring / card design.*** *Any older doc (V2, the Fresh Brainstorm, the Anti-Stale Charter, etc.) that conflicts with V3 **loses** — V3 wins. The companions that aren't overridden are the mutable, code-facing **"Active Skill System — Implementation Notes"** and **"Unified Unit Stats"** (+ its own Implementation Notes) — they track what the code does today; on a disagreement V3 wins on intent, the Notes win on current code.*
 
 ## Why V3 (the redundancy we found)
 
@@ -31,39 +31,39 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 **Tier A — effect-output channels** — attach per-effect; these are what the ring scales (via affinity weights):
 
-| Channel        | Meaning                                          | Unit | Ring-scales?                                     |
-| -------------- | ------------------------------------------------ | ---- | ------------------------------------------------ |
-| damage         | Direct damage — base power × ATK/MATK × affinity | mult | yes                                              |
-| hits           | Strikes per landing; each is a proc trigger      | int  | yes                                              |
-| heal_amount    | Flat HP restored                                 | HP   | yes                                              |
-| heal_per_tick  | Regen HP every 0.8s                              | HP   | yes                                              |
-| shield_amount  | Barrier HP absorbed before it breaks             | HP   | yes                                              |
-| dmg_reduction  | Guard incoming-damage cut (clamped to 1)         | 0..1 | yes                                              |
-| dmg_taken_frac | Vulnerability extra damage on a mob              | frac | yes                                              |
-| dot_damage     | Status DoT per tick (Poison / Bleed / Burn)      | HP   | yes                                              |
-| slow_amount    | Status Slow speed factor                         | 0..1 | yes                                              |
-| accuracy_loss  | Status Blind HIT loss                            | HIT  | yes                                              |
-| move_mult      | Haste move-speed (mobs: <1 = slow)               | mult | yes                                              |
-| shove_speed    | Knockback / Pull speed                           | u/s  | no (raw)                                         |
-| leech_frac     | ManaLeech — damage dealt → MP                    | frac | no (raw)                                         |
-| reflect_frac   | Reflect — damage taken bounced back              | frac | no (raw)                                         |
-| execute_scale  | Execute bonus multiplier vs missing HP           | mult | base roll scales; this is raw                    |
-| buff_mult      | Buff amplify amount                              | mult | **NO — flat by design** (support value = uptime) |
-| proc_chance    | Per-hit roll for a Status / Execute proc         | 0..1 | no                                               |
-| duration       | Effect window length                             | sec  | yes (own affinity list)                          |
+| Channel | Meaning | Unit | Ring-scales? |
+| --- | --- | --- | --- |
+| damage | Direct damage — base power × ATK/MATK × affinity | mult | yes |
+| hits | Strikes per landing; each is a proc trigger | int | yes |
+| heal_amount | Flat HP restored | HP | yes |
+| heal_per_tick | Regen HP every 0.8s | HP | yes |
+| shield_amount | Barrier HP absorbed before it breaks | HP | yes |
+| dmg_reduction | Guard incoming-damage cut (clamped to 1) | 0..1 | yes |
+| dmg_taken_frac | Vulnerability extra damage on a mob | frac | yes |
+| dot_damage | Status DoT per tick (Poison / Bleed / Burn) | HP | yes |
+| slow_amount | Status Slow speed factor | 0..1 | yes |
+| accuracy_loss | Status Blind HIT loss | HIT | yes |
+| move_mult | Haste move-speed (mobs: &lt;1 = slow) | mult | yes |
+| shove_speed | Knockback / Pull speed | u/s | no (raw) |
+| leech_frac | ManaLeech — damage dealt → MP | frac | no (raw) |
+| reflect_frac | Reflect — damage taken bounced back | frac | no (raw) |
+| execute_scale | Execute bonus multiplier vs missing HP | mult | base roll scales; this is raw |
+| buff_mult | Buff amplify amount | mult | **NO — flat by design** (support value = uptime) |
+| proc_chance | Per-hit roll for a Status / Execute proc | 0..1 | no |
+| duration | Effect window length | sec | yes (own affinity list) |
 
 **Tier B — skill / delivery channels** — owned once per skill or tick, not per effect:
 
-| Channel              | Meaning                                 | Owner                                       |
-| -------------------- | --------------------------------------- | ------------------------------------------- |
-| cost                 | Mana cost                               | SkillDef.manaCost                           |
-| cooldown             | Reuse delay                             | SkillDef.cooldown                           |
-| cast_time            | Wind-up before firing (DEX shortens it) | SkillDef.castTime                           |
-| range                | Max aim distance                        | SkillDef.castRange                          |
-| radius               | AoE / hit width                         | SkillTickBinding.radius                     |
-| projectiles / spread | Fan copies + cone angle                 | SkillDef.projectileCount / projectileSpread |
-| cycle                | Whole-effect repeat count + interval    | SkillDef.repeatCount / repeatInterval       |
-| charge_cost          | Ult charge to cast (Ultimate tier only) | SkillDef.chargeCost                         |
+| Channel | Meaning | Owner |
+| --- | --- | --- |
+| cost | Mana cost | SkillDef.manaCost |
+| cooldown | Reuse delay | SkillDef.cooldown |
+| cast_time | Wind-up before firing (DEX shortens it) | SkillDef.castTime |
+| range | Max aim distance | SkillDef.castRange |
+| radius | AoE / hit width | SkillTickBinding.radius |
+| projectiles / spread | Fan copies + cone angle | SkillDef.projectileCount / projectileSpread |
+| cycle | Whole-effect repeat count + interval | SkillDef.repeatCount / repeatInterval |
+| charge_cost | Ult charge to cast (Ultimate tier only) | SkillDef.chargeCost |
 
 **Reserved — not built yet** (author only when a skill needs them): **Interval** (DoT tick cadence — hardcoded in `StatusController`), **Limit** (max stacks / summons — no system), **Speed** (projectile travel — lives in the VFX carrier), **Resource** (non-MP gain / drain).
 
@@ -73,26 +73,26 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer), not rolled onto a weapon — a skill that knocks back simply *is* a knockback skill. The **ring does numbers only**, so there's nothing to "fold" between weapon and ring. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
 
-| Effect        | Target       | Dmg type | Channels                                                                  | Ring scales                         | Details                                                                    |
-| ------------- | ------------ | -------- | ------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------- |
-| Damage        | mobs/any     | yes      | damage, hits                                                              | damage, hits                        | Base power × ATK/MATK × affinity; each hit triggers the binding's procs    |
-| Execute       | mobs         | yes      | execute_scale, proc_chance                                                | base roll (scale raw)               | Proc per hit: bonus = roll × power × target's missing HP; huge near death  |
-| Heal          | self/others  | no       | heal_amount                                                               | heal_amount                         | Flat HP; landing follows the tick's TargetMode                             |
-| Status        | mobs/self    | no       | ailment + dot_damage / slow_amount / accuracy_loss, duration, proc_chance | output + duration (not proc_chance) | Ailment picks the channel; Stun/Freeze/Silence = duration-only             |
-| Haste         | self/mobs    | no       | move_mult, duration                                                       | move_mult, duration                 | Move-speed ×; on mobs a <1 value is a slow-debuff                          |
-| Guard         | self         | no       | dmg_reduction, duration                                                   | dmg_reduction, duration             | % incoming-damage cut (clamped to 1)                                       |
-| Shield        | self         | no       | shield_amount, duration                                                   | shield_amount, duration             | Finite HP barrier; soaks hits until drained; DoT bypasses (like Guard)     |
-| Regen         | self         | no       | heal_per_tick, duration                                                   | heal_per_tick, duration             | Heal-over-time, HP every 0.8s                                              |
-| Buff          | self         | no       | buff_mult, duration, ramp                                                 | duration only                       | buffStat = Damage/AttackSpeed/CastSpeed; amount FLAT; Damage buff can ramp |
-| Cleanse       | self         | no       | debuffs_removed                                                           | —                                   | Strips up to N active debuffs                                              |
-| Vulnerability | mobs         | no       | dmg_taken_frac, duration                                                  | dmg_taken_frac, duration            | Marks a mob to take +frac more damage                                      |
-| Taunt         | mobs         | no       | duration                                                                  | duration                            | Forces mob aggro onto the caster                                           |
-| Knockback     | mobs         | no       | shove_speed, duration                                                     | duration only                       | Shoves the mob away from the caster                                        |
-| Pull          | mobs         | no       | shove_speed, duration                                                     | duration only                       | Drags the mob toward the caster                                            |
-| ManaLeech     | self         | no       | leech_frac, duration                                                      | duration only                       | Timed window: fraction of damage dealt returns as MP                       |
-| Reflect       | self         | no       | reflect_frac, duration                                                    | duration only                       | Timed window: reflect a fraction of damage taken                           |
-| Teleport      | self (point) | no       | —                                                                         | —                                   | Instant blink to the aimed, range-clamped point                            |
-| Dash          | self (point) | no       | dash_speed, ease                                                          | —                                   | Visible fast glide to the aimed point; blocked by geometry                 |
+| Effect | Target | Dmg type | Channels | Ring scales | Details |
+| --- | --- | --- | --- | --- | --- |
+| Damage | mobs/any | yes | damage, hits | damage, hits | Base power × ATK/MATK × affinity; each hit triggers the binding's procs |
+| Execute | mobs | yes | execute_scale, proc_chance | base roll (scale raw) | Proc per hit: bonus = roll × power × target's missing HP; huge near death |
+| Heal | self/others | no | heal_amount | heal_amount | Flat HP; landing follows the tick's TargetMode |
+| Status | mobs/self | no | ailment + dot_damage / slow_amount / accuracy_loss, duration, proc_chance | output + duration (not proc_chance) | Ailment picks the channel; Stun/Freeze/Silence = duration-only |
+| Haste | self/mobs | no | move_mult, duration | move_mult, duration | Move-speed ×; on mobs a &lt;1 value is a slow-debuff |
+| Guard | self | no | dmg_reduction, duration | dmg_reduction, duration | % incoming-damage cut (clamped to 1) |
+| Shield | self | no | shield_amount, duration | shield_amount, duration | Finite HP barrier; soaks hits until drained; DoT bypasses (like Guard) |
+| Regen | self | no | heal_per_tick, duration | heal_per_tick, duration | Heal-over-time, HP every 0.8s |
+| Buff | self | no | buff_mult, duration, ramp | duration only | buffStat = Damage/AttackSpeed/CastSpeed; amount FLAT; Damage buff can ramp |
+| Cleanse | self | no | debuffs_removed | — | Strips up to N active debuffs |
+| Vulnerability | mobs | no | dmg_taken_frac, duration | dmg_taken_frac, duration | Marks a mob to take +frac more damage |
+| Taunt | mobs | no | duration | duration | Forces mob aggro onto the caster |
+| Knockback | mobs | no | shove_speed, duration | duration only | Shoves the mob away from the caster |
+| Pull | mobs | no | shove_speed, duration | duration only | Drags the mob toward the caster |
+| ManaLeech | self | no | leech_frac, duration | duration only | Timed window: fraction of damage dealt returns as MP |
+| Reflect | self | no | reflect_frac, duration | duration only | Timed window: reflect a fraction of damage taken |
+| Teleport | self (point) | no | — | — | Instant blink to the aimed, range-clamped point |
+| Dash | self (point) | no | dash_speed, ease | — | Visible fast glide to the aimed point; blocked by geometry |
 
 **Rejected — out of scope for unwritten:** **Summon** (needs the deferred `Limit` cap — uncapped = perf hazard) and **Transform** (a whole rig/stance/stat-swap feature).
 
@@ -150,8 +150,8 @@ A skill's **trigger** (`SkillDef.trigger`) decides what makes it run — one aut
 
 Passive triggers come in **two shapes, each matched to the space it names:**
 
-- **`OnSkillCastComplete<skill>` — parameterized** (pick the target active from a dropdown): fires when that active finishes casting **uninterrupted**. The skill set is **open-ended**, so a parameter — not one enum value per skill — is the only clean fit. This is how a passive rides another skill (e.g. Lock Blades off Lunge, Opening off Feint).
-- **Natural events — flat** (`OnBasicAttackLanded`, `OnKill`, `OnLowHP`, `OnHit`, `OnParry`): a **small, closed** set, listed directly with no wrapper. **`OnParry` is the deliberate exception** to the skill-parameterized scheme — a parry's success is a *game* event (you blocked a hit), not "you cast a skill."
+- `OnSkillCastComplete<skill>` **— parameterized** (pick the target active from a dropdown): fires when that active finishes casting **uninterrupted**. The skill set is **open-ended**, so a parameter — not one enum value per skill — is the only clean fit. This is how a passive rides another skill (e.g. Lock Blades off Lunge, Opening off Feint).
+- **Natural events — flat** (`OnBasicAttackLanded`, `OnKill`, `OnLowHP`, `OnHit`, `OnParry`): a **small, closed** set, listed directly with no wrapper. `OnParry` **is the deliberate exception** to the skill-parameterized scheme — a parry's success is a *game* event (you blocked a hit), not "you cast a skill."
 
 All triggers route through **one dispatch handler** (`PassiveEvents.Fire`) — the single place a trigger's rule is applied, so no fire-site can forget one. A passive **fires as a full skill** — the same VFX, ticks, and effects an active plays; only the trigger differs. Its aim is auto-resolved from the trigger: an aimed skill (single-target / AoE / projectile) lands on the triggering entity or its location; a **self** skill always casts on the caster (never the victim).
 
@@ -159,16 +159,17 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 
 ## Resulting separation (the whole point)
 
-| System                | Single responsibility                                                                                                             |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Weapon                | Grants skills — a rarity-scaled roll from the weapon's skill pool (see **Weapon Crafting & Economy**); defines weapon identity |
-| Channels (§1)         | The skill's numeric outputs ("how much?")                                                                                         |
-| Effects (§2)          | The skill's natural behaviors ("what happens?")                                                                                   |
-| Trigger (§6)          | WHEN a skill runs — an active press vs a passive's combat-moment (dispatched via one handler)                                     |
-| Ring                  | Numeric scaling of channels; scaling weights lock roles                                                                           |
-| Cards *(later)*       | Matchup specialization vs. enemy categories                                                                                       |
-| Ring Voices *(later)* | New behaviors added by ring investment                                                                                            |
+| System | Single responsibility |
+| --- | --- |
+| Weapon | Grants skills — a rarity-scaled roll from the weapon's skill pool (see **Weapon Crafting & Economy**); defines weapon identity |
+| Channels (§1) | The skill's numeric outputs ("how much?") |
+| Effects (§2) | The skill's natural behaviors ("what happens?") |
+| Trigger (§6) | WHEN a skill runs — an active press vs a passive's combat-moment (dispatched via one handler) |
+| Ring | Numeric scaling of channels; scaling weights lock roles |
+| Cards *(later)* | Matchup specialization vs. enemy categories |
+| Ring Voices *(later)* | New behaviors added by ring investment |
 
 ## Still open
 
 - Ring **voice** design when it returns (v-next); **card** list + mob categories (v3-content).
+- Mobs have the full stat model and their roster is reset onto it (86 mobs, Lv3–46, all on point budget), but there is almost no gear for them to wear yet — two equipment items exist. See *Unified Unit Stats — Implementation Notes*.

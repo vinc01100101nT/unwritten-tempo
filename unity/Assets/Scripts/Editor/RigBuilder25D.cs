@@ -317,6 +317,16 @@ public static class RigBuilder25D
         if (arc.wanderRadius > 0f) ai.wanderRadius = arc.wanderRadius;
         ai.preferredRange = arc.preferredRange;             // >0 = caster/archer kites at range
         ai.fleeHpFraction = arc.fleeHpFraction;             // >0 = skittish: flees when wounded
+        // The LIVE stat block + the worn set. Every derived number above is a snapshot of what these produce at the
+        // spawn level; the block re-derives them whenever the mob levels or its gear changes, so a mob never drifts
+        // onto a growth curve of its own. Equipment starts empty — an unarmed mob aggregates to zero bonuses.
+        var equip = go.AddComponent<UnitEquipment>();
+        if (arc.startingGear != null) equip.startingGear = arc.startingGear;   // worn gear is also the drop table
+        var block = go.AddComponent<UnitStatBlock>();
+        block.inputs = arc.stats.level > 0 ? arc.stats : UnitStatInputs.Default(1);
+        block.ringRankStats  = arc.ringRankStats  ?? System.Array.Empty<StatId>();
+        block.ringRankValues = arc.ringRankValues ?? System.Array.Empty<int>();
+
         ai.attackElement          = arc.attackElement;       // outgoing PROPERTY (checked vs player's armor)
         ai.onHitAilment           = arc.onHitAilment;        // status inflicted on a landed hit (chance 0 = none)
         ai.onHitAilmentChance     = arc.onHitAilmentChance;

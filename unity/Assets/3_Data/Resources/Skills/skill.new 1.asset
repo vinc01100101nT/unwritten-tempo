@@ -22,7 +22,7 @@ MonoBehaviour:
   shape: 0
   complexity: 0
   acquisitionTier: 0
-  trigger: 0
+  trigger: 1
   triggerSkillId: 
   requiresState: 0
   requireState: 12

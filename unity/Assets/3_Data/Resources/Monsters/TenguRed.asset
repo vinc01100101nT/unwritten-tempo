@@ -15,26 +15,24 @@ MonoBehaviour:
   id: mob.tengured
   displayName: TenguRed
   isBoss: 1
+  size: 1
   biome: 4
-  tier: 4
-  biomeAgnostic: 0
   sheet: TenguRed
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.6
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 1081
-  defense: 12
-  magicDefense: 10
-  flee: 0
+  level: 46
+  str: 31
+  agi: 15
+  vit: 38
+  intel: 15
+  dex: 24
+  luk: 14
   hardDefPercent: 32
   hardMagicDefPercent: 20
-  luk: 16
   attackType: 0
-  attack: 28
-  hit: 20
   xpReward: 800
-  damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
   moveSpeed: 1.7

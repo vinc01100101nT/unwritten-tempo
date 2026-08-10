@@ -31,12 +31,12 @@ public class FieldMobSpawner : MonoBehaviour
     public float respawnJitter = 3f;
 
     [Header("Which mobs (drawn from the catalog like a map's biome table)")]
-    [Tooltip("Empty = weighted mix of this biome's mobs in the tier band. A specific mob id/name (e.g. 'mob.slime') " +
+    [Tooltip("Empty = weighted mix of this biome's mobs in the level band. A specific mob id/name (e.g. 'mob.slime') " +
              "= always that mob. 'Boss' = a random boss-flagged mob. Mirrors a recipe mob group's Archetype Name.")]
     public string fixedMobId = "";
     public Biome biome = Biome.Grassland;
-    [Range(1, 4)] public int minTier = 1;
-    [Range(1, 4)] public int maxTier = 4;
+    public int minLevel = 1;
+    public int maxLevel = 99;
     [Tooltip("Also mix in biome-agnostic 'common' filler mobs (rats/bats/slimes). Only used when Fixed Mob Id is empty.")]
     public bool includeCommons = true;
 
@@ -89,11 +89,11 @@ public class FieldMobSpawner : MonoBehaviour
         });
     }
 
-    // Which mob to spawn this slot: a fixed mob / boss if configured, else a weighted biome+tier pick (RO table).
+    // Which mob to spawn this slot: a fixed mob / boss if configured, else a weighted biome+level pick (RO table).
     MonsterDef PickDef()
     {
         if (string.IsNullOrWhiteSpace(fixedMobId))
-            return MonsterCatalog.WeightedPick(biome, minTier, maxTier, includeCommons);
+            return MonsterCatalog.WeightedPick(biome, minLevel, maxLevel, includeCommons);
         if (string.Equals(fixedMobId, "Boss", System.StringComparison.OrdinalIgnoreCase))
             return MonsterCatalog.RandomBoss();
         return MonsterCatalog.Get(fixedMobId);

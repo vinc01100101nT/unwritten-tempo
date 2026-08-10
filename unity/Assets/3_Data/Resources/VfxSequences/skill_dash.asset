@@ -29,12 +29,12 @@ MonoBehaviour:
     trimEnd: 0
     clipStart: 0
     tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
     emitEventOnStart: 
     emitEventOnEnd: 
-    tickId: dash
-    tickCount: 1
-    tickInterval: 0
-    spreadTicks: 0
+    tickId: dash_tick
+    tickWhen: 0
+    tickInterval: 0.02
     carrierFromCaster: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
@@ -67,12 +67,12 @@ MonoBehaviour:
     trimEnd: 0
     clipStart: 0
     tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
     emitEventOnStart: 
     emitEventOnEnd: 
     tickId: 
-    tickCount: 1
+    tickWhen: 0
     tickInterval: 0
-    spreadTicks: 0
     carrierFromCaster: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
@@ -105,12 +105,12 @@ MonoBehaviour:
     trimEnd: 0
     clipStart: 0
     tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
     emitEventOnStart: 
     emitEventOnEnd: 
     tickId: 
-    tickCount: 1
+    tickWhen: 0
     tickInterval: 0
-    spreadTicks: 0
     carrierFromCaster: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0
@@ -143,12 +143,12 @@ MonoBehaviour:
     trimEnd: 0
     clipStart: 0
     tint: {r: 1, g: 1, b: 1, a: 1}
+    looping: 0
     emitEventOnStart: 
     emitEventOnEnd: 
     tickId: 
-    tickCount: 1
+    tickWhen: 0
     tickInterval: 0
-    spreadTicks: 0
     carrierFromCaster: 0
     carrierFrom: {x: 0, y: 9, z: 0}
     carrierScatter: 0

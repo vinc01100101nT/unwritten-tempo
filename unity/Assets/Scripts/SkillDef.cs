@@ -130,6 +130,35 @@ public class SkillTickBinding
     [Tooltip("What each tick does — applied through the shared SkillEffectApplier (the one damage path).")]
     public List<SkillEffect> effects = new List<SkillEffect>();
 
+    /// <summary>True if any effect here lands on GATHERED TARGETS (Damage / Status / Knockback / …) — i.e. the
+    /// targeting knobs above actually decide something. False ⇒ this tick carries only CASTER effects (Dash / Guard /
+    /// Buff / …), which ignore targeting entirely (see <see cref="SkillEffect.IsSelfVerb"/>). Drives whether the cast
+    /// asks for an entity pick (<see cref="SkillDef.NeedsUnitPick"/>) and how the composer's target section reads.</summary>
+    public bool HasTargetEffects => AnyEffectSide(false);
+    /// <summary>True if any effect here acts on the CASTER — those always apply, whatever the targeting says.</summary>
+    public bool HasCasterEffects => AnyEffectSide(true);
+
+    /// <summary>True if any effect here RELOCATES what it lands on (Dash / Teleport) — so the cast has to ask for a
+    /// point. Independent of which side the effect is on: the caster dashing and a mob being dashed both need one.</summary>
+    public bool HasPointEffects
+    {
+        get
+        {
+            if (effects == null) return false;
+            for (int i = 0; i < effects.Count; i++)
+                if (effects[i] != null && SkillEffect.NeedsPoint(effects[i].kind)) return true;
+            return false;
+        }
+    }
+
+    bool AnyEffectSide(bool casterSide)
+    {
+        if (effects == null) return false;
+        for (int i = 0; i < effects.Count; i++)
+            if (effects[i] != null && SkillEffect.IsSelfVerb(effects[i].kind) == casterSide) return true;
+        return false;
+    }
+
     // ---- LEGACY (pre-consolidation) — read ONLY by MigrateLegacy to seed the fields above; never by runtime now. ----
     [HideInInspector] public SkillTargets targets = SkillTargets.Mobs;
     [HideInInspector] public SkillScope scope = SkillScope.Area;
@@ -290,7 +319,7 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
             {
                 var e = b.effects[i];
                 if (e == null) continue;
-                if (SkillEffect.IsSelfPointVerb(e.kind)) anyPointSelf = true;
+                if (SkillEffect.NeedsPoint(e.kind)) anyPointSelf = true;
                 if (!SkillEffect.IsSelfVerb(e.kind)) allSelf = false;
             }
 
@@ -320,24 +349,51 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
         return null;
     }
 
-    /// <summary>The per-cast reticle, DERIVED from the ticks (no authored aim). Any Single-target tick ⇒ Unit pick;
-    /// else any Ground tick ⇒ Ground reticle; else Instant. This is the single source of truth the runner reads.</summary>
-    public CastReticle Reticle
+    // ---- the aim SEQUENCE, derived from the ticks (never authored) ----------------------------------------------
+    // A cast asks at most two questions, in this order, and each is skipped when the effects don't pose it:
+    //   1. WHICH ENTITY  (NeedsUnitPick) — only when a Single-target tick has effects that land on a target. The
+    //      caster side never asks: the entity is the caster by definition.
+    //   2. WHICH POINT   (NeedsAimPoint) — when a ground tick needs its spot, OR when any effect RELOCATES what it
+    //      lands on (Dash / Teleport, see SkillEffect.NeedsPoint) and so must be told where to send it.
+    // "Dash the mob I clicked over there" and "dash myself over there" are the same rule with step 1 present or absent.
+
+    /// <summary>Stage 1: this cast must pick an entity first.</summary>
+    public bool NeedsUnitPick
     {
         get
         {
-            bool anyGround = false;
-            if (bindings != null)
-                for (int i = 0; i < bindings.Count; i++)
-                {
-                    var b = bindings[i];
-                    if (b == null) continue;
-                    if (b.targetMode == TargetMode.SingleTarget) return CastReticle.Unit;
-                    if (b.targetMode == TargetMode.Ground) anyGround = true;
-                }
-            return anyGround ? CastReticle.Ground : CastReticle.Instant;
+            if (bindings == null) return false;
+            for (int i = 0; i < bindings.Count; i++)
+            {
+                var b = bindings[i];
+                if (b != null && b.targetMode == TargetMode.SingleTarget && b.HasTargetEffects) return true;
+            }
+            return false;
         }
     }
+
+    /// <summary>Stage 2: this cast must pick a ground point — either a ground tick lands there, or a relocating
+    /// effect (on EITHER side) has to be told where it sends whoever it caught.</summary>
+    public bool NeedsAimPoint
+    {
+        get
+        {
+            if (bindings == null) return false;
+            for (int i = 0; i < bindings.Count; i++)
+            {
+                var b = bindings[i];
+                if (b == null) continue;
+                if (b.targetMode == TargetMode.Ground) return true;
+                if (b.HasPointEffects) return true;
+            }
+            return false;
+        }
+    }
+
+    /// <summary>The MOST DEMANDING single gesture of the sequence above — what a combo pre-resolves and what the
+    /// tooltip calls "has a range". Derived from the two stages so it can never disagree with them.</summary>
+    public CastReticle Reticle =>
+        NeedsUnitPick ? CastReticle.Unit : NeedsAimPoint ? CastReticle.Ground : CastReticle.Instant;
 
     /// <summary>The largest Ground→AoE binding radius — the skill's real ground footprint. SINGLE OWNER of that value:
     /// the ground reticle (<see cref="SkillRunner.PreviewRadius"/>) and the cast circle both READ it. 1.5 fallback.</summary>

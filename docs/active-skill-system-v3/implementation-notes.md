@@ -1,6 +1,9 @@
 # Active Skill System — Implementation Notes
 
 > **This is the MUTABLE, code-facing companion** to the design doc *"Active Skill System — V3 (Channels + Role-Locked Scaling)"* — that doc is the **design source of truth**. This doc tracks how the design is actually wired in code and is expected to churn every build. If the two disagree: **V3 wins on intent, this doc wins on what the code does today.** *(Rewritten 2026-07-22 after the V3 teardown — the old V2 "weapon-affix + ring-voice fold" account it used to hold is gone, matching the code.)*
+>
+> **Sibling:** [Unified Unit Stats — Implementation Notes](unified-unit-stats-implementation-notes.md) covers the UNIT side (one stat model for players and mobs, the point budget, mob gear/rings/drops). This doc covers the SKILL side. An effect landing on anybody at all depends on both.
+
 
 ## The model in one paragraph
 

@@ -1,0 +1,124 @@
+using UnityEngine;
+
+/// <summary>
+/// A unit's LIVE stat block — its level, its six primaries, and the derived combat numbers that fall out of them
+/// through <see cref="UnitStatMath"/>. This is the mob-side equivalent of what <see cref="Character"/> is for the
+/// player: same inputs, same formulas, same results. A mob and a player of equal level and primaries wearing equal
+/// gear have identical stats, because both roads lead to the same functions.
+///
+/// <para><b>Why this exists:</b> a mob's derived numbers used to be stamped onto <see cref="Health"/> and
+/// <see cref="MonsterAI3D"/> once at spawn and then hand-scaled by a flat multiplier on level-up — a second growth
+/// curve that drifted away from the player's. Now level-up just raises <see cref="Level"/> and RE-DERIVES; nothing
+/// is ever scaled by a mob-only factor. Equipping or losing gear re-derives the same way.</para>
+///
+/// <para>Attached by the mob builder alongside <see cref="Health"/>. Zero per-frame cost: derivation runs only when
+/// something that feeds it actually changes (spawn, level-up, gear change).</para>
+/// </summary>
+[RequireComponent(typeof(Health))]
+public class UnitStatBlock : MonoBehaviour
+{
+    [Tooltip("The authored inputs: level + six primaries + the base/growth curve. Set by the mob builder from MonsterDef.")]
+    public UnitStatInputs inputs = UnitStatInputs.Default(1);
+
+    Health health;
+    MonsterAI3D ai;
+    UnitEquipment gear;
+
+    /// <summary>The unit's worn set (may be absent — an unarmed mob aggregates to zero bonuses).</summary>
+    public UnitEquipment Gear => gear != null ? gear : (gear = GetComponent<UnitEquipment>());
+
+    EquipBonuses Bonuses => Gear != null ? Gear.Bonuses : default;
+
+    [Header("Ring — the percentage passive layer")]
+    [Tooltip("Stats this unit's ring has invested in (parallel to Ring Rank Values). Serialized so the spawned mob " +
+             "carries them; the % comes from the SAME soft-cap curve the player's ring uses.")]
+    public StatId[] ringRankStats = System.Array.Empty<StatId>();
+    public int[] ringRankValues = System.Array.Empty<int>();
+
+    PassiveRanks ranks;
+    /// <summary>This unit's ring ranks, built once from the authored arrays. Same type the player's ring uses, so the
+    /// soft-cap curve, the per-stat percentages and any future rebalance are shared rather than mirrored.</summary>
+    PassiveRanks Ranks
+    {
+        get
+        {
+            if (ranks != null) return ranks;
+            ranks = new PassiveRanks();
+            if (ringRankStats != null && ringRankValues != null && ringRankStats.Length > 0)
+                ranks.LoadState(ringRankStats, ringRankValues, ringRankStats[0], true, 0);
+            return ranks;
+        }
+    }
+
+    // The percentage layer is GATED ON ACTUALLY WEARING A RING — the same rule the player plays by
+    // (Character.RingEquipped). Authored ranks with no ring item in the slot do nothing, so the thing that grants the
+    // power is the thing that can drop.
+    float RingPercent(StatId stat) =>
+        Gear != null && Gear.RingEquipped ? Ranks.Percent(stat) : 0f;
+
+    public int Level => inputs.level;
+
+    // MP, on the same footing as the player's. Mobs don't spend it on anything yet (they have no cost-bearing
+    // skills), but it EXISTS so an MP-touching effect — ManaLeech landing on a mob — has a real pool to move,
+    // instead of being a knob that silently does nothing on half the units in the game.
+    public int MaxMP => UnitStatMath.MaxMP(inputs, Bonuses, RingPercent(StatId.MP));
+    public int CurrentMP { get; private set; }
+
+    public void GainMana(int amount)
+    {
+        if (amount <= 0) return;
+        CurrentMP = Mathf.Min(MaxMP, CurrentMP + amount);
+    }
+
+    /// <summary>Spend MP if there's enough; returns false and spends nothing when short.</summary>
+    public bool SpendMana(int amount)
+    {
+        if (amount <= 0) return true;
+        if (CurrentMP < amount) return false;
+        CurrentMP -= amount;
+        return true;
+    }
+
+    void Awake()
+    {
+        health = GetComponent<Health>();
+        ai = GetComponent<MonsterAI3D>();
+        Rederive(healToFull: true);
+    }
+
+    /// <summary>Raise the level by one and re-derive everything from the shared formulas — the mob's mirror of a
+    /// player levelling. No growth multiplier: the new numbers are simply what this level's inputs produce.</summary>
+    public void LevelUp()
+    {
+        inputs.level++;
+        Rederive(healToFull: true);
+    }
+
+    /// <summary>Recompute every derived stat and write it onto the components that actually read them. Call after
+    /// anything that feeds the formulas changes (level, primaries, gear).</summary>
+    public void Rederive(bool healToFull = false)
+    {
+        if (health == null) health = GetComponent<Health>();
+        if (ai == null) ai = GetComponent<MonsterAI3D>();
+
+        var eb = Bonuses;
+
+        health.maxHealth    = UnitStatMath.MaxHP(inputs, eb, RingPercent(StatId.HP));
+        health.defense      = UnitStatMath.Defense(inputs, eb, RingPercent(StatId.Def));
+        health.magicDefense = UnitStatMath.MagicDefense(inputs, eb, RingPercent(StatId.Def));
+        health.flee         = UnitStatMath.Flee(inputs, RingPercent(StatId.Evasion));
+        health.luk          = inputs.luk;   // pre-renewal crit shield — the attacker reads this off the target
+
+        if (ai != null)
+        {
+            ai.level        = inputs.level;
+            ai.attack       = UnitStatMath.Attack(inputs, eb, RingPercent(StatId.Atk));
+            ai.hit          = UnitStatMath.Hit(inputs, RingPercent(StatId.Accuracy));
+            // Spread is DEX-driven for everyone: high DEX both lifts and STABILISES damage.
+            ai.damageSpread = 1f - UnitStatMath.MinFraction(inputs.dex);
+        }
+
+        if (healToFull) { health.RefillToMax(); CurrentMP = MaxMP; }
+        else CurrentMP = Mathf.Min(CurrentMP, MaxMP);   // a gear change that lowers MaxMP must not leave MP above it
+    }
+}

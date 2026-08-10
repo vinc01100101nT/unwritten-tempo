@@ -227,14 +227,30 @@ public class SkillEffect
 
     /// <summary>A "self verb" ALWAYS acts on the caster, never on a gathered entity. Canonical list (runtime + editor
     /// share it — no duplicate). Heal is intentionally NOT here anymore: it can target others, so its landing is
-    /// decided by the tick's <see cref="TargetMode"/> like any normal effect.</summary>
+    /// decided by the tick's <see cref="TargetMode"/> like any normal effect.
+    ///
+    /// <para>This is the PARTITION <see cref="SkillEffectApplier"/> resolves by: a self verb runs in the caster pass
+    /// (once per tick, whatever the targeting says — "who does this tick hit" was never the question it answers) and
+    /// is excluded from the target pass; everything else is target-side and runs only on gathered entities. So a
+    /// Single-target tick aimed at a mob still dashes the caster, and a Self-targeted tick can't dash them twice.
+    /// Adding a kind? Classify it here, then implement it in exactly ONE switch of the applier —
+    /// <c>ApplyOneToCaster</c>, or <c>ApplyOneToMob</c>/<c>ApplyOneToPlayer</c>.</para>
+    ///
+    /// <para>ROADMAP: the goal is for EVERY kind to work on both sides (an authored effect chooses its side by which
+    /// composer section it sits in), which needs the mob-side sinks the player already has — see the caster/target
+    /// section work. Until those land, this list is what the caster pass owns.</para></summary>
     public static bool IsSelfVerb(SkillEffectKind k) =>
         k == SkillEffectKind.Guard || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
         k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect ||
-        k == SkillEffectKind.Shield || IsSelfPointVerb(k);
+        k == SkillEffectKind.Shield || NeedsPoint(k);
 
-    /// <summary>A self verb that still needs a GROUND POINT to aim at — the caster relocates there (Dash / Blink).
-    /// These migrate to Ground → Point, everything else self migrates to Self.</summary>
-    public static bool IsSelfPointVerb(SkillEffectKind k) =>
+    /// <summary>An effect that must be told WHERE: it RELOCATES whoever it lands on, so the point is part of its
+    /// meaning, not part of its targeting. This is the ONE thing that makes a cast ask for a ground point on top of
+    /// (or instead of) picking an entity — see <see cref="SkillDef.NeedsAimPoint"/>. A future "move X to here" verb
+    /// joins this list and inherits the two-step aim for free.
+    ///
+    /// <para>Aim vs side are INDEPENDENT questions: on the caster side the entity is known (you), so only the point
+    /// is asked; on the target side the cast asks for the entity FIRST, then the point it's sent to.</para></summary>
+    public static bool NeedsPoint(SkillEffectKind k) =>
         k == SkillEffectKind.Dash || k == SkillEffectKind.Teleport;
 }

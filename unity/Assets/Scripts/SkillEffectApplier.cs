@@ -7,6 +7,12 @@ using UnityEngine;
 /// player's <see cref="Character"/>, the shared <see cref="Status"/> front door — so a data skill is just a new CALLER
 /// of the existing damage/heal/status paths, never a second combat engine.
 ///
+/// <para><b>Two passes per tick (caster side vs target side).</b> <see cref="SkillEffect.IsSelfVerb"/> partitions the
+/// effect kinds. Pass 1 applies the CASTER effects (Dash / Guard / Buff / …) to the acting caster — once, regardless of
+/// the tick's targeting, because "who does this tick hit" was never the question they answer. Pass 2 gathers the tick's
+/// targets and applies the TARGET effects (Damage / Status / …) to them. No kind is in both passes, so a self-targeted
+/// tick can't double-apply a caster effect and a mob-targeted tick can't swallow one.</para>
+///
 /// <para><b>Per-hit model (single-responsibility effects).</b> A binding is applied as a HIT LOOP whose length is the
 /// Damage effect's <see cref="SkillEffect.hitCount"/> (1 if none). Each iteration is a "hit": the Damage effect lands
 /// one strike, and every PROC effect in the binding (a Status or Execute with <see cref="SkillEffect.chance"/> &gt; 0)
@@ -26,8 +32,9 @@ public static class SkillEffectApplier
     // per-cast scan alloc. Cleared at the start of each ApplyBurst; MultiHitBurst copies it before the caller reuses it.
     static readonly List<MonsterAI3D> burstTargets = new List<MonsterAI3D>(32);
 
-    /// <summary>Apply the binding's effects to whoever the tick reaches — an AoE scan (Area) or the cast's designated
-    /// unit (Single). Zero-alloc: a squared-distance sweep over the small Active list, no physics / Find / GetComponent.
+    /// <summary>Apply the binding's effects — CASTER effects to the caster, TARGET effects to whoever the tick reaches
+    /// (an AoE scan, or the cast's designated unit for Single). Zero-alloc: a squared-distance sweep over the small
+    /// Active list, no physics / Find / GetComponent.
     /// <paramref name="caster"/> is the acting entity whose stats scale the roll (defaults to the local player).</summary>
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
@@ -35,7 +42,7 @@ public static class SkillEffectApplier
                                   Sprite srcIcon = null, string srcName = null,
                                   Vector3? aimPoint = null, Character caster = null)
     {
-        if (targets == SkillTargets.None || effects == null || effects.Count == 0) return;
+        if (effects == null || effects.Count == 0) return;
 
         // Resolve the acting caster ONCE here (the local player today; a per-connection entity once server-authoritative),
         // so nothing downstream reaches for the Character.Instance global — the whole burst scales off THIS entity.
@@ -45,6 +52,14 @@ public static class SkillEffectApplier
         // The two differ once a ground cast keeps origin(caster) ≠ target(aim), and a teleport must always go to the
         // aimed spot regardless of which anchor the VFX author chose for the visual. Defaults to point for old callers.
         Vector3 selfPoint = aimPoint ?? point;
+
+        // PASS 1 — CASTER effects (see SkillEffect.IsSelfVerb): they happen TO THE CASTER, so the tick's targeting has no say.
+        // They run here exactly once, whatever the scope/affects are, and are excluded from the target pass below — so
+        // "Single Target on a mob" can't swallow a Dash (the bug this split fixes), and a Self tick can't double-apply it.
+        ApplyCasterEffects(effects, selfPoint, srcIcon, srcName, ch);
+
+        // PASS 2 — TARGET effects: gather who the tick reaches, then run the hit loop on them.
+        if (targets == SkillTargets.None) return;
 
         // SINGLE scope: ignore the radius, land straight on the cast's designated unit. Falls back to Area if unset.
         if (scope == SkillScope.Single && singleTarget != null)
@@ -59,7 +74,7 @@ public static class SkillEffectApplier
                 }
             }
             else if ((targets & SkillTargets.Player) != 0)
-                ApplyEffectsToPlayer(effects, selfPoint, extraMult, extraFlat, comboMult, srcIcon, srcName, ch);
+                ApplyEffectsToPlayer(effects, extraMult, extraFlat, comboMult, srcIcon, srcName, ch);
             return;
         }
 
@@ -82,13 +97,74 @@ public static class SkillEffectApplier
 
         if ((targets & SkillTargets.Player) != 0)
         {
-            // Player-targeted effects are SELF effects (buff / guard / regen / cleanse / teleport) — they land on the
-            // caster regardless of where a ground cast dropped its point (a teleport's destination IS the point, and
-            // the caster is by definition NOT standing on it). No skill is a "hazard zone that hits the player if
-            // inside", so there's nothing the radius gate legitimately guarded here.
+            // The player as a TARGET (a heal / a self-damage / an ailment on yourself) — deliberately NOT radius-gated:
+            // no skill is a "hazard zone that hits the player if inside", and a ground cast's point is by definition
+            // somewhere the caster isn't standing. Caster effects already ran in pass 1 and are not repeated here.
             if (ch != null && !ch.IsDead)
-                ApplyEffectsToPlayer(effects, selfPoint, extraMult, extraFlat, comboMult, srcIcon, srcName, ch);
+                ApplyEffectsToPlayer(effects, extraMult, extraFlat, comboMult, srcIcon, srcName, ch);
         }
+    }
+
+    // ---- caster (pass 1) ----------------------------------------------------
+    // Every CASTER-side effect in the list, applied ONCE to the acting caster. No hit loop: a caster effect isn't a
+    // strike, so a multi-hit flurry must not dash you N times (target effects own hitCount, see HitLoops).
+    static void ApplyCasterEffects(List<SkillEffect> effects, Vector3 point, Sprite srcIcon, string srcName, Character ch)
+    {
+        if (ch == null || ch.IsDead) return;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            var e = effects[i];
+            if (e != null && SkillEffect.IsSelfVerb(e.kind)) ApplyOneToCaster(e, ch, point, srcIcon, srcName);
+        }
+    }
+
+    /// <summary>One caster-side effect. <paramref name="point"/> is the AIM point — the destination a Dash/Teleport
+    /// moves the caster to.</summary>
+    static void ApplyOneToCaster(SkillEffect e, Character ch, Vector3 point, Sprite srcIcon, string srcName)
+    {
+        // A durational self-effect tags its state entry with the SOURCE skill's icon + name + "what it does", so the
+        // buff tray shows the same icon the hotbar uses, counting down. Set BEFORE the gameplay call (the store's
+        // Apply reads the latch), cleared AFTER — the store is the single display source.
+        bool tagDisplay = e.seconds > 0f;
+        if (tagDisplay) ch.States.SetApplyContext(srcIcon, srcName, SkillTooltip.DescribeEffect(e),
+                                                  e.stacking, e.stacksPerApply, e.stackLimit);
+        switch (e.kind)
+        {
+            case SkillEffectKind.Guard:
+                ch.BeginGuard(ScaledSeconds(e, ch), ScaledMagnitude(e, ch));
+                break;
+            case SkillEffectKind.Teleport:
+                {
+                    var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
+                    if (pc != null) pc.Teleport(point);   // instant blink to the aimed (range-clamped) point
+                }
+                break;
+            case SkillEffectKind.Dash:
+                {
+                    var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
+                    if (pc != null) pc.BeginGlideTo(point, e.dashSpeedMult, e.dashEaseIn, e.dashEaseOut, e.dashEaseSeconds);   // pure A→B glide to the aimed (range-clamped) point — no animation
+                }
+                break;
+            case SkillEffectKind.Buff:
+                ApplyBuff(e, ch);
+                break;
+            case SkillEffectKind.Regen:
+                ch.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, ch))), ScaledSeconds(e, ch));
+                break;
+            case SkillEffectKind.Cleanse:
+                if (StatusController.Player != null) StatusController.Player.Cleanse(Mathf.Max(1, e.amount));
+                break;
+            case SkillEffectKind.ManaLeech:
+                ch.BeginManaLeech(ScaledSeconds(e, ch), e.magnitude);
+                break;
+            case SkillEffectKind.Reflect:
+                ch.BeginReflect(ScaledSeconds(e, ch), e.magnitude);
+                break;
+            case SkillEffectKind.Shield:
+                ch.BeginShield(ScaledAmount(e, ch), ScaledSeconds(e, ch));
+                break;
+        }
+        if (tagDisplay) ch.States.ClearApplyContext();
     }
 
     // The binding's strike count = the largest Damage hitCount (min 1). Each iteration is the trigger point where
@@ -256,11 +332,11 @@ public static class SkillEffectApplier
         CombatAuthority.Apply(h, new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic, crit));
     }
 
-    // ---- player -------------------------------------------------------------
-    /// <summary>Run the hit loop for the PLAYER. <paramref name="point"/> is the tick's world point — the teleport
-    /// destination for a <see cref="SkillEffectKind.Teleport"/> effect. <paramref name="caster"/> is the acting
-    /// entity (its own self-cast target); defaults to the local player.</summary>
-    public static void ApplyEffectsToPlayer(List<SkillEffect> effects, Vector3 point,
+    // ---- player as a TARGET (pass 2) ----------------------------------------
+    /// <summary>Run the hit loop for the PLAYER as a gathered TARGET (heal / self-damage / an ailment on yourself).
+    /// Caster effects are NOT here — they run once in <see cref="ApplyBurst"/>'s caster pass. <paramref name="caster"/>
+    /// is the acting entity (its own self-cast target); defaults to the local player.</summary>
+    public static void ApplyEffectsToPlayer(List<SkillEffect> effects,
                                             float extraMult = 0f, int extraFlat = 0, float comboMult = 1f,
                                             Sprite srcIcon = null, string srcName = null, Character caster = null)
     {
@@ -269,13 +345,17 @@ public static class SkillEffectApplier
         int loops = HitLoops(effects, ch);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
-                ApplyOneToPlayer(effects[i], ch, point, n, extraMult, extraFlat, comboMult, srcIcon, srcName);
+                ApplyOneToPlayer(effects[i], ch, n, extraMult, extraFlat, comboMult, srcIcon, srcName);
     }
 
-    static void ApplyOneToPlayer(SkillEffect e, Character ch, Vector3 point, int hit,
+    static void ApplyOneToPlayer(SkillEffect e, Character ch, int hit,
                                  float extraMult, int extraFlat, float comboMult, Sprite srcIcon, string srcName)
     {
         if (e == null) return;
+        // Caster effects already ran in pass 1 — skip them here so a self-targeted tick doesn't even churn the display
+        // latch below for an effect this switch can't handle. The predicate (not a hand-copied kind list) keeps the two
+        // passes from ever drifting apart.
+        if (SkillEffect.IsSelfVerb(e.kind)) return;
         // A durational self-effect (seconds > 0) landing this cast tags its state entry with the SOURCE skill's icon +
         // name + "what it does", so the buff tray shows the same icon the hotbar uses, counting down. Set BEFORE the
         // gameplay call (the store's Apply reads the latch), clear AFTER — the store is the single display source now.
@@ -301,42 +381,10 @@ public static class SkillEffectApplier
             case SkillEffectKind.Haste:
                 if (hit == 0 && StatusController.Player != null) StatusController.Player.Haste(ScaledMagnitude(e, ch), ScaledSeconds(e, ch));
                 break;
-            case SkillEffectKind.Guard:
-                if (hit == 0) ch.BeginGuard(ScaledSeconds(e, ch), ScaledMagnitude(e, ch));
-                break;
-            case SkillEffectKind.Teleport:
-                if (hit == 0)
-                {
-                    var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
-                    if (pc != null) pc.Teleport(point);   // instant blink to the aimed (range-clamped) point
-                }
-                break;
-            case SkillEffectKind.Dash:
-                if (hit == 0)
-                {
-                    var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
-                    if (pc != null) pc.BeginGlideTo(point, e.dashSpeedMult, e.dashEaseIn, e.dashEaseOut, e.dashEaseSeconds);   // pure A→B glide to the aimed (range-clamped) point — no animation
-                }
-                break;
-            case SkillEffectKind.Buff:
-                if (hit == 0) ApplyBuff(e, ch);
-                break;
-            case SkillEffectKind.Regen:
-                if (hit == 0) ch.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, ch))), ScaledSeconds(e, ch));
-                break;
-            case SkillEffectKind.Cleanse:
-                if (hit == 0 && StatusController.Player != null) StatusController.Player.Cleanse(Mathf.Max(1, e.amount));
-                break;
-            case SkillEffectKind.ManaLeech:
-                if (hit == 0) ch.BeginManaLeech(ScaledSeconds(e, ch), e.magnitude);
-                break;
-            case SkillEffectKind.Reflect:
-                if (hit == 0) ch.BeginReflect(ScaledSeconds(e, ch), e.magnitude);
-                break;
-            case SkillEffectKind.Shield:
-                if (hit == 0) ch.BeginShield(ScaledAmount(e, ch), ScaledSeconds(e, ch));
-                break;
             // Execute / Taunt / Vulnerability / Knockback / Pull are aimed at mobs — no-op on the player.
+            // Guard / Teleport / Dash / Buff / Regen / Cleanse / ManaLeech / Reflect / Shield are CASTER effects: they
+            // live in ApplyOneToCaster and ran in pass 1 of ApplyBurst. Deliberately absent here — the two switches are
+            // a partition (see SkillEffect.IsSelfVerb), so a Self-targeted tick can't apply them a second time.
         }
         if (tagDisplay) ch.States.ClearApplyContext();
     }

@@ -15,26 +15,24 @@ MonoBehaviour:
   id: mob.dragonblue
   displayName: DragonBlue
   isBoss: 1
+  size: 1
   biome: 2
-  tier: 1
-  biomeAgnostic: 0
   sheet: DragonBlue
   weight: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 2.15
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 220
-  defense: 6
-  magicDefense: 4
-  flee: 0
+  level: 30
+  str: 21
+  agi: 10
+  vit: 26
+  intel: 10
+  dex: 16
+  luk: 10
   hardDefPercent: 23
   hardMagicDefPercent: 14
-  luk: 10
   attackType: 0
-  attack: 16
-  hit: 14
   xpReward: 200
-  damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
   moveSpeed: 1.7

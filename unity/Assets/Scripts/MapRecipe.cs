@@ -33,7 +33,7 @@ public enum PathTile { Road, Soil, Stones, Rock }
 // NOTE: Unity serializes enums by integer position, so existing assets store the index, not the name.
 // Only ever APPEND new members at the end — inserting/reordering silently remaps every saved value.
 // `None` is the mob-side "biome-agnostic" value: a MonsterDef set to None is spawn-eligible in ANY
-// biome's tier band (see MonsterCatalog.Eligible). A MAP recipe should never be None.
+// biome's level band (see MonsterCatalog.Eligible). A MAP recipe should never be None.
 public enum Biome { Grassland, Snow, Desert, Volcanic, Corrupted, None }
 
 /// <summary>How the ground base/patch/path weights are rendered. <c>Blended</c> = the seamless feathered gradient
@@ -98,13 +98,13 @@ public class RecipeMobGroup
 {
     public string label = "Mobs";
     [Tooltip("Mob id or name from MonsterCatalog (e.g. 'mob.slime' or 'Slime'), or 'Boss'. " +
-             "Empty = weighted mix of this MAP's biome mobs within the tier band below.")]
+             "Empty = weighted mix of this MAP's biome mobs within the LEVEL band below.")]
     public string archetypeName = "";
 
-    [Tooltip("When Archetype Name is empty: lowest difficulty tier to draw from the map's biome (1 = weakest).")]
-    [Range(1, 4)] public int minTier = 1;
-    [Tooltip("When Archetype Name is empty: highest difficulty tier to draw (4 = elite). Set both to the same value for a single-tier zone.")]
-    [Range(1, 4)] public int maxTier = 4;
+    [Tooltip("When Archetype Name is empty: lowest mob LEVEL to draw from the map's biome. Difficulty is level.")]
+    public int minLevel = 1;
+    [Tooltip("When Archetype Name is empty: highest mob LEVEL to draw. Set both the same for a single-level zone.")]
+    public int maxLevel = 99;
     [Tooltip("When Archetype Name is empty: also include biome-agnostic 'common' filler mobs in the mix.")]
     public bool includeCommons = true;
     public AmountMode amountMode = AmountMode.Density;

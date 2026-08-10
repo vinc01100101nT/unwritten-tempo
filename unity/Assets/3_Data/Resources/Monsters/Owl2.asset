@@ -15,26 +15,24 @@ MonoBehaviour:
   id: mob.owl2
   displayName: Owl2
   isBoss: 0
+  size: 1
   biome: 4
-  tier: 1
-  biomeAgnostic: 0
   sheet: Owl2
   weight: 3
   tint: {r: 1, g: 1, b: 1, a: 1}
   scale: 0.92
   flash: {r: 1, g: 1, b: 1, a: 1}
-  maxHealth: 14
-  defense: 0
-  magicDefense: 0
-  flee: 0
+  level: 36
+  str: 25
+  agi: 19
+  vit: 25
+  intel: 12
+  dex: 19
+  luk: 11
   hardDefPercent: 0
   hardMagicDefPercent: 0
-  luk: 1
   attackType: 0
-  attack: 3
-  hit: 8
   xpReward: 5
-  damageSpread: 0.25
   touchRange: 0.9
   touchInterval: 1
   moveSpeed: 2.3000002

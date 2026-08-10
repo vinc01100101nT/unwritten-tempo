@@ -69,6 +69,13 @@ public class Health : MonoBehaviour, IDamageable
     // state store (V3 unified-state migration) — was a local vulnUntil/vulnMult timer.
     float VulnMult => States.VulnMult;
 
+    // Guard cut, then Shield absorb — the mitigation EVERY unit shares (see UnitMitigation), applied between the
+    // defence roll and the HP subtraction. The states were always stored on a mob (Health.States is the same
+    // UnitStates store the player uses); only this read was missing, so a Guard or Shield cast on a mob did nothing.
+    // HIT-only, exactly like the player: the true-damage/DoT path below deliberately bypasses both.
+    // One choke point so all four intakes (physical/magic × normal/overkill) can't drift apart.
+    int Mitigate(int dmg) => UnitMitigation.AfterShield(States, UnitMitigation.Guarded(States, dmg), transform.position);
+
     /// <summary>Mark this unit to TAKE +<paramref name="extraFraction"/> more damage (0.3 = +30%) for
     /// <paramref name="seconds"/>. Refreshes to the latest mark (newest-wins). Reusable armor-fray for skills like Hex Field.</summary>
     public void BeginVulnerable(float extraFraction, float seconds)
@@ -122,7 +129,7 @@ public class Health : MonoBehaviour, IDamageable
         if (mod <= 0f) { SpawnElementNumber(0, mod, Color.white); return 0; }
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod * VulnMult));
+        int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod * VulnMult)));
         Current = Mathf.Max(0, Current - dmg);
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
@@ -150,7 +157,7 @@ public class Health : MonoBehaviour, IDamageable
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
 
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult * Combat.MagicGlanceMult(flee)));
+        int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult * Combat.MagicGlanceMult(flee))));
         Current = Mathf.Max(0, Current - dmg);
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
@@ -172,7 +179,7 @@ public class Health : MonoBehaviour, IDamageable
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
 
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult * Combat.MagicGlanceMult(flee)));
+        int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult * Combat.MagicGlanceMult(flee))));
         bool wasAlive = !IsDead;
         Current = Mathf.Max(0, Current - dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
@@ -198,7 +205,7 @@ public class Health : MonoBehaviour, IDamageable
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, Color.white); return 0; }
 
-        int dmg = Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod * VulnMult));
+        int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod * VulnMult)));
         bool wasAlive = !IsDead;
         Current = Mathf.Max(0, Current - dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
@@ -247,9 +254,30 @@ public class Health : MonoBehaviour, IDamageable
         PassiveEvents.Fire(SkillTrigger.OnHit, null, victim != null ? victim.transform : null);
         ch.AddUltCharge(dmgDealt * Character.UltChargePerDamageDealt);   // dealing damage builds ult charge
         if (ch.ActiveManaLeechPct > 0f) ch.GainMana(Mathf.RoundToInt(dmgDealt * ch.ActiveManaLeechPct));   // ManaLeech skill window (V3)
+
+        // The VICTIM's own timed windows fire here too — the mob side of the rules the player already plays by, so a
+        // Reflect or ManaLeech landed ON a mob actually does something. Reflect bounces TRUE damage (bypasses defense
+        // and can't itself be reflected, exactly like Character.Reflect); ManaLeech feeds the mob's own MP pool.
+        if (victim != null)
+        {
+            var vs = victim.States;
+            if (vs.ReflectBonus > 0f)
+            {
+                int r = Mathf.RoundToInt(dmgDealt * vs.ReflectBonus);
+                if (r > 0) CombatAuthority.ApplyTrue(ch, r, ReflectColor);
+            }
+            if (vs.ManaLeechPct > 0f)
+            {
+                var block = victim.GetComponent<UnitStatBlock>();
+                if (block != null) block.GainMana(Mathf.RoundToInt(dmgDealt * vs.ManaLeechPct));
+            }
+        }
+
         if (ch.LifeStealPct <= 0f) return;
         ch.LeechHeal(Mathf.RoundToInt(dmgDealt * ch.LifeStealPct));
     }
+
+    static readonly Color ReflectColor = new Color(1f, 0.6f, 0.9f);   // damage bounced back at the attacker
 
     // A Health MISS is always the player attacking a mob (a mob missing the PLAYER pops a white MISS in
     // Character, not here), so read the player's equipped weapon to pick the ranged vs melee whiff.
