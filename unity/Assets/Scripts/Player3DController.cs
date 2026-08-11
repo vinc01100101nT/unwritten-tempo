@@ -329,7 +329,11 @@ public partial class Player3DController : MonoBehaviour
             // ticks the effect), so let a dash-to-point finish here — it IS the aftercast movement. A hard-CC
             // (stun/freeze) still cancels it, like any other action, via CannotAct.
             if (dashing && dashToPoint && !status.CannotAct) { StepDash(); return; }
-            if (attacker != null && attacker.Swinging) attacker.Cancel();
+            // Only a HARD CC (stun/freeze) kills a swing already in flight. A skill's own aftercast root must NOT:
+            // the swing is animation-locked and moves nothing, and the cast (a passive gap-closer, a self-buff) roots
+            // us for a beat BEFORE its effect even ticks — cancelling here silently ate every basic attack that a
+            // skill fired on top of.
+            if (status.CannotAct && attacker != null && attacker.Swinging) attacker.Cancel();
             dashing = false; dashOnArrive = null; dashTarget = null; dashToPoint = false;
             controller.Move(Vector3.down * gravity * Time.deltaTime);
             return;
@@ -561,6 +565,16 @@ public partial class Player3DController : MonoBehaviour
             routing = false; path.Clear();
             if (attackTarget == null) return Vector3.zero;   // nothing in range — stand and wait for a wanderer
         }
+        return PursueAttackTarget();
+    }
+
+    // The shared body of every basic-attack order (Attack + AutoCombat): announce the attack intent, then either stand
+    // and swing (in reach) or route toward the target. ONE body so both orders behave identically and a rule added here
+    // can't be forgotten in the other. The announce runs BEFORE reach is judged — that ordering is the whole point of
+    // OnBasicAttackStart: a passive gap-closer moves us first, and the same frame's reach check sees the new position.
+    Vector3 PursueAttackTarget()
+    {
+        if (attacker != null) attacker.AnnounceAttackIntent(attackTarget);
         if (attacker != null && attacker.EngagedWith(attackTarget))
         {
             routing = false; path.Clear();
@@ -592,15 +606,7 @@ public partial class Player3DController : MonoBehaviour
             order = Order.Idle;
             return Vector3.zero;
         }
-        if (attacker != null && attacker.EngagedWith(attackTarget))
-        {
-            routing = false; path.Clear();
-            attacker.TryAttack(attackTarget);    // only actually swings when strictly InRange + off cooldown
-            FaceTarget();
-            return Vector3.zero;                 // in range: stand and swing
-        }
-        if (!routing || Time.time >= nextChaseRepath) { StartRoute(attackTarget.transform.position); nextChaseRepath = Time.time + 0.3f; }
-        return routing ? FollowRoute() : Vector3.zero;
+        return PursueAttackTarget();
     }
 
     // ---- orders ---------------------------------------------------------------
@@ -683,8 +689,11 @@ public partial class Player3DController : MonoBehaviour
     /// gentle stop at the destination (both on = slow-fast-slow). Off = constant full speed (the previous behaviour).</summary>
     public void BeginGlideTo(Vector3 dest, float speedMult = 0f, bool easeIn = false, bool easeOut = false, float easeSeconds = 0.3f)
     {
-        ClearCombat();
-        order = Order.Idle; routing = false; path.Clear();
+        // A glide is MOVEMENT, not a new order: it keeps the current order, its target, the target marker AND any
+        // in-flight swing (whose damage is already committed and lands mid-glide), so combat simply resumes on arrival
+        // instead of dropping to Idle. Only the ROUTE is dropped — the path was computed from where we no longer are —
+        // and a repath is forced for the next frame. (A charge, BeginDash, still takes over the order outright.)
+        routing = false; path.Clear(); nextChaseRepath = 0f;
         dashing = true; dashToPoint = true; dashTarget = null; dashPoint = dest; dashOnArrive = null;
         dashEaseIn = easeIn; dashEaseOut = easeOut; dashEaseSeconds = Mathf.Max(0.01f, easeSeconds);
         Vector3 flat = dest - transform.position; flat.y = 0f;

@@ -79,6 +79,7 @@ public class SkillEffectCatalogWindow : EditorWindow
         [SkillEffectKind.ManaLeech]     = E("self", "no", "leech_frac, duration", "duration only", "Character.BeginManaLeech", "Timed window: a fraction of damage dealt returns as MP (frac raw)."),
         [SkillEffectKind.Reflect]       = E("self", "no", "reflect_frac, duration", "duration only", "Character.BeginReflect", "Timed window: reflect a fraction of damage taken (frac raw)."),
         [SkillEffectKind.Shield]        = E("self", "no", "shield_amount, duration", "shield_amount, duration", "Character.BeginShield", "NEW. A finite HP barrier that soaks HITS until drained; DoT bypasses it (like Guard)."),
+        [SkillEffectKind.Parry]         = E("self", "no", "duration, charges (stacks-per-apply)", "duration only", "Character.BeginParry", "NEW. Charges that ERASE one incoming hit each (0 damage, pre-defence) and are spent by it — not a % cut like Guard. Binary, so no magnitude. Fires OnParry."),
     };
     static Eff E(string target, string dmg, string channels, string scales, string sink, string details)
         => new Eff { target = target, dmg = dmg, channels = channels, scales = scales, sink = sink, details = details };

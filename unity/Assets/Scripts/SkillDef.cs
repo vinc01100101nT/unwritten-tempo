@@ -99,6 +99,7 @@ public enum SkillTrigger
     OnLowHP,               // natural — the player dropped below the low-HP threshold
     OnHit,                 // natural — the player landed a damaging hit
     OnParry,               // natural — a successful block (fired by the parry system, NOT on cast)
+    OnBasicAttackStart,    // natural — about to basic-attack a target, fired BEFORE reach is judged (gap-closers land first)
 }
 
 /// <summary>Binds ONE exposed <see cref="VfxStep.tickId"/> to the gameplay it should do. The tickId matches a

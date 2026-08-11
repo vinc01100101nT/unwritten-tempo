@@ -76,6 +76,11 @@ public class Health : MonoBehaviour, IDamageable
     // One choke point so all four intakes (physical/magic × normal/overkill) can't drift apart.
     int Mitigate(int dmg) => UnitMitigation.AfterShield(States, UnitMitigation.Guarded(States, dmg), transform.position);
 
+    // Parry — the SAME read the player gets (one primitive, no mob copy to hand-sync). Kept OUT of Mitigate on purpose:
+    // Mitigate is math on a hit that lands, while a parry cancels the landing, so each intake bails before its damage
+    // number and hit spark. Checked after the miss/immunity gates so a charge is only spent on a hit that would land.
+    bool Parried() => UnitMitigation.TryParry(States, transform.position);
+
     /// <summary>Mark this unit to TAKE +<paramref name="extraFraction"/> more damage (0.3 = +30%) for
     /// <paramref name="seconds"/>. Refreshes to the latest mark (newest-wins). Reusable armor-fray for skills like Hex Field.</summary>
     public void BeginVulnerable(float extraFraction, float seconds)
@@ -127,6 +132,7 @@ public class Health : MonoBehaviour, IDamageable
         // Neutral-vs-Neutral is 1.0, so default callers are unaffected.
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, Color.white); return 0; }
+        if (Parried()) return 0;
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
         int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod * VulnMult)));
@@ -156,6 +162,7 @@ public class Health : MonoBehaviour, IDamageable
 
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
+        if (Parried()) return 0;
 
         int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult * Combat.MagicGlanceMult(flee))));
         Current = Mathf.Max(0, Current - dmg);
@@ -178,6 +185,7 @@ public class Health : MonoBehaviour, IDamageable
     {
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
+        if (Parried()) return 0;
 
         int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult * Combat.MagicGlanceMult(flee))));
         bool wasAlive = !IsDead;
@@ -204,6 +212,7 @@ public class Health : MonoBehaviour, IDamageable
     {
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, Color.white); return 0; }
+        if (Parried()) return 0;
 
         int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod * VulnMult)));
         bool wasAlive = !IsDead;

@@ -848,6 +848,29 @@ public class Character : MonoBehaviour, IDamageable
         States.Apply(StateId.Shield, seconds, 0f, amount);   // intAmount = barrier HP pool
     }
 
+    /// <summary>Hold parry charges for <paramref name="seconds"/> (Parry skills): the next incoming hit is negated
+    /// outright and spends one charge. HOW MANY charges comes from the state store's apply context (the effect's
+    /// stacks-per-apply), so "blocks the next hit" is just the default single stack — no second charge knob here.</summary>
+    public void BeginParry(float seconds)
+    {
+        if (seconds <= 0f) return;
+        States.Apply(StateId.Parry, seconds);   // stacks ARE the charges
+    }
+
+    /// <summary>Remaining parry charges (0 when none) — for a HUD pip / the tooltip readout.</summary>
+    public int ParryCharges => States.ParryCharges;
+
+    // A parry cancels the hit BEFORE defence/element math, exactly like the off-hand block below it. The spend + the
+    // "PARRY" word are the shared unit primitive (mobs get the identical read); only the OnParry dispatch is here,
+    // because passives belong to the player. `source` rides along so a counter-passive can aim at who was parried.
+    bool ParriedHit(MonsterAI3D source)
+    {
+        var av = Avatar();
+        if (!UnitMitigation.TryParry(States, av != null ? av.position : transform.position)) return false;
+        PassiveEvents.Fire(SkillTrigger.OnParry, null, source != null ? source.transform : null);
+        return true;
+    }
+
     // Drain the barrier first, then HP. Pops a pale-cyan number for the soaked part so the absorb is visible. No alloc
     // (int math + the pooled DamagePopup). The two hit intakes route through here; DoT keeps its own line (shield bypass).
     // Fraction of MaxHP at/under which the player counts as "low HP" — the OnLowHP falling-edge threshold.
@@ -907,6 +930,8 @@ public class Character : MonoBehaviour, IDamageable
         // Element property: the incoming attack's element vs our armor element scales the damage (RO chart).
         float mod = Elements.Modifier(attackElement, armorElement);
         if (mod <= 0f) return 0;   // our armor fully resists this element
+        if (ParriedHit(source)) return 0;   // read LAST of the negations, so a charge is only ever spent on a hit that
+                                            // would really have landed (a miss / block / immunity keeps it in hand)
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF. Mobs don't crit the player → crit:false.
         int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod)));
@@ -938,7 +963,8 @@ public class Character : MonoBehaviour, IDamageable
         if (DodgedByInvuln()) return 0;   // i-frames (dodge-dash) dodge magic too
 
         float mod = Elements.Modifier(attackElement, armorElement);
-        if (mod <= 0f) return 0;
+        if (mod <= 0f) return 0;          // armour already nullified it — nothing to parry, so no charge is spent
+        if (ParriedHit(source)) return 0;   // the read catches magic too: Parry is a timing skill, not a physical block
 
         int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod * Combat.MagicGlanceMult(Flee))));
         ApplyHitToHP(dmg);

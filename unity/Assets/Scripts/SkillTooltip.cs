@@ -150,6 +150,16 @@ public static class SkillTooltip
             case SkillEffectKind.ManaLeech:     return "Restores " + Pct(Mathf.Clamp01(e.magnitude)) + " of damage dealt as MP for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Reflect:       return "Reflects " + Pct(Mathf.Clamp01(e.magnitude)) + " of damage taken for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Shield:        return "Absorbs " + Hl(e.amount.ToString()) + " damage for " + Hl(e.seconds.ToString("0.#") + "s");
+            case SkillEffectKind.Parry:
+            {
+                // Charges ARE stacks (the store's rule), so the count the player reads comes from the same knob the
+                // runtime hands to Apply — never a second number to keep in sync.
+                int charges = e.stacking ? Mathf.Max(1, e.stacksPerApply) : 1;
+                string window = " within " + Hl(e.seconds.ToString("0.#") + "s");
+                return charges > 1
+                    ? "Parries the next " + Hl(charges.ToString()) + " hits" + window + " — no damage taken"
+                    : "Parries the next hit" + window + " — no damage taken";
+            }
             default:                            return null;
         }
     }

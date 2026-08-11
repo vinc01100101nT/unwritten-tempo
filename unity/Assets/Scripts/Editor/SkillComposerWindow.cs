@@ -290,7 +290,9 @@ public class SkillComposerWindow : EditorWindow
                 "OnCast = a normal active the player presses. Anything else = a PASSIVE: no hotbar slot, it runs its " +
                 "effect bindings when that moment fires (dispatched via the one PassiveEvents handler). " +
                 "OnSkillCastComplete fires when the picked active finishes casting UNINTERRUPTED; the rest are natural " +
-                "game events (a basic landing, a kill, low HP, a hit, a parry)."), sel.trigger);
+                "game events (a basic landing, a kill, low HP, a hit, a parry). OnBasicAttackStart fires BEFORE the " +
+                "attack's reach is judged — once per swing interval while a target is held — so a gap-closer moves you " +
+                "in before the same frame decides whether you can reach; the swing itself is never lost."), sel.trigger);
 
             if (sel.trigger == SkillTrigger.OnSkillCastComplete)
                 sel.triggerSkillId = DrawSkillPicker("  on cast complete of", sel.triggerSkillId);
@@ -645,8 +647,8 @@ public class SkillComposerWindow : EditorWindow
         { SkillEffectKind.Damage, SkillEffectKind.Heal, SkillEffectKind.Execute, SkillEffectKind.Teleport,
           SkillEffectKind.Cleanse, SkillEffectKind.Dash, SkillEffectKind.Knockback, SkillEffectKind.Pull };
     static readonly SkillEffectKind[] BuffKinds =
-        { SkillEffectKind.Buff, SkillEffectKind.Haste, SkillEffectKind.Guard, SkillEffectKind.Regen,
-          SkillEffectKind.Shield, SkillEffectKind.ManaLeech, SkillEffectKind.Reflect };
+        { SkillEffectKind.Buff, SkillEffectKind.Haste, SkillEffectKind.Guard, SkillEffectKind.Parry,
+          SkillEffectKind.Regen, SkillEffectKind.Shield, SkillEffectKind.ManaLeech, SkillEffectKind.Reflect };
 
     // A debuff entry is either its own kind (Vulnerability/Taunt/Knockback/Pull) or a Status ailment (the 8 ailments
     // all share kind = Status, differing only by Ailment) — so picking "Burn" sets kind=Status, ailment=Burn.
@@ -909,6 +911,17 @@ public class SkillComposerWindow : EditorWindow
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage cut", "Fraction of incoming damage prevented (0..1). 0.4 = take 40% less damage."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the damage reduction lasts."), ef.seconds, 0.5f, 20f);
                     break;
+                case SkillEffectKind.Parry:
+                    // No magnitude on purpose: a parry is binary (the hit is erased or it isn't), so a "how much"
+                    // field would be a dead knob. Charges come from the stacking block below — the shared knob.
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("window (s)",
+                        "How long the caster waits for a hit to parry. The charge is spent by the HIT, not by this clock — " +
+                        "the window only decides how long the read stays open if nothing comes."), ef.seconds, 0.1f, 10f);
+                    EditorGUILayout.HelpBox("Parry ≠ Guard. Guard is a % cut on every hit in its window; Parry fully ERASES " +
+                        "one hit (0 damage, before defence) and is SPENT by it, then fires the OnParry trigger for passives.\n\n" +
+                        "One charge = 'blocks the next hit'. For more, turn on stacking below and set stacks-per-apply.",
+                        MessageType.Info);
+                    break;
                 case SkillEffectKind.Taunt:
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long enemies are forced to attack the caster."), ef.seconds, 0.5f, 20f);
                     break;
@@ -1034,6 +1047,7 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Status:        return "Inflicts an ailment (damage-over-time, stun, slow, …) for its duration.";
             case SkillEffectKind.Haste:         return "Temporarily speeds up movement.";
             case SkillEffectKind.Guard:         return "Temporarily reduces incoming damage to the caster.";
+            case SkillEffectKind.Parry:         return "Fully negates the next incoming hit (0 damage) and is spent by it — a timing read, not a damage cut. Fires the OnParry trigger.";
             case SkillEffectKind.Taunt:         return "Forces enemies in range to attack the caster for a while.";
             case SkillEffectKind.Teleport:      return "Blinks the caster INSTANTLY to the aimed point (use Ground aim). No fields — the destination is the aimed point.";
             case SkillEffectKind.Dash:          return "Rushes the caster FAST to the aimed point (use Ground aim) — visible travel, blocked by walls. Dash speed sets how fast; the skill's range is the max distance.";
@@ -1088,6 +1102,7 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Status:
             case SkillEffectKind.Buff:
             case SkillEffectKind.Guard:
+            case SkillEffectKind.Parry:
             case SkillEffectKind.Shield:
             case SkillEffectKind.Regen:
             case SkillEffectKind.Vulnerability:

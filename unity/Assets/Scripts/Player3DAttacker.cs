@@ -43,6 +43,7 @@ public class Player3DAttacker : MonoBehaviour
     public SfxSet defaultHitSfx;      // impact
 
     float nextSwing;
+    bool attemptOpen;                     // an announced attack that hasn't started or been cancelled yet (see AnnounceAttackIntent)
     Coroutine swing;
     bool engaged;                         // sticky in-range state (hysteresis) for the stand-vs-chase decision
     Health engagedTarget;                 // who `engaged` refers to, so a new target re-evaluates from scratch
@@ -133,9 +134,30 @@ public class Player3DAttacker : MonoBehaviour
         return Vector3.Distance(a, b);
     }
 
+    /// <summary>Announce that we WANT to basic-attack <paramref name="t"/> — the one fire-site of
+    /// <see cref="SkillTrigger.OnBasicAttackStart"/>. Called by the controller whenever a basic-attack target is held,
+    /// BEFORE reach is judged (<see cref="EngagedWith"/>/<see cref="InRange"/>), so a passive that reacts to the intent
+    /// — a gap-closer, a pre-swing self-buff, a shout — resolves while the attack is still pending instead of after it
+    /// already hit or was refused for being out of reach.
+    ///
+    /// <para><b>The announce and the swing that follows are ONE attempt.</b> Announcing OPENS the attempt; it closes
+    /// when the swing actually starts (<see cref="TryAttack"/>) or when the attempt is abandoned
+    /// (<see cref="Cancel"/> — hard CC, a new order, combat ending). Exactly one announce can be open at a time, so a
+    /// pre-attack passive fires once per swing BY CONSTRUCTION rather than on a timer of its own. An earlier version
+    /// used a parallel intent clock; because a gap-closer's travel time pushed every swing past that clock's expiry,
+    /// it had always elapsed by the time control returned and so gated nothing — the passive re-fired continuously,
+    /// paced by its own dash rather than by attack speed.</para></summary>
+    public void AnnounceAttackIntent(Health t)
+    {
+        if (t == null || t.IsDead || swing != null || attemptOpen || Time.time < nextSwing) return;
+        attemptOpen = true;
+        PassiveEvents.Fire(SkillTrigger.OnBasicAttackStart, null, t.transform);
+    }
+
     public void TryAttack(Health t)
     {
         if (Time.time < nextSwing || swing != null || !InRange(t)) return;
+        attemptOpen = false;   // the announced attack is happening — this attempt is resolved
         // AttackSpeed shortens the gap between swings AND the motion itself (faster = higher mult),
         // so the visible swing keeps pace with the cadence instead of lagging at high ASPD.
         nextSwing = Time.time + cooldown * MotionScale;
@@ -218,7 +240,15 @@ public class Player3DAttacker : MonoBehaviour
         }
     }
 
-    public void Cancel() { if (swing != null) { StopCoroutine(swing); swing = null; } engaged = false; engagedTarget = null; }
+    /// <summary>Abandon the current attack: drop an in-flight swing and CLOSE the attempt an
+    /// <see cref="AnnounceAttackIntent"/> opened, so a cancelled attack always resolves (a stuck-open attempt would
+    /// silence the pre-attack passive forever). Whatever the announce already spent stays spent — see StateGate.</summary>
+    public void Cancel()
+    {
+        if (swing != null) { StopCoroutine(swing); swing = null; }
+        attemptOpen = false;
+        engaged = false; engagedTarget = null;
+    }
 
     /// <summary>Execute a SKILL strike (e.g. the Swordsman's Bash) on <paramref name="t"/>: a heavier,
     /// always-landing hit that reuses the normal swing's windup → slash-FX → damage pipeline, then

@@ -56,7 +56,7 @@ public static class SkillEffectApplier
         // PASS 1 — CASTER effects (see SkillEffect.IsSelfVerb): they happen TO THE CASTER, so the tick's targeting has no say.
         // They run here exactly once, whatever the scope/affects are, and are excluded from the target pass below — so
         // "Single Target on a mob" can't swallow a Dash (the bug this split fixes), and a Self tick can't double-apply it.
-        ApplyCasterEffects(effects, selfPoint, srcIcon, srcName, ch);
+        ApplyCasterEffects(effects, selfPoint, singleTarget, srcIcon, srcName, ch);
 
         // PASS 2 — TARGET effects: gather who the tick reaches, then run the hit loop on them.
         if (targets == SkillTargets.None) return;
@@ -105,22 +105,75 @@ public static class SkillEffectApplier
         }
     }
 
+    // ---- where a relocation lands -------------------------------------------
+    // How far from the target a relocation stops, as a fraction of the caster's melee reach — just INSIDE it, the same
+    // "always in trading range" margin a melee mob holds at (MonsterAI3D's stop clamp), so the strict InRange check that
+    // gates a swing passes on arrival. Player3DAttacker.EffectiveRange stays the single owner of the reach itself.
+    const float LandingReachFactor = 0.9f;
+
+    static Player3DAttacker casterAtk;   // resolved lazily from the player rig; re-resolved if it's ever lost
+
+    /// <summary>Where a caster RELOCATION (Dash / Teleport) actually LANDS. Aiming at a unit means "get to it", not
+    /// "stand inside it": the caster arrives at melee reach on a RANDOM bearing around the target, so it never ends up
+    /// stacked on the mob's own spot and repeat dashes come in from different sides. A pure ground aim — no unit given
+    /// and no mob standing on the spot — is used verbatim.</summary>
+    static Vector3 RelocationDest(Vector3 aim, Transform unit)
+    {
+        if (casterAtk == null)
+        {
+            var pl = StatusController.Player;
+            if (pl != null) casterAtk = pl.GetComponent<Player3DAttacker>();
+            if (casterAtk == null) return aim;
+        }
+        float reach = casterAtk.EffectiveRange * LandingReachFactor;
+
+        // The thing we're landing next to: the cast's picked unit, else whatever mob the aim point is sitting on (a
+        // Ground-delivered dash at a victim's feet aims at the mob's own position, with no unit pick to read).
+        Vector3 center;
+        if (unit != null) center = unit.position;
+        else if (!MobAt(aim, reach, out center)) return aim;
+
+        float a = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+        return new Vector3(center.x + Mathf.Cos(a) * reach, center.y, center.z + Mathf.Sin(a) * reach);
+    }
+
+    // The living mob nearest `point` within `radius` (planar), if any. Same zero-alloc sweep over the small Active
+    // registry the AoE gather uses — no physics query, no GetComponent; runs once per relocation cast.
+    static bool MobAt(Vector3 point, float radius, out Vector3 pos)
+    {
+        pos = point;
+        var list = MonsterAI3D.Active;
+        float best = radius * radius; bool found = false;
+        for (int i = 0; i < list.Count; i++)
+        {
+            var ai = list[i];
+            if (ai == null || ai.Health == null || ai.Health.IsDead) continue;
+            Vector3 d = ai.transform.position - point; d.y = 0f;
+            float sqr = d.sqrMagnitude;
+            if (sqr > best) continue;
+            best = sqr; pos = ai.transform.position; found = true;
+        }
+        return found;
+    }
+
     // ---- caster (pass 1) ----------------------------------------------------
     // Every CASTER-side effect in the list, applied ONCE to the acting caster. No hit loop: a caster effect isn't a
     // strike, so a multi-hit flurry must not dash you N times (target effects own hitCount, see HitLoops).
-    static void ApplyCasterEffects(List<SkillEffect> effects, Vector3 point, Sprite srcIcon, string srcName, Character ch)
+    static void ApplyCasterEffects(List<SkillEffect> effects, Vector3 point, Transform aimUnit,
+                                   Sprite srcIcon, string srcName, Character ch)
     {
         if (ch == null || ch.IsDead) return;
         for (int i = 0; i < effects.Count; i++)
         {
             var e = effects[i];
-            if (e != null && SkillEffect.IsSelfVerb(e.kind)) ApplyOneToCaster(e, ch, point, srcIcon, srcName);
+            if (e != null && SkillEffect.IsSelfVerb(e.kind)) ApplyOneToCaster(e, ch, point, aimUnit, srcIcon, srcName);
         }
     }
 
     /// <summary>One caster-side effect. <paramref name="point"/> is the AIM point — the destination a Dash/Teleport
-    /// moves the caster to.</summary>
-    static void ApplyOneToCaster(SkillEffect e, Character ch, Vector3 point, Sprite srcIcon, string srcName)
+    /// moves the caster to (resolved through <see cref="RelocationDest"/>, which lands it BESIDE an aimed unit rather
+    /// than on top of it). <paramref name="aimUnit"/> is the cast's picked unit, if it had one.</summary>
+    static void ApplyOneToCaster(SkillEffect e, Character ch, Vector3 point, Transform aimUnit, Sprite srcIcon, string srcName)
     {
         // A durational self-effect tags its state entry with the SOURCE skill's icon + name + "what it does", so the
         // buff tray shows the same icon the hotbar uses, counting down. Set BEFORE the gameplay call (the store's
@@ -136,13 +189,14 @@ public static class SkillEffectApplier
             case SkillEffectKind.Teleport:
                 {
                     var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
-                    if (pc != null) pc.Teleport(point);   // instant blink to the aimed (range-clamped) point
+                    if (pc != null) pc.Teleport(RelocationDest(point, aimUnit));   // instant blink to the aimed (range-clamped) point
                 }
                 break;
             case SkillEffectKind.Dash:
                 {
                     var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
-                    if (pc != null) pc.BeginGlideTo(point, e.dashSpeedMult, e.dashEaseIn, e.dashEaseOut, e.dashEaseSeconds);   // pure A→B glide to the aimed (range-clamped) point — no animation
+                    // pure A→B glide to the aimed (range-clamped) point — no animation
+                    if (pc != null) pc.BeginGlideTo(RelocationDest(point, aimUnit), e.dashSpeedMult, e.dashEaseIn, e.dashEaseOut, e.dashEaseSeconds);
                 }
                 break;
             case SkillEffectKind.Buff:
@@ -162,6 +216,9 @@ public static class SkillEffectApplier
                 break;
             case SkillEffectKind.Shield:
                 ch.BeginShield(ScaledAmount(e, ch), ScaledSeconds(e, ch));
+                break;
+            case SkillEffectKind.Parry:
+                ch.BeginParry(ScaledSeconds(e, ch));   // charges ride the apply context above (stacks-per-apply)
                 break;
         }
         if (tagDisplay) ch.States.ClearApplyContext();

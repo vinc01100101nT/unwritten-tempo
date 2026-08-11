@@ -13,6 +13,23 @@ using UnityEngine;
 public static class UnitMitigation
 {
     static readonly Color ShieldAbsorbColor = new Color(0.5f, 0.8f, 1f);
+    static readonly Color ParryColor = new Color(1f, 0.95f, 0.6f);   // its own pale-gold word — a parry must be readable in PvP
+
+    /// <summary>Spend a parry charge on an incoming hit, if the unit holds one: the hit is negated OUTRIGHT and a
+    /// "PARRY" word pops so both sides can read it. Returns true when the hit was erased — callers must then bail
+    /// BEFORE any damage number, spark, or HP change (a parried hit didn't happen; it isn't a 0-damage hit).
+    ///
+    /// <para>Deliberately NOT part of the <see cref="Guarded"/>/<see cref="AfterShield"/> pipeline: those two are
+    /// mitigation MATH on a hit that lands, while a parry cancels the landing itself. Shared by the player and every
+    /// mob so the read behaves identically on both — only the fire-site of <see cref="SkillTrigger.OnParry"/> is
+    /// player-side (passives are the player's).</para></summary>
+    public static bool TryParry(UnitStates states, Vector3 popAt)
+    {
+        if (states == null || states.ParryCharges <= 0) return false;
+        states.Consume(StateId.Parry, 1);
+        DamagePopup.SpawnText(popAt, "PARRY", ParryColor);
+        return true;
+    }
 
     /// <summary>Apply the Guard stance's cut to a post-defence figure. Floors at 1 so a guarded hit still registers
     /// as a hit rather than silently vanishing.</summary>

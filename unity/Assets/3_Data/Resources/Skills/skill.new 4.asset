@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.new 4
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 0
-  id: skill.new
-  displayName: New Skill
+  targetingMigrated: 1
+  id: skill.sword.lock_blades
+  displayName: Lock Blades
   icon: {fileID: 0}
   description: 
   archetype: 0
@@ -22,14 +22,14 @@ MonoBehaviour:
   shape: 0
   complexity: 0
   acquisitionTier: 0
-  trigger: 0
-  triggerSkillId: 
+  trigger: 1
+  triggerSkillId: skill.sword.lunge
   requiresState: 0
   requireState: 12
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
-  manaCost: 10
+  manaCost: 0
   cooldown: 5
   castTime: 0
   aim: 2
@@ -38,14 +38,50 @@ MonoBehaviour:
   chargeCost: 100
   castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
-  vfx: {fileID: 0}
+  vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
   repeatInterval: 0
   projectileCount: 1
   projectileSpread: 0
   hasReleaseStance: 0
   releaseStance: 14
-  bindings: []
+  bindings:
+  - tickId: follow_hit
+    targetMode: 2
+    groundDelivery: 1
+    affects: 2
+    playerFaction: 0
+    radius: 1.5
+    stayDuration: 0
+    effects:
+    - kind: 7
+      damageType: 1
+      damageMult: 1
+      element: 0
+      amount: 10
+      ailment: 2
+      seconds: 5
+      shoveSeconds: 0.25
+      magnitude: 1.05
+      stacking: 1
+      stackLimit: 3
+      stacksPerApply: 3
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
+      hitCount: 1
+      chance: 0
+      buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
+      affinity: []
+      durationAffinity: []
+      hitCountAffinity: []
+    targets: 2
+    scope: 0
   shortLabel: Skill
   keyLabel: 
   slotOrder: 10

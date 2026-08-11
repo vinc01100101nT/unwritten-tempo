@@ -105,8 +105,19 @@ public enum SkillEffectKind
     /// damage for <see cref="SkillEffect.seconds"/> → <c>Character.BeginShield</c>. Distinct from <see cref="Guard"/> (a %
     /// damage CUT): Shield is a finite HP pool that depletes as it eats hits, then lapses. Bypassed by DoT, like Guard.
     /// Barrier HP scales off sustain stats via <see cref="SkillEffect.affinity"/> (kept off offense to stay a support
-    /// tool). MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</summary>
+    /// tool).</summary>
     Shield,
+    /// <summary>Self, timed READ: for <see cref="SkillEffect.seconds"/> the caster holds parry CHARGES — the next
+    /// incoming hit is negated OUTRIGHT (0 damage, no defence math) and spends one charge → <c>Character.BeginParry</c>.
+    /// One charge per <see cref="SkillEffect.stacksPerApply"/>, so "blocks the next hit" is simply 1.
+    ///
+    /// <para>Distinct from <see cref="Guard"/> on purpose: Guard is a standing PERCENTAGE cut that every hit in the
+    /// window is reduced by and that ends on its clock; Parry is a DISCRETE charge that fully erases ONE hit and is
+    /// spent by it (the duration is only how long you wait for that hit). Binary by design — there is no partial
+    /// parry, hence no magnitude. A spent charge fires <see cref="SkillTrigger.OnParry"/>.</para>
+    ///
+    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    Parry,
 }
 
 /// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window. Move speed is
@@ -242,7 +253,7 @@ public class SkillEffect
     public static bool IsSelfVerb(SkillEffectKind k) =>
         k == SkillEffectKind.Guard || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
         k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect ||
-        k == SkillEffectKind.Shield || NeedsPoint(k);
+        k == SkillEffectKind.Shield || k == SkillEffectKind.Parry || NeedsPoint(k);
 
     /// <summary>An effect that must be told WHERE: it RELOCATES whoever it lands on, so the point is part of its
     /// meaning, not part of its targeting. This is the ONE thing that makes a cast ask for a ground point on top of

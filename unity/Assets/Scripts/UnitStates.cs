@@ -26,6 +26,7 @@ public enum StateId
     Shield,                       // intAmount = barrier HP pool
     ManaLeech,                    // magnitude = fraction of damage dealt returned as MP
     Reflect,                      // magnitude = fraction of damage taken bounced back
+    Parry,                        // stacks = CHARGES; each negates one incoming hit outright, then is spent
 }
 
 /// <summary>
@@ -121,7 +122,7 @@ public class UnitStates : MonoBehaviour
 
     // ---- cached derived scalars (recomputed only on change; every getter below is O(1)) --------------------------
     float moveMult = 1f, guardCut, vulnMult = 1f, dmgBuffMult = 1f, aspdBuffMult = 1f, castBuffMult = 1f, leechPct, reflectBonus;
-    int hitPenalty, shieldPool;
+    int hitPenalty, shieldPool, parryCharges;
     bool cannotAct, silenced;
     float nextExpiry = float.MaxValue;   // earliest endTime across active states — the ONLY time EnsureFresh must prune
 
@@ -181,6 +182,9 @@ public class UnitStates : MonoBehaviour
     public float ReflectBonus { get { EnsureFresh(); return reflectBonus; } }
     /// <summary>Remaining barrier HP (Shield), 0 when none.</summary>
     public int ShieldPool { get { EnsureFresh(); return shieldPool; } }
+    /// <summary>Parry charges held, 0 when none — each negates one incoming hit. Cached like every other scalar so the
+    /// per-hit mitigation check stays O(1); spend one with <see cref="Consume"/>.</summary>
+    public int ParryCharges { get { EnsureFresh(); return parryCharges; } }
 
     /// <summary>True if this state is currently active on the unit.</summary>
     public bool Has(StateId id)
@@ -370,7 +374,7 @@ public class UnitStates : MonoBehaviour
         guardCut = 0f; vulnMult = 1f;
         dmgBuffMult = 1f; aspdBuffMult = 1f; castBuffMult = 1f;
         leechPct = 0f; reflectBonus = 0f;
-        hitPenalty = 0; shieldPool = 0;
+        hitPenalty = 0; shieldPool = 0; parryCharges = 0;
         cannotAct = false; silenced = false;
         nextExpiry = float.MaxValue;
 
@@ -397,6 +401,8 @@ public class UnitStates : MonoBehaviour
                 case StateId.ManaLeech:       leechPct = s.magnitude; break;
                 case StateId.Reflect:         reflectBonus = s.magnitude; break;
                 case StateId.Shield:          shieldPool = s.intAmount; break;
+                // Parry carries no per-stack value — the STACK COUNT *is* the charge count (one hit erased each).
+                case StateId.Parry:           parryCharges = s.StackCount; break;
                 // Poison/Bleed/Burn (DoT) + Regen tick in the (migrated) update loop; Taunt/Knockback/Pull drive
                 // MonsterAI3D directly — none contribute a cached scalar, they're timer + display entries here.
             }
