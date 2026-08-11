@@ -206,7 +206,8 @@ public class VfxSequenceRunner : MonoBehaviour
                     bool loop = st.looping || ctx.persistent;
                     float stayA = Stay(st);
                     float lifeA = (st.looping && !ctx.persistent) ? stayA : 0f;   // 0 → authored (persistent = until Stop)
-                    var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !loop, clipStart: 0f, lifetime: lifeA);
+                    var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !loop, clipStart: 0f, lifetime: lifeA,
+                                       speed: st.speed <= 0f ? 1f : st.speed);   // 0 = unauthored / legacy step → normal rate
                     float endA;
                     if (ctx.persistent) { endA = float.PositiveInfinity; if (h != null) hasLiveAura = true; }
                     else { endA = (h != null && h.ReturnAt > 0f) ? h.ReturnAt : Time.time + (st.looping ? stayA : 0.5f);

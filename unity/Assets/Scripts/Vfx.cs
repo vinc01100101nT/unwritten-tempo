@@ -309,8 +309,12 @@ public static class Vfx
     /// each frame without parenting (so it never inherits a billboard's breathe/scale). Looping effects live
     /// until you call <see cref="EffectHandle.Stop"/> on the returned handle; a fixed-lifetime effect returns
     /// itself. Null if the id is unknown.</summary>
+    /// <remarks><paramref name="speed"/> scales the effect's PLAYBACK rate (same knob PlayAt exposes) — a slow
+    /// smoulder or a frantic flicker. It never changes how LONG the aura lives: <paramref name="lifetime"/> is real
+    /// seconds, applied separately.</remarks>
     public static EffectHandle Attach(string id, Transform target, Vector3 offset = default, float scaleMult = 1f,
-                                      Color tint = default, bool oneShot = false, float clipStart = 0f, float lifetime = 0f)
+                                      Color tint = default, bool oneShot = false, float clipStart = 0f, float lifetime = 0f,
+                                      float speed = 1f)
     {
         var def = EffectCatalog.Get(id);
         if (def == null || target == null) return null;
@@ -320,7 +324,7 @@ public static class Vfx
         // lifetime > 0 → a looping aura capped at that many seconds (a skill's Stay Duration); 0 → the authored
         // lifetime (which for a looping effect means "until Stop()", the persistent-aura path).
         float life = lifetime > 0f ? lifetime : def.lifetime;
-        h.Begin(target.position + total, Quaternion.identity, def.scale, scaleMult, 1f, t, life, oneShot, target, total, 0f, clipStart);
+        h.Begin(target.position + total, Quaternion.identity, def.scale, scaleMult, speed, t, life, oneShot, target, total, 0f, clipStart);
         return h;
     }
 

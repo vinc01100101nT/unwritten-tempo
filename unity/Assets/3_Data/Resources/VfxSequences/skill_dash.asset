@@ -18,14 +18,14 @@ MonoBehaviour:
     delay: 0
     startEvent: 
     snapToEventPoint: 0
-    kind: 0
+    kind: 1
     anchor: 0
-    offset: {x: 0, y: 0, z: 0}
+    offset: {x: 0, y: 0.2, z: 0}
     scatter: 0
     rotationEuler: {x: 0, y: 0, z: 0}
-    effectId: smoke.dust-puff
-    scale: 0.11
-    speed: 1
+    effectId: fire.footprint
+    scale: 0.15
+    speed: 3
     trimEnd: 0
     clipStart: 0
     tint: {r: 1, g: 1, b: 1, a: 1}
@@ -46,121 +46,6 @@ MonoBehaviour:
     shakeDuration: 0.18
     sound:
       clips: []
-      volume: 1
-      pitch: {x: 0.95, y: 1.05}
-    soundDuration: 0
-    soundFadeIn: 0
-    soundFadeOut: 0
-  - note: VFX
-    schedule: 0
-    delay: 0.15
-    startEvent: 
-    snapToEventPoint: 0
-    kind: 0
-    anchor: 0
-    offset: {x: 0, y: 0, z: 0}
-    scatter: 0
-    rotationEuler: {x: 0, y: 0, z: 0}
-    effectId: smoke.dust-puff
-    scale: 0.11
-    speed: 1
-    trimEnd: 0
-    clipStart: 0
-    tint: {r: 1, g: 1, b: 1, a: 1}
-    looping: 0
-    emitEventOnStart: 
-    emitEventOnEnd: 
-    tickId: 
-    tickWhen: 0
-    tickInterval: 0
-    carrierFromCaster: 0
-    carrierFrom: {x: 0, y: 9, z: 0}
-    carrierScatter: 0
-    carrierSpeed: 16
-    carrierFaceTravel: 0
-    carrierArriveRadius: 0.4
-    carrierMaxLife: 3
-    shakeStrength: 0.3
-    shakeDuration: 0.18
-    sound:
-      clips: []
-      volume: 1
-      pitch: {x: 0.95, y: 1.05}
-    soundDuration: 0
-    soundFadeIn: 0
-    soundFadeOut: 0
-  - note: VFX
-    schedule: 0
-    delay: 0.3
-    startEvent: 
-    snapToEventPoint: 0
-    kind: 0
-    anchor: 0
-    offset: {x: 0, y: 0, z: 0}
-    scatter: 0
-    rotationEuler: {x: 0, y: 0, z: 0}
-    effectId: smoke.dust-puff
-    scale: 0.11
-    speed: 1
-    trimEnd: 0
-    clipStart: 0
-    tint: {r: 1, g: 1, b: 1, a: 1}
-    looping: 0
-    emitEventOnStart: 
-    emitEventOnEnd: 
-    tickId: 
-    tickWhen: 0
-    tickInterval: 0
-    carrierFromCaster: 0
-    carrierFrom: {x: 0, y: 9, z: 0}
-    carrierScatter: 0
-    carrierSpeed: 16
-    carrierFaceTravel: 0
-    carrierArriveRadius: 0.4
-    carrierMaxLife: 3
-    shakeStrength: 0.3
-    shakeDuration: 0.18
-    sound:
-      clips: []
-      volume: 1
-      pitch: {x: 0.95, y: 1.05}
-    soundDuration: 0
-    soundFadeIn: 0
-    soundFadeOut: 0
-  - note: SFX
-    schedule: 0
-    delay: 0
-    startEvent: 
-    snapToEventPoint: 0
-    kind: 4
-    anchor: 0
-    offset: {x: 0, y: 0, z: 0}
-    scatter: 0
-    rotationEuler: {x: 0, y: 0, z: 0}
-    effectId: 
-    scale: 1
-    speed: 1
-    trimEnd: 0
-    clipStart: 0
-    tint: {r: 1, g: 1, b: 1, a: 1}
-    looping: 0
-    emitEventOnStart: 
-    emitEventOnEnd: 
-    tickId: 
-    tickWhen: 0
-    tickInterval: 0
-    carrierFromCaster: 0
-    carrierFrom: {x: 0, y: 9, z: 0}
-    carrierScatter: 0
-    carrierSpeed: 16
-    carrierFaceTravel: 0
-    carrierArriveRadius: 0.4
-    carrierMaxLife: 3
-    shakeStrength: 0.3
-    shakeDuration: 0.18
-    sound:
-      clips:
-      - {fileID: 8300000, guid: cdb698da5b4e32d49a17c99b00a1b88c, type: 3}
       volume: 1
       pitch: {x: 0.95, y: 1.05}
     soundDuration: 0

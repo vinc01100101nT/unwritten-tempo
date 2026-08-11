@@ -1,0 +1,118 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
+  m_Name: skill.sword.overclock
+  m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  targetingMigrated: 1
+  id: skill.sword.overclock
+  displayName: Overclock
+  icon: {fileID: 0}
+  description: 'Go faster, fragile.
+
+    +30% Attack Speed for 8 seconds, but you take double damage for the first 3.'
+  archetype: 3
+  family: 0
+  shape: 3
+  complexity: 0
+  acquisitionTier: 0
+  trigger: 0
+  triggerSkillId:
+  requiresState: 0
+  requireState: 0
+  requireMinStacks: 1
+  consumeAllStacks: 0
+  consumeStacks: 0
+  manaCost: 12
+  cooldown: 6
+  castTime: 0
+  aim: 0
+  castRange: 0
+  tier: 0
+  chargeCost: 100
+  castCircleId:
+  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
+  repeatCount: 1
+  repeatInterval: 0
+  projectileCount: 1
+  projectileSpread: 0
+  hasReleaseStance: 0
+  releaseStance: 14
+  bindings:
+  - tickId: follow_hit
+    targetMode: 0
+    groundDelivery: 1
+    affects: 1
+    playerFaction: 0
+    radius: 1.5
+    stayDuration: 0
+    effects:
+    - kind: 7
+      damageType: 0
+      damageMult: 1
+      element: 0
+      amount: 10
+      ailment: 2
+      seconds: 8
+      shoveSeconds: 0.25
+      magnitude: 1.3
+      stacking: 0
+      stackLimit: 5
+      stacksPerApply: 1
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
+      hitCount: 1
+      chance: 0
+      buffStat: 1
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
+      affinity: []
+      durationAffinity:
+      - stat: 3
+        weight: 100
+      hitCountAffinity: []
+    - kind: 10
+      damageType: 0
+      damageMult: 1
+      element: 0
+      amount: 10
+      ailment: 2
+      seconds: 3
+      shoveSeconds: 0.25
+      magnitude: 1
+      stacking: 0
+      stackLimit: 5
+      stacksPerApply: 1
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
+      hitCount: 1
+      chance: 0
+      buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
+      affinity: []
+      durationAffinity: []
+      hitCountAffinity: []
+    targets: 1
+    scope: 0
+  shortLabel: Overclk
+  keyLabel:
+  slotOrder: 10
+  tint: {r: 1, g: 1, b: 1, a: 1}

@@ -410,6 +410,10 @@ public class Character : MonoBehaviour, IDamageable
     int   BarrierNow      => ignoreStates ? 0  : States.ShieldPool;
     // Reflect has BOTH a permanent source (the thorns card) and a timed one — the baseline keeps the permanent part.
     float ReflectPctNow   => reflectPct + (ignoreStates ? 0f : States.ReflectBonus);
+    // Vulnerability AMPLIFIES incoming damage (1 = none) — the mirror of GuardCut, read by every intake path below so a
+    // "take 2× damage" self-debuff can't be honoured on one damage type and ignored on another. Neutral (1) while
+    // snapshotting, like every other state readout here.
+    float VulnMultNow     => ignoreStates ? 1f : States.VulnMult;
 
     /// <summary>The pure preview: derived stats AS IF <paramref name="hypothetical"/> were equipped
     /// in <paramref name="slot"/> (pass null to preview UN-equipping it), WITHOUT mutating the
@@ -934,7 +938,7 @@ public class Character : MonoBehaviour, IDamageable
                                             // would really have landed (a miss / block / immunity keeps it in hand)
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF. Mobs don't crit the player → crit:false.
-        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod)));
+        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod * VulnMultNow)));
         ApplyHitToHP(dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);                       // player hurt grunt
@@ -966,7 +970,7 @@ public class Character : MonoBehaviour, IDamageable
         if (mod <= 0f) return 0;          // armour already nullified it — nothing to parry, so no charge is spent
         if (ParriedHit(source)) return 0;   // the read catches magic too: Parry is a timing skill, not a physical block
 
-        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod * Combat.MagicGlanceMult(Flee))));
+        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod * VulnMultNow * Combat.MagicGlanceMult(Flee))));
         ApplyHitToHP(dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);

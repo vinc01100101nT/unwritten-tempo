@@ -27,6 +27,11 @@ MonoBehaviour:
   acquisitionTier: 0
   trigger: 0
   triggerSkillId: skill.meteor
+  requiresState: 0
+  requireState: 12
+  requireMinStacks: 1
+  consumeAllStacks: 0
+  consumeStacks: 0
   manaCost: 8
   cooldown: 1.5
   castTime: 1.07
@@ -57,9 +62,13 @@ MonoBehaviour:
       damageMult: 1
       element: 3
       amount: 10
-      ailment: 2
+      ailment: 1
       seconds: 0
-      magnitude: 3
+      shoveSeconds: 0.25
+      magnitude: 2
+      stacking: 0
+      stackLimit: 5
+      stacksPerApply: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
@@ -78,6 +87,32 @@ MonoBehaviour:
       hitCountAffinity:
       - stat: 1
         weight: 100
+    - kind: 4
+      damageType: 1
+      damageMult: 1
+      element: 0
+      amount: 10
+      ailment: 2
+      seconds: 0.5
+      shoveSeconds: 0.25
+      magnitude: 1
+      stacking: 0
+      stackLimit: 5
+      stacksPerApply: 1
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
+      hitCount: 1
+      chance: 0
+      buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
+      affinity: []
+      durationAffinity: []
+      hitCountAffinity: []
     targets: 2
     scope: 1
   shortLabel: Ember

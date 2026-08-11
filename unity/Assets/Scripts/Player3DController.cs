@@ -726,13 +726,16 @@ public partial class Player3DController : MonoBehaviour
             Vector3 destPos = dashToPoint ? dashPoint : dashTarget.position;
             Vector3 to = destPos - transform.position; to.y = 0f;
             float dist = to.magnitude;
-            if (dist <= dashArriveRange) arrived = true;
-            else
-            {
-                Vector3 dir = to / Mathf.Max(dist, 1e-4f);
-                worldFacing = dir;
-                controller.Move((dir * DashStepSpeed(dist) + Vector3.down * gravity) * Time.deltaTime);
-            }
+            Vector3 dir = to / Mathf.Max(dist, 1e-4f);
+            worldFacing = dir;
+            // CLAMP THE STEP TO WHAT'S LEFT. One frame of dash travel is routinely LONGER than the whole trip
+            // (8× run speed ≈ 0.4 units/frame vs a ~0.3-unit lunge to a mob's side), so an unclamped step flies past
+            // the destination, the arrive test (a 0.05 radius) never sees it, and the glide ping-pongs across the spot
+            // until the safety cap expires — the player visibly vibrates for up to a second. Clamped, a step that would
+            // reach or pass the point lands exactly on it and ends the dash, at any speed / distance / frame rate.
+            float step = DashStepSpeed(dist) * Time.deltaTime;
+            if (step >= dist - dashArriveRange) { step = dist; arrived = true; }
+            controller.Move(dir * step + Vector3.down * gravity * Time.deltaTime);
         }
         if (arrived)
         {

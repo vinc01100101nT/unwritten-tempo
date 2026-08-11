@@ -696,9 +696,14 @@ public class VfxComposerWindow : EditorWindow
                     "On: keep this effect playing (looping) until the skill's STAY DURATION elapses (set per-skill in " +
                     "the Skill Composer; fallback 3s). Off: play once for the effect's natural length, then end."),
                     st.looping);
+                // Playback rate — shared by PlayAt and Attach (an aura can smoulder slowly or flicker fast). For an
+                // Attach it changes only the animation's pace, never how long the aura lives (that's Stay Duration).
+                st.speed = EditorGUILayout.Slider(new GUIContent("speed",
+                    "Playback rate of the effect's animation (1 = authored). Higher = faster. On an attached aura this " +
+                    "only changes how fast it animates — its duration is the skill's Stay Duration."),
+                    st.speed <= 0f ? 1f : st.speed, 0.1f, 3f);
                 if (st.kind == VfxStepKind.PlayAt)
                 {
-                    st.speed = EditorGUILayout.Slider("speed", st.speed <= 0f ? 1f : st.speed, 0.1f, 3f);
                     float naturalReal = 1f;
                     for (int k = 0; k < preview.Count; k++)
                         if (preview[k].stepIndex == i) { naturalReal = preview[k].naturalLife / (st.speed <= 0f ? 1f : st.speed); break; }
@@ -1270,9 +1275,10 @@ public class VfxComposerWindow : EditorWindow
     static float InstWindow(VfxStep st, PreviewInst inst)
     {
         if (st.kind == VfxStepKind.Carrier) return CarrierFlight(st);
+        float sp = st.speed <= 0f ? 1f : st.speed;
         if (st.kind == VfxStepKind.PlayAt)
-            return Mathf.Max(0.05f, inst.naturalLife / (st.speed <= 0f ? 1f : st.speed) - st.trimEnd);
-        return inst.naturalLife;
+            return Mathf.Max(0.05f, inst.naturalLife / sp - st.trimEnd);
+        return Mathf.Max(0.05f, inst.naturalLife / sp);   // Attach: same rate scaling; trim end is a PlayAt-only knob
     }
 
     // Record an event tag's earliest fire time (min-wins). Returns true if it changed the table (drives the
@@ -1413,7 +1419,8 @@ public class VfxComposerWindow : EditorWindow
                 && TryCarrierLanding(st.startEvent, loopSeed - inst.slot, out var landPt))
                 anchorPt = landPt + st.offset + inst.def.offset;
             float scale = inst.def.scale * (st.scale <= 0f ? 1f : st.scale);
-            float speed = st.kind == VfxStepKind.PlayAt ? (st.speed <= 0f ? 1f : st.speed) : 1f;
+            // Carrier ignores speed (its pace is the flight time); PlayAt and Attach both play at the authored rate.
+            float speed = st.kind == VfxStepKind.Carrier ? 1f : (st.speed <= 0f ? 1f : st.speed);
 
             Vector3 pos = anchorPt;
             Quaternion rot = Quaternion.Euler(st.rotationEuler);

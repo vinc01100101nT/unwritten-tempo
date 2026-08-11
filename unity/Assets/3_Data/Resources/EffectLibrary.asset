@@ -211,6 +211,12 @@ MonoBehaviour:
     offset: {x: 0, y: 0, z: 0}
     lifetime: 0
     groundRingRadius: 0
+  - id: fire.footprint
+    prefab: {fileID: 389821699222927281, guid: c78e2f7eca004290b813614c90be0889, type: 3}
+    scale: 1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
   - id: fire.magic-0
     prefab: {fileID: 1692517446758730, guid: 08fd1b80cc24cc8439f45fda3c558255, type: 3}
     scale: 1

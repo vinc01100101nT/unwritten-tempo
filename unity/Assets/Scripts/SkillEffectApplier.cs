@@ -111,12 +111,23 @@ public static class SkillEffectApplier
     // gates a swing passes on arrival. Player3DAttacker.EffectiveRange stays the single owner of the reach itself.
     const float LandingReachFactor = 0.9f;
 
+    // How far around the target each successive landing moves. 216° = cross to the far side (180°) plus a 36° nudge,
+    // which is the SAME rule seen from the caster: the spot sits 18° off your own line to the target. Every hop
+    // therefore passes within a tenth of a unit of the target — you cut straight through it — and because 5 × 216°
+    // is exactly two full laps, five hops visit five evenly-spaced bearings and close the loop: the path traced on
+    // the ground is a five-pointed star. Any multiple of 72° would land on the same five spots, but only this one
+    // orders them into a star instead of walking the pentagon's rim.
+    const float LandingStepDegrees = 216f;
+
     static Player3DAttacker casterAtk;   // resolved lazily from the player rig; re-resolved if it's ever lost
 
     /// <summary>Where a caster RELOCATION (Dash / Teleport) actually LANDS. Aiming at a unit means "get to it", not
-    /// "stand inside it": the caster arrives at melee reach on a RANDOM bearing around the target, so it never ends up
-    /// stacked on the mob's own spot and repeat dashes come in from different sides. A pure ground aim — no unit given
-    /// and no mob standing on the spot — is used verbatim.</summary>
+    /// "stand inside it": the caster arrives at melee reach, on the far side, rotated <see cref="LandingStepDegrees"/>
+    /// from wherever it currently stands — so it never ends up stacked on the target's own spot, every dash reads as a
+    /// cut THROUGH the target, and five in a row trace a star on the ground. Deliberately derived from the caster's
+    /// CURRENT bearing rather than a stored step index: there is no sequence state to reset, an interrupted chain just
+    /// resumes from wherever it stopped, and the pattern is the same on every unit-aimed relocation. A pure ground aim
+    /// — no unit given and no mob standing on the spot — is used verbatim.</summary>
     static Vector3 RelocationDest(Vector3 aim, Transform unit)
     {
         if (casterAtk == null)
@@ -133,7 +144,11 @@ public static class SkillEffectApplier
         if (unit != null) center = unit.position;
         else if (!MobAt(aim, reach, out center)) return aim;
 
-        float a = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+        // Bearing of the caster AS IT STANDS NOW, measured around the target, then stepped. A caster standing exactly
+        // on the target has no bearing to step from — fall back to its facing so the hop still has a direction.
+        Vector3 from = casterAtk.transform.position - center; from.y = 0f;
+        if (from.sqrMagnitude < 1e-6f) from = casterAtk.transform.forward;
+        float a = Mathf.Atan2(from.z, from.x) + LandingStepDegrees * Mathf.Deg2Rad;
         return new Vector3(center.x + Mathf.Cos(a) * reach, center.y, center.z + Mathf.Sin(a) * reach);
     }
 
@@ -376,6 +391,18 @@ public static class SkillEffectApplier
         if (tagDisplay) h.States.ClearApplyContext();
     }
 
+    // The PLAYER-side twin of ApplyExecute: the same missing-HP curve turned on the caster (a risk effect — the closer
+    // to death you are, the more it bites). Same formula, different HP source, so the two can't drift.
+    static void ApplyExecuteToPlayer(SkillEffect e, Character ch, float extraMult, int extraFlat, float comboMult)
+    {
+        if (ch.MaxHP <= 0 || e.magnitude <= 0f) return;
+        float missing = 1f - Mathf.Clamp01((float)ch.CurrentHP / ch.MaxHP);
+        if (missing <= 0f) return;
+        int bonus = Mathf.RoundToInt(RollPower(e, extraMult, extraFlat, comboMult, out _, ch) * e.magnitude * missing);
+        if (bonus <= 0) return;
+        CombatAuthority.Apply(ch, new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic));
+    }
+
     // Execute: a self-contained bonus hit scaled by the target's MISSING HP (proc'd per hit by the caller). magnitude =
     // execute power: bonus = roll × magnitude × (1 − HP fraction), so it's tiny at full HP and huge near death.
     static void ApplyExecute(SkillEffect e, Health h, float extraMult, int extraFlat, float comboMult, Character caster)
@@ -438,7 +465,20 @@ public static class SkillEffectApplier
             case SkillEffectKind.Haste:
                 if (hit == 0 && StatusController.Player != null) StatusController.Player.Haste(ScaledMagnitude(e, ch), ScaledSeconds(e, ch));
                 break;
-            // Execute / Taunt / Vulnerability / Knockback / Pull are aimed at mobs — no-op on the player.
+            case SkillEffectKind.Vulnerability:
+                // Self armour-fray — the "fragile" half of a power-up (Overclock's 2× incoming). Writes the SAME state
+                // a mob's BeginVulnerable does, at the same convention (magnitude = the EXTRA fraction), so one debuff
+                // means one thing on either side of the fight.
+                if (hit == 0 && ScaledSeconds(e, ch) > 0f)
+                    ch.States.Apply(StateId.Vulnerability, ScaledSeconds(e, ch), Mathf.Max(0f, ScaledMagnitude(e, ch)));
+                break;
+            case SkillEffectKind.Execute:
+                if (Fires(e, hit, ch)) ApplyExecuteToPlayer(e, ch, extraMult, extraFlat, comboMult);
+                break;
+            // Taunt is deliberately absent: it forces a MOB's aggro onto the caster, and there is no such thing as
+            // "the player's aggro" — on yourself it would be a knob that means nothing. Don't "complete" it here.
+            // Knockback / Pull are absent for a different reason: the shove sink is a mob mover (MonsterAI3D.Knockback);
+            // the player has no equivalent movement primitive yet, so they'd be silent no-ops until one exists.
             // Guard / Teleport / Dash / Buff / Regen / Cleanse / ManaLeech / Reflect / Shield are CASTER effects: they
             // live in ApplyOneToCaster and ran in pass 1 of ApplyBurst. Deliberately absent here — the two switches are
             // a partition (see SkillEffect.IsSelfVerb), so a Self-targeted tick can't apply them a second time.

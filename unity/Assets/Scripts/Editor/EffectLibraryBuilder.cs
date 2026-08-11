@@ -5,10 +5,11 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Scans the particle-effect prefab folders and (re)builds <c>Resources/EffectLibrary.asset</c> — the table
-/// <see cref="EffectCatalog"/>/<see cref="Vfx"/> resolve ids against. Each prefab becomes an <see cref="EffectDef"/>
-/// whose id is a category prefix + kebab-cased name (e.g. <c>Hits and explosions/Explosion</c> →
-/// <c>hit.explosion</c>, <c>Procedural fire/…/Explosion</c> → <c>fire.explosion</c>). Idempotent and
+/// Scans the authored VFX prefab palette (<c>Assets/1_Authored/Prefabs/VFX/&lt;Category&gt;/</c>) and (re)builds
+/// <c>Resources/EffectLibrary.asset</c> — the table <see cref="EffectCatalog"/>/<see cref="Vfx"/> resolve ids
+/// against. Each prefab becomes an <see cref="EffectDef"/> whose id is the category prefix + kebab-cased name
+/// (e.g. <c>Hits/Explosion</c> → <c>hit.explosion</c>, <c>Fire/Fire footprint</c> →
+/// <c>fire.footprint</c>). Idempotent and
 /// NON-destructive: an existing entry (matched by prefab reference) keeps its id + hand-tuned scale/lifetime, so
 /// re-running only ADDS new prefabs and reports entries whose prefab was deleted. Menu:
 /// <b>Tools ▸ unwritten ▸ Art ▸ Rebuild Effect Library</b>.
@@ -18,12 +19,10 @@ public static class EffectLibraryBuilder
     // A prefab folder to scan. Prefix modes (checked in this order):
     //   FixedPrefix != null           → every prefab under it gets that id prefix (a flat vendor pack).
     //   ByFirstSubfolder == true       → the id prefix is the FIRST subfolder under Path (the drop-in CONVENTION root:
-    //                                     Assets/1_Authored/Art/VFX/<prefix>/… → "<prefix>.*", any depth below that). No code edit
-    //                                     per pack — just drop prefabs into a prefix-named folder and Rebuild.
+    //                                     Assets/1_Authored/Prefabs/VFX/<Category>/… → "<prefix>.*", any depth below that).
+    //                                     No code edit per pack — just drop prefabs into a category folder and Rebuild.
     //   otherwise                      → the prefix is each prefab's IMMEDIATE parent folder via CategoryPrefix (a
     //                                     vendor pack pre-nested by category, e.g. Hovl).
-    // The vendor roots are source-specific by design — add one per pack imported. The convention root below means
-    // most new packs need NO code change at all.
     struct ScanRoot
     {
         public string Path;
@@ -34,40 +33,33 @@ public static class EffectLibraryBuilder
         { Path = path; FixedPrefix = fixedPrefix; ExtraDrop = extraDrop; ByFirstSubfolder = byFirstSubfolder; }
     }
 
-    // Universal naming noise stripped from generated ids everywhere (art tools name files "FX_…"/"VFX_…").
-    static readonly string[] NoiseTokens = { "fx", "vfx" };
+    // Universal naming noise stripped from generated ids everywhere ("FX_…"/"VFX_…" from art tools, and the
+    // "MagicCircle" restatement in the Eric VFX file names so those read "circle.icearrow01").
+    static readonly string[] NoiseTokens = { "fx", "vfx", "magiccircle" };
 
+    // ONE root: every effect prefab we use lives under the authored VFX palette, filed by category folder. Vendor
+    // packs are baked into it (they're placed from here, never straight out of 0_Raw), so there are no per-pack
+    // roots to keep in sync — drop a prefab into a category folder and Rebuild picks it up.
     static readonly ScanRoot[] Roots =
     {
-        // ── The drop-in convention root: NO code edit needed for new packs. ─────────────────────────────
-        // Make a subfolder named for the id prefix you want (e.g. Assets/1_Authored/Art/VFX/circle/), drop the pack's
-        // prefabs in (any depth below it), then run Rebuild Effect Library → ids read "circle.<name>".
-        new ScanRoot("Assets/1_Authored/Art/VFX", byFirstSubfolder: true, extraDrop: NoiseTokens),
-
-        // ── Vendor packs left in their imported location (one line per pack). ──────────────────────────
-        new ScanRoot("Assets/0_Raw/Hovl Studio/Magic effects pack/Prefabs"),          // nested by category
-        new ScanRoot("Assets/0_Raw/Hovl Studio/Procedural fire/Prefabs", "fire"),     // flat → all "fire.*"
-        // Eric VFX ground circles — flat pack; drop the "FX_"/"MagicCircle" naming noise so ids read "circle.icearrow01".
-        new ScanRoot("Assets/0_Raw/Eric VFX Studio/Game VFX - Magic Circle(Free)/Prefabs", "circle", new[] { "fx", "magiccircle" }),
-        // NamuFX stylized water — flat pack, all water FX → "water.*" (e.g. Water_Splash_A → water.splash-a, the
-        // puddle step splash WaterStep resolves by default).
-        new ScanRoot("Assets/0_Raw/NamuFX/StylizedWaterEffects/Prefabs", "water"),
+        new ScanRoot("Assets/1_Authored/Prefabs/VFX", byFirstSubfolder: true, extraDrop: NoiseTokens),
     };
 
     const string LibraryPath = "Assets/3_Data/Resources/EffectLibrary.asset";
 
-    // Category subfolder → id prefix (for nested roots). A folder not listed falls back to the kebab of its name.
+    // Category folder → id prefix. Keyed by the REAL folder names under the root above; a folder not listed falls
+    // back to the kebab of its name (so "Fire" → "fire.*"). The entries here exist because the folder is plural or
+    // spelled differently from the established prefix — without them new drops would read "hits.*"/"slashes.*" and
+    // clash with the "hit.*"/"slash.*" ids already in the library.
     static readonly Dictionary<string, string> CategoryPrefix = new Dictionary<string, string>
     {
-        { "AoE effects", "aoe" },
-        { "Character auras", "aura" },
+        { "Auras", "aura" },
         { "Environment", "env" },
-        { "Hits and explosions", "hit" },
-        { "Magic circles", "circle" },
-        { "Magic shields", "shield" },
+        { "Hits", "hit" },
+        { "MagicCircles", "circle" },
+        { "Shields", "shield" },
         { "Portals", "portal" },
-        { "Slash effects", "slash" },
-        { "Smoke effects", "smoke" },
+        { "Slashes", "slash" },
         { "Sparks", "spark" },
     };
 
@@ -146,9 +138,9 @@ public static class EffectLibraryBuilder
         return sb.ToString();
     }
 
-    // "…/Hits and explosions/Explosion.prefab" → "hit.explosion". Prefix is the root's FixedPrefix (flat pack)
-    // or, for a nested root, the immediate parent folder mapped via CategoryPrefix. The name is kebab-cased with
-    // any token equal to the prefix stripped (so "AoE slash blue" → "aoe.slash-blue").
+    // "…/VFX/Hits/Explosion.prefab" → "hit.explosion". Prefix is the root's FixedPrefix (flat pack), the first
+    // subfolder under the root (convention root), or the immediate parent folder — each mapped via CategoryPrefix.
+    // The name is kebab-cased with any token equal to the prefix stripped (so "AoE slash blue" → "aoe.slash-blue").
     static string MakeId(string assetPath, ScanRoot root)
     {
         string prefix;
