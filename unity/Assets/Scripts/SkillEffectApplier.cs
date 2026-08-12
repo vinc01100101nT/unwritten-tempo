@@ -369,7 +369,8 @@ public static class SkillEffectApplier
                 if (hit == 0) h.Heal(ScaledAmount(e, caster));
                 break;
             case SkillEffectKind.Haste:
-                if (Fires(e, hit, caster)) { var s = Status.Of(ai.gameObject); if (s != null) s.Haste(ScaledMagnitude(e, caster), ScaledSeconds(e, caster)); }
+                // Authored as a BONUS FRACTION (0.3 = +30%; negative slows, Haste's mob-debuff job) → multiplier.
+                if (Fires(e, hit, caster)) { var s = Status.Of(ai.gameObject); if (s != null) s.Haste(1f + ScaledMagnitude(e, caster), ScaledSeconds(e, caster)); }
                 break;
             case SkillEffectKind.Taunt:
                 if (hit == 0) ai.Taunt(ScaledSeconds(e, caster));
@@ -463,7 +464,7 @@ public static class SkillEffectApplier
                 if (Fires(e, hit, ch) && StatusController.Player != null) StatusController.Player.Apply(e.ailment, ScaledSeconds(e, ch), ScaledMagnitude(e, ch));
                 break;
             case SkillEffectKind.Haste:
-                if (hit == 0 && StatusController.Player != null) StatusController.Player.Haste(ScaledMagnitude(e, ch), ScaledSeconds(e, ch));
+                if (hit == 0 && StatusController.Player != null) StatusController.Player.Haste(1f + ScaledMagnitude(e, ch), ScaledSeconds(e, ch));
                 break;
             case SkillEffectKind.Vulnerability:
                 // Self armour-fray — the "fragile" half of a power-up (Overclock's 2× incoming). Writes the SAME state
@@ -493,7 +494,8 @@ public static class SkillEffectApplier
         // AMPLIFY buffs use a FLAT magnitude (NOT affinity-scaled): a DPS can't out-buff via their own offense. The
         // support's contribution is UPTIME (duration scales off sustain stats) and, on the Damage buff, the RAMP
         // ceiling (a longer buff climbs higher). See design "Support Scaling".
-        float mult = e.magnitude <= 0f ? 1f : e.magnitude;
+        // Authored magnitude is a BONUS FRACTION (0.3 = +30%, stacking or not); the Buff* APIs take a multiplier.
+        float mult = 1f + Mathf.Max(0f, e.magnitude);
         float sec  = ScaledSeconds(e, ch);
         switch (e.buffStat)
         {

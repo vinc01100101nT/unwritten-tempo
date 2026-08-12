@@ -951,7 +951,7 @@ public class SkillComposerWindow : EditorWindow
                         "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
                     break;
                 case SkillEffectKind.Haste:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("speed ×", "Move-speed multiplier (>1 = faster)."), ef.magnitude <= 0f ? 1.3f : ef.magnitude, 0.2f, 3f);
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("speed bonus (0.3 = +30%)", "The BONUS, not a multiplier: 0.3 = +30% move speed. NEGATIVE slows instead (Haste's mob-debuff job): -0.4 = 40% slower."), ef.magnitude, -0.9f, 2f);
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the speed boost lasts."), ef.seconds, 0.5f, 20f);
                     break;
                 case SkillEffectKind.Guard:
@@ -990,8 +990,8 @@ public class SkillComposerWindow : EditorWindow
                 case SkillEffectKind.Buff:
                     ef.buffStat = (BuffStat)EditorGUILayout.EnumPopup(new GUIContent("stat",
                         "Which self-stat is buffed. AMPLIFY buffs are FLAT — magnitude is NOT affinity-scaled, so a DPS can't out-buff via their offense."), ef.buffStat);
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("flat multiplier ×",
-                        "1.3 = +30%. FLAT (no affinity). A support's value is UPTIME (duration ↓ scales off sustain) + the ramp, not a bigger number."), ef.magnitude <= 0f ? 1.3f : ef.magnitude, 1f, 3f);
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("bonus (0.3 = +30%)",
+                        "The BONUS, not a multiplier: 0.3 = +30%. On a STACKING buff this is the PER-STACK bonus, so ten 0.03 stacks = +30%. FLAT (no affinity). A support's value is UPTIME (duration ↓ scales off sustain) + the ramp, not a bigger number."), Mathf.Max(0f, ef.magnitude), 0f, 2f);
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds",
                         "Base duration — scales UP off sustain stats via the DURATION affinity below (high-MP support keeps it up longer)."), ef.seconds, 0.5f, 30f);
                     if (ef.buffStat == BuffStat.Damage)

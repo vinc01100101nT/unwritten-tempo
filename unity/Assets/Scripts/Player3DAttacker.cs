@@ -337,10 +337,10 @@ public class Player3DAttacker : MonoBehaviour
         if (ctx.KnockbackSpeed > 0f)
             ai.Knockback(transform.position, ctx.KnockbackSpeed, ctx.KnockbackSecs, Mathf.Max(ctx.StaggerSecs, ctx.KnockbackSecs));
         else if (ctx.StaggerSecs > 0f) ai.Stagger(ctx.StaggerSecs);
-        // Slow / Root write the unified store's Slow state (drives MoveMult, the single mob-speed source). Explicit
-        // factors bypass the ailment default (0 = a hard root to full stop, exactly the old ai.Slow(0f,…) behaviour).
-        if (ctx.SlowSecs > 0f && ctx.SlowFactor < 1f) h.States.Apply(StateId.Slow, ctx.SlowSecs, ctx.SlowFactor);
-        if (ctx.RootSecs > 0f) h.States.Apply(StateId.Slow, ctx.RootSecs, 0f);   // Root (Entangling mod) = a hard slow to ~0
+        // Slow / Root write the unified store's Slow state (drives MoveMult, the single mob-speed source). SlowFactor is
+        // a TARGET SPEED (0.6 = moves at 60%); the store keeps a bonus FRACTION, so the slow is 1 − that.
+        if (ctx.SlowSecs > 0f && ctx.SlowFactor < 1f) h.States.Apply(StateId.Slow, ctx.SlowSecs, 1f - ctx.SlowFactor);
+        if (ctx.RootSecs > 0f) h.States.Apply(StateId.Slow, ctx.RootSecs, 1f);   // Root (Entangling mod) = slowed 100% = full stop
     }
 
     void OnDrawGizmosSelected()

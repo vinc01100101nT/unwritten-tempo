@@ -176,7 +176,9 @@ public class StatusController : MonoBehaviour
         float mg = a == Ailment.Slow  ? Mathf.Clamp01(magnitude <= 0f ? 0.5f : magnitude)
                  : a == Ailment.Blind ? Mathf.Max(1f, magnitude <= 0f ? 30f : magnitude)
                  : 0f;
-        states.Apply(id, seconds, mg);
+        // Slow is AUTHORED as a target-speed factor (0.4 = moves at 40%) while the store keeps a bonus FRACTION
+        // (how much speed is lost) — convert here, so the authored meaning and the tooltip stay as they are.
+        states.Apply(id, seconds, a == Ailment.Slow ? 1f - mg : mg);
 
         switch (a)
         {
@@ -245,7 +247,8 @@ public class StatusController : MonoBehaviour
     {
         if (seconds <= 0f || states == null) return;
         bool wasActive = states.Has(StateId.Haste);
-        states.Apply(StateId.Haste, seconds, Mathf.Max(0.01f, multiplier));
+        // This API speaks MULTIPLIERS (×1.3), the store keeps a BONUS FRACTION (0.3) — convert once, here.
+        states.Apply(StateId.Haste, seconds, Mathf.Max(0.01f, multiplier) - 1f);
         if (!wasActive)
         {
             DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Haste!", HasteColor);

@@ -91,12 +91,12 @@ public class UnitStates : MonoBehaviour
         /// <summary>How many stacks are live (1 for a non-stacking state).</summary>
         public int StackCount => stacks.Count;
 
-        /// <summary>This state's magnitude read as a MULTIPLIER — the ONE place the stacking encoding is applied, so no
-        /// reader can get it wrong. A stacking state stores per-stack BONUSES (ten +3% stacks sum to 0.30 ⇒ ×1.30); a
-        /// non-stacking one stores the multiplier outright (1.5 ⇒ ×1.5). Only mult-style channels (Haste, the stat
-        /// buffs) use this; additive ones (DoT, shield, guard cut) read <see cref="magnitude"/> directly, since a plain
-        /// sum is already correct for them.</summary>
-        public float Mult => stacking ? 1f + magnitude : magnitude;
+        /// <summary>This state's magnitude read as a MULTIPLIER — the ONE place the encoding is applied, so no reader
+        /// can get it wrong. Magnitude is ALWAYS a BONUS FRACTION (0.3 ⇒ +30% ⇒ ×1.30), stacking or not: a stacking
+        /// state's is the SUM of its per-stack bonuses (ten 0.03 stacks ⇒ 0.30), a non-stacking state's is simply its
+        /// own. Only mult-style channels (Haste, the stat buffs) use this; additive ones (DoT, shield, guard cut) read
+        /// <see cref="magnitude"/> directly, since a plain sum is already correct for them.</summary>
+        public float Mult => 1f + magnitude;
 
         public float Remaining => Mathf.Max(0f, endTime - Time.time);
         public float Fraction01 => endTime > startTime ? Mathf.Clamp01((endTime - Time.time) / (endTime - startTime)) : 0f;
@@ -423,12 +423,15 @@ public class UnitStates : MonoBehaviour
     // Fold the active list into the cached scalars. Runs ONLY on a set change — never per query. Neutral defaults when
     // a state is absent (mult = 1, cut/penalty = 0). Slow × Haste multiply, matching StatusController.MoveMult.
     //
-    // MAGNITUDE ENCODING — the one rule that keeps stacking honest:
-    //   • NON-stacking states store the ABSOLUTE value (a Haste of 1.5 IS ×1.5; a Slow of 0.5 IS half speed).
-    //   • STACKING states store the PER-STACK DELTA, and s.magnitude is their SUM (10 stacks of 0.03 ⇒ 0.30).
-    // Summing absolute multipliers would be nonsense (ten ×1.03 buffs are not ×10.3), so a stacking mult-style channel
-    // reads 1 + sum and a stacking slow reads 1 − sum. Additive channels (guard cut, vuln, DoT, shield, leech, reflect,
-    // blind) sum correctly either way, so they need no branch.
+    // MAGNITUDE ENCODING — ONE rule, no stacking branch: magnitude is ALWAYS a BONUS FRACTION.
+    //   • 0.3 means +30%, whether it came from one non-stacking buff or ten stacks of 0.03.
+    //   • Mult-style channels therefore read 1 + magnitude, and Slow reads 1 − magnitude, unconditionally.
+    // It used to depend on `stacking` — non-stacking stored the absolute multiplier (1.3 = ×1.3) while stacking stored
+    // per-stack deltas — so the SAME authored number meant +30% on one skill and +130% on another. Nothing in the
+    // composer or the tooltip could show which, and a stacking buff authored as 1.03 silently read as +103% per stack.
+    // Converting to a fraction happens ONCE, at each entry point (StatusController.Haste, Character.Buff*, the Slow
+    // applies), so callers keep their natural units and the store keeps one meaning. Additive channels (guard cut,
+    // vuln, DoT, shield, leech, reflect, blind) were always fractions and are unaffected.
     void Recompute()
     {
         // Mult-style channels accumulate BONUSES (a ×1.3 pile contributes +0.30) and are converted back to a multiplier
@@ -449,10 +452,10 @@ public class UnitStates : MonoBehaviour
             // Earliest STACK expiry drives EnsureFresh — a pile must wake up when its FIRST stack lapses, not its last.
             for (int k = 0; k < s.stacks.Count; k++)
                 if (s.stacks[k].endTime < nextExpiry) nextExpiry = s.stacks[k].endTime;
-            float mult = s.Mult;   // stacking stores per-stack deltas — State.Mult owns that rule
+            float mult = s.Mult;   // magnitude is a bonus fraction — State.Mult owns that rule
             switch (s.id)
             {
-                case StateId.Slow:            slow = Mathf.Min(slow, Mathf.Clamp01(s.stacking ? 1f - s.magnitude : s.magnitude)); break;   // harshest slow wins
+                case StateId.Slow:            slow = Mathf.Min(slow, Mathf.Clamp01(1f - s.magnitude)); break;   // harshest slow wins
                 case StateId.Haste:           hasteBonus += (mult <= 0f ? 1f : mult) - 1f; break;
                 case StateId.Stun:
                 case StateId.Freeze:          cannotAct = true; break;

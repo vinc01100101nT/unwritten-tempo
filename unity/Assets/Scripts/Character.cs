@@ -786,7 +786,8 @@ public class Character : MonoBehaviour, IDamageable
     {
         if (seconds <= 0f) return;
         // Apply keeps startTime on a refresh of a live buff (ramp progress preserved) and resets it on a lapsed re-cast.
-        var s = States.Apply(StateId.DamageBuff, seconds, Mathf.Max(0.01f, mult));
+        // These Buff* APIs speak MULTIPLIERS (×1.3); the store keeps a BONUS FRACTION (0.3) — convert once, here.
+        var s = States.Apply(StateId.DamageBuff, seconds, Mathf.Max(0.01f, mult) - 1f);
         if (s == null) return;
         s.rampDelay = Mathf.Max(0f, rampDelay);
         s.rampPerStep = Mathf.Max(0f, rampPerStep);
@@ -794,9 +795,9 @@ public class Character : MonoBehaviour, IDamageable
         s.rampCap = rampCap;
     }
     /// <summary>Timed attack-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
-    public void BuffAttackSpeed(float mult, float seconds) { if (seconds <= 0f) return; States.Apply(StateId.AttackSpeedBuff, seconds, Mathf.Max(0.01f, mult)); }
+    public void BuffAttackSpeed(float mult, float seconds) { if (seconds <= 0f) return; States.Apply(StateId.AttackSpeedBuff, seconds, Mathf.Max(0.01f, mult) - 1f); }
     /// <summary>Timed cast-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
-    public void BuffCastSpeed(float mult, float seconds)   { if (seconds <= 0f) return; States.Apply(StateId.CastSpeedBuff, seconds, Mathf.Max(0.01f, mult)); }
+    public void BuffCastSpeed(float mult, float seconds)   { if (seconds <= 0f) return; States.Apply(StateId.CastSpeedBuff, seconds, Mathf.Max(0.01f, mult) - 1f); }
 
     /// <summary>Start (or refresh) a heal-over-time: <paramref name="perTick"/> HP every <see cref="RegenInterval"/>s
     /// for <paramref name="seconds"/> (Mending Tide). Ticked in <see cref="Update"/>.</summary>

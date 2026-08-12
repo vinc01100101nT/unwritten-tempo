@@ -65,7 +65,7 @@ MonoBehaviour:
       ailment: 2
       seconds: 5
       shoveSeconds: 0.25
-      magnitude: 1.05
+      magnitude: 0.05
       stacking: 1
       stackLimit: 6
       stacksPerApply: 6

@@ -140,11 +140,12 @@ public static class SkillTooltip
             case SkillEffectKind.Taunt:         return "Taunts nearby enemies for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Teleport:      return "Blinks to the target location";
             case SkillEffectKind.Dash:          return "Dashes to the target location";
-            case SkillEffectKind.Buff:          return "+" + Pct(Mathf.Max(0f, e.magnitude - 1f)) + " " + BuffStatName(e.buffStat) + " for " + Hl(e.seconds.ToString("0.#") + "s");
+            // Magnitude is the bonus itself (0.3 = +30%); on a stacking buff it is the PER-STACK bonus, so say so.
+            case SkillEffectKind.Buff:          return "+" + Pct(Mathf.Max(0f, e.magnitude)) + " " + BuffStatName(e.buffStat) + (e.stacking ? " per stack" : "") + " for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Regen:         return "Restores " + Hl(e.magnitude.ToString("0.#")) + " HP/sec for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Cleanse:       return "Removes " + Hl(Mathf.Max(1, e.amount).ToString()) + " debuff(s)";
             case SkillEffectKind.Vulnerability: return "Enemies take +" + Pct(e.magnitude) + " damage for " + Hl(e.seconds.ToString("0.#") + "s");
-            case SkillEffectKind.Haste:         return "+" + Pct(Mathf.Max(0f, e.magnitude - 1f)) + " move speed for " + Hl(e.seconds.ToString("0.#") + "s");
+            case SkillEffectKind.Haste:         return (e.magnitude < 0f ? "−" + Pct(-e.magnitude) : "+" + Pct(e.magnitude)) + " move speed for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Knockback:     return "Knocks enemies back";
             case SkillEffectKind.Pull:          return "Pulls enemies in";
             case SkillEffectKind.ManaLeech:     return "Restores " + Pct(Mathf.Clamp01(e.magnitude)) + " of damage dealt as MP for " + Hl(e.seconds.ToString("0.#") + "s");
