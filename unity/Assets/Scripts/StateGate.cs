@@ -21,13 +21,24 @@ using UnityEngine;
 public static class StateGate
 {
     /// <summary>True when <paramref name="def"/> may run right now. A skill with no requirement always passes.
-    /// Gates the WHOLE skill — callers must bail before playing any VFX or paying any cost.</summary>
+    /// Gates the WHOLE skill — callers must bail before playing any VFX or paying any cost.
+    ///
+    /// <para><b>Requiring and spending are SEPARATE questions.</b> A minimum of 0 means "no gate": the skill fires
+    /// with an empty pile and simply cashes whatever is there. That's Deathblow — a Sword that never rolled Momentum
+    /// still swings it, just without the payoff — and it's why this can't fold back into the on/off switch.</para></summary>
     public static bool IsMet(SkillDef def, UnitStates states)
     {
         if (def == null || !def.requiresState) return true;
+        if (def.requireMinStacks <= 0) return true;              // reads the pile, but doesn't demand it
         if (states == null) return false;
-        return states.StackCount(def.requireState) >= Mathf.Max(1, def.requireMinStacks);
+        return StackCount(def, states) >= def.requireMinStacks;
     }
+
+    /// <summary>How many stacks of the required SKILL's pile the caster holds RIGHT NOW — the snapshot a cast takes
+    /// before it spends anything, so its payoff and its cost read the same pile (the locked compute-before-consume
+    /// order). 0 when the skill reads no pile.</summary>
+    public static int StackCount(SkillDef def, UnitStates states) =>
+        def != null && def.requiresState && states != null ? states.StacksFrom(def.requireSkillId) : 0;
 
     /// <summary>Spend what this use costs, AFTER the skill's effects have computed. No-op when the skill has no
     /// requirement or spends nothing (a pure "while X" condition). Returns how many stacks were actually spent.</summary>
@@ -35,6 +46,6 @@ public static class StateGate
     {
         if (def == null || !def.requiresState || states == null) return 0;
         if (!def.consumeAllStacks && def.consumeStacks <= 0) return 0;
-        return states.Consume(def.requireState, def.consumeStacks, def.consumeAllStacks);
+        return states.ConsumeFrom(def.requireSkillId, def.consumeStacks, def.consumeAllStacks);
     }
 }

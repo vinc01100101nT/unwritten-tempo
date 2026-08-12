@@ -42,6 +42,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // see "this passive is already upstream of me" no matter how many frames later the damage lands.
     ulong castChain;
     bool consumedThisCast;              // the gate spends ONCE per cast, right after the effects have computed
+    // The required state's stack count SNAPSHOT at cast start — taken before anything is spent, and reused by every
+    // tick of the cast. A live re-read would pay the first tick off the full pile and the rest off an empty one, and
+    // would also make a multi-tick finisher's damage depend on tick ORDER. (Locked order: snapshot → compute → consume.)
+    int castStacks;
 
     /// <summary>The caster's unified state store — the ONE store the gate reads and spends from.</summary>
     public UnitStates CasterStates => Character.Instance != null ? Character.Instance.States : null;
@@ -286,6 +290,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     void PlayCycles()
     {
         consumedThisCast = false;   // this cast hasn't paid its state cost yet — it pays once, after its effects compute
+        castStacks = StateGate.StackCount(def, CasterStates);   // the pile this cast is about to cash, read BEFORE spending it
         if (!def.IsPassive) castChain = 0UL;   // a player-pressed cast starts a FRESH chain (nothing caused it)
 
         // The cast finished UNINTERRUPTED (an interrupt runs EndCast + bails before here) — announce it so any passive
@@ -418,9 +423,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         ulong prevChain = PassiveEvents.PushChain(castChain);
         try
         {
+            // The stack payoff rides the burst's EXISTING extra-multiplier input (it adds to each effect's own
+            // damageMult), so cashing a pile can't become a second damage path beside the normal roll.
             SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, b.effects,
-                                          lastCtx.targetUnit, 0f, 0, comboDamageMult,
-                                          def.icon, def.displayName,
+                                          lastCtx.targetUnit, def.StackDamageBonus(castStacks), 0, comboDamageMult,
+                                          def.icon, def.displayName, def.id,   // def.id KEYS the pile: stacks belong to the skill that granted them
                                           aimPoint: lastCtx.effectPoint,   // Dash/Teleport go where stage 2 aimed, not to the tick's VFX anchor
                                           caster: Character.Instance); // explicit caster (local player today; a per-connection entity once server-authoritative)
         }

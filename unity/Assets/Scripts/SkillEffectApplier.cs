@@ -39,7 +39,7 @@ public static class SkillEffectApplier
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   float extraMult = 0f, int extraFlat = 0, float comboMult = 1f,
-                                  Sprite srcIcon = null, string srcName = null,
+                                  Sprite srcIcon = null, string srcName = null, string srcId = null,
                                   Vector3? aimPoint = null, Character caster = null)
     {
         if (effects == null || effects.Count == 0) return;
@@ -56,7 +56,7 @@ public static class SkillEffectApplier
         // PASS 1 — CASTER effects (see SkillEffect.IsSelfVerb): they happen TO THE CASTER, so the tick's targeting has no say.
         // They run here exactly once, whatever the scope/affects are, and are excluded from the target pass below — so
         // "Single Target on a mob" can't swallow a Dash (the bug this split fixes), and a Self tick can't double-apply it.
-        ApplyCasterEffects(effects, selfPoint, singleTarget, srcIcon, srcName, ch);
+        ApplyCasterEffects(effects, selfPoint, singleTarget, srcIcon, srcName, srcId, ch);
 
         // PASS 2 — TARGET effects: gather who the tick reaches, then run the hit loop on them.
         if (targets == SkillTargets.None) return;
@@ -70,11 +70,11 @@ public static class SkillEffectApplier
                 if ((targets & SkillTargets.Mobs) != 0 && mob.Health != null && !mob.Health.IsDead)
                 {
                     burstTargets.Clear(); burstTargets.Add(mob);
-                    DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult, ch, srcIcon, srcName);
+                    DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult, ch, srcIcon, srcName, srcId);
                 }
             }
             else if ((targets & SkillTargets.Player) != 0)
-                ApplyEffectsToPlayer(effects, extraMult, extraFlat, comboMult, srcIcon, srcName, ch);
+                ApplyEffectsToPlayer(effects, extraMult, extraFlat, comboMult, srcIcon, srcName, srcId, ch);
             return;
         }
 
@@ -92,7 +92,7 @@ public static class SkillEffectApplier
                 if (d.sqrMagnitude > r2) continue;
                 burstTargets.Add(ai);
             }
-            DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult, ch, srcIcon, srcName);
+            DispatchMobHits(effects, burstTargets, extraMult, extraFlat, comboMult, ch, srcIcon, srcName, srcId);
         }
 
         if ((targets & SkillTargets.Player) != 0)
@@ -101,7 +101,7 @@ public static class SkillEffectApplier
             // no skill is a "hazard zone that hits the player if inside", and a ground cast's point is by definition
             // somewhere the caster isn't standing. Caster effects already ran in pass 1 and are not repeated here.
             if (ch != null && !ch.IsDead)
-                ApplyEffectsToPlayer(effects, extraMult, extraFlat, comboMult, srcIcon, srcName, ch);
+                ApplyEffectsToPlayer(effects, extraMult, extraFlat, comboMult, srcIcon, srcName, srcId, ch);
         }
     }
 
@@ -175,27 +175,27 @@ public static class SkillEffectApplier
     // Every CASTER-side effect in the list, applied ONCE to the acting caster. No hit loop: a caster effect isn't a
     // strike, so a multi-hit flurry must not dash you N times (target effects own hitCount, see HitLoops).
     static void ApplyCasterEffects(List<SkillEffect> effects, Vector3 point, Transform aimUnit,
-                                   Sprite srcIcon, string srcName, Character ch)
+                                   Sprite srcIcon, string srcName, string srcId, Character ch)
     {
         if (ch == null || ch.IsDead) return;
         for (int i = 0; i < effects.Count; i++)
         {
             var e = effects[i];
-            if (e != null && SkillEffect.IsSelfVerb(e.kind)) ApplyOneToCaster(e, ch, point, aimUnit, srcIcon, srcName);
+            if (e != null && SkillEffect.IsSelfVerb(e.kind)) ApplyOneToCaster(e, ch, point, aimUnit, srcIcon, srcName, srcId);
         }
     }
 
     /// <summary>One caster-side effect. <paramref name="point"/> is the AIM point — the destination a Dash/Teleport
     /// moves the caster to (resolved through <see cref="RelocationDest"/>, which lands it BESIDE an aimed unit rather
     /// than on top of it). <paramref name="aimUnit"/> is the cast's picked unit, if it had one.</summary>
-    static void ApplyOneToCaster(SkillEffect e, Character ch, Vector3 point, Transform aimUnit, Sprite srcIcon, string srcName)
+    static void ApplyOneToCaster(SkillEffect e, Character ch, Vector3 point, Transform aimUnit, Sprite srcIcon, string srcName, string srcId)
     {
         // A durational self-effect tags its state entry with the SOURCE skill's icon + name + "what it does", so the
         // buff tray shows the same icon the hotbar uses, counting down. Set BEFORE the gameplay call (the store's
         // Apply reads the latch), cleared AFTER — the store is the single display source.
         bool tagDisplay = e.seconds > 0f;
         if (tagDisplay) ch.States.SetApplyContext(srcIcon, srcName, SkillTooltip.DescribeEffect(e),
-                                                  e.stacking, e.stacksPerApply, e.stackLimit);
+                                                  e.stacking, e.stacksPerApply, e.stackLimit, srcId);
         switch (e.kind)
         {
             case SkillEffectKind.Guard:
@@ -265,13 +265,13 @@ public static class SkillEffectApplier
     // exactly like RO — instead of N overlapping numbers dumped in a single frame.
     static void DispatchMobHits(List<SkillEffect> effects, List<MonsterAI3D> mobs,
                                 float extraMult, int extraFlat, float comboMult, Character caster,
-                                Sprite srcIcon = null, string srcName = null)
+                                Sprite srcIcon = null, string srcName = null, string srcId = null)
     {
         if (mobs.Count == 0) return;
         if (HitLoops(effects, caster) <= 1)
         {
             for (int i = 0; i < mobs.Count; i++)
-                ApplyEffectsToMob(effects, mobs[i], extraMult, extraFlat, comboMult, caster, srcIcon, srcName);
+                ApplyEffectsToMob(effects, mobs[i], extraMult, extraFlat, comboMult, caster, srcIcon, srcName, srcId);
             return;
         }
         // A flurry's later strikes land on LATER FRAMES, outside the caster's tick — so the causal chain must ride the
@@ -281,7 +281,7 @@ public static class SkillEffectApplier
             (ai, hit) =>
             {
                 ulong prev = PassiveEvents.PushChain(chain);
-                try { return ApplyHitToMob(effects, ai, hit, extraMult, extraFlat, comboMult, caster, srcIcon, srcName); }
+                try { return ApplyHitToMob(effects, ai, hit, extraMult, extraFlat, comboMult, caster, srcIcon, srcName, srcId); }
                 finally { PassiveEvents.PopChain(prev); }   // the damage dealt feeds the mob's rising combo total
             });
     }
@@ -291,7 +291,7 @@ public static class SkillEffectApplier
     // yellow combo total can accumulate it.
     static int ApplyHitToMob(List<SkillEffect> effects, MonsterAI3D ai, int hit,
                              float extraMult, int extraFlat, float comboMult, Character caster,
-                             Sprite srcIcon = null, string srcName = null)
+                             Sprite srcIcon = null, string srcName = null, string srcId = null)
     {
         if (ai == null) return 0;
         var h = ai.Health;
@@ -310,7 +310,7 @@ public static class SkillEffectApplier
                 dealt += CombatAuthority.Apply(h, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit, overkill: true));
             }
             else
-                ApplyOneToMob(e, ai, h, hit, extraMult, extraFlat, comboMult, caster, srcIcon, srcName);   // procs / status / one-shots, unchanged
+                ApplyOneToMob(e, ai, h, hit, extraMult, extraFlat, comboMult, caster, srcIcon, srcName, srcId);   // procs / status / one-shots, unchanged
         }
         return dealt;
     }
@@ -330,7 +330,7 @@ public static class SkillEffectApplier
     /// <summary>Run the hit loop for one MOB: each hit lands the Damage strike + rolls the binding's procs.</summary>
     public static void ApplyEffectsToMob(List<SkillEffect> effects, MonsterAI3D ai,
                                          float extraMult = 0f, int extraFlat = 0, float comboMult = 1f, Character caster = null,
-                                         Sprite srcIcon = null, string srcName = null)
+                                         Sprite srcIcon = null, string srcName = null, string srcId = null)
     {
         if (effects == null || ai == null) return;
         var h = ai.Health;
@@ -338,19 +338,19 @@ public static class SkillEffectApplier
         int loops = HitLoops(effects, caster);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
-                ApplyOneToMob(effects[i], ai, h, n, extraMult, extraFlat, comboMult, caster, srcIcon, srcName);
+                ApplyOneToMob(effects[i], ai, h, n, extraMult, extraFlat, comboMult, caster, srcIcon, srcName, srcId);
     }
 
     static void ApplyOneToMob(SkillEffect e, MonsterAI3D ai, Health h, int hit,
                               float extraMult, int extraFlat, float comboMult, Character caster,
-                              Sprite srcIcon = null, string srcName = null)
+                              Sprite srcIcon = null, string srcName = null, string srcId = null)
     {
         if (e == null) return;
         // A durational debuff (Status / Haste / Vulnerability writes a state entry) carries the source skill's icon for
         // the mob's nameplate AND that effect's stacking rules. Set BEFORE the switch (the store's Apply reads this
         // context), cleared AFTER. Description is null (the nameplate has no hover card) — no per-mob string alloc.
         bool tagDisplay = e.kind == SkillEffectKind.Status || e.kind == SkillEffectKind.Haste || e.kind == SkillEffectKind.Vulnerability;
-        if (tagDisplay) h.States.SetApplyContext(srcIcon, srcName, null, e.stacking, e.stacksPerApply, e.stackLimit);
+        if (tagDisplay) h.States.SetApplyContext(srcIcon, srcName, null, e.stacking, e.stacksPerApply, e.stackLimit, srcId);
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
@@ -422,18 +422,18 @@ public static class SkillEffectApplier
     /// is the acting entity (its own self-cast target); defaults to the local player.</summary>
     public static void ApplyEffectsToPlayer(List<SkillEffect> effects,
                                             float extraMult = 0f, int extraFlat = 0, float comboMult = 1f,
-                                            Sprite srcIcon = null, string srcName = null, Character caster = null)
+                                            Sprite srcIcon = null, string srcName = null, string srcId = null, Character caster = null)
     {
         var ch = caster ?? Character.Instance;
         if (effects == null || ch == null) return;
         int loops = HitLoops(effects, ch);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
-                ApplyOneToPlayer(effects[i], ch, n, extraMult, extraFlat, comboMult, srcIcon, srcName);
+                ApplyOneToPlayer(effects[i], ch, n, extraMult, extraFlat, comboMult, srcIcon, srcName, srcId);
     }
 
     static void ApplyOneToPlayer(SkillEffect e, Character ch, int hit,
-                                 float extraMult, int extraFlat, float comboMult, Sprite srcIcon, string srcName)
+                                 float extraMult, int extraFlat, float comboMult, Sprite srcIcon, string srcName, string srcId)
     {
         if (e == null) return;
         // Caster effects already ran in pass 1 — skip them here so a self-targeted tick doesn't even churn the display
@@ -447,7 +447,7 @@ public static class SkillEffectApplier
         // same stacking rules each time (a proc that stacks must stack on hit 3 exactly as it would on hit 0).
         bool tagDisplay = e.seconds > 0f;
         if (tagDisplay) ch.States.SetApplyContext(srcIcon, srcName, SkillTooltip.DescribeEffect(e),
-                                                  e.stacking, e.stacksPerApply, e.stackLimit);
+                                                  e.stacking, e.stacksPerApply, e.stackLimit, srcId);
         switch (e.kind)
         {
             case SkillEffectKind.Damage:

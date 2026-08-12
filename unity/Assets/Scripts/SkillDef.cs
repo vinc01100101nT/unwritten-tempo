@@ -90,6 +90,15 @@ public enum AcquisitionTier { Early, Mid, Late }
 ///
 /// <para><b>Serialized by int</b>: <see cref="OnCast"/> MUST stay 0 (old assets have no <c>trigger</c> field → they
 /// deserialize as 0 = OnCast), and new values MUST be appended, never inserted.</para></summary>
+/// <summary>What each CONSUMED stack buys the skill that cashes it (the payoff half of the combo gate — the gate says
+/// what you need, this says what it's worth). One entry today: a bigger hit. New payoffs are APPENDED, never inserted —
+/// the value is serialized by int.</summary>
+public enum StackPayoff
+{
+    /// <summary>Each stack adds <see cref="SkillDef.damageMultPerStack"/> to the skill's damage multiplier.</summary>
+    Damage = 0,
+}
+
 public enum SkillTrigger
 {
     OnCast = 0,
@@ -215,19 +224,41 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     public string triggerSkillId = "";
 
     [Header("Requires a state (the combo gate)")]
-    [Tooltip("ON = this skill only runs while the caster carries the required state. It gates the WHOLE skill: when " +
-             "unmet nothing happens at all — no VFX, no cast, no cost. Works for a pressed active and a passive alike.")]
+    [Tooltip("ON = this skill READS a caster state — it may require stacks to fire, spend them, and be paid off by " +
+             "them. Works for a pressed active and a passive alike.")]
     public bool requiresState = false;
-    [Tooltip("The state the caster must be carrying. NOTE: this is SERIALIZED, so the StateId list is append-only from " +
-             "here on — inserting a value mid-list would silently repoint every skill saved after it.")]
+    [Tooltip("WHOSE stacks this skill reads — the id of the skill that grants them (Deathblow reads Momentum's). " +
+             "Stacks are identified by the skill that created them, NOT by what they do, so two skills that both buff " +
+             "attack keep separate piles and a finisher can only ever cash its own partner's. Set it via the Skill " +
+             "Composer's picker, not by hand.")]
+    public string requireSkillId = "";
+    [Tooltip("LEGACY — the old by-STATE gate, kept only so pre-2026-08-12 assets still deserialize. Skills now key on " +
+             "requireSkillId; this is ignored at runtime and will be deleted once every asset is re-saved.")]
     public StateId requireState = StateId.Haste;
-    [Tooltip("How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state at all.")]
-    [Min(1)] public int requireMinStacks = 1;
+    [Tooltip("How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state at all. " +
+             "0 = NO GATE: the skill fires with none, and simply cashes whatever happens to be there (Deathblow, " +
+             "which must stay usable on a Sword that never rolled Momentum).")]
+    [Min(0)] public int requireMinStacks = 1;
     [Tooltip("Spend ALL stacks on use (Deathblow cashing a Momentum pile). Overrides the per-use count below.")]
     public bool consumeAllStacks = false;
     [Tooltip("How many stacks this use spends. 0 = spends nothing (a pure condition, e.g. 'while Enraged'). " +
              "Consumption ALWAYS happens after the skill's effects have computed, so the damage sees the live stacks.")]
     [Min(0)] public int consumeStacks = 0;
+    [Tooltip("What each stack BUYS this cast. The stack count is snapshot when the cast starts — before anything is " +
+             "spent — so every tick of the cast is paid off by the same pile.")]
+    public StackPayoff stackPayoff = StackPayoff.Damage;
+    [Tooltip("Damage payoff: how much EXTRA damage multiplier each stack adds, on top of the effect's own. " +
+             "0.4 = +40% of your Attack per stack, so a 600% skill on 10 stacks lands at 600 + 400 = 1000%. " +
+             "Adds up (never compounds), and lifts every damage effect on this skill. 0 = stacks buy no damage.")]
+    [Min(0f)] public float damageMultPerStack = 0f;
+
+    /// <summary>The extra damage multiplier <paramref name="stacks"/> of the required state buy this cast — the
+    /// ADDITIVE payoff channel (see <see cref="damageMultPerStack"/>). Zero unless the skill reads a state and its
+    /// payoff is Damage, so a skill that only gates on a state is unaffected.</summary>
+    public float StackDamageBonus(int stacks) =>
+        requiresState && stackPayoff == StackPayoff.Damage && stacks > 0
+            ? Mathf.Max(0f, damageMultPerStack) * stacks
+            : 0f;
 
     [Header("Cost / cadence")]
     public int manaCost = 10;

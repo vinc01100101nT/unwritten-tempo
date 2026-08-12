@@ -15,23 +15,26 @@ MonoBehaviour:
   targetingMigrated: 1
   id: skill.sword.deathblow
   displayName: Deathblow
-  icon: {fileID: 0}
+  icon: {fileID: 7699978436774145253, guid: 27c853ad0b0966943b0f1b26a0c9e49e, type: 3}
   description: 'Everything, in one swing.
 
-    One massive blow for 600% Attack. INCOMPLETE: does not yet consume Momentum
-    or scale with its stacks.'
+    One massive blow for 600% Attack,
+    +40% per Momentum stack, and spends them all.'
   archetype: 0
   family: 0
   shape: 0
   complexity: 0
   acquisitionTier: 2
   trigger: 0
-  triggerSkillId:
-  requiresState: 0
-  requireState: 0
-  requireMinStacks: 1
-  consumeAllStacks: 0
+  triggerSkillId: 
+  requiresState: 1
+  requireSkillId: skill.momentum
+  requireState: 14
+  requireMinStacks: 0
+  consumeAllStacks: 1
   consumeStacks: 0
+  stackPayoff: 0
+  damageMultPerStack: 0.43
   manaCost: 40
   cooldown: 3
   castTime: 1
@@ -39,7 +42,7 @@ MonoBehaviour:
   castRange: 5
   tier: 1
   chargeCost: 5000
-  castCircleId:
+  castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
@@ -59,7 +62,7 @@ MonoBehaviour:
     effects:
     - kind: 0
       damageType: 0
-      damageMult: 6
+      damageMult: 5.79
       element: 0
       amount: 10
       ailment: 2
@@ -88,6 +91,6 @@ MonoBehaviour:
     targets: 2
     scope: 0
   shortLabel: Deathblow
-  keyLabel:
+  keyLabel: 
   slotOrder: 10
   tint: {r: 1, g: 1, b: 1, a: 1}

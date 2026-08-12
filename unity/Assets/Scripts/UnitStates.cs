@@ -65,6 +65,12 @@ public class UnitStates : MonoBehaviour
         }
 
         public StateId id;
+        /// <summary>WHO granted this pile — the source skill's id ("" for engine-applied states with no skill behind
+        /// them). Part of the entry's IDENTITY, not just display: two skills that both buff attack keep SEPARATE piles,
+        /// so a finisher keyed to one can't cash the other's (Deathblow must eat Momentum, never Lock Blades' charges).
+        /// The mechanical effect is still generic — <see cref="id"/> decides what the stacks DO; this decides whose
+        /// they are.</summary>
+        public string sourceSkillId = "";
         /// <summary>True when this state was applied as a stacking pile. Decides how <see cref="magnitude"/> READS:
         /// stacking = the sum of per-stack DELTAS (a mult channel is 1 + sum); non-stacking = the absolute value.</summary>
         public bool stacking;
@@ -135,16 +141,20 @@ public class UnitStates : MonoBehaviour
     // (BeginGuard / BuffDamage / StatusController.Apply / …) so the created/refreshed entry gets the source skill's
     // tray/nameplate icon AND its stacking rules, WITHOUT threading either through every gameplay method. The applier
     // owns the lifecycle (SetApplyContext before the call, ClearApplyContext after); Apply only reads what it was given.
-    Sprite ctxIcon; string ctxName, ctxDesc;
+    Sprite ctxIcon; string ctxName, ctxDesc, ctxSourceId;
     bool ctxStacking; int ctxStacksPerApply = 1, ctxStackLimit;
 
-    /// <summary>Tag the NEXT applied state with a source icon/name/description and its stacking rules. Set by the skill
+    /// <summary>Tag the NEXT applied state with its SOURCE skill, display info and stacking rules. Set by the skill
     /// applier before a durational gameplay call; always pair with <see cref="ClearApplyContext"/> after.
-    /// <paramref name="stacking"/> off = today's single-instance, newest-wins behaviour.</summary>
+    /// <paramref name="stacking"/> off = today's single-instance, newest-wins behaviour.
+    /// <paramref name="sourceSkillId"/> is the granting skill's id — it keys the pile (see
+    /// <see cref="State.sourceSkillId"/>), so leaving it empty pools this state with every other sourceless one.</summary>
     public void SetApplyContext(Sprite icon, string name, string description,
-                                bool stacking = false, int stacksPerApply = 1, int stackLimit = 0)
+                                bool stacking = false, int stacksPerApply = 1, int stackLimit = 0,
+                                string sourceSkillId = null)
     {
         ctxIcon = icon; ctxName = name; ctxDesc = description;
+        ctxSourceId = sourceSkillId ?? "";
         ctxStacking = stacking;
         ctxStacksPerApply = Mathf.Max(1, stacksPerApply);
         ctxStackLimit = stackLimit;
@@ -152,7 +162,7 @@ public class UnitStates : MonoBehaviour
 
     public void ClearApplyContext()
     {
-        ctxIcon = null; ctxName = null; ctxDesc = null;
+        ctxIcon = null; ctxName = null; ctxDesc = null; ctxSourceId = "";
         ctxStacking = false; ctxStacksPerApply = 1; ctxStackLimit = 0;
     }
 
@@ -207,10 +217,57 @@ public class UnitStates : MonoBehaviour
     /// store stays the single source while the delicate per-tick math stays in its existing owner.</summary>
     public State Get(StateId id) { EnsureFresh(); return Find(id); }
 
+    // First entry of this KIND, whoever granted it. For the readers that ask "am I slowed / how long is my guard" —
+    // questions about the effect, not about whose it is.
     State Find(StateId id)
     {
         for (int i = 0; i < active.Count; i++) if (active[i].id == id) return active[i];
         return null;
+    }
+
+    // The one entry that is BOTH this kind and this source — the identity a pile is applied and cashed under.
+    State Find(StateId id, string sourceSkillId)
+    {
+        string src = sourceSkillId ?? "";
+        for (int i = 0; i < active.Count; i++)
+            if (active[i].id == id && active[i].sourceSkillId == src) return active[i];
+        return null;
+    }
+
+    /// <summary>Total live stacks granted by <paramref name="sourceSkillId"/>, across whatever states it applied. This
+    /// is what a finisher keyed to a SKILL asks ("how much Momentum do I hold"), so two skills that happen to buff the
+    /// same stat can never feed each other's payoff.</summary>
+    public int StacksFrom(string sourceSkillId)
+    {
+        if (string.IsNullOrEmpty(sourceSkillId)) return 0;
+        EnsureFresh();
+        int n = 0;
+        for (int i = 0; i < active.Count; i++)
+            if (active[i].sourceSkillId == sourceSkillId) n += active[i].StackCount;
+        return n;
+    }
+
+    /// <summary>Spend stacks granted by <paramref name="sourceSkillId"/> (oldest first), or ALL of them. Returns how
+    /// many were spent. Only that skill's piles are touched — the whole point of keying by source.</summary>
+    public int ConsumeFrom(string sourceSkillId, int count, bool all = false)
+    {
+        if (string.IsNullOrEmpty(sourceSkillId)) return 0;
+        EnsureFresh();
+        int spent = 0;
+        for (int i = active.Count - 1; i >= 0; i--)   // reverse: entries emptied by the spend are removed in-loop
+        {
+            var s = active[i];
+            if (s.sourceSkillId != sourceSkillId) continue;
+            int take = all ? s.stacks.Count : Mathf.Clamp(count - spent, 0, s.stacks.Count);
+            if (take <= 0) continue;
+            s.stacks.RemoveRange(0, take);           // oldest first — spend the stack nearest its expiry
+            spent += take;
+            if (s.stacks.Count == 0) { active.RemoveAt(i); pool.Push(s); }
+            else s.Refold();
+            if (!all && spent >= count) break;
+        }
+        if (spent > 0) { Recompute(); OnChanged?.Invoke(); }
+        return spent;
     }
 
     /// <summary>Apply a state for <paramref name="seconds"/>. Two behaviours, chosen by the apply context
@@ -229,11 +286,15 @@ public class UnitStates : MonoBehaviour
         if (seconds <= 0f) return null;
         EnsureFresh();   // drop an already-lapsed entry first, so a re-apply is treated as FRESH (restarts startTime/ramp)
         float now = Time.time;
-        var s = Find(id);
+        // Keyed by KIND + SOURCE: re-applying from the same skill grows that skill's pile, while a different skill
+        // buffing the same stat opens its own. Newest-wins and the stack limit therefore apply PER SOURCE, which is
+        // what stops one skill's refresh from resetting another's window.
+        var s = Find(id, ctxSourceId);
         if (s == null)
         {
             s = pool.Count > 0 ? pool.Pop() : new State();
             s.id = id; s.startTime = now; s.nextTick = 0f;
+            s.sourceSkillId = ctxSourceId ?? "";
             s.stacks.Clear();
             active.Add(s);
         }
@@ -370,9 +431,13 @@ public class UnitStates : MonoBehaviour
     // blind) sum correctly either way, so they need no branch.
     void Recompute()
     {
-        float slow = 1f, haste = 1f;
-        guardCut = 0f; vulnMult = 1f;
-        dmgBuffMult = 1f; aspdBuffMult = 1f; castBuffMult = 1f;
+        // Mult-style channels accumulate BONUSES (a ×1.3 pile contributes +0.30) and are converted back to a multiplier
+        // once, at the end. Two +30% piles therefore read ×1.60, not ×1.69: every pile of a kind sits in the SAME
+        // category, so a second one is worth the same as the first regardless of what's already running. Compounding
+        // would make each buff's value depend on which others happen to be up, and make order matter.
+        float slow = 1f, hasteBonus = 0f, vulnBonus = 0f;
+        float dmgBonus = 0f, aspdBonus = 0f, castBonus = 0f;
+        guardCut = 0f;
         leechPct = 0f; reflectBonus = 0f;
         hitPenalty = 0; shieldPool = 0; parryCharges = 0;
         cannotAct = false; silenced = false;
@@ -387,26 +452,36 @@ public class UnitStates : MonoBehaviour
             float mult = s.Mult;   // stacking stores per-stack deltas — State.Mult owns that rule
             switch (s.id)
             {
-                case StateId.Slow:            slow = Mathf.Clamp01(s.stacking ? 1f - s.magnitude : s.magnitude); break;
-                case StateId.Haste:           haste = mult <= 0f ? 1f : mult; break;
+                case StateId.Slow:            slow = Mathf.Min(slow, Mathf.Clamp01(s.stacking ? 1f - s.magnitude : s.magnitude)); break;   // harshest slow wins
+                case StateId.Haste:           hasteBonus += (mult <= 0f ? 1f : mult) - 1f; break;
                 case StateId.Stun:
                 case StateId.Freeze:          cannotAct = true; break;
                 case StateId.Silence:         silenced = true; break;
-                case StateId.Blind:           hitPenalty = Mathf.RoundToInt(s.magnitude); break;
-                case StateId.Guard:           guardCut = Mathf.Clamp01(s.magnitude); break;
-                case StateId.Vulnerability:   vulnMult = 1f + Mathf.Max(0f, s.magnitude); break;
-                case StateId.DamageBuff:      dmgBuffMult = mult <= 0f ? 1f : mult; break;
-                case StateId.AttackSpeedBuff: aspdBuffMult = mult <= 0f ? 1f : mult; break;
-                case StateId.CastSpeedBuff:   castBuffMult = mult <= 0f ? 1f : mult; break;
-                case StateId.ManaLeech:       leechPct = s.magnitude; break;
-                case StateId.Reflect:         reflectBonus = s.magnitude; break;
-                case StateId.Shield:          shieldPool = s.intAmount; break;
+                case StateId.Blind:           hitPenalty += Mathf.RoundToInt(s.magnitude); break;
+                // COMBINE, never overwrite. Since piles are keyed per SOURCE skill, the same kind can be active more
+                // than once (Momentum and a War Banner both buffing attack) — an assignment here would silently drop
+                // whichever the loop saw first. Everything ADDS (mult-style channels add their bonuses, pools sum);
+                // only Slow takes the strongest, since two slows aren't a bigger slow.
+                case StateId.Guard:           guardCut = Mathf.Clamp01(guardCut + s.magnitude); break;
+                case StateId.Vulnerability:   vulnBonus += Mathf.Max(0f, s.magnitude); break;
+                case StateId.DamageBuff:      dmgBonus  += (mult <= 0f ? 1f : mult) - 1f; break;
+                case StateId.AttackSpeedBuff: aspdBonus += (mult <= 0f ? 1f : mult) - 1f; break;
+                case StateId.CastSpeedBuff:   castBonus += (mult <= 0f ? 1f : mult) - 1f; break;
+                case StateId.ManaLeech:       leechPct += s.magnitude; break;
+                case StateId.Reflect:         reflectBonus += s.magnitude; break;
+                case StateId.Shield:          shieldPool += s.intAmount; break;
                 // Parry carries no per-stack value — the STACK COUNT *is* the charge count (one hit erased each).
-                case StateId.Parry:           parryCharges = s.StackCount; break;
+                case StateId.Parry:           parryCharges += s.StackCount; break;
                 // Poison/Bleed/Burn (DoT) + Regen tick in the (migrated) update loop; Taunt/Knockback/Pull drive
                 // MonsterAI3D directly — none contribute a cached scalar, they're timer + display entries here.
             }
         }
-        moveMult = slow * haste;
+        // Bonuses → multipliers, once. Floored at 0 so a stack of debuff-shaped piles can't drive a multiplier negative
+        // (which would flip damage into healing).
+        vulnMult     = Mathf.Max(0f, 1f + vulnBonus);
+        dmgBuffMult  = Mathf.Max(0f, 1f + dmgBonus);
+        aspdBuffMult = Mathf.Max(0f, 1f + aspdBonus);
+        castBuffMult = Mathf.Max(0f, 1f + castBonus);
+        moveMult = slow * Mathf.Max(0f, 1f + hasteBonus);
     }
 }

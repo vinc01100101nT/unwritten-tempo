@@ -186,18 +186,19 @@ public class SkillComposerWindow : EditorWindow
         return open;
     }
 
-    // Dropdown of every OnCast ACTIVE skill's id (passives + this skill excluded), returning the chosen id — the target
-    // of an OnSkillCastComplete<skill> trigger. Reads SkillCatalog (saved Resources/Skills assets); a stale/unsaved pick
-    // stays visible so it isn't silently blanked.
-    string DrawSkillPicker(string label, string current)
+    // Dropdown of other skills' ids, returning the chosen one. Two callers with one difference: the TRIGGER picker
+    // wants only OnCast actives (a passive isn't a cast you can key off), while the STACK-SOURCE picker must include
+    // passives — the classic stack granter, Momentum, is one. Reads SkillCatalog (saved Resources/Skills assets); a
+    // stale/unsaved pick stays visible so it isn't silently blanked.
+    string DrawSkillPicker(string label, string current, bool includePassives = false)
     {
         var ids = SkillCatalog.OrderedIds();
         var choices = new List<string> { "" };
         for (int i = 0; i < ids.Length; i++)
         {
             var d = SkillCatalog.Get(ids[i]);
-            if (d == null || d.IsPassive) continue;                 // a passive can't be the cast target
-            if (sel != null && ids[i] == sel.id) continue;          // a skill can't trigger off its own cast
+            if (d == null || (d.IsPassive && !includePassives)) continue;
+            if (sel != null && ids[i] == sel.id) continue;          // a skill can't key off itself
             choices.Add(ids[i]);
         }
         if (!string.IsNullOrEmpty(current) && !choices.Contains(current)) choices.Add(current);
@@ -306,24 +307,52 @@ public class SkillComposerWindow : EditorWindow
 
             EditorGUILayout.Space(4);
             sel.requiresState = EditorGUILayout.Toggle(new GUIContent("requires a state",
-                "ON = this skill only runs while the caster carries the state below. It gates the WHOLE skill: when " +
-                "unmet nothing happens — no VFX, no cast, no cost."), sel.requiresState);
+                "ON = this skill READS a caster state below — it can require stacks to fire, spend them, and be paid " +
+                "off by them."), sel.requiresState);
             if (sel.requiresState)
             {
                 EditorGUI.indentLevel++;
-                sel.requireState = (StateId)EditorGUILayout.EnumPopup(new GUIContent("  state",
-                    "The state the caster must be carrying."), sel.requireState);
+                // WHOSE stacks, not which state: a pile belongs to the skill that granted it, so a finisher can only
+                // ever cash its own partner's (Deathblow eats Momentum, never Lock Blades' charges — both buff attack).
+                sel.requireSkillId = DrawSkillPicker("  stacks from", sel.requireSkillId, includePassives: true);
+                if (string.IsNullOrEmpty(sel.requireSkillId))
+                    EditorGUILayout.HelpBox("Pick the skill whose stacks this one reads — without it there's no pile to " +
+                        "gate on, cash, or be paid by.", MessageType.Warning);
                 sel.requireMinStacks = EditorGUILayout.IntSlider(new GUIContent("  min stacks",
-                    "How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state."),
-                    Mathf.Max(1, sel.requireMinStacks), 1, UnitStates.MaxStacks);
+                    "How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state. " +
+                    "0 = NO GATE: fires with none and simply cashes whatever is there."),
+                    Mathf.Max(0, sel.requireMinStacks), 0, UnitStates.MaxStacks);
+                if (sel.requireMinStacks <= 0)
+                    EditorGUILayout.HelpBox("No gate: this skill fires even on an empty pile — it just gets no payoff. " +
+                        "(Deathblow, which must stay usable on a Sword that never rolled Momentum.)", MessageType.None);
                 sel.consumeAllStacks = EditorGUILayout.Toggle(new GUIContent("  consume ALL",
                     "Spend every stack on use — a finisher cashing a whole pile."), sel.consumeAllStacks);
                 if (!sel.consumeAllStacks)
                     sel.consumeStacks = EditorGUILayout.IntSlider(new GUIContent("  consume",
                         "How many stacks this use spends. 0 = spends nothing (a pure 'while X' condition)."),
                         Mathf.Max(0, sel.consumeStacks), 0, UnitStates.MaxStacks);
-                EditorGUILayout.HelpBox("Stacks are spent AFTER the skill's effects have computed, so its damage always " +
-                    "reads the live count (a finisher sees the whole pile it's about to cash).", MessageType.Info);
+
+                // What the stacks BUY. Separate question from what it costs to fire — the gate says what you need,
+                // this says what it's worth.
+                sel.stackPayoff = (StackPayoff)EditorGUILayout.EnumPopup(new GUIContent("  each stack adds",
+                    "What every stack buys this cast. Damage = a bigger hit (below)."), sel.stackPayoff);
+                if (sel.stackPayoff == StackPayoff.Damage)
+                {
+                    sel.damageMultPerStack = EditorGUILayout.Slider(new GUIContent("  damage x per stack",
+                        "EXTRA damage multiplier each stack adds, on top of the effect's own. 0.4 = +40% of your " +
+                        "Attack per stack. Adds up, never compounds; lifts every damage effect on this skill."),
+                        Mathf.Max(0f, sel.damageMultPerStack), 0f, 1f);
+                    if (sel.damageMultPerStack > 0f)
+                    {
+                        float baseMult = LargestDamageMult(sel);
+                        EditorGUILayout.HelpBox(
+                            $"At 10 stacks: {baseMult * 100f:0}% + {sel.damageMultPerStack * 10f * 100f:0}% = " +
+                            $"{(baseMult + sel.damageMultPerStack * 10f) * 100f:0}% Attack.", MessageType.None);
+                    }
+                }
+                EditorGUILayout.HelpBox("The count is snapshot when the cast STARTS and stacks are spent only after the " +
+                    "effects have computed — so the payoff and the cost read the same pile (a finisher sees the whole " +
+                    "thing it's about to cash).", MessageType.Info);
                 EditorGUI.indentLevel--;
             }
         }
@@ -528,6 +557,24 @@ public class SkillComposerWindow : EditorWindow
 
     // A stable pastel per tick id — each tick's effects block reads as its own colored group (meteor_ball vs
     // fire_pillar, etc.) so multi-tick skills aren't a wall of identical grey boxes.
+    // The biggest damage multiplier this skill actually authors — what the stack-payoff preview adds onto, so the
+    // "at 10 stacks" line quotes THIS skill's real number instead of a hardcoded example. 1 (=100%) when it has no
+    // damage effect yet, which is also the roll's own fallback.
+    static float LargestDamageMult(SkillDef def)
+    {
+        float best = 0f;
+        if (def?.bindings != null)
+            for (int i = 0; i < def.bindings.Count; i++)
+            {
+                var fx = def.bindings[i]?.effects;
+                if (fx == null) continue;
+                for (int j = 0; j < fx.Count; j++)
+                    if (fx[j] != null && fx[j].kind == SkillEffectKind.Damage)
+                        best = Mathf.Max(best, fx[j].damageMult);
+            }
+        return best > 0f ? best : 1f;
+    }
+
     static Color TickColor(string id)
     {
         if (string.IsNullOrEmpty(id)) return Color.white;
