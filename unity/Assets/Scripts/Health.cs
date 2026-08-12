@@ -67,14 +67,15 @@ public class Health : MonoBehaviour, IDamageable
 
     // Vulnerability mark (Hex Field): while active, every incoming hit is multiplied up. Now read from the unified
     // state store (V3 unified-state migration) — was a local vulnUntil/vulnMult timer.
-    float VulnMult => States.VulnMult;
 
     // Guard cut, then Shield absorb — the mitigation EVERY unit shares (see UnitMitigation), applied between the
     // defence roll and the HP subtraction. The states were always stored on a mob (Health.States is the same
     // UnitStates store the player uses); only this read was missing, so a Guard or Shield cast on a mob did nothing.
     // HIT-only, exactly like the player: the true-damage/DoT path below deliberately bypasses both.
     // One choke point so all four intakes (physical/magic × normal/overkill) can't drift apart.
-    int Mitigate(int dmg) => UnitMitigation.AfterShield(States, UnitMitigation.Guarded(States, dmg), transform.position);
+    // Raw post-defence figure -> the damage that lands. UnitMitigation.Landed owns the vulnerability amplify, the
+    // rounding and the guard cut (ONE place, so no intake can forget the debuff); the shield drain is layered after.
+    int Mitigate(float rawAfterDefence) => UnitMitigation.AfterShield(States, UnitMitigation.Landed(States, rawAfterDefence), transform.position);
 
     // Parry — the SAME read the player gets (one primitive, no mob copy to hand-sync). Kept OUT of Mitigate on purpose:
     // Mitigate is math on a hit that lands, while a parry cancels the landing, so each intake bails before its damage
@@ -135,7 +136,7 @@ public class Health : MonoBehaviour, IDamageable
         if (Parried()) return 0;
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
-        int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod * VulnMult)));
+        int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
         Current = Mathf.Max(0, Current - dmg);
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
@@ -164,7 +165,7 @@ public class Health : MonoBehaviour, IDamageable
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
         if (Parried()) return 0;
 
-        int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult * Combat.MagicGlanceMult(flee))));
+        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * Combat.MagicGlanceMult(flee));
         Current = Mathf.Max(0, Current - dmg);
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
@@ -187,7 +188,7 @@ public class Health : MonoBehaviour, IDamageable
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
         if (Parried()) return 0;
 
-        int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * VulnMult * Combat.MagicGlanceMult(flee))));
+        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * Combat.MagicGlanceMult(flee));
         bool wasAlive = !IsDead;
         Current = Mathf.Max(0, Current - dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
@@ -214,7 +215,7 @@ public class Health : MonoBehaviour, IDamageable
         if (mod <= 0f) { SpawnElementNumber(0, mod, Color.white); return 0; }
         if (Parried()) return 0;
 
-        int dmg = Mitigate(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod * VulnMult)));
+        int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
         bool wasAlive = !IsDead;
         Current = Mathf.Max(0, Current - dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);

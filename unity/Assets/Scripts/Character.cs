@@ -410,10 +410,6 @@ public class Character : MonoBehaviour, IDamageable
     int   BarrierNow      => ignoreStates ? 0  : States.ShieldPool;
     // Reflect has BOTH a permanent source (the thorns card) and a timed one — the baseline keeps the permanent part.
     float ReflectPctNow   => reflectPct + (ignoreStates ? 0f : States.ReflectBonus);
-    // Vulnerability AMPLIFIES incoming damage (1 = none) — the mirror of GuardCut, read by every intake path below so a
-    // "take 2× damage" self-debuff can't be honoured on one damage type and ignored on another. Neutral (1) while
-    // snapshotting, like every other state readout here.
-    float VulnMultNow     => ignoreStates ? 1f : States.VulnMult;
 
     /// <summary>The pure preview: derived stats AS IF <paramref name="hypothetical"/> were equipped
     /// in <paramref name="slot"/> (pass null to preview UN-equipping it), WITHOUT mutating the
@@ -745,9 +741,8 @@ public class Character : MonoBehaviour, IDamageable
         States.Apply(StateId.Guard, seconds, Mathf.Clamp01(reduction));
     }
 
-    // Apply the Guard reduction to a post-defense damage figure. Routed through the shared unit primitive so a mob
-    // wearing Guard is mitigated by the exact same rule (one implementation, no player/mob copy to hand-sync).
-    int Guarded(int dmg) => UnitMitigation.Guarded(States, dmg);
+    // (The local Guard shim is gone: both intakes now hand their raw post-defence figure to UnitMitigation.Landed,
+    // which owns the vulnerability amplify, the rounding and the Guard cut for player and mob alike.)
 
     // ---- Timed offensive self-buffs + regen (skill-driven; runtime-only, cleared on revive) -------
     // Each buff is a multiplier live until its expiry; the getters/rolls below fold in the current value (1 when
@@ -938,7 +933,7 @@ public class Character : MonoBehaviour, IDamageable
                                             // would really have landed (a miss / block / immunity keeps it in hand)
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF. Mobs don't crit the player → crit:false.
-        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod * VulnMultNow)));
+        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod);
         ApplyHitToHP(dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);                       // player hurt grunt
@@ -970,7 +965,7 @@ public class Character : MonoBehaviour, IDamageable
         if (mod <= 0f) return 0;          // armour already nullified it — nothing to parry, so no charge is spent
         if (ParriedHit(source)) return 0;   // the read catches magic too: Parry is a timing skill, not a physical block
 
-        int dmg = Guarded(Mathf.Max(1, Mathf.RoundToInt(Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod * VulnMultNow * Combat.MagicGlanceMult(Flee))));
+        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod * Combat.MagicGlanceMult(Flee));
         ApplyHitToHP(dmg);
         OnHealthChanged?.Invoke();
         Sfx.Play(hurtSfx);

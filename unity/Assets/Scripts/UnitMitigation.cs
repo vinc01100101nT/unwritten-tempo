@@ -31,6 +31,22 @@ public static class UnitMitigation
         return true;
     }
 
+    /// <summary>Turn a RAW post-defence figure into the damage that actually LANDS: amplify it by the target's
+    /// Vulnerability, round to a whole point (floored at 1 — a hit that connects always registers), then apply the
+    /// Guard cut. Takes a float on purpose, so the amplify happens BEFORE rounding rather than on an already-rounded
+    /// number.
+    ///
+    /// <para><b>THE entry point for every damage path, player and mob alike.</b> Vulnerability used to be written by
+    /// hand into each intake formula — six copies of one term — and a path that forgot it silently ignored the debuff
+    /// with no error to catch it. That is exactly how the player ended up immune: <see cref="Character"/>'s formulas
+    /// were written alongside <see cref="Health"/>'s and never picked the term up. Route new damage paths through here
+    /// and they inherit it for free; don't reintroduce a hand-written multiply.</para></summary>
+    public static int Landed(UnitStates states, float rawAfterDefence)
+    {
+        float vuln = states != null ? states.VulnMult : 1f;
+        return Guarded(states, Mathf.Max(1, Mathf.RoundToInt(rawAfterDefence * vuln)));
+    }
+
     /// <summary>Apply the Guard stance's cut to a post-defence figure. Floors at 1 so a guarded hit still registers
     /// as a hit rather than silently vanishing.</summary>
     public static int Guarded(UnitStates states, int dmg)
