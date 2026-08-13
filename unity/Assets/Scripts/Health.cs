@@ -56,7 +56,7 @@ public class Health : MonoBehaviour, IDamageable
             return info.isMagic ? TakeMagicDamageOverkill(info.amount, info.isCrit, info.element)
                                 : TakeDamageOverkill(info.amount, info.isCrit, info.element);
         return info.isMagic ? TakeMagicDamage(info.amount, info.isCrit, info.element)
-                            : TakeDamage(info.amount, info.isCrit, info.attackerHit, info.element);
+                            : TakeDamage(info.amount, info.isCrit, info.attackerHit, info.element, info.missed);
     }
     public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
 
@@ -113,16 +113,19 @@ public class Health : MonoBehaviour, IDamageable
     /// gold number so the player can see the crit land.</summary>
     public int TakeDamage(int attackerAttack, bool crit) => TakeDamage(attackerAttack, crit, -1);
 
-    /// <summary>As above, but with the attacker's RO <paramref name="attackerHit"/> (≥ 0) rolled against
-    /// our <see cref="flee"/> first — a non-crit miss pops a RED MISS and deals no damage. Pass −1 to skip
-    /// the accuracy roll (always lands). Red here = player-dealt; monster-dealt misses are white (Character).</summary>
-    public int TakeDamage(int attackerAttack, bool crit, int attackerHit, Element attackElement = Element.Neutral)
+    /// <summary>As above, but carrying the attack's already-resolved accuracy: <paramref name="missed"/> true pops a
+    /// RED MISS and deals nothing. The attacker owns that roll (<see cref="Combat.Missed"/>) so it happens once and
+    /// so a whiff never pays for a damage roll. Red here = player-dealt; monster-dealt misses are white (Character).</summary>
+    public int TakeDamage(int attackerAttack, bool crit, int attackerHit, Element attackElement = Element.Neutral,
+                          bool missed = false)
     {
         if (IsDead) return 0;
 
-        // Accuracy (physical only; a crit can't be evaded). The hit came from the player, so a whiff
-        // shows a RED MISS — monster-dealt misses on the player are white (see Character.TakeDamage).
-        if (!crit && attackerHit >= 0 && !Combat.Lands(attackerHit, flee))
+        // Accuracy was already rolled by the ATTACKER (Combat.Missed) — we only PRESENT the result, never re-roll it:
+        // the roll is random, so a second one could disagree with the number the attacker already acted on. The hit
+        // came from the player, so a whiff shows a RED MISS — monster-dealt misses on the player are white
+        // (see Character.TakeDamage).
+        if (missed)
         {
             DamagePopup.SpawnText(transform.position, "MISS", MissColor);
             CombatSfx.Miss(transform.position, PlayerRanged());   // whiff FROM the mob (spatial), melee/ranged by weapon

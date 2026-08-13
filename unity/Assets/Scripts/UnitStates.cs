@@ -127,7 +127,8 @@ public class UnitStates : MonoBehaviour
     public event Action OnChanged;
 
     // ---- cached derived scalars (recomputed only on change; every getter below is O(1)) --------------------------
-    float moveMult = 1f, guardCut, vulnMult = 1f, dmgBuffMult = 1f, aspdBuffMult = 1f, castBuffMult = 1f, leechPct, reflectBonus;
+    // DamageBuff is deliberately absent here — it is computed live by DamageBuffMult so its ramp can't go stale.
+    float moveMult = 1f, guardCut, vulnMult = 1f, aspdBuffMult = 1f, castBuffMult = 1f, leechPct, reflectBonus;
     int hitPenalty, shieldPool, parryCharges;
     bool cannotAct, silenced;
     float nextExpiry = float.MaxValue;   // earliest endTime across active states — the ONLY time EnsureFresh must prune
@@ -183,7 +184,40 @@ public class UnitStates : MonoBehaviour
     public float GuardCut { get { EnsureFresh(); return guardCut; } }
     /// <summary>Incoming-damage multiplier (>=1) from Vulnerability.</summary>
     public float VulnMult { get { EnsureFresh(); return vulnMult; } }
-    public float DamageBuffMult { get { EnsureFresh(); return dmgBuffMult; } }
+    /// <summary>Outgoing-damage multiplier from EVERY live DamageBuff pile, each pile's own RAMP folded in — the one
+    /// answer to "how much is my damage buffed", for player and mob alike.
+    ///
+    /// <para>Computed on read instead of cached like its siblings, on purpose: a ramp grows on its OWN clock (a step
+    /// every <c>rampInterval</c>) with no expiry to wake the cache, so a cached figure would sit stale between steps.
+    /// The loop is over the handful of live states and allocates nothing.</para>
+    ///
+    /// <para>Reading only the FIRST pile here is the bug this replaced: piles are keyed by GRANTING SKILL, so Momentum
+    /// and Lock Blades are two separate DamageBuff entries, and whichever landed first silently ate the other.</para></summary>
+    public float DamageBuffMult
+    {
+        get
+        {
+            EnsureFresh();
+            float bonus = 0f;
+            for (int i = 0; i < active.Count; i++)
+            {
+                var s = active[i];
+                if (s.id != StateId.DamageBuff) continue;
+                float m = s.Mult;
+                if (s.rampPerStep > 0f)   // ramping buff: base + perStep for each interval elapsed past the delay
+                {
+                    float el = Time.time - s.startTime - s.rampDelay;
+                    if (el > 0f)
+                    {
+                        m += s.rampPerStep * Mathf.FloorToInt(el / s.rampInterval);
+                        if (s.rampCap > 0f) m = Mathf.Min(m, s.rampCap);
+                    }
+                }
+                bonus += m - 1f;
+            }
+            return Mathf.Max(0f, 1f + bonus);
+        }
+    }
     public float AttackSpeedBuffMult { get { EnsureFresh(); return aspdBuffMult; } }
     public float CastSpeedBuffMult { get { EnsureFresh(); return castBuffMult; } }
     /// <summary>Fraction of damage dealt returned as MP (ManaLeech window), 0 when none.</summary>
@@ -268,6 +302,28 @@ public class UnitStates : MonoBehaviour
         }
         if (spent > 0) { Recompute(); OnChanged?.Invoke(); }
         return spent;
+    }
+
+    /// <summary>Apply a timed stat buff to THIS unit — the ONE place a Buff effect lands, for the player and for a mob
+    /// alike (a buff belongs to the unit, not to who is driving it). <paramref name="mult"/> is a MULTIPLIER (×1.3);
+    /// the store keeps a bonus fraction, so the conversion happens here, once.
+    ///
+    /// <para>The RAMP (<paramref name="rampPerStep"/> &gt; 0) only means anything on the Damage buff — it is the
+    /// "keep it up to reach the ceiling" support loop — and is read live by <see cref="DamageBuffMult"/>. Refreshing a
+    /// live buff keeps its ramp progress (Apply preserves startTime); a lapsed one restarts from base.</para></summary>
+    public void ApplyStatBuff(BuffStat stat, float mult, float seconds,
+                              float rampDelay = 0f, float rampPerStep = 0f, float rampInterval = 5f, float rampCap = 0f)
+    {
+        if (seconds <= 0f) return;
+        StateId id = stat == BuffStat.AttackSpeed ? StateId.AttackSpeedBuff
+                   : stat == BuffStat.CastSpeed   ? StateId.CastSpeedBuff
+                                                  : StateId.DamageBuff;
+        var s = Apply(id, seconds, Mathf.Max(0.01f, mult) - 1f);
+        if (s == null || id != StateId.DamageBuff) return;
+        s.rampDelay = Mathf.Max(0f, rampDelay);
+        s.rampPerStep = Mathf.Max(0f, rampPerStep);
+        s.rampInterval = Mathf.Max(0.1f, rampInterval);
+        s.rampCap = rampCap;
     }
 
     /// <summary>Apply a state for <paramref name="seconds"/>. Two behaviours, chosen by the apply context
@@ -439,7 +495,7 @@ public class UnitStates : MonoBehaviour
         // category, so a second one is worth the same as the first regardless of what's already running. Compounding
         // would make each buff's value depend on which others happen to be up, and make order matter.
         float slow = 1f, hasteBonus = 0f, vulnBonus = 0f;
-        float dmgBonus = 0f, aspdBonus = 0f, castBonus = 0f;
+        float aspdBonus = 0f, castBonus = 0f;   // DamageBuff is not cached here — see DamageBuffMult
         guardCut = 0f;
         leechPct = 0f; reflectBonus = 0f;
         hitPenalty = 0; shieldPool = 0; parryCharges = 0;
@@ -467,7 +523,7 @@ public class UnitStates : MonoBehaviour
                 // only Slow takes the strongest, since two slows aren't a bigger slow.
                 case StateId.Guard:           guardCut = Mathf.Clamp01(guardCut + s.magnitude); break;
                 case StateId.Vulnerability:   vulnBonus += Mathf.Max(0f, s.magnitude); break;
-                case StateId.DamageBuff:      dmgBonus  += (mult <= 0f ? 1f : mult) - 1f; break;
+                // DamageBuff is NOT summed here — DamageBuffMult walks the piles live so each pile's ramp stays current.
                 case StateId.AttackSpeedBuff: aspdBonus += (mult <= 0f ? 1f : mult) - 1f; break;
                 case StateId.CastSpeedBuff:   castBonus += (mult <= 0f ? 1f : mult) - 1f; break;
                 case StateId.ManaLeech:       leechPct += s.magnitude; break;
@@ -482,7 +538,6 @@ public class UnitStates : MonoBehaviour
         // Bonuses → multipliers, once. Floored at 0 so a stack of debuff-shaped piles can't drive a multiplier negative
         // (which would flip damage into healing).
         vulnMult     = Mathf.Max(0f, 1f + vulnBonus);
-        dmgBuffMult  = Mathf.Max(0f, 1f + dmgBonus);
         aspdBuffMult = Mathf.Max(0f, 1f + aspdBonus);
         castBuffMult = Mathf.Max(0f, 1f + castBonus);
         moveMult = slow * Mathf.Max(0f, 1f + hasteBonus);

@@ -62,7 +62,8 @@ public class Player3DAttacker : MonoBehaviour
     /// animation is sped to play fully within this window (see Character3DPose); the hit lands partway through at
     /// <see cref="hitTiming"/> (default 70%) — the contact moment. Equals the swing interval, so DPS is unchanged —
     /// only WHEN inside the window the hit connects moves.</summary>
-    public float SwingTime => Mathf.Max(0.05f, cooldown * MotionScale);
+    public float SwingTime => UnitOffense.AttackInterval(cooldown,
+        Character.Instance != null ? Character.Instance.AttackSpeedMult : 1f);   // same rule a mob's cadence uses
 
     /// <summary>The FULL-SIZE reach before unit-scaling: the equipped weapon's <see cref="Item.attackRange"/> when it
     /// sets one (Weapon slot, &gt; 0 — a bow/spear reaches farther than a fist), else the attacker's own default
@@ -220,14 +221,19 @@ public class Player3DAttacker : MonoBehaviour
     void LandBasicHit(Health t)
     {
         if (t == null || t.IsDead) return;
-        // Roll the hit through Character so CritChance/CritDamage apply (spike has no Character → flat damage).
-        bool crit = false;
-        int power = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk) : damage;   // t.luk = crit shield
-
-        // Pass our HIT so the target rolls it against its FLEE (RO accuracy); −1 in the Character-less spike.
+        // Our HIT, rolled against the target's FLEE below; −1 in the Character-less spike (always lands).
         int hit = Character.Instance != null ? Character.Instance.Hit : -1;
         if (hit >= 0 && StatusController.Player != null) hit = Mathf.Max(0, hit - StatusController.Player.HitPenalty);  // Blind
-        int dealt = CombatAuthority.Apply(t, new DamageInfo(power, MeleeElement, false, crit, attackerHit: hit));
+
+        // ORDER: crit → accuracy → magnitude. Crit first because a crit can't be evaded; accuracy next, ONCE, here on
+        // the attacker (its result travels in DamageInfo — the target must not re-roll a random check); the damage
+        // number last, and only if the strike actually connects, so a whiff costs no roll.
+        bool crit = Character.Instance != null && Character.Instance.RollCrit(t.luk);   // t.luk = crit shield
+        bool missed = Combat.Missed(crit, hit, t.flee);
+        int power = missed ? 0
+                  : Character.Instance != null ? Character.Instance.RollDamageMagnitude(crit)
+                                               : damage;
+        int dealt = CombatAuthority.Apply(t, new DamageInfo(power, MeleeElement, false, crit, attackerHit: hit, missed: missed));
         if (dealt > 0)
         {
             // Impact SOUND plays FROM the mob in Health.TakeDamage (received_hit/crit, spatial) — no 2D play here.

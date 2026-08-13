@@ -25,6 +25,18 @@ public static class Combat
     public static bool Lands(int attackerHit, int defenderFlee)
         => CombatRng.Chance(HitChance01(attackerHit, defenderFlee));
 
+    /// <summary>Resolve whether an attack WHIFFS — the ONE place the whole accuracy condition lives, for every
+    /// direction (player→mob and mob→player). A crit can't be evaded, and <paramref name="attackerHit"/> −1 means an
+    /// always-lands skill strike, so both skip the roll.
+    ///
+    /// <para><b>This is a RANDOM roll, so it must happen EXACTLY ONCE per attack — on the ATTACKER, before the damage
+    /// magnitude is rolled.</b> Its answer then travels to the defender in <see cref="DamageInfo.missed"/> rather than
+    /// being re-rolled there: a second roll would be a second coin-flip and could disagree with the first. Rolling it
+    /// up front is also what lets a whiff skip the damage roll entirely, and what lets a one-shot "next hit" buff be
+    /// spent only when the strike actually connects.</para></summary>
+    public static bool Missed(bool crit, int attackerHit, int defenderFlee)
+        => !crit && attackerHit >= 0 && !Lands(attackerHit, defenderFlee);
+
     /// <summary>
     /// Pre-renewal damage after DEF — the one place the split lives, shared by both directions
     /// (player→mob in <see cref="Health"/>, mob→player in <see cref="Character"/>) so they never drift.

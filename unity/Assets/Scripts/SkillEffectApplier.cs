@@ -346,6 +346,11 @@ public static class SkillEffectApplier
                               Sprite srcIcon = null, string srcName = null, string srcId = null)
     {
         if (e == null) return;
+        // Caster effects were already run by PASS 1 and must NOT land on a target too — the same guard
+        // ApplyOneToPlayer carries. Both passes are handed the SAME effect list, so without this the exclusion rests
+        // only on this switch happening to have no case for a self verb: add one (a Buff, say) and the caster's own
+        // Overclock would silently buff every mob it hit. Stated once, here, so the partition can't be broken by edit.
+        if (SkillEffect.IsSelfVerb(e.kind)) return;
         // A durational debuff (Status / Haste / Vulnerability writes a state entry) carries the source skill's icon for
         // the mob's nameplate AND that effect's stacking rules. Set BEFORE the switch (the store's Apply reads this
         // context), cleared AFTER. Description is null (the nameplate has no hover card) — no per-mob string alloc.

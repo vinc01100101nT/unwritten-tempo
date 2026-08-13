@@ -132,6 +132,10 @@ public class MonsterAI3D : MonoBehaviour
     /// scans read this instead of calling <c>GetComponent&lt;Health&gt;()</c> per mob, every frame.</summary>
     public Health Health { get; private set; }
 
+    /// <summary>This mob's shared effect store — the SAME <see cref="UnitStates"/> the player carries, so buffs and
+    /// debuffs read identically on either. Null only in the standalone spike, which has no Health.</summary>
+    public UnitStates MobStates => Health != null ? Health.States : null;
+
     /// <summary>Live registry of active mobs, so cursor target-magnetism can scan candidates without a
     /// per-frame <c>FindObjectsByType</c>. Maintained on enable/disable (so it respects MobRespawn pooling).</summary>
     public static readonly System.Collections.Generic.List<MonsterAI3D> Active = new System.Collections.Generic.List<MonsterAI3D>();
@@ -315,10 +319,20 @@ public class MonsterAI3D : MonoBehaviour
         if (player != null && touch3DSqr <= touch * touch && Time.time >= nextTouch && Character.Instance != null)
         {
             // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
-            int atk = Mathf.RoundToInt(attack * (1f - CombatRng.Range(0f, damageSpread)));   // RO-style spread
+            bool isMagic = attackType == AttackType.Magic;
+            // Blind cuts our accuracy: a physical attack rolls a reduced HIT against the player's FLEE. Magic passes
+            // −1 (always lands) — it can't be dodged, it only glances.
+            int effHit = isMagic ? -1 : Mathf.Max(0, hit - (status != null ? status.HitPenalty : 0));
+            // ORDER: accuracy FIRST, damage number second — a whiff never pays for a damage roll, and the roll happens
+            // exactly once here rather than again on the player. Mobs don't crit, so crit is false.
+            bool missed = Combat.Missed(false, effHit, Character.Instance.Flee);
+            // RO-style spread, then this mob's own damage buffs/debuffs — the SAME call the player's roll makes, so
+            // "cut this mob's damage" lands on a mob exactly as it would on the player. Covers melee AND the ranged
+            // branch below, which carries this same `atk` into the projectile.
+            int atk = missed ? 0 : UnitOffense.Dealt(MobStates, attack * (1f - CombatRng.Range(0f, damageSpread)));
             // A magic mob's attack IS its cast — fire the cast cue at the caster (player-parity OnCastStart).
-            if (attackType == AttackType.Magic) VfxCue.Fire(VfxCueId.OnCastStart, transform);
-            if (attackType == AttackType.Magic && projectileSheet != null)
+            if (isMagic) VfxCue.Fire(VfxCueId.OnCastStart, transform);
+            if (isMagic && projectileSheet != null)
             {
                 // Ranged caster: lob a VISIBLE projectile at the player; the magic damage lands on arrival.
                 // The hit state (damage/element/this) rides the projectile's HitPayload into the CACHED
@@ -331,11 +345,9 @@ public class MonsterAI3D : MonoBehaviour
             }
             else
             {
-                // Blind cuts our accuracy: physical attacks roll a reduced HIT against the player's FLEE.
-                int effHit = Mathf.Max(0, hit - (status != null ? status.HitPenalty : 0));
-                int dealt = CombatAuthority.Apply(Character.Instance, attackType == AttackType.Magic
-                    ? new DamageInfo(atk, attackElement, isMagic: true, source: this)                 // magic: MATK vs MDEF + element
-                    : new DamageInfo(atk, attackElement, attackerHit: effHit, source: this));         // physical: HIT vs FLEE + element
+                int dealt = CombatAuthority.Apply(Character.Instance, isMagic
+                    ? new DamageInfo(atk, attackElement, isMagic: true, source: this)                              // magic: MATK vs MDEF + element
+                    : new DamageInfo(atk, attackElement, attackerHit: effHit, source: this, missed: missed));      // physical: the HIT vs FLEE result, rolled above
                 if (dealt > 0)
                 {
                     DamagePopup.Spawn(player.position, dealt,
@@ -344,7 +356,8 @@ public class MonsterAI3D : MonoBehaviour
                     GainCombatXp(dealt);
                 }
             }
-            nextTouch = Time.time + touchInterval;
+            // Attack-speed buffs shorten a mob's cadence by the same rule they shorten the player's swing.
+            nextTouch = Time.time + UnitOffense.AttackInterval(touchInterval, MobStates != null ? MobStates.AttackSpeedBuffMult : 1f);
             if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell
         }
 

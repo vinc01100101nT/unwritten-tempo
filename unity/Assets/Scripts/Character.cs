@@ -320,7 +320,7 @@ public class Character : MonoBehaviour, IDamageable
     public Vector3 DamagePosition { get { var a = Avatar(); return a != null ? a.position : transform.position; } }
     public int ApplyDamage(in DamageInfo info)
         => info.isMagic ? TakeMagicDamage(info.amount, info.element, info.source)
-                        : TakeDamage(info.amount, info.attackerHit, info.element, info.source);
+                        : TakeDamage(info.amount, info.attackerHit, info.element, info.source, info.missed);
     public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
 
     // Derived passive combat stats (Phase G). These have no flat "base" — they read the
@@ -439,11 +439,22 @@ public class Character : MonoBehaviour, IDamageable
     /// cosmetic flag, so the bonus damage and DEF-bypass both apply.</summary>
     public int RollDamage(out bool crit, int targetLuk, bool forceCrit)
     {
-        crit = forceCrit || CombatRng.Chance(EffectiveCritChance(targetLuk));
-        float b = DamageBuffMult;   // timed damage buff (War Banner) lifts every roll
-        if (crit) return Mathf.RoundToInt(Attack * CritMultiplier * b);
-        return Mathf.RoundToInt(CombatRng.Range(MinAttack, Attack + 1) * b);
+        crit = RollCrit(targetLuk, forceCrit);
+        return RollDamageMagnitude(crit);
     }
+
+    /// <summary>Roll ONLY whether this attack crits. Split out from <see cref="RollDamage"/> because the accuracy roll
+    /// needs the answer first — a crit can't be evaded — and because knowing crit + hit/miss BEFORE the magnitude lets
+    /// a whiff skip the damage roll entirely. Order is: crit → accuracy → magnitude.</summary>
+    public bool RollCrit(int targetLuk = 0, bool forceCrit = false)
+        => forceCrit || CombatRng.Chance(EffectiveCritChance(targetLuk));
+
+    /// <summary>Roll the damage NUMBER for an attack whose crit is already decided. Only called once the strike is
+    /// known to connect. UnitOffense.Dealt folds in the damage buffs — the same call a mob's swing makes, so both
+    /// scale identically.</summary>
+    public int RollDamageMagnitude(bool crit)
+        => crit ? UnitOffense.Dealt(States, Attack * CritMultiplier)
+                : UnitOffense.Dealt(States, CombatRng.Range(MinAttack, Attack + 1));
 
     /// <summary>As <see cref="RollDamage"/> but for a spell — rolls in [<see cref="MinMagicAttack"/>,
     /// <see cref="MaxMagicAttack"/>]. Magic NEVER crits (RPS triangle — crit is the Finesse armour-piercer).</summary>
@@ -456,8 +467,7 @@ public class Character : MonoBehaviour, IDamageable
         // Magic NEVER crits: crit is the Finesse armour-piercer; a critting spell would pierce armour too and
         // collapse the Might>Arcane>Finesse triangle (design "Combat Ontology").
         crit = false;
-        float b = DamageBuffMult;   // timed damage buff (War Banner) still lifts magic rolls
-        return Mathf.RoundToInt(CombatRng.Range(MinMagicAttack, MagicAttack + 1) * b);
+        return UnitOffense.Dealt(States, CombatRng.Range(MinMagicAttack, MagicAttack + 1));
     }
 
     /// <summary>Our crit chance against a defender with <paramref name="targetLuk"/> LUK — base
@@ -753,27 +763,9 @@ public class Character : MonoBehaviour, IDamageable
     const float RegenInterval = 0.8f;
 
     /// <summary>The live outgoing-damage buff multiplier (1 = none) — folded into every damage roll, so it lifts
-    /// basic attacks and skills alike (War Banner's damage-up aura).</summary>
-    public float DamageBuffMult
-    {
-        get
-        {
-            if (ignoreStates) return 1f;   // BaseDerived: the pre-buff baseline, through this same formula
-            var s = States.Get(StateId.DamageBuff);
-            if (s == null) return 1f;
-            float m = s.Mult;   // State.Mult owns the stacking encoding (per-stack bonuses vs an outright multiplier)
-            if (s.rampPerStep > 0f)   // ramping buff: base + perStep for each interval elapsed past the delay
-            {
-                float el = Time.time - s.startTime - s.rampDelay;
-                if (el > 0f)
-                {
-                    m += s.rampPerStep * Mathf.FloorToInt(el / s.rampInterval);
-                    if (s.rampCap > 0f) m = Mathf.Min(m, s.rampCap);
-                }
-            }
-            return m;
-        }
-    }
+    /// basic attacks and skills alike (War Banner's damage-up aura). Reads the store like its two siblings below:
+    /// the store sums EVERY damage-buff pile (they are keyed per granting skill) and owns the ramp.</summary>
+    public float DamageBuffMult => ignoreStates ? 1f : States.DamageBuffMult;        // unified state store (neutral for BaseDerived)
     float AspdBuffMult          => ignoreStates ? 1f : States.AttackSpeedBuffMult;   // unified state store (neutral for BaseDerived)
     float CastBuffMult          => ignoreStates ? 1f : States.CastSpeedBuffMult;     // unified state store (neutral for BaseDerived)
 
@@ -781,23 +773,15 @@ public class Character : MonoBehaviour, IDamageable
     /// (<paramref name="rampPerStep"/> &gt; 0) grows the multiplier by that much every <paramref name="rampInterval"/>s
     /// after <paramref name="rampDelay"/>s, capped at <paramref name="rampCap"/> (0 = uncapped). Refreshing a live buff
     /// keeps the ramp's progress; a lapsed one restarts from base (the "keep it up to reach the ceiling" support loop).</summary>
+    /// <para>Thin wrapper over <see cref="UnitStates.ApplyStatBuff"/> — the shared landing point a mob uses too, so a
+    /// buff behaves identically on either. Kept as a named method because callers read better for it.</para>
     public void BuffDamage(float mult, float seconds, float rampDelay = 0f, float rampPerStep = 0f,
-                           float rampInterval = 5f, float rampCap = 0f)
-    {
-        if (seconds <= 0f) return;
-        // Apply keeps startTime on a refresh of a live buff (ramp progress preserved) and resets it on a lapsed re-cast.
-        // These Buff* APIs speak MULTIPLIERS (×1.3); the store keeps a BONUS FRACTION (0.3) — convert once, here.
-        var s = States.Apply(StateId.DamageBuff, seconds, Mathf.Max(0.01f, mult) - 1f);
-        if (s == null) return;
-        s.rampDelay = Mathf.Max(0f, rampDelay);
-        s.rampPerStep = Mathf.Max(0f, rampPerStep);
-        s.rampInterval = Mathf.Max(0.1f, rampInterval);
-        s.rampCap = rampCap;
-    }
+                           float rampInterval = 5f, float rampCap = 0f) =>
+        States.ApplyStatBuff(BuffStat.Damage, mult, seconds, rampDelay, rampPerStep, rampInterval, rampCap);
     /// <summary>Timed attack-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
-    public void BuffAttackSpeed(float mult, float seconds) { if (seconds <= 0f) return; States.Apply(StateId.AttackSpeedBuff, seconds, Mathf.Max(0.01f, mult) - 1f); }
+    public void BuffAttackSpeed(float mult, float seconds) => States.ApplyStatBuff(BuffStat.AttackSpeed, mult, seconds);
     /// <summary>Timed cast-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
-    public void BuffCastSpeed(float mult, float seconds)   { if (seconds <= 0f) return; States.Apply(StateId.CastSpeedBuff, seconds, Mathf.Max(0.01f, mult) - 1f); }
+    public void BuffCastSpeed(float mult, float seconds)   => States.ApplyStatBuff(BuffStat.CastSpeed, mult, seconds);
 
     /// <summary>Start (or refresh) a heal-over-time: <paramref name="perTick"/> HP every <see cref="RegenInterval"/>s
     /// for <paramref name="seconds"/> (Mending Tide). Ticked in <see cref="Update"/>.</summary>
@@ -901,14 +885,15 @@ public class Character : MonoBehaviour, IDamageable
     /// <paramref name="attackerHit"/> ≥ 0, the attacker's HIT is first rolled against our <see cref="Flee"/>
     /// (RO accuracy); a miss negates the hit. Pass −1 to skip the roll (always lands). <paramref name="source"/>
     /// (the attacking mob) is used for damage-reflect. Returns damage dealt.</summary>
-    public int TakeDamage(int attackerAttack, int attackerHit, Element attackElement = Element.Neutral, MonsterAI3D source = null)
+    public int TakeDamage(int attackerAttack, int attackerHit, Element attackElement = Element.Neutral,
+                          MonsterAI3D source = null, bool missed = false)
     {
         if (IsDead) return 0;
         if (DodgedByInvuln()) return 0;   // i-frames (dodge-dash): the hit passes harmlessly through
 
-        // FLEE: roll the attacker's HIT against our FLEE. A miss negates the hit — the monster's attack
-        // "missed", so show a WHITE MISS over the player (player-dealt misses are red, see Health).
-        if (attackerHit >= 0 && !Combat.Lands(attackerHit, Flee))
+        // Accuracy was already rolled by the attacking MOB (Combat.Missed) — we only PRESENT it, never re-roll, since
+        // a second random roll could disagree. A miss shows a WHITE MISS over the player (player-dealt = red, Health).
+        if (missed)
         {
             var dav = Avatar();
             if (dav != null) DamagePopup.SpawnText(dav.position, "MISS", MonsterMissColor);

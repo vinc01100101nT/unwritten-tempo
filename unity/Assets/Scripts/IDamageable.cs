@@ -14,12 +14,16 @@ public readonly struct DamageInfo
     public readonly Element element;
     public readonly bool isMagic;
     public readonly bool isCrit;
-    public readonly int attackerHit;      // ≥0 → roll HIT vs the defender's FLEE; −1 → always-lands (skill strike)
+    public readonly int attackerHit;      // ≥0 → the ATTACKER rolled HIT vs FLEE; −1 → always-lands (skill strike)
     public readonly bool overkill;        // mob multi-hit: register the number/sound even past death (RO cascade)
     public readonly MonsterAI3D source;   // the attacking mob, for player-side damage-reflect (null otherwise)
+    /// <summary>This attack already WHIFFED: the attacker rolled accuracy (<see cref="Combat.Missed"/>) and the answer
+    /// rides along. The defender only PRESENTS the miss — it must never re-roll, since the roll is random and a second
+    /// one could disagree with the first. On a miss <see cref="amount"/> is 0: no damage was rolled at all.</summary>
+    public readonly bool missed;
 
     public DamageInfo(int amount, Element element, bool isMagic = false, bool isCrit = false,
-                      int attackerHit = -1, bool overkill = false, MonsterAI3D source = null)
+                      int attackerHit = -1, bool overkill = false, MonsterAI3D source = null, bool missed = false)
     {
         this.amount = amount;
         this.element = element;
@@ -28,6 +32,7 @@ public readonly struct DamageInfo
         this.attackerHit = attackerHit;
         this.overkill = overkill;
         this.source = source;
+        this.missed = missed;
     }
 }
 
