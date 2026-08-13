@@ -514,6 +514,7 @@ MonoBehaviour:
     chance: 0.08
   scatterRadius: 0.5
   coinSprite: {fileID: -8171958947958391838, guid: d833d8d5b4847c74cab606b3b3fe8a1f, type: 3}
+  wornDropChance: 0.15
 --- !u!114 &15493033
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -594,7 +595,6 @@ MonoBehaviour:
   level: 1
   xpPerDamageDealt: 1
   xpToFirstLevel: 20
-  perLevelGrowth: 0.15
   preferredRange: 0
   fleeHpFraction: 0
   projectileSheet: {fileID: 0}
@@ -764,7 +764,7 @@ Transform:
   m_GameObject: {fileID: 15493030}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.003, y: -0.120000005, z: 0.344}
+  m_LocalPosition: {x: -2.1, y: -0.120000005, z: -0.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

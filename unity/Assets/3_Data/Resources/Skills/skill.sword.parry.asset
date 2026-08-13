@@ -18,27 +18,31 @@ MonoBehaviour:
   icon: {fileID: 0}
   description: 'Read the hit and punish it.
 
-    Fully negates the next incoming hit within 3 seconds.'
+    Fully negates the next incoming
+    hit within 3 seconds.'
   archetype: 2
   family: 0
   shape: 3
   complexity: 0
   acquisitionTier: 0
   trigger: 0
-  triggerSkillId:
+  triggerSkillId: 
   requiresState: 0
+  requireSkillId: 
   requireState: 0
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
+  stackPayoff: 0
+  damageMultPerStack: 0
   manaCost: 8
-  cooldown: 6
+  cooldown: 1
   castTime: 0
   aim: 0
   castRange: 0
   tier: 0
   chargeCost: 100
-  castCircleId:
+  castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
@@ -87,6 +91,6 @@ MonoBehaviour:
     targets: 1
     scope: 0
   shortLabel: Parry
-  keyLabel:
+  keyLabel: 
   slotOrder: 10
   tint: {r: 1, g: 1, b: 1, a: 1}

@@ -67,8 +67,8 @@ MonoBehaviour:
       shoveSeconds: 0.25
       magnitude: 0.05
       stacking: 1
-      stackLimit: 6
-      stacksPerApply: 6
+      stackLimit: 5
+      stacksPerApply: 5
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0

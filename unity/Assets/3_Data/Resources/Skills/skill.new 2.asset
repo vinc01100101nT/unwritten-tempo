@@ -19,7 +19,7 @@ MonoBehaviour:
   description: 'Close the distance.
 
     Dashes to the target and strikes for 100%
-    Attack. With Lock Blades, also grants 3 charges.'
+    Attack. With Lock Blades, also grants 5 charges.'
   archetype: 1
   family: 2
   shape: 4
@@ -28,10 +28,13 @@ MonoBehaviour:
   trigger: 0
   triggerSkillId: 
   requiresState: 0
+  requireSkillId: 
   requireState: 12
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
+  stackPayoff: 0
+  damageMultPerStack: 0
   manaCost: 0
   cooldown: 1
   castTime: 0
