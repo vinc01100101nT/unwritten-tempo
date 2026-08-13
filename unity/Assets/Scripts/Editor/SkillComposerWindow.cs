@@ -47,6 +47,62 @@ public class SkillComposerWindow : EditorWindow
         if (snapshot != null) DestroyImmediate(snapshot);
     }
 
+    /// <summary>Rename a skill's id AND re-point everything that referenced the old one, in the same undo step — so an
+    /// id is a label you can change, never a fragile string other assets silently depend on.
+    ///
+    /// <para>Sweeps every place a skill id is PERSISTED: a skill's <c>triggerSkillId</c> ("on cast complete of") and
+    /// <c>requireSkillId</c> ("stacks from"), plus every Item's <c>grantedSkillIds</c> (a weapon hands its kit out by
+    /// id, so a rename would otherwise strip that skill off the weapon). Refuses a blank id or one another skill
+    /// already owns, since either would merge two skills into one reference.</para></summary>
+    void RetargetSkillId(string oldId, string newId, SkillDef target)
+    {
+        if (target == null) return;
+        newId = (newId ?? "").Trim();
+        if (string.IsNullOrEmpty(newId))
+        {
+            EditorUtility.DisplayDialog("Rename skill id", "An id can't be empty — keeping the old one.", "OK");
+            return;
+        }
+        for (int i = 0; i < all.Count; i++)
+            if (all[i] != null && all[i] != target && all[i].id == newId)
+            {
+                EditorUtility.DisplayDialog("Rename skill id",
+                    $"\"{newId}\" is already used by {all[i].displayName}. Ids must be unique — keeping the old one.", "OK");
+                return;
+            }
+
+        Undo.RecordObject(target, "Rename skill id");
+        target.id = newId;
+        EditorUtility.SetDirty(target);
+        if (string.IsNullOrEmpty(oldId)) return;   // brand-new skill: nothing can point at it yet
+
+        int skillRefs = 0, itemRefs = 0;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var s = all[i];
+            if (s == null) continue;
+            bool touched = false;
+            if (s.triggerSkillId == oldId) { Undo.RecordObject(s, "Rename skill id"); s.triggerSkillId = newId; touched = true; }
+            if (s.requireSkillId == oldId) { Undo.RecordObject(s, "Rename skill id"); s.requireSkillId = newId; touched = true; }
+            if (touched) { EditorUtility.SetDirty(s); skillRefs++; }
+        }
+        foreach (var guid in AssetDatabase.FindAssets("t:Item"))
+        {
+            var it = AssetDatabase.LoadAssetAtPath<Item>(AssetDatabase.GUIDToAssetPath(guid));
+            if (it == null || it.grantedSkillIds == null) continue;
+            bool touched = false;
+            for (int k = 0; k < it.grantedSkillIds.Count; k++)
+                if (it.grantedSkillIds[k] == oldId)
+                {
+                    if (!touched) Undo.RecordObject(it, "Rename skill id");
+                    it.grantedSkillIds[k] = newId; touched = true;
+                }
+            if (touched) { EditorUtility.SetDirty(it); itemRefs++; }
+        }
+        AssetDatabase.SaveAssets();
+        Debug.Log($"[Skill Composer] Renamed \"{oldId}\" → \"{newId}\"; re-pointed {skillRefs} skill reference(s) and {itemRefs} item(s).");
+    }
+
     void Refresh()
     {
         all.Clear();
@@ -85,12 +141,19 @@ public class SkillComposerWindow : EditorWindow
         if (GUILayout.Button("◀", GUILayout.Width(24))) listCollapsed = true;
         EditorGUILayout.EndHorizontal();
         listScroll = EditorGUILayout.BeginScrollView(listScroll);
-        foreach (var s in all)
+        RebuildGroups();
+        foreach (var s in ungrouped) DrawRow(s, 0f, Color.clear);
+        foreach (var g in groupNames)
         {
-            if (s == null) continue;
-            bool on = s == sel;
-            var style = on ? EditorStyles.helpBox : EditorStyles.label;
-            if (GUILayout.Button($"{s.displayName}\n{s.id}", style, GUILayout.Height(34), GUILayout.MinWidth(0f))) sel = s;
+            var list = grouped[g];
+            var hue = GroupHue(g);
+            if (!groupOpen.TryGetValue(g, out bool open)) open = true;
+
+            var headerRect = GUILayoutUtility.GetRect(0f, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
+            EditorGUI.DrawRect(headerRect, Tint(hue, 0.30f));
+            groupOpen[g] = open = EditorGUI.Foldout(headerRect, open, $"{g}  ({list.Count})", true);
+            if (!open) continue;
+            foreach (var s in list) DrawRow(s, 12f, Tint(hue, 0.14f));
         }
         EditorGUILayout.EndScrollView();
 
@@ -104,6 +167,68 @@ public class SkillComposerWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
         if (GUILayout.Button("Refresh", GUILayout.MinWidth(0f))) Refresh();
         EditorGUILayout.EndVertical();
+    }
+
+    void DrawRow(SkillDef s, float indent, Color band)
+    {
+        if (s == null) return;
+        var r = GUILayoutUtility.GetRect(0f, 34f, GUILayout.ExpandWidth(true));
+        r.xMin += indent;
+        if (band.a > 0f) EditorGUI.DrawRect(r, band);
+        var style = s == sel ? EditorStyles.helpBox : EditorStyles.label;
+        if (GUI.Button(r, $"{s.displayName}\n{s.id}", style)) sel = s;
+    }
+
+    // Each group gets its own colored band so a family is recognizable at a glance. The hue comes from a stable hash
+    // of the group NAME (not its position), so a group keeps its color as skills are added, renamed, or reordered —
+    // and a brand-new group picks one up automatically with nothing to configure.
+    static float GroupHue(string name)
+    {
+        int h = 17;
+        unchecked { foreach (char c in name) h = h * 31 + c; }
+        return (h & 0x7fffffff) % 360 / 360f;
+    }
+
+    static Color Tint(float hue, float alpha)
+    {
+        var c = Color.HSVToRGB(hue, 0.65f, 0.9f);
+        c.a = alpha;
+        return c;
+    }
+
+    // Grouping for the left list: an id with three or more dot segments (skill.<group>.<name>) files under a foldout
+    // named for the MIDDLE segment; a two-segment id (skill.<name>) stays flat above the groups. Rebuilt from the live
+    // ids every repaint, so editing an id moves its row — and creates or removes the group — with no bookkeeping.
+    readonly List<SkillDef> ungrouped = new List<SkillDef>();
+    readonly List<string> groupNames = new List<string>();
+    readonly Dictionary<string, List<SkillDef>> grouped = new Dictionary<string, List<SkillDef>>();
+    readonly Dictionary<string, bool> groupOpen = new Dictionary<string, bool>();
+
+    static string GroupOf(SkillDef s)
+    {
+        string id = s.id;
+        if (string.IsNullOrEmpty(id)) return null;
+        int a = id.IndexOf('.');
+        if (a < 0) return null;
+        int b = id.IndexOf('.', a + 1);
+        return b > a + 1 ? id.Substring(a + 1, b - a - 1) : null;
+    }
+
+    void RebuildGroups()
+    {
+        ungrouped.Clear();
+        groupNames.Clear();
+        foreach (var list in grouped.Values) list.Clear();
+        foreach (var s in all)
+        {
+            if (s == null) continue;
+            var g = GroupOf(s);
+            if (g == null) { ungrouped.Add(s); continue; }
+            if (!grouped.TryGetValue(g, out var list)) grouped[g] = list = new List<SkillDef>();
+            if (list.Count == 0) groupNames.Add(g);
+            list.Add(s);
+        }
+        groupNames.Sort(string.CompareOrdinal);
     }
 
     // Draggable divider between the list and the body — drag to resize, no minimum width.
@@ -237,7 +362,13 @@ public class SkillComposerWindow : EditorWindow
         // 1) IDENTITY — what the skill IS.
         if (Section("Identity", ref foId))
         {
-            sel.id = EditorGUILayout.TextField(new GUIContent("id", "Stable kebab id (e.g. skill.meteor). Don't rename once shipped."), sel.id);
+            // DELAYED on purpose: a plain TextField commits per KEYSTROKE, so typing a new id would fire a rename for
+            // every half-typed prefix. This commits once, on Enter or focus-loss — then everything pointing at the old
+            // id is re-pointed at the new one, so a rename can never leave a dangling reference.
+            string beforeId = sel.id;
+            string typedId = EditorGUILayout.DelayedTextField(new GUIContent("id",
+                "Kebab id (e.g. skill.meteor). Safe to rename: every reference to it is updated automatically."), sel.id);
+            if (typedId != beforeId) RetargetSkillId(beforeId, typedId, sel);
             sel.displayName = EditorGUILayout.TextField(new GUIContent("display name",
                 "The skill's name shown to the player (hotbar hover, tooltips)."), sel.displayName);
             using (new EditorGUILayout.HorizontalScope())
