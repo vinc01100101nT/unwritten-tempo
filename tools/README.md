@@ -2,6 +2,26 @@
 
 Dev utilities for this project.
 
+## check-unity-code.sh
+
+Checks the game's C# for **compile errors without opening Unity** and without forcing a refresh. ~4 seconds.
+
+Why it's needed: the project rule forbids force-refreshing Unity (each refresh blocks ~60s and often times out), so a C# edit used to go unverified until the user happened to focus the editor. Unity ships its own C# compiler inside the app bundle (`Unity.app/Contents/Resources/Scripting`) and every reference library the game needs is already on disk — in `Managed/UnityEngine/`, the .NET compatibility stand-ins, and `unity/Library/ScriptAssemblies/` for package libraries — so this runs the *same* check Unity would. It never touches the running editor.
+
+Checks both halves separately: the game (`Assets/Scripts`) and the editor tools (`Assets/Scripts/Editor`). An editor-only mistake is otherwise invisible until someone opens that window.
+
+### Usage
+
+```bash
+tools/check-unity-code.sh            # both (default)
+tools/check-unity-code.sh runtime    # game scripts only
+tools/check-unity-code.sh editor     # editor tools only
+```
+
+Exit code **0** = clean, **1** = compile errors (printed with exact file + line), **2** = setup problem (it names what's missing). Reads the required Unity version from `unity/ProjectSettings/ProjectVersion.txt`; if that exact version isn't installed it warns and falls back to the newest installed one. Needs `unity/Library/ScriptAssemblies/` (present on any project Unity has opened once).
+
+Verified to **catch** deliberate errors in both halves, not just to report "clean". A clean run means Unity will build it — it does **not** mean the game behaves correctly, so it never replaces play-testing.
+
 ## extract_chatgpt_share.py
 
 Reads a **ChatGPT share link** (`chatgpt.com/share/...`) and prints the full conversation (every user + assistant turn) as Markdown.

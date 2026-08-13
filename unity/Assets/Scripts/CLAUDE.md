@@ -1,5 +1,20 @@
 # Rules for editing game scripts (`unity/Assets/Scripts/`)
 
+## ✅ After editing, check it compiles — `tools/check-unity-code.sh` (~4s, no Unity window)
+
+```bash
+tools/check-unity-code.sh
+```
+
+You do **not** have to leave a C# edit unverified, and you must **never** ask the user to click into Unity
+just to find out whether it builds. Unity ships its own C# compiler inside the app bundle, so this runs the
+same check Unity would and prints real errors with exact file + line. It does not touch the running editor,
+so it does not conflict with the "never force-refresh Unity" rule. Checks the game scripts AND the editor
+tools — an editor-only mistake is otherwise invisible until someone opens that window. Exit 0 = clean,
+1 = errors, 2 = setup problem. Full details in `tools/README.md`; the standing rule is in the project `CLAUDE.md`.
+
+A clean run means it BUILDS, not that it BEHAVES — it never replaces play-testing.
+
 ## ⚠️ Performance is a HARD constraint — read `PERFORMANCE.md` before writing runtime C#
 
 This is a 2.5D game with many billboard mobs and auto-combat that keeps the screen full. Code that's
