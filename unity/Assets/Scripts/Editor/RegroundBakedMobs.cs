@@ -11,7 +11,7 @@ public static class RegroundBakedMobs
     [MenuItem("Tools/unwritten/Quick Fixes/Reground Baked Mobs", priority = 900)]
     public static void Reground()
     {
-        var mobs = Object.FindObjectsByType<MonsterAI3D>(FindObjectsSortMode.None);
+        var mobs = Object.FindObjectsByType<MonsterAI3D>();
         int moved = 0, skipped = 0;
         foreach (var mob in mobs)
         {

@@ -89,7 +89,7 @@ public class SnowGround : MonoBehaviour
     /// <summary>Find the live snow-ground effect, creating one if none exists (used by the DevSettings knob).</summary>
     public static SnowGround Ensure()
     {
-        var s = FindFirstObjectByType<SnowGround>();
+        var s = FindAnyObjectByType<SnowGround>();
         if (s == null) s = new GameObject("SnowGround") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<SnowGround>();
         return s;
     }

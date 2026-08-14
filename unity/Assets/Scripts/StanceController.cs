@@ -39,11 +39,9 @@ public class StanceController : MonoBehaviour
     IStancePose pose;
     Player3DController playerCtrl;   // optional — resolves the MoveGait source
 
-    /// <summary>Gait multiplier for a unit that has NO <see cref="Player3DController"/> to read one from (an AI NPC).
-    /// The <see cref="StanceSpeedSource.MoveGait"/> case uses this when <see cref="playerCtrl"/> is null, so an NPC
-    /// driver (e.g. <see cref="TownNPC3DVisual"/>) can scale Walk cadence to its own ground speed. 1 = clip's natural
-    /// cadence. Ignored for the player (its live controller owns the gait).</summary>
-    public float externalGaitMult = 1f;
+    // An AI unit's own status host, so its leg cadence answers to ITS Slow/Haste. Optional: a unit with no status
+    // host simply never slows or hastes, and reads the shared baseline unchanged.
+    StatusController status;
 
     // One held stance: its id + the FitWindow duration its clip is fit to (0 = none). Kept as a single unit so the id
     // and its window can't drift apart.
@@ -85,6 +83,22 @@ public class StanceController : MonoBehaviour
         pose = GetComponent<IStancePose>();
         if (pose == null) pose = GetComponentInChildren<IStancePose>();
         playerCtrl = GetComponent<Player3DController>();
+        status = GetComponent<StatusController>();
+    }
+
+    /// <summary>This unit's live leg cadence — ONE rule for every character.
+    ///
+    /// <para>The player's controller already folds baseline x live Slow/Haste x gear tier each frame. An AI unit used
+    /// to carry a value FROZEN at spawn instead, so a hasted townsperson or shadow kept walking at the old cadence
+    /// while it visibly sped up. It now folds the same three terms from the same shared baseline, reading its OWN
+    /// Slow/Haste and the gear it is actually playing.</para></summary>
+    float GaitFor(StanceId id)
+    {
+        if (playerCtrl != null) return playerCtrl.GaitSpeedMult;
+        var spec = CharacterSpec.Active;
+        // Run legs churn at the run gear so the slower travel doesn't foot-skate — the same tier rule the player uses.
+        float gearAnimTier = id == StanceId.Run ? spec.runGearMult : 1f;
+        return spec.GaitMult(status != null ? status.MoveMult : 1f, gearAnimTier);
     }
 
     /// <summary>Point the MoveGait source at the player controller (the gait-mult owner) — for a rig whose billboard
@@ -266,7 +280,7 @@ public class StanceController : MonoBehaviour
         float m = b.speedMult;
         switch (b.speedSource)
         {
-            case StanceSpeedSource.MoveGait:    m *= playerCtrl != null ? playerCtrl.GaitSpeedMult : externalGaitMult; break;
+            case StanceSpeedSource.MoveGait:    m *= GaitFor(b.id); break;
             case StanceSpeedSource.FitWindow:
                 float n = pose.NaturalDuration(b.action, b.clip);
                 if (window > 0.01f && n > 0.01f) m *= n / window;

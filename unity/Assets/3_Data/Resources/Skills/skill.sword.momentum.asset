@@ -10,11 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
-  m_Name: skill.new 3
+  m_Name: skill.sword.momentum
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   targetingMigrated: 1
   id: skill.sword.momentum
   displayName: Momentum
+  weaponType: 1
+  published: 1
   icon: {fileID: -2241300882062069919, guid: 5865a4bc2158c594f91fe4497645f398, type: 3}
   description: Increases ATK by 3% each stack.
   archetype: 3
@@ -75,6 +77,7 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0
+      side: 0
       buffStat: 0
       rampDelay: 0
       rampPerStep: 0

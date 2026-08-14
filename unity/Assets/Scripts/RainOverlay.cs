@@ -59,7 +59,7 @@ public class RainOverlay : MonoBehaviour
     /// rain works even on a scene built before this component was added to the rig).</summary>
     public static RainOverlay Ensure()
     {
-        var r = FindFirstObjectByType<RainOverlay>();
+        var r = FindAnyObjectByType<RainOverlay>();
         if (r == null) r = new GameObject("RainOverlay") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<RainOverlay>();
         return r;
     }

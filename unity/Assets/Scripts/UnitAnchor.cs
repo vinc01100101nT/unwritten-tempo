@@ -22,8 +22,19 @@ public static class UnitAnchor
     // lossyScale.y already folds in RigBuilder25D.BillboardScale, so this tracks per-mob scale automatically.
     public const float HalfHeightFactor = 0.4f;
 
-    // Feet→centre distance (world units) for this unit, scaled to its size.
-    public static float HalfHeight(Transform t) => HalfHeightFactor * Mathf.Max(0.0001f, t.lossyScale.y);
+    /// <summary>Feet→centre distance (world units) for this unit.
+    ///
+    /// <para>A unit carrying a <see cref="UnitBody"/> states its real half-height outright. That is every LIVE-3D
+    /// character (player, townsfolk, shadow mobs), whose root scale is deliberately NOT its size — the body is a
+    /// separately-fitted child, so the scale rule below reads the wrong number for them (measured: a shadow's centre
+    /// landed at 0.4 on a 0.327-tall body; the player's at 0.28 on that same body).</para>
+    ///
+    /// <para>Everything else — the billboard mobs — keeps the scale rule, which is exactly right for them because the
+    /// sprite IS the root. The lookup is one non-allocating TryGetComponent and misses fast.</para></summary>
+    public static float HalfHeight(Transform t)
+        => t.TryGetComponent<UnitBody>(out var b) && b.halfHeight > 0f
+            ? b.halfHeight
+            : HalfHeightFactor * Mathf.Max(0.0001f, t.lossyScale.y);
 
     // The unit's feet on the ground. With the feet-pivot invariant this IS transform.position; kept as a
     // named accessor so callers read intent, not a raw field.
@@ -32,6 +43,23 @@ public static class UnitAnchor
     // Mid-body — the visual centre of the sprite. Aim, projectile homing and ground-marker math target this.
     public static Vector3 Center(Transform t) => t.position + Vector3.up * HalfHeight(t);
 
-    // Top of the sprite — where floating labels/popups sit so they clear the head.
+    // Top of the sprite / crown of the body.
     public static Vector3 Head(Transform t) => t.position + Vector3.up * (2f * HalfHeight(t));
+
+    // Gap above the crown for floating text, as a fraction of HALF-height — so it scales with the unit instead of
+    // being a fixed world distance that swamps a small mob and hugs a big one.
+    public const float OverheadClearanceFactor = 0.35f;
+
+    /// <summary>Where floating TEXT sits: just clear of the crown, scaled to the unit.
+    ///
+    /// <para>THE one answer for every popup — damage numbers, MISS, heals, status announcements, level-ups. They used
+    /// to use four different rules (the raw feet position, a hand-added +1.0, a hand-added +1.1, or the crown) on top
+    /// of a fixed +0.5 buried in the popup pool itself, which is a world distance and therefore size-blind: measured,
+    /// status text floated 8.4x a median mob's body height above its feet, and 11.2x on the smallest. Routing every
+    /// caller here is what this class was written for — its own summary already forbade hand-added offsets.</para></summary>
+    public static Vector3 Overhead(Transform t)
+    {
+        float h = HalfHeight(t);
+        return t.position + Vector3.up * (2f * h + h * OverheadClearanceFactor);
+    }
 }

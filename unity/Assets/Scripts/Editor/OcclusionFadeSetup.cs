@@ -12,9 +12,9 @@ public static class OcclusionFadeSetup
     [MenuItem("Tools/unwritten/Scene Setup/Add Camera Occlusion Fade (Systems scene)", priority = 120)]
     static void Add()
     {
-        var follow = Object.FindObjectOfType<CameraFollow3D>();
+        var follow = Object.FindAnyObjectByType<CameraFollow3D>();
         Camera cam = follow != null ? follow.GetComponent<Camera>() : Camera.main;
-        if (cam == null) cam = Object.FindObjectOfType<Camera>();
+        if (cam == null) cam = Object.FindAnyObjectByType<Camera>();
         if (cam == null)
         { EditorUtility.DisplayDialog("Occlusion Fade",
             "No camera in the open scene(s). Open the scene that has the follow camera (Systems.unity) and re-run.", "OK"); return; }

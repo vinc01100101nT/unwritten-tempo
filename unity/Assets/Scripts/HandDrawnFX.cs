@@ -109,7 +109,7 @@ public class HandDrawnFX : MonoBehaviour
     /// works even on a Systems scene baked before this component joined the rig).</summary>
     public static HandDrawnFX Ensure()
     {
-        var f = Instance != null ? Instance : FindFirstObjectByType<HandDrawnFX>();
+        var f = Instance != null ? Instance : FindAnyObjectByType<HandDrawnFX>();
         if (f == null) f = new GameObject("HandDrawnFX") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<HandDrawnFX>();
         return f;
     }

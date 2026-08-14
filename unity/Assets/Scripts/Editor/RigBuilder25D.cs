@@ -191,7 +191,7 @@ public static class RigBuilder25D
         // The GraphicRaycaster only reports "pointer over HUD" if an EventSystem drives it. The real
         // game gets one from the Systems scene; the standalone spike needs its own, or clicking the
         // HP bar would fall through to the world and move the player (Player3DController.PointerOverUI).
-        if (Object.FindFirstObjectByType<EventSystem>() == null)
+        if (Object.FindAnyObjectByType<EventSystem>() == null)
             new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
 
         var uiSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");

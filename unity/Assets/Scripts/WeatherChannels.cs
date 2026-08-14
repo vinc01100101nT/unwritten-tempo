@@ -61,7 +61,7 @@ public class WeatherChannels : MonoBehaviour
     /// weather works even on a Systems scene baked before this component joined the rig).</summary>
     public static WeatherChannels Ensure()
     {
-        var w = Instance != null ? Instance : FindFirstObjectByType<WeatherChannels>();
+        var w = Instance != null ? Instance : FindAnyObjectByType<WeatherChannels>();
         if (w == null) w = new GameObject("WeatherChannels") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<WeatherChannels>();
         return w;
     }

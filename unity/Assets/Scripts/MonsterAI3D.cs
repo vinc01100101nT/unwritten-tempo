@@ -51,6 +51,8 @@ public class MonsterAI3D : MonoBehaviour
     [Tooltip("HIT (RO accuracy). Rolled against the player's FLEE on each bite; lose and the attack MISSes (white).")]
     public int hit = 8;
     public int xpReward = 5;
+    [Tooltip("UNARMED reach (world units, full size). A mob holding a weapon uses that weapon's Attack Range " +
+             "instead — the same rule the player uses, so arming a mob extends its reach exactly as it would yours.")]
     public float touchRange = 0.9f;
     public float touchInterval = 1f;
 
@@ -108,7 +110,7 @@ public class MonsterAI3D : MonoBehaviour
         int d = CombatAuthority.Apply(Character.Instance, new DamageInfo(p.amount, p.element, isMagic: true, source: mob));
         if (d > 0)
         {
-            DamagePopup.Spawn(p.homing != null ? p.homing.position : p.at, d, MagicHitColor);
+            DamagePopup.Spawn(p.homing != null ? UnitAnchor.Overhead(p.homing) : p.at, d, MagicHitColor);
             mob.TryInflictOnHit();
             mob.GainCombatXp(d);
         }
@@ -136,6 +138,23 @@ public class MonsterAI3D : MonoBehaviour
     /// debuffs read identically on either. Null only in the standalone spike, which has no Health.</summary>
     public UnitStates MobStates => Health != null ? Health.States : null;
 
+    /// <summary><see cref="Time.time"/> of this mob's last landed touch-attack — the one general "it just attacked"
+    /// moment, readable by ANY visual. The billboard's squash tell (<see cref="AttackLunge"/>) is driven straight
+    /// from the same beat below; a live-3D rig (<see cref="MobShadow3DVisual"/>) reads this to play a swing clip.</summary>
+    public float LastAttackTime { get; private set; }
+
+    /// <summary>The simulate-near / freeze-far switch gating this brain, when the unit has one. Assigned by whatever
+    /// builds the unit (a live-3D shadow attaches one); null on a billboard mob, which is cheap enough to run always.
+    /// Pushed in rather than looked up so the per-frame path never calls GetComponent (PERFORMANCE.md).</summary>
+    public SimulationLod Lod { get; set; }
+
+    /// <summary>When true, this unit travels at the shared CHARACTER gear speeds (<see cref="CharacterSpec"/>) instead
+    /// of the mob dial — chasing uses the run gear, wandering the walk gear. A 3D shadow sets this because it IS a
+    /// character-sized body, and a character-sized body moving at mob scale (0.30×) visibly shuffles. False (the
+    /// default) = ordinary mob speed, so every billboard mob is untouched. Was a reference to the live
+    /// <c>Player3DController</c>; the gear speeds now have their own owner, so a mob no longer reads a player at all.</summary>
+    public bool UsesCharacterGears { get; set; }
+
     /// <summary>Live registry of active mobs, so cursor target-magnetism can scan candidates without a
     /// per-frame <c>FindObjectsByType</c>. Maintained on enable/disable (so it respects MobRespawn pooling).</summary>
     public static readonly System.Collections.Generic.List<MonsterAI3D> Active = new System.Collections.Generic.List<MonsterAI3D>();
@@ -159,6 +178,37 @@ public class MonsterAI3D : MonoBehaviour
         // duplicate when one is already present.
         if (GetComponent<TrainingDummy>() == null && !TryGetComponent<MobNameplate>(out _))
             gameObject.AddComponent<MobNameplate>();
+
+        EnsureSimulationLod();
+    }
+
+    [Header("Simulate near / freeze far")]
+    [Tooltip("Beyond this distance from the player this mob's movement + animation freeze. Must stay comfortably " +
+             "WIDER than the camera view so a mob chasing you from just off-screen keeps coming.")]
+    public float simulateRadius = 28f;
+
+    /// <summary>Give EVERY mob the simulate-near / freeze-far switch, sprite mobs included.
+    ///
+    /// <para>The switch was written to be the one shared rule for any unit that costs real per-frame work, and its own
+    /// notes say it was extracted precisely because "mobs — the units there are most of — never got it". In practice it
+    /// only ever reached the townsfolk and the handful of live-3D shadows: it sat on ZERO of the mob prefabs, so every
+    /// ordinary sprite mob kept running its brain, its mover, its status ticking and its animator at any distance.
+    /// Attaching it here — the one place every mob passes through — is what actually closes that gap.</para>
+    ///
+    /// <para>The BRAIN is deliberately not frozen: it early-outs on <see cref="Lod"/> itself so the mob stays in
+    /// <see cref="Active"/> and can still be found by target scans. A shadow builds its own switch with its own
+    /// radius and component list, so this leaves an already-configured one alone.</para></summary>
+    void EnsureSimulationLod()
+    {
+        if (Lod != null || TryGetComponent<SimulationLod>(out _)) return;
+
+        var lod = gameObject.AddComponent<SimulationLod>();
+        lod.simulateRadius = simulateRadius;
+        // The mover and the sprite animator are the per-frame costs worth stopping. The nameplate and depth sorter
+        // stay live: an off-screen unit's plate is already invisible, and freezing the sorter would strand its sprite
+        // at a stale draw order the moment it thaws.
+        lod.Freeze(agent, GetComponent<BillboardAnimator3D>());
+        Lod = lod;
     }
 
     void OnEnable()  { if (!Active.Contains(this)) Active.Add(this); }
@@ -168,7 +218,7 @@ public class MonsterAI3D : MonoBehaviour
     {
         agent.moveSpeed = moveSpeed * UnitScale.ForMob;
 
-        var pc = FindFirstObjectByType<Player3DController>();
+        var pc = FindAnyObjectByType<Player3DController>();
         if (pc != null) { player = pc.transform; playerAtk = pc.GetComponent<Player3DAttacker>(); }
 
         // Crowd avoidance: spread out from other mobs (they no longer physically block each other),
@@ -217,7 +267,7 @@ public class MonsterAI3D : MonoBehaviour
         // says what killing this mob is worth to the player, which is a payout curve, not part of the unit model the
         // player and mobs share. Named so it can't be mistaken for a surviving stat multiplier.
         xpReward = Mathf.Max(xpReward + 1, Mathf.RoundToInt(xpReward * (1f + XpRewardGrowthPerLevel)));
-        DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Level Up!", LevelUpColor);
+        DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "Level Up!", LevelUpColor);
         VfxCue.Fire(VfxCueId.OnLevelUp, transform);
     }
 
@@ -230,6 +280,39 @@ public class MonsterAI3D : MonoBehaviour
     /// <summary>This mob's live stat block (level + primaries → every derived number). Cached; may be null on a
     /// legacy hand-placed mob that predates the block.</summary>
     public UnitStatBlock Stats => statBlock != null ? statBlock : (statBlock = GetComponent<UnitStatBlock>());
+
+    UnitEquipment gear;
+    /// <summary>This mob's worn gear — the owner of its weapon, and so of its REACH (see <see cref="WeaponReach"/>).
+    /// Cached on first use, never looked up per frame.</summary>
+    public UnitEquipment Equipment => gear != null ? gear : (gear = GetComponent<UnitEquipment>());
+
+    /// <summary>How far this mob can reach, in world units — THE one answer, used by its bite, by the distance it
+    /// holds while chasing, and by anything outside asking (a relocation working out where to land beside it).
+    ///
+    /// <para>Reach comes from the EQUIPPED WEAPON (<c>Item.attackRange</c>), falling back to this mob's unarmed
+    /// <see cref="touchRange"/> — the identical rule the player uses, through the shared <see cref="WeaponReach"/>.
+    /// A MELEE reach is authored at full unit size and rescaled to the mob's actual size, so a shrunk mob bites at its
+    /// body edge instead of across a gap that dwarfs its sprite. A RANGED mob (<see cref="preferredRange"/> &gt; 0)
+    /// keeps its authored range untouched: that standoff is a deliberate distance, not body contact.</para>
+    ///
+    /// <para>Written once here because it was briefly computed in three places with two different rules — the ranged
+    /// exception was missing from one of them.</para></summary>
+    public float Reach
+    {
+        get
+        {
+            float baseReach = WeaponReach.For(Equipment, touchRange);
+            // Blend THIS mob's size with its opponent's. Its opponent is the player, which is always built to the
+            // shared character body — so the pair is (my size, character size), never a factor guessed in advance.
+            return preferredRange > 0f ? baseReach
+                                       : baseReach * UnitScale.MeleeBlend(MeleeScale, UnitScale.CharacterScale);
+        }
+    }
+
+    /// <summary>How big this mob's BODY is, for melee-contact maths — the shared character size when it is a live-3D
+    /// shadow (which is built to the same body as the player), the shrunken mob size otherwise. Reported rather than
+    /// baked into a reach, so whoever measures against this mob blends the real pair.</summary>
+    public float MeleeScale => UsesCharacterGears ? UnitScale.CharacterScale : UnitScale.MobScale;
 
     /// <summary>Briefly freeze this mob (chase + touch-attack) — a reusable stagger/crowd-control hook for
     /// skills like the Swordsman's Bash. Stacks by taking the later end time, not by adding.</summary>
@@ -251,7 +334,7 @@ public class MonsterAI3D : MonoBehaviour
             if (stunFx == null) stunFx = StatusFX.Create(transform, stunSheet, stunFrameSize, stunFrames, 12f, 0.7f, 1.15f);
             stunFx.Show(seconds);
         }
-        if (!wasStunned) DamagePopup.SpawnText(UnitAnchor.Head(transform), "Stun!", StunColor);
+        if (!wasStunned) DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "Stun!", StunColor);
     }
 
     /// <summary>Force this mob to fixate on the player for <paramref name="seconds"/> — it chases and can't leash
@@ -289,12 +372,22 @@ public class MonsterAI3D : MonoBehaviour
 
     void Update()
     {
+        // Frozen because the player is far away (a live-3D mob attaches a SimulationLod; billboards have none and
+        // run always). Checked here rather than by disabling this component so the mob stays in Active for target
+        // scans. Its mover + animator are the pieces the switch actually disables.
+        if (Lod != null && !Lod.Simulating) return;
+
         if (Time.time < stunnedUntil) { if (agent != null) agent.Halt(); return; }   // staggered — frozen
 
         // Move-speed states (Slow × Haste) come from the unified store's MoveMult — the SINGLE source, same as the
         // player reads. A Slow makes it <1, a Haste >1; 1 when neither is active. UnitScale.ForMob couples speed to
-        // size (smaller mob = slower) so it keeps the same body-lengths/sec at any size.
-        agent.moveSpeed = (Health != null ? Health.States.MoveMult : 1f) * moveSpeed * UnitScale.ForMob;
+        // size (smaller mob = slower) so it keeps the same body-lengths/sec at any size. A SpeedSource unit (a 3D
+        // shadow) instead reads the player's own gear speeds — same body, same stride — chasing on the run gear and
+        // wandering on the walk gear, exactly the two gears every character has.
+        float travel = UsesCharacterGears
+            ? (chasing ? CharacterSpec.Active.RunGearSpeed : CharacterSpec.Active.WalkGearSpeed)
+            : moveSpeed * UnitScale.ForMob;
+        agent.moveSpeed = (Health != null ? Health.States.MoveMult : 1f) * travel;
 
         Vector3 pos = transform.position;
         // A dead player is no target: leash off and resume wandering until they respawn.
@@ -315,7 +408,10 @@ public class MonsterAI3D : MonoBehaviour
         // mob bites at its actual body edge rather than across a fixed gap that dwarfs its sprite. RANGED mobs
         // (preferredRange > 0) keep their authored touchRange untouched — their reach is a deliberate standoff, not
         // a body-contact distance, so it must NOT shrink with unit size.
-        float touch = preferredRange > 0f ? touchRange : touchRange * UnitScale.MeleeReachFactor;
+        // Reach comes from the EQUIPPED WEAPON (Item.attackRange), falling back to this mob's unarmed touchRange —
+        // the identical rule Player3DAttacker.BaseRange uses, via the shared WeaponReach. Arming a mob now extends
+        // its reach exactly as arming the player does; before, a mob's weapon changed its damage but not its reach.
+        float touch = Reach;
         if (player != null && touch3DSqr <= touch * touch && Time.time >= nextTouch && Character.Instance != null)
         {
             // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
@@ -350,7 +446,7 @@ public class MonsterAI3D : MonoBehaviour
                     : new DamageInfo(atk, attackElement, attackerHit: effHit, source: this, missed: missed));      // physical: the HIT vs FLEE result, rolled above
                 if (dealt > 0)
                 {
-                    DamagePopup.Spawn(player.position, dealt,
+                    DamagePopup.Spawn(UnitAnchor.Overhead(player), dealt,
                         attackType == AttackType.Magic ? MagicHitColor : PhysHitColor);
                     TryInflictOnHit();
                     GainCombatXp(dealt);
@@ -358,7 +454,8 @@ public class MonsterAI3D : MonoBehaviour
             }
             // Attack-speed buffs shorten a mob's cadence by the same rule they shorten the player's swing.
             nextTouch = Time.time + UnitOffense.AttackInterval(touchInterval, MobStates != null ? MobStates.AttackSpeedBuffMult : 1f);
-            if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell
+            LastAttackTime = Time.time;         // the general "it attacked" beat every visual reads
+            if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell (billboard mobs only)
         }
 
         if (chasing)
@@ -400,13 +497,16 @@ public class MonsterAI3D : MonoBehaviour
             return;
         }
 
-        // Melee: close to stopDistance and bite (the original behavior). Contact distance IS authored at full size,
-        // so rescale it to the current size (UnitScale) — matching the melee touch range scaled in Update.
-        float stop = stopDistance * UnitScale.MeleeReachFactor;
+        // Melee: close and bite. The hold distance keeps its AUTHORED FRACTION of this mob's reach (stopDistance ÷
+        // touchRange), so a mob holding a long weapon stands off at the same relative spot a fist-fighter does
+        // instead of walking to punching distance with a spear. Then rescale to the current unit size, matching the
+        // touch range scaled in Update.
+        float reachFraction = touchRange > 1e-4f ? stopDistance / touchRange : 1f;
+        float stop = Reach * reachFraction;   // same reach the bite uses — one rule, so the two can't disagree
         // INVARIANT: a melee mob must never hold farther than the PLAYER can reach, or the player whiffs every swing
         // while the mob bites freely (authored stopDistance can exceed the player's range, e.g. 0.7 vs 0.5). Clamp the
         // hold distance to just inside the player's effective melee reach so a halted mob is always in trading range.
-        if (playerAtk != null) stop = Mathf.Min(stop, playerAtk.EffectiveRange * 0.9f);
+        if (playerAtk != null) stop = Mathf.Min(stop, playerAtk.RangeAgainst(Health) * 0.9f);
         if (toPlayerSqr <= stop * stop) agent.Halt();
         else agent.MoveToward(player.position);
     }

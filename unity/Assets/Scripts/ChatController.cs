@@ -165,7 +165,7 @@ public class ChatController : MonoBehaviour
     // exact same anchor path (SpeechBubble.ShowOverHead) so it sits identically. Cold path: once per sent line.
     void ShowOverheadBubble(string line)
     {
-        if (playerVisual == null) playerVisual = FindFirstObjectByType<Character3DVisual>();
+        if (playerVisual == null) playerVisual = FindAnyObjectByType<Character3DVisual>();
         if (playerVisual == null) return;
         SpeechBubble.ShowOverHead(playerVisual.Pose, line, BubbleLife);
     }

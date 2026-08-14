@@ -17,7 +17,9 @@ public class MobRespawn : MonoBehaviour
     public float respawnDelay = 1f;   // near-instant respawn — keeps the field full for auto-combat
     [Tooltip("Respawn within this radius of the original spawn home.")]
     public float homeRadius = 4f;
-    [Tooltip("Never respawn closer than this to the player (no spawning on their head).")]
+    [Tooltip("Never respawn closer than this to the player (no spawning on their head). Per-instance ON PURPOSE — the " +
+             "field spawner has its own, because the map recipe authors clearance per spawn area (MapRecipe." +
+             "clearFromSpawn): a tight courtyard and an open field legitimately want different distances.")]
     public float playerClearRadius = 7f;
 
     Vector3 home;
@@ -37,6 +39,9 @@ public class MobRespawn : MonoBehaviour
     public void OnFadedOut()
     {
         var sr = GetComponent<SpriteRenderer>(); if (sr != null) sr.enabled = false;   // hide while waiting
+        // A live-3D shadow renders a BODY, not that sprite — hide it too, or its corpse stands around fully lit
+        // for the whole respawn wait.
+        var shadow = GetComponent<MobShadow3DVisual>(); if (shadow != null) shadow.SetBodyVisible(false);
         StartCoroutine(RespawnAfter());
     }
 
@@ -67,7 +72,12 @@ public class MobRespawn : MonoBehaviour
         var health = mob.GetComponent<Health>(); if (health != null) health.Revive();          // full HP again
 
         // Re-enable everything DeathDissolve disabled when it became "remains".
-        var sr = mob.GetComponent<SpriteRenderer>(); if (sr != null) sr.enabled = true;
+        // PRESENTATION is owned by the unit, not assumed here. A billboard mob gets its sprite back; a live-3D
+        // shadow restores its own BODY and must keep the sprite off — forcing sr.enabled = true on one is what made
+        // respawned shadows come back as sprites.
+        var shadow = mob.GetComponent<MobShadow3DVisual>();
+        if (shadow != null) shadow.OnRevived();
+        else { var sr = mob.GetComponent<SpriteRenderer>(); if (sr != null) sr.enabled = true; }
         Enable<MonsterAI3D>(mob); Enable<BillboardAnimator3D>(mob); Enable<AttackLunge>(mob);
         // Enable the controller BEFORE its mover so PathAgent3D never runs a frame against a disabled cc.
         // Clamp stepOffset FIRST: BillboardAnimator3D scales mobs by UnitScale.ForMob, and once a mob is small
@@ -79,12 +89,18 @@ public class MobRespawn : MonoBehaviour
         if (cc != null) { ClampStepOffset(cc); cc.enabled = true; }
         var agent = mob.GetComponent<PathAgent3D>(); if (agent != null) agent.enabled = true;
         foreach (var col in mob.GetComponentsInChildren<Collider>(true)) col.enabled = true;
+
+        // LAST: hand the mover + animator back to the freeze switch. Everything above turns a mob's parts on wholesale,
+        // which silently un-freezes a unit revived FAR from the player — and the switch only acts when its near/far
+        // answer changes, so "still far" would early-out and leave it running forever. Re-asserting here keeps the
+        // switch's belief and the components in step. (Same class of bug as the sprite/3D-body restore right above.)
+        var lod = mob.GetComponent<SimulationLod>(); if (lod != null) lod.Resync();
     }
 
     // A ground point within homeRadius of home, kept clear of the player; falls back to home.
     Vector3 PickSpot()
     {
-        var player = FindFirstObjectByType<Player3DController>();
+        var player = FindAnyObjectByType<Player3DController>();
         Vector3 p = player != null ? player.transform.position : home;
 
         for (int i = 0; i < 16; i++)

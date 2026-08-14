@@ -11,8 +11,11 @@ using UnityEngine;
 public static class Character3DRigBuilder
 {
     // Quaternius FBX import several units tall (~3.3u); auto-fit every model to this world height instead.
-    // 0.327u = the hand-tuned size (Ninja_Female at 0.1 scale) that reads right against the game's world.
-    internal const float TargetHeight = 0.327f;
+    // READS THE SHARED SPEC, so the player this builder makes stands exactly as tall as the townsfolk and shadow mobs
+    // built at runtime. It used to be its own 0.327 const sitting beside the spec's own 0.327 — two owners of one
+    // number, agreeing only because they were typed the same, so retuning the spec would have silently resized
+    // everyone EXCEPT the player.
+    internal static float TargetHeight => CharacterSpec.Active.bodyHeight;
 
     // Every AnimationClip sub-asset of the FBX, keyed by CLEAN name (skips Unity's __preview clips).
     // Quaternius names its takes "CharacterArmature|Idle" (armature prefix) — CleanName strips that so

@@ -278,7 +278,7 @@ public class ItemSlot : MonoBehaviour, IDropHandler, IPointerClickHandler, IPoin
     }
 
     static ItemSlot[] AllSlots() =>
-        Object.FindObjectsByType<ItemSlot>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Object.FindObjectsByType<ItemSlot>(FindObjectsInactive.Include);
 
     /// <summary>Light up every equip slot that would accept this item (called on drag start).</summary>
     public static void HighlightAcceptingEquip(Item dragged)

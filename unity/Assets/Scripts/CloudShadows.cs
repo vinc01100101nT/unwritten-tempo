@@ -77,7 +77,7 @@ public class CloudShadows : MonoBehaviour
     /// clouds work even on a Systems scene baked before this component joined the rig; normally it's on the Sun).</summary>
     public static CloudShadows Ensure()
     {
-        var c = FindFirstObjectByType<CloudShadows>();
+        var c = FindAnyObjectByType<CloudShadows>();
         if (c == null) c = new GameObject("CloudShadows") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<CloudShadows>();
         return c;
     }

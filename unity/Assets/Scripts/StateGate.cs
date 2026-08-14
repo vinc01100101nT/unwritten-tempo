@@ -26,26 +26,26 @@ public static class StateGate
     /// <para><b>Requiring and spending are SEPARATE questions.</b> A minimum of 0 means "no gate": the skill fires
     /// with an empty pile and simply cashes whatever is there. That's Deathblow — a Sword that never rolled Momentum
     /// still swings it, just without the payoff — and it's why this can't fold back into the on/off switch.</para></summary>
-    public static bool IsMet(SkillDef def, UnitStates states)
+    public static bool IsMet(SkillTriggerEntry entry, UnitStates states)
     {
-        if (def == null || !def.requiresState) return true;
-        if (def.requireMinStacks <= 0) return true;              // reads the pile, but doesn't demand it
+        if (entry == null || !entry.requiresState) return true;
+        if (entry.requireMinStacks <= 0) return true;            // reads the pile, but doesn't demand it
         if (states == null) return false;
-        return StackCount(def, states) >= def.requireMinStacks;
+        return StackCount(entry, states) >= entry.requireMinStacks;
     }
 
     /// <summary>How many stacks of the required SKILL's pile the caster holds RIGHT NOW — the snapshot a cast takes
     /// before it spends anything, so its payoff and its cost read the same pile (the locked compute-before-consume
     /// order). 0 when the skill reads no pile.</summary>
-    public static int StackCount(SkillDef def, UnitStates states) =>
-        def != null && def.requiresState && states != null ? states.StacksFrom(def.requireSkillId) : 0;
+    public static int StackCount(SkillTriggerEntry entry, UnitStates states) =>
+        entry != null && entry.requiresState && states != null ? states.StacksFrom(entry.requireSkillId) : 0;
 
     /// <summary>Spend what this use costs, AFTER the skill's effects have computed. No-op when the skill has no
     /// requirement or spends nothing (a pure "while X" condition). Returns how many stacks were actually spent.</summary>
-    public static int Consume(SkillDef def, UnitStates states)
+    public static int Consume(SkillTriggerEntry entry, UnitStates states)
     {
-        if (def == null || !def.requiresState || states == null) return 0;
-        if (!def.consumeAllStacks && def.consumeStacks <= 0) return 0;
-        return states.ConsumeFrom(def.requireSkillId, def.consumeStacks, def.consumeAllStacks);
+        if (entry == null || !entry.requiresState || states == null) return 0;
+        if (!entry.consumeAllStacks && entry.consumeStacks <= 0) return 0;
+        return states.ConsumeFrom(entry.requireSkillId, entry.consumeStacks, entry.consumeAllStacks);
     }
 }

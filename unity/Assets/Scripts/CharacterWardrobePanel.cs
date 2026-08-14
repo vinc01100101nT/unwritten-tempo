@@ -256,7 +256,7 @@ public class CharacterWardrobePanel : MonoBehaviour
         // positions it separately), so we locate it directly. The player's visual is the one whose `player`
         // is wired (NPC/mob visuals leave it null). Add the dye there if this character was built before it existed.
         Character3DVisual visual = null;
-        foreach (var v in FindObjectsByType<Character3DVisual>(FindObjectsSortMode.None))
+        foreach (var v in FindObjectsByType<Character3DVisual>())
             if (v != null && v.player != null) { visual = v; break; }
         if (visual == null) return null;
         dye = visual.GetComponent<CharacterDye3D>() ?? visual.gameObject.AddComponent<CharacterDye3D>();

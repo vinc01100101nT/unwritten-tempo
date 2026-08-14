@@ -27,14 +27,14 @@ public class GameCursor3D : MonoBehaviour
 
     void Awake()
     {
-        player = FindFirstObjectByType<Player3DController>();
+        player = FindAnyObjectByType<Player3DController>();
         cam = Camera.main;
     }
 
     void Update()
     {
         if (cam == null) cam = Camera.main;
-        if (player == null) player = FindFirstObjectByType<Player3DController>();
+        if (player == null) player = FindAnyObjectByType<Player3DController>();
 
         // Aiming a skill (single-target UnitTargeter or AoE GroundTargeter) takes priority → reticle cursor.
         // Then: A-armed → crosshair; hovering a living mob → SWORD (so the player sees it's clickable to attack);

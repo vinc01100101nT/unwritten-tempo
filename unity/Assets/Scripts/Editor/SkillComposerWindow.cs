@@ -74,33 +74,88 @@ public class SkillComposerWindow : EditorWindow
         Undo.RecordObject(target, "Rename skill id");
         target.id = newId;
         EditorUtility.SetDirty(target);
+        SyncFileNameToId(target);
         if (string.IsNullOrEmpty(oldId)) return;   // brand-new skill: nothing can point at it yet
 
-        int skillRefs = 0, itemRefs = 0;
+        int skillRefs = 0;
         for (int i = 0; i < all.Count; i++)
         {
             var s = all[i];
             if (s == null) continue;
             bool touched = false;
-            if (s.triggerSkillId == oldId) { Undo.RecordObject(s, "Rename skill id"); s.triggerSkillId = newId; touched = true; }
-            if (s.requireSkillId == oldId) { Undo.RecordObject(s, "Rename skill id"); s.requireSkillId = newId; touched = true; }
+            // Both ids a skill can hold live PER TRIGGER now, so the sweep walks every entry — miss one and that
+            // trigger silently stops matching (or stops finding its stack pile) after a rename.
+            if (s.triggers != null)
+                for (int t = 0; t < s.triggers.Count; t++)
+                {
+                    var e = s.triggers[t];
+                    if (e == null) continue;
+                    if (e.triggerSkillId == oldId) { Undo.RecordObject(s, "Rename skill id"); e.triggerSkillId = newId; touched = true; }
+                    if (e.requireSkillId == oldId) { Undo.RecordObject(s, "Rename skill id"); e.requireSkillId = newId; touched = true; }
+                }
             if (touched) { EditorUtility.SetDirty(s); skillRefs++; }
         }
-        foreach (var guid in AssetDatabase.FindAssets("t:Item"))
-        {
-            var it = AssetDatabase.LoadAssetAtPath<Item>(AssetDatabase.GUIDToAssetPath(guid));
-            if (it == null || it.grantedSkillIds == null) continue;
-            bool touched = false;
-            for (int k = 0; k < it.grantedSkillIds.Count; k++)
-                if (it.grantedSkillIds[k] == oldId)
-                {
-                    if (!touched) Undo.RecordObject(it, "Rename skill id");
-                    it.grantedSkillIds[k] = newId; touched = true;
-                }
-            if (touched) { EditorUtility.SetDirty(it); itemRefs++; }
-        }
         AssetDatabase.SaveAssets();
-        Debug.Log($"[Skill Composer] Renamed \"{oldId}\" → \"{newId}\"; re-pointed {skillRefs} skill reference(s) and {itemRefs} item(s).");
+        Debug.Log($"[Skill Composer] Renamed \"{oldId}\" → \"{newId}\"; re-pointed {skillRefs} skill reference(s). " +
+                  "A weapon that already ROLLED the old id (in a save) simply drops it on load — kits are per-copy now.");
+    }
+
+    /// <summary>The file name ALWAYS follows the id — <c>skill.sword.parry</c> lives in <c>skill.sword.parry.asset</c>,
+    /// no exceptions. One name, one meaning: browsing the folder tells you exactly what's authored, and no one has to
+    /// open an asset to learn which skill it is. Every path that can change or mint an id calls this, so the two can't
+    /// drift apart. Renaming through <see cref="AssetDatabase"/> carries the <c>.meta</c> along, so the GUID — and every
+    /// scene/prefab/asset reference — survives untouched.</summary>
+    static void SyncFileNameToId(SkillDef s)
+    {
+        if (s == null || string.IsNullOrEmpty(s.id)) return;
+        string path = AssetDatabase.GetAssetPath(s);
+        if (string.IsNullOrEmpty(path) || System.IO.Path.GetFileNameWithoutExtension(path) == s.id) return;
+        string err = AssetDatabase.RenameAsset(path, s.id);
+        if (!string.IsNullOrEmpty(err))
+            Debug.LogWarning($"[Skill Composer] Couldn't rename \"{path}\" to \"{s.id}.asset\": {err}");
+    }
+
+    /// <summary>The first free id starting from <paramref name="wanted"/> (<c>skill.new</c> → <c>skill.new_2</c> → …).
+    /// Checks BOTH the authored ids and the folder, because the file name mirrors the id — so a free id is also a free
+    /// file name, and a new/duplicated skill can never be born already colliding.</summary>
+    static string UniqueId(string wanted)
+    {
+        if (string.IsNullOrEmpty(wanted)) wanted = "skill.new";
+        for (int n = 1; ; n++)
+        {
+            string candidate = n == 1 ? wanted : $"{wanted}_{n}";
+            if (!IdTaken(candidate) && !System.IO.File.Exists($"{Dir}/{candidate}.asset")) return candidate;
+        }
+    }
+
+    static bool IdTaken(string id)
+    {
+        foreach (var guid in AssetDatabase.FindAssets("t:SkillDef"))
+        {
+            var a = AssetDatabase.LoadAssetAtPath<SkillDef>(AssetDatabase.GUIDToAssetPath(guid));
+            if (a != null && a.id == id) return true;
+        }
+        return false;
+    }
+
+    /// <summary>The editable tail of an id — everything after the last dot, so both <c>skill.meteor</c> and
+    /// <c>skill.sword.deathblow</c> hand back the part the author actually names.</summary>
+    static string IdTail(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return "";
+        int dot = id.LastIndexOf('.');
+        return dot >= 0 && dot < id.Length - 1 ? id.Substring(dot + 1) : id;
+    }
+
+    /// <summary>Build the stable id from its two authored parts: <c>skill.&lt;weapon&gt;.&lt;name&gt;</c>, or
+    /// <c>skill.&lt;name&gt;</c> when the skill belongs to no weapon pool.</summary>
+    static string ComposeId(WeaponType weapon, string tail)
+    {
+        tail = (tail ?? "").Trim().ToLowerInvariant().Replace(' ', '_');
+        if (string.IsNullOrEmpty(tail)) tail = "new";
+        return weapon == WeaponType.None
+            ? $"skill.{tail}"
+            : $"skill.{weapon.ToString().ToLowerInvariant()}.{tail}";
     }
 
     void Refresh()
@@ -175,8 +230,30 @@ public class SkillComposerWindow : EditorWindow
         var r = GUILayoutUtility.GetRect(0f, 34f, GUILayout.ExpandWidth(true));
         r.xMin += indent;
         if (band.a > 0f) EditorGUI.DrawRect(r, band);
-        var style = s == sel ? EditorStyles.helpBox : EditorStyles.label;
-        if (GUI.Button(r, $"{s.displayName}\n{s.id}", style)) sel = s;
+        if (GUI.Button(r, $"{s.displayName}\n{s.id}", RowStyle(s == sel, s.published))) sel = s;
+    }
+
+    // The list doubles as the publish overview: a PUBLISHED skill (one a weapon can roll) reads BOLD and full-
+    // strength, an unpublished one is dimmed — so "what's live" is legible at a glance without opening each skill.
+    // Four cached styles (selected × published); built lazily because EditorStyles is only valid inside OnGUI.
+    GUIStyle[] rowStyles;
+
+    GUIStyle RowStyle(bool selected, bool published)
+    {
+        rowStyles ??= new GUIStyle[4];
+        int i = (selected ? 2 : 0) + (published ? 1 : 0);
+        if (rowStyles[i] == null)
+        {
+            var st = new GUIStyle(selected ? EditorStyles.helpBox : EditorStyles.label)
+            {
+                fontStyle = published ? FontStyle.Bold : FontStyle.Normal,
+            };
+            var c = st.normal.textColor;
+            if (!published) c.a *= 0.45f;
+            st.normal.textColor = st.onNormal.textColor = st.hover.textColor = c;
+            rowStyles[i] = st;
+        }
+        return rowStyles[i];
     }
 
     // Each group gets its own colored band so a family is recognizable at a glance. The hue comes from a stable hash
@@ -242,9 +319,9 @@ public class SkillComposerWindow : EditorWindow
     {
         EnsureFolder();
         var s = CreateInstance<SkillDef>();
-        s.id = "skill.new";
+        s.id = UniqueId("skill.new");
         s.displayName = "New Skill";
-        string path = AssetDatabase.GenerateUniqueAssetPath($"{Dir}/skill.new.asset");
+        string path = $"{Dir}/{s.id}.asset";   // never GenerateUniqueAssetPath: it would suffix the FILE and leave the id behind
         AssetDatabase.CreateAsset(s, path);
         AssetDatabase.SaveAssets();
         Refresh();
@@ -284,11 +361,14 @@ public class SkillComposerWindow : EditorWindow
     void Duplicate(SkillDef s)
     {
         string src = AssetDatabase.GetAssetPath(s);
-        string path = AssetDatabase.GenerateUniqueAssetPath(src);
-        AssetDatabase.CopyAsset(src, path);
+        string copyId = UniqueId(s.id);   // the copy gets its own id FIRST, so its file can be named after it
+        string path = $"{Dir}/{copyId}.asset";
+        if (!AssetDatabase.CopyAsset(src, path)) return;
+        var copy = AssetDatabase.LoadAssetAtPath<SkillDef>(path);
+        if (copy != null) { copy.id = copyId; EditorUtility.SetDirty(copy); }
         AssetDatabase.SaveAssets();
         Refresh();
-        sel = AssetDatabase.LoadAssetAtPath<SkillDef>(path);
+        sel = copy;
     }
 
     void DeleteAsset(SkillDef s)
@@ -309,6 +389,98 @@ public class SkillComposerWindow : EditorWindow
         EditorGUILayout.Space(6);
         open = EditorGUILayout.Foldout(open, title, true);
         return open;
+    }
+
+    /// <summary>Draw ONE trigger entry — the moment, plus the state gate that firing through this moment must satisfy.
+    /// Returns true if the author asked to delete it. The gate is drawn per entry, not per skill, because the two
+    /// halves of a dual-trigger skill need different answers (Lunge on OnCast requires no charge; the same Lunge on
+    /// OnBasicAttackStart requires and spends one).</summary>
+    bool DrawTriggerEntry(SkillTriggerEntry e, int index)
+    {
+        bool remove = false;
+        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                // The trigger IS the entry's name — no invented category label above it.
+                e.trigger = (SkillTrigger)EditorGUILayout.EnumPopup(new GUIContent("trigger",
+                    "OnCast = the player presses it (pays the MP + cooldown below). Every other trigger fires the " +
+                    "skill on its own, free. OnSkillCastComplete fires when the picked active finishes casting " +
+                    "UNINTERRUPTED — and only when the PLAYER cast it, so a skill's own auto-fire can't re-trigger " +
+                    "it. The rest are natural game events (a basic landing, a kill, low HP, a hit, a parry). " +
+                    "OnBasicAttackStart fires BEFORE the attack's reach is judged — once per swing interval while a " +
+                    "target is held — so a gap-closer moves you in before the same frame decides whether you can " +
+                    "reach; the swing itself is never lost."), e.trigger);
+                // The last entry can't be removed: a skill must start SOME way, and an empty list would silently read
+                // as a plain OnCast skill — a state the author never chose.
+                using (new EditorGUI.DisabledScope(sel.triggers.Count <= 1))
+                    if (GUILayout.Button("Remove", GUILayout.Width(70f))) remove = true;
+            }
+
+            if (e.trigger == SkillTrigger.OnSkillCastComplete)
+                e.triggerSkillId = DrawSkillPicker("  on cast complete of", e.triggerSkillId);
+
+            for (int i = 0; i < sel.triggers.Count; i++)
+                if (i != index && sel.triggers[i] != null && sel.triggers[i].trigger == e.trigger
+                    && (e.trigger != SkillTrigger.OnSkillCastComplete || sel.triggers[i].triggerSkillId == e.triggerSkillId))
+                {
+                    EditorGUILayout.HelpBox("Another entry already answers this moment — only the FIRST will ever " +
+                        "fire. Two entries can only differ in their gate, and one skill body can't honour both.",
+                        MessageType.Warning);
+                    break;
+                }
+
+            EditorGUILayout.Space(2);
+            e.requiresState = EditorGUILayout.Toggle(new GUIContent("requires a state",
+                "ON = firing through THIS moment READS a caster state below — it can require stacks, spend them, and " +
+                "be paid off by them."), e.requiresState);
+            if (!e.requiresState) return remove;
+
+            EditorGUI.indentLevel++;
+            // WHOSE stacks, not which state: a pile belongs to the skill that granted it, so a finisher can only
+            // ever cash its own partner's (Deathblow eats Momentum, never Lock Blades' charges — both buff attack).
+            e.requireSkillId = DrawSkillPicker("  stacks from", e.requireSkillId, includePassives: true);
+            if (string.IsNullOrEmpty(e.requireSkillId))
+                EditorGUILayout.HelpBox("Pick the skill whose stacks this reads — without it there's no pile to gate " +
+                    "on, cash, or be paid by.", MessageType.Warning);
+            e.requireMinStacks = EditorGUILayout.IntSlider(new GUIContent("  min stacks",
+                "How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state. " +
+                "0 = NO GATE: fires with none and simply cashes whatever is there."),
+                Mathf.Max(0, e.requireMinStacks), 0, UnitStates.MaxStacks);
+            if (e.requireMinStacks <= 0)
+                EditorGUILayout.HelpBox("No gate: this fires even on an empty pile — it just gets no payoff. " +
+                    "(Deathblow, which must stay usable on a Sword that never rolled Momentum.)", MessageType.None);
+            e.consumeAllStacks = EditorGUILayout.Toggle(new GUIContent("  consume ALL",
+                "Spend every stack on use — a finisher cashing a whole pile."), e.consumeAllStacks);
+            if (!e.consumeAllStacks)
+                e.consumeStacks = EditorGUILayout.IntSlider(new GUIContent("  consume",
+                    "How many stacks this use spends. 0 = spends nothing (a pure 'while X' condition)."),
+                    Mathf.Max(0, e.consumeStacks), 0, UnitStates.MaxStacks);
+
+            // What the stacks BUY. Separate question from what it costs to fire — the gate says what you need,
+            // this says what it's worth.
+            e.stackPayoff = (StackPayoff)EditorGUILayout.EnumPopup(new GUIContent("  each stack adds",
+                "What every stack buys this cast. Damage = a bigger hit (below)."), e.stackPayoff);
+            if (e.stackPayoff == StackPayoff.Damage)
+            {
+                e.damageMultPerStack = EditorGUILayout.Slider(new GUIContent("  damage x per stack",
+                    "EXTRA damage multiplier each stack adds, on top of the effect's own. 0.4 = +40% of your " +
+                    "Attack per stack. Adds up, never compounds; lifts every damage effect on this skill."),
+                    Mathf.Max(0f, e.damageMultPerStack), 0f, 1f);
+                if (e.damageMultPerStack > 0f)
+                {
+                    float baseMult = LargestDamageMult(sel);
+                    EditorGUILayout.HelpBox(
+                        $"At 10 stacks: {baseMult * 100f:0}% + {e.damageMultPerStack * 10f * 100f:0}% = " +
+                        $"{(baseMult + e.damageMultPerStack * 10f) * 100f:0}% Attack.", MessageType.None);
+                }
+            }
+            EditorGUILayout.HelpBox("The count is snapshot when the cast STARTS and stacks are spent only after the " +
+                "effects have computed — so the payoff and the cost read the same pile (a finisher sees the whole " +
+                "thing it's about to cash).", MessageType.Info);
+            EditorGUI.indentLevel--;
+        }
+        return remove;
     }
 
     // Dropdown of other skills' ids, returning the chosen one. Two callers with one difference: the TRIGGER picker
@@ -365,10 +537,36 @@ public class SkillComposerWindow : EditorWindow
             // DELAYED on purpose: a plain TextField commits per KEYSTROKE, so typing a new id would fire a rename for
             // every half-typed prefix. This commits once, on Enter or focus-loss — then everything pointing at the old
             // id is re-pointed at the new one, so a rename can never leave a dangling reference.
+            // The id is COMPOSED, never free-typed: skill.<weapon>.<name> (or skill.<name> for a skill in no weapon's
+            // pool). One value, one meaning — the weapon you pick here is the pool the skill rolls from, the group it
+            // files under in the list on the left, AND the middle segment of its id, so those can never disagree.
             string beforeId = sel.id;
-            string typedId = EditorGUILayout.DelayedTextField(new GUIContent("id",
-                "Kebab id (e.g. skill.meteor). Safe to rename: every reference to it is updated automatically."), sel.id);
-            if (typedId != beforeId) RetargetSkillId(beforeId, typedId, sel);
+            var beforeWeapon = sel.weaponType;
+            var weapon = (WeaponType)EditorGUILayout.EnumPopup(new GUIContent("weapon",
+                "WHICH weapon's skill pool this belongs to. A dropped weapon rolls its kit only from PUBLISHED skills " +
+                "of its own type. None = in no pool: never rolled, but still usable from the Grimoire for testing."), sel.weaponType);
+            string beforeTail = IdTail(beforeId);
+            string tail = EditorGUILayout.DelayedTextField(new GUIContent("name (in the id)",
+                "The last part of the id — 'deathblow' becomes skill.sword.deathblow. Safe to change: every reference " +
+                "to the old id is re-pointed automatically."), beforeTail);
+            if (weapon != beforeWeapon || tail != beforeTail)
+            {
+                sel.weaponType = weapon;
+                string composed = ComposeId(weapon, tail);
+                if (composed != beforeId) RetargetSkillId(beforeId, composed, sel);
+                EditorUtility.SetDirty(sel);
+            }
+            using (new EditorGUI.DisabledScope(true))
+                EditorGUILayout.TextField(new GUIContent("id", "Composed from the two fields above."), sel.id);
+
+            sel.published = EditorGUILayout.Toggle(new GUIContent("published",
+                "PUBLISHED = this skill may be rolled onto a dropped weapon of its type. Unpublished skills stay fully " +
+                "usable in the Grimoire (J) and on the hotbar for testing — publishing only opens the loot roll. " +
+                "A skill with weapon = None can never be rolled, published or not."), sel.published);
+            if (sel.published && sel.weaponType == WeaponType.None)
+                EditorGUILayout.HelpBox("Published, but in no weapon's pool — nothing can roll it. Pick a weapon above.",
+                    MessageType.Warning);
+
             sel.displayName = EditorGUILayout.TextField(new GUIContent("display name",
                 "The skill's name shown to the player (hotbar hover, tooltips)."), sel.displayName);
             using (new EditorGUILayout.HorizontalScope())
@@ -414,78 +612,35 @@ public class SkillComposerWindow : EditorWindow
                 "LABEL ONLY — no gameplay reads it. Real targeting is each tick's 'targets' dropdown below. Kept for library filtering."), sel.shape);
         }
 
-        // 2b) TRIGGER — OnCast (a normal active) vs a passive that fires on a moment. A passive has no slot and ignores
-        //     cost/cadence/aim; OnSkillCastComplete is parameterized by a picked active (that active finishing its cast).
-        if (Section("Trigger", ref foTrigger))
+        // 2b) TRIGGERS — every way this skill can start, each with its own state gate. One OnCast entry = a pressed
+        //     active; no OnCast entry = a pure passive; BOTH = pressed AND self-firing, from ONE payload.
+        if (Section("Triggers", ref foTrigger))
         {
-            sel.trigger = (SkillTrigger)EditorGUILayout.EnumPopup(new GUIContent("trigger",
-                "OnCast = a normal active the player presses. Anything else = a PASSIVE: no hotbar slot, it runs its " +
-                "effect bindings when that moment fires (dispatched via the one PassiveEvents handler). " +
-                "OnSkillCastComplete fires when the picked active finishes casting UNINTERRUPTED; the rest are natural " +
-                "game events (a basic landing, a kill, low HP, a hit, a parry). OnBasicAttackStart fires BEFORE the " +
-                "attack's reach is judged — once per swing interval while a target is held — so a gap-closer moves you " +
-                "in before the same frame decides whether you can reach; the swing itself is never lost."), sel.trigger);
+            if (sel.triggers == null) sel.triggers = new List<SkillTriggerEntry>();
+            if (sel.triggers.Count == 0)
+                sel.triggers.Add(new SkillTriggerEntry());   // never show an empty list: a skill always starts SOME way
 
-            if (sel.trigger == SkillTrigger.OnSkillCastComplete)
-                sel.triggerSkillId = DrawSkillPicker("  on cast complete of", sel.triggerSkillId);
+            for (int i = 0; i < sel.triggers.Count; i++)
+            {
+                if (sel.triggers[i] == null) sel.triggers[i] = new SkillTriggerEntry();
+                if (DrawTriggerEntry(sel.triggers[i], i)) { sel.triggers.RemoveAt(i); i--; }
+            }
+
+            if (GUILayout.Button("Add trigger"))
+                sel.triggers.Add(new SkillTriggerEntry { trigger = SkillTrigger.OnHit });
+
+            EditorGUILayout.Space(2);
+            EditorGUILayout.HelpBox("EVERY trigger runs the SAME skill body — a trigger chooses only WHEN this fires " +
+                "and what that firing costs in stacks, never what it does. If two triggers want different effects, " +
+                "that's two skills wearing one name: split them.\n\n" +
+                "OnCast pays the MP + cooldown below; every other trigger fires free — the trigger IS the gesture. A " +
+                "run started by a non-OnCast trigger does NOT count as 'you cast this skill', so a partner keyed to " +
+                "OnSkillCastComplete can't be re-fed by this skill's own self-fire.", MessageType.Info);
 
             if (sel.IsPassive)
-                EditorGUILayout.HelpBox("PASSIVE — no hotbar slot / cast gesture. It runs its tick bindings' effects " +
-                    "each time the trigger fires (Self bindings land on the caster; Single/Ground land on the triggering " +
-                    "mob). Cost / cadence / aim below are IGNORED — author the payload in the Gameplay section.\n\n" +
-                    "A passive never fires off a chain it's already part of, so it can't feed itself — but unrelated " +
-                    "passives can still react to what it does.", MessageType.Info);
-
-            EditorGUILayout.Space(4);
-            sel.requiresState = EditorGUILayout.Toggle(new GUIContent("requires a state",
-                "ON = this skill READS a caster state below — it can require stacks to fire, spend them, and be paid " +
-                "off by them."), sel.requiresState);
-            if (sel.requiresState)
-            {
-                EditorGUI.indentLevel++;
-                // WHOSE stacks, not which state: a pile belongs to the skill that granted it, so a finisher can only
-                // ever cash its own partner's (Deathblow eats Momentum, never Lock Blades' charges — both buff attack).
-                sel.requireSkillId = DrawSkillPicker("  stacks from", sel.requireSkillId, includePassives: true);
-                if (string.IsNullOrEmpty(sel.requireSkillId))
-                    EditorGUILayout.HelpBox("Pick the skill whose stacks this one reads — without it there's no pile to " +
-                        "gate on, cash, or be paid by.", MessageType.Warning);
-                sel.requireMinStacks = EditorGUILayout.IntSlider(new GUIContent("  min stacks",
-                    "How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state. " +
-                    "0 = NO GATE: fires with none and simply cashes whatever is there."),
-                    Mathf.Max(0, sel.requireMinStacks), 0, UnitStates.MaxStacks);
-                if (sel.requireMinStacks <= 0)
-                    EditorGUILayout.HelpBox("No gate: this skill fires even on an empty pile — it just gets no payoff. " +
-                        "(Deathblow, which must stay usable on a Sword that never rolled Momentum.)", MessageType.None);
-                sel.consumeAllStacks = EditorGUILayout.Toggle(new GUIContent("  consume ALL",
-                    "Spend every stack on use — a finisher cashing a whole pile."), sel.consumeAllStacks);
-                if (!sel.consumeAllStacks)
-                    sel.consumeStacks = EditorGUILayout.IntSlider(new GUIContent("  consume",
-                        "How many stacks this use spends. 0 = spends nothing (a pure 'while X' condition)."),
-                        Mathf.Max(0, sel.consumeStacks), 0, UnitStates.MaxStacks);
-
-                // What the stacks BUY. Separate question from what it costs to fire — the gate says what you need,
-                // this says what it's worth.
-                sel.stackPayoff = (StackPayoff)EditorGUILayout.EnumPopup(new GUIContent("  each stack adds",
-                    "What every stack buys this cast. Damage = a bigger hit (below)."), sel.stackPayoff);
-                if (sel.stackPayoff == StackPayoff.Damage)
-                {
-                    sel.damageMultPerStack = EditorGUILayout.Slider(new GUIContent("  damage x per stack",
-                        "EXTRA damage multiplier each stack adds, on top of the effect's own. 0.4 = +40% of your " +
-                        "Attack per stack. Adds up, never compounds; lifts every damage effect on this skill."),
-                        Mathf.Max(0f, sel.damageMultPerStack), 0f, 1f);
-                    if (sel.damageMultPerStack > 0f)
-                    {
-                        float baseMult = LargestDamageMult(sel);
-                        EditorGUILayout.HelpBox(
-                            $"At 10 stacks: {baseMult * 100f:0}% + {sel.damageMultPerStack * 10f * 100f:0}% = " +
-                            $"{(baseMult + sel.damageMultPerStack * 10f) * 100f:0}% Attack.", MessageType.None);
-                    }
-                }
-                EditorGUILayout.HelpBox("The count is snapshot when the cast STARTS and stacks are spent only after the " +
-                    "effects have computed — so the payoff and the cost read the same pile (a finisher sees the whole " +
-                    "thing it's about to cash).", MessageType.Info);
-                EditorGUI.indentLevel--;
-            }
+                EditorGUILayout.HelpBox("No OnCast trigger — this skill takes NO hotbar slot. Cost / cadence / aim " +
+                    "below are ignored; author the payload in the Gameplay section. It never fires off a chain it's " +
+                    "already part of, so it can't feed itself.", MessageType.Info);
         }
 
         // 3) COST · CADENCE · AIM — what it costs to fire and WHERE it lands (aim is the cast gesture; each tick's
@@ -556,7 +711,7 @@ public class SkillComposerWindow : EditorWindow
         // far the content scrolls (no scrolling to the end just to save).
         EditorGUILayout.Space(4);
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Save", GUILayout.Height(24))) { NormalizeAllAffinities(sel); EditorUtility.SetDirty(sel); AssetDatabase.SaveAssets(); SkillCatalog.Reload(); CaptureSnapshot(); }
+        if (GUILayout.Button("Save", GUILayout.Height(24))) { NormalizeAllAffinities(sel); EditorUtility.SetDirty(sel); SyncFileNameToId(sel); AssetDatabase.SaveAssets(); SkillCatalog.Reload(); CaptureSnapshot(); }
         using (new EditorGUI.DisabledScope(!EditorUtility.IsDirty(sel)))
             if (GUILayout.Button("Discard changes", GUILayout.Height(24))) DiscardSkillEdits();
         EditorGUILayout.EndHorizontal();
@@ -764,7 +919,7 @@ public class SkillComposerWindow : EditorWindow
         for (int i = 0; i < b.effects.Count; i++)
         {
             var a = b.effects[i];
-            if (a == null || !SkillEffect.IsSelfVerb(a.kind)) continue;
+            if (a == null || !SkillEffect.LandsOnCaster(a)) continue;
             for (int j = i + 1; j < b.effects.Count; j++)
             {
                 var c = b.effects[j];
@@ -847,18 +1002,16 @@ public class SkillComposerWindow : EditorWindow
     };
 
     // The menus above are split by SIDE, so each section only offers kinds it can actually run — one array pair per
-    // side, filtered once through the same SkillEffect.IsSelfVerb the runtime uses. Debuffs are all target-side, so
-    // the caster section's State cascade skips the Buffs/Debuffs step entirely (there'd be one choice).
+    // side, grouped by the same SkillEffect.LandsOnCaster the runtime partitions on. Both sections offer every kind
+    // and every state — a self-inflicted debuff (Overclock's own armour-fray) is as authorable as a buff on a mob.
     static SkillEffectKind[][] sideInstants, sideBuffs;     // [0] = target side, [1] = caster side
     static string[][] sideTopLabels, sideBuffLabels;
     static string[] typeLabels, debuffLabels;
 
-    static SkillEffectKind[] FilterSide(SkillEffectKind[] src, bool caster)
-    {
-        var keep = new List<SkillEffectKind>(src.Length);
-        for (int i = 0; i < src.Length; i++) if (SkillEffect.IsSelfVerb(src[i]) == caster) keep.Add(src[i]);
-        return keep.ToArray();
-    }
+    // Every kind is offered on BOTH sides: which side an effect lands on is now the AUTHOR's choice (SkillEffect.side),
+    // stamped by whichever section the effect was added in — it is no longer a fixed property of the kind. Kept as a
+    // pass-through (rather than deleted) so the two-side array shape below stays one code path.
+    static SkillEffectKind[] FilterSide(SkillEffectKind[] src, bool caster) => src;
 
     static void EnsureKindLabels()
     {
@@ -898,6 +1051,12 @@ public class SkillComposerWindow : EditorWindow
         return 0;
     }
 
+    // Write down WHICH SIDE this effect lands on, so it stays in the section the author put it in even after its kind
+    // changes. Before the side was authored, the kind decided it — which is why changing a Guard to a Damage used to be
+    // impossible rather than just moving it.
+    static void StampSide(SkillEffect ef, bool casterSide)
+        => ef.side = casterSide ? SkillEffect.EffectSide.Caster : SkillEffect.EffectSide.Target;
+
     // Top-level popup (this side's instant kinds + "State ▸"), drawn inline on the effect header row. Restricted to
     // the section's own side, so an effect can never hop sections from under the author — to move one, delete and
     // re-add it in the other section.
@@ -912,6 +1071,7 @@ public class SkillComposerWindow : EditorWindow
         int next = EditorGUILayout.Popup(idx, sideTopLabels[s]);
         if (next == idx) return;
         ef.kind = next < kinds.Length ? kinds[next] : sideBuffs[s][0];   // → State defaults to this side's first state
+        StampSide(ef, casterSide);
     }
 
     // For a State effect, the Type (Buffs/Debuffs) + specific popups on their own rows. The caster side has no
@@ -924,32 +1084,31 @@ public class SkillComposerWindow : EditorWindow
         var buffs = sideBuffs[s];
         bool isBuff = IsBuffKind(ef.kind);
 
-        if (!casterSide)
         {
             int typeIdx = isBuff ? 0 : 1;
             int typeNext = EditorGUILayout.Popup(new GUIContent("  type",
                 "Buff = beneficial state. Debuff = harmful state. Organizational only — WHO it lands on is the targeting above."),
                 typeIdx, typeLabels);
-            if (typeNext != typeIdx) { ef.kind = typeNext == 0 ? buffs[0] : SkillEffectKind.Vulnerability; isBuff = typeNext == 0; }
+            if (typeNext != typeIdx) { ef.kind = typeNext == 0 ? buffs[0] : SkillEffectKind.Vulnerability; isBuff = typeNext == 0; StampSide(ef, casterSide); }
         }
 
         if (isBuff)
         {
             int i = System.Array.IndexOf(buffs, ef.kind); if (i < 0) i = 0;
             int n = EditorGUILayout.Popup(new GUIContent("  state", "Which state to apply."), i, sideBuffLabels[s]);
-            if (n != i) ef.kind = buffs[n];
+            if (n != i) { ef.kind = buffs[n]; StampSide(ef, casterSide); }
         }
         else
         {
             int i = IndexOfDebuff(ef);
             int n = EditorGUILayout.Popup(new GUIContent("  state", "Which debuff to apply."), i, debuffLabels);
-            if (n != i) { var o = DebuffOptions[n]; ef.kind = o.kind; if (o.isAilment) ef.ailment = o.ailment; }
+            if (n != i) { var o = DebuffOptions[n]; ef.kind = o.kind; if (o.isAilment) ef.ailment = o.ailment; StampSide(ef, casterSide); }
         }
     }
 
     // A tick is authored as TWO composable lists: what it does to the CASTER and what it does to whoever it catches.
     // Both can be filled on the same tick (Lunge = dash yourself + strike the mob you clicked). The split is the same
-    // partition the runtime resolves by (SkillEffect.IsSelfVerb), so what you see grouped here is exactly what runs in
+    // partition the runtime resolves by (SkillEffect.LandsOnCaster), so what you see grouped here is exactly what runs in
     // each pass. Targeting lives INSIDE the target section, because that's the only thing it decides — the caster
     // section needs no "who", only (for a Dash/Teleport) the aimed point the cast asks for anyway.
     void DrawBinding(SkillTickBinding b)
@@ -1024,7 +1183,7 @@ public class SkillComposerWindow : EditorWindow
     {
         int n = 0;
         for (int i = 0; i < b.effects.Count; i++)
-            if (b.effects[i] != null && SkillEffect.IsSelfVerb(b.effects[i].kind) == casterSide) n++;
+            if (b.effects[i] != null && SkillEffect.LandsOnCaster(b.effects[i]) == casterSide) n++;
         return n;
     }
 
@@ -1037,7 +1196,7 @@ public class SkillComposerWindow : EditorWindow
         {
             if (b.effects[e] == null) b.effects[e] = new SkillEffect();
             var ef = b.effects[e];
-            if (SkillEffect.IsSelfVerb(ef.kind) != casterSide) continue;   // drawn by the other section
+            if (SkillEffect.LandsOnCaster(ef) != casterSide) continue;   // drawn by the other section
             EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.ExpandWidth(true));
             EditorGUILayout.BeginHorizontal();
             DrawEffectKindTop(ef, casterSide);
@@ -1187,7 +1346,11 @@ public class SkillComposerWindow : EditorWindow
         if (casterSide) WarnDuplicateCasterEffects(b);
         // A new effect is born on the side whose button made it, so it can't appear in the other section.
         if (GUILayout.Button(casterSide ? "  + caster effect" : "  + target effect", GUILayout.Width(120)))
-            b.effects.Add(new SkillEffect { kind = casterSide ? SkillEffectKind.Guard : SkillEffectKind.Damage });
+            b.effects.Add(new SkillEffect
+            {
+                kind = casterSide ? SkillEffectKind.Guard : SkillEffectKind.Damage,
+                side = casterSide ? SkillEffect.EffectSide.Caster : SkillEffect.EffectSide.Target,
+            });
     }
 
     // Stacking knobs — only meaningful for a STATE (something with a duration), so they're hidden entirely for instant

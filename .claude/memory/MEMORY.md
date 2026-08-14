@@ -23,6 +23,7 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 - [Skill tooltip voice](skill-tooltip-voice.md) — wiki/doc skill descriptions read as in-game tooltips (table, declarative rules, bold numbers), NOT article prose or designer meta-commentary.
 - [Never blame recompilation](assume-compiled-never-blame-recompile.md) — user ALWAYS recompiles; treat code as live+running, diagnose runtime, never suspect stale compile.
 - [Find-or-create hides duplicates; fix the CLASS not the instance](find-or-create-hides-duplicates.md) — `GetComponent ?? AddComponent` can't fail so it silently forks a "single source"; one broken member of a uniform system = check ALL members before fixing.
+- [NO editor-tool menus by default](no-editor-tools-by-default.md) — user rejects `Tools ▸ unwritten` tools; ask what the feature needs AT RUNTIME (it's often already live), prefer a GM chat command. OVERRIDES the project "prefer editor tools" rule.
 
 ## Grouped sub-indexes (open on demand)
 - 🗂 [Character / rig / stance / animation](index/character-rig-stance.md) — Mixamo/Quaternius rigging, stance system, IStancePose, gait, caster grounding (11).
@@ -33,4 +34,5 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 - 🗂 [World authoring / generation / data tables](index/world-authoring.md) — MapRecipe generator, prop palette, world-creator/map-painter, data SOs, portals, ambient life (10).
 - 🗂 [Combat / skills / progression / stats](index/combat-skills-progression.md) — cast time, multi-hit/status, trio-ring model, stats, Ring of Progression, charter (13).
 - 🗂 [HUD / UI](index/hud-ui.md) — build process, hotbar, progression windows, click-shield, dev-settings (5).
-- 🗂 [Workflow / tooling / meta](index/workflow-meta.md) — Unity MCP bridge, chat/GM, Tempo docs/canvas gotchas, extractors, logs, persist protocol, dead-code scan (10).
+- 🗂 [Workflow / tooling / meta](index/workflow-meta.md) — Unity MCP bridge, chat/GM, Tempo docs/canvas gotchas, extractors, logs, persist protocol, dead-code scan, stale editor-assembly list (11).
+- [Mobs get EVERYTHING players get](mobs-get-everything-players-get.md) — HARD LAW: every skill/stat/state/effect on the player must work on mobs; only STANCES are player-only. A player-only gap is a bug, never design.

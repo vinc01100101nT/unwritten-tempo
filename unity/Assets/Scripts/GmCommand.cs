@@ -49,6 +49,6 @@ public class GmContext
 
     public Transform Player
     {
-        get { var p = UnityEngine.Object.FindFirstObjectByType<Player3DController>(); return p != null ? p.transform : null; }
+        get { var p = UnityEngine.Object.FindAnyObjectByType<Player3DController>(); return p != null ? p.transform : null; }
     }
 }

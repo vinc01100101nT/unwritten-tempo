@@ -14,7 +14,7 @@ public enum PrimaryStat { STR, AGI, VIT, INT, DEX, LUK }
 ///
 /// (No save-to-disk yet — a fresh session starts at level 1.)
 /// </summary>
-public class Character : MonoBehaviour, IDamageable
+public class Character : MonoBehaviour, ICombatUnit
 {
     public static Character Instance { get; private set; }
 
@@ -211,6 +211,11 @@ public class Character : MonoBehaviour, IDamageable
     /// Set by drag/click in the Skills (K) menu; read by the bar + the central key router. Persisted.</summary>
     public HotbarBindings Hotbar { get; } = new HotbarBindings();
 
+    /// <summary>Which PASSIVE skills are live — ticked on in the Grimoire (J) or rolled onto the equipped weapon.
+    /// The single owner of that answer; <see cref="PassiveEvents"/> gates every dispatch on it. Persisted.
+    /// (Not to be confused with <see cref="Passives"/>, which is the ring's stat walk.)</summary>
+    public PassiveLoadout PassiveSkills { get; } = new PassiveLoadout();
+
     /// <summary>The player's combo chains (4 skills each, one hotkey each) — the single owner of which skill is
     /// committed to which chain. Edited in the Combo Composer; read by the combo bar + <see cref="ComboRunner"/>.
     /// Persisted alongside the hotbar.</summary>
@@ -322,6 +327,41 @@ public class Character : MonoBehaviour, IDamageable
         => info.isMagic ? TakeMagicDamage(info.amount, info.element, info.source)
                         : TakeDamage(info.amount, info.attackerHit, info.element, info.source, info.missed);
     public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
+
+    // ICombatUnit seam: the rest of the shared vocabulary an effect needs, so a skill effect targets the player through
+    // the SAME handle it targets a mob through. Body is the spawned AVATAR, not this component's own object — the
+    // player's stats live on a persistent data object while the body is a separate spawned rig.
+    /// <para>NULL until the avatar is spawned — callers must handle that rather than fall back to this component's own
+    /// object, which is the persistent stats holder and must never collect body-level components.</para>
+    public Transform Body => Avatar();
+
+    /// <summary>The player's FULL-SIZE melee reach, read from its attacker — the single owner of that number, and
+    /// unscaled so the caller can blend it against whatever body it is measuring to. 0 while the avatar hasn't spawned,
+    /// which callers treat as "can't work out a landing spot yet".</summary>
+    public float MeleeReachFullSize
+    {
+        get { var b = Avatar(); var atk = b != null ? b.GetComponent<Player3DAttacker>() : null; return atk != null ? atk.BaseRange : 0f; }
+    }
+
+    /// <summary>The player is built to the shared character body, so that is its size for melee-contact maths.</summary>
+    public float MeleeScale => UnitScale.CharacterScale;
+
+    // Movement + aggro: the player's half of the shared unit verbs. Each forwards to the rig that owns the primitive
+    // — the mob half forwards to its pathing agent — so one effect drives either unit through one name. Resolved from
+    // the avatar (never this component's own object, which is the persistent stats holder, not a body).
+    Player3DController Rig() { var b = Avatar(); return b != null ? b.GetComponent<Player3DController>() : null; }
+    public void TeleportTo(Vector3 dest) { var r = Rig(); if (r != null) r.Teleport(dest); }
+    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds)
+    { var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds); }
+    public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
+    { var r = Rig(); if (r != null) r.Shove(worldFrom, speed, seconds, stagger); }
+    public void ForceAggro(ICombatUnit source, float seconds)
+    {
+        // The player engages a MOB, so the taunter has to be one. A mob-vs-mob aggro lock needs the mob brain to hold
+        // an arbitrary chase target (it tracks the player today) — that is the mob-vs-mob combat step, not this one.
+        var r = Rig();
+        if (r != null && source is Health mob) r.Taunt(mob, seconds);
+    }
 
     // Derived passive combat stats (Phase G). These have no flat "base" — they read the
     // passive % layer directly, so a stat with 0 ranks is simply neutral.
@@ -698,7 +738,7 @@ public class Character : MonoBehaviour, IDamageable
         // granted skills. Only fires on a real equip action, not on load (RestoreEquipment writes the dict directly).
         if (slot == EquipSlotType.Weapon)
         {
-            var kit = (instance != null && instance.def != null) ? instance.def.grantedSkillIds : null;
+            var kit = (instance != null && instance.def != null) ? instance.skillIds : null;
             if (Hotbar.SetWeaponKit(kit)) HotbarPanel.RebuildRequested?.Invoke();
         }
     }
@@ -724,7 +764,7 @@ public class Character : MonoBehaviour, IDamageable
         if (Invincible) return true;   // GM invuln: silently eat the hit
         if (!Invulnerable) return false;
         var a = Avatar();
-        if (a != null) DamagePopup.SpawnText(a.position, "Dodge", DodgeColor);
+        if (a != null) DamagePopup.SpawnText(UnitAnchor.Overhead(a), "Dodge", DodgeColor);
         OnEvaded?.Invoke();
         return true;
     }
@@ -745,11 +785,7 @@ public class Character : MonoBehaviour, IDamageable
 
     /// <summary>Begin a damage-reduction stance for <paramref name="seconds"/>, preventing
     /// <paramref name="reduction"/> (0..1) of each incoming hit. Called by a guard-type active skill.</summary>
-    public void BeginGuard(float seconds, float reduction)
-    {
-        if (seconds <= 0f) return;
-        States.Apply(StateId.Guard, seconds, Mathf.Clamp01(reduction));
-    }
+    public void BeginGuard(float seconds, float reduction) => States.BeginGuard(seconds, reduction);
 
     // (The local Guard shim is gone: both intakes now hand their raw post-defence figure to UnitMitigation.Landed,
     // which owns the vulnerability amplify, the rounding and the Guard cut for player and mob alike.)
@@ -760,7 +796,6 @@ public class Character : MonoBehaviour, IDamageable
     // War Banner RAMP (experimental): the DamageBuff can GROW over its life (ramp params live on the DamageBuff state
     // entry). Refreshing a still-live buff KEEPS the ramp progress; letting it fully lapse RESETS to base — that parity
     // comes free from UnitStates.Apply (keeps startTime on a refresh, resets it on a lapsed re-cast). Stored in the store.
-    const float RegenInterval = 0.8f;
 
     /// <summary>The live outgoing-damage buff multiplier (1 = none) — folded into every damage roll, so it lifts
     /// basic attacks and skills alike (War Banner's damage-up aura). Reads the store like its two siblings below:
@@ -783,14 +818,9 @@ public class Character : MonoBehaviour, IDamageable
     /// <summary>Timed cast-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
     public void BuffCastSpeed(float mult, float seconds)   => States.ApplyStatBuff(BuffStat.CastSpeed, mult, seconds);
 
-    /// <summary>Start (or refresh) a heal-over-time: <paramref name="perTick"/> HP every <see cref="RegenInterval"/>s
+    /// <summary>Start (or refresh) a heal-over-time: <paramref name="perTick"/> HP every <see cref="UnitStates.RegenInterval"/>s
     /// for <paramref name="seconds"/> (Mending Tide). Ticked in <see cref="Update"/>.</summary>
-    public void BeginRegen(int perTick, float seconds)
-    {
-        if (perTick <= 0 || seconds <= 0f) return;
-        var s = States.Apply(StateId.Regen, seconds, 0f, perTick);   // intAmount = HP per tick
-        if (s != null) s.nextTick = Time.time + RegenInterval;
-    }
+    public void BeginRegen(int perTick, float seconds) => States.BeginRegen(perTick, seconds);
 
     // Timed skill windows (V3: the old weapon Mana-Leech / Reflect affixes, rehomed as skill effects) — now stored in
     // the unified state store. The combat sinks read the fraction via States and see 0 once the window lapses.
@@ -804,19 +834,11 @@ public class Character : MonoBehaviour, IDamageable
 
     /// <summary>Open a mana-leech window: for <paramref name="seconds"/>, <paramref name="fraction"/> (0..1) of the
     /// damage you deal returns as MP.</summary>
-    public void BeginManaLeech(float seconds, float fraction)
-    {
-        if (seconds <= 0f || fraction <= 0f) return;
-        States.Apply(StateId.ManaLeech, seconds, Mathf.Clamp01(fraction));
-    }
+    public void BeginManaLeech(float seconds, float fraction) => States.BeginManaLeech(seconds, fraction);
 
     /// <summary>Open a damage-reflect window: for <paramref name="seconds"/>, reflect an extra <paramref name="fraction"/>
     /// (0..1) of the damage you take back at the attacker (adds to the thorns card's permanent reflect).</summary>
-    public void BeginReflect(float seconds, float fraction)
-    {
-        if (seconds <= 0f || fraction <= 0f) return;
-        States.Apply(StateId.Reflect, seconds, Mathf.Clamp01(fraction));
-    }
+    public void BeginReflect(float seconds, float fraction) => States.BeginReflect(seconds, fraction);
 
     // Absorb pool (Shield skill): a timed barrier that eats incoming HIT damage before it reaches CurrentHP. Bypassed by
     // DoT true damage, exactly like Guard (see TakeTrueDamage). Stored in the unified state store (intAmount = pool).
@@ -826,20 +848,12 @@ public class Character : MonoBehaviour, IDamageable
 
     /// <summary>Raise a damage-absorbing barrier of <paramref name="amount"/> HP for <paramref name="seconds"/> (Aegis /
     /// Barrier skills). It soaks incoming hits until drained or the window lapses. Latest call replaces (no stacking).</summary>
-    public void BeginShield(int amount, float seconds)
-    {
-        if (amount <= 0 || seconds <= 0f) return;
-        States.Apply(StateId.Shield, seconds, 0f, amount);   // intAmount = barrier HP pool
-    }
+    public void BeginShield(int amount, float seconds) => States.BeginShield(amount, seconds);
 
     /// <summary>Hold parry charges for <paramref name="seconds"/> (Parry skills): the next incoming hit is negated
     /// outright and spends one charge. HOW MANY charges comes from the state store's apply context (the effect's
     /// stacks-per-apply), so "blocks the next hit" is just the default single stack — no second charge knob here.</summary>
-    public void BeginParry(float seconds)
-    {
-        if (seconds <= 0f) return;
-        States.Apply(StateId.Parry, seconds);   // stacks ARE the charges
-    }
+    public void BeginParry(float seconds) => States.BeginParry(seconds);
 
     /// <summary>Remaining parry charges (0 when none) — for a HUD pip / the tooltip readout.</summary>
     public int ParryCharges => States.ParryCharges;
@@ -850,7 +864,7 @@ public class Character : MonoBehaviour, IDamageable
     bool ParriedHit(MonsterAI3D source)
     {
         var av = Avatar();
-        if (!UnitMitigation.TryParry(States, av != null ? av.position : transform.position)) return false;
+        if (!UnitMitigation.TryParry(States, av != null ? UnitAnchor.Overhead(av) : transform.position)) return false;
         PassiveEvents.Fire(SkillTrigger.OnParry, null, source != null ? source.transform : null);
         return true;
     }
@@ -864,7 +878,7 @@ public class Character : MonoBehaviour, IDamageable
     {
         if (dmg <= 0) return;
         var av = Avatar();   // barrier soaks first, via the shared unit primitive (same rule mobs get)
-        dmg = UnitMitigation.AfterShield(States, dmg, av != null ? av.position : transform.position);
+        dmg = UnitMitigation.AfterShield(States, dmg, av != null ? UnitAnchor.Overhead(av) : transform.position);
         if (dmg > 0)
         {
             int before = CurrentHP;
@@ -896,7 +910,7 @@ public class Character : MonoBehaviour, IDamageable
         if (missed)
         {
             var dav = Avatar();
-            if (dav != null) DamagePopup.SpawnText(dav.position, "MISS", MonsterMissColor);
+            if (dav != null) DamagePopup.SpawnText(UnitAnchor.Overhead(dav), "MISS", MonsterMissColor);
             OnEvaded?.Invoke();
             return 0;
         }
@@ -907,7 +921,7 @@ public class Character : MonoBehaviour, IDamageable
         {
             Sfx.Play(off.guardSfx != null && !off.guardSfx.Empty ? off.guardSfx : blockSfx);
             var av = Avatar();
-            if (av != null) DamagePopup.SpawnText(av.position, "Guard", GuardColor);
+            if (av != null) DamagePopup.SpawnText(UnitAnchor.Overhead(av), "Guard", GuardColor);
             OnBlocked?.Invoke();
             return 0;
         }
@@ -972,7 +986,7 @@ public class Character : MonoBehaviour, IDamageable
         CurrentHP = Mathf.Max(0, CurrentHP - dmg);
         OnHealthChanged?.Invoke();
         var a = Avatar();
-        if (a != null) DamagePopup.Spawn(a.position, dmg, color);
+        if (a != null) DamagePopup.Spawn(UnitAnchor.Overhead(a), dmg, color);
         OnDamaged?.Invoke(dmg);
         if (CurrentHP == 0) RaiseDeath();
         return dmg;
@@ -1005,14 +1019,8 @@ public class Character : MonoBehaviour, IDamageable
     {
         if (IsDead) return;
 
-        // Skill heal-over-time (Mending Tide): tick fixed HP on its own cadence while active. Reads the Regen state
-        // entry (null once it lapses → no tick). No alloc.
-        var rg = States.Get(StateId.Regen);
-        if (rg != null && Time.time >= rg.nextTick)
-        {
-            rg.nextTick = Time.time + RegenInterval;
-            Heal(rg.intAmount);
-        }
+        // (Heal-over-time is NOT ticked here any more: StatusController.TickRegen owns it for every unit, so a regen
+        // cast on a mob heals it too. Duplicating it here would double-heal the player.)
 
         if (mpRegenPerSecond <= 0f) return;
         if (CurrentMP >= MaxMP) { mpAccum = 0f; return; }
@@ -1046,7 +1054,7 @@ public class Character : MonoBehaviour, IDamageable
         var a = Avatar();
         if (a != null)
         {
-            DamagePopup.SpawnText(a.position, "+" + amount, HealColor);  // green = heal
+            DamagePopup.SpawnText(UnitAnchor.Overhead(a), "+" + amount, HealColor);  // green = heal
             VfxCue.Fire(VfxCueId.OnReceiveHeal, a);
         }
     }
@@ -1058,7 +1066,7 @@ public class Character : MonoBehaviour, IDamageable
     {
         if (avatar == null)
         {
-            var pc3 = FindFirstObjectByType<Player3DController>();
+            var pc3 = FindAnyObjectByType<Player3DController>();
             avatar = pc3 != null ? pc3.transform : null;
         }
         return avatar;
@@ -1125,6 +1133,7 @@ public class Character : MonoBehaviour, IDamageable
         d.gold         = Wallet.Capture();
         d.hotbarBindings = Hotbar.Capture();
         d.comboChains = Combos.Capture();
+        d.activePassives = PassiveSkills.Capture();
         CaptureEquipment(d);
         d.outfitDyeSources = DyeSources;
         d.outfitDyeTargets = DyeTargets;
@@ -1140,6 +1149,8 @@ public class Character : MonoBehaviour, IDamageable
         var ids = new List<string>();
         var refines = new List<int>();
         var cards = new List<string>();
+        var rarities = new List<int>();
+        var kits = new List<string>();
         foreach (var kv in Gear.Worn)
         {
             if (kv.Key == EquipSlotType.Ring) continue;
@@ -1148,11 +1159,15 @@ public class Character : MonoBehaviour, IDamageable
             ids.Add(inst.def.id);
             refines.Add(inst.upgrade);
             cards.Add(ItemCatalog.EncodeCards(inst.cards));
+            rarities.Add((int)inst.rarity);
+            kits.Add(inst.EncodeSkills());
         }
         d.equipSlots   = slots.ToArray();
         d.equipItemIds = ids.ToArray();
         d.equipRefines = refines.ToArray();
         d.equipCards   = cards.ToArray();
+        d.equipRarities = rarities.ToArray();
+        d.equipSkills   = kits.ToArray();
     }
 
     // Rebuild the equip dictionary from the saved arrays (Ring excluded — EnsureRingEquipped re-wears it).
@@ -1172,6 +1187,10 @@ public class Character : MonoBehaviour, IDamageable
                 var inst = new EquipmentInstance(def, refine);
                 if (d.equipCards != null && i < d.equipCards.Length)
                     ItemCatalog.DecodeCards(d.equipCards[i], inst.cards);
+                // v7+: the copy's own rolled rarity + kit. A pre-v7 save has neither, so the piece keeps the def's
+                // rarity and an empty kit — it re-rolls nothing, it simply has no rolled identity yet.
+                if (d.equipRarities != null && i < d.equipRarities.Length) inst.rarity = (Rarity)d.equipRarities[i];
+                if (d.equipSkills != null && i < d.equipSkills.Length) inst.DecodeSkills(d.equipSkills[i]);
                 Gear.Equip(slot, inst);
             }
         }
@@ -1198,6 +1217,7 @@ public class Character : MonoBehaviour, IDamageable
         Wallet.Restore(d.gold);
         Hotbar.Restore(d.hotbarBindings);
         Combos.Restore(d.comboChains);
+        PassiveSkills.Restore(d.activePassives);
         RestoreEquipment(d);         // v6+: rebuild worn gear from the save (Ring excluded)
         EnsureRingEquipped();        // re-wear the Ring vessel (auto-managed, never serialized)
         DyeSources = d.outfitDyeSources;   // v6+: outfit dye (CharacterDye3D re-bakes off OnAppearanceChanged below)

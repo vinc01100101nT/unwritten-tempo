@@ -99,27 +99,27 @@ public class DevSettings : MonoBehaviour
 
     void EnsureRefs()
     {
-        if (player == null)   player   = FindFirstObjectByType<Player3DController>();
-        if (attacker == null) attacker = FindFirstObjectByType<Player3DAttacker>();
-        if (camRig == null)   camRig   = FindFirstObjectByType<CameraFollow3D>();
-        if (fader == null)    fader    = FindFirstObjectByType<CameraOccluderFader>();
+        if (player == null)   player   = FindAnyObjectByType<Player3DController>();
+        if (attacker == null) attacker = FindAnyObjectByType<Player3DAttacker>();
+        if (camRig == null)   camRig   = FindAnyObjectByType<CameraFollow3D>();
+        if (fader == null)    fader    = FindAnyObjectByType<CameraOccluderFader>();
         if (tod == null)      tod      = TimeOfDay.Instance;
         if (cal == null)      cal      = GameCalendar.Instance;
         if (wx == null)       wx       = WeatherDirector.Instance;
         if (wc == null)       wc       = WeatherChannels.Instance;
-        if (sun == null)      sun      = FindFirstObjectByType<DayNightLight>();
-        if (cloud == null)    cloud    = FindFirstObjectByType<CloudShadows>();
-        if (sky == null)      sky      = FindFirstObjectByType<SkyboxSky>();
-        if (wind == null)     wind     = FindFirstObjectByType<WindGlobals>();
-        if (rain == null)     rain     = FindFirstObjectByType<RainOverlay>();
-        if (wet == null)      wet      = FindFirstObjectByType<WetGround>();
-        if (refl == null)     refl     = FindFirstObjectByType<PlanarReflection>();
-        if (rainAudio == null) rainAudio = FindFirstObjectByType<RainAudio>();
-        if (snow == null)     snow     = FindFirstObjectByType<SnowOverlay>();
-        if (snowGround == null) snowGround = FindFirstObjectByType<SnowGround>();
-        if (fog == null)      fog      = FindFirstObjectByType<FogOverlay>();
-        if (ink == null)      ink      = FindFirstObjectByType<HandDrawnFX>();
-        if (foot == null)     foot     = FindFirstObjectByType<FootstepTracker>();
+        if (sun == null)      sun      = FindAnyObjectByType<DayNightLight>();
+        if (cloud == null)    cloud    = FindAnyObjectByType<CloudShadows>();
+        if (sky == null)      sky      = FindAnyObjectByType<SkyboxSky>();
+        if (wind == null)     wind     = FindAnyObjectByType<WindGlobals>();
+        if (rain == null)     rain     = FindAnyObjectByType<RainOverlay>();
+        if (wet == null)      wet      = FindAnyObjectByType<WetGround>();
+        if (refl == null)     refl     = FindAnyObjectByType<PlanarReflection>();
+        if (rainAudio == null) rainAudio = FindAnyObjectByType<RainAudio>();
+        if (snow == null)     snow     = FindAnyObjectByType<SnowOverlay>();
+        if (snowGround == null) snowGround = FindAnyObjectByType<SnowGround>();
+        if (fog == null)      fog      = FindAnyObjectByType<FogOverlay>();
+        if (ink == null)      ink      = FindAnyObjectByType<HandDrawnFX>();
+        if (foot == null)     foot     = FindAnyObjectByType<FootstepTracker>();
         EnsureGround();
     }
 
@@ -205,7 +205,7 @@ public class DevSettings : MonoBehaviour
     {
         if (respawns == null || respawns.Length == 0 || Time.unscaledTime >= nextRespawnRefresh)
         {
-            respawns = FindObjectsByType<MobRespawn>(FindObjectsSortMode.None);
+            respawns = FindObjectsByType<MobRespawn>();
             nextRespawnRefresh = Time.unscaledTime + 1f;
         }
         return respawns;
@@ -255,7 +255,7 @@ public class DevSettings : MonoBehaviour
         var m = NearestMob();
         if (m == null || m.Health == null) return;
         m.Health.element = NextElement(m.Health.element);
-        DamagePopup.SpawnText(m.transform.position + Vector3.up * 1.1f, "Armor: " + m.Health.element, Elements.Tint(m.Health.element));
+        DamagePopup.SpawnText(UnitAnchor.Overhead(m.transform), "Armor: " + m.Health.element, Elements.Tint(m.Health.element));
     }
 
     void CyclePlayerElement()
@@ -263,7 +263,7 @@ public class DevSettings : MonoBehaviour
         if (Ch == null) return;
         Ch.armorElement = NextElement(Ch.armorElement);
         if (player != null)
-            DamagePopup.SpawnText(player.transform.position + Vector3.up * 1.1f, "Armor: " + Ch.armorElement, Elements.Tint(Ch.armorElement));
+            DamagePopup.SpawnText(UnitAnchor.Overhead(player.transform), "Armor: " + Ch.armorElement, Elements.Tint(Ch.armorElement));
     }
 
     void Afflict(Ailment a, float secs, float mag)
@@ -298,13 +298,17 @@ public class DevSettings : MonoBehaviour
     {
         // ---- Player (movement / feel) — Player3DController -----------------
         Cat("Player");
-        F("Travel speed",     0f, 12f, () => player ? player.moveSpeed : 0f,       v => { if (player) player.moveSpeed = v; });   // base translation, no anim scaling
-        F("Gait speed (×)",   0.1f, 5f, () => player ? player.gaitSpeed : 0f,      v => { if (player) player.gaitSpeed = v; });   // scales move + animation together
+        // Travel + gait belong to EVERY character (CharacterSpec), so these two tune the player, the townsfolk and the
+        // shadow mobs together — which is the point: they are the same body and must not drift apart.
+        F("Travel speed",     0f, 12f, () => CharacterSpec.Active.moveSpeed,  v => CharacterSpec.Active.moveSpeed = v);   // base translation, no anim scaling
+        F("Gait speed (×)",   0.1f, 5f, () => CharacterSpec.Active.gaitSpeed, v => CharacterSpec.Active.gaitSpeed = v);   // scales move + animation together
         F("Acquire range",    0f, 15f, () => player ? player.acquireRange : 0f,    v => { if (player) player.acquireRange = v; });
         F("Roam range",       0f, 30f, () => player ? player.roamRange : 0f,       v => { if (player) player.roamRange = v; });
         F("Snap radius (px)", 0f, 200f, () => player ? player.snapRadiusPixels : 0f, v => { if (player) { player.snapRadiusPixels = v; player.ApplySnapRadius(); } });
-        F("Agent radius",     0.1f, 1f, () => player ? player.agentRadius : 0f,    v => { if (player) player.agentRadius = v; });
-        F("Gravity",          0f, 30f, () => player ? player.gravity : 0f,         v => { if (player) player.gravity = v; });
+        // Both are world/character-wide facts with ONE owner each — tuning them here moves the player, the townsfolk
+        // and every mob together, which is the point: they are the same rules, not per-unit preferences.
+        F("Agent radius",     0.1f, 1f, () => CharacterSpec.Active.routingRadius, v => CharacterSpec.Active.routingRadius = v);
+        F("Gravity",          0f, 30f, () => GroundElevation.Gravity,             v => GroundElevation.Gravity = v);
         F("Fall pose @ speed", 0f, 10f, () => player ? player.fallAnimSpeed : 0f,  v => { if (player) player.fallAnimSpeed = v; });   // min downward speed before the falling pose plays
         // (Footstep-sound timing knobs removed — the step SFX now fires on the walk/run animation's foot-plant FRAME,
         //  authored as plant phases on FootstepTracker, not a per-second gap.)

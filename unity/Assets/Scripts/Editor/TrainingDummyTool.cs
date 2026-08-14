@@ -108,7 +108,7 @@ public static class TrainingDummyTool
     // scene-view camera, else the origin — snapped to the Ground-layer terrain when we can ray it.
     static Vector3 ChooseSpot()
     {
-        var player = Object.FindFirstObjectByType<Player3DController>();
+        var player = Object.FindAnyObjectByType<Player3DController>();
         Vector3 guess = player != null ? player.transform.position + player.transform.forward * 0f + Vector3.forward * 3f
                                        : Vector3.zero;
 

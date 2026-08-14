@@ -49,6 +49,46 @@ public static class SkillTooltip
     // Damage-resolution word for the card (Physical / Magic / Crit — the RPS-triangle axis).
     static string DmgWord(DamageType t) => t == DamageType.Magic ? "magic" : t == DamageType.Crit ? "crit" : "physical";
 
+    /// <summary>Plain-language "what makes this run", read off the skill's authored triggers. Shared by every surface
+    /// that lists them (the Grimoire rows, the weapon skill-details panel) so they can never word it differently.
+    ///
+    /// <para>A skill can carry several triggers, so this joins every NON-OnCast one. OnCast is skipped: "you press it"
+    /// is what a hotbar slot already says, so listing it would only be noise on a skill that has both.</para></summary>
+    public static string TriggerLine(SkillDef def)
+    {
+        if (def == null || def.triggers == null) return "";
+        string line = "";
+        for (int i = 0; i < def.triggers.Count; i++)
+        {
+            var e = def.triggers[i];
+            if (e == null || e.trigger == SkillTrigger.OnCast) continue;
+            if (line.Length > 0) line += ", and ";
+            line += MomentLine(e);
+        }
+        return line.Length > 0 ? line : (def.IsPassive ? "Passive" : "");
+    }
+
+    static string MomentLine(SkillTriggerEntry e)
+    {
+        switch (e.trigger)
+        {
+            case SkillTrigger.OnSkillCastComplete: return "After casting " + NameOf(e.triggerSkillId);
+            case SkillTrigger.OnBasicAttackStart:  return "When you start a basic attack";
+            case SkillTrigger.OnBasicAttackLanded: return "When a basic attack lands";
+            case SkillTrigger.OnKill:              return "When you kill a mob";
+            case SkillTrigger.OnLowHP:             return "When your HP drops low";
+            case SkillTrigger.OnHit:               return "When you land a hit";
+            case SkillTrigger.OnParry:             return "When you parry";
+            default:                               return "Passive";
+        }
+    }
+
+    static string NameOf(string skillId)
+    {
+        var d = SkillCatalog.Get(skillId);
+        return d != null ? d.displayName : (string.IsNullOrEmpty(skillId) ? "(nothing)" : skillId);
+    }
+
     /// <summary>The full rich-text card body for <paramref name="def"/> (title through effects).</summary>
     public static string Build(SkillDef def)
     {

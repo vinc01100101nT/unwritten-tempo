@@ -20,7 +20,7 @@ public class WorldMapHUD : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
     {
-        if (FindFirstObjectByType<WorldMapHUD>() != null) return;       // already installed this session
+        if (FindAnyObjectByType<WorldMapHUD>() != null) return;       // already installed this session
         if (Resources.Load<WorldAtlas>("WorldAtlas") == null) return;   // no world baked yet
 
         var go = new GameObject("WorldMapHUD");

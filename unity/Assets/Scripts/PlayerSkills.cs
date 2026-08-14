@@ -20,7 +20,7 @@ public static class PlayerSkills
     static void EnsureCache()
     {
         if (player == null) byId.Clear();
-        if (player == null) player = Object.FindFirstObjectByType<Player3DController>();
+        if (player == null) player = Object.FindAnyObjectByType<Player3DController>();
         if (player == null || byId.Count > 0) return;
 
         var comps = player.GetComponents<IHotbarSkill>();

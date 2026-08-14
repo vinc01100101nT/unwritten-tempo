@@ -54,6 +54,9 @@ public class DeathDissolve : MonoBehaviour
         playing = true;
 
         // Stop it acting, moving, colliding or being targeted — it's now just remains.
+        // Tell the freeze switch to keep its hands off first: it owns the mover + animator too, so a player who walks
+        // out of range and back mid-fade would otherwise "thaw" the corpse and switch them straight back on.
+        var lod = GetComponent<SimulationLod>(); if (lod != null) lod.Suspend();
         Disable<MonsterAI3D>();
         Disable<BillboardAnimator3D>();
         Disable<PathAgent3D>();

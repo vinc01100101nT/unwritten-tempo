@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   targetingMigrated: 1
   id: skill.sword.committed_strike
+  weaponType: 1
+  published: 0
   displayName: Committed Strike
   icon: {fileID: 0}
   description: 'Wind up and commit.

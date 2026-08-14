@@ -87,7 +87,7 @@ public static class SkillDefTools
 
     static GameObject ResolvePlayer()
     {
-        var ctrl = Object.FindFirstObjectByType<Player3DController>();
+        var ctrl = Object.FindAnyObjectByType<Player3DController>();
         return ctrl != null ? ctrl.gameObject : null;
     }
 

@@ -24,7 +24,7 @@ public static class VerifyPlayerWiring
     {
         // Prefer a player already loaded in an open scene (what Play would actually use); otherwise peek into
         // the saved Systems scene without disturbing the user's open scenes.
-        var player = UnityEngine.Object.FindFirstObjectByType<Player3DController>();
+        var player = UnityEngine.Object.FindAnyObjectByType<Player3DController>();
         bool openedTemp = false;
         Scene temp = default;
 
@@ -39,7 +39,7 @@ public static class VerifyPlayerWiring
             }
             temp = EditorSceneManager.OpenScene(SystemsPath, OpenSceneMode.Additive);
             openedTemp = true;
-            player = UnityEngine.Object.FindFirstObjectByType<Player3DController>();
+            player = UnityEngine.Object.FindAnyObjectByType<Player3DController>();
         }
 
         try

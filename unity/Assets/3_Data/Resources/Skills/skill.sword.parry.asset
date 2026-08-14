@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   targetingMigrated: 1
   id: skill.sword.parry
+  weaponType: 1
+  published: 0
   displayName: Parry
   icon: {fileID: 0}
   description: 'Read the hit and punish it.

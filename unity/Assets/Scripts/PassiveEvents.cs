@@ -23,7 +23,13 @@ using UnityEngine;
 public static class PassiveEvents
 {
     // Small (a player's rolled passives — a handful). No per-call alloc; iterated on discrete combat moments, never per-frame.
-    static readonly List<SkillRunner> passives = new List<SkillRunner>(16);
+    // FIXED SLOTS, never compacted: a runner's slot index IS its identity bit in the chain mask, so that bit must not
+    // move for as long as it is registered. This used to be a List walked by index, which meant unregistering ANY
+    // passive shifted every later one down a slot — and because a chain is stamped now but consumed frames later (a
+    // flurry's tail hits, a deferred VFX tick), a skill enable/disable in between silently remapped the bits. Two real
+    // failures: the passive that caused the chain stopped recognising itself and re-fired off its own damage (the exact
+    // runaway this brake exists to stop), and an unrelated passive inherited the vacated bit and was silently muted.
+    static readonly SkillRunner[] slots = new SkillRunner[MaxTrackedPassives];
 
     // ---- NO-SELF-FEEDING BRAKE -----------------------------------------------------------------------------------
     // A passive never fires off a chain it is ALREADY part of. Every effect a passive causes carries the set of passives
@@ -46,11 +52,30 @@ public static class PassiveEvents
     public static ulong PushChain(ulong mask) { var prev = chain; chain = mask; return prev; }
     public static void PopChain(ulong prev) { chain = prev; }
 
-    /// <summary>A passive runner announces itself while it's alive on the player (called from its OnEnable).</summary>
-    public static void Register(SkillRunner r) { if (r != null && !passives.Contains(r)) passives.Add(r); }
+    /// <summary>A passive runner announces itself while it's alive on the player (called from its OnEnable). It keeps
+    /// the SAME slot — and so the same chain bit — until it unregisters.</summary>
+    public static void Register(SkillRunner r)
+    {
+        if (r == null) return;
+        int free = -1;
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (slots[i] == r) return;                       // already registered — keep its existing slot
+            if (free < 0 && slots[i] == null) free = i;
+        }
+        // No free slot: this runner simply isn't tracked (bit 0). It still fires; it just isn't braked — the same
+        // degradation the old code had past 64, and it can't corrupt anyone else's bit.
+        if (free >= 0) slots[free] = r;
+    }
 
-    /// <summary>Drop a passive runner when it's torn down / unequipped (called from its OnDisable). Safe if absent.</summary>
-    public static void Unregister(SkillRunner r) { passives.Remove(r); }
+    /// <summary>Drop a passive runner when it's torn down / unequipped (called from its OnDisable). Safe if absent.
+    /// Frees the slot WITHOUT shifting anyone else's, so every other passive keeps its identity.</summary>
+    public static void Unregister(SkillRunner r)
+    {
+        if (r == null) return;
+        for (int i = 0; i < slots.Length; i++)
+            if (slots[i] == r) { slots[i] = null; return; }
+    }
 
     /// <summary>Fire a passive trigger. For <see cref="SkillTrigger.OnSkillCastComplete"/>, <paramref name="skillId"/>
     /// is the completed active's id and only the passive keyed to it runs; the natural events ignore it.
@@ -58,26 +83,35 @@ public static class PassiveEvents
     /// completing) — a passive's Single/Ground bindings land on it.</summary>
     public static void Fire(SkillTrigger trigger, string skillId = null, Transform victim = null)
     {
-        // Reverse walk so a passive that tears down mid-dispatch (rare) can't cause a neighbour to be skipped, and so
-        // a stale (destroyed) entry can be compacted out in the same pass.
-        for (int i = passives.Count - 1; i >= 0; i--)
+        // Walk the fixed slots. Nothing is compacted, so a passive that tears down mid-dispatch just leaves a hole and
+        // every other slot — and therefore every other chain bit — stays exactly where it was.
+        for (int i = 0; i < slots.Length; i++)
         {
-            var r = passives[i];
-            if (r == null) { passives.RemoveAt(i); continue; }
+            var r = slots[i];
+            if (r == null) continue;
+            if (!r) { slots[i] = null; continue; }   // destroyed runner: clear its slot, don't shift the rest
             var def = r.def;
-            if (def == null || def.trigger != trigger) continue;
-            // OnSkillCastComplete is parameterized: only the passive bound to THIS skill fires (empty id never matches a real cast).
-            if (trigger == SkillTrigger.OnSkillCastComplete && def.triggerSkillId != skillId) continue;
+            if (def == null) continue;
+            // WHICH authored entry answers this moment (null = this skill doesn't). A skill may carry several triggers,
+            // so the moment picks the entry, and that entry — not the skill — owns the gate and the stack cost below.
+            // OnSkillCastComplete is parameterized inside EntryFor: only an entry bound to THIS skill id matches.
+            var entry = def.EntryFor(trigger, skillId);
+            if (entry == null) continue;
+            // THE OWNERSHIP GATE: a runner exists for every authored skill, but a passive only RUNS when the player
+            // ticked it on in the Grimoire or the equipped weapon rolled it. One rule, read from its one owner.
+            // A skill with an OnCast trigger passes freely here (an active is gated by the hotbar) — including one
+            // whose EXTRA trigger fired, since in practice that trigger is gated on a partner skill's stacks anyway.
+            if (Character.Instance != null && !Character.Instance.PassiveSkills.IsActive(def)) continue;
 
             // THE BRAKE: skip a passive already in this causal chain (it, or something it caused, led here). Unrelated
             // passives are untouched — "passive A kills, passive B reacts" stays legal.
-            ulong bit = i < MaxTrackedPassives ? 1UL << i : 0UL;
-            if (bit != 0UL && (chain & bit) != 0UL) continue;
+            ulong bit = 1UL << i;   // stable for as long as this runner holds slot i
+            if ((chain & bit) != 0UL) continue;
 
-            // THE GATE: a skill that requires a state doesn't run at all when unmet — no VFX, no cast.
-            if (!StateGate.IsMet(def, r.CasterStates)) continue;
+            // THE GATE: a trigger that requires a state doesn't run at all when unmet — no VFX, no cast.
+            if (!StateGate.IsMet(entry, r.CasterStates)) continue;
 
-            r.FireAsPassive(victim, chain | bit);   // fire the whole skill; the chain it hands to its own effects includes itself
+            r.FireAsPassive(entry, victim, chain | bit);   // fire the whole skill; the chain it hands to its own effects includes itself
         }
     }
 }

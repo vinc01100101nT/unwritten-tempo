@@ -122,7 +122,7 @@ public class BattleNotice : MonoBehaviour
         if (active.Count == 0) return;
 
         if (camT == null) { var c = Camera.main; if (c != null) camT = c.transform; }
-        if (player == null) { var p = FindFirstObjectByType<Player3DController>(); if (p != null) player = p.transform; }
+        if (player == null) { var p = FindAnyObjectByType<Player3DController>(); if (p != null) player = p.transform; }
         if (player == null) return;   // no anchor this frame — leave lines as-is (don't churn)
 
         Vector3 baseP = player.position + Vector3.up * BaseY;

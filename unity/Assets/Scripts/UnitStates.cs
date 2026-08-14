@@ -326,6 +326,72 @@ public class UnitStates : MonoBehaviour
         s.rampCap = rampCap;
     }
 
+    // ---- the state STARTERS — one per state family, valid on ANY unit ------------------------------------------
+    // These used to live on Character (the player) and Health (the mob), which is the whole reason "a guard/shield/
+    // parry/regen/leech/reflect can only be given to the player" was true: the store never cared who it sat on, but
+    // only the player's class had a method to write them. They are all the same shape — validate, then one Apply — so
+    // they belong to the store itself. Now a mob can be shielded, a player can be made vulnerable, and neither needed
+    // a new code path. Keep new state families here, NOT on a unit class, so both sides inherit them for free.
+
+    /// <summary>Seconds between heal-over-time ticks. Owned here because the state is; the unit's ticker reads it.</summary>
+    public const float RegenInterval = 0.8f;
+
+    /// <summary>Cut <paramref name="cutFraction"/> (0..1) off every incoming hit for <paramref name="seconds"/>.</summary>
+    public void BeginGuard(float seconds, float cutFraction)
+    {
+        if (seconds <= 0f) return;
+        Apply(StateId.Guard, seconds, Mathf.Clamp01(cutFraction));
+    }
+
+    /// <summary>Heal <paramref name="hpPerTick"/> every <see cref="RegenInterval"/>s for <paramref name="seconds"/>.
+    /// The HP is handed out by the unit's ticker (a state store has no HP of its own).</summary>
+    public void BeginRegen(int hpPerTick, float seconds)
+    {
+        if (hpPerTick <= 0 || seconds <= 0f) return;
+        var s = Apply(StateId.Regen, seconds, 0f, hpPerTick);
+        if (s != null) s.nextTick = Time.time + RegenInterval;
+    }
+
+    /// <summary>For <paramref name="seconds"/>, return <paramref name="fraction"/> (0..1) of the damage this unit
+    /// DEALS as MP.</summary>
+    public void BeginManaLeech(float seconds, float fraction)
+    {
+        if (seconds <= 0f || fraction <= 0f) return;
+        Apply(StateId.ManaLeech, seconds, Mathf.Clamp01(fraction));
+    }
+
+    /// <summary>For <paramref name="seconds"/>, bounce <paramref name="fraction"/> (0..1) of the damage this unit
+    /// TAKES back at whoever dealt it.</summary>
+    public void BeginReflect(float seconds, float fraction)
+    {
+        if (seconds <= 0f || fraction <= 0f) return;
+        Apply(StateId.Reflect, seconds, Mathf.Clamp01(fraction));
+    }
+
+    /// <summary>Raise a barrier of <paramref name="amount"/> HP for <paramref name="seconds"/> that soaks incoming
+    /// hits before they reach HP.</summary>
+    public void BeginShield(int amount, float seconds)
+    {
+        if (amount <= 0 || seconds <= 0f) return;
+        Apply(StateId.Shield, seconds, 0f, amount);   // intAmount = barrier HP pool
+    }
+
+    /// <summary>Hold parry charges for <paramref name="seconds"/> — each negates one incoming hit outright. HOW MANY
+    /// charges comes from the apply context's stacks-per-apply, so the stacks ARE the charges.</summary>
+    public void BeginParry(float seconds)
+    {
+        if (seconds <= 0f) return;
+        Apply(StateId.Parry, seconds);
+    }
+
+    /// <summary>Mark this unit to TAKE <paramref name="extraFraction"/> more damage (0.3 = +30%) for
+    /// <paramref name="seconds"/>.</summary>
+    public void BeginVulnerable(float extraFraction, float seconds)
+    {
+        if (seconds <= 0f) return;
+        Apply(StateId.Vulnerability, seconds, Mathf.Max(0f, extraFraction));
+    }
+
     /// <summary>Apply a state for <paramref name="seconds"/>. Two behaviours, chosen by the apply context
     /// (<see cref="SetApplyContext"/>) so no gameplay method needs a stacking parameter:
     /// <list type="bullet">

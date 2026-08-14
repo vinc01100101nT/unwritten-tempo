@@ -40,8 +40,16 @@ public class FieldMobSpawner : MonoBehaviour
     [Tooltip("Also mix in biome-agnostic 'common' filler mobs (rats/bats/slimes). Only used when Fixed Mob Id is empty.")]
     public bool includeCommons = true;
 
-    [Tooltip("Never respawn closer than this to the player (no spawning on their head).")]
+    [Tooltip("Never respawn closer than this to the player (no spawning on their head). Authored PER SPAWNER — the " +
+             "map recipe writes it (MapRecipe.clearFromSpawn), so a tight courtyard and an open field can differ.")]
     public float playerClearRadius = 6f;
+
+    [Header("Shadows of the Past (live-3D mobs)")]
+    [Range(0f, 1f)]
+    [Tooltip("Fraction of this spawner's mobs that appear as live-3D characters instead of billboard sprites. " +
+             "0 = every mob is a sprite (unchanged). Purely a VISUAL swap — a shadow keeps the same brain, stats, " +
+             "loot and death as any other mob, and copies its body from the live 3D player (no setup needed).")]
+    public float shadowFraction = 0f;
 
     // Per-type pools of hidden, reusable mob objects (keyed by MonsterDef asset name = the Addressable key tail).
     readonly Dictionary<string, Stack<GameObject>> pool = new Dictionary<string, Stack<GameObject>>();
@@ -51,7 +59,7 @@ public class FieldMobSpawner : MonoBehaviour
     void Start()
     {
         groundMask = LayerMask.GetMask("Ground");
-        var p = FindFirstObjectByType<Player3DController>();
+        var p = FindAnyObjectByType<Player3DController>();
         player = p != null ? p.transform : null;
 
         for (int i = 0; i < population; i++) SpawnOne();
@@ -79,6 +87,7 @@ public class FieldMobSpawner : MonoBehaviour
         }
 
         // Nothing pooled for this type → create a fresh one from data (async; Addressables caches the prefab).
+        bool asShadow = shadowFraction > 0f && Random.value < shadowFraction;
         MobSpawner.Spawn(def, spot, go =>
         {
             if (go == null) return;   // no baked/Addressable prefab for this def — slot stays open
@@ -86,6 +95,11 @@ public class FieldMobSpawner : MonoBehaviour
             pm.owner = this;
             pm.typeKey = key;
             go.GetComponent<MonsterAI3D>()?.SetHome(spot);
+            // A shadow is decided ONCE, at creation: the component builds a rigged body in its Start and the mob
+            // then keeps it for life, including through pool reuse. Re-rolling per respawn would Instantiate a rig
+            // per death — exactly the churn the pool exists to avoid — so a pooled mob stays whatever it was born as
+            // and the live mix drifts from this fraction over a long session.
+            if (asShadow) go.AddComponent<MobShadow3DVisual>();
         });
     }
 

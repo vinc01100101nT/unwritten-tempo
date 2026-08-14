@@ -68,9 +68,9 @@ public static class SetupOccludedSilhouette
     {
         // The visible model is the Character3DVisual object (a SEPARATE object riding the controller); the player
         // ROOT only holds the hidden sprite, so the marker must go on the visual or it flags nothing you can see.
-        var visual = Object.FindFirstObjectByType<Character3DVisual>();
+        var visual = Object.FindAnyObjectByType<Character3DVisual>();
         var host = visual != null ? visual.gameObject
-                 : Object.FindFirstObjectByType<Player3DController>()?.gameObject;
+                 : Object.FindAnyObjectByType<Player3DController>()?.gameObject;
         if (host == null)
         {
             EditorUtility.DisplayDialog("Occluded Silhouette",

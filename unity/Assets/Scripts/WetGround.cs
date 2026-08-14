@@ -134,7 +134,7 @@ public class WetGround : MonoBehaviour
     /// <summary>Find the live wet-ground effect, creating one if none exists (used by the DevSettings knob).</summary>
     public static WetGround Ensure()
     {
-        var w = Instance != null ? Instance : FindFirstObjectByType<WetGround>();
+        var w = Instance != null ? Instance : FindAnyObjectByType<WetGround>();
         if (w == null) w = new GameObject("WetGround") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<WetGround>();
         return w;
     }

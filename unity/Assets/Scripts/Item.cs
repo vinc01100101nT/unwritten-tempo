@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>Which equipment slot an item fits. None = a bag-only item (consumable / material).
@@ -59,12 +58,9 @@ public class Item : ScriptableObject
              "Author the grip with Tools ▸ unwritten ▸ Weapons ▸ Weapon Grip Tuner.")]
     public GameObject equipModel;
 
-    [Header("Weapon skills (V2: the weapon owns its kit)")]
-    [Tooltip("Stable SkillDef ids this weapon GRANTS while equipped (attached, not learned) — resolved via " +
-             "SkillCatalog.Get(id). Drawn from the family's shared skill pool; this list IS the equipped kit that " +
-             "fills the hotbar. The ring shapes these skills (scaling + mutations); the weapon owns them. Empty for " +
-             "non-weapons.")]
-    public List<string> grantedSkillIds = new List<string>();
+    // V3: a weapon's kit is ROLLED PER COPY at the drop (WeaponSkillRoll → EquipmentInstance.skillIds), so it can
+    // never live on the shared asset — two Swords off this def carry different skills. The old hand-authored
+    // `grantedSkillIds` was removed for exactly that reason; don't re-add a def-level kit field.
 
     [Tooltip("Damage element for a weapon (what element its attacks deal); defensive/affinity element for gear. " +
              "Neutral = no special element. Feeds the Elements damage table when combat consumes it.")]

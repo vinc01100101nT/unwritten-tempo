@@ -113,7 +113,7 @@ public static class GroundFill
         fbox.size   = new Vector3(gridX + 2f, 1f, gridZ + 2f);
 
         // Make sure routing knows the Ground layer = walkable, everything else = wall (add only if missing).
-        if (Object.FindObjectOfType<Pathfinder3DConfig>() == null)
+        if (Object.FindAnyObjectByType<Pathfinder3DConfig>() == null)
         {
             var cfg = new GameObject("Pathfinder3DConfig").AddComponent<Pathfinder3DConfig>();
             cfg.heightAware = true; cfg.groundMask = groundMask; cfg.maxStep = 0.6f;

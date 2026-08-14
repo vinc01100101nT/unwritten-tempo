@@ -37,7 +37,8 @@ public class TownNPC : MonoBehaviour
     public float barkCooldownMin = 10f, barkCooldownMax = 24f;
 
     [Header("Level of detail")]
-    [Tooltip("Beyond this distance from the player the brain + movement + animation freeze (perf).")]
+    [Tooltip("Beyond this distance from the player the brain + movement + animation freeze (perf). Fed to the " +
+             "shared SimulationLod switch, which mobs use too.")]
     public float simulateRadius = 35f;
 
     [Header("Unstick")]
@@ -53,11 +54,11 @@ public class TownNPC : MonoBehaviour
     Behaviour visualBehaviour;
     Animator visualAnimator;
     Behaviour visualDriver;
-    float nextWander, nextBark, nextLodCheck;
+    float nextWander, nextBark, nextResolveCheck;
     bool paused;                               // true while lingering at an arrived spot (waiting out the pause before the next stroll)
     float wanderDeadline, nextProgressCheck;   // stuck-detection: time budget + periodic progress sampling
     Vector3 lastProgressPos;
-    bool simulating = true;
+    SimulationLod lod;                         // the SHARED simulate-near / freeze-far switch (mobs use the same one)
 
     // Footsteps run through the SAME frame-locked plant detector the player uses (FootstepTracker.DetectPlants):
     // townsfolk are live-3D (a self-animating Character3DPose), so each NPC's steps fire on its OWN walk/run animation
@@ -76,7 +77,7 @@ public class TownNPC : MonoBehaviour
     static bool ResolveFootstepSfx()
     {
         if (sSfxResolved) return true;
-        var pc = FindFirstObjectByType<Player3DController>();
+        var pc = FindAnyObjectByType<Player3DController>();
         if (pc == null) return false;
         sPlayerFootstep = pc.footstepSfx;
         sWaterFootstep = pc.waterFootstepSfx;
@@ -99,6 +100,21 @@ public class TownNPC : MonoBehaviour
         visualDriver = GetComponent<TownNPC3DVisual>();            // 3D only; null for a billboard NPC
         pose3d = GetComponentInChildren<Character3DPose>(true);    // the self-animating pose we read foot-plants from
         onFootPlant = OnFootPlant;                                 // cache once → per-frame detection allocates no closure
+
+        // The freeze-far switch. It owns the staggered distance test and disables the mover/animator/visual driver;
+        // this brain only asks whether it's simulating, and re-seeds the gait when it thaws.
+        lod = GetComponent<SimulationLod>() ?? gameObject.AddComponent<SimulationLod>();
+        lod.simulateRadius = simulateRadius;
+        lod.Freeze(agent, visualBehaviour, visualAnimator, visualDriver);
+        lod.OnSimulatingChanged += OnSimulatingChanged;
+    }
+
+    // Re-seed on THAW so re-entering range can't fire a phantom footstep from a position we left long ago; halt on
+    // FREEZE so a frozen NPC doesn't resume mid-stride. Same two beats the old inline gate did.
+    void OnSimulatingChanged(bool on)
+    {
+        if (on) npcGait.Seed(transform.position);
+        else if (agent != null) agent.Halt();
     }
 
     void OnEnable() { if (!Active.Contains(this)) Active.Add(this); }
@@ -154,23 +170,22 @@ public class TownNPC : MonoBehaviour
         // the long cooldown only governs REPEAT barks once the first has fired.
         nextWander = Time.time + Random.value * pauseMax;
         nextBark = Time.time + 0.5f + Random.value * 2.5f;
-        nextLodCheck = Time.time + Random.value * 0.4f;
+        nextResolveCheck = Time.time + Random.value * 0.4f;
         npcGait.Seed(transform.position);
     }
 
     void Update()
     {
-        // --- LOD gate (staggered, not per-frame) ---
-        if (Time.time >= nextLodCheck)
+        // --- Load-order recovery (staggered, not per-frame; stops once both are resolved) ---
+        if ((player == null || !sSfxResolved) && Time.time >= nextResolveCheck)
         {
-            nextLodCheck = Time.time + 0.4f + Random.value * 0.2f;
+            nextResolveCheck = Time.time + 0.4f + Random.value * 0.2f;
 
-            // Recover from a load-order miss: if AmbientLife.Start ran before the (additively-loaded) player
-            // existed, re-acquire it here. Bounded cost — only runs while player is still null, on this slow
-            // cadence, never per-frame.
+            // If AmbientLife.Start ran before the (additively-loaded) player existed, re-acquire it here. Bounded
+            // cost — only runs while player is still null, on this slow cadence, never per-frame.
             if (player == null)
             {
-                var pc = FindFirstObjectByType<Player3DController>();
+                var pc = FindAnyObjectByType<Player3DController>();
                 if (pc != null) player = pc.transform;
             }
 
@@ -178,12 +193,10 @@ public class TownNPC : MonoBehaviour
             // additive player). The step CADENCE isn't resolved here anymore — it comes from each NPC's own walk/run
             // animation via FootstepTracker.DetectPlants, exactly like the player.
             if (!sSfxResolved) ResolveFootstepSfx();
-
-            bool near = player == null ||
-                        (player.position - transform.position).sqrMagnitude <= simulateRadius * simulateRadius;
-            if (near != simulating) SetSimulating(near);
         }
-        if (!simulating) return;
+
+        // --- Frozen because the player is far away (the shared switch owns the distance test) ---
+        if (lod != null && !lod.Simulating) return;
 
         // --- Talking to the player (F-interact): hold still, turn to face them, skip wander/barks/footsteps. ---
         if (talkTarget != null)
@@ -295,16 +308,4 @@ public class TownNPC : MonoBehaviour
         return moved2 < 0.18f * 0.18f;   // <0.18u in 0.7s while "walking" → not actually getting anywhere
     }
 
-    // Flip between full simulation and frozen. Freezing disables the mover + the billboard animator so a
-    // distant town is nearly free; re-entering range re-enables them (Awake already ran, so it just resumes).
-    void SetSimulating(bool on)
-    {
-        simulating = on;
-        if (on) npcGait.Seed(transform.position);   // re-seed so re-entering range doesn't fire a phantom step from a stale pos
-        if (!on) agent.Halt();
-        if (agent != null) agent.enabled = on;
-        if (visualBehaviour != null) visualBehaviour.enabled = on;   // Character3DPose pose driver
-        if (visualAnimator != null) visualAnimator.enabled = on;     // 3D: stop the skinned-mesh animator (the real cost) when far
-        if (visualDriver != null) visualDriver.enabled = on;         // 3D: stop feeding Walk/Idle intent when far
-    }
 }

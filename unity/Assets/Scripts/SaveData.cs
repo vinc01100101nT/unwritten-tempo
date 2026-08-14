@@ -16,7 +16,7 @@ using System;
 [Serializable]
 public class SaveData
 {
-    public const int CurrentVersion = 6;
+    public const int CurrentVersion = 7;
 
     public int version = CurrentVersion;
 
@@ -52,12 +52,19 @@ public class SaveData
     // owned by ComboBook. Null on an older save → no chains yet.
     public string[] comboChains;
 
+    // Passive skills ticked ON in the Grimoire (v7+) — the player's own choices only; a passive that's live because
+    // the equipped weapon rolled it is NOT stored here (that answer comes from the weapon). Null on an older save.
+    public string[] activePassives;
+
     // Equipped gear (v6+): parallel arrays, one entry per occupied slot EXCEPT the Ring vessel (auto-worn on
     // load by EnsureRingEquipped). Owned by Character. Null on a pre-v6 save → nothing equipped, ring re-worn.
     public int[]    equipSlots;     // (int)EquipSlotType
     public string[] equipItemIds;   // Item.id, resolved via ItemCatalog
     public int[]    equipRefines;   // +N enhancement
     public string[] equipCards;     // comma-joined card asset names ("" = none)
+    // v7+: what makes each COPY unique now that a weapon rolls its own identity at the drop.
+    public int[]    equipRarities;  // (int)Rarity rolled for this copy; null/short on a pre-v7 save → the def's rarity
+    public string[] equipSkills;    // '|'-joined rolled SkillDef ids ("" = none)
 
     // Bag (v6+): parallel arrays, one entry per stack. Owned by InventoryStore (canvas-scoped); captured/
     // restored by SaveManager. Null on a pre-v6 save (or before the bag window is ever opened) → re-seed.
@@ -66,6 +73,8 @@ public class SaveData
     public int[]    bagCounts;
     public int[]    bagRefines;
     public string[] bagCards;
+    public int[]    bagRarities;    // v7+: per-copy rolled rarity (see equipRarities)
+    public string[] bagSkills;      // v7+: per-copy rolled kit (see equipSkills)
 
     // Per-cloth-part outfit dye (v6+): parallel authored-sRGB hex arrays — the atlas source part-color and the
     // chosen color. Owned by Character, applied by CharacterDye3D. Null on an older save → no dye (art colors).

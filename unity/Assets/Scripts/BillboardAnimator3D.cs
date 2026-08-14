@@ -33,6 +33,12 @@ public class BillboardAnimator3D : MonoBehaviour
     float timer; int frame;
     Vector3 buildScale;   // authored localScale (UnitScale.ForMob is applied on top of this each frame)
     Vector3 baseScale;
+
+    /// <summary>THE rest scale for this mob's body: its authored size on the live unit-size dial. Everything that
+    /// animates the scale (the idle breathe here, the attack squash in <see cref="AttackLunge"/>) squashes around
+    /// THIS one value. <see cref="AttackLunge"/> used to recompute the same product from its own captured build
+    /// scale, with a comment saying it "matches BillboardAnimator3D" — a hand-sync note, which is always the tell.</summary>
+    public Vector3 BaseScale => baseScale;
     float breathePhase;
 
     void Awake()

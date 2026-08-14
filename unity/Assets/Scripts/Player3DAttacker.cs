@@ -12,7 +12,7 @@ using UnityEngine;
 public class Player3DAttacker : MonoBehaviour
 {
     [Tooltip("How close (world units, XZ) you must be to land a hit. This is the FULL-SIZE reach; the live reach " +
-             "is this × UnitScale.MeleeReachFactor (see EffectiveRange), so it shrinks with resized units.")]
+             "is this blended with the TARGET's size at each hit test (see RangeAgainst), so it tracks both bodies.")]
     public float range = 0.5f;
     [Tooltip("Once in range, stay 'engaged' (stand & swing) until the target passes range×this. Prevents the " +
              "stand-vs-chase decision from thrashing frame-to-frame against a target that hovers at the range " +
@@ -75,15 +75,25 @@ public class Player3DAttacker : MonoBehaviour
         get
         {
             var w = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
-            return w != null && w.attackRange > 0f ? w.attackRange : range;
+            return WeaponReach.Of(w, range);   // the SHARED rule — a mob resolves its reach through this same one
+
         }
     }
 
-    /// <summary>The <see cref="BaseRange"/> rescaled to the CURRENT unit size (see
-    /// <see cref="UnitScale.MeleeReachFactor"/>). When both player and mobs render at authored scale this equals
-    /// <see cref="BaseRange"/> exactly; once mobs are shrunk (e.g. MobRelative 0.3) the reach shrinks with them, so the
-    /// player closes in and swings at contact instead of from a fixed 1.4-unit gap that dwarfs a tiny billboard.</summary>
+    /// <summary>Reach against an ORDINARY SPRITE MOB — the common pairing, kept only for the callers that have no
+    /// target to measure against (the pickup radius, the editor gizmo). Every actual hit test uses
+    /// <see cref="RangeAgainst"/> instead, which blends against the target that is really there.</summary>
     public float EffectiveRange => BaseRange * UnitScale.MeleeReachFactor;
+
+    /// <summary>The player's reach AGAINST A SPECIFIC TARGET — the only correct form, because a melee blend is a fact
+    /// about the PAIR of bodies, not about either one alone. A shadow mob is built to the same body as the player, so
+    /// that pair blends to full reach; an ordinary shrunken sprite mob blends down exactly as before.
+    ///
+    /// <para><see cref="EffectiveRange"/> assumes an ordinary sprite mob and now exists only for the callers that have
+    /// NO target to measure against (the pickup radius, the editor gizmo). Every real hit test uses this.</para></summary>
+    public float RangeAgainst(Health t)
+        => BaseRange * UnitScale.MeleeBlend(UnitScale.CharacterScale,
+                                            t != null ? t.MeleeScale : UnitScale.MobScale);
 
     /// <summary>The attack ELEMENT applied to basic swings and (as the default) skill strikes: the equipped weapon's
     /// <see cref="Item.element"/> — the weapon is the single owner of its element — or Neutral when unarmed / there's
@@ -112,7 +122,7 @@ public class Player3DAttacker : MonoBehaviour
     }
 
     /// <summary>Strict planar range — used to actually LAND a hit (TryAttack / the windup check).</summary>
-    public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= EffectiveRange;
+    public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= RangeAgainst(t);
 
     /// <summary>Sticky version of <see cref="InRange"/> for the controller's stand-vs-chase decision:
     /// turns true at <see cref="range"/> and stays true until the target passes range×<see cref="rangeHysteresis"/>.
@@ -121,7 +131,7 @@ public class Player3DAttacker : MonoBehaviour
     {
         if (t == null || t.IsDead) { engaged = false; engagedTarget = null; return false; }
         if (t != engagedTarget) { engaged = false; engagedTarget = t; }   // new target → must reach `range` afresh
-        float r = EffectiveRange;
+        float r = RangeAgainst(t);
         float d = PlanarDist(t);
         if (d <= r) engaged = true;
         else if (d > r * Mathf.Max(1f, rangeHysteresis)) engaged = false;
@@ -293,7 +303,7 @@ public class Player3DAttacker : MonoBehaviour
         for (float el = 0f; el < windup; el += Time.deltaTime) yield return null;
         swing = null;
         if (t == null || t.IsDead) yield break;
-        if (PlanarDist(t) > EffectiveRange * 1.6f) yield break;   // target slipped out of the skill's (extended) reach
+        if (PlanarDist(t) > RangeAgainst(t) * 1.6f) yield break;   // target slipped out of the skill's (extended) reach
 
         bool crit = false;
         int basePower = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk, ctx.ForceCrit) : damage;

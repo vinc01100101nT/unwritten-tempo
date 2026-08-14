@@ -140,9 +140,10 @@ public sealed class HotbarBindings
     }
 
     /// <summary>Replace the ENTIRE bar — numbered keys 1–9 AND the dedicated ULT slot — with exactly this weapon kit
-    /// (V2: the weapon owns its whole kit). Clears every numbered slot AND the ult first, then fills from index 0;
-    /// any Ultimate in the list routes to the ULT slot, everything else to numbered keys. Unknown/duplicate ids are
-    /// skipped. Pass null/empty to clear the whole bar (a weapon was removed). Returns true if anything changed.</summary>
+    /// (V3: the kit is rolled per weapon COPY). Clears every numbered slot AND the ult first, then fills from index 0;
+    /// any Ultimate in the list routes to the ULT slot, passives are skipped (they hold no slot), everything else
+    /// goes to numbered keys. Unknown/duplicate ids are skipped. Pass null/empty to clear the whole bar (a weapon was
+    /// removed). Returns true if anything changed.</summary>
     public bool SetWeaponKit(IReadOnlyList<string> ids)
     {
         bool changed = false;
@@ -158,6 +159,9 @@ public sealed class HotbarBindings
                 var id = ids[k];
                 var def = SkillCatalog.Get(id);
                 if (def == null || SlotOf(id) >= 0 || id == ultSkillId) continue;   // unknown or already placed (dedupe)
+                // A rolled kit can contain PASSIVES; they take no slot (they run on their trigger via PassiveEvents,
+                // gated by PassiveLoadout). Binding one to a key would give the player a slot that can never fire.
+                if (def.IsPassive) continue;
                 if (def.IsUltimate) { if (BindUlt(id)) changed = true; continue; }
                 slots[next++] = id; changed = true;
             }

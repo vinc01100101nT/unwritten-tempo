@@ -28,7 +28,7 @@ public class RainAudio : MonoBehaviour
     /// <summary>Find the live rain audio, creating one if none exists (used by the DevSettings knob).</summary>
     public static RainAudio Ensure()
     {
-        var a = FindFirstObjectByType<RainAudio>();
+        var a = FindAnyObjectByType<RainAudio>();
         if (a == null) a = new GameObject("RainAudio") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<RainAudio>();
         return a;
     }

@@ -208,6 +208,12 @@ public class SkillEffect
              "and Execute. 0 = NOT a proc — the effect applies ONCE per landing instead.")]
     [Range(0f, 1f)] public float chance = 0f;
 
+    [Header("Who it lands on")]
+    [Tooltip("WHO this effect is applied to. Auto = this kind's traditional side (guard/shield/buff on the caster, " +
+             "damage/ailments on the target). Caster = always you. Target = always whoever the tick reaches, so a " +
+             "shield, a regen or a stat buff can be placed on ANY unit — including a mob.")]
+    public EffectSide side = EffectSide.Auto;
+
     [Header("Buff (Buff kind)")]
     [Tooltip("Which self-stat the Buff kind lifts for its window. magnitude = the FLAT multiplier (AMPLIFY buffs " +
              "are NOT affinity-scaled — support value comes from uptime, not a bigger number); seconds = duration " +
@@ -236,20 +242,35 @@ public class SkillEffect
              "hits in the flurry. hits = round(hitCount × mult). Empty = hit count unscaled (×1).")]
     public List<StatWeight> hitCountAffinity = new List<StatWeight>();
 
-    /// <summary>A "self verb" ALWAYS acts on the caster, never on a gathered entity. Canonical list (runtime + editor
-    /// share it — no duplicate). Heal is intentionally NOT here anymore: it can target others, so its landing is
-    /// decided by the tick's <see cref="TargetMode"/> like any normal effect.
+    /// <summary>WHO an authored effect lands on. The author's choice, not a property of the effect kind — every kind
+    /// works on every unit now (see <see cref="SkillEffectApplier"/>'s single apply switch), so "a shield can only be
+    /// cast on yourself" is a DESIGN decision made per skill, not a limit of the engine.
     ///
-    /// <para>This is the PARTITION <see cref="SkillEffectApplier"/> resolves by: a self verb runs in the caster pass
-    /// (once per tick, whatever the targeting says — "who does this tick hit" was never the question it answers) and
-    /// is excluded from the target pass; everything else is target-side and runs only on gathered entities. So a
-    /// Single-target tick aimed at a mob still dashes the caster, and a Self-targeted tick can't dash them twice.
-    /// Adding a kind? Classify it here, then implement it in exactly ONE switch of the applier —
-    /// <c>ApplyOneToCaster</c>, or <c>ApplyOneToMob</c>/<c>ApplyOneToPlayer</c>.</para>
+    /// <para><see cref="Auto"/> is the default and means "whatever this kind traditionally did" — see
+    /// <see cref="SkillEffect.IsSelfVerb"/>. It exists so every skill asset authored before the side was choosable keeps
+    /// its exact behaviour with no data migration: Unity serializes an enum by int, and 0 = Auto.</para></summary>
+    public enum EffectSide
+    {
+        /// <summary>Traditional behaviour for this kind (self verbs on the caster, everything else on the target).</summary>
+        Auto,
+        /// <summary>Always the acting caster, whatever the tick is aimed at.</summary>
+        Caster,
+        /// <summary>Always whoever the tick reaches — including a mob, for kinds that used to be caster-only.</summary>
+        Target,
+    }
+
+    /// <summary>Resolve where this effect actually lands. THE predicate the runtime partitions on and the composer
+    /// groups by, so what an author sees can't drift from what runs.</summary>
+    public static bool LandsOnCaster(SkillEffect e)
+        => e != null && (e.side == EffectSide.Auto ? IsSelfVerb(e.kind) : e.side == EffectSide.Caster);
+
+    /// <summary>The TRADITIONAL side of each kind — what <see cref="EffectSide.Auto"/> resolves to, and nothing else.
+    /// It is no longer a capability limit: every kind works on every unit (the applier has ONE apply switch), so this
+    /// is purely the default an asset gets when its author never picked a side.
     ///
-    /// <para>ROADMAP: the goal is for EVERY kind to work on both sides (an authored effect chooses its side by which
-    /// composer section it sits in), which needs the mob-side sinks the player already has — see the caster/target
-    /// section work. Until those land, this list is what the caster pass owns.</para></summary>
+    /// <para><b>Do not add new rules here.</b> A new kind's side is the author's choice via <see cref="side"/>; this
+    /// list only exists to keep pre-existing assets behaving exactly as they did before the side was authorable. Heal
+    /// is deliberately absent: it could always target others.</para></summary>
     public static bool IsSelfVerb(SkillEffectKind k) =>
         k == SkillEffectKind.Guard || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
         k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect ||

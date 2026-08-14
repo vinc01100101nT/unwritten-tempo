@@ -7,7 +7,7 @@ using UnityEngine;
 /// player's <see cref="Character"/>, the shared <see cref="Status"/> front door — so a data skill is just a new CALLER
 /// of the existing damage/heal/status paths, never a second combat engine.
 ///
-/// <para><b>Two passes per tick (caster side vs target side).</b> <see cref="SkillEffect.IsSelfVerb"/> partitions the
+/// <para><b>Two passes per tick (caster side vs target side).</b> <see cref="SkillEffect.LandsOnCaster"/> partitions the
 /// effect kinds. Pass 1 applies the CASTER effects (Dash / Guard / Buff / …) to the acting caster — once, regardless of
 /// the tick's targeting, because "who does this tick hit" was never the question they answer. Pass 2 gathers the tick's
 /// targets and applies the TARGET effects (Damage / Status / …) to them. No kind is in both passes, so a self-targeted
@@ -53,10 +53,10 @@ public static class SkillEffectApplier
         // aimed spot regardless of which anchor the VFX author chose for the visual. Defaults to point for old callers.
         Vector3 selfPoint = aimPoint ?? point;
 
-        // PASS 1 — CASTER effects (see SkillEffect.IsSelfVerb): they happen TO THE CASTER, so the tick's targeting has no say.
+        // PASS 1 — CASTER effects (see SkillEffect.LandsOnCaster): they happen TO THE CASTER, so the tick's targeting has no say.
         // They run here exactly once, whatever the scope/affects are, and are excluded from the target pass below — so
         // "Single Target on a mob" can't swallow a Dash (the bug this split fixes), and a Self tick can't double-apply it.
-        ApplyCasterEffects(effects, selfPoint, singleTarget, srcIcon, srcName, srcId, ch);
+        ApplyCasterEffects(effects, selfPoint, singleTarget, extraMult, extraFlat, comboMult, srcIcon, srcName, srcId, ch);
 
         // PASS 2 — TARGET effects: gather who the tick reaches, then run the hit loop on them.
         if (targets == SkillTargets.None) return;
@@ -119,44 +119,66 @@ public static class SkillEffectApplier
     // orders them into a star instead of walking the pentagon's rim.
     const float LandingStepDegrees = 216f;
 
-    static Player3DAttacker casterAtk;   // resolved lazily from the player rig; re-resolved if it's ever lost
-
-    /// <summary>Where a caster RELOCATION (Dash / Teleport) actually LANDS. Aiming at a unit means "get to it", not
-    /// "stand inside it": the caster arrives at melee reach, on the far side, rotated <see cref="LandingStepDegrees"/>
-    /// from wherever it currently stands — so it never ends up stacked on the target's own spot, every dash reads as a
-    /// cut THROUGH the target, and five in a row trace a star on the ground. Deliberately derived from the caster's
-    /// CURRENT bearing rather than a stored step index: there is no sequence state to reset, an interrupted chain just
-    /// resumes from wherever it stopped, and the pattern is the same on every unit-aimed relocation. A pure ground aim
-    /// — no unit given and no mob standing on the spot — is used verbatim.</summary>
-    static Vector3 RelocationDest(Vector3 aim, Transform unit)
+    /// <summary>Where a RELOCATION (Dash / Teleport) actually LANDS. Aiming at a unit means "get to it", not "stand
+    /// inside it": the mover arrives at ITS OWN melee reach, on the far side, rotated <see cref="LandingStepDegrees"/>
+    /// from wherever it currently stands — so it never ends up stacked on the target's spot, every dash reads as a cut
+    /// THROUGH the target, and five in a row trace a star on the ground. Derived from the mover's CURRENT bearing
+    /// rather than a stored step index: no sequence state to reset, an interrupted chain resumes from wherever it
+    /// stopped. A pure ground aim — no unit given and no mob on the spot — is used verbatim.
+    ///
+    /// <para><paramref name="mover"/> is WHOEVER IS BEING MOVED, which is not always the local player: an effect
+    /// authored on the TARGET side relocates a mob, and once combat is server-authoritative the caster is some other
+    /// connection's entity. This used to read a static <c>Player3DAttacker</c> resolved from the local player, so both
+    /// the reach and the bearing came from YOU no matter who was actually moving — teleporting a mob sent it to a spot
+    /// computed from the player's position and the player's weapon range.</para></summary>
+    static Vector3 RelocationDest(Vector3 aim, Transform unit, ICombatUnit mover)
     {
-        if (casterAtk == null)
-        {
-            var pl = StatusController.Player;
-            if (pl != null) casterAtk = pl.GetComponent<Player3DAttacker>();
-            if (casterAtk == null) return aim;
-        }
-        float reach = casterAtk.EffectiveRange * LandingReachFactor;
+        Transform body = mover?.Body;
+        if (body == null) return aim;
+
+        float full = mover.MeleeReachFullSize;
+        if (full <= 0f) return aim;   // reach unknown (avatar not spawned yet) — don't invent a landing spot
 
         // The thing we're landing next to: the cast's picked unit, else whatever mob the aim point is sitting on (a
         // Ground-delivered dash at a victim's feet aims at the mob's own position, with no unit pick to read).
+        // Its SIZE matters: how close "just inside reach" is depends on both bodies, so resolve the target first and
+        // blend against it. Using the mover's own pre-scaled reach here assumed the target was an ordinary sprite mob —
+        // the same one-sided assumption that made the player and a shadow disagree about the identical pairing.
         Vector3 center;
-        if (unit != null) center = unit.position;
-        else if (!MobAt(aim, reach, out center)) return aim;
+        Transform targetT = unit;
+        Health targetHealth = null;
+        if (targetT == null)
+        {
+            // SEARCH radius assumes an ordinary sprite mob — this only asks "is a mob standing on the aimed spot", and
+            // widening it would silently make ground-aimed dashes snap from further away than they used to.
+            float searchR = full * UnitScale.MeleeBlend(mover.MeleeScale, UnitScale.MobScale) * LandingReachFactor;
+            if (!MobAt(aim, searchR, out center, out targetHealth)) return aim;
+        }
+        else
+        {
+            center = targetT.position;
+            targetHealth = targetT.GetComponentInParent<Health>();   // once per relocation cast, never per frame
+        }
 
-        // Bearing of the caster AS IT STANDS NOW, measured around the target, then stepped. A caster standing exactly
-        // on the target has no bearing to step from — fall back to its facing so the hop still has a direction.
-        Vector3 from = casterAtk.transform.position - center; from.y = 0f;
-        if (from.sqrMagnitude < 1e-6f) from = casterAtk.transform.forward;
+        // LANDING distance blends the mover against the body it actually found.
+        float reach = full * UnitScale.MeleeBlend(mover.MeleeScale,
+                                                  targetHealth != null ? targetHealth.MeleeScale : UnitScale.MobScale)
+                           * LandingReachFactor;
+        if (reach <= 0f) return aim;
+
+        // Bearing of the MOVER as it stands now, measured around the target, then stepped. A mover standing exactly on
+        // the target has no bearing to step from — fall back to its facing so the hop still has a direction.
+        Vector3 from = body.position - center; from.y = 0f;
+        if (from.sqrMagnitude < 1e-6f) from = body.forward;
         float a = Mathf.Atan2(from.z, from.x) + LandingStepDegrees * Mathf.Deg2Rad;
         return new Vector3(center.x + Mathf.Cos(a) * reach, center.y, center.z + Mathf.Sin(a) * reach);
     }
 
     // The living mob nearest `point` within `radius` (planar), if any. Same zero-alloc sweep over the small Active
     // registry the AoE gather uses — no physics query, no GetComponent; runs once per relocation cast.
-    static bool MobAt(Vector3 point, float radius, out Vector3 pos)
+    static bool MobAt(Vector3 point, float radius, out Vector3 pos, out Health hit)
     {
-        pos = point;
+        pos = point; hit = null;
         var list = MonsterAI3D.Active;
         float best = radius * radius; bool found = false;
         for (int i = 0; i < list.Count; i++)
@@ -166,7 +188,7 @@ public static class SkillEffectApplier
             Vector3 d = ai.transform.position - point; d.y = 0f;
             float sqr = d.sqrMagnitude;
             if (sqr > best) continue;
-            best = sqr; pos = ai.transform.position; found = true;
+            best = sqr; pos = ai.transform.position; hit = ai.Health; found = true;
         }
         return found;
     }
@@ -175,68 +197,145 @@ public static class SkillEffectApplier
     // Every CASTER-side effect in the list, applied ONCE to the acting caster. No hit loop: a caster effect isn't a
     // strike, so a multi-hit flurry must not dash you N times (target effects own hitCount, see HitLoops).
     static void ApplyCasterEffects(List<SkillEffect> effects, Vector3 point, Transform aimUnit,
+                                   float extraMult, int extraFlat, float comboMult,
                                    Sprite srcIcon, string srcName, string srcId, Character ch)
     {
         if (ch == null || ch.IsDead) return;
         for (int i = 0; i < effects.Count; i++)
         {
             var e = effects[i];
-            if (e != null && SkillEffect.IsSelfVerb(e.kind)) ApplyOneToCaster(e, ch, point, aimUnit, srcIcon, srcName, srcId);
+            if (SkillEffect.LandsOnCaster(e))
+                ApplyOne(e, ch, 0, extraMult, extraFlat, comboMult, ch, point, aimUnit, srcIcon, srcName, srcId);
         }
     }
 
-    /// <summary>One caster-side effect. <paramref name="point"/> is the AIM point — the destination a Dash/Teleport
-    /// moves the caster to (resolved through <see cref="RelocationDest"/>, which lands it BESIDE an aimed unit rather
-    /// than on top of it). <paramref name="aimUnit"/> is the cast's picked unit, if it had one.</summary>
-    static void ApplyOneToCaster(SkillEffect e, Character ch, Vector3 point, Transform aimUnit, Sprite srcIcon, string srcName, string srcId)
+    /// <summary>THE apply switch: ONE effect onto ONE unit — the player, a mob, anything that is an
+    /// <see cref="ICombatUnit"/>. Every effect kind is implemented here exactly once, so every kind is available on
+    /// every entity by construction.
+    ///
+    /// <para><b>This replaced three near-identical switches</b> (caster / mob target / player target). That split was
+    /// the real reason a guard, shield, regen, parry, leech, reflect or stat buff could only ever land on the caster:
+    /// not a rule anyone chose, just a case missing from two of the three copies. With one switch there is nowhere for
+    /// a kind to be "forgotten" on one side of the fight.</para>
+    ///
+    /// <para><paramref name="ai"/> is the mob brain when the unit IS a mob (callers already hold it, so the mob-only
+    /// sinks below cost no lookup) and null for the player. <paramref name="caster"/> is who is ACTING — every
+    /// affinity/duration scale reads their ring investment, even when the effect lands on someone else, because the
+    /// strength of a buff you place on an ally is yours to earn. <paramref name="relocatePoint"/> is where a Dash /
+    /// Teleport sends whoever it moves.</para></summary>
+    static void ApplyOne(SkillEffect e, ICombatUnit unit, int hit,
+                         float extraMult, int extraFlat, float comboMult, Character caster,
+                         Vector3 relocatePoint, Transform aimUnit,
+                         Sprite srcIcon, string srcName, string srcId)
     {
-        // A durational self-effect tags its state entry with the SOURCE skill's icon + name + "what it does", so the
-        // buff tray shows the same icon the hotbar uses, counting down. Set BEFORE the gameplay call (the store's
-        // Apply reads the latch), cleared AFTER — the store is the single display source.
+        if (e == null || unit == null) return;
+        var states = unit.States;
+        if (states == null) return;
+        // The unit's BODY in the scene. Null only in the window before the player's avatar has spawned — the effects
+        // that need a body (ailments, cleanse, relocation) sit on it, so they simply don't land yet.
+        var body = unit.Body;
+
+        // A durational effect tags its state entry with the SOURCE skill's icon + name so the buff tray / nameplate can
+        // show it counting down. Set BEFORE the gameplay call (the store's Apply reads the latch), cleared AFTER.
+        // The "what it does" line is built only for the PLAYER: a mob nameplate has no hover card, so building the
+        // string for every mob of an AoE would be a per-hit allocation nobody reads.
         bool tagDisplay = e.seconds > 0f;
-        if (tagDisplay) ch.States.SetApplyContext(srcIcon, srcName, SkillTooltip.DescribeEffect(e),
-                                                  e.stacking, e.stacksPerApply, e.stackLimit, srcId);
+        if (tagDisplay) states.SetApplyContext(srcIcon, srcName,
+                                               unit is Character ? SkillTooltip.DescribeEffect(e) : null,
+                                               e.stacking, e.stacksPerApply, e.stackLimit, srcId);
         switch (e.kind)
         {
-            case SkillEffectKind.Guard:
-                ch.BeginGuard(ScaledSeconds(e, ch), ScaledMagnitude(e, ch));
-                break;
-            case SkillEffectKind.Teleport:
+            case SkillEffectKind.Damage:
+                if (hit < EffectiveHits(e, caster))
                 {
-                    var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
-                    if (pc != null) pc.Teleport(RelocationDest(point, aimUnit));   // instant blink to the aimed (range-clamped) point
+                    int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit, caster);
+                    // −1 HIT = always-lands skill strike (no accuracy roll); DamageInfo defaults attackerHit to −1.
+                    CombatAuthority.Apply(unit, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit));
                 }
                 break;
-            case SkillEffectKind.Dash:
+            case SkillEffectKind.Execute:
+                if (Fires(e, hit, caster)) ApplyExecute(e, unit, extraMult, extraFlat, comboMult, caster);
+                break;
+            case SkillEffectKind.Heal:
+                if (hit == 0) unit.Heal(ScaledAmount(e, caster));
+                break;
+            case SkillEffectKind.Status:
+                if (body != null && Fires(e, hit, caster)) Status.Apply(body.gameObject, e.ailment, ScaledSeconds(e, caster), ScaledMagnitude(e, caster));
+                break;
+            case SkillEffectKind.Haste:
+                // Authored as a BONUS FRACTION (0.3 = +30%) → multiplier.
+                if (body != null && Fires(e, hit, caster))
                 {
-                    var pc = StatusController.Player != null ? StatusController.Player.GetComponent<Player3DController>() : null;
-                    // pure A→B glide to the aimed (range-clamped) point — no animation
-                    if (pc != null) pc.BeginGlideTo(RelocationDest(point, aimUnit), e.dashSpeedMult, e.dashEaseIn, e.dashEaseOut, e.dashEaseSeconds);
+                    var sc = Status.Of(body.gameObject);
+                    if (sc != null) sc.Haste(1f + ScaledMagnitude(e, caster), ScaledSeconds(e, caster));
                 }
-                break;
-            case SkillEffectKind.Buff:
-                ApplyBuff(e, ch);
-                break;
-            case SkillEffectKind.Regen:
-                ch.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, ch))), ScaledSeconds(e, ch));
                 break;
             case SkillEffectKind.Cleanse:
-                if (StatusController.Player != null) StatusController.Player.Cleanse(Mathf.Max(1, e.amount));
+                if (hit == 0 && body != null)
+                {
+                    var sc = Status.Of(body.gameObject);
+                    if (sc != null) sc.Cleanse(Mathf.Max(1, e.amount));
+                }
+                break;
+            case SkillEffectKind.Vulnerability:
+                if (hit == 0) states.BeginVulnerable(ScaledMagnitude(e, caster), ScaledSeconds(e, caster));
+                break;
+            case SkillEffectKind.Guard:
+                if (hit == 0) states.BeginGuard(ScaledSeconds(e, caster), ScaledMagnitude(e, caster));
+                break;
+            case SkillEffectKind.Buff:
+                // Authored magnitude is a BONUS FRACTION (0.3 = +30%); ApplyStatBuff takes a multiplier. AMPLIFY buffs
+                // are FLAT (not affinity-scaled) — a support's value is uptime + the ramp, not a bigger number.
+                if (hit == 0) states.ApplyStatBuff(e.buffStat, 1f + Mathf.Max(0f, e.magnitude), ScaledSeconds(e, caster),
+                                                   e.rampDelay, e.rampPerStep, e.rampInterval, e.rampCap);
+                break;
+            case SkillEffectKind.Regen:
+                if (hit == 0) states.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, caster))), ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.ManaLeech:
-                ch.BeginManaLeech(ScaledSeconds(e, ch), e.magnitude);
+                if (hit == 0) states.BeginManaLeech(ScaledSeconds(e, caster), e.magnitude);
                 break;
             case SkillEffectKind.Reflect:
-                ch.BeginReflect(ScaledSeconds(e, ch), e.magnitude);
+                if (hit == 0) states.BeginReflect(ScaledSeconds(e, caster), e.magnitude);
                 break;
             case SkillEffectKind.Shield:
-                ch.BeginShield(ScaledAmount(e, ch), ScaledSeconds(e, ch));
+                if (hit == 0) states.BeginShield(ScaledAmount(e, caster), ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.Parry:
-                ch.BeginParry(ScaledSeconds(e, ch));   // charges ride the apply context above (stacks-per-apply)
+                if (hit == 0) states.BeginParry(ScaledSeconds(e, caster));   // charges ride the apply context (stacks-per-apply)
+                break;
+            case SkillEffectKind.Taunt:
+                // Force this unit onto the caster. Both sides implement it (a mob locks its chase, a player's
+                // auto-combat can't retarget away), so a taunt is authored once and works on whoever it lands on.
+                if (hit == 0) unit.ForceAggro(caster, ScaledSeconds(e, caster));
+                break;
+            case SkillEffectKind.Knockback:
+                // Shove AWAY from the caster (magnitude = speed).
+                if (hit == 0) unit.Shove(ShoveOrigin(unit, caster), e.magnitude, e.shoveSeconds, e.shoveSeconds);
+                break;
+            case SkillEffectKind.Pull:
+                // Drag TOWARD the caster: shove away from a point mirrored through the target = toward the caster.
+                if (hit == 0 && body != null)
+                    unit.Shove(2f * body.position - ShoveOrigin(unit, caster), e.magnitude, e.shoveSeconds, e.shoveSeconds);
+                break;
+            case SkillEffectKind.Teleport:
+                // `unit` is whoever is being moved — the caster for a Caster-side effect, a mob for a Target-side one.
+                if (hit == 0) unit.TeleportTo(RelocationDest(relocatePoint, aimUnit, unit));   // instant blink
+                break;
+            case SkillEffectKind.Dash:
+                if (hit == 0) unit.GlideTo(RelocationDest(relocatePoint, aimUnit, unit), // A→B glide
+                                           e.dashSpeedMult, e.dashEaseIn, e.dashEaseOut, e.dashEaseSeconds);
                 break;
         }
-        if (tagDisplay) ch.States.ClearApplyContext();
+        if (tagDisplay) states.ClearApplyContext();
+    }
+
+    // Where a shove is measured FROM: the caster's body. Falls back to the target's own spot when there's no caster,
+    // which makes the shove direction arbitrary rather than crashing — same fallback the mob-only version had.
+    static Vector3 ShoveOrigin(ICombatUnit unit, Character caster)
+    {
+        if (caster != null && caster.Body != null) return caster.Body.position;
+        return unit.Body != null ? unit.Body.position : unit.DamagePosition;
     }
 
     // The binding's strike count = the largest Damage hitCount (min 1). Each iteration is the trigger point where
@@ -310,7 +409,7 @@ public static class SkillEffectApplier
                 dealt += CombatAuthority.Apply(h, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit, overkill: true));
             }
             else
-                ApplyOneToMob(e, ai, h, hit, extraMult, extraFlat, comboMult, caster, srcIcon, srcName, srcId);   // procs / status / one-shots, unchanged
+                ApplyToTarget(e, h, hit, extraMult, extraFlat, comboMult, caster, srcIcon, srcName, srcId);   // procs / status / one-shots
         }
         return dealt;
     }
@@ -338,88 +437,33 @@ public static class SkillEffectApplier
         int loops = HitLoops(effects, caster);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
-                ApplyOneToMob(effects[i], ai, h, n, extraMult, extraFlat, comboMult, caster, srcIcon, srcName, srcId);
+                ApplyToTarget(effects[i], h, n, extraMult, extraFlat, comboMult, caster, srcIcon, srcName, srcId);
     }
 
-    static void ApplyOneToMob(SkillEffect e, MonsterAI3D ai, Health h, int hit,
+    // One TARGET-side effect onto a gathered unit. Caster-side effects already ran in pass 1 and must not land again —
+    // the partition is checked HERE, once, for every target (mob or player), so the two passes can never both fire an
+    // effect. Which side an effect is on is the AUTHOR's choice (SkillEffect.side); Auto keeps the kind's old side.
+    static void ApplyToTarget(SkillEffect e, ICombatUnit unit, int hit,
                               float extraMult, int extraFlat, float comboMult, Character caster,
-                              Sprite srcIcon = null, string srcName = null, string srcId = null)
+                              Sprite srcIcon, string srcName, string srcId)
     {
-        if (e == null) return;
-        // Caster effects were already run by PASS 1 and must NOT land on a target too — the same guard
-        // ApplyOneToPlayer carries. Both passes are handed the SAME effect list, so without this the exclusion rests
-        // only on this switch happening to have no case for a self verb: add one (a Buff, say) and the caster's own
-        // Overclock would silently buff every mob it hit. Stated once, here, so the partition can't be broken by edit.
-        if (SkillEffect.IsSelfVerb(e.kind)) return;
-        // A durational debuff (Status / Haste / Vulnerability writes a state entry) carries the source skill's icon for
-        // the mob's nameplate AND that effect's stacking rules. Set BEFORE the switch (the store's Apply reads this
-        // context), cleared AFTER. Description is null (the nameplate has no hover card) — no per-mob string alloc.
-        bool tagDisplay = e.kind == SkillEffectKind.Status || e.kind == SkillEffectKind.Haste || e.kind == SkillEffectKind.Vulnerability;
-        if (tagDisplay) h.States.SetApplyContext(srcIcon, srcName, null, e.stacking, e.stacksPerApply, e.stackLimit, srcId);
-        switch (e.kind)
-        {
-            case SkillEffectKind.Damage:
-                if (hit >= EffectiveHits(e, caster)) return;   // this Damage's strikes are spent
-                int power = RollPower(e, extraMult, extraFlat, comboMult, out bool crit, caster);
-                // −1 HIT = always-lands skill hit (no accuracy roll); DamageInfo defaults attackerHit to −1.
-                CombatAuthority.Apply(h, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit));
-                break;
-            case SkillEffectKind.Execute:
-                if (Fires(e, hit, caster)) ApplyExecute(e, h, extraMult, extraFlat, comboMult, caster);
-                break;
-            case SkillEffectKind.Status:
-                if (Fires(e, hit, caster)) Status.Apply(ai.gameObject, e.ailment, ScaledSeconds(e, caster), ScaledMagnitude(e, caster));
-                break;
-            case SkillEffectKind.Heal:
-                if (hit == 0) h.Heal(ScaledAmount(e, caster));
-                break;
-            case SkillEffectKind.Haste:
-                // Authored as a BONUS FRACTION (0.3 = +30%; negative slows, Haste's mob-debuff job) → multiplier.
-                if (Fires(e, hit, caster)) { var s = Status.Of(ai.gameObject); if (s != null) s.Haste(1f + ScaledMagnitude(e, caster), ScaledSeconds(e, caster)); }
-                break;
-            case SkillEffectKind.Taunt:
-                if (hit == 0) ai.Taunt(ScaledSeconds(e, caster));
-                break;
-            case SkillEffectKind.Vulnerability:
-                if (hit == 0) h.BeginVulnerable(ScaledMagnitude(e, caster), ScaledSeconds(e, caster));
-                break;
-            case SkillEffectKind.Knockback:
-                // Shove the mob AWAY from the caster (magnitude = speed). Caster position is the origin so no cast
-                // point needs threading through the hit loop; falls back to the mob's own spot if there's no caster.
-                if (hit == 0) { Vector3 kf = caster != null ? caster.transform.position : ai.transform.position; ai.Knockback(kf, e.magnitude, e.shoveSeconds, 0f); }
-                break;
-            case SkillEffectKind.Pull:
-                // Drag the mob TOWARD the caster: shove it away from a point mirrored through the mob = toward the caster.
-                if (hit == 0) { Vector3 kf = caster != null ? caster.transform.position : ai.transform.position; ai.Knockback(2f * ai.transform.position - kf, e.magnitude, e.shoveSeconds, 0f); }
-                break;
-            // Guard / Teleport / Dash / Buff / Regen / Cleanse / ManaLeech / Reflect are self-only (they land on the caster, not a mob) — no-op here.
-        }
-        if (tagDisplay) h.States.ClearApplyContext();
+        if (e == null || SkillEffect.LandsOnCaster(e)) return;
+        ApplyOne(e, unit, hit, extraMult, extraFlat, comboMult, caster, Vector3.zero, null, srcIcon, srcName, srcId);
     }
 
-    // The PLAYER-side twin of ApplyExecute: the same missing-HP curve turned on the caster (a risk effect — the closer
-    // to death you are, the more it bites). Same formula, different HP source, so the two can't drift.
-    static void ApplyExecuteToPlayer(SkillEffect e, Character ch, float extraMult, int extraFlat, float comboMult)
+    // Execute: a self-contained bonus hit scaled by the TARGET's MISSING HP (proc'd per hit by the caller). magnitude =
+    // execute power: bonus = roll x magnitude x (1 - HP fraction), so it's tiny at full HP and huge near death.
+    // One implementation for every unit — it used to be two copies (one reading a mob's HP, one the player's) that had
+    // to be kept in step by hand.
+    static void ApplyExecute(SkillEffect e, ICombatUnit unit, float extraMult, int extraFlat, float comboMult, Character caster)
     {
-        if (ch.MaxHP <= 0 || e.magnitude <= 0f) return;
-        float missing = 1f - Mathf.Clamp01((float)ch.CurrentHP / ch.MaxHP);
-        if (missing <= 0f) return;
-        int bonus = Mathf.RoundToInt(RollPower(e, extraMult, extraFlat, comboMult, out _, ch) * e.magnitude * missing);
-        if (bonus <= 0) return;
-        CombatAuthority.Apply(ch, new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic));
-    }
-
-    // Execute: a self-contained bonus hit scaled by the target's MISSING HP (proc'd per hit by the caller). magnitude =
-    // execute power: bonus = roll × magnitude × (1 − HP fraction), so it's tiny at full HP and huge near death.
-    static void ApplyExecute(SkillEffect e, Health h, float extraMult, int extraFlat, float comboMult, Character caster)
-    {
-        if (h.maxHealth <= 0 || e.magnitude <= 0f) return;
-        float missing = 1f - Mathf.Clamp01((float)h.Current / h.maxHealth);
+        if (unit.MaxHP <= 0 || e.magnitude <= 0f) return;
+        float missing = 1f - Mathf.Clamp01((float)unit.CurrentHP / unit.MaxHP);
         if (missing <= 0f) return;
         int roll = RollPower(e, extraMult, extraFlat, comboMult, out bool crit, caster);
         int bonus = Mathf.RoundToInt(roll * e.magnitude * missing);
         if (bonus <= 0) return;
-        CombatAuthority.Apply(h, new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic, crit));
+        CombatAuthority.Apply(unit, new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic, crit));
     }
 
     // ---- player as a TARGET (pass 2) ----------------------------------------
@@ -435,79 +479,7 @@ public static class SkillEffectApplier
         int loops = HitLoops(effects, ch);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
-                ApplyOneToPlayer(effects[i], ch, n, extraMult, extraFlat, comboMult, srcIcon, srcName, srcId);
-    }
-
-    static void ApplyOneToPlayer(SkillEffect e, Character ch, int hit,
-                                 float extraMult, int extraFlat, float comboMult, Sprite srcIcon, string srcName, string srcId)
-    {
-        if (e == null) return;
-        // Caster effects already ran in pass 1 — skip them here so a self-targeted tick doesn't even churn the display
-        // latch below for an effect this switch can't handle. The predicate (not a hand-copied kind list) keeps the two
-        // passes from ever drifting apart.
-        if (SkillEffect.IsSelfVerb(e.kind)) return;
-        // A durational self-effect (seconds > 0) landing this cast tags its state entry with the SOURCE skill's icon +
-        // name + "what it does", so the buff tray shows the same icon the hotbar uses, counting down. Set BEFORE the
-        // gameplay call (the store's Apply reads the latch), clear AFTER — the store is the single display source now.
-        // Set for EVERY hit, not just the first: a Status PROC can land on any hit of a flurry, and it must carry the
-        // same stacking rules each time (a proc that stacks must stack on hit 3 exactly as it would on hit 0).
-        bool tagDisplay = e.seconds > 0f;
-        if (tagDisplay) ch.States.SetApplyContext(srcIcon, srcName, SkillTooltip.DescribeEffect(e),
-                                                  e.stacking, e.stacksPerApply, e.stackLimit, srcId);
-        switch (e.kind)
-        {
-            case SkillEffectKind.Damage:
-                if (hit >= EffectiveHits(e, ch)) { if (tagDisplay) ch.States.ClearApplyContext(); return; }
-                int power = RollPower(e, extraMult, extraFlat, comboMult, out _, ch);
-                // −1 HIT = always-lands (skill/environmental hit); DamageInfo defaults attackerHit to −1.
-                CombatAuthority.Apply(ch, new DamageInfo(power, e.element, e.damageType == DamageType.Magic));
-                break;
-            case SkillEffectKind.Heal:
-                if (hit == 0) ch.Heal(ScaledAmount(e, ch));
-                break;
-            case SkillEffectKind.Status:
-                if (Fires(e, hit, ch) && StatusController.Player != null) StatusController.Player.Apply(e.ailment, ScaledSeconds(e, ch), ScaledMagnitude(e, ch));
-                break;
-            case SkillEffectKind.Haste:
-                if (hit == 0 && StatusController.Player != null) StatusController.Player.Haste(1f + ScaledMagnitude(e, ch), ScaledSeconds(e, ch));
-                break;
-            case SkillEffectKind.Vulnerability:
-                // Self armour-fray — the "fragile" half of a power-up (Overclock's 2× incoming). Writes the SAME state
-                // a mob's BeginVulnerable does, at the same convention (magnitude = the EXTRA fraction), so one debuff
-                // means one thing on either side of the fight.
-                if (hit == 0 && ScaledSeconds(e, ch) > 0f)
-                    ch.States.Apply(StateId.Vulnerability, ScaledSeconds(e, ch), Mathf.Max(0f, ScaledMagnitude(e, ch)));
-                break;
-            case SkillEffectKind.Execute:
-                if (Fires(e, hit, ch)) ApplyExecuteToPlayer(e, ch, extraMult, extraFlat, comboMult);
-                break;
-            // Taunt is deliberately absent: it forces a MOB's aggro onto the caster, and there is no such thing as
-            // "the player's aggro" — on yourself it would be a knob that means nothing. Don't "complete" it here.
-            // Knockback / Pull are absent for a different reason: the shove sink is a mob mover (MonsterAI3D.Knockback);
-            // the player has no equivalent movement primitive yet, so they'd be silent no-ops until one exists.
-            // Guard / Teleport / Dash / Buff / Regen / Cleanse / ManaLeech / Reflect / Shield are CASTER effects: they
-            // live in ApplyOneToCaster and ran in pass 1 of ApplyBurst. Deliberately absent here — the two switches are
-            // a partition (see SkillEffect.IsSelfVerb), so a Self-targeted tick can't apply them a second time.
-        }
-        if (tagDisplay) ch.States.ClearApplyContext();
-    }
-
-    // Route a self-buff onto the right timed channel. The buff amount (multiplier) scales off the affinity list; the
-    // seconds off the duration list. Move speed is NOT a buffStat — the Haste kind owns move speed (no dual path).
-    static void ApplyBuff(SkillEffect e, Character ch)
-    {
-        // AMPLIFY buffs use a FLAT magnitude (NOT affinity-scaled): a DPS can't out-buff via their own offense. The
-        // support's contribution is UPTIME (duration scales off sustain stats) and, on the Damage buff, the RAMP
-        // ceiling (a longer buff climbs higher). See design "Support Scaling".
-        // Authored magnitude is a BONUS FRACTION (0.3 = +30%, stacking or not); the Buff* APIs take a multiplier.
-        float mult = 1f + Mathf.Max(0f, e.magnitude);
-        float sec  = ScaledSeconds(e, ch);
-        switch (e.buffStat)
-        {
-            case BuffStat.Damage:      ch.BuffDamage(mult, sec, e.rampDelay, e.rampPerStep, e.rampInterval, e.rampCap); break;
-            case BuffStat.AttackSpeed: ch.BuffAttackSpeed(mult, sec); break;
-            case BuffStat.CastSpeed:   ch.BuffCastSpeed(mult, sec); break;
-        }
+                ApplyToTarget(effects[i], ch, n, extraMult, extraFlat, comboMult, ch, srcIcon, srcName, srcId);
     }
 
     // Damage value = the caster's rolled hit × (the effect's multiplier + per-level growth) × ring affinity × the combo

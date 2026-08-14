@@ -66,7 +66,7 @@ public class FogOverlay : MonoBehaviour
     /// director so fog works even on a Systems scene baked before this component joined the rig).</summary>
     public static FogOverlay Ensure()
     {
-        var f = Instance != null ? Instance : FindFirstObjectByType<FogOverlay>();
+        var f = Instance != null ? Instance : FindAnyObjectByType<FogOverlay>();
         if (f == null) f = new GameObject("FogOverlay") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<FogOverlay>();
         return f;
     }

@@ -5,48 +5,58 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// <summary>
-/// One-click setup for the ambient-life layer: drops an <see cref="AmbientLife"/> director into the open scene,
-/// wires it to the CIVILIAN rigged Quaternius models + the shared Humanoid controller, and points its ground mask
-/// at the Ground layer. After running it, just press Play — wandering live-3D townsfolk appear and chatter.
+/// One-click setup for the ambient-life layer: refreshes the shared <see cref="CharacterSpec"/>'s CAST (creating the
+/// asset if it doesn't exist yet), then drops an <see cref="AmbientLife"/> director into the open scene and points its
+/// ground mask at the Ground layer. After running it, just press Play — wandering live-3D townsfolk appear and chatter.
 ///
-/// The cast is filtered to civilians: it excludes soldiers/knights (those become combat NPCs later), monsters and
-/// animals (they'd walk wrong on the human controller), and accessory-only meshes (hats/hair/helmets).
+/// <para>The cast lives on the spec, not on the director, because the SAME models feed the shadow mobs. It is split in
+/// two: CIVILIANS (townsfolk) and FIGHTERS — soldiers, knights, goblins and zombies — which is the pool a Shadow of the
+/// Past draws from. Animals (Cow/Pug), the untextured BaseCharacter, and accessory-only meshes (hats/hair/helmets) are
+/// in neither: they'd walk wrong on the human controller or aren't full bodies.</para>
 ///
-/// Idempotent: re-running re-uses the existing director (re-wires the cast) instead of stacking duplicates.
+/// Idempotent: re-running re-uses the existing spec and director (re-wiring the cast) instead of stacking duplicates.
 /// </summary>
 public static class AmbientLifeTools
 {
     const string ModelsDir = "Assets/1_Authored/Art/Characters/Models";
     const string ControllerPath = "Assets/1_Authored/Art/Characters/Animators/HumanoidPlayerController.controller";
+    const string SpecPath = "Assets/3_Data/Resources/CharacterSpec.asset";
 
-    // Case-insensitive name tokens that disqualify a model from the civilian townsfolk cast. Soldiers/knights are
-    // held back for combat NPCs; Goblin/Zombie/Cow/Pug aren't humanoid civilians; BaseCharacter is the player's
-    // default; _Hat/_Hair/Helmet are accessory meshes, not full bodies.
-    static readonly string[] ExcludeTokens =
-        { "Soldier", "Knight", "Goblin", "Zombie", "Cow", "Pug", "BaseCharacter", "_Hat", "_Hair", "Helmet" };
+    // Case-insensitive name tokens deciding which pool a model lands in. FIGHTER wins first (a soldier is not a
+    // civilian); anything EXCLUDED is in neither pool.
+    static readonly string[] FighterTokens = { "Soldier", "Knight", "Goblin", "Zombie" };
+    static readonly string[] ExcludeTokens = { "Cow", "Pug", "BaseCharacter", "_Hat", "_Hair", "Helmet" };
 
     [MenuItem("Tools/unwritten/World/Add Ambient Townsfolk")]
     public static void AddAmbientTownsfolk()
     {
-        var existing = Object.FindFirstObjectByType<AmbientLife>();
-        var al = existing != null ? existing : new GameObject("AmbientLife").AddComponent<AmbientLife>();
+        var spec = LoadOrCreateSpec();
+        var civilians = new List<GameObject>();
+        var fighters = new List<GameObject>();
+        CollectCast(civilians, fighters);
 
-        var models = FindCivilianModels();
-        al.models = models;
+        spec.civilianModels = civilians;
+        spec.fighterModels = fighters;
 
         var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ControllerPath);
-        if (controller != null) al.sharedController = controller;
+        if (controller != null) spec.animatorController = controller;
+        EditorUtility.SetDirty(spec);
+        AssetDatabase.SaveAssets();
+        CharacterSpec.Reload();
 
-        if (models.Count == 0 || controller == null)
+        var existing = Object.FindAnyObjectByType<AmbientLife>();
+        var al = existing != null ? existing : new GameObject("AmbientLife").AddComponent<AmbientLife>();
+
+        if (civilians.Count == 0 || controller == null)
             EditorUtility.DisplayDialog("Ambient Townsfolk",
-                (models.Count == 0
+                (civilians.Count == 0
                     ? "No civilian character models found in " + ModelsDir + ".\n"
                     : "") +
                 (controller == null
                     ? "The shared Humanoid controller wasn't found at " + ControllerPath + " — build the 3D player " +
                       "first (Tools ▸ unwritten ▸ Rigs ▸ Set 3D Player Model), which creates it.\n"
                     : "") +
-                "\nThe director was still added — assign the missing field(s) by hand.", "OK");
+                "\nThe director was still added — assign the missing field(s) on the CharacterSpec asset by hand.", "OK");
 
         int ground = LayerMask.NameToLayer("Ground");
         if (ground >= 0) al.groundMask = 1 << ground;
@@ -59,34 +69,46 @@ public static class AmbientLifeTools
         Selection.activeGameObject = al.gameObject;
         EditorGUIUtility.PingObject(al.gameObject);
 
-        Debug.Log($"[unwritten] Ambient townsfolk ready — {models.Count} civilian models wired, " +
-                  $"spawning {al.count} live-3D townsfolk at Play. Tweak Count / Area Radius on the AmbientLife object.");
+        Debug.Log($"[unwritten] Character cast wired on {SpecPath} — {civilians.Count} civilians, {fighters.Count} " +
+                  $"fighters. Spawning {al.count} live-3D townsfolk at Play; shadow mobs draw from the fighters.");
     }
 
-    // Every rigged model in the Models folder that is a civilian (name passes the exclude filter) AND has a skinned
-    // mesh (a real character body, not an accessory/clip FBX).
-    static List<GameObject> FindCivilianModels()
+    static CharacterSpec LoadOrCreateSpec()
     {
-        var list = new List<GameObject>();
+        var spec = AssetDatabase.LoadAssetAtPath<CharacterSpec>(SpecPath);
+        if (spec != null) return spec;
+
+        string dir = Path.GetDirectoryName(SpecPath).Replace('\\', '/');
+        if (!AssetDatabase.IsValidFolder(dir)) AssetDatabase.CreateFolder("Assets/3_Data", "Resources");
+        spec = ScriptableObject.CreateInstance<CharacterSpec>();
+        AssetDatabase.CreateAsset(spec, SpecPath);
+        return spec;
+    }
+
+    // Every rigged model in the Models folder that is a real character body (has a skinned mesh — an accessory or a
+    // clip-only FBX doesn't), sorted into the two pools by name.
+    static void CollectCast(List<GameObject> civilians, List<GameObject> fighters)
+    {
         foreach (var guid in AssetDatabase.FindAssets("t:GameObject", new[] { ModelsDir }))
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
             if (!path.ToLower().EndsWith(".fbx")) continue;
 
             string fileName = Path.GetFileNameWithoutExtension(path);
-            if (IsExcluded(fileName)) continue;
+            if (HasToken(fileName, ExcludeTokens)) continue;
 
             var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (go == null || go.GetComponentInChildren<SkinnedMeshRenderer>(true) == null) continue;
-            list.Add(go);
+
+            (HasToken(fileName, FighterTokens) ? fighters : civilians).Add(go);
         }
-        list.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
-        return list;
+        civilians.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+        fighters.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
     }
 
-    static bool IsExcluded(string name)
+    static bool HasToken(string name, string[] tokens)
     {
-        foreach (var tok in ExcludeTokens)
+        foreach (var tok in tokens)
             if (name.IndexOf(tok, System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
         return false;
     }
@@ -96,7 +118,7 @@ public static class AmbientLifeTools
     static Vector3 SceneCenter(int groundLayer)
     {
         Vector3 c = Vector3.zero;
-        var spawns = Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None);
+        var spawns = Object.FindObjectsByType<SpawnPoint>();
         if (spawns != null && spawns.Length > 0)
         {
             c = Vector3.zero;

@@ -76,7 +76,7 @@ public class SfxWiringCheck : MonoBehaviour
         Player3DController player = null;
         while (Time.realtimeSinceStartup < deadline)
         {
-            player = FindFirstObjectByType<Player3DController>();
+            player = FindAnyObjectByType<Player3DController>();
             if (player != null) break;
             yield return new WaitForSeconds(0.5f);
         }

@@ -111,6 +111,60 @@ public enum SkillTrigger
     OnBasicAttackStart,    // natural — about to basic-attack a target, fired BEFORE reach is judged (gap-closers land first)
 }
 
+/// <summary>ONE way a skill can start — a moment, plus the state gate that moment must satisfy. A skill owns a LIST of
+/// these (<see cref="SkillDef.triggers"/>), so a single authored skill can answer OnCast AND another trigger
+/// without a second asset duplicating its payload.
+///
+/// <para><b>The invariant that makes this safe: every trigger runs the SAME skill body.</b> An entry chooses only
+/// WHEN the skill fires and what that firing costs in stacks — never WHAT it does. The moment two triggers want
+/// different effects, that's two skills wearing one name, and the whole reason this exists (one copy of the payload,
+/// so it can't drift) is gone. Split them into two skills instead.</para>
+///
+/// <para>The gate lives HERE and not on the skill because the two halves of a dual-trigger skill need different
+/// answers: pressed Lunge must NOT require a charge, while the same Lunge fired off your next basic attack must
+/// require and spend one.</para></summary>
+[System.Serializable]
+public class SkillTriggerEntry
+{
+    [Tooltip("The moment that starts the skill. OnCast = the player presses it (and pays its MP + cooldown); anything " +
+             "other trigger fires the skill on its own, free — the trigger IS the gesture.")]
+    public SkillTrigger trigger = SkillTrigger.OnCast;
+    [Tooltip("Only for OnSkillCastComplete: the id of the ACTIVE skill whose successful (uninterrupted) PLAYER cast " +
+             "fires this. Set it via the Skill Composer's trigger dropdown, not by hand.")]
+    public string triggerSkillId = "";
+
+    [Tooltip("ON = firing through THIS trigger reads a caster state — it may require stacks, spend them, and be paid " +
+             "off by them. Each trigger gates independently — OnCast and OnBasicAttackStart can require different things.")]
+    public bool requiresState = false;
+    [Tooltip("WHOSE stacks this reads — the id of the skill that grants them (Deathblow reads Momentum's). Stacks are " +
+             "identified by the skill that created them, NOT by what they do, so two skills that both buff attack keep " +
+             "separate piles and a finisher can only ever cash its own partner's.")]
+    public string requireSkillId = "";
+    [Tooltip("How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state at all. " +
+             "0 = NO GATE: it fires with none and simply cashes whatever happens to be there (Deathblow, which must " +
+             "stay usable on a Sword that never rolled Momentum).")]
+    [Min(0)] public int requireMinStacks = 1;
+    [Tooltip("Spend ALL stacks on use (Deathblow cashing a Momentum pile). Overrides the per-use count below.")]
+    public bool consumeAllStacks = false;
+    [Tooltip("How many stacks this use spends. 0 = spends nothing (a pure condition, e.g. 'while Enraged'). " +
+             "Consumption ALWAYS happens after the effects have computed, so the damage sees the live stacks.")]
+    [Min(0)] public int consumeStacks = 0;
+    [Tooltip("What each stack BUYS this cast. The stack count is snapshot when the cast starts — before anything is " +
+             "spent — so every tick of the cast is paid off by the same pile.")]
+    public StackPayoff stackPayoff = StackPayoff.Damage;
+    [Tooltip("Damage payoff: how much EXTRA damage multiplier each stack adds, on top of the effect's own. " +
+             "0.4 = +40% of your Attack per stack, so a 600% skill on 10 stacks lands at 600 + 400 = 1000%. " +
+             "Adds up (never compounds), and lifts every damage effect. 0 = stacks buy no damage.")]
+    [Min(0f)] public float damageMultPerStack = 0f;
+
+    /// <summary>The extra damage multiplier <paramref name="stacks"/> buy this cast — the ADDITIVE payoff channel.
+    /// Zero unless this trigger reads a state and its payoff is Damage.</summary>
+    public float StackDamageBonus(int stacks) =>
+        requiresState && stackPayoff == StackPayoff.Damage && stacks > 0
+            ? Mathf.Max(0f, damageMultPerStack) * stacks
+            : 0f;
+}
+
 /// <summary>Binds ONE exposed <see cref="VfxStep.tickId"/> to the gameplay it should do. The tickId matches a
 /// step in the skill's <see cref="SkillDef.vfx"/>; every time that component ticks, the runner applies these
 /// effects to the targets in <see cref="radius"/> at the tick point.</summary>
@@ -142,7 +196,7 @@ public class SkillTickBinding
 
     /// <summary>True if any effect here lands on GATHERED TARGETS (Damage / Status / Knockback / …) — i.e. the
     /// targeting knobs above actually decide something. False ⇒ this tick carries only CASTER effects (Dash / Guard /
-    /// Buff / …), which ignore targeting entirely (see <see cref="SkillEffect.IsSelfVerb"/>). Drives whether the cast
+    /// Buff / …), which ignore targeting entirely (see <see cref="SkillEffect.LandsOnCaster"/>). Drives whether the cast
     /// asks for an entity pick (<see cref="SkillDef.NeedsUnitPick"/>) and how the composer's target section reads.</summary>
     public bool HasTargetEffects => AnyEffectSide(false);
     /// <summary>True if any effect here acts on the CASTER — those always apply, whatever the targeting says.</summary>
@@ -165,7 +219,7 @@ public class SkillTickBinding
     {
         if (effects == null) return false;
         for (int i = 0; i < effects.Count; i++)
-            if (effects[i] != null && SkillEffect.IsSelfVerb(effects[i].kind) == casterSide) return true;
+            if (effects[i] != null && SkillEffect.LandsOnCaster(effects[i]) == casterSide) return true;
         return false;
     }
 
@@ -195,6 +249,13 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     [Tooltip("Stable kebab id, e.g. \"skill.meteor\". Keyed by SkillCatalog; don't rename once shipped.")]
     public string id;
     public string displayName = "New Skill";
+    [Tooltip("WHICH weapon's skill pool this belongs to — a dropped weapon rolls its kit only from skills of its " +
+             "own type (Sword rolls Sword skills). Also the middle segment of the id: skill.sword.<name>. " +
+             "None = in no weapon's pool, so it can never be rolled onto a weapon.")]
+    public WeaponType weaponType = WeaponType.None;
+    [Tooltip("PUBLISHED = eligible to be rolled onto a dropped weapon of its type. Unpublished skills are still " +
+             "fully usable in the Grimoire (J) and the hotbar for testing — publishing only opens the loot roll.")]
+    public bool published = false;
     [Tooltip("Hotbar icon (Skill Icon pack). Null → the bar falls back to the short label.")]
     public Sprite icon;
 
@@ -214,51 +275,61 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     [Tooltip("Designer metadata (not gameplay): when in progression this skill is meant to surface.")]
     public AcquisitionTier acquisitionTier = AcquisitionTier.Early;
 
-    [Header("Trigger (OnCast = a normal active; anything else = a passive)")]
-    [Tooltip("OnCast = a normal active the player presses (takes a hotbar slot + the cost/cadence below). Anything " +
-             "else = a PASSIVE: no slot, it runs its bindings when that moment fires (dispatched via PassiveEvents). " +
-             "For a passive, cost / cadence / aim below are IGNORED.")]
-    public SkillTrigger trigger = SkillTrigger.OnCast;
-    [Tooltip("Only for OnSkillCastComplete: the id of the ACTIVE skill whose successful (uninterrupted) cast fires " +
-             "this passive. Set it via the Skill Composer's trigger dropdown, not by hand.")]
-    public string triggerSkillId = "";
+    [Header("Triggers — every way this skill can start (all run the SAME body)")]
+    [Tooltip("The moments that can start this skill, each with its own state gate. One OnCast entry = a normal " +
+             "pressed active. No OnCast entry = a pure passive (no hotbar slot). BOTH = a skill you can press AND " +
+             "that also fires itself when another trigger's gate is met — one asset, one payload, no duplicate.")]
+    public List<SkillTriggerEntry> triggers = new List<SkillTriggerEntry>();
 
-    [Header("Requires a state (the combo gate)")]
-    [Tooltip("ON = this skill READS a caster state — it may require stacks to fire, spend them, and be paid off by " +
-             "them. Works for a pressed active and a passive alike.")]
-    public bool requiresState = false;
-    [Tooltip("WHOSE stacks this skill reads — the id of the skill that grants them (Deathblow reads Momentum's). " +
-             "Stacks are identified by the skill that created them, NOT by what they do, so two skills that both buff " +
-             "attack keep separate piles and a finisher can only ever cash its own partner's. Set it via the Skill " +
-             "Composer's picker, not by hand.")]
-    public string requireSkillId = "";
-    [Tooltip("LEGACY — the old by-STATE gate, kept only so pre-2026-08-12 assets still deserialize. Skills now key on " +
-             "requireSkillId; this is ignored at runtime and will be deleted once every asset is re-saved.")]
-    public StateId requireState = StateId.Haste;
-    [Tooltip("How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state at all. " +
-             "0 = NO GATE: the skill fires with none, and simply cashes whatever happens to be there (Deathblow, " +
-             "which must stay usable on a Sword that never rolled Momentum).")]
-    [Min(0)] public int requireMinStacks = 1;
-    [Tooltip("Spend ALL stacks on use (Deathblow cashing a Momentum pile). Overrides the per-use count below.")]
-    public bool consumeAllStacks = false;
-    [Tooltip("How many stacks this use spends. 0 = spends nothing (a pure condition, e.g. 'while Enraged'). " +
-             "Consumption ALWAYS happens after the skill's effects have computed, so the damage sees the live stacks.")]
-    [Min(0)] public int consumeStacks = 0;
-    [Tooltip("What each stack BUYS this cast. The stack count is snapshot when the cast starts — before anything is " +
-             "spent — so every tick of the cast is paid off by the same pile.")]
-    public StackPayoff stackPayoff = StackPayoff.Damage;
-    [Tooltip("Damage payoff: how much EXTRA damage multiplier each stack adds, on top of the effect's own. " +
-             "0.4 = +40% of your Attack per stack, so a 600% skill on 10 stacks lands at 600 + 400 = 1000%. " +
-             "Adds up (never compounds), and lifts every damage effect on this skill. 0 = stacks buy no damage.")]
-    [Min(0f)] public float damageMultPerStack = 0f;
+    // A skill with no authored entries reads as a plain OnCast skill. Shared and never mutated, so an un-authored
+    // skill costs no allocation and still answers every question below.
+    static readonly SkillTriggerEntry CastDefault = new SkillTriggerEntry();
 
-    /// <summary>The extra damage multiplier <paramref name="stacks"/> of the required state buy this cast — the
-    /// ADDITIVE payoff channel (see <see cref="damageMultPerStack"/>). Zero unless the skill reads a state and its
-    /// payoff is Damage, so a skill that only gates on a state is unaffected.</summary>
-    public float StackDamageBonus(int stacks) =>
-        requiresState && stackPayoff == StackPayoff.Damage && stacks > 0
-            ? Mathf.Max(0f, damageMultPerStack) * stacks
-            : 0f;
+    /// <summary>The skill's OnCast entry, or null when it has none (it can only ever fire from its other triggers).</summary>
+    public SkillTriggerEntry CastEntry
+    {
+        get
+        {
+            if (triggers == null || triggers.Count == 0) return CastDefault;
+            for (int i = 0; i < triggers.Count; i++)
+                if (triggers[i] != null && triggers[i].trigger == SkillTrigger.OnCast) return triggers[i];
+            return null;
+        }
+    }
+
+    /// <summary>The entry that <paramref name="trigger"/> starts, or null if this skill doesn't answer that moment.
+    /// <paramref name="skillId"/> only matters for <see cref="SkillTrigger.OnSkillCastComplete"/>, which is
+    /// parameterized by WHICH skill completed. First match wins — a duplicate moment is an authoring mistake, not a
+    /// second behavior (all entries run the same body, so a second copy could only differ in its gate).</summary>
+    public SkillTriggerEntry EntryFor(SkillTrigger trigger, string skillId)
+    {
+        if (triggers == null || triggers.Count == 0)
+            return trigger == SkillTrigger.OnCast ? CastDefault : null;
+        for (int i = 0; i < triggers.Count; i++)
+        {
+            var e = triggers[i];
+            if (e == null || e.trigger != trigger) continue;
+            if (trigger == SkillTrigger.OnSkillCastComplete && e.triggerSkillId != skillId) continue;
+            return e;
+        }
+        return null;
+    }
+
+    // ---- LEGACY (pre-multi-trigger, before 2026-08-15) — the single skill-level trigger + its one state gate. Read
+    // ONLY by MigrateTriggersFromLegacy to seed `triggers`; never by runtime. They must stay declared or Unity drops
+    // the serialized values on load and every authored gate (Deathblow's, the auto-lunge charge spend) silently
+    // vanishes. Deletable once every asset has been re-saved with triggersMigrated = true.
+    [HideInInspector] public bool triggersMigrated = false;
+    [HideInInspector] public SkillTrigger trigger = SkillTrigger.OnCast;
+    [HideInInspector] public string triggerSkillId = "";
+    [HideInInspector] public bool requiresState = false;
+    [HideInInspector] public string requireSkillId = "";
+    [HideInInspector] public StateId requireState = StateId.Haste;
+    [HideInInspector] public int requireMinStacks = 1;
+    [HideInInspector] public bool consumeAllStacks = false;
+    [HideInInspector] public int consumeStacks = 0;
+    [HideInInspector] public StackPayoff stackPayoff = StackPayoff.Damage;
+    [HideInInspector] public float damageMultPerStack = 0f;
 
     [Header("Cost / cadence")]
     public int manaCost = 10;
@@ -281,9 +352,11 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     /// <summary>True when this skill occupies the dedicated ULT slot and spends charge rather than riding keys 1–9.</summary>
     public bool IsUltimate => tier == SkillTier.Ultimate;
 
-    /// <summary>True when this skill runs on a <see cref="SkillTrigger"/> instead of a hotbar press — it takes no slot,
-    /// never casts, and its bindings fire through <see cref="PassiveEvents"/> when its trigger moment happens.</summary>
-    public bool IsPassive => trigger != SkillTrigger.OnCast;
+    /// <summary>True when this skill has NO OnCast trigger — it takes no hotbar slot and only ever runs through
+    /// <see cref="PassiveEvents"/> when one of its other triggers fires. A skill that HAS an OnCast entry is an active
+    /// even if it also answers other triggers: it still wants a slot, still pays MP, and the drop roll still files it
+    /// as an active.</summary>
+    public bool IsPassive => CastEntry == null;
 
     [Header("Cast circle (shown ONLY during the wind-up, needs castTime > 0)")]
     [Tooltip("EffectLibrary id of the ground casting circle shown WHILE this skill winds up. Empty = no per-skill " +
@@ -335,9 +408,33 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     /// new composer saves <see cref="targetingMigrated"/> = true so it never runs on already-migrated data.</summary>
     public void OnAfterDeserialize()
     {
+        MigrateTriggersFromLegacy();
         if (targetingMigrated || bindings == null) return;
         for (int i = 0; i < bindings.Count; i++) MigrateBindingFromLegacy(bindings[i]);
         targetingMigrated = true;
+    }
+
+    /// <summary>One-time migration of the single skill-level trigger + gate into the <see cref="triggers"/> list: an
+    /// old asset becomes exactly one entry, so its behavior is unchanged. Idempotent — the composer saves
+    /// <see cref="triggersMigrated"/> = true, so it never re-runs and can never overwrite an authored second entry.</summary>
+    void MigrateTriggersFromLegacy()
+    {
+        if (triggersMigrated) return;
+        triggersMigrated = true;
+        if (triggers == null) triggers = new List<SkillTriggerEntry>();
+        if (triggers.Count > 0) return;   // already authored (a fresh skill from the composer) — nothing to carry over
+        triggers.Add(new SkillTriggerEntry
+        {
+            trigger = trigger,
+            triggerSkillId = triggerSkillId,
+            requiresState = requiresState,
+            requireSkillId = requireSkillId,
+            requireMinStacks = requireMinStacks,
+            consumeAllStacks = consumeAllStacks,
+            consumeStacks = consumeStacks,
+            stackPayoff = stackPayoff,
+            damageMultPerStack = damageMultPerStack,
+        });
     }
 
     void MigrateBindingFromLegacy(SkillTickBinding b)
@@ -352,7 +449,7 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
                 var e = b.effects[i];
                 if (e == null) continue;
                 if (SkillEffect.NeedsPoint(e.kind)) anyPointSelf = true;
-                if (!SkillEffect.IsSelfVerb(e.kind)) allSelf = false;
+                if (!SkillEffect.LandsOnCaster(e)) allSelf = false;
             }
 
         // Honor the LEGACY aim first (it was the authoritative cast gesture), then refine with scope/effects.

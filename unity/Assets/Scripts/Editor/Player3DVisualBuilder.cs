@@ -72,7 +72,7 @@ public static class Player3DVisualBuilder
 
         // Snapshot the visuals to replace, but DON'T remove them yet — build the new one FIRST, so if any step below
         // throws (e.g. an AssetDatabase write in Play), the player keeps its working visual instead of going bare.
-        var toRemove = Object.FindObjectsByType<Character3DVisual>(FindObjectsSortMode.None);
+        var toRemove = Object.FindObjectsByType<Character3DVisual>();
 
         var go = (GameObject)PrefabUtility.InstantiatePrefab(model);
         string charName = Path.GetFileNameWithoutExtension(modelPath);
@@ -116,7 +116,7 @@ public static class Player3DVisualBuilder
     /// the controller once if there's no live visual to borrow it from.</summary>
     public static GameObject AttachRuntimeSwap(Player3DController player, string modelPath)
     {
-        var live = Object.FindFirstObjectByType<Character3DVisual>();
+        var live = Object.FindAnyObjectByType<Character3DVisual>();
         var anim = live != null ? live.GetComponent<Animator>() : null;
         var shared = anim != null ? anim.runtimeAnimatorController as UnityEditor.Animations.AnimatorController : null;
         return Attach(player, modelPath, shared != null ? shared : BuildController());
@@ -126,7 +126,7 @@ public static class Player3DVisualBuilder
     public static int RemoveExistingPlayerVisual()
     {
         int n = 0;
-        foreach (var v in Object.FindObjectsByType<Character3DVisual>(FindObjectsSortMode.None))
+        foreach (var v in Object.FindObjectsByType<Character3DVisual>())
             if (v != null) { Object.DestroyImmediate(v.gameObject); n++; }
         return n;
     }
@@ -136,7 +136,7 @@ public static class Player3DVisualBuilder
     [MenuItem("Tools/unwritten/Rigs/Set 3D Player Model (Systems scene)", priority = 623)]
     static void SetPlayerModel()
     {
-        var player = Object.FindFirstObjectByType<Player3DController>();
+        var player = Object.FindAnyObjectByType<Player3DController>();
         if (player == null)
         {
             EditorUtility.DisplayDialog("Set 3D Player Model",

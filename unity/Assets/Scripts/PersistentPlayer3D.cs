@@ -50,7 +50,7 @@ public class PersistentPlayer3D : MonoBehaviour
         placed = true;
 
         // Any leftover hand-placed avatar in the map yields to the persistent one.
-        foreach (var pc in FindObjectsByType<Player3DController>(FindObjectsSortMode.None))
+        foreach (var pc in FindObjectsByType<Player3DController>())
             if (pc.gameObject != gameObject) Destroy(pc.gameObject);
 
         if (controller != null) controller.Halt();   // don't carry a half-finished order across maps
@@ -85,7 +85,7 @@ public class PersistentPlayer3D : MonoBehaviour
     // SpawnPoint a Portal requested (by id), else one named "Start", else the first, else null.
     SpawnPoint ResolveSpawn()
     {
-        var points = FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None);
+        var points = FindObjectsByType<SpawnPoint>();
 
         if (!string.IsNullOrEmpty(SceneTravel.Target))
         {
@@ -100,7 +100,7 @@ public class PersistentPlayer3D : MonoBehaviour
     // The persistent follow camera lives in Systems and is the only rig — point it at us.
     void AimCamera()
     {
-        var follow = FindFirstObjectByType<CameraFollow3D>();
+        var follow = FindAnyObjectByType<CameraFollow3D>();
         if (follow != null) follow.target = transform;
     }
 }

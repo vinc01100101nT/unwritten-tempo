@@ -90,7 +90,7 @@ public class NightLight : MonoBehaviour
     static Transform PlayerTransform()
     {
         if (playerTf != null) return playerTf;
-        var p3d = FindFirstObjectByType<Player3DController>();
+        var p3d = FindAnyObjectByType<Player3DController>();
         if (p3d != null) playerTf = p3d.transform;
         return playerTf;
     }

@@ -87,7 +87,7 @@ public static class PlayerModelSwap
             Debug.LogWarning("[unwritten] PlayerModelSwap has no attacher — the editor hook didn't run. Reimport scripts.");
             return;
         }
-        var player = Object.FindFirstObjectByType<Player3DController>();
+        var player = Object.FindAnyObjectByType<Player3DController>();
         if (player == null)
         {
             Debug.LogWarning("[unwritten] PlayerModelSwap: no Player3DController in the scene to re-skin.");

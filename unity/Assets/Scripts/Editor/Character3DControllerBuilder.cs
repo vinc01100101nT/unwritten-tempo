@@ -105,7 +105,7 @@ public static class Character3DControllerBuilder
     /// Returns the visual's name, or null if there's no live-3D visual in the open scenes (e.g. a billboard player).</summary>
     public static string RebuildActiveFromLibrary()
     {
-        var pose = UnityEngine.Object.FindFirstObjectByType<Character3DPose>();
+        var pose = UnityEngine.Object.FindAnyObjectByType<Character3DPose>();
         if (pose == null) return null;
         var anim = pose.GetComponent<Animator>();
         if (anim == null) return null;

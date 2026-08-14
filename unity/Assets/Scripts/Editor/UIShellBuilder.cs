@@ -439,7 +439,7 @@ public static class UIShellBuilder
     // UI. Removes any standalone EventSystems first so there's never a duplicate.
     static void SetupEventSystem(Transform canvas)
     {
-        foreach (var es in Object.FindObjectsByType<EventSystem>(FindObjectsSortMode.None))
+        foreach (var es in Object.FindObjectsByType<EventSystem>())
             Undo.DestroyObjectImmediate(es.gameObject);
         var go = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
         go.transform.SetParent(canvas, false);

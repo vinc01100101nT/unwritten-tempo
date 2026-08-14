@@ -1,24 +1,32 @@
 ---
 name: compile-check-without-unity
-description: "How to type-check all of unity/Assets/Scripts offline using Unity's bundled .NET 8 SDK — catches C# errors without touching the Unity editor."
+description: "Run tools/check-unity-code.sh to compile-check all game C# offline in ~4s — no Unity window, no refresh_unity, catches errors in BOTH the game and the editor tools."
 metadata: 
   node_type: memory
   type: reference
   originSessionId: 036aac99-29a9-45db-bff5-8157919fb418
 ---
 
-C# edits in this project can be **compile-checked offline**, without Unity and without violating the `refresh_unity` ban. Unity ships a full .NET 8 SDK:
+**There is a committed script — just run it. Do NOT hand-build a csproj (the old way, below).**
 
-`/Applications/Unity/Hub/Editor/6000.5.4f1/Unity.app/Contents/Resources/Scripting/DotNetSdk/dotnet`
+```bash
+tools/check-unity-code.sh            # both halves (default)
+tools/check-unity-code.sh runtime    # game scripts only
+tools/check-unity-code.sh editor     # editor tools only
+```
 
-Build a throwaway `netstandard2.1` csproj in the scratchpad with `EnableDefaultCompileItems=false`, `<Compile Include=".../Assets/Scripts/**/*.cs" />` and these references:
+~4s. Needs no Unity window and does NOT violate the `refresh_unity` ban — it never touches the running editor. Unity ships its own C# compiler in the app bundle and every reference library is already on disk, so it runs the SAME check Unity would and prints real errors with exact file + line. Exit **0** = clean, **1** = compile errors (printed), **2** = setup problem (it names what's missing; needs `unity/Library/ScriptAssemblies/`, present on any project Unity has opened once).
 
-- `.../Scripting/Managed/UnityEngine/*.dll` (the 173 engine modules — this glob also supplies the `UnityEditor.*Module` assemblies, so do **NOT** also reference `Managed/UnityEditor.dll` or every `MenuItem`/`EditorWindow` becomes CS0433 "exists in both")
-- from the project's own `unity/Library/ScriptAssemblies/`: `UnityEngine.UI.dll`, `Unity.TextMeshPro.dll`, `Unity.RenderPipelines.Universal.Runtime.dll`, `Unity.RenderPipelines.Core.Runtime.dll`, `Unity.Addressables.dll`, `Unity.ResourceManager.dll`, `MCPForUnity.Runtime.dll`
-- `NoWarn` the Unity-normal noise: CS0169;CS0414;CS0649;CS0108;CS0114;CS0162;CS0219;CS0618;CS0672
+Verified to **CATCH** deliberate errors in both halves, not merely to report "clean" — a checker that can only say "fine" is worse than none.
 
-**Known baseline: 11 errors**, all environmental, none real — `Light2D` (URP-2D package not referenced), `PlayerModelSwap`/`PerfHud` (types outside `Assets/Scripts`), `WeatherSequenceLibrary.InvalidateCache`, and `GetInstanceID` obsolete-as-error (CS0619 under newer ref DLLs). Exclude `Editor/MeshDecimateWindow.cs` + `Editor/MobPrefabBaker.cs` (need UnityMeshSimplifier / UnityEditor.AddressableAssets). Anything ABOVE 11 is yours.
+**It checks BOTH assemblies, which matters:** the game (`Assets/Scripts`) and the editor tools (`Assets/Scripts/Editor`, the `Tools ▸ unwritten` windows). An editor-only mistake is otherwise invisible until someone opens that window.
 
-**Why it matters:** on 2026-08-10 this caught nine `tier` references across four files I hadn't opened during the tier→level removal, and would otherwise have shipped a broken tree the user had to find by hand. Worth the ~6 tool calls to set up on any multi-file refactor.
+**Two setup traps it already solves** (added 2026-08-13 after both bit me):
+- Missing the .NET **compatibility stand-ins** (`NetStandard/compat/2.1.0/shims/netstandard/*` and `.../netfx/*`, which supply `mscorlib`) makes ordinary `List<>`/`Func<>`/`Enum` code report *"type is defined in an assembly that is not referenced"* — reads as your bug, isn't.
+- `UnityEditor.dll` lives at `Managed/UnityEngine/UnityEditor.dll`, already covered by the engine-module glob.
 
-Pair it with the other habit that paid off the same session: **replay authoring math offline in Python** with the real constants before trusting it — that's how the stat-point budget guard's "untouched stats get crushed" bug was caught pre-ship. See [[skill-effects-caster-vs-target-passes]].
+There is **no known-error baseline any more** — a clean run means zero errors, full stop. (The old hand-rolled csproj had 11 environmental errors you had to remember to ignore; that's gone.)
+
+A clean run means Unity will BUILD it. It does **not** mean the game behaves correctly — it never replaces play-testing.
+
+Pair it with the other habit that keeps paying: **replay the math offline in Python with the real constants** before trusting a change — that's how the buff-encoding and attack-order changes were proven damage-identical before anyone pressed Play. See [[magnitude-always-bonus-fraction]] and [[attacker-owns-the-accuracy-roll]].

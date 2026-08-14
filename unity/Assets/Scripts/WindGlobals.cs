@@ -58,7 +58,7 @@ public class WindGlobals : MonoBehaviour
     /// Systems scene baked before this component joined the rig; normally it's on the Sun).</summary>
     public static WindGlobals Ensure()
     {
-        var w = Instance != null ? Instance : FindFirstObjectByType<WindGlobals>();
+        var w = Instance != null ? Instance : FindAnyObjectByType<WindGlobals>();
         if (w == null) w = new GameObject("WindGlobals") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<WindGlobals>();
         return w;
     }
@@ -102,7 +102,7 @@ public class WindGlobals : MonoBehaviour
         float dirDeg = windDirDeg, speed = windSpeed;
         if (followCloudWind)
         {
-            if (cloud == null) cloud = FindFirstObjectByType<CloudShadows>();   // resolves on frame 1 (same Sun)
+            if (cloud == null) cloud = FindAnyObjectByType<CloudShadows>();   // resolves on frame 1 (same Sun)
             if (cloud != null) { dirDeg = cloud.windDirDeg; speed = cloud.windSpeed; }
         }
 

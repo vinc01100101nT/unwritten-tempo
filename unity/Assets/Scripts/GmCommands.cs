@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 /// <summary>
@@ -83,13 +84,18 @@ public static class GmCommands
         // --- Economy & items ---
         Register(new GmCommand("gold", "gold <n>", "Add Zeny (may be negative).", CmdGold, "zeny"));
         Register(new GmCommand("item", "item <id|name> [count]", "Drop an item into the bag.", CmdItem, "give"));
+        Register(new GmCommand("weapon", "weapon [type] [rarity]",
+            "Roll a weapon into your bag. Type = sword/bow/… (default: a random weapon base). Rarity = common/uncommon/" +
+            "rare/epic/legendary (default: rolled off the drop table). Its skills are rolled from the published pool " +
+            "of that weapon type.", CmdWeapon, "drop"));
+        Register(new GmCommand("clearbag", "clearbag", "Empty the bag (worn gear is left alone).", CmdClearBag, "clearinv", "clearinventory"));
         Register(new GmCommand("bind", "bind <skillId>", "Bind a composed skill to the first empty hotbar slot.", CmdBind));
 
         // --- Mobs ---
         Register(new GmCommand("kill", "kill", "Kill the mob nearest the player.", CmdKill));
         Register(new GmCommand("killall", "killall", "Kill every active mob.", CmdKillAll));
         Register(new GmCommand("spawn", "spawn [count]", "Clone the nearest mob near the player.", CmdSpawn));
-        Register(new GmCommand("summon", "summon <count> <normal|boss>", "Summon N random mobs near you (clones live mobs of that KIND — normal or boss).", CmdSummon));
+        Register(new GmCommand("summon", "summon <count> <normal|boss> [shadow]", "Summon N random mobs near you (clones live mobs of that KIND — normal or boss). Add 'shadow' to render them as live-3D characters instead of sprites.", CmdSummon));
 
         // --- World & weather ---
         Register(new GmCommand("tp", "tp <scene> [spawnId]", "Travel to another map.", CmdTp, "warp", "goto"));
@@ -184,6 +190,72 @@ public static class GmCommands
         c.Reply($"Gave {count}× {found.displayName}.");
     }
 
+    // /weapon [type] [rarity] — the testing door for the drop roll. Both args are optional and order-free: whichever
+    // token parses as a weapon type is the base, whichever parses as a rarity forces the roll.
+    static void CmdWeapon(GmContext c)
+    {
+        var store = InventoryStore.Instance;
+        if (store == null) { c.Reply("Inventory not ready."); return; }
+
+        WeaponType? type = null;
+        Rarity? rarity = null;
+        for (int i = 0; i < c.ArgCount; i++)
+        {
+            var a = c.Arg(i);
+            if (Enum.TryParse<WeaponType>(a, true, out var t) && t != WeaponType.None) { type = t; continue; }
+            if (Enum.TryParse<Rarity>(a, true, out var r)) { rarity = r; continue; }
+            c.Reply($"Don't know '{a}' — expected a weapon type (sword, bow, …) or a rarity (common … legendary).");
+            return;
+        }
+
+        // Candidate bases: every weapon Item authored, filtered to the asked-for type.
+        Item pick = null;
+        int seen = 0;
+        foreach (var it in Resources.LoadAll<Item>("Items"))
+        {
+            if (it == null || it.slot != EquipSlotType.Weapon || it.weaponType == WeaponType.None) continue;
+            if (type.HasValue && it.weaponType != type.Value) continue;
+            if (CombatRng.Range(0, ++seen) == 0) pick = it;   // reservoir pick — one pass, no list
+        }
+        if (pick == null)
+        {
+            c.Reply(type.HasValue ? $"No {type.Value} base weapon authored." : "No weapon items authored.");
+            return;
+        }
+
+        var inst = store.GiveEquipment(pick, rarity);
+        if (inst == null) { c.Reply("Couldn't create the weapon."); return; }
+
+        WeaponSkillRoll.PoolCounts(pick.weaponType, out int ults, out int acts, out int pass);
+        var sb = new StringBuilder();
+        sb.Append(Rarities.Label(inst.rarity)).Append(' ').Append(pick.displayName);
+        if (inst.skillIds.Count == 0)
+            sb.Append(" — rolled NO skills (published pool for ").Append(pick.weaponType)
+              .Append(": ").Append(ults).Append(" ult / ").Append(acts).Append(" active / ").Append(pass)
+              .Append(" passive). Tick 'published' in the Skill Composer.");
+        else
+        {
+            sb.Append(" —");
+            for (int i = 0; i < inst.skillIds.Count; i++)
+            {
+                var d = SkillCatalog.Get(inst.skillIds[i]);
+                sb.Append(i == 0 ? " " : ", ").Append(d != null ? d.displayName : inst.skillIds[i]);
+                if (d != null && d.IsUltimate) sb.Append(" (ult)");
+                else if (d != null && d.IsPassive) sb.Append(" (passive)");
+            }
+        }
+        c.Reply(sb.ToString());
+    }
+
+    static void CmdClearBag(GmContext c)
+    {
+        var store = InventoryStore.Instance;
+        if (store == null) { c.Reply("Inventory not ready."); return; }
+        int n = store.ClearAll();
+        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();   // don't let a reload resurrect the bag
+        c.Reply(n == 0 ? "Bag was already empty." : $"Cleared {n} stack(s). Worn gear untouched.");
+    }
+
     static void CmdBind(GmContext c)
     {
         var id = c.Arg(0);
@@ -236,7 +308,7 @@ public static class GmCommands
     // Spawning is async (Addressables loads the prefab), so we count completions and reply once all land.
     static void CmdSummon(GmContext c)
     {
-        if (!c.TryInt(0, out var count) || count <= 0) { c.Reply("Usage: /summon <count> <normal|boss>"); return; }
+        if (!c.TryInt(0, out var count) || count <= 0) { c.Reply("Usage: /summon <count> <normal|boss> [shadow]"); return; }
         count = Mathf.Clamp(count, 1, 50);
 
         var type = c.Arg(1);
@@ -245,8 +317,14 @@ public static class GmCommands
         {
             case "boss": case "mvp": wantBoss = true; break;
             case "normal": case "mob": wantBoss = false; break;
-            default: c.Reply("Usage: /summon <count> <normal|boss>"); return;
+            default: c.Reply("Usage: /summon <count> <normal|boss> [shadow]"); return;
         }
+
+        // Optional trailing modifier — a VISUAL variant, orthogonal to the normal/boss kind, so it rides the one
+        // summon path rather than forking a second command that would have to be kept in step with this one.
+        var variant = c.Arg(2);
+        bool asShadow = variant != null && variant.ToLowerInvariant() == "shadow";
+        if (variant != null && !asShadow) { c.Reply("Usage: /summon <count> <normal|boss> [shadow]"); return; }
 
         var defs = new List<MonsterDef>(count);
         for (int i = 0; i < count; i++)
@@ -268,13 +346,20 @@ public static class GmCommands
             Vector2 r = UnityEngine.Random.insideUnitCircle * 2f;
             MobSpawner.Spawn(def, basePos + new Vector3(r.x, 0f, r.y), go =>
             {
-                if (go != null) spawned++; else missing++;
+                if (go != null)
+                {
+                    spawned++;
+                    // Purely the visual: the mob keeps the brain, stats, loot and death it just spawned with.
+                    if (asShadow) go.AddComponent<MobShadow3DVisual>();
+                }
+                else missing++;
                 if (++done < pending) return;
 
                 if (spawned == 0)
                     reply?.Invoke("Couldn't summon — mob prefabs aren't built yet. Run Tools ▸ unwritten ▸ Mobs & NPCs ▸ Bake Mob Prefabs, then retry.");
                 else
-                    reply?.Invoke($"Summoned {spawned} random {(wantBoss ? "boss" : "normal")} mob(s)" +
+                    reply?.Invoke($"Summoned {spawned} random {(wantBoss ? "boss" : "normal")} " +
+                                  (asShadow ? "shadow(s)" : "mob(s)") +
                                   (missing > 0 ? $" ({missing} skipped — no Addressable prefab)" : "") + ".");
             });
         }

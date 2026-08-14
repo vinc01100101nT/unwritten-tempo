@@ -28,7 +28,7 @@ public class AudioListenerRig : MonoBehaviour
         go.AddComponent<AudioListener>();
 
         // Exactly one active listener in the scene — disable every other (camera, map leftovers).
-        foreach (var other in FindObjectsByType<AudioListener>(FindObjectsSortMode.None))
+        foreach (var other in FindObjectsByType<AudioListener>())
             if (other.gameObject != go) other.enabled = false;
     }
 

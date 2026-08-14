@@ -102,7 +102,7 @@ public class SkyboxSky : MonoBehaviour
     /// <summary>Find the live sky, creating one if none exists (used by the weather director / day-night light).</summary>
     public static SkyboxSky Ensure()
     {
-        var s = FindFirstObjectByType<SkyboxSky>();
+        var s = FindAnyObjectByType<SkyboxSky>();
         if (s == null) s = new GameObject("SkyboxSky") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<SkyboxSky>();
         return s;
     }
@@ -151,7 +151,7 @@ public class SkyboxSky : MonoBehaviour
         // ── Day / night sky + sun (from the clock + the Sun) ──────────────────────────────────────────────────
         var tod = TimeOfDay.Instance;
         float day = tod != null ? tod.Daylight01 : 1f;
-        if (dnl == null) dnl = FindFirstObjectByType<DayNightLight>();
+        if (dnl == null) dnl = FindAnyObjectByType<DayNightLight>();
 
         // Horizon colour = the same day/night sky colour DayNightLight already computes (carries the dawn/dusk
         // glow); zenith = our own deeper blue lerped on the same clock. Fall back to sensible day colours.

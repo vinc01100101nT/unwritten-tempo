@@ -38,7 +38,7 @@ public static class FieldMobSpawnerTool
         Vector3 guess = Vector3.zero;
         var sv = SceneView.lastActiveSceneView;
         if (sv != null) guess = sv.pivot;
-        else { var pl = Object.FindFirstObjectByType<Player3DController>(); if (pl != null) guess = pl.transform.position; }
+        else { var pl = Object.FindAnyObjectByType<Player3DController>(); if (pl != null) guess = pl.transform.position; }
 
         int groundLayer = LayerMask.NameToLayer("Ground");
         if (groundLayer >= 0)

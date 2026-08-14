@@ -64,27 +64,57 @@ public class Projectile3D : MonoBehaviour
         p.payload = payload;
     }
 
+    // POOLED. Every ranged mob shot and every player arrow used to build a GameObject with three components and throw
+    // it away on arrival; in a fight with archers or casters that is constant churn. Spent projectiles go dormant and
+    // are reused (PERFORMANCE.md names projectiles explicitly in its "must be pooled" checklist).
+    static readonly System.Collections.Generic.Stack<Projectile3D> pool =
+        new System.Collections.Generic.Stack<Projectile3D>(16);
+
+    // Take a dormant projectile, or build one. A scene unload destroys pooled objects while this static pool still
+    // holds them, so skip any that came back dead.
+    static Projectile3D Rent()
+    {
+        while (pool.Count > 0)
+        {
+            var reused = pool.Pop();
+            if (reused != null) return reused;
+        }
+        var go = new GameObject("Projectile3D") { hideFlags = HideFlags.DontSaveInEditor };
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sortingOrder = DepthSortRuntime.FxSlash;   // FX band: in front of entities
+        go.AddComponent<Billboard>();
+        var made = go.AddComponent<Projectile3D>();
+        made.sr = sr;
+        return made;
+    }
+
     static Projectile3D Create(Texture2D body, int frameSize, int frameCount, float fps, float scale,
                                Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
                                float arriveRadius, float maxLife)
     {
-        var go = new GameObject("Projectile3D") { hideFlags = HideFlags.DontSaveInEditor };
-        go.transform.position = from;
-        go.transform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
-        var sr = go.AddComponent<SpriteRenderer>();
-        sr.sortingOrder = DepthSortRuntime.FxSlash;   // FX band: in front of entities
-        go.AddComponent<Billboard>();
+        var p = Rent();
+        p.transform.position = from;
+        p.transform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
 
-        var p = go.AddComponent<Projectile3D>();
-        p.sr = sr;
-        p.frames = SpriteSheetCache.Strip(body, frameSize, frameCount);   // shared/read-only
+        // Every field reset explicitly: a reused projectile must not inherit the previous shot's callback, payload,
+        // impact FX or animation phase.
+        p.frames = body != null ? SpriteSheetCache.Strip(body, frameSize, frameCount) : null;   // shared/read-only
         p.fps = Mathf.Max(1f, fps);
+        p.t = 0f;
         p.target = target;
         p.point = target != null ? UnitAnchor.Center(target) : fallbackPoint;   // home onto mid-body (feet-pivoted)
         p.speed = Mathf.Max(0.1f, speed);
         p.arriveRadius = Mathf.Max(0.05f, arriveRadius);
         p.die = Time.time + Mathf.Max(0.05f, maxLife);
-        if (p.frames.Length > 0) sr.sprite = p.frames[0];
+        p.onArrive = null;
+        p.onArriveWith = null;
+        p.payload = default;
+        p.impactSheet = null; p.impactFrameSize = 0; p.impactFrames = 0; p.impactFps = 20f; p.impactScale = 1f;
+        p.travel = null;
+        p.done = false;
+        p.sr.enabled = true;
+        p.sr.sprite = p.frames != null && p.frames.Length > 0 ? p.frames[0] : null;
+        p.gameObject.SetActive(true);
         return p;
     }
 
@@ -96,10 +126,15 @@ public class Projectile3D : MonoBehaviour
                                 float arriveRadius, float maxLife, System.Action onArrive, bool faceTravel = false,
                                 float travelClipStart = 0f, Color travelTint = default)
     {
+        // NOT pooled, deliberately: this overload hands its live transform back to the caller, which keeps reading the
+        // position each frame — recycling it underneath that caller would silently re-aim someone else's effect. It
+        // also has no SpriteRenderer, so it isn't a valid object for the sprite pool to hand out. It is destroyed on
+        // arrival like before, and these are far rarer than per-shot sprite projectiles.
         var go = new GameObject("Projectile3D(Vfx)") { hideFlags = HideFlags.DontSaveInEditor };
         go.transform.position = from;
 
         var p = go.AddComponent<Projectile3D>();
+        p.pooled = false;
         p.target = target;
         p.point = target != null ? UnitAnchor.Center(target) : fallbackPoint;   // home onto mid-body (feet-pivoted)
         p.speed = Mathf.Max(0.1f, speed);
@@ -128,6 +163,7 @@ public class Projectile3D : MonoBehaviour
     Texture2D impactSheet; int impactFrameSize, impactFrames; float impactFps, impactScale;
     Vfx.EffectHandle travel;   // Hovl travel mode (SpawnVfx)
     bool done;
+    bool pooled = true;        // false only for the SpawnVfx overload, which hands its transform to a live caller
 
     void Update()
     {
@@ -160,6 +196,20 @@ public class Projectile3D : MonoBehaviour
             payload.at = transform.position;
             onArriveWith(payload);
         }
-        Destroy(gameObject);
+
+        if (!pooled) { Destroy(gameObject); return; }
+
+        // Go dormant and wait to be reused. Drop every reference the shot was holding FIRST — the arrival callbacks
+        // above have already run, and a dormant projectile must not keep a target, a payload or a sprite sheet alive.
+        target = null;
+        onArrive = null;
+        onArriveWith = null;
+        payload = default;
+        frames = null;
+        travel = null;
+        impactSheet = null;
+        if (sr != null) sr.sprite = null;
+        gameObject.SetActive(false);
+        pool.Push(this);
     }
 }

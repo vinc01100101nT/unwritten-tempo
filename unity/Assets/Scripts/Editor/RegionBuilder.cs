@@ -29,7 +29,7 @@ public static class RegionBuilder
     {
         var scene = SceneManager.GetActiveScene();
         int n = 0;
-        foreach (var p in Object.FindObjectsByType<Portal3D>(FindObjectsSortMode.None))
+        foreach (var p in Object.FindObjectsByType<Portal3D>())
         {
             if (p.gameObject.scene != scene) continue;
             p.transform.localScale = Vector3.one;                       // undo any stray root scaling
@@ -142,7 +142,7 @@ public static class RegionBuilder
 
         // Drop the boss in an open spot away from the default arrival so you walk into it, not onto it.
         Vector3 anchor = Vector3.zero;
-        foreach (var sp in Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None))
+        foreach (var sp in Object.FindObjectsByType<SpawnPoint>())
             if (sp.id == "Start") { anchor = sp.transform.position; break; }
         Vector3 pos = WorldBuildUtil.SurfacePoint(anchor + new Vector3(6f, 0f, 10f), groundMask);
 
@@ -216,7 +216,7 @@ public static class RegionBuilder
     // Add a SpawnPoint only if this scene doesn't already have one with that id.
     public static bool EnsureSpawn(Scene scene, string id, Vector3 pos)
     {
-        foreach (var sp in Object.FindObjectsByType<SpawnPoint>(FindObjectsSortMode.None))
+        foreach (var sp in Object.FindObjectsByType<SpawnPoint>())
             if (sp.id == id && sp.gameObject.scene == scene) return false;
         MakeSpawn(scene, id, pos);
         return true;
@@ -330,7 +330,7 @@ public static class RegionBuilder
     // Add a Portal3D only if this scene doesn't already have one pointing at the same target.
     public static bool EnsurePortal(Scene scene, string name, Vector3 pos, string targetScene, string spawnId, Color padColor)
     {
-        foreach (var p in Object.FindObjectsByType<Portal3D>(FindObjectsSortMode.None))
+        foreach (var p in Object.FindObjectsByType<Portal3D>())
             if (p.targetScene == targetScene && p.gameObject.scene == scene) return false;
         MakePortal(scene, name, pos, targetScene, spawnId, padColor);
         return true;

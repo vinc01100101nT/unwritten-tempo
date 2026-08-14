@@ -66,7 +66,7 @@ public class PlanarReflection : MonoBehaviour
 
     public static PlanarReflection Ensure()
     {
-        var p = FindFirstObjectByType<PlanarReflection>();
+        var p = FindAnyObjectByType<PlanarReflection>();
         if (p == null) p = new GameObject("PlanarReflection") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<PlanarReflection>();
         return p;
     }
@@ -133,7 +133,7 @@ public class PlanarReflection : MonoBehaviour
 
         if (focus == null)
         {
-            var p = FindFirstObjectByType<Player3DController>();
+            var p = FindAnyObjectByType<Player3DController>();
             focus = p != null ? p.transform : (CameraRig.Cam != null ? CameraRig.Cam.transform : null);
         }
         if (focus == null) return;

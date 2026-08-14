@@ -15,6 +15,8 @@ MonoBehaviour:
   targetingMigrated: 1
   id: skill.sword.deathblow
   displayName: Deathblow
+  weaponType: 1
+  published: 1
   icon: {fileID: 7699978436774145253, guid: 27c853ad0b0966943b0f1b26a0c9e49e, type: 3}
   description: 'Everything, in one swing.
 
@@ -34,7 +36,7 @@ MonoBehaviour:
   consumeAllStacks: 1
   consumeStacks: 0
   stackPayoff: 0
-  damageMultPerStack: 0.43
+  damageMultPerStack: 0.4
   manaCost: 40
   cooldown: 3
   castTime: 1
@@ -62,7 +64,7 @@ MonoBehaviour:
     effects:
     - kind: 0
       damageType: 0
-      damageMult: 5.79
+      damageMult: 6
       element: 0
       amount: 10
       ailment: 2
@@ -78,6 +80,7 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0
+      side: 0
       buffStat: 0
       rampDelay: 0
       rampPerStep: 0

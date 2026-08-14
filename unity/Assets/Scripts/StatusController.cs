@@ -81,6 +81,11 @@ public class StatusController : MonoBehaviour
     /// <summary>The player's status host, so spells/attacker can check Silence/Blind without a lookup.</summary>
     public static StatusController Player { get; private set; }
 
+    /// <summary>WHOEVER this controller is attached to, as the shared combat handle — the player's stats object or this
+    /// mob's Health. Every per-tick effect below (DoT damage, heal-over-time) goes through this instead of branching on
+    /// isPlayer, so a new one is written ONCE and works on both sides.</summary>
+    ICombatUnit Unit => isPlayer ? Character.Instance : health;
+
     void Awake()
     {
         health = GetComponent<Health>();
@@ -251,7 +256,7 @@ public class StatusController : MonoBehaviour
         states.Apply(StateId.Haste, seconds, Mathf.Max(0.01f, multiplier) - 1f);
         if (!wasActive)
         {
-            DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, "Haste!", HasteColor);
+            DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "Haste!", HasteColor);
             VfxCue.Fire(VfxCueId.OnHaste, transform);
         }
     }
@@ -276,10 +281,10 @@ public class StatusController : MonoBehaviour
 
     void AnnounceIfNew(Ailment a, bool wasActive, string label, Color c)
     {
-        if (!wasActive) DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, label, c);
+        if (!wasActive) DamagePopup.SpawnText(UnitAnchor.Overhead(transform), label, c);
     }
 
-    void Announce(Ailment a) => DamagePopup.SpawnText(transform.position + Vector3.up * 1.0f, a.ToString() + "!", ColorOf(a));
+    void Announce(Ailment a) => DamagePopup.SpawnText(UnitAnchor.Overhead(transform), a.ToString() + "!", ColorOf(a));
 
     static Color ColorOf(Ailment a)
     {
@@ -300,6 +305,7 @@ public class StatusController : MonoBehaviour
         TickDot(Ailment.Poison);
         TickDot(Ailment.Bleed);
         TickDot(Ailment.Burn);
+        TickRegen();
 
         // Tear down a DoT's aura once its state has lapsed (aura[i] != null gates it, so states.Has is only hit for
         // the handful of active DoT slots — cheap, no alloc; only DoT slots ever hold an aura).
@@ -316,14 +322,20 @@ public class StatusController : MonoBehaviour
         Color c = ColorOf(a);
         VfxCue.Fire(TickCue(a), transform);   // one-shot puff per DoT tick
 
-        if (isPlayer)
-        {
-            if (Character.Instance != null) CombatAuthority.ApplyTrue(Character.Instance, dmg, c);
-        }
-        else if (health != null)
-        {
-            CombatAuthority.ApplyTrue(health, dmg, c);
-        }
+        var u = Unit;
+        if (u != null) CombatAuthority.ApplyTrue(u, dmg, c);
+    }
+
+    // Heal-over-time (Mending Tide). Lives here — the one per-unit ticker BOTH sides already run — so a regen cast on a
+    // mob actually heals it. It used to tick inside Character.Update, which is why regen was a player-only state in
+    // practice even though the store held it for anyone.
+    void TickRegen()
+    {
+        var s = states.Get(StateId.Regen);
+        if (s == null || Time.time < s.nextTick) return;
+        s.nextTick = Time.time + UnitStates.RegenInterval;
+        var u = Unit;
+        if (u != null) u.Heal(s.intAmount);
     }
 }
 

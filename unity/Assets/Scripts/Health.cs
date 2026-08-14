@@ -8,7 +8,7 @@ using UnityEngine;
 /// raises <see cref="onDeath"/> then removes the GameObject.
 /// </summary>
 [RequireComponent(typeof(SpriteRenderer))]
-public class Health : MonoBehaviour, IDamageable
+public class Health : MonoBehaviour, ICombatUnit
 {
     [Tooltip("Starting / maximum hit points.")]
     public int maxHealth = 3;
@@ -60,6 +60,49 @@ public class Health : MonoBehaviour, IDamageable
     }
     public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
 
+    // ICombatUnit seam: the rest of the shared vocabulary an effect needs, so a skill effect targets a mob through the
+    // SAME handle it targets the player through. Pure aliases onto this class's own fields — no second source of truth.
+    public Transform Body => transform;
+    public int CurrentHP => Current;
+    public int MaxHP => maxHealth;
+
+    /// <summary>How big this unit's BODY is, for melee-contact maths — read from its brain, which knows whether it is a
+    /// character-sized shadow or a shrunken sprite mob. REPORTED rather than folded into a reach, so whoever measures
+    /// against this unit blends the real pair of bodies instead of assuming what the other one is.</summary>
+    public float MeleeScale { get { var b = Brain; return b != null ? b.MeleeScale : UnitScale.MobScale; } }
+
+    /// <summary>This mob's FULL-SIZE melee reach — its worn weapon's range, or its unarmed reach. Unscaled on purpose:
+    /// the caller blends it against the other body's size. Read through the shared WeaponReach rule, the same one the
+    /// player uses, so arming a mob extends its reach exactly as arming the player does.</summary>
+    public float MeleeReachFullSize
+    {
+        get
+        {
+            var b = Brain;
+            return b != null ? WeaponReach.For(b.Equipment, b.touchRange) : 0.5f;   // no brain (the spike): sane default
+        }
+    }
+
+    // Movement + aggro: the mob's half of the shared unit verbs, forwarded to the rig that owns each primitive (the
+    // pathing agent moves, the brain holds aggro). Cached once — these run per cast, never per frame.
+    PathAgent3D agent;
+    MonsterAI3D brain;
+    PathAgent3D Agent => agent != null ? agent : (agent = GetComponent<PathAgent3D>());
+    MonsterAI3D Brain => brain != null ? brain : (brain = GetComponent<MonsterAI3D>());
+    public void TeleportTo(Vector3 dest) { var a = Agent; if (a != null) a.Teleport(dest); else transform.position = dest; }
+    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds)
+    {
+        var a = Agent;
+        if (a == null) return;
+        // speedMult is a multiple of the unit's OWN run speed on both sides, so the same authored dash reads the same
+        // relative to whoever performs it. ≤ 0 = the effect authored none → travel at plain run speed.
+        a.GlideTo(dest, (speedMult > 0f ? speedMult : 1f) * a.moveSpeed, easeIn, easeOut, easeSeconds);
+    }
+    public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
+    { var b = Brain; if (b != null) b.Knockback(worldFrom, speed, seconds, stagger); }
+    public void ForceAggro(ICombatUnit source, float seconds)
+    { var b = Brain; if (b != null) b.Taunt(seconds); }
+
     // The unified per-unit state store (buffs/debuffs) — single source for gameplay queries AND the nameplate icons.
     // Lazily created so every mob gets one without editing prefabs; cached after first touch (no per-hit GetComponent).
     UnitStates states;
@@ -75,20 +118,16 @@ public class Health : MonoBehaviour, IDamageable
     // One choke point so all four intakes (physical/magic × normal/overkill) can't drift apart.
     // Raw post-defence figure -> the damage that lands. UnitMitigation.Landed owns the vulnerability amplify, the
     // rounding and the guard cut (ONE place, so no intake can forget the debuff); the shield drain is layered after.
-    int Mitigate(float rawAfterDefence) => UnitMitigation.AfterShield(States, UnitMitigation.Landed(States, rawAfterDefence), transform.position);
+    int Mitigate(float rawAfterDefence) => UnitMitigation.AfterShield(States, UnitMitigation.Landed(States, rawAfterDefence), UnitAnchor.Overhead(transform));
 
     // Parry — the SAME read the player gets (one primitive, no mob copy to hand-sync). Kept OUT of Mitigate on purpose:
     // Mitigate is math on a hit that lands, while a parry cancels the landing, so each intake bails before its damage
     // number and hit spark. Checked after the miss/immunity gates so a charge is only spent on a hit that would land.
-    bool Parried() => UnitMitigation.TryParry(States, transform.position);
+    bool Parried() => UnitMitigation.TryParry(States, UnitAnchor.Overhead(transform));
 
     /// <summary>Mark this unit to TAKE +<paramref name="extraFraction"/> more damage (0.3 = +30%) for
     /// <paramref name="seconds"/>. Refreshes to the latest mark (newest-wins). Reusable armor-fray for skills like Hex Field.</summary>
-    public void BeginVulnerable(float extraFraction, float seconds)
-    {
-        if (seconds <= 0f) return;
-        States.Apply(StateId.Vulnerability, seconds, Mathf.Max(0f, extraFraction));
-    }
+    public void BeginVulnerable(float extraFraction, float seconds) => States.BeginVulnerable(extraFraction, seconds);
 
     static readonly Color MissColor = new Color(1f, 0.3f, 0.3f);   // a player-dealt hit whiffed → red MISS
     static readonly Color CritColor = new Color(1f, 0.85f, 0.2f);  // a crit pops a gold number
@@ -127,7 +166,7 @@ public class Health : MonoBehaviour, IDamageable
         // (see Character.TakeDamage).
         if (missed)
         {
-            DamagePopup.SpawnText(transform.position, "MISS", MissColor);
+            DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "MISS", MissColor);
             CombatSfx.Miss(transform.position, PlayerRanged());   // whiff FROM the mob (spatial), melee/ranged by weapon
             return 0;
         }
@@ -242,7 +281,7 @@ public class Health : MonoBehaviour, IDamageable
         if (IsDead || amount <= 0) return 0;
         int dmg = Mathf.Max(1, amount);
         Current = Mathf.Max(0, Current - dmg);
-        DamagePopup.Spawn(transform.position, dmg, color);
+        DamagePopup.Spawn(UnitAnchor.Overhead(transform), dmg, color);
         if (isActiveAndEnabled) StartCoroutine(Flash());
         if (IsDead) Die();
         return dmg;
@@ -253,8 +292,8 @@ public class Health : MonoBehaviour, IDamageable
     void SpawnElementNumber(int dmg, float mod, Color baseCol)
     {
         baseCol.a *= Elements.DamageAlpha(mod);
-        if (dmg > 0) DamagePopup.Spawn(transform.position, dmg, baseCol);
-        else DamagePopup.SpawnText(transform.position, "0", baseCol);
+        if (dmg > 0) DamagePopup.Spawn(UnitAnchor.Overhead(transform), dmg, baseCol);
+        else DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "0", baseCol);
     }
 
     // Lifesteal: a fraction of damage dealt to this mob heals the player (RO leech, the mechanical core of
@@ -311,6 +350,14 @@ public class Health : MonoBehaviour, IDamageable
     {
         Current = maxHealth;
         if (sr != null) sr.color = baseColor;
+
+        // Coming back to life hands this unit's mover + animator back to the simulate-near switch, which stood down
+        // while it was a corpse. Done HERE, at the one revive choke, rather than only at the respawn call site: several
+        // paths revive a unit (the mob respawn, the training dummy's regen tick, the GM command), and enumerating them
+        // is exactly how one gets missed and a unit is left permanently unmanaged. (MobRespawn ALSO resyncs after it
+        // re-enables everything — a different beat: this lifts the stand-down, that re-asserts over the wholesale
+        // enable. Both are needed; don't collapse them.)
+        var lod = GetComponent<SimulationLod>(); if (lod != null) lod.Resync();
     }
 
     /// <summary>Restore HP (capped at max) and pop a green "+N" over the unit.</summary>
@@ -319,7 +366,7 @@ public class Health : MonoBehaviour, IDamageable
         if (amount <= 0 || IsDead) return;
         Current = Mathf.Min(maxHealth, Current + amount);
         // Show the green digits for the FULL intended amount, even at full HP — the heal still "landed" (player parity).
-        DamagePopup.SpawnText(transform.position, "+" + amount, new Color(0.45f, 1f, 0.45f));
+        DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "+" + amount, new Color(0.45f, 1f, 0.45f));
         VfxCue.Fire(VfxCueId.OnReceiveHeal, transform);
     }
 

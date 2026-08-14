@@ -17,6 +17,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public SkillDef def;
 
     float nextUse, lastDuration;
+    // WHICH authored trigger started the run in progress — set at every entry point (a press, a combo step, a passive
+    // fire) and read by everything that must differ between them: which state gate applies, what the run spends, and
+    // whether finishing it announces "the player cast this". Never null while a run is resolving.
+    SkillTriggerEntry firedBy;
     float comboDamageMult = 1f;         // ×ramp for the CURRENT cast when fired from a combo chain (1 = solo). Set per
                                         // combo step; solo Cast/CastTargeted reset it to 1 so a normal cast is unscaled.
     Coroutine castRoutine;              // active cast wind-up (null = not casting); blocks re-cast + drives the CastBar
@@ -81,7 +85,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public bool Activate()
     {
         if (def == null || def.vfx == null) return false;
-        if (def.IsPassive) return false;   // passives never cast from the bar — they fire via PassiveEvents on their trigger
+        if (def.IsPassive) return false;   // no pressed entry — this skill only ever fires via PassiveEvents on its triggers
+        firedBy = def.CastEntry;           // a press always runs the OnCast entry, whatever other triggers this skill has
         if (Character.Instance == null || Character.Instance.IsDead) return false;
         // A skill committed to a combo chain is spent there — it can't be cast solo from the hotbar (the chain owns
         // it, and its cadence is the chain's shared cooldown). Character.Combos is the single owner of "who's committed".
@@ -205,6 +210,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     bool ComboSpend()
     {
         if (def == null || def.vfx == null || Character.Instance == null || Character.Instance.IsDead) return false;
+        firedBy = def.CastEntry;   // a combo step is still the player casting this skill, just without its own reticle
         var sc = StatusController.Player;
         if (sc != null && (sc.CannotAct || sc.Silenced)) return false;
         if (!Character.Instance.SpendMana(def.manaCost)) { BattleNotice.Warn("No MP", NoManaColor); return false; }
@@ -290,13 +296,19 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     void PlayCycles()
     {
         consumedThisCast = false;   // this cast hasn't paid its state cost yet — it pays once, after its effects compute
-        castStacks = StateGate.StackCount(def, CasterStates);   // the pile this cast is about to cash, read BEFORE spending it
-        if (!def.IsPassive) castChain = 0UL;   // a player-pressed cast starts a FRESH chain (nothing caused it)
+        castStacks = StateGate.StackCount(firedBy, CasterStates);   // the pile this cast is about to cash, read BEFORE spending it
+        bool pressed = firedBy != null && firedBy.trigger == SkillTrigger.OnCast;
+        if (pressed) castChain = 0UL;   // a player-pressed cast starts a FRESH chain (nothing caused it)
 
         // The cast finished UNINTERRUPTED (an interrupt runs EndCast + bails before here) — announce it so any passive
-        // keyed to this skill via OnSkillCastComplete<skill> fires. Only ACTIVES emit this: a passive isn't a
-        // player-driven cast, and emitting here would let passives chain off one another's fires.
-        if (!def.IsPassive)
+        // keyed to this skill via OnSkillCastComplete<skill> fires.
+        //
+        // "That skill finished casting" means THE PLAYER CAST IT. A run of this same skill started by one of its own
+        // non-OnCast triggers does NOT announce, because the granter of the charge it just spent is usually keyed to
+        // this very skill: Lock Blades grants charges when Lunge completes, an auto-fired Lunge would re-announce, and
+        // the pile would refill itself forever. Keying off the trigger that STARTED this run — not off whether the
+        // skill has a pressed form — makes that impossible for every skill, not just this pair.
+        if (pressed)
             PassiveEvents.Fire(SkillTrigger.OnSkillCastComplete, def.id);
 
         // The RELEASE moment: any cast wind-up (and its Casting pose) has already finished, so the release cue plays
@@ -376,7 +388,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (Character.Instance == null || Character.Instance.IsDead || Time.time < nextUse) return false;
         // The combo gate: a skill that requires a state doesn't run at all when unmet — checked BEFORE any cost is paid.
-        if (!StateGate.IsMet(def, CasterStates)) { BattleNotice.Warn("Not ready"); return false; }
+        // A press is always gated by the OnCast entry; the skill's other triggers have their own, separate gates.
+        if (!StateGate.IsMet(def.CastEntry, CasterStates)) { BattleNotice.Warn("Not ready"); return false; }
         // Ultimate gates on the shared charge meter (checked again here — the reticle may have taken time to confirm).
         if (def.IsUltimate && !Character.Instance.UltReady(def.chargeCost))
         { BattleNotice.Warn("Not charged"); return false; }
@@ -426,7 +439,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // The stack payoff rides the burst's EXISTING extra-multiplier input (it adds to each effect's own
             // damageMult), so cashing a pile can't become a second damage path beside the normal roll.
             SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, b.effects,
-                                          lastCtx.targetUnit, def.StackDamageBonus(castStacks), 0, comboDamageMult,
+                                          lastCtx.targetUnit, firedBy != null ? firedBy.StackDamageBonus(castStacks) : 0f, 0, comboDamageMult,
                                           def.icon, def.displayName, def.id,   // def.id KEYS the pile: stacks belong to the skill that granted them
                                           aimPoint: lastCtx.effectPoint,   // Dash/Teleport go where stage 2 aimed, not to the tick's VFX anchor
                                           caster: Character.Instance); // explicit caster (local player today; a per-connection entity once server-authoritative)
@@ -438,16 +451,17 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (!consumedThisCast)
         {
             consumedThisCast = true;
-            StateGate.Consume(def, CasterStates);
+            StateGate.Consume(firedBy, CasterStates);   // the entry that STARTED this run pays — a press and an auto-fire cost different things
         }
     }
 
     // ---- passive firing -----------------------------------------------------
 
-    /// <summary>Fire this passive as a FULL skill NOW — called by <see cref="PassiveEvents"/> when its trigger matches.
-    /// A passive is authored exactly like an active (same VFX, ticks, effects); ONLY the trigger differs. So it runs the
-    /// same cast path (<see cref="PlayCycles"/> → VFX → ticks → applier), with the aim resolved from the trigger context
-    /// instead of a reticle:
+    /// <summary>Fire this skill through one of its AUTOMATIC trigger entries — called by <see cref="PassiveEvents"/>
+    /// when <paramref name="entry"/>'s moment happens and its gate is met. The skill body is identical to the pressed
+    /// one (same VFX, ticks, effects); only the way it STARTED differs, which is why the entry is carried in rather
+    /// than re-derived. So it runs the same cast path (<see cref="PlayCycles"/> → VFX → ticks → applier), with the aim
+    /// resolved from the trigger context instead of a reticle:
     /// <list type="bullet">
     /// <item>Single-target skill (<see cref="CastReticle.Unit"/>) → lands on the triggering <paramref name="victim"/>
     /// entity (skipped if there's none this moment).</item>
@@ -457,9 +471,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     /// buff must never be flung onto the mob).</item>
     /// </list>
     /// No mana / cooldown / wind-up — the trigger IS the gesture. It's a real cast, so its cost/cadence knobs stay ignored.</summary>
-    public void FireAsPassive(Transform victim, ulong chain = 0UL)
+    public void FireAsPassive(SkillTriggerEntry entry, Transform victim, ulong chain = 0UL)
     {
-        if (def == null || def.vfx == null || Character.Instance == null || Character.Instance.IsDead) return;
+        if (def == null || def.vfx == null || entry == null || Character.Instance == null || Character.Instance.IsDead) return;
+        firedBy = entry;        // this run's gate, its stack cost, and "was this a player cast" all read from here
         comboDamageMult = 1f;   // passive fire — no combo ramp
         castChain = chain;      // this passive is in the chain; everything its effects cause carries that forward
 

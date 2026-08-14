@@ -65,10 +65,10 @@ public static class DepthSortRuntime
     static void SetupScene()
     {
         SetupCameraAxis();
-        foreach (var tm in Object.FindObjectsByType<Tilemap>(FindObjectsSortMode.None))
+        foreach (var tm in Object.FindObjectsByType<Tilemap>())
             BandTilemap(tm);
         BakeObstacleProps();
-        foreach (var sr in Object.FindObjectsByType<SpriteRenderer>(FindObjectsSortMode.None))
+        foreach (var sr in Object.FindObjectsByType<SpriteRenderer>())
         {
             if (!IsUnit(sr)) continue;
             // 3D entities: camera-relative depth sorting (tilted/orbiting camera).
@@ -156,7 +156,7 @@ public static class DepthSortRuntime
     static void BakeObstacleProps()
     {
         Transform root = null;
-        foreach (var tm in Object.FindObjectsByType<Tilemap>(FindObjectsSortMode.None))
+        foreach (var tm in Object.FindObjectsByType<Tilemap>())
         {
             string n = tm.name.ToLowerInvariant();
             if (IsCollisionLayer(n)) continue;          // never bake the collision layer into visuals

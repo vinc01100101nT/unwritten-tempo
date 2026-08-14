@@ -134,7 +134,7 @@ public class HotbarPanel : MonoBehaviour
 
     void TryBuild()
     {
-        if (player == null) player = Object.FindFirstObjectByType<Player3DController>();
+        if (player == null) player = Object.FindAnyObjectByType<Player3DController>();
         if (player == null) return;
         if (holder == null) holder = FindByName("HUD_Hotbar");
         if (holder == null) return;
@@ -362,7 +362,7 @@ public class HotbarPanel : MonoBehaviour
 
         tipText = NewText("Text", tipRoot.transform, "", 12, FontStyle.Normal, TextAnchor.UpperLeft, Color.white);
         tipText.richText = true;
-        tipText.enableWordWrapping = true;
+        tipText.textWrappingMode = TMPro.TextWrappingModes.Normal;
 
         tipIcon = NewImage("Icon", tipRoot.transform, Color.white);
         tipIcon.preserveAspect = true; tipIcon.raycastTarget = false;

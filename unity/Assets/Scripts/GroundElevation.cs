@@ -23,4 +23,11 @@ public static class GroundElevation
 
     /// <summary>World-Y for an integer elevation level.</summary>
     public static float LevelToY(int level) => level * LevelHeight;
+
+    /// <summary>How fast anything falls, in world units per second squared. ONE number for every unit: the player's
+    /// controller and the NPC/mob pathing agent both apply it, and each used to keep its own serialized copy. They
+    /// happened to agree (both 12) — which is exactly how this kind of duplicate survives. It costs nothing until
+    /// someone retunes one side, and then the player and the mobs fall at different rates for no reason anyone chose.</summary>
+    /// Tunable at runtime from the dev panel, like the unit-size dials — still ONE value for every unit.
+    public static float Gravity = 12f;
 }

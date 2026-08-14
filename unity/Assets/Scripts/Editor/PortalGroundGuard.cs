@@ -30,7 +30,7 @@ static class PortalGroundGuard
         Physics.SyncTransforms();
 
         int snapped = 0;
-        foreach (var portal in Object.FindObjectsByType<Portal3D>(FindObjectsSortMode.None))
+        foreach (var portal in Object.FindObjectsByType<Portal3D>())
         {
             if (portal.gameObject.scene != scene) continue;
             var t = portal.transform;

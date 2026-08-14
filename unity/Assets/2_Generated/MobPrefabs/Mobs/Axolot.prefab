@@ -252,7 +252,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitEquipment
   startingGear:
-  - {fileID: 11400000, guid: ea2bd669dfef0234385f07c6767e927b, type: 2}
+  - {fileID: 11400000, guid: 106d8f67f72c4ad6a413aeedcfee559e, type: 2}
 --- !u!114 &5445982849098166136
 MonoBehaviour:
   m_ObjectHideFlags: 0

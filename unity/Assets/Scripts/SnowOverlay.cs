@@ -65,7 +65,7 @@ public class SnowOverlay : MonoBehaviour
     /// snow works even on a Systems scene baked before this component joined the rig).</summary>
     public static SnowOverlay Ensure()
     {
-        var s = FindFirstObjectByType<SnowOverlay>();
+        var s = FindAnyObjectByType<SnowOverlay>();
         if (s == null) s = new GameObject("SnowOverlay") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<SnowOverlay>();
         return s;
     }

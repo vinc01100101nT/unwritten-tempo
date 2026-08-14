@@ -22,17 +22,17 @@ public static class SpriteSheetCache
 
     // Horizontal strip: N square frames along the BOTTOM row (y = 0). Used by slash/bolt/smoke FX and
     // the player's 4 attack poses (which are a 1-row strip).
-    static readonly Dictionary<(int tex, int size, int count), Sprite[]> strips
-        = new Dictionary<(int, int, int), Sprite[]>();
+    static readonly Dictionary<(EntityId tex, int size, int count), Sprite[]> strips
+        = new Dictionary<(EntityId, int, int), Sprite[]>();
 
     // 4-direction walk columns (Down/Up/Left/Right) read from the TOP rows of each column. Used by mobs.
-    static readonly Dictionary<(int tex, int cell, int frames), Sprite[][]> walk4
-        = new Dictionary<(int, int, int), Sprite[][]>();
+    static readonly Dictionary<(EntityId tex, int cell, int frames), Sprite[][]> walk4
+        = new Dictionary<(EntityId, int, int), Sprite[][]>();
 
     // Arbitrary horizontal clips read left→right from a grid cell. Used by the row-major NinjaGreen
     // "CharacterAnimated" sheets (one direction per ROW), vs walk4's column-major mob sheets.
-    static readonly Dictionary<(int tex, int cell, int row, int col, int frames, int ppu), Sprite[]> grids
-        = new Dictionary<(int, int, int, int, int, int), Sprite[]>();
+    static readonly Dictionary<(EntityId tex, int cell, int row, int col, int frames, int ppu), Sprite[]> grids
+        = new Dictionary<(EntityId, int, int, int, int, int), Sprite[]>();
 
     /// <summary>N square frames of side <paramref name="frameSize"/> along the sheet's bottom row,
     /// clamped to the number of columns. Pivot centred, pixels-per-unit = frameSize. Shared/read-only.</summary>
@@ -42,7 +42,7 @@ public static class SpriteSheetCache
         int cols = Mathf.Max(1, sheet.width / frameSize);
         int n = Mathf.Clamp(frameCount, 1, cols);
 
-        var key = (sheet.GetInstanceID(), frameSize, n);
+        var key = (sheet.GetEntityId(), frameSize, n);
         if (strips.TryGetValue(key, out var cached)) return cached;
 
         var frames = new Sprite[n];
@@ -65,7 +65,7 @@ public static class SpriteSheetCache
         int rows = Mathf.Max(1, sheet.height / cell);
         int wf = Mathf.Clamp(walkFrames, 1, rows);
 
-        var key = (sheet.GetInstanceID(), cell, wf);
+        var key = (sheet.GetEntityId(), cell, wf);
         if (walk4.TryGetValue(key, out var cached)) return cached;
 
         Sprite[] Column(int c)
@@ -101,7 +101,7 @@ public static class SpriteSheetCache
         int cols = Mathf.Max(1, sheet.width / cell);
         int n = Mathf.Clamp(frames, 1, Mathf.Max(1, cols - col));
 
-        var key = (sheet.GetInstanceID(), cell, row, col, n, ppu);
+        var key = (sheet.GetEntityId(), cell, row, col, n, ppu);
         if (grids.TryGetValue(key, out var cached)) return cached;
 
         var arr = new Sprite[n];

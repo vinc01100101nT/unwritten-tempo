@@ -140,7 +140,7 @@ public class FootstepTracker : MonoBehaviour
     /// <summary>Find the live tracker, creating one if none exists (used on demand by the effects/DevSettings).</summary>
     public static FootstepTracker Ensure()
     {
-        var t = Instance != null ? Instance : FindFirstObjectByType<FootstepTracker>();
+        var t = Instance != null ? Instance : FindAnyObjectByType<FootstepTracker>();
         if (t == null) t = new GameObject("FootstepTracker") { hideFlags = HideFlags.DontSaveInEditor }.AddComponent<FootstepTracker>();
         return t;
     }
@@ -188,10 +188,18 @@ public class FootstepTracker : MonoBehaviour
         {
             if (playerCtrl == null)
             {
-                playerCtrl = FindFirstObjectByType<Player3DController>();
+                playerCtrl = FindAnyObjectByType<Player3DController>();
                 player = playerCtrl != null ? playerCtrl.transform : null;
             }
-            if (pose == null) pose = FindFirstObjectByType<Character3DPose>();
+            // Reach the PLAYER's pose through the player-only visual, NOT by searching for any Character3DPose: every
+            // townsperson and shadow mob carries one too, so a bare search starts returning an NPC's pose the moment
+            // ambient life spawns — and the player's own footsteps would then be driven off a stranger's walk cycle.
+            // (Character3DVisual's own summary already warns about exactly this.)
+            if (pose == null)
+            {
+                var pv = FindAnyObjectByType<Character3DVisual>();
+                pose = pv != null ? pv.Pose as Character3DPose : null;
+            }
             nextFind = Time.time + 1f;
         }
         if (player == null) return;

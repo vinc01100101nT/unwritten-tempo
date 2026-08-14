@@ -52,12 +52,19 @@ public class Character3DVisual : MonoBehaviour
 
     void Start()
     {
-        if (player == null) player = FindFirstObjectByType<Player3DController>();
+        if (player == null) player = FindAnyObjectByType<Player3DController>();
         if (player == null) { Debug.LogWarning("[unwritten] Character3DVisual found no Player3DController."); return; }
 
         cc = player.GetComponent<CharacterController>();
         int gl = LayerMask.NameToLayer("Ground");
         groundMask = gl >= 0 ? (1 << gl) : 0;
+
+        // Tell the world how tall the player ACTUALLY is. Its root carries a build scale (0.7) that has nothing to do
+        // with its body size (the model is a separately-fitted object), so anchors derived from that root put the
+        // player's mid-body at 0.28 instead of 0.164 — which is where a ranged mob was aiming. Prefer the body's own
+        // measured height over the authored one so the two can't drift.
+        float measured = pose != null ? pose.VisualWorldHeight : 0f;
+        UnitBody.Set(player.gameObject, measured > 1e-3f ? measured : CharacterSpec.Active.bodyHeight);
         attacker = player.GetComponent<Player3DAttacker>();
         stance.SetGaitSource(player);
         hiddenPlayerSprite = player.GetComponent<SpriteRenderer>();

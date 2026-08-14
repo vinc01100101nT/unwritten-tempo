@@ -53,7 +53,7 @@ public static class SunRig
     static Light FindSun()
     {
         if (RenderSettings.sun != null) return RenderSettings.sun;
-        var all = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);   // only runs while the cache is null
+        var all = Object.FindObjectsByType<Light>();   // only runs while the cache is null
         Light best = null;
         for (int i = 0; i < all.Length; i++)
         {

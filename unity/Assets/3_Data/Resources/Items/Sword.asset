@@ -10,29 +10,29 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1273422f0fe446042a32e6c51cb86782, type: 3}
-  m_Name: Bow Epic
+  m_Name: Sword
   m_EditorClassIdentifier: Assembly-CSharp::Item
-  id: item.bow-epic
-  displayName: Bow Epic
+  id: item.sword
+  displayName: Sword
   icon: {fileID: 0}
   slot: 3
-  weaponType: 9
-  attackRange: 5
-  equipModel: {fileID: 1198998981114754527, guid: d0c32318984847e428ac1bce4ea19377, type: 3}
+  weaponType: 1
+  attackRange: 0
+  equipModel: {fileID: 2839524829476184550, guid: b31cf3d5ac315214a950e823cb9e2b9f, type: 3}
   element: 0
   rarity: 0
-  category: 3
-  cardSlots: 0
-  weight: 0
-  zeny: 0
+  category: 0
+  cardSlots: 2
+  weight: 90
+  zeny: 5000
   bonusHP: 0
-  bonusAttack: 3000
+  bonusAttack: 3
   bonusDefense: 0
   bonusMP: 0
   bonusMAtk: 0
   bonusMDef: 0
   bonusStr: 0
-  bonusAgi: 100
+  bonusAgi: 0
   bonusVit: 0
   bonusInt: 0
   bonusDex: 0
@@ -42,18 +42,21 @@ MonoBehaviour:
   healAmount: 0
   attackSfx:
     clips:
-    - {fileID: 8300000, guid: 2c07351db97c3db46bdbbcac4cb54e86, type: 3}
-    volume: 1
+    - {fileID: 8300000, guid: 878de55de930ef847ae44df0e8de01eb, type: 3}
+    - {fileID: 8300000, guid: 5ea2a3ee5bacab2478a21080f476b659, type: 3}
+    - {fileID: 8300000, guid: 5e78d9229f342644fb602ca85816f666, type: 3}
+    volume: 0.8
     pitch: {x: 0.95, y: 1.05}
   hitSfx:
     clips:
-    - {fileID: 8300000, guid: 1bbafb80233098340940fcf3bb0c7f26, type: 3}
-    volume: 1
+    - {fileID: 8300000, guid: 640240968c6578f468544093ea92b95f, type: 3}
+    - {fileID: 8300000, guid: 203f9d09276713d4e84c777b0fcb2120, type: 3}
+    - {fileID: 8300000, guid: 49d119a83e396134fa07af4f5855130c, type: 3}
+    volume: 0.9
     pitch: {x: 0.95, y: 1.05}
   guardSfx:
-    clips:
-    - {fileID: 8300000, guid: 750d863a5bb33b34a91cac93754c1d19, type: 3}
+    clips: []
     volume: 1
     pitch: {x: 0.95, y: 1.05}
   blockChance: 0
-  description: 
+  description: A dependable blade. What it can DO is decided when it drops.

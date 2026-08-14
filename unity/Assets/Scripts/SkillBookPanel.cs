@@ -20,16 +20,38 @@ public class SkillBookPanel : MonoBehaviour
     static readonly Color RowBg    = new Color(0.16f, 0.16f, 0.20f, 0.95f);
     static readonly Color SubColor = new Color(0.75f, 0.8f, 0.95f, 0.85f);
     static readonly Color MpColor  = new Color(0.6f, 0.78f, 1f);
+    // Checkbox palette: a live box reads bright, one the weapon already grants reads muted (ticked but untouchable).
+    static readonly Color BoxFill       = new Color(0.09f, 0.10f, 0.13f, 1f);
+    static readonly Color BoxFillLocked = new Color(0.16f, 0.17f, 0.19f, 1f);
+    static readonly Color BoxTickLocked = new Color(0.45f, 0.48f, 0.52f, 1f);
 
     GameObject root;                 // the window we show/hide on J
     RectTransform scrollContent;     // where rows are built
     bool built;
 
+    Character watched;   // whose equip changes we're listening to (the player appears after this panel does)
+
     void Update()
     {
+        WatchGearChanges();
         if (!built) { TryBuild(); return; }
         HandleHotkey();
     }
+
+    // Swapping a weapon changes WHICH passives are weapon-granted (greyed + forced on), so a list left open across an
+    // equip has to redraw — otherwise it keeps offering a checkbox for a passive the new weapon now owns.
+    void WatchGearChanges()
+    {
+        var c = Character.Instance;
+        if (c == watched) return;
+        if (watched != null) watched.OnStatsChanged -= OnGearChanged;
+        watched = c;
+        if (watched != null) watched.OnStatsChanged += OnGearChanged;
+    }
+
+    void OnDestroy() { if (watched != null) watched.OnStatsChanged -= OnGearChanged; }
+
+    void OnGearChanged() { if (built && root != null && UiAnim.IsOpen(root)) Rebuild(); }
 
     void HandleHotkey()
     {
@@ -109,9 +131,9 @@ public class SkillBookPanel : MonoBehaviour
             return;
         }
 
-        var caption = NewText(scrollContent, "Drag a skill onto a hotbar slot, or click to bind:", 13, FontStyle.Italic, TextAnchor.MiddleCenter);
+        var caption = NewText(scrollContent, "Drag or click a skill to bind it.\nTick a passive to turn it on.", 13, FontStyle.Italic, TextAnchor.MiddleCenter);
         caption.color = SubColor;
-        SetHeight(caption.gameObject, 22);
+        SetHeight(caption.gameObject, 34);
 
         var combos = Character.Instance != null ? Character.Instance.Combos : null;
         for (int i = 0; i < pool.Length; i++)
@@ -128,7 +150,27 @@ public class SkillBookPanel : MonoBehaviour
         row.raycastTarget = true;
         SetHeight(row.gameObject, 48);
 
-        // Icon (left).
+        // A PASSIVE takes no hotbar slot — it runs on its trigger. So its row isn't a bind target at all: it gets a
+        // checkbox that turns the passive on for the player. One the equipped weapon already rolled is shown ticked
+        // and greyed, because the weapon is what makes it live and ticking it again would mean nothing.
+        if (def.IsPassive) { BuildPassiveRow(row, def); return; }
+
+        BuildRowFace(row, def, $"<color=#99C7FF>MP {def.manaCost}</color>   ·   CD {def.cooldown:0.#}s", 8f);
+
+        // Click = bind to first empty slot; drag = drop onto any slot (same path as the K menu).
+        var btn = row.gameObject.AddComponent<Button>();
+        btn.targetGraphic = row;
+        var id = def.id;
+        btn.onClick.AddListener(() => BindFirstEmpty(id));
+
+        var drag = row.gameObject.AddComponent<SkillDragSource>();
+        drag.skillId = id; drag.iconSprite = def.icon; drag.tint = def.tint == default ? Color.white : def.tint;
+    }
+
+    // The shared look of every row — icon, name, and one sub-line. Both kinds of skill draw the same face; only what
+    // the sub-line SAYS and what sits on the right differ, so the layout lives here once.
+    void BuildRowFace(Image row, SkillDef def, string subLine, float rightPad)
+    {
         if (def.icon != null)
         {
             var im = NewImage(row.transform, Color.white);
@@ -140,32 +182,70 @@ public class SkillBookPanel : MonoBehaviour
             irt.sizeDelta = new Vector2(38f, 38f);
         }
 
-        // Name (top) + cost/cooldown sub-line (bottom).
+        float left = def.icon != null ? 50f : 10f;
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
         var title = NewText(row.transform, name, 14, FontStyle.Bold, TextAnchor.LowerLeft);
         title.color = def.tint == default ? Color.white : def.tint;
         title.raycastTarget = false;
         var trt = title.rectTransform;
         trt.anchorMin = new Vector2(0f, 0.5f); trt.anchorMax = new Vector2(1f, 1f);
-        trt.offsetMin = new Vector2(def.icon != null ? 50f : 10f, 0f);
-        trt.offsetMax = new Vector2(-8f, -4f);
+        trt.offsetMin = new Vector2(left, 0f);
+        trt.offsetMax = new Vector2(-rightPad, -4f);
 
-        var sub = NewText(row.transform, $"<color=#99C7FF>MP {def.manaCost}</color>   ·   CD {def.cooldown:0.#}s", 11, FontStyle.Normal, TextAnchor.UpperLeft);
+        var sub = NewText(row.transform, subLine, 11, FontStyle.Normal, TextAnchor.UpperLeft);
         sub.color = SubColor;
         sub.raycastTarget = false;
         var srt = sub.rectTransform;
         srt.anchorMin = new Vector2(0f, 0f); srt.anchorMax = new Vector2(1f, 0.5f);
-        srt.offsetMin = new Vector2(def.icon != null ? 50f : 10f, 4f);
-        srt.offsetMax = new Vector2(-8f, 0f);
+        srt.offsetMin = new Vector2(left, 4f);
+        srt.offsetMax = new Vector2(-rightPad, 0f);
+    }
 
-        // Click = bind to first empty slot; drag = drop onto any slot (same path as the K menu).
-        var btn = row.gameObject.AddComponent<Button>();
-        btn.targetGraphic = row;
+    // A passive row: icon + name + what fires it, and a checkbox on the right that turns it on.
+    void BuildPassiveRow(Image row, SkillDef def)
+    {
+        var loadout = Character.Instance != null ? Character.Instance.PassiveSkills : null;
+        bool byWeapon = loadout != null && loadout.GrantedByWeapon(def.id);
+        bool on = byWeapon || (loadout != null && loadout.IsChecked(def.id));
+
+        BuildRowFace(row, def, byWeapon ? "Active from your weapon" : SkillTooltip.TriggerLine(def), CheckboxWidth);
+
+        var box = MakeCheckbox(row.transform, on, !byWeapon && loadout != null);
+        if (byWeapon) return;   // the weapon owns this one — nothing to toggle
+
         var id = def.id;
-        btn.onClick.AddListener(() => BindFirstEmpty(id));
+        box.onValueChanged.AddListener(v =>
+        {
+            if (!loadout.Set(id, v)) return;
+            if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
+            UISounds.PlayClick();
+        });
+    }
 
-        var drag = row.gameObject.AddComponent<SkillDragSource>();
-        drag.skillId = id; drag.iconSprite = def.icon; drag.tint = def.tint == default ? Color.white : def.tint;
+    const float CheckboxWidth = 34f;
+
+    // A 20×20 tick box. Built from primitives (this whole HUD is code-built — there are no UI prefabs to reference).
+    Toggle MakeCheckbox(Transform parent, bool on, bool interactable)
+    {
+        var bg = NewImage(parent, interactable ? BoxFill : BoxFillLocked);
+        var brt = bg.rectTransform;
+        brt.anchorMin = brt.anchorMax = new Vector2(1f, 0.5f);
+        brt.pivot = new Vector2(1f, 0.5f);
+        brt.anchoredPosition = new Vector2(-9f, 0f);
+        brt.sizeDelta = new Vector2(20f, 20f);
+
+        var tick = NewImage(bg.transform, interactable ? UiKit.Cyan : BoxTickLocked);
+        tick.raycastTarget = false;
+        var trt = tick.rectTransform;
+        trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one;
+        trt.offsetMin = new Vector2(4f, 4f); trt.offsetMax = new Vector2(-4f, -4f);
+
+        var toggle = bg.gameObject.AddComponent<Toggle>();
+        toggle.targetGraphic = bg;
+        toggle.graphic = tick;
+        toggle.isOn = on;
+        toggle.interactable = interactable;
+        return toggle;
     }
 
     void BindFirstEmpty(string id)

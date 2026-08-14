@@ -33,7 +33,7 @@ public static class ProgressionWindowsBuilder
         scaler.referenceResolution = new Vector2(1280, 720);
         UiKit.ApplyTextCrispness(scaler);
 
-        if (Object.FindFirstObjectByType<EventSystem>() == null)
+        if (Object.FindAnyObjectByType<EventSystem>() == null)
         {
             var es = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
             es.transform.SetParent(go.transform, false);

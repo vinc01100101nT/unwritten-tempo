@@ -81,7 +81,7 @@ public static class SystemsSceneBuilder
             Debug.LogWarning("[unwritten] GameUICanvas prefab missing — using the bare HP bar. " +
                              "Run Tools ▸ unwritten ▸ Build UI Shell to get the I/C/K panels, then re-run this.");
         }
-        if (Object.FindFirstObjectByType<EventSystem>() == null)   // panels + HUD-click need one
+        if (Object.FindAnyObjectByType<EventSystem>() == null)   // panels + HUD-click need one
             new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
 
         var gameSystems = new GameObject("GameSystems");

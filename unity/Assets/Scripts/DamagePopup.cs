@@ -42,7 +42,8 @@ public class DamagePopup : MonoBehaviour
     static readonly Stack<DamagePopup> pool = new Stack<DamagePopup>();
     static Transform camT;                                   // cached camera transform for billboarding
 
-    /// <summary>Spawn a number at a world position (a head offset is added for you).</summary>
+    /// <summary>Spawn a number AT <paramref name="worldPos"/> — pass <see cref="UnitAnchor.Overhead"/> for text over a
+    /// unit. No offset is added for you: height belongs to the anchor, which knows how big the unit is.</summary>
     public static void Spawn(Vector3 worldPos, int amount, Color color) => Spawn(worldPos, amount, color, 1f);
 
     /// <summary>As <see cref="Spawn(Vector3,int,Color)"/> but at <paramref name="scaleMult"/>× size — e.g. a
@@ -189,8 +190,10 @@ public class DamagePopup : MonoBehaviour
         age = 0f;
         held = false;       // SpawnHeld re-sets this true after Begin; a normal reuse starts un-held
         holdAge = 0f;
-        // lift to the head, plus a little horizontal scatter so rapid hits don't stack exactly
-        transform.position = worldPos + new Vector3(Random.Range(-0.15f, 0.15f), 0.5f, 0f);
+        // Horizontal scatter only, so rapid hits don't stack exactly. NO vertical lift: this used to add a fixed +0.5,
+        // which is a world distance and so ignored unit size — it read as 3.7x body height over the smallest mob and
+        // 1.1x over the largest. HEIGHT IS THE CALLER'S to choose, through UnitAnchor.Overhead (the single owner).
+        transform.position = worldPos + new Vector3(Random.Range(-0.15f, 0.15f), 0f, 0f);
         transform.localScale = Vector3.one * (BaseScale * scaleMult);
         gameObject.SetActive(true);
     }

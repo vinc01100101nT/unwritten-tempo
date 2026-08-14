@@ -6,6 +6,28 @@
 
 ---
 
+## ✅ SUPERSEDED IN PART, 2026-08-15 — a skill can now carry MULTIPLE TRIGGERS
+
+The 2026-08-13 decision below still stands for the general "1:any effect-on-act" framework — do NOT build that. What
+changed is smaller and shipped: **`SkillDef.triggers` is a LIST** (`SkillTriggerEntry`), so ONE authored skill can be
+both pressed AND self-firing, each entry with its OWN state gate. Pressed Lunge requires no charge; the same Lunge
+fired at `OnBasicAttackStart` requires and spends a Lock Blades charge. **`skill.sword.auto_lunge` was deleted** — it
+was a copy of Lunge's payload and would have drifted the moment either was tuned.
+
+**The invariant that makes it safe: every trigger runs the SAME skill body.** An entry chooses only WHEN the skill
+fires and what that firing costs in stacks — never WHAT it does. Two triggers wanting different effects = two skills.
+
+**The paired rule (also shipped): "that skill finished casting" now means THE PLAYER CAST IT.** `OnSkillCastComplete`
+fires only for a run started by the pressed entry (`SkillRunner.PlayCycles`, keyed off `firedBy.trigger`). Without it,
+an auto-fired Lunge would announce "Lunge cast complete", Lock Blades would re-grant its charges, and the pile would
+refill itself forever.
+
+Touched: `SkillDef` (new `SkillTriggerEntry`, `triggers`, `CastEntry`, `EntryFor`, `IsPassive` = no pressed entry,
+`MigrateTriggersFromLegacy`), `StateGate` (takes an entry, not a def), `SkillRunner` (`firedBy`), `PassiveEvents`
+(the moment picks the entry), `SkillTooltip.TriggerLine`, `SkillComposerWindow` (trigger-list editor + the rename
+sweep walks entries). Old assets migrate on load into exactly one entry, so their behavior is unchanged.
+**Compile-verified only — NOTHING was play-tested.**
+
 ## ⛔ DECISION 2026-08-13 — NO "effect on next act" (1:any). We stay 1:1. Do not build it.
 
 **The rule going forward:** a stack pile is granted by one skill and consumed by ONE NAMED skill that says `requireSkillId: <granter>`. That is the only stack relationship the engine has, and the only one we want for now.
@@ -14,11 +36,11 @@
 
 **Why (decided with the user after a full design pass — do NOT re-litigate without new information):**
 
-1. **A framework wouldn't generalise the expensive part.** Every payoff hooks a *different, unrelated* line: damage → `UnitOffense.Dealt`; free cast → `SkillRunner` MP spend at **two** sites (~lines 210 and 383); no-cooldown → `SkillRunner` `nextUse` (~391); instant-cast → the castTime fork (~222). The only shared part is ~20 lines of bookkeeping (hold a stack, spend it at a moment). The framework buys those 20 lines and nothing else.
+1. **A framework wouldn't generalise the expensive part.** Every payoff hooks a *different, unrelated* line: damage → `UnitOffense.Dealt`; free cast → `SkillRunner` MP spend at **two** sites (\~lines 210 and 383); no-cooldown → `SkillRunner` `nextUse` (\~391); instant-cast → the castTime fork (\~222). The only shared part is \~20 lines of bookkeeping (hold a stack, spend it at a moment). The framework buys those 20 lines and nothing else.
 2. **Most payoff × moment combinations are meaningless and fail SILENTLY.** A damage payoff spent at `OnBasicAttackStart` removes the stack *before* the damage is rolled, so it does nothing, with no error. 6 payoffs × 8 triggers = 48 pairings, only a handful valid. Building validation UI for that violates the project's own "no dead knobs" rule.
 3. **Nothing gets harder by waiting.** Adding a payoff later costs exactly what it costs today — same 20 lines, same single hook. No migration, no lock-in. So buy play-test information first.
 
-**Context (not the reason):** this repo has twice built and deleted a layer that sits between a skill and its cast and rewrites it (`RingVoices` / `WeaponAffixes` / `CastMods`, removed 2026-07-20 and 2026-07-22). The V3 rule it violated is in `docs/active-skill-system-v3/README.md`: *"Every behavior is a natural effect authored on the skill… The ring does numbers only, so there's nothing to fold."* `SkillContext` (in `SkillMod.cs`) is the leftover shell — ~20 per-strike knobs, **all unused**, every strike passes `Default`. Do not revive it.
+**Context (not the reason):** this repo has twice built and deleted a layer that sits between a skill and its cast and rewrites it (`RingVoices` / `WeaponAffixes` / `CastMods`, removed 2026-07-20 and 2026-07-22). The V3 rule it violated is in `docs/active-skill-system-v3/README.md`: *"Every behavior is a natural effect authored on the skill… The ring does numbers only, so there's nothing to fold."* `SkillContext` (in `SkillMod.cs`) is the leftover shell — \~20 per-strike knobs, **all unused**, every strike passes `Default`. Do not revive it.
 
 ### Roster entries that MUST BE REWORKED because they assumed effect-on-act
 
@@ -49,7 +71,7 @@ ee008c17  Check C# without opening Unity: tools/check-unity-code.sh
 
 ### 1. `tools/check-unity-code.sh` — RUN THIS AFTER EVERY C# EDIT
 
-Checks the game's C# for compile errors **without opening Unity and without a force-refresh** (~4s). Unity's own compiler lives in the app bundle; the script runs the same check and never touches the running editor. Checks BOTH halves (game scripts + `Tools ▸ unwritten` editor windows — an editor-only mistake is otherwise invisible until someone opens that window).
+Checks the game's C# for compile errors **without opening Unity and without a force-refresh** (\~4s). Unity's own compiler lives in the app bundle; the script runs the same check and never touches the running editor. Checks BOTH halves (game scripts + `Tools ▸ unwritten` editor windows — an editor-only mistake is otherwise invisible until someone opens that window).
 
 ```bash
 tools/check-unity-code.sh
@@ -71,7 +93,7 @@ All 6 intakes hand their raw post-defence float to `UnitMitigation.Landed(states
 
 ### 5. Damage buff now sums EVERY pile
 
-`Character.DamageBuffMult` read only the FIRST `DamageBuff` pile via `States.Get`. Piles are keyed per granting skill, so Momentum + Lock Blades together lifted damage by only one of them (~27% loss, and cast order silently changed your damage). `UnitStates.DamageBuffMult` now walks all piles and folds each pile's ramp. It is computed **live, not cached**, because a ramp advances on its own clock with no expiry to wake a cache. Single-pile cases (including ramp + cap) verified byte-identical.
+`Character.DamageBuffMult` read only the FIRST `DamageBuff` pile via `States.Get`. Piles are keyed per granting skill, so Momentum + Lock Blades together lifted damage by only one of them (\~27% loss, and cast order silently changed your damage). `UnitStates.DamageBuffMult` now walks all piles and folds each pile's ramp. It is computed **live, not cached**, because a ramp advances on its own clock with no expiry to wake a cache. Single-pile cases (including ramp + cap) verified byte-identical.
 
 ### 6. Attack resolution is now **crit → accuracy → damage**
 
@@ -79,7 +101,7 @@ All 6 intakes hand their raw post-defence float to `UnitMitigation.Landed(states
 
 ### 7. Renaming a skill id re-points every reference
 
-The composer's id field is now DELAYED (commits on Enter/focus-loss, not per keystroke) and a rename sweeps every persisted reference: `triggerSkillId`, `requireSkillId`, and **every Item's `grantedSkillIds`** (a weapon hands out its kit by id, so a rename would otherwise strip the skill off the weapon). One undo step; refuses a blank or duplicate id; logs what it re-pointed. **Known gap:** the player's SAVE stores hotbar slots by skill id and is NOT rewritten — a renamed skill drops off the hotbar and must be re-dragged once.
+The composer's id field is now DELAYED (commits on Enter/focus-loss, not per keystroke) and a rename sweeps every persisted reference: `triggerSkillId`, `requireSkillId`, and **every Item's** `grantedSkillIds` (a weapon hands out its kit by id, so a rename would otherwise strip the skill off the weapon). One undo step; refuses a blank or duplicate id; logs what it re-pointed. **Known gap:** the player's SAVE stores hotbar slots by skill id and is NOT rewritten — a renamed skill drops off the hotbar and must be re-dragged once.
 
 ### 8. `ApplyOneToMob` now excludes self-verbs explicitly
 
@@ -91,22 +113,21 @@ Both passes are handed the SAME effect list; caster-side effects were only kept 
 
 | id | file | trigger | MP | CD | notes |
 | --- | --- | --- | --- | --- | --- |
-| `skill.sword.lunge` | `skill.new 2.asset` | OnCast | 0 | 1s | Dash + strike. **Doc says 8 MP / 5s / reach 8; asset is 0 / 1s / range 4. UNRECONCILED.** |
-| `skill.sword.auto_lunge` | `skill.new 5.asset` | OnBasicAttackStart | 0 | 1s | Spends a Lock Blades charge to re-lunge. `requireSkillId: skill.sword.lock_blades`, consume 1. |
-| `skill.sword.lock_blades` | `skill.new 4.asset` | OnSkillCastComplete→Lunge | 0 | 5s | Grants **5** charges (doc says 3). Buff/Damage stacking, magnitude **0.05** = +5%/stack (+25% at 5). |
-| `skill.sword.momentum` | `skill.new 3.asset` | OnBasicAttackLanded | 1 | 5s | Buff/Damage stacking, cap 99, magnitude **0.03** = +3%/stack. |
+| `skill.sword.lunge` | own file | **OnCast + OnBasicAttackStart** | 0 | 1s | Dash + strike. TWO trigger entries: pressed (no gate), and auto at `OnBasicAttackStart` requiring `skill.sword.lock_blades`, consume 1. **Doc says 8 MP / 5s / reach 8; asset is 0 / 1s / range 4. UNRECONCILED.** |
+| `skill.sword.lock_blades` | own file | OnSkillCastComplete→Lunge | 0 | 5s | Grants **5** charges (doc says 3). Buff/Damage stacking, magnitude **0.05** = +5%/stack (+25% at 5). |
+| `skill.sword.momentum` | own file | OnBasicAttackLanded | 1 | 5s | Buff/Damage stacking, cap 99, magnitude **0.03** = +3%/stack. |
 | `skill.sword.guard_stance` | own file | OnCast | 12 | 10s | Guard 50% / 5s, Def-scaled. Complete. |
 | `skill.sword.committed_strike` | own file | OnCast | 14 | 6s | 200% Atk, 1.2s cast. Complete. |
 | `skill.sword.parry` | own file | OnCast | 8 | **1s** | Parry 1 charge / 3s. **Missing the next-strike +50% — see the rework table above.** |
 | `skill.sword.overclock` | own file | OnCast | 12 | 6s | +30% aspd 8s (magnitude 0.3) + self-Vulnerability 3s (magnitude 1 = +100% damage taken). Complete. |
 | `skill.sword.deathblow` | own file | OnCast (ult) | 40 | 3s | 5.79× base, +0.43/stack, `requireSkillId: skill.sword.momentum`, consumes ALL. User-tuned. |
 
-**The only two 1:1 stack pairs that exist:**
+**The only two stack pairs that exist:**
 
-- `skill.sword.lock_blades` grants → `skill.sword.auto_lunge` consumes **1**
+- `skill.sword.lock_blades` grants → **Lunge's own automatic trigger** consumes **1** (no separate skill since 2026-08-15)
 - `skill.sword.momentum` grants → `skill.sword.deathblow` consumes **ALL**
 
-All 9 share ONE empty placeholder VFX (`cue_trigger_target_hit.asset`, tickId `follow_hit`) — no visuals yet, by design. Reuse it rather than creating more empties.
+All 8 share ONE empty placeholder VFX (`cue_trigger_target_hit.asset`, tickId `follow_hit`) — no visuals yet, by design. Reuse it rather than creating more empties.
 
 ---
 
@@ -126,7 +147,7 @@ All 9 share ONE empty placeholder VFX (`cue_trigger_target_hit.asset`, tickId `f
 | --- | --- |
 | Onslaught | "fire N real basic attacks" effect + the recursion guard (roster doc impl item #9) |
 | Disarm | an outgoing-damage CUT on a mob. The engine now applies mob damage buffs, **but** `Buff` is a self-verb so it cannot target a mob — see gap #1 |
-| Feint | interrupt-on-windup + mobs telegraphing ~0.25s early (they currently tell AT impact) |
+| Feint | interrupt-on-windup + mobs telegraphing \~0.25s early (they currently tell AT impact) |
 | Perfect Form | same-target hit-streak tracking |
 | Unwavering | knockback/interrupt immunity — the player has no knockback to be immune to |
 | Pressure | mob HP regen (mobs have none) |
@@ -141,10 +162,10 @@ Plus **1 active slot deliberately left open** in the design.
 
 ## Known gaps / open decisions (all deliberately NOT actioned)
 
-1. **`Buff` cannot target a mob.** `SkillEffect.IsSelfVerb` decides which side an effect lands on *by kind*, and `Buff` is self-only. Flipping it would re-route Overclock / Momentum / Lock Blades onto enemies and break all three. The real fix is making the side an **authored** choice per effect. **Needs the user's call. This blocks Disarm.**
+1. `Buff` **cannot target a mob.** `SkillEffect.IsSelfVerb` decides which side an effect lands on *by kind*, and `Buff` is self-only. Flipping it would re-route Overclock / Momentum / Lock Blades onto enemies and break all three. The real fix is making the side an **authored** choice per effect. **Needs the user's call. This blocks Disarm.**
 2. **Mobs have no stats / skills / weapons.** A mob's `attack` and `hit` are plain ints on `MonsterAI3D`; `SkillRunner` is hard-wired to the player (`Character.Instance`, `GetComponent<Player3DController>`). The user's stated goal is "player === mobs for SKILLS, WEAPONS, STATS" — a multi-session project, sequenced stats → equipment → skills. Already shared: incoming mitigation (guard/vuln/shield/parry), move speed, blind/stun/freeze/DoT, and now outgoing damage + attack speed.
 3. **One-shot buffs on mobs.** `PassiveEvents` is player-only, so a mob can't hold or spend one. Moot while 1:1 stands.
-4. **`skill.new 1.asset` ("Heal", id `skill.single_heal`)** carries a stacking damage buff at magnitude 1 = +100%/stack for 20.2s. Looks like a placeholder; behaviour unchanged by this session's work. Worth a look.
+4. `skill.single_heal.asset` **("Heal")** carries a stacking damage buff at magnitude 1 = +100%/stack for 20.2s. Looks like a placeholder; behaviour unchanged by this session's work. Worth a look.
 5. Renaming a skill does not rewrite the save's hotbar (see item 7 above).
 
 ---
@@ -158,7 +179,7 @@ Plus **1 active slot deliberately left open** in the design.
 - MP is spent in exactly 2 lines, both `Character.Instance.SpendMana(def.manaCost)`.
 - One damage roll costs **21 nanoseconds** (benchmarked with the real .NET runtime). Combat math is never the performance problem here; per-frame allocation across many mobs is (see `PERFORMANCE.md`).
 - `CombatRng` is unseeded Unity `Random` — no replay/netcode determinism to preserve.
-- `SkillContext` (`SkillMod.cs`) is a dead shell: ~20 knobs, all unused, every strike passes `Default`.
+- `SkillContext` (`SkillMod.cs`) is a dead shell: \~20 knobs, all unused, every strike passes `Default`.
 
 **Hypotheses (NOT verified):** none outstanding.
 
@@ -166,7 +187,7 @@ Plus **1 active slot deliberately left open** in the design.
 
 ## Next single step
 
-Ask the user to settle the **Composure / Opening / Parry-+50% rework** (table at the top) — it unblocks 3 of the 12 remaining entries and needs only a design decision, no code. If the user would rather write code, the next best-value item is the **`Buff`-cannot-target-a-mob** decision (gap #1), which unblocks Disarm.
+Ask the user to settle the **Composure / Opening / Parry-+50% rework** (table at the top) — it unblocks 3 of the 12 remaining entries and needs only a design decision, no code. If the user would rather write code, the next best-value item is the `Buff`**-cannot-target-a-mob** decision (gap #1), which unblocks Disarm.
 
 **Do NOT start the 1:any / effect-on-act system. That decision is made.**
 

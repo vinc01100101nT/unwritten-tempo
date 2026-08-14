@@ -48,6 +48,8 @@ public class InventoryStore : MonoBehaviour
         var counts = new List<int>();
         var refines = new List<int>();
         var cards = new List<string>();
+        var rarities = new List<int>();
+        var kits = new List<string>();
         foreach (var e in Entries)
         {
             if (e == null || e.def == null) continue;
@@ -60,13 +62,17 @@ public class InventoryStore : MonoBehaviour
             {
                 refines.Add(e.instance.upgrade);
                 cards.Add(ItemCatalog.EncodeCards(e.instance.cards));
+                rarities.Add((int)e.instance.rarity);
+                kits.Add(e.instance.EncodeSkills());
             }
-            else { refines.Add(0); cards.Add(""); }
+            else { refines.Add(0); cards.Add(""); rarities.Add((int)e.def.rarity); kits.Add(""); }
         }
         d.bagItemIds = ids.ToArray();
         d.bagCounts  = counts.ToArray();
         d.bagRefines = refines.ToArray();
         d.bagCards   = cards.ToArray();
+        d.bagRarities = rarities.ToArray();
+        d.bagSkills   = kits.ToArray();
     }
 
     /// <summary>Rebuild the bag from a saved <see cref="SaveData"/>. Unknown item ids are dropped so a
@@ -89,6 +95,10 @@ public class InventoryStore : MonoBehaviour
                     entry.instance = new EquipmentInstance(def, refine);
                     if (d.bagCards != null && i < d.bagCards.Length)
                         ItemCatalog.DecodeCards(d.bagCards[i], entry.instance.cards);
+                    // v7+: the copy's rolled rarity + kit ride the save; a pre-v7 entry keeps the def's rarity and
+                    // an empty kit rather than silently re-rolling into something the player never earned.
+                    if (d.bagRarities != null && i < d.bagRarities.Length) entry.instance.rarity = (Rarity)d.bagRarities[i];
+                    if (d.bagSkills != null && i < d.bagSkills.Length) entry.instance.DecodeSkills(d.bagSkills[i]);
                 }
                 Entries.Add(entry);
             }
@@ -105,6 +115,9 @@ public class InventoryStore : MonoBehaviour
             // The Ring of Progression vessel is auto-equipped by Character (one per player); don't also seed a
             // duplicate into the bag. It still returns to the bag normally if you unequip it.
             if (def.slot == EquipSlotType.Ring) continue;
+            // WEAPONS are never seeded: a weapon's identity is its ROLLED kit, so it may only enter the world
+            // through a roll (a drop, or /weapon). A hand-placed starter weapon would have no kit at all.
+            if (def.slot == EquipSlotType.Weapon) continue;
             if (def.slot != EquipSlotType.None)
             {
                 // Showcase the +N enhancement channel: rarer gear arrives pre-refined.
@@ -123,15 +136,38 @@ public class InventoryStore : MonoBehaviour
     {
         if (def == null || count <= 0) return;
         if (def.slot != EquipSlotType.None)
-            for (int i = 0; i < count; i++)
-                Entries.Add(new Entry { def = def, count = 1, instance = new EquipmentInstance(def, 0), isNew = true });
-        else
         {
-            var e = Entries.Find(x => x.def == def && !x.IsEquip);
-            if (e != null) e.count += count;
-            else Entries.Add(new Entry { def = def, count = count, isNew = true });
+            for (int i = 0; i < count; i++) GiveEquipment(def);   // each copy rolls its own identity (and notifies)
+            return;
         }
+        var e = Entries.Find(x => x.def == def && !x.IsEquip);
+        if (e != null) e.count += count;
+        else Entries.Add(new Entry { def = def, count = count, isNew = true });
         Notify();
+    }
+
+    /// <summary>Add ONE rolled copy of a piece of equipment and hand it back, so the caller can report what fate
+    /// gave it (rarity + kit). <paramref name="rarity"/> forces the drop's rarity; null rolls it off the drop table.
+    /// The single place a wearable copy is born — loot, GM grants and rewards all land here, so nothing can enter
+    /// the bag having skipped its roll.</summary>
+    public EquipmentInstance GiveEquipment(Item def, Rarity? rarity = null)
+    {
+        if (def == null || def.slot == EquipSlotType.None) return null;
+        var inst = EquipmentInstance.CreateRolled(def, rarity);
+        Entries.Add(new Entry { def = def, count = 1, instance = inst, isNew = true });
+        Notify();
+        return inst;
+    }
+
+    /// <summary>Empty the whole bag and report how many stacks went. WORN gear is untouched — this is the bag, not
+    /// the character. Returns the number of entries removed (0 = it was already empty).</summary>
+    public int ClearAll()
+    {
+        int removed = Entries.Count;
+        if (removed == 0) return 0;
+        Entries.Clear();
+        Notify();
+        return removed;
     }
 
     public int TotalWeight

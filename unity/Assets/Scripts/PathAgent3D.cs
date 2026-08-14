@@ -18,7 +18,8 @@ public class PathAgent3D : MonoBehaviour
     public float moveSpeed = 3f;
     public float agentRadius = 0.35f;
     public float arriveRadius = 0.1f;
-    public float gravity = 12f;
+    /// <summary>Fall rate — READ from the world's one owner, the same constant the player's controller applies.</summary>
+    public float gravity => GroundElevation.Gravity;
     [Tooltip("Seconds between re-routes while chasing a moving target.")]
     public float repathInterval = 0.35f;
     [Tooltip("Re-route early if the chase target drifts at least this far from the last route goal.")]
@@ -56,6 +57,11 @@ public class PathAgent3D : MonoBehaviour
     Vector3 knockbackVel;
     float knockbackDecel, knockbackUntil;
 
+    // Dash glide (a skill relocation): a fixed A→B slide that overrides pathing, twin of the player's BeginGlideTo.
+    bool gliding, glideEaseIn, glideEaseOut;
+    Vector3 glideDest;
+    float glideSpeed, glideTotalDist, glideEaseSeconds, glideUntil;
+
     static readonly Collider[] avoidBuf = new Collider[16];   // reused overlap buffer (no per-frame alloc)
 
     void Awake()
@@ -65,8 +71,8 @@ public class PathAgent3D : MonoBehaviour
         // billboard units the capsule geometry makes the sprite's feet float by exactly that skinWidth, so
         // Unity's default 0.08 leaves mobs/NPCs "obviously elevated" while the player (own tuned controller)
         // looks planted. Shrink it so the feet sit on the ground. Reads the single owner constant so every
-        // unit shares one skin-width value (see Player3DController.DefaultCapsuleSkinWidth).
-        cc.skinWidth = Player3DController.DefaultCapsuleSkinWidth;
+        // unit shares one skin-width value (see CharacterSpec.capsuleSkinWidth).
+        cc.skinWidth = CharacterSpec.Active.capsuleSkinWidth;
     }
 
     /// <summary>Shove this agent in <paramref name="worldDir"/> at <paramref name="speed"/>, easing out
@@ -81,6 +87,39 @@ public class PathAgent3D : MonoBehaviour
         knockbackDecel = speed / seconds;        // hits 0 right at the end → an ease-out shove
         knockbackUntil = Time.time + seconds;
         Halt();
+    }
+
+    /// <summary>Blink this agent straight to <paramref name="dest"/> — no travel. The CharacterController is toggled
+    /// off across the reposition so the capsule doesn't fight it (same disable/move/enable the player's teleport uses),
+    /// and the current path is dropped so the brain re-routes from where it now stands.</summary>
+    public void Teleport(Vector3 dest)
+    {
+        knockbackUntil = 0f;
+        Halt();
+        if (cc != null) cc.enabled = false;
+        transform.position = dest;
+        if (cc != null) cc.enabled = true;
+    }
+
+    /// <summary>Glide from here to <paramref name="dest"/> at <paramref name="speed"/> world-units/second — a fixed
+    /// A→B move that overrides pathing until it arrives (or its safety window lapses). The mob twin of the player's
+    /// dash glide, so a Dash effect reads the same on either.</summary>
+    public void GlideTo(Vector3 dest, float speed, bool easeIn, bool easeOut, float easeSeconds)
+    {
+        Vector3 to = dest - transform.position; to.y = 0f;
+        float dist = to.magnitude;
+        if (dist < 0.05f || speed <= 0f) return;
+        Halt();
+        knockbackUntil = 0f;
+        glideDest = new Vector3(dest.x, transform.position.y, dest.z);
+        glideSpeed = speed;
+        glideTotalDist = dist;
+        glideEaseIn = easeIn; glideEaseOut = easeOut;
+        glideEaseSeconds = Mathf.Max(0.05f, easeSeconds);
+        // Safety window: a glide blocked by a wall must not hold the agent hostage. Generous enough that easing
+        // (which slows the trip) can't clip a legitimate long dash short.
+        glideUntil = Time.time + dist / speed * 3f + 0.5f;
+        gliding = true;
     }
 
     public void MoveTo(Vector3 worldPoint)
@@ -131,6 +170,22 @@ public class PathAgent3D : MonoBehaviour
             return;
         }
 
+        // A dash glide also overrides pathing: travel straight to the destination, then hand control back.
+        if (gliding)
+        {
+            Vector3 toDest = glideDest - transform.position; toDest.y = 0f;
+            float left = toDest.magnitude;
+            if (left <= 0.05f || Time.time >= glideUntil) { gliding = false; Moving = false; }
+            else
+            {
+                Vector3 g = toDest / left;
+                Facing = Facing3D.FromWorldDir(g);
+                cc.Move((g * GlideSpeed(left) + Vector3.down * gravity) * Time.deltaTime);
+                Moving = true;
+                return;
+            }
+        }
+
         Vector3 dir = Vector3.zero;
         bool moving = false;
 
@@ -169,6 +224,22 @@ public class PathAgent3D : MonoBehaviour
         }
 
         Moving = moving;
+    }
+
+    // The glide's speed this frame, shaped by the ease flags: ramp up over the first easeSeconds' worth of distance,
+    // ramp down over the last. Distance-based (not a clock) so the shape holds however the trip is interrupted; on a
+    // dash shorter than both ramps they simply overlap and the whole hop is gentle. Floored at a tenth so an eased
+    // glide can never stall short of its destination.
+    float GlideSpeed(float distLeft)
+    {
+        if (!glideEaseIn && !glideEaseOut) return glideSpeed;
+        float ramp = Mathf.Min(glideSpeed * glideEaseSeconds, glideTotalDist * 0.5f);
+        if (ramp <= 0.01f) return glideSpeed;
+        float travelled = glideTotalDist - distLeft;
+        float t = 1f;
+        if (glideEaseIn) t = Mathf.Min(t, travelled / ramp);
+        if (glideEaseOut) t = Mathf.Min(t, distLeft / ramp);
+        return glideSpeed * Mathf.Max(0.1f, Mathf.Clamp01(t));
     }
 
     // Local crowd avoidance (ported from the 2D PathAgent): blend the desired heading with a radial push-off

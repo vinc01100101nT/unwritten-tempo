@@ -28,13 +28,29 @@ public static class UnitScale
     public static float ForMob => Global * MobRelative;
 
     /// <summary>
-    /// Blend factor for melee CONTACT distances between the player and a mob — the average of the two units'
-    /// scales. A "reach" authored at full size (factor 1 when both are at authored scale) then shrinks as the
-    /// units shrink, so melee stays glued to the resized bodies instead of swinging/biting across a visible gap.
-    /// Multiply any world-space "close enough to touch" range by this so it self-corrects at any <see cref="Global"/>
-    /// / <see cref="MobRelative"/> dial. Cheap (two reads + a multiply) — safe to call per-frame in the hot path.
+    /// Blend factor for a melee CONTACT distance between TWO SPECIFIC fighters — the average of THEIR OWN scales. A
+    /// "reach" authored at full size then shrinks as the pair shrinks, so melee stays glued to the resized bodies
+    /// instead of swinging across a visible gap.
+    ///
+    /// <para>PASS BOTH FIGHTERS' ACTUAL SCALES. The bug this shape prevents: each side used to bake in its own guess at
+    /// the blend, so a shadow mob (character-sized) and the player (also character-sized) computed 1.00 and 0.65 for
+    /// the very same pairing — the shadow out-reached the player by 54% against an identical body. A blend is a fact
+    /// about a PAIR; it cannot be stored on one side.</para>
+    ///
+    /// Cheap (two reads + a multiply) — safe to call per-frame in the hot path.
     /// </summary>
-    public static float MeleeReachFactor => 0.5f * (ForPlayer + ForMob);
+    public static float MeleeBlend(float scaleA, float scaleB) => 0.5f * (scaleA + scaleB);
+
+    /// <summary>Size of a unit built to the shared <see cref="CharacterSpec"/> body — the player, the townsfolk, and a
+    /// live-3D shadow mob. They are the same body, so they are the same size.</summary>
+    public static float CharacterScale => ForPlayer;
+
+    /// <summary>Size of an ordinary billboard mob, which is shrunk by <see cref="MobRelative"/>.</summary>
+    public static float MobScale => ForMob;
+
+    /// <summary>The blend for the COMMON case — a character against an ordinary sprite mob. Derived from
+    /// <see cref="MeleeBlend"/> rather than re-typed, so it can never disagree with a pairwise check.</summary>
+    public static float MeleeReachFactor => MeleeBlend(CharacterScale, MobScale);
 
     public static void SetGlobal(float v)      => Global      = Mathf.Clamp(v, 0.2f, 3f);
     public static void SetMobRelative(float v) => MobRelative = Mathf.Clamp(v, 0.2f, 3f);

@@ -17,6 +17,12 @@ public class EquipmentInstance
     public int upgrade;
     [Tooltip("Inserted cards (length ≤ def.cardSlots).")]
     public List<Card> cards = new List<Card>();
+    [Tooltip("THIS copy's rarity — rolled per drop, not shared with the asset. Seeded from the def for anything " +
+             "that isn't a rolled weapon, so a hand-authored piece keeps the rarity it was authored with.")]
+    public Rarity rarity = Rarity.Common;
+    [Tooltip("THIS copy's rolled skill kit (stable SkillDef ids) — the weapon's whole identity, decided once at " +
+             "creation by WeaponSkillRoll and carried in the save. Empty for anything that isn't a weapon.")]
+    public List<string> skillIds = new List<string>();
 
     // Enhancement scaling (kept simple for v1 — mirrors the locked prototype):
     //   weapon ATK gains +3 per refine level; every piece gains +1 soft DEF per level.
@@ -28,9 +34,39 @@ public class EquipmentInstance
     {
         this.def = def;
         this.upgrade = upgrade;
+        rarity = def != null ? def.rarity : Rarity.Common;
     }
 
-    public Rarity Rarity => def != null ? def.rarity : Rarity.Common;
+    /// <summary>Make a fresh copy of <paramref name="def"/> as a DROP: a weapon rolls its rarity (unless one is
+    /// forced) and then its skill kit from the published pool of its type; anything else just inherits the def's
+    /// rarity. THE single creation path for anything entering the world — loot, a GM grant, a reward — so no
+    /// caller can hand out a weapon that skipped its roll.</summary>
+    public static EquipmentInstance CreateRolled(Item def, Rarity? forcedRarity = null, int upgrade = 0)
+    {
+        var inst = new EquipmentInstance(def, upgrade);
+        if (def == null) return inst;
+
+        bool isWeapon = def.slot == EquipSlotType.Weapon && def.weaponType != WeaponType.None;
+        inst.rarity = forcedRarity ?? (isWeapon ? WeaponSkillRoll.RollRarity() : def.rarity);
+        if (isWeapon) inst.skillIds = WeaponSkillRoll.RollKit(def.weaponType, inst.rarity);
+        return inst;
+    }
+
+    /// <summary>The rolled kit joined for the save file ("" = none). Paired with <see cref="DecodeSkills"/>.</summary>
+    public string EncodeSkills() => (skillIds == null || skillIds.Count == 0) ? "" : string.Join("|", skillIds);
+
+    /// <summary>Rebuild <see cref="skillIds"/> from a saved string, dropping ids that are no longer authored (a
+    /// retired or renamed skill can't linger as a dead slot).</summary>
+    public void DecodeSkills(string encoded)
+    {
+        if (skillIds == null) skillIds = new List<string>();
+        skillIds.Clear();
+        if (string.IsNullOrEmpty(encoded)) return;
+        foreach (var id in encoded.Split('|'))
+            if (!string.IsNullOrEmpty(id) && SkillCatalog.IsKnown(id)) skillIds.Add(id);
+    }
+
+    public Rarity Rarity => rarity;
     public int CardSlots => def != null ? def.cardSlots : 0;
     public int FilledSockets => cards != null ? cards.Count : 0;
     public bool HasFreeSocket => FilledSockets < CardSlots;

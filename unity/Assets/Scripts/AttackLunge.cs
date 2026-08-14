@@ -15,17 +15,23 @@ public class AttackLunge : MonoBehaviour
     [Tooltip("Peak stretch amount (0.25 = ±25% wider/flatter at the peak).")]
     public float stretch = 0.25f;
 
-    Vector3 buildScale;   // authored localScale; UnitScale.ForMob is applied on top (matches BillboardAnimator3D)
+    Vector3 buildScale;   // fallback capture, used only when this mob has no BillboardAnimator3D to own the rest scale
+    BillboardAnimator3D anim;
     Coroutine co;
 
     /// <summary>True while a chomp is animating the scale — idle breathing yields to it.</summary>
     public bool Punching => co != null;
 
-    void Awake() { buildScale = transform.localScale; }
+    void Awake()
+    {
+        anim = GetComponent<BillboardAnimator3D>();
+        buildScale = transform.localScale;
+    }
 
-    // The unit-size-scaled rest scale the chomp squashes around — so the mob doesn't pop back to its raw
-    // (un-scaled) build size mid-attack when the global/mob size dial is below 1.
-    Vector3 BaseScale => buildScale * UnitScale.ForMob;
+    // The rest scale the chomp squashes around — READ from the sprite animator, which owns this mob's live body scale,
+    // so the chomp and the idle breathe can't disagree about what "rest" means. The local capture is only a fallback
+    // for a mob that has no sprite animator at all.
+    Vector3 BaseScale => anim != null ? anim.BaseScale : buildScale * UnitScale.ForMob;
 
     public void Punch()
     {

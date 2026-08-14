@@ -41,7 +41,7 @@ public static class Vfx
         ParticleSystem.MinMaxGradient[] baseColor; // authored startColor per system — the tint baseline
         bool[] isRoot;                           // system has no ParticleSystem ancestor in this instance → drives children
         bool[] baseLoop;                         // authored loop flag per system — restored for attached auras, forced off for one-shots
-        int poolKey;
+        EntityId poolKey;
         bool looping;          // any child system loops → won't auto-return; the caller must Stop() it
         float oneShotDuration; // longest system's (duration + max start-lifetime), for the auto-return timer
         float fadeTail;        // longest system's particle lifetime — the fade window after emission stops
@@ -56,7 +56,7 @@ public static class Vfx
         // time this instance is built (the arrays persist across reuses), so no GetComponentsInChildren on the
         // hot spawn path — and every Begin resets speed/colour FROM these baselines, so a crit's params never
         // leak into the next reuse of the same pooled instance.
-        internal void Prepare(int key)
+        internal void Prepare(EntityId key)
         {
             poolKey = key;
             systems = GetComponentsInChildren<ParticleSystem>(true);
@@ -225,7 +225,7 @@ public static class Vfx
 
     // ---- pool ---------------------------------------------------------------
     static Transform host;                                                   // parent for all pooled instances
-    static readonly Dictionary<int, Stack<EffectHandle>> pools = new Dictionary<int, Stack<EffectHandle>>();
+    static readonly Dictionary<EntityId, Stack<EffectHandle>> pools = new Dictionary<EntityId, Stack<EffectHandle>>();
 
     // The shared parent. Recreated lazily if a scene unload destroyed it (pooled children die with it, so the
     // pools are cleared then to drop the stale refs). Mirrors DamagePopup.EnsureHost.
@@ -242,7 +242,7 @@ public static class Vfx
 
     // The one place a pooled instance is born (Rent pool-miss + Prewarm). Tags it DontSaveInEditor so a pool
     // object can never be baked into a saved scene, then caches its components once via Prepare.
-    static EffectHandle NewInstance(EffectDef def, int key)
+    static EffectHandle NewInstance(EffectDef def, EntityId key)
     {
         var go = Object.Instantiate(def.prefab, host);
         go.hideFlags = HideFlags.DontSaveInEditor;
@@ -252,7 +252,7 @@ public static class Vfx
         return h;
     }
 
-    static Stack<EffectHandle> GetPool(int key)
+    static Stack<EffectHandle> GetPool(EntityId key)
     {
         if (!pools.TryGetValue(key, out var s)) { s = new Stack<EffectHandle>(); pools[key] = s; }
         return s;
@@ -262,7 +262,7 @@ public static class Vfx
     static EffectHandle Rent(EffectDef def)
     {
         EnsureHost();
-        int key = def.prefab.GetInstanceID();
+        EntityId key = def.prefab.GetEntityId();
         var pool = GetPool(key);
         if (pool.Count > 0) return pool.Pop();
         return NewInstance(def, key);
@@ -348,7 +348,7 @@ public static class Vfx
         var def = EffectCatalog.Get(id);
         if (def == null) return;
         EnsureHost();
-        int key = def.prefab.GetInstanceID();
+        EntityId key = def.prefab.GetEntityId();
         var pool = GetPool(key);
         for (int i = 0; i < count; i++)
         {

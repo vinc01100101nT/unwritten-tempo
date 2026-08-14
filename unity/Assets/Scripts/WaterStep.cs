@@ -41,7 +41,7 @@ public class WaterStep : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
     {
-        if (FindFirstObjectByType<WaterStep>() != null) return;
+        if (FindAnyObjectByType<WaterStep>() != null) return;
         var go = new GameObject("WaterStep") { hideFlags = HideFlags.DontSaveInEditor };
         DontDestroyOnLoad(go);
         go.AddComponent<WaterStep>();

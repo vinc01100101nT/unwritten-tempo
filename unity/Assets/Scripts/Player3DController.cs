@@ -23,12 +23,15 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CharacterController))]
 public partial class Player3DController : MonoBehaviour
 {
-    [Tooltip("TRAVEL speed: base ground translation (world units, pre-UnitScale). Changing this moves you faster/slower " +
-             "WITHOUT scaling the animation — GaitSpeedMult divides it back out, so the legs keep their baked cadence.")]
-    public float moveSpeed = 2f;
-    [Tooltip("GAIT speed: a baseline multiplier that scales movement AND animation together (the permanent twin of the " +
-             "DevSettings Haste buff). Stacks multiplicatively with live Slow/Haste, so legs + footsteps churn with it.")]
-    public float gaitSpeed = 1.5f;
+    // TRAVEL, GAIT and the gear fractions all come from the shared CharacterSpec, so the player, the townsfolk and the
+    // shadow mobs cannot disagree about how fast a character travels or how quickly its legs churn. Tune them there.
+
+    /// <summary>TRAVEL speed: base ground translation before unit scale. Moving this changes speed WITHOUT scaling the
+    /// animation — <see cref="GaitSpeedMult"/> divides it back out so the legs keep their baked cadence.</summary>
+    public float moveSpeed => CharacterSpec.Active.moveSpeed;
+    /// <summary>GAIT speed: the baseline that scales movement AND animation together, so legs and footsteps churn
+    /// with it. Stacks multiplicatively with live Slow/Haste.</summary>
+    public float gaitSpeed => CharacterSpec.Active.gaitSpeed;
     /// <summary>The player's CURRENT run speed in world units/sec — the same hand-tuned baseline the walk uses, scaled
     /// by <see cref="UnitScale.ForPlayer"/>, the <see cref="gaitSpeed"/> baseline, and the live Slow/Haste move buff
     /// (but NOT the Shift-walk slowdown). The dodge roll (E) reads this so it's always exactly 2× the current run.</summary>
@@ -37,8 +40,16 @@ public partial class Player3DController : MonoBehaviour
     /// aftercast root and to &lt;1 under Slow). A skill glide captures its speed from THIS so its own
     /// release-animation lock can't zero it — the glide is a fixed A→B move, not gated locomotion.</summary>
     public float RawRunSpeed => moveSpeed * UnitScale.ForPlayer * gaitSpeed;
-    [Tooltip("Speed multiplier while holding Shift to walk — slower than the default run, and plays the Walk animation.")]
-    public float walkSpeedMult = 0.2f;
+    /// <summary>Travel speed of the RUN gear — the default jog you move at with no modifier held. THE single owner
+    /// of that composition (base × unit scale × gear tier × gait), so anything that must move "like the player"
+    /// reads this instead of re-deriving the multiplier chain and drifting from it. A chasing 3D shadow mob runs
+    /// at exactly this, because a shadow is a player-sized unit and must stride like one.</summary>
+    public float RunGearSpeed => moveSpeed * UnitScale.ForPlayer * runSpeedMult * gaitSpeed;
+    /// <summary>Travel speed of the WALK gear (Shift held) — the strolling pace. Same single-owner rule as
+    /// <see cref="RunGearSpeed"/>; the ambient townsfolk and a wandering shadow both move at exactly this.</summary>
+    public float WalkGearSpeed => moveSpeed * UnitScale.ForPlayer * walkSpeedMult * gaitSpeed;
+    /// <summary>Speed fraction while holding Shift to walk — the shared walk gear.</summary>
+    public float walkSpeedMult => CharacterSpec.Active.walkGearMult;
     /// <summary>True while moving with Shift held (walk, not run). Read by <see cref="Character3DVisual"/>'s stance brain to
     /// choose the Walk vs Run animation.</summary>
     public bool WalkingSlow { get; private set; }
@@ -49,9 +60,9 @@ public partial class Player3DController : MonoBehaviour
     public float GaitSpeedMult { get; private set; } = 1f;
 
     // ── Sprint (V) + stamina ──────────────────────────────────────────────────
-    [Tooltip("Run gear as a fraction of Sprint — both its travel speed AND its leg cadence. 0.5 = normal Run is a " +
-             "half-speed jog; Sprint (V) is the full-speed run the old default used.")]
-    [Range(0.1f, 1f)] public float runSpeedMult = 0.5f;
+    /// <summary>Run gear as a fraction of Sprint — both its travel speed AND its leg cadence. The shared run gear;
+    /// Sprint (V) is the full-speed run on top of it.</summary>
+    public float runSpeedMult => CharacterSpec.Active.runGearMult;
     [Tooltip("Stamina drained per second while V-sprinting.")]
     public float sprintDrainPerSec = 25f;
     [Tooltip("Stamina recharged per second while standing idle (fast).")]
@@ -70,43 +81,25 @@ public partial class Player3DController : MonoBehaviour
 
     public float arriveDistance = 0.12f;
     [Tooltip("Clearance kept from props when routing.")]
-    public float agentRadius = 0.35f;
+    /// <summary>Routing footprint — READ from the shared CharacterSpec, the same width every townsperson and shadow
+    /// mob is given. It used to be its own serialized field that merely happened to match.</summary>
+    public float agentRadius => CharacterSpec.Active.routingRadius;
     [Tooltip("Downward acceleration (units/s²). Now ACCUMULATES into a vertical velocity while airborne so " +
              "walking off a ledge free-falls (accelerates) instead of descending at a flat rate; reset on landing.")]
-    public float gravity = 12f;
+    /// <summary>Fall rate — READ from the world's one owner, so the player and every NPC/mob fall identically.</summary>
+    public float gravity => GroundElevation.Gravity;
     [Tooltip("Downward speed (units/s) the player must exceed before the falling pose plays — keeps small " +
              "steps/slopes from flickering the in-air animation.")]
     public float fallAnimSpeed = 1.5f;
     [Tooltip("During attack-move, auto-engage a mob within this range.")]
     public float acquireRange = 5f;
 
-    // ── Collision capsule (CharacterController) — hand-tuned for the 2.5D avatar ──────────────────
-    // Deliberately SHORT so the capsule's top clears overhead prop geometry (overhanging roof eaves,
-    // tree leaves) while the bottom still bumps + climbs ground-level geometry (walls, stairs, tree
-    // roots). Applied in Awake so every player gets it without a rebuild and it survives map loads;
-    // also the shared default the player builders bake in (see ApplyDefaultCapsule). Prop colliders
-    // stay the exact visible mesh — the oversize-collision feel was THIS capsule being full-height.
-    public const float DefaultCapsuleRadius = 0.15f;
-    public const float DefaultCapsuleHeight = 0.5f;
-    // Single-sourced with the pathfinder's cliff/stair threshold so player + mobs agree on what's climbable.
-    public const float DefaultCapsuleStepOffset = GroundElevation.MaxClimbStep;
-    public const float DefaultCapsuleSlopeLimit = 45f;
-
-    // set skin width to 0.02f --vince
-    public const float DefaultCapsuleSkinWidth = 0.02f;   // low so the capsule bottom rests ~on the ground (min hover)
-    // Centered capsule (center.y = 0). The VISUAL is feet-seated by Character3DVisual regardless; the CC is kept
-    // centered on the root by choice. Lowering skinWidth (above) is what keeps the capsule bottom touching ground.
-
-    // i changed collider Y to 0.25f, blame me here when encountering weird collisions with props. -vince
-    public static readonly Vector3 DefaultCapsuleCenter = new Vector3(0f, 0.25f, 0f);
-
-    [Header("Collision capsule (applied in Awake — tuned to clear overhead leaves/eaves)")]
-    public float capsuleRadius = DefaultCapsuleRadius;
-    public float capsuleHeight = DefaultCapsuleHeight;
-    public Vector3 capsuleCenter = DefaultCapsuleCenter;   // single source: mirror the const, don't re-type
-    public float capsuleStepOffset = DefaultCapsuleStepOffset;
-    public float capsuleSlopeLimit = DefaultCapsuleSlopeLimit;
-    public float capsuleSkinWidth = DefaultCapsuleSkinWidth;
+    // ── Collision capsule ─────────────────────────────────────────────────────────────────────────
+    // The shape now lives on the shared CharacterSpec, because the player, the townsfolk and the shadow
+    // mobs are the same body and must collide the same. It used to be hand-tuned constants HERE while both
+    // NPC builders ran a copy-pasted formula off the body height — the same character with collision shapes
+    // 2.5x apart. Still deliberately SHORT so the capsule's top clears overhead prop geometry (roof eaves,
+    // tree leaves) while the bottom bumps + climbs ground-level geometry; that tuning moved, it didn't change.
 
     [Header("Target magnetism (soft-snap)")]
     [Tooltip("A mob whose on-screen sprite is within this many pixels of the cursor counts as hovered/" +
@@ -254,43 +247,27 @@ public partial class Player3DController : MonoBehaviour
         if (added) PlayerSkills.Refresh();   // re-resolve id → runner so the hotbar/menu see the new actives
     }
 
-    /// <summary>Push the serialized capsule fields onto the CharacterController. Called in Awake so the
-    /// tuned (short) capsule is enforced on every player — even one built before this — and re-applies
-    /// across map loads. Tune via the Inspector fields (or the Default* consts) and it sticks.</summary>
+    /// <summary>Push the SHARED character capsule onto this player's CharacterController. Called in Awake so the
+    /// tuned (short) capsule is enforced on every player — even one built before this — and re-applies across map
+    /// loads. Tune it on the CharacterSpec asset and every character changes together.</summary>
     public void ApplyCapsule()
     {
         if (controller == null) controller = GetComponent<CharacterController>();
-        if (controller == null) return;
-        controller.radius = capsuleRadius;
-        controller.height = capsuleHeight;
-        controller.center = capsuleCenter;
-        controller.stepOffset = capsuleStepOffset;
-        controller.slopeLimit = capsuleSlopeLimit;
-        controller.skinWidth = capsuleSkinWidth;
+        CharacterSpec.Active.ApplyCapsule(controller);
     }
 
 #if UNITY_EDITOR
-    // Live-apply the serialized capsule fields to the CharacterController as you tune them in the Inspector —
-    // including in Play mode (Awake ran once and won't re-read them). Editor-only; no runtime cost.
+    // Live-apply the shared capsule as you tune the spec — including in Play mode (Awake ran once and won't re-read
+    // it). Editor-only; no runtime cost.
     void OnValidate()
     {
         if (GetComponent<CharacterController>() != null) ApplyCapsule();
     }
 #endif
 
-    /// <summary>Write the canonical tuned capsule onto a CharacterController — the one place the player
-    /// builders (Build Player / NinjaGreen / Sscary) call so a freshly-built player matches the runtime
-    /// default in edit mode too. Keeps all four sites from drifting.</summary>
-    public static void ApplyDefaultCapsule(CharacterController cc)
-    {
-        if (cc == null) return;
-        cc.radius = DefaultCapsuleRadius;
-        cc.height = DefaultCapsuleHeight;
-        cc.center = DefaultCapsuleCenter;
-        cc.stepOffset = DefaultCapsuleStepOffset;
-        cc.slopeLimit = DefaultCapsuleSlopeLimit;
-        cc.skinWidth = DefaultCapsuleSkinWidth;
-    }
+    /// <summary>Write the shared character capsule onto a CharacterController — the one place the player builders
+    /// call so a freshly-built player matches the runtime shape in edit mode too.</summary>
+    public static void ApplyDefaultCapsule(CharacterController cc) => CharacterSpec.Active.ApplyCapsule(cc);
 
     void Update()
     {
@@ -558,6 +535,14 @@ public partial class Player3DController : MonoBehaviour
     // exits by switching the order out from under it.
     Vector3 AutoStep()
     {
+        // A taunt outranks acquisition: while the lock holds, the taunter IS the target and auto-combat can't drift
+        // to a nearer mob. Same rule a taunted mob obeys (MonsterAI3D.Taunted) — one aggro concept, both sides.
+        if (Taunted && attackTarget != tauntSource)
+        {
+            attackTarget = tauntSource;
+            if (targetMarker != null) targetMarker.Follow(tauntSource.transform);
+            routing = false; path.Clear();
+        }
         if (attackTarget == null || attackTarget.IsDead)
         {
             attackTarget = NearestMonsterWithin(roamRange);
@@ -645,6 +630,40 @@ public partial class Player3DController : MonoBehaviour
 
     /// <summary>Cancel any move/attack order (used on map arrival by PersistentPlayer3D).</summary>
     public void Halt() => Stop();
+
+    // ---- aggro (the player's half of the shared Taunt verb) -----------------------------------------------------
+    Health tauntSource;
+    float tauntUntil;
+
+    /// <summary>True while a taunt is forcing this player onto <see cref="tauntSource"/> — the mirror of
+    /// <c>MonsterAI3D.Taunted</c>. A dead taunter releases the lock immediately.</summary>
+    bool Taunted => Time.time < tauntUntil && tauntSource != null && !tauntSource.IsDead;
+
+    /// <summary>Force this player to engage <paramref name="source"/> for <paramref name="seconds"/> — auto-combat
+    /// can't retarget away while it holds. The player's twin of <c>MonsterAI3D.Taunt</c>, so a taunt authored on a
+    /// skill behaves the same whoever it lands on. Stacks by later end time, exactly like the mob side.</summary>
+    public void Taunt(Health source, float seconds)
+    {
+        if (source == null || seconds <= 0f) return;
+        tauntSource = source;
+        tauntUntil = Mathf.Max(tauntUntil, Time.time + seconds);
+        BeginAttack(source, false);   // false = don't resume attack-move after the kill; the taunt decided this target
+    }
+
+    /// <summary>Shove this player away from <paramref name="worldFrom"/> — the twin of a mob's knockback, so a
+    /// Knockback / Pull effect works on either. Routed through the dash glide (the one A→B move primitive the rig
+    /// owns) so it collides with props instead of phasing through them.</summary>
+    public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
+    {
+        if (speed <= 0f || seconds <= 0f) return;
+        Vector3 dir = transform.position - worldFrom; dir.y = 0f;
+        if (dir.sqrMagnitude < 1e-4f) dir = transform.forward;
+        dir.Normalize();
+        // Distance = the same speed × time a mob shove covers, so one authored number reads identically on both sides.
+        // BeginGlideTo speaks in MULTIPLES of run speed, so convert the world-units/second the effect authored.
+        float mult = speed / Mathf.Max(0.01f, RawRunSpeed);
+        BeginGlideTo(transform.position + dir * (speed * seconds), mult, false, true, Mathf.Max(0.05f, seconds));
+    }
 
     /// <summary>Re-publish <see cref="snapRadiusPixels"/> to the static the cursor pick reads, so the
     /// dev-settings panel can tune target magnetism live (the field is only mirrored in Awake otherwise).</summary>

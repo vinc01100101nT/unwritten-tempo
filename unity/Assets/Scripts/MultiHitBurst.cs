@@ -81,7 +81,7 @@ public class MultiHitBurst : MonoBehaviour
                     anyHit = true;
                     totals[i] += dealt;
 
-                    Vector3 tp = UnitAnchor.Center(ai.transform);   // live total over the mob (feet-pivoted)
+                    Vector3 tp = UnitAnchor.Overhead(ai.transform);   // live total over the mob
                     // First hit of THIS tick spawns the yellow total; later hits just bump it up.
                     if (totalPopups[i] == null) totalPopups[i] = DamagePopup.SpawnHeld(tp, totals[i], TotalColor, 1.7f);
                     else totalPopups[i].SetHeld(totals[i], tp);
@@ -132,7 +132,7 @@ public class MultiHitBurst : MonoBehaviour
                 anyHit = true;
                 totals[i] += dealt;
 
-                Vector3 tp = UnitAnchor.Center(ai.transform);
+                Vector3 tp = UnitAnchor.Overhead(ai.transform);
                 if (popups[i] == null) popups[i] = DamagePopup.SpawnHeld(tp, totals[i], TotalColor, 1.7f);
                 else popups[i].SetHeld(totals[i], tp);
             }
