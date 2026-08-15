@@ -50,6 +50,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // tick of the cast. A live re-read would pay the first tick off the full pile and the rest off an empty one, and
     // would also make a multi-tick finisher's damage depend on tick ORDER. (Locked order: snapshot → compute → consume.)
     int castStacks;
+    // The same pile read the OTHER way — its stacks' summed VALUE, as one number whatever channel they use (a
+    // percentage pile is already a decimal: +30% arrives as 0.3). Float, because that reading can be fractional.
+    float castCarried;
 
     /// <summary>The caster's unified state store — the ONE store the gate reads and spends from.</summary>
     public UnitStates CasterStates => Character.Instance != null ? Character.Instance.States : null;
@@ -297,6 +300,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         consumedThisCast = false;   // this cast hasn't paid its state cost yet — it pays once, after its effects compute
         castStacks = StateGate.StackCount(firedBy, CasterStates);   // the pile this cast is about to cash, read BEFORE spending it
+        castCarried = StateGate.CarriedTotal(firedBy, CasterStates);   // same snapshot, same moment — the payoff picks which one counts
         bool pressed = firedBy != null && firedBy.trigger == SkillTrigger.OnCast;
         if (pressed) castChain = 0UL;   // a player-pressed cast starts a FRESH chain (nothing caused it)
 
@@ -431,7 +435,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                 // ticks, not a hard-coded scan. radius = the projectile's hit width.
                 break;
         }
-        // Stamp this cast's causal chain for the whole burst, so any trigger the damage raises (OnHit / OnKill fire
+        // Stamp this cast's causal chain for the whole burst, so any trigger the damage raises (OnDamageDealt / OnKill fire
         // synchronously inside the applier) can see which passives are already upstream and refuse to re-fire them.
         ulong prevChain = PassiveEvents.PushChain(castChain);
         try
@@ -439,10 +443,21 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // The stack payoff rides the burst's EXISTING extra-multiplier input (it adds to each effect's own
             // damageMult), so cashing a pile can't become a second damage path beside the normal roll.
             SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, b.effects,
-                                          lastCtx.targetUnit, firedBy != null ? firedBy.StackDamageBonus(castStacks) : 0f, 0, comboDamageMult,
+                                          lastCtx.targetUnit,
+                                          firedBy != null ? firedBy.StackDamageBonus(castStacks) : 0f,
+                                          // The CarriedTotal payoff rides the burst's FLAT input, not the multiplier:
+                                          // a carried value is already damage, so it must be added, never re-rolled
+                                          // through the caster's Attack. Only one of the two is ever non-zero — the
+                                          // authored payoff picks which.
+                                          firedBy != null ? firedBy.CarriedDamageBonus(castCarried) : 0,
+                                          comboDamageMult,
                                           def.icon, def.displayName, def.id,   // def.id KEYS the pile: stacks belong to the skill that granted them
                                           aimPoint: lastCtx.effectPoint,   // Dash/Teleport go where stage 2 aimed, not to the tick's VFX anchor
-                                          caster: Character.Instance); // explicit caster (local player today; a per-connection entity once server-authoritative)
+                                          caster: Character.Instance, // explicit caster (local player today; a per-connection entity once server-authoritative)
+                                          // Both readings of the cashed pile, measured once at cast start, handed to
+                                          // EVERY effect this burst runs — so a skill's damage and its lifesteal read
+                                          // the SAME pile, and the first one can't spend it out from under the second.
+                                          vars: new StackVars(castStacks, castCarried));
         }
         finally { PassiveEvents.PopChain(prevChain); }
 

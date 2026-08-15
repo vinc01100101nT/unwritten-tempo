@@ -1,0 +1,110 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
+  m_Name: skill.sword.brace
+  m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  targetingMigrated: 1
+  id: skill.sword.brace
+  displayName: Brace
+  weaponType: 1
+  published: 1
+  icon: {fileID: -4335222134116007343, guid: 1fce026f31fb948408df69e99065b9fb, type: 3}
+  description: 
+  archetype: 0
+  family: 0
+  shape: 3
+  complexity: 0
+  acquisitionTier: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+    stackReading: 0
+    stackPayoff: 0
+    damageMultPerStack: 0
+  triggersMigrated: 1
+  trigger: 0
+  triggerSkillId: 
+  requiresState: 0
+  requireSkillId: 
+  requireState: 12
+  requireMinStacks: 1
+  consumeAllStacks: 0
+  consumeStacks: 0
+  stackReading: 0
+  stackPayoff: 0
+  damageMultPerStack: 0
+  manaCost: 10
+  cooldown: 7
+  castTime: 0
+  aim: 2
+  castRange: 11
+  tier: 0
+  chargeCost: 100
+  castCircleId: 
+  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
+  repeatCount: 1
+  repeatInterval: 0
+  projectileCount: 1
+  projectileSpread: 0
+  hasReleaseStance: 0
+  releaseStance: 14
+  bindings:
+  - tickId: follow_hit
+    targetMode: 0
+    groundDelivery: 1
+    affects: 1
+    playerFaction: 0
+    radius: 1.5
+    stayDuration: 0
+    effects:
+    - kind: 19
+      damageType: 1
+      damageMult: 1
+      element: 0
+      amount: 10
+      ailment: 2
+      seconds: 4
+      shoveSeconds: 0.25
+      magnitude: 1
+      stacking: 1
+      stackLimit: 5
+      stacksPerApply: 5
+      dashSpeedMult: 8
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds: 0.3
+      hitCount: 1
+      chance: 0
+      useStackValue: 0
+      stackValueSource: 0
+      stackValueMult: 1
+      side: 1
+      buffStat: 0
+      rampDelay: 0
+      rampPerStep: 0
+      rampInterval: 5
+      rampCap: 0
+      affinity: []
+      durationAffinity: []
+      hitCountAffinity: []
+    targets: 2
+    scope: 0
+  shortLabel: Skill
+  keyLabel: 
+  slotOrder: 10
+  tint: {r: 1, g: 1, b: 1, a: 1}

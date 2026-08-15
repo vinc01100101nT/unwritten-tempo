@@ -99,16 +99,106 @@ public enum StackPayoff
     Damage = 0,
 }
 
+/// <summary>HOW a consumer MEASURES the pile it cashes — orthogonal to <see cref="StackPayoff"/>, which says what
+/// that measurement BUYS. Two independent questions: this one is "how much is there?", the payoff is "what is it
+/// worth?", and every payoff can be paid on either reading.
+///
+/// <para>Serialized by int: <see cref="Count"/> MUST stay 0 (assets authored before this existed deserialize as 0 and
+/// keep their exact behaviour), and new values are APPENDED, never inserted.</para></summary>
+public enum StackReading
+{
+    /// <summary>HOW MANY stacks are in the pile. The tally reading — a pile of ten identical marks is worth ten.
+    /// (Momentum → Deathblow.)</summary>
+    Count = 0,
+    /// <summary>The SUM OF WHAT THE STACKS CARRY. The amount reading — for a pile whose stacks each hold a number
+    /// rather than just existing. (Brace's delayed damage → Retribution.)</summary>
+    CarriedTotal,
+}
+
+/// <summary>The cast's stack readings, measured ONCE when it starts and handed to every effect it runs — so any
+/// number of effects on one skill can each pull from the same pile without re-reading it (and without the first one
+/// spending it out from under the rest). Retribution is the case that needs this: its damage and its lifesteal are
+/// two effects reading ONE banked total.
+///
+/// <para>A readonly struct passed by value — no allocation on the combat path, and nothing downstream can alter what
+/// the cast measured.</para></summary>
+public readonly struct StackVars
+{
+    /// <summary>How many stacks the cashed pile held. <see cref="StackReading.Count"/>.</summary>
+    public readonly int Count;
+    /// <summary>The summed value those stacks carried, already in plain units — a percentage pile reads as its
+    /// decimal (+30% ⇒ 0.3). <see cref="StackReading.CarriedTotal"/>.</summary>
+    public readonly float Carried;
+
+    public StackVars(int count, float carried) { Count = count; Carried = carried; }
+
+    /// <summary>Read the variable an effect asked for. The ONE place the choice is resolved, so an effect can never
+    /// read one reading while its label claims the other.</summary>
+    public float Read(StackReading reading) => reading == StackReading.CarriedTotal ? Carried : Count;
+
+    public static readonly StackVars None = new StackVars(0, 0f);
+}
+
+/// <summary>Every moment a skill can start from. Each member below documents its EXACT fire-site and the precise
+/// condition that site checks, read from that code — an author picking a trigger must never have to guess whether a
+/// whiffed swing, an absorbed hit or a parried blow counts. The composer shows the same text per selection.
+///
+/// <para><b>Naming is load-bearing.</b> <c>…Dealt</c> = it happened outward, from you. <c>…Received</c> = it happened
+/// to you. A <c>Damage…</c> name means the moment REQUIRES damage to have actually reached HP; a name without it
+/// (<see cref="OnBasicAttackStart"/>) does not.</para></summary>
 public enum SkillTrigger
 {
+    /// <summary>THE PLAYER PRESSED IT. The only trigger that takes a hotbar slot and the only one that pays the
+    /// skill's MP + cooldown; every other moment fires the skill free, because the moment IS the gesture.</summary>
     OnCast = 0,
-    OnSkillCastComplete,   // parameterized by triggerSkillId: that active finished casting (not interrupted)
-    OnBasicAttackLanded,   // natural — a basic attack connected
-    OnKill,                // natural — a mob died to the player
-    OnLowHP,               // natural — the player dropped below the low-HP threshold
-    OnHit,                 // natural — the player landed a damaging hit
-    OnParry,               // natural — a successful block (fired by the parry system, NOT on cast)
-    OnBasicAttackStart,    // natural — about to basic-attack a target, fired BEFORE reach is judged (gap-closers land first)
+
+    /// <summary>PARAMETERIZED by <see cref="SkillDef.triggerSkillId"/> — the ONE named active finished its wind-up
+    /// without being interrupted. Fires at <c>SkillRunner.cs:312</c>, gated on <c>pressed</c>, so it means "THE PLAYER
+    /// CAST THAT SKILL": a run of the same skill started by one of its own non-OnCast triggers does NOT announce.
+    /// That gate is what stops a granter/consumer pair (Lock Blades ⇄ Lunge) from refilling itself forever.
+    /// No entity is passed — nothing was necessarily hit.</summary>
+    OnSkillCastComplete,
+
+    /// <summary>A BASIC ATTACK YOU SWUNG DEALT DAMAGE. Fires at <c>Player3DAttacker.cs:255</c>, inside
+    /// <c>if (dealt &gt; 0)</c> — so a MISS fires nothing, and skill strikes never fire it (they aren't basics).
+    /// Entity = the mob you hit. This is Momentum's moment: it paces off attack speed, which is why attack speed is
+    /// the lever on any stack pile built from it.</summary>
+    OnBasicAttackDealt,
+
+    /// <summary>A MOB DIED. Fires at <c>Health.cs:390</c> in <c>Die()</c>, before the corpse is pooled, with the dying
+    /// mob as the entity (read synchronously — it may not exist a frame later).</summary>
+    OnKill,
+
+    /// <summary>YOUR HP CROSSED THE LOW THRESHOLD — <c>LowHpFrac</c> = <b>0.3</b> (<c>Character.cs:875</c>). Fires at
+    /// <c>Character.cs:898</c> only on the FALLING EDGE (above the line before this hit, at-or-below after) and only
+    /// if the hit LEFT YOU ALIVE, so it re-arms after any heal with no flag to reset. Damage-over-time crossings do
+    /// NOT fire it — they never reach that line. No entity is passed.</summary>
+    OnLowHP,
+
+    /// <summary>YOU DEALT DAMAGE THAT LANDED. Fires at <c>Health.cs:312</c> inside <c>ApplyLeech</c>, which bails on
+    /// <c>dmgDealt &lt;= 0</c> (<c>Health.cs:309</c>) — the number checked is AFTER the victim's full mitigation, so a
+    /// miss, a fully-absorbed hit or a braced hit fires NOTHING. Basics AND skills both funnel here, once per damage
+    /// instance. Entity = the victim.</summary>
+    OnDamageDealt,
+
+    /// <summary>YOU PARRIED — a charge was spent erasing an incoming hit. Fires at <c>Character.cs:868</c>, only after
+    /// the parry actually consumed a charge. Entity = the attacker you parried, so a counter can aim back. A parried
+    /// hit produces no damage number at all, so it fires NEITHER damage moment — this is its own moment precisely
+    /// because nothing was taken.</summary>
+    OnParry,
+
+    /// <summary>YOU ARE ABOUT TO SWING — the intent, not the outcome. Fires at <c>Player3DAttacker.cs:165</c>
+    /// (<c>AnnounceAttackIntent</c>) BEFORE reach is judged, so a gap-closer moves you in and the same swing still
+    /// lands. Gated to once per swing interval. Entity = the intended target. The ONLY moment here that does not
+    /// require damage — it fires even if the swing goes on to miss.</summary>
+    OnBasicAttackStart,
+
+    /// <summary>DAMAGE LANDED ON YOU. The exact mirror of <see cref="OnDamageDealt"/>: fires at
+    /// <c>Character.cs:892</c> inside <c>if (dmg &gt; 0)</c>, after EVERY mitigation, so it means one damage instance
+    /// that truly cost HP. A parried hit (see <see cref="OnParry"/>), a hit a Shield fully absorbed, and a hit held by
+    /// a Brace window all fire NOTHING — same rule the dealt side uses, so the two can never drift apart. Ailment
+    /// ticks (poison / bleed / burn) bypass this path and fire neither side. Entity = the attacker.</summary>
+    OnDamageReceived,
 }
 
 /// <summary>ONE way a skill can start — a moment, plus the state gate that moment must satisfy. A skill owns a LIST of
@@ -149,7 +239,10 @@ public class SkillTriggerEntry
     [Tooltip("How many stacks this use spends. 0 = spends nothing (a pure condition, e.g. 'while Enraged'). " +
              "Consumption ALWAYS happens after the effects have computed, so the damage sees the live stacks.")]
     [Min(0)] public int consumeStacks = 0;
-    [Tooltip("What each stack BUYS this cast. The stack count is snapshot when the cast starts — before anything is " +
+    [Tooltip("HOW the pile is measured when this skill cashes it: Count = how many stacks; Carried total = the sum " +
+             "of what those stacks are carrying (a Brace's delayed damage). Separate from what the measurement BUYS.")]
+    public StackReading stackReading = StackReading.Count;
+    [Tooltip("What the measured pile BUYS this cast. The pile is snapshot when the cast starts — before anything is " +
              "spent — so every tick of the cast is paid off by the same pile.")]
     public StackPayoff stackPayoff = StackPayoff.Damage;
     [Tooltip("Damage payoff: how much EXTRA damage multiplier each stack adds, on top of the effect's own. " +
@@ -160,9 +253,22 @@ public class SkillTriggerEntry
     /// <summary>The extra damage multiplier <paramref name="stacks"/> buy this cast — the ADDITIVE payoff channel.
     /// Zero unless this trigger reads a state and its payoff is Damage.</summary>
     public float StackDamageBonus(int stacks) =>
-        requiresState && stackPayoff == StackPayoff.Damage && stacks > 0
+        requiresState && stackPayoff == StackPayoff.Damage && stackReading == StackReading.Count && stacks > 0
             ? Mathf.Max(0f, damageMultPerStack) * stacks
             : 0f;
+
+    /// <summary>The FLAT damage a CarriedTotal reading buys this cast. Flat on purpose: the carried number is already
+    /// damage, so it must not be re-rolled through the caster's Attack. Zero unless this trigger reads a state on the
+    /// carried-total reading with the Damage payoff.
+    ///
+    /// <para><paramref name="carried"/> is ONE number whatever the pile stores — a percentage pile hands over its
+    /// decimal (30% ⇒ 0.3), a flat pile hands over its amount. Pairing a percentage pile with this flat-damage payoff
+    /// is an AUTHORING mistake (0.3 × a multiplier is ~0 damage), not something to branch on here: the reading stays
+    /// one number, and which pile is worth cashing this way is the designer's call.</para></summary>
+    public int CarriedDamageBonus(float carried) =>
+        requiresState && stackPayoff == StackPayoff.Damage && stackReading == StackReading.CarriedTotal && carried > 0f
+            ? Mathf.RoundToInt(carried * Mathf.Max(0f, damageMultPerStack))
+            : 0;
 }
 
 /// <summary>Binds ONE exposed <see cref="VfxStep.tickId"/> to the gameplay it should do. The tickId matches a
@@ -328,6 +434,7 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     [HideInInspector] public int requireMinStacks = 1;
     [HideInInspector] public bool consumeAllStacks = false;
     [HideInInspector] public int consumeStacks = 0;
+    [HideInInspector] public StackReading stackReading = StackReading.Count;
     [HideInInspector] public StackPayoff stackPayoff = StackPayoff.Damage;
     [HideInInspector] public float damageMultPerStack = 0f;
 
@@ -432,6 +539,7 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
             requireMinStacks = requireMinStacks,
             consumeAllStacks = consumeAllStacks,
             consumeStacks = consumeStacks,
+            stackReading = stackReading,
             stackPayoff = stackPayoff,
             damageMultPerStack = damageMultPerStack,
         });

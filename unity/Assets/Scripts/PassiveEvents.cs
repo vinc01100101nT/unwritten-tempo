@@ -15,8 +15,8 @@ using UnityEngine;
 ///
 /// <para>Trigger shapes: <see cref="SkillTrigger.OnSkillCastComplete"/> is parameterized by the completed skill's id
 /// (only the passive keyed to that skill fires); the natural events (<see cref="SkillTrigger.OnBasicAttackStart"/>,
-/// <see cref="SkillTrigger.OnBasicAttackLanded"/>,
-/// <see cref="SkillTrigger.OnKill"/>, <see cref="SkillTrigger.OnLowHP"/>, <see cref="SkillTrigger.OnHit"/>,
+/// <see cref="SkillTrigger.OnBasicAttackDealt"/>,
+/// <see cref="SkillTrigger.OnKill"/>, <see cref="SkillTrigger.OnLowHP"/>, <see cref="SkillTrigger.OnDamageDealt"/>,
 /// <see cref="SkillTrigger.OnParry"/>) carry no id and, when mob-facing, pass the triggering mob as
 /// <paramref name="victim"/>. Fire-sites for the natural events are wired as each consuming passive is built.</para>
 /// </summary>

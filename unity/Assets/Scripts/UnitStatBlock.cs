@@ -76,6 +76,16 @@ public class UnitStatBlock : MonoBehaviour
         CurrentMP = MaxMP;   // a fresh creature comes back with a full pool, like its HP
     }
 
+    /// <summary>Replace this unit's level + primaries after it has spawned and re-derive from them. Re-baselines the
+    /// respawn level too, so a recycled mob comes back as what it was RE-STATTED to rather than snapping back to what
+    /// its prefab was baked at.</summary>
+    public void SetSpawnInputs(in UnitStatInputs newInputs)
+    {
+        inputs = newInputs;
+        spawnLevel = Mathf.Max(1, inputs.level);
+        Rederive(healToFull: true);   // refills HP and MP to the new maxima
+    }
+
     // MP, on the same footing as the player's. Mobs don't spend it on anything yet (they have no cost-bearing
     // skills), but it EXISTS so an MP-touching effect — ManaLeech landing on a mob — has a real pool to move,
     // instead of being a knob that silently does nothing on half the units in the game.

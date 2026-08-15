@@ -12,8 +12,8 @@
           "effect": "Consumes all Momentum. Deals **600% Attack**, **+40% per stack** consumed. Without Momentum, deals a flat **600% Attack**." },
         { "name": "Bladedance", "cost": "40 MP · Channel 8s", "flavor": "Become the storm.",
           "effect": "Strikes the target **~2×/sec for 100% Attack** over **8s**; higher Attack Speed adds strikes. Grants full **invulnerability to all damage — poison, bleed and burn included — for the duration**." },
-        { "name": "Retribution", "cost": "40 MP · Brace 3s", "flavor": "Endure, then answer.",
-          "effect": "Braces for **3s**, banking all damage taken. On release, deals **250% of the banked total**. Parries during the brace increase the counter." }
+        { "name": "Retribution", "cost": "10 MP · CD 5s", "flavor": "Endure, then answer.",
+          "effect": "Cashes the damage **Brace** is holding: strikes for **250% of the banked total** and **erases the debt** — you never pay what you release. Also recovers **50% of the banked total** as HP. Requires Brace." }
       ]
     },
 
@@ -21,9 +21,11 @@
     { "type": "skillTable", "tier": "active",
       "skills": [
         { "name": "Lunge", "cost": "8 MP · CD 5s · Range 8", "flavor": "Close the distance.",
-          "effect": "Dashes to the target and strikes for **100% Attack**. With **Lock Blades**, also grants **3 charges**." },
-        { "name": "Parry", "cost": "12 MP · CD 8s · Window 1.5s", "flavor": "Read the blow.",
-          "effect": "Braces **1.5s**, fully blocking the next hit (**0 damage**) and granting **+50%** to the next strike. During Retribution, blocks for **0 HP** while banking full value; the counter gains **+100%** on the first parry, **+25%** per parry after. Begins an auto-parry chain: **75% → 50% → 25%**." },
+          "effect": "Dashes to the target and strikes for **100% Attack**. With **Lock Blades**, also grants **5 charges**." },
+        { "name": "Brace", "cost": "10 MP · CD 7s · Window 4s", "flavor": "Take it now, pay it later.",
+          "effect": "Arms **5 charges** for **4s**. Each charge holds back one incoming hit — that damage is **banked** instead of costing you health. When the window ends, everything banked lands at once. A delay, not a save: **Retribution** is the only way out of the bill." },
+        { "name": "Parry", "cost": "8 MP · CD 1s · Window 3s", "flavor": "Read the blow.",
+          "effect": "Fully blocks the next hit (**0 damage**) and is spent by it." },
         { "name": "Guard Stance", "cost": "12 MP · CD 10s", "flavor": "Weather it.",
           "effect": "Reduces damage taken by **50%** for **5s**." },
         { "name": "Overclock", "cost": "12 MP · CD 6s", "flavor": "Faster. Riskier.",
@@ -50,7 +52,7 @@
         { "name": "Encore", "flavor": "The dance continues.",
           "effect": "A kill during Bladedance **extends the storm**." },
         { "name": "Last Stand", "flavor": "Cornered, not finished.",
-          "effect": "While at low health, Retribution enters **Desperate Brace**: the auto-parry chain no longer decays, holding every parry at **75%**." },
+          "effect": "*Being redesigned — its old form depended on Retribution's auto-parry chain, which no longer exists.*" },
         { "name": "Composure", "flavor": "Stillness breeds clarity.",
           "effect": "After a successful Parry, the **next skill costs 0 MP**." },
         { "name": "Unwavering", "flavor": "Stand your ground.",
@@ -60,7 +62,7 @@
         { "name": "Pressure", "flavor": "Never let them recover.",
           "effect": "Consecutive hits on the same target **delay its health regeneration**." },
         { "name": "Lock Blades", "flavor": "No escape.",
-          "effect": "Casting Lunge grants **3 charges**. Each hit you land spends one to **automatically lunge** at the target again. Auto-lunges don't spend further charges of their own. With no charges left, nothing fires. Requires Lunge." }
+          "effect": "Casting Lunge grants **5 charges**, each lasting **5s** and granting **+5% Attack Speed** while held. Each hit you land spends one to **automatically lunge** at the target again. Auto-lunges don't spend further charges of their own. With no charges left, nothing fires. Requires Lunge." }
       ]
     }
   ]

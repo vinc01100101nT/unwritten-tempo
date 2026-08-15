@@ -14,16 +14,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   targetingMigrated: 1
   id: skill.sword.lock_blades
-  weaponType: 1
-  published: 0
   displayName: Lock Blades
+  weaponType: 1
+  published: 1
   icon: {fileID: -6454969007074664543, guid: c4bce261683a10b42bf52bb46da9e0de, type: 3}
-  description: 
+  description: 'No escape.
+
+    Casting Lunge grants 5 charges. Each hit you land
+    spends one to lunge at the target again.'
   archetype: 0
   family: 0
   shape: 0
   complexity: 0
   acquisitionTier: 0
+  triggers:
+  - trigger: 1
+    triggerSkillId: skill.sword.lunge
+    requiresState: 0
+    requireSkillId: 
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+    stackPayoff: 0
+    damageMultPerStack: 0
+  triggersMigrated: 1
   trigger: 1
   triggerSkillId: skill.sword.lunge
   requiresState: 0
@@ -77,7 +91,8 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0
-      buffStat: 0
+      side: 0
+      buffStat: 1
       rampDelay: 0
       rampPerStep: 0
       rampInterval: 5

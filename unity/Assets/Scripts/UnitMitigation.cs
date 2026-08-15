@@ -14,6 +14,7 @@ public static class UnitMitigation
 {
     static readonly Color ShieldAbsorbColor = new Color(0.5f, 0.8f, 1f);
     static readonly Color ParryColor = new Color(1f, 0.95f, 0.6f);   // its own pale-gold word — a parry must be readable in PvP
+    static readonly Color BraceColor = new Color(0.6f, 0.8f, 1f);    // delayed, not avoided — a cold number for a bill not yet paid
 
     /// <summary>Spend a parry charge on an incoming hit, if the unit holds one: the hit is negated OUTRIGHT and a
     /// "PARRY" word pops so both sides can read it. Returns true when the hit was erased — callers must then bail
@@ -66,5 +67,20 @@ public static class UnitMitigation
         if (soaked <= 0) return dmg;
         DamagePopup.Spawn(popAt, soaked, ShieldAbsorbColor);
         return dmg - soaked;
+    }
+
+    /// <summary>LAST step before HP: if a Brace CHARGE is armed, it is spent to hold this hit back — the damage is
+    /// banked instead of dealt (returns 0) and the whole debt comes due when the window ends. One charge per hit,
+    /// exactly like <see cref="TryParry"/>; the difference is only that a parry ERASES the hit while a brace
+    /// POSTPONES it. Out of charges, the next hit lands normally.
+    ///
+    /// <para>Runs after every other mitigation on purpose — what gets banked is what would really have cost HP, so a
+    /// Guard cut, a Vulnerability amplify or a Shield absorb each shrink the bill exactly as they shrink the hit.
+    /// Returns <paramref name="dmg"/> untouched when nothing is armed.</para></summary>
+    public static int Deferred(UnitStates states, int dmg, Vector3 popAt)
+    {
+        if (states == null || dmg <= 0 || !states.AddDeferredHit(dmg)) return dmg;
+        DamagePopup.Spawn(popAt, dmg, BraceColor);
+        return 0;
     }
 }

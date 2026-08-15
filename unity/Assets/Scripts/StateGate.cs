@@ -40,6 +40,13 @@ public static class StateGate
     public static int StackCount(SkillTriggerEntry entry, UnitStates states) =>
         entry != null && entry.requiresState && states != null ? states.StacksFrom(entry.requireSkillId) : 0;
 
+    /// <summary>The total VALUE the required pile's stacks carry, read under the SAME compute-before-consume rule as
+    /// <see cref="StackCount"/> — the snapshot a cast takes before it spends anything. 0 when the skill reads no pile.
+    /// WHICH of the two a skill cashes is its authored <see cref="StackPayoff"/>, not a second gate: the gate always
+    /// answers both, and the payoff decides which answer is worth anything.</summary>
+    public static float CarriedTotal(SkillTriggerEntry entry, UnitStates states) =>
+        entry != null && entry.requiresState && states != null ? states.CarriedFrom(entry.requireSkillId) : 0f;
+
     /// <summary>Spend what this use costs, AFTER the skill's effects have computed. No-op when the skill has no
     /// requirement or spends nothing (a pure "while X" condition). Returns how many stacks were actually spent.</summary>
     public static int Consume(SkillTriggerEntry entry, UnitStates states)

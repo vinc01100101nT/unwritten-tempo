@@ -24,6 +24,17 @@ MonoBehaviour:
   shape: 3
   complexity: 0
   acquisitionTier: 0
+  triggers:
+  - trigger: 2
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+    stackPayoff: 0
+    damageMultPerStack: 0
+  triggersMigrated: 1
   trigger: 2
   triggerSkillId: 
   requiresState: 0

@@ -14,25 +14,40 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   targetingMigrated: 1
   id: skill.sword.committed_strike
-  weaponType: 1
-  published: 0
   displayName: Committed Strike
+  weaponType: 1
+  published: 1
   icon: {fileID: 0}
   description: 'Wind up and commit.
 
-    A slow, telegraphed heavy blow for 200% Attack.'
+    A slow, telegraphed heavy blow for 200%
+    Attack.'
   archetype: 0
   family: 0
   shape: 0
   complexity: 0
   acquisitionTier: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+    stackPayoff: 0
+    damageMultPerStack: 0
+  triggersMigrated: 1
   trigger: 0
-  triggerSkillId:
+  triggerSkillId: 
   requiresState: 0
+  requireSkillId: 
   requireState: 0
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
+  stackPayoff: 0
+  damageMultPerStack: 0
   manaCost: 14
   cooldown: 6
   castTime: 1.2
@@ -40,7 +55,7 @@ MonoBehaviour:
   castRange: 5
   tier: 0
   chargeCost: 100
-  castCircleId:
+  castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
@@ -76,6 +91,7 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0
+      side: 0
       buffStat: 0
       rampDelay: 0
       rampPerStep: 0
@@ -89,6 +105,6 @@ MonoBehaviour:
     targets: 2
     scope: 0
   shortLabel: Commit
-  keyLabel:
+  keyLabel: 
   slotOrder: 10
   tint: {r: 1, g: 1, b: 1, a: 1}

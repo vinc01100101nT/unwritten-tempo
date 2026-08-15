@@ -394,6 +394,55 @@ public class SkillComposerWindow : EditorWindow
     /// <summary>Draw ONE trigger entry — the moment, plus the state gate that firing through this moment must satisfy.
     /// Returns true if the author asked to delete it. The gate is drawn per entry, not per skill, because the two
     /// halves of a dual-trigger skill need different answers (Lunge on OnCast requires no charge; the same Lunge on
+    /// <summary>What the selected trigger ACTUALLY counts as — the same facts documented on each SkillTrigger member,
+    /// worded for an author. Every line states the edge cases (miss / absorbed / parried) rather than leaving them to
+    /// be discovered in play, and says which unit the skill is handed to aim at.</summary>
+    static string TriggerHelp(SkillTrigger t)
+    {
+        switch (t)
+        {
+            case SkillTrigger.OnCast:
+                return "The player PRESSES it. Takes a hotbar slot, and is the only trigger that pays the MP and " +
+                       "cooldown below — every other moment fires the skill for free.";
+            case SkillTrigger.OnSkillCastComplete:
+                return "The skill you pick below finished its wind-up WITHOUT being interrupted.\n\n" +
+                       "Only counts when the PLAYER pressed that skill. If that same skill self-fires from one of its " +
+                       "own other triggers, this does NOT fire — which is what stops a pair like Lock Blades and Lunge " +
+                       "from endlessly refilling each other. Nothing was necessarily hit, so no target is handed over.";
+            case SkillTrigger.OnBasicAttackDealt:
+                return "A BASIC ATTACK YOU SWUNG DEALT DAMAGE. Aims at the mob you hit.\n\n" +
+                       "A MISS does not fire it. Skill strikes do not fire it — only real basic attacks. This is the " +
+                       "moment Momentum is built from, which is why attack speed is the lever on any pile made this way.";
+            case SkillTrigger.OnKill:
+                return "A MOB DIED. Aims at the dying mob (announced before the corpse is cleaned up).";
+            case SkillTrigger.OnLowHP:
+                return "YOUR HP DROPPED TO 30% OR BELOW. No target is handed over.\n\n" +
+                       "Fires only on the way DOWN, and only if the hit left you alive — so it re-arms by itself after " +
+                       "any heal. Poison, bleed and burn ticks do NOT fire it.";
+            case SkillTrigger.OnDamageDealt:
+                return "YOU DEALT DAMAGE THAT ACTUALLY LANDED. Aims at the victim.\n\n" +
+                       "Basics AND skills both fire it, once per damage instance. It does NOT fire on a miss, on a hit " +
+                       "a Shield fully absorbed, or on a hit a Brace window held — the number checked is what was left " +
+                       "AFTER the victim's mitigation. Exact mirror of OnDamageReceived.";
+            case SkillTrigger.OnParry:
+                return "YOU PARRIED — a charge was spent erasing an incoming hit. Aims at the attacker you parried.\n\n" +
+                       "A parried hit never produces a damage number, so it fires NEITHER damage moment. That is why " +
+                       "this is its own trigger: it marks the hit you took nothing from.";
+            case SkillTrigger.OnBasicAttackStart:
+                return "YOU ARE ABOUT TO SWING — the intent, not the result. Aims at the intended target.\n\n" +
+                       "The ONLY moment here that doesn't need damage: it fires even if the swing goes on to miss. It " +
+                       "runs BEFORE reach is judged, so a gap-closer can close the distance and the same swing still " +
+                       "lands. Fires at most once per swing interval.";
+            case SkillTrigger.OnDamageReceived:
+                return "DAMAGE LANDED ON YOU. Aims at the attacker, so a counter can strike back.\n\n" +
+                       "Fires only when a hit truly cost you HP. A parried hit, a hit a Shield fully absorbed, and a " +
+                       "hit held by a Brace window all fire NOTHING. Poison, bleed and burn ticks don't fire it either. " +
+                       "Exact mirror of OnDamageDealt — same rule on both sides, so they can't drift apart.";
+            default:
+                return "";
+        }
+    }
+
     /// OnBasicAttackStart requires and spends one).</summary>
     bool DrawTriggerEntry(SkillTriggerEntry e, int index)
     {
@@ -404,18 +453,18 @@ public class SkillComposerWindow : EditorWindow
             {
                 // The trigger IS the entry's name — no invented category label above it.
                 e.trigger = (SkillTrigger)EditorGUILayout.EnumPopup(new GUIContent("trigger",
-                    "OnCast = the player presses it (pays the MP + cooldown below). Every other trigger fires the " +
-                    "skill on its own, free. OnSkillCastComplete fires when the picked active finishes casting " +
-                    "UNINTERRUPTED — and only when the PLAYER cast it, so a skill's own auto-fire can't re-trigger " +
-                    "it. The rest are natural game events (a basic landing, a kill, low HP, a hit, a parry). " +
-                    "OnBasicAttackStart fires BEFORE the attack's reach is judged — once per swing interval while a " +
-                    "target is held — so a gap-closer moves you in before the same frame decides whether you can " +
-                    "reach; the swing itself is never lost."), e.trigger);
+                    "WHEN this skill fires. OnCast = the player presses it (the only one that pays the MP + cooldown " +
+                    "below); every other moment fires it free. Pick one and read the box beneath for exactly what it " +
+                    "counts as — whether a miss, an absorbed hit or a parry fires it."), e.trigger);
                 // The last entry can't be removed: a skill must start SOME way, and an empty list would silently read
                 // as a plain OnCast skill — a state the author never chose.
                 using (new EditorGUI.DisabledScope(sel.triggers.Count <= 1))
                     if (GUILayout.Button("Remove", GUILayout.Width(70f))) remove = true;
             }
+
+            // Per-trigger help, not one blob covering all nine: an author only ever needs the one they picked, and the
+            // edge cases (does a miss count? an absorbed hit? a parry?) are exactly what a general blurb leaves out.
+            EditorGUILayout.HelpBox(TriggerHelp(e.trigger), MessageType.None);
 
             if (e.trigger == SkillTrigger.OnSkillCastComplete)
                 e.triggerSkillId = DrawSkillPicker("  on cast complete of", e.triggerSkillId);
@@ -457,11 +506,37 @@ public class SkillComposerWindow : EditorWindow
                     "How many stacks this use spends. 0 = spends nothing (a pure 'while X' condition)."),
                     Mathf.Max(0, e.consumeStacks), 0, UnitStates.MaxStacks);
 
-            // What the stacks BUY. Separate question from what it costs to fire — the gate says what you need,
-            // this says what it's worth.
+            // TWO independent questions, deliberately TWO dropdowns: how much is in the pile, and what that is worth.
+            // Folding them into one would mean every future payoff had to be duplicated once per reading.
+            e.stackReading = (StackReading)EditorGUILayout.EnumPopup(new GUIContent("  consume stacks by",
+                "HOW the pile is measured.\n\n" +
+                "Count = how many stacks there are (Momentum → Deathblow).\n\n" +
+                "Carried total = the sum of what those stacks are CARRYING — for a pile whose stacks each hold a " +
+                "number rather than just existing (Brace's delayed damage → Retribution).\n\n" +
+                "Carried total is ONE number whatever the granter stores: a flat pile hands over its amount, and a " +
+                "PERCENTAGE pile hands over its decimal — +30% reads as 0.3, ten +3% stacks read as 0.3. There is no " +
+                "second mode to pick; match the payoff below to the kind of number your granter carries."), e.stackReading);
+
+            // What that measurement BUYS. Separate question from what it costs to fire — the gate says what you need,
+            // this says what it's worth. More payoffs land here as they're designed.
             e.stackPayoff = (StackPayoff)EditorGUILayout.EnumPopup(new GUIContent("  each stack adds",
-                "What every stack buys this cast. Damage = a bigger hit (below)."), e.stackPayoff);
-            if (e.stackPayoff == StackPayoff.Damage)
+                "What the measured pile buys this cast. Damage = a bigger hit (below)."), e.stackPayoff);
+
+            if (e.stackPayoff == StackPayoff.Damage && e.stackReading == StackReading.CarriedTotal)
+            {
+                // Same stored field, relabelled for what it means on THIS reading — one number, no parallel knob.
+                e.damageMultPerStack = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  carried total x",
+                    "What the pile's carried total is multiplied by. 2.5 = deal 2.5x the banked damage. Added FLAT, " +
+                    "NOT scaled by your Attack — the carried number is already real damage."),
+                    e.damageMultPerStack));
+                EditorGUILayout.HelpBox(
+                    $"Carrying 400 releases {400f * Mathf.Max(0f, e.damageMultPerStack):0} flat damage." +
+                    (e.damageMultPerStack <= 0f ? "  (0 = the pile buys nothing.)" : "") +
+                    "\n\nThis payoff wants a pile carrying REAL DAMAGE. A percentage pile carries its decimal " +
+                    "(+30% = 0.3), so cashing one here lands ~0 damage — that's an authoring mismatch, not a bug.",
+                    MessageType.None);
+            }
+            else if (e.stackPayoff == StackPayoff.Damage)
             {
                 e.damageMultPerStack = EditorGUILayout.Slider(new GUIContent("  damage x per stack",
                     "EXTRA damage multiplier each stack adds, on top of the effect's own. 0.4 = +40% of your " +
@@ -475,9 +550,11 @@ public class SkillComposerWindow : EditorWindow
                         $"{(baseMult + e.damageMultPerStack * 10f) * 100f:0}% Attack.", MessageType.None);
                 }
             }
-            EditorGUILayout.HelpBox("The count is snapshot when the cast STARTS and stacks are spent only after the " +
-                "effects have computed — so the payoff and the cost read the same pile (a finisher sees the whole " +
-                "thing it's about to cash).", MessageType.Info);
+
+            EditorGUILayout.HelpBox("The pile is snapshot when the cast STARTS and spent only after the effects have " +
+                "computed — so the payoff and the cost read the same pile (a finisher sees the whole thing it's " +
+                "about to cash). Both readings are taken at that same moment; the choice above decides which one " +
+                "this skill is paid on.", MessageType.Info);
             EditorGUI.indentLevel--;
         }
         return remove;
@@ -545,19 +622,22 @@ public class SkillComposerWindow : EditorWindow
             var weapon = (WeaponType)EditorGUILayout.EnumPopup(new GUIContent("weapon",
                 "WHICH weapon's skill pool this belongs to. A dropped weapon rolls its kit only from PUBLISHED skills " +
                 "of its own type. None = in no pool: never rolled, but still usable from the Grimoire for testing."), sel.weaponType);
-            string beforeTail = IdTail(beforeId);
-            string tail = EditorGUILayout.DelayedTextField(new GUIContent("name (in the id)",
-                "The last part of the id — 'deathblow' becomes skill.sword.deathblow. Safe to change: every reference " +
-                "to the old id is re-pointed automatically."), beforeTail);
-            if (weapon != beforeWeapon || tail != beforeTail)
+            string beforeName = sel.displayName;
+            string named = EditorGUILayout.DelayedTextField(new GUIContent("display name",
+                "The skill's name shown to the player (hotbar hover, tooltips) — and the source of its id: " +
+                "'Lock Blades' becomes skill.sword.lock_blades. Safe to rename: every reference to the old id is " +
+                "re-pointed automatically."), sel.displayName);
+            if (weapon != beforeWeapon || named != beforeName)
             {
                 sel.weaponType = weapon;
-                string composed = ComposeId(weapon, tail);
+                sel.displayName = named;
+                string composed = ComposeId(weapon, named);
                 if (composed != beforeId) RetargetSkillId(beforeId, composed, sel);
                 EditorUtility.SetDirty(sel);
             }
             using (new EditorGUI.DisabledScope(true))
-                EditorGUILayout.TextField(new GUIContent("id", "Composed from the two fields above."), sel.id);
+                EditorGUILayout.TextField(new GUIContent("id",
+                    "Composed from the weapon and the display name — lowercased, spaces to underscores."), sel.id);
 
             sel.published = EditorGUILayout.Toggle(new GUIContent("published",
                 "PUBLISHED = this skill may be rolled onto a dropped weapon of its type. Unpublished skills stay fully " +
@@ -567,8 +647,6 @@ public class SkillComposerWindow : EditorWindow
                 EditorGUILayout.HelpBox("Published, but in no weapon's pool — nothing can roll it. Pick a weapon above.",
                     MessageType.Warning);
 
-            sel.displayName = EditorGUILayout.TextField(new GUIContent("display name",
-                "The skill's name shown to the player (hotbar hover, tooltips)."), sel.displayName);
             using (new EditorGUILayout.HorizontalScope())
             {
                 sel.icon = (Sprite)EditorGUILayout.ObjectField(new GUIContent("icon",
@@ -627,7 +705,7 @@ public class SkillComposerWindow : EditorWindow
             }
 
             if (GUILayout.Button("Add trigger"))
-                sel.triggers.Add(new SkillTriggerEntry { trigger = SkillTrigger.OnHit });
+                sel.triggers.Add(new SkillTriggerEntry { trigger = SkillTrigger.OnDamageDealt });
 
             EditorGUILayout.Space(2);
             EditorGUILayout.HelpBox("EVERY trigger runs the SAME skill body — a trigger chooses only WHEN this fires " +
@@ -981,7 +1059,8 @@ public class SkillComposerWindow : EditorWindow
           SkillEffectKind.Cleanse, SkillEffectKind.Dash, SkillEffectKind.Knockback, SkillEffectKind.Pull };
     static readonly SkillEffectKind[] BuffKinds =
         { SkillEffectKind.Buff, SkillEffectKind.Haste, SkillEffectKind.Guard, SkillEffectKind.Parry,
-          SkillEffectKind.Regen, SkillEffectKind.Shield, SkillEffectKind.ManaLeech, SkillEffectKind.Reflect };
+          SkillEffectKind.Brace, SkillEffectKind.Regen, SkillEffectKind.Shield, SkillEffectKind.ManaLeech,
+          SkillEffectKind.Reflect };
 
     // A debuff entry is either its own kind (Vulnerability/Taunt/Knockback/Pull) or a Status ailment (the 8 ailments
     // all share kind = Status, differing only by Ailment) — so picking "Burn" sets kind=Status, ailment=Burn.
@@ -1205,20 +1284,25 @@ public class SkillComposerWindow : EditorWindow
             DrawEffectStateBranch(ef, casterSide);   // State ▸ Buffs / Debuffs cascade (only for durational "state" effects)
             // Plain-English summary of what THIS effect does — directly under the kind dropdown, above its fields.
             EditorGUILayout.HelpBox(EffectSummary(ef.kind), MessageType.None);
+            DrawStackValue(ef, sel);
             switch (ef.kind)
             {
                 case SkillEffectKind.Damage:
                     ef.damageType = (DamageType)EditorGUILayout.EnumPopup(new GUIContent("damage type",
                         "Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (pierces armour, always crits)."), ef.damageType);
-                    ef.damageMult = EditorGUILayout.Slider(new GUIContent("base power ×",
-                        "The skill's INHERENT strength (Ember ~1×, Meteor ~8×). Affinity picks WHICH stats scale it; this sets HOW BIG. Final = caster ATK/MATK × base power × affinity."), ef.damageMult <= 0f ? 1f : ef.damageMult, 0.1f, 8f);
+                    // Hidden when the pile drives the size: it would be a dead knob, and a visible number that changes
+                    // nothing is a lie about what this effect does.
+                    if (!ef.useStackValue)
+                        ef.damageMult = EditorGUILayout.Slider(new GUIContent("base power ×",
+                            "The skill's INHERENT strength (Ember ~1×, Meteor ~8×). Affinity picks WHICH stats scale it; this sets HOW BIG. Final = caster ATK/MATK × base power × affinity."), ef.damageMult <= 0f ? 1f : ef.damageMult, 0.1f, 8f);
                     ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
                         "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
                     ef.hitCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("hits",
                         "Strikes per landing. Each hit is the TRIGGER for this binding's proc effects (a Status or Execute with a chance)."), ef.hitCount));
                     break;
                 case SkillEffectKind.Heal:
-                    ef.amount = EditorGUILayout.IntField(new GUIContent("HP", "Flat HP restored to the caster."), ef.amount);
+                    if (!ef.useStackValue)
+                        ef.amount = EditorGUILayout.IntField(new GUIContent("HP", "Flat HP restored to the caster."), ef.amount);
                     break;
                 case SkillEffectKind.Status:
                     // The ailment is chosen in the State ▸ Debuffs picker above — not repeated here (no double-knob).
@@ -1247,6 +1331,22 @@ public class SkillComposerWindow : EditorWindow
                 case SkillEffectKind.Guard:
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage cut", "Fraction of incoming damage prevented (0..1). 0.4 = take 40% less damage."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the damage reduction lasts."), ef.seconds, 0.5f, 20f);
+                    break;
+                case SkillEffectKind.Brace:
+                    // No magnitude, for the same reason Parry has none: a hit is held or it isn't. Charges come from
+                    // the shared stacking block below — this kind owns no multiplicity of its own.
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("window (s)",
+                        "How long the charges stay armed, and when the banked damage comes due. Every hit held during " +
+                        "the window is banked; the whole total lands at once the moment the window ends."), ef.seconds, 0.5f, 20f);
+                    EditorGUILayout.HelpBox("Brace DELAYS damage, it does not prevent it. Each CHARGE holds back ONE hit " +
+                        "— exactly like Parry, except a parry erases the hit and a brace only postpones it. Out of " +
+                        "charges, the next hit lands normally. Charges come from the stacking block below (1 = hold one " +
+                        "hit), so stacking always buys something real.\n\n" +
+                        "When the window ends, everything banked lands as ONE true-damage hit. Surviving is the " +
+                        "player's job — a consumer skill must cash the debt before it comes due.\n\n" +
+                        "What gets banked is what would really have cost HP: Guard, Vulnerability and Shield all apply " +
+                        "BEFORE it is banked, and a parried hit never lands at all, so it banks nothing.",
+                        MessageType.Info);
                     break;
                 case SkillEffectKind.Parry:
                     // No magnitude on purpose: a parry is binary (the hit is erased or it isn't), so a "how much"
@@ -1353,6 +1453,48 @@ public class SkillComposerWindow : EditorWindow
             });
     }
 
+    /// <summary>"Pull this effect's size from the pile this cast is cashing." Drawn only for the kinds whose output is
+    /// a plain AMOUNT (see <see cref="SkillEffect.SupportsStackValue"/>) — on a duration or a proc chance there is no
+    /// sensible conversion, so the control simply isn't offered rather than sitting there doing nothing.
+    ///
+    /// <para>Several effects on one skill may each switch this on and read the SAME snapshot — that is the whole
+    /// point: one cast can hit for the banked damage AND heal off it.</para></summary>
+    static void DrawStackValue(SkillEffect ef, SkillDef sel)
+    {
+        if (!SkillEffect.SupportsStackValue(ef.kind)) { ef.useStackValue = false; return; }
+
+        ef.useStackValue = EditorGUILayout.Toggle(new GUIContent("use stack value",
+            "ON = this effect's SIZE comes from the pile this cast cashes, instead of its own power field above. " +
+            "Output = the reading x the multiplier, dealt FLAT (never re-rolled through your Attack, so it can't crit)."),
+            ef.useStackValue);
+        if (!ef.useStackValue) return;
+
+        ef.stackValueSource = (StackReading)EditorGUILayout.EnumPopup(new GUIContent("  read",
+            "Count = how many stacks the pile holds.\n\n" +
+            "Carried total = the sum of what those stacks CARRY (a percentage pile reads as its decimal, +30% = 0.3)."),
+            ef.stackValueSource);
+        ef.stackValueMult = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  x multiplier",
+            "What the reading is multiplied by to get this effect's output. 2.5 on a carried total of 400 = 1000."),
+            ef.stackValueMult));
+
+        string unit = ef.kind == SkillEffectKind.Heal ? "HP healed" : "damage";
+        EditorGUILayout.HelpBox(
+            ef.stackValueSource == StackReading.CarriedTotal
+                ? $"Carrying 400 → {400f * Mathf.Max(0f, ef.stackValueMult):0} {unit}."
+                : $"At 10 stacks → {10f * Mathf.Max(0f, ef.stackValueMult):0} {unit}.",
+            MessageType.None);
+
+        // The pile comes from the TRIGGER's gate — without one there is nothing to read, and this would silently be 0.
+        bool anyGate = false;
+        if (sel != null && sel.triggers != null)
+            for (int i = 0; i < sel.triggers.Count; i++)
+                if (sel.triggers[i] != null && sel.triggers[i].requiresState) anyGate = true;
+        if (!anyGate)
+            EditorGUILayout.HelpBox("No trigger on this skill requires a state, so there is no pile to read — this " +
+                "effect would land 0. Set 'requires state' on a trigger above and name the granting skill.",
+                MessageType.Warning);
+    }
+
     // Stacking knobs — only meaningful for a STATE (something with a duration), so they're hidden entirely for instant
     // effects rather than shown as dead fields. Stacks-per-apply IS the "charges" knob: 3 = one cast hands out 3.
     static void DrawStacking(SkillEffect ef)
@@ -1372,8 +1514,8 @@ public class SkillComposerWindow : EditorWindow
             "window, spent one at a time."), Mathf.Max(1, ef.stacksPerApply), 1, Mathf.Max(1, ef.stackLimit));
         EditorGUILayout.HelpBox(
             "Magnitude above is PER STACK, and the total is the SUM.\n" +
-            "For Haste and Stat Buff, author the BONUS, not the multiplier: 0.03 = \"+3% per stack\", so 10 stacks read " +
-            "as +30%. (A non-stacking effect still uses the absolute value, e.g. 1.5 = x1.5.)", MessageType.Info);
+            "For Haste and Stat Buff it is always the BONUS, never a multiplier — stacking or not: 0.03 = \"+3% per " +
+            "stack\", so 10 stacks read as +30%.", MessageType.Info);
         EditorGUI.indentLevel--;
     }
 
@@ -1389,6 +1531,7 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Haste:         return "Temporarily speeds up movement.";
             case SkillEffectKind.Guard:         return "Temporarily reduces incoming damage to the caster.";
             case SkillEffectKind.Parry:         return "Fully negates the next incoming hit (0 damage) and is spent by it — a timing read, not a damage cut. Fires the OnParry trigger.";
+            case SkillEffectKind.Brace:         return "Each charge holds ONE incoming hit back instead of erasing it; the banked damage all lands when the window ends. A delay, not a save.";
             case SkillEffectKind.Taunt:         return "Forces enemies in range to attack the caster for a while.";
             case SkillEffectKind.Teleport:      return "Blinks the caster INSTANTLY to the aimed point (use Ground aim). No fields — the destination is the aimed point.";
             case SkillEffectKind.Dash:          return "Rushes the caster FAST to the aimed point (use Ground aim) — visible travel, blocked by walls. Dash speed sets how fast; the skill's range is the max distance.";
@@ -1444,6 +1587,7 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Buff:
             case SkillEffectKind.Guard:
             case SkillEffectKind.Parry:
+            case SkillEffectKind.Brace:
             case SkillEffectKind.Shield:
             case SkillEffectKind.Regen:
             case SkillEffectKind.Vulnerability:

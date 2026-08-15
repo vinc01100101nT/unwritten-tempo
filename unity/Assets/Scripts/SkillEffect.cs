@@ -116,8 +116,22 @@ public enum SkillEffectKind
     /// spent by it (the duration is only how long you wait for that hit). Binary by design — there is no partial
     /// parry, hence no magnitude. A spent charge fires <see cref="SkillTrigger.OnParry"/>.</para>
     ///
-    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    /// <para>Distinct from <see cref="Brace"/>: a parry ERASES the hit, a brace only POSTPONES it.</para></summary>
     Parry,
+    /// <summary>Arm BRACE charges for <see cref="SkillEffect.seconds"/>. Each charge holds back ONE incoming hit:
+    /// instead of costing HP, that hit's damage — what it would really have cost after every other mitigation — is
+    /// banked, and the whole debt lands as one true-damage hit the moment the window ends. Out of charges, the next
+    /// hit lands normally.
+    ///
+    /// <para>Charges come from <see cref="SkillEffect.stacksPerApply"/>, the same shared knob <see cref="Parry"/>
+    /// uses — this kind has NO multiplicity of its own, so stacking it is the only way to hold more hits and stacking
+    /// it always does something real. Binary per hit, so no magnitude.</para>
+    ///
+    /// <para>The twin of <see cref="Parry"/>, one word apart: a parry ERASES the hit, a brace POSTPONES it. Surviving
+    /// is the player's job — a consumer must cash the debt before it comes due.</para>
+    ///
+    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    Brace,
 }
 
 /// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window. Move speed is
@@ -166,7 +180,8 @@ public class SkillEffect
     [Tooltip("Knockback / Pull ONLY: how long the shove MOVEMENT lasts (seconds). This is movement time, NOT a state " +
              "duration — a shove isn't a tracked condition, so it never shows a buff/nameplate icon.")]
     public float shoveSeconds = 0.25f;
-    [Tooltip("Status: DoT damage-per-tick, Slow factor (0..1), or Blind HIT loss. Haste/Buff: multiplier (>1). " +
+    [Tooltip("Status: DoT damage-per-tick, Slow factor (0..1), or Blind HIT loss. Haste/Buff: the BONUS fraction, " +
+             "not a multiplier (0.3 = +30%). " +
              "Guard: damage-cut fraction (0..1). Regen: HP per tick. Vulnerability: extra-damage fraction (0.3 = +30%). " +
              "Knockback/Pull: shove speed. ManaLeech/Reflect: fraction of damage dealt/taken (0..1).")]
     public float magnitude = 3f;
@@ -174,9 +189,8 @@ public class SkillEffect
     [Header("Stacking (STATE effects only)")]
     [Tooltip("OFF = one instance; re-applying REPLACES it (newest wins) — today's behaviour. ON = each application ADDS " +
              "stacks, every stack carrying its own duration and its own magnitude; the total is their SUM.\n\n" +
-             "IMPORTANT: a stacking effect's magnitude is the PER-STACK amount, and for multiplier-style channels " +
-             "(Haste / Stat Buff) it is the BONUS, not the multiplier — author 0.03 for '+3% per stack', so 10 stacks " +
-             "read as +30%. A non-stacking effect keeps using the absolute value (1.5 = x1.5).")]
+             "IMPORTANT: a stacking effect's magnitude is the PER-STACK amount. On Haste / Stat Buff it is the BONUS, " +
+             "never a multiplier — stacking or not: author 0.03 for '+3% per stack', so 10 stacks read as +30%.")]
     public bool stacking = false;
     [Tooltip("Max stacks held at once. Past it, the OLDEST stack drops. Hard-capped by the store's safety ceiling.")]
     [Min(1)] public int stackLimit = 5;
@@ -208,6 +222,33 @@ public class SkillEffect
              "and Execute. 0 = NOT a proc — the effect applies ONCE per landing instead.")]
     [Range(0f, 1f)] public float chance = 0f;
 
+    [Header("Pull from the cast's stacks")]
+    [Tooltip("ON = this effect's SIZE comes from the pile this cast is cashing, instead of from its own power field. " +
+             "Output = the chosen reading x the multiplier below, dealt FLAT (never re-rolled through your Attack). " +
+             "Several effects on one skill can each pull from the SAME pile — that's how one cast both hits for the " +
+             "banked damage and heals off it.")]
+    public bool useStackValue = false;
+    [Tooltip("WHICH reading this effect pulls: Count = how many stacks; Carried total = the sum of what they carry " +
+             "(a percentage pile reads as its decimal, +30% = 0.3).")]
+    public StackReading stackValueSource = StackReading.Count;
+    [Tooltip("What the reading is multiplied by to get this effect's output. 2.5 on a carried total of 400 = 1000 " +
+             "damage; 0.5 = heal for half of it.")]
+    [Min(0f)] public float stackValueMult = 1f;
+
+    /// <summary>This effect's output when it pulls from the cast's pile, or -1 when it doesn't. ONE formula for every
+    /// kind that supports it — reading × multiplier, FLAT — so damage and healing off the same pile can't diverge.
+    ///
+    /// <para>Flat on purpose: a carried total is already real, earned damage, so re-rolling it through the caster's
+    /// Attack would scale a number that was never the caster's to scale.</para></summary>
+    public int StackOutput(in StackVars vars) =>
+        useStackValue ? Mathf.Max(0, Mathf.RoundToInt(vars.Read(stackValueSource) * Mathf.Max(0f, stackValueMult))) : -1;
+
+    /// <summary>Which kinds can be driven by the cast's pile. Deliberately the two whose output is a plain AMOUNT —
+    /// a size the pile can simply BE. A duration or a proc chance is not an amount, so pulling a pile into one would
+    /// mean inventing a second conversion rule per kind; those keep their own fields.</summary>
+    public static bool SupportsStackValue(SkillEffectKind k) =>
+        k == SkillEffectKind.Damage || k == SkillEffectKind.Heal;
+
     [Header("Who it lands on")]
     [Tooltip("WHO this effect is applied to. Auto = this kind's traditional side (guard/shield/buff on the caster, " +
              "damage/ailments on the target). Caster = always you. Target = always whoever the tick reaches, so a " +
@@ -215,7 +256,7 @@ public class SkillEffect
     public EffectSide side = EffectSide.Auto;
 
     [Header("Buff (Buff kind)")]
-    [Tooltip("Which self-stat the Buff kind lifts for its window. magnitude = the FLAT multiplier (AMPLIFY buffs " +
+    [Tooltip("Which self-stat the Buff kind lifts for its window. magnitude = the FLAT bonus fraction, 0.3 = +30% (AMPLIFY buffs " +
              "are NOT affinity-scaled — support value comes from uptime, not a bigger number); seconds = duration " +
              "(this DOES scale off sustain stats via durationAffinity).")]
     public BuffStat buffStat = BuffStat.Damage;
@@ -274,7 +315,7 @@ public class SkillEffect
     public static bool IsSelfVerb(SkillEffectKind k) =>
         k == SkillEffectKind.Guard || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
         k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect ||
-        k == SkillEffectKind.Shield || k == SkillEffectKind.Parry || NeedsPoint(k);
+        k == SkillEffectKind.Shield || k == SkillEffectKind.Parry || k == SkillEffectKind.Brace || NeedsPoint(k);
 
     /// <summary>An effect that must be told WHERE: it RELOCATES whoever it lands on, so the point is part of its
     /// meaning, not part of its targeting. This is the ONE thing that makes a cast ask for a ground point on top of

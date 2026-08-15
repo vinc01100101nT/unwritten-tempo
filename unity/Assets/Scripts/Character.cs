@@ -874,15 +874,27 @@ public class Character : MonoBehaviour, ICombatUnit
     // Fraction of MaxHP at/under which the player counts as "low HP" — the OnLowHP falling-edge threshold.
     const float LowHpFrac = 0.3f;
 
-    void ApplyHitToHP(int dmg)
+    /// <summary>Run the last two mitigations (Shield absorb, then Brace defer) and subtract what's left from HP.
+    /// RETURNS what actually landed, which is NOT what the caller passed in — a barrier or a brace can reduce it, to
+    /// zero. Every caller must use the RETURN for anything downstream (the number shown, thorns, ult charge, what it
+    /// reports back); the figure it passed in is only the hit's size BEFORE these two, and using that is the bug this
+    /// signature exists to prevent.</summary>
+    int ApplyHitToHP(int dmg, MonsterAI3D source = null)
     {
-        if (dmg <= 0) return;
+        if (dmg <= 0) return 0;
         var av = Avatar();   // barrier soaks first, via the shared unit primitive (same rule mobs get)
-        dmg = UnitMitigation.AfterShield(States, dmg, av != null ? UnitAnchor.Overhead(av) : transform.position);
+        Vector3 popAt = av != null ? UnitAnchor.Overhead(av) : transform.position;
+        dmg = UnitMitigation.AfterShield(States, dmg, popAt);
+        dmg = UnitMitigation.Deferred(States, dmg, popAt);   // Brace holds the hit back; 0 here means the bill is banked
         if (dmg > 0)
         {
             int before = CurrentHP;
             CurrentHP = Mathf.Max(0, CurrentHP - dmg);
+            // A hit got THROUGH — the exact mirror of OnDamageDealt, whose fire-site (Health.ApplyLeech) likewise bails
+            // on damage <= 0 after the victim's own mitigation. Both sides therefore mean one damage instance that
+            // really landed, and a parried / fully shielded / braced hit reaches neither. The attacker travels as the
+            // trigger's entity, so a counter-attack passive aims back at whoever hit you.
+            PassiveEvents.Fire(SkillTrigger.OnDamageReceived, null, source != null ? source.transform : null);
             // Falling-edge into low HP: this hit crossed the threshold and left the player alive → fire OnLowHP (Last
             // Stand). Computed locally (before vs after), so it re-arms after any heal with no persisted flag. DoT-only
             // crossings bypass this line and aren't covered — fine until OnLowHP becomes a queried state.
@@ -890,6 +902,7 @@ public class Character : MonoBehaviour, ICombatUnit
             if (before > thr && CurrentHP > 0 && CurrentHP <= thr)
                 PassiveEvents.Fire(SkillTrigger.OnLowHP);
         }
+        return dmg;
     }
 
     public int TakeDamage(int attackerAttack) => TakeDamage(attackerAttack, -1);
@@ -934,12 +947,18 @@ public class Character : MonoBehaviour, ICombatUnit
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF. Mobs don't crit the player → crit:false.
         int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod);
-        ApplyHitToHP(dmg);
+        // Everything below reads what LANDED, never the pre-barrier figure: a hit a Shield ate or a Brace holds costs
+        // no HP, so it must also not flash, not bounce thorns, not build ult charge, and must report 0 to the attacker
+        // (whose own "did I connect" check pops the damage number and grants its XP).
+        dmg = ApplyHitToHP(dmg, source);
         OnHealthChanged?.Invoke();
-        Sfx.Play(hurtSfx);                       // player hurt grunt
-        OnDamaged?.Invoke(dmg);                  // drives the player hurt flash
-        Reflect(dmg, source);                    // thorns: bounce a fraction back at the attacker
-        AddUltCharge(dmg * UltChargePerDamageTaken);   // taking hits builds ult charge
+        if (dmg > 0)
+        {
+            Sfx.Play(hurtSfx);                       // player hurt grunt
+            OnDamaged?.Invoke(dmg);                  // drives the player hurt flash
+            Reflect(dmg, source);                    // thorns: bounce a fraction back at the attacker
+            AddUltCharge(dmg * UltChargePerDamageTaken);   // taking hits builds ult charge
+        }
         if (CurrentHP == 0) RaiseDeath();   // Phase F: DeathScreen handles the death → respawn flow
         return dmg;
     }
@@ -966,12 +985,15 @@ public class Character : MonoBehaviour, ICombatUnit
         if (ParriedHit(source)) return 0;   // the read catches magic too: Parry is a timing skill, not a physical block
 
         int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod * Combat.MagicGlanceMult(Flee));
-        ApplyHitToHP(dmg);
+        dmg = ApplyHitToHP(dmg, source);   // what LANDED — see the physical intake above for why nothing below may use the raw figure
         OnHealthChanged?.Invoke();
-        Sfx.Play(hurtSfx);
-        OnDamaged?.Invoke(dmg);
-        Reflect(dmg, source);
-        AddUltCharge(dmg * UltChargePerDamageTaken);   // taking hits builds ult charge
+        if (dmg > 0)
+        {
+            Sfx.Play(hurtSfx);
+            OnDamaged?.Invoke(dmg);
+            Reflect(dmg, source);
+            AddUltCharge(dmg * UltChargePerDamageTaken);   // taking hits builds ult charge
+        }
         if (CurrentHP == 0) RaiseDeath();
         return dmg;
     }

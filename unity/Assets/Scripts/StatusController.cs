@@ -306,6 +306,7 @@ public class StatusController : MonoBehaviour
         TickDot(Ailment.Bleed);
         TickDot(Ailment.Burn);
         TickRegen();
+        TickBrace();
 
         // Tear down a DoT's aura once its state has lapsed (aura[i] != null gates it, so states.Has is only hit for
         // the handful of active DoT slots — cheap, no alloc; only DoT slots ever hold an aura).
@@ -337,6 +338,29 @@ public class StatusController : MonoBehaviour
         var u = Unit;
         if (u != null) u.Heal(s.intAmount);
     }
+
+    // Brace: damage held back during the window comes due the moment it ENDS — as true damage, because the mitigation
+    // that applied to each hit was already taken off when it was banked (UnitMitigation.Deferred); running it through
+    // defence a second time would discount the same hit twice.
+    //
+    // The STORE decides what came due: it is the only thing that sees a delayed hit's own deadline pass, and it can
+    // tell the two endings apart by construction — a stack a consumer CASHED is removed by that consumer and never
+    // reaches the sweeper, while a stack that RAN OUT is collected on its way out. This side only pays the bill.
+    //
+    // Reading a running total (rather than watching a pile) is what makes several delaying skills work: each owes on
+    // its own clock, and whatever expires this frame — from one pile or three — arrives here as one number to charge.
+    void TickBrace()
+    {
+        int owed = states.TakeExpiredDebt();
+        if (owed <= 0) return;
+        var u = Unit;
+        if (u != null) CombatAuthority.ApplyTrue(u, owed, BraceDueColor);
+    }
+
+    // The bill coming due gets its OWN colour, deliberately not Brace's blue: the blue numbers are damage you dodged
+    // for now, this one is damage you are actually taking, and they must not read as the same event. Pushed toward
+    // magenta rather than violet so it can't be mistaken for magic damage either (that's 0.7, 0.5, 1).
+    static readonly Color BraceDueColor = new Color(0.8f, 0.25f, 0.9f);
 }
 
 /// <summary>Convenience front door: find-or-add the <see cref="StatusController"/> on a unit and apply an

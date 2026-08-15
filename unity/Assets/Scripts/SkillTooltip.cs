@@ -74,11 +74,12 @@ public static class SkillTooltip
         {
             case SkillTrigger.OnSkillCastComplete: return "After casting " + NameOf(e.triggerSkillId);
             case SkillTrigger.OnBasicAttackStart:  return "When you start a basic attack";
-            case SkillTrigger.OnBasicAttackLanded: return "When a basic attack lands";
+            case SkillTrigger.OnBasicAttackDealt:  return "When a basic attack lands";
             case SkillTrigger.OnKill:              return "When you kill a mob";
             case SkillTrigger.OnLowHP:             return "When your HP drops low";
-            case SkillTrigger.OnHit:               return "When you land a hit";
+            case SkillTrigger.OnDamageDealt:       return "When you deal damage";
             case SkillTrigger.OnParry:             return "When you parry";
+            case SkillTrigger.OnDamageReceived:    return "When you take damage";
             default:                               return "Passive";
         }
     }
@@ -139,6 +140,16 @@ public static class SkillTooltip
     public static string DescribeEffect(SkillEffect e)
     {
         if (e == null) return null;
+
+        // A stack-driven effect's size is decided at CAST time by the pile, so there is no fixed number to preview
+        // here — say what it reads instead of printing a base power the runtime will ignore.
+        if (e.useStackValue && SkillEffect.SupportsStackValue(e.kind))
+        {
+            string what = e.kind == SkillEffectKind.Heal ? "Heals" : "Deals";
+            string read = e.stackValueSource == StackReading.CarriedTotal ? "banked total" : "stacks";
+            return what + " " + Hl(e.stackValueMult.ToString("0.##") + "×") + " your " + read;
+        }
+
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
@@ -184,7 +195,7 @@ public static class SkillTooltip
             case SkillEffectKind.Buff:          return "+" + Pct(Mathf.Max(0f, e.magnitude)) + " " + BuffStatName(e.buffStat) + (e.stacking ? " per stack" : "") + " for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Regen:         return "Restores " + Hl(e.magnitude.ToString("0.#")) + " HP/sec for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Cleanse:       return "Removes " + Hl(Mathf.Max(1, e.amount).ToString()) + " debuff(s)";
-            case SkillEffectKind.Vulnerability: return "Enemies take +" + Pct(e.magnitude) + " damage for " + Hl(e.seconds.ToString("0.#") + "s");
+            case SkillEffectKind.Vulnerability: return Subject(e, "You take", "Enemies take") + " +" + Pct(e.magnitude) + " damage for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Haste:         return (e.magnitude < 0f ? "−" + Pct(-e.magnitude) : "+" + Pct(e.magnitude)) + " move speed for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Knockback:     return "Knocks enemies back";
             case SkillEffectKind.Pull:          return "Pulls enemies in";
@@ -201,9 +212,22 @@ public static class SkillTooltip
                     ? "Parries the next " + Hl(charges.ToString()) + " hits" + window + " — no damage taken"
                     : "Parries the next hit" + window + " — no damage taken";
             }
+            case SkillEffectKind.Brace:
+            {
+                // Charges ARE stacks — the same read Parry uses, off the same knob, so the two can't word it differently.
+                int held = e.stacking ? Mathf.Max(1, e.stacksPerApply) : 1;
+                return (held > 1 ? "Delays the next " + Hl(held.ToString()) + " hits" : "Delays the next hit")
+                     + " within " + Hl(e.seconds.ToString("0.#") + "s")
+                     + " — the delayed damage all lands at once when the window ends";
+            }
             default:                            return null;
         }
     }
+
+    // WHO a line is about comes from the same predicate the runtime partitions on (SkillEffect.LandsOnCaster), never
+    // from an assumption baked into the kind: a Vulnerability authored on the caster is a self-drawback (Overclock's
+    // fragile window), not a debuff on enemies, and saying "enemies" there tells the player the opposite of the truth.
+    static string Subject(SkillEffect e, string caster, string target) => SkillEffect.LandsOnCaster(e) ? caster : target;
 
     static string BuffStatName(BuffStat s)
     {

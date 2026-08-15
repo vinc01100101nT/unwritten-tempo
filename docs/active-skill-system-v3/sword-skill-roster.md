@@ -15,7 +15,7 @@ The first fully-authored weapon. Companion to **Weapon Roster — 12 Identities*
 - It's a **heuristic, not a law** — don't force the resource→specialist→ult shape onto weapons whose identity doesn't want it (e.g. Firearm may need only one setup skill).
 - **Not every normal must be build-optimal.** Some weaker "trash-ish" slots are intentional — players discover which rolled skills suit their build. A perfectly flat roster where every skill is equally good is *not* the goal.
 
-Sword's spine: **Momentum → Deathblow · Parry → Retribution · Overclock → Bladedance.**
+Sword's spine: **Momentum → Deathblow · Brace → Retribution · Overclock → Bladedance.**
 
 ## Momentum — Deathblow's partner (a ROLLABLE passive skill, NOT default)
 
@@ -36,7 +36,7 @@ Sword's spine: **Momentum → Deathblow · Parry → Retribution · Overclock �
 | --- | --- | --- | --- | --- |
 | **Deathblow** | Execution spike | One massive hit; **consumes all Momentum** | Base **600% ATK + 40%/stack** (stacks uncapped) **×** the standing Momentum attack% (deliberate double-dip) · 1s cast | **Momentum** |
 | **Bladedance** | Sustained DPS | 8s auto-strike storm, ~1 hit/0.4s, hit-count **scales with Attack Speed**. **Fully invulnerable — all damage types, incl. DoT/true (ticks pause) — for the whole channel** (Juggernaut-style; doubles as a panic button by design) | ~100% ATK/hit · 8s | **Overclock** |
-| **Retribution** | Reactive counter | Brace 3s (**you still take the HP damage**), bank all damage taken; release a plain strike | Release = **banked × 2.5 × (1 + parry bonus)** · **NO CAP** · plain strike (no reflect recursion) | **Parry** |
+| **Retribution** | Reactive counter | Cash the damage **Brace** delayed: a plain strike scaled off the banked total, and **the debt is erased** — you never pay what you release | Release = **banked × 2.5** · **NO CAP** · plain strike (no reflect recursion) | **Brace** |
 
 ## Pool status
 
@@ -46,12 +46,21 @@ Sword's spine: **Momentum → Deathblow · Parry → Retribution · Overclock �
 
 Two are **spine partners** (carry an ult); the rest are single-purpose texture.
 
-**Parry** *(Retribution's spine partner)* — *Read the hit and punish it.* Blocks the next hit fully (**0 HP**), grants **next-strike +50%** (any ult → helps all three).
-- During Retribution's brace, a successful Parry **banks 100%** of the hit (0 HP lost, **full bank**) and grants the release bonus.
-- The manual 1st parry opens a **decaying auto-parry chain** for the rest of the brace: 2nd **75%** · 3rd **50%** · 4th **25%** · 5th+ **0%**.
-- **Release bonus:** +100% (1st parry) then **+25% each** additional → **max +175%**, multiplying the release.
-- **Every auto-parry must telegraph** (distinct VFX/number) so PvP attackers can read it.
-- *(Balance note: the compounding tower — Overclock ×2 → Parry banks doubled value → ×2.5 → up to ×2.75 → no cap — is a deliberate hero-moment, gated behind setup + parry-RNG + a rare fast-attacker. Playtest watch-item, not a fix.)*
+**Brace** *(Retribution's spine partner)* — *Take it now, pay it later — or don't pay at all.* Arms **5 charges for 4s**. Each charge holds back ONE incoming hit: instead of costing HP, that hit's damage is **banked**, and a cold-blue number pops for it. Out of charges, the next hit lands normally. **10 MP · 7s cd.**
+
+- **The bill comes due when the window ends** — everything banked lands at once as a single **true-damage** hit (its own purple number). Brace DELAYS damage, it never prevents it.
+- **What's banked is what would really have cost HP:** Guard, Vulnerability and Shield all apply *before* the hit is recorded, and a parried hit never lands at all, so it banks nothing. Poison/bleed/burn ticks bypass it entirely.
+- **Its only escape is Retribution** (below). Cashing the pile erases the debt — that IS Retribution's perk. With the ult uncharged, bracing is a bet you will lose.
+- **The cooldown deliberately exceeds the window** (7s vs 4s), so a second cast can't chain-postpone the bill forever.
+- *Engine note: two states — the armed charges (spend down, can hit zero) and the debt (must outlive them). Parry's exact shape, one word apart: a parry **erases** the hit, a brace **postpones** it.*
+
+**Parry** — *Read the hit and punish it.* Blocks the next hit fully (**0 HP**), grants **next-strike +50%** (any ult → helps all three).
+- ⚠️ **STALE — needs a design decision (2026-08-16).** Everything below was written when Retribution owned its own brace and Parry was its spine partner. **Brace is now a separate skill and Retribution's partner**, and the two do not interact: a parried hit is erased before any damage number exists, so it **banks nothing**. The auto-parry chain, the release bonus and the compounding tower described below are all unimplemented and currently unreachable. Parry today is exactly its first line — a full negate, plus a next-strike bonus that is itself still unbuilt. **Decide whether Parry gets a new role or keeps standing alone, then rewrite this block.**
+  - ~~During Retribution's brace, a successful Parry **banks 100%** of the hit (0 HP lost, **full bank**) and grants the release bonus.~~
+  - ~~The manual 1st parry opens a **decaying auto-parry chain** for the rest of the brace: 2nd **75%** · 3rd **50%** · 4th **25%** · 5th+ **0%**.~~
+  - ~~**Release bonus:** +100% (1st parry) then **+25% each** additional → **max +175%**, multiplying the release.~~
+  - ~~**Every auto-parry must telegraph** (distinct VFX/number) so PvP attackers can read it.~~
+  - ~~(Balance note: the compounding tower — Overclock ×2 → Parry banks doubled value → ×2.5 → up to ×2.75 → no cap.)~~
 
 **Overclock** (was "Flurry") *(Bladedance's spine partner)* — *Go faster, fragile.* **+30% Attack Speed for 8s, but take 2× damage for 3s.** The 2× drawback **flips per ult**:
 - **Bladedance** (specialist): its full invuln **suppresses the 2×** → pure upside.
@@ -59,7 +68,7 @@ Two are **spine partners** (carry an ult); the rest are single-purpose texture.
 - **Deathblow:** aspd → faster basics → Momentum quicker, but fragile for 3s.
 - 12 MP · 6s cd. *(Watch-item: trends universally desirable; the 2× cost is the governor for non-Bladedance builds.)*
 
-**Lunge** — *Close the gap and strike.* Dash to a target + strike. The "reach" glue. 100% ATK · 8 MP · 5s cd · reach 8 tiles. **Combo:** if you also rolled **Lock Blades**, casting Lunge grants it **3 charges** (tunable) — a Lunge+Lock Blades build keeps a near-constant supply of auto-lunges.
+**Lunge** — *Close the gap and strike.* Dash to a target + strike. The "reach" glue. 100% ATK · 8 MP · 5s cd · reach **8 world units** (`castRange`; the unit every range in this doc is written in — not navigation cells, which are 0.5 each). **Combo:** if you also rolled **Lock Blades**, casting Lunge grants it **5 charges** (tunable) — a Lunge+Lock Blades build keeps a near-constant supply of auto-lunges.
 
 **Guard Stance** — *Weather it.* Take **50% less damage for 5s** (Guard, Def-scaled). 12 MP · 10s cd. **Intentionally the weakest slot** (dominated by Parry/Bladedance, anti-synergizes Retribution) — kept as the always-available sustain floor and a deliberate "not every roll is optimal" slot.
 
@@ -84,8 +93,8 @@ Behavioral, event-triggered (via the trigger system Momentum proves). **Each ult
 - **Composure** — **OnParrySuccess** → your next skill costs **0 MP**.
 - **Unwavering** — **while Guard Stance active** → immune to knockback/interrupt (pairs with Committed Strike's long wind-up).
 - **Opening** *(combos with Feint)* — **OnFeintSuccess** → **chance to grant a private *Opening* state**; your **next damaging strike consumes it for +200% ATK** (a bonus single-target **Physical** hit — no crit, no pierce, ban-clean). The proc **chance scales with the Accuracy ring stat** (authored as a `chance`-channel affinity weight — data-layer only, deliberately **not** shown in the player tooltip). A combo passive (needs Feint rolled to fire), turning Feint into a setup→payoff verb. **State order:** an existing Opening is **consumed before** Feint rolls a new one (see impl items) — a hit can't self-consume the Opening it just created. *(Replaces the old telegraph-reveal Opening — no longer depends on mob telegraphs.)*
-- **Pressure** — **OnHit** (consecutive, same target) → **delays that target's HP regeneration**. *Depends on the mob-regen system (see impl items).*
-- **Lock Blades** *(combos with Lunge)* — **`OnSkillCastComplete` → Lunge** grants **3 charges** (tunable): each hit you land **spends one charge to auto-lunge** the target again, so it can't disengage while you keep connecting. **No Slow, no root** — the stickiness is on *you*, not a debuff on them. Out of charges, the passive does **nothing at all** (skill-level gate: no VFX, no lunge). Auto-lunges can't spend charges of their own — the no-self-feeding brake stops the chain. A combo passive (needs Lunge rolled to fire); leans **Deathblow** (denies disengage while you build/cash Momentum). *(Charges supersede the earlier duration-pin version, 2026-08-08 — see the **State System** doc, which owns the stacks/charges rules.)*
+- **Pressure** — **OnDamageDealt** (consecutive, same target) → **delays that target's HP regeneration**. *Depends on the mob-regen system (see impl items).*
+- **Lock Blades** *(combos with Lunge)* — **`OnSkillCastComplete` → Lunge** grants **5 charges** (tunable), each lasting **5s**: each hit you land **spends one charge to auto-lunge** the target again, so it can't disengage while you keep connecting. **Each held charge also grants +5% Attack Speed** (+25% at 5) — the charges are a stacking attack-speed buff, so a full pile both chases *and* swings faster, feeding Momentum while it lasts. **No Slow, no root** — the stickiness is on *you*, not a debuff on them. Out of charges, the passive does **nothing at all** (skill-level gate: no VFX, no lunge). Auto-lunges can't spend charges of their own — the no-self-feeding brake stops the chain. A combo passive (needs Lunge rolled to fire); leans **Deathblow** (denies disengage while you build/cash Momentum). *(Charges supersede the earlier duration-pin version, 2026-08-08 — see the **State System** doc, which owns the stacks/charges rules.)*
 
 ## Combos (setup → payoff)
 
@@ -101,7 +110,7 @@ Behavioral, event-triggered (via the trigger system Momentum proves). **Each ult
 4. **Retribution:** brace costs HP and banks it; release uncapped.
 5. **Mob attack telegraph lead-time — NEW (code TODO).** Measured: billboard mobs' `AttackLunge` squash currently fires *at* impact. **Feint** and reactive defense need mobs to telegraph ~0.2–0.3s **before** the hit — shift the tell earlier. *(Opening no longer needs this — it keys off Feint's success, not a mob tell.)*
 6. **Mob HP regen + healer mobs — NEW SYSTEM (code TODO).** Measured: mobs have no regen today (only `leashRadius`). **Pressure** requires a mob HP-regen system (and some mobs with heal skills) to have anything to delay. Build it, then Pressure activates.
-7. **Lock Blades ↔ Lunge combo (CONTENT TODO — engine built).** Lock Blades is authored as a passive triggered by `OnSkillCastComplete` parameterized to **Lunge**, granting **3 charges** (tune the count); each landed hit spends one to auto-lunge. Cross-skill combo — only fires if both are rolled. Auto-pursue = the *caster* re-lunges; it is NOT a Slow/root on the target. The machinery it needs (stacks/charges, the skill-level gate, consume-per-use, the no-self-feeding brake) is **built** — what remains is authoring the skill asset.
+7. **Lock Blades ↔ Lunge combo (CONTENT TODO — engine built).** Lock Blades is authored as a passive triggered by `OnSkillCastComplete` parameterized to **Lunge**, granting **5 charges** (tune the count) that each also carry +5% Attack Speed; each landed hit spends one to auto-lunge. Cross-skill combo — only fires if both are rolled. Auto-pursue = the *caster* re-lunges; it is NOT a Slow/root on the target. The machinery it needs (stacks/charges, the skill-level gate, consume-per-use, the no-self-feeding brake) is **built** — what remains is authoring the skill asset.
 8. **Per-hit state/trigger order — LOCKED (from stress test).** One canonical order so combos resolve predictably every time: **(1)** hit lands → **(2)** **consume** one-shot states (Opening, Composure's 0-MP flag, Parry's next-strike empower) → **(3)** apply damage/effects → **(4)** roll new procs → **(5)** apply newly-granted states. Consequence (the Opening case): consume-before-grant means a strike **can't self-consume** the Opening it just created.
 9. **OnBasicAttack recursion guard (code TODO).** Onslaught and Momentum both key off basic attacks; a basic attack **generated** by another (Onslaught's flurry, Lock Blades' auto-pursue) must **not** recursively spawn more basics unless explicitly flagged — cap the chain at one level or the flurry feeds itself.
 10. **Lock Blades "auto-pursue" — define ONE mechanism, engine-wide (code TODO).** "Your basic attacks automatically pursue" must resolve to a single behavior — **attack-lunge only** / **pathfind to target** / **forced facing** — chosen once so every future weapon reusing the primitive behaves identically. (Ties to #7.)

@@ -27,6 +27,14 @@ public enum StateId
     ManaLeech,                    // magnitude = fraction of damage dealt returned as MP
     Reflect,                      // magnitude = fraction of damage taken bounced back
     Parry,                        // stacks = CHARGES; each negates one incoming hit outright, then is spent
+    // Delaying a hit needs TWO states, because they are two different things with two different lifetimes. Merging
+    // them is impossible, not merely untidy: spending the last charge must make the ARMED state vanish, while the DEBT
+    // it created has to outlive it and still come due.
+    Brace,                        // ARMED capacity. stacks = CHARGES, exactly like Parry — each holds one hit, then is spent.
+    // Named for WHAT IT IS, not for the skill that fills it: any skill that postpones damage owes into this. (Brace
+    // above keeps its name for the same reason Parry does — one combat verb naming the effect, the state and the
+    // skill is this codebase's established pattern; see SkillEffectKind.Parry / StateId.Parry / skill.sword.parry.)
+    DeferredDamage,               // The DEBT. stacks = one delayed hit each, intAmount = its damage; the SUM comes due at expiry.
 }
 
 /// <summary>
@@ -137,6 +145,10 @@ public class UnitStates : MonoBehaviour
     /// bounds it in practice — but an unbounded list is a memory/perf hazard, so this backstop exists and design never
     /// reaches it.</summary>
     public const int MaxStacks = 99;
+
+    /// <summary>Tray tint for a BANKED-damage pile — red, so a debt you owe can't be mistaken for the protection that
+    /// created it. Kept light enough that the icon underneath still reads.</summary>
+    static readonly Color DebtTint = new Color(1f, 0.45f, 0.45f);
 
     // Transient APPLY CONTEXT for the NEXT Apply — the skill applier sets it right before a durational gameplay call
     // (BeginGuard / BuffDamage / StatusController.Apply / …) so the created/refreshed entry gets the source skill's
@@ -281,6 +293,28 @@ public class UnitStates : MonoBehaviour
         return n;
     }
 
+    /// <summary>The total VALUE the stacks granted by <paramref name="sourceSkillId"/> are carrying — the sibling of
+    /// <see cref="StacksFrom"/> for piles whose stacks mean an AMOUNT rather than a tally. ONE number, whichever
+    /// channel the pile uses, so a consumer never branches on how its granter happened to store things.
+    ///
+    /// <para><b>A percentage arrives already converted.</b> <see cref="State.magnitude"/> is ALWAYS a bonus fraction
+    /// (see <see cref="State.Mult"/>): +30% is stored as 0.3, and ten +3% stacks fold to 0.30. So "30% Attack" is read
+    /// as the flat number <c>0.3</c> with no conversion here — the store did it at apply time, in one place.</para>
+    ///
+    /// <para>Both channels are summed because a pile carries ONE kind of value, never both: a flat pile (a Brace's
+    /// delayed damage) leaves the fraction at 0, a percentage pile leaves the flat at 0. That invariant is what makes
+    /// a single total honest — a state whose stacks carried both meanings at once would be two things wearing one
+    /// name, which the store's one-responsibility rule already forbids.</para></summary>
+    public float CarriedFrom(string sourceSkillId)
+    {
+        if (string.IsNullOrEmpty(sourceSkillId)) return 0f;
+        EnsureFresh();
+        float total = 0f;
+        for (int i = 0; i < active.Count; i++)
+            if (active[i].sourceSkillId == sourceSkillId) total += active[i].magnitude + active[i].intAmount;
+        return total;
+    }
+
     /// <summary>Spend stacks granted by <paramref name="sourceSkillId"/> (oldest first), or ALL of them. Returns how
     /// many were spent. Only that skill's piles are touched — the whole point of keying by source.</summary>
     public int ConsumeFrom(string sourceSkillId, int count, bool all = false)
@@ -349,7 +383,10 @@ public class UnitStates : MonoBehaviour
     {
         if (hpPerTick <= 0 || seconds <= 0f) return;
         var s = Apply(StateId.Regen, seconds, 0f, hpPerTick);
-        if (s != null) s.nextTick = Time.time + RegenInterval;
+        // Seed the cadence only for a state that is actually NEW (Apply zeroes nextTick when it creates the entry).
+        // Re-seeding on every apply pushed the next heal a full interval away each time, so stacking or refreshing
+        // faster than the interval starved the tick — the DoTs already avoid this by seeding only when not active.
+        if (s != null && s.nextTick <= 0f) s.nextTick = Time.time + RegenInterval;
     }
 
     /// <summary>For <paramref name="seconds"/>, return <paramref name="fraction"/> (0..1) of the damage this unit
@@ -382,6 +419,102 @@ public class UnitStates : MonoBehaviour
     {
         if (seconds <= 0f) return;
         Apply(StateId.Parry, seconds);
+    }
+
+    /// <summary>Open a BRACE window for <paramref name="seconds"/>: incoming damage stops reaching HP and is recorded
+    /// instead, one stack per hit (see <see cref="AddDeferredHit"/>), coming due as a lump when the window ends.
+    /// Applied with ONE zero-value stack — the window itself — so the entry exists (and shows its timer) before any
+    /// hit lands; recorded hits are appended to it and carry the whole total in <see cref="State.intAmount"/>.</summary>
+    public void BeginBrace(float seconds)
+    {
+        if (seconds <= 0f) return;
+        Apply(StateId.Brace, seconds);   // HOW MANY charges rides the apply context's stacks-per-apply, exactly like Parry
+    }
+
+    /// <summary>Record one hit against an open Brace window instead of letting it reach HP; returns false (nothing
+    /// recorded) when no window is open. The stack expires WITH the window rather than on its own clock — a hit taken
+    /// in the last half-second must come due with all the others, not outlive them.
+    ///
+    /// <para>Stacks are appended directly, the same way <see cref="DrainShield"/> edits them, because the apply
+    /// context that <see cref="Apply"/> reads belongs to whoever cast the skill — and this runs deep inside a damage
+    /// intake, where there is no cast in progress to borrow that context from.</para></summary>
+    public bool AddDeferredHit(int dmg)
+    {
+        if (dmg <= 0) return false;
+        EnsureFresh();
+
+        // EVERY armed pile spends a charge on this ONE hit — they are not a queue. Two delaying skills up at once are
+        // two skills that each answered the same blow, so each pays a charge for it, and each ends up owing its share.
+        int piles = 0;
+        for (int i = 0; i < active.Count; i++)
+            if (active[i].id == StateId.Brace && active[i].stacks.Count > 0) piles++;
+        if (piles == 0) return false;   // nothing armed → the hit lands normally
+
+        // SPLIT the damage across them so the TOTAL owed is exactly the hit you took — never a multiple of it. Integer
+        // shares plus the remainder handed out one each, so the parts always add back up to dmg with nothing lost or
+        // invented by rounding.
+        int share = dmg / piles, extra = dmg % piles, handled = 0;
+
+        // Walk BACKWARDS: a pile that runs out of charges is removed from this very list, and going down means those
+        // removals can't shuffle entries we haven't visited yet.
+        for (int i = active.Count - 1; i >= 0 && handled < piles; i--)
+        {
+            var armed = active[i];
+            if (armed.id != StateId.Brace || armed.stacks.Count == 0) continue;
+
+            int part = share + (handled < extra ? 1 : 0);   // the remainder rides the first few piles
+            handled++;
+
+            // Spend one charge, oldest first — the same order Parry spends its charges and the store spends every
+            // pile. Spent on USE and never refunded (StateGate's locked rule).
+            float due = armed.endTime;            // captured BEFORE the pile can drop: the debt inherits ITS window's deadline
+            string owner = armed.sourceSkillId;   // the debt belongs to the skill that armed it, so a consumer can name it
+            Sprite icon = armed.icon; string label = armed.name; string desc = armed.description;
+            armed.stacks.RemoveAt(0);
+            if (armed.stacks.Count == 0) { active.RemoveAt(i); pool.Push(armed); }   // out of charges → the armed state (and its icon) go
+            else armed.Refold();
+
+            if (part <= 0) continue;   // more piles than damage: the charge is still spent, this one just owes nothing
+
+            // The debt, filed under the SKILL THAT ARMED IT so its own consumer can find it, and carrying that pile's
+            // own deadline — two braces with different windows come due at their own times, not a shared one.
+            var debt = Find(StateId.DeferredDamage, owner);
+            if (debt == null)
+            {
+                debt = pool.Count > 0 ? pool.Pop() : new State();
+                debt.id = StateId.DeferredDamage; debt.startTime = Time.time; debt.nextTick = 0f;
+                debt.sourceSkillId = owner ?? "";
+                debt.stacking = true;              // it IS a pile: one stack per hit, and its total is their sum
+                debt.stacks.Clear();
+                // Same icon as the armed charges — it's the same skill — but tinted RED, because the two mean opposite
+                // things: armed is protection you still hold, a debt is about to hurt you. The tray multiplies the
+                // sprite by this (BuffBarPanel.cs:134), so one value separates them with no second icon to draw.
+                debt.icon = icon; debt.name = label; debt.description = desc;
+                debt.tint = DebtTint;
+                active.Add(debt);
+            }
+            debt.stacks.Add(new State.Stack { endTime = due, magnitude = 0f, intAmount = part });
+            debt.Refold();
+        }
+
+        Recompute();
+        OnChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>Damage currently owed across EVERY delaying skill (0 when none) — what comes due if nobody cashes it.
+    /// Summed over all debt piles, never just the first: with two skills up, one pile is only part of what you owe.
+    /// Read from the debt, never from the armed charges — idle charges owe nothing.</summary>
+    public int DamageOwed
+    {
+        get
+        {
+            EnsureFresh();
+            int owed = 0;
+            for (int i = 0; i < active.Count; i++)
+                if (active[i].id == StateId.DeferredDamage) owed += active[i].intAmount;
+            return owed;
+        }
     }
 
     /// <summary>Mark this unit to TAKE <paramref name="extraFraction"/> more damage (0.3 = +30%) for
@@ -524,7 +657,15 @@ public class UnitStates : MonoBehaviour
             var s = active[i];
             var st = s.stacks;
             for (int k = st.Count - 1; k >= 0; k--)
-                if (now >= st[k].endTime) { st.RemoveAt(k); changed = true; }
+                if (now >= st[k].endTime)
+                {
+                    // A DELAYED hit that ran out of time is a bill that must still be paid — capture it on the way out.
+                    // Collected HERE, in the sweeper, because pruning happens from many places (any query, the tray,
+                    // the nameplate): whoever drops the stack, the debt is banked for the ticker instead of vanishing.
+                    // A stack a consumer CASHED never reaches this line, which is what separates "spent" from "expired".
+                    if (s.id == StateId.DeferredDamage) pendingDebt += st[k].intAmount;
+                    st.RemoveAt(k); changed = true;
+                }
             if (st.Count == 0) { pool.Push(s); active.RemoveAt(i); changed = true; }
             else s.Refold();
         }
@@ -532,9 +673,18 @@ public class UnitStates : MonoBehaviour
         return changed;
     }
 
+    /// <summary>Damage whose delay ran out and which nobody cashed — collected by <see cref="Prune"/>, drained here by
+    /// the one per-unit ticker that owns actually dealing it. Returns 0 (and stays 0) when nothing came due.
+    ///
+    /// <para>Kept as a running total rather than a per-pile lookup so it survives however many delaying skills are up,
+    /// and so a pile pruned by an unrelated query can't slip through unbilled.</para></summary>
+    public int TakeExpiredDebt() { int owed = pendingDebt; pendingDebt = 0; return owed; }
+    int pendingDebt;
+
     /// <summary>Wipe all states (on death / revive).</summary>
     public void Clear()
     {
+        pendingDebt = 0;   // death clears the slate: nothing owed follows you through a respawn
         if (active.Count == 0) return;
         for (int i = 0; i < active.Count; i++) pool.Push(active[i]);
         active.Clear();

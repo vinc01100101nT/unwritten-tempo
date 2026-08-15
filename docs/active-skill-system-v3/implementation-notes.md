@@ -67,15 +67,15 @@ Rebuilt the passive-skill trigger foundation clean (the reverted sword work's co
 **Aim is auto-resolved from the trigger** (via `def.Reticle`, so it matches how the skill was authored):
 
 - **Single-target** (`CastReticle.Unit`) → lands on the triggering entity (the `victim`); skipped if the moment has no entity.
-- **Ground / AoE / projectile** (`CastReticle.Ground`) → casts AT the victim's location (or the caster's spot if the moment has no victim, e.g. OnLowHP). So *meteor on OnBasicAttackLanded* rains on the mob you just hit, exactly as if hand-cast there.
+- **Ground / AoE / projectile** (`CastReticle.Ground`) → casts AT the victim's location (or the caster's spot if the moment has no victim, e.g. OnLowHP). So *meteor on OnBasicAttackDealt* rains on the mob you just hit, exactly as if hand-cast there.
 - **Self** (`CastReticle.Instant`) → **ALWAYS** casts on the caster; the victim is ignored (a self-buff is never flung onto the mob).
 
-**Re-entrancy:** ✅ **SOLVED 2026-08-07** by the **no-self-feeding brake** (see the stacking section below) — a passive never fires off a chain it's already in, at any delay. The old one-level `dispatching` bool is **deleted**: it only caught synchronous re-entry and missed the real hazard, a passive's damage landing frames later via deferred VFX ticks. Damage payloads on `OnHit`/`OnKill` passives are now safe.
+**Re-entrancy:** ✅ **SOLVED 2026-08-07** by the **no-self-feeding brake** (see the stacking section below) — a passive never fires off a chain it's already in, at any delay. The old one-level `dispatching` bool is **deleted**: it only caught synchronous re-entry and missed the real hazard, a passive's damage landing frames later via deferred VFX ticks. Damage payloads on `OnDamageDealt`/`OnKill` passives are now safe.
 
 **Two trigger shapes, matched to the space they name:**
 
 - `OnSkillCastComplete` **— parameterized** by `SkillDef.triggerSkillId` (a target active picked in the composer dropdown): fires when THAT active finishes casting **uninterrupted**. One value replaces the old per-skill events (`OnLunge`, `OnFeintSuccess`) because the skill set is open-ended. **Renamed** from the earlier `OnSkillSuccess` — "cast complete" states plainly that the cast wasn't interrupted, where "success" was context-vague.
-- **Natural events — flat** (a small, closed set, so no wrapper): `OnBasicAttackLanded`, `OnKill`, `OnLowHP`, `OnHit`, `OnParry`. `OnParry` **is the deliberate exception** to the skill-parameterized scheme — a parry's "success" is a natural game event (you blocked an attack), not "you cast the Parry skill."
+- **Natural events — flat** (a small, closed set, so no wrapper): `OnBasicAttackDealt`, `OnKill`, `OnLowHP`, `OnDamageDealt`, `OnParry`. `OnParry` **is the deliberate exception** to the skill-parameterized scheme — a parry's "success" is a natural game event (you blocked an attack), not "you cast the Parry skill."
 
 **One dispatch handler:** every fire-site routes through `PassiveEvents.Fire(trigger, skillId, victim)` — the single choke point, so a new trigger's rule lives in exactly one place and no fire-site can forget it. Passives are `SkillRunner` components that self-register in `OnEnable` / unregister in `OnDisable`, so **registered ⇔ the player owns it** (no separate owned-set to hand-sync). `Fire` runs every passive whose `trigger` matches (and, for `OnSkillCastComplete`, whose `triggerSkillId` == the completed skill's id).
 
@@ -83,8 +83,8 @@ Rebuilt the passive-skill trigger foundation clean (the reverted sword work's co
 
 **Wired now:** `OnSkillCastComplete` (from `PlayCycles`, the uninterrupted-cast site). **Natural events wired (2026-08-04):**
 
-- `OnBasicAttackLanded` — `Player3DAttacker.LandBasicHit`, only on a landed (non-whiff, `dealt > 0`) basic; victim = the mob. Covers melee + arrow basics (both funnel through `LandBasicHit`), NOT skill strikes.
-- `OnHit` — `Health.ApplyLeech(Health victim, int dmgDealt)`, the code's own "one player-dealt-damage choke," so basics **and** skills both fire it once per damage instance; victim = the mob hit. (Signature gained the `victim`; its 4 call sites pass `this`.)
+- `OnBasicAttackDealt` — `Player3DAttacker.LandBasicHit`, only on a landed (non-whiff, `dealt > 0`) basic; victim = the mob. Covers melee + arrow basics (both funnel through `LandBasicHit`), NOT skill strikes.
+- `OnDamageDealt` — `Health.ApplyLeech(Health victim, int dmgDealt)`, the code's own "one player-dealt-damage choke," so basics **and** skills both fire it once per damage instance; victim = the mob hit. (Signature gained the `victim`; its 4 call sites pass `this`.)
 - `OnKill` — `Health.Die`, fired first (before pool/destroy so `victim.position` is still valid); victim = the dying mob. Mobs only die to the player here, so this reads as "player kill."
 - `OnLowHP` — `Character.ApplyHitToHP`, a **local before/after crossing** of `LowHpFrac` (0.3 · MaxHP): fires the hit that crosses you into low HP while still alive. Re-arms after any heal automatically (no persisted flag). DoT-only crossings bypass this line and aren't covered — fine until OnLowHP becomes a queried state (its consumer Last Stand is a "while low" condition that wants the state store anyway).
 
@@ -160,7 +160,7 @@ The State-System doc's stacking slice, built in one pass. **Compile-verified** �
 - ⚠️ `StateId` **is now SERIALIZED** (on `SkillDef.requireState`) ⇒ the enum is **append-only** from here. Its old comment claiming the order was free to change was corrected. Same discipline as `SkillEffectKind`.
 - **COMPUTE BEFORE CONSUME** — locked, no snapshots anywhere. Effects run reading the LIVE store; the spend happens in `SkillRunner.OnTick` immediately after `ApplyBurst` returns, once per cast (`consumedThisCast`). So Deathblow sees the whole Momentum pile while rolling damage and spends it the instant that finishes. *(Corollary: a skill with a requirement but no effect bindings never reaches a tick, so it never consumes — a malformed authoring case.)*
 
-**The no-self-feeding brake replaces the old** `dispatching` **bool.** Every effect carries the set of passives that caused it (`chain`, one bit per registered passive, a single `ulong` — zero-alloc). `PassiveEvents.Fire` skips a passive whose bit is already in the chain; unrelated passives still run. Because no passive can repeat within a chain, **every chain is finite by construction** — no depth counter. `SkillRunner.OnTick` pushes its cast's chain around `ApplyBurst` (OnHit/OnKill fire synchronously inside it), and the multi-hit cascade captures it too, since a flurry's later strikes land on later frames. The old guard only caught synchronous re-entry and missed the real hazard: damage landing frames later via deferred ticks.
+**The no-self-feeding brake replaces the old** `dispatching` **bool.** Every effect carries the set of passives that caused it (`chain`, one bit per registered passive, a single `ulong` — zero-alloc). `PassiveEvents.Fire` skips a passive whose bit is already in the chain; unrelated passives still run. Because no passive can repeat within a chain, **every chain is finite by construction** — no depth counter. `SkillRunner.OnTick` pushes its cast's chain around `ApplyBurst` (OnDamageDealt/OnKill fire synchronously inside it), and the multi-hit cascade captures it too, since a flurry's later strikes land on later frames. The old guard only caught synchronous re-entry and missed the real hazard: damage landing frames later via deferred ticks.
 
 - **Only damage a passive's own effects deal stamps its bit** — a passive that merely buffs/extends doesn't mark an active's damage. That's what keeps Encore (extends Bladedance) firing on each kill.
 

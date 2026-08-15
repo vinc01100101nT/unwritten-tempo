@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   targetingMigrated: 1
   id: skill.sword.lunge
-  weaponType: 1
-  published: 0
   displayName: Lunge
+  weaponType: 1
+  published: 1
   icon: {fileID: -2812528802495159281, guid: 6cc824c29321438408138dbb62104f13, type: 3}
   description: 'Close the distance.
 
@@ -27,19 +27,18 @@ MonoBehaviour:
   shape: 4
   complexity: 0
   acquisitionTier: 0
-  triggersMigrated: 1
   triggers:
   - trigger: 0
-    triggerSkillId:
+    triggerSkillId: 
     requiresState: 0
-    requireSkillId:
+    requireSkillId: 
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
     stackPayoff: 0
     damageMultPerStack: 0
   - trigger: 7
-    triggerSkillId:
+    triggerSkillId: 
     requiresState: 1
     requireSkillId: skill.sword.lock_blades
     requireMinStacks: 1
@@ -47,21 +46,22 @@ MonoBehaviour:
     consumeStacks: 1
     stackPayoff: 0
     damageMultPerStack: 0
+  triggersMigrated: 1
   trigger: 0
-  triggerSkillId:
+  triggerSkillId: 
   requiresState: 0
-  requireSkillId:
+  requireSkillId: 
   requireState: 12
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
   stackPayoff: 0
   damageMultPerStack: 0
-  manaCost: 0
-  cooldown: 1
+  manaCost: 8
+  cooldown: 5
   castTime: 0
   aim: 2
-  castRange: 4
+  castRange: 8
   tier: 0
   chargeCost: 100
   castCircleId: 
@@ -100,6 +100,7 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0
+      side: 0
       buffStat: 0
       rampDelay: 0
       rampPerStep: 0
@@ -126,6 +127,7 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       hitCount: 1
       chance: 0
+      side: 0
       buffStat: 0
       rampDelay: 0
       rampPerStep: 0

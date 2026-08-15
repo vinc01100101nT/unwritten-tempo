@@ -251,8 +251,8 @@ public class Player3DAttacker : MonoBehaviour
             // attacker/direction (Origin == Target == receiver), just like OnReceiveHeal / OnHitBySkill —
             // the crit's bigger punch lives in the basic_crit sequence (×1.7), not a caller-side scale fudge.
             VfxCue.Fire(crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack, t.transform);
-            // A real basic attack connected — announce it for OnBasicAttackLanded passives (Momentum, Perfect Form).
-            PassiveEvents.Fire(SkillTrigger.OnBasicAttackLanded, null, t.transform);
+            // A real basic attack connected — announce it for OnBasicAttackDealt passives (Momentum, Perfect Form).
+            PassiveEvents.Fire(SkillTrigger.OnBasicAttackDealt, null, t.transform);
         }
     }
 

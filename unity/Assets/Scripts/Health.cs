@@ -118,7 +118,13 @@ public class Health : MonoBehaviour, ICombatUnit
     // One choke point so all four intakes (physical/magic × normal/overkill) can't drift apart.
     // Raw post-defence figure -> the damage that lands. UnitMitigation.Landed owns the vulnerability amplify, the
     // rounding and the guard cut (ONE place, so no intake can forget the debuff); the shield drain is layered after.
-    int Mitigate(float rawAfterDefence) => UnitMitigation.AfterShield(States, UnitMitigation.Landed(States, rawAfterDefence), UnitAnchor.Overhead(transform));
+    // Brace is the LAST link (UnitMitigation.Deferred): what it banks is what would really have cost HP. A fully
+    // deferred hit returns 0, the same "nothing got through" every intake already handles for a full Shield soak.
+    int Mitigate(float rawAfterDefence)
+    {
+        Vector3 popAt = UnitAnchor.Overhead(transform);
+        return UnitMitigation.Deferred(States, UnitMitigation.AfterShield(States, UnitMitigation.Landed(States, rawAfterDefence), popAt), popAt);
+    }
 
     // Parry — the SAME read the player gets (one primitive, no mob copy to hand-sync). Kept OUT of Mitigate on purpose:
     // Mitigate is math on a hit that lands, while a parry cancels the landing, so each intake bails before its damage
@@ -302,8 +308,8 @@ public class Health : MonoBehaviour, ICombatUnit
     {
         var ch = Character.Instance;
         if (ch == null || dmgDealt <= 0) return;
-        // The ONE player-dealt-damage choke (basics + skills both funnel here) → also the OnHit fire-site (victim = the mob just hit).
-        PassiveEvents.Fire(SkillTrigger.OnHit, null, victim != null ? victim.transform : null);
+        // The ONE player-dealt-damage choke (basics + skills both funnel here) → also the OnDamageDealt fire-site (victim = the mob just hit).
+        PassiveEvents.Fire(SkillTrigger.OnDamageDealt, null, victim != null ? victim.transform : null);
         ch.AddUltCharge(dmgDealt * Character.UltChargePerDamageDealt);   // dealing damage builds ult charge
         if (ch.ActiveManaLeechPct > 0f) ch.GainMana(Mathf.RoundToInt(dmgDealt * ch.ActiveManaLeechPct));   // ManaLeech skill window (V3)
 
