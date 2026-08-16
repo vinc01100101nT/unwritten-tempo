@@ -141,9 +141,11 @@ public static class SkillTooltip
     {
         if (e == null) return null;
 
-        // A stack-driven effect's size is decided at CAST time by the pile, so there is no fixed number to preview
-        // here — say what it reads instead of printing a base power the runtime will ignore.
-        if (e.useStackValue && SkillEffect.SupportsStackValue(e.kind))
+        // An effect the pile REPLACES has no fixed number to preview — its size is decided at cast time — so say what
+        // it reads instead of printing a base power the runtime will ignore. An effect the pile merely ADDS power to
+        // (a Damage reading the count) keeps its normal line below, with the per-stack bonus appended there.
+        if (e.useStackValue && SkillEffect.SupportsStackValue(e.kind)
+            && !(e.kind == SkillEffectKind.Damage && e.stackValueSource == StackReading.Count))
         {
             string what = e.kind == SkillEffectKind.Heal ? "Heals" : "Deals";
             string read = e.stackValueSource == StackReading.CarriedTotal ? "banked total" : "stacks";
@@ -166,6 +168,10 @@ public static class SkillTooltip
                 }
                 int hits = SkillEffectApplier.EffectiveHits(e);   // affinity-scaled, matches what actually lands
                 if (hits > 1) s += ", " + Hl(hits + "×") + " hits";
+                // The pile's count buys EXTRA power on this same hit, so it reads as a bonus to the line above rather
+                // than a separate strike — which is exactly how it lands.
+                if (e.useStackValue && e.stackValueSource == StackReading.Count)
+                    s += ", " + Hl("+" + e.stackValueMult.ToString("0.##") + "×") + " per stack";
                 return s;
             }
             case SkillEffectKind.Status:

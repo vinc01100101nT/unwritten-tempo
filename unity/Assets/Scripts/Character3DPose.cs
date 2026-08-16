@@ -77,6 +77,27 @@ public class Character3DPose : MonoBehaviour, IStancePose
 
     void Awake() => Reinitialize();
 
+    // Every Animator call warns ONCE PER CALL when nothing is driving it — three per frame from Update alone, which
+    // buries the console under thousands of lines. Reinitialize already tolerates a missing controller; the per-frame
+    // path did not, so it is gated here. The report fires ONCE and names the object, so a body genuinely missing its
+    // controller is still found rather than silently swallowed.
+    bool warnedNoController;
+    bool Posable
+    {
+        get
+        {
+            if (anim == null) anim = GetComponent<Animator>();
+            if (anim != null && anim.runtimeAnimatorController != null) return true;
+            if (!warnedNoController)
+            {
+                warnedNoController = true;
+                Debug.LogWarning($"[Character3DPose] \"{name}\" has no AnimatorController — posing skipped for it. " +
+                                 "Reported once, not per frame.", this);
+            }
+            return false;
+        }
+    }
+
     /// <summary>(Re)build the state-hash + clip-length caches from the CURRENT controller. Called on Awake, and by the
     /// Stance Composer after it rebuilds the controller so a clip change reflects live without leaving Play.</summary>
     public void Reinitialize()
@@ -136,7 +157,7 @@ public class Character3DPose : MonoBehaviour, IStancePose
         bool isWalk = !isSprint && !isRun && !string.IsNullOrEmpty(clip) && clip == walkClip;
         speedTarget = isSprint ? 2f : isRun ? 1f : isWalk ? 0.5f : 0f;
         Gait = isSprint ? LocoGait.Sprint : isRun ? LocoGait.Run : isWalk ? LocoGait.Walk : LocoGait.None;
-        anim.speed = 1f;
+        if (Posable) anim.speed = 1f;
         GoTo(Loco);
     }
 
@@ -210,7 +231,7 @@ public class Character3DPose : MonoBehaviour, IStancePose
     public bool TryGetLocoPhase(out float frac, out LocoGait gait)
     {
         frac = 0f; gait = LocoGait.None;
-        if (anim == null) return false;
+        if (!Posable) return false;
         var st = anim.GetCurrentAnimatorStateInfo(0);
         if (st.shortNameHash != Loco) return false;   // a one-shot (or the transition into one) is playing → no steps
         float nt = st.normalizedTime;
@@ -219,7 +240,7 @@ public class Character3DPose : MonoBehaviour, IStancePose
         return true;
     }
 
-    public void ResumeSelfDrive() { speedTarget = 0f; anim.speed = 1f; GoTo(Loco); }
+    public void ResumeSelfDrive() { speedTarget = 0f; if (Posable) anim.speed = 1f; GoTo(Loco); }
 
     float cachedHeight;
     // World-space rendered height (union of this model's renderer bounds), cached on first successful read. Height
@@ -247,15 +268,19 @@ public class Character3DPose : MonoBehaviour, IStancePose
 
     void GoTo(int hash)
     {
-        if (hash == currentState) return;
+        if (hash == currentState || !Posable) return;
         anim.CrossFadeInFixedTime(hash, crossFade, 0);
         currentState = hash;
     }
 
     void Update()
     {
-        float s = anim.GetFloat(PSpeed);
-        anim.SetFloat(PSpeed, Mathf.SmoothDamp(s, speedTarget, ref speedVel, speedSmooth));
+        // Facing is this component's OTHER job and needs no controller — a body with no animation should still turn.
+        if (Posable)
+        {
+            float s = anim.GetFloat(PSpeed);
+            anim.SetFloat(PSpeed, Mathf.SmoothDamp(s, speedTarget, ref speedVel, speedSmooth));
+        }
 
         if (facing.sqrMagnitude > 1e-4f)
         {

@@ -223,7 +223,7 @@ MonoBehaviour:
     footPlants: []
   - id: 20
     action: 3
-    clip: 
+    clip: AttackSword2H
     speedSource: 3
     speedMult: 1
     priority: 0

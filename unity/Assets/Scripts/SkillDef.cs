@@ -90,18 +90,9 @@ public enum AcquisitionTier { Early, Mid, Late }
 ///
 /// <para><b>Serialized by int</b>: <see cref="OnCast"/> MUST stay 0 (old assets have no <c>trigger</c> field → they
 /// deserialize as 0 = OnCast), and new values MUST be appended, never inserted.</para></summary>
-/// <summary>What each CONSUMED stack buys the skill that cashes it (the payoff half of the combo gate — the gate says
-/// what you need, this says what it's worth). One entry today: a bigger hit. New payoffs are APPENDED, never inserted —
-/// the value is serialized by int.</summary>
-public enum StackPayoff
-{
-    /// <summary>Each stack adds <see cref="SkillDef.damageMultPerStack"/> to the skill's damage multiplier.</summary>
-    Damage = 0,
-}
-
-/// <summary>HOW a consumer MEASURES the pile it cashes — orthogonal to <see cref="StackPayoff"/>, which says what
-/// that measurement BUYS. Two independent questions: this one is "how much is there?", the payoff is "what is it
-/// worth?", and every payoff can be paid on either reading.
+/// <summary>HOW an effect MEASURES the pile its cast is cashing — separate from what that measurement BUYS, which is
+/// the effect's own business (<see cref="SkillEffect.useStackValue"/>). Two independent questions: this one is "how
+/// much is there?", and every effect that pulls from the pile answers it for itself.
 ///
 /// <para>Serialized by int: <see cref="Count"/> MUST stay 0 (assets authored before this existed deserialize as 0 and
 /// keep their exact behaviour), and new values are APPENDED, never inserted.</para></summary>
@@ -145,7 +136,15 @@ public readonly struct StackVars
 ///
 /// <para><b>Naming is load-bearing.</b> <c>…Dealt</c> = it happened outward, from you. <c>…Received</c> = it happened
 /// to you. A <c>Damage…</c> name means the moment REQUIRES damage to have actually reached HP; a name without it
-/// (<see cref="OnBasicAttackStart"/>) does not.</para></summary>
+/// (<see cref="OnBasicAttackStart"/>) does not.</para>
+///
+/// <para><b>NEVER ADD AN "OnRepeat" TRIGGER — a beat of a repeating cast is NOT a moment.</b> Every member here is
+/// something that happened in the fight; a repeat is the SAME cast still running, which is why the repeat spends its
+/// charge directly (<see cref="SkillDef.repeatCostsCharge"/>) instead of announcing anything. Give a beat a trigger
+/// and a skill can answer its own beat, which re-enters the skill, which beats again — an unbounded loop that also
+/// pays no charge, because the pile is only spent by the run that owns it. This is the same trap the
+/// <c>OnSkillCastComplete</c> fire-site avoids by announcing only on a PLAYER press: it is what stops a granter and a
+/// consumer refilling each other forever. A repeating cast reads its pile; it must never raise a moment.</para></summary>
 public enum SkillTrigger
 {
     /// <summary>THE PLAYER PRESSED IT. The only trigger that takes a hotbar slot and the only one that pays the
@@ -230,6 +229,10 @@ public class SkillTriggerEntry
              "identified by the skill that created them, NOT by what they do, so two skills that both buff attack keep " +
              "separate piles and a finisher can only ever cash its own partner's.")]
     public string requireSkillId = "";
+    [Tooltip("WHICH of that skill's piles. A skill can grant more than one stacking state (charges to spend AND parry " +
+             "charges to survive on), and those must never be counted together or spent for each other — so the gate " +
+             "names both halves: whose pile, and which pile. Picked from what the granter actually grants.")]
+    public StateId requireStateId = StateId.Poison;
     [Tooltip("How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state at all. " +
              "0 = NO GATE: it fires with none and simply cashes whatever happens to be there (Deathblow, which must " +
              "stay usable on a Sword that never rolled Momentum).")]
@@ -239,36 +242,10 @@ public class SkillTriggerEntry
     [Tooltip("How many stacks this use spends. 0 = spends nothing (a pure condition, e.g. 'while Enraged'). " +
              "Consumption ALWAYS happens after the effects have computed, so the damage sees the live stacks.")]
     [Min(0)] public int consumeStacks = 0;
-    [Tooltip("HOW the pile is measured when this skill cashes it: Count = how many stacks; Carried total = the sum " +
-             "of what those stacks are carrying (a Brace's delayed damage). Separate from what the measurement BUYS.")]
-    public StackReading stackReading = StackReading.Count;
-    [Tooltip("What the measured pile BUYS this cast. The pile is snapshot when the cast starts — before anything is " +
-             "spent — so every tick of the cast is paid off by the same pile.")]
-    public StackPayoff stackPayoff = StackPayoff.Damage;
-    [Tooltip("Damage payoff: how much EXTRA damage multiplier each stack adds, on top of the effect's own. " +
-             "0.4 = +40% of your Attack per stack, so a 600% skill on 10 stacks lands at 600 + 400 = 1000%. " +
-             "Adds up (never compounds), and lifts every damage effect. 0 = stacks buy no damage.")]
-    [Min(0f)] public float damageMultPerStack = 0f;
 
-    /// <summary>The extra damage multiplier <paramref name="stacks"/> buy this cast — the ADDITIVE payoff channel.
-    /// Zero unless this trigger reads a state and its payoff is Damage.</summary>
-    public float StackDamageBonus(int stacks) =>
-        requiresState && stackPayoff == StackPayoff.Damage && stackReading == StackReading.Count && stacks > 0
-            ? Mathf.Max(0f, damageMultPerStack) * stacks
-            : 0f;
-
-    /// <summary>The FLAT damage a CarriedTotal reading buys this cast. Flat on purpose: the carried number is already
-    /// damage, so it must not be re-rolled through the caster's Attack. Zero unless this trigger reads a state on the
-    /// carried-total reading with the Damage payoff.
-    ///
-    /// <para><paramref name="carried"/> is ONE number whatever the pile stores — a percentage pile hands over its
-    /// decimal (30% ⇒ 0.3), a flat pile hands over its amount. Pairing a percentage pile with this flat-damage payoff
-    /// is an AUTHORING mistake (0.3 × a multiplier is ~0 damage), not something to branch on here: the reading stays
-    /// one number, and which pile is worth cashing this way is the designer's call.</para></summary>
-    public int CarriedDamageBonus(float carried) =>
-        requiresState && stackPayoff == StackPayoff.Damage && stackReading == StackReading.CarriedTotal && carried > 0f
-            ? Mathf.RoundToInt(carried * Mathf.Max(0f, damageMultPerStack))
-            : 0;
+    // WHAT the cashed pile is worth is deliberately NOT here: a trigger says only WHEN the skill fires and what that
+    // firing COSTS in stacks. The pile's payoff is authored on the effect that spends it (SkillEffect.useStackValue),
+    // so it composes with that effect's own power instead of being a second damage channel at the skill level.
 }
 
 /// <summary>Binds ONE exposed <see cref="VfxStep.tickId"/> to the gameplay it should do. The tickId matches a
@@ -434,9 +411,6 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     [HideInInspector] public int requireMinStacks = 1;
     [HideInInspector] public bool consumeAllStacks = false;
     [HideInInspector] public int consumeStacks = 0;
-    [HideInInspector] public StackReading stackReading = StackReading.Count;
-    [HideInInspector] public StackPayoff stackPayoff = StackPayoff.Damage;
-    [HideInInspector] public float damageMultPerStack = 0f;
 
     [Header("Cost / cadence")]
     public int manaCost = 10;
@@ -484,6 +458,28 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     [Tooltip("Seconds between the start of each cycle when repeatCount > 1. 0 = fall back to the VFX sequence's " +
              "RestartInterval (its loop-end marker). Cycles overlap freely; a still-playing cycle keeps rendering.")]
     [Min(0f)] public float repeatInterval = 0f;
+
+    [Tooltip("ON = the beat follows the caster's SWING SPEED instead of a fixed number of seconds, so a faster caster " +
+             "beats faster. Overrides the repeat interval entirely. Read live each beat, so a speed buff landing " +
+             "mid-run quickens the rest of it.")]
+    public bool repeatScaleWithAttackSpeed = false;
+    [Tooltip("How many beats per swing when the beat follows swing speed. 1 = one beat per swing (your normal rhythm); " +
+             "2 = twice as fast as you swing; 3 = three times. Whole numbers only — a beat is either on your rhythm " +
+             "or a clean multiple of it.")]
+    [Min(1)] public int repeatBeatsPerSwing = 1;
+
+    [Tooltip("ON = each repeat SPENDS one charge of the state this skill's trigger requires, and the repeats run " +
+             "until that pile is empty instead of stopping at a fixed count (repeat count is then ignored). Because " +
+             "the loop reads the LIVE pile, a passive that grants more charges mid-run genuinely lengthens the run.")]
+    public bool repeatCostsCharge = false;
+
+    [Tooltip("ON = each repeat RE-AIMS at a random living mob within the range below, measured from the CURRENT " +
+             "target — so the cast walks from one target to the next. OFF = every repeat replays at the spot the " +
+             "cast was originally aimed (a meteor shower stays where you aimed it).")]
+    public bool repeatReaim = false;
+    [Tooltip("Re-aim search range in world units, measured from the CURRENT target's position — not from the caster " +
+             "and not from where the cast started. Nothing living in range ENDS the run.")]
+    [Min(0f)] public float repeatReaimRange = 6f;
 
     [Header("Projectile fan (compose ONE projectile in the Vfx Composer; multiply here, like repeat)")]
     [Tooltip("Fire this many copies of the projectile at once, fanned into a cone around the aim direction. 1 = single. " +
@@ -539,9 +535,6 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
             requireMinStacks = requireMinStacks,
             consumeAllStacks = consumeAllStacks,
             consumeStacks = consumeStacks,
-            stackReading = stackReading,
-            stackPayoff = stackPayoff,
-            damageMultPerStack = damageMultPerStack,
         });
     }
 

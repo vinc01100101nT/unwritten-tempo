@@ -32,7 +32,7 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 - 🗂 [Rendering / lighting / reflection / weather](index/rendering-weather.md) — additional-lights loops, planar reflection, nightlight, rain/snow (6).
 - 🗂 [Asset / art pipeline](index/asset-pipeline.md) — Hunyuan/Trellis 3D props, style guides, 8-dir sprites, Pxltgr/Kenney (7).
 - 🗂 [World authoring / generation / data tables](index/world-authoring.md) — MapRecipe generator, prop palette, world-creator/map-painter, data SOs, portals, ambient life (10).
-- 🗂 [Combat / skills / progression / stats](index/combat-skills-progression.md) — cast time, multi-hit/status, trio-ring model, stats, Ring of Progression, charter (13).
+- 🗂 [Combat / skills / progression / stats](index/combat-skills-progression.md) — cast time, multi-hit/status, trio-ring model, stats, Ring of Progression, charter (15).
 - 🗂 [HUD / UI](index/hud-ui.md) — build process, hotbar, progression windows, click-shield, dev-settings (5).
 - 🗂 [Workflow / tooling / meta](index/workflow-meta.md) — Unity MCP bridge, chat/GM, Tempo docs/canvas gotchas, extractors, logs, persist protocol, dead-code scan, stale editor-assembly list (11).
 - [Mobs get EVERYTHING players get](mobs-get-everything-players-get.md) — HARD LAW: every skill/stat/state/effect on the player must work on mobs; only STANCES are player-only. A player-only gap is a bug, never design.

@@ -467,7 +467,10 @@ public class SkillComposerWindow : EditorWindow
             EditorGUILayout.HelpBox(TriggerHelp(e.trigger), MessageType.None);
 
             if (e.trigger == SkillTrigger.OnSkillCastComplete)
-                e.triggerSkillId = DrawSkillPicker("  on cast complete of", e.triggerSkillId);
+                e.triggerSkillId = DrawSkillPicker("  on cast complete of",
+                    "The ACTIVE skill whose successful (uninterrupted) PLAYER cast fires this one. Only a press " +
+                    "announces, so a skill auto-fired by one of its own triggers can't set this off. Lists saved " +
+                    "skills under Resources/Skills; a skill can't be fired by itself.", e.triggerSkillId);
 
             for (int i = 0; i < sel.triggers.Count; i++)
                 if (i != index && sel.triggers[i] != null && sel.triggers[i].trigger == e.trigger
@@ -488,10 +491,21 @@ public class SkillComposerWindow : EditorWindow
             EditorGUI.indentLevel++;
             // WHOSE stacks, not which state: a pile belongs to the skill that granted it, so a finisher can only
             // ever cash its own partner's (Deathblow eats Momentum, never Lock Blades' charges — both buff attack).
-            e.requireSkillId = DrawSkillPicker("  stacks from", e.requireSkillId, includePassives: true);
+            // THIS SKILL ITSELF is a legal answer: a skill whose cast grants its own charges and whose repeats spend
+            // them is self-contained. Only the "fired by" question above excludes self.
+            e.requireSkillId = DrawSkillPicker("  stacks from",
+                "WHOSE stacks this reads — the skill that GRANTED them. A pile belongs to the skill that created it, " +
+                "not to what it does, so two skills that both buff attack keep separate piles. THIS SKILL is a valid " +
+                "answer: a skill can grant its own charges and spend them over its own repeats. Passives are listed " +
+                "too, since most piles come from one.", e.requireSkillId, includePassives: true, allowSelf: true);
             if (string.IsNullOrEmpty(e.requireSkillId))
+            {
                 EditorGUILayout.HelpBox("Pick the skill whose stacks this reads — without it there's no pile to gate " +
                     "on, cash, or be paid by.", MessageType.Warning);
+                EditorGUI.indentLevel--;
+                return remove;   // WHICH pile is meaningless until WHOSE is answered
+            }
+            if (!DrawGrantedStatePicker(e)) { EditorGUI.indentLevel--; return remove; }
             e.requireMinStacks = EditorGUILayout.IntSlider(new GUIContent("  min stacks",
                 "How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state. " +
                 "0 = NO GATE: fires with none and simply cashes whatever is there."),
@@ -506,55 +520,11 @@ public class SkillComposerWindow : EditorWindow
                     "How many stacks this use spends. 0 = spends nothing (a pure 'while X' condition)."),
                     Mathf.Max(0, e.consumeStacks), 0, UnitStates.MaxStacks);
 
-            // TWO independent questions, deliberately TWO dropdowns: how much is in the pile, and what that is worth.
-            // Folding them into one would mean every future payoff had to be duplicated once per reading.
-            e.stackReading = (StackReading)EditorGUILayout.EnumPopup(new GUIContent("  consume stacks by",
-                "HOW the pile is measured.\n\n" +
-                "Count = how many stacks there are (Momentum → Deathblow).\n\n" +
-                "Carried total = the sum of what those stacks are CARRYING — for a pile whose stacks each hold a " +
-                "number rather than just existing (Brace's delayed damage → Retribution).\n\n" +
-                "Carried total is ONE number whatever the granter stores: a flat pile hands over its amount, and a " +
-                "PERCENTAGE pile hands over its decimal — +30% reads as 0.3, ten +3% stacks read as 0.3. There is no " +
-                "second mode to pick; match the payoff below to the kind of number your granter carries."), e.stackReading);
-
-            // What that measurement BUYS. Separate question from what it costs to fire — the gate says what you need,
-            // this says what it's worth. More payoffs land here as they're designed.
-            e.stackPayoff = (StackPayoff)EditorGUILayout.EnumPopup(new GUIContent("  each stack adds",
-                "What the measured pile buys this cast. Damage = a bigger hit (below)."), e.stackPayoff);
-
-            if (e.stackPayoff == StackPayoff.Damage && e.stackReading == StackReading.CarriedTotal)
-            {
-                // Same stored field, relabelled for what it means on THIS reading — one number, no parallel knob.
-                e.damageMultPerStack = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  carried total x",
-                    "What the pile's carried total is multiplied by. 2.5 = deal 2.5x the banked damage. Added FLAT, " +
-                    "NOT scaled by your Attack — the carried number is already real damage."),
-                    e.damageMultPerStack));
-                EditorGUILayout.HelpBox(
-                    $"Carrying 400 releases {400f * Mathf.Max(0f, e.damageMultPerStack):0} flat damage." +
-                    (e.damageMultPerStack <= 0f ? "  (0 = the pile buys nothing.)" : "") +
-                    "\n\nThis payoff wants a pile carrying REAL DAMAGE. A percentage pile carries its decimal " +
-                    "(+30% = 0.3), so cashing one here lands ~0 damage — that's an authoring mismatch, not a bug.",
-                    MessageType.None);
-            }
-            else if (e.stackPayoff == StackPayoff.Damage)
-            {
-                e.damageMultPerStack = EditorGUILayout.Slider(new GUIContent("  damage x per stack",
-                    "EXTRA damage multiplier each stack adds, on top of the effect's own. 0.4 = +40% of your " +
-                    "Attack per stack. Adds up, never compounds; lifts every damage effect on this skill."),
-                    Mathf.Max(0f, e.damageMultPerStack), 0f, 1f);
-                if (e.damageMultPerStack > 0f)
-                {
-                    float baseMult = LargestDamageMult(sel);
-                    EditorGUILayout.HelpBox(
-                        $"At 10 stacks: {baseMult * 100f:0}% + {e.damageMultPerStack * 10f * 100f:0}% = " +
-                        $"{(baseMult + e.damageMultPerStack * 10f) * 100f:0}% Attack.", MessageType.None);
-                }
-            }
-
-            EditorGUILayout.HelpBox("The pile is snapshot when the cast STARTS and spent only after the effects have " +
-                "computed — so the payoff and the cost read the same pile (a finisher sees the whole thing it's " +
-                "about to cash). Both readings are taken at that same moment; the choice above decides which one " +
-                "this skill is paid on.", MessageType.Info);
+            EditorGUILayout.HelpBox("This is the pile's COST, not its payoff — what the pile is WORTH is set on each " +
+                "effect below (\"use stack value\"), so one cast can pay several effects out of the same pile.\n\n" +
+                "The pile is snapshot when the cast STARTS and spent only after the effects have computed — so what " +
+                "the effects are paid and what the cast costs read the same pile (a finisher sees the whole thing " +
+                "it's about to cash).", MessageType.Info);
             EditorGUI.indentLevel--;
         }
         return remove;
@@ -564,7 +534,121 @@ public class SkillComposerWindow : EditorWindow
     // wants only OnCast actives (a passive isn't a cast you can key off), while the STACK-SOURCE picker must include
     // passives — the classic stack granter, Momentum, is one. Reads SkillCatalog (saved Resources/Skills assets); a
     // stale/unsaved pick stays visible so it isn't silently blanked.
-    string DrawSkillPicker(string label, string current, bool includePassives = false)
+    /// <summary>Every pile the given skill actually hands out — one entry per STACKING effect that creates a state
+    /// (<see cref="SkillEffect.TryStateFor"/>). Reused by the picker below and by the sweeps that keep consumers in
+    /// step, so "what piles does this skill grant" is answered in exactly one place.
+    ///
+    /// <para>Non-stacking effects are excluded on purpose: a single-instance state has no pile to spend down, so
+    /// gating on it could never mean "how many do I hold".</para></summary>
+    static void CollectGrantedStates(SkillDef granter, List<StateId> into)
+    {
+        into.Clear();
+        if (granter?.bindings == null) return;
+        for (int b = 0; b < granter.bindings.Count; b++)
+        {
+            var fx = granter.bindings[b]?.effects;
+            if (fx == null) continue;
+            for (int i = 0; i < fx.Count; i++)
+            {
+                var ef = fx[i];
+                if (ef == null || !ef.stacking) continue;
+                if (SkillEffect.TryStateFor(ef, out var id) && !into.Contains(id)) into.Add(id);
+            }
+        }
+    }
+
+    static readonly List<StateId> grantedScratch = new List<StateId>(4);
+    static readonly List<StateId> grantedBefore = new List<StateId>(4);
+    static readonly List<StateId> grantedAfter = new List<StateId>(4);
+
+    /// <summary>Keep every consumer of THIS skill's piles honest after its stacking effects were edited. A gate names
+    /// a pair — whose pile, and which — so changing what this skill grants would otherwise leave other skills pointing
+    /// at a pile that no longer exists, and they would silently stop firing.
+    ///
+    /// <para>Diffed against the last SAVED version, so the rule is simple and predictable: exactly one pile gone and
+    /// exactly one new one is an EDIT of that pile (consumers follow it); anything else that removes a pile is a
+    /// DELETION (consumers lose that gate rather than keep a reference that can never match). Run at Save, next to
+    /// the other whole-library fixups, because it writes to OTHER assets.</para></summary>
+    void SyncConsumersToGrantedStates(SkillDef granter, SkillDef before)
+    {
+        if (granter == null || before == null || string.IsNullOrEmpty(granter.id)) return;
+        CollectGrantedStates(before, grantedBefore);
+        CollectGrantedStates(granter, grantedAfter);
+
+        StateId? renamedFrom = null, renamedTo = null;
+        int gone = 0;
+        for (int i = 0; i < grantedBefore.Count; i++)
+            if (!grantedAfter.Contains(grantedBefore[i])) { gone++; renamedFrom = grantedBefore[i]; }
+        int fresh = 0;
+        for (int i = 0; i < grantedAfter.Count; i++)
+            if (!grantedBefore.Contains(grantedAfter[i])) { fresh++; renamedTo = grantedAfter[i]; }
+        if (gone == 0) return;                       // nothing lost — every existing gate still matches
+        bool isEdit = gone == 1 && fresh == 1;
+
+        int followed = 0, dropped = 0;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var s = all[i];
+            if (s?.triggers == null || s == granter) continue;
+            bool touched = false;
+            for (int t = 0; t < s.triggers.Count; t++)
+            {
+                var e = s.triggers[t];
+                if (e == null || !e.requiresState || e.requireSkillId != granter.id) continue;
+                if (grantedAfter.Contains(e.requireStateId)) continue;   // its pile survived untouched
+                Undo.RecordObject(s, "Sync stack gate");
+                if (isEdit && e.requireStateId.Equals(renamedFrom.Value))
+                {
+                    e.requireStateId = renamedTo.Value; followed++;
+                }
+                else
+                {
+                    // The pile it was spending is gone. Disarm the gate rather than leave it pointing at nothing.
+                    e.requiresState = false; e.requireSkillId = ""; dropped++;
+                }
+                touched = true;
+            }
+            if (touched) EditorUtility.SetDirty(s);
+        }
+        if (followed + dropped == 0) return;
+        Debug.Log($"[Skill Composer] \"{granter.id}\" changed what it stacks — " +
+                  $"{followed} gate(s) followed the change, {dropped} lost their gate (the pile they spent is gone).");
+    }
+
+    /// <summary>The "which pile" half of the gate, listing only what the chosen granter really stacks. Returns false
+    /// when the granter stacks nothing — there is then no pile to point at, and saying so is more useful than showing
+    /// a dropdown of states that will never exist.</summary>
+    static bool DrawGrantedStatePicker(SkillTriggerEntry e)
+    {
+        var granter = SkillCatalog.Get(e.requireSkillId);
+        CollectGrantedStates(granter, grantedScratch);
+        if (grantedScratch.Count == 0)
+        {
+            EditorGUILayout.HelpBox(
+                $"{(granter != null ? granter.displayName : e.requireSkillId)} doesn't stack anything, so it leaves no " +
+                "pile to read. Turn on 'stacking' for one of ITS effects first, or gate on a different skill.",
+                MessageType.Warning);
+            return false;
+        }
+
+        var labels = new string[grantedScratch.Count];
+        for (int i = 0; i < grantedScratch.Count; i++) labels[i] = grantedScratch[i].ToString();
+        int idx = Mathf.Max(0, grantedScratch.IndexOf(e.requireStateId));
+        idx = EditorGUILayout.Popup(new GUIContent("  which pile",
+            "WHICH of that skill's stacking states this reads. A skill can grant more than one — charges to spend and " +
+            "parry charges to survive on — and the two must never be counted together or spent for each other. Only " +
+            "the piles that skill really stacks are listed."), idx, labels);
+        e.requireStateId = grantedScratch[idx];
+        if (grantedScratch.Count == 1)
+            EditorGUILayout.HelpBox($"{labels[0]} is the only pile this skill stacks.", MessageType.None);
+        return true;
+    }
+
+    /// <summary>Pick a skill by id. <paramref name="allowSelf"/> separates the two questions this one popup answers:
+    /// WHICH SKILL FIRES this one (no — a skill announcing its own cast would re-fire itself forever) versus WHOSE
+    /// PILE this one reads (yes — a skill that grants its own charges and spends them over its own repeats is
+    /// self-contained, not a loop: the repeats replay the cast, they never start a new one).</summary>
+    string DrawSkillPicker(string label, string tooltip, string current, bool includePassives = false, bool allowSelf = false)
     {
         var ids = SkillCatalog.OrderedIds();
         var choices = new List<string> { "" };
@@ -572,7 +656,7 @@ public class SkillComposerWindow : EditorWindow
         {
             var d = SkillCatalog.Get(ids[i]);
             if (d == null || (d.IsPassive && !includePassives)) continue;
-            if (sel != null && ids[i] == sel.id) continue;          // a skill can't key off itself
+            if (!allowSelf && sel != null && ids[i] == sel.id) continue;   // a skill can't be FIRED by itself
             choices.Add(ids[i]);
         }
         if (!string.IsNullOrEmpty(current) && !choices.Contains(current)) choices.Add(current);
@@ -586,9 +670,9 @@ public class SkillComposerWindow : EditorWindow
         }
 
         int idx = Mathf.Max(0, choices.IndexOf(current ?? ""));
-        int next = EditorGUILayout.Popup(new GUIContent(label,
-            "The active skill whose successful (uninterrupted) cast fires this passive. Lists saved skills under Resources/Skills."),
-            idx, labels);
+        // The tooltip is the CALLER's: this one popup answers two different questions, and a shared hint would
+        // describe the wrong one at whichever site didn't write it.
+        int next = EditorGUILayout.Popup(new GUIContent(label, tooltip), idx, labels);
         return choices[next];
     }
 
@@ -749,12 +833,60 @@ public class SkillComposerWindow : EditorWindow
         {
             sel.vfx = (VfxSequence)EditorGUILayout.ObjectField(new GUIContent("vfx sequence",
                 "The composed look from the Vfx Composer. Its exposed ticks appear in Gameplay below."), sel.vfx, typeof(VfxSequence), false);
-            sel.repeatCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("repeat count",
-                "Replay the WHOLE cycle N times per cast (e.g. 5 = a 5-meteor shower). Each cycle is an independent play " +
-                "at the same cast point; per-fall hits still come from the VFX's tick rule. 1 = play once."), sel.repeatCount));
-            if (sel.repeatCount > 1)   // only meaningful when the cycle actually repeats
-                sel.repeatInterval = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("repeat interval (s)",
-                    "Seconds between cycle starts. 0 = use the VFX sequence's RestartInterval (its loop-end marker)."), sel.repeatInterval));
+            // A charge-driven run has no authored length, so the count would be a dead knob — hide it rather than
+            // show a number the run ignores.
+            sel.repeatCostsCharge = EditorGUILayout.Toggle(new GUIContent("repeat costs a charge",
+                "ON = each repeat SPENDS one charge of the state this skill's trigger requires, and the repeats run " +
+                "until that pile is empty (the count below is ignored). The loop reads the LIVE pile, so a passive " +
+                "that grants more charges mid-run genuinely lengthens the run."), sel.repeatCostsCharge);
+            if (sel.repeatCostsCharge)
+            {
+                bool gated = false;
+                if (sel.triggers != null)
+                    for (int i = 0; i < sel.triggers.Count; i++)
+                        if (sel.triggers[i] != null && sel.triggers[i].requiresState) gated = true;
+                if (!gated)
+                    EditorGUILayout.HelpBox("No trigger on this skill requires a state, so there are no charges to " +
+                        "spend — the repeats would stop after the first beat.", MessageType.Warning);
+            }
+            else
+                sel.repeatCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("repeat count",
+                    "Replay the WHOLE cycle N times per cast (e.g. 5 = a 5-meteor shower). Each cycle is an independent play " +
+                    "at the same cast point; per-fall hits still come from the VFX's tick rule. 1 = play once."), sel.repeatCount));
+
+            if (sel.repeatCount > 1 || sel.repeatCostsCharge)   // only meaningful when the cycle actually repeats
+            {
+                sel.repeatScaleWithAttackSpeed = EditorGUILayout.Toggle(new GUIContent("scale with attack speed",
+                    "ON = the beat follows the caster's SWING SPEED rather than a fixed number of seconds, so a faster " +
+                    "caster beats faster. It takes precedence, so the interval below is hidden."),
+                    sel.repeatScaleWithAttackSpeed);
+                if (sel.repeatScaleWithAttackSpeed)
+                {
+                    sel.repeatBeatsPerSwing = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("  beats per swing",
+                        "1 = one beat per swing, your normal rhythm. 2 = twice as fast as you swing. Whole numbers " +
+                        "only — a beat is either on your rhythm or a clean multiple of it."), sel.repeatBeatsPerSwing));
+                    float swing = Character.Instance != null ? Character.Instance.SwingTime : 0f;
+                    EditorGUILayout.HelpBox(swing > 0f
+                        ? $"Right now ({swing:0.00}s per swing): a beat every {swing / Mathf.Max(1, sel.repeatBeatsPerSwing):0.00}s."
+                        : "Enter Play mode to see the live beat.", MessageType.None);
+                }
+                else
+                    sel.repeatInterval = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("repeat interval (s)",
+                        "Seconds between cycle starts. 0 = use the VFX sequence's RestartInterval (its loop-end marker)."), sel.repeatInterval));
+                sel.repeatReaim = EditorGUILayout.Toggle(new GUIContent("repeat re-aims",
+                    "ON = each repeat picks a random living mob within the range below and goes there. OFF = every " +
+                    "repeat replays where the cast was originally aimed (a meteor shower stays put)."), sel.repeatReaim);
+                if (sel.repeatReaim)
+                {
+                    sel.repeatReaimRange = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  re-aim range",
+                        "World units, measured from the CURRENT target — not from you, and not from where the cast " +
+                        "started. So the run walks target to target. Nothing living in range ENDS the run."),
+                        sel.repeatReaimRange));
+                    EditorGUILayout.HelpBox("Each beat hits ONE target. The range is re-measured from whoever was " +
+                        "just struck, so the run chains outward from target to target and stops the moment there is " +
+                        "nothing living within reach of the last one.", MessageType.None);
+                }
+            }
 
 
             // Projectile fan — only when the VFX actually launches a projectile (a Carrier step). Compose ONE projectile
@@ -789,7 +921,18 @@ public class SkillComposerWindow : EditorWindow
         // far the content scrolls (no scrolling to the end just to save).
         EditorGUILayout.Space(4);
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Save", GUILayout.Height(24))) { NormalizeAllAffinities(sel); EditorUtility.SetDirty(sel); SyncFileNameToId(sel); AssetDatabase.SaveAssets(); SkillCatalog.Reload(); CaptureSnapshot(); }
+        // The consumer sweep runs BEFORE the snapshot is refreshed — the snapshot IS the "what this skill granted
+        // last time" it diffs against.
+        if (GUILayout.Button("Save", GUILayout.Height(24)))
+        {
+            NormalizeAllAffinities(sel);
+            EditorUtility.SetDirty(sel);
+            SyncFileNameToId(sel);
+            if (snapshotOwner == sel) SyncConsumersToGrantedStates(sel, snapshot);
+            AssetDatabase.SaveAssets();
+            SkillCatalog.Reload();
+            CaptureSnapshot();
+        }
         using (new EditorGUI.DisabledScope(!EditorUtility.IsDirty(sel)))
             if (GUILayout.Button("Discard changes", GUILayout.Height(24))) DiscardSkillEdits();
         EditorGUILayout.EndHorizontal();
@@ -921,24 +1064,6 @@ public class SkillComposerWindow : EditorWindow
 
     // A stable pastel per tick id — each tick's effects block reads as its own colored group (meteor_ball vs
     // fire_pillar, etc.) so multi-tick skills aren't a wall of identical grey boxes.
-    // The biggest damage multiplier this skill actually authors — what the stack-payoff preview adds onto, so the
-    // "at 10 stacks" line quotes THIS skill's real number instead of a hardcoded example. 1 (=100%) when it has no
-    // damage effect yet, which is also the roll's own fallback.
-    static float LargestDamageMult(SkillDef def)
-    {
-        float best = 0f;
-        if (def?.bindings != null)
-            for (int i = 0; i < def.bindings.Count; i++)
-            {
-                var fx = def.bindings[i]?.effects;
-                if (fx == null) continue;
-                for (int j = 0; j < fx.Count; j++)
-                    if (fx[j] != null && fx[j].kind == SkillEffectKind.Damage)
-                        best = Mathf.Max(best, fx[j].damageMult);
-            }
-        return best > 0f ? best : 1f;
-    }
-
     static Color TickColor(string id)
     {
         if (string.IsNullOrEmpty(id)) return Color.white;
@@ -1290,9 +1415,10 @@ public class SkillComposerWindow : EditorWindow
                 case SkillEffectKind.Damage:
                     ef.damageType = (DamageType)EditorGUILayout.EnumPopup(new GUIContent("damage type",
                         "Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (pierces armour, always crits)."), ef.damageType);
-                    // Hidden when the pile drives the size: it would be a dead knob, and a visible number that changes
-                    // nothing is a lie about what this effect does.
-                    if (!ef.useStackValue)
+                    // Hidden only when the pile REPLACES the size (a carried total is dealt flat): a visible number that
+                    // changes nothing is a lie about what this effect does. On the COUNT reading the pile ADDS to this
+                    // number instead, so it stays live and stays shown.
+                    if (!ef.useStackValue || ef.stackValueSource == StackReading.Count)
                         ef.damageMult = EditorGUILayout.Slider(new GUIContent("base power ×",
                             "The skill's INHERENT strength (Ember ~1×, Meteor ~8×). Affinity picks WHICH stats scale it; this sets HOW BIG. Final = caster ATK/MATK × base power × affinity."), ef.damageMult <= 0f ? 1f : ef.damageMult, 0.1f, 8f);
                     ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
@@ -1363,8 +1489,10 @@ public class SkillComposerWindow : EditorWindow
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long enemies are forced to attack the caster."), ef.seconds, 0.5f, 20f);
                     break;
                 case SkillEffectKind.Teleport:
-                    break;   // no fields — the destination is the aimed point (see the summary below)
+                    DrawStarCorners(ef);
+                    break;   // destination = the aimed point (see the summary below); only the FIGURE is authored
                 case SkillEffectKind.Dash:
+                    DrawStarCorners(ef);
                     ef.dashSpeedMult = EditorGUILayout.Slider(new GUIContent("dash speed ×",
                         "How fast the caster rushes to the aimed point, as a multiple of run speed (8 = 8× run speed). Higher = snappier gap-close."),
                         ef.dashSpeedMult <= 0f ? 8f : ef.dashSpeedMult, 1f, 20f);
@@ -1453,9 +1581,40 @@ public class SkillComposerWindow : EditorWindow
             });
     }
 
+    /// <summary>The FIGURE successive landings trace. Each hop crosses to the far side of the target and steps on, so
+    /// N hops in a row draw an N-pointed star THROUGH it instead of walking a ring around it. Only odd counts close,
+    /// so an even one is nudged up rather than silently drawing an unfinished shape.</summary>
+    static void DrawStarCorners(SkillEffect ef)
+    {
+        ef.afterimageSeconds = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("afterimage (s)",
+            "Leave a frozen copy of the mover where it stood, fading out over this many seconds — a fast chain of " +
+            "hops then reads as several of you at once. 0 = off. Only characters with a 3D body leave one."),
+            ef.afterimageSeconds));
+        if (ef.afterimageSeconds > 0f)
+        {
+            ef.afterimageTint = EditorGUILayout.ColorField(new GUIContent("  afterimage tint",
+                "Colour of the frozen copy. Alpha = how solid it starts before fading to nothing."), ef.afterimageTint);
+            EditorGUILayout.HelpBox("The copy is unlit and casts no shadow, so it reads as a ghost rather than a " +
+                "second character. It is a SNAPSHOT — it holds the pose it was struck in and does not animate.",
+                MessageType.None);
+        }
+
+        ef.starCorners = Mathf.Max(3, EditorGUILayout.IntField(new GUIContent("star corners",
+            "How many corners repeated landings trace. 5 = the classic five-pointed star (what Lunge draws today). " +
+            "Only matters when the skill relocates more than once — a single hop has no figure to close."),
+            ef.starCorners));
+        if ((ef.starCorners & 1) == 0)
+            EditorGUILayout.HelpBox($"Even counts never close the figure — this will run as {ef.starCorners + 1}.",
+                MessageType.Warning);
+    }
+
     /// <summary>"Pull this effect's size from the pile this cast is cashing." Drawn only for the kinds whose output is
-    /// a plain AMOUNT (see <see cref="SkillEffect.SupportsStackValue"/>) — on a duration or a proc chance there is no
+    /// a plain SIZE (see <see cref="SkillEffect.SupportsStackValue"/>) — on a duration or a proc chance there is no
     /// sensible conversion, so the control simply isn't offered rather than sitting there doing nothing.
+    ///
+    /// <para>The READING decides how the pile pays, because the two readings are different kinds of number: a carried
+    /// total is already real damage, so it is dealt flat; a count is a tally, so it buys EXTRA POWER on this effect and
+    /// still rolls through the caster's Attack. A heal has no roll to lift, so it takes the flat path either way.</para>
     ///
     /// <para>Several effects on one skill may each switch this on and read the SAME snapshot — that is the whole
     /// point: one cast can hit for the banked damage AND heal off it.</para></summary>
@@ -1464,8 +1623,9 @@ public class SkillComposerWindow : EditorWindow
         if (!SkillEffect.SupportsStackValue(ef.kind)) { ef.useStackValue = false; return; }
 
         ef.useStackValue = EditorGUILayout.Toggle(new GUIContent("use stack value",
-            "ON = this effect's SIZE comes from the pile this cast cashes, instead of its own power field above. " +
-            "Output = the reading x the multiplier, dealt FLAT (never re-rolled through your Attack, so it can't crit)."),
+            "ON = the pile this cast cashes decides this effect's SIZE. HOW it pays depends on the reading below: a " +
+            "carried total is dealt FLAT (it is already real damage, so it can't crit), while a COUNT adds power to " +
+            "this effect and rolls through your Attack like any other hit."),
             ef.useStackValue);
         if (!ef.useStackValue) return;
 
@@ -1473,16 +1633,31 @@ public class SkillComposerWindow : EditorWindow
             "Count = how many stacks the pile holds.\n\n" +
             "Carried total = the sum of what those stacks CARRY (a percentage pile reads as its decimal, +30% = 0.3)."),
             ef.stackValueSource);
-        ef.stackValueMult = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  x multiplier",
-            "What the reading is multiplied by to get this effect's output. 2.5 on a carried total of 400 = 1000."),
+
+        bool perStackPower = ef.kind == SkillEffectKind.Damage && ef.stackValueSource == StackReading.Count;
+        ef.stackValueMult = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent(
+            perStackPower ? "  power × per stack" : "  × multiplier",
+            perStackPower
+                ? "EXTRA power each stack adds, on top of this effect's own base power. 0.4 = +40% of your Attack per " +
+                  "stack. Adds up, never compounds."
+                : "What the reading is multiplied by to get this effect's output. 2.5 on a carried total of 400 = 1000."),
             ef.stackValueMult));
 
         string unit = ef.kind == SkillEffectKind.Heal ? "HP healed" : "damage";
-        EditorGUILayout.HelpBox(
-            ef.stackValueSource == StackReading.CarriedTotal
-                ? $"Carrying 400 → {400f * Mathf.Max(0f, ef.stackValueMult):0} {unit}."
-                : $"At 10 stacks → {10f * Mathf.Max(0f, ef.stackValueMult):0} {unit}.",
-            MessageType.None);
+        if (perStackPower)
+        {
+            float basePower = ef.damageMult <= 0f ? 1f : ef.damageMult;
+            float per = Mathf.Max(0f, ef.stackValueMult);
+            EditorGUILayout.HelpBox(
+                $"At 10 stacks: {basePower * 100f:0}% + {per * 10f * 100f:0}% = {(basePower + per * 10f) * 100f:0}% Attack." +
+                (per <= 0f ? "  (0 = the pile buys nothing.)" : ""), MessageType.None);
+        }
+        else
+            EditorGUILayout.HelpBox(
+                ef.stackValueSource == StackReading.CarriedTotal
+                    ? $"Carrying 400 → {400f * Mathf.Max(0f, ef.stackValueMult):0} {unit}, flat."
+                    : $"At 10 stacks → {10f * Mathf.Max(0f, ef.stackValueMult):0} {unit}, flat.",
+                MessageType.None);
 
         // The pile comes from the TRIGGER's gate — without one there is nothing to read, and this would silently be 0.
         bool anyGate = false;
@@ -1507,11 +1682,41 @@ public class SkillComposerWindow : EditorWindow
         if (!ef.stacking) return;
 
         EditorGUI.indentLevel++;
-        ef.stackLimit = EditorGUILayout.IntSlider(new GUIContent("  max stacks",
-            "Held at once. Past this the OLDEST stack drops."), Mathf.Max(1, ef.stackLimit), 1, UnitStates.MaxStacks);
-        ef.stacksPerApply = EditorGUILayout.IntSlider(new GUIContent("  stacks per use",
-            "How many stacks ONE application grants — the 'charges' knob. 3 = a cast hands out 3 charges sharing one " +
-            "window, spent one at a time."), Mathf.Max(1, ef.stacksPerApply), 1, Mathf.Max(1, ef.stackLimit));
+
+        ef.stacksFromAttackSpeed = EditorGUILayout.Toggle(new GUIContent("  count from attack speed",
+            "ON = the count is NOT authored. It is worked out in-game from how many times the caster would swing " +
+            "during this effect's own duration, so a faster caster gets MORE stacks in the SAME window. The two " +
+            "knobs below no longer apply — the count is whatever the caster's speed earns."), ef.stacksFromAttackSpeed);
+
+        // The two authored knobs describe a hand-sized pile. A speed-earned count replaces both, so they're shown
+        // greyed rather than hidden: the author can still see the numbers the effect falls back to.
+        using (new EditorGUI.DisabledScope(ef.stacksFromAttackSpeed))
+        {
+            ef.stackLimit = EditorGUILayout.IntSlider(new GUIContent("  max stacks",
+                "Held at once. Past this the OLDEST stack drops."), Mathf.Max(1, ef.stackLimit), 1, UnitStates.MaxStacks);
+            ef.stacksPerApply = EditorGUILayout.IntSlider(new GUIContent("  stacks per use",
+                "How many stacks ONE application grants — the 'charges' knob. 3 = a cast hands out 3 charges sharing one " +
+                "window, spent one at a time."), Mathf.Max(1, ef.stacksPerApply), 1, Mathf.Max(1, ef.stackLimit));
+        }
+
+        if (ef.stacksFromAttackSpeed)
+        {
+            ef.stackShare = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  share of the count",
+                "This effect's share. 1 = the full count; 0.5 = half of it, rounded up. Two effects on this skill " +
+                "with the SAME duration stay in exact proportion at every attack speed — half is always half, and " +
+                "changing the duration moves both on its own."), ef.stackShare));
+
+            // Preview from the LIVE player, the same way every other estimate in this window is quoted — an authored
+            // count is now a rate, and a rate with no worked example is a knob you can't reason about.
+            float swing = Character.Instance != null ? Character.Instance.SwingTime : 0f;
+            string live = swing > 0f
+                ? $"Right now ({swing:0.00}s per swing): {Mathf.Max(1, Mathf.CeilToInt(ef.seconds / swing * Mathf.Max(0f, ef.stackShare)))} stacks."
+                : "Enter Play mode to see the live count.";
+            EditorGUILayout.HelpBox(
+                $"{ef.seconds:0.#}s window ÷ seconds-per-swing × {Mathf.Max(0f, ef.stackShare):0.##}, rounded up.\n{live}",
+                MessageType.None);
+        }
+
         EditorGUILayout.HelpBox(
             "Magnitude above is PER STACK, and the total is the SUM.\n" +
             "For Haste and Stat Buff it is always the BONUS, never a multiplier — stacking or not: 0.03 = \"+3% per " +

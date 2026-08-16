@@ -330,7 +330,7 @@ public class VfxSequenceRunner : MonoBehaviour
     void Emit(string tag, Vector3 point, bool hasPoint)
     {
         if (string.IsNullOrEmpty(tag)) return;
-        onTick?.Invoke(new VfxTick(tag, point));
+        onTick?.Invoke(new VfxTick(tag, point, ctx.targetUnit, ctx.effectPoint, ctx.isRepeat));
         var steps = seq.steps;
         for (int i = 0; i < steps.Count && i < started.Length; i++)   // bound: a tuner may add steps mid-play
         {
@@ -354,8 +354,8 @@ public class VfxSequenceRunner : MonoBehaviour
             if (!started[i] || endFired[i] || steps[i] == null) continue;
             var st = steps[i];
             Vector3 p = tickFollow[i] != null ? tickFollow[i].position : (ctx.follow != null ? ctx.follow.position : ctx.target);
-            if (!string.IsNullOrEmpty(st.emitEventOnEnd)) onTick?.Invoke(new VfxTick(st.emitEventOnEnd, p));
-            if (st.HasTick && st.tickWhen == TickTiming.End) onTick?.Invoke(new VfxTick(st.tickId, p));
+            if (!string.IsNullOrEmpty(st.emitEventOnEnd)) onTick?.Invoke(new VfxTick(st.emitEventOnEnd, p, ctx.targetUnit, ctx.effectPoint, ctx.isRepeat));
+            if (st.HasTick && st.tickWhen == TickTiming.End) onTick?.Invoke(new VfxTick(st.tickId, p, ctx.targetUnit, ctx.effectPoint, ctx.isRepeat));
             endFired[i] = true;
         }
 

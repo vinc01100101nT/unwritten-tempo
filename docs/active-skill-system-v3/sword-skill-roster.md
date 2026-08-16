@@ -15,7 +15,7 @@ The first fully-authored weapon. Companion to **Weapon Roster — 12 Identities*
 - It's a **heuristic, not a law** — don't force the resource→specialist→ult shape onto weapons whose identity doesn't want it (e.g. Firearm may need only one setup skill).
 - **Not every normal must be build-optimal.** Some weaker "trash-ish" slots are intentional — players discover which rolled skills suit their build. A perfectly flat roster where every skill is equally good is *not* the goal.
 
-Sword's spine: **Momentum → Deathblow · Brace → Retribution · Overclock → Bladedance.**
+Sword's spine: **Momentum → Deathblow · Brace → Retribution · Overclock → Blade Dance.** (Blade Dance is no longer an ult — see below.)
 
 ## Momentum — Deathblow's partner (a ROLLABLE passive skill, NOT default)
 
@@ -30,13 +30,14 @@ Sword's spine: **Momentum → Deathblow · Brace → Retribution · Overclock �
 - **Deathblow double-dips Momentum by design** (its specialty) — see below.
 - **State-order (LOCKED, closes the S2 ambiguity):** on Deathblow cast → **snapshot stack count → compute *both* Deathblow's +40%/stack scaling AND the standing attack% off that snapshot → deal damage → THEN consume all stacks.** Never consume before reading.
 
-## Ultimates (3) — pick 1 per weapon roll · ~40 MP · charge-gated · Physical · single-target
+## Ultimates — ⚠️ NOW TWO, NOT THREE (2026-08-16)
 
 | Ult | Payoff | Effect | Numbers | Specialist feeder |
 | --- | --- | --- | --- | --- |
 | **Deathblow** | Execution spike | One massive hit; **consumes all Momentum** | Base **600% ATK + 40%/stack** (stacks uncapped) **×** the standing Momentum attack% (deliberate double-dip) · 1s cast | **Momentum** |
-| **Bladedance** | Sustained DPS | 8s auto-strike storm, ~1 hit/0.4s, hit-count **scales with Attack Speed**. **Fully invulnerable — all damage types, incl. DoT/true (ticks pause) — for the whole channel** (Juggernaut-style; doubles as a panic button by design) | ~100% ATK/hit · 8s | **Overclock** |
 | **Retribution** | Reactive counter | Cash the damage **Brace** delayed: a plain strike scaled off the banked total, and **the debt is erased** — you never pay what you release | Release = **banked × 2.5** · **NO CAP** · plain strike (no reflect recursion) | **Brace** |
+
+**Bladedance left this table.** It was built on 2026-08-16 as **Blade Dance**, a **base-tier active** (10 MP · 5s cd, no ult charge) — see its own section under the actives. **Open structural question:** Sword now has two ults. Design a third, or ship with two? Nothing else in this doc has been restructured for that.
 
 ## Pool status
 
@@ -62,15 +63,21 @@ Two are **spine partners** (carry an ult); the rest are single-purpose texture.
   - ~~**Every auto-parry must telegraph** (distinct VFX/number) so PvP attackers can read it.~~
   - ~~(Balance note: the compounding tower — Overclock ×2 → Parry banks doubled value → ×2.5 → up to ×2.75 → no cap.)~~
 
-**Overclock** (was "Flurry") *(Bladedance's spine partner)* — *Go faster, fragile.* **+30% Attack Speed for 8s, but take 2× damage for 3s.** The 2× drawback **flips per ult**:
-- **Bladedance** (specialist): its full invuln **suppresses the 2×** → pure upside.
+**Overclock** (was "Flurry") *(Blade Dance's spine partner)* — *Go faster, fragile.* **+30% Attack Speed for 8s, but take 2× damage for 3s.** The 2× drawback **flips per build**:
+- **Blade Dance** (specialist): attack speed buys **more charges AND more parries** (both counts are derived from your swing rate), and it beats faster. ⚠️ **The old "its full invuln suppresses the 2×" no longer holds** — Blade Dance grants no invulnerability, so the 2× is a real cost you take with parries as the only cover. Reads as a bigger, more honest gamble than it used to.
 - **Retribution:** 2× incoming → **2× bank** — drawback becomes upside.
 - **Deathblow:** aspd → faster basics → Momentum quicker, but fragile for 3s.
-- 12 MP · 6s cd. *(Watch-item: trends universally desirable; the 2× cost is the governor for non-Bladedance builds.)*
+- 12 MP · 6s cd. *(Watch-item: trends universally desirable; the 2× cost is the governor for every build now.)*
+
+**Blade Dance** *(Overclock's specialist — BUILT 2026-08-16)* — *Become the storm.* A **base-tier active**: **10 MP · 5s cd · 11 range**. On cast it hands you **two piles that both last 8s and are both sized by your swing rate** — dance charges (`ceil(8 ÷ your seconds-per-swing)`) and **half that many, rounded up, in Parry charges**. Then it beats: **3 beats per swing**, each beat **spends one dance charge**, hops to the next of **7 star corners** leaving a **1s afterimage**, and strikes for **100% ATK**. Each beat re-aims at a random living mob within **3 units of the mob it just struck**, so the dance walks target to target; nothing in range ends it. **One beat, one target — this is single-target, never AoE.**
+- Each held dance charge is also **+1% damage** (they are a stacking Damage buff), so the storm is strongest at its start and tapers as it spends down.
+- **Defence is the Parry pile, not invulnerability** — it erases hits until it runs out, then you are exposed. Deliberate: a defence you can drain is a decision, not a freebie.
+- **Measured consequence of the current tuning:** at base speed that is **14 slashes over ~2.8s** (14 × 0.2s) while the **parries last the full 8s** — so the guard outlives the dance by ~5s. Set beats-per-swing to 1 if you want the dance to fill its own window instead.
+- *Engine note: no code names this skill. It composes from `repeatCostsCharge` + `repeatScaleWithAttackSpeed` + `repeatReaim` + attack-speed-derived stack counts + the authored star corner count. See the implementation notes.*
 
 **Lunge** — *Close the gap and strike.* Dash to a target + strike. The "reach" glue. 100% ATK · 8 MP · 5s cd · reach **8 world units** (`castRange`; the unit every range in this doc is written in — not navigation cells, which are 0.5 each). **Combo:** if you also rolled **Lock Blades**, casting Lunge grants it **5 charges** (tunable) — a Lunge+Lock Blades build keeps a near-constant supply of auto-lunges.
 
-**Guard Stance** — *Weather it.* Take **50% less damage for 5s** (Guard, Def-scaled). 12 MP · 10s cd. **Intentionally the weakest slot** (dominated by Parry/Bladedance, anti-synergizes Retribution) — kept as the always-available sustain floor and a deliberate "not every roll is optimal" slot.
+**Guard Stance** — *Weather it.* Take **50% less damage for 5s** (Guard, Def-scaled). 12 MP · 10s cd. **Intentionally the weakest slot** (dominated by Parry/Blade Dance, anti-synergizes Retribution) — kept as the always-available sustain floor and a deliberate "not every roll is optimal" slot.
 
 **Feint** — *Strike between heartbeats.* A quick strike; landing it on an enemy **mid-attack-windup** **interrupts and staggers** the attack. The telegraph-read verb — distinct from Parry (which negates the hit). **Combo:** if you also rolled **Opening**, a successful Feint has a chance to grant an *Opening* state (see passives) — Feint becomes a setup→payoff verb. *Needs mob telegraph lead-time (see impl items).*
 
@@ -88,7 +95,7 @@ Behavioral, event-triggered (via the trigger system Momentum proves). **Each ult
 
 - **Momentum** *(Deathblow partner)* — see its own section above. OnBasicAttack → stacks; +%ATK to all damage; Deathblow consumes.
 - **Perfect Form** *(Deathblow partner)* — same-target hit streak: **+1 Momentum-per-hit every 3 consecutive same-target hits** *and* slows stack decay; **resets on miss/target-swap**. (Merged the old "Duelist's Focus".)
-- **Encore** *(Bladedance partner, exclusive)* — **OnKill during Bladedance** → extend the storm. Only functions mid-Bladedance.
+- **Encore** *(Blade Dance partner, exclusive)* — **OnKill during Blade Dance** → extend the storm. Only functions mid-Blade Dance. **NOT BUILT, but the engine now supports it with no special case:** the beat loop reads the LIVE charge pile each beat, so a passive that grants more dance charges genuinely lengthens the run. Still to decide: how many charges per kill, and whether it also grants Parry charges (today it would not, so an extended dance runs past its guard).
 - **Last Stand** *(Retribution partner)* — **OnLowHP**: while below the HP threshold, Retribution's **parry-chain doesn't decay** (75/75/75… instead of 75/50/25) — a real low-HP comeback, no added numbers.
 - **Composure** — **OnParrySuccess** → your next skill costs **0 MP**.
 - **Unwavering** — **while Guard Stance active** → immune to knockback/interrupt (pairs with Committed Strike's long wind-up).
@@ -99,7 +106,7 @@ Behavioral, event-triggered (via the trigger system Momentum proves). **Each ult
 ## Combos (setup → payoff)
 
 - **Deathblow:** basic-attack to build Momentum → Deathblow (cash it). Overclock first to stack faster (fragile window).
-- **Bladedance:** Overclock (aspd, cost suppressed by invuln) → Bladedance.
+- **Blade Dance:** Overclock (aspd → more charges, more parries, faster beat) → Blade Dance. The 2× damage taken is NOT suppressed any more; the Parry pile is your only cover.
 - **Retribution:** Overclock (2× incoming) → Retribution brace → Parry the big hits (bank doubled, 0 HP) → release.
 
 ## Balance & implementation items (before/at build)

@@ -343,6 +343,20 @@ public class Character : MonoBehaviour, ICombatUnit
         get { var b = Avatar(); var atk = b != null ? b.GetComponent<Player3DAttacker>() : null; return atk != null ? atk.BaseRange : 0f; }
     }
 
+    /// <summary>SECONDS BETWEEN SWINGS at this unit's current attack speed — the live cadence, weapon and buffs
+    /// included, read from the attacker that already owns it rather than recomputed here. 0 while the avatar hasn't
+    /// spawned, which callers treat as "can't work out a swing rate yet".
+    ///
+    /// <para>This is the honest way to read attack speed as a COUNT: the speed stat itself is a multiplier around 1
+    /// (capped at 3), so it can only become "how many times would I have swung" by way of the interval.</para>
+    ///
+    /// <para>Same shape and same cost as <see cref="MeleeReachFullSize"/> above — one component lookup, on a path that
+    /// runs once per cast, never per frame.</para></summary>
+    public float SwingTime
+    {
+        get { var b = Avatar(); var atk = b != null ? b.GetComponent<Player3DAttacker>() : null; return atk != null ? atk.SwingTime : 0f; }
+    }
+
     /// <summary>The player is built to the shared character body, so that is its size for melee-contact maths.</summary>
     public float MeleeScale => UnitScale.CharacterScale;
 

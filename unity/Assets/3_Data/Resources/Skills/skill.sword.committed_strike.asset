@@ -35,8 +35,6 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
-    stackPayoff: 0
-    damageMultPerStack: 0
   triggersMigrated: 1
   trigger: 0
   triggerSkillId: 
@@ -46,8 +44,6 @@ MonoBehaviour:
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
-  stackPayoff: 0
-  damageMultPerStack: 0
   manaCost: 14
   cooldown: 6
   castTime: 1.2

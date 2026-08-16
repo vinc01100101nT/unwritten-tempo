@@ -198,6 +198,16 @@ public class SkillEffect
              "share one window and are spent one at a time.")]
     [Min(1)] public int stacksPerApply = 1;
 
+    [Tooltip("ON = this effect's stack count is NOT authored — it is worked out at cast time from how many times the " +
+             "caster would swing during this effect's own duration (duration / seconds-per-swing). Faster attack " +
+             "speed therefore means more stacks in the SAME window, never a longer one. Max stacks and stacks per " +
+             "use no longer apply: the count is whatever the caster's speed earns.")]
+    public bool stacksFromAttackSpeed = false;
+    [Tooltip("This effect's SHARE of that count. 1 = the full count; 0.5 = half of it, rounded up. Two effects on one " +
+             "skill sharing a duration stay in exact proportion for free — half is always half, at any attack speed, " +
+             "with nothing to re-author when the duration changes.")]
+    [Min(0f)] public float stackShare = 1f;
+
     [Header("Dash")]
     [Tooltip("Dash travel speed as a multiple of the caster's CURRENT run speed (8 = 8× run speed) — the visible fast " +
              "glide to the aimed point. Higher = snappier gap-close. Only the Dash kind uses this.")]
@@ -212,6 +222,18 @@ public class SkillEffect
              "Only used when ease in / out is on.")]
     [Min(0.05f)] public float dashEaseSeconds = 0.3f;
 
+    [Tooltip("Dash / Blink: leave a FROZEN COPY of the mover where it stood, fading out behind it — so a fast chain " +
+             "of hops reads as several of you at once. 0 = off.")]
+    [Min(0f)] public float afterimageSeconds = 0f;
+    [Tooltip("Colour of that frozen copy. Alpha = how solid it starts before fading to nothing.")]
+    public Color afterimageTint = new Color(0.6f, 0.85f, 1f, 0.5f);
+
+    [Tooltip("Dash / Blink: how many CORNERS the repeated landings trace. Each hop crosses to the far side of the " +
+             "target and steps on, so this many hops in a row draw a star THROUGH it rather than walking a ring " +
+             "around it. 5 = the classic five-pointed star. Must be ODD or the figure never closes — an even value " +
+             "is nudged up by one.")]
+    [Min(3)] public int starCorners = 5;
+
     [Header("Multi-hit (Damage kind)")]
     [Tooltip("How many times a Damage effect strikes per landing. Each strike is the TRIGGER POINT for the binding's " +
              "PROC effects (a Status or Execute with a chance) — they roll once per hit. 1 = single hit.")]
@@ -223,28 +245,81 @@ public class SkillEffect
     [Range(0f, 1f)] public float chance = 0f;
 
     [Header("Pull from the cast's stacks")]
-    [Tooltip("ON = this effect's SIZE comes from the pile this cast is cashing, instead of from its own power field. " +
-             "Output = the chosen reading x the multiplier below, dealt FLAT (never re-rolled through your Attack). " +
-             "Several effects on one skill can each pull from the SAME pile — that's how one cast both hits for the " +
-             "banked damage and heals off it.")]
+    [Tooltip("ON = the pile this cast is cashing decides this effect's SIZE. HOW it pays depends on the reading below: " +
+             "a carried total is dealt FLAT (it is already real damage), while a COUNT adds to this effect's base " +
+             "power and rolls through your Attack like any other hit. Several effects on one skill can each pull from " +
+             "the SAME pile — that's how one cast both hits for the banked damage and heals off it.")]
     public bool useStackValue = false;
     [Tooltip("WHICH reading this effect pulls: Count = how many stacks; Carried total = the sum of what they carry " +
              "(a percentage pile reads as its decimal, +30% = 0.3).")]
     public StackReading stackValueSource = StackReading.Count;
-    [Tooltip("What the reading is multiplied by to get this effect's output. 2.5 on a carried total of 400 = 1000 " +
-             "damage; 0.5 = heal for half of it.")]
+    [Tooltip("What the reading is multiplied by. On a carried total it is a FLAT scale: 2.5 on a total of 400 = 1000 " +
+             "damage, 0.5 = heal for half of it. On a COUNT of Damage it is the extra power PER STACK: 0.4 = +40% of " +
+             "your Attack per stack, added to this effect's base power.")]
     [Min(0f)] public float stackValueMult = 1f;
 
-    /// <summary>This effect's output when it pulls from the cast's pile, or -1 when it doesn't. ONE formula for every
-    /// kind that supports it — reading × multiplier, FLAT — so damage and healing off the same pile can't diverge.
+    /// <summary>This effect's FLAT output when the pile simply IS its size, or -1 when it isn't driven that way. The
+    /// number is dealt/healed as-is, with no Attack roll behind it — a carried total is already real, earned damage,
+    /// so re-rolling it through the caster's Attack would scale a number that was never the caster's to scale.
     ///
-    /// <para>Flat on purpose: a carried total is already real, earned damage, so re-rolling it through the caster's
-    /// Attack would scale a number that was never the caster's to scale.</para></summary>
+    /// <para>The ONE exception is a DAMAGE effect reading the COUNT: a tally is not an amount, so it pays through
+    /// <see cref="StackDamageBonus"/> (which lifts this effect's own power and still rolls) instead. The two are exact
+    /// complements — every stack-driven effect goes down one path or the other, never both, never neither. A HEAL takes
+    /// the flat path on either reading, because a heal has no Attack roll for a multiplier to lift.</para></summary>
     public int StackOutput(in StackVars vars) =>
-        useStackValue ? Mathf.Max(0, Mathf.RoundToInt(vars.Read(stackValueSource) * Mathf.Max(0f, stackValueMult))) : -1;
+        !useStackValue || (kind == SkillEffectKind.Damage && stackValueSource == StackReading.Count)
+            ? -1
+            : Mathf.Max(0, Mathf.RoundToInt(vars.Read(stackValueSource) * Mathf.Max(0f, stackValueMult)));
 
-    /// <summary>Which kinds can be driven by the cast's pile. Deliberately the two whose output is a plain AMOUNT —
-    /// a size the pile can simply BE. A duration or a proc chance is not an amount, so pulling a pile into one would
+    /// <summary>The extra damage multiplier the COUNT reading buys THIS effect — ADDED to its own base power, so the
+    /// hit still rolls through the caster's Attack, still scales with the ring, and can still crit. Zero for any effect
+    /// the pile doesn't drive that way.
+    ///
+    /// <para>Adds up, never compounds: a 6× effect on 10 stacks at 0.4 lands at 6 + 4 = 10× Attack.</para></summary>
+    public float StackDamageBonus(in StackVars vars) =>
+        useStackValue && kind == SkillEffectKind.Damage && stackValueSource == StackReading.Count
+            ? Mathf.Max(0f, stackValueMult) * vars.Count
+            : 0f;
+
+    /// <summary>WHICH state entry this effect creates, or false when it creates none. THE one answer to "what pile
+    /// does this effect leave behind", so a consumer's authoring list can never offer a pile that will not exist.
+    ///
+    /// <para>It must agree with <c>SkillEffectApplier.ApplyOne</c>, which is where each kind actually lands — every
+    /// line below names the site it mirrors. Kinds absent from the switch make no state at all: the instant ones
+    /// (Damage, Heal, Dash…) obviously, but also <see cref="SkillEffectKind.Taunt"/>, which has a duration yet routes
+    /// to <c>ForceAggro</c> — <c>StateId.Taunt</c>, <c>Knockback</c> and <c>Pull</c> are declared but never written by
+    /// anything, so offering them would be offering an empty pile.</para></summary>
+    public static bool TryStateFor(SkillEffect e, out StateId id)
+    {
+        id = default;
+        if (e == null) return false;
+        switch (e.kind)
+        {
+            // Ailment i ↔ StateId i, matching enum order (StatusController.Apply).
+            case SkillEffectKind.Status:        id = (StateId)(int)e.ailment; return true;
+            // UnitStates.ApplyStatBuff picks the channel from the stat.
+            case SkillEffectKind.Buff:
+                id = e.buffStat == BuffStat.AttackSpeed ? StateId.AttackSpeedBuff
+                   : e.buffStat == BuffStat.CastSpeed   ? StateId.CastSpeedBuff
+                                                        : StateId.DamageBuff;
+                return true;
+            case SkillEffectKind.Guard:         id = StateId.Guard;         return true;
+            case SkillEffectKind.Parry:         id = StateId.Parry;         return true;
+            // The ARMED charges. Its debt (StateId.DeferredDamage) is created by incoming hits, not by this apply,
+            // so it is not something this effect hands out.
+            case SkillEffectKind.Brace:         id = StateId.Brace;         return true;
+            case SkillEffectKind.Shield:        id = StateId.Shield;        return true;
+            case SkillEffectKind.Regen:         id = StateId.Regen;         return true;
+            case SkillEffectKind.Vulnerability: id = StateId.Vulnerability; return true;
+            case SkillEffectKind.Haste:         id = StateId.Haste;         return true;
+            case SkillEffectKind.ManaLeech:     id = StateId.ManaLeech;     return true;
+            case SkillEffectKind.Reflect:       id = StateId.Reflect;       return true;
+            default: return false;
+        }
+    }
+
+    /// <summary>Which kinds can be driven by the cast's pile. Deliberately the two whose output is a plain SIZE — a
+    /// number the pile can BE or add to. A duration or a proc chance is not a size, so pulling a pile into one would
     /// mean inventing a second conversion rule per kind; those keep their own fields.</summary>
     public static bool SupportsStackValue(SkillEffectKind k) =>
         k == SkillEffectKind.Damage || k == SkillEffectKind.Heal;

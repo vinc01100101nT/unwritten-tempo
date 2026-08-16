@@ -339,7 +339,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (fan <= 1) VfxDirector.Play(def.vfx, lastCtx, onTick);
         else PlayFan(fan, def.projectileSpread);
 
-        int extra = Mathf.Max(0, def.repeatCount - 1);
+        // A charge-driven run has no fixed length — it goes until the pile is empty — so the count is only consulted
+        // for the plain fixed-repeat case.
+        int extra = def.repeatCostsCharge ? int.MaxValue : Mathf.Max(0, def.repeatCount - 1);
         if (extra > 0 && isActiveAndEnabled) StartCoroutine(PlayExtraCycles(extra, lastCtx));
     }
 
@@ -376,14 +378,73 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         }
     }
 
+    // Reused so filtering a repeat's payload costs no garbage on the combat path — a beat can fire several times a
+    // second for the length of a run.
+    readonly System.Collections.Generic.List<SkillEffect> repeatEffects = new System.Collections.Generic.List<SkillEffect>(8);
+
+    /// <summary>The binding's effects MINUS the ones that hand out a stacking state. Those establish what the run
+    /// spends, so they belong to the cast's opening play; re-running them each beat would refill the pile the beats
+    /// are draining and the run could never finish. Everything else — the strike, the relocation, one-shot states —
+    /// runs on every beat exactly as authored.</summary>
+    System.Collections.Generic.List<SkillEffect> WithoutStateGrants(System.Collections.Generic.List<SkillEffect> effects)
+    {
+        repeatEffects.Clear();
+        if (effects == null) return repeatEffects;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            var e = effects[i];
+            if (e == null) continue;
+            if (e.stacking && SkillEffect.TryStateFor(e, out _)) continue;
+            repeatEffects.Add(e);
+        }
+        return repeatEffects;
+    }
+
     System.Collections.IEnumerator PlayExtraCycles(int extra, VfxContext ctx)
     {
-        float interval = def.repeatInterval > 0f ? def.repeatInterval
+        float authored = def.repeatInterval > 0f ? def.repeatInterval
                        : (def.vfx != null && def.vfx.RestartInterval > 0f ? def.vfx.RestartInterval : 0.35f);
         for (int i = 0; i < extra; i++)
         {
+            // The beat, resolved PER BEAT so a speed buff landing mid-run quickens the rest of it. Following swing
+            // speed means the run keeps the caster's own rhythm at any attack speed; the beats-per-swing multiple
+            // divides that rhythm (2 = twice as fast as you swing). Falls back to the authored seconds if the body
+            // hasn't spawned, so a missing rig can't stall the run.
+            float interval = authored;
+            if (def.repeatScaleWithAttackSpeed && Character.Instance != null)
+            {
+                float swing = Character.Instance.SwingTime;
+                if (swing > 0f) interval = swing / Mathf.Max(1, def.repeatBeatsPerSwing);
+            }
             // manual timer, not `new WaitForSeconds`: this coroutine starts per cast and the interval varies per skill
+            ctx.isRepeat = true;   // every play from here on is a REPEAT, not the cast's opening play
             for (float t = 0f; t < interval; t += Time.deltaTime) yield return null;
+            // Only a run that STEERS or PAYS needs a live caster to read; a plain fixed repeat (a meteor shower) keeps
+            // its old behaviour of finishing on its own, so nothing existing changes.
+            if ((def.repeatReaim || def.repeatCostsCharge)
+                && (Character.Instance == null || Character.Instance.IsDead)) yield break;
+
+            // RE-AIM walks the run from one target to the next: the search is centred on the CURRENT target, so each
+            // hop's range is measured from where the last one landed, never from the caster or the original aim.
+            // An empty search ENDS the run — with nothing left in reach there is nothing to walk to.
+            if (def.repeatReaim)
+            {
+                Vector3 from = ctx.targetUnit != null ? ctx.targetUnit.position : ctx.target;
+                var next = SkillEffectApplier.RandomMobNear(from, def.repeatReaimRange);
+                if (next == null) yield break;
+                ctx = BuildCtx(next, next.position);   // the ONE place an aim is assembled — no field can be missed
+                ctx.isRepeat = true;                    // BuildCtx answers the aim, not which play this is
+            }
+
+            // A charge-driven run pays for EVERY beat, not once for the whole cast: re-arming the flag lets the
+            // existing consume site (OnTick, after the effects have computed) charge this beat too. Out of charges
+            // ends the run — the gate is what the run is spending, so an unpayable beat must not fire.
+            if (def.repeatCostsCharge)
+            {
+                if (StateGate.StackCount(firedBy, CasterStates) <= 0) yield break;
+                consumedThisCast = false;
+            }
+
             VfxDirector.Play(def.vfx, ctx, onTick);
         }
     }
@@ -417,6 +478,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         var b = def.BindingFor(tick.tickId);
         if (b == null) return;
 
+        // A REPEAT replays the whole skill body, which would otherwise re-apply the very states the run is spending —
+        // the pile refills faster than the beats drain it and the run never ends. So the states a cast SETS UP are
+        // granted by its opening play only; a repeat runs everything else (the strike, the hop) unchanged.
+        var effects = tick.isRepeat ? WithoutStateGrants(b.effects) : b.effects;
+
         // Map the consolidated per-tick targeting onto the shared burst params (scope/targets/radius). The applier
         // already routes each effect kind to the right sink per WHO is gathered, so nothing downstream changes.
         SkillScope scope; SkillTargets targets; float radius = b.radius;
@@ -440,19 +506,17 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         ulong prevChain = PassiveEvents.PushChain(castChain);
         try
         {
-            // The stack payoff rides the burst's EXISTING extra-multiplier input (it adds to each effect's own
-            // damageMult), so cashing a pile can't become a second damage path beside the normal roll.
-            SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, b.effects,
-                                          lastCtx.targetUnit,
-                                          firedBy != null ? firedBy.StackDamageBonus(castStacks) : 0f,
-                                          // The CarriedTotal payoff rides the burst's FLAT input, not the multiplier:
-                                          // a carried value is already damage, so it must be added, never re-rolled
-                                          // through the caster's Attack. Only one of the two is ever non-zero — the
-                                          // authored payoff picks which.
-                                          firedBy != null ? firedBy.CarriedDamageBonus(castCarried) : 0,
+            // The cast hands DOWN what the pile measures and nothing more: which effects that pile pays, and how, is
+            // authored per effect (SkillEffect.useStackValue), so cashing stacks composes with the damage effect
+            // instead of being a second damage channel bolted onto the skill.
+            SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, effects,
+                                          // The aim rides the TICK, not a field on this runner: one cast can have
+                                          // several plays in flight, and a re-aiming repeat would otherwise resolve a
+                                          // still-running beat against whatever the newest beat picked.
+                                          tick.aimUnit,
                                           comboDamageMult,
                                           def.icon, def.displayName, def.id,   // def.id KEYS the pile: stacks belong to the skill that granted them
-                                          aimPoint: lastCtx.effectPoint,   // Dash/Teleport go where stage 2 aimed, not to the tick's VFX anchor
+                                          aimPoint: tick.aimPoint,   // Dash/Teleport go where THIS play aimed, not to the tick's VFX anchor
                                           caster: Character.Instance, // explicit caster (local player today; a per-connection entity once server-authoritative)
                                           // Both readings of the cashed pile, measured once at cast start, handed to
                                           // EVERY effect this burst runs — so a skill's damage and its lifesteal read

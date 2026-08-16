@@ -35,8 +35,6 @@ MonoBehaviour:
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
-  stackPayoff: 0
-  damageMultPerStack: 0
   manaCost: 8
   cooldown: 1
   castTime: 0

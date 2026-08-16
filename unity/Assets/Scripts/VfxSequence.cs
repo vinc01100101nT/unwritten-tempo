@@ -228,6 +228,10 @@ public struct VfxContext
     public Vector3 effectPoint;
     /// <summary>Uniform scale applied to every effect in the sequence (1 = authored).</summary>
     public float scaleMult;
+    /// <summary>TRUE when this play is a REPEAT of a cast that already started, not the cast's first play. A repeat
+    /// replays the whole skill body, so without this the effects that SET UP the run — the stacking states it is
+    /// spending — would be re-applied on every beat and the run could never end.</summary>
+    public bool isRepeat;
     /// <summary>World Y of the FLOOR under the actor. A character's <c>transform.position</c> is its billboard
     /// VISUAL CENTRE, but the Vfx Composer authors every effect from the ground (the ruler stands on the floor),
     /// so cues resolve this and anchor there — otherwise a ground-authored aura rides up to the character's head.
@@ -251,10 +255,27 @@ public struct VfxContext
 
 /// <summary>One gameplay beat raised by a <see cref="VfxSequence"/> at runtime — the join between the VFX
 /// timeline and the skill. Carries WHICH component ticked (<see cref="tickId"/>) and WHERE
-/// (<see cref="point"/>) so the skill can resolve targets there. The skill decides WHAT it does.</summary>
+/// (<see cref="point"/>) so the skill can resolve targets there. The skill decides WHAT it does.
+///
+/// <para>It also carries THE AIM THE PLAY WAS STARTED WITH (<see cref="aimUnit"/> / <see cref="aimPoint"/>), copied
+/// from that play's own context. Without it a skill has to read the aim off a shared field, which is wrong the moment
+/// one cast has more than one play in flight: a repeating cast that re-aims between beats would resolve a still-running
+/// beat's effects against the NEWER aim. Every beat now answers for the play it belongs to.</para></summary>
 public readonly struct VfxTick
 {
     public readonly string tickId;
     public readonly Vector3 point;
-    public VfxTick(string tickId, Vector3 point) { this.tickId = tickId; this.point = point; }
+    /// <summary>The unit this play was aimed at (null for a pure ground cast) — the entity a Single-target effect lands on.</summary>
+    public readonly Transform aimUnit;
+    /// <summary>Where this play's relocating effects send what they catch — the aimed spot, not the tick's own point.</summary>
+    public readonly Vector3 aimPoint;
+    /// <summary>TRUE when the play that raised this beat is a REPEAT of an already-running cast. See
+    /// <see cref="VfxContext.isRepeat"/>.</summary>
+    public readonly bool isRepeat;
+
+    public VfxTick(string tickId, Vector3 point, Transform aimUnit, Vector3 aimPoint, bool isRepeat)
+    {
+        this.tickId = tickId; this.point = point; this.aimUnit = aimUnit; this.aimPoint = aimPoint;
+        this.isRepeat = isRepeat;
+    }
 }

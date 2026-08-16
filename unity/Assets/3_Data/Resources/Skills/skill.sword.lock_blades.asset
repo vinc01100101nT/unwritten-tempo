@@ -35,8 +35,6 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
-    stackPayoff: 0
-    damageMultPerStack: 0
   triggersMigrated: 1
   trigger: 1
   triggerSkillId: skill.sword.lunge
@@ -46,8 +44,6 @@ MonoBehaviour:
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
-  stackPayoff: 0
-  damageMultPerStack: 0
   manaCost: 0
   cooldown: 5
   castTime: 0

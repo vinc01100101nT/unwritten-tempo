@@ -38,14 +38,16 @@ public static class StateGate
     /// before it spends anything, so its payoff and its cost read the same pile (the locked compute-before-consume
     /// order). 0 when the skill reads no pile.</summary>
     public static int StackCount(SkillTriggerEntry entry, UnitStates states) =>
-        entry != null && entry.requiresState && states != null ? states.StacksFrom(entry.requireSkillId) : 0;
+        entry != null && entry.requiresState && states != null
+            ? states.StacksFrom(entry.requireSkillId, entry.requireStateId) : 0;
 
     /// <summary>The total VALUE the required pile's stacks carry, read under the SAME compute-before-consume rule as
     /// <see cref="StackCount"/> — the snapshot a cast takes before it spends anything. 0 when the skill reads no pile.
-    /// WHICH of the two a skill cashes is its authored <see cref="StackPayoff"/>, not a second gate: the gate always
-    /// answers both, and the payoff decides which answer is worth anything.</summary>
+    /// WHICH of the two is cashed is each EFFECT's own <see cref="SkillEffect.stackValueSource"/>, not a second gate:
+    /// the gate always answers both, and every effect decides which answer is worth anything to it.</summary>
     public static float CarriedTotal(SkillTriggerEntry entry, UnitStates states) =>
-        entry != null && entry.requiresState && states != null ? states.CarriedFrom(entry.requireSkillId) : 0f;
+        entry != null && entry.requiresState && states != null
+            ? states.CarriedFrom(entry.requireSkillId, entry.requireStateId) : 0f;
 
     /// <summary>Spend what this use costs, AFTER the skill's effects have computed. No-op when the skill has no
     /// requirement or spends nothing (a pure "while X" condition). Returns how many stacks were actually spent.</summary>
@@ -53,6 +55,7 @@ public static class StateGate
     {
         if (entry == null || !entry.requiresState || states == null) return 0;
         if (!entry.consumeAllStacks && entry.consumeStacks <= 0) return 0;
-        return states.ConsumeFrom(entry.requireSkillId, entry.consumeStacks, entry.consumeAllStacks);
+        return states.ConsumeFrom(entry.requireSkillId, entry.requireStateId,
+                                  entry.consumeStacks, entry.consumeAllStacks);
     }
 }

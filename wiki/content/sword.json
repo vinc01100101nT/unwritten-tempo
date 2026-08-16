@@ -1,68 +1,172 @@
 {
   "title": "The Sword",
   "blocks": [
-    { "type": "lede", "text": "A duelist's weapon — win fights one opponent at a time through precise single-target bursts and timed defense. Precision here is **timing**, not luck: no crits, no armor-piercing — just reading the fight and hitting the beat." },
-    { "type": "callout", "text": "**Status:** design locked, numbers in tuning. One active skill is still being finalized. Below are the in-game skill entries." },
-    { "type": "paragraph", "text": "Every Sword rolls its kit from this pool: **1 ultimate + a few actives + a few passives**." },
-
-    { "type": "heading", "level": 2, "text": "Ultimates" },
-    { "type": "skillTable", "tier": "ultimate", "subtitle": "One per Sword. Charge in combat, ~40 MP to unleash.",
+    {
+      "type": "lede",
+      "text": "A duelist's weapon — win fights one opponent at a time through precise single-target bursts and timed defense. Precision here is **timing**, not luck: no crits, no armor-piercing — just reading the fight and hitting the beat."
+    },
+    {
+      "type": "callout",
+      "text": "**Status:** design locked, numbers in tuning. One active skill is still being finalized. Below are the in-game skill entries."
+    },
+    {
+      "type": "paragraph",
+      "text": "Every Sword rolls its kit from this pool: **1 ultimate + a few actives + a few passives**."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Ultimates"
+    },
+    {
+      "type": "skillTable",
+      "tier": "ultimate",
+      "subtitle": "One per Sword. Charge in combat, ~40 MP to unleash.",
       "skills": [
-        { "name": "Deathblow", "cost": "40 MP · Cast 1s · Melee", "flavor": "One strike to end it.",
-          "effect": "Consumes all Momentum. Deals **600% Attack**, **+40% per stack** consumed. Without Momentum, deals a flat **600% Attack**." },
-        { "name": "Bladedance", "cost": "40 MP · Channel 8s", "flavor": "Become the storm.",
-          "effect": "Strikes the target **~2×/sec for 100% Attack** over **8s**; higher Attack Speed adds strikes. Grants full **invulnerability to all damage — poison, bleed and burn included — for the duration**." },
-        { "name": "Retribution", "cost": "10 MP · CD 5s", "flavor": "Endure, then answer.",
-          "effect": "Cashes the damage **Brace** is holding: strikes for **250% of the banked total** and **erases the debt** — you never pay what you release. Also recovers **50% of the banked total** as HP. Requires Brace." }
+        {
+          "name": "Deathblow",
+          "cost": "40 MP · Cast 1s · Melee",
+          "flavor": "One strike to end it.",
+          "effect": "Consumes all Momentum. Deals **600% Attack**, **+40% per stack** consumed. Without Momentum, deals a flat **600% Attack**."
+        },
+        {
+          "name": "Retribution",
+          "cost": "10 MP · CD 5s",
+          "flavor": "Endure, then answer.",
+          "effect": "Cashes the damage **Brace** is holding: strikes for **250% of the banked total** and **erases the debt** — you never pay what you release. Also recovers **50% of the banked total** as HP. Requires Brace."
+        }
       ]
     },
-
-    { "type": "heading", "level": 2, "text": "Active skills" },
-    { "type": "skillTable", "tier": "active",
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Active skills"
+    },
+    {
+      "type": "skillTable",
+      "tier": "active",
       "skills": [
-        { "name": "Lunge", "cost": "8 MP · CD 5s · Range 8", "flavor": "Close the distance.",
-          "effect": "Dashes to the target and strikes for **100% Attack**. With **Lock Blades**, also grants **5 charges**." },
-        { "name": "Brace", "cost": "10 MP · CD 7s · Window 4s", "flavor": "Take it now, pay it later.",
-          "effect": "Arms **5 charges** for **4s**. Each charge holds back one incoming hit — that damage is **banked** instead of costing you health. When the window ends, everything banked lands at once. A delay, not a save: **Retribution** is the only way out of the bill." },
-        { "name": "Parry", "cost": "8 MP · CD 1s · Window 3s", "flavor": "Read the blow.",
-          "effect": "Fully blocks the next hit (**0 damage**) and is spent by it." },
-        { "name": "Guard Stance", "cost": "12 MP · CD 10s", "flavor": "Weather it.",
-          "effect": "Reduces damage taken by **50%** for **5s**." },
-        { "name": "Overclock", "cost": "12 MP · CD 6s", "flavor": "Faster. Riskier.",
-          "effect": "Grants **+30% Attack Speed** for **8s** and inflicts **2× damage taken** for **3s**. Bladedance's invulnerability negates the drawback; Retribution banks the doubled damage." },
-        { "name": "Feint", "cost": "*in tuning*", "flavor": "Strike between heartbeats.",
-          "effect": "A quick strike. Against an enemy mid-wind-up, **interrupts and staggers** the attack." },
-        { "name": "Committed Strike", "cost": "*in tuning*", "flavor": "One perfect swing.",
-          "effect": "Charges a heavy overhead slash, then lands the Sword's strongest non-ultimate hit." },
-        { "name": "Disarm", "cost": "*in tuning*", "flavor": "Break their rhythm.",
-          "effect": "Strikes the target, **weakening its next attack**." },
-        { "name": "Onslaught", "cost": "*in tuning*", "flavor": "Don't let up.",
-          "effect": "A rapid sequence of **basic attacks**. Each hit grants Momentum and triggers all on-basic-attack effects." }
+        {
+          "name": "Lunge",
+          "cost": "8 MP · CD 5s · Range 8",
+          "flavor": "Close the distance.",
+          "effect": "Dashes to the target and strikes for **100% Attack**. With **Lock Blades**, also grants **5 charges**."
+        },
+        {
+          "name": "Brace",
+          "cost": "10 MP · CD 7s · Window 4s",
+          "flavor": "Take it now, pay it later.",
+          "effect": "Arms **5 charges** for **4s**. Each charge holds back one incoming hit — that damage is **banked** instead of costing you health. When the window ends, everything banked lands at once. A delay, not a save: **Retribution** is the only way out of the bill."
+        },
+        {
+          "name": "Parry",
+          "cost": "8 MP · CD 1s · Window 3s",
+          "flavor": "Read the blow.",
+          "effect": "Fully blocks the next hit (**0 damage**) and is spent by it."
+        },
+        {
+          "name": "Guard Stance",
+          "cost": "12 MP · CD 10s",
+          "flavor": "Weather it.",
+          "effect": "Reduces damage taken by **50%** for **5s**."
+        },
+        {
+          "name": "Overclock",
+          "cost": "12 MP · CD 6s",
+          "flavor": "Faster. Riskier.",
+          "effect": "Grants **+30% Attack Speed** for **8s** and inflicts **2× damage taken** for **3s**. Blade Dance turns the speed into more charges, more parries and a faster storm; Retribution banks the doubled damage."
+        },
+        {
+          "name": "Feint",
+          "cost": "*in tuning*",
+          "flavor": "Strike between heartbeats.",
+          "effect": "A quick strike. Against an enemy mid-wind-up, **interrupts and staggers** the attack."
+        },
+        {
+          "name": "Committed Strike",
+          "cost": "*in tuning*",
+          "flavor": "One perfect swing.",
+          "effect": "Charges a heavy overhead slash, then lands the Sword's strongest non-ultimate hit."
+        },
+        {
+          "name": "Disarm",
+          "cost": "*in tuning*",
+          "flavor": "Break their rhythm.",
+          "effect": "Strikes the target, **weakening its next attack**."
+        },
+        {
+          "name": "Onslaught",
+          "cost": "*in tuning*",
+          "flavor": "Don't let up.",
+          "effect": "A rapid sequence of **basic attacks**. Each hit grants Momentum and triggers all on-basic-attack effects."
+        },
+        {
+          "name": "Blade Dance",
+          "cost": "10 MP · 5s cooldown",
+          "flavor": "Become the storm.",
+          "effect": "Arms two sets of charges for **8s**, both sized by how fast you swing: **dance charges**, and **half as many Parry charges** (rounded up). Each dance charge is spent on a strike — you flash to the next point of a **seven-pointed star** around your target and hit for **100% Attack**, leaving an afterimage behind. Every strike picks a new living target within **3 units** of the last one, so the dance walks from foe to foe; with nothing left in reach it ends. Each unspent dance charge also grants **+1% damage**, so the storm is fiercest at its opening. The Parry charges are your only guard — when they run out, you are exposed."
+        }
       ]
     },
-    { "type": "paragraph", "text": "*One more active is still being designed.*" },
-
-    { "type": "heading", "level": 2, "text": "Passive skills" },
-    { "type": "skillTable", "tier": "passive", "subtitle": "Always active — no button to press.",
+    {
+      "type": "paragraph",
+      "text": "*One more active is still being designed.*"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Passive skills"
+    },
+    {
+      "type": "skillTable",
+      "tier": "passive",
+      "subtitle": "Always active — no button to press.",
       "skills": [
-        { "name": "Momentum", "flavor": "Every hit adds up.",
-          "effect": "Each basic attack grants **+1 Momentum**. Every stack adds **~3% to all damage**. Stacks expire one at a time. Deathblow consumes all stacks." },
-        { "name": "Perfect Form", "flavor": "Stay on one foe.",
-          "effect": "Every **3 consecutive hits on the same target** grant **+1 Momentum** and slow Momentum decay. Missing or switching targets resets the streak." },
-        { "name": "Encore", "flavor": "The dance continues.",
-          "effect": "A kill during Bladedance **extends the storm**." },
-        { "name": "Last Stand", "flavor": "Cornered, not finished.",
-          "effect": "*Being redesigned — its old form depended on Retribution's auto-parry chain, which no longer exists.*" },
-        { "name": "Composure", "flavor": "Stillness breeds clarity.",
-          "effect": "After a successful Parry, the **next skill costs 0 MP**." },
-        { "name": "Unwavering", "flavor": "Stand your ground.",
-          "effect": "During Guard Stance, grants immunity to **knockback and stagger**." },
-        { "name": "Opening", "flavor": "Find the weakness.",
-          "effect": "A successful **Feint** may create an **Opening**. Your next damaging strike consumes it to deal **200% Attack**." },
-        { "name": "Pressure", "flavor": "Never let them recover.",
-          "effect": "Consecutive hits on the same target **delay its health regeneration**." },
-        { "name": "Lock Blades", "flavor": "No escape.",
-          "effect": "Casting Lunge grants **5 charges**, each lasting **5s** and granting **+5% Attack Speed** while held. Each hit you land spends one to **automatically lunge** at the target again. Auto-lunges don't spend further charges of their own. With no charges left, nothing fires. Requires Lunge." }
+        {
+          "name": "Momentum",
+          "flavor": "Every hit adds up.",
+          "effect": "Each basic attack grants **+1 Momentum**. Every stack adds **~3% to all damage**. Stacks expire one at a time. Deathblow consumes all stacks."
+        },
+        {
+          "name": "Perfect Form",
+          "flavor": "Stay on one foe.",
+          "effect": "Every **3 consecutive hits on the same target** grant **+1 Momentum** and slow Momentum decay. Missing or switching targets resets the streak."
+        },
+        {
+          "name": "Encore",
+          "flavor": "The dance continues.",
+          "effect": "A kill during **Blade Dance** grants more dance charges, **extending the storm**. Only works while Blade Dance is running."
+        },
+        {
+          "name": "Last Stand",
+          "flavor": "Cornered, not finished.",
+          "effect": "*Being redesigned — its old form depended on Retribution's auto-parry chain, which no longer exists.*"
+        },
+        {
+          "name": "Composure",
+          "flavor": "Stillness breeds clarity.",
+          "effect": "After a successful Parry, the **next skill costs 0 MP**."
+        },
+        {
+          "name": "Unwavering",
+          "flavor": "Stand your ground.",
+          "effect": "During Guard Stance, grants immunity to **knockback and stagger**."
+        },
+        {
+          "name": "Opening",
+          "flavor": "Find the weakness.",
+          "effect": "A successful **Feint** may create an **Opening**. Your next damaging strike consumes it to deal **200% Attack**."
+        },
+        {
+          "name": "Pressure",
+          "flavor": "Never let them recover.",
+          "effect": "Consecutive hits on the same target **delay its health regeneration**."
+        },
+        {
+          "name": "Lock Blades",
+          "flavor": "No escape.",
+          "effect": "Casting Lunge grants **5 charges**, each lasting **5s** and granting **+5% Attack Speed** while held. Each hit you land spends one to **automatically lunge** at the target again. Auto-lunges don't spend further charges of their own. With no charges left, nothing fires. Requires Lunge."
+        }
       ]
     }
   ]

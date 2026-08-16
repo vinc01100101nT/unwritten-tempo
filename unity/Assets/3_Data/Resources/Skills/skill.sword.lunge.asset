@@ -35,8 +35,6 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
-    stackPayoff: 0
-    damageMultPerStack: 0
   - trigger: 7
     triggerSkillId: 
     requiresState: 1
@@ -44,8 +42,6 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 1
-    stackPayoff: 0
-    damageMultPerStack: 0
   triggersMigrated: 1
   trigger: 0
   triggerSkillId: 
@@ -55,8 +51,6 @@ MonoBehaviour:
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
-  stackPayoff: 0
-  damageMultPerStack: 0
   manaCost: 8
   cooldown: 5
   castTime: 0
@@ -69,6 +63,9 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: d2894bf833c371843b778e0ad6cf1427, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  repeatCostsCharge: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
   projectileCount: 1
   projectileSpread: 0
   hasReleaseStance: 0
@@ -94,12 +91,18 @@ MonoBehaviour:
       stacking: 0
       stackLimit: 5
       stacksPerApply: 1
+      stacksFromAttackSpeed: 0
+      stackShare: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
+      starCorners: 5
       hitCount: 1
       chance: 0
+      useStackValue: 0
+      stackValueSource: 0
+      stackValueMult: 1
       side: 0
       buffStat: 0
       rampDelay: 0
@@ -121,12 +124,18 @@ MonoBehaviour:
       stacking: 0
       stackLimit: 5
       stacksPerApply: 1
+      stacksFromAttackSpeed: 0
+      stackShare: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
+      starCorners: 5
       hitCount: 1
       chance: 0
+      useStackValue: 0
+      stackValueSource: 0
+      stackValueMult: 1
       side: 0
       buffStat: 0
       rampDelay: 0

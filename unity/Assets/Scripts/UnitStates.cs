@@ -280,16 +280,18 @@ public class UnitStates : MonoBehaviour
         return null;
     }
 
-    /// <summary>Total live stacks granted by <paramref name="sourceSkillId"/>, across whatever states it applied. This
-    /// is what a finisher keyed to a SKILL asks ("how much Momentum do I hold"), so two skills that happen to buff the
-    /// same stat can never feed each other's payoff.</summary>
-    public int StacksFrom(string sourceSkillId)
+    /// <summary>Live stacks of ONE pile: the state <paramref name="id"/> granted by <paramref name="sourceSkillId"/>.
+    /// Both halves are required, and that is the point. Keying by skill alone was ambiguous the moment one skill
+    /// granted two stacking states — a skill handing out charges to spend AND parry charges to survive on would have
+    /// its two piles counted as one total and spent for each other. The pair (who granted it, which state it is)
+    /// names exactly one pile.</summary>
+    public int StacksFrom(string sourceSkillId, StateId id)
     {
         if (string.IsNullOrEmpty(sourceSkillId)) return 0;
         EnsureFresh();
         int n = 0;
         for (int i = 0; i < active.Count; i++)
-            if (active[i].sourceSkillId == sourceSkillId) n += active[i].StackCount;
+            if (active[i].sourceSkillId == sourceSkillId && active[i].id == id) n += active[i].StackCount;
         return n;
     }
 
@@ -305,19 +307,22 @@ public class UnitStates : MonoBehaviour
     /// delayed damage) leaves the fraction at 0, a percentage pile leaves the flat at 0. That invariant is what makes
     /// a single total honest — a state whose stacks carried both meanings at once would be two things wearing one
     /// name, which the store's one-responsibility rule already forbids.</para></summary>
-    public float CarriedFrom(string sourceSkillId)
+    public float CarriedFrom(string sourceSkillId, StateId id)
     {
         if (string.IsNullOrEmpty(sourceSkillId)) return 0f;
         EnsureFresh();
         float total = 0f;
         for (int i = 0; i < active.Count; i++)
-            if (active[i].sourceSkillId == sourceSkillId) total += active[i].magnitude + active[i].intAmount;
+            if (active[i].sourceSkillId == sourceSkillId && active[i].id == id)
+                total += active[i].magnitude + active[i].intAmount;
         return total;
     }
 
-    /// <summary>Spend stacks granted by <paramref name="sourceSkillId"/> (oldest first), or ALL of them. Returns how
-    /// many were spent. Only that skill's piles are touched — the whole point of keying by source.</summary>
-    public int ConsumeFrom(string sourceSkillId, int count, bool all = false)
+    /// <summary>Spend stacks of ONE pile — the state <paramref name="id"/> granted by <paramref name="sourceSkillId"/>
+    /// — oldest first, or ALL of them. Returns how many were spent. Nothing else is touched: naming both halves is
+    /// what stops a skill's second stacking state being spent by a consumer that meant the first (see
+    /// <see cref="StacksFrom"/>).</summary>
+    public int ConsumeFrom(string sourceSkillId, StateId id, int count, bool all = false)
     {
         if (string.IsNullOrEmpty(sourceSkillId)) return 0;
         EnsureFresh();
@@ -325,7 +330,7 @@ public class UnitStates : MonoBehaviour
         for (int i = active.Count - 1; i >= 0; i--)   // reverse: entries emptied by the spend are removed in-loop
         {
             var s = active[i];
-            if (s.sourceSkillId != sourceSkillId) continue;
+            if (s.sourceSkillId != sourceSkillId || s.id != id) continue;
             int take = all ? s.stacks.Count : Mathf.Clamp(count - spent, 0, s.stacks.Count);
             if (take <= 0) continue;
             s.stacks.RemoveRange(0, take);           // oldest first — spend the stack nearest its expiry

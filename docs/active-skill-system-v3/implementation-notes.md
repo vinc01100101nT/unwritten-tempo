@@ -189,6 +189,40 @@ The Character sheet (**C**) now lists **every** player-facing number and shows w
 
 **Files:** `DerivedSnapshot.cs`, `Character.cs`, `ProgressionWindows.cs`.
 
+## Charge-driven repeats · attack-speed stack counts · authored star — BUILT (2026-08-16), NOT Play-tested
+
+The mechanism behind a charge-spending storm (Bladedance is the first skill to compose from it; **no code names it**). Compile-verified via `tools/check-unity-code.sh`, both halves clean. Both formulas were replayed offline against real authored values — the star step reproduces the old constant exactly at 5 corners, and the half-share invariant held across 7,839 duration × attack-speed combinations.
+
+- **`SkillDef.repeatCostsCharge`** — each repeat spends one charge of the state the trigger requires, and the run continues *while the pile holds*, ignoring `repeatCount`. It re-arms `consumedThisCast` per beat so the existing consume site in `SkillRunner.OnTick` charges every beat rather than once per cast. Because the loop reads the LIVE pile, a passive granting charges mid-run genuinely lengthens it — **Encore needs no special case**.
+- **`SkillDef.repeatReaim` + `repeatReaimRange`** — each repeat re-aims at a RANDOM living mob within range of the **current target** (not the caster, not the original aim), so the run walks target to target; an empty search ends it. One beat = one target: this is single-target, never AoE. Rolled through `CombatRng`. New `SkillEffectApplier.RandomMobNear` (zero-alloc reservoir pick, sibling of `MobAt`).
+- **`VfxTick` now carries the aim of the play that raised it** (`aimUnit`/`aimPoint`, copied from that play's own context) instead of `SkillRunner` reading a shared field. Without it, a re-aiming repeat whose previous beat is still playing resolves that older beat's effects against the NEWER aim.
+- **`SkillEffect.stacksFromAttackSpeed` + `stackShare`** — the stack count becomes *how many times the caster would swing inside this effect's own window*: `ceil(ScaledSeconds ÷ Character.SwingTime × share)`. Faster attack speed = more stacks in the SAME window, never a longer one. **Deliberately uncapped** (`stackLimit` bypassed) — clamping an earned count to a hand-sized ceiling would delete charges the caster paid for. Two effects sharing a duration stay in exact proportion: a `0.5` share is always exactly half, because halving a window and halving that window's count round the same way. New `Character.SwingTime` mirrors `MeleeReachFullSize` (attack speed is a ×1–×3 multiplier — only the swing INTERVAL turns it into a count).
+- **`SkillEffect.starCorners`** — the relocation figure is authored, not fixed at five. `LandingStepDegrees(corners)` = `180 + 180/corners`, the rule the old constant's own comment described; 5 → 216°, unchanged. Odd counts only (an even one never closes, so it is nudged up). That comment's "5 × 216° is exactly two full laps" was wrong — it is three.
+- **Composer:** `stacks from` now accepts THIS SKILL (see the rule below); `on cast complete of` still cannot.
+
+### ⚠️ STANDING RULE — never add an `OnRepeat` trigger
+
+A beat of a repeating cast is **not a moment**. Every `SkillTrigger` member is something that happened in the fight; a repeat is the *same cast still running*, which is why a beat spends its charge directly instead of announcing anything. Give a beat a trigger and a skill can answer its own beat → which re-enters the skill → which beats again: an unbounded loop that also pays nothing, because the pile is only spent by the run that owns it. This is the same trap `OnSkillCastComplete` avoids by announcing **only on a player press** — the brake that stops a granter/consumer pair (Lock Blades ⇄ Lunge) refilling each other forever. **A repeating cast reads its pile; it must never raise a moment.** The rule is restated on the `SkillTrigger` enum in `SkillDef.cs`.
+
+It is also why a skill may name **itself** in `stacks from`: granting your own charges and spending them over your own repeats is self-contained, because the repeats replay the cast and never start a new one. Only the "which skill FIRES this" question excludes self.
+
+### The rest of the same day — beat, gate and ghosts
+
+- **`SkillDef.repeatScaleWithAttackSpeed` + `repeatBeatsPerSwing`** — the beat follows the caster's `Character.SwingTime` divided by a whole multiple (1 = your swing rhythm, 2 = twice as fast), instead of a fixed interval, which is then hidden in the composer. **Read per beat**, so a speed buff landing mid-run quickens the rest of it. At beats-per-swing 1 the run lands on its authored window at every attack speed, because count and beat come from the same swing time.
+- **The gate names a PILE, not just a skill** — `SkillTriggerEntry.requireStateId` joins `requireSkillId`, and `UnitStates.StacksFrom/CarriedFrom/ConsumeFrom` all take the pair. **This was a real bug:** keying by skill alone summed every state that skill granted and spent them in `active`-list order, so a skill with two stacking effects had its piles merged — a Blade Dance beat could have eaten a Parry charge. The composer's "which pile" dropdown lists only what the chosen granter actually stacks, derived from `SkillEffect.TryStateFor` (the one mapping from an effect to the state it creates; note `StateId.Taunt/Knockback/Pull` are declared but never written by anything, so they are excluded). Changing what a skill stacks re-points or drops its consumers on Save.
+- **A skill may name ITSELF in `stacks from`** — the composer's self-exclusion was narrowed to the "which skill fires this" dropdown only. Granting your own charges and spending them over your own repeats is self-contained; being fired by yourself is not.
+- **Grants happen on the OPENING play only** (`SkillRunner.WithoutStateGrants`). **This was the infinite-loop bug:** a repeat replays the whole body, so the effects that created the pile re-ran every beat and refilled it faster than the beats drained it — observed live at 98 stacks against the 99 ceiling. A repeat now runs everything except the effects that hand out a stacking state.
+- **`SkillEffect.afterimageSeconds` + `afterimageTint` → `Afterimage.cs`** (new) — a pooled, shared snapshot service: each skinned renderer bakes its current deformed shape into a plain mesh, drawn once and faded, never animated. **Copy, never re-derive:** position and rotation come verbatim from the source and NO scale is applied, because the bake already delivers world size — re-applying the source's scale made every ghost ten times too large, the third time this project has hit that exact mistake.
+
+**Files:** `SkillDef.cs`, `SkillEffect.cs`, `SkillEffectApplier.cs`, `SkillRunner.cs`, `StateGate.cs`, `UnitStates.cs`, `Character.cs`, `Character3DPose.cs`, `VfxSequence.cs`, `VfxDirector.cs`, `Afterimage.cs` **(new)**, `Editor/SkillComposerWindow.cs`.
+
+**Composed with it:** `skill.sword.blade_dance` — see the Sword roster. **Still content-side:** Encore (the engine supports it with no special case; the numbers are undecided).
+
+### Two editor-side traps found while building this
+
+- **The Stance Composer rewriting the shared controller leaves stale references.** After it rebuilt `HumanoidPlayerController` in place, `CharacterSpec.animatorController` read null at runtime — every townsfolk T-posed and `Character3DBody` logged leaked animation graphs. **Verified the data was never damaged:** the guid, the `.meta`, the controller's main object id `9100000` and all 17 clip references were intact, and a Unity restart cleared it completely. Worth making the composer not leave the editor in that state.
+- **`Character3DPose.Update` called the Animator unguarded**, so a body without a controller spammed warnings every frame and buried the real message. It now skips posing and reports once, naming the object.
+
 ## Standing (unchanged, still true)
 
 - `Item.grantedSkillIds` — weapons carry their kit; equip → `HotbarBindings.SetWeaponKit` fills the bar, unequip clears it.
