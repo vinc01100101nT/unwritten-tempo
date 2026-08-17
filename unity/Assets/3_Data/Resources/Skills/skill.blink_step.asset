@@ -45,7 +45,6 @@ MonoBehaviour:
     playerFaction: 0
     radius: 1.5
     projectileCount: 1
-    projectileSpreadAngle: 0
     effects:
     - kind: 6
       damageType: 1
@@ -62,10 +61,6 @@ MonoBehaviour:
       hitCount: 1
       chance: 0
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []

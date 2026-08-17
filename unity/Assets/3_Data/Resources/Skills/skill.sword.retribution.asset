@@ -29,6 +29,8 @@ MonoBehaviour:
     triggerSkillId: 
     requiresState: 1
     requireSkillId: skill.sword.brace
+    requireStateId: 23
+    requireStateIdSet: 1
     requireMinStacks: 1
     consumeAllStacks: 1
     consumeStacks: 0
@@ -89,10 +91,6 @@ MonoBehaviour:
       stackValueMult: 1
       side: 2
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []

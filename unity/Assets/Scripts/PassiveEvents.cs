@@ -44,13 +44,37 @@ public static class PassiveEvents
     const int MaxTrackedPassives = 64;   // one bit each in the chain mask
     static ulong chain;                  // the passives already in the currently-resolving causal chain
 
+    static string causeSkillId = "";     // the skill whose effects are landing right now ("" = a basic attack / the engine)
+
     /// <summary>The chain currently in force — a passive's runner stamps this onto the effects it causes.</summary>
     public static ulong CurrentChain => chain;
 
-    /// <summary>Make <paramref name="mask"/> the active chain while a passive's effects resolve, returning the previous
-    /// one to restore. Paired with <see cref="PopChain"/> around the moment effects are applied.</summary>
-    public static ulong PushChain(ulong mask) { var prev = chain; chain = mask; return prev; }
-    public static void PopChain(ulong prev) { chain = prev; }
+    /// <summary>WHICH SKILL is landing the effects being applied right now, or "" when nothing skill-shaped is (a basic
+    /// attack, a damage-over-time tick, the engine). Read by a moment that happens INSIDE a cast and wants to name its
+    /// cause — a kill is the first: "a mob died" and "Blade Dance killed it" are different moments, and only the second
+    /// can drive a passive that answers one particular skill.
+    ///
+    /// <para>It rides the same push/pop as the chain deliberately: both answer "what is causing this", so one owner
+    /// means they can never disagree about the cast in flight.</para></summary>
+    public static string CurrentSkillId => causeSkillId;
+
+    /// <summary>What was in force before a push — restore it in a finally.</summary>
+    public readonly struct Cause
+    {
+        public readonly ulong chain; public readonly string skillId;
+        public Cause(ulong chain, string skillId) { this.chain = chain; this.skillId = skillId; }
+    }
+
+    /// <summary>Make <paramref name="mask"/> and <paramref name="skillId"/> the cause in force while a cast's effects
+    /// resolve, returning the previous pair to restore. Paired with <see cref="Pop"/> around the moment effects are
+    /// applied.</summary>
+    public static Cause Push(ulong mask, string skillId)
+    {
+        var prev = new Cause(chain, causeSkillId);
+        chain = mask; causeSkillId = skillId ?? "";
+        return prev;
+    }
+    public static void Pop(Cause prev) { chain = prev.chain; causeSkillId = prev.skillId; }
 
     /// <summary>A passive runner announces itself while it's alive on the player (called from its OnEnable). It keeps
     /// the SAME slot — and so the same chain bit — until it unregisters.</summary>

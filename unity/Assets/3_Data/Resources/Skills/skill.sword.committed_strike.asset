@@ -32,6 +32,8 @@ MonoBehaviour:
     triggerSkillId: 
     requiresState: 0
     requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
@@ -56,10 +58,16 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
   projectileCount: 1
   projectileSpread: 0
   hasReleaseStance: 0
   releaseStance: 14
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: follow_hit
     targetMode: 1
@@ -81,18 +89,28 @@ MonoBehaviour:
       stacking: 0
       stackLimit: 5
       stacksPerApply: 1
+      stacksFromAttackSpeed: 0
+      stackShare: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
+      afterimageSeconds: 0
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
+      starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 1
       chance: 0
+      useStackValue: 0
+      stackValueSource: 0
+      stackValueMult: 1
       side: 0
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity:
       - stat: 0
         weight: 100

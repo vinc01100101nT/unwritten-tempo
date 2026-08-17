@@ -48,10 +48,19 @@ public class SettingsWindow : MonoBehaviour
         UiKit.Fill(body.rectTransform, Vector2.zero, new Vector2(0, -34));
 
         AddTab(tabRow.transform, "Gameplay", body.transform);
-        AddTab(tabRow.transform, "Sound", body.transform);
+        var sound = AddTab(tabRow.transform, "Sound", body.transform);
         var graphics = AddTab(tabRow.transform, "Graphics", body.transform);
 
-        var smooth = OptionRow(graphics, "Smooth camera follow", GameSettings.SmoothCameraFollow);
+        var master = UiKit.MakeSlider(Row(sound, "Master volume"), GameSettings.MasterVolume);
+        master.onValueChanged.AddListener(v => GameSettings.MasterVolume = v);
+
+        var sfx = UiKit.MakeSlider(Row(sound, "Sound effects volume"), GameSettings.SfxVolume);
+        sfx.onValueChanged.AddListener(v => GameSettings.SfxVolume = v);
+
+        var musicVol = UiKit.MakeSlider(Row(sound, "Music volume"), GameSettings.MusicVolume);
+        musicVol.onValueChanged.AddListener(v => GameSettings.MusicVolume = v);
+
+        var smooth = UiKit.Checkbox(Row(graphics, "Smooth camera follow"), GameSettings.SmoothCameraFollow);
         smooth.onValueChanged.AddListener(v => GameSettings.SmoothCameraFollow = v);
 
         Select(0);
@@ -87,17 +96,23 @@ public class SettingsWindow : MonoBehaviour
         }
     }
 
-    // One option line: its name on the left, its tick box on the right.
-    Toggle OptionRow(Transform page, string label, bool on)
+    // One option line: its name on the left, room for its control on the right. The caller drops the control
+    // (tick box, slider) into the returned row, so every option reads at the same height and alignment.
+    Transform Row(Transform page, string label)
     {
         var row = UiKit.Img("Row_" + label, page, new Color(0, 0, 0, 0));
         row.raycastTarget = false;
         row.gameObject.AddComponent<LayoutElement>().preferredHeight = 28;
 
         var text = UiKit.Label("Label", row.transform, label, 15, FontStyle.Normal, TextAnchor.MiddleLeft);
-        UiKit.Fill(text.rectTransform, new Vector2(4, 0), new Vector2(-32, 0));
+        // Stop the name at the 45% mark — where MakeSlider's track starts — so a long label can never run
+        // underneath its own control.
+        text.rectTransform.anchorMin = new Vector2(0f, 0f);
+        text.rectTransform.anchorMax = new Vector2(0.45f, 1f);
+        text.rectTransform.offsetMin = new Vector2(4f, 0f);
+        text.rectTransform.offsetMax = new Vector2(-6f, 0f);
         text.raycastTarget = false;
 
-        return UiKit.Checkbox(row.transform, on);
+        return row.transform;
     }
 }

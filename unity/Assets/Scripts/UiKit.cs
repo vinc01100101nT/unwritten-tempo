@@ -194,6 +194,40 @@ public static class UiKit
         return toggle;
     }
 
+    /// <summary>A horizontal 0–1 slider filling the RIGHT half of <paramref name="parent"/> — the shared
+    /// control for option rows that hold an amount. Returns the Slider so the caller wires onValueChanged.</summary>
+    public static Slider MakeSlider(Transform parent, float value)
+    {
+        var track = Img("Slider", parent, SlotFill);
+        var trt = track.rectTransform;
+        trt.anchorMin = new Vector2(0.45f, 0.5f);
+        trt.anchorMax = new Vector2(1f, 0.5f);
+        trt.pivot = new Vector2(0.5f, 0.5f);
+        trt.offsetMin = new Vector2(0f, -5f);
+        trt.offsetMax = new Vector2(-2f, 5f);
+
+        // Fill grows from the left edge; the Slider drives its width via fillRect.
+        var fillArea = Img("FillArea", track.transform, new Color(0, 0, 0, 0));
+        fillArea.raycastTarget = false;
+        Fill(fillArea.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
+        var fill = Img("Fill", fillArea.transform, Gold);
+        fill.raycastTarget = false;
+        Fill(fill.rectTransform, Vector2.zero, Vector2.zero);
+
+        var handle = Img("Handle", track.transform, TextMain);
+        handle.rectTransform.sizeDelta = new Vector2(10f, 18f);
+
+        var slider = track.gameObject.AddComponent<Slider>();
+        slider.targetGraphic = handle;
+        slider.fillRect = fill.rectTransform;
+        slider.handleRect = handle.rectTransform;
+        slider.direction = Slider.Direction.LeftToRight;
+        slider.minValue = 0f;
+        slider.maxValue = 1f;
+        slider.value = value;
+        return slider;
+    }
+
     public static void Fill(RectTransform rt, Vector2 offMin, Vector2 offMax)
     {
         rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;

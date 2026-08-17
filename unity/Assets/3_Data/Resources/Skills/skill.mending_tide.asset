@@ -17,11 +17,9 @@ MonoBehaviour:
   icon: {fileID: 2903848411162822477, guid: 4bae3342ecf8e1c4ca8a5e2eb9f81491, type: 3}
   description: "A soothing tide heals you over time and washes away one debuff."
   archetype: 3
-  category: 2
   manaCost: 18
   cooldown: 12
   castTime: 0.5
-  maxLevel: 10
   aim: 0
   castRange: 6
   tier: 0
@@ -40,7 +38,6 @@ MonoBehaviour:
     radius: 1
     effects:
     - kind: 8
-      magic: 1
       damageMult: 1
       element: 0
       amount: 10
@@ -48,9 +45,6 @@ MonoBehaviour:
       seconds: 6
       magnitude: 6
       hitCount: 1
-      executeAmp: 0
-      stunChance: 0
-      stunSeconds: 0.75
       buffStat: 0
       affinity:
       - stat: 4
@@ -65,7 +59,6 @@ MonoBehaviour:
       - stat: 3
         weight: 30
     - kind: 9
-      magic: 1
       damageMult: 1
       element: 0
       amount: 1
@@ -73,15 +66,9 @@ MonoBehaviour:
       seconds: 0
       magnitude: 1
       hitCount: 1
-      executeAmp: 0
-      stunChance: 0
-      stunSeconds: 0.75
       buffStat: 0
       affinity: []
       durationAffinity: []
-    scale:
-      damageMultPerLevel: 0
-      flatBonusPerLevel: 0
   shortLabel: Mend
   keyLabel:
   slotOrder: 13

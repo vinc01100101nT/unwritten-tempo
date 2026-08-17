@@ -17,11 +17,9 @@ MonoBehaviour:
   icon: {fileID: 6969427886737629405, guid: 3964ad93b5f03fc4d8bc30d5f55a7756, type: 3}
   description: "Raise a rallying banner so you and nearby allies deal more damage for a while."
   archetype: 3
-  category: 2
   manaCost: 20
   cooldown: 18
   castTime: 0.6
-  maxLevel: 10
   aim: 0
   castRange: 6
   tier: 0
@@ -40,7 +38,6 @@ MonoBehaviour:
     radius: 5
     effects:
     - kind: 7
-      magic: 1
       damageMult: 1
       element: 0
       amount: 10
@@ -48,9 +45,6 @@ MonoBehaviour:
       seconds: 8
       magnitude: 1.3
       hitCount: 1
-      executeAmp: 0
-      stunChance: 0
-      stunSeconds: 0.75
       buffStat: 0
       affinity:
       - stat: 4
@@ -62,9 +56,6 @@ MonoBehaviour:
         weight: 70
       - stat: 3
         weight: 30
-    scale:
-      damageMultPerLevel: 0
-      flatBonusPerLevel: 0
   shortLabel: Banner
   keyLabel:
   slotOrder: 14

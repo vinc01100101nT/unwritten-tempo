@@ -89,10 +89,6 @@ MonoBehaviour:
       stackValueMult: 1
       side: 1
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []

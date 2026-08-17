@@ -808,26 +808,18 @@ public class Character : MonoBehaviour, ICombatUnit
     // ---- Timed offensive self-buffs + regen (skill-driven; runtime-only, cleared on revive) -------
     // Each buff is a multiplier live until its expiry; the getters/rolls below fold in the current value (1 when
     // expired). Latest call replaces the current buff on that channel (no stacking) — matches the Haste model.
-    // War Banner RAMP (experimental): the DamageBuff can GROW over its life (ramp params live on the DamageBuff state
-    // entry). Refreshing a still-live buff KEEPS the ramp progress; letting it fully lapse RESETS to base — that parity
-    // comes free from UnitStates.Apply (keeps startTime on a refresh, resets it on a lapsed re-cast). Stored in the store.
 
     /// <summary>The live outgoing-damage buff multiplier (1 = none) — folded into every damage roll, so it lifts
     /// basic attacks and skills alike (War Banner's damage-up aura). Reads the store like its two siblings below:
-    /// the store sums EVERY damage-buff pile (they are keyed per granting skill) and owns the ramp.</summary>
+    /// the store sums EVERY damage-buff pile (they are keyed per granting skill).</summary>
     public float DamageBuffMult => ignoreStates ? 1f : States.DamageBuffMult;        // unified state store (neutral for BaseDerived)
     float AspdBuffMult          => ignoreStates ? 1f : States.AttackSpeedBuffMult;   // unified state store (neutral for BaseDerived)
     float CastBuffMult          => ignoreStates ? 1f : States.CastSpeedBuffMult;     // unified state store (neutral for BaseDerived)
 
-    /// <summary>Timed outgoing-damage buff ×<paramref name="mult"/> for <paramref name="seconds"/>. Optional RAMP
-    /// (<paramref name="rampPerStep"/> &gt; 0) grows the multiplier by that much every <paramref name="rampInterval"/>s
-    /// after <paramref name="rampDelay"/>s, capped at <paramref name="rampCap"/> (0 = uncapped). Refreshing a live buff
-    /// keeps the ramp's progress; a lapsed one restarts from base (the "keep it up to reach the ceiling" support loop).</summary>
+    /// <summary>Timed outgoing-damage buff ×<paramref name="mult"/> for <paramref name="seconds"/>.
     /// <para>Thin wrapper over <see cref="UnitStates.ApplyStatBuff"/> — the shared landing point a mob uses too, so a
-    /// buff behaves identically on either. Kept as a named method because callers read better for it.</para>
-    public void BuffDamage(float mult, float seconds, float rampDelay = 0f, float rampPerStep = 0f,
-                           float rampInterval = 5f, float rampCap = 0f) =>
-        States.ApplyStatBuff(BuffStat.Damage, mult, seconds, rampDelay, rampPerStep, rampInterval, rampCap);
+    /// buff behaves identically on either. Kept as a named method because callers read better for it.</para></summary>
+    public void BuffDamage(float mult, float seconds) => States.ApplyStatBuff(BuffStat.Damage, mult, seconds);
     /// <summary>Timed attack-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
     public void BuffAttackSpeed(float mult, float seconds) => States.ApplyStatBuff(BuffStat.AttackSpeed, mult, seconds);
     /// <summary>Timed cast-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>

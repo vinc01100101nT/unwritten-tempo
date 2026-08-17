@@ -68,6 +68,7 @@ public class MusicDirector : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
+        GameSettings.ApplyAudio();   // start at the player's saved volumes, not the level baked into the scene
         music.Init(gameObject);
         surrDay.Init(gameObject);
         surrNight.Init(gameObject);

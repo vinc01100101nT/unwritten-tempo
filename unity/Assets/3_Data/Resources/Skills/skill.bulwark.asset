@@ -17,11 +17,9 @@ MonoBehaviour:
   icon: {fileID: -7809785511404226330, guid: 4a6c997ee6699414da629ee459545ea7, type: 3}
   description: "Brace behind a guard that cuts incoming damage and forces nearby foes to attack you."
   archetype: 2
-  category: 2
   manaCost: 12
   cooldown: 14
   castTime: 0
-  maxLevel: 10
   aim: 0
   castRange: 6
   tier: 0
@@ -40,7 +38,6 @@ MonoBehaviour:
     radius: 5
     effects:
     - kind: 4
-      magic: 1
       damageMult: 1
       element: 0
       amount: 10
@@ -48,9 +45,6 @@ MonoBehaviour:
       seconds: 5
       magnitude: 0.5
       hitCount: 1
-      executeAmp: 0
-      stunChance: 0
-      stunSeconds: 0.75
       buffStat: 0
       affinity:
       - stat: 4
@@ -63,7 +57,6 @@ MonoBehaviour:
       - stat: 4
         weight: 30
     - kind: 5
-      magic: 1
       damageMult: 1
       element: 0
       amount: 10
@@ -71,17 +64,11 @@ MonoBehaviour:
       seconds: 5
       magnitude: 1
       hitCount: 1
-      executeAmp: 0
-      stunChance: 0
-      stunSeconds: 0.75
       buffStat: 0
       affinity: []
       durationAffinity:
       - stat: 4
         weight: 100
-    scale:
-      damageMultPerLevel: 0
-      flatBonusPerLevel: 0
   shortLabel: Bulwark
   keyLabel:
   slotOrder: 12

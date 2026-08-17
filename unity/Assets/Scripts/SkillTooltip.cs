@@ -75,7 +75,7 @@ public static class SkillTooltip
             case SkillTrigger.OnSkillCastComplete: return "After casting " + NameOf(e.triggerSkillId);
             case SkillTrigger.OnBasicAttackStart:  return "When you start a basic attack";
             case SkillTrigger.OnBasicAttackDealt:  return "When a basic attack lands";
-            case SkillTrigger.OnKill:              return "When you kill a mob";
+            case SkillTrigger.OnKill:              return "When you kill a mob";   // the "killed by" filter is named by the caller's line
             case SkillTrigger.OnLowHP:             return "When your HP drops low";
             case SkillTrigger.OnDamageDealt:       return "When you deal damage";
             case SkillTrigger.OnParry:             return "When you parry";
@@ -225,6 +225,20 @@ public static class SkillTooltip
                 return (held > 1 ? "Delays the next " + Hl(held.ToString()) + " hits" : "Delays the next hit")
                      + " within " + Hl(e.seconds.ToString("0.#") + "s")
                      + " — the delayed damage all lands at once when the window ends";
+            }
+            // Named by the skill they edit, not by the pile's internal name: the player knows "Blade Dance", never
+            // "DamageBuff". A modifier with no skill picked describes nothing, so it says nothing.
+            case SkillEffectKind.ExtendDuration:
+            {
+                var of = SkillCatalog.Get(e.modifierSkillId);
+                return of == null ? null
+                     : "Extends " + Hl(of.displayName) + " by " + Hl(e.modifierSeconds.ToString("0.#") + "s");
+            }
+            case SkillEffectKind.AddStacks:
+            {
+                var of = SkillCatalog.Get(e.modifierSkillId);
+                return of == null ? null
+                     : "Adds " + Hl(Mathf.Max(1, e.modifierStacks).ToString()) + " to " + Hl(of.displayName);
             }
             default:                            return null;
         }

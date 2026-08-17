@@ -64,10 +64,6 @@ MonoBehaviour:
       hitCount: 3
       chance: 0
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity:
       - stat: 1
         weight: 70
@@ -94,10 +90,6 @@ MonoBehaviour:
       hitCount: 1
       chance: 0
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity:
       - stat: 1
         weight: 100
@@ -122,10 +114,6 @@ MonoBehaviour:
       hitCount: 1
       chance: 0.25
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity:
       - stat: 5
         weight: 100
@@ -160,10 +148,6 @@ MonoBehaviour:
       hitCount: 1
       chance: 0
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity:
       - stat: 1
         weight: 100

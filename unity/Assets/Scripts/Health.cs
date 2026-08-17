@@ -387,8 +387,9 @@ public class Health : MonoBehaviour, ICombatUnit
     void Die()
     {
         // A mob died (mobs only die to the player here) — announce OnKill with the dying mob as victim NOW, before it's
-        // pooled/destroyed below (FireAsPassive reads victim.position synchronously).
-        PassiveEvents.Fire(SkillTrigger.OnKill, null, transform);
+        // pooled/destroyed below (FireAsPassive reads victim.position synchronously). The killing SKILL rides along
+        // (empty for a basic attack or an ailment tick), so a passive can answer one particular skill's kills.
+        PassiveEvents.Fire(SkillTrigger.OnKill, PassiveEvents.CurrentSkillId, transform);
         VfxCue.Fire(VfxCueId.OnDeath, transform);   // receiver-side death cue (mirrors Character.RaiseDeath)
         onDeath?.Invoke();
         // Play the "poof" death animation if one is attached, and once it finishes either RECYCLE the mob

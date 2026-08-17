@@ -30,6 +30,7 @@ MonoBehaviour:
     requiresState: 1
     requireSkillId: skill.sword.blade_dance
     requireStateId: 14
+    requireStateIdSet: 1
     requireMinStacks: 0
     consumeAllStacks: 0
     consumeStacks: 1
@@ -102,10 +103,6 @@ MonoBehaviour:
       stackValueMult: 1
       side: 2
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []
@@ -138,10 +135,6 @@ MonoBehaviour:
       stackValueMult: 1
       side: 1
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []
@@ -174,10 +167,6 @@ MonoBehaviour:
       stackValueMult: 1
       side: 1
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []
@@ -210,10 +199,6 @@ MonoBehaviour:
       stackValueMult: 1
       side: 1
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []

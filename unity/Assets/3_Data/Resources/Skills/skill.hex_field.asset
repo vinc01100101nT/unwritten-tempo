@@ -18,11 +18,9 @@ MonoBehaviour:
   description: Curse the ground so enemies inside are slowed and take extra damage.
   archetype: 4
   family: 1
-  category: 1
   manaCost: 16
   cooldown: 10
   castTime: 0.5
-  maxLevel: 10
   aim: 2
   castRange: 11
   tier: 0
@@ -41,7 +39,6 @@ MonoBehaviour:
     radius: 1.5
     effects:
     - kind: 0
-      magic: 1
       damageMult: 1
       element: 0
       amount: 10
@@ -56,7 +53,6 @@ MonoBehaviour:
         weight: 50
       durationAffinity: []
     - kind: 2
-      magic: 1
       damageMult: 1
       element: 0
       amount: 10
@@ -68,9 +64,6 @@ MonoBehaviour:
       buffStat: 0
       affinity: []
       durationAffinity: []
-    scale:
-      damageMultPerLevel: 0.2
-      flatBonusPerLevel: 0
   shortLabel: Hex
   keyLabel: 
   slotOrder: 15

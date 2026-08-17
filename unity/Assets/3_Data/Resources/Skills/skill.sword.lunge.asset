@@ -39,6 +39,8 @@ MonoBehaviour:
     triggerSkillId: 
     requiresState: 1
     requireSkillId: skill.sword.lock_blades
+    requireStateId: 15
+    requireStateIdSet: 1
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 1
@@ -105,10 +107,6 @@ MonoBehaviour:
       stackValueMult: 1
       side: 0
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []
@@ -138,10 +136,6 @@ MonoBehaviour:
       stackValueMult: 1
       side: 0
       buffStat: 0
-      rampDelay: 0
-      rampPerStep: 0
-      rampInterval: 5
-      rampCap: 0
       affinity:
       - stat: 0
         weight: 100

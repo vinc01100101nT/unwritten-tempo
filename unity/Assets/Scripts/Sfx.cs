@@ -70,6 +70,7 @@ public class Sfx : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        GameSettings.ApplyAudio();   // start at the player's saved volumes, not the level baked into the scene
 
         pool = new AudioSource[Mathf.Max(1, voices)];
         for (int i = 0; i < pool.Length; i++)

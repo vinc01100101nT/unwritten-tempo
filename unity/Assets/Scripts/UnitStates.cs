@@ -86,7 +86,6 @@ public class UnitStates : MonoBehaviour
         public int intAmount;      // SUM across stacks (Shield pool · Regen HP/tick)
         public float startTime, endTime;   // endTime = the LAST stack to expire (when the state is fully gone)
         public float nextTick;     // DoT / Regen cadence marker (owner ticks it)
-        public float rampDelay, rampPerStep, rampInterval, rampCap;   // DamageBuff ramp params (all 0 = a flat buff)
         // Display (for the buff tray + nameplate icons)
         public Sprite icon;
         public string name;
@@ -135,7 +134,7 @@ public class UnitStates : MonoBehaviour
     public event Action OnChanged;
 
     // ---- cached derived scalars (recomputed only on change; every getter below is O(1)) --------------------------
-    // DamageBuff is deliberately absent here — it is computed live by DamageBuffMult so its ramp can't go stale.
+    // DamageBuff is deliberately absent here — DamageBuffMult sums its piles on read.
     float moveMult = 1f, guardCut, vulnMult = 1f, aspdBuffMult = 1f, castBuffMult = 1f, leechPct, reflectBonus;
     int hitPenalty, shieldPool, parryCharges;
     bool cannotAct, silenced;
@@ -196,15 +195,12 @@ public class UnitStates : MonoBehaviour
     public float GuardCut { get { EnsureFresh(); return guardCut; } }
     /// <summary>Incoming-damage multiplier (>=1) from Vulnerability.</summary>
     public float VulnMult { get { EnsureFresh(); return vulnMult; } }
-    /// <summary>Outgoing-damage multiplier from EVERY live DamageBuff pile, each pile's own RAMP folded in — the one
-    /// answer to "how much is my damage buffed", for player and mob alike.
-    ///
-    /// <para>Computed on read instead of cached like its siblings, on purpose: a ramp grows on its OWN clock (a step
-    /// every <c>rampInterval</c>) with no expiry to wake the cache, so a cached figure would sit stale between steps.
-    /// The loop is over the handful of live states and allocates nothing.</para>
+    /// <summary>Outgoing-damage multiplier summed over EVERY live DamageBuff pile — the one answer to "how much is my
+    /// damage buffed", for player and mob alike.
     ///
     /// <para>Reading only the FIRST pile here is the bug this replaced: piles are keyed by GRANTING SKILL, so Momentum
-    /// and Lock Blades are two separate DamageBuff entries, and whichever landed first silently ate the other.</para></summary>
+    /// and Lock Blades are two separate DamageBuff entries, and whichever landed first silently ate the other. The loop
+    /// walks the handful of live states and allocates nothing.</para></summary>
     public float DamageBuffMult
     {
         get
@@ -214,18 +210,7 @@ public class UnitStates : MonoBehaviour
             for (int i = 0; i < active.Count; i++)
             {
                 var s = active[i];
-                if (s.id != StateId.DamageBuff) continue;
-                float m = s.Mult;
-                if (s.rampPerStep > 0f)   // ramping buff: base + perStep for each interval elapsed past the delay
-                {
-                    float el = Time.time - s.startTime - s.rampDelay;
-                    if (el > 0f)
-                    {
-                        m += s.rampPerStep * Mathf.FloorToInt(el / s.rampInterval);
-                        if (s.rampCap > 0f) m = Mathf.Min(m, s.rampCap);
-                    }
-                }
-                bonus += m - 1f;
+                if (s.id == StateId.DamageBuff) bonus += s.Mult - 1f;
             }
             return Mathf.Max(0f, 1f + bonus);
         }
@@ -259,7 +244,7 @@ public class UnitStates : MonoBehaviour
     }
 
     /// <summary>The live entry for <paramref name="id"/>, or null. For the few systems that own a state's ACTIVE
-    /// mechanic (regen/DoT tick, shield drain, damage ramp) and read/mutate its params on the unified entry — so the
+    /// mechanic (regen/DoT tick, shield drain) and read/mutate its params on the unified entry — so the
     /// store stays the single source while the delicate per-tick math stays in its existing owner.</summary>
     public State Get(StateId id) { EnsureFresh(); return Find(id); }
 
@@ -343,26 +328,92 @@ public class UnitStates : MonoBehaviour
         return spent;
     }
 
+    /// <summary>Push out the life of ONE pile — every stack of the state <paramref name="id"/> granted by
+    /// <paramref name="sourceSkillId"/> gets <paramref name="seconds"/> more. Returns how many stacks were extended.
+    ///
+    /// <para><b>Extends what is THERE; it never creates.</b> A pile that has already lapsed is gone, and re-creating it
+    /// here would mean inventing a stack's value out of nothing — a lengthener has no idea what one of that skill's
+    /// charges is worth. So "extend a storm that ended" does nothing, which is the honest answer and the one a player
+    /// can read off the screen.</para>
+    ///
+    /// <para>EVERY stack moves, not just the last: the pile drains one stack at a time, so lengthening only the final
+    /// one would let the front of the pile keep expiring on the old clock.</para></summary>
+    public int ExtendFrom(string sourceSkillId, StateId id, float seconds)
+    {
+        if (string.IsNullOrEmpty(sourceSkillId) || seconds <= 0f) return 0;
+        EnsureFresh();
+        int moved = 0;
+        for (int i = 0; i < active.Count; i++)
+        {
+            var s = active[i];
+            if (s.sourceSkillId != sourceSkillId || s.id != id) continue;
+            for (int k = 0; k < s.stacks.Count; k++)
+            {
+                var st = s.stacks[k];
+                st.endTime += seconds;
+                s.stacks[k] = st;
+                moved++;
+            }
+            s.Refold();
+        }
+        if (moved > 0) { Recompute(); OnChanged?.Invoke(); }
+        return moved;
+    }
+
+    /// <summary>Add stacks to ONE pile — the state <paramref name="id"/> granted by <paramref name="sourceSkillId"/>.
+    /// Returns how many were actually added. This is how a skill feeds ANOTHER skill's pile (a kill lengthening a
+    /// storm), which the normal grant path cannot do: a grant always files under the skill that ran it.
+    ///
+    /// <para><b>A new stack matches what one of that skill's charges IS</b> — never a value invented here, which would
+    /// be a second, silently different definition of the same charge. Running pile: copy its newest stack. Not running:
+    /// the caller passes what the granting skill's own effect authors (<paramref name="magnitude"/> /
+    /// <paramref name="seconds"/>), so the pile starts exactly as that skill would have started it. Either way the
+    /// answer comes from the granter, so a skill that is merely OFF COOLDOWN can still be fed.</para></summary>
+    public int AddStacksTo(string sourceSkillId, StateId id, int count, float magnitude, float seconds,
+                           Sprite icon = null, string name = null, string description = null)
+    {
+        if (string.IsNullOrEmpty(sourceSkillId) || count <= 0) return 0;
+        EnsureFresh();
+        int added = 0;
+        var s = Find(id, sourceSkillId);
+        if (s != null && s.stacks.Count > 0)
+        {
+            var template = s.stacks[s.stacks.Count - 1];               // the newest — the freshest window on the pile
+            int take = Mathf.Min(count, Mathf.Max(0, MaxStacks - s.stacks.Count));
+            for (int k = 0; k < take; k++) s.stacks.Add(template);
+            added = take;
+        }
+        else if (seconds > 0f)
+        {
+            // Nothing running: start the pile the granting skill's own way. Its window is what makes this honest — a
+            // stack with no deadline would never leave, and a pile nobody can see ending is not a charge.
+            s = pool.Count > 0 ? pool.Pop() : new State();
+            s.id = id; s.sourceSkillId = sourceSkillId; s.stacking = true;
+            s.startTime = Time.time; s.nextTick = 0f;
+            s.icon = icon; s.name = name; s.description = description; s.tint = Color.white;
+            s.stacks.Clear();
+            added = Mathf.Min(count, MaxStacks);
+            for (int k = 0; k < added; k++)
+                s.stacks.Add(new State.Stack { endTime = Time.time + seconds, magnitude = magnitude, intAmount = 0 });
+            active.Add(s);
+        }
+        if (added > 0) { s.Refold(); Recompute(); OnChanged?.Invoke(); }
+        return added;
+    }
+
     /// <summary>Apply a timed stat buff to THIS unit — the ONE place a Buff effect lands, for the player and for a mob
     /// alike (a buff belongs to the unit, not to who is driving it). <paramref name="mult"/> is a MULTIPLIER (×1.3);
     /// the store keeps a bonus fraction, so the conversion happens here, once.
     ///
-    /// <para>The RAMP (<paramref name="rampPerStep"/> &gt; 0) only means anything on the Damage buff — it is the
-    /// "keep it up to reach the ceiling" support loop — and is read live by <see cref="DamageBuffMult"/>. Refreshing a
-    /// live buff keeps its ramp progress (Apply preserves startTime); a lapsed one restarts from base.</para></summary>
-    public void ApplyStatBuff(BuffStat stat, float mult, float seconds,
-                              float rampDelay = 0f, float rampPerStep = 0f, float rampInterval = 5f, float rampCap = 0f)
+    /// <para>A buff is worth exactly what it says: there is no growth-over-time channel any more (removed 2026-08-17,
+    /// unused and unreadable on screen). Uptime is the support's contribution.</para></summary>
+    public void ApplyStatBuff(BuffStat stat, float mult, float seconds)
     {
         if (seconds <= 0f) return;
         StateId id = stat == BuffStat.AttackSpeed ? StateId.AttackSpeedBuff
                    : stat == BuffStat.CastSpeed   ? StateId.CastSpeedBuff
                                                   : StateId.DamageBuff;
-        var s = Apply(id, seconds, Mathf.Max(0.01f, mult) - 1f);
-        if (s == null || id != StateId.DamageBuff) return;
-        s.rampDelay = Mathf.Max(0f, rampDelay);
-        s.rampPerStep = Mathf.Max(0f, rampPerStep);
-        s.rampInterval = Mathf.Max(0.1f, rampInterval);
-        s.rampCap = rampCap;
+        Apply(id, seconds, Mathf.Max(0.01f, mult) - 1f);
     }
 
     // ---- the state STARTERS — one per state family, valid on ANY unit ------------------------------------------
@@ -544,7 +595,7 @@ public class UnitStates : MonoBehaviour
                        Sprite icon = null, string name = null, Color tint = default, string description = null)
     {
         if (seconds <= 0f) return null;
-        EnsureFresh();   // drop an already-lapsed entry first, so a re-apply is treated as FRESH (restarts startTime/ramp)
+        EnsureFresh();   // drop an already-lapsed entry first, so a re-apply is treated as FRESH (restarts startTime)
         float now = Time.time;
         // Keyed by KIND + SOURCE: re-applying from the same skill grows that skill's pile, while a different skill
         // buffing the same stat opens its own. Newest-wins and the stack limit therefore apply PER SOURCE, which is
@@ -744,7 +795,7 @@ public class UnitStates : MonoBehaviour
                 // only Slow takes the strongest, since two slows aren't a bigger slow.
                 case StateId.Guard:           guardCut = Mathf.Clamp01(guardCut + s.magnitude); break;
                 case StateId.Vulnerability:   vulnBonus += Mathf.Max(0f, s.magnitude); break;
-                // DamageBuff is NOT summed here — DamageBuffMult walks the piles live so each pile's ramp stays current.
+                // DamageBuff is NOT summed here — DamageBuffMult walks the piles on read.
                 case StateId.AttackSpeedBuff: aspdBonus += (mult <= 0f ? 1f : mult) - 1f; break;
                 case StateId.CastSpeedBuff:   castBonus += (mult <= 0f ? 1f : mult) - 1f; break;
                 case StateId.ManaLeech:       leechPct += s.magnitude; break;

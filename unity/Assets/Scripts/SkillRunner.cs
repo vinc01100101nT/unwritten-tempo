@@ -423,7 +423,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // Only a run that STEERS or PAYS needs a live caster to read; a plain fixed repeat (a meteor shower) keeps
             // its old behaviour of finishing on its own, so nothing existing changes.
             if ((def.repeatReaim || def.repeatCostsCharge)
-                && (Character.Instance == null || Character.Instance.IsDead)) yield break;
+                && (Character.Instance == null || Character.Instance.IsDead)) break;
 
             // RE-AIM walks the run from one target to the next: the search is centred on the CURRENT target, so each
             // hop's range is measured from where the last one landed, never from the caster or the original aim.
@@ -432,7 +432,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             {
                 Vector3 from = ctx.targetUnit != null ? ctx.targetUnit.position : ctx.target;
                 var next = SkillEffectApplier.RandomMobNear(from, def.repeatReaimRange);
-                if (next == null) yield break;
+                if (next == null) break;
                 ctx = BuildCtx(next, next.position);   // the ONE place an aim is assembled — no field can be missed
                 ctx.isRepeat = true;                    // BuildCtx answers the aim, not which play this is
             }
@@ -442,7 +442,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // ends the run — the gate is what the run is spending, so an unpayable beat must not fire.
             if (def.repeatCostsCharge)
             {
-                if (StateGate.StackCount(firedBy, CasterStates) <= 0) yield break;
+                if (StateGate.StackCount(firedBy, CasterStates) <= 0) break;
                 consumedThisCast = false;
             }
 
@@ -453,6 +453,35 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                 StanceController.Player.PlayActionFor(def.releaseStance, interval, 1f, fitToWindow: true);
 
             VfxDirector.Play(def.vfx, ctx, onTick);
+        }
+        // However the run stopped — last charge spent, nothing left in reach, caster down — it is over here, so the
+        // piles it set up are over too.
+        EndRunPiles();
+    }
+
+    /// <summary>End every pile the cast's opening play granted on the caster. A charge-driven run has no length of its
+    /// own — it lasts exactly as long as its pile lets it — so a stack still sitting there after the run stopped is a
+    /// window nobody is paying for any more, and it would ride into the next fight. Mirrors
+    /// <see cref="WithoutStateGrants"/>: the same stacking grants that the opening play alone hands out are the ones
+    /// that end with it. A plain fixed repeat is untouched — its length is authored, not bought, so its states keep
+    /// their own clocks.</summary>
+    void EndRunPiles()
+    {
+        if (!def.repeatCostsCharge) return;
+        var states = CasterStates;
+        if (states == null || def.bindings == null) return;
+        for (int b = 0; b < def.bindings.Count; b++)
+        {
+            var effects = def.bindings[b] != null ? def.bindings[b].effects : null;
+            if (effects == null) continue;
+            for (int i = 0; i < effects.Count; i++)
+            {
+                var e = effects[i];
+                if (e == null || !e.stacking) continue;
+                // Only what THIS skill granted: the pair (granter, state) names one pile, so another skill's buff and
+                // any debt an incoming hit created are left alone.
+                if (SkillEffect.TryStateFor(e, out var id)) states.ConsumeFrom(def.id, id, 0, all: true);
+            }
         }
     }
 
@@ -510,7 +539,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         }
         // Stamp this cast's causal chain for the whole burst, so any trigger the damage raises (OnDamageDealt / OnKill fire
         // synchronously inside the applier) can see which passives are already upstream and refuse to re-fire them.
-        ulong prevChain = PassiveEvents.PushChain(castChain);
+        var prevCause = PassiveEvents.Push(castChain, def.id);
         try
         {
             // The cast hands DOWN what the pile measures and nothing more: which effects that pile pays, and how, is
@@ -530,7 +559,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                                           // the SAME pile, and the first one can't spend it out from under the second.
                                           vars: new StackVars(castStacks, castCarried));
         }
-        finally { PassiveEvents.PopChain(prevChain); }
+        finally { PassiveEvents.Pop(prevCause); }
 
         // COMPUTE BEFORE CONSUME: the effects above read the LIVE store (Deathblow sees the whole Momentum pile while
         // rolling its damage); only now is the cost paid. Once per cast, not per tick.

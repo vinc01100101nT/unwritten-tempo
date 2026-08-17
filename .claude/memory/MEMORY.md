@@ -3,6 +3,7 @@
 Two-level: top-level facts below are always relevant; grouped topics live in `index/<group>.md` sub-indexes — open the matching sub-index when a task touches that area, then the memory file it points to.
 
 ## Top-level (always-on)
+- [Never widen a snapshot into a verdict](never-widen-a-snapshot-into-a-verdict.md) — today's files prove today only; if the user tested it working, believe them and hunt what CHANGED — never say "it never worked / can't be done".
 - [Assets/ reorganized by usage 2026-07-16](assets-reorg-2026-07.md) — numbered buckets 0_Raw/1_Authored/2_Generated/3_Data; OLD paths in older memories are stale — use its mapping.
 - [Changes MUST persist in repo, not runtime](changes-must-persist-in-repo.md) — bake in code/saved asset + read back; never leave a change in bare execute_code/runtime state.
 - [DIRECTION: RO-style 2.5D](direction-2p5d-pivot.md) — PLAYER+NPC live-3D, MOBS billboard; player LIVE-3D 2026-07-04.

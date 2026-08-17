@@ -233,6 +233,12 @@ public class SkillTriggerEntry
              "charges to survive on), and those must never be counted together or spent for each other — so the gate " +
              "names both halves: whose pile, and which pile. Picked from what the granter actually grants.")]
     public StateId requireStateId = StateId.Poison;
+    // Every StateId is a legal value, so the pile field alone cannot say "nobody picked one" — and the first member
+    // (Poison) is what un-authored data reads as, which is a pile no gate would ever mean. This flag is that missing
+    // answer, and it is the ONLY thing that may decide a gate is unauthored: an editor must not guess a pile for it,
+    // and the runtime must not act as if one was chosen. Assets written before the pile field existed have it false,
+    // which is exactly right — they never named a pile.
+    [HideInInspector] public bool requireStateIdSet = false;
     [Tooltip("How many stacks must be present to fire ('detonate at 3'). 1 = just needs the state at all. " +
              "0 = NO GATE: it fires with none and simply cashes whatever happens to be there (Deathblow, which must " +
              "stay usable on a Sword that never rolled Momentum).")]
@@ -285,17 +291,25 @@ public class SkillTickBinding
     /// <summary>True if any effect here acts on the CASTER — those always apply, whatever the targeting says.</summary>
     public bool HasCasterEffects => AnyEffectSide(true);
 
-    /// <summary>True if any effect here RELOCATES what it lands on (Dash / Teleport) — so the cast has to ask for a
-    /// point. Independent of which side the effect is on: the caster dashing and a mob being dashed both need one.</summary>
-    public bool HasPointEffects
+    /// <summary>True if an effect here RELOCATES THE CASTER (Dash / Teleport authored on the caster side). Whether the
+    /// cast has to ASK where to send them depends on what else it already asked — with an entity picked, that entity
+    /// is the destination (see <see cref="SkillDef.NeedsAimPoint"/>).</summary>
+    public bool HasCasterPointEffects => AnyPointEffectSide(true);
+    /// <summary>True if an effect here RELOCATES WHOEVER IT CATCHES (Dash / Teleport authored on the target side) —
+    /// "throw that one over there". Nothing but an aimed point can answer where "there" is, so this always asks.</summary>
+    public bool HasTargetPointEffects => AnyPointEffectSide(false);
+
+    // The two questions a relocation raises are NOT the same question, which is why the sides are counted apart: moving
+    // yourself TO something you already pointed at needs no destination, moving something else needs one.
+    bool AnyPointEffectSide(bool casterSide)
     {
-        get
+        if (effects == null) return false;
+        for (int i = 0; i < effects.Count; i++)
         {
-            if (effects == null) return false;
-            for (int i = 0; i < effects.Count; i++)
-                if (effects[i] != null && SkillEffect.NeedsPoint(effects[i].kind)) return true;
-            return false;
+            var e = effects[i];
+            if (e != null && SkillEffect.NeedsPoint(e.kind) && SkillEffect.LandsOnCaster(e) == casterSide) return true;
         }
+        return false;
     }
 
     bool AnyEffectSide(bool casterSide)
@@ -393,6 +407,11 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
             var e = triggers[i];
             if (e == null || e.trigger != trigger) continue;
             if (trigger == SkillTrigger.OnSkillCastComplete && e.triggerSkillId != skillId) continue;
+            // A kill may name the skill that landed it. Left blank the entry answers ANY kill (the original meaning, so
+            // every existing OnKill passive is untouched); filled, only kills by that skill — which is what lets one
+            // passive belong to one skill's kills instead of every kill in the fight.
+            if (trigger == SkillTrigger.OnKill && !string.IsNullOrEmpty(e.triggerSkillId)
+                && e.triggerSkillId != skillId) continue;
             return e;
         }
         return null;
@@ -587,8 +606,8 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     // A cast asks at most two questions, in this order, and each is skipped when the effects don't pose it:
     //   1. WHICH ENTITY  (NeedsUnitPick) — only when a Single-target tick has effects that land on a target. The
     //      caster side never asks: the entity is the caster by definition.
-    //   2. WHICH POINT   (NeedsAimPoint) — when a ground tick needs its spot, OR when any effect RELOCATES what it
-    //      lands on (Dash / Teleport, see SkillEffect.NeedsPoint) and so must be told where to send it.
+    //   2. WHICH POINT   (NeedsAimPoint) — when a ground tick needs its spot, OR when a relocation still has to be told
+    //      where to send what it caught (Dash / Teleport, see SkillEffect.NeedsPoint).
     // "Dash the mob I clicked over there" and "dash myself over there" are the same rule with step 1 present or absent.
 
     /// <summary>Stage 1: this cast must pick an entity first.</summary>
@@ -606,19 +625,27 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
         }
     }
 
-    /// <summary>Stage 2: this cast must pick a ground point — either a ground tick lands there, or a relocating
-    /// effect (on EITHER side) has to be told where it sends whoever it caught.</summary>
+    /// <summary>Stage 2: this cast must pick a ground point — either a ground tick lands there, or a relocation still
+    /// has no destination once stage 1 is done.
+    ///
+    /// <para><b>A question already answered is not asked again.</b> Moving the CASTER to an entity the cast just picked
+    /// has its destination: the landing is worked out from that entity and the mover's reach, and a clicked point would
+    /// be thrown away — so a strike-and-hop skill costs ONE click, not two. Move the caster with nobody picked (a plain
+    /// dash) and the point is the only aim there is, so it is still asked. Moving whoever the tick CATCHES always asks:
+    /// the caught unit is the thing being thrown, so it can't also be the place it's thrown to.</para></summary>
     public bool NeedsAimPoint
     {
         get
         {
             if (bindings == null) return false;
+            bool picksUnit = NeedsUnitPick;
             for (int i = 0; i < bindings.Count; i++)
             {
                 var b = bindings[i];
                 if (b == null) continue;
                 if (b.targetMode == TargetMode.Ground) return true;
-                if (b.HasPointEffects) return true;
+                if (b.HasTargetPointEffects) return true;
+                if (b.HasCasterPointEffects && !picksUnit) return true;
             }
             return false;
         }

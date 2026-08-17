@@ -128,10 +128,25 @@ public enum SkillEffectKind
     /// it always does something real. Binary per hit, so no magnitude.</para>
     ///
     /// <para>The twin of <see cref="Parry"/>, one word apart: a parry ERASES the hit, a brace POSTPONES it. Surviving
-    /// is the player's job — a consumer must cash the debt before it comes due.</para>
+    /// is the player's job — a consumer must cash the debt before it comes due.</para></summary>
+    Brace,
+
+    // ---- Modifiers: the target is a SKILL's live pile, not a body ------------------------------------------------
+    // These two are the first effects whose subject is another skill. Everything above asks "what happens to whoever
+    // this reaches"; these ask "what happens to the pile that skill left on me". Both edit an EXISTING pile and never
+    // create one — a pile's stacks are the granter's to define, so an editor that could conjure them would be a second
+    // definition of the same charge (see UnitStates.AddStacksTo).
+
+    /// <summary>Give every stack of the named skill's pile <see cref="SkillEffect.modifierSeconds"/> more life →
+    /// <c>UnitStates.ExtendFrom</c>. Does nothing if that pile isn't running.</summary>
+    ExtendDuration,
+    /// <summary>Add <see cref="SkillEffect.modifierStacks"/> stacks to the named skill's pile, each a copy of its
+    /// newest one → <c>UnitStates.AddStacksTo</c>. THE way one skill feeds another's pile: a normal grant always files
+    /// under the skill that ran it, so a kill can only lengthen a storm through this. Does nothing if that pile isn't
+    /// running.
     ///
     /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
-    Brace,
+    AddStacks,
 }
 
 /// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window. Move speed is
@@ -238,6 +253,21 @@ public class SkillEffect
              "is nudged up by one.")]
     [Min(3)] public int starCorners = 5;
 
+    [Header("Modifiers (which skill's pile this edits)")]
+    [Tooltip("WHOSE pile this edits — the id of the skill that granted it. Its own pile is a valid answer (a skill " +
+             "that lengthens itself). Set it via the Skill Composer's dropdown, not by hand.")]
+    public string modifierSkillId = "";
+    [Tooltip("WHICH of that skill's piles. Same two-part answer the stack gate needs: a skill can grant more than one, " +
+             "and editing the wrong one is silent.")]
+    public StateId modifierStateId = StateId.Poison;
+    // Every StateId is legal, so the field alone can't say "nobody picked". Same companion flag, same reason, as the
+    // stack gate's — an unauthored pile must be VISIBLY unauthored instead of reading as the first enum member.
+    [HideInInspector] public bool modifierStateIdSet = false;
+    [Tooltip("Seconds added to every stack of that pile. Extend duration only.")]
+    [Min(0f)] public float modifierSeconds = 1f;
+    [Tooltip("How many stacks are added to that pile, each a copy of its newest. Add stacks/charges only.")]
+    [Min(0)] public int modifierStacks = 1;
+
     [Header("Multi-hit (Damage kind)")]
     [Tooltip("How many times a Damage effect strikes per landing. Each strike is the TRIGGER POINT for the binding's " +
              "PROC effects (a Status or Execute with a chance) — they roll once per hit. 1 = single hit.")]
@@ -322,6 +352,20 @@ public class SkillEffect
         }
     }
 
+    /// <summary>EVERY pile this effect can leave on the caster — what its apply creates, plus any pile that apply
+    /// causes LATER. The two differ for exactly one kind today: a Brace arms charges now, and each charge that catches
+    /// a hit turns into delayed damage, which is a second pile with its own lifetime. That later pile is filed under
+    /// this same skill, so a consumer must be able to name it — Retribution cashes the delayed damage, never the armed
+    /// charges. THE one answer to "what can a consumer point at", so an authoring list can neither offer a pile that
+    /// will never exist nor hide one that will.</summary>
+    public static void CollectPiles(SkillEffect e, List<StateId> into)
+    {
+        if (into == null || !TryStateFor(e, out var id)) return;
+        if (!into.Contains(id)) into.Add(id);
+        if (e.kind == SkillEffectKind.Brace && !into.Contains(StateId.DeferredDamage))
+            into.Add(StateId.DeferredDamage);
+    }
+
     /// <summary>Which kinds can be driven by the cast's pile. Deliberately the two whose output is a plain SIZE — a
     /// number the pile can BE or add to. A duration or a proc chance is not a size, so pulling a pile into one would
     /// mean inventing a second conversion rule per kind; those keep their own fields.</summary>
@@ -340,17 +384,11 @@ public class SkillEffect
              "(this DOES scale off sustain stats via durationAffinity).")]
     public BuffStat buffStat = BuffStat.Damage;
 
-    [Header("Buff RAMP (Damage buff only — EXPERIMENTAL, design 'Support Scaling')")]
-    [Tooltip("Seconds before the ramp begins. 0 (with rampPerStep 0) = a plain flat buff, no ramp. Only the Damage " +
-             "buffStat ramps for now (War Banner prototype).")]
-    [Min(0f)] public float rampDelay = 0f;
-    [Tooltip("Multiplier ADDED each interval once ramping (0.05 = +5% Atk per step). 0 = no ramp.")]
-    [Min(0f)] public float rampPerStep = 0f;
-    [Tooltip("Seconds between ramp steps.")]
-    [Min(0.1f)] public float rampInterval = 5f;
-    [Tooltip("Ceiling for the ramped multiplier (1.5 = caps at +50%). 0 = uncapped. Longer duration (more MP) reaches " +
-             "a higher point on the ramp before it ends — that's the support's contribution.")]
-    [Min(0f)] public float rampCap = 0f;
+    // A buff that GREW while it was up (a delay, a step size, an interval, a ceiling — four knobs on one effect) was
+    // removed 2026-08-17: no shipped skill ever set them, and a buff whose value depends on how long it has been
+    // running can't be read off the screen or balanced against a flat one. A buff is worth what it says it is worth;
+    // uptime is the support's contribution. Don't reintroduce it as an effect — it would be a standing change with a
+    // clock, which the Modifiers rule already forbids.
 
     [Header("Affinity (ring-investment scaling)")]
     [Tooltip("Scales this effect's main OUTPUT by ring investment — its damage / heal amount / DoT damage / buff " +
@@ -394,7 +432,14 @@ public class SkillEffect
     public static bool IsSelfVerb(SkillEffectKind k) =>
         k == SkillEffectKind.Guard || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
         k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect ||
-        k == SkillEffectKind.Shield || k == SkillEffectKind.Parry || k == SkillEffectKind.Brace || NeedsPoint(k);
+        k == SkillEffectKind.Shield || k == SkillEffectKind.Parry || k == SkillEffectKind.Brace ||
+        IsModifier(k) || NeedsPoint(k);
+
+    /// <summary>An effect that changes ANOTHER SKILL's live pile instead of doing something to a body. Its target is
+    /// named by <see cref="modifierSkillId"/> + <see cref="modifierStateId"/>, never by the tick's aim, and the pile it
+    /// edits sits on the caster — so these always land caster-side no matter what the tick catches.</summary>
+    public static bool IsModifier(SkillEffectKind k) =>
+        k == SkillEffectKind.ExtendDuration || k == SkillEffectKind.AddStacks;
 
     /// <summary>An effect that must be told WHERE: it RELOCATES whoever it lands on, so the point is part of its
     /// meaning, not part of its targeting. This is the ONE thing that makes a cast ask for a ground point on top of

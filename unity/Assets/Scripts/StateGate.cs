@@ -29,9 +29,25 @@ public static class StateGate
     public static bool IsMet(SkillTriggerEntry entry, UnitStates states)
     {
         if (entry == null || !entry.requiresState) return true;
+        ReportIfUnauthored(entry);
         if (entry.requireMinStacks <= 0) return true;            // reads the pile, but doesn't demand it
         if (states == null) return false;
         return StackCount(entry, states) >= entry.requireMinStacks;
+    }
+
+    // Gates already reported, so a skill pressed every few seconds says it once and not once per press. Keyed by the
+    // granter id, which is what the author has to go fix.
+    static readonly System.Collections.Generic.HashSet<string> reported = new System.Collections.Generic.HashSet<string>();
+
+    /// <summary>SAY SO when a gate reads a pile nobody ever named. A gate whose pile was never authored reads the
+    /// first state in the enum, which no author ever means, so it silently counts nothing and spends nothing — the
+    /// exact failure that survived a day of play because it looked like a skill that simply "wasn't scaling yet."
+    /// Cost is one set lookup on a path that already walks a state list; nothing is logged twice.</summary>
+    static void ReportIfUnauthored(SkillTriggerEntry entry)
+    {
+        if (entry.requireStateIdSet || !reported.Add(entry.requireSkillId ?? "")) return;
+        Debug.LogError($"[StateGate] A skill reads \"{entry.requireSkillId}\"'s stacks but never names WHICH pile, so " +
+                       "it counts nothing and spends nothing. Open it in the Skill Composer, pick the pile, and save.");
     }
 
     /// <summary>How many stacks of the required SKILL's pile the caster holds RIGHT NOW — the snapshot a cast takes
