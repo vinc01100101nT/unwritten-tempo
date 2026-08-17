@@ -173,6 +173,27 @@ public static class UiKit
         return btn;
     }
 
+    /// <summary>A 20×20 tick box, anchored to the RIGHT edge of <paramref name="parent"/> — the shared
+    /// on/off control for option rows. Returns the Toggle so the caller wires onValueChanged.</summary>
+    public static Toggle Checkbox(Transform parent, bool on)
+    {
+        var box = Img("Checkbox", parent, new Color(0.09f, 0.10f, 0.13f, 1f));
+        var brt = box.rectTransform;
+        brt.anchorMin = brt.anchorMax = new Vector2(1f, 0.5f);
+        brt.pivot = new Vector2(1f, 0.5f);
+        brt.sizeDelta = new Vector2(20f, 20f);
+
+        var tick = Img("Tick", box.transform, Cyan);
+        tick.raycastTarget = false;
+        Fill(tick.rectTransform, new Vector2(4, 4), new Vector2(-4, -4));
+
+        var toggle = box.gameObject.AddComponent<Toggle>();
+        toggle.targetGraphic = box;
+        toggle.graphic = tick;
+        toggle.isOn = on;
+        return toggle;
+    }
+
     public static void Fill(RectTransform rt, Vector2 offMin, Vector2 offMax)
     {
         rt.anchorMin = Vector2.zero; rt.anchorMax = Vector2.one;

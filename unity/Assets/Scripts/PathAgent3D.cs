@@ -59,6 +59,9 @@ public class PathAgent3D : MonoBehaviour
 
     // Dash glide (a skill relocation): a fixed A→B slide that overrides pathing, twin of the player's BeginGlideTo.
     bool gliding, glideEaseIn, glideEaseOut;
+    /// <summary>True while this agent is travelling a fixed A→B glide (a Dash effect) rather than pathing. The mob
+    /// twin of the player's SkillGliding, so a presentation effect can last exactly one hop on either.</summary>
+    public bool Gliding => gliding;
     Vector3 glideDest;
     float glideSpeed, glideTotalDist, glideEaseSeconds, glideUntil;
 
@@ -104,11 +107,17 @@ public class PathAgent3D : MonoBehaviour
     /// <summary>Glide from here to <paramref name="dest"/> at <paramref name="speed"/> world-units/second — a fixed
     /// A→B move that overrides pathing until it arrives (or its safety window lapses). The mob twin of the player's
     /// dash glide, so a Dash effect reads the same on either.</summary>
-    public void GlideTo(Vector3 dest, float speed, bool easeIn, bool easeOut, float easeSeconds)
+    /// <summary>A world point this unit keeps FACING for the whole glide, instead of turning toward its travel
+    /// direction. Read by <see cref="Agent3DVisual"/>; null when the glide authored none. Same rule the player's
+    /// controller follows, so a mob's dash-and-strike also lands looking at what it is about to hit.</summary>
+    public Vector3? GlideFaceAt { get; private set; }
+
+    public void GlideTo(Vector3 dest, float speed, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt = null)
     {
         Vector3 to = dest - transform.position; to.y = 0f;
         float dist = to.magnitude;
         if (dist < 0.05f || speed <= 0f) return;
+        GlideFaceAt = faceAt;
         Halt();
         knockbackUntil = 0f;
         glideDest = new Vector3(dest.x, transform.position.y, dest.z);
@@ -175,7 +184,7 @@ public class PathAgent3D : MonoBehaviour
         {
             Vector3 toDest = glideDest - transform.position; toDest.y = 0f;
             float left = toDest.magnitude;
-            if (left <= 0.05f || Time.time >= glideUntil) { gliding = false; Moving = false; }
+            if (left <= 0.05f || Time.time >= glideUntil) { gliding = false; Moving = false; GlideFaceAt = null; }
             else
             {
                 Vector3 g = toDest / left;

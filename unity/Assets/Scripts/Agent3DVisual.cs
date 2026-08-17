@@ -88,9 +88,17 @@ public abstract class Agent3DVisual : MonoBehaviour
             {
                 float dt = Mathf.Max(Time.deltaTime, 1e-4f);
                 stance.DriveStance(LocomotionStanceFor(d.magnitude / dt));
+                // A glide may name a point to keep facing instead of the travel line — a hop that ends in a strike has
+                // to arrive already looking at what it will hit. Same rule the player's controller follows.
+                Vector3 face = d;
+                if (agent.GlideFaceAt.HasValue)
+                {
+                    Vector3 look = agent.GlideFaceAt.Value - p; look.y = 0f;
+                    if (look.sqrMagnitude > 1e-4f) face = look;
+                }
                 // Pass a UNIT direction, not the raw per-frame delta (~0.01 long): Character3DPose only yaws when the
                 // facing's sqrMagnitude clears 1e-4, and a tiny delta sits below that gate so the model never turns.
-                if (d.sqrMagnitude > 1e-8f && pose != null) pose.SetFacing(d.normalized);
+                if (face.sqrMagnitude > 1e-8f && pose != null) pose.SetFacing(face.normalized);
             }
             else
             {

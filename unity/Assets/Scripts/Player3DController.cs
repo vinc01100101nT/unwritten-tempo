@@ -157,6 +157,7 @@ public partial class Player3DController : MonoBehaviour
     bool dashEaseIn, dashEaseOut;
     float dashTotalDist, dashEaseSeconds;
     System.Action dashOnArrive;
+    Vector3? dashFaceAt;           // hold this facing for the whole glide (a hop that ends in a strike); null = face travel
     /// <summary>True while a Dash SKILL is gliding the player A→B (vs a charge/E-dash roll). The stance brain reads
     /// this to play NO animation — a skill glide is pure movement, not a roll or a run.</summary>
     public bool SkillGliding => dashing && dashToPoint;
@@ -456,7 +457,7 @@ public partial class Player3DController : MonoBehaviour
         // if (KeyS()) { Stop(); return; }      // S = STOP (cancel move / attack-move / swing)
         if (KeyT()) { ToggleAuto(); return; }   // T toggles roam auto-combat
         // if (KeyA()) AttackArmed = true;      // A = arm an attack-click (next left-click attacks)
-        if (KeyEsc()) AttackArmed = false;
+        if (AttackArmed && KeyEsc()) { AttackArmed = false; Hotkeys.MarkCancelHandled(); }
 
         // Left-click drives the character (right-click is the camera orbit). Attacking now REQUIRES A:
         //   • plain left-click            → MOVE (even onto a mob — it no longer auto-attacks),
@@ -706,8 +707,12 @@ public partial class Player3DController : MonoBehaviour
     /// No on-arrive callback (pure relocation). Shares the charge dash's step/state so cancels can't be forgotten.
     /// <paramref name="easeIn"/> starts the glide slow and accelerates; <paramref name="easeOut"/> decelerates to a
     /// gentle stop at the destination (both on = slow-fast-slow). Off = constant full speed (the previous behaviour).</summary>
-    public void BeginGlideTo(Vector3 dest, float speedMult = 0f, bool easeIn = false, bool easeOut = false, float easeSeconds = 0.3f)
+    public void BeginGlideTo(Vector3 dest, float speedMult = 0f, bool easeIn = false, bool easeOut = false,
+                             float easeSeconds = 0.3f, Vector3? faceAt = null)
     {
+        // Set ONCE here, not per frame: a hop that ends in a strike must arrive already looking at what it is about to
+        // hit, and must not swivel again on landing. StepDash honours this instead of facing its travel direction.
+        dashFaceAt = faceAt;
         // A glide is MOVEMENT, not a new order: it keeps the current order, its target, the target marker AND any
         // in-flight swing (whose damage is already committed and lands mid-glide), so combat simply resumes on arrival
         // instead of dropping to Idle. Only the ROUTE is dropped — the path was computed from where we no longer are —
@@ -746,7 +751,16 @@ public partial class Player3DController : MonoBehaviour
             Vector3 to = destPos - transform.position; to.y = 0f;
             float dist = to.magnitude;
             Vector3 dir = to / Mathf.Max(dist, 1e-4f);
-            worldFacing = dir;
+            // Face the point we were told to face, if any — otherwise the way we're travelling. Held every frame of the
+            // trip so the landing frame can't leave us looking down the travel line instead of at the target.
+            // dashToPoint gates it: only a skill GLIDE ever supplies a face point, and this same step also drives the
+            // charge-into-a-mob dash. Without the gate a cancelled glide's stale point would steer the next charge.
+            if (dashToPoint && dashFaceAt.HasValue)
+            {
+                Vector3 look = dashFaceAt.Value - transform.position; look.y = 0f;
+                if (look.sqrMagnitude > 1e-4f) worldFacing = look;
+            }
+            else worldFacing = dir;
             // CLAMP THE STEP TO WHAT'S LEFT. One frame of dash travel is routinely LONGER than the whole trip
             // (8× run speed ≈ 0.4 units/frame vs a ~0.3-unit lunge to a mob's side), so an unclamped step flies past
             // the destination, the arrive test (a 0.05 radius) never sees it, and the glide ping-pongs across the spot
@@ -758,7 +772,7 @@ public partial class Player3DController : MonoBehaviour
         }
         if (arrived)
         {
-            dashing = false; dashToPoint = false;
+            dashing = false; dashToPoint = false; dashFaceAt = null;
             var cb = dashOnArrive; dashOnArrive = null; dashTarget = null;
             cb?.Invoke();
             return false;

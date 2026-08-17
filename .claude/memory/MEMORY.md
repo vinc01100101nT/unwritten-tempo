@@ -23,6 +23,7 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 - [Skill tooltip voice](skill-tooltip-voice.md) — wiki/doc skill descriptions read as in-game tooltips (table, declarative rules, bold numbers), NOT article prose or designer meta-commentary.
 - [Never blame recompilation](assume-compiled-never-blame-recompile.md) — user ALWAYS recompiles; treat code as live+running, diagnose runtime, never suspect stale compile.
 - [Find-or-create hides duplicates; fix the CLASS not the instance](find-or-create-hides-duplicates.md) — `GetComponent ?? AddComponent` can't fail so it silently forks a "single source"; one broken member of a uniform system = check ALL members before fixing.
+- [A matching function name is NOT the behaviour](existing-function-name-is-not-the-behaviour.md) — user asks for a FEEL; finding `SmoothDamp` ≠ the result exists. Trace position AND rotation to the screen before "already implemented"; when the feel is wrong, suspect the mechanism, not the number.
 - [NO editor-tool menus by default](no-editor-tools-by-default.md) — user rejects `Tools ▸ unwritten` tools; ask what the feature needs AT RUNTIME (it's often already live), prefer a GM chat command. OVERRIDES the project "prefer editor tools" rule.
 
 ## Grouped sub-indexes (open on demand)

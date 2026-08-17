@@ -113,14 +113,19 @@ public class ProgressionWindows : MonoBehaviour
             if (open) UiAnim.Open(equipRoot); else UiAnim.Close(equipRoot);
         }
         if (Hotkeys.Down(KeyCode.C)) UiAnim.Toggle(charRoot);
-        if (Hotkeys.CancelDown())
+        if (Hotkeys.CancelDown() && AnyWindowOpen())
         {
             if (cardDialog != null) UiAnim.Close(cardDialog);
             UiAnim.Close(invRoot); UiAnim.Close(equipRoot); UiAnim.Close(charRoot);
+            Hotkeys.MarkCancelHandled();   // this Escape is spent — it must not also pop the System window
         }
 
         KeepDerivedLive();
     }
+
+    bool AnyWindowOpen() =>
+        UiAnim.IsOpen(invRoot) || UiAnim.IsOpen(equipRoot) || UiAnim.IsOpen(charRoot) ||
+        (cardDialog != null && UiAnim.IsOpen(cardDialog));
 
     // Keep the Character sheet honest while a buff runs, expires, or ramps. Only while the window is actually OPEN, and
     // the text is rebuilt ONLY when a value really moved — the per-frame cost is a struct build + an int compare, no

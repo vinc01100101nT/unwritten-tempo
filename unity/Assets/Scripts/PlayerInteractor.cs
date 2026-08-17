@@ -34,8 +34,10 @@ public class PlayerInteractor : MonoBehaviour
         if (Talking)
         {
             // Esc cancels (WASD does NOT — the player is frozen). If the partner despawned, close too.
-            if (Hotkeys.CancelDown() || partner == null)
+            bool cancelled = Hotkeys.CancelDown();
+            if (cancelled || partner == null)
             {
+                if (cancelled) Hotkeys.MarkCancelHandled();
                 if (DialogBox.Instance != null) DialogBox.Instance.Close();   // fires onClosed → EndTalk
                 else EndTalk();
                 return;

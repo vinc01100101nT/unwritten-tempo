@@ -599,7 +599,7 @@ MonoBehaviour:
   height: 10
   yaw: 0
   lookAtHeight: 0.18
-  smoothTime: 0.12
+  smoothTime: 0.35
   minDistance: 0.4
   maxDistance: 7
   minHeight: 0.1

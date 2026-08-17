@@ -95,7 +95,8 @@ public class UnitTargeter : MonoBehaviour
         if (!Active) return;
         if (cam == null) cam = Camera.main;
 
-        if (EscDown() || RightDown()) { Cancel(); return; }   // Esc or right-click bails out of aim mode
+        if (EscDown()) { Cancel(); Hotkeys.MarkCancelHandled(); return; }   // Esc bails out of aim mode
+        if (RightDown()) { Cancel(); return; }                             // right-click does too
 
         // Hover pick: a unit (mob or the player) under/near the cursor. Classify its KIND against the mask so the
         // ring reads GREEN only for a legal, in-range target — RED for an illegal kind or out of range.

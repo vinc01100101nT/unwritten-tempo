@@ -49,7 +49,7 @@ public class WorldMapHUD : MonoBehaviour
     {
         if (Hotkeys.Down(toggleKey)) Toggle();
         if (panel == null || !panel.activeSelf) return;
-        if (Hotkeys.CancelDown()) { panel.SetActive(false); return; }
+        if (Hotkeys.CancelDown()) { panel.SetActive(false); Hotkeys.MarkCancelHandled(); return; }
         UpdateMarker();
     }
 

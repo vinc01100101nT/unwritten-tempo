@@ -191,7 +191,7 @@ public class ItemTooltip : MonoBehaviour
         // unlike Hotkeys.Down — so if a text field holds focus (very easy: you just typed /weapon in chat, and chat
         // keeps focus), Alt is swallowed and Escape is the only key that still gets through. Without this the window
         // could become genuinely un-closable by keyboard.
-        if (details != null && details.IsOpen && Hotkeys.CancelDown()) { details.Hide(); return; }
+        if (details != null && details.IsOpen && Hotkeys.CancelDown()) { details.Hide(); Hotkeys.MarkCancelHandled(); return; }
 
         if (!AltPressed()) return;
 

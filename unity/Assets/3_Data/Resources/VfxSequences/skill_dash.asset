@@ -28,7 +28,7 @@ MonoBehaviour:
     speed: 3
     trimEnd: 0
     clipStart: 0
-    tint: {r: 1, g: 1, b: 1, a: 1}
+    tint: {r: 0.06679422, g: 0.29295716, b: 0.745283, a: 1}
     looping: 0
     emitEventOnStart: 
     emitEventOnEnd: 
@@ -51,4 +51,4 @@ MonoBehaviour:
     soundDuration: 0
     soundFadeIn: 0
     soundFadeOut: 0
-  loopEnd: 0
+  loopEnd: 3

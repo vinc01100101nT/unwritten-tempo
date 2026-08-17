@@ -69,6 +69,7 @@ public class StanceController : MonoBehaviour
     StanceId overrideId;
     float overrideUntil;
     float overrideWindow;
+    bool overrideFit;                // this play was asked to fit its window, whatever the stance's own speed source
 
     bool driving;                    // a stance is overriding self-drive — so we hand back to it ONCE
     StanceId currentResolved;
@@ -133,14 +134,18 @@ public class StanceController : MonoBehaviour
     /// motion scale so a faster caster's release animation AND its recovery both shorten together. Since release
     /// stances are FitWindow, feeding the scaled window makes the clip actually play at that speed, so the visible
     /// animation and the returned lock length can never drift apart.</summary>
-    public float PlayActionFor(StanceId id, float seconds = 0f, float durationScale = 1f)
+    /// <param name="fitToWindow">Force the clip to fit <paramref name="seconds"/> even when the stance's own speed
+    /// source is not FitWindow. A repeating skill needs this: its release animation must play through once per beat at
+    /// whatever the beat's length is, and the stance may well be authored to a gait instead.</param>
+    public float PlayActionFor(StanceId id, float seconds = 0f, float durationScale = 1f, bool fitToWindow = false)
     {
         var b = StanceCatalog.Get(id);
         float natural = (pose != null && b != null) ? pose.NaturalDuration(b.action, b.clip) : 0f;
         if (natural <= 0.05f) natural = 0.6f;   // clip missing/absent → a sane default beat
 
+        bool fit = fitToWindow || b == null || b.speedSource == StanceSpeedSource.FitWindow;
         float dur;
-        if (b != null && b.speedSource != StanceSpeedSource.FitWindow)
+        if (!fit)
             // Intrinsic-speed stance (MoveGait / AttackSpeed / CastSpeed / Baked): the clip plays at its OWN resolved
             // speed, so the lock must equal its real play time = natural / that speed. durationScale (an attack-speed
             // hint for FitWindow) does NOT apply — the speed source already owns the timing. This is what stops a
@@ -151,7 +156,7 @@ public class StanceController : MonoBehaviour
             // durationScale; the clip is fit to it, so play time == the window.
             dur = (seconds > 0f ? seconds : natural) * Mathf.Max(0.01f, durationScale);
 
-        overrideId = id; overrideWindow = dur; overrideUntil = Time.time + dur;
+        overrideId = id; overrideWindow = dur; overrideUntil = Time.time + dur; overrideFit = fitToWindow;
         return dur;
     }
 
@@ -219,7 +224,7 @@ public class StanceController : MonoBehaviour
         if (Time.time < overrideUntil)
         {
             var ob = StanceCatalog.Get(overrideId);
-            if (ob != null) { driving = true; currentResolved = overrideId; ApplyStance(ob, overrideWindow); return; }
+            if (ob != null) { driving = true; currentResolved = overrideId; ApplyStance(ob, overrideWindow, forceFit: overrideFit); return; }
         }
 
         // 1) Action stance beats everything.
@@ -262,30 +267,31 @@ public class StanceController : MonoBehaviour
     }
 
     // Play a resolved binding on the billboard: its action, its playback mode, and its live-modulated speed.
-    void ApplyStance(StanceBinding b, float window, bool release = false)
+    void ApplyStance(StanceBinding b, float window, bool release = false, bool forceFit = false)
     {
         // Jump + Fall drive the clip in phases: `window` carries the freeze point (seconds), `release` plays the
         // landing tail. Fall (ledge walk-off) reuses the Jump binding's airborneFreeze — the brain feeds it here.
         if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release, ResolveSpeedMult(b, window)); return; }
 
         pose.Play(b.action, b.clip);
-        pose.SetActionSpeed(b.action, ResolveSpeedMult(b, window));
+        pose.SetActionSpeed(b.action, ResolveSpeedMult(b, window, forceFit));
     }
 
     // The live playback-speed multiplier for a stance, resolved from its speedSource. SINGLE OWNER used by BOTH the
     // per-frame drive (ApplyStance) and the aftercast-lock duration (PlayActionFor), so the visible animation length
     // and the lock length can never drift apart — whatever the speed source. `window` is only read for FitWindow.
-    float ResolveSpeedMult(StanceBinding b, float window)
+    float ResolveSpeedMult(StanceBinding b, float window, bool forceFit = false)
     {
         float m = b.speedMult;
-        switch (b.speedSource)
+        // forceFit REPLACES the authored source rather than stacking on it: a caller that says "this play must last
+        // exactly this long" owns the timing outright, and multiplying a gait on top would break the very fit it asked
+        // for. Without it, behaviour is identical to before.
+        if (forceFit || b.speedSource == StanceSpeedSource.FitWindow)
         {
-            case StanceSpeedSource.MoveGait:    m *= GaitFor(b.id); break;
-            case StanceSpeedSource.FitWindow:
-                float n = pose.NaturalDuration(b.action, b.clip);
-                if (window > 0.01f && n > 0.01f) m *= n / window;
-                break;
+            float n = pose.NaturalDuration(b.action, b.clip);
+            if (window > 0.01f && n > 0.01f) m *= n / window;
         }
+        else if (b.speedSource == StanceSpeedSource.MoveGait) m *= GaitFor(b.id);
         return Mathf.Max(0.01f, m);
     }
 }

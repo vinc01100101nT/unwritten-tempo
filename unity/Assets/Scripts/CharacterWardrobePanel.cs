@@ -68,6 +68,7 @@ public class CharacterWardrobePanel : MonoBehaviour
         {
             UiAnim.Close(panelRoot);
             UISounds.PlayClose();
+            Hotkeys.MarkCancelHandled();
         }
 
         // While open, keep the parts column in sync with the current character (rebuilds after a model swap,

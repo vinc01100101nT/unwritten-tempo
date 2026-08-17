@@ -1008,6 +1008,17 @@ public class SkillComposerWindow : EditorWindow
             "the Stance Composer."), cur, SkillTypeLabels());
         if (next == 0) sel.hasReleaseStance = false;
         else { sel.hasReleaseStance = true; sel.releaseStance = all[next - 1]; }
+
+        if (sel.hasReleaseStance)
+        {
+            EditorGUI.indentLevel++;
+            sel.releaseStanceReplayPerRepeat = EditorGUILayout.Toggle(new GUIContent("replay per repeat",
+                "Play the release animation again on EVERY repeat, restarted from its first frame and fit to that " +
+                "repeat's interval — so each beat shows one WHOLE animation (a full swing per hit) instead of one " +
+                "animation stretched across the run. Off = it plays once, when the skill fires."),
+                sel.releaseStanceReplayPerRepeat);
+            EditorGUI.indentLevel--;
+        }
     }
 
     // The tick list read live from the chosen sequence: bind gameplay to each exposed tickId. Orphan bindings
@@ -1504,6 +1515,15 @@ public class SkillComposerWindow : EditorWindow
                         ef.dashEaseSeconds = EditorGUILayout.Slider(new GUIContent("ease window (s)",
                             "How long each accelerate / decelerate ramp lasts. Time-based, so it reads the same at any distance; on a dash shorter than the window the ramps fill the whole trip."),
                             ef.dashEaseSeconds <= 0f ? 0.3f : ef.dashEaseSeconds, 0.05f, 1.5f);
+                    // Dash only, deliberately: Blink arrives instantly, so a travel-length fade would have nothing to
+                    // last for — the control isn't offered there rather than sitting in the Blink rows doing nothing.
+                    ef.casterOpacity = EditorGUILayout.Slider(new GUIContent("caster opacity",
+                        "How see-through the mover's own body is WHILE IT TRAVELS — solid again the instant it lands, " +
+                        "so the fade is always exactly one hop long. 1 = solid (no fade)."), ef.casterOpacity, 0f, 1f);
+                    if (ef.casterOpacity < 0.999f)
+                        EditorGUILayout.HelpBox("Held only for the hop itself. Several fades can overlap on one body " +
+                            "(a later invisibility, say) — the most see-through one wins, and the body returns to " +
+                            "solid when the last of them lets go.", MessageType.None);
                     break;
                 case SkillEffectKind.Buff:
                     ef.buffStat = (BuffStat)EditorGUILayout.EnumPopup(new GUIContent("stat",

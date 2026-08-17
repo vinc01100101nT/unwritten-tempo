@@ -48,6 +48,7 @@ public class ComboComposerPanel : MonoBehaviour
         else if (UiAnim.IsOpen(root) && Hotkeys.CancelDown())
         {
             UiAnim.Close(root); UISounds.PlayClose();
+            Hotkeys.MarkCancelHandled();
         }
     }
 

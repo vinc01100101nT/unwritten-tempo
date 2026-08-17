@@ -365,8 +365,9 @@ public class Character : MonoBehaviour, ICombatUnit
     // the avatar (never this component's own object, which is the persistent stats holder, not a body).
     Player3DController Rig() { var b = Avatar(); return b != null ? b.GetComponent<Player3DController>() : null; }
     public void TeleportTo(Vector3 dest) { var r = Rig(); if (r != null) r.Teleport(dest); }
-    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds)
-    { var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds); }
+    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt)
+    { var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds, faceAt); }
+    public bool IsRelocating { get { var r = Rig(); return r != null && r.SkillGliding; } }
     public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
     { var r = Rig(); if (r != null) r.Shove(worldFrom, speed, seconds, stagger); }
     public void ForceAggro(ICombatUnit source, float seconds)

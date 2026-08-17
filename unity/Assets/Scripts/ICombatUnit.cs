@@ -57,7 +57,15 @@ public interface ICombatUnit : IDamageable
     /// <summary>Glide from here to <paramref name="dest"/> at <paramref name="speedMult"/> × this unit's own run
     /// speed. A fixed A→B move, not gated locomotion — it ignores the usual movement gates so a dash always travels.
     /// The ease flags shape the ramp (in = start slow, out = stop gently) over <paramref name="easeSeconds"/>.</summary>
-    void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds);
+    /// <param name="faceAt">A world point to face for the WHOLE trip, instead of turning to face the way the unit is
+    /// travelling. A hop that lands beside what it is about to hit must arrive already looking at it, or the strike
+    /// reads as a swing at empty air — and nothing must re-turn it on landing. Null = face the travel direction.</param>
+    void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt);
+
+    /// <summary>True while this unit is mid-relocation — travelling a fixed A→B glide rather than walking. Lets a
+    /// presentation effect last exactly as long as the hop does, without anyone having to author its length or guess
+    /// it. False the instant it lands.</summary>
+    bool IsRelocating { get; }
 
     /// <summary>Shove this unit directly AWAY from <paramref name="worldFrom"/> at <paramref name="speed"/> for
     /// <paramref name="seconds"/>, stunning its own steering for <paramref name="stagger"/>s so it doesn't fight the

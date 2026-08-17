@@ -65,6 +65,7 @@ public class SkillBookPanel : MonoBehaviour
         {
             UiAnim.Close(root);
             UISounds.PlayClose();
+            Hotkeys.MarkCancelHandled();
         }
     }
 

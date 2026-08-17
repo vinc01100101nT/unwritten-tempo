@@ -62,7 +62,8 @@ MonoBehaviour:
   projectileCount: 1
   projectileSpread: 0
   hasReleaseStance: 1
-  releaseStance: 18
+  releaseStance: 20
+  releaseStanceReplayPerRepeat: 1
   bindings:
   - tickId: dash_tick
     targetMode: 1
@@ -92,6 +93,7 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       afterimageSeconds: 0
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
       starCorners: 5
       hitCount: 1
       chance: 0
@@ -127,6 +129,7 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       afterimageSeconds: 0
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
       starCorners: 5
       hitCount: 1
       chance: 0
@@ -162,6 +165,7 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       afterimageSeconds: 0
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
       starCorners: 5
       hitCount: 1
       chance: 0
@@ -191,12 +195,13 @@ MonoBehaviour:
       stacksPerApply: 1
       stacksFromAttackSpeed: 0
       stackShare: 1
-      dashSpeedMult: 8
+      dashSpeedMult: 15
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
       afterimageSeconds: 1
-      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      afterimageTint: {r: 0, g: 0.6274508, b: 1, a: 0.5}
+      casterOpacity: 0.5
       starCorners: 7
       hitCount: 1
       chance: 0

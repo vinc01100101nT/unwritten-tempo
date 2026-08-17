@@ -195,7 +195,7 @@ public class GroundTargeter : MonoBehaviour
         if (!Active) return;
         if (cam == null) cam = Camera.main;
 
-        if (EscDown()) { Cancel(); return; }
+        if (EscDown()) { Cancel(); Hotkeys.MarkCancelHandled(); return; }
 
         if (Player3DController.GroundUnderCursor(cam, out Vector3 p))
         {

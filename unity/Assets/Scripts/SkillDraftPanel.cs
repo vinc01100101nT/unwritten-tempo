@@ -62,6 +62,7 @@ public class SkillDraftPanel : MonoBehaviour
         {
             UiAnim.Close(panelRoot);
             UISounds.PlayClose();
+            Hotkeys.MarkCancelHandled();
         }
     }
 

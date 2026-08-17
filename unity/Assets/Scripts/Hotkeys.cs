@@ -83,6 +83,19 @@ public static class Hotkeys
         return Input.GetKeyDown(KeyCode.Escape);
     }
 
+    static int cancelHandledFrame = -1;
+
+    /// <summary>Say that this frame's Escape was USED (a window closed, an aim was cancelled, …). Every
+    /// Escape consumer calls this in the branch where it actually acts, so <see cref="CancelHandledThisFrame"/>
+    /// can tell "Escape did something" from "Escape went unanswered". Escape falling all the way through is
+    /// what opens the System window (<see cref="SystemWindow"/>), so this flag is what keeps closing a window
+    /// from popping the System menu in the same keypress.</summary>
+    public static void MarkCancelHandled() => cancelHandledFrame = Time.frameCount;
+
+    /// <summary>True when something already acted on this frame's Escape. Read it from <c>LateUpdate</c> —
+    /// every consumer marks in <c>Update</c>, which always runs first.</summary>
+    public static bool CancelHandledThisFrame => cancelHandledFrame == Time.frameCount;
+
 #if ENABLE_INPUT_SYSTEM
     // Legacy KeyCode → new-Input-System Key, for the keys this game binds. Key.None = no mapping
     // (the caller then relies on the legacy read alone).

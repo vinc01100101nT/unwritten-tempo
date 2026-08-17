@@ -375,23 +375,40 @@ public static class SkillEffectApplier
             case SkillEffectKind.Dash:
                 if (hit != 0) break;
                 // Snapshot BEFORE the move — the copy belongs to the spot being left, not the one being arrived at.
-                // Snapshot the RENDERED model, which is not always the body that moves: the player's model is a
-                // separate object riding its root (Character3DVisual is not parented under it), so its Body holds no
-                // renderers at all and a capture there finds nothing. Every other character carries its model as a
-                // child of its body, so Body is already the right object for them. StanceController.Player IS the
-                // player's model — registered in Awake, so this is a static field read, never a scene search.
                 if (e.afterimageSeconds > 0f)
-                    Afterimage.Capture(ReferenceEquals(unit, Character.Instance) && StanceController.Player != null
-                                           ? StanceController.Player.transform : unit.Body,
-                                       e.afterimageSeconds, e.afterimageTint);
+                    Afterimage.Capture(RenderedBody(unit), e.afterimageSeconds, e.afterimageTint);
                 if (e.kind == SkillEffectKind.Teleport)
                     unit.TeleportTo(RelocationDest(relocatePoint, aimUnit, unit, e.starCorners));   // instant blink
                 else
+                    // Face what the hop is AIMED AT for the whole trip, not the direction it flies. A relocation lands
+                    // BESIDE its target (a star corner), so facing the travel line leaves the caster swinging at empty
+                    // air on arrival — and nothing turns it back afterwards. No aimed unit = face travel, as before.
+                {
                     unit.GlideTo(RelocationDest(relocatePoint, aimUnit, unit, e.starCorners),       // A→B glide
-                                 e.dashSpeedMult, e.dashEaseIn, e.dashEaseOut, e.dashEaseSeconds);
+                                 e.dashSpeedMult, e.dashEaseIn, e.dashEaseOut, e.dashEaseSeconds,
+                                 aimUnit != null ? aimUnit.position : (Vector3?)null);
+                    // AFTER the glide has started, never before: the hold ends when the unit stops relocating, and
+                    // asking that a frame too early would end it instantly. The mover's own rendered model is what
+                    // fades — for the player that is a separate object from the body being moved.
+                    if (e.casterOpacity < 0.999f)
+                        CharacterFade.HoldWhileRelocating(unit, RenderedBody(unit), e.casterOpacity);
+                }
                 break;
         }
         if (tagDisplay) states.ClearApplyContext();
+    }
+
+    /// <summary>The unit's RENDERED model — what you actually see, which is not always the body that moves. The
+    /// player's model is a separate object riding its root (Character3DVisual is not parented under it), so its Body
+    /// holds no renderers at all; every other character carries its model as a child of its body, so Body is already
+    /// right for them. StanceController.Player IS the player's model, registered in Awake — a static field read, never
+    /// a scene search. Anything that DRAWS a unit (a snapshot, a fade) must ask through here, or it silently finds
+    /// nothing on the player.</summary>
+    static Transform RenderedBody(ICombatUnit unit)
+    {
+        if (unit == null) return null;
+        return ReferenceEquals(unit, Character.Instance) && StanceController.Player != null
+             ? StanceController.Player.transform : unit.Body;
     }
 
     // Where a shove is measured FROM: the caster's body. Falls back to the target's own spot when there's no caster,

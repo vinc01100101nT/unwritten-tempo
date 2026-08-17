@@ -317,11 +317,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
         // The RELEASE moment: any cast wind-up (and its Casting pose) has already finished, so the release cue plays
         // now — casting first, release second. Instant skills reach here immediately.
+        float releaseDur = 0f;
         if (def.hasReleaseStance && StanceController.Player != null)
         {
             // Scale the release beat by the SAME attack-speed motion scale swings use (1 / AttackSpeedMult): a faster
             // caster plays the release animation faster AND is rooted for less time — one number drives both.
-            float releaseDur = StanceController.Player.PlayActionFor(def.releaseStance, 0f, Player3DAttacker.MotionScale);
+            releaseDur = StanceController.Player.PlayActionFor(def.releaseStance, 0f, Player3DAttacker.MotionScale);
             // RO-style aftercast: fully root the caster for the (attack-speed-scaled) release animation's length.
             // Stacks on top of the skill's own cooldown; a skill with no release stance roots for nothing.
             if (StatusController.Player != null) StatusController.Player.LockActions(releaseDur);
@@ -444,6 +445,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                 if (StateGate.StackCount(firedBy, CasterStates) <= 0) yield break;
                 consumedThisCast = false;
             }
+
+            // Restart the release animation ON the beat, fit to this beat's length, so every repeat shows the whole
+            // animation instead of one play stretched across the run. Forced to fit because the release stance is
+            // usually authored to a gait, which would otherwise ignore the window and drift out of step with the beat.
+            if (def.hasReleaseStance && def.releaseStanceReplayPerRepeat && StanceController.Player != null)
+                StanceController.Player.PlayActionFor(def.releaseStance, interval, 1f, fitToWindow: true);
 
             VfxDirector.Play(def.vfx, ctx, onTick);
         }

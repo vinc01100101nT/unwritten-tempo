@@ -494,6 +494,10 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     [Tooltip("Which release cue to play — the caster's chosen 'skill type'. Only the SkillReleaseStances subset is " +
              "valid; assign each cue a clip in the Stance Composer. Ignored when hasReleaseStance is false.")]
     public StanceId releaseStance = StanceId.AoeSpell1;
+    [Tooltip("Play the release animation again on EVERY repeat, restarted from its first frame and fit to that " +
+             "repeat's interval — so a repeating skill shows one WHOLE animation per beat instead of one animation " +
+             "stretched across the run. Off = it plays once, when the skill fires. Does nothing if the skill never repeats.")]
+    public bool releaseStanceReplayPerRepeat = false;
 
     [Header("Gameplay — one binding per tickId you want to matter")]
     public List<SkillTickBinding> bindings = new List<SkillTickBinding>();

@@ -26,7 +26,9 @@ public class CameraFollow3D : MonoBehaviour
     public float height = 10f;         // Y above the target (right-drag adjusts this)
     public float yaw = 0f;             // orbit angle (degrees)
     public float lookAtHeight = 0.18f;
-    public float smoothTime = 0.12f;
+    [Tooltip("How long the camera takes to catch up (seconds). Bigger = it trails further behind you and coasts " +
+             "to a stop; 0 = locked to the player. Gated on/off by Settings ▸ Graphics ▸ Smooth camera follow.")]
+    public float smoothTime = 0.35f;
 
     [Header("Limits")]
     public float minDistance = 0.4f, maxDistance = 7f;
@@ -44,9 +46,37 @@ public class CameraFollow3D : MonoBehaviour
     Vector3 vel;
     Vector2 lastMouse;
 
+    // The lagged point the camera frames (see FollowAnchor). Invalid until the first frame with a target, and
+    // re-seeded whenever the target changes, so a new/teleported target is framed instantly instead of flown to.
+    Vector3 anchorPos;
+    bool anchorValid;
+    Transform anchorTarget;
+
     void Awake() { cam = GetComponent<Camera>(); Main = this; }
     void OnDestroy() { if (Main == this) Main = null; }
-    void OnEnable() => lastMouse = MousePos();
+    void OnEnable() { lastMouse = MousePos(); anchorValid = false; }
+
+    /// <summary>The point the camera frames: <paramref name="targetPos"/> eased toward over
+    /// <see cref="smoothTime"/> seconds, so the camera runs late behind the player and coasts to a stop.
+    /// Returns the live position unchanged when the player has smoothing switched off, or on the first frame.</summary>
+    Vector3 FollowAnchor(Vector3 targetPos)
+    {
+        float ease = GameSettings.SmoothCameraFollow ? smoothTime : 0f;
+        if (!anchorValid || anchorTarget != target || ease <= 0f)
+        {
+            anchorPos = targetPos;
+            vel = Vector3.zero;
+            anchorValid = true;
+            anchorTarget = target;
+            return anchorPos;
+        }
+        anchorPos = Vector3.SmoothDamp(anchorPos, targetPos, ref vel, ease);
+        return anchorPos;
+    }
+
+    /// <summary>Drop the follow delay for one frame — the camera frames the target exactly where it is now.
+    /// For teleports / scene loads, so the camera doesn't fly across the map catching up.</summary>
+    public void SnapToTarget() => anchorValid = false;
 
     // ---- screen shake (call CameraFollow3D.ShakeMain from anywhere, e.g. a meteor impact) ----------
     public static CameraFollow3D Main { get; private set; }
@@ -95,8 +125,8 @@ public class CameraFollow3D : MonoBehaviour
 
     void LateUpdate()
     {
-        // Undo last frame's shake so the follow smoothing always works from the CLEAN base position
-        // (shake never feeds back into SmoothDamp → no drift/runaway).
+        // Undo last frame's shake so it can never accumulate into the camera's position (it's re-applied at
+        // the end, on top of the freshly computed pose).
         transform.position -= shakeOffset;
         shakeOffset = Vector3.zero;
 
@@ -104,18 +134,22 @@ public class CameraFollow3D : MonoBehaviour
         if (target == null) return;
 
         Vector3 offset = Quaternion.Euler(0f, yaw, 0f) * new Vector3(0f, height, -distance);
-        Vector3 followPos = target.position + offset;
-        Vector3 followLook = target.position + Vector3.up * lookAtHeight;
+
+        // What the camera is framing. The delay is applied HERE, to the point being followed — not to the
+        // camera's own position. Both the camera and its look-at are then built from that one lagged point, so
+        // the view direction stays exactly -offset and the camera NEVER rotates to chase the player: it simply
+        // arrives late, and the player drifts off centre while moving and slides back when you stop.
+        // (Lagging the camera position instead makes it swivel, because it keeps aiming at the real player.)
+        Vector3 anchor = FollowAnchor(target.position);
+        Vector3 followPos = anchor + offset;
+        Vector3 followLook = anchor + Vector3.up * lookAtHeight;
 
         float targetBlend = cineWant ? 1f : 0f;
         cineBlend = Mathf.MoveTowards(cineBlend, targetBlend, Time.deltaTime / Mathf.Max(0.01f, cineTime));
 
         if (cineBlend <= 0.0001f)
         {
-            // Pure follow (unchanged behaviour).
-            transform.position = smoothTime > 0f
-                ? Vector3.SmoothDamp(transform.position, followPos, ref vel, smoothTime)
-                : followPos;
+            transform.position = followPos;
             transform.LookAt(followLook);
         }
         else
@@ -125,7 +159,6 @@ public class CameraFollow3D : MonoBehaviour
             float k = Mathf.SmoothStep(0f, 1f, cineBlend);
             transform.position = Vector3.Lerp(followPos, cinePos, k);
             transform.LookAt(Vector3.Lerp(followLook, cineLook, k));
-            vel = Vector3.zero;   // keep SmoothDamp clean for the frame we hand back to pure follow
         }
 
         shakeOffset = CurrentShakeOffset();   // re-apply on TOP of the smoothed base (after LookAt set rotation)

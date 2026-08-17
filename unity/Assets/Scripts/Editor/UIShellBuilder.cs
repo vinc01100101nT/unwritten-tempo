@@ -112,6 +112,8 @@ public static class UIShellBuilder
         canvasGO.AddComponent<UltChargeBar>();             // HUD ult charge gauge: slim bar above the hotbar, fills to READY
         canvasGO.AddComponent<XpBarHUD>();                 // bottom-of-screen XP bars: character (left) + ring (right)
         canvasGO.AddComponent<ChatController>();            // in-game chat window (Enter) + /command console (GmCommands)
+        canvasGO.AddComponent<SettingsWindow>();           // Gameplay/Sound/Graphics tabs, opened from the System window
+        canvasGO.AddComponent<SystemWindow>();             // Esc (when nothing else answers it) → System menu ▸ Settings
 
         // The new progression window trio (Inventory I · Equipment E · Character C) — replaces the old
         // Bag/Character panels. Builds itself into this canvas at runtime; needs the starter Card assets.

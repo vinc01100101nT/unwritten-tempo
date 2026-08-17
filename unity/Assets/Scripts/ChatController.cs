@@ -53,6 +53,7 @@ public class ChatController : MonoBehaviour
             if (input != null) input.DeactivateInputField();
             UiAnim.Close(root);
             UISounds.PlayClose();
+            Hotkeys.MarkCancelHandled();
         }
     }
 

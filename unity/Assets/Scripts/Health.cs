@@ -90,14 +90,15 @@ public class Health : MonoBehaviour, ICombatUnit
     PathAgent3D Agent => agent != null ? agent : (agent = GetComponent<PathAgent3D>());
     MonsterAI3D Brain => brain != null ? brain : (brain = GetComponent<MonsterAI3D>());
     public void TeleportTo(Vector3 dest) { var a = Agent; if (a != null) a.Teleport(dest); else transform.position = dest; }
-    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds)
+    public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt)
     {
         var a = Agent;
         if (a == null) return;
         // speedMult is a multiple of the unit's OWN run speed on both sides, so the same authored dash reads the same
         // relative to whoever performs it. ≤ 0 = the effect authored none → travel at plain run speed.
-        a.GlideTo(dest, (speedMult > 0f ? speedMult : 1f) * a.moveSpeed, easeIn, easeOut, easeSeconds);
+        a.GlideTo(dest, (speedMult > 0f ? speedMult : 1f) * a.moveSpeed, easeIn, easeOut, easeSeconds, faceAt);
     }
+    public bool IsRelocating { get { var a = Agent; return a != null && a.Gliding; } }
     public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
     { var b = Brain; if (b != null) b.Knockback(worldFrom, speed, seconds, stagger); }
     public void ForceAggro(ICombatUnit source, float seconds)

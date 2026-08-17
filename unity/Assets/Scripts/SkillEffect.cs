@@ -227,6 +227,10 @@ public class SkillEffect
     [Min(0f)] public float afterimageSeconds = 0f;
     [Tooltip("Colour of that frozen copy. Alpha = how solid it starts before fading to nothing.")]
     public Color afterimageTint = new Color(0.6f, 0.85f, 1f, 0.5f);
+    [Tooltip("Dash: how see-through the MOVER's own body is WHILE IT TRAVELS — solid again the instant it lands, so " +
+             "the fade is always exactly one hop long. 1 = solid (no fade). Lower = more see-through, so a hop reads " +
+             "as a blur rather than a person sliding. Blink arrives instantly, so it has no travel to fade.")]
+    [Range(0f, 1f)] public float casterOpacity = 1f;
 
     [Tooltip("Dash / Blink: how many CORNERS the repeated landings trace. Each hop crosses to the far side of the " +
              "target and steps on, so this many hops in a row draw a star THROUGH it rather than walking a ring " +

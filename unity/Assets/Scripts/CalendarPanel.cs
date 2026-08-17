@@ -59,6 +59,7 @@ public class CalendarPanel : MonoBehaviour
         {
             UiAnim.Close(panel);
             UISounds.PlayClose();
+            Hotkeys.MarkCancelHandled();
         }
 
         bool active = UiAnim.IsOpen(panel);
