@@ -208,6 +208,16 @@ public static class SkillTooltip
             case SkillEffectKind.ManaLeech:     return "Restores " + Pct(Mathf.Clamp01(e.magnitude)) + " of damage dealt as MP for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Reflect:       return "Reflects " + Pct(Mathf.Clamp01(e.magnitude)) + " of damage taken for " + Hl(e.seconds.ToString("0.#") + "s");
             case SkillEffectKind.Shield:        return "Absorbs " + Hl(e.amount.ToString()) + " damage for " + Hl(e.seconds.ToString("0.#") + "s");
+            case SkillEffectKind.BoostOutgoingDamage:
+            {
+                // Charges ARE stacks, read from the same knob the runtime uses — never a second number to keep in sync.
+                int charges = e.stacking ? Mathf.Max(1, e.stacksPerApply) : 1;
+                string window = " within " + Hl(e.seconds.ToString("0.#") + "s");
+                string amount = "+" + Pct(e.magnitude) + " damage";
+                return charges > 1
+                    ? "Your next " + Hl(charges.ToString()) + " attacks deal " + amount + window
+                    : "Your next attack deals " + amount + window;
+            }
             case SkillEffectKind.Parry:
             {
                 // Charges ARE stacks (the store's rule), so the count the player reads comes from the same knob the

@@ -207,6 +207,18 @@ public class VfxStep
     public bool CanLoop => kind == VfxStepKind.PlayAt || kind == VfxStepKind.Attach;
 }
 
+/// <summary>How many copies of ONE carrier step launch at once, and how wide they fan. Owned per tick binding by the
+/// skill, because a projectile belongs to the step that launches it: a sequence can hold two carriers and each answers
+/// this for itself. <see cref="count"/> 1 = a single shot (the spread then means nothing).</summary>
+public readonly struct ProjectileFan
+{
+    public readonly int count;
+    public readonly float spreadDegrees;
+    public ProjectileFan(int count, float spreadDegrees)
+    { this.count = count < 1 ? 1 : count; this.spreadDegrees = spreadDegrees < 0f ? 0f : spreadDegrees; }
+    public static readonly ProjectileFan Single = new ProjectileFan(1, 0f);
+}
+
 /// <summary>Where in the world a <see cref="VfxSequence"/> plays. The skill fills this per cast; the sequence's
 /// per-step anchors resolve against it. <see cref="scaleMult"/> scales every effect (e.g. a crit punch, AoE sizing).</summary>
 public struct VfxContext
@@ -247,6 +259,11 @@ public struct VfxContext
     /// (3s). Null → all looping steps use the fallback. The VFX owns the loop RULE; the skill owns HOW LONG each use
     /// of it lasts (per step) — so one VFX serves every skill.</summary>
     public System.Func<string, float> stayForTick;
+    /// <summary>Skill-supplied PER-STEP projectile fan for a CARRIER step, keyed by the step's tickId: how many copies
+    /// that one carrier launches and how wide they spread. Null (or an unbound tick) → a single shot. The VFX owns the
+    /// carrier — what it looks like and how it flies; the skill owns how many of it this use fires, per step, so two
+    /// carriers in one sequence never share a count.</summary>
+    public System.Func<string, ProjectileFan> fanForTick;
 
     /// <summary>A fixed-point context (origin == target == point, scale 1).</summary>
     public static VfxContext At(Vector3 point) =>

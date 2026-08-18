@@ -12,7 +12,7 @@ When making a change, ALWAYS land it in a place that persists across domain relo
 **Why:** the user was (rightly) furious when a value set via `execute_code` on a ScriptableObject didn't survive — it looked done but evaporated. An ephemeral edit is worse than no edit: it wastes their playtest and erodes trust.
 
 **How to apply:**
-- Prefer a CODE-level source of truth (a field default, a constant) so the value is baked in the repo and survives asset rebuilds/resets. See [[single-source-of-truth-principle]].
+- Prefer a CODE-level source of truth (a field default, a constant) so the value is baked in the repo and survives asset rebuilds/resets. See the single-source-of-truth rule in CLAUDE.md.
 - If you must write an asset at runtime: `SetDirty` + `SaveAssetIfDirty`/`SaveAssets`, then READ IT BACK from disk to prove it stuck — don't assume.
 - Check whether any builder/rebuild tool re-generates the asset and would clobber the field ([[editor-tools-menu]]); make the tool preserve it.
 - Canonical case: `EffectDef.groundRingRadius` (cast-circle sizing) — persisted via code default `1.5f` in `EffectLibrary.cs` AND the on-disk `EffectLibrary.asset`, not just an `execute_code` poke.

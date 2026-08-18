@@ -15,6 +15,8 @@ MonoBehaviour:
   targetingMigrated: 1
   id: skill.meteor
   displayName: Meteor
+  weaponType: 0
+  published: 0
   icon: {fileID: -748796600851884618, guid: e332629eb48b6454a8278a39bd5d6b5a, type: 3}
   description: Meat balls
   archetype: 0
@@ -22,24 +24,47 @@ MonoBehaviour:
   shape: 1
   complexity: 0
   acquisitionTier: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+  triggersMigrated: 1
   trigger: 0
   triggerSkillId: 
+  requiresState: 0
+  requireSkillId: 
+  requireState: 12
+  requireMinStacks: 1
+  consumeAllStacks: 0
+  consumeStacks: 0
   manaCost: 40
-  cooldown: 3.12
+  cooldown: 1.5
   castTime: 1.5
   aim: 2
   castRange: 13
-  tier: 1
+  tier: 0
   chargeCost: 5000
   castCircleId: circle.magic
   castCircleTint: {r: 0.86415094, g: 0.29302153, b: 0.11576363, a: 1}
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
   repeatCount: 5
   repeatInterval: 0.5
-  projectileCount: 1
-  projectileSpread: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
+  holdCasterForRun: 0
   hasReleaseStance: 0
   releaseStance: 16
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: meteor_ball
     targetMode: 2
@@ -47,22 +72,44 @@ MonoBehaviour:
     affects: 2
     playerFaction: 0
     radius: 4.75
+    projectileCount: 1
+    projectileSpread: 0
     stayDuration: 0
     effects:
     - kind: 0
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult: 8
       element: 3
       amount: 10
       ailment: 2
       seconds: 0
+      shoveSeconds: 0.25
       magnitude: 3
+      stacking: 0
+      stackLimit: 5
+      stacksPerApply: 1
+      stacksFromAttackSpeed: 0
+      stackShare: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
+      afterimageSeconds: 0
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
+      starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 3
       chance: 0
+      useStackValue: 0
+      stackValueSource: 0
+      stackValueMult: 1
+      side: 0
       buffStat: 0
       affinity:
       - stat: 1
@@ -76,19 +123,39 @@ MonoBehaviour:
       - stat: 1
         weight: 100
     - kind: 2
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult: 1
       element: 3
       amount: 10
       ailment: 2
       seconds: 4
+      shoveSeconds: 0.25
       magnitude: 3
+      stacking: 0
+      stackLimit: 5
+      stacksPerApply: 1
+      stacksFromAttackSpeed: 0
+      stackShare: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
+      afterimageSeconds: 0
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
+      starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 1
       chance: 0
+      useStackValue: 0
+      stackValueSource: 0
+      stackValueMult: 1
+      side: 0
       buffStat: 0
       affinity:
       - stat: 1
@@ -100,19 +167,39 @@ MonoBehaviour:
         weight: 30
       hitCountAffinity: []
     - kind: 2
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult: 1
       element: 3
       amount: 10
       ailment: 3
       seconds: 0.75
+      shoveSeconds: 0.25
       magnitude: 0
+      stacking: 0
+      stackLimit: 5
+      stacksPerApply: 1
+      stacksFromAttackSpeed: 0
+      stackShare: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
+      afterimageSeconds: 0
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
+      starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 1
       chance: 0.25
+      useStackValue: 0
+      stackValueSource: 0
+      stackValueMult: 1
+      side: 0
       buffStat: 0
       affinity:
       - stat: 5
@@ -131,22 +218,44 @@ MonoBehaviour:
     affects: 2
     playerFaction: 0
     radius: 1
+    projectileCount: 1
+    projectileSpread: 0
     stayDuration: 1
     effects:
     - kind: 0
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult: 8
       element: 3
       amount: 10
       ailment: 2
       seconds: 0
+      shoveSeconds: 0.25
       magnitude: 3
+      stacking: 0
+      stackLimit: 5
+      stacksPerApply: 1
+      stacksFromAttackSpeed: 0
+      stackShare: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
+      afterimageSeconds: 0
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
+      starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 1
       chance: 0
+      useStackValue: 0
+      stackValueSource: 0
+      stackValueMult: 1
+      side: 0
       buffStat: 0
       affinity:
       - stat: 1

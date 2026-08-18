@@ -9,7 +9,7 @@ metadata:
 
 In-game **chat** built 2026-07-04 (branch `experiment/3d-characters`) for in-game testing capability.
 
-- `ChatController.cs` — runtime chat window, self-builds on the persistent GameUICanvas (added in `UIShellBuilder` alongside XpBarHUD; re-run **Build UI Shell** to bake it in). **Enter** opens+focuses input, Enter again sends, **Esc** closes. Focus rides the shared [[function-centralization]] typing guard (`Hotkeys.Typing` true while the InputField is focused → all gameplay/HUD keys auto-suppressed, no per-site checks). Scrolling log capped at 200 lines; user/echo text run through `Sanitize` (zero-width space after `<`) so stray markup can't corrupt rich-text.
+- `ChatController.cs` — runtime chat window, self-builds on the persistent GameUICanvas (added in `UIShellBuilder` alongside XpBarHUD; re-run **Build UI Shell** to bake it in). **Enter** opens+focuses input, Enter again sends, **Esc** closes. Focus rides the shared central typing guard (`Hotkeys.Typing` true while the InputField is focused → all gameplay/HUD keys auto-suppressed, no per-site checks). Scrolling log capped at 200 lines; user/echo text run through `Sanitize` (zero-width space after `<`) so stray markup can't corrupt rich-text.
 - `GmCommands.cs` — THE single slash-command dispatcher (choke point). `IsCommand` (starts with `/`) · `Execute(line, reply)` parses `/name args`, looks up in one registry, runs; unknown/exception → error reply, never throws.
 - `GmCommand.cs` — command def (`name`, aliases, usage, summary, `Action<GmContext>`) + `GmContext` (parsed args, `Reply`, lazy `Ch`/`Player`).
 

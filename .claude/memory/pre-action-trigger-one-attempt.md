@@ -27,7 +27,7 @@ timer was DELETED so the swing cadence is the only clock:
 **The general rule (applies to any future pre-action trigger, e.g. an `OnCastStart`):** arm once, consume by the action
 it precedes, one flag per action kind owned by whoever owns that action. Never a shared latch that any event may clear
 (multiple writers = this bug from another direction), and never a second timer beside the action's own cadence
-(two clocks for one rhythm = [[single-source-of-truth]] violation).
+(two clocks for one rhythm = the single-source-of-truth rule in CLAUDE.md violation).
 
 **Related locked rule, same change:** charged states are spent on FIRE and never refunded — a cancelled swing keeps the
 charge spent. Documented in `StateGate`'s class comment. A refund/deferred-pay path would make cancelling free

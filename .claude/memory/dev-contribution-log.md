@@ -17,4 +17,4 @@ The dev (vince) wants a **gamified record of HIS own contributions** (not the AI
 - **Entry format (required):** each log entry MUST carry a one-line **`*Why:*`** explaining what earned the points (the insight / redirect / catch) — never log a bare title + XP. Shape: `**YYYY-MM-DD · <category> Short title · +XP**` then a `*Why:* …(difficulty ×N)*` line. Quote the dev when the phrasing is punchy.
 - **Honesty rule (important):** score the DEV's input only. If the AI proposed something and he just said "ok," don't score it. Diagnosing, redirecting, choosing between genuine options, pushing back = scored. Be generous about *noticing*, honest about *scoring*.
 - Mention notable XP/level/badge gains to him in the reply when they happen (it's the reward).
-- As of 2026-06-14 he's at **400 XP, Level 3 (Builder)**. Related: [[user-new-to-unity]], [[user-dev-background]].
+- As of 2026-06-14 he's at **400 XP, Level 3 (Builder)**.

@@ -12,6 +12,18 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/tools/check-before-done.py\"",
+            "timeout": 200,
+            "statusMessage": "verify"
+          }
+        ]
+      }
     ]
   }
 }

@@ -134,6 +134,29 @@ public class MonsterAI3D : MonoBehaviour
     /// scans read this instead of calling <c>GetComponent&lt;Health&gt;()</c> per mob, every frame.</summary>
     public Health Health { get; private set; }
 
+    // ---- the basic swing, this mob's half ------------------------------------------------------------------------
+    // WHAT one ordinary attack of ours is made of. Its own attack site above reads these too, so a swing this mob makes
+    // by walking up to the player and a swing a skill asks it for are the same numbers, from one place. HOW a swing
+    // lands (the crit → accuracy → magnitude order, and the announcement) is BasicSwing's, shared with the player.
+
+    /// <summary>Our accuracy for a swing, Blind already taken off. A MAGIC mob answers −1: its attack can't be dodged,
+    /// it only glances.</summary>
+    public int BasicHit => attackType == AttackType.Magic
+        ? -1
+        : Mathf.Max(0, hit - (status != null ? status.HitPenalty : 0));
+
+    /// <summary>The element our attack carries.</summary>
+    public Element BasicElement => attackElement;
+
+    /// <summary>True for a caster mob, whose ordinary attack IS its spell.</summary>
+    public bool BasicIsMagic => attackType == AttackType.Magic;
+
+    /// <summary>RO-style spread, then our own damage buffs/debuffs — the SAME call the player's roll makes, so "cut
+    /// this mob's damage" lands on a mob exactly as it would on the player. <paramref name="crit"/> is ignored: mobs
+    /// never crit.</summary>
+    public int RollBasicDamage(bool crit)
+        => UnitOffense.Dealt(MobStates, attack * (1f - CombatRng.Range(0f, damageSpread)));
+
     /// <summary>This mob's shared effect store — the SAME <see cref="UnitStates"/> the player carries, so buffs and
     /// debuffs read identically on either. Null only in the standalone spike, which has no Health.</summary>
     public UnitStates MobStates => Health != null ? Health.States : null;
@@ -416,16 +439,12 @@ public class MonsterAI3D : MonoBehaviour
         {
             // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
             bool isMagic = attackType == AttackType.Magic;
-            // Blind cuts our accuracy: a physical attack rolls a reduced HIT against the player's FLEE. Magic passes
-            // −1 (always lands) — it can't be dodged, it only glances.
-            int effHit = isMagic ? -1 : Mathf.Max(0, hit - (status != null ? status.HitPenalty : 0));
+            int effHit = BasicHit;   // blind already taken off; −1 for a magic mob, which can't be dodged
             // ORDER: accuracy FIRST, damage number second — a whiff never pays for a damage roll, and the roll happens
             // exactly once here rather than again on the player. Mobs don't crit, so crit is false.
             bool missed = Combat.Missed(false, effHit, Character.Instance.Flee);
-            // RO-style spread, then this mob's own damage buffs/debuffs — the SAME call the player's roll makes, so
-            // "cut this mob's damage" lands on a mob exactly as it would on the player. Covers melee AND the ranged
-            // branch below, which carries this same `atk` into the projectile.
-            int atk = missed ? 0 : UnitOffense.Dealt(MobStates, attack * (1f - CombatRng.Range(0f, damageSpread)));
+            int atk = missed ? 0 : RollBasicDamage(false);
+            atk = UnitOffense.Boosted(MobStates, atk);   // one attack, one charge — spent on the whiff too
             // A magic mob's attack IS its cast — fire the cast cue at the caster (player-parity OnCastStart).
             if (isMagic) VfxCue.Fire(VfxCueId.OnCastStart, transform);
             if (isMagic && projectileSheet != null)

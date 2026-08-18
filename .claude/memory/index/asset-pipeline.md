@@ -12,3 +12,5 @@
 - [Branch-only tree collider baker](../branch-only-tree-collider.md) — `Bake Tree Collider…` (`TreeColliderBaker.cs`): eyedrop bark/leaf colours → trim single-mesh tree collision to branches (leaves jump-through); trim from VISIBLE mesh not collider slot.
 - [Ground tiles need Default+Repeat import (not Sprite/Clamp)](../ground-tiles-need-repeat-import.md) — PixelArtImportPostprocessor force-clamps all /Art/ textures → tiled texture smears on plain material; carve out GroundTiles. Meta hand-edits get reverted on import.
 - [Optimize+Import needed 2 runs (deferred import)](../glb-prop-deferred-import-2x-bug.md) — `ImportAsset`/`CreateFolder` are DEFERRED inside `StartAssetEditing`; reimport + make folders BEFORE the batch. Base pivot baked into a shifted mesh copy (single node, no wrapper) in `Props/Meshes/`.
+- [Assets/ reorganized by usage 2026-07-16](../assets-reorg-2026-07.md) — numbered buckets 0_Raw/1_Authored/2_Generated/3_Data; OLD paths in older memories are stale — use its mapping.
+- [Trellis 2 beats Hunyuan3D for prop generation](../trellis2-vs-hunyuan-prop-pipeline.md) — solved the same holey input with zero param tuning; known-good defaults.

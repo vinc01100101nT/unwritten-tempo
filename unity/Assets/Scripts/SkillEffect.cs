@@ -142,11 +142,33 @@ public enum SkillEffectKind
     ExtendDuration,
     /// <summary>Add <see cref="SkillEffect.modifierStacks"/> stacks to the named skill's pile, each a copy of its
     /// newest one → <c>UnitStates.AddStacksTo</c>. THE way one skill feeds another's pile: a normal grant always files
-    /// under the skill that ran it, so a kill can only lengthen a storm through this. Does nothing if that pile isn't
-    /// running.
+    /// under the skill that ran it, so a kill can only lengthen a storm through this.
+    ///
+    /// <para>Works whether or not that pile is running: a live pile gains copies of its newest stack, and a lapsed one
+    /// is STARTED from the granting skill's own authored size and duration. Either way the stack is defined by the
+    /// granter, never invented here — which is the rule this kind exists to keep, not a limit on when it fires.</para>
+    ///
+    /// <para>Appending is the only safe add — Unity serializes the kind by int.</para></summary>
+    AddStacks,
+
+    /// <summary>Hand the unit CHARGES that make its attacks hit harder: one charge multiplies one outgoing attack by
+    /// 1 + <see cref="SkillEffect.magnitude"/>, and that attack spends it — whether it hits or misses, because the
+    /// charge paid for making the attack, not for landing it → <c>UnitOffense.Boosted</c>.
+    ///
+    /// <para>Charges come from <see cref="SkillEffect.stacksPerApply"/>, the same knob <see cref="Parry"/> and
+    /// <see cref="Brace"/> use, and each carries its own bonus. The kind owns no multiplicity of its own — one charge,
+    /// one attack — so stacking it always buys exactly N boosted attacks.</para>
+    ///
+    /// <para>It catches every attack the unit sends: a basic, a skill strike, an execute, a mob's swing, and the flat
+    /// banked kind that never rolls. Damage-over-time is the one exclusion, and it comes free: ailment ticks are true
+    /// damage straight to HP, so they can neither gain the boost nor eat a charge.</para>
+    ///
+    /// <para>It multiplies BEFORE the target's armour, so the flat part of armour is paid once out of a bigger number
+    /// and the boost is worth more the tankier the target. Distinct from a <see cref="Buff"/> on Damage, which is a
+    /// standing percentage for a window; this is a counted resource, spent per attack.</para>
     ///
     /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
-    AddStacks,
+    BoostOutgoingDamage,
 }
 
 /// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window. Move speed is
@@ -172,6 +194,11 @@ public class SkillEffect
     public SkillEffectKind kind = SkillEffectKind.Damage;
 
     [Header("Damage")]
+    [Tooltip("ON = this strike IS an ordinary attack: the caster swings by its own rules — its crit, its accuracy " +
+             "against the target's dodge (so it CAN miss), its weapon's element — and a landed strike announces a " +
+             "basic attack, so it feeds Momentum and every on-basic passive. Base power still scales it (1 = one " +
+             "normal swing, 2 = twice one). Damage type and element are the weapon's then, not this effect's.")]
+    public bool resolveAsBasicAttack = false;
     [Tooltip("How the hit resolves: Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (physical " +
              "that pierces armour & always crits). Default Magic — matches every pre-migration bool-magic skill.")]
     public DamageType damageType = DamageType.Magic;
@@ -339,6 +366,7 @@ public class SkillEffect
                 return true;
             case SkillEffectKind.Guard:         id = StateId.Guard;         return true;
             case SkillEffectKind.Parry:         id = StateId.Parry;         return true;
+            case SkillEffectKind.BoostOutgoingDamage: id = StateId.OutgoingDamageBoost; return true;
             // The ARMED charges. Its debt (StateId.DeferredDamage) is created by incoming hits, not by this apply,
             // so it is not something this effect hands out.
             case SkillEffectKind.Brace:         id = StateId.Brace;         return true;
@@ -433,6 +461,7 @@ public class SkillEffect
         k == SkillEffectKind.Guard || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
         k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect ||
         k == SkillEffectKind.Shield || k == SkillEffectKind.Parry || k == SkillEffectKind.Brace ||
+        k == SkillEffectKind.BoostOutgoingDamage ||
         IsModifier(k) || NeedsPoint(k);
 
     /// <summary>An effect that changes ANOTHER SKILL's live pile instead of doing something to a body. Its target is

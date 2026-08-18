@@ -30,6 +30,29 @@ public class ChatController : MonoBehaviour
     bool built;
     Character3DVisual playerVisual;   // resolved lazily on first say — its feet-seated pose anchors the chat bubble
 
+    static ChatController instance;   // the one live chat, so the game can post a line without a lookup
+
+    void Awake() { instance = this; }
+    void OnDestroy() { if (instance == this) instance = null; }
+
+    /// <summary>A skill CALL: the player names the skill they just fired. Identical in every way to saying that word
+    /// in chat — the same speaker prefix, the same white bubble over the head for the same time, the same log row —
+    /// only tinted, so a call reads apart from a said line at a glance. The ONE entry point, so the two can't drift.</summary>
+    public static void SkillCall(string skillName)
+    {
+        if (instance == null || string.IsNullOrEmpty(skillName)) return;
+        instance.AddLine($"{SpeakerPrefix} <color=#{CallHex}>{Sanitize(skillName)}</color>");
+        instance.ShowOverheadBubble(skillName);
+    }
+
+    // Who is speaking, written once: a said line and a skill call are the same person talking, so they share this
+    // rather than each typing their own copy.
+    const string SpeakerPrefix = "<color=#9FB4CC>You:</color>";
+
+    // The tint a call is logged in, taken from the palette's own colour rather than typed here as a second copy.
+    static string callHex;
+    static string CallHex => callHex ??= ColorUtility.ToHtmlStringRGB(UiKit.Cyan);
+
     void Update()
     {
         if (!built) { TryBuild(); return; }
@@ -157,7 +180,7 @@ public class ChatController : MonoBehaviour
         }
         else
         {
-            AddLine($"<color=#9FB4CC>You:</color> {Sanitize(text)}");
+            AddLine($"{SpeakerPrefix} {Sanitize(text)}");
             ShowOverheadBubble(text);
         }
     }

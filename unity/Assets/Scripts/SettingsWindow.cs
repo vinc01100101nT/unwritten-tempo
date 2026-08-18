@@ -47,9 +47,19 @@ public class SettingsWindow : MonoBehaviour
         body.raycastTarget = false;
         UiKit.Fill(body.rectTransform, Vector2.zero, new Vector2(0, -34));
 
-        AddTab(tabRow.transform, "Gameplay", body.transform);
+        var gameplay = AddTab(tabRow.transform, "Gameplay", body.transform);
         var sound = AddTab(tabRow.transform, "Sound", body.transform);
         var graphics = AddTab(tabRow.transform, "Graphics", body.transform);
+
+        // Tick boxes only need 20 points at the right edge, so their names get the wide column (a slider's
+        // track would start at 45%).
+        var quickSingle = UiKit.Checkbox(Row(gameplay, "Quick cast single targeting", 0.85f),
+                                         GameSettings.QuickCastSingleTarget);
+        quickSingle.onValueChanged.AddListener(v => GameSettings.QuickCastSingleTarget = v);
+
+        var quickGround = UiKit.Checkbox(Row(gameplay, "Quick cast ground targeting", 0.85f),
+                                         GameSettings.QuickCastGroundTarget);
+        quickGround.onValueChanged.AddListener(v => GameSettings.QuickCastGroundTarget = v);
 
         var master = UiKit.MakeSlider(Row(sound, "Master volume"), GameSettings.MasterVolume);
         master.onValueChanged.AddListener(v => GameSettings.MasterVolume = v);
@@ -98,17 +108,17 @@ public class SettingsWindow : MonoBehaviour
 
     // One option line: its name on the left, room for its control on the right. The caller drops the control
     // (tick box, slider) into the returned row, so every option reads at the same height and alignment.
-    Transform Row(Transform page, string label)
+    Transform Row(Transform page, string label, float labelWidth = 0.45f)
     {
         var row = UiKit.Img("Row_" + label, page, new Color(0, 0, 0, 0));
         row.raycastTarget = false;
         row.gameObject.AddComponent<LayoutElement>().preferredHeight = 28;
 
         var text = UiKit.Label("Label", row.transform, label, 15, FontStyle.Normal, TextAnchor.MiddleLeft);
-        // Stop the name at the 45% mark — where MakeSlider's track starts — so a long label can never run
-        // underneath its own control.
+        // Stop the name where its control starts — 45% by default (MakeSlider's track) — so a long label can
+        // never run underneath its own control.
         text.rectTransform.anchorMin = new Vector2(0f, 0f);
-        text.rectTransform.anchorMax = new Vector2(0.45f, 1f);
+        text.rectTransform.anchorMax = new Vector2(labelWidth, 1f);
         text.rectTransform.offsetMin = new Vector2(4f, 0f);
         text.rectTransform.offsetMax = new Vector2(-6f, 0f);
         text.raycastTarget = false;

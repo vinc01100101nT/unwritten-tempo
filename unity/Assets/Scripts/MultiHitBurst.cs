@@ -103,18 +103,24 @@ public class MultiHitBurst : MonoBehaviour
     /// <summary>Single-flurry variant driven by an EXPLICIT target snapshot (the skill-composer path already scanned
     /// the mobs). Deals <paramref name="hits"/> hits over time to each mob; <paramref name="onHit"/>(mob, hitIndex)
     /// applies one hit and returns its damage; a per-mob yellow combo total accumulates then rises + fades at the end.
-    /// Copies the list so the caller can reuse its buffer immediately.</summary>
+    /// Copies the list so the caller can reuse its buffer immediately.
+    ///
+    /// <para><paramref name="showTotal"/> false hands the yellow number to whoever asked for it instead — a run showing
+    /// ONE total across all its repeats (<see cref="RepeatsDamageTotal"/>). Exactly one of the two ever draws it, so the
+    /// flurry stops drawing its own rather than stacking a second number on the same mob. The hits themselves are
+    /// untouched either way: this decides only who displays their sum.</para></summary>
     public static void Run(List<MonsterAI3D> targets, int hits, float hitInterval,
-                           System.Func<MonsterAI3D, int, int> onHit, System.Action onHitBeat = null)
+                           System.Func<MonsterAI3D, int, int> onHit, System.Action onHitBeat = null,
+                           bool showTotal = true)
     {
         if (onHit == null || targets == null || targets.Count == 0) return;
         var go = new GameObject("MultiHitBurst") { hideFlags = HideFlags.DontSaveInEditor };
         go.AddComponent<MultiHitBurst>().StartCoroutine(RoutineList(go, new List<MonsterAI3D>(targets),
-            Mathf.Max(1, hits), Mathf.Max(0.01f, hitInterval), onHit, onHitBeat));
+            Mathf.Max(1, hits), Mathf.Max(0.01f, hitInterval), onHit, onHitBeat, showTotal));
     }
 
     static IEnumerator RoutineList(GameObject self, List<MonsterAI3D> targets, int hits, float hitInterval,
-                                   System.Func<MonsterAI3D, int, int> onHit, System.Action onHitBeat)
+                                   System.Func<MonsterAI3D, int, int> onHit, System.Action onHitBeat, bool showTotal)
     {
         int n = targets.Count;
         var totals = new int[n];
@@ -132,6 +138,7 @@ public class MultiHitBurst : MonoBehaviour
                 anyHit = true;
                 totals[i] += dealt;
 
+                if (!showTotal) continue;              // the run is drawing one total across all its repeats instead
                 Vector3 tp = UnitAnchor.Overhead(ai.transform);
                 if (popups[i] == null) popups[i] = DamagePopup.SpawnHeld(tp, totals[i], TotalColor, 1.7f);
                 else popups[i].SetHeld(totals[i], tp);

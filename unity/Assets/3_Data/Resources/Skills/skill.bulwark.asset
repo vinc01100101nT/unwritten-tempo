@@ -29,6 +29,7 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  holdCasterForRun: 0
   hasReleaseStance: 0
   releaseStance: 16
   bindings:
@@ -36,6 +37,8 @@ MonoBehaviour:
     targets: 3
     scope: 0
     radius: 5
+    projectileCount: 1
+    projectileSpread: 0
     effects:
     - kind: 4
       damageMult: 1

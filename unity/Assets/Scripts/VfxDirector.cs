@@ -70,12 +70,24 @@ public class VfxSequenceRunner : MonoBehaviour
     bool[] started;                 // per-step, reused across plays (grown as needed)
     float[] endAt;                  // per-step absolute Time.time the step's visual finishes → emitEventOnEnd + an End tick (∞ = none/handled)
     bool[] endFired;                // per-step: the step's "end" (event + End tick) has already fired → Finish won't re-fire it
-    // Gameplay tick schedule, per-step (reused/grown). tickWhen decides placement: Start fires once at Execute; End
-    // fires at endAt (or a Carrier's arrival / the aura's Stop); Interval fires every tickInterval until tickUntil.
-    float[] tickAt;                 // Interval: next fire time (∞ = interval inactive for this step)
-    float[] tickUntil;              // Interval: window end (∞ = unbounded — a persistent aura, ticks until Finish)
-    Vector3[] tickPoint;
-    Transform[] tickFollow;         // a live mover/followed unit — while non-null, ticks resolve at its CURRENT position
+    // Gameplay tick schedule. tickWhen decides placement: Start fires once at Execute; End fires at endAt (or a
+    // Carrier's arrival / the aura's Stop); Interval fires every tickInterval until its window closes.
+    Vector3[] tickPoint;            // per-step: where the step's visual sits (the teardown/End paths read it)
+    Transform[] tickFollow;         // per-step: a live mover/followed unit — while non-null, the End paths resolve at its CURRENT position
+    int[] carriersLive;             // per-step: copies of this carrier still flying — the step has ended when the LAST one lands
+
+    /// <summary>One LIVE interval schedule: a tickId firing every so often while something is active. A PlayAt/Attach
+    /// step has exactly one; a CARRIER step has one PER COPY in flight, which is the whole reason these are a list
+    /// rather than a per-step slot — five fanned bolts each tick along their OWN path, at their own position.</summary>
+    struct IntervalTick
+    {
+        public int step;
+        public float nextAt;        // absolute Time.time of the next fire
+        public float until;         // window end (∞ = unbounded — a persistent aura, ticks until Finish)
+        public Vector3 point;
+        public Transform follow;    // non-null → each tick resolves at its CURRENT position
+    }
+    readonly List<IntervalTick> intervals = new List<IntervalTick>(4);
     readonly List<Vfx.EffectHandle> attached = new List<Vfx.EffectHandle>();
     float startTime, endBy;
     int gen;                        // bumped each Begin/Finish → stale carrier callbacks are ignored
@@ -90,12 +102,13 @@ public class VfxSequenceRunner : MonoBehaviour
         active = true;
         hasLiveAura = false;
         attached.Clear();
+        intervals.Clear();
 
         int n = seq.steps.Count;
         if (started == null || started.Length < n)
-        { started = new bool[n]; endAt = new float[n]; endFired = new bool[n]; tickAt = new float[n]; tickUntil = new float[n]; tickPoint = new Vector3[n]; tickFollow = new Transform[n]; }
+        { started = new bool[n]; endAt = new float[n]; endFired = new bool[n]; tickPoint = new Vector3[n]; tickFollow = new Transform[n]; carriersLive = new int[n]; }
         for (int i = 0; i < n; i++)
-        { started[i] = false; endAt[i] = float.PositiveInfinity; endFired[i] = false; tickAt[i] = float.PositiveInfinity; tickUntil[i] = float.PositiveInfinity; tickFollow[i] = null; }
+        { started[i] = false; endAt[i] = float.PositiveInfinity; endFired[i] = false; tickFollow[i] = null; carriersLive[i] = 0; }
 
         // Upper bound on when the last step can possibly fire: the latest timed delay, plus a carrier's full
         // flight time (an OnEvent step may be chained to an arrival), plus a pad. Then Finish tears down. Tick
@@ -130,19 +143,23 @@ public class VfxSequenceRunner : MonoBehaviour
             if (st.schedule == VfxSchedule.AtTime && t >= st.delay) Execute(i);
         }
 
-        // Interval ticks: raise the tickId every tickInterval while the step's window is open. A live mover/followed
-        // unit (a flying Carrier, a tracked aura) makes each tick land at its CURRENT position (damage along the path).
-        for (int i = 0; i < steps.Count && i < tickAt.Length; i++)
+        // Interval ticks: raise the tickId every tickInterval while each live schedule's window is open. A live
+        // mover/followed unit (a flying Carrier copy, a tracked aura) makes each tick land at its CURRENT position
+        // (damage along the path). Walked BACKWARDS so a closed window can be dropped in place, and so a tick that
+        // starts a fresh step mid-loop (appended at the end) waits for the next frame instead of shifting this pass.
+        for (int k = intervals.Count - 1; k >= 0; k--)
         {
-            if (float.IsInfinity(tickAt[i])) continue;   // interval not active for this step
-            if (tickFollow[i] != null) tickPoint[i] = tickFollow[i].position;
-            float iv = Mathf.Max(0.02f, steps[i].tickInterval);
-            while (now >= tickAt[i] && (float.IsInfinity(tickUntil[i]) || tickAt[i] <= tickUntil[i] + 1e-4f))
+            var it = intervals[k];
+            if (it.step >= steps.Count || steps[it.step] == null) { intervals.RemoveAt(k); continue; }
+            if (it.follow != null) it.point = it.follow.position;
+            float iv = Mathf.Max(0.02f, steps[it.step].tickInterval);
+            while (now >= it.nextAt && (float.IsInfinity(it.until) || it.nextAt <= it.until + 1e-4f))
             {
-                Emit(steps[i].tickId, tickPoint[i], true);
-                tickAt[i] += iv;
+                Emit(steps[it.step].tickId, it.point, true);
+                it.nextAt += iv;
             }
-            if (!float.IsInfinity(tickUntil[i]) && now >= tickUntil[i]) tickAt[i] = float.PositiveInfinity;   // window closed
+            if (!float.IsInfinity(it.until) && now >= it.until) { intervals.RemoveAt(k); continue; }   // window closed
+            intervals[k] = it;
         }
 
         // Window end: when a step's visual finishes, raise emitEventOnEnd AND (for End timing) its one gameplay tick.
@@ -219,33 +236,61 @@ public class VfxSequenceRunner : MonoBehaviour
 
             case VfxStepKind.Carrier:
             {
-                // Scatter both ends independently: the impact spreads around the anchor (a shower) and the launch
-                // origin jitters too. The event/ticks still fire on arrival at the scattered landing.
-                Vector3 land = point;
+                // THIS step's volley — how many copies of THIS carrier fly, and how wide. Asked per step (by tickId),
+                // so a sequence holding a bolt and a meteor gives each its own answer instead of one count multiplying
+                // the whole sequence and every other step in it.
+                var fan = Fan(st);
+                int shots = fan.count;
+                float half = fan.spreadDegrees * 0.5f;
                 Vector3 fromBase = st.carrierFromCaster ? ctx.origin : point;
-                Vector3 from = fromBase + st.carrierFrom;
-                if (st.carrierScatter > 0f)
+                carriersLive[i] = shots;
+                tickPoint[i] = fromBase + st.carrierFrom;
+
+                for (int c = 0; c < shots; c++)
                 {
-                    float sc = st.carrierScatter;
-                    land += new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
-                    // Off caster: launch re-bases on the scattered landing (a straight-down shower). From caster:
-                    // launch stays at the fixed caster, only the impact spreads.
-                    Vector3 fb = st.carrierFromCaster ? fromBase : land;
-                    from = fb + st.carrierFrom + new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
-                }
-                int g = gen; string tag = st.emitEventOnEnd; Vector3 landing = land; int idx = i;
-                var mover = Projectile3D.SpawnVfx(st.effectId, scale, from, null, land,
-                    st.carrierSpeed, st.carrierArriveRadius, st.carrierMaxLife,
-                    () => { if (gen == g) { Emit(tag, landing, true); OnCarrierArrive(idx, landing); } },
-                    st.carrierFaceTravel, st.clipStart, st.tint);
-                // Carrier tick placement: Start = one tick at launch; Interval = every tickInterval along the flight
-                // (tracks the live mover, capped by carrierMaxLife, closed on arrival); End = one tick on arrival.
-                if (st.HasTick)
-                {
-                    tickPoint[i] = from;
-                    if (st.tickWhen == TickTiming.Start) Emit(st.tickId, from, true);
-                    else if (st.tickWhen == TickTiming.Interval)
-                    { tickFollow[i] = mover; tickAt[i] = Time.time; tickUntil[i] = Time.time + st.carrierMaxLife; }
+                    // Scatter both ends independently, per copy: the impact spreads around the anchor (a shower) and
+                    // the launch origin jitters too. The event/ticks still fire on arrival at the scattered landing.
+                    Vector3 land = point;
+                    Vector3 from = fromBase + st.carrierFrom;
+                    if (st.carrierScatter > 0f)
+                    {
+                        float sc = st.carrierScatter;
+                        land += new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
+                        // Off caster: launch re-bases on the scattered landing (a straight-down shower). From caster:
+                        // launch stays at the fixed caster, only the impact spreads.
+                        Vector3 fb = st.carrierFromCaster ? fromBase : land;
+                        from = fb + st.carrierFrom + new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
+                    }
+                    // The fan turns each copy's LANDING about its launch point, so every shot leaves the same muzzle
+                    // and diverges from there. A fall-in carrier launches straight above its landing, so there is no
+                    // horizontal line to turn and it stays a single drop however wide the cone is set.
+                    if (shots > 1 && half > 0f)
+                    {
+                        float ang = Mathf.Lerp(-half, half, c / (float)(shots - 1));
+                        land = from + Quaternion.AngleAxis(ang, Vector3.up) * (land - from);
+                    }
+
+                    int g = gen; string tag = st.emitEventOnEnd; Vector3 landing = land; int idx = i;
+                    Transform mover = null;
+                    // Each copy's arrival re-arms the steps chained to it, so a volley of five gets five landings —
+                    // five explosions, five impact sounds — instead of one. Without that, an OnEvent step is once per
+                    // sequence play, and four of the five bolts would land in silence.
+                    mover = Projectile3D.SpawnVfx(st.effectId, scale, from, null, land,
+                        st.carrierSpeed, st.carrierArriveRadius, st.carrierMaxLife,
+                        () => { if (gen == g) { Emit(tag, landing, true, rearmChained: true); OnCarrierArrive(idx, landing, mover); } },
+                        st.carrierFaceTravel, st.clipStart, st.tint);
+                    // Carrier tick placement: Start = one tick at launch; Interval = every tickInterval along the
+                    // flight (tracks the live mover, capped by carrierMaxLife, closed on arrival); End = one tick on
+                    // arrival. Each copy answers for itself — its own launch, its own path, its own landing.
+                    if (st.HasTick)
+                    {
+                        if (st.tickWhen == TickTiming.Start) Emit(st.tickId, from, true);
+                        else if (st.tickWhen == TickTiming.Interval)
+                            intervals.Add(new IntervalTick { step = i, nextAt = Time.time,
+                                                             until = Time.time + st.carrierMaxLife,
+                                                             point = from, follow = mover });
+                    }
+                    if (c == 0) tickFollow[i] = mover;   // the step's representative for the teardown path
                 }
                 break;
             }
@@ -284,6 +329,11 @@ public class VfxSequenceRunner : MonoBehaviour
         return s > 0f ? s : DefaultStay;
     }
 
+    // This step's projectile volley, supplied by the skill per tickId — the same per-step shape as Stay Duration.
+    // No resolver, or a step with no tick to key off, means the one carrier the VFX composed.
+    ProjectileFan Fan(VfxStep st) =>
+        ctx.fanForTick != null && !string.IsNullOrEmpty(st.tickId) ? ctx.fanForTick(st.tickId) : ProjectileFan.Single;
+
     // Set up a PlayAt/Attach step's ticks + end, given its active window [now, endT] (endT = ∞ for a persistent aura).
     // Start fires one tick now; Interval fires every tickInterval until endT; End fires from EmitStepEnd at endT.
     void ArmTicks(int i, Vector3 point, float endT, Transform follow)
@@ -296,8 +346,7 @@ public class VfxSequenceRunner : MonoBehaviour
         if (st.tickWhen == TickTiming.Start) Emit(st.tickId, point, true);
         else if (st.tickWhen == TickTiming.Interval)
         {
-            tickAt[i] = Time.time;
-            tickUntil[i] = endT;
+            intervals.Add(new IntervalTick { step = i, nextAt = Time.time, until = endT, point = point, follow = follow });
             if (!float.IsInfinity(endT) && endT + 1f > endBy) endBy = endT + 1f;
         }
     }
@@ -312,22 +361,32 @@ public class VfxSequenceRunner : MonoBehaviour
         if (st.HasTick && st.tickWhen == TickTiming.End) Emit(st.tickId, point, true);
     }
 
-    // A flying Carrier reached its landing: fire an End tick there, or close an Interval flight.
-    void OnCarrierArrive(int i, Vector3 landing)
+    // ONE copy of a flying Carrier reached its landing: fire an End tick there, or close THAT copy's Interval flight.
+    // Only the last copy down ends the step — with a volley in the air, the first arrival must not mark the step
+    // finished or the stragglers' ends would be swallowed by teardown.
+    void OnCarrierArrive(int i, Vector3 landing, Transform mover)
     {
         var st = seq.steps[i];
         if (st.HasTick)
         {
             if (st.tickWhen == TickTiming.End) Emit(st.tickId, landing, true);
-            else if (st.tickWhen == TickTiming.Interval) { tickAt[i] = float.PositiveInfinity; tickFollow[i] = null; }
+            else if (st.tickWhen == TickTiming.Interval)
+                for (int k = intervals.Count - 1; k >= 0; k--)
+                    if (intervals[k].step == i && intervals[k].follow == mover) intervals.RemoveAt(k);
         }
-        endFired[i] = true;
+        if (tickFollow[i] == mover) tickFollow[i] = null;
+        if (--carriersLive[i] <= 0) endFired[i] = true;
     }
 
     // Relay a raised tag+point: hand it to the skill (VfxTick → damage), then start any OnEvent steps keyed to it.
     // hasPoint carries the emitter's exact world point (e.g. a Carrier's real landing / a tick point) so an OnEvent
     // step opted into snapToEventPoint can anchor there instead of the plain context anchor.
-    void Emit(string tag, Vector3 point, bool hasPoint)
+    //
+    // A chained step normally runs ONCE per sequence play. rearmChained says this tag came from one copy of a fanned
+    // carrier landing, so the steps hanging off it get to run again for THIS copy — the impact belongs to the shot that
+    // arrived, not to the volley. (The step's own slots are shared, so a chained step that itself exposes a tick still
+    // reports one end for the volley; nothing authored does that today.)
+    void Emit(string tag, Vector3 point, bool hasPoint, bool rearmChained = false)
     {
         if (string.IsNullOrEmpty(tag)) return;
         onTick?.Invoke(new VfxTick(tag, point, ctx.targetUnit, ctx.effectPoint, ctx.isRepeat));
@@ -335,8 +394,10 @@ public class VfxSequenceRunner : MonoBehaviour
         for (int i = 0; i < steps.Count && i < started.Length; i++)   // bound: a tuner may add steps mid-play
         {
             var st = steps[i];
-            if (st == null || started[i]) continue;
-            if (st.schedule == VfxSchedule.OnEvent && st.startEvent == tag) Execute(i, true, point, hasPoint);
+            if (st == null) continue;
+            if (st.schedule != VfxSchedule.OnEvent || st.startEvent != tag) continue;
+            if (started[i]) { if (!rearmChained) continue; endFired[i] = false; }
+            Execute(i, true, point, hasPoint);
         }
     }
 

@@ -9,7 +9,6 @@
 - [Unity MCP bridge](../unity-mcp-bridge.md) — `com.coplaydev.unity-mcp` → HTTP localhost:8080/mcp; Unity must be OPEN.
 - [Run editor actions YOURSELF via MCP](../act-editor-actions-via-mcp.md) — NEVER tell user to click Tools ▸ unwritten / add a component; `execute_code` the dialog-free `*Core()`; still no refresh_unity.
 - [Maintain gamified Dev Contribution Log](../dev-contribution-log.md) — score dev's OWN contributions; doc q17a89053cf2xqjadkyk7agjb988nvgp.
-- [YouTube update format template](../youtube-update-format-template.md) — all lowercase, no icons; new assets / weather / next.
 - [YouTube devlog publishing spec](../devlog-youtube-spec.md) — start 2026-06-12, day-N calc, title `…day N | game-dev-NN`, unwritten logo card, export/tags/hashtags.
 - [Protocol: "what did you learn" = persist to memory](../learn-protocol-persist-to-memory.md) — WRITE it (topic file + index), not just chat.
 - [Feature knobs live on their OWN object/asset](../feature-knobs-own-object.md) — dedicated named GameObject (e.g. `WaterFX`), never piled onto the crowded `Sun`.
@@ -28,3 +27,8 @@
 - [Compile-check C# without Unity](../compile-check-without-unity.md) — Unity's bundled .NET 8 SDK type-checks all of Assets/Scripts offline; baseline = 11 known-environmental errors, anything above is yours. Caught 9 missed refs in one refactor.
 - [Editor menu never appears: stale editor-assembly source list](../unity-editor-assembly-source-list-stale.md) — Unity reused a 2-day-old `Library/Bee/**/Assembly-CSharp-Editor.rsp` (89 files vs 90 on disk); DLL mtime is NOT evidence the new file compiled. Diagnose from the .rsp, not a refresh.
 - [Re-measure the tree at session end](../session-end-remeasure-the-tree.md) — never report `git status` from an earlier snapshot; user commits between turns (reported files already committed in `51cefcea`). Files you didn't edit = say so, don't offer to commit them.
+- [Project layout & tech facts](../project-layout.md) — Unity 6 + URP, PPU 16; Field/Town scenes; MonsterSpawner.
+- [Unity game lives in unity/ of THIS repo](../unity-2d-direction.md) — game C# at `unity/Assets/Scripts/`; the root Vite+React app is the UX prototype, not the product.
+- [Peer-to-peer GPT replies](../peer-to-peer-gpt-replies.md) — when user pastes a GPT design reply, respond in peer voice addressed to GPT, paste-ready, grounded in real code.
+- [Skill tooltip voice](../skill-tooltip-voice.md) — wiki/doc skill descriptions read as in-game tooltips (table, declarative rules, bold numbers), NOT article prose or designer meta-commentary.
+- [Editor tools catalog](../editor-tools-menu.md) — what each `Tools ▸ unwritten` one-click script does; canonical list is `Editor/TOOLS.md`. Read before adding a tool — but see the always-on rule: don't reach for a tool menu by default.

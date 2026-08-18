@@ -21,3 +21,7 @@
 - [Diagonal half-cells (📏 line tool)](../map-painter-diagonal-cuts.md) — cut = KEPT corner nw/ne/se/sw, layered `under`, n↔s flip on import, per-edge neighbour levels; trim-along-diagonal deferred.
 - [Painted elevation = EXACT, no corner-fill](../painted-elevation-exact-no-cornerfill.md) — FillCornerNotches auto-fattened painted zigzags (2-wide→3-wide); disabled, painted levels are authoritative.
 - [Sunken path corners shredded into diagonal](../ground-blend-sunken-path-corners-shredded.md) — `FillCornerNotches` raised −1 lane turns to base level → zigzag path broke into diagonal; skip `L<0`.
+- [Persistent global systems layer](../persistent-systems-layer.md) — HUD/cursor/player/camera in never-unloaded `Systems.unity`.
+- [unwritten: foundation-first + Ninja art](../unwritten-foundation-first.md) — world before skill-draft; CC0 pack, PPU 16.
+- [Procedural town map generator](../map-generator-tool.md) — VIN-13 editor-tool plan + Phase 0 done.
+- [World is 100% Pxltgr](../pxltgr-field-migration.md) — LowPolySimpleNature pack removed; field rebuilt via PxltgrFieldBuilder/Scatter.

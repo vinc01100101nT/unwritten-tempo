@@ -24,9 +24,13 @@ often the hook actually had to intervene.
 When the gate denies, its reason text ("read PERFORMANCE.md") lands in the transcript.
 A naive grep for `PERFORMANCE.md` would then match the gate's *own* message on retry and
 wave an unread edit through. So the gate greps for a phrase that only exists in the doc's
-**body** (`SENTINEL` in `perf_gate.py`) — it enters the transcript only via a real Read.
-⚠️ If you edit `PERFORMANCE.md` and that line changes, update `SENTINEL`. A stale sentinel
-fails *safe* (the gate over-blocks; it never lets an unread edit through).
+**body** — it enters the transcript only via a real Read.
+That phrase is DERIVED at run time (the longest prose line in `PERFORMANCE.md` that does not
+also appear in the sibling `CLAUDE.md`, which the harness injects on its own), so editing
+`PERFORMANCE.md` needs no follow-up here — there is no constant to keep in sync. It was a
+hardcoded string once, which meant reading the gate's own source poisoned the transcript and
+disabled the gate for the rest of the session; deriving it is what fixed that. Either way it
+fails *safe* — the gate over-blocks; it never lets an unread edit through.
 
 ## Viewing the dashboard
 
@@ -36,9 +40,12 @@ Browsers block `file://` fetches, so either:
 
 ## Activating / changing the hook
 
-Configured in `.claude/settings.local.json` (machine-local, gitignored). After first
-creating that file you must open `/hooks` once (or restart Claude Code) for the settings
-watcher to pick it up. Review or disable it anytime via `/hooks`.
+Configured in `.claude/settings.json` — the COMMITTED project settings, not the gitignored
+machine-local file, so it applies to anyone who opens this repo. It sits under `PreToolUse`
+with the `Edit|Write` matcher, alongside the `Stop` entry that runs `tools/check-before-done.py`
+(the compile + skill-data check that fires when a turn tries to end). After first creating a
+settings file you must open `/hooks` once (or restart Claude Code) for the settings watcher to
+pick it up. Review or disable either hook anytime via `/hooks`.
 
 ## Scope
 

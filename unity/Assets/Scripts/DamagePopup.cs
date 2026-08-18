@@ -32,6 +32,20 @@ public class DamagePopup : MonoBehaviour
     // A released multi-hit combo total lingers this long and fades IN PLACE (no rise) — see Release().
     const float HeldFadeSeconds = 2f;
 
+    // A live TOTAL sits ABOVE every per-hit number it is counting, always — it is the headline, and a number that
+    // ducks under the very hits feeding it reads as a mistake. Per-hit numbers climb for their whole life, so the top
+    // of that climb IS the height, derived from the two constants that decide it rather than typed as a guess: a
+    // hand-picked lift would silently go wrong the moment either of them is retuned.
+    // (This is a plain world distance ON PURPOSE, unlike the anchor a number is spawned at — which must scale with the
+    // body, and once didn't. What this clears is the CLIMB of the other numbers, and that climb is a world distance
+    // too, so matching it is the only way to stay above them over a mob of any size.)
+    const float HeldLift = DefaultRise * DefaultLifetime;
+
+    // How a pop decays: full size boost at the moment it fires, gone this many times faster than a second.
+    const float PopDecay = 6f;
+    const float SpawnPop = 0.4f;   // a fresh number arriving
+    const float HeldPop = 0.24f;   // a live total taking another hit
+
     // On-screen size = fontSize * BaseScale. We render the glyphs into a HIGH-res atlas (big fontSize) and
     // downscale with a small BaseScale — downscaling a large atlas stays crisp, where a small atlas upscaled
     // goes blurry. Tune size here via BaseScale; keep fontSize comfortably >= the displayed pixel height.
@@ -103,16 +117,20 @@ public class DamagePopup : MonoBehaviour
         popup.Begin(worldPos, amount.ToString(), color, scaleMult);
         popup.held = true;
         popup.holdAge = 0f;
+        popup.transform.position += Vector3.up * HeldLift;   // clear of every per-hit number, from the first frame
         return popup;
     }
 
-    /// <summary>Update a held popup's value + position (resets its idle failsafe). No-op once released.</summary>
+    /// <summary>Update a held popup's value + position, popping once for the change and resetting its idle failsafe.
+    /// No-op once released.</summary>
     public void SetHeld(int amount, Vector3 worldPos)
     {
         if (!held) return;
         text.text = amount.ToString();
-        transform.position = worldPos + new Vector3(0f, 0.5f, 0f);
+        // The SAME lift the spawn used — they used to differ, so a total jumped upward the first time it was updated.
+        transform.position = worldPos + Vector3.up * HeldLift;
         holdAge = 0f;
+        popAge = 0f;
     }
 
     /// <summary>Stop holding — the combo total now stays PUT and just fades out over <see cref="HeldFadeSeconds"/>
@@ -125,6 +143,10 @@ public class DamagePopup : MonoBehaviour
         age = 0f;                     // fresh fade starting now
         riseSpeed = 0f;               // hold position — fade in place, don't drift up
         lifetime = HeldFadeSeconds;   // linger ~2s before it's gone
+        // A pop belongs to something HAPPENING — a number arriving, or a total taking another hit. Ending is neither,
+        // so the fade starts past the pop window: the total simply fades from wherever the last hit left it. (This used
+        // to reset the shared age, which the spawn pop reads, so every total flinched once just before disappearing.)
+        popAge = 1f / PopDecay;
     }
 
     // The shared canvas. Recreated lazily if a scene unload destroyed it (the pool is cleared then, since
@@ -176,6 +198,7 @@ public class DamagePopup : MonoBehaviour
     float scaleMult = 1f;
     bool held;          // a live combo total: stays put + updatable until Release()
     float holdAge;      // failsafe so a never-released held popup can't get stuck on screen
+    float popAge;       // since the last POP — arriving, or a total taking another hit. Never reset by ending.
     const float MaxHold = 8f;
 
     // (Re)activate this pooled popup at a fresh position with new text/colour/size.
@@ -188,6 +211,7 @@ public class DamagePopup : MonoBehaviour
         startColor = color;
         scaleMult = Mathf.Max(0.1f, mult);
         age = 0f;
+        popAge = 0f;        // arriving IS a pop
         held = false;       // SpawnHeld re-sets this true after Begin; a normal reuse starts un-held
         holdAge = 0f;
         // Horizontal scatter only, so rapid hits don't stack exactly. NO vertical lift: this used to add a fixed +0.5,
@@ -200,18 +224,23 @@ public class DamagePopup : MonoBehaviour
 
     void Update()
     {
-        // Held (live combo total): don't rise/fade/recycle — just sit and pulse while it accumulates.
+        // Held (live combo total): don't rise/fade/recycle — sit still, and pop ONCE each time the number actually
+        // changes. The pop decays from the moment of the change (holdAge is reset by every update), so a total that is
+        // climbing bumps per hit while one that is simply waiting stays perfectly still. It used to ride an endless
+        // sine instead, which was invisible on a fast flurry — the hits outran it — but read as a number shrinking and
+        // growing by itself whenever the gap between hits was long enough to see, as a repeating run's is.
         if (held)
         {
             holdAge += Time.deltaTime;
-            float beat = 1f + 0.12f * Mathf.Abs(Mathf.Sin(holdAge * 9f));
-            transform.localScale = Vector3.one * (BaseScale * scaleMult * beat);
+            popAge += Time.deltaTime;
+            transform.localScale = Vector3.one * (BaseScale * scaleMult * PopScale(HeldPop));
             text.color = startColor;
             if (holdAge >= MaxHold) Release();   // failsafe: updates stopped → let it fade instead of sticking
             return;
         }
 
         age += Time.deltaTime;
+        popAge += Time.deltaTime;
         transform.position += Vector3.up * (riseSpeed * Time.deltaTime);
 
         var c = startColor;
@@ -221,11 +250,15 @@ public class DamagePopup : MonoBehaviour
         text.color = c;
 
         // a quick "pop": briefly larger at spawn, then settle to the base size
-        float pop = 1f + 0.4f * Mathf.Clamp01(1f - age * 6f);
-        transform.localScale = Vector3.one * (BaseScale * scaleMult * pop);
+        transform.localScale = Vector3.one * (BaseScale * scaleMult * PopScale(SpawnPop));
 
         if (age >= lifetime) Recycle();
     }
+
+    /// <summary>The size boost from the most recent pop, decaying to nothing. ONE timer and ONE curve for both kinds of
+    /// pop — a number arriving and a live total taking another hit — so they can only ever differ in strength, and a
+    /// moment that is not a pop (a total ending) simply never resets the timer.</summary>
+    float PopScale(float strength) => 1f + strength * Mathf.Clamp01(1f - popAge * PopDecay);
 
     // Face the camera every frame so orbiting the 2.5D camera never skews/edge-ons the number. Runs in
     // LateUpdate so it's applied AFTER CameraFollow3D has moved the camera this frame.

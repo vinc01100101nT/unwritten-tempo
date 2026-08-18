@@ -24,3 +24,5 @@ Recurring spec for the "unwritten" solo-mmorpg YouTube devlogs, so each upload i
 **Voice:** captions on-screen (no voiceover); all lowercase; no icons. Video structured in phases.
 
 See also [[unwritten-foundation-first]].
+
+**Written update-post format** (the only surviving record of this — the separate note it pointed at was never written): all lowercase, no icons; sections in the order *new assets / weather / next*.

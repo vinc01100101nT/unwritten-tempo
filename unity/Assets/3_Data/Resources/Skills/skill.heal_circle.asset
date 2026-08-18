@@ -34,6 +34,7 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: d6535b57215ae2c479e8c6dff7e958df, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  holdCasterForRun: 0
   hasReleaseStance: 1
   releaseStance: 14
   bindings:
@@ -43,6 +44,8 @@ MonoBehaviour:
     affects: 3
     playerFaction: 0
     radius: 1
+    projectileCount: 1
+    projectileSpread: 0
     projectileCount: 1
     effects:
     - kind: 1

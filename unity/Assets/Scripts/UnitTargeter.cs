@@ -50,6 +50,11 @@ public class UnitTargeter : MonoBehaviour
     /// pops an in-game warning. Re-call to retarget a fresh cast.</summary>
     public static void Begin(Transform player, float castRange, SkillTargets mask, System.Action<Transform> onConfirm)
     {
+        // Quick cast (Settings ▸ Gameplay): skip the reticle entirely and fire at the target the player is
+        // already engaged with. Every caster inherits this because it sits in the aim step itself.
+        if (GameSettings.QuickCastSingleTarget && QuickTarget(player, castRange, mask, out var quick))
+        { active = false; onConfirm?.Invoke(quick); return; }
+
         if (inst == null)
         {
             var go = new GameObject("UnitTargeter") { hideFlags = HideFlags.DontSaveInEditor };
@@ -63,6 +68,21 @@ public class UnitTargeter : MonoBehaviour
         inst.hoverUnit = null;
         active = true;
         inst.ring.enabled = false;   // the ring appears only once a unit is hovered
+    }
+
+    // The current target, ONLY when this cast could legally have landed on it through the reticle: the skill must
+    // accept mobs and the target must be alive and inside castRange. Anything else returns false, so the reticle
+    // opens exactly as it would with quick cast off (no target yet, a self-only skill, a target out of reach).
+    static bool QuickTarget(Transform player, float castRange, SkillTargets mask, out Transform target)
+    {
+        target = null;
+        if (player == null || (mask & SkillTargets.Mobs) == 0) return false;
+        var pc = player.GetComponentInParent<Player3DController>();
+        var mob = pc != null ? pc.AttackTarget : null;
+        if (mob == null) return false;
+        if (castRange > 0f && PlanarDist(player.position, mob.transform.position) > castRange) return false;
+        target = mob.transform;
+        return true;
     }
 
     public static void Cancel()

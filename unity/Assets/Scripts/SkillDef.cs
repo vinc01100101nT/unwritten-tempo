@@ -36,11 +36,12 @@ public enum GroundDelivery
     /// cref="SkillTickBinding.radius"/> of the aimed spot (the cast-circle reticle). Effect lands AT the spot the
     /// player picks.</summary>
     Aoe,
-    /// <summary>A directional projectile: the reticle is a line-arrow (aim a DIRECTION, not a landing spot) and the
-    /// skill fans <see cref="SkillDef.projectileCount"/> copies. The flying VFX (a Carrier with spread ticks) raises
-    /// ticks along its path, each landing as a small AoE (<see cref="SkillTickBinding.radius"/> = hit width) at the
-    /// projectile's live position. This — NOT the VFX's Carrier step — is the single owner of "this skill is a
-    /// projectile" (see <see cref="SkillDef.IsProjectileAim"/>).</summary>
+    /// <summary>A directional projectile: the reticle is a line-arrow (aim a DIRECTION, not a landing spot) and this
+    /// tick fans <see cref="SkillTickBinding.projectileCount"/> copies of ITS OWN carrier step. The flying VFX (a
+    /// Carrier with spread ticks) raises ticks along its path, each landing as a small AoE
+    /// (<see cref="SkillTickBinding.radius"/> = hit width) at the projectile's live position. This — NOT the VFX's
+    /// Carrier step — is the single owner of "this tick is a projectile" (see <see cref="SkillDef.IsProjectileAim"/>
+    /// for the cast-level aim it derives).</summary>
     Projectile,
 }
 
@@ -275,6 +276,13 @@ public class SkillTickBinding
     public PlayerFaction playerFaction = PlayerFaction.Ally;
     [Tooltip("AoE radius (world units) around the point. Used by Ground → AoE (and a projectile's per-tick hit width).")]
     public float radius = 1.5f;
+    [Tooltip("Projectile delivery only: how many copies of THIS tick's carrier launch at once, fanned into a cone " +
+             "around the aim direction. 1 = a single shot. Per tick, because the carrier belongs to the step this " +
+             "tick names — a sequence with two carriers gives each its own volley.")]
+    [Min(1)] public int projectileCount = 1;
+    [Tooltip("Projectile delivery only: total cone angle (degrees) this tick's volley spreads across. 0 = every copy " +
+             "flies straight at the aim.")]
+    [Min(0f)] public float projectileSpread = 0f;
     [Tooltip("Only when THIS tick's VFX step is a LOOPING Play At / Attach: how long that loop stays before it ends " +
              "(and, for an End tick, when it lands). Per-step, so a VFX with two looping steps can give each its own " +
              "length. 0 = default 3s. The VFX owns the loop rule; this skill owns how long THIS use of it lasts.")]
@@ -492,6 +500,12 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
              "the loop reads the LIVE pile, a passive that grants more charges mid-run genuinely lengthens the run.")]
     public bool repeatCostsCharge = false;
 
+    [Tooltip("ON = the yellow total belongs to the WHOLE run: each mob shows ONE number that climbs with every repeat " +
+             "that strikes it, closing a second after the run last touched it. OFF = today's behaviour, where a " +
+             "multi-hit flurry owns the total, so every repeat pops its own (a meteor shower shows one per meteor). " +
+             "Purely what you SEE — it changes no damage, no timing and no state.")]
+    public bool showRepeatsTotalDamage = false;
+
     [Tooltip("ON = each repeat RE-AIMS at a random living mob within the range below, measured from the CURRENT " +
              "target — so the cast walks from one target to the next. OFF = every repeat replays at the spot the " +
              "cast was originally aimed (a meteor shower stays where you aimed it).")]
@@ -500,12 +514,12 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
              "and not from where the cast started. Nothing living in range ENDS the run.")]
     [Min(0f)] public float repeatReaimRange = 6f;
 
-    [Header("Projectile fan (compose ONE projectile in the Vfx Composer; multiply here, like repeat)")]
-    [Tooltip("Fire this many copies of the projectile at once, fanned into a cone around the aim direction. 1 = single. " +
-             "Only does anything when the VFX launches a projectile (has a Carrier step).")]
-    [Min(1)] public int projectileCount = 1;
-    [Tooltip("Total cone angle (degrees) the fan spreads across. 0 = all straight at the aim point.")]
-    [Min(0f)] public float projectileSpread = 0f;
+    [Tooltip("ON = the caster is HELD for the whole run: from the first beat until the last one ends it can't move, " +
+             "attack, start another skill or launch a combo — the run is the only thing it is doing. The hold is " +
+             "re-taken each beat and lapses on its own when the run stops, however it stopped (last charge spent, " +
+             "nothing left in reach, caster down). OFF = only the release animation's own aftercast roots the caster, " +
+             "so it is free again between beats (a meteor shower rains while you keep fighting).")]
+    public bool holdCasterForRun = false;
 
     [Header("Skill type (release animation)")]
     [Tooltip("Play a skill-release stance when this skill FIRES (after any cast wind-up). false = no release pose.")]
@@ -522,10 +536,25 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     public List<SkillTickBinding> bindings = new List<SkillTickBinding>();
 
     [Header("Hotbar")]
-    public string shortLabel = "Skill";
+    [Tooltip("A SHORTENED name for the hotbar cell, for when the real name won't fit (\"Committed Strike\" → " +
+             "\"Commit\"). Leave it alone and the cell shows the skill's own name — so a skill is never labelled with " +
+             "this field's factory value instead of what it's called.")]
+    public string shortLabel = DefaultShortLabel;
     public string keyLabel = "";
     public int slotOrder = 10;
     public Color tint = Color.white;
+
+    /// <summary>What the field holds until somebody shortens a name — the value that means "nobody chose one".</summary>
+    public const string DefaultShortLabel = "Skill";
+
+    /// <summary>What an icon-less hotbar cell reads: the shortened name if one was authored, else the skill's OWN name.
+    /// THE one answer to "what is this slot called", so no reader can show the placeholder instead.
+    ///
+    /// <para>Untouched, the field still says <see cref="DefaultShortLabel"/> — the literal word every skill starts with
+    /// — and a cell showing that tells the player nothing about which skill it is. Treating it as unauthored is what
+    /// makes naming a skill enough, with no second place to fill in.</para></summary>
+    public string HotbarLabel =>
+        string.IsNullOrWhiteSpace(shortLabel) || shortLabel == DefaultShortLabel ? displayName : shortLabel;
 
     public void OnBeforeSerialize() { }
 
@@ -688,10 +717,12 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
         return false;
     }
 
-    /// <summary>True if any ground tick is authored as <see cref="GroundDelivery.Projectile"/> — so the skill aims a
-    /// DIRECTION: the ground reticle shows a line-arrow toward the aim, and <see cref="projectileCount"/> fans copies
-    /// of it. SINGLE OWNER of "this skill is a projectile" — derived from the authored delivery, NOT from whether the
-    /// VFX happens to have a Carrier step (a Carrier that drops from ABOVE is a fall-in AoE, e.g. a meteor).</summary>
+    /// <summary>True if any ground tick is authored as <see cref="GroundDelivery.Projectile"/> — so the CAST aims a
+    /// DIRECTION: the ground reticle shows a line-arrow toward the aim, and the aim is pushed out to the travel range.
+    /// That is a whole-cast question (there is one reticle), which is why it asks "any tick"; how many copies actually
+    /// fly is each tick's own <see cref="SkillTickBinding.projectileCount"/>. SINGLE OWNER of "this skill aims like a
+    /// projectile" — derived from the authored delivery, NOT from whether the VFX happens to have a Carrier step (a
+    /// Carrier that drops from ABOVE is a fall-in AoE, e.g. a meteor).</summary>
     public bool IsProjectileAim
     {
         get

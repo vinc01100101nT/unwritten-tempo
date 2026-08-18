@@ -100,13 +100,7 @@ public class Player3DAttacker : MonoBehaviour
     /// no Character (the standalone spike). Read at use-time from the equipped weapon, same pattern as
     /// <see cref="BaseRange"/> and the audio/stance lookups, so there's no per-equip copy to keep in sync.</summary>
     public Element MeleeElement
-    {
-        get
-        {
-            var w = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
-            return w != null ? w.element : Element.Neutral;
-        }
-    }
+        => Character.Instance != null ? Character.Instance.BasicElement : Element.Neutral;
 
     /// <summary>True when the equipped weapon is a physical RANGED type (Bow/Firearm), so a basic attack lobs a
     /// visible arrow that carries the blow to the target instead of connecting instantly. Read at use-time from the
@@ -231,29 +225,14 @@ public class Player3DAttacker : MonoBehaviour
     void LandBasicHit(Health t)
     {
         if (t == null || t.IsDead) return;
-        // Our HIT, rolled against the target's FLEE below; −1 in the Character-less spike (always lands).
-        int hit = Character.Instance != null ? Character.Instance.Hit : -1;
-        if (hit >= 0 && StatusController.Player != null) hit = Mathf.Max(0, hit - StatusController.Player.HitPenalty);  // Blind
+        // ONE implementation of what a swing is, shared with every other unit that has one and with any skill strike
+        // authored to resolve as a basic attack — so the crit → accuracy → magnitude order, the impact cue and the
+        // OnBasicAttackDealt announcement can never differ between them.
+        if (Character.Instance != null) { BasicSwing.Land(Character.Instance, t); return; }
 
-        // ORDER: crit → accuracy → magnitude. Crit first because a crit can't be evaded; accuracy next, ONCE, here on
-        // the attacker (its result travels in DamageInfo — the target must not re-roll a random check); the damage
-        // number last, and only if the strike actually connects, so a whiff costs no roll.
-        bool crit = Character.Instance != null && Character.Instance.RollCrit(t.luk);   // t.luk = crit shield
-        bool missed = Combat.Missed(crit, hit, t.flee);
-        int power = missed ? 0
-                  : Character.Instance != null ? Character.Instance.RollDamageMagnitude(crit)
-                                               : damage;
-        int dealt = CombatAuthority.Apply(t, new DamageInfo(power, MeleeElement, false, crit, attackerHit: hit, missed: missed));
-        if (dealt > 0)
-        {
-            // Impact SOUND plays FROM the mob in Health.TakeDamage (received_hit/crit, spatial) — no 2D play here.
-            // Impact BURST is a receiver-side Passive Verb cue (Vfx Cue Composer), fired AT the target with no
-            // attacker/direction (Origin == Target == receiver), just like OnReceiveHeal / OnHitBySkill —
-            // the crit's bigger punch lives in the basic_crit sequence (×1.7), not a caller-side scale fudge.
-            VfxCue.Fire(crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack, t.transform);
-            // A real basic attack connected — announce it for OnBasicAttackDealt passives (Momentum, Perfect Form).
-            PassiveEvents.Fire(SkillTrigger.OnBasicAttackDealt, null, t.transform);
-        }
+        // The Character-less spike: no stats to roll, so the serialized flat damage always lands.
+        int dealt = CombatAuthority.Apply(t, new DamageInfo(damage, MeleeElement));
+        if (dealt > 0) VfxCue.Fire(VfxCueId.OnHitByNormalAttack, t.transform);
     }
 
     /// <summary>Abandon the current attack: drop an in-flight swing and CLOSE the attempt an

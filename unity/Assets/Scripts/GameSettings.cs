@@ -17,12 +17,15 @@ using UnityEngine;
 public static class GameSettings
 {
     const string SmoothCameraFollowKey = "set_smooth_camera_follow";
+    const string QuickCastSingleKey    = "set_quickcast_single";
+    const string QuickCastGroundKey    = "set_quickcast_ground";
     const string MasterVolumeKey       = "set_volume_master";
     const string SfxVolumeKey          = "set_volume_sfx";
     const string MusicVolumeKey        = "set_volume_music";
 
     static bool smoothCameraFollowValue;
     static bool smoothCameraFollowLoaded;
+    static bool? quickCastSingle, quickCastGround;
     static float? master, sfx, music;
 
     /// <summary>Ease the follow-camera toward the player instead of snapping to it. On by default.</summary>
@@ -44,6 +47,24 @@ public static class GameSettings
             smoothCameraFollowLoaded = true;
             PlayerPrefs.SetInt(SmoothCameraFollowKey, value ? 1 : 0);
         }
+    }
+
+    /// <summary>Fire a single-target skill straight at the current target instead of opening the reticle
+    /// (<see cref="UnitTargeter"/>). The reticle still opens when there is no legal, in-range target to fire
+    /// at. Off by default.</summary>
+    public static bool QuickCastSingleTarget
+    {
+        get => Flag(ref quickCastSingle, QuickCastSingleKey);
+        set => SetFlag(ref quickCastSingle, QuickCastSingleKey, value);
+    }
+
+    /// <summary>Fire a ground-placed skill straight at the point under the cursor instead of opening the
+    /// reticle (<see cref="GroundTargeter"/>). The reticle still opens when the cursor isn't over ground.
+    /// Off by default.</summary>
+    public static bool QuickCastGroundTarget
+    {
+        get => Flag(ref quickCastGround, QuickCastGroundKey);
+        set => SetFlag(ref quickCastGround, QuickCastGroundKey, value);
     }
 
     /// <summary>Overall loudness — scales EVERY sound the game makes (effects, music, ambience, rain).</summary>
@@ -76,6 +97,19 @@ public static class GameSettings
         AudioListener.volume = MasterVolume;
         if (Sfx.Instance != null) Sfx.Instance.masterVolume = SfxVolume;
         if (MusicDirector.Instance != null) MusicDirector.Instance.masterVolume = MusicVolume;
+    }
+
+    static bool Flag(ref bool? cache, string key)
+    {
+        if (cache == null) cache = PlayerPrefs.GetInt(key, 0) != 0;
+        return cache.Value;
+    }
+
+    static void SetFlag(ref bool? cache, string key, bool value)
+    {
+        if (cache != null && cache.Value == value) return;
+        cache = value;
+        PlayerPrefs.SetInt(key, value ? 1 : 0);
     }
 
     static float Volume(ref float? cache, string key)

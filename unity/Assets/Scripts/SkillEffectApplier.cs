@@ -283,17 +283,7 @@ public static class SkillEffectApplier
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
-                if (hit < EffectiveHits(e, caster))
-                {
-                    // A strike fed the pile's CARRIED TOTAL is that number, dealt flat with no Attack roll behind it, so
-                    // it cannot crit either (there was no roll to crit). Every other strike — including one paid by the
-                    // pile's COUNT — is the normal roll, which absorbs that payoff as extra power inside RollPower.
-                    int fromPile = e.StackOutput(vars);
-                    bool crit = false;
-                    int power = fromPile >= 0 ? fromPile : RollPower(e, vars, comboMult, out crit, caster);
-                    // −1 HIT = always-lands skill strike (no accuracy roll); DamageInfo defaults attackerHit to −1.
-                    CombatAuthority.Apply(unit, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit));
-                }
+                if (hit < EffectiveHits(e, caster)) LandStrike(e, unit, comboMult, caster, vars, overkill: false);
                 break;
             case SkillEffectKind.Execute:
                 if (Fires(e, hit, caster)) ApplyExecute(e, unit, vars, comboMult, caster);
@@ -363,6 +353,11 @@ public static class SkillEffectApplier
             case SkillEffectKind.Brace:
                 // Only the window is authored; the pile fills itself from whatever hits arrive (UnitMitigation.Deferred).
                 if (hit == 0) states.BeginBrace(ScaledSeconds(e, caster));
+                break;
+            case SkillEffectKind.BoostOutgoingDamage:
+                // Charges ride the apply context like Parry's; each carries the authored bonus, which is FLAT for the
+                // same reason a stat buff's is — a support's value is how many attacks it covers, not a bigger number.
+                if (hit == 0) states.BeginOutgoingBoost(ScaledSeconds(e, caster), e.magnitude);
                 break;
             case SkillEffectKind.Taunt:
                 // Force this unit onto the caster. Both sides implement it (a mob locks its chase, a player's
@@ -470,15 +465,20 @@ public static class SkillEffectApplier
         ulong chain = PassiveEvents.CurrentChain;
         var flurryVars = vars;   // the cast's readings ride the callback too — later strikes must cash the SAME snapshot
         Vector3 flurryPoint = relocatePoint;   // and so does where this cast aimed — a later strike relocates to the same spot
+        // A run that shows ONE total across its repeats rides the callback for the same reason the cause does: the
+        // strikes land on later frames, long after the tick that started them has returned.
+        var runTotal = RepeatsDamageTotal.Current;
         MultiHitBurst.Run(mobs, HitLoops(effects, caster), MultiHitInterval,
             (ai, hit) =>
             {
                 // The CAUSE rides the callback whole — chain and skill both. A flurry's later strike can be the killing
                 // blow, and a kill that couldn't name the skill that landed it would be a kill by nobody.
                 var prev = PassiveEvents.Push(chain, srcId);
+                var prevTotal = RepeatsDamageTotal.Push(runTotal);
                 try { return ApplyHitToMob(effects, ai, hit, comboMult, caster, flurryPoint, srcIcon, srcName, srcId, flurryVars); }
-                finally { PassiveEvents.Pop(prev); }        // the damage dealt feeds the mob's rising combo total
-            });
+                finally { RepeatsDamageTotal.Pop(prevTotal); PassiveEvents.Pop(prev); }   // the damage dealt feeds the rising total
+            },
+            showTotal: runTotal == null);   // one drawer of the yellow number, never both
     }
 
     // One beat of a multi-hit flurry on ONE mob: land every Damage effect (overkill-safe so the running total keeps
@@ -500,14 +500,9 @@ public static class SkillEffectApplier
             if (e.kind == SkillEffectKind.Damage)
             {
                 if (hit >= EffectiveHits(e, caster)) continue;
-                // A strike fed the pile's CARRIED TOTAL is that flat number — no Attack roll, so no crit either. A strike
-                // paid by the pile's COUNT rolls normally; RollPower folds that payoff into the effect's own power.
-                int fromPile = e.StackOutput(vars);
-                bool crit = false;
-                int power = fromPile >= 0 ? fromPile : RollPower(e, vars, comboMult, out crit, caster);
-                // Both magic and physical use an overkill-safe sink here, so a multi-hit flurry keeps its numbers,
-                // hit sparks AND per-strike sound climbing past the kill — the whole count runs to the end, RO-style.
-                dealt += CombatAuthority.Apply(h, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit, overkill: true));
+                // Overkill-safe, so a multi-hit flurry keeps its numbers, hit sparks AND per-strike sound climbing past
+                // the kill — the whole count runs to the end, RO-style.
+                dealt += LandStrike(e, h, comboMult, caster, vars, overkill: true);
             }
             else
                 ApplyToTarget(e, h, hit, comboMult, caster, relocatePoint, srcIcon, srcName, srcId, vars);   // procs / status / one-shots
@@ -567,6 +562,8 @@ public static class SkillEffectApplier
         int roll = RollPower(e, vars, comboMult, out bool crit, caster);
         int bonus = Mathf.RoundToInt(roll * e.magnitude * missing);
         if (bonus <= 0) return;
+        // Its own damage number, so its own charge — an execute is a second outgoing hit riding the first, not part of it.
+        bonus = UnitOffense.Boosted(caster != null ? caster.States : null, bonus);
         CombatAuthority.Apply(unit, new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic, crit));
     }
 
@@ -585,6 +582,41 @@ public static class SkillEffectApplier
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
                 ApplyToTarget(effects[i], ch, n, comboMult, ch, relocatePoint, srcIcon, srcName, srcId, vars);
+    }
+
+    /// <summary>ONE Damage strike onto one unit — the single place a skill's damage is rolled and applied, whether it
+    /// lands instantly or as a beat of a multi-hit cascade (<paramref name="overkill"/> is the only difference between
+    /// those two). Returns the damage dealt, so a rising combo total can accumulate it.
+    ///
+    /// <para>Three ways a strike can be paid for, and they are exclusive: a pile's CARRIED TOTAL is that flat number,
+    /// dealt with no Attack roll behind it and therefore no crit; a strike authored to RESOLVE AS A BASIC ATTACK is the
+    /// caster's own swing, scaled by the effect's power; everything else is the ordinary skill roll (which absorbs a
+    /// pile's COUNT payoff as extra power inside <see cref="RollPower"/>).</para></summary>
+    static int LandStrike(SkillEffect e, ICombatUnit unit, float comboMult, Character caster,
+                          in StackVars vars, bool overkill)
+    {
+        int fromPile = e.StackOutput(vars);
+        if (fromPile < 0 && e.resolveAsBasicAttack)
+            // The caster swings; the skill only says how hard. Every authored multiplier the ordinary roll would apply
+            // still applies — base power, the pile's count payoff, ring scaling, the combo ramp — so the one thing that
+            // changes is WHICH roll is underneath, which is the whole point of the checkbox.
+            return BasicSwing.Land(caster, unit,
+                                   ((e.damageMult <= 0f ? 1f : e.damageMult) + e.StackDamageBonus(vars))
+                                       * AffinityMult(e.affinity, caster) * Mathf.Max(0f, comboMult),
+                                   overkill,
+                                   // This swing has no wind-up of its own, so it announces the intent here rather than
+                                   // never — a passive that answers "about to swing" (the auto-lunge) rides a skill's
+                                   // swings exactly as it rides an ordinary one.
+                                   announceIntent: true);
+
+        bool crit = false;
+        int power = fromPile >= 0 ? fromPile : RollPower(e, vars, comboMult, out crit, caster);
+        // One strike, one charge — and it catches the flat banked kind too, which never rolls. (The basic-attack branch
+        // above doesn't come back through here: the swing spends its own, so nothing is charged twice.)
+        power = UnitOffense.Boosted(caster != null ? caster.States : null, power);
+        // −1 HIT = always-lands skill strike (no accuracy roll); DamageInfo defaults attackerHit to −1.
+        return CombatAuthority.Apply(unit, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit,
+                                                         overkill: overkill));
     }
 
     // Damage value = the caster's rolled hit × (the effect's multiplier + whatever the cashed pile's COUNT adds to it)

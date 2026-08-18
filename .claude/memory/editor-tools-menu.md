@@ -7,7 +7,7 @@ metadata:
   originSessionId: 7e46c3f0-a8b6-4991-952c-5c03f2890bdc
 ---
 
-On **unwritten**, the workflow is built around **one-click editor scripts** under the **`Tools ▸ unwritten`** menu (source in **`unity/Assets/Scripts/Editor/`** inside this repo — see [[unity-2d-direction]]). The user is **new to Unity**, so prefer adding/extending a menu item over manual click-by-click steps (see [[user-new-to-unity]]). New setup scripts get a `[MenuItem("Tools/unwritten/…")]` and should be **idempotent + undoable**.
+On **unwritten**, the workflow is built around **one-click editor scripts** under the **`Tools ▸ unwritten`** menu (source in **`unity/Assets/Scripts/Editor/`** inside this repo — see [[unity-2d-direction]]). The user is **new to Unity**, so prefer adding/extending a menu item over manual click-by-click steps (a standing rule in CLAUDE.md). New setup scripts get a `[MenuItem("Tools/unwritten/…")]` and should be **idempotent + undoable**.
 
 **📒 ALWAYS DOCUMENT A NEW TOOL (rule set 2026-06-25):** whenever I add (or remove/rename) a `Tools ▸ unwritten` menu item, I MUST update the canonical reference doc **`unity/Assets/Scripts/Editor/TOOLS.md`** in the same change — add a row to the right submenu section with *What it does* / *Use when* / source file (and note idempotency + which scene must be open). That file is the full per-tool catalog (built 2026-06-25, ~39 live commands across 13 submenus). Keep it in sync; don't let it drift.
 

@@ -83,6 +83,22 @@ public class Health : MonoBehaviour, ICombatUnit
         }
     }
 
+    // The basic swing: forwarded to the brain, which owns this mob's attack numbers and already reads the same answers
+    // at its own attack site — so a swing it walks up and makes and a swing a skill asks of it come from one place.
+    public int BasicHit { get { var b = Brain; return b != null ? b.BasicHit : 0; } }
+    public Element BasicElement { get { var b = Brain; return b != null ? b.BasicElement : Element.Neutral; } }
+    public bool BasicIsMagic { get { var b = Brain; return b != null && b.BasicIsMagic; } }
+    public int RollBasicDamage(bool crit) { var b = Brain; return b != null ? b.RollBasicDamage(crit) : 0; }
+
+    /// <summary>Mobs never crit — crit is the Finesse identity, and the whole armour-piercing rule hangs off it.</summary>
+    public bool RollBasicCrit(ICombatUnit victim) => false;
+
+    /// <summary>Our dodge, rolled against an attacker's accuracy.</summary>
+    public int Flee => flee;
+
+    /// <summary>Our LUK, which lowers an attacker's crit chance against us.</summary>
+    public int CritShieldLuk => luk;
+
     // Movement + aggro: the mob's half of the shared unit verbs, forwarded to the rig that owns each primitive (the
     // pathing agent moves, the brain holds aggro). Cached once — these run per cast, never per frame.
     PathAgent3D agent;
@@ -301,6 +317,10 @@ public class Health : MonoBehaviour, ICombatUnit
         baseCol.a *= Elements.DamageAlpha(mod);
         if (dmg > 0) DamagePopup.Spawn(UnitAnchor.Overhead(transform), dmg, baseCol);
         else DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "0", baseCol);
+        // Every skill strike's white number is spawned HERE, whichever path rolled it — so this is also the one place a
+        // run that shows its own total can hear about the hit, with nothing per-path to keep in step. Null unless a run
+        // asked for the total, so the normal case costs one reference check.
+        if (RepeatsDamageTotal.Current != null) RepeatsDamageTotal.Current.Report(transform, dmg);
     }
 
     // Lifesteal: a fraction of damage dealt to this mob heals the player (RO leech, the mechanical core of

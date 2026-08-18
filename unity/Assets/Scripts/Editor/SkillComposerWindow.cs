@@ -47,74 +47,6 @@ public class SkillComposerWindow : EditorWindow
         if (snapshot != null) DestroyImmediate(snapshot);
     }
 
-    /// <summary>Rename a skill's id AND re-point everything that referenced the old one, in the same undo step — so an
-    /// id is a label you can change, never a fragile string other assets silently depend on.
-    ///
-    /// <para>Sweeps every place a skill id is PERSISTED: a skill's <c>triggerSkillId</c> ("on cast complete of") and
-    /// <c>requireSkillId</c> ("stacks from"), plus every Item's <c>grantedSkillIds</c> (a weapon hands its kit out by
-    /// id, so a rename would otherwise strip that skill off the weapon). Refuses a blank id or one another skill
-    /// already owns, since either would merge two skills into one reference.</para></summary>
-    void RetargetSkillId(string oldId, string newId, SkillDef target)
-    {
-        if (target == null) return;
-        newId = (newId ?? "").Trim();
-        if (string.IsNullOrEmpty(newId))
-        {
-            EditorUtility.DisplayDialog("Rename skill id", "An id can't be empty — keeping the old one.", "OK");
-            return;
-        }
-        for (int i = 0; i < all.Count; i++)
-            if (all[i] != null && all[i] != target && all[i].id == newId)
-            {
-                EditorUtility.DisplayDialog("Rename skill id",
-                    $"\"{newId}\" is already used by {all[i].displayName}. Ids must be unique — keeping the old one.", "OK");
-                return;
-            }
-
-        Undo.RecordObject(target, "Rename skill id");
-        target.id = newId;
-        EditorUtility.SetDirty(target);
-        SyncFileNameToId(target);
-        if (string.IsNullOrEmpty(oldId)) return;   // brand-new skill: nothing can point at it yet
-
-        int skillRefs = 0;
-        for (int i = 0; i < all.Count; i++)
-        {
-            var s = all[i];
-            if (s == null) continue;
-            bool touched = false;
-            // Both ids a skill can hold live PER TRIGGER now, so the sweep walks every entry — miss one and that
-            // trigger silently stops matching (or stops finding its stack pile) after a rename.
-            if (s.triggers != null)
-                for (int t = 0; t < s.triggers.Count; t++)
-                {
-                    var e = s.triggers[t];
-                    if (e == null) continue;
-                    if (e.triggerSkillId == oldId) { Undo.RecordObject(s, "Rename skill id"); e.triggerSkillId = newId; touched = true; }
-                    if (e.requireSkillId == oldId) { Undo.RecordObject(s, "Rename skill id"); e.requireSkillId = newId; touched = true; }
-                }
-            if (touched) { EditorUtility.SetDirty(s); skillRefs++; }
-        }
-        AssetDatabase.SaveAssets();
-        Debug.Log($"[Skill Composer] Renamed \"{oldId}\" → \"{newId}\"; re-pointed {skillRefs} skill reference(s). " +
-                  "A weapon that already ROLLED the old id (in a save) simply drops it on load — kits are per-copy now.");
-    }
-
-    /// <summary>The file name ALWAYS follows the id — <c>skill.sword.parry</c> lives in <c>skill.sword.parry.asset</c>,
-    /// no exceptions. One name, one meaning: browsing the folder tells you exactly what's authored, and no one has to
-    /// open an asset to learn which skill it is. Every path that can change or mint an id calls this, so the two can't
-    /// drift apart. Renaming through <see cref="AssetDatabase"/> carries the <c>.meta</c> along, so the GUID — and every
-    /// scene/prefab/asset reference — survives untouched.</summary>
-    static void SyncFileNameToId(SkillDef s)
-    {
-        if (s == null || string.IsNullOrEmpty(s.id)) return;
-        string path = AssetDatabase.GetAssetPath(s);
-        if (string.IsNullOrEmpty(path) || System.IO.Path.GetFileNameWithoutExtension(path) == s.id) return;
-        string err = AssetDatabase.RenameAsset(path, s.id);
-        if (!string.IsNullOrEmpty(err))
-            Debug.LogWarning($"[Skill Composer] Couldn't rename \"{path}\" to \"{s.id}.asset\": {err}");
-    }
-
     /// <summary>The first free id starting from <paramref name="wanted"/> (<c>skill.new</c> → <c>skill.new_2</c> → …).
     /// Checks BOTH the authored ids and the folder, because the file name mirrors the id — so a free id is also a free
     /// file name, and a new/duplicated skill can never be born already colliding.</summary>
@@ -382,13 +314,54 @@ public class SkillComposerWindow : EditorWindow
     // ---- right: editor ------------------------------------------------------
 
     // Collapsible section headers, in the order an author actually thinks: what it IS → how it's classified → WHEN it
-    // fires → WHAT IT DOES → what it costs → how it looks. Gameplay sits above cost and presentation because it is the
-    // part you return to; the two you set once are last. State is static so a section stays open across repaints.
-    static bool foId = true, foClass = true, foTrigger = true, foCost = false, foPresent = false, foGameplay = true;
+    // fires → what it COSTS to fire → WHAT IT DOES → how many times → how it looks. Repeats sits directly under
+    // Gameplay because it multiplies exactly what that section authored. State is static so a section stays open
+    // across repaints.
+    // Every group starts OPEN. A group that hides itself hides fields the author never chose to hide, and a skill you
+    // are opening for the first time shouldn't keep half of itself out of sight. Closing one is the author's decision.
+    static bool foId = true, foClass = true, foTrigger = true, foCost = true, foPresent = true, foGameplay = true,
+                foRepeat = true;
+    // A section header is deliberately louder than anything inside it: a full-width rule above, then the title in a
+    // larger bold face. The rule is what makes a collapsed stack of sections read as separate groups rather than one
+    // list of similar-looking rows.
+    // Green, and ONLY the group headers are green — nothing else in the window uses it, so the colour means exactly
+    // one thing: "a new group starts here". Muted rather than pure green so it reads as a heading rather than as a
+    // success message, and it stays clear of the blue Unity paints on a hovered/focused control.
+    static Color SectionGreen => EditorGUIUtility.isProSkin
+        ? new Color(0.44f, 0.82f, 0.47f)
+        : new Color(0.13f, 0.44f, 0.18f);
+
+    static GUIStyle _sectionTitle;
+    static GUIStyle SectionTitle
+    {
+        get
+        {
+            if (_sectionTitle != null) return _sectionTitle;
+            _sectionTitle = new GUIStyle(EditorStyles.foldout)
+            { fontSize = 14, fontStyle = FontStyle.Bold, fixedHeight = 0f };
+            // Every state, not just the resting one: otherwise the title flips to Unity's blue the moment the mouse
+            // crosses it, and the colour would stop meaning "group" exactly when you are pointing at one.
+            var g = SectionGreen;
+            foreach (var st in new[] { _sectionTitle.normal, _sectionTitle.onNormal, _sectionTitle.hover,
+                                       _sectionTitle.onHover, _sectionTitle.focused, _sectionTitle.onFocused,
+                                       _sectionTitle.active, _sectionTitle.onActive })
+                st.textColor = g;
+            return _sectionTitle;
+        }
+    }
+
     static bool Section(string title, ref bool open)
     {
-        EditorGUILayout.Space(6);
-        open = EditorGUILayout.Foldout(open, title, true);
+        EditorGUILayout.Space(8);
+        // The separator: height only, never a width demand, so a narrow docked window still can't grow a horizontal
+        // scrollbar (see the editor-window rule — MaxWidth only, and MinWidth(0) states "no floor").
+        var rule = EditorGUILayout.GetControlRect(false, 4f, GUILayout.MinWidth(0f), GUILayout.ExpandWidth(true));
+        EditorGUI.DrawRect(rule, SectionGreen);
+        EditorGUILayout.Space(4);
+
+        var header = EditorGUILayout.GetControlRect(false, 22f, GUILayout.MinWidth(0f), GUILayout.ExpandWidth(true));
+        open = EditorGUI.Foldout(header, open, title, true, SectionTitle);
+        EditorGUILayout.Space(2);
         return open;
     }
 
@@ -407,9 +380,6 @@ public class SkillComposerWindow : EditorWindow
         return now;
     }
 
-    /// <summary>Draw ONE trigger entry — the moment, plus the state gate that firing through this moment must satisfy.
-    /// Returns true if the author asked to delete it. The gate is drawn per entry, not per skill, because the two
-    /// halves of a dual-trigger skill need different answers (Lunge on OnCast requires no charge; the same Lunge on
     /// <summary>What the selected trigger ACTUALLY counts as — the same facts documented on each SkillTrigger member,
     /// worded for an author. Every line states the edge cases (miss / absorbed / parried) rather than leaving them to
     /// be discovered in play, and says which unit the skill is handed to aim at.</summary>
@@ -461,6 +431,9 @@ public class SkillComposerWindow : EditorWindow
         }
     }
 
+    /// <summary>Draw ONE trigger entry — the moment, plus the state gate that firing through this moment must satisfy.
+    /// Returns true if the author asked to delete it. The gate is drawn per entry, not per skill, because the two
+    /// halves of a dual-trigger skill need different answers (Lunge on OnCast requires no charge; the same Lunge on
     /// OnBasicAttackStart requires and spends one).</summary>
     bool DrawTriggerEntry(SkillTriggerEntry e, int index)
     {
@@ -553,91 +526,6 @@ public class SkillComposerWindow : EditorWindow
         return remove;
     }
 
-    // Dropdown of other skills' ids, returning the chosen one. Two callers with one difference: the TRIGGER picker
-    // wants only OnCast actives (a passive isn't a cast you can key off), while the STACK-SOURCE picker must include
-    // passives — the classic stack granter, Momentum, is one. Reads SkillCatalog (saved Resources/Skills assets); a
-    // stale/unsaved pick stays visible so it isn't silently blanked.
-    /// <summary>Every pile the given skill actually hands out — one entry per STACKING effect that creates a state
-    /// (<see cref="SkillEffect.TryStateFor"/>). Reused by the picker below and by the sweeps that keep consumers in
-    /// step, so "what piles does this skill grant" is answered in exactly one place.
-    ///
-    /// <para>Non-stacking effects are excluded on purpose: a single-instance state has no pile to spend down, so
-    /// gating on it could never mean "how many do I hold".</para></summary>
-    static void CollectGrantedStates(SkillDef granter, List<StateId> into)
-    {
-        into.Clear();
-        if (granter?.bindings == null) return;
-        for (int b = 0; b < granter.bindings.Count; b++)
-        {
-            var fx = granter.bindings[b]?.effects;
-            if (fx == null) continue;
-            for (int i = 0; i < fx.Count; i++)
-            {
-                var ef = fx[i];
-                if (ef == null || !ef.stacking) continue;
-                SkillEffect.CollectPiles(ef, into);
-            }
-        }
-    }
-
-    static readonly List<StateId> grantedScratch = new List<StateId>(4);
-    static readonly List<StateId> grantedBefore = new List<StateId>(4);
-    static readonly List<StateId> grantedAfter = new List<StateId>(4);
-
-    /// <summary>Keep every consumer of THIS skill's piles honest after its stacking effects were edited. A gate names
-    /// a pair — whose pile, and which — so changing what this skill grants would otherwise leave other skills pointing
-    /// at a pile that no longer exists, and they would silently stop firing.
-    ///
-    /// <para>Diffed against the last SAVED version, so the rule is simple and predictable: exactly one pile gone and
-    /// exactly one new one is an EDIT of that pile (consumers follow it); anything else that removes a pile is a
-    /// DELETION (consumers lose that gate rather than keep a reference that can never match). Run at Save, next to
-    /// the other whole-library fixups, because it writes to OTHER assets.</para></summary>
-    void SyncConsumersToGrantedStates(SkillDef granter, SkillDef before)
-    {
-        if (granter == null || before == null || string.IsNullOrEmpty(granter.id)) return;
-        CollectGrantedStates(before, grantedBefore);
-        CollectGrantedStates(granter, grantedAfter);
-
-        StateId? renamedFrom = null, renamedTo = null;
-        int gone = 0;
-        for (int i = 0; i < grantedBefore.Count; i++)
-            if (!grantedAfter.Contains(grantedBefore[i])) { gone++; renamedFrom = grantedBefore[i]; }
-        int fresh = 0;
-        for (int i = 0; i < grantedAfter.Count; i++)
-            if (!grantedBefore.Contains(grantedAfter[i])) { fresh++; renamedTo = grantedAfter[i]; }
-        if (gone == 0) return;                       // nothing lost — every existing gate still matches
-        bool isEdit = gone == 1 && fresh == 1;
-
-        int followed = 0, dropped = 0;
-        for (int i = 0; i < all.Count; i++)
-        {
-            var s = all[i];
-            if (s?.triggers == null || s == granter) continue;
-            bool touched = false;
-            for (int t = 0; t < s.triggers.Count; t++)
-            {
-                var e = s.triggers[t];
-                if (e == null || !e.requiresState || e.requireSkillId != granter.id) continue;
-                if (grantedAfter.Contains(e.requireStateId)) continue;   // its pile survived untouched
-                Undo.RecordObject(s, "Sync stack gate");
-                if (isEdit && e.requireStateId.Equals(renamedFrom.Value))
-                {
-                    e.requireStateId = renamedTo.Value; followed++;
-                }
-                else
-                {
-                    // The pile it was spending is gone. Disarm the gate rather than leave it pointing at nothing.
-                    e.requiresState = false; e.requireSkillId = ""; dropped++;
-                }
-                touched = true;
-            }
-            if (touched) EditorUtility.SetDirty(s);
-        }
-        if (followed + dropped == 0) return;
-        Debug.Log($"[Skill Composer] \"{granter.id}\" changed what it stacks — " +
-                  $"{followed} gate(s) followed the change, {dropped} lost their gate (the pile they spent is gone).");
-    }
-
     /// <summary>The "which pile" half of the gate, listing only what the chosen granter really stacks. Returns false
     /// when the granter stacks nothing — there is then no pile to point at, and saying so is more useful than showing
     /// a dropdown of states that will never exist.</summary>
@@ -682,11 +570,13 @@ public class SkillComposerWindow : EditorWindow
     /// <summary>The "which pile" question, wherever it is asked — the stack gate asks it about the pile it CASHES, a
     /// modifier effect about the pile it EDITS. One drawer for both, so the unset rule and the "only what that skill
     /// really stacks" list can never be enforced in one place and forgotten in the other.</summary>
+    static readonly List<StateId> grantedScratch = new List<StateId>(4);
+
     static bool DrawPilePicker(string granterId, ref StateId stateId, ref bool stateIdSet,
                                string verb, string consequence)
     {
         var granter = SkillCatalog.Get(granterId);
-        CollectGrantedStates(granter, grantedScratch);
+        SkillLibrarySweeps.CollectGrantedStates(granter, grantedScratch);
         if (grantedScratch.Count == 0)
         {
             EditorGUILayout.HelpBox(
@@ -737,6 +627,10 @@ public class SkillComposerWindow : EditorWindow
         return false;
     }
 
+    // Dropdown of other skills' ids, returning the chosen one. Two callers with one difference: the TRIGGER picker
+    // wants only OnCast actives (a passive isn't a cast you can key off), while the STACK-SOURCE picker must include
+    // passives — the classic stack granter, Momentum, is one. Reads SkillCatalog (saved Resources/Skills assets); a
+    // stale/unsaved pick stays visible so it isn't silently blanked.
     /// <summary>Pick a skill by id. <paramref name="allowSelf"/> separates the two questions this one popup answers:
     /// WHICH SKILL FIRES this one (no — a skill announcing its own cast would re-fire itself forever) versus WHOSE
     /// PILE this one reads (yes — a skill that grants its own charges and spends them over its own repeats is
@@ -771,6 +665,28 @@ public class SkillComposerWindow : EditorWindow
         return choices[next];
     }
 
+    /// <summary>The edited skill's name, pinned above the scroll view so it stays put however far the body scrolls —
+    /// scroll into an effect's numbers and WHICH skill you are editing is still on screen. Reads the live
+    /// <c>displayName</c>, so it renames as you type. Falls back to the id for a skill with no name yet.</summary>
+    static GUIStyle _skillNameBar;
+    static GUIStyle SkillNameBar => _skillNameBar ??= new GUIStyle(EditorStyles.boldLabel)
+    {
+        fontSize = 15,
+        alignment = TextAnchor.MiddleLeft,
+        clipping = TextClipping.Clip,
+        // The same green as the group headers — one colour, one meaning: "this names something, it isn't a setting".
+        normal = { textColor = SectionGreen },
+    };
+
+    void DrawSkillNameBar()
+    {
+        // Height only, never a width demand, so a narrow docked window still can't grow a horizontal scrollbar.
+        var bar = EditorGUILayout.GetControlRect(false, 26f, GUILayout.MinWidth(0f), GUILayout.ExpandWidth(true));
+        EditorGUI.DrawRect(bar, new Color(0.09f, 0.09f, 0.10f));
+        var text = new Rect(bar.x + 8f, bar.y, Mathf.Max(0f, bar.width - 12f), bar.height);
+        GUI.Label(text, string.IsNullOrEmpty(sel.displayName) ? sel.id : sel.displayName, SkillNameBar);
+    }
+
     void DrawBody()
     {
         EditorGUILayout.BeginVertical();
@@ -779,6 +695,7 @@ public class SkillComposerWindow : EditorWindow
         if (snapshotOwner != sel) CaptureSnapshot();   // freshly-selected skill → snapshot its saved state
 
         float contentWidth = position.width - (listCollapsed ? 20f : listWidth) - 5f;
+        DrawSkillNameBar();
         bodyScroll = EditorGUILayout.BeginScrollView(bodyScroll);
         // Pin the scroll content to the viewport width so the fields SHRINK to fit instead of the scroll view
         // laying them out at their preferred width and adding a horizontal scrollbar (the "won't shrink" symptom).
@@ -788,7 +705,7 @@ public class SkillComposerWindow : EditorWindow
         EditorGUI.BeginChangeCheck();
 
         // 1) IDENTITY — what the skill IS.
-        if (Section("Identity", ref foId))
+        if (Section("Identity — what this skill is", ref foId))
         {
             // DELAYED on purpose: a plain TextField commits per KEYSTROKE, so typing a new id would fire a rename for
             // every half-typed prefix. This commits once, on Enter or focus-loss — then everything pointing at the old
@@ -811,7 +728,7 @@ public class SkillComposerWindow : EditorWindow
                 sel.weaponType = weapon;
                 sel.displayName = named;
                 string composed = ComposeId(weapon, named);
-                if (composed != beforeId) RetargetSkillId(beforeId, composed, sel);
+                if (composed != beforeId) SkillLibrarySweeps.RetargetSkillId(all, beforeId, composed, sel);
                 EditorUtility.SetDirty(sel);
             }
             using (new EditorGUI.DisabledScope(true))
@@ -847,17 +764,15 @@ public class SkillComposerWindow : EditorWindow
         }
 
         // 2) CLASSIFICATION — the gameplay axes (verb · family · tier) + designer-only metadata (shape/complexity/acq).
-        if (Section("Classification  (verb · family · tier)", ref foClass))
+        if (Section("Classification — verb, family and tier", ref foClass))
         {
             sel.archetype = (SkillArchetype)EditorGUILayout.EnumPopup(new GUIContent("archetype (verb)",
                 "Battlefield-role VERB — what the skill DOES. Drives the hover card chip + color (Burst / Tempo / Fortress / Buff / Curse)."), sel.archetype);
             sel.family = (SkillFamily)EditorGUILayout.EnumPopup(new GUIContent("family",
                 "Attribute CLUSTER (Might / Arcane / Finesse) — the RPS-triangle side; also the default damage-type source. Orthogonal to the verb."), sel.family);
             sel.tier = (SkillTier)EditorGUILayout.EnumPopup(new GUIContent("tier",
-                "Base = a normal hotbar skill (keys 1–9). Ultimate = fires from the dedicated ULT slot, charge-gated."), sel.tier);
-            if (sel.tier == SkillTier.Ultimate)   // charge cost only exists for an Ultimate; a Base skill uses cooldown
-                sel.chargeCost = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("charge cost",
-                    "Ult-meter charge spent per cast. The meter fills in combat (dealing/taking damage, casting)."), sel.chargeCost));
+                "Base = a normal hotbar skill (keys 1–9). Ultimate = fires from the dedicated ULT slot, charge-gated. " +
+                "An Ultimate pays charge instead of a cooldown — both live in the cost section below."), sel.tier);
 
             EditorGUILayout.Space(2);
             EditorGUILayout.LabelField("Designer metadata (not gameplay)", EditorStyles.miniLabel);
@@ -869,9 +784,9 @@ public class SkillComposerWindow : EditorWindow
                 "LABEL ONLY — no gameplay reads it. Real targeting is each tick's 'targets' dropdown below. Kept for library filtering."), sel.shape);
         }
 
-        // 2b) TRIGGERS — every way this skill can start, each with its own state gate. One OnCast entry = a pressed
-        //     active; no OnCast entry = a pure passive; BOTH = pressed AND self-firing, from ONE payload.
-        if (Section("Triggers", ref foTrigger))
+        // 3) TRIGGERS — every way this skill can start, each with its own state gate. One OnCast entry = a pressed
+        //    active; no OnCast entry = a pure passive; BOTH = pressed AND self-firing, from ONE payload.
+        if (Section("Triggers — when it fires", ref foTrigger))
         {
             if (sel.triggers == null) sel.triggers = new List<SkillTriggerEntry>();
             if (sel.triggers.Count == 0)
@@ -898,19 +813,18 @@ public class SkillComposerWindow : EditorWindow
                     "already part of, so it can't feed itself.", MessageType.Info);
         }
 
-        // 4) GAMEPLAY — the tick bindings + effects (the actual mechanics). Has its own internal indentation.
-        //    Sits ABOVE cost and presentation on purpose: the sections run in the order the author thinks in —
-        //    what is it, when does it fire, WHAT DOES IT DO, what does it cost, how does it look.
-        if (Section("Gameplay — Ticks & Effects", ref foGameplay))
-            DrawTickBindings();
-
-        // 5) COST · CADENCE · AIM — what it costs to fire and WHERE it lands (aim is the cast gesture; each tick's
-        //    'applies to' below is WHO it affects there — kept distinct on purpose).
-        if (Section("Cost · Cadence · Aim", ref foCost))
+        // 4) COST & AIM — everything a cast PAYS to happen, plus WHERE it lands (aim is the cast gesture; each tick's
+        //    'applies to' in Gameplay is WHO it affects there — kept distinct on purpose).
+        if (Section("Cost & Aim — what firing takes, and how far it reaches", ref foCost))
         {
             sel.manaCost = EditorGUILayout.IntField(new GUIContent("mana cost",
                 "MP spent each time the skill is cast. The cast is blocked if you don't have enough."), sel.manaCost);
-            if (sel.tier != SkillTier.Ultimate)   // an Ultimate is gated by its charge meter, not a cooldown
+            // Everything a cast PAYS is asked in one place — charge sits beside mana rather than up beside the tier
+            // dropdown that reveals it, so "what does this cost" is one section, never two.
+            if (sel.tier == SkillTier.Ultimate)   // charge cost only exists for an Ultimate; a Base skill uses cooldown
+                sel.chargeCost = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("charge cost",
+                    "Ult-meter charge spent per cast. The meter fills in combat (dealing/taking damage, casting)."), sel.chargeCost));
+            else
                 sel.cooldown = EditorGUILayout.Slider(new GUIContent("cooldown (s)",
                     "Seconds before the skill can be used again after casting."), sel.cooldown, 0f, 30f);
             sel.castTime = EditorGUILayout.Slider(
@@ -927,11 +841,14 @@ public class SkillComposerWindow : EditorWindow
                     sel.castRange, 1f, 30f);
         }
 
-        // 6) PRESENTATION & HOTBAR — how it looks + where it sits on the bar.
-        if (Section("Presentation & Hotbar", ref foPresent))
+        // 5) GAMEPLAY — the tick bindings + effects (the actual mechanics). Has its own internal indentation.
+        if (Section("Gameplay — what each tick does", ref foGameplay))
+            DrawTickBindings();
+
+        // 6) REPEATS — how many times the payload above plays, and on what beat. Sits right after Gameplay because
+        //    everything here MULTIPLIES what that section authored: one cycle is the payload, this decides how many.
+        if (Section("Repeats — how many times it plays", ref foRepeat))
         {
-            sel.vfx = (VfxSequence)EditorGUILayout.ObjectField(new GUIContent("vfx sequence",
-                "The composed look from the Vfx Composer. Its exposed ticks appear in Gameplay below."), sel.vfx, typeof(VfxSequence), false);
             // A charge-driven run has no authored length, so the count would be a dead knob — hide it rather than
             // show a number the run ignores.
             sel.repeatCostsCharge = EditorGUILayout.Toggle(new GUIContent("repeat costs a charge",
@@ -984,19 +901,24 @@ public class SkillComposerWindow : EditorWindow
                         "last one."),
                         sel.repeatReaimRange));
                 }
+                sel.showRepeatsTotalDamage = EditorGUILayout.Toggle(new GUIContent("show repeats total damage dealt",
+                    "ON = each mob shows ONE yellow total that climbs with every repeat that strikes it, closing a " +
+                    "second after the run last touched it — so a dance that hops away and comes back starts a fresh " +
+                    "number. OFF = every repeat pops its own total (a meteor shower shows one per meteor). Purely what " +
+                    "you SEE: no damage, timing or state changes either way."), sel.showRepeatsTotalDamage);
+                sel.holdCasterForRun = EditorGUILayout.Toggle(new GUIContent("holds the caster",
+                    "ON = the caster is held for the WHOLE run — from the first beat until the last one ends it " +
+                    "can't move, attack, start another skill or launch a combo. OFF = only the release animation's " +
+                    "own aftercast roots it, so it's free again between beats (a meteor shower rains while you keep " +
+                    "fighting)."), sel.holdCasterForRun);
             }
+        }
 
-
-            // Projectile fan — only when the VFX actually launches a projectile (a Carrier step). Compose ONE projectile
-            // in the Vfx Composer; multiply it here, like repeat.
-            if (sel.IsProjectileAim)
-            {
-                sel.projectileCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("projectiles",
-                    "Fire this many copies of the projectile at once, fanned into a cone around the aim. 1 = single."), sel.projectileCount));
-                using (new EditorGUI.DisabledScope(sel.projectileCount <= 1))
-                    sel.projectileSpread = EditorGUILayout.Slider(new GUIContent("fan spread °",
-                        "Total cone angle the fan spreads across. 0 = all straight at the aim point."), sel.projectileSpread, 0f, 180f);
-            }
+        // 7) PRESENTATION — how it looks + where it sits on the bar.
+        if (Section("Presentation — how it looks and sits on the bar", ref foPresent))
+        {
+            sel.vfx = (VfxSequence)EditorGUILayout.ObjectField(new GUIContent("vfx sequence",
+                "The composed look from the Vfx Composer. Its exposed ticks appear in Gameplay above."), sel.vfx, typeof(VfxSequence), false);
 
             DrawCastCircle();
             DrawSkillType();
@@ -1019,10 +941,10 @@ public class SkillComposerWindow : EditorWindow
         // last time" it diffs against.
         if (GUILayout.Button("Save", GUILayout.Height(24)))
         {
-            NormalizeAllAffinities(sel);
+            SkillAffinityWeights.NormalizeAll(sel);
             EditorUtility.SetDirty(sel);
-            SyncFileNameToId(sel);
-            if (snapshotOwner == sel) SyncConsumersToGrantedStates(sel, snapshot);
+            SkillLibrarySweeps.SyncFileNameToId(sel);
+            if (snapshotOwner == sel) SkillLibrarySweeps.SyncConsumersToGrantedStates(all, sel, snapshot);
             AssetDatabase.SaveAssets();
             SkillCatalog.Reload();
             CaptureSnapshot();
@@ -1033,88 +955,11 @@ public class SkillComposerWindow : EditorWindow
                 "Read every saved skill's stack gates and report the broken ones — no Play needed. A gate breaks " +
                 "silently (it just counts nothing), so this is the only cheap way to see them all at once."),
                 GUILayout.Height(24), GUILayout.MaxWidth(96)))
-            CheckAllStackGates();
+            SkillLibrarySweeps.CheckAllStackGates(all);
         EditorGUILayout.EndHorizontal();
         EditorGUILayout.Space(2);
 
         EditorGUILayout.EndVertical();
-    }
-
-    /// <summary>Read every saved skill's stack gates and report each one that can never match. A broken gate is
-    /// SILENT at runtime — it counts nothing and spends nothing, which looks exactly like a skill that isn't scaling
-    /// yet — so the whole roster is checked in one go rather than one play-test per skill. Reads only; nothing is
-    /// repaired, because which pile a gate meant is the author's call, not a guess this can make.</summary>
-    void CheckAllStackGates()
-    {
-        var report = new System.Text.StringBuilder();
-        int broken = 0, gates = 0;
-        for (int i = 0; i < all.Count; i++)
-        {
-            var s = all[i];
-            if (s?.triggers == null) continue;
-            for (int t = 0; t < s.triggers.Count; t++)
-            {
-                var e = s.triggers[t];
-                if (e == null || !e.requiresState) continue;
-                gates++;
-
-                string fault = null;
-                var granter = SkillCatalog.Get(e.requireSkillId);
-                if (string.IsNullOrEmpty(e.requireSkillId)) fault = "reads a pile but names no skill to read it from";
-                else if (granter == null) fault = $"reads \"{e.requireSkillId}\", which is not a saved skill";
-                else
-                {
-                    CollectGrantedStates(granter, grantedScratch);
-                    if (grantedScratch.Count == 0)
-                        fault = $"reads \"{e.requireSkillId}\", which stacks nothing — there is no pile";
-                    else if (!e.requireStateIdSet)
-                        fault = $"never names WHICH of \"{e.requireSkillId}\"'s piles it reads";
-                    else if (!grantedScratch.Contains(e.requireStateId))
-                        fault = $"reads {e.requireStateId} from \"{e.requireSkillId}\", which that skill never stacks";
-                }
-                if (fault == null) continue;
-                broken++;
-                report.Append("\n • ").Append(s.displayName).Append(" (").Append(e.trigger).Append(") ").Append(fault);
-            }
-
-            // Modifier effects name a pile the same way a gate does, and fail the same silent way, so they are checked
-            // in the same sweep — one broken-link answer for the whole roster, not two half-checks.
-            if (s.bindings == null) continue;
-            for (int b = 0; b < s.bindings.Count; b++)
-            {
-                var fx = s.bindings[b]?.effects;
-                if (fx == null) continue;
-                for (int f = 0; f < fx.Count; f++)
-                {
-                    var ef = fx[f];
-                    if (ef == null || !SkillEffect.IsModifier(ef.kind)) continue;
-                    gates++;
-
-                    string fault = null;
-                    var target = SkillCatalog.Get(ef.modifierSkillId);
-                    if (string.IsNullOrEmpty(ef.modifierSkillId)) fault = "edits a pile but names no skill";
-                    else if (target == null) fault = $"edits \"{ef.modifierSkillId}\", which is not a saved skill";
-                    else
-                    {
-                        CollectGrantedStates(target, grantedScratch);
-                        if (grantedScratch.Count == 0)
-                            fault = $"edits \"{ef.modifierSkillId}\", which stacks nothing — there is no pile";
-                        else if (!ef.modifierStateIdSet)
-                            fault = $"never names WHICH of \"{ef.modifierSkillId}\"'s piles it edits";
-                        else if (!grantedScratch.Contains(ef.modifierStateId))
-                            fault = $"edits {ef.modifierStateId} of \"{ef.modifierSkillId}\", which that skill never stacks";
-                    }
-                    if (fault == null) continue;
-                    broken++;
-                    report.Append("\n • ").Append(s.displayName).Append(" (").Append(ef.kind).Append(") ").Append(fault);
-                }
-            }
-        }
-        string head = broken == 0
-            ? $"[Skill Composer] All {gates} stack link(s) point at a real pile."
-            : $"[Skill Composer] {broken} of {gates} stack link(s) can never match — each one silently counts and " +
-              "spends nothing:";
-        if (broken == 0) Debug.Log(head); else Debug.LogError(head + report);
     }
 
     // The "skill type" dropdown: pick which release cue plays when the skill fires. Index 0 = None (no release
@@ -1326,28 +1171,33 @@ public class SkillComposerWindow : EditorWindow
         }
     }
 
-    // The delivery dropdown is the SINGLE SOURCE OF TRUTH for "is this a projectile" — but the VFX's Carrier step has
-    // its own visual "launch from caster" flag, and the two should agree (from-caster ⇒ Projectile; from-above ⇒ AoE).
-    // We only READ the VFX here to warn on a mismatch — we never let it drive gameplay.
-    void WarnDeliveryVfxMismatch(GroundDelivery delivery)
+    // The delivery dropdown is the SINGLE SOURCE OF TRUTH for "is this tick a projectile" — but the VFX step this tick
+    // names has its own visual "launch from caster" flag, and the two should agree (from-caster ⇒ Projectile;
+    // from-above ⇒ AoE). We only READ the VFX here to warn on a mismatch — we never let it drive gameplay.
+    //
+    // The question is asked of THIS TICK'S OWN STEP, never of the sequence as a whole: a skill that dashes on one tick
+    // and shoots on another would otherwise be told its dash tick was a projectile, because some OTHER step in the same
+    // sequence launches one. A tick names exactly one step, so the answer is one-to-one.
+    void WarnDeliveryVfxMismatch(SkillTickBinding b)
     {
-        bool hasCarrier = false, fromCaster = false;
-        if (sel.vfx != null && sel.vfx.steps != null)
+        bool fromCaster = false;
+        if (sel.vfx != null && sel.vfx.steps != null && !string.IsNullOrEmpty(b.tickId))
             for (int i = 0; i < sel.vfx.steps.Count; i++)
             {
                 var s = sel.vfx.steps[i];
-                if (s != null && s.kind == VfxStepKind.Carrier) { hasCarrier = true; fromCaster = s.carrierFromCaster; break; }
+                if (s == null || s.tickId != b.tickId) continue;
+                if (s.kind == VfxStepKind.Carrier && s.carrierFromCaster) { fromCaster = true; break; }
             }
 
-        if (delivery == GroundDelivery.Projectile && !(hasCarrier && fromCaster))
+        if (b.groundDelivery == GroundDelivery.Projectile && !fromCaster)
             EditorGUILayout.HelpBox(
-                "Projectile delivery, but this skill's VFX doesn't launch a projectile from the caster. Turn ON " +
-                "'launch from caster' on the VFX's Carrier step so the shot visually flies from the caster.",
+                "Projectile delivery, but the VFX step this tick names doesn't launch from the caster. Turn ON " +
+                "'launch from caster' on that step (it must be a Carrier) so the shot visually flies from the caster.",
                 MessageType.Warning);
-        else if (delivery != GroundDelivery.Projectile && hasCarrier && fromCaster)
+        else if (b.groundDelivery != GroundDelivery.Projectile && fromCaster)
             EditorGUILayout.HelpBox(
-                "This skill's VFX launches from the caster (a projectile), but delivery is " + delivery +
-                ". Set delivery to Projectile, or turn OFF 'launch from caster' on the VFX's Carrier step.",
+                "The VFX step this tick names launches from the caster (a projectile), but delivery is " +
+                b.groundDelivery + ". Set delivery to Projectile, or turn OFF 'launch from caster' on that step.",
                 MessageType.Warning);
     }
 
@@ -1374,9 +1224,9 @@ public class SkillComposerWindow : EditorWindow
     static readonly SkillEffectKind[] MovementKinds =
         { SkillEffectKind.Teleport, SkillEffectKind.Dash, SkillEffectKind.Knockback, SkillEffectKind.Pull };
     static readonly SkillEffectKind[] BuffKinds =
-        { SkillEffectKind.Buff, SkillEffectKind.Haste, SkillEffectKind.Guard, SkillEffectKind.Parry,
-          SkillEffectKind.Brace, SkillEffectKind.Regen, SkillEffectKind.Shield, SkillEffectKind.ManaLeech,
-          SkillEffectKind.Reflect };
+        { SkillEffectKind.Buff, SkillEffectKind.BoostOutgoingDamage, SkillEffectKind.Haste, SkillEffectKind.Guard,
+          SkillEffectKind.Parry, SkillEffectKind.Brace, SkillEffectKind.Regen, SkillEffectKind.Shield,
+          SkillEffectKind.ManaLeech, SkillEffectKind.Reflect };
 
     // Modifiers: the effects whose target is a SKILL's pile rather than a body. Labelled as the whole sentence they
     // read as, because that IS the effect — "extend duration of <skill>" says what it does and what it needs, where a
@@ -1627,11 +1477,24 @@ public class SkillComposerWindow : EditorWindow
                 b.groundDelivery = (GroundDelivery)EditorGUILayout.EnumPopup(new GUIContent("    delivery",
                     "Point = the exact spot (the caster acts there — dash/place). AoE = splash in a radius at the aimed spot (cast-circle reticle). " +
                     "Projectile = aim a DIRECTION (line-arrow reticle); the shot flies and hits along its path."), b.groundDelivery);
-                WarnDeliveryVfxMismatch(b.groundDelivery);
+                WarnDeliveryVfxMismatch(b);
                 if (b.groundDelivery != GroundDelivery.Point)
                 {
                     b.radius = EditorGUILayout.Slider(new GUIContent("    radius",
                         "Circle size (world units) around the spot that catches entities. For a projectile skill this is its per-tick hit width."), b.radius <= 0f ? 1.5f : b.radius, 0.1f, 12f);
+                    // The volley belongs to THIS tick, so it is asked here, under the delivery that turned it into a
+                    // projectile — one carrier step, one count. A second projectile tick fans its own.
+                    if (b.groundDelivery == GroundDelivery.Projectile)
+                    {
+                        b.projectileCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("    projectiles",
+                            "How many copies of THIS tick's projectile launch at once, fanned into a cone around the " +
+                            "aim. 1 = a single shot. Compose ONE projectile in the Vfx Composer; multiply it here."),
+                            b.projectileCount));
+                        using (new EditorGUI.DisabledScope(b.projectileCount <= 1))
+                            b.projectileSpread = EditorGUILayout.Slider(new GUIContent("    fan spread °",
+                                "Total cone angle the volley spreads across. 0 = every copy flies straight at the aim."),
+                                b.projectileSpread, 0f, 180f);
+                    }
                     needsAffects = true;
                 }
                 else
@@ -1680,16 +1543,30 @@ public class SkillComposerWindow : EditorWindow
                     DrawModifierTarget(ef);
                     break;
                 case SkillEffectKind.Damage:
-                    ef.damageType = (DamageType)EditorGUILayout.EnumPopup(new GUIContent("damage type",
-                        "Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (pierces armour, always crits)."), ef.damageType);
+                    // A strike paid by a pile's CARRIED TOTAL is that flat number — there is no roll under it to make a
+                    // basic attack out of, so the choice isn't offered there.
+                    if (!ef.useStackValue || ef.stackValueSource == StackReading.Count)
+                        ef.resolveAsBasicAttack = EditorGUILayout.Toggle(new GUIContent("resolve as a basic attack",
+                            "ON = this strike IS an ordinary attack: the caster swings by ITS OWN rules — its crit, its " +
+                            "accuracy against the target's dodge (so it CAN miss), its weapon's element — and a landed " +
+                            "strike announces a basic attack, feeding Momentum and every on-basic passive. Base power " +
+                            "still scales it: 1 = one normal swing, 2 = twice one. Damage type and element belong to the " +
+                            "weapon then, so they're hidden."), ef.resolveAsBasicAttack);
+                    if (!ef.resolveAsBasicAttack)
+                        ef.damageType = (DamageType)EditorGUILayout.EnumPopup(new GUIContent("damage type",
+                            "Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (pierces armour, always crits)."), ef.damageType);
                     // Hidden only when the pile REPLACES the size (a carried total is dealt flat): a visible number that
                     // changes nothing is a lie about what this effect does. On the COUNT reading the pile ADDS to this
                     // number instead, so it stays live and stays shown.
                     if (!ef.useStackValue || ef.stackValueSource == StackReading.Count)
                         ef.damageMult = EditorGUILayout.Slider(new GUIContent("base power ×",
-                            "The skill's INHERENT strength (Ember ~1×, Meteor ~8×). Affinity picks WHICH stats scale it; this sets HOW BIG. Final = caster ATK/MATK × base power × affinity."), ef.damageMult <= 0f ? 1f : ef.damageMult, 0.1f, 8f);
-                    ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
-                        "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
+                            ef.resolveAsBasicAttack
+                                ? "How hard the swing is: 1 = one of your normal attacks, 2 = twice one. The roll under it is the caster's own."
+                                : "The skill's INHERENT strength (Ember ~1×, Meteor ~8×). Affinity picks WHICH stats scale it; this sets HOW BIG. Final = caster ATK/MATK × base power × affinity."),
+                            ef.damageMult <= 0f ? 1f : ef.damageMult, 0.1f, 8f);
+                    if (!ef.resolveAsBasicAttack)
+                        ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
+                            "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
                     ef.hitCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("hits",
                         "Strikes per landing. Each hit is the TRIGGER for this binding's proc effects (a Status or Execute with a chance)."), ef.hitCount));
                     break;
@@ -1724,6 +1601,18 @@ public class SkillComposerWindow : EditorWindow
                 case SkillEffectKind.Guard:
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage cut", "Fraction of incoming damage prevented (0..1). 0.4 = take 40% less damage."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the damage reduction lasts."), ef.seconds, 0.5f, 20f);
+                    break;
+                case SkillEffectKind.BoostOutgoingDamage:
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage bonus (1 = +100%)",
+                        "The BONUS one charge is worth, not a multiplier: 1 = the attack hits for double. Applied " +
+                        "BEFORE the target's armour, so the flat part of armour is paid out of the bigger number and " +
+                        "the boost is worth more against tanky targets."), ef.magnitude, 0f, 5f);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("window (s)",
+                        "How long unspent charges stay held. They lapse when it ends — the window is a deadline for " +
+                        "using them, not what makes them work."), ef.seconds, 0.5f, 30f);
+                    EditorGUILayout.HelpBox("ONE charge boosts ONE attack, and that attack spends it whether it hits " +
+                        "or misses. Basics, skill strikes, executes and banked damage all count; damage-over-time " +
+                        "ticks never do. Set how many charges below (charges per use).", MessageType.None);
                     break;
                 case SkillEffectKind.Brace:
                     // No magnitude, for the same reason Parry has none: a hit is held or it isn't. Charges come from
@@ -2002,6 +1891,8 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Guard:         return "Temporarily reduces incoming damage to the caster.";
             case SkillEffectKind.Parry:         return "Fully negates the next incoming hit (0 damage) and is spent by it — a timing read, not a damage cut. Fires the OnParry trigger.";
             case SkillEffectKind.Brace:         return "Each charge holds ONE incoming hit back instead of erasing it; the banked damage all lands when the window ends. A delay, not a save.";
+            case SkillEffectKind.BoostOutgoingDamage:
+                                                return "Each charge makes ONE outgoing attack hit harder and is spent by it, hit or miss. Every kind of attack counts except damage-over-time ticks.";
             case SkillEffectKind.Taunt:         return "Forces enemies in range to attack the caster for a while.";
             case SkillEffectKind.Teleport:      return "Blinks the caster INSTANTLY to the aimed point (use Ground aim). No fields — the destination is the aimed point.";
             case SkillEffectKind.Dash:          return "Rushes the caster FAST to the aimed point (use Ground aim) — visible travel, blocked by walls. Dash speed sets how fast; the skill's range is the max distance.";
@@ -2060,6 +1951,7 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Guard:
             case SkillEffectKind.Parry:
             case SkillEffectKind.Brace:
+            case SkillEffectKind.BoostOutgoingDamage:
             case SkillEffectKind.Shield:
             case SkillEffectKind.Regen:
             case SkillEffectKind.Vulnerability:
@@ -2071,18 +1963,6 @@ public class SkillComposerWindow : EditorWindow
             default:
                 return false;
         }
-    }
-
-    // Per-channel lock state (editor-only, session-scoped) — deliberately NOT a field on StatWeight, so the serialized
-    // affinity data stays pure runtime data with no dead 'locked' knob the game would ignore. Keyed by the list's
-    // identity + the stat id, so it survives repaints/row reorder; it resets when the asset unloads (fine to author).
-    static readonly HashSet<(int, int)> _lockedAffinity = new HashSet<(int, int)>();
-    static int RtHash(object o) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(o);
-    static bool IsLocked(List<StatWeight> list, StatId stat) => _lockedAffinity.Contains((RtHash(list), (int)stat));
-    static void SetLocked(List<StatWeight> list, StatId stat, bool locked)
-    {
-        var key = (RtHash(list), (int)stat);
-        if (locked) _lockedAffinity.Add(key); else _lockedAffinity.Remove(key);
     }
 
     // One weighted stat-list (an effect's affinity channel): rows of (stat, lock, %-slider) + add/remove. Affinity is a
@@ -2097,7 +1977,7 @@ public class SkillComposerWindow : EditorWindow
         // Enforce the invariant on entry so legacy assets (or all-zero channels) start summing to 100.
         float sum = 0f;
         for (int i = 0; i < list.Count; i++) sum += Mathf.Max(0f, list[i].weight);
-        if (list.Count > 0 && Mathf.Abs(sum - 100f) > 0.5f) NormalizeTo100(list);
+        if (list.Count > 0 && Mathf.Abs(sum - 100f) > 0.5f) SkillAffinityWeights.NormalizeTo100(list);
 
         EditorGUILayout.BeginHorizontal();
         GUILayout.Space(8);
@@ -2116,21 +1996,21 @@ public class SkillComposerWindow : EditorWindow
         for (int i = 0; i < list.Count; i++)
         {
             var w = list[i];
-            bool locked = IsLocked(list, w.stat);
+            bool locked = SkillAffinityWeights.IsLocked(list, w.stat);
             EditorGUILayout.BeginHorizontal();
             GUILayout.Space(16);
 
             var newStat = (StatId)EditorGUILayout.EnumPopup(w.stat, GUILayout.MaxWidth(110));
             if (newStat != w.stat)
             {
-                SetLocked(list, w.stat, false);          // carry the lock across a rename so it isn't silently dropped
+                SkillAffinityWeights.SetLocked(list, w.stat, false);   // carry the lock across a rename so it isn't silently dropped
                 w.stat = newStat; list[i] = w;
-                SetLocked(list, newStat, locked);
+                SkillAffinityWeights.SetLocked(list, newStat, locked);
             }
 
             bool nowLocked = GUILayout.Toggle(locked,
                 new GUIContent("🔒", "Lock: keep this stat fixed while you drag the others"), GUILayout.MaxWidth(30));
-            if (nowLocked != locked) SetLocked(list, w.stat, nowLocked);
+            if (nowLocked != locked) SkillAffinityWeights.SetLocked(list, w.stat, nowLocked);
 
             using (new EditorGUI.DisabledScope(nowLocked))       // a locked stat's own slider is frozen too
             {
@@ -2143,8 +2023,13 @@ public class SkillComposerWindow : EditorWindow
             if (GUILayout.Button("✕", GUILayout.MaxWidth(22))) rm = i;
             EditorGUILayout.EndHorizontal();
         }
-        if (changed >= 0) Redistribute(list, changed, changedVal);
-        if (rm >= 0) { SetLocked(list, list[rm].stat, false); list.RemoveAt(rm); RebalanceUnlocked(list); }
+        if (changed >= 0) SkillAffinityWeights.Redistribute(list, changed, changedVal);
+        if (rm >= 0)
+        {
+            SkillAffinityWeights.SetLocked(list, list[rm].stat, false);
+            list.RemoveAt(rm);
+            SkillAffinityWeights.RebalanceUnlocked(list);
+        }
 
         EditorGUILayout.BeginHorizontal();
         GUILayout.Space(16);
@@ -2152,148 +2037,6 @@ public class SkillComposerWindow : EditorWindow
         if (GUILayout.Button("+ stat", GUILayout.MaxWidth(90)))
             list.Add(new StatWeight { stat = StatId.MAtk, weight = list.Count == 0 ? 100f : 0f });
         EditorGUILayout.EndHorizontal();
-    }
-
-    // Conserved-total allocator, lock-aware: set channel[changed] = newValue, hold every LOCKED stat fixed, and rescale
-    // the OTHER unlocked stats so the whole list sums to exactly 100 again. The dragged stat is clamped to the budget
-    // the locks leave free (100 − lockedSum), so it can never push an unlocked stat below 0 — "limit changeable sliders
-    // to valid values" falls out of the clamp. Integer output (largest-remainder) so stored + displayed always match.
-    static void Redistribute(List<StatWeight> list, int changed, float newValue)
-    {
-        int n = list.Count;
-        if (n == 0) return;
-
-        int lockedSum = 0, otherUnlocked = 0;
-        float otherOld = 0f;
-        for (int j = 0; j < n; j++)
-        {
-            if (j == changed) continue;
-            if (IsLocked(list, list[j].stat)) lockedSum += Mathf.RoundToInt(Mathf.Max(0f, list[j].weight));
-            else { otherUnlocked++; otherOld += Mathf.Max(0f, list[j].weight); }
-        }
-        int budget = Mathf.Clamp(100 - lockedSum, 0, 100);       // all the dragged + other-unlocked stats can hold
-        int v = Mathf.Clamp(Mathf.RoundToInt(newValue), 0, budget);
-        if (otherUnlocked == 0) v = budget;                       // nothing free to hold a remainder → dragged takes it all
-        int othersBudget = budget - v;
-
-        var targets = new float[n];
-        var pinned = new bool[n];
-        for (int j = 0; j < n; j++)
-        {
-            if (j == changed) { targets[j] = v; pinned[j] = true; }
-            else if (IsLocked(list, list[j].stat)) { targets[j] = Mathf.RoundToInt(Mathf.Max(0f, list[j].weight)); pinned[j] = true; }
-            else if (otherOld > 0f) targets[j] = Mathf.Max(0f, list[j].weight) / otherOld * othersBudget;
-            else targets[j] = otherUnlocked > 0 ? othersBudget / (float)otherUnlocked : 0f;
-        }
-        int[] rounded = RoundSharesPinned(targets, pinned, othersBudget);
-        for (int j = 0; j < n; j++) { var w = list[j]; w.weight = rounded[j]; list[j] = w; }
-    }
-
-    // Fill the UNLOCKED stats so the channel sums to 100 again while holding every locked stat fixed. Used after a stat
-    // is removed. If nothing is unlocked (or all remaining are locked), falls back to a plain rescale-to-100.
-    static void RebalanceUnlocked(List<StatWeight> list)
-    {
-        int n = list.Count;
-        if (n == 0) return;
-        int lockedSum = 0, unlocked = 0;
-        float unlockedOld = 0f;
-        for (int j = 0; j < n; j++)
-        {
-            if (IsLocked(list, list[j].stat)) lockedSum += Mathf.RoundToInt(Mathf.Max(0f, list[j].weight));
-            else { unlocked++; unlockedOld += Mathf.Max(0f, list[j].weight); }
-        }
-        if (unlocked == 0) { NormalizeTo100(list); return; }
-        int budget = Mathf.Clamp(100 - lockedSum, 0, 100);
-        var targets = new float[n];
-        var pinned = new bool[n];
-        for (int j = 0; j < n; j++)
-        {
-            if (IsLocked(list, list[j].stat)) { targets[j] = Mathf.RoundToInt(Mathf.Max(0f, list[j].weight)); pinned[j] = true; }
-            else targets[j] = unlockedOld > 0f ? Mathf.Max(0f, list[j].weight) / unlockedOld * budget : budget / (float)unlocked;
-        }
-        int[] rounded = RoundSharesPinned(targets, pinned, budget);
-        for (int j = 0; j < n; j++) { var w = list[j]; w.weight = rounded[j]; list[j] = w; }
-    }
-
-    // Largest-remainder rounding: entries flagged `pinned` keep their exact (already-integer) target; the rest are
-    // rounded so the UNPINNED entries sum to exactly `unpinnedTotal` (leftover units go to the largest fractions).
-    static int[] RoundSharesPinned(float[] targets, bool[] pinned, int unpinnedTotal)
-    {
-        int n = targets.Length;
-        var result = new int[n];
-        var frac = new float[n];
-        int floored = 0;
-        for (int j = 0; j < n; j++)
-        {
-            if (pinned[j]) { result[j] = Mathf.RoundToInt(targets[j]); continue; }
-            int f = Mathf.FloorToInt(targets[j]);
-            result[j] = f; frac[j] = targets[j] - f; floored += f;
-        }
-        int remainder = unpinnedTotal - floored;
-        for (int r = 0; r < remainder; r++)
-        {
-            int best = -1; float bestFrac = -1f;
-            for (int j = 0; j < n; j++)
-            {
-                if (pinned[j]) continue;
-                if (frac[j] > bestFrac) { bestFrac = frac[j]; best = j; }
-            }
-            if (best < 0) break;
-            result[best]++; frac[best] = -1f;
-        }
-        return result;
-    }
-
-    // Rescale a channel's weights so they sum to exactly 100 (integers, largest-remainder). Used on entry for legacy
-    // assets, after a stat is removed, and on Save. All-zero channels get an even split.
-    static void NormalizeTo100(List<StatWeight> list)
-    {
-        if (list == null || list.Count == 0) return;
-        int n = list.Count;
-        float sum = 0f;
-        for (int i = 0; i < n; i++) sum += Mathf.Max(0f, list[i].weight);
-        var targets = new float[n];
-        for (int i = 0; i < n; i++)
-            targets[i] = sum > 0f ? Mathf.Max(0f, list[i].weight) / sum * 100f : 100f / n;
-        // No pinned index here — largest-remainder over all n to hit 100 exactly.
-        int[] rounded = RoundSharesAll(targets, 100);
-        for (int i = 0; i < n; i++) { var w = list[i]; w.weight = rounded[i]; list[i] = w; }
-    }
-
-    // Largest-remainder rounding over ALL entries to sum exactly `total` (no pinned index).
-    static int[] RoundSharesAll(float[] targets, int total)
-    {
-        int n = targets.Length;
-        var result = new int[n];
-        var frac = new float[n];
-        int floored = 0;
-        for (int j = 0; j < n; j++) { int f = Mathf.FloorToInt(targets[j]); result[j] = f; frac[j] = targets[j] - f; floored += f; }
-        int remainder = total - floored;
-        for (int r = 0; r < remainder; r++)
-        {
-            int best = -1; float bestFrac = -1f;
-            for (int j = 0; j < n; j++) if (frac[j] > bestFrac) { bestFrac = frac[j]; best = j; }
-            if (best < 0) break;
-            result[best]++; frac[best] = -1f;
-        }
-        return result;
-    }
-
-    // Normalize every affinity channel on the skill (called on Save) so assets always store clean percentages.
-    static void NormalizeAllAffinities(SkillDef def)
-    {
-        if (def == null || def.bindings == null) return;
-        foreach (var b in def.bindings)
-        {
-            if (b?.effects == null) continue;
-            foreach (var e in b.effects)
-            {
-                if (e == null) continue;
-                NormalizeTo100(e.affinity);
-                NormalizeTo100(e.durationAffinity);
-                NormalizeTo100(e.hitCountAffinity);
-            }
-        }
     }
 
     struct TickInfo { public string id; public TickTiming when; public float interval; }

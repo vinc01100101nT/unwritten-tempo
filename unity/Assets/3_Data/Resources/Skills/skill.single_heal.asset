@@ -15,6 +15,8 @@ MonoBehaviour:
   targetingMigrated: 1
   id: skill.single_heal
   displayName: Heal
+  weaponType: 0
+  published: 0
   icon: {fileID: 2903848411162822477, guid: 4bae3342ecf8e1c4ca8a5e2eb9f81491, type: 3}
   description: 
   archetype: 0
@@ -22,9 +24,21 @@ MonoBehaviour:
   shape: 0
   complexity: 0
   acquisitionTier: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+  triggersMigrated: 1
   trigger: 1
   triggerSkillId: 
   requiresState: 0
+  requireSkillId: 
   requireState: 12
   requireMinStacks: 1
   consumeAllStacks: 0
@@ -41,10 +55,15 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
   repeatInterval: 0.4
-  projectileCount: 1
-  projectileSpread: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
+  holdCasterForRun: 0
   hasReleaseStance: 1
   releaseStance: 17
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: follow_hit
     targetMode: 1
@@ -52,6 +71,8 @@ MonoBehaviour:
     affects: 3
     playerFaction: 0
     radius: 0.97
+    projectileCount: 1
+    projectileSpread: 0
     stayDuration: 0
     effects:
     - kind: 7
@@ -66,12 +87,27 @@ MonoBehaviour:
       stacking: 1
       stackLimit: 5
       stacksPerApply: 1
+      stacksFromAttackSpeed: 0
+      stackShare: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
+      afterimageSeconds: 0
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
+      starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 1
       chance: 0
+      useStackValue: 0
+      stackValueSource: 0
+      stackValueMult: 1
+      side: 0
       buffStat: 0
       affinity: []
       durationAffinity: []

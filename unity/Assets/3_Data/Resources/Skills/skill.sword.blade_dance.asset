@@ -58,10 +58,10 @@ MonoBehaviour:
   repeatScaleWithAttackSpeed: 1
   repeatBeatsPerSwing: 3
   repeatCostsCharge: 1
+  showRepeatsTotalDamage: 1
   repeatReaim: 1
   repeatReaimRange: 3
-  projectileCount: 1
-  projectileSpread: 0
+  holdCasterForRun: 1
   hasReleaseStance: 1
   releaseStance: 20
   releaseStanceReplayPerRepeat: 1
@@ -72,6 +72,8 @@ MonoBehaviour:
     affects: 2
     playerFaction: 0
     radius: 1.5
+    projectileCount: 1
+    projectileSpread: 0
     stayDuration: 0
     effects:
     - kind: 0
@@ -96,6 +98,11 @@ MonoBehaviour:
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
       casterOpacity: 1
       starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 1
       chance: 0
       useStackValue: 0
@@ -128,6 +135,11 @@ MonoBehaviour:
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
       casterOpacity: 1
       starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 1
       chance: 0
       useStackValue: 0
@@ -160,6 +172,11 @@ MonoBehaviour:
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
       casterOpacity: 1
       starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 1
       chance: 0
       useStackValue: 0
@@ -192,6 +209,11 @@ MonoBehaviour:
       afterimageTint: {r: 0, g: 0.6274508, b: 1, a: 0.5}
       casterOpacity: 0.5
       starCorners: 7
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 1
       chance: 0
       useStackValue: 0

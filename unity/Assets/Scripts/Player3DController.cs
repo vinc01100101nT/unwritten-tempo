@@ -128,6 +128,10 @@ public partial class Player3DController : MonoBehaviour
     /// <summary>True while roam auto-combat is running (drives the on-screen indicator).</summary>
     public bool AutoActive => order == Order.AutoCombat;
 
+    /// <summary>The mob the player is currently engaged with — the one wearing the target arrow — or null.
+    /// Read by quick cast (<see cref="UnitTargeter"/>) so a pressed skill can fire at it without a reticle.</summary>
+    public Health AttackTarget => attackTarget != null && !attackTarget.IsDead ? attackTarget : null;
+
     enum Order { Idle, Move, AttackMove, Attack, AutoCombat }
     Order order = Order.Idle;
     Vector3 movePoint;

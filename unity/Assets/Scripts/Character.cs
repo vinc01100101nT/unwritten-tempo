@@ -504,6 +504,31 @@ public class Character : MonoBehaviour, ICombatUnit
     public bool RollCrit(int targetLuk = 0, bool forceCrit = false)
         => forceCrit || CombatRng.Chance(EffectiveCritChance(targetLuk));
 
+    // ---- the basic swing, this unit's half (ICombatUnit) ---------------------------------------------------------
+    // WHAT one ordinary swing of ours is made of. HOW a swing is landed — the crit → accuracy → magnitude order and
+    // the announcement — belongs to BasicSwing, shared with every other unit, so it is deliberately absent here.
+
+    /// <summary>Our accuracy for a swing, with Blind already taken off.</summary>
+    public int BasicHit => Mathf.Max(0, Hit - States.HitPenalty);
+
+    /// <summary>The equipped weapon's element (Neutral unarmed) — the weapon is the single owner of it, read at
+    /// use-time so there is no per-equip copy to keep in sync.</summary>
+    public Element BasicElement
+    {
+        get { var w = GetEquipped(EquipSlotType.Weapon); return w != null ? w.element : Element.Neutral; }
+    }
+
+    /// <summary>A player's ordinary attack is physical — a spell is a cast, never a swing.</summary>
+    public bool BasicIsMagic => false;
+
+    public bool RollBasicCrit(ICombatUnit victim) => RollCrit(victim != null ? victim.CritShieldLuk : 0);
+
+    public int RollBasicDamage(bool crit) => RollDamageMagnitude(crit);
+
+    /// <summary>The player has no LUK stat, so nothing shields against a crit on us — and nothing reads this today,
+    /// because mobs never crit.</summary>
+    public int CritShieldLuk => 0;
+
     /// <summary>Roll the damage NUMBER for an attack whose crit is already decided. Only called once the strike is
     /// known to connect. UnitOffense.Dealt folds in the damage buffs — the same call a mob's swing makes, so both
     /// scale identically.</summary>

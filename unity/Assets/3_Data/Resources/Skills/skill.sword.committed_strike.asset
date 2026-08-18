@@ -63,8 +63,7 @@ MonoBehaviour:
   repeatCostsCharge: 0
   repeatReaim: 0
   repeatReaimRange: 6
-  projectileCount: 1
-  projectileSpread: 0
+  holdCasterForRun: 0
   hasReleaseStance: 0
   releaseStance: 14
   releaseStanceReplayPerRepeat: 0
@@ -75,6 +74,8 @@ MonoBehaviour:
     affects: 2
     playerFaction: 0
     radius: 1.5
+    projectileCount: 1
+    projectileSpread: 0
     stayDuration: 0
     effects:
     - kind: 0

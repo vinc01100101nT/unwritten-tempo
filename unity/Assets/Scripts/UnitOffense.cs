@@ -25,6 +25,27 @@ public static class UnitOffense
         return Mathf.RoundToInt(rawRoll * buff);
     }
 
+    /// <summary>The LAST thing that happens to an attack on the attacker's side: spend one Boost Outgoing Damage charge,
+    /// if this unit holds any, and multiply the attack by what that charge is worth. Returns the amount unchanged when
+    /// there are none, so every outgoing site can call it without asking first.
+    ///
+    /// <para><b>Call it ONCE per attack, INCLUDING an attack that missed</b> (pass its 0) — the charge pays for making
+    /// the attack, not for landing it, so a whiff spends one exactly as a hit does. Calling it twice for one attack
+    /// would charge the unit twice, which is why it belongs at the site that BUILDS the hit and nowhere downstream.</para>
+    ///
+    /// <para>Deliberately BEFORE the target's armour, not after: armour subtracts a flat amount, so multiplying first
+    /// means that subtraction is paid once out of a bigger number, and the boost is worth MORE the tankier the target.
+    /// That is the design, and it also keeps the charge on the attacker, where the pile lives, instead of shipping the
+    /// attacker's state across to the defender.</para>
+    ///
+    /// <para>Damage-over-time never reaches here — ailment ticks are true damage straight to HP — so they neither gain
+    /// the boost nor eat a charge, with nothing to special-case.</para></summary>
+    public static int Boosted(UnitStates states, int amount)
+    {
+        float mult = states != null ? states.SpendOutgoingBoost() : 1f;
+        return mult == 1f ? amount : Mathf.RoundToInt(amount * mult);
+    }
+
     /// <summary>Seconds from one swing to the next, given a base cadence and the unit's attack-speed multiplier
     /// (&gt;1 = faster). Shared so the player and a mob speed up by the exact same rule.
     ///

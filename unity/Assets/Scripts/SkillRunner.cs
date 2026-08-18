@@ -37,6 +37,17 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // Resolve a looping step's Stay Duration from its tick binding (by tickId). Handed to the VFX context so the
     // runner supplies each step its own stay; the VFX never stores this per-use gameplay number.
     System.Func<string, float> StayFor => stayFor ??= tid => { var b = def.BindingFor(tid); return b != null ? b.stayDuration : 0f; };
+    System.Func<string, ProjectileFan> fanFor;   // cached per-tickId projectile fan resolver (built once; no per-cast alloc)
+    // Resolve a carrier step's volley from its tick binding (by tickId) — the same per-step shape as Stay Duration.
+    // Only a tick authored as Projectile delivery fans; anything else launches the one carrier the VFX composed, so a
+    // fall-in meteor can never be multiplied by a count meant for a bolt.
+    System.Func<string, ProjectileFan> FanFor => fanFor ??= tid =>
+    {
+        var b = def.BindingFor(tid);
+        return b != null && b.targetMode == TargetMode.Ground && b.groundDelivery == GroundDelivery.Projectile
+            ? new ProjectileFan(b.projectileCount, b.projectileSpread)
+            : ProjectileFan.Single;
+    };
     Player3DController body;            // caster's mover — turned to face the cast point on release
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
 
@@ -46,6 +57,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // see "this passive is already upstream of me" no matter how many frames later the damage lands.
     ulong castChain;
     bool consumedThisCast;              // the gate spends ONCE per cast, right after the effects have computed
+    // The one yellow total this run's repeats all climb, or null when the skill didn't ask for one (then a multi-hit
+    // flurry keeps drawing its own, per beat). Purely what's on screen — it reads damage, never changes any.
+    RepeatsDamageTotal runTotal;
     // The required state's stack count SNAPSHOT at cast start — taken before anything is spent, and reused by every
     // tick of the cast. A live re-read would pay the first tick off the full pile and the rest off an empty one, and
     // would also make a multi-tick finisher's damage depend on tick ORDER. (Locked order: snapshot → compute → consume.)
@@ -80,6 +94,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         PassiveEvents.Unregister(this);
         pendingUnit = null;   // a half-aimed cast dies with the runner; never resume stage 2 against a stale pick
+        EndRunTotal();        // the beat coroutine dies with the runner, so its total is ended here or never
         if (castRoutine != null || castAura != null || castCircle != null) EndCast();
     }
 
@@ -178,6 +193,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         targetUnit = unit,
         scaleMult = 1f,
         stayForTick = StayFor,
+        fanForTick = FanFor,
     };
 
     // ---- combo-chain firing -------------------------------------------------
@@ -304,6 +320,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         bool pressed = firedBy != null && firedBy.trigger == SkillTrigger.OnCast;
         if (pressed) castChain = 0UL;   // a player-pressed cast starts a FRESH chain (nothing caused it)
 
+        // The skill call: an ACTIVE skill shouts its name the moment it actually fires — over the caster's head and in
+        // the chat log — through the very same path a said line takes, so the two can never drift apart. Here, at the
+        // one place every way of firing (a press, a combo step, one of the skill's own automatic triggers) passes
+        // through, so no entry point can forget it. A passive is not called out: it has no gesture to announce.
+        if (!def.IsPassive) ChatController.SkillCall(def.displayName);
+
         // The cast finished UNINTERRUPTED (an interrupt runs EndCast + bails before here) — announce it so any passive
         // keyed to this skill via OnSkillCastComplete<skill> fires.
         //
@@ -334,16 +356,24 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // projected radius); repeat cycles inherit it via lastCtx.
         if (def.IsProjectileAim) lastCtx.target = ProjectToTravelRange(lastCtx.target);
 
-        // A projectile skill fans N copies of its ONE composed projectile around the aim direction (authored skill-side,
-        // like repeat). Non-projectile skills, or count 1, just play once.
-        int fan = def.IsProjectileAim ? Mathf.Max(1, def.projectileCount) : 1;
-        if (fan <= 1) VfxDirector.Play(def.vfx, lastCtx, onTick);
-        else PlayFan(fan, def.projectileSpread);
+        // A run that shows one yellow total across all its repeats opens it BEFORE the first play, so the opening beat
+        // counts too. A cast that doesn't repeat can't have a total spanning repeats, so it never opens one.
+        EndRunTotal();   // a re-cast while the last run is still going hands the old total its ending, never orphans it
+        if (def.showRepeatsTotalDamage && (def.repeatCount > 1 || def.repeatCostsCharge))
+            runTotal = RepeatsDamageTotal.Begin();
+
+        // The sequence plays ONCE. A tick that fans launches several copies of ITS OWN carrier step (see the fan
+        // resolver above) — replaying the whole sequence per copy would have fanned every other step along with it.
+        VfxDirector.Play(def.vfx, lastCtx, onTick);
 
         // A charge-driven run has no fixed length — it goes until the pile is empty — so the count is only consulted
         // for the plain fixed-repeat case.
         int extra = def.repeatCostsCharge ? int.MaxValue : Mathf.Max(0, def.repeatCount - 1);
-        if (extra > 0 && isActiveAndEnabled) StartCoroutine(PlayExtraCycles(extra, lastCtx));
+        if (extra > 0 && isActiveAndEnabled)
+        {
+            HoldForBeat(BeatInterval());   // the opening beat; every later one re-takes the hold inside the loop
+            StartCoroutine(PlayExtraCycles(extra, lastCtx));
+        }
     }
 
     // Push the aim point out to the skill's travel range (reused castRange) along the aim direction — a projectile
@@ -357,26 +387,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         Vector3 nrm = d < 0.05f ? new Vector3(transform.forward.x, 0f, transform.forward.z).normalized : dir / d;
         float range = def.castRange > 0f ? def.castRange : d;
         return new Vector3(me.x + nrm.x * range, aim.y, me.z + nrm.z * range);
-    }
-
-    // Play the VFX N times at once, each aimed along a different cone direction centred on the original aim — so one
-    // composed projectile becomes a fanned volley. Each copy's Carrier flies its own line and spread-ticks along it.
-    void PlayFan(int n, float spreadDeg)
-    {
-        Vector3 me = transform.position;
-        Vector3 baseDir = lastCtx.target - me; baseDir.y = 0f;
-        float dist = baseDir.magnitude;
-        if (dist < 0.05f) { VfxDirector.Play(def.vfx, lastCtx, onTick); return; }
-        Vector3 nrm = baseDir / dist;
-        float half = Mathf.Max(0f, spreadDeg) * 0.5f;
-        for (int i = 0; i < n; i++)
-        {
-            float ang = n <= 1 ? 0f : Mathf.Lerp(-half, half, i / (float)(n - 1));
-            Vector3 dir = Quaternion.AngleAxis(ang, Vector3.up) * nrm;
-            var c = lastCtx;                 // struct copy — rotate only this shot's aim point
-            c.target = me + dir * dist;
-            VfxDirector.Play(def.vfx, c, onTick);
-        }
     }
 
     // Reused so filtering a repeat's payload costs no garbage on the combat path — a beat can fire several times a
@@ -401,22 +411,36 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         return repeatEffects;
     }
 
-    System.Collections.IEnumerator PlayExtraCycles(int extra, VfxContext ctx)
+    // The beat, resolved PER BEAT so a speed buff landing mid-run quickens the rest of it. Following swing speed means
+    // the run keeps the caster's own rhythm at any attack speed; the beats-per-swing multiple divides that rhythm
+    // (2 = twice as fast as you swing). Falls back to the authored seconds if the body hasn't spawned, so a missing
+    // rig can't stall the run. One resolver, so the hold below covers exactly the beat the run is about to play.
+    float BeatInterval()
     {
         float authored = def.repeatInterval > 0f ? def.repeatInterval
                        : (def.vfx != null && def.vfx.RestartInterval > 0f ? def.vfx.RestartInterval : 0.35f);
+        if (def.repeatScaleWithAttackSpeed && Character.Instance != null)
+        {
+            float swing = Character.Instance.SwingTime;
+            if (swing > 0f) return swing / Mathf.Max(1, def.repeatBeatsPerSwing);
+        }
+        return authored;
+    }
+
+    // A run that HOLDS its caster re-takes the root at the start of every beat, sized to that beat. A run has no known
+    // total length (a charge-driven one lasts as long as its pile), so a single lock up front is impossible; and
+    // because a lock is only ever extended, never shortened, a hold that stops being re-taken simply lapses when the
+    // run stops — however it stopped. Nothing to undo, and no way to leave the caster rooted after the last beat.
+    void HoldForBeat(float seconds)
+    {
+        if (def.holdCasterForRun && StatusController.Player != null) StatusController.Player.LockActions(seconds);
+    }
+
+    System.Collections.IEnumerator PlayExtraCycles(int extra, VfxContext ctx)
+    {
         for (int i = 0; i < extra; i++)
         {
-            // The beat, resolved PER BEAT so a speed buff landing mid-run quickens the rest of it. Following swing
-            // speed means the run keeps the caster's own rhythm at any attack speed; the beats-per-swing multiple
-            // divides that rhythm (2 = twice as fast as you swing). Falls back to the authored seconds if the body
-            // hasn't spawned, so a missing rig can't stall the run.
-            float interval = authored;
-            if (def.repeatScaleWithAttackSpeed && Character.Instance != null)
-            {
-                float swing = Character.Instance.SwingTime;
-                if (swing > 0f) interval = swing / Mathf.Max(1, def.repeatBeatsPerSwing);
-            }
+            float interval = BeatInterval();
             // manual timer, not `new WaitForSeconds`: this coroutine starts per cast and the interval varies per skill
             ctx.isRepeat = true;   // every play from here on is a REPEAT, not the cast's opening play
             for (float t = 0f; t < interval; t += Time.deltaTime) yield return null;
@@ -453,10 +477,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                 StanceController.Player.PlayActionFor(def.releaseStance, interval, 1f, fitToWindow: true);
 
             VfxDirector.Play(def.vfx, ctx, onTick);
+            HoldForBeat(interval);   // hold through THIS beat; the next one re-takes it, and the last one just lapses
         }
         // However the run stopped — last charge spent, nothing left in reach, caster down — it is over here, so the
         // piles it set up are over too.
         EndRunPiles();
+        EndRunTotal();
     }
 
     /// <summary>End every pile the cast's opening play granted on the caster. A charge-driven run has no length of its
@@ -483,6 +509,16 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                 if (SkillEffect.TryStateFor(e, out var id)) states.ConsumeFrom(def.id, id, 0, all: true);
             }
         }
+    }
+
+    /// <summary>Tell this run's shared yellow total that the run is over. Each number still open finishes its own idle
+    /// wait before closing, so the last beat's total reads exactly like every earlier one. Safe to call when there is
+    /// none — a run that never showed one has nothing to end.</summary>
+    void EndRunTotal()
+    {
+        if (runTotal == null) return;
+        runTotal.End();
+        runTotal = null;
     }
 
     bool Spend()
@@ -540,6 +576,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // Stamp this cast's causal chain for the whole burst, so any trigger the damage raises (OnDamageDealt / OnKill fire
         // synchronously inside the applier) can see which passives are already upstream and refuse to re-fire them.
         var prevCause = PassiveEvents.Push(castChain, def.id);
+        var prevTotal = RepeatsDamageTotal.Push(runTotal);   // null unless this run draws one total across its repeats
         try
         {
             // The cast hands DOWN what the pile measures and nothing more: which effects that pile pays, and how, is
@@ -559,7 +596,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                                           // the SAME pile, and the first one can't spend it out from under the second.
                                           vars: new StackVars(castStacks, castCarried));
         }
-        finally { PassiveEvents.Pop(prevCause); }
+        finally { RepeatsDamageTotal.Pop(prevTotal); PassiveEvents.Pop(prevCause); }
 
         // COMPUTE BEFORE CONSUME: the effects above read the LIVE store (Deathblow sees the whole Momentum pile while
         // rolling its damage); only now is the cost paid. Once per cast, not per tick.
@@ -610,7 +647,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
     // ---- IHotbarSkill -------------------------------------------------------
     public int SlotOrder => def != null ? def.slotOrder : 100;
-    public string ShortLabel => def != null ? def.shortLabel : "Skill";
+    public string ShortLabel => def != null ? def.HotbarLabel : SkillDef.DefaultShortLabel;
     public string KeyLabel => def != null ? def.keyLabel : "";
     public Sprite Icon => def != null ? def.icon : null;
     public int ManaCost => def != null ? def.manaCost : 0;

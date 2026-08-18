@@ -35,6 +35,10 @@ public enum StateId
     // above keeps its name for the same reason Parry does — one combat verb naming the effect, the state and the
     // skill is this codebase's established pattern; see SkillEffectKind.Parry / StateId.Parry / skill.sword.parry.)
     DeferredDamage,               // The DEBT. stacks = one delayed hit each, intAmount = its damage; the SUM comes due at expiry.
+    // Parry's mirror on the OUTGOING side: stacks = CHARGES, and one charge multiplies one attack this unit sends,
+    // spent by that attack whether it hits or misses. Each stack carries its own bonus, so a charge is worth what the
+    // skill that granted it said — never what a later, different grant says.
+    OutgoingDamageBoost,
 }
 
 /// <summary>
@@ -477,6 +481,15 @@ public class UnitStates : MonoBehaviour
         Apply(StateId.Parry, seconds);
     }
 
+    /// <summary>Hold outgoing-damage-boost charges for <paramref name="seconds"/> — each multiplies ONE attack this
+    /// unit sends by 1 + <paramref name="bonus"/> and is spent by it. HOW MANY comes from the apply context's
+    /// stacks-per-apply, the same knob Parry's charges use, so the stacks ARE the charges.</summary>
+    public void BeginOutgoingBoost(float seconds, float bonus)
+    {
+        if (seconds <= 0f || bonus <= 0f) return;
+        Apply(StateId.OutgoingDamageBoost, seconds, bonus);
+    }
+
     /// <summary>Open a BRACE window for <paramref name="seconds"/>: incoming damage stops reaching HP and is recorded
     /// instead, one stack per hit (see <see cref="AddDeferredHit"/>), coming due as a lump when the window ends.
     /// Applied with ONE zero-value stack — the window itself — so the entry exists (and shows its timer) before any
@@ -661,6 +674,23 @@ public class UnitStates : MonoBehaviour
         Recompute();
         OnChanged?.Invoke();
         return take;
+    }
+
+    /// <summary>Spend ONE outgoing-damage-boost charge and report what it is worth as a multiplier — 1 when this unit
+    /// holds none, so the caller can multiply unconditionally. The charge goes whether the attack that asked for it
+    /// goes on to hit or miss: it was spent making the attack, exactly as an attack-intent gate is.
+    ///
+    /// <para>The bonus is read off THE CHARGE BEING SPENT rather than the pile's folded total, so a pile of three
+    /// +100% charges is three doubled attacks, never one quadrupled one — the multiplicity is the stacking, and this
+    /// kind owns none of its own. Oldest first, matching every other spend.</para></summary>
+    public float SpendOutgoingBoost()
+    {
+        EnsureFresh();
+        var s = Find(StateId.OutgoingDamageBoost);
+        if (s == null || s.stacks.Count == 0) return 1f;
+        float mult = 1f + s.stacks[0].magnitude;
+        Consume(StateId.OutgoingDamageBoost, 1);
+        return mult;
     }
 
     /// <summary>Remove a state now (e.g. Cleanse, or a consumed mark). No-op if absent.</summary>

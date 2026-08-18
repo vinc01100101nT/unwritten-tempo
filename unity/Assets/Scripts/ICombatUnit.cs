@@ -47,6 +47,39 @@ public interface ICombatUnit : IDamageable
     /// <summary>Restore hit points (clamped at full, ignored when dead).</summary>
     void Heal(int amount);
 
+    // ---- the BASIC SWING: what one ordinary attack from this unit is made of -------------------------------------
+    // A skill that says "this strike resolves as a basic attack" asks the CASTER these, never the player: the skill
+    // states the intent, the unit supplies the swing. Both halves live here so <see cref="BasicSwing"/> can be the one
+    // implementation of "land one swing" for every unit that has one — see the player/NPC shared-behaviour rule.
+    // Rolling is the unit's business (its crit rule, its weapon, its spread); the ORDER those rolls happen in, and
+    // what a landed swing announces, belong to the shared function and must never be re-written per unit.
+
+    /// <summary>Accuracy this unit swings with, blindness already taken off — rolled against the victim's
+    /// <see cref="Flee"/>.</summary>
+    int BasicHit { get; }
+
+    /// <summary>The element this unit's ordinary attack carries (its weapon's, or Neutral unarmed).</summary>
+    Element BasicElement { get; }
+
+    /// <summary>True when this unit's ordinary attack resolves as MAGIC (a caster mob), so a swing lands against the
+    /// magic side of the defence maths rather than armour.</summary>
+    bool BasicIsMagic { get; }
+
+    /// <summary>Roll whether one swing at <paramref name="victim"/> crits, by this unit's own crit rule (a mob never
+    /// crits). Separate from the damage roll because a crit cannot be evaded, so accuracy needs this answer first.</summary>
+    bool RollBasicCrit(ICombatUnit victim);
+
+    /// <summary>Roll ONE ordinary swing's damage, crit already decided — this unit's own attack range, spread and
+    /// damage buffs, and nothing about whichever skill asked for it.</summary>
+    int RollBasicDamage(bool crit);
+
+    /// <summary>This unit's dodge, rolled against an attacker's <see cref="BasicHit"/>.</summary>
+    int Flee { get; }
+
+    /// <summary>The LUK that lowers an attacker's crit chance when it swings at this unit. The player has no LUK stat
+    /// today, so its answer is 0 — and nothing reads it, because mobs never crit.</summary>
+    int CritShieldLuk { get; }
+
     // ---- movement + aggro: the same verbs on every unit ---------------------------------------------------------
     // Each side drives a different rig (the player's controller vs a mob's pathing agent), but the CAPABILITY is
     // identical and named identically, so an effect never has to know which kind of thing it is moving.

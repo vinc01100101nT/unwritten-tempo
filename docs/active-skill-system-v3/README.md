@@ -61,7 +61,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 | cast_time | Wind-up before firing (DEX shortens it) | SkillDef.castTime |
 | range | Max aim distance | SkillDef.castRange |
 | radius | AoE / hit width | SkillTickBinding.radius |
-| projectiles / spread | Fan copies + cone angle | SkillDef.projectileCount / projectileSpread |
+| projectiles / spread | Fan copies of THIS tick's carrier + cone angle | SkillTickBinding.projectileCount / projectileSpread |
 | cycle | Whole-effect repeat count + interval | SkillDef.repeatCount / repeatInterval |
 | charge_cost | Ult charge to cast (Ultimate tier only) | SkillDef.chargeCost |
 

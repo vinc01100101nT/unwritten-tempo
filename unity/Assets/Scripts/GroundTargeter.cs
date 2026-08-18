@@ -70,6 +70,12 @@ public class GroundTargeter : MonoBehaviour
     public static void Begin(Transform player, float castRange, System.Action<Vector3> onConfirm,
                              string circleId, Color circleTint, float circleRadius, bool projectilePreview = false)
     {
+        // Quick cast (Settings ▸ Gameplay): skip the reticle entirely and place the skill under the cursor,
+        // clamped to range the same way the reticle clamps it. Every caster inherits this because it sits in
+        // the aim step itself. With no ground under the cursor there's nowhere to fire, so the reticle opens.
+        if (GameSettings.QuickCastGroundTarget && QuickPoint(player, castRange, out Vector3 quick))
+        { active = false; onConfirm?.Invoke(quick); return; }
+
         if (inst == null)
         {
             var go = new GameObject("GroundTargeter") { hideFlags = HideFlags.DontSaveInEditor };
@@ -84,6 +90,24 @@ public class GroundTargeter : MonoBehaviour
         inst.circleRadius = circleRadius <= 0f ? 1.5f : circleRadius;
         inst.projectilePreview = projectilePreview;
         active = true;
+    }
+
+    static bool QuickPoint(Transform player, float castRange, out Vector3 point)
+    {
+        point = Vector3.zero;
+        var cam = Camera.main;
+        if (cam == null || !Player3DController.GroundUnderCursor(cam, out Vector3 p)) return false;
+        point = ClampToRange(player != null ? player.position : Vector3.zero, p, castRange);
+        return true;
+    }
+
+    // Keep the aim point inside castRange (planar) of the caster — the one rule for both the reticle and quick cast.
+    static Vector3 ClampToRange(Vector3 me, Vector3 p, float castRange)
+    {
+        Vector3 off = p - me; off.y = 0f;
+        if (castRange > 0f && off.magnitude > castRange)
+            p = me + off.normalized * castRange + Vector3.up * (p.y - me.y);
+        return p;
     }
 
     public static void Cancel()
@@ -199,11 +223,8 @@ public class GroundTargeter : MonoBehaviour
 
         if (Player3DController.GroundUnderCursor(cam, out Vector3 p))
         {
-            // Clamp the reticle to castRange (planar) from the player.
             Vector3 me = player != null ? player.position : Vector3.zero;
-            Vector3 off = p - me; off.y = 0f;
-            if (castRange > 0f && off.magnitude > castRange)
-                p = me + off.normalized * castRange + Vector3.up * (p.y - me.y);
+            p = ClampToRange(me, p, castRange);
             point = p; hasPoint = true;
             // Park this object at the cursor point so the attached circle tracks it; spawn the circle on first use.
             transform.position = p;
