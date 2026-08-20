@@ -102,7 +102,7 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       starCorners: 5
       hitCount: 1
-      chance: 0
+      chance: 1
       useStackValue: 0
       stackValueSource: 0
       stackValueMult: 1
@@ -131,7 +131,7 @@ MonoBehaviour:
       dashEaseSeconds: 0.3
       starCorners: 5
       hitCount: 1
-      chance: 0
+      chance: 1
       useStackValue: 0
       stackValueSource: 0
       stackValueMult: 1

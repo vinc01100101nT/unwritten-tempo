@@ -19,7 +19,27 @@ public static class CombatAuthority
     public static int Apply(IDamageable target, in DamageInfo info)
     {
         if (target == null) return 0;
-        return target.ApplyDamage(info);
+        // The attacker's RUN of hits is counted here, before the sink, for the same reason the flinch is decided after
+        // it: this is the one door every real hit passes through. Counting before means the number is already right
+        // when the sink fires the moment a skill reads it — and switching targets restarts the run at this very hit.
+        var attackerStates = info.attacker != null ? info.attacker.States : null;
+        if (attackerStates != null) attackerStates.NoteAttackHit(target as ICombatUnit);
+
+        int dealt = target.ApplyDamage(info);
+        // FLINCH is decided here because this is the one door every real hit passes through — a player swing, a skill
+        // tick and a mob's bite alike. It keys off what was actually DEALT, so a miss, a parry, a full shield absorb
+        // and a braced hit all cost no HP and stagger nobody, with no case written for any of them.
+        if (dealt > 0 && target is ICombatUnit unit)
+        {
+            var status = unit.StatusHost;
+            if (status != null) status.TookHit(dealt);
+        }
+        // The same DEALT number read from the ATTACKER's side: a hit that cost the victim nothing ends their run. This
+        // is the ONLY place that fact exists — a miss, a parry and a fully absorbed hit fire no trigger for anything to
+        // hear. Overkill beats are excluded: a flurry's extra numbers past a mob's death are presentation, and reading
+        // them as failed hits would break a run the attacker never actually dropped.
+        if (attackerStates != null && dealt <= 0 && !info.overkill) attackerStates.BreakConsecutiveHits();
+        return dealt;
     }
 
     /// <summary>Apply RAW over-time / reflected damage (poison/burn/bleed ticks, thorns reflect) — the second combat

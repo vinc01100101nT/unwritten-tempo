@@ -21,9 +21,15 @@ public readonly struct DamageInfo
     /// rides along. The defender only PRESENTS the miss — it must never re-roll, since the roll is random and a second
     /// one could disagree with the first. On a miss <see cref="amount"/> is 0: no damage was rolled at all.</summary>
     public readonly bool missed;
+    /// <summary>WHO SWUNG, whichever side they are on — the one handle both a player and a mob answer to. Carried so
+    /// the damage door can tell the attacker what their own hit did, which is the only place a hit that dealt NOTHING
+    /// is visible: a miss, a parry and a full absorb fire no trigger anywhere. <see cref="source"/> stays the mob-only
+    /// handle the player's reflect already reaches back through.</summary>
+    public readonly ICombatUnit attacker;
 
     public DamageInfo(int amount, Element element, bool isMagic = false, bool isCrit = false,
-                      int attackerHit = -1, bool overkill = false, MonsterAI3D source = null, bool missed = false)
+                      int attackerHit = -1, bool overkill = false, MonsterAI3D source = null, bool missed = false,
+                      ICombatUnit attacker = null)
     {
         this.amount = amount;
         this.element = element;
@@ -33,6 +39,7 @@ public readonly struct DamageInfo
         this.overkill = overkill;
         this.source = source;
         this.missed = missed;
+        this.attacker = attacker;
     }
 }
 

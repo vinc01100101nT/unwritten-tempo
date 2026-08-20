@@ -139,6 +139,17 @@ public class StanceController : MonoBehaviour
     /// whatever the beat's length is, and the stance may well be authored to a gait instead.</param>
     public float PlayActionFor(StanceId id, float seconds = 0f, float durationScale = 1f, bool fitToWindow = false)
     {
+        float played = ActionDuration(id, seconds, durationScale, fitToWindow);
+        overrideId = id; overrideWindow = played; overrideUntil = Time.time + played; overrideFit = fitToWindow;
+        return played;
+    }
+
+    /// <summary>How long <paramref name="id"/> WOULD play for, without playing it — the same number
+    /// <see cref="PlayActionFor"/> roots the caster for. Split out so anything that must last "exactly as long as the
+    /// animation" reads the clip rather than a seconds field typed next to it: a hurt reaction and the movement stop
+    /// that goes with it have to be the same length, and two hand-typed numbers is how they drift apart.</summary>
+    public float ActionDuration(StanceId id, float seconds = 0f, float durationScale = 1f, bool fitToWindow = false)
+    {
         var b = StanceCatalog.Get(id);
         float natural = (pose != null && b != null) ? pose.NaturalDuration(b.action, b.clip) : 0f;
         if (natural <= 0.05f) natural = 0.6f;   // clip missing/absent → a sane default beat
@@ -156,7 +167,6 @@ public class StanceController : MonoBehaviour
             // durationScale; the clip is fit to it, so play time == the window.
             dur = (seconds > 0f ? seconds : natural) * Mathf.Max(0.01f, durationScale);
 
-        overrideId = id; overrideWindow = dur; overrideUntil = Time.time + dur; overrideFit = fitToWindow;
         return dur;
     }
 

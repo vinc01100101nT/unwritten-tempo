@@ -95,6 +95,11 @@ CASES = [
     ("editing a pile that skill never leaves behind",
      patch("skill.sword.encore.asset", ("modifierStateId: 14", "modifierStateId: 13")),
      "never leaves that pile behind"),
+    # Flips the asset's own answer, like the repeat case above, so the break is real rather than a second key the
+    # true one further down would overrule.
+    ("an effect that can never happen",
+     patch("skill.sword.guard_stance.asset", ("chance: 1", "chance: 0")),
+     "can never happen"),
 ]
 
 

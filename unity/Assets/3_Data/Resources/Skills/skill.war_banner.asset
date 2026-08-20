@@ -48,6 +48,7 @@ MonoBehaviour:
       seconds: 8
       magnitude: 1.3
       hitCount: 1
+      chance: 1
       buffStat: 0
       affinity:
       - stat: 4

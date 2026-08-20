@@ -77,12 +77,6 @@
           "effect": "Grants **+30% Attack Speed** for **8s** and inflicts **2× damage taken** for **3s**. Blade Dance turns the speed into more charges, more parries and a faster storm; Retribution banks the doubled damage."
         },
         {
-          "name": "Feint",
-          "cost": "*in tuning*",
-          "flavor": "Strike between heartbeats.",
-          "effect": "A quick strike. Against an enemy mid-wind-up, **interrupts and staggers** the attack."
-        },
-        {
           "name": "Committed Strike",
           "cost": "*in tuning*",
           "flavor": "One perfect swing.",
@@ -155,7 +149,7 @@
         {
           "name": "Opening",
           "flavor": "Find the weakness.",
-          "effect": "A successful **Feint** may create an **Opening**. Your next damaging strike consumes it to deal **200% Attack**."
+          "effect": "A successful **Parry** creates an **Opening**: your next attack deals **+200% damage** within **5s**. One attack spends it — hit or miss."
         },
         {
           "name": "Pressure",

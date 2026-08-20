@@ -140,6 +140,16 @@ public static class SkillTooltip
     public static string DescribeEffect(SkillEffect e)
     {
         if (e == null) return null;
+        string line = DescribeEffectBody(e);
+        // The odds are said ONCE, here, for every kind that has them — so a new effect never has to remember to
+        // mention its own chance. A certain effect (the default) says nothing, because "100%" is just noise.
+        if (line == null || !SkillEffect.RollsChance(e.kind) || e.chance >= 1f) return line;
+        if (e.kind == SkillEffectKind.Status || e.kind == SkillEffectKind.Execute) return line;   // these word it themselves
+        return Pct(Mathf.Clamp01(e.chance)) + " per hit: " + char.ToLower(line[0]) + line.Substring(1);
+    }
+
+    static string DescribeEffectBody(SkillEffect e)
+    {
 
         // An effect the pile REPLACES has no fixed number to preview — its size is decided at cast time — so say what
         // it reads instead of printing a base power the runtime will ignore. An effect the pile merely ADDS power to
@@ -186,11 +196,11 @@ public static class SkillTooltip
                     case Ailment.Burn:  body = e.ailment + " " + Hl(e.magnitude.ToString("0.#")) + "/tick for " + Hl(e.seconds.ToString("0.#") + "s"); break;
                     default:            body = e.ailment + " for " + Hl(e.seconds.ToString("0.#") + "s"); break;
                 }
-                // A proc (chance > 0) rolls per hit; else it's a guaranteed apply.
-                return e.chance > 0f ? Pct(e.chance) + " per hit: " + body : char.ToUpper(body[0]) + body.Substring(1);
+                // Below certain it reads as the gamble it is; certain (the default) just states what happens.
+                return e.chance < 1f ? Pct(e.chance) + " per hit: " + body : char.ToUpper(body[0]) + body.Substring(1);
             }
             case SkillEffectKind.Execute:
-                return (e.chance > 0f ? Pct(e.chance) + " per hit: " : "")
+                return (e.chance < 1f ? Pct(e.chance) + " per hit: " : "")
                      + "execute — bonus " + DmgWord(e.damageType) + " damage scaling with the target's missing HP (×" + Hl(e.magnitude.ToString("0.##")) + ")";
             case SkillEffectKind.Heal:          return "Heals " + Hl(e.amount.ToString()) + " HP";
             case SkillEffectKind.Guard:         return "Reduces damage taken " + Pct(Mathf.Clamp01(e.magnitude)) + " for " + Hl(e.seconds.ToString("0.#") + "s");
@@ -217,6 +227,21 @@ public static class SkillTooltip
                 return charges > 1
                     ? "Your next " + Hl(charges.ToString()) + " attacks deal " + amount + window
                     : "Your next attack deals " + amount + window;
+            }
+            case SkillEffectKind.ImmuneToDisables:
+                return "Nothing stops you for " + Hl(e.seconds.ToString("0.#") + "s") +
+                       " — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts";
+            case SkillEffectKind.ReduceOutgoingDamage:
+            {
+                // Same shape as the boost's line — charges read off the one knob the runtime uses — but the subject is
+                // whoever the effect lands on, since this one is authored on either side.
+                int charges = e.stacking ? Mathf.Max(1, e.stacksPerApply) : 1;
+                string window = " within " + Hl(e.seconds.ToString("0.#") + "s");
+                string amount = "−" + Pct(Mathf.Clamp01(e.magnitude)) + " damage";
+                string who = Subject(e, "Your", "Their");
+                return charges > 1
+                    ? who + " next " + Hl(charges.ToString()) + " attacks deal " + amount + window
+                    : who + " next attack deals " + amount + window;
             }
             case SkillEffectKind.Parry:
             {

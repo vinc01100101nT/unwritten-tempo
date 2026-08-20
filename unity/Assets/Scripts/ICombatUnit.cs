@@ -27,6 +27,11 @@ public interface ICombatUnit : IDamageable
     /// avatar is spawned separately (see memory "player-two-gameobjects-one-store").</summary>
     Transform Body { get; }
 
+    /// <summary>This unit's status host — the thing that holds its ailments, its action lock and its flinch. Exposed
+    /// (and CACHED on both sides) because the damage door touches it on every landed hit, and a component lookup per
+    /// hit per mob is exactly the per-frame cost PERFORMANCE.md bans.</summary>
+    StatusController StatusHost { get; }
+
     /// <summary>Current hit points — read by the effects whose strength scales off how hurt the target is.</summary>
     int CurrentHP { get; }
 

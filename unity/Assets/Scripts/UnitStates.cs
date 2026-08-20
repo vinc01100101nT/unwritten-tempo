@@ -39,6 +39,13 @@ public enum StateId
     // spent by that attack whether it hits or misses. Each stack carries its own bonus, so a charge is worth what the
     // skill that granted it said — never what a later, different grant says.
     OutgoingDamageBoost,
+    // The boost's mirror, and a SEPARATE pile on purpose: sharing one would let a penalty charge landed by an enemy
+    // spend the boost charge you were saving, so a debuff could quietly eat a buff. Held apart, a unit carrying both
+    // simply pays both on the same attack.
+    OutgoingDamagePenalty,        // stacks = CHARGES. One charge weakens one attack this unit sends, spent hit or miss.
+    // "Nothing stops me." Blocks every disable while it is up — see StatusController for the exact list it turns away.
+    // Timed, not charged: it is a window you bought, and one hit does not use it up.
+    DisableImmune,
 }
 
 /// <summary>
@@ -490,6 +497,79 @@ public class UnitStates : MonoBehaviour
         Apply(StateId.OutgoingDamageBoost, seconds, bonus);
     }
 
+    /// <summary>Hold outgoing-damage-penalty charges for <paramref name="seconds"/> — each multiplies ONE attack this
+    /// unit sends by 1 − <paramref name="cut"/> and is spent by it. The mirror of <see cref="BeginOutgoingBoost"/>
+    /// down to the knob it reads: HOW MANY comes from the apply context's stacks-per-apply.</summary>
+    public void BeginOutgoingPenalty(float seconds, float cut)
+    {
+        if (seconds <= 0f || cut <= 0f) return;
+        Apply(StateId.OutgoingDamagePenalty, seconds, cut);
+    }
+
+    /// <summary>Turn away every disable for <paramref name="seconds"/> — see <see cref="StateId.DisableImmune"/>.
+    /// A plain window: it is not spent by what it blocks, so one stun does not use it up.</summary>
+    public void BeginDisableImmunity(float seconds)
+    {
+        if (seconds <= 0f) return;
+        Apply(StateId.DisableImmune, seconds);
+    }
+
+    /// <summary>Is every disable being turned away right now? Read by the flinch, the ailment door, the shove door and
+    /// the cast wind-up, so one window covers all of them and none of them keeps its own copy of the answer.</summary>
+    public bool DisablesBlocked => Has(StateId.DisableImmune);
+
+    // ---- consecutive hits on one body ---------------------------------------------------------------------------
+    // Counted for EVERY unit, always, with nothing authored anywhere: a run of hits is a fact about the fight, not
+    // something a skill hands out. Deliberately NOT a StateId — it has no window to show and nothing to spend, so a
+    // state entry would carry a duration knob, a stack-limit knob and a consume knob that all did nothing.
+    //
+    // WHICH body the run is against, and WHICH LIFE of that body: a dead mob is pooled and returns as the SAME object,
+    // so the body alone can't tell "still the one I was hitting" from "a brand-new mob wearing a corpse".
+    Transform streakTarget;
+    int streakTargetLife;
+
+    /// <summary>This unit's unbroken run of hits on one body — 0 when there is no run. Read by a skill's stack gate;
+    /// nothing spends it, because a run is ended by the fight, never by a skill cashing it.</summary>
+    public int ConsecutiveHits { get; private set; }
+
+    /// <summary>How many lives this unit has started. Bumped at each revive choke, and read by whoever is counting a
+    /// run against this body — see <see cref="NoteAttackHit"/>.</summary>
+    public int LifeCount { get; private set; }
+
+    /// <summary>A new life starts here: nobody's run of hits on the old one carries over, and this unit's own run dies
+    /// with the life that built it.</summary>
+    public void NoteNewLife()
+    {
+        LifeCount++;
+        BreakConsecutiveHits();
+    }
+
+    /// <summary>This unit just sent a hit at <paramref name="victim"/>. Called BEFORE the damage lands, so the count is
+    /// already right when the victim's damage path fires the moment a skill answers. Switching bodies restarts the run
+    /// AT this hit rather than wiping it — a new target's first hit is a run of one.</summary>
+    public void NoteAttackHit(ICombatUnit victim)
+    {
+        var body = victim != null ? victim.Body : null;
+        int life = victim != null && victim.States != null ? victim.States.LifeCount : 0;
+        if (body != streakTarget || life != streakTargetLife)
+        {
+            streakTarget = body;
+            streakTargetLife = life;
+            ConsecutiveHits = 0;
+        }
+        ConsecutiveHits++;
+    }
+
+    /// <summary>That hit cost the victim nothing — a miss, a parry, a full absorb, an immune element — so the run is
+    /// over. Separate from <see cref="NoteAttackHit"/> because the two answers arrive at different times: WHO is being
+    /// hit is known before the hit, WHAT it actually dealt only after.</summary>
+    public void BreakConsecutiveHits()
+    {
+        streakTarget = null;
+        streakTargetLife = 0;
+        ConsecutiveHits = 0;
+    }
+
     /// <summary>Open a BRACE window for <paramref name="seconds"/>: incoming damage stops reaching HP and is recorded
     /// instead, one stack per hit (see <see cref="AddDeferredHit"/>), coming due as a lump when the window ends.
     /// Applied with ONE zero-value stack — the window itself — so the entry exists (and shows its timer) before any
@@ -690,6 +770,21 @@ public class UnitStates : MonoBehaviour
         if (s == null || s.stacks.Count == 0) return 1f;
         float mult = 1f + s.stacks[0].magnitude;
         Consume(StateId.OutgoingDamageBoost, 1);
+        return mult;
+    }
+
+    /// <summary>Spend ONE outgoing-damage-penalty charge and return what it leaves the attack worth (1 = none held).
+    /// Floored at 0 so a 100%-cut charge means "this attack does nothing", never healing the target.
+    ///
+    /// <para>Read off THE CHARGE BEING SPENT, oldest first, for the same reason the boost is: three 40% charges are
+    /// three separately-weakened attacks, not one attack cut by 120%.</para></summary>
+    public float SpendOutgoingPenalty()
+    {
+        EnsureFresh();
+        var s = Find(StateId.OutgoingDamagePenalty);
+        if (s == null || s.stacks.Count == 0) return 1f;
+        float mult = Mathf.Max(0f, 1f - s.stacks[0].magnitude);
+        Consume(StateId.OutgoingDamagePenalty, 1);
         return mult;
     }
 

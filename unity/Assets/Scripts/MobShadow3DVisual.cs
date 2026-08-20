@@ -28,9 +28,6 @@ public class MobShadow3DVisual : Agent3DVisual
              "Interval so the swing finishes before the next one starts.")]
     public float swingSeconds = 0.45f;
 
-    [Tooltip("Seconds the flinch animation plays after this mob takes damage.")]
-    public float hurtSeconds = 0.3f;
-
     // NO freeze-distance field here on purpose. Every mob already has one on its brain (MonsterAI3D.simulateRadius),
     // which is the single owner; a second box on this component would put two editable numbers for one behaviour on
     // the same object, with whichever ran last silently winning.
@@ -154,7 +151,8 @@ public class MobShadow3DVisual : Agent3DVisual
         // Flinch on any HP drop. Read from Health.Current rather than a damage event so this stays a pure visual
         // observer — nothing in the combat path has to know a shadow exists.
         int hp = health.Current;
-        if (hp < lastHp) hurtUntil = Time.time + hurtSeconds;
+        // Length read from the clip, like the player's — and the same length this mob's feet are pinned for.
+        if (hp < lastHp && stance != null) hurtUntil = Time.time + stance.ActionDuration(StanceId.Hurt);
         lastHp = hp;
 
         if (Time.time < hurtUntil)

@@ -24,6 +24,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     float comboDamageMult = 1f;         // ×ramp for the CURRENT cast when fired from a combo chain (1 = solo). Set per
                                         // combo step; solo Cast/CastTargeted reset it to 1 so a normal cast is unscaled.
     Coroutine castRoutine;              // active cast wind-up (null = not casting); blocks re-cast + drives the CastBar
+    int pendingMana;                    // this cast's cost, checked at the press and taken at the release (never both)
     VfxSequenceRunner castAura;         // the global OnCastStart aura looping for this wind-up; MUST be Stopped at every exit
     Vfx.EffectHandle castCircle;        // the per-skill cast circle (def.castCircleId) for this wind-up; MUST be Stopped at every exit
     VfxContext lastCtx;                 // captured per cast so OnTick can read the Single-scope target unit
@@ -94,6 +95,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         PassiveEvents.Unregister(this);
         pendingUnit = null;   // a half-aimed cast dies with the runner; never resume stage 2 against a stale pick
+        pendingMana = 0;      // …and an unfinished wind-up is never charged for
         EndRunTotal();        // the beat coroutine dies with the runner, so its total is ended here or never
         if (castRoutine != null || castAura != null || castCircle != null) EndCast();
     }
@@ -232,7 +234,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         firedBy = def.CastEntry;   // a combo step is still the player casting this skill, just without its own reticle
         var sc = StatusController.Player;
         if (sc != null && (sc.CannotAct || sc.Silenced)) return false;
-        if (!Character.Instance.SpendMana(def.manaCost)) { BattleNotice.Warn("No MP", NoManaColor); return false; }
+        if (Character.Instance.CurrentMP < def.manaCost) { BattleNotice.Warn("No MP", NoManaColor); return false; }
+        pendingMana = def.manaCost;   // paid at the release, exactly like a pressed cast
         return true;
     }
 
@@ -260,6 +263,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         float mult = Character.Instance != null ? Character.Instance.CastTimeMult : 1f;
         float dur = def.castTime * mult;
+        float startedAt = Time.time;   // any HP lost after this instant breaks the wind-up
 
         if (dur > 0f)
         {
@@ -270,9 +274,14 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             string label = def.displayName;
             for (float t = 0f; t < dur; t += Time.deltaTime)
             {
+                // Broken by death, silence, hard CC — and now by any hit that actually cost HP, which is the whole
+                // reason a long wind-up is a gamble. The earned footing does NOT save a cast (shrugging off a stagger
+                // is not the same as keeping your concentration); only the bought window does, which is what makes
+                // that window worth buying.
                 if (Character.Instance == null || Character.Instance.IsDead ||
-                    (sc != null && (sc.Silenced || sc.CannotAct)))
-                { EndCast(); yield break; }
+                    (sc != null && (sc.Silenced || sc.CannotAct ||
+                                    (!sc.DisablesBlocked && sc.LastHpLossTime > startedAt))))
+                { pendingMana = 0; EndCast(); yield break; }
                 CastBar.Set(UnitAnchor.Head(transform), t / dur, label, def.tint);
                 yield return null;
             }
@@ -314,6 +323,13 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // of the whole effect is owned HERE (gameplay), not the Vfx Composer (which stays WYSIWYG: one cycle = one fall).
     void PlayCycles()
     {
+        // THE RELEASE: the skill is actually going off, so this is where its mana is taken. Only a press or a combo
+        // step ever left a cost here, so a run started by one of the skill's own moments still fires free.
+        if (pendingMana > 0 && Character.Instance != null)
+        {
+            Character.Instance.SpendMana(pendingMana);
+            pendingMana = 0;
+        }
         consumedThisCast = false;   // this cast hasn't paid its state cost yet — it pays once, after its effects compute
         castStacks = StateGate.StackCount(firedBy, CasterStates);   // the pile this cast is about to cash, read BEFORE spending it
         castCarried = StateGate.CarriedTotal(firedBy, CasterStates);   // same snapshot, same moment — the payoff picks which one counts
@@ -530,11 +546,14 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // Ultimate gates on the shared charge meter (checked again here — the reticle may have taken time to confirm).
         if (def.IsUltimate && !Character.Instance.UltReady(def.chargeCost))
         { BattleNotice.Warn("Not charged"); return false; }
-        if (!Character.Instance.SpendMana(def.manaCost))
+        // CHECKED here, PAID at the release (PayPendingMana): a wind-up that gets broken costs you the attempt and
+        // the cooldown, never the mana — you never got the skill off.
+        if (Character.Instance.CurrentMP < def.manaCost)
         {
             BattleNotice.Warn("No MP", NoManaColor);
             return false;
         }
+        pendingMana = def.manaCost;
         if (def.IsUltimate) Character.Instance.SpendUltCharge(def.chargeCost);   // ults SPEND charge…
         else Character.Instance.AddUltCharge(Character.UltChargePerCast);        // …every other cast BUILDS it
         lastDuration = def.cooldown;

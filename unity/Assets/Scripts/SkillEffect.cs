@@ -153,7 +153,7 @@ public enum SkillEffectKind
 
     /// <summary>Hand the unit CHARGES that make its attacks hit harder: one charge multiplies one outgoing attack by
     /// 1 + <see cref="SkillEffect.magnitude"/>, and that attack spends it — whether it hits or misses, because the
-    /// charge paid for making the attack, not for landing it → <c>UnitOffense.Boosted</c>.
+    /// charge paid for making the attack, not for landing it → <c>UnitOffense.SpendCharges</c>.
     ///
     /// <para>Charges come from <see cref="SkillEffect.stacksPerApply"/>, the same knob <see cref="Parry"/> and
     /// <see cref="Brace"/> use, and each carries its own bonus. The kind owns no multiplicity of its own — one charge,
@@ -165,10 +165,30 @@ public enum SkillEffectKind
     ///
     /// <para>It multiplies BEFORE the target's armour, so the flat part of armour is paid once out of a bigger number
     /// and the boost is worth more the tankier the target. Distinct from a <see cref="Buff"/> on Damage, which is a
-    /// standing percentage for a window; this is a counted resource, spent per attack.</para>
+    /// standing percentage for a window; this is a counted resource, spent per attack.</para></summary>
+    BoostOutgoingDamage,
+
+    /// <summary>The mirror of <see cref="BoostOutgoingDamage"/>: charges that make the holder's attacks land SOFTER.
+    /// One charge multiplies one outgoing attack by 1 − <see cref="SkillEffect.magnitude"/> and is spent by it, hit or
+    /// miss, for the same reason — the charge pays for making the attack. Authored as the CUT (0.4 = the next attack
+    /// comes out 40% weaker) so the number reads as what it does, and it lands on whoever the effect's side names: on
+    /// a target it blunts their swing, on the caster it is a self-inflicted cost.
+    ///
+    /// <para><b>Its own pile, deliberately.</b> A boost charge and a penalty charge never share one, so an enemy
+    /// debuff cannot spend the boost you were saving, and the two simply multiply when a unit holds both.</para>
     ///
     /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
-    BoostOutgoingDamage,
+    ReduceOutgoingDamage,
+
+    /// <summary>Nothing stops the holder for <see cref="SkillEffect.seconds"/>. It turns away, by name: the FLINCH a
+    /// landing hit causes, STUN, FREEZE, SILENCE, KNOCKBACK, PULL, and a hit CANCELLING a cast in progress. It does not
+    /// touch damage, poison, bleed, burn, slow or blind — this is about being stopped, not about being hurt.
+    ///
+    /// <para>A plain window, not charges: it is never spent by what it blocks, so one stun does not use it up. Refused
+    /// at each door rather than suppressed after the fact, so nothing lingers to resume when the window closes.</para>
+    ///
+    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    ImmuneToDisables,
 }
 
 /// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window. Move speed is
@@ -297,13 +317,16 @@ public class SkillEffect
 
     [Header("Multi-hit (Damage kind)")]
     [Tooltip("How many times a Damage effect strikes per landing. Each strike is the TRIGGER POINT for the binding's " +
-             "PROC effects (a Status or Execute with a chance) — they roll once per hit. 1 = single hit.")]
+             "other effects — every state and proc rolls its chance once per hit. 1 = single hit.")]
     [Min(1)] public int hitCount = 1;
 
     [Header("Proc")]
-    [Tooltip("PROC chance (0..1), rolled PER HIT of the binding's multi-hit Damage. Used by Status (e.g. a stun proc) " +
-             "and Execute. 0 = NOT a proc — the effect applies ONCE per landing instead.")]
-    [Range(0f, 1f)] public float chance = 0f;
+    [Tooltip("Chance this effect happens at all (0..1), rolled PER HIT of the binding's multi-hit Damage. 1 = certain, " +
+             "which is what every effect is unless its author says otherwise; 0.25 = a gamble taken on each hit. " +
+             "0 means the effect can NEVER happen — the skill-data check reports it rather than letting it rot.\n\n" +
+             "The roll belongs to the EFFECT, so it happens the same way whatever moment started the skill — a press, " +
+             "a kill, a parry. A caster-side effect is applied once per landing, so it rolls once.")]
+    [Range(0f, 1f)] public float chance = 1f;
 
     [Header("Pull from the cast's stacks")]
     [Tooltip("ON = the pile this cast is cashing decides this effect's SIZE. HOW it pays depends on the reading below: " +
@@ -367,6 +390,8 @@ public class SkillEffect
             case SkillEffectKind.Guard:         id = StateId.Guard;         return true;
             case SkillEffectKind.Parry:         id = StateId.Parry;         return true;
             case SkillEffectKind.BoostOutgoingDamage: id = StateId.OutgoingDamageBoost; return true;
+            case SkillEffectKind.ReduceOutgoingDamage: id = StateId.OutgoingDamagePenalty; return true;
+            case SkillEffectKind.ImmuneToDisables: id = StateId.DisableImmune; return true;
             // The ARMED charges. Its debt (StateId.DeferredDamage) is created by incoming hits, not by this apply,
             // so it is not something this effect hands out.
             case SkillEffectKind.Brace:         id = StateId.Brace;         return true;
@@ -420,8 +445,12 @@ public class SkillEffect
 
     [Header("Affinity (ring-investment scaling)")]
     [Tooltip("Scales this effect's main OUTPUT by ring investment — its damage / heal amount / DoT damage / buff " +
-             "amount / slow amount, or (for a proc) its CHANCE. Weights are relative; empty = no scaling (×1).")]
+             "amount / slow amount. Weights are relative; empty = no scaling (×1).")]
     public List<StatWeight> affinity = new List<StatWeight>();
+    [Tooltip("Scales this effect's CHANCE by ring investment, so investment makes it land more often. Its own " +
+             "channel, never the output one: a gamble can grow in TWO directions (how often, how big) and one list " +
+             "can't say which. Empty = the authored chance, unscaled (×1). Nothing to scale on a certain effect.")]
+    public List<StatWeight> chanceAffinity = new List<StatWeight>();
     [Tooltip("Scales this effect's DURATION (its seconds) by ring investment. Empty = duration unscaled (×1).")]
     public List<StatWeight> durationAffinity = new List<StatWeight>();
     [Tooltip("Damage kind only: scales the number of STRIKES (hitCount) by ring investment — more investment = more " +
@@ -457,6 +486,17 @@ public class SkillEffect
     /// <para><b>Do not add new rules here.</b> A new kind's side is the author's choice via <see cref="side"/>; this
     /// list only exists to keep pre-existing assets behaving exactly as they did before the side was authorable. Heal
     /// is deliberately absent: it could always target others.</para></summary>
+    /// <summary>Does this kind ask <see cref="chance"/> whether it happens? Every STATE does (a buff, an ailment, a
+    /// charge pile, a cleanse) plus Execute — one list, read by the runtime roll, the composer's slider and the
+    /// skill-data check, so a kind can never be offered a chance the game then ignores.
+    ///
+    /// <para>Damage is deliberately absent: how many times it lands is <see cref="hitCount"/>, and a second knob for
+    /// the same question would be two doors to one room. So are the movement verbs and the modifiers — a dash that
+    /// sometimes doesn't happen, or a cooldown cut that sometimes isn't cut, is a bug wearing a feature's clothes.</para></summary>
+    public static bool RollsChance(SkillEffectKind k) =>
+        k != SkillEffectKind.Damage && k != SkillEffectKind.Heal && !IsModifier(k) && !NeedsPoint(k) &&
+        k != SkillEffectKind.Knockback && k != SkillEffectKind.Pull;
+
     public static bool IsSelfVerb(SkillEffectKind k) =>
         k == SkillEffectKind.Guard || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
         k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect ||

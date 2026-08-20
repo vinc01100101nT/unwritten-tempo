@@ -20,6 +20,20 @@ using UnityEngine;
 /// </summary>
 public static class StateGate
 {
+    /// <summary>The granter id that means "nobody granted this — the fight itself counts it": the unit's unbroken run
+    /// of hits on one body (<see cref="UnitStates.ConsecutiveHits"/>). It is stored where a granting skill's id is
+    /// stored, and deliberately starts with a character no skill id can contain, so it can never collide with a real
+    /// skill and an UNAUTHORED gate (empty id) stays distinguishable from this one.
+    ///
+    /// <para>There is no "which pile" half for it: nothing grants it, there is only ever one of it, and it is never
+    /// spent — a run is ended by the fight (a switched target, a hit that dealt nothing), never by a skill cashing
+    /// it.</para></summary>
+    public const string RunOfHitsId = "@run-of-hits";
+
+    /// <summary>True when this gate reads the automatic run of hits rather than some skill's pile.</summary>
+    public static bool ReadsRunOfHits(SkillTriggerEntry entry) =>
+        entry != null && entry.requiresState && entry.requireSkillId == RunOfHitsId;
+
     /// <summary>True when <paramref name="def"/> may run right now. A skill with no requirement always passes.
     /// Gates the WHOLE skill — callers must bail before playing any VFX or paying any cost.
     ///
@@ -45,6 +59,7 @@ public static class StateGate
     /// Cost is one set lookup on a path that already walks a state list; nothing is logged twice.</summary>
     static void ReportIfUnauthored(SkillTriggerEntry entry)
     {
+        if (ReadsRunOfHits(entry)) return;   // it names no pile because there is none to name — that is the whole point
         if (entry.requireStateIdSet || !reported.Add(entry.requireSkillId ?? "")) return;
         Debug.LogError($"[StateGate] A skill reads \"{entry.requireSkillId}\"'s stacks but never names WHICH pile, so " +
                        "it counts nothing and spends nothing. Open it in the Skill Composer, pick the pile, and save.");
@@ -54,22 +69,29 @@ public static class StateGate
     /// before it spends anything, so its payoff and its cost read the same pile (the locked compute-before-consume
     /// order). 0 when the skill reads no pile.</summary>
     public static int StackCount(SkillTriggerEntry entry, UnitStates states) =>
-        entry != null && entry.requiresState && states != null
-            ? states.StacksFrom(entry.requireSkillId, entry.requireStateId) : 0;
+        entry == null || !entry.requiresState || states == null ? 0
+        : ReadsRunOfHits(entry) ? states.ConsecutiveHits
+        : states.StacksFrom(entry.requireSkillId, entry.requireStateId);
 
     /// <summary>The total VALUE the required pile's stacks carry, read under the SAME compute-before-consume rule as
     /// <see cref="StackCount"/> — the snapshot a cast takes before it spends anything. 0 when the skill reads no pile.
     /// WHICH of the two is cashed is each EFFECT's own <see cref="SkillEffect.stackValueSource"/>, not a second gate:
-    /// the gate always answers both, and every effect decides which answer is worth anything to it.</summary>
+    /// the gate always answers both, and every effect decides which answer is worth anything to it.
+    ///
+    /// <para>The run of hits answers 0 here, deliberately: its stacks are a TALLY, not an amount. Reading a value off
+    /// it would be inventing one, so an effect paid by the run must read the COUNT.</para></summary>
     public static float CarriedTotal(SkillTriggerEntry entry, UnitStates states) =>
-        entry != null && entry.requiresState && states != null
-            ? states.CarriedFrom(entry.requireSkillId, entry.requireStateId) : 0f;
+        entry == null || !entry.requiresState || states == null || ReadsRunOfHits(entry) ? 0f
+        : states.CarriedFrom(entry.requireSkillId, entry.requireStateId);
 
     /// <summary>Spend what this use costs, AFTER the skill's effects have computed. No-op when the skill has no
     /// requirement or spends nothing (a pure "while X" condition). Returns how many stacks were actually spent.</summary>
     public static int Consume(SkillTriggerEntry entry, UnitStates states)
     {
         if (entry == null || !entry.requiresState || states == null) return 0;
+        // A run of hits is ended by the fight, never by a skill cashing it — so there is nothing here to spend, and the
+        // composer doesn't offer the knob. Answered here too, so a hand-edited asset can't spend what isn't spendable.
+        if (ReadsRunOfHits(entry)) return 0;
         if (!entry.consumeAllStacks && entry.consumeStacks <= 0) return 0;
         return states.ConsumeFrom(entry.requireSkillId, entry.requireStateId,
                                   entry.consumeStacks, entry.consumeAllStacks);

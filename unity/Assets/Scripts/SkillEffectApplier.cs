@@ -15,9 +15,10 @@ using UnityEngine;
 ///
 /// <para><b>Per-hit model (single-responsibility effects).</b> A binding is applied as a HIT LOOP whose length is the
 /// Damage effect's <see cref="SkillEffect.hitCount"/> (1 if none). Each iteration is a "hit": the Damage effect lands
-/// one strike, and every PROC effect in the binding (a Status or Execute with <see cref="SkillEffect.chance"/> &gt; 0)
-/// rolls its chance THAT hit. Non-proc effects (chance == 0 — buffs, heals, a guaranteed status) apply once, on hit 0.
-/// So a stun-proc or execute never lives INSIDE the Damage effect; it's its own effect that triggers off the multi-hit.</para>
+/// one strike, and every OTHER effect in the binding rolls its <see cref="SkillEffect.chance"/> THAT hit — a state, an
+/// ailment, an execute, all on the same rule. Certain (chance 1, the default) simply means the roll always says yes.
+/// So a stun-proc or execute never lives INSIDE the Damage effect; it's its own effect that triggers off the multi-hit.
+/// Caster-side effects are applied once per landing, so their roll happens once no matter how many strikes there are.</para>
 ///
 /// <para><b>Caster threading (network-readiness).</b> The acting caster is resolved ONCE at <see cref="ApplyBurst"/>
 /// and threaded through the whole resolve, so no inner method reaches for the <c>Character.Instance</c> global. Today
@@ -309,14 +310,14 @@ public static class SkillEffectApplier
                 }
                 break;
             case SkillEffectKind.Cleanse:
-                if (hit == 0 && body != null)
+                if (body != null && Fires(e, hit, caster))
                 {
                     var sc = Status.Of(body.gameObject);
                     if (sc != null) sc.Cleanse(Mathf.Max(1, e.amount));
                 }
                 break;
             case SkillEffectKind.Vulnerability:
-                if (hit == 0) states.BeginVulnerable(ScaledMagnitude(e, caster), ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.BeginVulnerable(ScaledMagnitude(e, caster), ScaledSeconds(e, caster));
                 break;
             // Both modifiers edit a pile that already exists, so they run ONCE per landing (hit 0) like every other
             // non-proc effect, and they name their own target — the tick's aim decides nothing here.
@@ -328,41 +329,50 @@ public static class SkillEffectApplier
                 if (hit == 0 && ModifierIsAuthored(e)) AddStacksToOtherSkill(e, states, caster);
                 break;
             case SkillEffectKind.Guard:
-                if (hit == 0) states.BeginGuard(ScaledSeconds(e, caster), ScaledMagnitude(e, caster));
+                if (Fires(e, hit, caster)) states.BeginGuard(ScaledSeconds(e, caster), ScaledMagnitude(e, caster));
                 break;
             case SkillEffectKind.Buff:
                 // Authored magnitude is a BONUS FRACTION (0.3 = +30%); ApplyStatBuff takes a multiplier. AMPLIFY buffs
                 // are FLAT (not affinity-scaled) — a support's value is uptime, not a bigger number.
-                if (hit == 0) states.ApplyStatBuff(e.buffStat, 1f + Mathf.Max(0f, e.magnitude), ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.ApplyStatBuff(e.buffStat, 1f + Mathf.Max(0f, e.magnitude), ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.Regen:
-                if (hit == 0) states.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, caster))), ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, caster))), ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.ManaLeech:
-                if (hit == 0) states.BeginManaLeech(ScaledSeconds(e, caster), e.magnitude);
+                if (Fires(e, hit, caster)) states.BeginManaLeech(ScaledSeconds(e, caster), e.magnitude);
                 break;
             case SkillEffectKind.Reflect:
-                if (hit == 0) states.BeginReflect(ScaledSeconds(e, caster), e.magnitude);
+                if (Fires(e, hit, caster)) states.BeginReflect(ScaledSeconds(e, caster), e.magnitude);
                 break;
             case SkillEffectKind.Shield:
-                if (hit == 0) states.BeginShield(ScaledAmount(e, caster), ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.BeginShield(ScaledAmount(e, caster), ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.Parry:
-                if (hit == 0) states.BeginParry(ScaledSeconds(e, caster));   // charges ride the apply context (stacks-per-apply)
+                if (Fires(e, hit, caster)) states.BeginParry(ScaledSeconds(e, caster));   // charges ride the apply context (stacks-per-apply)
                 break;
             case SkillEffectKind.Brace:
                 // Only the window is authored; the pile fills itself from whatever hits arrive (UnitMitigation.Deferred).
-                if (hit == 0) states.BeginBrace(ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.BeginBrace(ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.BoostOutgoingDamage:
                 // Charges ride the apply context like Parry's; each carries the authored bonus, which is FLAT for the
                 // same reason a stat buff's is — a support's value is how many attacks it covers, not a bigger number.
-                if (hit == 0) states.BeginOutgoingBoost(ScaledSeconds(e, caster), e.magnitude);
+                if (Fires(e, hit, caster)) states.BeginOutgoingBoost(ScaledSeconds(e, caster), e.magnitude);
+                break;
+            case SkillEffectKind.ImmuneToDisables:
+                // No magnitude: being stopped is binary. The whole knob is how long it lasts.
+                if (Fires(e, hit, caster)) states.BeginDisableImmunity(ScaledSeconds(e, caster));
+                break;
+            case SkillEffectKind.ReduceOutgoingDamage:
+                // The boost's mirror, charges and all — authored as the CUT, and flat for the same reason: how many
+                // attacks it covers is the knob, not how big the number is.
+                if (Fires(e, hit, caster)) states.BeginOutgoingPenalty(ScaledSeconds(e, caster), e.magnitude);
                 break;
             case SkillEffectKind.Taunt:
                 // Force this unit onto the caster. Both sides implement it (a mob locks its chase, a player's
                 // auto-combat can't retarget away), so a taunt is authored once and works on whoever it lands on.
-                if (hit == 0) unit.ForceAggro(caster, ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) unit.ForceAggro(caster, ScaledSeconds(e, caster));
                 break;
             case SkillEffectKind.Knockback:
                 // Shove AWAY from the caster (magnitude = speed).
@@ -510,15 +520,24 @@ public static class SkillEffectApplier
         return dealt;
     }
 
-    // A proc-type effect (chance > 0) rolls PER HIT; a non-proc effect (chance == 0) applies ONCE, on the first hit.
-    // A STATUS proc puts its affinity on its CHANCE (a stun has no magnitude — its only strength is how often it lands,
-    // e.g. Accuracy investment → higher stun chance). Other procs (Execute) put affinity on their own output (damage),
-    // so their chance stays the authored value.
+    // Does this effect happen on THIS hit? Every state and proc asks, once per hit of the binding's multi-hit Damage,
+    // so a 3-hit strike offers a buff or an ailment three chances to land. A certain effect (chance 1, the default)
+    // answers yes every time — which is why "guaranteed" needs no special case anywhere.
+    //
+    // A caster-side effect never sees a hit index above 0 (it is applied once per landing, before targets are gathered),
+    // so this is one roll for it, not one per strike.
+    //
+    // A chance of 0 means the effect can never happen. It is a real authored value, not "unset" — tools/check-skill-data.py
+    // reports it, because an effect nobody can ever see is a mistake, never a design.
+    //
+    // The odds have their OWN scaling channel, on every kind alike: invest in it and a gamble lands more often. It used
+    // to borrow the output channel, which meant an ailment could scale how OFTEN it landed or how BIG it was but never
+    // both, and which of the two you got depended on a number somewhere else in the effect.
     static bool Fires(SkillEffect e, int hitIndex, Character caster)
     {
-        if (e.chance <= 0f) return hitIndex == 0;
-        float c = e.kind == SkillEffectKind.Status ? Mathf.Clamp01(e.chance * AffinityMult(e.affinity, caster)) : e.chance;
-        return CombatRng.Chance(c);
+        if (e.chance <= 0f) return false;
+        if (e.chance >= 1f) return true;
+        return CombatRng.Chance(Mathf.Clamp01(e.chance * AffinityMult(e.chanceAffinity, caster)));
     }
 
     // ---- mob ----------------------------------------------------------------
@@ -563,8 +582,9 @@ public static class SkillEffectApplier
         int bonus = Mathf.RoundToInt(roll * e.magnitude * missing);
         if (bonus <= 0) return;
         // Its own damage number, so its own charge — an execute is a second outgoing hit riding the first, not part of it.
-        bonus = UnitOffense.Boosted(caster != null ? caster.States : null, bonus);
-        CombatAuthority.Apply(unit, new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic, crit));
+        bonus = UnitOffense.SpendCharges(caster != null ? caster.States : null, bonus);
+        CombatAuthority.Apply(unit, new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic, crit,
+                                                  attacker: caster));
     }
 
     // ---- player as a TARGET (pass 2) ----------------------------------------
@@ -613,10 +633,10 @@ public static class SkillEffectApplier
         int power = fromPile >= 0 ? fromPile : RollPower(e, vars, comboMult, out crit, caster);
         // One strike, one charge — and it catches the flat banked kind too, which never rolls. (The basic-attack branch
         // above doesn't come back through here: the swing spends its own, so nothing is charged twice.)
-        power = UnitOffense.Boosted(caster != null ? caster.States : null, power);
+        power = UnitOffense.SpendCharges(caster != null ? caster.States : null, power);
         // −1 HIT = always-lands skill strike (no accuracy roll); DamageInfo defaults attackerHit to −1.
         return CombatAuthority.Apply(unit, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit,
-                                                         overkill: overkill));
+                                                         overkill: overkill, attacker: caster));
     }
 
     // Damage value = the caster's rolled hit × (the effect's multiplier + whatever the cashed pile's COUNT adds to it)
@@ -703,7 +723,7 @@ public static class SkillEffectApplier
                            granter.icon, granter.displayName, null);
     }
 
-    static float ScaledMagnitude(SkillEffect e, Character caster) => e.magnitude * (e.kind == SkillEffectKind.Status && e.chance > 0f ? 1f : AffinityMult(e.affinity, caster));
+    static float ScaledMagnitude(SkillEffect e, Character caster) => e.magnitude * AffinityMult(e.affinity, caster);
     static float ScaledSeconds(SkillEffect e, Character caster)   => e.seconds   * AffinityMult(e.durationAffinity, caster);
 
     /// <summary>How many stacks this apply grants. Normally the authored number; when the effect is driven by attack

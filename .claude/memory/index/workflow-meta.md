@@ -6,8 +6,8 @@
 - [Tempo docs drop markdown tables on edit](../tempo-docs-no-markdown-tables.md) — GFM tables vanish on docs_edit; use bullet lists.
 - [Overwrite docs, don't append history](../docs-overwrite-not-append.md) — on doc revisions replace stale claims in place + fix title; keep docs lean (v1 skill doc hit ~65k chars/overflow).
 - [Reading ChatGPT share links](../chatgpt-share-extractor.md) — run tools/extract_chatgpt_share.py, NOT WebFetch.
-- [Unity MCP bridge](../unity-mcp-bridge.md) — `com.coplaydev.unity-mcp` → HTTP localhost:8080/mcp; Unity must be OPEN.
-- [Run editor actions YOURSELF via MCP](../act-editor-actions-via-mcp.md) — NEVER tell user to click Tools ▸ unwritten / add a component; `execute_code` the dialog-free `*Core()`; still no refresh_unity.
+- [Live link to Unity = the Unity CLI](../unity-mcp-bridge.md) — `~/.unity/bin/unity` + `com.unity.pipeline`; old HTTP bridge RETIRED 2026-08-20; check `unity status` says `ready`, never assume; reading proven, mutating not.
+- [Run editor actions YOURSELF](../act-editor-actions-via-mcp.md) — NEVER tell user to click Tools ▸ unwritten / add a component; `eval` the dialog-free `*Core()`; still never force a recompile.
 - [Maintain gamified Dev Contribution Log](../dev-contribution-log.md) — score dev's OWN contributions; doc q17a89053cf2xqjadkyk7agjb988nvgp.
 - [YouTube devlog publishing spec](../devlog-youtube-spec.md) — start 2026-06-12, day-N calc, title `…day N | game-dev-NN`, unwritten logo card, export/tags/hashtags.
 - [Protocol: "what did you learn" = persist to memory](../learn-protocol-persist-to-memory.md) — WRITE it (topic file + index), not just chat.
@@ -32,3 +32,4 @@
 - [Peer-to-peer GPT replies](../peer-to-peer-gpt-replies.md) — when user pastes a GPT design reply, respond in peer voice addressed to GPT, paste-ready, grounded in real code.
 - [Skill tooltip voice](../skill-tooltip-voice.md) — wiki/doc skill descriptions read as in-game tooltips (table, declarative rules, bold numbers), NOT article prose or designer meta-commentary.
 - [Editor tools catalog](../editor-tools-menu.md) — what each `Tools ▸ unwritten` one-click script does; canonical list is `Editor/TOOLS.md`. Read before adding a tool — but see the always-on rule: don't reach for a tool menu by default.
+- [Answer design questions with the REAL window](../answer-design-questions-with-the-real-window.md) — "where should this live / what will I see" is ground-truthed in the AUTHORING WINDOW, not the runtime; reply with an ASCII mockup using labels copied from code, never coin a noun the UI already names ("pile" cost 6 turns), and ASK when their sentence is ambiguous instead of arguing my own model.

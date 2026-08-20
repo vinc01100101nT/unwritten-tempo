@@ -48,6 +48,7 @@ MonoBehaviour:
       seconds: 6
       magnitude: 6
       hitCount: 1
+      chance: 1
       buffStat: 0
       affinity:
       - stat: 4
@@ -69,6 +70,7 @@ MonoBehaviour:
       seconds: 0
       magnitude: 1
       hitCount: 1
+      chance: 1
       buffStat: 0
       affinity: []
       durationAffinity: []

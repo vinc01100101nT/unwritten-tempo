@@ -1,17 +1,37 @@
 ---
 name: unity-mcp-bridge
-description: "Drive the Unity Editor directly via the CoplayDev MCP bridge (run menu items, read Console, edit scenes) — no window focus needed, but Unity must be open"
-metadata: 
+description: "The live connection to the Unity Editor is the Unity CLI (unity status / unity cmd / the unity-editor-mcp tools) — the old CoplayDev HTTP bridge was retired 2026-08-20"
+metadata:
   node_type: memory
   type: reference
   originSessionId: d73f3fc5-ee96-47da-a443-058d9e14cd4f
 ---
 
-Set up 2026-06-25: I can control the live Unity Editor through the **CoplayDev MCP for Unity** bridge.
+**Superseded 2026-08-20.** The CoplayDev HTTP bridge (`com.coplaydev.unity-mcp`, `http://localhost:8080/mcp`) is
+RETIRED — removed from `.mcp.json` and its server stopped. It had been dead for five days with nobody noticing,
+and I worked a whole session believing I had a connection I did not have. **Never assume the link is up; check.**
 
-- **Unity package:** `com.coplaydev.unity-mcp` pinned to `#v9.7.3` in `unity/Packages/manifest.json` (UPM git URL `https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#v9.7.3`).
-- **Claude Code registration:** project-scoped `.mcp.json` at workspace root → server `UnityMCP`, **HTTP transport** `http://localhost:8080/mcp`. The in-editor `HttpAutoStartHandler` auto-starts the server when Unity opens.
-- **How it works:** TCP/HTTP socket *inside the Editor process* calling Unity APIs (`AssetDatabase`, `EditorApplication.ExecuteMenuItem`, scene/GameObject APIs). It does NOT simulate mouse/keyboard and does NOT need the Unity window focused/foregrounded — I can work while the user is in other windows.
-- **Hard requirement:** Unity Editor must be **open** with the project loaded; bridge can't drive a closed/headless editor.
-- **Gotchas:** Unity defers recompile/asset refresh until focus returns (bridge forces `AssetDatabase.Refresh()`); Play Mode can throttle/behave oddly while unfocused. MCP tools only register at Claude Code **session start** — reload the session after first setup to see the `UnityMCP` tools.
-- This is the live-control complement to the one-click [[editor-tools-menu]] (`Tools ▸ unwritten`) — I can now invoke those menu items myself instead of asking the user to click.
+The live connection is now the **Unity CLI**, set up and proven working 2026-08-20:
+
+- **Binary:** `~/.unity/bin/unity` (v1.0.0-beta.5, ships inside the Unity Hub app bundle; `~/.zshrc` sources
+  `~/.unity/env` to add it to the PATH). A NON-interactive shell may not load that — `which unity` came back empty
+  twice and I twice told the user it wasn't installed. **Use the full path when a bare `unity` is not found.**
+- **In-editor half:** the `com.unity.pipeline` package (0.5.0-exp.1) in `unity/Packages/manifest.json`. Without it
+  the CLI SEES the editor (project, PID, version) but cannot talk to it — `unity status` prints an empty table.
+- **As tools:** `.mcp.json` registers `unity-editor-mcp` (stdio, `unity mcp --project-path unity/`), so the editor's
+  ~143 commands arrive as ordinary tools.
+- **HOW to use it:** Unity's own skill at `~/.claude/skills/unity-cli/SKILL.md` loads every session. Read it; don't
+  re-derive the command surface.
+
+**Is it connected?** `unity status` → a row with state `ready`. Empty table = the editor isn't attached, usually
+because the package hasn't been imported yet (Unity imports it when the user focuses the window).
+
+**Proven by measurement, 2026-08-20:** read the live scene tree, read the console clean, read compile state, and
+captured a scene-view screenshot I actually looked at. **Reading is proven. MUTATING is NOT** — the first person to
+change something through it should verify and say so.
+
+**Measured gotcha:** `capture_scene_view`'s `save_path` is IGNORED — it always returns the PNG inline as base64.
+Decode it yourself; don't report a path it never wrote.
+
+Still true: Unity must be OPEN with the project loaded, and the forced-recompile ban stands (see
+[[act-editor-actions-via-mcp]] and the project `CLAUDE.md`) — its speed on the CLI is UNMEASURED.

@@ -31,6 +31,9 @@ SCRIPTS = os.path.join(ASSETS, "Scripts")
 
 RED, YEL, GRN, DIM, OFF = "\033[31m", "\033[33m", "\033[32m", "\033[2m", "\033[0m"
 
+# Filled from the C# at run time (see load_run_of_hits_id) so it can never drift from the game, exactly like the enums.
+RUN_OF_HITS_ID = None
+
 
 def die(msg):
     sys.stderr.write("%s%s%s\n" % (RED, msg, OFF))
@@ -47,6 +50,15 @@ def read(path):
 # --------------------------------------------------------------------------------------
 
 _LINE_COMMENT = re.compile(r"//.*$", re.M)
+
+
+def parse_run_of_hits_id(source):
+    """The granter id that means 'the fight counts this, no skill grants it' — read from the C# constant."""
+    m = re.search(r'\bRunOfHitsId\s*=\s*"([^"]+)"', source)
+    if not m:
+        die("Could not find RunOfHitsId in the game's C#. This checker reads the real value instead of\n"
+            "keeping its own copy, so it stops rather than guess.")
+    return m.group(1)
 
 
 def parse_enum(source, name):
@@ -246,6 +258,9 @@ def main():
     if not os.path.isdir(SKILLS_DIR):
         die("No skills folder at %s" % SKILLS_DIR)
 
+    global RUN_OF_HITS_ID
+    RUN_OF_HITS_ID = parse_run_of_hits_id(read(os.path.join(SCRIPTS, "StateGate.cs")))
+
     effect_src = read(os.path.join(SCRIPTS, "SkillEffect.cs"))
     states = parse_enum(read(os.path.join(SCRIPTS, "UnitStates.cs")), "StateId")
     ailments = parse_enum(read(os.path.join(SCRIPTS, "StatusController.cs")), "Ailment")
@@ -404,6 +419,10 @@ def main():
             if not granter:
                 problem(s, "reads someone's stacks but never says whose, so it counts nothing.")
                 continue
+            # The run of consecutive hits is counted by the fight, not granted by a skill: it names no pile because
+            # there is none, and it is never spent. Every check below asks about a granting skill, so none applies.
+            if granter == RUN_OF_HITS_ID:
+                continue
             if as_int(e.get("requireStateIdSet")) != 1:
                 problem(s, "reads %s's stacks but nobody picked WHICH pile — it counts nothing and "
                            "spends nothing, silently." % name_of(granter))
@@ -447,6 +466,12 @@ def main():
 
             for e in b.get("effects") or []:
                 kind = kind_name.get(as_int(e.get("kind")), "?")
+
+                # A chance of 0 is a real saved value meaning "never happens", and it looks exactly like a field
+                # nobody filled in. Every effect carries 1 (certain) unless its author chose otherwise, so a 0
+                # is either a dead effect or an asset that missed the upgrade — both worth stopping for.
+                if "chance" in e and as_float(e.get("chance"), 1.0) <= 0.0:
+                    problem(s, "has an effect set to a 0% chance, so it can never happen.")
 
                 if as_int(e.get("useStackValue")) == 1 and not gated:
                     problem(s, "has an effect sized by a pile of stacks, but the skill never reads a "

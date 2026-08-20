@@ -116,7 +116,10 @@ public class Health : MonoBehaviour, ICombatUnit
     }
     public bool IsRelocating { get { var a = Agent; return a != null && a.Gliding; } }
     public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
-    { var b = Brain; if (b != null) b.Knockback(worldFrom, speed, seconds, stagger); }
+    {
+        if (States != null && States.DisablesBlocked) return;   // a shove is a disable: the window turns it away
+        var b = Brain; if (b != null) b.Knockback(worldFrom, speed, seconds, stagger);
+    }
     public void ForceAggro(ICombatUnit source, float seconds)
     { var b = Brain; if (b != null) b.Taunt(seconds); }
 
@@ -124,6 +127,10 @@ public class Health : MonoBehaviour, ICombatUnit
     // Lazily created so every mob gets one without editing prefabs; cached after first touch (no per-hit GetComponent).
     UnitStates states;
     public UnitStates States => states != null ? states : (states = GetComponent<UnitStates>() ?? gameObject.AddComponent<UnitStates>());
+
+    // Same shape and same reason as the store above: looked up once, then held.
+    StatusController statusHost;
+    public StatusController StatusHost => statusHost != null ? statusHost : (statusHost = Status.Of(gameObject));
 
     // Vulnerability mark (Hex Field): while active, every incoming hit is multiplied up. Now read from the unified
     // state store (V3 unified-state migration) — was a local vulnUntil/vulnMult timer.
@@ -385,6 +392,10 @@ public class Health : MonoBehaviour, ICombatUnit
         // re-enables everything — a different beat: this lifts the stand-down, that re-asserts over the wholesale
         // enable. Both are needed; don't collapse them.)
         var lod = GetComponent<SimulationLod>(); if (lod != null) lod.Resync();
+        StatusHost.ClearFlinch();   // a new life is not staggered, and does not inherit the last one's footing meter
+        // A pooled mob comes back as the SAME object, so this is what tells anyone counting a run of hits that the
+        // thing they were hitting is gone and this is somebody new.
+        if (States != null) States.NoteNewLife();
     }
 
     /// <summary>Restore HP (capped at max) and pop a green "+N" over the unit.</summary>

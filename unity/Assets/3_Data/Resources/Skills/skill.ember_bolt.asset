@@ -75,7 +75,7 @@ MonoBehaviour:
       dashEaseOut: 0
       dashEaseSeconds: 0.3
       hitCount: 1
-      chance: 0
+      chance: 1
       buffStat: 0
       affinity:
       - stat: 1
@@ -101,7 +101,7 @@ MonoBehaviour:
       dashEaseOut: 0
       dashEaseSeconds: 0.3
       hitCount: 1
-      chance: 0
+      chance: 1
       buffStat: 0
       affinity: []
       durationAffinity: []

@@ -174,6 +174,9 @@ public static class SkillLibrarySweeps
             {
                 var e = s.triggers[t];
                 if (e == null || !e.requiresState) continue;
+                // The run of consecutive hits is counted by the fight, not granted by a skill: it names no pile because
+                // there is none, and nothing below can be asked about it without inventing a granter.
+                if (StateGate.ReadsRunOfHits(e)) continue;
                 gates++;
 
                 string fault = null;

@@ -369,7 +369,10 @@ public class Character : MonoBehaviour, ICombatUnit
     { var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds, faceAt); }
     public bool IsRelocating { get { var r = Rig(); return r != null && r.SkillGliding; } }
     public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
-    { var r = Rig(); if (r != null) r.Shove(worldFrom, speed, seconds, stagger); }
+    {
+        if (States != null && States.DisablesBlocked) return;   // a shove is a disable: the window turns it away
+        var r = Rig(); if (r != null) r.Shove(worldFrom, speed, seconds, stagger);
+    }
     public void ForceAggro(ICombatUnit source, float seconds)
     {
         // The player engages a MOB, so the taunter has to be one. A mob-vs-mob aggro lock needs the mob brain to hold
@@ -814,6 +817,10 @@ public class Character : MonoBehaviour, ICombatUnit
     UnitStates states;
     public UnitStates States => states != null ? states : (states = GetComponent<UnitStates>() ?? gameObject.AddComponent<UnitStates>());
 
+    // The player's host is a static handle the controller already publishes — nothing to look up, ever. It lives on the
+    // spawned avatar, not on this persistent stats object, so it is null until the body exists.
+    public StatusController StatusHost => StatusController.Player;
+
     // ---- Guard (a timed defensive stance; driven by a guard-type active) --------------------------
     // A timed damage-reduction stance: while active, incoming physical AND magic damage is cut by the Guard state's
     // magnitude. Stored in the unified state store (V3 unified-state migration); runtime-only, cleared on revive.
@@ -1093,6 +1100,8 @@ public class Character : MonoBehaviour, ICombatUnit
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
         States.Clear();                           // buffs/debuffs/barriers don't carry across death — the tray reads States, so this clears it too
+        States.NoteNewLife();                     // …and no mob keeps a run of hits going across the death that interrupted it (Health.Revive does the same)
+        if (StatusHost != null) StatusHost.ClearFlinch();   // …nor the stagger, nor the footing the last life had earned
         OnHealthChanged?.Invoke();
         OnManaChanged?.Invoke();
         OnRevived?.Invoke();

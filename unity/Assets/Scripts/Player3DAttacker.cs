@@ -298,7 +298,8 @@ public class Player3DAttacker : MonoBehaviour
         int perHit = Mathf.Max(1, Mathf.RoundToInt(power / (float)hitCount));
         int dealt = 0;
         for (int h = 0; h < hitCount && !t.IsDead; h++)
-            dealt += CombatAuthority.Apply(t, new DamageInfo(perHit, element, false, crit, attackerHit: -1));
+            dealt += CombatAuthority.Apply(t, new DamageInfo(perHit, element, false, crit, attackerHit: -1,
+                                                            attacker: Character.Instance));
         if (dealt > 0)
         {
             // Impact SOUND now plays FROM the mob in Health.TakeDamage (received_hit_skill, spatial) — no 2D play here.

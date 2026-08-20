@@ -1,8 +1,9 @@
 {
   "mcpServers": {
-    "UnityMCP": {
-      "type": "http",
-      "url": "http://localhost:8080/mcp"
+    "unity-editor-mcp": {
+      "type": "stdio",
+      "command": "/Users/vince/.unity/bin/unity",
+      "args": ["mcp", "--project-path", "/Users/vince/Desktop/CODES/unwritten-tempo/unity"]
     }
   }
 }

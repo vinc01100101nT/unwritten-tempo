@@ -105,7 +105,7 @@ MonoBehaviour:
       modifierSeconds: 1
       modifierStacks: 1
       hitCount: 3
-      chance: 0
+      chance: 1
       useStackValue: 0
       stackValueSource: 0
       stackValueMult: 1
@@ -151,7 +151,7 @@ MonoBehaviour:
       modifierSeconds: 1
       modifierStacks: 1
       hitCount: 1
-      chance: 0
+      chance: 1
       useStackValue: 0
       stackValueSource: 0
       stackValueMult: 1
@@ -201,7 +201,8 @@ MonoBehaviour:
       stackValueMult: 1
       side: 0
       buffStat: 0
-      affinity:
+      affinity: []
+      chanceAffinity:
       - stat: 5
         weight: 100
       durationAffinity:
@@ -251,7 +252,7 @@ MonoBehaviour:
       modifierSeconds: 1
       modifierStacks: 1
       hitCount: 1
-      chance: 0
+      chance: 1
       useStackValue: 0
       stackValueSource: 0
       stackValueMult: 1

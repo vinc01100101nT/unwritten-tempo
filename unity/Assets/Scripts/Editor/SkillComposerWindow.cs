@@ -497,7 +497,25 @@ public class SkillComposerWindow : EditorWindow
                 "WHOSE stacks this reads — the skill that GRANTED them. A pile belongs to the skill that created it, " +
                 "not to what it does, so two skills that both buff attack keep separate piles. THIS SKILL is a valid " +
                 "answer: a skill can grant its own charges and spend them over its own repeats. Passives are listed " +
-                "too, since most piles come from one.", e.requireSkillId, includePassives: true, allowSelf: true);
+                "too, since most piles come from one.\n\n" +
+                "The one entry that is NOT a skill is the run of consecutive hits: nothing grants it, the fight " +
+                "counts it, and it is never spent.",
+                e.requireSkillId, includePassives: true, allowSelf: true, runOfHits: true);
+            // The run of hits stops here: there is no pile to name (nothing grants it) and nothing to spend (the fight
+            // ends it, not a skill), so those rows are not drawn rather than shown doing nothing.
+            if (StateGate.ReadsRunOfHits(e))
+            {
+                e.requireMinStacks = EditorGUILayout.IntSlider(new GUIContent("  min hits in a row",
+                    "How many hits in a row on the SAME enemy this needs to fire. The run restarts at 1 the moment a " +
+                    "hit lands on somebody else, and empties whenever a hit deals NOTHING — a miss, a parry, a full " +
+                    "shield absorb, an immune element.\n\n" +
+                    "0 = no gate: it fires anyway and simply reads however long the run happens to be."),
+                    Mathf.Max(0, e.requireMinStacks), 0, UnitStates.MaxStacks);
+                EditorGUILayout.HelpBox("Counted automatically for every unit — there is nothing to author on the " +
+                    "granting side, and nothing to wire wrong. Reading it never spends it.", MessageType.None);
+                EditorGUI.indentLevel--;
+                return remove;
+            }
             if (string.IsNullOrEmpty(e.requireSkillId))
             {
                 EditorGUILayout.HelpBox("Pick the skill whose stacks this reads — without it there's no pile to gate " +
@@ -636,10 +654,14 @@ public class SkillComposerWindow : EditorWindow
     /// PILE this one reads (yes — a skill that grants its own charges and spends them over its own repeats is
     /// self-contained, not a loop: the repeats replay the cast, they never start a new one).</summary>
     string DrawSkillPicker(string label, string tooltip, string current, bool includePassives = false,
-                           bool allowSelf = false, bool damagingOnly = false, string noneLabel = "(none)")
+                           bool allowSelf = false, bool damagingOnly = false, string noneLabel = "(none)",
+                           bool runOfHits = false)
     {
         var ids = SkillCatalog.OrderedIds();
         var choices = new List<string> { "" };
+        // Offered only where it is a legal answer (the stack gate). It is not a skill, so it sits at the top rather
+        // than inside the alphabetical run of real skills.
+        if (runOfHits) choices.Add(StateGate.RunOfHitsId);
         for (int i = 0; i < ids.Length; i++)
         {
             var d = SkillCatalog.Get(ids[i]);
@@ -654,6 +676,7 @@ public class SkillComposerWindow : EditorWindow
         for (int i = 0; i < choices.Count; i++)
         {
             if (string.IsNullOrEmpty(choices[i])) { labels[i] = noneLabel; continue; }
+            if (choices[i] == StateGate.RunOfHitsId) { labels[i] = "Consecutive hits  (automatic)"; continue; }
             var d = SkillCatalog.Get(choices[i]);
             labels[i] = d != null ? $"{d.displayName}  ({choices[i]})" : choices[i];
         }
@@ -1225,8 +1248,8 @@ public class SkillComposerWindow : EditorWindow
         { SkillEffectKind.Teleport, SkillEffectKind.Dash, SkillEffectKind.Knockback, SkillEffectKind.Pull };
     static readonly SkillEffectKind[] BuffKinds =
         { SkillEffectKind.Buff, SkillEffectKind.BoostOutgoingDamage, SkillEffectKind.Haste, SkillEffectKind.Guard,
-          SkillEffectKind.Parry, SkillEffectKind.Brace, SkillEffectKind.Regen, SkillEffectKind.Shield,
-          SkillEffectKind.ManaLeech, SkillEffectKind.Reflect };
+          SkillEffectKind.Parry, SkillEffectKind.Brace, SkillEffectKind.ImmuneToDisables, SkillEffectKind.Regen,
+          SkillEffectKind.Shield, SkillEffectKind.ManaLeech, SkillEffectKind.Reflect };
 
     // Modifiers: the effects whose target is a SKILL's pile rather than a body. Labelled as the whole sentence they
     // read as, because that IS the effect — "extend duration of <skill>" says what it does and what it needs, where a
@@ -1257,6 +1280,7 @@ public class SkillComposerWindow : EditorWindow
     static readonly DebuffOption[] DebuffOptions =
     {
         new DebuffOption("Vulnerability", SkillEffectKind.Vulnerability),
+        new DebuffOption("Reduce Outgoing Damage", SkillEffectKind.ReduceOutgoingDamage),
         new DebuffOption("Taunt", SkillEffectKind.Taunt),
         new DebuffOption("Poison", Ailment.Poison), new DebuffOption("Bleed", Ailment.Bleed),
         new DebuffOption("Burn", Ailment.Burn),     new DebuffOption("Slow", Ailment.Slow),
@@ -1568,7 +1592,7 @@ public class SkillComposerWindow : EditorWindow
                         ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
                             "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
                     ef.hitCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("hits",
-                        "Strikes per landing. Each hit is the TRIGGER for this binding's proc effects (a Status or Execute with a chance)."), ef.hitCount));
+                        "Strikes per landing. Each hit is the TRIGGER for every other effect on this binding — each rolls its chance once per hit."), ef.hitCount));
                     break;
                 case SkillEffectKind.Heal:
                     if (!ef.useStackValue)
@@ -1576,8 +1600,6 @@ public class SkillComposerWindow : EditorWindow
                     break;
                 case SkillEffectKind.Status:
                     // The ailment is chosen in the State ▸ Debuffs picker above — not repeated here (no double-knob).
-                    ef.chance = EditorGUILayout.Slider(new GUIContent("chance",
-                        "PROC chance rolled PER HIT of the binding's multi-hit Damage (e.g. a stun proc). 0 = not a proc — applies ONCE per landing. The 'affinity (chance)' channel below scales this."), ef.chance, 0f, 1f);
                     ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the ailment lasts."), ef.seconds, 0.5f, 20f);
                     // magnitude is only meaningful for DoTs (dmg/tick), Slow (speed factor) and Blind (HIT loss).
                     // Pure CC (Stun/Freeze/Silence) is binary — no magnitude, so hide it to avoid the confusion.
@@ -1587,8 +1609,6 @@ public class SkillComposerWindow : EditorWindow
                 case SkillEffectKind.Execute:
                     ef.damageType = (DamageType)EditorGUILayout.EnumPopup(new GUIContent("damage type",
                         "Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (pierces armour, always crits)."), ef.damageType);
-                    ef.chance = EditorGUILayout.Slider(new GUIContent("chance",
-                        "PROC chance rolled PER HIT of the binding's multi-hit Damage. 1 = executes on every hit."), ef.chance, 0f, 1f);
                     ef.magnitude = EditorGUILayout.Slider(new GUIContent("execute power ×",
                         "Bonus damage = roll × this × (target's missing HP). Huge near death, ~0 at full HP."), ef.magnitude <= 0f ? 1f : ef.magnitude, 0.1f, 5f);
                     ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
@@ -1613,6 +1633,30 @@ public class SkillComposerWindow : EditorWindow
                     EditorGUILayout.HelpBox("ONE charge boosts ONE attack, and that attack spends it whether it hits " +
                         "or misses. Basics, skill strikes, executes and banked damage all count; damage-over-time " +
                         "ticks never do. Set how many charges below (charges per use).", MessageType.None);
+                    break;
+                case SkillEffectKind.ImmuneToDisables:
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds",
+                        "How long nothing can stop the holder. No other knob — being stopped is yes or no, so there " +
+                        "is no amount to set."), ef.seconds, 0.5f, 30f);
+                    EditorGUILayout.HelpBox("Turns away, by name: FLINCH (the stagger a landing hit causes), STUN, " +
+                        "FREEZE, SILENCE, KNOCKBACK, PULL, and a hit CANCELLING a cast in progress.\n\n" +
+                        "It does NOT touch damage, poison, bleed, burn, slow or blind — this is about being stopped, " +
+                        "not about being hurt. It is never used up by what it blocks: one stun does not end it.",
+                        MessageType.None);
+                    break;
+                case SkillEffectKind.ReduceOutgoingDamage:
+                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage cut (0.4 = −40%)",
+                        "How much weaker ONE attack comes out. 0.4 = that attack deals 40% less; 1 = it deals nothing. " +
+                        "Cut BEFORE the target's armour, the same place the boost multiplies."),
+                        Mathf.Clamp01(ef.magnitude), 0f, 1f);
+                    ef.seconds = EditorGUILayout.Slider(new GUIContent("window (s)",
+                        "How long unspent charges stay held. They lapse when it ends — the window is a deadline for " +
+                        "spending them, not what makes them work."), ef.seconds, 0.5f, 30f);
+                    EditorGUILayout.HelpBox("The mirror of Boost Outgoing Damage: ONE charge weakens ONE attack sent " +
+                        "by whoever holds it, spent whether that attack hits or misses. Put it on the target side to " +
+                        "blunt their swing, or on the caster side as a self-inflicted cost. Its charges are a " +
+                        "SEPARATE pile from the boost's, so the two never spend each other. Set how many charges " +
+                        "below (charges per use).", MessageType.None);
                     break;
                 case SkillEffectKind.Brace:
                     // No magnitude, for the same reason Parry has none: a hit is held or it isn't. Charges come from
@@ -1704,6 +1748,27 @@ public class SkillComposerWindow : EditorWindow
                     break;
             }
 
+            // ONE chance row for every effect that has one — drawn here rather than inside each case, so a new kind
+            // inherits it instead of needing its own copy. Which kinds have one is SkillEffect.RollsChance, the same
+            // answer the runtime roll uses.
+            if (SkillEffect.RollsChance(ef.kind))
+            {
+                ef.chance = EditorGUILayout.Slider(new GUIContent("chance",
+                    "How likely this effect is to happen, rolled once per hit of this binding's Damage — so a 3-hit " +
+                    "strike gives it three chances. 100% (the default) = certain, every time.\n\n" +
+                    "The roll belongs to the EFFECT, so it happens the same way whatever moment ran the skill: a " +
+                    "press, a kill, a parry. An effect on the caster is applied once per landing, so it rolls once.\n\n" +
+                    "0% means it can never happen — the skill-data check reports that rather than let it rot."),
+                    Mathf.Clamp01(ef.chance), 0f, 1f);
+                if (ef.chance <= 0f)
+                    EditorGUILayout.HelpBox("At 0% this effect can never happen. Raise it, or delete the effect.",
+                        MessageType.Warning);
+                else if (ef.chance < 1f)
+                    EditorGUILayout.HelpBox("Below 100% this effect gains a \"boosts CHANCE\" channel under scaling & " +
+                        "stacks — ring investment then makes it land more often, separately from whatever scales its " +
+                        "own number.", MessageType.None);
+            }
+
             // An instant effect has NO duration — keep seconds 0 so the buff tray (which validates by duration) never
             // shows a phantom icon for it, and so switching a durational kind to an instant one clears the leftover.
             if (!HasDurationChannel(ef)) ef.seconds = 0f;
@@ -1715,11 +1780,13 @@ public class SkillComposerWindow : EditorWindow
             if (Foldout(ef, "  scaling & stacks"))
             {
                 EditorGUI.indentLevel++;
-                // Affinity channels, each labeled by WHAT it boosts. The first scales the effect's main output (damage,
-                // heal amount, proc chance, slow amount, …); the second scales its duration. A channel that scales
-                // nothing (a pure stun has no output number) is hidden. Weights are relative; empty = ×1 (no scaling).
+                // Affinity channels, each labeled by WHAT it boosts: the effect's main output (damage, heal amount,
+                // slow amount, …), its odds, its duration. A channel that scales nothing is hidden rather than shown
+                // dead — a pure stun has no output number, and a certain effect has no odds to improve. Weights are
+                // relative; empty = ×1 (no scaling).
                 string affLabel = AffinityOutputLabel(ef);
                 if (affLabel != null) DrawAffinity(affLabel, ref ef.affinity);
+                if (SkillEffect.RollsChance(ef.kind) && ef.chance < 1f) DrawAffinity("boosts CHANCE", ref ef.chanceAffinity);
                 if (HasDurationChannel(ef)) DrawAffinity("boosts DURATION", ref ef.durationAffinity);
                 DrawStacking(ef);
                 if (ef.kind == SkillEffectKind.Damage) DrawAffinity("boosts HITS COUNT", ref ef.hitCountAffinity);
@@ -1893,6 +1960,10 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Brace:         return "Each charge holds ONE incoming hit back instead of erasing it; the banked damage all lands when the window ends. A delay, not a save.";
             case SkillEffectKind.BoostOutgoingDamage:
                                                 return "Each charge makes ONE outgoing attack hit harder and is spent by it, hit or miss. Every kind of attack counts except damage-over-time ticks.";
+            case SkillEffectKind.ImmuneToDisables:
+                                                return "Nothing stops the holder for a while: no flinch, stun, freeze, silence, knockback, pull, and hits can't cancel their casts.";
+            case SkillEffectKind.ReduceOutgoingDamage:
+                                                return "Each charge makes ONE attack sent by whoever holds it land weaker, and is spent by it, hit or miss. Its own pile — it never spends a boost charge.";
             case SkillEffectKind.Taunt:         return "Forces enemies in range to attack the caster for a while.";
             case SkillEffectKind.Teleport:      return "Blinks the caster INSTANTLY to the aimed point (use Ground aim). No fields — the destination is the aimed point.";
             case SkillEffectKind.Dash:          return "Rushes the caster FAST to the aimed point (use Ground aim) — visible travel, blocked by walls. Dash speed sets how fast; the skill's range is the max distance.";
@@ -1929,13 +2000,13 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Vulnerability: return "boosts DAMAGE TAKEN";
             case SkillEffectKind.Haste:         return "boosts MOVE SPEED";
             case SkillEffectKind.Status:
-                if (e.chance > 0f) return "boosts PROC CHANCE";
+                // The odds live in their own channel now, so this one always names the ailment's own number.
                 switch (e.ailment)
                 {
                     case Ailment.Burn: case Ailment.Poison: case Ailment.Bleed: return "boosts DAMAGE / TICK";
                     case Ailment.Slow:  return "boosts SLOW AMOUNT";
                     case Ailment.Blind: return "boosts ACCURACY LOSS";
-                    default:            return null;   // stun / freeze / silence: applied for sure, nothing to scale
+                    default:            return null;   // stun / freeze / silence: binary, nothing to scale
                 }
             default: return null;   // Taunt / Teleport / Cleanse have no scalable output
         }
@@ -1952,6 +2023,8 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Parry:
             case SkillEffectKind.Brace:
             case SkillEffectKind.BoostOutgoingDamage:
+            case SkillEffectKind.ReduceOutgoingDamage:
+            case SkillEffectKind.ImmuneToDisables:
             case SkillEffectKind.Shield:
             case SkillEffectKind.Regen:
             case SkillEffectKind.Vulnerability:

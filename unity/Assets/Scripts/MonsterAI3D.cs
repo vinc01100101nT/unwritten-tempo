@@ -107,7 +107,8 @@ public class MonsterAI3D : MonoBehaviour
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
         var mob = (MonsterAI3D)p.source;
-        int d = CombatAuthority.Apply(Character.Instance, new DamageInfo(p.amount, p.element, isMagic: true, source: mob));
+        int d = CombatAuthority.Apply(Character.Instance, new DamageInfo(p.amount, p.element, isMagic: true, source: mob,
+                                                                        attacker: mob != null ? mob.Health : null));
         if (d > 0)
         {
             DamagePopup.Spawn(p.homing != null ? UnitAnchor.Overhead(p.homing) : p.at, d, MagicHitColor);
@@ -444,7 +445,7 @@ public class MonsterAI3D : MonoBehaviour
             // exactly once here rather than again on the player. Mobs don't crit, so crit is false.
             bool missed = Combat.Missed(false, effHit, Character.Instance.Flee);
             int atk = missed ? 0 : RollBasicDamage(false);
-            atk = UnitOffense.Boosted(MobStates, atk);   // one attack, one charge — spent on the whiff too
+            atk = UnitOffense.SpendCharges(MobStates, atk);   // one attack, one charge — spent on the whiff too
             // A magic mob's attack IS its cast — fire the cast cue at the caster (player-parity OnCastStart).
             if (isMagic) VfxCue.Fire(VfxCueId.OnCastStart, transform);
             if (isMagic && projectileSheet != null)
@@ -461,8 +462,8 @@ public class MonsterAI3D : MonoBehaviour
             else
             {
                 int dealt = CombatAuthority.Apply(Character.Instance, isMagic
-                    ? new DamageInfo(atk, attackElement, isMagic: true, source: this)                              // magic: MATK vs MDEF + element
-                    : new DamageInfo(atk, attackElement, attackerHit: effHit, source: this, missed: missed));      // physical: the HIT vs FLEE result, rolled above
+                    ? new DamageInfo(atk, attackElement, isMagic: true, source: this, attacker: Health)                              // magic: MATK vs MDEF + element
+                    : new DamageInfo(atk, attackElement, attackerHit: effHit, source: this, missed: missed, attacker: Health));      // physical: the HIT vs FLEE result, rolled above
                 if (dealt > 0)
                 {
                     DamagePopup.Spawn(UnitAnchor.Overhead(player), dealt,
@@ -476,6 +477,11 @@ public class MonsterAI3D : MonoBehaviour
             LastAttackTime = Time.time;         // the general "it attacked" beat every visual reads
             if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell (billboard mobs only)
         }
+
+        // FLINCHED: a hit that cost HP pins this mob's feet for as long as its hurt reaction plays — but not its bite,
+        // which is why this sits BELOW the touch attack and only skips the steering. Same rule the player plays by, so
+        // chaining hits on a mob keeps it off you exactly as a pack keeps you pinned.
+        if (status != null && status.MovementFlinched) { agent.Halt(); return; }
 
         if (chasing)
         {

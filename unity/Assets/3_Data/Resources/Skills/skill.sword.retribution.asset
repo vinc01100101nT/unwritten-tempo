@@ -55,9 +55,16 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
   holdCasterForRun: 0
   hasReleaseStance: 0
   releaseStance: 14
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: follow_hit
     targetMode: 1
@@ -70,6 +77,7 @@ MonoBehaviour:
     stayDuration: 0
     effects:
     - kind: 0
+      resolveAsBasicAttack: 0
       damageType: 0
       damageMult: 1
       element: 0
@@ -81,18 +89,30 @@ MonoBehaviour:
       stacking: 0
       stackLimit: 5
       stacksPerApply: 1
+      stacksFromAttackSpeed: 0
+      stackShare: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
+      afterimageSeconds: 0
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
+      starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 5
-      chance: 0
+      chance: 1
       useStackValue: 1
       stackValueSource: 1
-      stackValueMult: 1
+      stackValueMult: 2.5
       side: 2
       buffStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
     targets: 2

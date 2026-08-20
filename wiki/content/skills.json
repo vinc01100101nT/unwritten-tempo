@@ -72,12 +72,12 @@
     {
       "type": "list",
       "items": [
-        "**After you finish casting a particular skill** — uninterrupted. This is how one skill rides another: Lock Blades off Lunge, Opening off Feint.",
+        "**After you finish casting a particular skill** — uninterrupted. This is how one skill rides another: Lock Blades off Lunge.",
         "**When a basic attack of yours lands.**",
         "**When you kill something.**",
         "**When you drop to low health.**",
         "**When you're hit.**",
-        "**When you successfully parry.**"
+        "**When you successfully parry.** Opening rides this one."
       ]
     },
     {

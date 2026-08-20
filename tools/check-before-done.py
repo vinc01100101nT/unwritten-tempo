@@ -12,6 +12,14 @@ Two checkers, each run ONLY when its own files actually changed since the last c
   · the game's C#            -> tools/check-unity-code.sh   (never touches the Unity editor)
   · the saved skill data     -> tools/check-skill-data.py
 
+ONLY MY OWN CHANGES. This gate exists to stop ME shipping a broken edit, and nothing else.
+A repo can be mid-edit for a dozen reasons that have nothing to do with this turn — another
+session, the user's own unfinished work, an editor writing files underneath us — and a fault
+in code I never opened is not mine to fix, not mine to guess at, and not a reason to hold the
+turn hostage. So a group is skipped outright unless THIS session edited one of its files, and
+a fault only speaks if it names a file THIS session edited. Everything else is somebody else's
+work in progress and is passed over in silence.
+
 Cheap by design: unchanged files mean it does nothing at all and adds no waiting. It never
 blocks twice in a row for the same turn (the payload says when it has already fired), and
 it never blocks when a checker could not run at all — a missing tool is not a red build.
@@ -80,6 +88,64 @@ def fingerprint(paths):
     return hashlib.sha1("\n".join(marks).encode()).hexdigest()
 
 
+EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
+
+
+def session_edits(payload):
+    """Every file THIS session actually wrote, read back out of the turn transcript. The
+    transcript is the only honest record of it — a file's modification time says a file moved,
+    never who moved it, and this gate turns on exactly that difference."""
+    path = payload.get("transcript_path")
+    if not path or not os.path.isfile(path):
+        return None                     # can't tell whose work it is → caller stays silent
+    touched = set()
+
+    def walk(node):
+        if isinstance(node, dict):
+            if node.get("type") == "tool_use" and node.get("name") in EDIT_TOOLS:
+                f = (node.get("input") or {}).get("file_path")
+                if f:
+                    touched.add(os.path.realpath(f))
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    walk(json.loads(line))
+                except ValueError:
+                    continue
+    except OSError:
+        return None
+    return touched
+
+
+def mine_only(body, touched):
+    """Keep only the fault lines that name a file this session edited. A checker compiles the
+    whole project, so its output mixes my faults in with everyone's; this is what separates
+    them. Lines naming no file at all (headings, counts) ride along with the ones kept."""
+    kept, saw_fault = [], False
+    for line in body.splitlines():
+        hit = re.search(r"([\w./\\-]+\.(?:cs|asset|py))\s*[(:]", line)
+        if not hit:
+            kept.append(line)
+            continue
+        candidate = hit.group(1)
+        real = os.path.realpath(candidate if os.path.isabs(candidate)
+                                else os.path.join(REPO, candidate))
+        if real in touched:
+            kept.append(line)
+            saw_fault = True
+    return "\n".join(kept).strip() if saw_fault else ""
+
+
 def load_state():
     try:
         with open(STATE, "r", encoding="utf-8") as f:
@@ -106,6 +172,10 @@ def main():
     if payload.get("stop_hook_active"):
         return 0
 
+    touched = session_edits(payload)
+    if not touched:
+        return 0                       # this session wrote nothing, or we can't tell — say nothing
+
     state = load_state()
     findings, checked, unavailable, already = [], [], [], []
 
@@ -114,7 +184,10 @@ def main():
             continue
         if not all(os.path.isfile(f) for f in group.get("files", [])):
             continue
-        now = fingerprint(watched(group))
+        watch = watched(group)
+        if not touched.intersection(os.path.realpath(p) for p in watch):
+            continue                   # nothing of MINE in here — whatever else is going on isn't my business
+        now = fingerprint(watch)
         if state.get(name) == now:
             continue                                    # nothing changed since it last passed
         try:
@@ -127,7 +200,9 @@ def main():
             state.pop(name + ":told", None)
             checked.append(name)
         elif done.returncode == 1:
-            body = ANSI.sub("", (done.stdout or "") + (done.stderr or "")).strip()
+            body = mine_only(ANSI.sub("", (done.stdout or "") + (done.stderr or "")).strip(), touched)
+            if not body:
+                continue               # it is broken, but not by me — not this gate's business
             # Say a given fault ONCE. Having been told, the turn is free to end — the same rule
             # the in-game gate uses when it reports an unauthored pile: report per fault, not
             # per attempt. Anything NEW, or the same fault after the files moved, speaks again.

@@ -43,11 +43,11 @@ public static class BasicSwing
         int power = missed ? 0
                   : Mathf.Max(1, Mathf.RoundToInt(attacker.RollBasicDamage(crit) * Mathf.Max(0f, powerMult)));
         // One swing, one charge — spent on the whiff too, which is why this sits outside the miss branch.
-        power = UnitOffense.Boosted(attacker.States, power);
+        power = UnitOffense.SpendCharges(attacker.States, power);
 
         int dealt = CombatAuthority.Apply(victim, new DamageInfo(power, attacker.BasicElement, attacker.BasicIsMagic,
                                                                 crit, attackerHit: hit, overkill: overkill,
-                                                                missed: missed));
+                                                                missed: missed, attacker: attacker));
         if (dealt > 0)
         {
             var body = victim.Body;

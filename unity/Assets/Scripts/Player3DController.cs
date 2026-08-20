@@ -370,6 +370,12 @@ public partial class Player3DController : MonoBehaviour
         }
         else move = Tick();
 
+        // FLINCHED: a hit that cost HP stops the feet for as long as the hurt reaction plays. MOVEMENT ONLY — the
+        // swing, the cast and pressing a skill all still run, which is exactly what separates a flinch from a stun.
+        // Zeroed here rather than by returning early, so the stance reads "not moving" and input keeps being served;
+        // a routed order survives and simply resumes when the stagger lifts.
+        if (status != null && status.MovementFlinched) move = Vector3.zero;
+
         bool moving = move.sqrMagnitude > 0.001f;
         if (moving) worldFacing = move;
         // Sprint gear (V toggle, stamina-gated) decided FIRST so it wins over Shift-walk; also drains/refills stamina.

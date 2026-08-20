@@ -25,9 +25,10 @@ public static class UnitOffense
         return Mathf.RoundToInt(rawRoll * buff);
     }
 
-    /// <summary>The LAST thing that happens to an attack on the attacker's side: spend one Boost Outgoing Damage charge,
-    /// if this unit holds any, and multiply the attack by what that charge is worth. Returns the amount unchanged when
-    /// there are none, so every outgoing site can call it without asking first.
+    /// <summary>The LAST thing that happens to an attack on the attacker's side: spend one charge from EACH outgoing
+    /// charge pile this unit holds — Boost Outgoing Damage and Reduce Outgoing Damage — and multiply the attack by what
+    /// those charges are worth. Returns the amount unchanged when it holds none, so every outgoing site can call it
+    /// without asking first. Holding both is not a special case: the attack pays both multipliers.
     ///
     /// <para><b>Call it ONCE per attack, INCLUDING an attack that missed</b> (pass its 0) — the charge pays for making
     /// the attack, not for landing it, so a whiff spends one exactly as a hit does. Calling it twice for one attack
@@ -38,11 +39,14 @@ public static class UnitOffense
     /// That is the design, and it also keeps the charge on the attacker, where the pile lives, instead of shipping the
     /// attacker's state across to the defender.</para>
     ///
-    /// <para>Damage-over-time never reaches here — ailment ticks are true damage straight to HP — so they neither gain
-    /// the boost nor eat a charge, with nothing to special-case.</para></summary>
-    public static int Boosted(UnitStates states, int amount)
+    /// <para>Damage-over-time never reaches here — ailment ticks are true damage straight to HP — so it neither gains
+    /// the boost nor eats a charge of either kind, with nothing to special-case.</para></summary>
+    public static int SpendCharges(UnitStates states, int amount)
     {
-        float mult = states != null ? states.SpendOutgoingBoost() : 1f;
+        if (states == null) return amount;
+        // BOTH piles are asked every attack, never one-or-the-other: an early return on the boost would let a unit
+        // carrying both keep its penalty charges forever.
+        float mult = states.SpendOutgoingBoost() * states.SpendOutgoingPenalty();
         return mult == 1f ? amount : Mathf.RoundToInt(amount * mult);
     }
 

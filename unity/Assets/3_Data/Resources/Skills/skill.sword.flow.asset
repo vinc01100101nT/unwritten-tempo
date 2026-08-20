@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
+  m_Name: skill.sword.flow
+  m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  targetingMigrated: 1
+  id: skill.sword.flow
+  displayName: Flow
+  weaponType: 1
+  published: 0
+  icon: {fileID: 0}
+  description: 
+  archetype: 0
+  family: 0
+  shape: 0
+  complexity: 0
+  acquisitionTier: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+  triggersMigrated: 1
+  trigger: 0
+  triggerSkillId: 
+  requiresState: 0
+  requireSkillId: 
+  requireState: 12
+  requireMinStacks: 1
+  consumeAllStacks: 0
+  consumeStacks: 0
+  manaCost: 10
+  cooldown: 5
+  castTime: 0
+  aim: 2
+  castRange: 11
+  tier: 0
+  chargeCost: 100
+  castCircleId: 
+  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  vfx: {fileID: 0}
+  repeatCount: 1
+  repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
+  holdCasterForRun: 0
+  hasReleaseStance: 0
+  releaseStance: 14
+  releaseStanceReplayPerRepeat: 0
+  bindings: []
+  shortLabel: Skill
+  keyLabel: 
+  slotOrder: 10
+  tint: {r: 1, g: 1, b: 1, a: 1}

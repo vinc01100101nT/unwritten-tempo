@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   targetingMigrated: 1
   id: skill.sword.parry
-  weaponType: 1
-  published: 0
   displayName: Parry
+  weaponType: 1
+  published: 1
   icon: {fileID: 0}
   description: 'Read the hit and punish it.
 
@@ -27,6 +27,17 @@ MonoBehaviour:
   shape: 3
   complexity: 0
   acquisitionTier: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+  triggersMigrated: 1
   trigger: 0
   triggerSkillId: 
   requiresState: 0
@@ -47,9 +58,16 @@ MonoBehaviour:
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
   holdCasterForRun: 0
   hasReleaseStance: 0
   releaseStance: 14
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: follow_hit
     targetMode: 0
@@ -62,6 +80,7 @@ MonoBehaviour:
     stayDuration: 0
     effects:
     - kind: 18
+      resolveAsBasicAttack: 0
       damageType: 0
       damageMult: 1
       element: 0
@@ -73,12 +92,27 @@ MonoBehaviour:
       stacking: 1
       stackLimit: 1
       stacksPerApply: 1
+      stacksFromAttackSpeed: 0
+      stackShare: 1
       dashSpeedMult: 8
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds: 0.3
+      afterimageSeconds: 0
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity: 1
+      starCorners: 5
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds: 1
+      modifierStacks: 1
       hitCount: 1
-      chance: 0
+      chance: 1
+      useStackValue: 0
+      stackValueSource: 0
+      stackValueMult: 1
+      side: 0
       buffStat: 0
       affinity: []
       durationAffinity:

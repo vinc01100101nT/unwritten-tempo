@@ -105,7 +105,7 @@ MonoBehaviour:
       modifierSeconds: 1
       modifierStacks: 1
       hitCount: 1
-      chance: 0
+      chance: 1
       useStackValue: 0
       stackValueSource: 0
       stackValueMult: 1
@@ -143,7 +143,7 @@ MonoBehaviour:
       modifierSeconds: 1
       modifierStacks: 1
       hitCount: 1
-      chance: 0
+      chance: 1
       useStackValue: 0
       stackValueSource: 0
       stackValueMult: 1

@@ -133,6 +133,72 @@ public class StatusController : MonoBehaviour
     /// mid-cast wait keep reading ActionLocked.</summary>
     public bool CannotStartSkill => ActionLocked || (player != null && player.IsAirborne);
 
+    // ---- flinch: a hit that costs HP stops you WALKING, never swinging ---------
+    // The share of max HP a unit must eat, while it can still be flinched, to earn a moment of footing.
+    const float PityFraction = 0.2f;
+    // How long that footing lasts. Starts when the hurt reaction ends, so a hit never rescues itself.
+    const float PityWindowSeconds = 0.4f;
+    // A billboard mob has no rig and so no hurt clip to measure. One number, here, rather than per mob.
+    const float NoRigFlinchSeconds = 0.3f;
+
+    float flinchUntil, flinchImmuneUntil, pityDamage, lastHpLossTime;
+    StanceController stanceCache;
+
+    /// <summary>Is this unit's MOVEMENT stopped by a hit right now? Deliberately not part of
+    /// <see cref="ActionLocked"/>: a flinched unit still swings, casts and presses skills — it just can't walk.</summary>
+    public bool MovementFlinched => Time.time < flinchUntil;
+
+    /// <summary>Every disable turned away — the bought window (a skill granted it), not the earned one.</summary>
+    public bool DisablesBlocked { get { var st = states; return st != null && st.DisablesBlocked; } }
+
+    /// <summary>Can't be flinched right now: either the footing earned by bleeding, or the bought window.</summary>
+    public bool FlinchImmune => Time.time < flinchImmuneUntil || DisablesBlocked;
+
+    /// <summary>When this unit last LOST HP. The cast wind-up reads it to know a hit landed mid-cast; stamped even
+    /// while flinch-immune, because shrugging off the stagger is not the same as shrugging off the interruption.</summary>
+    public float LastHpLossTime => lastHpLossTime;
+
+    /// <summary>A hit that actually cost HP landed on this unit: stop its feet for as long as its hurt reaction plays,
+    /// and count the damage toward the footing it earns for eating punishment. Called from the one damage door
+    /// (<see cref="CombatAuthority"/>) so player and mob are flinched by the identical rule.
+    ///
+    /// <para>Damage-over-time never reaches here — it goes through the true-damage channel — so ticks neither stagger
+    /// a unit nor build its footing. Nor does a hit a parry erased, a shield ate or a brace banked: those cost no HP,
+    /// so the damage door reports 0 and this is never called.</para></summary>
+    public void TookHit(int dealt)
+    {
+        if (dealt <= 0) return;
+        lastHpLossTime = Time.time;
+        // Immune: no stagger AND no credit. Damage eaten while it cannot stop you is not punishment, so it must not
+        // buy the next window — that is what would otherwise chain one window straight into the next forever.
+        if (FlinchImmune) return;
+
+        flinchUntil = Mathf.Max(flinchUntil, Time.time + FlinchSeconds());
+
+        int max = Unit != null ? Unit.MaxHP : 0;
+        if (max <= 0) return;
+        pityDamage += dealt;
+        if (pityDamage < max * PityFraction) return;
+        pityDamage = 0f;                                        // paid out; the excess is dropped, never banked
+        flinchImmuneUntil = flinchUntil + PityWindowSeconds;     // begins once the hurt reaction has played out
+    }
+
+    /// <summary>Wipe the stagger and the footing meter — a unit coming back to life starts its next life clean, rather
+    /// than inheriting the last hit of the one that killed it or a meter half-filled by it.</summary>
+    public void ClearFlinch() { flinchUntil = 0f; flinchImmuneUntil = 0f; pityDamage = 0f; }
+
+    /// <summary>How long one flinch lasts: exactly as long as this unit's hurt animation, read from the clip through
+    /// the same resolver a skill's release animation roots the caster with. No hand-typed seconds anywhere.</summary>
+    float FlinchSeconds()
+    {
+        // Resolved on first use and kept — but only once it is actually FOUND. Latching a null would be permanent:
+        // the player's rig is spawned separately and may not exist the first time something hits them, and a mob's
+        // 3D body is swapped in by its own visual, so an early miss must be retried rather than remembered.
+        if (stanceCache == null)
+            stanceCache = isPlayer ? StanceController.Player : GetComponentInChildren<StanceController>();
+        return stanceCache != null ? stanceCache.ActionDuration(StanceId.Hurt) : NoRigFlinchSeconds;
+    }
+
     /// <summary>Root the unit for <paramref name="seconds"/> as a skill's self-imposed lock (cast wind-up or RO-style
     /// aftercast delay). Pure gate: no popup, no VFX — unlike an Ailment. Extends (never shortens) any active lock.</summary>
     public void LockActions(float seconds)
@@ -162,6 +228,10 @@ public class StatusController : MonoBehaviour
     public void Apply(Ailment a, float seconds, float magnitude)
     {
         if (seconds <= 0f || states == null) return;
+        // Turned away at the door rather than suppressed after landing: an immune unit never gains the ailment at all,
+        // so nothing lingers to resume the moment the window closes. Only the ailments that STOP you are refused —
+        // poison still poisons, blind still blinds, slow still slows.
+        if (DisablesBlocked && (a == Ailment.Stun || a == Ailment.Freeze || a == Ailment.Silence)) return;
         var id = (StateId)(int)a;
         bool wasActive = states.Has(id);
 

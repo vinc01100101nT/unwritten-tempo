@@ -17,8 +17,6 @@ public class Character3DVisual : MonoBehaviour
     public Player3DController player;
     [Tooltip("Ground speed (units/sec) above which the player counts as moving.")]
     public float walkThreshold = 0.12f;
-    [Tooltip("Seconds the Hurt action plays after taking a hit.")]
-    public float hurtDuration = 0.4f;
     [Tooltip("Seconds the PickUp action plays when collecting loot.")]
     public float pickUpDuration = 0.6f;
     [Tooltip("Extra world-Y offset applied ONLY while a Mixamo one-shot clip plays (Quaternius clips unaffected). " +
@@ -80,7 +78,10 @@ public class Character3DVisual : MonoBehaviour
 
     void OnDamaged(int dmg)
     {
-        if (Character.Instance == null || !Character.Instance.IsDead) hurtUntil = Time.time + hurtDuration;
+        // How long the flinch reads for comes from the CLIP, not a number typed here — the same length the movement
+        // stop uses, so what you see and how long you're pinned can never drift apart.
+        if (stance != null && (Character.Instance == null || !Character.Instance.IsDead))
+            hurtUntil = Time.time + stance.ActionDuration(StanceId.Hurt);
     }
 
     void OnPickUp() => pickUpUntil = Time.time + pickUpDuration;
