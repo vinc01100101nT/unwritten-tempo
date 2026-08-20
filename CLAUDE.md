@@ -33,6 +33,30 @@ Escalate EFFORT/model only once the evidence is in hand and the remaining hard p
 
 **Measured gotcha**: `capture_scene_view`'s `save_path` is IGNORED — it always returns the PNG inline as base64. Decode it yourself and write the file; don't report a path it never wrote.
 
+### REACH FOR IT WITHOUT BEING TOLD — these moments ARE the instruction
+
+Knowing the link exists changes nothing if nobody uses it. The user should never have to say "check Unity" — a
+capability you have to be reminded of is a capability you don't have. When any of these is true, USE IT, silently,
+as the first move, and report what you MEASURED:
+
+- **You are about to say what a live value is** — a transform, a component field, what's in the scene, whether a
+  thing is wired up. RULE ZERO already forbids guessing it; this is where the answer actually lives. Reading the
+  `.unity` / `.prefab` text tells you what was SAVED, not what is LOADED — when those can differ, ask the editor.
+- **You want to know what something LOOKS like.** Take the screenshot and LOOK at it. Do not describe an
+  appearance you have not seen, and do not ask the user to describe it for you.
+- **You need the console** — after any author-time action, to see what it actually printed. (Reading it once is
+  fine and always was; the ban is on POLLING it in a loop while forcing recompiles.)
+- **An author-time action is on the table** — an asset edit, a one-shot fix, an existing editor tool's logic. Run
+  it, per the standing "don't hand the user a menu click" rule.
+- **A fix survived one round.** The second-fix rule says go get ground truth; for anything living in the editor,
+  this IS the ground truth, and one look beats another hypothesis.
+
+**Check `unity status` FIRST, every session, before leaning on any of it** — and if it is down, say so plainly in
+the reply. Working blind while sounding certain is the exact failure that killed the old bridge for five days.
+
+**Still NOT automatic, and still the user's:** entering Play mode, anything needing their visual judgement
+("does this look right"), and forcing a recompile. Those stay asked-for.
+
 ## Handoff protocol — the phrase "do a handoff" (covers tasks AND unsolved bugs)
 
 When the user says **"do a handoff"** (or "handoff this" / "hand off the task"), treat it as a command: WITHOUT further prompting, write a handoff file so the NEXT session can resume cold. This ONE protocol covers both a general in-progress task and an unsolved hard bug — both live in the same folder.

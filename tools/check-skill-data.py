@@ -177,7 +177,13 @@ def _tokens(text):
 
 def _split(entry):
     key, _, val = entry.partition(":")
-    return key.strip(), val.strip()
+    key, val = key.strip(), val.strip()
+    # Unity quotes any string YAML would otherwise read as an indicator — an id beginning with '@' is the case that
+    # found this. The quotes are YAML's, never part of the value, so a reader that keeps them compares a different
+    # string than the game does and reports a fault that only exists in this file's punctuation.
+    if len(val) >= 2 and val[0] == val[-1] and val[0] in "'\"":
+        val = val[1:-1].replace("''", "'")
+    return key, val
 
 
 def _parse_map(toks, i, indent):

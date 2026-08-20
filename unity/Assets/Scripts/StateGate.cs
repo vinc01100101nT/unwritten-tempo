@@ -34,6 +34,16 @@ public static class StateGate
     public static bool ReadsRunOfHits(SkillTriggerEntry entry) =>
         entry != null && entry.requiresState && entry.requireSkillId == RunOfHitsId;
 
+    /// <summary>The only moments where the run of hits is a LIVE number: a hit of yours just landed, and the count
+    /// already includes it (the damage door counts before the sink that fires these).
+    ///
+    /// <para>Every other moment reads something that is not the run: a press or a finished cast reads a standing
+    /// number nothing just changed; the start of a swing reads one hit behind, on a swing that may go on to miss; a
+    /// KILL reads a run against a body that is now dead; and taking damage, parrying or dropping to low HP are not
+    /// about your attacking at all. Offering it there would be a knob that reads a real number meaning nothing.</para></summary>
+    public static bool MomentHasLiveRunOfHits(SkillTrigger trigger) =>
+        trigger == SkillTrigger.OnBasicAttackDealt || trigger == SkillTrigger.OnDamageDealt;
+
     /// <summary>True when <paramref name="def"/> may run right now. A skill with no requirement always passes.
     /// Gates the WHOLE skill — callers must bail before playing any VFX or paying any cost.
     ///

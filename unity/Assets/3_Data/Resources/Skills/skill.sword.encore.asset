@@ -58,6 +58,7 @@ MonoBehaviour:
   repeatScaleWithAttackSpeed: 0
   repeatBeatsPerSwing: 1
   repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
   repeatReaim: 0
   repeatReaimRange: 6
   holdCasterForRun: 0
@@ -76,6 +77,7 @@ MonoBehaviour:
     stayDuration: 0
     effects:
     - kind: 21
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult: 1
       element: 0
@@ -110,6 +112,7 @@ MonoBehaviour:
       side: 1
       buffStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
     targets: 2

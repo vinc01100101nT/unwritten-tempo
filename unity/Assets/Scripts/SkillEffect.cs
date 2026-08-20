@@ -351,19 +351,39 @@ public class SkillEffect
     /// complements — every stack-driven effect goes down one path or the other, never both, never neither. A HEAL takes
     /// the flat path on either reading, because a heal has no Attack roll for a multiplier to lift.</para></summary>
     public int StackOutput(in StackVars vars) =>
-        !useStackValue || (kind == SkillEffectKind.Damage && stackValueSource == StackReading.Count)
+        !useStackValue || stackValueSource == StackReading.Count
             ? -1
-            : Mathf.Max(0, Mathf.RoundToInt(vars.Read(stackValueSource) * Mathf.Max(0f, stackValueMult)));
+            : Mathf.Max(0, Mathf.FloorToInt(StackOutputRaw(vars) + FloorNudge));
 
-    /// <summary>The extra damage multiplier the COUNT reading buys THIS effect — ADDED to its own base power, so the
-    /// hit still rolls through the caster's Attack, still scales with the ring, and can still crit. Zero for any effect
-    /// the pile doesn't drive that way.
+    /// <summary>The same answer before it is cut to a whole number — for the kinds whose number is a FRACTION (a
+    /// damage cut, a leech share, a slow amount), where rounding to an integer would erase it entirely.</summary>
+    public float StackOutputRaw(in StackVars vars) =>
+        vars.Read(stackValueSource) * Mathf.Max(0f, stackValueMult);
+
+    /// <summary>True when the pile REPLACES this effect's number outright — a carried total only. A COUNT never
+    /// replaces anything: it is a tally, so it ADDS to whatever the author typed (see <see cref="StackCountBonus"/>).</summary>
+    public bool StackDrivesOutput => useStackValue && stackValueSource == StackReading.CarriedTotal;
+
+    // "one per three" typed as 0.3333 lands at 0.9999 on three stacks, and cutting that down gives ZERO — a rate that
+    // reads as broken for a reason no author could ever see. A nudge a ten-thousandth wide fixes exactly that and is
+    // far too small to change any number anybody actually means.
+    const float FloorNudge = 0.001f;
+
+    /// <summary>What a COUNT reading buys this effect, ADDED to whatever the author typed — the rule damage has always
+    /// used, now the rule for every kind: 6× power + 0.4 per stack at 10 stacks is 10× power, and 0 stacks added + a
+    /// third per hit at 3 hits in a row is 1 stack. The author's number is never ignored, so it is never a dead knob.
     ///
-    /// <para>Adds up, never compounds: a 6× effect on 10 stacks at 0.4 lands at 6 + 4 = 10× Attack.</para></summary>
-    public float StackDamageBonus(in StackVars vars) =>
-        useStackValue && kind == SkillEffectKind.Damage && stackValueSource == StackReading.Count
+    /// <para>Adds up, never compounds. A carried total is the other shape entirely — already real, earned value, so it
+    /// REPLACES the number instead of adding to it and nothing re-rolls it.</para></summary>
+    public float StackCountBonus(in StackVars vars) =>
+        useStackValue && stackValueSource == StackReading.Count
             ? Mathf.Max(0f, stackValueMult) * vars.Count
             : 0f;
+
+    /// <summary>The whole-number form of <see cref="StackCountBonus"/>, cut DOWN so "one per three" is 1 at three in a
+    /// row and still 1 at five.</summary>
+    public int StackCountBonusInt(in StackVars vars) =>
+        Mathf.Max(0, Mathf.FloorToInt(StackCountBonus(vars) + FloorNudge));
 
     /// <summary>WHICH state entry this effect creates, or false when it creates none. THE one answer to "what pile
     /// does this effect leave behind", so a consumer's authoring list can never offer a pile that will not exist.
@@ -419,11 +439,29 @@ public class SkillEffect
             into.Add(StateId.DeferredDamage);
     }
 
-    /// <summary>Which kinds can be driven by the cast's pile. Deliberately the two whose output is a plain SIZE — a
-    /// number the pile can BE or add to. A duration or a proc chance is not a size, so pulling a pile into one would
-    /// mean inventing a second conversion rule per kind; those keep their own fields.</summary>
-    public static bool SupportsStackValue(SkillEffectKind k) =>
-        k == SkillEffectKind.Damage || k == SkillEffectKind.Heal;
+    /// <summary>Which kinds can be driven by the cast's pile — EVERY kind that has a number for it to be. Only the
+    /// kinds with no number at all are missing: a teleport, a dash, a parry, a brace and an immunity are a window or a
+    /// destination, and there is nothing there for a pile to become.
+    ///
+    /// <para>A binary ailment (stun / freeze / silence) is listed because its kind carries a number for the ailments
+    /// that do have one; the apply site simply has nothing to feed. Listing it costs one dead checkbox on those three
+    /// and keeps this answer per-KIND, which is what the serialized field is.</para></summary>
+    public static bool SupportsStackValue(SkillEffectKind k)
+    {
+        switch (k)
+        {
+            case SkillEffectKind.Teleport:
+            case SkillEffectKind.Dash:
+            case SkillEffectKind.Parry:
+            case SkillEffectKind.Brace:
+            case SkillEffectKind.ImmuneToDisables:
+            case SkillEffectKind.Taunt:
+            case SkillEffectKind.ExtendDuration:   // its only number is the seconds it adds — a duration, not a size
+                return false;
+            default:
+                return true;
+        }
+    }
 
     [Header("Who it lands on")]
     [Tooltip("WHO this effect is applied to. Auto = this kind's traditional side (guard/shield/buff on the caster, " +

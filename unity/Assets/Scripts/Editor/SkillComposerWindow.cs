@@ -500,11 +500,19 @@ public class SkillComposerWindow : EditorWindow
                 "too, since most piles come from one.\n\n" +
                 "The one entry that is NOT a skill is the run of consecutive hits: nothing grants it, the fight " +
                 "counts it, and it is never spent.",
-                e.requireSkillId, includePassives: true, allowSelf: true, runOfHits: true);
+                e.requireSkillId, includePassives: true, allowSelf: true,
+                runOfHits: StateGate.MomentHasLiveRunOfHits(e.trigger));
             // The run of hits stops here: there is no pile to name (nothing grants it) and nothing to spend (the fight
             // ends it, not a skill), so those rows are not drawn rather than shown doing nothing.
             if (StateGate.ReadsRunOfHits(e))
             {
+                // A gate SAVED against the run, whose moment was later changed to one that doesn't offer it, keeps
+                // reading — the picker never silently repoints anyone. But it is now reading a number that means
+                // nothing at that moment, so the window says so instead of letting it sit and look deliberate.
+                if (!StateGate.MomentHasLiveRunOfHits(e.trigger))
+                    EditorGUILayout.HelpBox("This moment has no live run of hits — it fires when nothing of yours just " +
+                        "landed, so the count read here is stale, over, or about something else entirely. Move this to " +
+                        "'On Basic Attack Dealt' or 'On Damage Dealt', or read a real pile instead.", MessageType.Warning);
                 e.requireMinStacks = EditorGUILayout.IntSlider(new GUIContent("  min hits in a row",
                     "How many hits in a row on the SAME enemy this needs to fire. The run restarts at 1 the moment a " +
                     "hit lands on somebody else, and empties whenever a hit deals NOTHING — a miss, a parry, a full " +
@@ -580,8 +588,10 @@ public class SkillComposerWindow : EditorWindow
                 "How many stacks to add. Each is a copy of that pile's newest one — same worth, same deadline — because " +
                 "what one of its charges is worth is the granting skill's business, not this effect's.\n\n" +
                 "Works whether or not that skill is running: if its pile is up the stacks join it; if not, the pile " +
-                "starts with exactly the charges that skill's own effect authors."),
-                Mathf.Max(0, ef.modifierStacks), 1, UnitStates.MaxStacks);
+                "starts with exactly the charges that skill's own effect authors.\n\n" +
+                "0 is a real answer: it means this effect adds nothing ON ITS OWN, and hands over only what the cast's " +
+                "pile buys it above. That is how 'one Momentum per three hits in a row' is written."),
+                Mathf.Max(0, ef.modifierStacks), 0, UnitStates.MaxStacks);
 
     }
 
@@ -1788,6 +1798,11 @@ public class SkillComposerWindow : EditorWindow
                 if (affLabel != null) DrawAffinity(affLabel, ref ef.affinity);
                 if (SkillEffect.RollsChance(ef.kind) && ef.chance < 1f) DrawAffinity("boosts CHANCE", ref ef.chanceAffinity);
                 if (HasDurationChannel(ef)) DrawAffinity("boosts DURATION", ref ef.durationAffinity);
+                // A MODIFIER's numbers live in fields of their own (they describe another skill's pile rather than this
+                // effect's body), so they can't ride the two rows above — but they are the same two channels, and there
+                // is no reason a modifier should be the one kind whose numbers nothing is allowed to lift.
+                if (ef.kind == SkillEffectKind.AddStacks) DrawAffinity("boosts STACKS ADDED", ref ef.affinity);
+                if (ef.kind == SkillEffectKind.ExtendDuration) DrawAffinity("boosts SECONDS ADDED", ref ef.durationAffinity);
                 DrawStacking(ef);
                 if (ef.kind == SkillEffectKind.Damage) DrawAffinity("boosts HITS COUNT", ref ef.hitCountAffinity);
                 EditorGUI.indentLevel--;
@@ -1846,41 +1861,71 @@ public class SkillComposerWindow : EditorWindow
         if (!SkillEffect.SupportsStackValue(ef.kind)) { ef.useStackValue = false; return; }
 
         ef.useStackValue = EditorGUILayout.Toggle(new GUIContent("use stack value",
-            "ON = the pile this cast cashes decides this effect's SIZE. HOW it pays depends on the reading below: a " +
-            "carried total is dealt FLAT (it is already real damage, so it can't crit), while a COUNT adds power to " +
-            "this effect and rolls through your Attack like any other hit."),
+            "ON = the pile this cast cashes BECOMES this effect's number, replacing the one typed above. Available on " +
+            "every effect that has a number: a heal's HP, an ailment's damage per tick, a shield's pool, a shove's " +
+            "speed, how many stacks a modifier hands over.\n\n" +
+            "A COUNT is cut DOWN to a whole number, so reading it at a third gives 1 at three stacks and still 1 at " +
+            "five — 'one per three' says exactly what it does.\n\n" +
+            "DAMAGE is the one kind that pays a count differently: there a count buys extra POWER on this effect and " +
+            "still rolls through your Attack, because a tally is not an amount of damage. A carried total is dealt " +
+            "flat on every kind — it is already real, earned value, so nothing re-rolls it."),
             ef.useStackValue);
         if (!ef.useStackValue) return;
 
-        ef.stackValueSource = (StackReading)EditorGUILayout.EnumPopup(new GUIContent("  read",
-            "Count = how many stacks the pile holds.\n\n" +
-            "Carried total = the sum of what those stacks CARRY (a percentage pile reads as its decimal, +30% = 0.3)."),
-            ef.stackValueSource);
+        // A run of consecutive hits is a TALLY — each hit adds one, and the hits carry nothing. So when that is all
+        // this skill reads, "carried total" is not a harder answer, it is a non-existent one that would read 0 in
+        // silence. It isn't offered; the choice is made and shown.
+        bool countOnly = OnlyReadsRunOfHits(sel);
+        if (countOnly) ef.stackValueSource = StackReading.Count;
 
-        bool perStackPower = ef.kind == SkillEffectKind.Damage && ef.stackValueSource == StackReading.Count;
+        var readLabel = new GUIContent("  read",
+            "Count = how many stacks the pile holds.\n\n" +
+            "Carried total = the sum of what those stacks CARRY (a percentage pile reads as its decimal, +30% = 0.3).");
+        if (countOnly)
+        {
+            EditorGUILayout.Popup(readLabel, 0, CountOnlyRead);
+            EditorGUILayout.LabelField(" ", "Count is the only reading — a run of hits carries nothing to total.",
+                                       EditorStyles.miniLabel);
+        }
+        else
+            ef.stackValueSource = (StackReading)EditorGUILayout.EnumPopup(readLabel, ef.stackValueSource);
+
+        // ONE rule for every kind now: a COUNT is a tally, so it ADDS to the number you typed; a CARRIED TOTAL is
+        // already real earned value, so it REPLACES it. That was always how damage behaved — it is just no longer
+        // damage's private rule, which is what stopped the typed number being ignored on everything else.
+        bool perUnit = ef.stackValueSource == StackReading.Count;
         ef.stackValueMult = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent(
-            perStackPower ? "  power × per stack" : "  × multiplier",
-            perStackPower
-                ? "EXTRA power each stack adds, on top of this effect's own base power. 0.4 = +40% of your Attack per " +
-                  "stack. Adds up, never compounds."
-                : "What the reading is multiplied by to get this effect's output. 2.5 on a carried total of 400 = 1000."),
+            perUnit ? "  + per stack" : "  × multiplier",
+            perUnit
+                ? "How much EACH stack adds, on TOP of the number you typed above — that number is never ignored.\n\n" +
+                  "0.4 on a 6× damage effect at 10 stacks = 6 + 4 = 10× Attack. A third on 0 stacks added, at three " +
+                  "hits in a row = 1 stack. Adds up, never compounds; whole-number fields are cut DOWN, so a third " +
+                  "gives 1 at three in a row and still 1 at five."
+                : "What the carried total is multiplied by to BECOME this effect's number, replacing the one above. " +
+                  "2.5 on a carried total of 400 = 1000."),
             ef.stackValueMult));
 
-        string unit = ef.kind == SkillEffectKind.Heal ? "HP healed" : "damage";
-        if (perStackPower)
+        string unit = StackOutputLabel(ef) ?? "output";
+        float per2 = Mathf.Max(0f, ef.stackValueMult);
+        if (ef.kind == SkillEffectKind.Damage && perUnit)
         {
             float basePower = ef.damageMult <= 0f ? 1f : ef.damageMult;
-            float per = Mathf.Max(0f, ef.stackValueMult);
             EditorGUILayout.HelpBox(
-                $"At 10 stacks: {basePower * 100f:0}% + {per * 10f * 100f:0}% = {(basePower + per * 10f) * 100f:0}% Attack." +
-                (per <= 0f ? "  (0 = the pile buys nothing.)" : ""), MessageType.None);
+                $"At 10 stacks: {basePower * 100f:0}% + {per2 * 10f * 100f:0}% = {(basePower + per2 * 10f) * 100f:0}% Attack." +
+                (per2 <= 0f ? "  (0 = the pile buys nothing.)" : ""), MessageType.None);
+        }
+        else if (perUnit)
+        {
+            // Shown against the number actually typed above, so the line reads as this effect rather than as algebra.
+            float baseVal = ef.kind == SkillEffectKind.AddStacks ? ef.modifierStacks
+                          : ef.amount != 0 ? ef.amount : ef.magnitude;
+            EditorGUILayout.HelpBox(
+                $"At 3 stacks: {baseVal:0.##} + (3 × {per2:0.##}) = {baseVal + 3f * per2:0.##} {unit}." +
+                (per2 <= 0f ? "  (0 = the pile buys nothing.)" : ""), MessageType.None);
         }
         else
             EditorGUILayout.HelpBox(
-                ef.stackValueSource == StackReading.CarriedTotal
-                    ? $"Carrying 400 → {400f * Mathf.Max(0f, ef.stackValueMult):0} {unit}, flat."
-                    : $"At 10 stacks → {10f * Mathf.Max(0f, ef.stackValueMult):0} {unit}, flat.",
-                MessageType.None);
+                $"Carrying 400 → {400f * per2:0} {unit}, flat — the number above is replaced.", MessageType.None);
 
         // The pile comes from the TRIGGER's gate — without one there is nothing to read, and this would silently be 0.
         bool anyGate = false;
@@ -2009,6 +2054,66 @@ public class SkillComposerWindow : EditorWindow
                     default:            return null;   // stun / freeze / silence: binary, nothing to scale
                 }
             default: return null;   // Taunt / Teleport / Cleanse have no scalable output
+        }
+    }
+
+    /// <summary>WHAT this effect's main number IS, named the way its own row names it — the label for the row that
+    /// lets the cast's pile lift it. Deliberately NOT <see cref="AffinityOutputLabel"/>: that one answers a different
+    /// question ("which numbers may your BUILD lift"), and several kinds are flat against the ring on purpose while
+    /// still being fair game for what a cast earned this fight. Null = this kind has no output number at all.</summary>
+    static readonly string[] CountOnlyRead = { "Count" };
+
+    /// <summary>True when every gate on this skill reads the automatic run of hits — the case where "carried total"
+    /// has no meaning at all. False the moment ONE gate reads a real pile, because the reading is chosen per effect
+    /// and a mixed skill can legitimately want the other answer.</summary>
+    static bool OnlyReadsRunOfHits(SkillDef d)
+    {
+        if (d?.triggers == null) return false;
+        bool any = false;
+        for (int i = 0; i < d.triggers.Count; i++)
+        {
+            var e = d.triggers[i];
+            if (e == null || !e.requiresState) continue;
+            if (!StateGate.ReadsRunOfHits(e)) return false;
+            any = true;
+        }
+        return any;
+    }
+
+    /// <summary>WHAT this effect's number IS, named the way its own row names it — used to word the worked example
+    /// under 'use stack value' so it says "HP restored" or "shove speed" instead of a generic word.</summary>
+    static string StackOutputLabel(SkillEffect e)
+    {
+        switch (e.kind)
+        {
+            case SkillEffectKind.Damage:               return "DAMAGE POWER";
+            case SkillEffectKind.Execute:              return "EXECUTE POWER";
+            case SkillEffectKind.Heal:                 return "HP RESTORED";
+            case SkillEffectKind.Haste:                return "SPEED BONUS";
+            case SkillEffectKind.Guard:                return "DAMAGE CUT";
+            case SkillEffectKind.BoostOutgoingDamage:  return "DAMAGE BONUS";
+            case SkillEffectKind.ReduceOutgoingDamage: return "DAMAGE CUT";
+            case SkillEffectKind.Buff:                 return "BUFF BONUS";
+            case SkillEffectKind.Regen:                return "HP / TICK";
+            case SkillEffectKind.Cleanse:              return "DEBUFFS REMOVED";
+            case SkillEffectKind.Vulnerability:        return "DAMAGE TAKEN";
+            case SkillEffectKind.Knockback:
+            case SkillEffectKind.Pull:                 return "SHOVE SPEED";
+            case SkillEffectKind.ManaLeech:            return "MP LEECHED";
+            case SkillEffectKind.Reflect:              return "REFLECT AMOUNT";
+            case SkillEffectKind.Shield:               return "BARRIER HP";
+            case SkillEffectKind.AddStacks:            return "STACKS ADDED";
+            case SkillEffectKind.Status:
+                switch (e.ailment)
+                {
+                    case Ailment.Burn: case Ailment.Poison: case Ailment.Bleed: return "DAMAGE / TICK";
+                    case Ailment.Slow:  return "SLOW AMOUNT";
+                    case Ailment.Blind: return "ACCURACY LOSS";
+                    default:            return null;   // stun / freeze / silence are binary — no number to lift
+                }
+            // Extend Duration's only number is the seconds it adds, which is the DURATION row below, not an output.
+            // Teleport, Dash, Parry, Brace, Immune To Disables and Taunt have no output number either.
+            default: return null;
         }
     }
 

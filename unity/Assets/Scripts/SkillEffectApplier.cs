@@ -279,12 +279,12 @@ public static class SkillEffectApplier
         // hand, and clamping an earned count to it would silently delete the charges a fast caster just paid for.
         if (tagDisplay) states.SetApplyContext(srcIcon, srcName,
                                                unit is Character ? SkillTooltip.DescribeEffect(e) : null,
-                                               e.stacking, ResolveStacks(e, caster),
+                                               e.stacking, ResolveStacks(e, caster, vars),
                                                e.stacksFromAttackSpeed ? 0 : e.stackLimit, srcId);
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
-                if (hit < EffectiveHits(e, caster)) LandStrike(e, unit, comboMult, caster, vars, overkill: false);
+                if (hit < EffectiveHits(e, caster, vars)) LandStrike(e, unit, comboMult, caster, vars, overkill: false);
                 break;
             case SkillEffectKind.Execute:
                 if (Fires(e, hit, caster)) ApplyExecute(e, unit, vars, comboMult, caster);
@@ -292,96 +292,95 @@ public static class SkillEffectApplier
             case SkillEffectKind.Heal:
                 // Same one formula as the Damage side, so a lifesteal read off a pile can't drift from the hit that
                 // read the same pile — one cast, one snapshot, two effects.
-                if (hit == 0)
-                {
-                    int healFromPile = e.StackOutput(vars);
-                    unit.Heal(healFromPile >= 0 ? healFromPile : ScaledAmount(e, caster));
-                }
+                // The pile-or-authored choice now lives in ScaledAmount, the same place every other flat number asks it.
+                if (hit == 0) unit.Heal(ScaledAmount(e, caster, vars));
                 break;
             case SkillEffectKind.Status:
-                if (body != null && Fires(e, hit, caster)) Status.Apply(body.gameObject, e.ailment, ScaledSeconds(e, caster), ScaledMagnitude(e, caster));
+                if (body != null && Fires(e, hit, caster)) Status.Apply(body.gameObject, e.ailment, ScaledSeconds(e, caster, vars), ScaledMagnitude(e, caster, vars));
                 break;
             case SkillEffectKind.Haste:
                 // Authored as a BONUS FRACTION (0.3 = +30%) → multiplier.
                 if (body != null && Fires(e, hit, caster))
                 {
                     var sc = Status.Of(body.gameObject);
-                    if (sc != null) sc.Haste(1f + ScaledMagnitude(e, caster), ScaledSeconds(e, caster));
+                    if (sc != null) sc.Haste(1f + ScaledMagnitude(e, caster, vars), ScaledSeconds(e, caster, vars));
                 }
                 break;
             case SkillEffectKind.Cleanse:
                 if (body != null && Fires(e, hit, caster))
                 {
                     var sc = Status.Of(body.gameObject);
-                    if (sc != null) sc.Cleanse(Mathf.Max(1, e.amount));
+                    if (sc != null) sc.Cleanse(Mathf.Max(1, StackedAmount(e, vars)));
                 }
                 break;
             case SkillEffectKind.Vulnerability:
-                if (Fires(e, hit, caster)) states.BeginVulnerable(ScaledMagnitude(e, caster), ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.BeginVulnerable(ScaledMagnitude(e, caster, vars), ScaledSeconds(e, caster, vars));
                 break;
             // Both modifiers edit a pile that already exists, so they run ONCE per landing (hit 0) like every other
             // non-proc effect, and they name their own target — the tick's aim decides nothing here.
             case SkillEffectKind.ExtendDuration:
                 if (hit == 0 && ModifierIsAuthored(e))
-                    states.ExtendFrom(e.modifierSkillId, e.modifierStateId, e.modifierSeconds);
+                    states.ExtendFrom(e.modifierSkillId, e.modifierStateId, ScaledModifierSeconds(e, caster, vars));
                 break;
             case SkillEffectKind.AddStacks:
-                if (hit == 0 && ModifierIsAuthored(e)) AddStacksToOtherSkill(e, states, caster);
+                if (hit == 0 && ModifierIsAuthored(e)) AddStacksToOtherSkill(e, states, caster, vars);
                 break;
             case SkillEffectKind.Guard:
-                if (Fires(e, hit, caster)) states.BeginGuard(ScaledSeconds(e, caster), ScaledMagnitude(e, caster));
+                if (Fires(e, hit, caster)) states.BeginGuard(ScaledSeconds(e, caster, vars), ScaledMagnitude(e, caster, vars));
                 break;
             case SkillEffectKind.Buff:
                 // Authored magnitude is a BONUS FRACTION (0.3 = +30%); ApplyStatBuff takes a multiplier. AMPLIFY buffs
                 // are FLAT (not affinity-scaled) — a support's value is uptime, not a bigger number.
-                if (Fires(e, hit, caster)) states.ApplyStatBuff(e.buffStat, 1f + Mathf.Max(0f, e.magnitude), ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.ApplyStatBuff(e.buffStat, 1f + Mathf.Max(0f, StackedMagnitude(e, vars)), ScaledSeconds(e, caster, vars));
                 break;
             case SkillEffectKind.Regen:
-                if (Fires(e, hit, caster)) states.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, caster))), ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, caster, vars))), ScaledSeconds(e, caster, vars));
                 break;
             case SkillEffectKind.ManaLeech:
-                if (Fires(e, hit, caster)) states.BeginManaLeech(ScaledSeconds(e, caster), e.magnitude);
+                if (Fires(e, hit, caster)) states.BeginManaLeech(ScaledSeconds(e, caster, vars), StackedMagnitude(e, vars));
                 break;
             case SkillEffectKind.Reflect:
-                if (Fires(e, hit, caster)) states.BeginReflect(ScaledSeconds(e, caster), e.magnitude);
+                if (Fires(e, hit, caster)) states.BeginReflect(ScaledSeconds(e, caster, vars), StackedMagnitude(e, vars));
                 break;
             case SkillEffectKind.Shield:
-                if (Fires(e, hit, caster)) states.BeginShield(ScaledAmount(e, caster), ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.BeginShield(ScaledAmount(e, caster, vars), ScaledSeconds(e, caster, vars));
                 break;
             case SkillEffectKind.Parry:
-                if (Fires(e, hit, caster)) states.BeginParry(ScaledSeconds(e, caster));   // charges ride the apply context (stacks-per-apply)
+                if (Fires(e, hit, caster)) states.BeginParry(ScaledSeconds(e, caster, vars));   // charges ride the apply context (stacks-per-apply)
                 break;
             case SkillEffectKind.Brace:
                 // Only the window is authored; the pile fills itself from whatever hits arrive (UnitMitigation.Deferred).
-                if (Fires(e, hit, caster)) states.BeginBrace(ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.BeginBrace(ScaledSeconds(e, caster, vars));
                 break;
             case SkillEffectKind.BoostOutgoingDamage:
                 // Charges ride the apply context like Parry's; each carries the authored bonus, which is FLAT for the
                 // same reason a stat buff's is — a support's value is how many attacks it covers, not a bigger number.
-                if (Fires(e, hit, caster)) states.BeginOutgoingBoost(ScaledSeconds(e, caster), e.magnitude);
+                if (Fires(e, hit, caster)) states.BeginOutgoingBoost(ScaledSeconds(e, caster, vars), StackedMagnitude(e, vars));
                 break;
             case SkillEffectKind.ImmuneToDisables:
                 // No magnitude: being stopped is binary. The whole knob is how long it lasts.
-                if (Fires(e, hit, caster)) states.BeginDisableImmunity(ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) states.BeginDisableImmunity(ScaledSeconds(e, caster, vars));
                 break;
             case SkillEffectKind.ReduceOutgoingDamage:
                 // The boost's mirror, charges and all — authored as the CUT, and flat for the same reason: how many
                 // attacks it covers is the knob, not how big the number is.
-                if (Fires(e, hit, caster)) states.BeginOutgoingPenalty(ScaledSeconds(e, caster), e.magnitude);
+                if (Fires(e, hit, caster)) states.BeginOutgoingPenalty(ScaledSeconds(e, caster, vars), StackedMagnitude(e, vars));
                 break;
             case SkillEffectKind.Taunt:
                 // Force this unit onto the caster. Both sides implement it (a mob locks its chase, a player's
                 // auto-combat can't retarget away), so a taunt is authored once and works on whoever it lands on.
-                if (Fires(e, hit, caster)) unit.ForceAggro(caster, ScaledSeconds(e, caster));
+                if (Fires(e, hit, caster)) unit.ForceAggro(caster, ScaledSeconds(e, caster, vars));
                 break;
             case SkillEffectKind.Knockback:
                 // Shove AWAY from the caster (magnitude = speed).
-                if (hit == 0) unit.Shove(ShoveOrigin(unit, caster), e.magnitude, e.shoveSeconds, e.shoveSeconds);
+                if (hit == 0) unit.Shove(ShoveOrigin(unit, caster), StackedMagnitude(e, vars),
+                                         StackedShoveSeconds(e, vars), StackedShoveSeconds(e, vars));
                 break;
             case SkillEffectKind.Pull:
                 // Drag TOWARD the caster: shove away from a point mirrored through the target = toward the caster.
                 if (hit == 0 && body != null)
-                    unit.Shove(2f * body.position - ShoveOrigin(unit, caster), e.magnitude, e.shoveSeconds, e.shoveSeconds);
+                    unit.Shove(2f * body.position - ShoveOrigin(unit, caster), StackedMagnitude(e, vars),
+                               StackedShoveSeconds(e, vars), StackedShoveSeconds(e, vars));
                 break;
             // `unit` is whoever is being moved — the caster for a Caster-side effect, a mob for a Target-side one.
             // Both relocations share this body: they differ only in HOW the mover travels, never in where it lands
@@ -436,13 +435,13 @@ public static class SkillEffectApplier
 
     // The binding's strike count = the largest Damage hitCount (min 1). Each iteration is the trigger point where
     // proc effects roll.
-    static int HitLoops(List<SkillEffect> effects, Character caster)
+    static int HitLoops(List<SkillEffect> effects, Character caster, in StackVars vars)
     {
         int loops = 1;
         for (int i = 0; i < effects.Count; i++)
         {
             var e = effects[i];
-            if (e != null && e.kind == SkillEffectKind.Damage) loops = Mathf.Max(loops, EffectiveHits(e, caster));
+            if (e != null && e.kind == SkillEffectKind.Damage) loops = Mathf.Max(loops, EffectiveHits(e, caster, vars));
         }
         return loops;
     }
@@ -452,7 +451,7 @@ public static class SkillEffectApplier
     // per-strike cap, so they can't disagree. AffinityMult is stable within a cast (ring investment doesn't change).
     // Public so the tooltip shows the SAME live count the runtime will land (no parallel formula) — it omits the
     // caster, falling back to the local player, which is exactly whose tooltip it is.
-    public static int EffectiveHits(SkillEffect e, Character caster = null)
+    public static int EffectiveHits(SkillEffect e, Character caster = null, StackVars vars = default)
         => Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, e.hitCount) * AffinityMult(e.hitCountAffinity, caster)));
 
     // Single hit (the common case): apply instantly to each mob, unchanged. Multi-hit (hitCount > 1): hand the mob
@@ -464,7 +463,7 @@ public static class SkillEffectApplier
                                 StackVars vars = default)
     {
         if (mobs.Count == 0) return;
-        if (HitLoops(effects, caster) <= 1)
+        if (HitLoops(effects, caster, vars) <= 1)
         {
             for (int i = 0; i < mobs.Count; i++)
                 ApplyEffectsToMob(effects, mobs[i], relocatePoint, comboMult, caster, srcIcon, srcName, srcId, vars);
@@ -478,7 +477,7 @@ public static class SkillEffectApplier
         // A run that shows ONE total across its repeats rides the callback for the same reason the cause does: the
         // strikes land on later frames, long after the tick that started them has returned.
         var runTotal = RepeatsDamageTotal.Current;
-        MultiHitBurst.Run(mobs, HitLoops(effects, caster), MultiHitInterval,
+        MultiHitBurst.Run(mobs, HitLoops(effects, caster, vars), MultiHitInterval,
             (ai, hit) =>
             {
                 // The CAUSE rides the callback whole — chain and skill both. A flurry's later strike can be the killing
@@ -509,7 +508,7 @@ public static class SkillEffectApplier
             if (e == null) continue;
             if (e.kind == SkillEffectKind.Damage)
             {
-                if (hit >= EffectiveHits(e, caster)) continue;
+                if (hit >= EffectiveHits(e, caster, vars)) continue;
                 // Overkill-safe, so a multi-hit flurry keeps its numbers, hit sparks AND per-strike sound climbing past
                 // the kill — the whole count runs to the end, RO-style.
                 dealt += LandStrike(e, h, comboMult, caster, vars, overkill: true);
@@ -549,7 +548,7 @@ public static class SkillEffectApplier
         if (effects == null || ai == null) return;
         var h = ai.Health;
         if (h == null) return;
-        int loops = HitLoops(effects, caster);
+        int loops = HitLoops(effects, caster, vars);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
                 ApplyToTarget(effects[i], h, n, comboMult, caster, relocatePoint, srcIcon, srcName, srcId, vars);
@@ -598,7 +597,7 @@ public static class SkillEffectApplier
     {
         var ch = caster ?? Character.Instance;
         if (effects == null || ch == null) return;
-        int loops = HitLoops(effects, ch);
+        int loops = HitLoops(effects, ch, vars);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
                 ApplyToTarget(effects[i], ch, n, comboMult, ch, relocatePoint, srcIcon, srcName, srcId, vars);
@@ -621,7 +620,7 @@ public static class SkillEffectApplier
             // still applies — base power, the pile's count payoff, ring scaling, the combo ramp — so the one thing that
             // changes is WHICH roll is underneath, which is the whole point of the checkbox.
             return BasicSwing.Land(caster, unit,
-                                   ((e.damageMult <= 0f ? 1f : e.damageMult) + e.StackDamageBonus(vars))
+                                   ((e.damageMult <= 0f ? 1f : e.damageMult) + e.StackCountBonus(vars))
                                        * AffinityMult(e.affinity, caster) * Mathf.Max(0f, comboMult),
                                    overkill,
                                    // This swing has no wind-up of its own, so it announces the intent here rather than
@@ -648,7 +647,7 @@ public static class SkillEffectApplier
         if (ch == null) return 1;
         // The pile's payoff rides the effect's OWN multiplier rather than becoming a second damage path beside it, so a
         // stack-fed hit is still one ordinary roll — ring-scaled, crit-able, and read off ONE number in the composer.
-        float mult = (e.damageMult <= 0f ? 1f : e.damageMult) + e.StackDamageBonus(vars);
+        float mult = (e.damageMult <= 0f ? 1f : e.damageMult) + e.StackCountBonus(vars);
         float aff = AffinityMult(e.affinity, ch);   // ring-investment scaling term, layered on the base-stat roll
         // Magic → MATK roll (unmissable). Physical → ATK roll. Crit type → ATK roll with a FORCED crit (its
         // armour-pierce is the deferred combat-pass TODO; the forced crit is the part we can honour now).
@@ -681,7 +680,45 @@ public static class SkillEffectApplier
     // The affinity list scales the effect's main output (heal amount, DoT damage, buff amount, slow amount); the
     // duration list scales its seconds. A Status PROC spends its affinity on the CHANCE (see Fires), so its magnitude
     // stays raw. Everything falls back to ×1 when no weights are authored.
-    static int   ScaledAmount(SkillEffect e, Character caster)    => Mathf.Max(0, Mathf.RoundToInt(e.amount * AffinityMult(e.affinity, caster)));
+    // A MODIFIER's two numbers are the same two channels every other effect has, just stored in their own fields
+    // because they describe another skill's pile rather than this effect's own body: the seconds it adds are a
+    // DURATION, the stacks it adds are its OUTPUT. Routed here so a modifier scales off the ring and off the cast's
+    // pile exactly like everything else, instead of being the one kind whose numbers are frozen.
+    static float ScaledModifierSeconds(SkillEffect e, Character caster, in StackVars vars) =>
+        Mathf.Max(0f, e.modifierSeconds * AffinityMult(e.durationAffinity, caster));
+    // HOW MANY stacks a modifier hands over is a plain size, so the pile can BE it — that is Perfect Form: a run of
+    // hits read as a count, times a third, floored, so three in a row adds one and six adds two.
+    static int ScaledModifierStacks(SkillEffect e, Character caster, in StackVars vars)
+    {
+        int fromPile = e.StackOutput(vars);
+        if (fromPile >= 0) return fromPile;
+        return Mathf.Max(0, Mathf.RoundToInt(e.modifierStacks * AffinityMult(e.affinity, caster))
+                            + e.StackCountBonusInt(vars));
+    }
+
+    // The kinds whose bonus is deliberately FLAT against ring investment (a stat buff, leech, reflect, the outgoing
+    // charges) still answer to the cast's pile: that exemption was a decision about what your BUILD may lift, never
+    // about what a cast EARNED this fight. So they take the pile's multiplier and skip affinity's.
+    static float StackedMagnitude(SkillEffect e, in StackVars vars) =>
+        e.StackDrivesOutput ? e.StackOutputRaw(vars) : e.magnitude + e.StackCountBonus(vars);
+    static int StackedAmount(SkillEffect e, in StackVars vars)
+    {
+        int fromPile = e.StackOutput(vars);
+        return fromPile >= 0 ? fromPile : Mathf.Max(0, e.amount) + e.StackCountBonusInt(vars);
+    }
+    // A shove's travel time is its own field because it is MOVEMENT, not a state window — but it is still this
+    // effect's duration, so the pile lifts it through the same channel every other duration uses.
+    static float StackedShoveSeconds(SkillEffect e, in StackVars vars) =>
+        Mathf.Max(0.01f, e.shoveSeconds);
+
+    // The flat-amount sibling of ScaledMagnitude (a heal's HP, a shield's pool, a cleanse's count) — same two scalings.
+    static int ScaledAmount(SkillEffect e, Character caster, in StackVars vars)
+    {
+        int fromPile = e.StackOutput(vars);
+        if (fromPile >= 0) return fromPile;
+        return Mathf.Max(0, Mathf.RoundToInt(e.amount * AffinityMult(e.affinity, caster))
+                            + e.StackCountBonusInt(vars));
+    }
     /// <summary>Feed ANOTHER skill's pile. What one of its charges is worth is read from THAT skill's own authored
     /// effect — the single definition of its charge — so a pile that is running and one that is not both end up with
     /// identical stacks, and a modifier never has to invent a number. A skill that grants nothing of that kind (or was
@@ -703,7 +740,7 @@ public static class SkillEffectApplier
         return false;
     }
 
-    static void AddStacksToOtherSkill(SkillEffect e, UnitStates states, Character caster)
+    static void AddStacksToOtherSkill(SkillEffect e, UnitStates states, Character caster, in StackVars vars)
     {
         var granter = SkillCatalog.Get(e.modifierSkillId);
         SkillEffect grant = null;
@@ -718,13 +755,24 @@ public static class SkillEffectApplier
                     { grant = fx[i]; break; }
             }
         if (grant == null) return;
-        states.AddStacksTo(e.modifierSkillId, e.modifierStateId, e.modifierStacks,
-                           ScaledMagnitude(grant, caster), ScaledSeconds(grant, caster),
+        // What ONE added stack is worth is the GRANTER's business, so its numbers are read with no pile behind them:
+        // this cast's stacks scale what THIS effect does (how many it adds, below), never what the other skill's
+        // charges are each worth. Ring investment still applies — that is the granter's own scaling, not the cast's.
+        states.AddStacksTo(e.modifierSkillId, e.modifierStateId, ScaledModifierStacks(e, caster, vars),
+                           ScaledMagnitude(grant, caster, StackVars.None), ScaledSeconds(grant, caster, StackVars.None),
                            granter.icon, granter.displayName, null);
     }
 
-    static float ScaledMagnitude(SkillEffect e, Character caster) => e.magnitude * AffinityMult(e.affinity, caster);
-    static float ScaledSeconds(SkillEffect e, Character caster)   => e.seconds   * AffinityMult(e.durationAffinity, caster);
+    // The THREE numbers every effect kind is made of, each scaled the same two ways at the same one place: by ring
+    // investment (what you built) and by the cast's pile (what you earned this fight). Every kind flows through these,
+    // so neither scaling has to be taught to a single effect — and a new kind inherits both by existing.
+    // An effect's OUTPUT: the pile's reading when the author said the pile IS this number, otherwise the authored
+    // value scaled by ring investment. One or the other, never both — a number is either yours or the pile's.
+    static float ScaledMagnitude(SkillEffect e, Character caster, in StackVars vars) =>
+        e.StackDrivesOutput ? e.StackOutputRaw(vars)
+                            : e.magnitude * AffinityMult(e.affinity, caster) + e.StackCountBonus(vars);
+    static float ScaledSeconds(SkillEffect e, Character caster, in StackVars vars) =>
+        e.seconds * AffinityMult(e.durationAffinity, caster);
 
     /// <summary>How many stacks this apply grants. Normally the authored number; when the effect is driven by attack
     /// speed it is instead HOW MANY TIMES THE CASTER WOULD SWING inside this effect's own window — the window it is
@@ -737,11 +785,11 @@ public static class SkillEffectApplier
     ///
     /// <para>Falls back to the authored count when there is no swing rate to read (the avatar hasn't spawned) rather
     /// than granting nothing — a missing body must not silently erase a skill's charges.</para></summary>
-    static int ResolveStacks(SkillEffect e, Character caster)
+    static int ResolveStacks(SkillEffect e, Character caster, in StackVars vars)
     {
         if (!e.stacksFromAttackSpeed) return Mathf.Max(1, e.stacksPerApply);
         float swing = caster != null ? caster.SwingTime : 0f;
         if (swing <= 0f) return Mathf.Max(1, e.stacksPerApply);
-        return Mathf.Max(1, Mathf.CeilToInt(ScaledSeconds(e, caster) / swing * Mathf.Max(0f, e.stackShare)));
+        return Mathf.Max(1, Mathf.CeilToInt(ScaledSeconds(e, caster, vars) / swing * Mathf.Max(0f, e.stackShare)));
     }
 }
