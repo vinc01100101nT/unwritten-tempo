@@ -24,10 +24,17 @@ public static class BasicSwing
     /// <summary>Land one swing from <paramref name="attacker"/> on <paramref name="victim"/>, scaled by
     /// <paramref name="powerMult"/> (1 = an ordinary swing; a skill passes its own authored power). Returns the damage
     /// dealt, so a rising combo total can accumulate it. <paramref name="overkill"/> keeps the number and its sound
-    /// registering past the victim's death, the way a multi-hit cascade must.
-    ///
+    /// registering past the victim's death, the way a multi-hit cascade must.</summary>
     public static int Land(ICombatUnit attacker, ICombatUnit victim, float powerMult = 1f, bool overkill = false,
                            bool announceIntent = false)
+        => Land(attacker, victim, ScaledNumber.Of(powerMult), StackVars.None, 1f, overkill, announceIntent);
+
+    /// <summary>The same swing, told how hard by an AUTHORED number rather than a bare multiplier — so a skill strike
+    /// that resolves as a basic attack gets the identical treatment its own roll would have got: the swing's roll is
+    /// the basis the multiplier is applied to, and the cast's pile meets the result. <paramref name="outer"/> is the
+    /// ring-and-combo scale that multiplies the finished number.</summary>
+    public static int Land(ICombatUnit attacker, ICombatUnit victim, in ScaledNumber power, in StackVars vars,
+                           float outer, bool overkill, bool announceIntent)
     {
         if (attacker == null || victim == null) return 0;
 
@@ -41,12 +48,13 @@ public static class BasicSwing
         int hit = attacker.BasicHit;
         bool missed = Combat.Missed(crit, hit, victim.Flee);
         // A whiff rolls no damage at all — the miss rides along and the defender only shows it.
-        int power = missed ? 0
-                  : Mathf.Max(1, Mathf.RoundToInt(attacker.RollBasicDamage(crit) * Mathf.Max(0f, powerMult)));
+        int dmg = missed ? 0
+                : Mathf.Max(1, Mathf.RoundToInt(power.Resolve(vars, Mathf.Max(0f, outer),
+                                                              attacker.RollBasicDamage(crit))));
         // One swing, one charge — spent on the whiff too, which is why this sits outside the miss branch.
-        power = UnitOffense.SpendCharges(attacker.States, power);
+        dmg = UnitOffense.SpendCharges(attacker.States, dmg);
 
-        int dealt = CombatAuthority.Apply(victim, new DamageInfo(power, attacker.BasicElement, attacker.BasicIsMagic,
+        int dealt = CombatAuthority.Apply(victim, new DamageInfo(dmg, attacker.BasicElement, attacker.BasicIsMagic,
                                                                 crit, attackerHit: hit, overkill: overkill,
                                                                 missed: missed, attacker: attacker));
         if (dealt > 0)

@@ -138,29 +138,42 @@ public struct ScaledNumber
     public StackOp op;
     [Tooltip("Count = how many stacks the pile holds. Carried total = the sum of what those stacks carry.")]
     public StackReading read;
+    [Tooltip("What the reading is multiplied by before it meets this number. A stack count and a banked total are raw " +
+             "tallies, so this is what turns them into the units this number is measured in.")]
+    public float scaler;
 
-    public ScaledNumber(float v) { value = v; useStacks = false; op = StackOp.Add; read = StackReading.Count; }
+    public ScaledNumber(float v)
+    {
+        value = v; useStacks = false; op = StackOp.Add; read = StackReading.Count; scaler = 1f;
+    }
 
     /// <summary>An ordinary number where no authoring is involved — a code-side constant handed to the same call.</summary>
     public static ScaledNumber Of(float v) => new ScaledNumber(v);
 
-    /// <summary>THE resolve, and the only one. The authored number, optionally met by the pile's reading, then scaled
-    /// by ring investment. Every number on every effect comes through here, so there is exactly one place where what
-    /// a number MEANS is decided.
+    /// <summary>THE resolve, and the only one — every number on every effect comes through here, so there is exactly
+    /// one place where what a number MEANS is decided:
+    ///
+    /// <para><c>(this number × basis)  op  (reading × scaler)  × ring</c></para>
+    ///
+    /// <para><paramref name="basis"/> is what this number is applied TO, and it is the reason the two sides of the
+    /// operation are in the same units. A damage multiplier's basis is the caster's rolled hit, so its left side is
+    /// real damage and the pile's side — a raw count or banked total, converted by the scaler — is real damage too.
+    /// Every other number stands alone, so its basis is 1 and the left side is simply the number.</para>
     ///
     /// <para>Divide guards its own zero: dividing by an empty pile would be an error the author can neither see nor
     /// predict, so a zero reading leaves the number untouched instead.</para></summary>
-    public float Resolve(in StackVars vars, float ringMult = 1f)
+    public float Resolve(in StackVars vars, float ringMult = 1f, float basis = 1f)
     {
-        if (!useStacks) return value * ringMult;
-        float r = vars.Read(read);
+        float own = value * basis;
+        if (!useStacks) return own * ringMult;
+        float r = vars.Read(read) * scaler;
         float outv;
         switch (op)
         {
-            case StackOp.Subtract: outv = value - r; break;
-            case StackOp.Multiply: outv = value * r; break;
-            case StackOp.Divide:   outv = r == 0f ? value : value / r; break;
-            default:               outv = value + r; break;
+            case StackOp.Subtract: outv = own - r; break;
+            case StackOp.Multiply: outv = own * r; break;
+            case StackOp.Divide:   outv = r == 0f ? own : own / r; break;
+            default:               outv = own + r; break;
         }
         return outv * ringMult;
     }
@@ -172,9 +185,9 @@ public struct ScaledNumber
 
     /// <summary>The whole-number form. A pile-driven answer is cut DOWN, so a number that has not yet earned a whole
     /// unit does not get one; with no pile there is no rate to protect, so it rounds the way a bare field always did.</summary>
-    public int ResolveInt(in StackVars vars, float ringMult = 1f) =>
-        useStacks ? Mathf.Max(0, Mathf.FloorToInt(Resolve(vars, ringMult) + FloorNudge))
-                  : Mathf.Max(0, Mathf.RoundToInt(value * ringMult));
+    public int ResolveInt(in StackVars vars, float ringMult = 1f, float basis = 1f) =>
+        useStacks ? Mathf.Max(0, Mathf.FloorToInt(Resolve(vars, ringMult, basis) + FloorNudge))
+                  : Mathf.Max(0, Mathf.RoundToInt(value * basis * ringMult));
 
     /// <summary>The number as authored, with no pile and no ring — for previews, tooltips and any reader that wants
     /// what the designer typed rather than what a live cast would produce.</summary>

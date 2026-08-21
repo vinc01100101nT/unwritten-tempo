@@ -85,50 +85,59 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       element: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       ailment: 2
       seconds:
         value: 0
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       shoveSeconds:
         value: 0.25
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       magnitude:
         value: 3
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacking: 0
       stackLimit:
         value: 5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacksPerApply:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacksFromAttackSpeed: 0
       stackShare:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       dashSpeedMult:
         value: 8
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds:
@@ -136,22 +145,26 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       afterimageSeconds:
         value: 0
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
       casterOpacity:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       starCorners:
         value: 5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       modifierSkillId: 
       modifierStateId: 0
       modifierStateIdSet: 0
@@ -160,21 +173,25 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       modifierStacks:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       hitCount:
         value: 3
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       chance:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       side: 0
       buffStat: 0
       affinity:
@@ -197,50 +214,59 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       element: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       ailment: 2
       seconds:
         value: 4
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       shoveSeconds:
         value: 0.25
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       magnitude:
         value: 3
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacking: 0
       stackLimit:
         value: 5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacksPerApply:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacksFromAttackSpeed: 0
       stackShare:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       dashSpeedMult:
         value: 8
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds:
@@ -248,22 +274,26 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       afterimageSeconds:
         value: 0
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
       casterOpacity:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       starCorners:
         value: 5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       modifierSkillId: 
       modifierStateId: 0
       modifierStateIdSet: 0
@@ -272,21 +302,25 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       modifierStacks:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       hitCount:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       chance:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       side: 0
       buffStat: 0
       affinity:
@@ -307,50 +341,59 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       element: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       ailment: 3
       seconds:
         value: 0.75
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       shoveSeconds:
         value: 0.25
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       magnitude:
         value: 0
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacking: 0
       stackLimit:
         value: 5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacksPerApply:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacksFromAttackSpeed: 0
       stackShare:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       dashSpeedMult:
         value: 8
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds:
@@ -358,22 +401,26 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       afterimageSeconds:
         value: 0
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
       casterOpacity:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       starCorners:
         value: 5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       modifierSkillId: 
       modifierStateId: 0
       modifierStateIdSet: 0
@@ -382,21 +429,25 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       modifierStacks:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       hitCount:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       chance:
         value: 0.25
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       side: 0
       buffStat: 0
       affinity: []
@@ -430,50 +481,59 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       element: 3
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       ailment: 2
       seconds:
         value: 0
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       shoveSeconds:
         value: 0.25
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       magnitude:
         value: 3
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacking: 0
       stackLimit:
         value: 5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacksPerApply:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       stacksFromAttackSpeed: 0
       stackShare:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       dashSpeedMult:
         value: 8
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       dashEaseIn: 0
       dashEaseOut: 0
       dashEaseSeconds:
@@ -481,22 +541,26 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       afterimageSeconds:
         value: 0
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
       casterOpacity:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       starCorners:
         value: 5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       modifierSkillId: 
       modifierStateId: 0
       modifierStateIdSet: 0
@@ -505,21 +569,25 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       modifierStacks:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       hitCount:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       chance:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       side: 0
       buffStat: 0
       affinity:

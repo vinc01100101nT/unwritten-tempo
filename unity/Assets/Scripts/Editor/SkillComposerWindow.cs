@@ -1986,6 +1986,10 @@ public class SkillComposerWindow : EditorWindow
             {
                 n.op   = (StackOp)EditorGUILayout.EnumPopup(n.op, GUILayout.MaxWidth(84f), GUILayout.MinWidth(0f));
                 n.read = (StackReading)EditorGUILayout.EnumPopup(n.read, GUILayout.MaxWidth(104f), GUILayout.MinWidth(0f));
+                // The reading is a raw tally; this is what puts it in the same units as the number it is meeting, so it
+                // sits immediately after the reading it scales and reads as part of the same term.
+                GUILayout.Label("×", GUILayout.MaxWidth(12f), GUILayout.MinWidth(0f));
+                n.scaler = EditorGUILayout.FloatField(n.scaler, GUILayout.MaxWidth(56f), GUILayout.MinWidth(0f));
             }
         }
         else n.useStacks = false;   // the controls are gone, so the setting cannot linger unseen behind them

@@ -47,33 +47,39 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       element: 0
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       ailment: 2
       seconds:
         value: 5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       magnitude:
         value: 0.5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       hitCount:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       chance:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       buffStat: 0
       affinity:
       - stat: 4
@@ -92,33 +98,39 @@ MonoBehaviour:
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       element: 0
       amount:
         value: 10
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       ailment: 2
       seconds:
         value: 5
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       magnitude:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       hitCount:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       chance:
         value: 1
         useStacks: 0
         op: 0
         read: 0
+        scaler: 1
       buffStat: 0
       affinity: []
       durationAffinity:

@@ -1,5 +1,6 @@
 # Workflow / tooling / meta (Tempo, MCP, extractors, logs)
 
+- [Grep the BYPASS, not the call](../grep-the-bypass-not-the-call.md) — grepping a shared function's call sites only ever finds the compliant ones; to prove a concern is really centralised, run the INVERSE grep for the raw pattern it replaced and expect zero hits outside author-time code.
 - [In-game chat + GM slash-commands](../chat-and-gm-command-system.md) — `ChatController`+`GmCommands`; add via `Register` in `EnsureBootstrap`.
 - [PerfHud IMGUI self-pollutes GC/s (~15KB/frame)](../perfhud-imgui-self-pollution.md) — F3 overlay's OnGUI dominated its own reading; measured mobs add only ~2KB; FindObjectsByType omits DontSaveInEditor.
 - [Canvas validate false-positives on @/ aliases](../canvas-alias-validator-false-positive.md) — "missing_package @/..." harmless; trust render.

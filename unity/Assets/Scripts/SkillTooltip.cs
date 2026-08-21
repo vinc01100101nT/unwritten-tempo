@@ -55,7 +55,11 @@ public static class SkillTooltip
     {
         if (!n.useStacks) return "";
         string op = n.op == StackOp.Subtract ? "−" : n.op == StackOp.Multiply ? "×" : n.op == StackOp.Divide ? "÷" : "+";
-        return " " + Hl(op + " " + (n.read == StackReading.CarriedTotal ? "banked total" : "stacks"));
+        string what = n.read == StackReading.CarriedTotal ? "banked total" : "stacks";
+        // The scaler is part of what the pile is WORTH, so it is said with it — "+ 2.5 per stack" rather than a bare
+        // "+ stacks" that hides the number doing the work. A scaler of 1 adds nothing to read.
+        if (Mathf.Abs(n.scaler - 1f) > 0.0001f) what = n.scaler.ToString("0.####") + " × " + what;
+        return " " + Hl(op + " " + what);
     }
 
     /// <summary>Plain-language "what makes this run", read off the skill's authored triggers. Shared by every surface
