@@ -49,6 +49,15 @@ public static class SkillTooltip
     // Damage-resolution word for the card (Physical / Magic / Crit — the RPS-triangle axis).
     static string DmgWord(DamageType t) => t == DamageType.Magic ? "magic" : t == DamageType.Crit ? "crit" : "physical";
 
+    /// <summary>The short "…and it also answers to the pile" note for ONE number. Every number that can pull says it
+    /// the same way, so a reader learns the phrasing once instead of per effect kind.</summary>
+    static string StackNote(ScaledNumber n)
+    {
+        if (!n.useStacks) return "";
+        string op = n.op == StackOp.Subtract ? "−" : n.op == StackOp.Multiply ? "×" : n.op == StackOp.Divide ? "÷" : "+";
+        return " " + Hl(op + " " + (n.read == StackReading.CarriedTotal ? "banked total" : "stacks"));
+    }
+
     /// <summary>Plain-language "what makes this run", read off the skill's authored triggers. Shared by every surface
     /// that lists them (the Grimoire rows, the weapon skill-details panel) so they can never word it differently.
     ///
@@ -143,31 +152,20 @@ public static class SkillTooltip
         string line = DescribeEffectBody(e);
         // The odds are said ONCE, here, for every kind that has them — so a new effect never has to remember to
         // mention its own chance. A certain effect (the default) says nothing, because "100%" is just noise.
-        if (line == null || !SkillEffect.RollsChance(e.kind) || e.chance >= 1f) return line;
+        if (line == null || !SkillEffect.RollsChance(e.kind) || e.chance.value >= 1f) return line;
         if (e.kind == SkillEffectKind.Status || e.kind == SkillEffectKind.Execute) return line;   // these word it themselves
-        return Pct(Mathf.Clamp01(e.chance)) + " per hit: " + char.ToLower(line[0]) + line.Substring(1);
+        return Pct(Mathf.Clamp01(e.chance.value)) + " per hit: " + char.ToLower(line[0]) + line.Substring(1);
     }
 
     static string DescribeEffectBody(SkillEffect e)
     {
-
-        // An effect the pile REPLACES has no fixed number to preview — its size is decided at cast time — so say what
-        // it reads instead of printing a base power the runtime will ignore. An effect the pile merely ADDS power to
-        // (a Damage reading the count) keeps its normal line below, with the per-stack bonus appended there.
-        if (e.useStackValue && SkillEffect.SupportsStackValue(e.kind)
-            && !(e.kind == SkillEffectKind.Damage && e.stackValueSource == StackReading.Count))
-        {
-            string what = e.kind == SkillEffectKind.Heal ? "Heals" : "Deals";
-            string read = e.stackValueSource == StackReading.CarriedTotal ? "banked total" : "stacks";
-            return what + " " + Hl(e.stackValueMult.ToString("0.##") + "×") + " your " + read;
-        }
 
         switch (e.kind)
         {
             case SkillEffectKind.Damage:
             {
                 var ch = Character.Instance;
-                float mult = e.damageMult <= 0f ? 1f : e.damageMult;
+                float mult = e.damageMult.value <= 0f ? 1f : e.damageMult.value;
                 string s = "Deals " + Hl(mult.ToString("0.##") + "×") + " " + DmgWord(e.damageType) + " damage";
                 if (ch != null)
                 {
@@ -178,10 +176,9 @@ public static class SkillTooltip
                 }
                 int hits = SkillEffectApplier.EffectiveHits(e);   // affinity-scaled, matches what actually lands
                 if (hits > 1) s += ", " + Hl(hits + "×") + " hits";
-                // The pile's count buys EXTRA power on this same hit, so it reads as a bonus to the line above rather
-                // than a separate strike — which is exactly how it lands.
-                if (e.useStackValue && e.stackValueSource == StackReading.Count)
-                    s += ", " + Hl("+" + e.stackValueMult.ToString("0.##") + "×") + " per stack";
+                // Any number may answer to the pile now, so the note belongs to the NUMBER, said the same way
+                // wherever it appears rather than spelled out per kind.
+                s += StackNote(e.damageMult);
                 return s;
             }
             case SkillEffectKind.Status:
@@ -189,55 +186,55 @@ public static class SkillTooltip
                 string body;
                 switch (e.ailment)
                 {
-                    case Ailment.Slow:  body = "slow " + Pct(1f - Mathf.Clamp01(e.magnitude)) + " for " + Hl(e.seconds.ToString("0.#") + "s"); break;
-                    case Ailment.Stun:  body = "stun for " + Hl(e.seconds.ToString("0.#") + "s"); break;
+                    case Ailment.Slow:  body = "slow " + Pct(1f - Mathf.Clamp01(e.magnitude.value)) + " for " + Hl(e.seconds.value.ToString("0.#") + "s"); break;
+                    case Ailment.Stun:  body = "stun for " + Hl(e.seconds.value.ToString("0.#") + "s"); break;
                     case Ailment.Poison:
                     case Ailment.Bleed:
-                    case Ailment.Burn:  body = e.ailment + " " + Hl(e.magnitude.ToString("0.#")) + "/tick for " + Hl(e.seconds.ToString("0.#") + "s"); break;
-                    default:            body = e.ailment + " for " + Hl(e.seconds.ToString("0.#") + "s"); break;
+                    case Ailment.Burn:  body = e.ailment + " " + Hl(e.magnitude.value.ToString("0.#")) + "/tick for " + Hl(e.seconds.value.ToString("0.#") + "s"); break;
+                    default:            body = e.ailment + " for " + Hl(e.seconds.value.ToString("0.#") + "s"); break;
                 }
                 // Below certain it reads as the gamble it is; certain (the default) just states what happens.
-                return e.chance < 1f ? Pct(e.chance) + " per hit: " + body : char.ToUpper(body[0]) + body.Substring(1);
+                return e.chance.value < 1f ? Pct(e.chance.value) + " per hit: " + body : char.ToUpper(body[0]) + body.Substring(1);
             }
             case SkillEffectKind.Execute:
-                return (e.chance < 1f ? Pct(e.chance) + " per hit: " : "")
-                     + "execute — bonus " + DmgWord(e.damageType) + " damage scaling with the target's missing HP (×" + Hl(e.magnitude.ToString("0.##")) + ")";
-            case SkillEffectKind.Heal:          return "Heals " + Hl(e.amount.ToString()) + " HP";
-            case SkillEffectKind.Guard:         return "Reduces damage taken " + Pct(Mathf.Clamp01(e.magnitude)) + " for " + Hl(e.seconds.ToString("0.#") + "s");
-            case SkillEffectKind.Taunt:         return "Taunts nearby enemies for " + Hl(e.seconds.ToString("0.#") + "s");
+                return (e.chance.value < 1f ? Pct(e.chance.value) + " per hit: " : "")
+                     + "execute — bonus " + DmgWord(e.damageType) + " damage scaling with the target's missing HP (×" + Hl(e.magnitude.value.ToString("0.##")) + ")";
+            case SkillEffectKind.Heal:          return "Heals " + Hl(e.amount.value.ToString()) + " HP";
+            case SkillEffectKind.Guard:         return "Reduces damage taken " + Pct(Mathf.Clamp01(e.magnitude.value)) + " for " + Hl(e.seconds.value.ToString("0.#") + "s");
+            case SkillEffectKind.Taunt:         return "Taunts nearby enemies for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Teleport:      return "Blinks to the target location";
             case SkillEffectKind.Dash:          return "Dashes to the target location";
             // Magnitude is the bonus itself (0.3 = +30%); on a stacking buff it is the PER-STACK bonus, so say so.
-            case SkillEffectKind.Buff:          return "+" + Pct(Mathf.Max(0f, e.magnitude)) + " " + BuffStatName(e.buffStat) + (e.stacking ? " per stack" : "") + " for " + Hl(e.seconds.ToString("0.#") + "s");
-            case SkillEffectKind.Regen:         return "Restores " + Hl(e.magnitude.ToString("0.#")) + " HP/sec for " + Hl(e.seconds.ToString("0.#") + "s");
-            case SkillEffectKind.Cleanse:       return "Removes " + Hl(Mathf.Max(1, e.amount).ToString()) + " debuff(s)";
-            case SkillEffectKind.Vulnerability: return Subject(e, "You take", "Enemies take") + " +" + Pct(e.magnitude) + " damage for " + Hl(e.seconds.ToString("0.#") + "s");
-            case SkillEffectKind.Haste:         return (e.magnitude < 0f ? "−" + Pct(-e.magnitude) : "+" + Pct(e.magnitude)) + " move speed for " + Hl(e.seconds.ToString("0.#") + "s");
+            case SkillEffectKind.Buff:          return "+" + Pct(Mathf.Max(0f, e.magnitude.value)) + " " + BuffStatName(e.buffStat) + (e.stacking ? " per stack" : "") + " for " + Hl(e.seconds.value.ToString("0.#") + "s");
+            case SkillEffectKind.Regen:         return "Restores " + Hl(e.magnitude.value.ToString("0.#")) + " HP/sec for " + Hl(e.seconds.value.ToString("0.#") + "s");
+            case SkillEffectKind.Cleanse:       return "Removes " + Hl(Mathf.Max(1, e.amount.value).ToString()) + " debuff(s)";
+            case SkillEffectKind.Vulnerability: return Subject(e, "You take", "Enemies take") + " +" + Pct(e.magnitude.value) + " damage for " + Hl(e.seconds.value.ToString("0.#") + "s");
+            case SkillEffectKind.Haste:         return (e.magnitude.value < 0f ? "−" + Pct(-e.magnitude.value) : "+" + Pct(e.magnitude.value)) + " move speed for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Knockback:     return "Knocks enemies back";
             case SkillEffectKind.Pull:          return "Pulls enemies in";
-            case SkillEffectKind.ManaLeech:     return "Restores " + Pct(Mathf.Clamp01(e.magnitude)) + " of damage dealt as MP for " + Hl(e.seconds.ToString("0.#") + "s");
-            case SkillEffectKind.Reflect:       return "Reflects " + Pct(Mathf.Clamp01(e.magnitude)) + " of damage taken for " + Hl(e.seconds.ToString("0.#") + "s");
-            case SkillEffectKind.Shield:        return "Absorbs " + Hl(e.amount.ToString()) + " damage for " + Hl(e.seconds.ToString("0.#") + "s");
+            case SkillEffectKind.ManaLeech:     return "Restores " + Pct(Mathf.Clamp01(e.magnitude.value)) + " of damage dealt as MP for " + Hl(e.seconds.value.ToString("0.#") + "s");
+            case SkillEffectKind.Reflect:       return "Reflects " + Pct(Mathf.Clamp01(e.magnitude.value)) + " of damage taken for " + Hl(e.seconds.value.ToString("0.#") + "s");
+            case SkillEffectKind.Shield:        return "Absorbs " + Hl(e.amount.value.ToString()) + " damage for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.BoostOutgoingDamage:
             {
                 // Charges ARE stacks, read from the same knob the runtime uses — never a second number to keep in sync.
-                int charges = e.stacking ? Mathf.Max(1, e.stacksPerApply) : 1;
-                string window = " within " + Hl(e.seconds.ToString("0.#") + "s");
-                string amount = "+" + Pct(e.magnitude) + " damage";
+                int charges = e.stacking ? Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value)) : 1;
+                string window = " within " + Hl(e.seconds.value.ToString("0.#") + "s");
+                string amount = "+" + Pct(e.magnitude.value) + " damage";
                 return charges > 1
                     ? "Your next " + Hl(charges.ToString()) + " attacks deal " + amount + window
                     : "Your next attack deals " + amount + window;
             }
             case SkillEffectKind.ImmuneToDisables:
-                return "Nothing stops you for " + Hl(e.seconds.ToString("0.#") + "s") +
+                return "Nothing stops you for " + Hl(e.seconds.value.ToString("0.#") + "s") +
                        " — no flinch, stun, freeze, silence, knockback or pull, and hits can't cancel your casts";
             case SkillEffectKind.ReduceOutgoingDamage:
             {
                 // Same shape as the boost's line — charges read off the one knob the runtime uses — but the subject is
                 // whoever the effect lands on, since this one is authored on either side.
-                int charges = e.stacking ? Mathf.Max(1, e.stacksPerApply) : 1;
-                string window = " within " + Hl(e.seconds.ToString("0.#") + "s");
-                string amount = "−" + Pct(Mathf.Clamp01(e.magnitude)) + " damage";
+                int charges = e.stacking ? Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value)) : 1;
+                string window = " within " + Hl(e.seconds.value.ToString("0.#") + "s");
+                string amount = "−" + Pct(Mathf.Clamp01(e.magnitude.value)) + " damage";
                 string who = Subject(e, "Your", "Their");
                 return charges > 1
                     ? who + " next " + Hl(charges.ToString()) + " attacks deal " + amount + window
@@ -247,8 +244,8 @@ public static class SkillTooltip
             {
                 // Charges ARE stacks (the store's rule), so the count the player reads comes from the same knob the
                 // runtime hands to Apply — never a second number to keep in sync.
-                int charges = e.stacking ? Mathf.Max(1, e.stacksPerApply) : 1;
-                string window = " within " + Hl(e.seconds.ToString("0.#") + "s");
+                int charges = e.stacking ? Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value)) : 1;
+                string window = " within " + Hl(e.seconds.value.ToString("0.#") + "s");
                 return charges > 1
                     ? "Parries the next " + Hl(charges.ToString()) + " hits" + window + " — no damage taken"
                     : "Parries the next hit" + window + " — no damage taken";
@@ -256,9 +253,9 @@ public static class SkillTooltip
             case SkillEffectKind.Brace:
             {
                 // Charges ARE stacks — the same read Parry uses, off the same knob, so the two can't word it differently.
-                int held = e.stacking ? Mathf.Max(1, e.stacksPerApply) : 1;
+                int held = e.stacking ? Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value)) : 1;
                 return (held > 1 ? "Delays the next " + Hl(held.ToString()) + " hits" : "Delays the next hit")
-                     + " within " + Hl(e.seconds.ToString("0.#") + "s")
+                     + " within " + Hl(e.seconds.value.ToString("0.#") + "s")
                      + " — the delayed damage all lands at once when the window ends";
             }
             // Named by the skill they edit, not by the pile's internal name: the player knows "Blade Dance", never
@@ -267,13 +264,13 @@ public static class SkillTooltip
             {
                 var of = SkillCatalog.Get(e.modifierSkillId);
                 return of == null ? null
-                     : "Extends " + Hl(of.displayName) + " by " + Hl(e.modifierSeconds.ToString("0.#") + "s");
+                     : "Extends " + Hl(of.displayName) + " by " + Hl(e.modifierSeconds.value.ToString("0.#") + "s");
             }
             case SkillEffectKind.AddStacks:
             {
                 var of = SkillCatalog.Get(e.modifierSkillId);
                 return of == null ? null
-                     : "Adds " + Hl(Mathf.Max(1, e.modifierStacks).ToString()) + " to " + Hl(of.displayName);
+                     : "Adds " + Hl(Mathf.Max(1, e.modifierStacks.value).ToString()) + " to " + Hl(of.displayName);
             }
             default:                            return null;
         }

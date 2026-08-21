@@ -92,7 +92,7 @@ public enum AcquisitionTier { Early, Mid, Late }
 /// <para><b>Serialized by int</b>: <see cref="OnCast"/> MUST stay 0 (old assets have no <c>trigger</c> field → they
 /// deserialize as 0 = OnCast), and new values MUST be appended, never inserted.</para></summary>
 /// <summary>HOW an effect MEASURES the pile its cast is cashing — separate from what that measurement BUYS, which is
-/// the effect's own business (<see cref="SkillEffect.useStackValue"/>). Two independent questions: this one is "how
+/// each authored NUMBER's own business. Two independent questions: this one is "how
 /// much is there?", and every effect that pulls from the pile answers it for itself.
 ///
 /// <para>Serialized by int: <see cref="Count"/> MUST stay 0 (assets authored before this existed deserialize as 0 and
@@ -105,6 +105,82 @@ public enum StackReading
     /// <summary>The SUM OF WHAT THE STACKS CARRY. The amount reading — for a pile whose stacks each hold a number
     /// rather than just existing. (Brace's delayed damage → Retribution.)</summary>
     CarriedTotal,
+}
+
+/// <summary>HOW a number meets the pile's reading. The four ordinary operations, nothing else — a knob an author can
+/// read off the row without being taught a rule.
+///
+/// <para>Serialized by int: <see cref="Add"/> MUST stay 0 and new values are APPENDED, never inserted.</para></summary>
+public enum StackOp
+{
+    Add = 0,
+    Subtract,
+    Multiply,
+    Divide,
+}
+
+/// <summary>ONE authored number, anywhere on any effect — a damage multiplier, a duration, a heal's HP, a proc chance,
+/// a shove's speed. It is a plain number by default and stands entirely on its own; ticking
+/// <see cref="useStacks"/> lets it ALSO answer to the pile the cast is cashing, through an operation and a reading it
+/// carries itself.
+///
+/// <para>That is the whole point of this type existing: the pile is not a mode an EFFECT is in, it is an option each
+/// NUMBER may take, so every number on every kind gets the same treatment for free and no kind can drift from
+/// another. A number with the box unticked behaves exactly as a bare field always did.</para></summary>
+[System.Serializable]
+public struct ScaledNumber
+{
+    [Tooltip("The number itself. It stands on its own — an effect never needs the pile to work.")]
+    public float value;
+    [Tooltip("ON = this number ALSO answers to the pile this cast is cashing, through the operation and reading beside it.")]
+    public bool useStacks;
+    [Tooltip("How this number meets the pile's reading.")]
+    public StackOp op;
+    [Tooltip("Count = how many stacks the pile holds. Carried total = the sum of what those stacks carry.")]
+    public StackReading read;
+
+    public ScaledNumber(float v) { value = v; useStacks = false; op = StackOp.Add; read = StackReading.Count; }
+
+    /// <summary>An ordinary number where no authoring is involved — a code-side constant handed to the same call.</summary>
+    public static ScaledNumber Of(float v) => new ScaledNumber(v);
+
+    /// <summary>THE resolve, and the only one. The authored number, optionally met by the pile's reading, then scaled
+    /// by ring investment. Every number on every effect comes through here, so there is exactly one place where what
+    /// a number MEANS is decided.
+    ///
+    /// <para>Divide guards its own zero: dividing by an empty pile would be an error the author can neither see nor
+    /// predict, so a zero reading leaves the number untouched instead.</para></summary>
+    public float Resolve(in StackVars vars, float ringMult = 1f)
+    {
+        if (!useStacks) return value * ringMult;
+        float r = vars.Read(read);
+        float outv;
+        switch (op)
+        {
+            case StackOp.Subtract: outv = value - r; break;
+            case StackOp.Multiply: outv = value * r; break;
+            case StackOp.Divide:   outv = r == 0f ? value : value / r; break;
+            default:               outv = value + r; break;
+        }
+        return outv * ringMult;
+    }
+
+    // "one per three" typed as 0.3333 lands at 0.9999, and cutting that down gives ZERO — a rate that reads as broken
+    // for a reason no author could ever see. A nudge a ten-thousandth wide fixes exactly that and is far too small to
+    // change any number anybody actually means.
+    const float FloorNudge = 0.001f;
+
+    /// <summary>The whole-number form. A pile-driven answer is cut DOWN, so a number that has not yet earned a whole
+    /// unit does not get one; with no pile there is no rate to protect, so it rounds the way a bare field always did.</summary>
+    public int ResolveInt(in StackVars vars, float ringMult = 1f) =>
+        useStacks ? Mathf.Max(0, Mathf.FloorToInt(Resolve(vars, ringMult) + FloorNudge))
+                  : Mathf.Max(0, Mathf.RoundToInt(value * ringMult));
+
+    /// <summary>The number as authored, with no pile and no ring — for previews, tooltips and any reader that wants
+    /// what the designer typed rather than what a live cast would produce.</summary>
+    public float Raw => value;
+
+    public override string ToString() => value.ToString("0.####");
 }
 
 /// <summary>The cast's stack readings, measured ONCE when it starts and handed to every effect it runs — so any
@@ -251,7 +327,7 @@ public class SkillTriggerEntry
     [Min(0)] public int consumeStacks = 0;
 
     // WHAT the cashed pile is worth is deliberately NOT here: a trigger says only WHEN the skill fires and what that
-    // firing COSTS in stacks. The pile's payoff is authored on the effect that spends it (SkillEffect.useStackValue),
+    // firing COSTS in stacks. The pile's payoff is authored on each NUMBER of the effect that spends it,
     // so it composes with that effect's own power instead of being a second damage channel at the skill level.
 }
 

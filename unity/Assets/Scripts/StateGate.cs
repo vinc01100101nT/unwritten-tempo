@@ -85,7 +85,7 @@ public static class StateGate
 
     /// <summary>The total VALUE the required pile's stacks carry, read under the SAME compute-before-consume rule as
     /// <see cref="StackCount"/> — the snapshot a cast takes before it spends anything. 0 when the skill reads no pile.
-    /// WHICH of the two is cashed is each EFFECT's own <see cref="SkillEffect.stackValueSource"/>, not a second gate:
+    /// WHICH of the two is cashed is each NUMBER's own reading, not a second gate:
     /// the gate always answers both, and every effect decides which answer is worth anything to it.
     ///
     /// <para>The run of hits answers 0 here, deliberately: its stacks are a TALLY, not an amount. Reading a value off

@@ -599,7 +599,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         try
         {
             // The cast hands DOWN what the pile measures and nothing more: which effects that pile pays, and how, is
-            // authored per effect (SkillEffect.useStackValue), so cashing stacks composes with the damage effect
+            // authored per NUMBER, so cashing stacks composes with the damage effect
             // instead of being a second damage channel bolted onto the skill.
             SkillEffectApplier.ApplyBurst(tick.point, radius, scope, targets, effects,
                                           // The aim rides the TICK, not a field on this runner: one cast can have

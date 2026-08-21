@@ -42,28 +42,78 @@ MonoBehaviour:
     projectileSpread: 0
     effects:
     - kind: 0
-      damageMult: 1
+      useStacks: 0
+      damageMult:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       element: 0
-      amount: 10
+      amount:
+        value: 10
+        useStacks: 0
+        op: 0
+        read: 0
       ailment: 2
-      seconds: 0
-      magnitude: 3
-      hitCount: 1
-      chance: 1
+      seconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+      magnitude:
+        value: 3
+        useStacks: 0
+        op: 0
+        read: 0
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       buffStat: 0
       affinity:
       - stat: 1
         weight: 50
       durationAffinity: []
     - kind: 2
-      damageMult: 1
+      useStacks: 0
+      damageMult:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       element: 0
-      amount: 10
+      amount:
+        value: 10
+        useStacks: 0
+        op: 0
+        read: 0
       ailment: 3
-      seconds: 4
-      magnitude: 3
-      hitCount: 1
-      chance: 1
+      seconds:
+        value: 4
+        useStacks: 0
+        op: 0
+        read: 0
+      magnitude:
+        value: 3
+        useStacks: 0
+        op: 0
+        read: 0
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       buffStat: 0
       affinity: []
       durationAffinity: []

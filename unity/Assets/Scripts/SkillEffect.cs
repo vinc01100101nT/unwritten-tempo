@@ -159,8 +159,8 @@ public enum SkillEffectKind
     /// <see cref="Brace"/> use, and each carries its own bonus. The kind owns no multiplicity of its own — one charge,
     /// one attack — so stacking it always buys exactly N boosted attacks.</para>
     ///
-    /// <para>It catches every attack the unit sends: a basic, a skill strike, an execute, a mob's swing, and the flat
-    /// banked kind that never rolls. Damage-over-time is the one exclusion, and it comes free: ailment ticks are true
+    /// <para>It catches every attack the unit sends: a basic, a skill strike, an execute, a mob's swing.
+    /// Damage-over-time is the one exclusion, and it comes free: ailment ticks are true
     /// damage straight to HP, so they can neither gain the boost nor eat a charge.</para>
     ///
     /// <para>It multiplies BEFORE the target's armour, so the flat part of armour is paid once out of a bigger number
@@ -213,24 +213,30 @@ public class SkillEffect
 {
     public SkillEffectKind kind = SkillEffectKind.Damage;
 
+    [Tooltip("ON = this effect's numbers may answer to the pile this cast is cashing. Each number then carries its own " +
+             "operation and reading, right beside it — a damage multiplier can build on the pile while a duration " +
+             "ignores it. OFF = every number is a plain number, which is what an effect is by default.")]
+    public bool useStacks = false;
+
     [Header("Damage")]
     [Tooltip("ON = this strike IS an ordinary attack: the caster swings by its own rules — its crit, its accuracy " +
              "against the target's dodge (so it CAN miss), its weapon's element — and a landed strike announces a " +
-             "basic attack, so it feeds Momentum and every on-basic passive. Base power still scales it (1 = one " +
-             "normal swing, 2 = twice one). Damage type and element are the weapon's then, not this effect's.")]
+             "basic attack, so it feeds Momentum and every on-basic passive. The ATK multiplier still scales it (1 = " +
+             "one normal swing, 2 = twice one). Damage type and element are the weapon's then, not this effect's.")]
     public bool resolveAsBasicAttack = false;
     [Tooltip("How the hit resolves: Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (physical " +
              "that pierces armour & always crits). Default Magic — matches every pre-migration bool-magic skill.")]
     public DamageType damageType = DamageType.Magic;
-    [Tooltip("BASE POWER — the skill's inherent strength (1 = one normal hit; a heavy nuke is higher). Affinity picks " +
-             "WHICH stats scale it; this sets HOW BIG. Final = caster ATK/MATK × base power × affinity. No skill levels.")]
-    public float damageMult = 1f;
+    [Tooltip("ATK/MATK MULTIPLIER — how many of the caster's own hits this strike is worth (1 = one hit; a heavy nuke " +
+             "is higher). The roll it multiplies is a physical ATK roll or a magic MATK roll, chosen by the damage " +
+             "type above. Affinity picks WHICH stats scale it; this sets HOW BIG. No skill levels.")]
+    public ScaledNumber damageMult = new ScaledNumber(1f);
     [Tooltip("Attack element (RO property), checked against the target's armor element.")]
     public Element element = Element.Neutral;
 
     [Header("Heal")]
     [Tooltip("Flat HP restored (Heal kind).")]
-    public int amount = 10;
+    public ScaledNumber amount = new ScaledNumber(10f);
 
     [Header("Status / Haste")]
     [Tooltip("Which ailment to inflict (Status kind).")]
@@ -238,15 +244,15 @@ public class SkillEffect
     [Tooltip("Duration in seconds — 0 for an instant/action effect. Only durational STATE kinds (Status/Haste/Guard/" +
              "Buff/Regen/…) use it; the composer keeps it 0 for everything else. The buff tray / nameplate shows an icon " +
              "iff this is > 0 — i.e. only for ongoing CONDITIONS, never for movement actions.")]
-    public float seconds = 0f;
+    public ScaledNumber seconds = new ScaledNumber(0f);
     [Tooltip("Knockback / Pull ONLY: how long the shove MOVEMENT lasts (seconds). This is movement time, NOT a state " +
              "duration — a shove isn't a tracked condition, so it never shows a buff/nameplate icon.")]
-    public float shoveSeconds = 0.25f;
+    public ScaledNumber shoveSeconds = new ScaledNumber(0.25f);
     [Tooltip("Status: DoT damage-per-tick, Slow factor (0..1), or Blind HIT loss. Haste/Buff: the BONUS fraction, " +
              "not a multiplier (0.3 = +30%). " +
              "Guard: damage-cut fraction (0..1). Regen: HP per tick. Vulnerability: extra-damage fraction (0.3 = +30%). " +
              "Knockback/Pull: shove speed. ManaLeech/Reflect: fraction of damage dealt/taken (0..1).")]
-    public float magnitude = 3f;
+    public ScaledNumber magnitude = new ScaledNumber(3f);
 
     [Header("Stacking (STATE effects only)")]
     [Tooltip("OFF = one instance; re-applying REPLACES it (newest wins) — today's behaviour. ON = each application ADDS " +
@@ -255,10 +261,10 @@ public class SkillEffect
              "never a multiplier — stacking or not: author 0.03 for '+3% per stack', so 10 stacks read as +30%.")]
     public bool stacking = false;
     [Tooltip("Max stacks held at once. Past it, the OLDEST stack drops. Hard-capped by the store's safety ceiling.")]
-    [Min(1)] public int stackLimit = 5;
+    public ScaledNumber stackLimit = new ScaledNumber(5f);
     [Tooltip("How many stacks ONE application grants — this is the 'charges' knob. 3 = a cast hands out 3 charges that " +
              "share one window and are spent one at a time.")]
-    [Min(1)] public int stacksPerApply = 1;
+    public ScaledNumber stacksPerApply = new ScaledNumber(1f);
 
     [Tooltip("ON = this effect's stack count is NOT authored — it is worked out at cast time from how many times the " +
              "caster would swing during this effect's own duration (duration / seconds-per-swing). Faster attack " +
@@ -268,12 +274,12 @@ public class SkillEffect
     [Tooltip("This effect's SHARE of that count. 1 = the full count; 0.5 = half of it, rounded up. Two effects on one " +
              "skill sharing a duration stay in exact proportion for free — half is always half, at any attack speed, " +
              "with nothing to re-author when the duration changes.")]
-    [Min(0f)] public float stackShare = 1f;
+    public ScaledNumber stackShare = new ScaledNumber(1f);
 
     [Header("Dash")]
     [Tooltip("Dash travel speed as a multiple of the caster's CURRENT run speed (8 = 8× run speed) — the visible fast " +
              "glide to the aimed point. Higher = snappier gap-close. Only the Dash kind uses this.")]
-    public float dashSpeedMult = 8f;
+    public ScaledNumber dashSpeedMult = new ScaledNumber(8f);
     [Tooltip("Dash: ease IN — accelerate from a slow start up to full speed over the ease-window seconds. Off = full speed instantly.")]
     public bool dashEaseIn = false;
     [Tooltip("Dash: ease OUT — decelerate to a gentle stop over the ease-window seconds before arrival. Off = full speed " +
@@ -282,23 +288,23 @@ public class SkillEffect
     [Tooltip("Dash: how long (seconds) each ease ramp lasts — the accelerate / decelerate window. TIME-based, so the " +
              "ramp reads the same at any distance; on a dash shorter than the window the ramps fill the whole trip. " +
              "Only used when ease in / out is on.")]
-    [Min(0.05f)] public float dashEaseSeconds = 0.3f;
+    public ScaledNumber dashEaseSeconds = new ScaledNumber(0.3f);
 
     [Tooltip("Dash / Blink: leave a FROZEN COPY of the mover where it stood, fading out behind it — so a fast chain " +
              "of hops reads as several of you at once. 0 = off.")]
-    [Min(0f)] public float afterimageSeconds = 0f;
+    public ScaledNumber afterimageSeconds = new ScaledNumber(0f);
     [Tooltip("Colour of that frozen copy. Alpha = how solid it starts before fading to nothing.")]
     public Color afterimageTint = new Color(0.6f, 0.85f, 1f, 0.5f);
     [Tooltip("Dash: how see-through the MOVER's own body is WHILE IT TRAVELS — solid again the instant it lands, so " +
              "the fade is always exactly one hop long. 1 = solid (no fade). Lower = more see-through, so a hop reads " +
              "as a blur rather than a person sliding. Blink arrives instantly, so it has no travel to fade.")]
-    [Range(0f, 1f)] public float casterOpacity = 1f;
+    public ScaledNumber casterOpacity = new ScaledNumber(1f);
 
     [Tooltip("Dash / Blink: how many CORNERS the repeated landings trace. Each hop crosses to the far side of the " +
              "target and steps on, so this many hops in a row draw a star THROUGH it rather than walking a ring " +
              "around it. 5 = the classic five-pointed star. Must be ODD or the figure never closes — an even value " +
              "is nudged up by one.")]
-    [Min(3)] public int starCorners = 5;
+    public ScaledNumber starCorners = new ScaledNumber(5f);
 
     [Header("Modifiers (which skill's pile this edits)")]
     [Tooltip("WHOSE pile this edits — the id of the skill that granted it. Its own pile is a valid answer (a skill " +
@@ -311,14 +317,14 @@ public class SkillEffect
     // stack gate's — an unauthored pile must be VISIBLY unauthored instead of reading as the first enum member.
     [HideInInspector] public bool modifierStateIdSet = false;
     [Tooltip("Seconds added to every stack of that pile. Extend duration only.")]
-    [Min(0f)] public float modifierSeconds = 1f;
+    public ScaledNumber modifierSeconds = new ScaledNumber(1f);
     [Tooltip("How many stacks are added to that pile, each a copy of its newest. Add stacks/charges only.")]
-    [Min(0)] public int modifierStacks = 1;
+    public ScaledNumber modifierStacks = new ScaledNumber(1f);
 
     [Header("Multi-hit (Damage kind)")]
     [Tooltip("How many times a Damage effect strikes per landing. Each strike is the TRIGGER POINT for the binding's " +
              "other effects — every state and proc rolls its chance once per hit. 1 = single hit.")]
-    [Min(1)] public int hitCount = 1;
+    public ScaledNumber hitCount = new ScaledNumber(1f);
 
     [Header("Proc")]
     [Tooltip("Chance this effect happens at all (0..1), rolled PER HIT of the binding's multi-hit Damage. 1 = certain, " +
@@ -326,64 +332,7 @@ public class SkillEffect
              "0 means the effect can NEVER happen — the skill-data check reports it rather than letting it rot.\n\n" +
              "The roll belongs to the EFFECT, so it happens the same way whatever moment started the skill — a press, " +
              "a kill, a parry. A caster-side effect is applied once per landing, so it rolls once.")]
-    [Range(0f, 1f)] public float chance = 1f;
-
-    [Header("Pull from the cast's stacks")]
-    [Tooltip("ON = the pile this cast is cashing decides this effect's SIZE. HOW it pays depends on the reading below: " +
-             "a carried total is dealt FLAT (it is already real damage), while a COUNT adds to this effect's base " +
-             "power and rolls through your Attack like any other hit. Several effects on one skill can each pull from " +
-             "the SAME pile — that's how one cast both hits for the banked damage and heals off it.")]
-    public bool useStackValue = false;
-    [Tooltip("WHICH reading this effect pulls: Count = how many stacks; Carried total = the sum of what they carry " +
-             "(a percentage pile reads as its decimal, +30% = 0.3).")]
-    public StackReading stackValueSource = StackReading.Count;
-    [Tooltip("What the reading is multiplied by. On a carried total it is a FLAT scale: 2.5 on a total of 400 = 1000 " +
-             "damage, 0.5 = heal for half of it. On a COUNT of Damage it is the extra power PER STACK: 0.4 = +40% of " +
-             "your Attack per stack, added to this effect's base power.")]
-    [Min(0f)] public float stackValueMult = 1f;
-
-    /// <summary>This effect's FLAT output when the pile simply IS its size, or -1 when it isn't driven that way. The
-    /// number is dealt/healed as-is, with no Attack roll behind it — a carried total is already real, earned damage,
-    /// so re-rolling it through the caster's Attack would scale a number that was never the caster's to scale.
-    ///
-    /// <para>The ONE exception is a DAMAGE effect reading the COUNT: a tally is not an amount, so it pays through
-    /// <see cref="StackDamageBonus"/> (which lifts this effect's own power and still rolls) instead. The two are exact
-    /// complements — every stack-driven effect goes down one path or the other, never both, never neither. A HEAL takes
-    /// the flat path on either reading, because a heal has no Attack roll for a multiplier to lift.</para></summary>
-    public int StackOutput(in StackVars vars) =>
-        !useStackValue || stackValueSource == StackReading.Count
-            ? -1
-            : Mathf.Max(0, Mathf.FloorToInt(StackOutputRaw(vars) + FloorNudge));
-
-    /// <summary>The same answer before it is cut to a whole number — for the kinds whose number is a FRACTION (a
-    /// damage cut, a leech share, a slow amount), where rounding to an integer would erase it entirely.</summary>
-    public float StackOutputRaw(in StackVars vars) =>
-        vars.Read(stackValueSource) * Mathf.Max(0f, stackValueMult);
-
-    /// <summary>True when the pile REPLACES this effect's number outright — a carried total only. A COUNT never
-    /// replaces anything: it is a tally, so it ADDS to whatever the author typed (see <see cref="StackCountBonus"/>).</summary>
-    public bool StackDrivesOutput => useStackValue && stackValueSource == StackReading.CarriedTotal;
-
-    // "one per three" typed as 0.3333 lands at 0.9999 on three stacks, and cutting that down gives ZERO — a rate that
-    // reads as broken for a reason no author could ever see. A nudge a ten-thousandth wide fixes exactly that and is
-    // far too small to change any number anybody actually means.
-    const float FloorNudge = 0.001f;
-
-    /// <summary>What a COUNT reading buys this effect, ADDED to whatever the author typed — the rule damage has always
-    /// used, now the rule for every kind: 6× power + 0.4 per stack at 10 stacks is 10× power, and 0 stacks added + a
-    /// third per hit at 3 hits in a row is 1 stack. The author's number is never ignored, so it is never a dead knob.
-    ///
-    /// <para>Adds up, never compounds. A carried total is the other shape entirely — already real, earned value, so it
-    /// REPLACES the number instead of adding to it and nothing re-rolls it.</para></summary>
-    public float StackCountBonus(in StackVars vars) =>
-        useStackValue && stackValueSource == StackReading.Count
-            ? Mathf.Max(0f, stackValueMult) * vars.Count
-            : 0f;
-
-    /// <summary>The whole-number form of <see cref="StackCountBonus"/>, cut DOWN so "one per three" is 1 at three in a
-    /// row and still 1 at five.</summary>
-    public int StackCountBonusInt(in StackVars vars) =>
-        Mathf.Max(0, Mathf.FloorToInt(StackCountBonus(vars) + FloorNudge));
+    public ScaledNumber chance = new ScaledNumber(1f);
 
     /// <summary>WHICH state entry this effect creates, or false when it creates none. THE one answer to "what pile
     /// does this effect leave behind", so a consumer's authoring list can never offer a pile that will not exist.
@@ -437,30 +386,6 @@ public class SkillEffect
         if (!into.Contains(id)) into.Add(id);
         if (e.kind == SkillEffectKind.Brace && !into.Contains(StateId.DeferredDamage))
             into.Add(StateId.DeferredDamage);
-    }
-
-    /// <summary>Which kinds can be driven by the cast's pile — EVERY kind that has a number for it to be. Only the
-    /// kinds with no number at all are missing: a teleport, a dash, a parry, a brace and an immunity are a window or a
-    /// destination, and there is nothing there for a pile to become.
-    ///
-    /// <para>A binary ailment (stun / freeze / silence) is listed because its kind carries a number for the ailments
-    /// that do have one; the apply site simply has nothing to feed. Listing it costs one dead checkbox on those three
-    /// and keeps this answer per-KIND, which is what the serialized field is.</para></summary>
-    public static bool SupportsStackValue(SkillEffectKind k)
-    {
-        switch (k)
-        {
-            case SkillEffectKind.Teleport:
-            case SkillEffectKind.Dash:
-            case SkillEffectKind.Parry:
-            case SkillEffectKind.Brace:
-            case SkillEffectKind.ImmuneToDisables:
-            case SkillEffectKind.Taunt:
-            case SkillEffectKind.ExtendDuration:   // its only number is the seconds it adds — a duration, not a size
-                return false;
-            default:
-                return true;
-        }
     }
 
     [Header("Who it lands on")]

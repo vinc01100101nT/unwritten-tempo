@@ -77,38 +77,104 @@ MonoBehaviour:
     stayDuration: 0
     effects:
     - kind: 24
+      useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 1
-      damageMult: 1
+      damageMult:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       element: 0
-      amount: 10
+      amount:
+        value: 10
+        useStacks: 0
+        op: 0
+        read: 0
       ailment: 2
-      seconds: 9
-      shoveSeconds: 0.25
-      magnitude: 1
+      seconds:
+        value: 9
+        useStacks: 0
+        op: 0
+        read: 0
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+      magnitude:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       stacking: 0
-      stackLimit: 5
-      stacksPerApply: 1
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       stacksFromAttackSpeed: 0
-      stackShare: 1
-      dashSpeedMult: 8
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
       dashEaseIn: 0
       dashEaseOut: 0
-      dashEaseSeconds: 0.3
-      afterimageSeconds: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
       afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
-      casterOpacity: 1
-      starCorners: 5
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
       modifierSkillId: 
       modifierStateId: 0
       modifierStateIdSet: 0
-      modifierSeconds: 1
-      modifierStacks: 1
-      hitCount: 1
-      chance: 1
-      useStackValue: 0
-      stackValueSource: 0
-      stackValueMult: 1
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      modifierStacks:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       side: 1
       buffStat: 0
       affinity: []

@@ -59,23 +59,68 @@ MonoBehaviour:
     stayDuration: 0
     effects:
     - kind: 0
+      useStacks: 0
       damageType: 1
-      damageMult: 1
+      damageMult:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       element: 3
-      amount: 10
+      amount:
+        value: 10
+        useStacks: 0
+        op: 0
+        read: 0
       ailment: 1
-      seconds: 0
-      shoveSeconds: 0.25
-      magnitude: 2
+      seconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+      magnitude:
+        value: 2
+        useStacks: 0
+        op: 0
+        read: 0
       stacking: 0
-      stackLimit: 5
-      stacksPerApply: 1
-      dashSpeedMult: 8
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
       dashEaseIn: 0
       dashEaseOut: 0
-      dashEaseSeconds: 0.3
-      hitCount: 1
-      chance: 1
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       buffStat: 0
       affinity:
       - stat: 1
@@ -85,23 +130,68 @@ MonoBehaviour:
       - stat: 1
         weight: 100
     - kind: 4
+      useStacks: 0
       damageType: 1
-      damageMult: 1
+      damageMult:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       element: 0
-      amount: 10
+      amount:
+        value: 10
+        useStacks: 0
+        op: 0
+        read: 0
       ailment: 2
-      seconds: 0.5
-      shoveSeconds: 0.25
-      magnitude: 1
+      seconds:
+        value: 0.5
+        useStacks: 0
+        op: 0
+        read: 0
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+      magnitude:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       stacking: 0
-      stackLimit: 5
-      stacksPerApply: 1
-      dashSpeedMult: 8
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
       dashEaseIn: 0
       dashEaseOut: 0
-      dashEaseSeconds: 0.3
-      hitCount: 1
-      chance: 1
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       buffStat: 0
       affinity: []
       durationAffinity: []

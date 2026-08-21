@@ -114,6 +114,46 @@ When an editor tool writes assets, its output path must point at the correct buc
 
 ---
 
+## ⛔ THE FIVE — the anti-invention protocol (HARD-PINNED, read before every build)
+
+These exist because a full day was lost on 2026-08-21 to inventions that did not *feel* like inventions. The
+"don't invent" rules were already in force and were broken anyway, because **an invention disguises itself as
+continuity**: coining a word feels like *labelling*, and carrying an old rule forward through a redesign feels
+like *preserving*. Judgement is therefore not the fix. Each rule below produces an ARTIFACT or is a MECHANICAL
+test, so it fires whether or not I notice I am about to do the wrong thing.
+
+**1. The contract must list what STAYS, not only what CHANGES.**
+Before building, write the behaviours the change TOUCHES BUT DOES NOT ALTER, in plain language, as part of the
+same three bullets. A rule that is already in the code is NOT automatically agreed — the user has never seen most
+of it. If a preserved rule cannot be stated in one plain sentence, that is the signal it was never a decision
+anyone made, and it goes to the user before a line is written.
+*(Scar: "a banked total skips the attack roll entirely" was inherited, never authored, silently carried through
+three redesigns of the same feature, and surfaced only when the user read it off a UI label hours later.)*
+
+**2. Any branch on what a number MEANS is a DESIGN decision — no exceptions for "it already did that".**
+If a condition makes one authored value mean two different things (a multiplier here, the final amount there),
+stop and hand it to the user. Age is not consent: inheriting the branch from existing code does not make it
+agreed, and "I was preserving current behaviour" is exactly how the scar above happened.
+
+**3. A question mark with no imperative ⇒ ANSWER, TOUCH NOTHING.**
+Mechanical, no interpretation. "Why is this confusing?", "what does X mean?", "is this a bug?" get an answer and
+a proposal — never an edit. Editing on a question was done TWICE in one afternoon while this rule's softer
+sibling was already in the global file.
+
+**4. Every report ends with "New words I introduced".**
+A flat list of every user-visible string written this session — labels, headers, tooltips, enum members, doc
+titles — that was NOT already in the codebase or in the user's own message. Empty list = say "none". Ten seconds
+to write; it turns coined vocabulary into something the user can veto BEFORE it reaches their screen.
+*(Scar: "banked ×" — a term invented on the spot and pushed into the composer as though it were theirs.)*
+
+**5. Ask AT MOST ONCE per task, then decide and move.**
+One question, batched, covering everything genuinely ambiguous. After that, ambiguity gets MY decision, labelled
+plainly as mine, and the work continues. The day's real cost was not a wrong build — it was eight rounds of
+questions about one skill while nothing got built. A decision the user can correct in one line beats a question
+that costs a round.
+
+---
+
 ## Standing rules
 
 - **Say the contract back BEFORE building anything bigger than a one-liner.** First reply with three bullets — what I'm about to build, and the exact in-game check that will prove it works — then WAIT for a go. No code until then. Most wasted rounds here were not bad code; they were the wrong thing built well, or extra things nobody asked for. Three bullets cost one line and buy the acceptance test for free (see the play-test rule below, which reuses them).

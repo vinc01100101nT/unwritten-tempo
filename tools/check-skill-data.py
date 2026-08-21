@@ -246,6 +246,14 @@ def as_int(v, default=0):
         return default
 
 
+def num_of(v, default=0.0):
+    """One authored number, whatever shape it is saved in. Every number on an effect is now a small record
+    (value + how it meets the pile); a bare scalar is still accepted so this can never go blind on old data."""
+    if isinstance(v, dict):
+        return as_float(v.get("value"), default)
+    return as_float(v, default)
+
+
 def as_float(v, default=0.0):
     try:
         return float(str(v).strip())
@@ -476,12 +484,17 @@ def main():
                 # A chance of 0 is a real saved value meaning "never happens", and it looks exactly like a field
                 # nobody filled in. Every effect carries 1 (certain) unless its author chose otherwise, so a 0
                 # is either a dead effect or an asset that missed the upgrade — both worth stopping for.
-                if "chance" in e and as_float(e.get("chance"), 1.0) <= 0.0:
+                if "chance" in e and num_of(e.get("chance"), 1.0) <= 0.0:
                     problem(s, "has an effect set to a 0% chance, so it can never happen.")
 
-                if as_int(e.get("useStackValue")) == 1 and not gated:
-                    problem(s, "has an effect sized by a pile of stacks, but the skill never reads a "
-                               "pile — so that effect always comes out at nothing.")
+                # Every number is now its own little record, and any of them may pull from the pile. So the question
+                # is asked of the NUMBERS, not of the effect: does anything here pull with no pile to pull from?
+                if not gated:
+                    for fname, fval in e.items():
+                        if isinstance(fval, dict) and as_int(fval.get("useStacks")) == 1:
+                            problem(s, "has a number (%s) sized by a pile of stacks, but the skill never reads a "
+                                       "pile — so it always comes out at nothing." % fname)
+                            break
 
                 if kind in ("ExtendDuration", "AddStacks"):
                     target = str(e.get("modifierSkillId", "")).strip()

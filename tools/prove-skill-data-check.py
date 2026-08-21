@@ -69,8 +69,11 @@ CASES = [
     ("gameplay wired to a beat the visual does not have",
      patch("skill.sword.deathblow.asset", ("tickId: follow_hit", "tickId: nonesuch")),
      "does not have"),
-    ("an effect sized by stacks on a skill with no gate",
-     patch("skill.sword.committed_strike.asset", ("useStackValue: 0", "useStackValue: 1")),
+    # A NUMBER is what pulls now, so the break has to be made on a number's own record, not on the effect.
+    ("a number sized by stacks on a skill with no gate",
+     patch("skill.sword.committed_strike.asset",
+           ("damageMult:\n        value: 2\n        useStacks: 0",
+            "damageMult:\n        value: 2\n        useStacks: 1")),
      "always comes out at nothing"),
     # Flip the asset's OWN answer rather than inserting a second one: the field now gets written into every saved
     # skill, and a duplicate key would simply be overruled by the real one further down — the break would silently
@@ -98,7 +101,8 @@ CASES = [
     # Flips the asset's own answer, like the repeat case above, so the break is real rather than a second key the
     # true one further down would overrule.
     ("an effect that can never happen",
-     patch("skill.sword.guard_stance.asset", ("chance: 1", "chance: 0")),
+     patch("skill.sword.guard_stance.asset",
+           ("chance:\n        value: 1", "chance:\n        value: 0")),
      "can never happen"),
 ]
 

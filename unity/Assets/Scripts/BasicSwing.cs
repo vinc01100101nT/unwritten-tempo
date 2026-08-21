@@ -24,7 +24,8 @@ public static class BasicSwing
     /// <summary>Land one swing from <paramref name="attacker"/> on <paramref name="victim"/>, scaled by
     /// <paramref name="powerMult"/> (1 = an ordinary swing; a skill passes its own authored power). Returns the damage
     /// dealt, so a rising combo total can accumulate it. <paramref name="overkill"/> keeps the number and its sound
-    /// registering past the victim's death, the way a multi-hit cascade must.</summary>
+    /// registering past the victim's death, the way a multi-hit cascade must.
+    ///
     public static int Land(ICombatUnit attacker, ICombatUnit victim, float powerMult = 1f, bool overkill = false,
                            bool announceIntent = false)
     {

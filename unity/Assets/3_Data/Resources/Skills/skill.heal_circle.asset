@@ -49,19 +49,52 @@ MonoBehaviour:
     projectileCount: 1
     effects:
     - kind: 1
+      useStacks: 0
       damageType: 1
-      damageMult: 1
+      damageMult:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       element: 0
-      amount: 100
+      amount:
+        value: 100
+        useStacks: 0
+        op: 0
+        read: 0
       ailment: 2
-      seconds: 0
-      magnitude: 3
-      dashSpeedMult: 8
+      seconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+      magnitude:
+        value: 3
+        useStacks: 0
+        op: 0
+        read: 0
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
       dashEaseIn: 0
       dashEaseOut: 0
-      dashEaseSeconds: 0.3
-      hitCount: 1
-      chance: 1
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
       buffStat: 0
       affinity: []
       durationAffinity: []

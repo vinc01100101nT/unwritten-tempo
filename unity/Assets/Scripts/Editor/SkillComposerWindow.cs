@@ -90,6 +90,9 @@ public class SkillComposerWindow : EditorWindow
             : $"skill.{weapon.ToString().ToLowerInvariant()}.{tail}";
     }
 
+    // Ultimates first, then pressed actives, then pure passives — slotOrder breaks ties within a rank.
+    static int ListRank(SkillDef s) => s.IsUltimate ? 0 : s.IsPassive ? 2 : 1;
+
     void Refresh()
     {
         all.Clear();
@@ -98,7 +101,11 @@ public class SkillComposerWindow : EditorWindow
             var a = AssetDatabase.LoadAssetAtPath<SkillDef>(AssetDatabase.GUIDToAssetPath(guid));
             if (a != null) all.Add(a);
         }
-        all.Sort((x, y) => x.slotOrder.CompareTo(y.slotOrder));
+        all.Sort((x, y) =>
+        {
+            int r = ListRank(x).CompareTo(ListRank(y));
+            return r != 0 ? r : x.slotOrder.CompareTo(y.slotOrder);
+        });
         if (sel == null && all.Count > 0) sel = all[0];
     }
 
@@ -578,20 +585,9 @@ public class SkillComposerWindow : EditorWindow
                             "edits", "this changes nothing")) return;
 
         if (ef.kind == SkillEffectKind.ExtendDuration)
-            ef.modifierSeconds = EditorGUILayout.Slider(new GUIContent("  seconds added",
-                "Added to EVERY stack of that pile, so the front of the pile stops expiring on the old clock.\n\n" +
-                "Lengthens a pile that is ALREADY running — on a lapsed pile there is nothing to lengthen, so this " +
-                "does nothing."),
-                ef.modifierSeconds, 0.1f, 20f);
+            NumberRow("  seconds added", "Added to EVERY stack of that pile, so the front of the pile stops expiring on the old clock.\n\n" + "Lengthens a pile that is ALREADY running — on a lapsed pile there is nothing to lengthen, so this " + "does nothing.", ref ef.modifierSeconds, ef.useStacks);
         else
-            ef.modifierStacks = EditorGUILayout.IntSlider(new GUIContent("  stacks added",
-                "How many stacks to add. Each is a copy of that pile's newest one — same worth, same deadline — because " +
-                "what one of its charges is worth is the granting skill's business, not this effect's.\n\n" +
-                "Works whether or not that skill is running: if its pile is up the stacks join it; if not, the pile " +
-                "starts with exactly the charges that skill's own effect authors.\n\n" +
-                "0 is a real answer: it means this effect adds nothing ON ITS OWN, and hands over only what the cast's " +
-                "pile buys it above. That is how 'one Momentum per three hits in a row' is written."),
-                Mathf.Max(0, ef.modifierStacks), 0, UnitStates.MaxStacks);
+            NumberRow("  stacks added", "How many stacks to add. Each is a copy of that pile's newest one — same worth, same deadline — because " + "what one of its charges is worth is the granting skill's business, not this effect's.\n\n" + "Works whether or not that skill is running: if its pile is up the stacks join it; if not, the pile " + "starts with exactly the charges that skill's own effect authors.\n\n" + "0 is a real answer: it means this effect adds nothing ON ITS OWN, and hands over only what the cast's " + "pile buys it above. That is how 'one Momentum per three hits in a row' is written.", ref ef.modifierStacks, ef.useStacks, whole: true);
 
     }
 
@@ -1569,7 +1565,6 @@ public class SkillComposerWindow : EditorWindow
             DrawEffectStateBranch(ef, casterSide);   // the row under the group: which member of it this effect is
             // Plain-English summary of what THIS effect does — directly under the kind dropdown, above its fields.
             EditorGUILayout.HelpBox(EffectSummary(ef.kind), MessageType.None);
-            DrawStackValue(ef, sel);
             switch (ef.kind)
             {
                 case SkillEffectKind.ExtendDuration:
@@ -1577,77 +1572,69 @@ public class SkillComposerWindow : EditorWindow
                     DrawModifierTarget(ef);
                     break;
                 case SkillEffectKind.Damage:
-                    // A strike paid by a pile's CARRIED TOTAL is that flat number — there is no roll under it to make a
-                    // basic attack out of, so the choice isn't offered there.
-                    if (!ef.useStackValue || ef.stackValueSource == StackReading.Count)
-                        ef.resolveAsBasicAttack = EditorGUILayout.Toggle(new GUIContent("resolve as a basic attack",
-                            "ON = this strike IS an ordinary attack: the caster swings by ITS OWN rules — its crit, its " +
-                            "accuracy against the target's dodge (so it CAN miss), its weapon's element — and a landed " +
-                            "strike announces a basic attack, feeding Momentum and every on-basic passive. Base power " +
-                            "still scales it: 1 = one normal swing, 2 = twice one. Damage type and element belong to the " +
-                            "weapon then, so they're hidden."), ef.resolveAsBasicAttack);
+                    // Offered on EVERY strike, banked reading included — a swing paid by banked value lands that exact
+                    // amount and is a swing in every other way, so there is no case where this choice doesn't apply.
+                    ef.resolveAsBasicAttack = EditorGUILayout.Toggle(new GUIContent("resolve as a basic attack",
+                        "ON = this strike IS an ordinary attack: the caster swings by ITS OWN rules — its crit, its " +
+                        "accuracy against the target's dodge (so it CAN miss), its weapon's element — and a landed " +
+                        "strike announces a basic attack, feeding Momentum and every on-basic passive. The ATK " +
+                        "multiplier still scales it: 1 = one normal swing, 2 = twice one. Damage type and element " +
+                        "belong to the weapon then, so they're hidden.\n\n" +
+                        "Paid by a BANKED total, the swing lands that exact amount — it can still miss and still " +
+                        "announces, but it does not crit, because there is no roll for a crit to multiply."),
+                        ef.resolveAsBasicAttack);
                     if (!ef.resolveAsBasicAttack)
                         ef.damageType = (DamageType)EditorGUILayout.EnumPopup(new GUIContent("damage type",
                             "Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (pierces armour, always crits)."), ef.damageType);
-                    // Hidden only when the pile REPLACES the size (a carried total is dealt flat): a visible number that
-                    // changes nothing is a lie about what this effect does. On the COUNT reading the pile ADDS to this
-                    // number instead, so it stays live and stays shown.
-                    if (!ef.useStackValue || ef.stackValueSource == StackReading.Count)
-                        ef.damageMult = EditorGUILayout.Slider(new GUIContent("base power ×",
-                            ef.resolveAsBasicAttack
-                                ? "How hard the swing is: 1 = one of your normal attacks, 2 = twice one. The roll under it is the caster's own."
-                                : "The skill's INHERENT strength (Ember ~1×, Meteor ~8×). Affinity picks WHICH stats scale it; this sets HOW BIG. Final = caster ATK/MATK × base power × affinity."),
-                            ef.damageMult <= 0f ? 1f : ef.damageMult, 0.1f, 8f);
+                    // ONE meaning, always: this number MULTIPLIES the damage. Where it came from — typed, or built with
+                    // the pile — changes nothing about what it then does, so the row never has to be re-read.
+                    NumberRow(new GUIContent("damage mult",
+                            "The base scaler of this effect's damage. It ALWAYS multiplies the damage roll: 1 = one " +
+                            "normal hit, 8 = a heavy nuke.\n\n" +
+                            "This never changes meaning. Whatever the number ends up being — typed here, or built from " +
+                            "the pile with the controls beside it — the result multiplies the damage, every time."),
+                        ref ef.damageMult, ef.useStacks);
                     if (!ef.resolveAsBasicAttack)
                         ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
                             "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
-                    ef.hitCount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("hits",
-                        "Strikes per landing. Each hit is the TRIGGER for every other effect on this binding — each rolls its chance once per hit."), ef.hitCount));
+                    NumberRow("hits", "Strikes per landing. Each hit is the TRIGGER for every other effect on this binding — each rolls its chance once per hit.", ref ef.hitCount, ef.useStacks, whole: true);
                     break;
                 case SkillEffectKind.Heal:
-                    if (!ef.useStackValue)
-                        ef.amount = EditorGUILayout.IntField(new GUIContent("HP", "Flat HP restored to the caster."), ef.amount);
+                    // The base value of the one formula — always shown, whether or not a pile sizes it.
+                    NumberRow("HP", "Flat HP restored to the caster.", ref ef.amount, ef.useStacks, whole: true);
                     break;
                 case SkillEffectKind.Status:
                     // The ailment is chosen in the State ▸ Debuffs picker above — not repeated here (no double-knob).
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the ailment lasts."), ef.seconds, 0.5f, 20f);
+                    NumberRow("seconds", "How long the ailment lasts.", ref ef.seconds, ef.useStacks);
                     // magnitude is only meaningful for DoTs (dmg/tick), Slow (speed factor) and Blind (HIT loss).
                     // Pure CC (Stun/Freeze/Silence) is binary — no magnitude, so hide it to avoid the confusion.
                     if (ef.ailment != Ailment.Stun && ef.ailment != Ailment.Freeze && ef.ailment != Ailment.Silence)
-                        ef.magnitude = EditorGUILayout.FloatField(new GUIContent("magnitude", "DoT dmg/tick, Slow factor (0..1), or Blind HIT loss."), ef.magnitude);
+                        NumberRow("magnitude", "DoT dmg/tick, Slow factor (0..1), or Blind HIT loss.", ref ef.magnitude, ef.useStacks);
                     break;
                 case SkillEffectKind.Execute:
                     ef.damageType = (DamageType)EditorGUILayout.EnumPopup(new GUIContent("damage type",
                         "Physical (ATK vs armour) / Magic (MATK, unmissable, no crit) / Crit (pierces armour, always crits)."), ef.damageType);
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("execute power ×",
-                        "Bonus damage = roll × this × (target's missing HP). Huge near death, ~0 at full HP."), ef.magnitude <= 0f ? 1f : ef.magnitude, 0.1f, 5f);
+                    NumberRow("execute power ×", "Bonus damage = roll × this × (target's missing HP). Huge near death, ~0 at full HP.", ref ef.magnitude, ef.useStacks);
                     ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
                         "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
                     break;
                 case SkillEffectKind.Haste:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("speed bonus (0.3 = +30%)", "The BONUS, not a multiplier: 0.3 = +30% move speed. NEGATIVE slows instead (Haste's mob-debuff job): -0.4 = 40% slower."), ef.magnitude, -0.9f, 2f);
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the speed boost lasts."), ef.seconds, 0.5f, 20f);
+                    NumberRow("speed bonus (0.3 = +30%)", "The BONUS, not a multiplier: 0.3 = +30% move speed. NEGATIVE slows instead (Haste's mob-debuff job): -0.4 = 40% slower.", ref ef.magnitude, ef.useStacks);
+                    NumberRow("seconds", "How long the speed boost lasts.", ref ef.seconds, ef.useStacks);
                     break;
                 case SkillEffectKind.Guard:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage cut", "Fraction of incoming damage prevented (0..1). 0.4 = take 40% less damage."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the damage reduction lasts."), ef.seconds, 0.5f, 20f);
+                    NumberRow("damage cut", "Fraction of incoming damage prevented (0..1). 0.4 = take 40% less damage.", ref ef.magnitude, ef.useStacks);
+                    NumberRow("seconds", "How long the damage reduction lasts.", ref ef.seconds, ef.useStacks);
                     break;
                 case SkillEffectKind.BoostOutgoingDamage:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage bonus (1 = +100%)",
-                        "The BONUS one charge is worth, not a multiplier: 1 = the attack hits for double. Applied " +
-                        "BEFORE the target's armour, so the flat part of armour is paid out of the bigger number and " +
-                        "the boost is worth more against tanky targets."), ef.magnitude, 0f, 5f);
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("window (s)",
-                        "How long unspent charges stay held. They lapse when it ends — the window is a deadline for " +
-                        "using them, not what makes them work."), ef.seconds, 0.5f, 30f);
+                    NumberRow("damage bonus (1 = +100%)", "The BONUS one charge is worth, not a multiplier: 1 = the attack hits for double. Applied " + "BEFORE the target's armour, so the flat part of armour is paid out of the bigger number and " + "the boost is worth more against tanky targets.", ref ef.magnitude, ef.useStacks);
+                    NumberRow("window (s)", "How long unspent charges stay held. They lapse when it ends — the window is a deadline for " + "using them, not what makes them work.", ref ef.seconds, ef.useStacks);
                     EditorGUILayout.HelpBox("ONE charge boosts ONE attack, and that attack spends it whether it hits " +
                         "or misses. Basics, skill strikes, executes and banked damage all count; damage-over-time " +
                         "ticks never do. Set how many charges below (charges per use).", MessageType.None);
                     break;
                 case SkillEffectKind.ImmuneToDisables:
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds",
-                        "How long nothing can stop the holder. No other knob — being stopped is yes or no, so there " +
-                        "is no amount to set."), ef.seconds, 0.5f, 30f);
+                    NumberRow("seconds", "How long nothing can stop the holder. No other knob — being stopped is yes or no, so there " + "is no amount to set.", ref ef.seconds, ef.useStacks);
                     EditorGUILayout.HelpBox("Turns away, by name: FLINCH (the stagger a landing hit causes), STUN, " +
                         "FREEZE, SILENCE, KNOCKBACK, PULL, and a hit CANCELLING a cast in progress.\n\n" +
                         "It does NOT touch damage, poison, bleed, burn, slow or blind — this is about being stopped, " +
@@ -1655,13 +1642,8 @@ public class SkillComposerWindow : EditorWindow
                         MessageType.None);
                     break;
                 case SkillEffectKind.ReduceOutgoingDamage:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("damage cut (0.4 = −40%)",
-                        "How much weaker ONE attack comes out. 0.4 = that attack deals 40% less; 1 = it deals nothing. " +
-                        "Cut BEFORE the target's armour, the same place the boost multiplies."),
-                        Mathf.Clamp01(ef.magnitude), 0f, 1f);
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("window (s)",
-                        "How long unspent charges stay held. They lapse when it ends — the window is a deadline for " +
-                        "spending them, not what makes them work."), ef.seconds, 0.5f, 30f);
+                    NumberRow("damage cut (0.4 = −40%)", "How much weaker ONE attack comes out. 0.4 = that attack deals 40% less; 1 = it deals nothing. " + "Cut BEFORE the target's armour, the same place the boost multiplies.", ref ef.magnitude, ef.useStacks);
+                    NumberRow("window (s)", "How long unspent charges stay held. They lapse when it ends — the window is a deadline for " + "spending them, not what makes them work.", ref ef.seconds, ef.useStacks);
                     EditorGUILayout.HelpBox("The mirror of Boost Outgoing Damage: ONE charge weakens ONE attack sent " +
                         "by whoever holds it, spent whether that attack hits or misses. Put it on the target side to " +
                         "blunt their swing, or on the caster side as a self-inflicted cost. Its charges are a " +
@@ -1671,90 +1653,65 @@ public class SkillComposerWindow : EditorWindow
                 case SkillEffectKind.Brace:
                     // No magnitude, for the same reason Parry has none: a hit is held or it isn't. Charges come from
                     // the shared stacking block below — this kind owns no multiplicity of its own.
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("window (s)",
-                        "How long the charges stay armed, and when the banked damage comes due. Every hit held during " +
-                        "the window is banked; the whole total lands at once the moment the window ends.\n\n" +
-                        "Brace DELAYS damage, it does not prevent it. Each CHARGE holds back ONE hit — exactly like " +
-                        "Parry, except a parry erases the hit and a brace only postpones it. Out of charges the next " +
-                        "hit lands normally, and charges come from the stacking block below.\n\n" +
-                        "When the window ends everything banked lands as ONE true-damage hit; a consumer skill must " +
-                        "cash the debt before it comes due. What gets banked is what would really have cost HP: Guard, " +
-                        "Vulnerability and Shield all apply BEFORE it is banked, and a parried hit never lands at all, " +
-                        "so it banks nothing."), ef.seconds, 0.5f, 20f);
+                    NumberRow("window (s)", "How long the charges stay armed, and when the banked damage comes due. Every hit held during " + "the window is banked; the whole total lands at once the moment the window ends.\n\n" + "Brace DELAYS damage, it does not prevent it. Each CHARGE holds back ONE hit — exactly like " + "Parry, except a parry erases the hit and a brace only postpones it. Out of charges the next " + "hit lands normally, and charges come from the stacking block below.\n\n" + "When the window ends everything banked lands as ONE true-damage hit; a consumer skill must " + "cash the debt before it comes due. What gets banked is what would really have cost HP: Guard, " + "Vulnerability and Shield all apply BEFORE it is banked, and a parried hit never lands at all, " + "so it banks nothing.", ref ef.seconds, ef.useStacks);
                     break;
                 case SkillEffectKind.Parry:
                     // No magnitude on purpose: a parry is binary (the hit is erased or it isn't), so a "how much"
                     // field would be a dead knob. Charges come from the stacking block below — the shared knob.
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("window (s)",
-                        "How long the caster waits for a hit to parry. The charge is spent by the HIT, not by this clock — " +
-                        "the window only decides how long the read stays open if nothing comes.\n\n" +
-                        "Parry is not Guard: Guard is a % cut on every hit in its window, while Parry fully ERASES one " +
-                        "hit (0 damage, before defence) and is SPENT by it, then fires the OnParry trigger. One charge " +
-                        "= blocks the next hit; for more, turn on stacking below."), ef.seconds, 0.1f, 10f);
+                    NumberRow("window (s)", "How long the caster waits for a hit to parry. The charge is spent by the HIT, not by this clock — " + "the window only decides how long the read stays open if nothing comes.\n\n" + "Parry is not Guard: Guard is a % cut on every hit in its window, while Parry fully ERASES one " + "hit (0 damage, before defence) and is SPENT by it, then fires the OnParry trigger. One charge " + "= blocks the next hit; for more, turn on stacking below.", ref ef.seconds, ef.useStacks);
                     break;
                 case SkillEffectKind.Taunt:
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long enemies are forced to attack the caster."), ef.seconds, 0.5f, 20f);
+                    NumberRow("seconds", "How long enemies are forced to attack the caster.", ref ef.seconds, ef.useStacks);
                     break;
                 case SkillEffectKind.Teleport:
                     DrawStarCorners(ef);
                     break;   // destination = the aimed point (see the summary below); only the FIGURE is authored
                 case SkillEffectKind.Dash:
                     DrawStarCorners(ef);
-                    ef.dashSpeedMult = EditorGUILayout.Slider(new GUIContent("dash speed ×",
-                        "How fast the caster rushes to the aimed point, as a multiple of run speed (8 = 8× run speed). Higher = snappier gap-close."),
-                        ef.dashSpeedMult <= 0f ? 8f : ef.dashSpeedMult, 1f, 20f);
+                    NumberRow("dash speed ×", "How fast the caster rushes to the aimed point, as a multiple of run speed (8 = 8× run speed). Higher = snappier gap-close.", ref ef.dashSpeedMult, ef.useStacks);
                     ef.dashEaseIn = EditorGUILayout.Toggle(new GUIContent("ease in",
                         "Accelerate from a slow start up to full speed over the ease-window seconds. Off = full speed instantly."), ef.dashEaseIn);
                     ef.dashEaseOut = EditorGUILayout.Toggle(new GUIContent("ease out",
                         "Decelerate to a gentle stop over the ease-window seconds before arrival. Off = full speed until arrival. (Both on = slow-fast-slow.)"), ef.dashEaseOut);
                     if (ef.dashEaseIn || ef.dashEaseOut)
-                        ef.dashEaseSeconds = EditorGUILayout.Slider(new GUIContent("ease window (s)",
-                            "How long each accelerate / decelerate ramp lasts. Time-based, so it reads the same at any distance; on a dash shorter than the window the ramps fill the whole trip."),
-                            ef.dashEaseSeconds <= 0f ? 0.3f : ef.dashEaseSeconds, 0.05f, 1.5f);
+                        NumberRow("ease window (s)", "How long each accelerate / decelerate ramp lasts. Time-based, so it reads the same at any distance; on a dash shorter than the window the ramps fill the whole trip.", ref ef.dashEaseSeconds, ef.useStacks);
                     // Dash only, deliberately: Blink arrives instantly, so a travel-length fade would have nothing to
                     // last for — the control isn't offered there rather than sitting in the Blink rows doing nothing.
-                    ef.casterOpacity = EditorGUILayout.Slider(new GUIContent("caster opacity",
-                        "How see-through the mover's own body is WHILE IT TRAVELS — solid again the instant it lands, " +
-                        "so the fade is always exactly one hop long. 1 = solid (no fade).\n\n" +
-                        "Several fades can overlap on one body — the most see-through one wins, and the body returns " +
-                        "to solid when the last of them lets go."), ef.casterOpacity, 0f, 1f);
+                    NumberRow("caster opacity", "How see-through the mover's own body is WHILE IT TRAVELS — solid again the instant it lands, " + "so the fade is always exactly one hop long. 1 = solid (no fade).\n\n" + "Several fades can overlap on one body — the most see-through one wins, and the body returns " + "to solid when the last of them lets go.", ref ef.casterOpacity, ef.useStacks);
                     break;
                 case SkillEffectKind.Buff:
                     ef.buffStat = (BuffStat)EditorGUILayout.EnumPopup(new GUIContent("stat",
                         "Which self-stat is buffed. AMPLIFY buffs are FLAT — magnitude is NOT affinity-scaled, so a DPS can't out-buff via their offense."), ef.buffStat);
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("bonus (0.3 = +30%)",
-                        "The BONUS, not a multiplier: 0.3 = +30%. On a STACKING buff this is the PER-STACK bonus, so ten 0.03 stacks = +30%. FLAT (no affinity). A support's value is UPTIME — duration scales off sustain — not a bigger number."), Mathf.Max(0f, ef.magnitude), 0f, 2f);
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds",
-                        "Base duration — scales UP off sustain stats via the DURATION affinity below (high-MP support keeps it up longer)."), ef.seconds, 0.5f, 30f);
+                    NumberRow("bonus (0.3 = +30%)", "The BONUS, not a multiplier: 0.3 = +30%. On a STACKING buff this is the PER-STACK bonus, so ten 0.03 stacks = +30%. FLAT (no affinity). A support's value is UPTIME — duration scales off sustain — not a bigger number.", ref ef.magnitude, ef.useStacks);
+                    NumberRow("seconds", "Base duration — scales UP off sustain stats via the DURATION affinity below (high-MP support keeps it up longer).", ref ef.seconds, ef.useStacks);
                     break;
                 case SkillEffectKind.Regen:
-                    ef.magnitude = EditorGUILayout.FloatField(new GUIContent("HP / tick", "HP healed every 0.8s while active."), ef.magnitude);
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the heal-over-time lasts."), ef.seconds, 0.5f, 30f);
+                    NumberRow("HP / tick", "HP healed every 0.8s while active.", ref ef.magnitude, ef.useStacks);
+                    NumberRow("seconds", "How long the heal-over-time lasts.", ref ef.seconds, ef.useStacks);
                     break;
                 case SkillEffectKind.Cleanse:
-                    ef.amount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("debuffs removed", "How many active debuffs to strip."), ef.amount));
+                    NumberRow("debuffs removed", "How many active debuffs to strip.", ref ef.amount, ef.useStacks, whole: true);
                     break;
                 case SkillEffectKind.Vulnerability:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("+damage taken", "Extra damage the marked enemy takes (0.3 = +30%)."), ef.magnitude, 0f, 2f);
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long enemies stay marked as vulnerable."), ef.seconds, 0.5f, 20f);
+                    NumberRow("+damage taken", "Extra damage the marked enemy takes (0.3 = +30%).", ref ef.magnitude, ef.useStacks);
+                    NumberRow("seconds", "How long enemies stay marked as vulnerable.", ref ef.seconds, ef.useStacks);
                     break;
                 case SkillEffectKind.Knockback:
                 case SkillEffectKind.Pull:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("shove speed", "How fast the enemy is pushed away / pulled in (world units per second)."), ef.magnitude <= 0f ? 10f : ef.magnitude, 1f, 30f);
-                    ef.shoveSeconds = EditorGUILayout.Slider(new GUIContent("shove time (s)", "How long the shove MOVEMENT lasts — movement time, NOT a state duration (so it shows no icon)."), ef.shoveSeconds <= 0f ? 0.25f : ef.shoveSeconds, 0.05f, 2f);
+                    NumberRow("shove speed", "How fast the enemy is pushed away / pulled in (world units per second).", ref ef.magnitude, ef.useStacks);
+                    NumberRow("shove time (s)", "How long the shove MOVEMENT lasts — movement time, NOT a state duration (so it shows no icon).", ref ef.shoveSeconds, ef.useStacks);
                     break;
                 case SkillEffectKind.ManaLeech:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("MP leech", "Fraction of the damage you deal returned to you as MP (0..1). 0.15 = 15%."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the leech window lasts."), ef.seconds, 0.5f, 30f);
+                    NumberRow("MP leech", "Fraction of the damage you deal returned to you as MP (0..1). 0.15 = 15%.", ref ef.magnitude, ef.useStacks);
+                    NumberRow("seconds", "How long the leech window lasts.", ref ef.seconds, ef.useStacks);
                     break;
                 case SkillEffectKind.Reflect:
-                    ef.magnitude = EditorGUILayout.Slider(new GUIContent("reflect", "Fraction of the damage you take bounced back at the attacker (0..1). 0.3 = 30%."), Mathf.Clamp01(ef.magnitude), 0f, 1f);
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the reflect window lasts."), ef.seconds, 0.5f, 30f);
+                    NumberRow("reflect", "Fraction of the damage you take bounced back at the attacker (0..1). 0.3 = 30%.", ref ef.magnitude, ef.useStacks);
+                    NumberRow("seconds", "How long the reflect window lasts.", ref ef.seconds, ef.useStacks);
                     break;
                 case SkillEffectKind.Shield:
-                    ef.amount = Mathf.Max(1, EditorGUILayout.IntField(new GUIContent("barrier HP",
-                        "Incoming HIT damage the shield soaks before it breaks (a finite pool, unlike Guard's %). Scales UP via the affinity channel below (sustain stats)."), ef.amount));
-                    ef.seconds = EditorGUILayout.Slider(new GUIContent("seconds", "How long the barrier lasts if not broken first."), ef.seconds, 0.5f, 30f);
+                    NumberRow("barrier HP", "Incoming HIT damage the shield soaks before it breaks (a finite pool, unlike Guard's %). Scales UP via the affinity channel below (sustain stats).", ref ef.amount, ef.useStacks, whole: true);
+                    NumberRow("seconds", "How long the barrier lasts if not broken first.", ref ef.seconds, ef.useStacks);
                     break;
             }
 
@@ -1763,25 +1720,24 @@ public class SkillComposerWindow : EditorWindow
             // answer the runtime roll uses.
             if (SkillEffect.RollsChance(ef.kind))
             {
-                ef.chance = EditorGUILayout.Slider(new GUIContent("chance",
-                    "How likely this effect is to happen, rolled once per hit of this binding's Damage — so a 3-hit " +
-                    "strike gives it three chances. 100% (the default) = certain, every time.\n\n" +
-                    "The roll belongs to the EFFECT, so it happens the same way whatever moment ran the skill: a " +
-                    "press, a kill, a parry. An effect on the caster is applied once per landing, so it rolls once.\n\n" +
-                    "0% means it can never happen — the skill-data check reports that rather than let it rot."),
-                    Mathf.Clamp01(ef.chance), 0f, 1f);
-                if (ef.chance <= 0f)
+                NumberRow("chance", "How likely this effect is to happen, rolled once per hit of this binding's Damage — so a 3-hit " + "strike gives it three chances. 100% (the default) = certain, every time.\n\n" + "The roll belongs to the EFFECT, so it happens the same way whatever moment ran the skill: a " + "press, a kill, a parry. An effect on the caster is applied once per landing, so it rolls once.\n\n" + "0% means it can never happen — the skill-data check reports that rather than let it rot.", ref ef.chance, ef.useStacks);
+                if (ef.chance.value <= 0f)
                     EditorGUILayout.HelpBox("At 0% this effect can never happen. Raise it, or delete the effect.",
                         MessageType.Warning);
-                else if (ef.chance < 1f)
+                else if (ef.chance.value < 1f)
                     EditorGUILayout.HelpBox("Below 100% this effect gains a \"boosts CHANCE\" channel under scaling & " +
                         "stacks — ring investment then makes it land more often, separately from whatever scales its " +
                         "own number.", MessageType.None);
             }
 
+            // AFTER the kind's own fields, never before: this section's formula opens with that kind's BASE VALUE, and
+            // a formula printed above the number it starts from is unreadable — the author meets the leading term with
+            // no idea which field it came from.
+            DrawStackValue(ef, sel);
+
             // An instant effect has NO duration — keep seconds 0 so the buff tray (which validates by duration) never
             // shows a phantom icon for it, and so switching a durational kind to an instant one clears the leftover.
-            if (!HasDurationChannel(ef)) ef.seconds = 0f;
+            if (!HasDurationChannel(ef)) ef.seconds.value = 0f;
 
             // SCALING & STACKS live behind a fold, CLOSED by default: an effect's identity is its verb and its one or
             // two numbers, and those were being buried under ring-scaling rows and stacking knobs that most effects
@@ -1796,7 +1752,7 @@ public class SkillComposerWindow : EditorWindow
                 // relative; empty = ×1 (no scaling).
                 string affLabel = AffinityOutputLabel(ef);
                 if (affLabel != null) DrawAffinity(affLabel, ref ef.affinity);
-                if (SkillEffect.RollsChance(ef.kind) && ef.chance < 1f) DrawAffinity("boosts CHANCE", ref ef.chanceAffinity);
+                if (SkillEffect.RollsChance(ef.kind) && ef.chance.value < 1f) DrawAffinity("boosts CHANCE", ref ef.chanceAffinity);
                 if (HasDurationChannel(ef)) DrawAffinity("boosts DURATION", ref ef.durationAffinity);
                 // A MODIFIER's numbers live in fields of their own (they describe another skill's pile rather than this
                 // effect's body), so they can't ride the two rows above — but they are the same two channels, and there
@@ -1825,11 +1781,8 @@ public class SkillComposerWindow : EditorWindow
     /// so an even one is nudged up rather than silently drawing an unfinished shape.</summary>
     static void DrawStarCorners(SkillEffect ef)
     {
-        ef.afterimageSeconds = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("afterimage (s)",
-            "Leave a frozen copy of the mover where it stood, fading out over this many seconds — a fast chain of " +
-            "hops then reads as several of you at once. 0 = off. Only characters with a 3D body leave one."),
-            ef.afterimageSeconds));
-        if (ef.afterimageSeconds > 0f)
+        NumberRow("afterimage (s)", "Leave a frozen copy of the mover where it stood, fading out over this many seconds — a fast chain of " + "hops then reads as several of you at once. 0 = off. Only characters with a 3D body leave one.", ref ef.afterimageSeconds, ef.useStacks);
+        if (ef.afterimageSeconds.value > 0f)
         {
             ef.afterimageTint = EditorGUILayout.ColorField(new GUIContent("  afterimage tint",
                 "Colour of the frozen copy. Alpha = how solid it starts before fading to nothing.\n\n" +
@@ -1837,105 +1790,40 @@ public class SkillComposerWindow : EditorWindow
                 "is a SNAPSHOT — it holds the pose it was struck in and does not animate."), ef.afterimageTint);
         }
 
-        ef.starCorners = Mathf.Max(3, EditorGUILayout.IntField(new GUIContent("star corners",
-            "How many corners repeated landings trace. 5 = the classic five-pointed star (what Lunge draws today). " +
-            "Only matters when the skill relocates more than once — a single hop has no figure to close."),
-            ef.starCorners));
-        if ((ef.starCorners & 1) == 0)
-            EditorGUILayout.HelpBox($"Even counts never close the figure — this will run as {ef.starCorners + 1}.",
+        NumberRow("star corners", "How many corners repeated landings trace. 5 = the classic five-pointed star (what Lunge draws today). " + "Only matters when the skill relocates more than once — a single hop has no figure to close.", ref ef.starCorners, ef.useStacks, whole: true);
+        if ((Mathf.RoundToInt(ef.starCorners.value) & 1) == 0)
+            EditorGUILayout.HelpBox($"Even counts never close the figure — this will run as {Mathf.RoundToInt(ef.starCorners.value) + 1}.",
                 MessageType.Warning);
     }
 
-    /// <summary>"Pull this effect's size from the pile this cast is cashing." Drawn only for the kinds whose output is
-    /// a plain SIZE (see <see cref="SkillEffect.SupportsStackValue"/>) — on a duration or a proc chance there is no
-    /// sensible conversion, so the control simply isn't offered rather than sitting there doing nothing.
+    /// <summary>The ONE opt-in: "this effect's numbers may answer to the pile this cast is cashing."
     ///
-    /// <para>The READING decides how the pile pays, because the two readings are different kinds of number: a carried
-    /// total is already real damage, so it is dealt flat; a count is a tally, so it buys EXTRA POWER on this effect and
-    /// still rolls through the caster's Attack. A heal has no roll to lift, so it takes the flat path either way.</para>
-    ///
-    /// <para>Several effects on one skill may each switch this on and read the SAME snapshot — that is the whole
-    /// point: one cast can hit for the banked damage AND heal off it.</para></summary>
+    /// <para>It is a REVEAL, not a formula. Ticking it grows every number row on this effect by an operation and a
+    /// reading, each number choosing for itself — so a strike can build on the pile while its duration ignores it.
+    /// Untick it and every number goes back to being a plain number, which is what an effect is by default.</para></summary>
     static void DrawStackValue(SkillEffect ef, SkillDef sel)
     {
-        if (!SkillEffect.SupportsStackValue(ef.kind)) { ef.useStackValue = false; return; }
+        ef.useStacks = EditorGUILayout.Toggle(new GUIContent("use stack variables",
+            "ON = each number on this effect may ALSO answer to the pile this cast is cashing. A tick appears beside " +
+            "every number; tick the ones that should pull, and each picks its own operation (Add / Subtract / " +
+            "Multiply / Divide) and reading (Count / Carried total).\n\n" +
+            "OFF = every number is a plain number. An effect never needs the pile to work."),
+            ef.useStacks);
+        if (!ef.useStacks) return;
 
-        ef.useStackValue = EditorGUILayout.Toggle(new GUIContent("use stack value",
-            "ON = the pile this cast cashes BECOMES this effect's number, replacing the one typed above. Available on " +
-            "every effect that has a number: a heal's HP, an ailment's damage per tick, a shield's pool, a shove's " +
-            "speed, how many stacks a modifier hands over.\n\n" +
-            "A COUNT is cut DOWN to a whole number, so reading it at a third gives 1 at three stacks and still 1 at " +
-            "five — 'one per three' says exactly what it does.\n\n" +
-            "DAMAGE is the one kind that pays a count differently: there a count buys extra POWER on this effect and " +
-            "still rolls through your Attack, because a tally is not an amount of damage. A carried total is dealt " +
-            "flat on every kind — it is already real, earned value, so nothing re-rolls it."),
-            ef.useStackValue);
-        if (!ef.useStackValue) return;
-
-        // A run of consecutive hits is a TALLY — each hit adds one, and the hits carry nothing. So when that is all
-        // this skill reads, "carried total" is not a harder answer, it is a non-existent one that would read 0 in
-        // silence. It isn't offered; the choice is made and shown.
-        bool countOnly = OnlyReadsRunOfHits(sel);
-        if (countOnly) ef.stackValueSource = StackReading.Count;
-
-        var readLabel = new GUIContent("  read",
-            "Count = how many stacks the pile holds.\n\n" +
-            "Carried total = the sum of what those stacks CARRY (a percentage pile reads as its decimal, +30% = 0.3).");
-        if (countOnly)
-        {
-            EditorGUILayout.Popup(readLabel, 0, CountOnlyRead);
-            EditorGUILayout.LabelField(" ", "Count is the only reading — a run of hits carries nothing to total.",
-                                       EditorStyles.miniLabel);
-        }
-        else
-            ef.stackValueSource = (StackReading)EditorGUILayout.EnumPopup(readLabel, ef.stackValueSource);
-
-        // ONE rule for every kind now: a COUNT is a tally, so it ADDS to the number you typed; a CARRIED TOTAL is
-        // already real earned value, so it REPLACES it. That was always how damage behaved — it is just no longer
-        // damage's private rule, which is what stopped the typed number being ignored on everything else.
-        bool perUnit = ef.stackValueSource == StackReading.Count;
-        ef.stackValueMult = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent(
-            perUnit ? "  + per stack" : "  × multiplier",
-            perUnit
-                ? "How much EACH stack adds, on TOP of the number you typed above — that number is never ignored.\n\n" +
-                  "0.4 on a 6× damage effect at 10 stacks = 6 + 4 = 10× Attack. A third on 0 stacks added, at three " +
-                  "hits in a row = 1 stack. Adds up, never compounds; whole-number fields are cut DOWN, so a third " +
-                  "gives 1 at three in a row and still 1 at five."
-                : "What the carried total is multiplied by to BECOME this effect's number, replacing the one above. " +
-                  "2.5 on a carried total of 400 = 1000."),
-            ef.stackValueMult));
-
-        string unit = StackOutputLabel(ef) ?? "output";
-        float per2 = Mathf.Max(0f, ef.stackValueMult);
-        if (ef.kind == SkillEffectKind.Damage && perUnit)
-        {
-            float basePower = ef.damageMult <= 0f ? 1f : ef.damageMult;
-            EditorGUILayout.HelpBox(
-                $"At 10 stacks: {basePower * 100f:0}% + {per2 * 10f * 100f:0}% = {(basePower + per2 * 10f) * 100f:0}% Attack." +
-                (per2 <= 0f ? "  (0 = the pile buys nothing.)" : ""), MessageType.None);
-        }
-        else if (perUnit)
-        {
-            // Shown against the number actually typed above, so the line reads as this effect rather than as algebra.
-            float baseVal = ef.kind == SkillEffectKind.AddStacks ? ef.modifierStacks
-                          : ef.amount != 0 ? ef.amount : ef.magnitude;
-            EditorGUILayout.HelpBox(
-                $"At 3 stacks: {baseVal:0.##} + (3 × {per2:0.##}) = {baseVal + 3f * per2:0.##} {unit}." +
-                (per2 <= 0f ? "  (0 = the pile buys nothing.)" : ""), MessageType.None);
-        }
-        else
-            EditorGUILayout.HelpBox(
-                $"Carrying 400 → {400f * per2:0} {unit}, flat — the number above is replaced.", MessageType.None);
-
-        // The pile comes from the TRIGGER's gate — without one there is nothing to read, and this would silently be 0.
+        // The pile comes from the TRIGGER's gate — without one there is nothing to read, and every pulling number
+        // would silently be 0.
         bool anyGate = false;
         if (sel != null && sel.triggers != null)
             for (int i = 0; i < sel.triggers.Count; i++)
                 if (sel.triggers[i] != null && sel.triggers[i].requiresState) anyGate = true;
         if (!anyGate)
-            EditorGUILayout.HelpBox("No trigger on this skill requires a state, so there is no pile to read — this " +
-                "effect would land 0. Set 'requires state' on a trigger above and name the granting skill.",
+            EditorGUILayout.HelpBox("No trigger on this skill requires a state, so there is no pile to read — every " +
+                "number set to pull would read 0. Set 'requires state' on a trigger above and name the granting skill.",
                 MessageType.Warning);
+        else if (OnlyReadsRunOfHits(sel))
+            EditorGUILayout.HelpBox("This skill reads the automatic run of hits, which carries nothing — those numbers " +
+                "must read Count. Carried total would be 0.", MessageType.None);
     }
 
     // Stacking knobs — only meaningful for a STATE (something with a duration), so they're hidden entirely for instant
@@ -1962,28 +1850,22 @@ public class SkillComposerWindow : EditorWindow
         // greyed rather than hidden: the author can still see the numbers the effect falls back to.
         using (new EditorGUI.DisabledScope(ef.stacksFromAttackSpeed))
         {
-            ef.stackLimit = EditorGUILayout.IntSlider(new GUIContent("  max stacks",
-                "Held at once. Past this the OLDEST stack drops."), Mathf.Max(1, ef.stackLimit), 1, UnitStates.MaxStacks);
-            ef.stacksPerApply = EditorGUILayout.IntSlider(new GUIContent("  stacks per use",
-                "How many stacks ONE application grants — the 'charges' knob. 3 = a cast hands out 3 charges sharing one " +
-                "window, spent one at a time."), Mathf.Max(1, ef.stacksPerApply), 1, Mathf.Max(1, ef.stackLimit));
+            NumberRow("  max stacks", "Held at once. Past this the OLDEST stack drops.", ref ef.stackLimit, ef.useStacks, whole: true);
+            NumberRow("  stacks per use", "How many stacks ONE application grants — the 'charges' knob. 3 = a cast hands out 3 charges sharing one " + "window, spent one at a time.", ref ef.stacksPerApply, ef.useStacks, whole: true);
         }
 
         if (ef.stacksFromAttackSpeed)
         {
-            ef.stackShare = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("  share of the count",
-                "This effect's share. 1 = the full count; 0.5 = half of it, rounded up. Two effects on this skill " +
-                "with the SAME duration stay in exact proportion at every attack speed — half is always half, and " +
-                "changing the duration moves both on its own."), ef.stackShare));
+            NumberRow("  share of the count", "This effect's share. 1 = the full count; 0.5 = half of it, rounded up. Two effects on this skill " + "with the SAME duration stay in exact proportion at every attack speed — half is always half, and " + "changing the duration moves both on its own.", ref ef.stackShare, ef.useStacks);
 
             // Preview from the LIVE player, the same way every other estimate in this window is quoted — an authored
             // count is now a rate, and a rate with no worked example is a knob you can't reason about.
             float swing = Character.Instance != null ? Character.Instance.SwingTime : 0f;
             string live = swing > 0f
-                ? $"Right now ({swing:0.00}s per swing): {Mathf.Max(1, Mathf.CeilToInt(ef.seconds / swing * Mathf.Max(0f, ef.stackShare)))} stacks."
+                ? $"Right now ({swing:0.00}s per swing): {Mathf.Max(1, Mathf.CeilToInt(ef.seconds.value / swing * Mathf.Max(0f, ef.stackShare.value)))} stacks."
                 : "Enter Play mode to see the live count.";
             EditorGUILayout.HelpBox(
-                $"{ef.seconds:0.#}s window ÷ seconds-per-swing × {Mathf.Max(0f, ef.stackShare):0.##}, rounded up.\n{live}",
+                $"{ef.seconds.value:0.#}s window ÷ seconds-per-swing × {Mathf.Max(0f, ef.stackShare.value):0.##}, rounded up.\n{live}",
                 MessageType.None);
         }
 
@@ -1996,7 +1878,7 @@ public class SkillComposerWindow : EditorWindow
     {
         switch (k)
         {
-            case SkillEffectKind.Damage:        return "Deals damage to whoever this tick hits. Scales off your ATK/MATK × base power.";
+            case SkillEffectKind.Damage:        return "Deals damage to whoever this tick hits. The ATK/MATK multiplier below says how many of the caster's own hits it is worth.";
             case SkillEffectKind.Heal:          return "Restores a flat chunk of HP to the caster.";
             case SkillEffectKind.Status:        return "Inflicts an ailment (damage-over-time, stun, slow, …) for its duration.";
             case SkillEffectKind.Haste:         return "Temporarily speeds up movement.";
@@ -2080,14 +1962,50 @@ public class SkillComposerWindow : EditorWindow
         return any;
     }
 
+    // ---- THE number row -----------------------------------------------------------------------------------------
+    /// <summary>ONE authored number, drawn the same way everywhere it appears — the whole point of the shape: an
+    /// author learns one row and then knows every number on every effect.
+    ///
+    /// <para>A plain field by default. When the effect has opted in to the pile, the row grows a small tick and, once
+    /// ticked, the two dropdowns that say HOW this number meets the pile — operation, then reading — sitting beside
+    /// the number they belong to rather than in a section of their own.</para>
+    ///
+    /// <para>Every control is a MAX width with no floor, so the row shrinks with a narrow window instead of forcing a
+    /// horizontal scrollbar across the whole composer.</para></summary>
+    static void NumberRow(GUIContent label, ref ScaledNumber n, bool effectUsesStacks, bool whole = false)
+    {
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.PrefixLabel(label);
+        n.value = whole
+            ? EditorGUILayout.IntField(Mathf.RoundToInt(n.value), GUILayout.MinWidth(0f))
+            : EditorGUILayout.FloatField(n.value, GUILayout.MinWidth(0f));
+        if (effectUsesStacks)
+        {
+            n.useStacks = EditorGUILayout.Toggle(n.useStacks, GUILayout.MaxWidth(16f), GUILayout.MinWidth(0f));
+            if (n.useStacks)
+            {
+                n.op   = (StackOp)EditorGUILayout.EnumPopup(n.op, GUILayout.MaxWidth(84f), GUILayout.MinWidth(0f));
+                n.read = (StackReading)EditorGUILayout.EnumPopup(n.read, GUILayout.MaxWidth(104f), GUILayout.MinWidth(0f));
+            }
+        }
+        else n.useStacks = false;   // the controls are gone, so the setting cannot linger unseen behind them
+        EditorGUILayout.EndHorizontal();
+    }
+
+    static void NumberRow(string label, string tip, ref ScaledNumber n, bool uses, bool whole = false)
+        => NumberRow(new GUIContent(label, tip), ref n, uses, whole);
+
     /// <summary>WHAT this effect's number IS, named the way its own row names it — used to word the worked example
     /// under 'use stack value' so it says "HP restored" or "shove speed" instead of a generic word.</summary>
     static string StackOutputLabel(SkillEffect e)
     {
         switch (e.kind)
         {
-            case SkillEffectKind.Damage:               return "DAMAGE POWER";
-            case SkillEffectKind.Execute:              return "EXECUTE POWER";
+            // A damage effect's number is a MULTIPLIER of the caster's own roll, never an amount of damage — saying
+            // "× ATK" is the difference between a line the author can act on and one they have to decode.
+            case SkillEffectKind.Damage:
+            case SkillEffectKind.Execute:              return e.damageType == DamageType.Magic && !e.resolveAsBasicAttack
+                                                            ? "× MATK" : "× ATK";
             case SkillEffectKind.Heal:                 return "HP RESTORED";
             case SkillEffectKind.Haste:                return "SPEED BONUS";
             case SkillEffectKind.Guard:                return "DAMAGE CUT";

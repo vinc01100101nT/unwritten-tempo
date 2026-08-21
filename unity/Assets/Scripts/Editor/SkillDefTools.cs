@@ -50,14 +50,14 @@ public static class SkillDefTools
             {
                 tickId = "meteor_ball",
                 targets = SkillTargets.Mobs, scope = SkillScope.Area, radius = 1.36f,
-                effects = new List<SkillEffect> { new SkillEffect { kind = SkillEffectKind.Damage, damageType = DamageType.Magic, damageMult = 8f, element = Element.Fire } },
+                effects = new List<SkillEffect> { new SkillEffect { kind = SkillEffectKind.Damage, damageType = DamageType.Magic, damageMult = new ScaledNumber(8f), element = Element.Fire } },
             },
             // The lingering fire (5 beats, 0.372s apart) = a small repeated tick — the multi-tick demonstration.
             new SkillTickBinding
             {
                 tickId = "fire_pillar",
                 targets = SkillTargets.Mobs, scope = SkillScope.Area, radius = 1.14f,
-                effects = new List<SkillEffect> { new SkillEffect { kind = SkillEffectKind.Damage, damageType = DamageType.Magic, damageMult = 0.51f, element = Element.Fire } },
+                effects = new List<SkillEffect> { new SkillEffect { kind = SkillEffectKind.Damage, damageType = DamageType.Magic, damageMult = new ScaledNumber(0.51f), element = Element.Fire } },
             },
         };
         EditorUtility.SetDirty(def);

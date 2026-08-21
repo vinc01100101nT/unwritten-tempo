@@ -5,6 +5,7 @@ Two-level: top-level facts below are always relevant; grouped topics live in `in
 Keep the always-on list SHORT (~10). A line earns its place only if it changes what I do on almost ANY task; a fact that matters only inside one area belongs in that area's sub-index, and a rule already enforced by a check or written in CLAUDE.md does not need a second home here.
 
 ## Top-level (always-on)
+- [THE FIVE — anti-invention protocol](the-five-anti-invention.md) — an invention disguises itself as continuity: the contract must list what STAYS, a meaning-branch is a design decision, a question gets an answer NOT an edit, every report ends with "new words I introduced", ask once then decide.
 - [Never widen a snapshot into a verdict](never-widen-a-snapshot-into-a-verdict.md) — today's files prove today only; if the user tested it working, believe them and hunt what CHANGED — never say "it never worked / can't be done".
 - [Changes MUST persist in repo, not runtime](changes-must-persist-in-repo.md) — bake in code/saved asset + read back; never leave a change in bare execute_code/runtime state.
 - [Never blame recompilation](assume-compiled-never-blame-recompile.md) — user ALWAYS recompiles; treat code as live+running, diagnose runtime, never suspect stale compile.

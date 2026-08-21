@@ -25,7 +25,7 @@ public class SkillEffectCatalogWindow : EditorWindow
     struct Chan { public string id, label, unit, tier, ring, notes; }
     static readonly Chan[] Channels =
     {
-        C("damage",         "Damage",           "mult",   "effect-output", "yes",  "base power; final = ATK/MATK × this × affinity"),
+        C("damage",         "Damage",           "mult",   "effect-output", "yes",  "ATK/MATK multiplier; final = the caster's ATK/MATK roll × this × affinity"),
         C("hits",           "Hits",             "int",    "effect-output", "yes",  "strikes per landing; each is a proc trigger (hitCountAffinity)"),
         C("heal_amount",    "Heal Amount",      "flat HP","effect-output", "yes",  "Heal amount (sustain: HP/MP/Def)"),
         C("heal_per_tick",  "Heal / sec",       "HP",     "effect-output", "yes",  "Regen HoT, every 0.8s"),
@@ -61,7 +61,7 @@ public class SkillEffectCatalogWindow : EditorWindow
     struct Eff { public string target, dmg, channels, scales, sink, details; }
     static readonly Dictionary<SkillEffectKind, Eff> Effects = new Dictionary<SkillEffectKind, Eff>
     {
-        [SkillEffectKind.Damage]        = E("mobs/any", "yes", "damage, hits", "damage, hits", "CombatAuthority.Apply", "Base power × ATK/MATK × affinity; each hit triggers the binding's procs."),
+        [SkillEffectKind.Damage]        = E("mobs/any", "yes", "damage, hits", "damage, hits", "CombatAuthority.Apply", "The caster's ATK/MATK roll × the effect's ATK/MATK multiplier × affinity; each hit triggers the binding's procs."),
         [SkillEffectKind.Heal]          = E("self/others","no", "heal_amount", "heal_amount", "Health/Character.Heal", "Flat HP restored; landing follows the tick's TargetMode."),
         [SkillEffectKind.Status]        = E("mobs/self", "no", "ailment; dot_damage | slow_amount | accuracy_loss, duration, proc_chance", "output + duration (proc_chance never)", "StatusController.Apply", "Ailment picks the output channel. Stun/Freeze/Silence = duration-only (no magnitude)."),
         [SkillEffectKind.Haste]         = E("self/mobs", "no", "move_mult, duration", "move_mult, duration", "StatusController.Haste", "Move-speed ×; on mobs a <1 value is a slow-debuff."),
