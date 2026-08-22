@@ -1644,8 +1644,6 @@ GameObject:
   - component: {fileID: 1481781066900209576}
   - component: {fileID: 4353415632890949807}
   - component: {fileID: 9089076849142685705}
-  - component: {fileID: 6232888626014627275}
-  - component: {fileID: 8705954486488704167}
   - component: {fileID: 5557482616007551214}
   - component: {fileID: 8640521617098767544}
   - component: {fileID: 3681536792159765582}
@@ -1840,30 +1838,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b45dfd3772460eb4e82e406cd441fc7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HotbarPanel
---- !u!114 &6232888626014627275
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3183779459780461396}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9649eabe18c2b26488f991efdbf79e58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ComboComposerPanel
---- !u!114 &8705954486488704167
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3183779459780461396}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a07ee9f75631344e9d957b66b80263b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ComboBarPanel
 --- !u!114 &5557482616007551214
 MonoBehaviour:
   m_ObjectHideFlags: 0

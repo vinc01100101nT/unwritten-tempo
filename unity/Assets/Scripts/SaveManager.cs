@@ -74,7 +74,6 @@ public class SaveManager : MonoBehaviour
             // The data restored correctly; this is purely the post-load visual refresh (else the hotbar reads
             // as empty until the next manual bind).
             HotbarPanel.RebuildRequested?.Invoke();
-            ComboBarPanel.RebuildRequested?.Invoke();
         }
 
         // Subscribe AFTER restoring, so loading doesn't immediately mark us dirty.

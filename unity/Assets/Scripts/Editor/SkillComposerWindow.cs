@@ -1289,8 +1289,8 @@ public class SkillComposerWindow : EditorWindow
     static readonly SkillEffectKind[] MovementKinds =
         { SkillEffectKind.Teleport, SkillEffectKind.Dash, SkillEffectKind.Knockback, SkillEffectKind.Pull };
     static readonly SkillEffectKind[] BuffKinds =
-        { SkillEffectKind.SubStatBuff, SkillEffectKind.SubStatDebuff, SkillEffectKind.BoostOutgoingDamage,
-          SkillEffectKind.Guard, SkillEffectKind.Parry, SkillEffectKind.Brace, SkillEffectKind.ImmuneToDisables,
+        { SkillEffectKind.SubStatBuff, SkillEffectKind.BoostOutgoingDamage,
+          SkillEffectKind.Parry, SkillEffectKind.Brace, SkillEffectKind.ImmuneToDisables,
           SkillEffectKind.Shield };
 
     // Modifiers: the effects whose target is a SKILL's pile rather than a body. Labelled as the whole sentence they
@@ -1321,13 +1321,13 @@ public class SkillComposerWindow : EditorWindow
     }
     static readonly DebuffOption[] DebuffOptions =
     {
-        new DebuffOption("Vulnerability", SkillEffectKind.Vulnerability),
+        new DebuffOption("Sub Stat Debuff", SkillEffectKind.SubStatDebuff),
         new DebuffOption("Reduce Outgoing Damage", SkillEffectKind.ReduceOutgoingDamage),
         new DebuffOption("Taunt", SkillEffectKind.Taunt),
         new DebuffOption("Poison", Ailment.Poison), new DebuffOption("Bleed", Ailment.Bleed),
-        new DebuffOption("Burn", Ailment.Burn),     new DebuffOption("Slow", Ailment.Slow),
+        new DebuffOption("Burn", Ailment.Burn),
         new DebuffOption("Stun", Ailment.Stun),     new DebuffOption("Freeze", Ailment.Freeze),
-        new DebuffOption("Silence", Ailment.Silence), new DebuffOption("Blind", Ailment.Blind),
+        new DebuffOption("Silence", Ailment.Silence),
     };
 
     // The menus above are split by SIDE, so each section only offers kinds it can actually run — one array pair per
@@ -1466,7 +1466,10 @@ public class SkillComposerWindow : EditorWindow
                 typeIdx, typeLabels);
             if (typeNext != typeIdx)
             {
-                ef.kind = typeNext == 0 ? buffs[0] : typeNext == 1 ? SkillEffectKind.Vulnerability : SkillEffectKind.Cleanse;
+                // Each branch lands on the FIRST entry of its own list, so the state row below always opens showing
+                // what was actually just selected. Naming one kind here instead would drift the moment either list
+                // is reordered.
+                ef.kind = typeNext == 0 ? buffs[0] : typeNext == 1 ? DebuffOptions[0].kind : SkillEffectKind.Cleanse;
                 isBuff = typeNext == 0; isCleanse = typeNext == 2;
                 StampSide(ef, casterSide);
             }
@@ -1654,10 +1657,6 @@ public class SkillComposerWindow : EditorWindow
                     ef.element = (Element)EditorGUILayout.EnumPopup(new GUIContent("element",
                         "Attack element, checked against the target's armor element. Neutral = no matchup bonus/penalty."), ef.element);
                     break;
-                case SkillEffectKind.Guard:
-                    NumberRow("damage cut", "Fraction of incoming damage prevented (0..1). 0.4 = take 40% less damage.", ref ef.magnitude, ef.useStacks);
-                    NumberRow("seconds", "How long the damage reduction lasts.", ref ef.seconds, ef.useStacks);
-                    break;
                 case SkillEffectKind.BoostOutgoingDamage:
                     NumberRow("damage bonus (1 = +100%)", "The BONUS one charge is worth, not a multiplier: 1 = the attack hits for double. Applied " + "BEFORE the target's armour, so the flat part of armour is paid out of the bigger number and " + "the boost is worth more against tanky targets.", ref ef.magnitude, ef.useStacks);
                     NumberRow("window (s)", "How long unspent charges stay held. They lapse when it ends — the window is a deadline for " + "using them, not what makes them work.", ref ef.seconds, ef.useStacks);
@@ -1732,10 +1731,6 @@ public class SkillComposerWindow : EditorWindow
                 case SkillEffectKind.Cleanse:
                     NumberRow("debuffs removed", "How many active debuffs to strip.", ref ef.amount, ef.useStacks, whole: true);
                     break;
-                case SkillEffectKind.Vulnerability:
-                    NumberRow("+damage taken", "Extra damage the marked enemy takes (0.3 = +30%).", ref ef.magnitude, ef.useStacks);
-                    NumberRow("seconds", "How long enemies stay marked as vulnerable.", ref ef.seconds, ef.useStacks);
-                    break;
                 case SkillEffectKind.Knockback:
                 case SkillEffectKind.Pull:
                     NumberRow("shove speed", "How fast the enemy is pushed away / pulled in (world units per second).", ref ef.magnitude, ef.useStacks);
@@ -1803,7 +1798,7 @@ public class SkillComposerWindow : EditorWindow
         if (GUILayout.Button(casterSide ? "  + caster effect" : "  + target effect", GUILayout.MaxWidth(120)))
             b.effects.Add(new SkillEffect
             {
-                kind = casterSide ? SkillEffectKind.Guard : SkillEffectKind.Damage,
+                kind = casterSide ? SkillEffectKind.SubStatBuff : SkillEffectKind.Damage,
                 side = casterSide ? SkillEffect.EffectSide.Caster : SkillEffect.EffectSide.Target,
             });
     }
@@ -1913,7 +1908,6 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Damage:        return "Deals damage to whoever this tick hits. The ATK/MATK multiplier below says how many of the caster's own hits it is worth.";
             case SkillEffectKind.Heal:          return "Restores a flat chunk of HP to the caster.";
             case SkillEffectKind.Status:        return "Inflicts an ailment (damage-over-time, stun, slow, …) for its duration.";
-            case SkillEffectKind.Guard:         return "Temporarily reduces incoming damage to the caster.";
             case SkillEffectKind.Parry:         return "Fully negates the next incoming hit (0 damage) and is spent by it — a timing read, not a damage cut. Fires the OnParry trigger.";
             case SkillEffectKind.Brace:         return "Each charge holds ONE incoming hit back instead of erasing it; the banked damage all lands when the window ends. A delay, not a save.";
             case SkillEffectKind.BoostOutgoingDamage:
@@ -1928,7 +1922,6 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.SubStatBuff:   return "Temporarily RAISES one sub-stat — pick which below. Every timed sub-stat change lives here: movement speed, HP and MP regen, leech, reflect, evasion, all of them.";
             case SkillEffectKind.SubStatDebuff: return "Temporarily LOWERS one sub-stat — the same list as the buff. Author the amount as a positive number; it is subtracted for you.";
             case SkillEffectKind.Cleanse:       return "Removes active debuffs from the caster.";
-            case SkillEffectKind.Vulnerability: return "Marks enemies to take extra damage for a while.";
             case SkillEffectKind.Execute:       return "Bonus damage that grows as the target's HP drops — a finisher, tiny at full HP.";
             case SkillEffectKind.Knockback:     return "Shoves enemies AWAY from the caster on hit.";
             case SkillEffectKind.Pull:          return "Drags enemies TOWARD the caster on hit.";
@@ -1948,20 +1941,16 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Damage:        return "boosts DAMAGE";
             case SkillEffectKind.Execute:       return "boosts EXECUTE DAMAGE";
             case SkillEffectKind.Heal:          return "boosts HEAL AMOUNT (sustain: HP/MP/Def)";
-            case SkillEffectKind.Guard:         return "boosts DAMAGE REDUCTION (sustain: HP/Def)";
             case SkillEffectKind.Shield:        return "boosts BARRIER HP (sustain: HP/Def/MP)";
             // A sub-stat change's amount is FLAT — no affinity channel (round-7 rule); only its DURATION scales
             // (off sustain). One rule for every sub-stat, so none of them can quietly become affinity-scaled.
             case SkillEffectKind.SubStatBuff:
             case SkillEffectKind.SubStatDebuff: return null;
-            case SkillEffectKind.Vulnerability: return "boosts DAMAGE TAKEN";
             case SkillEffectKind.Status:
                 // The odds live in their own channel now, so this one always names the ailment's own number.
                 switch (e.ailment)
                 {
                     case Ailment.Burn: case Ailment.Poison: case Ailment.Bleed: return "boosts DAMAGE / TICK";
-                    case Ailment.Slow:  return "boosts SLOW AMOUNT";
-                    case Ailment.Blind: return "boosts ACCURACY LOSS";
                     default:            return null;   // stun / freeze / silence: binary, nothing to scale
                 }
             default: return null;   // Taunt / Teleport / Cleanse have no scalable output
@@ -2040,14 +2029,12 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Execute:              return e.damageType == DamageType.Magic && !e.resolveAsBasicAttack
                                                             ? "× MATK" : "× ATK";
             case SkillEffectKind.Heal:                 return "HP RESTORED";
-            case SkillEffectKind.Guard:                return "DAMAGE CUT";
             case SkillEffectKind.BoostOutgoingDamage:  return "DAMAGE BONUS";
             case SkillEffectKind.ReduceOutgoingDamage: return "DAMAGE CUT";
             // Named for the STAT the author picked, so the row says what it moves rather than "bonus".
             case SkillEffectKind.SubStatBuff:
             case SkillEffectKind.SubStatDebuff:        return ObjectNames.NicifyVariableName(e.subStat.ToString()).ToUpperInvariant();
             case SkillEffectKind.Cleanse:              return "DEBUFFS REMOVED";
-            case SkillEffectKind.Vulnerability:        return "DAMAGE TAKEN";
             case SkillEffectKind.Knockback:
             case SkillEffectKind.Pull:                 return "SHOVE SPEED";
             case SkillEffectKind.Shield:               return "BARRIER HP";
@@ -2056,8 +2043,6 @@ public class SkillComposerWindow : EditorWindow
                 switch (e.ailment)
                 {
                     case Ailment.Burn: case Ailment.Poison: case Ailment.Bleed: return "DAMAGE / TICK";
-                    case Ailment.Slow:  return "SLOW AMOUNT";
-                    case Ailment.Blind: return "ACCURACY LOSS";
                     default:            return null;   // stun / freeze / silence are binary — no number to lift
                 }
             // Extend Duration's only number is the seconds it adds, which is the DURATION row below, not an output.
@@ -2074,14 +2059,12 @@ public class SkillComposerWindow : EditorWindow
             case SkillEffectKind.Status:
             case SkillEffectKind.SubStatBuff:
             case SkillEffectKind.SubStatDebuff:
-            case SkillEffectKind.Guard:
             case SkillEffectKind.Parry:
             case SkillEffectKind.Brace:
             case SkillEffectKind.BoostOutgoingDamage:
             case SkillEffectKind.ReduceOutgoingDamage:
             case SkillEffectKind.ImmuneToDisables:
             case SkillEffectKind.Shield:
-            case SkillEffectKind.Vulnerability:
             case SkillEffectKind.Taunt:
                 return true;
             default:

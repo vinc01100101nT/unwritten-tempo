@@ -32,7 +32,7 @@ MonoBehaviour:
     triggerSkillId: 
     requiresState: 1
     requireSkillId: skill.sword.momentum
-    requireStateId: 14
+    requireStateId: 10
     requireStateIdSet: 1
     requireMinStacks: 0
     consumeAllStacks: 1
@@ -42,7 +42,7 @@ MonoBehaviour:
   triggerSkillId: 
   requiresState: 1
   requireSkillId: skill.sword.momentum
-  requireState: 14
+  requireState: 10
   requireMinStacks: 0
   consumeAllStacks: 1
   consumeStacks: 0

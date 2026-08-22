@@ -17,12 +17,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public SkillDef def;
 
     float nextUse, lastDuration;
-    // WHICH authored trigger started the run in progress — set at every entry point (a press, a combo step, a passive
+    // WHICH authored trigger started the run in progress — set at every entry point (a press, a passive
     // fire) and read by everything that must differ between them: which state gate applies, what the run spends, and
     // whether finishing it announces "the player cast this". Never null while a run is resolving.
     SkillTriggerEntry firedBy;
-    float comboDamageMult = 1f;         // ×ramp for the CURRENT cast when fired from a combo chain (1 = solo). Set per
-                                        // combo step; solo Cast/CastTargeted reset it to 1 so a normal cast is unscaled.
     Coroutine castRoutine;              // active cast wind-up (null = not casting); blocks re-cast + drives the CastBar
     int pendingMana;                    // this cast's cost, checked at the press and taken at the release (never both)
     VfxSequenceRunner castAura;         // the global OnCastStart aura looping for this wind-up; MUST be Stopped at every exit
@@ -108,10 +106,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (def.IsPassive) return false;   // no pressed entry — this skill only ever fires via PassiveEvents on its triggers
         firedBy = def.CastEntry;           // a press always runs the OnCast entry, whatever other triggers this skill has
         if (Character.Instance == null || Character.Instance.IsDead) return false;
-        // A skill committed to a combo chain is spent there — it can't be cast solo from the hotbar (the chain owns
-        // it, and its cadence is the chain's shared cooldown). Character.Combos is the single owner of "who's committed".
-        if (Character.Instance.Combos.IsCommitted(def.id))
-        { BattleNotice.Warn("In a combo chain"); return false; }
         if (StatusController.Player != null && StatusController.Player.Silenced)
         { BattleNotice.Warn("Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
         if (StatusController.Player != null && StatusController.Player.CannotStartSkill) return false;   // stunned / frozen / casting / mid-aftercast / mid-jump — can't start another skill
@@ -168,12 +162,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     void CastResolved(Transform unit, Vector3 point)
     {
         if (!Spend()) return;
-        comboDamageMult = 1f;               // solo cast — no combo ramp
         lastCtx = BuildCtx(unit, point);
         StartCastOrPlay();
     }
 
-    // The ONE place a cast's VfxContext is built — solo, combo and passive all come through here so no path can
+    // The ONE place a cast's VfxContext is built — a press and a passive both come through here so no path can
     // forget a field (a missed effectPoint would silently dash the caster to the world origin).
     //   origin = the CASTER (Origin anchor).
     //   target = where the VFX plays (Target anchor): the picked entity if there is one, else the aimed point. A
@@ -193,47 +186,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         stayForTick = StayFor,
         fanForTick = FanFor,
     };
-
-    // ---- combo-chain firing -------------------------------------------------
-    // A ComboRunner drives a chain by firing each member skill here at ONE pre-resolved aim (no per-skill reticle),
-    // bypassing the per-skill cooldown (the chain owns cadence via its shared cooldown) while STILL paying mana and
-    // respecting hard-CC / silence. `dmgMult` is the slot's position ramp (1×/1.5×/2.5×/4×) applied to this cast's hits.
-
-    /// <summary>Fire this skill from a combo at a ground point (Ground/Self members). Returns true if it fired.</summary>
-    public bool ComboCastGround(Vector3 center, float dmgMult)
-    {
-        if (!ComboSpend()) return false;
-        comboDamageMult = Mathf.Max(0f, dmgMult);
-        // A combo resolves ONE aim for the whole chain, so a relocating member sends its catch to that same spot.
-        lastCtx = BuildCtx(null, center);
-        StartCastOrPlay();
-        return true;
-    }
-
-    /// <summary>Fire this skill from a combo onto a chosen unit (Single/Target members). Returns true if it fired.
-    /// A chain pre-resolves ONE aim, so there's no second stage here: a relocating member sends its catch to the
-    /// picked unit's spot rather than asking the player for a separate point mid-chain.</summary>
-    public bool ComboCastUnit(Transform unit, float dmgMult)
-    {
-        if (unit == null || !ComboSpend()) return false;
-        comboDamageMult = Mathf.Max(0f, dmgMult);
-        lastCtx = BuildCtx(unit, unit.position);
-        StartCastOrPlay();
-        return true;
-    }
-
-    // Combo spend: mana only — NO per-skill cooldown gate (the chain's shared cooldown is the real gate) and it does
-    // not touch nextUse. Still refuses under death / hard-CC / silence, and warns + fails on empty MP (fizzling the chain).
-    bool ComboSpend()
-    {
-        if (def == null || def.vfx == null || Character.Instance == null || Character.Instance.IsDead) return false;
-        firedBy = def.CastEntry;   // a combo step is still the player casting this skill, just without its own reticle
-        var sc = StatusController.Player;
-        if (sc != null && (sc.CannotAct || sc.Silenced)) return false;
-        if (Character.Instance.CurrentMP < def.manaCost) { BattleNotice.Warn("No MP", NoManaColor); return false; }
-        pendingMana = def.manaCost;   // paid at the release, exactly like a pressed cast
-        return true;
-    }
 
     // The single fork between an instant skill and one with a wind-up. A castTime of 0 fires immediately — NO cast
     // bar and NO OnCastStart cue (the cue marks a real wind-up). Otherwise a coroutine winds up first, then plays.
@@ -319,8 +271,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // of the whole effect is owned HERE (gameplay), not the Vfx Composer (which stays WYSIWYG: one cycle = one fall).
     void PlayCycles()
     {
-        // THE RELEASE: the skill is actually going off, so this is where its mana is taken. Only a press or a combo
-        // step ever left a cost here, so a run started by one of the skill's own moments still fires free.
+        // THE RELEASE: the skill is actually going off, so this is where its mana is taken. Only a press ever
+        // left a cost here, so a run started by one of the skill's own moments still fires free.
         if (pendingMana > 0 && Character.Instance != null)
         {
             Character.Instance.SpendMana(pendingMana);
@@ -334,7 +286,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
         // The skill call: an ACTIVE skill shouts its name the moment it actually fires — over the caster's head and in
         // the chat log — through the very same path a said line takes, so the two can never drift apart. Here, at the
-        // one place every way of firing (a press, a combo step, one of the skill's own automatic triggers) passes
+        // one place every way of firing (a press, one of the skill's own automatic triggers) passes
         // through, so no entry point can forget it. A passive is not called out: it has no gesture to announce.
         if (!def.IsPassive) ChatController.SkillCall(def.displayName);
 
@@ -536,7 +488,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     bool Spend()
     {
         if (Character.Instance == null || Character.Instance.IsDead || Time.time < nextUse) return false;
-        // The combo gate: a skill that requires a state doesn't run at all when unmet — checked BEFORE any cost is paid.
+        // The stack gate: a skill that requires a state doesn't run at all when unmet — checked BEFORE any cost is paid.
         // A press is always gated by the OnCast entry; the skill's other triggers have their own, separate gates.
         if (!StateGate.IsMet(def.CastEntry, CasterStates)) { BattleNotice.Warn("Not ready"); return false; }
         // CHECKED here, PAID at the release (PayPendingMana): a wind-up that gets broken costs you the attempt and
@@ -597,7 +549,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                                           // several plays in flight, and a re-aiming repeat would otherwise resolve a
                                           // still-running beat against whatever the newest beat picked.
                                           tick.aimUnit,
-                                          comboDamageMult,
                                           def.icon, def.displayName, def.id,   // def.id KEYS the pile: stacks belong to the skill that granted them
                                           aimPoint: tick.aimPoint,   // Dash/Teleport go where THIS play aimed, not to the tick's VFX anchor
                                           caster: Character.Instance, // explicit caster (local player today; a per-connection entity once server-authoritative)
@@ -637,7 +588,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (def == null || def.vfx == null || entry == null || Character.Instance == null || Character.Instance.IsDead) return;
         firedBy = entry;        // this run's gate, its stack cost, and "was this a player cast" all read from here
-        comboDamageMult = 1f;   // passive fire — no combo ramp
         castChain = chain;      // this passive is in the chain; everything its effects cause carries that forward
 
         // Same two stages as a manual cast, answered by the trigger instead of by clicks: the entity is the victim,

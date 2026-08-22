@@ -49,7 +49,7 @@ MonoBehaviour:
     projectileSpread: 0
     projectileCount: 1
     effects:
-    - kind: 5
+    - kind: 4
       useStacks: 0
       damageType: 1
       damageMult:

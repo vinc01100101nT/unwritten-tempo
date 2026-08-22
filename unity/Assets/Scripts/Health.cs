@@ -157,7 +157,6 @@ public class Health : MonoBehaviour, ICombatUnit
 
     /// <summary>Mark this unit to TAKE +<paramref name="extraFraction"/> more damage (0.3 = +30%) for
     /// <paramref name="seconds"/>. Refreshes to the latest mark (newest-wins). Reusable armor-fray for skills like Hex Field.</summary>
-    public void BeginVulnerable(float extraFraction, float seconds) => States.BeginVulnerable(extraFraction, seconds);
 
     static readonly Color MissColor = new Color(1f, 0.3f, 0.3f);   // a player-dealt hit whiffed → red MISS
     static readonly Color CritColor = new Color(1f, 0.85f, 0.2f);  // a crit pops a gold number

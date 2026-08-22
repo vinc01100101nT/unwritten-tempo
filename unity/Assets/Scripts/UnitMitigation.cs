@@ -32,10 +32,14 @@ public static class UnitMitigation
         return true;
     }
 
-    /// <summary>Turn a RAW post-defence figure into the damage that actually LANDS: amplify it by the target's
-    /// Vulnerability, round to a whole point (floored at 1 — a hit that connects always registers), then apply the
-    /// Guard cut. Takes a float on purpose, so the amplify happens BEFORE rounding rather than on an already-rounded
-    /// number.
+    /// <summary>Turn a RAW post-defence figure into the damage that actually LANDS: scale it by the target's damage
+    /// reduction — ONE signed number covering both protection and exposure — then round to a whole point, floored at 1
+    /// so a hit that connects always registers. Takes a float on purpose, so the scaling happens BEFORE rounding
+    /// rather than on an already-rounded number.
+    ///
+    /// <para>Protection and exposure used to be two multipliers applied in sequence (a Guard cut and a Vulnerability
+    /// amplify). One number means 30% of each is exactly neutral, which is what a player reading their own screen
+    /// expects, instead of the 9% net the two-multiplier order happened to produce.</para>
     ///
     /// <para><b>THE entry point for every damage path, player and mob alike.</b> Vulnerability used to be written by
     /// hand into each intake formula — six copies of one term — and a path that forgot it silently ignored the debuff
@@ -44,17 +48,8 @@ public static class UnitMitigation
     /// and they inherit it for free; don't reintroduce a hand-written multiply.</para></summary>
     public static int Landed(UnitStates states, float rawAfterDefence)
     {
-        float vuln = states != null ? states.VulnMult : 1f;
-        return Guarded(states, Mathf.Max(1, Mathf.RoundToInt(rawAfterDefence * vuln)));
-    }
-
-    /// <summary>Apply the Guard stance's cut to a post-defence figure. Floors at 1 so a guarded hit still registers
-    /// as a hit rather than silently vanishing.</summary>
-    public static int Guarded(UnitStates states, int dmg)
-    {
-        if (states == null || dmg <= 0) return dmg;
-        float cut = states.GuardCut;
-        return cut > 0f ? Mathf.Max(1, Mathf.RoundToInt(dmg * (1f - cut))) : dmg;
+        float mult = states != null ? states.IncomingMult : 1f;
+        return Mathf.Max(1, Mathf.RoundToInt(rawAfterDefence * mult));
     }
 
     /// <summary>Drain the Shield barrier before the hit reaches HP, popping a pale-cyan number for the soaked part so

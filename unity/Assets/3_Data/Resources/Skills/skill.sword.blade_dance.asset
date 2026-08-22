@@ -29,7 +29,7 @@ MonoBehaviour:
     triggerSkillId: 
     requiresState: 1
     requireSkillId: skill.sword.blade_dance
-    requireStateId: 14
+    requireStateId: 10
     requireStateIdSet: 1
     requireMinStacks: 0
     consumeAllStacks: 0
@@ -39,7 +39,7 @@ MonoBehaviour:
   triggerSkillId: 
   requiresState: 0
   requireSkillId: 
-  requireState: 12
+  requireState: 9
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
@@ -198,7 +198,7 @@ MonoBehaviour:
       chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    - kind: 14
+    - kind: 12
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 1
@@ -320,7 +320,7 @@ MonoBehaviour:
       chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    - kind: 6
+    - kind: 5
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 1
@@ -442,7 +442,7 @@ MonoBehaviour:
       chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    - kind: 10
+    - kind: 8
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 1

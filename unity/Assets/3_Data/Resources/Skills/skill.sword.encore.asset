@@ -39,7 +39,7 @@ MonoBehaviour:
   triggerSkillId: 
   requiresState: 0
   requireSkillId: 
-  requireState: 12
+  requireState: 9
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
@@ -76,7 +76,7 @@ MonoBehaviour:
     projectileSpread: 0
     stayDuration: 0
     effects:
-    - kind: 17
+    - kind: 15
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 1
@@ -166,7 +166,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       modifierSkillId: skill.sword.blade_dance
-      modifierStateId: 14
+      modifierStateId: 10
       modifierStateIdSet: 1
       modifierSeconds:
         value: 1

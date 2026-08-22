@@ -10,16 +10,17 @@ public enum Ailment
     Burn,     // DoT — fire-orange
     Stun,     // can't act / move (yellow)
     Freeze,   // can't act / move (blue) — a distinct hard-CC
-    Slow,     // move-speed reduction (magnitude = speed multiplier 0..1)
     Silence,  // can't cast spells
-    Blind,    // accuracy (HIT) penalty (magnitude = HIT points lost)
+    // Slow and Blind were here. Both only ever moved a sub-stat — move speed and accuracy — so they are authored as
+    // sub-stat debuffs now, and having them here as well was a second door to the same number.
+    // ⚠️ This list is MIRRORED by the head of StateId, index for index; edit the two together.
 }
 
 /// <summary>
 /// One unified status-ailment host for ANY combatant — mob or player. It owns the timers for every
 /// <see cref="Ailment"/>, ticks the damage-over-time ones, and exposes the control flags the rest of the
 /// game reads (<see cref="CannotAct"/>, <see cref="MoveMult"/>, <see cref="Silenced"/>,
-/// <see cref="HitPenalty"/>).
+/// <see cref="Silenced"/>).
 ///
 /// It auto-detects what it's attached to in <see cref="Awake"/>:
 ///   • a MOB (<see cref="Health"/> + <see cref="MonsterAI3D"/>) — DoT ticks damage the Health, and hard-CC
@@ -221,7 +222,6 @@ public class StatusController : MonoBehaviour
     /// <summary>True while spell-casting is blocked.</summary>
     public bool Silenced { get { var st = states; return st != null && st.Silenced; } }
     /// <summary>HIT (accuracy) points to subtract from this unit's attacks while blinded.</summary>
-    public int HitPenalty { get { var st = states; return st != null ? st.HitPenalty : 0; } }
 
     /// <summary>Inflict (or refresh) an ailment for <paramref name="seconds"/>. <paramref name="magnitude"/>
     /// means: damage-per-tick for DoTs, the speed multiplier (0..1) for Slow, or HIT lost for Blind.</summary>
@@ -247,13 +247,9 @@ public class StatusController : MonoBehaviour
             return;
         }
 
-        // Control / debuff: compute the per-ailment magnitude (Slow factor / Blind HIT loss; the rest are binary).
-        float mg = a == Ailment.Slow  ? Mathf.Clamp01(magnitude <= 0f ? 0.5f : magnitude)
-                 : a == Ailment.Blind ? Mathf.Max(1f, magnitude <= 0f ? 30f : magnitude)
-                 : 0f;
-        // Slow is AUTHORED as a target-speed factor (0.4 = moves at 40%) while the store keeps a bonus FRACTION
-        // (how much speed is lost) — convert here, so the authored meaning and the tooltip stay as they are.
-        states.Apply(id, seconds, a == Ailment.Slow ? 1f - mg : mg);
+        // Control: every remaining ailment is BINARY — it either has you or it doesn't. The two that carried a number
+        // (Slow's speed factor, Blind's accuracy loss) were sub-stat moves and are authored as sub-stat debuffs now.
+        states.Apply(id, seconds, 0f);
 
         switch (a)
         {
@@ -265,16 +261,8 @@ public class StatusController : MonoBehaviour
                 if (ai != null) ai.Stagger(seconds);                 // mob: freeze movement/attacks
                 AnnounceIfNew(a, wasActive, "Frozen!", FreezeColor);
                 break;
-            case Ailment.Slow:
-                // No mob delegation: the store's Slow entry (written above) drives move speed via MoveMult, which the
-                // mob mover now reads — one source for player AND mob. Stun/Freeze still delegate (they gate the AI brain).
-                AnnounceIfNew(a, wasActive, "Slow!", FreezeColor);
-                break;
             case Ailment.Silence:
                 AnnounceIfNew(a, wasActive, "Silenced!", SilenceColor);
-                break;
-            case Ailment.Blind:
-                AnnounceIfNew(a, wasActive, "Blind!", BlindColor);
                 break;
         }
 
@@ -307,9 +295,7 @@ public class StatusController : MonoBehaviour
         {
             case Ailment.Stun:    cue = VfxCueId.OnStun;    return true;
             case Ailment.Freeze:  cue = VfxCueId.OnFreeze;  return true;
-            case Ailment.Slow:    cue = VfxCueId.OnSlow;    return true;
             case Ailment.Silence: cue = VfxCueId.OnSilence; return true;
-            case Ailment.Blind:   cue = VfxCueId.OnBlind;   return true;
             default:              cue = default;            return false;
         }
     }

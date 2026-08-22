@@ -144,7 +144,7 @@ public class MonsterAI3D : MonoBehaviour
     /// it only glances.</summary>
     public int BasicHit => attackType == AttackType.Magic
         ? -1
-        : Mathf.Max(0, hit - (status != null ? status.HitPenalty : 0));
+        : Mathf.Max(0, hit);   // any accuracy debuff is already folded into `hit` by UnitStatBlock
 
     /// <summary>The element our attack carries.</summary>
     public Element BasicElement => attackElement;

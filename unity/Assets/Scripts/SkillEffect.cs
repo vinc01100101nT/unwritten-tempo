@@ -51,9 +51,6 @@ public enum SkillEffectKind
     /// <see cref="SkillEffect.magnitude"/> → the shared <c>Status.Apply</c> front door.</summary>
     Status,
 
-    /// <summary>Self incoming-damage cut for <see cref="SkillEffect.seconds"/> at <see cref="SkillEffect.magnitude"/>
-    /// (0..1 reduction) → reuses <c>Character.BeginGuard</c>. (Bulwark.)</summary>
-    Guard,
     /// <summary>Force a mob's aggro onto the caster for <see cref="SkillEffect.seconds"/> → <c>MonsterAI3D.Taunt</c>.
     /// (Bulwark.)</summary>
     Taunt,
@@ -71,9 +68,6 @@ public enum SkillEffectKind
     /// <summary>Remove up to <see cref="SkillEffect.amount"/> active debuffs from the target → <c>StatusController.Cleanse</c>.
     /// (Mending Tide.)</summary>
     Cleanse,
-    /// <summary>Mark a mob to TAKE +<see cref="SkillEffect.magnitude"/> fraction more damage for
-    /// <see cref="SkillEffect.seconds"/> → <c>Health.BeginVulnerable</c>. (Hex Field.)</summary>
-    Vulnerability,
     /// <summary>Bonus damage vs a LOW-HP target — a PROC (rolled per hit via <see cref="SkillEffect.chance"/>):
     /// deals <c>roll × magnitude × (1 − target HP fraction)</c>, hitting hardest as the target nears death. Its own
     /// self-contained effect, sitting alongside the Damage effect it triggers off. (Meteor.)</summary>
@@ -214,6 +208,9 @@ public enum SubStat
     Accuracy, Evasion,
     CritChance, CritDamage,
     MaxHP, MaxMP,
+    // One axis for how hard incoming damage lands: positive CUTS it (what Guard used to be), negative makes it hurt
+    // more (what Vulnerability used to be). They were always the same number pointed two ways.
+    DamageReduction,
 }
 
 /// <summary>THE sub-stat table — which pile each sub-stat lives in, and what its authored number MEANS. Every reader
@@ -247,6 +244,7 @@ public static class SubStats
             case SubStat.CritChance:    return StateId.CritChance;
             case SubStat.CritDamage:    return StateId.CritDamage;
             case SubStat.MaxHP:         return StateId.MaxHP;
+            case SubStat.DamageReduction: return StateId.DamageReduction;
             default:                    return StateId.MaxMP;
         }
     }
@@ -468,7 +466,6 @@ public class SkillEffect
             // One pile per sub-stat, buff and debuff alike — SubStats.PileFor is the single owner of that mapping.
             case SkillEffectKind.SubStatBuff:
             case SkillEffectKind.SubStatDebuff: id = SubStats.PileFor(e.subStat); return true;
-            case SkillEffectKind.Guard:         id = StateId.Guard;         return true;
             case SkillEffectKind.Parry:         id = StateId.Parry;         return true;
             case SkillEffectKind.BoostOutgoingDamage: id = StateId.OutgoingDamageBoost; return true;
             case SkillEffectKind.ReduceOutgoingDamage: id = StateId.OutgoingDamagePenalty; return true;
@@ -477,7 +474,6 @@ public class SkillEffect
             // so it is not something this effect hands out.
             case SkillEffectKind.Brace:         id = StateId.Brace;         return true;
             case SkillEffectKind.Shield:        id = StateId.Shield;        return true;
-            case SkillEffectKind.Vulnerability: id = StateId.Vulnerability; return true;
             default: return false;
         }
     }
@@ -570,7 +566,7 @@ public class SkillEffect
         k != SkillEffectKind.Knockback && k != SkillEffectKind.Pull;
 
     public static bool IsSelfVerb(SkillEffectKind k) =>
-        k == SkillEffectKind.Guard || k == SkillEffectKind.SubStatBuff || k == SkillEffectKind.SubStatDebuff ||
+        k == SkillEffectKind.SubStatBuff || k == SkillEffectKind.SubStatDebuff ||
         k == SkillEffectKind.Cleanse ||
         k == SkillEffectKind.Shield || k == SkillEffectKind.Parry || k == SkillEffectKind.Brace ||
         k == SkillEffectKind.BoostOutgoingDamage ||

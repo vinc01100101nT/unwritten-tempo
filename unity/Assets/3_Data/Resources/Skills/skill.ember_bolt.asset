@@ -28,7 +28,7 @@ MonoBehaviour:
   trigger: 0
   triggerSkillId: skill.meteor
   requiresState: 0
-  requireState: 12
+  requireState: 9
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
@@ -140,7 +140,7 @@ MonoBehaviour:
       hitCountAffinity:
       - stat: 1
         weight: 100
-    - kind: 3
+    - kind: 5
       useStacks: 0
       damageType: 1
       damageMult:
@@ -214,7 +214,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      subStat: 0
+      subStat: 19
       affinity: []
       durationAffinity: []
       hitCountAffinity: []

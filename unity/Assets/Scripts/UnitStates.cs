@@ -11,12 +11,12 @@ using UnityEngine;
 public enum StateId
 {
     // ---- Debuffs — ailments (was StatusController) ----
+    // These MIRROR the Ailment enum one-for-one, by index (SkillEffect.TryStateFor casts one to the other), so the
+    // two lists must be edited together and in the same order. Slow and Blind used to sit here; they only ever moved
+    // a sub-stat (move speed, accuracy), so they live in those piles now and are gone from both lists.
     Poison, Bleed, Burn,          // DoT: magnitude = damage per tick
     Stun, Freeze,                 // hard-CC: CannotAct
-    Slow,                         // magnitude = move-speed factor (0..1)
     Silence,                      // blocks casting
-    Blind,                        // magnitude = HIT (accuracy) points lost
-    Vulnerability,                // magnitude = extra-damage fraction (VulnMult = 1 + frac)
     Taunt, Knockback, Pull,       // control (mob-side gameplay stays in MonsterAI3D; here for the timer + icon)
     // ---- Sub-stat piles — ONE per sub-stat, buff and debuff alike ----------------------------------------------
     // Each holds a SIGNED bonus, so a debuff is the same pile carrying a negative number — there is no mirror pile to
@@ -24,7 +24,6 @@ public enum StateId
     // a pile's identity is what the modifier effects and the stack gate name: two stats buffed by one skill have to
     // be two piles, or "which pile" cannot tell them apart.
     MovementSpeed,                // was Haste
-    Guard,                        // magnitude = incoming-damage cut (0..1)  [NOT a sub-stat — a window, left alone]
     DamageBuff, AttackSpeedBuff, CastSpeedBuff,   // magnitude = the stat's bonus fraction
     HPRegen,                      // was Regen. magnitude = HP per SECOND (mirrors the character's mana trickle)
     Shield,                       // intAmount = barrier HP pool  [NOT a sub-stat — a finite pool]
@@ -55,7 +54,7 @@ public enum StateId
     // APPENDED, never inserted above: a StateId is stored as a plain int in every authored gate and modifier, so a new
     // member in the middle would silently repoint saved data at a different pile. Same signed-bonus rule as the piles
     // in the buff block near the top — these simply had no pile before this change.
-    MPRegen, LifeSteal,
+    MPRegen, LifeSteal, DamageReduction,
     Attack, MagicAttack,
     Defense, MagicDefense,
     Accuracy, Evasion,
@@ -70,7 +69,7 @@ public enum StateId
 /// <see cref="Health"/>'s vulnerability — each migrated onto it one family at a time, behaviour-preserving.
 ///
 /// <para><b>Optimized as agreed:</b> one list of active states is the source of truth, but the hot gameplay scalars
-/// (<see cref="MoveMult"/>, <see cref="GuardCut"/>, <see cref="VulnMult"/>, the buff mults, …) are <b>cached</b> and
+/// (<see cref="MoveMult"/>, <see cref="IncomingMult"/>, the sub-stat table, …) are <b>cached</b> and
 /// recomputed only when the set CHANGES (apply / remove / prune) — so every reader stays <b>O(1)</b>, matching today's
 /// field reads. Entry objects are <b>pooled</b>, so apply/remove is <b>zero-alloc</b>. No per-query list scan, no GC.</para>
 ///
@@ -161,8 +160,8 @@ public class UnitStates : MonoBehaviour
 
     // ---- cached derived scalars (recomputed only on change; every getter below is O(1)) --------------------------
     // DamageBuff is deliberately absent here — DamageBuffMult sums its piles on read.
-    float moveMult = 1f, guardCut, vulnMult = 1f, aspdBuffMult = 1f, castBuffMult = 1f, leechPct, reflectBonus;
-    int hitPenalty, shieldPool, parryCharges;
+    float moveMult = 1f, incomingMult = 1f, aspdBuffMult = 1f, castBuffMult = 1f, leechPct, reflectBonus;
+    int shieldPool, parryCharges;
     // The live signed bonus on every sub-stat, refilled by Recompute. One slot per SubStat, allocated once — the
     // alternative (walking the piles on each read) is paid per frame by movement and per hit by damage and leech.
     readonly float[] subStatBonus = new float[SubStats.All.Length];
@@ -218,12 +217,11 @@ public class UnitStates : MonoBehaviour
     public bool CannotAct { get { EnsureFresh(); return cannotAct; } }
     /// <summary>Spell-casting blocked (Silence).</summary>
     public bool Silenced { get { EnsureFresh(); return silenced; } }
-    /// <summary>HIT (accuracy) points to subtract from this unit's attacks while Blinded.</summary>
-    public int HitPenalty { get { EnsureFresh(); return hitPenalty; } }
-    /// <summary>Incoming-damage cut fraction (0..1) from Guard.</summary>
-    public float GuardCut { get { EnsureFresh(); return guardCut; } }
-    /// <summary>Incoming-damage multiplier (>=1) from Vulnerability.</summary>
-    public float VulnMult { get { EnsureFresh(); return vulnMult; } }
+    /// <summary>What every incoming hit is multiplied by, from the DamageReduction sub-stat: below 1 while the unit
+    /// is protected, above 1 while it is exposed. ONE number for both directions — a cut and an exposure are the same
+    /// axis pointed opposite ways, so they cancel instead of racing. Floored at 0 (a hit can be fully absorbed but
+    /// never heals).</summary>
+    public float IncomingMult { get { EnsureFresh(); return incomingMult; } }
     /// <summary>Outgoing-damage multiplier summed over EVERY live DamageBuff pile — the one answer to "how much is my
     /// damage buffed", for player and mob alike.
     ///
@@ -463,13 +461,6 @@ public class UnitStates : MonoBehaviour
     /// <summary>Seconds between heal-over-time ticks. Owned here because the state is; the unit's ticker reads it.</summary>
     public const float RegenInterval = 0.8f;
 
-    /// <summary>Cut <paramref name="cutFraction"/> (0..1) off every incoming hit for <paramref name="seconds"/>.</summary>
-    public void BeginGuard(float seconds, float cutFraction)
-    {
-        if (seconds <= 0f) return;
-        Apply(StateId.Guard, seconds, Mathf.Clamp01(cutFraction));
-    }
-
     // HP regen, mana leech and reflect used to have a starter each here. They are sub-stats now, so they arrive
     // through ApplySubStat like every other one — a second door to the same pile is exactly what that collapse
     // removed, and keeping one "because it reads nicely" is how the two drift apart.
@@ -666,14 +657,6 @@ public class UnitStates : MonoBehaviour
                 if (active[i].id == StateId.DeferredDamage) owed += active[i].intAmount;
             return owed;
         }
-    }
-
-    /// <summary>Mark this unit to TAKE <paramref name="extraFraction"/> more damage (0.3 = +30%) for
-    /// <paramref name="seconds"/>.</summary>
-    public void BeginVulnerable(float extraFraction, float seconds)
-    {
-        if (seconds <= 0f) return;
-        Apply(StateId.Vulnerability, seconds, Mathf.Max(0f, extraFraction));
     }
 
     /// <summary>Apply a state for <paramref name="seconds"/>. Two behaviours, chosen by the apply context
@@ -893,9 +876,7 @@ public class UnitStates : MonoBehaviour
         // once, at the end. Two +30% piles therefore read ×1.60, not ×1.69: every pile of a kind sits in the SAME
         // category, so a second one is worth the same as the first regardless of what's already running. Compounding
         // would make each buff's value depend on which others happen to be up, and make order matter.
-        float slow = 1f, vulnBonus = 0f;
-        guardCut = 0f;
-        hitPenalty = 0; shieldPool = 0; parryCharges = 0;
+        shieldPool = 0; parryCharges = 0;
         cannotAct = false; silenced = false;
         nextExpiry = float.MaxValue;
         System.Array.Clear(subStatBonus, 0, subStatBonus.Length);
@@ -913,16 +894,11 @@ public class UnitStates : MonoBehaviour
 
             switch (s.id)
             {
-                case StateId.Slow:            slow = Mathf.Min(slow, Mathf.Clamp01(1f - s.magnitude)); break;   // harshest slow wins
                 case StateId.Stun:
                 case StateId.Freeze:          cannotAct = true; break;
                 case StateId.Silence:         silenced = true; break;
-                case StateId.Blind:           hitPenalty += Mathf.RoundToInt(s.magnitude); break;
                 // COMBINE, never overwrite — same rule as the sub-stat table above, for the piles that are not
-                // sub-stats. Everything ADDS (pools sum); only Slow takes the strongest, since two slows aren't a
-                // bigger slow.
-                case StateId.Guard:           guardCut = Mathf.Clamp01(guardCut + s.magnitude); break;
-                case StateId.Vulnerability:   vulnBonus += Mathf.Max(0f, s.magnitude); break;
+                // sub-stats. Pools sum.
                 case StateId.Shield:          shieldPool += s.intAmount; break;
                 // Parry carries no per-stack value — the STACK COUNT *is* the charge count (one hit erased each).
                 case StateId.Parry:           parryCharges += s.StackCount; break;
@@ -932,11 +908,13 @@ public class UnitStates : MonoBehaviour
         }
         // Bonuses → multipliers, once. Floored at 0 so a stack of debuff-shaped piles can't drive a multiplier negative
         // (which would flip damage into healing).
-        vulnMult     = Mathf.Max(0f, 1f + vulnBonus);
         aspdBuffMult = Mathf.Max(0f, 1f + subStatBonus[(int)SubStat.AttackSpeed]);
         castBuffMult = Mathf.Max(0f, 1f + subStatBonus[(int)SubStat.CastSpeed]);
         leechPct     = subStatBonus[(int)SubStat.ManaLeech];
         reflectBonus = subStatBonus[(int)SubStat.Reflect];
-        moveMult = slow * Mathf.Max(0f, 1f + subStatBonus[(int)SubStat.MovementSpeed]);
+        moveMult     = Mathf.Max(0f, 1f + subStatBonus[(int)SubStat.MovementSpeed]);
+        // Protection SUBTRACTS from what lands, exposure adds to it — one signed number, so 30% of each is simply
+        // neutral rather than two multipliers fighting.
+        incomingMult = Mathf.Max(0f, 1f - subStatBonus[(int)SubStat.DamageReduction]);
     }
 }

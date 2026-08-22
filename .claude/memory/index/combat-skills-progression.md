@@ -48,3 +48,5 @@
 - [Weapons are 3D, no 2D weapons](../weapons-are-3d-no-2d.md) — a weapon Item is real only with a 3D equipModel; kept: Iron Sword + Bow Epic; Katana/Sai/Dawnbreaker retired.
 - [Ring stats: always LOOP order](../ring-stats-canonical-order.md) — list the 10 ring stats as Def→HP→Atk→Accuracy→CastSpeed→MAtk→MP→Evasion→Critical→AttackSpeed (from SkillRing.Ring), never enum order.
 - [Name knobs concretely, one job, no dead knobs](../name-knobs-concretely-one-job.md) — label every field/effect by the exact thing it changes (never "potency"/"magnitude"); one responsibility each; hide fields that mean nothing in a case. Also a standing rule in CLAUDE.md — this file holds the scar behind it.
+- [A stat channel can be display-only](../dead-stat-channel-displayed-only.md) — cast speed had two values and only one reached gameplay; the ring node + buff moved the panel and nothing else. Trace every reader before believing a stat works.
+- [Per-tick authored, per-second labelled](../authored-per-tick-labelled-per-second.md) — regen healed 25% more than its own tooltip claimed; check the label unit against the tick interval.

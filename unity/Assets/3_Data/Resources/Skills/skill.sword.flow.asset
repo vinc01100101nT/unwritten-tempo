@@ -29,7 +29,7 @@ MonoBehaviour:
     triggerSkillId: 
     requiresState: 1
     requireSkillId: '@run-of-hits'
-    requireStateId: 14
+    requireStateId: 10
     requireStateIdSet: 1
     requireMinStacks: 0
     consumeAllStacks: 0
@@ -39,7 +39,7 @@ MonoBehaviour:
   triggerSkillId: 
   requiresState: 0
   requireSkillId: 
-  requireState: 12
+  requireState: 9
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
@@ -75,7 +75,7 @@ MonoBehaviour:
     projectileSpread: 0
     stayDuration: 0
     effects:
-    - kind: 17
+    - kind: 15
       useStacks: 1
       resolveAsBasicAttack: 0
       damageType: 1
@@ -165,7 +165,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       modifierSkillId: skill.sword.momentum
-      modifierStateId: 14
+      modifierStateId: 10
       modifierStateIdSet: 1
       modifierSeconds:
         value: 1
@@ -179,128 +179,6 @@ MonoBehaviour:
         op: 2
         read: 0
         scaler: 0.33
-      hitCount:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      chance:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      side: 1
-      subStat: 0
-      affinity: []
-      chanceAffinity: []
-      durationAffinity: []
-      hitCountAffinity: []
-    - kind: 16
-      useStacks: 0
-      resolveAsBasicAttack: 0
-      damageType: 1
-      damageMult:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      element: 0
-      amount:
-        value: 10
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      ailment: 2
-      seconds:
-        value: 0
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      shoveSeconds:
-        value: 0.25
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      magnitude:
-        value: 3
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      stacking: 0
-      stackLimit:
-        value: 5
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      stacksPerApply:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      stacksFromAttackSpeed: 0
-      stackShare:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      dashSpeedMult:
-        value: 8
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      dashEaseIn: 0
-      dashEaseOut: 0
-      dashEaseSeconds:
-        value: 0.3
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      afterimageSeconds:
-        value: 0
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
-      casterOpacity:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      starCorners:
-        value: 5
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      modifierSkillId: skill.sword.momentum
-      modifierStateId: 14
-      modifierStateIdSet: 1
-      modifierSeconds:
-        value: 3
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
-      modifierStacks:
-        value: 1
-        useStacks: 0
-        op: 0
-        read: 0
-        scaler: 1
       hitCount:
         value: 1
         useStacks: 0

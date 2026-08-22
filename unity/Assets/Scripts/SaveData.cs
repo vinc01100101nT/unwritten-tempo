@@ -48,9 +48,6 @@ public class SaveData
     // Hotbar layout (v3+): slot → bound skill id ("" = empty), nine entries (keys 1–9). Null on an older save.
     public string[] hotbarBindings;
 
-    // Combo chains (v5+): one entry per chain, encoded "<hotkeyKeyCodeInt>|id0,id1,id2,id3" (empty slot = ""),
-    // owned by ComboBook. Null on an older save → no chains yet.
-    public string[] comboChains;
 
     // Passive skills ticked ON in the Grimoire (v7+) — the player's own choices only; a passive that's live because
     // the equipped weapon rolled it is NOT stored here (that answer comes from the weapon). Null on an older save.

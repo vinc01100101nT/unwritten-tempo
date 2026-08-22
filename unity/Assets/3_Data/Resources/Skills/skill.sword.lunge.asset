@@ -39,7 +39,7 @@ MonoBehaviour:
     triggerSkillId: 
     requiresState: 1
     requireSkillId: skill.sword.lock_blades
-    requireStateId: 15
+    requireStateId: 11
     requireStateIdSet: 1
     requireMinStacks: 1
     consumeAllStacks: 0
@@ -49,7 +49,7 @@ MonoBehaviour:
   triggerSkillId: 
   requiresState: 0
   requireSkillId: 
-  requireState: 12
+  requireState: 9
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
@@ -82,7 +82,7 @@ MonoBehaviour:
     projectileSpread: 0
     stayDuration: 0
     effects:
-    - kind: 10
+    - kind: 8
       useStacks: 0
       damageType: 1
       damageMult:

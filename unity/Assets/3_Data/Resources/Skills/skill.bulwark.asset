@@ -40,7 +40,7 @@ MonoBehaviour:
     projectileCount: 1
     projectileSpread: 0
     effects:
-    - kind: 3
+    - kind: 5
       useStacks: 0
       damageMult:
         value: 1
@@ -80,18 +80,14 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      subStat: 0
-      affinity:
-      - stat: 4
-        weight: 70
-      - stat: 2
-        weight: 30
+      subStat: 19
+      affinity: []
       durationAffinity:
       - stat: 2
         weight: 70
       - stat: 4
         weight: 30
-    - kind: 4
+    - kind: 3
       useStacks: 0
       damageMult:
         value: 1

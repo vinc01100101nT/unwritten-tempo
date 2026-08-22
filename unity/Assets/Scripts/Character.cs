@@ -227,11 +227,6 @@ public class Character : MonoBehaviour, ICombatUnit
     /// (Not to be confused with <see cref="Passives"/>, which is the ring's stat walk.)</summary>
     public PassiveLoadout PassiveSkills { get; } = new PassiveLoadout();
 
-    /// <summary>The player's combo chains (4 skills each, one hotkey each) — the single owner of which skill is
-    /// committed to which chain. Edited in the Combo Composer; read by the combo bar + <see cref="ComboRunner"/>.
-    /// Persisted alongside the hotbar.</summary>
-    public ComboBook Combos { get; } = new ComboBook();
-
     static readonly Color HealColor = new Color(0.45f, 1f, 0.45f);
     Transform avatar;   // the in-scene player, located lazily for heal popups
 
@@ -449,8 +444,7 @@ public class Character : MonoBehaviour, ICombatUnit
                 d.atkMin = Mathf.RoundToInt(d.atkMin * b);   d.atkMax = Mathf.RoundToInt(d.atkMax * b);
                 d.matkMin = Mathf.RoundToInt(d.matkMin * b); d.matkMax = Mathf.RoundToInt(d.matkMax * b);
             }
-            d.hit = Mathf.Max(0, d.hit - States.HitPenalty);                  // Blind
-            d.moveSpeed = Mathf.RoundToInt(d.moveSpeed * States.MoveMult);    // Slow x Haste (NOT the cast/aftercast
+            d.moveSpeed = Mathf.RoundToInt(d.moveSpeed * States.MoveMult);    // the move-speed sub-stat (NOT the cast/aftercast
                                                                              // root — that's a momentary lock, not a stat)
             return d;
         }
@@ -470,13 +464,14 @@ public class Character : MonoBehaviour, ICombatUnit
         critChance = CritChance01, critMult = CritMultiplier,
         aspdMult = AttackSpeedMult, castTimeMult = CastTimeMult,
         hardDefPct = HardDefPercent, hardMdefPct = HardMagicDefPercent,
-        guardCutPct = GuardCutNow, lifeStealPct = LifeStealPct,
+        guardCutPct = DamageCutNow, lifeStealPct = LifeStealPct,
         reflectPct = ReflectPctNow, manaLeechPct = ManaLeechPctNow, barrierHP = BarrierNow,
     };
 
     // State-sourced readouts, neutral while BaseDerived is snapshotting — so each reads 0 on the baseline and shows its
     // real value in the live view, giving the window a clean "0 (+25)" bonus line instead of a silently-mixed number.
-    float GuardCutNow     => ignoreStates ? 0f : States.GuardCut;
+    // What the damage-reduction sub-stat is cutting right now, as a positive fraction — the readout the window shows.
+    float DamageCutNow    => ignoreStates ? 0f : 1f - States.IncomingMult;
     float ManaLeechPctNow => ignoreStates ? 0f : States.ManaLeechPct;
     int   BarrierNow      => ignoreStates ? 0  : States.ShieldPool;
     // Reflect has BOTH a permanent source (the thorns card) and a timed one — the baseline keeps the permanent part.
@@ -524,8 +519,9 @@ public class Character : MonoBehaviour, ICombatUnit
     // WHAT one ordinary swing of ours is made of. HOW a swing is landed — the crit → accuracy → magnitude order and
     // the announcement — belongs to BasicSwing, shared with every other unit, so it is deliberately absent here.
 
-    /// <summary>Our accuracy for a swing, with Blind already taken off.</summary>
-    public int BasicHit => Mathf.Max(0, Hit - States.HitPenalty);
+    /// <summary>Our accuracy for a swing. Any accuracy debuff is already inside <see cref="Hit"/> — it lifts the same
+    /// one number ring investment does, so there is nothing left to subtract here.</summary>
+    public int BasicHit => Mathf.Max(0, Hit);
 
     /// <summary>The equipped weapon's element (Neutral unarmed) — the weapon is the single owner of it, read at
     /// use-time so there is no per-equip copy to keep in sync.</summary>
@@ -788,21 +784,15 @@ public class Character : MonoBehaviour, ICombatUnit
     // spawned avatar, not on this persistent stats object, so it is null until the body exists.
     public StatusController StatusHost => StatusController.Player;
 
-    // ---- Guard (a timed defensive stance; driven by a guard-type active) --------------------------
-    // A timed damage-reduction stance: while active, incoming physical AND magic damage is cut by the Guard state's
-    // magnitude. Stored in the unified state store (V3 unified-state migration); runtime-only, cleared on revive.
+    // ---- Damage reduction (a timed defensive stance) ---------------------------------------------
+    // Guard used to be its own state and its own effect kind. It only ever moved one number — how hard an incoming hit
+    // lands — so it is the DamageReduction sub-stat now, and the exposure debuff that used to be Vulnerability is the
+    // same pile carrying a negative. Both intakes hand their raw post-defence figure to UnitMitigation.Landed.
 
-    /// <summary>True while the Guard stance is mitigating incoming damage.</summary>
-    public bool GuardActive => States.GuardCut > 0f;
-    /// <summary>Seconds left on the Guard stance (0 when inactive).</summary>
-    public float GuardRemaining => States.Remaining(StateId.Guard);
-
-    /// <summary>Begin a damage-reduction stance for <paramref name="seconds"/>, preventing
-    /// <paramref name="reduction"/> (0..1) of each incoming hit. Called by a guard-type active skill.</summary>
-    public void BeginGuard(float seconds, float reduction) => States.BeginGuard(seconds, reduction);
-
-    // (The local Guard shim is gone: both intakes now hand their raw post-defence figure to UnitMitigation.Landed,
-    // which owns the vulnerability amplify, the rounding and the Guard cut for player and mob alike.)
+    /// <summary>True while a defensive window is cutting incoming damage.</summary>
+    public bool GuardActive => States.SubStatBonus(SubStat.DamageReduction) > 0f;
+    /// <summary>Seconds left on the damage-reduction window (0 when none).</summary>
+    public float GuardRemaining => States.Remaining(StateId.DamageReduction);
 
     // ---- Timed offensive self-buffs + regen (skill-driven; runtime-only, cleared on revive) -------
     // Each buff is a multiplier live until its expiry; the getters/rolls below fold in the current value (1 when
@@ -1146,7 +1136,6 @@ public class Character : MonoBehaviour, ICombatUnit
         Ring.Capture(out d.ringLevel, out d.ringXp);
         d.gold         = Wallet.Capture();
         d.hotbarBindings = Hotbar.Capture();
-        d.comboChains = Combos.Capture();
         d.activePassives = PassiveSkills.Capture();
         CaptureEquipment(d);
         d.outfitDyeSources = DyeSources;
@@ -1230,7 +1219,6 @@ public class Character : MonoBehaviour, ICombatUnit
         Ring.Restore(d.ringLevel > 0 ? d.ringLevel : Passives.TotalRanks() + Passives.BankedPoints, d.ringXp);
         Wallet.Restore(d.gold);
         Hotbar.Restore(d.hotbarBindings);
-        Combos.Restore(d.comboChains);
         PassiveSkills.Restore(d.activePassives);
         RestoreEquipment(d);         // v6+: rebuild worn gear from the save (Ring excluded)
         EnsureRingEquipped();        // re-wear the Ring vessel (auto-managed, never serialized)

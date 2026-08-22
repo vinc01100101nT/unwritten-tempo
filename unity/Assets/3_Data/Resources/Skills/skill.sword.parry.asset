@@ -79,7 +79,7 @@ MonoBehaviour:
     projectileSpread: 0
     stayDuration: 0
     effects:
-    - kind: 14
+    - kind: 12
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 0

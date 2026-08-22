@@ -189,7 +189,6 @@ public static class SkillTooltip
                 string body;
                 switch (e.ailment)
                 {
-                    case Ailment.Slow:  body = "slow " + Pct(1f - Mathf.Clamp01(e.magnitude.value)) + " for " + Hl(e.seconds.value.ToString("0.#") + "s"); break;
                     case Ailment.Stun:  body = "stun for " + Hl(e.seconds.value.ToString("0.#") + "s"); break;
                     case Ailment.Poison:
                     case Ailment.Bleed:
@@ -203,7 +202,6 @@ public static class SkillTooltip
                 return (e.chance.value < 1f ? Pct(e.chance.value) + " per hit: " : "")
                      + "execute — bonus " + DmgWord(e.damageType) + " damage scaling with the target's missing HP (×" + Hl(e.magnitude.value.ToString("0.##")) + ")";
             case SkillEffectKind.Heal:          return "Heals " + Hl(e.amount.value.ToString()) + " HP";
-            case SkillEffectKind.Guard:         return "Reduces damage taken " + Pct(Mathf.Clamp01(e.magnitude.value)) + " for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Taunt:         return "Taunts nearby enemies for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Teleport:      return "Blinks to the target location";
             case SkillEffectKind.Dash:          return "Dashes to the target location";
@@ -211,7 +209,6 @@ public static class SkillTooltip
             case SkillEffectKind.SubStatBuff:   return SubStatLine(e, worse: false);
             case SkillEffectKind.SubStatDebuff: return SubStatLine(e, worse: true);
             case SkillEffectKind.Cleanse:       return "Removes " + Hl(Mathf.Max(1, e.amount.value).ToString()) + " debuff(s)";
-            case SkillEffectKind.Vulnerability: return Subject(e, "You take", "Enemies take") + " +" + Pct(e.magnitude.value) + " damage for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Knockback:     return "Knocks enemies back";
             case SkillEffectKind.Pull:          return "Pulls enemies in";
             case SkillEffectKind.Shield:        return "Absorbs " + Hl(e.amount.value.ToString()) + " damage for " + Hl(e.seconds.value.ToString("0.#") + "s");
@@ -305,6 +302,7 @@ public static class SkillTooltip
             case SubStat.CritChance:    return "crit chance";
             case SubStat.CritDamage:    return "crit damage";
             case SubStat.MaxHP:         return "max HP";
+            case SubStat.DamageReduction: return "damage reduction";
             default:                    return "max MP";
         }
     }

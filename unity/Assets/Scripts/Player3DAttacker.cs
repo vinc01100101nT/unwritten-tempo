@@ -259,9 +259,10 @@ public class Player3DAttacker : MonoBehaviour
     public void Strike(Health t, in SkillContext ctx, SfxSet swingSfx, SfxSet hitSfx)
     {
         if (t == null || t.IsDead || swing != null) return;
-        // SelfEffect that fires on CAST (no hit needed) — the Bulwark self-shield mod.
+        // SelfEffect that fires on CAST (no hit needed) — the Bulwark self-shield mod. Writes the damage-reduction
+        // sub-stat pile, the one place protection is held for player and mob alike.
         if (ctx.ShieldSecs > 0f && ctx.ShieldCut > 0f && Character.Instance != null)
-            Character.Instance.BeginGuard(ctx.ShieldSecs, ctx.ShieldCut);
+            Character.Instance.States.ApplySubStat(SubStat.DamageReduction, Mathf.Clamp01(ctx.ShieldCut), ctx.ShieldSecs);
         Sfx.Play(swingSfx != null && !swingSfx.Empty ? swingSfx : WeaponSfx(w => w.attackSfx, defaultAttackSfx));
         swing = StartCoroutine(StrikeRoutine(t, ctx, hitSfx));
     }
@@ -333,10 +334,11 @@ public class Player3DAttacker : MonoBehaviour
         if (ctx.KnockbackSpeed > 0f)
             ai.Knockback(transform.position, ctx.KnockbackSpeed, ctx.KnockbackSecs, Mathf.Max(ctx.StaggerSecs, ctx.KnockbackSecs));
         else if (ctx.StaggerSecs > 0f) ai.Stagger(ctx.StaggerSecs);
-        // Slow / Root write the unified store's Slow state (drives MoveMult, the single mob-speed source). SlowFactor is
-        // a TARGET SPEED (0.6 = moves at 60%); the store keeps a bonus FRACTION, so the slow is 1 − that.
-        if (ctx.SlowSecs > 0f && ctx.SlowFactor < 1f) h.States.Apply(StateId.Slow, ctx.SlowSecs, 1f - ctx.SlowFactor);
-        if (ctx.RootSecs > 0f) h.States.Apply(StateId.Slow, ctx.RootSecs, 1f);   // Root (Entangling mod) = slowed 100% = full stop
+        // Slow / Root write the MOVE-SPEED sub-stat pile — the single mob-speed source, shared with every buff and
+        // debuff that touches it. SlowFactor is a TARGET SPEED (0.6 = moves at 60%); the pile keeps a signed bonus, so
+        // the slow is that speed MINUS one (a negative).
+        if (ctx.SlowSecs > 0f && ctx.SlowFactor < 1f) h.States.Apply(StateId.MovementSpeed, ctx.SlowSecs, ctx.SlowFactor - 1f);
+        if (ctx.RootSecs > 0f) h.States.Apply(StateId.MovementSpeed, ctx.RootSecs, -1f);   // Root (Entangling mod) = 100% slower = full stop
     }
 
     void OnDrawGizmosSelected()

@@ -106,8 +106,6 @@ public static class UIShellBuilder
         canvasGO.AddComponent<SkillDraftPanel>();          // Phase G: builds the Trio-Ring draft into the Skills (K) panel
         canvasGO.AddComponent<SkillBookPanel>();           // Grimoire (J): browse all composed skills + bind to the hotbar
         canvasGO.AddComponent<HotbarPanel>();              // populates HUD_Hotbar with the player's actives (icon + cooldown)
-        canvasGO.AddComponent<ComboComposerPanel>();       // Combo Composer (N): assign 4 skills per chain + bind a hotkey
-        canvasGO.AddComponent<ComboBarPanel>();            // HUD combo bar: one cell per complete chain (icons + shared CD)
         canvasGO.AddComponent<BuffBarPanel>();             // HUD buff bar (right edge): active self-buffs w/ icon + countdown
         canvasGO.AddComponent<XpBarHUD>();                 // bottom-of-screen XP bars: character (left) + ring (right)
         canvasGO.AddComponent<ChatController>();            // in-game chat window (Enter) + /command console (GmCommands)

@@ -29,7 +29,7 @@ MonoBehaviour:
     triggerSkillId: 
     requiresState: 1
     requireSkillId: skill.sword.onslaught
-    requireStateId: 14
+    requireStateId: 10
     requireStateIdSet: 1
     requireMinStacks: 0
     consumeAllStacks: 0
@@ -39,7 +39,7 @@ MonoBehaviour:
   triggerSkillId: 
   requiresState: 0
   requireSkillId: 
-  requireState: 12
+  requireState: 9
   requireMinStacks: 1
   consumeAllStacks: 0
   consumeStacks: 0
@@ -76,7 +76,7 @@ MonoBehaviour:
     projectileSpread: 0
     stayDuration: 0
     effects:
-    - kind: 6
+    - kind: 5
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 1

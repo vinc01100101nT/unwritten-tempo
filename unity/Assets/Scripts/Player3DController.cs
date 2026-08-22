@@ -220,9 +220,6 @@ public partial class Player3DController : MonoBehaviour
         // were retired — one runner interprets any skill. Which skills are BOUND to the hotbar comes from the
         // equipped weapon (Item.grantedSkillIds) / the Grimoire, via HotbarBindings — not a class gate.
         EnsureComposedSkills();
-        // The combo executor rides on the player too (reads Character.Combos). Auto-attach so a player built before
-        // combos existed picks it up with no re-bake — same idempotent pattern as the skills above.
-        if (GetComponent<ComboRunner>() == null) gameObject.AddComponent<ComboRunner>();
         // Press-to-talk (F) with ambient townsfolk. Same idempotent self-attach pattern — every player gets it.
         if (GetComponent<PlayerInteractor>() == null) gameObject.AddComponent<PlayerInteractor>();
     }

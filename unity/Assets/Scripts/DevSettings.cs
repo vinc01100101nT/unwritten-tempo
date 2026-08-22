@@ -457,11 +457,8 @@ public class DevSettings : MonoBehaviour
         Act("Burn nearest (5s)",   () => Afflict(Ailment.Burn, 5f, 4f));
         Act("Stun nearest (2s)",   () => Afflict(Ailment.Stun, 2f, 0f));
         Act("Freeze nearest (2s)", () => Afflict(Ailment.Freeze, 2f, 0f));
-        Act("Slow nearest (4s)",   () => Afflict(Ailment.Slow, 4f, 0.4f));
-        Act("Blind nearest (5s)",  () => Afflict(Ailment.Blind, 5f, 50f));
         Act("Stun ME (2s)",        () => AfflictMe(Ailment.Stun, 2f, 0f));
         Act("Freeze ME (2s)",      () => AfflictMe(Ailment.Freeze, 2f, 0f));
-        Act("Slow ME (5s)",        () => AfflictMe(Ailment.Slow, 5f, 0.4f));
         // Persistent move-speed buff slider (1 = none). Folds into MoveMult on the Haste channel, so it lifts the
         // run/walk animation fps + footstep cadence with the speed (Player3DController.GaitSpeedMult) — drag it to
         // feel the animation↔speed lock. Held effectively-permanent (re-armed each drag) until you slide back to 1.
@@ -469,7 +466,6 @@ public class DevSettings : MonoBehaviour
             () => player ? Status.Of(player.gameObject).HasteMult : 1f,
             v => { if (player) Status.Of(player.gameObject).Haste(v, 9999f); });
         Act("Silence ME (4s)",     () => AfflictMe(Ailment.Silence, 4f, 0f));
-        Act("Blind ME (6s)",       () => AfflictMe(Ailment.Blind, 6f, 60f));
         Act("Poison ME (6s)",      () => AfflictMe(Ailment.Poison, 6f, 3f));
 
         // ---- Environment — TimeOfDay + DayNightLight -----------------------

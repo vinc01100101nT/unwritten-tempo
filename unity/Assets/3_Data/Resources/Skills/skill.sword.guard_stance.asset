@@ -78,7 +78,7 @@ MonoBehaviour:
     projectileSpread: 0
     stayDuration: 0
     effects:
-    - kind: 3
+    - kind: 5
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 0
@@ -195,10 +195,8 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 0
-      subStat: 0
-      affinity:
-      - stat: 4
-        weight: 100
+      subStat: 19
+      affinity: []
       chanceAffinity: []
       durationAffinity:
       - stat: 3
