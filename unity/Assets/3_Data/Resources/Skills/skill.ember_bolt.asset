@@ -132,7 +132,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      buffStat: 0
+      subStat: 0
       affinity:
       - stat: 1
         weight: 100
@@ -140,7 +140,7 @@ MonoBehaviour:
       hitCountAffinity:
       - stat: 1
         weight: 100
-    - kind: 4
+    - kind: 3
       useStacks: 0
       damageType: 1
       damageMult:
@@ -214,7 +214,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      buffStat: 0
+      subStat: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []

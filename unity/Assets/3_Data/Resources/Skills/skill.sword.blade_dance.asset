@@ -48,7 +48,7 @@ MonoBehaviour:
   castTime: 0
   aim: 2
   castRange: 11
-  tier: 0
+  tier: 1
   chargeCost: 100
   castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
@@ -78,6 +78,7 @@ MonoBehaviour:
     effects:
     - kind: 0
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
         value: 1
@@ -192,12 +193,14 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 2
-      buffStat: 0
+      subStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    - kind: 18
+    - kind: 14
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
         value: 1
@@ -312,12 +315,14 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 1
-      buffStat: 0
+      subStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    - kind: 7
+    - kind: 6
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
         value: 1
@@ -432,12 +437,14 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 1
-      buffStat: 0
+      subStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    - kind: 12
+    - kind: 10
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
         value: 1
@@ -552,8 +559,9 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 1
-      buffStat: 0
+      subStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
     targets: 2

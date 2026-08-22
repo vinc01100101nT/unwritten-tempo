@@ -117,10 +117,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (StatusController.Player != null && StatusController.Player.CannotStartSkill) return false;   // stunned / frozen / casting / mid-aftercast / mid-jump — can't start another skill
         if (castRoutine != null) return false;   // already winding up a cast — ignore until it resolves
         if (Time.time < nextUse) return false;
-        // Ultimate: refuse (with a notice) before entering the reticle if the shared meter isn't charged — MP/charge
-        // are only spent on confirm, so this early-out costs nothing.
-        if (def.IsUltimate && !Character.Instance.UltReady(def.chargeCost))
-        { BattleNotice.Warn("Not charged"); return false; }
 
         // The aim is a SEQUENCE derived from the ticks (SkillDef.NeedsUnitPick / NeedsAimPoint), never an authored
         // field: pick an entity (only when target effects need one), then pick a point (only when a ground tick or a
@@ -543,9 +539,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // The combo gate: a skill that requires a state doesn't run at all when unmet — checked BEFORE any cost is paid.
         // A press is always gated by the OnCast entry; the skill's other triggers have their own, separate gates.
         if (!StateGate.IsMet(def.CastEntry, CasterStates)) { BattleNotice.Warn("Not ready"); return false; }
-        // Ultimate gates on the shared charge meter (checked again here — the reticle may have taken time to confirm).
-        if (def.IsUltimate && !Character.Instance.UltReady(def.chargeCost))
-        { BattleNotice.Warn("Not charged"); return false; }
         // CHECKED here, PAID at the release (PayPendingMana): a wind-up that gets broken costs you the attempt and
         // the cooldown, never the mana — you never got the skill off.
         if (Character.Instance.CurrentMP < def.manaCost)
@@ -554,8 +547,6 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             return false;
         }
         pendingMana = def.manaCost;
-        if (def.IsUltimate) Character.Instance.SpendUltCharge(def.chargeCost);   // ults SPEND charge…
-        else Character.Instance.AddUltCharge(Character.UltChargePerCast);        // …every other cast BUILDS it
         lastDuration = def.cooldown;
         nextUse = Time.time + lastDuration;
         return true;

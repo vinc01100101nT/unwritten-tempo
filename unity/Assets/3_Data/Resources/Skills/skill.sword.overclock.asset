@@ -70,7 +70,7 @@ MonoBehaviour:
     projectileSpread: 0
     stayDuration: 0
     effects:
-    - kind: 7
+    - kind: 6
       useStacks: 0
       damageType: 0
       damageMult:
@@ -145,13 +145,13 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 0
-      buffStat: 1
+      subStat: 1
       affinity: []
       durationAffinity:
       - stat: 3
         weight: 100
       hitCountAffinity: []
-    - kind: 10
+    - kind: 8
       useStacks: 0
       damageType: 1
       damageMult:
@@ -226,7 +226,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 1
-      buffStat: 0
+      subStat: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []

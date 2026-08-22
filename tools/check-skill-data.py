@@ -131,19 +131,37 @@ def parse_state_for_kind(source):
     """The effect-kind -> state mapping, read out of the one C# function that owns it.
 
     Returns {kind_name: state_name}, plus the two kinds whose state depends on another
-    field ("Status" follows the ailment, "Buff" follows the stat) as the marker "*"."""
+    field ("Status" follows the ailment, the sub-stat kinds follow the stat) as "*"."""
     body = _body_of(source, r"public static bool TryStateFor\s*\([^)]*\)\s*\{",
                     "which pile an effect leaves behind")
     mapping = {}
     for kind, state in re.findall(r"case\s+SkillEffectKind\.(\w+)\s*:\s*id\s*=\s*StateId\.(\w+)\s*;", body):
         mapping[kind] = state
-    # The two that resolve from a sibling field rather than a constant.
-    for kind in re.findall(r"case\s+SkillEffectKind\.(\w+)\s*:\s*\n?\s*id\s*=\s*e\.", body):
-        mapping[kind] = "*"
+    # The ones that resolve from a sibling field rather than a constant. Fall-through labels share the line that
+    # actually assigns, so collect every label stacked above such an assignment, not just the nearest one.
+    for labels, _ in re.findall(
+            r"((?:case\s+SkillEffectKind\.\w+\s*:\s*)+)id\s*=\s*(e\.|SubStats\.)", body):
+        for kind in re.findall(r"SkillEffectKind\.(\w+)", labels):
+            mapping[kind] = "*"
     if "Status" in body and "Status" not in mapping:
         mapping["Status"] = "*"
     if not mapping:
         die("Read the effect-to-pile function but understood none of its cases.")
+    return mapping
+
+
+def parse_pile_for_stat(source):
+    """Which pile each sub-stat lives in, read out of the one C# function that owns it."""
+    body = _body_of(source, r"public static StateId PileFor\s*\([^)]*\)\s*\{",
+                    "which pile each sub-stat lives in")
+    mapping = dict(re.findall(r"case\s+SubStat\.(\w+)\s*:\s*return\s+StateId\.(\w+)\s*;", body))
+    fallback = re.search(r"default\s*:\s*return\s+StateId\.(\w+)\s*;", body)
+    if fallback:
+        # The default arm covers the last stat, which is deliberately not spelled out as its own case.
+        for stat in parse_enum(source, "SubStat"):
+            mapping.setdefault(stat, fallback.group(1))
+    if not mapping:
+        die("Read the sub-stat-to-pile function but understood none of its cases.")
     return mapping
 
 
@@ -279,7 +297,8 @@ def main():
     states = parse_enum(read(os.path.join(SCRIPTS, "UnitStates.cs")), "StateId")
     ailments = parse_enum(read(os.path.join(SCRIPTS, "StatusController.cs")), "Ailment")
     kinds = parse_enum(effect_src, "SkillEffectKind")
-    buff_stats = parse_enum(effect_src, "BuffStat")
+    sub_stats = parse_enum(effect_src, "SubStat")
+    pile_for_stat = parse_pile_for_stat(effect_src)
     triggers = parse_enum(read(os.path.join(SCRIPTS, "SkillDef.cs")), "SkillTrigger")
     weapons = parse_enum(read(os.path.join(SCRIPTS, "WeaponType.cs")), "WeaponType")
     state_for_kind = parse_state_for_kind(effect_src)
@@ -288,7 +307,7 @@ def main():
     kind_name = {v: k for k, v in kinds.items()}
     state_name = {v: k for k, v in states.items()}
     ail_name = {v: k for k, v in ailments.items()}
-    stat_name = {v: k for k, v in buff_stats.items()}
+    stat_name = {v: k for k, v in sub_stats.items()}
     weapon_name = {v: k for k, v in weapons.items()}
 
     # Which pile does one saved effect leave behind? Mirrors the C# switch we just read.
@@ -301,9 +320,9 @@ def main():
             return mapped
         if kind == "Status":
             return ail_name.get(as_int(effect.get("ailment")))
-        if kind == "Buff":
-            stat = stat_name.get(as_int(effect.get("buffStat")), "Damage")
-            return {"AttackSpeed": "AttackSpeedBuff", "CastSpeed": "CastSpeedBuff"}.get(stat, "DamageBuff")
+        if kind in ("SubStatBuff", "SubStatDebuff"):
+            stat = stat_name.get(as_int(effect.get("subStat")), "Damage")
+            return pile_for_stat.get(stat)
         return None
 
     # ---- load every skill ------------------------------------------------------------

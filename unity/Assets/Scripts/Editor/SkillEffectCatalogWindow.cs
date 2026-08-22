@@ -50,7 +50,6 @@ public class SkillEffectCatalogWindow : EditorWindow
         C("radius",         "Radius",           "u",      "skill-delivery","—",    "SkillTickBinding.radius (AoE / hit width)"),
         C("projectiles",    "Projectiles / Spread","int/°","skill-delivery","—",   "SkillTickBinding.projectileCount / projectileSpread"),
         C("cycle",          "Repeat",           "int/sec","skill-delivery","—",    "SkillDef.repeatCount / repeatInterval"),
-        C("charge_cost",    "Ult Charge",       "pts",    "skill-delivery","—",    "SkillDef.chargeCost (Ultimate tier only)"),
     };
     static Chan C(string id, string label, string unit, string tier, string ring, string notes)
         => new Chan { id = id, label = label, unit = unit, tier = tier, ring = ring, notes = notes };
@@ -64,20 +63,17 @@ public class SkillEffectCatalogWindow : EditorWindow
         [SkillEffectKind.Damage]        = E("mobs/any", "yes", "damage, hits", "damage, hits", "CombatAuthority.Apply", "The caster's ATK/MATK roll × the effect's ATK/MATK multiplier × affinity; each hit triggers the binding's procs."),
         [SkillEffectKind.Heal]          = E("self/others","no", "heal_amount", "heal_amount", "Health/Character.Heal", "Flat HP restored; landing follows the tick's TargetMode."),
         [SkillEffectKind.Status]        = E("mobs/self", "no", "ailment; dot_damage | slow_amount | accuracy_loss, duration, proc_chance", "output + duration (proc_chance never)", "StatusController.Apply", "Ailment picks the output channel. Stun/Freeze/Silence = duration-only (no magnitude)."),
-        [SkillEffectKind.Haste]         = E("self/mobs", "no", "move_mult, duration", "move_mult, duration", "StatusController.Haste", "Move-speed ×; on mobs a <1 value is a slow-debuff."),
         [SkillEffectKind.Guard]         = E("self", "no", "dmg_reduction, duration", "dmg_reduction, duration", "Character.BeginGuard", "% incoming-damage cut (0..1, clamped). Reduction grows with ring affinity; duration too."),
         [SkillEffectKind.Taunt]         = E("mobs", "no", "duration", "duration", "MonsterAI3D.Taunt", "Forces mob aggro onto the caster."),
         [SkillEffectKind.Teleport]      = E("self (point)","no", "—", "—", "Player3DController.Teleport", "Instant blink to the aimed, range-clamped point."),
-        [SkillEffectKind.Buff]          = E("self", "no", "buff_mult (FLAT), duration, ramp", "duration only", "Character.Buff{Damage,AttackSpeed,CastSpeed}", "buffStat picks which self-stat. Amount is FLAT by design; Damage buff can RAMP over its life."),
-        [SkillEffectKind.Regen]         = E("self", "no", "heal_per_tick, duration", "heal_per_tick, duration", "Character.BeginRegen", "Heal-over-time, HP every 0.8s."),
+        [SkillEffectKind.SubStatBuff]   = E("self/mobs", "no", "amount (FLAT), duration", "duration only", "UnitStates.ApplySubStat", "subStat picks WHICH sub-stat rises. THE one path for every timed sub-stat change — move speed, both regens, leech, reflect, evasion, all of them."),
+        [SkillEffectKind.SubStatDebuff] = E("self/mobs", "no", "amount (FLAT), duration", "duration only", "UnitStates.ApplySubStat", "The mirror of SubStatBuff: same stat list, authored as a positive amount, applied as a drop."),
         [SkillEffectKind.Cleanse]       = E("self", "no", "debuffs_removed (amount)", "—", "StatusController.Cleanse", "Strips up to N active debuffs."),
         [SkillEffectKind.Vulnerability] = E("mobs", "no", "dmg_taken_frac, duration", "dmg_taken_frac, duration", "Health.BeginVulnerable", "Marks a mob to take +frac more damage; the amount grows with ring affinity, duration too."),
         [SkillEffectKind.Execute]       = E("mobs", "yes", "execute_scale, proc_chance", "base roll (execute_scale raw)", "CombatAuthority.Apply", "Proc per hit: bonus = roll × power × (target's missing HP). Huge near death."),
         [SkillEffectKind.Dash]          = E("self (point)","no", "dash_speed, ease", "—", "Player3DController.BeginGlideTo", "Visible fast glide to the aimed point; blocked by geometry (unlike Teleport)."),
         [SkillEffectKind.Knockback]     = E("mobs", "no", "shove_speed, duration", "duration only", "MonsterAI3D.Knockback", "Shoves the mob AWAY from the caster (speed = raw magnitude)."),
         [SkillEffectKind.Pull]          = E("mobs", "no", "shove_speed, duration", "duration only", "MonsterAI3D.Knockback", "Drags the mob TOWARD the caster (mirrored origin)."),
-        [SkillEffectKind.ManaLeech]     = E("self", "no", "leech_frac, duration", "duration only", "Character.BeginManaLeech", "Timed window: a fraction of damage dealt returns as MP (frac raw)."),
-        [SkillEffectKind.Reflect]       = E("self", "no", "reflect_frac, duration", "duration only", "Character.BeginReflect", "Timed window: reflect a fraction of damage taken (frac raw)."),
         [SkillEffectKind.Shield]        = E("self", "no", "shield_amount, duration", "shield_amount, duration", "Character.BeginShield", "NEW. A finite HP barrier that soaks HITS until drained; DoT bypasses it (like Guard)."),
         [SkillEffectKind.Parry]         = E("self", "no", "duration, charges (stacks-per-apply)", "duration only", "Character.BeginParry", "NEW. Charges that ERASE one incoming hit each (0 damage, pre-defence) and are spent by it — not a % cut like Guard. Binary, so no magnitude. Fires OnParry."),
     };

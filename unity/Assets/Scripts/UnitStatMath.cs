@@ -54,7 +54,7 @@ public static class UnitStatMath
     // Per-point contributions of each primary to the derived layer.
     public const int   AtkPerStr = 1, MatkPerInt = 1;
     public const int   DefPerVit = 3, MdefPerInt = 3, AtkPerDex = 2, AtkPerLuk = 4, MatkPerLuk = 4;  // DIVISORS
-    public const float AspdPerAgi = 0.005f, CritPerLuk = 0.003f, CastPerDex = 0.006f;   // pre-renewal CRIT = LUK×0.3%
+    public const float AspdPerAgi = 0.005f, CritPerLuk = 0.003f;   // pre-renewal CRIT = LUK×0.3%
     // VIT and INT scale HP/SP as a PERCENT per point (they multiply the level-driven base, not add flat);
     // DEX raises ASPD a fraction of what AGI does.
     public const float VitHpPercent = 0.02f, IntSpPercent = 0.015f, DexAspdShare = 0.25f;
@@ -223,10 +223,18 @@ public static class UnitStatMath
         Mathf.Min(MaxAttackSpeedMult,
                   (1f + (u.agi + u.dex * DexAspdShare) * AspdPerAgi + ringPct + eb.aspdPercent / 100f) * buffMult);
 
-    public static float CastSpeedMult(in UnitStatInputs u, float ringPct, float buffMult) =>
-        (1f + u.dex * CastPerDex + ringPct) * buffMult;
-
-    public static float CastTimeMult(in UnitStatInputs u) => Mathf.Clamp01(1f - u.dex / (float)InstantCastDex);
+    /// <summary>THE cast-speed value — the multiplier a spell's base wind-up is scaled by (1 = full, 0 = instant).
+    /// DEX shortens it on the pre-renewal curve (instant at <see cref="InstantCastDex"/>); the ring's CastSpeed node
+    /// and the cast-speed buff divide what is left. DEX is counted ONCE, here.
+    ///
+    /// <para>There used to be a second "cast speed" multiplier alongside this, fed by DEX again plus the ring and the
+    /// buff — and NOTHING in gameplay read it, so both of those contributions only ever moved a number on the stat
+    /// panel. Collapsed into this one value so every lift on casting lands in the place the wind-up actually uses.</para>
+    ///
+    /// <para>Instant at 150 DEX survives every other contribution: the DEX term reaches zero and a divisor cannot lift
+    /// it back off zero, so the design's ceiling holds no matter how much ring or buff is stacked on top.</para></summary>
+    public static float CastTimeMult(in UnitStatInputs u, float ringPct, float buffMult) =>
+        Mathf.Clamp01(1f - u.dex / (float)InstantCastDex) / Mathf.Max(0.01f, (1f + ringPct) * buffMult);
 
     // ---- damage spread ------------------------------------------------------------------------------------------
     /// <summary>The fraction of MAX a hit can drop to, raised toward 1 by the stabilising stat (DEX physical / INT magic).</summary>

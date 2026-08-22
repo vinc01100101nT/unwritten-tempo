@@ -132,7 +132,7 @@ public class ProgressionWindows : MonoBehaviour
     // string work and no allocation (PERFORMANCE.md: nothing per-frame may allocate).
     DerivedSnapshot lastLive;
     bool lastLiveValid;
-    int lastSta = -1, lastUlt = -1;   // resources drain/fill outside the snapshot, so they're watched separately
+    int lastSta = -1;   // stamina drains/fills outside the snapshot, so it's watched separately
     void KeepDerivedLive()
     {
         if (charRoot == null || !UiAnim.IsOpen(charRoot) || Character.Instance == null) return;
@@ -140,9 +140,9 @@ public class ProgressionWindows : MonoBehaviour
         var now = c.DerivedWithStates;
         // Compare the DISPLAYED (rounded) resource values, not the raw floats — otherwise a draining stamina bar would
         // rebuild the text every single frame instead of only when the number on screen actually changes.
-        int sta = Mathf.RoundToInt(c.Stamina), ult = Mathf.RoundToInt(c.UltCharge01 * 100);
-        if (lastLiveValid && sta == lastSta && ult == lastUlt && Same(now, lastLive)) return;
-        lastLive = now; lastLiveValid = true; lastSta = sta; lastUlt = ult;
+        int sta = Mathf.RoundToInt(c.Stamina);
+        if (lastLiveValid && sta == lastSta && Same(now, lastLive)) return;
+        lastLive = now; lastLiveValid = true; lastSta = sta;
         RefreshCharacter();
     }
 
@@ -154,7 +154,7 @@ public class ProgressionWindows : MonoBehaviour
         a.hardDefPct == b.hardDefPct && a.hardMdefPct == b.hardMdefPct && a.barrierHP == b.barrierHP &&
         Mathf.Approximately(a.critChance, b.critChance) && Mathf.Approximately(a.critMult, b.critMult) &&
         Mathf.Approximately(a.aspdMult, b.aspdMult) && Mathf.Approximately(a.castTimeMult, b.castTimeMult) &&
-        Mathf.Approximately(a.castSpeedMult, b.castSpeedMult) && Mathf.Approximately(a.guardCutPct, b.guardCutPct) &&
+        Mathf.Approximately(a.guardCutPct, b.guardCutPct) &&
         Mathf.Approximately(a.lifeStealPct, b.lifeStealPct) && Mathf.Approximately(a.reflectPct, b.reflectPct) &&
         Mathf.Approximately(a.manaLeechPct, b.manaLeechPct);
 
@@ -585,13 +585,12 @@ public class ProgressionWindows : MonoBehaviour
             $"DEF   {b.def}{Hard(b.hardDefPct)}{Delta(d.def - b.def)}    M.DEF {b.mdef}{Hard(b.hardMdefPct)}{Delta(d.mdef - b.mdef)}\n" +
             $"HIT   {b.hit}{Delta(d.hit - b.hit)}    FLEE {b.flee}{Delta(d.flee - b.flee)}\n" +
             $"CRIT  {Pct(b.critChance)}{DeltaPct(d.critChance - b.critChance)}  ×{b.critMult:0.00}{Delta(d.critMult - b.critMult)}\n" +
-            $"ASPD  ×{b.aspdMult:0.00}{Delta(d.aspdMult - b.aspdMult)}    CAST ×{b.castSpeedMult:0.00}{Delta(d.castSpeedMult - b.castSpeedMult)}\n" +
-            $"WIND-UP ×{b.castTimeMult:0.00}{Delta(d.castTimeMult - b.castTimeMult)}\n" +
+            $"ASPD  ×{b.aspdMult:0.00}{Delta(d.aspdMult - b.aspdMult)}    CAST ×{b.castTimeMult:0.00}{Delta(d.castTimeMult - b.castTimeMult)}\n" +
             $"MOVE  {b.moveSpeed}{Delta(d.moveSpeed - b.moveSpeed)}{Gait(pc)}\n" +
             $"GUARD {Pct(b.guardCutPct)}{DeltaPct(d.guardCutPct - b.guardCutPct)}    BARRIER {b.barrierHP}{Delta(d.barrierHP - b.barrierHP)}\n" +
             $"LEECH {Pct(b.lifeStealPct)}{DeltaPct(d.lifeStealPct - b.lifeStealPct)}    MP LEECH {Pct(b.manaLeechPct)}{DeltaPct(d.manaLeechPct - b.manaLeechPct)}\n" +
             $"REFLECT {Pct(b.reflectPct)}{DeltaPct(d.reflectPct - b.reflectPct)}\n" +
-            $"HP {c.MaxHP}  MP {c.MaxMP}  STA {Mathf.RoundToInt(c.Stamina)}/{Mathf.RoundToInt(c.maxStamina)}  ULT {Pct(c.UltCharge01)}";
+            $"HP {c.MaxHP}  MP {c.MaxMP}  STA {Mathf.RoundToInt(c.Stamina)}/{Mathf.RoundToInt(c.maxStamina)}";
     }
 
     static string Pct(float f01) => Mathf.RoundToInt(f01 * 100) + "%";

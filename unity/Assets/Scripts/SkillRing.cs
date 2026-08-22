@@ -18,7 +18,7 @@ public enum StatId
     MP,
     Def,          // dual: its ring % scales BOTH physical Defense and MagicDefense (no separate MDef node)
     Accuracy,     // % lift on Hit
-    CastSpeed,    // % lift on CastSpeedMult
+    CastSpeed,    // % that SHORTENS the cast wind-up (Character.CastTimeMult)
     Evasion,
     AttackSpeed,
     Critical,     // one node → % to BOTH crit rate and crit damage

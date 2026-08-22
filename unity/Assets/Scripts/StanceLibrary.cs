@@ -72,8 +72,8 @@ public enum StanceSpeedSource
 {
     Baked = 0,      // the baked action's authored fps (× speedMult) — no live link
     // 1,2 (was AttackSpeed / CastSpeed) retired: the actual swing / cast stances use FitWindow (they fit the
-    // gameplay swing time / cast-bar window). The ASPD & CastSpeed STATS are unchanged (Character.AttackSpeedMult /
-    // CastSpeedMult) — only the stance-animation source is gone. Ints kept stable so MoveGait/FitWindow assets survive.
+    // gameplay swing time / cast-bar window). The ASPD & cast-speed STATS are unchanged (Character.AttackSpeedMult /
+    // CastTimeMult) — only the stance-animation source is gone. Ints kept stable so MoveGait/FitWindow assets survive.
     MoveGait = 3,   // × the player's GaitSpeedMult (locomotion stances)
     FitWindow = 4,  // fps fits the clip to a RUNTIME window: clipNaturalLength / window (window fed at drive time).
                     // For a swing/dodge whose duration is gameplay-driven (Attack = swing time, Roll = dash length),

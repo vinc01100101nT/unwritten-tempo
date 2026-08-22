@@ -81,7 +81,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      buffStat: 0
+      subStat: 0
       affinity:
       - stat: 1
         weight: 50
@@ -126,7 +126,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      buffStat: 0
+      subStat: 0
       affinity: []
       durationAffinity: []
   shortLabel: Hex

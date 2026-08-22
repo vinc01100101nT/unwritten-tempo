@@ -31,8 +31,7 @@ public class HotbarPanel : MonoBehaviour
         public GameObject hideOnCd;     // the center label to hide while counting down (null when an icon shows)
         public int lastSecs = -1;
         public sbyte lastOnCd = -1, lastAff = -1;
-        public bool isUlt;              // the dedicated ULT cell — driven by the charge meter, not a cooldown
-        public float chargeCost;        // (ult) charge required to fire, read once at build
+        public bool isUlt;              // the dedicated ULT cell (the R seat) — same cooldown rules as keys 1–9
     }
 
     static readonly Color CellReady = Color.white;
@@ -43,7 +42,6 @@ public class HotbarPanel : MonoBehaviour
     static readonly Color MpNoColor   = new Color(1f, 0.5f, 0.45f);
     static readonly Color CdShade     = new Color(0f, 0f, 0f, 0.55f);
     static readonly Color UltKeyColor    = new Color(1f, 0.55f, 0.95f);   // ult slot's "R" glyph — distinct from 1–9
-    static readonly Color UltChargeShade = new Color(0.05f, 0f, 0.1f, 0.7f);   // shade that CLEARS as the meter charges
 
     // Pre-baked second strings so the countdown repaint never allocates (cooldowns are short).
     static readonly string[] Secs = BuildSecs();
@@ -76,10 +74,7 @@ public class HotbarPanel : MonoBehaviour
         // Ensure the buff bar exists even on a GameUICanvas built BEFORE it was added to the shell (so it appears
         // without a Build UI Shell rebuild). Idempotent — skips if the shell already added one.
         if (GetComponent<BuffBarPanel>() == null) gameObject.AddComponent<BuffBarPanel>();
-        // The standalone ult charge gauge — added here (like the buff bar) so a GameUICanvas built before it
-        // existed still gets it without a Build UI Shell rebuild. Idempotent.
-        if (GetComponent<UltChargeBar>() == null) gameObject.AddComponent<UltChargeBar>();
-        // The stamina gauge sits just above the ult bar — added the same way so it appears without a shell rebuild. Idempotent.
+        // The stamina gauge — added the same way so it appears without a shell rebuild. Idempotent.
         if (GetComponent<StaminaBar>() == null) gameObject.AddComponent<StaminaBar>();
         TryBuild();
     }
@@ -269,13 +264,13 @@ public class HotbarPanel : MonoBehaviour
     }
 
     // The dedicated ULT cell: display + fire only (its binding is separate from keys 1–9, so no drop-target/drag).
-    // Its radial shade is driven by the CHARGE meter (clears as it fills), not a cooldown.
+    // The tier picks the SLOT and nothing else — it shades and counts down exactly like keys 1–9, through the same
+    // RefreshSlot body, because an ultimate is an ordinary skill sitting in a reserved seat.
     Slot BuildUltSlot(Image cell)
     {
         string id = Character.Instance.Hotbar.Ult;
         var skill = PlayerSkills.ById(id);
         var s = new Slot { index = -1, skill = skill, cell = cell, isUlt = true };
-        if (skill is SkillRunner sr && sr.def != null) s.chargeCost = sr.def.chargeCost;
 
         var btn = cell.gameObject.GetComponent<Button>() ?? cell.gameObject.AddComponent<Button>();
         btn.transition = Selectable.Transition.None;
@@ -315,14 +310,14 @@ public class HotbarPanel : MonoBehaviour
             Stretch(s.icon.rectTransform, 5, 5);
         }
 
-        // Charge shade: full at empty, clears as the meter fills (fillAmount = 1 − charge01, set in Refresh).
-        s.cooldown = NewImage("Charge", cell.transform, UltChargeShade);
+        // Radial cooldown shade — the same one keys 1–9 get, built the same way round.
+        s.cooldown = NewImage("Cooldown", cell.transform, CdShade);
         s.cooldown.sprite = whiteSprite;
         s.cooldown.type = Image.Type.Filled;
         s.cooldown.fillMethod = Image.FillMethod.Radial360;
-        s.cooldown.fillOrigin = (int)Image.Origin360.Bottom;
-        s.cooldown.fillClockwise = false;
-        s.cooldown.fillAmount = 1f;
+        s.cooldown.fillOrigin = (int)Image.Origin360.Top;
+        s.cooldown.fillClockwise = true;
+        s.cooldown.fillAmount = 0f;
         s.cooldown.raycastTarget = false;
         Stretch(s.cooldown.rectTransform, 3, 3);
 
@@ -330,10 +325,16 @@ public class HotbarPanel : MonoBehaviour
         {
             s.label = NewText("Label", cell.transform, skill.ShortLabel, 11, FontStyle.Bold, TextAnchor.MiddleCenter, skill.Tint);
             Stretch(s.label.rectTransform, 2, 2);
+            s.hideOnCd = s.label.gameObject;
         }
 
         s.mp = NewText("Mp", cell.transform, skill.ManaCost.ToString(), 10, FontStyle.Bold, TextAnchor.LowerRight, MpColor);
         Stretch(s.mp.rectTransform, 2, 3);
+
+        // Countdown number (center), shown only while on cooldown — same as every other cell.
+        s.cdNum = NewText("CdNum", cell.transform, "", 18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
+        Stretch(s.cdNum.rectTransform, 2, 2);
+        s.cdNum.gameObject.SetActive(false);
 
         if (skill is SkillRunner sr2 && sr2.def != null) AttachSkillTooltip(cell.transform, sr2.def);
         return s;
@@ -415,10 +416,16 @@ public class HotbarPanel : MonoBehaviour
     void Refresh()
     {
         bool ringOn = SkillsEnabled;   // hoist once: no ring → the whole bar reads as suppressed
-        for (int i = 0; i < slots.Count; i++)
+        for (int i = 0; i < slots.Count; i++) RefreshSlot(slots[i], ringOn);
+        RefreshSlot(ult, ringOn);      // the ult cell is a slot like any other — one body, so it can't drift
+    }
+
+    // ONE per-cell repaint for every hotbar cell, the ult included. Kept as a single body on purpose: the ult
+    // differs only in which seat it occupies, so any cooldown/affordability rule written here applies everywhere.
+    void RefreshSlot(Slot s, bool ringOn)
+    {
         {
-            var s = slots[i];
-            if (s.skill == null || s.cooldown == null) continue;   // empty slot — nothing live to refresh
+            if (s == null || s.skill == null || s.cooldown == null) return;   // empty slot — nothing live to refresh
 
             float frac = s.skill.CooldownFraction01;
             s.cooldown.fillAmount = frac;
@@ -448,23 +455,6 @@ public class HotbarPanel : MonoBehaviour
                 if (s.icon != null) s.icon.color = aff == 1 ? CellReady : CellDim;
                 if (s.mp != null) s.mp.color = aff == 1 ? MpColor : MpNoColor;
                 s.lastAff = aff;
-            }
-        }
-
-        // The dedicated ult cell: shade recedes as the charge meter fills; bright + affordable only when fully charged.
-        if (ult != null && ult.skill != null && ult.cooldown != null)
-        {
-            var ch = Character.Instance;
-            float charge01 = ch != null ? ch.UltCharge01 : 0f;
-            ult.cooldown.fillAmount = 1f - charge01;
-            bool ready = ch != null && ch.UltReady(ult.chargeCost) && ringOn && ult.skill.Affordable;
-            sbyte aff = (sbyte)(ready ? 1 : 0);
-            if (aff != ult.lastAff)
-            {
-                ult.cell.color = ready ? CellReady : CellDim;
-                if (ult.icon != null) ult.icon.color = ready ? CellReady : CellDim;
-                if (ult.mp != null) ult.mp.color = ready ? MpColor : MpNoColor;
-                ult.lastAff = aff;
             }
         }
     }

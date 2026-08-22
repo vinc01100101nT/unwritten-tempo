@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
-  m_Name: skill.meteor
+  m_Name: skill.staff.meteor
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   targetingMigrated: 1
-  id: skill.meteor
+  id: skill.staff.meteor
   displayName: Meteor
-  weaponType: 0
+  weaponType: 8
   published: 0
   icon: {fileID: -748796600851884618, guid: e332629eb48b6454a8278a39bd5d6b5a, type: 3}
   description: Meat balls
@@ -49,7 +49,6 @@ MonoBehaviour:
   aim: 2
   castRange: 13
   tier: 0
-  chargeCost: 5000
   castCircleId: circle.magic
   castCircleTint: {r: 0.86415094, g: 0.29302153, b: 0.11576363, a: 1}
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
@@ -193,7 +192,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 0
-      buffStat: 0
+      subStat: 0
       affinity:
       - stat: 1
         weight: 70
@@ -201,6 +200,7 @@ MonoBehaviour:
         weight: 15
       - stat: 3
         weight: 15
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity:
       - stat: 1
@@ -322,10 +322,11 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 0
-      buffStat: 0
+      subStat: 0
       affinity:
       - stat: 1
         weight: 100
+      chanceAffinity: []
       durationAffinity:
       - stat: 3
         weight: 70
@@ -449,7 +450,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 0
-      buffStat: 0
+      subStat: 0
       affinity: []
       chanceAffinity:
       - stat: 5
@@ -589,10 +590,11 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 0
-      buffStat: 0
+      subStat: 0
       affinity:
       - stat: 1
         weight: 100
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
     targets: 2

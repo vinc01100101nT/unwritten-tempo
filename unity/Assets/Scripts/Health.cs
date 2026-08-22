@@ -338,7 +338,6 @@ public class Health : MonoBehaviour, ICombatUnit
         if (ch == null || dmgDealt <= 0) return;
         // The ONE player-dealt-damage choke (basics + skills both funnel here) → also the OnDamageDealt fire-site (victim = the mob just hit).
         PassiveEvents.Fire(SkillTrigger.OnDamageDealt, null, victim != null ? victim.transform : null);
-        ch.AddUltCharge(dmgDealt * Character.UltChargePerDamageDealt);   // dealing damage builds ult charge
         if (ch.ActiveManaLeechPct > 0f) ch.GainMana(Mathf.RoundToInt(dmgDealt * ch.ActiveManaLeechPct));   // ManaLeech skill window (V3)
 
         // The VICTIM's own timed windows fire here too — the mob side of the rules the player already plays by, so a

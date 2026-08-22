@@ -523,7 +523,7 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     [HideInInspector] public string triggerSkillId = "";
     [HideInInspector] public bool requiresState = false;
     [HideInInspector] public string requireSkillId = "";
-    [HideInInspector] public StateId requireState = StateId.Haste;
+    [HideInInspector] public StateId requireState = StateId.MovementSpeed;
     [HideInInspector] public int requireMinStacks = 1;
     [HideInInspector] public bool consumeAllStacks = false;
     [HideInInspector] public int consumeStacks = 0;
@@ -540,13 +540,10 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     public float castRange = 11f;
 
     [Header("Ultimate (tier, not a category)")]
-    [Tooltip("Base = a normal hotbar skill (keys 1–9). Ultimate = fires from the dedicated ULT slot, gated by the " +
-             "shared ult-charge meter instead of a plain cooldown.")]
+    [Tooltip("Base = a normal hotbar skill (keys 1–9). Ultimate = fires from the dedicated ULT slot. The tier changes " +
+             "WHERE it sits, nothing else: an ult pays mana and rides its own cooldown exactly like every other skill.")]
     public SkillTier tier = SkillTier.Base;
-    [Tooltip("Ult-charge required to cast (Ultimate tier only). Spent from Character's shared meter, which fills " +
-             "during combat (dealing/taking damage, casting).")]
-    [Min(0f)] public float chargeCost = 100f;
-    /// <summary>True when this skill occupies the dedicated ULT slot and spends charge rather than riding keys 1–9.</summary>
+    /// <summary>True when this skill occupies the dedicated ULT slot rather than riding keys 1–9.</summary>
     public bool IsUltimate => tier == SkillTier.Ultimate;
 
     /// <summary>True when this skill has NO OnCast trigger — it takes no hotbar slot and only ever runs through

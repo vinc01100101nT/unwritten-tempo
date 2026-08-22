@@ -121,8 +121,7 @@ public static class SkillTooltip
 
         // Cost / cadence line.
         sb.Append("<color=").Append(Chip).Append(">MP </color>").Append(Hl(def.manaCost.ToString()));
-        if (def.IsUltimate) sb.Append("  <color=").Append(Chip).Append(">Charge </color>").Append(Hl(def.chargeCost.ToString("0")));
-        else                sb.Append("  <color=").Append(Chip).Append(">CD </color>").Append(Hl(def.cooldown.ToString("0.#") + "s"));
+        sb.Append("  <color=").Append(Chip).Append(">CD </color>").Append(Hl(def.cooldown.ToString("0.#") + "s"));
         if (def.castTime > 0f) sb.Append("  <color=").Append(Chip).Append(">Cast </color>").Append(Hl(def.castTime.ToString("0.#") + "s"));
         else                   sb.Append("  <color=").Append(Chip).Append(">Instant</color>");
         if (def.Reticle != CastReticle.Instant) sb.Append("  <color=").Append(Chip).Append(">Range </color>").Append(Hl(def.castRange.ToString("0.#")));
@@ -208,16 +207,13 @@ public static class SkillTooltip
             case SkillEffectKind.Taunt:         return "Taunts nearby enemies for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Teleport:      return "Blinks to the target location";
             case SkillEffectKind.Dash:          return "Dashes to the target location";
-            // Magnitude is the bonus itself (0.3 = +30%); on a stacking buff it is the PER-STACK bonus, so say so.
-            case SkillEffectKind.Buff:          return "+" + Pct(Mathf.Max(0f, e.magnitude.value)) + " " + BuffStatName(e.buffStat) + (e.stacking ? " per stack" : "") + " for " + Hl(e.seconds.value.ToString("0.#") + "s");
-            case SkillEffectKind.Regen:         return "Restores " + Hl(e.magnitude.value.ToString("0.#")) + " HP/sec for " + Hl(e.seconds.value.ToString("0.#") + "s");
+            // Magnitude is the amount itself; on a stacking one it is the PER-STACK amount, so say so.
+            case SkillEffectKind.SubStatBuff:   return SubStatLine(e, worse: false);
+            case SkillEffectKind.SubStatDebuff: return SubStatLine(e, worse: true);
             case SkillEffectKind.Cleanse:       return "Removes " + Hl(Mathf.Max(1, e.amount.value).ToString()) + " debuff(s)";
             case SkillEffectKind.Vulnerability: return Subject(e, "You take", "Enemies take") + " +" + Pct(e.magnitude.value) + " damage for " + Hl(e.seconds.value.ToString("0.#") + "s");
-            case SkillEffectKind.Haste:         return (e.magnitude.value < 0f ? "−" + Pct(-e.magnitude.value) : "+" + Pct(e.magnitude.value)) + " move speed for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Knockback:     return "Knocks enemies back";
             case SkillEffectKind.Pull:          return "Pulls enemies in";
-            case SkillEffectKind.ManaLeech:     return "Restores " + Pct(Mathf.Clamp01(e.magnitude.value)) + " of damage dealt as MP for " + Hl(e.seconds.value.ToString("0.#") + "s");
-            case SkillEffectKind.Reflect:       return "Reflects " + Pct(Mathf.Clamp01(e.magnitude.value)) + " of damage taken for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Shield:        return "Absorbs " + Hl(e.amount.value.ToString()) + " damage for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.BoostOutgoingDamage:
             {
@@ -285,14 +281,43 @@ public static class SkillTooltip
     // fragile window), not a debuff on enemies, and saying "enemies" there tells the player the opposite of the truth.
     static string Subject(SkillEffect e, string caster, string target) => SkillEffect.LandsOnCaster(e) ? caster : target;
 
-    static string BuffStatName(BuffStat s)
+    /// <summary>The sub-stat's name in ordinary words. Every stat has a row, so a new one cannot silently fall
+    /// through to a run-together enum name on the player's screen.</summary>
+    static string SubStatName(SubStat s)
     {
         switch (s)
         {
-            case BuffStat.Damage:      return "damage";
-            case BuffStat.AttackSpeed: return "attack speed";
-            case BuffStat.CastSpeed:   return "cast speed";
-            default:                   return s.ToString();
+            case SubStat.Damage:        return "damage";
+            case SubStat.AttackSpeed:   return "attack speed";
+            case SubStat.CastSpeed:     return "cast speed";
+            case SubStat.MovementSpeed: return "movement speed";
+            case SubStat.HPRegen:       return "HP regen";
+            case SubStat.MPRegen:       return "MP regen";
+            case SubStat.ManaLeech:     return "mana leech";
+            case SubStat.Reflect:       return "reflect";
+            case SubStat.LifeSteal:     return "life steal";
+            case SubStat.Attack:        return "attack";
+            case SubStat.MagicAttack:   return "magic attack";
+            case SubStat.Defense:       return "defense";
+            case SubStat.MagicDefense:  return "magic defense";
+            case SubStat.Accuracy:      return "accuracy";
+            case SubStat.Evasion:       return "evasion";
+            case SubStat.CritChance:    return "crit chance";
+            case SubStat.CritDamage:    return "crit damage";
+            case SubStat.MaxHP:         return "max HP";
+            default:                    return "max MP";
         }
+    }
+
+    /// <summary>One line for a sub-stat buff or debuff: which way, how much, which stat, how long. The amount reads as
+    /// a percentage or as a plain number depending on what the stat's number MEANS, so a regen never claims to be
+    /// "+6%" of a trickle that is usually zero.</summary>
+    static string SubStatLine(SkillEffect e, bool worse)
+    {
+        float v = Mathf.Max(0f, e.magnitude.value);
+        string amount = SubStats.IsPercent(e.subStat) ? Pct(v) : v.ToString("0.##");
+        return (worse ? "−" : "+") + amount + " " + SubStatName(e.subStat)
+             + (e.stacking ? " per stack" : "")
+             + " for " + Hl(e.seconds.value.ToString("0.#") + "s");
     }
 }

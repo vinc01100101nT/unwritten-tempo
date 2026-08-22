@@ -194,7 +194,7 @@ MonoBehaviour:
         read: 0
         scaler: 1
       side: 0
-      buffStat: 0
+      subStat: 0
       affinity:
       - stat: 0
         weight: 100

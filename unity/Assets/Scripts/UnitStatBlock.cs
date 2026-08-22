@@ -56,6 +56,32 @@ public class UnitStatBlock : MonoBehaviour
     float RingPercent(StatId stat) =>
         Gear != null && Gear.RingEquipped ? Ranks.Percent(stat) : 0f;
 
+    /// <summary>The whole percentage lift on one stat: ring investment plus any live sub-stat buff or debuff — the
+    /// mob-side twin of <c>Character.Lift</c>, so a window that raises a player's evasion raises a mob's by the same
+    /// rule. Without this a sub-stat effect would work on the player and quietly do nothing to a mob.</summary>
+    float Lift(StatId ringNode, SubStat stat)
+    {
+        float sub = health != null && health.States != null ? health.States.SubStatBonus(stat) : 0f;
+        return RingPercent(ringNode) + sub;
+    }
+
+    // A mob's derived numbers are STAMPED onto its components rather than read live the way the player's are, so a
+    // timed sub-stat window only reaches them if something re-stamps when the window opens and again when it lapses.
+    // The store already announces both, so listening to it is the whole fix — and it costs nothing at rest, because
+    // a mob with no states never fires.
+    void OnEnable()
+    {
+        if (health == null) health = GetComponent<Health>();
+        if (health != null && health.States != null) health.States.OnChanged += OnStatesChanged;
+    }
+
+    void OnDisable()
+    {
+        if (health != null && health.States != null) health.States.OnChanged -= OnStatesChanged;
+    }
+
+    void OnStatesChanged() => Rederive();
+
     public int Level => inputs.level;
 
     // The level this unit was AUTHORED at — captured once, before any in-combat level-up. A pooled/respawned mob
@@ -89,7 +115,7 @@ public class UnitStatBlock : MonoBehaviour
     // MP, on the same footing as the player's. Mobs don't spend it on anything yet (they have no cost-bearing
     // skills), but it EXISTS so an MP-touching effect — ManaLeech landing on a mob — has a real pool to move,
     // instead of being a knob that silently does nothing on half the units in the game.
-    public int MaxMP => UnitStatMath.MaxMP(inputs, Bonuses, RingPercent(StatId.MP));
+    public int MaxMP => UnitStatMath.MaxMP(inputs, Bonuses, Lift(StatId.MP, SubStat.MaxMP));
     public int CurrentMP { get; private set; }
 
     public void GainMana(int amount)
@@ -133,17 +159,17 @@ public class UnitStatBlock : MonoBehaviour
 
         var eb = Bonuses;
 
-        health.maxHealth    = UnitStatMath.MaxHP(inputs, eb, RingPercent(StatId.HP));
-        health.defense      = UnitStatMath.Defense(inputs, eb, RingPercent(StatId.Def));
-        health.magicDefense = UnitStatMath.MagicDefense(inputs, eb, RingPercent(StatId.Def));
-        health.flee         = UnitStatMath.Flee(inputs, RingPercent(StatId.Evasion));
+        health.maxHealth    = UnitStatMath.MaxHP(inputs, eb, Lift(StatId.HP, SubStat.MaxHP));
+        health.defense      = UnitStatMath.Defense(inputs, eb, Lift(StatId.Def, SubStat.Defense));
+        health.magicDefense = UnitStatMath.MagicDefense(inputs, eb, Lift(StatId.Def, SubStat.MagicDefense));
+        health.flee         = UnitStatMath.Flee(inputs, Lift(StatId.Evasion, SubStat.Evasion));
         health.luk          = inputs.luk;   // pre-renewal crit shield — the attacker reads this off the target
 
         if (ai != null)
         {
             ai.level        = inputs.level;
-            ai.attack       = UnitStatMath.Attack(inputs, eb, RingPercent(StatId.Atk));
-            ai.hit          = UnitStatMath.Hit(inputs, RingPercent(StatId.Accuracy));
+            ai.attack       = UnitStatMath.Attack(inputs, eb, Lift(StatId.Atk, SubStat.Attack));
+            ai.hit          = UnitStatMath.Hit(inputs, Lift(StatId.Accuracy, SubStat.Accuracy));
             // Spread is DEX-driven for everyone: high DEX both lifts and STABILISES damage.
             ai.damageSpread = 1f - UnitStatMath.MinFraction(inputs.dex);
         }

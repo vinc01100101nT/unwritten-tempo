@@ -302,14 +302,6 @@ public static class SkillEffectApplier
             case SkillEffectKind.Status:
                 if (body != null && Fires(e, hit, caster, vars)) Status.Apply(body.gameObject, e.ailment, seconds, ScaledMagnitude(e, caster, vars));
                 break;
-            case SkillEffectKind.Haste:
-                // Authored as a BONUS FRACTION (0.3 = +30%) → multiplier.
-                if (body != null && Fires(e, hit, caster, vars))
-                {
-                    var sc = Status.Of(body.gameObject);
-                    if (sc != null) sc.Haste(1f + ScaledMagnitude(e, caster, vars), seconds);
-                }
-                break;
             case SkillEffectKind.Cleanse:
                 if (body != null && Fires(e, hit, caster, vars))
                 {
@@ -332,19 +324,18 @@ public static class SkillEffectApplier
             case SkillEffectKind.Guard:
                 if (Fires(e, hit, caster, vars)) states.BeginGuard(seconds, ScaledMagnitude(e, caster, vars));
                 break;
-            case SkillEffectKind.Buff:
-                // Authored magnitude is a BONUS FRACTION (0.3 = +30%); ApplyStatBuff takes a multiplier. AMPLIFY buffs
-                // are FLAT (not affinity-scaled) — a support's value is uptime, not a bigger number.
-                if (Fires(e, hit, caster, vars)) states.ApplyStatBuff(e.buffStat, 1f + Mathf.Max(0f, StackedMagnitude(e, vars)), seconds);
-                break;
-            case SkillEffectKind.Regen:
-                if (Fires(e, hit, caster, vars)) states.BeginRegen(Mathf.Max(1, Mathf.RoundToInt(ScaledMagnitude(e, caster, vars))), seconds);
-                break;
-            case SkillEffectKind.ManaLeech:
-                if (Fires(e, hit, caster, vars)) states.BeginManaLeech(seconds, StackedMagnitude(e, vars));
-                break;
-            case SkillEffectKind.Reflect:
-                if (Fires(e, hit, caster, vars)) states.BeginReflect(seconds, StackedMagnitude(e, vars));
+            // EVERY timed sub-stat change, buff and debuff alike, lands here — move speed, both regens, leech,
+            // reflect, evasion, the lot. The authored magnitude is FLAT (not affinity-scaled): a support's value is
+            // uptime, not a bigger number. A debuff is authored as a POSITIVE amount and negated here, so nobody has
+            // to type a minus sign to make something worse.
+            case SkillEffectKind.SubStatBuff:
+            case SkillEffectKind.SubStatDebuff:
+                if (Fires(e, hit, caster, vars))
+                {
+                    float amount = Mathf.Max(0f, StackedMagnitude(e, vars));
+                    if (e.kind == SkillEffectKind.SubStatDebuff) amount = -amount;
+                    states.ApplySubStat(e.subStat, amount, seconds);
+                }
                 break;
             case SkillEffectKind.Shield:
                 if (Fires(e, hit, caster, vars)) states.BeginShield(ScaledAmount(e, caster, vars), seconds);

@@ -136,7 +136,7 @@ public class StatPanel : MonoBehaviour
             $"HP    {c.CurrentHP}/{c.MaxHP}\n" +
             $"MP    {c.CurrentMP}/{c.MaxMP}\n" +
             $"ASPD  +{Mathf.RoundToInt((c.AttackSpeedMult - 1f) * 100)}%   " +
-            $"CAST +{Mathf.RoundToInt((c.CastSpeedMult - 1f) * 100)}%\n" +
+            $"CAST ×{c.CastTimeMult:0.00}\n" +
             $"CRIT  {Mathf.RoundToInt(c.CritChance01 * 100)}% ×{c.CritMultiplier:0.0}\n" +
             $"HIT   {c.Hit,-4}  FLEE {c.Flee}";
     }

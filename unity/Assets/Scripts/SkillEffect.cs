@@ -50,9 +50,6 @@ public enum SkillEffectKind
     /// <summary>Inflict an <see cref="Ailment"/> (DoT / stun / slow / …) for <see cref="SkillEffect.seconds"/> at
     /// <see cref="SkillEffect.magnitude"/> → the shared <c>Status.Apply</c> front door.</summary>
     Status,
-    /// <summary>Timed move-speed buff ×<see cref="SkillEffect.magnitude"/> for <see cref="SkillEffect.seconds"/> →
-    /// <c>StatusController.Haste</c>.</summary>
-    Haste,
 
     /// <summary>Self incoming-damage cut for <see cref="SkillEffect.seconds"/> at <see cref="SkillEffect.magnitude"/>
     /// (0..1 reduction) → reuses <c>Character.BeginGuard</c>. (Bulwark.)</summary>
@@ -63,13 +60,14 @@ public enum SkillEffectKind
     /// <summary>Instantly TELEPORT the caster to the cast point (no roll, no travel) → <c>Player3DController.Teleport</c>.
     /// Applied to the caster regardless of the tick radius (the destination IS the point). (Blink Step.)</summary>
     Teleport,
-    /// <summary>Timed self stat-buff (which stat = <see cref="SkillEffect.buffStat"/>) ×<see cref="SkillEffect.magnitude"/>
-    /// for <see cref="SkillEffect.seconds"/>. Damage / AttackSpeed / CastSpeed ride <c>Character</c>. Move speed is NOT
-    /// here — use the <see cref="Haste"/> kind (the single move-speed path; it can also debuff mobs). (War Banner damage-up.)</summary>
-    Buff,
-    /// <summary>Heal-over-time on the caster: <see cref="SkillEffect.magnitude"/> HP per tick for
-    /// <see cref="SkillEffect.seconds"/> → <c>Character.BeginRegen</c>. (Mending Tide.)</summary>
-    Regen,
+    /// <summary>Timed RISE in one sub-stat (which one = <see cref="SkillEffect.subStat"/>) by
+    /// <see cref="SkillEffect.magnitude"/> for <see cref="SkillEffect.seconds"/>.
+    ///
+    /// <para>THE single path for every timed sub-stat change there is — move speed, both regens, leech, reflect,
+    /// accuracy, evasion, the lot. Each used to be its own verb; an author no longer has to know which ones happened
+    /// to get one. Whether the number is a percentage of the stat or an amount added to it is the stat's own answer
+    /// (<see cref="SubStats.IsPercent"/>).</para></summary>
+    SubStatBuff,
     /// <summary>Remove up to <see cref="SkillEffect.amount"/> active debuffs from the target → <c>StatusController.Cleanse</c>.
     /// (Mending Tide.)</summary>
     Cleanse,
@@ -94,12 +92,6 @@ public enum SkillEffectKind
     /// <summary>Drag a mob TOWARD the caster at <see cref="SkillEffect.magnitude"/> speed for
     /// <see cref="SkillEffect.seconds"/> → <c>MonsterAI3D.Knockback</c> from a mirrored origin. (The old Pull affix.)</summary>
     Pull,
-    /// <summary>Self, timed window: for <see cref="SkillEffect.seconds"/>, restore <see cref="SkillEffect.magnitude"/>
-    /// fraction (0..1) of the damage you deal as MP → <c>Character.BeginManaLeech</c>. (The old weapon Mana-Leech affix.)</summary>
-    ManaLeech,
-    /// <summary>Self, timed window: for <see cref="SkillEffect.seconds"/>, reflect <see cref="SkillEffect.magnitude"/>
-    /// fraction (0..1) of the damage you TAKE back at the attacker → <c>Character.BeginReflect</c>. (The old Reflect affix.)</summary>
-    Reflect,
 
     /// <summary>Raise a timed absorbing BARRIER on the caster: soaks <see cref="SkillEffect.amount"/> HP of incoming HIT
     /// damage for <see cref="SkillEffect.seconds"/> → <c>Character.BeginShield</c>. Distinct from <see cref="Guard"/> (a %
@@ -187,14 +179,137 @@ public enum SkillEffectKind
     /// <para>A plain window, not charges: it is never spent by what it blocks, so one stun does not use it up. Refused
     /// at each door rather than suppressed after the fact, so nothing lingers to resume when the window closes.</para>
     ///
-    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    /// <para>Appending is the only safe add — Unity serializes the kind by int.</para></summary>
     ImmuneToDisables,
+
+    /// <summary>Timed DROP in one sub-stat — the exact mirror of <see cref="SubStatBuff"/>, same stat list, same
+    /// pile, same window. The authored number is stated as a positive amount and applied as a subtraction, so an
+    /// author never has to type a minus sign to make something worse.
+    ///
+    /// <para>A separate kind rather than "a buff with a negative number" for ONE reason: what an effect is FOR should
+    /// be readable off the effect. A row that says "Sub Stat Debuff · Evasion · 0.3" says what it does; a buff row
+    /// with a hidden minus in a number field does not.</para>
+    ///
+    /// <para>MUST stay last in the enum — Unity serializes the kind by int, so appending is the only safe add.</para></summary>
+    SubStatDebuff,
 }
 
-/// <summary>Which self-stat a <see cref="SkillEffectKind.Buff"/> effect lifts for its window. Move speed is
-/// deliberately absent — the <see cref="SkillEffectKind.Haste"/> kind is the one authoring path for move speed
-/// (it also targets mobs), so Buff owns only the character-combat stats Haste can't do.</summary>
-public enum BuffStat { Damage, AttackSpeed, CastSpeed }
+/// <summary>WHICH sub-stat a <see cref="SkillEffectKind.SubStatBuff"/> / <see cref="SkillEffectKind.SubStatDebuff"/>
+/// moves. Every timed change to a sub-stat is authored here — there is no second effect kind for any one of them, so
+/// an author never has to know that move speed used to be its own verb and regen another.
+///
+/// <para>Serialized by int, so order is LOAD-BEARING: the first three keep the positions the old three-item stat buff
+/// had, and everything new is APPENDED. Never reorder, never insert in the middle.</para>
+///
+/// <para>Named for the sub-stat itself, never for a flavour word — "MovementSpeed", not "Haste". A reader must be able
+/// to find the number on the character sheet by the name on the effect.</para></summary>
+public enum SubStat
+{
+    Damage, AttackSpeed, CastSpeed,          // 0,1,2 — the original three; positions frozen for saved assets
+    MovementSpeed,
+    HPRegen, MPRegen,
+    ManaLeech, Reflect, LifeSteal,
+    Attack, MagicAttack,
+    Defense, MagicDefense,
+    Accuracy, Evasion,
+    CritChance, CritDamage,
+    MaxHP, MaxMP,
+}
+
+/// <summary>THE sub-stat table — which pile each sub-stat lives in, and what its authored number MEANS. Every reader
+/// (the applier, the state store's recompute, the composer, the tooltip) asks here, so a new sub-stat is one row and
+/// cannot be half-added.</summary>
+public static class SubStats
+{
+    /// <summary>Every sub-stat, in authoring order. Cached so a per-frame or per-hit reader never allocates one.</summary>
+    public static readonly SubStat[] All = (SubStat[])System.Enum.GetValues(typeof(SubStat));
+
+    /// <summary>The pile this sub-stat's bonus is held in. One pile per stat, so "which pile" can name it.</summary>
+    public static StateId PileFor(SubStat s)
+    {
+        switch (s)
+        {
+            case SubStat.Damage:        return StateId.DamageBuff;
+            case SubStat.AttackSpeed:   return StateId.AttackSpeedBuff;
+            case SubStat.CastSpeed:     return StateId.CastSpeedBuff;
+            case SubStat.MovementSpeed: return StateId.MovementSpeed;
+            case SubStat.HPRegen:       return StateId.HPRegen;
+            case SubStat.MPRegen:       return StateId.MPRegen;
+            case SubStat.ManaLeech:     return StateId.ManaLeech;
+            case SubStat.Reflect:       return StateId.Reflect;
+            case SubStat.LifeSteal:     return StateId.LifeSteal;
+            case SubStat.Attack:        return StateId.Attack;
+            case SubStat.MagicAttack:   return StateId.MagicAttack;
+            case SubStat.Defense:       return StateId.Defense;
+            case SubStat.MagicDefense:  return StateId.MagicDefense;
+            case SubStat.Accuracy:      return StateId.Accuracy;
+            case SubStat.Evasion:       return StateId.Evasion;
+            case SubStat.CritChance:    return StateId.CritChance;
+            case SubStat.CritDamage:    return StateId.CritDamage;
+            case SubStat.MaxHP:         return StateId.MaxHP;
+            default:                    return StateId.MaxMP;
+        }
+    }
+
+    // The reverse of PileFor, built ONCE from PileFor itself so the two can never disagree: slot = (int)StateId,
+    // value = the sub-stat + 1, leaving 0 for "this pile is not a sub-stat". An array rather than a switch because
+    // the state store asks this for every live pile inside its recompute.
+    static readonly int[] statForPile = BuildStatForPile();
+    static int[] BuildStatForPile()
+    {
+        var ids = (StateId[])System.Enum.GetValues(typeof(StateId));
+        int max = 0;
+        for (int i = 0; i < ids.Length; i++) if ((int)ids[i] > max) max = (int)ids[i];
+        var map = new int[max + 1];
+        for (int i = 0; i < All.Length; i++) map[(int)PileFor(All[i])] = (int)All[i] + 1;
+        return map;
+    }
+
+    /// <summary>Which sub-stat this pile holds, if it holds one at all. False for every pile that is not a sub-stat
+    /// (Guard, Shield, Parry, the ailments…), so a caller can walk every live state and pick out only these.</summary>
+    public static bool TryStatFor(StateId pile, out SubStat stat)
+    {
+        int i = (int)pile;
+        int v = (i >= 0 && i < statForPile.Length) ? statForPile[i] : 0;
+        stat = (SubStat)(v - 1);
+        return v > 0;
+    }
+
+    /// <summary>True when the authored number is a FRACTION OF THE STAT (0.3 = +30% of what you already have); false
+    /// when it is added straight on in the stat's own units.
+    ///
+    /// <para>The split is not a style choice: a percentage of a stat that sits at zero for most builds — regen, leech,
+    /// reflect, life steal, crit chance — is always zero, so a percentage knob there would be a knob that does
+    /// nothing. Those stats take the number as-is instead.</para></summary>
+    public static bool IsPercent(SubStat s)
+    {
+        switch (s)
+        {
+            case SubStat.HPRegen:
+            case SubStat.MPRegen:
+            case SubStat.ManaLeech:
+            case SubStat.Reflect:
+            case SubStat.LifeSteal:
+            case SubStat.CritChance:
+            case SubStat.CritDamage: return false;
+            default:                 return true;
+        }
+    }
+
+    /// <summary>What the authored number means, for the composer field and the tooltip — so an author is never left
+    /// guessing whether they are typing a percentage or an amount.</summary>
+    public static string UnitLabel(SubStat s)
+    {
+        if (IsPercent(s)) return "0.3 = +30%";
+        switch (s)
+        {
+            case SubStat.HPRegen: return "HP per second";
+            case SubStat.MPRegen: return "MP per second";
+            case SubStat.CritDamage: return "0.5 = +50% crit damage";
+            default: return "0.3 = 30%";
+        }
+    }
+}
 
 /// <summary>How a Damage/Execute effect RESOLVES — the RPS-triangle axis (design doc "Combat Ontology"). Serialized
 /// by int, so order is load-bearing: <c>Physical=0, Magic=1, Crit=2</c> (a legacy <c>magic:1</c> bool migrates to
@@ -350,12 +465,9 @@ public class SkillEffect
         {
             // Ailment i ↔ StateId i, matching enum order (StatusController.Apply).
             case SkillEffectKind.Status:        id = (StateId)(int)e.ailment; return true;
-            // UnitStates.ApplyStatBuff picks the channel from the stat.
-            case SkillEffectKind.Buff:
-                id = e.buffStat == BuffStat.AttackSpeed ? StateId.AttackSpeedBuff
-                   : e.buffStat == BuffStat.CastSpeed   ? StateId.CastSpeedBuff
-                                                        : StateId.DamageBuff;
-                return true;
+            // One pile per sub-stat, buff and debuff alike — SubStats.PileFor is the single owner of that mapping.
+            case SkillEffectKind.SubStatBuff:
+            case SkillEffectKind.SubStatDebuff: id = SubStats.PileFor(e.subStat); return true;
             case SkillEffectKind.Guard:         id = StateId.Guard;         return true;
             case SkillEffectKind.Parry:         id = StateId.Parry;         return true;
             case SkillEffectKind.BoostOutgoingDamage: id = StateId.OutgoingDamageBoost; return true;
@@ -365,11 +477,7 @@ public class SkillEffect
             // so it is not something this effect hands out.
             case SkillEffectKind.Brace:         id = StateId.Brace;         return true;
             case SkillEffectKind.Shield:        id = StateId.Shield;        return true;
-            case SkillEffectKind.Regen:         id = StateId.Regen;         return true;
             case SkillEffectKind.Vulnerability: id = StateId.Vulnerability; return true;
-            case SkillEffectKind.Haste:         id = StateId.Haste;         return true;
-            case SkillEffectKind.ManaLeech:     id = StateId.ManaLeech;     return true;
-            case SkillEffectKind.Reflect:       id = StateId.Reflect;       return true;
             default: return false;
         }
     }
@@ -394,11 +502,12 @@ public class SkillEffect
              "shield, a regen or a stat buff can be placed on ANY unit — including a mob.")]
     public EffectSide side = EffectSide.Auto;
 
-    [Header("Buff (Buff kind)")]
-    [Tooltip("Which self-stat the Buff kind lifts for its window. magnitude = the FLAT bonus fraction, 0.3 = +30% (AMPLIFY buffs " +
-             "are NOT affinity-scaled — support value comes from uptime, not a bigger number); seconds = duration " +
-             "(this DOES scale off sustain stats via durationAffinity).")]
-    public BuffStat buffStat = BuffStat.Damage;
+    [Header("Sub stat (Sub Stat Buff / Debuff kinds)")]
+    [Tooltip("Which sub-stat this moves for its window. magnitude = how far (a fraction of the stat for most, an " +
+             "amount for the ones whose base is normally zero — the field says which); seconds = duration " +
+             "(this DOES scale off sustain stats via durationAffinity). The magnitude itself is FLAT — support value " +
+             "comes from uptime, not a bigger number.")]
+    public SubStat subStat = SubStat.Damage;
 
     // A buff that GREW while it was up (a delay, a step size, an interval, a ceiling — four knobs on one effect) was
     // removed 2026-08-17: no shipped skill ever set them, and a buff whose value depends on how long it has been
@@ -461,8 +570,8 @@ public class SkillEffect
         k != SkillEffectKind.Knockback && k != SkillEffectKind.Pull;
 
     public static bool IsSelfVerb(SkillEffectKind k) =>
-        k == SkillEffectKind.Guard || k == SkillEffectKind.Buff || k == SkillEffectKind.Regen ||
-        k == SkillEffectKind.Cleanse || k == SkillEffectKind.ManaLeech || k == SkillEffectKind.Reflect ||
+        k == SkillEffectKind.Guard || k == SkillEffectKind.SubStatBuff || k == SkillEffectKind.SubStatDebuff ||
+        k == SkillEffectKind.Cleanse ||
         k == SkillEffectKind.Shield || k == SkillEffectKind.Parry || k == SkillEffectKind.Brace ||
         k == SkillEffectKind.BoostOutgoingDamage ||
         IsModifier(k) || NeedsPoint(k);

@@ -103,7 +103,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      buffStat: 0
+      subStat: 0
       affinity: []
       durationAffinity: []
       hitCountAffinity: []

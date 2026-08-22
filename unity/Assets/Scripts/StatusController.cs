@@ -48,7 +48,7 @@ public class StatusController : MonoBehaviour
     // Ailment + Haste STATE (which are active, their timers + magnitudes) now lives in the unified per-unit
     // UnitStates store (V3). This controller keeps the VFX auras, the mob-AI delegation, the DoT ticking, and the
     // action-lock — but reads/writes state through `states`. Ailment i maps 1:1 to StateId i (matching enum order);
-    // Haste is StateId.Haste. Newest-wins overwrite (the store's policy — the intended change from the old Max timer).
+    // Haste writes the MovementSpeed sub-stat pile. Newest-wins overwrite (the store's policy — the intended change from the old Max timer).
     UnitStates statesCache;
     /// <summary>The unit's ONE state store — the single source that BOTH gameplay and the buff tray read, so no state
     /// can be visible to one and not the other. The PLAYER is built from TWO GameObjects (the persistent Character data
@@ -217,7 +217,7 @@ public class StatusController : MonoBehaviour
     public float MoveMult { get { if (ActionLocked) return 0f; var st = states; return st != null ? st.MoveMult : 1f; } }   // store folds Slow × Haste; the action-lock still zeroes it
     /// <summary>The live Haste move-speed multiplier (1 = none), or 1 once the buff has expired. Lets the dev
     /// panel show/drive the current speed buff on a slider.</summary>
-    public float HasteMult { get { var st = states; var h = st != null ? st.Get(StateId.Haste) : null; return h != null ? h.Mult : 1f; } }
+    public float HasteMult { get { var st = states; var h = st != null ? st.Get(StateId.MovementSpeed) : null; return h != null ? h.Mult : 1f; } }
     /// <summary>True while spell-casting is blocked.</summary>
     public bool Silenced { get { var st = states; return st != null && st.Silenced; } }
     /// <summary>HIT (accuracy) points to subtract from this unit's attacks while blinded.</summary>
@@ -321,9 +321,9 @@ public class StatusController : MonoBehaviour
     public void Haste(float multiplier, float seconds)
     {
         if (seconds <= 0f || states == null) return;
-        bool wasActive = states.Has(StateId.Haste);
+        bool wasActive = states.Has(StateId.MovementSpeed);
         // This API speaks MULTIPLIERS (×1.3), the store keeps a BONUS FRACTION (0.3) — convert once, here.
-        states.Apply(StateId.Haste, seconds, Mathf.Max(0.01f, multiplier) - 1f);
+        states.Apply(StateId.MovementSpeed, seconds, Mathf.Max(0.01f, multiplier) - 1f);
         if (!wasActive)
         {
             DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "Haste!", HasteColor);
@@ -402,11 +402,13 @@ public class StatusController : MonoBehaviour
     // practice even though the store held it for anyone.
     void TickRegen()
     {
-        var s = states.Get(StateId.Regen);
+        var s = states.Get(StateId.HPRegen);
         if (s == null || Time.time < s.nextTick) return;
         s.nextTick = Time.time + UnitStates.RegenInterval;
         var u = Unit;
-        if (u != null) u.Heal(s.intAmount);
+        // The pile holds HP per SECOND (the same units the character's mana trickle uses), so one tick pays for the
+        // interval it covers. Rounded up so a rate slower than one HP per tick still heals rather than vanishing.
+        if (u != null) u.Heal(Mathf.Max(1, Mathf.CeilToInt(s.magnitude * UnitStates.RegenInterval)));
     }
 
     // Brace: damage held back during the window comes due the moment it ENDS — as true damage, because the mitigation

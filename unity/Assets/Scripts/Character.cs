@@ -40,8 +40,10 @@ public class Character : MonoBehaviour, ICombatUnit
     [Tooltip("Damage reflect: fraction of damage you TAKE returned to the attacker. A thorns card.")]
     public float reflectPct = 0f;
 
-    /// <summary>Lifesteal fraction (0..1), read by <see cref="Health"/> when the player deals damage.</summary>
-    public float LifeStealPct => lifeStealPct;
+    /// <summary>Lifesteal fraction (0..1), read by <see cref="Health"/> when the player deals damage — the permanent
+    /// card value plus whatever a timed sub-stat window is adding. Floored at 0 so a debuff cannot turn dealing damage
+    /// into taking it.</summary>
+    public float LifeStealPct => Mathf.Max(0f, lifeStealPct + SubBonus(SubStat.LifeSteal));
 
     [Header("Growth per level")]
     public int hpPerLevel = 6;
@@ -207,6 +209,15 @@ public class Character : MonoBehaviour, ICombatUnit
     /// passive layer does. Reads the same choke as every effective-stat getter.</summary>
     public float RingBonus(StatId stat) => PassivePercent(stat);
 
+    /// <summary>The live signed bonus a timed sub-stat buff or debuff is putting on <paramref name="stat"/>, 0 when
+    /// none. Neutral while the baseline snapshot is being taken, so the "before" column of a level-up preview shows
+    /// the character without their windows rather than a moment frozen mid-fight.</summary>
+    float SubBonus(SubStat stat) => ignoreStates ? 0f : States.SubStatBonus(stat);
+
+    /// <summary>The whole percentage lift on one stat: ring investment plus any live sub-stat window. The single
+    /// place the two are added, so no formula has to know that states exist and none can be forgotten.</summary>
+    float Lift(StatId ringNode, SubStat stat) => PassivePercent(ringNode) + SubBonus(stat);
+
     /// <summary>The hotbar layout — which unlocked skill is bound to each of the nine slots (keys 1–9).
     /// Set by drag/click in the Skills (K) menu; read by the bar + the central key router. Persisted.</summary>
     public HotbarBindings Hotbar { get; } = new HotbarBindings();
@@ -288,14 +299,17 @@ public class Character : MonoBehaviour, ICombatUnit
         baseMagicDefense = baseMagicDefense, magicDefensePerLevel = magicDefensePerLevel,
     };
 
-    public int MaxHP   => UnitStatMath.MaxHP(Inputs, equipBonuses, PassivePercent(StatId.HP));
-    public int Attack  => UnitStatMath.Attack(Inputs, equipBonuses, PassivePercent(StatId.Atk));
-    public int Defense => UnitStatMath.Defense(Inputs, equipBonuses, PassivePercent(StatId.Def));
+    // Each stat's lift is ONE number handed to the shared formula: what the ring invested, plus whatever a timed
+    // sub-stat buff or debuff is adding right now. Folding the two together here — rather than teaching every formula
+    // about states — is what lets a new sub-stat work everywhere by touching one line.
+    public int MaxHP   => UnitStatMath.MaxHP(Inputs, equipBonuses, Lift(StatId.HP, SubStat.MaxHP));
+    public int Attack  => UnitStatMath.Attack(Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
+    public int Defense => UnitStatMath.Defense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.Defense));
 
-    public int MaxMP        => UnitStatMath.MaxMP(Inputs, equipBonuses, PassivePercent(StatId.MP));
-    public int MagicAttack  => UnitStatMath.MagicAttack(Inputs, equipBonuses, PassivePercent(StatId.MAtk));
+    public int MaxMP        => UnitStatMath.MaxMP(Inputs, equipBonuses, Lift(StatId.MP, SubStat.MaxMP));
+    public int MagicAttack  => UnitStatMath.MagicAttack(Inputs, equipBonuses, Lift(StatId.MAtk, SubStat.MagicAttack));
     // The ring has no separate M.DEF node — the Def node is dual, so MagicDefense reads the Def passive %.
-    public int MagicDefense => UnitStatMath.MagicDefense(Inputs, equipBonuses, PassivePercent(StatId.Def));
+    public int MagicDefense => UnitStatMath.MagicDefense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.MagicDefense));
 
     // Pre-renewal DEF split (player side): incoming damage is cut by HARD DEF (a % reduction, from armor)
     // FIRST, then by SOFT DEF (the flat Defense/MagicDefense above, mostly VIT/INT). Hard DEF has no item
@@ -385,23 +399,22 @@ public class Character : MonoBehaviour, ICombatUnit
     // passive % layer directly, so a stat with 0 ranks is simply neutral.
     public const float BaseCritMultiplier = UnitStatMath.BaseCritMultiplier;          // pre-renewal: a crit deals 140%…
     // The single Critical ring node drives BOTH crit rate and crit damage — both read PassivePercent(StatId.Critical).
-    public float CritMultiplier  => UnitStatMath.CritMultiplier(PassivePercent(StatId.Critical));   // …+ the Critical node's % on top
+    public float CritMultiplier  => UnitStatMath.CritMultiplier(Lift(StatId.Critical, SubStat.CritDamage));   // …+ the Critical node's % on top
     // These combine the primary-stat contribution (LUK/AGI/DEX) with the passive % layer.
-    public float CritChance01    => UnitStatMath.CritChance01(Inputs, equipBonuses, PassivePercent(StatId.Critical));
+    public float CritChance01    => UnitStatMath.CritChance01(Inputs, equipBonuses, Lift(StatId.Critical, SubStat.CritChance));
     // RO accuracy/evasion. HIT (DEX + level) is rolled against a target's FLEE to decide a physical hit;
     // FLEE (AGI + level, scaled by the Evasion passive) is how often incoming physical attacks whiff on us.
     // Both feed the shared HIT-vs-FLEE roll in Combat; magic ignores them. See Combat for the formula.
-    public int Hit  => UnitStatMath.Hit(Inputs, PassivePercent(StatId.Accuracy));
-    public int Flee => UnitStatMath.Flee(Inputs, PassivePercent(StatId.Evasion));
+    public int Hit  => UnitStatMath.Hit(Inputs, Lift(StatId.Accuracy, SubStat.Accuracy));
+    public int Flee => UnitStatMath.Flee(Inputs, Lift(StatId.Evasion, SubStat.Evasion));
     // Pre-renewal ASPD: AGI is the primary driver, DEX contributes a fraction (DexAspdShare). Kept as a
     // SPEED MULTIPLIER (the game's attack model) rather than the RO 0–200 scale. >1 = swing faster.
     public float AttackSpeedMult => UnitStatMath.AttackSpeedMult(Inputs, equipBonuses, PassivePercent(StatId.AttackSpeed), AspdBuffMult);
-    public float CastSpeedMult   => UnitStatMath.CastSpeedMult(Inputs, PassivePercent(StatId.CastSpeed), CastBuffMult);   // >1 = cast faster; CastSpeed ring node + Blink haste lift it
 
-    /// <summary>Pre-renewal cast-time multiplier applied to a spell's base wind-up: <c>1 − DEX/150</c>,
-    /// clamped to [0,1]. 1 at 0 DEX, 0 (instant cast) at DEX 150. A spell's real cast time is
-    /// <c>baseCast × CastTimeMult</c>.</summary>
-    public float CastTimeMult => UnitStatMath.CastTimeMult(Inputs);
+    /// <summary>The ONE cast-speed number: the multiplier applied to a spell's base wind-up, so a spell's real cast
+    /// time is <c>baseCast × CastTimeMult</c>. 1 at 0 DEX, 0 (instant) at DEX 150; the CastSpeed ring node and the
+    /// cast-speed buff shorten it further. Lower is faster.</summary>
+    public float CastTimeMult => UnitStatMath.CastTimeMult(Inputs, PassivePercent(StatId.CastSpeed), CastBuffMult);
 
     // ---- Derived-stat snapshots (the pure keystone for the HUD windows) -----------------------
     /// <summary>A readout of every derived stat for the CURRENT loadout (what the Character /
@@ -455,7 +468,7 @@ public class Character : MonoBehaviour, ICombatUnit
         maxHP = MaxHP,            maxMP = MaxMP,
         moveSpeed = 100,
         critChance = CritChance01, critMult = CritMultiplier,
-        aspdMult = AttackSpeedMult, castSpeedMult = CastSpeedMult, castTimeMult = CastTimeMult,
+        aspdMult = AttackSpeedMult, castTimeMult = CastTimeMult,
         hardDefPct = HardDefPercent, hardMdefPct = HardMagicDefPercent,
         guardCutPct = GuardCutNow, lifeStealPct = LifeStealPct,
         reflectPct = ReflectPctNow, manaLeechPct = ManaLeechPctNow, barrierHP = BarrierNow,
@@ -575,52 +588,6 @@ public class Character : MonoBehaviour, ICombatUnit
         if (amount <= 0 || CurrentMP >= MaxMP) return;
         CurrentMP = Mathf.Min(MaxMP, CurrentMP + amount);
         OnManaChanged?.Invoke();
-    }
-
-    // ---- Ultimate charge (shared meter) -----------------------------------------------------------
-    // ONE meter feeding the dedicated ult slot. Fills in combat — dealing damage (Health.ApplyLeech), taking
-    // damage (the TakeDamage sinks), and casting any skill (SkillRunner.Spend). An Ultimate spends it instead of
-    // riding a plain cooldown, so it's a earned MOMENT, not a rotation button.
-    [Header("Ultimate charge")]
-    [Tooltip("Charge-accumulation ceiling used ONLY while no ultimate is equipped. When an ult IS equipped the meter caps at THAT ult's chargeCost (see UltMeterCap), so any cost — 300, 1000, a million — always fills to READY.")]
-    public float ultChargeMax = 200f;
-    /// <summary>Charge added per point of damage DEALT / TAKEN, and a flat amount per non-ult cast — the combat fill rate.</summary>
-    public const float UltChargePerDamageDealt = 0.2f, UltChargePerDamageTaken = 0.3f, UltChargePerCast = 6f;
-
-    /// <summary>Current ult charge (0..<see cref="UltMeterCap"/>).</summary>
-    public float UltCharge { get; private set; }
-
-    /// <summary>Charge needed to FIRE the equipped ultimate (0 = none equipped). THE single source of truth for
-    /// "full": the meter cap and every HUD fill derive from it, so there's no fixed max to keep in sync — raise
-    /// an ult's chargeCost to any value and the meter still reaches it.</summary>
-    public float EquippedUltCost => PlayerSkills.ById(Hotbar.Ult) is SkillRunner sr && sr.def != null ? sr.def.chargeCost : 0f;
-
-    /// <summary>The live meter cap: the equipped ult's cost, or (nothing equipped) the fallback accumulation ceiling.</summary>
-    float UltMeterCap { get { float c = EquippedUltCost; return c > 0f ? c : ultChargeMax; } }
-
-    /// <summary>Ult charge as a 0..1 fill for the HUD (progress toward firing the equipped ult).</summary>
-    public float UltCharge01 { get { float c = UltMeterCap; return c > 0f ? Mathf.Clamp01(UltCharge / c) : 0f; } }
-    /// <summary>True when the meter holds at least <paramref name="cost"/>.</summary>
-    public bool UltReady(float cost) => UltCharge >= cost;
-    /// <summary>Fired whenever the meter changes — drives the ult slot's fill.</summary>
-    public event Action OnUltChargeChanged;
-
-    /// <summary>Add to the ult meter (clamped to max). No-op while dead. Called by the combat fill sources.</summary>
-    public void AddUltCharge(float amount)
-    {
-        if (amount <= 0f || IsDead) return;
-        float before = UltCharge;
-        UltCharge = Mathf.Min(UltMeterCap, UltCharge + amount);
-        if (UltCharge != before) OnUltChargeChanged?.Invoke();
-    }
-
-    /// <summary>Spend <paramref name="cost"/> from the meter; false (and spends nothing) if not charged.</summary>
-    public bool SpendUltCharge(float cost)
-    {
-        if (UltCharge < cost) return false;
-        UltCharge -= Mathf.Max(0f, cost);
-        OnUltChargeChanged?.Invoke();
-        return true;
     }
 
     // ── Stamina (sprint pool) ─────────────────────────────────────────────────
@@ -848,18 +815,9 @@ public class Character : MonoBehaviour, ICombatUnit
     float AspdBuffMult          => ignoreStates ? 1f : States.AttackSpeedBuffMult;   // unified state store (neutral for BaseDerived)
     float CastBuffMult          => ignoreStates ? 1f : States.CastSpeedBuffMult;     // unified state store (neutral for BaseDerived)
 
-    /// <summary>Timed outgoing-damage buff ×<paramref name="mult"/> for <paramref name="seconds"/>.
-    /// <para>Thin wrapper over <see cref="UnitStates.ApplyStatBuff"/> — the shared landing point a mob uses too, so a
-    /// buff behaves identically on either. Kept as a named method because callers read better for it.</para></summary>
-    public void BuffDamage(float mult, float seconds) => States.ApplyStatBuff(BuffStat.Damage, mult, seconds);
-    /// <summary>Timed attack-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
-    public void BuffAttackSpeed(float mult, float seconds) => States.ApplyStatBuff(BuffStat.AttackSpeed, mult, seconds);
-    /// <summary>Timed cast-speed buff ×<paramref name="mult"/> for <paramref name="seconds"/> (Blink Step haste).</summary>
-    public void BuffCastSpeed(float mult, float seconds)   => States.ApplyStatBuff(BuffStat.CastSpeed, mult, seconds);
-
-    /// <summary>Start (or refresh) a heal-over-time: <paramref name="perTick"/> HP every <see cref="UnitStates.RegenInterval"/>s
-    /// for <paramref name="seconds"/> (Mending Tide). Ticked in <see cref="Update"/>.</summary>
-    public void BeginRegen(int perTick, float seconds) => States.BeginRegen(perTick, seconds);
+    // A timed change to a sub-stat is written ONE way, through UnitStates.ApplySubStat, for a player and a mob alike.
+    // The per-stat wrappers that used to sit here (damage, attack speed, cast speed, regen, leech, reflect) were a
+    // second door onto the same piles with nothing but a nicer name to recommend them, and nothing called them.
 
     // Timed skill windows (V3: the old weapon Mana-Leech / Reflect affixes, rehomed as skill effects) — now stored in
     // the unified state store. The combat sinks read the fraction via States and see 0 once the window lapses.
@@ -870,14 +828,6 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>The live extra damage-reflect fraction from a skill window (0 when inactive), added on top of the
     /// permanent thorns-card <c>reflectPct</c> where incoming damage is bounced back.</summary>
     public float ActiveReflectBonus => States.ReflectBonus;
-
-    /// <summary>Open a mana-leech window: for <paramref name="seconds"/>, <paramref name="fraction"/> (0..1) of the
-    /// damage you deal returns as MP.</summary>
-    public void BeginManaLeech(float seconds, float fraction) => States.BeginManaLeech(seconds, fraction);
-
-    /// <summary>Open a damage-reflect window: for <paramref name="seconds"/>, reflect an extra <paramref name="fraction"/>
-    /// (0..1) of the damage you take back at the attacker (adds to the thorns card's permanent reflect).</summary>
-    public void BeginReflect(float seconds, float fraction) => States.BeginReflect(seconds, fraction);
 
     // Absorb pool (Shield skill): a timed barrier that eats incoming HIT damage before it reaches CurrentHP. Bypassed by
     // DoT true damage, exactly like Guard (see TakeTrueDamage). Stored in the unified state store (intAmount = pool).
@@ -915,7 +865,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Run the last two mitigations (Shield absorb, then Brace defer) and subtract what's left from HP.
     /// RETURNS what actually landed, which is NOT what the caller passed in — a barrier or a brace can reduce it, to
-    /// zero. Every caller must use the RETURN for anything downstream (the number shown, thorns, ult charge, what it
+    /// zero. Every caller must use the RETURN for anything downstream (the number shown, thorns, what it
     /// reports back); the figure it passed in is only the hit's size BEFORE these two, and using that is the bug this
     /// signature exists to prevent.</summary>
     int ApplyHitToHP(int dmg, MonsterAI3D source = null)
@@ -987,7 +937,7 @@ public class Character : MonoBehaviour, ICombatUnit
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF. Mobs don't crit the player → crit:false.
         int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod);
         // Everything below reads what LANDED, never the pre-barrier figure: a hit a Shield ate or a Brace holds costs
-        // no HP, so it must also not flash, not bounce thorns, not build ult charge, and must report 0 to the attacker
+        // no HP, so it must also not flash, not bounce thorns, and must report 0 to the attacker
         // (whose own "did I connect" check pops the damage number and grants its XP).
         dmg = ApplyHitToHP(dmg, source);
         OnHealthChanged?.Invoke();
@@ -996,7 +946,6 @@ public class Character : MonoBehaviour, ICombatUnit
             Sfx.Play(hurtSfx);                       // player hurt grunt
             OnDamaged?.Invoke(dmg);                  // drives the player hurt flash
             Reflect(dmg, source);                    // thorns: bounce a fraction back at the attacker
-            AddUltCharge(dmg * UltChargePerDamageTaken);   // taking hits builds ult charge
         }
         if (CurrentHP == 0) RaiseDeath();   // Phase F: DeathScreen handles the death → respawn flow
         return dmg;
@@ -1031,7 +980,6 @@ public class Character : MonoBehaviour, ICombatUnit
             Sfx.Play(hurtSfx);
             OnDamaged?.Invoke(dmg);
             Reflect(dmg, source);
-            AddUltCharge(dmg * UltChargePerDamageTaken);   // taking hits builds ult charge
         }
         if (CurrentHP == 0) RaiseDeath();
         return dmg;
@@ -1083,9 +1031,12 @@ public class Character : MonoBehaviour, ICombatUnit
         // (Heal-over-time is NOT ticked here any more: StatusController.TickRegen owns it for every unit, so a regen
         // cast on a mob heals it too. Duplicating it here would double-heal the player.)
 
-        if (mpRegenPerSecond <= 0f) return;
+        // The trickle is the character's own rate plus any live sub-stat window, floored at 0 — a debuff can stop
+        // regen dead but never drain mana, which would be a damage source wearing a regen's name.
+        float mpRate = Mathf.Max(0f, mpRegenPerSecond + SubBonus(SubStat.MPRegen));
+        if (mpRate <= 0f) return;
         if (CurrentMP >= MaxMP) { mpAccum = 0f; return; }
-        mpAccum += mpRegenPerSecond * Time.deltaTime;
+        mpAccum += mpRate * Time.deltaTime;
         if (mpAccum < 1f) return;
         int add = Mathf.FloorToInt(mpAccum);
         mpAccum -= add;

@@ -2,17 +2,16 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// The slim horizontal <b>stamina gauge</b> — the sprint pool. Sits directly ABOVE the ult charge bar
-/// (<see cref="UltChargeBar"/>), same width, with a plain WHITE fill that empties left→right as V-sprint drains
-/// <see cref="Character.Stamina"/> and refills as it recharges. Always visible (stamina always exists).
+/// The slim horizontal <b>stamina gauge</b> — the sprint pool. Sits above the hotbar with a plain WHITE fill that
+/// empties left→right as V-sprint drains <see cref="Character.Stamina"/> and refills as it recharges. Always
+/// visible (stamina always exists).
 ///
 /// <para>Self-builds its holder on the persistent GameUICanvas (added by <c>HotbarPanel</c>, exactly like
-/// <see cref="UltChargeBar"/> / <see cref="BuffBarPanel"/>); event-driven off <see cref="Character.OnStaminaChanged"/>.
+/// <see cref="BuffBarPanel"/>); event-driven off <see cref="Character.OnStaminaChanged"/>.
 /// The fill is written only on a stamina change — no per-frame or per-hit allocation.</para>
 /// </summary>
 public class StaminaBar : MonoBehaviour
 {
-    // Same width as the ult bar (UltChargeBar.BarWidth = 300); sit just above it (ult holder is at Y=104, height 16).
     const float BarWidth = 300f, BarHeight = 12f, YAboveUlt = 124f;
     static readonly Color TrackColor = new Color(0.06f, 0.05f, 0.08f, 0.92f);
     static readonly Color FillColor  = Color.white;
