@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.heal_circle
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 1
   id: skill.heal_circle
   displayName: Sanctuary
+  weaponType: 0
+  published: 0
   icon: {fileID: -7148899402789621793, guid: 6a4837e8d7a3aab44b6d6e0ef020be4c, type: 3}
   description: 
   archetype: 0
@@ -22,21 +23,37 @@ MonoBehaviour:
   shape: 0
   complexity: 0
   acquisitionTier: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
   manaCost: 10
   cooldown: 4.5
   castTime: 2.03
   aim: 2
   castRange: 11
   tier: 0
-  chargeCost: 100
   castCircleId: circle.magic
   castCircleTint: {r: 0.4278216, g: 0.93207544, b: 0.22334634, a: 1}
   vfx: {fileID: 11400000, guid: d6535b57215ae2c479e8c6dff7e958df, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
   holdCasterForRun: 0
   hasReleaseStance: 1
   releaseStance: 14
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: heal
     targetMode: 2
@@ -46,10 +63,11 @@ MonoBehaviour:
     radius: 1
     projectileCount: 1
     projectileSpread: 0
-    projectileCount: 1
+    stayDuration: 0
     effects:
     - kind: 1
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
         value: 1
@@ -71,8 +89,34 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       magnitude:
         value: 3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
         useStacks: 0
         op: 0
         read: 0
@@ -91,6 +135,40 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       hitCount:
         value: 1
         useStacks: 0
@@ -103,12 +181,12 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      side: 0
       subStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    targets: 1
-    scope: 0
   shortLabel: Sanctuaryy
   keyLabel: a
   slotOrder: 10

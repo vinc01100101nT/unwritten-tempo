@@ -417,9 +417,9 @@ public class SkillTickBinding
         return false;
     }
 
-    // ---- LEGACY (pre-consolidation) — read ONLY by MigrateLegacy to seed the fields above; never by runtime now. ----
-    [HideInInspector] public SkillTargets targets = SkillTargets.Mobs;
-    [HideInInspector] public SkillScope scope = SkillScope.Area;
+    // The pre-consolidation targeting pair (targets + scope) was DELETED on 2026-08-23 with the conversion that read
+    // it: every saved skill now carries the per-tick targeting directly. Same rule as the trigger fields — a format
+    // change finishes on disk, so nothing is left needing a conversion.
 }
 
 /// <summary>
@@ -433,11 +433,10 @@ public class SkillTickBinding
 /// <c>Resources/Skills/</c> so the game can load it by <see cref="id"/> via <see cref="SkillCatalog"/>.</para>
 /// </summary>
 [CreateAssetMenu(menuName = "unwritten/Skill", fileName = "Skill")]
-public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
+public class SkillDef : ScriptableObject
 {
     // Set once the ticks carry the consolidated targeting fields. Old assets (no such field) load as false → auto-
     // migrate on load (idempotent); saving from the new composer persists true, so migration never runs again.
-    [HideInInspector] public bool targetingMigrated = false;
 
     [Header("Identity")]
     [Tooltip("Stable kebab id, e.g. \"skill.meteor\". Keyed by SkillCatalog; don't rename once shipped.")]
@@ -514,19 +513,18 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
         return null;
     }
 
-    // ---- LEGACY (pre-multi-trigger, before 2026-08-15) — the single skill-level trigger + its one state gate. Read
-    // ONLY by MigrateTriggersFromLegacy to seed `triggers`; never by runtime. They must stay declared or Unity drops
-    // the serialized values on load and every authored gate (Deathblow's, the auto-lunge charge spend) silently
-    // vanishes. Deletable once every asset has been re-saved with triggersMigrated = true.
-    [HideInInspector] public bool triggersMigrated = false;
-    [HideInInspector] public SkillTrigger trigger = SkillTrigger.OnCast;
-    [HideInInspector] public string triggerSkillId = "";
-    [HideInInspector] public bool requiresState = false;
-    [HideInInspector] public string requireSkillId = "";
-    [HideInInspector] public StateId requireState = StateId.MovementSpeed;
-    [HideInInspector] public int requireMinStacks = 1;
-    [HideInInspector] public bool consumeAllStacks = false;
-    [HideInInspector] public int consumeStacks = 0;
+    // The pre-multi-trigger fields (one trigger + one gate per skill) and the load-time conversion that seeded
+    // `triggers` from them were DELETED on 2026-08-23, after every saved skill was rewritten carrying its own list.
+    //
+    // ⛔ THE RULE THAT REPLACED THEM: A FORMAT CHANGE FINISHES ON DISK, NOT IN MEMORY. Converting on load and leaving
+    // the files alone is what caused the only bug this has ever had: the conversion is invisible, so a file nobody
+    // happened to re-save sat in the old form for months while the game silently papered over it — and the day the
+    // old field was tidied away, that file would have lost the value with no error, because the zero it fell back to
+    // is a legal value. Seven of twenty-five skills were in exactly that state.
+    //
+    // So when the skill format changes: rewrite EVERY skill asset in the new form as part of the same change, then
+    // delete the old fields. Never ship a conversion that has to be remembered. `tools/check-skill-data.py` fails on
+    // any saved skill that still needs converting, so the rule is enforced rather than merely written down.
 
     [Header("Cost / cadence")]
     public int manaCost = 10;
@@ -641,72 +639,6 @@ public class SkillDef : ScriptableObject, ISerializationCallbackReceiver
     /// makes naming a skill enough, with no second place to fill in.</para></summary>
     public string HotbarLabel =>
         string.IsNullOrWhiteSpace(shortLabel) || shortLabel == DefaultShortLabel ? displayName : shortLabel;
-
-    public void OnBeforeSerialize() { }
-
-    /// <summary>One-time migration of the pre-consolidation targeting (skill <c>aim</c> + per-tick <c>scope</c>/
-    /// <c>targets</c>) into the new per-tick <see cref="TargetMode"/> model. Runs on load for un-migrated assets; the
-    /// new composer saves <see cref="targetingMigrated"/> = true so it never runs on already-migrated data.</summary>
-    public void OnAfterDeserialize()
-    {
-        MigrateTriggersFromLegacy();
-        if (targetingMigrated || bindings == null) return;
-        for (int i = 0; i < bindings.Count; i++) MigrateBindingFromLegacy(bindings[i]);
-        targetingMigrated = true;
-    }
-
-    /// <summary>One-time migration of the single skill-level trigger + gate into the <see cref="triggers"/> list: an
-    /// old asset becomes exactly one entry, so its behavior is unchanged. Idempotent — the composer saves
-    /// <see cref="triggersMigrated"/> = true, so it never re-runs and can never overwrite an authored second entry.</summary>
-    void MigrateTriggersFromLegacy()
-    {
-        if (triggersMigrated) return;
-        triggersMigrated = true;
-        if (triggers == null) triggers = new List<SkillTriggerEntry>();
-        if (triggers.Count > 0) return;   // already authored (a fresh skill from the composer) — nothing to carry over
-        triggers.Add(new SkillTriggerEntry
-        {
-            trigger = trigger,
-            triggerSkillId = triggerSkillId,
-            requiresState = requiresState,
-            requireSkillId = requireSkillId,
-            requireMinStacks = requireMinStacks,
-            consumeAllStacks = consumeAllStacks,
-            consumeStacks = consumeStacks,
-        });
-    }
-
-    void MigrateBindingFromLegacy(SkillTickBinding b)
-    {
-        if (b == null) return;
-        b.affects = b.targets == SkillTargets.None ? SkillTargets.Mobs : b.targets;
-
-        bool anyPointSelf = false, allSelf = true;   // any Dash/Blink present? are ALL effects self-only?
-        if (b.effects != null && b.effects.Count > 0)
-            for (int i = 0; i < b.effects.Count; i++)
-            {
-                var e = b.effects[i];
-                if (e == null) continue;
-                if (SkillEffect.NeedsPoint(e.kind)) anyPointSelf = true;
-                if (!SkillEffect.LandsOnCaster(e)) allSelf = false;
-            }
-
-        // Honor the LEGACY aim first (it was the authoritative cast gesture), then refine with scope/effects.
-        if (aim == SkillAim.Self)
-        {
-            b.targetMode = TargetMode.Self; b.affects = SkillTargets.Player;
-        }
-        else if (aim == SkillAim.Target || b.scope == SkillScope.Single)
-        {
-            b.targetMode = TargetMode.SingleTarget;
-        }
-        else   // aim == Ground
-        {
-            b.targetMode = TargetMode.Ground;
-            if (anyPointSelf || allSelf) { b.groundDelivery = GroundDelivery.Point; b.affects = SkillTargets.Player; }
-            else                          { b.groundDelivery = GroundDelivery.Aoe; }
-        }
-    }
 
     /// <summary>The binding for <paramref name="tickId"/>, or null if this tick is purely visual (unbound).</summary>
     public SkillTickBinding BindingFor(string tickId)

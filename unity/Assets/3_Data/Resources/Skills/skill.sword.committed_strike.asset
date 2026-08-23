@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.sword.committed_strike
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 1
   id: skill.sword.committed_strike
   displayName: Committed Strike
   weaponType: 1
@@ -37,22 +36,12 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
-  triggersMigrated: 1
-  trigger: 0
-  triggerSkillId: 
-  requiresState: 0
-  requireSkillId: 
-  requireState: 0
-  requireMinStacks: 1
-  consumeAllStacks: 0
-  consumeStacks: 0
   manaCost: 14
   cooldown: 6
   castTime: 1.2
   aim: 1
   castRange: 5
   tier: 0
-  chargeCost: 100
   castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
@@ -61,6 +50,7 @@ MonoBehaviour:
   repeatScaleWithAttackSpeed: 0
   repeatBeatsPerSwing: 1
   repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
   repeatReaim: 0
   repeatReaimRange: 6
   holdCasterForRun: 0
@@ -80,6 +70,7 @@ MonoBehaviour:
     effects:
     - kind: 0
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
         value: 2
@@ -198,10 +189,9 @@ MonoBehaviour:
       affinity:
       - stat: 0
         weight: 100
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    targets: 2
-    scope: 0
   shortLabel: Commit
   keyLabel: 
   slotOrder: 10

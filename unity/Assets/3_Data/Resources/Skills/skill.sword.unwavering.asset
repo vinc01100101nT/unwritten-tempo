@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.sword.unwavering
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 1
   id: skill.sword.unwavering
   displayName: Unwavering
   weaponType: 1
@@ -34,22 +33,12 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
-  triggersMigrated: 1
-  trigger: 0
-  triggerSkillId: 
-  requiresState: 0
-  requireSkillId: 
-  requireState: 9
-  requireMinStacks: 1
-  consumeAllStacks: 0
-  consumeStacks: 0
   manaCost: 10
   cooldown: 5
   castTime: 0
   aim: 2
   castRange: 11
   tier: 0
-  chargeCost: 100
   castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
@@ -198,8 +187,6 @@ MonoBehaviour:
       chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    targets: 2
-    scope: 0
   shortLabel: Skill
   keyLabel: 
   slotOrder: 10

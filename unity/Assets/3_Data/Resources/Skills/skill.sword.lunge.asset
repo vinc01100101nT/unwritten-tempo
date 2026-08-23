@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.sword.lunge
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 1
   id: skill.sword.lunge
   displayName: Lunge
   weaponType: 1
@@ -32,6 +31,8 @@ MonoBehaviour:
     triggerSkillId: 
     requiresState: 0
     requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
@@ -44,33 +45,27 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 1
-  triggersMigrated: 1
-  trigger: 0
-  triggerSkillId: 
-  requiresState: 0
-  requireSkillId: 
-  requireState: 9
-  requireMinStacks: 1
-  consumeAllStacks: 0
-  consumeStacks: 0
   manaCost: 8
   cooldown: 5
   castTime: 0
   aim: 2
   castRange: 8
   tier: 0
-  chargeCost: 100
   castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: d2894bf833c371843b778e0ad6cf1427, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
   repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
   repeatReaim: 0
   repeatReaimRange: 6
   holdCasterForRun: 0
   hasReleaseStance: 0
   releaseStance: 19
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: dash_tick
     targetMode: 1
@@ -84,6 +79,7 @@ MonoBehaviour:
     effects:
     - kind: 8
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
         value: 1
@@ -151,8 +147,36 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       starCorners:
         value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
         useStacks: 0
         op: 0
         read: 0
@@ -172,10 +196,12 @@ MonoBehaviour:
       side: 0
       subStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
     - kind: 0
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
         value: 1
@@ -243,8 +269,36 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       starCorners:
         value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
         useStacks: 0
         op: 0
         read: 0
@@ -266,12 +320,11 @@ MonoBehaviour:
       affinity:
       - stat: 0
         weight: 100
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity:
       - stat: 8
         weight: 100
-    targets: 2
-    scope: 0
   shortLabel: Skill
   keyLabel: 
   slotOrder: 10

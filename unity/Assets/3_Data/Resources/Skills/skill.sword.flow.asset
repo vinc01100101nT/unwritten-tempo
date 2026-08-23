@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.sword.flow
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 1
   id: skill.sword.flow
   displayName: Flow
   weaponType: 1
@@ -34,15 +33,6 @@ MonoBehaviour:
     requireMinStacks: 0
     consumeAllStacks: 0
     consumeStacks: 0
-  triggersMigrated: 1
-  trigger: 0
-  triggerSkillId: 
-  requiresState: 0
-  requireSkillId: 
-  requireState: 9
-  requireMinStacks: 1
-  consumeAllStacks: 0
-  consumeStacks: 0
   manaCost: 0
   cooldown: 0
   castTime: 0
@@ -197,8 +187,6 @@ MonoBehaviour:
       chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    targets: 2
-    scope: 0
   shortLabel: Skill
   keyLabel: 
   slotOrder: 10

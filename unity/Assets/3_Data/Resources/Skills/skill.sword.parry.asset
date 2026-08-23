@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.sword.parry
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 1
   id: skill.sword.parry
   displayName: Parry
   weaponType: 1
@@ -37,22 +36,12 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
-  triggersMigrated: 1
-  trigger: 0
-  triggerSkillId: 
-  requiresState: 0
-  requireSkillId: 
-  requireState: 0
-  requireMinStacks: 1
-  consumeAllStacks: 0
-  consumeStacks: 0
   manaCost: 8
   cooldown: 1
   castTime: 0
   aim: 0
   castRange: 0
   tier: 0
-  chargeCost: 100
   castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
@@ -198,12 +187,11 @@ MonoBehaviour:
       side: 0
       subStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity:
       - stat: 3
         weight: 100
       hitCountAffinity: []
-    targets: 1
-    scope: 0
   shortLabel: Parry
   keyLabel: 
   slotOrder: 10

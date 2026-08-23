@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.staff.meteor
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 1
   id: skill.staff.meteor
   displayName: Meteor
   weaponType: 8
@@ -34,15 +33,6 @@ MonoBehaviour:
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
-  triggersMigrated: 1
-  trigger: 0
-  triggerSkillId: 
-  requiresState: 0
-  requireSkillId: 
-  requireState: 9
-  requireMinStacks: 1
-  consumeAllStacks: 0
-  consumeStacks: 0
   manaCost: 40
   cooldown: 1.5
   castTime: 1.5
@@ -461,8 +451,6 @@ MonoBehaviour:
       - stat: 3
         weight: 40
       hitCountAffinity: []
-    targets: 2
-    scope: 0
   - tickId: fire_pillar
     targetMode: 2
     groundDelivery: 1
@@ -597,8 +585,6 @@ MonoBehaviour:
       chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    targets: 2
-    scope: 0
   shortLabel: Meteor
   keyLabel: 
   slotOrder: 20

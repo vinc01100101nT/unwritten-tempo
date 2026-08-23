@@ -14,34 +14,62 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.bulwark
   displayName: Bulwark
+  weaponType: 0
+  published: 0
   icon: {fileID: -7809785511404226330, guid: 4a6c997ee6699414da629ee459545ea7, type: 3}
-  description: "Brace behind a guard that cuts incoming damage and forces nearby foes to attack you."
+  description: Brace behind a guard that cuts incoming damage and forces nearby foes
+    to attack you.
   archetype: 2
+  family: 0
+  shape: 0
+  complexity: 0
+  acquisitionTier: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
   manaCost: 12
   cooldown: 14
   castTime: 0
   aim: 0
   castRange: 6
   tier: 0
-  chargeCost: 100
-  castCircleId:
+  castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: 59bc86ccc164d7e4085172138da6f480, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
   holdCasterForRun: 0
   hasReleaseStance: 0
   releaseStance: 16
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: meteor_ball
-    targets: 3
-    scope: 0
+    targetMode: 2
+    groundDelivery: 1
+    affects: 2
+    playerFaction: 0
     radius: 5
     projectileCount: 1
     projectileSpread: 0
+    stayDuration: 0
     effects:
     - kind: 5
       useStacks: 0
+      resolveAsBasicAttack: 0
+      damageType: 1
       damageMult:
         value: 1
         useStacks: 0
@@ -58,6 +86,12 @@ MonoBehaviour:
       ailment: 2
       seconds:
         value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      shoveSeconds:
+        value: 0.25
         useStacks: 0
         op: 0
         read: 0
@@ -68,6 +102,74 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       hitCount:
         value: 1
         useStacks: 0
@@ -80,15 +182,20 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      side: 0
       subStat: 19
       affinity: []
+      chanceAffinity: []
       durationAffinity:
       - stat: 2
         weight: 70
       - stat: 4
         weight: 30
+      hitCountAffinity: []
     - kind: 3
       useStacks: 0
+      resolveAsBasicAttack: 0
+      damageType: 1
       damageMult:
         value: 1
         useStacks: 0
@@ -109,7 +216,81 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       magnitude:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
         value: 1
         useStacks: 0
         op: 0
@@ -127,12 +308,15 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      side: 0
       subStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity:
       - stat: 4
         weight: 100
+      hitCountAffinity: []
   shortLabel: Bulwark
-  keyLabel:
+  keyLabel: 
   slotOrder: 12
   tint: {r: 0.8, g: 0.85, b: 1, a: 1}

@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.sword.deathblow
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 1
   id: skill.sword.deathblow
   displayName: Deathblow
   weaponType: 1
@@ -37,22 +36,12 @@ MonoBehaviour:
     requireMinStacks: 0
     consumeAllStacks: 1
     consumeStacks: 0
-  triggersMigrated: 1
-  trigger: 0
-  triggerSkillId: 
-  requiresState: 1
-  requireSkillId: skill.sword.momentum
-  requireState: 10
-  requireMinStacks: 0
-  consumeAllStacks: 1
-  consumeStacks: 0
   manaCost: 40
   cooldown: 60
   castTime: 1
   aim: 1
   castRange: 5
   tier: 1
-  chargeCost: 100
   castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
@@ -203,8 +192,6 @@ MonoBehaviour:
       chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    targets: 2
-    scope: 0
   shortLabel: Deathblow
   keyLabel: 
   slotOrder: 10

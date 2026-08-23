@@ -14,35 +14,61 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.hex_field
   displayName: Hex Field
+  weaponType: 0
+  published: 0
   icon: {fileID: -7360022419767180686, guid: 404fe349000fb8740b505b9a1601ec8a, type: 3}
   description: Curse the ground so enemies inside are slowed and take extra damage.
   archetype: 4
   family: 1
+  shape: 0
+  complexity: 0
+  acquisitionTier: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
   manaCost: 16
   cooldown: 10
   castTime: 0.5
   aim: 2
   castRange: 11
   tier: 0
-  chargeCost: 100
   castCircleId: circle.magic
   castCircleTint: {r: 0.7, g: 0.45, b: 0.85, a: 1}
   vfx: {fileID: 11400000, guid: d6535b57215ae2c479e8c6dff7e958df, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
   holdCasterForRun: 0
   hasReleaseStance: 1
   releaseStance: 15
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: heal
-    targets: 2
-    scope: 0
+    targetMode: 2
+    groundDelivery: 1
+    affects: 2
+    playerFaction: 0
     radius: 1.5
     projectileCount: 1
     projectileSpread: 0
+    stayDuration: 0
     effects:
     - kind: 0
       useStacks: 0
+      resolveAsBasicAttack: 0
+      damageType: 1
       damageMult:
         value: 1
         useStacks: 0
@@ -63,8 +89,82 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       magnitude:
         value: 3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
         useStacks: 0
         op: 0
         read: 0
@@ -81,13 +181,18 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      side: 0
       subStat: 0
       affinity:
       - stat: 1
         weight: 50
+      chanceAffinity: []
       durationAffinity: []
+      hitCountAffinity: []
     - kind: 2
       useStacks: 0
+      resolveAsBasicAttack: 0
+      damageType: 1
       damageMult:
         value: 1
         useStacks: 0
@@ -108,8 +213,82 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       magnitude:
         value: 3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
         useStacks: 0
         op: 0
         read: 0
@@ -126,9 +305,12 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      side: 0
       subStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
+      hitCountAffinity: []
   shortLabel: Hex
   keyLabel: 
   slotOrder: 15

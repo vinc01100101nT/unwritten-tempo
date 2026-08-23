@@ -393,31 +393,54 @@ def main():
         rows = by_id.get(skill_id) or []
         return str(rows[0].get("displayName")) if rows else skill_id
 
-    # A skill saved before the trigger LIST existed still carries its one old trigger in
-    # the flat fields beside it, and the game rebuilds an entry from them as it loads. We
-    # read it back the same way, or half the library would be checked as if it had no
-    # trigger at all — an answer that would always look clean because we never looked.
+    # ⛔ A FORMAT CHANGE FINISHES ON DISK. The game used to convert an old skill into the
+    # current shape as it loaded and leave the file untouched — so a skill nobody happened
+    # to re-save stayed in the old shape indefinitely while the game silently papered over
+    # it. Seven of twenty-five sat like that for months; the day the old fields were tidied
+    # away they would have lost their values with NO error, because the zero each fell back
+    # to is a legal value. That conversion is gone (2026-08-23) and this rule is what keeps
+    # it gone: a saved skill must already be in the current shape.
+    #
+    # Any of these fields present means the file predates a format change and was never
+    # rewritten. Fix by re-saving every skill through Unity as part of the change that moved
+    # the format — never by reviving a converter.
+    RETIRED_FIELDS = {
+        "trigger":          "its trigger",
+        "triggerSkillId":   "which skill its trigger names",
+        "requiresState":    "its stack gate",
+        "requireSkillId":   "whose pile its gate reads",
+        "requireState":     "which pile its gate reads",
+        "consumeAllStacks": "whether its gate spends the whole pile",
+        "triggersMigrated": "the old already-converted marker",
+        "targetingMigrated": "the old already-converted marker",
+    }
+
     def entries_of(skill):
-        listed = skill.get("triggers") or []
-        if listed or as_int(skill.get("triggersMigrated")) == 1:
-            return listed
-        return [{
-            "trigger": skill.get("trigger", 0),
-            "triggerSkillId": skill.get("triggerSkillId", ""),
-            "requiresState": skill.get("requiresState", 0),
-            "requireSkillId": skill.get("requireSkillId", ""),
-            "requireMinStacks": skill.get("requireMinStacks", 1),
-            "consumeAllStacks": skill.get("consumeAllStacks", 0),
-            "consumeStacks": skill.get("consumeStacks", 0),
-            # The old pile field is deliberately NOT carried over by that rebuild, so an
-            # old gate arrives with no pile named — which is exactly what we must report.
-            "requireStateIdSet": 0,
-        }]
+        return skill.get("triggers") or []
 
     for s in skills:
         sid = str(s.get("id", ""))
+
+        # THE SHAPE RULE, checked before anything else: a saved skill must already be in the
+        # current shape. A retired field still sitting in the file means that file predates a
+        # format change and was never rewritten — the exact silent state this whole rule exists
+        # to outlaw. Reported per field so the fix is obvious.
+        for field, what in RETIRED_FIELDS.items():
+            if field in s:
+                problem(s, "was saved in an OLD FORMAT — it still stores %s the retired way (%s). "
+                           "Re-save every skill through Unity; never revive a converter." % (what, field))
+        for b_ in s.get("bindings") or []:
+            for field in ("targets", "scope"):
+                if field in b_:
+                    problem(s, "has a tick saved in an OLD FORMAT — it still stores its targeting "
+                               "the retired way (%s). Re-save every skill through Unity." % field)
+                    break
+
         entries = entries_of(s)
         gated = [e for e in entries if as_int(e.get("requiresState")) == 1]
+
+        if not entries:
+            problem(s, "has no trigger at all, so nothing can ever run it.")
 
         # ---- identity -----------------------------------------------------------------
         if not sid:

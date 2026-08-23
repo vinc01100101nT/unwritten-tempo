@@ -103,6 +103,9 @@ public class SkillComposerWindow : EditorWindow
             if (a != null) all.Add(a);
         }
         if (sel == null && all.Count > 0) sel = all[0];
+        // A rescan hands back FRESH objects, so the cached groups are holding dead references even when every id and
+        // order is identical. Force the regroup rather than let the fingerprint conclude nothing changed.
+        groupsFingerprint = -1;
     }
 
     void OnGUI()
@@ -131,7 +134,7 @@ public class SkillComposerWindow : EditorWindow
         if (GUILayout.Button("◀", GUILayout.MaxWidth(24))) listCollapsed = true;
         EditorGUILayout.EndHorizontal();
         listScroll = EditorGUILayout.BeginScrollView(listScroll);
-        RebuildGroups();
+        RebuildGroupsIfChanged();
         foreach (var s in ungrouped) DrawRow(s, 0f, Color.clear);
         foreach (var g in groupNames)
         {
@@ -244,8 +247,14 @@ public class SkillComposerWindow : EditorWindow
     }
 
     // Grouping for the left list: an id with three or more dot segments (skill.<group>.<name>) files under a foldout
-    // named for the MIDDLE segment; a two-segment id (skill.<name>) stays flat above the groups. Rebuilt from the live
-    // ids every repaint, so editing an id moves its row — and creates or removes the group — with no bookkeeping.
+    // named for the MIDDLE segment; a two-segment id (skill.<name>) stays flat above the groups.
+    //
+    // Rebuilt WHENEVER THE ANSWER WOULD DIFFER, and not otherwise — checked by fingerprinting the only four things
+    // the order and grouping depend on. That keeps the original no-bookkeeping property (editing an id still moves
+    // its row immediately, with no call site to remember) while dropping a full sort + regroup + allocation from
+    // every redraw the window sees. Unity redraws on mouse movement, so "every redraw" meant continuously.
+    long groupsFingerprint = -1;
+
     readonly List<SkillDef> ungrouped = new List<SkillDef>();
     readonly List<string> groupNames = new List<string>();
     readonly Dictionary<string, List<SkillDef>> grouped = new Dictionary<string, List<SkillDef>>();
@@ -261,16 +270,41 @@ public class SkillComposerWindow : EditorWindow
         return b > a + 1 ? id.Substring(a + 1, b - a - 1) : null;
     }
 
+    /// <summary>Regroup only if the result would actually change. The fingerprint covers exactly the inputs
+    /// <see cref="RebuildGroups"/> reads — how many skills there are, and each one's id (grouping + the tiebreak),
+    /// slot order, and rank. Anything else an author edits leaves the list alone, which is correct.</summary>
+    void RebuildGroupsIfChanged()
+    {
+        long fp = 17;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var s = all[i];
+            fp = fp * 31 + (s == null ? 0 : s.id != null ? s.id.GetHashCode() : 1);
+            if (s != null) fp = fp * 31 + s.slotOrder * 7 + ListRank(s);
+        }
+        fp = fp * 31 + all.Count;
+        if (fp == groupsFingerprint) return;
+        groupsFingerprint = fp;
+        RebuildGroups();
+    }
+
     void RebuildGroups()
     {
         ungrouped.Clear();
         groupNames.Clear();
         foreach (var list in grouped.Values) list.Clear();
+        // The comparator must be TOTAL — it has to separate every pair, not just most of them. This runs inside the
+        // draw code, so it re-sorts on every event the window sees, mouse movement included; the sort underneath is
+        // not a stable one, so any two skills it calls equal are free to swap places on each pass. With rank and
+        // slotOrder alone, 20 of the 26 skills tied, and the list visibly reshuffled under the cursor. The id is the
+        // last word because it is unique and never changes.
         all.Sort((x, y) =>
         {
             if (x == null || y == null) return (x == null ? 1 : 0).CompareTo(y == null ? 1 : 0);
             int r = ListRank(x).CompareTo(ListRank(y));
-            return r != 0 ? r : x.slotOrder.CompareTo(y.slotOrder);
+            if (r != 0) return r;
+            int o = x.slotOrder.CompareTo(y.slotOrder);
+            return o != 0 ? o : string.CompareOrdinal(x.id ?? "", y.id ?? "");
         });
         foreach (var s in all)
         {

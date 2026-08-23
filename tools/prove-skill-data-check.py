@@ -64,7 +64,7 @@ CASES = [
             "requireSkillId: skill.sword.ghost\n    requireStateId")),
      "does not exist"),
     ("a gate pointing at a pile the granter never leaves",
-     patch("skill.sword.deathblow.asset", ("requireStateId: 14", "requireStateId: 13")),
+     patch("skill.sword.deathblow.asset", ("requireStateId: 10", "requireStateId: 13")),
      "never leaves that pile behind"),
     ("gameplay wired to a beat the visual does not have",
      patch("skill.sword.deathblow.asset", ("tickId: follow_hit", "tickId: nonesuch")),
@@ -79,10 +79,10 @@ CASES = [
     # skill, and a duplicate key would simply be overruled by the real one further down — the break would silently
     # not happen, and this proof would report the checker as blind when nothing was ever broken.
     ("a repeat that spends charges it never gated",
-     patch("skill.meteor.asset", ("repeatCostsCharge: 0", "repeatCostsCharge: 1")),
+     patch("skill.staff.meteor.asset", ("repeatCostsCharge: 0", "repeatCostsCharge: 1")),
      "plays once and stops"),
     ("two skills sharing one id",
-     patch("skill.meteor.asset", ("id: skill.meteor", "id: skill.bulwark")),
+     patch("skill.staff.meteor.asset", ("id: skill.staff.meteor", "id: skill.bulwark")),
      "shares its id"),
     ("waiting on a finished cast but naming no skill",
      patch("skill.sword.lock_blades.asset",
@@ -96,7 +96,7 @@ CASES = [
      patch("skill.sword.encore.asset", ("modifierStateIdSet: 1", "modifierStateIdSet: 0")),
      "nobody picked WHICH pile"),
     ("editing a pile that skill never leaves behind",
-     patch("skill.sword.encore.asset", ("modifierStateId: 14", "modifierStateId: 13")),
+     patch("skill.sword.encore.asset", ("modifierStateId: 10", "modifierStateId: 13")),
      "never leaves that pile behind"),
     # Flips the asset's own answer, like the repeat case above, so the break is real rather than a second key the
     # true one further down would overrule.
@@ -104,6 +104,17 @@ CASES = [
      patch("skill.sword.guard_stance.asset",
            ("chance:\n        value: 1", "chance:\n        value: 0")),
      "can never happen"),
+    # THE SHAPE RULE. A file left in an older format is the one fault that used to be invisible: the game converted
+    # it on load and said nothing, so it looked identical to a healthy file from every angle. Putting a retired field
+    # back is exactly the state seven skills were really in, and the checker must refuse it.
+    ("a skill left in an older saved format",
+     patch("skill.sword.guard_stance.asset",
+           ("\n  manaCost:", "\n  triggersMigrated: 1\n  manaCost:")),
+     "OLD FORMAT"),
+    ("a tick left in an older saved format",
+     patch("skill.sword.guard_stance.asset",
+           ("\n  - tickId:", "\n  - scope: 0\n    tickId:")),
+     "OLD FORMAT"),
 ]
 
 

@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.ember_bolt
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 1
   id: skill.ember_bolt
   displayName: Ember Bolt
+  weaponType: 0
+  published: 0
   icon: {fileID: 21300000, guid: 175b1dd4b468f2e4e99f17d5afaaa905, type: 3}
   description: 'A single-target fire bolt that ignites the
 
@@ -25,28 +26,37 @@ MonoBehaviour:
   shape: 0
   complexity: 0
   acquisitionTier: 0
-  trigger: 0
-  triggerSkillId: skill.meteor
-  requiresState: 0
-  requireState: 9
-  requireMinStacks: 1
-  consumeAllStacks: 0
-  consumeStacks: 0
+  triggers:
+  - trigger: 0
+    triggerSkillId: 
+    requiresState: 0
+    requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
   manaCost: 8
   cooldown: 1.5
   castTime: 1.07
   aim: 1
   castRange: 11
   tier: 0
-  chargeCost: 100
   castCircleId: 
   castCircleTint: {r: 1, g: 0.55, b: 0.25, a: 1}
   vfx: {fileID: 11400000, guid: 4c60782cfebfe8447b9e7eeb807bf7bf, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
   holdCasterForRun: 0
   hasReleaseStance: 0
   releaseStance: 17
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: projectile_fire
     targetMode: 2
@@ -60,6 +70,7 @@ MonoBehaviour:
     effects:
     - kind: 0
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
         value: 1
@@ -106,6 +117,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       dashSpeedMult:
         value: 8
         useStacks: 0
@@ -116,6 +134,40 @@ MonoBehaviour:
       dashEaseOut: 0
       dashEaseSeconds:
         value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
         useStacks: 0
         op: 0
         read: 0
@@ -132,16 +184,19 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      side: 0
       subStat: 0
       affinity:
       - stat: 1
         weight: 100
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity:
       - stat: 1
         weight: 100
     - kind: 5
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
         value: 1
@@ -188,6 +243,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       dashSpeedMult:
         value: 8
         useStacks: 0
@@ -198,6 +260,40 @@ MonoBehaviour:
       dashEaseOut: 0
       dashEaseSeconds:
         value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
         useStacks: 0
         op: 0
         read: 0
@@ -214,12 +310,12 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      side: 0
       subStat: 19
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    targets: 2
-    scope: 1
   shortLabel: Ember
   keyLabel: 
   slotOrder: 10

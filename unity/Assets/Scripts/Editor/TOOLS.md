@@ -173,7 +173,6 @@ The Unity side of the batch Mixamo auto-rig flow (see the `mixamo-batch-autorig-
 
 | Menu | What | Use when |
 | --- | --- | --- |
-| **Build Default Skills** | (Re)builds the built-in `SkillDef` assets under `Resources/Skills/` — the PROOF of the pipeline. Builds `skill.meteor` (references the `meteor` VfxSequence; binds `meteor_ball` → Fire ×1.5 AoE and `fire_pillar` → Fire ×0.4 ×5). Idempotent. | To (re)generate the default data skills from code. (`SkillDefTools.cs`) |
 | **Attach Data Skills To Player (Systems scene)** | Adds a `SkillRunner` per catalog skill onto the player (so `IHotbarSkill` shows them on the bar). Skips skills already attached. Needs **Systems.unity open** (the player lives there). Mostly redundant now — `Player3DController` auto-attaches composed skills on Awake. | Force-attaching data skills without pressing Play. (`SkillDefTools.cs`) |
 
 ---

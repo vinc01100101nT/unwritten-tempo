@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
   m_Name: skill.sword.brace
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
-  targetingMigrated: 1
   id: skill.sword.brace
   displayName: Brace
   weaponType: 1
@@ -29,33 +28,32 @@ MonoBehaviour:
     triggerSkillId: 
     requiresState: 0
     requireSkillId: 
+    requireStateId: 0
+    requireStateIdSet: 0
     requireMinStacks: 1
     consumeAllStacks: 0
     consumeStacks: 0
-  triggersMigrated: 1
-  trigger: 0
-  triggerSkillId: 
-  requiresState: 0
-  requireSkillId: 
-  requireState: 9
-  requireMinStacks: 1
-  consumeAllStacks: 0
-  consumeStacks: 0
   manaCost: 10
   cooldown: 7
   castTime: 0
   aim: 2
   castRange: 11
   tier: 0
-  chargeCost: 100
   castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
   repeatInterval: 0
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
   holdCasterForRun: 0
   hasReleaseStance: 0
   releaseStance: 14
+  releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: follow_hit
     targetMode: 0
@@ -69,6 +67,7 @@ MonoBehaviour:
     effects:
     - kind: 13
       useStacks: 0
+      resolveAsBasicAttack: 0
       damageType: 1
       damageMult:
         value: 1
@@ -115,6 +114,13 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
       dashSpeedMult:
         value: 8
         useStacks: 0
@@ -125,6 +131,40 @@ MonoBehaviour:
       dashEaseOut: 0
       dashEaseSeconds:
         value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId: 
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
         useStacks: 0
         op: 0
         read: 0
@@ -144,10 +184,9 @@ MonoBehaviour:
       side: 1
       subStat: 0
       affinity: []
+      chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []
-    targets: 2
-    scope: 0
   shortLabel: Skill
   keyLabel: 
   slotOrder: 10
