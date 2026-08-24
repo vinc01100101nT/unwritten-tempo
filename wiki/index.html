@@ -85,6 +85,9 @@
   .skillcard .cost{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--gold)}
   .skillcard .flavor{font-style:italic;color:var(--ink-dim);font-size:14px;margin:3px 0 6px}
   .skillcard .effect{font-size:14.5px;color:var(--ink);line-height:1.55}
+  /* A generated card lists one line per effect. Bullets are drawn by the list, never typed into the text. */
+  .skillcard ul.effect{margin:0;padding-left:1.1em;list-style:disc}
+  .skillcard ul.effect li{margin:1px 0}
   .skillcard .effect strong{color:var(--gold-bright)}
   #content figure.fig{margin:20px 0;text-align:center}
   #content figure.fig img{max-width:100%;border:1px solid var(--rule);border-radius:8px}
@@ -130,16 +133,61 @@ function skillIcon(s){
   if(s.icon) return `<span class="icon"><img src="${esc(s.icon)}" alt="${esc(s.name||'')}"></span>`;
   return `<span class="icon">${esc((s.name||'?').trim().slice(0,1))}</span>`;
 }
+// Generated skill data — content/skills.generated.json, written by the Skill Composer from the game's own skill
+// assets. A skillTable block that names a `source` is rendered FROM this, so a number on the page cannot disagree
+// with the number in the game. Loaded once per visit, before any page that needs it renders.
+let SKILLS=null;
+async function ensureSkills(){
+  if(SKILLS) return SKILLS;
+  try{
+    const res=await fetch('content/skills.generated.json',{cache:'no-store'});
+    SKILLS=res.ok?await res.json():{skills:[]};
+  }catch(e){ SKILLS={skills:[]}; }
+  return SKILLS;
+}
+function needsSkills(doc){
+  return (doc.blocks||[]).some(b=>b&&b.type==='skillTable'&&b.source);
+}
+// Which bucket a generated skill belongs to. The three are mutually exclusive and come straight from the asset,
+// so a skill re-tiered in the Composer moves section on the page by itself.
+function skillGroup(s){ return s.ultimate?'ultimate':(s.passive?'passive':'active'); }
+
 function skillTable(b){
   let h='';
   if(b.subtitle) h+=`<p class="skill-sub">${inline(b.subtitle)}</p>`;
+
+  // Generated: pull the weapon's skills out of the export instead of reading hand-typed cards.
+  let list=b.skills||[];
+  if(b.source){
+    const all=(SKILLS&&SKILLS.skills)||[];
+    list=all.filter(s=>s.weapon===b.source&&(!b.group||skillGroup(s)===b.group))
+            .map(s=>({
+              name:s.name,
+              cost:s.cost,
+              flavor:s.description,
+              // Kept as a LIST, never pre-joined into markup: every text field here goes through inline(), which
+              // escapes < and >, so any HTML built into the string would print as literal characters.
+              effects:s.effects||[],
+              trigger:s.trigger,
+              unpublished:!s.published
+            }));
+    if(!list.length) return h+`<p class="skill-sub"><em>No ${esc(b.group||'')} skills exported for ${esc(b.source)} yet — run the Skill Composer's export.</em></p>`;
+  }
+
   h+='<div class="skillgrid">';
-  (b.skills||[]).forEach(s=>{
+  list.forEach(s=>{
     h+='<div class="skillcard">'+skillIcon(s)+'<div class="body">'+
        `<div class="head"><span class="name">${inline(s.name||'')}</span>`+
-       (s.cost?`<span class="cost">${inline(s.cost)}</span>`:'')+'</div>'+
-       (s.flavor?`<div class="flavor">${inline(s.flavor)}</div>`:'')+
-       (s.effect?`<div class="effect">${inline(s.effect)}</div>`:'')+
+       (s.unpublished?'<span class="cost"><em>not in the game yet</em></span>':(s.cost?`<span class="cost">${inline(s.cost)}</span>`:''))+'</div>'+
+       (s.trigger?`<div class="flavor"><strong>${inline(s.trigger)}</strong></div>`:'')+
+       // A description is authored as separate lines (a flavour line, then what it does). HTML collapses newlines,
+       // so each line gets its own element rather than being run together into one blob.
+       (s.flavor?String(s.flavor).split('\n').filter(x=>x.trim()).map(x=>`<div class="flavor">${inline(x)}</div>`).join(''):'')+
+       // Two shapes, one renderer: a generated card carries `effects` (a list, one line per effect); a hand-written
+       // card carries a single `effect` string. Each line is escaped on its own — no markup ever rides in the text.
+       (s.effects&&s.effects.length
+          ?'<ul class="effect">'+s.effects.map(e=>`<li>${inline(e)}</li>`).join('')+'</ul>'
+          :(s.effect?`<div class="effect">${inline(s.effect)}</div>`:''))+
        '</div></div>';
   });
   return h+'</div>';
@@ -175,7 +223,10 @@ async function load(id){
   try{
     const res=await fetch('content/'+p.file,{cache:'no-store'});
     if(!res.ok) throw new Error(res.status);
-    el.innerHTML=renderDoc(await res.json());
+    const doc=await res.json();
+    // A page whose skill cards are generated needs the export in hand before it renders — block() is synchronous.
+    if(needsSkills(doc)) await ensureSkills();
+    el.innerHTML=renderDoc(doc);
   }catch(e){
     el.innerHTML=`<h1>Couldn't load page</h1><p class="lede">${p.file} — ${e.message}</p>`;
   }

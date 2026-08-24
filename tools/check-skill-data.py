@@ -286,6 +286,56 @@ def guid_of(ref):
 
 # --------------------------------------------------------------------------------------
 
+def check_export(skills, problems):
+    """The wiki and the design docs READ the export, so a stale export is a page telling the player a number the
+    game no longer uses — the exact drift the pipeline exists to end. Two ways it can rot, both silent:
+
+      1. The export is missing a skill that exists on disk (or lists one that no longer does).
+      2. The wiki's served copy has drifted from the neutral owner.
+
+    We deliberately do NOT re-derive the sentences here. Those come from the game's own describer, and a second
+    copy of that logic in Python would be the very duplication this whole change removes. What we can check without
+    guessing is COVERAGE and the copy — and both catch the realistic failure, which is "somebody changed a skill and
+    never re-saved it in the Composer".
+    """
+    export = os.path.join(REPO, "data", "skills.json")
+    wiki_copy = os.path.join(REPO, "wiki", "content", "skills.generated.json")
+
+    if not os.path.exists(export):
+        problems.append(("the skill export",
+                         "data/skills.json does not exist. Run Tools > unwritten > Skills > Export Skill Data, "
+                         "or press Save on any skill in the Skill Composer."))
+        return
+
+    import json as _json
+    try:
+        data = _json.loads(read(export))
+    except Exception as e:
+        problems.append(("the skill export", "data/skills.json is not readable JSON (%s)." % e))
+        return
+
+    exported = set(s.get("id", "") for s in data.get("skills", []))
+    on_disk = set(s.get("id", "") for s in skills)
+
+    for missing in sorted(on_disk - exported):
+        problems.append(("the skill export",
+                         "'%s' exists as an asset but is NOT in data/skills.json — the wiki and the docs cannot "
+                         "see it. Re-save it in the Skill Composer." % missing))
+    for extra in sorted(exported - on_disk):
+        problems.append(("the skill export",
+                         "data/skills.json still lists '%s', which no longer exists as an asset. Re-run the "
+                         "export." % extra))
+
+    if not os.path.exists(wiki_copy):
+        problems.append(("the skill export",
+                         "the wiki's copy (wiki/content/skills.generated.json) is missing — the Sword page will "
+                         "render empty. Re-run the export."))
+    elif read(wiki_copy) != read(export):
+        problems.append(("the skill export",
+                         "the wiki's copy has drifted from data/skills.json. Re-run the export; never hand-edit "
+                         "either file."))
+
+
 def main():
     if not os.path.isdir(SKILLS_DIR):
         die("No skills folder at %s" % SKILLS_DIR)
@@ -569,6 +619,8 @@ def main():
                 print("  %s" % who)
                 last = who
             print("    - %s" % text)
+
+    check_export(skills, problems)
 
     print("Checked %d skills." % len(skills))
     show("PROBLEMS — these are silently wrong in the running game:", problems, RED)

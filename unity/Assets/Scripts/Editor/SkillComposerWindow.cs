@@ -17,6 +17,18 @@ public class SkillComposerWindow : EditorWindow
     [MenuItem("Tools/unwritten/Composers/Skill Composer")]
     public static void Open() => GetWindow<SkillComposerWindow>("Skill Composer");
 
+    /// <summary>Open the composer already pointed at <paramref name="def"/> — the way in from a skill's read-only
+    /// Inspector, so "you must edit it here" is one click rather than a hunt through the list.</summary>
+    public static void OpenOn(SkillDef def)
+    {
+        var w = GetWindow<SkillComposerWindow>("Skill Composer");
+        if (def == null) return;
+        w.Refresh();
+        w.sel = def;
+        w.CaptureSnapshot();
+        w.Repaint();
+    }
+
     readonly List<SkillDef> all = new List<SkillDef>();
     SkillDef sel;
     Vector2 listScroll, bodyScroll;
@@ -1043,6 +1055,10 @@ public class SkillComposerWindow : EditorWindow
             if (snapshotOwner == sel) SkillLibrarySweeps.SyncConsumersToGrantedStates(all, sel, snapshot);
             AssetDatabase.SaveAssets();
             SkillCatalog.Reload();
+            // Publishing is part of saving, not a second thing to remember: the wiki and the design docs read the
+            // export, so a skill that is saved but not exported would put the game and the player's page out of step —
+            // which is exactly the drift this pipeline exists to end.
+            SkillExport.Write();
             CaptureSnapshot();
         }
         using (new EditorGUI.DisabledScope(!EditorUtility.IsDirty(sel)))

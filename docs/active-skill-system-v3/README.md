@@ -25,6 +25,35 @@ Comparing V2's **Ring Voices** against a skill's actual outputs showed heavy ove
 - **Ring answers "scaled by whom?"** — the ring multiplies, it doesn't add new numbers or behaviors (for now).
 - **Effects answer "what happens?"** — authored on the skill (§2), not rolled as weapon affixes.
 
+## 0. One source for skill data — the Composer writes, everything else reads (LOCKED 2026-08-24)
+
+**The skill asset is the single owner of every skill fact** — its numbers, targets, triggers, cost, cadence and its
+description. Four surfaces show that data, and **all four are readers**:
+
+| Surface | How it gets the data |
+| --- | --- |
+| **Skill Composer** | Edits the asset directly. The only writer. |
+| **In-game hover card** | `SkillTooltip.Build(def)` off the live asset. |
+| **Player wiki** | `wiki/content/skills.generated.json` — a served copy of the export. |
+| **These docs** | `data/skills.json` — the neutral export. |
+
+**One describer, three dialects.** Every sentence about a skill comes from `SkillTooltip`, which now writes its
+emphasis as Unity rich text, as markdown, or as plain text on request. The words and the numbers are identical in all
+three — only the markup differs — so the wiki prints *exactly* what the player is told in game. A second describer
+anywhere is the drift this removed; do not add one, in C# or in Python.
+
+**Publishing is part of saving.** The Composer's Save regenerates `data/skills.json` and the wiki's copy
+(`SkillExport.cs`, also on **Tools ▸ unwritten ▸ Skills ▸ Export Skill Data**). Neither file is ever hand-edited, and
+`tools/check-skill-data.py` fails if either falls out of step with the assets.
+
+**The plain Inspector is read-only** (`SkillDefInspector.cs`) and offers only a button back to the Composer.
+Deliberately with **no unlock toggle**: an escape hatch would be used, and the moment it is, the guarantee is gone.
+If the Composer cannot express something a skill needs, teach the Composer — that keeps every surface honest.
+
+*Consequence for the wiki: a skill's card is fully generated. Hand-written player prose about a skill's numbers is no
+longer a thing that can exist, because there is nowhere to type it. Prose ABOUT the weapon — its identity, how builds
+fit together — stays authored, and lives around the generated cards rather than inside them.*
+
 ## 1. Channels Catalog — LOCKED (the numeric outputs, "how much?")
 
 A channel is a **stat-agnostic numeric output** — the common language every other system references. A skill exposes **only the channels it owns**. Channels split into two tiers by who owns them. *(Live view: **Tools ▸ unwritten ▸ Catalogs ▸ Skill Channels & Effects**.)*

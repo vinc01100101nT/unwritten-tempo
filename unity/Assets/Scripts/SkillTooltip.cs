@@ -15,7 +15,33 @@ public static class SkillTooltip
 
     static readonly StringBuilder sb = new StringBuilder(512);
 
-    static string Hl(string s) => "<color=" + Num + "><b>" + s + "</b></color>";
+    /// <summary>Which dialect the describer writes its emphasis in. The WORDS and the NUMBERS are identical in every
+    /// dialect — only the markup around them changes — so the wiki and the design docs can print exactly what the
+    /// in-game card says without a second describer that would drift from this one.</summary>
+    public enum Dialect
+    {
+        /// <summary>Unity rich text (<c>&lt;color&gt;</c>/<c>&lt;b&gt;</c>) — what the in-game hover cards want.</summary>
+        RichText = 0,
+        /// <summary>Markdown (<c>**bold**</c>) — what the wiki renderer and the design docs want.</summary>
+        Markdown,
+        /// <summary>No markup at all, for anything that just needs the sentence.</summary>
+        Plain,
+    }
+
+    // The dialect in force for the call being built. Set only by the public entry points below, which always restore
+    // it, so a caller can never leave the describer speaking the wrong dialect to the next one.
+    static Dialect dialect = Dialect.RichText;
+
+    static string Hl(string s)
+    {
+        switch (dialect)
+        {
+            case Dialect.Markdown: return "**" + s + "**";
+            case Dialect.Plain:    return s;
+            default:               return "<color=" + Num + "><b>" + s + "</b></color>";
+        }
+    }
+
     static string Pct(float f01) => Hl(Mathf.RoundToInt(f01 * 100f) + "%");
 
     public static string ArchetypeName(SkillArchetype a)
@@ -67,6 +93,13 @@ public static class SkillTooltip
     ///
     /// <para>A skill can carry several triggers, so this joins every NON-OnCast one. OnCast is skipped: "you press it"
     /// is what a hotbar slot already says, so listing it would only be noise on a skill that has both.</para></summary>
+    public static string TriggerLine(SkillDef def, Dialect d)
+    {
+        var prev = dialect; dialect = d;
+        try { return TriggerLine(def); }
+        finally { dialect = prev; }
+    }
+
     public static string TriggerLine(SkillDef def)
     {
         if (def == null || def.triggers == null) return "";
@@ -103,52 +136,128 @@ public static class SkillTooltip
         return d != null ? d.displayName : (string.IsNullOrEmpty(skillId) ? "(nothing)" : skillId);
     }
 
-    /// <summary>The full rich-text card body for <paramref name="def"/> (title through effects).</summary>
-    public static string Build(SkillDef def)
+    // A quiet label ("MP", "CD", the family chip). Grey in the game; plain everywhere else, because the wiki and the
+    // docs colour their own text and a stray hex code in a markdown file is noise.
+    static string Chipped(string s) => dialect == Dialect.RichText ? "<color=" + Chip + ">" + s + "</color>" : s;
+
+    /// <summary>The ONE cost/cadence line — mana, cooldown, cast, range — in whatever dialect is in force. Every
+    /// surface that states a skill's price reads it from here, so the hover card, the wiki and the docs can never
+    /// quote different numbers for the same skill.</summary>
+    public static string CostLine(SkillDef def, Dialect d)
+    {
+        var prev = dialect; dialect = d;
+        try { return CostLine(def); }
+        finally { dialect = prev; }
+    }
+
+    public static string CostLine(SkillDef def)
     {
         if (def == null) return "";
-        sb.Length = 0;
+        var t = new StringBuilder(96);
+        t.Append(Chipped("MP ")).Append(Hl(def.manaCost.ToString()));
+        t.Append("  ").Append(Chipped("CD ")).Append(Hl(def.cooldown.ToString("0.#") + "s"));
+        if (def.castTime > 0f) t.Append("  ").Append(Chipped("Cast ")).Append(Hl(def.castTime.ToString("0.#") + "s"));
+        else                   t.Append("  ").Append(Chipped("Instant"));
+        if (def.Reticle != CastReticle.Instant) t.Append("  ").Append(Chipped("Range ")).Append(Hl(def.castRange.ToString("0.#")));
+        return t.ToString();
+    }
 
-        // Title + tier.
-        sb.Append("<size=120%><b>").Append(def.displayName).Append("</b></size>");
-        if (def.IsUltimate) sb.Append("  <color=#FF8CE0><b>ULTIMATE</b></color>");
-        sb.Append('\n');
+    /// <summary>The full card body for <paramref name="def"/> (title through effects), in the game's rich text.</summary>
+    public static string Build(SkillDef def) => Build(def, Dialect.RichText);
 
-        // Tag (archetype) + category chips.
-        sb.Append("<color=").Append(Hex(ArchetypeColor(def.archetype))).Append("><b>")
-          .Append(ArchetypeName(def.archetype)).Append("</b></color>")
-          .Append("  <color=").Append(Chip).Append('>').Append(def.family).Append("</color>\n");
+    /// <summary>The same card body in a chosen dialect — the wiki and the design docs ask for
+    /// <see cref="Dialect.Markdown"/> so they print exactly what the player is told, word for word.</summary>
+    public static string Build(SkillDef def, Dialect d)
+    {
+        if (def == null) return "";
+        var prev = dialect; dialect = d;
+        try
+        {
+            sb.Length = 0;
 
-        // Cost / cadence line.
-        sb.Append("<color=").Append(Chip).Append(">MP </color>").Append(Hl(def.manaCost.ToString()));
-        sb.Append("  <color=").Append(Chip).Append(">CD </color>").Append(Hl(def.cooldown.ToString("0.#") + "s"));
-        if (def.castTime > 0f) sb.Append("  <color=").Append(Chip).Append(">Cast </color>").Append(Hl(def.castTime.ToString("0.#") + "s"));
-        else                   sb.Append("  <color=").Append(Chip).Append(">Instant</color>");
-        if (def.Reticle != CastReticle.Instant) sb.Append("  <color=").Append(Chip).Append(">Range </color>").Append(Hl(def.castRange.ToString("0.#")));
-        sb.Append('\n');
-
-        // Description.
-        if (!string.IsNullOrEmpty(def.description))
-            sb.Append("<color=").Append(Desc).Append("><i>").Append(def.description).Append("</i></color>\n");
-
-        // Effects — one line each, numbers highlighted.
-        if (def.bindings != null)
-            for (int i = 0; i < def.bindings.Count; i++)
+            // Title + tier.
+            if (d == Dialect.RichText)
             {
-                var b = def.bindings[i];
-                if (b == null || b.effects == null) continue;
-                for (int k = 0; k < b.effects.Count; k++)
-                {
-                    string line = DescribeEffect(b.effects[k]);
-                    if (!string.IsNullOrEmpty(line)) sb.Append("\n• ").Append(line);
-                }
+                sb.Append("<size=120%><b>").Append(def.displayName).Append("</b></size>");
+                if (def.IsUltimate) sb.Append("  <color=#FF8CE0><b>ULTIMATE</b></color>");
+            }
+            else
+            {
+                sb.Append(Hl(def.displayName));
+                if (def.IsUltimate) sb.Append("  ").Append(Hl("ULTIMATE"));
+            }
+            sb.Append('\n');
+
+            // Tag (archetype) + category chips.
+            if (d == Dialect.RichText)
+                sb.Append("<color=").Append(Hex(ArchetypeColor(def.archetype))).Append("><b>")
+                  .Append(ArchetypeName(def.archetype)).Append("</b></color>");
+            else
+                sb.Append(ArchetypeName(def.archetype));
+            sb.Append("  ").Append(Chipped(def.family.ToString())).Append('\n');
+
+            // Cost / cadence line.
+            sb.Append(CostLine(def)).Append('\n');
+
+            // Description.
+            if (!string.IsNullOrEmpty(def.description))
+            {
+                if (d == Dialect.RichText) sb.Append("<color=").Append(Desc).Append("><i>").Append(def.description).Append("</i></color>\n");
+                else if (d == Dialect.Markdown) sb.Append('*').Append(def.description).Append("*\n");
+                else sb.Append(def.description).Append('\n');
             }
 
-        return sb.ToString();
+            // Effects — one line each, numbers highlighted.
+            var lines = EffectLines(def);
+            for (int i = 0; i < lines.Count; i++) sb.Append("\n• ").Append(lines[i]);
+
+            return sb.ToString();
+        }
+        finally { dialect = prev; }
+    }
+
+    // Reused across calls so listing a skill's effects allocates nothing per call on the game's side.
+    static readonly System.Collections.Generic.List<string> effectLines = new System.Collections.Generic.List<string>(8);
+
+    /// <summary>Every effect line this skill would show, in order — the same lines the hover card bullets. Returns a
+    /// SHARED list: read it or copy it before the next call. Assumes the dialect is already set by the caller.</summary>
+    public static System.Collections.Generic.List<string> EffectLines(SkillDef def)
+    {
+        effectLines.Clear();
+        if (def == null || def.bindings == null) return effectLines;
+        for (int i = 0; i < def.bindings.Count; i++)
+        {
+            var b = def.bindings[i];
+            if (b == null || b.effects == null) continue;
+            for (int k = 0; k < b.effects.Count; k++)
+            {
+                string line = DescribeEffect(b.effects[k]);
+                if (!string.IsNullOrEmpty(line)) effectLines.Add(line);
+            }
+        }
+        return effectLines;
+    }
+
+    /// <summary>Every effect line in a chosen dialect. Copies into <paramref name="into"/> so the caller owns the
+    /// result (the no-alloc list above is only safe until the next call).</summary>
+    public static void EffectLines(SkillDef def, Dialect d, System.Collections.Generic.List<string> into)
+    {
+        if (into == null) return;
+        into.Clear();
+        var prev = dialect; dialect = d;
+        try { into.AddRange(EffectLines(def)); }
+        finally { dialect = prev; }
     }
 
     /// <summary>One human-readable line for a single effect ("Reduces damage taken 30% for 6s", "+20% move speed
     /// for 5s"), with its variable numbers highlighted. Shared by the skill card AND the buff-bar hover card.</summary>
+    public static string DescribeEffect(SkillEffect e, Dialect d)
+    {
+        var prev = dialect; dialect = d;
+        try { return DescribeEffect(e); }
+        finally { dialect = prev; }
+    }
+
     public static string DescribeEffect(SkillEffect e)
     {
         if (e == null) return null;
