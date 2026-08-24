@@ -216,10 +216,9 @@ public class ItemSlot : MonoBehaviour, IDropHandler, IPointerClickHandler, IPoin
 
         if (accepts == EquipSlotType.None)                      // a bag slot
         {
-            if (item.healAmount > 0)                            // consumable → use
+            if (item.IsUsable)                                  // consumable → use
             {
-                if (Character.Instance != null) Character.Instance.Heal(item.healAmount);
-                SetItem(null);
+                if (ItemUse.Use(item)) SetItem(null);           // only spend it if the effect actually ran
             }
             else if (item.slot != EquipSlotType.None)           // equipment → equip
             {

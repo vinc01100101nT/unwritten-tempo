@@ -235,7 +235,7 @@ public class ProgressionWindows : MonoBehaviour
         bool doubleClick = e.clickCount >= 2;
         bool right = e.button == PointerEventData.InputButton.Right;
         if (entry.IsEquip && (doubleClick || right)) InventoryStore.Instance.Equip(entry);
-        else if (!entry.IsEquip && right && entry.def != null && entry.def.healAmount > 0)
+        else if (!entry.IsEquip && right && entry.def != null && entry.def.IsUsable)
             InventoryStore.Instance.Consume(entry);
     }
 

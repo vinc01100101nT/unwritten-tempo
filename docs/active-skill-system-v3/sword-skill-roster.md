@@ -55,7 +55,7 @@ All three are authored `tier = Ultimate` and priced as ultimates (**40 MP**, lon
 
 **Perfect Form is gone — it is now** `skill.sword.flow`**, "Flow".** Same job, reshaped onto the engine's automatic run-of-hits counter instead of a hand-rolled same-target streak. Do not re-add Perfect Form.
 
-**1 active slot still open** (single-purpose texture; the Path-1 "complete at 8" vs. Pinpoint call is unresolved) plus **the slot Feint vacated when it was cut on 2026-08-18** for reading as Parry-with-damage. The pool has had its **Stage-7 stress-test** — findings are folded into the implementation items below (per-hit state order, OnBasicAttack recursion guard, Lock-Blades pursue definition). The player-facing **wiki** (`wiki/content/sword.json`) reflects the current pool.
+**No slots remain open.** The last two — the unresolved single-purpose texture slot and the one Feint vacated when it was cut on 2026-08-18 for reading as Parry-with-damage — were filled by Challenge and Offbeat. The pool has had its **Stage-7 stress-test**; findings are folded into the implementation items below (per-hit state order, OnBasicAttack recursion guard, Lock-Blades pursue definition). The player-facing **wiki** (`wiki/content/sword.json`) reflects the current pool.
 
 ## Active skills (10 composed, none open)
 
@@ -64,7 +64,7 @@ Two are **spine partners** (carry an ult); the rest are single-purpose texture.
 **Brace** *(Retribution's spine partner)* — *Take it now, pay it later — or don't pay at all.* Arms **5 charges for 4s**. Each charge holds back ONE incoming hit: instead of costing HP, that hit's damage is **banked**, and a cold-blue number pops for it. Out of charges, the next hit lands normally. **12 MP · 7s cd.**
 
 - **The bill comes due when the window ends** — everything banked lands at once as a single **true-damage** hit (its own purple number). Brace DELAYS damage, it never prevents it.
-- **What's banked is what would really have cost HP:** Guard, Vulnerability and Shield all apply *before* the hit is recorded, and a parried hit never lands at all, so it banks nothing. Poison/bleed/burn ticks bypass it entirely.
+- **What's banked is what would really have cost HP:** the damage-reduction pile (in either direction) and Shield all apply *before* the hit is recorded, and a parried hit never lands at all, so it banks nothing. Poison/bleed/burn ticks bypass it entirely.
 - **Its only escape is Retribution** (below). Cashing the pile erases the debt — that IS Retribution's perk. With the ult uncharged, bracing is a bet you will lose.
 - **The cooldown deliberately exceeds the window** (7s vs 4s), so a second cast can't chain-postpone the bill forever.
 - *Engine note: two states — the armed charges (spend down, can hit zero) and the debt (must outlive them). Parry's exact shape, one word apart: a parry **erases** the hit, a brace **postpones** it.*

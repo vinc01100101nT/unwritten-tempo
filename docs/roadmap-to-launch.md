@@ -1,8 +1,8 @@
 # unwritten — Roadmap to Launch
 
-RO-style **2.5D** action-RPG (3D world + billboard sprites), built in Unity. *Status as of 2026-07-02.*
+RO-style **2.5D** action-RPG (3D world + billboard sprites), built in Unity. *Status as of 2026-08-24.*
 
-> **Progress snapshot (2026-07-02):** against **Tier 1 (Minimum Shippable Steam game)** we are **~30–35% done**; against the **full MMORPG dream** ~**8–10%**. Nearest real target — a **playable vertical slice (M1 + thin M2)** — is ~**60–70%** there. Per-milestone: **M1 ~75%**, **M2 ~30%**, **M3 ~25%**, **M4 ~5%**, **M5 ~2%**. Biggest gaps blocking the demo: the **first fully-realized class kit** (only `skill.meteor` exists in the composed pool) and a **quest → dungeon → boss** story thread. The hard *technology* is essentially done; what remains is **content and connective tissue**.
+> **Progress snapshot (2026-08-24, measured):** against **Tier 1 (Minimum Shippable Steam game)** we are, by estimate, **~45–50% done** (up from ~30–35% on 2026-07-02); against the **full MMORPG dream** ~**10–12%**. Per-milestone estimate: **M1 ~95%**, **M2 ~20%**, **M3 ~35%**, **M4 ~0%**, **M5 ~0%**. The July snapshot's headline gap — *the first fully-realized class kit* — is **closed**: the sword pool finished on 2026-08-24 at 22 composed skills. The gap has moved. It is now that **the world has no reasons in it**: 2 items exist in the entire game, no quests, no named NPCs, no boss placed in any map, no title screen, and no player build has ever been produced.
 
 > **What this doc is.** The single source of truth for *how far we are from a real, shippable game* and *what stands between here and a Steam launch*. It replaces the old phase-by-phase 2D plan (the 2D build order is now history — see **Appendix**). It is deliberately honest about scope: the dream is a full MMORPG; the **shippable path** is a single-player (or small co-op) RO-style ARPG first.
 
@@ -10,34 +10,42 @@ RO-style **2.5D** action-RPG (3D world + billboard sprites), built in Unity. *St
 
 ## TL;DR — the honest distance
 
-- **Against the full MMORPG dream** (huge map, 8 classes w/ advancements, dungeons, NPCs, stories, **massively-multiplayer**, polished on Steam): we are roughly **5–10% of the way** there. That remaining 90% is, in industry terms, a **multi-year, multi-person, funded-studio** effort. The "MMO" alone is a *second entire game* the size of the one we have.
-- **Against a Minimum Shippable Game** (single-player/small-co-op RO-style ARPG, one region, one class line, a few dungeons, a real story thread, on Steam): that is **reachable** on a plannable horizon — **months, not years** — and it is the target we should actually aim at first.
+- **Against the full MMORPG dream** (huge map, 8 classes w/ advancements, dungeons, NPCs, stories, **massively-multiplayer**, polished on Steam): roughly **10% of the way** there. The remaining 90% is a **multi-year, multi-person, funded-studio** effort. The "MMO" alone is a *second entire game* the size of the one we have.
+- **Against a Minimum Shippable Game** (single-player/small-co-op RO-style ARPG, one region, one class line, a few dungeons, a real story thread, on Steam): **about halfway**, and reachable on a plannable horizon — **months, not years**.
+- **The shape of what remains has changed.** Through July and August the work was *combat technology*, and it is now deep and finished for one weapon. What is left is almost entirely **content and connective tissue**: things to find, people to talk to, reasons to enter a dungeon, and a wrapper that makes it a product.
 - **Strategy:** Ship Tier 1 first. *The MMO is what kills projects like this* — it's the most expensive, least-finished part, and it makes the whole thing feel "0% done" forever. Prove the game is fun and find an audience with Tier 1; let success justify Tier 2.
 
 ---
 
-## Where we actually are (built & working)
+## Where we actually are (measured 2026-08-24)
 
-The foundation — the *hardest part to start* — is real:
+**The counts, so nobody has to guess:**
 
-- **2.5D rendering** validated (spike `f195a5d` on branch `experiment/3d-world`): 3D world + billboard sprites, merged Kenney terrain platforms, per-feet depth sorting.
-- **Spatial layer:** WASD/click movement, camera rig, grid **A** pathfinding (`Pathfinder3D` + `PathAgent`), portals/spawns, persistent global-systems scene with additive map loading.
-- **Combat loop:** click-to-target, auto-swing, two-directional damage (`max(1, atk−def)`), pooled damage popups, monster AI (wander→chase→leash), spawners.
-- **RPG numbers:** `Character` stats + per-level growth + equipment bonuses, XP→level-up→heal.
-- **Signature systems (built 2026-06-18):** **TRIO-RING** percent-passive skill draft (MVP, all 10 stats, magic foundation) **and** the **RO-style flat stat layer** (STR/AGI/VIT/INT/DEX/LUK, allocatable points + StatPanel).
-- **World tooling:** procedural town/map generator (bake-then-hand-finish), floor autotiling via RuleTiles.
-- **Polish primitives:** day/night cycle, SFX, in-game DevSettings tuning panel, a perf pass + perf HUD.
-- **Built since 2026-06-18 (folded in):**
-  - **Save/load** progression-spine slice + **death/respawn** flow (`DeathScreen`) — M1's spine is real, not planned.
-  - **RO combat depth:** `Element.cs` (10 elements + modifier table), unified **status/DoT/CC** controller (mobs + player), life-steal / reflect, multi-hit bursts + stun. Pre-renewal ATK/MATK formula port in progress.
-  - **Skill system reboot:** legacy hand-written skills retired → **composed `SkillDef` pool** + `SkillCatalog`, per-def `SkillRunner`, **Grimoire (J)** browse/bind window. :warning: only `skill.meteor` authored so far — the class-kit content is the M1 gap.
-  - **VFX pipeline:** Hovl particle library (`Vfx.PlayAt/Attach`), event→VFX **VfxCue** choke point, and the edit-mode **Vfx Composer** authoring window (replaced in-Play tuners).
-  - **World life & content tooling:** ambient townsfolk + reactive barks (`AmbientLife`/`TownNPC`), tiered town interiors, weather (rain/snow/wet/reflections) tied toward a calendar, additional-lights lighting on ground + billboards, night lamps.
-  - **Data-driven content:** mobs/items/maps as ScriptableObject tables (`MonsterDef`/`MonsterCatalog`, stable kebab ids) — the foundation the quest/loot systems will reference.
-  - **Art pipeline (in-house props):** GPT→**Trellis 2**→Blender→Unity prop pipeline proven (Tier-1 town landmarks), + 8-dir sprite baker for characters/mobs. Locked style guide v2.1.
-  - **HUD progression windows:** Inventory / Equipment / Character trio + data-driven hotbar (`IHotbarSkill`), locked charcoal+gold palette.
+| Thing | Count | Note |
+| --- | --- | --- |
+| Game + tooling C# files | 329 | 93 of them editor tools |
+| Playable maps on disk | 41 | 10 towns · 17 fields · 14 dungeons — all carry real content |
+| Mob definitions | 86 | 20 flagged as bosses — **0 placed in any map** |
+| Composed skills | 31 | 22 sword (pool complete) · 9 magic/support |
+| Items in the entire game | **2** | one sword, one bow |
+| Cards | 4 | |
+| Player builds ever produced | **0** | |
 
-**Honest read:** this is a strong **single-player vertical-slice foundation** — and materially fuller than the 2026-06-18 snapshot (save/load, RO combat depth, VFX, world life, data tables, in-house art pipeline all landed since). It is *not yet a game* — still missing **content volume** (one class kit exists in skeleton, ~5 mobs), an **end-to-end progression spine** (quests/loot/advancement), the **game-shaped wrapper** (menus/settings/Steam), and **any networking**.
+**The foundation — the hardest part to start — is real:**
+
+- **2.5D rendering:** 3D world + billboard sprites, merged terrain platforms, per-feet depth sorting, occluder fading, planar reflection, hand-drawn grade pass.
+- **Spatial layer:** WASD/click movement, camera rig, grid A* pathfinding, crowd pass-through, portals/spawns, persistent global-systems scene with additive map loading.
+- **Combat — the deep, finished part (built 2026-08-11 → 08-24):** player and mob resolve damage through **one shared set of rules** and **one landing choke point**; crit → hit → damage resolves in a fixed order; stacks belong to the skill that granted them and finishers cash them; every timed stat change is **one** sub-stat effect (the per-stat verbs were deleted); modifiers fire at a moment and finish; flinch, earned footing, weapon reach, parry charges, banked damage, combo runs counted by the fight.
+- **The first class kit is done:** 22 composed sword skills, each with an authored description, all written by one composer that everything else reads from. Nine more magic/support skills exist across staff and healing.
+- **RPG numbers:** RO-style primaries (STR/AGI/VIT/INT/DEX/LUK) + allocatable points, per-level growth, 10 elements + modifier table, pre-renewal ATK/MATK formula port, the **Trio-Ring** percent-passive draft.
+- **Gear machinery — deeper than the item count suggests:** equipment instances carry **refine levels, slotted cards, per-copy rolled rarity, and rolled skills**, and all of it persists (save format v7, alongside level, XP, stats, ring walk, bag, gold, hotbar bindings, dyes).
+- **World & life:** procedural town/map generator, tiered interiors, ambient townsfolk with reactive barks, weather (rain/snow/wet ground/reflections) on a calendar, day/night with night lamps, music director, minimap + world map.
+- **VFX pipeline:** particle library behind one play-at choke point, an event→cue layer, and an edit-mode composer window.
+- **Art pipeline:** GPT→Trellis→Blender→Unity prop pipeline proven, 8-dir sprite baker, live-3D player and NPC rigs, locked style guide v2.1 and charcoal+gold UI palette.
+- **HUD:** inventory / equipment / character trio, skill book, data-driven hotbar, buff bar, cast bar, damage popups, death screen.
+- **Workflow:** offline C# and skill-data checkers that run in seconds without opening Unity, plus a live editor link for reading real values.
+
+**Honest read:** this is a combat system a stranger could enjoy for twenty minutes and then run out of reasons to keep playing. The technology is not the blocker and has not been for a while.
 
 ---
 
@@ -47,43 +55,53 @@ The foundation — the *hardest part to start* — is real:
 
 Milestones are in dependency order; each ends in something you can actually *play*.
 
-### M1 — Core loop is fun for 30 minutes
+### M1 — Core loop is fun for 30 minutes — **~95%, effectively done**
 
-- **Death → respawn/game-over flow** — *already built* (`DeathScreen.cs`: "YOU DIED" vignette, death pose, countdown, Respawn → revive at full HP + teleport to the map SpawnPoint). The roadmap's old "instant-revive" note was stale.
-- **Save/load — progression spine (slice 1, built 2026-06-18):** level, XP, HP/MP, the six RO primary stats + unspent points, and the full Trio-Ring passive walk persist to JSON (`SaveData`/`SaveSystem`/`SaveManager`). Auto-loads on launch; auto-saves on level-up / respawn / quit / every 20s when changed. Self-bootstraps — no editor setup. Editor: *Tools ▸ unwritten ▸ Save ▸ …* to wipe/inspect. **Out of scope (→ M3):** equipment + bag persistence (UI-layer; lands with the inventory system).
-- **Enemy variety + behavior feel (built 2026-06-18):** a 5-archetype **mob roster** — Slime grunt, Bat swarmer (fast/fragile), Kappa bruiser (slow/tanky), Flam caster (kites at range), Cyclope darter (flees when wounded) — each its own sprite sheet + stats + tint/size. Two new *allocation-free* behavior axes on `MonsterAI3D` (`preferredRange` kiting, `fleeHpFraction` fleeing). *Tools ▸ unwritten ▸ Populate Mobs (Nature)* now scatters a weighted mix. Floating combat text / hit-flash / death-poof already existed.
-- One fully-realized **starting class** (kit + a few TRIO skills that feel good) — *next up.* Plus a combat-feel polish pass (hit-stop / knockback / crit emphasis), and a real ranged projectile for casters (currently a magic "touch" at range).
-- *Playable when:* you can start a character, fight a varied field, level, die, reload — **and your progress survives a restart.**
+- **Death → respawn/game-over flow** — built. "YOU DIED" vignette, death pose, countdown, revive at full HP at the map spawn point.
+- **Save/load** — built and now well past the original slice: level, XP, HP/MP, the six primaries + unspent points, the full Trio-Ring walk, gold, hotbar bindings, active passives, **equipment and bag with refines/cards/rarities/rolled kits**, and outfit dyes. Auto-loads on launch; auto-saves on level-up / respawn / quit / every 20s when changed.
+- **Enemy variety + behavior feel** — 86 mob definitions with kiting and fleeing behavior axes, weighted field scatter, hit-flash, death poof, floating combat text.
+- **One fully-realized starting class** — **done 2026-08-24.** The sword pool closed at 22 skills.
+- *Remaining:* a combat-feel polish pass (hit-stop, knockback, crit emphasis) and a real ranged projectile for casters.
+- *Playable when:* you can start a character, fight a varied field, level, die, reload — **and your progress survives a restart.** ✅ true today.
 
-### M2 — A world worth exploring (one region)
+### M2 — A world worth exploring (one region) — **~20%**
 
-- One hand-finished **region**: town hub + 3–5 connected field/zone maps + 1–2 **dungeons** (instanced, with a boss).
-- **NPCs + dialogue + a quest system** (track/turn-in), and a **story thread** that gives the region a reason to exist.
-- Map transitions, minimap, points of interest.
+- **Built:** 41 maps exist with real geometry, mob spawning and portals; minimap and world map work; map transitions work. The four largest towns are hand-finished.
+- **Missing, and this is the milestone:** **no quest system exists at all** (not partial — no such code). **No named NPCs** — townsfolk are anonymous and speak random ambient lines; the dialogue box exists but nothing drives it. **No boss is placed in any map**, so no dungeon has a destination. The 14 dungeons are generator output with no identity.
 - *Playable when:* you can follow a quest from the town into a dungeon and beat its boss.
 
-### M3 — Progression & loot spine
+### M3 — Progression & loot spine — **~35%**
 
-- **Items**: a real loot table, equip/inventory/stat-bonus UI, consumables, a shop/economy.
-- **Class advancement**: at least ONE class → its advanced job (proves the advancement system end-to-end; the other classes are content, not new tech).
-- Stat + skill respec, level cap for the demo.
+- **Built:** the *machinery* — equip/inventory/stat-bonus UI, refine, card slotting, rolled rarity and rolled skills per copy, gold, loot-dropper hooks on death, all persisted.
+- **Missing:** the *content* — **2 items in the whole game**, no drop tables authored, no armor, no consumables, no shop or economy, no crafting (despite a crafting design already written). **Class advancement does not exist** in any form. No respec, no demo level cap.
 - *Playable when:* killing things drops gear that meaningfully changes your build.
 
-### M4 — Game-shaped product
+### M4 — Game-shaped product — **~0%**
 
-- Main menu, settings (audio/video/controls), pause, controller support, a tutorial/onboarding.
-- Audio pass (music + SFX coverage), UI polish, localization scaffolding.
-- **Steam integration:** Steamworks app, store page, achievements, cloud saves, build pipeline.
+- No title screen or new-game flow; no pause; no controller support; no tutorial; no localization scaffolding. In-game settings and audio wiring exist, which is the only part standing.
+- **Steam integration** — nothing started, and **no player build has ever been produced from this project**, so packaging is entirely unproven.
 - *Shippable when:* a first-time player needs zero outside instructions.
 
-### M5 — Content multiplication (the real 80%)
+### M5 — Content multiplication (the real 80%) — **~0%**
 
-- Scale to **7–8 classes** (+ their advancements), dozens of monsters, hundreds of items, more zones/dungeons, more story. *This is where most of the calendar time goes — each bullet is weeks-to-months.*
+- One weapon of thirteen declared has a skill pool. Scaling to 7–8 classes (+ advancements), hundreds of items, more zones and story is where most of the calendar time goes.
 - Balance pass, QA/bug pass, "no unfinished work" polish.
 - **Optional small co-op** (2–4 players, friend-hosted) — far cheaper than a true MMO and a big Steam selling point.
-- *Shippable when:* the content depth matches the price tag.
 
-> **Recommended first public step:** a **vertical-slice demo** (M1 + a thin M2) — one class, one dungeon, one story beat — hosted as a **WebGL build** or a **Steam "Next Fest" demo** to test whether it's fun *before* committing to M5's content grind.
+> **Recommended first public step:** a **vertical-slice demo** (M1 + a thin M2) — one class, one dungeon, one story beat — as a **WebGL build** or a **Steam "Next Fest" demo** to test whether it's fun *before* committing to M5's content grind.
+
+---
+
+## The recommended next move — the loot spine, before quests
+
+Two items means every fight the last two months perfected pays out **nothing**. Loot is also the cheapest large win available: the gear machinery is already built and proven, so authoring items is data entry against a working system rather than new technology. Fifty items with real drop tables would turn the existing 86 mobs and 41 maps into a loop, with no engine work at all.
+
+Then, in dependency order:
+
+1. **Loot spine** — ~50 items (weapons, armor, consumables), drop tables per mob, a first shop.
+2. **One dungeon with a point** — place a boss (20 are already defined), give that dungeon a layout and a reward.
+3. **A minimal quest system** — track and turn in, with three named NPCs to carry it.
+4. **A title screen and a first real build** — prove packaging early, while it is cheap to fix.
 
 ---
 
@@ -102,18 +120,18 @@ Only attempt after Tier 1 proves the game is fun and has an audience. This is a 
 
 ## What it would realistically take
 
-- **Honest playable demo (M1 + thin M2):** months of focused work — very achievable at our pace.
+- **Honest playable demo (M1 + thin M2):** months of focused content work — no new technology required.
 - **Full Tier 1 on Steam (M1–M5):** roughly a **year-plus** of sustained work, dominated by M5 content volume.
 - **Tier 2 (true MMO):** **multi-year**, and the part that most needs people/money beyond just direction.
 
-The good news: nothing in Tier 1 is blocked by missing *technology* — it's blocked by **content and connective tissue**, which is exactly the kind of work we can chew through milestone by milestone.
+Nothing in Tier 1 is blocked by missing *technology*. It is blocked by **content and connective tissue** — which is exactly the kind of work we can chew through milestone by milestone.
 
 ---
 
 ## Appendix — build history (the 2D → 2.5D path)
 
-The original plan built a **2D** foundation in phases A–G (engine → character/world → towns/interaction → monsters/combat → UI shell → RPG numbers → skill draft), single-player-first with MMO deferred. As of **2026-06-16** the project **pivoted to RO-style 2.5D** (3D world + billboard sprites), validated by spike `f195a5d`; the RPG/UI/combat/art systems ported over while the spatial layer (movement/depth/pathfinding/maps) was rebuilt for 3D. On **2026-06-18** the skill system was redesigned to **TRIO-RING** (the old 28-node graph is retired) and the RO-style flat stat layer was added. Those built systems are folded into "Where we actually are" above; this appendix exists so the lineage isn't lost.
+The original plan built a **2D** foundation in phases A–G (engine → character/world → towns/interaction → monsters/combat → UI shell → RPG numbers → skill draft), single-player-first with MMO deferred. As of **2026-06-16** the project **pivoted to RO-style 2.5D** (3D world + billboard sprites); the RPG/UI/combat/art systems ported over while the spatial layer (movement/depth/pathfinding/maps) was rebuilt for 3D. On **2026-06-18** the skill system was redesigned to **TRIO-RING** (the old 28-node graph is retired) and the RO-style flat stat layer was added. Through **July–August 2026** the effort was almost entirely combat: unified player/mob rules, one damage choke point, the stack and sub-stat collapses, and the composed skill pool that closed the sword line on **2026-08-24**. Those built systems are folded into "Where we actually are" above; this appendix exists so the lineage isn't lost.
 
 ---
 
-*Related docs: **Ring System — Current Facts (Trio-Ring)**, **Procedural Town Map Generator — Spec**, **Performance Checkup — My Routine**, **Dev Contribution Log**.*
+*Related docs: [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md), [Active Skill System — V3](active-skill-system-v3/README.md), [Crafting & Recycling](crafting-and-recycling.md), [World Creator — Spec](world-creator-spec.md), [Performance Checkup — My Routine](performance-checkup-routine.md), [Dev Contribution Log](dev-contribution-log.md).*

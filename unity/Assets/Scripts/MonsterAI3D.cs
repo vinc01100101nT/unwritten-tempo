@@ -43,7 +43,8 @@ public class MonsterAI3D : MonoBehaviour
     public float onHitAilmentChance = 0f;
     [Tooltip("Ailment duration in seconds.")]
     public float onHitAilmentSeconds = 4f;
-    [Tooltip("Ailment magnitude — DoT damage/tick, Slow factor (0..1), or Blind HIT loss.")]
+    [Tooltip("Ailment magnitude — damage per tick for Poison / Bleed / Burn. Stun / Freeze / Silence use none: being " +
+             "stopped is binary, so only the duration matters.")]
     public float onHitAilmentMagnitude = 3f;
 
     [Tooltip("Outgoing damage swings down to (1−spread)×attack each hit, RO-style (0 = always full attack).")]

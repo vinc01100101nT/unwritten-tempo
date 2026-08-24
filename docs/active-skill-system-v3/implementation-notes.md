@@ -1,252 +1,250 @@
 # Active Skill System — Implementation Notes
 
-> **This is the MUTABLE, code-facing companion** to the design doc *"Active Skill System — V3 (Channels + Role-Locked Scaling)"* — that doc is the **design source of truth**. This doc tracks how the design is actually wired in code and is expected to churn every build. If the two disagree: **V3 wins on intent, this doc wins on what the code does today.** *(Rewritten 2026-07-22 after the V3 teardown — the old V2 "weapon-affix + ring-voice fold" account it used to hold is gone, matching the code.)*
+> **This is the MUTABLE, code-facing companion** to the design doc *"Active Skill System — V3 (Channels + Role-Locked
+> Scaling)"* — that doc is the **design source of truth**. This one records how the design is actually wired **today**.
+> If the two disagree: **V3 wins on intent, this doc wins on what the code does.**
 >
-> **Sibling:** [Unified Unit Stats — Implementation Notes](unified-unit-stats-implementation-notes.md) covers the UNIT side (one stat model for players and mobs, the point budget, mob gear/rings/drops). This doc covers the SKILL side. An effect landing on anybody at all depends on both.
-
+> # :no_entry: NEVER APPEND. ALWAYS UPDATE IN PLACE.
+> This doc states the CURRENT wiring, not the order things were built in — git holds the history. When something
+> changes, **rewrite the passage that described the old wiring**; never add a dated section and leave the old text
+> above it. Before finishing any edit, re-read the whole doc and confirm nothing elsewhere still describes the old
+> behaviour.
+>
+> **Sibling:** [Unified Unit Stats — Implementation Notes](unified-unit-stats-implementation-notes.md) covers the UNIT
+> side (one stat model for players and mobs, the point budget, mob gear/rings/drops). This doc covers the SKILL side.
+> An effect landing on anybody at all depends on both.
 
 ## The model in one paragraph
 
-A **weapon** grants skills (`Item.grantedSkillIds`). A **skill** is a `SkillDef` asset (authored in the Skill Composer) that binds VFX ticks to a list of `SkillEffect`s. Each `SkillEffect` owns its **numbers** (the V3 *channels*: `damageMult`, `amount`, `seconds`, `magnitude`, `hitCount`, `chance`, binding `radius`, plus `SkillDef` cost/cooldown/castTime/range) **and** its **behavior** (the `SkillEffectKind`). The **ring** does exactly one thing to all of this: **scale it**, via per-effect **affinity** weight-lists. There is no separate mutation/affix/voice engine — every behavior is a `SkillEffect` running through the one `SkillEffectApplier`.
+A **weapon** grants skills — **rolled per copy** at the drop (`WeaponSkillRoll` → `EquipmentInstance.skillIds`), never
+listed on the shared asset, because two Swords off one def carry different kits. A **skill** is a `SkillDef` asset (authored in the Skill Composer)
+that binds VFX ticks to a list of `SkillEffect`s. Each `SkillEffect` owns its **numbers** (the V3 *channels*:
+`damageMult`, `amount`, `seconds`, `magnitude`, `hitCount`, `chance`, binding `radius`, plus `SkillDef`
+cost/cooldown/castTime/range) **and** its **behavior** (the `SkillEffectKind`). The **ring** does exactly one thing to
+all of this: **scale it**, via per-effect **affinity** weight-lists. There is no separate mutation/affix/voice engine —
+every behavior is a `SkillEffect` running through the one `SkillEffectApplier`.
 
-## How V3 maps to live code (all already present)
+## How V3 maps to live code
 
 | V3 concept | Code |
 | --- | --- |
-| **Channels** (the numbers) | fields on `SkillEffect` + `SkillDef` |
-| **Ring = numeric scaling only** | `affinity` / `durationAffinity` / `hitCountAffinity` (`List<StatWeight>`) → `SkillEffectApplier.AffinityMult` reads `Character.RingBonus(StatId)` (0 when no ring worn) |
-| **Role-lock** (Heal→MP, Damage→Atk/MAtk) | the `affinity` weights authored on each effect — data, per skill. per-channel scaling **defaults** locked in *Skill Numbers & Balance Baseline* |
-| **Damage type as data** | `DamageType {Physical, Magic, Crit}` on each `SkillEffect` (Physical=ATK vs armour, Magic=MATK/unmissable/no-crit, Crit=forced-crit). *Crit-pierce / Magic-glance math is still a stubbed combat-pass TODO — pre-existing, not V3.* |
+| **Channels** (the numbers) | fields on `SkillEffect` + `SkillDef`, each a `ScaledNumber` |
+| **Ring = numeric scaling only** | `affinity` / `durationAffinity` / `hitCountAffinity` / `chanceAffinity` (`List<StatWeight>`) → `SkillEffectApplier.AffinityMult` reads `Character.RingBonus(StatId)` (0 when no ring worn) |
+| **Role-lock** (Heal→MP, Damage→Atk/MAtk) | the `affinity` weights authored on each effect — data, per skill. Per-channel scaling **defaults** locked in *Skill Numbers & Balance Baseline* |
+| **Damage type as data** | `DamageType {Physical, Magic, Crit}` on each `SkillEffect` (Physical = ATK vs armour, Magic = MATK/unmissable/no-crit, Crit = forced-crit) |
 | **Effects authored on skills** | `SkillEffectKind` + the `SkillEffectApplier` handlers |
-| **Family / Archetype = guides** | `SkillFamily` is an **author-time default** for an effect's `DamageType` (runtime never reads it for balance); `SkillArchetype` is a tooltip identity chip. Neither is a stat-lock. |
+| **Which side an effect lands on** | `SkillEffect.side` (`EffectSide`) — every effect states whether it hits the caster or the target; `SkillEffect.LandsOnCaster` is the one reader the runtime and the composer both partition on |
+| **Family / Archetype = guides** | `SkillFamily` is an author-time default for an effect's `DamageType` (runtime never reads it for balance); `SkillArchetype` is a tooltip identity chip. Neither is a stat-lock. |
+
+## The effect catalog as the composer groups it
+
+Twenty kinds, split by what they act on. The composer offers each group filtered by side, so a section only lists kinds
+it can actually run:
+
+- **Health** — Damage, Execute, Heal.
+- **Movement** — Teleport, Dash, Knockback, Pull. Every verb that MOVES a body; who gets moved is the targeting
+  question, not this one. Their seconds are **travel time, not an ongoing condition**, which is exactly why they are not
+  States and never show an icon (`shoveSeconds` holds a shove's travel time, kept out of `seconds` for that reason).
+- **State ▸ Buffs** — Sub Stat Buff, Boost Outgoing Damage, Parry, Brace, Immune To Disables, Shield.
+- **State ▸ Debuffs** — Sub Stat Debuff, Reduce Outgoing Damage, Taunt, and the **six** ailments (Poison, Bleed, Burn,
+  Stun, Freeze, Silence). Ailments map to `kind = Status` + `ailment`; the rest are their own kinds. Choosing "Burn" IS
+  the choice, so there is no second ailment dropdown.
+- **Cleanse** — the one verb that REMOVES states, so it sits beside the two branches rather than inside either.
+- **Modifiers** — Extend Duration, Add Stacks. These target **a skill's pile**, not a body, and are labelled as the whole
+  sentence they read as ("extend duration of &lt;skill&gt;") because that IS the effect.
+
+**Every timed sub-stat change is ONE kind.** Move speed, HP/MP regen, mana leech, reflect, life steal, attack, magic
+attack, defence, magic defence, accuracy, evasion, crit chance, crit damage, max HP/MP, damage, damage reduction, attack
+speed and cast speed are all picked from the `subStat` dropdown rather than being a verb each. Shield, Parry, Brace,
+Immune To Disables and the outgoing-damage charges stayed as their own kinds because none of them moves a sub-stat —
+they are windows, pools and charges. **Do not re-add a per-stat verb**; that is the DRY violation this collapse removed.
+
+`seconds` **means one thing: ongoing-CONDITION duration.** Instant and movement kinds keep it 0, so the tray/nameplate
+rule "duration &gt; 0 ⇒ show an icon" is exact and needs no kind checks.
+
+## The unified state store
+
+ONE `UnitStates` per unit — player and mob alike — holding every buff, debuff and ailment, and serving as the single
+source for BOTH gameplay queries AND display (player buff tray + mob nameplate icons). It absorbed the old scattered
+ailment arrays, the eight hand-written buff windows on `Character`, and the separate mob vulnerability field; all of
+those are deleted.
+
+- **Overwrite = newest-wins.** A refresh replaces window AND magnitude, even if weaker. Ailments follow the same rule.
+- **Lazy self-expiry** — `EnsureFresh` prunes only when an expiry is due, so there is no per-frame `Update` and the
+  cached scalars stay correct at the old lazy cost.
+- **Perf shape (a cost, not a speed-up — the goal was perf-neutral):** the stack list is the source of truth, but the
+  hot scalars are **cached** and recomputed only on a set change, so readers stay O(1); entries are **pooled**, so
+  apply/remove is zero-alloc. N is ~0–8 per unit; the only real lag risk was GC, and it is designed out.
+- ⚠️ **`StateId` is SERIALIZED** on the gate and on modifier effects ⇒ the enum is **append-only**. A member inserted in
+  the middle silently re-points saved skills at a different pile.
+
+⚠️ **The player is TWO GameObjects** (the persistent `Character` data object plus the spawned body carrying
+`Player3DController`/`StatusController`), so a find-or-create lookup once gave it **two** stores — gameplay read one and
+the tray the other, so a move-speed buff sped the player up while showing no icon. `StatusController` resolves the
+player's store **lazily from `Character.Instance.States`** for this reason. Mobs are one GameObject and were always
+fine. See memory `player-two-gameobjects-one-store`.
+
+*Nameplate limitation:* mob icons only show once a mob has been damaged, because the plate hides at full HP — so a
+slowed-but-untouched mob shows none.
+
+## Stacks, charges and the gate
+
+**Stacks and charges are ONE mechanism.** Each state holds a list of `Stack` structs, each with its OWN end time,
+magnitude and integer amount. A "charge" is N stacks granted together sharing a window; a Momentum-style pile is one
+stack per event, each on its own timer. The state's aggregate is a fold over its stacks, so **every existing reader is
+untouched** — a non-stacking state is one stack whose aggregate IS its value.
+
+- **Expiry is per stack**; the wake-up time is the minimum across all stack ends, so the lazy no-`Update` design still
+  fires at the right moment. **Overflow and consumption both take the OLDEST first.**
+- `MaxStacks = 99` is a hard safety ceiling even for "uncapped" design — bounded memory, and the design never reaches it.
+- ⚠️ **Magnitude encoding — the one trap.** A STACKING state stores per-stack **deltas** (10 × 0.03 ⇒ 0.30); a
+  non-stacking one stores the absolute value. Summing multipliers would be nonsense. `State.Mult` **owns this rule** and
+  every reader routes through it, so it cannot be re-derived wrongly. Additive channels (DoT, damage reduction, shield,
+  leech, reflect) sum correctly with no branch.
+- **Apply context, not a per-method parameter** — one latch carries the source icon AND the stacking rules, so no
+  gameplay method needs a stacking argument. It is set for **every** hit, not just the first, so a Status proc landing on
+  hit 3 stacks exactly as it would on hit 0.
+
+**The gate is per TRIGGER** (`SkillTriggerEntry.requiresState` / `requireSkillId` / `requireStateId` /
+`requireMinStacks` / `consumeAllStacks` / `consumeStacks`), checked and spent through the ONE `StateGate` from both
+entry points — a pressed active (before any cost is paid) and a passive fire. Unmet ⇒ **nothing happens at all**: no VFX,
+no cast, no cost.
+
+- ⚠️ **The gate names a PILE, not just a skill.** Keying by skill alone summed every state that skill granted and spent
+  them in list order, so a skill with two stacking effects had its piles merged — a Blade Dance beat could have eaten a
+  Parry charge. The composer's "which pile" dropdown lists only what the chosen granter actually stacks. Changing what a
+  skill stacks re-points or drops its consumers on Save, and a gate that names no pile is reported as an authoring error.
+- **COMPUTE BEFORE CONSUME** — no snapshots anywhere. Effects run reading the LIVE store; the spend happens immediately
+  after the burst returns, once per cast. Deathblow sees the whole Momentum pile while rolling damage and spends it the
+  instant that finishes. *(A skill with a requirement but no effect bindings never reaches a tick, so it never
+  consumes — a malformed authoring case.)*
+- **The run of hits** is a gate source that no skill grants: one per fight, never spent, ended by the fight itself. It
+  has no "which pile" half, and it is only a live number at the moments one of your hits just landed.
+
+### Stack counts earned from attack speed
+
+`stacksFromAttackSpeed` + `stackShare` make the stack count *how many times the caster would swing inside this effect's
+own window*. Faster attack speed = more stacks in the SAME window, never a longer one. **Deliberately uncapped** (the
+stack limit is bypassed) — clamping an earned count to a hand-sized ceiling would delete charges the caster paid for. Two
+effects sharing a duration stay in exact proportion: a `0.5` share is always exactly half, because halving a window and
+halving that window's count round the same way. Verified offline across 7,839 duration × attack-speed combinations.
+
+### Numbers that answer to the pile
+
+`SkillEffect.useStacks` lets an effect's numbers read the pile the cast is cashing, each number carrying its own
+operation and reading, so one effect can have a damage multiplier that builds on the pile beside a duration that
+ignores it. This is the **single** rule for stack-sized numbers — damage does not get a private version of it.
 
-## V3 teardown — DONE (2026-07-22)
+## Passives and triggers
 
-The leftover **V2 reshaper layer** (weapon affixes baked on the weapon + ring "voices" folded per cast through a `CastMods` struct) was **removed** — V3 makes the ring numbers-only and authors every behavior on the skill. Deleted: `RingVoices.cs`, `WeaponAffixes.cs`, `CastMods.cs` (incl. `SkillReshape`), `Editor/AffixVoiceTableWindow.cs`, `Item.weaponAffixIds` (+ the Iron Sword seed), and the weapon equip-passives (`weaponManaLeech/Refund/Reflect`). The `SkillEffectApplier.ApplyBurst` `in CastMods` param and its `ApplyOutgoing`/`EchoDamage`/`ExecuteFinisher` post-pass are gone; `SkillRunner.OnTick` no longer folds anything.
+A skill carries a list of `SkillTriggerEntry`. `OnCast` (serialized 0, so every existing asset stays valid) is a normal
+pressed active; anything else is a passive moment. A passive is **authored exactly like an active** — same VFX, ticks and
+effects — and when its trigger fires it **runs as a full skill cast**, with no mana, cooldown or wind-up, because the
+trigger is the gesture. It takes no hotbar slot.
 
-**Nothing was lost — every affix behavior was rehomed or was already reachable:**
+**Aim is auto-resolved from the trigger**, matching how the skill was authored: a single-target reticle lands on the
+triggering entity; a ground/AoE/projectile reticle casts at the victim's location (or the caster's spot when the moment
+has no victim); a **self** reticle ALWAYS casts on the caster, so a self-buff is never flung onto the mob.
 
-| Old affix / voice | Where it lives now |
-| --- | --- |
-| Slow, Stun | already authorable as a `Status` effect (`Ailment.Slow` — magnitude = speed factor; `Ailment.Stun`) |
-| Root | a `Status` `Ailment.Slow` with a \~0.02 factor (a hard stop) — no separate kind (DRY) |
-| Push (knockback) | **new** `SkillEffectKind.Knockback` → `MonsterAI3D.Knockback`, shoved away from the caster (magnitude = speed) |
-| Pull | **new** `SkillEffectKind.Pull` → `MonsterAI3D.Knockback` from a mirrored origin (toward the caster) |
-| Mana-Leech | **new** self `SkillEffectKind.ManaLeech` → `Character.BeginManaLeech(sec, frac)`; the player's damage-dealt choke (`Health.ApplyLeech`) reads `Character.ActiveManaLeechPct` |
-| Reflect | **new** self `SkillEffectKind.Reflect` → `Character.BeginReflect(sec, frac)`; `Character.Reflect` adds `ActiveReflectBonus` on top of the permanent thorns-card `reflectPct` |
-| Raw damage | **dropped** — a skill authors its own `damageMult` (the Damage channel). Redundant. |
-| Refund | **dropped** — a skill authors its own `manaCost` (the Cost channel). Redundant. |
-| Ring voices (Fortify/Leech/Accelerate/Execute/Expand/Repeat) | **removed** (V3 defers behavioral voices to v-next). Their effects still exist as authorable `SkillEffect` kinds (Guard/Regen/Execute/…), just no longer auto-fired by ring stats. |
+**The trigger set:** `OnSkillCastComplete` is **parameterized** by a target skill id picked in the composer, because the
+skill set is open-ended; the rest are a small closed set of natural events — `OnBasicAttackDealt`, `OnKill`, `OnLowHP`,
+`OnDamageDealt`, `OnParry`, `OnBasicAttackStart`, `OnDamageReceived`. `OnParry` is the deliberate exception to the
+skill-parameterized scheme: a parry's success is a *game* event, not "you cast a skill."
 
-The two new mob kinds (`Knockback`/`Pull`) use the caster's position as the shove origin, so no cast-point threading through the hit loop is needed. The two new self kinds (`ManaLeech`/`Reflect`) are timed windows on `Character` — **lazy** (checked via `Time.time`, no `Update` tick, no allocation), latest-call-replaces (no stacking).
+**One dispatch handler** — every fire-site routes through `PassiveEvents.Fire`, so a trigger's rule lives in exactly one
+place and no fire-site can forget it. Passives self-register when enabled and unregister when disabled, so
+**registered ⇔ the player owns it**, with no separate owned-set to hand-sync.
 
-**Files touched:** `SkillEffect.cs` (+4 kinds), `SkillEffectApplier.cs` (−reshaper post-pass, +Knockback/Pull/ManaLeech/Reflect handlers), `Character.cs` (−weapon passives, +`BeginManaLeech`/`BeginReflect` + `ActiveManaLeechPct`/`ActiveReflectBonus`; reflect reads the timed window), `Health.cs` (leech read), `SkillRunner.cs` (−voice cast-hook, −2 refund blocks, plain `ApplyBurst`), `SkillTooltip.cs` (−Ring&Weapon section, +describe lines), `Item.cs` (−`weaponAffixIds`), `Iron Sword.asset` (−seed), `SkillMod.cs` (comment), `Editor/TOOLS.md` (−Affix table row).
+### The no-self-feeding brake
 
-## Shield effect + catalog lock — DONE in code (2026-07-24, roster prep)
+Every effect carries the set of passives that caused it — one bit per registered passive in a single machine word, so
+zero-alloc. A passive whose bit is already in the chain is skipped; unrelated passives still run. Because no passive can
+repeat within a chain, **every chain is finite by construction**, with no depth counter to tune. Only damage a passive's
+own effects deal stamps its bit, which is what keeps Encore (which merely extends Blade Dance) firing on each kill.
 
-Added the **Shield** effect (the one new verb the roster forced) and locked the effect/channel catalog with GPT. Shield = a timed absorbing **barrier**: a finite HP pool that soaks incoming HITS until drained or its window lapses — distinct from Guard's % damage *cut*.
-
-**Files touched:**
-
-- `SkillEffect.cs` — **appended** `SkillEffectKind.Shield` (MUST stay last: Unity serializes the kind by int, so inserting mid-enum would corrupt existing skill `.asset` ints). Added to `IsSelfVerb` (self-only, like Guard/Regen). Reuses existing fields — `amount` = barrier HP, `seconds` = duration; no new serialized field.
-- `Character.cs` — `BeginShield(int amount, float seconds)` + `ShieldRemaining` (for a future HUD pip) + a private `ApplyHitToHP(int)` choke that drains the barrier before HP. `TakeDamage` / `TakeMagicDamage` route through it; `TakeTrueDamage` does **not** (DoT bypasses the shield, matching Guard). Cleared in `Revive()`. Soaked damage pops a pale-cyan number (`ShieldAbsorbColor`) via the pooled `DamagePopup` — no per-hit allocation.
-- `SkillEffectApplier.cs` — `case Shield` in `ApplyOneToPlayer` → `BeginShield(ScaledAmount, ScaledSeconds)` (barrier HP scales off the effect's `affinity`; duration off `durationAffinity`).
-- `Editor/SkillComposerWindow.cs` — field-drawing case (barrier HP + seconds), `AffinityOutputLabel` → "boosts BARRIER HP (sustain: HP/Def/MP)", `HasDurationChannel` includes Shield, effect-summary line.
-- `SkillTooltip.cs` — `DescribeEffect` line ("Absorbs N damage for Ns").
-
-**Rejected (design call):** Summon (inseparable from the deferred `Limit`/cap system — uncapped = perf hazard) and Transform (a whole feature). Out of scope.
-
-**Measured finding — the "split strength into channel-ids" clarity win is ALREADY present in the composer UI.** `SkillComposerWindow` already draws per-kind named magnitude labels (`damage cut`, `HP / tick`, `shove speed`, `MP leech`, `slow amount`, …) and already **hides** magnitude for Stun/Freeze/Silence (the dead-knob removal). What does NOT yet exist is a formal **Channels-catalog data type** with stable ids: the labels live in a per-kind `switch` (`AffinityOutputLabel`) and the value storage is still one reused `magnitude` float. Turning that into a real catalog (effects declare owned channel-ids; ring-scaling + composer + tooltip read one source) is a **serialized-schema refactor** that would migrate every existing skill `.asset` — **deferred**, not done here, to avoid an unrequested data migration.
-
-**Status:** not yet compiled/verified in Unity (the user recompiles + watches the Console). Playtest: author a skill with a Shield effect on a Player-binding → cast → take a hit → a pale-cyan absorbed number pops and HP is spared until the barrier drains.
-
-## Passive trigger system — DONE (2026-08-04, code foundation)
-
-Rebuilt the passive-skill trigger foundation clean (the reverted sword work's core, redone). A skill now carries a `SkillTrigger`: `OnCast` (a normal active — default, serialized int **0** so every existing `.asset` stays valid) or one of the passive triggers. A passive is **authored exactly like an active** (same VFX, ticks, effects) — **only the trigger differs**. It takes no hotbar slot and isn't pressed; when its trigger fires it **fires as a full skill cast** (`SkillRunner.FireAsPassive` → the same `PlayCycles` path an active uses: VFX + ticks + `SkillEffectApplier`), with **no mana / cooldown / wind-up** (the trigger is the gesture).
-
-**Aim is auto-resolved from the trigger** (via `def.Reticle`, so it matches how the skill was authored):
-
-- **Single-target** (`CastReticle.Unit`) → lands on the triggering entity (the `victim`); skipped if the moment has no entity.
-- **Ground / AoE / projectile** (`CastReticle.Ground`) → casts AT the victim's location (or the caster's spot if the moment has no victim, e.g. OnLowHP). So *meteor on OnBasicAttackDealt* rains on the mob you just hit, exactly as if hand-cast there.
-- **Self** (`CastReticle.Instant`) → **ALWAYS** casts on the caster; the victim is ignored (a self-buff is never flung onto the mob).
-
-**Re-entrancy:** ✅ **SOLVED 2026-08-07** by the **no-self-feeding brake** (see the stacking section below) — a passive never fires off a chain it's already in, at any delay. The old one-level `dispatching` bool is **deleted**: it only caught synchronous re-entry and missed the real hazard, a passive's damage landing frames later via deferred VFX ticks. Damage payloads on `OnDamageDealt`/`OnKill` passives are now safe.
-
-**Two trigger shapes, matched to the space they name:**
-
-- `OnSkillCastComplete` **— parameterized** by `SkillDef.triggerSkillId` (a target active picked in the composer dropdown): fires when THAT active finishes casting **uninterrupted**. One value replaces the old per-skill events (`OnLunge`, `OnFeintSuccess`) because the skill set is open-ended. **Renamed** from the earlier `OnSkillSuccess` — "cast complete" states plainly that the cast wasn't interrupted, where "success" was context-vague.
-- **Natural events — flat** (a small, closed set, so no wrapper): `OnBasicAttackDealt`, `OnKill`, `OnLowHP`, `OnDamageDealt`, `OnParry`. `OnParry` **is the deliberate exception** to the skill-parameterized scheme — a parry's "success" is a natural game event (you blocked an attack), not "you cast the Parry skill."
-
-**One dispatch handler:** every fire-site routes through `PassiveEvents.Fire(trigger, skillId, victim)` — the single choke point, so a new trigger's rule lives in exactly one place and no fire-site can forget it. Passives are `SkillRunner` components that self-register in `OnEnable` / unregister in `OnDisable`, so **registered ⇔ the player owns it** (no separate owned-set to hand-sync). `Fire` runs every passive whose `trigger` matches (and, for `OnSkillCastComplete`, whose `triggerSkillId` == the completed skill's id).
-
-**Files:** `SkillDef.cs` (+`SkillTrigger` enum, `trigger`/`triggerSkillId` fields, `IsPassive`), `PassiveEvents.cs` (new — the handler + registry), `SkillRunner.cs` (`Activate` rejects passives; `OnEnable`/`OnDisable` register/unregister; new `FireAsPassive(victim)` — resolves aim from `def.Reticle` then runs `PlayCycles`; emits `OnSkillCastComplete` at the top of `PlayCycles` **only for actives**, `if (!def.IsPassive)`, so passives don't chain off one another), `Editor/SkillComposerWindow.cs` (new **Trigger** section — dropdown + `DrawSkillPicker` for the target active + a passive help box).
-
-**Wired now:** `OnSkillCastComplete` (from `PlayCycles`, the uninterrupted-cast site). **Natural events wired (2026-08-04):**
-
-- `OnBasicAttackDealt` — `Player3DAttacker.LandBasicHit`, only on a landed (non-whiff, `dealt > 0`) basic; victim = the mob. Covers melee + arrow basics (both funnel through `LandBasicHit`), NOT skill strikes.
-- `OnDamageDealt` — `Health.ApplyLeech(Health victim, int dmgDealt)`, the code's own "one player-dealt-damage choke," so basics **and** skills both fire it once per damage instance; victim = the mob hit. (Signature gained the `victim`; its 4 call sites pass `this`.)
-- `OnKill` — `Health.Die`, fired first (before pool/destroy so `victim.position` is still valid); victim = the dying mob. Mobs only die to the player here, so this reads as "player kill."
-- `OnLowHP` — `Character.ApplyHitToHP`, a **local before/after crossing** of `LowHpFrac` (0.3 · MaxHP): fires the hit that crosses you into low HP while still alive. Re-arms after any heal automatically (no persisted flag). DoT-only crossings bypass this line and aren't covered — fine until OnLowHP becomes a queried state (its consumer Last Stand is a "while low" condition that wants the state store anyway).
-
-**Still NOT wired:** `OnParry` — no parry mechanic exists yet (the Parry skill was reverted); its fire-site lands when that's built.
-
-**Marks / stacks / charge counts:** ✅ **BUILT 2026-08-07** on the unified state store — see the stacking section below. (Owner Private/Shared remains deferred until multiplayer exists.)
-
-**Status:** not yet compiled/verified in Unity (the user recompiles + watches the Console). Playtest: author a passive (trigger = OnSkillCastComplete, pick an active) with a **Self** Haste/Guard effect → cast that active → the passive's buff lands and its icon shows on the tray (via the shared applier's auto-register).
-
-## Skill Composer — effect picker reorg: State ▸ Buffs / Debuffs — DONE (2026-08-04)
-
-Realized the State-System doc's `STATE → BUFF | DEBUFF` hierarchy in the composer's effect picker. The old flat \~18-value `SkillEffectKind` dropdown is now a cascade: **instant effects sit at top level**, and every **durational** effect collapses under a single **State ▸** entry → **Type** (Buffs / Debuffs) → the specific effect. **Purely presentational** — it maps to/from the flat `SkillEffectKind` (+ `Ailment`), so **no enum/serialization change** and existing `.asset`s are untouched.
-
-Classification (author's rules): **State = has any duration** (even \~0s); **Buff = self-castable**; **Debuff = never self**. It's organizational only — **targeting stays on the affects checkboxes**, not enforced by the category.
-
-- **Top-level (instant + ACTION):** Damage, Heal, Execute, Teleport, Cleanse, **Dash, Knockback, Pull**. A "state" is an ongoing CONDITION; a movement action (dash glide, shove) is NOT a state even though it takes time — its timer is movement time, not a condition. So these carry `seconds = 0` and never show an icon. Their movement time lives in dedicated fields (Dash: dash fields; **Knockback/Pull:** `shoveSeconds`, split out of `seconds` 2026-08-04).
-- **State ▸ Buffs:** Sub Stat Buff, Sub Stat Debuff, Guard, Shield, Parry, Brace, Immune To Disables, Boost Outgoing Damage. **Every timed sub-stat change is one kind now** (2026-08-22): move speed, HP regen, MP regen, mana leech, reflect, life steal, attack, magic attack, defence, magic defence, accuracy, evasion, crit chance, crit damage, max HP, max MP, damage, attack speed, cast speed — picked from the `subStat` dropdown instead of being a verb each. The separate `Haste`, `Regen`, `ManaLeech` and `Reflect` kinds were deleted and their assets migrated; `Buff` became `SubStatBuff`. Guard, Shield, Parry, Brace and the outgoing-damage charges stayed as their own kinds because none of them moves a sub-stat — they are windows, pools and charges.
-- **State ▸ Debuffs:** Vulnerability, Taunt, + the 8 ailments (Poison/Bleed/Burn/Slow/Stun/Freeze/Silence/Blind). The ailments map to `kind = Status` + `ailment`; the rest are their own kinds. (Taunt IS a state — the mob is forced to target you for its duration.)
-
-`seconds` **now means one thing: ongoing-CONDITION duration.** Instant/action kinds keep it 0 (default 0 + composer forces it via `!HasDurationChannel`), so the tray/nameplate "duration &gt; 0 ⇒ show icon" rule is exact — no kind checks.
-
-Nice cleanup: choosing "Burn" IS the choice, so the **separate** `ailment` **dropdown was removed** from the Status field block (no more two-step "Status → then ailment field").
-
-**Files:** `Editor/SkillComposerWindow.cs` only (`InstantKinds`/`BuffKinds`/`DebuffOptions` tables + `DrawEffectKindTop`/`DrawEffectStateBranch` + the removed ailment popup).
-
-## Buff-tray auto-register: duration-driven — DONE (2026-08-04)
-
-The on-screen buff tray populates from **one rule**: in `SkillEffectApplier`'s player-apply path, **any effect with a duration** (`e.seconds > 0`) tags the applied state with the source skill's icon (with the affinity-scaled seconds + tooltip); instant effects tag nothing. This **replaced the hand-maintained** `IsOngoingSelfBuff` **kind list** (Haste/Guard/Buff/Regen/ManaLeech/Reflect/Shield) — that list is deleted. It falls straight out of the State classification: *has a duration ⇒ it's a State ⇒ it's on the tray*, so no list can drift and a new durational effect shows up for free.
-
-**Scope:** debuffs the player puts **on a mob** belong on the mob (nameplate), not the player tray; a "your active debuffs on enemies" tracker would be a separate feature if ever wanted. **File:** `SkillEffectApplier.cs`.
-
-> ⚠️ **Superseded 2026-08-06:** the separate `PlayerBuffs` display mirror this section originally described is **deleted**. The tray now reads the unified store directly (`Character.States.Active`), and the icon rides the state itself via the applier's apply-context. The duration-driven rule above is unchanged — only its storage moved.
-
-## Unified state store (`UnitStates`) — COMPLETE in code (2026-08-04 → 08-06), NOT Play-tested
-
-The State-System doc's unified per-unit state store: ONE list of active buffs/debuffs per unit, the single source for BOTH gameplay queries AND display (player buff tray + mob nameplate icons). It absorbed the scattered `StatusController` ailment arrays, `Character`'s 8 buff windows, and `Health.VulnMult` — all of which are now deleted.
-
-**Optimized (as agreed — this is a cost, not a speed-up; goal is to keep it perf-neutral):** the list is the source of truth, but the hot scalars (`MoveMult`, `GuardCut`, `VulnMult`, `DamageBuffMult`, `AttackSpeedBuffMult`, `CastSpeedBuffMult`, `ManaLeechPct`, `ReflectBonus`, `ShieldPool`, `CannotAct`, `Silenced`, `HitPenalty`) are **cached** and recomputed only on a set change → readers stay **O(1)**; entries are **pooled** → apply/remove is **zero-alloc**. (N = active states on one unit, \~0–8, hard-capped by the effect kinds; compute cost is microseconds even naive — the only lag risk was GC, designed out.)
-
-**The store itself:** `UnitStates.cs` — the store (`StateId` enum, pooled `State` entries, `Apply`/`Remove`/`Prune`/`Clear`, `Active` display list, `OnChanged`) + the cached query getters + `Recompute`. Two locked decisions: **overwrite = newest-wins** (refresh replaces window+magnitude — the State-System doc's rule), and **lazy self-expiry** (`EnsureFresh` prunes only when an expiry is due → no per-frame `Update`, cached scalars stay correct at the old lazy cost).
-
-**Migration progress (family-by-family, each behaviour-preserving + testable):**
-
-- ✅ **Vulnerability** (mob-side) — `Health.BeginVulnerable`/`VulnMult` → `Health.States`; old fields deleted. Each mob lazily gets a `UnitStates`.
-- ✅ **All player-side buff families** (`Character.States`, lazy on the player): **Guard** (`GuardCut`/`Guarded`), **AttackSpeed** & **CastSpeed** buffs (feed `AttackSpeedMult`/`CastSpeedMult` unchanged), **DamageBuff incl. the War-Banner ramp** (ramp params live on the state entry; refresh-keeps / lapse-resets parity comes free from `Apply`'s `EnsureFresh`), **Regen** (ticks off the entry's `nextTick`), **ManaLeech**, **Reflect**, **Shield** (drains via `States.DrainShield`, drops its icon on break). `Revive()` now clears via `States.Clear()`. **All old** `Character` **buff fields deleted; every public property signature kept, so external readers are untouched.** Verified: zero dangling references.
-  - Helpers added to `UnitStates` for these: `Remaining(id)`, `Get(id)` (owner reads/mutates the entry for ramp/regen/shield), `DrainShield`, ramp fields on `State`, and `EnsureFresh` inside `Apply` (lapsed re-cast restarts).
-- ✅ **Ailments + Haste** (`StatusController`) — all ailment state (timers + magnitudes) and Haste moved into `UnitStates`; the `until[]`/`nextTick[]`/`mag[]` arrays and `hasteUntil`/`hasteMult` are deleted. `StatusController` keeps the VFX auras, the mob-AI delegation (`ai.Stun`/`Slow`/`Stagger`), DoT ticking (off the entry's `nextTick`/`magnitude`), `Cleanse`, and the **action-lock** (`recoverUntil` — a cast/aftercast root, NOT a state, stays). `MoveMult`/`CannotAct`/`Silenced`/`HitPenalty`/`HasteMult` now read the store (`Ailment i` ↔ `StateId i`, matching enum order). **Behaviour change (intended):** ailment refresh is now **newest-wins** (was longer-wins `Max`) — the State-System doc's locked policy.
-
-**➡ Every unit shares ONE** `UnitStates` — buffs, ailments, and vulnerability in one store. **The entire gameplay read/write path is migrated.**
-
-- ⚠️ **The PLAYER needed a fix to make that true.** The player is **TWO GameObjects** (the persistent `Character` data object + the spawned body carrying `Player3DController`/`StatusController`), so the find-or-create lookup silently gave it **two** stores — gameplay read one, the tray the other (symptom: Haste sped the player but showed no icon). `StatusController` now resolves the player's store **lazily** from `Character.Instance.States`. Mobs are one GameObject and were always fine. See memory `player-two-gameobjects-one-store`.
-
-- ✅ **DISPLAY — DONE (2026-08-06).** `BuffBarPanel` (player tray) and `MobNameplate` (pooled icon row above the HP bar) both read `UnitStates.Active`; the legacy `PlayerBuffs` mirror and `RegisterBuff` are **deleted**. Icons ride the state itself, populated by the applier's apply-context latch. *Nameplate limitation:* icons only show once a mob has been damaged (the plate hides at full HP), so a slowed-but-untouched mob shows none.
-
-- ✅ **Mob move speed folded in too.** The mob mover read a private `slowFactor` (clamped 0..1, so it could only ever SLOW) and ignored the store — mob Haste did nothing. It now reads `Health.States.MoveMult` (Slow × Haste); `MonsterAI3D.Slow` is deleted and its callers write the store's Slow state.
-
-⚠️ **NOT Play-tested.** This is the balance-critical rewrite — combat-test guard %, vuln, slow/haste move-speed, stun/silence gating, DoT ticks, shield absorb/break, the damage-buff ramp, and death-clear before trusting it.
-
-## Stacking · charges · the combo gate · the no-self-feeding brake — BUILT (2026-08-07)
-
-The State-System doc's stacking slice, built in one pass. **Compile-verified** — the C# compiler bundled inside the Unity install (`…/DotNetSdk/…/Roslyn/bincore/csc.dll`, the same one Unity itself uses) was run directly over all runtime + editor scripts with the project's real assemblies: zero errors in every touched file. That proves the code is VALID, not that it BEHAVES — **NOT Play-tested.**
-
-**Stacks and charges are ONE mechanism.** Each `UnitStates.State` now holds a list of `Stack` structs, each with its OWN `endTime`, `magnitude` and `intAmount`. A "charge" is simply N stacks granted together sharing a window; a Momentum-style pile is one stack per event, each on its own timer. `State.magnitude`/`intAmount` are now the AGGREGATE (`Refold()` owns that sum), so **every existing reader is untouched** — a non-stacking state is one stack whose aggregate IS its value.
-
-- **Expiry** is per stack (`Prune` thins a pile one stack at a time); `nextExpiry` is the min across all STACK ends, so the lazy no-`Update` design still wakes at the right moment. **Overflow** and **consumption** both take the OLDEST first.
-- `MaxStacks = 99` is a hard safety ceiling even for "uncapped" design (Momentum) — bounded memory, design never reaches it.
-- **Magnitude encoding — the one trap.** A STACKING state stores per-stack **deltas** (10 × 0.03 ⇒ 0.30); a non-stacking one stores the absolute value (1.5 ⇒ ×1.5). Summing multipliers would be nonsense. `State.Mult` **owns this rule** — `Recompute`, `Character.DamageBuffMult` (which reads the raw entry for the War-Banner ramp) and `StatusController.HasteMult` all route through it, so it can't be re-derived wrongly. Stacking Slow reads `1 − sum`. Additive channels (DoT, guard cut, vuln, shield, leech, reflect, blind) sum correctly with no branch.
-
-**Apply context replaces the display latch.** `SetApplyContext(icon, name, desc, stacking, stacksPerApply, stackLimit)` / `ClearApplyContext()` — one latch carrying BOTH the source icon and the stacking rules, so no gameplay method (`BeginGuard`/`BuffDamage`/`StatusController.Apply`/…) needs a stacking parameter. Set for **every** hit, not just the first, so a Status **proc** landing on hit 3 stacks exactly as it would on hit 0.
-
-**The combo gate is SKILL-level** (`SkillDef.requiresState` / `requireState` / `requireMinStacks` / `consumeAllStacks` / `consumeStacks`), checked and spent through the ONE `StateGate` (new file) from both entry points — `SkillRunner.Spend` (pressed active, before any cost is paid) and `PassiveEvents.Fire` (passive). Unmet ⇒ **nothing happens at all**: no VFX, no cast, no cost.
-
-- ⚠️ `StateId` **is now SERIALIZED** (on `SkillDef.requireState`) ⇒ the enum is **append-only** from here. Its old comment claiming the order was free to change was corrected. Same discipline as `SkillEffectKind`.
-- **COMPUTE BEFORE CONSUME** — locked, no snapshots anywhere. Effects run reading the LIVE store; the spend happens in `SkillRunner.OnTick` immediately after `ApplyBurst` returns, once per cast (`consumedThisCast`). So Deathblow sees the whole Momentum pile while rolling damage and spends it the instant that finishes. *(Corollary: a skill with a requirement but no effect bindings never reaches a tick, so it never consumes — a malformed authoring case.)*
-
-**The no-self-feeding brake replaces the old** `dispatching` **bool.** Every effect carries the set of passives that caused it (`chain`, one bit per registered passive, a single `ulong` — zero-alloc). `PassiveEvents.Fire` skips a passive whose bit is already in the chain; unrelated passives still run. Because no passive can repeat within a chain, **every chain is finite by construction** — no depth counter. `SkillRunner.OnTick` pushes its cast's chain around `ApplyBurst` (OnDamageDealt/OnKill fire synchronously inside it), and the multi-hit cascade captures it too, since a flurry's later strikes land on later frames. The old guard only caught synchronous re-entry and missed the real hazard: damage landing frames later via deferred ticks.
-
-- **Only damage a passive's own effects deal stamps its bit** — a passive that merely buffs/extends doesn't mark an active's damage. That's what keeps Encore (extends Bladedance) firing on each kill.
-
-**Display:** stack-count badges on both readers — the player tray (gold "×3", top-left, opposite the timer; pre-built `"x1".."x99"` label table so a count change never allocates) and the mob nameplate (count on the icon). Blank at 1 stack.
-
-**Authoring (Skill Composer):** a **stacking** toggle on any durational effect revealing *max stacks* + *stacks per use* (the charges knob), with an inline note about the bonus-vs-multiplier encoding; and a **requires a state** block in the Trigger section (state · min stacks · consume ALL / consume N) that hides whichever consume field is irrelevant.
-
-**Files:** `UnitStates.cs`, `StateGate.cs` **(new)**, `PassiveEvents.cs`, `SkillRunner.cs`, `SkillEffectApplier.cs`, `SkillEffect.cs`, `SkillDef.cs`, `Character.cs`, `StatusController.cs`, `BuffBarPanel.cs`, `MobNameplate.cs`, `Editor/SkillComposerWindow.cs`.
-
-**Still content-side (the user authors these):** Lock Blades + Momentum. Lock Blades additionally needs the roster's open question answered — "auto-pursue" must resolve to ONE engine-wide mechanism (attack-lunge / pathfind / forced facing).
-
-## Character window — full stat readout + live state deltas — BUILT (2026-08-07)
-
-The Character sheet (**C**) now lists **every** player-facing number and shows what states are doing to each, live. Compile-verified, not Play-tested.
-
-**The rule: the number shown is the character's OWN value; the parentheses after it are the state contribution** — green for a gain, red for a loss, nothing at all when unmodified. This fixed a real inconsistency: ASPD already included its buff while ATK / M.ATK / HIT did **not** (those multipliers land at swing time, not in the stat), so the sheet was silently mixing buffed and unbuffed lines.
-
-**Implemented as two views diffed, not a hand-written bonus table** — `Character.BaseDerived` (an `ignoreStates` flag makes the buff multipliers read neutral, so the baseline runs through the SAME formulas) and `Character.DerivedWithStates` (applies each state where it really lands: the damage buff scales the attack rolls exactly as `RollDamage` does, Blind subtracts HIT, Slow×Haste scales move speed). No formula is duplicated, so the window can't drift from combat.
-
-`DerivedSnapshot` **gained** `castSpeedMult`, `hardDefPct`, `hardMdefPct`, `guardCutPct`, `lifeStealPct`, `reflectPct`, `manaLeechPct`, `barrierHP` — twelve numbers that existed in the game but were never displayed (crit damage, cast speed, cast wind-up, hard DEF/M.DEF %, guard cut, barrier, life steal, mana leech, reflect, stamina, ult charge, run speed). State-sourced ones read 0 on the baseline so they display as `0 (+25)` while active.
-
-**Live refresh** runs only while the window is open and rebuilds text **only when a displayed value actually changes** (field compare on the struct; resources compared at their ROUNDED value so a draining stamina bar doesn't rewrite every frame). Per-frame cost is a struct build + compares — no string work, no allocation.
-
-- Window grew 360×500 → **360×660** (the block went from 5 lines to 11; a fixed height would have clipped the tail).
-- Run speed is read from the player's BODY (a different GameObject — see the two-GameObject split) and cached.
-
-**Files:** `DerivedSnapshot.cs`, `Character.cs`, `ProgressionWindows.cs`.
-
-## Charge-driven repeats · attack-speed stack counts · authored star — BUILT (2026-08-16), NOT Play-tested
-
-The mechanism behind a charge-spending storm (Bladedance is the first skill to compose from it; **no code names it**). Compile-verified via `tools/check-unity-code.sh`, both halves clean. Both formulas were replayed offline against real authored values — the star step reproduces the old constant exactly at 5 corners, and the half-share invariant held across 7,839 duration × attack-speed combinations.
-
-- **`SkillDef.repeatCostsCharge`** — each repeat spends one charge of the state the trigger requires, and the run continues *while the pile holds*, ignoring `repeatCount`. It re-arms `consumedThisCast` per beat so the existing consume site in `SkillRunner.OnTick` charges every beat rather than once per cast. Because the loop reads the LIVE pile, a passive granting charges mid-run genuinely lengthens it — **Encore needs no special case**.
-- **`SkillDef.repeatReaim` + `repeatReaimRange`** — each repeat re-aims at a RANDOM living mob within range of the **current target** (not the caster, not the original aim), so the run walks target to target; an empty search ends it. One beat = one target: this is single-target, never AoE. Rolled through `CombatRng`. New `SkillEffectApplier.RandomMobNear` (zero-alloc reservoir pick, sibling of `MobAt`).
-- **`VfxTick` now carries the aim of the play that raised it** (`aimUnit`/`aimPoint`, copied from that play's own context) instead of `SkillRunner` reading a shared field. Without it, a re-aiming repeat whose previous beat is still playing resolves that older beat's effects against the NEWER aim.
-- **`SkillEffect.stacksFromAttackSpeed` + `stackShare`** — the stack count becomes *how many times the caster would swing inside this effect's own window*: `ceil(ScaledSeconds ÷ Character.SwingTime × share)`. Faster attack speed = more stacks in the SAME window, never a longer one. **Deliberately uncapped** (`stackLimit` bypassed) — clamping an earned count to a hand-sized ceiling would delete charges the caster paid for. Two effects sharing a duration stay in exact proportion: a `0.5` share is always exactly half, because halving a window and halving that window's count round the same way. New `Character.SwingTime` mirrors `MeleeReachFullSize` (attack speed is a ×1–×3 multiplier — only the swing INTERVAL turns it into a count).
-- **`SkillEffect.starCorners`** — the relocation figure is authored, not fixed at five. `LandingStepDegrees(corners)` = `180 + 180/corners`, the rule the old constant's own comment described; 5 → 216°, unchanged. Odd counts only (an even one never closes, so it is nudged up). That comment's "5 × 216° is exactly two full laps" was wrong — it is three.
-- **Composer:** `stacks from` now accepts THIS SKILL (see the rule below); `on cast complete of` still cannot.
+⚠️ **A passive's slot is fixed and never compacted.** A chain is stamped now but consumed frames later, so shifting a
+slot makes a passive stop recognising itself and re-fire off its own damage. This replaced an earlier one-level guard
+that only caught synchronous re-entry and missed the real hazard — damage landing frames later via deferred ticks.
 
 ### ⚠️ STANDING RULE — never add an `OnRepeat` trigger
 
-A beat of a repeating cast is **not a moment**. Every `SkillTrigger` member is something that happened in the fight; a repeat is the *same cast still running*, which is why a beat spends its charge directly instead of announcing anything. Give a beat a trigger and a skill can answer its own beat → which re-enters the skill → which beats again: an unbounded loop that also pays nothing, because the pile is only spent by the run that owns it. This is the same trap `OnSkillCastComplete` avoids by announcing **only on a player press** — the brake that stops a granter/consumer pair (Lock Blades ⇄ Lunge) refilling each other forever. **A repeating cast reads its pile; it must never raise a moment.** The rule is restated on the `SkillTrigger` enum in `SkillDef.cs`.
+A beat of a repeating cast is **not a moment**. Every trigger member is something that happened in the fight; a repeat is
+the *same cast still running*, which is why a beat spends its charge directly instead of announcing anything. Give a beat
+a trigger and a skill can answer its own beat → which re-enters the skill → which beats again: an unbounded loop that
+also pays nothing, because the pile is only spent by the run that owns it. This is the same trap `OnSkillCastComplete`
+avoids by announcing **only on a player press** — the brake that stops a granter/consumer pair (Lock Blades ⇄ Lunge)
+refilling each other forever. **A repeating cast reads its pile; it must never raise a moment.** The rule is restated on
+the trigger enum in code.
 
-It is also why a skill may name **itself** in `stacks from`: granting your own charges and spending them over your own repeats is self-contained, because the repeats replay the cast and never start a new one. Only the "which skill FIRES this" question excludes self.
+It is also why a skill may name **itself** as its stack source: granting your own charges and spending them over your own
+repeats is self-contained, because the repeats replay the cast and never start a new one. Only the "which skill FIRES
+this" question excludes self.
 
-### The rest of the same day — beat, gate and ghosts
+## Repeating casts
 
-- **`SkillDef.repeatScaleWithAttackSpeed` + `repeatBeatsPerSwing`** — the beat follows the caster's `Character.SwingTime` divided by a whole multiple (1 = your swing rhythm, 2 = twice as fast), instead of a fixed interval, which is then hidden in the composer. **Read per beat**, so a speed buff landing mid-run quickens the rest of it. At beats-per-swing 1 the run lands on its authored window at every attack speed, because count and beat come from the same swing time.
-- **The gate names a PILE, not just a skill** — `SkillTriggerEntry.requireStateId` joins `requireSkillId`, and `UnitStates.StacksFrom/CarriedFrom/ConsumeFrom` all take the pair. **This was a real bug:** keying by skill alone summed every state that skill granted and spent them in `active`-list order, so a skill with two stacking effects had its piles merged — a Blade Dance beat could have eaten a Parry charge. The composer's "which pile" dropdown lists only what the chosen granter actually stacks, derived from `SkillEffect.TryStateFor` (the one mapping from an effect to the state it creates; note `StateId.Taunt/Knockback/Pull` are declared but never written by anything, so they are excluded). Changing what a skill stacks re-points or drops its consumers on Save.
-- **A skill may name ITSELF in `stacks from`** — the composer's self-exclusion was narrowed to the "which skill fires this" dropdown only. Granting your own charges and spending them over your own repeats is self-contained; being fired by yourself is not.
-- **Grants happen on the OPENING play only** (`SkillRunner.WithoutStateGrants`). **This was the infinite-loop bug:** a repeat replays the whole body, so the effects that created the pile re-ran every beat and refilled it faster than the beats drained it — observed live at 98 stacks against the 99 ceiling. A repeat now runs everything except the effects that hand out a stacking state.
-- **`SkillEffect.afterimageSeconds` + `afterimageTint` → `Afterimage.cs`** (new) — a pooled, shared snapshot service: each skinned renderer bakes its current deformed shape into a plain mesh, drawn once and faded, never animated. **Copy, never re-derive:** position and rotation come verbatim from the source and NO scale is applied, because the bake already delivers world size — re-applying the source's scale made every ghost ten times too large, the third time this project has hit that exact mistake.
+- **`repeatCostsCharge`** — each repeat spends one charge of the state the trigger requires, and the run continues *while
+  the pile holds*, ignoring the authored repeat count. Because the loop reads the LIVE pile, a passive granting charges
+  mid-run genuinely lengthens it — **Encore needs no special case.**
+- **`repeatReaim` + `repeatReaimRange`** — each repeat re-aims at a RANDOM living mob within range of the **current
+  target** (not the caster, not the original aim), so the run walks target to target; an empty search ends it. One beat =
+  one target: this is single-target, never AoE.
+- **`repeatScaleWithAttackSpeed` + `repeatBeatsPerSwing`** — the beat follows the caster's swing time divided by a whole
+  multiple, **read per beat**, so a speed buff landing mid-run quickens the rest of it. At one beat per swing the run
+  lands on its authored window at every attack speed, because count and beat come from the same swing time.
+- ⚠️ **Grants happen on the OPENING play only.** A repeat replays the whole body, so the effects that created the pile
+  re-ran every beat and refilled it faster than the beats drained it — observed live at 98 stacks against the 99 ceiling.
+  A repeat now runs everything except the effects that hand out a stacking state.
+- **A tick carries the aim of the play that raised it.** Without that, a re-aiming repeat whose previous beat is still
+  playing resolves the older beat's effects against the NEWER aim.
+- **`starCorners`** — the relocation figure is authored, not fixed at five: the step is `180 + 180/corners`. Odd counts
+  only, since an even one never closes, so it is nudged up.
 
-**Files:** `SkillDef.cs`, `SkillEffect.cs`, `SkillEffectApplier.cs`, `SkillRunner.cs`, `StateGate.cs`, `UnitStates.cs`, `Character.cs`, `Character3DPose.cs`, `VfxSequence.cs`, `VfxDirector.cs`, `Afterimage.cs` **(new)**, `Editor/SkillComposerWindow.cs`.
+## Afterimages
 
-**Composed with it:** `skill.sword.blade_dance` — see the Sword roster. **Still content-side:** Encore (the engine supports it with no special case; the numbers are undecided).
+`afterimageSeconds` + `afterimageTint` drive a pooled, shared snapshot service: each skinned renderer bakes its current
+deformed shape into a plain mesh, drawn once and faded, never animated. ⚠️ **Copy, never re-derive** — position and
+rotation come verbatim from the source and NO scale is applied, because the bake already delivers world size.
+Re-applying the source's scale made every ghost ten times too large, the third time this project has hit that mistake.
 
-### Two editor-side traps found while building this
+## The Character window
 
-- **The Stance Composer rewriting the shared controller leaves stale references.** After it rebuilt `HumanoidPlayerController` in place, `CharacterSpec.animatorController` read null at runtime — every townsfolk T-posed and `Character3DBody` logged leaked animation graphs. **Verified the data was never damaged:** the guid, the `.meta`, the controller's main object id `9100000` and all 17 clip references were intact, and a Unity restart cleared it completely. Worth making the composer not leave the editor in that state.
-- **`Character3DPose.Update` called the Animator unguarded**, so a body without a controller spammed warnings every frame and buried the real message. It now skips posing and reports once, naming the object.
+The Character sheet (**C**) lists **every** player-facing number and shows what states are doing to each, live.
 
-## Standing (unchanged, still true)
+**The rule: the number shown is the character's OWN value; the parentheses after it are the state contribution** — green
+for a gain, red for a loss, nothing at all when unmodified. This fixed a real inconsistency where attack speed already
+included its buff while ATK / M.ATK / HIT did not, so the sheet silently mixed buffed and unbuffed lines.
 
-- `Item.grantedSkillIds` — weapons carry their kit; equip → `HotbarBindings.SetWeaponKit` fills the bar, unequip clears it.
-- Skills don't level — power comes from the ring (affinity). Ring = passive draft + stat bonuses; skills come from the equipped weapon (+ Grimoire **H** for testing).
-- Multi-hit cascade, procs (per-hit `chance`), and self-vs-mob effect routing are unchanged.
+**Implemented as two views diffed, not a hand-written bonus table** — a baseline that runs through the SAME formulas with
+the state multipliers reading neutral, and a with-states view that applies each state where it really lands. No formula
+is duplicated, so the window cannot drift from combat. Live refresh runs only while the window is open and rebuilds text
+only when a displayed value actually changes, so the per-frame cost is a struct build and some compares — no string work,
+no allocation.
 
-## Playtest (after recompile)
+## Standing facts
 
-**⚠️ PRIORITY — the 2026-08-06/07 work is untested and four layers deep. Test BOTTOM-UP or a failure won't localise:**
+- **A weapon's kit is per-copy**, rolled at the drop onto the `EquipmentInstance`; equipping fills the bar via `HotbarBindings.SetWeaponKit`, unequipping clears it. There is deliberately **no def-level kit field** — don't re-add one.
+- **Skills don't level.** Power comes from the ring (affinity). Skills come from the equipped weapon, plus the Grimoire
+  (**H**) for testing.
+- Multi-hit cascade, per-hit proc chance, and self-vs-mob effect routing all run through the one applier.
+- The composer is the ONLY writer of skill data; the tooltip, the wiki and the docs export are all readers. See §0 of the
+  V3 design doc.
 
-1. **State store (gameplay)** — guard %, vulnerability, slow/haste move speed (player AND mob), stun/freeze gating, silence, blind, DoT ticks, shield absorb+break, regen, damage-buff ramp, death clears states.
-2. **Display** — buff tray + mob nameplate icons appear with the source skill's icon and clear on expiry.
-3. **Stacking** — author a stacking effect: stacks climb, show a count badge, expire one at a time. Then a charge-granting skill + a consumer (gate blocks with 0 charges; damage reads the full pile before spending).
-4. **Character sheet (C)** — every stat listed, green/red parentheses while buffed, nothing clipped at the window's bottom.
+## Verifying a change here
 
-- **Knockback / Pull:** author a skill with a `Knockback` (or `Pull`) effect on a Mobs-binding → hit a mob → it's shoved away from (or dragged toward) you.
-- **ManaLeech / Reflect:** author on a Player-binding → cast → for the window, damage you deal returns MP (watch the MP bar) / damage you take bounces back (orange number on the attacker).
-- **Slow / Stun / Root:** author a `Status` effect (Slow factor, Stun, or Slow \~0.02 for root) — the same path as before.
-- **Ring scaling still works:** invest a stat that an effect's `affinity` weights → that effect's output grows; no ring worn → ×1.
+`tools/check-unity-code.sh` compiles both halves (game + editor tools) in about four seconds without opening Unity, and
+`tools/check-skill-data.py` proves the authored skill data is sane. Neither touches the running editor. **Compiling is
+not behaving** — a wrong formula compiles perfectly, so neither replaces a play-test.
 
-## Status / caveats
+## Known gaps
 
-- **Compile status:** the 2026-08-06/07 work (state store, display, stacking, combo gate, brake, character sheet) was **compile-verified offline** — the C# compiler bundled inside the Unity install (the same one Unity uses when it recompiles) run directly over the scripts with the project's real assemblies, so nothing in Unity had to be touched or refreshed. Zero errors in every touched file. Earlier sections' code predates that check. **Compiling is not behaving** — a wrong formula compiles perfectly; none of it is Play-tested.
-- **Buff / Shield / Curse scaling stat** — defaulted in *Skill Numbers & Balance Baseline* (all durations → MP; Guard → Def; offense debuffs → the caster's offense stat; Haste speed flat). Composer starter-weights not yet updated to match those defaults.
-- **Damage-type combat math** (Crit armour-pierce, Magic glance-vs-Evasion) is still the pre-existing stubbed TODO — Physical/Magic behave as before, Crit forces a crit; the full pierce/glance pass touches `Health` and is separate from V3.
+- **Damage-type combat math** — Crit armour-pierce and Magic glance-vs-Evasion are still stubbed. Physical and Magic
+  behave as before and Crit forces a crit; the full pass touches `Health` and is separate from V3.
+- **Composer starter weights** don't yet match the scaling defaults locked in *Skill Numbers & Balance Baseline*.
+- **A formal Channels-catalog data type** with stable ids does not exist: the per-kind labels live in a switch and the
+  value storage is one reused magnitude field. Turning that into a real catalog would migrate every existing skill
+  asset — deferred deliberately.
 - **Ring behavioral voices** and **Cards** are deferred by design (v-next / v3-content) — not in code.
-- **Weapon skill-pool + crafting / economy** (each weapon type has a 12-skill pool → rarity-scaled drop of up to 1 ult + 3 normals; Potential / Weapon Essence / refine / transmog / recycle) — DESIGNED (see *Weapon Roster — 12 Identities* + *Weapon Crafting & Economy*), **not in code yet**; today `Item.grantedSkillIds` is hand-authored per weapon.
+- **Weapon skill-pools + crafting/economy** are DESIGNED (see *Weapon Roster — 12 Identities* and *Weapon Crafting &
+  Economy*) but **not in code**; today the granted skill list is hand-authored per weapon.
+- **`StateId.Knockback` and `StateId.Pull` are declared but never written** — they are instant shoves with no window to
+  hold, so they are excluded from the composer's pile dropdown.

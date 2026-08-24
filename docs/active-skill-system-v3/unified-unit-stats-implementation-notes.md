@@ -6,7 +6,7 @@
 
 ## Why this is part of V3
 
-V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the ring only *scales* them. That only holds if **every unit an effect can land on has the fields the effect reads**. Guard needs a damage cut on a mob; ManaLeech needs MP on a mob; a target-side Dash needs a mob that can be relocated. So "player === mob" is the data-shaped half of V3's "one applier, no special cases" — not a separate initiative. See also the caster/target split in [Implementation Notes](implementation-notes.md).
+V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the ring only *scales* them. That only holds if **every unit an effect can land on has the fields the effect reads**. A damage-reduction buff needs a damage cut on a mob; a mana-leech buff needs MP on a mob; a target-side Dash needs a mob that can be relocated. So "player === mob" is the data-shaped half of V3's "one applier, no special cases" — not a separate initiative. See also the caster/target split in [Implementation Notes](implementation-notes.md).
 
 ## The files
 
@@ -15,7 +15,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 | `UnitStatMath.cs` | **Every** formula and constant, plus the stat-point economy. Static, no Unity objects. |
 | `UnitStatBlock.cs` | A mob's LIVE block: level + primaries + ring ranks + MP. Derives and writes onto `Health`/`MonsterAI3D`. |
 | `UnitEquipment.cs` | The worn set for EVERY unit — `Character` and mobs both hold one. Aggregated through `EquipBonuses.Aggregate`. |
-| `UnitMitigation.cs` | Guard cut + Shield absorb for mobs — the states `Health` stored but ignored. |
+| `UnitMitigation.cs` | The damage-reduction cut + Shield absorb for mobs — the states `Health` stored but ignored. |
 | `MonsterDef.cs` | Authoring: level, six primaries, `startingGear`, ring ranks. Derives via `ToArchetype`. |
 | `Editor/MobTableWindow.cs` | The full authoring surface (see below). |
 
@@ -62,12 +62,12 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 ## Verifying changes here without Unity
 
-Unity's bundled .NET 8 SDK type-checks all of `Assets/Scripts` offline — see the `compile-check-without-unity` memory. Known-good baseline is **11 environmental errors**; anything above that is yours. Authoring maths (the budget curve, the allocator, the ring percentages) should be **replayed in a throwaway script against the real constants** before being trusted — that's how the "untouched stats get crushed" bug in the budget guard was caught pre-ship.
+Run `tools/check-unity-code.sh` — it type-checks both halves (game + editor tools) in about four seconds without opening Unity, and reports only real errors. For authored skill data, `tools/check-skill-data.py` proves the assets are sane. Authoring maths (the budget curve, the allocator, the ring percentages) should be **replayed in a throwaway script against the real constants** before being trusted — that's how the "untouched stats get crushed" bug in the budget guard was caught pre-ship.
 
 ## Still open
 
 - ~~Reset the roster~~ **DONE** — 86 mobs across levels **3–46**, every one exactly on its point budget (verified by parsing the assets: 0 over-budget, 0 left at level 1). The one-shot migration tool has been deleted; a future bulk reset would mean re-writing it from `UnitStatMath.Allocate`.
-- Only two equipment items exist (`Iron Sword`, `Bow Epic`), so mobs are effectively unarmed. Content, not code.
+- Only two equipment items exist — `item.sword` and `item.bow` — so mobs are effectively unarmed. Content, not code.
 - Mob MP has a pool but nothing spends it — mobs don't pay skill costs yet.
 - Roster re-tuning by playing it — the numbers are consistent now, not necessarily *fun* yet.
 - Nothing has been run in Play mode.

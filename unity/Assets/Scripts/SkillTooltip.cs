@@ -383,8 +383,8 @@ public static class SkillTooltip
     }
 
     // WHO a line is about comes from the same predicate the runtime partitions on (SkillEffect.LandsOnCaster), never
-    // from an assumption baked into the kind: a Vulnerability authored on the caster is a self-drawback (Overclock's
-    // fragile window), not a debuff on enemies, and saying "enemies" there tells the player the opposite of the truth.
+    // from an assumption baked into the kind: a damage-reduction DEBUFF authored on the caster is a self-drawback
+    // (Overclock's fragile window), not a debuff on enemies, and saying "enemies" tells the player the opposite.
     static string Subject(SkillEffect e, string caster, string target) => SkillEffect.LandsOnCaster(e) ? caster : target;
 
     /// <summary>The sub-stat's name in ordinary words. Every stat has a row, so a new one cannot silently fall

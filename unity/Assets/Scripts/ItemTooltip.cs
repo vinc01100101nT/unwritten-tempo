@@ -226,10 +226,25 @@ public class ItemTooltip : MonoBehaviour
         var sb = new StringBuilder();
         AppendHeader(sb, item, item.rarity);
         AppendItemStats(sb, item);
-        if (item.healAmount > 0)
-            sb.Append("\n<color=#7FD1C9>Heals ").Append(item.healAmount).Append(" HP  (right-click)</color>");
+        AppendUseEffect(sb, item);
         AppendFooter(sb, item);
         return sb.ToString();
+    }
+
+    // What a consumable DOES, in the same words the skill's own card uses — read straight off the skill it runs
+    // (SkillTooltip is the one describer, so a potion and a spell can never word the same effect differently).
+    static readonly System.Collections.Generic.List<string> useLines = new System.Collections.Generic.List<string>();
+    static void AppendUseEffect(StringBuilder sb, Item item)
+    {
+        if (!item.IsUsable) return;
+        var def = SkillCatalog.Get(item.useSkillId);
+        if (def == null) return;
+
+        useLines.Clear();
+        SkillTooltip.EffectLines(def, SkillTooltip.Dialect.RichText, useLines);
+        for (int i = 0; i < useLines.Count; i++)
+            sb.Append("\n<color=#7FD1C9>").Append(useLines[i]).Append("</color>");
+        sb.Append("\n<color=#7FD1C9>(right-click to use)</color>");
     }
 
     static string DescribeInstance(EquipmentInstance inst)
@@ -260,7 +275,7 @@ public class ItemTooltip : MonoBehaviour
     static void AppendHeader(StringBuilder sb, Item item, Rarity rarity)
     {
         string category = item.slot != EquipSlotType.None ? Spaced(item.slot.ToString())
-                        : item.healAmount > 0 ? "Consumable" : item.category.ToString();
+                        : item.IsUsable ? "Consumable" : item.category.ToString();
         sb.Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(Rarities.Border(rarity)))
           .Append('>').Append(Rarities.Label(rarity)).Append("</color>")
           .Append(" <color=#B9B9B9>· ").Append(category).Append("</color>");

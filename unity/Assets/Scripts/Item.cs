@@ -24,14 +24,15 @@ public enum EquipSlotType
 }
 
 /// <summary>Inventory tab bucket. Independent of <see cref="EquipSlotType"/>: an item with a
-/// real slot is <see cref="Equip"/>; bag-only items split into Use / Material / Etc for the tabs.</summary>
-public enum ItemCategory { Equip, Use, Material, Etc }
+/// real slot is <see cref="Equip"/>; bag-only items split into Use / Material / Etc / Quest for the tabs.
+///
+/// <para>⚠️ APPEND ONLY — never reorder. The category is stored as a plain int on every item asset, so inserting a
+/// member would silently re-file every existing item under a different bucket.</para></summary>
+public enum ItemCategory { Equip, Use, Material, Etc, Quest }
 
 /// <summary>
-/// A piece of gear or a bag item: an icon, which slot it fits, and (Phase F) the
-/// stat bonuses it grants while equipped, or how much it heals when used. Create
-/// more via Assets ▸ Create ▸ unwritten ▸ Item, or Tools ▸ unwritten ▸ Create
-/// Starter Items.
+/// A piece of gear or a bag item: an icon, which slot it fits, and the stat bonuses it grants while equipped, or
+/// the skill it runs when used. Create more via Assets ▸ Create ▸ unwritten ▸ Item.
 /// </summary>
 [CreateAssetMenu(fileName = "Item", menuName = "unwritten/Item")]
 public class Item : ScriptableObject
@@ -103,8 +104,17 @@ public class Item : ScriptableObject
     public int bonusAspdPercent;
 
     [Header("Consumable")]
-    [Tooltip("Right-click in the bag to heal this much, then consume it. 0 = not a consumable.")]
-    public int healAmount;
+    // ONE way to say what a consumable does: it runs a skill. The old `healAmount` int was deleted with this change —
+    // it was a second, weaker effect system racing the composed one (heal only, no duration, no cure, no buff), and a
+    // potion and a spell could disagree about what "heals 80" means. A restorative is a Heal effect, a food is a
+    // sub-stat buff, an antidote is a Cleanse: all of it already exists in the Skill Composer.
+    [Tooltip("The skill this item runs when used, e.g. \"skill.item.life-potion\". That skill must carry an On Item " +
+             "Used trigger. Empty = this item isn't usable. The skill is self-cast and pays no mana or cooldown — " +
+             "consuming the item IS the cost.")]
+    public string useSkillId = "";
+
+    /// <summary>True when using this item does something — the one test every consume path asks.</summary>
+    public bool IsUsable => !string.IsNullOrEmpty(useSkillId);
 
     [Header("Combat audio (weapon / off-hand — overrides the player defaults while equipped)")]
     [Tooltip("Weapon: the swing sound.")]

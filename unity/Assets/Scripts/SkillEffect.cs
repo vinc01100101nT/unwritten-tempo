@@ -88,8 +88,9 @@ public enum SkillEffectKind
     Pull,
 
     /// <summary>Raise a timed absorbing BARRIER on the caster: soaks <see cref="SkillEffect.amount"/> HP of incoming HIT
-    /// damage for <see cref="SkillEffect.seconds"/> → <c>Character.BeginShield</c>. Distinct from <see cref="Guard"/> (a %
-    /// damage CUT): Shield is a finite HP pool that depletes as it eats hits, then lapses. Bypassed by DoT, like Guard.
+    /// damage for <see cref="SkillEffect.seconds"/> → <c>Character.BeginShield</c>. Distinct from a damage-reduction
+    /// sub-stat buff (a % damage CUT): Shield is a finite HP pool that depletes as it eats hits, then lapses. Bypassed
+    /// by DoT, as the damage-reduction cut is.
     /// Barrier HP scales off sustain stats via <see cref="SkillEffect.affinity"/> (kept off offense to stay a support
     /// tool).</summary>
     Shield,
@@ -97,8 +98,8 @@ public enum SkillEffectKind
     /// incoming hit is negated OUTRIGHT (0 damage, no defence math) and spends one charge → <c>Character.BeginParry</c>.
     /// One charge per <see cref="SkillEffect.stacksPerApply"/>, so "blocks the next hit" is simply 1.
     ///
-    /// <para>Distinct from <see cref="Guard"/> on purpose: Guard is a standing PERCENTAGE cut that every hit in the
-    /// window is reduced by and that ends on its clock; Parry is a DISCRETE charge that fully erases ONE hit and is
+    /// <para>Distinct from a damage-reduction sub-stat buff on purpose: that is a standing PERCENTAGE cut that every hit
+    /// in the window is reduced by and that ends on its clock; Parry is a DISCRETE charge that fully erases ONE hit and is
     /// spent by it (the duration is only how long you wait for that hit). Binary by design — there is no partial
     /// parry, hence no magnitude. A spent charge fires <see cref="SkillTrigger.OnParry"/>.</para>
     ///
@@ -150,8 +151,8 @@ public enum SkillEffectKind
     /// damage straight to HP, so they can neither gain the boost nor eat a charge.</para>
     ///
     /// <para>It multiplies BEFORE the target's armour, so the flat part of armour is paid once out of a bigger number
-    /// and the boost is worth more the tankier the target. Distinct from a <see cref="Buff"/> on Damage, which is a
-    /// standing percentage for a window; this is a counted resource, spent per attack.</para></summary>
+    /// and the boost is worth more the tankier the target. Distinct from a <see cref="SubStatBuff"/> on the Damage
+    /// sub-stat, which is a standing percentage for a window; this is a counted resource, spent per attack.</para></summary>
     BoostOutgoingDamage,
 
     /// <summary>The mirror of <see cref="BoostOutgoingDamage"/>: charges that make the holder's attacks land SOFTER.
@@ -351,27 +352,33 @@ public class SkillEffect
     [Tooltip("Flat HP restored (Heal kind).")]
     public ScaledNumber amount = new ScaledNumber(10f);
 
-    [Header("Status / Haste")]
+    [Header("Status / duration / magnitude")]
     [Tooltip("Which ailment to inflict (Status kind).")]
     public Ailment ailment = Ailment.Burn;
-    [Tooltip("Duration in seconds — 0 for an instant/action effect. Only durational STATE kinds (Status/Haste/Guard/" +
-             "Buff/Regen/…) use it; the composer keeps it 0 for everything else. The buff tray / nameplate shows an icon " +
+    [Tooltip("Duration in seconds — 0 for an instant/action effect. Only durational STATE kinds use it (the ailments, " +
+             "Sub Stat Buff / Debuff, Shield, Parry, Brace, the outgoing-damage charges, Immune To Disables); the " +
+             "composer keeps it 0 for everything else. The buff tray / nameplate shows an icon " +
              "iff this is > 0 — i.e. only for ongoing CONDITIONS, never for movement actions.")]
     public ScaledNumber seconds = new ScaledNumber(0f);
     [Tooltip("Knockback / Pull ONLY: how long the shove MOVEMENT lasts (seconds). This is movement time, NOT a state " +
              "duration — a shove isn't a tracked condition, so it never shows a buff/nameplate icon.")]
     public ScaledNumber shoveSeconds = new ScaledNumber(0.25f);
-    [Tooltip("Status: DoT damage-per-tick, Slow factor (0..1), or Blind HIT loss. Haste/Buff: the BONUS fraction, " +
-             "not a multiplier (0.3 = +30%). " +
-             "Guard: damage-cut fraction (0..1). Regen: HP per tick. Vulnerability: extra-damage fraction (0.3 = +30%). " +
-             "Knockback/Pull: shove speed. ManaLeech/Reflect: fraction of damage dealt/taken (0..1).")]
+    [Tooltip("What this number MEANS depends on the kind:\n\n" +
+             "• Poison / Bleed / Burn: damage per tick. Stun / Freeze / Silence use none — being stopped is binary, " +
+             "so the whole knob is how long it lasts.\n" +
+             "• Sub Stat Buff / Debuff: how far the chosen sub-stat moves. The Sub stat field below says whether that " +
+             "reads as a fraction (0.3 = +30%) or a plain amount (HP per second) — a debuff is authored POSITIVE and " +
+             "negated on the way in, so nobody types a minus sign to make something worse.\n" +
+             "• Boost / Reduce Outgoing Damage: the bonus or the cut ONE charge is worth.\n" +
+             "• Execute: execute power — the bonus is roll × this × the target's missing HP fraction.\n" +
+             "• Knockback / Pull: shove speed.")]
     public ScaledNumber magnitude = new ScaledNumber(3f);
 
     [Header("Stacking (STATE effects only)")]
     [Tooltip("OFF = one instance; re-applying REPLACES it (newest wins) — today's behaviour. ON = each application ADDS " +
              "stacks, every stack carrying its own duration and its own magnitude; the total is their SUM.\n\n" +
-             "IMPORTANT: a stacking effect's magnitude is the PER-STACK amount. On Haste / Stat Buff it is the BONUS, " +
-             "never a multiplier — stacking or not: author 0.03 for '+3% per stack', so 10 stacks read as +30%.")]
+             "IMPORTANT: a stacking effect's magnitude is the PER-STACK amount. On a Sub Stat Buff / Debuff it is the " +
+             "BONUS, never a multiplier — stacking or not: author 0.03 for '+3% per stack', so 10 stacks read as +30%.")]
     public bool stacking = false;
     [Tooltip("Max stacks held at once. Past it, the OLDEST stack drops. Hard-capped by the store's safety ceiling.")]
     public ScaledNumber stackLimit = new ScaledNumber(5f);

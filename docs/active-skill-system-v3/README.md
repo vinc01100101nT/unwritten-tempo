@@ -92,7 +92,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 **Reserved — not built yet** (author only when a skill needs them): **Interval** (DoT tick cadence — hardcoded in `StatusController`), **Limit** (max stacks / summons — no system), **Speed** (projectile travel — lives in the VFX carrier), **Resource** (non-MP gain / drain).
 
-**On magnitude / "Strength":** V2's vague single "Strength / potency" channel is **dissolved** — every effect names the exact thing it scales (`slow_amount`, `dot_damage`, `dmg_reduction`, …), never a floating cross-skill magnitude. Hard-CC (Stun / Freeze / Silence) names none: they're **duration-only**. *(A formal Channels-catalog **data type** with stable ids — so composer + applier + tooltip read one source — is a future serialized-schema refactor; today these ids ARE the catalog and the composer mirrors them.)*
+**On magnitude / "Strength":** V2's vague single "Strength / potency" channel is **dissolved** — every effect names the exact thing it scales (`dot_damage`, `heal_amount`, `shield_amount`, or the specific sub-stat a `sub_stat_magnitude` moves), never a floating cross-skill magnitude. Hard-CC (Stun / Freeze / Silence) names none: they're **duration-only**. *(A formal Channels-catalog **data type** with stable ids — so composer + applier + tooltip read one source — is a future serialized-schema refactor; today these ids ARE the catalog and the composer mirrors them.)*
 
 ## 2. Effects Catalog — LOCKED (the behaviors, "what happens?")
 

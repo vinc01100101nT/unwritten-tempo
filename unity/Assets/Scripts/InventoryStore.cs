@@ -125,7 +125,7 @@ public class InventoryStore : MonoBehaviour
                 Entries.Add(new Entry { def = def, count = 1, instance = new EquipmentInstance(def, up) });
             }
             else
-                Entries.Add(new Entry { def = def, count = def.healAmount > 0 ? 5 : 1 });
+                Entries.Add(new Entry { def = def, count = def.IsUsable ? 5 : 1 });
         }
     }
 
@@ -213,8 +213,8 @@ public class InventoryStore : MonoBehaviour
 
     public void Consume(Entry e)
     {
-        if (e == null || e.def == null || e.def.healAmount <= 0) return;
-        Character.Instance?.Heal(e.def.healAmount);
+        if (e == null || e.def == null) return;
+        if (!ItemUse.Use(e.def)) return;   // the effect never ran → the stack is left untouched
         if (--e.count <= 0) Entries.Remove(e);
         Notify();
     }

@@ -2,6 +2,8 @@
 
 How players go from a random drop to a deliberate build. Companion to **Weapon Roster — 12 Identities** and **Active Skill System — V3**. Design converged 2026-07-28; numbers below are illustrative and still to be tuned.
 
+> **Status: DESIGN ONLY — none of this is in code.** Verified 2026-08-24: nothing in the codebase mentions Potential, Essence, Reforge, Add or Transmog. What exists today is the rarity ladder below (the five tiers are real and drive item presentation) and the refine level, which equipment already carries and saves. Everything else on this page is unbuilt.
+
 ## Philosophy — fate → forge → commit
 
 Three layers at three speeds, so players get surprise *and* agency without either killing the other:

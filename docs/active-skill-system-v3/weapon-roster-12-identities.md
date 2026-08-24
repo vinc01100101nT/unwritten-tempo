@@ -27,24 +27,28 @@ Each weapon is the only surviving trace of one of **the Twelve Unwritten** — t
 
 | Weapon | Family / scales | Archetype | Uniquely owns | Feel |
 | --- | --- | --- | --- | --- |
-| Sword | Might / Atk | Burst | single-target spike + self-Guard | duelist |
+*Effects are named in the current vocabulary: every timed stat change is a **sub-stat buff or debuff**, so "self-Guard" is a damage-reduction buff, "Slow" is a movement-speed debuff, and "Vulnerability" is the damage-reduction pile carrying a negative. Only the ailments (Poison / Bleed / Burn / Stun / Freeze / Silence) and the standalone kinds (Shield, Taunt, Parry, Brace, Execute, Dash, Knockback, Pull, Cleanse) are verbs of their own.*
+
+| Weapon | Family / scales | Archetype | Uniquely owns | Feel |
+| --- | --- | --- | --- | --- |
+| Sword | Might / Atk | Burst | single-target spike + self damage-reduction | duelist |
 | Greatsword | Might / Atk | Burst (AoE) | melee AoE cleave | crowd-clearer |
-| Axe | Might / Atk | Buff (self) | Bleed + self-Haste + ramping-damage snowball, no defense | berserker |
+| Axe | Might / Atk | Buff (self) | Bleed + self move-speed + a ramping damage buff, no defense | berserker |
 | Warhammer | Might / Atk | Tempo (CC) | hard Stun + Knockback stagger | disabler |
-| Spear | Might / Atk | Tempo | Pull + Dash-through + Vulnerability | wrangler |
-| Shield | Might / Def | Fortress | Taunt + Guard + Shield + Reflect, \~no damage | wall |
-| Bow | Finesse / Atk-crit | Tempo | mobile kite: Slow + Dash spacing | skirmisher |
+| Spear | Might / Atk | Tempo | Pull + Dash-through + a damage-reduction debuff | wrangler |
+| Shield | Might / Def | Fortress | Taunt + damage reduction + Shield + reflect, \~no damage | wall |
+| Bow | Finesse / Atk-crit | Tempo | mobile kite: move-speed debuff + Dash spacing | skirmisher |
 | Dagger | Finesse / Atk-crit | Burst | Execute finisher + blink out | assassin |
 | Firearm | Finesse / Atk-crit | Burst | biggest single crit spike on a reload rhythm, immobile | sniper |
-| Staff | Arcane / MAtk | Burst (AoE) | ranged magic AoE nuke + Burn + Freeze/Slow lockdown | artillery |
-| Wand | Arcane / MP | Fortress / Buff | Heal / Regen / Shield / Buff / Cleanse — ally uptime | lifeline |
-| Scythe | Arcane / MAtk | Curse | stacked Poison + Vulnerability + Silence attrition + ManaLeech | reaper |
+| Staff | Arcane / MAtk | Burst (AoE) | ranged magic AoE nuke + Burn + Freeze / move-speed lockdown | artillery |
+| Wand | Arcane / MP | Fortress / Buff | Heal / HP-regen / Shield / sub-stat buffs / Cleanse — ally uptime | lifeline |
+| Scythe | Arcane / MAtk | Curse | stacked Poison + a damage-reduction debuff + Silence attrition + mana leech | reaper |
 
 ## 3. The three control weapons — each owns a distinct battlefield question
 
 - **Shield → "Hit me."** — draws fire via Taunt, absorbs and reflects.
 - **Warhammer → "You don't get to act."** — Stun + Knockback, no Taunt (Taunt is the Shield's; keeping them apart is what makes the split clean).
-- **Spear → "Stand over there."** — Pull + Dash-through + Vulnerability; rearranges, doesn't disable.
+- **Spear → "Stand over there."** — Pull + Dash-through + a damage-reduction debuff; rearranges, doesn't disable.
 
 ## 4. Magic AoE is split three ways (no Staff monopoly)
 

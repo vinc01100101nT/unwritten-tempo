@@ -2,7 +2,7 @@
 
 **Status:** implemented 2026-08-10 (roster re-tune pending). Decided 2026-08-10.
 
-**Done — the model is complete in code.** `UnitStatMath` owns every formula, constant and the stat-point economy; `Character` computes nothing itself. `MonsterDef` authors level + six primaries. `UnitStatBlock` carries the live block onto each spawned mob and **re-derives on level-up** — the flat 1.15× mob growth rate is deleted, so nothing scales on a mob-only curve. `UnitEquipment` gives mobs the same worn set the player has, aggregated through the same `EquipBonuses`. `UnitMitigation` gives mobs the Guard cut and Shield absorb; `Health` now also fires a mob's **Reflect** and **ManaLeech** windows, and mobs have a real **MP pool**. Death drops the worn set (`LootDropper.DropWornGear`). **Tier is deleted everywhere** — difficulty is level, and spawn bands are level bands. The Mob Table edits level + primaries with a live pts spent/budget guard that snaps over-budget entries down. `Tools ▸ unwritten ▸ Quick Fixes ▸ Reset Mob Stats to Level + Primaries` resets all 85 assets onto the curve.
+**Done — the model is complete in code.** `UnitStatMath` owns every formula, constant and the stat-point economy; `Character` computes nothing itself. `MonsterDef` authors level + six primaries. `UnitStatBlock` carries the live block onto each spawned mob and **re-derives on level-up** — the flat 1.15× mob growth rate is deleted, so nothing scales on a mob-only curve. `UnitEquipment` gives mobs the same worn set the player has, aggregated through the same `EquipBonuses`. `UnitMitigation` gives mobs the damage-reduction cut and Shield absorb; `Health` now also fires a mob's **reflect** and **mana-leech** piles, and mobs have a real **MP pool**. Death drops the worn set (`LootDropper.DropWornGear`). **Tier is deleted everywhere** — difficulty is level, and spawn bands are level bands. The Mob Table edits level + primaries with a live pts spent/budget guard that snaps over-budget entries down. `Tools ▸ unwritten ▸ Quick Fixes ▸ Reset Mob Stats to Level + Primaries` resets the whole roster (**86 mobs** today) onto the curve.
 
 **Not done:** nothing in the model, and the roster reset has been run (86 mobs, levels 3–46, all on budget). What's left is content — real equipment for mobs to wear (only two weapons exist) — and re-tuning by playing it.
 
@@ -14,7 +14,7 @@ A unit's primaries are an ALLOCATION, not free-typed numbers. `PointsEarnedByLev
 
 Every combat unit — the player, every mob, every future NPC — carries the **same stats and substats**, produced by the **same formulas**. No unit has a stat another lacks, and no system asks "is this a player or a mob?" before reading a number.
 
-This is the data-shaped half of the caster/target work in [Active Skill System V3](README.md): once an effect can land on anybody, the thing it lands on has to *have* the fields the effect reads. Guard needs a damage-cut on a mob, ManaLeech needs MP on a mob, and a shared stat block is what makes "no exceptions" true rather than aspirational.
+This is the data-shaped half of the caster/target work in [Active Skill System V3](README.md): once an effect can land on anybody, the thing it lands on has to *have* the fields the effect reads. A damage-reduction buff needs a damage-cut on a mob, a mana-leech buff needs MP on a mob, and a shared stat block is what makes "no exceptions" true rather than aspirational.
 
 **1:1, with no scaling layers at all.** No tier, no global multiplier, no mob-only growth rate. A mob is strong for exactly the reasons a player is strong: its level, its primaries, its equipment, its ring. Difficulty is *authored*, not dialled.
 
@@ -26,7 +26,7 @@ This is the data-shaped half of the caster/target work in [Active Skill System V
 2. **Derived** — MaxHP, MaxMP, Attack, MagicAttack, Defense, MagicDefense, Hit, Flee, crit chance, crit multiplier, attack-speed multiplier, cast-speed multiplier, cast-time multiplier, min/max damage spread, hard-def %, hard-magic-def %.
 3. **Ring percentages** — the 10 `StatId` nodes, applied by `Character.Scale(...)`.
 
-**Mobs** — `MonsterDef.cs` (**85 assets**), one flat authored layer:
+**Mobs** — `MonsterDef.cs` (**86 assets**), one flat authored layer:
 
 | Mobs already have | Mobs are missing |
 | --- | --- |
@@ -84,7 +84,7 @@ Single source of truth: the thing it wears is the thing it drops, so a mob can n
 
 The codebase already enforces the line: `ItemType` is DERIVED from `slot` + `category` (ItemType.cs:14-17), so an item is Weapon/Armor *because* it has an equip slot. A stat-carrying item with no slot would be data the equip pipeline can't read — dead by construction.
 
-- **Equipment** — has an equip slot, bonuses, and a model. Worn by anyone. Only two exist today (`Iron Sword`, `Bow Epic`).
+- **Equipment** — has an equip slot, bonuses, and a model. Worn by anyone. Only two exist today: `item.sword` and `item.bow`.
 - **Materials** — `ItemCategory.Material`: an icon, a name, a crafting input, **no stats and no model**. Fangs, hides, carapace live here and feed [Crafting & Recycling](../crafting-and-recycling.md).
 
 **A mob with no equipment is valid.** Its stats come from level + primaries; `EquipBonuses` aggregates to zeros and every formula still resolves. So mobs start unarmed and get armed as real gear is made — the art debt is incremental content, never a prerequisite for the stat unification.
@@ -97,11 +97,11 @@ With tier and the throttle gone there is no single number to turn when playtesti
 
 Behaviour is not stats and does not unify: `moveSpeed`, `aggroRadius`, `leashRadius`, `stopDistance`, wander knobs, `preferredRange`, `fleeHpFraction`, `touchRange`, `touchInterval`, `attackType`, on-hit ailment, loot, sheet/tint/scale.
 
-**One open question:** move speed is arguably a shared stat (Haste already multiplies it on both sides through `UnitStates.MoveMult`), but it's stored on the mover today, not in either stat block. Recommend leaving it where it is for this pass and revisiting once the block is in.
+**One open question:** move speed is arguably a shared stat (the movement-speed sub-stat pile already multiplies it on both sides through `UnitStates.MoveMult`), but it's stored on the mover today, not in either stat block. Recommend leaving it where it is for this pass and revisiting once the block is in.
 
 ## Migration — reset to a level template
 
-Decided: **do not** preserve the 85 hand-set stat blocks. Each mob gets a level and a primary spread from a template, plus a starting kit of natural gear; hand-tuning happens afterwards on the mobs that feel wrong.
+Decided: **do not** preserve the hand-set stat blocks the roster used to carry. Each mob gets a level and a primary spread from a template, plus a starting kit of natural gear; hand-tuning happens afterwards on the mobs that feel wrong. The roster is **86 mobs** today.
 
 This trades current balance for a clean base. Expect a re-tuning pass across the roster — and with no global dial, that pass is the tuning, so budget for it.
 
@@ -110,7 +110,7 @@ This trades current balance for a clean base. Expect a re-tuning pass across the
 1. ~~**Extract the stat block.**~~ `UnitStatMath` owns the formulas; `Character` delegates.
 2. ~~**Extract the equipment holder.**~~ `UnitEquipment`.
 3. ~~**Give mobs both.**~~ `UnitStatBlock` on every spawned mob, wired by `RigBuilder25D`.
-4. ~~**Teach `Health` to read the states it already stores.**~~ `UnitMitigation` (Guard/Shield) + `ApplyLeech` (Reflect/ManaLeech).
+4. ~~**Teach `Health` to read the states it already stores.**~~ `UnitMitigation` (the damage-reduction pile + Shield) + `ApplyLeech` (the reflect and mana-leech piles).
 5. ~~**Drops from the worn set.**~~ `LootDropper.DropWornGear`.
 6. ~~**Delete `perLevelGrowth` and tier.**~~ Level-up re-derives; tier is gone from every file.
 7. ~~**Migration tool.**~~ `Tools ▸ unwritten ▸ Quick Fixes ▸ Reset Mob Stats to Level + Primaries`.
@@ -171,7 +171,7 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 | Stat | Where it comes from |
 | --- | --- |
 | Movement speed | `CharacterSpec.moveSpeed` (2), × `UnitStates.MoveMult` |
-| Mana leech | 0; a timed ManaLeech change only |
+| Mana leech | 0; a timed sub-stat change only |
 | Life steal | `Character.lifeStealPct` (0) + a timed LifeSteal change |
 | Damage reflect | `Character.reflectPct` (0) + a timed Reflect change |
 | Damage dealt | **not a character stat** — a per-hit multiplier applied while the hit is built (`UnitOffense.Dealt`) |

@@ -4,39 +4,148 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// A single spreadsheet-style view of every <see cref="Item"/> in the project — one item per row, icon preview plus the
-/// balance-relevant fields editable inline (Undo-able, saved on demand). The item sibling of <see cref="MobTableWindow"/>.
+/// The spreadsheet view of the item catalog — one row per <see cref="Item"/>, the balance-relevant fields editable
+/// inline (Undo-able, saved on demand). The item sibling of <see cref="MobTableWindow"/>.
 ///
-/// <para>"Type" is the coarse bucket DERIVED from slot/category (<see cref="ItemTypes"/>) — editing it maps back onto
-/// the real fields, so there's no duplicated value to hand-sync. "Kind" is context-sensitive: the weapon type for a
-/// weapon, the equip slot for armor, blank otherwise. Open via <c>Tools ▸ unwritten ▸ Catalogs ▸ Item Table</c>.</para>
+/// <para><b>ONE table, opened once per bucket.</b> Weapons, Armor, Rings, Consumables, Materials, Quest Items and Misc
+/// are the same window filtered to one <see cref="ItemType"/>, each showing only the columns that bucket actually has —
+/// a weapon shows ATK and reach, a consumable shows the skill it runs, and neither wastes a column on the other's
+/// blanks. Six near-identical windows would rot the moment one got a fix the others didn't, so there is exactly one
+/// body here and a menu entry per bucket.</para>
+///
+/// <para>Every item lands in exactly one bucket (<see cref="ItemTypes.Of"/>) and Misc catches whatever the named
+/// buckets don't, so no item can be invisible in all of them. "Type" is DERIVED from slot/category — editing it maps
+/// back onto the real fields, so there is no duplicated value to hand-sync; changing it moves the row to another
+/// table. Open via <c>Tools ▸ unwritten ▸ Catalogs ▸ Items ▸ …</c>.</para>
 /// </summary>
 public class ItemTableWindow : EditorWindow
 {
-    const string MenuPath = "Tools/unwritten/Catalogs/Item Table";
     const float RowHeight = 34f;
 
-    [MenuItem(MenuPath)]
-    static void Open()
+    // ---- The buckets -----------------------------------------------------------------------------------------
+    // Adding a table later is this list plus a menu entry — never another copy of the window.
+
+    enum ColId { Icon, Id, Name, Type, Kind, Elem, Rarity, Atk, Def, MAtk, MDef, HP, MP, Reach, Sockets, Weight, Zeny, UseSkill, Select }
+
+    struct Col
     {
-        var w = GetWindow<ItemTableWindow>("Item Table");
+        public ColId id; public string label, sort; public float w;
+        public Col(ColId i, string l, string s, float wi) { id = i; label = l; sort = s; w = wi; }
+    }
+
+    static readonly Col[] All =
+    {
+        new Col(ColId.Icon,    "",        null,     38),
+        new Col(ColId.Id,      "id",      "id",     150),
+        new Col(ColId.Name,    "name",    "name",   120),
+        new Col(ColId.Type,    "type",    "type",   92),
+        new Col(ColId.Kind,    "kind",    null,     104),
+        new Col(ColId.Elem,    "elem",    "elem",   78),
+        new Col(ColId.Rarity,  "rarity",  "rarity", 84),
+        new Col(ColId.Atk,     "ATK",     "atk",    46),
+        new Col(ColId.Def,     "DEF",     "def",    46),
+        new Col(ColId.MAtk,    "MATK",    null,     50),
+        new Col(ColId.MDef,    "MDEF",    null,     50),
+        new Col(ColId.HP,      "HP",      null,     46),
+        new Col(ColId.MP,      "MP",      null,     46),
+        new Col(ColId.Reach,   "reach",   null,     52),
+        new Col(ColId.Sockets, "◇",       null,     32),
+        new Col(ColId.Weight,  "wt",      null,     38),
+        new Col(ColId.Zeny,    "zeny",    "zeny",   52),
+        new Col(ColId.UseSkill,"runs skill", null,  200),
+        new Col(ColId.Select,  "",        null,     28),
+    };
+
+    // Each bucket's columns, in draw order. Icon/id/name/select are on every one; the middle is what differs.
+    static ColId[] ColumnsFor(ItemType t)
+    {
+        switch (t)
+        {
+            case ItemType.Weapon:
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Kind, ColId.Elem, ColId.Rarity,
+                               ColId.Atk, ColId.MAtk, ColId.Reach, ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
+            case ItemType.Armor:
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Kind, ColId.Elem, ColId.Rarity,
+                               ColId.Def, ColId.MDef, ColId.HP, ColId.MP, ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
+            case ItemType.Ring:
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Rarity,
+                               ColId.HP, ColId.MP, ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
+            case ItemType.Consumable:
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Rarity, ColId.UseSkill,
+                               ColId.Weight, ColId.Zeny, ColId.Select };
+            case ItemType.Material:
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Rarity, ColId.Weight, ColId.Zeny, ColId.Select };
+            case ItemType.Quest:
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Weight, ColId.Select };
+            default:   // Misc — the catch-all, so it shows the coarse Type to explain why a row landed here
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Type, ColId.Rarity, ColId.Weight, ColId.Zeny, ColId.Select };
+        }
+    }
+
+    // ---- Menu ------------------------------------------------------------------------------------------------
+
+    const string Root = "Tools/unwritten/Catalogs/Items/";
+    [MenuItem(Root + "Weapons")]     static void OpenWeapons()     => Open(ItemType.Weapon);
+    [MenuItem(Root + "Armor")]       static void OpenArmor()       => Open(ItemType.Armor);
+    [MenuItem(Root + "Rings")]       static void OpenRings()       => Open(ItemType.Ring);
+    [MenuItem(Root + "Consumables")] static void OpenConsumables() => Open(ItemType.Consumable);
+    [MenuItem(Root + "Materials")]   static void OpenMaterials()   => Open(ItemType.Material);
+    [MenuItem(Root + "Quest Items")] static void OpenQuest()       => Open(ItemType.Quest);
+    [MenuItem(Root + "Misc")]        static void OpenMisc()        => Open(ItemType.Misc);
+
+    static void Open(ItemType bucket)
+    {
+        // One window PER bucket, so two tables can sit side by side. Keyed by title, which is how GetWindow finds it.
+        var w = CreateOrFocus(bucket);
+        w._bucket = bucket;
+        w.titleContent = new GUIContent(Title(bucket));
+        // Width floor stays tiny on purpose: the window must be able to shrink to a sliver beside another one, and a
+        // real minimum would hide every column past the greedy one.
         w.minSize = new Vector2(40, 320);
         w.Reload();
     }
 
+    static ItemTableWindow CreateOrFocus(ItemType bucket)
+    {
+        foreach (var open in Resources.FindObjectsOfTypeAll<ItemTableWindow>())
+            if (open._bucket == bucket) { open.Focus(); return open; }
+        return CreateWindow<ItemTableWindow>();
+    }
+
+    static string Title(ItemType t) => t == ItemType.Quest ? "Quest Items" : t.ToString() + (t == ItemType.Misc ? "" : "s");
+
+    // ---- State -----------------------------------------------------------------------------------------------
+
+    [SerializeField] ItemType _bucket = ItemType.Weapon;   // survives a domain reload, so the window reopens as itself
     readonly List<Item> _items = new List<Item>();
     Vector2 _scroll, _hscroll;
     string _search = "";
     string _sortField = "id";
     bool _sortAsc = true;
 
+    Col[] _cols;
+    Col[] Cols
+    {
+        get
+        {
+            if (_cols == null || _cols.Length == 0)
+            {
+                var ids = ColumnsFor(_bucket);
+                _cols = ids.Select(id => All.First(c => c.id == id)).ToArray();
+            }
+            return _cols;
+        }
+    }
+    float TotalWidth => Cols.Sum(c => c.w) + 8;
+
     void Reload()
     {
+        _cols = null;                       // bucket may have changed → rebuild the column set
         _items.Clear();
         foreach (var guid in AssetDatabase.FindAssets("t:Item"))
         {
             var it = AssetDatabase.LoadAssetAtPath<Item>(AssetDatabase.GUIDToAssetPath(guid));
-            if (it != null) _items.Add(it);
+            if (it != null && ItemTypes.Of(it) == _bucket) _items.Add(it);
         }
         Resort();
         Repaint();
@@ -58,28 +167,6 @@ public class ItemTableWindow : EditorWindow
         _items.Sort((a, b) => (_sortAsc ? 1 : -1) * cmp(a, b));
     }
 
-    struct Col { public string label, sort; public float w; public Col(string l, string s, float wi) { label = l; sort = s; w = wi; } }
-    static readonly Col[] Cols =
-    {
-        new Col("",       null,     38),   // icon
-        new Col("id",     "id",     150),
-        new Col("name",   "name",   120),
-        new Col("type",   "type",   92),
-        new Col("kind",   null,     104),
-        new Col("elem",   "elem",   78),
-        new Col("rarity", "rarity", 84),
-        new Col("ATK",    "atk",    46),
-        new Col("DEF",    "def",    46),
-        new Col("MATK",   null,     50),
-        new Col("MDEF",   null,     50),
-        new Col("HP",     null,     46),
-        new Col("wt",     null,     38),
-        new Col("zeny",   "zeny",   52),
-        new Col("heal",   null,     46),
-        new Col("",       null,     28),   // select asset
-    };
-    static float TotalWidth => Cols.Sum(c => c.w) + 8;
-
     void OnGUI()
     {
         DrawToolbar();
@@ -87,11 +174,17 @@ public class ItemTableWindow : EditorWindow
 
         _scroll = EditorGUILayout.BeginScrollView(_scroll);
         _hscroll = GUILayout.BeginScrollView(_hscroll, GUILayout.ExpandWidth(true));
+        bool any = false;
         foreach (var it in _items)
         {
             if (!string.IsNullOrEmpty(_search) && !MatchesSearch(it)) continue;
             DrawRow(it);
+            any = true;
         }
+        if (!any)
+            EditorGUILayout.LabelField(_items.Count == 0
+                ? $"No {Title(_bucket).ToLowerInvariant()} authored yet."
+                : "Nothing matches that search.", EditorStyles.centeredGreyMiniLabel);
         GUILayout.EndScrollView();
         EditorGUILayout.EndScrollView();
     }
@@ -101,7 +194,7 @@ public class ItemTableWindow : EditorWindow
         string s = _search.ToLowerInvariant();
         return (it.id ?? "").ToLowerInvariant().Contains(s)
             || (it.displayName ?? "").ToLowerInvariant().Contains(s)
-            || ItemTypes.Of(it).ToString().ToLowerInvariant().Contains(s)
+            || (it.useSkillId ?? "").ToLowerInvariant().Contains(s)
             || it.weaponType.ToString().ToLowerInvariant().Contains(s)
             || it.element.ToString().ToLowerInvariant().Contains(s);
     }
@@ -154,55 +247,81 @@ public class ItemTableWindow : EditorWindow
         float x = rect.x;
         int ci = 0;
         Rect Next() { var r = new Rect(x, rect.y + 3, Cols[ci].w - 3, RowHeight - 6); x += Cols[ci].w; ci++; return r; }
-
-        var iconRect = Next();
-        DrawIcon(new Rect(iconRect.x, rect.y + 2, 30, 30), it);
+        Rect Field() => VCenter(Next(), 18);
 
         var curType = ItemTypes.Of(it);
+        var newType = curType;
+        var newWeaponKind = it.weaponType;
+        var newSlotKind = it.slot;
+        bool retypedOrMoved = false;
 
         EditorGUI.BeginChangeCheck();
-        string id   = EditorGUI.TextField(VCenter(Next(), 18), it.id);
-        string name = EditorGUI.TextField(VCenter(Next(), 18), it.displayName);
-        var newType = (ItemType)EditorGUI.EnumPopup(VCenter(Next(), 18), curType);
+        foreach (var c in Cols)
+        {
+            switch (c.id)
+            {
+                case ColId.Icon:    DrawIcon(new Rect(Next().x, rect.y + 2, 30, 30), it); break;
+                case ColId.Id:      it.id = EditorGUI.TextField(Field(), it.id); break;
+                case ColId.Name:    it.displayName = EditorGUI.TextField(Field(), it.displayName); break;
+                case ColId.Type:    newType = (ItemType)EditorGUI.EnumPopup(Field(), curType); break;
 
-        // Kind: weapon → weaponType; armor → equip slot; consumable/misc → blank. Captured for the apply block.
-        var kindRect = VCenter(Next(), 18);
-        WeaponType newWeaponKind = it.weaponType;
-        EquipSlotType newSlotKind = it.slot;
-        if (curType == ItemType.Weapon)      newWeaponKind = (WeaponType)EditorGUI.EnumPopup(kindRect, it.weaponType);
-        else if (curType == ItemType.Armor)  newSlotKind   = (EquipSlotType)EditorGUI.EnumPopup(kindRect, it.slot);
-        else EditorGUI.LabelField(kindRect, "—", EditorStyles.centeredGreyMiniLabel);
+                // Kind is context-sensitive: a weapon's kind is its weapon type, a piece of armor's is which slot it
+                // fills. Neither question means anything for the bag buckets, which is why they don't show the column.
+                case ColId.Kind:
+                    if (curType == ItemType.Weapon)     newWeaponKind = (WeaponType)EditorGUI.EnumPopup(Field(), it.weaponType);
+                    else if (curType == ItemType.Armor) newSlotKind   = (EquipSlotType)EditorGUI.EnumPopup(Field(), it.slot);
+                    else EditorGUI.LabelField(Field(), "—", EditorStyles.centeredGreyMiniLabel);
+                    break;
 
-        var elem   = (Element)EditorGUI.EnumPopup(VCenter(Next(), 18), it.element);
-        var rarity = (Rarity)EditorGUI.EnumPopup(VCenter(Next(), 18), it.rarity);
-        int atk    = EditorGUI.IntField(VCenter(Next(), 18), it.bonusAttack);
-        int def    = EditorGUI.IntField(VCenter(Next(), 18), it.bonusDefense);
-        int matk   = EditorGUI.IntField(VCenter(Next(), 18), it.bonusMAtk);
-        int mdef   = EditorGUI.IntField(VCenter(Next(), 18), it.bonusMDef);
-        int hp     = EditorGUI.IntField(VCenter(Next(), 18), it.bonusHP);
-        int wt     = EditorGUI.IntField(VCenter(Next(), 18), it.weight);
-        int zeny   = EditorGUI.IntField(VCenter(Next(), 18), it.zeny);
-        int heal   = EditorGUI.IntField(VCenter(Next(), 18), it.healAmount);
+                case ColId.Elem:    it.element = (Element)EditorGUI.EnumPopup(Field(), it.element); break;
+                case ColId.Rarity:  it.rarity = (Rarity)EditorGUI.EnumPopup(Field(), it.rarity); break;
+                case ColId.Atk:     it.bonusAttack = EditorGUI.IntField(Field(), it.bonusAttack); break;
+                case ColId.Def:     it.bonusDefense = EditorGUI.IntField(Field(), it.bonusDefense); break;
+                case ColId.MAtk:    it.bonusMAtk = EditorGUI.IntField(Field(), it.bonusMAtk); break;
+                case ColId.MDef:    it.bonusMDef = EditorGUI.IntField(Field(), it.bonusMDef); break;
+                case ColId.HP:      it.bonusHP = EditorGUI.IntField(Field(), it.bonusHP); break;
+                case ColId.MP:      it.bonusMP = EditorGUI.IntField(Field(), it.bonusMP); break;
+                case ColId.Reach:   it.attackRange = EditorGUI.FloatField(Field(), it.attackRange); break;
+                case ColId.Sockets: it.cardSlots = EditorGUI.IntField(Field(), it.cardSlots); break;
+                case ColId.Weight:  it.weight = EditorGUI.IntField(Field(), it.weight); break;
+                case ColId.Zeny:    it.zeny = EditorGUI.IntField(Field(), it.zeny); break;
+                case ColId.UseSkill: DrawUseSkill(Field(), it); break;
+
+                case ColId.Select:
+                    if (GUI.Button(Field(), "◎")) { Selection.activeObject = it; EditorGUIUtility.PingObject(it); }
+                    break;
+            }
+        }
+
         if (EditorGUI.EndChangeCheck())
         {
             Undo.RecordObject(it, "Edit Item");
-            it.id = id; it.displayName = name; it.element = elem; it.rarity = rarity;
-            it.bonusAttack = atk; it.bonusDefense = def; it.bonusMAtk = matk; it.bonusMDef = mdef;
-            it.bonusHP = hp; it.weight = wt; it.zeny = zeny; it.healAmount = heal;
-
-            // Type wins if it changed (remaps slot/category); otherwise honor the context-sensitive Kind edit.
-            if (newType != curType) ItemTypes.Apply(it, newType);
+            // Type wins if it changed (it remaps slot/category, which moves the row to another table); otherwise
+            // honour the context-sensitive Kind edit.
+            if (newType != curType) { ItemTypes.Apply(it, newType); retypedOrMoved = true; }
             else if (curType == ItemType.Weapon) it.weaponType = newWeaponKind;
-            else if (curType == ItemType.Armor)  it.slot = newSlotKind;
+            else if (curType == ItemType.Armor && newSlotKind != it.slot) { it.slot = newSlotKind; retypedOrMoved = true; }
 
             EditorUtility.SetDirty(it);
+            // A row that no longer belongs in this bucket must leave it, or the table would show an item it claims not
+            // to hold. Deferred to the next frame — reloading mid-draw changes the row count between layout passes.
+            if (retypedOrMoved) EditorApplication.delayCall += Reload;
         }
+    }
 
-        if (GUI.Button(VCenter(Next(), 18), "◎"))
-        {
-            Selection.activeObject = it;
-            EditorGUIUtility.PingObject(it);
-        }
+    // The skill a consumable runs. Typed as a plain id (that is how every other skill reference is stored), but
+    // validated live against the catalog so a typo shows up here rather than as a silent no-op at the bag.
+    void DrawUseSkill(Rect r, Item it)
+    {
+        var field = new Rect(r.x, r.y, r.width - 18, r.height);
+        var mark = new Rect(r.xMax - 16, r.y, 16, r.height);
+        it.useSkillId = EditorGUI.TextField(field, it.useSkillId);
+
+        if (string.IsNullOrEmpty(it.useSkillId)) { EditorGUI.LabelField(mark, "—", EditorStyles.centeredGreyMiniLabel); return; }
+        var def = SkillCatalog.Get(it.useSkillId);
+        if (def == null)              EditorGUI.LabelField(mark, new GUIContent("✗", "No skill with that id."), EditorStyles.centeredGreyMiniLabel);
+        else if (def.ItemUseEntry == null) EditorGUI.LabelField(mark, new GUIContent("!", "That skill has no On Item Used trigger, so using this item would do nothing."), EditorStyles.centeredGreyMiniLabel);
+        else                          EditorGUI.LabelField(mark, new GUIContent("✓", def.displayName), EditorStyles.centeredGreyMiniLabel);
     }
 
     static Rect VCenter(Rect r, float h) => new Rect(r.x, r.y + (r.height - h) * 0.5f, r.width, h);
