@@ -125,7 +125,7 @@ A duration is **seconds**; charges are **a number of uses**. A skill may carry b
 
 **Resolved 2026-08-24 — Opening rolls 50%.** The asset's chance is the authority; the roster doc and the wiki were the stale side and now say a successful parry has a **50% chance** to grant the +200% charge.
 
-**Found 2026-08-24, NOT a number and NOT fixed — Guard Stance is authored backwards.** It is a `SubStatDebuff` on `DamageReduction`, and `SkillEffectApplier` negates a debuff's magnitude, so the live effect is **+50% damage taken** rather than −50%. Overclock uses the same kind on purpose (that is how it doubles incoming damage). Guard Stance needs `SubStatBuff`. Left for the owner to change.
+**Found and FIXED 2026-08-24 — Guard Stance was authored backwards.** It was a `SubStatDebuff` on `DamageReduction`, and `SkillEffectApplier` negates a debuff's magnitude, so the live effect was **+50% damage taken** rather than −50%. Now a `SubStatBuff`, verified off the asset. Overclock still uses the debuff kind on purpose — that is how it doubles incoming damage. **Watch for this shape on any new defensive skill:** the two kinds differ by one word and the wrong one is silently a buff for the enemy.
 
 ## Open / to measure before mass-tuning
 

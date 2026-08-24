@@ -17,7 +17,8 @@ MonoBehaviour:
   weaponType: 1
   published: 1
   icon: {fileID: 0}
-  description: 
+  description: "Stand your ground.\nAfter casting Guard Stance, nothing stops you
+    for 6s \u2014 no flinch, stun, freeze, silence, knockback or pull."
   archetype: 2
   family: 0
   shape: 0

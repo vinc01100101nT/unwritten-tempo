@@ -17,7 +17,11 @@ MonoBehaviour:
   weaponType: 8
   published: 0
   icon: {fileID: -748796600851884618, guid: e332629eb48b6454a8278a39bd5d6b5a, type: 3}
-  description: Meat balls
+  description: 'The sky falls.
+
+    Calls down 8x Magic damage across 3 strikes,
+    then a second impact for 8x more. Sets the target burning for 3 a tick over 4s,
+    and each hit has a 25% chance to stun.'
   archetype: 0
   family: 1
   shape: 1

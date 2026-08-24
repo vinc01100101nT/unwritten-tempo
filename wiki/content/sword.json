@@ -13,7 +13,7 @@
   },
   {
    "type": "callout",
-   "text": "**Status:** the Sword's pool is complete — every skill below is built and in the game except **Pressure**, which is finished but not yet switched on for drops. Numbers are still in tuning."
+   "text": "**Status:** the Sword's pool is complete — every skill below is built and in the game. Numbers are still in tuning."
   },
   {
    "type": "paragraph",
@@ -26,28 +26,9 @@
   },
   {
    "type": "skillTable",
-   "tier": "ultimate",
-   "subtitle": "One per Sword. 40 MP, and a long cooldown rather than a charge meter.",
-   "skills": [
-    {
-     "name": "Deathblow",
-     "cost": "40 MP · CD 60s · Cast 1s · Range 5",
-     "flavor": "Everything, in one swing.",
-     "effect": "One massive blow for **600% Attack**, **+40% for every Momentum stack** you hold, then spends them all. Without Momentum it is still a flat **600% Attack** — it just doesn't scale."
-    },
-    {
-     "name": "Retribution",
-     "cost": "40 MP · CD 45s · Range 11",
-     "flavor": "Endure, then answer.",
-     "effect": "Cashes the damage **Brace** is holding. Strikes for **100% Attack plus 250% of the banked total**, split across **5 hits**, and **erases the debt** — you never pay what you release. Needs something banked to be worth casting."
-    },
-    {
-     "name": "Blade Dance",
-     "cost": "40 MP · CD 45s · Range 11",
-     "flavor": "Become the storm.",
-     "effect": "Arms two sets of charges for **8s**, both sized by how fast you swing: **one dance charge per swing you'd fit into 8 seconds**, and **half that many Parry charges**. Then it beats **3 times per swing** — each beat spends a dance charge, flashes you to the next point of a **seven-pointed star**, leaves a **1s afterimage**, and strikes for **100% Attack**. Every beat re-aims at a living target within **3 units** of the last one, so the dance walks from foe to foe. Each dance charge you still hold is **+1% damage**, so the storm is fiercest at its opening. The Parry charges are your only guard — when they run out, you are exposed."
-    }
-   ]
+   "source": "Sword",
+   "group": "ultimate",
+   "subtitle": "One per Sword. 40 MP, and a long cooldown rather than a charge meter."
   },
   {
    "type": "heading",
@@ -56,69 +37,8 @@
   },
   {
    "type": "skillTable",
-   "tier": "active",
-   "skills": [
-    {
-     "name": "Lunge",
-     "cost": "8 MP · CD 5s · Range 8",
-     "flavor": "Close the distance.",
-     "effect": "Dashes to the target and strikes for **100% Attack**. With **Lock Blades**, casting it also arms **5 charges**."
-    },
-    {
-     "name": "Parry",
-     "cost": "8 MP · CD 5s · Window 3s",
-     "flavor": "Read the blow.",
-     "effect": "Fully negates the next incoming hit within **3s** (**0 damage**) and is spent by it."
-    },
-    {
-     "name": "Brace",
-     "cost": "12 MP · CD 7s · Window 4s",
-     "flavor": "Take it now, pay it later.",
-     "effect": "Arms **5 charges** for **4s**. Each charge holds back one incoming hit — that damage is **banked** instead of costing you health. When the window ends, everything banked lands at once. A delay, not a save: **Retribution** is the only way out of the bill, and the cooldown is longer than the window so you can't postpone it forever."
-    },
-    {
-     "name": "Guard Stance",
-     "cost": "12 MP · CD 9s",
-     "flavor": "Weather it.",
-     "effect": "Reduces damage taken by **50%** for **6s**."
-    },
-    {
-     "name": "Overclock",
-     "cost": "12 MP · CD 12s",
-     "flavor": "Faster. Riskier.",
-     "effect": "Grants **+30% Attack Speed** for **8s** and makes you take **double damage** for the first **3s**. Blade Dance turns the speed into more charges, more parries and a faster storm; Retribution banks the doubled damage; Deathblow builds Momentum quicker."
-    },
-    {
-     "name": "Onslaught",
-     "cost": "12 MP · CD 8s · Range 11",
-     "flavor": "Don't let up.",
-     "effect": "Arms **5 stacks of +1% damage** for **5s** (up to **7**), then spends them: **2 beats per swing**, each beat burning one stack to land a **real basic attack**. Real ones, so every beat feeds Momentum and fires every on-basic-attack passive."
-    },
-    {
-     "name": "Committed Strike",
-     "cost": "16 MP · CD 8s · Cast 1.2s · Range 5",
-     "flavor": "Wind up and commit.",
-     "effect": "Winds up for **1.2s**, then lands a single heavy hit for **200% Attack** — the Sword's strongest non-ultimate strike."
-    },
-    {
-     "name": "Disarm",
-     "cost": "12 MP · CD 9s · Range 5",
-     "flavor": "Blunt their swing.",
-     "effect": "A strike for **100% Attack** that leaves them holding a charge: their **next attack lands 40% weaker**, within **6s**. It weakens — it never stuns or denies."
-    },
-    {
-     "name": "Offbeat",
-     "cost": "12 MP · CD 8s · Range 5",
-     "flavor": "Break their rhythm.",
-     "effect": "A strike for **100% Attack** that cuts the target's **Attack Speed by 30%** for **5s**. Fewer swings coming at you means every Parry and Brace window covers more of the fight. Nothing is denied — only made rarer."
-    },
-    {
-     "name": "Challenge",
-     "cost": "12 MP · CD 8s · Range 11",
-     "flavor": "Make them fight you.",
-     "effect": "Taunts one enemy for **5s**: it is locked onto you, **cannot use skills**, and takes **no pause between swings**. It deals no damage — the lock is the whole skill. A taunted enemy can't decline to feed **Brace**."
-    }
-   ]
+   "source": "Sword",
+   "group": "active"
   },
   {
    "type": "heading",
@@ -127,56 +47,9 @@
   },
   {
    "type": "skillTable",
-   "tier": "passive",
-   "subtitle": "No button, no mana, no cooldown — each one fires on a moment in the fight.",
-   "skills": [
-    {
-     "name": "Momentum",
-     "flavor": "Every hit adds up.",
-     "effect": "Each basic attack you land grants **+1 Momentum**. Every stack adds **+3% to all your damage** and lasts **5s** on its own timer, so they expire one at a time — your standing count settles at however fast you swing. Deathblow spends the whole pile."
-    },
-    {
-     "name": "Flow",
-     "flavor": "Stay on one foe.",
-     "effect": "Staying on one target pays: every basic attack grants **extra Momentum equal to a third of your unbroken run of hits** on that body. Switching targets, or a hit that deals nothing, ends the run and starts it over."
-    },
-    {
-     "name": "Encore",
-     "flavor": "The dance continues.",
-     "effect": "A kill during **Blade Dance** grants **7 more dance charges**, extending the storm. Only fires while Blade Dance is running — and it doesn't add Parry charges, so a long dance outlives its guard."
-    },
-    {
-     "name": "Opening",
-     "flavor": "Find the weakness.",
-     "effect": "A successful **Parry** has a **50% chance** to open them up: your next attack deals **+200% damage** within **5s**. One attack spends it — **hit or miss** — and the bonus lands before their armor, so it is worth more the tankier they are."
-    },
-    {
-     "name": "Unwavering",
-     "flavor": "Stand your ground.",
-     "effect": "Casting **Guard Stance** makes you immune to **knockback and stagger** for **6s** — exactly as long as the stance itself. Pairs with Committed Strike's long wind-up."
-    },
-    {
-     "name": "Lock Blades",
-     "flavor": "No escape.",
-     "effect": "Casting **Lunge** arms **5 charges**, each lasting **5s** and granting **+5% Attack Speed** while held (**+25%** at five). Each hit you land spends one to **automatically lunge** at the target again, so it can't disengage while you keep connecting. Auto-lunges don't spend charges of their own. With none left, nothing fires."
-    },
-    {
-     "name": "Last Stand",
-     "flavor": "Cornered, you hold the line.",
-     "effect": "Dropping to low health arms **5 more Brace charges**. The moment you are nearly dead is the moment you can hold back more hits — and every hit you hold makes the **Retribution** release bigger."
-    },
-    {
-     "name": "Composure",
-     "flavor": "A read pays for the next one.",
-     "effect": "After a successful **Parry**, mana returns at **2 per second for 4s** — about **8 MP**, roughly one reaction skill."
-    },
-    {
-     "name": "Pressure",
-     "cost": "*not in the game yet*",
-     "flavor": "Never let them recover.",
-     "effect": "Hits on the same target **delay its health regeneration**."
-    }
-   ]
+   "source": "Sword",
+   "group": "passive",
+   "subtitle": "No button, no mana, no cooldown — each one fires on a moment in the fight."
   },
   {
    "type": "heading",

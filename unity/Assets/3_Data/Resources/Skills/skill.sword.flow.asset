@@ -17,7 +17,10 @@ MonoBehaviour:
   weaponType: 1
   published: 1
   icon: {fileID: 0}
-  description: 
+  description: 'Stay on one foe.
+
+    Every basic attack grants extra Momentum equal
+    to a third of your unbroken run of hits on that target.'
   archetype: 1
   family: 2
   shape: 0

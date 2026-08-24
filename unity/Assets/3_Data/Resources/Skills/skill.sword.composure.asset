@@ -19,7 +19,8 @@ MonoBehaviour:
   icon: {fileID: 0}
   description: 'A read pays for the next one.
 
-    After a parry, MP returns at 2 per second for 4s.'
+    After a parry, MP returns at 2
+    per second for 4s.'
   archetype: 3
   family: 0
   shape: 3
@@ -41,7 +42,7 @@ MonoBehaviour:
   aim: 2
   castRange: 11
   tier: 0
-  castCircleId:
+  castCircleId: 
   castCircleTint: {r: 1, g: 1, b: 1, a: 1}
   vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
   repeatCount: 1
@@ -190,6 +191,6 @@ MonoBehaviour:
       durationAffinity: []
       hitCountAffinity: []
   shortLabel: Skill
-  keyLabel:
+  keyLabel: 
   slotOrder: 10
   tint: {r: 1, g: 1, b: 1, a: 1}

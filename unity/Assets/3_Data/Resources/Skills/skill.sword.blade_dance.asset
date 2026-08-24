@@ -17,7 +17,12 @@ MonoBehaviour:
   weaponType: 1
   published: 1
   icon: {fileID: 0}
-  description: Omni Slashhhh
+  description: 'Become the storm.
+
+    Arms dance charges and half as many parries
+    for 8s, both sized by how fast you swing. Each beat spends a charge to flash
+    to a new angle and strike for 100% Attack, hunting a new target within 3 units.
+    Every charge still held is +1% damage.'
   archetype: 1
   family: 2
   shape: 0

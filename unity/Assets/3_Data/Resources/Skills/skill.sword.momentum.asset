@@ -17,7 +17,10 @@ MonoBehaviour:
   weaponType: 1
   published: 1
   icon: {fileID: -2241300882062069919, guid: 5865a4bc2158c594f91fe4497645f398, type: 3}
-  description: Increases ATK by 3% each stack.
+  description: 'Every hit adds up.
+
+    Each basic attack that lands grants a stack:
+    +3% damage each, 5s apiece.'
   archetype: 3
   family: 0
   shape: 3

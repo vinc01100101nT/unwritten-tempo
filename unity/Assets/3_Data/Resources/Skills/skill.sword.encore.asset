@@ -17,7 +17,10 @@ MonoBehaviour:
   weaponType: 1
   published: 1
   icon: {fileID: 0}
-  description: Extends Blade Dance on kill.
+  description: 'The dance goes on.
+
+    A kill during Blade Dance adds 7 more dance
+    charges.'
   archetype: 1
   family: 2
   shape: 3

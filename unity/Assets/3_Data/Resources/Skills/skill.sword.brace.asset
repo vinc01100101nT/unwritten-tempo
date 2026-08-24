@@ -17,7 +17,11 @@ MonoBehaviour:
   weaponType: 1
   published: 1
   icon: {fileID: -4335222134116007343, guid: 1fce026f31fb948408df69e99065b9fb, type: 3}
-  description: 
+  description: 'Take it now, pay it later.
+
+    Arms 5 charges for 4s. Each holds
+    back one incoming hit and banks the damage instead of paying it in health; the
+    whole bill lands at once when the window ends.'
   archetype: 0
   family: 0
   shape: 3

@@ -17,7 +17,9 @@ MonoBehaviour:
   weaponType: 0
   published: 0
   icon: {fileID: -7148899402789621793, guid: 6a4837e8d7a3aab44b6d6e0ef020be4c, type: 3}
-  description: 
+  description: 'Ground that mends.
+
+    Restores 100 HP.'
   archetype: 0
   family: 0
   shape: 0

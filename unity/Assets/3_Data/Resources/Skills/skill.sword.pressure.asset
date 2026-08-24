@@ -15,9 +15,12 @@ MonoBehaviour:
   id: skill.sword.pressure
   displayName: Pressure
   weaponType: 1
-  published: 0
+  published: 1
   icon: {fileID: 0}
-  description: 
+  description: 'Never let them recover.
+
+    Every hit cuts the target''s HP regen
+    by 3 a second for 5s, and the cuts stack.'
   archetype: 0
   family: 0
   shape: 0

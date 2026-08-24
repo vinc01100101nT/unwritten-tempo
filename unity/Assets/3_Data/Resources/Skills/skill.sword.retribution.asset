@@ -17,7 +17,11 @@ MonoBehaviour:
   weaponType: 1
   published: 1
   icon: {fileID: 8135663367076951168, guid: 83317278050e7dc45bff1a2d92dc62eb, type: 3}
-  description: 
+  description: 'Answer all of it at once.
+
+    Cashes the damage Brace banked: 100%
+    Attack plus 250% of the banked total, split across 5 strikes, and the debt is
+    erased. Does nothing with an empty bank.'
   archetype: 0
   family: 0
   shape: 0

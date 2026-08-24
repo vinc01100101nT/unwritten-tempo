@@ -3,6 +3,9 @@
 
   D:\tempo\projects\roguelike-mmo\unity\Assets\Art\Quat\Anim\Humanoid
 
+OPEN UNITY IN AUTOMATED MODE (handles warning popups when using cli)
+unity open /Users/vince/Desktop/CODES/unwritten-tempo/unity --args "-automated"
+
 MAP PAINTER SERVER:
 python -m http.server 8000 --directory tools/map-painter
 
