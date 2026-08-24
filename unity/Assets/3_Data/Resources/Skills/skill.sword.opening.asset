@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.opening
   displayName: Opening
+  symbol: Op
   weaponType: 1
   published: 1
   icon: {fileID: 6969427886737629405, guid: 3964ad93b5f03fc4d8bc30d5f55a7756, type: 3}

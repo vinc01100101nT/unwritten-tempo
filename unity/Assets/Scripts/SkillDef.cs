@@ -288,6 +288,17 @@ public enum SkillTrigger
     /// a Brace window all fire NOTHING — same rule the dealt side uses, so the two can never drift apart. Ailment
     /// ticks (poison / bleed / burn) bypass this path and fire neither side. Entity = the attacker.</summary>
     OnDamageReceived,
+
+    /// <summary>AN ITEM WAS USED, and that item names THIS skill (<see cref="Item.useSkillId"/>) — a potion drunk, a
+    /// food eaten. Fired straight from <see cref="ItemUse.Use"/>, never through <c>PassiveEvents</c>, because the item
+    /// already says which skill runs: the moment picks no winner, the item does. No entity is passed, so an item's
+    /// skill is always self-cast.
+    ///
+    /// <para>Unparameterized ON PURPOSE, unlike <see cref="OnSkillCastComplete"/>: the pointer lives on the ITEM, so
+    /// naming the item here as well would be the same fact stored in two places. A skill carrying only this trigger
+    /// has no pressed form — it never reaches the hotbar and never announces itself — which is exactly what a
+    /// consumable's effect should be.</para></summary>
+    OnItemUsed,
 }
 
 /// <summary>ONE way a skill can start — a moment, plus the state gate that moment must satisfy. A skill owns a LIST of
@@ -442,6 +453,9 @@ public class SkillDef : ScriptableObject
     [Tooltip("Stable kebab id, e.g. \"skill.meteor\". Keyed by SkillCatalog; don't rename once shipped.")]
     public string id;
     public string displayName = "New Skill";
+    [Tooltip("Two letters that stand for this skill on a tile, the way Au stands for gold: \"Committed Strike\" " +
+             "becomes \"Cs\". Blank = the tile shows the skill's whole name instead.")]
+    public string symbol = "";
     [Tooltip("WHICH weapon's skill pool this belongs to — a dropped weapon rolls its kit only from skills of its " +
              "own type (Sword rolls Sword skills). Also the middle segment of the id: skill.sword.<name>. " +
              "None = in no weapon's pool, so it can never be rolled onto a weapon.")]
@@ -486,6 +500,20 @@ public class SkillDef : ScriptableObject
             if (triggers == null || triggers.Count == 0) return CastDefault;
             for (int i = 0; i < triggers.Count; i++)
                 if (triggers[i] != null && triggers[i].trigger == SkillTrigger.OnCast) return triggers[i];
+            return null;
+        }
+    }
+
+    /// <summary>The entry an ITEM runs this skill through, or null when no item can. Separate from
+    /// <see cref="CastEntry"/> because the two are different moments: a press pays mana and cooldown, an item was
+    /// already paid for by being consumed.</summary>
+    public SkillTriggerEntry ItemUseEntry
+    {
+        get
+        {
+            if (triggers == null) return null;
+            for (int i = 0; i < triggers.Count; i++)
+                if (triggers[i] != null && triggers[i].trigger == SkillTrigger.OnItemUsed) return triggers[i];
             return null;
         }
     }
@@ -639,6 +667,10 @@ public class SkillDef : ScriptableObject
     /// makes naming a skill enough, with no second place to fill in.</para></summary>
     public string HotbarLabel =>
         string.IsNullOrWhiteSpace(shortLabel) || shortLabel == DefaultShortLabel ? displayName : shortLabel;
+
+    /// <summary>What a tile reads for this skill: its two-letter <see cref="symbol"/> if one was authored, else the
+    /// skill's whole name. THE one answer, so every tile falls back the same way.</summary>
+    public string IconLabel => string.IsNullOrWhiteSpace(symbol) ? displayName : symbol;
 
     /// <summary>The binding for <paramref name="tickId"/>, or null if this tick is purely visual (unbound).</summary>
     public SkillTickBinding BindingFor(string tickId)

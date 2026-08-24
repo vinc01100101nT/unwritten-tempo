@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.brace
   displayName: Brace
+  symbol: Br
   weaponType: 1
   published: 1
   icon: {fileID: -4335222134116007343, guid: 1fce026f31fb948408df69e99065b9fb, type: 3}

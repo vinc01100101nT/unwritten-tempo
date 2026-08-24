@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.retribution
   displayName: Retribution
+  symbol: Rt
   weaponType: 1
   published: 1
   icon: {fileID: 8135663367076951168, guid: 83317278050e7dc45bff1a2d92dc62eb, type: 3}

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.momentum
   displayName: Momentum
+  symbol: Mo
   weaponType: 1
   published: 1
   icon: {fileID: -2241300882062069919, guid: 5865a4bc2158c594f91fe4497645f398, type: 3}

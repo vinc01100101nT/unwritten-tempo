@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.challenge
   displayName: Challenge
+  symbol: Ch
   weaponType: 1
   published: 1
   icon: {fileID: 0}

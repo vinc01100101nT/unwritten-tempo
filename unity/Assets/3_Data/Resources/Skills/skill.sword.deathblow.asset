@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SkillDef
   id: skill.sword.deathblow
   displayName: Deathblow
+  symbol: Db
   weaponType: 1
   published: 1
   icon: {fileID: 7699978436774145253, guid: 27c853ad0b0966943b0f1b26a0c9e49e, type: 3}

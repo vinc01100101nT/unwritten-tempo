@@ -102,6 +102,21 @@ public class SkillComposerWindow : EditorWindow
             : $"skill.{weapon.ToString().ToLowerInvariant()}.{tail}";
     }
 
+    /// <summary>The typed text reduced to what a symbol may hold: letters only, at most two. Case is left exactly as
+    /// typed — how a symbol is capitalised is the author's call, not the field's.</summary>
+    static string TwoLetters(string typed)
+    {
+        if (string.IsNullOrEmpty(typed)) return "";
+        var kept = new System.Text.StringBuilder(2);
+        foreach (char c in typed)
+        {
+            if (!char.IsLetter(c)) continue;
+            kept.Append(c);
+            if (kept.Length == 2) break;
+        }
+        return kept.ToString();
+    }
+
     // Ultimates first, then pressed actives, then pure passives — slotOrder breaks ties within a rank. Re-applied
     // every repaint (never only on load), so flipping a skill's tier or adding its OnCast entry moves the row at once.
     static int ListRank(SkillDef s) => s.IsUltimate ? 0 : s.IsPassive ? 2 : 1;
@@ -151,15 +166,29 @@ public class SkillComposerWindow : EditorWindow
         foreach (var g in groupNames)
         {
             var list = grouped[g];
-            var hue = GroupHue(g);
+            var color = GroupColor(g);
             if (!groupOpen.TryGetValue(g, out bool open)) open = true;
 
             var headerRect = GUILayoutUtility.GetRect(0f, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
-            EditorGUI.DrawRect(headerRect, Tint(hue, 0.30f));
-            groupOpen[g] = open = EditorGUI.Foldout(headerRect, open, $"{g}  ({list.Count})", true);
+            EditorGUI.DrawRect(headerRect, Fade(color, 0.30f));
+
+            // The pencil opens the palette for THIS group's weapon. Carved out of the header rather than laid beside
+            // it so the foldout keeps the whole remaining width — clicking the name still opens and closes the group.
+            var foldRect = headerRect;
+            if (WeaponOfGroup(g, out var groupWeapon) && headerRect.width > 48f)
+            {
+                var pencilRect = new Rect(headerRect.xMax - 18f, headerRect.y, 18f, headerRect.height);
+                foldRect.xMax = pencilRect.xMin;
+                if (GUI.Button(pencilRect, new GUIContent("✎", $"Pick the colour for {g}"), EditorStyles.label))
+                {
+                    var weapon = groupWeapon;   // capture: the popup's callback fires after this GUI pass
+                    PopupWindow.Show(pencilRect, new WeaponColorPalette(c => SetWeaponColor(weapon, c)));
+                }
+            }
+            groupOpen[g] = open = EditorGUI.Foldout(foldRect, open, $"{g}  ({list.Count})", true);
 
             var countRect = GUILayoutUtility.GetRect(0f, EditorGUIUtility.singleLineHeight - 3f, GUILayout.ExpandWidth(true));
-            EditorGUI.DrawRect(countRect, Tint(hue, 0.30f));
+            EditorGUI.DrawRect(countRect, Fade(color, 0.30f));
             countRect.xMin += 14f;
             EditorGUI.LabelField(countRect, TierCounts(list), EditorStyles.miniLabel);
 
@@ -170,7 +199,7 @@ public class SkillComposerWindow : EditorWindow
                 int rank = ListRank(s);
                 if (prevRank >= 0 && rank != prevRank) DrawRankSeparator();
                 prevRank = rank;
-                DrawRow(s, 12f, Tint(hue, 0.14f));
+                DrawRow(s, 12f, Fade(color, 0.14f));
             }
         }
         EditorGUILayout.EndScrollView();
@@ -229,9 +258,21 @@ public class SkillComposerWindow : EditorWindow
         return rowStyles[i];
     }
 
-    // Each group gets its own colored band so a family is recognizable at a glance. The hue comes from a stable hash
-    // of the group NAME (not its position), so a group keeps its color as skills are added, renamed, or reordered —
-    // and a brand-new group picks one up automatically with nothing to configure.
+    // Each group gets its own colored band so a family is recognizable at a glance. A weapon somebody has painted
+    // shows THAT colour; the rest keep the automatic one below, so a group that nobody has chosen for still reads
+    // apart from its neighbours and nothing has to be configured before the list is useful.
+    static Color GroupColor(string name)
+    {
+        if (WeaponOfGroup(name, out var w))
+        {
+            var chosen = WeaponColors.Load()?.Lookup(w);
+            if (chosen.HasValue) return chosen.Value;
+        }
+        return Color.HSVToRGB(GroupHue(name), 0.65f, 0.9f);
+    }
+
+    // The fallback hue comes from a stable hash of the group NAME (not its position), so a group keeps its color as
+    // skills are added, renamed, or reordered — and a brand-new group picks one up automatically.
     static float GroupHue(string name)
     {
         int h = 17;
@@ -239,12 +280,40 @@ public class SkillComposerWindow : EditorWindow
         return (h & 0x7fffffff) % 360 / 360f;
     }
 
-    // One hue per group; brightness carries the tier so a row's rank reads without moving the eye to any text.
-    static Color Tint(float hue, float alpha)
+    // One colour per group; alpha carries the tier so a row's rank reads without moving the eye to any text.
+    static Color Fade(Color c, float alpha)
     {
-        var c = Color.HSVToRGB(hue, 0.65f, 0.9f);
         c.a = alpha;
         return c;
+    }
+
+    /// <summary>The weapon a group's name stands for. The group IS the middle segment of the id, which the composer
+    /// writes from the weapon enum — so the name maps back to exactly one weapon, and a group that came from
+    /// somewhere else simply has none. Digits are refused because a number would parse as an enum position.</summary>
+    static bool WeaponOfGroup(string name, out WeaponType weapon)
+    {
+        weapon = WeaponType.None;
+        if (string.IsNullOrEmpty(name) || char.IsDigit(name[0])) return false;
+        return System.Enum.TryParse(name, true, out weapon) && weapon != WeaponType.None;
+    }
+
+    const string ColorsPath = "Assets/3_Data/Resources/WeaponColors.asset";
+
+    /// <summary>Point a weapon at a colour and save it. The table is created the first time somebody picks, so a
+    /// project that never uses the palette never carries an empty asset.</summary>
+    static void SetWeaponColor(WeaponType weapon, Color color)
+    {
+        var table = WeaponColors.Load();
+        if (table == null)
+        {
+            table = ScriptableObject.CreateInstance<WeaponColors>();
+            AssetDatabase.CreateAsset(table, ColorsPath);
+            WeaponColors.Adopt(table);
+        }
+        Undo.RecordObject(table, "Set Weapon Color");
+        table.Set(weapon, color);
+        EditorUtility.SetDirty(table);
+        AssetDatabase.SaveAssets();
     }
 
     // The group's make-up in the same order the rows are sorted, so the header reads as a summary of what's below it.
@@ -516,6 +585,12 @@ public class SkillComposerWindow : EditorWindow
                        "Fires only when a hit truly cost you HP. A parried hit, a hit a Shield fully absorbed, and a " +
                        "hit held by a Brace window all fire NOTHING. Poison, bleed and burn ticks don't fire it either. " +
                        "Exact mirror of OnDamageDealt — same rule on both sides, so they can't drift apart.";
+            case SkillTrigger.OnItemUsed:
+                return "AN ITEM THAT NAMES THIS SKILL WAS USED — a potion drunk, a food eaten. Always cast on " +
+                       "YOURSELF; no target is handed over, so author this skill's effects on the caster.\n\n" +
+                       "The pointer lives on the ITEM (its 'runs skill' field in the Consumables table), which is why " +
+                       "there is nothing to pick here. A skill carrying only this trigger never reaches the hotbar and " +
+                       "never announces itself, and it pays no MP or cooldown — being consumed is the cost.";
             default:
                 return "";
         }
@@ -846,6 +921,18 @@ public class SkillComposerWindow : EditorWindow
             using (new EditorGUI.DisabledScope(true))
                 EditorGUILayout.TextField(new GUIContent("id",
                     "Composed from the weapon and the display name — lowercased, spaces to underscores."), sel.id);
+
+            // Two letters, nothing else. The field FILTERS as you type rather than warning afterwards, so a symbol
+            // can never be saved in a shape a tile has no room to draw.
+            string beforeSymbol = sel.symbol ?? "";
+            string cleaned = TwoLetters(EditorGUILayout.TextField(new GUIContent("symbol",
+                "Two letters that stand for this skill on a tile, the way Au stands for gold: 'Committed Strike' " +
+                "becomes 'Cs'. Blank = the tile shows the skill's whole name instead."), beforeSymbol));
+            if (cleaned != beforeSymbol)
+            {
+                sel.symbol = cleaned;
+                EditorUtility.SetDirty(sel);
+            }
 
             sel.published = EditorGUILayout.Toggle(new GUIContent("published",
                 "PUBLISHED = this skill may be rolled onto a dropped weapon of its type. Unpublished skills stay fully " +
