@@ -43,7 +43,7 @@
           ],
           "syncedAt": {
             "docs/story-setting-canon.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a",
-            "docs/active-skill-system-v3/README.md": "aa530e67e89c991ef2d51e68c0f0f7639648f32f",
+            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
             "docs/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
           }
         },
@@ -77,7 +77,7 @@
             "docs/ring-system-trio-ring.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/README.md": "aa530e67e89c991ef2d51e68c0f0f7639648f32f",
+            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
             "docs/active-skill-system-v3/weapon-roster-12-identities.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a",
             "docs/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
           }
@@ -96,8 +96,8 @@
           "syncedAt": {
             "docs/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
             "docs/pre-renewal-ro-port.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
-            "docs/active-skill-system-v3/README.md": "aa530e67e89c991ef2d51e68c0f0f7639648f32f",
-            "docs/active-skill-system-v3/unified-unit-stats.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
+            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
+            "docs/active-skill-system-v3/unified-unit-stats.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         },
         {
@@ -110,8 +110,8 @@
             "docs/active-skill-system-v3/skill-numbers-balance-baseline.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/README.md": "aa530e67e89c991ef2d51e68c0f0f7639648f32f",
-            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
+            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
+            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         }
       ]
@@ -130,7 +130,7 @@
             "docs/pre-renewal-ro-port.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/README.md": "aa530e67e89c991ef2d51e68c0f0f7639648f32f",
+            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
             "docs/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
             "docs/pre-renewal-ro-port.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
           }
@@ -159,9 +159,9 @@
             "docs/active-skill-system-v3/skill-numbers-balance-baseline.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/sword-skill-roster.md": "aa530e67e89c991ef2d51e68c0f0f7639648f32f",
+            "docs/active-skill-system-v3/sword-skill-roster.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
             "docs/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
-            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
+            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         },
         {
@@ -188,7 +188,7 @@
             "docs/active-skill-system-v3/README.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/README.md": "aa530e67e89c991ef2d51e68c0f0f7639648f32f"
+            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         }
       ]
@@ -207,7 +207,7 @@
           ],
           "syncedAt": {
             "docs/biome-mob-families.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb",
-            "docs/active-skill-system-v3/unified-unit-stats.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
+            "docs/active-skill-system-v3/unified-unit-stats.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         }
       ]

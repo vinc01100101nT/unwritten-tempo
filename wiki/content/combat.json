@@ -123,6 +123,31 @@
       "text": "Some states **stack**. Each stack carries its own strength and its own timer, and the total is simply the sum — ten stacks of +3% attack is +30% attack. When a stack expires, only that one drops; the rest keep running. An icon shows its count when it's holding more than one."
     },
     {
+      "type": "paragraph",
+      "text": "**Death clears everything.** Nothing timed survives dying — no buff, no debuff, no banked damage, no charges. That holds for you and for monsters alike, so nothing comes back still carrying what killed it."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Taunt"
+    },
+    {
+      "type": "paragraph",
+      "text": "A taunted enemy is doing three things at once, for as long as it lasts:"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Locked onto whoever taunted it** — a ranged enemy loses its standoff and closes in instead of kiting.",
+        "**It cannot use skills.** Only its ordinary swings.",
+        "**No pause between swings.** Its swing *rate* is untouched — the taunt removes the gaps, it doesn't make it faster."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Its **passives still fire**. A taunt takes away choices, and a passive isn't one. These rules belong to the taunt itself, so they hold for whatever it lands on."
+    },
+    {
       "type": "heading",
       "level": 3,
       "text": "Charges"

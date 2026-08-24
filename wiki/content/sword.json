@@ -13,7 +13,7 @@
   },
   {
    "type": "callout",
-   "text": "**Status:** the pool below is built and in the game unless a skill says otherwise. Numbers are still in tuning. A few designed skills are not composed yet and are marked *not in the game yet*."
+   "text": "**Status:** the Sword's pool is complete — every skill below is built and in the game except **Pressure**, which is finished but not yet switched on for drops. Numbers are still in tuning."
   },
   {
    "type": "paragraph",
@@ -102,15 +102,23 @@
     },
     {
      "name": "Disarm",
-     "cost": "*not in the game yet*",
+     "cost": "12 MP · CD 9s · Range 5",
+     "flavor": "Blunt their swing.",
+     "effect": "A strike for **100% Attack** that leaves them holding a charge: their **next attack lands 40% weaker**, within **6s**. It weakens — it never stuns or denies."
+    },
+    {
+     "name": "Offbeat",
+     "cost": "12 MP · CD 8s · Range 5",
      "flavor": "Break their rhythm.",
-     "effect": "Strikes the target, **weakening its next attack**. It weakens — it never stuns or denies."
+     "effect": "A strike for **100% Attack** that cuts the target's **Attack Speed by 30%** for **5s**. Fewer swings coming at you means every Parry and Brace window covers more of the fight. Nothing is denied — only made rarer."
+    },
+    {
+     "name": "Challenge",
+     "cost": "12 MP · CD 8s · Range 11",
+     "flavor": "Make them fight you.",
+     "effect": "Taunts one enemy for **5s**: it is locked onto you, **cannot use skills**, and takes **no pause between swings**. It deals no damage — the lock is the whole skill. A taunted enemy can't decline to feed **Brace**."
     }
    ]
-  },
-  {
-   "type": "paragraph",
-   "text": "*One more active is still being designed.*"
   },
   {
    "type": "heading",
@@ -153,22 +161,20 @@
      "effect": "Casting **Lunge** arms **5 charges**, each lasting **5s** and granting **+5% Attack Speed** while held (**+25%** at five). Each hit you land spends one to **automatically lunge** at the target again, so it can't disengage while you keep connecting. Auto-lunges don't spend charges of their own. With none left, nothing fires."
     },
     {
-     "name": "Pressure",
-     "cost": "*not in the game yet*",
-     "flavor": "Never let them recover.",
-     "effect": "Consecutive hits on the same target **delay its health regeneration**."
-    },
-    {
      "name": "Last Stand",
-     "cost": "*not in the game yet*",
-     "flavor": "Cornered, not finished.",
-     "effect": "*Being redesigned — its old form depended on a parry chain that no longer exists.*"
+     "flavor": "Cornered, you hold the line.",
+     "effect": "Dropping to low health arms **5 more Brace charges**. The moment you are nearly dead is the moment you can hold back more hits — and every hit you hold makes the **Retribution** release bigger."
     },
     {
      "name": "Composure",
+     "flavor": "A read pays for the next one.",
+     "effect": "After a successful **Parry**, mana returns at **2 per second for 4s** — about **8 MP**, roughly one reaction skill."
+    },
+    {
+     "name": "Pressure",
      "cost": "*not in the game yet*",
-     "flavor": "Stillness breeds clarity.",
-     "effect": "After a successful Parry, the **next skill costs 0 MP**."
+     "flavor": "Never let them recover.",
+     "effect": "Hits on the same target **delay its health regeneration**."
     }
    ]
   },
@@ -181,7 +187,7 @@
    "type": "list",
    "items": [
     "**Deathblow** — swing to build Momentum, keep **Flow** running by staying on one target, then cash it all in one blow. Overclock stacks it faster at the cost of a fragile window.",
-    "**Retribution** — Brace to bank the hits you were going to take, then release. Overclock's doubled incoming damage doubles the bank, turning its drawback into the payoff.",
+    "**Retribution** — Brace to bank the hits you were going to take, then release. **Challenge** stops them walking away from the bank; **Last Stand** hands you more charges exactly when you're about to die. Overclock's doubled incoming damage doubles the bank, turning its drawback into the payoff.",
     "**Blade Dance** — Overclock first: attack speed buys more dance charges, more parries and a faster beat. **Encore** keeps it going on every kill. The doubled damage taken is real — the Parry charges are your only cover."
    ]
   }
