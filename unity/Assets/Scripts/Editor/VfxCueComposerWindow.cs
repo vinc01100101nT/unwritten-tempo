@@ -77,7 +77,7 @@ public class VfxCueComposerWindow : EditorWindow
         // no direction). Active Verbs (attacker-side, e.g. OnAttack) aren't built yet — see VfxCueId.
         Section("Passive Verbs (receiver-only, one-shot)");
         Row(VfxCueId.OnHitByNormalAttack); Row(VfxCueId.OnHitByCriticalAttack); Row(VfxCueId.OnHitBySkill);
-        Row(VfxCueId.OnReceiveHeal); Row(VfxCueId.OnLevelUp); Row(VfxCueId.OnDeath);
+        Row(VfxCueId.OnHPAdded); Row(VfxCueId.OnLevelUp); Row(VfxCueId.OnDeath);
 
         Section("Damage-over-time (Start = aura, Tick = puff)");
         Row(VfxCueId.OnPoisonStart); Row(VfxCueId.OnPoisonTick);

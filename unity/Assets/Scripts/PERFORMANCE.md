@@ -34,7 +34,7 @@ Performance is a **hard constraint** for this game (3D world + many billboard mo
 | Physics overlap/raycast queries | `*NonAlloc` **variants with a reused buffer** | e.g. `Physics.OverlapSphereNonAlloc(..., overlapBuf, ...)`. No garbage per query. |
 | Recycling dead mobs | `MobRespawn` re-enables the same object | Don't `Destroy`/`Instantiate` mobs on a cadence — recycle. |
 | Handing state to an on-arrive / on-complete callback (projectiles, delayed hits) | `Projectile3D.HitPayload` + a **cached** `static readonly Action<HitPayload>` handler | A lambda that captures locals allocates a closure **per shot**. Instead the state rides the carrier in a by-value struct and one shared handler reads it back (see `MonsterAI3D.LandRangedHit`, `Player3DAttacker.LandArrow`). Reuse the pattern for any per-event callback. |
-| The same expensive question asked by several systems in one frame | **Frame memo**: stamp `Time.frameCount`, compute once, share the result | The cursor pick (raycast + mob snap-scan) was computed up to 3×/frame by `GameCursor3D`, `MobHoverPanel`, and click handlers. A two-field memo (`Player3DController.MonsterUnderCursor`) makes N callers cost one scan. Sibling of rule 2 — this is the idiom for *queries*, `CameraRig` is the idiom for *values*. |
+| The same expensive question asked by several systems in one frame | **Frame memo**: stamp `Time.frameCount`, compute once, share the result | The cursor pick (raycast + mob snap-scan) was computed up to 3×/frame by `GameCursor3D`, `UnitStatusPanel`, and click handlers. A two-field memo (`Player3DController.MonsterUnderCursor`) makes N callers cost one scan. Sibling of rule 2 — this is the idiom for *queries*, `CameraRig` is the idiom for *values*. |
 
 ---
 
@@ -52,7 +52,7 @@ Performance is a **hard constraint** for this game (3D world + many billboard mo
 - ❌ `Vector3.Distance` / `.magnitude` when you only need to compare. → `sqrMagnitude` vs `r*r`.
 - ❌ Writing `RenderSettings.*` or other globals every frame. → Only when the value actually changed (see `DayNightLight` early-out).
 - ❌ Per-frame `string` interpolation for the inspector/debug. → `#if UNITY_EDITOR` it, or only on change.
-- ❌ Setting `Text.text = $"..."` every frame when the value rarely changes. → Cache the last value and only rewrite on change (see `TrainingDummy`). Each assignment both allocates a string AND forces a canvas rebuild.
+- ❌ Setting `Text.text = $"..."` every frame when the value rarely changes. → Cache the last value and only rewrite on change (see `MobNameplate`). Each assignment both allocates a string AND forces a canvas rebuild.
 - ❌ One `Canvas` per HUD widget. Canvases are batch/rebuild boundaries — fewer, shared canvases batch better.
 - ❌ A per-frame boundary check (`InRange`, "am I close enough?") that **gates a hot path** with no hysteresis. A target sitting right at the threshold (e.g. a kiting mob at attack-range edge) flips the check true/false every frame, thrashing whatever it gates — re-routing (`StartRoute`/`FindPath`), restarting an animation, or re-firing SFX. → Add **hysteresis**: enter at `range`, stay engaged until `range × k` (see `Player3DAttacker.EngagedWith`); keep the strict check only for the irreversible action (landing the hit).
 

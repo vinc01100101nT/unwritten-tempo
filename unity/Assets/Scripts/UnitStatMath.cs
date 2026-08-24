@@ -72,6 +72,14 @@ public static class UnitStatMath
     public const float MinFractionPerStat  = 0.012f;  // each point closes the min→max gap (~38 → min == max)
     /// <summary>Pre-renewal base crit multiplier: a crit deals 140%.</summary>
     public const float BaseCritMultiplier = 1.4f;
+    /// <summary>LUK's pull on how hard a crit lands: +0.2% crit damage per point, on top of the base.</summary>
+    public const float CritDamagePerLuk = 0.002f;
+    // Natural regeneration is a PERCENT of the pool per second, not a flat amount, so it stays meaningful as the pool
+    // grows with level. VIT owns the health side and INT the mana side — the same primary that already grows each pool.
+    public const float HpRegenPercentPerVit = 0.0002f, MpRegenPercentPerInt = 0.0002f;
+    /// <summary>The flat mana trickle every unit gets before INT is counted. The player's own field defaults to it and
+    /// may be tuned per character; a mob reads it straight, so there is one number and not two.</summary>
+    public const float BaseMpRegenPerSecond = 1.5f;
     /// <summary>Pre-renewal base-stat ceiling — a primary can't be raised past this with points.</summary>
     public const int   MaxStatValue = 99;
 
@@ -216,7 +224,15 @@ public static class UnitStatMath
     public static float CritChance01(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Mathf.Min(0.95f, u.luk * CritPerLuk + ringPct + eb.critPercent / 100f);
 
-    public static float CritMultiplier(float ringPct) => BaseCritMultiplier + ringPct;
+    public static float CritMultiplier(in UnitStatInputs u, float ringPct) =>
+        BaseCritMultiplier + u.luk * CritDamagePerLuk + ringPct;
+
+    // ---- natural regeneration ------------------------------------------------------------------------------------
+    // Both pools regenerate on their own, from the primary that grows them. Reported as a RATE PER SECOND so the
+    // caller owns its own cadence, and derived from the pool the caller already computed rather than re-deriving it.
+    public static float HPRegenPerSecond(in UnitStatInputs u, int maxHP) => maxHP * u.vit * HpRegenPercentPerVit;
+
+    public static float MPRegenPerSecond(in UnitStatInputs u, int maxMP) => maxMP * u.intel * MpRegenPercentPerInt;
 
     /// <summary><paramref name="buffMult"/> is the live attack-speed buff (1 = none); the cap applies AFTER it.</summary>
     public static float AttackSpeedMult(in UnitStatInputs u, in EquipBonuses eb, float ringPct, float buffMult) =>

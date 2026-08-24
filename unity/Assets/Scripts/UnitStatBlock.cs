@@ -118,6 +118,11 @@ public class UnitStatBlock : MonoBehaviour
     public int MaxMP => UnitStatMath.MaxMP(inputs, Bonuses, Lift(StatId.MP, SubStat.MaxMP));
     public int CurrentMP { get; private set; }
 
+    /// <summary>Mana refilled per second with no skill running — the mob's half of the same INT rule the player uses,
+    /// on top of the shared flat base every unit gets.</summary>
+    public float MPRegenPerSecond =>
+        UnitStatMath.BaseMpRegenPerSecond + UnitStatMath.MPRegenPerSecond(inputs, MaxMP);
+
     public void GainMana(int amount)
     {
         if (amount <= 0) return;
@@ -164,6 +169,7 @@ public class UnitStatBlock : MonoBehaviour
         health.magicDefense = UnitStatMath.MagicDefense(inputs, eb, Lift(StatId.Def, SubStat.MagicDefense));
         health.flee         = UnitStatMath.Flee(inputs, Lift(StatId.Evasion, SubStat.Evasion));
         health.luk          = inputs.luk;   // pre-renewal crit shield — the attacker reads this off the target
+        health.hpRegenPerSecond = UnitStatMath.HPRegenPerSecond(inputs, health.maxHealth);
 
         if (ai != null)
         {

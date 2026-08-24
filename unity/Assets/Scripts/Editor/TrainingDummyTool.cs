@@ -65,8 +65,8 @@ public static class TrainingDummyTool
         // dummy is a clean, predictable fixture.
         StripIfPresent<MobRespawn>(go);
         StripIfPresent<DeathDissolve>(go);
-        // (No MobNameplate to strip — MonsterAI3D.Awake skips the dummy, which shows its own "TEST DUMMY"
-        // readout above its head.)
+        // The nameplate STAYS: MonsterAI3D.Awake gives the dummy the same bottom-anchored HP plate every
+        // other mob wears, and it reads out in the target/hover panels the same way.
 
         var sr = go.GetComponent<SpriteRenderer>();
         if (sr != null) sr.color = new Color(0.7f, 0.72f, 0.78f);   // slate-gray "training" tint (also the Revive base color)
@@ -84,8 +84,8 @@ public static class TrainingDummyTool
             "Press Play, walk up to it and LEFT-click to attack (or Q to cast). Damage now ROLLS in a " +
             "min–max range each hit, and some swings show a red MISS — the dummy has FLEE 15, so low DEX " +
             "whiffs a fair bit and your accuracy (HIT = level + DEX) climbs as you add DEX. (Set its " +
-            "Health ▸ Flee to 0 in the inspector for a clean, never-miss DPS read.) Its floating HP label " +
-            "shows the damage stacking up; it refills to full every 5 seconds.\n\n" +
+            "Health ▸ Flee to 0 in the inspector for a clean, never-miss DPS read.) It reads out exactly like " +
+            "any other mob — HP plate under its feet, full panel while you're engaged; it refills to full every 5 seconds.\n\n" +
             "Re-run to respawn it, or Tools ▸ unwritten ▸ Clear Training Dummy to remove it.", "OK");
     }
 

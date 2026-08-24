@@ -102,9 +102,12 @@
       "type": "list",
       "items": [
         "**Damage over time:** Burn, Poison, Bleed",
-        "**Control:** Stun, Freeze, Silence",
-        "**Weakening:** Slow (movement), Blind (accuracy), Vulnerability (takes extra damage)"
+        "**Control:** Stun, Freeze, Silence"
       ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Those six are the whole list. **Weakening isn't an ailment** — being slowed, blinded, or made to take extra damage is the same thing as any buff, just pointed the other way: one number on your sheet moved down for a while. Move speed, accuracy and damage taken are ordinary stats, so a skill lowers them exactly the way another skill raises them."
     },
     {
       "type": "heading",
@@ -126,7 +129,28 @@
     },
     {
       "type": "paragraph",
-      "text": "A few skills hand you a burst of **charges** at once — several stacks sharing one window, spent one at a time. Casting a skill might grant 3 charges, and each qualifying hit spends one until they're gone or the window closes."
+      "text": "A few skills hand you a burst of **charges** at once — several stacks sharing one window, spent one at a time. Casting a skill might grant 5 charges, and each qualifying hit spends one until they're gone or the window closes."
+    },
+    {
+      "type": "paragraph",
+      "text": "**A charge is spent on use, and never refunded.** Whatever happens afterwards — the swing was cancelled, the dash hit a wall, the target died mid-cast — the charge is gone. That's deliberate: if cancelling gave charges back, cancel-spam would be free."
+    },
+    {
+      "type": "paragraph",
+      "text": "The four kinds of charge you'll meet:"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Parry charges** — each one erases a whole incoming hit. No damage, no defense math, then the charge is gone.",
+        "**Brace charges** — each one holds a hit back instead of erasing it. The damage is banked, and the whole bill lands at once when the window ends.",
+        "**Attack charges** — each one makes a single outgoing attack land harder, and is spent **whether it hits or misses** (the charge paid for making the attack, not for landing it). The bonus applies *before* the target's armor, so it's worth more against tanky foes. There's a mirror version that makes an attack land softer.",
+        "**Skill charges** — a count a skill spends as it runs, like each strike of a long combo."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Some charge piles are sized by **how fast you swing** rather than by a fixed number, so a faster character genuinely gets more of them."
     },
     {
       "type": "heading",

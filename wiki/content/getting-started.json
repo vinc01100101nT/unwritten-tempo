@@ -12,7 +12,7 @@
     },
     {
       "type": "paragraph",
-      "text": "You wake with no color — one of the many who lost their identity when the world's truth was un-written. Your goal from the first minute is the goal of the whole game: **hunt the scattered pages** (the monsters), recover the truth, and win your color back."
+      "text": "You wake with no color — one of the many nobody ever wrote down. Your goal from the first minute is the goal of the whole game: **hunt the blank pages** (the monsters), fill them in, and write your color into the world."
     },
     {
       "type": "heading",
@@ -23,11 +23,11 @@
       "type": "list",
       "ordered": true,
       "items": [
-        "**Fight monsters** — each one is a corrupted page. Defeating it recovers a fragment.",
+        "**Fight monsters** — each one is a blank page. Defeating it writes a line onto it.",
         "**Level up** — every level lets you draft a point of growth on your **Ring** (see *Stats & the Ring*).",
         "**Equip a weapon** — your weapon decides which **skills** you can use. Swap weapons to swap your kit.",
         "**Grow into a role** — where you invest your ring points quietly commits you to a role (a bruiser, a mage, a healer…).",
-        "**Get your color back** — as you progress, identity leaks back into your husk."
+        "**Get your color** — as you progress, identity leaks into your husk for the first time."
       ]
     },
     {

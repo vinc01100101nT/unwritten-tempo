@@ -34,7 +34,7 @@ MonoBehaviour:
     consumeAllStacks: 0
     consumeStacks: 0
   manaCost: 0
-  cooldown: 5
+  cooldown: 0
   castTime: 0
   aim: 2
   castRange: 11
@@ -56,7 +56,7 @@ MonoBehaviour:
   releaseStanceReplayPerRepeat: 0
   bindings:
   - tickId: follow_hit
-    targetMode: 2
+    targetMode: 1
     groundDelivery: 1
     affects: 2
     playerFaction: 0
@@ -181,7 +181,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      side: 2
+      side: 1
       subStat: 4
       affinity: []
       chanceAffinity: []

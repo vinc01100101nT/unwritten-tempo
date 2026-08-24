@@ -42,6 +42,32 @@ public static class CombatAuthority
         return dealt;
     }
 
+    /// <summary>Green digits over a unit that just gained HP.</summary>
+    static readonly Color HPAddedColor = new Color(0.45f, 1f, 0.45f);
+
+    /// <summary>Fired whenever a unit's HP goes UP, by ANY route — a heal skill, a potion, regen, a life-steal
+    /// trickle, anything written later. Deliberately says only WHO and HOW MUCH: a listener that had to know which
+    /// source it came from would need a new case for every future source, which is the exact thing this replaces.</summary>
+    public static event System.Action<ICombatUnit, int> OnHPAdded;
+
+    /// <summary>Announce that <paramref name="unit"/> just gained <paramref name="amount"/> HP. The ONE door every
+    /// gain passes through, so the green digits and the cue are written once and cannot be forgotten by whoever adds
+    /// the next source. The caller has already applied the HP — this only announces it.
+    ///
+    /// <para>The digits show the FULL intended amount even when the unit was already at full: the gain still landed,
+    /// and hiding it would make a heal at full health look like it failed.</para></summary>
+    public static void NoteHPAdded(ICombatUnit unit, int amount)
+    {
+        if (unit == null || amount <= 0) return;
+        var body = unit.Body;
+        if (body != null)
+        {
+            DamagePopup.SpawnText(UnitAnchor.Overhead(body), "+" + amount, HPAddedColor);
+            VfxCue.Fire(VfxCueId.OnHPAdded, body);
+        }
+        OnHPAdded?.Invoke(unit, amount);
+    }
+
     /// <summary>Apply RAW over-time / reflected damage (poison/burn/bleed ticks, thorns reflect) — the second combat
     /// channel through this seam. Bypasses DEF/element/crit; same server-authoritative interception point as
     /// <see cref="Apply"/> so a client can't fabricate DoT ticks once networking lands. Returns damage dealt.</summary>

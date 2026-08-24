@@ -38,6 +38,24 @@ public interface ICombatUnit : IDamageable
     /// <summary>Hit points at full health.</summary>
     int MaxHP { get; }
 
+    /// <summary>Health this unit restores on its own each second, from its VIT — before any timed regen change. The
+    /// one per-unit ticker reads it here rather than asking what KIND of unit it is, so a mob heals out of combat by
+    /// exactly the rule a player does.</summary>
+    float HPRegenPerSecond { get; }
+
+    /// <summary>Current mana.</summary>
+    int CurrentMP { get; }
+
+    /// <summary>Mana at a full pool. 0 on a unit that has no pool, which is what stops its regen.</summary>
+    int MaxMP { get; }
+
+    /// <summary>Mana this unit restores on its own each second, from its INT — before any timed regen change. The
+    /// mana pool's mirror of <see cref="HPRegenPerSecond"/>, and read by the same shared ticker.</summary>
+    float MPRegenPerSecond { get; }
+
+    /// <summary>Restore mana, clamped to the pool.</summary>
+    void GainMana(int amount);
+
     /// <summary>This unit's melee reach at FULL SIZE — its weapon's range, or its unarmed reach. Deliberately NOT
     /// scaled: contact distance depends on how big BOTH bodies are, so the caller blends it against the other unit
     /// (<see cref="UnitScale.MeleeBlend"/>). Storing a pre-scaled reach on one side is what let the player and a
@@ -113,4 +131,21 @@ public interface ICombatUnit : IDamageable
     /// <summary>Force this unit to fixate on <paramref name="source"/> for <paramref name="seconds"/> — it engages
     /// that target and cannot drop it, leash away, or flee while the lock holds.</summary>
     void ForceAggro(ICombatUnit source, float seconds);
+
+    /// <summary>Everything that is true of ANY unit starting a new life, in one body every revive calls: nothing timed
+    /// survives the death that ended the last one. Every buff, debuff, barrier and charge is dropped, the run of hits
+    /// is broken, and the stagger and the footing it had earned are cleared.
+    ///
+    /// <para><b>Why it lives on the interface.</b> The player and a mob revive through two different functions — one
+    /// refills two pools and raises a screen, the other repaints a corpse and hands the body back to the simulation —
+    /// and the shared half was written into only ONE of them, so a mob kept its buffs across death for as long as
+    /// nobody noticed. Two revive paths is fine; two copies of the shared rule is the bug. There is one copy now, and a
+    /// third kind of unit inherits it by existing.</para></summary>
+    void BeginNewLife()
+    {
+        var st = States;
+        if (st != null) { st.Clear(); st.NoteNewLife(); }
+        var host = StatusHost;
+        if (host != null) host.ClearFlinch();
+    }
 }

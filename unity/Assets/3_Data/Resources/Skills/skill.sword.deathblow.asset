@@ -73,7 +73,7 @@ MonoBehaviour:
       resolveAsBasicAttack: 0
       damageType: 0
       damageMult:
-        value: 7
+        value: 6
         useStacks: 1
         op: 0
         read: 0
@@ -184,7 +184,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      side: 0
+      side: 1
       subStat: 0
       affinity:
       - stat: 0

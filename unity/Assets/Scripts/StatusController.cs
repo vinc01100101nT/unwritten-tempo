@@ -38,6 +38,9 @@ public class StatusController : MonoBehaviour
     const int N = 8;                 // = number of Ailment values
     const float DotInterval = 0.8f;  // seconds between damage-over-time ticks
 
+    float nextRegenTick, nextManaTick;   // each pool's own deadline on this unit
+    float hpAccum, manaAccum;            // the sub-1-point remainder each carries between ticks
+
     static readonly Color PoisonColor = new Color(0.55f, 0.85f, 0.35f);
     static readonly Color BleedColor  = new Color(1f, 0.3f, 0.3f);
     static readonly Color BurnColor   = new Color(1f, 0.55f, 0.25f);
@@ -127,12 +130,22 @@ public class StatusController : MonoBehaviour
     /// (hard-CC only) instead, so a cast never interrupts itself.</summary>
     public bool ActionLocked => CannotAct || Time.time < recoverUntil;
 
-    /// <summary>The gate for STARTING a skill or combo: <see cref="ActionLocked"/> PLUS being mid-jump — you can't
-    /// cast in the air. Kept SEPARATE from <see cref="ActionLocked"/> on purpose: the movement Update roots on
-    /// ActionLocked BEFORE it runs the jump arc (<see cref="Player3DController"/>), so folding "airborne" into
-    /// ActionLocked would freeze the jump. Only the cast/combo START paths read this; movement, MoveMult and the
-    /// mid-cast wait keep reading ActionLocked.</summary>
-    public bool CannotStartSkill => ActionLocked || (player != null && player.IsAirborne);
+    /// <summary>The gate for STARTING a skill or combo: <see cref="ActionLocked"/>, PLUS being mid-jump (you can't cast
+    /// in the air), PLUS being <see cref="Taunted"/>. Kept SEPARATE from <see cref="ActionLocked"/> on purpose: the
+    /// movement Update roots on ActionLocked BEFORE it runs the jump arc (<see cref="Player3DController"/>), so folding
+    /// "airborne" into ActionLocked would freeze the jump. Only the cast/combo START paths read this; movement,
+    /// MoveMult and the mid-cast wait keep reading ActionLocked.</summary>
+    public bool CannotStartSkill => ActionLocked || Taunted || (player != null && player.IsAirborne);
+
+    /// <summary>Is this unit taunted? A taunted unit can only swing — no skill it chooses to use, whoever it is and
+    /// whatever it has. The rule belongs to the taunt, not to the kit it is refusing, so it is checked HERE at the one
+    /// door every skill is STARTED through rather than per-caster. Movement and basic attacks are untouched: a taunt
+    /// takes the options away, never the fight.
+    ///
+    /// <para>PASSIVES still fire. What a taunt removes is the target's choice, and a passive is not one — it answers a
+    /// moment on its own. Turning them off here would silently stop a Momentum pile filling while a mob holds you,
+    /// which is a different rule nobody asked for.</para></summary>
+    public bool Taunted { get { var st = states; return st != null && st.Taunted; } }
 
     // ---- flinch: a hit that costs HP stops you WALKING, never swinging ---------
     // The share of max HP a unit must eat, while it can still be flinched, to earn a moment of footing.
@@ -362,6 +375,7 @@ public class StatusController : MonoBehaviour
         TickDot(Ailment.Bleed);
         TickDot(Ailment.Burn);
         TickRegen();
+        TickMana();
         TickBrace();
 
         // Tear down a DoT's aura once its state has lapsed (aura[i] != null gates it, so states.Has is only hit for
@@ -388,13 +402,40 @@ public class StatusController : MonoBehaviour
     // practice even though the store held it for anyone.
     void TickRegen()
     {
-        var s = states.Get(StateId.HPRegen);
-        if (s == null || Time.time < s.nextTick) return;
-        s.nextTick = Time.time + UnitStates.RegenInterval;
+        // The timer runs for EVERY unit, always: natural regen from VIT has no state entry to hang a deadline on, and
+        // hanging it on the timed entry meant regen only existed while a skill was running.
+        if (Time.time < nextRegenTick) return;
+        nextRegenTick = Time.time + UnitStates.RegenInterval;
         var u = Unit;
-        // The pile holds HP per SECOND (the same units the character's mana trickle uses), so one tick pays for the
-        // interval it covers. Rounded up so a rate slower than one HP per tick still heals rather than vanishing.
-        if (u != null) u.Heal(Mathf.Max(1, Mathf.CeilToInt(s.magnitude * UnitStates.RegenInterval)));
+        if (u == null) return;
+        // Both halves are HP per SECOND: what the unit's own VIT restores, plus whatever a timed regen change adds
+        // (or, negative, takes away).
+        int pay = Owed(ref hpAccum, u.HPRegenPerSecond + states.SubStatBonus(SubStat.HPRegen));
+        if (pay > 0) u.Heal(pay);
+    }
+
+    // The mana pool's mirror of the health tick, on the same unit and the same rule — INT's natural rate plus any
+    // timed change. Here rather than on the player, so a mob's pool is refilled by the one implementation too.
+    void TickMana()
+    {
+        if (Time.time < nextManaTick) return;
+        nextManaTick = Time.time + UnitStates.RegenInterval;
+        var u = Unit;
+        if (u == null || u.CurrentMP >= u.MaxMP) { manaAccum = 0f; return; }
+        int pay = Owed(ref manaAccum, u.MPRegenPerSecond + states.SubStatBonus(SubStat.MPRegen));
+        if (pay > 0) u.GainMana(pay);
+    }
+
+    /// <summary>What this interval owes a pool, carrying the sub-1-point remainder to the next tick. A rate at or
+    /// below zero pays nothing and forgets the remainder — a regen debuff must never refill what it weakens, and
+    /// rounding UP instead would pay a level-1 mob a whole point for a rate of 0.004 a second.</summary>
+    static int Owed(ref float accum, float ratePerSecond)
+    {
+        if (ratePerSecond <= 0f) { accum = 0f; return 0; }
+        accum += ratePerSecond * UnitStates.RegenInterval;
+        int pay = Mathf.FloorToInt(accum);
+        accum -= pay;
+        return pay;
     }
 
     // Brace: damage held back during the window comes due the moment it ENDS — as true damage, because the mitigation

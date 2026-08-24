@@ -37,7 +37,7 @@ MonoBehaviour:
     consumeAllStacks: 0
     consumeStacks: 0
   manaCost: 0
-  cooldown: 5
+  cooldown: 0
   castTime: 0
   aim: 2
   castRange: 11

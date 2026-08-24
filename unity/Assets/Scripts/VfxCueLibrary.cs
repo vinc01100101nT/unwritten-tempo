@@ -20,11 +20,13 @@ public enum VfxCueId
 
     // --- Passive Verbs (receiver-side, one-shot) ---
     // Every cue below fires on the UNIT THAT RECEIVES the event, with no attacker and no direction (Origin ==
-    // Target == receiver), exactly like OnReceiveHeal. That receiver-only rule is the whole point of the "passive"
+    // Target == receiver), exactly like OnHPAdded. That receiver-only rule is the whole point of the "passive"
     // grouping — it keeps the mental model simple: these are things that happen TO a unit.
     OnHitByNormalAttack,   // took a basic (non-crit) auto-attack hit
     OnHitByCriticalAttack, // took a critical auto-attack hit
-    OnReceiveHeal,         // HP restored (potion, heal skill, regen)
+    // Named for the MOMENT, not for what caused it: any route that raises HP fires this one cue, so a source added
+    // later is covered without touching this list. Its int is unchanged, so authored libraries keep their binding.
+    OnHPAdded,
     OnLevelUp,             // gained a level
     OnDeath,               // died
 

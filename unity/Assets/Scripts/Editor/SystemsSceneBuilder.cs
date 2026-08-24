@@ -95,7 +95,7 @@ public static class SystemsSceneBuilder
         gameSystems.AddComponent<GameCalendar>();       // 4-season / 48-day calendar derived from TimeOfDay.DayIndex (+ OnNewDay/OnSeasonChange)
         gameSystems.AddComponent<WeatherChannels>();    // the 4 independent weather channels (rain/cloud/snow/puddle) every renderer follows
         gameSystems.AddComponent<WeatherDirector>();    // deterministic per-day weather: season-gated weighted pick → plays a composed WeatherSequence on the channels
-        gameSystems.AddComponent<MobHoverPanel>();      // top-right hover tooltip: HP bar + name + element
+        gameSystems.AddComponent<UnitStatusPanel>();    // engaged target (top-center) + hovered mob (top-right): name, element, HP, MP, states
 
         var root = new GameObject("GameRoot").AddComponent<GameRoot>();   // loads the first map under Systems
         root.firstMap = FirstMap;

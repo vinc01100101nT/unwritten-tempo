@@ -36,7 +36,7 @@ MonoBehaviour:
     consumeAllStacks: 0
     consumeStacks: 0
   manaCost: 12
-  cooldown: 10
+  cooldown: 9
   castTime: 0
   aim: 0
   castRange: 0
@@ -67,7 +67,7 @@ MonoBehaviour:
     projectileSpread: 0
     stayDuration: 0
     effects:
-    - kind: 19
+    - kind: 5
       useStacks: 0
       resolveAsBasicAttack: 0
       damageType: 0
@@ -86,7 +86,7 @@ MonoBehaviour:
         scaler: 1
       ailment: 2
       seconds:
-        value: 9
+        value: 6
         useStacks: 0
         op: 0
         read: 0
@@ -183,7 +183,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      side: 1
+      side: 0
       subStat: 19
       affinity: []
       chanceAffinity: []

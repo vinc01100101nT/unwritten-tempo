@@ -28,7 +28,7 @@ public class Character : MonoBehaviour, ICombatUnit
     public int baseMagicAttack = 3;
     public int baseMagicDefense = 1;
     [Tooltip("Mana regenerated per second.")]
-    public float mpRegenPerSecond = 1.5f;
+    public float mpRegenPerSecond = UnitStatMath.BaseMpRegenPerSecond;
 
     [Header("Element & cards (RO)")]
     [Tooltip("The player's armor PROPERTY. Incoming attacks are scaled by their element vs this (Elements chart).")]
@@ -72,7 +72,6 @@ public class Character : MonoBehaviour, ICombatUnit
     public int XP { get; private set; }
     public int CurrentHP { get; private set; }
     public int CurrentMP { get; private set; }
-    float mpAccum;   // fractional mana regen carried between frames
 
     // The six primary stats (indexed by PrimaryStat), each starts at 1. Runtime-only (no save yet).
     readonly int[] primary = { 1, 1, 1, 1, 1, 1 };
@@ -227,8 +226,7 @@ public class Character : MonoBehaviour, ICombatUnit
     /// (Not to be confused with <see cref="Passives"/>, which is the ring's stat walk.)</summary>
     public PassiveLoadout PassiveSkills { get; } = new PassiveLoadout();
 
-    static readonly Color HealColor = new Color(0.45f, 1f, 0.45f);
-    Transform avatar;   // the in-scene player, located lazily for heal popups
+    Transform avatar;   // the in-scene player, located lazily
 
     public event Action OnStatsChanged;    // level / equipment changed
     public event Action OnHealthChanged;   // current or max HP changed
@@ -298,10 +296,12 @@ public class Character : MonoBehaviour, ICombatUnit
     // sub-stat buff or debuff is adding right now. Folding the two together here — rather than teaching every formula
     // about states — is what lets a new sub-stat work everywhere by touching one line.
     public int MaxHP   => UnitStatMath.MaxHP(Inputs, equipBonuses, Lift(StatId.HP, SubStat.MaxHP));
+    public float HPRegenPerSecond => UnitStatMath.HPRegenPerSecond(Inputs, MaxHP);
     public int Attack  => UnitStatMath.Attack(Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
     public int Defense => UnitStatMath.Defense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.Defense));
 
     public int MaxMP        => UnitStatMath.MaxMP(Inputs, equipBonuses, Lift(StatId.MP, SubStat.MaxMP));
+    public float MPRegenPerSecond => mpRegenPerSecond + UnitStatMath.MPRegenPerSecond(Inputs, MaxMP);
     public int MagicAttack  => UnitStatMath.MagicAttack(Inputs, equipBonuses, Lift(StatId.MAtk, SubStat.MagicAttack));
     // The ring has no separate M.DEF node — the Def node is dual, so MagicDefense reads the Def passive %.
     public int MagicDefense => UnitStatMath.MagicDefense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.MagicDefense));
@@ -384,6 +384,8 @@ public class Character : MonoBehaviour, ICombatUnit
     }
     public void ForceAggro(ICombatUnit source, float seconds)
     {
+        if (seconds <= 0f) return;
+        States.BeginTaunt(seconds);   // the WINDOW — the same one the mob side stamps, and the one the skill door reads
         // The player engages a MOB, so the taunter has to be one. A mob-vs-mob aggro lock needs the mob brain to hold
         // an arbitrary chase target (it tracks the player today) — that is the mob-vs-mob combat step, not this one.
         var r = Rig();
@@ -394,7 +396,7 @@ public class Character : MonoBehaviour, ICombatUnit
     // passive % layer directly, so a stat with 0 ranks is simply neutral.
     public const float BaseCritMultiplier = UnitStatMath.BaseCritMultiplier;          // pre-renewal: a crit deals 140%…
     // The single Critical ring node drives BOTH crit rate and crit damage — both read PassivePercent(StatId.Critical).
-    public float CritMultiplier  => UnitStatMath.CritMultiplier(Lift(StatId.Critical, SubStat.CritDamage));   // …+ the Critical node's % on top
+    public float CritMultiplier  => UnitStatMath.CritMultiplier(Inputs, Lift(StatId.Critical, SubStat.CritDamage));   // …+ LUK + the Critical node's % on top
     // These combine the primary-stat contribution (LUK/AGI/DEX) with the passive % layer.
     public float CritChance01    => UnitStatMath.CritChance01(Inputs, equipBonuses, Lift(StatId.Critical, SubStat.CritChance));
     // RO accuracy/evasion. HIT (DEX + level) is rolled against a target's FLEE to decide a physical hit;
@@ -1013,26 +1015,9 @@ public class Character : MonoBehaviour, ICombatUnit
         if (CurrentHP != before) OnHealthChanged?.Invoke();
     }
 
-    // Mana regenerates over time toward MaxMP (whole points; the fraction is carried in mpAccum).
-    void Update()
-    {
-        if (IsDead) return;
-
-        // (Heal-over-time is NOT ticked here any more: StatusController.TickRegen owns it for every unit, so a regen
-        // cast on a mob heals it too. Duplicating it here would double-heal the player.)
-
-        // The trickle is the character's own rate plus any live sub-stat window, floored at 0 — a debuff can stop
-        // regen dead but never drain mana, which would be a damage source wearing a regen's name.
-        float mpRate = Mathf.Max(0f, mpRegenPerSecond + SubBonus(SubStat.MPRegen));
-        if (mpRate <= 0f) return;
-        if (CurrentMP >= MaxMP) { mpAccum = 0f; return; }
-        mpAccum += mpRate * Time.deltaTime;
-        if (mpAccum < 1f) return;
-        int add = Mathf.FloorToInt(mpAccum);
-        mpAccum -= add;
-        CurrentMP = Mathf.Min(MaxMP, CurrentMP + add);
-        OnManaChanged?.Invoke();
-    }
+    // Neither pool is refilled here any more. StatusController owns both tickers for EVERY unit, so a mob's mana
+    // refills by the same rule the player's does — a second copy here would double-pay the player and still leave
+    // mobs with a pool nothing ever filled.
 
     /// <summary>Bring the player back to full HP after a death. The <see cref="DeathScreen"/>
     /// calls this on respawn (and teleports the avatar to a SpawnPoint separately).</summary>
@@ -1040,9 +1025,7 @@ public class Character : MonoBehaviour, ICombatUnit
     {
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
-        States.Clear();                           // buffs/debuffs/barriers don't carry across death — the tray reads States, so this clears it too
-        States.NoteNewLife();                     // …and no mob keeps a run of hits going across the death that interrupted it (Health.Revive does the same)
-        if (StatusHost != null) StatusHost.ClearFlinch();   // …nor the stagger, nor the footing the last life had earned
+        ((ICombatUnit)this).BeginNewLife();   // the shared half — nothing timed carries across a death, for any unit
         OnHealthChanged?.Invoke();
         OnManaChanged?.Invoke();
         OnRevived?.Invoke();
@@ -1054,13 +1037,7 @@ public class Character : MonoBehaviour, ICombatUnit
         int before = CurrentHP;
         CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
         if (CurrentHP != before) OnHealthChanged?.Invoke();
-        // Show the green digits for the FULL intended amount, even at full HP (healed==0) — the heal still "landed".
-        var a = Avatar();
-        if (a != null)
-        {
-            DamagePopup.SpawnText(UnitAnchor.Overhead(a), "+" + amount, HealColor);  // green = heal
-            VfxCue.Fire(VfxCueId.OnReceiveHeal, a);
-        }
+        CombatAuthority.NoteHPAdded(this, amount);
     }
 
     // The in-scene player avatar (re-found after scene changes destroy the old one). Without it,

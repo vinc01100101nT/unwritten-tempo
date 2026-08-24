@@ -17,7 +17,9 @@ public enum StateId
     Poison, Bleed, Burn,          // DoT: magnitude = damage per tick
     Stun, Freeze,                 // hard-CC: CannotAct
     Silence,                      // blocks casting
-    Taunt, Knockback, Pull,       // control (mob-side gameplay stays in MonsterAI3D; here for the timer + icon)
+    // Taunt owns the WINDOW for every taunted unit, mob or player — the brains hold only who the taunter is. Knockback
+    // and Pull are still declared-but-unwritten (they are instant shoves with no window to hold).
+    Taunt, Knockback, Pull,
     // ---- Sub-stat piles — ONE per sub-stat, buff and debuff alike ----------------------------------------------
     // Each holds a SIGNED bonus, so a debuff is the same pile carrying a negative number — there is no mirror pile to
     // build or keep in step. One pile PER STAT (rather than one shared pile with the stat written inside it) because
@@ -165,7 +167,7 @@ public class UnitStates : MonoBehaviour
     // The live signed bonus on every sub-stat, refilled by Recompute. One slot per SubStat, allocated once — the
     // alternative (walking the piles on each read) is paid per frame by movement and per hit by damage and leech.
     readonly float[] subStatBonus = new float[SubStats.All.Length];
-    bool cannotAct, silenced;
+    bool cannotAct, silenced, taunted;
     float nextExpiry = float.MaxValue;   // earliest endTime across active states — the ONLY time EnsureFresh must prune
 
     /// <summary>Hard ceiling on stacks per state. Design may call a state "uncapped" (Momentum) — its FIFO equilibrium
@@ -428,12 +430,7 @@ public class UnitStates : MonoBehaviour
     public void ApplySubStat(SubStat stat, float bonus, float seconds)
     {
         if (seconds <= 0f || Mathf.Approximately(bonus, 0f)) return;
-        var s = Apply(SubStats.PileFor(stat), seconds, bonus);
-        // HP regen is the one sub-stat that is PAID OUT on a cadence rather than merely read, so its pile needs a
-        // first tick scheduled. Seeded only when the entry is genuinely new (Apply zeroes nextTick then): re-seeding
-        // on every apply pushed the next heal a full interval away each time, so refreshing faster than the interval
-        // starved the tick entirely.
-        if (stat == SubStat.HPRegen && s != null && s.nextTick <= 0f) s.nextTick = Time.time + RegenInterval;
+        Apply(SubStats.PileFor(stat), seconds, bonus);
     }
 
     /// <summary>The live SIGNED bonus on one sub-stat, summed over every pile holding it — what a buff and a debuff on
@@ -510,6 +507,24 @@ public class UnitStates : MonoBehaviour
     /// <summary>Is every disable being turned away right now? Read by the flinch, the ailment door, the shove door and
     /// the cast wind-up, so one window covers all of them and none of them keeps its own copy of the answer.</summary>
     public bool DisablesBlocked => Has(StateId.DisableImmune);
+
+    /// <summary>Lock this unit onto whoever taunted it for <paramref name="seconds"/> — see <see cref="StateId.Taunt"/>.
+    /// A plain window like <see cref="BeginDisableImmunity"/>: nothing spends it, it simply runs out.
+    ///
+    /// <para>The window lives HERE, not in either brain, because both sides of the taunt need the same answer: the mob
+    /// brain and the player rig each used to keep a private end-time, and the "no skills while taunted" rule has to be
+    /// readable by a unit that has no brain in front of it at all. Who the taunter IS stays with the brain — that is
+    /// the role-specific half; how long the lock lasts is the shared half.</para></summary>
+    public void BeginTaunt(float seconds)
+    {
+        if (seconds <= 0f) return;
+        Apply(StateId.Taunt, seconds);
+    }
+
+    /// <summary>Is this unit taunted right now? THE single answer — the mob brain's chase lock, the player rig's
+    /// retarget lock and the skill door all read this one window rather than each timing their own. Cached like the
+    /// other hot flags, because the brain asks every frame.</summary>
+    public bool Taunted { get { EnsureFresh(); return taunted; } }
 
     // ---- consecutive hits on one body ---------------------------------------------------------------------------
     // Counted for EVERY unit, always, with nothing authored anywhere: a run of hits is a fact about the fight, not
@@ -877,7 +892,7 @@ public class UnitStates : MonoBehaviour
         // category, so a second one is worth the same as the first regardless of what's already running. Compounding
         // would make each buff's value depend on which others happen to be up, and make order matter.
         shieldPool = 0; parryCharges = 0;
-        cannotAct = false; silenced = false;
+        cannotAct = false; silenced = false; taunted = false;
         nextExpiry = float.MaxValue;
         System.Array.Clear(subStatBonus, 0, subStatBonus.Length);
 
@@ -897,6 +912,9 @@ public class UnitStates : MonoBehaviour
                 case StateId.Stun:
                 case StateId.Freeze:          cannotAct = true; break;
                 case StateId.Silence:         silenced = true; break;
+                // Cached like the flags above because the mob brain reads it every frame, twice — once to pin the
+                // chase and once to take the ranged standoff away.
+                case StateId.Taunt:           taunted = true; break;
                 // COMBINE, never overwrite — same rule as the sub-stat table above, for the piles that are not
                 // sub-stats. Pools sum.
                 case StateId.Shield:          shieldPool += s.intAmount; break;

@@ -15,7 +15,7 @@ using TMPro;
 /// <see cref="Image"/>s + one <see cref="Text"/>) parented under that shared canvas; per frame it only
 /// FOLLOWS the mob and faces the camera (cheap transform writes, no allocation — same as
 /// <see cref="DamagePopup"/>), and it only rewrites the fill/colour when HP actually changes (the
-/// <see cref="TrainingDummy"/>/<see cref="BossBanner"/> "update-on-change" discipline). The name is set
+/// <see cref="BossBanner"/> "update-on-change" discipline). The name is set
 /// once. A shared ZTest-Always material keeps the bottom-anchored plate from being swallowed by the
 /// terrain it sits on.
 /// </summary>

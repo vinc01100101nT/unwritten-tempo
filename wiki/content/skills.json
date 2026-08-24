@@ -12,7 +12,7 @@
     },
     {
       "type": "paragraph",
-      "text": "In Unwritten, **your equipped weapon carries its own kit of active skills.** Equip a sword and your hotbar fills with that sword's abilities; swap to a bow and the bar becomes the bow's kit. There are no classes in Unwritten — your weapon is what defines your abilities, and changing weapons is how you change your loadout."
+      "text": "In Unwritten, **your equipped weapon carries its own kit of active skills.** Equip a sword and your hotbar fills with that sword's abilities; swap to a bow and the bar becomes the bow's kit. There are no classes in Unwritten — your weapon is what defines your abilities, and changing weapons is how you change your loadout. A weapon's kit isn't arbitrary: it is what its **Unwritten** — the person the weapon is the last trace of — could do. See *The World of Unwritten*."
     },
     {
       "type": "heading",
@@ -29,7 +29,7 @@
     },
     {
       "type": "paragraph",
-      "text": "So two of the same weapon can play very differently, and chasing the weapon (and the ultimate) *you* want is part of the hunt. Every skill in a weapon's pool reinforces that weapon's identity — so whatever you roll, it still plays like that weapon."
+      "text": "So two of the same weapon can play very differently, and chasing the weapon (and the ultimate) *you* want is part of the hunt. That isn't randomness for its own sake: a dropped weapon remembers its wielder in fragments, and the skills it carries are **which memories surfaced this time**. Every skill in a weapon's pool reinforces that weapon's identity — so whatever you roll, it still plays like that weapon."
     },
     {
       "type": "heading",
@@ -72,11 +72,13 @@
     {
       "type": "list",
       "items": [
-        "**After you finish casting a particular skill** — uninterrupted. This is how one skill rides another: Lock Blades off Lunge.",
-        "**When a basic attack of yours lands.**",
-        "**When you kill something.**",
+        "**After you finish casting a particular skill** — uninterrupted. This is how one skill rides another: Lock Blades off Lunge, Unwavering off Guard Stance.",
+        "**When a basic attack of yours lands.** Momentum and Flow ride this one.",
+        "**When you begin a basic attack.**",
+        "**When a hit of yours deals damage.**",
+        "**When you kill something.** Encore rides this one.",
         "**When you drop to low health.**",
-        "**When you're hit.**",
+        "**When you take damage.**",
         "**When you successfully parry.** Opening rides this one."
       ]
     },
@@ -96,24 +98,26 @@
     {
       "type": "list",
       "items": [
-        "**Damage** — direct harm (physical, magic, or forced-crit).",
-        "**Heal / Regen / Shield** — restore health now, heal over time, or raise an absorbing barrier.",
-        "**Guard** — cut incoming damage for a while.",
-        "**Buff** — raise your damage, attack speed, or cast speed.",
-        "**Status ailments** — Burn, Poison, and Bleed (damage over time), plus Slow, Stun, Freeze, Silence, and Blind.",
-        "**Haste** — speed yourself up (or slow enemies down).",
-        "**Vulnerability** — mark a monster to take extra damage.",
+        "**Damage** — direct harm. A multi-hit strike splits one total across its hits.",
+        "**Heal** — restore health now.",
+        "**Shield** — raise an absorbing barrier that soaks a set amount of damage, then lapses.",
+        "**Raise a stat / lower a stat** — the workhorse. One effect moves one number on the sheet for a while: your damage, attack speed, cast speed, move speed, health or mana regeneration, accuracy, evasion, attack, defense, crit, max health or mana, life steal, mana leech, reflect, or how much damage you take. Everything that used to be a separate Haste, Guard, Regen or Buff is this one effect now.",
+        "**Status ailments** — Burn, Poison, and Bleed (damage over time), plus Stun, Freeze, and Silence.",
+        "**Parry charges** — each charge erases one incoming hit outright, then is spent.",
+        "**Brace charges** — each charge holds back one incoming hit and banks the damage instead; the whole debt lands when the window ends.",
+        "**Damage charges** — charges that make your next attacks land harder (or an enemy's land softer). One charge, one attack, spent whether it hits or misses.",
+        "**Immunity to being stopped** — a window where nothing flinches, stuns, freezes, silences, shoves or interrupts you.",
         "**Taunt** — force monsters to attack you.",
         "**Knockback / Pull** — shove enemies away or drag them in.",
-        "**Mana Leech / Reflect** — briefly turn damage you deal into mana, or bounce damage back at attackers.",
         "**Cleanse** — strip debuffs off yourself.",
         "**Execute** — bonus damage that grows huge against low-health enemies.",
-        "**Dash / Teleport** — close distance in a rush, or blink to a target spot."
+        "**Dash / Teleport** — close distance in a rush, or blink to a target spot.",
+        "**Feed another skill** — add stacks to another skill's pile, or give that pile more time. This is how Encore keeps Blade Dance going, and how Flow feeds Momentum."
       ]
     },
     {
       "type": "paragraph",
-      "text": "**Ultimate skills** are a special tier that charge up during combat and cost that charge to unleash — every weapon's pool holds **3** of them, and a weapon can carry **one** (higher-rarity drops are far more likely to come with it)."
+      "text": "**Ultimate skills** are a special tier — the biggest thing a weapon does, at **40 mana** and a long cooldown rather than a charge meter. Every weapon's pool holds **3** of them, and a weapon can carry **one** (higher-rarity drops are far more likely to come with it)."
     },
     {
       "type": "quote",

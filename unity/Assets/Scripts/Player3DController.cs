@@ -641,20 +641,29 @@ public partial class Player3DController : MonoBehaviour
 
     // ---- aggro (the player's half of the shared Taunt verb) -----------------------------------------------------
     Health tauntSource;
-    float tauntUntil;
 
     /// <summary>True while a taunt is forcing this player onto <see cref="tauntSource"/> — the mirror of
-    /// <c>MonsterAI3D.Taunted</c>. A dead taunter releases the lock immediately.</summary>
-    bool Taunted => Time.time < tauntUntil && tauntSource != null && !tauntSource.IsDead;
+    /// <c>MonsterAI3D.Taunted</c>. A dead taunter releases the lock immediately.
+    ///
+    /// <para>The WINDOW is the state store's (<see cref="UnitStates.Taunted"/>), shared with the mob side and with the
+    /// skill door; only WHO taunted us is the rig's own half.</para></summary>
+    bool Taunted
+    {
+        get
+        {
+            if (tauntSource == null || tauntSource.IsDead) return false;
+            var st = Character.Instance != null ? Character.Instance.States : null;
+            return st != null && st.Taunted;
+        }
+    }
 
-    /// <summary>Force this player to engage <paramref name="source"/> for <paramref name="seconds"/> — auto-combat
-    /// can't retarget away while it holds. The player's twin of <c>MonsterAI3D.Taunt</c>, so a taunt authored on a
-    /// skill behaves the same whoever it lands on. Stacks by later end time, exactly like the mob side.</summary>
+    /// <summary>Remember who taunted this player and engage them at once — auto-combat can't retarget away while the
+    /// lock holds. The player's twin of <c>MonsterAI3D.LockOnTaunter</c>, so a taunt authored on a skill behaves the
+    /// same whoever it lands on. The window itself was already stamped by <see cref="Character.ForceAggro"/>.</summary>
     public void Taunt(Health source, float seconds)
     {
         if (source == null || seconds <= 0f) return;
         tauntSource = source;
-        tauntUntil = Mathf.Max(tauntUntil, Time.time + seconds);
         BeginAttack(source, false);   // false = don't resume attack-move after the kill; the taunt decided this target
     }
 
@@ -875,7 +884,7 @@ public partial class Player3DController : MonoBehaviour
     static Health cursorPick;
 
     /// <summary>The living mob under the cursor (camera raycast), or null. Static so GameCursor3D shares it.
-    /// Frame-memoized: it's read up to 3× per frame (GameCursor3D, MobHoverPanel, click/target handlers), so the
+    /// Frame-memoized: it's read up to 3× per frame (GameCursor3D, UnitStatusPanel, click/target handlers), so the
     /// raycast + snap scan runs ONCE and the rest of the frame reads the cached pick. All callers pass the one
     /// gameplay camera, so the memo doesn't key on <paramref name="cam"/>.</summary>
     public static Health MonsterUnderCursor(Camera cam)
@@ -891,7 +900,7 @@ public partial class Player3DController : MonoBehaviour
         if (cam == null) return null;
         // The cursor is over a HUD element (e.g. an open Inventory/Equipment/Character window): don't
         // pick the mob "behind" it. This single guard makes the sword cursor (GameCursor3D), the hover
-        // panel (MobHoverPanel), and click-to-attack all ignore mobs occluded by the UI.
+        // panel (UnitStatusPanel), and click-to-attack all ignore mobs occluded by the UI.
         if (PointerOverUI()) return null;
         Vector2 mp = MousePos();
 

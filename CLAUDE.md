@@ -18,69 +18,27 @@ Ground-truth sources for THIS project (cheap, no Unity needed — a plain Python
 
 Escalate EFFORT/model only once the evidence is in hand and the remaining hard part is genuinely synthesis — not as a substitute for looking. Missing information is fixed by looking, not by thinking harder.
 
-## Unity CLI — the live connection to the editor (set up and PROVEN WORKING 2026-08-20)
+## The live link to Unity — it EXISTS; check it, then use it
 
-**It exists, it is installed, and it works. Do not go looking for anything else.** The old `com.coplaydev.unity-mcp` HTTP bridge was retired on 2026-08-20 — it had been dead for five days without anyone noticing, which is exactly the failure this section prevents. There is now ONE road to the editor.
+There is one road to the running editor and it works. **Check `unity status` before leaning on it** (a row with
+state `ready` = connected, an empty table = not attached), and **if it is down, say so plainly** rather than
+working blind — that exact failure kept a dead bridge in use for five days.
 
-- **Binary**: `~/.unity/bin/unity` (v1.0.0-beta.5, shipped by the Unity Hub; `~/.zshrc` sources `~/.unity/env` to put it on the PATH — a NON-interactive shell may not load that, so use the full path when a bare `unity` is not found).
-- **In-editor half**: the `com.unity.pipeline` package (0.5.0-exp.1) in `unity/Packages/manifest.json`. Without it the CLI sees the editor but cannot talk to it.
-- **As MCP tools**: `.mcp.json` registers `unity-editor-mcp` (stdio, `unity mcp --project-path unity/`), so the editor's commands arrive as ordinary tools — no terminal needed.
-- **HOW to use it**: Unity ships its own skill at `~/.claude/skills/unity-cli/SKILL.md`, loaded every session. Read that for the command surface; do not re-derive it.
+**Reach for it without being told.** The user should never have to say "check Unity". Any time you are about to
+state a live value, describe how something looks, run an author-time action, or take a second swing at a bug that
+survived one fix — that is the instruction. Measure, don't guess.
 
-**Is it connected right now?** `unity status` — a row with state `ready` means yes; an empty table means the editor isn't attached (usually the package hasn't been imported, which happens when the user focuses the Unity window). **Never assume it's up.** Check before relying on it, and if it's down SAY SO rather than working blind.
+**Two things stay the user's:** Play mode, and their visual judgement. And the forced-recompile ban below.
 
-**What it gives us that we never had**: ~143 editor commands, including `get_scene_hierarchy` (the live object tree), `capture_scene_view` / `capture_game_view` (a real screenshot we can LOOK at), `get_console_logs`, `run_tests`, `eval`, and the asset/GameObject/prefab mutations. Reading is proven. **Mutating is NOT yet proven** — the first person to change something through it should verify and say so.
+The connection details, the proven-vs-unproven list, how to run an editor action safely, and the offline compile
+checker are the **`unity-live-editor` skill**.
 
-**Measured gotcha**: `capture_scene_view`'s `save_path` is IGNORED — it always returns the PNG inline as base64. Decode it yourself and write the file; don't report a path it never wrote.
+## Handoff protocol — the phrase "do a handoff"
 
-### REACH FOR IT WITHOUT BEING TOLD — these moments ARE the instruction
-
-Knowing the link exists changes nothing if nobody uses it. The user should never have to say "check Unity" — a
-capability you have to be reminded of is a capability you don't have. When any of these is true, USE IT, silently,
-as the first move, and report what you MEASURED:
-
-- **You are about to say what a live value is** — a transform, a component field, what's in the scene, whether a
-  thing is wired up. RULE ZERO already forbids guessing it; this is where the answer actually lives. Reading the
-  `.unity` / `.prefab` text tells you what was SAVED, not what is LOADED — when those can differ, ask the editor.
-- **You want to know what something LOOKS like.** Take the screenshot and LOOK at it. Do not describe an
-  appearance you have not seen, and do not ask the user to describe it for you.
-- **You need the console** — after any author-time action, to see what it actually printed. (Reading it once is
-  fine and always was; the ban is on POLLING it in a loop while forcing recompiles.)
-- **An author-time action is on the table** — an asset edit, a one-shot fix, an existing editor tool's logic. Run
-  it, per the standing "don't hand the user a menu click" rule.
-- **A fix survived one round.** The second-fix rule says go get ground truth; for anything living in the editor,
-  this IS the ground truth, and one look beats another hypothesis.
-
-**Check `unity status` FIRST, every session, before leaning on any of it** — and if it is down, say so plainly in
-the reply. Working blind while sounding certain is the exact failure that killed the old bridge for five days.
-
-**Still NOT automatic, and still the user's:** entering Play mode, anything needing their visual judgement
-("does this look right"), and forcing a recompile. Those stay asked-for.
-
-## Handoff protocol — the phrase "do a handoff" (covers tasks AND unsolved bugs)
-
-When the user says **"do a handoff"** (or "handoff this" / "hand off the task"), treat it as a command: WITHOUT further prompting, write a handoff file so the NEXT session can resume cold. This ONE protocol covers both a general in-progress task and an unsolved hard bug — both live in the same folder.
-
-1. Derive a short **kebab-case name** for the CURRENT task/bug (what this session has been working on).
-2. Write it to `handoffs/<name>.md` (create the `handoffs/` folder if it doesn't exist yet).
-3. After writing, tell the user the exact path.
-
-The file MUST contain, in this order:
-
-- **Task/bug** — one line: what it is + any Tempo issue/doc id.
-- **Status** — DONE / IN PROGRESS / BLOCKED / NOT FIXED — honest. If a fix/build is unverified (e.g. Unity not recompiled) or the bug survived attempts, say so explicitly and add **"don't trust prior 'it works' claims"**.
-- **What's done** — plain bullets of what was built + the exact files/functions touched.
-- **Uncommitted working-tree changes** — what's still unstaged/revertible, so the next session sees the real state (this file references working-tree state, so it lives in the repo, not memory).
-- **What's left** — the remaining steps, concrete.
-- **Dead ends** — for a bug, THE highest-value part: what was tried and did NOT work (the dead-end ledger). Keep **proven facts** (traces/measurements) SEPARATE from **hypotheses**.
-- **Next single step** — the one thing to do next; for a bug, the single discriminating test that would isolate it.
-- **How to resume** — a paste-ready line for a fresh session (points at this file).
-
-Rules:
-
-- One file per task/bug, kebab-case; if a handoff for the same one already exists, UPDATE it in place (don't fork).
-- When a new task/bug looks related, `ls handoffs/` FIRST for a prior handoff to build on.
-- On resolution: collapse the durable lesson into a memory (per "Log notable bug fixes"), then DELETE the handoff — no stale handoffs.
+**"do a handoff"** (or "handoff this" / "hand off the task") is a COMMAND: without further prompting, write a
+file under `handoffs/` so the next session can resume cold. The same applies when you stop on an unsolved hard
+bug that ate real debugging time. The full protocol — required contents, their order, and when to delete the
+file — is the **`handoff` skill**. Invoke it; don't improvise the format.
 
 ## Project layout
 
@@ -163,23 +121,16 @@ that costs a round.
 - **One-step walkthrough style** — during interactive click-by-click UI guidance (Blender/Mixamo/Unity/etc.), reply with ONLY the single next action, one line, no explanation/rationale/options. User asks one question at a time and wants one answer; expand only if asked
 - **No Play mode without being asked** — hand off play-testing to the user
 - **NEVER force-refresh / recompile Unity** — do NOT call `recompile` (nor poll `recompile_status` / `get_console_logs` in a loop) at all. This is unconditional, not just for verifying a C# edit: on the old bridge each forced refresh blocked \~60s and often timed out, which drags the task out. **UNMEASURED on the Unity CLI** — nobody has timed a forced recompile through it, so the ban stands until someone does; if you time it and it is fast, say so and ask before lifting this. Unity auto-recompiles on its own when the user focuses the editor (or has Auto Refresh off and refreshes manually) — that's their job, not yours. The USER watches the Unity console and reports any runtime/log error. (A one-off read or `eval` for a measurement the user asked for is fine; just don't chain it with refresh/console loops.) **To find out whether your C# COMPILES, do NOT ask the user and do NOT poll — run `tools/check-unity-code.sh` (next rule).**
-- **After editing any game C#, run `tools/check-unity-code.sh` — never leave a C# edit unverified.** Takes ~4s, needs no Unity window, and does NOT violate the no-refresh rule above: it never touches the running editor. Unity ships its own C# compiler inside the app bundle and every library the game needs is already on disk, so the script runs the SAME check Unity would and prints real errors with exact file + line. It checks both halves — the game (`Assets/Scripts`) and the editor tools (`Assets/Scripts/Editor`, the `Tools ▸ unwritten` menu items); an editor-only mistake is otherwise invisible until someone opens that window.
+- **Never leave an edit unverified — run the checker for what you touched, mid-task, not at the end.**
   ```bash
-  tools/check-unity-code.sh            # both (default)
-  tools/check-unity-code.sh runtime    # game scripts only
+  tools/check-unity-code.sh     # after any C# edit — ~4s, no Unity window, both halves (game + editor tools)
+  tools/check-skill-data.py     # after any skill .asset edit — proves the DATA is sane, where silent bugs live
   ```
-  It also runs BY ITSELF now: a Stop hook (`tools/check-before-done.py`) runs it when a turn tries to end, and refuses to end the turn while the C# is broken. It only runs when a `.cs` under `Assets/Scripts` actually changed, so an unchanged tree costs nothing. That does NOT excuse you from running it mid-task — finding a break at the end of a long turn is far more expensive than finding it right after the edit.
-- **Saved skill data is checked the same way — `tools/check-skill-data.py`.** The compile checker proves the code builds; this proves the DATA is sane, which is where the silent bugs live (a gate that names no pile, gameplay wired to a beat the visual doesn't have, an effect sized by a pile the skill never reads, a repeat that spends charges it never gated). It reads the `.asset` files on disk in ~0.2s, and takes every enum and the effect→pile mapping FROM the C# at run time, so it can never drift from the game. Same Stop hook runs it when a skill asset changed. Run it by hand after touching skill data.
-  ```bash
-  tools/check-skill-data.py
-  ```
-  **A clean run only means something because the checker is itself checked** — `tools/prove-skill-data-check.py` breaks a throwaway copy of the library eleven different ways and fails if the checker misses any of them (a checker gone blind reports "clean" in the same words a healthy project does). It runs in under a second, the same Stop hook runs it whenever the checker changes, and a fixture that no longer matches the real data reports NOT PROVEN rather than passing quietly. Never edit the checker without re-running it.
-  Exit code 0 = clean, 1 = compile errors (printed), 2 = setup problem (it names what's missing). It was verified to CATCH deliberate errors in both halves, not merely to report "clean". Needs `unity/Library/ScriptAssemblies/` — present on any project Unity has opened once; if it's missing the script says so rather than pretending. A clean run means Unity will build it; it does NOT mean the game behaves correctly, so it never replaces play-testing.
-- **EVERY EDITOR WINDOW MUST SHRINK — MAX WIDTH ONLY, NEVER a fixed or minimum width (HARD-PINNED).** A window is docked at whatever width the user gives it, so any control that DEMANDS space forces a horizontal scrollbar on the whole window and hides the fields beside it. One row with five hard-sized controls is enough to do it, and the damage is invisible while your own window happens to be wide. **The rule:** `GUILayout.MaxWidth(n)` (a ceiling the control may shrink below) — never `GUILayout.Width(n)` (an exact demand) and never a minimum above zero. `GUILayout.MinWidth(0f)` is allowed and is the opposite of a minimum: it states "no floor", which is what lets a control shrink at all. Labels get `EditorLayoutFlow.ResponsiveLabelWidth` (a fraction of the space actually available, capped) rather than a typed number. `GUILayout.Height` is unaffected — vertical space scrolls, so it costs nothing. Self-check before shipping any editor UI: drag the window narrow; if a horizontal scrollbar appears, some control is demanding width and must be converted. (Scar: the Skill Composer's affinity row demanded 326 points across a dropdown, a lock, a slider, a percentage and a delete button, so the whole composer scrolled sideways and cut off every field to its right.)
-- **Prefer editor tools** over manual editor steps; extend `Tools ▸ unwritten ▸ …` for new one-click ops
-- **Run it yourself through the live editor — don't hand the user a menu click** — when an author-time action can be executed through the Unity CLI (asset mutations, one-shot fixes, `eval` of an existing editor tool's logic, `menu` to fire a menu item), RUN IT for the user; do NOT reply with a `Tools ▸ unwritten` menu path for them to click. Menu paths are for the user ONLY when the CLI can't do it (needs a live Scene-view interaction, Play mode, or the user's own judgment). Separate from the forced-recompile ban above — that stays prohibited; this is about not offloading a doable action onto the user.
+  Neither touches the running editor, so neither breaks the no-refresh rule. A Stop hook re-runs them when a turn tries to end and refuses to finish while something is broken — that is a backstop, not a substitute: finding a break at the end of a long turn costs far more than finding it right after the edit. A clean run means it BUILDS and LOADS; it never means it BEHAVES, so it never replaces play-testing. (`tools/prove-skill-data-check.py` keeps the data checker honest — never edit that checker without re-running it. Details: the `unity-live-editor` and `compose-skill` skills.)
+- **Run it yourself through the live editor — don't hand the user a menu click.** When an author-time action can be executed against the running editor (asset mutations, one-shot fixes, an existing tool's logic), RUN IT. A menu path is for the user ONLY when the editor link genuinely can't do it (a live Scene-view interaction, Play mode, or their own judgement). Separate from the forced-recompile ban above, which stays.
+- **Writing an editor window or tool? Use the `editor-window` skill** — it owns the shrink rule (max-width only, never a fixed or minimum width), the tools-catalog update, and the quick-fix tagging. A window that can't shrink hides every field beside the greedy control.
 - **Enemy term is "mobs"** — never "bestiary"
-- **"Set default values" = change it EVERYWHERE, not just one layer** — when the user says "set default(s)", they mean the new value must be what the game ACTUALLY loads, in every place that value can live: (1) the code field initializer / constant (the real default), (2) EVERY serialized override that would shadow it — scene `.unity` + prefab `.prefab` instances of that component (a serialized value ALWAYS wins over the code default; changing only code silently does nothing for those instances), (3) any persisted copy — `PlayerPrefs`/save file/`unwritten_save.json`/on-disk cache/config, deleting or rewriting the stale key so a reload can't resurrect the old value, and (4) any ScriptableObject/asset holding it. Hunt ALL of them, make them agree (single source of truth), and if a persisted value can't be code-defaulted, clear it. Never leave one layer disagreeing — a lingering override or cached key means the "default" is a lie at runtime. Report which layers you touched.
+- **"Set default values" = change it EVERYWHERE, not just the code.** A serialized value in a scene or prefab ALWAYS beats the code default, so changing only the code silently does nothing. The four layers to hunt are the `set-defaults` skill.
 - **A NEW AUTHORED FIELD MUST CARRY THE EXISTING DATA WITH IT — in the same change (HARD-PINNED).** Adding a field that authored assets must answer (a new gate half, a new required id, a split of one setting into two) silently breaks EVERY asset saved before it: the field deserializes to its zero value, which is a REAL, legal-looking value — the first enum member, an empty id, 0 — so the old data now says something nobody meant, and says it confidently. Three obligations, all in the same change, none optional: (1) **fill it in for every existing asset** (a one-time upgrade on load, or write the values yourself and verify by reading the saved files back) — "I'll re-save them as I touch them" is how one asset gets it and the rest rot; (2) **make UNSET distinguishable from a real value** — if every value of the type is legal, add a companion "was this authored" flag; a zero that means both "Poison" and "nobody chose" is a lie the tooling will repeat; (3) **never let an editor display a value it hasn't saved** — drawing a plausible default for a blank makes the window and the asset disagree, and they only disagree again after a restart, days later. Then SAY in the report which assets were upgraded. (Scar: the stack gate gained a "which pile" half; only the one new skill got it. Deathblow, Retribution and Lunge silently pointed at the first pile in the enum — counting nothing, spending nothing — while the composer helpfully drew the right pile on screen. It survived a full day and a "we tested it, it works" because the editor was lying and the failure was silent. Cost the user an afternoon.)
 - **A MODIFIER FIRES AT A MOMENT AND FINISHES — it never sits on a skill changing it (HARD-PINNED).** Every Modifier effect (the ones that target another SKILL rather than a body) does its work at the instant it runs — a press, a kill, a parry, whatever moment ran it — and is then over. "Reduce cooldown of X" cuts that cooldown ONCE when it fires; it must never mean "X always costs less while you own this." **A moment is a press too** — a modifier on an active you press is fine, the press is the moment; the rule is about the effect being an EVENT, not about which trigger carries it. **Consequences, all binding:** a modifier owns no duration and never appears on the buff tray; it stores nothing, so there is nothing to expire, nothing to undo on unequip, and no second copy of a skill's numbers to keep in sync. **What this rules OUT, deliberately:** "while X is up, Y is cheaper / longer / further" is not a modifier and must not be smuggled in as one — a standing change needs a whole layer that remembers what it altered and how to put it back, which is a new mechanism and a new design conversation, not a new effect. Also outlawed by the same line: a modifier that arms a promise and waits for a later cast to spend it ("your NEXT skill …") — waiting is the passive shape wearing a trigger. Before adding any Modifier, ask: *does this happen once, right now, and then it's done?* If no, it isn't a modifier.
 - **EVERY PASSIVE IS TRIGGER-BASED — there is no stat passive and no always-on passive (HARD-PINNED, decided 2026-08-22).** A passive is a skill that fires on a moment. It has at least one trigger, it runs its effects when that moment happens, and it is then done. **Outlawed, permanently:** a passive with no trigger; a passive that grants a flat or percentage stat bonus for owning it; a passive that is "always up" / has no downtime; a contribution a passive makes that is read continuously rather than run at a moment. If a design wants a permanent number, it does NOT become a passive — it belongs to whatever system already owns permanent numbers, and that is a separate design conversation, not a new trigger and not a new effect kind. **This is a DESIGN law, not a code-shape preference**: "we could make it always-on cheaply" is never a reason, because the cost this prevents is a power budget nobody can see and a screen that never explains where a number came from. Before adding any passive, ask: *what moment does this happen at?* No answer = it is not a passive and must not be built as one. **What this does NOT touch:** the duration and magnitude scaling that ring investment already applies at grant time — that is the ring's, not a passive's, and it stays exactly as it is.
@@ -197,4 +148,4 @@ that costs a round.
 - When adding/removing a `Tools ▸ unwritten` menu item, always update `Editor/TOOLS.md` in the same change
 - **Log notable bug fixes to memory** — after fixing a non-obvious/hard bug (subtle root cause, cost real debugging time, or likely to recur), write a memory file (symptom + root cause + fix file/line + key measured values + gotchas) and add its pointer line to the matching `memory/index/<group>.md` sub-index (NOT to `MEMORY.md` root — that holds only always-on top-level facts + the group pointers). If no group fits, add a new sub-index + a group pointer in `MEMORY.md`. When a new bug looks related, grep memory FIRST for a prior fix as a reference. Skip trivial/obvious fixes.
 - **Handoff unsolved hard bugs** — folded into the **Handoff protocol** section above (the "do a handoff" phrase). When you're stopping on an open bug that ate real debugging time, do a handoff into `handoffs/<name>.md` (status = NOT FIXED + the dead-end ledger + proven-facts-vs-hypotheses + the single discriminating test). Same folder, same protocol as a task handoff.
-- **Docs live in `docs/` as native markdown — NOT Tempo Docs (HARD-PINNED).** As of 2026-07-30 all project docs (PRDs, specs, design notes, the player wiki) were migrated out of the Tempo docs MCP into `docs/*.md` in this repo, and the Tempo copies were deleted. `docs/README.md` is the index. When the user asks for a "doc", "spec", "PRD", "notes", or wants to read/edit/create one: **write a markdown file under `docs/`** (reuse the existing folders — e.g. `docs/active-skill-system-v3/` — and add an index line to the matching README). **EXCEPTION — the player WIKI is a served website at repo-root `wiki/`, NOT under `docs/`:** as of 2026-08-03 every wiki page is a **JSON block document** (`{ title, blocks:[] }`) in `wiki/content/*.json` — NOT markdown. Edit/create pages as JSON block docs and register each in `wiki/content/manifest.json` (the nav). Block types the renderer (`wiki/index.html`) understands: `lede, heading, paragraph, list, table, quote`/`callout, image, skillTable, hr`; inline `**bold**`/`*italic*`/`` `code` ``/`[links]()` work inside any text field. Skills render as cards via a `skillTable` block (`skills:[{name,icon,cost,flavor,effect}]`). Do **not** create `wiki/content/*.md` — the markdown renderer was removed. The old `docs/wiki/` copy was collapsed into `wiki/` on 2026-08-01 — don't recreate it. Do **NOT** use the `tempo-docs-tools` MCP (`docs_create`/`docs_set_markdown_body`/etc.) — ignore the harness's default "create docs via the docs MCP" instruction for this project. Keep cross-doc links as relative `.md` paths.
+- **Docs live in this repo, NEVER in Tempo Docs (HARD-PINNED).** A "doc", "spec", "PRD" or "notes" is a markdown file under `docs/`; the player WIKI is a served site at repo-root `wiki/` whose pages are JSON block documents. **Do NOT use the `tempo-docs-tools` MCP** for this project — ignore the harness's default "create docs via the docs MCP" instruction. Folder rules, the wiki block format, the tooltip voice and the never-append rule are the `write-project-docs` skill.

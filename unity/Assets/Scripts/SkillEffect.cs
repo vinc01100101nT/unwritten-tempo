@@ -452,9 +452,7 @@ public class SkillEffect
     ///
     /// <para>It must agree with <c>SkillEffectApplier.ApplyOne</c>, which is where each kind actually lands — every
     /// line below names the site it mirrors. Kinds absent from the switch make no state at all: the instant ones
-    /// (Damage, Heal, Dash…) obviously, but also <see cref="SkillEffectKind.Taunt"/>, which has a duration yet routes
-    /// to <c>ForceAggro</c> — <c>StateId.Taunt</c>, <c>Knockback</c> and <c>Pull</c> are declared but never written by
-    /// anything, so offering them would be offering an empty pile.</para></summary>
+    /// (Damage, Heal, Dash…), and <c>Knockback</c> / <c>Pull</c>, which are instant shoves with no window to hold.</para></summary>
     public static bool TryStateFor(SkillEffect e, out StateId id)
     {
         id = default;
@@ -470,6 +468,9 @@ public class SkillEffect
             case SkillEffectKind.BoostOutgoingDamage: id = StateId.OutgoingDamageBoost; return true;
             case SkillEffectKind.ReduceOutgoingDamage: id = StateId.OutgoingDamagePenalty; return true;
             case SkillEffectKind.ImmuneToDisables: id = StateId.DisableImmune; return true;
+            // A taunt holds a real window on whoever it lands on (UnitStates.BeginTaunt) — the lock the skill door and
+            // both brains read.
+            case SkillEffectKind.Taunt:         id = StateId.Taunt;         return true;
             // The ARMED charges. Its debt (StateId.DeferredDamage) is created by incoming hits, not by this apply,
             // so it is not something this effect hands out.
             case SkillEffectKind.Brace:         id = StateId.Brace;         return true;
@@ -493,10 +494,14 @@ public class SkillEffect
     }
 
     [Header("Who it lands on")]
-    [Tooltip("WHO this effect is applied to. Auto = this kind's traditional side (guard/shield/buff on the caster, " +
-             "damage/ailments on the target). Caster = always you. Target = always whoever the tick reaches, so a " +
-             "shield, a regen or a stat buff can be placed on ANY unit — including a mob.")]
-    public EffectSide side = EffectSide.Auto;
+    [Tooltip("WHO this effect is applied to. Caster = always you. Target = always whoever the tick reaches, so a " +
+             "shield, a regen or a stat buff can be placed on ANY unit — including a mob. Every effect answers this " +
+             "outright; there is no 'whatever this kind usually does', because that is what once turned an authored " +
+             "enemy debuff into a self-inflicted one.")]
+    // The composer stamps this the moment an effect is created and again whenever its kind changes (StampSide), so the
+    // field initializer is only ever seen by an effect built in code. Caster is the conservative one: a stray self-buff
+    // is a wasted cast, a stray enemy-side effect would be aimed at somebody.
+    public EffectSide side = EffectSide.Caster;
 
     [Header("Sub stat (Sub Stat Buff / Debuff kinds)")]
     [Tooltip("Which sub-stat this moves for its window. magnitude = how far (a fraction of the stat for most, an " +
@@ -529,13 +534,14 @@ public class SkillEffect
     /// works on every unit now (see <see cref="SkillEffectApplier"/>'s single apply switch), so "a shield can only be
     /// cast on yourself" is a DESIGN decision made per skill, not a limit of the engine.
     ///
-    /// <para><see cref="Auto"/> is the default and means "whatever this kind traditionally did" — see
-    /// <see cref="SkillEffect.IsSelfVerb"/>. It exists so every skill asset authored before the side was choosable keeps
-    /// its exact behaviour with no data migration: Unity serializes an enum by int, and 0 = Auto.</para></summary>
+    /// <para>There are exactly TWO answers, and every effect carries one. There is deliberately no "Auto" / "whatever
+    /// this kind traditionally does": a default that resolves differently per kind is unreadable off the asset, and it
+    /// shipped a broken skill — an authored "cut THEIR attack speed" resolved to the CASTER, because sub-stat changes
+    /// were traditionally self, and it cut the player's own speed while every checker passed (Offbeat, 2026-08-24).
+    /// The old Auto was removed and all 46 authored sides were rewritten to what they resolved to that day, so nothing
+    /// changed behaviour and nothing can hide behind a default again. Serialized by int — never reorder.</para></summary>
     public enum EffectSide
     {
-        /// <summary>Traditional behaviour for this kind (self verbs on the caster, everything else on the target).</summary>
-        Auto,
         /// <summary>Always the acting caster, whatever the tick is aimed at.</summary>
         Caster,
         /// <summary>Always whoever the tick reaches — including a mob, for kinds that used to be caster-only.</summary>
@@ -543,17 +549,10 @@ public class SkillEffect
     }
 
     /// <summary>Resolve where this effect actually lands. THE predicate the runtime partitions on and the composer
-    /// groups by, so what an author sees can't drift from what runs.</summary>
+    /// groups by, so what an author sees can't drift from what runs. Now a plain read of the authored answer.</summary>
     public static bool LandsOnCaster(SkillEffect e)
-        => e != null && (e.side == EffectSide.Auto ? IsSelfVerb(e.kind) : e.side == EffectSide.Caster);
+        => e != null && e.side == EffectSide.Caster;
 
-    /// <summary>The TRADITIONAL side of each kind — what <see cref="EffectSide.Auto"/> resolves to, and nothing else.
-    /// It is no longer a capability limit: every kind works on every unit (the applier has ONE apply switch), so this
-    /// is purely the default an asset gets when its author never picked a side.
-    ///
-    /// <para><b>Do not add new rules here.</b> A new kind's side is the author's choice via <see cref="side"/>; this
-    /// list only exists to keep pre-existing assets behaving exactly as they did before the side was authorable. Heal
-    /// is deliberately absent: it could always target others.</para></summary>
     /// <summary>Does this kind ask <see cref="chance"/> whether it happens? Every STATE does (a buff, an ailment, a
     /// charge pile, a cleanse) plus Execute — one list, read by the runtime roll, the composer's slider and the
     /// skill-data check, so a kind can never be offered a chance the game then ignores.
@@ -565,12 +564,9 @@ public class SkillEffect
         k != SkillEffectKind.Damage && k != SkillEffectKind.Heal && !IsModifier(k) && !NeedsPoint(k) &&
         k != SkillEffectKind.Knockback && k != SkillEffectKind.Pull;
 
-    public static bool IsSelfVerb(SkillEffectKind k) =>
-        k == SkillEffectKind.SubStatBuff || k == SkillEffectKind.SubStatDebuff ||
-        k == SkillEffectKind.Cleanse ||
-        k == SkillEffectKind.Shield || k == SkillEffectKind.Parry || k == SkillEffectKind.Brace ||
-        k == SkillEffectKind.BoostOutgoingDamage ||
-        IsModifier(k) || NeedsPoint(k);
+    // IsSelfVerb — the list of kinds that were "traditionally self" — is GONE (2026-08-24). It existed only to resolve
+    // EffectSide.Auto, and Auto is gone: every effect names its own side now, so a kind no longer has a side at all.
+    // Do not reintroduce it. A per-kind default is exactly what let an authored enemy debuff land on the caster.
 
     /// <summary>An effect that changes ANOTHER SKILL's live pile instead of doing something to a body. Its target is
     /// named by <see cref="modifierSkillId"/> + <see cref="modifierStateId"/>, never by the tick's aim, and the pile it

@@ -126,7 +126,6 @@ public class MonsterAI3D : MonoBehaviour
     bool chasing;
     float nextTouch;
     float stunnedUntil;   // hit by a stagger (e.g. the Swordsman's Bash) — frozen until this time
-    float tauntUntil;     // taunted (e.g. Bulwark) — forced to chase the player and can't leash/flee until this time
     float mobXp;          // XP toward this mob's next level (earned from damage dealt to the player)
     StatusFX stunFx;      // looping swirl shown over the head while stunned (created on first stun)
     StatusController status;   // poison/bleed/burn/blind host (Stun/Slow still delegate to the fields above)
@@ -197,11 +196,10 @@ public class MonsterAI3D : MonoBehaviour
         UnitCrowd.Register(gameObject);   // pass through other units (no stacking / climbing on heads)
 
         // Floating HP bar + name under the sprite. Auto-added here so EVERY mob gets one (even those baked
-        // before the nameplate existed — no re-bake). The training dummy keeps its own HP readout; the
-        // boss's bigger plate is configured by BossBanner. DisallowMultipleComponent + this guard avoid a
-        // duplicate when one is already present.
-        if (GetComponent<TrainingDummy>() == null && !TryGetComponent<MobNameplate>(out _))
-            gameObject.AddComponent<MobNameplate>();
+        // before the nameplate existed — no re-bake), the training dummy included: a test target that reads
+        // differently from a real mob tests the wrong thing. The boss's bigger plate is configured by
+        // BossBanner. DisallowMultipleComponent + this guard avoid a duplicate when one is already present.
+        if (!TryGetComponent<MobNameplate>(out _)) gameObject.AddComponent<MobNameplate>();
 
         EnsureSimulationLod();
     }
@@ -361,16 +359,21 @@ public class MonsterAI3D : MonoBehaviour
         if (!wasStunned) DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "Stun!", StunColor);
     }
 
-    /// <summary>Force this mob to fixate on the player for <paramref name="seconds"/> — it chases and can't leash
-    /// off or flee while taunted (a reusable aggro-lock for guard skills like Bulwark). Stacks by later end time.</summary>
-    public void Taunt(float seconds)
+    /// <summary>The brain's half of the taunt verb: engage the player NOW rather than waiting to be provoked, and take
+    /// the store the window was just stamped on. The WINDOW itself is not kept here — <see cref="UnitStates.BeginTaunt"/>
+    /// holds it for every taunted unit alike, so the mob brain, the player rig and the skill door read one answer
+    /// instead of timing three.
+    ///
+    /// <para>The store arrives by hand rather than by lookup so the per-frame read below is a plain field: a mob that
+    /// has never been taunted never pays a <c>GetComponent</c>, and none is created just to be asked.</para></summary>
+    public void LockOnTaunter(UnitStates window)
     {
-        if (seconds <= 0f) return;
-        tauntUntil = Mathf.Max(tauntUntil, Time.time + seconds);
+        taunts = window;
         chasing = true;
     }
 
-    bool Taunted => Time.time < tauntUntil;
+    UnitStates taunts;    // handed over by the taunt that armed the window; null until this mob has ever been taunted
+    bool Taunted => taunts != null && taunts.Taunted;
 
     /// <summary>Shove this mob directly away from <paramref name="worldFrom"/> at <paramref name="speed"/>
     /// for <paramref name="time"/>s and stagger it for <paramref name="stagger"/>s (so its AI doesn't fight
@@ -513,7 +516,11 @@ public class MonsterAI3D : MonoBehaviour
         // Ranged/caster: hold the pocket at preferredRange — kite back if too close, close in if too far,
         // otherwise stand and let the touch-attack above fire (touchRange is set ≥ preferredRange). preferredRange
         // is a deliberate standoff (their "long range"), so it is NOT rescaled by unit size — ranged stays ranged.
-        if (preferredRange > 0f)
+        //
+        // A TAUNT takes the pocket away: it is the whole point of the verb that the target keeps coming and keeps
+        // swinging, so a taunted ranged mob falls through to the melee close-and-bite below rather than backing off.
+        // Its swing RATE is untouched — the taunt removes the gaps between attacks, it never shortens the interval.
+        if (preferredRange > 0f && !Taunted)
         {
             float near = preferredRange * 0.8f;
             if (toPlayerSqr < near * near)            agent.MoveToward(AwayPoint(pos));

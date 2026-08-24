@@ -20,7 +20,7 @@ So combat is **single-to-low-double-digit** for a long time. Skill numbers are *
 | `damageMult` — **ultimate** | 6–10, usually + multi-hit | **meteor = 8** |
 | `hits` / `repeatCount` — multi-hit | 2–4 normal; ults stack | meteor hitCount 3 × repeat 5 |
 | `manaCost` | spam 5–8 · standard 10–18 · heavy 18–20 · **ult \~40** | ember 8, mending 18, meteor 40 |
-| `cooldown` (s) | spam 0.7–1.5 · standard 4–6 · heavy/utility 8–18 · ult \~3 (charge-gated) | ember 1.5, war_banner 18 |
+| `cooldown` (s) | spam 0.7–1.5 · standard 4–6 · heavy/utility 8–18 · **ult 45–60, a long cooldown and NOT charge-gated (decided 2026-08-23)** | ember 1.5, war_banner 18 |
 | `castTime` (s) | instant 0 · light 0.5 · heavy 1–2 | meteor 1.5 |
 | `castRange` | self 0 · melee 4–6 · ranged 11–13 | bulwark 6, meteor 13 |
 | Guard `dmg_reduction` | 0.3–0.6 (0.5 = half), 4–6s | bulwark 0.5 / 5s |
@@ -68,6 +68,64 @@ The default ring stat each channel scales off, **unless a skill deliberately ove
 ## Attack Speed cap — DONE (implemented 2026-08-04)
 
 `Character.AttackSpeedMult` (`Character.cs:370`) is clamped by `MaxAttackSpeedMult = 3f` (`Character.cs:88`). Sword's **Momentum** (uncapped stacks, generated per basic attack) has an equilibrium of *attack rate × stack duration*; the clamp bounds that ceiling so Momentum — and Deathblow's +40%/stack — can't scale without bound. General combat fix, not Sword-specific. Retune the `3f` in playtest if needed.
+
+## Cost & cooldown — the RULES (planned 2026-08-23, not yet applied)
+
+The bands above say what's normal; they can't say why a skill is 10 and not 14. Measured on the sword pool, that gap shows: **7 of 17 sword skills carry the identical 5s cooldown and 5 carry the identical 10 MP.** That is a default nobody revisited, not seventeen decisions. These rules replace the guesswork — they are still starting points, but every number now has a reason attached.
+
+### Rule 1 — passives are FREE (decided 2026-08-23)
+
+**Every passive costs 0 MP and has no cooldown.** What a passive costs you is the build slot it occupies; charging mana on top prices it twice, and its trigger already limits how often it fires. Today the sword pool is split — Encore, Unwavering and Opening pay 10 MP, Momentum pays 1, while Flow, Lock Blades and Pressure pay nothing — with no rule saying which is right. There is one now.
+
+### Rule 2 — mana is the price of POWER
+
+One number, four steps. A skill sits in the step matching what it delivers, and moving a skill between steps is a real decision to write down:
+
+| Step | MP | What belongs here |
+| --- | --- | --- |
+| Reaction | 8 | short, small, meant to be used often — a gap-closer, a single parry |
+| Standard | 12 | the ordinary active: a normal buff, a burst, a guard |
+| Heavy | 16 | the biggest non-ultimate — a long wind-up strike, or a skill arming two piles at once |
+| Ultimate | 40 | one per weapon |
+
+### Rule 3 — cooldown is set by the DURATION, never by feel
+
+**A skill's cooldown must be at least 1.5× its own duration**, so its effect can never be permanently up. An effect that outlives its cooldown isn't a decision the player makes, it is a state they simply live in.
+
+- Instant skills (no duration) keep the band cooldown for their step: reaction ~5s, standard ~6s, heavy ~8s.
+- **Ultimates: 45–60s.** A long cooldown, deliberately not a charge gate — decided 2026-08-23, and the `cooldown` band above is corrected to match.
+- Brace already obeys this (4s duration, 7s cooldown) and is the reference.
+
+### Rule 4 — a WINDOW and a COUNT OF CHARGES are different things, and never mix
+
+A duration is **seconds**; charges are **a number of uses**. A skill may carry both — Brace holds 5 charges for 4s — but they are authored and tuned as separate numbers, and neither is ever expressed in terms of the other. In particular, never write a duration as "however many attacks that is": attack speed varies per character, so the same authored number would mean different things to two players.
+
+### What the rules produce for the sword pool
+
+**APPLIED to the assets 2026-08-23** and read back from disk. Values marked → changed; the rest already complied.
+
+| Skill | Duration | MP | Cooldown | Why |
+| --- | --- | --- | --- | --- |
+| Deathblow | — | 40 | 60 | ultimate |
+| Retribution | — | 40 | 45 | ultimate |
+| Blade Dance | 8s | 10 → **40** | 5 → **45** | **it is authored `tier = Ultimate`**, so it pays an ultimate's price |
+| Committed Strike | — | 14 → **16** | 6 → **8** | heavy, instant |
+| Overclock | 8s / 3s | 12 | 6 → **12** | its buff outlived its cooldown — permanent uptime |
+| Guard Stance | 9s → **6s** | 12 | 10 → **9** | 9s was outside the 4–6s Guard band; 6s × 1.5 |
+| Brace | 4s | 10 → **12** | 7 | already the reference |
+| Onslaught | 5s | 10 → **12** | 5 → **8** | 5s × 1.5 |
+| Lunge | — | 8 | 5 | reaction, instant |
+| Parry | 3s | 8 | 1 → **5** | 3s × 1.5; a 1s cooldown on a 3s effect is permanent parry |
+| Unwavering | 9s → **6s** | 10 → **0** | 5 → **0** | passive; its 6s deliberately **matches Guard Stance**, which it exists to cover |
+| Momentum · Flow · Encore · Opening · Lock Blades · Pressure | unchanged | → **0** | → **0** | passives are free |
+
+**Sword now has THREE ultimates** — Deathblow, Retribution and Blade Dance are all authored `tier = Ultimate`. The pricing above follows the assets, since the composed skill is the source of truth for what a skill IS. **Adopted 2026-08-24:** the sword roster and the wiki now both describe three, so the "one per weapon" line no longer contradicts them.
+
+**The two that were actually broken, not merely inconsistent:** Overclock and Parry both had cooldowns *shorter* than their own durations, so their effects could be held up permanently.
+
+**Resolved 2026-08-24 — Opening rolls 50%.** The asset's chance is the authority; the roster doc and the wiki were the stale side and now say a successful parry has a **50% chance** to grant the +200% charge.
+
+**Found 2026-08-24, NOT a number and NOT fixed — Guard Stance is authored backwards.** It is a `SubStatDebuff` on `DamageReduction`, and `SkillEffectApplier` negates a debuff's magnitude, so the live effect is **+50% damage taken** rather than −50%. Overclock uses the same kind on purpose (that is how it doubles incoming damage). Guard Stance needs `SubStatBuff`. Left for the owner to change.
 
 ## Open / to measure before mass-tuning
 

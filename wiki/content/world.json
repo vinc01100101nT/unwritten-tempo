@@ -3,37 +3,37 @@
   "blocks": [
     {
       "type": "paragraph",
-      "text": "*The setting, the catastrophe that shaped it, and why the world looks the way it does.*"
+      "text": "*The setting, the sentence that never finished, and why the world looks the way it does.*"
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "The Truth, and the Un-writing"
+      "text": "The record, and the silence"
     },
     {
       "type": "paragraph",
-      "text": "In ancient history, one person wrote down the **truth of the world** — a complete record of everything that was and is. It was the definitive account of reality itself."
+      "text": "In ancient history, one person wrote down the **truth of the world** — a record of what was and what is, kept current as the world happened. Then the scribe was **silenced, mid-sentence**. The record simply stops."
     },
     {
       "type": "paragraph",
-      "text": "Then a **negative entity** found the book and **un-wrote it**: it tore the truth apart. The record was destroyed, and its pages were **scattered across the world**. Wherever a page came to rest, it did not stay paper — it **transformed into a monster**."
+      "text": "Everything before that line has a name, a shape, a settled truth. Everything after it was **never written down** — and what is never written does not hold together. The blank pages that should have carried the rest of the record scattered across the world, and where they landed they **transformed into monsters**: unrecorded space given hostile form."
     },
     {
       "type": "paragraph",
-      "text": "The world has been called *Unwritten* ever since: a world whose record was un-written."
+      "text": "The world is called *Unwritten* for exactly that reason. Not un-done — **never recorded.** The quest is not to restore a lost book; it is to write the part that was never there."
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "What the Un-writing did to people"
+      "text": "What the silence did to people"
     },
     {
       "type": "paragraph",
-      "text": "When the truth was destroyed, **people lost their identities.** Their color, their sense of self — all of it drained away, leaving behind **charcoal-like husks**. A body still stands: present, real, solid. But the ink is gone."
+      "text": "With no record still being kept, **people lost their identities.** Their color, their sense of self — all of it drained away, leaving behind **charcoal-like husks**. A body still stands: present, real, solid. But nobody's name was ever inked."
     },
     {
       "type": "paragraph",
-      "text": "The husks did not simply give up. They wander a seemingly endless journey across the world, **hunting the scattered pages** — trying to reconstruct the evidence of the past and recover the truth that was taken. You are one of them."
+      "text": "The husks did not simply give up. They wander a seemingly endless journey across the world, **hunting the scattered pages** — trying to finish what the scribe never got to write. You are one of them."
     },
     {
       "type": "heading",
@@ -47,19 +47,60 @@
     {
       "type": "list",
       "items": [
-        "**The flat, papery monsters are the corrupted pages.** They are literally paper — fragments of the torn book given hostile form. Their flatness isn't an art choice; it's what they are.",
-        "**The colorless, charcoal heroes are people who lost their identity.** The body is 3D and fully present, but the ink has drained — no color, no self. A faint trace of who they were still clings on: a hint of colored hair, an inked eye.",
-        "**The pages you recover are fragments of the true text.** To defeat a monster is, in a sense, to *read* the page it came from — to recover a piece of what was un-written."
+        "**The flat, papery monsters are blank pages.** They are literally paper — the pages that should have held the rest of the record and never did. Their flatness isn't an art choice; it's what they are.",
+        "**The colorless, charcoal heroes are people who were never named.** The body is 3D and fully present, but no ink ever reached it — no color, no self. A faint trace of identity still clings on: a hint of colored hair, an inked eye.",
+        "**What you take from a page is text you put on it.** To defeat a monster is to *fill it in* — one more line of the record that now exists because you wrote it."
       ]
     },
     {
       "type": "heading",
       "level": 2,
-      "text": "Recovering your color"
+      "text": "Winning your color"
     },
     {
       "type": "paragraph",
-      "text": "Progression in Unwritten is the story of **getting your color back.** As a husk reconstructs the truth — growing stronger, journeying further, uncovering story — **color returns to them**, identity leaking back in. A fully realized hero is one who has won back a great deal of what the entity took."
+      "text": "Progression in Unwritten is the story of **getting your color.** As a husk writes more of the record — growing stronger, journeying further, uncovering story, mastering a weapon — **color returns to them**, identity leaking in for the first time. A fully realized hero is one who has written a great deal of themselves into existence."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The Twelve Unwritten"
+    },
+    {
+      "type": "paragraph",
+      "text": "Twelve people fought the thing that silenced the scribe. Because they acted **after** the last written line, none of it was recorded — not the battle, not whether they won. They left **twelve weapons** and no names."
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Each of the twelve weapons is one of them.** A weapon is not a tool; it is the only surviving trace of a person the record never captured. How the weapon fights *is* how that person fought.",
+        "**They are known only by epithet, never by name** — the Shield is *The One Who Stood*, the Dagger is *The Late Arrival*. The missing name is the point, and it is also the reward.",
+        "**A dropped weapon remembers its wielder in fragments.** That is why two of the same weapon can carry different skills: it isn't randomness, it's which memories surfaced this time.",
+        "**Carrying one bleeds their identity into you** — this is the charcoal-to-color return. You are not recovering *the* truth; you are finishing *a* story.",
+        "**Naming an Unwritten is the endgame.** Learn enough of a weapon's skills and its true name can finally be written down — twelve names to write, twelve journeys to finish."
+      ]
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Weapon",
+        "Epithet",
+        "The deed nobody recorded"
+      ],
+      "rows": [
+        ["**Sword**", "The One Who Answered", "Met every challenge alone, one at a time, and never lost the exchange."],
+        ["**Greatsword**", "The One Who Cleared the Road", "Walked ahead of the others so there would be a path behind."],
+        ["**Axe**", "The One Who Never Stopped", "Would not be turned, would not defend, only pressed forward."],
+        ["**Warhammer**", "The One Who Said No", "Whatever the enemy meant to do, it did not get to."],
+        ["**Spear**", "The One Who Moved the Line", "Decided where everyone stood, on both sides."],
+        ["**Shield**", "The One Who Stood", "Took what was meant for the other eleven."],
+        ["**Bow**", "The One Who Kept Distance", "Was never where the blow landed, and never out of range."],
+        ["**Dagger**", "The Late Arrival", "Was not in the fight until it was already ending."],
+        ["**Firearm**", "The One Who Fired Once", "Needed one shot; waited as long as that took."],
+        ["**Staff**", "The One Who Burned the Field", "Unmade the ground the enemy was standing on."],
+        ["**Wand**", "The One Who Brought Them Back", "Is the reason the other eleven were still standing."],
+        ["**Scythe**", "The One Who Waited", "Did nothing quickly, and nothing survived it."]
+      ]
     },
     {
       "type": "heading",
@@ -69,8 +110,8 @@
     {
       "type": "list",
       "items": [
-        "**The entity** — the un-writer itself, the force that tore the truth apart. The most concentrated corruption in the world.",
-        "**Bosses** — larger, reassembled clusters of false pages: corruption gathered into something powerful and deliberate.",
+        "**The silencer** — the thing that stopped the scribe mid-sentence, and the deepest blankness in the world.",
+        "**Bosses** — larger, self-assembled masses of blank page: absence gathered into something powerful and deliberate.",
         "**The scattered pages** — the ordinary monsters of the world, and the reason to keep walking."
       ]
     },
@@ -79,7 +120,7 @@
     },
     {
       "type": "paragraph",
-      "text": "*Canon reference: this page is drawn from the game's canon lore. Story beats, the entity's history, and the codex of recovered pages will be expanded as they are designed.*"
+      "text": "*Canon reference: this page is drawn from the game's canon lore. Story beats, the silencer's history, and the codex you write as you play will be expanded as they are designed.*"
     }
   ]
 }

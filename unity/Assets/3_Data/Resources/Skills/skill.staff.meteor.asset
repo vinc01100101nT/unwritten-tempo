@@ -181,7 +181,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      side: 0
+      side: 1
       subStat: 0
       affinity:
       - stat: 1
@@ -311,7 +311,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      side: 0
+      side: 1
       subStat: 0
       affinity:
       - stat: 1
@@ -439,7 +439,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      side: 0
+      side: 1
       subStat: 0
       affinity: []
       chanceAffinity:
@@ -577,7 +577,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      side: 0
+      side: 1
       subStat: 0
       affinity:
       - stat: 1

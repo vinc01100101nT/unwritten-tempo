@@ -132,4 +132,64 @@ Steps 1-3 are the risky ones: every read of a mob stat moves. Step 4 is what unb
 
 - **`CritShieldPerLuk` becomes symmetric.** It already reads the *target's* LUK to lower the attacker's crit chance (Character.cs:89). Mobs have LUK today, but mob attacks don't route through the player's crit path — unifying makes it apply both ways. That is a real balance change, not a refactor.
 - **A mob's ring is authored, not drafted.** The player's ring comes from the Ring of Progression's pick-per-10-points draft; a mob just wears a pre-authored one. Same data, no drafting code.
+
+---
+
+## The stat reference (added 2026-08-23)
+
+Three tables, read off `UnitStatMath` and its callers. Every row is what the code does today, not intent.
+
+### Primary stats — the only six you allocate
+
+STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **two** sources: the points you spend and what your gear grants. **No skill, buff, debuff, passive, ailment or state may move a primary** — that rule is the reason the sub-stat table below exists.
+
+### What the primaries drive
+
+| Sub-stat | Scaled by |
+| --- | --- |
+| Attack | STR ×1/pt + `⌊STR/10⌋²`, DEX÷2, LUK÷4, base + 1/level, gear, the Atk ring node, a timed Attack change |
+| Magic attack | INT ×1/pt + `⌊INT/10⌋²`, LUK÷4, base + 1/level, gear, the MAtk ring node, a timed MagicAttack change |
+| Defence | VIT÷3, base + 1/level, gear, the Def ring node, a timed Defense change |
+| Magic defence | INT÷3, base + 1/level, gear, the **same** Def ring node, a timed MagicDefense change |
+| Max health | level curve × (1 + VIT×0.02), gear, the HP ring node, a timed MaxHP change |
+| Max mana | level curve × (1 + INT×0.015), gear, the MP ring node, a timed MaxMP change |
+| Accuracy | level + DEX×1 + LUK÷3, the Accuracy ring node, a timed Accuracy change |
+| Evasion | level + AGI×1 + LUK÷5, the Evasion ring node, a timed Evasion change |
+| Attack speed | AGI 0.5%/pt + DEX at 0.25× that, gear, the AttackSpeed ring node, a timed AttackSpeed change; capped ×3 |
+| Cast speed | `1 − DEX/150` (instant at 150 DEX), divided by the CastSpeed ring node and a timed CastSpeed change |
+| Crit chance | LUK 0.3%/pt, gear, the Critical ring node, a timed CritChance change; capped 95% |
+| Crit damage | 1.4 base + **LUK 0.2%/pt**, the same Critical ring node, a timed CritDamage change |
+| Crit resistance | the DEFENDER's LUK, 0.3%/pt off the attacker's crit chance |
+| HP regen | **VIT 0.02% of MaxHP per second per point**, plus a timed HPRegen change |
+| Mana regen | 1.5/s base + **INT 0.02% of MaxMP per second per point**, plus a timed MPRegen change |
+| Minimum damage floor | 55% of max, closed toward 1.0 by DEX (physical) / INT (magic) at 1.2%/pt |
+
+**The three bold lines were added 2026-08-23.** Before that, crit damage read the ring alone, HP regen had no source at all (it existed only while a skill granted it), and mana regen was a flat 1.5/s.
+
+### Misc — nothing here reads a primary
+
+| Stat | Where it comes from |
+| --- | --- |
+| Movement speed | `CharacterSpec.moveSpeed` (2), × `UnitStates.MoveMult` |
+| Mana leech | 0; a timed ManaLeech change only |
+| Life steal | `Character.lifeStealPct` (0) + a timed LifeSteal change |
+| Damage reflect | `Character.reflectPct` (0) + a timed Reflect change |
+| Damage dealt | **not a character stat** — a per-hit multiplier applied while the hit is built (`UnitOffense.Dealt`) |
+| Damage reduction | **not a character stat** — the timed DamageReduction pile, read per incoming hit |
+| Hard defence % / hard magic defence % | authored per mob on `Health`; on the player `baseHardDefPercent` is 0 with no item source (dev slider only) |
+| Max stamina | flat 100 on `Character`; drain/refill rates on `Player3DController`, player-only |
+| Block chance | the equipped off-hand `Item.blockChance` |
+| Armour element | `Character.armorElement` / the mob's authored element |
+
+### Regeneration is one ticker for everyone (2026-08-23)
+
+Both pools refill in `StatusController` — the one per-unit ticker — on the 0.8s cadence, each carrying its sub-1-point remainder so a tiny rate is paid exactly rather than rounded up. Rate = the unit's own natural rate + the timed sub-stat change; **a rate at or below zero pays nothing**, so a regen debuff can stop healing but never drain, and never heals what it is meant to weaken.
+
+This closed a player-only gap: mobs had an MP pool that nothing ever refilled. `Character.Update` no longer trickles either pool.
+
+### Every HP gain announces itself the same way (2026-08-23)
+
+`CombatAuthority.NoteHPAdded` is the ONE door: it draws the green digits, fires the cue and raises the `OnHPAdded` event, which carries only WHO and HOW MUCH. Any healing source added later is covered for free. The cue was renamed from `OnReceiveHeal` (same int, so authored libraries keep their binding) because a cue must name the moment, not the source.
+
+**One deliberate exception left:** `Character.LeechHeal` still adds HP silently, so multi-hit life steal doesn't spam numbers.
 - **Gear defines the skill kit.** Since a weapon's identity is its skill roster, arming a mob with a real weapon hands it that weapon's skills. Powerful, and a reason to keep most mobs on natural gear until that's intentional.

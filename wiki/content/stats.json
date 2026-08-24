@@ -31,6 +31,189 @@
   },
   {
    "type": "heading",
+   "level": 3,
+   "text": "What each point actually buys"
+  },
+  {
+   "type": "paragraph",
+   "text": "Every stat feeds several numbers at once — that spread is what makes a build. The exact per-point values:"
+  },
+  {
+   "type": "table",
+   "headers": [
+    "Stat",
+    "Every point gives you"
+   ],
+   "rows": [
+    [
+     "**STR**",
+     "+1 ATK. Every full 10 STR also adds a bonus equal to that tens digit squared — so 50 STR is +25 ATK on top, and 99 STR is +81."
+    ],
+    [
+     "**AGI**",
+     "+1 FLEE (dodge), and +0.5% attack speed."
+    ],
+    [
+     "**VIT**",
+     "+2% max HP, +⅓ DEF, and health regeneration worth 0.02% of your max HP every second."
+    ],
+    [
+     "**INT**",
+     "+1 M.ATK (with the same tens-squared bonus STR gets), +1.5% max MP, +⅓ M.DEF, mana regeneration worth 0.02% of your max MP every second, and steadier magic damage."
+    ],
+    [
+     "**DEX**",
+     "+1 HIT (accuracy), +½ ATK, +0.125% attack speed, steadier physical damage, and a shorter cast wind-up — reaching **instant casting at 150 DEX**."
+    ],
+    [
+     "**LUK**",
+     "+0.3% crit chance, +0.2% crit damage, +¼ ATK, +¼ M.ATK, +⅓ HIT, +⅕ FLEE — and it works defensively too: your LUK lowers an attacker's crit chance against you by 0.3% per point."
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "text": "**Nothing in combat can change these six.** No buff, debuff, potion or ailment touches a primary stat — they come from your points and your gear alone. What skills move instead is the list below."
+  },
+  {
+   "type": "heading",
+   "level": 3,
+   "text": "Every number on your sheet, and what feeds it"
+  },
+  {
+   "type": "paragraph",
+   "text": "These are the numbers combat actually reads. A buff or debuff can move any of them for a while; your primaries and your gear set where they sit at rest."
+  },
+  {
+   "type": "table",
+   "headers": [
+    "Number",
+    "Fed by"
+   ],
+   "rows": [
+    [
+     "**ATK**",
+     "STR (plus its tens bonus), DEX÷2, LUK÷4, your level, your gear, the Attack ring stat"
+    ],
+    [
+     "**M.ATK**",
+     "INT (plus its tens bonus), LUK÷4, your level, your gear, the Magic Attack ring stat"
+    ],
+    [
+     "**DEF**",
+     "VIT÷3, your level, your gear, the Defense ring stat"
+    ],
+    [
+     "**M.DEF**",
+     "INT÷3, your level, your gear — the *same* Defense ring stat, there is no separate magic node"
+    ],
+    [
+     "**Max HP**",
+     "a level curve raised 2% per VIT, your gear, the HP ring stat"
+    ],
+    [
+     "**Max MP**",
+     "a level curve raised 1.5% per INT, your gear, the MP ring stat"
+    ],
+    [
+     "**HIT** (accuracy)",
+     "your level + DEX + LUK÷3, the Accuracy ring stat"
+    ],
+    [
+     "**FLEE** (dodge)",
+     "your level + AGI + LUK÷5, the Evasion ring stat"
+    ],
+    [
+     "**Attack speed**",
+     "AGI at 0.5% a point, DEX at a quarter of that, your gear, the Attack Speed ring stat — **hard-capped at 3× normal**"
+    ],
+    [
+     "**Cast wind-up**",
+     "DEX alone decides it, reaching instant at 150; the Cast Speed ring stat shortens whatever is left"
+    ],
+    [
+     "**Crit chance**",
+     "LUK at 0.3% a point, your gear, the Critical ring stat — **capped at 95%**"
+    ],
+    [
+     "**Crit damage**",
+     "starts at 140%, plus 0.2% a point of LUK, plus the *same* Critical ring stat"
+    ],
+    [
+     "**HP regen**",
+     "VIT — 0.02% of your max HP each second"
+    ],
+    [
+     "**MP regen**",
+     "1.5 a second flat, plus 0.02% of your max MP each second from INT"
+    ],
+    [
+     "**Damage spread**",
+     "a swing rolls between a floor and its maximum. The floor starts at 55% and closes as DEX (physical) or INT (magic) rises, hitting full around 38 points — so investment both raises *and* steadies your damage."
+    ]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 3,
+   "text": "Numbers your stats don't touch"
+  },
+  {
+   "type": "paragraph",
+   "text": "A few things come from somewhere other than your six stats. They're real numbers that matter in a fight — they just aren't bought with points."
+  },
+  {
+   "type": "table",
+   "headers": [
+    "Number",
+    "Where it comes from"
+   ],
+   "rows": [
+    [
+     "**Move speed**",
+     "your character's own speed, multiplied by whatever is slowing or hastening you"
+    ],
+    [
+     "**Block chance**",
+     "the shield or off-hand you have equipped — the item, not you"
+    ],
+    [
+     "**Armor element**",
+     "your character's own property; incoming attacks are scaled against it"
+    ],
+    [
+     "**Stamina**",
+     "a flat pool of 100. Sprinting drains 25 a second; it refills at 30 standing still, 18 walking, and 8 doing anything else"
+    ],
+    [
+     "**Life steal · MP leech · Reflect**",
+     "0 at rest — they exist only while a card or a skill grants them"
+    ],
+    [
+     "**Flat damage cut**",
+     "a percentage taken off a hit *before* DEF subtracts its flat amount. Monsters can be built with it; you have none yet"
+    ]
+   ]
+  },
+  {
+   "type": "heading",
+   "level": 3,
+   "text": "How regeneration works"
+  },
+  {
+   "type": "paragraph",
+   "text": "HP and MP both tick back up on their own, several times a second, and the fraction is never lost — a rate too small to pay a whole point this tick is carried to the next, so 0.3 a second really is 0.3 a second."
+  },
+  {
+   "type": "paragraph",
+   "text": "A debuff can **stop** your regeneration but can never reverse it. Push a regen rate below zero and it simply pays nothing — it will not drain you, and it will not heal an enemy you cast it on."
+  },
+  {
+   "type": "callout",
+   "text": "Any time your HP goes up — a potion, a heal, natural regeneration, anything added later — you'll see the same **green number** float over your head. Monsters get it too, so you can always see when something is healing itself."
+  },
+  {
+   "type": "heading",
    "level": 2,
    "text": "The Ring — your growth engine"
   },

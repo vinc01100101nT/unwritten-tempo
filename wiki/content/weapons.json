@@ -21,7 +21,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Every weapon owns a **distinct playstyle** — one clear reason to wield it. They fall into three families:"
+      "text": "Every weapon owns a **distinct playstyle** — one clear reason to wield it. That playstyle isn't a design label: each of the twelve is the last surviving trace of one of the **Twelve Unwritten**, and how the weapon fights *is* how that person fought. None of them was ever named — only described by the deed witnesses remembered. They fall into three families:"
     },
     {
       "type": "heading",
@@ -32,31 +32,38 @@
       "type": "table",
       "headers": [
         "Weapon",
+        "Unwritten",
         "What it's for"
       ],
       "rows": [
         [
           "**Sword**",
+          "The One Who Answered",
           "Win duels with precise single-target bursts and timed defense."
         ],
         [
           "**Greatsword**",
+          "The One Who Cleared the Road",
           "Delete whole groups with huge cleaves."
         ],
         [
           "**Axe**",
+          "The One Who Never Stopped",
           "Snowball through relentless aggression."
         ],
         [
           "**Warhammer**",
+          "The One Who Said No",
           "Deny enemies their turn — stun and knock them back."
         ],
         [
           "**Spear**",
+          "The One Who Moved the Line",
           "Reposition the fight — pull enemies in and impale them."
         ],
         [
           "**Shield**",
+          "The One Who Stood",
           "Protect your allies by absorbing all the attention. *(off-hand — pair it with a one-handed weapon)*"
         ]
       ]
@@ -70,19 +77,23 @@
       "type": "table",
       "headers": [
         "Weapon",
+        "Unwritten",
         "What it's for"
       ],
       "rows": [
         [
           "**Bow**",
+          "The One Who Kept Distance",
           "Win through mobility and spacing — kite and never get touched."
         ],
         [
           "**Dagger**",
+          "The Late Arrival",
           "Eliminate weakened targets, then vanish."
         ],
         [
           "**Firearm**",
+          "The One Who Fired Once",
           "Land one devastating shot, then reload."
         ]
       ]
@@ -96,19 +107,23 @@
       "type": "table",
       "headers": [
         "Weapon",
+        "Unwritten",
         "What it's for"
       ],
       "rows": [
         [
           "**Staff**",
+          "The One Who Burned the Field",
           "Dominate whole areas with destructive magic."
         ],
         [
           "**Wand**",
+          "The One Who Brought Them Back",
           "Keep your allies alive."
         ],
         [
           "**Scythe**",
+          "The One Who Waited",
           "Slowly overwhelm enemies with stacking curses."
         ]
       ]

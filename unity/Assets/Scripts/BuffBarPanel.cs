@@ -31,7 +31,9 @@ public class BuffBarPanel : MonoBehaviour
     static readonly Color StackColor = new Color(1f, 0.87f, 0.45f);   // warm gold — reads as "count", distinct from the white timer
     // Pre-built "x1".."x99" labels: the count changes on every stack gain/expiry, and building the string there would
     // allocate during combat. Indexed by count, so a refresh is a lookup (PERFORMANCE.md: no per-frame/per-hit strings).
-    static readonly string[] StackLabels = BuildStackLabels();
+    /// <summary>Shared with <see cref="UnitStatusPanel"/> (the target/hover readouts) so both status displays read one
+    /// table rather than each building its own.</summary>
+    public static readonly string[] StackLabels = BuildStackLabels();
     static string[] BuildStackLabels()
     {
         var a = new string[UnitStates.MaxStacks + 1];
@@ -41,7 +43,6 @@ public class BuffBarPanel : MonoBehaviour
 
     static readonly Color CellBg = new Color(0.10f, 0.10f, 0.13f, 0.9f);
     static readonly Color Shade  = new Color(0f, 0f, 0f, 0.5f);
-    static readonly Color TipBg  = new Color(0.05f, 0.05f, 0.07f, 0.97f);
 
     Canvas canvas;
     RectTransform holder;
@@ -50,14 +51,6 @@ public class BuffBarPanel : MonoBehaviour
     bool built;
     bool dirty;
     UnitStates subscribed;
-
-    // Shared hover card (one instance, reused by every cell): title + "what it does" body + live remaining time.
-    RectTransform tipRoot;
-    TMP_Text tipBody;
-    TMP_Text tipTime;
-    Cell hovered;
-    int tipLastSecs = -1;
-    readonly Vector3[] cornerBuf = new Vector3[4];
 
     void Update()
     {
@@ -111,7 +104,7 @@ public class BuffBarPanel : MonoBehaviour
     void Rebuild()
     {
         if (holder == null) return;
-        HideTip();   // the cells (and the one being hovered) are about to be destroyed
+        StateInfoCard.Hide();   // the cells (and the one being hovered) are about to be destroyed
         for (int i = holder.childCount - 1; i >= 0; i--) Destroy(holder.GetChild(i).gameObject);
         cells.Clear();
 
@@ -160,10 +153,11 @@ public class BuffBarPanel : MonoBehaviour
 
         var cell = new Cell { buff = buff, rt = frame.rectTransform, fill = fill, time = time, stacks = stacks };
 
-        // Hover → show the shared info card over this cell; exit → hide it.
+        // Hover → show the shared info card beside this cell; exit → hide it.
         var trig = frame.gameObject.AddComponent<EventTrigger>();
-        AddTrigger(trig, EventTriggerType.PointerEnter, () => ShowTip(cell));
-        AddTrigger(trig, EventTriggerType.PointerExit,  HideTip);
+        AddTrigger(trig, EventTriggerType.PointerEnter,
+                   () => StateInfoCard.Show(canvas, cell.rt, cell.buff, StateInfoCard.Side.Left));
+        AddTrigger(trig, EventTriggerType.PointerExit, StateInfoCard.Hide);
         return cell;
     }
 
@@ -191,74 +185,5 @@ public class BuffBarPanel : MonoBehaviour
                 c.lastStacks = n;
             }
         }
-
-        // Keep the open card's remaining-time line ticking (rewrite only on a whole-second change — no per-frame alloc).
-        if (hovered != null && hovered.buff != null && tipTime != null)
-        {
-            int tsecs = Mathf.CeilToInt(hovered.buff.Remaining);
-            if (tsecs != tipLastSecs) { tipTime.text = "Time left: " + tsecs + "s"; tipLastSecs = tsecs; }
-        }
-    }
-
-    void EnsureTooltip()
-    {
-        if (tipRoot != null || canvas == null) return;
-
-        var bg = UiKit.Img("BuffInfoCard", canvas.transform, TipBg);
-        tipRoot = bg.rectTransform;
-        tipRoot.anchorMin = tipRoot.anchorMax = new Vector2(0.5f, 0.5f);
-        tipRoot.pivot = new Vector2(1f, 0.5f);        // right edge sits against the cell; card grows LEFT
-        tipRoot.sizeDelta = new Vector2(230f, 60f);   // width fixed; height driven by the fitter below
-        bg.raycastTarget = false;
-
-        var vlg = bg.gameObject.AddComponent<VerticalLayoutGroup>();
-        vlg.padding = new RectOffset(10, 10, 8, 8);
-        vlg.spacing = 3;
-        vlg.childControlWidth = vlg.childControlHeight = true;
-        vlg.childForceExpandWidth = true; vlg.childForceExpandHeight = false;
-        var fit = bg.gameObject.AddComponent<ContentSizeFitter>();
-        fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        fit.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-        tipBody = UiKit.MakeText("Body", tipRoot, "", 12, FontStyle.Normal, TextAnchor.UpperLeft);
-        tipBody.richText = true; tipBody.raycastTarget = false;
-        tipTime = UiKit.MakeText("Time", tipRoot, "", 11, FontStyle.Bold, TextAnchor.UpperLeft);
-        tipTime.color = new Color(0.655f, 0.620f, 0.533f); tipTime.raycastTarget = false;
-
-        tipRoot.gameObject.SetActive(false);
-    }
-
-    void ShowTip(Cell c)
-    {
-        if (c == null || c.buff == null) return;
-        EnsureTooltip();
-        if (tipRoot == null) return;
-
-        hovered = c;
-        tipBody.text = "<b>" + (string.IsNullOrEmpty(c.buff.name) ? c.buff.id.ToString() : c.buff.name) + "</b>"
-                     + (string.IsNullOrEmpty(c.buff.description) ? "" : "\n" + c.buff.description);
-        tipLastSecs = -1;                       // force the time line to write this frame
-        tipRoot.gameObject.SetActive(true);
-        tipRoot.SetAsLastSibling();             // above every cell
-        PositionTip(c.rt);
-    }
-
-    void HideTip()
-    {
-        hovered = null;
-        if (tipRoot != null) tipRoot.gameObject.SetActive(false);
-    }
-
-    // Seat the card's right edge just left of the hovered cell, vertically centered on it.
-    void PositionTip(RectTransform cellRT)
-    {
-        if (tipRoot == null || cellRT == null) return;
-        var canvasRT = (RectTransform)canvas.transform;
-        Camera cam = canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
-        cellRT.GetWorldCorners(cornerBuf);                          // [0]=bottom-left, [1]=top-left
-        Vector3 leftCenter = (cornerBuf[0] + cornerBuf[1]) * 0.5f;
-        Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, leftCenter);
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRT, screen, cam, out var local))
-            tipRoot.anchoredPosition = local + new Vector2(-8f, 0f);
     }
 }

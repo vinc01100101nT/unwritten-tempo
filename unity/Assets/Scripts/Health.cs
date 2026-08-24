@@ -29,6 +29,11 @@ public class Health : MonoBehaviour, ICombatUnit
     [Tooltip("LUK — pre-renewal CRIT SHIELD: each point lowers an attacker's crit chance against this unit (0.3%/pt).")]
     public int luk = 0;
 
+    [Tooltip("Health restored per second with no skill running — derived from VIT by UnitStatBlock, like every other " +
+             "stat here. Authored directly only on a mob that carries no stat block.")]
+    public float hpRegenPerSecond = 0f;
+    public float HPRegenPerSecond => hpRegenPerSecond;
+
     [Tooltip("FLEE (RO evasion). A physical attacker's HIT is rolled against this; when it loses, the hit " +
              "MISSes (red) and deals no damage. Magic can't be evaded. Higher = dodges more. See Combat.")]
     public int flee = 0;
@@ -121,7 +126,12 @@ public class Health : MonoBehaviour, ICombatUnit
         var b = Brain; if (b != null) b.Knockback(worldFrom, speed, seconds, stagger);
     }
     public void ForceAggro(ICombatUnit source, float seconds)
-    { var b = Brain; if (b != null) b.Taunt(seconds); }
+    {
+        if (seconds <= 0f) return;
+        States.BeginTaunt(seconds);   // the WINDOW — shared with the player side, read by the skill door
+        // …and the brain's own half: engage now rather than waiting to be provoked, reading that same window.
+        var b = Brain; if (b != null) b.LockOnTaunter(States);
+    }
 
     // The unified per-unit state store (buffs/debuffs) — single source for gameplay queries AND the nameplate icons.
     // Lazily created so every mob gets one without editing prefabs; cached after first touch (no per-hit GetComponent).
@@ -131,6 +141,15 @@ public class Health : MonoBehaviour, ICombatUnit
     // Same shape and same reason as the store above: looked up once, then held.
     StatusController statusHost;
     public StatusController StatusHost => statusHost != null ? statusHost : (statusHost = Status.Of(gameObject));
+
+    // Mana lives on the stat block (it is derived from INT, like every other pool), so this side just forwards. A mob
+    // with no stat block reports an empty pool, which is what stops its regen rather than a special case for it.
+    UnitStatBlock block;
+    UnitStatBlock Block => block != null ? block : (block = GetComponent<UnitStatBlock>());
+    public int CurrentMP => Block != null ? Block.CurrentMP : 0;
+    public int MaxMP => Block != null ? Block.MaxMP : 0;
+    public float MPRegenPerSecond => Block != null ? Block.MPRegenPerSecond : 0f;
+    public void GainMana(int amount) { var b = Block; if (b != null) b.GainMana(amount); }
 
     // Vulnerability mark (Hex Field): while active, every incoming hit is multiplied up. Now read from the unified
     // state store (V3 unified-state migration) — was a local vulnUntil/vulnMult timer.
@@ -390,20 +409,15 @@ public class Health : MonoBehaviour, ICombatUnit
         // re-enables everything — a different beat: this lifts the stand-down, that re-asserts over the wholesale
         // enable. Both are needed; don't collapse them.)
         var lod = GetComponent<SimulationLod>(); if (lod != null) lod.Resync();
-        StatusHost.ClearFlinch();   // a new life is not staggered, and does not inherit the last one's footing meter
-        // A pooled mob comes back as the SAME object, so this is what tells anyone counting a run of hits that the
-        // thing they were hitting is gone and this is somebody new.
-        if (States != null) States.NoteNewLife();
+        ((ICombatUnit)this).BeginNewLife();   // the shared half — nothing timed carries across a death, for any unit
     }
 
-    /// <summary>Restore HP (capped at max) and pop a green "+N" over the unit.</summary>
+    /// <summary>Restore HP (capped at max) and announce the gain.</summary>
     public void Heal(int amount)
     {
         if (amount <= 0 || IsDead) return;
         Current = Mathf.Min(maxHealth, Current + amount);
-        // Show the green digits for the FULL intended amount, even at full HP — the heal still "landed" (player parity).
-        DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "+" + amount, new Color(0.45f, 1f, 0.45f));
-        VfxCue.Fire(VfxCueId.OnReceiveHeal, transform);
+        CombatAuthority.NoteHPAdded(this, amount);
     }
 
     IEnumerator Flash()

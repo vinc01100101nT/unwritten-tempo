@@ -37,7 +37,7 @@ MonoBehaviour:
     consumeAllStacks: 0
     consumeStacks: 0
   manaCost: 12
-  cooldown: 6
+  cooldown: 12
   castTime: 0
   aim: 0
   castRange: 0
@@ -308,7 +308,7 @@ MonoBehaviour:
         op: 0
         read: 0
         scaler: 1
-      side: 1
+      side: 0
       subStat: 19
       affinity: []
       chanceAffinity: []

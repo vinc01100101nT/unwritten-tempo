@@ -15,7 +15,7 @@ metadata:
 - Pass 1 `ApplyCasterEffects` → `ApplyOneToCaster`: every self verb, applied once to the caster, regardless of scope/affects/targets (runs even when `targets == None`). No hit loop — a multi-hit flurry must not dash you N times.
 - Pass 2: the existing gather, but the caster kinds were REMOVED from `ApplyOneToPlayer`'s switch (plus an early `IsSelfVerb` return), so the two switches are a true partition — a Self-targeted tick physically cannot double-apply a caster effect.
 
-**Single source of truth:** `SkillEffect.IsSelfVerb(kind)` (SkillEffect.cs) — it already existed for legacy targeting migration; do NOT add a second classifier (I nearly shipped a duplicate `SkillEffectSide` class). `SkillTickBinding.HasTargetEffects` / `HasCasterEffects` wrap it for the editor.
+**Single source of truth:** `SkillEffect.LandsOnCaster(e)` (SkillEffect.cs) — do NOT add a second classifier (I nearly shipped a duplicate `SkillEffectSide` class). `SkillTickBinding.HasTargetEffects` / `HasCasterEffects` wrap it for the editor. **Updated 2026-08-24:** it used to fall back to a per-KIND list, `IsSelfVerb`, whenever the authored side was `Auto`. Both are gone — see [[effect-side-auto-means-self]] — and the predicate is now a plain read of the authored side.
 
 **Authoring surface:** Skill Composer hides the radius/affects rows on a tick with no target effects (they'd gather nobody), relabels the mode dropdown "targets"→"aim" there, adds a second readout line naming the caster effects that always apply, and warns when the same caster kind appears twice on one tick (keyed by `buffStat` for Stat Buff, where two entries are legitimate).
 

@@ -36,21 +36,17 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 | damage | Direct damage — base power × ATK/MATK × affinity | mult | yes |
 | hits | Strikes per landing; each is a proc trigger | int | yes |
 | heal_amount | Flat HP restored | HP | yes |
-| heal_per_tick | Regen HP every 0.8s | HP | yes |
 | shield_amount | Barrier HP absorbed before it breaks | HP | yes |
-| dmg_reduction | Guard incoming-damage cut (clamped to 1) | 0..1 | yes |
-| dmg_taken_frac | Vulnerability extra damage on a mob | frac | yes |
 | dot_damage | Status DoT per tick (Poison / Bleed / Burn) | HP | yes |
-| slow_amount | Status Slow speed factor | 0..1 | yes |
-| accuracy_loss | Status Blind HIT loss | HIT | yes |
-| move_mult | Haste move-speed (mobs: &lt;1 = slow) | mult | yes |
+| sub_stat_magnitude | How far ONE sub-stat moves, up or down | frac or amount (the stat's own answer) | yes |
 | shove_speed | Knockback / Pull speed | u/s | no (raw) |
-| leech_frac | ManaLeech — damage dealt → MP | frac | no (raw) |
-| reflect_frac | Reflect — damage taken bounced back | frac | no (raw) |
+| charges | How many uses a charge pile holds (Parry, Brace, the two outgoing-damage piles) | int | no (`stacksPerApply`, or derived from swing rate) |
+| modifier_seconds / modifier_stacks | What ExtendDuration / AddStacks hand another skill's pile | sec / int | no |
 | execute_scale | Execute bonus multiplier vs missing HP | mult | base roll scales; this is raw |
-| buff_mult | Buff amplify amount | mult | **NO — flat by design** (support value = uptime) |
 | proc_chance | Per-hit roll for a Status / Execute proc | 0..1 | no |
 | duration | Effect window length | sec | yes (own affinity list) |
+
+**Retired channels — folded into `sub_stat_magnitude` when the sub-stat collapse landed:** `dmg_reduction` (Guard), `dmg_taken_frac` (Vulnerability), `heal_per_tick` (Regen), `slow_amount`, `accuracy_loss`, `move_mult` (Haste), `leech_frac`, `reflect_frac`, `buff_mult`. Do not reintroduce any of them as its own channel — see the note under the Effects catalog.
 
 **Tier B — skill / delivery channels** — owned once per skill or tick, not per effect:
 
@@ -73,26 +69,32 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer), not rolled onto a weapon — a skill that knocks back simply *is* a knockback skill. The **ring does numbers only**, so there's nothing to "fold" between weapon and ring. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
 
+**This table is the `SkillEffectKind` enum, in enum order** (re-read off `SkillEffect.cs` on 2026-08-24). It is the full set — there is no effect a skill can author that is not here.
+
 | Effect | Target | Dmg type | Channels | Ring scales | Details |
 | --- | --- | --- | --- | --- | --- |
-| Damage | mobs/any | yes | damage, hits | damage, hits | Base power × ATK/MATK × affinity; each hit triggers the binding's procs |
-| Execute | mobs | yes | execute_scale, proc_chance | base roll (scale raw) | Proc per hit: bonus = roll × power × target's missing HP; huge near death |
+| Damage | mobs/any | yes | damage, hits | damage, hits | Base power × ATK/MATK × affinity; each strike triggers the binding's procs. Multi-hit SPLITS one total across the strikes |
 | Heal | self/others | no | heal_amount | heal_amount | Flat HP; landing follows the tick's TargetMode |
-| Status | mobs/self | no | ailment + dot_damage / slow_amount / accuracy_loss, duration, proc_chance | output + duration (not proc_chance) | Ailment picks the channel; Stun/Freeze/Silence = duration-only |
-| Haste | self/mobs | no | move_mult, duration | move_mult, duration | Move-speed ×; on mobs a &lt;1 value is a slow-debuff |
-| Guard | self | no | dmg_reduction, duration | dmg_reduction, duration | % incoming-damage cut (clamped to 1) |
-| Shield | self | no | shield_amount, duration | shield_amount, duration | Finite HP barrier; soaks hits until drained; DoT bypasses (like Guard) |
-| Regen | self | no | heal_per_tick, duration | heal_per_tick, duration | Heal-over-time, HP every 0.8s |
-| Buff | self | no | buff_mult, duration, ramp | duration only | buffStat = Damage/AttackSpeed/CastSpeed; amount FLAT; Damage buff can ramp |
-| Cleanse | self | no | debuffs_removed | — | Strips up to N active debuffs |
-| Vulnerability | mobs | no | dmg_taken_frac, duration | dmg_taken_frac, duration | Marks a mob to take +frac more damage |
+| Status | mobs/self | no | ailment + dot_damage, duration, proc_chance | output + duration (not proc_chance) | The **six** ailments: Poison / Bleed / Burn (DoT) and Stun / Freeze / Silence (duration-only) |
 | Taunt | mobs | no | duration | duration | Forces mob aggro onto the caster |
+| Teleport | self (point) | no | — | — | Instant blink to the aimed, range-clamped point |
+| **SubStatBuff** | self/others | no | sub-stat + magnitude, duration | magnitude, duration | **THE single path for every timed sub-stat RISE** — move speed, both regens, leech, reflect, accuracy, evasion, attack, defence, crit, max HP/MP, damage, damage reduction. Percent-or-amount is the stat's own answer |
+| Cleanse | self | no | debuffs_removed | — | Strips up to N active debuffs |
+| Execute | mobs | yes | execute_scale, proc_chance | base roll (scale raw) | Proc per hit: bonus = roll × magnitude × target's missing HP fraction; huge near death |
+| Dash | self (point) | no | dash_speed, ease | — | Visible fast glide to the aimed point; blocked by geometry |
 | Knockback | mobs | no | shove_speed, duration | duration only | Shoves the mob away from the caster |
 | Pull | mobs | no | shove_speed, duration | duration only | Drags the mob toward the caster |
-| ManaLeech | self | no | leech_frac, duration | duration only | Timed window: fraction of damage dealt returns as MP |
-| Reflect | self | no | reflect_frac, duration | duration only | Timed window: reflect a fraction of damage taken |
-| Teleport | self (point) | no | — | — | Instant blink to the aimed, range-clamped point |
-| Dash | self (point) | no | dash_speed, ease | — | Visible fast glide to the aimed point; blocked by geometry |
+| Shield | self | no | shield_amount, duration | shield_amount, duration | Finite HP barrier; soaks hits until drained; DoT bypasses |
+| **Parry** | self | no | charges, duration | duration | CHARGES: the next incoming hit is negated outright (0 damage, no defence math) and spends one. Binary — no magnitude. A spent charge fires `OnParry` |
+| **Brace** | self | no | charges, duration | duration | CHARGES: each holds back one incoming hit, banking its damage instead of paying HP; the whole debt lands as one true-damage hit when the window ends. A parry ERASES, a brace POSTPONES |
+| **ExtendDuration** | another SKILL's pile | no | modifier_seconds | — | Gives every stack of the named skill's pile more life. Does nothing if that pile isn't running |
+| **AddStacks** | another SKILL's pile | no | modifier_stacks | — | Adds stacks to the named skill's pile, each a copy of its newest. THE way one skill feeds another's pile |
+| **BoostOutgoingDamage** | self/others | no | magnitude, charges, duration | magnitude, duration | CHARGES: one charge multiplies one outgoing attack by `1 + magnitude` and is spent by it, **hit or miss**. Lands BEFORE armour. Catches basics, skill strikes, executes, mob swings — DoT excluded |
+| **ReduceOutgoingDamage** | self/others | no | magnitude, charges, duration | magnitude, duration | The mirror: one charge makes one outgoing attack land at `1 − magnitude`. Authored as the CUT. Its own pile, so a debuff can never spend a boost |
+| **ImmuneToDisables** | self/others | no | duration | duration | A plain window (not charges) where nothing stops the holder: flinch, stun, freeze, silence, knockback, pull, and a hit cancelling a cast. Does not touch damage or DoT |
+| **SubStatDebuff** | mobs/self | no | sub-stat + magnitude, duration | magnitude, duration | The exact mirror of SubStatBuff, same stat list and pile. Authored as a positive number, applied as a subtraction |
+
+**Collapsed into the two sub-stat effects — they are NOT separate kinds any more:** Haste, Guard, Regen, Buff, Vulnerability, ManaLeech and Reflect. Each is now one row of the sub-stat table plus one lift at that stat's read site. Adding any of them back as its own verb is the DRY violation the collapse removed. **Slow and Blind are likewise not ailments** — slow is the MovementSpeed sub-stat, and accuracy loss is the Accuracy sub-stat.
 
 **Rejected — out of scope for unwritten:** **Summon** (needs the deferred `Limit` cap — uncapped = perf hazard) and **Transform** (a whole rig/stance/stat-swap feature).
 
@@ -151,7 +153,7 @@ A skill's **trigger** (`SkillDef.trigger`) decides what makes it run — one aut
 Passive triggers come in **two shapes, each matched to the space it names:**
 
 - `OnSkillCastComplete<skill>` **— parameterized** (pick the target active from a dropdown): fires when that active finishes casting **uninterrupted**. The skill set is **open-ended**, so a parameter — not one enum value per skill — is the only clean fit. This is how a passive rides another skill (e.g. Lock Blades off Lunge).
-- **Natural events — flat** (`OnBasicAttackDealt`, `OnKill`, `OnLowHP`, `OnDamageDealt`, `OnParry`): a **small, closed** set, listed directly with no wrapper. `OnParry` **is the deliberate exception** to the skill-parameterized scheme — a parry's success is a *game* event (you blocked a hit), not "you cast a skill."
+- **Natural events — flat** (`OnBasicAttackDealt`, `OnKill`, `OnLowHP`, `OnDamageDealt`, `OnParry`, `OnBasicAttackStart`, `OnDamageReceived`): a **small, closed** set, listed directly with no wrapper — the whole of `SkillTrigger` besides `OnCast` and the parameterized one above. `OnParry` **is the deliberate exception** to the skill-parameterized scheme — a parry's success is a *game* event (you blocked a hit), not "you cast a skill."
 
 All triggers route through **one dispatch handler** (`PassiveEvents.Fire`) — the single place a trigger's rule is applied, so no fire-site can forget one. A passive **fires as a full skill** — the same VFX, ticks, and effects an active plays; only the trigger differs. Its aim is auto-resolved from the trigger: an aimed skill (single-target / AoE / projectile) lands on the triggering entity or its location; a **self** skill always casts on the caster (never the victim).
 
