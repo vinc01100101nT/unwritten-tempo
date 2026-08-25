@@ -9,6 +9,9 @@ unity open /Users/vince/Desktop/CODES/unwritten-tempo/unity --args "-automated"
 MAP PAINTER SERVER:
 python -m http.server 8000 --directory tools/map-painter
 
+POSTGRESS:
+psql -d unwritten -c "select name, model_name, progress->>'level' as level from character;"
+
 wiki:
 cd /Users/vince/Desktop/CODES/unwritten-tempo/wiki && python3 -m http.server 8099 --bind 127.0.0.1
 

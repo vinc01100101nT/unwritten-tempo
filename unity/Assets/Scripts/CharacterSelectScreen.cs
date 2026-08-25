@@ -34,6 +34,11 @@ public class CharacterSelectScreen : MonoBehaviour
     string[] models;
     int modelIndex;
 
+    // The recolour being chosen: which part is selected, and the swatches showing each part's current colour.
+    Transform partsRow;
+    readonly List<Image> partSwatches = new List<Image>();
+    int selectedPart;
+
     public static void Open()
     {
         var go = new GameObject("CharacterSelectScreen") { hideFlags = HideFlags.DontSaveInEditor };
@@ -44,7 +49,7 @@ public class CharacterSelectScreen : MonoBehaviour
     void Start()
     {
         var canvas = FrontScreen.Canvas(transform);
-        panel = FrontScreen.Panel(canvas, new Vector2(720, 520));
+        panel = FrontScreen.Panel(canvas, new Vector2(780, 620));
 
         var title = UiKit.Label("Title", panel, "Your Characters", 28, FontStyle.Normal, TextAnchor.MiddleCenter, title: true);
         title.color = UiKit.Gold;
@@ -56,25 +61,25 @@ public class CharacterSelectScreen : MonoBehaviour
         listBox.rectTransform.pivot = new Vector2(0.5f, 1);
         listBox.rectTransform.offsetMin = new Vector2(24, 0);
         listBox.rectTransform.offsetMax = new Vector2(-24, 0);
-        listBox.rectTransform.sizeDelta = new Vector2(-48, 340);
+        listBox.rectTransform.sizeDelta = new Vector2(-48, 430);
         listBox.rectTransform.anchoredPosition = new Vector2(0, -76);
         listRoot = listBox.transform;
 
         status = UiKit.Label("Status", panel, "", 13, FontStyle.Normal, TextAnchor.MiddleCenter);
         status.color = UiKit.Gold;
-        FrontScreen.Row(status.rectTransform, -424, 18);
+        FrontScreen.Row(status.rectTransform, -518, 18);
 
         enterButton = UiKit.Btn("Enter World", panel, OnEnter);
-        FrontScreen.Place(enterButton.GetComponent<RectTransform>(), new Vector2(-243, -458), new Vector2(150, 34));
+        FrontScreen.Place(enterButton.GetComponent<RectTransform>(), new Vector2(-267, -556), new Vector2(150, 34));
 
         var newButton = UiKit.Btn("New", panel, OpenCreate);
-        FrontScreen.Place(newButton.GetComponent<RectTransform>(), new Vector2(-81, -458), new Vector2(150, 34));
+        FrontScreen.Place(newButton.GetComponent<RectTransform>(), new Vector2(-89, -556), new Vector2(150, 34));
 
         deleteButton = UiKit.Btn("Delete", panel, OnDelete);
-        FrontScreen.Place(deleteButton.GetComponent<RectTransform>(), new Vector2(81, -458), new Vector2(150, 34));
+        FrontScreen.Place(deleteButton.GetComponent<RectTransform>(), new Vector2(89, -556), new Vector2(150, 34));
 
         var signOut = UiKit.Btn("Sign Out", panel, OnSignOut);
-        FrontScreen.Place(signOut.GetComponent<RectTransform>(), new Vector2(243, -458), new Vector2(150, 34));
+        FrontScreen.Place(signOut.GetComponent<RectTransform>(), new Vector2(267, -556), new Vector2(150, 34));
 
         Refresh();
     }
@@ -199,7 +204,7 @@ public class CharacterSelectScreen : MonoBehaviour
         box.rectTransform.pivot = new Vector2(0.5f, 1);
         box.rectTransform.offsetMin = new Vector2(24, 0);
         box.rectTransform.offsetMax = new Vector2(-24, 0);
-        box.rectTransform.sizeDelta = new Vector2(-48, 340);
+        box.rectTransform.sizeDelta = new Vector2(-48, 430);
         box.rectTransform.anchoredPosition = new Vector2(0, -76);
         createPanel = box.gameObject;
 
@@ -209,37 +214,48 @@ public class CharacterSelectScreen : MonoBehaviour
 
         var heading = UiKit.Label("Heading", inner, "A new character", 20, FontStyle.Normal, TextAnchor.MiddleCenter, title: true);
         heading.color = UiKit.Gold;
-        FrontScreen.Row(heading.rectTransform, -16, 28);
+        FrontScreen.Row(heading.rectTransform, -14, 28);
 
-        // The body you are choosing, shown as itself. A name in a box tells you nothing about what you will play.
+        // The body, shown as itself. It owns the left column outright; nothing else is allowed into that strip.
         var frame = UiKit.Img("PreviewFrame", inner, UiKit.Gold);
-        FrontScreen.Place(frame.rectTransform, new Vector2(-216, -56), new Vector2(210, 260));
+        FrontScreen.Place(frame.rectTransform, new Vector2(-232, -54), new Vector2(212, 300));
         var shot = new GameObject("Preview", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
         shot.transform.SetParent(frame.transform, false);
         UiKit.Fill((RectTransform)shot.transform, new Vector2(2, 2), new Vector2(-2, -2));
         preview = CharacterPreview.Create(shot.GetComponent<RawImage>(), transform);
+        preview.OnBodyChanged += RebuildParts;
 
-        // Name and body sit to the RIGHT of the preview, sharing its lines.
-        const float TextLeft = 250f;
-        nameField = FrontScreen.Field(inner, "Name", -64, false, TextLeft, 30f);
+        // Everything else starts past the preview's right edge PLUS a gutter, so no label can ever sit on the art.
+        const float TextLeft = 262f;
+        const float TextRight = 28f;
+        const float Mid = 117f;            // centre of the right column, for the fixed-width controls
+
+        nameField = FrontScreen.Field(inner, "Name", -58, false, TextLeft, TextRight);
 
         var bodyCaption = UiKit.Label("BodyLabel", inner, "Body", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
         bodyCaption.color = UiKit.TextDim;
-        FrontScreen.Row(bodyCaption.rectTransform, -132, 18, TextLeft, 30f);
+        FrontScreen.Row(bodyCaption.rectTransform, -128, 18, TextLeft, TextRight);
 
         modelLabel = UiKit.Label("Body", inner, "…", 16, FontStyle.Normal, TextAnchor.MiddleCenter);
         modelLabel.color = UiKit.TextMain;
-        FrontScreen.Place(modelLabel.rectTransform, new Vector2(110, -154), new Vector2(200, 32));
+        FrontScreen.Place(modelLabel.rectTransform, new Vector2(Mid, -150), new Vector2(180, 32));
 
         var prev = UiKit.Btn("<", inner, () => StepModel(-1));
-        FrontScreen.Place(prev.GetComponent<RectTransform>(), new Vector2(-20, -154), new Vector2(40, 32));
+        FrontScreen.Place(prev.GetComponent<RectTransform>(), new Vector2(Mid - 122, -150), new Vector2(40, 32));
         var next = UiKit.Btn(">", inner, () => StepModel(1));
-        FrontScreen.Place(next.GetComponent<RectTransform>(), new Vector2(240, -154), new Vector2(40, 32));
+        FrontScreen.Place(next.GetComponent<RectTransform>(), new Vector2(Mid + 122, -150), new Vector2(40, 32));
+
+        var colourCaption = UiKit.Label("ColourLabel", inner, "Colours", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
+        colourCaption.color = UiKit.TextDim;
+        FrontScreen.Row(colourCaption.rectTransform, -200, 18, TextLeft, TextRight);
+
+        partsRow = MakeSwatchRow(inner, -222, TextLeft, TextRight).transform;
+        BuildMixer(inner, TextLeft, TextRight, Mid);
 
         var create = UiKit.Btn("Create", inner, OnCreate);
-        FrontScreen.Place(create.GetComponent<RectTransform>(), new Vector2(30, -262), new Vector2(140, 34));
+        FrontScreen.Place(create.GetComponent<RectTransform>(), new Vector2(Mid - 78, -372), new Vector2(140, 34));
         var cancel = UiKit.Btn("Cancel", inner, CloseCreate);
-        FrontScreen.Place(cancel.GetComponent<RectTransform>(), new Vector2(190, -262), new Vector2(140, 34));
+        FrontScreen.Place(cancel.GetComponent<RectTransform>(), new Vector2(Mid + 78, -372), new Vector2(140, 34));
 
         nameField.ActivateInputField();
 
@@ -253,6 +269,146 @@ public class CharacterSelectScreen : MonoBehaviour
             modelIndex = 0;
             ShowModel();
         });
+    }
+
+    const int SwatchSize = 26;
+
+    UnityEngine.UI.Slider redSlider, greenSlider, blueSlider;
+    Image mixedSwatch;
+
+    // A left-aligned strip beside the preview that swatches are laid into.
+    static GameObject MakeSwatchRow(Transform inner, float top, float left, float right)
+    {
+        var go = new GameObject("Row", typeof(RectTransform));
+        go.transform.SetParent(inner, false);
+        var group = go.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+        group.spacing = 6;
+        group.childForceExpandWidth = false;
+        group.childForceExpandHeight = false;
+        group.childAlignment = TextAnchor.MiddleLeft;
+        FrontScreen.Row((RectTransform)go.transform, top, SwatchSize, left, right);
+        return go;
+    }
+
+    // ANY colour, not a menu of twenty. Three sliders mix it and the chosen part follows as they move, so the
+    // body in the frame IS the preview of the colour — there is no separate "apply" step to forget.
+    void BuildMixer(Transform inner, float left, float right, float mid)
+    {
+        redSlider   = MixerRow(inner, "R", -256, left, right, new Color(0.9f, 0.3f, 0.3f));
+        greenSlider = MixerRow(inner, "G", -286, left, right, new Color(0.4f, 0.85f, 0.4f));
+        blueSlider  = MixerRow(inner, "B", -316, left, right, new Color(0.45f, 0.6f, 1f));
+
+        var border = UiKit.Img("Mixed", inner, UiKit.Gold);
+        FrontScreen.Place(border.rectTransform, new Vector2(mid + 132, -286), new Vector2(52, 52));
+        mixedSwatch = UiKit.Img("Fill", border.transform, Color.white);
+        UiKit.Fill(mixedSwatch.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
+        mixedSwatch.raycastTarget = false;
+    }
+
+    UnityEngine.UI.Slider MixerRow(Transform inner, string label, float top, float left, float right, Color tint)
+    {
+        var caption = UiKit.Label(label + "Cap", inner, label, 12, FontStyle.Bold, TextAnchor.MiddleLeft);
+        caption.color = tint;
+        FrontScreen.Row(caption.rectTransform, top, 22, left, right + 190f);
+
+        var slider = UiKit.MakeSlider(inner, 1f);
+        FrontScreen.Row(slider.GetComponent<RectTransform>(), top + 4, 14, left + 18f, right + 130f);
+        slider.onValueChanged.AddListener(_ => OnMixed());
+        return slider;
+    }
+
+    Color Mixed => new Color(
+        redSlider   != null ? redSlider.value   : 1f,
+        greenSlider != null ? greenSlider.value : 1f,
+        blueSlider  != null ? blueSlider.value  : 1f);
+
+    void OnMixed()
+    {
+        if (mixedSwatch != null) mixedSwatch.color = Mixed;
+        PaintSelectedPart(Mixed);
+    }
+
+    // Moving to another part shows THAT part's colour on the sliders, so the mixer always describes what is
+    // selected rather than whatever was mixed last.
+    void PullMixerFrom(Color colour)
+    {
+        if (redSlider == null) return;
+        redSlider.SetValueWithoutNotify(colour.r);
+        greenSlider.SetValueWithoutNotify(colour.g);
+        blueSlider.SetValueWithoutNotify(colour.b);
+        if (mixedSwatch != null) mixedSwatch.color = colour;
+    }
+
+    // The body decides which parts exist, so the parts strip is rebuilt whenever the body changes.
+    void RebuildParts()
+    {
+        if (partsRow == null || preview == null) return;
+        for (int i = partsRow.childCount - 1; i >= 0; i--) Destroy(partsRow.GetChild(i).gameObject);
+        partSwatches.Clear();
+        selectedPart = 0;
+
+        var parts = preview.Parts;
+        for (int i = 0; i < parts.Count; i++)
+        {
+            int index = i;
+            var border = UiKit.Img("Part", partsRow, i == 0 ? UiKit.Cyan : UiKit.Gold);
+            var le = border.gameObject.AddComponent<UnityEngine.UI.LayoutElement>();
+            le.preferredWidth = le.preferredHeight = SwatchSize;
+
+            var fill = UiKit.Img("Fill", border.transform, preview.TargetFor(parts[index]));
+            UiKit.Fill(fill.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
+            fill.raycastTarget = true;
+            partSwatches.Add(fill);
+
+            var button = fill.gameObject.AddComponent<Button>();
+            button.targetGraphic = fill;
+            button.onClick.AddListener(() => SelectPart(index));
+        }
+
+        if (parts.Count > 0) PullMixerFrom(preview.TargetFor(parts[0]));
+    }
+
+    void SelectPart(int index)
+    {
+        selectedPart = index;
+        var parts = preview != null ? preview.Parts : null;
+        if (parts != null && index >= 0 && index < parts.Count) PullMixerFrom(preview.TargetFor(parts[index]));
+        for (int i = 0; i < partSwatches.Count; i++)
+        {
+            var border = partSwatches[i] != null ? partSwatches[i].transform.parent.GetComponent<Image>() : null;
+            if (border != null) border.color = i == selectedPart ? UiKit.Cyan : UiKit.Gold;
+        }
+    }
+
+    void PaintSelectedPart(Color colour)
+    {
+        if (preview == null) return;
+        var parts = preview.Parts;
+        if (selectedPart < 0 || selectedPart >= parts.Count) return;
+
+        preview.SetPartColor(parts[selectedPart], colour);
+        if (selectedPart < partSwatches.Count && partSwatches[selectedPart] != null)
+            partSwatches[selectedPart].color = colour;
+    }
+
+    // What the player chose, in the form the character record stores: source colour → the colour it now wears.
+    void CaptureDye(out string[] sources, out string[] targets)
+    {
+        var parts = preview != null ? preview.Parts : null;
+        var src = new List<string>();
+        var dst = new List<string>();
+        if (parts != null)
+        {
+            for (int i = 0; i < parts.Count; i++)
+            {
+                Color target = preview.TargetFor(parts[i]);
+                if (target == parts[i]) continue;   // untouched parts keep the model's own art — nothing to store
+                src.Add("#" + ColorUtility.ToHtmlStringRGB(parts[i]));
+                dst.Add("#" + ColorUtility.ToHtmlStringRGB(target));
+            }
+        }
+        sources = src.ToArray();
+        targets = dst.ToArray();
     }
 
     void StepModel(int step)
@@ -279,6 +435,10 @@ public class CharacterSelectScreen : MonoBehaviour
         modelLabel = null;
         // The preview owns a camera, a light and a picture in memory — none of it should outlive the panel.
         if (preview != null) { Destroy(preview.gameObject); preview = null; }
+        partsRow = null;
+        partSwatches.Clear();
+        redSlider = greenSlider = blueSlider = null;
+        mixedSwatch = null;
         Say("");
     }
 
@@ -289,8 +449,10 @@ public class CharacterSelectScreen : MonoBehaviour
         string name = nameField.text.Trim();
         if (name.Length < 3) { Say("A name needs at least 3 characters."); return; }
 
+        CaptureDye(out var dyeSources, out var dyeTargets);
+
         Say("Creating " + name + "…");
-        AccountClient.CreateCharacter(name, models[modelIndex], (info, error) =>
+        AccountClient.CreateCharacter(name, models[modelIndex], dyeSources, dyeTargets, (info, error) =>
         {
             if (this == null) return;
             if (info == null) { Say(error ?? "Could not create that character."); return; }

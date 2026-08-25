@@ -105,7 +105,14 @@ public static class AccountClient
 
     [Serializable] class CharacterList { public CharacterInfo[] characters; }
     [Serializable] class ModelList { public string[] models; }
-    [Serializable] class NewCharacter { public string name; public string modelName; }
+    [Serializable]
+    class NewCharacter
+    {
+        public string name;
+        public string modelName;
+        public string[] dyeSources;
+        public string[] dyeTargets;
+    }
 
     public static void ListCharacters(Action<CharacterInfo[], string> onDone)
     {
@@ -129,9 +136,19 @@ public static class AccountClient
         });
     }
 
-    public static void CreateCharacter(string name, string modelName, Action<CharacterInfo, string> onDone)
+    /// <summary>Create a character. The recolour travels WITH the creation, because appearance is chosen at the
+    /// same moment as the name and belongs to the character record, not to anything saved later.</summary>
+    public static void CreateCharacter(string name, string modelName, string[] dyeSources, string[] dyeTargets,
+                                       Action<CharacterInfo, string> onDone)
     {
-        Send("POST", "/characters", JsonUtility.ToJson(new NewCharacter { name = name, modelName = modelName }),
+        var body0 = new NewCharacter
+        {
+            name = name,
+            modelName = modelName,
+            dyeSources = dyeSources ?? Array.Empty<string>(),
+            dyeTargets = dyeTargets ?? Array.Empty<string>(),
+        };
+        Send("POST", "/characters", JsonUtility.ToJson(body0),
              true, (ok, body, error) =>
         {
             if (!ok) { onDone?.Invoke(null, error); return; }

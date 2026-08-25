@@ -131,6 +131,17 @@ public static class FrontScreen
             Object.DontDestroyOnLoad(events);
         }
 
+        // A camera of its own. The world's cameras are switched off until a character enters, and a screen with
+        // no camera at all makes Unity paint "No cameras rendering" across the view. This one draws nothing —
+        // it exists so the frame has an owner.
+        var camGo = new GameObject("FrontCamera") { hideFlags = HideFlags.DontSaveInEditor };
+        camGo.transform.SetParent(owner, false);
+        var frontCam = camGo.AddComponent<Camera>();
+        frontCam.clearFlags = CameraClearFlags.SolidColor;
+        frontCam.backgroundColor = new Color(0.051f, 0.055f, 0.063f, 1f);   // #0D0E10
+        frontCam.cullingMask = 0;
+        frontCam.depth = -50;
+
         var go = new GameObject("FrontCanvas", typeof(UnityEngine.Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         go.hideFlags = HideFlags.DontSaveInEditor;
         go.transform.SetParent(owner, false);
@@ -156,7 +167,30 @@ public static class FrontScreen
         veil.raycastTarget = true;   // swallow every click so nothing behind the door can be reached
         UiKit.Fill(veil.rectTransform, Vector2.zero, Vector2.zero);
 
+        Emblem(veil.transform);
         return veil.rectTransform;
+    }
+
+    // The game's mark, behind everything the screen puts on top of it. It is a SQUARE image, so it is placed as a
+    // large centred emblem rather than stretched across a wide screen — stretching it would distort the logo, and
+    // tiling it would read as wallpaper. Dimmed, because it is a backdrop and not the thing being read.
+    static void Emblem(Transform veil)
+    {
+        var art = Resources.Load<Texture2D>("UI/unwritten-logo");
+        if (art == null) return;   // no mark shipped — the screen is still perfectly usable without it
+
+        var go = new GameObject("Emblem", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
+        go.transform.SetParent(veil, false);
+        var image = go.GetComponent<RawImage>();
+        image.texture = art;
+        image.color = new Color(1f, 1f, 1f, 0.10f);
+        image.raycastTarget = false;
+
+        var rt = (RectTransform)go.transform;
+        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(900, 900);   // square art, square box — the ratio is never touched
+        rt.anchoredPosition = Vector2.zero;
     }
 
     /// <summary>A gold-bordered charcoal panel, centred. Returns the fill to parent contents to.</summary>
@@ -181,10 +215,12 @@ public static class FrontScreen
         rt.anchorMin = new Vector2(0, 1);
         rt.anchorMax = new Vector2(1, 1);
         rt.pivot = new Vector2(0.5f, 1);
-        rt.offsetMin = new Vector2(left, 0);
-        rt.offsetMax = new Vector2(-right, 0);
-        rt.sizeDelta = new Vector2(-(left + right), height);
-        rt.anchoredPosition = new Vector2(0, top);
+        // Position AND size come from the two offsets alone. Writing sizeDelta or anchoredPosition afterwards
+        // discards them: the row keeps the right width but re-centres itself, so an uneven inset pushes it off
+        // one edge. (Measured: left 250 / right 30 hung the name box 110 past the panel and slid the labels
+        // over the preview.)
+        rt.offsetMin = new Vector2(left, -(top + height));
+        rt.offsetMax = new Vector2(-right, -top);
     }
 
     /// <summary>Centre a fixed-size control, measured from the panel's top edge.</summary>

@@ -24,7 +24,26 @@ public class CharacterPreview : MonoBehaviour
     RenderTexture picture;
     Transform stageRoot;
     GameObject body;
+    CharacterDye3D dye;
     string shownModel;
+
+    /// <summary>Raised once a new body is standing and its recolourable parts are known, so a colour picker can
+    /// rebuild for the body actually on show rather than the one before it.</summary>
+    public event System.Action OnBodyChanged;
+
+    /// <summary>The parts of the body on show that can be recoloured, or an empty list before one is up.</summary>
+    public System.Collections.Generic.IReadOnlyList<Color> Parts =>
+        dye != null ? dye.DetectableParts() : System.Array.Empty<Color>();
+
+    /// <summary>Recolour one part of the body on show. Nothing is persisted — this preview has no character
+    /// behind it, so the dye lives only on the model in the frame until the character is created.</summary>
+    public void SetPartColor(Color source, Color target)
+    {
+        if (dye != null) dye.SetPartColor(source, target);
+    }
+
+    /// <summary>What a part is currently showing as.</summary>
+    public Color TargetFor(Color source) => dye != null ? dye.TargetFor(source) : source;
 
     /// <summary>Build a preview and put its picture into <paramref name="into"/>. It lives under
     /// <paramref name="owner"/>, so closing the screen that opened it takes the camera, the light and the
@@ -50,7 +69,7 @@ public class CharacterPreview : MonoBehaviour
         camGo.transform.SetParent(stageRoot, false);
         cam = camGo.AddComponent<Camera>();
         cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.07f, 0.075f, 0.09f, 1f);   // the same charcoal an empty slot uses
+        cam.backgroundColor = Color.white;   // a plain white studio, so a body reads as itself and not as a silhouette
         cam.orthographic = false;
         cam.fieldOfView = 30f;
         cam.nearClipPlane = 0.01f;
@@ -66,10 +85,20 @@ public class CharacterPreview : MonoBehaviour
         lightGo.transform.SetParent(stageRoot, false);
         var light = lightGo.AddComponent<Light>();
         light.type = LightType.Directional;
-        light.intensity = 1.1f;
+        light.intensity = 1.2f;
         light.color = new Color(1f, 0.97f, 0.9f);
         lightGo.transform.localRotation = Quaternion.Euler(35f, 160f, 0f);
         light.cullingMask = ~0;
+
+        // A second, softer light from the other side. One light leaves half of a body in darkness, which reads
+        // as "this model is broken" rather than "this side is unlit".
+        var fillGo = new GameObject("Fill") { hideFlags = HideFlags.DontSaveInEditor };
+        fillGo.transform.SetParent(stageRoot, false);
+        var fillLight = fillGo.AddComponent<Light>();
+        fillLight.type = LightType.Directional;
+        fillLight.intensity = 0.6f;
+        fillLight.color = new Color(0.85f, 0.9f, 1f);
+        fillGo.transform.localRotation = Quaternion.Euler(20f, -40f, 0f);
 
         if (into != null)
         {
@@ -91,6 +120,7 @@ public class CharacterPreview : MonoBehaviour
             if (modelName != shownModel) return;   // paged on while this one was loading — it is no longer wanted
 
             if (body != null) Destroy(body);
+            dye = null;
 
             body = Instantiate(model, stageRoot);
             body.hideFlags = HideFlags.DontSaveInEditor;
@@ -107,6 +137,12 @@ public class CharacterPreview : MonoBehaviour
             var animator = body.GetComponent<Animator>() ?? body.AddComponent<Animator>();
             animator.runtimeAnimatorController = CharacterSpec.Active.animatorController;
             animator.applyRootMotion = false;
+
+            // The SAME recolouring the wardrobe uses in game. With no live character to bind to it applies the
+            // colours straight to the model in front of us and persists nothing, which is exactly what a preview
+            // wants — the choice is only written down when the character is actually created.
+            dye = body.AddComponent<CharacterDye3D>();
+            OnBodyChanged?.Invoke();
         });
     }
 

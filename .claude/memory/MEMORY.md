@@ -13,6 +13,7 @@ Keep the always-on list SHORT (~10). A line earns its place only if it changes w
 - [A matching function name is NOT the behaviour](existing-function-name-is-not-the-behaviour.md) — user asks for a FEEL; finding `SmoothDamp` ≠ the result exists. Trace position AND rotation to the screen before "already implemented"; when the feel is wrong, suspect the mechanism, not the number.
 - [Apply review fixes, don't gatekeep](apply-review-fixes-dont-gatekeep.md) — fix ALL listed findings or label skips explicitly; silent "not worth it" triage reads as refusal.
 - [Don't agree reflexively](dont-agree-reflexively.md) — critique on merits even when user says "I like this"; reflexive agreement kills the value of a second opinion.
+- [Just DO it, don't instruct](just-do-it-dont-instruct.md) — if a command can do it, RUN it; never hand over menu paths, keyboard shortcuts, or key symbols. "Where is X" means SHOW me.
 - [NO editor-tool menus by default](no-editor-tools-by-default.md) — user rejects `Tools ▸ unwritten` tools; ask what the feature needs AT RUNTIME (it's often already live), prefer a GM chat command. OVERRIDES the project "prefer editor tools" rule.
 - [Mobs get EVERYTHING players get](mobs-get-everything-players-get.md) — HARD LAW: every skill/stat/state/effect on the player must work on mobs; only STANCES are player-only. A player-only gap is a bug, never design.
 - [DIRECTION: RO-style 2.5D](direction-2p5d-pivot.md) — PLAYER+NPC live-3D, MOBS billboard; player LIVE-3D 2026-07-04.
