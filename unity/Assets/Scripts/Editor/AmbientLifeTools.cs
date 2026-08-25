@@ -31,8 +31,8 @@ public static class AmbientLifeTools
     public static void AddAmbientTownsfolk()
     {
         var spec = LoadOrCreateSpec();
-        var civilians = new List<GameObject>();
-        var fighters = new List<GameObject>();
+        var civilians = new List<string>();
+        var fighters = new List<string>();
         CollectCast(civilians, fighters);
 
         spec.civilianModels = civilians;
@@ -86,8 +86,10 @@ public static class AmbientLifeTools
     }
 
     // Every rigged model in the Models folder that is a real character body (has a skinned mesh — an accessory or a
-    // clip-only FBX doesn't), sorted into the two pools by name.
-    static void CollectCast(List<GameObject> civilians, List<GameObject> fighters)
+    // clip-only FBX doesn't), sorted into the two pools by name. The pools store the model's NAME: the spec must not
+    // hold object links, or loading it would drag the whole cast into memory to dress one unit. The name is resolved
+    // to an asset on demand by CharacterModels.
+    static void CollectCast(List<string> civilians, List<string> fighters)
     {
         foreach (var guid in AssetDatabase.FindAssets("t:GameObject", new[] { ModelsDir }))
         {
@@ -100,10 +102,10 @@ public static class AmbientLifeTools
             var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (go == null || go.GetComponentInChildren<SkinnedMeshRenderer>(true) == null) continue;
 
-            (HasToken(fileName, FighterTokens) ? fighters : civilians).Add(go);
+            (HasToken(fileName, FighterTokens) ? fighters : civilians).Add(fileName);
         }
-        civilians.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
-        fighters.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+        civilians.Sort(string.CompareOrdinal);
+        fighters.Sort(string.CompareOrdinal);
     }
 
     static bool HasToken(string name, string[] tokens)

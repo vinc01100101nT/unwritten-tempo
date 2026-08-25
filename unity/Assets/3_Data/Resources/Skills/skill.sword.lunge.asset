@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Lu
   weaponType: 1
   published: 1
-  icon: {fileID: -2812528802495159281, guid: 6cc824c29321438408138dbb62104f13, type: 3}
   description: 'Close the distance.
 
     Dashes to the target and strikes for 100%

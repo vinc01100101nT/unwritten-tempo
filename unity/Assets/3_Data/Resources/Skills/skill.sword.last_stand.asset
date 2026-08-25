@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Ls
   weaponType: 1
   published: 1
-  icon: {fileID: 0}
   description: 'Cornered, you hold the line.
 
     Dropping to low HP arms 5 more

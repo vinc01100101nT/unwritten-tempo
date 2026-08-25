@@ -16,7 +16,6 @@ MonoBehaviour:
   displayName: War Banner
   weaponType: 0
   published: 0
-  icon: {fileID: 6969427886737629405, guid: 3964ad93b5f03fc4d8bc30d5f55a7756, type: 3}
   description: Raise a rallying banner so you and nearby allies deal more damage
     for a while.
   archetype: 3

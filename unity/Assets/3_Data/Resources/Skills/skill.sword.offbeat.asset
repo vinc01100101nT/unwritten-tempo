@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Ob
   weaponType: 1
   published: 1
-  icon: {fileID: 0}
   description: 'Break their rhythm.
 
     A strike for 100% Attack; their attack speed

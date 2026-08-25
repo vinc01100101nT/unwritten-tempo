@@ -56,25 +56,28 @@ public class CharacterSpec : ScriptableObject
 
     // ---- the cast -------------------------------------------------------------------------------------------------
 
-    [Header("Cast (rigged Quaternius models — Assets/1_Authored/Art/Characters/Models)")]
-    [Tooltip("Ordinary folk. Townsfolk draw from this pool.")]
-    public List<GameObject> civilianModels = new List<GameObject>();
+    // The pools hold model NAMES, not object links. A direct link would drag every model in the cast into memory the
+    // moment this settings asset loads — all of them, to wear one. A name costs nothing until something asks for it,
+    // and the asset itself is fetched on demand through CharacterModels (the roster) → AddressablePrefabs (the cache).
+    [Header("Cast (rigged model names — see CharacterModels for the roster)")]
+    [Tooltip("Ordinary folk. Townsfolk draw from this pool. Entries are model names, e.g. 'Casual_Female'.")]
+    public List<string> civilianModels = new List<string>();
 
     [Tooltip("Soldiers, knights, and other fighters. Shadow mobs draw from this pool, so a Shadow of the Past reads " +
-             "as a fallen combatant rather than a chef.")]
-    public List<GameObject> fighterModels = new List<GameObject>();
+             "as a fallen combatant rather than a chef. Entries are model names, e.g. 'BlueSoldier_Male'.")]
+    public List<string> fighterModels = new List<string>();
 
     [Tooltip("The shared Humanoid animator controller. Every model's embedded avatar retargets it, so one controller " +
              "animates the whole cast — player, townsfolk and shadows alike.")]
     public RuntimeAnimatorController animatorController;
 
-    /// <summary>A random civilian model, or null when the pool is empty.</summary>
-    public GameObject RandomCivilian() => Pick(civilianModels);
+    /// <summary>A random civilian model NAME, or null when the pool is empty. Load it via <see cref="CharacterModels"/>.</summary>
+    public string RandomCivilian() => Pick(civilianModels);
 
-    /// <summary>A random fighter model, or null when the pool is empty.</summary>
-    public GameObject RandomFighter() => Pick(fighterModels);
+    /// <summary>A random fighter model NAME, or null when the pool is empty. Load it via <see cref="CharacterModels"/>.</summary>
+    public string RandomFighter() => Pick(fighterModels);
 
-    static GameObject Pick(List<GameObject> pool)
+    static string Pick(List<string> pool)
     {
         if (pool == null || pool.Count == 0) return null;
         // One pass to skip empty slots without allocating a filtered copy — an unassigned entry is an authoring slip,
@@ -82,9 +85,9 @@ public class CharacterSpec : ScriptableObject
         for (int attempt = 0; attempt < 4; attempt++)
         {
             var g = pool[Random.Range(0, pool.Count)];
-            if (g != null) return g;
+            if (!string.IsNullOrWhiteSpace(g)) return g;
         }
-        for (int i = 0; i < pool.Count; i++) if (pool[i] != null) return pool[i];
+        for (int i = 0; i < pool.Count; i++) if (!string.IsNullOrWhiteSpace(pool[i])) return pool[i];
         return null;
     }
 

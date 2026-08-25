@@ -16,7 +16,6 @@ MonoBehaviour:
   displayName: Bulwark
   weaponType: 0
   published: 0
-  icon: {fileID: -7809785511404226330, guid: 4a6c997ee6699414da629ee459545ea7, type: 3}
   description: 'Brace behind a guard.
 
     Cuts incoming damage by 50% for 5s and

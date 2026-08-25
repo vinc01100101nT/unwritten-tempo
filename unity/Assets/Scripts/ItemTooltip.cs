@@ -141,8 +141,10 @@ public class ItemTooltip : MonoBehaviour
             for (int i = 0; i < ids.Count; i++)
             {
                 var def = SkillCatalog.Get(ids[i]);
-                if (def == null || def.icon == null) continue;
-                GetIcon(shown++).sprite = def.icon;
+                if (def == null) continue;
+                var cell = GetIcon(shown++);
+                cell.sprite = null;
+                cell.color = SkillSymbol.ColorFor(def);
             }
         for (int i = 0; i < skillIcons.Count; i++) skillIcons[i].gameObject.SetActive(i < shown);
         skillRow.gameObject.SetActive(shown > 0);

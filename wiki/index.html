@@ -79,6 +79,9 @@
     border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;
     color:var(--gold);font-size:24px;font-weight:600;overflow:hidden}
   .skillcard .icon img{width:100%;height:100%;object-fit:cover;display:block}
+  /* A two-letter symbol reads as a chemical element: slightly smaller than a single letter so both fit the same box,
+     and it wears the weapon's colour (set inline, since the colour is data). */
+  .skillcard .icon.sym{font-size:22px;letter-spacing:.5px;font-weight:700}
   .skillcard .body{min-width:0}
   .skillcard .head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
   .skillcard .name{font-size:17px;font-weight:600;color:#f4eedd}
@@ -131,7 +134,11 @@ function inline(s){
 // ---- JSON block-document renderer (the canonical and only content format) ----
 function skillIcon(s){
   if(s.icon) return `<span class="icon"><img src="${esc(s.icon)}" alt="${esc(s.name||'')}"></span>`;
-  return `<span class="icon">${esc((s.name||'?').trim().slice(0,1))}</span>`;
+  // A skill's two-letter symbol, worn in its weapon's colour — the same pair the game puts on a tile. Falls back to
+  // the first letter only when nobody has authored a symbol, so an unauthored one stays visibly different.
+  const sym=(s.symbol||'').trim();
+  const tint=s.color?` style="color:${esc(s.color)};border-color:${esc(s.color)}"`:'';
+  return `<span class="icon${sym?' sym':''}"${tint}>${esc(sym||(s.name||'?').trim().slice(0,1))}</span>`;
 }
 // Generated skill data — content/skills.generated.json, written by the Skill Composer from the game's own skill
 // assets. A skillTable block that names a `source` is rendered FROM this, so a number on the page cannot disagree
@@ -163,6 +170,9 @@ function skillTable(b){
     list=all.filter(s=>s.weapon===b.source&&(!b.group||skillGroup(s)===b.group))
             .map(s=>({
               name:s.name,
+              symbol:s.symbol,
+              // The colour belongs to the WEAPON, so it is looked up here rather than repeated on every skill row.
+              color:(SKILLS.weaponColors||{})[s.weapon],
               cost:s.cost,
               flavor:s.description,
               // Kept as a LIST, never pre-joined into markup: every text field here goes through inline(), which

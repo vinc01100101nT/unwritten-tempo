@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Fl
   weaponType: 1
   published: 1
-  icon: {fileID: 0}
   description: 'Stay on one foe.
 
     Every basic attack grants extra Momentum equal

@@ -1,26 +1,81 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// The boot component of the persistent <c>Systems</c> scene. Once the persistent layer
-/// (HUD / cursor / character / player / camera) is up, it brings the first gameplay map in
-/// underneath it via <see cref="MapManager.LoadMap"/>. After that, portals swap maps and
-/// Systems just stays loaded.
+/// The boot component of the persistent <c>Systems</c> scene, and THE gate on the world existing at all.
 ///
-/// In a build, scene index 0 is Systems and it loads alone, so this loads <see cref="firstMap"/>.
-/// In the editor we always enter Play from Systems (see SystemsPlayMode), and the map you had
-/// open is remembered and loaded instead — so "press Play in Town" still tests Town.
+/// <para><b>Nothing of the world runs until a character is chosen.</b> Before that, no map is loaded, the HUD is
+/// switched off and the player is switched off — so there is no town simulating behind the sign-in screen, no
+/// weather falling, no clock running and no mob thinking. Hiding the world behind an opaque panel is NOT the
+/// same thing and was the wrong fix: a game that is already running while you are still signing in is spending
+/// frames on a session that hasn't begun, and would happily let a stray input reach it.</para>
+///
+/// <para>The moment <see cref="AccountSession"/> says somebody is playing, the persistent layer wakes up and the
+/// first map comes in underneath it. After that, portals swap maps and Systems just stays loaded.</para>
+///
+/// In a build, scene index 0 is Systems and it loads alone. In the editor we always enter Play from Systems
+/// (see SystemsPlayMode), and the map you had open is remembered and loaded instead — so "press Play in Town"
+/// still tests Town, once you are through the door.
 /// </summary>
 public class GameRoot : MonoBehaviour
 {
-    [Tooltip("Map to load on Play when none is open (the build's starting map). In the editor, " +
+    [Tooltip("Map to load when a character enters the world (the build's starting map). In the editor, " +
              "whichever map you had open is remembered and used instead.")]
     public string firstMap = "town_0";
 
+    bool worldUp;
+
     void Start()
     {
-        // If a gameplay map is somehow already loaded alongside Systems, adopt it instead of
-        // loading a second one.
+        AccountSession.OnChanged += OnSessionChanged;
+        Quiet();                  // asleep until somebody is actually playing
+        OnSessionChanged();       // …unless a character was already chosen before this scene loaded
+    }
+
+    void OnDestroy() => AccountSession.OnChanged -= OnSessionChanged;
+
+    void OnSessionChanged()
+    {
+        if (worldUp || !AccountSession.IsActive) return;
+        worldUp = true;
+        Wake();
+        BringUpMap();
+    }
+
+    // The persistent layer exists from the first frame — it IS this scene — so it gets switched off rather than
+    // not built. Everything that belongs to a MAP simply isn't loaded yet, which is why there is no list of mobs
+    // or weather to silence here: they do not exist.
+    //
+    // Everything in the scene is silenced rather than a hand-written list of the things that tick. A list would
+    // be wrong the first time somebody adds a director to this scene and forgets to add it here, and that kind
+    // of miss is invisible — it just quietly runs behind the sign-in screen.
+    readonly System.Collections.Generic.List<GameObject> quieted = new System.Collections.Generic.List<GameObject>();
+
+    void Quiet()
+    {
+        foreach (var root in gameObject.scene.GetRootGameObjects())
+        {
+            if (root == gameObject) continue;                                    // the gate itself has to keep running
+            if (root.GetComponentInChildren<EventSystem>(true) != null) continue; // the sign-in screen needs input to work
+            if (!root.activeSelf) continue;
+
+            root.SetActive(false);
+            quieted.Add(root);
+        }
+    }
+
+    void Wake()
+    {
+        // Exactly what was switched off, and nothing else — so anything an author deliberately left disabled in
+        // the scene stays that way.
+        foreach (var root in quieted) if (root != null) root.SetActive(true);
+        quieted.Clear();
+    }
+
+    void BringUpMap()
+    {
+        // If a gameplay map is somehow already loaded alongside Systems, adopt it instead of loading a second one.
         for (int i = 0; i < SceneManager.sceneCount; i++)
         {
             var s = SceneManager.GetSceneAt(i);

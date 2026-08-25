@@ -16,7 +16,6 @@ MonoBehaviour:
   displayName: Hex Field
   weaponType: 0
   published: 0
-  icon: {fileID: -7360022419767180686, guid: 404fe349000fb8740b505b9a1601ec8a, type: 3}
   description: Curse the ground so enemies inside are slowed and take extra damage.
   archetype: 4
   family: 1

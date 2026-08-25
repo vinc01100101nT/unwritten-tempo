@@ -80,6 +80,7 @@ public static class GmCommands
         Register(new GmCommand("heal", "heal", "Full-heal (revives if dead).", CmdHeal));
         Register(new GmCommand("revive", "revive", "Revive the player at full HP/MP.", CmdRevive));
         Register(new GmCommand("invuln", "invuln", "Toggle invincibility (no damage taken).", CmdInvuln, "nodmg"));
+        Register(new GmCommand("model", "model [name]", "Wear a character model. No name lists the roster.", CmdModel, "body"));
 
         // --- Economy & items ---
         Register(new GmCommand("gold", "gold <n>", "Add Zeny (may be negative).", CmdGold, "zeny"));
@@ -114,6 +115,32 @@ public static class GmCommands
         if (!c.TryInt(0, out var n)) { c.Reply("Usage: /lvl <n>"); return; }
         c.Ch.SetLevel(Mathf.Max(1, n));
         c.Reply($"Level → {c.Ch.Level}.");
+    }
+
+    // Listing and wearing both wait on the roster, which is fetched once and answered instantly after that. Replies
+    // land in the chat log whenever they resolve — a command that answers a frame late is fine; a stalled one is not.
+    static void CmdModel(GmContext c)
+    {
+        string typed = c.Rest(0);
+        CharacterModels.Names(names =>
+        {
+            if (names == null || names.Count == 0)
+            {
+                c.Reply("No character models are registered — the roster is empty.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(typed))
+            {
+                c.Reply($"{names.Count} models: {string.Join(", ", names)}");
+                return;
+            }
+            string match = CharacterModels.Resolve(typed);
+            if (match == null) { c.Reply($"No model called '{typed}'. Type /model to list them."); return; }
+
+            Player3DBody.Wear(match, worn => c.Reply(worn != null
+                ? $"Wearing {worn}."
+                : $"Couldn't load '{match}' — is Addressables content built?"));
+        });
     }
 
     static void CmdXp(GmContext c)

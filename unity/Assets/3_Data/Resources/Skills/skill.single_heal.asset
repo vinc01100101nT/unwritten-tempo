@@ -16,7 +16,6 @@ MonoBehaviour:
   displayName: Heal
   weaponType: 0
   published: 0
-  icon: {fileID: 2903848411162822477, guid: 4bae3342ecf8e1c4ca8a5e2eb9f81491, type: 3}
   description: 
   archetype: 0
   family: 0

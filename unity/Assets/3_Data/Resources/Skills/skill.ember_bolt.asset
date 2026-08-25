@@ -16,7 +16,6 @@ MonoBehaviour:
   displayName: Ember Bolt
   weaponType: 0
   published: 0
-  icon: {fileID: 21300000, guid: 175b1dd4b468f2e4e99f17d5afaaa905, type: 3}
   description: 'A single-target fire bolt that ignites the
 
     target, leaving a

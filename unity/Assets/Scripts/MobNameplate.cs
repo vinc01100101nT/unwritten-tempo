@@ -58,6 +58,7 @@ public class MobNameplate : MonoBehaviour
     bool iconsDirty;
     readonly List<Image> iconSlots = new List<Image>(4);
     readonly List<TextMeshProUGUI> iconCounts = new List<TextMeshProUGUI>(4);   // "3" badge under each stacked icon
+    readonly List<TextMeshProUGUI> iconSymbols = new List<TextMeshProUGUI>();
     const float IconSize = 11f, IconGap = 1.5f, IconRowGap = 2f;   // UI px (before worldScale)
     static readonly Color StackColor = new Color(1f, 0.87f, 0.45f);
 
@@ -191,11 +192,14 @@ public class MobNameplate : MonoBehaviour
         for (int i = 0; i < list.Count; i++)
         {
             var s = list[i];
-            if (s.icon == null) continue;
+            if (string.IsNullOrEmpty(s.symbol)) continue;
             var img = IconSlot(n);
-            img.sprite = s.icon;
-            img.preserveAspect = true;
-            img.color = s.tint == default ? Color.white : s.tint;
+            img.sprite = null;                                   // a plain colour tile; the letters ride on top
+            img.color = SkillSymbol.ColorFor(s.sourceSkillId);
+            var sym = iconSymbols[n];
+            sym.text = s.symbol;
+            sym.color = s.tint == default ? Color.white : s.tint;
+            if (!sym.gameObject.activeSelf) sym.gameObject.SetActive(true);
             if (!img.gameObject.activeSelf) img.gameObject.SetActive(true);
             // Stack count sits on the icon; blank at a single stack. Rebuilds only on a state change, never per frame.
             var cnt = iconCounts[n];
@@ -207,6 +211,7 @@ public class MobNameplate : MonoBehaviour
         for (int i = n; i < iconSlots.Count; i++)
         {
             if (iconSlots[i].gameObject.activeSelf) iconSlots[i].gameObject.SetActive(false);
+            if (iconSymbols[i].gameObject.activeSelf) iconSymbols[i].gameObject.SetActive(false);
             if (iconCounts[i].gameObject.activeSelf) iconCounts[i].gameObject.SetActive(false);
         }
 
@@ -251,6 +256,23 @@ public class MobNameplate : MonoBehaviour
             txt.color = StackColor;
             go.SetActive(false);
             iconCounts.Add(txt);
+
+            // The state's own two letters, centred on the tile.
+            var sgo = new GameObject("Symbol", typeof(RectTransform));
+            var srt = (RectTransform)sgo.transform;
+            srt.SetParent(rt, false);
+            srt.anchorMin = Vector2.zero; srt.anchorMax = Vector2.one;
+            srt.offsetMin = Vector2.zero; srt.offsetMax = Vector2.zero;
+            var stxt = sgo.AddComponent<TextMeshProUGUI>();
+            stxt.font = UiKit.BodyFont;
+            stxt.fontSharedMaterial = UiKit.OutlinedMaterial(UiKit.BodyFont);
+            stxt.fontSize = IconSize * 0.8f;
+            stxt.fontStyle = FontStyles.Bold;
+            stxt.alignment = TextAlignmentOptions.Center;
+            stxt.textWrappingMode = TextWrappingModes.NoWrap;
+            stxt.raycastTarget = false;
+            sgo.SetActive(false);
+            iconSymbols.Add(stxt);
         }
         return iconSlots[i];
     }

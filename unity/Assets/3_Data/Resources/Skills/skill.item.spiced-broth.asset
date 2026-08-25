@@ -1,0 +1,192 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6a6d18b0badbd45ad8b33c36f44c3a, type: 3}
+  m_Name: skill.item.spiced-broth
+  m_EditorClassIdentifier: Assembly-CSharp::SkillDef
+  id: skill.item.spiced-broth
+  displayName: Spiced Broth
+  weaponType: 0
+  published: 0
+  description: Raises attack speed by 10% for 120s.
+  archetype: 3
+  family: 0
+  shape: 3
+  complexity: 0
+  acquisitionTier: 0
+  triggers:
+  - trigger: 9
+    triggerSkillId:
+    requiresState: 0
+    requireSkillId:
+    requireStateId: 0
+    requireStateIdSet: 0
+    requireMinStacks: 1
+    consumeAllStacks: 0
+    consumeStacks: 0
+  manaCost: 0
+  cooldown: 0
+  castTime: 0
+  aim: 0
+  castRange: 0
+  tier: 0
+  castCircleId:
+  castCircleTint: {r: 1, g: 1, b: 1, a: 1}
+  vfx: {fileID: 11400000, guid: bed98974a94ad9449a946ae852e48c0c, type: 2}
+  repeatCount: 1
+  repeatInterval: 0.4
+  repeatScaleWithAttackSpeed: 0
+  repeatBeatsPerSwing: 1
+  repeatCostsCharge: 0
+  showRepeatsTotalDamage: 0
+  repeatReaim: 0
+  repeatReaimRange: 6
+  holdCasterForRun: 0
+  hasReleaseStance: 0
+  releaseStance: 14
+  releaseStanceReplayPerRepeat: 0
+  bindings:
+  - tickId: follow_hit
+    targetMode: 0
+    groundDelivery: 1
+    affects: 1
+    playerFaction: 0
+    radius: 1.5
+    projectileCount: 1
+    projectileSpread: 0
+    stayDuration: 0
+    effects:
+    - kind: 5
+      useStacks: 0
+      resolveAsBasicAttack: 0
+      damageType: 1
+      damageMult:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      element: 0
+      amount:
+        value: 10
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      ailment: 0
+      seconds:
+        value: 120
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      shoveSeconds:
+        value: 0.25
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      magnitude:
+        value: 0.1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacking: 0
+      stackLimit:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksPerApply:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      stacksFromAttackSpeed: 0
+      stackShare:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashSpeedMult:
+        value: 8
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      dashEaseIn: 0
+      dashEaseOut: 0
+      dashEaseSeconds:
+        value: 0.3
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageSeconds:
+        value: 0
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      afterimageTint: {r: 0.6, g: 0.85, b: 1, a: 0.5}
+      casterOpacity:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      starCorners:
+        value: 5
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierSkillId:
+      modifierStateId: 0
+      modifierStateIdSet: 0
+      modifierSeconds:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      modifierStacks:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      hitCount:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      chance:
+        value: 1
+        useStacks: 0
+        op: 0
+        read: 0
+        scaler: 1
+      side: 0
+      subStat: 1
+      affinity: []
+      chanceAffinity: []
+      durationAffinity: []
+      hitCountAffinity: []
+  shortLabel: Food
+  keyLabel:
+  slotOrder: 100
+  tint: {r: 1, g: 1, b: 1, a: 1}

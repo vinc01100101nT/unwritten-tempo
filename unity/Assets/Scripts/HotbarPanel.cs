@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 /// <summary>
 /// Drives the on-screen action bar (the <c>HUD_Hotbar</c> holder baked by <see cref="UIShellBuilder"/>) and
 /// is the CENTRAL key router for active skills. The bar has nine slots (keys 1–9); each shows the skill the
-/// player has BOUND to it (<see cref="HotbarBindings"/>) — icon/label, hotkey glyph, MP cost, cooldown sweep,
+/// player has BOUND to it (<see cref="HotbarBindings"/>) — symbol, hotkey glyph, MP cost, cooldown sweep,
 /// countdown — or reads as an empty slot. The class system is gone: any UNLOCKED skill can be dragged or
 /// clicked onto any slot in the Skills (K) menu; this panel decorates the slots, fires the bound skill on its
 /// slot key or a click, and accepts drops (each cell is a <see cref="HotbarSlotTarget"/>).
@@ -26,15 +26,20 @@ public class HotbarPanel : MonoBehaviour
     {
         public int index;               // 0..8 → key (index+1)
         public IHotbarSkill skill;      // the bound skill (null = empty slot)
-        public Image cell, icon, cooldown;
+        public Image cell, cooldown;
         public TMP_Text mp, label, cdNum;
-        public GameObject hideOnCd;     // the center label to hide while counting down (null when an icon shows)
+        public GameObject hideOnCd;     // the center label to hide while counting down
         public int lastSecs = -1;
         public sbyte lastOnCd = -1, lastAff = -1;
         public bool isUlt;              // the dedicated ULT cell (the R seat) — same cooldown rules as keys 1–9
+        public Color weaponColor = CellReady;   // the cell's own colour; affordability DIMS this, never replaces it
     }
 
     static readonly Color CellReady = Color.white;
+
+    /// <summary>A cell you cannot afford: its OWN colour, darkened. Dimming rather than replacing is what keeps the
+    /// weapon readable when the skill is greyed out.</summary>
+    static Color Dim(Color c) => new Color(c.r * 0.45f, c.g * 0.45f, c.b * 0.5f, c.a);
     static readonly Color CellDim    = new Color(0.5f, 0.5f, 0.55f, 1f);
     static readonly Color CellEmpty  = new Color(0.32f, 0.32f, 0.37f, 0.6f);   // unbound slot
     static readonly Color KeyColor   = new Color(1f, 0.85f, 0.45f);
@@ -65,7 +70,6 @@ public class HotbarPanel : MonoBehaviour
     GameObject tipRoot;
     TMP_Text tipText;
     RectTransform tipRT;
-    Image tipIcon;
     static readonly Vector3[] cornerBuf = new Vector3[4];   // reused by GetWorldCorners (no per-hover alloc)
 
     void Start()
@@ -205,7 +209,7 @@ public class HotbarPanel : MonoBehaviour
 
         if (skill == null)
         {
-            cell.color = CellEmpty;   // dim, no icon/label/mp → reads as an open slot
+            cell.color = CellEmpty;   // dim, no symbol/mp → reads as an open slot
             var staleDrag = cell.gameObject.GetComponent<HotbarSlotDragSource>();   // an emptied cell isn't draggable
             if (staleDrag != null) Destroy(staleDrag);
             return s;
@@ -214,20 +218,9 @@ public class HotbarPanel : MonoBehaviour
         // Drag this filled slot onto another to rearrange the bar (a plain click still fires the skill).
         var drag = cell.gameObject.GetComponent<HotbarSlotDragSource>() ?? cell.gameObject.AddComponent<HotbarSlotDragSource>();
         drag.slotIndex = index;
-        drag.iconSprite = skill.Icon;
         drag.tint = skill.Tint;
 
         cell.color = CellReady;
-
-        // Icon (below the sweep so it greys under it). Falls back to a centered label if unset.
-        if (skill.Icon != null)
-        {
-            s.icon = NewImage("Icon", cell.transform, CellReady);
-            s.icon.sprite = skill.Icon;
-            s.icon.preserveAspect = true;
-            s.icon.raycastTarget = false;
-            Stretch(s.icon.rectTransform, 5, 5);
-        }
 
         // Radial cooldown shade.
         s.cooldown = NewImage("Cooldown", cell.transform, CdShade);
@@ -240,10 +233,11 @@ public class HotbarPanel : MonoBehaviour
         s.cooldown.raycastTarget = false;
         Stretch(s.cooldown.rectTransform, 3, 3);
 
-        // Center label — only when there's no icon (above the sweep so it reads when ready).
-        if (skill.Icon == null)
+        // The symbol IS the face of the slot — two letters on the weapon's colour, the way Au stands for gold.
         {
-            s.label = NewText("Label", cell.transform, skill.ShortLabel, 11, FontStyle.Bold, TextAnchor.MiddleCenter, skill.Tint);
+            s.weaponColor = skill.SymbolColor;
+            cell.color = s.weaponColor;
+            s.label = NewText("Label", cell.transform, skill.Symbol, 18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
             Stretch(s.label.rectTransform, 2, 2);
             s.hideOnCd = s.label.gameObject;
         }
@@ -257,7 +251,7 @@ public class HotbarPanel : MonoBehaviour
         Stretch(s.cdNum.rectTransform, 2, 2);
         s.cdNum.gameObject.SetActive(false);
 
-        // Skill-info hover card (icon, tags, cost, description, effects).
+        // Skill-info hover card (tags, cost, description, effects).
         if (skill is SkillRunner sr && sr.def != null) AttachSkillTooltip(cell.transform, sr.def);
 
         return s;
@@ -299,17 +293,9 @@ public class HotbarPanel : MonoBehaviour
         // Drag the equipped ult OFF the cell to remove it (sentinel slotIndex −1 → HotbarBindings.ClearUlt).
         var drag = cell.gameObject.GetComponent<HotbarSlotDragSource>() ?? cell.gameObject.AddComponent<HotbarSlotDragSource>();
         drag.slotIndex = -1;
-        drag.iconSprite = skill.Icon;
         drag.tint = skill.Tint;
 
         cell.color = CellReady;
-        if (skill.Icon != null)
-        {
-            s.icon = NewImage("Icon", cell.transform, CellReady);
-            s.icon.sprite = skill.Icon; s.icon.preserveAspect = true; s.icon.raycastTarget = false;
-            Stretch(s.icon.rectTransform, 5, 5);
-        }
-
         // Radial cooldown shade — the same one keys 1–9 get, built the same way round.
         s.cooldown = NewImage("Cooldown", cell.transform, CdShade);
         s.cooldown.sprite = whiteSprite;
@@ -321,9 +307,10 @@ public class HotbarPanel : MonoBehaviour
         s.cooldown.raycastTarget = false;
         Stretch(s.cooldown.rectTransform, 3, 3);
 
-        if (skill.Icon == null)
         {
-            s.label = NewText("Label", cell.transform, skill.ShortLabel, 11, FontStyle.Bold, TextAnchor.MiddleCenter, skill.Tint);
+            s.weaponColor = skill.SymbolColor;
+            cell.color = s.weaponColor;
+            s.label = NewText("Label", cell.transform, skill.Symbol, 18, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
             Stretch(s.label.rectTransform, 2, 2);
             s.hideOnCd = s.label.gameObject;
         }
@@ -341,7 +328,7 @@ public class HotbarPanel : MonoBehaviour
     }
 
     // Build the ONE shared skill-info card on the canvas root (once). Fixed width, auto height via ContentSizeFitter;
-    // the skill icon is pinned top-right (out of the vertical layout). Hidden until a hover positions + shows it.
+    // Hidden until a hover positions + shows it.
     void EnsureSharedTooltip()
     {
         if (tipRoot != null) return;
@@ -365,12 +352,6 @@ public class HotbarPanel : MonoBehaviour
         tipText.richText = true;
         tipText.textWrappingMode = TMPro.TextWrappingModes.Normal;
 
-        tipIcon = NewImage("Icon", tipRoot.transform, Color.white);
-        tipIcon.preserveAspect = true; tipIcon.raycastTarget = false;
-        var le = tipIcon.gameObject.AddComponent<LayoutElement>(); le.ignoreLayout = true;   // pinned, not in the flow
-        var irt = tipIcon.rectTransform;
-        irt.anchorMin = irt.anchorMax = new Vector2(1f, 1f); irt.pivot = new Vector2(1f, 1f);
-        irt.anchoredPosition = new Vector2(-8f, -8f); irt.sizeDelta = new Vector2(34f, 34f);
 
         tipRoot.SetActive(false);
     }
@@ -391,7 +372,6 @@ public class HotbarPanel : MonoBehaviour
         if (def == null) return;
         EnsureSharedTooltip();
         tipText.text = SkillTooltip.Build(def);
-        if (tipIcon != null) { tipIcon.sprite = def.icon; tipIcon.enabled = def.icon != null; }
         tipRoot.transform.SetAsLastSibling();   // above every cell — the fix for "sometimes it doesn't show"
         tipRoot.SetActive(true);
 
@@ -451,8 +431,7 @@ public class HotbarPanel : MonoBehaviour
             sbyte aff = (sbyte)(s.skill.Affordable && ringOn ? 1 : 0);
             if (aff != s.lastAff)
             {
-                s.cell.color = aff == 1 ? CellReady : CellDim;
-                if (s.icon != null) s.icon.color = aff == 1 ? CellReady : CellDim;
+                s.cell.color = aff == 1 ? s.weaponColor : Dim(s.weaponColor);
                 if (s.mp != null) s.mp.color = aff == 1 ? MpColor : MpNoColor;
                 s.lastAff = aff;
             }

@@ -13,50 +13,50 @@ MonoBehaviour:
   m_Name: CharacterSpec
   m_EditorClassIdentifier: 
   civilianModels:
-  - {fileID: 919132149155446097, guid: 8c253ad026f38254390dae75484bdac8, type: 3}
-  - {fileID: 919132149155446097, guid: 0c927d10c77d01345ad1d2199d30bd4a, type: 3}
-  - {fileID: 919132149155446097, guid: eb917d793eb54284d9d76c4b30a4c5ff, type: 3}
-  - {fileID: 919132149155446097, guid: 356a413bfa09f6c488685167e033ff3a, type: 3}
-  - {fileID: 919132149155446097, guid: 035819627887434409ddeb6411b5a753, type: 3}
-  - {fileID: 919132149155446097, guid: aa867f76defbb894bb7aa884b5a965cf, type: 3}
-  - {fileID: 919132149155446097, guid: 900eb34ab388cb845aabe93ed774f80d, type: 3}
-  - {fileID: 919132149155446097, guid: ed17305d441251541ae95387541cd014, type: 3}
-  - {fileID: 919132149155446097, guid: 1547ab1d0e3e8564dac1534dfda7d617, type: 3}
-  - {fileID: 919132149155446097, guid: b3560ce9507aa584f8655ed0d7a46202, type: 3}
-  - {fileID: 919132149155446097, guid: 693dd85549ee87b45889edcfc7ea9e46, type: 3}
-  - {fileID: 919132149155446097, guid: 7904eaa012889e64c988e18e6756d19d, type: 3}
-  - {fileID: 919132149155446097, guid: 601368c4250a66449bbf7b1e704215c7, type: 3}
-  - {fileID: 919132149155446097, guid: f8f123f0c5631b14fb6f94d678b2caeb, type: 3}
-  - {fileID: 919132149155446097, guid: ce2a6fad891b88441ae4c0d56730d099, type: 3}
-  - {fileID: 919132149155446097, guid: fe743a24eb9775c4996d08bc0c7521b9, type: 3}
-  - {fileID: 919132149155446097, guid: ab970332b8637834b9091f4013221334, type: 3}
-  - {fileID: 919132149155446097, guid: f167c9dfaf03adc4e916df488f587287, type: 3}
-  - {fileID: 919132149155446097, guid: b2c6dd7cdcaa2ba44944e486e8beb314, type: 3}
-  - {fileID: 919132149155446097, guid: 681b26c59bfb90b4f83f854f1d691998, type: 3}
-  - {fileID: 919132149155446097, guid: 714ffb43c5cdaa44f9e82101b8792e26, type: 3}
-  - {fileID: 919132149155446097, guid: 842622f825c872d489d87a2613474e4e, type: 3}
-  - {fileID: 919132149155446097, guid: fe72f10e6ad7fa7429ae449216300be8, type: 3}
-  - {fileID: 919132149155446097, guid: 23979fa220a09004ca0bc8a577139232, type: 3}
-  - {fileID: 919132149155446097, guid: 4fc631cb0964ed84d91941a77259605b, type: 3}
-  - {fileID: 919132149155446097, guid: bc8a6b07489d36642aab341d9e23db3c, type: 3}
-  - {fileID: 919132149155446097, guid: fd9d1a52863cd1d42add5f6c855648a9, type: 3}
-  - {fileID: 919132149155446097, guid: 128b3ca1a45896c4eb037b7f55753924, type: 3}
-  - {fileID: 919132149155446097, guid: 8cbdfd7e15094d64588b7b8f132ca59b, type: 3}
-  - {fileID: 919132149155446097, guid: 79e40cbfbb941e74d8570757bf8c6208, type: 3}
-  - {fileID: 919132149155446097, guid: eafc3debf4978f64eaa59b4919c983e3, type: 3}
-  - {fileID: 919132149155446097, guid: df576b6bda449ec4fbaa9f05d799db1d, type: 3}
+  - Casual2_Female
+  - Casual2_Male
+  - Casual3_Female
+  - Casual3_Male
+  - Casual_Bald
+  - Casual_Female
+  - Casual_Male
+  - Chef_Female
+  - Chef_Male
+  - Doctor_Female_Old
+  - Doctor_Female_Young
+  - Doctor_Male_Old
+  - Doctor_Male_Young
+  - Elf
+  - Kimono_Female
+  - Kimono_Male
+  - Ninja_Female
+  - Ninja_Male
+  - Ninja_Sand
+  - Ninja_Sand_Female
+  - OldClassy_Female
+  - OldClassy_Male
+  - Pirate_Female
+  - Pirate_Male
+  - Suit_Female
+  - Suit_Male
+  - Viking_Female
+  - Viking_Male
+  - Witch
+  - Wizard
+  - Worker_Female
+  - Worker_Male
   fighterModels:
-  - {fileID: 919132149155446097, guid: 33cf2d46010627e4889c9d0c715799c5, type: 3}
-  - {fileID: 919132149155446097, guid: 9c4a97be3f2b6494ebf63c47098d6374, type: 3}
-  - {fileID: 919132149155446097, guid: 8bf0ff49c01c089408443f7800929fdc, type: 3}
-  - {fileID: 919132149155446097, guid: a932e0267dc6f6f4cb04de3c960efab9, type: 3}
-  - {fileID: 919132149155446097, guid: 70ce5dcad1eaccb40aba50f64dfd2b41, type: 3}
-  - {fileID: 919132149155446097, guid: 03a0fb995fc222347bc310a13994002c, type: 3}
-  - {fileID: 919132149155446097, guid: 97509ec331d1243448819123df7df1fd, type: 3}
-  - {fileID: 919132149155446097, guid: e28be99053afd01478ffdee955bc60b5, type: 3}
-  - {fileID: 919132149155446097, guid: feb29fabb3b1cee4f8c45ffcbad874b0, type: 3}
-  - {fileID: 919132149155446097, guid: 8d15f58bd47f96941998e15b31be3c75, type: 3}
-  - {fileID: 919132149155446097, guid: 7c82ac00a52b13f42a9fc5ba1ede5c37, type: 3}
+  - BlueSoldier_Female
+  - BlueSoldier_Male
+  - Goblin_Female
+  - Goblin_Male
+  - Knight_Golden_Female
+  - Knight_Golden_Male
+  - Knight_Male
+  - Soldier_Female
+  - Soldier_Male
+  - Zombie_Female
+  - Zombie_Male
   animatorController: {fileID: 9100000, guid: aba9e80c47c9a9c49911925e7b4a0422, type: 2}
   bodyHeight: 0.327
   capsuleHeight: 0.5

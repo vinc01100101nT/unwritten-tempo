@@ -1,0 +1,4 @@
+# Real secrets: the database password and the token signing key. Never committed.
+.env
+.env.*
+!.env.example

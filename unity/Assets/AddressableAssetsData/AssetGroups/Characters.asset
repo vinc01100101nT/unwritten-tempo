@@ -1,0 +1,335 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Characters
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Characters
+  m_GUID: ab99e30451d0646a990e70e0fb6609c1
+  m_SerializeEntries:
+  - m_GUID: 035819627887434409ddeb6411b5a753
+    m_Address: Characters/Casual_Bald
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 03a0fb995fc222347bc310a13994002c
+    m_Address: Characters/Knight_Golden_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0c927d10c77d01345ad1d2199d30bd4a
+    m_Address: Characters/Casual2_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 11e3bfb4c44dff34eb955264045e2157
+    m_Address: Characters/Chef_Hat
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 128b3ca1a45896c4eb037b7f55753924
+    m_Address: Characters/Viking_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1547ab1d0e3e8564dac1534dfda7d617
+    m_Address: Characters/Chef_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 23979fa220a09004ca0bc8a577139232
+    m_Address: Characters/Pirate_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26ef8649994286a46aee140cce4d9ab1
+    m_Address: Characters/BaseCharacter
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33cf2d46010627e4889c9d0c715799c5
+    m_Address: Characters/BlueSoldier_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 356a413bfa09f6c488685167e033ff3a
+    m_Address: Characters/Casual3_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4fc631cb0964ed84d91941a77259605b
+    m_Address: Characters/Suit_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 51776d8c873126a4ebe17df2c983e38a
+    m_Address: Characters/Cow
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5902e7834e84f5a4bab29fc6f6b4b458
+    m_Address: Characters/Cowboy_Hair
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ea5da737e995094c9cc3078b980f72b
+    m_Address: Characters/Pug
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 601368c4250a66449bbf7b1e704215c7
+    m_Address: Characters/Doctor_Male_Young
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 654ba5a92cd8157478bb0a647b790035
+    m_Address: Characters/VikingHelmet
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 681b26c59bfb90b4f83f854f1d691998
+    m_Address: Characters/Ninja_Sand_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 693dd85549ee87b45889edcfc7ea9e46
+    m_Address: Characters/Doctor_Female_Young
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70ce5dcad1eaccb40aba50f64dfd2b41
+    m_Address: Characters/Knight_Golden_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 714ffb43c5cdaa44f9e82101b8792e26
+    m_Address: Characters/OldClassy_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7904eaa012889e64c988e18e6756d19d
+    m_Address: Characters/Doctor_Male_Old
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 79e40cbfbb941e74d8570757bf8c6208
+    m_Address: Characters/Wizard
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7c82ac00a52b13f42a9fc5ba1ede5c37
+    m_Address: Characters/Zombie_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7f96d095ac0ac3b47840272bfb559b58
+    m_Address: Characters/Ninja_Male_Hair
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 818741281443c81438d7cef4c5d041cb
+    m_Address: Characters/Cowboy_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 842622f825c872d489d87a2613474e4e
+    m_Address: Characters/OldClassy_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8bf0ff49c01c089408443f7800929fdc
+    m_Address: Characters/Goblin_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c253ad026f38254390dae75484bdac8
+    m_Address: Characters/Casual2_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8cbdfd7e15094d64588b7b8f132ca59b
+    m_Address: Characters/Witch
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8d15f58bd47f96941998e15b31be3c75
+    m_Address: Characters/Zombie_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 900eb34ab388cb845aabe93ed774f80d
+    m_Address: Characters/Casual_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 97509ec331d1243448819123df7df1fd
+    m_Address: Characters/Knight_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c4a97be3f2b6494ebf63c47098d6374
+    m_Address: Characters/BlueSoldier_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a932e0267dc6f6f4cb04de3c960efab9
+    m_Address: Characters/Goblin_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aa867f76defbb894bb7aa884b5a965cf
+    m_Address: Characters/Casual_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab970332b8637834b9091f4013221334
+    m_Address: Characters/Ninja_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b2c6dd7cdcaa2ba44944e486e8beb314
+    m_Address: Characters/Ninja_Sand
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b3560ce9507aa584f8655ed0d7a46202
+    m_Address: Characters/Doctor_Female_Old
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bb961a94a51c1784ebe25385379b4333
+    m_Address: Characters/Cowboy_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bc8a6b07489d36642aab341d9e23db3c
+    m_Address: Characters/Suit_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ce2a6fad891b88441ae4c0d56730d099
+    m_Address: Characters/Kimono_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df576b6bda449ec4fbaa9f05d799db1d
+    m_Address: Characters/Worker_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e28be99053afd01478ffdee955bc60b5
+    m_Address: Characters/Soldier_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eafc3debf4978f64eaa59b4919c983e3
+    m_Address: Characters/Worker_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb917d793eb54284d9d76c4b30a4c5ff
+    m_Address: Characters/Casual3_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ed17305d441251541ae95387541cd014
+    m_Address: Characters/Chef_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f167c9dfaf03adc4e916df488f587287
+    m_Address: Characters/Ninja_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f8f123f0c5631b14fb6f94d678b2caeb
+    m_Address: Characters/Elf
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd9d1a52863cd1d42add5f6c855648a9
+    m_Address: Characters/Viking_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe72f10e6ad7fa7429ae449216300be8
+    m_Address: Characters/Pirate_Female
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe743a24eb9775c4996d08bc0c7521b9
+    m_Address: Characters/Kimono_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: feb29fabb3b1cee4f8c45ffcbad874b0
+    m_Address: Characters/Soldier_Male
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - CharacterModel
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: 5f1152186a52bc34fb4c72702ef3b355, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: fdaf77bb62cad40d6bf1b7dc5695c2c0, type: 2}
+    - {fileID: 11400000, guid: c85958fadf45249cc860127346b40201, type: 2}

@@ -160,25 +160,29 @@ public class SkillBookPanel : MonoBehaviour
         btn.onClick.AddListener(() => BindFirstEmpty(id));
 
         var drag = row.gameObject.AddComponent<SkillDragSource>();
-        drag.skillId = id; drag.iconSprite = def.icon; drag.tint = def.tint == default ? Color.white : def.tint;
+        drag.skillId = id; drag.tint = SkillSymbol.ColorFor(def);
     }
 
     // The shared look of every row — icon, name, and one sub-line. Both kinds of skill draw the same face; only what
     // the sub-line SAYS and what sits on the right differ, so the layout lives here once.
     void BuildRowFace(Image row, SkillDef def, string subLine, float rightPad)
     {
-        if (def.icon != null)
-        {
-            var im = NewImage(row.transform, Color.white);
-            im.sprite = def.icon; im.preserveAspect = true; im.raycastTarget = false;
-            var irt = im.rectTransform;
-            irt.anchorMin = irt.anchorMax = new Vector2(0f, 0.5f);
-            irt.pivot = new Vector2(0f, 0.5f);
-            irt.anchoredPosition = new Vector2(6f, 0f);
-            irt.sizeDelta = new Vector2(38f, 38f);
-        }
+        // The skill's face: its two letters on its weapon's colour, in place of the picture that used to sit here.
+        var tile = NewImage(row.transform, SkillSymbol.ColorFor(def));
+        tile.raycastTarget = false;
+        var irt = tile.rectTransform;
+        irt.anchorMin = irt.anchorMax = new Vector2(0f, 0.5f);
+        irt.pivot = new Vector2(0f, 0.5f);
+        irt.anchoredPosition = new Vector2(6f, 0f);
+        irt.sizeDelta = new Vector2(38f, 38f);
 
-        float left = def.icon != null ? 50f : 10f;
+        var sym = NewText(tile.transform, def.Symbol, 16, FontStyle.Bold, TextAnchor.MiddleCenter);
+        sym.color = Color.white; sym.raycastTarget = false;
+        var symRt = sym.rectTransform;
+        symRt.anchorMin = Vector2.zero; symRt.anchorMax = Vector2.one;
+        symRt.offsetMin = Vector2.zero; symRt.offsetMax = Vector2.zero;
+
+        float left = 50f;
         string name = string.IsNullOrEmpty(def.displayName) ? def.id : def.displayName;
         var title = NewText(row.transform, name, 14, FontStyle.Bold, TextAnchor.LowerLeft);
         title.color = def.tint == default ? Color.white : def.tint;

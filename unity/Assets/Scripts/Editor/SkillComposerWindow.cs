@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// Edit-mode authoring workspace for <see cref="SkillDef"/> assets — where you COMPOSE SKILLS: pick a composed
 /// <see cref="VfxSequence"/> (from the Vfx Composer), and map each of its exposed <b>ticks</b> to gameplay
-/// (damage/heal/status, element, multiplier, radius, targets) plus identity (icon, cost, cooldown, level growth).
+/// (damage/heal/status, element, multiplier, radius, targets) plus identity (symbol, cost, cooldown, level growth).
 ///
 /// <para>The split of concerns is the whole point: the Vfx Composer owns the LOOK and exposes named ticks; this
 /// window owns WHAT each tick does. The final numbers stay in code (<see cref="SkillEffectApplier"/> rolls them off
@@ -172,18 +172,25 @@ public class SkillComposerWindow : EditorWindow
             var headerRect = GUILayoutUtility.GetRect(0f, EditorGUIUtility.singleLineHeight, GUILayout.ExpandWidth(true));
             EditorGUI.DrawRect(headerRect, Fade(color, 0.30f));
 
-            // The pencil opens the palette for THIS group's weapon. Carved out of the header rather than laid beside
-            // it so the foldout keeps the whole remaining width — clicking the name still opens and closes the group.
+            // The swatch at the header's right edge IS the colour control: clicking it opens Unity's own colour
+            // picker on any colour at all, and it shows the group's current colour while closed. Carved out of the
+            // header rather than laid beside it so the foldout keeps the whole remaining width — clicking the name
+            // still opens and closes the group.
             var foldRect = headerRect;
             if (WeaponOfGroup(g, out var groupWeapon) && headerRect.width > 48f)
             {
-                var pencilRect = new Rect(headerRect.xMax - 18f, headerRect.y, 18f, headerRect.height);
-                foldRect.xMax = pencilRect.xMin;
-                if (GUI.Button(pencilRect, new GUIContent("✎", $"Pick the colour for {g}"), EditorStyles.label))
-                {
-                    var weapon = groupWeapon;   // capture: the popup's callback fires after this GUI pass
-                    PopupWindow.Show(pencilRect, new WeaponColorPalette(c => SetWeaponColor(weapon, c)));
-                }
+                // Held clear of the scroll view's vertical scrollbar, so the swatch can never sit underneath it and
+                // hand its clicks to the bar instead.
+                var swatchRect = new Rect(headerRect.xMax - ScrollGutter - 28f, headerRect.y + 1f, 28f,
+                                          headerRect.height - 2f);
+                foldRect.xMax = swatchRect.xMin - 2f;
+                ProbeHeaderClick(g, headerRect, swatchRect);
+                EditorGUI.BeginChangeCheck();
+                // NO eyedropper: at this size its icon fills the whole field, so every click armed the screen-picker
+                // instead of opening the colour window. No alpha and no HDR either — a weapon's colour is a flat
+                // opaque tint, so both would be knobs that change nothing a tile can show.
+                var picked = EditorGUI.ColorField(swatchRect, GUIContent.none, color, false, false, false);
+                if (EditorGUI.EndChangeCheck()) SetWeaponColor(groupWeapon, picked);
             }
             groupOpen[g] = open = EditorGUI.Foldout(foldRect, open, $"{g}  ({list.Count})", true);
 
@@ -285,6 +292,19 @@ public class SkillComposerWindow : EditorWindow
     {
         c.a = alpha;
         return c;
+    }
+
+    /// <summary>Width the scroll view keeps for its vertical scrollbar — anything drawn inside this much of the
+    /// right edge is sitting under the bar.</summary>
+    const float ScrollGutter = 16f;
+
+    // PROBE — temporary, delete once the swatch is confirmed clickable. Reports where a click on a group header
+    // actually landed, so "the picker won't open" is answered with the real numbers instead of a theory.
+    static void ProbeHeaderClick(string group, Rect header, Rect swatch)
+    {
+        var e = Event.current;
+        if (e == null || e.type != EventType.MouseDown || !swatch.Contains(e.mousePosition)) return;
+        Debug.Log($"[swatch probe] {group}: click {e.mousePosition} landed in swatch {swatch}");
     }
 
     /// <summary>The weapon a group's name stands for. The group IS the middle segment of the id, which the composer
@@ -942,22 +962,6 @@ public class SkillComposerWindow : EditorWindow
                 EditorGUILayout.HelpBox("Published, but in no weapon's pool — nothing can roll it. Pick a weapon above.",
                     MessageType.Warning);
 
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                sel.icon = (Sprite)EditorGUILayout.ObjectField(new GUIContent("icon",
-                    "Hotbar icon. Leave empty to fall back to the short text label."), sel.icon, typeof(Sprite), false);
-                var pickRect = GUILayoutUtility.GetRect(new GUIContent("Skill Icons ▾"), EditorStyles.miniButton, GUILayout.MaxWidth(96));
-                if (GUI.Button(pickRect, new GUIContent("Skill Icons ▾", "Pick from " + SkillIconPicker.Folder), EditorStyles.miniButton))
-                {
-                    var target = sel;   // capture the edited def; the popup callback fires after this GUI pass
-                    PopupWindow.Show(pickRect, new SkillIconPicker(s =>
-                    {
-                        Undo.RecordObject(target, "Set Skill Icon");
-                        target.icon = s;
-                        EditorUtility.SetDirty(target);
-                    }));
-                }
-            }
             EditorGUILayout.LabelField(new GUIContent("description", "Flavor + mechanics blurb shown in the hover card."));
             sel.description = EditorGUILayout.TextArea(sel.description ?? "", WrapTextArea, GUILayout.Height(42), GUILayout.ExpandWidth(true));
         }

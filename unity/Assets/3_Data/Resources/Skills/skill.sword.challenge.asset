@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Ch
   weaponType: 1
   published: 1
-  icon: {fileID: 0}
   description: 'Force one enemy to fight you.
 
     Taunted for 5s: locked onto you,

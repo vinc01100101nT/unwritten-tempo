@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Ds
   weaponType: 1
   published: 1
-  icon: {fileID: 0}
   description: 'Blunt their swing.
 
     A strike for 100% Attack; their next attack

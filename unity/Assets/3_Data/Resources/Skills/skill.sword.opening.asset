@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Op
   weaponType: 1
   published: 1
-  icon: {fileID: 6969427886737629405, guid: 3964ad93b5f03fc4d8bc30d5f55a7756, type: 3}
   description: "Find the weakness.\nA parry has a 50% chance to charge your next
     attack with +200% damage, within 5s \u2014 spent whether it hits or misses."
   archetype: 1

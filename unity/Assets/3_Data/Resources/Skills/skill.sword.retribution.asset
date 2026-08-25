@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Rt
   weaponType: 1
   published: 1
-  icon: {fileID: 8135663367076951168, guid: 83317278050e7dc45bff1a2d92dc62eb, type: 3}
   description: 'Answer all of it at once.
 
     Cashes the damage Brace banked: 100%

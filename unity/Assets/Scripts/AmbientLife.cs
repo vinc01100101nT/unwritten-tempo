@@ -58,14 +58,32 @@ public class AmbientLife : MonoBehaviour
             SpawnOne(player, spec);
     }
 
+    // The model ARRIVES rather than being on hand: the cast holds names and the asset is fetched through the shared
+    // roster, so a townsperson is built in the callback. Everything that decides WHERE it stands is settled first, so
+    // a late-arriving model lands exactly where an instant one would have.
     void SpawnOne(Transform player, CharacterSpec spec)
     {
-        var model = spec.RandomCivilian();
-        if (model == null) return;
+        var modelName = spec.RandomCivilian();
+        if (string.IsNullOrWhiteSpace(modelName)) return;
 
         Vector2 r = Random.insideUnitCircle * areaRadius;
         Vector3 p = GroundSnap(transform.position + new Vector3(r.x, 0f, r.y));
 
+        CharacterModels.Load(modelName, model =>
+        {
+            if (this == null) return;   // director (or its map) went away while the model was loading
+            if (model == null)
+            {
+                Debug.LogWarning("[unwritten] No character model registered as '" + modelName +
+                                 "' — one townsperson was skipped.");
+                return;
+            }
+            Build(player, spec, model, p);
+        });
+    }
+
+    void Build(Transform player, CharacterSpec spec, GameObject model, Vector3 p)
+    {
         // The MOVER must live on an UNSCALED root: a CharacterController silently refuses to translate when its
         // transform is scaled down to character size (~0.1) — MEASURED, its move came out 0 at scale 0.098 but works
         // at scale 1. So (same split the player uses) the unscaled root carries the controller + brain, and the

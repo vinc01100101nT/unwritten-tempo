@@ -463,8 +463,6 @@ public class SkillDef : ScriptableObject
     [Tooltip("PUBLISHED = eligible to be rolled onto a dropped weapon of its type. Unpublished skills are still " +
              "fully usable in the Grimoire (J) and the hotbar for testing — publishing only opens the loot roll.")]
     public bool published = false;
-    [Tooltip("Hotbar icon (Skill Icon pack). Null → the bar falls back to the short label.")]
-    public Sprite icon;
 
     [Header("Codex (hover tooltip)")]
     [TextArea(2, 4)]
@@ -659,7 +657,7 @@ public class SkillDef : ScriptableObject
     /// <summary>What the field holds until somebody shortens a name — the value that means "nobody chose one".</summary>
     public const string DefaultShortLabel = "Skill";
 
-    /// <summary>What an icon-less hotbar cell reads: the shortened name if one was authored, else the skill's OWN name.
+    /// <summary>What a hotbar cell's long form reads: the shortened name if one was authored, else the skill's OWN name.
     /// THE one answer to "what is this slot called", so no reader can show the placeholder instead.
     ///
     /// <para>Untouched, the field still says <see cref="DefaultShortLabel"/> — the literal word every skill starts with
@@ -670,7 +668,7 @@ public class SkillDef : ScriptableObject
 
     /// <summary>What a tile reads for this skill: its two-letter <see cref="symbol"/> if one was authored, else the
     /// skill's whole name. THE one answer, so every tile falls back the same way.</summary>
-    public string IconLabel => string.IsNullOrWhiteSpace(symbol) ? displayName : symbol;
+    public string Symbol => string.IsNullOrWhiteSpace(symbol) ? displayName : symbol;
 
     /// <summary>The binding for <paramref name="tickId"/>, or null if this tick is purely visual (unbound).</summary>
     public SkillTickBinding BindingFor(string tickId)

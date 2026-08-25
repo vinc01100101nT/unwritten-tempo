@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Pa
   weaponType: 1
   published: 1
-  icon: {fileID: 0}
   description: 'Read the hit and punish it.
 
     Fully negates the next incoming

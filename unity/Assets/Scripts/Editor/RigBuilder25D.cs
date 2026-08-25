@@ -487,28 +487,6 @@ public static class RigBuilder25D
         Player3DVisualBuilder.Attach(ctrl, Player3DVisualBuilder.DefaultModel);
     }
 
-    /// <summary>Loads a hotbar icon from the Ninja Adventure "Skill Icon" pack (e.g. "Spell/Cut"),
-    /// ensuring it's imported as a Sprite first. Returns null (→ the hotbar shows the text label) if the
-    /// file is missing. Assigned to the skill components so the icon serializes / is swappable in the
-    /// Inspector.</summary>
-    static Sprite LoadSkillIcon(string relativeNoExt)
-    {
-        string path = $"Assets/1_Authored/Art/Billboards/Ui/Skill Icon/{relativeNoExt}.png";
-        var importer = AssetImporter.GetAtPath(path) as TextureImporter;
-        if (importer == null) { Debug.LogWarning($"[unwritten] Hotbar icon not found: {path}"); return null; }
-        // The pack ships these icons as Sprite/Multiple (one 24×24 sub-sprite each), which
-        // LoadAssetAtPath<Sprite> can't return directly — force Single so the whole image is one
-        // addressable sprite. Nothing references the sub-sprites yet, so this is non-destructive.
-        if (importer.textureType != TextureImporterType.Sprite || importer.spriteImportMode != SpriteImportMode.Single)
-        {
-            importer.textureType = TextureImporterType.Sprite;
-            importer.spriteImportMode = SpriteImportMode.Single;
-            importer.SaveAndReimport();
-        }
-        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-        if (sprite == null) Debug.LogWarning($"[unwritten] Hotbar icon failed to load as Sprite: {path}");
-        return sprite;
-    }
 
     static int Fail(string msg)
     {

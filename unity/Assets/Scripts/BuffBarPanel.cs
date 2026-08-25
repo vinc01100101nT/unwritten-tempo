@@ -116,24 +116,22 @@ public class BuffBarPanel : MonoBehaviour
 
     Cell BuildCell(UnitStates.State buff)
     {
-        var frame = UiKit.Img("Buff", holder, CellBg);
+        // The cell wears the granting skill's weapon colour; a state from no skill falls back to the plain backdrop.
+        var weapon = SkillSymbol.ColorFor(buff.sourceSkillId);
+        var frame = UiKit.Img("Buff", holder,
+            string.IsNullOrEmpty(buff.sourceSkillId) ? CellBg : new Color(weapon.r, weapon.g, weapon.b, CellBg.a));
         frame.rectTransform.sizeDelta = new Vector2(44f, 44f);
         var le = frame.gameObject.AddComponent<LayoutElement>();
         le.preferredWidth = le.preferredHeight = 44f;
         frame.raycastTarget = true;   // the cell IS the hover target for the info card
 
-        if (buff.icon != null)
-        {
-            var icon = UiKit.Img("Icon", frame.transform, buff.tint == default ? Color.white : buff.tint);
-            icon.sprite = buff.icon; icon.preserveAspect = true; icon.raycastTarget = false;
-            UiKit.Fill(icon.rectTransform, new Vector2(3, 3), new Vector2(-3, -3));
-        }
-        else
-        {
-            var lbl = UiKit.MakeText("Label", frame.transform, string.IsNullOrEmpty(buff.name) ? buff.id.ToString() : buff.name, 9, FontStyle.Bold, TextAnchor.MiddleCenter);
-            lbl.color = Color.white; lbl.raycastTarget = false;
-            UiKit.Fill(lbl.rectTransform, Vector2.zero, Vector2.zero);
-        }
+        // The granting skill's two letters are the face. Tinted by the state's own colour, which is how an armed
+        // charge and the debt it becomes stay told apart without a second thing to draw.
+        string face = !string.IsNullOrEmpty(buff.symbol) ? buff.symbol
+                    : string.IsNullOrEmpty(buff.name) ? buff.id.ToString() : buff.name;
+        var lbl = UiKit.MakeText("Symbol", frame.transform, face, face.Length <= 2 ? 20 : 9, FontStyle.Bold, TextAnchor.MiddleCenter);
+        lbl.color = buff.tint == default ? Color.white : buff.tint; lbl.raycastTarget = false;
+        UiKit.Fill(lbl.rectTransform, Vector2.zero, Vector2.zero);
 
         // Shade that fills IN (radial) as the buff runs down — a "time left" ring, like an inverse cooldown.
         var fill = UiKit.Img("Fill", frame.transform, Shade);

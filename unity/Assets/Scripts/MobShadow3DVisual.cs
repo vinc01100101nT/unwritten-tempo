@@ -39,6 +39,7 @@ public class MobShadow3DVisual : Agent3DVisual
     int lastHp;
     float hurtUntil, lastAttackSeen;
     bool built;
+    bool building;   // a model is on its way — keeps a second call from starting a second load for the same mob
 
     // Footsteps run through the SAME frame-locked plant detector the player and the townsfolk use, so a shadow's
     // steps fire on ITS OWN walk/run animation crossing an authored plant frame — never a distance timer. Per-unit
@@ -66,23 +67,48 @@ public class MobShadow3DVisual : Agent3DVisual
 
     /// <summary>Swap the billboard for a live-3D character body. Idempotent — a pooled mob that already has a body
     /// keeps it (rebuilding on every respawn would Instantiate a rig per death, exactly the churn the mob pool exists
-    /// to avoid).</summary>
+    /// to avoid).
+    ///
+    /// <para>The model ARRIVES rather than being on hand: the cast holds names and the asset is fetched through the
+    /// shared roster, so the swap itself happens in the callback. Until it lands the mob is simply still a billboard —
+    /// a legal state it was already in the frame before, so nothing downstream sees a half-built shadow.</para></summary>
     void BuildBody()
     {
-        if (built) return;
+        if (built || building) return;
 
         // A shadow has its OWN look, drawn at random from the shared cast's FIGHTER pool. It used to CLONE the live
         // player, which made every shadow identical to you and to each other, tied a mob's appearance to a player
         // (wrong the moment more than one player shares a map), and made shadows silently fail to exist at all on any
         // map where no live 3D player had spawned yet. A shadow now depends on nothing but the spec.
         var spec = CharacterSpec.Active;
-        GameObject model = spec.RandomFighter();
-        if (model == null)
+        string modelName = spec.RandomFighter();
+        if (string.IsNullOrWhiteSpace(modelName))
         {
             Debug.LogWarning("[unwritten] CharacterSpec has no fighter models — '" + name + "' stays a billboard.");
             enabled = false;
             return;
         }
+
+        building = true;
+        CharacterModels.Load(modelName, model =>
+        {
+            if (this == null) return;   // mob died/recycled while its model was loading
+            building = false;
+            if (model == null)
+            {
+                Debug.LogWarning("[unwritten] No character model registered as '" + modelName + "' — '" + name +
+                                 "' stays a billboard.");
+                enabled = false;
+                return;
+            }
+            SwapToBody(spec, model);
+        });
+    }
+
+    // The in-place billboard→character swap, once the model is in hand.
+    void SwapToBody(CharacterSpec spec, GameObject model)
+    {
+        if (built) return;
 
         // --- Retire EVERY billboard part. A shadow keeps none of the sprite rig. ---
         // BillboardAnimator3D writes this root's localScale every frame (breathing squash) and AttackLunge writes it

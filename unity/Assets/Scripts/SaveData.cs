@@ -1,9 +1,9 @@
 using System;
 
 /// <summary>
-/// The serializable snapshot of a character's progression (M1 save slice). Written to / read from
-/// disk as JSON by <see cref="SaveSystem"/>; produced and consumed by <see cref="Character.CaptureSave"/>
-/// and <see cref="Character.RestoreSave"/>.
+/// The serializable snapshot of a character's PROGRESSION. Produced and consumed by
+/// <see cref="Character.CaptureSave"/> / <see cref="Character.RestoreSave"/>, and stored as one document in
+/// the account service's database — the single place a character's data lives.
 ///
 /// JsonUtility can't serialize a Dictionary, so the Trio-Ring ranks are stored as two parallel arrays
 /// (<see cref="rankStats"/> / <see cref="rankValues"/>). Every field has a safe default so an older or
@@ -18,7 +18,11 @@ public class SaveData
 {
     public const int CurrentVersion = 7;
 
-    public int version = CurrentVersion;
+    // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
+    // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
+    // can only ever mean unplayed. Without that distinction an empty document would look like a real level-1
+    // save and quietly stand in for the fresh character the game is supposed to build.
+    public int version;
 
     // Core progression.
     public int level = 1;
@@ -73,13 +77,9 @@ public class SaveData
     public int[]    bagRarities;    // v7+: per-copy rolled rarity (see equipRarities)
     public string[] bagSkills;      // v7+: per-copy rolled kit (see equipSkills)
 
-    // Per-cloth-part outfit dye (v6+): parallel authored-sRGB hex arrays — the atlas source part-color and the
-    // chosen color. Owned by Character, applied by CharacterDye3D. Null on an older save → no dye (art colors).
-    public string[] outfitDyeSources;
-    public string[] outfitDyeTargets;
-
-    // Which character model the dye above was authored for (a signature of the worn mesh names). Lets
-    // CharacterDye3D drop the dye when the model changes, so a color-keyed dye can't bleed onto a different
-    // character that happens to share a base color. Null on an older save → adopted by the current model.
-    public string outfitDyeModel;
+    // NOTE — APPEARANCE IS NOT HERE. Which body a character wears and how it is recoloured belong to the
+    // CHARACTER RECORD on the server (see AccountSession), not to this progress document. They used to live
+    // in both, which is two owners for one thing: the pair drifts the moment either side is written alone.
+    // Appearance is identity — chosen once at creation and true before the character has ever been played —
+    // while everything above is progress, which only exists after playing. Do not add them back here.
 }

@@ -1086,7 +1086,7 @@ public class Character : MonoBehaviour, ICombatUnit
     // The progression spine — level, XP, HP/MP, the six primary stats + unspent points, the Trio-Ring
     // passive walk, and (v6+) equipped gear. The BAG is owned by InventoryStore, not here; SaveManager
     // stitches it into the same SaveData. These methods are the only place that touches the private
-    // fields, so SaveSystem stays free of Character internals.
+    // fields, so the storage layer stays free of Character internals.
 
     /// <summary>Snapshot the character's progression into a serializable <see cref="SaveData"/>.</summary>
     public SaveData CaptureSave()
@@ -1115,9 +1115,7 @@ public class Character : MonoBehaviour, ICombatUnit
         d.hotbarBindings = Hotbar.Capture();
         d.activePassives = PassiveSkills.Capture();
         CaptureEquipment(d);
-        d.outfitDyeSources = DyeSources;
-        d.outfitDyeTargets = DyeTargets;
-        d.outfitDyeModel   = DyeModel;
+        // Appearance is deliberately absent — see SaveData. It belongs to the character record, not to progress.
         return d;
     }
 
@@ -1199,9 +1197,8 @@ public class Character : MonoBehaviour, ICombatUnit
         PassiveSkills.Restore(d.activePassives);
         RestoreEquipment(d);         // v6+: rebuild worn gear from the save (Ring excluded)
         EnsureRingEquipped();        // re-wear the Ring vessel (auto-managed, never serialized)
-        DyeSources = d.outfitDyeSources;   // v6+: outfit dye (CharacterDye3D re-bakes off OnAppearanceChanged below)
-        DyeTargets = d.outfitDyeTargets;
-        DyeModel   = d.outfitDyeModel;     // CharacterDye3D drops the dye if this doesn't match the worn model
+        // Appearance is NOT restored here — it is not progress. The chosen body and its recolour come from the
+        // character record (SaveManager applies them from AccountSession before this runs).
 
         // HP/MP last, against the now-restored maxima. Never load into a dead state.
         CurrentHP = Mathf.Clamp(d.currentHP <= 0 ? MaxHP : d.currentHP, 1, MaxHP);

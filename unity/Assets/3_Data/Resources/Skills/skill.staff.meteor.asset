@@ -16,7 +16,6 @@ MonoBehaviour:
   displayName: Meteor
   weaponType: 8
   published: 0
-  icon: {fileID: -748796600851884618, guid: e332629eb48b6454a8278a39bd5d6b5a, type: 3}
   description: 'The sky falls.
 
     Calls down 8x Magic damage across 3 strikes,

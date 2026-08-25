@@ -87,6 +87,7 @@ public class UnitStatusPanel : MonoBehaviour
             public GameObject go;
             public RectTransform rt;      // hover anchor for the shared info card
             public Image icon;
+            public TMP_Text symbol;
             public Image fill;
             public TMP_Text time;
             public TMP_Text stacks;
@@ -257,8 +258,10 @@ public class UnitStatusPanel : MonoBehaviour
                 if (c.go.activeSelf != on) c.go.SetActive(on);
                 if (!on) continue;
 
-                c.icon.sprite  = st.icon;
-                c.icon.color   = st.icon != null ? (st.tint == default ? Color.white : st.tint) : Color.clear;
+                c.icon.sprite  = null;
+                c.icon.color   = SkillSymbol.ColorFor(st.sourceSkillId);
+                c.symbol.text  = st.symbol ?? "";
+                c.symbol.color = st.tint == default ? Color.white : st.tint;
                 c.lastSecs = c.lastStacks = -1;   // force both labels to write on the next refresh
                 // Laid out by hand (no LayoutGroup) so a rebuild costs nothing but a few anchored positions.
                 ((RectTransform)c.go.transform).anchoredPosition = new Vector2(i * (IconH + IconGap), 0f);
@@ -328,8 +331,12 @@ public class UnitStatusPanel : MonoBehaviour
             rt.sizeDelta = new Vector2(IconH, IconH);
 
             var icon = NewImage("Icon", rt, Color.white);
-            icon.preserveAspect = true;
             Inset(icon.rectTransform, 2f);
+
+            // The granting skill's two letters, centred on the tile — what used to be a picture.
+            var symbol = NewText("Symbol", rt, 15, TextAlignmentOptions.Center, Color.white);
+            symbol.raycastTarget = false;
+            Inset(symbol.rectTransform, 2f);
 
             var fill = NewImage("Fill", rt, Shade);
             fill.type = Image.Type.Filled;
@@ -345,7 +352,7 @@ public class UnitStatusPanel : MonoBehaviour
             var stacks = NewText("Stacks", rt, 9, TextAlignmentOptions.TopLeft, StackTint);
             Inset(stacks.rectTransform, 1f);
 
-            var cell = new Cell { go = frame.gameObject, rt = rt, icon = icon, fill = fill, time = time, stacks = stacks };
+            var cell = new Cell { go = frame.gameObject, rt = rt, icon = icon, symbol = symbol, fill = fill, time = time, stacks = stacks };
             cell.go.SetActive(false);
 
             if (hoverable)

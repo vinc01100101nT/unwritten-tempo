@@ -21,7 +21,6 @@ public class HotbarSlotTarget : MonoBehaviour
 public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public int slotIndex;
-    public Sprite iconSprite;
     public Color tint = Color.white;
 
     GameObject ghost;
@@ -41,10 +40,8 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
         ghost.transform.SetParent(canvas.transform, false);
         ghost.transform.SetAsLastSibling();
         var img = ghost.GetComponent<Image>();
-        img.sprite = iconSprite;
-        img.color = new Color(tint.r, tint.g, tint.b, iconSprite != null ? 0.9f : 0.55f);
+        img.color = new Color(tint.r, tint.g, tint.b, 0.75f);
         img.raycastTarget = false;
-        img.preserveAspect = true;
         ((RectTransform)ghost.transform).sizeDelta = new Vector2(44, 44);
         Position(e);
     }
@@ -99,7 +96,6 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
 public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public string skillId;
-    public Sprite iconSprite;       // for the drag ghost (null → a plain tinted square)
     public Color tint = Color.white;
 
     GameObject ghost;
@@ -115,10 +111,8 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         ghost.transform.SetParent(canvas.transform, false);
         ghost.transform.SetAsLastSibling();
         var img = ghost.GetComponent<Image>();
-        img.sprite = iconSprite;
-        img.color = new Color(tint.r, tint.g, tint.b, iconSprite != null ? 0.9f : 0.55f);
+        img.color = new Color(tint.r, tint.g, tint.b, 0.75f);
         img.raycastTarget = false;
-        img.preserveAspect = true;
         ((RectTransform)ghost.transform).sizeDelta = new Vector2(44, 44);
         Position(e);
     }

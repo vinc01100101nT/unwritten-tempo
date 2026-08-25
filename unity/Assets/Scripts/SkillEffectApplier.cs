@@ -39,7 +39,7 @@ public static class SkillEffectApplier
     /// <paramref name="caster"/> is the acting entity whose stats scale the roll (defaults to the local player).</summary>
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
-                                  Sprite srcIcon = null, string srcName = null, string srcId = null,
+                                  string srcSymbol = null, string srcName = null, string srcId = null,
                                   Vector3? aimPoint = null, Character caster = null, StackVars vars = default)
     {
         if (effects == null || effects.Count == 0) return;
@@ -58,7 +58,7 @@ public static class SkillEffectApplier
         // PASS 1 — CASTER effects (see SkillEffect.LandsOnCaster): they happen TO THE CASTER, so the tick's targeting has no say.
         // They run here exactly once, whatever the scope/affects are, and are excluded from the target pass below — so
         // "Single Target on a mob" can't swallow a Dash (the bug this split fixes), and a Self tick can't double-apply it.
-        ApplyCasterEffects(effects, relocatePoint, singleTarget, srcIcon, srcName, srcId, ch, vars);
+        ApplyCasterEffects(effects, relocatePoint, singleTarget, srcSymbol, srcName, srcId, ch, vars);
 
         // PASS 2 — TARGET effects: gather who the tick reaches, then run the hit loop on them.
         if (targets == SkillTargets.None) return;
@@ -72,11 +72,11 @@ public static class SkillEffectApplier
                 if ((targets & SkillTargets.Mobs) != 0 && mob.Health != null && !mob.Health.IsDead)
                 {
                     burstTargets.Clear(); burstTargets.Add(mob);
-                    DispatchMobHits(effects, burstTargets, ch, relocatePoint, srcIcon, srcName, srcId, vars);
+                    DispatchMobHits(effects, burstTargets, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
                 }
             }
             else if ((targets & SkillTargets.Player) != 0)
-                ApplyEffectsToPlayer(effects, relocatePoint, srcIcon, srcName, srcId, ch, vars);
+                ApplyEffectsToPlayer(effects, relocatePoint, srcSymbol, srcName, srcId, ch, vars);
             return;
         }
 
@@ -94,7 +94,7 @@ public static class SkillEffectApplier
                 if (d.sqrMagnitude > r2) continue;
                 burstTargets.Add(ai);
             }
-            DispatchMobHits(effects, burstTargets, ch, relocatePoint, srcIcon, srcName, srcId, vars);
+            DispatchMobHits(effects, burstTargets, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
         }
 
         if ((targets & SkillTargets.Player) != 0)
@@ -103,7 +103,7 @@ public static class SkillEffectApplier
             // no skill is a "hazard zone that hits the player if inside", and a ground cast's point is by definition
             // somewhere the caster isn't standing. Caster effects already ran in pass 1 and are not repeated here.
             if (ch != null && !ch.IsDead)
-                ApplyEffectsToPlayer(effects, relocatePoint, srcIcon, srcName, srcId, ch, vars);
+                ApplyEffectsToPlayer(effects, relocatePoint, srcSymbol, srcName, srcId, ch, vars);
         }
     }
 
@@ -231,14 +231,14 @@ public static class SkillEffectApplier
     // Every CASTER-side effect in the list, applied ONCE to the acting caster. No hit loop: a caster effect isn't a
     // strike, so a multi-hit flurry must not dash you N times (target effects own hitCount, see HitLoops).
     static void ApplyCasterEffects(List<SkillEffect> effects, Vector3 point, Transform aimUnit,
-                                   Sprite srcIcon, string srcName, string srcId, Character ch, in StackVars vars)
+                                   string srcSymbol, string srcName, string srcId, Character ch, in StackVars vars)
     {
         if (ch == null || ch.IsDead) return;
         for (int i = 0; i < effects.Count; i++)
         {
             var e = effects[i];
             if (SkillEffect.LandsOnCaster(e))
-                ApplyOne(e, ch, 0, ch, point, aimUnit, srcIcon, srcName, srcId, vars);
+                ApplyOne(e, ch, 0, ch, point, aimUnit, srcSymbol, srcName, srcId, vars);
         }
     }
 
@@ -259,7 +259,7 @@ public static class SkillEffectApplier
     static void ApplyOne(SkillEffect e, ICombatUnit unit, int hit,
                          Character caster,
                          Vector3 relocatePoint, Transform aimUnit,
-                         Sprite srcIcon, string srcName, string srcId, in StackVars vars)
+                         string srcSymbol, string srcName, string srcId, in StackVars vars)
     {
         if (e == null || unit == null) return;
         var states = unit.States;
@@ -279,7 +279,7 @@ public static class SkillEffectApplier
         bool tagDisplay = seconds > 0f;
         // A speed-earned count is deliberately UNCAPPED: the authored ceiling describes a pile the designer sized by
         // hand, and clamping an earned count to it would silently delete the charges a fast caster just paid for.
-        if (tagDisplay) states.SetApplyContext(srcIcon, srcName,
+        if (tagDisplay) states.SetApplyContext(srcSymbol, srcName,
                                                unit is Character ? SkillTooltip.DescribeEffect(e) : null,
                                                e.stacking, ResolveStacks(e, caster, vars),
                                                e.stacksFromAttackSpeed ? 0 : Mathf.Max(1, e.stackLimit.ResolveInt(vars)), srcId);
@@ -449,14 +449,14 @@ public static class SkillEffectApplier
     // exactly like RO — instead of N overlapping numbers dumped in a single frame.
     static void DispatchMobHits(List<SkillEffect> effects, List<MonsterAI3D> mobs,
                                 Character caster, Vector3 relocatePoint,
-                                Sprite srcIcon = null, string srcName = null, string srcId = null,
+                                string srcSymbol = null, string srcName = null, string srcId = null,
                                 StackVars vars = default)
     {
         if (mobs.Count == 0) return;
         if (HitLoops(effects, caster, vars) <= 1)
         {
             for (int i = 0; i < mobs.Count; i++)
-                ApplyEffectsToMob(effects, mobs[i], relocatePoint, caster, srcIcon, srcName, srcId, vars);
+                ApplyEffectsToMob(effects, mobs[i], relocatePoint, caster, srcSymbol, srcName, srcId, vars);
             return;
         }
         // A flurry's later strikes land on LATER FRAMES, outside the caster's tick — so the causal chain must ride the
@@ -474,7 +474,7 @@ public static class SkillEffectApplier
                 // blow, and a kill that couldn't name the skill that landed it would be a kill by nobody.
                 var prev = PassiveEvents.Push(chain, srcId);
                 var prevTotal = RepeatsDamageTotal.Push(runTotal);
-                try { return ApplyHitToMob(effects, ai, hit, caster, flurryPoint, srcIcon, srcName, srcId, flurryVars); }
+                try { return ApplyHitToMob(effects, ai, hit, caster, flurryPoint, srcSymbol, srcName, srcId, flurryVars); }
                 finally { RepeatsDamageTotal.Pop(prevTotal); PassiveEvents.Pop(prev); }   // the damage dealt feeds the rising total
             },
             showTotal: runTotal == null);   // one drawer of the yellow number, never both
@@ -485,7 +485,7 @@ public static class SkillEffectApplier
     // yellow combo total can accumulate it.
     static int ApplyHitToMob(List<SkillEffect> effects, MonsterAI3D ai, int hit,
                              Character caster, Vector3 relocatePoint,
-                             Sprite srcIcon = null, string srcName = null, string srcId = null,
+                             string srcSymbol = null, string srcName = null, string srcId = null,
                              StackVars vars = default)
     {
         if (ai == null) return 0;
@@ -504,7 +504,7 @@ public static class SkillEffectApplier
                 dealt += LandStrike(e, h, caster, vars, overkill: true);
             }
             else
-                ApplyToTarget(e, h, hit, caster, relocatePoint, srcIcon, srcName, srcId, vars);   // procs / status / one-shots
+                ApplyToTarget(e, h, hit, caster, relocatePoint, srcSymbol, srcName, srcId, vars);   // procs / status / one-shots
         }
         return dealt;
     }
@@ -534,7 +534,7 @@ public static class SkillEffectApplier
     /// <summary>Run the hit loop for one MOB: each hit lands the Damage strike + rolls the binding's procs.</summary>
     public static void ApplyEffectsToMob(List<SkillEffect> effects, MonsterAI3D ai, Vector3 relocatePoint,
                                          Character caster = null,
-                                         Sprite srcIcon = null, string srcName = null, string srcId = null, StackVars vars = default)
+                                         string srcSymbol = null, string srcName = null, string srcId = null, StackVars vars = default)
     {
         if (effects == null || ai == null) return;
         var h = ai.Health;
@@ -542,7 +542,7 @@ public static class SkillEffectApplier
         int loops = HitLoops(effects, caster, vars);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
-                ApplyToTarget(effects[i], h, n, caster, relocatePoint, srcIcon, srcName, srcId, vars);
+                ApplyToTarget(effects[i], h, n, caster, relocatePoint, srcSymbol, srcName, srcId, vars);
     }
 
     // One TARGET-side effect onto a gathered unit. Caster-side effects already ran in pass 1 and must not land again —
@@ -553,10 +553,10 @@ public static class SkillEffectApplier
     // here on purpose: the aimed unit IS the one being moved, and landing it beside itself would move it nowhere.
     static void ApplyToTarget(SkillEffect e, ICombatUnit unit, int hit,
                               Character caster, Vector3 relocatePoint,
-                              Sprite srcIcon, string srcName, string srcId, in StackVars vars)
+                              string srcSymbol, string srcName, string srcId, in StackVars vars)
     {
         if (e == null || SkillEffect.LandsOnCaster(e)) return;
-        ApplyOne(e, unit, hit, caster, relocatePoint, null, srcIcon, srcName, srcId, vars);
+        ApplyOne(e, unit, hit, caster, relocatePoint, null, srcSymbol, srcName, srcId, vars);
     }
 
     // Execute: a self-contained bonus hit scaled by the TARGET's MISSING HP (proc'd per hit by the caller). magnitude =
@@ -584,7 +584,7 @@ public static class SkillEffectApplier
     /// Caster effects are NOT here — they run once in <see cref="ApplyBurst"/>'s caster pass. <paramref name="caster"/>
     /// is the acting entity (its own self-cast target); defaults to the local player.</summary>
     public static void ApplyEffectsToPlayer(List<SkillEffect> effects, Vector3 relocatePoint,
-                                            Sprite srcIcon = null, string srcName = null, string srcId = null, Character caster = null,
+                                            string srcSymbol = null, string srcName = null, string srcId = null, Character caster = null,
                                             StackVars vars = default)
     {
         var ch = caster ?? Character.Instance;
@@ -592,7 +592,7 @@ public static class SkillEffectApplier
         int loops = HitLoops(effects, ch, vars);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
-                ApplyToTarget(effects[i], ch, n, ch, relocatePoint, srcIcon, srcName, srcId, vars);
+                ApplyToTarget(effects[i], ch, n, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
     }
 
     /// <summary>ONE Damage strike onto one unit — the single place a skill's damage is rolled and applied, whether it
@@ -734,7 +734,7 @@ public static class SkillEffectApplier
         // charges are each worth. Ring investment still applies — that is the granter's own scaling, not the cast's.
         states.AddStacksTo(e.modifierSkillId, e.modifierStateId, ScaledModifierStacks(e, caster, vars),
                            ScaledMagnitude(grant, caster, StackVars.None), ScaledSeconds(grant, caster, StackVars.None),
-                           granter.icon, granter.displayName, null);
+                           granter.Symbol, granter.displayName, null);
     }
 
     // The THREE numbers every effect kind is made of, each scaled the same two ways at the same one place: by ring

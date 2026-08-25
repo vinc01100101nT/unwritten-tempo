@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 
 /// <summary>
 /// THE runtime choke point for "make a live mob from catalog data" during Play. The mob BUILDER
@@ -12,20 +9,16 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 /// clones it. Route all data-driven spawning through here so the address key + caching + hideFlags rule live
 /// in one place.
 ///
-/// Loading is ASYNC (Addressables): the first spawn of a given mob loads its prefab off the main path, then
-/// the loaded prefab asset is cached for the session and every later spawn is an immediate
-/// <see cref="UnityEngine.Object.Instantiate"/>. Instances are plain clones (NOT Addressables-managed), so a
-/// mob's death/recycle lifecycle (<c>MobRespawn</c>, <c>DeathDissolve</c>) is unchanged — only where the
-/// prefab comes from changed (Addressables instead of a Resources folder).
+/// Loading is ASYNC and runs through <see cref="AddressablePrefabs"/> — the shared address→prefab cache the
+/// character models use too, so the "load once, keep for the session, never retry a dead address" rule has one
+/// owner rather than a copy per system. The first spawn of a given mob loads its prefab off the main path and
+/// every later spawn is an immediate <see cref="UnityEngine.Object.Instantiate"/>. Instances are plain clones
+/// (NOT Addressables-managed), so a mob's death/recycle lifecycle (<c>MobRespawn</c>, <c>DeathDissolve</c>) is
+/// unchanged — only where the prefab comes from changed (Addressables instead of a Resources folder).
 /// </summary>
 public static class MobSpawner
 {
     const string AddressPrefix = "Mobs/";
-
-    // key -> loaded prefab handle. Kept for the session (never released) so repeated summons are instant;
-    // a failed load caches a default (invalid) handle so a missing address isn't re-attempted every summon.
-    static readonly Dictionary<string, AsyncOperationHandle<GameObject>> loaded =
-        new Dictionary<string, AsyncOperationHandle<GameObject>>();
 
     /// <summary>Spawn <paramref name="def"/>'s baked prefab with its feet at <paramref name="foot"/>. The
     /// prefab loads async on first use then is cached, so <paramref name="onSpawned"/> may fire this frame
@@ -34,21 +27,9 @@ public static class MobSpawner
     public static void Spawn(MonsterDef def, Vector3 foot, Action<GameObject> onSpawned = null)
     {
         if (def == null) { onSpawned?.Invoke(null); return; }
-        string key = AddressPrefix + def.name;
 
-        if (loaded.TryGetValue(key, out var cached))
-        {
-            onSpawned?.Invoke(cached.IsValid() && cached.Result != null ? Clone(cached.Result, foot) : null);
-            return;
-        }
-
-        var handle = Addressables.LoadAssetAsync<GameObject>(key);
-        handle.Completed += h =>
-        {
-            loaded[key] = h;   // cache success OR failure (an invalid/failed handle → null, not retried)
-            var prefab = h.Status == AsyncOperationStatus.Succeeded ? h.Result : null;
-            onSpawned?.Invoke(prefab != null ? Clone(prefab, foot) : null);
-        };
+        AddressablePrefabs.Load(AddressPrefix + def.name,
+                                prefab => onSpawned?.Invoke(prefab != null ? Clone(prefab, foot) : null));
     }
 
     static GameObject Clone(GameObject prefab, Vector3 foot)

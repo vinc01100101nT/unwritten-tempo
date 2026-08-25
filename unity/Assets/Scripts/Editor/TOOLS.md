@@ -213,11 +213,9 @@ The Unity side of the batch Mixamo auto-rig flow (see the `mixamo-batch-autorig-
 
 ## Save
 
-| Menu | What | Use when |
-| --- | --- | --- |
-| **Delete Save File (new game)** | Deletes the character save → next Play is a fresh level-1 start. | Testing the new-game / first-boot flow. (`SaveTools.cs`) |
-| **Open Save Folder** | Reveals the save JSON in the OS file browser. | Inspecting the save on disk. (`SaveTools.cs`) |
-| **Print Save Path** | Logs the absolute save path + whether it exists. | Quick check of where the save lives. (`SaveTools.cs`) |
+No menu items. A character's data lives in the account service's database — there is no save file on disk to
+delete, reveal or locate, and the three tools that did those things were removed with it. To start a character
+over, delete that character and make a new one.
 
 ---
 

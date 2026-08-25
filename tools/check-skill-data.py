@@ -326,6 +326,22 @@ def check_export(skills, problems):
                          "data/skills.json still lists '%s', which no longer exists as an asset. Re-run the "
                          "export." % extra))
 
+    docs_table = os.path.join(REPO, "data", "skills.md")
+    if not os.path.exists(docs_table):
+        problems.append(("the skill export",
+                         "the design docs' table (data/skills.md) is missing. Re-run the export."))
+    else:
+        # Cheap coverage check: every skill must have a row. We match on the display name because the table is for
+        # humans and carries no ids — and coverage is the failure that actually happens (somebody added a skill and
+        # never re-saved), not a mangled cell.
+        table = read(docs_table)
+        for s in skills:
+            name = s.get("displayName", "")
+            if name and name not in table:
+                problems.append(("the skill export",
+                                 "'%s' has no row in data/skills.md — the design docs cannot see it. Re-run the "
+                                 "export." % name))
+
     if not os.path.exists(wiki_copy):
         problems.append(("the skill export",
                          "the wiki's copy (wiki/content/skills.generated.json) is missing — the Sword page will "

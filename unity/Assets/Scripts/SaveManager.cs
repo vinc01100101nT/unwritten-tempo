@@ -11,6 +11,11 @@ using UnityEngine;
 ///
 /// <see cref="Character"/> may not exist yet on frame one (the Systems scene loads additively), so we
 /// poll cheaply until it appears, then initialize exactly once.
+///
+/// <para>A character's data lives in ONE place: the account service's database, reached through
+/// <see cref="ProfileStore"/>. Loading therefore takes frames rather than returning immediately, and nothing
+/// loads or saves until <see cref="AccountSession"/> says who is playing — before sign-in there is no
+/// character to write, which is the correct state, not a failure.</para>
 /// </summary>
 public class SaveManager : MonoBehaviour
 {
@@ -21,6 +26,7 @@ public class SaveManager : MonoBehaviour
 
     Character character;
     bool initialized;
+    bool loading;      // a load is in flight — the answer comes over a network, so it spans frames
     bool dirty;
     float nextAutosave;
 
@@ -51,39 +57,64 @@ public class SaveManager : MonoBehaviour
     {
         if (!initialized)
         {
-            if (Character.Instance != null) Initialize();   // Systems scene is up — load now
+            // Nothing to do until someone is playing a character AND the Systems scene is up.
+            if (!loading && AccountSession.IsActive && Character.Instance != null) BeginLoad();
             return;
         }
 
         if (dirty && Time.unscaledTime >= nextAutosave) SaveNow();
     }
 
-    void Initialize()
+    void BeginLoad()
     {
+        loading   = true;
         character = Character.Instance;
 
-        // Continue an existing character if there's a save; otherwise the fresh level-1 character stands,
-        // and the first checkpoint below seeds the file. Read through the profile store (local disk today,
-        // a server backend later) so the source of truth is a one-line swap.
-        Loaded = ProfileStore.Current.Read();
-        if (Loaded != null)
+        // Appearance first, and from the CHARACTER RECORD — it is identity, chosen at creation, and true even
+        // for a character nobody has played. It is deliberately not in the save document; keeping it in both
+        // would be two owners for one thing.
+        ApplyAppearance();
+
+        ProfileStore.Current.Load(data =>
         {
-            character.RestoreSave(Loaded);
-            // The persistent HUD panels may have already built from the fresh (empty) character earlier this
-            // frame — they only reflect saved layout when told to rebuild, so nudge the ones that mirror it.
-            // The data restored correctly; this is purely the post-load visual refresh (else the hotbar reads
-            // as empty until the next manual bind).
-            HotbarPanel.RebuildRequested?.Invoke();
-        }
+            if (this == null) return;   // left the game while the request was out
 
-        // Subscribe AFTER restoring, so loading doesn't immediately mark us dirty.
-        character.OnLeveledUp       += OnLeveledUp;         // biggest checkpoints
-        character.OnRevived         += SaveNow;             // persist the post-death respawn
-        character.OnStatsChanged    += MarkDirty;           // spent a stat/skill point, gear, etc.
-        character.OnAppearanceChanged += MarkDirty;         // recolored an outfit part
+            Loaded = data;
+            if (Loaded != null)
+            {
+                character.RestoreSave(Loaded);
+                // The persistent HUD panels may have already built from the fresh (empty) character — they
+                // only reflect saved layout when told to rebuild, so nudge the ones that mirror it. The data
+                // restored correctly; this is purely the post-load visual refresh (else the hotbar reads as
+                // empty until the next manual bind).
+                HotbarPanel.RebuildRequested?.Invoke();
+            }
 
-        nextAutosave = Time.unscaledTime + autosaveInterval;
-        initialized  = true;
+            // Subscribe AFTER restoring, so loading doesn't immediately mark us dirty.
+            character.OnLeveledUp         += OnLeveledUp;    // biggest checkpoints
+            character.OnRevived           += SaveNow;        // persist the post-death respawn
+            character.OnStatsChanged      += MarkDirty;      // spent a stat/skill point, gear, etc.
+            character.OnAppearanceChanged += SaveAppearance; // recoloured — goes to the character record, not the save
+
+            nextAutosave = Time.unscaledTime + autosaveInterval;
+            initialized  = true;
+            loading      = false;
+        });
+    }
+
+    // Wear the body this character was created with and its chosen recolour.
+    void ApplyAppearance()
+    {
+        if (!string.IsNullOrEmpty(AccountSession.ModelName)) Player3DBody.Wear(AccountSession.ModelName);
+        character.SetDye(AccountSession.DyeSources, AccountSession.DyeTargets, AccountSession.ModelName);
+    }
+
+    /// <summary>Push a recolour to the character record. Appearance is not progress, so it never waits for the
+    /// autosave timer and never rides along in the save document.</summary>
+    void SaveAppearance()
+    {
+        if (character == null) return;
+        ProfileStore.Current.SaveAppearance(character.DyeModel, character.DyeSources, character.DyeTargets);
     }
 
     void OnLeveledUp(int newLevel) => SaveNow();
@@ -101,7 +132,7 @@ public class SaveManager : MonoBehaviour
         // never opened this session, carry forward the bag we loaded so an autosave doesn't wipe it.
         if (InventoryStore.Instance != null) InventoryStore.Instance.CaptureInto(data);
         else CarryForwardBag(data);
-        ProfileStore.Current.Write(data);
+        ProfileStore.Current.Save(data);
         Loaded = data;
         dirty = false;
         nextAutosave = Time.unscaledTime + autosaveInterval;
@@ -122,9 +153,9 @@ public class SaveManager : MonoBehaviour
     void OnDestroy()
     {
         if (character == null) return;
-        character.OnLeveledUp       -= OnLeveledUp;
-        character.OnRevived         -= SaveNow;
-        character.OnStatsChanged    -= MarkDirty;
-        character.OnAppearanceChanged -= MarkDirty;
+        character.OnLeveledUp         -= OnLeveledUp;
+        character.OnRevived           -= SaveNow;
+        character.OnStatsChanged      -= MarkDirty;
+        character.OnAppearanceChanged -= SaveAppearance;
     }
 }

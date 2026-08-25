@@ -549,7 +549,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                                           // several plays in flight, and a re-aiming repeat would otherwise resolve a
                                           // still-running beat against whatever the newest beat picked.
                                           tick.aimUnit,
-                                          def.icon, def.displayName, def.id,   // def.id KEYS the pile: stacks belong to the skill that granted them
+                                          def.Symbol, def.displayName, def.id,   // def.id KEYS the pile: stacks belong to the skill that granted them
                                           aimPoint: tick.aimPoint,   // Dash/Teleport go where THIS play aimed, not to the tick's VFX anchor
                                           caster: Character.Instance, // explicit caster (local player today; a per-connection entity once server-authoritative)
                                           // Both readings of the cashed pile, measured once at cast start, handed to
@@ -609,7 +609,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public int SlotOrder => def != null ? def.slotOrder : 100;
     public string ShortLabel => def != null ? def.HotbarLabel : SkillDef.DefaultShortLabel;
     public string KeyLabel => def != null ? def.keyLabel : "";
-    public Sprite Icon => def != null ? def.icon : null;
+    public string Symbol => def != null ? def.Symbol : "";
+    public Color SymbolColor => SkillSymbol.ColorFor(def);
     public int ManaCost => def != null ? def.manaCost : 0;
     public bool Affordable => Character.Instance != null && def != null && Character.Instance.CurrentMP >= def.manaCost;
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);

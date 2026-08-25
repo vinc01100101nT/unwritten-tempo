@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Pr
   weaponType: 1
   published: 1
-  icon: {fileID: 0}
   description: 'Never let them recover.
 
     Every hit cuts the target''s HP regen

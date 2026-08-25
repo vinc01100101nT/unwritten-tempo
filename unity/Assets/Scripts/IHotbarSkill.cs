@@ -17,8 +17,11 @@ public interface IHotbarSkill
     string ShortLabel { get; }
     /// <summary>The hotkey glyph shown in the corner, e.g. "1" / "Q".</summary>
     string KeyLabel { get; }
-    /// <summary>Slot icon (from the Skill Icon pack), or null to fall back to <see cref="ShortLabel"/>.</summary>
-    Sprite Icon { get; }
+    /// <summary>The two letters the slot wears, falling back to the skill's whole name when none was authored.</summary>
+    string Symbol { get; }
+
+    /// <summary>The colour of the weapon this skill belongs to — the slot's background.</summary>
+    Color SymbolColor { get; }
     /// <summary>Mana spent per use (shown in the corner; greys the slot when unaffordable).</summary>
     int ManaCost { get; }
     /// <summary>True when the player currently has enough MP to use it.</summary>

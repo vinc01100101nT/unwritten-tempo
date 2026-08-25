@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Bd
   weaponType: 1
   published: 1
-  icon: {fileID: 0}
   description: 'Become the storm.
 
     Arms dance charges and half as many parries

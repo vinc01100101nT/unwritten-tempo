@@ -86,7 +86,7 @@ public class UnitStates : MonoBehaviour
     /// <summary>One active state on the unit, holding one or more STACKS. <see cref="magnitude"/> / <see cref="intAmount"/>
     /// are the AGGREGATE across stacks (their meaning is per <see cref="StateId"/> — see the enum), so every existing
     /// reader keeps working untouched: a non-stacking state is simply one stack, and its aggregate IS that stack's value.
-    /// Display fields carry the source skill's icon for the tray / nameplate.</summary>
+    /// Display fields carry the source skill's symbol for the tray / nameplate.</summary>
     public class State
     {
         /// <summary>One application. Each stack carries its OWN magnitude and its OWN expiry — that's what makes a
@@ -113,8 +113,8 @@ public class UnitStates : MonoBehaviour
         public int intAmount;      // SUM across stacks (Shield pool · Regen HP/tick)
         public float startTime, endTime;   // endTime = the LAST stack to expire (when the state is fully gone)
         public float nextTick;     // DoT / Regen cadence marker (owner ticks it)
-        // Display (for the buff tray + nameplate icons)
-        public Sprite icon;
+        // Display (for the buff tray + nameplate tiles)
+        public string symbol;
         public string name;
         public string description;
         public Color tint;
@@ -181,9 +181,9 @@ public class UnitStates : MonoBehaviour
 
     // Transient APPLY CONTEXT for the NEXT Apply — the skill applier sets it right before a durational gameplay call
     // (BeginGuard / BuffDamage / StatusController.Apply / …) so the created/refreshed entry gets the source skill's
-    // tray/nameplate icon AND its stacking rules, WITHOUT threading either through every gameplay method. The applier
+    // tray/nameplate symbol AND its stacking rules, WITHOUT threading either through every gameplay method. The applier
     // owns the lifecycle (SetApplyContext before the call, ClearApplyContext after); Apply only reads what it was given.
-    Sprite ctxIcon; string ctxName, ctxDesc, ctxSourceId;
+    string ctxSymbol, ctxName, ctxDesc, ctxSourceId;
     bool ctxStacking; int ctxStacksPerApply = 1, ctxStackLimit;
 
     /// <summary>Tag the NEXT applied state with its SOURCE skill, display info and stacking rules. Set by the skill
@@ -191,11 +191,11 @@ public class UnitStates : MonoBehaviour
     /// <paramref name="stacking"/> off = today's single-instance, newest-wins behaviour.
     /// <paramref name="sourceSkillId"/> is the granting skill's id — it keys the pile (see
     /// <see cref="State.sourceSkillId"/>), so leaving it empty pools this state with every other sourceless one.</summary>
-    public void SetApplyContext(Sprite icon, string name, string description,
+    public void SetApplyContext(string symbol, string name, string description,
                                 bool stacking = false, int stacksPerApply = 1, int stackLimit = 0,
                                 string sourceSkillId = null)
     {
-        ctxIcon = icon; ctxName = name; ctxDesc = description;
+        ctxSymbol = symbol; ctxName = name; ctxDesc = description;
         ctxSourceId = sourceSkillId ?? "";
         ctxStacking = stacking;
         ctxStacksPerApply = Mathf.Max(1, stacksPerApply);
@@ -204,7 +204,7 @@ public class UnitStates : MonoBehaviour
 
     public void ClearApplyContext()
     {
-        ctxIcon = null; ctxName = null; ctxDesc = null; ctxSourceId = "";
+        ctxSymbol = null; ctxName = null; ctxDesc = null; ctxSourceId = "";
         ctxStacking = false; ctxStacksPerApply = 1; ctxStackLimit = 0;
     }
 
@@ -386,7 +386,7 @@ public class UnitStates : MonoBehaviour
     /// <paramref name="seconds"/>), so the pile starts exactly as that skill would have started it. Either way the
     /// answer comes from the granter, so a skill that is merely OFF COOLDOWN can still be fed.</para></summary>
     public int AddStacksTo(string sourceSkillId, StateId id, int count, float magnitude, float seconds,
-                           Sprite icon = null, string name = null, string description = null)
+                           string symbol = null, string name = null, string description = null)
     {
         if (string.IsNullOrEmpty(sourceSkillId) || count <= 0) return 0;
         EnsureFresh();
@@ -406,7 +406,7 @@ public class UnitStates : MonoBehaviour
             s = pool.Count > 0 ? pool.Pop() : new State();
             s.id = id; s.sourceSkillId = sourceSkillId; s.stacking = true;
             s.startTime = Time.time; s.nextTick = 0f;
-            s.icon = icon; s.name = name; s.description = description; s.tint = Color.white;
+            s.symbol = symbol; s.name = name; s.description = description; s.tint = Color.white;
             s.stacks.Clear();
             added = Mathf.Min(count, MaxStacks);
             for (int k = 0; k < added; k++)
@@ -626,9 +626,9 @@ public class UnitStates : MonoBehaviour
             // pile. Spent on USE and never refunded (StateGate's locked rule).
             float due = armed.endTime;            // captured BEFORE the pile can drop: the debt inherits ITS window's deadline
             string owner = armed.sourceSkillId;   // the debt belongs to the skill that armed it, so a consumer can name it
-            Sprite icon = armed.icon; string label = armed.name; string desc = armed.description;
+            string symbol = armed.symbol; string label = armed.name; string desc = armed.description;
             armed.stacks.RemoveAt(0);
-            if (armed.stacks.Count == 0) { active.RemoveAt(i); pool.Push(armed); }   // out of charges → the armed state (and its icon) go
+            if (armed.stacks.Count == 0) { active.RemoveAt(i); pool.Push(armed); }   // out of charges → the armed state (and its tile) go
             else armed.Refold();
 
             if (part <= 0) continue;   // more piles than damage: the charge is still spent, this one just owes nothing
@@ -643,10 +643,10 @@ public class UnitStates : MonoBehaviour
                 debt.sourceSkillId = owner ?? "";
                 debt.stacking = true;              // it IS a pile: one stack per hit, and its total is their sum
                 debt.stacks.Clear();
-                // Same icon as the armed charges — it's the same skill — but tinted RED, because the two mean opposite
-                // things: armed is protection you still hold, a debt is about to hurt you. The tray multiplies the
-                // sprite by this (BuffBarPanel.cs:134), so one value separates them with no second icon to draw.
-                debt.icon = icon; debt.name = label; debt.description = desc;
+                // Same symbol as the armed charges — it's the same skill — but tinted RED, because the two mean
+                // opposite things: armed is protection you still hold, a debt is about to hurt you. The tray tints the
+                // letters with this, so one value separates them with no second face to draw.
+                debt.symbol = symbol; debt.name = label; debt.description = desc;
                 debt.tint = DebtTint;
                 active.Add(debt);
             }
@@ -682,10 +682,10 @@ public class UnitStates : MonoBehaviour
     /// <item><b>Stacking</b> — APPENDS <c>stacksPerApply</c> stacks, each with its own window and its own magnitude;
     /// the total is their SUM. Past the limit the OLDEST stacks drop.</item>
     /// </list>
-    /// Display args are optional — pass the source skill's icon/name/tint for the tray / nameplate. Returns the entry so
+    /// Display args are optional — pass the source skill's symbol/name/tint for the tray / nameplate. Returns the entry so
     /// a caller can seed per-family extras (e.g. a DoT's first <see cref="State.nextTick"/>).</summary>
     public State Apply(StateId id, float seconds, float magnitude = 0f, int intAmount = 0,
-                       Sprite icon = null, string name = null, Color tint = default, string description = null)
+                       string symbol = null, string name = null, Color tint = default, string description = null)
     {
         if (seconds <= 0f) return null;
         EnsureFresh();   // drop an already-lapsed entry first, so a re-apply is treated as FRESH (restarts startTime)
@@ -718,10 +718,10 @@ public class UnitStates : MonoBehaviour
         }
         s.Refold();
 
-        if (icon == null) icon = ctxIcon;          // fall back to the applier's context (set for this apply)
+        if (symbol == null) symbol = ctxSymbol;    // fall back to the applier's context (set for this apply)
         if (name == null) name = ctxName;
         if (description == null) description = ctxDesc;
-        if (icon != null) s.icon = icon;
+        if (symbol != null) s.symbol = symbol;
         if (name != null) s.name = name;
         s.description = description;
         s.tint = tint == default ? Color.white : tint;

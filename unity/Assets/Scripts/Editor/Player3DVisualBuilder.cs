@@ -3,7 +3,6 @@ using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Builds the committed live-3D player visual: instantiates a rigged (Mixamo Humanoid) character model, gives it an
@@ -70,39 +69,16 @@ public static class Player3DVisualBuilder
             return null;
         }
 
-        // Snapshot the visuals to replace, but DON'T remove them yet — build the new one FIRST, so if any step below
-        // throws (e.g. an AssetDatabase write in Play), the player keeps its working visual instead of going bare.
-        var toRemove = Object.FindObjectsByType<Character3DVisual>();
-
+        // A PREFAB instance, not a plain clone: at author time the scene must save a LINK to the model, not a copy of
+        // it. That is the one thing this path genuinely does differently from the in-game swap — everything after it
+        // is the shared recipe (Player3DBody), so the two can no longer drift.
         var go = (GameObject)PrefabUtility.InstantiatePrefab(model);
         string charName = Path.GetFileNameWithoutExtension(modelPath);
-        go.name = "Player3DVisual (" + charName + ")";
-        SceneManager.MoveGameObjectToScene(go, player.gameObject.scene);
-        go.transform.position = player.transform.position;
-
-        float nativeH = Character3DRigBuilder.MeasureHeight(go);
-        float s = nativeH > 1e-3f ? Character3DRigBuilder.TargetHeight / nativeH : 1f;
-        go.transform.localScale = Vector3.one * s;
-
-        var anim = go.GetComponent<Animator>() ?? go.AddComponent<Animator>();
-        anim.runtimeAnimatorController = controllerOverride != null ? controllerOverride : BuildController();
         var avatar = Character3DRigBuilder.LoadAvatar(modelPath);   // the model's own Humanoid avatar (retarget target)
-        if (avatar != null) anim.avatar = avatar;
-        anim.applyRootMotion = false;
+        var controller = controllerOverride != null ? controllerOverride : BuildController();
 
-        if (go.GetComponent<Character3DPose>() == null) go.AddComponent<Character3DPose>();
-        if (go.GetComponent<StanceController>() == null) go.AddComponent<StanceController>();
-        var vis = go.GetComponent<Character3DVisual>() ?? go.AddComponent<Character3DVisual>();
-        vis.player = player;
-        if (go.GetComponent<WeaponSocket>() == null) go.AddComponent<WeaponSocket>();
-        if (go.GetComponent<CharacterDye3D>() == null) go.AddComponent<CharacterDye3D>();   // per-part outfit dye
-        // The x-ray occlusion silhouette flags THIS object's renderers (the visible model) — it lives here, not on
-        // the player root, because the model is a SEPARATE object riding the controller (the root only holds the
-        // hidden sprite). A model swap rebuilds this object, so the fresh renderers are re-tagged automatically.
-        if (go.GetComponent<OccludedSilhouetteTarget>() == null) go.AddComponent<OccludedSilhouetteTarget>();
-
-        // New visual is fully built — now retire the old one(s). (Skip the new go in case it was already matched.)
-        foreach (var v in toRemove) if (v != null && v.gameObject != go) Object.DestroyImmediate(v.gameObject);
+        go = Player3DBody.Configure(player, go, charName, controller, avatar);
+        if (go == null) return null;
 
         // Author-time only: dirty the scene so the swap persists on save. ILLEGAL in Play (throws
         // InvalidOperationException) — the runtime editor-Play swapper is transient, nothing to persist.

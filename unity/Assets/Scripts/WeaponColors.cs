@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// The SINGLE OWNER of "what colour is this weapon". One colour per <see cref="WeaponType"/>, chosen in the Skill
-/// Composer (the pencil beside a weapon group) and read by everything that shows that weapon's skills — the
+/// Composer (the swatch beside a weapon group) and read by everything that shows that weapon's skills — the
 /// composer's own list today, and whatever draws a skill tile later — so the colour is never typed twice and can
 /// never drift between the tool and the game.
 ///
@@ -51,8 +51,9 @@ public class WeaponColors : ScriptableObject
         entries.Add(new Entry { weapon = w, color = c });
     }
 
-    /// <summary>The swatches the composer's palette offers, in the weapon roster's order. Twelve colours spread as
-    /// far apart as twelve can be, because at tile size the colour is what says WHICH weapon.</summary>
+    /// <summary>The twelve starting colours, in the weapon roster's order — spread as far apart as twelve can be,
+    /// because at tile size the colour is what says WHICH weapon. Only a suggestion now that the composer picks any
+    /// colour at all; kept so the roster's original spread isn't lost.</summary>
     public static readonly Color[] Palette =
     {
         new Color32(0xD6, 0x3A, 0x3A, 0xFF),   // crimson

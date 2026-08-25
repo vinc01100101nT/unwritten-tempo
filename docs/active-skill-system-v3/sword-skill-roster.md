@@ -47,6 +47,24 @@ All three are authored `tier = Ultimate` and priced as ultimates (**40 MP**, lon
 
 **The structural question is answered by the data:** Sword ships with three ultimates. Nothing else in this doc assumed that, so treat any "one ult per weapon" line elsewhere as the older assumption.
 
+## What is actually composed — read it, don't restate it
+
+**`data/skills.md` is the generated table of every composed skill**: its two-letter **symbol**, tier, cost, trigger and
+what it does, grouped by weapon, with each weapon's **colour** named as a hex code. It is written by the Skill
+Composer's Save from the assets themselves, so it can never disagree with the game.
+
+**The Sword's colour is `#FF0F00`.** Its symbols, in the composer's order: `Bd` Blade Dance · `Br` Brace ·
+`Ch` Challenge · `Cs` Committed Strike · `Cp` Composure · `Db` Deathblow · `Ds` Disarm · `En` Encore · `Fl` Flow ·
+`Gs` Guard Stance · `Ls` Last Stand · `Lb` Lock Blades · `Lu` Lunge · `Mo` Momentum · `Ob` Offbeat · `On` Onslaught ·
+`Op` Opening · `Oc` Overclock · `Pa` Parry · `Pr` Pressure · `Rt` Retribution · `Un` Unwavering.
+
+*A symbol is two letters standing for a skill the way `Au` stands for gold — what a tile shows when there is no room
+for a name. It is authored on the skill; the colour is authored on the WEAPON, so every Sword skill wears the same
+one. This doc states them for a reader's convenience; the generated table is the authority.*
+
+**This doc owns INTENT — why a skill exists, what it must never do, what is still undecided.** Numbers stated below
+are for that argument's sake; when one disagrees with the generated table, the table is right and this line is stale.
+
 ## Pool status
 
 **22 sword skills are composed** (read off the assets 2026-08-24): 3 ultimates, 10 actives, 9 passives. **All 22 are** `published = 1` **and rollable** — Pressure was the last holdout and was published on 2026-08-24.

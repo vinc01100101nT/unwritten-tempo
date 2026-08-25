@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: En
   weaponType: 1
   published: 1
-  icon: {fileID: 0}
   description: 'The dance goes on.
 
     A kill during Blade Dance adds 7 more dance

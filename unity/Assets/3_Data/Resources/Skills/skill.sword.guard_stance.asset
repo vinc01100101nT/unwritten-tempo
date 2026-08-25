@@ -17,7 +17,6 @@ MonoBehaviour:
   symbol: Gs
   weaponType: 1
   published: 1
-  icon: {fileID: 0}
   description: 'Weather it.
 
     Take 50% less damage for 6 seconds.'

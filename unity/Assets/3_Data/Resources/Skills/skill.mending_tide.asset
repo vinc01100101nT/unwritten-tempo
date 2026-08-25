@@ -16,7 +16,6 @@ MonoBehaviour:
   displayName: Mending Tide
   weaponType: 0
   published: 0
-  icon: {fileID: 2903848411162822477, guid: 4bae3342ecf8e1c4ca8a5e2eb9f81491, type: 3}
   description: 'A soothing tide.
 
     Restores 7.5 HP a second for 6s and washes
