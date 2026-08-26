@@ -19,6 +19,15 @@ public static class CombatAuthority
     public static int Apply(IDamageable target, in DamageInfo info)
     {
         if (target == null) return 0;
+
+        // ON A CONNECTED CLIENT, NOBODY'S HP CHANGES HERE. The world lives on the server, so a hit is a
+        // REQUEST, not an act: it is sent, the server decides what really happened, and the answer comes back
+        // to every player at once. Returning 0 is not a failure — it is this machine saying "I did not decide
+        // that". Everything a landed hit sets off (flinch, on-hit effects, a broken run of hits) then happens
+        // exactly once, on the server, instead of once per watching client.
+        //
+        // Offline, none of this is true and the whole method runs as it always has.
+        if (GameNetwork.SendHitToServer(target, info)) return 0;
         // The attacker's RUN of hits is counted here, before the sink, for the same reason the flinch is decided after
         // it: this is the one door every real hit passes through. Counting before means the number is already right
         // when the sink fires the moment a skill reads it — and switching targets restarts the run at this very hit.

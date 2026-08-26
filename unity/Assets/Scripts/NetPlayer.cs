@@ -23,10 +23,6 @@ using UnityEngine;
 /// </summary>
 public class NetPlayer : NetworkBehaviour
 {
-    /// <summary>Everyone currently on this world, including yourself. Read by anything that needs the roster;
-    /// kept as a plain list because it is small and read far more often than it changes.</summary>
-    public static readonly System.Collections.Generic.List<NetPlayer> Active = new System.Collections.Generic.List<NetPlayer>();
-
     // ---- what the server holds and every client receives ------------------------------------------------
     // Identity is set ONCE when the body is spawned and never changes; position changes constantly. They are
     // separate so a body that is standing still costs nothing to keep in sync.
@@ -42,6 +38,14 @@ public class NetPlayer : NetworkBehaviour
     GameObject body;
     bool bodyRequested;
 
+    /// <summary>SERVER ONLY: the fighter this connection swings with — the thing that owns their stats, rolls
+    /// their crits and takes their hits. Null on a client, which has no business holding anyone's authoritative
+    /// stats, and null on the server until their character has been built.</summary>
+    public ICombatUnit ServerCombatUnit { get; private set; }
+
+    /// <summary>Server-only: give this connection the fighter the server will resolve its blows with.</summary>
+    public void BindCombatUnitOnServer(ICombatUnit unit) => ServerCombatUnit = unit;
+
     // How often the owner tells the server where it is. Ten times a second is far below the frame rate and
     // still smoother than a person can walk; sending every frame would be bandwidth spent on nothing.
     const float ReportInterval = 0.1f;
@@ -51,8 +55,10 @@ public class NetPlayer : NetworkBehaviour
     const float MoveEpsilon = 0.01f;
     Vector3 lastReported;
 
-    void OnEnable() { if (!Active.Contains(this)) Active.Add(this); }
-    void OnDisable() { Active.Remove(this); }
+    // The FIRST report has to go out even if the player has not moved a millimetre. Without it a person who
+    // spawns and stands still never sends anything, so the server's idea of where they are stays at the world
+    // origin — and everyone else watches them standing in the far corner of the map instead of in town.
+    bool hasReportedOnce;
 
     void Update()
     {
@@ -72,9 +78,10 @@ public class NetPlayer : NetworkBehaviour
 
         Vector3 p = me.transform.position;
         float yaw = me.transform.eulerAngles.y;
-        if ((p - lastReported).sqrMagnitude < MoveEpsilon * MoveEpsilon) return;
+        if (hasReportedOnce && (p - lastReported).sqrMagnitude < MoveEpsilon * MoveEpsilon) return;
 
         lastReported = p;
+        hasReportedOnce = true;
         CmdReportPosition(p, yaw);
     }
 

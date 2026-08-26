@@ -612,8 +612,16 @@ public class Character : MonoBehaviour, ICombatUnit
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        // "There is exactly one player" is true of a SCREEN, not of a world. On a server there are as many
+        // players as there are people signed in, so destroying the second one — which is what this used to do
+        // — would delete a real person's character the moment they arrived. The singleton keeps its original
+        // meaning on a client (the one player at this keyboard) and simply does not apply on a server, where
+        // nobody is at the keyboard and every player is somebody else.
+        if (!GameServer.IsServer)
+        {
+            if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+            Instance = this;
+        }
         Stamina = maxStamina;   // sprint pool starts full
 
         // Spending a skill point changes both the displayed stats and (for HP) the max —

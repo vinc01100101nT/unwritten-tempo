@@ -11,6 +11,7 @@ Native markdown docs for the **unwritten** project, migrated out of Tempo Docs o
 - [Roadmap to Launch](roadmap-to-launch.md) — how far from a shippable game; Tier 1 (Steam ARPG) vs Tier 2 (MMO), milestones M1–M5.
 - [Dev Contribution Log](dev-contribution-log.md) — gamified record of the dev's design/diagnosis contributions.
 - [Performance Checkup — My Routine](performance-checkup-routine.md) — the recurring `/perf-checkup` routine.
+- [Starting the Network](starting-the-network.md) — the runbook for getting more than one player into the world: database → account service → game server → players, with how to tell each step worked.
 - [YouTube Update Format Template](youtube-update-template.md) — the lowercase progress-update template.
 
 ## Systems & combat design
@@ -28,6 +29,7 @@ Native markdown docs for the **unwritten** project, migrated out of Tempo Docs o
 - [Crafting & Recycling](crafting-and-recycling.md) — player-facing weapon crafting loop.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](pre-renewal-ro-port.md) — combat/stat math port.
 - [Network-Readiness — Combat Audit & Refactor Plan](network-readiness-audit.md) — multiplayer seam prep.
+- [Networking — Implementation Notes](networking-implementation-notes.md) — code-facing companion for the multiplayer layer: the shell/body split, who owns what, the conventions, the traps already paid for, and the remaining order of work. **Read before touching anything networked.**
 - [HUD/UI System — Design & Relay](hud-ui-system.md) — the HUD/UI workstream.
 
 ## World & content

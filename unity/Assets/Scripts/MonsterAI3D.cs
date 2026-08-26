@@ -172,6 +172,16 @@ public class MonsterAI3D : MonoBehaviour
     /// Pushed in rather than looked up so the per-frame path never calls GetComponent (PERFORMANCE.md).</summary>
     public SimulationLod Lod { get; set; }
 
+    /// <summary>False on a mob that is only a COPY of one the server owns: it is watched, not simulated, so it
+    /// must not chase, attack or decide anything for itself.
+    ///
+    /// <para>Checked inside <see cref="Update"/> rather than by switching this component off, for exactly the
+    /// reason the LOD freeze is: disabling it drops the mob out of <see cref="Active"/>, and that list is how
+    /// the player finds something to attack, how area effects find their targets, and how the minimap draws its
+    /// blips. Switching the component off would silently make every networked mob impossible to click, hit or
+    /// see on the map — a mob that is there but cannot be touched.</para></summary>
+    public bool ThinksForItself { get; set; } = true;
+
     /// <summary>When true, this unit travels at the shared CHARACTER gear speeds (<see cref="CharacterSpec"/>) instead
     /// of the mob dial — chasing uses the run gear, wandering the walk gear. A 3D shadow sets this because it IS a
     /// character-sized body, and a character-sized body moving at mob scale (0.30×) visibly shuffles. False (the
@@ -404,6 +414,11 @@ public class MonsterAI3D : MonoBehaviour
         // run always). Checked here rather than by disabling this component so the mob stays in Active for target
         // scans. Its mover + animator are the pieces the switch actually disables.
         if (Lod != null && !Lod.Simulating) return;
+
+        // A copy of a mob the server owns: it is moved by what the server says, not by its own decisions.
+        // Same treatment as the freeze above, and for the same reason — it stays in Active so it can still be
+        // targeted, hit and drawn on the map.
+        if (!ThinksForItself) return;
 
         if (Time.time < stunnedUntil) { if (agent != null) agent.Halt(); return; }   // staggered — frozen
 

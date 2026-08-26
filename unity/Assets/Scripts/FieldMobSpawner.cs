@@ -58,6 +58,16 @@ public class FieldMobSpawner : MonoBehaviour
 
     void Start()
     {
+        // ONE world, so ONE set of creatures. Only the machine that owns the world populates it; every other
+        // machine receives those mobs over the wire (see NetMob). A client that spawned its own would give
+        // each player a private set of monsters at private positions with private health — which is what
+        // this game did before it had a server, and is the thing that makes shared combat impossible.
+        if (!GameServer.IsServer && GameNetwork.IsConnectedToAServer)
+        {
+            enabled = false;
+            return;
+        }
+
         groundMask = LayerMask.GetMask("Ground");
         var p = FindAnyObjectByType<Player3DController>();
         player = p != null ? p.transform : null;
@@ -82,6 +92,10 @@ public class FieldMobSpawner : MonoBehaviour
                 reused.SetActive(true);
                 MobRespawn.Reactivate(reused, spot);
                 reused.GetComponent<MonsterAI3D>()?.SetHome(spot);   // wander around where it reappeared, not its first spawn
+                // A pooled mob coming back is a NEW creature as far as every watching player is concerned:
+                // its old shell died with it, so it needs a fresh one. Missing this is how a respawned mob
+                // becomes invisible to everyone but the server.
+                GameNetwork.PublishMob(reused, def.id);
                 return;
             }
         }
@@ -95,6 +109,8 @@ public class FieldMobSpawner : MonoBehaviour
             pm.owner = this;
             pm.typeKey = key;
             go.GetComponent<MonsterAI3D>()?.SetHome(spot);
+            // Born on the server → every connected player gets to see it. No-op offline.
+            GameNetwork.PublishMob(go, def.id);
             // A shadow is decided ONCE, at creation: the component builds a rigged body in its Start and the mob
             // then keeps it for life, including through pool reuse. Re-rolling per respawn would Instantiate a rig
             // per death — exactly the churn the pool exists to avoid — so a pooled mob stays whatever it was born as

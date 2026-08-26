@@ -193,6 +193,18 @@ public class Health : MonoBehaviour, ICombatUnit
         flashWait = new WaitForSeconds(flashTime);
     }
 
+    /// <summary>Write in the health the SERVER says this creature has. Only ever called on a mob that is a
+    /// watched copy of one the server owns — it does not take damage, it is told the answer.
+    ///
+    /// <para>Needed because everything that shows a mob's condition — its nameplate, its bar — reads
+    /// <see cref="Current"/>. Without this the copy keeps the health it spawned with, so a mob being killed in
+    /// front of you would sit at full health until it vanished.</para></summary>
+    public void SetHealthFromServer(int current, int max)
+    {
+        if (max > 0) maxHealth = max;
+        Current = Mathf.Clamp(current, 0, maxHealth);
+    }
+
     /// <summary>Apply a hit; final damage = max(1, attackerAttack − defense). Returns the damage dealt.</summary>
     public int TakeDamage(int attackerAttack) => TakeDamage(attackerAttack, false, -1);
 

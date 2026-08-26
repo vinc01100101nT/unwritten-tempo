@@ -1,97 +1,114 @@
 # Handoff — the authoritative game server
 
-**Task** — build the C# game server that owns combat and world state. The user's decision, made 2026-08-25:
-**server-authoritative**, not peer/co-op. Node for accounts (built, running), C# for the game server (not
-started) so it can share the game's own combat and stat code instead of re-implementing every formula.
+**Task** — build the C# game server that owns combat and world state. Decision (2026-08-25):
+**server-authoritative**, not peer/co-op. Node for accounts, **headless Unity** for the game server.
 
-**Status — NOT STARTED.** No game-server code exists. Everything below is the groundwork it plugs into.
-The accounts half is DONE and proven; the game half of this session compiles but **has never been play-tested
-— don't trust any "it works" claim about the screens or the world-gate.**
+**Status (2026-08-26, end of day):** the server RUNS and two players have played in one world together,
+verified by the user. Combat is NOT yet server-owned and is blocked on one named thing (below).
 
 ---
 
-## What's done (the foundation the server plugs into)
+## The backend decision, and why
 
-**The account service** — `accounts/`, Node + TypeScript + Postgres. Register, log in, refresh/revoke a session,
-list/create/delete characters, read/write a character's progress, change appearance. Proven: `npm test` runs 20
-checks against a real database, all passing. Postgres 17 installed via Homebrew, database `unwritten`, data at
-`/opt/homebrew/var/postgresql@17`. Secrets in `accounts/.env` (gitignored); template in `.env.example`.
+Headless Unity, not a plain .NET service. Measured reasons:
 
-**One home for character data.** The local JSON save file is DELETED (`SaveSystem`, `SaveTools` — gone from the
-repo). `IProfileStore` is now async and server-backed (`ServerProfileStore`), routed through `AccountClient`,
-the single place the game talks to the service. `SaveManager` loads asynchronously and waits for a session.
-
-**Appearance vs progress — settled, do not re-merge.** The character RECORD owns name, body and recolour
-(identity, true before the character is ever played). The progress document owns level/XP/stats/gear/bag/gold/
-hotbar. `SaveData` no longer carries dye fields; a comment in it says so. `SaveData.version == 0` means
-"never played" and MUST stay distinguishable.
-
-**The world does not run until a character enters it.** `GameRoot` switches off every root object in the
-Systems scene (except itself and whatever carries input handling) and loads no map until
-`AccountSession.IsActive`. This is the shape the server will need anyway — a client that isn't in the world
-should not be simulating one.
-
-**Sign-in + character select** — `SignInScreen`, `CharacterSelectScreen`, `FrontScreen`, `CharacterPreview`.
-Live 3D body preview, free RGB colour mixing wired to the existing `CharacterDye3D`.
-
-**All 52 character bodies load at runtime by name** — Addressable group `Characters`, label `CharacterModel`,
-via `CharacterModels` → `AddressablePrefabs` (shared with `MobSpawner`).
+- The combat FORMULAS are nearly engine-free already (accuracy/defence, stat maths, the skill engine) — they
+  would port easily either way, so they are not the argument.
+- The expensive half is **world geometry**: pathing, ground height and obstacle queries all ask Unity for the
+  real shape of the map. A plain .NET service can share none of it and would have to rebuild it.
+- Mirror (the networking library) was validated against Unity 6000.4.11f1 by compiling all 228 of its runtime
+  source files against this exact editor: **clean**. Mirror only claims support to 6000.1, so this mattered.
+- Unity's own Multiplay hosting **shut down 31 March 2026** — do not plan around it. Host on an ordinary
+  always-on machine near the players (Singapore for SEA).
 
 ---
 
-## Uncommitted working-tree changes
+## What works, verified
 
-**None at the time of writing** — everything was committed and pushed to `main` at the end of the session
-(the commit after `9df5b546`). Re-measure with `git status` before trusting this line.
+- **Headless server build** (Mac + Linux dedicated-server modules installed). Boots with no display, loads
+  `town_0`, ticks, and says so in its log.
+- **Two players in one world.** Both sign in through the account service, both get a body, both see the other
+  move. The user ran this and confirmed it.
+- **Server-owned mobs** (written, compiles, NOT yet run). Before this, *every client spawned its own monsters* —
+  two players never shared a creature, which is why combat could not be server-owned.
 
----
+## What is written but has NEVER RUN
 
-## What's left — the server itself
-
-Read `docs/network-readiness-audit.md` FIRST. It is a measured audit of exactly this job and its refactor
-plan (steps A–D) is already DONE on the client: `CombatRng`, caster threading, `IDamageable`,
-`CombatAuthority`. Those are the seams the server hooks.
-
-1. **Decide where the server runs the simulation.** Headless Unity (shares the game's C# and its physics/
-   pathfinding directly) vs a plain .NET service (lighter, but every formula that depends on Unity types has
-   to be lifted out first). This decision gates everything and has NOT been made.
-2. **Move the dice.** `CombatRng` is the keystone the audit names — it exists as a choke point but still rolls
-   locally. Server-seeded rolls come first, because nothing downstream can be authoritative without it.
-3. **Make `CombatAuthority.Submit` send instead of apply.** Today it calls the local apply synchronously. This
-   is the one place a net layer swaps in "send to server → validate → roll → broadcast".
-4. **Replicate mobs.** `MonsterAI3D` runs client-side today, including its own attack rolls.
-5. **Share the token.** The game server verifies the SAME `JWT_SECRET` the account service signs with — that
-   is why the accounts half issues a token rather than a cookie. Do not invent a second auth scheme.
-6. **Decide who writes progress.** Right now the CLIENT writes its own progress to the account service. Once
-   the game server is authoritative, that must move server-side or the whole exercise is decorative. The
-   account service is deliberately dumb about gameplay so this move is possible without rewriting it.
+Everything committed after `a1ed4db0` is compile-verified only — the working tree at handoff time holds the
+mob-ownership and combat-seam work. Unity's remote-control bridge stopped responding before it could be built,
+so none of it has executed. **Restart Unity, build, and run it before trusting any of it.**
 
 ---
 
-## Dead ends and traps (proven, not guessed)
+## ⛔ THE BLOCKER — per-connection fighters
 
-- **`Casual3_Male` cannot be a humanoid in Unity.** Its feet are parented to the skeleton ROOT, not to the
-  lower legs, and it carries Blender IK helper bones. Unity's humanoid system rejects that by structure — no
-  amount of re-mapping fixes it. Its texture WAS fixed this session (it was never bound; a material now exists
-  in `1_Authored/Art/Characters/Materials`). It will render but T-pose. It needs re-rigging at source, or
-  removing from the roster. It is the only one of 52 like this.
-- **"Above the HUD" is not one number.** HUD canvases sit at 5000, 30000 and 32760. Anything that must cover
-  the game needs the top slot, not a guessed one.
-- **Hiding the world is not stopping the world.** An opaque panel over a running game was the wrong fix and
-  was called out as such. Gate the world, don't cover it.
-- **Scrypt at 32 MB hits Node's default ceiling** and throws on every password hash. `maxmem` is set
-  explicitly in `accounts/src/auth.ts`; don't remove it.
+**The server cannot resolve combat because it has no fighter for each connected player.**
+
+- A player's stats live on `Character`, which is a singleton, and it finds its avatar with
+  `FindAnyObjectByType<Player3DController>()` — *the* one on-screen player.
+- On a server holding several people, every `Character` would find the same avatar and they would all share one
+  body's stats.
+- `Character.Awake` used to DESTROY any second instance. That is now skipped on a server (it would have deleted
+  a real person's character the moment they signed in), so `Character.Instance` is **null** on a server.
+- Consequence, deliberate and loud: `GameNetwork.OnHitRequest` refuses every swing and logs why, once per
+  connection. Mob→player attacks are also inert on the server, because they aim at `Character.Instance`.
+
+**Scale, measured:** 155 uses of `Character.Instance` and 12 of `StatusController.Player`; 44 of those are in
+combat files. This is the "deferred, mostly server-side" work the network-readiness audit named.
+
+**Checked and safe:** every per-frame `Character.Instance` use in `MonsterAI3D` / `PathAgent3D` /
+`SimulationLod` / `UnitCrowd` / `MobRespawn` is null-guarded, so a null player does not spam or crash the
+server. It simply does nothing.
+
+---
+
+## Bugs found and fixed during review (all compile-verified, none run)
+
+1. **Networked mobs would have been untouchable.** Silencing a client's mob brain by disabling the component
+   also removed it from `MonsterAI3D.Active` — the registry the game uses to find an attack target, to pick
+   area-effect targets and to draw minimap blips. Fixed with a `ThinksForItself` flag checked inside `Update`,
+   copying the pattern the LOD freeze already uses for exactly this reason.
+2. **Mob shells leaked and left ghosts.** A killed mob is pooled, not destroyed, so a null check alone never
+   fired; the shell kept publishing a corpse's frozen position forever and a new shell was made on every
+   respawn. Now the shell also goes when its mob is deactivated.
+3. **A player who spawned and stood still sat at the world origin** for everyone else — nothing was sent until
+   they first moved. The first report now always goes out.
+4. **Mobs looked permanently at full health** on other players' screens: the synced health was never applied to
+   the watched copy. `Health.SetHealthFromServer` now writes it in, only when the number changes.
+5. Dead knob removed (`NetPlayer.Active`, read by nothing).
+6. **Perf:** the per-hit target lookup used `GetComponentInParent` and a list walk — both banned on that path by
+   `PERFORMANCE.md`. Now a dictionary keyed by the drawn body. Idle mobs also no longer pay for a position and
+   rotation blend every frame.
+
+---
+
+## Known limits, stated so nobody mistakes them for done
+
+- **Movement is RELAYED, not validated.** A client is still trusted about where it stands. Written into
+  `NetPlayer`'s own documentation so it cannot be quietly forgotten.
+- **Only the basic swing** has a server path. Skills do not.
+- **Progress is still written by the client** to the account service.
+
+---
+
+## How to run it
+
+```bash
+cd accounts && npm start                     # account service on :8080
+```
+Server and client builds are produced from the editor (`BuildPipeline.BuildPlayer`, subtarget `Server` /
+`Player`). Call it DIRECTLY — scheduling it for "shortly" is silently discarded by a domain reload, and the
+build then never happens with nothing reporting a failure.
+
+Test accounts already in the database: `alpha@test.local` / `bravo@test.local`, password `testpass123`.
+
+Environment settings, no rebuild needed: `GAME_SERVER=1` (be a server), `GAME_SERVER_HOST`,
+`GAME_SERVER_PORT` (default 7777), `ACCOUNTS_URL`.
 
 ---
 
 ## Next single step
 
-Answer question 1 above — headless Unity or plain .NET — because every other step depends on it. Bring the
-network-readiness audit and the user's answer to the same conversation; do not pick it unilaterally.
-
----
-
-## How to resume
-
-Read `handoffs/game-server.md`, then `docs/network-readiness-audit.md`, then continue the authoritative game
-server from "Next single step".
+Restart Unity, build, and run the server plus two clients. Confirm mobs appear in both clients at the same
+places and that the server logs its refusal to resolve a swing. Then design per-connection fighters — that one
+piece unblocks all remaining combat work.
