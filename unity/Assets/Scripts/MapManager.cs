@@ -60,7 +60,16 @@ public static class MapManager
         StripForeignGlobals(scene);
     }
 
-    static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => Activate(scene);
+    static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Activate(scene);
+        // A map arriving is the one thing a server operator needs to see in the log: it is the difference
+        // between "asked for the town" and "the town is up". Server-only — a player sees the map instead.
+        if (GameServer.IsServer && scene.name != SystemsScene)
+            Debug.Log("[server] map '" + scene.name + "' loaded — "
+                      + scene.rootCount + " root objects, active scene is now '"
+                      + SceneManager.GetActiveScene().name + "'");
+    }
 
     // Maps authored before the Systems split may still carry their own camera / audio listener /
     // event system. Disable them so the singletons in Systems win.

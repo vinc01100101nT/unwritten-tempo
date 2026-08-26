@@ -35,12 +35,25 @@ public class GameRoot : MonoBehaviour
 
     void OnDestroy() => AccountSession.OnChanged -= OnSessionChanged;
 
+    // The SERVER owns the world rather than watching one, so it has nobody to sign in and nothing to wait for:
+    // it brings the map up the moment it boots. The gate below is the only thing that knows the difference —
+    // everything downstream (waking the scene, loading the map) is identical either way.
+    static bool WorldMayRun => AccountSession.IsActive || GameServer.IsServer;
+
     void OnSessionChanged()
     {
-        if (worldUp || !AccountSession.IsActive) return;
+        if (worldUp || !WorldMayRun) return;
         worldUp = true;
         Wake();
         BringUpMap();
+        // A server writes to a log file, not to a screen, so the only way anyone knows it came up is if it
+        // says so. Server-only: a player's console is not the place to announce this.
+        if (GameServer.IsServer) Debug.Log("[server] world up — loading map '" + MapToLoad() + "'");
+
+        // Joining the wire happens at the same moment the world starts existing, for BOTH sides — a server
+        // begins listening as it boots, a client dials once it is through the door. One call site, so the
+        // two halves can never be started by different rules.
+        GameNetwork.Begin();
     }
 
     // The persistent layer exists from the first frame — it IS this scene — so it gets switched off rather than

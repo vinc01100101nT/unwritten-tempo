@@ -326,20 +326,14 @@ MonoBehaviour:
   eDashSpeedMult: 0.85
   eDashDuration: 1
   eDashCooldown: 2
-  moveSpeed: 2
-  gaitSpeed: 1.5
-  walkSpeedMult: 0.2
+  sprintDrainPerSec: 25
+  staminaRegenIdle: 30
+  staminaRegenWalk: 18
+  staminaRegenOther: 8
+  sprintUnlockFrac: 0.2
   arriveDistance: 0.12
-  agentRadius: 0.35
-  gravity: 12
   fallAnimSpeed: 1.5
   acquireRange: 5
-  capsuleRadius: 0.15
-  capsuleHeight: 0.5
-  capsuleCenter: {x: 0, y: 0.25, z: 0}
-  capsuleStepOffset: 0.075
-  capsuleSlopeLimit: 45
-  capsuleSkinWidth: 0.02
   snapRadiusPixels: 72
   footstepSfx:
     clips:
@@ -365,6 +359,8 @@ MonoBehaviour:
     volume: 0.65
     pitch: {x: 0.95, y: 1.05}
   roamRange: 14
+  skillDashSpeedMult: 8
+  skillDashMaxTime: 1
 --- !u!114 &236044107
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -608,6 +604,7 @@ MonoBehaviour:
   zoomStep: 1
   dragYawSpeed: 0.25
   dragHeightSpeed: 0.04
+  cineTime: 0.5
 --- !u!114 &720304769
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -788,7 +785,7 @@ MonoBehaviour:
     pitch: {x: 0.7, y: 0.85}
   baseHardDefPercent: 0
   baseHardMagicDefPercent: 0
-  ultChargeMax: 200
+  maxStamina: 100
 --- !u!4 &763514985
 Transform:
   m_ObjectHideFlags: 0
@@ -1842,7 +1839,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Character3DVisual
   player: {fileID: 236044106}
   walkThreshold: 0.12
-  hurtDuration: 0.4
   pickUpDuration: 0.6
   mixamoFootOffsetY: 0
 --- !u!114 &1720462579

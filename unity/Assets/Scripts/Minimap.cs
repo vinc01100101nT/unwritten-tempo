@@ -63,6 +63,11 @@ public class Minimap : MonoBehaviour
 
     void Start()
     {
+        // A server has no screen and a dedicated server build ships no shaders, so asking the render pipeline
+        // to draw the map throws — every frame, forever. Stand down the same way this already does when its
+        // refs are missing: the map still exists on the server, nobody is looking at a picture of it.
+        if (GameServer.IsServer) { enabled = false; return; }
+
         if (view == null || blipRoot == null)
         {
             Debug.LogWarning("[unwritten] Minimap is missing its view/blipRoot refs — rebuild the UI shell " +

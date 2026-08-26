@@ -26,6 +26,7 @@ public class SignInScreen : MonoBehaviour
     static void Bootstrap()
     {
         if (AccountSession.IsActive) return;   // already playing (a scene change, not a fresh launch)
+        if (GameServer.IsServer) return;       // a server has nobody sitting at it to sign in
         var go = new GameObject("SignInScreen") { hideFlags = HideFlags.DontSaveInEditor };
         DontDestroyOnLoad(go);
         go.AddComponent<SignInScreen>();

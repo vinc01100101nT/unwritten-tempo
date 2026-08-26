@@ -64,14 +64,16 @@ verify and say so.
 **Measured gotcha:** `capture_scene_view`'s `save_path` is IGNORED — it always returns the PNG inline as base64.
 Decode it yourself and write the file; don't report a path it never wrote.
 
-## Two things that stay the USER's — do not do these
+## What stays the USER's — do not do this
 
-- **NEVER force a recompile.** Don't call `recompile`, and don't poll `recompile_status` / `get_console_logs` in
-  a loop. On the old bridge each forced refresh blocked ~60s and often timed out. Its speed on the CLI is
-  **UNMEASURED**, so the ban stands until someone times it — if you do time it and it's fast, say so and ASK
-  before lifting this. Unity auto-recompiles when the user focuses the editor; that's their job. A one-off read
-  or `eval` for a measurement is fine — just don't chain it with refresh/console loops.
 - **Play mode, and anything needing their visual judgement** ("does this look right").
+
+## Refreshing / recompiling is ALLOWED (ban lifted 2026-08-26)
+
+Trigger a refresh yourself when the editor needs to pick up new files or edits — don't hand the user a click.
+Two things still hold: **don't sit in a polling loop** on `recompile_status` / `get_console_logs` (fire it, wait,
+read once), and **to learn whether your C# compiles, use the offline checker below**, not a refresh — it is far
+faster and needs no editor.
 
 ## To find out whether your C# compiles, run the offline checker
 

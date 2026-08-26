@@ -23,11 +23,21 @@ using UnityEngine.InputSystem;
 /// </summary>
 public static class Hotkeys
 {
+    /// <summary>Nobody is at the keyboard of a server, so no key is ever down there. Checked by every reader
+    /// below, which is the whole point of this being the one gate: the answer is given ONCE and no input site
+    /// can forget it.
+    ///
+    /// <para>Not merely tidy — <b>required</b>. <see cref="Typing"/> asks <c>GUIUtility.keyboardControl</c>, and a
+    /// dedicated server build strips the graphics stack that owns it, so touching it there crashes the process
+    /// outright rather than returning a value.</para></summary>
+    static bool NoKeyboard => GameServer.IsServer;
+
     /// <summary>True while a text box owns the keyboard — every key query below returns false.</summary>
     public static bool Typing
     {
         get
         {
+            if (NoKeyboard) return false;
             if (GUIUtility.keyboardControl != 0) return true;   // IMGUI text field focused (dev tuners)
             var es = EventSystem.current;
             var go = es != null ? es.currentSelectedGameObject : null;
@@ -44,7 +54,7 @@ public static class Hotkeys
     /// Hotkeys-routed key works under either backend — the backend dance lives HERE, nowhere else.</summary>
     public static bool Down(KeyCode key)
     {
-        if (Typing) return false;
+        if (NoKeyboard || Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null)
@@ -59,7 +69,7 @@ public static class Hotkeys
     /// <summary>Key held — suppressed while typing (so WASD doesn't walk the avatar while you type).</summary>
     public static bool Held(KeyCode key)
     {
-        if (Typing) return false;
+        if (NoKeyboard || Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null)
@@ -76,6 +86,7 @@ public static class Hotkeys
     /// every panel's close-on-Escape, so the "Esc works while typing" rule can't fork per panel.</summary>
     public static bool CancelDown()
     {
+        if (NoKeyboard) return false;
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null && kb.escapeKey.wasPressedThisFrame) return true;
@@ -127,7 +138,7 @@ public static class Hotkeys
     /// <summary>Digit 1–9 for hotbar slot <paramref name="i"/> (0-based) pressed this frame. Suppressed while typing.</summary>
     public static bool DigitDown(int i)
     {
-        if (i < 0 || i > 8 || Typing) return false;
+        if (i < 0 || i > 8 || NoKeyboard || Typing) return false;
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null) return kb[(Key)((int)Key.Digit1 + i)].wasPressedThisFrame;
