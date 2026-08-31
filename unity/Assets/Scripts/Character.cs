@@ -344,27 +344,33 @@ public class Character : MonoBehaviour, ICombatUnit
     /// object, which is the persistent stats holder and must never collect body-level components.</para>
     public Transform Body => Avatar();
 
-    /// <summary>The player's FULL-SIZE melee reach, read from its attacker — the single owner of that number, and
-    /// unscaled so the caller can blend it against whatever body it is measuring to. 0 while the avatar hasn't spawned,
-    /// which callers treat as "can't work out a landing spot yet".</summary>
-    public float MeleeReachFullSize
-    {
-        get { var b = Avatar(); var atk = b != null ? b.GetComponent<Player3DAttacker>() : null; return atk != null ? atk.BaseRange : 0f; }
-    }
+    /// <summary>How far this character reaches with nothing in their hands. The weapon's own range wins whenever one
+    /// is equipped (<see cref="MeleeReachFullSize"/>); this is the bare-fisted distance.</summary>
+    [Header("Reach & cadence")]
+    [Tooltip("Bare-handed reach, in world units. A weapon's own attackRange replaces it while one is equipped.")]
+    public float unarmedReach = 0.5f;
 
-    /// <summary>SECONDS BETWEEN SWINGS at this unit's current attack speed — the live cadence, weapon and buffs
-    /// included, read from the attacker that already owns it rather than recomputed here. 0 while the avatar hasn't
-    /// spawned, which callers treat as "can't work out a swing rate yet".
+    [Tooltip("Seconds between ordinary swings before attack-speed is applied.")]
+    public float swingInterval = 0.6f;
+
+    /// <summary>The player's FULL-SIZE melee reach — the equipped weapon's range, or their bare-handed reach —
+    /// unscaled so the caller can blend it against whatever body it is measuring to.
+    ///
+    /// <para><b>Read from the GEAR, not from the body.</b> It used to be read off the avatar's attacker, which meant
+    /// the answer only existed while a body was standing in the scene — so a server, which holds a character with no
+    /// body of its own, got 0 and refused every blow as out of reach. Reach is a fact about what somebody is holding,
+    /// and what somebody is holding lives here.</para></summary>
+    public float MeleeReachFullSize => WeaponReach.Of(GetEquipped(EquipSlotType.Weapon), unarmedReach);
+
+    /// <summary>SECONDS BETWEEN SWINGS at this unit's current attack speed — the live cadence, buffs included.
     ///
     /// <para>This is the honest way to read attack speed as a COUNT: the speed stat itself is a multiplier around 1
     /// (capped at 3), so it can only become "how many times would I have swung" by way of the interval.</para>
     ///
-    /// <para>Same shape and same cost as <see cref="MeleeReachFullSize"/> above — one component lookup, on a path that
-    /// runs once per cast, never per frame.</para></summary>
-    public float SwingTime
-    {
-        get { var b = Avatar(); var atk = b != null ? b.GetComponent<Player3DAttacker>() : null; return atk != null ? atk.SwingTime : 0f; }
-    }
+    /// <para>Owned HERE for the same reason reach is (see <see cref="MeleeReachFullSize"/>): a cadence is a fact about
+    /// the character, and it has to have an answer on a machine where that character has no body standing in a
+    /// scene.</para></summary>
+    public float SwingTime => UnitOffense.AttackInterval(swingInterval, AttackSpeedMult);
 
     /// <summary>The player is built to the shared character body, so that is its size for melee-contact maths.</summary>
     public float MeleeScale => UnitScale.CharacterScale;
@@ -621,6 +627,12 @@ public class Character : MonoBehaviour, ICombatUnit
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+
+            // The one person at this keyboard is a player in this world, and everything that asks "who is here?"
+            // — a creature choosing whom to chase, most of all — asks that question of the roll, not of this
+            // handle. A SERVER's characters do not do this here: the copy sitting in its persistent scene is
+            // nobody, and only the fighters built for real connections join the roll (see PlayerFighter).
+            PlayerUnits.Enter(this);
         }
         Stamina = maxStamina;   // sprint pool starts full
 
@@ -790,9 +802,75 @@ public class Character : MonoBehaviour, ICombatUnit
     UnitStates states;
     public UnitStates States => states != null ? states : (states = GetComponent<UnitStates>() ?? gameObject.AddComponent<UnitStates>());
 
+    /// <summary>Who last cost this unit health — see <see cref="ICombatUnit.LastAttacker"/>.</summary>
+    public ICombatUnit LastAttacker { get; private set; }
+    public void NoteAttacker(ICombatUnit attacker) { if (attacker != null) LastAttacker = attacker; }
+
+    /// <summary>TRUE on a copy of a character the SERVER owns — the one on this player's own screen while a server
+    /// holds the real one. It shows every blow (the number, the flash, the stagger) but its health is told to it
+    /// rather than worked out, so two machines can never disagree about how hurt somebody is.</summary>
+    public bool IsWatchedCopy { get; private set; }
+
+    /// <summary>Say that this character's health is the server's to decide. One-way and permanent for this life —
+    /// a copy never becomes an authority.</summary>
+    public void MarkAsWatchedCopy() => IsWatchedCopy = true;
+
+    /// <summary>The ONE place health comes off, so the watched-copy rule is written once and cannot be forgotten by
+    /// whoever adds the next way to be hurt.</summary>
+    void SubtractHealth(int dmg)
+    {
+        if (IsWatchedCopy) return;
+        CurrentHP = Mathf.Max(0, CurrentHP - dmg);
+    }
+
+    /// <summary>The health the server says this character has. The authoritative figure, arriving on the machine of
+    /// the person it belongs to; it corrects whatever the local presentation guessed within a tenth of a second.</summary>
+    public void SetHealthFromServer(int current, int max)
+    {
+        bool wasAlive = !IsDead;
+        CurrentHP = Mathf.Clamp(current, 0, Mathf.Max(1, max));
+        OnHealthChanged?.Invoke();
+
+        // DEATH IS THE SERVER'S WORD TOO. It arrives as health reaching zero, which is the same shape the offline
+        // game always used — so the death screen, the cue and everything listening run through their usual door.
+        if (wasAlive && CurrentHP <= 0)
+        {
+            OnDied?.Invoke();
+            var a = Avatar();
+            if (a != null) VfxCue.Fire(VfxCueId.OnDeath, a);
+        }
+
+        // AND SO IS COMING BACK. Standing up arrives the same way dying did — as health — and everything that has
+        // always happened on a revive has to happen here too, or the person is walking around with the buffs they
+        // died holding and nothing has written their new life down. Asking the server to revive is the request;
+        // THIS is the answer, and only the answer may act.
+        if (!wasAlive && CurrentHP > 0) FinishReviving();
+    }
+
+    // The half of a revive that is not about health: nothing timed survives a death, and the moment is announced.
+    // Shared by the revive that happens here and the one the server's own copy performs, so the two cannot drift.
+    void FinishReviving()
+    {
+        // The mana pool refills HERE rather than beside the health, because health is the server's to grant and mana
+        // is not — so the two halves of standing back up happen at different moments on a player's own machine, and
+        // only this one is guaranteed to run on both.
+        CurrentMP = MaxMP;
+        ((ICombatUnit)this).BeginNewLife();
+        OnManaChanged?.Invoke();
+        OnRevived?.Invoke();
+    }
+
     // The player's host is a static handle the controller already publishes — nothing to look up, ever. It lives on the
     // spawned avatar, not on this persistent stats object, so it is null until the body exists.
-    public StatusController StatusHost => StatusController.Player;
+    //
+    // A TOLD HOST WINS, for the same reason a told body does: "the player's status host" is one screen's answer, and
+    // a server holding several people has one per person.
+    public StatusController StatusHost => boundStatusHost != null ? boundStatusHost : StatusController.Player;
+
+    StatusController boundStatusHost;
+
+    /// <summary>Tell this character which status host is theirs, instead of reading the one-per-screen handle.</summary>
+    public void BindStatusHost(StatusController host) { boundStatusHost = host; }
 
     // ---- Damage reduction (a timed defensive stance) ---------------------------------------------
     // Guard used to be its own state and its own effect kind. It only ever moved one number — how hard an incoming hit
@@ -878,7 +956,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (dmg > 0)
         {
             int before = CurrentHP;
-            CurrentHP = Mathf.Max(0, CurrentHP - dmg);
+            SubtractHealth(dmg);
             // A hit got THROUGH — the exact mirror of OnDamageDealt, whose fire-site (Health.ApplyLeech) likewise bails
             // on damage <= 0 after the victim's own mitigation. Both sides therefore mean one damage instance that
             // really landed, and a parried / fully shielded / braced hit reaches neither. The attacker travels as the
@@ -955,6 +1033,10 @@ public class Character : MonoBehaviour, ICombatUnit
     // entry points route here so the cue can't be forgotten at one site.
     void RaiseDeath()
     {
+        // A WATCHED COPY DOES NOT GET TO DECIDE IT DIED. The server owns that fact and sends it like every other
+        // fact about this character; deciding it here as well would raise a death screen on a machine whose
+        // arithmetic happened to reach zero first, over a person the server still has standing.
+        if (IsWatchedCopy) return;
         OnDied?.Invoke();
         var a = Avatar();
         if (a != null) VfxCue.Fire(VfxCueId.OnDeath, a);
@@ -992,7 +1074,7 @@ public class Character : MonoBehaviour, ICombatUnit
     {
         if (IsDead || amount <= 0) return 0;
         int dmg = Mathf.Max(1, amount);
-        CurrentHP = Mathf.Max(0, CurrentHP - dmg);
+        SubtractHealth(dmg);
         OnHealthChanged?.Invoke();
         var a = Avatar();
         if (a != null) DamagePopup.Spawn(UnitAnchor.Overhead(a), dmg, color);
@@ -1031,17 +1113,25 @@ public class Character : MonoBehaviour, ICombatUnit
     /// calls this on respawn (and teleports the avatar to a SpawnPoint separately).</summary>
     public void Revive()
     {
+        // COMING BACK IS THE SERVER'S TO GRANT, for the same reason dying was its to declare. A machine that stood
+        // its own character back up would be alive on its own screen and dead in the world — and would go on being
+        // dead the moment the server said so again. Sent, then it happens here when the answer arrives.
+        if (GameNetwork.SendReviveToServer()) return;
+
         CurrentHP = MaxHP;
-        CurrentMP = MaxMP;
-        ((ICombatUnit)this).BeginNewLife();   // the shared half — nothing timed carries across a death, for any unit
         OnHealthChanged?.Invoke();
-        OnManaChanged?.Invoke();
-        OnRevived?.Invoke();
+        FinishReviving();   // the shared half — nothing timed carries across a death, for any unit
     }
 
     public void Heal(int amount)
     {
         if (amount <= 0 || IsDead) return;
+
+        // On a machine whose health belongs to the server, the gain is SENT rather than made. The green digits still
+        // pop here and now, because the heal really did happen and a potion that looked like it did nothing for a
+        // tenth of a second reads as a broken potion.
+        if (GameNetwork.SendHealToServer(amount)) { CombatAuthority.NoteHPAdded(this, amount); return; }
+
         int before = CurrentHP;
         CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
         if (CurrentHP != before) OnHealthChanged?.Invoke();
@@ -1051,14 +1141,44 @@ public class Character : MonoBehaviour, ICombatUnit
     // The in-scene player avatar (re-found after scene changes destroy the old one). Without it,
     // MISS/Guard/heal popups silently vanish (Avatar() returns null, so the `if (a != null)` guards
     // skip them).
+    //
+    // A SERVER-HELD FIGHTER IS TOLD ITS BODY INSTEAD OF LOOKING FOR ONE. Searching the scene for "the" player
+    // means "the one person at this keyboard", which is a fact about a screen and false on a server holding
+    // several people: every fighter there would find the same body, or none at all. A told body wins; the
+    // search is left exactly as it was for the machine that really does have one player.
     Transform Avatar()
     {
+        if (boundBody != null) return boundBody;
         if (avatar == null)
         {
             var pc3 = FindAnyObjectByType<Player3DController>();
             avatar = pc3 != null ? pc3.transform : null;
         }
         return avatar;
+    }
+
+    Transform boundBody;
+
+    /// <summary>Tell this character which body in the world is theirs, instead of letting it search. Used by the
+    /// server, which holds one of these per connected player and cannot tell them apart by looking.</summary>
+    public void BindBody(Transform body) { boundBody = body; }
+
+    string boundMap;
+
+    /// <summary>Tell this character which map its person is standing in. The server's half of <see cref="Map"/>:
+    /// a person there has no body in any map of its own, so the only machine that knows is theirs, and it says so
+    /// (see <see cref="NetPlayer"/>). Same shape as <see cref="BindBody"/> on purpose.</summary>
+    public void BindMap(string map) { boundMap = map; }
+
+    /// <summary>Which map this person is in. On their own machine that is simply the map they are standing in; on a
+    /// server it is whatever they last reported. Never a guess: a server that read its own active scene would hand
+    /// every person the same map and put every creature back to hunting across the whole world.</summary>
+    public string Map => !string.IsNullOrEmpty(boundMap) ? boundMap : MapManager.CurrentMap;
+
+    void OnDestroy()
+    {
+        PlayerUnits.Leave(this);
+        if (Instance == this) Instance = null;
     }
 
     public void AddXP(int amount)
@@ -1123,7 +1243,13 @@ public class Character : MonoBehaviour, ICombatUnit
         d.hotbarBindings = Hotbar.Capture();
         d.activePassives = PassiveSkills.Capture();
         CaptureEquipment(d);
-        // Appearance is deliberately absent — see SaveData. It belongs to the character record, not to progress.
+
+        // The look, written into the save with everything else it changes alongside. One home, one write.
+        d.modelName  = DyeModel;
+        d.dyeSources = DyeSources;
+        d.dyeTargets = DyeTargets;
+
+        d.stamina = Stamina;
         return d;
     }
 
@@ -1205,12 +1331,16 @@ public class Character : MonoBehaviour, ICombatUnit
         PassiveSkills.Restore(d.activePassives);
         RestoreEquipment(d);         // v6+: rebuild worn gear from the save (Ring excluded)
         EnsureRingEquipped();        // re-wear the Ring vessel (auto-managed, never serialized)
-        // Appearance is NOT restored here — it is not progress. The chosen body and its recolour come from the
-        // character record (SaveManager applies them from AccountSession before this runs).
+
+        // v8+: the look comes back out of the save. A save written before v8 carries no body name — leave
+        // whatever the character already wears rather than stripping it to nothing.
+        if (!string.IsNullOrEmpty(d.modelName)) SetDye(d.dyeSources, d.dyeTargets, d.modelName);
 
         // HP/MP last, against the now-restored maxima. Never load into a dead state.
         CurrentHP = Mathf.Clamp(d.currentHP <= 0 ? MaxHP : d.currentHP, 1, MaxHP);
         CurrentMP = Mathf.Clamp(d.currentMP, 0, MaxMP);
+        // Below zero means a save older than v8, which never recorded it — keep the full pool it starts with.
+        SetStamina(d.stamina < 0f ? maxStamina : d.stamina);
 
         OnStatsChanged?.Invoke();
         OnHealthChanged?.Invoke();

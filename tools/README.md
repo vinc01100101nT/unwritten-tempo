@@ -22,7 +22,7 @@ Takes a few minutes. It decides pass/fail by checking the artefact actually appe
 request — the request usually times out long before the build ends, which is expected and harmless. On
 success it prints the exact command to run what it built.
 
-Used by [Starting the Network](../docs/starting-the-network.md).
+Used by [Starting the Network](../docs/1-planning/starting-the-network.md).
 
 ## check-unity-code.sh
 

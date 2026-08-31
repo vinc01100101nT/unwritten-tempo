@@ -45,9 +45,19 @@ public class MobRespawn : MonoBehaviour
         StartCoroutine(RespawnAfter());
     }
 
+    // A wait object is immutable, so one per mob is enough — building a fresh one on every death is
+    // rubbish for the collector to sweep up, and mobs die constantly.
+    WaitForSeconds respawnWait;
+    float respawnWaitFor = -1f;
+
     IEnumerator RespawnAfter()
     {
-        yield return new WaitForSeconds(respawnDelay);
+        if (respawnWait == null || respawnWaitFor != respawnDelay)
+        {
+            respawnWait = new WaitForSeconds(respawnDelay);
+            respawnWaitFor = respawnDelay;
+        }
+        yield return respawnWait;
         Respawn();
     }
 
@@ -100,9 +110,6 @@ public class MobRespawn : MonoBehaviour
     // A ground point within homeRadius of home, kept clear of the player; falls back to home.
     Vector3 PickSpot()
     {
-        var player = FindAnyObjectByType<Player3DController>();
-        Vector3 p = player != null ? player.transform.position : home;
-
         for (int i = 0; i < 16; i++)
         {
             Vector2 r = Random.insideUnitCircle * homeRadius;
@@ -110,8 +117,9 @@ public class MobRespawn : MonoBehaviour
             if (groundMask != 0 &&
                 Physics.Raycast(probe, Vector3.down, out var hit, 120f, groundMask, QueryTriggerInteraction.Ignore))
             {
-                float dx = hit.point.x - p.x, dz = hit.point.z - p.z;
-                if (Mathf.Sqrt(dx * dx + dz * dz) < playerClearRadius) continue;   // too close to the player
+                // Clear of EVERYBODY, not of one player found by looking around — see FieldMobSpawner.PickSpot for
+                // why that answer is wrong on a server and stale everywhere else.
+                if (PlayerUnits.AnyoneWithin(hit.point, playerClearRadius, gameObject.scene.name)) continue;
                 return hit.point + Vector3.up * footOffset;
             }
         }

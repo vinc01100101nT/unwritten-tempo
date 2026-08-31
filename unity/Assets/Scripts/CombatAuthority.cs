@@ -20,21 +20,64 @@ public static class CombatAuthority
     {
         if (target == null) return 0;
 
-        // ON A CONNECTED CLIENT, NOBODY'S HP CHANGES HERE. The world lives on the server, so a hit is a
-        // REQUEST, not an act: it is sent, the server decides what really happened, and the answer comes back
-        // to every player at once. Returning 0 is not a failure — it is this machine saying "I did not decide
-        // that". Everything a landed hit sets off (flinch, on-hit effects, a broken run of hits) then happens
-        // exactly once, on the server, instead of once per watching client.
-        //
-        // Offline, none of this is true and the whole method runs as it always has.
+        // ON A PLAYER'S MACHINE, NOBODY'S HP CHANGES HERE — EVER. The world lives on the server, so a hit is a
+        // REQUEST, not an act: it is sent, the server decides what really happened, and the answer comes back to
+        // every player at once. Returning 0 is not a failure — it is this machine saying "I did not decide that".
         if (GameNetwork.SendHitToServer(target, info)) return 0;
+
+        // The server is the only thing that reaches this line. There is no longer an offline game to fall through
+        // to: a player who is not joined is not in the world, so there is nothing for them to hit and nothing of
+        // theirs to be hit. A blow that gets here on a player's machine is one aimed at something the server has
+        // never heard of, and the honest answer is that it does not land.
+        if (!GameServer.IsServer)
+        {
+            WarnUnownedTarget(target);
+            return 0;
+        }
+
+        return Land(target, info);
+    }
+
+    // Said ONCE per kind of target, not once per blow: whatever is producing these is producing them at combat
+    // speed, and a line each would bury the one that matters. This exists because the alternative — dropping the
+    // blow in silence — is how "why does nothing take damage" costs somebody an afternoon.
+    static readonly System.Collections.Generic.HashSet<string> warnedAbout = new System.Collections.Generic.HashSet<string>();
+
+    static void WarnUnownedTarget(IDamageable target)
+    {
+        string kind = target.GetType().Name;
+        if (!warnedAbout.Add(kind)) return;
+        Debug.LogWarning("[net] a blow aimed at a '" + kind + "' was dropped: this machine is not the authority "
+                         + "and the server does not know that thing. Nothing local decides damage any more. If "
+                         + "this is a creature hitting a player, that path is still waiting on per-connection "
+                         + "fighters — see the migration plan.");
+    }
+
+    /// <summary>Apply a blow the SERVER already decided, on a machine that is only watching. Skips the forwarding
+    /// step — this hit has already been to the server and come back, and sending it again would loop forever — and
+    /// otherwise runs the identical door, so the number, the flash, the impact and the stagger are the ones the
+    /// offline game has always produced rather than a second set written for the networked case.</summary>
+    public static int ApplyFromServer(IDamageable target, in DamageInfo info)
+    {
+        if (target == null) return 0;
+        return Land(target, info);
+    }
+
+    // The door itself, once. Everything above decides WHETHER this machine is the one that gets to open it.
+    static int Land(IDamageable target, in DamageInfo info)
+    {
         // The attacker's RUN of hits is counted here, before the sink, for the same reason the flinch is decided after
         // it: this is the one door every real hit passes through. Counting before means the number is already right
         // when the sink fires the moment a skill reads it — and switching targets restarts the run at this very hit.
-        var attackerStates = info.attacker != null ? info.attacker.States : null;
+        // Gone, not merely null: a blow can outlive whoever threw it — a projectile in flight, a delayed tick, a
+        // player who disconnected — and a destroyed object behind an interface reference passes a null check.
+        var attackerStates = !PlayerUnits.Gone(info.attacker) ? info.attacker.States : null;
         if (attackerStates != null) attackerStates.NoteAttackHit(target as ICombatUnit);
 
         int dealt = target.ApplyDamage(info);
+        // WHO DID THIS, recorded once, here, for every unit alike — a kill pays whoever landed it, and this is the
+        // only place that knows. A blow that cost nothing (a miss, a parry, a full absorb) is not a claim on anyone.
+        if (dealt > 0 && !PlayerUnits.Gone(info.attacker) && target is ICombatUnit hurt) hurt.NoteAttacker(info.attacker);
         // FLINCH is decided here because this is the one door every real hit passes through — a player swing, a skill
         // tick and a mob's bite alike. It keys off what was actually DEALT, so a miss, a parry, a full shield absorb
         // and a braced hit all cost no HP and stagger nobody, with no case written for any of them.
@@ -48,6 +91,12 @@ public static class CombatAuthority
         // hear. Overkill beats are excluded: a flurry's extra numbers past a mob's death are presentation, and reading
         // them as failed hits would break a run the attacker never actually dropped.
         if (attackerStates != null && dealt <= 0 && !info.overkill) attackerStates.BreakConsecutiveHits();
+
+        // A BLOW ON A PERSON HAS TO BE SAID OUT LOUD. The server has no screen, and the machine of the person it
+        // happened to no longer works its own health out — so a hit the server keeps to itself is a hit that
+        // never appears anywhere. Said HERE, at the one door, so a bite, a poison tick and whatever is written
+        // next are all announced by one line that nobody has to remember to add.
+        if (target is Character person) GameNetwork.AnnounceBlowOnPlayer(person, info, dealt);
         return dealt;
     }
 
@@ -83,6 +132,18 @@ public static class CombatAuthority
     public static int ApplyTrue(IDamageable target, int amount, Color color)
     {
         if (target == null) return 0;
-        return target.ApplyTrueDamage(amount, color);
+
+        // THE SAME RULE AS AN ORDINARY HIT. A poison tick is still a change to a creature the server owns, and a
+        // player's machine does not get to make it: with both halves subtracting their own ticks, the two argued
+        // about the same creature's health ten times a second. The server is already burning its own copy on its
+        // own clock, so nothing needs to be sent — this side simply does nothing.
+        if (!GameServer.IsServer) return 0;
+
+        int dealt = target.ApplyTrueDamage(amount, color);
+        // Announced for the same reason an ordinary blow is: a person's own machine no longer works their health
+        // out, so a burn nobody says out loud is a bar that drops with no number to explain it.
+        if (dealt > 0 && target is Character person)
+            GameNetwork.AnnounceBlowOnPlayer(person, new DamageInfo(dealt, Element.Neutral, isMagic: false), dealt);
+        return dealt;
     }
 }

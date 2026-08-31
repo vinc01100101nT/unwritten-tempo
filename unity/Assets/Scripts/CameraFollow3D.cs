@@ -199,8 +199,19 @@ public class CameraFollow3D : MonoBehaviour
         Vector2 mouse = MousePos();
         Vector2 delta = mouse - lastMouse;
         lastMouse = mouse;
+        bool orbiting = RightHeld();
+#if UNITY_ANDROID
+        // A phone orbits with a one-finger drag, and that gesture reports its OWN travel. Taking a difference of
+        // pointer positions here would fold in the jump from wherever the last finger happened to lift, so the
+        // camera would snap the instant a new drag began.
+        if (TouchControls.HasTouch)
+        {
+            delta = TouchControls.OrbitDelta;
+            orbiting = delta.sqrMagnitude > 0f;
+        }
+#endif
 
-        if (RightHeld())
+        if (orbiting)
         {
             yaw += delta.x * dragYawSpeed;
             height = Mathf.Clamp(height - delta.y * dragHeightSpeed, minHeight, maxHeight);
@@ -213,33 +224,10 @@ public class CameraFollow3D : MonoBehaviour
         if (height > maxH) height = maxH;
     }
 
-    // ---- input helpers (legacy Input always works; new Input System optional) ---
-    // Scroll units differ per backend (legacy mouseScrollDelta vs new Input System pixels, which
-    // is ~120/notch on Windows), so we take only the SIGN — one notch = one zoomStep, regardless
-    // of backend or mouse driver. Predictable, and can't be "too slow" or "too fast".
-    static int ScrollDir()
-    {
-        float s;
-#if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null) s = Mouse.current.scroll.ReadValue().y;
-        else s = Input.mouseScrollDelta.y;
-#else
-        s = Input.mouseScrollDelta.y;
-#endif
-        return s > 0f ? 1 : s < 0f ? -1 : 0;
-    }
-    static Vector2 MousePos()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null) return Mouse.current.position.ReadValue();
-#endif
-        return Input.mousePosition;
-    }
-    static bool RightHeld()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null && Mouse.current.rightButton.isPressed) return true;
-#endif
-        return Input.GetMouseButton(1);
-    }
+    // ---- input helpers -----------------------------------------------------------
+    // All three route through PointerInput, the one gate for the mouse (and, on a phone, for the finger that
+    // answers in its place). The backend dance and the scroll-sign normalisation live there, not here.
+    static int ScrollDir() => PointerInput.ScrollDir;
+    static Vector2 MousePos() => PointerInput.Position;
+    static bool RightHeld() => PointerInput.SecondaryHeld;
 }

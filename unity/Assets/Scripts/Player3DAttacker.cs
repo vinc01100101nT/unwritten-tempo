@@ -61,9 +61,13 @@ public class Player3DAttacker : MonoBehaviour
     /// <summary>How long one whole swing lasts (start → next swing can begin), scaled by attack-speed. The attack
     /// animation is sped to play fully within this window (see Character3DPose); the hit lands partway through at
     /// <see cref="hitTiming"/> (default 70%) — the contact moment. Equals the swing interval, so DPS is unchanged —
-    /// only WHEN inside the window the hit connects moves.</summary>
-    public float SwingTime => UnitOffense.AttackInterval(cooldown,
-        Character.Instance != null ? Character.Instance.AttackSpeedMult : 1f);   // same rule a mob's cadence uses
+    /// only WHEN inside the window the hit connects moves.
+    ///
+    /// <para>The character owns the interval and the attack-speed that scales it; this asks them. Only the standalone
+    /// spike — a body with no character behind it — falls back to <see cref="cooldown"/>.</para></summary>
+    public float SwingTime => Character.Instance != null
+        ? Character.Instance.SwingTime
+        : UnitOffense.AttackInterval(cooldown, 1f);   // same rule a mob's cadence uses
 
     /// <summary>The FULL-SIZE reach before unit-scaling: the equipped weapon's <see cref="Item.attackRange"/> when it
     /// sets one (Weapon slot, &gt; 0 — a bow/spear reaches farther than a fist), else the attacker's own default
@@ -71,14 +75,8 @@ public class Player3DAttacker : MonoBehaviour
     /// weapon — same pattern as <see cref="MeleeElement"/>, the audio lookup, and the stance brain — so there's no per-equip copy to
     /// keep in sync; the Item stays the single owner of weapon reach.</summary>
     public float BaseRange
-    {
-        get
-        {
-            var w = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
-            return WeaponReach.Of(w, range);   // the SHARED rule — a mob resolves its reach through this same one
-
-        }
-    }
+        => Character.Instance != null ? Character.Instance.MeleeReachFullSize
+                                      : WeaponReach.Of(null, range);   // the SHARED rule — a mob resolves its reach through this same one
 
     /// <summary>Reach against an ORDINARY SPRITE MOB — the common pairing, kept only for the callers that have no
     /// target to measure against (the pickup radius, the editor gizmo). Every actual hit test uses
@@ -327,7 +325,7 @@ public class Player3DAttacker : MonoBehaviour
 
     void ApplyOnHit(Health h, in SkillContext ctx)
     {
-        var ai = h.GetComponent<MonsterAI3D>();
+        var ai = h.GetComponent<MonsterAI3D>();   // perf-ok: once per landed hit, not per frame
         if (ai == null) return;
         // Knockback (Repelling mod) shoves from the player and carries its own freeze, so it subsumes the
         // separate Stagger; a plain Stagger applies only when there's no shove.

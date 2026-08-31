@@ -235,9 +235,9 @@ public class MobShadow3DVisual : Agent3DVisual
     }
 
     /// <summary>Walk vs Run, switched at the shared gear-change speed rather than a hand-picked threshold — so every
-    /// character changes gear at the same pace, whoever is driving it.</summary>
-    protected override StanceId LocomotionStanceFor(float groundSpeed)
-        => groundSpeed >= CharacterSpec.Active.GearSwitchSpeed ? StanceId.Run : StanceId.Walk;
+    /// character changes gear at the same pace, whoever is driving it. A shadow copies a player, so it uses the
+    /// player's own two gears; the rule lives in the base because another body stands in for a player too.</summary>
+    protected override StanceId LocomotionStanceFor(float groundSpeed) => PlayersGearFor(groundSpeed);
 
     /// <summary>This unit's equipped weapon type (None when unarmed) — the mob's own gear, read through the same
     /// UnitEquipment every mob carries.</summary>

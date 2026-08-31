@@ -18,6 +18,11 @@ public class SignInScreen : MonoBehaviour
 {
     TMP_InputField accountField;
     TMP_InputField passwordField;
+#if UNITY_ANDROID
+    // Only a phone asks: Android carries no environment variables, so the address a desktop build reads from
+    // one has to be typed here instead. See ServerAddress.
+    TMP_InputField serverField;
+#endif
     TextMeshProUGUI status;
     Button enterButton;
     Button createButton;
@@ -26,16 +31,47 @@ public class SignInScreen : MonoBehaviour
     static void Bootstrap()
     {
         if (AccountSession.IsActive) return;   // already playing (a scene change, not a fresh launch)
+        Open();
+    }
+
+    /// <summary>Put the sign-in screen up. Called at launch, and again whenever somebody is put back out of the
+    /// world — a lost connection ends a session exactly the way signing out does, so both arrive here rather than
+    /// at two different-looking front doors.</summary>
+    public static void Open()
+    {
         if (GameServer.IsServer) return;       // a server has nobody sitting at it to sign in
+        if (Object.FindAnyObjectByType<SignInScreen>() != null) return;   // already up; never a second one
+
         var go = new GameObject("SignInScreen") { hideFlags = HideFlags.DontSaveInEditor };
         DontDestroyOnLoad(go);
         go.AddComponent<SignInScreen>();
     }
 
+    /// <summary>Put the screen up carrying a line explaining why the player is looking at it. Used when a world
+    /// was lost rather than left: arriving back at sign-in with no explanation reads as a crash.</summary>
+    public static void OpenSaying(string message)
+    {
+        Open();
+        var screen = Object.FindAnyObjectByType<SignInScreen>();
+        if (screen != null) screen.pendingMessage = message;
+    }
+
+    string pendingMessage;
+
+    // The panel's vertical rhythm, named once so a row can be inserted without re-typing every offset below it.
+    const float RowGap = 56f;      // one labelled field to the next
+    const float StatusGap = 60f;   // last field to the status line
+    const float ButtonGap = 32f;   // status line to the buttons
+
     void Start()
     {
         var canvas = FrontScreen.Canvas(transform);
-        var panel = FrontScreen.Panel(canvas, new Vector2(430, 330));
+
+        float panelHeight = 330f;
+#if UNITY_ANDROID
+        panelHeight += RowGap;   // the server line needs a row of its own
+#endif
+        var panel = FrontScreen.Panel(canvas, new Vector2(430, panelHeight));
 
         var title = UiKit.Label("Title", panel, "unwritten", 34, FontStyle.Normal, TextAnchor.MiddleCenter, title: true);
         title.color = UiKit.Gold;
@@ -43,28 +79,49 @@ public class SignInScreen : MonoBehaviour
 
         var line = UiKit.Label("Line", panel, "Sign in to continue", 14, FontStyle.Italic, TextAnchor.MiddleCenter);
         line.color = UiKit.TextDim;
-        FrontScreen.Row(line.rectTransform, -76, 20);
+        FrontScreen.Row(line.rectTransform, -82, 20);
 
-        accountField = FrontScreen.Field(panel, "Account", -124, false);
-        passwordField = FrontScreen.Field(panel, "Password", -180, true);
+        // Rows walk DOWN the panel from here rather than each carrying a hand-typed offset, so inserting the
+        // phone's server line above them moves everything below it without a second copy of the layout.
+        float y = -124f;
+#if UNITY_ANDROID
+        serverField = FrontScreen.Field(panel, "Server", y, false);
+        serverField.text = ServerAddress.TypedHost;   // whatever this device was told last time
+        y -= RowGap;
+#endif
+        accountField = FrontScreen.Field(panel, "Account", y, false);
+        y -= RowGap;
+        passwordField = FrontScreen.Field(panel, "Password", y, true);
+        y -= StatusGap;
 
         status = UiKit.Label("Status", panel, "", 13, FontStyle.Normal, TextAnchor.MiddleCenter);
         status.color = UiKit.Gold;
-        FrontScreen.Row(status.rectTransform, -222, 18);
+        FrontScreen.Row(status.rectTransform, y, 18);
+        y -= ButtonGap;
 
         enterButton = UiKit.Btn("Enter", panel, OnEnter);
-        FrontScreen.Place(enterButton.GetComponent<RectTransform>(), new Vector2(-80, -272), new Vector2(140, 34));
+        FrontScreen.Place(enterButton.GetComponent<RectTransform>(), new Vector2(-80, y), new Vector2(140, 34));
 
         createButton = UiKit.Btn("New Account", panel, OnCreate);
-        FrontScreen.Place(createButton.GetComponent<RectTransform>(), new Vector2(80, -272), new Vector2(140, 34));
+        FrontScreen.Place(createButton.GetComponent<RectTransform>(), new Vector2(80, y), new Vector2(140, 34));
 
         accountField.ActivateInputField();
+
+        // Set before this screen's parts existed (the world was lost while it was being built), so it is said now.
+        if (!string.IsNullOrEmpty(pendingMessage)) { Say(pendingMessage); pendingMessage = null; }
     }
 
     void Update()
     {
         // Enter moves down the form and then submits, which is what hands on a keyboard expect.
         if (!Input.GetKeyDown(KeyCode.Return) && !Input.GetKeyDown(KeyCode.KeypadEnter)) return;
+
+        // ...unless a BUTTON holds the keyboard, which Tab now makes possible: pressing it belongs to the button,
+        // and answering here as well would run the button AND a sign-in off one press.
+        var events = EventSystem.current;
+        var focused = events != null ? events.currentSelectedGameObject : null;
+        if (focused != null && focused.GetComponent<Button>() != null) return;
+
         if (accountField.isFocused && passwordField.text.Length == 0) passwordField.ActivateInputField();
         else OnEnter();
     }
@@ -77,6 +134,12 @@ public class SignInScreen : MonoBehaviour
         string email = accountField.text.Trim();
         string password = passwordField.text;
 
+#if UNITY_ANDROID
+        // Remembered before anything dials, because both the account service and the world read it from there.
+        string host = serverField.text.Trim();
+        if (host.Length == 0) { Say("Fill in the server, account and password."); return; }
+        ServerAddress.TypedHost = host;
+#endif
         if (email.Length == 0 || password.Length == 0) { Say("Fill in both lines."); return; }
         if (signUpFirst && password.Length < 8) { Say("A new password needs at least 8 characters."); return; }
 
@@ -161,6 +224,11 @@ public static class FrontScreen
         scaler.matchWidthOrHeight = 0.5f;
         UiKit.ApplyTextCrispness(scaler);
 
+        // Tab walks this screen's boxes and buttons in the order they are built. Attached HERE, at the one
+        // canvas every front screen is made on, so sign-in and character select cannot end up with different
+        // keyboard behaviour — and a screen added later gets it without being told.
+        TabFocus.Attach(go);
+
         // Fully opaque: before you have signed in you are not in the world, so the world has no business being
         // visible. A partly-transparent veil reads as "the game is already running and you're locked out of it",
         // which is exactly the wrong impression.
@@ -208,9 +276,14 @@ public static class FrontScreen
         return fill.transform;
     }
 
-    /// <summary>A row at <paramref name="top"/> pixels below the panel's top edge, inset by
+    /// <summary>A row whose top edge sits at <paramref name="top"/> from the panel's top edge, inset by
     /// <paramref name="left"/> and <paramref name="right"/>. The insets let a row share its line with something
-    /// beside it — the body preview, for instance — without a second layout system.</summary>
+    /// beside it — the body preview, for instance — without a second layout system.
+    ///
+    /// <para><paramref name="top"/> counts DOWNWARDS as a negative number, exactly like <see cref="Place"/>:
+    /// one screen cannot have two opposite meanings for "how far from the top". (Measured: read as a positive
+    /// distance it threw the title, the name box, both captions, the swatch strip and all three colour sliders
+    /// clean off the top of the screen, above the panel they belong to.)</para></summary>
     public static void Row(RectTransform rt, float top, float height, float left = 24f, float right = 24f)
     {
         rt.anchorMin = new Vector2(0, 1);
@@ -220,8 +293,8 @@ public static class FrontScreen
         // discards them: the row keeps the right width but re-centres itself, so an uneven inset pushes it off
         // one edge. (Measured: left 250 / right 30 hung the name box 110 past the panel and slid the labels
         // over the preview.)
-        rt.offsetMin = new Vector2(left, -(top + height));
-        rt.offsetMax = new Vector2(-right, -top);
+        rt.offsetMin = new Vector2(left, top - height);
+        rt.offsetMax = new Vector2(-right, top);
     }
 
     /// <summary>Centre a fixed-size control, measured from the panel's top edge.</summary>

@@ -45,6 +45,10 @@ public class PersistentPlayer3D : MonoBehaviour
     /// on respawn). Reuses the same snap-to-terrain placement as a fresh map arrival.</summary>
     public void Respawn() => PlaceInScene();
 
+    /// <summary>Put the player back where their save says they were. Called once, by <see cref="SaveManager"/>,
+    /// after the save arrives — which is always later than the map coming up, because it crosses a network.</summary>
+    public void ReturnToSavedPlace() => PlaceInScene();
+
     void PlaceInScene()
     {
         placed = true;
@@ -54,6 +58,17 @@ public class PersistentPlayer3D : MonoBehaviour
             if (pc.gameObject != gameObject) Destroy(pc.gameObject);
 
         if (controller != null) controller.Halt();   // don't carry a half-finished order across maps
+
+        // Where the player logged out beats where the map would put them — but only in the map they logged
+        // out of, and only once. Anything else (a door, a death, a fresh character) falls through to the
+        // spawn point exactly as before.
+        if (SceneTravel.HasResume && SceneTravel.ResumeScene == MapManager.CurrentMap)
+        {
+            MoveTo(SceneTravel.ResumePosition);
+            SceneTravel.ForgetResume();
+            AimCamera();
+            return;
+        }
 
         var spawn = ResolveSpawn();
         if (spawn != null) MoveTo(spawn.transform.position);

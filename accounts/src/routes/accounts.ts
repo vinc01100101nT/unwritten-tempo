@@ -10,6 +10,38 @@ const credentials = z.object({
 
 const refreshBody = z.object({ refreshToken: z.string().min(10) });
 
+// Checking a password is deliberately slow — that is what makes a stolen hash expensive to crack. It also
+// means a handful of requests can pin a CPU, so the same address only gets a few tries before it has to wait.
+// Held in memory on purpose: it is a speed bump, not a security boundary, and it costs nothing to lose on a
+// restart. If this service is ever run as more than one process, each keeps its own count.
+const MAX_FAILURES = 5;
+const LOCKOUT_MS = 60_000;
+
+const failures = new Map<string, { count: number; until: number }>();
+
+function lockedOut(email: string): boolean {
+  const seen = failures.get(email.toLowerCase());
+  return seen !== undefined && seen.until > Date.now();
+}
+
+function noteFailure(email: string): void {
+  const key = email.toLowerCase();
+  const now = Date.now();
+  const seen = failures.get(key);
+  const count = seen && seen.until > now - LOCKOUT_MS ? seen.count + 1 : 1;
+  failures.set(key, { count, until: count >= MAX_FAILURES ? now + LOCKOUT_MS : now });
+
+  // Swept here rather than on a timer: without this the map is a slow leak, which is the very shape of bug
+  // this pass went looking for.
+  if (failures.size > 10_000) {
+    for (const [k, v] of failures) if (v.until <= now) failures.delete(k);
+  }
+}
+
+function forgetFailures(email: string): void {
+  failures.delete(email.toLowerCase());
+}
+
 interface AccountRow {
   id: string;
   password_hash: string;
@@ -42,6 +74,10 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     if (!parsed.success) return reply.code(400).send({ error: "invalid email or password" });
 
     const { email, password } = parsed.data;
+    if (lockedOut(email)) {
+      return reply.code(429).send({ error: "too many attempts — wait a minute and try again" });
+    }
+
     const account = await queryOne<AccountRow>(
       "select id, password_hash from account where lower(email) = lower($1)",
       [email],
@@ -53,8 +89,12 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
       ? await verifyPassword(password, account.password_hash)
       : await verifyPassword(password, "scrypt$32768$8$1$00$00");
 
-    if (!account || !ok) return reply.code(401).send({ error: "wrong email or password" });
+    if (!account || !ok) {
+      noteFailure(email);
+      return reply.code(401).send({ error: "wrong email or password" });
+    }
 
+    forgetFailures(email);
     return reply.send(await startSession(account.id));
   });
 
@@ -88,7 +128,21 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
   });
 }
 
+// How long a spent or expired token is kept before it is swept. Long enough to still be visible while
+// investigating a theft, short enough that the table does not grow for the life of the game.
+const TOKEN_KEEP_DAYS = 30;
+
 async function startSession(accountId: string) {
+  // Swept as sessions are made rather than on a schedule, so there is no job to remember to run. Scoped to
+  // this account: one person signing in never pays for everybody else's history.
+  await query(
+    `delete from refresh_token
+      where account_id = $1
+        and (revoked_at < now() - interval '${TOKEN_KEEP_DAYS} days'
+             or expires_at < now() - interval '${TOKEN_KEEP_DAYS} days')`,
+    [accountId],
+  );
+
   const refresh = newRefreshToken();
   await query("insert into refresh_token (token_hash, account_id, expires_at) values ($1, $2, $3)", [
     refresh.hash,

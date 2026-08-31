@@ -18,6 +18,9 @@ those. The literal phrase never lives in this file, so reading this file can't t
 """
 import sys, os, re, json, datetime
 
+import guard_check   # sibling file — the heartbeat that proves this gate really ran
+import tool_writes   # sibling file — the one answer to 'which files does this call write?'
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOG = os.path.join(HERE, "hook-analytics.jsonl")
 
@@ -43,12 +46,16 @@ def is_runtime_cs(path: str) -> bool:
     p = path.replace("\\", "/").lower()
     if not p.endswith(".cs"):
         return False
-    if "/assets/scripts/" not in p:
-        return False
     # Editor-only code isn't a runtime hot path — exclude it.
-    if "/assets/scripts/editor/" in p:
+    if "/assets/scripts/editor/" in p or p.startswith("editor/"):
         return False
-    return True
+    if "/assets/scripts/" in p:
+        return True
+    # A bare name the shell was given for a file that does not exist YET — a new script being
+    # created. It cannot be placed, and the safe way to be wrong is to ask for the document:
+    # a needless read costs seconds, while a miss here is the hole this whole gate exists to
+    # close. (A .cs anywhere else in this repo would be the first of its kind.)
+    return "/" not in p
 
 
 def scripts_root(file_path: str) -> str:
@@ -57,7 +64,12 @@ def scripts_root(file_path: str) -> str:
     regardless of where the repo lives."""
     fwd = file_path.replace("\\", "/")
     idx = fwd.lower().find("/assets/scripts/")
-    return fwd[: idx + len("/assets/scripts/")]
+    if idx >= 0:
+        return fwd[: idx + len("/assets/scripts/")]
+    # A name with no folder on it (a script being created through the shell). The documents
+    # still have to be found, so fall back to this repo's own scripts folder.
+    repo = os.path.dirname(os.path.dirname(HERE))
+    return os.path.join(repo, "unity", "Assets", "Scripts") + "/"
 
 
 def read_text(path: str) -> str:
@@ -150,14 +162,25 @@ def main():
     try:
         data = json.load(sys.stdin)
     except (json.JSONDecodeError, ValueError):
+        data = {}
+    # Stamp BEFORE deciding anything: a gate that runs and waves the edit through has still
+    # run, and that is the case a heartbeat exists to tell apart from a gate that never fired.
+    guard_check.beat(os.path.basename(__file__), data.get("session_id", ""))
+    if not data:
         allow()  # malformed payload → never block real work
         return
 
-    tool_input = data.get("tool_input") or {}
-    file_path = tool_input.get("file_path") or ""
-    if not is_runtime_cs(file_path):
-        allow()  # not a gated file → silent, no log
+    # Which files does this call write? Asked of the one shared answer, because an edit made
+    # with a shell command is still an edit — trusting the editing tools' "which file" field
+    # alone is precisely how this gate slept through a session of them.
+    written = tool_writes.files_written(data.get("tool_name") or "",
+                                        data.get("tool_input") or {},
+                                        data.get("cwd") or "")
+    gated = [f for f in written if is_runtime_cs(f)]
+    if not gated:
+        allow()  # nothing of the game's runtime C# → silent, no log
         return
+    file_path = gated[0]
 
     session_id = data.get("session_id") or ""
     root = scripts_root(file_path)

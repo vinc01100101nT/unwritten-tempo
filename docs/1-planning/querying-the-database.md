@@ -1,0 +1,394 @@
+---
+status:
+owner: vince
+last-updated: 2026-08-30
+tags:
+  - planning-production
+---
+
+# Querying the Database
+
+How to ask the accounts database questions by hand — find a player, look up a character by name, see who is
+wearing which body, read a level out of a save. Every query below is written against the tables the account
+service actually creates in `accounts/sql/001_init.sql`, so what you type here matches what the game stores.
+
+This is a **read-and-poke** guide for a developer at a terminal. The service itself never queries this way:
+it goes through its two helpers in `accounts/src/db.ts`, which always pass values as parameters. Anything you
+learn here that ends up in code must follow that rule — see [Never paste a value into SQL](#never-paste-a-value-into-sql).
+
+---
+
+## Getting in
+
+The service reads its connection string from `DATABASE_URL`. The same string works at the command line:
+
+```bash
+psql "$DATABASE_URL"
+```
+
+Locally the database is created with `createdb unwritten`, so this also works:
+
+```bash
+psql unwritten
+```
+
+Useful once you are in:
+
+| | |
+| --- | --- |
+| `\dt` | list the tables |
+| `\d character` | show one table's columns, indexes and constraints |
+| `\x` | toggle expanded output — essential for rows carrying a save document |
+| `\q` | quit |
+
+To run one query without opening a session:
+
+```bash
+psql "$DATABASE_URL" -c "select count(*) from account"
+```
+
+---
+
+## What is in there
+
+Three tables you will actually query, and one rule that explains most of the queries below: **appearance is
+identity, progress is progress.** (A fourth, `schema_migration`, is bookkeeping the migrator owns — it just
+records which `.sql` files this database has already run.)
+
+- **`account`** — `id`, `email`, `password_hash`, `created_at`. Nothing else. There is no display name here.
+- **`character`** — `id`, `account_id`, `name`, `model_name`, `dye_sources`, `dye_targets`, `progress`,
+  `created_at`, `updated_at`, `deleted_at`. The body and recolour live in columns; everything that only exists
+  after playing — level, XP, gear, gold — lives inside the single `progress` JSON document.
+- **`refresh_token`** — `token_hash`, `account_id`, `expires_at`, `revoked_at`. Live sessions, hashed.
+
+Two things about `character` that will bite you if you forget them:
+
+1. **Deleting is soft.** A deleted character keeps its row and gets a `deleted_at` timestamp. Almost every
+   query you write wants `and deleted_at is null`, and the two indexes on the table only cover rows where that
+   is true — so leaving it out is both wrong and slower.
+2. **`character` is also a SQL type name.** Postgres still accepts it as a table name unquoted, exactly as the
+   service uses it, so `from character` is fine. If a tool ever chokes on it, write `from "character"`.
+
+---
+
+## Accounts
+
+Find one by email. The address is stored as the player typed it, and matched case-insensitively — there is a
+unique index on `lower(email)`, so this is the form that uses it:
+
+```sql
+select id, email, created_at
+  from account
+ where lower(email) = lower('Player@Example.com');
+```
+
+Everyone who signed up today:
+
+```sql
+select id, email, created_at
+  from account
+ where created_at >= current_date
+ order by created_at desc;
+```
+
+The newest twenty:
+
+```sql
+select id, email, created_at
+  from account
+ order by created_at desc
+ limit 20;
+```
+
+---
+
+## Characters
+
+### One character by name
+
+Names are unique across the whole game, case-insensitively, among characters that are not deleted. Match the
+same way the index does:
+
+```sql
+select id, name, model_name, created_at
+  from character
+ where lower(name) = lower('Ashwalker')
+   and deleted_at is null;
+```
+
+### Names that start with something
+
+A prefix search — useful for "who is called Ash-something":
+
+```sql
+select name, model_name
+  from character
+ where name ilike 'ash%'
+   and deleted_at is null
+ order by name;
+```
+
+`ilike` is `like` that ignores case. `%` means "any run of characters", `_` means "exactly one". So
+`'%wolf%'` finds the word anywhere in the name:
+
+```sql
+select name from character
+ where name ilike '%wolf%' and deleted_at is null;
+```
+
+Be aware that a leading `%` cannot use an index — on a small database nobody will notice, on a large one it
+reads every row.
+
+### Everything one account owns
+
+This is the query behind the character-select screen:
+
+```sql
+select id, name, model_name, dye_sources, dye_targets, created_at, updated_at
+  from character
+ where account_id = '00000000-0000-0000-0000-000000000000'
+   and deleted_at is null
+ order by created_at;
+```
+
+### Characters with the player they belong to
+
+Joining reaches the email, which the character row does not carry:
+
+```sql
+select c.name, c.model_name, a.email
+  from character c
+  join account a on a.id = c.account_id
+ where c.deleted_at is null
+ order by a.email, c.created_at;
+```
+
+### Filtering by body and recolour
+
+The model is a plain column:
+
+```sql
+select name, created_at
+  from character
+ where model_name = 'BlueSoldier_Female'
+   and deleted_at is null;
+```
+
+How popular each body is:
+
+```sql
+select model_name, count(*) as characters
+  from character
+ where deleted_at is null
+ group by model_name
+ order by characters desc;
+```
+
+The two dye columns are arrays that move in step — `dye_sources[i]` is a colour in the model's own art and
+`dye_targets[i]` is what it was recoloured to. `= any(...)` asks whether a value appears anywhere in an array:
+
+```sql
+select name, dye_sources, dye_targets
+  from character
+ where '#FF0000' = any(dye_targets)
+   and deleted_at is null;
+```
+
+Characters that were never recoloured at all:
+
+```sql
+select name from character
+ where cardinality(dye_sources) = 0 and deleted_at is null;
+```
+
+### Deleted characters
+
+They are still there, and their names are free for someone else to take:
+
+```sql
+select name, deleted_at
+  from character
+ where deleted_at is not null
+ order by deleted_at desc;
+```
+
+---
+
+## Reading inside a save
+
+`progress` is one JSON document, written by the game, in the game's own shape. Nothing is mirrored into
+columns beside it — so anything you want out of a save, you read out of the document.
+
+A character that has never been played carries `{}`.
+
+`->` returns JSON, `->>` returns text. To compare a number you must say it is a number:
+
+```sql
+select name,
+       progress ->> 'version'                as save_version,
+       (progress ->> 'level')::int           as level
+  from character
+ where deleted_at is null
+ order by level desc nulls last;
+```
+
+Everyone past level 20:
+
+```sql
+select name, (progress ->> 'level')::int as level
+  from character
+ where deleted_at is null
+   and (progress ->> 'level')::int > 20;
+```
+
+That cast fails loudly if any row's `level` is not a number, so on mixed data filter to the rows that have one
+first:
+
+```sql
+select name, (progress ->> 'level')::int as level
+  from character
+ where deleted_at is null
+   and jsonb_typeof(progress -> 'level') = 'number'
+   and (progress ->> 'level')::int > 20;
+```
+
+Characters nobody has started yet:
+
+```sql
+select name, created_at
+  from character
+ where progress = '{}'::jsonb
+   and deleted_at is null;
+```
+
+Reach a nested value with a path — `#>>` takes the route as an array and returns text:
+
+```sql
+select name, progress #>> '{stats,strength}' as strength
+  from character
+ where deleted_at is null;
+```
+
+Ask whether a document contains something, at any depth, with `@>`:
+
+```sql
+select name
+  from character
+ where progress @> '{"version": 7}'
+   and deleted_at is null;
+```
+
+See what keys a save actually has, which is the fastest way to learn its shape:
+
+```sql
+select jsonb_object_keys(progress)
+  from character
+ where lower(name) = lower('Ashwalker') and deleted_at is null;
+```
+
+Read a whole save without it wrapping into unreadable mush:
+
+```sql
+\x
+select jsonb_pretty(progress) from character where lower(name) = lower('Ashwalker');
+```
+
+---
+
+## Sessions
+
+Which sessions are live for one account:
+
+```sql
+select expires_at, revoked_at
+  from refresh_token
+ where account_id = '00000000-0000-0000-0000-000000000000'
+   and revoked_at is null
+   and expires_at > now();
+```
+
+Only the hash of a refresh token is stored, so you cannot look one up by the token a client is holding, and
+nothing in this table can be presented as a token. That is deliberate.
+
+Sign one account out everywhere:
+
+```sql
+update refresh_token set revoked_at = now()
+ where account_id = '00000000-0000-0000-0000-000000000000'
+   and revoked_at is null;
+```
+
+---
+
+## Habits that keep you out of trouble
+
+### Never paste a value into SQL
+
+In code, a value is always a numbered placeholder and a separate argument — `$1`, `$2` — never glued into the
+string. Both query helpers in the service take the text and the values apart for exactly this reason:
+
+```ts
+const rows = await query<CharacterRow>(
+  "select id, name from character where lower(name) = lower($1) and deleted_at is null",
+  [name],
+);
+```
+
+Written the other way, a name containing a quote stops being a name and starts being SQL.
+
+### Let the database enforce what must be true
+
+A duplicate name is not caught by looking first and inserting second — two players can pass that check at the
+same moment. The unique index refuses the second insert, and the service turns that one error code into "that
+name is taken". Check for the error, don't pre-check the row.
+
+### Always say `and deleted_at is null`
+
+Both character indexes only cover live rows. Omitting it silently includes deleted characters and gives up the
+index at the same time.
+
+### Say what you want and how many
+
+`select *` on `character` drags every save document across the wire. Name the columns you actually need, and
+put a `limit` on anything exploratory.
+
+### Look before you change
+
+Run any `update` or `delete` as a `select` with the identical `where` clause first and read the rows it
+returns. If you are still nervous, wrap it:
+
+```sql
+begin;
+update character set name = 'Ashwalker' where id = '…';
+-- read it back, then:
+commit;   -- or: rollback;
+```
+
+### Find out why something is slow
+
+`explain analyze` in front of a query shows what the database really did — whether it used an index or read
+the whole table:
+
+```sql
+explain analyze
+select name from character where lower(name) = lower('Ashwalker') and deleted_at is null;
+```
+
+---
+
+## Changing the shape of a table
+
+Never edit `accounts/sql/001_init.sql`. Add `002_*.sql` beside it and run `npm run migrate` — every `.sql`
+file the database has not seen yet is applied in filename order, each inside its own transaction, and the
+filename is recorded in `schema_migration`. Re-running is therefore harmless. Editing the old file instead
+leaves every database that already ran it behind, silently.
+
+---
+
+## Related
+
+- [Starting the Network](starting-the-network.md) — how the database gets running in the first place.
+- [Networking — Implementation Notes](../2-systems/networking-implementation-notes.md) — who writes what into it, and why progress is still written by the client.
+- [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — how to read the stats inside a save.
+- [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the ring walk that a save serializes.
+- [Roadmap to Launch](roadmap-to-launch.md) — the persistence line under Tier 2.

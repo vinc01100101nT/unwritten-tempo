@@ -27,15 +27,21 @@ public static class BasicSwing
     /// registering past the victim's death, the way a multi-hit cascade must.</summary>
     public static int Land(ICombatUnit attacker, ICombatUnit victim, float powerMult = 1f, bool overkill = false,
                            bool announceIntent = false)
-        => Land(attacker, victim, ScaledNumber.Of(powerMult), StackVars.None, 1f, overkill, announceIntent);
+        => Land(attacker, victim, ScaledNumber.Of(powerMult), StackVars.None, 1f, overkill, announceIntent, out _);
 
     /// <summary>The same swing, told how hard by an AUTHORED number rather than a bare multiplier — so a skill strike
     /// that resolves as a basic attack gets the identical treatment its own roll would have got: the swing's roll is
     /// the basis the multiplier is applied to, and the cast's pile meets the result. <paramref name="outer"/> is the
     /// ring-and-combo scale that multiplies the finished number.</summary>
+    /// <param name="resolved">WHAT THIS SWING ACTUALLY WAS — the same blow that was applied, handed back whole so a
+    /// caller who has to REPEAT it elsewhere describes the one that happened rather than rebuilding a description
+    /// from the authored data. The server announcing a blow to everybody watching is the caller that needs it: a
+    /// swing's element, its crit and its whiff are facts about the weapon that swung, and none of them can be read
+    /// off the skill that asked for the swing.</param>
     public static int Land(ICombatUnit attacker, ICombatUnit victim, in ScaledNumber power, in StackVars vars,
-                           float outer, bool overkill, bool announceIntent)
+                           float outer, bool overkill, bool announceIntent, out DamageInfo resolved)
     {
+        resolved = default;
         if (attacker == null || victim == null) return 0;
 
         // A swing has TWO moments — about to swing, then landed — and a passive may key off either. An ordinary attack
@@ -54,9 +60,10 @@ public static class BasicSwing
         // One swing, one charge — spent on the whiff too, which is why this sits outside the miss branch.
         dmg = UnitOffense.SpendCharges(attacker.States, dmg);
 
-        int dealt = CombatAuthority.Apply(victim, new DamageInfo(dmg, attacker.BasicElement, attacker.BasicIsMagic,
-                                                                crit, attackerHit: hit, overkill: overkill,
-                                                                missed: missed, attacker: attacker));
+        resolved = new DamageInfo(dmg, attacker.BasicElement, attacker.BasicIsMagic,
+                                  crit, attackerHit: hit, overkill: overkill,
+                                  missed: missed, attacker: attacker);
+        int dealt = CombatAuthority.Apply(victim, resolved);
         if (dealt > 0)
         {
             var body = victim.Body;

@@ -14,12 +14,29 @@ public class GmCommand
     public readonly string summary;     // one-liner for /help
     public readonly Action<GmContext> run;
 
+    /// <summary>May an ordinary player run this? <b>Default NO</b>, and that default is the point: every
+    /// command here changes something — a level, a bag, the creatures standing in the world — so a new one
+    /// arrives locked, and the person adding it has to say out loud that it is harmless before anybody but a
+    /// GM can type it. A permission that has to be remembered is one that eventually is not.</summary>
+    public readonly bool anyoneMayRun;
+
+    /// <summary>Changes something that everybody else in the world can see, so it belongs to the machine that
+    /// owns the world. A player's game does not carry these out; it asks the server to (see
+    /// <see cref="GmCommands.Execute"/>).</summary>
+    public readonly bool changesTheWorld;
+
     public GmCommand(string name, string usage, string summary, Action<GmContext> run, params string[] aliases)
+        : this(name, usage, summary, run, false, false, aliases) { }
+
+    public GmCommand(string name, string usage, string summary, Action<GmContext> run,
+                     bool anyoneMayRun, bool changesTheWorld, params string[] aliases)
     {
         this.name = name;
         this.usage = usage;
         this.summary = summary;
         this.run = run;
+        this.anyoneMayRun = anyoneMayRun;
+        this.changesTheWorld = changesTheWorld;
         this.aliases = aliases ?? Array.Empty<string>();
     }
 }
@@ -45,10 +62,22 @@ public class GmContext
     public bool TryFloat(int i, out float v)
         => float.TryParse(Arg(i), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v);
 
-    public Character Ch => Character.Instance;
+    /// <summary>WHO ASKED, when that is somebody other than the person at this keyboard. Set on a server,
+    /// where a command arrives from one of many connections and "the player" is not a question with a single
+    /// answer — the same reason <see cref="PlayerUnits"/> exists. Left empty on a player's own game, where the
+    /// only person who can type a command is the one already standing there.</summary>
+    public Character askerCharacter;
+    public Transform askerBody;
+
+    public Character Ch => askerCharacter != null ? askerCharacter : Character.Instance;
 
     public Transform Player
     {
-        get { var p = UnityEngine.Object.FindAnyObjectByType<Player3DController>(); return p != null ? p.transform : null; }
+        get
+        {
+            if (askerBody != null) return askerBody;
+            var p = UnityEngine.Object.FindAnyObjectByType<Player3DController>();
+            return p != null ? p.transform : null;
+        }
     }
 }

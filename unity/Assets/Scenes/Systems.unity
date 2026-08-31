@@ -149,6 +149,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameRoot
   firstMap: town_0
+  alsoHeldOpen:
+  - field_11
 --- !u!4 &8686562
 Transform:
   m_ObjectHideFlags: 0
@@ -785,6 +787,8 @@ MonoBehaviour:
     pitch: {x: 0.7, y: 0.85}
   baseHardDefPercent: 0
   baseHardMagicDefPercent: 0
+  unarmedReach: 0.5
+  swingInterval: 0.6
   maxStamina: 100
 --- !u!4 &763514985
 Transform:

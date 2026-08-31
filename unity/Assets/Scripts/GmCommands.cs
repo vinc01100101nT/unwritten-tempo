@@ -57,6 +57,25 @@ public static class GmCommands
             return;
         }
 
+        // WHO IS ALLOWED, asked before anything is parsed or spent. Answered here, once, rather than by each
+        // command remembering to ask — the check every handler shares is the one a new handler forgets.
+        if (!cmd.anyoneMayRun && !AccountSession.IsGm && !GameServer.IsServer)
+        {
+            reply?.Invoke(NotAGm);
+            return;
+        }
+
+        // A command that changes the shared world is not carried out here. A creature this game made by itself
+        // is one the server has never heard of: invisible to everybody else, unhittable, and gone the moment the
+        // real world is next believed. So the line is handed to the machine that owns the world, and its answer
+        // comes back into this same chat log a moment later.
+        if (cmd.changesTheWorld && !GameServer.IsServer)
+        {
+            if (!GameNetwork.SendCommandToServer(line, reply))
+                reply?.Invoke("Not connected to a world — that command needs the server.");
+            return;
+        }
+
         var args = new string[tokens.Length - 1];
         Array.Copy(tokens, 1, args, 0, args.Length);
 
@@ -65,12 +84,52 @@ public static class GmCommands
         catch (Exception e) { reply?.Invoke($"<color=#FF8080>/{name} failed: {e.Message}</color>"); }
     }
 
+    /// <summary>What somebody who is not a GM is told, written once so the game and the server refuse in the
+    /// same words — a command that is refused differently depending on where it was checked reads as a bug.</summary>
+    public const string NotAGm = "That command is for GMs.";
+
+    /// <summary>Run a line that arrived from somewhere other than this machine's own chat box — a player's
+    /// request, carried to the server. The asker is named explicitly because a server holds many people and
+    /// "the player" is not a question with a single answer there.</summary>
+    public static void ExecuteAsAsker(string line, Character askerCharacter, Transform askerBody, Action<string> reply)
+    {
+        EnsureBootstrap();
+        if (!IsCommand(line)) return;
+
+        var tokens = line.Trim().Substring(1).Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        if (tokens.Length == 0) return;
+
+        if (!byName.TryGetValue(tokens[0], out var cmd))
+        {
+            reply?.Invoke($"Unknown command '/{tokens[0]}'. Type /help.");
+            return;
+        }
+
+        var args = new string[tokens.Length - 1];
+        Array.Copy(tokens, 1, args, 0, args.Length);
+
+        var ctx = new GmContext { args = args, reply = reply, askerCharacter = askerCharacter, askerBody = askerBody };
+        try { cmd.run(ctx); }
+        catch (Exception e) { reply?.Invoke($"<color=#FF8080>/{tokens[0]} failed: {e.Message}</color>"); }
+    }
+
+    /// <summary>Does this command belong to the machine that owns the world? Asked by the server when a request
+    /// arrives, so that a request for anything else is refused rather than quietly run on the wrong machine.</summary>
+    public static bool ChangesTheWorld(string line)
+    {
+        EnsureBootstrap();
+        if (!IsCommand(line)) return false;
+        var tokens = line.Trim().Substring(1).Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        return tokens.Length > 0 && byName.TryGetValue(tokens[0], out var cmd) && cmd.changesTheWorld;
+    }
+
     // Registers every command once, on first use. Declare new gameplay/GM commands here.
     static void EnsureBootstrap()
     {
         if (bootstrapped) return;
         bootstrapped = true;
-        Register(new GmCommand("help", "help [command]", "List commands, or show one command's usage.", Help, "h", "commands"));
+        Register(new GmCommand("help", "help [command]", "List commands, or show one command's usage.", Help,
+                               anyoneMayRun: true, changesTheWorld: false, "h", "commands"));
 
         // --- Character ---
         Register(new GmCommand("lvl", "lvl <n>", "Set character level.", CmdLevel, "level"));
@@ -93,10 +152,16 @@ public static class GmCommands
         Register(new GmCommand("bind", "bind <skillId>", "Bind a composed skill to the first empty hotbar slot.", CmdBind));
 
         // --- Mobs ---
-        Register(new GmCommand("kill", "kill", "Kill the mob nearest the player.", CmdKill));
-        Register(new GmCommand("killall", "killall", "Kill every active mob.", CmdKillAll));
-        Register(new GmCommand("spawn", "spawn [count]", "Clone the nearest mob near the player.", CmdSpawn));
-        Register(new GmCommand("summon", "summon <count> <normal|boss> [level] [shadow]", "Summon N random mobs near you (clones live mobs of that KIND — normal or boss). Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns. Add 'shadow' to render them as live-3D characters instead of sprites.", CmdSummon));
+        Register(new GmCommand("kill", "kill", "Kill the mob nearest the player.", CmdKill,
+                               anyoneMayRun: false, changesTheWorld: true));
+        Register(new GmCommand("killall", "killall", "Kill every active mob.", CmdKillAll,
+                               anyoneMayRun: false, changesTheWorld: true));
+        Register(new GmCommand("dummy", "dummy", "Put a training dummy in front of you — an immobile target with "
+                               + "enormous health that never fights back, for measuring what your build actually does. "
+                               + "The server owns it, so everybody can see and hit the same one.", CmdDummy,
+                               anyoneMayRun: false, changesTheWorld: true));
+        Register(new GmCommand("summon", "summon <count> <normal|boss> [level] [shadow]", "Summon N random mobs near you (clones live mobs of that KIND — normal or boss). Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns. Add 'shadow' to render them as live-3D characters instead of sprites.", CmdSummon,
+                               anyoneMayRun: false, changesTheWorld: true));
 
         // --- World & weather ---
         Register(new GmCommand("tp", "tp <scene> [spawnId]", "Travel to another map.", CmdTp, "warp", "goto"));
@@ -298,7 +363,10 @@ public static class GmCommands
     {
         var m = NearestMob(c.Player);
         if (m == null) { c.Reply("No mob nearby."); return; }
-        m.Health.TakeTrueDamage(int.MaxValue, KillColor);
+        // THROUGH THE ONE DAMAGE DOOR, not straight into the sink. Reaching past it skipped the rule about who is
+        // allowed to change a creature's health, so on a player's machine this popped a number in the billions over
+        // a mob that then shrugged it off — the health write was refused, the popup was not.
+        CombatAuthority.ApplyTrue(m.Health, int.MaxValue, KillColor);
         c.Reply("Killed nearest mob.");
     }
 
@@ -307,27 +375,33 @@ public static class GmCommands
         var snapshot = new List<MonsterAI3D>(MonsterAI3D.Active);   // Die() mutates the live list
         int n = 0;
         foreach (var m in snapshot)
-            if (m != null && m.Health != null && !m.Health.IsDead) { m.Health.TakeTrueDamage(int.MaxValue, KillColor); n++; }
+            if (m != null && m.Health != null && !m.Health.IsDead) { CombatAuthority.ApplyTrue(m.Health, int.MaxValue, KillColor); n++; }
         c.Reply($"Killed {n} mob(s).");
     }
 
-    static void CmdSpawn(GmContext c)
+    // A dummy is a creature the SERVER makes and every player is told about, exactly like any other creature — which
+    // is the whole point. The editor tool used to place one straight into a scene, and a scene fixture has no shared
+    // identity, so a swing at it reached nothing the server had heard of and was refused: no damage, no number. Born
+    // here instead, it travels the path that already works.
+    static void CmdDummy(GmContext c)
     {
-        if (!c.TryInt(0, out var count) || count <= 0) count = 1;
-        count = Mathf.Clamp(count, 1, 50);
 
-        var near = NearestMob(c.Player);
-        if (near == null) { c.Reply("No mob to clone (spawn duplicates an existing mob)."); return; }
+        var def = MonsterCatalog.WeightedPick();
+        if (def == null) { c.Reply("No mobs in the catalog to build a dummy from."); return; }
 
+        var reply = c.reply;   // the GmContext is transient; this callback outlives it
         var p = c.Player;
-        Vector3 basePos = p != null ? p.position : near.transform.position;
-        for (int i = 0; i < count; i++)
+        Vector3 at = p != null ? p.position + p.forward * 2f : Vector3.zero;
+
+        MobSpawner.Spawn(def, at, go =>
         {
-            Vector2 r = UnityEngine.Random.insideUnitCircle * 2f;
-            UnityEngine.Object.Instantiate(near.gameObject, basePos + new Vector3(r.x, 0f, r.y), near.transform.rotation)
-                .hideFlags = HideFlags.DontSaveInEditor;
-        }
-        c.Reply($"Spawned {count}× {near.name}.");
+            if (go == null) { reply?.Invoke("Couldn't build a dummy."); return; }
+
+            go.name = "Training_Dummy";
+            TrainingDummy.MakeOne(go);                 // the ONE description of what a dummy is
+            GameNetwork.PublishMob(go, def.id);        // …and every connected player is told about it
+            reply?.Invoke("Dummy placed. It resets to full health every 5 seconds.");
+        });
     }
 
     // "random mobs" = pull random defs from the mob catalog and spawn them from their Addressable prefabs
@@ -399,6 +473,10 @@ public static class GmCommands
                     }
                     // Purely the visual: the mob keeps the brain, stats, loot and death it just spawned with.
                     if (asShadow) go.AddComponent<MobShadow3DVisual>();
+                    // Born on the server → every connected player gets to see it. Without this a summoned creature
+                    // existed only on the machine that typed the command — the same way a pooled respawn goes
+                    // invisible to everyone but the server if its fresh shell is skipped.
+                    GameNetwork.PublishMob(go, def.id);
                 }
                 else missing++;
                 if (++done < pending) return;

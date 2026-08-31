@@ -20,8 +20,9 @@ public interface IProfileStore
     /// <summary>Write the character's progress. <paramref name="onDone"/> reports whether it landed.</summary>
     void Save(SaveData data, Action<bool> onDone = null);
 
-    /// <summary>Write the character's APPEARANCE — a separate call because it is stored on the character
-    /// record rather than inside the progress document, and it changes at completely different moments.</summary>
+    /// <summary>Write the character's APPEARANCE. It lives in the same document as everything else, but it has
+    /// its own call because it changes at a different moment — the instant a player recolours, rather than on
+    /// the next autosave — and the service merges it in rather than replacing the document.</summary>
     void SaveAppearance(string modelName, string[] dyeSources, string[] dyeTargets, Action<bool> onDone = null);
 }
 
@@ -34,6 +35,10 @@ public sealed class ServerProfileStore : IProfileStore
     class ProgressEnvelope
     {
         public SaveData progress;
+
+        /// <summary>Whether this account is trusted with the game's commands. Carried on the same reply the
+        /// save arrives on, so learning it costs no extra request.</summary>
+        public bool isGm;
     }
 
     [Serializable]
@@ -64,6 +69,11 @@ public sealed class ServerProfileStore : IProfileStore
             }
 
             var envelope = JsonUtility.FromJson<ProgressEnvelope>(body);
+
+            // Recorded even for a character nobody has played yet: being trusted with commands is a fact about
+            // the ACCOUNT, and it is true from the first moment of a brand-new character, not from their first save.
+            AccountSession.SetGm(envelope != null && envelope.isGm);
+
             // A character nobody has played yet comes back as an empty document, which reads as version 0.
             // That is NOT a save — hand back null so the game builds a fresh character instead.
             bool played = envelope?.progress != null && envelope.progress.version > 0;

@@ -6,10 +6,10 @@ using UnityEngine;
 /// profile store asks it for the address and the token, and <see cref="SaveManager"/> asks it for the
 /// character's appearance.
 ///
-/// <para><b>Appearance lives HERE, not in the save.</b> Which body a character wears and how it is recoloured
-/// are chosen at creation and are true before the character has ever been played — that is identity, not
-/// progress. The save document carries progress only. Keeping appearance in both is two owners for one thing,
-/// and the pair drifts the moment either is written alone.</para>
+/// <para><b>The appearance held here is a COPY for the moment before the save arrives.</b> A character's body
+/// and colours live in the save document — the one place they are stored — and the character list reads them
+/// out of it. They are kept here too so the world can dress the player the instant they enter, without waiting
+/// for a second request; the save confirms the same values a moment later.</para>
 ///
 /// <para>Nothing is signed in until a sign-in flow fills this. Until then <see cref="IsActive"/> is false, and
 /// the game has no character to load or save — which is the correct state for an online game sitting at its
@@ -18,9 +18,12 @@ using UnityEngine;
 public static class AccountSession
 {
     /// <summary>Where the account service lives. Overridden by the ACCOUNTS_URL environment variable so a
-    /// build can point at a real host without a rebuild.</summary>
-    public static string ServerUrl =
-        Environment.GetEnvironmentVariable("ACCOUNTS_URL") ?? "http://localhost:8080";
+    /// build can point at a real host without a rebuild — and, ahead of that, by a host typed on the device
+    /// (<see cref="ServerAddress"/>), which is the only route a phone has since Android carries no environment.</summary>
+    public static string ServerUrl =>
+        ServerAddress.HasTypedHost
+            ? $"http://{ServerAddress.TypedHost}:{ServerAddress.AccountsPort}"
+            : Environment.GetEnvironmentVariable("ACCOUNTS_URL") ?? "http://localhost:8080";
 
     public static string AccessToken { get; private set; }
     public static string AccountId { get; private set; }
@@ -37,6 +40,20 @@ public static class AccountSession
     /// loaded or saved, and the one condition under which the world may come up at all.</summary>
     public static bool IsActive => !string.IsNullOrEmpty(AccessToken) && !string.IsNullOrEmpty(CharacterId);
 
+    /// <summary>Is this account trusted with the game's commands? Answered by the account service when this
+    /// character's progress is read, and false until it says otherwise — so a game that never got an answer
+    /// refuses commands rather than allowing them.
+    ///
+    /// <para><b>This copy decides nothing that matters to anybody else.</b> It spares a player from typing a
+    /// command that was going to be refused, and it is what the commands that only touch their own game ask.
+    /// Anything that changes the shared world is asked of the SERVER, which reads the same mark itself and
+    /// believes no claim a game makes about its own player.</para></summary>
+    public static bool IsGm { get; private set; }
+
+    /// <summary>Record the mark the account service just answered with. Told to us by whoever read the
+    /// character, rather than fetched again here, so there is one request and one answer.</summary>
+    public static void SetGm(bool isGm) => IsGm = isGm;
+
     /// <summary>Raised whenever the signed-in character changes. <see cref="GameRoot"/> listens for it: the
     /// world is not brought up until this says somebody is actually playing.</summary>
     public static event Action OnChanged;
@@ -45,11 +62,17 @@ public static class AccountSession
     {
         AccountId = accountId;
         AccessToken = accessToken;
+        IsGm = false;   // a fresh sign-in is untrusted until the account service says otherwise
+
+        // The world's clock belongs to the server, and this is the one moment it is worth asking: we have just
+        // proved we can reach it, and the answer holds for the whole session.
+        WorldClock.Sync();
+
         OnChanged?.Invoke();
     }
 
-    /// <summary>Choose the character to play. The appearance comes from the character record the server
-    /// returned — it is never read back out of the save.</summary>
+    /// <summary>Choose the character to play. The appearance comes from the list the server answered with,
+    /// which reads it out of that character's save — the same document the game loads a moment later.</summary>
     public static void PlayAs(string characterId, string characterName, string modelName,
                               string[] dyeSources, string[] dyeTargets)
     {
@@ -65,6 +88,7 @@ public static class AccountSession
     {
         AccessToken = AccountId = CharacterId = CharacterName = ModelName = null;
         DyeSources = DyeTargets = null;
+        IsGm = false;   // signed out is nobody, and nobody is trusted with commands
         OnChanged?.Invoke();
     }
 }

@@ -1,0 +1,287 @@
+#!/usr/bin/env python3
+"""Is every guard this machine is configured to run ACTUALLY running?
+
+WHY THIS EXISTS: a hook that cannot start fails SILENTLY. Claude Code runs the command,
+the command is not there, and the turn carries on exactly as if the guard had approved the
+work — no error, no warning, nothing in the reply. The performance gate died that way when
+this project moved from Windows to a Mac (it was configured to start with `python`, which
+does not exist here) and it guarded NOTHING for five weeks while its own log sat there
+looking finished. Nobody was told, because nothing was watching the watchers.
+
+So this asks two different questions about every configured hook, and they are not the same
+question:
+  1. CAN it start — the program exists, the script it points at still exists, the settings
+     file it lives in still parses.
+  2. Has it actually RUN — each of our own hooks stamps a heartbeat every time it is invoked,
+     so a hook that is configured, runnable, and never firing (a matcher that matches nothing,
+     a settings file the app never loaded) shows up as a hook nobody has seen in weeks.
+
+Runnable is NOT the same as running. Question 1 alone would have missed a wrong matcher;
+question 2 alone would have missed a fresh install. Both, every session.
+
+Run directly, it answers as a SessionStart hook. Imported, `problems()` is the same answer
+for anything else that wants it — one implementation, several callers.
+"""
+import datetime
+import io
+import json
+import os
+import shlex
+import shutil
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(HERE))
+HEARTBEAT = os.path.join(HERE, "hook-heartbeat.json")
+
+# A hook of ours that has not been seen in this long is worth a question — not an accusation.
+# (My choice of number, not a measured one: two weeks is longer than any quiet stretch this
+# project has had, and short enough that a dead guard is caught in the same month.)
+UNSEEN_DAYS = 14
+
+SETTINGS_FILES = [
+    os.path.join(os.path.expanduser("~"), ".claude", "settings.json"),
+    os.path.join(os.path.expanduser("~"), ".claude", "settings.local.json"),
+    os.path.join(REPO, ".claude", "settings.json"),
+    os.path.join(REPO, ".claude", "settings.local.json"),
+]
+
+SCRIPT_SUFFIXES = (".py", ".sh", ".js", ".ts", ".mjs")
+SHELL_CHARS = "|;&<>()`"
+LAUNCHER_NAME = "run-hook.sh"
+PYTHONS = ("python3", "python", "py")
+
+
+def beat(name, session=""):
+    """Called BY a hook, at the top of its own run, before any early-out: 'I ran.' Written at
+    the top on purpose — a hook that runs and decides to say nothing has still run, and that
+    is exactly the case a heartbeat has to tell apart from a hook that never fired at all."""
+    try:
+        try:
+            with io.open(HEARTBEAT, encoding="utf-8") as f:
+                seen = json.load(f)
+        except (OSError, ValueError):
+            seen = {}
+        # Keep the RECENT sessions, not just the last one. A single "who ran me last" slot is
+        # overwritten by any test run of the hook, and the next end-of-turn check then compares the
+        # test's fake id against the real one and reports a working guard as dead. (Measured: the
+        # gate was run five times with the id "try" while proving it; both false alarms followed.)
+        recent = list((seen.get(name) or {}).get("sessions") or [])
+        if session and session not in recent:
+            recent.append(session)
+        seen[name] = {"ts": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
+                      "session": session,
+                      "sessions": recent[-8:]}
+        # Written beside the real file and moved into place in one step. Hooks fire back to back at
+        # the end of a turn, and a plain "open for writing" empties the file first — a guard reading
+        # it in that instant sees nothing and reports every other guard as dead. (Measured: exactly
+        # that, at 10:31:22, on a gate that was running perfectly.)
+        tmp = HEARTBEAT + ".%d.tmp" % os.getpid()
+        with io.open(tmp, "w", encoding="utf-8") as f:
+            json.dump(seen, f, indent=2, sort_keys=True)
+        os.replace(tmp, HEARTBEAT)
+    except OSError:
+        pass                            # a guard must never fail because its diary is unwritable
+
+
+def _heartbeats():
+    try:
+        with io.open(HEARTBEAT, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def configured():
+    """Every hook configured for this machine, from every settings file that can hold one —
+    the user's own and the project's. A guard in the global file is just as able to die
+    quietly as a guard in this repo, so both are read."""
+    found, unreadable = [], []
+    for path in SETTINGS_FILES:
+        if not os.path.isfile(path):
+            continue
+        try:
+            with io.open(path, encoding="utf-8") as f:
+                cfg = json.load(f)
+        except ValueError:
+            unreadable.append(path)
+            continue
+        except OSError:
+            continue
+        for event, entries in (cfg.get("hooks") or {}).items():
+            for entry in entries or []:
+                for hook in entry.get("hooks") or []:
+                    if hook.get("type") != "command" or not (hook.get("command") or "").strip():
+                        continue
+                    found.append({
+                        "event": event,
+                        "matcher": entry.get("matcher") or hook.get("matcher") or "*",
+                        "command": hook["command"].strip(),
+                        "source": path,
+                    })
+    return found, unreadable
+
+
+def _scripts_in(command):
+    """Every script file a command names, absolute. Repo-relative paths are resolved against
+    the repo, which is how the launcher is given its target."""
+    try:
+        parts = shlex.split(command.replace("$CLAUDE_PROJECT_DIR", REPO))
+    except ValueError:
+        return []
+    out = []
+    for arg in parts[1:]:
+        if arg.endswith(SCRIPT_SUFFIXES):
+            out.append(arg if os.path.isabs(arg) else os.path.join(REPO, arg))
+    return out
+
+
+def _target_of(command):
+    """The hook file that finally RUNS — seen through the launcher, whose whole job is to pick
+    an interpreter this machine actually has. Without this, every hook would look like the
+    launcher, and no hook could ever be matched to its own heartbeat."""
+    scripts = _scripts_in(command)
+    if not scripts:
+        return None
+    if os.path.basename(scripts[0]) == LAUNCHER_NAME and len(scripts) > 1:
+        return scripts[1]
+    return scripts[0]
+
+
+def _can_start(command):
+    """Empty string when it can start, else the plain reason it cannot.
+
+    A command like `python3 foo.py` names the program it needs, and whether that program exists
+    is a fact we can check. A command that is a whole shell line — a variable assignment, a
+    pipe, a substitution — names no single program, and guessing at one would invent a fault
+    that is not there. So an inline line is only checked for what IS knowable: the files it
+    names must exist."""
+    expanded = command.replace("$CLAUDE_PROJECT_DIR", REPO)
+    try:
+        parts = shlex.split(expanded)
+    except ValueError:
+        parts = []
+    inline_shell = (not parts
+                    or any(c in command for c in SHELL_CHARS)
+                    or "=" in parts[0]
+                    or command.lstrip().startswith("$"))
+    if not inline_shell:
+        prog = parts[0]
+        if os.path.sep in prog:
+            if not (os.path.isfile(prog) and os.access(prog, os.X_OK)):
+                return "there is no runnable %s on this machine" % prog
+        elif shutil.which(prog) is None:
+            return "there is no %s on this machine" % prog
+
+    scripts = _scripts_in(command)
+    for script in scripts:
+        if not os.path.isfile(script):
+            return "the file it runs is gone: %s" % script
+
+    # The launcher picks the interpreter itself, so the only thing that can defeat it is a
+    # machine with no Python at all — which is the one interpreter fact worth checking here.
+    if scripts and os.path.basename(scripts[0]) == LAUNCHER_NAME:
+        if not any(shutil.which(py) for py in PYTHONS):
+            return "this machine has no Python at all (tried %s)" % ", ".join(PYTHONS)
+    return ""
+
+
+def problems():
+    """Everything wrong right now, in plain sentences. Empty list = every guard can start and
+    every guard of ours has been seen recently."""
+    out = []
+    hooks, unreadable = configured()
+    for path in unreadable:
+        out.append("%s is not valid JSON, so EVERY hook in it is switched off" % path)
+
+    seen = _heartbeats()
+    now = datetime.datetime.now().astimezone()
+    for hook in hooks:
+        why = _can_start(hook["command"])
+        if why:
+            out.append("the %s hook cannot start — %s" % (hook["event"], why))
+            continue
+        script = _target_of(hook["command"])
+        if not script or not script.startswith(REPO):
+            continue                    # not ours; it cannot stamp a heartbeat, so we can't ask
+        name = os.path.basename(script)
+        stamp = (seen.get(name) or {}).get("ts")
+        if not stamp:
+            out.append("the %s hook (%s) has never once reported running — it may be configured "
+                       "but never firing" % (hook["event"], name))
+            continue
+        try:
+            when = datetime.datetime.fromisoformat(stamp)
+        except ValueError:
+            continue
+        days = (now - when).days
+        if days >= UNSEEN_DAYS:
+            out.append("the %s hook (%s) has not run in %d days — last seen %s"
+                       % (hook["event"], name, days, when.strftime("%d %b")))
+    return out
+
+
+def never_ran_this_session(session_id):
+    """Our before-a-tool-runs guards that have NOT stamped THIS session, in plain sentences.
+
+    Asked at the end of a turn that actually wrote files: by then every such guard must have been
+    consulted at least once, so one that has not reported in is attached to nothing being used and
+    is approving everything in silence. The two questions above cannot see this — a guard can be
+    perfectly runnable, and stamped minutes ago by some other session, while sitting out this one
+    entirely. That is exactly how the performance gate watched a whole session of edits go by."""
+    if not session_id:
+        return []
+    seen = _heartbeats()
+    if not seen:
+        return []                       # no diary to read is "cannot tell", never "never ran"
+    out = []
+    hooks, _ = configured()
+    for hook in hooks:
+        if hook["event"] != "PreToolUse":
+            continue
+        script = _target_of(hook["command"])
+        if not script or not script.startswith(REPO):
+            continue                    # not ours; it cannot stamp a heartbeat, so we can't ask
+        name = os.path.basename(script)
+        stamp = seen.get(name) or {}
+        if session_id not in (stamp.get("sessions") or [stamp.get("session")]):
+            out.append("the %s guard (%s) never ran once this session, though files were written "
+                       "— it is attached to nothing being used" % (hook["event"], name))
+    return out
+
+
+def summary():
+    """One short line for a healthy machine: how many guards, and that they are alive."""
+    hooks, _ = configured()
+    return "guards: %d configured, all able to run and reporting in" % len(hooks)
+
+
+def main():
+    try:
+        payload = json.load(sys.stdin) if not sys.stdin.isatty() else {}
+    except (json.JSONDecodeError, ValueError):
+        payload = {}
+    beat(os.path.basename(__file__), payload.get("session_id", ""))
+
+    found = problems()
+    if not found:
+        print(json.dumps({"suppressOutput": True, "systemMessage": summary()}))
+        return 0
+
+    text = ("A guard configured for this project is not doing its job:\n  · "
+            + "\n  · ".join(found))
+    print(json.dumps({
+        "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": text + "\n\nTELL THE USER THIS IN YOUR FIRST REPLY, in plain "
+                                 "words, before anything else they asked for. A guard that "
+                                 "fails silently is exactly how the performance gate went "
+                                 "five weeks unnoticed.",
+        },
+        "systemMessage": "⚠ " + found[0] + (" (+%d more)" % (len(found) - 1) if len(found) > 1 else ""),
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

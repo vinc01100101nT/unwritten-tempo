@@ -149,10 +149,15 @@ public class Sfx : MonoBehaviour
         }
     }
 
+    /// <summary>TRUE where there is nobody to hear — a headless server, which resolves every blow in the world and
+    /// would otherwise pick, load and play a clip for each one into an empty room.</summary>
+    static bool Deaf => GameServer.IsServer;
+
     /// <summary>Play a random variation of the set in <b>2D</b> (no-op if the set is empty or no Sfx exists
     /// yet). For UI and player-self sounds where direction doesn't matter.</summary>
     public static void Play(SfxSet set)
     {
+        if (Deaf) return;
         if (Instance != null) Instance.PlaySet(set);
     }
 
@@ -161,6 +166,7 @@ public class Sfx : MonoBehaviour
     /// a spell landing, a distant door). No-op if the set is empty or no Sfx exists yet.</summary>
     public static void PlayAt(SfxSet set, Vector3 pos)
     {
+        if (Deaf) return;
         if (Instance != null) Instance.PlaySetAt(set, pos, 0f, 0f, 0f);
     }
 
@@ -169,6 +175,7 @@ public class Sfx : MonoBehaviour
     /// seconds (0 = no ramp). Bounding is how a long or looping clip is kept from bleeding past its beat.</summary>
     public static void PlayAt(SfxSet set, Vector3 pos, float fadeIn, float fadeOut, float duration)
     {
+        if (Deaf) return;
         if (Instance != null) Instance.PlaySetAt(set, pos, fadeIn, fadeOut, duration);
     }
 

@@ -37,6 +37,18 @@ public class MultiHitBurst : MonoBehaviour
             Mathf.Max(0.01f, hitInterval), Mathf.Max(0.01f, tickInterval), onHit, onTick, onHitBeat));
     }
 
+    // A wait object is immutable, so ONE per duration serves every burst ever cast. Skills author a
+    // handful of intervals between them, so this holds a handful of entries for the life of the run —
+    // instead of two fresh ones every time somebody swings.
+    static readonly System.Collections.Generic.Dictionary<float, WaitForSeconds> waits =
+        new System.Collections.Generic.Dictionary<float, WaitForSeconds>();
+
+    static WaitForSeconds Wait(float seconds)
+    {
+        if (!waits.TryGetValue(seconds, out var w)) { w = new WaitForSeconds(seconds); waits[seconds] = w; }
+        return w;
+    }
+
     static IEnumerator Routine(GameObject self, Vector3 center, float radius, int ticks, int hitsPerTick,
                                float hitInterval, float tickInterval,
                                System.Func<MonsterAI3D, int, int> onHit, System.Action<Vector3> onTick,
@@ -61,8 +73,8 @@ public class MultiHitBurst : MonoBehaviour
         var totals = new int[targets.Count];
         var totalPopups = new DamagePopup[targets.Count];
 
-        var hitWait = new WaitForSeconds(hitInterval);
-        var tickWait = new WaitForSeconds(tickInterval);
+        var hitWait = Wait(hitInterval);
+        var tickWait = Wait(tickInterval);
 
         for (int tick = 0; tick < ticks; tick++)
         {
@@ -80,6 +92,13 @@ public class MultiHitBurst : MonoBehaviour
                     int dealt = onHit(ai, tick * hitsPerTick + hit);
                     anyHit = true;
                     totals[i] += dealt;
+
+                    // THE RUNNING TOTAL IS BUILT FROM WHAT CAME BACK, and on a machine that no longer decides
+                    // damage nothing comes back through this return — the server answers separately, and each
+                    // individual number still appears. Adding those zeros up and showing the sum would put a large
+                    // confident 0 over the mob, which is worse than showing no total at all. Feeding this from the
+                    // numbers that actually arrive is the follow-up; drawing a lie is not an option in between.
+                    if (GameNetwork.DamageDecidedElsewhere) continue;
 
                     Vector3 tp = UnitAnchor.Overhead(ai.transform);   // live total over the mob
                     // First hit of THIS tick spawns the yellow total; later hits just bump it up.
@@ -125,7 +144,7 @@ public class MultiHitBurst : MonoBehaviour
         int n = targets.Count;
         var totals = new int[n];
         var popups = new DamagePopup[n];
-        var hitWait = new WaitForSeconds(hitInterval);
+        var hitWait = Wait(hitInterval);
 
         for (int hit = 0; hit < hits; hit++)
         {
@@ -139,6 +158,7 @@ public class MultiHitBurst : MonoBehaviour
                 totals[i] += dealt;
 
                 if (!showTotal) continue;              // the run is drawing one total across all its repeats instead
+                if (GameNetwork.DamageDecidedElsewhere) continue;   // see the note on the other total above
                 Vector3 tp = UnitAnchor.Overhead(ai.transform);
                 if (popups[i] == null) popups[i] = DamagePopup.SpawnHeld(tp, totals[i], TotalColor, 1.7f);
                 else popups[i].SetHeld(totals[i], tp);

@@ -24,13 +24,18 @@ public static class VfxCue
     /// hold. No-op if the cue is unbound or actor is null.</summary>
     public static void Fire(VfxCueId id, Transform actor, Transform target = null)
     {
-        if (actor == null) return;
+        if (NobodyToShowItTo || actor == null) return;
         var b = VfxCueCatalog.Get(id);
         if (b == null || b.vfx == null) return;
         var ctx = BuildCtx(b, actor, target);
         ctx.follow = actor;   // let one-shot cues use Attach steps too (they auto-stop when the sequence ends)
         VfxDirector.Play(b.vfx, ctx, null);
     }
+
+    /// <summary>TRUE where there is nobody to watch an effect — a headless server. It decides the whole of combat
+    /// now, so every blow it resolves would otherwise build and tick a visual effect for an empty room. Asked at
+    /// this door because every cue in the game passes through it.</summary>
+    static bool NobodyToShowItTo => GameServer.IsServer;
 
     /// <summary>Begin a PERSISTENT cue that TRACKS <paramref name="actor"/> (a status aura) and return the runner
     /// handle — the caller MUST call <see cref="VfxSequenceRunner.Stop"/> on it when the state ends (e.g. the

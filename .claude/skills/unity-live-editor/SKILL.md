@@ -66,7 +66,12 @@ Decode it yourself and write the file; don't report a path it never wrote.
 
 ## What stays the USER's — do not do this
 
-- **Play mode, and anything needing their visual judgement** ("does this look right").
+- **Anything needing their visual judgement** ("does this look right"). Always theirs.
+- **Play mode, EXCEPT under the `tester` skill.** The blanket ban was lifted by the user on 2026-08-30, once
+  entering Play mode, reading live values, capturing the screen and signing in were all proven to work through
+  this link. It is still not something to enter casually: it takes over the user's editor, so it happens only
+  when they have said "spawn a tester". Whoever enters Play mode LEAVES it, and checks the open scene came back
+  undirtied.
 
 ## Refreshing / recompiling is ALLOWED (ban lifted 2026-08-26)
 

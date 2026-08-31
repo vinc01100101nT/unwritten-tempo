@@ -105,7 +105,7 @@ public class GroundTargeter : MonoBehaviour
     static Vector3 ClampToRange(Vector3 me, Vector3 p, float castRange)
     {
         Vector3 off = p - me; off.y = 0f;
-        if (castRange > 0f && off.magnitude > castRange)
+        if (castRange > 0f && off.sqrMagnitude > castRange * castRange)
             p = me + off.normalized * castRange + Vector3.up * (p.y - me.y);
         return p;
     }
@@ -244,13 +244,9 @@ public class GroundTargeter : MonoBehaviour
 
     static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 
-    static bool LeftDown()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null) return Mouse.current.leftButton.wasPressedThisFrame;
-#endif
-        return Input.GetMouseButtonDown(0);
-    }
+    // The one pointer gate (mouse on the desktop, a finger on a phone). Aiming confirms on RELEASE there, so a
+    // drag can slide the reticle before it commits.
+    static bool LeftDown() => PointerInput.PrimaryDown;
 
     static bool EscDown() => Hotkeys.CancelDown();
 }

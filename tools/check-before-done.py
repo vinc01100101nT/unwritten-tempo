@@ -25,6 +25,7 @@ blocks twice in a row for the same turn (the payload says when it has already fi
 it never blocks when a checker could not run at all — a missing tool is not a red build.
 """
 import hashlib
+import io
 import json
 import os
 import re
@@ -36,6 +37,10 @@ REPO = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 TOOLS = os.path.join(REPO, "tools")
 SCRIPTS = os.path.join(REPO, "unity", "Assets", "Scripts")
 SKILLS = os.path.join(REPO, "unity", "Assets", "3_Data", "Resources", "Skills")
+LEARNINGS = os.path.join(REPO, "docs", "5-ai-learnings", "README.md")
+sys.path.insert(0, os.path.join(TOOLS, "hook-analytics"))
+import guard_check   # the one implementation of "is every guard alive"
+import tool_writes   # the one answer to "which files does this call write?"
 
 ANSI = re.compile(r"\033\[[0-9;]*m")
 
@@ -47,6 +52,14 @@ GROUPS = {
         "roots": [(SCRIPTS, ".cs")],
         "run": ["bash", os.path.join(TOOLS, "check-unity-code.sh")],
         "headline": "The game's C# does not compile. Fix these before saying anything is done:",
+    },
+    # Reading PERFORMANCE.md is guarded before an edit; this is the other half — that what was
+    # written actually follows it. Only faults in files THIS session touched ever speak.
+    "perf": {
+        "roots": [(SCRIPTS, ".cs")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-perf-hotpaths.py")],
+        "headline": "A per-frame path breaks a rule in PERFORMANCE.md. Fix it, or mark the line "
+                    "`// perf-ok: <why>` if it genuinely only runs once:",
     },
     "skills": {
         "roots": [(SKILLS, ".asset")],
@@ -61,6 +74,16 @@ GROUPS = {
         "run": [sys.executable, os.path.join(TOOLS, "prove-skill-data-check.py")],
         "headline": "The skill-data checker no longer catches every fault it is supposed to, "
                     "so a clean run from it proves nothing until this passes:",
+        "mine_by_construction": True,
+    },
+    # The guard check is guarded the same way: it only runs here because I just edited it,
+    # and a proof that names no file of mine would otherwise be filtered into silence.
+    "guard-checker": {
+        "files": [os.path.join(TOOLS, "hook-analytics", "guard_check.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "hook-analytics", "prove-guard-check.py")],
+        "headline": "The guard check can no longer see a broken guard, so its silence proves "
+                    "nothing until this passes:",
+        "mine_by_construction": True,
     },
 }
 
@@ -88,13 +111,15 @@ def fingerprint(paths):
     return hashlib.sha1("\n".join(marks).encode()).hexdigest()
 
 
-EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
-
-
 def session_edits(payload):
     """Every file THIS session actually wrote, read back out of the turn transcript. The
     transcript is the only honest record of it — a file's modification time says a file moved,
-    never who moved it, and this gate turns on exactly that difference."""
+    never who moved it, and this gate turns on exactly that difference.
+
+    A shell command counts as an edit, and is read for what it writes by the same shared answer
+    the read-first gate uses. Counting only the dedicated editing tools is what let a whole
+    session of shell-written C# arrive here looking like a session that wrote nothing at all,
+    so neither checker ran."""
     path = payload.get("transcript_path")
     if not path or not os.path.isfile(path):
         return None                     # can't tell whose work it is → caller stays silent
@@ -102,9 +127,8 @@ def session_edits(payload):
 
     def walk(node):
         if isinstance(node, dict):
-            if node.get("type") == "tool_use" and node.get("name") in EDIT_TOOLS:
-                f = (node.get("input") or {}).get("file_path")
-                if f:
+            if node.get("type") == "tool_use":
+                for f in tool_writes.files_written(node.get("name") or "", node.get("input")):
                     touched.add(os.path.realpath(f))
             for v in node.values():
                 walk(v)
@@ -146,6 +170,35 @@ def mine_only(body, touched):
     return "\n".join(kept).strip() if saw_fault else ""
 
 
+def learnings_index():
+    """The symptom lines out of the AI-learnings index, read fresh so this can never drift from
+    the folder it points at. A fix that did not take is exactly the moment those pages are for,
+    and a blocked turn is the one place in a session where that moment is visible to a machine
+    instead of only to memory."""
+    try:
+        with io.open(LEARNINGS, encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return ""
+    rows = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("|") or line.startswith("| ---"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) != 2 or cells[0].lower().startswith("you are seeing"):
+            continue
+        link = re.match(r"\[([^\]]+)\]\(([^)]+)\)", cells[1])
+        if not link:
+            continue
+        rows.append("  \u00b7 %s\n      -> docs/5-ai-learnings/%s" % (cells[0], link.group(2)))
+    if not rows:
+        return ""
+    return ("\n\nThis is a second attempt now. Before making one, check whether one of these "
+            "already covers what went wrong \u2014 open the page, do not work from the line:\n"
+            + "\n".join(rows))
+
+
 def load_state():
     try:
         with open(STATE, "r", encoding="utf-8") as f:
@@ -168,15 +221,54 @@ def main():
     except (json.JSONDecodeError, ValueError):
         payload = {}
 
+    guard_check.beat(os.path.basename(__file__), payload.get("session_id", ""))
+
     # Already blocked once for this turn — say nothing, or the turn can never finish.
     if payload.get("stop_hook_active"):
         return 0
+
+    state = load_state()
+
+    # Is every guard this project configured actually able to run? Asked first, because a
+    # broken guard is broken whether or not this turn touched anything it watches.
+    dead = guard_check.problems()
+    if dead:
+        mark = hashlib.sha1("\n".join(dead).encode()).hexdigest()
+        if state.get("hooks:told") != mark:
+            state["hooks:told"] = mark
+            save_state(state)
+            reason = ("A guard configured for this project cannot run, so it has been passing "
+                      "everything silently:\n  \u00b7 " + "\n  \u00b7 ".join(dead) +
+                      "\n\nRepair it or tell the user plainly that it is off. A gate nobody can "
+                      "see fail is worse than no gate at all.")
+            print(json.dumps({"decision": "block", "reason": reason}))
+            sys.stderr.write(reason + "\n")
+            return 2
+    elif state.pop("hooks:told", None) is not None:
+        save_state(state)
 
     touched = session_edits(payload)
     if not touched:
         return 0                       # this session wrote nothing, or we can't tell — say nothing
 
-    state = load_state()
+    # Files were written, so every before-a-tool-runs guard must have been consulted by now. One
+    # that has not reported in all session is switched off in practice, whatever the settings say.
+    absent = guard_check.never_ran_this_session(payload.get("session_id") or "")
+    if absent:
+        mark = hashlib.sha1("\n".join(absent).encode()).hexdigest()
+        if state.get("absent:told") != mark:
+            state["absent:told"] = mark
+            save_state(state)
+            reason = ("A guard was configured and silent for this whole session:\n  \u00b7 "
+                      + "\n  \u00b7 ".join(absent) +
+                      "\n\nSay so plainly to the user before anything else, and fix what it is "
+                      "attached to. Configuration is a wish; the heartbeat is the evidence.")
+            print(json.dumps({"decision": "block", "reason": reason}))
+            sys.stderr.write(reason + "\n")
+            return 2
+    elif state.pop("absent:told", None) is not None:
+        save_state(state)
+
     findings, checked, unavailable, already = [], [], [], []
 
     for name, group in GROUPS.items():
@@ -200,7 +292,12 @@ def main():
             state.pop(name + ":told", None)
             checked.append(name)
         elif done.returncode == 1:
-            body = mine_only(ANSI.sub("", (done.stdout or "") + (done.stderr or "")).strip(), touched)
+            body = ANSI.sub("", (done.stdout or "") + (done.stderr or "")).strip()
+            # A group that only runs BECAUSE I edited its own file is mine by construction —
+            # filtering it by filename would drop a failure that names no file and report the
+            # silence as good news.
+            if not group.get("mine_by_construction"):
+                body = mine_only(body, touched)
             if not body:
                 continue               # it is broken, but not by me — not this gate's business
             # Say a given fault ONCE. Having been told, the turn is free to end — the same rule
@@ -220,7 +317,8 @@ def main():
     if findings:
         reason = ("\n\n".join(findings) +
                   "\n\nFix these, then finish the turn. If any of it was already broken before "
-                  "this turn's work, say so plainly instead of quietly repairing it.")
+                  "this turn's work, say so plainly instead of quietly repairing it." +
+                  learnings_index())
         print(json.dumps({"decision": "block", "reason": reason}))
         sys.stderr.write(reason + "\n")
         return 2

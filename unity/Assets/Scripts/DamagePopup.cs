@@ -64,6 +64,7 @@ public class DamagePopup : MonoBehaviour
     /// big yellow multi-hit TOTAL.</summary>
     public static void Spawn(Vector3 worldPos, int amount, Color color, float scaleMult)
     {
+        if (NobodyToShowItTo) return;
         if (amount <= 0) return;
         SpawnText(worldPos, Format(amount), color, scaleMult);
     }
@@ -90,7 +91,7 @@ public class DamagePopup : MonoBehaviour
     /// long lifetime into a later hit number.</summary>
     public static void SpawnBubble(Vector3 worldPos, string label, Color color, float life, float rise)
     {
-        if (string.IsNullOrEmpty(label)) return;
+        if (NobodyToShowItTo || string.IsNullOrEmpty(label)) return;
         EnsureHost();
         var popup = pool.Count > 0 ? pool.Pop() : Create();
         popup.Begin(worldPos, label, color, 1f);
@@ -101,7 +102,7 @@ public class DamagePopup : MonoBehaviour
     /// <summary>As <see cref="SpawnText(Vector3,string,Color)"/> but at <paramref name="scaleMult"/>× size.</summary>
     public static void SpawnText(Vector3 worldPos, string label, Color color, float scaleMult)
     {
-        if (string.IsNullOrEmpty(label)) return;
+        if (NobodyToShowItTo || string.IsNullOrEmpty(label)) return;
         EnsureHost();
         var popup = pool.Count > 0 ? pool.Pop() : Create();
         popup.Begin(worldPos, label, color, scaleMult);
@@ -112,6 +113,7 @@ public class DamagePopup : MonoBehaviour
     /// let it rise + fade. Returns the handle.</summary>
     public static DamagePopup SpawnHeld(Vector3 worldPos, int amount, Color color, float scaleMult)
     {
+        if (NobodyToShowItTo) return null;
         EnsureHost();
         var popup = pool.Count > 0 ? pool.Pop() : Create();
         popup.Begin(worldPos, amount.ToString(), color, scaleMult);
@@ -151,6 +153,14 @@ public class DamagePopup : MonoBehaviour
 
     // The shared canvas. Recreated lazily if a scene unload destroyed it (the pool is cleared then, since
     // its pooled children died with it). Kept at origin/identity/unit-scale — see the class note.
+    /// <summary>TRUE where there is nobody to read a floating number — a headless server.
+    ///
+    /// <para>The server runs the whole of combat now, so without this every blow it decides builds a world-space
+    /// canvas and a piece of styled text on a machine with no screen: a font loaded, objects created and ticked,
+    /// and a pool grown, all of it for nobody. Asked at the door rather than at the call sites, because the call
+    /// sites are every place in the game that has ever shown a number and always will be.</para></summary>
+    static bool NobodyToShowItTo => GameServer.IsServer;
+
     static void EnsureHost()
     {
         if (host != null) return;        // alive (Unity-null check)

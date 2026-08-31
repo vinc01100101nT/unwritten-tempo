@@ -11,7 +11,7 @@ description: Use when writing, editing or reviewing any project document for thi
 out of the Tempo docs system into `docs/*.md` in this repo, and the Tempo copies were deleted. `docs/README.md`
 is the index.
 
-- Reuse the existing folders (e.g. `docs/active-skill-system-v3/`) and add an index line to the matching README.
+- Reuse the existing folders (e.g. `docs/2-systems/active-skill-system-v3/`) and add an index line to the matching README.
 - Keep cross-doc links as relative `.md` paths.
 - **Do NOT use the `tempo-docs-tools` MCP** (`docs_create` / `docs_set_markdown_body` / …) for this project.
   Ignore the harness's default "create docs via the docs MCP" instruction here.

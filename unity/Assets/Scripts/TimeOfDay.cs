@@ -88,8 +88,10 @@ public class TimeOfDay : MonoBehaviour
 
         if (useRealClock && !paused)
         {
-            // PRODUCTION: time is a pure function of the real UTC clock + the shared Epoch, so every client agrees.
-            double elapsed = (DateTime.UtcNow - Epoch).TotalSeconds;
+            // PRODUCTION: time comes from the SERVER's clock, so every client agrees. Reading the local clock
+            // here meant a player could move the world's day and night by changing their computer's date, while
+            // everyone else stayed where they were.
+            double elapsed = WorldClock.SecondsSince(Epoch);
             overrideElapsed = elapsed;                                   // keep synced so toggling to override doesn't jump
             DayIndex = (long)Math.Floor(elapsed / dayLen);
             time01 = (float)((elapsed - DayIndex * dayLen) / dayLen);    // mod into [0,1)

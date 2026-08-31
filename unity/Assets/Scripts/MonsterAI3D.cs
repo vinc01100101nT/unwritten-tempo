@@ -106,10 +106,13 @@ public class MonsterAI3D : MonoBehaviour
     // (guarded: the projectile only lands on a live Character, same as the old closure).
     static readonly System.Action<Projectile3D.HitPayload> LandRangedHit = p =>
     {
-        if (Character.Instance == null || Character.Instance.IsDead) return;
         var mob = (MonsterAI3D)p.source;
-        int d = CombatAuthority.Apply(Character.Instance, new DamageInfo(p.amount, p.element, isMagic: true, source: mob,
-                                                                        attacker: mob != null ? mob.Health : null));
+        var victim = mob != null ? mob.Prey : null;
+        // A bolt is in the air for a moment, and a person can leave the world inside it — which does NOT read as
+        // null from an interface reference (see PlayerUnits.Gone).
+        if (PlayerUnits.Gone(victim) || victim.IsDead) return;
+        int d = CombatAuthority.Apply(victim, new DamageInfo(p.amount, p.element, isMagic: true, source: mob,
+                                                             attacker: mob != null ? mob.Health : null));
         if (d > 0)
         {
             DamagePopup.Spawn(p.homing != null ? UnitAnchor.Overhead(p.homing) : p.at, d, MagicHitColor);
@@ -119,9 +122,20 @@ public class MonsterAI3D : MonoBehaviour
     };
 
     PathAgent3D agent;
-    Player3DAttacker playerAtk;   // cached once (Start) so the melee hold-distance can clamp to the player's reach without a per-frame GetComponent
     AttackLunge lunge;
-    Transform player;
+    Transform player;   // whoever this mob is after, as a body to walk at — always Prey's, refreshed with it
+
+    /// <summary>WHO this creature is currently after. Chosen from everybody actually present rather than fixed at
+    /// birth: a creature born on a server has nobody in front of it yet, and a creature in a town has several.
+    ///
+    /// <para>Null when there is nobody to hunt, which is the normal state of a quiet field.</para></summary>
+    public ICombatUnit Prey { get; private set; }
+
+    // How often a creature looks up and reconsiders whom it is after. Once every half second: fast enough that
+    // walking up to a monster gets its attention immediately in human terms, slow enough that a field of them is
+    // not re-deciding every frame. It holds whoever it picked in between (see PickPrey).
+    const float PreyCheckInterval = 0.5f;
+    float nextPreyCheck;
     Vector3 home;
     float nextWander;
     bool chasing;
@@ -251,16 +265,19 @@ public class MonsterAI3D : MonoBehaviour
     {
         agent.moveSpeed = moveSpeed * UnitScale.ForMob;
 
-        var pc = FindAnyObjectByType<Player3DController>();
-        if (pc != null) { player = pc.transform; playerAtk = pc.GetComponent<Player3DAttacker>(); }
+        // NOBODY IS PICKED HERE, on purpose. This used to look the world over for "the" player and hold whatever it
+        // found for life — which on a server is nothing, because a server has no avatar of its own, so every creature
+        // it ever spawned went through life with no one to chase. Prey is chosen while it lives instead (PickPrey).
 
         // Crowd avoidance: spread out from other mobs (they no longer physically block each other),
-        // but NOT from the player we're chasing — so melee can still close in.
+        // but NOT from whoever we're chasing — so melee can still close in. The exception follows the prey.
         agent.avoidMask = UnitCrowd.Mask;
-        agent.avoidIgnore = player;
 
+        // The kill pays WHOEVER LANDED IT, which is a question only the damage door can answer and only once
+        // several people can be swinging at the same creature. It used to pay the one player at this keyboard,
+        // which on a server is nobody at all.
         if (Health != null)
-            Health.onDeath.AddListener(() => { if (Character.Instance != null) Character.Instance.AddXP(xpReward); });
+            Health.onDeath.AddListener(() => Rewards.PayForKill(Health.LastAttacker, xpReward));
 
         nextWander = Time.time + Random.value;
     }
@@ -403,7 +420,7 @@ public class MonsterAI3D : MonoBehaviour
     public void TryInflictOnHit()
     {
         if (onHitAilmentChance <= 0f) return;
-        var ps = StatusController.Player;
+        var ps = Prey != null ? Prey.StatusHost : null;
         if (ps != null && CombatRng.Chance(onHitAilmentChance))
             ps.Apply(onHitAilment, onHitAilmentSeconds, onHitAilmentMagnitude);
     }
@@ -433,8 +450,9 @@ public class MonsterAI3D : MonoBehaviour
         agent.moveSpeed = (Health != null ? Health.States.MoveMult : 1f) * travel;
 
         Vector3 pos = transform.position;
-        // A dead player is no target: leash off and resume wandering until they respawn.
-        bool playerAlive = player != null && Character.Instance != null && !Character.Instance.IsDead;
+        PickPrey(pos);
+        // A dead or departed target is no target: leash off and resume wandering until somebody else turns up.
+        bool playerAlive = player != null && Prey != null && !Prey.IsDead;
         // Compare SQUARED distances against squared radii — avoids a sqrt per check, per mob, per frame.
         float toPlayerSqr = playerAlive ? PlanarSqr(pos, player.position) : Mathf.Infinity;
 
@@ -455,14 +473,14 @@ public class MonsterAI3D : MonoBehaviour
         // the identical rule Player3DAttacker.BaseRange uses, via the shared WeaponReach. Arming a mob now extends
         // its reach exactly as arming the player does; before, a mob's weapon changed its damage but not its reach.
         float touch = Reach;
-        if (player != null && touch3DSqr <= touch * touch && Time.time >= nextTouch && Character.Instance != null)
+        if (player != null && touch3DSqr <= touch * touch && Time.time >= nextTouch && Prey != null)
         {
             // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
             bool isMagic = attackType == AttackType.Magic;
             int effHit = BasicHit;   // blind already taken off; −1 for a magic mob, which can't be dodged
             // ORDER: accuracy FIRST, damage number second — a whiff never pays for a damage roll, and the roll happens
             // exactly once here rather than again on the player. Mobs don't crit, so crit is false.
-            bool missed = Combat.Missed(false, effHit, Character.Instance.Flee);
+            bool missed = Combat.Missed(false, effHit, Prey.Flee);
             int atk = missed ? 0 : RollBasicDamage(false);
             atk = UnitOffense.SpendCharges(MobStates, atk);   // one attack, one charge — spent on the whiff too
             // A magic mob's attack IS its cast — fire the cast cue at the caster (player-parity OnCastStart).
@@ -480,7 +498,7 @@ public class MonsterAI3D : MonoBehaviour
             }
             else
             {
-                int dealt = CombatAuthority.Apply(Character.Instance, isMagic
+                int dealt = CombatAuthority.Apply(Prey, isMagic
                     ? new DamageInfo(atk, attackElement, isMagic: true, source: this, attacker: Health)                              // magic: MATK vs MDEF + element
                     : new DamageInfo(atk, attackElement, attackerHit: effHit, source: this, missed: missed, attacker: Health));      // physical: the HIT vs FLEE result, rolled above
                 if (dealt > 0)
@@ -504,7 +522,7 @@ public class MonsterAI3D : MonoBehaviour
 
         if (chasing)
         {
-            Pursue(pos, toPlayerSqr);
+            Pursue(pos, toPlayerSqr, touch3DSqr);
         }
         else
         {
@@ -520,7 +538,9 @@ public class MonsterAI3D : MonoBehaviour
 
     // The chase brain, split by behavior style. All branches reuse the per-frame distance already computed
     // in Update — no extra Find/GetComponent/alloc (PERFORMANCE.md: nothing new in the per-mob hot path).
-    void Pursue(Vector3 pos, float toPlayerSqr)
+    // to3DSqr is the SAME true distance the bite is judged on. It is passed in rather than measured again so the
+    // two can never be computed differently, and so the per-frame cost is paid once.
+    void Pursue(Vector3 pos, float toPlayerSqr, float to3DSqr)
     {
         // Skittish: wounded enough → break off and run from the player (unless taunted, which pins it in the fight).
         if (!Taunted && fleeHpFraction > 0f && Health != null && Health.Current <= Health.maxHealth * fleeHpFraction)
@@ -554,9 +574,59 @@ public class MonsterAI3D : MonoBehaviour
         // INVARIANT: a melee mob must never hold farther than the PLAYER can reach, or the player whiffs every swing
         // while the mob bites freely (authored stopDistance can exceed the player's range, e.g. 0.7 vs 0.5). Clamp the
         // hold distance to just inside the player's effective melee reach so a halted mob is always in trading range.
-        if (playerAtk != null) stop = Mathf.Min(stop, playerAtk.RangeAgainst(Health) * 0.9f);
-        if (toPlayerSqr <= stop * stop) agent.Halt();
+        // Read from the TARGET as a unit rather than from a component bolted to its body: a person the server is
+        // holding has stats but no rig, and the blend below is the identical rule that component was applying.
+        if (Prey != null && Health != null)
+        {
+            float preyReach = Prey.MeleeReachFullSize * UnitScale.MeleeBlend(Prey.MeleeScale, Health.MeleeScale);
+            if (preyReach > 0f) stop = Mathf.Min(stop, preyReach * 0.9f);
+        }
+        // STOP ON THE SAME MEASUREMENT THE BITE IS JUDGED ON — the true one, not the flat one.
+        //
+        // These were two different distances: the creature decided it had ARRIVED on a flat measurement that
+        // ignores height, and then decided whether it could REACH on the real one. Any height between the two
+        // bodies is invisible to the first and counted by the second, so a creature halted where it could never
+        // land a blow and stood there for as long as you let it. Measured: a creature 0.54 away flat, 0.79 away
+        // in truth, holding still against a reach of 0.59, while the person it was hunting took no damage at all.
+        // A creature that has stopped is now always a creature that can bite.
+        if (to3DSqr <= stop * stop) agent.Halt();
         else agent.MoveToward(player.position);
+    }
+
+    /// <summary>Look up and decide who this creature is after.
+    ///
+    /// <para><b>The rule, in one sentence:</b> the nearest living person it can see, kept until they die, leave, or
+    /// something takes the choice away. It does NOT re-pick every frame — a creature that switched to whoever edged a
+    /// hair closer would spin on the spot between two people standing together — and it does not re-pick at all while
+    /// a taunt holds it, because being unable to look away is the whole point of a taunt.</para>
+    ///
+    /// <para>A creature keeps whoever it has while they are still worth keeping, so walking past a monster that is
+    /// already fighting your friend does not steal it off them.</para></summary>
+    void PickPrey(Vector3 pos)
+    {
+        // Whoever it has stops counting the moment they die, their body leaves the world, or they leave it
+        // themselves — the last of which does NOT look like null from here (see PlayerUnits.Gone).
+        if (Prey != null && (PlayerUnits.Gone(Prey) || Prey.IsDead || Prey.Body == null)) SetPrey(null);
+
+        if (Taunted) return;                       // pinned: the taunt already chose
+        if (Time.time < nextPreyCheck) return;
+        nextPreyCheck = Time.time + PreyCheckInterval;
+
+        // Already busy with somebody who is still in reach of the chase — leave it be.
+        if (Prey != null && chasing && PlanarSqr(pos, Prey.Body.position) <= leashRadius * leashRadius) return;
+
+        // ONLY PEOPLE IN THIS CREATURE'S OWN MAP. The machine that owns the world holds every map at once in one set
+        // of coordinates, so "nearest by distance" alone picks people who are not here at all.
+        SetPrey(PlayerUnits.NearestTo(pos, gameObject.scene.name));
+    }
+
+    void SetPrey(ICombatUnit unit)
+    {
+        if (Prey == unit) return;
+        Prey = unit;
+        player = unit != null ? unit.Body : null;
+        // Do not shoulder past the one you are hunting — the same exception the chase always had, moved with it.
+        if (agent != null) agent.avoidIgnore = player;
     }
 
     // A point ~2 units from the player, directly opposite this mob — the target for kiting / fleeing.

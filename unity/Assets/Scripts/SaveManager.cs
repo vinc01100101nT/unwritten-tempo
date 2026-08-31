@@ -70,9 +70,9 @@ public class SaveManager : MonoBehaviour
         loading   = true;
         character = Character.Instance;
 
-        // Appearance first, and from the CHARACTER RECORD — it is identity, chosen at creation, and true even
-        // for a character nobody has played. It is deliberately not in the save document; keeping it in both
-        // would be two owners for one thing.
+        // Appearance first, from what the character list already told us, so the body is right before the world
+        // is looked at. The save carries the same values and will confirm them a moment later — the list reads
+        // them out of that very document, so there is still only one thing being remembered.
         ApplyAppearance();
 
         ProfileStore.Current.Load(data =>
@@ -88,6 +88,7 @@ public class SaveManager : MonoBehaviour
                 // restored correctly; this is purely the post-load visual refresh (else the hotbar reads as
                 // empty until the next manual bind).
                 HotbarPanel.RebuildRequested?.Invoke();
+                ReturnToWhereWeLeftOff(Loaded);
             }
 
             // Subscribe AFTER restoring, so loading doesn't immediately mark us dirty.
@@ -123,6 +124,26 @@ public class SaveManager : MonoBehaviour
     /// bag-only change (give/consume/reorder) that doesn't touch Character's stat events.</summary>
     public void MarkDirty() => dirty = true;
 
+    /// <summary>Stand the player where their save says they were. The save always arrives AFTER the map has
+    /// come up, so this either moves them within the map they are already in, or sends them to the one they
+    /// logged out of and lets the arrival place them.</summary>
+    static void ReturnToWhereWeLeftOff(SaveData data)
+    {
+        if (data == null || string.IsNullOrEmpty(data.sceneName)) return;   // a save older than this, or a fresh character
+
+        SceneTravel.ResumeScene = data.sceneName;
+        SceneTravel.ResumePosition = new Vector3(data.posX, data.posY, data.posZ);
+
+        if (data.sceneName == MapManager.CurrentMap)
+        {
+            if (PersistentPlayer3D.Instance != null) PersistentPlayer3D.Instance.ReturnToSavedPlace();
+        }
+        else
+        {
+            MapManager.Travel(data.sceneName, null);   // the arrival reads the resume point and clears it
+        }
+    }
+
     /// <summary>Write the live character + bag now and reset the autosave timer.</summary>
     public void SaveNow()
     {
@@ -132,6 +153,22 @@ public class SaveManager : MonoBehaviour
         // never opened this session, carry forward the bag we loaded so an autosave doesn't wipe it.
         if (InventoryStore.Instance != null) InventoryStore.Instance.CaptureInto(data);
         else CarryForwardBag(data);
+
+        // Where the player is standing, so signing back in puts them there instead of at the map's front door.
+        var player = PersistentPlayer3D.Instance;
+        if (player != null && !string.IsNullOrEmpty(MapManager.CurrentMap))
+        {
+            data.sceneName = MapManager.CurrentMap;
+            var p = player.transform.position;
+            data.posX = p.x; data.posY = p.y; data.posZ = p.z;
+        }
+        else if (Loaded != null)
+        {
+            // No map yet (the world has not finished coming up) — carry forward what we loaded rather than
+            // recording nowhere, which would silently forget the spot on the very first autosave.
+            data.sceneName = Loaded.sceneName;
+            data.posX = Loaded.posX; data.posY = Loaded.posY; data.posZ = Loaded.posZ;
+        }
         ProfileStore.Current.Save(data);
         Loaded = data;
         dirty = false;

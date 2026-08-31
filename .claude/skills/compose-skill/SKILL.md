@@ -43,14 +43,14 @@ It prints who every effect lands on, reading both enums out of the C# at run tim
 
 ## 3. Prices and cooldowns are RULES, not taste
 
-`docs/active-skill-system-v3/skill-numbers-balance-baseline.md` owns them. Read it; the short form:
+`docs/2-systems/active-skill-system-v3/skill-numbers-balance-baseline.md` owns them. Read it; the short form:
 
 - **Passives are free** — 0 mana, 0 cooldown, always. The build slot is the price.
 - **Mana by step:** reaction 8 · standard 12 · heavy 16 · ultimate 40.
 - **Cooldown ≥ 1.5 × the skill's own duration**, so an effect can never be permanently up. Instant skills take their step's band (\~5s reaction, \~6s standard, \~8s heavy). Ultimates are 45–60s.
 - A window (seconds) and a count of charges are different numbers and are never expressed in terms of each other.
 
-The weapon's own roster doc (e.g. `docs/active-skill-system-v3/sword-skill-roster.md`) owns what the skill IS, including its identity bans. Read it before designing — Sword, for instance, may never have crit or AoE.
+The weapon's own roster doc (e.g. `docs/2-systems/active-skill-system-v3/sword-skill-roster.md`) owns what the skill IS, including its identity bans. Read it before designing — Sword, for instance, may never have crit or AoE.
 
 ## 4. Mandatory verification — none of these are optional
 

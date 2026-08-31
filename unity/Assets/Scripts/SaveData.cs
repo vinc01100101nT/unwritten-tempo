@@ -16,7 +16,7 @@ using System;
 [Serializable]
 public class SaveData
 {
-    public const int CurrentVersion = 7;
+    public const int CurrentVersion = 8;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
@@ -77,9 +77,23 @@ public class SaveData
     public int[]    bagRarities;    // v7+: per-copy rolled rarity (see equipRarities)
     public string[] bagSkills;      // v7+: per-copy rolled kit (see equipSkills)
 
-    // NOTE — APPEARANCE IS NOT HERE. Which body a character wears and how it is recoloured belong to the
-    // CHARACTER RECORD on the server (see AccountSession), not to this progress document. They used to live
-    // in both, which is two owners for one thing: the pair drifts the moment either side is written alone.
-    // Appearance is identity — chosen once at creation and true before the character has ever been played —
-    // while everything above is progress, which only exists after playing. Do not add them back here.
+    // Appearance (v8+). A player changes their body and their colours in the game, exactly as they change
+    // everything else here, so this is where it lives. It used to sit in its own columns beside the save on
+    // the server; that was two homes for one fact, written by two different requests, and either could land
+    // without the other. THIS document is now the only home — do not add columns for it back.
+    //
+    // Written at creation, before the character has ever been played, which is why an unplayed character's
+    // document is no longer empty. What marks a save as a save is `version`, nothing else.
+    public string   modelName;
+    public string[] dyeSources;
+    public string[] dyeTargets;
+
+    // Where you left off (v8+). Empty scene name = "nowhere recorded yet" → the game spawns you where it
+    // always did, so a save written before this existed still loads.
+    public string sceneName;
+    public float  posX, posY, posZ;
+
+    // The sprint pool (v8+), saved for the same reason HP and MP are: it is a current value against a
+    // maximum, and coming back with it full is a small free refill.
+    public float stamina = -1f;   // below zero = not recorded; the character keeps its own starting value
 }

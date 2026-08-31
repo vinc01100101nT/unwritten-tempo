@@ -55,6 +55,9 @@ public static class Hotkeys
     public static bool Down(KeyCode key)
     {
         if (NoKeyboard || Typing) return false;
+#if UNITY_ANDROID
+        if (TouchControls.VirtualDown(key)) return true;   // an on-screen button counts as the key being struck
+#endif
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null)
@@ -70,6 +73,9 @@ public static class Hotkeys
     public static bool Held(KeyCode key)
     {
         if (NoKeyboard || Typing) return false;
+#if UNITY_ANDROID
+        if (TouchControls.VirtualHeld(key)) return true;
+#endif
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null)
@@ -87,11 +93,43 @@ public static class Hotkeys
     public static bool CancelDown()
     {
         if (NoKeyboard) return false;
+#if UNITY_ANDROID
+        // The Android Back gesture already arrives here as Escape; this adds the on-screen route to the same door.
+        if (TouchControls.VirtualDown(KeyCode.Escape)) return true;
+#endif
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null && kb.escapeKey.wasPressedThisFrame) return true;
 #endif
         return Input.GetKeyDown(KeyCode.Escape);
+    }
+
+    /// <summary>Tab pressed this frame. Deliberately NOT typing-guarded, the same way <see cref="CancelDown"/>
+    /// isn't: stepping to the next box on a form is exactly the thing you do WHILE typing, so the guard that
+    /// silences gameplay keys must not silence this one. Read by <see cref="TabFocus"/>.</summary>
+    public static bool TabDown()
+    {
+        if (NoKeyboard) return false;
+#if ENABLE_INPUT_SYSTEM
+        var kb = Keyboard.current;
+        if (kb != null && kb.tabKey.wasPressedThisFrame) return true;
+#endif
+        return Input.GetKeyDown(KeyCode.Tab);
+    }
+
+    /// <summary>Either Shift held. Not typing-guarded for the same reason as <see cref="TabDown"/> — it is only
+    /// ever read alongside a key that has to work inside a text box.</summary>
+    public static bool ShiftHeld
+    {
+        get
+        {
+            if (NoKeyboard) return false;
+#if ENABLE_INPUT_SYSTEM
+            var kb = Keyboard.current;
+            if (kb != null && (kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed)) return true;
+#endif
+            return Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        }
     }
 
     static int cancelHandledFrame = -1;
@@ -139,6 +177,9 @@ public static class Hotkeys
     public static bool DigitDown(int i)
     {
         if (i < 0 || i > 8 || NoKeyboard || Typing) return false;
+#if UNITY_ANDROID
+        if (TouchControls.VirtualDown((KeyCode)((int)KeyCode.Alpha1 + i))) return true;
+#endif
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
         if (kb != null) return kb[(Key)((int)Key.Digit1 + i)].wasPressedThisFrame;

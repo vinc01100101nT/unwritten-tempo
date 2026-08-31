@@ -47,6 +47,49 @@ with the `Edit|Write` matcher, alongside the `Stop` entry that runs `tools/check
 settings file you must open `/hooks` once (or restart Claude Code) for the settings watcher to
 pick it up. Review or disable either hook anytime via `/hooks`.
 
+## Starting a hook on any OS — `tools/hooks/run-hook.sh`
+
+No hook command names an interpreter. `python` exists on Windows and not on macOS; `python3` is
+the reverse — so any name written into the settings file is right on one machine and fatal on
+the other, which is exactly how the gate died. Every hook is therefore configured as
+
+```
+sh "$CLAUDE_PROJECT_DIR/tools/hooks/run-hook.sh" <repo-relative hook script>
+```
+
+and the launcher picks the first of `python3`, `python`, `py` that exists. Claude Code passes a
+hook command to `sh` on macOS/Linux and to Git Bash on Windows, so the same line runs on both;
+the launcher takes the repo root from `CLAUDE_PROJECT_DIR` and normalises Windows backslashes,
+and says so loudly rather than dying quietly if there is no Python at all. **Adding a hook: use
+the launcher.** A settings entry that names an interpreter is a bug.
+
+## The guard on the guards — `guard_check.py`
+
+The gate above was configured to start with `python`, which does not exist on macOS. It
+therefore failed to start on every edit from the day this project moved machines, and a hook
+that fails to start fails **silently** — the edit proceeds exactly as if the gate had allowed
+it. It guarded nothing for five weeks (last log entry: 24 Jul, Windows paths) and nothing in
+any session could notice.
+
+`guard_check.py` runs at **SessionStart** and asks two different questions about every hook
+configured on this machine — the user's global settings included, not just this repo's:
+
+1. **Can it start?** The program exists on this machine, the script it names still exists, the
+   settings file still parses. Inline shell commands name no single program, so those are only
+   checked for the files they reference.
+2. **Has it actually run?** Every hook of ours calls `guard_check.beat()` at the *top* of its
+   run, before any early-out, writing to the gitignored `hook-heartbeat.json`. A hook that is
+   configured, runnable and never firing — a matcher that matches nothing, a settings file the
+   app never loaded — shows up as one nobody has seen in `UNSEEN_DAYS` (14) days.
+
+Runnable is not the same as running; either question alone misses a whole class of dead guard.
+Healthy machine → one line (`guards: N configured, all able to run and reporting in`). A fault
+→ it lands in the session's context with an instruction to tell the user in the first reply.
+
+`prove-guard-check.py` keeps it honest: seven planted faults it must catch, two healthy setups
+it must stay quiet about. The `Stop` gate re-runs that proof automatically whenever
+`guard_check.py` is edited, so the checker can never quietly go blind.
+
 ## Scope
 
 Single rule for now: `PERFORMANCE.md` ⇄ runtime C#. To generalize later, replace the

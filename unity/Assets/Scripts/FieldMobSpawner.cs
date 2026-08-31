@@ -54,7 +54,6 @@ public class FieldMobSpawner : MonoBehaviour
     // Per-type pools of hidden, reusable mob objects (keyed by MonsterDef asset name = the Addressable key tail).
     readonly Dictionary<string, Stack<GameObject>> pool = new Dictionary<string, Stack<GameObject>>();
     int groundMask;
-    Transform player;
 
     void Start()
     {
@@ -62,15 +61,17 @@ public class FieldMobSpawner : MonoBehaviour
         // machine receives those mobs over the wire (see NetMob). A client that spawned its own would give
         // each player a private set of monsters at private positions with private health — which is what
         // this game did before it had a server, and is the thing that makes shared combat impossible.
-        if (!GameServer.IsServer && GameNetwork.IsConnectedToAServer)
+        //
+        // ONLY THE SERVER POPULATES A WORLD. A player is never the authority for anything now, so there is no
+        // longer a case where this machine should make its own creatures — no offline game to fall back to, and
+        // no window during a handshake to slip through. A player receives what the world already has (see NetMob).
+        if (!GameServer.IsServer)
         {
             enabled = false;
             return;
         }
 
         groundMask = LayerMask.GetMask("Ground");
-        var p = FindAnyObjectByType<Player3DController>();
-        player = p != null ? p.transform : null;
 
         for (int i = 0; i < population; i++) SpawnOne();
     }
@@ -105,17 +106,20 @@ public class FieldMobSpawner : MonoBehaviour
         MobSpawner.Spawn(def, spot, go =>
         {
             if (go == null) return;   // no baked/Addressable prefab for this def — slot stays open
-            var pm = go.AddComponent<PooledMob>();
+            var pm = go.AddComponent<PooledMob>();   // perf-ok: once per mob CREATED; every later life comes from the pool
             pm.owner = this;
             pm.typeKey = key;
-            go.GetComponent<MonsterAI3D>()?.SetHome(spot);
-            // Born on the server → every connected player gets to see it. No-op offline.
-            GameNetwork.PublishMob(go, def.id);
+            go.GetComponent<MonsterAI3D>()?.SetHome(spot);   // perf-ok: once per mob created or pulled from the pool
             // A shadow is decided ONCE, at creation: the component builds a rigged body in its Start and the mob
             // then keeps it for life, including through pool reuse. Re-rolling per respawn would Instantiate a rig
             // per death — exactly the churn the pool exists to avoid — so a pooled mob stays whatever it was born as
             // and the live mix drifts from this fraction over a long session.
-            if (asShadow) go.AddComponent<MobShadow3DVisual>();
+            //
+            // DECIDED BEFORE IT IS ANNOUNCED. What crosses the wire is read off the creature at the moment it is
+            // published, so adding this afterwards told every watching machine it was an ordinary sprite.
+            if (asShadow) go.AddComponent<MobShadow3DVisual>();   // perf-ok: once per mob created; a pooled mob keeps what it was born as
+            // Born on the server → every connected player gets to see it. No-op offline.
+            GameNetwork.PublishMob(go, def.id);
         });
     }
 
@@ -156,10 +160,14 @@ public class FieldMobSpawner : MonoBehaviour
         SpawnOne();
     }
 
-    // A ground point within `radius` of this spawner, kept clear of the player; falls back to the spawner spot.
+    // A ground point within `radius` of this spawner, kept clear of EVERYBODY; falls back to the spawner spot.
+    //
+    // It used to look the world over for "the" player once, at birth, and measure against whatever it found. On a
+    // server that is nothing at all — so the clear-radius quietly measured the distance from the spawner to itself,
+    // which is zero, and creatures could appear on top of anyone. Asked of the roll of who is here instead, which
+    // has an answer on every machine and has as many answers as there are people.
     Vector3 PickSpot()
     {
-        Vector3 pPos = player != null ? player.position : transform.position;
         Vector3 c = transform.position;
 
         for (int i = 0; i < 16; i++)
@@ -169,8 +177,9 @@ public class FieldMobSpawner : MonoBehaviour
             if (groundMask != 0 &&
                 Physics.Raycast(probe, Vector3.down, out var hit, 120f, groundMask, QueryTriggerInteraction.Ignore))
             {
-                float dx = hit.point.x - pPos.x, dz = hit.point.z - pPos.z;
-                if (dx * dx + dz * dz < playerClearRadius * playerClearRadius) continue;   // too close to the player
+                // Clear of everybody IN THIS MAP. Judged across all of them, a spot is refused because somebody is
+                // standing on the same coordinates in a different place entirely.
+                if (PlayerUnits.AnyoneWithin(hit.point, playerClearRadius, gameObject.scene.name)) continue;
                 return hit.point;
             }
         }

@@ -203,7 +203,7 @@ public class PathAgent3D : MonoBehaviour
             Vector3 to = WaypointDelta(wp);
             bool last = wp == path.Count - 1;
             float reach = (last && stopOnArrive) ? arriveRadius : Mathf.Max(arriveRadius, 0.12f);
-            if (to.magnitude <= reach)
+            if (to.sqrMagnitude <= reach * reach)
             {
                 wp++;
                 if (wp >= path.Count) { if (stopOnArrive) Halt(); }   // chase: idle here until next repath

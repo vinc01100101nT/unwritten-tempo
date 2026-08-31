@@ -214,11 +214,11 @@ public class CharacterSelectScreen : MonoBehaviour
 
         var heading = UiKit.Label("Heading", inner, "A new character", 20, FontStyle.Normal, TextAnchor.MiddleCenter, title: true);
         heading.color = UiKit.Gold;
-        FrontScreen.Row(heading.rectTransform, -14, 28);
+        FrontScreen.Row(heading.rectTransform, -16, 28);
 
         // The body, shown as itself. It owns the left column outright; nothing else is allowed into that strip.
         var frame = UiKit.Img("PreviewFrame", inner, UiKit.Gold);
-        FrontScreen.Place(frame.rectTransform, new Vector2(-232, -54), new Vector2(212, 300));
+        FrontScreen.Place(frame.rectTransform, new Vector2(-232, -56), new Vector2(212, 300));
         var shot = new GameObject("Preview", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
         shot.transform.SetParent(frame.transform, false);
         UiKit.Fill((RectTransform)shot.transform, new Vector2(2, 2), new Vector2(-2, -2));
@@ -230,32 +230,32 @@ public class CharacterSelectScreen : MonoBehaviour
         const float TextRight = 28f;
         const float Mid = 117f;            // centre of the right column, for the fixed-width controls
 
-        nameField = FrontScreen.Field(inner, "Name", -58, false, TextLeft, TextRight);
+        nameField = FrontScreen.Field(inner, "Name", -56, false, TextLeft, TextRight);
 
         var bodyCaption = UiKit.Label("BodyLabel", inner, "Body", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
         bodyCaption.color = UiKit.TextDim;
-        FrontScreen.Row(bodyCaption.rectTransform, -128, 18, TextLeft, TextRight);
+        FrontScreen.Row(bodyCaption.rectTransform, -120, 18, TextLeft, TextRight);
 
         modelLabel = UiKit.Label("Body", inner, "…", 16, FontStyle.Normal, TextAnchor.MiddleCenter);
         modelLabel.color = UiKit.TextMain;
-        FrontScreen.Place(modelLabel.rectTransform, new Vector2(Mid, -150), new Vector2(180, 32));
+        FrontScreen.Place(modelLabel.rectTransform, new Vector2(Mid, -142), new Vector2(180, 32));
 
         var prev = UiKit.Btn("<", inner, () => StepModel(-1));
-        FrontScreen.Place(prev.GetComponent<RectTransform>(), new Vector2(Mid - 122, -150), new Vector2(40, 32));
+        FrontScreen.Place(prev.GetComponent<RectTransform>(), new Vector2(Mid - 110, -142), new Vector2(40, 32));
         var next = UiKit.Btn(">", inner, () => StepModel(1));
-        FrontScreen.Place(next.GetComponent<RectTransform>(), new Vector2(Mid + 122, -150), new Vector2(40, 32));
+        FrontScreen.Place(next.GetComponent<RectTransform>(), new Vector2(Mid + 110, -142), new Vector2(40, 32));
 
         var colourCaption = UiKit.Label("ColourLabel", inner, "Colours", 13, FontStyle.Normal, TextAnchor.MiddleLeft);
         colourCaption.color = UiKit.TextDim;
-        FrontScreen.Row(colourCaption.rectTransform, -200, 18, TextLeft, TextRight);
+        FrontScreen.Row(colourCaption.rectTransform, -188, 18, TextLeft, TextRight);
 
-        partsRow = MakeSwatchRow(inner, -222, TextLeft, TextRight).transform;
+        partsRow = MakeSwatchRow(inner, -210, TextLeft, TextRight).transform;
         BuildMixer(inner, TextLeft, TextRight, Mid);
 
         var create = UiKit.Btn("Create", inner, OnCreate);
-        FrontScreen.Place(create.GetComponent<RectTransform>(), new Vector2(Mid - 78, -372), new Vector2(140, 34));
+        FrontScreen.Place(create.GetComponent<RectTransform>(), new Vector2(Mid - 76, -370), new Vector2(140, 34));
         var cancel = UiKit.Btn("Cancel", inner, CloseCreate);
-        FrontScreen.Place(cancel.GetComponent<RectTransform>(), new Vector2(Mid + 78, -372), new Vector2(140, 34));
+        FrontScreen.Place(cancel.GetComponent<RectTransform>(), new Vector2(Mid + 76, -370), new Vector2(140, 34));
 
         nameField.ActivateInputField();
 
@@ -294,12 +294,13 @@ public class CharacterSelectScreen : MonoBehaviour
     // body in the frame IS the preview of the colour — there is no separate "apply" step to forget.
     void BuildMixer(Transform inner, float left, float right, float mid)
     {
-        redSlider   = MixerRow(inner, "R", -256, left, right, new Color(0.9f, 0.3f, 0.3f));
-        greenSlider = MixerRow(inner, "G", -286, left, right, new Color(0.4f, 0.85f, 0.4f));
-        blueSlider  = MixerRow(inner, "B", -316, left, right, new Color(0.45f, 0.6f, 1f));
+        redSlider   = MixerRow(inner, "R", -250, left, right, new Color(0.9f, 0.3f, 0.3f));
+        greenSlider = MixerRow(inner, "G", -280, left, right, new Color(0.4f, 0.85f, 0.4f));
+        blueSlider  = MixerRow(inner, "B", -310, left, right, new Color(0.45f, 0.6f, 1f));
 
+        // Sits level with the middle slider, past their right end, so the mix reads as the sum of the three.
         var border = UiKit.Img("Mixed", inner, UiKit.Gold);
-        FrontScreen.Place(border.rectTransform, new Vector2(mid + 132, -286), new Vector2(52, 52));
+        FrontScreen.Place(border.rectTransform, new Vector2(mid + 138, -266), new Vector2(52, 52));
         mixedSwatch = UiKit.Img("Fill", border.transform, Color.white);
         UiKit.Fill(mixedSwatch.rectTransform, new Vector2(2, 2), new Vector2(-2, -2));
         mixedSwatch.raycastTarget = false;
@@ -309,10 +310,10 @@ public class CharacterSelectScreen : MonoBehaviour
     {
         var caption = UiKit.Label(label + "Cap", inner, label, 12, FontStyle.Bold, TextAnchor.MiddleLeft);
         caption.color = tint;
-        FrontScreen.Row(caption.rectTransform, top, 22, left, right + 190f);
+        FrontScreen.Row(caption.rectTransform, top, 22, left, right + 210f);
 
         var slider = UiKit.MakeSlider(inner, 1f);
-        FrontScreen.Row(slider.GetComponent<RectTransform>(), top + 4, 14, left + 18f, right + 130f);
+        FrontScreen.Row(slider.GetComponent<RectTransform>(), top - 4, 14, left + 18f, right + 150f);
         slider.onValueChanged.AddListener(_ => OnMixed());
         return slider;
     }

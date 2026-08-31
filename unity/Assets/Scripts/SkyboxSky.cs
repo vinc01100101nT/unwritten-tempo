@@ -99,6 +99,10 @@ public class SkyboxSky : MonoBehaviour
 
     Camera taughtMain;
 
+    // The cloud layer, held rather than looked up. Ensure() hunts the whole scene and builds one if it is
+    // missing — a boot-time call, and it was being made every single frame from LateUpdate below.
+    CloudShadows clouds;
+
     /// <summary>Find the live sky, creating one if none exists (used by the weather director / day-night light).</summary>
     public static SkyboxSky Ensure()
     {
@@ -187,7 +191,8 @@ public class SkyboxSky : MonoBehaviour
         float storm = Mathf.Max(Mathf.SmoothStep(fairCloud, 1f, cover), rain) * stormDarken;
         Color baseCloud = Color.Lerp(cloudColor, stormColor, storm);
 
-        var cs = CloudShadows.Ensure();
+        if (clouds == null) clouds = CloudShadows.Ensure();   // re-found only if a scene swap took it
+        var cs = clouds;
         if (cs != null && cs.CloudTexture != null) mat.SetTexture(CloudTexID, cs.CloudTexture);
 
         // Drift the sky clouds with the SAME wind as the ground shadows (direction + the Wind channel speed-up).

@@ -70,10 +70,22 @@ public class DeathDissolve : MonoBehaviour
         StartCoroutine(Run(onComplete));
     }
 
+    // Built once per corpse rather than once per death — see MobRespawn.
+    WaitForSeconds remainWait;
+    float remainWaitFor = -1f;
+
     IEnumerator Run(Action onComplete)
     {
         // Remains lie on the ground.
-        if (remainSeconds > 0f) yield return new WaitForSeconds(remainSeconds);
+        if (remainSeconds > 0f)
+        {
+            if (remainWait == null || remainWaitFor != remainSeconds)
+            {
+                remainWait = new WaitForSeconds(remainSeconds);
+                remainWaitFor = remainSeconds;
+            }
+            yield return remainWait;
+        }
 
         // Fade out — swap to an alpha-blended material so the alpha ramp actually shows.
         var mat = FadeMaterial();

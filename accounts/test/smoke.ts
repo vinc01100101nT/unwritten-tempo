@@ -14,6 +14,13 @@ import { query, closeDb } from "../src/db.ts";
 
 const app = await buildServer();
 
+/** The appearance entries of a stored document — the part a save does not send and must not lose. */
+const appearanceKeysOf = (doc: Record<string, unknown>) => ({
+  modelName: doc.modelName,
+  dyeSources: doc.dyeSources,
+  dyeTargets: doc.dyeTargets,
+});
+
 const email = `smoke-${randomUUID()}@example.test`;
 const password = "correct horse battery";
 let accountId = "";
@@ -168,13 +175,24 @@ try {
   await step("reads that progress back exactly as it was sent", async () => {
     const res = await app.inject({ method: "GET", url: `/characters/${heroId}/progress`, headers: auth() });
     assert.equal(res.statusCode, 200, res.body);
-    assert.deepEqual(res.json().progress, save);
+
+    // The look lives in this same document now, and it was written at creation — so a save that does not
+    // carry one keeps the one already there rather than erasing it. Everything the save DID send must come
+    // back byte-for-byte.
+    const stored = res.json().progress;
+    assert.deepEqual({ ...stored, ...appearanceKeysOf(stored) }, { ...save, ...appearanceKeysOf(stored) });
+    for (const [key, value] of Object.entries(save)) assert.deepEqual(stored[key], value, key);
+    assert.equal(stored.modelName, "BlueSoldier_Male", "the body chosen at creation survives a save");
   });
 
   await step("left the other character untouched", async () => {
     const res = await app.inject({ method: "GET", url: `/characters/${mageId}/progress`, headers: auth() });
     assert.equal(res.statusCode, 200, res.body);
-    assert.deepEqual(res.json().progress, {}, "never played, so still unstarted");
+    // Not empty any more: a character carries the look it was created with from its first moment. What makes
+    // it "never played" is the absence of a version, which is what the level being null reflects.
+    assert.deepEqual(res.json().progress, {
+      modelName: "Wizard", dyeSources: [], dyeTargets: [],
+    }, "never played, so it carries only the look it was made with");
     assert.equal(res.json().level, null);
   });
 
@@ -183,6 +201,33 @@ try {
       method: "PUT", url: `/characters/${heroId}/progress`, headers: auth(), payload: { progress: { nope: true } },
     });
     assert.equal(res.statusCode, 400, res.body);
+  });
+
+  await step("stops guessing after five wrong passwords", async () => {
+    // Its own account, so a locked-out address cannot affect any other step.
+    const target = `smoke-${randomUUID()}@example.test`;
+    await app.inject({ method: "POST", url: "/accounts", payload: { email: target, password } });
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const wrong = await app.inject({
+        method: "POST", url: "/sessions", payload: { email: target, password: "not the password" },
+      });
+      assert.equal(wrong.statusCode, 401, `attempt ${attempt + 1} should be refused, not throttled`);
+    }
+
+    const throttled = await app.inject({
+      method: "POST", url: "/sessions", payload: { email: target, password },
+    });
+    assert.equal(throttled.statusCode, 429, "the sixth attempt waits, even with the right password");
+
+    await query("delete from account where lower(email) = lower($1)", [target]);
+  });
+
+  await step("answers what time it is", async () => {
+    const res = await app.inject({ method: "GET", url: "/time" });
+    assert.equal(res.statusCode, 200, res.body);
+    const drift = Math.abs(res.json().epochSeconds * 1000 - Date.now());
+    assert.ok(drift < 5000, `the world clock should be this machine's clock here, drifted ${drift}ms`);
   });
 
   await step("hides another account's characters", async () => {
@@ -228,8 +273,12 @@ try {
     assert.deepEqual(recolour.json().dyeTargets, ["#2E7D32"]);
     assert.equal(recolour.json().modelName, "BlueSoldier_Male", "a recolour must not blank the body");
 
+    // Appearance and the rest of the save share one document, so the test is no longer "they never touch" —
+    // it is that a recolour changes the colours and NOTHING else.
     const after = await app.inject({ method: "GET", url: `/characters/${heroId}/progress`, headers: auth() });
-    assert.deepEqual(after.json().progress, save, "appearance and progress do not touch each other");
+    const stored = after.json().progress;
+    assert.deepEqual(stored.dyeTargets, ["#2E7D32"]);
+    for (const [key, value] of Object.entries(save)) assert.deepEqual(stored[key], value, key);
   });
 
   await step("refuses an appearance with a body that does not exist", async () => {

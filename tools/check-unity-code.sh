@@ -7,9 +7,15 @@
 # exact same check ourselves in ~10 seconds. Errors here are real errors; a clean run means Unity will
 # compile it too.
 #
-# USAGE:   tools/check-unity-code.sh          # check both assemblies
+# USAGE:   tools/check-unity-code.sh          # every pass below
 #          tools/check-unity-code.sh runtime  # game scripts only (faster)
 #          tools/check-unity-code.sh editor   # editor tools only
+#          tools/check-unity-code.sh android  # game scripts as the PHONE build sees them
+#
+# WHY THE ANDROID PASS: code inside `#if UNITY_ANDROID` is invisible to the desktop pass — the compiler never
+# reads it — so the whole touch layer could be broken and every other pass would still print "clean". This pass
+# compiles the same sources with the phone's symbols (and WITHOUT UNITY_EDITOR, which a real device build also
+# lacks), so the phone-only half is held to the same standard as everything else.
 #
 # EXIT CODE: 0 = clean, 1 = compile errors (they are printed), 2 = setup problem (Unity/libs not found).
 
@@ -68,7 +74,12 @@ for f in "$PKG_DIR"/*.dll; do
   echo "/r:$f" >> "$REFS"
 done
 
-COMMON_FLAGS=$'/target:library\n/nostdlib+\n/langversion:9.0\n/unsafe+\n/define:UNITY_2023_1_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_EDITOR;UNITY_STANDALONE_OSX;UNITY_STANDALONE'
+# Input symbols: the project's Active Input Handling is "Both", so BOTH of these are defined in the real build.
+# Without them here, every `#if ENABLE_INPUT_SYSTEM` branch in the game silently goes unchecked.
+INPUT_DEFS='ENABLE_INPUT_SYSTEM;ENABLE_LEGACY_INPUT_MANAGER'
+BASE_FLAGS=$'/target:library\n/nostdlib+\n/langversion:9.0\n/unsafe+'
+COMMON_FLAGS="$BASE_FLAGS"$'\n'"/define:UNITY_2023_1_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_EDITOR;UNITY_STANDALONE_OSX;UNITY_STANDALONE;$INPUT_DEFS"
+ANDROID_FLAGS="$BASE_FLAGS"$'\n'"/define:UNITY_2023_1_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_ANDROID;$INPUT_DEFS"
 
 STATUS=0
 
@@ -111,6 +122,14 @@ if [ "$WHICH" = "all" ] || [ "$WHICH" = "editor" ]; then
       find "$UNITY_PROJ/Assets/Scripts/Editor" -name '*.cs'; } > "$ED_RSP"
     run_pass "editor" "$ED_RSP"
   fi
+fi
+
+# --- pass 3: the game's scripts as the PHONE build sees them ---------------------------------------------
+if [ "$WHICH" = "all" ] || [ "$WHICH" = "android" ]; then
+  AND_RSP="$OUT/android.rsp"
+  { printf '%s\n' "$ANDROID_FLAGS"; echo "/out:$OUT/game-android.dll"; cat "$REFS"
+    find "$UNITY_PROJ/Assets/Scripts" -name '*.cs' -not -path '*/Editor/*'; } > "$AND_RSP"
+  run_pass "android" "$AND_RSP"
 fi
 
 [ "$STATUS" -eq 0 ] && printf '\nNo compile errors. Unity will build this.\n'

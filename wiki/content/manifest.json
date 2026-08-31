@@ -12,10 +12,10 @@
           "file": "home.json",
           "docId": "q177drps7d34bed8yawcj4byh98bbvw8",
           "sourceDocs": [
-            "docs/story-setting-canon.md"
+            "docs/3-world/story-setting-canon.md"
           ],
           "syncedAt": {
-            "docs/story-setting-canon.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
+            "docs/3-world/story-setting-canon.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
           }
         },
         {
@@ -24,10 +24,10 @@
           "file": "world.json",
           "docId": "q179p4hqphaxjbsz3k6n9g2avn8barx5",
           "sourceDocs": [
-            "docs/story-setting-canon.md"
+            "docs/3-world/story-setting-canon.md"
           ],
           "syncedAt": {
-            "docs/story-setting-canon.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
+            "docs/3-world/story-setting-canon.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
           }
         },
         {
@@ -37,14 +37,14 @@
           "docId": "q172wgwr5m7e9zrbgw86ydsych8ba70z",
           "tag": "wip",
           "sourceDocs": [
-            "docs/story-setting-canon.md",
-            "docs/active-skill-system-v3/README.md",
-            "docs/ring-system-trio-ring.md"
+            "docs/3-world/story-setting-canon.md",
+            "docs/2-systems/active-skill-system-v3/README.md",
+            "docs/2-systems/ring-system-trio-ring.md"
           ],
           "syncedAt": {
-            "docs/story-setting-canon.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a",
-            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
-            "docs/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+            "docs/3-world/story-setting-canon.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a",
+            "docs/2-systems/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
+            "docs/2-systems/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
           }
         },
         {
@@ -53,12 +53,12 @@
           "file": "world-maps.json",
           "docId": "q17cqtsgm410vbjaw08k2rwcnx8bapcb",
           "sourceDocs": [
-            "docs/biome-mob-families.md",
-            "docs/story-setting-canon.md"
+            "docs/3-world/biome-mob-families.md",
+            "docs/3-world/story-setting-canon.md"
           ],
           "syncedAt": {
-            "docs/biome-mob-families.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb",
-            "docs/story-setting-canon.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
+            "docs/3-world/biome-mob-families.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb",
+            "docs/3-world/story-setting-canon.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a"
           }
         }
       ]
@@ -72,14 +72,14 @@
           "file": "playstyles.json",
           "docId": "q173dsj7jmv4d6x1zqnqxy35yd8bawcf",
           "sourceDocs": [
-            "docs/active-skill-system-v3/README.md",
-            "docs/active-skill-system-v3/weapon-roster-12-identities.md",
-            "docs/ring-system-trio-ring.md"
+            "docs/2-systems/active-skill-system-v3/README.md",
+            "docs/2-systems/active-skill-system-v3/weapon-roster-12-identities.md",
+            "docs/2-systems/ring-system-trio-ring.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
-            "docs/active-skill-system-v3/weapon-roster-12-identities.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a",
-            "docs/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+            "docs/2-systems/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
+            "docs/2-systems/active-skill-system-v3/weapon-roster-12-identities.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a",
+            "docs/2-systems/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
           }
         },
         {
@@ -88,16 +88,16 @@
           "file": "stats.json",
           "docId": "q171723wqm1t6v9qa96258w06h8bag4d",
           "sourceDocs": [
-            "docs/ring-system-trio-ring.md",
-            "docs/pre-renewal-ro-port.md",
-            "docs/active-skill-system-v3/README.md",
-            "docs/active-skill-system-v3/unified-unit-stats.md"
+            "docs/2-systems/ring-system-trio-ring.md",
+            "docs/2-systems/pre-renewal-ro-port.md",
+            "docs/2-systems/active-skill-system-v3/README.md",
+            "docs/2-systems/active-skill-system-v3/unified-unit-stats.md"
           ],
           "syncedAt": {
-            "docs/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
-            "docs/pre-renewal-ro-port.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
-            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
-            "docs/active-skill-system-v3/unified-unit-stats.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
+            "docs/2-systems/ring-system-trio-ring.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
+            "docs/2-systems/pre-renewal-ro-port.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
+            "docs/2-systems/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
+            "docs/2-systems/active-skill-system-v3/unified-unit-stats.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         },
         {
@@ -106,12 +106,12 @@
           "file": "skills.json",
           "docId": "q176a4jkptgq6j4xwjp7ymh92x8ba9dw",
           "sourceDocs": [
-            "docs/active-skill-system-v3/README.md",
-            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md"
+            "docs/2-systems/active-skill-system-v3/README.md",
+            "docs/2-systems/active-skill-system-v3/skill-numbers-balance-baseline.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
-            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
+            "docs/2-systems/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
+            "docs/2-systems/active-skill-system-v3/skill-numbers-balance-baseline.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         }
       ]
@@ -125,14 +125,14 @@
           "file": "combat.json",
           "docId": "q17afjhjntpkkq18c01gqwxbjs8bbt2y",
           "sourceDocs": [
-            "docs/active-skill-system-v3/README.md",
-            "docs/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md",
-            "docs/pre-renewal-ro-port.md"
+            "docs/2-systems/active-skill-system-v3/README.md",
+            "docs/2-systems/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md",
+            "docs/2-systems/pre-renewal-ro-port.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
-            "docs/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
-            "docs/pre-renewal-ro-port.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+            "docs/2-systems/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52",
+            "docs/2-systems/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
+            "docs/2-systems/pre-renewal-ro-port.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
           }
         },
         {
@@ -141,12 +141,12 @@
           "file": "weapons.json",
           "docId": "q170dqg8b6pe370nj8sj3wwnmn8bb88q",
           "sourceDocs": [
-            "docs/active-skill-system-v3/weapon-roster-12-identities.md",
-            "docs/active-skill-system-v3/weapon-crafting-economy.md"
+            "docs/2-systems/active-skill-system-v3/weapon-roster-12-identities.md",
+            "docs/2-systems/active-skill-system-v3/weapon-crafting-economy.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/weapon-roster-12-identities.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a",
-            "docs/active-skill-system-v3/weapon-crafting-economy.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+            "docs/2-systems/active-skill-system-v3/weapon-roster-12-identities.md": "18ff2f2398d06c9cedc314e778eb55ac5c23e73a",
+            "docs/2-systems/active-skill-system-v3/weapon-crafting-economy.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
           }
         },
         {
@@ -154,14 +154,14 @@
           "title": "The Sword",
           "file": "sword.json",
           "sourceDocs": [
-            "docs/active-skill-system-v3/sword-skill-roster.md",
-            "docs/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md",
-            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md"
+            "docs/2-systems/active-skill-system-v3/sword-skill-roster.md",
+            "docs/2-systems/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md",
+            "docs/2-systems/active-skill-system-v3/skill-numbers-balance-baseline.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/sword-skill-roster.md": "f054701b8a8700bf41786e847bcfc31caa0fb1db",
-            "docs/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
-            "docs/active-skill-system-v3/skill-numbers-balance-baseline.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
+            "docs/2-systems/active-skill-system-v3/sword-skill-roster.md": "f054701b8a8700bf41786e847bcfc31caa0fb1db",
+            "docs/2-systems/active-skill-system-v3/state-system-buffs-debuffs-combo-marks.md": "fb74b7ffa47c2cb43a93df663d8a551e084e184f",
+            "docs/2-systems/active-skill-system-v3/skill-numbers-balance-baseline.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         },
         {
@@ -170,12 +170,12 @@
           "file": "crafting.json",
           "docId": "q17cy3qese3w2k7hjcpz0nw91h8bdgr7",
           "sourceDocs": [
-            "docs/crafting-and-recycling.md",
-            "docs/active-skill-system-v3/weapon-crafting-economy.md"
+            "docs/2-systems/crafting-and-recycling.md",
+            "docs/2-systems/active-skill-system-v3/weapon-crafting-economy.md"
           ],
           "syncedAt": {
-            "docs/crafting-and-recycling.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
-            "docs/active-skill-system-v3/weapon-crafting-economy.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
+            "docs/2-systems/crafting-and-recycling.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08",
+            "docs/2-systems/active-skill-system-v3/weapon-crafting-economy.md": "2b5843b214123f9ea95eb02cb05b97ad7780ac08"
           }
         },
         {
@@ -185,10 +185,10 @@
           "docId": "q176aha2yer0b8xcg7e7zns7498bbtpx",
           "tag": "planned",
           "sourceDocs": [
-            "docs/active-skill-system-v3/README.md"
+            "docs/2-systems/active-skill-system-v3/README.md"
           ],
           "syncedAt": {
-            "docs/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
+            "docs/2-systems/active-skill-system-v3/README.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         }
       ]
@@ -202,12 +202,12 @@
           "file": "monsters.json",
           "docId": "q1706w4tf9wtc9wngjvnh1r8rh8bamx2",
           "sourceDocs": [
-            "docs/biome-mob-families.md",
-            "docs/active-skill-system-v3/unified-unit-stats.md"
+            "docs/3-world/biome-mob-families.md",
+            "docs/2-systems/active-skill-system-v3/unified-unit-stats.md"
           ],
           "syncedAt": {
-            "docs/biome-mob-families.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb",
-            "docs/active-skill-system-v3/unified-unit-stats.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
+            "docs/3-world/biome-mob-families.md": "96bd39dfc99f26f3def7892cb65ff84f1926accb",
+            "docs/2-systems/active-skill-system-v3/unified-unit-stats.md": "13f49460ecce6ff83e547369342c05bdabdc9b52"
           }
         }
       ]

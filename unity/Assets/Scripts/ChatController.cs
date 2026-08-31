@@ -63,6 +63,11 @@ public class ChatController : MonoBehaviour
     void HandleKeys()
     {
         bool enter = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
+#if UNITY_ANDROID
+        // Chat is the one opener that reads the key directly rather than through Hotkeys (it does its own typing
+        // check, just below), so the on-screen button has to be admitted here too.
+        enter = enter || TouchControls.VirtualDown(KeyCode.Return);
+#endif
         // Open + focus on Enter — but only when NOT already typing (a submit press has Hotkeys.Typing == true,
         // so this branch is skipped and the InputField's own submit handles it instead).
         if (enter && !Hotkeys.Typing)

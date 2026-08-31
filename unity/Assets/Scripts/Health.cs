@@ -58,10 +58,11 @@ public class Health : MonoBehaviour, ICombatUnit
     public int ApplyDamage(in DamageInfo info)
     {
         if (info.overkill)   // multi-hit flurry: keep numbers/sound climbing past the kill (RO cascade)
-            return info.isMagic ? TakeMagicDamageOverkill(info.amount, info.isCrit, info.element)
-                                : TakeDamageOverkill(info.amount, info.isCrit, info.element);
-        return info.isMagic ? TakeMagicDamage(info.amount, info.isCrit, info.element)
-                            : TakeDamage(info.amount, info.isCrit, info.attackerHit, info.element, info.missed);
+            return info.isMagic ? TakeMagicDamageOverkill(info.amount, info.isCrit, info.element, info.attacker)
+                                : TakeDamageOverkill(info.amount, info.isCrit, info.element, info.attacker);
+        return info.isMagic ? TakeMagicDamage(info.amount, info.isCrit, info.element, info.attacker)
+                            : TakeDamage(info.amount, info.isCrit, info.attackerHit, info.element, info.missed,
+                                         info.attacker);
     }
     public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
 
@@ -70,6 +71,10 @@ public class Health : MonoBehaviour, ICombatUnit
     public Transform Body => transform;
     public int CurrentHP => Current;
     public int MaxHP => maxHealth;
+
+    /// <summary>The map this creature is in — simply the scene its body lives in, which is true on the machine that
+    /// owns it and on every machine watching it, with nothing to keep in step.</summary>
+    public string Map => gameObject.scene.name;
 
     /// <summary>How big this unit's BODY is, for melee-contact maths — read from its brain, which knows whether it is a
     /// character-sized shadow or a shrunken sprite mob. REPORTED rather than folded into a reach, so whoever measures
@@ -138,6 +143,10 @@ public class Health : MonoBehaviour, ICombatUnit
     UnitStates states;
     public UnitStates States => states != null ? states : (states = GetComponent<UnitStates>() ?? gameObject.AddComponent<UnitStates>());
 
+    /// <summary>Who last cost this unit health — see <see cref="ICombatUnit.LastAttacker"/>.</summary>
+    public ICombatUnit LastAttacker { get; private set; }
+    public void NoteAttacker(ICombatUnit attacker) { if (attacker != null) LastAttacker = attacker; }
+
     // Same shape and same reason as the store above: looked up once, then held.
     StatusController statusHost;
     public StatusController StatusHost => statusHost != null ? statusHost : (statusHost = Status.Of(gameObject));
@@ -202,7 +211,45 @@ public class Health : MonoBehaviour, ICombatUnit
     public void SetHealthFromServer(int current, int max)
     {
         if (max > 0) maxHealth = max;
+        bool wasAlive = !IsDead;
         Current = Mathf.Clamp(current, 0, maxHealth);
+
+        // THE ONLY THING THAT KILLS A WATCHED COPY. Writing the health straight in never ran the death, so a
+        // creature dying in front of you simply blinked out of existence the instant the server let go of it —
+        // no poof, no fade, nothing to tell you it had been killed rather than despawned.
+        if (wasAlive && IsDead) PlayDeathVisuals();
+    }
+
+    /// <summary>True on a body that is only a WATCHED COPY of a creature the server owns. Such a copy still shows
+    /// every blow in full — the number, the flash, the impact — but it never decides that the creature DIED. That
+    /// answer arrives from the server, like every other fact about it.</summary>
+    public bool IsWatchedCopy { get; private set; }
+
+    /// <summary>Mark this body as a watched copy of one the server owns. Said once, when the copy is built.</summary>
+    public void MarkAsWatchedCopy() => IsWatchedCopy = true;
+
+    /// <summary>Take hit points off — the ONE place a blow lowers this unit's health, so the rule about who is
+    /// allowed to do that is written once instead of at five separate sinks.
+    ///
+    /// <para><b>A watched copy does not do this at all.</b> It still shows the whole blow — the number, the flash,
+    /// the impact — but its health is the server's to state, and it arrives already correct. Letting the copy
+    /// subtract as well means two answers to one question: the copy could reach zero a moment early, count itself
+    /// dead, then be corrected back to alive, and the real death — when it came — would find a body that already
+    /// thought it was gone and so would play no death at all.</para></summary>
+    void SubtractHealth(int dmg)
+    {
+        if (IsWatchedCopy) return;
+        Current = Mathf.Max(0, Current - dmg);
+    }
+
+    /// <summary>Play what a death LOOKS like, with none of what a death MEANS. A watched copy must not announce a
+    /// kill — the server already did that, once, on behalf of everybody — and must not recycle or bank itself,
+    /// because the shell that speaks for it is what removes it when the server says it is gone.</summary>
+    void PlayDeathVisuals()
+    {
+        VfxCue.Fire(VfxCueId.OnDeath, transform);
+        var fx = GetComponent<DeathDissolve>();
+        if (fx != null && gameObject.activeInHierarchy) fx.Play(() => { });
     }
 
     /// <summary>Apply a hit; final damage = max(1, attackerAttack − defense). Returns the damage dealt.</summary>
@@ -216,7 +263,7 @@ public class Health : MonoBehaviour, ICombatUnit
     /// RED MISS and deals nothing. The attacker owns that roll (<see cref="Combat.Missed"/>) so it happens once and
     /// so a whiff never pays for a damage roll. Red here = player-dealt; monster-dealt misses are white (Character).</summary>
     public int TakeDamage(int attackerAttack, bool crit, int attackerHit, Element attackElement = Element.Neutral,
-                          bool missed = false)
+                          bool missed = false, ICombatUnit attacker = null)
     {
         if (IsDead) return 0;
 
@@ -239,7 +286,7 @@ public class Health : MonoBehaviour, ICombatUnit
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
         int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
-        Current = Mathf.Max(0, Current - dmg);
+        SubtractHealth(dmg);
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
         // Impact FROM the mob (spatial). A basic attack (rolled accuracy, attackerHit ≥ 0) → hit/crit;
@@ -252,14 +299,15 @@ public class Health : MonoBehaviour, ICombatUnit
         else { CombatSfx.SkillHit(transform.position); VfxCue.Fire(VfxCueId.OnHitBySkill, transform); }
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
-        ApplyLeech(this, dmg);
+        ApplyLeech(this, dmg, attacker);
         if (IsDead) Die();
         return dmg;
     }
 
     /// <summary>Apply a MAGIC hit, reduced by <see cref="magicDefense"/> instead of <see cref="defense"/>.
     /// Pops a purple number (gold on a crit). Returns the damage dealt.</summary>
-    public int TakeMagicDamage(int attackerMagic, bool crit, Element attackElement = Element.Neutral)
+    public int TakeMagicDamage(int attackerMagic, bool crit, Element attackElement = Element.Neutral,
+                               ICombatUnit attacker = null)
     {
         if (IsDead) return 0;
 
@@ -268,14 +316,14 @@ public class Health : MonoBehaviour, ICombatUnit
         if (Parried()) return 0;
 
         int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * Combat.MagicGlanceMult(flee));
-        Current = Mathf.Max(0, Current - dmg);
+        SubtractHealth(dmg);
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
         CombatSfx.SkillHit(transform.position);   // magic = skill impact, spatial from the mob
         VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
-        ApplyLeech(this, dmg);
+        ApplyLeech(this, dmg, attacker);
         if (IsDead) Die();
         return dmg;
     }
@@ -284,7 +332,8 @@ public class Health : MonoBehaviour, ICombatUnit
     /// dead. A multi-hit sequence keeps showing its remaining ticks (overkill) over a mob that died partway,
     /// the RO way. HP floors at 0; death fires exactly once (on the alive→dead transition). Returns the hit's
     /// value, so a combo total can keep accumulating past the kill.</summary>
-    public int TakeMagicDamageOverkill(int attackerMagic, bool crit, Element attackElement = Element.Neutral)
+    public int TakeMagicDamageOverkill(int attackerMagic, bool crit, Element attackElement = Element.Neutral,
+                                       ICombatUnit attacker = null)
     {
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
@@ -292,7 +341,7 @@ public class Health : MonoBehaviour, ICombatUnit
 
         int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * Combat.MagicGlanceMult(flee));
         bool wasAlive = !IsDead;
-        Current = Mathf.Max(0, Current - dmg);
+        SubtractHealth(dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
         CombatSfx.SkillHit(transform.position);   // overkill beats still sound (throttled per frame)
         // Hit spark + impact SOUND fire on EVERY strike, including overkill beats past death — the per-hit
@@ -301,7 +350,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (wasAlive)
         {
             if (isActiveAndEnabled) StartCoroutine(Flash());
-            ApplyLeech(this, dmg);
+            ApplyLeech(this, dmg, attacker);
             if (IsDead) Die();
         }
         return dmg;
@@ -311,7 +360,8 @@ public class Health : MonoBehaviour, ICombatUnit
     /// number + hit spark/sound even past death, so a physical multi-hit flurry keeps sounding to the end of the
     /// count instead of cutting off the instant the mob's HP hits 0. Always-lands (skill hit, no FLEE roll). HP
     /// floors at 0; death fires exactly once. Returns the hit's value so a combo total keeps climbing past the kill.</summary>
-    public int TakeDamageOverkill(int attackerAttack, bool crit, Element attackElement = Element.Neutral)
+    public int TakeDamageOverkill(int attackerAttack, bool crit, Element attackElement = Element.Neutral,
+                                  ICombatUnit attacker = null)
     {
         float mod = Elements.Modifier(attackElement, element);
         if (mod <= 0f) { SpawnElementNumber(0, mod, Color.white); return 0; }
@@ -319,7 +369,7 @@ public class Health : MonoBehaviour, ICombatUnit
 
         int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
         bool wasAlive = !IsDead;
-        Current = Mathf.Max(0, Current - dmg);
+        SubtractHealth(dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
         CombatSfx.SkillHit(transform.position);   // always-lands skill strike → the unified skill impact
         // Hit spark + impact SOUND on EVERY strike, incl. overkill beats past death — same as the magic path.
@@ -327,7 +377,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (wasAlive)
         {
             if (isActiveAndEnabled) StartCoroutine(Flash());
-            ApplyLeech(this, dmg);
+            ApplyLeech(this, dmg, attacker);
             if (IsDead) Die();
         }
         return dmg;
@@ -340,7 +390,7 @@ public class Health : MonoBehaviour, ICombatUnit
     {
         if (IsDead || amount <= 0) return 0;
         int dmg = Mathf.Max(1, amount);
-        Current = Mathf.Max(0, Current - dmg);
+        SubtractHealth(dmg);
         DamagePopup.Spawn(UnitAnchor.Overhead(transform), dmg, color);
         if (isActiveAndEnabled) StartCoroutine(Flash());
         if (IsDead) Die();
@@ -362,9 +412,12 @@ public class Health : MonoBehaviour, ICombatUnit
 
     // Lifesteal: a fraction of damage dealt to this mob heals the player (RO leech, the mechanical core of
     // a lifesteal card). Silent heal — a green "+N" per hit would spam during multi-hit; the HP bar is the cue.
-    static void ApplyLeech(Health victim, int dmgDealt)
+    static void ApplyLeech(Health victim, int dmgDealt, ICombatUnit attacker)
     {
-        var ch = Character.Instance;
+        // WHOEVER ACTUALLY SWUNG, not "the one player at this keyboard". Reading a single global character meant
+        // this whole block — lifesteal, mana leech, the victim's reflect, and the "I dealt damage" moment — went
+        // silently dead on a server, where there is nobody at a keyboard and every fighter belongs to somebody else.
+        var ch = attacker as Character;
         if (ch == null || dmgDealt <= 0) return;
         // The ONE player-dealt-damage choke (basics + skills both funnel here) → also the OnDamageDealt fire-site (victim = the mob just hit).
         PassiveEvents.Fire(SkillTrigger.OnDamageDealt, null, victim != null ? victim.transform : null);
@@ -441,6 +494,11 @@ public class Health : MonoBehaviour, ICombatUnit
 
     void Die()
     {
+        // A WATCHED COPY never gets to decide this. Its death is played from the health the server sends
+        // (see SetHealthFromServer). Deciding it here as well would announce a kill on every machine that happened
+        // to be looking, and dismantle a body the shell speaking for it still owns.
+        if (IsWatchedCopy) return;
+
         // A mob died (mobs only die to the player here) — announce OnKill with the dying mob as victim NOW, before it's
         // pooled/destroyed below (FireAsPassive reads victim.position synchronously). The killing SKILL rides along
         // (empty for a basic attack or an ailment tick), so a passive can answer one particular skill's kills.
@@ -452,13 +510,13 @@ public class Health : MonoBehaviour, ICombatUnit
         // immediately.
         // A pooled mob (owned by a FieldMobSpawner) returns to its pool instead of self-recycling in place
         // (MobRespawn) or being destroyed. Checked first so a spawner-owned mob always takes the pool path.
-        var pooled = GetComponent<PooledMob>();
-        var respawn = GetComponent<MobRespawn>();
+        var pooled = GetComponent<PooledMob>();   // perf-ok: once, at the moment a unit dies
+        var respawn = GetComponent<MobRespawn>();   // perf-ok: once, at the moment a unit dies
         System.Action done;
         if (pooled != null) done = pooled.OnFadedOut;
         else if (respawn != null) done = respawn.OnFadedOut;
         else done = () => Destroy(gameObject);
-        var fx = GetComponent<DeathDissolve>();
+        var fx = GetComponent<DeathDissolve>();   // perf-ok: once, at the moment a unit dies
         if (fx != null && gameObject.activeInHierarchy) fx.Play(done);
         else done();
     }

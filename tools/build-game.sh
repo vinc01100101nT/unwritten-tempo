@@ -18,7 +18,7 @@ set -uo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 UNITY_CLI="$HOME/.unity/bin/unity"
-OUT_ROOT="${TMPDIR:-/tmp}/unwritten-builds"
+OUT_ROOT="$REPO/builds"
 TARGET="StandaloneOSX"
 
 fail() { printf '\n\033[31m%s\033[0m\n' "$*" >&2; exit 2; }

@@ -605,27 +605,61 @@ public static class SkillEffectApplier
     static int LandStrike(SkillEffect e, ICombatUnit unit, Character caster,
                           in StackVars vars, bool overkill)
     {
+        // THE SERVER ROLLS THIS ONE, and is told WHICH strike it is rather than how hard it hit. It holds the same
+        // authored skill and the same character, so everything it needs to work the number out itself is already
+        // there — the only thing it cannot know is which of a skill's strikes just landed.
+        //
+        // Returns 0 here for the same reason a swing does: this machine did not decide it. The number appears when
+        // the server's answer comes back, through the same door every other blow arrives by.
+        if (GameNetwork.SendSkillStrikeToServer(e, unit, vars, overkill)) return 0;
+
+        return Strike(e, unit, caster, vars, overkill, out _, out _);
+    }
+
+    /// <summary>Roll and land ONE authored strike, on the machine that is allowed to decide it — a player's own
+    /// machine when there is no server in the picture, and the server itself otherwise.
+    ///
+    /// <para>Public because the server calls it from the net layer with the character IT holds. Deliberately the same
+    /// function either way: a second copy written for the server is how the two come to disagree about what a skill
+    /// does.</para></summary>
+    /// <param name="resolved">THE BLOW THAT ACTUALLY HAPPENED, handed back whole. The server has to repeat this to
+    /// every machine watching, and the only honest description of it is the one that was applied: rebuilding a
+    /// description from the authored effect instead gets the element and the crit wrong for a strike that swings the
+    /// weapon, cannot say a swing whiffed at all, and states a number that has already had the victim's armour taken
+    /// out of it — which every watching machine would then take out of it a second time.</param>
+    public static int Strike(SkillEffect e, ICombatUnit unit, Character caster,
+                             in StackVars vars, bool overkill, out bool crit, out DamageInfo resolved)
+    {
+        crit = false;
+        resolved = default;
         // Ring investment and the combo ramp are both OUTER multipliers of the finished number, so they travel together
         // as one scale — the pile's contribution answers to them exactly as the caster's own damage does.
         float outer = AffinityMult(e.affinity, caster);
 
+        // The caster swings; the skill only says how hard. The swing's own roll becomes the basis the damage
+        // multiplier is applied to, and the pile meets the result — so the one thing the checkbox changes is WHICH
+        // roll is underneath, which is the whole point of it.
         if (e.resolveAsBasicAttack)
-            // The caster swings; the skill only says how hard. The swing's own roll becomes the basis the damage
-            // multiplier is applied to, and the pile meets the result — so the one thing the checkbox changes is WHICH
-            // roll is underneath, which is the whole point of it.
-            return BasicSwing.Land(caster, unit, e.damageMult, vars, outer, overkill,
-                                   // This swing has no wind-up of its own, so it announces the intent here rather than
-                                   // never — a passive that answers "about to swing" (the auto-lunge) rides a skill's
-                                   // swings exactly as it rides an ordinary one.
-                                   announceIntent: true);
+        {
+            int swung = BasicSwing.Land(caster, unit, e.damageMult, vars, outer, overkill,
+                                        // This swing has no wind-up of its own, so it announces the intent here rather
+                                        // than never — a passive that answers "about to swing" (the auto-lunge) rides a
+                                        // skill's swings exactly as it rides an ordinary one.
+                                        announceIntent: true, out resolved);
+            // The swing's crit, not the skill's: this branch never reaches the roll below, so without this a strike
+            // that resolves as a basic attack could never report a crit at all.
+            crit = resolved.isCrit;
+            return swung;
+        }
 
-        int power = RollPower(e, vars, outer, out bool crit, caster);
+        int power = RollPower(e, vars, outer, out crit, caster);
         // One strike, one charge. (The basic-attack branch above doesn't come back through here: the swing spends its
         // own, so nothing is charged twice.)
         power = UnitOffense.SpendCharges(caster != null ? caster.States : null, power);
         // −1 HIT = always-lands skill strike (no accuracy roll); DamageInfo defaults attackerHit to −1.
-        return CombatAuthority.Apply(unit, new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit,
-                                                         overkill: overkill, attacker: caster));
+        resolved = new DamageInfo(power, e.element, e.damageType == DamageType.Magic, crit,
+                                  overkill: overkill, attacker: caster);
+        return CombatAuthority.Apply(unit, resolved);
     }
 
     // Damage = (the caster's rolled hit × this effect's damage multiplier) met by the pile, all × ring × combo. The

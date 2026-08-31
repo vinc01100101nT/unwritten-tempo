@@ -54,7 +54,45 @@ Performance is a **hard constraint** for this game (3D world + many billboard mo
 - ❌ Per-frame `string` interpolation for the inspector/debug. → `#if UNITY_EDITOR` it, or only on change.
 - ❌ Setting `Text.text = $"..."` every frame when the value rarely changes. → Cache the last value and only rewrite on change (see `MobNameplate`). Each assignment both allocates a string AND forces a canvas rebuild.
 - ❌ One `Canvas` per HUD widget. Canvases are batch/rebuild boundaries — fewer, shared canvases batch better.
+- ❌ **A find-or-create `Ensure()` called from a frame path.** `Foo.Ensure()` searches the whole scene and builds the object if it is missing — it is a BOOT-time call, and the "if it is missing" half hides that from the reader. Call it once (on load, on a weather change, on a scene swap) and hold the reference. **Measured 2026-08-31:** the sky called `CloudShadows.Ensure()` from `LateUpdate`, so every single frame ran a `FindAnyObjectByType` over the entire scene to fetch an object that never changed.
+- ❌ **A `magnitude` / `Vector3.Distance` compared against a range.** Same rule as above, listed again because it keeps coming back in routing code: `to.magnitude <= reach` is a square root per agent per frame; `to.sqrMagnitude <= reach * reach` is not.
+
 - ❌ A per-frame boundary check (`InRange`, "am I close enough?") that **gates a hot path** with no hysteresis. A target sitting right at the threshold (e.g. a kiting mob at attack-range edge) flips the check true/false every frame, thrashing whatever it gates — re-routing (`StartRoute`/`FindPath`), restarting an animation, or re-firing SFX. → Add **hysteresis**: enter at `range`, stay engaged until `range × k` (see `Player3DAttacker.EngagedWith`); keep the strict check only for the irreversible action (landing the hit).
+
+---
+
+## What counts as "runs once" — the three shapes that are ALLOWED in a frame path
+
+A per-frame method may do an expensive thing as long as it does it once. Three shapes say so, and
+the automatic scan below understands exactly these three — write one of them and it stays quiet:
+
+1. **The null cache** — `if (cam == null) cam = CameraRig.Cam;`. Fine when the thing always turns
+   up. When it can legitimately be ABSENT forever, this is the anti-pattern above instead: throttle
+   the retry (see `DevSettings.EnsureRefs`, 0.5 s) or resolve it at load.
+2. **The memo** — `if (map.TryGetValue(k, out var v)) return v;` before building `v`, or
+   `while (pool.Count <= i)` before growing a pool. The work happens on the miss and never again.
+3. **The change gate** — `if (secs != last) { label.text = …; last = secs; }`. Nothing is written,
+   built or allocated unless the value on screen actually moved (see `MobNameplate`, `XpBarHUD`).
+
+Anything genuinely fine that fits none of them gets `// perf-ok: <why>` on the line — the reason
+sits with the code, where the next reader can argue with it.
+
+---
+
+## The automatic check
+
+```bash
+tools/check-perf-hotpaths.py     # reads every Update/LateUpdate/FixedUpdate/OnGUI in the game
+```
+
+It reads four kinds of hot path — the per-frame engine callbacks, the physics contact callbacks, the
+LOOPING part of a coroutine, and the per-hit combat path from `Health.ApplyDamage` / `TakeDamage`
+outwards — plus the helpers each of those calls, across files. It runs by itself at the end of any
+turn that edited a runtime script, reporting only faults in files that turn touched.
+
+**Its silence is not approval.** It cannot see past two calls, cannot tell how often a branch is
+really taken, and knows nothing about the GPU, memory or load times. The Profiler is still the
+authority; this only catches the mistakes that are visible in the source.
 
 ---
 

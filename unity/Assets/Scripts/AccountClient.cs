@@ -21,6 +21,15 @@ public static class AccountClient
     /// <summary>Send a request to the account service. <paramref name="body"/> null = no payload;
     /// <paramref name="authorize"/> attaches the signed-in player's token.</summary>
     public static void Send(string method, string path, string body, bool authorize, Reply onDone)
+        => SendAs(method, path, body, authorize ? AccountSession.AccessToken : null, onDone);
+
+    /// <summary>The same request, sent as SOMEBODY ELSE — with the sign-in proof they handed over themselves.
+    ///
+    /// <para>The game server needs this and nothing else does: it holds several people at once, so "the signed-in
+    /// player" has no meaning there, and it must read each person's character with that person's own proof. The
+    /// account service scopes every answer to whoever the proof belongs to, so this can only ever fetch what its
+    /// holder was already entitled to.</para></summary>
+    public static void SendAs(string method, string path, string body, string bearerToken, Reply onDone)
     {
         var request = new UnityWebRequest(AccountSession.ServerUrl + path, method)
         {
@@ -31,7 +40,7 @@ public static class AccountClient
             request.uploadHandler = new UploadHandlerRaw(System.Text.Encoding.UTF8.GetBytes(body));
             request.SetRequestHeader("Content-Type", "application/json");
         }
-        if (authorize) request.SetRequestHeader("Authorization", "Bearer " + AccountSession.AccessToken);
+        if (!string.IsNullOrEmpty(bearerToken)) request.SetRequestHeader("Authorization", "Bearer " + bearerToken);
 
         request.SendWebRequest().completed += _ =>
         {

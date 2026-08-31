@@ -66,6 +66,7 @@ public class StatusController : MonoBehaviour
         get
         {
             if (statesCache != null) return statesCache;
+            if (boundUnit != null) return statesCache = boundUnit.States;
             if (isPlayer) { var c = Character.Instance; return c == null ? null : (statesCache = c.States); }
             return statesCache = GetComponent<UnitStates>() ?? gameObject.AddComponent<UnitStates>();
         }
@@ -88,7 +89,20 @@ public class StatusController : MonoBehaviour
     /// <summary>WHOEVER this controller is attached to, as the shared combat handle — the player's stats object or this
     /// mob's Health. Every per-tick effect below (DoT damage, heal-over-time) goes through this instead of branching on
     /// isPlayer, so a new one is written ONCE and works on both sides.</summary>
-    ICombatUnit Unit => isPlayer ? Character.Instance : health;
+    ICombatUnit Unit => boundUnit != null ? boundUnit : (isPlayer ? (ICombatUnit)Character.Instance : health);
+
+    // WHO this host belongs to, when it cannot be worked out by looking at its own GameObject. Both of the tests
+    // below — "is there a rig on me" and "is there a Health on me" — describe a body standing in a scene, and the
+    // server holds fighters that have no body of their own. Told beats guessed; nothing else changes.
+    ICombatUnit boundUnit;
+
+    /// <summary>Say which unit this host belongs to. The unit's own state store becomes this host's store, so an
+    /// ailment written here and a buff read there can never be two different piles.</summary>
+    public void BindUnit(ICombatUnit unit)
+    {
+        boundUnit = unit;
+        statesCache = unit != null ? unit.States : null;
+    }
 
     void Awake()
     {

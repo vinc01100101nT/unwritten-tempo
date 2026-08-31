@@ -27,14 +27,17 @@ def git(*args):
     ).stdout.strip()
 
 
+# --follow makes every lookup survive a doc being MOVED. Without it, reorganising docs/ into
+# folders silently resets each page's history to empty, and every page reports STALE with
+# "0 commits" — stale-looking for a reason that has nothing to do with its content.
 def head_sha(doc):
     """Current commit of a doc, or None if git has never seen it."""
-    return git("log", "-1", "--format=%H", "--", doc) or None
+    return git("log", "--follow", "-1", "--format=%H", "--", doc) or None
 
 
 def sha_as_of(doc, when):
     """The doc's commit as it stood at a point in time."""
-    return git("log", "-1", "--format=%H", f"--before={when}", "--", doc) or None
+    return git("log", "--follow", "-1", "--format=%H", f"--before={when}", "--", doc) or None
 
 
 def page_last_commit_date(page_file):
@@ -46,7 +49,7 @@ def commits_between(doc, old_sha):
     if not old_sha:
         return []
     try:
-        out = git("log", "--oneline", f"{old_sha}..HEAD", "--", doc)
+        out = git("log", "--follow", "--oneline", f"{old_sha}..HEAD", "--", doc)
     except subprocess.CalledProcessError:
         return ["(stamped commit not found — history rewritten?)"]
     return [line for line in out.splitlines() if line]

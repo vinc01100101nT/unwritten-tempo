@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
@@ -23,9 +24,19 @@ public class CharacterPreview : MonoBehaviour
     Camera cam;
     RenderTexture picture;
     Transform stageRoot;
+    Transform bodyPivot;
     GameObject body;
     CharacterDye3D dye;
     string shownModel;
+
+    // How the body is being held right now. The camera and the lights never move sideways — turning the BODY
+    // is what a hand expects when it drags a doll, and it also keeps the lighting steady while it turns.
+    float turn, tilt, lean;
+    float zoom = 1f;
+
+    const float TiltLimit = 60f;     // past this the body is being looked at from above or below, not turned
+    const float ZoomIn = 0.45f;
+    const float ZoomOut = 1.9f;
 
     /// <summary>Raised once a new body is standing and its recolourable parts are known, so a colour picker can
     /// rebuild for the body actually on show rather than the one before it.</summary>
@@ -63,6 +74,12 @@ public class CharacterPreview : MonoBehaviour
         stageRoot.SetParent(transform, false);
         stageRoot.position = Stage;
 
+        // The body hangs from a pivot at half its height, so tilting turns it about its middle. Hung from the
+        // feet instead, a tilt swings the head right out of the frame.
+        bodyPivot = new GameObject("BodyPivot") { hideFlags = HideFlags.DontSaveInEditor }.transform;
+        bodyPivot.SetParent(stageRoot, false);
+        bodyPivot.localPosition = new Vector3(0f, Character3DBody.BodyHeight * 0.5f, 0f);
+
         picture = new RenderTexture(Size, Size, 16) { name = "CharacterPreview" };
 
         var camGo = new GameObject("Camera") { hideFlags = HideFlags.DontSaveInEditor };
@@ -73,13 +90,14 @@ public class CharacterPreview : MonoBehaviour
         cam.orthographic = false;
         cam.fieldOfView = 30f;
         cam.nearClipPlane = 0.01f;
-        cam.farClipPlane = 5f;      // tight, so only the staged body can possibly be in shot
+        // Only just past the furthest the camera can be pulled back to, so nothing but the staged body can be
+        // in shot. Measured against the zoom limit rather than guessed, or a body vanishes when zoomed out.
+        cam.farClipPlane = Character3DBody.BodyHeight * (2.6f * ZoomOut + 2f);
         cam.targetTexture = picture;
 
         // Slightly above eye level looking down a little, which reads as a portrait rather than a floor plan.
-        float height = Character3DBody.BodyHeight;
-        camGo.transform.localPosition = new Vector3(0f, height * 0.62f, -height * 2.6f);
         camGo.transform.localRotation = Quaternion.Euler(6f, 0f, 0f);
+        ApplyView();
 
         var lightGo = new GameObject("Light") { hideFlags = HideFlags.DontSaveInEditor };
         lightGo.transform.SetParent(stageRoot, false);
@@ -104,6 +122,84 @@ public class CharacterPreview : MonoBehaviour
         {
             into.texture = picture;
             into.color = Color.white;
+            into.raycastTarget = true;   // the picture IS the handle: it has to be able to catch a drag
+            var hand = into.gameObject.AddComponent<PreviewHandle>();
+            hand.preview = this;
+        }
+    }
+
+    // ---- holding the body ------------------------------------------------------------------------------
+
+    /// <summary>Turn the body left/right and tilt it forwards/backwards, in degrees.</summary>
+    public void Turn(float turnDegrees, float tiltDegrees)
+    {
+        turn += turnDegrees;
+        tilt = Mathf.Clamp(tilt + tiltDegrees, -TiltLimit, TiltLimit);
+        ApplyView();
+    }
+
+    /// <summary>Lean the body over sideways, in degrees — the third axis a drag cannot reach on its own.</summary>
+    public void Lean(float degrees)
+    {
+        lean += degrees;
+        ApplyView();
+    }
+
+    /// <summary>Move the camera closer or further away. Positive comes closer.</summary>
+    public void Zoom(float amount)
+    {
+        zoom = Mathf.Clamp(zoom - amount, ZoomIn, ZoomOut);
+        ApplyView();
+    }
+
+    /// <summary>Back to the straight-on portrait the preview opens with.</summary>
+    public void ResetView()
+    {
+        turn = tilt = lean = 0f;
+        zoom = 1f;
+        ApplyView();
+    }
+
+    void ApplyView()
+    {
+        if (bodyPivot != null) bodyPivot.localRotation = Quaternion.Euler(tilt, turn, lean);
+        if (cam == null) return;
+        float height = Character3DBody.BodyHeight;
+        cam.transform.localPosition = new Vector3(0f, height * 0.62f * zoom, -height * 2.6f * zoom);
+    }
+
+    /// <summary>The picture's own hands. Left drag turns and tilts the body, right drag leans it and pushes the
+    /// camera in and out, the wheel zooms, and a double-click puts it back the way it opened.</summary>
+    class PreviewHandle : MonoBehaviour, IDragHandler, IScrollHandler, IPointerClickHandler
+    {
+        public CharacterPreview preview;
+
+        const float TurnPerPixel = 0.55f;
+        const float TiltPerPixel = 0.35f;
+        const float LeanPerPixel = 0.4f;
+        const float ZoomPerPixel = 0.005f;
+        const float ZoomPerNotch = 0.09f;
+
+        public void OnDrag(PointerEventData e)
+        {
+            if (preview == null) return;
+            if (e.button == PointerEventData.InputButton.Left)
+                preview.Turn(-e.delta.x * TurnPerPixel, -e.delta.y * TiltPerPixel);
+            else
+            {
+                preview.Lean(e.delta.x * LeanPerPixel);
+                preview.Zoom(e.delta.y * ZoomPerPixel);
+            }
+        }
+
+        public void OnScroll(PointerEventData e)
+        {
+            if (preview != null) preview.Zoom(e.scrollDelta.y * ZoomPerNotch);
+        }
+
+        public void OnPointerClick(PointerEventData e)
+        {
+            if (preview != null && e.clickCount >= 2) preview.ResetView();
         }
     }
 
@@ -122,9 +218,10 @@ public class CharacterPreview : MonoBehaviour
             if (body != null) Destroy(body);
             dye = null;
 
-            body = Instantiate(model, stageRoot);
+            body = Instantiate(model, bodyPivot);
             body.hideFlags = HideFlags.DontSaveInEditor;
-            body.transform.localPosition = Vector3.zero;
+            // Hung from the pivot's middle, so its feet still land on the stage floor.
+            body.transform.localPosition = new Vector3(0f, -Character3DBody.BodyHeight * 0.5f, 0f);
             body.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);   // face the camera
 
             // Fit to the same height every character in the game stands at, so paging bodies doesn't make them
@@ -142,6 +239,7 @@ public class CharacterPreview : MonoBehaviour
             // colours straight to the model in front of us and persists nothing, which is exactly what a preview
             // wants — the choice is only written down when the character is actually created.
             dye = body.AddComponent<CharacterDye3D>();
+            ResetView();   // a body just paged to is shown as itself, not still held at the last one's angle
             OnBodyChanged?.Invoke();
         });
     }

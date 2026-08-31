@@ -48,6 +48,10 @@ public class DeathScreen : MonoBehaviour
         StopAllCoroutines();
         StartCoroutine(ShowRoutine());
     }
+    // Built once for this screen, not once per death — see MobRespawn.
+    WaitForSeconds preFadeWait;
+    float preFadeWaitFor = -1f;
+
 
     IEnumerator ShowRoutine()
     {
@@ -58,7 +62,15 @@ public class DeathScreen : MonoBehaviour
         SetButtonEnabled(false);
 
         // Let the player's death pose land before the screen takes over.
-        if (preFadeDelay > 0f) yield return new WaitForSeconds(preFadeDelay);
+        if (preFadeDelay > 0f)
+        {
+            if (preFadeWait == null || preFadeWaitFor != preFadeDelay)
+            {
+                preFadeWait = new WaitForSeconds(preFadeDelay);
+                preFadeWaitFor = preFadeDelay;
+            }
+            yield return preFadeWait;
+        }
 
         // Fade the overlay in.
         for (float t = 0f; t < fadeTime; t += Time.deltaTime)
@@ -70,9 +82,13 @@ public class DeathScreen : MonoBehaviour
 
         // Countdown, then unlock the button.
         float remaining = respawnDelay;
+        int shown = -1;
         while (remaining > 0f)
         {
-            countdown.text = $"Respawn in {Mathf.CeilToInt(remaining)}…";
+            // Only when the number on screen actually changes — a rewrite every frame both allocates a
+            // string and forces the canvas to rebuild, for a digit that moves once a second.
+            int secs = Mathf.CeilToInt(remaining);
+            if (secs != shown) { countdown.text = $"Respawn in {secs}…"; shown = secs; }
             remaining -= Time.deltaTime;
             yield return null;
         }

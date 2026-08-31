@@ -24,36 +24,73 @@ public class GameRoot : MonoBehaviour
              "whichever map you had open is remembered and used instead.")]
     public string firstMap = "town_0";
 
+    [Tooltip("SERVER ONLY: maps the server keeps open BESIDES the first one, so their mobs are alive and moving " +
+             "before anybody walks in. A player ignores this — they are only ever in one map. GAME_MAPS overrides " +
+             "it when set, for trying a different set without a rebuild.")]
+    public string[] alsoHeldOpen = { "field_11" };
+
     bool worldUp;
 
     void Start()
     {
         AccountSession.OnChanged += OnSessionChanged;
+        GameNetwork.OnJoinedWorld += OnJoinedWorld;
+        GameNetwork.OnLostWorld += OnLostWorld;
         Quiet();                  // asleep until somebody is actually playing
         OnSessionChanged();       // …unless a character was already chosen before this scene loaded
     }
 
-    void OnDestroy() => AccountSession.OnChanged -= OnSessionChanged;
+    void OnDestroy()
+    {
+        AccountSession.OnChanged -= OnSessionChanged;
+        GameNetwork.OnJoinedWorld -= OnJoinedWorld;
+        GameNetwork.OnLostWorld -= OnLostWorld;
+    }
 
-    // The SERVER owns the world rather than watching one, so it has nobody to sign in and nothing to wait for:
-    // it brings the map up the moment it boots. The gate below is the only thing that knows the difference —
-    // everything downstream (waking the scene, loading the map) is identical either way.
-    static bool WorldMayRun => AccountSession.IsActive || GameServer.IsServer;
+    // THERE IS NO OFFLINE WORLD. A server owns a world and so may bring one up the moment it boots; a player
+    // does not own one and may only be IN one, which means being joined to a server. Signing in is no longer
+    // enough to be somewhere — it only earns the right to try.
+    static bool MayTryToEnter => AccountSession.IsActive || GameServer.IsServer;
 
     void OnSessionChanged()
     {
-        if (worldUp || !WorldMayRun) return;
+        if (worldUp || !MayTryToEnter) return;
+
+        // The wire FIRST, the world second. One call site for both halves, so the two can never be started by
+        // different rules — a server begins listening, a player dials.
+        GameNetwork.Begin();
+
+        // A server IS the world and waits for nobody. A player waits to be let in (see OnJoinedWorld).
+        if (GameServer.IsServer) BringTheWorldUp();
+        else ReconnectNotice.Show();   // something is happening, and it is not nothing
+    }
+
+    // The wire came up. THIS is the moment a player is allowed to be somewhere.
+    void OnJoinedWorld()
+    {
+        ReconnectNotice.Hide();
+        if (worldUp) return;           // a reconnect, not a first arrival — the world is already here
+        BringTheWorldUp();
+    }
+
+    // Every retry spent. Nobody may be in a world they are not joined to, so the world goes and the player is
+    // put back at the front door with a line saying why — not left standing in a town nobody else can see.
+    void OnLostWorld()
+    {
+        GameNetwork.Forget();
+        AccountSession.SignOut();
+        SceneManager.LoadScene(MapManager.SystemsScene, LoadSceneMode.Single);
+        SignInScreen.OpenSaying("Lost the connection to the world.");
+    }
+
+    void BringTheWorldUp()
+    {
         worldUp = true;
         Wake();
         BringUpMap();
         // A server writes to a log file, not to a screen, so the only way anyone knows it came up is if it
         // says so. Server-only: a player's console is not the place to announce this.
         if (GameServer.IsServer) Debug.Log("[server] world up — loading map '" + MapToLoad() + "'");
-
-        // Joining the wire happens at the same moment the world starts existing, for BOTH sides — a server
-        // begins listening as it boots, a client dials once it is through the door. One call site, so the
-        // two halves can never be started by different rules.
-        GameNetwork.Begin();
     }
 
     // The persistent layer exists from the first frame — it IS this scene — so it gets switched off rather than
@@ -88,17 +125,47 @@ public class GameRoot : MonoBehaviour
 
     void BringUpMap()
     {
+        string first = MapToLoad();
+
         // If a gameplay map is somehow already loaded alongside Systems, adopt it instead of loading a second one.
+        bool adopted = false;
         for (int i = 0; i < SceneManager.sceneCount; i++)
         {
             var s = SceneManager.GetSceneAt(i);
             if (s.isLoaded && s.name != MapManager.SystemsScene)
             {
                 MapManager.Activate(s);
-                return;
+                first = s.name;   // the adopted map IS the first one; nothing below may load it a second time
+                adopted = true;
+                break;
             }
         }
-        MapManager.LoadMap(MapToLoad(), null);
+        if (!adopted) MapManager.LoadMap(first, null);
+
+        // A PLAYER IS IN ONE MAP. A SERVER HOLDS SEVERAL AT ONCE, and that difference is the whole reason a
+        // world has creatures in it when nobody is looking: a field the server never opened has no spawner,
+        // so it makes nothing, and a player walking in finds it empty. Which maps to hold is authored above.
+        if (!GameServer.IsServer) return;
+
+        foreach (string name in AlsoHeldOpen())
+        {
+            if (name == first) continue;                                  // already coming up above
+            if (SceneManager.GetSceneByName(name).isLoaded) continue;     // somebody already has it
+            MapManager.LoadMap(name, null);
+        }
+    }
+
+    // The extra maps a server keeps open. Normally the authored list; GAME_MAPS replaces it wholesale so a
+    // different set can be tried without a rebuild, the same way GAME_SERVER and ACCOUNTS_URL work. Read once
+    // at boot: this runs when the world comes up and never again.
+    string[] AlsoHeldOpen()
+    {
+        string v = System.Environment.GetEnvironmentVariable("GAME_MAPS");
+        if (string.IsNullOrWhiteSpace(v)) return alsoHeldOpen ?? System.Array.Empty<string>();
+
+        var names = v.Split(',');
+        for (int i = 0; i < names.Length; i++) names[i] = names[i].Trim();
+        return names;
     }
 
     string MapToLoad()

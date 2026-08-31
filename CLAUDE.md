@@ -40,6 +40,82 @@ file under `handoffs/` so the next session can resume cold. The same applies whe
 bug that ate real debugging time. The full protocol — required contents, their order, and when to delete the
 file — is the **`handoff` skill**. Invoke it; don't improvise the format.
 
+## Reviewer protocol — the phrase "spawn a reviewer"
+
+**"spawn a reviewer"** is the ONLY thing that starts one. It spawns a single cold sub-agent that READS the
+change and hunts for what is broken in it — the protocol is the **`reviewer` skill**.
+
+**The default is OFF and it is never suggested.** Do not spawn one after making changes, do not spawn one
+because a change felt risky, and do not end a report by offering one. Silence means no.
+
+It is a reviewer, NOT a tester: nothing here can play the game, so its findings are reasoning about code and
+must never be relayed as something that was watched happening.
+
+## Tester protocol — the phrase "spawn a tester"
+
+**"spawn a tester"** is the ONLY thing that starts one. It spawns a sub-agent that actually PLAYS the game
+through the live editor and reports what it OBSERVED — the protocol is the **`tester` skill**.
+
+**The default is OFF and it is never suggested**, because it takes over the editor for as long as it runs.
+
+It is the opposite half of the reviewer: a reviewer only reads, a tester only reports what it watched happen.
+Never let one wear the other's words. Two players at once is beyond it — the editor is one client.
+
+## AI learnings — `docs/5-ai-learnings/`
+
+Lessons about HOW to work — a way of measuring, a way of diagnosing, a way of running a long task — that would
+help on ANY codebase. One page each, indexed in that folder's `README.md`.
+
+**The whole problem this folder has is being READ.** Memory loads itself into every session; docs do not. A
+learnings folder with no read trigger is a diary. So the system below is mostly about reading, and everything in
+it exists to make the check cost almost nothing.
+
+### READ — the trigger is mechanical, not a good intention
+
+**Open `docs/5-ai-learnings/README.md` — the index only — before a SECOND attempt at anything that already
+failed once.** A stalled tool, a measurement you cannot get, a fix that did not take, a long agent run. That is
+the same beat as the second-fix rule at the top of this file, deliberately: one moment to remember, not two.
+
+Also open it when a tool HANGS or returns nothing, before theorising about why.
+
+The index is one screen of symptom lines, so reading it costs a few seconds. If checking it ever feels expensive,
+the index has grown too big and that is a fault to FIX (below), not a reason to skip it.
+
+### WRITE — the trigger is a wasted round, not the end of a session
+
+Write a page when **both** are true:
+
+1. it generalises past this project, and
+2. **something real was paid for it** — a wasted round, a lost hour, a wrong report, a user having to correct you.
+
+The cost IS the trigger. At the end of any session that burned a round, ask: *what rule would have saved it?* If
+the answer is project-specific, it goes to memory instead. If you cannot name what it cost, it is advice, not a
+learning — do not write it.
+
+### The page shape — fixed, so it can be skimmed at speed
+
+1. **Reach for this when** — the SYMPTOM, in the reader's words, first line of the page.
+2. **The rule** — what to do, in two or three sentences.
+3. **Why** — the incident and what it cost. Concrete, with the real numbers.
+4. **How to apply** — the concrete moves, including the exact command where there is one.
+
+The index line is **symptom → lesson**, never lesson → symptom, because you arrive at the index knowing the
+symptom and nothing else.
+
+### Keep it SMALL — a cap is what keeps it readable
+
+**Hard cap: 12 pages.** At the cap, a new lesson must merge into an existing page or replace one. Delete a page
+the moment it is obsolete, or the moment it graduates into a hard rule in this file — a lesson in two places is
+the dual-path rot this file bans everywhere else.
+
+### One home per lesson, split by whether it must fire unprompted
+
+- **Must change default behaviour every session, with nobody looking it up** → memory, or a line in this file.
+- **A playbook you consult when you hit the situation** → `docs/5-ai-learnings/`.
+- **A bug's root cause, a design decision, a project fact** → NOT a learning. Memory or the systems doc.
+
+Never both homes, ever.
+
 ## Project layout
 
 - `unity/Assets/Scripts/` — all game C# (Unity 6 + URP); see `unity/Assets/Scripts/CLAUDE.md`
@@ -127,6 +203,44 @@ that costs a round.
   tools/check-skill-data.py     # after any skill .asset edit — proves the DATA is sane, where silent bugs live
   ```
   Neither touches the running editor, so neither breaks the no-refresh rule. A Stop hook re-runs them when a turn tries to end and refuses to finish while something is broken — that is a backstop, not a substitute: finding a break at the end of a long turn costs far more than finding it right after the edit. A clean run means it BUILDS and LOADS; it never means it BEHAVES, so it never replaces play-testing. (`tools/prove-skill-data-check.py` keeps the data checker honest — never edit that checker without re-running it. Details: the `unity-live-editor` and `compose-skill` skills.)
+
+  **AND READ THE EDITOR'S CONSOLE BEFORE SAYING THE WORK IS DONE — every time, unprompted (HARD-PINNED, added 2026-08-29 at the user's instruction).** The offline checker and the console answer DIFFERENT questions, and a clean checker has never meant a clean console: the checker compiles the source it finds on disk, while the console is the only place that shows what the running editor actually did with it — an import failure, a serialization complaint, a null thrown by a tool, a package window falling over. So the closing move of any turn that touched C#, an asset, a scene or a prefab is: run the checker, then read the console, then report. **The user must never be the one to say "check the console".** Being asked is the failure this rule exists to remove.
+
+  **READ THE WHOLE CONSOLE. NEVER GREP IT, NEVER FILTER IT, NEVER PATTERN-MATCH IT.** Pull every entry —
+  `severity: all`, a generous limit — and actually read them. A search pattern can only return what I already
+  suspected, so it turns an investigation into a confirmation of my own guess, and whatever I did not think of
+  stays invisible while I report the silence as good news. **The user reporting a problem is not a hint about
+  WHERE to look — it is an instruction to look at ALL of it.** No shortcut is permitted here, ever, no matter
+  how big the log or how sure I am about the cause.
+  *(Scar, 2026-08-29: the user said "still error". I grepped the editor log for `error CS` and for lines
+  starting with "Error", found none, and told them the console was clean. A red `Burst internal compiler error`
+  was sitting at the top of their console the whole time — it matched neither pattern. They had to screenshot
+  it for me. Twenty minutes later I repeated the identical mistake on the folder that caused it: I tested
+  whether it was WRITABLE, it was, and I nearly moved on — the broken bit was EXECUTE. Both failures are one
+  failure: I chose what to look for, and so I could only find what I chose.)*
+
+  Three more things make the console honest, and skipping any of them turns it into a lie:
+  1. **Prove the reader can SEE.** An empty result is only evidence when the instrument has coverage — and this one's buffer is per-editor-session, so a restarted editor reports zero of everything. If `severity: all` also returns zero, the console is EMPTY, not CLEAN, and those are not the same sentence. Say which one it is.
+  2. **Read `recompile_status` too** — it carries its own error list and survives an empty console, so it is the independent second signal when the buffer has nothing.
+  3. **Attribute every error before blaming or clearing it.** An error inside a package's own code (`Library/PackageCache/…`) is Unity's, not ours; say so plainly instead of hunting our source for it.
+
+  The same ban covers the on-disk log at `~/Library/Logs/Unity/Editor.log` when the console buffer is empty:
+  read its tail wholesale, do not go fishing in it with a regex.
+
+  **NEVER ask the user to screenshot or describe an error. The live link exists — USE IT.** Asking them to
+  photograph their own screen makes them do the work the connection is for, on top of the work of having found
+  the bug. If the console buffer is empty, read the log; if the link is down, say so plainly and fix that. A
+  screenshot is something the user may VOLUNTEER, never something I request.
+
+  When an edit MUST be proven to have reached the running editor, search the built assembly for a string unique to the change — `Library/ScriptAssemblies/Assembly-CSharp.dll`, with a control string you know predates the edit to prove the search works. **.NET stores literals as UTF-16, so macOS `strings` cannot see them and will report a false ABSENT** — match `s.encode('utf-16-le')` against the raw bytes instead. (Scar: that exact false negative nearly had a working, already-compiled fix reported as missing from the build.)
+- **EVERY SESSION, PROVE THE GUARDS ARE ALIVE — a hook that cannot start fails SILENTLY (HARD-PINNED, added 2026-08-31 at the user's instruction).** A hook whose command is missing does not error, does not warn, and does not appear anywhere in the reply: the turn proceeds exactly as if the guard had approved the work. The performance gate died that way when this project moved to the Mac — it was configured to start with a Python that does not exist here — and it guarded NOTHING for five weeks while its own log sat there looking finished. Nobody noticed because nothing was watching the watchers. So, every session, without being asked:
+  1. **The guard check runs on its own at session start** and answers two DIFFERENT questions about every hook configured on this machine, the user's global ones included: *can it start* (the program exists, the file it runs exists, the settings parse) and *has it actually run* (each of our hooks stamps a heartbeat the moment it is invoked, so one that is configured, runnable and never firing shows up as one nobody has seen in weeks). **Runnable is not running** — either question alone misses a whole class of dead guard.
+  2. **If it reports a fault, SAY IT TO THE USER IN THE FIRST REPLY**, in plain words, before whatever else they asked for. A silent guard is the user's problem to know about, not mine to file away.
+  3. **If the session-start report never arrived at all, that is itself the fault** — say so plainly instead of assuming the guards are fine. An absent report is not a clean one.
+  4. **Never claim a hook is working because it is configured.** The config is a wish; the heartbeat is the evidence.
+  5. **No interpreter name is ever written into the settings file.** Every hook starts through one small launcher that picks whatever Python the machine has (`python3`, `python`, `py`), because `python` exists on Windows and not on macOS and `python3` the other way round — hardcoding either is what killed the gate. Add a new hook the same way; a settings entry naming an interpreter directly is a bug.
+  A guard nobody can see fail is worse than no guard at all, because it buys confidence it is not paying for.
+
 - **Run it yourself through the live editor — don't hand the user a menu click.** When an author-time action can be executed against the running editor (asset mutations, one-shot fixes, an existing tool's logic), RUN IT. A menu path is for the user ONLY when the editor link genuinely can't do it (a live Scene-view interaction, Play mode, or their own judgement). Separate from the forced-recompile ban above, which stays.
 - **Writing an editor window or tool? Use the `editor-window` skill** — it owns the shrink rule (max-width only, never a fixed or minimum width), the tools-catalog update, and the quick-fix tagging. A window that can't shrink hides every field beside the greedy control.
 - **Enemy term is "mobs"** — never "bestiary"

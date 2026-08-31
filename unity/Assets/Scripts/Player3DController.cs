@@ -502,6 +502,19 @@ public partial class Player3DController : MonoBehaviour
     Vector3 ReadWasd()
     {
         float x = 0f, z = 0f;
+#if UNITY_ANDROID
+        // The on-screen stick feeds the same camera-relative direction the keys do, so everything downstream —
+        // the gears, the facing, the stance, the footsteps — is the desktop's code untouched. The one difference
+        // is that a stick is analog: its LENGTH is kept, so a half-push walks at half speed, where four keys can
+        // only ever say "full speed" and must be normalized.
+        Vector2 stick = TouchControls.MoveAxis;
+        if (stick.sqrMagnitude > 1e-4f)
+        {
+            Vector3 tdir = CameraRig.ForwardXZ * stick.y + CameraRig.RightXZ * stick.x; tdir.y = 0f;
+            float len = Mathf.Min(stick.magnitude, 1f);
+            return tdir.sqrMagnitude > 1e-4f ? tdir.normalized * len : Vector3.zero;
+        }
+#endif
         if (HeldW()) z += 1f;
         if (HeldS()) z -= 1f;
         if (HeldD()) x += 1f;
@@ -621,7 +634,7 @@ public partial class Player3DController : MonoBehaviour
         // Loot reach == melee reach: you must be as close as you'd stand to swing (no looting from afar).
         // The pickup's own collectRadius stays the CLICK size; this gates the actual collect.
         float reach = attacker != null ? attacker.EffectiveRange : pendingPickup.collectRadius;
-        if (Vector3.Distance(a, b) > reach) return;
+        if ((a - b).sqrMagnitude > reach * reach) return;
         pendingPickup.Collect();                         // item/gold + fires WorldPickup.OnCollected (PickUp anim)
         pickupLockUntil = Time.time + PickupLockSeconds;
         pendingPickup = null;
@@ -863,7 +876,7 @@ public partial class Player3DController : MonoBehaviour
     {
         if (wp >= path.Count) { routing = false; return Vector3.zero; }
         Vector3 to = WaypointDelta();
-        if (to.magnitude <= arriveDistance)
+        if (to.sqrMagnitude <= arriveDistance * arriveDistance)
         {
             wp++;
             if (wp >= path.Count) { routing = false; return Vector3.zero; }
@@ -969,21 +982,11 @@ public partial class Player3DController : MonoBehaviour
         return false;
     }
 
-    static Vector2 MousePos()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null) return Mouse.current.position.ReadValue();
-#endif
-        return Input.mousePosition;
-    }
+    // Pointer reads route through PointerInput — the ONE gate for the mouse, the way Hotkeys is the one gate for
+    // keys. It is also where a finger answers instead on a phone, so nothing here has to know about touch.
+    static Vector2 MousePos() => PointerInput.Position;
 
-    static bool LeftDown()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) return true;
-#endif
-        return Input.GetMouseButtonDown(0);
-    }
+    static bool LeftDown() => PointerInput.PrimaryDown;
 
     /// <summary>True when the cursor is over a UI element (HUD), so a click shouldn't also move the player.
     /// Delegates to <see cref="UiBlock"/> so uGUI windows AND IMGUI overlays (dev panels) both block.</summary>

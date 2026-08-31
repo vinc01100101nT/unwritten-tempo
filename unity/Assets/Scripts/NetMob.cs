@@ -38,6 +38,26 @@ public class NetMob : NetworkBehaviour
     /// <summary>Which creature this is, by catalog id. Set once by the server before it spawns.</summary>
     [SyncVar] public string defId = "";
 
+    /// <summary>WHICH MAP this creature lives in, by scene name. Set by the server from the scene the real creature
+    /// actually stands in.
+    ///
+    /// <para><b>Why a watcher needs it.</b> The world is several maps at once and they share one set of
+    /// coordinates, so a creature in the field and a person in a town can be a metre apart by the numbers. Without
+    /// this, every machine drew every creature in the world into whichever map its player was standing in: a town
+    /// full of the field's monsters, standing on nothing, that walked at you and could never reach you.</para></summary>
+    ///
+    /// <para>PRIVATE on purpose, unlike the id above it. Mirror syncs a value whether or not Unity can see it, but
+    /// a PUBLIC field is also baked into the saved prefab — and this prefab is one of the two the server loads at
+    /// the very moment it starts up. Kept private, the wire carries it and the stored prefab is left exactly as it
+    /// was.</para></summary>
+    [SyncVar] string mapName = "";
+
+    /// <summary>Whether this creature wears a live-3D body instead of a flat sprite. Set once by the server
+    /// before it spawns, from the creature itself — the kind of thing it is does not say, because the same kind
+    /// can be summoned either way. Without this on the wire the choice lived only on the machine that made it,
+    /// and every watcher rebuilt the creature from its kind alone, which is always the sprite.</summary>
+    [SyncVar] public bool isShadow;
+
     [SyncVar] Vector3 netPosition;
     [SyncVar] float netYaw;
     [SyncVar] int netHealth;
@@ -51,29 +71,56 @@ public class NetMob : NetworkBehaviour
 
     // The client's own copy of the body: seen, never simulated.
     GameObject view;
-    bool viewRequested;
+    // A body is on its way. NOT "one was asked for once" — a body can be destroyed under us, and a latch that only
+    // ever went true meant such a creature could never be drawn again for as long as it lived.
+    bool viewLoading;
+
+    /// <summary>WATCHING MACHINES ONLY: the copy of this creature that a server-decided blow is shown on. Cached
+    /// when the copy is built, never looked up per hit — the door that uses it runs on every blow.</summary>
+    public IDamageable WatchedTarget { get; private set; }
 
     const float PushInterval = 0.1f;   // ten times a second, same cadence as a player's position
+
     float nextPush;
 
-    // Close enough to count as arrived. Below these, blending toward the target is work nobody can see.
-    const float SettledDistance = 0.005f;
-    const float SettledAngle = 0.5f;
+    // The synced facing, held as a rotation. Rebuilt only when the number actually changes — the follow below runs
+    // every frame on every creature on screen, and building a rotation from an angle there would be that cost times
+    // every mob in the field, forever, for a value that changes ten times a second at most.
+    Quaternion facing = Quaternion.identity;
+    float facingBuiltFrom = float.NaN;
 
     /// <summary>Server-only: hand this shell the creature it speaks for.</summary>
     public void BindOnServer(GameObject mob, string id)
     {
         ServerMob = mob;
         defId = id;
+        mapName = mob != null ? mob.gameObject.scene.name : "";
+        isShadow = mob != null && mob.GetComponent<MobShadow3DVisual>() != null;
         serverHealth = mob != null ? mob.GetComponent<Health>() : null;
         if (serverHealth != null) { netMaxHealth = serverHealth.maxHealth; netHealth = serverHealth.CurrentHP; }
-        if (mob != null) { netPosition = mob.transform.position; netYaw = mob.transform.eulerAngles.y; }
+        if (mob != null)
+        {
+            netPosition = mob.transform.position;
+            netYaw = mob.transform.eulerAngles.y;
+            // AND THE SHELL ITSELF STANDS THERE TOO — see StandWhereTheMobStands.
+            transform.position = mob.transform.position;
+        }
     }
+
+    /// <summary>Put this shell where the creature it speaks for actually is.
+    ///
+    /// <para>The position on the wire is a value this object CARRIES; the position of the object is what the
+    /// server measures to decide WHO IS TOLD about it, and those were two different numbers. Every shell was
+    /// built at the world origin and left there, so "is this creature near enough to hear about" was really
+    /// asking "is this player near the origin" — one answer for every creature in the world at once. A player
+    /// who walked away lost the lot, a player who stayed was told about creatures in maps they were nowhere
+    /// near, and nothing changed as they travelled, so nothing was ever re-sent.</para></summary>
+    void StandWhereTheMobStands() => transform.position = ServerMob.transform.position;
 
     void Update()
     {
-        if (isServer) PushFromTheRealMob();
-        else FollowTheServer();
+        if (isServer) { PushFromTheRealMob(); return; }
+        if (isClient) FollowTheServer();
     }
 
     // ---- the server's half: publish what the real creature is doing --------------------------------------
@@ -95,7 +142,18 @@ public class NetMob : NetworkBehaviour
 
         netPosition = ServerMob.transform.position;
         netYaw = ServerMob.transform.eulerAngles.y;
-        if (serverHealth != null) netHealth = serverHealth.CurrentHP;
+        StandWhereTheMobStands();
+
+        // BOTH numbers, every push — not just the current one. A creature's maximum is not fixed for life: it
+        // levels up, and levelling re-derives its whole stat block including how much health it can hold. Sending
+        // only the current figure meant every watching player measured a grown creature's bar against the maximum
+        // it was BORN with, so a full-health veteran read as overflowing and a hurt one read as healthier than it
+        // was. Both are cheap, and a SyncVar that is written the same value it already holds sends nothing.
+        if (serverHealth != null)
+        {
+            netHealth = serverHealth.CurrentHP;
+            netMaxHealth = serverHealth.maxHealth;
+        }
     }
 
     // ---- everybody else's half: show it ------------------------------------------------------------------
@@ -105,35 +163,95 @@ public class NetMob : NetworkBehaviour
     // PERFORMANCE.md bans.
     Health viewHealth;
     int lastShownHealth = -1;
+    int lastShownMaxHealth = -1;
+
+    // The map this machine was standing in when we last decided whether to draw this creature. An INTEGER, not the
+    // name: this runs on every creature in the world every frame, and PERFORMANCE.md bans a string compare at that
+    // rate. It only ever moves when a person walks through a door.
+    int seenMapVersion = -1;
+    bool inMyMap;
 
     void FollowTheServer()
     {
+        // AM I EVEN IN THE PLACE THIS CREATURE IS? Re-decided when this machine changes map, and while this
+        // creature has not said which map it is in yet — never once per frame in the settled case.
+        //
+        // THE SECOND HALF IS NOT BELT AND BRACES. A creature's map arrives as its own value on the wire and can
+        // land a frame or two after the creature itself, exactly as its kind does. Deciding once on an empty name
+        // and remembering that answer would show a creature from somewhere else for the rest of its life, and the
+        // map it belongs to would never be read at all — the bug this whole change exists to remove, restored by
+        // the very check meant to fix it.
+        bool mapKnown = !string.IsNullOrEmpty(mapName);
+        if (seenMapVersion != MapManager.MapVersion || !mapKnown)
+        {
+            // Latched ONLY once the creature has actually said where it is; until then this stays open so the
+            // question is asked again next frame.
+            seenMapVersion = mapKnown ? MapManager.MapVersion : -1;
+            inMyMap = mapKnown && mapName == MapManager.CurrentMap;
+            // GONE THE MOMENT YOU LEAVE, not left standing in the map you walked into. Its body is handed back for
+            // reuse exactly as a creature that walked out of range is, so returning costs nothing.
+            if (!inMyMap && view != null) DropTheView();
+        }
+
+        if (!inMyMap) return;
+
         if (view == null) { EnsureView(); return; }
 
-        // A mob standing still costs nothing. Without this, every mob on screen pays for a position blend and
-        // a rotation blend every frame forever — and a rotation blend is the expensive one. Most mobs in a
-        // town or a quiet field are idle most of the time, so this is the common case, not the rare one.
-        var t = view.transform;
-        Vector3 here = t.position;
-        if ((here - netPosition).sqrMagnitude > SettledDistance * SettledDistance)
-            t.position = Vector3.Lerp(here, netPosition, 12f * Time.deltaTime);
+        // The SHARED way a watched body catches up — the same one a watched person uses, so a creature and a
+        // player can never drift into gliding differently. It also leaves a body that has arrived completely
+        // alone, which is the common case in a town or a quiet field, not the rare one.
+        if (facingBuiltFrom != netYaw) { facing = Quaternion.Euler(0f, netYaw, 0f); facingBuiltFrom = netYaw; }
+        WatchedBody.Follow(view.transform, netPosition, facing);
 
-        if (Mathf.Abs(Mathf.DeltaAngle(t.eulerAngles.y, netYaw)) > SettledAngle)
-            t.rotation = Quaternion.Slerp(t.rotation, Quaternion.Euler(0f, netYaw, 0f), 12f * Time.deltaTime);
-
-        // Only when the number actually changed — a mob at steady health should cost nothing, and the
+        // Only when a number actually changed — a mob at steady health should cost nothing, and the
         // nameplate below only redraws when it sees a different value anyway.
-        if (viewHealth != null && netHealth != lastShownHealth)
+        //
+        // BOTH numbers are watched, not just the current one. Watching only the current figure would have made the
+        // maximum's delivery depend on the current one happening to move in the same breath — true when a level-up
+        // heals to full, and quietly false the day anything raises a creature's ceiling without touching what it is
+        // holding right now. A bar is a pair of numbers; either one moving is news.
+        if (viewHealth != null && (netHealth != lastShownHealth || netMaxHealth != lastShownMaxHealth))
         {
+            bool wasDown = lastShownHealth == 0;
             lastShownHealth = netHealth;
+            lastShownMaxHealth = netMaxHealth;
+
+            // BACK ON ITS FEET. A creature that dies where it stands is not replaced — the server revives the very
+            // same one, so no new shell is ever announced and this copy is never rebuilt. It had played its death
+            // for real (faded out, colliders off) and nothing ever told it otherwise, so from every watching seat
+            // the creature died once and never came back while the server had it walking around.
+            //
+            // Restored through the SAME function the server revives its own bodies with, then re-silenced, exactly
+            // as a body handed back by the pool is — so a creature that got up can never keep a brain of its own.
+            if (wasDown && netHealth > 0) ReviveTheWatchedCopy();
+
             viewHealth.SetHealthFromServer(netHealth, netMaxHealth);
         }
     }
 
+    void ReviveTheWatchedCopy()
+    {
+        MobRespawn.Reactivate(view, netPosition);
+        SilenceTheBrain(view);
+    }
+
     void EnsureView()
     {
-        if (viewRequested || string.IsNullOrEmpty(defId)) return;
-        viewRequested = true;
+        if (viewLoading || view != null || string.IsNullOrEmpty(defId)) return;
+        viewLoading = true;
+
+        // A body of this kind we already have, standing by. Reusing it costs nothing; building one costs a model
+        // fetch and a rig assembled from scratch, and a field of respawning creatures asks for that every few
+        // seconds. It comes back as a FRESH creature — the same treatment the server gives its own pooled bodies,
+        // through the same function, so a returning body can never be a corpse or keep the last one's wounds.
+        var reused = TakeSpareBody(BodyKind);
+        if (reused != null)
+        {
+            reused.SetActive(true);
+            MobRespawn.Reactivate(reused, netPosition);
+            AdoptView(reused);
+            return;
+        }
 
         var def = MonsterCatalog.Get(defId);
         if (def == null)
@@ -144,12 +262,45 @@ public class NetMob : NetworkBehaviour
 
         MobSpawner.Spawn(def, netPosition, go =>
         {
-            if (this == null || go == null) return;
-            SilenceTheBrain(go);
-            view = go;
-            viewHealth = go.GetComponent<Health>();   // cached once; never looked up per frame
-            byView[go] = this;                        // so a swing at this body finds the shared identity
+            if (go == null) return;
+            // NOBODY LEFT TO SPEAK FOR IT. A shell can be taken away while its body is still being fetched — which
+            // is now an ordinary event rather than a rare one, because a creature that walks out of range is
+            // dismissed and taken back again. Left standing, this body would keep its own brain and its own
+            // respawn timer: a monster only this machine can see, hunting people nobody else can watch it hunt.
+            if (this == null) { Destroy(go); return; }
+            AdoptView(go);
         });
+    }
+
+    // Everything true of a body this shell is now speaking for, whether it was just built or handed back by the
+    // pool. ONE place, so a reused body can never quietly skip a step a fresh one gets.
+    void AdoptView(GameObject go)
+    {
+        SilenceTheBrain(go);
+        view = go;
+        viewLoading = false;
+        viewHealth = go.GetComponent<Health>();   // cached once; never looked up per frame
+        WatchedTarget = viewHealth;               // cached once; the per-hit door reads it
+        byView[go] = this;                        // so a swing at this body finds the shared identity
+
+        // The body belongs to the WORLD, not to the map this machine happens to be standing in when it arrives.
+        MapManager.KeepAcrossMaps(go);
+
+        // The live-3D body, if the server said this creature wears one. A body only ever comes back from the pool
+        // as what it was built as (see BodyKind), so this either adds it to a fresh body or finds it already there.
+        if (isShadow && go.GetComponent<MobShadow3DVisual>() == null) go.AddComponent<MobShadow3DVisual>();
+
+        // A REUSED BODY MUST BE TOLD ITS HEALTH AGAIN. These remember what was last drawn so a creature at steady
+        // health costs nothing; left as they were, a recycled body would keep showing the last creature's wounds
+        // until its health happened to change.
+        lastShownHealth = -1;
+        lastShownMaxHealth = -1;
+
+        // This body does not get to decide it died. It shows a blow — the number, the flash — but the moment
+        // it is DEAD is a fact that arrives from the server like every other fact about it. Without this, a
+        // watching machine's own arithmetic could reach zero first, fire a kill nobody else fired, and tear
+        // the body down underneath the shell that speaks for it.
+        if (viewHealth != null) viewHealth.MarkAsWatchedCopy();
     }
 
     // A watched mob must not also be a thinking mob. What remains is a body that follows what the server says.
@@ -168,15 +319,89 @@ public class NetMob : NetworkBehaviour
 
         var respawn = mob.GetComponent<MobRespawn>();
         if (respawn != null) respawn.enabled = false;
+
+        // AND SAY SO TO THE THING THAT ALSO OWNS THOSE PARTS, or it hands them straight back. The distance switch
+        // captured this mob's mover during Awake — before this ran — and re-asserts every part it holds each time
+        // the player crosses its radius. So a watched mob you walked away from and returned to had its mover switched
+        // back ON, and a live mover shoves its body about with crowd separation and gravity, fighting the positions
+        // the server is sending: the creature drifts, and two people standing together stop seeing it in the same
+        // place. Suspending is that switch's OWN answer to "something else owns these now" — the death fade already
+        // uses it for exactly this reason.
+        var lod = mob.GetComponent<SimulationLod>();
+        if (lod != null) lod.Suspend();
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        // Out of the map this machine is standing in, before it can be caught by a portal. Mirror drops an arriving
+        // object in whichever map is current, and travelling unloads that map — so every creature the server had
+        // already announced was destroyed on the way through the door and never mentioned again.
+        MapManager.KeepAcrossMaps(gameObject);
+    }
+
+    /// <summary>Let this creature's body go and bank it for reuse. The ONE description of "stop drawing this",
+    /// because there are now two reasons to — the shell going away, and this machine walking into another map — and
+    /// a second copy of these three lines is how one of them ends up keeping a dead key in the lookup table.</summary>
+    void DropTheView()
+    {
+        if (view == null) return;
+        byView.Remove(view);   // before the object goes, or the table keeps a dead key forever
+        PutBodyBack(BodyKind, view);
+        view = null;
+        viewHealth = null;
+        WatchedTarget = null;
+        viewLoading = false;
     }
 
     public override void OnStopClient()
     {
-        if (view != null)
-        {
-            byView.Remove(view);   // before the object goes, or the table keeps a dead key forever
-            Destroy(view);
-        }
+        DropTheView();
         base.OnStopClient();
+    }
+
+    // ---- the watching side's pool of bodies -------------------------------------------------------------
+    // A creature that walks out of range, dies, or is respawned by the server arrives and leaves constantly, and
+    // each arrival used to BUILD a whole rigged body and each departure THREW IT AWAY. In a field of respawning
+    // monsters that is a model loaded, assembled and discarded every few seconds, per player, forever — the exact
+    // churn the server already avoids with a pool of its own. This is that pool for the machines that only watch.
+    //
+    // Kept by KIND, because a body is only reusable as the same creature it was built as.
+
+    static readonly System.Collections.Generic.Dictionary<string, System.Collections.Generic.Stack<GameObject>> spare =
+        new System.Collections.Generic.Dictionary<string, System.Collections.Generic.Stack<GameObject>>();
+
+    /// <summary>What a banked body IS, not merely which creature it belongs to. A flat one and a live-3D one of the
+    /// same creature are not interchangeable — the 3D one hides the sprite and builds a rig it keeps for life — so
+    /// handing one back for the other would either strip a body that cannot be rebuilt or leave an invisible mob.</summary>
+    string BodyKind => isShadow ? defId + " 3d" : defId;
+
+    /// <summary>How many bodies of one kind are worth keeping. Past this they are let go — a player who walks
+    /// through a whole map should not still be holding a body for every creature they passed.</summary>
+    const int SpareBodiesPerKind = 8;
+
+    static GameObject TakeSpareBody(string kind)
+    {
+        if (string.IsNullOrEmpty(kind) || !spare.TryGetValue(kind, out var stack)) return null;
+
+        // A body destroyed under us (a scene change) leaves a hole in the stack, so keep taking until one is real.
+        while (stack.Count > 0)
+        {
+            var body = stack.Pop();
+            if (body != null) return body;
+        }
+        return null;
+    }
+
+    static void PutBodyBack(string kind, GameObject body)
+    {
+        if (body == null) return;
+        if (string.IsNullOrEmpty(kind)) { Destroy(body); return; }
+
+        if (!spare.TryGetValue(kind, out var stack)) { spare[kind] = stack = new System.Collections.Generic.Stack<GameObject>(); }
+        if (stack.Count >= SpareBodiesPerKind) { Destroy(body); return; }
+
+        body.SetActive(false);
+        stack.Push(body);
     }
 }

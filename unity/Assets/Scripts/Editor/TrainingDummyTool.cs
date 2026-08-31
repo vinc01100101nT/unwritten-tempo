@@ -12,7 +12,6 @@ using UnityEngine;
 public static class TrainingDummyTool
 {
     const string Name = "Training_Dummy";
-    const int    DummyHP = 10_000_000;
 
     [MenuItem("Tools/unwritten/Mobs & NPCs/Spawn Training Dummy", priority = 310)]
     static void Spawn()
@@ -34,53 +33,19 @@ public static class TrainingDummyTool
         go.transform.localScale = Vector3.one * 1.0f;            // a touch bigger than mobs (0.7) so it reads as a fixture
         Undo.RegisterCreatedObjectUndo(go, "Spawn Training Dummy");
 
-        // …then neuter it into an immobile punching bag.
-        // FIRST drop the stat block: it is the single writer of maxHealth/defense/flee/attack on a normal mob and
-        // re-derives them from level+primaries on Awake, which would wipe every hand-set number below and turn the
-        // dummy into an ordinary level-1 mob that dies instantly and hits back. The dummy is deliberately NOT a unit
-        // that follows the shared model — it's a measuring instrument, so it opts out rather than fighting it.
-        var block = go.GetComponent<UnitStatBlock>();
-        if (block != null) Object.DestroyImmediate(block);
-
-        var health = go.GetComponent<Health>();
-        health.maxHealth = DummyHP;     // Health.Awake copies this into Current on Play
-        health.defense = 0;             // measure raw weapon/skill output, not post-mitigation
-        health.magicDefense = 0;
-        health.flee = 15;               // RO FLEE: low DEX misses it a fair bit (red MISS), accuracy climbs as you add DEX
-                                        // (set Health ▸ Flee to 0 in the inspector for a clean, never-miss DPS read)
-
-        var ai = go.GetComponent<MonsterAI3D>();
-        if (ai != null)
-        {
-            ai.moveSpeed = 0f;
-            ai.aggroRadius = 0f;        // never chase
-            ai.leashRadius = 0f;
-            ai.wanderRadius = 0f;       // never wander — stays put as a fixed target
-            ai.touchRange = 0f;         // never bite the player
-            ai.attack = 0;
-            ai.xpReward = 0;            // no free XP from the test rig
-        }
-
-        // It never dies (10M HP + regen), so the recycle/death FX would never fire — drop them so the
-        // dummy is a clean, predictable fixture.
-        StripIfPresent<MobRespawn>(go);
-        StripIfPresent<DeathDissolve>(go);
-        // The nameplate STAYS: MonsterAI3D.Awake gives the dummy the same bottom-anchored HP plate every
-        // other mob wears, and it reads out in the target/hover panels the same way.
-
-        var sr = go.GetComponent<SpriteRenderer>();
-        if (sr != null) sr.color = new Color(0.7f, 0.72f, 0.78f);   // slate-gray "training" tint (also the Revive base color)
-
-        var dummy = go.AddComponent<TrainingDummy>();
-        dummy.regenInterval = 5f;
+        // …then neuter it into an immobile punching bag — through the ONE description of what a dummy is, which the
+        // server uses too. Written here once and it drifted the moment the server needed to make one.
+        // The nameplate STAYS: the same bottom-anchored HP plate every other mob wears, reading out in the
+        // target/hover panels the same way.
+        TrainingDummy.MakeOne(go);
 
         EditorSceneManager.MarkSceneDirty(go.scene);
         Selection.activeGameObject = go;
         SceneView.lastActiveSceneView?.FrameSelected();
 
-        Debug.Log($"[unwritten] Spawned '{Name}' at {foot} — {DummyHP:N0} HP, resets every 5 s.");
+        Debug.Log($"[unwritten] Spawned '{Name}' at {foot} — {TrainingDummy.DummyHP:N0} HP, resets every 5 s.");
         EditorUtility.DisplayDialog("Training Dummy — spawned",
-            $"Placed '{Name}' ({DummyHP:N0} HP).\n\n" +
+            $"Placed '{Name}' ({TrainingDummy.DummyHP:N0} HP).\n\n" +
             "Press Play, walk up to it and LEFT-click to attack (or Q to cast). Damage now ROLLS in a " +
             "min–max range each hit, and some swings show a red MISS — the dummy has FLEE 15, so low DEX " +
             "whiffs a fair bit and your accuracy (HIT = level + DEX) climbs as you add DEX. (Set its " +
@@ -96,12 +61,6 @@ public static class TrainingDummyTool
         if (prev == null) { Debug.Log("[unwritten] No Training_Dummy to clear."); return; }
         Undo.DestroyObjectImmediate(prev);
         EditorSceneManager.MarkSceneDirty(prev.scene);
-    }
-
-    static void StripIfPresent<T>(GameObject go) where T : Component
-    {
-        var c = go.GetComponent<T>();
-        if (c != null) Object.DestroyImmediate(c);
     }
 
     // Drop the dummy in front of the player if one's in the open scene, else on the ground under the

@@ -30,6 +30,13 @@ public class RepeatsDamageTotal : MonoBehaviour
     struct Entry
     {
         public Transform mob;
+
+        /// <summary>WHOSE run this total belongs to, as the shared name for a player that every machine agrees on.
+        /// A total keyed by the creature alone merges two people hitting the same creature into one climbing number
+        /// that belongs to neither of them — which is exactly what happens in a shared world the moment two players
+        /// pick the same target. 0 = nobody in particular, which is what a single-machine run has always been.</summary>
+        public uint attacker;
+
         public DamagePopup popup;
         public int total;
         public float lastHit;
@@ -52,13 +59,15 @@ public class RepeatsDamageTotal : MonoBehaviour
     public static RepeatsDamageTotal Push(RepeatsDamageTotal t) { var prev = Current; Current = t; return prev; }
     public static void Pop(RepeatsDamageTotal prev) { Current = prev; }
 
-    /// <summary>Fold one landed hit into that mob's running total, opening the number if this is the first.</summary>
-    public void Report(Transform mob, int dmg)
+    /// <summary>Fold one landed hit into that mob's running total, opening the number if this is the first.
+    /// <paramref name="attacker"/> names WHOSE run it belongs to, so two people striking one creature keep two
+    /// numbers instead of pooling into a third that is nobody's.</summary>
+    public void Report(Transform mob, int dmg, uint attacker = 0)
     {
         if (mob == null || dmg <= 0) return;
         for (int i = 0; i < entries.Count; i++)
         {
-            if (entries[i].mob != mob) continue;
+            if (entries[i].mob != mob || entries[i].attacker != attacker) continue;
             var e = entries[i];
             e.total += dmg;
             e.lastHit = Time.time;
@@ -70,10 +79,33 @@ public class RepeatsDamageTotal : MonoBehaviour
         entries.Add(new Entry
         {
             mob = mob,
+            attacker = attacker,
             total = dmg,
             lastHit = Time.time,
             popup = DamagePopup.SpawnHeld(UnitAnchor.Overhead(mob), dmg, TotalColor, 1.7f),
         });
+    }
+
+    // ---- the watching machine's totals ---------------------------------------------------------------------------
+
+    /// <summary>The one keeper for totals built from numbers that ARRIVE rather than from numbers this machine
+    /// decided. It never ends, because there is no run to end it: a player's machine no longer works damage out, so
+    /// every strike reaches it separately, long after the cast that sent it has returned. What closes a number here
+    /// is the same idle gap that closes every other one, which is why this needed no rule of its own.</summary>
+    static RepeatsDamageTotal watching;
+
+    /// <summary>Fold an ARRIVED strike into its own attacker's total over that creature. Called for a strike the
+    /// server marked as belonging to a run that draws one — the flag is the server's reading of the authored skill,
+    /// never a client's claim, so a machine cannot ask for a number it was not owed.</summary>
+    public static void ReportArrived(Transform mob, int dmg, uint attacker)
+    {
+        if (mob == null || dmg <= 0) return;
+        if (watching == null)
+        {
+            var go = new GameObject("RepeatsDamageTotal_Watching") { hideFlags = HideFlags.DontSaveInEditor };
+            watching = go.AddComponent<RepeatsDamageTotal>();
+        }
+        watching.Report(mob, dmg, attacker);
     }
 
     /// <summary>The run is over. Any total still open finishes its idle wait first, so the last beat's number reads the

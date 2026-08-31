@@ -18,13 +18,19 @@ using UnityEngine;
 /// nothing here allocates.</para>
 /// </summary>
 [DefaultExecutionOrder(-100)]
-[RequireComponent(typeof(PathAgent3D))]
 public abstract class Agent3DVisual : MonoBehaviour
 {
+    // NO RequireComponent for the mover HERE, on purpose — each role that HAS one declares it itself (the
+    // townsperson and the shadow mob both do). A remote player is walked by the server rather than steered by a
+    // mover, and requiring one would silently bolt a pathfinder onto a body that must never route anywhere.
     protected PathAgent3D agent;
     protected StanceController stance;
     protected Character3DPose pose;
     protected Transform model;    // the scaled visual model child (its origin is the feet pivot)
+
+    // What counts as walking for a body with no mover to ask, in units per second. Well above the crawl a body
+    // makes while easing the last centimetre onto a position it has nearly reached, well below a walk.
+    const float MinTravelSpeed = 0.05f;
     int groundMask;
     Vector3 lastPos;
     bool seated;   // the feet have been placed at least once; a still unit then needs no further ground ray
@@ -67,9 +73,35 @@ public abstract class Agent3DVisual : MonoBehaviour
     protected virtual bool DriveRoleAction() => false;
 
     /// <summary>Which locomotion gear to play at this measured ground speed. Base = always Walk, because a
-    /// strolling townsperson has exactly one gear. A shadow overrides it to pick between the player's Walk and Run
-    /// gears, the same two the player has.</summary>
+    /// strolling townsperson has exactly one gear. A body that has the player's TWO gears overrides it with
+    /// <see cref="PlayersGearFor"/>.</summary>
     protected virtual StanceId LocomotionStanceFor(float groundSpeed) => StanceId.Walk;
+
+    /// <summary>Walk or Run, chosen the way the PLAYER's own two gears are chosen — one threshold, read from the
+    /// one place that holds it, so a body standing in for a player changes gear at the same speed the player does.
+    /// Written once here because more than one role stands in for a player: the shadow that copies them, and
+    /// another person's body watched over the wire.</summary>
+    protected static StanceId PlayersGearFor(float groundSpeed)
+        => groundSpeed >= CharacterSpec.Active.GearSwitchSpeed ? StanceId.Run : StanceId.Walk;
+
+    /// <summary>Which way this body should look this frame, or a zero vector for "leave it as it is".
+    ///
+    /// <para>Base answer: the line it just travelled — or, mid-glide, the point the glide named instead, because a
+    /// hop that ends in a strike has to arrive already looking at what it will hit. A body that is not walking
+    /// keeps whatever facing it had, which is what a standing townsperson has always done.</para>
+    ///
+    /// <para>A role whose facing comes from somewhere OTHER than its own travel overrides this — a body that is
+    /// placed by a server is told which way it faces, and is told that even while it stands still.</para></summary>
+    protected virtual Vector3 FacingThisFrame(Vector3 groundTravel, bool walking, Vector3 position)
+    {
+        if (!walking) return Vector3.zero;
+        if (agent != null && agent.GlideFaceAt.HasValue)
+        {
+            Vector3 look = agent.GlideFaceAt.Value - position; look.y = 0f;
+            if (look.sqrMagnitude > 1e-4f) return look;
+        }
+        return groundTravel;
+    }
 
     protected virtual void LateUpdate()
     {
@@ -82,29 +114,29 @@ public abstract class Agent3DVisual : MonoBehaviour
         Vector3 d = moved; d.y = 0f;
         lastPos = p;
 
+        float dt = Mathf.Max(Time.deltaTime, 1e-4f);
+
+        // "AM I WALKING?" — asked of the MOVER when this body has one, and of its own footfall when it does not.
+        // A body that is PLACED rather than steered (a remote player, followed from the server) has no mover to
+        // ask, and measuring the ground it just covered is the same question answered from the other end. Compared
+        // squared, against the distance that speed covers in this frame, so a standing crowd pays no square root.
+        bool walking = agent != null
+            ? agent.Moving
+            : d.sqrMagnitude > MinTravelSpeed * MinTravelSpeed * dt * dt;
+
         if (!DriveRoleAction())
         {
-            if (agent != null && agent.Moving)
-            {
-                float dt = Mathf.Max(Time.deltaTime, 1e-4f);
-                stance.DriveStance(LocomotionStanceFor(d.magnitude / dt));
-                // A glide may name a point to keep facing instead of the travel line — a hop that ends in a strike has
-                // to arrive already looking at what it will hit. Same rule the player's controller follows.
-                Vector3 face = d;
-                if (agent.GlideFaceAt.HasValue)
-                {
-                    Vector3 look = agent.GlideFaceAt.Value - p; look.y = 0f;
-                    if (look.sqrMagnitude > 1e-4f) face = look;
-                }
-                // Pass a UNIT direction, not the raw per-frame delta (~0.01 long): Character3DPose only yaws when the
-                // facing's sqrMagnitude clears 1e-4, and a tiny delta sits below that gate so the model never turns.
-                if (face.sqrMagnitude > 1e-8f && pose != null) pose.SetFacing(face.normalized);
-            }
-            else
-            {
-                // Fall through to the authored Idle stance (StanceController.selfDrive = false).
-                stance.ClearAction();
-            }
+            if (walking) stance.DriveStance(LocomotionStanceFor(d.magnitude / dt));
+            else stance.ClearAction();   // fall through to the authored Idle stance (selfDrive = false)
+
+            // Facing is asked EVERY frame, not only while walking, because which way a body looks and whether it is
+            // walking are two different questions — a person can stand their ground and turn. The default answer
+            // below still says "nothing" while standing, so a townsperson behaves exactly as it always has.
+            //
+            // Pass a UNIT direction, not the raw per-frame delta (~0.01 long): Character3DPose only yaws when the
+            // facing's sqrMagnitude clears 1e-4, and a tiny delta sits below that gate so the model never turns.
+            Vector3 face = FacingThisFrame(d, walking, p);
+            if (face.sqrMagnitude > 1e-8f && pose != null) pose.SetFacing(face.normalized);
         }
 
         // Seat the feet: share the player's ground raycast (GroundSnap — the single owner of "how high is the floor

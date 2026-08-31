@@ -27,6 +27,15 @@ public interface ICombatUnit : IDamageable
     /// avatar is spawned separately (see memory "player-two-gameobjects-one-store").</summary>
     Transform Body { get; }
 
+    /// <summary>WHICH MAP this unit is standing in, by scene name.
+    ///
+    /// <para>Asked because a world is several maps at once on the machine that owns it, and they all share one set of
+    /// coordinates: a creature in the field and a person in the town can be a metre apart by the numbers while being
+    /// nowhere near each other. Every question of the form "who is near me" has to be asked WITHIN a map or it
+    /// answers across the whole world at once — which is how a town filled with a field's monsters that could walk
+    /// at somebody and never reach them.</para></summary>
+    string Map { get; }
+
     /// <summary>This unit's status host — the thing that holds its ailments, its action lock and its flinch. Exposed
     /// (and CACHED on both sides) because the damage door touches it on every landed hit, and a component lookup per
     /// hit per mob is exactly the per-frame cost PERFORMANCE.md bans.</summary>
@@ -69,6 +78,14 @@ public interface ICombatUnit : IDamageable
 
     /// <summary>Restore hit points (clamped at full, ignored when dead).</summary>
     void Heal(int amount);
+
+    /// <summary>The last unit whose blow actually cost this one health, or null if nothing has. Recorded by the one
+    /// damage door for every unit alike, so "who did this to me" has a single answer that cannot be forgotten at a
+    /// call site — and so a kill can pay whoever earned it rather than whoever happens to be standing there.</summary>
+    ICombatUnit LastAttacker { get; }
+
+    /// <summary>Remember who just landed a blow. Called ONLY by the damage door.</summary>
+    void NoteAttacker(ICombatUnit attacker);
 
     // ---- the BASIC SWING: what one ordinary attack from this unit is made of -------------------------------------
     // A skill that says "this strike resolves as a basic attack" asks the CASTER these, never the player: the skill
