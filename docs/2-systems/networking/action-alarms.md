@@ -160,7 +160,7 @@ Built and played on 2026-09-02 — creatures walk, run, swing and flinch, and it
 
 The early-swing guard stays deliberately loose — a blow may arrive up to half a beat early and still be believed — because the swinger's machine still times its own animation and refusing an honest player is worse than missing a cheat. It cuts the fastest a machine can possibly swing from the flood ceiling's twenty a second down to twice its real rate. Every refusal is logged rather than dropped in silence.
 
-**Skills are out of scope.** A skill's damage is still the client's word until skills resolve on the server; a skill's alarm belongs with that work, not before it.
+**Skills have no alarm yet.** The whole skill already runs on the server, so the missing piece is only the announcement — a cast has no "this body began a cast, at this moment, for this long" the way a swing now does. It is the obvious next thing this channel carries, and nothing about it is blocked.
 
 What already worked and was NOT rebuilt: a blow on a creature or a person is announced to everyone in range with its amount, element, crit, miss, overkill and whether it folds into a rising total, and each machine runs it through the same door the offline game used.
 
@@ -171,4 +171,4 @@ What already worked and was NOT rebuilt: a blow on a creature or a person is ann
 - [Networking — Implementation Notes](implementation-notes.md) — what is actually built, the shell/body split, and the traps already paid for.
 - [Network-Readiness — Combat Audit & Refactor Plan](readiness-audit.md) — the survey that chose the shape.
 - [Starting the Network](../../1-planning/starting-the-network.md) — the runbook for standing the world up.
-- [Active Skill System — V3](../active-skill-system-v3/README.md) — the effects the server cannot yet resolve, which is why skills are out of scope here.
+- [Active Skill System — V3](../active-skill-system-v3/README.md) — the effects the server now runs, and the vocabulary a cast's alarm would use.
