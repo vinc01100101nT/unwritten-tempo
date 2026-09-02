@@ -131,6 +131,18 @@ public class CharacterSpec : ScriptableObject
         cc.skinWidth = capsuleSkinWidth;
     }
 
+    // ---- the swing ------------------------------------------------------------------------------------------------
+
+    [Header("The swing")]
+    [Tooltip("Fraction (0..1) of the swing at which a basic attack LANDS. The animation still plays the full swing " +
+             "for the same cadence; the damage just connects at this point — 0.7 = 70% in, the natural contact " +
+             "moment — instead of right at the end.")]
+    [Range(0.1f, 1f)] public float hitTiming = 0.70f;
+
+    // WHY IT LIVES HERE rather than on the attacker where it started: the SERVER decides when a blow lands now, and
+    // it has no attacker component to read — it holds a fighter, not an avatar. Two copies of this number would mean
+    // the swing on your screen and the blow on the server drifting apart by however far they disagreed.
+
     // ---- travel + gait ------------------------------------------------------------------------------------------------
 
     [Header("Travel + gait")]

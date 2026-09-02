@@ -128,6 +128,11 @@ public class MonsterAI3D : MonoBehaviour
     /// <para>Null when there is nobody to hunt, which is the normal state of a quiet field.</para></summary>
     public ICombatUnit Prey { get; private set; }
 
+    /// <summary>The BODY this creature is after, or null when it is after nobody — the same transform it walks at.
+    /// Read by its visual so a creature biting somebody turns to face THEM. Null on a watched copy, which chooses
+    /// nothing and so has nobody to turn to.</summary>
+    public Transform PreyBody => player;
+
     // How often a creature looks up and reconsiders whom it is after. Once every half second: fast enough that
     // walking up to a monster gets its attention immediately in human terms, slow enough that a field of them is
     // not re-deciding every frame. It holds whoever it picked in between (see PickPrey).
@@ -340,6 +345,19 @@ public class MonsterAI3D : MonoBehaviour
     /// legacy hand-placed mob that predates the block.</summary>
     public UnitStatBlock Stats => statBlock != null ? statBlock : (statBlock = GetComponent<UnitStatBlock>());
 
+    // This creature's live-3D animation driver, when it has one. Resolved ONCE and the miss remembered too: a flat
+    // sprite creature has none and never will, and a plain null-cache would search it out again on every bite.
+    Agent3DVisual visual;
+    bool lookedForVisual;
+    Agent3DVisual Visual
+    {
+        get
+        {
+            if (!lookedForVisual) { lookedForVisual = true; visual = GetComponent<Agent3DVisual>(); }
+            return visual;
+        }
+    }
+
     UnitEquipment gear;
     /// <summary>This mob's worn gear — the owner of its weapon, and so of its REACH (see <see cref="WeaponReach"/>).
     /// Cached on first use, never looked up per frame.</summary>
@@ -517,9 +535,22 @@ public class MonsterAI3D : MonoBehaviour
                 }
             }
             // Attack-speed buffs shorten a mob's cadence by the same rule they shorten the player's swing.
-            nextTouch = Time.time + UnitOffense.AttackInterval(touchInterval, MobStates != null ? MobStates.AttackSpeedBuffMult : 1f);
+            float beat = UnitOffense.AttackInterval(touchInterval, MobStates != null ? MobStates.AttackSpeedBuffMult : 1f);
+            nextTouch = Time.time + beat;
             LastAttackTime = Time.time;         // the general "it attacked" beat every visual reads
             if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell (billboard mobs only)
+
+            // THE SWING ITSELF, through ONE door on every machine alike. The swing POSE is chosen here because the
+            // weapon that decides it is this machine's fact, not a watcher's guess; the beat is how long it has to
+            // finish inside, and the art still owns how long the clip takes.
+            //
+            // Said out loud as well, because a watching machine's copy of this creature has no brain to reach this
+            // line: without it a creature bites in silence and the damage numbers climb over a body that never
+            // moved. Both halves carry the SAME action and the SAME beat, from here, so a swing can never look one
+            // length on the machine that owns the creature and another on the machines watching it.
+            StanceId swing = WeaponStances.AttackFor(Equipment != null ? Equipment.WeaponType : WeaponType.None);
+            if (Visual != null) Visual.TellAction(swing, Mirror.NetworkTime.time, beat);
+            GameNetwork.AnnounceActionOnMob(gameObject, swing, beat);
         }
 
         // FLINCHED: a hit that cost HP pins this mob's feet for as long as its hurt reaction plays — but not its bite,

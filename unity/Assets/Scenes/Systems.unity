@@ -407,7 +407,6 @@ MonoBehaviour:
   rangeHysteresis: 1.4
   cooldown: 0.6
   windupTime: 0.18
-  hitTiming: 0.7
   damage: 3
   arrowSheet: {fileID: 0}
   arrowFrameSize: 16

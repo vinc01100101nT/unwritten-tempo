@@ -70,6 +70,9 @@ public class StanceController : MonoBehaviour
     float overrideUntil;
     float overrideWindow;
     bool overrideFit;                // this play was asked to fit its window, whatever the stance's own speed source
+    // Where in the clip this override must START, as a 0→1 fraction; negative = at the beginning. Set when a beat
+    // that began before we heard about it is joined part-way through, and spent on the first frame it is applied.
+    float overrideSeekTo = -1f;
 
     bool driving;                    // a stance is overriding self-drive — so we hand back to it ONCE
     StanceId currentResolved;
@@ -137,10 +140,21 @@ public class StanceController : MonoBehaviour
     /// <param name="fitToWindow">Force the clip to fit <paramref name="seconds"/> even when the stance's own speed
     /// source is not FitWindow. A repeating skill needs this: its release animation must play through once per beat at
     /// whatever the beat's length is, and the stance may well be authored to a gait instead.</param>
-    public float PlayActionFor(StanceId id, float seconds = 0f, float durationScale = 1f, bool fitToWindow = false)
+    /// <param name="startedSecondsAgo">How long ago this action actually BEGAN. 0 for anything happening now. A
+    /// positive value joins the action part-way through — the clip enters at that fraction and holds for what is
+    /// left of it, rather than replaying from the start. This is how a body watched from another machine picks up
+    /// an action that was already running when we started watching; an action already over plays nothing.</param>
+    public float PlayActionFor(StanceId id, float seconds = 0f, float durationScale = 1f, bool fitToWindow = false,
+                               float startedSecondsAgo = 0f)
     {
         float played = ActionDuration(id, seconds, durationScale, fitToWindow);
-        overrideId = id; overrideWindow = played; overrideUntil = Time.time + played; overrideFit = fitToWindow;
+
+        float left = played - Mathf.Max(0f, startedSecondsAgo);
+        if (left <= 0f) return 0f;
+
+        overrideId = id; overrideWindow = played; overrideUntil = Time.time + left; overrideFit = fitToWindow;
+        // The clip is still fit to its WHOLE length, so it plays at the right speed; only the entry point moves.
+        overrideSeekTo = startedSecondsAgo > 0f ? Mathf.Clamp01(startedSecondsAgo / played) : -1f;
         return played;
     }
 
@@ -234,7 +248,16 @@ public class StanceController : MonoBehaviour
         if (Time.time < overrideUntil)
         {
             var ob = StanceCatalog.Get(overrideId);
-            if (ob != null) { driving = true; currentResolved = overrideId; ApplyStance(ob, overrideWindow, forceFit: overrideFit); return; }
+            if (ob != null)
+            {
+                driving = true; currentResolved = overrideId;
+                float seek = overrideSeekTo;
+                // Spent here, not in the setter: it must be applied on the first frame this override actually
+                // renders, and cleared so the following frames do not keep snapping back to the entry point.
+                overrideSeekTo = -1f;
+                ApplyStance(ob, overrideWindow, forceFit: overrideFit, seekTo: seek);
+                return;
+            }
         }
 
         // 1) Action stance beats everything.
@@ -277,13 +300,14 @@ public class StanceController : MonoBehaviour
     }
 
     // Play a resolved binding on the billboard: its action, its playback mode, and its live-modulated speed.
-    void ApplyStance(StanceBinding b, float window, bool release = false, bool forceFit = false)
+    void ApplyStance(StanceBinding b, float window, bool release = false, bool forceFit = false, float seekTo = -1f)
     {
         // Jump + Fall drive the clip in phases: `window` carries the freeze point (seconds), `release` plays the
         // landing tail. Fall (ledge walk-off) reuses the Jump binding's airborneFreeze — the brain feeds it here.
         if (b.id == StanceId.Jump || b.id == StanceId.Fall) { pose.PlayClipPhase(b.action, b.clip, window, release, ResolveSpeedMult(b, window)); return; }
 
-        pose.Play(b.action, b.clip);
+        if (seekTo >= 0f) pose.PlayFrom(b.action, b.clip, seekTo);
+        else pose.Play(b.action, b.clip);
         pose.SetActionSpeed(b.action, ResolveSpeedMult(b, window, forceFit));
     }
 

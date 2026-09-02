@@ -59,6 +59,18 @@ public class UnitEquipment : MonoBehaviour
     /// <summary>How many pieces are worn (what a drop roll iterates).</summary>
     public int Count { get { EnsureSpawnedGear(); return equipped.Count; } }
 
+    /// <summary>What this unit is holding, or <see cref="WeaponType.None"/> when its hands are empty. The single
+    /// reading of "which weapon is worn", because more than one thing asks: the pose a swing plays is chosen from
+    /// it on the machine that owns the unit, and again on every machine watching.</summary>
+    public WeaponType WeaponType
+    {
+        get
+        {
+            var worn = Get(EquipSlotType.Weapon);
+            return worn != null && worn.def != null ? worn.def.weaponType : WeaponType.None;
+        }
+    }
+
     public EquipmentInstance Get(EquipSlotType slot)
     {
         EnsureSpawnedGear();

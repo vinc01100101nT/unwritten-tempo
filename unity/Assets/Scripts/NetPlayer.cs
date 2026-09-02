@@ -61,6 +61,21 @@ public class NetPlayer : NetworkBehaviour
     // machine, which draws its real avatar instead.
     GameObject body;
     bool bodyLoading;
+    // This person's animation driver on THIS machine, cached when their body is built. Read every frame for every
+    // person on screen, which is exactly where PERFORMANCE.md bans a component lookup.
+    Agent3DVisual bodyVisual;
+
+    /// <summary>How fast this person is travelling on the ground, in units per second — worked out by the SERVER
+    /// from the position reports it accepted, so nobody has to measure the catch-up glide (which measures the
+    /// glide, not the walk: see <see cref="Agent3DVisual.TellTravelSpeed"/>).</summary>
+    [SyncVar] float netSpeed;
+
+    // What this person's body is DOING: which action, the moment it began on the clock both machines share, and
+    // the beat it has to finish inside. HELD as a value rather than shouted, so somebody who starts watching
+    // half-way through an action picks it up instead of seeing a body stand still through it.
+    [SyncVar] StanceId netAction;
+    [SyncVar] double netActionAt;
+    [SyncVar] float netActionSeconds;
 
     /// <summary>SERVER ONLY: the fighter this connection swings with — the thing that owns their stats, rolls
     /// their crits and takes their hits. Null on a client, which has no business holding anyone's authoritative
@@ -150,9 +165,38 @@ public class NetPlayer : NetworkBehaviour
         //
         // The creature shells never had this problem because they ask a different question. So this asks it too:
         // a body is built only by a machine that is actually WATCHING.
-        if (isServer) { PushMyHealth(); return; }
+        if (isServer) { PushMyHealth(); ForgetSpeedIfTheyStopped(); return; }
         if (isOwned) { ReportMyPosition(); TakeTheServersWord(); return; }
         if (isClient) FollowTheServer();
+    }
+
+    // How fast the last accepted pair of positions says this person was travelling. Server-only working, published
+    // as netSpeed the moment a report is believed.
+    float acceptedGroundSpeed;
+
+    /// <summary>SERVER ONLY: a person who has stopped walking stops REPORTING — only a step or a turn is worth a
+    /// packet — so the speed worked out from their last two positions would otherwise stand at whatever they were
+    /// doing when they stopped, and their body would walk on the spot on every other screen forever.
+    ///
+    /// <para>Silence for longer than two report intervals is the whole of the evidence that they are standing
+    /// still, and it is enough: a person who is walking sends ten times a second.</para></summary>
+    void ForgetSpeedIfTheyStopped()
+    {
+        if (netSpeed <= 0f) return;
+        if (lastAcceptedAt <= 0f || Time.time - lastAcceptedAt > ReportInterval * 2f) netSpeed = 0f;
+    }
+
+    /// <summary>SERVER ONLY: say that this person just BEGAN an action, and the beat it has to finish inside. The
+    /// mirror of a creature's, and it exists for the same reason: nothing else on the wire says that a body did
+    /// anything, so another person's swing does not exist on your screen at all without it.</summary>
+    public void BeganAction(StanceId action, float beatSeconds)
+    {
+        if (!isServer || beatSeconds <= 0f) return;
+        netAction = action;
+        netActionSeconds = beatSeconds;
+        // Stamped by the server, never by the machine that asked: a moment a client writes is a moment a client
+        // can move, and every watcher measures the action against it.
+        netActionAt = NetworkTime.time;
     }
 
     // ---- the server's half: say how hurt this person is --------------------------------------------------
@@ -756,6 +800,7 @@ public class NetPlayer : NetworkBehaviour
 
         netPosition = p;
         netYaw = yaw;
+        netSpeed = acceptedGroundSpeed;
 
         // AND THE SERVER'S OWN COPY ACTUALLY STANDS THERE. Writing only the figure above left this object sitting
         // at the world origin on the server for the whole of a player's life — which was harmless while nothing on
@@ -843,6 +888,8 @@ public class NetPlayer : NetworkBehaviour
             lastAcceptedAt = now;
             refusedInARow = 0;
             haveAcceptedAPosition = true;
+            // Nothing to measure a speed against, and a jump the server itself ordered is not travel.
+            acceptedGroundSpeed = 0f;
             return true;
         }
 
@@ -870,6 +917,10 @@ public class NetPlayer : NetworkBehaviour
 
         if (possible)
         {
+            // HOW FAST THEY ACTUALLY WENT, from the two positions this machine believed — measured here because
+            // this is the only place that holds both the distance and the time it took. Flat, like the check
+            // above: falling is not travelling, and a body does not break into a run for stepping off a ledge.
+            acceptedGroundSpeed = elapsed > 0f ? Mathf.Sqrt(movedSqr) / elapsed : 0f;
             lastAcceptedAt = now;
             refusedInARow = 0;
             haveAcceptedAPosition = true;
@@ -947,6 +998,15 @@ public class NetPlayer : NetworkBehaviour
         // that — the identical one a watched creature uses, so the two can never drift into gliding differently.
         if (facingBuiltFrom != netYaw) { facing = Quaternion.Euler(0f, netYaw, 0f); facingBuiltFrom = netYaw; }
         WatchedBody.Follow(body.transform, MapManager.InWorld(netPosition, mapName), facing);
+
+        // WHAT THIS PERSON IS DOING, handed over rather than worked out from where their body has been placed.
+        // Without it their character walked in a fixed standing pose whenever the glide flickered, and never swung
+        // at all — their damage numbers climbed over somebody standing perfectly still.
+        if (bodyVisual != null)
+        {
+            bodyVisual.TellTravelSpeed(netSpeed);
+            if (netActionAt > 0d) bodyVisual.TellAction(netAction, netActionAt, netActionSeconds);
+        }
     }
 
     /// <summary>Stop drawing this person. Two reasons to, so one description of it: they left, or this machine
@@ -955,6 +1015,7 @@ public class NetPlayer : NetworkBehaviour
     {
         if (body != null) Destroy(body);
         body = null;
+        bodyVisual = null;
         bodyLoading = false;
     }
 
@@ -998,6 +1059,9 @@ public class NetPlayer : NetworkBehaviour
             // walk-or-stand decision, and seating the feet on the ground are not written a second time here.
             var visual = root.AddComponent<RemotePlayer3DVisual>();
             visual.BindBody(pose);
+            // Held so the per-frame follow below can hand this body the server's word without looking a component
+            // up on every frame of every person on screen.
+            bodyVisual = visual;
 
             // The body belongs to the WORLD, not to the map this machine is standing in — same reason a creature's
             // does. Travelling unloads the map you left, and everything built into it goes with it.
@@ -1096,6 +1160,16 @@ public class NetPlayer : NetworkBehaviour
     {
         base.OnStartClient();
         MapManager.KeepAcrossMaps(gameObject);   // survives a portal, exactly as a creature's shell does
+    }
+
+    /// <summary>THIS IS THE PROOF that this person was let in. The server hands out a body only to a connection
+    /// it accepted, so this arriving on the machine that owns it is the one thing a refused connection never
+    /// gets — which is why the retry count and the waking of the world both hang off it rather than off the wire
+    /// coming up, which the refused get too.</summary>
+    public override void OnStartLocalPlayer()
+    {
+        base.OnStartLocalPlayer();
+        GameNetwork.ConfirmedInTheWorld();
     }
 
     public override void OnStopClient()

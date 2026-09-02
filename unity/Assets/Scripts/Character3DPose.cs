@@ -161,6 +161,19 @@ public class Character3DPose : MonoBehaviour, IStancePose
         GoTo(Loco);
     }
 
+    public void PlayFrom(CharacterAction a, string clip, float normalizedStart)
+    {
+        // Only a clip with its OWN one-shot state can be entered part-way — the locomotion blend has no single
+        // timeline to seek into, and a body joining someone mid-walk is already in the right place anyway.
+        if (!Posable || string.IsNullOrEmpty(clip) || !stateHash.TryGetValue(clip, out int h)) { Play(a, clip); return; }
+
+        // Played rather than cross-faded: a cross-fade always enters at the start of the target state, which is
+        // the one thing this call exists to avoid.
+        anim.Play(h, 0, Mathf.Clamp01(normalizedStart));
+        anim.speed = 1f;
+        currentState = h;
+    }
+
     // Jump/Fall clip-phase driver: play the clip and either HOLD it at `freezeSeconds` (airborne pose) or, once
     // `releaseToEnd`, resume from that frame and play the landing tail to the end. Works by scaling anim.speed to 0
     // at the freeze frame (freeze) or to `mult` and snapping past it (release). `mult` is the stance's × mult — the

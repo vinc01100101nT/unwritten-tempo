@@ -80,11 +80,34 @@ public class NetMob : NetworkBehaviour
     [SyncVar] int netHealth;
     [SyncVar] int netMaxHealth = 1;
 
+    /// <summary>How fast this creature is actually travelling on the ground, in units per second — 0 while it
+    /// stands. TOLD rather than left for each watcher to work out, because a watcher can only measure the
+    /// catch-up glide toward the positions it received, not the walk: see <see cref="Agent3DVisual.TellTravelSpeed"/>
+    /// for the arithmetic. It only changes when the creature changes gear, and a SyncVar written the value it
+    /// already holds sends nothing.</summary>
+    [SyncVar] float netSpeed;
+
+    // ---- what this creature is DOING ---------------------------------------------------------------------
+    // The action beat: which action, the moment it began on the clock both machines share, and how long it runs.
+    // HELD AS A VALUE rather than shouted once, which is what lets somebody who only just started watching pick
+    // up an action already in progress — a shout reaches whoever was already there and nobody else.
+    //
+    // Three plain fields rather than one struct on purpose: Mirror batches a behaviour's dirty values into one
+    // update, so they arrive together, and the watching side reads them in its own per-frame follow instead of
+    // depending on the order three separate change-hooks would fire in.
+
+    [SyncVar] StanceId netAction;
+    [SyncVar] double netActionAt;
+    [SyncVar] float netActionSeconds;
+
     /// <summary>The real creature. Only ever set on the SERVER — this is the thing that actually thinks,
     /// walks and takes damage; everything below just copies its state onto the wire.</summary>
     public GameObject ServerMob { get; private set; }
 
     Health serverHealth;
+    // The real creature's mover, cached when the shell is bound. It is the one thing on the server that knows
+    // whether this creature is travelling and how fast, and this is read on the push beat — never looked up there.
+    PathAgent3D serverAgent;
 
     // The client's own copy of the body: seen, never simulated.
     GameObject view;
@@ -117,6 +140,7 @@ public class NetMob : NetworkBehaviour
         mapName = mob != null ? mob.gameObject.scene.name : "";
         isShadow = mob != null && mob.GetComponent<MobShadow3DVisual>() != null;
         serverHealth = mob != null ? mob.GetComponent<Health>() : null;
+        serverAgent = mob != null ? mob.GetComponent<PathAgent3D>() : null;
         if (serverHealth != null) { netMaxHealth = serverHealth.maxHealth; netHealth = serverHealth.CurrentHP; }
         if (mob != null)
         {
@@ -171,6 +195,11 @@ public class NetMob : NetworkBehaviour
         netYaw = ServerMob.transform.eulerAngles.y;
         StandWhereTheMobStands();
 
+        // WHAT GEAR IT IS IN, as a speed. Read off the mover's own live figure, which already has this creature's
+        // Slow or Haste folded into it — so a watcher picks the right gait AND churns the legs at the right
+        // cadence for a slowed creature, neither of which a plain walking/not-walking flag could say.
+        netSpeed = serverAgent != null && serverAgent.Moving ? serverAgent.moveSpeed : 0f;
+
         // BOTH numbers, every push — not just the current one. A creature's maximum is not fixed for life: it
         // levels up, and levelling re-derives its whole stat block including how much health it can hold. Sending
         // only the current figure meant every watching player measured a grown creature's bar against the maximum
@@ -183,12 +212,32 @@ public class NetMob : NetworkBehaviour
         }
     }
 
+    /// <summary>SERVER ONLY: say that this creature just BEGAN an action, and how long it runs. Called at the
+    /// moment it happens — never polled for, because the push beat below runs ten times a second and a swing
+    /// shorter than that would simply never be seen.
+    ///
+    /// <para><paramref name="seconds"/> is a number the SERVER owns. It must never be an animation clip's length:
+    /// this machine is headless and has no business reading art to decide gameplay timing.</para></summary>
+    public void BeganAction(StanceId action, float seconds)
+    {
+        if (!isServer || seconds <= 0f) return;
+        netAction = action;
+        netActionSeconds = seconds;
+        // Stamped LAST, and stamped HERE rather than by whoever asked: the moment is the thing every watcher
+        // measures the action against, so it is the server's word or it is worth nothing.
+        netActionAt = NetworkTime.time;
+    }
+
     // ---- everybody else's half: show it ------------------------------------------------------------------
 
     // The view's own Health, cached at build time. Looked up once rather than per frame, because this runs on
     // every mob on screen every frame and a per-frame component lookup at that rate is exactly what
     // PERFORMANCE.md bans.
     Health viewHealth;
+    // The copy's animation driver, cached at build time for the same reason its health is: this is read every
+    // frame on every creature on screen, and a per-frame component lookup at that rate is exactly what
+    // PERFORMANCE.md bans. Null on a flat sprite creature, which has no such driver and needs none.
+    Agent3DVisual viewVisual;
     int lastShownHealth = -1;
     int lastShownMaxHealth = -1;
 
@@ -229,6 +278,17 @@ public class NetMob : NetworkBehaviour
         // alone, which is the common case in a town or a quiet field, not the rare one.
         if (facingBuiltFrom != netYaw) { facing = Quaternion.Euler(0f, netYaw, 0f); facingBuiltFrom = netYaw; }
         WatchedBody.Follow(view.transform, MapManager.InWorld(netPosition, mapName), facing);
+
+        // WHAT THE BODY IS DOING, handed over rather than guessed at. Its mover and its brain are switched off on
+        // this machine, so the two things its animation used to read from both answer "nothing" forever — which is
+        // why a watched creature slid about in its standing pose and never swung at anybody.
+        if (viewVisual != null)
+        {
+            viewVisual.TellTravelSpeed(netSpeed);
+            // A moment of zero means this creature has not done anything yet, not that it acted at the dawn of the
+            // clock. Both calls are cheap and self-guarding: one beat plays once, however often it is offered.
+            if (netActionAt > 0d) viewVisual.TellAction(netAction, netActionAt, netActionSeconds);
+        }
 
         // Only when a number actually changed — a mob at steady health should cost nothing, and the
         // nameplate below only redraws when it sees a different value anyway.
@@ -321,6 +381,10 @@ public class NetMob : NetworkBehaviour
         // as what it was built as (see BodyKind), so this either adds it to a fresh body or finds it already there.
         if (isShadow && go.GetComponent<MobShadow3DVisual>() == null) go.AddComponent<MobShadow3DVisual>();
 
+        // Resolved AFTER the line above, or a body being given its live-3D driver for the first time would be
+        // filed as having none and would never be told anything for the whole of its life.
+        viewVisual = go.GetComponent<Agent3DVisual>();
+
         // A REUSED BODY MUST BE TOLD ITS HEALTH AGAIN. These remember what was last drawn so a creature at steady
         // health costs nothing; left as they were, a recycled body would keep showing the last creature's wounds
         // until its health happened to change.
@@ -381,6 +445,7 @@ public class NetMob : NetworkBehaviour
         PutBodyBack(BodyKind, view);
         view = null;
         viewHealth = null;
+        viewVisual = null;
         WatchedTarget = null;
         viewLoading = false;
     }

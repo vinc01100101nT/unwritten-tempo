@@ -16,6 +16,12 @@ public interface IStancePose
     /// <summary>Play (hold) this action / clip. Called every frame the action is active; idempotent per frame.</summary>
     void Play(CharacterAction a, string clip);
 
+    /// <summary>Play this action / clip STARTING part-way through it, at <paramref name="normalizedStart"/> (0→1 of
+    /// the clip). For a body watched from another machine that joins an action already in progress: the server said
+    /// when it began, so the body picks it up at the right frame instead of replaying it from the top. Called once,
+    /// on the frame the action is joined; <see cref="Play"/> holds it from then on.</summary>
+    void PlayFrom(CharacterAction a, string clip, float normalizedStart);
+
     /// <summary>Drive a jump/fall clip with a freeze point (in SECONDS into the clip). <paramref name="releaseToEnd"/>
     /// false = play forward but HOLD once the clip reaches <paramref name="freezeSeconds"/> (the airborne pose); true =
     /// resume from that frame and play to the end once (the landing tail). Used for the Jump + Fall stances.

@@ -251,9 +251,20 @@ public class GameNetwork : NetworkManager
         string characterId = AccountSession.CharacterId;
         if (string.IsNullOrEmpty(characterId) || string.IsNullOrEmpty(AccountSession.CharacterServerUrl))
         {
-            Debug.Log("[client] dialling " + spawned.networkAddress + ":" + kcp.port
-                      + " (no character server to ask)");
-            spawned.StartClient();
+            // NOBODY TO ASK MEANS NOBODY CAN ENTER, and dialling anyway is worse than saying so. A map server
+            // refuses every connection it was not told to expect — there is no branch that lets a ticketless one
+            // through — so this used to dial, be refused, and retry forever under a veil, with the only clue a
+            // single line in the log. MEASURED on a real run: a player who launched the game in a way that did
+            // not carry CHAR_SERVER_URL printed "retrying 1 of 3" more than forty times and never got in.
+            //
+            // The commonest way to arrive here is launching the built game with `open`, which starts it through
+            // the operating system and passes it NONE of the settings from the terminal that ran it.
+            Debug.LogError("[client] this copy has no character server to ask, so nobody can let it into the "
+                           + "world — CHAR_SERVER_URL is not set"
+                           + (string.IsNullOrEmpty(characterId) ? ", and no character has been chosen" : "")
+                           + ". Start the game with that setting; see docs/1-planning/starting-the-network.md.");
+            Stop();
+            OnLostWorld?.Invoke();
             return;
         }
 
@@ -623,6 +634,11 @@ public class GameNetwork : NetworkManager
     public override void OnStartServer()
     {
         base.OnStartServer();
+        // NOTHING CARRIED OVER FROM A PREVIOUS WORLD. These outlive the server that filled them — a second Play in
+        // the same editor session, or a server stopped and started — and a swing left in flight from the last one
+        // names a connection number this one will hand out again to somebody else.
+        pendingBlows.Clear();
+        swingDueAt.Clear();
         NetworkServer.RegisterHandler<JoinRequest>(OnJoinRequest);
         NetworkServer.RegisterHandler<HitRequest>(OnHitRequest);
         NetworkServer.RegisterHandler<HealClaim>(OnHealClaim);
@@ -769,6 +785,21 @@ public class GameNetwork : NetworkManager
     /// which has no audience to announce to.</para></summary>
     /// <param name="showsTotal">Whether this strike belongs to a run that draws ONE rising yellow total rather
     /// than a number per beat. Worked out by the caller from the authored skill, never from a client's claim.</param>
+    /// <summary>SERVER ONLY: say that a creature just BEGAN an action — a swing, and later anything else its body
+    /// does that takes time. Silent off a server, and silent for a creature no shell speaks for.
+    ///
+    /// <para>Sent from the MOMENT it happens rather than noticed on the push beat, which runs ten times a second:
+    /// an action noticed there would be up to 100 ms late and a short one would be missed outright.</para>
+    ///
+    /// <para><paramref name="beatSeconds"/> is the window the action has to finish inside — a number this machine
+    /// already holds. It is never an animation clip's length: a headless server has no business reading art.</para></summary>
+    public static void AnnounceActionOnMob(GameObject serverMob, StanceId action, float beatSeconds)
+    {
+        if (!NetworkServer.active || serverMob == null) return;
+        var shell = NetMob.ShellForServerMob(serverMob);
+        if (shell != null) shell.BeganAction(action, beatSeconds);
+    }
+
     public static void AnnounceBlowOnMob(ICombatUnit victim, ICombatUnit attacker, in DamageInfo info, bool showsTotal)
     {
         if (!NetworkServer.active || victim == null) return;
@@ -1034,6 +1065,21 @@ public class GameNetwork : NetworkManager
     /// bans a component search on that path. Anything networked registers itself in that table; there is deliberately
     /// no second, slower way to be found, because a fallback search runs on every MISS, which is exactly the common
     /// case of a creature hitting a player.</para></summary>
+    /// <summary>A PLAYER'S MACHINE: say that a swing has just begun on <paramref name="target"/>. Returns whether the
+    /// server was actually asked — false means there is nobody to ask (this machine is the authority, or the target is
+    /// something no server has heard of), and the caller falls back to whatever it did before there was a wire.
+    ///
+    /// <para>Asked at the START of the swing rather than when the animation reaches the target, because the server
+    /// decides when the blow lands and announces the swing to every watcher from the moment it accepts it. The
+    /// message carries only what it is aimed at: the server holds the weapon, the numbers and the cadence.</para></summary>
+    public static bool AskToSwingAt(IDamageable target)
+    {
+        var identity = SharedIdentityOf(target);
+        if (identity == null) return false;
+        NetworkClient.Send(new HitRequest { targetNetId = identity.netId });
+        return true;
+    }
+
     static NetworkIdentity SharedIdentityOf(IDamageable target)
     {
         if (NetworkServer.active) return null;                  // I AM the authority — apply it for real
@@ -1104,6 +1150,34 @@ public class GameNetwork : NetworkManager
     static readonly System.Collections.Generic.Dictionary<int, ClaimLedger> skillLedgers =
         new System.Collections.Generic.Dictionary<int, ClaimLedger>();
 
+    // When each connection's next blow may land, by this machine's clock. Separate from the flood ledger above and
+    // asking a different question: that one is "is this machine shouting", this one is "does this fighter's attack
+    // speed allow a blow yet".
+    static readonly System.Collections.Generic.Dictionary<int, float> swingDueAt =
+        new System.Collections.Generic.Dictionary<int, float>();
+
+    // How much of a beat a blow may arrive early and still be believed. DELIBERATELY LOOSE, and it is my call:
+    // the swinger's own machine still times the animation, so an honest blow arrives a trip's jitter away from
+    // when this machine expected it, and refusing an honest player is worse than missing a cheat. At half a beat
+    // it still cuts the fastest a machine can possibly swing down to twice its real rate, from the twenty a
+    // second the flood ceiling allows. Tighten it once the swing's timing lives here rather than on the client.
+    const float SwingEarliness = 0.5f;
+
+    static bool SwingIsDue(int connectionId, float swingTime)
+    {
+        float now = Time.time;
+        if (swingDueAt.TryGetValue(connectionId, out float due) && now < due)
+        {
+            // SAID, not dropped in silence: a blow that vanishes with nothing in the log looks exactly like a bug
+            // in the swing itself, and the whole point of this guard is that it can be wrong about honest players.
+            Debug.LogWarning("[server] a blow from connection " + connectionId + " arrived "
+                             + (due - now).ToString("0.00") + "s before that fighter's next swing was due — dropped.");
+            return false;
+        }
+
+        swingDueAt[connectionId] = now + swingTime * SwingEarliness;
+        return true;
+    }
     static bool SwingingTooFast(int connectionId) => TooMany(swingLedgers, connectionId, MaxHitsPerSecond);
     static bool HealingTooFast(int connectionId) => TooMany(healLedgers, connectionId, MaxHealsPerSecond);
     static bool CastingTooFast(int connectionId) => TooMany(skillLedgers, connectionId, MaxSkillStrikesPerSecond);
@@ -1134,7 +1208,38 @@ public class GameNetwork : NetworkManager
         return (target.Body.position - swinger.Body.position).sqrMagnitude <= reach * reach;
     }
 
-    // The server's side: resolve the hit for real, on the one copy of the world that counts.
+    // A swing that has been accepted and is on its way to landing, held until its contact moment comes round.
+    // A STRUCT in a plain list, walked once a frame: a swing is accepted about once a second per player, and a
+    // coroutine each would be an object and a timer per blow, forever (PERFORMANCE.md).
+    struct PendingBlow
+    {
+        public int connectionId;
+        public uint targetNetId;
+        public float landsAt;
+    }
+
+    static readonly System.Collections.Generic.List<PendingBlow> pendingBlows =
+        new System.Collections.Generic.List<PendingBlow>();
+
+    /// <summary>The server's clock for swings in flight. Walked backwards so a landing can be removed in place
+    /// without disturbing the ones still waiting.</summary>
+    public override void Update()
+    {
+        base.Update();
+        if (!NetworkServer.active || pendingBlows.Count == 0) return;
+
+        float now = Time.time;
+        for (int i = pendingBlows.Count - 1; i >= 0; i--)
+        {
+            var p = pendingBlows[i];
+            if (now < p.landsAt) continue;
+            pendingBlows.RemoveAt(i);
+            if (NetworkServer.connections.TryGetValue(p.connectionId, out var conn) && conn != null)
+                LandTheBlow(conn, p.targetNetId);
+        }
+    }
+
+    // The server's side: ACCEPT a swing. It does not land here — see LandTheBlow, which this schedules.
     void OnHitRequest(NetworkConnectionToClient conn, HitRequest msg)
     {
         // NOTHING a client says is taken on trust — not what it is hitting, not how often, not from how far. A
@@ -1142,12 +1247,7 @@ public class GameNetwork : NetworkManager
         if (SwingingTooFast(conn.connectionId)) return;
 
         if (!NetworkServer.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null) return;
-
-        var shell = identity.GetComponent<NetMob>();
-        var victim = shell != null && shell.ServerMob != null
-            ? shell.ServerMob.GetComponent<IDamageable>()
-            : identity.GetComponent<IDamageable>();
-        if (victim == null) return;
+        if (VictimBehind(identity) == null) return;
 
         var attacker = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
         var swinger = attacker != null ? attacker.ServerCombatUnit : null;
@@ -1162,7 +1262,76 @@ public class GameNetwork : NetworkManager
             return;
         }
 
-        // Reach is checked AFTER the fighter is found, because it is the fighter that has a reach at all.
+        // THE BEAT IS THIS MACHINE'S, not the swinger's. Until now the only thing standing between a client and
+        // twenty blows a second was the flood ceiling, which is set far above any real attack speed on purpose —
+        // so a machine that sent a request the moment it was allowed to, instead of when its own animation reached
+        // the target, simply swung faster. The real cadence was always meant to live here and was waiting on the
+        // server holding a fighter per connection, which it now does.
+        var fighter = swinger as Character;
+        float swingTime = fighter != null ? fighter.SwingTime : 0f;
+        if (swingTime > 0f && !SwingIsDue(conn.connectionId, swingTime)) return;
+
+        var worn = fighter != null ? fighter.GetEquipped(EquipSlotType.Weapon) : null;
+        var weapon = worn != null ? worn.weaponType : WeaponType.None;
+
+        // AND THE SWING IS SAID OUT LOUD. Nothing on the wire has ever said that a person's body did anything, so
+        // until now everybody else watched their damage numbers climb over a character standing perfectly still.
+        // The pose is chosen from the weapon THIS machine holds for them, never from what their machine claims.
+        if (attacker != null) attacker.BeganAction(WeaponStances.AttackFor(weapon), swingTime);
+
+        // WHEN IT LANDS IS THIS MACHINE'S TOO. A swing was asked for at the moment it began, and it connects part
+        // way through — the same fraction the swinger's own animation reaches, because both read the one number in
+        // the shared character spec. Until this, the swinger's machine sent the request AT its contact frame, which
+        // handed it the say over when inside its own swing a blow landed.
+        //
+        // A BOW IS THE EXCEPTION, and it is the swinger's machine that says so by asking at a different moment: an
+        // arrow's blow lands when the arrow arrives, which is worked out by flying it. This machine flies nothing,
+        // so a request from a bow is one whose moment has already come.
+        if (swingTime > 0f && !IsRangedWeapon(weapon))
+        {
+            pendingBlows.Add(new PendingBlow
+            {
+                connectionId = conn.connectionId,
+                targetNetId = msg.targetNetId,
+                landsAt = Time.time + swingTime * Mathf.Clamp01(CharacterSpec.Active.hitTiming)
+            });
+            return;
+        }
+
+        LandTheBlow(conn, msg.targetNetId);
+    }
+
+    /// <summary>A bow or a firearm — the two weapons whose blow travels rather than connecting. Read from the same
+    /// weapon type the swinger's own machine reads, so the two can never disagree about which is which.</summary>
+    static bool IsRangedWeapon(WeaponType w) => w == WeaponType.Bow || w == WeaponType.Firearm;
+
+    // Whatever actually takes the damage behind a shell: a creature's real body on this machine, or the thing
+    // itself. One reading of it, because both the accepting half and the landing half need the same answer.
+    static IDamageable VictimBehind(NetworkIdentity identity)
+    {
+        if (identity == null) return null;
+        var shell = identity.GetComponent<NetMob>();
+        return shell != null && shell.ServerMob != null
+            ? shell.ServerMob.GetComponent<IDamageable>()
+            : identity.GetComponent<IDamageable>();
+    }
+
+    // The contact moment itself, on the server's clock. EVERYTHING here is re-asked rather than remembered from
+    // when the swing was accepted: a creature can die, be recycled or walk out of reach during a swing, and a
+    // fighter can be gone entirely if their player left mid-blow.
+    void LandTheBlow(NetworkConnectionToClient conn, uint targetNetId)
+    {
+        if (!NetworkServer.spawned.TryGetValue(targetNetId, out var identity) || identity == null) return;
+
+        var victim = VictimBehind(identity);
+        if (victim == null) return;
+
+        var attacker = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        var swinger = attacker != null ? attacker.ServerCombatUnit : null;
+        if (swinger == null) return;
+
+        // Reach is judged HERE, at the contact moment, exactly as it was when the swinger's own machine chose that
+        // moment — so a target that walked out during the swing is missed the same way it always was.
         if (!WithinReach(swinger, victim)) return;
 
         // THE SERVER RUNS THE SWING ITSELF — through the ONE implementation of what a swing is, the same one a
@@ -1180,7 +1349,7 @@ public class GameNetwork : NetworkManager
         // …and then TELL EVERYONE. The server has no screen, so a blow it keeps to itself is a blow nobody sees.
         NetworkServer.SendToReadyObservers(identity, new HitResult
         {
-            targetNetId = msg.targetNetId,
+            targetNetId = targetNetId,
             attackerNetId = conn.identity != null ? conn.identity.netId : 0u,
             amount = resolved.amount,
             element = resolved.element,
@@ -1711,6 +1880,12 @@ public class GameNetwork : NetworkManager
         warnedNoFighter.Remove(conn.connectionId);
         swingLedgers.Remove(conn.connectionId);
         healLedgers.Remove(conn.connectionId);
+        skillLedgers.Remove(conn.connectionId);
+        swingDueAt.Remove(conn.connectionId);
+        // AND ANY SWING STILL IN FLIGHT. A blow scheduled a moment before somebody left would otherwise come round
+        // and look for a fighter that has been dismissed — harmless, but it would sit in the list until it did.
+        for (int i = pendingBlows.Count - 1; i >= 0; i--)
+            if (pendingBlows[i].connectionId == conn.connectionId) pendingBlows.RemoveAt(i);
 
         // WRITTEN DOWN BEFORE THEY ARE LET GO. This is the moment everything that happened to them has to
         // survive — and the order matters: a character released while its last write is still in flight is how
@@ -1750,15 +1925,11 @@ public class GameNetwork : NetworkManager
         base.OnClientConnect();
         Debug.Log("[client] connected to the server");
 
-        // A fresh start — but only once this connection has actually been let INTO the world, which is what the
-        // join below asks for. Reset merely on the wire coming up, a REFUSED join looked like a success: the
-        // count went back to zero, the refusal arrived, and the retry began again from one, forever. MEASURED: a
-        // player who had already been in the world once printed "retrying 1 of 3" more than thirty times and
-        // never gave up, leaving them under a veil with no way out.
-        //
-        // It is cleared instead when the server confirms them (see OnJoinedWorld's caller).
-        ReconnectNotice.Hide();
-        ReconnectNotice.Hide();
+        // NOTHING IS RESET HERE, and the world is NOT woken here. The wire coming up is also exactly what
+        // happens a moment before a join is refused, so treating it as success is what made a refused player
+        // retry forever from one: the count went back to zero, the refusal arrived, and the loop began again.
+        // MEASURED on a real run: "retrying 1 of 3" printed more than forty times, and the world came up on
+        // screen for somebody the server had already turned away. Both now wait for ConfirmedInTheWorld.
 
         // Announce who is playing, so the server can give this connection the right body. Sent from here
         // rather than at sign-in because a connection is the thing that needs a body, and a connection is
@@ -1770,12 +1941,18 @@ public class GameNetwork : NetworkManager
             characterId = AccountSession.CharacterId ?? "",
             ticket = AccountSession.EntryTicket ?? ""
         });
+    }
 
-        // ACTUALLY IN, so the retry count starts fresh. Cleared here rather than when the wire came up, because
-        // the wire coming up is also what happens a moment before being refused.
-        attemptsSpent = 0;
-
-        // The world may exist now, and not one moment before this.
+    /// <summary>THE MOMENT THIS PLAYER IS REALLY IN: the server granted them a body, which is the only thing it
+    /// does that a refused connection never gets. Called by that body as it starts on the machine that owns it.
+    ///
+    /// <para>This is where the retry count starts fresh and where the world is allowed to come up — never on the
+    /// wire coming up, which happens to the refused too.</para></summary>
+    public static void ConfirmedInTheWorld()
+    {
+        if (spawned == null) return;
+        spawned.attemptsSpent = 0;
+        ReconnectNotice.Hide();
         OnJoinedWorld?.Invoke();
     }
 

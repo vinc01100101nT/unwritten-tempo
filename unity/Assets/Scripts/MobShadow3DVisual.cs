@@ -24,9 +24,10 @@ using UnityEngine;
 [RequireComponent(typeof(PathAgent3D))]
 public class MobShadow3DVisual : Agent3DVisual
 {
-    [Tooltip("Seconds the attack animation plays after this mob lands a bite. Keep it under the mob's Touch " +
-             "Interval so the swing finishes before the next one starts.")]
-    public float swingSeconds = 0.45f;
+    // NO swing-length field here on purpose. How long a swing lasts is now two facts owned by two places that
+    // already hold them: the BEAT it must finish inside belongs to the creature's attack cadence on the machine
+    // that owns it, and how long the animation itself takes belongs to the clip. A number typed here was a third
+    // answer that agreed with neither, and it could not follow an attack-speed buff.
 
     // NO freeze-distance field here on purpose. Every mob already has one on its brain (MonsterAI3D.simulateRadius),
     // which is the single owner; a second box on this component would put two editable numbers for one behaviour on
@@ -34,10 +35,9 @@ public class MobShadow3DVisual : Agent3DVisual
 
     MonsterAI3D brain;
     Health health;
-    UnitEquipment equipment;
-    Transform player;   // the chase target it turns to face — targeting, NOT where its looks or its numbers come from
-    int lastHp;
-    float hurtUntil, lastAttackSeen;
+    // The one owner of "is this unit flinching" — the door every real hit passes through sets it, on the machine
+    // that decided the blow AND on every machine the blow was announced to.
+    StatusController status;
     bool built;
     bool building;   // a model is on its way — keeps a second call from starting a second load for the same mob
 
@@ -52,16 +52,21 @@ public class MobShadow3DVisual : Agent3DVisual
         base.Awake();
         brain = GetComponent<MonsterAI3D>();
         health = GetComponent<Health>();
-        equipment = GetComponent<UnitEquipment>();
+        status = GetComponent<StatusController>();
         onFootPlant = OnFootPlant;
     }
 
     void Start()
     {
-        BuildBody();
-        var pc = FindAnyObjectByType<Player3DController>();
-        player = pc != null ? pc.transform : null;
-        if (health != null) lastHp = health.Current;
+        // THE RIG IS GAMEPLAY, THE MODEL IS PRESENTATION, and only one of them belongs on a machine with no screen.
+        // A map server was fetching a character model and assembling an animated rig for every shadow creature it
+        // held, for nobody at all. It still needs everything below the skin — the capsule this creature collides
+        // with, the footprint it routes on, and the character travel gears that also decide its reach — because
+        // those are facts about the creature rather than a picture of it.
+        // A watching machine still waits for the model before it changes anything: until the model lands the
+        // creature is simply still a sprite, which is a legal state it was already in, rather than nothing at all.
+        if (GameServer.IsServer) { BecomeACharactersBody(); built = true; }
+        else BuildBody();
         gait.Seed(transform.position);
     }
 
@@ -105,11 +110,17 @@ public class MobShadow3DVisual : Agent3DVisual
         });
     }
 
-    // The in-place billboard→character swap, once the model is in hand.
-    void SwapToBody(CharacterSpec spec, GameObject model)
+    /// <summary>Everything that makes this creature a CHARACTER rather than a sprite, except the picture: the
+    /// billboard parts retired, the root unscaled, the shared collision capsule and routing footprint applied, and
+    /// the character travel gears switched on.
+    ///
+    /// <para>Split out from the model swap because a headless map server needs all of it and none of the model.
+    /// Every line here changes what the creature IS — how wide it is, what it can climb, how fast it walks, how far
+    /// it can reach — so a server that skipped them would run a different creature from the one everybody sees.</para>
+    ///
+    /// <para>Idempotent: a watching machine runs it again when the model lands, which costs two null checks.</para></summary>
+    void BecomeACharactersBody()
     {
-        if (built) return;
-
         // --- Retire EVERY billboard part. A shadow keeps none of the sprite rig. ---
         // BillboardAnimator3D writes this root's localScale every frame (breathing squash) and AttackLunge writes it
         // per bite; both would deform the 3D model, and the squash "tell" is replaced by a real swing clip.
@@ -141,6 +152,40 @@ public class MobShadow3DVisual : Agent3DVisual
         // second copy of the townsfolk formula, which also silently omitted the slope limit that copy set.
         Character3DBody.ApplyRig(gameObject, agent);
 
+        // HOW TALL THIS CREATURE IS, stated rather than guessed from its root — the model normally declares it, and
+        // a headless server has no model. Anything that measures a unit by its body reads this: a projectile aims
+        // at mid-body, and where it aims decides how far it flies and therefore when its damage lands. Left unsaid,
+        // a server would time a caster's bolt against a different creature from the one everybody is watching.
+        UnitBody.Set(gameObject, CharacterSpec.Active.bodyHeight);
+
+        PointTheFreezeSwitchAt(null);
+
+        // Travel at the shared CHARACTER gear speeds, not the mob dial. Without this a character-sized body moves
+        // at the mob scale (0.30x) and visibly shuffles — and it is not only a look: the same answer decides how
+        // far this creature can reach, so a server that skipped it would run creatures that fight differently from
+        // the ones on screen.
+        if (brain != null) brain.UsesCharacterGears = true;
+    }
+
+    // Which of this unit's parts stop when the player is far away. Every mob already HAS the switch (the brain
+    // attaches it) and it already owns the distance — this only says WHICH components it stops, because a shadow's
+    // costly parts are its rigged Animator and this driver rather than the sprite animator a billboard freezes.
+    // The animator is null until a model lands, and on a headless server it never does.
+    void PointTheFreezeSwitchAt(Animator bodyAnimator)
+    {
+        var lod = GetComponent<SimulationLod>() ?? gameObject.AddComponent<SimulationLod>();
+        lod.Freeze(agent, bodyAnimator, this);
+        if (brain != null) brain.Lod = lod;
+    }
+
+    // The in-place sprite→character swap, once the model is in hand. Presentation only: everything that changes
+    // what this creature IS happened in BecomeACharactersBody, which a headless server runs on its own.
+    void SwapToBody(CharacterSpec spec, GameObject model)
+    {
+        if (built) return;
+
+        BecomeACharactersBody();
+
         // Fit the raw model to the shared body height, and declare that height so every anchor (floating numbers,
         // nameplate, projectile homing, cursor snap) measures this unit by its BODY rather than by its root scale.
         var builtPose = Character3DBody.Build(gameObject, model, spec.animatorController, spec.bodyHeight);
@@ -148,62 +193,58 @@ public class MobShadow3DVisual : Agent3DVisual
         BindBody(builtPose);
         built = true;
 
-        // Re-point the freeze switch at a 3D body's pieces. Every mob already HAS the switch (the brain attaches it),
-        // and it already owns the distance — this only swaps WHICH components stop, because a shadow's costly parts
-        // are its rigged Animator and this driver, not the sprite animator a billboard mob freezes.
-        var lod = GetComponent<SimulationLod>() ?? gameObject.AddComponent<SimulationLod>();
-        lod.Freeze(agent, builtPose.GetComponent<Animator>(), this);
-        if (brain != null)
-        {
-            brain.Lod = lod;
-            // Travel at the shared CHARACTER gear speeds, not the mob dial. Without this a character-sized body moves
-            // at the mob scale (0.30x) and visibly shuffles. The brain owns which gear (chase = run, wander = walk).
-            brain.UsesCharacterGears = true;
-        }
+        PointTheFreezeSwitchAt(builtPose.GetComponent<Animator>());
     }
 
-    /// <summary>Die beats hurt beats attack; anything else falls through to the shared walk/idle. Each is a timer
-    /// comparison against state the mob already owns — no polling of other systems, no allocation.</summary>
+    /// <summary>Die beats hurt; anything else falls through to the shared walk/idle. Two comparisons against state
+    /// this mob already owns — no polling of other systems, no allocation.
+    ///
+    /// <para>THE SWING IS NOT HERE ANY MORE, deliberately. It arrives as a beat — which action, the moment it
+    /// began, and the window it must finish inside — through <see cref="Agent3DVisual.TellAction"/>, from the
+    /// creature's own brain on the machine that owns it and from the server's announcement on every machine
+    /// watching. That layer outranks this one, so a swing plays over a walk without either having to know about
+    /// the other, and one description of a swing serves every machine.</para></summary>
     protected override bool DriveRoleAction()
     {
         if (health == null) return false;
 
         if (health.IsDead)
         {
+            // Death has to beat a swing that was still running when the killing blow landed, or a creature dies
+            // mid-bite and finishes the bite lying down. The one-shot layer outranks this one, so it is cancelled
+            // rather than merely out-driven.
+            stance.CancelActionOverride();
             stance.DriveStance(StanceId.Die);
             return true;
         }
 
-        // Flinch on any HP drop. Read from Health.Current rather than a damage event so this stays a pure visual
-        // observer — nothing in the combat path has to know a shadow exists.
-        int hp = health.Current;
-        // Length read from the clip, like the player's — and the same length this mob's feet are pinned for.
-        if (hp < lastHp && stance != null) hurtUntil = Time.time + stance.ActionDuration(StanceId.Hurt);
-        lastHp = hp;
-
-        if (Time.time < hurtUntil)
+        // FLINCH, from the ONE thing that decides it: the door every real hit passes through sets this, and it is
+        // set on a watched copy too because the blow was announced to this machine. It used to be inferred here
+        // from the health number dropping, which made two owners of one reaction — and the inferred one was the
+        // worse: a watched creature's health arrives ten times a second, so two hits inside the same tenth of a
+        // second showed one flinch, and a creature that had earned its footing flinched anyway.
+        if (status != null && status.MovementFlinched)
         {
             stance.DriveStance(StanceId.Hurt);
             return true;
         }
 
-        // A bite the brain just landed — MonsterAI3D stamps the moment, the one general "it attacked" signal any
-        // visual can read (the billboard's squash tell used to be the only consumer).
-        if (brain != null && brain.LastAttackTime > lastAttackSeen) lastAttackSeen = brain.LastAttackTime;
-        if (Time.time < lastAttackSeen + swingSeconds)
-        {
-            // The swing pose is picked by the EQUIPPED WEAPON, through the same resolver the player's brain uses —
-            // so a shadow holding a sword swings the sword stance, not a generic one.
-            stance.DriveStance(WeaponStances.AttackFor(EquippedWeaponType()), swingSeconds);
-            if (player != null && pose != null)
-            {
-                Vector3 toPlayer = player.position - transform.position; toPlayer.y = 0f;
-                if (toPlayer.sqrMagnitude > 1e-4f) pose.SetFacing(toPlayer.normalized);
-            }
-            return true;
-        }
-
         return false;
+    }
+
+    /// <summary>Turn toward whoever this creature is after while it stands its ground, so a bite lands facing its
+    /// target instead of facing wherever it last walked. Falls back to the shared answer — the line it travelled —
+    /// the moment it is walking, and to nothing at all on a watched copy, which chooses nobody to chase and so has
+    /// nobody to turn to.</summary>
+    protected override Vector3 FacingThisFrame(Vector3 groundTravel, bool walking, Vector3 position)
+    {
+        if (walking) return base.FacingThisFrame(groundTravel, true, position);
+
+        var prey = brain != null ? brain.PreyBody : null;
+        if (prey == null) return Vector3.zero;
+
+        Vector3 toPrey = prey.position - position; toPrey.y = 0f;
+        return toPrey.sqrMagnitude > 1e-4f ? toPrey : Vector3.zero;
     }
 
     /// <summary>Show or hide the 3D body. The billboard death path hides the SPRITE, which a shadow doesn't render —
@@ -225,12 +266,9 @@ public class MobShadow3DVisual : Agent3DVisual
         var sr = GetComponent<SpriteRenderer>();
         if (sr != null) sr.enabled = false;   // a shadow NEVER shows the sprite, in any lifecycle state
 
-        // Drop the death pose and re-baseline the per-life state, so a recycled body doesn't flinch from last
-        // life's HP or fire a phantom footstep from where it died.
-        if (stance != null) stance.ClearAction();
-        if (health != null) lastHp = health.Current;
-        hurtUntil = 0f;
-        lastAttackSeen = 0f;
+        // Drop the death pose and re-baseline the per-life state, so a recycled body doesn't hold last life's
+        // swing or fire a phantom footstep from where it died.
+        if (stance != null) { stance.ClearAction(); stance.CancelActionOverride(); }
         gait.Seed(transform.position);
     }
 
@@ -238,14 +276,6 @@ public class MobShadow3DVisual : Agent3DVisual
     /// character changes gear at the same pace, whoever is driving it. A shadow copies a player, so it uses the
     /// player's own two gears; the rule lives in the base because another body stands in for a player too.</summary>
     protected override StanceId LocomotionStanceFor(float groundSpeed) => PlayersGearFor(groundSpeed);
-
-    /// <summary>This unit's equipped weapon type (None when unarmed) — the mob's own gear, read through the same
-    /// UnitEquipment every mob carries.</summary>
-    WeaponType EquippedWeaponType()
-    {
-        var w = equipment != null ? equipment.Get(EquipSlotType.Weapon) : null;
-        return w != null && w.def != null ? w.def.weaponType : WeaponType.None;
-    }
 
     protected override void LateUpdate()
     {

@@ -31,6 +31,56 @@ public abstract class Agent3DVisual : MonoBehaviour
     // What counts as walking for a body with no mover to ask, in units per second. Well above the crawl a body
     // makes while easing the last centimetre onto a position it has nearly reached, well below a walk.
     const float MinTravelSpeed = 0.05f;
+
+    // ---- the server's word about this body -------------------------------------------------------------
+    // A body the server PLACES is TOLD two things rather than asked for them: how fast it is travelling, and what
+    // action it began. Whatever is following the server for this body sets them.
+
+    float toldGroundSpeed;
+    bool speedIsTold;
+
+    // The beat last played from the server's word, by the moment it began. The beat is a VALUE that is re-read
+    // every frame rather than an event that fires once, so without this it would restart on every frame it held.
+    double playedActionAt = double.NegativeInfinity;
+
+    /// <summary>The server's word on how fast this body is travelling on the ground, in units per second (0 =
+    /// standing). Call it every frame this body is being followed.
+    ///
+    /// <para>TOLD rather than measured because measuring is wrong here, and measurably so: positions arrive ten
+    /// times a second and <see cref="WatchedBody"/> closes 12/second of the gap toward them, so within each 100 ms
+    /// gap the apparent speed decays to about 30% of the real one and jumps back when the next position lands —
+    /// a threefold swing, ten times a second, straight across the walk/run threshold. A body that STOPS reads as
+    /// still walking for about a third of a second.</para></summary>
+    public void TellTravelSpeed(float groundSpeed)
+    {
+        toldGroundSpeed = groundSpeed;
+        speedIsTold = true;
+    }
+
+    /// <summary>The server's word that this body BEGAN an action: which one, the moment it began on the clock both
+    /// machines share, and the beat it has to finish inside. Safe to call every frame — one beat plays once.
+    ///
+    /// <para><paramref name="beatSeconds"/> is NOT the length of the animation. The server owns the beat — for a
+    /// creature's bite, the interval until its next one, with its attack speed already folded in — and the art
+    /// owns how long the swing takes. So the clip plays at its own natural length, capped so it cannot still be
+    /// running when the next beat lands. Neither side has to know the other's number, and a hasted unit's swing
+    /// shortens by itself.</para>
+    ///
+    /// <para>A beat that began before this body started watching is JOINED part-way through rather than skipped,
+    /// however little of it is left. That is a decision, not an oversight: a body standing still while its damage
+    /// number climbs is worse than a swing showing only its last frames.</para></summary>
+    public void TellAction(StanceId action, double startedAt, float beatSeconds)
+    {
+        if (stance == null || startedAt <= playedActionAt) return;
+        playedActionAt = startedAt;
+
+        float natural = stance.ActionDuration(action);
+        float play = beatSeconds > 0f ? Mathf.Min(natural, beatSeconds) : natural;
+        if (play <= 0f) return;
+
+        float elapsed = (float)(Mirror.NetworkTime.time - startedAt);
+        stance.PlayActionFor(action, play, startedSecondsAgo: Mathf.Max(0f, elapsed));
+    }
     int groundMask;
     Vector3 lastPos;
     bool seated;   // the feet have been placed at least once; a still unit then needs no further ground ray
@@ -55,6 +105,12 @@ public abstract class Agent3DVisual : MonoBehaviour
     {
         lastPos = transform.position;
         seated = false;
+        // A POOLED BODY COMES BACK AS SOMEBODY ELSE. It may be handed to a different unit entirely, so last life's
+        // told speed would have it walking on the spot, and last life's played beat would swallow the new unit's
+        // first swing if that swing happened to be stamped earlier on the clock.
+        speedIsTold = false;
+        toldGroundSpeed = 0f;
+        playedActionAt = double.NegativeInfinity;
     }
 
     /// <summary>Re-resolve the pose sink after the body is built at runtime (the model child doesn't exist yet when
@@ -71,6 +127,33 @@ public abstract class Agent3DVisual : MonoBehaviour
     /// frame — locomotion and facing are then skipped, because the role action outranks walking. Default: no
     /// role vocabulary at all.</summary>
     protected virtual bool DriveRoleAction() => false;
+
+    /// <summary>"AM I WALKING, AND HOW FAST?" — the one question, answered from the best source this body has.
+    ///
+    /// <para>Three answers, in order of authority. TOLD: the server said, and that beats everything (see
+    /// <see cref="TellTravelSpeed"/>). STEERED: a mover that is actually running knows, and the ground it covered
+    /// gives the speed. NEITHER: a body that is placed with nothing to ask reads its own footfall.</para>
+    ///
+    /// <para>The middle case asks whether the mover is RUNNING, not whether it exists. A body the server places
+    /// keeps its mover as a switched-off component, and a switched-off mover answers "not moving" forever — which
+    /// is why a watched creature slid around in its standing pose.</para>
+    ///
+    /// <para>The square root is paid only by a body that is actually moving; a standing crowd compares squares.</para></summary>
+    protected virtual bool Travelling(Vector3 groundTravel, float dt, out float groundSpeed)
+    {
+        if (speedIsTold)
+        {
+            groundSpeed = toldGroundSpeed;
+            return toldGroundSpeed > MinTravelSpeed;
+        }
+
+        bool moving = agent != null && agent.isActiveAndEnabled
+            ? agent.Moving
+            : groundTravel.sqrMagnitude > MinTravelSpeed * MinTravelSpeed * dt * dt;
+
+        groundSpeed = moving ? groundTravel.magnitude / dt : 0f;
+        return moving;
+    }
 
     /// <summary>Which locomotion gear to play at this measured ground speed. Base = always Walk, because a
     /// strolling townsperson has exactly one gear. A body that has the player's TWO gears overrides it with
@@ -116,17 +199,11 @@ public abstract class Agent3DVisual : MonoBehaviour
 
         float dt = Mathf.Max(Time.deltaTime, 1e-4f);
 
-        // "AM I WALKING?" — asked of the MOVER when this body has one, and of its own footfall when it does not.
-        // A body that is PLACED rather than steered (a remote player, followed from the server) has no mover to
-        // ask, and measuring the ground it just covered is the same question answered from the other end. Compared
-        // squared, against the distance that speed covers in this frame, so a standing crowd pays no square root.
-        bool walking = agent != null
-            ? agent.Moving
-            : d.sqrMagnitude > MinTravelSpeed * MinTravelSpeed * dt * dt;
+        bool walking = Travelling(d, dt, out float groundSpeed);
 
         if (!DriveRoleAction())
         {
-            if (walking) stance.DriveStance(LocomotionStanceFor(d.magnitude / dt));
+            if (walking) stance.DriveStance(LocomotionStanceFor(groundSpeed));
             else stance.ClearAction();   // fall through to the authored Idle stance (selfDrive = false)
 
             // Facing is asked EVERY frame, not only while walking, because which way a body looks and whether it is

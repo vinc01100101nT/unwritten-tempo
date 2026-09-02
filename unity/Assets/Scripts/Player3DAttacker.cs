@@ -22,10 +22,9 @@ public class Player3DAttacker : MonoBehaviour
     public float cooldown = 0.6f;
     [Tooltip("Delay between a swing starting and the hit landing (cancellable window).")]
     public float windupTime = 0.18f;
-    [Tooltip("Fraction (0..1) of the swing at which the basic-attack hit LANDS. The animation still plays the " +
-             "FULL swing for the same cadence; the damage just connects at this point — 0.7 = 70% in, the " +
-             "natural contact moment — instead of right at the end.")]
-    [Range(0.1f, 1f)] public float hitTiming = 0.70f;
+    // NO contact-fraction knob here any more. When in the swing a blow lands is now the SERVER's decision, and it
+    // has no attacker component to read it from — so the number moved to the shared character spec, where both
+    // machines read the same one. A copy here would let your animation and the server's blow drift apart.
     [Tooltip("Fallback damage when there's no Character (e.g. the standalone spike).")]
     public int damage = 3;
     [Header("Ranged (Bow / Firearm) — arrow projectile")]
@@ -60,7 +59,7 @@ public class Player3DAttacker : MonoBehaviour
 
     /// <summary>How long one whole swing lasts (start → next swing can begin), scaled by attack-speed. The attack
     /// animation is sped to play fully within this window (see Character3DPose); the hit lands partway through at
-    /// <see cref="hitTiming"/> (default 70%) — the contact moment. Equals the swing interval, so DPS is unchanged —
+    /// <see cref="CharacterSpec.hitTiming"/> (default 70%) — the contact moment. Equals the swing interval, so DPS is unchanged —
     /// only WHEN inside the window the hit connects moves.
     ///
     /// <para>The character owns the interval and the attack-speed that scales it; this asks them. Only the standalone
@@ -165,6 +164,17 @@ public class Player3DAttacker : MonoBehaviour
         // AttackSpeed shortens the gap between swings AND the motion itself (faster = higher mult),
         // so the visible swing keeps pace with the cadence instead of lagging at high ASPD.
         nextSwing = Time.time + cooldown * MotionScale;
+
+        // ASK AT THE START, not at the contact frame. The server decides when this blow lands, on its own clock, and
+        // announces the swing to everybody watching from the moment it accepts it — so their view of the swing and
+        // of the damage number come from one message and cannot disagree. Your own character still swings this frame
+        // and waits for nothing; only the OUTCOME travels.
+        //
+        // A BOW IS DELIBERATELY NOT SENT HERE: its blow lands when the arrow arrives, which this machine works out by
+        // flying it. Asking the server to time that would mean the server flying its own arrow, which is a whole
+        // movement simulation rather than a timer — so a bow still asks at the moment its arrow lands, as before.
+        if (!IsRanged) AskTheServerToSwing(t);
+
         Sfx.Play(WeaponSfx(w => w.attackSfx, defaultAttackSfx));   // swing
         // OnAttack (attacker-side "Active Verb") is dormant — re-enable once we compose per-weapon swing vfx/sfx.
         // VfxCue.Fire(VfxCueId.OnAttack, transform);
@@ -179,14 +189,26 @@ public class Player3DAttacker : MonoBehaviour
         return s != null && !s.Empty ? s : fallback;
     }
 
+    // Whether the swing currently playing was handed to the server at its start. False on a machine that is its own
+    // authority and for the Character-less spike, both of which still land their own blow at the contact frame.
+    bool AskedTheServer;
+
+    // Ask only when there is a fighter for the server to swing WITH. Without a character this is the spike — a scene
+    // fixture with no stats and nothing on the wire — and it keeps landing its own flat blow as it always did.
+    void AskTheServerToSwing(Health t)
+    {
+        AskedTheServer = Character.Instance != null && GameNetwork.AskToSwingAt(t);
+    }
+
     IEnumerator SwingThenHit(Health t)
     {
         // The whole swing spans SwingTime (scales with attack-speed; Character3DPose speeds the clip to fill it).
-        // The hit lands at hitTiming OF that window — the contact moment, ~70% in — not at the very end. We then
-        // hold `swing` for the remainder so the animation finishes and cadence (= SwingTime) is unchanged.
+        // The hit lands at the shared contact fraction OF that window — ~70% in — not at the very end. We then
+        // hold `swing` for the remainder so the animation finishes and cadence (= SwingTime) is unchanged. The
+        // server reads the same fraction to time the blow, so the animation and the blow cannot drift apart.
         float scale = MotionScale;
         float swingTime = SwingTime;
-        float impactAt = swingTime * Mathf.Clamp01(hitTiming);
+        float impactAt = swingTime * Mathf.Clamp01(CharacterSpec.Active.hitTiming);
         // Manual timer, not `new WaitForSeconds`: this coroutine starts EVERY swing during auto-combat,
         // and the duration varies with attack speed so a cached wait can't cover it (PERFORMANCE.md).
         for (float el = 0f; el < impactAt; el += Time.deltaTime) yield return null;
@@ -207,7 +229,10 @@ public class Player3DAttacker : MonoBehaviour
                     from, t.transform, UnitAnchor.Center(t.transform), arrowSpeed, 0.35f, 3f, LandArrow,
                     this, t, 0, Element.Neutral);
             }
-            else LandBasicHit(t);
+            // MELEE IS NOT LANDED HERE ANY MORE. The server was asked when this swing began and lands it on its own
+            // clock, at the same point of the swing this animation reaches now — both read one number. Landing it
+            // here as well would be the same blow twice: once asked for at the start, once at the contact frame.
+            else if (!AskedTheServer) LandBasicHit(t);
         }
 
         // Let the rest of the swing play out before freeing the slot, so the pose/animation completes and the next
