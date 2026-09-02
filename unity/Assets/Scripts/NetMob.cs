@@ -35,6 +35,23 @@ public class NetMob : NetworkBehaviour
         return null;
     }
 
+    /// <summary>Every shell on the SERVER, found by the REAL creature it speaks for — the mirror of
+    /// <see cref="byView"/>, which answers the same question on a watching machine. A dictionary for the same
+    /// reason: the server has to name the creature a blow landed on in order to announce that blow, which is the
+    /// per-hit path, and PERFORMANCE.md's rule is that a per-hit lookup does not walk a collection.</summary>
+    static readonly System.Collections.Generic.Dictionary<GameObject, NetMob> byServerMob =
+        new System.Collections.Generic.Dictionary<GameObject, NetMob>();
+
+    /// <summary>SERVER ONLY: the shell that speaks for the real creature <paramref name="mobObject"/> belongs to,
+    /// or null when that object is not a creature this server published. Walks up from a child for the same reason
+    /// <see cref="ShellForView"/> does — a blow may land on a body part rather than on the root.</summary>
+    public static NetMob ShellForServerMob(GameObject mobObject)
+    {
+        for (var t = mobObject != null ? mobObject.transform : null; t != null; t = t.parent)
+            if (byServerMob.TryGetValue(t.gameObject, out var shell) && shell != null) return shell;
+        return null;
+    }
+
     /// <summary>Which creature this is, by catalog id. Set once by the server before it spawns.</summary>
     [SyncVar] public string defId = "";
 
@@ -93,6 +110,9 @@ public class NetMob : NetworkBehaviour
     public void BindOnServer(GameObject mob, string id)
     {
         ServerMob = mob;
+        // FILED UNDER THE REAL CREATURE, so a blow the server lands on it can find the shell that has to announce
+        // that blow. The watching side files its own body the same way when it builds one (see AdoptView).
+        if (mob != null) byServerMob[mob] = this;
         defId = id;
         mapName = mob != null ? mob.gameObject.scene.name : "";
         isShadow = mob != null && mob.GetComponent<MobShadow3DVisual>() != null;
@@ -100,10 +120,17 @@ public class NetMob : NetworkBehaviour
         if (serverHealth != null) { netMaxHealth = serverHealth.maxHealth; netHealth = serverHealth.CurrentHP; }
         if (mob != null)
         {
-            netPosition = mob.transform.position;
+            // WHERE IT IS INSIDE ITS MAP, not where this machine happens to keep that map — see MapManager's
+            // parking. A watcher adds back its own answer for where the map is, which for a player is nowhere.
+            netPosition = MapManager.InMap(mob.transform.position, mapName);
             netYaw = mob.transform.eulerAngles.y;
             // AND THE SHELL ITSELF STANDS THERE TOO — see StandWhereTheMobStands.
             transform.position = mob.transform.position;
+            // AND IN THE CREATURE'S OWN MAP, not in whichever one the server happened to load last. Anything
+            // built while the game runs lands in the map that came up most recently, which for a shell made on
+            // behalf of a creature somewhere else is the wrong one — and the watcher lists are now built map
+            // first, so a shell filed under the wrong map is one no one in the right map is ever told about.
+            MapManager.PutInMap(gameObject, mob.gameObject.scene);
         }
     }
 
@@ -140,7 +167,7 @@ public class NetMob : NetworkBehaviour
         if (Time.time < nextPush) return;
         nextPush = Time.time + PushInterval;
 
-        netPosition = ServerMob.transform.position;
+        netPosition = MapManager.InMap(ServerMob.transform.position, mapName);
         netYaw = ServerMob.transform.eulerAngles.y;
         StandWhereTheMobStands();
 
@@ -201,7 +228,7 @@ public class NetMob : NetworkBehaviour
         // player can never drift into gliding differently. It also leaves a body that has arrived completely
         // alone, which is the common case in a town or a quiet field, not the rare one.
         if (facingBuiltFrom != netYaw) { facing = Quaternion.Euler(0f, netYaw, 0f); facingBuiltFrom = netYaw; }
-        WatchedBody.Follow(view.transform, netPosition, facing);
+        WatchedBody.Follow(view.transform, MapManager.InWorld(netPosition, mapName), facing);
 
         // Only when a number actually changed — a mob at steady health should cost nothing, and the
         // nameplate below only redraws when it sees a different value anyway.
@@ -231,7 +258,7 @@ public class NetMob : NetworkBehaviour
 
     void ReviveTheWatchedCopy()
     {
-        MobRespawn.Reactivate(view, netPosition);
+        MobRespawn.Reactivate(view, MapManager.InWorld(netPosition, mapName));
         SilenceTheBrain(view);
     }
 
@@ -244,11 +271,13 @@ public class NetMob : NetworkBehaviour
         // fetch and a rig assembled from scratch, and a field of respawning creatures asks for that every few
         // seconds. It comes back as a FRESH creature — the same treatment the server gives its own pooled bodies,
         // through the same function, so a returning body can never be a corpse or keep the last one's wounds.
+        //
+        // SWITCHING IT ON IS THAT FUNCTION'S JOB, not this one's — the order of the switch-on against the step
+        // clamp it does next is exactly what has to stay in one place (see MobRespawn.Reactivate).
         var reused = TakeSpareBody(BodyKind);
         if (reused != null)
         {
-            reused.SetActive(true);
-            MobRespawn.Reactivate(reused, netPosition);
+            MobRespawn.Reactivate(reused, MapManager.InWorld(netPosition, mapName));
             AdoptView(reused);
             return;
         }
@@ -260,7 +289,9 @@ public class NetMob : NetworkBehaviour
             return;
         }
 
-        MobSpawner.Spawn(def, netPosition, go =>
+        // NO MAP ON PURPOSE. This copy is not a creature living in a map — it is what a watching machine draws
+        // for one the server owns, and it belongs to the world so a door cannot destroy it (see AdoptView).
+        MobSpawner.Spawn(def, MapManager.InWorld(netPosition, mapName), default, go =>
         {
             if (go == null) return;
             // NOBODY LEFT TO SPEAK FOR IT. A shell can be taken away while its body is still being fetched — which
@@ -358,6 +389,19 @@ public class NetMob : NetworkBehaviour
     {
         DropTheView();
         base.OnStopClient();
+    }
+
+    /// <summary>The shell is going away, so the creature it spoke for goes out of the table with it — otherwise a
+    /// dead key sits there forever, exactly as it would on the watching side.
+    ///
+    /// <para>Removed only while the entry is still THIS shell's. A creature's body is switched off and kept for
+    /// reuse rather than destroyed, so a newer shell may already have claimed the same key, and a blind remove
+    /// would take the living shell out along with the dead one.</para></summary>
+    public override void OnStopServer()
+    {
+        if (ServerMob != null && byServerMob.TryGetValue(ServerMob, out var held) && held == this)
+            byServerMob.Remove(ServerMob);
+        base.OnStopServer();
     }
 
     // ---- the watching side's pool of bodies -------------------------------------------------------------

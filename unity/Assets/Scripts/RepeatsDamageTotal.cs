@@ -52,6 +52,9 @@ public class RepeatsDamageTotal : MonoBehaviour
     /// caster being disabled mid-run), exactly like the multi-hit flurry's.</summary>
     public static RepeatsDamageTotal Begin()
     {
+        // NOBODY TO SHOW IT TO on a headless server, which resolves everybody's runs and would otherwise build a
+        // floating number per run in front of no screen. The twin of Sfx.Deaf, Vfx.Blind and BattleNotice's guard.
+        if (GameServer.IsServer) return null;
         var go = new GameObject("RepeatsDamageTotal") { hideFlags = HideFlags.DontSaveInEditor };
         return go.AddComponent<RepeatsDamageTotal>();
     }

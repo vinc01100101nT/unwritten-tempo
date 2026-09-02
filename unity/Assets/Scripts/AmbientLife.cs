@@ -89,6 +89,8 @@ public class AmbientLife : MonoBehaviour
         // at scale 1. So (same split the player uses) the unscaled root carries the controller + brain, and the
         // scaled visual model rides it as a child.
         var root = new GameObject("Townsfolk_" + model.name);
+        // The town that made them is the town they live in — never whichever map was loaded last.
+        MapManager.PutInMap(root, gameObject.scene);
         root.transform.position = p;
         root.hideFlags = HideFlags.DontSaveInEditor;   // runtime spawn — never bake a stray copy into the scene
 

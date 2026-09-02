@@ -25,6 +25,24 @@ public static class AccountSession
             ? $"http://{ServerAddress.TypedHost}:{ServerAddress.AccountsPort}"
             : Environment.GetEnvironmentVariable("ACCOUNTS_URL") ?? "http://localhost:8080";
 
+    /// <summary>Where the CHARACTER server lives — the thing that owns the list of characters and their saves,
+    /// as opposed to signing in, which stays with the account service above.
+    ///
+    /// <para><b>Empty means "the same place as everything else"</b>, which is how this has always worked and is
+    /// still the default. Set CHAR_SERVER_URL to move characters onto their own server; leave it unset and not
+    /// one request changes address. That is the whole migration: a setting, not a rebuild, and it can be put
+    /// back just as fast if the new server misbehaves.</para></summary>
+    public static string CharacterServerUrl =>
+        Environment.GetEnvironmentVariable("CHAR_SERVER_URL") ?? "";
+
+    /// <summary>The one-time secret the CHARACTER server hands out when a player asks to enter the world. It is
+    /// what a map server matches an arriving connection against, and it is the only thing about this person that
+    /// travels on that connection — their character was already sent there, by the character server, before they
+    /// were told where to knock.
+    ///
+    /// <para>Good once and for about half a minute. Cleared as it is spent.</para></summary>
+    public static string EntryTicket { get; set; }
+
     public static string AccessToken { get; private set; }
     public static string AccountId { get; private set; }
 

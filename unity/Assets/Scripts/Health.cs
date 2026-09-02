@@ -151,6 +151,10 @@ public class Health : MonoBehaviour, ICombatUnit
     StatusController statusHost;
     public StatusController StatusHost => statusHost != null ? statusHost : (statusHost = Status.Of(gameObject));
 
+    /// <summary>Creatures carry no skills of their own yet, so a passive moment aimed at one finds nothing to run.
+    /// Here rather than absent because the question is asked of every unit alike.</summary>
+    public SkillRunner[] SkillRunners => null;
+
     // Mana lives on the stat block (it is derived from INT, like every other pool), so this side just forwards. A mob
     // with no stat block reports an empty pool, which is what stops its regen rather than a special case for it.
     UnitStatBlock block;
@@ -420,7 +424,7 @@ public class Health : MonoBehaviour, ICombatUnit
         var ch = attacker as Character;
         if (ch == null || dmgDealt <= 0) return;
         // The ONE player-dealt-damage choke (basics + skills both funnel here) → also the OnDamageDealt fire-site (victim = the mob just hit).
-        PassiveEvents.Fire(SkillTrigger.OnDamageDealt, null, victim != null ? victim.transform : null);
+        PassiveEvents.Fire(ch, SkillTrigger.OnDamageDealt, null, victim != null ? victim.transform : null);
         if (ch.ActiveManaLeechPct > 0f) ch.GainMana(Mathf.RoundToInt(dmgDealt * ch.ActiveManaLeechPct));   // ManaLeech skill window (V3)
 
         // The VICTIM's own timed windows fire here too — the mob side of the rules the player already plays by, so a
@@ -502,7 +506,7 @@ public class Health : MonoBehaviour, ICombatUnit
         // A mob died (mobs only die to the player here) — announce OnKill with the dying mob as victim NOW, before it's
         // pooled/destroyed below (FireAsPassive reads victim.position synchronously). The killing SKILL rides along
         // (empty for a basic attack or an ailment tick), so a passive can answer one particular skill's kills.
-        PassiveEvents.Fire(SkillTrigger.OnKill, PassiveEvents.CurrentSkillId, transform);
+        PassiveEvents.Fire(LastAttacker, SkillTrigger.OnKill, PassiveEvents.CurrentSkillId, transform);
         VfxCue.Fire(VfxCueId.OnDeath, transform);   // receiver-side death cue (mirrors Character.RaiseDeath)
         onDeath?.Invoke();
         // Play the "poof" death animation if one is attached, and once it finishes either RECYCLE the mob

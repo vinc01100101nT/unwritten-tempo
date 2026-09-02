@@ -63,13 +63,28 @@ public class MobRespawn : MonoBehaviour
 
     void Respawn() => Reactivate(gameObject, PickSpot());
 
-    /// <summary>Bring a dead/hidden mob back to a live state at <paramref name="pos"/>: restore its death
-    /// visuals, refill HP, and re-enable movement/AI/colliders. THE single source of truth for "revive a mob
-    /// object" — used by this in-place recycle AND by the pooled <see cref="FieldMobSpawner"/> when it reuses
-    /// an object, so the tricky re-enable order + stepOffset clamp can't drift between the two paths.</summary>
+    /// <summary>Bring a dead/hidden mob back to a live state at <paramref name="pos"/>: switch the object on if
+    /// it was banked, restore its death visuals, refill HP, and re-enable movement/AI/colliders. THE single
+    /// source of truth for "revive a mob object" — used by this in-place recycle AND by the pooled
+    /// <see cref="FieldMobSpawner"/> when it reuses an object, so the tricky re-enable order + stepOffset clamp
+    /// can't drift between the two paths. Takes a mob that is switched off OR one that is already live.</summary>
     public static void Reactivate(GameObject mob, Vector3 pos)
     {
         mob.transform.position = pos;
+
+        // SWITCHING THE OBJECT ON IS ITSELF A VALIDATION OF THE CONTROLLER, against whatever step it was banked
+        // with — so the clamp further down, which runs after, was always too late: switching a field's worth of
+        // bodies back on threw "Step Offset must be ≤ …" once per body, in one burst, before any of this ran.
+        // Two things were measured here, because both are counter-intuitive: switching the controller off does
+        // NOT spare it (an activation validates a disabled one just the same), and a step written while the
+        // object is off DOES survive the switch-on. So fitting the step first is the only thing that keeps the
+        // moment quiet. It is clamped again below, against the scale the body actually settles at.
+        var cc = mob.GetComponent<CharacterController>();
+        if (!mob.activeSelf)
+        {
+            if (cc != null) ClampStepOffset(cc);
+            mob.SetActive(true);
+        }
 
         var dd = mob.GetComponent<DeathDissolve>(); if (dd != null) dd.ResetAfterRespawn();   // restore lit material + alpha
 
@@ -95,7 +110,6 @@ public class MobRespawn : MonoBehaviour
         // bound). Unity then rejects the enable and logs "Step Offset must be ≤ …" every respawn (floods during
         // auto-combat) — and a controller left disabled also spams "Move called on inactive controller". Fitting
         // the step to the live scale stops both.
-        var cc = mob.GetComponent<CharacterController>();
         if (cc != null) { ClampStepOffset(cc); cc.enabled = true; }
         var agent = mob.GetComponent<PathAgent3D>(); if (agent != null) agent.enabled = true;
         foreach (var col in mob.GetComponentsInChildren<Collider>(true)) col.enabled = true;

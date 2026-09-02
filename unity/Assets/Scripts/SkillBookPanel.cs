@@ -217,7 +217,7 @@ public class SkillBookPanel : MonoBehaviour
         box.onValueChanged.AddListener(v =>
         {
             if (!loadout.Set(id, v)) return;
-            if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
+            PassivesSaved.Now();
             UISounds.PlayClick();
         });
     }
@@ -252,7 +252,7 @@ public class SkillBookPanel : MonoBehaviour
     {
         var c = Character.Instance;
         if (c == null || !c.Hotbar.AutoBind(id)) return;   // unknown, already bound, or bar full (ultimates → ult slot)
-        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
+        PassivesSaved.Now();
         HotbarPanel.RebuildRequested?.Invoke();
         UISounds.PlayClick();
     }
@@ -279,5 +279,22 @@ public class SkillBookPanel : MonoBehaviour
     {
         var le = go.GetComponent<LayoutElement>() ?? go.AddComponent<LayoutElement>();
         le.minHeight = le.preferredHeight = h;
+    }
+}
+
+/// <summary>Where a changed passive loadout goes. In a world the server writes the character down from ITS own
+/// copy, which has never heard of a choice made here — so it is told, and told immediately, because the next
+/// write is at most fifteen seconds away and would otherwise put the old choice back.</summary>
+static class PassivesSaved
+{
+    public static void Now()
+    {
+        var me = GameNetwork.MyPlayer;
+        if (me != null && Character.Instance != null)
+        {
+            me.AskToSetPassives(Character.Instance.PassiveSkills.Capture());
+            return;
+        }
+        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
     }
 }

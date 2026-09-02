@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-09-01
 tags:
   - ai-learnings
 ---
@@ -37,6 +37,20 @@ both times its findings survived intact, including the two things that mattered 
 On the asking half, the correction came from the user directly: *"can you just ask that sub agent tester rather
 than you reading its entire transcript. it already has context itself."* They were right, and the answer it wrote
 was better than anything the transcript would have given.
+
+## And when one dies mid-edit, the tree is the first thing to check
+
+A helper that is writing code when it is killed leaves **half a change behind**. It is not a lost run, it is a
+broken repository — and the next thing anybody does, including another helper, inherits it.
+
+Five helpers were fanned out across separate files; three were killed by a rate limit within seconds of each
+other. One had written two calls to functions it had not written yet. The project did not compile, and nothing
+announced that — the notification said only that the agent had failed. It was found by running the compile check
+out of habit, not because anything pointed at it.
+
+So the FIRST move after any helper dies is to check the working tree still builds, before reading its notes,
+before respawning anything. And when the fan-out is on shared code, give each helper a written list of the files
+it owns, so a death leaves damage in one place instead of everywhere.
 
 ## How to apply it
 

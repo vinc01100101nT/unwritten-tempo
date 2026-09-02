@@ -38,6 +38,9 @@ public class GameNetwork : NetworkManager
     /// <summary>The shell spawned for each mob the server owns, found in Resources by this name.</summary>
     public const string MobPrefabName = "NetMob";
 
+    /// <summary>The shell spawned for each drop the server owns, found in Resources by this name.</summary>
+    public const string LootPrefabName = "NetLoot";
+
     // DELIBERATELY ABSENT: a public "am I joined right now" answer. It had no readers, and the one use anybody
     // would reach for it for — gating behaviour — is the timing accident this layer already outlawed: dialling
     // takes a moment, and a question asked inside that moment gets the wrong answer and acts on it. The question
@@ -81,6 +84,47 @@ public class GameNetwork : NetworkManager
         NetworkServer.Spawn(shell);
     }
 
+    static GameObject lootPrefab;
+
+    /// <summary>Server-only: announce a drop that has just been made, so every connected player receives it and
+    /// builds its own body for it. TRUE when the announcement was made — which is also the answer to "should I
+    /// skip building one here", because a server has no screen and the body belongs on the machines watching.
+    /// FALSE off a server, so a game with no world but its own drops exactly as it always did.</summary>
+    public static bool PublishLoot(Item item, int gold, Vector3 start, Vector3 landing, string map)
+    {
+        if (!NetworkServer.active) return false;
+
+        if (lootPrefab == null) lootPrefab = Resources.Load<GameObject>(LootPrefabName);
+        if (lootPrefab == null)
+        {
+            Debug.LogError("[net] no '" + LootPrefabName + "' prefab in Resources — loot will exist on the "
+                           + "server but no player will see it.");
+            return false;
+        }
+
+        var shell = Instantiate(lootPrefab);
+        shell.GetComponent<NetLoot>()?.BindOnServer(item, gold, start, landing, map);
+        NetworkServer.Spawn(shell);
+        return true;
+    }
+
+    /// <summary>ASK for a drop this machine is only watching. TRUE when the question was sent and the answer is
+    /// the server's to give — the caller must then do NOTHING, because paying out here as well would hand the
+    /// same coin to two people. FALSE for a drop no server has heard of, which is this machine's own to give.</summary>
+    public static bool SendPickupToServer(WorldPickup pickup)
+    {
+        if (pickup == null) return false;
+
+        var shell = NetLoot.ShellForView(pickup.gameObject);
+        if (shell == null) return false;                       // an offline drop — nobody else can be holding it
+
+        var me = NetworkClient.localPlayer != null ? NetworkClient.localPlayer.GetComponent<NetPlayer>() : null;
+        if (me == null) return false;                          // watching a drop with no body of our own to ask with
+
+        me.AskForLoot(shell, pickup);
+        return true;
+    }
+
     static GameNetwork spawned;
 
     /// <summary>Bring the net layer up. Called once, by <see cref="GameRoot"/>, at the moment the world starts
@@ -102,6 +146,7 @@ public class GameNetwork : NetworkManager
         spawned = go.AddComponent<GameNetwork>();
         spawned.transport = kcp;
         Transport.active = kcp;
+
         spawned.networkAddress = ServerAddress.HasTypedHost
             ? ServerAddress.TypedHost
             : Environment.GetEnvironmentVariable(HostEnvVar) ?? DefaultHost;
@@ -119,12 +164,30 @@ public class GameNetwork : NetworkManager
         if (mobPrefab != null) spawned.spawnPrefabs.Add(mobPrefab);
         else Debug.LogError("[net] no '" + MobPrefabName + "' prefab in Resources — no player will see mobs.");
 
+        lootPrefab = Resources.Load<GameObject>(LootPrefabName);
+        if (lootPrefab != null) spawned.spawnPrefabs.Add(lootPrefab);
+        else Debug.LogError("[net] no '" + LootPrefabName + "' prefab in Resources — no player will see loot.");
+
         // The server hands out bodies itself, when a client says who it is (see OnJoinRequest). Mirror's
         // automatic version would spawn one before we know which character to build.
         spawned.autoCreatePlayer = false;
 
         if (GameServer.IsServer)
         {
+            // HOW OFTEN THE WIRE IS PUMPED, matched to how often this server runs a frame. The pump happens once
+            // per frame, so anything above the frame rate is a promise the loop cannot keep — the extra passes
+            // could only ever walk the connection list and find nothing new to say.
+            //
+            // SERVER ONLY, and the branch is the point. Mirror reads this one number for both directions, so
+            // setting it outside here slowed down every PLAYER's outgoing messages too — including the position
+            // reports the movement check measures, which would have added a fraction of a second to every one of
+            // them for no reason at all.
+            //
+            // It is also NOT what decides what a moving thing costs: a creature and a person each write their
+            // position ten times a second, and Mirror sends a value only when it actually changed, so the traffic
+            // was already paced by the writers. This only stops the empty passes between them.
+            spawned.sendRate = GameSystems.ServerFps;
+
             // ONLY TELL A PLAYER ABOUT WHAT IS NEAR THEM. Without this the server sends every creature's position to
             // every person ten times a second regardless of where they are, so a busy world costs each player the
             // whole world's traffic — the cost grows with the square of how much is in it. Mirror does the work;
@@ -133,7 +196,15 @@ public class GameNetwork : NetworkManager
             // The distance is comfortably beyond anything the game itself already treats as mattering: creatures
             // stop thinking at 28 units from a player, so at 60 a thing is always known about long before it does
             // anything, and nothing appears out of thin air in front of anybody.
-            var interest = go.AddComponent<DistanceInterestManagement>();
+            // THE MAP IS ASKED FIRST, THEN THE DISTANCE. A plain distance check compares every thing in the
+            // world against every person in it, and a server holds every map at once — so it was measuring the
+            // gap between a person in the town and a creature in a field, forever, to reach an answer the
+            // parking gap had already decided. Asking which map each is in settles those in one comparison and
+            // only then does the arithmetic, for the pairs where it can change the answer.
+            //
+            // It is also the shape the world has to be in before maps can ever live in separate processes: a
+            // watcher list built per map is one that does not silently depend on the other maps being here.
+            var interest = go.AddComponent<SceneDistanceInterestManagement>();
             interest.visRange = VisibleRange;
 
             // IS ANYBODY ALREADY THERE. Asked BEFORE listening, because the failure it prevents is silent: the
@@ -141,6 +212,11 @@ public class GameNetwork : NetworkManager
             // goes on standing in the process list having bound nothing at all. It looks alive, it answers
             // nobody, and every player keeps talking to the older copy that really does hold the port — which
             // is indistinguishable, from a player's seat, from the new code simply not working.
+            // THE CHARACTER SERVER IS TOLD WHAT THIS MACHINE HOLDS, and this machine starts listening for the
+            // people it sends. Without it nobody can enter the world at all: a player is handed an address by
+            // the character server, and it has no address to hand out until this has said so.
+            MapServerLink.Begin();
+
             if (!PortIsFree(kcp.port, kcp.DualMode))
             {
                 Debug.LogError(Shout("[server] port " + kcp.port + " is already taken — another server is running. "
@@ -158,10 +234,74 @@ public class GameNetwork : NetworkManager
             // Said BEFORE dialling, on purpose. Everything that must not build its own copy of the world asks this,
             // and some of them ask while the handshake is still in flight — so the answer has to be true from the
             // moment the decision was made, not from the moment the wire came up.
-            Debug.Log("[client] dialling " + spawned.networkAddress + ":" + kcp.port);
-            spawned.StartClient();
+            // ASK THE CHARACTER SERVER WHERE TO GO. A player no longer dials an address somebody typed into a
+            // build — they say which character they are entering as, and are told which machine is holding the
+            // map they were last in, along with a one-time ticket to knock with. Their whole character has
+            // already been sent there by the time the answer comes back.
+            AskWhereToEnter(kcp);
         }
     }
+
+    /// <summary>Ask the character server to let this person into the world, then dial wherever it says.
+    ///
+    /// <para>Falls back to the address in the environment when there is no character server to ask — which is
+    /// how a single machine is run for testing, with no character server at all.</para></summary>
+    static void AskWhereToEnter(kcp2k.KcpTransport kcp)
+    {
+        string characterId = AccountSession.CharacterId;
+        if (string.IsNullOrEmpty(characterId) || string.IsNullOrEmpty(AccountSession.CharacterServerUrl))
+        {
+            Debug.Log("[client] dialling " + spawned.networkAddress + ":" + kcp.port
+                      + " (no character server to ask)");
+            spawned.StartClient();
+            return;
+        }
+
+        AccountClient.Send("POST", "/characters/" + characterId + "/enter", "{}", true, (ok, body, error) =>
+        {
+            if (spawned == null) return;
+
+            if (!ok)
+            {
+                Debug.LogError("[client] the character server would not let us in — " + error + " " + body);
+                Stop();
+                OnLostWorld?.Invoke();
+                return;
+            }
+
+            var where = JsonUtility.FromJson<EntryReply>(body);
+            if (where == null || string.IsNullOrEmpty(where.ticket))
+            {
+                Debug.LogError("[client] the character server let us in but said nowhere to go: " + body);
+                Stop();
+                OnLostWorld?.Invoke();
+                return;
+            }
+
+            AccountSession.EntryTicket = where.ticket;
+            if (!string.IsNullOrEmpty(where.host)) spawned.networkAddress = where.host;
+            // AND THE PORT IT NAMED. A build pointed at one machine by its environment must still go wherever
+            // the character server sends it, or splitting the world across machines would need a new build for
+            // every player.
+            if (where.port > 0 && where.port <= ushort.MaxValue) kcp.port = (ushort)where.port;
+
+            Debug.Log("[client] dialling " + spawned.networkAddress + ":" + kcp.port + " with a ticket");
+            spawned.StartClient();
+        });
+    }
+
+    [Serializable]
+    class EntryReply
+    {
+        public string host;
+        public int port;
+        public string ticket;
+        public string map;
+    }
+
+    /// <summary>The port PLAYERS connect on. Said here because it is decided here, and the character server has
+    /// to be able to tell somebody where to knock.</summary>
+    public static ushort PlayerPort => PortFromEnvironment();
 
     static ushort PortFromEnvironment()
     {
@@ -236,7 +376,11 @@ public class GameNetwork : NetworkManager
         /// that can state any numbers. The proof is the one the account service issued at sign-in, so the service
         /// only ever answers for characters on that account: claiming somebody else's name gets nothing.</summary>
         public string characterId;
-        public string accessToken;
+
+        /// <summary>THE RECEIPT, not the character. The character server has already handed this person's whole
+        /// character to this map server and given them this one-time secret to knock with — so nothing about who
+        /// they are travels on this message, and a connection that cannot produce one was never announced.</summary>
+        public string ticket;
     }
 
     /// <summary>A player saying "I am hitting that", and NOTHING else. One field, because every other thing a
@@ -345,6 +489,62 @@ public class GameNetwork : NetworkManager
         public bool overkill;
     }
 
+    /// <summary>A PERSON CASTING A SKILL — the whole of it, named rather than resolved. Which skill, what they
+    /// aimed at, and where. Nothing else: no damage, no duration, no charge count, no number of any kind.
+    ///
+    /// <para><b>This replaces asking for one strike at a time.</b> A skill used to be run on the caster's own
+    /// machine, which sent the server only the damage half of it — so a brace held nothing, a buff protected
+    /// nobody, and a charge was spent on a copy of the character that nobody else could see. The server now runs
+    /// the authored skill itself, from its first beat to its last, against the character it holds for that person:
+    /// the same component, the same effects, the same measured timings, drawing nothing.</para>
+    ///
+    /// <para>The aim is stated IN THE CASTER'S OWN MAP, because a server sets each map it holds down somewhere of
+    /// its own and the two are not the same coordinates.</para></summary>
+    public struct SkillCastRequest : NetworkMessage
+    {
+        public string skillId;
+
+        /// <summary>What they picked, if the skill asked them to pick something. 0 when it did not.</summary>
+        public uint targetNetId;
+
+        /// <summary>Where they aimed, in their own map's coordinates.</summary>
+        public Vector3 aimPoint;
+    }
+
+    /// <summary>A skill going off, as everybody else sees it — sent to every machine watching the caster so the
+    /// effect, the pose and the sound play there too. It carries no outcome: what the skill DID arrives through
+    /// the doors that already announce a blow, a heal and a death.</summary>
+    public struct SkillCastPlayed : NetworkMessage
+    {
+        public uint casterNetId;
+        public string skillId;
+        public uint targetNetId;
+        public Vector3 aimPoint;
+
+        /// <summary>The number every scattered shot of this play is rolled from — picked here, so a shower falls in
+        /// the same places on every screen as it fell in on the server that decided who it hit.</summary>
+        public int seed;
+    }
+
+    /// <summary>A PERSON USING AN ITEM — a potion drunk, a food eaten. It names the ITEM, never the skill: the item
+    /// is what says which skill runs, so a machine that named the skill itself could run any skill in the game by
+    /// calling it a potion.
+    ///
+    /// <para>What using an item does is a skill like any other, so it is resolved where every other skill now is.
+    /// Whether they actually HAD one is still their own machine's word, because a bag lives there and nowhere
+    /// else — that is the inventory's migration, not this one.</para></summary>
+    public struct ItemUsedRequest : NetworkMessage
+    {
+        /// <summary>WHERE IN THE BAG, not which item — the server reads what is actually at that position in the
+        /// bag IT holds, so a machine cannot ask to drink a potion it does not have.</summary>
+        public int bagIndex;
+
+        /// <summary>What the asker believed was at that position. The server drops the request if the bag has
+        /// moved under it — two quick clicks are enough to shift every position by one, and without this the
+        /// second one would drink whatever slid into the place the first one emptied.</summary>
+        public string expectedItemId;
+    }
+
     /// <summary>A strike whose damage the client resolved and the server CANNOT re-derive, because no authored skill
     /// stands behind it — a weapon's own flurry or cleave, split off a swing by the modifiers on that weapon.
     ///
@@ -418,6 +618,8 @@ public class GameNetwork : NetworkManager
         NetworkServer.RegisterHandler<HealClaim>(OnHealClaim);
         NetworkServer.RegisterHandler<ReviveRequest>(OnReviveRequest);
         NetworkServer.RegisterHandler<SkillStrikeRequest>(OnSkillStrikeRequest);
+        NetworkServer.RegisterHandler<SkillCastRequest>(OnSkillCastRequest);
+        NetworkServer.RegisterHandler<ItemUsedRequest>(OnItemUsedRequest);
         NetworkServer.RegisterHandler<ResolvedStrikeRequest>(OnResolvedStrikeRequest);
         NetworkServer.RegisterHandler<GmCommandRequest>(OnGmCommandRequest);
     }
@@ -428,6 +630,7 @@ public class GameNetwork : NetworkManager
         NetworkClient.RegisterHandler<HitResult>(OnHitResult);
         NetworkClient.RegisterHandler<PlayerHitResult>(OnPlayerHitResult);
         NetworkClient.RegisterHandler<XpEarned>(OnXpEarned);
+        NetworkClient.RegisterHandler<SkillCastPlayed>(OnSkillCastPlayed);
         NetworkClient.RegisterHandler<GmCommandReply>(OnGmCommandReply);
     }
 
@@ -465,7 +668,46 @@ public class GameNetwork : NetworkManager
     {
         // Only a dead person can be brought back, so a live one asking is refused rather than handed a free heal.
         var fighter = FighterFor(conn) as Character;
-        if (fighter != null && fighter.IsDead) fighter.Revive();
+
+        // IT SAYS WHY IT REFUSED. This used to do nothing at all when it would not grant a revive, which from
+        // the player's seat is a Respawn button that does not work and a death screen that never goes away, with
+        // nothing anywhere saying so. A refusal that cannot be explained is the same as a crash you cannot see.
+        if (fighter == null)
+        {
+            Debug.LogWarning("[server] somebody asked to be revived but this server holds no fighter for them.");
+            return;
+        }
+        if (!fighter.IsDead)
+        {
+            Debug.LogWarning("[server] " + (conn.identity != null ? conn.identity.name : "somebody")
+                             + " asked to be revived but this server has them alive on "
+                             + fighter.CurrentHP + " health — nothing to do.");
+            return;
+        }
+        Debug.Log("[server] reviving a player who was dead.");
+
+        fighter.Revive();
+
+        // AND COMING BACK MOVES THEM. A person stands up at a spawn point, which is nowhere near where they fell —
+        // a jump the movement check would otherwise read as the largest lie it has ever seen, on every single
+        // death. Forgiven from HERE because this is the server granting it: nothing a client says can reach it.
+        var shell = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        if (shell != null) shell.ForgiveNextMoveAfterServerMove();
+    }
+
+    /// <summary>The body belonging to this character, on a server. Lets anything holding a CHARACTER reach the
+    /// connection that owns it — a GM command acting on somebody's bag has to be able to tell them about it.
+    /// Null off a server, and null for a character nobody is connected as.</summary>
+    public static NetPlayer ShellFor(Character who)
+    {
+        if (who == null || !NetworkServer.active) return null;
+        foreach (var conn in NetworkServer.connections.Values)
+        {
+            if (conn == null || conn.identity == null) continue;
+            var shell = conn.identity.GetComponent<NetPlayer>();
+            if (shell != null && ReferenceEquals(shell.ServerCombatUnit, who)) return shell;
+        }
+        return null;
     }
 
     static ICombatUnit FighterFor(NetworkConnectionToClient conn)
@@ -496,6 +738,50 @@ public class GameNetwork : NetworkManager
         });
     }
 
+    /// <summary>Announce a blow the server decided landed on a CREATURE, to everybody watching that creature. The
+    /// exact mirror of <see cref="AnnounceBlowOnPlayer"/>, and it exists for the same reason: the server has no
+    /// screen, so a blow it keeps to itself is a blow that appears on nobody's.
+    ///
+    /// <para><b>The gap this closes.</b> A joined player sends the WHOLE cast across and then resolves none of it,
+    /// so every strike of a skill is landed by the server on its own initiative, with no request from anybody to
+    /// answer. The handlers below each announce the blow they were ASKED for — there was nothing announcing the
+    /// blows nobody asked for. The creature's health still reached every screen, because that is a synced number
+    /// that is written straight in without drawing anything, which is exactly why the bar moved and no digits
+    /// ever did.</para>
+    ///
+    /// <para><b>What it deliberately does nothing for.</b> Off a server. A victim that is a person — that is the
+    /// line above, and announcing here as well would draw their number twice. And a creature no server published,
+    /// which has no audience to announce to.</para></summary>
+    /// <param name="showsTotal">Whether this strike belongs to a run that draws ONE rising yellow total rather
+    /// than a number per beat. Worked out by the caller from the authored skill, never from a client's claim.</param>
+    public static void AnnounceBlowOnMob(ICombatUnit victim, ICombatUnit attacker, in DamageInfo info, bool showsTotal)
+    {
+        if (!NetworkServer.active || victim == null) return;
+
+        var body = victim.Body;
+        var shell = body != null ? NetMob.ShellForServerMob(body.gameObject) : null;
+        if (shell == null) return;
+
+        var attackerIdentity = IdentityOfFighter(attacker as Character);
+
+        NetworkServer.SendToReadyObservers(shell.netIdentity, new HitResult
+        {
+            targetNetId = shell.netId,
+            attackerNetId = attackerIdentity != null ? attackerIdentity.netId : 0u,
+            // THE BLOW AS IT WENT IN, not the number that came out of it. Every watching machine runs what arrives
+            // through the same door the server did — armour, element chart and all — so handing over the finished
+            // figure would have the victim's armour taken out of it a second time.
+            amount = info.amount,
+            element = info.element,
+            isMagic = info.isMagic,
+            isCrit = info.isCrit,
+            missed = info.missed,
+            attackerHit = info.attackerHit,
+            overkill = info.overkill,
+            showsTotal = showsTotal
+        });
+    }
+
     /// <summary>Tell the person a reward belongs to that they earned it. Silent off a server, and silent for a
     /// character that is not somebody's — so the single-machine game is untouched.</summary>
     public static void TellOwnerTheyEarned(Character who, int xp)
@@ -515,13 +801,34 @@ public class GameNetwork : NetworkManager
     /// be re-rolled at the far end, so it goes down the older path that carries its own number.</para></summary>
     public static bool SendSkillStrikeToServer(SkillEffect e, IDamageable target, in StackVars vars, bool overkill)
     {
+        // THE SERVER HAS NOBODY TO ASK, and that is not a fault worth a word. It lands the strike itself and
+        // announces it (see AnnounceBlowOnMob), which is the ordinary case for every cast a joined player sends
+        // across whole. Answered before the warning below, because that warning blamed "no shell for that body"
+        // on a machine where the real reason was simply being the authority — a wrong reason printed once per
+        // skill, in the one log somebody debugging this would read.
+        if (NetworkServer.active) return false;
+
         var identity = SharedIdentityOf(target);
-        if (identity == null) return false;      // this machine is the authority, or the target is not shared
+        if (identity == null)
+        {
+            // SAYS WHY IT DID NOTHING. A strike that is neither sent nor applied is silent — no error, no number,
+            // nothing on screen — and silence has no stack trace. Whichever of the two reasons it is, it is said
+            // once per skill rather than per strike, so a flurry cannot bury it.
+            WhyNoStrike(PassiveEvents.CurrentSkillId, "the target is not a creature this server owns "
+                        + "(no shell for that body), so there is nobody to ask");
+            return false;
+        }
 
         // WHICH skill is landing right now — already tracked for the passives that answer "this skill killed it",
         // so naming a strike costs no new bookkeeping anywhere.
         var def = SkillCatalog.Get(PassiveEvents.CurrentSkillId);
-        if (!FindStrike(def, e, out int tick, out int index)) return false;   // no authored skill behind it — the older path handles it
+        if (!FindStrike(def, e, out int tick, out int index))
+        {
+            WhyNoStrike(PassiveEvents.CurrentSkillId, def == null
+                ? "no skill is named as the cause right now, so the strike cannot say which one it belongs to"
+                : "that damage effect is not one of '" + def.id + "'s own authored effects");
+            return false;
+        }
 
         NetworkClient.Send(new SkillStrikeRequest
         {
@@ -534,6 +841,17 @@ public class GameNetwork : NetworkManager
             overkill = overkill
         });
         return true;
+    }
+
+    // Once per skill, not once per strike — a flurry raises dozens and a line each would bury the log.
+    static readonly System.Collections.Generic.HashSet<string> saidWhyNoStrike = new System.Collections.Generic.HashSet<string>();
+
+    static void WhyNoStrike(string skillId, string why)
+    {
+        string key = (skillId ?? "") + "|" + why;
+        if (!saidWhyNoStrike.Add(key)) return;
+        Debug.LogWarning("[client] a skill strike from '" + (string.IsNullOrEmpty(skillId) ? "(unnamed)" : skillId)
+                         + "' was neither sent to the server nor shown: " + why + ".");
     }
 
     // WHERE this strike sits inside its skill. By reference, so it names the exact authored effect rather than one
@@ -589,16 +907,44 @@ public class GameNetwork : NetworkManager
         return body != null ? body.GetComponentInParent<NetworkIdentity>() : null;
     }
 
+    /// <summary>MOVING A PERSON is the server's decision and their own machine's job. Walking and running are still
+    /// theirs to do — so a skill that hauls them somewhere (a dash, a blink, a shove) is decided here, against the
+    /// character this server holds, and then TOLD to the machine that owns the legs.
+    ///
+    /// <para>Returns TRUE when it was sent, which means the caller must not try to move anything itself. FALSE for a
+    /// character that is not somebody's — the single-machine case, where the mover is right there.</para></summary>
+    public static bool TellOwnerToMove(Character who, NetPlayer.Motion motion)
+    {
+        if (!NetworkServer.active || who == null) return false;
+        var identity = IdentityOfFighter(who);
+        var shell = identity != null ? identity.GetComponent<NetPlayer>() : null;
+        if (shell == null || identity.connectionToClient == null) return false;
+
+        // WHERE, IN THEIR OWN MAP. A server parks each map it holds somewhere of its own; a destination sent raw
+        // would put them somewhere else entirely.
+        motion.destination = MapManager.InMap(motion.destination, who.Map);
+        motion.faceAt = MapManager.InMap(motion.faceAt, who.Map);
+        shell.MoveOnOwnersMachine(identity.connectionToClient, motion);
+        return true;
+    }
+
     // A watching machine's half: show the blow the server just decided, using the SAME sink the offline game uses.
     // The presentation is not written a second time for the networked case — the resolved blow is simply handed to
     // the door every hit already went through.
+    /// <summary>How many blows this machine has been told about, and how many it could not find a victim for.
+    /// A probe: "the number did not show" has two very different causes — the announcement never arrived, or it
+    /// arrived and was dropped — and nothing else on this machine can tell them apart.</summary>
+    public static int HitResultsHeard;
+    public static int HitResultsWithNoVictim;
+
     static void OnHitResult(HitResult msg)
     {
+        HitResultsHeard++;
         if (!NetworkClient.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null) return;
 
         var shell = identity.GetComponent<NetMob>();
         var victim = shell != null ? shell.WatchedTarget : identity.GetComponent<IDamageable>();
-        if (victim == null) return;
+        if (victim == null) { HitResultsWithNoVictim++; return; }
 
         int dealt = CombatAuthority.ApplyFromServer(victim, new DamageInfo(msg.amount, msg.element, msg.isMagic,
                                                               msg.isCrit,
@@ -687,6 +1033,17 @@ public class GameNetwork : NetworkManager
     // Said ONCE per connection, not once per swing: a player attacking holds the button down, and a line per
     // blow would bury the log it is trying to warn from.
     static readonly System.Collections.Generic.HashSet<int> warnedNoFighter = new System.Collections.Generic.HashSet<int>();
+
+    // Once per reason per skill, so a flurry cannot bury it and a genuine repeat still shows.
+    static readonly System.Collections.Generic.HashSet<string> saidWhyRefused = new System.Collections.Generic.HashSet<string>();
+
+    static void WhyRefused(string skillId, string why)
+    {
+        string key = (skillId ?? "") + "|" + why;
+        if (!saidWhyRefused.Add(key)) return;
+        Debug.LogWarning("[server] refused a skill strike from '" + (string.IsNullOrEmpty(skillId) ? "(unnamed)" : skillId)
+                         + "': " + why + ". Nothing was damaged and no number was shown.");
+    }
 
     static void WarnNoFighter(int connectionId)
     {
@@ -793,16 +1150,17 @@ public class GameNetwork : NetworkManager
         // Reach is checked AFTER the fighter is found, because it is the fighter that has a reach at all.
         if (!WithinReach(swinger, victim)) return;
 
-        // The SERVER rolls, using the same shared functions the offline game uses — the formulas are not
-        // duplicated for the networked case, they are simply run somewhere trustworthy. EVERY part of the blow is
-        // read off the fighter, including which element it carries and whether it is physical or magic: those are
-        // facts about the attacker's weapon, and the fighter is the thing that holds it.
-        bool crit = swinger.RollBasicCrit(victim as ICombatUnit);
-        int damage = swinger.RollBasicDamage(crit);
-
-        var resolved = new DamageInfo(damage, swinger.BasicElement, swinger.BasicIsMagic, crit,
-                                      attackerHit: swinger.BasicHit, attacker: swinger);
-        CombatAuthority.Apply(victim, resolved);
+        // THE SERVER RUNS THE SWING ITSELF — through the ONE implementation of what a swing is, the same one a
+        // skill strike authored as a basic attack goes through. It used to roll its own crit and damage inline
+        // here, which was a second copy of the swing: it silently skipped everything else a swing does, so a run
+        // of hits was never counted, a boost charge was never spent, the impact cue never played, and — the reason
+        // this was found — the two moments a swing raises, "about to swing" and "a swing landed", fired on NOBODY.
+        // Every passive keyed to either of them was dead in a shared world.
+        //
+        // It announces the intent here because the machine that swung can no longer do it: its own announcement
+        // fires against a character it does not decide for, so nothing comes of it.
+        BasicSwing.Land(swinger, victim as ICombatUnit, ScaledNumber.Of(1f), StackVars.None,
+                        outer: 1f, overkill: false, announceIntent: true, out var resolved);
 
         // …and then TELL EVERYONE. The server has no screen, so a blow it keeps to itself is a blow nobody sees.
         NetworkServer.SendToReadyObservers(identity, new HitResult
@@ -830,26 +1188,49 @@ public class GameNetwork : NetworkManager
     /// machine would have.</summary>
     void OnSkillStrikeRequest(NetworkConnectionToClient conn, SkillStrikeRequest msg)
     {
-        if (CastingTooFast(conn.connectionId)) return;
+        // EVERY REFUSAL BELOW SAYS SO. A strike that is dropped here is silent from the player's seat — the skill
+        // plays, nothing takes damage, no number appears, and no log anywhere mentions it. Silence has no stack
+        // trace, so each way out names itself, once per reason per skill.
+        if (CastingTooFast(conn.connectionId)) { WhyRefused(msg.skillId, "asked for faster than the ceiling allows"); return; }
 
         var def = SkillCatalog.Get(msg.skillId);
-        if (def == null || def.bindings == null) return;
-        if (msg.tickIndex < 0 || msg.tickIndex >= def.bindings.Count) return;
+        if (def == null || def.bindings == null)
+        {
+            WhyRefused(msg.skillId, "this server has no such skill in its catalog");
+            return;
+        }
+        if (msg.tickIndex < 0 || msg.tickIndex >= def.bindings.Count)
+        {
+            WhyRefused(msg.skillId, "tick " + msg.tickIndex + " is outside that skill's " + def.bindings.Count + " tick(s)");
+            return;
+        }
 
         var effects = def.bindings[msg.tickIndex] != null ? def.bindings[msg.tickIndex].effects : null;
-        if (effects == null || msg.effectIndex < 0 || msg.effectIndex >= effects.Count) return;
+        if (effects == null || msg.effectIndex < 0 || msg.effectIndex >= effects.Count)
+        {
+            WhyRefused(msg.skillId, "effect " + msg.effectIndex + " is outside that tick's effects");
+            return;
+        }
 
         var effect = effects[msg.effectIndex];
         // ONLY A STRIKE may be asked for here. Naming any other kind of effect would have the server land a
         // damage roll for something authored to heal or to buff.
-        if (effect == null || effect.kind != SkillEffectKind.Damage) return;
+        if (effect == null || effect.kind != SkillEffectKind.Damage)
+        {
+            WhyRefused(msg.skillId, "that effect is not a Damage effect");
+            return;
+        }
 
-        if (!NetworkServer.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null) return;
+        if (!NetworkServer.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null)
+        {
+            WhyRefused(msg.skillId, "the target it named is not anything this server is holding");
+            return;
+        }
         var shell = identity.GetComponent<NetMob>();
         var victim = (shell != null && shell.ServerMob != null
             ? shell.ServerMob.GetComponent<IDamageable>()
             : identity.GetComponent<IDamageable>()) as ICombatUnit;
-        if (victim == null) return;
+        if (victim == null) { WhyRefused(msg.skillId, "the target it named cannot be hurt"); return; }
 
         var caster = FighterFor(conn) as Character;
         if (caster == null) { WarnNoFighter(conn.connectionId); return; }
@@ -857,8 +1238,16 @@ public class GameNetwork : NetworkManager
 
         var casterBody = caster.Body;
         var victimBody = victim.Body;
-        if (casterBody == null || victimBody == null) return;
-        if ((victimBody.position - casterBody.position).sqrMagnitude > SkillReachCeiling * SkillReachCeiling) return;
+        if (casterBody == null || victimBody == null)
+        {
+            WhyRefused(msg.skillId, "one of the two bodies does not exist on this server");
+            return;
+        }
+        if ((victimBody.position - casterBody.position).sqrMagnitude > SkillReachCeiling * SkillReachCeiling)
+        {
+            WhyRefused(msg.skillId, "the target is further than the ceiling of " + SkillReachCeiling + " units away");
+            return;
+        }
 
         // THE PILE IS IGNORED UNLESS THIS STRIKE ACTUALLY READS ONE. The reading is the single thing a client still
         // states that can move a number, so it is accepted only where the authored data says it means something —
@@ -889,19 +1278,207 @@ public class GameNetwork : NetworkManager
             // WHETHER A TOTAL WAS OWED, read off the authored skill on the machine that holds it. The two things
             // that draw one have always been these: a run that asked to show ONE number across all its repeats, and
             // a strike that lands more than once. Read here rather than sent, so it stays the skill's decision.
-            showsTotal = def.showRepeatsTotalDamage
-                         || SkillEffectApplier.EffectiveHits(effect, caster, vars) > 1
+            showsTotal = SkillEffectApplier.ShowsRunTotal(def, effect, caster, vars)
         });
+    }
+
+    /// <summary>TRUE when the world this machine is playing in belongs to somebody else — a joined client. Nothing
+    /// here decides anything then: not a blow, not a buff, not a charge.
+    ///
+    /// <para>Asked as well as, not instead of, <see cref="Character.IsWatchedCopy"/>: that latch is set the first
+    /// time the shell speaks, and a skill cast in the frames before it would otherwise have been resolved twice —
+    /// once here and once, properly, on the server.</para></summary>
+    public static bool TheWorldIsElsewhere =>
+        !NetworkServer.active && NetworkClient.active && NetworkClient.isConnected;
+
+    /// <summary>Send a whole cast to the server. Returns TRUE when it went, which means the caller must not resolve
+    /// a single thing itself — the picture of the cast is all this machine is entitled to.
+    ///
+    /// <para>FALSE on the machine that owns the world (it simply casts), and false before anyone has joined.</para></summary>
+    public static bool SendCastToServer(SkillDef def, Transform aimedAt, Vector3 aimPoint)
+    {
+        if (def == null) return false;
+        if (NetworkServer.active) return false;
+        if (!NetworkClient.active || !NetworkClient.isConnected) return false;
+
+        NetworkClient.Send(new SkillCastRequest
+        {
+            skillId = def.id,
+            targetNetId = IdentityOfAimed(aimedAt),
+            // WHERE THEY AIMED, INSIDE THEIR OWN MAP. A server parks each map it holds somewhere of its own, so a
+            // raw world position taken here would land somewhere else entirely over there.
+            aimPoint = MapManager.InMap(aimPoint, MapManager.CurrentMap)
+        });
+        return true;
+    }
+
+    // What the caster picked, as the shared thing that speaks for it. A creature answers through its shell, a
+    // person through theirs; anything else was never shared and is named as nothing.
+    static uint IdentityOfAimed(Transform aimed)
+    {
+        if (aimed == null) return 0u;
+        var shell = NetMob.ShellForView(aimed.gameObject);
+        if (shell != null) return shell.netId;
+        var person = aimed.GetComponentInParent<NetPlayer>();
+        return person != null ? person.netId : 0u;
+    }
+
+    // How far a cast may be aimed from the caster before the server calls it impossible — the same generous ceiling
+    // a named strike already answers to, read from the same constant so the two cannot drift apart.
+    void OnSkillCastRequest(NetworkConnectionToClient conn, SkillCastRequest msg)
+    {
+        if (CastingTooFast(conn.connectionId)) return;
+
+        var def = SkillCatalog.Get(msg.skillId);
+        if (def == null || def.IsPassive) return;   // a passive has no pressed form: it fires from its own moments, here
+
+        var caster = FighterFor(conn) as Character;
+        if (caster == null) { WarnNoFighter(conn.connectionId); return; }
+        if (!Owns(caster, msg.skillId)) { WarnNotTheirSkill(conn.connectionId, msg.skillId); return; }
+
+        var runner = PlayerFighter.RunnerFor(caster, msg.skillId);
+        if (runner == null) return;
+
+        // WHERE THEY AIMED, put back into this machine's copy of their map.
+        Vector3 point = MapManager.InWorld(msg.aimPoint, caster.Map);
+
+        var casterBody = caster.Body;
+        if (casterBody == null) return;
+        if ((point - casterBody.position).sqrMagnitude > SkillReachCeiling * SkillReachCeiling) return;
+
+        Transform aimed = null;
+        if (msg.targetNetId != 0u && NetworkServer.spawned.TryGetValue(msg.targetNetId, out var identity) && identity != null)
+        {
+            var shell = identity.GetComponent<NetMob>();
+            if (shell != null && shell.ServerMob != null) aimed = shell.ServerMob.transform;
+            else
+            {
+                var person = identity.GetComponent<NetPlayer>();
+                var unit = person != null ? person.ServerCombatUnit : null;
+                aimed = unit != null ? unit.Body : null;
+            }
+        }
+
+        // The cast itself announces each of its plays as they start (see AnnounceCastPlayed) — including its
+        // repeats, so a shower's later falls reach every screen too, rather than only its first.
+        runner.CastFromRequest(aimed, point);
+    }
+
+    /// <summary>Tell the server an item was used, so the skill it names is run there like every other skill.
+    /// Returns TRUE when it went, which means the caller must not run anything itself.</summary>
+    /// <summary>The body the server spawned for the person at THIS keyboard, or null when there is no world —
+    /// which is the same question as "is anything I do to my bag the server's to decide". One place asks it, so
+    /// nothing has to work out on its own what being joined means.</summary>
+    public static NetPlayer MyPlayer
+        => NetworkClient.active && NetworkClient.localPlayer != null
+            ? NetworkClient.localPlayer.GetComponent<NetPlayer>()
+            : null;
+
+    public static bool SendItemUsedToServer(int bagIndex, string expectedItemId)
+    {
+        if (bagIndex < 0) return false;
+        if (NetworkServer.active) return false;
+        if (!NetworkClient.active || !NetworkClient.isConnected) return false;
+        NetworkClient.Send(new ItemUsedRequest { bagIndex = bagIndex, expectedItemId = expectedItemId });
+        return true;
+    }
+
+    void OnItemUsedRequest(NetworkConnectionToClient conn, ItemUsedRequest msg)
+    {
+        // The same ceiling a cast answers to: an item's effect IS a cast, and a machine sending them as fast as the
+        // wire allows is the thing this guards against, whatever it calls them.
+        if (CastingTooFast(conn.connectionId)) return;
+
+        var caster = FighterFor(conn) as Character;
+        if (caster == null) { WarnNoFighter(conn.connectionId); return; }
+
+        // WHAT IS ACTUALLY THERE. The message says where in the bag, and the item is read off the bag the SERVER
+        // holds — so a request to drink something the person does not own resolves to nothing, and there is no
+        // item name on the wire for anybody to substitute.
+        if (msg.bagIndex < 0 || msg.bagIndex >= caster.Bag.Count) return;
+        var entryInBag = caster.Bag[msg.bagIndex];
+        var item = entryInBag != null ? entryInBag.def : null;
+        if (item == null || !item.IsUsable) return;
+        // AND STILL THE ONE THEY MEANT. Without this, a second click landing inside the first one's round trip
+        // drinks whatever moved into that position.
+        if (!string.IsNullOrEmpty(msg.expectedItemId) && item.id != msg.expectedItemId) return;
+
+        // THE ITEM NAMES THE SKILL, and the server reads that off the item it holds — never off the message.
+        var runner = PlayerFighter.RunnerFor(caster, item.useSkillId);
+        var entry = runner != null && runner.def != null ? runner.def.ItemUseEntry : null;
+        if (entry == null) return;
+
+        runner.FireAsPassive(entry, null);
+
+        // AND IT IS SPENT HERE, where it was drunk. The bag belongs to the server now, so a stack reduced only on
+        // the drinker's own machine would be put straight back the next time the server said what they were
+        // carrying — a potion that heals you and is never used up.
+        if (--entryInBag.count <= 0) caster.Bag.RemoveAt(msg.bagIndex);
+
+        var shell = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        shell?.PushBagToOwner();
+        // A drunk potion is a change like any other. Without this it was written down only if something ELSE
+        // happened to dirty the character, so a server restart handed the potions back.
+        shell?.SaveSoon();
+    }
+
+    /// <summary>Say that one play of a cast is starting NOW, to every machine that can see the caster — the caster's
+    /// own included. It carries the seed, which is the point of it: where a scattered shot lands is where its damage
+    /// is measured from, so the picture and the decision must be rolled from the same number.
+    ///
+    /// <para>Sent per PLAY rather than per cast, because a repeating skill is several plays and each one scatters
+    /// again. Silent off a server, so the single-machine game is untouched.</para></summary>
+    public static void AnnounceCastPlayed(Character caster, SkillDef def, Transform aimedAt, Vector3 aimPoint, int seed)
+    {
+        if (!NetworkServer.active || caster == null || def == null) return;
+        var identity = IdentityOfFighter(caster);
+        if (identity == null) return;
+
+        NetworkServer.SendToReadyObservers(identity, new SkillCastPlayed
+        {
+            casterNetId = identity.netId,
+            skillId = def.id,
+            targetNetId = IdentityOfServerSide(aimedAt),
+            aimPoint = MapManager.InMap(aimPoint, caster.Map),
+            seed = seed
+        });
+    }
+
+    // What the cast was aimed at, as the shared thing that speaks for it — asked on the SERVER, where a creature is
+    // the real one and its shell is the parent that carries the identity.
+    static uint IdentityOfServerSide(Transform aimed)
+    {
+        if (aimed == null) return 0u;
+        var identity = aimed.GetComponentInParent<NetworkIdentity>();
+        return identity != null ? identity.netId : 0u;
+    }
+
+    // Somebody else's skill, arriving as a thing to LOOK at. Nothing here decides anything: the effect plays on
+    // their body and every consequence of it reaches this machine through the doors that already announce one.
+    static void OnSkillCastPlayed(SkillCastPlayed msg)
+    {
+        if (!NetworkClient.spawned.TryGetValue(msg.casterNetId, out var identity) || identity == null) return;
+        var shell = identity.GetComponent<NetPlayer>();
+        if (shell == null) return;
+
+        Transform aimed = null;
+        if (msg.targetNetId != 0u && NetworkClient.spawned.TryGetValue(msg.targetNetId, out var at) && at != null)
+            aimed = at.transform;
+
+        shell.ShowCast(SkillCatalog.Get(msg.skillId), aimed, msg.aimPoint, msg.seed);
     }
 
     // SAID OUT LOUD, once per connection, for the same reason a missing fighter is: the refusal itself is silent —
     // the strike simply does not land — and the honest cause is usually not cheating at all but a character whose
     // progress never arrived, leaving the server holding somebody with no weapon and therefore no skills.
-    static readonly System.Collections.Generic.HashSet<int> warnedNotTheirSkill = new System.Collections.Generic.HashSet<int>();
+    static readonly System.Collections.Generic.HashSet<string> warnedNotTheirSkill = new System.Collections.Generic.HashSet<string>();
 
     static void WarnNotTheirSkill(int connectionId, string skillId)
     {
-        if (!warnedNotTheirSkill.Add(connectionId)) return;
+        // KEYED BY THE SKILL AS WELL AS THE PERSON. Said once per CONNECTION, the first refusal silenced every
+        // other skill that person cast for the rest of their session — so a log with one line in it looked like
+        // one broken skill when it was all of them.
+        if (!warnedNotTheirSkill.Add(connectionId + "|" + skillId)) return;
         Debug.LogWarning("[server] connection " + connectionId + " cast '" + skillId + "', which is neither bound on "
                          + "the hotbar this server holds for them nor on their equipped weapon, so the strike was "
                          + "refused. Either their character's progress never loaded (they are standing here at "
@@ -1044,9 +1621,21 @@ public class GameNetwork : NetworkManager
     {
         if (conn.identity != null) return;   // already has a body; ignore a repeat
 
-        // TURNED AWAY BEFORE THEY ARE BUILT ANYTHING. Checked here rather than after the body exists, so a refused
-        // join never leaves a half-made person standing in the world with nothing to fight with.
-        if (PlayerFighter.AlreadyPlaying(msg.characterId))
+        // WERE WE TOLD TO EXPECT THEM. The character server announces a person and hands over their whole
+        // character BEFORE telling them where to knock, so a connection that cannot produce the ticket it was
+        // given was never announced and is nobody. This is the door, and it is the reason nothing about who a
+        // person is travels on their own message any more.
+        var announced = MapServerLink.TakeExpected(msg.ticket);
+        if (announced == null)
+        {
+            Debug.LogWarning("[server] refused a connection nobody announced — no good ticket.");
+            conn.Disconnect();
+            return;
+        }
+
+        // AND IT MUST BE THE CHARACTER THEY WERE ANNOUNCED WITH. The name and the body on their message are
+        // only what to draw; anything that decides something is read off what the character server sent.
+        if (PlayerFighter.AlreadyPlaying(announced.characterId))
         {
             Debug.LogWarning("[server] refused a second connection for a character already being played.");
             conn.Disconnect();
@@ -1057,14 +1646,15 @@ public class GameNetwork : NetworkManager
         var np = go.GetComponent<NetPlayer>();
         if (np != null)
         {
-            np.playerName = string.IsNullOrWhiteSpace(msg.characterName) ? "Player" : msg.characterName;
+            np.playerName = string.IsNullOrWhiteSpace(announced.characterName) ? "Player" : announced.characterName;
             np.modelName = msg.modelName;
         }
         NetworkServer.AddPlayerForConnection(conn, go);
 
-        // AND A CHARACTER TO GO WITH THE BODY. Without one this connection has a shape in the world that can
-        // neither hit anything nor be hit — which is what every player had until now.
-        PlayerFighter.BuildFor(np, msg.characterId, msg.accessToken);
+        // AND A CHARACTER TO GO WITH THE BODY — the one that was PUSHED here, already in hand. Nothing is
+        // fetched: this server never asks the character store for anything, which is the whole point of the
+        // character server announcing somebody before sending them.
+        PlayerFighter.BuildFrom(np, announced);
 
         Debug.Log("[server] " + (np != null ? np.playerName : "someone") + " entered the world — "
                   + NetworkServer.connections.Count + " player(s) here");
@@ -1081,10 +1671,25 @@ public class GameNetwork : NetworkManager
                   + ", " + NetworkServer.connections.Count + " now on this world");
     }
 
+    /// <summary>EVERYBODY GETS WRITTEN DOWN WHEN THIS SERVER STOPS. Without it a clean shutdown threw away
+    /// whatever had happened since each player's last beat — up to fifteen seconds each, for everybody at once,
+    /// on the one event an operator triggers deliberately.</summary>
+    public override void OnStopServer()
+    {
+        foreach (var conn in NetworkServer.connections.Values)
+        {
+            var shell = conn != null && conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+            shell?.SaveNow(null);
+        }
+        Debug.Log("[server] stopping — asked for a write for every player still here.");
+        base.OnStopServer();
+    }
+
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
     {
-        Debug.Log("[server] player left — connection " + conn.connectionId
-                  + ", " + (NetworkServer.connections.Count - 1) + " remaining");
+        // COUNTED AFTER, not guessed at. Taking one off the current count assumed this connection was still in
+        // it, and by this point it sometimes is not — so the number went NEGATIVE as people left.
+        Debug.Log("[server] player left — connection " + conn.connectionId);
 
         // Everything remembered ABOUT a connection goes when the connection does. A long-lived server hands out
         // connection numbers for months; anything kept per connection and never dropped grows forever.
@@ -1092,11 +1697,37 @@ public class GameNetwork : NetworkManager
         swingLedgers.Remove(conn.connectionId);
         healLedgers.Remove(conn.connectionId);
 
-        // Their character goes with them. Left behind it would still be standing in the roll of who is here, and
-        // every creature in the world would go on hunting somebody who has gone home.
-        if (conn.identity != null) PlayerFighter.Dismiss(conn.identity.GetComponent<NetPlayer>());
+        // WRITTEN DOWN BEFORE THEY ARE LET GO. This is the moment everything that happened to them has to
+        // survive — and the order matters: a character released while its last write is still in flight is how
+        // the same items end up in two places, which is the oldest duplication trick there is. The write is
+        // asked for first, and the character is dismissed only once it has landed.
+        var leaving = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        if (leaving != null)
+        {
+            // THE NAME AND THE ID, TAKEN NOW. Everything below this runs after Mirror has destroyed the body, so
+            // reading anything off it inside the answer would be reading a destroyed object — which is exactly
+            // what happened: the character was never released, and its owner was refused as "already playing"
+            // for the life of the server. Copied out here, while it still exists.
+            string whoLeft = leaving.playerName;
+            string theirCharacter = leaving.ServerCharacterId;
+
+            // AND THE NAME IS FREED IMMEDIATELY, not when the write lands. Holding it until then means a person
+            // whose save is slow — or whose character server is down — cannot come back at all, and the write
+            // has nothing to do with whether somebody may play again.
+            PlayerFighter.Dismiss(leaving);
+
+            leaving.SaveNow(ok =>
+            {
+                if (!ok) Debug.LogError("[server] " + whoLeft + " left and their character could NOT be "
+                                        + "written down. Their last few seconds are lost.");
+                // Said again for the case the line above cannot cover: if anything else released the body
+                // first, the name still has to come free.
+                PlayerFighter.ReleaseCharacter(theirCharacter);
+            });
+        }
 
         base.OnServerDisconnect(conn);
+        Debug.Log("[server] " + NetworkServer.connections.Count + " player(s) still here");
     }
 
     public override void OnClientConnect()
@@ -1104,9 +1735,14 @@ public class GameNetwork : NetworkManager
         base.OnClientConnect();
         Debug.Log("[client] connected to the server");
 
-        // A fresh start. However many attempts the last drop cost, they are spent and forgotten — otherwise a
-        // player who reconnects twice in an evening would be given fewer tries the second time.
-        attemptsSpent = 0;
+        // A fresh start — but only once this connection has actually been let INTO the world, which is what the
+        // join below asks for. Reset merely on the wire coming up, a REFUSED join looked like a success: the
+        // count went back to zero, the refusal arrived, and the retry began again from one, forever. MEASURED: a
+        // player who had already been in the world once printed "retrying 1 of 3" more than thirty times and
+        // never gave up, leaving them under a veil with no way out.
+        //
+        // It is cleared instead when the server confirms them (see OnJoinedWorld's caller).
+        ReconnectNotice.Hide();
         ReconnectNotice.Hide();
 
         // Announce who is playing, so the server can give this connection the right body. Sent from here
@@ -1117,8 +1753,12 @@ public class GameNetwork : NetworkManager
             characterName = AccountSession.CharacterName ?? "Player",
             modelName = AccountSession.ModelName ?? "",
             characterId = AccountSession.CharacterId ?? "",
-            accessToken = AccountSession.AccessToken ?? ""
+            ticket = AccountSession.EntryTicket ?? ""
         });
+
+        // ACTUALLY IN, so the retry count starts fresh. Cleared here rather than when the wire came up, because
+        // the wire coming up is also what happens a moment before being refused.
+        attemptsSpent = 0;
 
         // The world may exist now, and not one moment before this.
         OnJoinedWorld?.Invoke();
@@ -1153,7 +1793,12 @@ public class GameNetwork : NetworkManager
     {
         yield return new WaitForSeconds(SecondsBetweenAttempts);
         if (goneForGood) yield break;
-        StartClient();
+
+        // A FRESH TICKET, not the spent one. A ticket opens the door exactly once — that is the whole point of
+        // it — so dialling again with the same one is refused every single time, and the retry could never have
+        // succeeded. Asking the character server again also re-announces this person to the map server, which
+        // is what actually has to happen for them to be let back in.
+        AskWhereToEnter(Transport.active as kcp2k.KcpTransport);
     }
 
     /// <summary>Put this copy back to knowing nothing, so a later sign-in dials a genuinely fresh connection

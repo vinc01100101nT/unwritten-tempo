@@ -28,7 +28,6 @@ public class SimulationLod : MonoBehaviour
     /// footstep gait whose last position is now far behind). Subscribed once at build — never per frame.</summary>
     public event System.Action<bool> OnSimulatingChanged;
 
-    Transform player;
     Behaviour[] frozen;
     float nextCheck;
 
@@ -66,17 +65,16 @@ public class SimulationLod : MonoBehaviour
     {
         if (Suspended) return;
 
-        // Re-acquire on a miss: load order can build a unit before the additively-loaded player exists. Bounded —
-        // only runs while player is null, on this slow cadence, never per frame.
-        if (player == null)
-        {
-            var pc = FindAnyObjectByType<Player3DController>();
-            if (pc != null) player = pc.transform;
-            // No player yet → stay simulating (a frozen unit with no thawer is a bug), but still re-assert if forced.
-            if (player == null) { if (force) ApplyFrozen(Simulating); return; }
-        }
-
-        bool near = (player.position - transform.position).sqrMagnitude <= simulateRadius * simulateRadius;
+        // IS ANYBODY NEAR ME, IN MY MAP — asked of the roll of who is actually here, which is the same question
+        // this unit's brain already asks to choose who to chase. It used to hunt the scene for the ONE avatar at
+        // this keyboard, which is a fact about a screen: a server has no avatar of its own, so every creature it
+        // held measured itself against the wrong body — or against the idle one sitting in the first map — and
+        // froze. MEASURED on a running server: a field creature reported not-simulating with its mover switched
+        // off and its brain skipping every frame, while a player stood two metres away.
+        //
+        // On a machine with one person at it the roll holds exactly them, so nothing about playing alone changes.
+        // Flat distance, ignoring height, for the same reason the leash and aggro radii are flat.
+        bool near = PlayerUnits.AnyoneWithin(transform.position, simulateRadius, gameObject.scene.name);
         if (near == Simulating)
         {
             if (force) ApplyFrozen(near);

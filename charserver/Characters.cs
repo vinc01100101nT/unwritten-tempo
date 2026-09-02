@@ -1,0 +1,356 @@
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using Npgsql;
+using NpgsqlTypes;
+
+namespace CharServer;
+
+/// <summary>
+/// Everything a character IS, and the only code that reads or writes one. The map server never touches this
+/// database; it asks here. That is the single rule this whole server exists to make true.
+/// </summary>
+public sealed partial class Characters(Db db, Auth auth, Roster roster, Config config, MapServers maps)
+{
+    // Names players read out loud and type at each other: letters, digits and underscore only, so a name
+    // cannot hide look-alike whitespace or wear punctuation that breaks a chat command.
+    [GeneratedRegex(@"^[A-Za-z0-9_]{3,16}$")] private static partial Regex NamePattern();
+    [GeneratedRegex(@"^#[0-9a-fA-F]{6}$")] private static partial Regex HexColour();
+
+    const string Columns = "id, name, progress, created_at, updated_at";
+
+    /// <summary>How many recoloured colours a character may carry. One number, so the route that creates a
+    /// character and the route that recolours one cannot come to disagree about it.</summary>
+    const int MaxColours = 32;
+
+    // Surrounding space is trimmed before the shape is judged, so a colour pasted with a stray space is the
+    // same colour rather than a refusal.
+    static bool IsColour(string? c) => c is not null && HexColour().IsMatch(c.Trim());
+
+    public void MapOnto(WebApplication app)
+    {
+        var chars = app.MapGroup("").AddEndpointFilter(RequireSignedIn);
+
+        chars.MapGet("/character-models", () => Results.Ok(new { models = roster.Models }));
+        // CAST, and it matters. ListAsync's only argument is the request itself, which makes it look exactly
+        // like the low-level shape that returns nothing — so it would have been bound as one and its answer
+        // thrown away, leaving every character list an empty reply with no error anywhere. The others take a
+        // further argument and cannot be mistaken for it.
+        chars.MapGet("/characters", (Delegate)ListAsync);
+        chars.MapPost("/characters", CreateAsync);
+        chars.MapPatch("/characters/{id}/appearance", AppearanceAsync);
+        chars.MapDelete("/characters/{id}", DeleteAsync);
+        chars.MapGet("/characters/{id}/progress", ReadProgressAsync);
+        chars.MapPut("/characters/{id}/progress", WriteProgressAsync);
+
+        // THE DOOR INTO THE WORLD. A player asks to enter with a character; this hands their whole character to
+        // the map server that holds the map they are entering, and gives them back only an address and a
+        // one-time ticket. They never carry their character; they carry a receipt for it.
+        chars.MapPost("/characters/{id}/enter", EnterAsync);
+    }
+
+    // ---- who is asking ----------------------------------------------------------------------------------
+    //
+    // Checked ONCE here for every route below rather than at the top of each, because a route that forgot it
+    // would be a route anybody could call, and nothing about it would look wrong.
+
+    const string AccountKey = "accountId";
+
+    async ValueTask<object?> RequireSignedIn(EndpointFilterInvocationContext ctx, EndpointFilterDelegate next)
+    {
+        var accountId = auth.AccountIdFrom(ctx.HttpContext.Request.Headers.Authorization);
+        // TURNED INTO THE THING IT WILL BE USED AS, HERE, ONCE. Every route needs it as an id and each used to
+        // convert it itself — six chances to be handed a token whose account is not an id at all, and the
+        // conversion does not return a failure, it throws. That reached the caller as a server fault carrying a
+        // stack trace, where the honest answer is the same "sign in first" as any other unusable token.
+        if (accountId is null || !Guid.TryParse(accountId, out var account))
+            return Results.Json(new { error = "sign in first" }, statusCode: 401);
+        ctx.HttpContext.Items[AccountKey] = account;
+        return await next(ctx);
+    }
+
+    static Guid AccountOf(HttpContext http) => (Guid)http.Items[AccountKey]!;
+
+    // THE PLAIN DASHED FORM ONLY, because that is the one shape the login service accepts and the two must not
+    // disagree about what counts as an id. The permissive parse also takes braces, brackets and no dashes at
+    // all, so the same character had several spellings here and exactly one there.
+    static bool IsId(string raw, out Guid id) => Guid.TryParseExact(raw, "D", out id);
+
+    // ---- the routes -------------------------------------------------------------------------------------
+
+    async Task<IResult> ListAsync(HttpContext http)
+    {
+        await using var conn = await db.ConnectAsync();
+        await using var cmd = new NpgsqlCommand(
+            $"select {Columns} from character where account_id = $1 and deleted_at is null order by created_at", conn);
+        cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
+
+        var list = new List<object>();
+        await using var rows = await cmd.ExecuteReaderAsync();
+        while (await rows.ReadAsync()) list.Add(Summarise(rows));
+        return Results.Ok(new { characters = list });
+    }
+
+    async Task<IResult> CreateAsync(HttpContext http, CreateBody? body)
+    {
+        if (body is null) return Bad("send a character");
+        var name = body.name?.Trim() ?? "";
+        if (!NamePattern().IsMatch(name)) return Bad("3-16 letters, digits or underscore");
+
+        var sources = body.dyeSources ?? [];
+        var targets = body.dyeTargets ?? [];
+        if (sources.Length != targets.Length) return Bad("dyeSources and dyeTargets must have the same number of colours");
+        if (sources.Length > MaxColours || targets.Length > MaxColours) return Bad("too many colours");
+        foreach (var c in sources.Concat(targets))
+            if (!IsColour(c)) return Bad("colours must look like #RRGGBB");
+        sources = [.. sources.Select(c => c.Trim())];
+        targets = [.. targets.Select(c => c.Trim())];
+
+        var model = roster.Resolve(body.modelName);
+        if (model is null) return Bad($"no character model called '{body.modelName}'");
+
+        // The look goes straight into the save document — the character has no other home for it. It carries no
+        // version, which is exactly what marks this character as never played.
+        var born = JsonSerializer.Serialize(new { modelName = model, dyeSources = sources, dyeTargets = targets });
+
+        try
+        {
+            await using var conn = await db.ConnectAsync();
+            await using var cmd = new NpgsqlCommand(
+                $"insert into character (account_id, name, progress) values ($1, $2, $3) returning {Columns}", conn);
+            cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
+            cmd.Parameters.Add(new NpgsqlParameter { Value = name });
+            cmd.Parameters.Add(new NpgsqlParameter { Value = born, NpgsqlDbType = NpgsqlDbType.Jsonb });
+
+            await using var rows = await cmd.ExecuteReaderAsync();
+            if (!await rows.ReadAsync()) return Results.Json(new { error = "could not create" }, statusCode: 500);
+            return Results.Json(Summarise(rows), statusCode: 201);
+        }
+        catch (Exception e) when (Db.IsUniqueViolation(e))
+        {
+            return Results.Json(new { error = "that name is taken" }, statusCode: 409);
+        }
+    }
+
+    // Appearance has its own route because it changes at a completely different moment than progress does —
+    // the instant a player recolours, rather than on the next autosave. It writes into the same document.
+    async Task<IResult> AppearanceAsync(HttpContext http, string id, AppearanceBody? body)
+    {
+        if (!IsId(id, out var characterId)) return Bad("invalid character id");
+        if (body is null) return Bad("send an appearance");
+
+        bool sendsColours = body.dyeSources is not null || body.dyeTargets is not null;
+        if (sendsColours && (body.dyeSources is null || body.dyeTargets is null))
+            return Bad("send both dyeSources and dyeTargets, or neither");
+        if (sendsColours && body.dyeSources!.Length != body.dyeTargets!.Length)
+            return Bad("dyeSources and dyeTargets must have the same number of colours");
+        // THE SAME CEILING CREATION HAS. Without it this route took as many colours as somebody cared to send,
+        // and they land in the save document permanently — every later save that omits the look copies them
+        // straight back in, and every character list then carries them.
+        if (sendsColours && (body.dyeSources!.Length > MaxColours || body.dyeTargets!.Length > MaxColours))
+            return Bad("too many colours");
+        if (sendsColours)
+            foreach (var c in body.dyeSources!.Concat(body.dyeTargets!))
+                if (!IsColour(c)) return Bad("colours must look like #RRGGBB");
+
+        string? model = null;
+        if (body.modelName is not null)
+        {
+            model = roster.Resolve(body.modelName);
+            if (model is null) return Bad($"no character model called '{body.modelName}'");
+        }
+
+        // Merged into the save document, so whatever the caller left out keeps the value it already had.
+        var patch = new Dictionary<string, object>();
+        if (model is not null) patch["modelName"] = model;
+        if (sendsColours)
+        {
+            patch["dyeSources"] = body.dyeSources!.Select(c => c.Trim()).ToArray();
+            patch["dyeTargets"] = body.dyeTargets!.Select(c => c.Trim()).ToArray();
+        }
+
+        await using var conn = await db.ConnectAsync();
+        await using var cmd = new NpgsqlCommand(
+            $@"update character set progress = progress || $3::jsonb, updated_at = now()
+                where id = $1 and account_id = $2 and deleted_at is null returning {Columns}", conn);
+        cmd.Parameters.Add(new NpgsqlParameter { Value = characterId });
+        cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
+        cmd.Parameters.Add(new NpgsqlParameter { Value = JsonSerializer.Serialize(patch), NpgsqlDbType = NpgsqlDbType.Jsonb });
+
+        await using var rows = await cmd.ExecuteReaderAsync();
+        if (!await rows.ReadAsync()) return NoSuchCharacter();
+        return Results.Ok(Summarise(rows));
+    }
+
+    async Task<IResult> DeleteAsync(HttpContext http, string id)
+    {
+        if (!IsId(id, out var characterId)) return Bad("invalid character id");
+
+        // Soft delete: the row stays, so a mistaken deletion is recoverable and anything that later references
+        // this character still has something to point at. The partial unique index treats a deleted row as
+        // absent, so the name comes free.
+        await using var conn = await db.ConnectAsync();
+        await using var cmd = new NpgsqlCommand(
+            @"update character set deleted_at = now(), updated_at = now()
+               where id = $1 and account_id = $2 and deleted_at is null returning id", conn);
+        cmd.Parameters.Add(new NpgsqlParameter { Value = characterId });
+        cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
+
+        var gone = await cmd.ExecuteScalarAsync();
+        return gone is null ? NoSuchCharacter() : Results.NoContent();
+    }
+
+    async Task<IResult> ReadProgressAsync(HttpContext http, string id)
+    {
+        if (!IsId(id, out var characterId)) return Bad("invalid character id");
+
+        // The GM mark rides along here, joined off the owning account, because both readers already ask for
+        // exactly this — the player's own game, to decide which commands it will even attempt, and the map
+        // server, to decide which it will actually carry out. Answering it in a second place as well would be
+        // two owners for one fact.
+        await using var conn = await db.ConnectAsync();
+        await using var cmd = new NpgsqlCommand(
+            @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm
+                from character c join account a on a.id = c.account_id
+               where c.id = $1 and c.account_id = $2 and c.deleted_at is null", conn);
+        cmd.Parameters.Add(new NpgsqlParameter { Value = characterId });
+        cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
+
+        await using var rows = await cmd.ExecuteReaderAsync();
+        if (!await rows.ReadAsync()) return NoSuchCharacter();
+
+        using var progress = JsonDocument.Parse(rows.GetString(2));
+        var look = Progress.AppearanceOf(progress.RootElement);
+        return Results.Ok(new
+        {
+            id = rows.GetGuid(0),
+            name = rows.GetString(1),
+            modelName = look.ModelName,
+            dyeSources = look.DyeSources,
+            dyeTargets = look.DyeTargets,
+            level = Progress.LevelOf(progress.RootElement),
+            createdAt = rows.GetDateTime(3),
+            updatedAt = rows.GetDateTime(4),
+            progress = progress.RootElement.Clone(),
+            isGm = rows.GetBoolean(5),
+        });
+    }
+
+    async Task<IResult> WriteProgressAsync(HttpContext http, string id, ProgressBody? body)
+    {
+        if (!IsId(id, out var characterId)) return Bad("invalid character id");
+        if (body is null || body.progress.ValueKind == JsonValueKind.Undefined) return Bad("send { progress: … }");
+
+        var raw = body.progress.GetRawText();
+        if (raw.Length > config.MaxProgressBytes)
+            return Results.Json(new { error = "that save is too large" }, statusCode: 413);
+
+        var verdict = Progress.Check(body.progress);
+        if (!verdict.Ok) return Bad(verdict.Reason ?? "invalid save");
+
+        // A save REPLACES the document, because the game owns it whole. The one exception is the look: a client
+        // that does not carry it must not be able to wipe it, so an incoming save that names no body keeps the
+        // one already stored. Without this, a single save from an older build erases a character's appearance.
+        bool keepsLook = body.progress.TryGetProperty("modelName", out var m)
+                         && m.ValueKind == JsonValueKind.String
+                         && (m.GetString()?.Length ?? 0) > 0;
+
+        var sql = keepsLook
+            ? $@"update character set progress = $3, updated_at = now()
+                  where id = $1 and account_id = $2 and deleted_at is null returning {Columns}"
+            : $@"update character
+                    set progress = $3::jsonb
+                                 || jsonb_build_object('modelName',  progress -> 'modelName',
+                                                       'dyeSources', progress -> 'dyeSources',
+                                                       'dyeTargets', progress -> 'dyeTargets'),
+                        updated_at = now()
+                  where id = $1 and account_id = $2 and deleted_at is null returning {Columns}";
+
+        await using var conn = await db.ConnectAsync();
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.Add(new NpgsqlParameter { Value = characterId });
+        cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
+        cmd.Parameters.Add(new NpgsqlParameter { Value = raw, NpgsqlDbType = NpgsqlDbType.Jsonb });
+
+        await using var rows = await cmd.ExecuteReaderAsync();
+        if (!await rows.ReadAsync()) return NoSuchCharacter();
+        return Results.Ok(Summarise(rows));
+    }
+
+    // ---- entering the world -----------------------------------------------------------------------------
+
+    async Task<IResult> EnterAsync(HttpContext http, string id, EnterBody? body)
+    {
+        if (!IsId(id, out var characterId)) return Bad("invalid character id");
+
+        await using var conn = await db.ConnectAsync();
+        await using var cmd = new NpgsqlCommand(
+            @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm
+                from character c join account a on a.id = c.account_id
+               where c.id = $1 and c.account_id = $2 and c.deleted_at is null", conn);
+        cmd.Parameters.Add(new NpgsqlParameter { Value = characterId });
+        cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
+
+        await using var rows = await cmd.ExecuteReaderAsync();
+        if (!await rows.ReadAsync()) return NoSuchCharacter();
+
+        using var progress = JsonDocument.Parse(rows.GetString(2));
+
+        // WHERE THIS PERSON IS GOING. Their save says which map they logged out in; a caller may name one
+        // instead, which is what walking through a door into another map server's territory will use.
+        var map = body?.map;
+        if (string.IsNullOrWhiteSpace(map)
+            && progress.RootElement.TryGetProperty("sceneName", out var scene)
+            && scene.ValueKind == JsonValueKind.String)
+            map = scene.GetString();
+
+        // Nobody has claimed that map — or the character has never played and named none. Fall back to the one
+        // map server there is, which is the ordinary case and the whole of it until maps are ever split up.
+        var to = (map is not null ? maps.Holding(map) : null) ?? maps.Alive.FirstOrDefault();
+        if (to is null)
+            return Results.Json(new { error = "no map server is holding that map" }, statusCode: 503);
+
+        var ticket = maps.MintTicket(AccountOf(http).ToString(), characterId.ToString());
+
+        // ANNOUNCED FIRST, AND ONLY THEN IS THE PLAYER TOLD WHERE TO GO. If the map server will not take them,
+        // they are told that here rather than being sent to knock on a door that is going to refuse them.
+        bool taken = await maps.AnnounceAsync(to, ticket, rows.GetString(1), progress.RootElement,
+                                              rows.GetBoolean(5), http.RequestAborted);
+        if (!taken)
+            return Results.Json(new { error = "the world would not take you just now" }, statusCode: 503);
+
+                // THE PORT PLAYERS USE, not the one this server pushed their character to. Those are two different
+        // doors on the same machine, and handing over the wrong one sends somebody to knock where nothing is
+        // listening for them.
+        return Results.Ok(new { host = to.Address, port = to.PlayerPort, ticket = ticket.Value, map });
+    }
+
+    public sealed record EnterBody(string? map);
+
+    // ---- shared shapes ----------------------------------------------------------------------------------
+
+    // What a character-select screen needs. The level is READ from the save document rather than stored beside
+    // it — one owner for the number, so the list can never disagree with the character it describes.
+    static object Summarise(NpgsqlDataReader rows)
+    {
+        using var progress = JsonDocument.Parse(rows.GetString(2));
+        var look = Progress.AppearanceOf(progress.RootElement);
+        return new
+        {
+            id = rows.GetGuid(0),
+            name = rows.GetString(1),
+            modelName = look.ModelName,
+            dyeSources = look.DyeSources,
+            dyeTargets = look.DyeTargets,
+            level = Progress.LevelOf(progress.RootElement),
+            createdAt = rows.GetDateTime(3),
+            updatedAt = rows.GetDateTime(4),
+        };
+    }
+
+    static IResult Bad(string why) => Results.Json(new { error = why }, statusCode: 400);
+    static IResult NoSuchCharacter() => Results.Json(new { error = "no such character" }, statusCode: 404);
+
+    public sealed record CreateBody(string? name, string? modelName, string[]? dyeSources, string[]? dyeTargets);
+    public sealed record AppearanceBody(string? modelName, string[]? dyeSources, string[]? dyeTargets);
+    public sealed record ProgressBody(JsonElement progress);
+}

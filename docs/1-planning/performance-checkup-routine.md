@@ -41,7 +41,7 @@ In the AI chat, type `**/perf-checkup**`. The AI reads the rules + history and t
 
 **2. Run the stress test in Unity**
 
-- Make sure the **database, the account service and the game server are running** — Play waits to be let into a world and will sit there otherwise. [Starting the Network](starting-the-network.md) is the runbook.
+- Make sure the **database, the sign-in service, the character server and the game server are running** — Play waits to be let into a world and will sit there otherwise, and without the character server nobody can be let in at all. [Starting the Network](starting-the-network.md) is the runbook.
 - In the **Project** window open `Assets/Scenes/`, double-click any **field** map (e.g. `field_0`), then press **Play** (▶ at the top). Play always boots the persistent `Systems` scene and loads whichever map I had open, so I never press Play *on* `Systems` directly.
 - Sign in and pick a character at the door.
 - Walk around and gather **as many monsters as I can** near the player.

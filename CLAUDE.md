@@ -148,6 +148,35 @@ When an editor tool writes assets, its output path must point at the correct buc
 
 ---
 
+## ⛔ RULE NOSTALE — NEVER APPEND TO A DOC. ALWAYS UPDATE IT IN PLACE. NOT ONE STALE STRING MAY SURVIVE (HARD-PINNED, ranks with THE FIVE)
+
+Every doc in this repo — `docs/`, the wiki pages, a README, a handoff, a learnings page, a design note, a spec,
+a PRD — states what is TRUE NOW and nothing else. Revising one means **finding every sentence that says the old
+thing and rewriting it where it sits**. Appending the new version at the bottom while the old one stands is a
+FAILED edit, even when the new section is perfect: two answers in one doc means the reader cannot tell which is
+real, and the dead half wins whichever paragraph they happen to read first.
+
+**Banned, absolutely, in every doc:** an appended "UPDATE" / "SETTLED" / "V2" / "NEW" section left beside the
+text it supersedes · a changelog or history section inside a living doc · a superseded number, name, verb,
+count, label or example left anywhere on the page · a "(old: …)" parenthetical · a struck-through line kept for
+context · "previously this worked like…". **History lives in git and in chat, never in the doc.**
+
+**The mandatory pass after EVERY doc edit — not optional, not "if it feels risky":**
+1. Re-read the WHOLE doc, top to bottom. Not the part I edited — all of it.
+2. Grep the doc, and the folder around it, for the OLD term / OLD number / OLD name I just replaced.
+3. Reconcile every hit in the SAME turn. A stale line I plan to fix later is a stale line that ships.
+4. Say in the report which stale passages I found and killed, or say plainly that I found none.
+
+**One string is enough to break it.** A single leftover old number reads exactly as authoritative as the twenty
+correct ones around it, so the whole doc becomes untrustworthy and every future read pays for it. There is no
+"close enough", no "that bit is harmless", and no doc small enough to skip the pass.
+
+*(Scar, 2026-07-24: a "SETTLED" section was appended to the V3 skill doc while three earlier sections kept
+contradicting it — a stale verb and a wrong count among them. The user was furious. The full doc rules are the
+`write-project-docs` skill; this line is here so the rule fires without anyone opening it.)*
+
+---
+
 ## ⛔ THE FIVE — the anti-invention protocol (HARD-PINNED, read before every build)
 
 These exist because a full day was lost on 2026-08-21 to inventions that did not *feel* like inventions. The

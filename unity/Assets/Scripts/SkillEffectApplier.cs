@@ -444,6 +444,16 @@ public static class SkillEffectApplier
     public static int EffectiveHits(SkillEffect e, Character caster = null, StackVars vars = default)
         => Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, e.hitCount.ResolveInt(vars)) * AffinityMult(e.hitCountAffinity, caster)));
 
+    /// <summary>Does this strike belong to a run that draws ONE RISING YELLOW TOTAL instead of a number per beat?
+    /// Two things have always drawn one: a skill that asks to show a single total across its repeats, and a strike
+    /// that lands more than once.
+    ///
+    /// <para>Read in ONE place because two different parts of the server now have to answer it — the one landing a
+    /// skill it is running itself, and the one answering a strike a client named — and an answer written out twice
+    /// is an answer that drifts.</para></summary>
+    public static bool ShowsRunTotal(SkillDef def, SkillEffect e, Character caster, in StackVars vars)
+        => (def != null && def.showRepeatsTotalDamage) || (e != null && EffectiveHits(e, caster, vars) > 1);
+
     // Single hit (the common case): apply instantly to each mob, unchanged. Multi-hit (hitCount > 1): hand the mob
     // snapshot to MultiHitBurst so the strikes CASCADE over time and each mob shows ONE rising yellow combo total,
     // exactly like RO — instead of N overlapping numbers dumped in a single frame.
@@ -575,8 +585,18 @@ public static class SkillEffectApplier
         if (bonus <= 0) return;
         // Its own damage number, so its own charge — an execute is a second outgoing hit riding the first, not part of it.
         bonus = UnitOffense.SpendCharges(caster != null ? caster.States : null, bonus);
-        CombatAuthority.Apply(unit, new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic, crit,
-                                                  attacker: caster));
+        var resolved = new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic, crit,
+                                      attacker: caster);
+        CombatAuthority.Apply(unit, resolved);
+
+        // ANNOUNCED FOR THE SAME REASON A STRIKE IS. This is the other place a skill's damage reaches a creature on
+        // the server, and it had the identical silence: the health went down and the number it says it draws was
+        // never drawn anywhere. Fixed here rather than only at the strike, because the two are the same thing done
+        // twice and a fix at one of them is a fix that comes back.
+        if (GameServer.IsServer)
+            GameNetwork.AnnounceBlowOnMob(unit, caster, resolved,
+                                          ShowsRunTotal(SkillCatalog.Get(PassiveEvents.CurrentSkillId),
+                                                        e, caster, vars));
     }
 
     // ---- player as a TARGET (pass 2) ----------------------------------------
@@ -613,7 +633,20 @@ public static class SkillEffectApplier
         // the server's answer comes back, through the same door every other blow arrives by.
         if (GameNetwork.SendSkillStrikeToServer(e, unit, vars, overkill)) return 0;
 
-        return Strike(e, unit, caster, vars, overkill, out _, out _);
+        int dealt = Strike(e, unit, caster, vars, overkill, out _, out var resolved);
+
+        // AND THE SERVER SAYS WHAT IT JUST DID. A joined player hands the whole cast over and resolves nothing of
+        // it, so this line is where a skill's damage really lands — on the server, with no request behind it for a
+        // handler to answer and announce. Without this the creature loses health and no number is ever drawn for
+        // it, because health travels as a synced value that is written in without drawing anything.
+        //
+        // Silent for a person: a blow on one is already announced at the damage door, and saying it twice would
+        // draw their number twice.
+        if (GameServer.IsServer)
+            GameNetwork.AnnounceBlowOnMob(unit, caster, resolved,
+                                          ShowsRunTotal(SkillCatalog.Get(PassiveEvents.CurrentSkillId),
+                                                        e, caster, vars));
+        return dealt;
     }
 
     /// <summary>Roll and land ONE authored strike, on the machine that is allowed to decide it — a player's own

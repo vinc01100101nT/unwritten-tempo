@@ -25,6 +25,26 @@ public class EffectDef
              "ring lands exactly on the AoE. Eyeball it ONCE per circle prefab — auto-measuring catches stray sparks, " +
              "not the ring. 0 = not a ground circle (telegraph falls back to raw scale).")]
     public float groundRingRadius = 0f;
+
+    // ---- written by the machine, never by hand ------------------------------------------------------------------
+    // How long this effect plays, read off its own particles and kept here so a machine that never builds one still
+    // knows. A skill's beats are timed by its effect — a beat authored to land "at the end" lands when the burst
+    // finishes — and a server draws nothing, so without these three numbers it could not fire its own skills on the
+    // same moments as the player watching them. Filled and kept current automatically (EffectTimingBaker); editing
+    // them by hand only makes the table disagree with the prefab until the next import puts it back.
+
+    [Tooltip("AUTOMATIC — do not edit. Seconds one play of this effect takes, measured from its particles.")]
+    public float measuredPlaySeconds = 0f;
+
+    [Tooltip("AUTOMATIC — do not edit. Seconds its tail takes to fade once emission stops.")]
+    public float measuredFadeSeconds = 0f;
+
+    [Tooltip("AUTOMATIC — do not edit. True when one of its particle systems loops, so it never ends on its own.")]
+    public bool measuredLoops = false;
+
+    /// <summary>What this effect's particles say about its length — the same answer a machine holding the real
+    /// prefab gets from <see cref="EffectTiming"/>, read from the table instead of from an instance.</summary>
+    public EffectTiming.Measured Timing => new EffectTiming.Measured(measuredPlaySeconds, measuredFadeSeconds, measuredLoops);
 }
 
 /// <summary>

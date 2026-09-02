@@ -17,7 +17,7 @@ public static class ItemUse
 {
     /// <summary>Run <paramref name="item"/>'s effect. Returns TRUE only if it actually fired — the caller spends the
     /// item on true and leaves the stack alone on false, so a potion is never eaten by a cast that never happened.</summary>
-    public static bool Use(Item item)
+    public static bool Use(Item item, int bagIndex)
     {
         if (item == null || !item.IsUsable) return false;
         if (Character.Instance == null || Character.Instance.IsDead) return false;
@@ -38,9 +38,19 @@ public static class ItemUse
             return false;
         }
 
+        // SAID TO THE SERVER, which runs the skill against the character it holds AND takes the item off the
+        // stack — the bag is its now, so spending it here as well would be counted twice, and spending it only
+        // here would be undone the next time the server said what this person was carrying.
+        //
+        // WHERE in the bag, not which item: the server reads what is actually at that spot in the bag it holds.
+        bool theServersToDecide = GameNetwork.SendItemUsedToServer(bagIndex, item.id);
+
         // The same path a passive takes: a real cast with no press behind it. No victim is passed, so an aimed skill
         // would have nothing to land on — an item's skill is authored self-cast.
         runner.FireAsPassive(entry, null);
-        return true;
+
+        // TRUE means the caller should take one off the stack ITSELF, which is only ever right when there is no
+        // server — a game with no world still has a bag, and nothing else would spend from it.
+        return !theServersToDecide;
     }
 }

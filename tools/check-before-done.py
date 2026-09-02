@@ -41,6 +41,7 @@ LEARNINGS = os.path.join(REPO, "docs", "5-ai-learnings", "README.md")
 sys.path.insert(0, os.path.join(TOOLS, "hook-analytics"))
 import guard_check   # the one implementation of "is every guard alive"
 import tool_writes   # the one answer to "which files does this call write?"
+import repeat_watch  # the one answer to "has this session already tried this once?"
 
 ANSI = re.compile(r"\033\[[0-9;]*m")
 
@@ -246,6 +247,36 @@ def main():
             return 2
     elif state.pop("hooks:told", None) is not None:
         save_state(state)
+
+    # A SECOND ATTEMPT IS A FINDING TOO, even when nothing is broken and nothing was written.
+    #
+    # ASKED HERE, ABOVE THE "wrote nothing" EXIT, ON PURPOSE. Everything below this line only
+    # speaks when the turn EDITED FILES, and the day that earned this rule edited almost none: it
+    # was builds that came out unusable and creatures that did nothing, over and over, with the
+    # C# compiling clean every single time. Nothing was ever written, so nothing ever blocked, so
+    # the learnings pages — written for exactly that moment — were never once offered. Put below
+    # that exit, this check would have been just as silent as the one it replaces.
+    #
+    # Running the same heavy command twice IS the second attempt the rule names, and it needs no
+    # opinion about what "failed" means for a given tool. Said ONCE per command, so it lands at
+    # the moment it helps and never becomes wallpaper.
+    session_id = payload.get("session_id", "")
+    fresh = {k: n for k, n in repeat_watch.repeats(session_id).items()
+             if not repeat_watch.told(session_id, k)}
+    if fresh:
+        repeat_watch.mark_told(session_id, list(fresh))
+        again = ", ".join("%s (%d×)" % (k, n) for k, n in sorted(fresh.items()))
+        reason = ("You have now run the same thing more than once this session: " + again +
+                  "\n\nThat is a SECOND ATTEMPT, which is the exact moment this project's rule "
+                  "says to stop and read — before trying a third time. A repeat means the "
+                  "last attempt did not settle it, and the pages below were paid for by rounds "
+                  "already lost to this." +
+                  learnings_index() +
+                  "\n\nIf none of them fit, say so in one line and carry on — but do not "
+                  "simply try again on a new theory. Get a measurement first.")
+        print(json.dumps({"decision": "block", "reason": reason}))
+        sys.stderr.write(reason + "\n")
+        return 2
 
     touched = session_edits(payload)
     if not touched:

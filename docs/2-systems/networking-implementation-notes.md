@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-09-02
 tags:
   - systems-combat-design
 ---
@@ -10,7 +10,7 @@ tags:
 
 Code-facing companion for the multiplayer layer. Read this before touching anything networked, or before adding a new kind of thing that has to exist for more than one player.
 
-Sibling docs: [Network-Readiness Audit](network-readiness-audit.md) (the July survey that chose the shape) · [Starting the Network](../1-planning/starting-the-network.md) (how to run it) · [Querying the Database](../1-planning/querying-the-database.md) (how to read what it persisted) · `handoffs/game-server.md` (what is half-finished right now).
+Sibling docs: [Network-Readiness Audit](network-readiness-audit.md) (the July survey that chose the shape) · [Starting the Network](../1-planning/starting-the-network.md) (how to run it) · [Querying the Database](../1-planning/querying-the-database.md) (how to read what it persisted) · `charserver/README.md` (the character server).
 
 ---
 
@@ -41,11 +41,13 @@ Both live things follow this exactly: `NetPlayer` for a person, `NetMob` for a c
 
 |  | Owned by | Everyone else |
 | --- | --- | --- |
-| A player's position | the player's own machine (for now — see limits) | watches |
+| A player's position | moved by their own machine, **checked** by the server | watches |
 | A mob's brain, path, health | the server | watches |
 | Combat outcome | the server — it rolls it, applies it, and announces it | watches, and shows what it was told |
+| A player's bag, money and worn gear | the server | asks, and is sent the result |
+| A player's save | the server, written through the character server | — |
 
-**A player's machine owns nothing and decides nothing.** That is literal now, not aspirational: both damage channels refuse to act anywhere but the server. See *There is no offline game* below.
+**A player's machine owns nothing and decides nothing.** That is literal: both damage channels refuse to act anywhere but the server, the bag refuses to be added to anywhere but the server, and a save from a player's own machine is refused while they are in a world. See *There is no offline game* below.
 
 ---
 
@@ -58,7 +60,11 @@ Both live things follow this exactly: `NetPlayer` for a person, `NetMob` for a c
 | `NetPlayer.cs` | One connected person, as everyone else sees them. |
 | `NetMob.cs` | One creature the server owns, as everyone else sees it. |
 | `ReconnectNotice.cs` | The "Reconnecting…" overlay shown while a connection is being retried. Dims rather than hides — a player being reconnected has not gone anywhere. |
-| `PlayerFighter.cs` | The server's copy of one person's character — built per connection, filled in from the account service with that person's own sign-in proof, and taken away when they leave. |
+| `PlayerFighter.cs` | The server's copy of one person's character — built per connection **from the character the character server pushed ahead of them**, and taken away when they leave. It fetches nothing; this machine never reads the store. |
+| `MapServerLink.cs` | Server-only. Says what maps this server holds, listens on its own port for characters being pushed in, holds the people it has been told to expect, and beats every 30s so the character server keeps believing it. |
+| `ServerHttp.cs` | How one SERVER talks to another, carrying the shared secret. Deliberately not `AccountClient`, which speaks as a PERSON — one function taking "some credential" would eventually be handed the wrong one, and neither would look wrong. |
+| `BagWire.cs` | A whole bag, purse and worn gear, in the shape they cross the wire in. The same arrays the save uses, on purpose. |
+| `BagEntry.cs` | One stack in a bag. Plain data, so the character can hold it without knowing anything about windows. |
 | `PlayerUnits.cs` | Who is actually in this world, as fighters. One entry on a player's own machine, one per connection on a server. The thing creatures ask when choosing whom to hunt. |
 | `Rewards.cs` | What a kill is worth and who gets it. One door, so the answer cannot differ between the machine that decided the kill and the one that records it. |
 
@@ -72,7 +78,11 @@ Prefabs `NetPlayer` and `NetMob` live in `Assets/3_Data/Resources` and are found
 
 **The wire comes up BEFORE the world, not with it.** A server may bring its map up immediately — it *is* the world. A player may not: `GameRoot` dials, waits for `GameNetwork.OnJoinedWorld`, and only then wakes the scene and loads a map. Signing in no longer puts anybody anywhere; it earns the right to try.
 
-**Environment settings, never rebuilds.** Where a build points is set by `GAME_SERVER_HOST` / `GAME_SERVER_PORT`/ `ACCOUNTS_URL`, the same rule the account service already followed. One build, aimed anywhere.
+**Environment settings, never rebuilds.** Where a build points is set by `ACCOUNTS_URL` / `CHAR_SERVER_URL` / `SERVER_SECRET` / `MAP_SERVER_ADDRESS` / `GAME_SERVER_PORT`, the same rule the sign-in service already followed. One build, aimed anywhere — and now a player's build does not even need to be aimed, because the character server tells it where to go.
+
+**A player never carries their own character onto the wire.** They carry a one-time pass. Their character was pushed to that game server before they were told where to knock, so a connection that cannot produce a pass is refused before it is anybody. This is Ragnarok's order and the reason for it: the thing running the world never talks to the character store, and a client's token is never the key that opens it.
+
+**Two roads, and they never cross.** A PERSON's token reaches their own characters and nothing else. The SERVERS' shared secret registers a game server, receives a pushed character and writes a save back — and cannot read anybody's character list. A player's token on the servers' road is refused, and the other way round.
 
 **A watched copy must not think — but must not be switched off either.** Silence a mob's brain by setting `MonsterAI3D.ThinksForItself = false`, never by disabling the component. Disabling it drops the mob out of `MonsterAI3D.Active`, and that registry is how the game finds an attack target, picks area-effect targets and draws minimap blips. A mob missing from it is visible but impossible to click or hit, with nothing in any log saying why. The distance-based freeze already solved this the same way — follow it.
 
@@ -116,21 +126,29 @@ A player who is not joined is not in the world at all, so there is no state in w
 
 **A request must carry only what the server cannot already know.** The hit request used to name the blow's element and whether it was magic, and the server used both verbatim — which handed the client a damage dial: element multiplies straight against a creature's armour, and physical and magic are two separate defence numbers to choose the lower of. Both are facts about the attacker's WEAPON, which the server is already holding. Before adding a field to any message, ask whether the far end could look it up instead; if it could, that field is not information, it is an invitation.
 
+**A body destroyed before your callback runs takes your bookkeeping with it.** Releasing a departing player's character was done inside the reply to a save request — which arrives long after the connection has been torn down, by which time the object reads as null and the method returns before releasing anything. That character was then held for the life of the server and its owner refused as "already playing" on every attempt to come back. Copy what you need OUT of an object before an async call, and do the bookkeeping that must not be missed synchronously.
+
+**A "retry" that re-sends a single-use thing can never succeed.** The reconnect loop dialled again with the pass it had already spent, so all three attempts were refused for a reason nobody would guess from the message. Worse, the attempt counter was cleared when the wire came up rather than when the server accepted the join — and a refusal happens a moment after the wire comes up, so the count reset every time and the loop ran forever. Reset a counter on the thing you actually wanted, not on the step before it.
+
+**Saving from two places is a rollback waiting to happen.** While a save is in flight, another asked for beside it is a second whole document racing the first, and whichever lands last wins. One at a time, and remember the one you deferred. Give every server-to-server request a deadline, too: without one, a peer that accepts the connection and never answers leaves that player un-saved for the rest of the session with nothing saying so.
+
+**Index-addressed requests need to say what they expected to find.** Naming a position in a list is unambiguous right up until the list moves between the click and the request arriving, which two quick clicks are enough to do. Carry the id alongside and drop the request when it no longer matches.
+
 **Everything watching receives a blow — only ONE machine may be taught by it.** A landed hit teaches its attacker things: a run of consecutive hits, the on-damage-dealt passives, a lifesteal trickle. The announcement goes to everybody, so it has to name who swung, and each machine credits the person at its own keyboard only when the id matches. Send it with no attacker and the lesson is lost everywhere; hand it to whoever is watching and every spectator is credited for a stranger's swing.
 
 ---
 
 ## What is done, and what is not
 
-**Working, watched with two players:** the headless server boots and loads its map; players sign in, connect, get a body, and see each other move.
+**Working, watched with two players:** the headless server boots and loads its map; players sign in, connect, get a body, and see each other move. A tester also watched the bag arrive from the server, an item picked up land in it and survive a relog, money paid exactly once for a drop several people reached for, and reordering hold across a sign-out.
 
-**Written, never run:** everything else — server-owned creatures, the whole hit round-trip in both directions, per-connection fighters, skills over the wire, range-based interest, and the client-side pool of watched bodies. It builds, it loads, and the editor compiles it clean. **Nobody has watched any of it behave.** Treat every sentence below about combat as a description of what the code says, not of what has been seen.
+**Written, never run:** the combat half — the whole hit round-trip in both directions, skills over the wire, range-based interest, and the client-side pool of watched bodies. It builds, it loads, and the editor compiles it clean, and the servers' own tests exercise the handoff and the character store; **nobody has watched a fight behave.** Treat every sentence below about combat as a description of what the code says, not of what has been seen. Nobody has run **two** clients against this build at all.
 
-**The blocker is gone.** The server now holds a CHARACTER PER CONNECTION — a real `Character` built under that connection's shell, with that player's own stats — so it can roll their blows, and creatures can hurt them. Their numbers are read from the account service using the sign-in proof the client hands over on joining, so nothing about a fighter is taken from what the client says about itself. That proof also settles identity: the service only answers for characters on the account it was issued to, so typing somebody else's name no longer gets their character.
+**The blocker is gone.** The server holds a CHARACTER PER CONNECTION — a real `Character` built under that connection's shell, with that player's own stats — so it can roll their blows, and creatures can hurt them. That character is **pushed here by the character server** before the player is told where to knock, so this machine reads nothing from the store and nothing about a fighter is taken from what the client says about itself. Identity is settled the same way: a connection that cannot produce the one-time pass it was given is refused before it is anybody.
 
 **Creatures choose whom to hunt.** A creature no longer looks for "the" player once at birth and holds whatever it found for life. It picks the nearest living person actually present, re-checked twice a second, and keeps them until they die, leave its leash, or a taunt takes the choice away. Walking past a monster already fighting your friend does not steal it off them.
 
-**A kill pays whoever landed it.** The damage door records who last cost a unit health, and the reward goes to that unit — announced to that player's own machine, because progress is still written there.
+**A kill pays whoever landed it.** The damage door records who last cost a unit health, and the reward goes to that unit — announced to that player's own machine so they see it, and written down by the server, which is what holds their character.
 
 **Both damage directions cross the wire.** A blow on a person is announced from the same door a blow on a creature is: the person it happened to sees it through the ordinary hit path, and everybody else sees a number over their head. Health for a person travels exactly as a creature's does — a figure the server keeps writing — and their machine stops working it out for itself. Dying and coming back are both the server's word.
 
@@ -140,14 +158,18 @@ A player who is not joined is not in the world at all, so there is no state in w
 
 **A watching machine reuses creature bodies.** Arriving shells take a spare body of the same kind rather than building a rigged model and throwing it away, which is what a field of respawning monsters used to cost every player.
 
+**Movement is CHECKED, not simulated.** A player's machine still moves them — that is what keeps the controls answering at this camera distance — but every reported position is measured against how far they could possibly have travelled since the last one accepted, at their real top speed with their buffs. An impossible report is dropped rather than written down, and a run of them puts the person back where the server has them. It is forgiving on purpose: a wrong correction on an honest player is worse than a missed cheat, so a door, a respawn and any shove the server itself ordered are all let off. **This raises the reach checks with it** — they measure from a position that can no longer be arbitrary.
+
+**The bag, the money and the worn gear are the server's.** Equipping, taking off, reordering, using an item and picking loot up are all asked for and decided there; what comes back is the whole bag, and the window redraws from that. A client cannot add an item at all. Requests name a POSITION in the bag **and what the asker expected to find there**, so a second click landing inside the first one's round trip cannot act on whatever slid into that place.
+
+**The server writes the save**, on a 15-second beat, on a map change, and on disconnect — where the write is asked for before the character is let go, which is the guard against the same items existing twice. A save from a player's own machine is refused outright while they are in a world. Spending a stat point is the server's too; arranging the hotbar and choosing passives are asked for and taken as said, because that is a person's own arrangement of their own things and cannot be worth more than somebody else has.
+
 ### Deliberate limits, still true
 
-- **Movement is relayed, not validated.** A player is still trusted about where they stand. Server-owned movement additionally needs prediction and correction on the client, or it feels laggy — its own phase, and the largest piece left. **Read this together with the reach checks:** the server measures whether a blow could reach from the position that player reported, so those checks are exactly as trustworthy as the position is, which today is not at all. They stop an honest mistake, not a determined one.
 - **The training dummy takes no damage from a client.** It is a hand-built scene fixture with no shared identity, so a swing at it finds nothing the server has heard of and is refused out loud. It was only ever hittable because a player's machine used to decide damage. Making it work again means giving it a networked identity — and first answering whether a dummy is one fixture everybody shares or one each, which nobody has decided.
 - **A skill's DAMAGE is the client's word.** The server does not hold the skill system, so it cannot roll a skill itself; it checks what it can and applies what it is told. This is the trusted half of the layer, and it is trusted on purpose rather than by accident — refusing instead is what made skills useless. Resolving skills server-side is the fix, and it is a whole piece of work.
 - **A heal is the client's word too, for the same reason,** and so is the size of it. Health belongs to the server, so a potion drunk only on somebody's own machine would be undone by the server's next word about them; it crosses as a claim instead. It ends the same day skills do.
 - **A player's own buffs do not protect them.** The character the server holds carries no buffs, barriers or parry charges, because everything that grants one still runs on the player's machine. So a shield shows on your screen and soaks nothing that the server decided. Same root cause as the two above.
-- **Progress is still written by the client** to the account service.
 - **Lifesteal and mana leech only pay out for a player attacker.** A creature having lifesteal is new gameplay nobody has specified, so it was deliberately not invented.
 - **A watching machine re-runs the defender's mitigation** on a hit the server announces. Defence and element are data and agree; **parry is a state**, and a copy holds none, so it may briefly show a number the server parried. The authoritative health corrects it within a tenth of a second.
 - **The hit rate cap is a flood guard, not a swing cadence** — set far above any real attack speed so it can never gate legitimate play.
@@ -157,11 +179,10 @@ A player who is not joined is not in the world at all, so there is no state in w
 
 ## Order of remaining work, and why this order
 
-1. **Play it.** Everything above is unrun. Two clients against one server, hitting the same creature, being hit back. Nothing further should be built on top of code nobody has watched work.
+1. **Play it with two people.** The bag, the saving and the handoff have been exercised by their own tests and watched by one tester on one client; nobody has run two clients against this build. Nothing further should be built on top of code nobody has watched work.
 2. **Resolve SKILLS on the server**, which closes three holes at once — a skill's damage, a heal's size, and a player's own buffs mattering — because all three are the same missing thing: the character the server holds does not run the game's effects. This is the next real piece.
-3. **Server owns player movement**, with prediction and correction. Hardest piece; needs the ones above settled first.
-4. **Threat, so several people can fight one creature.** It picks the nearest today, which is honest but shallow.
-5. **Progress written by the server** rather than by the player's own machine.
+3. **Threat, so several people can fight one creature.** It picks the nearest today, which is honest but shallow.
+4. **Server-SIMULATED movement**, with prediction and correction — only if checking turns out not to be enough. It is deliberately not the plan: this camera is close enough that a player must move their own body, and checking covers the whole of what a moving player can lie about.
 
 Mobs had to become server-owned *before* combat could, and that was found the hard way: every client used to spawn its own creatures, so two players never shared a monster and there was nothing for a server to adjudicate. Expect more ordering surprises of that shape — check who owns a thing before writing rules about who may change it.
 ---
@@ -169,7 +190,7 @@ Mobs had to become server-owned *before* combat could, and that was found the ha
 ## Related
 
 - [Network-Readiness — Combat Audit & Refactor Plan](network-readiness-audit.md) — the July survey whose four prep steps this layer was built on top of.
-- [Starting the Network](../1-planning/starting-the-network.md) — the runbook: database → account service → server → players.
+- [Starting the Network](../1-planning/starting-the-network.md) — the runbook: database → sign-in → character server → game server → players.
 - [Querying the Database](../1-planning/querying-the-database.md) — reading back the accounts and characters this layer persists.
 - [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — the stat block the server builds per connection.
 - [Active Skill System — V3](active-skill-system-v3/README.md) — the effects the server cannot yet resolve, and why that is the next piece.

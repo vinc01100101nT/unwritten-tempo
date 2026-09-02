@@ -43,7 +43,7 @@ public class ProgressionWindows : MonoBehaviour
 
     // Inventory
     ItemSlot[] bagSlots;
-    readonly List<InventoryStore.Entry> filtered = new List<InventoryStore.Entry>();
+    readonly List<BagEntry> filtered = new List<BagEntry>();
     bool useFilter; ItemCategory tab; // useFilter=false => "All"
     TMP_Text invFooter;
     readonly List<Button> tabButtons = new List<Button>();
@@ -545,7 +545,15 @@ public class ProgressionWindows : MonoBehaviour
         statCost[i] = UiKit.Label("Cost", row.transform, "", 12, FontStyle.Normal, TextAnchor.MiddleRight);
         statCost[i].gameObject.AddComponent<LayoutElement>().preferredWidth = 38;
 
-        var btn = UiKit.Btn("+", row.transform, () => { if (Character.Instance != null) Character.Instance.AddStat(stat); });
+        // ASKED FOR IN A WORLD, where a point is real power and the server decides; done here when there is no
+        // world. Spent locally in a world it was simply undone by the server's next write, within fifteen
+        // seconds, with nothing saying why.
+        var btn = UiKit.Btn("+", row.transform, () =>
+        {
+            var me = GameNetwork.MyPlayer;
+            if (me != null) { me.AskToSpendStatPoint(stat); return; }
+            if (Character.Instance != null) Character.Instance.AddStat(stat);
+        });
         btn.gameObject.AddComponent<LayoutElement>().preferredWidth = 28;
         statPlus[i] = btn;
     }

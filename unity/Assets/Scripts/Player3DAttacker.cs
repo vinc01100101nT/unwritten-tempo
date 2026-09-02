@@ -154,7 +154,8 @@ public class Player3DAttacker : MonoBehaviour
     {
         if (t == null || t.IsDead || swing != null || attemptOpen || Time.time < nextSwing) return;
         attemptOpen = true;
-        PassiveEvents.Fire(SkillTrigger.OnBasicAttackStart, null, t.transform);
+        // The person at this keyboard — this component only ever exists on their own avatar.
+        PassiveEvents.Fire(Character.Instance, SkillTrigger.OnBasicAttackStart, null, t.transform);
     }
 
     public void TryAttack(Health t)

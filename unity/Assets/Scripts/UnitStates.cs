@@ -885,6 +885,104 @@ public class UnitStates : MonoBehaviour
     // Converting to a fraction happens ONCE, at each entry point (StatusController.Haste, Character.Buff*, the Slow
     // applies), so callers keep their natural units and the store keeps one meaning. Additive channels (guard cut,
     // vuln, DoT, shield, leech, reflect, blind) were always fractions and are unaffected.
+    // ---- the server's word, on a machine that only watches -------------------------------------------------------
+
+    /// <summary>ONE state as it crosses the wire — what the owner's machine needs in order to SHOW a pile and to
+    /// move at the speed it grants. Times travel as SECONDS LEFT rather than as a moment: two machines do not share
+    /// a clock, and a moment taken from the other one is a moment in the wrong century.</summary>
+    public struct Mirrored
+    {
+        public StateId id;
+        public string sourceSkillId;
+        public bool stacking;
+        public float magnitude;
+        public int intAmount;
+        public float secondsLeft;
+        public float secondsTotal;
+        public int stacks;
+        public string symbol;
+        public string name;
+        public string description;
+        public Color tint;
+    }
+
+    /// <summary>Fill <paramref name="into"/> with this store's live states, for sending to the machine of the person
+    /// it belongs to. Caller-owned list, per the rule against handing back a fresh collection.</summary>
+    public void SnapshotForOwner(List<Mirrored> into)
+    {
+        if (into == null) return;
+        into.Clear();
+        EnsureFresh();
+        float now = Time.time;
+        for (int i = 0; i < active.Count; i++)
+        {
+            var a = active[i];
+            into.Add(new Mirrored
+            {
+                id = a.id,
+                sourceSkillId = a.sourceSkillId ?? "",
+                stacking = a.stacking,
+                magnitude = a.magnitude,
+                intAmount = a.intAmount,
+                secondsLeft = Mathf.Max(0f, a.endTime - now),
+                secondsTotal = Mathf.Max(0.01f, a.endTime - a.startTime),
+                stacks = a.StackCount,
+                symbol = a.symbol ?? "",
+                name = a.name ?? "",
+                description = a.description ?? "",
+                tint = a.tint,
+            });
+        }
+    }
+
+    /// <summary>Replace everything in this store with what the server says is on this character.
+    ///
+    /// <para>A WHOLE PICTURE, not a list of changes: the server is the only thing that knows what is running, and a
+    /// stream of edits would drift the first time one went missing. Whatever this machine had is dropped, so a pile
+    /// its own ticking wrongly spent or expired is simply put back on the next word from the server.</para>
+    ///
+    /// <para>The stacks are rebuilt as N copies sharing the pile's own window, which is what the tray counts and what
+    /// every reader of a total reads. A per-stack expiry is the granting machine's business — nothing here spends a
+    /// charge, because nothing here decides anything.</para></summary>
+    public void MirrorFromServer(List<Mirrored> from)
+    {
+        for (int i = 0; i < active.Count; i++) { active[i].stacks.Clear(); pool.Push(active[i]); }
+        active.Clear();
+
+        float now = Time.time;
+        if (from != null)
+        {
+            for (int i = 0; i < from.Count; i++)
+            {
+                var m = from[i];
+                var e = pool.Count > 0 ? pool.Pop() : new State();
+                e.id = m.id;
+                e.sourceSkillId = m.sourceSkillId ?? "";
+                e.stacking = m.stacking;
+                e.symbol = m.symbol; e.name = m.name; e.description = m.description; e.tint = m.tint;
+                e.nextTick = 0f;
+                e.endTime = now + m.secondsLeft;
+                e.startTime = e.endTime - m.secondsTotal;
+                e.stacks.Clear();
+                int n = Mathf.Max(1, m.stacks);
+                for (int k = 0; k < n; k++)
+                    e.stacks.Add(new State.Stack { endTime = e.endTime, magnitude = m.magnitude / n, intAmount = m.intAmount / n });
+                // The totals are the server's, written straight in — dividing them out per stack above is only so the
+                // count reads right, and a remainder that rounding dropped must not quietly shrink the number.
+                e.magnitude = m.magnitude;
+                e.intAmount = m.intAmount;
+                active.Add(e);
+            }
+        }
+
+        nextExpiry = float.PositiveInfinity;
+        for (int i = 0; i < active.Count; i++)
+            if (active[i].endTime < nextExpiry) nextExpiry = active[i].endTime;
+
+        Recompute();
+        OnChanged?.Invoke();
+    }
+
     void Recompute()
     {
         // Mult-style channels accumulate BONUSES (a ×1.3 pile contributes +0.30) and are converted back to a multiplier

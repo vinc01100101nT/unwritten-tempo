@@ -48,7 +48,7 @@ public static class BasicSwing
         // announces the first one much earlier (before its reach is even judged, so a gap-closer can move you in and the
         // same swing still lands), which is why it asks for this to stay off: it has already announced. A swing a skill
         // produces has no separate wind-up to announce from, so it raises both here, in the same order.
-        if (announceIntent) PassiveEvents.Fire(SkillTrigger.OnBasicAttackStart, null, victim.Body);
+        if (announceIntent) PassiveEvents.Fire(attacker, SkillTrigger.OnBasicAttackStart, null, victim.Body);
 
         bool crit = attacker.RollBasicCrit(victim);
         int hit = attacker.BasicHit;
@@ -70,7 +70,7 @@ public static class BasicSwing
             if (body != null) VfxCue.Fire(crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack, body);
             // A real basic attack connected — the moment Momentum, Perfect Form and every other on-basic passive wait
             // for. Fired HERE, at the one place a swing lands, so no way of swinging can forget to announce it.
-            PassiveEvents.Fire(SkillTrigger.OnBasicAttackDealt, null, body);
+            PassiveEvents.Fire(attacker, SkillTrigger.OnBasicAttackDealt, null, body);
         }
         return dealt;
     }

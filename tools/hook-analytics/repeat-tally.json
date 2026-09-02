@@ -1,0 +1,96 @@
+{
+  "07e29be4-4ab9-42bf-b310-7c04d134830f": {
+    "counts": {
+      "build-game.sh": 2,
+      "build-game.sh server": 3,
+      "check-perf-hotpaths.py 2>&1": 1,
+      "check-unity-code.sh 2>&1": 4,
+      "unwritten-server.app": 2,
+      "unwritten-server.app \"Assembly-CSharp.dll\"": 1,
+      "unwritten-server.app .no-content.txt": 1
+    },
+    "told": [
+      "build-game.sh",
+      "build-game.sh server",
+      "check-unity-code.sh 2>&1",
+      "unwritten-server.app"
+    ]
+  },
+  "dbff358d-c100-4f3c-ab1e-4e528b8c6636": {
+    "counts": {
+      "build-game.sh": 2,
+      "build-game.sh both": 1,
+      "build-game.sh client": 2,
+      "build-game.sh server": 14,
+      "build-game.sh server`": 1,
+      "build-game.sh |": 1,
+      "check-perf-hotpaths.py 2>&1": 2,
+      "check-unity-code.sh 2>&1": 61,
+      "editor_play": 2,
+      "editor_play 2>&1": 1,
+      "npm run sync-roster'),": 1,
+      "npm start 2>&1": 1,
+      "recompile": 7,
+      "recompile 2>&1": 1,
+      "recompile _status": 7,
+      "recompile and": 1,
+      "recompile status": 1,
+      "unwritten-server.app": 31,
+      "unwritten-server.app \"": 5,
+      "unwritten-server.app ;": 1,
+      "unwritten-server.app ];": 3,
+      "unwritten-server.app |": 1
+    },
+    "told": [
+      "build-game.sh",
+      "build-game.sh client",
+      "build-game.sh server",
+      "check-perf-hotpaths.py 2>&1",
+      "check-unity-code.sh 2>&1",
+      "editor_play",
+      "recompile",
+      "recompile _status",
+      "unwritten-server.app",
+      "unwritten-server.app \"",
+      "unwritten-server.app ];"
+    ]
+  },
+  "f3b0d73e-e6b2-44be-b82c-adab050b405d": {
+    "counts": {
+      "check-perf-hotpaths.py 2>&1": 2,
+      "check-skill-data.py 2>&1": 1,
+      "check-unity-code.sh 2>&1": 29,
+      "check-unity-code.sh >": 1
+    },
+    "told": [
+      "check-perf-hotpaths.py 2>&1",
+      "check-unity-code.sh 2>&1"
+    ]
+  },
+  "fe864e3c-3554-4a86-b6a7-32cc0267ab83": {
+    "counts": {
+      "build-game.sh": 3,
+      "build-game.sh \"": 1,
+      "build-game.sh `": 1,
+      "build-game.sh both": 5,
+      "build-game.sh client": 3,
+      "build-game.sh server": 11,
+      "build-game.sh |": 1,
+      "check-unity-code.sh 2>&1": 17,
+      "recompile 2>&1": 2,
+      "recompile _status": 4,
+      "recompile status": 1,
+      "unwritten-server.app": 14
+    },
+    "told": [
+      "build-game.sh",
+      "build-game.sh both",
+      "build-game.sh client",
+      "build-game.sh server",
+      "check-unity-code.sh 2>&1",
+      "recompile 2>&1",
+      "recompile _status",
+      "unwritten-server.app"
+    ]
+  }
+}

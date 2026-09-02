@@ -90,7 +90,9 @@ public class FieldMobSpawner : MonoBehaviour
             var reused = stack.Pop();
             if (reused != null)
             {
-                reused.SetActive(true);
+                // SWITCHING IT ON IS REACTIVATE'S JOB. Doing it here first validates the body's controller
+                // against the step it was banked with, before anything has fitted that step to its size — the
+                // burst of "Step Offset must be ≤ …" the watching side used to throw for exactly this reason.
                 MobRespawn.Reactivate(reused, spot);
                 reused.GetComponent<MonsterAI3D>()?.SetHome(spot);   // wander around where it reappeared, not its first spawn
                 // A pooled mob coming back is a NEW creature as far as every watching player is concerned:
@@ -103,7 +105,7 @@ public class FieldMobSpawner : MonoBehaviour
 
         // Nothing pooled for this type → create a fresh one from data (async; Addressables caches the prefab).
         bool asShadow = shadowFraction > 0f && Random.value < shadowFraction;
-        MobSpawner.Spawn(def, spot, go =>
+        MobSpawner.Spawn(def, spot, gameObject.scene, go =>
         {
             if (go == null) return;   // no baked/Addressable prefab for this def — slot stays open
             var pm = go.AddComponent<PooledMob>();   // perf-ok: once per mob CREATED; every later life comes from the pool
@@ -183,8 +185,19 @@ public class FieldMobSpawner : MonoBehaviour
                 return hit.point;
             }
         }
+        // NOT ONE OF SIXTEEN TRIES FOUND A FLOOR. Returning the spawner's own spot regardless is how a creature
+        // ends up somewhere nobody checked; saying nothing about it is how that goes unnoticed for months. Once
+        // per spawner, so a field that cannot see its ground does not drown the log.
+        if (!warnedNoFloor)
+        {
+            warnedNoFloor = true;
+            Debug.LogWarning("[spawn] '" + gameObject.scene.name + "' found no ground under " + name
+                             + " in sixteen tries — its creatures are being placed unchecked.");
+        }
         return c;
     }
+
+    bool warnedNoFloor;
 
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()

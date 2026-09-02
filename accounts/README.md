@@ -1,11 +1,16 @@
 # accounts
 
-Who you are, which characters you own, and their saves. A small Node + Postgres service that the game talks
-to instead of writing a file on the player's machine.
+**Who you are.** A small Node + Postgres service that registers people, signs them in, and issues the token
+every other server verifies. That is now its whole job.
 
-It deliberately does **not** decide anything about gameplay. Levels, gold and items are stored exactly as the
-game hands them over. When the C# game server takes authority over those numbers, the rules go there — the
-two servers share this database and the token this one issues, not each other's code.
+**Characters moved out on 2026-09-02.** The list, creating and deleting one, the appearance and every save
+belong to `charserver/` — a C# server that owns that half and is the only thing that reads or writes those
+rows. This service still serves those routes for now so an older build keeps working, but nothing should be
+pointed at them: set `CHAR_SERVER_URL` and they go where they belong.
+
+The three servers share **one** database, with ownership split by table — this one owns accounts and refresh
+tokens — and **one** signing secret. That is the whole arrangement: this issues a token, the others verify it,
+and no two of them can write the same row.
 
 ## What it holds
 

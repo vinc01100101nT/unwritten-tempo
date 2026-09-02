@@ -149,6 +149,21 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Spend points to raise <paramref name="s"/> by 1 using the pre-renewal cost curve. No-op if
     /// the stat is capped or there aren't enough points for the next (escalating) point.</summary>
+    /// <summary>The six primaries and the unspent points, for handing to the machine that shows them. The
+    /// server spends points now, so its answer has to reach the person who asked.</summary>
+    public int[] CaptureStatsForOwner() => (int[])primary.Clone();
+
+    /// <summary>Take the server's word for level, unspent points and the six primaries.</summary>
+    public void RestoreStatsFromServer(int newLevel, int pointsLeft, int[] primaries)
+    {
+        level = Mathf.Max(1, newLevel);
+        StatPoints = Mathf.Max(0, pointsLeft);
+        if (primaries != null)
+            for (int i = 0; i < primary.Length && i < primaries.Length; i++)
+                primary[i] = Mathf.Clamp(primaries[i], 1, MaxStatValue);
+        OnStatsChanged?.Invoke();
+    }
+
     public bool AddStat(PrimaryStat s)
     {
         int v = primary[(int)s];
@@ -268,6 +283,12 @@ public class Character : MonoBehaviour, ICombatUnit
 
     static readonly Color GuardColor = new Color(0.78f, 0.85f, 1f);
     static readonly Color MonsterMissColor = Color.white;   // a monster's swing whiffed the player → white MISS
+    /// <summary>The digits of a hit that LANDED on a player — red for a bite, violet for a spell. Public because the
+    /// copy of somebody else standing in front of you shows the same two colours (<see cref="NetPlayer.ShowBlow"/>),
+    /// and one blow must not be one colour on the screen of the person it happened to and another on everybody
+    /// else's.</summary>
+    public static readonly Color MonsterHitColor   = new Color(1f, 0.35f, 0.35f);
+    public static readonly Color MonsterMagicColor = new Color(0.7f, 0.5f, 1f);
     static readonly Color ReflectColor = new Color(0.85f, 0.85f, 0.95f);   // thorns damage bounced back at a mob
 
     // Effective stat = flat layer (base + level growth + PRIMARY-STAT contribution + equipment) × (1 + passive%).
@@ -379,13 +400,31 @@ public class Character : MonoBehaviour, ICombatUnit
     // — the mob half forwards to its pathing agent — so one effect drives either unit through one name. Resolved from
     // the avatar (never this component's own object, which is the persistent stats holder, not a body).
     Player3DController Rig() { var b = Avatar(); return b != null ? b.GetComponent<Player3DController>() : null; }
-    public void TeleportTo(Vector3 dest) { var r = Rig(); if (r != null) r.Teleport(dest); }
+    // A CHARACTER THE SERVER HOLDS HAS NO LEGS OF ITS OWN. Walking is still the owner's machine to do, so a skill
+    // that hauls them somewhere is decided here and performed there — otherwise a dash resolved on a server moved
+    // nothing at all, silently, and the person stood where they were while the skill reported success.
+    public void TeleportTo(Vector3 dest)
+    {
+        if (GameNetwork.TellOwnerToMove(this, new NetPlayer.Motion
+            { kind = NetPlayer.Motion.Kind.Teleport, destination = dest })) return;
+        var r = Rig(); if (r != null) r.Teleport(dest);
+    }
+
     public void GlideTo(Vector3 dest, float speedMult, bool easeIn, bool easeOut, float easeSeconds, Vector3? faceAt)
-    { var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds, faceAt); }
+    {
+        if (GameNetwork.TellOwnerToMove(this, new NetPlayer.Motion
+            { kind = NetPlayer.Motion.Kind.Glide, destination = dest, speed = speedMult,
+              easeIn = easeIn, easeOut = easeOut, seconds = easeSeconds,
+              facing = faceAt.HasValue, faceAt = faceAt ?? Vector3.zero })) return;
+        var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds, faceAt);
+    }
     public bool IsRelocating { get { var r = Rig(); return r != null && r.SkillGliding; } }
     public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
     {
         if (States != null && States.DisablesBlocked) return;   // a shove is a disable: the window turns it away
+        if (GameNetwork.TellOwnerToMove(this, new NetPlayer.Motion
+            { kind = NetPlayer.Motion.Kind.Shove, destination = worldFrom, speed = speed,
+              seconds = seconds, stagger = stagger })) return;
         var r = Rig(); if (r != null) r.Shove(worldFrom, speed, seconds, stagger);
     }
     public void ForceAggro(ICombatUnit source, float seconds)
@@ -580,6 +619,11 @@ public class Character : MonoBehaviour, ICombatUnit
     {
         if (amount <= 0) return true;
         if (CurrentMP < amount) return false;
+        // A WATCHED COPY DOES NOT PAY ITS OWN COSTS, for the same reason it does not take its own damage: the pool
+        // belongs to the character the server holds, and a machine subtracting its own copy would drift out of step
+        // with it and start refusing casts the server would have allowed. It still answers "yes, that was
+        // affordable" so the picture of the cast goes ahead — the server decides whether it really did.
+        if (IsWatchedCopy) return true;
         CurrentMP -= amount;
         OnManaChanged?.Invoke();
         return true;
@@ -590,7 +634,17 @@ public class Character : MonoBehaviour, ICombatUnit
     public void GainMana(int amount)
     {
         if (amount <= 0 || CurrentMP >= MaxMP) return;
+        if (IsWatchedCopy) return;
         CurrentMP = Mathf.Min(MaxMP, CurrentMP + amount);
+        OnManaChanged?.Invoke();
+    }
+
+    /// <summary>The mana the server says this character has — the twin of <see cref="SetHealthFromServer"/>, arriving
+    /// on the same beat. Mana had to become the server's word the moment skills did: the server refuses a cast
+    /// nobody can pay for, and two machines counting the same pool separately disagree about what that is.</summary>
+    public void SetManaFromServer(int current, int max)
+    {
+        CurrentMP = Mathf.Clamp(current, 0, Mathf.Max(1, max));
         OnManaChanged?.Invoke();
     }
 
@@ -627,6 +681,11 @@ public class Character : MonoBehaviour, ICombatUnit
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+
+            // AND THE MONEY ON SCREEN FOLLOWS THIS ONE. The counter and the bag footer are built with the
+            // heads-up display and outlive any particular character, so they ask Wallet once and it follows
+            // whoever is current — rather than each of them having to notice a character being swapped.
+            Wallet.ListenTo(this);
 
             // The one person at this keyboard is a player in this world, and everything that asks "who is here?"
             // — a creature choosing whom to chase, most of all — asks that question of the roll, not of this
@@ -867,6 +926,15 @@ public class Character : MonoBehaviour, ICombatUnit
     // a server holding several people has one per person.
     public StatusController StatusHost => boundStatusHost != null ? boundStatusHost : StatusController.Player;
 
+    /// <summary>This character's own skills, in the fixed order the passive dispatch walks them in. Handed over by
+    /// whoever built them — the avatar on a screen, the fighter host on a server — so both sides answer the question
+    /// the same way and neither has to search the scene for them.</summary>
+    public SkillRunner[] SkillRunners { get; private set; }
+
+    /// <summary>Say which skills are this character's. Called again whenever that list is rebuilt (a fresh avatar
+    /// after a door, a newly composed skill), because a passive's place in it IS its identity to the brake.</summary>
+    public void BindSkillRunners(SkillRunner[] runners) { SkillRunners = runners; }
+
     StatusController boundStatusHost;
 
     /// <summary>Tell this character which status host is theirs, instead of reading the one-per-screen handle.</summary>
@@ -932,7 +1000,7 @@ public class Character : MonoBehaviour, ICombatUnit
     {
         var av = Avatar();
         if (!UnitMitigation.TryParry(States, av != null ? UnitAnchor.Overhead(av) : transform.position)) return false;
-        PassiveEvents.Fire(SkillTrigger.OnParry, null, source != null ? source.transform : null);
+        PassiveEvents.Fire(this, SkillTrigger.OnParry, null, source != null ? source.transform : null);
         return true;
     }
 
@@ -961,13 +1029,13 @@ public class Character : MonoBehaviour, ICombatUnit
             // on damage <= 0 after the victim's own mitigation. Both sides therefore mean one damage instance that
             // really landed, and a parried / fully shielded / braced hit reaches neither. The attacker travels as the
             // trigger's entity, so a counter-attack passive aims back at whoever hit you.
-            PassiveEvents.Fire(SkillTrigger.OnDamageReceived, null, source != null ? source.transform : null);
+            PassiveEvents.Fire(this, SkillTrigger.OnDamageReceived, null, source != null ? source.transform : null);
             // Falling-edge into low HP: this hit crossed the threshold and left the player alive → fire OnLowHP (Last
             // Stand). Computed locally (before vs after), so it re-arms after any heal with no persisted flag. DoT-only
             // crossings bypass this line and aren't covered — fine until OnLowHP becomes a queried state.
             int thr = Mathf.CeilToInt(MaxHP * LowHpFrac);
             if (before > thr && CurrentHP > 0 && CurrentHP <= thr)
-                PassiveEvents.Fire(SkillTrigger.OnLowHP);
+                PassiveEvents.Fire(this, SkillTrigger.OnLowHP);
         }
         return dmg;
     }
@@ -995,6 +1063,12 @@ public class Character : MonoBehaviour, ICombatUnit
             return 0;
         }
 
+        // A WATCHED COPY IS TOLD WHAT LANDED — it does not work it out, exactly as its health is told to it rather
+        // than counted. The server has already taken the block, the parry, the armour's element and DEF off this
+        // figure, so weighing them a second time here would draw the person a smaller number than the blow they
+        // actually took, or swallow the blow entirely on a coin this machine had no business tossing.
+        if (IsWatchedCopy) return LandOnMe(attackerAttack, source, MonsterHitColor);
+
         // Off-hand block: a shield can negate the hit (and clang) before any damage applies.
         var off = GetEquipped(EquipSlotType.Shield);
         if (off != null && off.blockChance > 0f && CombatRng.Chance(off.blockChance))
@@ -1017,15 +1091,32 @@ public class Character : MonoBehaviour, ICombatUnit
         // Everything below reads what LANDED, never the pre-barrier figure: a hit a Shield ate or a Brace holds costs
         // no HP, so it must also not flash, not bounce thorns, and must report 0 to the attacker
         // (whose own "did I connect" check pops the damage number and grants its XP).
+        return LandOnMe(dmg, source, MonsterHitColor);
+    }
+
+    /// <summary>Where every hit on the player ends: what a Shield or a Brace leaves of it comes off HP, the DIGITS
+    /// appear over the body, the hurt grunt and flash run, thorns bounce back, and a death is raised once.
+    ///
+    /// <para>The number is drawn HERE, on the side it happened to, for the same reason a creature's is drawn inside
+    /// its own <see cref="Health"/>: whoever swung is no longer on this machine. A monster's bite is decided on the
+    /// server, so a number the monster itself drew appeared on a screen nobody is sitting at.</para></summary>
+    int LandOnMe(int dmg, MonsterAI3D source, Color numberColor)
+    {
         dmg = ApplyHitToHP(dmg, source);
         OnHealthChanged?.Invoke();
         if (dmg > 0)
         {
-            Sfx.Play(hurtSfx);                       // player hurt grunt
-            OnDamaged?.Invoke(dmg);                  // drives the player hurt flash
-            Reflect(dmg, source);                    // thorns: bounce a fraction back at the attacker
+            var av = Avatar();
+            if (av != null) DamagePopup.Spawn(UnitAnchor.Overhead(av), dmg, numberColor);
+            // player hurt grunt
+            Sfx.Play(hurtSfx);
+            // drives the player hurt flash
+            OnDamaged?.Invoke(dmg);
+            // thorns: bounce a fraction back at the attacker
+            Reflect(dmg, source);
         }
-        if (CurrentHP == 0) RaiseDeath();   // Phase F: DeathScreen handles the death → respawn flow
+        // Phase F: DeathScreen handles the death → respawn flow
+        if (CurrentHP == 0) RaiseDeath();
         return dmg;
     }
 
@@ -1050,21 +1141,15 @@ public class Character : MonoBehaviour, ICombatUnit
         if (IsDead) return 0;
         if (DodgedByInvuln()) return 0;   // i-frames (dodge-dash) dodge magic too
 
+        // Told, not worked out — the same rule the physical intake above explains.
+        if (IsWatchedCopy) return LandOnMe(attackerMagic, source, MonsterMagicColor);
+
         float mod = Elements.Modifier(attackElement, armorElement);
         if (mod <= 0f) return 0;          // armour already nullified it — nothing to parry, so no charge is spent
         if (ParriedHit(source)) return 0;   // the read catches magic too: Parry is a timing skill, not a physical block
 
         int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod * Combat.MagicGlanceMult(Flee));
-        dmg = ApplyHitToHP(dmg, source);   // what LANDED — see the physical intake above for why nothing below may use the raw figure
-        OnHealthChanged?.Invoke();
-        if (dmg > 0)
-        {
-            Sfx.Play(hurtSfx);
-            OnDamaged?.Invoke(dmg);
-            Reflect(dmg, source);
-        }
-        if (CurrentHP == 0) RaiseDeath();
-        return dmg;
+        return LandOnMe(dmg, source, MonsterMagicColor);
     }
 
     /// <summary>Apply raw over-time damage (e.g. a <see cref="StatusController"/> Poison/Bleed/Burn tick) that
@@ -1178,6 +1263,7 @@ public class Character : MonoBehaviour, ICombatUnit
     void OnDestroy()
     {
         PlayerUnits.Leave(this);
+        Wallet.StopListeningTo(this);
         if (Instance == this) Instance = null;
     }
 
@@ -1210,11 +1296,55 @@ public class Character : MonoBehaviour, ICombatUnit
     /// it's currently worn — so the ring track can be exercised without grinding.</summary>
     public void AddRingXP(int amount) => Ring.AddXP(amount);
 
+    // ---- What this character is carrying --------------------------------------------------------------
+    //
+    // THE BAG AND THE PURSE BELONG TO THE CHARACTER, for the same reason their worn gear already does: they are
+    // facts about a person, not about a screen. Both used to live somewhere else and both were wrong for it.
+    //
+    // The bag lived on a component attached to the inventory WINDOW, which does not exist until somebody opens
+    // it — so a character's belongings had no home at all until they looked at them, and the code that saved
+    // them had to guess what to write when they had not. The purse was worse: one global figure for the whole
+    // program, which is fine on a machine with one person at it and is a single shared wallet the moment a
+    // server holds several people.
+    //
+    // Neither is a hot path — a bag changes when somebody picks something up.
+
+    readonly System.Collections.Generic.List<BagEntry> bag = new System.Collections.Generic.List<BagEntry>();
+
+    /// <summary>What this character is carrying. The live list — the bag window reads it and edits it through
+    /// <see cref="InventoryStore"/>, which is the one door for changing it.</summary>
+    public System.Collections.Generic.List<BagEntry> Bag => bag;
+
+    /// <summary>How much money this character has.</summary>
+    public int Gold { get; private set; }
+
+    /// <summary>Fires when this character's money changes. Arg = the new total.</summary>
+    public event Action<int> OnGoldChanged;
+
+    /// <summary>Add money, or take it away with a negative amount. Never goes below nothing.</summary>
+    public void AddGold(int amount)
+    {
+        if (amount == 0) return;
+        SetGold(Gold + amount);
+    }
+
+    /// <summary>Set the balance outright — loading a save, or a GM setting it.</summary>
+    public void SetGold(int amount)
+    {
+        int next = Mathf.Max(0, amount);
+        if (next == Gold) return;
+        Gold = next;
+        OnGoldChanged?.Invoke(Gold);
+    }
+
+    // Told once after a load even when the figure did not move, because the things that display it read it
+    // before the save arrives and would otherwise sit on the pre-load number forever.
+    void AnnounceGold() => OnGoldChanged?.Invoke(Gold);
+
     // ---- Save / load ----------------------------------------------------------
     // The progression spine — level, XP, HP/MP, the six primary stats + unspent points, the Trio-Ring
-    // passive walk, and (v6+) equipped gear. The BAG is owned by InventoryStore, not here; SaveManager
-    // stitches it into the same SaveData. These methods are the only place that touches the private
-    // fields, so the storage layer stays free of Character internals.
+    // passive walk, (v6+) equipped gear, and what the character is carrying. These methods are the only
+    // place that touches the private fields, so the storage layer stays free of Character internals.
 
     /// <summary>Snapshot the character's progression into a serializable <see cref="SaveData"/>.</summary>
     public SaveData CaptureSave()
@@ -1239,10 +1369,11 @@ public class Character : MonoBehaviour, ICombatUnit
         d.leader       = Passives.Leader;
         d.hasLeader    = Passives.HasLeader;
         Ring.Capture(out d.ringLevel, out d.ringXp);
-        d.gold         = Wallet.Capture();
+        d.gold         = Gold;
         d.hotbarBindings = Hotbar.Capture();
         d.activePassives = PassiveSkills.Capture();
         CaptureEquipment(d);
+        CaptureBag(d);
 
         // The look, written into the save with everything else it changes alongside. One home, one write.
         d.modelName  = DyeModel;
@@ -1253,8 +1384,134 @@ public class Character : MonoBehaviour, ICombatUnit
         return d;
     }
 
+    // ---- the bag, written and read exactly as it was before it moved here ------------------------------
+    //
+    // The arrays and their meanings are UNCHANGED from when the inventory window owned this, deliberately:
+    // every save already written has to keep loading, so the storage shape is not what is being fixed here —
+    // only who owns the thing being stored.
+
+    void CaptureBag(SaveData d)
+    {
+        var ids = new List<string>();
+        var counts = new List<int>();
+        var refines = new List<int>();
+        var cards = new List<string>();
+        var rarities = new List<int>();
+        var kits = new List<string>();
+        foreach (var e in bag)
+        {
+            if (e == null || e.def == null) continue;
+            // The Ring vessel is auto-worn on load and is never a real bag item — writing a copy of it here
+            // would restore one INTO the bag and equip a second, which is one ring becoming two.
+            if (e.def.slot == EquipSlotType.Ring) continue;
+            ids.Add(e.def.id);
+            counts.Add(Mathf.Max(1, e.count));
+            if (e.IsEquip && e.instance != null)
+            {
+                refines.Add(e.instance.upgrade);
+                cards.Add(ItemCatalog.EncodeCards(e.instance.cards));
+                rarities.Add((int)e.instance.rarity);
+                kits.Add(e.instance.EncodeSkills());
+            }
+            else { refines.Add(0); cards.Add(""); rarities.Add((int)e.def.rarity); kits.Add(""); }
+        }
+        d.bagItemIds = ids.ToArray();
+        d.bagCounts = counts.ToArray();
+        d.bagRefines = refines.ToArray();
+        d.bagCards = cards.ToArray();
+        d.bagRarities = rarities.ToArray();
+        d.bagSkills = kits.ToArray();
+    }
+
+    // Unknown item ids are dropped, so an asset removed from the game cannot stop a character loading.
+    void RestoreBag(SaveData d)
+    {
+        bag.Clear();
+
+        // NO BAG IN THE SAVE AT ALL means this character has never been played, so they are given the starter
+        // kit. A save that carries an EMPTY bag is a different thing entirely — somebody who spent everything —
+        // and must not be handed a fresh set of goods every time they log in.
+        if (d.bagItemIds == null)
+        {
+            SeedBag();
+            return;
+        }
+
+        for (int i = 0; i < d.bagItemIds.Length; i++)
+        {
+            var def = ItemCatalog.Resolve(d.bagItemIds[i]);
+            if (def == null) continue;
+            int count = (d.bagCounts != null && i < d.bagCounts.Length) ? d.bagCounts[i] : 1;
+            var entry = new BagEntry { def = def, count = Mathf.Max(1, count) };
+            if (def.slot != EquipSlotType.None)
+            {
+                int refine = (d.bagRefines != null && i < d.bagRefines.Length) ? d.bagRefines[i] : 0;
+                entry.count = 1;
+                entry.instance = new EquipmentInstance(def, refine);
+                if (d.bagCards != null && i < d.bagCards.Length)
+                    ItemCatalog.DecodeCards(d.bagCards[i], entry.instance.cards);
+                // v7+: the copy's rolled rarity + kit ride the save; a pre-v7 entry keeps the def's rarity and
+                // an empty kit rather than silently re-rolling into something the player never earned.
+                if (d.bagRarities != null && i < d.bagRarities.Length) entry.instance.rarity = (Rarity)d.bagRarities[i];
+                if (d.bagSkills != null && i < d.bagSkills.Length) entry.instance.DecodeSkills(d.bagSkills[i]);
+            }
+            bag.Add(entry);
+        }
+    }
+
+    /// <summary>The goods a character starts life with. Public so the bag window can hand them to somebody who
+    /// arrived before their save did — it is the same set either way, decided in one place.</summary>
+    public void SeedBag()
+    {
+        bag.Clear();
+        foreach (var def in Resources.LoadAll<Item>("Items"))
+        {
+            if (def == null) continue;
+            // The Ring of Progression vessel is auto-equipped (one per player); don't also seed a duplicate
+            // into the bag. It still returns to the bag normally if you take it off.
+            if (def.slot == EquipSlotType.Ring) continue;
+            // WEAPONS are never seeded: a weapon's identity is its ROLLED kit, so it may only enter the world
+            // through a roll (a drop, or /weapon). A hand-placed starter weapon would have no kit at all.
+            if (def.slot == EquipSlotType.Weapon) continue;
+            if (def.slot != EquipSlotType.None)
+            {
+                // Showcase the +N enhancement channel: rarer gear arrives pre-refined.
+                int up = def.rarity >= Rarity.Legendary ? 9 : def.rarity >= Rarity.Rare ? 7 : 0;
+                bag.Add(new BagEntry { def = def, count = 1, instance = new EquipmentInstance(def, up) });
+            }
+            else
+                bag.Add(new BagEntry { def = def, count = def.IsUsable ? 5 : 1 });
+        }
+    }
+
     // Every occupied slot EXCEPT the Ring vessel (auto-worn on load by EnsureRingEquipped, and never a
     // normal bag item). Allocates a few small lists — fine, this runs only on save, not a hot path.
+    /// <summary>What this character is WEARING, in the same arrays the save uses. Public so the wire can carry
+    /// it beside the bag — equipping moves an item between the two in one decision, and sending only one half
+    /// leaves the item apparently nowhere. The Ring vessel is excluded, as it is from the save.</summary>
+    public void CaptureWornInto(out int[] slots, out string[] ids, out int[] refines,
+                                out string[] cards, out int[] rarities, out string[] kits)
+    {
+        var d = new SaveData();
+        CaptureEquipment(d);
+        slots = d.equipSlots; ids = d.equipItemIds; refines = d.equipRefines;
+        cards = d.equipCards; rarities = d.equipRarities; kits = d.equipSkills;
+    }
+
+    /// <summary>Wear exactly this, replacing whatever was worn. The Ring is put back on afterwards because it
+    /// is never in what arrives.</summary>
+    public void RestoreWornFrom(int[] slots, string[] ids, int[] refines,
+                                string[] cards, int[] rarities, string[] kits)
+    {
+        if (slots == null || ids == null) return;
+        RestoreEquipment(new SaveData
+        {
+            equipSlots = slots, equipItemIds = ids, equipRefines = refines,
+            equipCards = cards, equipRarities = rarities, equipSkills = kits,
+        });
+        EnsureRingEquipped();
+    }
+
     void CaptureEquipment(SaveData d)
     {
         var slots = new List<int>();
@@ -1326,10 +1583,12 @@ public class Character : MonoBehaviour, ICombatUnit
         // Ring level/XP. Pre-v4 saves have no ring fields → derive the level from the points ever granted
         // (allocated + banked), since one point == one ring level, so the walk stays consistent.
         Ring.Restore(d.ringLevel > 0 ? d.ringLevel : Passives.TotalRanks() + Passives.BankedPoints, d.ringXp);
-        Wallet.Restore(d.gold);
+        SetGold(d.gold);
+        AnnounceGold();              // even if the figure did not move — see AnnounceGold
         Hotbar.Restore(d.hotbarBindings);
         PassiveSkills.Restore(d.activePassives);
         RestoreEquipment(d);         // v6+: rebuild worn gear from the save (Ring excluded)
+        RestoreBag(d);               // what they were carrying, or the starter kit on a first-ever run
         EnsureRingEquipped();        // re-wear the Ring vessel (auto-managed, never serialized)
 
         // v8+: the look comes back out of the save. A save written before v8 carries no body name — leave

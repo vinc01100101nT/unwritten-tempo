@@ -1,47 +1,58 @@
 using System;
-using UnityEngine;
 
 /// <summary>
-/// Global Zeny (gold) store. A plain static class — no MonoBehaviour overhead, no
-/// scene dependency. Any system can call <see cref="Add"/> or read <see cref="Gold"/>;
-/// HUD components subscribe to <see cref="OnChanged"/> to refresh their display.
+/// The money of whoever is playing at THIS machine, for the things on screen that show it.
 ///
-/// Persistence: <see cref="Capture"/> / <see cref="Restore"/> are called by SaveManager
-/// so the wallet survives scene transitions and game restarts (M3 save slice).
+/// <para><b>It no longer holds the money.</b> The figure belongs to <see cref="Character"/>, next to everything
+/// else that is true of a person. It used to be a single number belonging to the whole program, which reads as
+/// harmless on a machine with one player at it and is one shared purse the moment a server holds several people
+/// at once — every one of them spending the same coins.</para>
+///
+/// <para>Kept as a name the heads-up display can ask, so the counter and the bag footer did not all have to learn
+/// how to find the character themselves. Everything that CHANGES money should go to the character it belongs to;
+/// this is for reading, and for the one machine that has an obvious answer to "whose money".</para>
 /// </summary>
 public static class Wallet
 {
-    /// <summary>Fires whenever the gold amount changes. Arg = new total.</summary>
+    /// <summary>Fires whenever the local player's money changes. Arg = the new total.</summary>
     public static event Action<int> OnChanged;
 
-    static int _gold;
+    /// <summary>What the local player has. Nothing, before there is a character.</summary>
+    public static int Gold => Character.Instance != null ? Character.Instance.Gold : 0;
 
-    /// <summary>Current Zeny balance.</summary>
-    public static int Gold => _gold;
+    /// <summary>Add money to the local player, or take it away with a negative amount.</summary>
+    public static void Add(int amount) => Character.Instance?.AddGold(amount);
 
-    /// <summary>Add (or subtract) Zeny. Amount may be negative (purchase, fee).</summary>
-    public static void Add(int amount)
+    /// <summary>Set the local player's balance outright.</summary>
+    public static void Set(int amount) => Character.Instance?.SetGold(amount);
+
+    // ---- how the character's own event reaches the screen ------------------------------------------------
+    //
+    // The things that display money subscribe to THIS, once, and outlive any particular character — the counter
+    // is built with the heads-up display and stays for the session. So this follows whichever character is
+    // current and passes their news along, rather than each display having to notice a character being swapped
+    // and re-subscribe. Called by Character as it comes and goes; nothing else should.
+
+    static Character listeningTo;
+
+    /// <summary>Called by <see cref="Character"/> when it becomes the local player's, so money news reaches the
+    /// screen. Safe to call twice.</summary>
+    public static void ListenTo(Character c)
     {
-        _gold = Mathf.Max(0, _gold + amount);
-        OnChanged?.Invoke(_gold);
+        if (listeningTo == c) return;
+        if (listeningTo != null) listeningTo.OnGoldChanged -= Relay;
+        listeningTo = c;
+        if (listeningTo != null) listeningTo.OnGoldChanged += Relay;
+        Relay(Gold);
     }
 
-    /// <summary>Directly set the balance (e.g. after loading a save). Fires OnChanged.</summary>
-    public static void Set(int amount)
+    /// <summary>Called by <see cref="Character"/> as it goes, so a departed one cannot go on talking.</summary>
+    public static void StopListeningTo(Character c)
     {
-        _gold = Mathf.Max(0, amount);
-        OnChanged?.Invoke(_gold);
+        if (listeningTo != c) return;
+        if (listeningTo != null) listeningTo.OnGoldChanged -= Relay;
+        listeningTo = null;
     }
 
-    /// <summary>Export current balance into a save snapshot.</summary>
-    public static int Capture() => _gold;
-
-    /// <summary>Restore balance from a save snapshot. Fires OnChanged once so HUD listeners that
-    /// already subscribed (e.g. GoldCounter, which reads Gold in Awake before the save loads) refresh
-    /// to the loaded total instead of being stuck on the pre-load value.</summary>
-    public static void Restore(int saved)
-    {
-        _gold = Mathf.Max(0, saved);
-        OnChanged?.Invoke(_gold);
-    }
+    static void Relay(int total) => OnChanged?.Invoke(total);
 }

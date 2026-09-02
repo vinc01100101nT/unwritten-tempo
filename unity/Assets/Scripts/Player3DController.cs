@@ -247,6 +247,17 @@ public partial class Player3DController : MonoBehaviour
             added = true;
         }
         if (added) PlayerSkills.Refresh();   // re-resolve id → runner so the hotbar/menu see the new actives
+
+        // WHOSE SKILLS THESE ARE, said out loud. The passive dispatch walks this list rather than a process-wide
+        // table, so a character that never handed one over simply has no passives — and the order is what gives each
+        // passive its place in the no-self-feeding brake, which is why it is bound once here rather than searched for.
+        var me = Character.Instance;
+        if (me != null)
+        {
+            var mine = GetComponents<SkillRunner>();
+            for (int i = 0; i < mine.Length; i++) mine[i].BindCaster(me);
+            me.BindSkillRunners(mine);
+        }
     }
 
     /// <summary>Push the SHARED character capsule onto this player's CharacterController. Called in Awake so the

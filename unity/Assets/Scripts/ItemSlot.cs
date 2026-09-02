@@ -47,10 +47,10 @@ public class ItemSlot : MonoBehaviour, IDropHandler, IPointerClickHandler, IPoin
     [SerializeField] EquipmentInstance instance;
     public EquipmentInstance Instance => instance;
 
-    /// <summary>For bag slots in the new windows: the live <see cref="InventoryStore.Entry"/> this
+    /// <summary>For bag slots in the new windows: the live <see cref="BagEntry"/> this
     /// cell currently shows (set each refresh). null on equip slots and empty cells. SlotDragHandler
     /// uses it to reorder/equip against the store rather than mutating slot <see cref="Item"/>s.</summary>
-    public InventoryStore.Entry boundEntry;
+    public BagEntry boundEntry;
 
     // Neutral pip color — card slots are NEVER rarity-tinted (locked channel rule).
     static readonly Color PipColor = new Color(0.62f, 0.66f, 0.72f, 1f);
@@ -211,26 +211,13 @@ public class ItemSlot : MonoBehaviour, IDropHandler, IPointerClickHandler, IPoin
     /// </summary>
     public void OnPointerClick(PointerEventData e)
     {
-        if (clickOverride != null) { clickOverride(e); return; }   // new windows handle it themselves
-        if (e.button != PointerEventData.InputButton.Right || item == null) return;
-
-        if (accepts == EquipSlotType.None)                      // a bag slot
-        {
-            if (item.IsUsable)                                  // consumable → use
-            {
-                if (ItemUse.Use(item)) SetItem(null);           // only spend it if the effect actually ran
-            }
-            else if (item.slot != EquipSlotType.None)           // equipment → equip
-            {
-                var target = FindEquipSlot(item.slot);
-                if (target != null) TryMove(this, target);
-            }
-        }
-        else                                                    // an equip slot → unequip
-        {
-            var bag = FindEmptyBagSlot();
-            if (bag != null) TryMove(this, bag);
-        }
+        // EVERY slot the game builds is given its own click handler by the window that made it, so the line
+        // below has always been the end of this method — everything that used to follow it could never run.
+        // What was there was a second, older way to use, equip and unequip straight out of a SQUARE on the
+        // screen, which reached none of the character's real belongings. Its sibling — the one that put a
+        // picked-up item into a square — was losing loot for exactly that reason. Removed rather than left
+        // sitting here looking like a working path into somebody's bag.
+        if (clickOverride != null) clickOverride(e);
         ItemTooltip.HideTip();   // whatever it described may have moved/vanished
     }
 
@@ -333,19 +320,10 @@ public class ItemSlot : MonoBehaviour, IDropHandler, IPointerClickHandler, IPoin
         return null;
     }
 
-    static ItemSlot FindEmptyBagSlot()
-    {
-        foreach (var s in AllSlots())
-            if (s.accepts == EquipSlotType.None && s.Item == null) return s;
-        return null;
-    }
 
-    /// <summary>Puts <paramref name="item"/> into the first free bag slot. Returns false if the bag is full.</summary>
-    public static bool TryAddToBag(Item item)
-    {
-        var slot = FindEmptyBagSlot();
-        if (slot == null) return false;
-        slot.SetItem(item);
-        return true;
-    }
+    // DELIBERATELY GONE: a way to "add an item to the bag" from here. It put the item into the first empty
+    // SQUARE of the window, which is a picture of the bag and not the bag — nothing ever read a square back
+    // into the character, and the next repaint drew over it from the real list. Loot collected that way was
+    // therefore lost, silently, every time. Anything giving somebody an item goes to InventoryStore.Give,
+    // which is the one door into what a character is actually carrying.
 }

@@ -83,6 +83,12 @@ public sealed class ServerProfileStore : IProfileStore
 
     public void Save(SaveData data, Action<bool> onDone = null)
     {
+        // NOT WHILE THERE IS A WORLD. The server owns this character while somebody is playing it and writes it
+        // down itself; a write from here would be a machine the player controls telling the database what it
+        // thinks it owns, over the top of what actually happened. Refused HERE rather than at each caller,
+        // because a caller that forgets is a silent rollback nobody would look for.
+        if (GameNetwork.MyPlayer != null) { onDone?.Invoke(false); return; }
+
         if (data == null || !AccountSession.IsActive) { onDone?.Invoke(false); return; }
         Write("PUT", CharacterPath + "/progress",
               JsonUtility.ToJson(new ProgressEnvelope { progress = data }), "Save", onDone);

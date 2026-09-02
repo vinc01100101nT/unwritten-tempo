@@ -67,8 +67,10 @@ public class SaveData
     public int[]    equipRarities;  // (int)Rarity rolled for this copy; null/short on a pre-v7 save → the def's rarity
     public string[] equipSkills;    // '|'-joined rolled SkillDef ids ("" = none)
 
-    // Bag (v6+): parallel arrays, one entry per stack. Owned by InventoryStore (canvas-scoped); captured/
-    // restored by SaveManager. Null on a pre-v6 save (or before the bag window is ever opened) → re-seed.
+    // Bag (v6+): parallel arrays, one entry per stack. Owned by the CHARACTER, alongside its worn gear, and
+    // written and read by Character itself. NULL means the save predates bags being stored at all, and that
+    // character is given the starter goods; an EMPTY array is a real answer — somebody carrying nothing — and
+    // must never be mistaken for the first.
     // Equipment stacks carry refine/cards and count 1; stackables carry a count and refine 0 / cards "".
     public string[] bagItemIds;
     public int[]    bagCounts;

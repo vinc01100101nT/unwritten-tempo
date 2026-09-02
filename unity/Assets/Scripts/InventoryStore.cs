@@ -1,148 +1,96 @@
 using System;
 using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 
 /// <summary>
-/// The runtime inventory model behind the new Inventory + Equipment windows: a flat list of
-/// entries (equipment carries a unique <see cref="EquipmentInstance"/>; stackables carry a count).
-/// Equipping/unequipping routes through <see cref="Character"/> so gear affects real combat stats.
-/// Lives on the windows' canvas. On first-ever run it seeds from the starter <see cref="Item"/> assets
-/// in Resources/Items; once a save carries a bag, it restores from that instead (v6+). SaveManager owns
-/// the capture/restore stitching (this store is created lazily when the bag window first opens).
+/// The ONE door for changing what a character is carrying — give, take, equip, take off, use, reorder. Every
+/// caller goes through here rather than editing the list itself, so a rule about what may enter the bag has one
+/// place to live.
+///
+/// <para><b>It no longer OWNS the bag.</b> The list belongs to <see cref="Character"/>, alongside the worn gear
+/// it always owned. This component used to hold it, and that was wrong in a way that cost real items: this lives
+/// on the inventory WINDOW's canvas and is built the first time somebody opens the bag, so before that moment a
+/// character's belongings had nowhere to be, and the code that saved them had to guess. Now this is the set of
+/// operations, and the character is the thing being operated on.</para>
+///
+/// <para>The window still reads <see cref="Entries"/> and still listens to <see cref="OnChanged"/>; nothing about
+/// how the bag looks or behaves changed.</para>
 /// </summary>
 public class InventoryStore : MonoBehaviour
 {
     public static InventoryStore Instance { get; private set; }
 
-    public class Entry
-    {
-        public Item def;
-        public int count;
-        public EquipmentInstance instance;   // present for equipment
-        public bool isNew;
-        public bool IsEquip => def != null && def.slot != EquipSlotType.None;
-    }
-
-    public readonly List<Entry> Entries = new List<Entry>();
     public event Action OnChanged;
+
+    // Handed back when there is no character yet, so every reader can loop over it without a null check and
+    // nobody is tempted to add to it. One instance, never rebuilt — this is read from the window's repaint.
+    static readonly List<BagEntry> nothing = new List<BagEntry>();
+
+    /// <summary>What the character is carrying. The character's own list, not a copy — editing it through the
+    /// methods below changes the thing that gets saved.</summary>
+    public List<BagEntry> Entries => Character.Instance != null ? Character.Instance.Bag : nothing;
 
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(this); return; }
         Instance = this;
 
-        // Restore the saved bag if one exists; otherwise seed the starter items (first-ever run). Gate on
-        // SaveManager being initialized so a startup race can't seed over an existing save. In practice this
-        // store is built only when the player opens the bag window, long after SaveManager has loaded.
-        var loaded = (SaveManager.Instance != null && SaveManager.Instance.Initialized)
-            ? SaveManager.Instance.Loaded : null;
-        if (loaded != null && loaded.bagItemIds != null) LoadFrom(loaded);
-        else Seed();
+        // NOBODY IS GOING TO BRING A SAVE. Opening the game straight into a map to try something out means no
+        // session, so nothing ever loads and nothing ever seeds — and the bag would simply be empty forever.
+        //
+        // Deliberately NOT gated on the save system being absent, which was the first attempt and was wrong:
+        // it is built after the first scene's objects wake up, so that test reads TRUE on every ordinary boot
+        // too. Asked of the session instead, which is the thing that actually decides whether a save is coming.
+        // Should one arrive anyway, it replaces the whole list rather than adding to it, so the worst this can
+        // do is be overwritten.
+        if (!AccountSession.IsActive && Character.Instance != null && Character.Instance.Bag.Count == 0)
+            Character.Instance.SeedBag();
     }
 
-    /// <summary>Snapshot the current bag into a <see cref="SaveData"/> (parallel arrays — see the schema).
-    /// Equipment stacks carry refine + cards; stackables carry a count. Save-time only, not a hot path.</summary>
-    public void CaptureInto(SaveData d)
-    {
-        var ids = new List<string>();
-        var counts = new List<int>();
-        var refines = new List<int>();
-        var cards = new List<string>();
-        var rarities = new List<int>();
-        var kits = new List<string>();
-        foreach (var e in Entries)
-        {
-            if (e == null || e.def == null) continue;
-            // The Ring vessel is auto-worn on load (EnsureRingEquipped) and never a real bag item — don't
-            // persist a bag copy, or a load would restore it here AND re-equip a fresh one (duplicate).
-            if (e.def.slot == EquipSlotType.Ring) continue;
-            ids.Add(e.def.id);
-            counts.Add(Mathf.Max(1, e.count));
-            if (e.IsEquip && e.instance != null)
-            {
-                refines.Add(e.instance.upgrade);
-                cards.Add(ItemCatalog.EncodeCards(e.instance.cards));
-                rarities.Add((int)e.instance.rarity);
-                kits.Add(e.instance.EncodeSkills());
-            }
-            else { refines.Add(0); cards.Add(""); rarities.Add((int)e.def.rarity); kits.Add(""); }
-        }
-        d.bagItemIds = ids.ToArray();
-        d.bagCounts  = counts.ToArray();
-        d.bagRefines = refines.ToArray();
-        d.bagCards   = cards.ToArray();
-        d.bagRarities = rarities.ToArray();
-        d.bagSkills   = kits.ToArray();
-    }
+    void OnDestroy() { if (Instance == this) Instance = null; }
 
-    /// <summary>Rebuild the bag from a saved <see cref="SaveData"/>. Unknown item ids are dropped so a
-    /// removed asset can't break a load.</summary>
-    public void LoadFrom(SaveData d)
+    public int TotalWeight
     {
-        Entries.Clear();
-        if (d.bagItemIds != null)
+        get
         {
-            for (int i = 0; i < d.bagItemIds.Length; i++)
-            {
-                var def = ItemCatalog.Resolve(d.bagItemIds[i]);
-                if (def == null) continue;
-                int count = (d.bagCounts != null && i < d.bagCounts.Length) ? d.bagCounts[i] : 1;
-                var entry = new Entry { def = def, count = Mathf.Max(1, count) };
-                if (def.slot != EquipSlotType.None)
-                {
-                    int refine = (d.bagRefines != null && i < d.bagRefines.Length) ? d.bagRefines[i] : 0;
-                    entry.count = 1;
-                    entry.instance = new EquipmentInstance(def, refine);
-                    if (d.bagCards != null && i < d.bagCards.Length)
-                        ItemCatalog.DecodeCards(d.bagCards[i], entry.instance.cards);
-                    // v7+: the copy's rolled rarity + kit ride the save; a pre-v7 entry keeps the def's rarity and
-                    // an empty kit rather than silently re-rolling into something the player never earned.
-                    if (d.bagRarities != null && i < d.bagRarities.Length) entry.instance.rarity = (Rarity)d.bagRarities[i];
-                    if (d.bagSkills != null && i < d.bagSkills.Length) entry.instance.DecodeSkills(d.bagSkills[i]);
-                }
-                Entries.Add(entry);
-            }
-        }
-        Notify();
-    }
-
-    void Seed()
-    {
-        Entries.Clear();
-        foreach (var def in Resources.LoadAll<Item>("Items"))
-        {
-            if (def == null) continue;
-            // The Ring of Progression vessel is auto-equipped by Character (one per player); don't also seed a
-            // duplicate into the bag. It still returns to the bag normally if you unequip it.
-            if (def.slot == EquipSlotType.Ring) continue;
-            // WEAPONS are never seeded: a weapon's identity is its ROLLED kit, so it may only enter the world
-            // through a roll (a drop, or /weapon). A hand-placed starter weapon would have no kit at all.
-            if (def.slot == EquipSlotType.Weapon) continue;
-            if (def.slot != EquipSlotType.None)
-            {
-                // Showcase the +N enhancement channel: rarer gear arrives pre-refined.
-                int up = def.rarity >= Rarity.Legendary ? 9 : def.rarity >= Rarity.Rare ? 7 : 0;
-                Entries.Add(new Entry { def = def, count = 1, instance = new EquipmentInstance(def, up) });
-            }
-            else
-                Entries.Add(new Entry { def = def, count = def.IsUsable ? 5 : 1 });
+            int w = 0;
+            foreach (var e in Entries) if (e.def != null) w += e.def.weight * Mathf.Max(1, e.count);
+            return w;
         }
     }
 
-    /// <summary>Drop <paramref name="count"/> of an item into the bag (GM/testing + future loot). Equipment
-    /// adds one entry per copy (each its own <see cref="EquipmentInstance"/>); stackables merge into an existing
-    /// non-equip stack. The single add-item path — callers never poke <see cref="Entries"/> directly.</summary>
+    /// <summary>The bag changed — repaint whatever is showing it, and (unless told otherwise) remember that it
+    /// needs writing down. <paramref name="alsoSave"/> is false for the one case that is not a change at all:
+    /// the bag having just been FILLED FROM a save, where marking it dirty would write back what was read.</summary>
+    public void Notify(bool alsoSave = true)
+    {
+        OnChanged?.Invoke();
+        // Bag-only changes (give/consume/reorder) don't touch Character's stat events, so flag the autosave
+        // here too; equip/unequip already mark dirty via Character.OnStatsChanged.
+        if (alsoSave) SaveManager.Instance?.MarkDirty();
+    }
+
+    /// <summary>Drop <paramref name="count"/> of an item into the bag. Equipment adds one entry per copy (each its
+    /// own <see cref="EquipmentInstance"/>); stackables merge into an existing non-equip stack. The single
+    /// add-item path — callers never poke <see cref="Entries"/> directly.</summary>
     public void Give(Item def, int count)
     {
-        if (def == null || count <= 0) return;
+        if (def == null || count <= 0 || Character.Instance == null) return;
+
+        // NOT A DOOR A CLIENT MAY WALK THROUGH. In a world, things enter a bag because the server decided they
+        // did — a drop claimed, a command carried out — and it puts them in its own copy and says so. A client
+        // adding one here would be inventing an item, and it would vanish on the server's next word anyway.
+        if (GameNetwork.MyPlayer != null && !NetworkServer.active) return;
         if (def.slot != EquipSlotType.None)
         {
             for (int i = 0; i < count; i++) GiveEquipment(def);   // each copy rolls its own identity (and notifies)
             return;
         }
-        var e = Entries.Find(x => x.def == def && !x.IsEquip);
+        var entries = Entries;
+        var e = entries.Find(x => x.def == def && !x.IsEquip);
         if (e != null) e.count += count;
-        else Entries.Add(new Entry { def = def, count = count, isNew = true });
+        else entries.Add(new BagEntry { def = def, count = count, isNew = true });
         Notify();
     }
 
@@ -152,9 +100,9 @@ public class InventoryStore : MonoBehaviour
     /// the bag having skipped its roll.</summary>
     public EquipmentInstance GiveEquipment(Item def, Rarity? rarity = null)
     {
-        if (def == null || def.slot == EquipSlotType.None) return null;
+        if (def == null || def.slot == EquipSlotType.None || Character.Instance == null) return null;
         var inst = EquipmentInstance.CreateRolled(def, rarity);
-        Entries.Add(new Entry { def = def, count = 1, instance = inst, isNew = true });
+        Entries.Add(new BagEntry { def = def, count = 1, instance = inst, isNew = true });
         Notify();
         return inst;
     }
@@ -170,51 +118,54 @@ public class InventoryStore : MonoBehaviour
         return removed;
     }
 
-    public int TotalWeight
-    {
-        get
-        {
-            int w = 0;
-            foreach (var e in Entries) if (e.def != null) w += e.def.weight * Mathf.Max(1, e.count);
-            return w;
-        }
-    }
-
-    public void Notify()
-    {
-        OnChanged?.Invoke();
-        // Bag-only changes (give/consume/reorder) don't touch Character's stat events, so flag the autosave
-        // here too; equip/unequip already mark dirty via Character.OnStatsChanged.
-        SaveManager.Instance?.MarkDirty();
-    }
+    // ---- ASKED, when there is a world; DONE, when there is not -------------------------------------------
+    //
+    // Every one of these changes what somebody owns, so in a world it is the server's to decide and this only
+    // asks. What comes back is the whole bag, and the window redraws from that. With NO world — the game opened
+    // straight into a map to try something out — there is nobody to ask and it happens right here, exactly as
+    // it always did.
+    //
+    // The ask names a POSITION in the bag, because both copies are the same list in the same order and a
+    // position cannot be mistaken for a different copy of an identical item.
 
     /// <summary>Equip an inventory entry; any item already in that slot returns to the bag.</summary>
-    public void Equip(Entry e)
+    public void Equip(BagEntry e)
     {
         if (e == null || !e.IsEquip || e.instance == null || Character.Instance == null) return;
+
+        var me = GameNetwork.MyPlayer;
+        if (me != null) { me.AskToEquip(Entries.IndexOf(e), e.def != null ? e.def.id : ""); return; }
+
         var slot = e.def.slot;
         var prev = Character.Instance.GetEquippedInstance(slot);
         Character.Instance.SetEquipped(slot, e.instance);
         Entries.Remove(e);
         if (prev != null && prev.def != null)
-            Entries.Add(new Entry { def = prev.def, count = 1, instance = prev });
+            Entries.Add(new BagEntry { def = prev.def, count = 1, instance = prev });
         Notify();
     }
 
     public void Unequip(EquipSlotType slot)
     {
         if (Character.Instance == null) return;
+
+        var me = GameNetwork.MyPlayer;
+        if (me != null) { me.AskToUnequip(slot); return; }
+
         var inst = Character.Instance.GetEquippedInstance(slot);
         if (inst == null) return;
         Character.Instance.SetEquipped(slot, (EquipmentInstance)null);
-        if (inst.def != null) Entries.Add(new Entry { def = inst.def, count = 1, instance = inst });
+        if (inst.def != null) Entries.Add(new BagEntry { def = inst.def, count = 1, instance = inst });
         Notify();
     }
 
-    public void Consume(Entry e)
+    public void Consume(BagEntry e)
     {
         if (e == null || e.def == null) return;
-        if (!ItemUse.Use(e.def)) return;   // the effect never ran → the stack is left untouched
+
+        // The item's effect already goes to the server on its own road; what this decides is whether the stack
+        // is ALSO reduced here. In a world it is not — the server takes it off and says so.
+        if (!ItemUse.Use(e.def, Entries.IndexOf(e))) return;
         if (--e.count <= 0) Entries.Remove(e);
         Notify();
     }
@@ -222,15 +173,25 @@ public class InventoryStore : MonoBehaviour
     /// <summary>Drag-to-sort: pull <paramref name="moving"/> out and re-insert it just before
     /// <paramref name="before"/> (others shift up). A null <paramref name="before"/> appends to the
     /// end (dropped on an empty cell). No-op if nothing actually changes.</summary>
-    public void Reorder(Entry moving, Entry before)
+    public void Reorder(BagEntry moving, BagEntry before)
     {
         if (moving == null || moving == before) return;
-        int from = Entries.IndexOf(moving);
+        var entries = Entries;
+        int from = entries.IndexOf(moving);
         if (from < 0) return;
-        Entries.RemoveAt(from);
-        int idx = before != null ? Entries.IndexOf(before) : Entries.Count;
-        if (idx < 0) idx = Entries.Count;
-        Entries.Insert(idx, moving);
+
+        var me = GameNetwork.MyPlayer;
+        if (me != null)
+        {
+            int to = before != null ? entries.IndexOf(before) : entries.Count - 1;
+            me.AskToReorder(from, to < 0 ? entries.Count - 1 : to, moving.def != null ? moving.def.id : "");
+            return;
+        }
+
+        entries.RemoveAt(from);
+        int idx = before != null ? entries.IndexOf(before) : entries.Count;
+        if (idx < 0) idx = entries.Count;
+        entries.Insert(idx, moving);
         Notify();
     }
 }

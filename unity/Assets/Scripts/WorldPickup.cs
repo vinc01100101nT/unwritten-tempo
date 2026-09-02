@@ -124,23 +124,48 @@ public class WorldPickup : MonoBehaviour
         transform.position = pos;
     }
 
-    /// <summary>Collect this pickup — give the reward, fire <see cref="OnCollected"/> (PickUp gesture), destroy.
-    /// Called by <see cref="Player3DController"/> when the player CLICKS the item and reaches it (no auto-collect:
-    /// the player must click to pick up, and is movement-locked briefly while the gesture plays).</summary>
+    /// <summary>Collect this pickup — in a world this machine owns, give the reward and destroy it; in one it is
+    /// only watching, ASK for it and wait. Called by <see cref="Player3DController"/> when the player CLICKS the
+    /// item and reaches it (no auto-collect: the player must click to pick up, and is movement-locked briefly
+    /// while the gesture plays).</summary>
     public void Collect()
+    {
+        // ASKED FOR, NOT TAKEN. On a machine watching somebody else's world a drop is not this machine's to give
+        // away: the server decides whether this person may have it, hands it to ONE of them, and takes it away for
+        // everybody watching. Nothing happens here until it says so — otherwise two people clicking the same coin
+        // would each walk away believing they had it.
+        if (GameNetwork.SendPickupToServer(this)) return;
+
+        Award(item, goldAmount, collectSfx);
+        Destroy(gameObject);
+    }
+
+    /// <summary>Give what a drop was worth. The ONE description of what collecting pays, for a game with NO
+    /// world — where this machine's bag is the only bag there is. In a world the server pays it into the bag it
+    /// holds and this is never reached; see <see cref="Celebrate"/>, which is all that is left for the winner's
+    /// own machine to do.</summary>
+    public static void Award(Item item, int goldAmount, SfxSet collectSfx)
     {
         if (item != null)
         {
-            if (!ItemSlot.TryAddToBag(item))
-                Debug.Log($"[unwritten] Bag full — {item.displayName} dropped on the ground.");
+            var bag = InventoryStore.Instance;
+            if (bag != null) bag.Give(item, 1);
+            else Debug.LogWarning($"[unwritten] Nowhere to put {item.displayName} — no inventory yet.");
             Sfx.Play(collectSfx);
         }
         else if (goldAmount > 0)
         {
-            Wallet.Add(goldAmount);
+            Character.Instance?.AddGold(goldAmount);
             Sfx.Play(collectSfx);
         }
         OnCollected?.Invoke();   // let the baked player visual play its PickUp gesture
-        Destroy(gameObject);
+    }
+
+    /// <summary>The half of collecting that is still this machine's in a world: the sound, and the reaching
+    /// gesture. What the person actually GOT arrived separately, with the bag the server sent.</summary>
+    public static void Celebrate(SfxSet collectSfx)
+    {
+        Sfx.Play(collectSfx);
+        OnCollected?.Invoke();
     }
 }

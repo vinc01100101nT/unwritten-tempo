@@ -96,8 +96,6 @@ public class MonsterAI3D : MonoBehaviour
     public int stunFrameSize = 32;
     public int stunFrames = 5;
 
-    static readonly Color MagicHitColor = new Color(0.7f, 0.5f, 1f);
-    static readonly Color PhysHitColor  = new Color(1f, 0.35f, 0.35f);
     static readonly Color StunColor     = new Color(1f, 0.9f, 0.3f);
     static readonly Color LevelUpColor  = new Color(1f, 0.85f, 0.35f);   // mob level-up toast
 
@@ -115,7 +113,6 @@ public class MonsterAI3D : MonoBehaviour
                                                              attacker: mob != null ? mob.Health : null));
         if (d > 0)
         {
-            DamagePopup.Spawn(p.homing != null ? UnitAnchor.Overhead(p.homing) : p.at, d, MagicHitColor);
             mob.TryInflictOnHit();
             mob.GainCombatXp(d);
         }
@@ -138,6 +135,18 @@ public class MonsterAI3D : MonoBehaviour
     float nextPreyCheck;
     Vector3 home;
     float nextWander;
+
+    // The world's floor, asked for once and shared. LayerMask.GetMask is a string lookup; a creature must not pay
+    // for it every time it decides where to stroll.
+    static int wanderGroundMask = -1;
+    static int WanderGroundMask
+    {
+        get
+        {
+            if (wanderGroundMask < 0) wanderGroundMask = LayerMask.GetMask("Ground");
+            return wanderGroundMask;
+        }
+    }
     bool chasing;
     float nextTouch;
     float stunnedUntil;   // hit by a stagger (e.g. the Swordsman's Bash) — frozen until this time
@@ -503,8 +512,6 @@ public class MonsterAI3D : MonoBehaviour
                     : new DamageInfo(atk, attackElement, attackerHit: effHit, source: this, missed: missed, attacker: Health));      // physical: the HIT vs FLEE result, rolled above
                 if (dealt > 0)
                 {
-                    DamagePopup.Spawn(UnitAnchor.Overhead(player), dealt,
-                        attackType == AttackType.Magic ? MagicHitColor : PhysHitColor);
                     TryInflictOnHit();
                     GainCombatXp(dealt);
                 }
@@ -529,9 +536,27 @@ public class MonsterAI3D : MonoBehaviour
             if (was) { agent.Halt(); nextWander = Time.time; }
             if (agent.Arrived && Time.time >= nextWander)
             {
-                Vector2 r = Random.insideUnitCircle * wanderRadius;
-                agent.MoveTo(home + new Vector3(r.x, 0f, r.y));
                 nextWander = Time.time + Random.Range(wanderPauseMin, wanderPauseMax);
+
+                // BACK ON THE FLOOR, IF IT IS SOMEHOW UNDER IT. A creature that leaves the ground falls, and the
+                // distance switch can stop its mover mid-fall — after which nothing moves it again and it hangs
+                // there for the rest of its life. MEASURED: two creatures standing 31 metres below a field whose
+                // floor was solid directly above them, motionless for minutes. Whatever put them there — an edge,
+                // a shove, a gap — this is the answer to all of it, so it is written once here rather than at each
+                // of the ways down. The ray starts well above so it can find a floor the creature is BENEATH.
+                // perf-ok: once per wander pause per creature, and only while it is idle and being simulated.
+                if (GroundSnap.TryGroundY(pos, WanderGroundMask, 60f, 200f, out float floorY) && pos.y < floorY - 1f)
+                {
+                    transform.position = new Vector3(pos.x, floorY, pos.z);
+                    pos = transform.position;
+                }
+
+                // AND ONLY WANDER TO A SPOT THAT HAS A FLOOR. The target used to be any point in a circle around
+                // home, so a creature living near an edge would eventually be told to walk over it.
+                // perf-ok: same beat as above.
+                Vector2 r = Random.insideUnitCircle * wanderRadius;
+                Vector3 target = home + new Vector3(r.x, 0f, r.y);
+                if (GroundSnap.TryGroundY(target, WanderGroundMask, 2f, 40f, out _)) agent.MoveTo(target);
             }
         }
     }

@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-09-02
 tags:
   - ai-learnings
 ---
@@ -35,8 +35,14 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | A command driving a windowed app has hung, and your other requests to that app are timing out too | [A Hanging Tool Is Usually a Dialog](a-hanging-tool-is-usually-a-dialog.md) — that is a window waiting for a click, not slow work. Ask the user what is on screen. |
 | About to run a build or regenerate script you have not read | [A Rebuild May Delete the Old Output First](a-rebuild-may-delete-the-old-output-first.md) — many delete the current output before building; a failed rebuild then leaves less than you started with. |
 | Briefing a long helper run, or one was stopped and you need its status | [Long Agent Runs: Report Per Step, and Ask Them](long-agent-runs-report-per-step.md) — a run that saves its report for the end hands back nothing when killed; and ask it, never read its transcript. |
+| Something worked before your change and breaks after it, and reading has not told you why | [Bisect by Removing Your Own Change](bisect-by-removing-your-own-change.md) — set your change aside, rebuild, run. One control beats three theories. |
+| A parser or probe you just wrote says the data is corrupt, empty or wrong | [Prove Your Decoder on a Known-Good Sample](prove-your-decoder-on-a-known-good-sample.md) — run it on something known GOOD first; if that looks broken too, your instrument is the broken thing. |
+| A script that drives another app produced nothing, and only the app's own log mentions a timeout | [A Busy Host App Drops Your Request](wait-for-the-host-app-to-be-idle.md) — work sent while the host is busy is dropped, not queued. Wait for it to be idle BEFORE asking, not only after. |
+| Something does nothing at all and there is no error to explain it | [Make the Code Narrate Its Own Decision](make-the-code-narrate-its-decision.md) — silence has no stack trace. Print the decision's INPUTS at the decision site, throttled, one subject. |
+| An app you are driving throws the same error every frame, in files your change never touched | [You Reloaded Under a Live Session](never-reload-under-a-live-session.md) — a reload empties everything the app was holding and the setup never re-runs. Ask whether somebody is using it BEFORE you reload. |
+| Your offline compile check passes, then the real build fails on compiler errors | [The Offline Checker Is Not the Editor](the-checker-is-not-the-editor.md) — the checker compiles the files on DISK, the build compiles what the editor has IMPORTED. Force a recompile and wait for it, then build. |
 
-**4 of 12 pages used.** At the cap, a new lesson merges into an existing page or replaces one.
+**10 of 12 pages used.** At the cap, a new lesson merges into an existing page or replaces one.
 
 ---
 

@@ -670,6 +670,32 @@ public class SkillDef : ScriptableObject
     /// skill's whole name. THE one answer, so every tile falls back the same way.</summary>
     public string Symbol => string.IsNullOrWhiteSpace(symbol) ? displayName : symbol;
 
+    /// <summary>How long a LOOPING step keyed to <paramref name="tickId"/> stays before it ends. 0 = unauthored, and
+    /// the runtime falls back to its own default.
+    ///
+    /// <para>Here, not on whoever happens to be playing the sequence, because two different things now play it: the
+    /// machine that DECIDES the cast and every machine that only DRAWS it. A second copy of this answer would have
+    /// them disagree about how long the same effect lasts.</para></summary>
+    public float StayForTick(string tickId)
+    {
+        var b = BindingFor(tickId);
+        return b != null ? b.stayDuration : 0f;
+    }
+
+    /// <summary>How many copies of the carrier on <paramref name="tickId"/> fly, and how wide they fan. One shot
+    /// unless the tick is authored as a projectile delivery — so a fall-in meteor is never multiplied by a count
+    /// meant for a bolt.
+    ///
+    /// <para>Same reason as <see cref="StayForTick"/>: a watcher drawing one bolt where the server fired five is a
+    /// picture of a different skill.</para></summary>
+    public ProjectileFan FanForTick(string tickId)
+    {
+        var b = BindingFor(tickId);
+        return b != null && b.targetMode == TargetMode.Ground && b.groundDelivery == GroundDelivery.Projectile
+            ? new ProjectileFan(b.projectileCount, b.projectileSpread)
+            : ProjectileFan.Single;
+    }
+
     /// <summary>The binding for <paramref name="tickId"/>, or null if this tick is purely visual (unbound).</summary>
     public SkillTickBinding BindingFor(string tickId)
     {

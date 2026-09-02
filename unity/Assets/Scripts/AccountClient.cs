@@ -23,6 +23,24 @@ public static class AccountClient
     public static void Send(string method, string path, string body, bool authorize, Reply onDone)
         => SendAs(method, path, body, authorize ? AccountSession.AccessToken : null, onDone);
 
+    /// <summary>Which server answers this path. Anything about a CHARACTER — the list, one character's save,
+    /// the models one may be created with — belongs to the character server; signing in, refreshing and signing
+    /// out stay with the account service.
+    ///
+    /// <para>Decided by the path in ONE place rather than at each call site, so a request added later cannot be
+    /// sent to the wrong server by somebody who did not know there were two. While no character server address
+    /// is set both answers are the same, which is what makes turning it on a setting rather than a change.</para></summary>
+    static string WhereThisGoes(string path)
+    {
+        var characterServer = AccountSession.CharacterServerUrl;
+        if (string.IsNullOrEmpty(characterServer)) return AccountSession.ServerUrl;
+
+        return path != null && (path.StartsWith("/characters", System.StringComparison.Ordinal)
+                                || path.StartsWith("/character-models", System.StringComparison.Ordinal))
+            ? characterServer
+            : AccountSession.ServerUrl;
+    }
+
     /// <summary>The same request, sent as SOMEBODY ELSE — with the sign-in proof they handed over themselves.
     ///
     /// <para>The game server needs this and nothing else does: it holds several people at once, so "the signed-in
@@ -31,7 +49,7 @@ public static class AccountClient
     /// holder was already entitled to.</para></summary>
     public static void SendAs(string method, string path, string body, string bearerToken, Reply onDone)
     {
-        var request = new UnityWebRequest(AccountSession.ServerUrl + path, method)
+        var request = new UnityWebRequest(WhereThisGoes(path) + path, method)
         {
             downloadHandler = new DownloadHandlerBuffer(),
         };

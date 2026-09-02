@@ -89,6 +89,9 @@ public class VfxSequenceRunner : MonoBehaviour
     }
     readonly List<IntervalTick> intervals = new List<IntervalTick>(4);
     readonly List<Vfx.EffectHandle> attached = new List<Vfx.EffectHandle>();
+    // THIS PLAY'S OWN DICE, rolled from the seed the cast carried, so every machine drawing this cast puts the
+    // scattered shots in the same places — and therefore measures their damage from the same places.
+    CombatRng.Stream dice;
     float startTime, endBy;
     int gen;                        // bumped each Begin/Finish → stale carrier callbacks are ignored
     bool active;
@@ -97,6 +100,8 @@ public class VfxSequenceRunner : MonoBehaviour
     internal void Begin(VfxSequence s, VfxContext c, System.Action<VfxTick> cb)
     {
         seq = s; ctx = c; onTick = cb;
+        // An unseeded play rolls its own run — the single-machine case, where there is nothing to agree with.
+        dice = new CombatRng.Stream(ctx.seed != 0 ? ctx.seed : CombatRng.NewSeed());
         gen++;
         startTime = Time.time;
         active = true;
@@ -192,6 +197,8 @@ public class VfxSequenceRunner : MonoBehaviour
             : (st.anchor == VfxAnchor.Origin ? originPoint : ctx.target);
         // Optional random spawn jitter (PlayAt/Attach) so repeated plays don't stack in the exact same spot.
         Vector3 jitter = (st.scatter && (st.kind == VfxStepKind.PlayAt || st.kind == VfxStepKind.Attach)) ? ScatterJitter() : Vector3.zero;
+        // The jitter moves the step's TICK POINT as well as its picture (see the `point` below feeding ArmTicks), so
+        // it is rolled from the cast's shared stream for exactly the reason a carrier's scatter is.
         Vector3 point = anchorPoint + st.offset + jitter;
         float scale = st.scale * (ctx.scaleMult <= 0f ? 1f : ctx.scaleMult);
 
@@ -204,10 +211,13 @@ public class VfxSequenceRunner : MonoBehaviour
                 // Looping PlayAt: keep the particle loop on and live for the skill's Stay Duration; otherwise a
                 // one-shot that plays once for its natural length. The window end (natural or Stay) drives End ticks.
                 float stayP = Stay(st);
-                var ph = Vfx.PlayAt(st.effectId, point, Quaternion.Euler(st.rotationEuler),
+                Vfx.PlayAt(st.effectId, point, Quaternion.Euler(st.rotationEuler),
                            new Vfx.VfxParams { scale = scale, speed = st.speed, tint = st.tint, tailTrim = st.trimEnd,
                                                clipStart = st.clipStart, loop = st.looping, lifetime = st.looping ? stayP : 0f });
-                float endP = (ph != null && ph.ReturnAt > 0f) ? ph.ReturnAt : Time.time + (st.looping ? stayP : 0.5f);
+                // WHEN THIS BEAT LANDS is read off the effect TABLE, never off the instance we may or may not have
+                // just built. A machine that draws nothing has to reach the same moment as one that does, and asking
+                // the handle made the answer depend on having a screen.
+                float endP = StepEnds(st, st.looping ? stayP : 0f, !st.looping, stayP);
                 ArmTicks(i, point, endP, null);
                 break;
             }
@@ -226,8 +236,10 @@ public class VfxSequenceRunner : MonoBehaviour
                     var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !loop, clipStart: 0f, lifetime: lifeA,
                                        speed: st.speed <= 0f ? 1f : st.speed);   // 0 = unauthored / legacy step → normal rate
                     float endA;
-                    if (ctx.persistent) { endA = float.PositiveInfinity; if (h != null) hasLiveAura = true; }
-                    else { endA = (h != null && h.ReturnAt > 0f) ? h.ReturnAt : Time.time + (st.looping ? stayA : 0.5f);
+                    // The aura's latch reads whether this effect EXISTS, not whether we drew it — a server holds a
+                    // persistent aura open for exactly as long as the machines watching it do.
+                    if (ctx.persistent) { endA = float.PositiveInfinity; if (EffectCatalog.Has(st.effectId)) hasLiveAura = true; }
+                    else { endA = StepEnds(st, lifeA, !loop, stayA);
                            if (endA + 0.5f > endBy) endBy = endA + 0.5f; }
                     if (h != null) attached.Add(h);
                     ArmTicks(i, point, endA, ctx.follow);
@@ -255,11 +267,11 @@ public class VfxSequenceRunner : MonoBehaviour
                     if (st.carrierScatter > 0f)
                     {
                         float sc = st.carrierScatter;
-                        land += new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
+                        land += new Vector3(dice.Range(-sc, sc), 0f, dice.Range(-sc, sc));
                         // Off caster: launch re-bases on the scattered landing (a straight-down shower). From caster:
                         // launch stays at the fixed caster, only the impact spreads.
                         Vector3 fb = st.carrierFromCaster ? fromBase : land;
-                        from = fb + st.carrierFrom + new Vector3(Random.Range(-sc, sc), 0f, Random.Range(-sc, sc));
+                        from = fb + st.carrierFrom + new Vector3(dice.Range(-sc, sc), 0f, dice.Range(-sc, sc));
                     }
                     // The fan turns each copy's LANDING about its launch point, so every shot leaves the same muzzle
                     // and diverges from there. A fall-in carrier launches straight above its landing, so there is no
@@ -308,9 +320,27 @@ public class VfxSequenceRunner : MonoBehaviour
         }
     }
 
+    /// <summary>The absolute moment this step's window closes — the beat an End tick lands on, and the fence an
+    /// Interval tick series runs to. Read from the effect table's measured length through the SAME arithmetic the
+    /// pool uses when it actually plays one, so drawing and not drawing agree by construction.
+    ///
+    /// <para><paramref name="fallbackStay"/> is what an unknown or unnamed effect gets — the half-second a step with
+    /// no effect behind it has always had, kept exactly, because skills are authored against it today.</para></summary>
+    float StepEnds(VfxStep st, float forcedLifetime, bool oneShot, float fallbackStay)
+    {
+        var def = EffectCatalog.Get(st.effectId);
+        if (def != null)
+        {
+            float window = EffectTiming.PlayEndsInSeconds(def.Timing, def.lifetime, forcedLifetime, oneShot,
+                                                          st.speed <= 0f ? 1f : st.speed, st.trimEnd, st.clipStart);
+            if (window > EffectTiming.NeverEnds) return Time.time + window;
+        }
+        return Time.time + (st.looping ? fallbackStay : 0.5f);
+    }
+
     // A random per-axis nudge (magnitude up to 0.2 units) for a step's "scatter" option.
-    static Vector3 ScatterJitter() =>
-        new Vector3(Random.Range(-0.2f, 0.2f), Random.Range(-0.2f, 0.2f), Random.Range(-0.2f, 0.2f));
+    Vector3 ScatterJitter() =>
+        new Vector3(dice.Range(-0.2f, 0.2f), dice.Range(-0.2f, 0.2f), dice.Range(-0.2f, 0.2f));
 
     // Arm the step's "end" (visual finish) at absolute time t: drives emitEventOnEnd AND an End-timing tick. Always
     // records the time (even pure-visual) so teardown outlives it; EmitStepEnd decides what actually fires.

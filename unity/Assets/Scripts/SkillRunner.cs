@@ -35,18 +35,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     System.Func<string, float> stayFor; // cached per-tickId Stay Duration resolver (built once; no per-cast alloc)
     // Resolve a looping step's Stay Duration from its tick binding (by tickId). Handed to the VFX context so the
     // runner supplies each step its own stay; the VFX never stores this per-use gameplay number.
-    System.Func<string, float> StayFor => stayFor ??= tid => { var b = def.BindingFor(tid); return b != null ? b.stayDuration : 0f; };
+    System.Func<string, float> StayFor => stayFor ??= tid => def.StayForTick(tid);
     System.Func<string, ProjectileFan> fanFor;   // cached per-tickId projectile fan resolver (built once; no per-cast alloc)
     // Resolve a carrier step's volley from its tick binding (by tickId) — the same per-step shape as Stay Duration.
     // Only a tick authored as Projectile delivery fans; anything else launches the one carrier the VFX composed, so a
     // fall-in meteor can never be multiplied by a count meant for a bolt.
-    System.Func<string, ProjectileFan> FanFor => fanFor ??= tid =>
-    {
-        var b = def.BindingFor(tid);
-        return b != null && b.targetMode == TargetMode.Ground && b.groundDelivery == GroundDelivery.Projectile
-            ? new ProjectileFan(b.projectileCount, b.projectileSpread)
-            : ProjectileFan.Single;
-    };
+    System.Func<string, ProjectileFan> FanFor => fanFor ??= tid => def.FanForTick(tid);
     Player3DController body;            // caster's mover — turned to face the cast point on release
     static readonly Color NoManaColor = new Color(0.55f, 0.6f, 1f);
 
@@ -67,8 +61,33 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // percentage pile is already a decimal: +30% arrives as 0.3). Float, because that reading can be fractional.
     float castCarried;
 
+    // WHOSE RUN THIS IS. A server holds one character per person signed in, so "the player" is not a fact it can
+    // read off a global — it has to be told. Bound once when the fighter is built; left unbound on a screen, where
+    // there is exactly one character and it is the one at this keyboard. Same shape as Character.BindStatusHost,
+    // deliberately: the two answer the same kind of question.
+    Character boundCaster;
+
+    /// <summary>Say whose character this runner casts for. One-way for the life of the runner.</summary>
+    public void BindCaster(Character c) { boundCaster = c; }
+
+    /// <summary>The character this run belongs to — the one every roll, gate and cost reads.</summary>
+    public Character Caster => boundCaster != null ? boundCaster : Character.Instance;
+
+    /// <summary>TRUE when this runner casts for the person sitting at this machine, so it is the one that may draw
+    /// a cast bar, push a pose, or say the skill's name out loud. False on a server, and false for a character the
+    /// server holds on somebody else's behalf.</summary>
+    bool Mine => Character.Instance != null && ReferenceEquals(Caster, Character.Instance);
+
+    /// <summary>TRUE when this machine only WATCHES the character casting — the server holds the real one, so
+    /// nothing here may touch health, states or piles. The same answer <see cref="Character.IsWatchedCopy"/> gives
+    /// the damage door, asked once for a whole cast instead of once per blow.</summary>
+    bool Watching => GameNetwork.TheWorldIsElsewhere || (Caster != null && Caster.IsWatchedCopy);
+
+    /// <summary>The status host of whoever is casting — the caster's own, never a global.</summary>
+    StatusController Status { get { var c = Caster; return c != null ? c.StatusHost : null; } }
+
     /// <summary>The caster's unified state store — the ONE store the gate reads and spends from.</summary>
-    public UnitStates CasterStates => Character.Instance != null ? Character.Instance.States : null;
+    public UnitStates CasterStates { get { var c = Caster; return c != null ? c.States : null; } }
 
     void Awake()
     {
@@ -78,20 +97,15 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         body = GetComponent<Player3DController>();
     }
 
-    // Every runner registers with the ONE dispatch (PassiveEvents) while it lives on the player — so a runner exists ⇔
-    // the player owns that skill, no separate list to hand-sync. We register unconditionally (not just passives)
-    // because `def` may be assigned AFTER OnEnable (runtime AddComponent then set-def); PassiveEvents.Fire filters to
-    // the matching passive at dispatch, so a registered active is simply never matched. Cheap: the list is tiny.
-    void OnEnable()
-    {
-        PassiveEvents.Register(this);
-    }
+    // A runner no longer announces itself to a process-wide table. Its caster HOLDS its skills in a fixed order
+    // (Character.BindSkillRunners), which is both the list a passive moment is dispatched against and the thing that
+    // gives each passive its place in the no-self-feeding brake. One list per character rather than one per machine,
+    // because a server holds a character for everybody signed in.
 
     // If we're torn down mid-cast (disabled, scene swap, death), Unity stops the coroutine but won't run its cleanup,
-    // so drop the shared bar + kill the looping aura here or they'd hang on screen. Also drop any passive registration.
+    // so drop the shared bar + kill the looping aura here or they'd hang on screen.
     void OnDisable()
     {
-        PassiveEvents.Unregister(this);
         pendingUnit = null;   // a half-aimed cast dies with the runner; never resume stage 2 against a stale pick
         pendingMana = 0;      // …and an unfinished wind-up is never charged for
         EndRunTotal();        // the beat coroutine dies with the runner, so its total is ended here or never
@@ -100,17 +114,43 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
     // ---- activation ---------------------------------------------------------
 
-    public bool Activate()
+    /// <summary>May this skill START right now — asked identically wherever a cast begins, so the machine deciding a
+    /// cast and the machine picturing it can never disagree about whether it was allowed. Sets the entry this run
+    /// answers to as a side effect, because a press always runs the OnCast entry.</summary>
+    bool CanStart()
     {
         if (def == null || def.vfx == null) return false;
         if (def.IsPassive) return false;   // no pressed entry — this skill only ever fires via PassiveEvents on its triggers
         firedBy = def.CastEntry;           // a press always runs the OnCast entry, whatever other triggers this skill has
-        if (Character.Instance == null || Character.Instance.IsDead) return false;
-        if (StatusController.Player != null && StatusController.Player.Silenced)
+        if (Caster == null || Caster.IsDead) return false;
+        var gate = Status;
+        if (gate != null && gate.Silenced)
         { BattleNotice.Warn("Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
-        if (StatusController.Player != null && StatusController.Player.CannotStartSkill) return false;   // stunned / frozen / casting / mid-aftercast / mid-jump — can't start another skill
+        if (gate != null && gate.CannotStartSkill) return false;   // stunned / frozen / casting / mid-aftercast / mid-jump — can't start another skill
         if (castRoutine != null) return false;   // already winding up a cast — ignore until it resolves
         if (Time.time < nextUse) return false;
+        return true;
+    }
+
+    /// <summary>Cast this skill for the character the server holds, with the aim already decided by the person who
+    /// asked for it. The SERVER'S entry point, and deliberately the same body a press runs — the aiming is all that
+    /// differs, because the reticle happened on their machine and the answer arrived here.</summary>
+    public bool CastFromRequest(Transform aimedAt, Vector3 point)
+    {
+        if (!CanStart()) return false;
+        // A skill that asks the caster to PICK something must have been given one; without it the cast would silently
+        // fall back to an area sweep the person never aimed. Asked BEFORE anything is paid, so a cast that cannot
+        // happen costs neither the mana nor the cooldown.
+        if (def.NeedsUnitPick && aimedAt == null) return false;
+        if (!Spend()) return false;
+        lastCtx = BuildCtx(def.NeedsUnitPick ? aimedAt : null, def.NeedsAimPoint ? point : transform.position);
+        StartCastOrPlay();
+        return true;
+    }
+
+    public bool Activate()
+    {
+        if (!CanStart()) return false;
 
         // The aim is a SEQUENCE derived from the ticks (SkillDef.NeedsUnitPick / NeedsAimPoint), never an authored
         // field: pick an entity (only when target effects need one), then pick a point (only when a ground tick or a
@@ -162,6 +202,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     void CastResolved(Transform unit, Vector3 point)
     {
         if (!Spend()) return;
+
+        // SAID TO THE SERVER, ONCE, for the whole skill. Everything the skill does is decided there against the
+        // character it holds for this person; what happens below is the picture of it, started now so the game feels
+        // exactly as immediate as it always has.
+        GameNetwork.SendCastToServer(def, unit, point);
+
         lastCtx = BuildCtx(unit, point);
         StartCastOrPlay();
     }
@@ -209,15 +255,15 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // singleton and the label is a stable reference (it only rewrites the Text on change).
     System.Collections.IEnumerator CastWindup()
     {
-        float mult = Character.Instance != null ? Character.Instance.CastTimeMult : 1f;
+        float mult = Caster != null ? Caster.CastTimeMult : 1f;
         float dur = def.castTime * mult;
         float startedAt = Time.time;   // any HP lost after this instant breaks the wind-up
 
         if (dur > 0f)
         {
             BeginCastVisuals();
-            if (StanceController.Player != null) StanceController.Player.Push(StanceId.Casting, dur);   // hold the cast pose, stretched to span the whole wind-up (FitWindow)
-            var sc = StatusController.Player;
+            if (Mine && StanceController.Player != null) StanceController.Player.Push(StanceId.Casting, dur);   // hold the cast pose, stretched to span the whole wind-up (FitWindow)
+            var sc = Status;
             if (sc != null) sc.LockActions(dur);   // fully root for the wind-up (no move/attack/other skills); freed in EndCast on complete or interrupt
             string label = def.displayName;
             for (float t = 0f; t < dur; t += Time.deltaTime)
@@ -226,11 +272,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                 // reason a long wind-up is a gamble. The earned footing does NOT save a cast (shrugging off a stagger
                 // is not the same as keeping your concentration); only the bought window does, which is what makes
                 // that window worth buying.
-                if (Character.Instance == null || Character.Instance.IsDead ||
+                if (Caster == null || Caster.IsDead ||
                     (sc != null && (sc.Silenced || sc.CannotAct ||
                                     (!sc.DisablesBlocked && sc.LastHpLossTime > startedAt))))
                 { pendingMana = 0; EndCast(); yield break; }
-                CastBar.Set(UnitAnchor.Head(transform), t / dur, label, def.tint);
+                if (Mine) CastBar.Set(UnitAnchor.Head(transform), t / dur, label, def.tint);
                 yield return null;
             }
         }
@@ -260,9 +306,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (castAura != null) { castAura.Stop(); castAura = null; }
         if (castCircle != null) { castCircle.Stop(); castCircle = null; }
-        if (StanceController.Player != null) StanceController.Player.Pop(StanceId.Casting);   // release the cast pose (complete/interrupt/OnDisable)
-        if (StatusController.Player != null) StatusController.Player.Unlock();   // free the wind-up root; on completion PlayCycles re-locks for the aftercast beat
-        CastBar.Hide();
+        if (Mine && StanceController.Player != null) StanceController.Player.Pop(StanceId.Casting);   // release the cast pose (complete/interrupt/OnDisable)
+        var unlock = Status;
+        if (unlock != null) unlock.Unlock();   // free the wind-up root; on completion PlayCycles re-locks for the aftercast beat
+        if (Mine) CastBar.Hide();
         castRoutine = null;
     }
 
@@ -273,9 +320,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         // THE RELEASE: the skill is actually going off, so this is where its mana is taken. Only a press ever
         // left a cost here, so a run started by one of the skill's own moments still fires free.
-        if (pendingMana > 0 && Character.Instance != null)
+        if (pendingMana > 0 && Caster != null)
         {
-            Character.Instance.SpendMana(pendingMana);
+            Caster.SpendMana(pendingMana);
             pendingMana = 0;
         }
         consumedThisCast = false;   // this cast hasn't paid its state cost yet — it pays once, after its effects compute
@@ -288,7 +335,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // the chat log — through the very same path a said line takes, so the two can never drift apart. Here, at the
         // one place every way of firing (a press, one of the skill's own automatic triggers) passes
         // through, so no entry point can forget it. A passive is not called out: it has no gesture to announce.
-        if (!def.IsPassive) ChatController.SkillCall(def.displayName);
+        if (Mine && !def.IsPassive) ChatController.SkillCall(def.displayName);
 
         // The cast finished UNINTERRUPTED (an interrupt runs EndCast + bails before here) — announce it so any passive
         // keyed to this skill via OnSkillCastComplete<skill> fires.
@@ -299,19 +346,20 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // the pile would refill itself forever. Keying off the trigger that STARTED this run — not off whether the
         // skill has a pressed form — makes that impossible for every skill, not just this pair.
         if (pressed)
-            PassiveEvents.Fire(SkillTrigger.OnSkillCastComplete, def.id);
+            PassiveEvents.Fire(Caster, SkillTrigger.OnSkillCastComplete, def.id);
 
         // The RELEASE moment: any cast wind-up (and its Casting pose) has already finished, so the release cue plays
         // now — casting first, release second. Instant skills reach here immediately.
         float releaseDur = 0f;
-        if (def.hasReleaseStance && StanceController.Player != null)
+        if (def.hasReleaseStance && Mine && StanceController.Player != null)
         {
             // Scale the release beat by the SAME attack-speed motion scale swings use (1 / AttackSpeedMult): a faster
             // caster plays the release animation faster AND is rooted for less time — one number drives both.
             releaseDur = StanceController.Player.PlayActionFor(def.releaseStance, 0f, Player3DAttacker.MotionScale);
             // RO-style aftercast: fully root the caster for the (attack-speed-scaled) release animation's length.
             // Stacks on top of the skill's own cooldown; a skill with no release stance roots for nothing.
-            if (StatusController.Player != null) StatusController.Player.LockActions(releaseDur);
+            var aftercast = Status;
+            if (aftercast != null) aftercast.LockActions(releaseDur);
         }
 
         // A projectile aims a DIRECTION, not a landing spot: the shot flies a FIXED travel distance (the reused
@@ -328,7 +376,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
         // The sequence plays ONCE. A tick that fans launches several copies of ITS OWN carrier step (see the fan
         // resolver above) — replaying the whole sequence per copy would have fanned every other step along with it.
-        VfxDirector.Play(def.vfx, lastCtx, onTick);
+        PlaySequence(ref lastCtx);
 
         // A charge-driven run has no fixed length — it goes until the pile is empty — so the count is only consulted
         // for the plain fixed-repeat case.
@@ -338,6 +386,20 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             HoldForBeat(BeatInterval());   // the opening beat; every later one re-takes the hold inside the loop
             StartCoroutine(PlayExtraCycles(extra, lastCtx));
         }
+    }
+
+    /// <summary>THE ONE PLACE A PLAY OF THIS CAST STARTS — its opening beat and each of its repeats alike.
+    ///
+    /// <para>The machine that owns the world picks this play's SEED, stamps it on, tells every machine watching the
+    /// caster, and then plays. A machine that is only watching plays NOTHING here: it waits to be told, and plays
+    /// from that. Where a scattered shot lands is where its damage is measured from, so a watcher rolling its own
+    /// would draw a shower falling in places the server never touched.</para></summary>
+    void PlaySequence(ref VfxContext ctx)
+    {
+        if (Watching) return;
+        ctx.seed = CombatRng.NewSeed();
+        GameNetwork.AnnounceCastPlayed(Caster, def, ctx.targetUnit, ctx.effectPoint, ctx.seed);
+        VfxDirector.Play(def.vfx, ctx, onTick);
     }
 
     // Push the aim point out to the skill's travel range (reused castRange) along the aim direction — a projectile
@@ -383,9 +445,9 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         float authored = def.repeatInterval > 0f ? def.repeatInterval
                        : (def.vfx != null && def.vfx.RestartInterval > 0f ? def.vfx.RestartInterval : 0.35f);
-        if (def.repeatScaleWithAttackSpeed && Character.Instance != null)
+        if (def.repeatScaleWithAttackSpeed && Caster != null)
         {
-            float swing = Character.Instance.SwingTime;
+            float swing = Caster.SwingTime;
             if (swing > 0f) return swing / Mathf.Max(1, def.repeatBeatsPerSwing);
         }
         return authored;
@@ -397,7 +459,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // run stops — however it stopped. Nothing to undo, and no way to leave the caster rooted after the last beat.
     void HoldForBeat(float seconds)
     {
-        if (def.holdCasterForRun && StatusController.Player != null) StatusController.Player.LockActions(seconds);
+        var hold = def.holdCasterForRun ? Status : null;
+        if (hold != null) hold.LockActions(seconds);
     }
 
     System.Collections.IEnumerator PlayExtraCycles(int extra, VfxContext ctx)
@@ -411,7 +474,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // Only a run that STEERS or PAYS needs a live caster to read; a plain fixed repeat (a meteor shower) keeps
             // its old behaviour of finishing on its own, so nothing existing changes.
             if ((def.repeatReaim || def.repeatCostsCharge)
-                && (Character.Instance == null || Character.Instance.IsDead)) break;
+                && (Caster == null || Caster.IsDead)) break;
 
             // RE-AIM walks the run from one target to the next: the search is centred on the CURRENT target, so each
             // hop's range is measured from where the last one landed, never from the caster or the original aim.
@@ -440,7 +503,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             if (def.hasReleaseStance && def.releaseStanceReplayPerRepeat && StanceController.Player != null)
                 StanceController.Player.PlayActionFor(def.releaseStance, interval, 1f, fitToWindow: true);
 
-            VfxDirector.Play(def.vfx, ctx, onTick);
+            PlaySequence(ref ctx);
             HoldForBeat(interval);   // hold through THIS beat; the next one re-takes it, and the last one just lapses
         }
         // However the run stopped — last charge spent, nothing left in reach, caster down — it is over here, so the
@@ -457,7 +520,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     /// their own clocks.</summary>
     void EndRunPiles()
     {
-        if (!def.repeatCostsCharge) return;
+        if (!def.repeatCostsCharge || Watching) return;
         var states = CasterStates;
         if (states == null || def.bindings == null) return;
         for (int b = 0; b < def.bindings.Count; b++)
@@ -487,13 +550,13 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
     bool Spend()
     {
-        if (Character.Instance == null || Character.Instance.IsDead || Time.time < nextUse) return false;
+        if (Caster == null || Caster.IsDead || Time.time < nextUse) return false;
         // The stack gate: a skill that requires a state doesn't run at all when unmet — checked BEFORE any cost is paid.
         // A press is always gated by the OnCast entry; the skill's other triggers have their own, separate gates.
         if (!StateGate.IsMet(def.CastEntry, CasterStates)) { BattleNotice.Warn("Not ready"); return false; }
         // CHECKED here, PAID at the release (PayPendingMana): a wind-up that gets broken costs you the attempt and
         // the cooldown, never the mana — you never got the skill off.
-        if (Character.Instance.CurrentMP < def.manaCost)
+        if (Caster.CurrentMP < def.manaCost)
         {
             BattleNotice.Warn("No MP", NoManaColor);
             return false;
@@ -511,6 +574,16 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         var b = def.BindingFor(tick.tickId);
         if (b == null) return;
+
+        // NOTHING HAPPENS HERE ON A MACHINE THAT IS ONLY WATCHING. The world lives on the server, so a skill on a
+        // player's own screen is a PICTURE of a cast, not the cast itself: the effect plays, the pose plays, and the
+        // server decides every single thing the skill does — its damage, its buffs, its holds, its charges, its
+        // dashes — against the character it holds for that person.
+        //
+        // The gate is on the CASTER, not on each effect, which is the whole point: a skill used to send only the
+        // damage half across and settle the other forty-five effects in the game here, on a copy nobody else can
+        // see. That is why a brace held nothing and a buff protected nobody.
+        if (Watching) return;
 
         // A REPEAT replays the whole skill body, which would otherwise re-apply the very states the run is spending —
         // the pile refills faster than the beats drain it and the run never ends. So the states a cast SETS UP are
@@ -551,7 +624,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                                           tick.aimUnit,
                                           def.Symbol, def.displayName, def.id,   // def.id KEYS the pile: stacks belong to the skill that granted them
                                           aimPoint: tick.aimPoint,   // Dash/Teleport go where THIS play aimed, not to the tick's VFX anchor
-                                          caster: Character.Instance, // explicit caster (local player today; a per-connection entity once server-authoritative)
+                                          caster: Caster, // the character this run belongs to: the person at this keyboard, or the one the server holds for them
                                           // Both readings of the cashed pile, measured once at cast start, handed to
                                           // EVERY effect this burst runs — so a skill's damage and its lifesteal read
                                           // the SAME pile, and the first one can't spend it out from under the second.
@@ -586,7 +659,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     /// No mana / cooldown / wind-up — the trigger IS the gesture. It's a real cast, so its cost/cadence knobs stay ignored.</summary>
     public void FireAsPassive(SkillTriggerEntry entry, Transform victim, ulong chain = 0UL)
     {
-        if (def == null || def.vfx == null || entry == null || Character.Instance == null || Character.Instance.IsDead) return;
+        if (def == null || def.vfx == null || entry == null || Caster == null || Caster.IsDead) return;
         firedBy = entry;        // this run's gate, its stack cost, and "was this a player cast" all read from here
         castChain = chain;      // this passive is in the chain; everything its effects cause carries that forward
 
@@ -612,7 +685,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public string Symbol => def != null ? def.Symbol : "";
     public Color SymbolColor => SkillSymbol.ColorFor(def);
     public int ManaCost => def != null ? def.manaCost : 0;
-    public bool Affordable => Character.Instance != null && def != null && Character.Instance.CurrentMP >= def.manaCost;
+    public bool Affordable => Caster != null && def != null && Caster.CurrentMP >= def.manaCost;
     public float CooldownRemaining => Mathf.Max(0f, nextUse - Time.time);
     public float CooldownFraction01 => lastDuration <= 0.001f ? 0f : Mathf.Clamp01(CooldownRemaining / lastDuration);
     public Color Tint => def != null ? def.tint : Color.white;

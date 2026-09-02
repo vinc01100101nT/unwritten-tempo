@@ -23,14 +23,30 @@ public class GameSystems : MonoBehaviour
              "On a 60 Hz monitor this caps you at 60.")]
     public bool lockToVSync = false;
 
-    // Apply a 120 FPS cap (VSync off) at startup — runs automatically before the first scene loads, so the
-    // whole game is uncapped from the monitor's 60 Hz refresh even if no GameSystems component is present.
-    // If the component IS in the scene, its Awake (below) re-applies the inspector values right after.
+    /// <summary>How often a SERVER runs a frame. A server draws nothing, so every frame it spends is pure
+    /// simulation — and it was spending them at the client's 120, four times more than the world needs, on a
+    /// machine with no screen to show for it.
+    ///
+    /// <para>This is also the ceiling on how often anything can reach a player: the wire is pumped once per
+    /// frame, so a send rate above this would be a promise the loop cannot keep. <see cref="GameNetwork"/>
+    /// reads this same number rather than keeping its own, so the two can never drift apart.</para>
+    ///
+    /// <para><b>Why sixty and not something lower.</b> A frame is not only simulation here — it is also when the
+    /// wire is emptied and refilled, and the transport is set up expecting to be seen roughly every ten
+    /// milliseconds. Thirty was tried first and would have stretched that to thirty-three, making every lost
+    /// packet take about three times as long to notice and resend, which is paid by every player in the world.
+    /// Sixty still halves what a server was spending and keeps the wire close to the beat it asked for.</para></summary>
+    public const int ServerFps = 60;
+
+    // Apply the frame cap at startup — runs before the first scene loads, so it holds even if no GameSystems
+    // component is present. If the component IS in the scene, its Awake (below) re-applies the inspector
+    // values right after. A server takes ServerFps and ignores the inspector entirely: those knobs describe a
+    // display, and a server has none.
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void BootFrameRate()
     {
         QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = 120;
+        Application.targetFrameRate = GameServer.IsServer ? ServerFps : 120;
     }
 
     void Awake()
@@ -48,6 +64,16 @@ public class GameSystems : MonoBehaviour
     // rate), so to actually exceed 60 on a 60 Hz panel we must turn VSync off and set the cap directly.
     public void ApplyFrameRate()
     {
+        // A SERVER IGNORES BOTH KNOBS, and it has to be said here as well as at boot: this runs from Awake,
+        // so without it the component in the Systems scene would hand a headless server the display settings
+        // back and undo the cap a few milliseconds after it was set.
+        if (GameServer.IsServer)
+        {
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = ServerFps;
+            return;
+        }
+
         if (lockToVSync)
         {
             QualitySettings.vSyncCount = 1;

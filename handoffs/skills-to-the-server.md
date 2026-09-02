@@ -4,10 +4,32 @@
 
 ## Status
 
-**MOSTLY DONE, UNPLAYED (2026-08-29).** The server now rolls a skill's damage itself. Written and
-compile-verified only — nobody has swung a skill since. Don't trust any "it works" claim about it.
+**DONE, UNPLAYED (2026-09-02).** The server rolls a skill's damage itself and now also SAYS SO, which it did not
+before. Written and compile-verified, and the server binary has been rebuilt and restarted carrying it — but
+nobody has swung a skill since. Don't trust any "it works" claim about it.
 
-## What's done
+## The per-strike path is NOT how a skill reaches the server any more — read this first
+
+Everything below under "What's done" describes a message that names ONE strike. That is not the mechanism a
+joined player uses. A press sends the WHOLE CAST across (`SkillCastRequest` → `OnSkillCastRequest` →
+`SkillRunner.CastFromRequest`), the player's own machine resolves none of it (`SkillRunner.cs:586`, `if
+(Watching) return;`), and the server runs the entire skill against the character it holds. So
+`SendSkillStrikeToServer` never runs on a client and `OnSkillStrikeRequest` never fires — the whole per-strike
+mechanism is unreachable in a live session. It is left in place because it still answers a strike named by
+anything that is not a whole cast; nothing routes to it today.
+
+**That is what caused "skills damage the mob but draw no number" (fixed 2026-09-02).** The three places that
+announce a blow on a creature are all handlers for messages a client sends, so a blow the server landed on its
+own initiative was announced by nobody, while the creature's health still reached every screen as a plain
+SyncVar. Fixed at the two places a skill's damage actually lands on the server — `SkillEffectApplier.LandStrike`
+and `ApplyExecute` — both calling the new `GameNetwork.AnnounceBlowOnMob`, the mirror of the
+`AnnounceBlowOnPlayer` line that has always sat at the damage door. `NetMob.ShellForServerMob` is the
+server-side twin of `ShellForView` that lets it name the creature.
+
+## What the per-strike message does, for the day something routes to it again
+
+Read with the section above: nothing sends one of these today. Kept because the rules it enforces are the rules
+any future per-strike route will need, and because the pieces it introduced are what the live cast path runs on.
 
 - A skill strike is **named, not measured**. The request carries the skill id, which beat of that skill, which
   effect of that beat, and the target — never a damage figure. `GameNetwork.SkillStrikeRequest` /
@@ -15,12 +37,12 @@ compile-verified only — nobody has swung a skill since. Don't trust any "it wo
 - The server looks the skill up in the same catalog (it loads from `Resources/Skills` on both sides), takes that
   exact authored effect, and rolls it through the SAME function the player's machine would have used —
   `SkillEffectApplier.Strike`, split out of the old private `LandStrike` so there is one implementation, not two.
-- The client's `LandStrike` sends and returns 0, exactly as a basic swing does.
-- The server refuses anything that is not an authored Damage effect, bounds-checks both indices, applies the same
+  **This half is very much alive**: the server's own cast path lands every strike through `Strike` as well.
+- The handler refuses anything that is not an authored Damage effect, bounds-checks both indices, applies the same
   distance ceiling and flood guard as a swing, and announces the result as an ordinary `HitResult`.
-- **The pile** (`StackVars`) is the one thing a client still states that can move a number, and it is accepted
-  ONLY when the named effect's damage multiplier actually reads a pile — **3 of 42 skills**
-  (`deathblow`, `retribution`, `flow`). For the other 39, nothing the client says affects the number.
+- **The pile** (`StackVars`) was the one thing a client stated that could move a number, and it was accepted ONLY
+  when the named effect's damage multiplier actually reads a pile — **3 of 42 skills** (`deathblow`,
+  `retribution`, `flow`). The live cast path sends no pile at all, so today no client states one.
 - `MultiHitBurst`'s running yellow total is suppressed on a machine that no longer decides damage, because it was
   built by adding up local return values and would have drawn a confident `0`.
 
@@ -72,25 +94,31 @@ has cast a skill.
    (`Player3DAttacker`, the two `attackerHit: -1` calls). No authored skill stands behind them, so they take the
    older `ResolvedStrikeRequest` path that carries a number. Closing this means resolving weapon modifiers on the
    server; smaller than the job just done.
-4. **A heal is still the client's word** (`HealClaim`) — its size is trusted.
-5. **A player's own buffs protect nothing.** The server's fighter carries no barriers, parry charges or sub-stat
-   buffs, because everything that grants one still runs on the player's machine. Bigger than the rest.
-6. **The pile reading is unbounded** — for those 3 skills a client could claim a large pile. Cap it against the
-   effect's authored `stackLimit`.
+4. **A heal a player's OWN machine decides is still their word** (`HealClaim`, sent from `Character.cs:1218`) —
+   its size is trusted. A skill's Heal effect is no longer one of these: the whole cast runs on the server, so
+   that heal is applied there like everything else the skill does.
+5. ~~A player's own buffs protect nothing~~ **NO LONGER TRUE, and unplayed.** The server runs the WHOLE cast
+   against the character it holds, so the barriers, parry charges and sub-stat buffs a skill grants are now on
+   the server's own fighter — see the comment at `SkillRunner.cs:578`, which says exactly why this was the
+   point of moving the cast. Nobody has tested that a brace actually holds a blow in a live session.
+6. ~~The pile reading is unbounded~~ **NO LONGER REACHABLE.** `SkillCastRequest` carries only the skill id, what
+   was picked and where it was aimed — no stack count — so the pile is read entirely off the character the
+   server holds. The unbounded reading survives only on `SkillStrikeRequest`, which nothing routes to.
 
 ## Dead ends / things not to retry
 
 - **Do not** have the server re-roll a skill from the def alone without being told which strike: a skill's beats
   each carry their own effects, and "the third effect" is meaningless without naming the beat.
-- **Do not** try to reproduce the strike TIMING on the server. The client keeps the timeline (it owns the
-  visuals); only the NUMBER moved. That split is deliberate and works — an earlier note in this file claimed the
-  timeline had to move too, which was wrong.
+- **Do not** put the deciding back on a player's machine. The server runs the whole cast — the timeline, every
+  effect and every number — and the player's machine draws the picture of it. That is the split, and everything
+  it fixed (a brace that holds nothing, a buff that protects nobody) comes straight back if the halves are
+  separated again.
 
 ## Next single step
 
 Play one flurry skill against a REAL MOB (not `/dummy` — its armour is 0 and hides the mitigation bug) in a live
-client-server session, and confirm the per-hit numbers appear and match what the same build shows for a basic
-swing of comparable power.
+client-server session, and confirm every beat draws its own number, the rising yellow total appears, and a basic
+swing at the same mob still draws exactly ONE number per hit rather than two.
 
 ## How to resume
 

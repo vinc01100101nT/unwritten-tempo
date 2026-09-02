@@ -42,15 +42,14 @@ public static class Vfx
         bool[] isRoot;                           // system has no ParticleSystem ancestor in this instance → drives children
         bool[] baseLoop;                         // authored loop flag per system — restored for attached auras, forced off for one-shots
         EntityId poolKey;
-        bool looping;          // any child system loops → won't auto-return; the caller must Stop() it
-        float oneShotDuration; // longest system's (duration + max start-lifetime), for the auto-return timer
-        float fadeTail;        // longest system's particle lifetime — the fade window after emission stops
+        // What this effect's own particles say about its length — the same three numbers the effect table carries
+        // for a machine that never builds one of these (see EffectTiming).
+        EffectTiming.Measured measured;
         float returnAt;        // Time.time to auto-return at; 0 = never (attached loop, until Stop)
         bool stopping;         // in the fade-out tail after Stop() → next returnAt hits Return, not another Stop
         Transform follow;      // tracked target for Attach (auras/shields); null for a fixed-point one-shot
         Vector3 offset;
 
-        const float MaxOneShot = 30f;   // safety cap so a mis-read duration can't leak an instance forever
 
         // Cache components + measure loop/duration + the authored speed/color baselines. Runs ONCE the first
         // time this instance is built (the arrays persist across reuses), so no GetComponentsInChildren on the
@@ -73,9 +72,11 @@ public static class Vfx
             baseColor = new ParticleSystem.MinMaxGradient[systems.Length];
             isRoot = new bool[systems.Length];
             baseLoop = new bool[systems.Length];
-            looping = false;
-            oneShotDuration = 0f;
-            fadeTail = 0f;
+            // HOW LONG THIS PLAYS is no longer worked out here — it is one formula, shared with the author-time
+            // baker that writes the same numbers into the effect table for a machine that never builds an instance
+            // (see EffectTiming). Measured from the instance we are holding, so a machine with the real thing still
+            // reads the real thing; the bake exists for the one that hasn't.
+            measured = EffectTiming.Of(systems);
             for (int i = 0; i < systems.Length; i++)
             {
                 var m = systems[i].main;
@@ -95,14 +96,7 @@ public static class Vfx
                 }
                 isRoot[i] = root;
                 baseLoop[i] = m.loop;
-                if (m.loop) looping = true;
-                float speed = Mathf.Max(0.01f, m.simulationSpeed);
-                float life = m.duration + m.startLifetime.constantMax;
-                oneShotDuration = Mathf.Max(oneShotDuration, life / speed);
-                fadeTail = Mathf.Max(fadeTail, m.startLifetime.constantMax / speed);
             }
-            oneShotDuration = Mathf.Min(oneShotDuration + 0.15f, MaxOneShot);
-            fadeTail = Mathf.Min(fadeTail + 0.15f, MaxOneShot);
         }
 
         // (Re)activate at a world pose with a caller scale/speed/tint. followTarget != null → track it each
@@ -144,11 +138,11 @@ public static class Vfx
                 for (int i = 0; i < audioSources.Length; i++)
                     if (audioSources[i].playOnAwake && audioSources[i].clip != null) audioSources[i].Play();
 
-            if (lifetimeOverride > 0f) returnAt = Time.time + Mathf.Max(0.05f, lifetimeOverride - tailTrim - clipStart);
-            else if (looping && !oneShot) returnAt = 0f;              // attached loop: lives until Stop()
-            // One-shot window = the Composer's WYSIWYG length (naturalLife/speed − trimEnd). A looping sub-emitter
-            // takes the SAME window (matches the preview), then Stop() fades the tail for one particle lifetime.
-            else returnAt = Time.time + Mathf.Max(0.05f, oneShotDuration / speed - tailTrim - clipStart);
+            // WHEN THIS PLAY ENDS is one arithmetic, shared with whatever else has to know the moment without
+            // holding an instance (see EffectTiming.PlayEndsInSeconds). A forced window wins; otherwise a one-shot
+            // runs the Composer's WYSIWYG length and an attached loop never ends until Stop().
+            float window = EffectTiming.PlayEndsInSeconds(measured, 0f, lifetimeOverride, oneShot, speed, tailTrim, clipStart);
+            returnAt = window > EffectTiming.NeverEnds ? Time.time + window : 0f;
         }
 
         // Tint an authored startColor by multiplying. Handles the common solid / two-colour modes; an authored
@@ -198,7 +192,8 @@ public static class Vfx
             // Keep tracking `follow` through the fade-out tail so the ease-out stays glued to a MOVING caster
             // (cleared on Return once the tail is done). Nulling it here left the tail behind at the Stop position.
             stopping = true;
-            returnAt = Time.time + fadeTail;   // let live particles fade for one particle lifetime, then Return picks it up
+            returnAt = Time.time + measured.fadeSeconds;
+            // let live particles fade for one particle lifetime, then Return picks it up
         }
 
         void LateUpdate()
@@ -211,7 +206,7 @@ public static class Vfx
             if (returnAt <= 0f || Time.time < returnAt) return;
             // A one-shot with a looping sub-emitter: stop emitting + fade the tail, THEN return (avoids a hard
             // cut). Everything else returns immediately.
-            if (looping && !stopping) Stop();
+            if (measured.loops && !stopping) Stop();
             else Return();
         }
 
@@ -268,6 +263,15 @@ public static class Vfx
         return NewInstance(def, key);
     }
 
+    /// <summary>TRUE where there is nobody to see — a headless server, which resolves every skill in the world and
+    /// would otherwise build and run a particle system for each one in front of no screen. The twin of
+    /// <c>Sfx.Deaf</c>, written the same way for the same reason.
+    ///
+    /// <para>Nothing about TIMING hangs on this. A skill's beats come from the effect table's measured lengths
+    /// (see <see cref="EffectTiming"/>), never from whether an instance was built — so a machine that draws
+    /// nothing still runs every skill on the same moments as the machines watching it.</para></summary>
+    static bool Blind => GameServer.IsServer;
+
     /// <summary>Play a one-shot effect at a world position (prefab's own orientation). Returns null if the id
     /// is unknown or the library is missing.</summary>
     public static EffectHandle PlayAt(string id, Vector3 pos) => PlayAt(id, pos, Quaternion.identity, 1f);
@@ -276,6 +280,7 @@ public static class Vfx
     /// the effect's authored scale.</summary>
     public static EffectHandle PlayAt(string id, Vector3 pos, Quaternion rot, float scaleMult = 1f)
     {
+        if (Blind) return null;
         var def = EffectCatalog.Get(id);
         if (def == null) return null;
         var h = Rent(def);
@@ -292,6 +297,7 @@ public static class Vfx
     /// <summary>As <see cref="PlayAt(string,Vector3,VfxParams)"/> but with an explicit rotation.</summary>
     public static EffectHandle PlayAt(string id, Vector3 pos, Quaternion rot, VfxParams p)
     {
+        if (Blind) return null;
         var def = EffectCatalog.Get(id);
         if (def == null) return null;
         var h = Rent(def);
@@ -316,6 +322,7 @@ public static class Vfx
                                       Color tint = default, bool oneShot = false, float clipStart = 0f, float lifetime = 0f,
                                       float speed = 1f)
     {
+        if (Blind) return null;
         var def = EffectCatalog.Get(id);
         if (def == null || target == null) return null;
         var h = Rent(def);

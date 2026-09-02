@@ -240,6 +240,14 @@ public struct VfxContext
     public Vector3 effectPoint;
     /// <summary>Uniform scale applied to every effect in the sequence (1 = authored).</summary>
     public float scaleMult;
+    /// <summary>THE NUMBER EVERY SCATTERED SHOT OF THIS PLAY IS ROLLED FROM. Picked by the machine that owns the
+    /// world and handed to every machine that draws the same cast.
+    ///
+    /// <para>Where a scattered shot lands is not decoration: the step's gameplay tick fires AT that point, so that
+    /// is where the damage is measured from. Rolled separately on each machine, a shower fell in one set of places
+    /// on the screen and took health off creatures standing in another. 0 = nobody said, and the play rolls its own
+    /// — the single-machine case, where there is nothing to agree with.</para></summary>
+    public int seed;
     /// <summary>TRUE when this play is a REPEAT of a cast that already started, not the cast's first play. A repeat
     /// replays the whole skill body, so without this the effects that SET UP the run — the stacking states it is
     /// spending — would be re-applied on every beat and the run could never end.</summary>

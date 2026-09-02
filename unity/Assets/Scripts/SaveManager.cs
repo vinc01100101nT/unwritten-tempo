@@ -30,12 +30,12 @@ public class SaveManager : MonoBehaviour
     bool dirty;
     float nextAutosave;
 
-    /// <summary>The last data read/written — the bag InventoryStore restores from, and the fallback bag we
-    /// carry forward on a save taken before the bag window was ever opened this session.</summary>
+    /// <summary>The last data read or written. Kept so the resume point and anything else that wants to know
+    /// what the save SAID can ask, without going back to the network for it.</summary>
     public SaveData Loaded { get; private set; }
 
-    /// <summary>True once the save file has been read and applied — InventoryStore waits for this before
-    /// deciding restore-vs-seed, so it never seeds over an existing save due to a startup race.</summary>
+    /// <summary>True once the save has been read and applied to the character. Goes false again if the
+    /// character it was applied to is replaced, which is what a lost connection does.</summary>
     public bool Initialized => initialized;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -55,6 +55,20 @@ public class SaveManager : MonoBehaviour
 
     void Update()
     {
+        // THE PERSON WE WERE SAVING IS GONE. Losing the connection puts the player back at the front door by
+        // reloading the whole systems layer, which destroys the character and builds a fresh one — and this
+        // object outlives that, so without noticing it would go on holding a destroyed character and never read
+        // anybody's save again. Everything the character owns would then be blank for the rest of the session:
+        // their level, their belongings, their money. Noticing here re-runs the load against the new one.
+        if (initialized && (character == null || character != Character.Instance))
+        {
+            initialized = false;
+            loading = false;
+            character = null;
+            Loaded = null;
+            return;
+        }
+
         if (!initialized)
         {
             // Nothing to do until someone is playing a character AND the Systems scene is up.
@@ -89,6 +103,18 @@ public class SaveManager : MonoBehaviour
                 // empty until the next manual bind).
                 HotbarPanel.RebuildRequested?.Invoke();
                 ReturnToWhereWeLeftOff(Loaded);
+                // AND THE BAG WINDOW IS TOLD. Filling the list does not repaint anything by itself, and the
+                // window is built before the save arrives — so without this it shows the empty bag the
+                // character had a moment ago until something unrelated happens to refresh it.
+                InventoryStore.Instance?.Notify(alsoSave: false);
+            }
+            else if (GameNetwork.MyPlayer == null)
+            {
+                // NOBODY HAS PLAYED THIS CHARACTER YET, and there is no world — so their starter goods are given
+                // here. IN a world the server does this instead, and doing it here as well was a race: whichever
+                // landed last won, and half the time a new player saw a bag the server had never heard of.
+                character.SeedBag();
+                InventoryStore.Instance?.Notify();
             }
 
             // Subscribe AFTER restoring, so loading doesn't immediately mark us dirty.
@@ -144,15 +170,29 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    /// <summary>Write the live character + bag now and reset the autosave timer.</summary>
+    /// <summary>Write the live character now and reset the autosave timer.</summary>
     public void SaveNow()
     {
         if (character == null) return;
+
+        // NOT OURS TO WRITE, IN A WORLD. The server owns this character while somebody is playing it — it holds
+        // their bag, their money and the result of every fight — and it writes them down itself. A save from
+        // here would be this machine telling the database what it thinks it owns, which is the whole hole the
+        // move was meant to close: authoritative during the fight, not authoritative about its result.
+        //
+        // Offline, there is no server and this is still the only thing that could write anything.
+        if (GameNetwork.MyPlayer != null)
+        {
+            dirty = false;
+            nextAutosave = Time.unscaledTime + autosaveInterval;
+            return;
+        }
+
+        // THE WHOLE CHARACTER, IN ONE CALL. The bag used to be fetched separately from the inventory window and
+        // stitched in here, with a fallback that carried forward the last loaded bag for the case where the
+        // window had never been opened and there was nothing to fetch. The bag belongs to the character now, so
+        // there is nothing to stitch and no case where it is missing.
         var data = character.CaptureSave();
-        // The bag lives on InventoryStore (canvas-scoped). If it's up, snapshot it; if the window was
-        // never opened this session, carry forward the bag we loaded so an autosave doesn't wipe it.
-        if (InventoryStore.Instance != null) InventoryStore.Instance.CaptureInto(data);
-        else CarryForwardBag(data);
 
         // Where the player is standing, so signing back in puts them there instead of at the map's front door.
         var player = PersistentPlayer3D.Instance;
@@ -173,15 +213,6 @@ public class SaveManager : MonoBehaviour
         Loaded = data;
         dirty = false;
         nextAutosave = Time.unscaledTime + autosaveInterval;
-    }
-
-    void CarryForwardBag(SaveData data)
-    {
-        if (Loaded == null) return;
-        data.bagItemIds = Loaded.bagItemIds;
-        data.bagCounts  = Loaded.bagCounts;
-        data.bagRefines = Loaded.bagRefines;
-        data.bagCards   = Loaded.bagCards;
     }
 
     void OnApplicationPause(bool paused) { if (paused && initialized) SaveNow(); }  // mobile/web background

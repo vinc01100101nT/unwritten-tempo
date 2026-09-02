@@ -20,7 +20,7 @@ tags:
 >
 > **STATUS (2026-07-24, the last true line on this page):** ✅ Prep Steps A–D DONE + committed to `main` (`9f393fac`) — `CombatRng`, caster-threading, `IDamageable`, `CombatAuthority`.
 >
-> **What happened after (2026-08, measured):** the netcode was NOT deferred. Mirror was adopted, a headless server and an account service were built, and the seams above were spent rather than left dormant. Two players have been watched in one world.
+> **What happened after (2026-08 to 2026-09, measured):** the netcode was NOT deferred. Mirror was adopted, and the layer grew into **four** processes — a sign-in service, a character server owning every character and save, a headless game server owning the world, and one shared database. The seams above were spent rather than left dormant. Two players have been watched in one world; the character server hands a player to a game server the way Ragnarok Online does, pushing their character ahead of them.
 
 ---
 

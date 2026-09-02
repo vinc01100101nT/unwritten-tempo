@@ -28,7 +28,15 @@ public static class PlayerFighter
     /// real progress arrives. Waiting for the answer instead would leave a person standing in the world unable to
     /// hit anything or be hit for as long as a network round trip takes, which reads as a broken game rather than
     /// as a loading pause.</para></summary>
-    public static bool BuildFor(NetPlayer shell, string characterId, string accessToken)
+    /// <summary>Build the fighter for somebody the character server ANNOUNCED, from the character it sent with
+    /// the announcement. Nothing is fetched — this server never asks the character store for anything.</summary>
+    public static bool BuildFrom(NetPlayer shell, MapServerLink.Expected announced)
+    {
+        if (announced == null) return false;
+        return Build(shell, announced.characterId, announced.progress, announced.isGm);
+    }
+
+    static bool Build(NetPlayer shell, string characterId, SaveData pushed, bool isGm)
     {
         if (shell == null || !GameServer.IsServer) return false;
 
@@ -62,9 +70,85 @@ public static class PlayerFighter
 
         shell.BindCombatUnitOnServer(character);
         PlayerUnits.Enter(character);
+        GiveThemTheirSkills(host, character);
+        // …and from now on their own machine is told what is running on them. Their skills are decided here, so the
+        // windows, the charges and the piles exist here; without this a person casts a brace and sees nothing.
+        shell.ReportStatesOf(character.States);
 
-        LoadProgressInto(character, shell, characterId, accessToken, shell.playerName);
+        // WHAT THE CHARACTER SERVER SENT, laid straight onto them. It arrived before this person did.
+        shell.ServerIsGm = isGm;
+        if (pushed != null && pushed.version > 0)
+        {
+            character.RestoreSave(pushed);
+            Debug.Log("[server] " + shell.playerName + " is level " + character.Level + " with "
+                      + character.Bag.Count + " stack(s) — their character came with them.");
+        }
+        else
+        {
+            // NEVER PLAYED, so their starter goods are given HERE — by the thing that owns bags now. It used to
+            // be their own machine that decided this, and the two raced: whichever landed last won, so a new
+            // player either saw a bag the server did not have (every use silently ignored) or none at all.
+            character.SeedBag();
+            Debug.Log("[server] " + shell.playerName + " has never been played — given "
+                      + character.Bag.Count + " starter stack(s).");
+            shell.SaveSoon();
+        }
+
+        // AND THEIR BELONGINGS GO STRAIGHT TO THEM. The bag is the server's, so the person's own machine starts
+        // empty and only ever learns what it is carrying from here.
+        shell.PushBagToOwner();
+
+        // ANYTHING THAT CHANGES THEM IS WORTH WRITING DOWN. Levelling, spending a point, gear — all of it now
+        // happens on the server, so the server is what notices. Subscribed AFTER the load is asked for, but the
+        // load itself arrives later still and calls these, which is harmless: the first save simply writes back
+        // what was just read.
+        character.OnLeveledUp += _ => shell.SaveSoon();
+        character.OnStatsChanged += shell.SaveSoon;
+        character.OnGoldChanged += _ => shell.SaveSoon();
         return true;
+    }
+
+    /// <summary>Put every composed skill on this fighter, exactly as a player's own avatar does — the SAME component,
+    /// running the SAME skill body, so a skill cannot behave one way where it is decided and another where it is
+    /// watched.
+    ///
+    /// <para>Nothing is drawn by any of it: the server plays no effect and no sound, and a skill's beats come from
+    /// the effect table's measured lengths rather than from a particle that was never built. What arrives here is
+    /// only the decision — the damage, the buff, the hold, the charge, the dash — against the character this server
+    /// holds for that person.</para>
+    ///
+    /// <para>Which of them they may actually cast is a separate question, asked per request against their hotbar and
+    /// their weapon. A runner existing is not permission.</para></summary>
+    /// <summary>Let go of a character's name so its owner can come back. Takes the ID rather than the body,
+    /// because the moment this matters most is AFTER the body has been destroyed — a person leaving. Safe to
+    /// call twice.</summary>
+    public static void ReleaseCharacter(string characterId)
+    {
+        if (!string.IsNullOrEmpty(characterId)) playing.Remove(characterId);
+    }
+
+    static void GiveThemTheirSkills(GameObject host, Character fighter)
+    {
+        var pool = SkillCatalog.All;
+        var runners = new SkillRunner[pool.Count];
+        for (int i = 0; i < pool.Count; i++)
+        {
+            var runner = host.AddComponent<SkillRunner>();
+            runner.def = pool[i];
+            runner.BindCaster(fighter);
+            runners[i] = runner;
+        }
+        fighter.BindSkillRunners(runners);
+    }
+
+    /// <summary>The runner this fighter casts <paramref name="skillId"/> with, or null if that is not a skill.</summary>
+    public static SkillRunner RunnerFor(Character fighter, string skillId)
+    {
+        var runners = fighter != null ? fighter.SkillRunners : null;
+        if (runners == null || string.IsNullOrEmpty(skillId)) return null;
+        for (int i = 0; i < runners.Length; i++)
+            if (runners[i] != null && runners[i].def != null && runners[i].def.id == skillId) return runners[i];
+        return null;
     }
 
     // Which characters are being played on this server right now. Emptied one name at a time as people leave, so
@@ -80,83 +164,22 @@ public static class PlayerFighter
     /// gone, or every creature in the world goes on chasing somebody who is not there.</summary>
     public static void Dismiss(NetPlayer shell)
     {
+        // DESTROYED IS STILL GONE. A body whose connection has already been torn down reads as null here, and
+        // that used to end this method before the name was released — so that character was held forever and
+        // its owner could never come back until the server restarted. Whoever calls this after the body has
+        // gone must use ReleaseCharacter below instead; this early return only skips the parts that need a body.
         if (shell == null) return;
 
         // Their character is free to be played again — released BEFORE the early return below, because a
         // connection that never got as far as a fighter has still claimed the name.
-        if (!string.IsNullOrEmpty(shell.ServerCharacterId)) playing.Remove(shell.ServerCharacterId);
+        ReleaseCharacter(shell.ServerCharacterId);
 
         var unit = shell.ServerCombatUnit;
         if (unit == null) return;
 
         PlayerUnits.Leave(unit);
+        shell.ReportStatesOf(null);   // stop listening before the store goes with the fighter below
         shell.BindCombatUnitOnServer(null);
         if (unit is Character c && c != null) UnityEngine.Object.Destroy(c.gameObject);
-    }
-
-    // What the account service answers with — the parts of it this server trusts over anything the client said.
-    [Serializable]
-    class ProgressReply
-    {
-        public SaveData progress;
-
-        /// <summary>The NAME and BODY the account service has on record. Taken from here rather than from what the
-        /// client announced about itself: a name is what everybody around you reads, and a client that states its
-        /// own could state anybody's. The stats were already protected this way; these were not.</summary>
-        public string name;
-        public string modelName;
-
-        /// <summary>Whether this account is trusted with the game's commands — the ONE answer that decides
-        /// whether a summon, a kill or a dummy actually happens. Read here for the same reason as the name
-        /// above: a game that asked for it could claim anything, and this reply cannot.</summary>
-        public bool isGm;
-    }
-
-    static void LoadProgressInto(Character character, NetPlayer shell, string characterId, string accessToken, string who)
-    {
-        if (string.IsNullOrEmpty(characterId) || string.IsNullOrEmpty(accessToken))
-        {
-            // SAID OUT LOUD, because the alternative is a player who quietly fights at level 1 forever and a
-            // afternoon spent wondering why their gear does nothing.
-            Debug.LogWarning("[server] " + who + " joined without sign-in proof, so their character could not be "
-                             + "read. They are fighting at starting numbers. An older client sends no proof.");
-            return;
-        }
-
-        AccountClient.SendAs("GET", "/characters/" + characterId + "/progress", null, accessToken,
-                             (ok, body, error) =>
-        {
-            if (character == null) return;   // they left while the answer was in flight
-
-            if (!ok)
-            {
-                Debug.LogWarning("[server] could not read " + who + "'s character: " + error
-                                 + ". They are fighting at starting numbers.");
-                return;
-            }
-
-            var reply = JsonUtility.FromJson<ProgressReply>(body);
-            if (reply == null) return;
-
-            // WHO THEY REALLY ARE, overwriting what they announced. Everybody around them reads this name and sees
-            // this body, so both are corrected to the record the moment it arrives — a person can no longer walk
-            // into town wearing somebody else's name.
-            if (shell != null)
-            {
-                if (!string.IsNullOrEmpty(reply.name)) shell.playerName = reply.name;
-                if (!string.IsNullOrEmpty(reply.modelName)) shell.modelName = reply.modelName;
-
-                // …and whether they are allowed to change the world. Set unconditionally, so an account that has
-                // had the mark taken away loses it here too rather than keeping whatever this body started with.
-                shell.ServerIsGm = reply.isGm;
-            }
-
-            // A character nobody has played yet comes back as an empty document, which reads as version 0 — that is
-            // a fresh character, not a failure, and the starting numbers it already has are the right ones.
-            if (reply.progress == null || reply.progress.version <= 0) return;
-
-            character.RestoreSave(reply.progress);
-            Debug.Log("[server] " + who + " is level " + character.Level + " — their character is loaded.");
-        });
     }
 }

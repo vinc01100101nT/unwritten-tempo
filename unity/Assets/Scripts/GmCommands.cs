@@ -142,13 +142,16 @@ public static class GmCommands
         Register(new GmCommand("model", "model [name]", "Wear a character model. No name lists the roster.", CmdModel, "body"));
 
         // --- Economy & items ---
-        Register(new GmCommand("gold", "gold <n>", "Add Zeny (may be negative).", CmdGold, "zeny"));
-        Register(new GmCommand("item", "item <id|name> [count]", "Drop an item into the bag.", CmdItem, "give"));
+        // THE FOUR BELOW CHANGE WHAT SOMEBODY OWNS, and what somebody owns is the server's. Run on a player's own
+        // machine they said they had worked and had not: the reply read "Gave 5x Healing Potion" while the bag
+        // went from nothing to nothing, and an added coin vanished the instant the server next spoke.
+        Register(new GmCommand("gold", "gold <n>", "Add Zeny (may be negative).", CmdGold, false, true, "zeny"));
+        Register(new GmCommand("item", "item <id|name> [count]", "Drop an item into the bag.", CmdItem, false, true, "give"));
         Register(new GmCommand("weapon", "weapon [type] [rarity]",
             "Roll a weapon into your bag. Type = sword/bow/… (default: a random weapon base). Rarity = common/uncommon/" +
             "rare/epic/legendary (default: rolled off the drop table). Its skills are rolled from the published pool " +
-            "of that weapon type.", CmdWeapon, "drop"));
-        Register(new GmCommand("clearbag", "clearbag", "Empty the bag (worn gear is left alone).", CmdClearBag, "clearinv", "clearinventory"));
+            "of that weapon type.", CmdWeapon, false, true, "drop"));
+        Register(new GmCommand("clearbag", "clearbag", "Empty the bag (worn gear is left alone).", CmdClearBag, false, true, "clearinv", "clearinventory"));
         Register(new GmCommand("bind", "bind <skillId>", "Bind a composed skill to the first empty hotbar slot.", CmdBind));
 
         // --- Mobs ---
@@ -256,8 +259,12 @@ public static class GmCommands
     static void CmdGold(GmContext c)
     {
         if (!c.TryInt(0, out var n)) { c.Reply("Usage: /gold <n>"); return; }
-        Wallet.Add(n);
-        c.Reply($"Zeny → {Wallet.Gold}.");
+        // THE PERSON WHO ASKED, not "the money on this machine". On a server the asker is one of several people
+        // signed in and each has their own; the old call reached for the one figure the whole program used to
+        // share, which on a server is nobody's.
+        if (c.Ch == null) { c.Reply("No character."); return; }
+        c.Ch.AddGold(n);
+        c.Reply($"Zeny → {c.Ch.Gold}.");
     }
 
     static void CmdItem(GmContext c)
@@ -266,8 +273,7 @@ public static class GmCommands
         if (key == null) { c.Reply("Usage: /item <id|name> [count]"); return; }
         if (!c.TryInt(1, out var count) || count <= 0) count = 1;
 
-        var store = InventoryStore.Instance;
-        if (store == null) { c.Reply("Inventory not ready."); return; }
+        if (c.Ch == null) { c.Reply("No character."); return; }
 
         Item found = null;
         foreach (var it in Resources.LoadAll<Item>("Items"))
@@ -278,7 +284,7 @@ public static class GmCommands
         }
         if (found == null) { c.Reply($"No item '{key}'."); return; }
 
-        store.Give(found, count);
+        GiveTo(c.Ch, found, count);
         c.Reply($"Gave {count}× {found.displayName}.");
     }
 
@@ -286,8 +292,7 @@ public static class GmCommands
     // token parses as a weapon type is the base, whichever parses as a rarity forces the roll.
     static void CmdWeapon(GmContext c)
     {
-        var store = InventoryStore.Instance;
-        if (store == null) { c.Reply("Inventory not ready."); return; }
+        if (c.Ch == null) { c.Reply("No character."); return; }
 
         WeaponType? type = null;
         Rarity? rarity = null;
@@ -315,7 +320,9 @@ public static class GmCommands
             return;
         }
 
-        var inst = store.GiveEquipment(pick, rarity);
+        var inst = EquipmentInstance.CreateRolled(pick, rarity);
+        c.Ch.Bag.Add(new BagEntry { def = pick, count = 1, instance = inst, isNew = true });
+        AfterChangingTheirBag(c.Ch);
         if (inst == null) { c.Reply("Couldn't create the weapon."); return; }
 
         WeaponSkillRoll.PoolCounts(pick.weaponType, out int ults, out int acts, out int pass);
@@ -341,11 +348,45 @@ public static class GmCommands
 
     static void CmdClearBag(GmContext c)
     {
-        var store = InventoryStore.Instance;
-        if (store == null) { c.Reply("Inventory not ready."); return; }
-        int n = store.ClearAll();
-        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();   // don't let a reload resurrect the bag
+        if (c.Ch == null) { c.Reply("No character."); return; }
+        int n = c.Ch.Bag.Count;
+        c.Ch.Bag.Clear();
+        AfterChangingTheirBag(c.Ch);
         c.Reply(n == 0 ? "Bag was already empty." : $"Cleared {n} stack(s). Worn gear untouched.");
+    }
+
+    // ---- putting things in somebody's bag ----------------------------------------------------------------
+    //
+    // Straight onto the CHARACTER, because on a server that is the only bag there is — the window component
+    // these used to go through belongs to a screen, and a server has none. It also has to be the asker's
+    // character and not "the" character: a server holds several people at once.
+
+    static void GiveTo(Character who, Item def, int count)
+    {
+        if (who == null || def == null || count <= 0) return;
+        if (def.slot != EquipSlotType.None)
+        {
+            for (int i = 0; i < count; i++)
+                who.Bag.Add(new BagEntry { def = def, count = 1, isNew = true,
+                                           instance = EquipmentInstance.CreateRolled(def, null) });
+        }
+        else
+        {
+            var stack = who.Bag.Find(x => x.def == def && !x.IsEquip);
+            if (stack != null) stack.count += count;
+            else who.Bag.Add(new BagEntry { def = def, count = count, isNew = true });
+        }
+        AfterChangingTheirBag(who);
+    }
+
+    /// <summary>Tell whoever owns this bag that it changed, and have it written down. On a server that means
+    /// sending them the whole bag; with no world it means nudging the window and the save that live here.</summary>
+    static void AfterChangingTheirBag(Character who)
+    {
+        var shell = GameNetwork.ShellFor(who);
+        if (shell != null) { shell.PushBagToOwner(); shell.SaveSoon(); return; }
+        InventoryStore.Instance?.Notify();
+        SaveManager.Instance?.SaveNow();
     }
 
     static void CmdBind(GmContext c)
@@ -385,6 +426,7 @@ public static class GmCommands
     // here instead, it travels the path that already works.
     static void CmdDummy(GmContext c)
     {
+        if (!TryAskersMap(c, out var map)) return;
 
         var def = MonsterCatalog.WeightedPick();
         if (def == null) { c.Reply("No mobs in the catalog to build a dummy from."); return; }
@@ -393,7 +435,7 @@ public static class GmCommands
         var p = c.Player;
         Vector3 at = p != null ? p.position + p.forward * 2f : Vector3.zero;
 
-        MobSpawner.Spawn(def, at, go =>
+        MobSpawner.Spawn(def, at, map, go =>
         {
             if (go == null) { reply?.Invoke("Couldn't build a dummy."); return; }
 
@@ -410,6 +452,7 @@ public static class GmCommands
     static void CmdSummon(GmContext c)
     {
         const string usage = "Usage: /summon <count> <normal|boss> [level] [shadow]";
+        if (!TryAskersMap(c, out var askerMap)) return;
         if (!c.TryInt(0, out var count) || count <= 0) { c.Reply(usage); return; }
         count = Mathf.Clamp(count, 1, 50);
 
@@ -454,7 +497,7 @@ public static class GmCommands
         foreach (var def in defs)
         {
             Vector2 r = UnityEngine.Random.insideUnitCircle * 2f;
-            MobSpawner.Spawn(def, basePos + new Vector3(r.x, 0f, r.y), go =>
+            MobSpawner.Spawn(def, basePos + new Vector3(r.x, 0f, r.y), askerMap, go =>
             {
                 if (go != null)
                 {
@@ -530,6 +573,26 @@ public static class GmCommands
     }
 
     // ---- shared helpers ---------------------------------------------------------
+
+    /// <summary>THE GATE EVERY COMMAND THAT BUILDS SOMETHING AT THE ASKER'S FEET GOES THROUGH. Answers with the
+    /// map to build in, or refuses and says so.
+    ///
+    /// <para>A server holds only the maps it was told to open, and a player may walk into one it never did.
+    /// <see cref="MapManager.PutInMap"/> can only move a new thing into a map that is open here, and does
+    /// NOTHING AT ALL when it is not — so the thing stays in whichever map Unity loaded last, filed under the
+    /// asker's map while standing two thousand units from that map's ground. MEASURED: six creatures filed
+    /// under a field, standing in the town. Refusing is the only honest answer, because there is nowhere here
+    /// to put it.</para>
+    ///
+    /// <para>A player's own game holds the one map it is standing in, so this never refuses in ordinary
+    /// play.</para></summary>
+    static bool TryAskersMap(GmContext c, out UnityEngine.SceneManagement.Scene map)
+    {
+        map = c.Map;
+        if (map.IsValid() && map.isLoaded) return true;
+        c.Reply($"The world isn't holding {c.MapName} — nothing can be built there.");
+        return false;
+    }
 
     static MonsterAI3D NearestMob(Transform player)
     {

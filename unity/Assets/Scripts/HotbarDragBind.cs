@@ -72,7 +72,7 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
     static void Commit()
     {
         HotbarPanel.RebuildRequested?.Invoke();
-        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
+        HotbarSaved.Now();
         UISounds.PlayClick();
     }
 
@@ -133,7 +133,7 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             if (Character.Instance.Hotbar.BindFromDrag(target.slotIndex, skillId))
             {
                 HotbarPanel.RebuildRequested?.Invoke();
-                if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
+                HotbarSaved.Now();
                 UISounds.PlayClick();
             }
             return;
@@ -148,5 +148,23 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             (RectTransform)canvas.transform, e.position, canvas.worldCamera, out var local);
         ((RectTransform)ghost.transform).anchoredPosition = local;
+    }
+}
+
+/// <summary>Where a rearranged hotbar goes. Its own small thing because BOTH drag sources in this file need it,
+/// and a copy in each is a copy that drifts.</summary>
+static class HotbarSaved
+{
+    // WHOEVER IS GOING TO WRITE THIS DOWN. In a world that is the server, which has never heard of this bar
+    // until it is told — arranging it and saying nothing meant the server's next write put the old bar back.
+    public static void Now()
+    {
+        var me = GameNetwork.MyPlayer;
+        if (me != null && Character.Instance != null)
+        {
+            me.AskToSetHotbar(Character.Instance.Hotbar.Capture());
+            return;
+        }
+        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
     }
 }

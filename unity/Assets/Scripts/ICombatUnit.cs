@@ -41,6 +41,14 @@ public interface ICombatUnit : IDamageable
     /// hit per mob is exactly the per-frame cost PERFORMANCE.md bans.</summary>
     StatusController StatusHost { get; }
 
+    /// <summary>This unit's OWN skills, in a fixed order — what a passive moment is dispatched against, and what
+    /// gives each passive the bit that keeps it from firing off its own chain. Null for a unit that carries none
+    /// (every creature today), which costs one reference check at the dispatch.
+    ///
+    /// <para>Held per unit rather than in one table because a server holds a character per person signed in: a
+    /// shared table would run out of bits after two of them, and an untracked passive is an unbraked one.</para></summary>
+    SkillRunner[] SkillRunners { get; }
+
     /// <summary>Current hit points — read by the effects whose strength scales off how hurt the target is.</summary>
     int CurrentHP { get; }
 

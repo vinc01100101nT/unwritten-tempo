@@ -71,6 +71,19 @@ public class GmContext
 
     public Character Ch => askerCharacter != null ? askerCharacter : Character.Instance;
 
+    /// <summary>The NAME of the map the person who asked is standing in — what <see cref="Map"/> looks up, kept
+    /// beside it so a message about the map and the map itself can never name two different ones.</summary>
+    public string MapName => Ch != null ? Ch.Map : MapManager.CurrentMap;
+
+    /// <summary>THE MAP THE PERSON WHO ASKED IS STANDING IN. On a server the request arrives from one of many
+    /// connections and the machine's own idea of "the current map" is meaningless — it names whichever map it
+    /// loaded last, which is somebody else's. Anything a command builds belongs here.
+    ///
+    /// <para>INVALID when this machine is not holding that map — a player may walk into a map the server never
+    /// opened. Anything that builds must ask before it builds; see <c>GmCommands.TryAskersMap</c>.</para></summary>
+    public UnityEngine.SceneManagement.Scene Map
+        => UnityEngine.SceneManagement.SceneManager.GetSceneByName(MapName);
+
     public Transform Player
     {
         get

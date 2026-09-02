@@ -90,14 +90,14 @@ public class LootDropper : MonoBehaviour
         if (Random.value <= goldDropChance)
         {
             int amount = Random.Range(goldMin, goldMax + 1);
-            if (amount > 0) SpawnCoin(amount, body);
+            if (amount > 0) Drop(null, amount, body);
         }
 
         // Items — each entry is an independent roll. The table carries MATERIALS and other non-worn drops.
         foreach (var entry in lootTable)
         {
             if (entry.item == null) continue;
-            if (Random.value <= entry.chance) SpawnItem(entry.item, body);
+            if (Random.value <= entry.chance) Drop(entry.item, 0, body);
         }
 
         DropWornGear(body);
@@ -131,30 +131,38 @@ public class LootDropper : MonoBehaviour
             if (inst?.def == null) continue;
             // A ring rolls on its own vanishingly-small chance; everything else uses this mob's normal gear rate.
             float chance = inst.def.slot == EquipSlotType.Ring ? RingDropChance : wornDropChance;
-            if (chance > 0f && Random.value <= chance) SpawnItem(inst.def, body);
+            if (chance > 0f && Random.value <= chance) Drop(inst.def, 0, body);
         }
         wornScratch.Clear();
     }
 
-    void SpawnCoin(int amount, Vector3 body)
+    // A drop lands the same way whatever it is: burst out of the mob's body and arc down to a scattered spot,
+    // resting at the mob's visible foot height (see SurfaceY) so it lands ON the grass the player sees.
+    void Drop(Item item, int gold, Vector3 body)
     {
-        var go = new GameObject("GoldPickup") { hideFlags = HideFlags.DontSaveInEditor };
-        var sr = go.AddComponent<SpriteRenderer>();
-        sr.sortingLayerName = "Default";
-        var mat = PickupMaterial.Get();
-        if (mat != null) sr.sharedMaterial = mat;
+        float surfaceY = SurfaceY();
+        Vector2 s = Random.insideUnitCircle * scatterRadius;
 
-        var pickup = go.AddComponent<WorldPickup>();
-        pickup.goldAmount = amount;
-        pickup.coinSprite = coinSprite;
-        HopToGround(pickup, body);
+        Vector3 landing = new Vector3(body.x + s.x, surfaceY + GroundLift, body.z + s.y);
+        Vector3 start   = new Vector3(body.x, surfaceY + BurstOutHeight, body.z);
 
-        go.AddComponent<YDepthSorter>();
+        // ON A SERVER NOTHING IS BUILT HERE. A server has no screen, so a body it made would be lying where
+        // nobody can see it; what every player needs is the shell that crosses the wire, and each of them
+        // builds its own body from that — the same division a creature already lives under.
+        if (GameNetwork.PublishLoot(item, gold, start, landing, gameObject.scene.name)) return;
+
+        var pickup = BuildBody(item, gold, coinSprite, start, landing);
+        // Dropped in THIS map, so it lies in this map and no other.
+        MapManager.PutInMap(pickup.gameObject, gameObject.scene);
     }
 
-    void SpawnItem(Item item, Vector3 body)
+    /// <summary>Build a drop's body and start its hop. The ONE description of what a drop lying on the ground
+    /// IS, because it is built in two places now: here, by the world that dropped it, and on every machine
+    /// watching a world it does not own (see <see cref="NetLoot"/>).</summary>
+    public static WorldPickup BuildBody(Item item, int gold, Sprite coin, Vector3 start, Vector3 landing)
     {
-        var go = new GameObject($"ItemPickup_{item.displayName}") { hideFlags = HideFlags.DontSaveInEditor };
+        var go = new GameObject(item != null ? "ItemPickup_" + item.displayName : "GoldPickup")
+                 { hideFlags = HideFlags.DontSaveInEditor };
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sortingLayerName = "Default";
         var mat = PickupMaterial.Get();
@@ -162,20 +170,38 @@ public class LootDropper : MonoBehaviour
 
         var pickup = go.AddComponent<WorldPickup>();
         pickup.item = item;
-        HopToGround(pickup, body);
+        pickup.goldAmount = gold;
+        pickup.coinSprite = coin;
+        pickup.BeginDrop(start, landing, DropDur, DropArc);
 
         go.AddComponent<YDepthSorter>();
+        return pickup;
     }
 
-    // Burst out of the mob's body and arc down to a scattered spot on the ground, resting at the mob's
-    // visible foot height (see SurfaceY) so it always lands ON the grass the player sees, not under it.
-    void HopToGround(WorldPickup pickup, Vector3 body)
-    {
-        float surfaceY = SurfaceY();
-        Vector2 s = Random.insideUnitCircle * scatterRadius;
+    /// <summary>Where a WATCHING machine finds the Zeny coin's picture. A creature carries its own (see
+    /// <see cref="coinSprite"/>), but a watcher has no creature to read it off — a drop reaches it from a server
+    /// as an amount and a place — so it loads its own copy by name, the way the net layer loads every other
+    /// thing both halves must be able to build.</summary>
+    const string CoinSpriteName = "GoldCoin";
 
-        Vector3 landing = new Vector3(body.x + s.x, surfaceY + GroundLift, body.z + s.y);
-        Vector3 start   = new Vector3(body.x, surfaceY + BurstOutHeight, body.z);
-        pickup.BeginDrop(start, landing, DropDur, DropArc);
+    static Sprite watchedCoin;
+    static bool lookedForWatchedCoin;
+
+    public static Sprite WatchedCoinSprite()
+    {
+        if (lookedForWatchedCoin) return watchedCoin;
+        lookedForWatchedCoin = true;
+
+        // GoldCoin.png is a sheet of several sprites and the baker that fills in a mob's coin takes the FIRST
+        // Sprite it finds there (see RigBuilder25D), so this takes the first one too.
+        var sprites = Resources.LoadAll<Sprite>(CoinSpriteName);
+        watchedCoin = sprites != null && sprites.Length > 0 ? sprites[0] : null;
+
+        // SAID OUT LOUD, ONCE. Without it a coin dropped in a shared world lies there showing nothing at all,
+        // which looks exactly like loot that was never sent.
+        if (watchedCoin == null)
+            Debug.LogError("[net] no sprite called '" + CoinSpriteName + "' in Resources — Zeny dropped in a "
+                           + "shared world will lie on the ground with nothing to show for it.");
+        return watchedCoin;
     }
 }

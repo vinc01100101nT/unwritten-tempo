@@ -1,5 +1,7 @@
+using System;
 using Mirror;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// One connected player, as everybody else sees them. The server spawns exactly one of these per connection
@@ -15,11 +17,17 @@ using UnityEngine;
 /// the player are built from — so a remote player is not a third kind of character with its own drift.</item>
 /// </list>
 ///
-/// <para><b>Honest about what this is NOT yet.</b> The server currently RELAYS the position its owner reports
-/// rather than deciding it. That is enough for players to see each other, and it is the same shape the real
-/// thing takes, but a client is still trusted about where it stands. Making the server decide movement needs
-/// prediction and correction on the client, which is a whole piece of work of its own — see the migration
-/// plan. Nothing here should be read as "movement is validated", because it is not.</para>
+/// <para><b>Honest about how far the server's say goes.</b> A person's own machine still MOVES them — that is
+/// what keeps the controls answering instantly at this camera distance — but the server no longer believes
+/// whatever it is told. Every reported position is checked against how far that person could possibly have
+/// travelled since the last one the server accepted, and a stream of impossible ones puts them back where the
+/// server has them (see <see cref="MoveWasPossible"/>).</para>
+///
+/// <para>So: CHECKED, not simulated. That covers the whole of what a moving player can lie about — travelling
+/// further or faster than the game allows. It is deliberately NOT the other design, where the server walks the
+/// body and the client merely predicts; that one needs full prediction and reconciliation and belongs with a
+/// camera that can afford it. Nothing here should be read as "the server decides movement", because it does
+/// not — it decides whether to believe it.</para>
 /// </summary>
 public class NetPlayer : NetworkBehaviour
 {
@@ -37,6 +45,11 @@ public class NetPlayer : NetworkBehaviour
     // figure the server keeps writing — rather than being worked out again on each machine, because two machines
     // working it out separately is precisely how they come to disagree about whether somebody is still alive.
     [SyncVar] int netHealth;
+    // The mana pool travels beside the health one, on the same beat and the same latch. It had to the moment the
+    // server started running skills: it is the server that refuses a cast nobody can pay for, so the number the
+    // person is shown must be the number that decision was made against.
+    [SyncVar] int netMana;
+    [SyncVar] int netMaxMana = 1;
     [SyncVar] int netMaxHealth = 1;
 
     // HAS THE SERVER ACTUALLY SAID ANYTHING YET. Without this the pair above start at their empty values — no
@@ -70,6 +83,8 @@ public class NetPlayer : NetworkBehaviour
     /// again when they leave — a character being played is a fact about the server, not about the wire, so it is
     /// deliberately not a synced value and no client is ever told it.</summary>
     public string ServerCharacterId { get; set; }
+
+
 
     /// <summary>SERVER ONLY: is the person on this connection trusted with the game's commands? Set from what the
     /// account service answered when their character was read, and false until then — so a connection whose
@@ -117,6 +132,17 @@ public class NetPlayer : NetworkBehaviour
 
     void Update()
     {
+        if (isServer) ServerSaveTick();
+
+        // The bag that arrived too early, handed over the moment there is somebody to hand it to.
+        if (bagWaitingForACharacter.HasValue && Character.Instance != null)
+        {
+            var waiting = bagWaitingForACharacter.Value;
+            bagWaitingForACharacter = null;
+            waiting.Onto(Character.Instance);
+            InventoryStore.Instance?.Notify(alsoSave: false);
+        }
+
         // THREE possible askers, not two — and this is where the server used to fall through the crack. "Am I the
         // one steering this?" is false on a server for EVERY player, because the server steers nobody, so it took
         // the watcher's branch and built a visible body for each person who connected: a rigged model fetched,
@@ -142,13 +168,114 @@ public class NetPlayer : NetworkBehaviour
         if (fighter == null) return;
         netHealth = fighter.CurrentHP;
         netMaxHealth = Mathf.Max(1, fighter.MaxHP);
+        if (fighter is Character person && person != null)
+        {
+            netMana = person.CurrentMP;
+            netMaxMana = Mathf.Max(1, person.MaxMP);
+        }
         healthKnown = true;
+    }
+
+    // ---- the server's half: say what is running on them --------------------------------------------------
+
+    // Reused on both sides so a push costs no garbage — this runs whenever anything about a person's buffs changes,
+    // which during a fight is often.
+    static readonly System.Collections.Generic.List<UnitStates.Mirrored> statesScratch =
+        new System.Collections.Generic.List<UnitStates.Mirrored>(16);
+
+    // The store we are listening to, held so the subscription can be dropped when the person leaves.
+    UnitStates watchedStates;
+
+    /// <summary>SERVER ONLY: from now on, tell this person about every change to what is running on them. Their
+    /// skills are decided here, so their buffs, their charges and the windows they bought exist here — and a person
+    /// whose machine was never told would cast a brace and watch nothing happen.</summary>
+    public void ReportStatesOf(UnitStates states)
+    {
+        if (watchedStates != null) watchedStates.OnChanged -= PushMyStates;
+        watchedStates = states;
+        if (watchedStates != null) { watchedStates.OnChanged += PushMyStates; PushMyStates(); }
+    }
+
+    void PushMyStates()
+    {
+        if (watchedStates == null || connectionToClient == null) return;
+        watchedStates.SnapshotForOwner(statesScratch);
+        TargetStates(connectionToClient, statesScratch.ToArray());
+    }
+
+    /// <summary>…and only to the person it belongs to. Everybody else reads a fight off the bodies and the numbers;
+    /// only you need to know how long your own window has left.</summary>
+    [TargetRpc]
+    void TargetStates(NetworkConnectionToClient target, UnitStates.Mirrored[] states)
+    {
+        var me = Character.Instance;
+        if (me == null || me.States == null) return;
+        statesScratch.Clear();
+        if (states != null) statesScratch.AddRange(states);
+        me.States.MirrorFromServer(statesScratch);
+    }
+
+    /// <summary>ONE way a skill moves a person, whichever way it does it. A blink, a glide and a shove differ only
+    /// in how the body travels — never in the fact that the server decided it and the owner's machine performs
+    /// it — so they cross the wire as one thing with a kind, rather than as three near-identical messages.</summary>
+    public struct Motion
+    {
+        public enum Kind { Teleport, Glide, Shove }
+
+        public Kind kind;
+        /// <summary>Teleport / Glide: where they end up. Shove: the point they are pushed AWAY from.</summary>
+        public Vector3 destination;
+        /// <summary>Glide: what to face for the whole trip. Ignored unless <see cref="facing"/> is set.</summary>
+        public Vector3 faceAt;
+        public bool facing;
+        /// <summary>Glide: how much faster than a run. Shove: the push's speed.</summary>
+        public float speed;
+        public bool easeIn, easeOut;
+        /// <summary>Glide: the ease window. Shove: how long the push lasts.</summary>
+        public float seconds;
+        /// <summary>Shove: how long they are staggered for.</summary>
+        public float stagger;
+    }
+
+    /// <summary>SERVER ONLY: hand this motion to the machine that owns the legs.</summary>
+    public void MoveOnOwnersMachine(NetworkConnectionToClient owner, Motion motion)
+    {
+        // WE MOVED THEM, SO WE DO NOT THEN ACCUSE THEM OF IT. Every motion the server decides — a teleport, a
+        // glide, a shove, and the GM commands that ride on them — lands this person somewhere the movement check
+        // has no way to reach at walking pace, and the report that follows would look exactly like a lie.
+        //
+        // It is forgiven HERE rather than at each of the three kinds, because this is the one door they all pass
+        // through: a fourth kind added later inherits it instead of quietly missing it.
+        ForgiveNextMove();
+        TargetMove(owner, motion);
+    }
+
+    [TargetRpc]
+    void TargetMove(NetworkConnectionToClient target, Motion motion)
+    {
+        var me = Character.Instance;
+        if (me == null) return;
+
+        // Back into this machine's own copy of the map they are standing in.
+        Vector3 dest = MapManager.InWorld(motion.destination, MapManager.CurrentMap);
+        Vector3 face = MapManager.InWorld(motion.faceAt, MapManager.CurrentMap);
+        switch (motion.kind)
+        {
+            case Motion.Kind.Teleport: me.TeleportTo(dest); break;
+            case Motion.Kind.Glide:
+                me.GlideTo(dest, motion.speed, motion.easeIn, motion.easeOut, motion.seconds,
+                           motion.facing ? face : (Vector3?)null);
+                break;
+            case Motion.Kind.Shove: me.Shove(dest, motion.speed, motion.seconds, motion.stagger); break;
+        }
     }
 
     // ---- the owner's half: believe it ---------------------------------------------------------------------
 
     int lastToldHealth = -1;
     int lastToldMaxHealth = -1;
+    int lastToldMana = -1;
+    int lastToldMaxMana = -1;
 
     void TakeTheServersWord()
     {
@@ -164,6 +291,13 @@ public class NetPlayer : NetworkBehaviour
 
         // Only when a number actually changed — a person at steady health should cost nothing. Both are watched for
         // the same reason a creature's are: a bar is a pair of numbers, and either one moving is news.
+        if (netMana != lastToldMana || netMaxMana != lastToldMaxMana)
+        {
+            lastToldMana = netMana;
+            lastToldMaxMana = netMaxMana;
+            me.SetManaFromServer(netMana, netMaxMana);
+        }
+
         if (netHealth == lastToldHealth && netMaxHealth == lastToldMaxHealth) return;
         lastToldHealth = netHealth;
         lastToldMaxHealth = netMaxHealth;
@@ -208,21 +342,418 @@ public class NetPlayer : NetworkBehaviour
         CmdReportPosition(p, yaw);
     }
 
+
+
+    // ---- writing the character down ---------------------------------------------------------------------
+    //
+    // THE SERVER IS THE ONE THAT SAVES, now that it is the one that owns what is being saved. It used to be
+    // the player's own machine, which meant the server decided what a fight was worth and the client decided
+    // what was written down — authoritative during the fight and not authoritative about its result.
+    //
+    // Written on a beat rather than on every change: a bag change, a level and a coin all arrive within a
+    // second of each other during a fight, and each is not worth its own trip to the database.
+
+    bool needsSaving;
+    float nextSaveAt;
+    bool savingNow;
+
+    // Long enough that a busy fight is one write, short enough that a machine losing power costs seconds.
+    const float SecondsBetweenSaves = 15f;
+
+    /// <summary>Server-only: something about this character changed and should be written down before long.</summary>
+    public void SaveSoon()
+    {
+        if (!isServer) return;
+        if (!needsSaving) nextSaveAt = Time.time + SecondsBetweenSaves;
+        needsSaving = true;
+    }
+
+    void ServerSaveTick()
+    {
+        if (!needsSaving || savingNow || Time.time < nextSaveAt) return;
+        SaveNow(null);
+    }
+
+    /// <summary>Server-only: write this character down NOW. <paramref name="whenDone"/> is told whether it
+    /// landed — the disconnect path waits on it, because a character released before the write has finished is
+    /// how the same items end up in two places.</summary>
+    public void SaveNow(Action<bool> whenDone)
+    {
+        if (!isServer) { whenDone?.Invoke(false); return; }
+
+        var c = ServerCharacter;
+        if (c == null || string.IsNullOrEmpty(ServerCharacterId))
+        {
+            whenDone?.Invoke(false);
+            return;
+        }
+
+        // ONE AT A TIME. Two writes in flight are two whole documents racing, and whichever lands last wins —
+        // so a slow first one arriving after a newer one silently puts the older state back. A save asked for
+        // while one is out is remembered instead and goes on the next beat.
+        if (savingNow)
+        {
+            needsSaving = true;
+            whenDone?.Invoke(false);
+            return;
+        }
+
+        needsSaving = false;
+        savingNow = true;
+
+        // SENT TO THE CHARACTER SERVER, which is the only thing that writes to the store. This machine has no
+        // database and never will — it asks, as a SERVER, with the secret the two of them share, and not as
+        // whoever happens to be playing.
+        var save = c.CaptureSave();
+
+        // AND WHERE THEY WERE STANDING. The character itself does not know — it has no map of its own and its
+        // body is this object — so the two things that decide where somebody comes back to are filled in here.
+        // Left out, every save wrote an empty map and the origin, so everybody logged in at the front door of
+        // the default map however far they had travelled, and the character server could not route them either.
+        if (!string.IsNullOrEmpty(mapName))
+        {
+            save.sceneName = mapName;
+            save.posX = netPosition.x;
+            save.posY = netPosition.y;
+            save.posZ = netPosition.z;
+        }
+
+        var body = JsonUtility.ToJson(new SaveEnvelope { progress = save });
+        ServerHttp.Send("PUT", MapServerLink.CharacterServerUrl + "/server/characters/" + ServerCharacterId
+                        + "/progress", body, MapServerLink.ServerSecret,
+            (ok, reply, error) =>
+            {
+                savingNow = false;
+                if (!ok)
+                {
+                    // SAID OUT LOUD, and the character is marked as still needing writing so the next beat tries
+                    // again. A failed save that nobody hears about is a character quietly going stale.
+                    Debug.LogWarning("[server] could not write " + playerName + " down — " + error);
+                    needsSaving = true;
+                    nextSaveAt = Time.time + SecondsBetweenSaves;
+                }
+                whenDone?.Invoke(ok);
+            });
+    }
+
+    [Serializable]
+    class SaveEnvelope { public SaveData progress; }
+
+
+    // ---- the other things a person changes about themselves ---------------------------------------------
+    //
+    // Spending a point, arranging the hotbar and choosing passives all used to happen on the player's own
+    // machine and be written down by it. The server writes now, from ITS copy — which had never heard of any of
+    // them, so every one of these was quietly undone by the next write, within fifteen seconds.
+    //
+    // The point is real power and is DECIDED here. The hotbar and the passive choice are asked for and taken as
+    // said: they are that person's own arrangement of their own things, and nothing about them can be worth
+    // more than somebody else has.
+
+    [Command]
+    void CmdSpendStatPoint(int stat)
+    {
+        var c = ServerCharacter;
+        if (c == null) return;
+        if (!System.Enum.IsDefined(typeof(PrimaryStat), stat)) return;
+        if (!c.AddStat((PrimaryStat)stat)) return;   // no points left, or already at the ceiling
+        SaveSoon();
+        TargetStatsChanged(connectionToClient, (int)c.Level, c.StatPoints, c.CaptureStatsForOwner());
+    }
+
+    [TargetRpc]
+    void TargetStatsChanged(NetworkConnectionToClient target, int level, int pointsLeft, int[] primaries)
+    {
+        var me = Character.Instance;
+        if (me == null) return;
+        me.RestoreStatsFromServer(level, pointsLeft, primaries);
+    }
+
+    [Command]
+    void CmdSetHotbar(string[] bindings)
+    {
+        var c = ServerCharacter;
+        if (c == null || bindings == null || bindings.Length > 64) return;
+        c.Hotbar.Restore(bindings);
+        SaveSoon();
+    }
+
+    [Command]
+    void CmdSetPassives(string[] chosen)
+    {
+        var c = ServerCharacter;
+        if (c == null || chosen == null || chosen.Length > 64) return;
+        c.PassiveSkills.Restore(chosen);
+        SaveSoon();
+    }
+
+    /// <summary>Client-side: tell the server this person spent a point / rearranged their bar / changed which
+    /// passives they are running. Silently does nothing with no world, where their own machine already is the
+    /// only thing that knows.</summary>
+    public void AskToSpendStatPoint(PrimaryStat stat) => CmdSpendStatPoint((int)stat);
+    public void AskToSetHotbar(string[] bindings) => CmdSetHotbar(bindings);
+    public void AskToSetPassives(string[] chosen) => CmdSetPassives(chosen);
+
+    // ---- the bag: the server holds it, this machine shows it ---------------------------------------------
+    //
+    // WHO OWNS WHAT A PERSON IS CARRYING. It is the server, now, for the same reason it owns their health: the
+    // alternative is a machine the player controls deciding what they own, and then being asked to write it
+    // down. Every change is ASKED for here and DECIDED there; what comes back is the whole bag, and this
+    // machine simply wears it.
+    //
+    // The asking is by POSITION IN THE BAG, not by naming an item: the two copies are the same list in the same
+    // order, so a position is unambiguous, and a request naming an item could be answered with the wrong copy
+    // of two identical swords carrying different upgrades.
+
+    /// <summary>Server-only: hand this connection its belongings as they now stand. Called after every change
+    /// the server makes to them, so there is exactly one way the client ever learns what it is holding.</summary>
+    public void PushBagToOwner()
+    {
+        if (!isServer) return;
+        if (ServerCombatUnit is not Character fighter || fighter == null) return;
+        TargetBagChanged(connectionToClient, BagWire.From(fighter));
+    }
+
+    // WHAT ARRIVED BEFORE THERE WAS ANYBODY TO GIVE IT TO. The bag can land before this machine has built its
+    // character, and dropping it left the person with nothing until something else happened to change it —
+    // with no way to ask again.
+    BagWire? bagWaitingForACharacter;
+
+    [TargetRpc]
+    void TargetBagChanged(NetworkConnectionToClient target, BagWire bag)
+    {
+        var me = Character.Instance;
+        if (me == null) { bagWaitingForACharacter = bag; return; }
+        bag.Onto(me);
+        // The window redraws from what just arrived. NOT marked as needing saving: this IS what the server has,
+        // so writing it back would be this machine telling the server what the server just told it.
+        InventoryStore.Instance?.Notify(alsoSave: false);
+    }
+
+    /// <summary>The server's copy of whoever is playing here, or null when this connection has no fighter
+    /// yet. Every bag command below goes through it, so "is there anybody to do this to" is asked once.</summary>
+    Character ServerCharacter => ServerCombatUnit as Character;
+
+    /// <summary>Is the thing at <paramref name="index"/> still the thing the asker was looking at? The two
+    /// copies are the same list in the same order, so a position is enough to name a stack — right up until the
+    /// list moves between the click and the request arriving, which two quick clicks are enough to do. The
+    /// asker therefore says WHAT it believed was there, and a request that no longer matches is dropped rather
+    /// than carried out on whatever slid into that place.</summary>
+    bool StillTheSameStack(Character c, int index, string expectedItemId)
+    {
+        if (c == null || index < 0 || index >= c.Bag.Count) return false;
+        var e = c.Bag[index];
+        if (e == null || e.def == null) return false;
+        if (!string.IsNullOrEmpty(expectedItemId) && e.def.id != expectedItemId)
+        {
+            Debug.LogWarning("[server] " + playerName + " asked about position " + index + " expecting '"
+                             + expectedItemId + "' but it now holds '" + e.def.id + "' — ignored.");
+            return false;
+        }
+        return true;
+    }
+
+    [Command]
+    void CmdEquipFromBag(int index, string expectedItemId)
+    {
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        var e = c.Bag[index];
+        if (e == null || !e.IsEquip || e.instance == null) return;
+
+        var prev = c.GetEquippedInstance(e.def.slot);
+        c.SetEquipped(e.def.slot, e.instance);
+        c.Bag.RemoveAt(index);
+        if (prev != null && prev.def != null)
+            c.Bag.Add(new BagEntry { def = prev.def, count = 1, instance = prev });
+        PushBagToOwner();
+        SaveSoon();
+    }
+
+    [Command]
+    void CmdUnequipToBag(int slot)
+    {
+        var c = ServerCharacter;
+        if (c == null) return;
+        var worn = c.GetEquippedInstance((EquipSlotType)slot);
+        if (worn == null) return;
+
+        c.SetEquipped((EquipSlotType)slot, (EquipmentInstance)null);
+        if (worn.def != null) c.Bag.Add(new BagEntry { def = worn.def, count = 1, instance = worn });
+        PushBagToOwner();
+        SaveSoon();
+    }
+
+    [Command]
+    void CmdReorderBag(int from, int to, string expectedItemId)
+    {
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, from, expectedItemId) || from == to) return;
+
+        var moving = c.Bag[from];
+        c.Bag.RemoveAt(from);
+        c.Bag.Insert(Mathf.Clamp(to, 0, c.Bag.Count), moving);
+        PushBagToOwner();
+        SaveSoon();
+    }
+
+    // ---- what a client asks for, from the bag window -----------------------------------------------------
+    // Public so InventoryStore can send them without knowing anything about the wire.
+
+    public void AskToEquip(int index, string itemId) => CmdEquipFromBag(index, itemId);
+    public void AskToUnequip(EquipSlotType slot) => CmdUnequipToBag((int)slot);
+    public void AskToReorder(int from, int to, string itemId) => CmdReorderBag(from, to, itemId);
+
+    // ---- loot: asked for, granted once -------------------------------------------------------------------
+
+    /// <summary>WHAT WE ASKED FOR, held only until the answer comes back, so the reward can be shown with the
+    /// drop's own sound. A person can only be reaching for one thing at a time.</summary>
+    WorldPickup askedFor;
+
+    /// <summary>Client-only: ask the server for a drop. Goes through <see cref="GameNetwork.SendPickupToServer"/>,
+    /// which is the one place that decides whether a drop is ours to give or the server's.</summary>
+    public void AskForLoot(NetLoot shell, WorldPickup body)
+    {
+        if (shell == null) return;
+        askedFor = body;
+        CmdClaimLoot(shell.netId);
+    }
+
+    /// <summary>The server decides. A drop pays out ONCE however many people reach for it in the same breath —
+    /// the loser is simply told nothing, and watches it vanish like everybody else.</summary>
+    [Command]
+    void CmdClaimLoot(uint shellId)
+    {
+        if (!NetworkServer.spawned.TryGetValue(shellId, out var identity) || identity == null) return;
+
+        var loot = identity.GetComponent<NetLoot>();
+        if (loot == null || !loot.ClaimOnServer()) return;
+
+        // PAID INTO THE BAG THE SERVER HOLDS. It used to be paid on the winner's own machine, which was the only
+        // place a bag existed; now the bag is here, and a coin added on their machine alone would be rubbed out
+        // by the next thing the server said they were carrying.
+        var c = ServerCharacter;
+        if (c != null)
+        {
+            var def = ItemCatalog.Resolve(loot.ItemId);
+            if (def != null)
+            {
+                if (def.slot != EquipSlotType.None)
+                    c.Bag.Add(new BagEntry { def = def, count = 1, isNew = true,
+                                             instance = EquipmentInstance.CreateRolled(def, null) });
+                else
+                {
+                    var stack = c.Bag.Find(x => x.def == def && !x.IsEquip);
+                    if (stack != null) stack.count += 1;
+                    else c.Bag.Add(new BagEntry { def = def, count = 1, isNew = true });
+                }
+            }
+            if (loot.Gold > 0) c.AddGold(loot.Gold);
+            PushBagToOwner();
+            SaveSoon();
+        }
+
+        // The winner is told BEFORE the drop is taken away, so the two arrive in that order. What they are told
+        // now is only that they got it — the reward itself already happened, up here.
+        TargetLootGranted(connectionToClient, loot.ItemId, loot.Gold);
+        NetworkServer.Destroy(loot.gameObject);
+    }
+
+    /// <summary>…and only the person who won it is told, so their own machine can play the sound and the
+    /// reaching gesture. It adds NOTHING: what they own arrived with the bag.</summary>
+    [TargetRpc]
+    void TargetLootGranted(NetworkConnectionToClient target, string itemId, int gold)
+    {
+        WorldPickup.Celebrate(askedFor != null ? askedFor.collectSfx : null);
+        askedFor = null;
+    }
+
     [Command]
     void CmdReportMap(string map)
     {
+        // NOTHING TO DO IF THEY ARE STILL WHERE THEY WERE, and saying so matters far more than the work it saves.
+        // The end of this method forgives the next move, because walking through a door is a jump no checker could
+        // tell from a lie. A client that simply repeats its map before every step would therefore be forgiven
+        // before every step — which is the whole movement check switched off, by a client, for free.
+        if (map == mapName) return;
+
         mapName = map;
+
+        // AND THIS BODY MOVES HOUSE WITH THEM. The server decides who is told about whom by asking which map
+        // each is in before it measures any distance, and the answer it reads is the scene the object actually
+        // sits in — not the name on the wire. A person whose body stayed in the map they started in would walk
+        // into a town nobody there could see them arrive in, and go on being visible to the map they left.
+        // A MAP THIS SERVER IS NOT HOLDING IS SAID OUT LOUD, because the alternative is the quietest failure in
+        // this whole layer. Putting a body in a map only works for a map that is actually open here; for any other
+        // it does nothing, with no error — and the body is then left filed under the map they LEFT, at the new
+        // map's coordinates. The watcher lists are built map first, so that person and the people they walked away
+        // from go on seeing each other, at positions that mean nothing, indefinitely.
+        var into = SceneManager.GetSceneByName(map);
+        if (!into.IsValid() || !into.isLoaded)
+            Debug.LogWarning("[server] " + playerName + " says they are in '" + map
+                             + "', which this server is not holding — they will be filed under '"
+                             + gameObject.scene.name + "' and seen by the wrong people. Add it to the map list.");
+        MapManager.PutInMap(gameObject, into);
 
         // AND THE FIGHTER IS TOLD TOO. It is the thing creatures actually look at, and it has no body in any map of
         // its own to be found in — so if this is not pushed across, every creature goes on hunting the whole world.
         if (ServerCombatUnit is Character fighter && fighter != null) fighter.BindMap(map);
+
+        // WORTH WRITING DOWN, because where somebody is standing is part of their character — coming back to
+        // the wrong map is the one save mistake a player notices immediately.
+        SaveSoon();
+
+        // A DOOR IS NOT A LIE. Walking into another map puts this person somewhere with no relation at all to where
+        // they were standing a moment ago, and the movement checker would read that as the largest teleport it has
+        // ever seen. The map is reported before the position that follows it, so forgiving here covers the jump.
+        //
+        // RATIONED, because this is a client saying it. A person walks through a door a few times a minute; a
+        // client that wanted free teleports would flip between two real maps as fast as it could and be forgiven
+        // each time. A second between forgivenesses costs an honest player nothing and takes that down to one
+        // jump a second — which is not nothing, and is why the real answer is for the SERVER to decide that
+        // somebody changed map rather than being told. That belongs with the character server and its map
+        // registry; until then this is the narrow version.
+        if (Time.time - lastForgivenMapChangeAt < ForgivenMapChangeGap)
+        {
+            Debug.LogWarning("[server] " + playerName + " changed map again after only "
+                             + (Time.time - lastForgivenMapChangeAt).ToString("0.00")
+                             + "s — not forgiving the jump this time.");
+            return;
+        }
+
+        lastForgivenMapChangeAt = Time.time;
+        ForgiveNextMove();
     }
+
+    // When the last map change was let off the movement check, and how long until another one can be. Server-only.
+    float lastForgivenMapChangeAt = -999f;
+    const float ForgivenMapChangeGap = 1f;
 
     [Command]
     void CmdReportPosition(Vector3 p, float yaw)
     {
-        // The server writes it down and every other client receives it. It does NOT yet check whether the
-        // move was possible — see the class summary.
+        // COULD THEY ACTUALLY HAVE GOT THERE. A person's own machine works out where they are standing and then
+        // says so, which is the one thing in the world a player is still trusted about — so this is where that
+        // trust is checked. A report that could not be true is DROPPED: nothing is written, so the server goes on
+        // holding the last place this person could actually have reached, and that is what everybody else is told.
+        if (!MoveWasPossible(p))
+        {
+            // PUT BACK only once the refusals have piled up. A single one is the game's own doing far more often
+            // than it is a lie — and dropping it already cost the liar the move, so there is no hurry.
+            //
+            // AND ONLY IF THERE IS SOMEWHERE TO PUT THEM. Until one report has been believed, the position the
+            // server holds is the empty one every object starts at, and "putting them back" would mean dragging
+            // somebody who has never successfully said where they are to the corner of their map.
+            if (haveAcceptedAPosition && refusedInARow >= RefusalsBeforeCorrecting)
+            {
+                TargetReturnTo(connectionToClient, netPosition);
+                // They are being moved by us now, so the next thing they say is measured from there and not
+                // read as one more lie.
+                ForgiveNextMove();
+            }
+            return;
+        }
+
         netPosition = p;
         netYaw = yaw;
 
@@ -233,20 +764,198 @@ public class NetPlayer : NetworkBehaviour
         // measured from the corner of the map and refused as out of reach, and every creature hunts the origin.
         //
         // Server-local: nothing here is a networked transform, so this moves the server's copy and sends nothing.
-        transform.SetPositionAndRotation(p, Quaternion.Euler(0f, yaw, 0f));
+        // WHERE THIS MACHINE KEEPS THAT MAP. What arrives is where the person is inside their own map; a
+        // server sets each map it holds down somewhere of its own, so the two are not the same number here.
+        transform.SetPositionAndRotation(MapManager.InWorld(p, mapName), Quaternion.Euler(0f, yaw, 0f));
+    }
+
+    // ---- is that where they could be? -------------------------------------------------------------------
+    //
+    // THE ONE PLACE A PLAYER IS STILL TRUSTED, and so the one place worth checking. Their machine steers their
+    // own body and reports where it ended up; nothing else about them is taken on trust any more.
+    //
+    // WHY THIS IS FORGIVING ON PURPOSE. A wrong refusal is worse than a missed cheat: it drags an honest player
+    // backwards for something the game itself did — a door, a respawn, a shove, a frame the machine spent
+    // loading something. So the ceiling is several times the fastest anybody can legitimately travel, a whole
+    // step of slack is given away on top, and one bad report is never acted on at all. A speed or teleport hack
+    // does not produce ONE impossible report, it produces every report — so counting them in a row separates the
+    // two cleanly, and still corrects within about half a second.
+
+    // Server-only, so no [SyncVar]: a client has no business knowing what it is being measured against.
+    float lastAcceptedAt;
+    int refusedInARow;
+
+    // Has ONE report ever been believed. Not the same question as lastAcceptedAt, which is deliberately cleared
+    // every time the server moves somebody itself — this one is asked to find out whether there is a real place to
+    // put a person back to, and once it is true it stays true for the life of the connection.
+    bool haveAcceptedAPosition;
+
+    // How many impossible reports in a row before the person is actually moved back. They arrive ten times a
+    // second, so this is a fifth of a second of sustained impossibility — far past any hitch, far short of
+    // anything a player would feel.
+    const int RefusalsBeforeCorrecting = 4;
+
+    // How many times the fastest legitimate travel speed still counts as possible. Generous by design; it is
+    // catching "across the map instantly", not "half a metre quick".
+    const float SpeedForgiveness = 3f;
+
+    // Free movement allowed in every report regardless of the clock, in world units. Covers the frame a machine
+    // spends loading something, and the small shove a crowd or a slope can give.
+    const float StepSlack = 1.5f;
+
+    // Nothing legitimate crosses this in one report, whatever the clock says. The backstop for a report that
+    // arrives after a long silence, where elapsed time alone would justify almost any distance.
+    const float NeverThisFarInOneStep = 40f;
+
+    /// <summary>Server-only: accept whatever position comes next without question. Called when the server ITSELF
+    /// moved this person — walking through a door is a jump the checker must not read as a lie.</summary>
+    void ForgiveNextMove()
+    {
+        lastAcceptedAt = 0f;
+        refusedInARow = 0;
+    }
+
+    /// <summary>SERVER ONLY, for the places outside this object that move somebody — coming back from the dead is
+    /// granted by the world, not by this body, and the jump to a spawn point has to be forgiven the same way a
+    /// teleport is. Deliberately NOT reachable from a client: it is the one thing that turns the check off.</summary>
+    public void ForgiveNextMoveAfterServerMove() => ForgiveNextMove();
+
+    bool MoveWasPossible(Vector3 p)
+    {
+        // A number that is not a number. It would poison every comparison after it and settle nowhere, so it is
+        // refused before anything else looks at it. It still COUNTS as a refusal: a stream of these has to end in
+        // the person being put back like any other, and counting it also means the very first report of a life
+        // cannot drag somebody to the map's origin — there is nowhere sensible to put them back to yet, and the
+        // count has not been reached.
+        if (float.IsNaN(p.x) || float.IsNaN(p.y) || float.IsNaN(p.z) ||
+            float.IsInfinity(p.x) || float.IsInfinity(p.y) || float.IsInfinity(p.z))
+        {
+            refusedInARow++;
+            return false;
+        }
+
+        float now = Time.time;
+
+        // The first report of a life, or the first after the server moved them itself. There is nothing to
+        // measure against, so it is taken as read and becomes the thing the next one is measured against.
+        if (lastAcceptedAt <= 0f)
+        {
+            lastAcceptedAt = now;
+            refusedInARow = 0;
+            haveAcceptedAPosition = true;
+            return true;
+        }
+
+        float elapsed = now - lastAcceptedAt;
+
+        // HOW FAST COULD THIS PERSON POSSIBLY BE GOING. The sprint gear is the fastest anything a player owns
+        // travels, and a Haste multiplies it — both read from the same places the mover itself reads, so the
+        // ceiling cannot drift away from the speed it is meant to describe.
+        var spec = CharacterSpec.Active;
+        float top = spec != null ? spec.moveSpeed * UnitScale.ForPlayer * spec.gaitSpeed : 8f;
+        var unit = ServerCombatUnit;
+        if (unit != null && unit.States != null) top *= Mathf.Max(1f, unit.States.MoveMult);
+
+        float allowed = top * SpeedForgiveness * elapsed + StepSlack;
+
+        // MEASURED FLAT. Falling is not travelling: gravity can move somebody down faster than they can ever walk,
+        // and a checker that counted it would refuse honest players stepping off ledges. The height is covered by
+        // the outright cap below instead, which nothing legitimate reaches in either direction.
+        Vector3 was = netPosition;
+        float dx = p.x - was.x, dz = p.z - was.z;
+        float movedSqr = dx * dx + dz * dz;
+
+        bool possible = movedSqr <= allowed * allowed
+                        && (p - was).sqrMagnitude <= NeverThisFarInOneStep * NeverThisFarInOneStep;
+
+        if (possible)
+        {
+            lastAcceptedAt = now;
+            refusedInARow = 0;
+            haveAcceptedAPosition = true;
+            return true;
+        }
+
+        // IMPOSSIBLE — so it is not written down, whichever number this is in the run. An earlier version of this
+        // counted the first few and let them through, which is a different thing entirely and a much worse one:
+        // the impossible place became the place the server held, the NEXT report was a small honest-looking step
+        // away from it, and the count reset. A liar who jumped every other report was never once corrected, and
+        // every jump landed. Refusing costs a cheat the move immediately; the count below only decides when the
+        // person is additionally dragged back, which is the part worth being slow about.
+        //
+        // The clock still advances. The next report is measured from now rather than from whenever the last
+        // believable one was, or one stalled frame would make everything after it look impossible too.
+        lastAcceptedAt = now;
+        refusedInARow++;
+
+        // Said once per run of refusals rather than per report — these arrive ten times a second, and a line each
+        // would bury the log the moment one turned up.
+        if (refusedInARow == RefusalsBeforeCorrecting)
+            Debug.LogWarning("[server] " + playerName + " reported " + refusedInARow
+                             + " impossible moves in a row — putting them back.");
+        return false;
+    }
+
+    /// <summary>Told only to the person who has to move: everybody else is already being sent the position the
+    /// server kept, so they never saw the refused one and have nothing to undo.</summary>
+    [TargetRpc]
+    void TargetReturnTo(NetworkConnectionToClient target, Vector3 whereTheServerHasYou)
+    {
+        var me = Character.Instance;
+        if (me == null) return;
+
+        // THE SAME DOOR EVERY OTHER REPOSITION GOES THROUGH. Writing the transform directly is not the same thing:
+        // this body carries a CharacterController, which fights a bare position write, and whatever the legs were
+        // already doing — a route, a dash, a glide — would carry straight on from the new spot. TeleportTo is the
+        // one place that knows how to put somebody somewhere and have them actually be there, and the server's own
+        // teleport already uses it (see TargetMove).
+        me.TeleportTo(MapManager.InWorld(whereTheServerHasYou, MapManager.CurrentMap));
     }
 
     // ---- everybody else's half: show them ---------------------------------------------------------------
 
+    // The map this machine was standing in when we last decided whether to draw this person. An INTEGER, not the
+    // name: this runs on every watched person every frame, and a string compare at that rate is the cost
+    // PERFORMANCE.md bans. It only ever moves when somebody walks through a door.
+    int seenMapVersion = -1;
+    bool inMyMap;
+
     void FollowTheServer()
     {
+        // AM I EVEN IN THE PLACE THIS PERSON IS? The creature half has always asked this; the person half never
+        // did, and got away with it only because two people in maps set far apart fall outside each other's view
+        // distance — an accident of an unrelated bandwidth rule, not a rule about maps. Two people in maps that
+        // overlap would have watched each other walk through the scenery.
+        //
+        // The second half is not belt and braces: a person's map arrives as its own value and can land a frame
+        // after their position, so a single answer taken on an empty name would be wrong for the rest of their
+        // session.
+        bool mapKnown = !string.IsNullOrEmpty(mapName);
+        if (seenMapVersion != MapManager.MapVersion || !mapKnown)
+        {
+            seenMapVersion = mapKnown ? MapManager.MapVersion : -1;
+            inMyMap = mapKnown && mapName == MapManager.CurrentMap;
+            if (!inMyMap) DropTheBody();
+        }
+
+        if (!inMyMap) return;
+
         if (body == null) { EnsureBody(); return; }
 
         // Glide rather than snap. Updates arrive ten times a second; moving straight to each one would read as a
         // stutter, so the body walks toward the latest known position instead. The SHARED way a watched body does
         // that — the identical one a watched creature uses, so the two can never drift into gliding differently.
         if (facingBuiltFrom != netYaw) { facing = Quaternion.Euler(0f, netYaw, 0f); facingBuiltFrom = netYaw; }
-        WatchedBody.Follow(body.transform, netPosition, facing);
+        WatchedBody.Follow(body.transform, MapManager.InWorld(netPosition, mapName), facing);
+    }
+
+    /// <summary>Stop drawing this person. Two reasons to, so one description of it: they left, or this machine
+    /// walked into another map.</summary>
+    void DropTheBody()
+    {
+        if (body != null) Destroy(body);
+        body = null;
+        bodyLoading = false;
     }
 
     void EnsureBody()
@@ -275,7 +984,7 @@ public class NetPlayer : NetworkBehaviour
             // Placed AND turned, not just placed. The body appears already standing where this person is and
             // already looking the way they are looking; setting only the position meant somebody walked into view
             // facing due north and then swung round to their real heading in front of you.
-            root.transform.position = netPosition;
+            root.transform.position = MapManager.InWorld(netPosition, mapName);
             root.transform.rotation = Quaternion.Euler(0f, netYaw, 0f);
 
             // The SHARED character body — the same recipe behind townsfolk and your own avatar. A remote
@@ -315,12 +1024,62 @@ public class NetPlayer : NetworkBehaviour
         }
 
         if (body == null || info.amount <= 0 || info.missed) return;
+        // The SAME two colours the person it happened to sees over their own body — one owner, read here.
         DamagePopup.Spawn(UnitAnchor.Overhead(body.transform), info.amount,
-                          info.isMagic ? WatchedMagicColor : WatchedHitColor);
+                          info.isMagic ? Character.MonsterMagicColor : Character.MonsterHitColor);
     }
 
-    static readonly Color WatchedHitColor  = new Color(1f, 0.35f, 0.35f);
-    static readonly Color WatchedMagicColor = new Color(0.7f, 0.5f, 1f);
+    /// <summary>Show this person casting a skill, on the machines watching them. The EFFECT and nothing else — no
+    /// damage, no buff, no charge, no cost. Everything the skill actually did was decided on the server against the
+    /// character it holds for them, and reaches this machine through the doors that already announce a blow, a heal
+    /// or a death.
+    ///
+    /// <para>The sequence is played directly rather than through a skill runner, deliberately: a runner is a thing
+    /// that CASTS, and one standing on somebody else's body would read its costs, gates and piles off whoever is at
+    /// this keyboard. A watcher needs a picture, and a picture is all this builds.</para></summary>
+    public void ShowCast(SkillDef def, Transform aimedAt, Vector3 aimPointInMap, int seed)
+    {
+        if (def == null || def.vfx == null) return;
+
+        // WHOSE BODY TO PLAY IT ON. Your own machine keeps no watched copy of you — it draws your real avatar — so
+        // your own casts play there, and everybody else's play on the copy built for them.
+        Transform on = isOwned ? (Character.Instance != null ? Character.Instance.Body : null)
+                               : (body != null ? body.transform : null);
+        if (on == null) return;
+
+        Vector3 point = MapManager.InWorld(aimPointInMap, isOwned ? MapManager.CurrentMap : mapName);
+        Vector3 target = aimedAt != null ? aimedAt.position : point;
+        showing = def;
+        VfxDirector.Play(def.vfx, new VfxContext
+        {
+            origin = on.position,
+            target = target,
+            effectPoint = point,
+            follow = on,
+            targetUnit = aimedAt,
+            scaleMult = 1f,
+            // THE SERVER'S OWN NUMBER, so this picture scatters into exactly the places the server measured its
+            // damage from. Without it every screen drew a different shower.
+            seed = seed,
+            // …and the two answers that decide how much there is to look at: how long a looping step stays, and how
+            // many copies of a carrier fly. Read off the SAME authored skill the server read them off, so a watcher
+            // cannot draw one bolt where five were fired.
+            stayForTick = stayForShown,
+            fanForTick = fanForShown,
+        });
+    }
+
+    // The skill currently being drawn, and the two resolvers that read its per-step answers. Fields rather than
+    // fresh lambdas per cast, so drawing somebody's flurry allocates nothing per beat.
+    SkillDef showing;
+    System.Func<string, float> stayForShown;
+    System.Func<string, ProjectileFan> fanForShown;
+
+    void Awake()
+    {
+        stayForShown = tid => showing != null ? showing.StayForTick(tid) : 0f;
+        fanForShown = tid => showing != null ? showing.FanForTick(tid) : ProjectileFan.Single;
+    }
 
     public override void OnStartClient()
     {
