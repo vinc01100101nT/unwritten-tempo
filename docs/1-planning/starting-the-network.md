@@ -76,10 +76,10 @@ CHAR_SERVER_URL=http://127.0.0.1:8081 SERVER_SECRET=change-me MAP_SERVER_ADDRESS
   builds/server/unwritten-server.app/unwritten -batchmode -nographics -logFile -
 ```
 
-Opens the game for one player. Run it again for each extra player.
+Opens the game for one player. Run it again for each extra player. **The setting is not optional** — see below.
 
 ```
-open -n builds/client/unwritten.app
+CHAR_SERVER_URL=http://127.0.0.1:8081 builds/client/unwritten.app/Contents/MacOS/unwritten &
 ```
 
 ### Building
@@ -347,14 +347,29 @@ Open the normal game build, once per player. Each one signs in, picks a characte
 the character server on the way in.
 
 ```
-open -n builds/client/unwritten.app
+CHAR_SERVER_URL=http://127.0.0.1:8081 builds/client/unwritten.app/Contents/MacOS/unwritten &
 ```
 
-Run that once for each player on this Mac; `-n` is what lets a second copy open.
+Run that once for each player on this Mac. It starts the game's own program rather than the app, which is what
+lets a second copy open AND what carries the setting to it.
+
+**Why not `open -n builds/client/unwritten.app`.** `open` hands the app to the operating system to start, and the
+operating system passes it **none** of the settings from the terminal that ran it — so the game comes up with no
+character server to ask, cannot be let into the world, and is refused at the door. It now says so and stops
+rather than retrying forever, but it still cannot get in. If you prefer `open`, it has to carry the setting
+itself:
+
+```
+open -n --env CHAR_SERVER_URL=http://127.0.0.1:8081 builds/client/unwritten.app
+```
 
 **Worked when:** each player sees the other walking around, and the server prints a line as each arrives —
 `[map] expecting <name> — their character arrived ahead of them.` That line is the character server's push
-landing, and it appears *before* the player's own connection does.
+landing, and it appears *before* the player's own connection does. **Watched happening on 2026-09-02** with two
+accounts on this Mac.
+
+**If a player connects and instantly drops, over and over,** they were started without `CHAR_SERVER_URL` — see
+the troubleshooting entry below. That is the one failure this step has actually produced.
 
 ---
 
@@ -368,7 +383,7 @@ Nothing here is baked into a build. A build made once can be aimed anywhere by s
 | `GAME_SERVER_HOST` | Which machine a player's game dials. | `localhost` |
 | `GAME_SERVER_PORT` | The port both sides use. Must match. | `7777` |
 | `ACCOUNTS_URL` | Where the sign-in service lives. | `http://localhost:8080` |
-| `CHAR_SERVER_URL` | Where the character server lives. **On a player's build, leaving this unset sends character requests to the sign-in service instead** — which no longer answers them. | `http://localhost:8081` on a server; empty on a player's build |
+| `CHAR_SERVER_URL` | Where the character server lives. **Required on a player's build too:** left unset, the game has nobody to ask to be let in, cannot be announced to the world, and refuses to dial rather than being turned away at the door. | `http://localhost:8081` on a server; empty on a player's build — which is why you must set it |
 | `SERVER_SECRET` | How the game server and the character server recognise each other. Must match on both. Never a player's token. **Required on the game server.** | none — the game server says so and nobody can enter |
 | `MAP_SERVER_ADDRESS` | How the character server reaches this game server back. Its address on the network, not the player's. | `127.0.0.1` |
 | `MAP_SERVER_ARRIVALS_PORT` | The door the character server pushes characters in on. Not the port players use. | `7788` |
@@ -549,6 +564,8 @@ believing a game server that has said nothing for two minutes, so a crashed one 
 **Everything works but nothing is saved.** The game server writes through the character server. If the
 character server is down, the world keeps playing and stops being written down — its log says so each time.
 
+**A player connects and immediately reconnects, over and over, and the server says "refused a connection nobody announced — no good ticket."** The game was started without `CHAR_SERVER_URL`, so it never asked the character server to let it in and dialled the world with no ticket — and a map server refuses every connection it was not told to expect. **Watched happening on 2026-09-02**, from launching the built game with `open`, which passes it none of the terminal's settings. Start it the way *The players* above says. The game now says this out loud and stops instead of retrying, so if you see the old silent loop you are running a build from before that.
+
 **You restarted the character server and now nobody can enter.** Expected, and it fixes itself: a fresh
 character server starts knowing about no game servers at all. The game server says hello again on its own
 beat — **up to 30 seconds** — and entering works from then on. Watched on 2026-09-02: refused immediately
@@ -639,10 +656,10 @@ Unity's own hosting service shut down on 31 March 2026; do not plan around it.
 
 ## Related
 
-- [Networking — Implementation Notes](../2-systems/networking-implementation-notes.md) — what the thing you just started actually does, and what is still unrun.
+- [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md) — what the thing you just started actually does, and what is still unrun.
 - `charserver/README.md` — the character server itself: what it owns, its settings, and how to prove it works.
 - [The Offline Checker Is Not the Editor](../5-ai-learnings/the-checker-is-not-the-editor.md) — why a build fails on code the checker says is fine.
 - [Querying the Database](querying-the-database.md) — reading back the accounts and characters this runbook creates.
-- [Network-Readiness — Combat Audit & Refactor Plan](../2-systems/network-readiness-audit.md) — the July survey that chose this shape.
+- [Network-Readiness — Combat Audit & Refactor Plan](../2-systems/networking/readiness-audit.md) — the July survey that chose this shape.
 - [Performance Checkup — My Routine](performance-checkup-routine.md) — the routine that now needs a running world before it can start.
 - [Roadmap to Launch](roadmap-to-launch.md) — Tier 2, where this sits against the plan.

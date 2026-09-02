@@ -89,4 +89,4 @@ Run `tools/check-unity-code.sh` — it type-checks both halves (game + editor to
 - [Active Skill System — V3](README.md) — the design this is the unit half of.
 - [Biome Mob Families — Tiered Spawning](../../3-world/biome-mob-families.md) — where the 86 mobs came from.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the curve a mob's ring ranks resolve through.
-- [Networking — Implementation Notes](../networking-implementation-notes.md) — server-owned creatures, built from these blocks.
+- [Networking — Implementation Notes](../networking/implementation-notes.md) — server-owned creatures, built from these blocks.

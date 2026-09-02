@@ -388,7 +388,7 @@ leaves every database that already ran it behind, silently.
 ## Related
 
 - [Starting the Network](starting-the-network.md) — how the database gets running in the first place.
-- [Networking — Implementation Notes](../2-systems/networking-implementation-notes.md) — who writes what into it, and why progress is still written by the client.
+- [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md) — who writes what into it, and why progress is still written by the client.
 - [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — how to read the stats inside a save.
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the ring walk that a save serializes.
 - [Roadmap to Launch](roadmap-to-launch.md) — the persistence line under Tier 2.

@@ -54,7 +54,7 @@ RO-style **2.5D** action-RPG (3D world + billboard sprites), built in Unity. *Co
 - **Art pipeline:** GPT→Trellis→Blender→Unity prop pipeline proven, 8-dir sprite baker, live-3D player and NPC rigs, locked style guide v2.1 and charcoal+gold UI palette.
 - **HUD:** inventory / equipment / character trio, skill book, data-driven hotbar, buff bar, cast bar, damage popups, death screen.
 - **Workflow:** offline C# and skill-data checkers that run in seconds without opening Unity, plus a live editor link for reading real values.
-- **Multiplayer — started, and no longer a Tier-2 abstraction (see Tier 2 below):** **four** processes now — a sign-in service, a character server that owns every character and every save, a headless game server that owns the world and never touches the database, and one shared Postgres. Two players have been watched standing in the same town seeing each other move. A player is let in by the character server, which pushes their whole character to the game server before telling them where to knock. The combat half is written and largely unrun. There is deliberately **no offline game any more** — pressing Play needs a running server. Details in [Networking — Implementation Notes](../2-systems/networking-implementation-notes.md); how to stand it up in [Starting the Network](starting-the-network.md).
+- **Multiplayer — started, and no longer a Tier-2 abstraction (see Tier 2 below):** **four** processes now — a sign-in service, a character server that owns every character and every save, a headless game server that owns the world and never touches the database, and one shared Postgres. Two players have been watched standing in the same town seeing each other move. A player is let in by the character server, which pushes their whole character to the game server before telling them where to knock. The combat half is written and largely unrun. There is deliberately **no offline game any more** — pressing Play needs a running server. Details in [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md); how to stand it up in [Starting the Network](starting-the-network.md).
 
 **Honest read:** this is a combat system a stranger could enjoy for twenty minutes and then run out of reasons to keep playing. The technology is not the blocker and has not been for a while.
 
@@ -121,7 +121,7 @@ Then, in dependency order:
 
 **This tier is no longer untouched.** The plan said defer it until Tier 1 lands; the work went ahead anyway through late August, so the honest statement is that the foundation of Tier 2 exists and Tier 1's content gap did not shrink while it was being built. That is a real trade already made, not a proposal. Whether to keep spending here before the loot spine is the open strategic question — see *The recommended next move* above, which still says content first.
 
-What now stands, measured (details in [Networking — Implementation Notes](../2-systems/networking-implementation-notes.md)):
+What now stands, measured (details in [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md)):
 
 - **Networking core** — **partly built.** Server-authoritative on headless Unity, Mirror as the library, a shell/body split so only ids and positions cross the wire, range-based interest at 60 units, and a reconnect-then-give-up loop. **Watched working:** the server boots, players sign in and see each other move. **Written and never run:** server-owned creatures and the whole combat round-trip. **Not built:** client prediction/reconciliation — movement is relayed and trusted, which is the largest piece left — and zoning/sharding.
 - **Backend & accounts** — **built for the basics, and the authority moved.** Login/auth, a real database of accounts and characters, and a separate character server that owns the list, the saves and the door into the world. **The server now writes progress, and owns the bag, the money and the worn gear**; a save from a player's own machine is refused while they are in a world, and movement reports are checked against what was possible. **Not built:** sharding, trade, and resolving skills server-side (a skill's damage and a heal's size are still the client's word).
@@ -155,7 +155,7 @@ The original plan built a **2D** foundation in phases A–G (engine → characte
 - [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the progression engine behind M3.
 - [Crafting & Recycling](../2-systems/crafting-and-recycling.md) — the loot loop M3 is missing the content for.
 - [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — why the 86 mobs are comparable to a player.
-- [Networking — Implementation Notes](../2-systems/networking-implementation-notes.md) — what Tier 2 has actually become.
+- [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md) — what Tier 2 has actually become.
 - [Starting the Network](starting-the-network.md) — how to stand the multiplayer half up.
 - [World Creator — Spec](../3-world/world-creator-spec.md) — the pipeline that made the 41 maps.
 - [Biome Mob Families — Tiered Spawning](../3-world/biome-mob-families.md) — how M2's maps get populated.

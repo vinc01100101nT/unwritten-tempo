@@ -10,7 +10,7 @@ tags:
 
 Code-facing companion for the multiplayer layer. Read this before touching anything networked, or before adding a new kind of thing that has to exist for more than one player.
 
-Sibling docs: [Network-Readiness Audit](network-readiness-audit.md) (the July survey that chose the shape) · [Starting the Network](../1-planning/starting-the-network.md) (how to run it) · [Querying the Database](../1-planning/querying-the-database.md) (how to read what it persisted) · `charserver/README.md` (the character server).
+Sibling docs: **[Architecture](README.md)** (the shape on one page — start there) · [Network-Readiness Audit](readiness-audit.md) (the July survey that chose the shape) · [Starting the Network](../../1-planning/starting-the-network.md) (how to run it) · [Querying the Database](../../1-planning/querying-the-database.md) (how to read what it persisted) · `charserver/README.md` (the character server).
 
 ---
 
@@ -39,19 +39,9 @@ Both live things follow this exactly: `NetPlayer` for a person, `NetMob` for a c
 
 ### Who decides what
 
-|  | Owned by | Everyone else |
-| --- | --- | --- |
-| A player's position | moved by their own machine, **checked** by the server | watches |
-| A mob's brain, path, health | the server | watches |
-| Combat outcome | the server — it rolls it, applies it, and announces it | watches, and shows what it was told |
-| What a body is DOING — swinging, walking | **nothing announces it yet**; each machine guesses from what it can see | shows a still body — see [Action Alarms](action-alarms.md) |
-| How a body LOOKS — which clip, which model, which effect | each machine, locally | — |
-| A player's bag, money and worn gear | the server | asks, and is sent the result |
-| A player's save | the server, written through the character server | — |
-
-**A player's machine owns no FACT and decides no outcome.** That is literal: both damage channels refuse to act anywhere but the server, the bag refuses to be added to anywhere but the server, and a save from a player's own machine is refused while they are in a world. See *There is no offline game* below.
-
-What it does own is **presentation**: which clip plays, how a body is drawn, and when its *own* body reacts to its *own* input — your character swings the frame you press, and waits for nothing to do it. That is the only thing a player's machine gets to decide, and the line is drawn in [Action Alarms](action-alarms.md).
+**The table lives in [the architecture overview](README.md)** — one home for it, so a reader can never find two
+answers to the same question. In one line: your machine owns how things *look* and when your own body reacts to
+your own input; the server owns everything that is *true*.
 
 ---
 
@@ -82,7 +72,7 @@ Prefabs `NetPlayer` and `NetMob` live in `Assets/3_Data/Resources` and are found
 
 **The wire comes up BEFORE the world, not with it.** A server may bring its map up immediately — it *is* the world. A player may not: `GameRoot` dials, waits for `GameNetwork.OnJoinedWorld`, and only then wakes the scene and loads a map. Signing in no longer puts anybody anywhere; it earns the right to try.
 
-**Environment settings, never rebuilds.** Where a build points is set by `ACCOUNTS_URL` / `CHAR_SERVER_URL` / `SERVER_SECRET` / `MAP_SERVER_ADDRESS` / `GAME_SERVER_PORT`, the same rule the sign-in service already followed. One build, aimed anywhere — and now a player's build does not even need to be aimed, because the character server tells it where to go.
+**Environment settings, never rebuilds.** Where a build points is set by `ACCOUNTS_URL` / `CHAR_SERVER_URL` / `SERVER_SECRET` / `MAP_SERVER_ADDRESS` / `GAME_SERVER_PORT`, the same rule the sign-in service already followed. One build, aimed anywhere. **A player's build still has to be told where the CHARACTER server is** — that is the one it cannot be sent to, because asking it is how a player is let in at all; what it no longer needs is the address of the world, which the character server hands over. A copy started without it cannot enter, and says so rather than knocking on a door that will refuse it.
 
 **A player never carries their own character onto the wire.** They carry a one-time pass. Their character was pushed to that game server before they were told where to knock, so a connection that cannot produce a pass is refused before it is anybody. This is Ragnarok's order and the reason for it: the thing running the world never talks to the character store, and a client's token is never the key that opens it.
 
@@ -132,7 +122,9 @@ A player who is not joined is not in the world at all, so there is no state in w
 
 **A body destroyed before your callback runs takes your bookkeeping with it.** Releasing a departing player's character was done inside the reply to a save request — which arrives long after the connection has been torn down, by which time the object reads as null and the method returns before releasing anything. That character was then held for the life of the server and its owner refused as "already playing" on every attempt to come back. Copy what you need OUT of an object before an async call, and do the bookkeeping that must not be missed synchronously.
 
-**A "retry" that re-sends a single-use thing can never succeed.** The reconnect loop dialled again with the pass it had already spent, so all three attempts were refused for a reason nobody would guess from the message. Worse, the attempt counter was cleared when the wire came up rather than when the server accepted the join — and a refusal happens a moment after the wire comes up, so the count reset every time and the loop ran forever. Reset a counter on the thing you actually wanted, not on the step before it.
+**A "retry" that re-sends a single-use thing can never succeed.** The reconnect loop dialled again with the pass it had already spent, so all three attempts were refused for a reason nobody would guess from the message. It now asks the character server again on every attempt, which mints a fresh pass and re-announces the person to the map server.
+
+**And "the wire came up" is not "I am in".** The attempt counter was cleared, and the world woken, the moment the connection opened — but a refusal arrives a moment AFTER the connection opens, so the count reset on every attempt and the loop ran forever while the world came up on screen for somebody who had been turned away. **This was fixed once and came back**, because the fix was described in a comment at the top of the method while the reset stayed fifteen lines below it: a comment is not a mechanism. Both now hang off the one thing a refused connection never gets — the server handing this player a body. Reset a counter on the thing you actually wanted, not on the step before it.
 
 **Saving from two places is a rollback waiting to happen.** While a save is in flight, another asked for beside it is a second whole document racing the first, and whichever lands last wins. One at a time, and remember the one you deferred. Give every server-to-server request a deadline, too: without one, a peer that accepts the connection and never answers leaves that player un-saved for the rest of the session with nothing saying so.
 
@@ -144,9 +136,11 @@ A player who is not joined is not in the world at all, so there is no state in w
 
 ## What is done, and what is not
 
-**Working, watched with two players:** the headless server boots and loads its map; players sign in, connect, get a body, and see each other move. A tester also watched the bag arrive from the server, an item picked up land in it and survive a relog, money paid exactly once for a drop several people reached for, and reordering hold across a sign-out.
+**Working, watched with two players:** the headless server boots and loads its map; two copies of the built game sign in as different accounts, are let in by the character server, get a body, hold their connection and see each other move — **watched on 2026-09-02**, and the first time two clients have ever been run against this layer. A tester also watched the bag arrive from the server, an item picked up land in it and survive a relog, money paid exactly once for a drop several people reached for, and reordering hold across a sign-out.
 
-**Written, never run:** the combat half — the whole hit round-trip in both directions, skills over the wire, range-based interest, and the client-side pool of watched bodies. It builds, it loads, and the editor compiles it clean, and the servers' own tests exercise the handoff and the character store; **nobody has watched a fight behave.** Treat every sentence below about combat as a description of what the code says, not of what has been seen. Nobody has run **two** clients against this build at all.
+**Watched working, one client:** a fight against server-owned creatures — the hit round-trip in both directions, the damage numbers, the creatures walking, running, swinging and flinching. **Played on 2026-09-02.**
+
+**Written, not yet watched in a fight:** skills over the wire, range-based interest at its real distance, and the swing timing now that the server decides when a blow lands rather than being told. **No fight has been watched with two people in it** — treat anything below about several players fighting as a description of what the code says, not of what has been seen.
 
 **The blocker is gone.** The server holds a CHARACTER PER CONNECTION — a real `Character` built under that connection's shell, with that player's own stats — so it can roll their blows, and creatures can hurt them. That character is **pushed here by the character server** before the player is told where to knock, so this machine reads nothing from the store and nothing about a fighter is taken from what the client says about itself. Identity is settled the same way: a connection that cannot produce the one-time pass it was given is refused before it is anybody.
 
@@ -176,16 +170,16 @@ A player who is not joined is not in the world at all, so there is no state in w
 - **A player's own buffs do not protect them.** The character the server holds carries no buffs, barriers or parry charges, because everything that grants one still runs on the player's machine. So a shield shows on your screen and soaks nothing that the server decided. Same root cause as the two above.
 - **Lifesteal and mana leech only pay out for a player attacker.** A creature having lifesteal is new gameplay nobody has specified, so it was deliberately not invented.
 - **A watching machine re-runs the defender's mitigation** on a hit the server announces. Defence and element are data and agree; **parry is a state**, and a copy holds none, so it may briefly show a number the server parried. The authoritative health corrects it within a tenth of a second.
-- **The hit rate cap is a flood guard, not a swing cadence** — 20 blows a second, far above any real attack speed so it can never gate legitimate play. The real cadence was waiting on per-connection fighters, which have now landed; moving the beat to the server is decided in [Action Alarms](action-alarms.md).
-- **Nothing crossing the wire says what a body is DOING.** A watched creature never walks, runs or swings — its mover is switched off on arrival and its brain is silenced, so the two things its animation reads from both answer "no" forever. Another player's body has no attack animation at all: their damage numbers appear while their character stands still. Decided fix: [Action Alarms](action-alarms.md).
+- **A BOW's flight time is still the swinger's to measure.** Every other basic swing is now asked for when it begins and landed by the server part-way through, on its own clock — but an arrow's blow lands when the arrow arrives, which only the machine flying it knows. So a bow asks at that moment instead, the server lands it straight away, and a bow's swing appears on other screens when the arrow lands rather than when it is loosed. See [Action Alarms](action-alarms.md).
+- **What a body is DOING now crosses the wire** — which action, when it began on the shared clock, how long it runs — so a watched creature walks, runs and swings, and another person's swing exists on your screen. **Played on 2026-09-02 and it works:** see [Action Alarms](action-alarms.md).
 - **A creature cannot yet be fought by two people fairly.** It picks one target at a time and there is no threat model; whoever it picked is who it hits.
 
 ---
 
 ## Order of remaining work, and why this order
 
-1. **Play it with two people.** The bag, the saving and the handoff have been exercised by their own tests and watched by one tester on one client; nobody has run two clients against this build. Nothing further should be built on top of code nobody has watched work.
-2. **Say what bodies are DOING** — [Action Alarms](action-alarms.md). Ahead of the skill work because it is small, it changes no outcome, and it fixes the most visible thing in a shared world: creatures that slide instead of walking, and swings that nobody but the swinger can see. Its last step — moving the swing beat to the server — does change who decides when a blow lands, and is ordered after the rest for that reason.
+1. ~~**Play it with two people.**~~ **Done on 2026-09-02** — two clients, two accounts, both in the world and watching each other. What that run has NOT yet covered is a fight with both of them in it: two people on one creature, and each seeing the other swing.
+2. ~~**Say what bodies are DOING**~~ — [Action Alarms](action-alarms.md). **Done**, including the server timing each swing and deciding when its blow lands. The animation half is played and works; the swing-timing half has not yet been watched in a fight.
 3. **Resolve SKILLS on the server**, which closes three holes at once — a skill's damage, a heal's size, and a player's own buffs mattering — because all three are the same missing thing: the character the server holds does not run the game's effects. This is the next real piece.
 4. **Threat, so several people can fight one creature.** It picks the nearest today, which is honest but shallow.
 5. **Server-SIMULATED movement**, with prediction and correction — only if checking turns out not to be enough. It is deliberately not the plan: this camera is close enough that a player must move their own body, and checking covers the whole of what a moving player can lie about.
@@ -196,9 +190,9 @@ Mobs had to become server-owned *before* combat could, and that was found the ha
 ## Related
 
 - [Action Alarms](action-alarms.md) — how a body says what it is DOING across the wire, and who owns the animation, the timing and the rendering.
-- [Network-Readiness — Combat Audit & Refactor Plan](network-readiness-audit.md) — the July survey whose four prep steps this layer was built on top of.
-- [Starting the Network](../1-planning/starting-the-network.md) — the runbook: database → sign-in → character server → game server → players.
-- [Querying the Database](../1-planning/querying-the-database.md) — reading back the accounts and characters this layer persists.
-- [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — the stat block the server builds per connection.
-- [Active Skill System — V3](active-skill-system-v3/README.md) — the effects the server cannot yet resolve, and why that is the next piece.
-- [Roadmap to Launch](../1-planning/roadmap-to-launch.md) — where this sits against the plan (Tier 2).
+- [Network-Readiness — Combat Audit & Refactor Plan](readiness-audit.md) — the July survey whose four prep steps this layer was built on top of.
+- [Starting the Network](../../1-planning/starting-the-network.md) — the runbook: database → sign-in → character server → game server → players.
+- [Querying the Database](../../1-planning/querying-the-database.md) — reading back the accounts and characters this layer persists.
+- [Unified Unit Stats](../active-skill-system-v3/unified-unit-stats.md) — the stat block the server builds per connection.
+- [Active Skill System — V3](../active-skill-system-v3/README.md) — the effects the server cannot yet resolve, and why that is the next piece.
+- [Roadmap to Launch](../../1-planning/roadmap-to-launch.md) — where this sits against the plan (Tier 2).

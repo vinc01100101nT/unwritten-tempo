@@ -268,4 +268,4 @@ not behaving** — a wrong formula compiles perfectly, so neither replaces a pla
 - [Skill Numbers & Balance Baseline](skill-numbers-balance-baseline.md) — the bands the composer's starter weights still don't match.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — what `AffinityMult` is reading.
 - [HUD/UI System — Design & Relay](../hud-ui-system.md) — the windows these numbers surface in.
-- [Networking — Implementation Notes](../networking-implementation-notes.md) — the applier that does not yet run on the server.
+- [Networking — Implementation Notes](../networking/implementation-notes.md) — the applier that does not yet run on the server.

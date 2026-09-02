@@ -226,5 +226,5 @@ The trigger is only **when** a passive runs. **What** it sets or reads (stacks, 
 - [Sword — Skill Roster](sword-skill-roster.md) — the one fully-authored pool.
 - [Ring System — Current Facts (Trio-Ring)](../ring-system-trio-ring.md) — the scaling layer §3 hands the numbers to.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](../pre-renewal-ro-port.md) — the combat maths under the channels.
-- [Networking — Implementation Notes](../networking-implementation-notes.md) — why the server cannot resolve these effects yet.
+- [Networking — Implementation Notes](../networking/implementation-notes.md) — why the server cannot resolve these effects yet.
 - [The Three-Brain Design Process](../../0-process/design-process.md) — the flow that locks anything on this page.

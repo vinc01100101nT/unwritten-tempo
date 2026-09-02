@@ -1,5 +1,5 @@
 ---
-status: decided, not built
+status: built and play-tested
 owner: vince
 last-updated: 2026-09-02
 tags:
@@ -12,31 +12,21 @@ tags:
 
 An **alarm** is one announcement that says: *this unit began this action, at this moment, and it lasts this long.* Nobody ever sends "stop" — it expires on its own clock. Borrowed from Ragnarok, whose server source was read for this doc rather than remembered.
 
-Sibling docs: [Networking — Implementation Notes](networking-implementation-notes.md) (what is actually built) · [Network-Readiness Audit](network-readiness-audit.md) (the survey that chose the shape) · [Starting the Network](../1-planning/starting-the-network.md) (how to run it).
+Sibling docs: **[Architecture](README.md)** (the shape on one page) · [Networking — Implementation Notes](implementation-notes.md) (what is actually built) · [Network-Readiness Audit](readiness-audit.md) (the survey that chose the shape) · [Starting the Network](../../1-planning/starting-the-network.md) (how to run it).
 
-**Status: decided on paper, none of it built.** Every "does X" below is a decision, not a description. What is true *today* is in [What is broken today](#what-is-broken-today), and it is all measured.
+**Status: built, and played on 2026-09-02 — it works.** [What shipped, and what has not](#what-shipped-and-what-has-not) is the ledger.
 
 ---
 
-## Ownership — the whole table, one place
+## Ownership
 
-This is the answer to "who owns what" for everything the alarm touches. The rows about position, health and combat outcome restate what the [implementation notes](networking-implementation-notes.md) already own; they are here so the picture is not split across two documents.
+**The table lives in [the architecture overview](README.md)**, which is the one home for it. The rows that matter
+here: when your own animation starts is your machine's; when your action starts on everybody else's screen is the
+server's clock; how long an action lasts is a number the server holds, never a clip length; and which clip, model
+and effect are drawn is each machine's own business.
 
-| Thing | Who owns it | Everyone else |
-| --- | --- | --- |
-| Where **you** are | your machine moves you; the server **checks** it | watches |
-| Where anything else is | the server | watches |
-| A monster's brain, path and target | the server | watches |
-| Whether a blow lands, and for how much | the server | is told, and shows it |
-| Health, death, revival | the server | is told |
-| **When your own animation starts on your own screen** | **your machine** | — |
-| **When your action starts on everyone else's screen** | **the server's clock** | is told, and shows it |
-| **How long an action lasts** | **the server** (a number it holds, never a clip length) | is told |
-| **Which clip, which model, how it looks** | **each machine, locally** | — |
-| Your bag, money and worn gear | the server | asks, is sent the result |
-| Writing to the database | the **character server**, only | the map server pushes progress to it and never writes |
-
-**The one-line rule:** your machine owns how things *look* and when *your own* body reacts to *your own* input. The server owns everything that is *true*.
+**The one-line rule:** your machine owns how things *look* and when *your own* body reacts to *your own* input.
+The server owns everything that is *true*.
 
 ---
 
@@ -46,14 +36,14 @@ This is the answer to "who owns what" for everything the alarm touches. The rows
 
 1. You press attack. **Your character swings that same frame**, locally, waiting for nothing.
 2. Your machine sends one message: *"I am swinging at that thing."* Nothing else — no timestamp, no damage, no element. The server holds all of it.
-3. The map server checks: is that target real, is it in reach, **is your next swing due yet**. If not due, the request is dropped.
-4. The map server stamps the moment on the shared clock, runs the swing on its own timer, and decides the outcome.
+3. The map server checks: is that target real, does it hold a fighter for you, **is your next swing due yet**. If not due, the request is dropped and the refusal logged.
+4. The map server stamps the moment on the shared clock, runs the swing on its own timer, and at the contact point judges reach and decides the outcome — reach at the moment of contact, exactly where it was judged before.
 5. It announces **one** message to everyone who can see you: who swung, at what moment, for how long, and what the blow did.
 6. Every other machine plays your swing from that moment and pops the damage number partway through it, wherever its own art says the contact frame is. Your machine ignores its own echo — you already swung.
 
 **Why the timestamp is the server's and not yours.** A machine that writes its own timestamp can backdate a swing to slip past the cadence check, or post-date one to shove everyone's view of it out of step. The server's own stamp costs nothing and cannot be gamed. Ragnarok's action packet carries the **server's** tick for this exact reason.
 
-**Why one message and not two.** Today your machine sends a second message at the contact frame of its own animation, which hands it the say over *when* the blow lands. Dropping that message and letting the server run the swing on its own timer removes that, and it makes the number and the animation **the same message**, so they can never disagree. The delay is identical either way — one trip out, a swing length, one trip back — so this costs nothing in feel.
+**Why one message and not two.** Your machine used to send a second message at the contact frame of its own animation, which handed it the say over *when* the blow landed. That message is gone: the server runs the swing on its own timer, so the number and the animation are **the same message** and cannot disagree. The delay is identical either way — one trip out, a swing length, one trip back — so it cost nothing in feel.
 
 ### A monster's swing
 
@@ -97,7 +87,7 @@ Somebody who starts watching a body 90% of the way through its swing plays the l
 
 ### 3. The moment is stamped on the SHARED clock
 
-The networking library carries a server-synchronised clock. **Nothing in this codebase uses it yet** — that is measured, not assumed. Without it a start moment is meaningless, because two machines' uptimes differ by however long each has been running.
+The networking library carries a server-synchronised clock, and every beat is stamped on it. Without it a start moment would be meaningless, because two machines' uptimes differ by however long each has been running.
 
 ### 4. The duration is a number the SERVER owns — never an animation clip's length
 
@@ -151,40 +141,34 @@ Two more, so they are not discovered later:
 
 ---
 
-## What is broken today
+## What shipped, and what has not
 
-All measured on 2026-09-02, in the code, not reasoned.
+Built and played on 2026-09-02 — creatures walk, run, swing and flinch, and it holds up in play. Two clients have since been run against it and both hold their place in the world, though **no fight with two people in it has been watched yet**: nobody has seen another person's swing on their own screen, and the server-timed landing (item 7) has not been watched in a fight either.
 
-- **A watched monster never walks or runs.** Its mover is switched off when it arrives from the server, and the animation driver asks that switched-off mover whether it is walking. A switched-off mover always answers no.
-- **A watched monster never swings.** The moment "it bit someone" is stamped by its brain, and a watched copy's brain is silenced, so nothing is ever stamped.
-- **A player's swing is invisible to everyone else.** Not mistimed — absent. There is no attack animation on another player's body at all; the damage numbers appear while their character stands still.
-- **A monster's flinch has two owners** — the announced blow, and the body's own inference from its health dropping.
-- **The server does not enforce attack cadence** — only a 20-per-second flood ceiling and a reach check.
-- **The map server builds animation rigs** for shadow monsters that nobody will ever look at.
-- **The shared clock is unused.** No code reads it.
+**Done:**
 
-What already works, and must not be rebuilt: a blow on a monster or a person is announced to everyone in range with its amount, element, crit, miss, overkill and whether it folds into a rising total, and each machine runs it through the same door the offline game used.
+1. **Locomotion is told as a speed** — creatures publish the mover's own live figure; people have theirs worked out on the server from the position reports it accepted, and zeroed when they go quiet for longer than two report intervals (a person who stops walking stops reporting).
+2. **The held action value and the alarm**, on creatures and on people alike. The clip plays at its own natural length, capped by the beat.
+3. **The flinch has one owner** — the announced blow. The body's inference from its health number dropping is gone.
+4. **A person's swing is announced**, with the pose chosen from the weapon the server holds for them.
+5. **The map server builds no rigs** — it applies the capsule, the footprint and the character travel gears, and fetches no model.
+6. **The shared clock is in use** — every beat is stamped on it, by the server.
 
----
+7. **The server owns the beat AND the landing** — decision 7, both halves. A swing is asked for at the moment it begins; the server refuses one that arrives before that fighter's attack speed allows it, announces it, and lands it part-way through on its own clock. When in the swing that is happens to be one number in the shared character spec, which the swinger's animation and the server both read, so they cannot drift.
 
-## Build order
+**The one exception, and the swinger's machine says so by asking at a different moment: a bow.** An arrow's blow lands when the arrow arrives, which is worked out by flying it — so a bow still asks at the moment its arrow lands, and the server lands that one straight away. Two consequences, both accepted: a bow's swing appears on other screens when its arrow lands rather than when it is loosed, and for a bow the flight time is still the swinger's to measure. Fixing it properly means the server flying its own arrow, which is a movement simulation rather than a timer.
 
-1. **Locomotion told as a speed.** No new concepts, smallest change, and it fixes the most visible half — monsters that slide instead of walking.
-2. **The held action value, and the alarm that fires from it**, on monsters first: the server stamps a bite and announces it; watchers play the swing and join one already in progress.
-3. **Delete the flinch's second owner** once the blow's flinch is proven to be the one arriving.
-4. **The same alarm on players**, so another person's swing exists on your screen at all.
-5. **Move the beat to the server** — one message at the start of a swing, the server runs the motion and lands the blow, and an early swing is refused.
-6. **Take the rigs off the map server**, moving the travel-gear choice to the brain in the same change.
-
-Steps 1–4 are presentation and change no outcome. Step 5 changes who decides when a blow lands and should be played with two people before anything is built on top of it.
+The early-swing guard stays deliberately loose — a blow may arrive up to half a beat early and still be believed — because the swinger's machine still times its own animation and refusing an honest player is worse than missing a cheat. It cuts the fastest a machine can possibly swing from the flood ceiling's twenty a second down to twice its real rate. Every refusal is logged rather than dropped in silence.
 
 **Skills are out of scope.** A skill's damage is still the client's word until skills resolve on the server; a skill's alarm belongs with that work, not before it.
+
+What already worked and was NOT rebuilt: a blow on a creature or a person is announced to everyone in range with its amount, element, crit, miss, overkill and whether it folds into a rising total, and each machine runs it through the same door the offline game used.
 
 ---
 
 ## Related
 
-- [Networking — Implementation Notes](networking-implementation-notes.md) — what is actually built, the shell/body split, and the traps already paid for.
-- [Network-Readiness — Combat Audit & Refactor Plan](network-readiness-audit.md) — the survey that chose the shape.
-- [Starting the Network](../1-planning/starting-the-network.md) — the runbook for standing the world up.
-- [Active Skill System — V3](active-skill-system-v3/README.md) — the effects the server cannot yet resolve, which is why skills are out of scope here.
+- [Networking — Implementation Notes](implementation-notes.md) — what is actually built, the shell/body split, and the traps already paid for.
+- [Network-Readiness — Combat Audit & Refactor Plan](readiness-audit.md) — the survey that chose the shape.
+- [Starting the Network](../../1-planning/starting-the-network.md) — the runbook for standing the world up.
+- [Active Skill System — V3](../active-skill-system-v3/README.md) — the effects the server cannot yet resolve, which is why skills are out of scope here.

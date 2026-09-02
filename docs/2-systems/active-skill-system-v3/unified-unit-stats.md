@@ -212,4 +212,4 @@ This closed a player-only gap: mobs had an MP pool that nothing ever refilled. `
 - [State System — Buffs, Debuffs & Combo Marks](state-system-buffs-debuffs-combo-marks.md) — the sub-stat piles the table above is read through.
 - [Biome Mob Families — Tiered Spawning](../../3-world/biome-mob-families.md) — the 86 mobs this model was reset onto, and the tier it deleted.
 - [Crafting & Recycling](../crafting-and-recycling.md) — the materials a mob drops that it isn't wearing.
-- [Networking — Implementation Notes](../networking-implementation-notes.md) — the per-connection fighter the server builds from this block.
+- [Networking — Implementation Notes](../networking/implementation-notes.md) — the per-connection fighter the server builds from this block.

@@ -38,9 +38,10 @@ The folders match the sections below, so the file tree and this index say the sa
 - [Ring System — Current Facts (Trio-Ring)](2-systems/ring-system-trio-ring.md) — the stat-growth engine, source of truth.
 - [Crafting & Recycling](2-systems/crafting-and-recycling.md) — player-facing weapon crafting loop.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](2-systems/pre-renewal-ro-port.md) — combat/stat math port.
-- [Networking — Implementation Notes](2-systems/networking-implementation-notes.md) — code-facing companion for the multiplayer layer: the shell/body split, who owns what, the conventions, the traps already paid for, and the remaining order of work. **Read before touching anything networked.**
-- [Action Alarms](2-systems/action-alarms.md) — how a body says what it is DOING across the wire: one announcement carrying which action, when it began and how long it lasts, so a swing, a walk and a damage number can never disagree. Also the full ownership table — data, timing, animation, rendering, persistence. **Decided, not built.**
-- [Network-Readiness — Combat Audit & Refactor Plan](2-systems/network-readiness-audit.md) — the July survey that chose the shape. Superseded on what is built; kept for the audit and the reasoning.
+- [Networking — Architecture](2-systems/networking/README.md) — the whole shape of the multiplayer layer on one page: the four processes and what each may decide, how a person gets from sign-in to standing in the world, what crosses the wire, and the single ownership table everything else points at. **Start here.** Folder:
+  - [Implementation Notes](2-systems/networking/implementation-notes.md) — what is actually built, the conventions, and every trap already paid for. **Read before touching anything networked.**
+  - [Action Alarms](2-systems/networking/action-alarms.md) — how a body says what it is DOING across the wire: which action, when it began, how long it lasts, so a swing, a walk and a damage number can never disagree. **Played and working**; a fight with two people in it is the part still unwatched.
+  - [Readiness Audit](2-systems/networking/readiness-audit.md) — the July survey that chose the shape. Historical; kept for the reasoning.
 - [HUD/UI System — Design & Relay](2-systems/hud-ui-system.md) — the HUD/UI workstream.
 
 ## World & content

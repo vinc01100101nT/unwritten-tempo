@@ -25,7 +25,7 @@ Tracking issue: **VIN-22** (Inventory + Equipment + Character window trio).
   - pooled `DamagePopup`, `SpriteSheetCache`
   - skill icons from a Ninja Adventure UI set; shell baked via the **Build UI Shell** editor command
   - Revisit UI Toolkit only for movable windows + saved layouts (later phase).
-- **Scope** — ⚠️ **This line no longer holds.** It said SOLO RO-like, with Chat / Guild / Party / Marketplace / Mail deferred and liveliness faked by ambient simulation rather than networking. The game went the other way in August: there is a real server, a real sign-in door, and **no offline game at all**. **Chat is built.** Guild / Party / Marketplace / Mail are still absent. See [Networking — Implementation Notes](networking-implementation-notes.md).
+- **Scope** — ⚠️ **This line no longer holds.** It said SOLO RO-like, with Chat / Guild / Party / Marketplace / Mail deferred and liveliness faked by ambient simulation rather than networking. The game went the other way in August: there is a real server, a real sign-in door, and **no offline game at all**. **Chat is built.** Guild / Party / Marketplace / Mail are still absent. See [Networking — Implementation Notes](networking/implementation-notes.md).
 
 ## Architecture agreements (with GPT)
 
@@ -61,5 +61,5 @@ Visual spec LOCKED (v2). Selection = cyan inner ring, hover = cyan outer bloom (
 - [Weapon Roster — 12 Identities](active-skill-system-v3/weapon-roster-12-identities.md) — where a hotbar kit comes from.
 - [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — what the draft panel drafts.
 - [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — every number the character sheet prints.
-- [Networking — Implementation Notes](networking-implementation-notes.md) — the sign-in door and the reconnect notice now in front of all of it.
+- [Networking — Implementation Notes](networking/implementation-notes.md) — the sign-in door and the reconnect notice now in front of all of it.
 - [Roadmap to Launch](../1-planning/roadmap-to-launch.md) — the HUD line under M1.

@@ -12,7 +12,7 @@ tags:
 
 > **One-line verdict:** Content is safe to build full-speed. The combat core is **well-funneled** (single choke points exist), but it is **hard-wired to one local player = the truth**. Deferring the *network work* is fine; deferring the *architecture decision* gets more expensive with every new skill authored.
 
-> ## ⚠️ SUPERSEDED on what is built — read [Networking — Implementation Notes](networking-implementation-notes.md) for the current layer
+> ## ⚠️ SUPERSEDED on what is built — read [Networking — Implementation Notes](implementation-notes.md) for the current layer
 >
 > **This doc is a snapshot of 2026-07-23, kept for the audit and the reasoning that chose the shape.** Everything it says about *what exists* is out of date: the netcode it defers was built through late August. The measurements below (the blast-radius table, the three structural assumptions, the choke points) are still the honest record of what the combat core looked like before it, and the decision it reaches — **server-authoritative** — is the one that was carried out.
 >
@@ -97,8 +97,8 @@ Picking a transport (Netcode for GameObjects / Mirror / Fishnet), accounts/auth,
 
 ## Related
 
-- [Networking — Implementation Notes](networking-implementation-notes.md) — **the current layer.** What this doc deferred, actually built.
-- [Starting the Network](../1-planning/starting-the-network.md) — how to run the thing this audit prepared for.
-- [Active Skill System — V3](active-skill-system-v3/README.md) — the applier and the choke points this audit measured.
-- [Unified Unit Stats](active-skill-system-v3/unified-unit-stats.md) — the one stat model that made a server-side fighter cheap.
-- [Roadmap to Launch](../1-planning/roadmap-to-launch.md) — Tier 2 › Networking core.
+- [Networking — Implementation Notes](implementation-notes.md) — **the current layer.** What this doc deferred, actually built.
+- [Starting the Network](../../1-planning/starting-the-network.md) — how to run the thing this audit prepared for.
+- [Active Skill System — V3](../active-skill-system-v3/README.md) — the applier and the choke points this audit measured.
+- [Unified Unit Stats](../active-skill-system-v3/unified-unit-stats.md) — the one stat model that made a server-side fighter cheap.
+- [Roadmap to Launch](../../1-planning/roadmap-to-launch.md) — Tier 2 › Networking core.

@@ -122,4 +122,4 @@ After the first optimization pass: combat garbage went from **~28.6 KB/frame →
 - [Roadmap to Launch](roadmap-to-launch.md) — where the perf habit sits in the plan.
 - [Active Skill System — Implementation Notes](../2-systems/active-skill-system-v3/implementation-notes.md) — the per-hit and per-frame paths most likely to make garbage.
 - [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — what every mob in the stress test is computing.
-- [Networking — Implementation Notes](../2-systems/networking-implementation-notes.md) — the per-hit and per-frame rules the networked half has to obey too.
+- [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md) — the per-hit and per-frame rules the networked half has to obey too.

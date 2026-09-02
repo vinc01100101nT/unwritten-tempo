@@ -208,4 +208,4 @@ show their count.
 - [Sword — Skill Roster](sword-skill-roster.md) — the first consumers, all composed.
 - [Skill Numbers & Balance Baseline](skill-numbers-balance-baseline.md) — the bands a state's magnitude and window are authored from.
 - [Unified Unit Stats](unified-unit-stats.md) — the sub-stats these piles move, and the units that carry a store.
-- [Networking — Implementation Notes](../networking-implementation-notes.md) — why a watching copy holds no states, and why the deferred Owner axis matters again.
+- [Networking — Implementation Notes](../networking/implementation-notes.md) — why a watching copy holds no states, and why the deferred Owner axis matters again.
