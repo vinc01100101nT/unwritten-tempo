@@ -453,6 +453,16 @@ public class GameNetwork : NetworkManager
         public bool isCrit;
         public bool missed;
         public int attackerHit;
+
+        /// <summary>WHAT THE BLOW RAN INTO on the way to their health — how much a barrier ate, how much a brace held
+        /// back, whether a parry or an off-hand block erased it outright.
+        ///
+        /// <para><b>Why the number alone was not enough.</b> <see cref="amount"/> is what SURVIVED, and every one of
+        /// these can take a blow down to nothing — so a fully braced, soaked, parried or blocked hit arrived as a
+        /// plain zero, which draws nothing and looks exactly like being missed. A brace held a blow and the person
+        /// wearing it saw no sign that anything had happened at all. This is the same kind of fact as
+        /// <see cref="missed"/>, which has always travelled for exactly this reason.</para></summary>
+        public UnitMitigation.Outcome mitigated;
     }
 
     /// <summary>What a kill was worth, told to the person who earned it. Progress is written by a player's own
@@ -643,7 +653,8 @@ public class GameNetwork : NetworkManager
         if (shell == null) return;
 
         shell.ShowBlow(new DamageInfo(msg.amount, msg.element, msg.isMagic, msg.isCrit,
-                                      attackerHit: msg.attackerHit, missed: msg.missed));
+                                      attackerHit: msg.attackerHit, missed: msg.missed),
+                       msg.mitigated);
     }
 
     static void OnXpEarned(XpEarned msg)
@@ -734,7 +745,11 @@ public class GameNetwork : NetworkManager
             isMagic = info.isMagic,
             isCrit = info.isCrit,
             missed = info.missed,
-            attackerHit = info.attackerHit
+            attackerHit = info.attackerHit,
+            // TAKEN AND CLEARED, right after the blow was applied and before anything else can be hit. The victim
+            // recorded this on its way through its own intake, which is the only place that knows a barrier ate part
+            // of it or a brace held all of it.
+            mitigated = victim.TakeMitigation()
         });
     }
 

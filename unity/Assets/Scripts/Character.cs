@@ -281,7 +281,6 @@ public class Character : MonoBehaviour, ICombatUnit
     [Tooltip("Player hurt grunt — played when an unblocked hit lands.")]
     public SfxSet hurtSfx;
 
-    static readonly Color GuardColor = new Color(0.78f, 0.85f, 1f);
     static readonly Color MonsterMissColor = Color.white;   // a monster's swing whiffed the player → white MISS
     /// <summary>The digits of a hit that LANDED on a player — red for a bite, violet for a spell. Public because the
     /// copy of somebody else standing in front of you shows the same two colours (<see cref="NetPlayer.ShowBlow"/>),
@@ -998,10 +997,26 @@ public class Character : MonoBehaviour, ICombatUnit
     // because passives belong to the player. `source` rides along so a counter-passive can aim at who was parried.
     bool ParriedHit(MonsterAI3D source)
     {
-        var av = Avatar();
-        if (!UnitMitigation.TryParry(States, av != null ? UnitAnchor.Overhead(av) : transform.position)) return false;
+        if (!UnitMitigation.TryParry(States)) return false;
+        lastMitigation.parried = true;
         PassiveEvents.Fire(this, SkillTrigger.OnParry, null, source != null ? source.transform : null);
         return true;
+    }
+
+    /// <summary>What the mitigations did to the blow this character is taking right now — recorded here rather than
+    /// drawn, because the machine that decides a blow is the server and a server has no screen. Read once, by the
+    /// door that announces the blow to the person it happened to, and cleared by that read so a later blow that
+    /// mitigated nothing can never inherit an older one's word.</summary>
+    UnitMitigation.Outcome lastMitigation;
+
+    /// <summary>Hand over what the mitigations did to the last blow, and forget it. Read-and-clear, the same shape
+    /// <see cref="UnitStates.TakeExpiredDebt"/> uses, and for the same reason: a total nobody collects must not be
+    /// counted twice.</summary>
+    public UnitMitigation.Outcome TakeMitigation()
+    {
+        var o = lastMitigation;
+        lastMitigation = default;
+        return o;
     }
 
     // Drain the barrier first, then HP. Pops a pale-cyan number for the soaked part so the absorb is visible. No alloc
@@ -1017,10 +1032,16 @@ public class Character : MonoBehaviour, ICombatUnit
     int ApplyHitToHP(int dmg, MonsterAI3D source = null)
     {
         if (dmg <= 0) return 0;
-        var av = Avatar();   // barrier soaks first, via the shared unit primitive (same rule mobs get)
-        Vector3 popAt = av != null ? UnitAnchor.Overhead(av) : transform.position;
-        dmg = UnitMitigation.AfterShield(States, dmg, popAt);
-        dmg = UnitMitigation.Deferred(States, dmg, popAt);   // Brace holds the hit back; 0 here means the bill is banked
+        // A WATCHED COPY WEIGHS NOTHING. The figure it was handed is what already got through on the server, with the
+        // barrier and the brace taken out of it there — so running them again here took the same protection off a
+        // second time: the number on screen read smaller than the blow really was, or vanished entirely, and the
+        // mirrored charges were spent on a decision this machine had no business making. What the mitigations DID
+        // arrives alongside the blow and is drawn by NetPlayer.ShowBlow.
+        if (!IsWatchedCopy)
+        {
+            dmg = UnitMitigation.AfterShield(States, dmg, out lastMitigation.soaked);
+            dmg = UnitMitigation.Deferred(States, dmg, out lastMitigation.banked);
+        }
         if (dmg > 0)
         {
             int before = CurrentHP;
@@ -1074,8 +1095,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (off != null && off.blockChance > 0f && CombatRng.Chance(off.blockChance))
         {
             Sfx.Play(off.guardSfx != null && !off.guardSfx.Empty ? off.guardSfx : blockSfx);
-            var av = Avatar();
-            if (av != null) DamagePopup.SpawnText(UnitAnchor.Overhead(av), "Guard", GuardColor);
+            lastMitigation.blocked = true;
             OnBlocked?.Invoke();
             return 0;
         }

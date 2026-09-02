@@ -176,16 +176,20 @@ public class Health : MonoBehaviour, ICombatUnit
     // rounding and the guard cut (ONE place, so no intake can forget the debuff); the shield drain is layered after.
     // Brace is the LAST link (UnitMitigation.Deferred): what it banks is what would really have cost HP. A fully
     // deferred hit returns 0, the same "nothing got through" every intake already handles for a full Shield soak.
+    // WHAT THE BARRIER AND THE BRACE TOOK is dropped here, because nothing yet carries a CREATURE's mitigation to a
+    // watching machine — so a creature wearing a barrier still shows no number for what it soaked. The player's half
+    // of the same gap is closed (PlayerHitResult.mitigated); this half needs the creature's announcement to carry the
+    // same thing, which is a change to what crosses the wire rather than a line here.
     int Mitigate(float rawAfterDefence)
     {
-        Vector3 popAt = UnitAnchor.Overhead(transform);
-        return UnitMitigation.Deferred(States, UnitMitigation.AfterShield(States, UnitMitigation.Landed(States, rawAfterDefence), popAt), popAt);
+        int landed = UnitMitigation.AfterShield(States, UnitMitigation.Landed(States, rawAfterDefence), out _);
+        return UnitMitigation.Deferred(States, landed, out _);
     }
 
     // Parry — the SAME read the player gets (one primitive, no mob copy to hand-sync). Kept OUT of Mitigate on purpose:
     // Mitigate is math on a hit that lands, while a parry cancels the landing, so each intake bails before its damage
     // number and hit spark. Checked after the miss/immunity gates so a charge is only spent on a hit that would land.
-    bool Parried() => UnitMitigation.TryParry(States, UnitAnchor.Overhead(transform));
+    bool Parried() => UnitMitigation.TryParry(States);
 
     /// <summary>Mark this unit to TAKE +<paramref name="extraFraction"/> more damage (0.3 = +30%) for
     /// <paramref name="seconds"/>. Refreshes to the latest mark (newest-wins). Reusable armor-fray for skills like Hex Field.</summary>

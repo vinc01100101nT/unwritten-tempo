@@ -2,15 +2,18 @@
   "07e29be4-4ab9-42bf-b310-7c04d134830f": {
     "counts": {
       "build-game.sh": 2,
-      "build-game.sh server": 3,
+      "build-game.sh both": 2,
+      "build-game.sh server": 4,
       "check-perf-hotpaths.py 2>&1": 1,
-      "check-unity-code.sh 2>&1": 4,
-      "unwritten-server.app": 2,
+      "check-unity-code.sh 2>&1": 8,
+      "recompile _status": 1,
+      "unwritten-server.app": 6,
       "unwritten-server.app \"Assembly-CSharp.dll\"": 1,
       "unwritten-server.app .no-content.txt": 1
     },
     "told": [
       "build-game.sh",
+      "build-game.sh both",
       "build-game.sh server",
       "check-unity-code.sh 2>&1",
       "unwritten-server.app"

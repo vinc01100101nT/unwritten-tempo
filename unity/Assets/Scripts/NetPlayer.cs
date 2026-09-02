@@ -1014,12 +1014,23 @@ public class NetPlayer : NetworkBehaviour
     /// goes through the ordinary door every hit has always gone through — the number, the flash, the stagger, the
     /// passives that listen for being hurt — with only the health left for the server to say. On everybody else's
     /// machine it is a number over somebody's head, which is all a bystander can honestly know.</para></summary>
-    public void ShowBlow(in DamageInfo info)
+    public void ShowBlow(in DamageInfo info, in UnitMitigation.Outcome mitigated)
     {
         if (isOwned)
         {
             var me = Character.Instance;
-            if (me != null) CombatAuthority.ApplyFromServer(me, info);
+            if (me == null) return;
+            CombatAuthority.ApplyFromServer(me, info);
+
+            // WHAT THE BLOW RAN INTO, drawn here because this is the first machine in the chain with a screen. The
+            // server decided all of it and suppresses every floating number it makes, and none of these survives in
+            // the figure above — a fully braced or parried blow arrives as a plain zero. Over the body, beside the
+            // white number, exactly where each of them used to appear.
+            if (!mitigated.Nothing)
+            {
+                var av = me.Body;
+                if (av != null) UnitMitigation.Show(mitigated, UnitAnchor.Overhead(av));
+            }
             return;
         }
 

@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-01
+last-updated: 2026-09-02
 tags:
   - ai-learnings
 ---
@@ -14,9 +14,11 @@ tags:
 
 ## The rule
 
-Stop reading. Put your change aside, rebuild, and run it. A control run tells you in one attempt what an
-afternoon of inference will not: whether the fault is yours at all. Then put the change back and remove one
-piece at a time until it works.
+Stop reading. First spend five seconds checking whether anything else in the system moved — a service restarted,
+a file replaced, a setting changed by somebody's hand — because "right after my change" is a coincidence often
+enough to be worth ruling out for free. Then put your change aside, rebuild, and run it. A control run tells you
+in one attempt what an afternoon of inference will not: whether the fault is yours at all. Then put the change
+back and remove one piece at a time until it works.
 
 You are allowed to do this safely because you keep your own copies: copy every file you are about to touch into
 the scratchpad **before** editing, and copy the finished version somewhere else before you set it aside. Then
@@ -40,6 +42,17 @@ Three rounds of theory, one round of control. The control should have been round
 
 ## How to apply
 
+0. **First, check whether anything ELSE moved.** Before setting your own change aside, read the START TIME of
+   every service and process involved. A control run costs a rebuild; `ps -o lstart=` costs five seconds and
+   sometimes settles it outright. **Cost: 2026-09-02.** A game server that had registered happily all afternoon
+   suddenly came up refusing every player, right after a code change, and the change was the obvious suspect. It
+   was innocent: a companion service had been restarted twenty minutes earlier and come back holding a different
+   shared password. Its process start time said so immediately. Probing which password it actually accepted
+   settled the rest.
+   **And read the project's OWN runbook for whatever refused you, before diagnosing anything.** That same
+   afternoon the runbook already carried the exact refusal message, its cause and its fix, written up two hours
+   earlier — the whole detour was spent rediscovering a page nobody opened. A learnings index is not the only
+   doc worth checking; the operational one usually knows more about its own services than you do.
 1. **Before editing, copy every target file to the scratchpad.** This is already a standing rule; this lesson is
    what it buys you.
 2. **When your change breaks a build or a run**, save your current versions to a second scratchpad folder, then

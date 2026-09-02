@@ -78,6 +78,27 @@ has cast a skill.
   (`RestoreEquipment` decodes them). Refusal warns once per connection, because the usual cause is a character
   whose progress never loaded rather than cheating.
 
+## The four mitigations were silent too, and are fixed (2026-09-02, unplayed)
+
+Same shape as the missing damage numbers, found the same afternoon by the user reporting "the brace's banked
+damage is not showing". A barrier soaking part of a hit, a brace holding one, a parry erasing one and an off-hand
+block all pop their own word or number **at the moment they decide**, and the machine that decides is now the
+server — which suppresses every popup it makes. The person was then told only the figure that SURVIVED, and for
+a fully mitigated hit that is 0, which draws nothing. So a brace ate a blow and the wearer saw nothing at all.
+
+- Deciding and drawing are now separate: `UnitMitigation.Outcome` records what was done,
+  `UnitMitigation.Show` draws it. The three primitives and the off-hand block branch no longer pop anything.
+- It crosses the wire on `PlayerHitResult.mitigated`, filled from `Character.TakeMitigation` (read-and-clear,
+  the `UnitStates.TakeExpiredDebt` idiom) and drawn by `NetPlayer.ShowBlow` for the owner only.
+- **A second bug fixed in the same pass:** `Character.ApplyHitToHP` was re-running both mitigations on the
+  WATCHED copy against its mirrored states, so a barrier came off twice and mirrored charges were spent on a
+  decision that machine had no business making. It is now skipped when `IsWatchedCopy`.
+- **Verified, because it is the one line that could switch a brace off entirely:** the server's per-connection
+  fighter is NOT marked as a watched copy — `NetPlayer.cs:153` returns on `isServer` before the branch that
+  marks it, and `PlayerFighter` never marks one.
+- **A creature's mitigation is still silent** — nothing carries it to a watching machine. Closing it means the
+  creature's announcement carrying the same thing the player's now does.
+
 ## What's left
 
 1. **Play it.** Nothing below matters until a skill has been swung in a live client-server session.
@@ -118,7 +139,12 @@ has cast a skill.
 
 Play one flurry skill against a REAL MOB (not `/dummy` — its armour is 0 and hides the mitigation bug) in a live
 client-server session, and confirm every beat draws its own number, the rising yellow total appears, and a basic
-swing at the same mob still draws exactly ONE number per hit rather than two.
+swing at the same mob still draws exactly ONE number per hit rather than two. Then cast Brace and let a mob hit
+you: the blue held number must appear and your health must not move.
+
+Both the server and the client MUST be rebuilt together for this — `PlayerHitResult` changed shape on
+2026-09-02, so a build from before that will disagree on the wire. Both were rebuilt and the server restarted
+carrying it at 18:33.
 
 ## How to resume
 

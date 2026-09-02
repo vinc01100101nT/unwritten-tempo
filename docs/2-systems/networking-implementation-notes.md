@@ -44,10 +44,14 @@ Both live things follow this exactly: `NetPlayer` for a person, `NetMob` for a c
 | A player's position | moved by their own machine, **checked** by the server | watches |
 | A mob's brain, path, health | the server | watches |
 | Combat outcome | the server — it rolls it, applies it, and announces it | watches, and shows what it was told |
+| What a body is DOING — swinging, walking | **nothing announces it yet**; each machine guesses from what it can see | shows a still body — see [Action Alarms](action-alarms.md) |
+| How a body LOOKS — which clip, which model, which effect | each machine, locally | — |
 | A player's bag, money and worn gear | the server | asks, and is sent the result |
 | A player's save | the server, written through the character server | — |
 
-**A player's machine owns nothing and decides nothing.** That is literal: both damage channels refuse to act anywhere but the server, the bag refuses to be added to anywhere but the server, and a save from a player's own machine is refused while they are in a world. See *There is no offline game* below.
+**A player's machine owns no FACT and decides no outcome.** That is literal: both damage channels refuse to act anywhere but the server, the bag refuses to be added to anywhere but the server, and a save from a player's own machine is refused while they are in a world. See *There is no offline game* below.
+
+What it does own is **presentation**: which clip plays, how a body is drawn, and when its *own* body reacts to its *own* input — your character swings the frame you press, and waits for nothing to do it. That is the only thing a player's machine gets to decide, and the line is drawn in [Action Alarms](action-alarms.md).
 
 ---
 
@@ -172,7 +176,8 @@ A player who is not joined is not in the world at all, so there is no state in w
 - **A player's own buffs do not protect them.** The character the server holds carries no buffs, barriers or parry charges, because everything that grants one still runs on the player's machine. So a shield shows on your screen and soaks nothing that the server decided. Same root cause as the two above.
 - **Lifesteal and mana leech only pay out for a player attacker.** A creature having lifesteal is new gameplay nobody has specified, so it was deliberately not invented.
 - **A watching machine re-runs the defender's mitigation** on a hit the server announces. Defence and element are data and agree; **parry is a state**, and a copy holds none, so it may briefly show a number the server parried. The authoritative health corrects it within a tenth of a second.
-- **The hit rate cap is a flood guard, not a swing cadence** — set far above any real attack speed so it can never gate legitimate play.
+- **The hit rate cap is a flood guard, not a swing cadence** — 20 blows a second, far above any real attack speed so it can never gate legitimate play. The real cadence was waiting on per-connection fighters, which have now landed; moving the beat to the server is decided in [Action Alarms](action-alarms.md).
+- **Nothing crossing the wire says what a body is DOING.** A watched creature never walks, runs or swings — its mover is switched off on arrival and its brain is silenced, so the two things its animation reads from both answer "no" forever. Another player's body has no attack animation at all: their damage numbers appear while their character stands still. Decided fix: [Action Alarms](action-alarms.md).
 - **A creature cannot yet be fought by two people fairly.** It picks one target at a time and there is no threat model; whoever it picked is who it hits.
 
 ---
@@ -180,15 +185,17 @@ A player who is not joined is not in the world at all, so there is no state in w
 ## Order of remaining work, and why this order
 
 1. **Play it with two people.** The bag, the saving and the handoff have been exercised by their own tests and watched by one tester on one client; nobody has run two clients against this build. Nothing further should be built on top of code nobody has watched work.
-2. **Resolve SKILLS on the server**, which closes three holes at once — a skill's damage, a heal's size, and a player's own buffs mattering — because all three are the same missing thing: the character the server holds does not run the game's effects. This is the next real piece.
-3. **Threat, so several people can fight one creature.** It picks the nearest today, which is honest but shallow.
-4. **Server-SIMULATED movement**, with prediction and correction — only if checking turns out not to be enough. It is deliberately not the plan: this camera is close enough that a player must move their own body, and checking covers the whole of what a moving player can lie about.
+2. **Say what bodies are DOING** — [Action Alarms](action-alarms.md). Ahead of the skill work because it is small, it changes no outcome, and it fixes the most visible thing in a shared world: creatures that slide instead of walking, and swings that nobody but the swinger can see. Its last step — moving the swing beat to the server — does change who decides when a blow lands, and is ordered after the rest for that reason.
+3. **Resolve SKILLS on the server**, which closes three holes at once — a skill's damage, a heal's size, and a player's own buffs mattering — because all three are the same missing thing: the character the server holds does not run the game's effects. This is the next real piece.
+4. **Threat, so several people can fight one creature.** It picks the nearest today, which is honest but shallow.
+5. **Server-SIMULATED movement**, with prediction and correction — only if checking turns out not to be enough. It is deliberately not the plan: this camera is close enough that a player must move their own body, and checking covers the whole of what a moving player can lie about.
 
 Mobs had to become server-owned *before* combat could, and that was found the hard way: every client used to spawn its own creatures, so two players never shared a monster and there was nothing for a server to adjudicate. Expect more ordering surprises of that shape — check who owns a thing before writing rules about who may change it.
 ---
 
 ## Related
 
+- [Action Alarms](action-alarms.md) — how a body says what it is DOING across the wire, and who owns the animation, the timing and the rendering.
 - [Network-Readiness — Combat Audit & Refactor Plan](network-readiness-audit.md) — the July survey whose four prep steps this layer was built on top of.
 - [Starting the Network](../1-planning/starting-the-network.md) — the runbook: database → sign-in → character server → game server → players.
 - [Querying the Database](../1-planning/querying-the-database.md) — reading back the accounts and characters this layer persists.

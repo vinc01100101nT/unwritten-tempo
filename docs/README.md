@@ -39,6 +39,7 @@ The folders match the sections below, so the file tree and this index say the sa
 - [Crafting & Recycling](2-systems/crafting-and-recycling.md) — player-facing weapon crafting loop.
 - [Pre-Renewal RO Port — Phase Plan & Formulas](2-systems/pre-renewal-ro-port.md) — combat/stat math port.
 - [Networking — Implementation Notes](2-systems/networking-implementation-notes.md) — code-facing companion for the multiplayer layer: the shell/body split, who owns what, the conventions, the traps already paid for, and the remaining order of work. **Read before touching anything networked.**
+- [Action Alarms](2-systems/action-alarms.md) — how a body says what it is DOING across the wire: one announcement carrying which action, when it began and how long it lasts, so a swing, a walk and a damage number can never disagree. Also the full ownership table — data, timing, animation, rendering, persistence. **Decided, not built.**
 - [Network-Readiness — Combat Audit & Refactor Plan](2-systems/network-readiness-audit.md) — the July survey that chose the shape. Superseded on what is built; kept for the audit and the reasoning.
 - [HUD/UI System — Design & Relay](2-systems/hud-ui-system.md) — the HUD/UI workstream.
 
