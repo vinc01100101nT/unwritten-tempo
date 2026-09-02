@@ -42,8 +42,9 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | Something does nothing at all and there is no error to explain it | [Make the Code Narrate Its Own Decision](make-the-code-narrate-its-decision.md) — silence has no stack trace. Print the decision's INPUTS at the decision site, throttled, one subject. |
 | An app you are driving throws the same error every frame, in files your change never touched | [You Reloaded Under a Live Session](never-reload-under-a-live-session.md) — a reload empties everything the app was holding and the setup never re-runs. Ask whether somebody is using it BEFORE you reload. |
 | Your offline compile check passes, then the real build fails on compiler errors | [The Offline Checker Is Not the Editor](the-checker-is-not-the-editor.md) — the checker compiles the files on DISK, the build compiles what the editor has IMPORTED. Force a recompile and wait for it, then build. |
+| About to repeat something a doc says is current — especially under "still true" | [A Doc Cannot Vouch for Its Own Freshness](a-doc-cannot-vouch-for-itself.md) — that heading was written on the day it was true and nothing has re-checked it. Check the claim against the code, and when updating a doc, check EVERY claim, not the ones you changed. |
 
-**11 of 12 pages used.** At the cap, a new lesson merges into an existing page or replaces one.
+**12 of 12 pages used — at the cap.** At the cap, a new lesson merges into an existing page or replaces one.
 
 ---
 
