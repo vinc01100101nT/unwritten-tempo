@@ -925,14 +925,161 @@ public class Character : MonoBehaviour, ICombatUnit
     // a server holding several people has one per person.
     public StatusController StatusHost => boundStatusHost != null ? boundStatusHost : StatusController.Player;
 
-    /// <summary>This character's own skills, in the fixed order the passive dispatch walks them in. Handed over by
-    /// whoever built them — the avatar on a screen, the fighter host on a server — so both sides answer the question
-    /// the same way and neither has to search the scene for them.</summary>
+    /// <summary>This character's own skills, in the fixed order the passive dispatch walks them in — one entry per
+    /// authored skill, and a slot stays EMPTY until that skill is actually wanted. The order is the whole catalog's,
+    /// identical on every machine, because a skill's position IS its identity to the no-self-feeding brake.</summary>
     public SkillRunner[] SkillRunners { get; private set; }
 
-    /// <summary>Say which skills are this character's. Called again whenever that list is rebuilt (a fresh avatar
-    /// after a door, a newly composed skill), because a passive's place in it IS its identity to the brake.</summary>
-    public void BindSkillRunners(SkillRunner[] runners) { SkillRunners = runners; }
+    // The authored skill each position stands for. Held separately from the runners above so a moment can ask "does
+    // this skill answer me?" without a component having to exist yet — which is what lets a person carry the whole
+    // catalog's worth of positions while paying for only the handful they actually use.
+    SkillDef[] skillDefs;
+
+    // The object a skill component gets attached to when one is finally needed. A character and the body it drives
+    // are two different objects here, so this has to be told, not looked up.
+    GameObject skillHost;
+
+    // WHICH POSITION A SKILL ID SITS AT. Built with the list, so it can never answer for a list this character no
+    // longer has.
+    readonly System.Collections.Generic.Dictionary<string, int> slotById =
+        new System.Collections.Generic.Dictionary<string, int>(64);
+
+    // WHICH POSITIONS ANSWER A GIVEN MOMENT. One entry per authored trigger; a moment none of these skills answer
+    // holds an empty array, which is the common case and costs a length check. This is what turned a landed blow
+    // from asking every skill in the catalog into asking the two or three that authored that moment.
+    int[][] slotsByTrigger;
+
+    /// <summary>True once this character has been told what its skills are.</summary>
+    public bool HasSkills => skillDefs != null && skillDefs.Length > 0;
+
+    /// <summary>Say which skills are this character's, and which object their components live on. Called again
+    /// whenever that list is rebuilt (a fresh avatar after a door, a newly composed skill).
+    ///
+    /// <para>NOTHING IS BUILT HERE. Every skill gets a position and nothing else; the component that plays it is
+    /// made the first moment it is genuinely needed — a press, or a passive of theirs that actually fires. A server
+    /// holds one of these per person signed in, so building the whole catalog for everybody the instant they joined
+    /// was the largest thing a person cost simply by being present.</para>
+    ///
+    /// <para>A component already sitting on the host (one an author-time tool attached) is ADOPTED into its own
+    /// position rather than duplicated.</para></summary>
+    public void BindSkills(GameObject host, System.Collections.Generic.IReadOnlyList<SkillDef> defs)
+    {
+        skillHost = host;
+        int n = defs != null ? defs.Count : 0;
+        skillDefs = new SkillDef[n];
+        SkillRunners = new SkillRunner[n];
+        slotById.Clear();
+        for (int i = 0; i < n; i++)
+        {
+            var def = defs[i];
+            skillDefs[i] = def;
+            if (def != null && !string.IsNullOrEmpty(def.id)) slotById[def.id] = i;
+        }
+
+        if (host != null)
+        {
+            var already = host.GetComponents<SkillRunner>();
+            for (int k = 0; k < already.Length; k++)
+            {
+                var r = already[k];
+                var def = r != null ? r.def : null;
+                if (def == null || string.IsNullOrEmpty(def.id)) continue;
+                if (slotById.TryGetValue(def.id, out int slot) && SkillRunners[slot] == null)
+                {
+                    r.BindCaster(this);
+                    SkillRunners[slot] = r;
+                }
+            }
+        }
+
+        IndexTriggers();
+    }
+
+    void IndexTriggers()
+    {
+        int triggerKinds = System.Enum.GetValues(typeof(SkillTrigger)).Length;
+        var counts = new int[triggerKinds];
+        for (int i = 0; i < skillDefs.Length; i++) CountTriggers(skillDefs[i], counts);
+
+        slotsByTrigger = new int[triggerKinds][];
+        for (int t = 0; t < triggerKinds; t++)
+            slotsByTrigger[t] = counts[t] > 0 ? new int[counts[t]] : System.Array.Empty<int>();
+
+        var filled = new int[triggerKinds];
+        for (int i = 0; i < skillDefs.Length; i++) FileTriggers(skillDefs[i], i, filled);
+    }
+
+    // A skill with no authored trigger list still answers a press — the same fallback the dispatch makes, said once
+    // here so the index and the dispatch cannot disagree about which moments a skill has.
+    void CountTriggers(SkillDef def, int[] counts)
+    {
+        if (def == null) return;
+        var list = def.triggers;
+        if (list == null || list.Count == 0) { counts[(int)SkillTrigger.OnCast]++; return; }
+        for (int k = 0; k < list.Count; k++)
+        {
+            var e = list[k];
+            if (e == null) continue;
+            int t = (int)e.trigger;
+            if (t >= 0 && t < counts.Length) counts[t]++;
+        }
+    }
+
+    void FileTriggers(SkillDef def, int slot, int[] filled)
+    {
+        if (def == null) return;
+        var list = def.triggers;
+        if (list == null || list.Count == 0)
+        {
+            int c = (int)SkillTrigger.OnCast;
+            slotsByTrigger[c][filled[c]++] = slot;
+            return;
+        }
+        for (int k = 0; k < list.Count; k++)
+        {
+            var e = list[k];
+            if (e == null) continue;
+            int t = (int)e.trigger;
+            if (t < 0 || t >= filled.Length) continue;
+            slotsByTrigger[t][filled[t]++] = slot;
+        }
+    }
+
+    /// <summary>The authored skill at <paramref name="slot"/>, WITHOUT building anything. This is what a moment asks
+    /// first, so a skill that turns out not to answer never costs a component.</summary>
+    public SkillDef DefAt(int slot)
+        => skillDefs != null && slot >= 0 && slot < skillDefs.Length ? skillDefs[slot] : null;
+
+    /// <summary>The live component for <paramref name="slot"/>, BUILDING it if this is the first time this character
+    /// has needed that skill. Never null for a real slot on a bound character.</summary>
+    public SkillRunner RunnerAt(int slot)
+    {
+        if (SkillRunners == null || slot < 0 || slot >= SkillRunners.Length) return null;
+        var r = SkillRunners[slot];
+        if (r != null && r) return r;
+        var def = skillDefs[slot];
+        if (def == null || skillHost == null) return null;
+        // perf-ok: builds once per skill this character ever uses, then never again — the memo shape.
+        r = skillHost.AddComponent<SkillRunner>();
+        r.def = def;
+        r.BindCaster(this);
+        SkillRunners[slot] = r;
+        return r;
+    }
+
+    /// <summary>The component this character casts <paramref name="skillId"/> with, built on first use, or null if
+    /// that is not one of their skills. One lookup, whatever the size of the skill catalog.</summary>
+    public SkillRunner RunnerById(string skillId)
+        => !string.IsNullOrEmpty(skillId) && slotById.TryGetValue(skillId, out int slot) ? RunnerAt(slot) : null;
+
+    /// <summary>The positions of the skills that answer <paramref name="trigger"/> — the only ones a moment needs to
+    /// ask. Never null; empty when none of this character's skills answer it.</summary>
+    public int[] SlotsFor(SkillTrigger trigger)
+    {
+        int t = (int)trigger;
+        if (slotsByTrigger == null || t < 0 || t >= slotsByTrigger.Length) return System.Array.Empty<int>();
+        return slotsByTrigger[t] ?? System.Array.Empty<int>();
+    }
 
     StatusController boundStatusHost;
 
@@ -1273,7 +1420,14 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>Tell this character which map its person is standing in. The server's half of <see cref="Map"/>:
     /// a person there has no body in any map of its own, so the only machine that knows is theirs, and it says so
     /// (see <see cref="NetPlayer"/>). Same shape as <see cref="BindBody"/> on purpose.</summary>
-    public void BindMap(string map) { boundMap = map; }
+    public void BindMap(string map)
+    {
+        if (boundMap == map) return;
+        boundMap = map;
+        // AND THE ROLL IS TOLD. Creatures look for somebody to chase by map, so a person who walked through a door
+        // and was never re-filed would be hunted by the map they left and invisible to the one they are in.
+        PlayerUnits.Refile(this);
+    }
 
     /// <summary>Which map this person is in. On their own machine that is simply the map they are standing in; on a
     /// server it is whatever they last reported. Never a guess: a server that read its own active scene would hand

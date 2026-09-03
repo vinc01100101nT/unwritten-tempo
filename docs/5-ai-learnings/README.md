@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-02
+last-updated: 2026-09-03
 tags:
   - ai-learnings
 ---
@@ -40,11 +40,14 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | A parser or probe you just wrote says the data is corrupt, empty or wrong | [Prove Your Decoder on a Known-Good Sample](prove-your-decoder-on-a-known-good-sample.md) — run it on something known GOOD first; if that looks broken too, your instrument is the broken thing. |
 | A script that drives another app produced nothing, and only the app's own log mentions a timeout | [A Busy Host App Drops Your Request](wait-for-the-host-app-to-be-idle.md) — work sent while the host is busy is dropped, not queued. Wait for it to be idle BEFORE asking, not only after. |
 | Something does nothing at all and there is no error to explain it | [Make the Code Narrate Its Own Decision](make-the-code-narrate-its-decision.md) — silence has no stack trace. Print the decision's INPUTS at the decision site, throttled, one subject. |
-| An app you are driving throws the same error every frame, in files your change never touched | [You Reloaded Under a Live Session](never-reload-under-a-live-session.md) — a reload empties everything the app was holding and the setup never re-runs. Ask whether somebody is using it BEFORE you reload. |
+| An app you are driving throws the same error every frame in files you never touched, or a play session dies for no reason | [Something Reloaded Under a Live Session](never-reload-under-a-live-session.md) — a reload empties everything the app was holding and the setup never re-runs. Ask whether somebody is using it first — and know that SAVING A FILE can be the reload. |
 | Your offline compile check passes, then the real build fails on compiler errors | [The Offline Checker Is Not the Editor](the-checker-is-not-the-editor.md) — the checker compiles the files on DISK, the build compiles what the editor has IMPORTED. Force a recompile and wait for it, then build. |
 | About to repeat something a doc says is current — especially under "still true" | [A Doc Cannot Vouch for Its Own Freshness](a-doc-cannot-vouch-for-itself.md) — that heading was written on the day it was true and nothing has re-checked it. Check the claim against the code, and when updating a doc, check EVERY claim, not the ones you changed. |
+| You changed a value, read it back, and it had not moved — and you are about to call that a bug | [A Value You Just Changed Reads Stale](a-value-you-just-changed-reads-stale.md) — your read-back is slower than the value moves, so it changed and changed back before you looked. Probe from inside with timestamps. |
+| The user is asking "is there anything else?" for the third or fourth time | [Give the Whole List, Not a Trickle](give-the-whole-list-not-a-trickle.md) — one finding per reply is a loop with no exit. Sweep once, hand back the closed list with its boundary, then fix without asking again. |
+| A comment promises an order — "asked for first", "released after", "only once" | [A Comment Promising an Order Is Where the Bug Is](a-comment-promising-an-order-is-where-the-bug-is.md) — it is the only written record of what the code SHOULD do, and nobody re-reads it. Check the two lines beneath it. |
 
-**12 of 12 pages used — at the cap.** At the cap, a new lesson merges into an existing page or replaces one.
+**No page cap.** A lesson that was paid for gets its own page; the index above is what keeps this skimmable, so keep each symptom line short and distinct. Merge two pages only when they genuinely share a symptom, and delete one the moment it is obsolete or has graduated into a hard rule.
 
 ---
 

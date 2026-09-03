@@ -631,8 +631,32 @@ public class GameNetwork : NetworkManager
         public string text;
     }
 
+    // WHO IS TOLD ABOUT WHAT. Without this, everything that happens is sent to every person connected, however far
+    // away and whatever map they are standing in — so the traffic climbed with the SQUARE of how many people were
+    // here, and a person in a dungeon paid for every cast in every town.
+    //
+    // Distance is the measure because a server holds several maps at once by setting each one down 2000 apart from
+    // the others: any range comfortably inside that gap separates the maps, with no second rule to keep in step.
+    //
+    // WHAT THIS RANGE DOES AND DOES NOT DO, measured rather than assumed: the maps themselves are small — 60x60 up
+    // to 120x64 — so the component's own default of 500 separates MAPS and nothing else. Everyone standing in the
+    // same map still hears each other, exactly as they did before, which is why nothing about what a player can see
+    // changes today. Culling INSIDE a map needs a range near what the camera actually shows (it pulls back 7 at the
+    // very most), and that is a decision about draw distance — people appearing and vanishing as you walk — so it is
+    // deliberately not made here.
+    //
+    // Attached from here rather than left to a scene, because a world this is missing from is not visibly broken —
+    // it just quietly sends everything to everybody, which is exactly the kind of fault nobody notices until there
+    // are enough people for it to matter.
+    void EnsureInterestManagement()
+    {
+        if (GetComponent<InterestManagementBase>() != null) return;
+        gameObject.AddComponent<DistanceInterestManagement>();
+    }
+
     public override void OnStartServer()
     {
+        EnsureInterestManagement();
         base.OnStartServer();
         // NOTHING CARRIED OVER FROM A PREVIOUS WORLD. These outlive the server that filled them — a second Play in
         // the same editor session, or a server stopped and started — and a swing left in flight from the last one
@@ -718,7 +742,7 @@ public class GameNetwork : NetworkManager
         // AND COMING BACK MOVES THEM. A person stands up at a spawn point, which is nowhere near where they fell —
         // a jump the movement check would otherwise read as the largest lie it has ever seen, on every single
         // death. Forgiven from HERE because this is the server granting it: nothing a client says can reach it.
-        var shell = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        var shell = ShellFor(conn);
         if (shell != null) shell.ForgiveNextMoveAfterServerMove();
     }
 
@@ -730,16 +754,33 @@ public class GameNetwork : NetworkManager
         if (who == null || !NetworkServer.active) return null;
         foreach (var conn in NetworkServer.connections.Values)
         {
-            if (conn == null || conn.identity == null) continue;
-            var shell = conn.identity.GetComponent<NetPlayer>();
+            var shell = ShellFor(conn);
             if (shell != null && ReferenceEquals(shell.ServerCombatUnit, who)) return shell;
         }
         return null;
     }
 
+    // WHO IS PLAYING ON A CONNECTION, remembered. The answer cannot change while somebody is here, yet it used to be
+    // searched for on their object again on every single thing they asked for — every cast, every item, every swing.
+    // Filled the first time it is asked and dropped when the connection goes, the same as everything else kept per
+    // connection here. A body that has been destroyed reads as missing and is looked up again, so a person who is
+    // given a fresh one is never answered with the old.
+    static readonly System.Collections.Generic.Dictionary<int, NetPlayer> shellByConnection =
+        new System.Collections.Generic.Dictionary<int, NetPlayer>();
+
+    static NetPlayer ShellFor(NetworkConnectionToClient conn)
+    {
+        if (conn == null) return null;
+        if (shellByConnection.TryGetValue(conn.connectionId, out var known) && known != null && known) return known;
+
+        var shell = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        if (shell != null) shellByConnection[conn.connectionId] = shell;
+        return shell;
+    }
+
     static ICombatUnit FighterFor(NetworkConnectionToClient conn)
     {
-        var shell = conn != null && conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        var shell = ShellFor(conn);
         return shell != null ? shell.ServerCombatUnit : null;
     }
 
@@ -1249,7 +1290,7 @@ public class GameNetwork : NetworkManager
         if (!NetworkServer.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null) return;
         if (VictimBehind(identity) == null) return;
 
-        var attacker = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        var attacker = ShellFor(conn);
         var swinger = attacker != null ? attacker.ServerCombatUnit : null;
         if (swinger == null)
         {
@@ -1326,7 +1367,7 @@ public class GameNetwork : NetworkManager
         var victim = VictimBehind(identity);
         if (victim == null) return;
 
-        var attacker = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        var attacker = ShellFor(conn);
         var swinger = attacker != null ? attacker.ServerCombatUnit : null;
         if (swinger == null) return;
 
@@ -1599,7 +1640,7 @@ public class GameNetwork : NetworkManager
         // carrying — a potion that heals you and is never used up.
         if (--entryInBag.count <= 0) caster.Bag.RemoveAt(msg.bagIndex);
 
-        var shell = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        var shell = ShellFor(conn);
         shell?.PushBagToOwner();
         // A drunk potion is a change like any other. Without this it was written down only if something ELSE
         // happened to dirty the character, so a server restart handed the potions back.
@@ -1684,8 +1725,12 @@ public class GameNetwork : NetworkManager
     // was refused and nothing took damage. The lesson is bigger than the line: this check must only enforce a rule
     // the GAME already enforces. Inventing a stricter one here does not harden the server, it breaks play.
     //
-    // Only OWNERSHIP is settled here. Whether the skill was off cooldown and whether its cost was paid are still
-    // decided on the player's own machine, because neither a cooldown nor a mana bill exists on the server yet.
+    // Only OWNERSHIP is settled HERE — but that is not the same as saying it is all the server settles. The cast
+    // it lets through runs on the server's own copy of the skill, and that copy pays for itself: it refuses a skill
+    // still on cooldown, refuses one the person cannot afford, and refuses one whose required state is missing or
+    // whose caster is silenced or stunned — all before a single effect lands. This note used to say the opposite,
+    // that a cooldown and a mana bill existed only on the player's machine, which was false and is the sort of thing
+    // somebody later trusts a client over.
     static bool Owns(Character caster, string skillId)
     {
         if (caster == null || string.IsNullOrEmpty(skillId)) return false;
@@ -1779,7 +1824,7 @@ public class GameNetwork : NetworkManager
             conn.Send(new GmCommandReply { text = text });
         }
 
-        var asker = conn != null && conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        var asker = ShellFor(conn);
         if (asker == null) return;   // no body here yet; there is nobody for a command to act as
 
         // 1. IS THIS PERSON TRUSTED. Read off what the account service told this server at the door — never off
@@ -1861,11 +1906,9 @@ public class GameNetwork : NetworkManager
     public override void OnStopServer()
     {
         foreach (var conn in NetworkServer.connections.Values)
-        {
-            var shell = conn != null && conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
-            shell?.SaveNow(null);
-        }
+            ShellFor(conn)?.SaveNow(null);
         Debug.Log("[server] stopping — asked for a write for every player still here.");
+        shellByConnection.Clear();   // nothing about the world that just ended survives into the next one
         base.OnStopServer();
     }
 
@@ -1878,6 +1921,7 @@ public class GameNetwork : NetworkManager
         // Everything remembered ABOUT a connection goes when the connection does. A long-lived server hands out
         // connection numbers for months; anything kept per connection and never dropped grows forever.
         warnedNoFighter.Remove(conn.connectionId);
+        shellByConnection.Remove(conn.connectionId);
         swingLedgers.Remove(conn.connectionId);
         healLedgers.Remove(conn.connectionId);
         skillLedgers.Remove(conn.connectionId);
@@ -1891,6 +1935,9 @@ public class GameNetwork : NetworkManager
         // survive — and the order matters: a character released while its last write is still in flight is how
         // the same items end up in two places, which is the oldest duplication trick there is. The write is
         // asked for first, and the character is dismissed only once it has landed.
+        // ASKED FOR DIRECTLY, not through the remembered answer: this runs AFTER that memory has been dropped a few
+        // lines up, and going through it here would quietly write the entry back for a connection that is leaving —
+        // one stranded entry per departure, on a server that runs for months.
         var leaving = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
         if (leaving != null)
         {
@@ -1901,11 +1948,15 @@ public class GameNetwork : NetworkManager
             string whoLeft = leaving.playerName;
             string theirCharacter = leaving.ServerCharacterId;
 
-            // AND THE NAME IS FREED IMMEDIATELY, not when the write lands. Holding it until then means a person
-            // whose save is slow — or whose character server is down — cannot come back at all, and the write
-            // has nothing to do with whether somebody may play again.
-            PlayerFighter.Dismiss(leaving);
-
+            // THE WRITE IS ASKED FOR FIRST, AND THIS ORDER IS THE WHOLE POINT. Letting go of the fighter unbinds
+            // the character from this shell and destroys it — so asking for the write afterwards found nothing to
+            // write, gave up without so much as sending a request, and reported failure. MEASURED 2026-09-03: every
+            // single person who left lost whatever had changed since their last periodic write, and the log said so
+            // every time. The comment here used to claim this order already; the code did the opposite.
+            //
+            // Asking first costs nothing, because the whole of what gets written is copied out of the character
+            // SYNCHRONOUSLY inside this call, before the request is even sent. So the body may be torn down on the
+            // very next line without touching what is already on its way.
             leaving.SaveNow(ok =>
             {
                 if (!ok) Debug.LogError("[server] " + whoLeft + " left and their character could NOT be "
@@ -1914,6 +1965,11 @@ public class GameNetwork : NetworkManager
                 // first, the name still has to come free.
                 PlayerFighter.ReleaseCharacter(theirCharacter);
             });
+
+            // AND THE NAME IS FREED IMMEDIATELY, not when the write lands — this runs now, not in the answer above.
+            // Holding it until the write returns means a person whose save is slow, or whose character server is
+            // down, cannot come back at all, and the write has nothing to do with whether somebody may play again.
+            PlayerFighter.Dismiss(leaving);
         }
 
         base.OnServerDisconnect(conn);

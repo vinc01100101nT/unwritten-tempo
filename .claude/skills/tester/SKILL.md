@@ -32,7 +32,13 @@ Every one of these was done through the live editor link this session:
 
 ## What is NOT proven, and must be reported honestly if attempted
 
-- Entering the world and fighting in it. The door is proven; the room is not.
+- Entering the world and fighting in it. The door is proven; the room is not. As of 2026-09-03 a tester HAS
+  reached the town, read the whole hotbar, pressed a bound skill and watched its cooldown start — so the room is
+  reachable; fighting in it still is not.
+- **The freeze itself.** Pausing play from the outside and capturing the composited screen while paused is what
+  the hard rule below is built on, and NOBODY HAS DONE IT YET — the pause control and the screen capture both
+  exist, but the two have never been used together. The FIRST tester to need the freeze must say plainly whether
+  it worked, so this line can be moved up to the proven list or the rule rewritten around something that does.
 - **Two players at once.** The editor is ONE client. A second needs the built game with its own window and its
   own sign-in, and nothing here has driven that. Any test needing two people is OUT OF SCOPE — say so plainly
   instead of approximating it with one.
@@ -56,6 +62,50 @@ with a compile error when a name is wrong. Simulating input adds a second thing 
 
 When a screen's own handler is out of reach, run the exact lines that handler runs — and say in the report that
 this is what was done.
+
+## ⛔ ANYTHING SHORT-LIVED IS FROZEN, NEVER CHASED (hard rule — no exceptions)
+
+**Your round trip to the editor takes 2 to 10 seconds. Most of what you are asked to look at lasts less than
+that.** A buff runs 4 seconds. A cooldown ticks. Mana refills in 8. So "do the thing, then ask to look at it" is
+two trips, and the second one arrives after the thing is over — every time, forever, however carefully you work.
+
+**THE RULE: act and freeze in ONE call. Then look as long as you like.**
+
+    one call:  cast the skill  →  immediately pause play
+    then:      capture the screen, read the drawn text, read the values — unlimited trips, nothing moving
+
+Paused, the clock stops and so does the thing you are watching. A 4-second window becomes an indefinite one.
+Unpause when you are done with that moment.
+
+**The three moves, in order of what they prove:**
+
+1. **Read what the interface actually DRAWS** — the text on the tile, the number in the corner — not only the
+   value behind it. "The buff exists in the data" and "the tile shows its letters" are DIFFERENT claims, and the
+   second is usually the one being tested. Report them separately.
+2. **Capture the composited screen** (the source that includes the on-screen interface) as the backstop.
+3. **Read the underlying values** last, as corroboration.
+
+**Make the window bigger when timing is not the question.** If the check is "does the icon appear at all", use a
+long-lasting version of the effect rather than a 4-second one. Save the short one for when expiry itself is what
+is being tested.
+
+### THE LINE YOU MUST NOT WRITE
+
+**Never report a short-lived thing as ABSENT when your look arrived late.** That is not an observation, it is a
+missed measurement, and it reads to everyone else as a bug. The words are **"I looked too late — unmeasured"**.
+
+*(Scar, 2026-09-03: a tester cast a 4-second shielding buff and asked for a picture afterwards. The picture came
+back after the buff had gone, so the tile could not be confirmed. The USER, watching the same run in real time,
+saw the icon perfectly well. The tester was honest about it — but the whole check was wasted, and the same
+lateness had already produced a near-miss on mana: a 12-mana cost read as "mana unchanged" because the refill
+takes 8 seconds and the read-back takes up to 10.)*
+
+### The mandatory report line — this is what makes the rule impossible to skip
+
+**Every report ends with a "Timed observations" list: every short-lived thing you looked at, and how you froze
+it.** One line each — *what it was, how long it lasts, how it was frozen, what you read*. A timed thing missing
+from that list, or listed with no freeze, is a FAILED observation and must be re-done or reported as unmeasured.
+Empty list = say "none — nothing short-lived was observed".
 
 ## The two-part search rule — BOTH halves, every time
 
@@ -91,8 +141,11 @@ It starts COLD. Carry all of this, written out:
    also try what nobody asked for — the boundary, the empty case, the second time, the thing done out of order,
    and the state after death and respawn.
 4. **Everything measured this session** that bears on it.
-5. **The rules above, verbatim**, plus: never invent an identifier, a value, or a menu name; "I could not
-   determine this" is a valid and preferred answer.
+5. **The rules above, verbatim** — including the freeze rule and its mandatory closing list — plus: never invent
+   an identifier, a value, or a menu name; "I could not determine this" is a valid and preferred answer.
+6. **Which checks are timed**, named in the brief itself. Whoever writes the brief already knows a buff lasts 4
+   seconds and a cooldown 7; saying so turns the freeze rule from something the tester has to notice into
+   something it was told.
 
 ## Finishing — not optional
 
@@ -102,8 +155,11 @@ lives only in that play session, but say in the report that it added some.
 ## What it hands back
 
 - **What it actually did**, step by step, so the run can be repeated.
-- **What it observed** — the real values, and screenshots where they carry the answer.
+- **What it observed** — the real values, and screenshots where they carry the answer. For anything on screen,
+  say separately what the interface DREW and what the value behind it was.
 - **What it could NOT check, and why.** Never silently drop a checklist item; an unrun check reported as unrun
   is worth more than a guess.
+- **The "Timed observations" list** — every short-lived thing looked at and how it was frozen (see the hard rule
+  above). This is not optional and an empty list must be stated as empty.
 - Plain language, no file paths, per the global rules — and never the word "verified" for anything it only
   reasoned about.

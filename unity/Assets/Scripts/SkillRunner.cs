@@ -98,9 +98,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     }
 
     // A runner no longer announces itself to a process-wide table. Its caster HOLDS its skills in a fixed order
-    // (Character.BindSkillRunners), which is both the list a passive moment is dispatched against and the thing that
-    // gives each passive its place in the no-self-feeding brake. One list per character rather than one per machine,
-    // because a server holds a character for everybody signed in.
+    // (Character.BindSkills), which is both the list a passive moment is dispatched against and the thing that gives
+    // each passive its place in the no-self-feeding brake. One list per character rather than one per machine,
+    // because a server holds a character for everybody signed in. The caster owns the POSITIONS; a runner like this
+    // one is built the first time that position is genuinely used, and its caster is bound at that moment.
 
     // If we're torn down mid-cast (disabled, scene swap, death), Unity stops the coroutine but won't run its cleanup,
     // so drop the shared bar + kill the looping aura here or they'd hang on screen.

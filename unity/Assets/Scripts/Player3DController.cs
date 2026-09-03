@@ -229,35 +229,27 @@ public partial class Player3DController : MonoBehaviour
     void OnEnable()  { FootstepTracker.PlayerStepped += OnPlayerStep; }
     void OnDisable() { FootstepTracker.PlayerStepped -= OnPlayerStep; }
 
-    // Attach one SkillRunner per authored SkillDef (idempotent — skips defs already carried). Runs on Awake so
-    // a player built before a skill was composed still picks it up without a re-bake. Cold path (once per spawn).
+    // Say which skills are this player's and where their components go. Runs on Awake so a player built before a
+    // skill was composed still picks it up without a re-bake. Cold path (once per spawn).
+    //
+    // NOTHING IS BUILT HERE any more: a skill gets a position, and its component is made the first time the player
+    // presses it or one of their passives actually fires. The avatar and the server's fighter now bind the SAME list
+    // in the SAME order — the catalog's — so a passive's position, which is its identity to the no-self-feeding
+    // brake, means the same thing on the machine deciding a fight and the machine picturing it.
     void EnsureComposedSkills()
     {
-        var have = new HashSet<SkillDef>();
-        foreach (var r in GetComponents<SkillRunner>()) if (r.def != null) have.Add(r.def);
-
-        bool added = false;
-        var pool = SkillCatalog.All;
-        for (int i = 0; i < pool.Count; i++)
-        {
-            var def = pool[i];
-            if (def == null || have.Contains(def)) continue;
-            var runner = gameObject.AddComponent<SkillRunner>();
-            runner.def = def;
-            added = true;
-        }
-        if (added) PlayerSkills.Refresh();   // re-resolve id → runner so the hotbar/menu see the new actives
-
-        // WHOSE SKILLS THESE ARE, said out loud. The passive dispatch walks this list rather than a process-wide
-        // table, so a character that never handed one over simply has no passives — and the order is what gives each
-        // passive its place in the no-self-feeding brake, which is why it is bound once here rather than searched for.
         var me = Character.Instance;
-        if (me != null)
-        {
-            var mine = GetComponents<SkillRunner>();
-            for (int i = 0; i < mine.Length; i++) mine[i].BindCaster(me);
-            me.BindSkillRunners(mine);
-        }
+        if (me != null) me.BindSkills(gameObject, SkillCatalog.All);
+    }
+
+    // THE CHARACTER MAY NOT EXIST YET when this body wakes — the two are separate objects and Unity does not promise
+    // an order between them. Binding is what gives this player their skills at all now, so a miss above must not be
+    // final: this asks once more, one step later, when the character is certainly there. Binding twice is harmless —
+    // it re-files the same positions and adopts the same components.
+    void Start()
+    {
+        var me = Character.Instance;
+        if (me != null && !me.HasSkills) me.BindSkills(gameObject, SkillCatalog.All);
     }
 
     /// <summary>Push the SHARED character capsule onto this player's CharacterController. Called in Awake so the

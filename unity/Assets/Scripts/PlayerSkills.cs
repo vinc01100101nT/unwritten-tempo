@@ -1,53 +1,24 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Runtime lookup from a stable skill id to the live <see cref="IHotbarSkill"/> component on the player.
-/// The class-agnostic active pool all lives on the <see cref="Player3DController"/> (see its self-bootstrap),
-/// so this maps "skill.meteor" → the <see cref="SkillRunner"/> playing that composed <see cref="SkillDef"/>:
-/// the hotbar, the key router, and the skill menu fetch a skill's icon/label/tint and fire it without knowing
-/// concrete types. The id is the composed skill's <see cref="SkillDef.id"/>. Cached; <see cref="Refresh"/> on
-/// player rebuild.
+/// Runtime lookup from a stable skill id to the live <see cref="IHotbarSkill"/> that plays it — what the hotbar,
+/// the key router and the skill menu use to fetch a skill's icon/label/tint and fire it without knowing concrete
+/// types. The id is the composed skill's <see cref="SkillDef.id"/>.
+///
+/// <para>The answer comes from the CHARACTER, which owns the ordered skill list and builds a skill's component the
+/// first time it is asked for. This used to keep its own cache, rebuilt by scanning every component on the player —
+/// a second copy of a list the character already had, which had to be told by hand whenever the real one changed.
+/// One owner now, so there is nothing to refresh and nothing that can go stale.</para>
 /// </summary>
 public static class PlayerSkills
 {
-    static Player3DController player;
-    static readonly Dictionary<string, IHotbarSkill> byId = new Dictionary<string, IHotbarSkill>();
-
-    /// <summary>Drop the cache (call when the player is (re)built so the next lookup re-resolves).</summary>
-    public static void Refresh() { player = null; byId.Clear(); }
-
-    static void EnsureCache()
-    {
-        if (player == null) byId.Clear();
-        if (player == null) player = Object.FindAnyObjectByType<Player3DController>();
-        if (player == null || byId.Count > 0) return;
-
-        var comps = player.GetComponents<IHotbarSkill>();
-        for (int i = 0; i < comps.Length; i++)
-        {
-            // Composed skills (the data-driven pool) key off their SkillDef id.
-            if (comps[i] is SkillRunner sr && sr.def != null && !string.IsNullOrEmpty(sr.def.id))
-                byId[sr.def.id] = comps[i];
-        }
-    }
-
-    /// <summary>The live skill component for <paramref name="id"/>, or null. Re-resolves if the cached one
-    /// was destroyed (e.g. a scene rebuilt the player).</summary>
+    /// <summary>The live skill for <paramref name="id"/>, or null when it is not one of this character's.</summary>
     public static IHotbarSkill ById(string id)
     {
-        if (string.IsNullOrEmpty(id)) return null;
-        EnsureCache();
-        if (byId.TryGetValue(id, out var s))
-        {
-            if (s is Object o && o != null) return s;
-            Refresh();                       // cached component is dead → rebuild and retry once
-            EnsureCache();
-            return byId.TryGetValue(id, out var s2) && s2 is Object o2 && o2 != null ? s2 : null;
-        }
-        return null;
+        var me = Character.Instance;
+        return me != null ? me.RunnerById(id) : null;
     }
 
-    /// <summary>True once the player + its skill components are resolvable.</summary>
-    public static bool Ready { get { EnsureCache(); return byId.Count > 0; } }
+    /// <summary>True once the player's skills are resolvable.</summary>
+    public static bool Ready => Character.Instance != null && Character.Instance.HasSkills;
 }

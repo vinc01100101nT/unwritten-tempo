@@ -102,11 +102,18 @@ learning — do not write it.
 The index line is **symptom → lesson**, never lesson → symptom, because you arrive at the index knowing the
 symptom and nothing else.
 
-### Keep it SMALL — a cap is what keeps it readable
+### NO PAGE CAP — but every page must still earn its place
 
-**Hard cap: 12 pages.** At the cap, a new lesson must merge into an existing page or replace one. Delete a page
-the moment it is obsolete, or the moment it graduates into a hard rule in this file — a lesson in two places is
-the dual-path rot this file bans everywhere else.
+**There is no limit on the number of pages** (the old cap of 12 was lifted by the user on 2026-09-03). A lesson
+that was paid for gets written down, full stop; never merge two unrelated lessons into one page, or drop one,
+because a counter said so.
+
+What keeps the folder readable is not a page count, it is the INDEX: one symptom line per page, sorted so the
+reader arrives knowing the symptom and finds it by scanning. Keep those lines short and distinct, and merge two
+pages ONLY when they genuinely share a symptom — never as bookkeeping.
+
+Delete a page the moment it is obsolete, or the moment it graduates into a hard rule in this file — a lesson in
+two places is the dual-path rot this file bans everywhere else.
 
 ### One home per lesson, split by whether it must fire unprompted
 

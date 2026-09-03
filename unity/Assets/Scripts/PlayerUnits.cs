@@ -19,6 +19,41 @@ public static class PlayerUnits
 {
     static readonly List<ICombatUnit> present = new List<ICombatUnit>();
 
+    // THE SAME PEOPLE, FILED BY THE MAP THEY ARE STANDING IN. A creature looking for somebody to chase asked the
+    // whole world twice a second and threw away everybody who was not even in its map — creatures times players,
+    // most of it wasted. This answers the same question by looking only where the creature actually is.
+    //
+    // It cannot silently lose anybody. A person is filed when they arrive and re-filed the moment they are told
+    // they are somewhere new, and anyone whose map is not known yet sits in the unfiled list below, which EVERY
+    // search reads as well as its own map's. So the worst a stale entry can do is be considered twice, never
+    // vanish — which matters, because a person a creature cannot see is a bug nobody would ever notice.
+    static readonly Dictionary<string, List<ICombatUnit>> byMap = new Dictionary<string, List<ICombatUnit>>();
+    static readonly List<ICombatUnit> unfiled = new List<ICombatUnit>();
+
+    static List<ICombatUnit> BucketFor(string map)
+    {
+        if (!byMap.TryGetValue(map, out var list)) byMap[map] = list = new List<ICombatUnit>();
+        return list;
+    }
+
+    // Take a person out of wherever they are filed, without disturbing anybody else.
+    static void Unfile(ICombatUnit unit)
+    {
+        unfiled.Remove(unit);
+        foreach (var list in byMap.Values) if (list.Remove(unit)) return;
+    }
+
+    /// <summary>File this person under the map they are in now — called when they arrive and every time they are
+    /// told they are somewhere new. Safe to call with the same map twice.</summary>
+    public static void Refile(ICombatUnit unit)
+    {
+        if (unit == null || !present.Contains(unit)) return;
+        Unfile(unit);
+        string map = unit.Map;
+        if (string.IsNullOrEmpty(map)) unfiled.Add(unit);
+        else BucketFor(map).Add(unit);
+    }
+
     /// <summary>Everyone currently in the world. Never null; empty before anybody has arrived.</summary>
     public static IReadOnlyList<ICombatUnit> Present => present;
 
@@ -27,6 +62,7 @@ public static class PlayerUnits
     {
         if (unit == null || present.Contains(unit)) return;
         present.Add(unit);
+        Refile(unit);
     }
 
     /// <summary>Somebody has gone. Safe to call for a unit that was never in.</summary>
@@ -34,6 +70,7 @@ public static class PlayerUnits
     {
         if (unit == null) return;
         present.Remove(unit);
+        Unfile(unit);
     }
 
     /// <summary>TRUE when this unit is not really there any more — including the case that looks fine and is not:
@@ -102,10 +139,23 @@ public static class PlayerUnits
         ICombatUnit best = null;
         float bestSqr = float.MaxValue;
 
-        for (int i = 0; i < present.Count; i++)
+        // An empty map still means "anybody", which is what one machine holding one map asks for.
+        if (string.IsNullOrEmpty(map)) { Closest(present, from, map, ref best, ref bestSqr); return best; }
+
+        if (byMap.TryGetValue(map, out var here)) Closest(here, from, map, ref best, ref bestSqr);
+        Closest(unfiled, from, map, ref best, ref bestSqr);
+        return best;
+    }
+
+    static void Closest(List<ICombatUnit> people, Vector3 from, string map,
+                        ref ICombatUnit best, ref float bestSqr)
+    {
+        for (int i = 0; i < people.Count; i++)
         {
-            var unit = present[i];
+            var unit = people[i];
             if (Gone(unit) || unit.IsDead) continue;
+            // ASKED AGAIN even though the filing already answered it: a person filed under the wrong map must be
+            // skipped rather than chased across the world, and this is what makes a stale entry harmless.
             if (!string.IsNullOrEmpty(map) && unit.Map != map) continue;
 
             var body = unit.Body;
@@ -119,7 +169,5 @@ public static class PlayerUnits
             bestSqr = sqr;
             best = unit;
         }
-
-        return best;
     }
 }

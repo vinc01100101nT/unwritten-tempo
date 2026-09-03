@@ -222,8 +222,12 @@ public class NetPlayer : NetworkBehaviour
 
     // ---- the server's half: say what is running on them --------------------------------------------------
 
-    // Reused on both sides so a push costs no garbage — this runs whenever anything about a person's buffs changes,
-    // which during a fight is often.
+    // SERVER SIDE ONLY, and reused for the life of the process, so a push allocates nothing at all — this runs
+    // whenever anything about a person's buffs changes, which during a fight is often, and the server does it for
+    // every person signed in at once. It is filled and handed STRAIGHT to the send; it used to be copied into a
+    // fresh array first, which threw that array away on every buff change of every player in the world. The
+    // receiving side never touches this buffer — the reader hands that side its own list — so the two halves of
+    // this exchange share nothing, and a host running both at once could not clear the buffer out from under a send.
     static readonly System.Collections.Generic.List<UnitStates.Mirrored> statesScratch =
         new System.Collections.Generic.List<UnitStates.Mirrored>(16);
 
@@ -237,26 +241,49 @@ public class NetPlayer : NetworkBehaviour
     {
         if (watchedStates != null) watchedStates.OnChanged -= PushMyStates;
         watchedStates = states;
+        alreadyDescribed.Clear();   // a different store is a different person: nothing has been explained to them yet
         if (watchedStates != null) { watchedStates.OnChanged += PushMyStates; PushMyStates(); }
     }
+
+    // WHAT THIS PERSON HAS ALREADY BEEN TOLD THE MEANING OF. A buff's hover sentence never changes while the buff
+    // runs, so it is sent once, when the buff first appears, and left out of every push after — and there are many
+    // pushes, because this fires on every change to every buff during a fight. Their machine keeps the sentence it
+    // was given (see UnitStates.MirrorFromServer). Rebuilt to exactly what was just sent, so a buff that ends and
+    // comes back is described again rather than arriving blank.
+    readonly System.Collections.Generic.HashSet<(StateId, string)> alreadyDescribed =
+        new System.Collections.Generic.HashSet<(StateId, string)>();
+    readonly System.Collections.Generic.HashSet<(StateId, string)> describedThisPush =
+        new System.Collections.Generic.HashSet<(StateId, string)>();
 
     void PushMyStates()
     {
         if (watchedStates == null || connectionToClient == null) return;
         watchedStates.SnapshotForOwner(statesScratch);
-        TargetStates(connectionToClient, statesScratch.ToArray());
+
+        describedThisPush.Clear();
+        for (int i = 0; i < statesScratch.Count; i++)
+        {
+            var m = statesScratch[i];
+            var key = (m.id, m.sourceSkillId ?? "");
+            describedThisPush.Add(key);
+            if (!alreadyDescribed.Contains(key)) continue;
+            m.description = "";              // they have it already
+            statesScratch[i] = m;
+        }
+        alreadyDescribed.Clear();
+        foreach (var key in describedThisPush) alreadyDescribed.Add(key);
+
+        TargetStates(connectionToClient, statesScratch);
     }
 
     /// <summary>…and only to the person it belongs to. Everybody else reads a fight off the bodies and the numbers;
     /// only you need to know how long your own window has left.</summary>
     [TargetRpc]
-    void TargetStates(NetworkConnectionToClient target, UnitStates.Mirrored[] states)
+    void TargetStates(NetworkConnectionToClient target, System.Collections.Generic.List<UnitStates.Mirrored> states)
     {
         var me = Character.Instance;
         if (me == null || me.States == null) return;
-        statesScratch.Clear();
-        if (states != null) statesScratch.AddRange(states);
-        me.States.MirrorFromServer(statesScratch);
+        me.States.MirrorFromServer(states);
     }
 
     /// <summary>ONE way a skill moves a person, whichever way it does it. A blink, a glide and a shove differ only

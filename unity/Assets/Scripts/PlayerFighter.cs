@@ -129,27 +129,12 @@ public static class PlayerFighter
 
     static void GiveThemTheirSkills(GameObject host, Character fighter)
     {
-        var pool = SkillCatalog.All;
-        var runners = new SkillRunner[pool.Count];
-        for (int i = 0; i < pool.Count; i++)
-        {
-            var runner = host.AddComponent<SkillRunner>();
-            runner.def = pool[i];
-            runner.BindCaster(fighter);
-            runners[i] = runner;
-        }
-        fighter.BindSkillRunners(runners);
+        fighter.BindSkills(host, SkillCatalog.All);
     }
 
     /// <summary>The runner this fighter casts <paramref name="skillId"/> with, or null if that is not a skill.</summary>
     public static SkillRunner RunnerFor(Character fighter, string skillId)
-    {
-        var runners = fighter != null ? fighter.SkillRunners : null;
-        if (runners == null || string.IsNullOrEmpty(skillId)) return null;
-        for (int i = 0; i < runners.Length; i++)
-            if (runners[i] != null && runners[i].def != null && runners[i].def.id == skillId) return runners[i];
-        return null;
-    }
+        => fighter != null ? fighter.RunnerById(skillId) : null;
 
     // Which characters are being played on this server right now. Emptied one name at a time as people leave, so
     // it never grows past the number of people actually here.

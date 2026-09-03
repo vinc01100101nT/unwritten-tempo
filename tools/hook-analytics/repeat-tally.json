@@ -26,7 +26,8 @@
       "recompile 2>&1": 3,
       "recompile _status": 5,
       "recompile _status\"],capture_output=True,text=True)": 1,
-      "recompile _status\"],capture_output=True,text=True).stdout": 1
+      "recompile _status\"],capture_output=True,text=True).stdout": 1,
+      "recompile and": 1
     },
     "told": [
       "check-perf-hotpaths.py 2>&1",
@@ -84,6 +85,28 @@
     "told": [
       "check-perf-hotpaths.py 2>&1",
       "check-unity-code.sh 2>&1"
+    ]
+  },
+  "f76e20c5-7f46-47c8-99d4-70e9cfc654a8": {
+    "counts": {
+      "build-game.sh": 2,
+      "build-game.sh ;": 1,
+      "build-game.sh server": 2,
+      "check-perf-hotpaths.py 2>&1": 5,
+      "check-skill-data.py 2>&1": 2,
+      "check-unity-code.sh 2>&1": 15,
+      "recompile ,": 1,
+      "recompile _status": 1,
+      "unwritten-server.app": 8,
+      "unwritten-server.app ;": 1
+    },
+    "told": [
+      "build-game.sh",
+      "build-game.sh server",
+      "check-perf-hotpaths.py 2>&1",
+      "check-skill-data.py 2>&1",
+      "check-unity-code.sh 2>&1",
+      "unwritten-server.app"
     ]
   },
   "fe864e3c-3554-4a86-b6a7-32cc0267ab83": {

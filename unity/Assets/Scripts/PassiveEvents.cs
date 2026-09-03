@@ -79,11 +79,20 @@ public static class PassiveEvents
 
         var owner = actor as Character;
         int n = runners.Length < MaxTrackedPassives ? runners.Length : MaxTrackedPassives;
-        for (int i = 0; i < n; i++)
+
+        // ONLY THE SKILLS THAT ANSWER THIS MOMENT. Their positions were worked out once, when this character's skill
+        // list was bound, so a blow no longer asks every skill in the catalog whether it cares — it asks the few that
+        // authored this trigger. A character that has not been indexed (none of ours, but the interface allows it)
+        // still gets the whole list, so nothing can silently stop firing.
+        var slots = owner != null ? owner.SlotsFor(trigger) : null;
+        int count = slots != null ? slots.Length : n;
+        for (int s = 0; s < count; s++)
         {
-            var r = runners[i];
-            if (r == null || !r) continue;
-            var def = r.def;
+            int i = slots != null ? slots[s] : s;
+            if (i < 0 || i >= n) continue;
+            // THE AUTHORED SKILL, not its component. Every question below is answered off the asset, so a skill that
+            // turns out not to answer this moment — or that this person has not switched on — never costs a component.
+            var def = owner != null ? owner.DefAt(i) : (runners[i] != null && runners[i] ? runners[i].def : null);
             if (def == null) continue;
             // WHICH authored entry answers this moment (null = this skill doesn't). A skill may carry several triggers,
             // so the moment picks the entry, and that entry — not the skill — owns the gate and the stack cost below.
@@ -100,8 +109,13 @@ public static class PassiveEvents
             ulong bit = 1UL << i;
             if ((chain & bit) != 0UL) continue;
 
-            // THE GATE: a trigger that requires a state doesn't run at all when unmet — no VFX, no cast.
-            if (!StateGate.IsMet(entry, r.CasterStates)) continue;
+            // THE GATE: a trigger that requires a state doesn't run at all when unmet — no VFX, no cast. Asked of the
+            // caster's own store rather than through a component, so an unmet gate also costs nothing to build.
+            if (!StateGate.IsMet(entry, owner != null ? owner.States : (runners[i] != null ? runners[i].CasterStates : null))) continue;
+
+            // ONLY NOW is the component built, if this is the first time this person has fired this passive.
+            var r = owner != null ? owner.RunnerAt(i) : runners[i];
+            if (r == null || !r) continue;
 
             r.FireAsPassive(entry, victim, chain | bit);   // fire the whole skill; the chain it hands to its own effects includes itself
         }

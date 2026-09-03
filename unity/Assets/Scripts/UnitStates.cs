@@ -900,10 +900,12 @@ public class UnitStates : MonoBehaviour
         public float secondsLeft;
         public float secondsTotal;
         public int stacks;
-        public string symbol;
-        public string name;
         public string description;
         public Color tint;
+
+        // The two-letter tag and the skill's name are NOT carried. Both are the GRANTING SKILL'S OWN, read straight
+        // off its asset — and every machine already has every skill asset on disk, so sending them was sending a
+        // person a copy of something they were holding. `sourceSkillId` above is what they are looked up by.
     }
 
     /// <summary>Fill <paramref name="into"/> with this store's live states, for sending to the machine of the person
@@ -927,8 +929,6 @@ public class UnitStates : MonoBehaviour
                 secondsLeft = Mathf.Max(0f, a.endTime - now),
                 secondsTotal = Mathf.Max(0.01f, a.endTime - a.startTime),
                 stacks = a.StackCount,
-                symbol = a.symbol ?? "",
-                name = a.name ?? "",
                 description = a.description ?? "",
                 tint = a.tint,
             });
@@ -944,8 +944,23 @@ public class UnitStates : MonoBehaviour
     /// <para>The stacks are rebuilt as N copies sharing the pile's own window, which is what the tray counts and what
     /// every reader of a total reads. A per-stack expiry is the granting machine's business — nothing here spends a
     /// charge, because nothing here decides anything.</para></summary>
+    // THE HOVER SENTENCE THIS MACHINE ALREADY HOLDS, kept across a rebuild. The server sends that sentence once,
+    // when a state first appears, and leaves it out of every push after — it never changes while the state runs, and
+    // re-posting a paragraph on every tick of a fight is the whole of what this saves. Reused, so keeping it costs
+    // no memory per push.
+    static readonly Dictionary<(StateId, string), string> keptDescriptions =
+        new Dictionary<(StateId, string), string>();
+
     public void MirrorFromServer(List<Mirrored> from)
     {
+        keptDescriptions.Clear();
+        for (int i = 0; i < active.Count; i++)
+        {
+            var had = active[i];
+            if (!string.IsNullOrEmpty(had.description))
+                keptDescriptions[(had.id, had.sourceSkillId ?? "")] = had.description;
+        }
+
         for (int i = 0; i < active.Count; i++) { active[i].stacks.Clear(); pool.Push(active[i]); }
         active.Clear();
 
@@ -959,7 +974,18 @@ public class UnitStates : MonoBehaviour
                 e.id = m.id;
                 e.sourceSkillId = m.sourceSkillId ?? "";
                 e.stacking = m.stacking;
-                e.symbol = m.symbol; e.name = m.name; e.description = m.description; e.tint = m.tint;
+                // THE TAG AND THE NAME COME OFF THE SKILL, not off the wire. Identical values — this is where the
+                // machine that decided the buff read them from too — so the tray, the nameplate and the hover card
+                // all show exactly what they showed before.
+                var src = SkillCatalog.Get(m.sourceSkillId);
+                e.symbol = src != null ? src.Symbol : "";
+                e.name = src != null ? src.displayName : "";
+                // Blank means "the same as last time" — so what this machine was already showing is carried over
+                // rather than lost. A state that went away and came back is not in the kept set, so its sentence
+                // arrives again with it.
+                e.description = !string.IsNullOrEmpty(m.description) ? m.description
+                              : (keptDescriptions.TryGetValue((e.id, e.sourceSkillId), out var kept) ? kept : "");
+                e.tint = m.tint;
                 e.nextTick = 0f;
                 e.endTime = now + m.secondsLeft;
                 e.startTime = e.endTime - m.secondsTotal;
