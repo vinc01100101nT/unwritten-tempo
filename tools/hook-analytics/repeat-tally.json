@@ -83,14 +83,14 @@
       "check-perf-hotpaths.py": 2,
       "check-perf-hotpaths.py 2>&1": 4,
       "check-perf-hotpaths.py |": 1,
-      "check-unity-code.sh 2>&1": 25,
+      "check-unity-code.sh 2>&1": 27,
       "editor_play 2>&1": 4,
-      "recompile": 3,
+      "recompile": 4,
       "recompile 2>&1": 2,
       "recompile ===\";": 1,
       "recompile _status": 6,
       "recompile start?": 1,
-      "unwritten-server.app": 14
+      "unwritten-server.app": 15
     },
     "told": [
       "build-game.sh server",

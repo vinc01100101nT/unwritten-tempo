@@ -164,14 +164,29 @@ public class CharacterSelectScreen : MonoBehaviour
         if (deleteButton != null) deleteButton.interactable = has;
     }
 
+    // WHAT HAPPENS WHEN A CHARACTER IS CHOSEN — answered ONCE, off the fact of the choice, not off the button.
+    // Exactly the same fault the sign-in screen had, one screen further along: the dismissal lived inside this
+    // button's handler, so anything that chose a character without pressing it — a test driving the game through
+    // the same functions a player's clicks reach — entered the world with this full-screen overlay still on top,
+    // covering the running game. The world showed in the editor's scene view and nothing but this in the game view.
+    void OnCharacterChosen()
+    {
+        if (this == null) return;                                        // already gone; nothing to do
+        if (string.IsNullOrEmpty(AccountSession.CharacterId)) return;    // signing out also raises this
+        Destroy(gameObject);
+    }
+
+    void OnEnable()  { AccountSession.OnChanged += OnCharacterChosen; }
+    void OnDisable() { AccountSession.OnChanged -= OnCharacterChosen; }
+
     void OnEnter()
     {
         if (selected < 0 || selected >= characters.Count) return;
         var info = characters[selected];
 
         // From here the game knows who it is playing: SaveManager sees the session go live and loads them.
+        // Choosing raises the event above, which is what takes this screen down — by any route in, not just this one.
         AccountSession.PlayAs(info.id, info.name, info.modelName, info.dyeSources, info.dyeTargets);
-        Destroy(gameObject);
     }
 
     void OnDelete()
@@ -191,9 +206,10 @@ public class CharacterSelectScreen : MonoBehaviour
     void OnSignOut()
     {
         AccountSession.SignOut();
-        var go = new GameObject("SignInScreen") { hideFlags = HideFlags.DontSaveInEditor };
-        DontDestroyOnLoad(go);
-        go.AddComponent<SignInScreen>();
+        // Through the one function that puts that screen up, not a hand-built copy of it. Its own guard refuses a
+        // second instance, and a copy assembled here was invisible to that guard — two stacked full-screen
+        // overlays, the top one silently eating every click meant for the real one.
+        SignInScreen.Open();
         Destroy(gameObject);
     }
 

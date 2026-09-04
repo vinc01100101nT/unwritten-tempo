@@ -95,19 +95,24 @@ change code, they lose an afternoon to something that was never broken. An unrun
 the check.
 
 So before writing **bug**, **broken**, **failed**, **did not fire**, or **does nothing** about any action, the
-tester must answer all four of these, with a measurement, and put the answers in the report:
+tester must answer all four of these and put the answers in the report.
 
-1. **Was I in range?** Measure the real gap between the two bodies AND read the reach the game itself reports.
-   Compare them. Never assume a reach; never assume a weapon grants one.
-2. **Was I blocked?** THIS IS A MEASUREMENT, NOT A GUESS — never write "movement did not happen" or "cause not
-   established" without having actually taken it. Query everything solid within a few units of the body, sorted
-   by distance, and read what is nearest: a fellow creature's body, a tree, a wall, a fence. If something solid
-   sits closer than the distance you were trying to move, THAT is the answer, and you name it plainly — "blocked
-   by [the nearest solid thing], N units away" is a finding, "cause not established" is only for when that query
-   comes back with nothing closer than the move itself.
-3. **Was my read late?** If it was not captured by a recorder running across the moment, the answer is *"I
-   looked too late — unmeasured"*, never *"it was absent"* — and never a read taken while play was paused (see
-   the short-lived-things rule below; a paused read is proven to lie in this game).
+**A LOG LINE FROM THE GAME COUNTS AS THE ANSWER.** Each of the first three has a line that already carries it,
+written by the code that made the decision. When you have that line, quote it — that is the measurement, taken
+by the thing that actually knows. Take your own only when no line answers it.
+
+1. **Was I in range?** The game says so: *"CANNOT REACH X — it is 0.369 away and this weapon reaches 0.325"* —
+   both numbers, already compared. Without that line, measure the real gap AND read the reach the game reports,
+   and compare them yourself. Never assume a reach; never assume a weapon grants one.
+2. **Was I blocked?** The game says so: *"MOVEMENT REFUSED for 8.5s — asked to move 0.0141 per frame and moved 0.
+   Nearest solid: Tavern"* — that IS the query, already run, naming what is in the way. Without that line, run it
+   yourself: everything solid within a few units, sorted by distance, and read what is nearest. Either way,
+   "cause not established" is only honest when the answer genuinely is not there — never as a shrug in place of
+   looking.
+3. **Was my read late?** A log line is stamped by the game at the moment it happened, so a line is never late.
+   Otherwise: if it was not captured by a recorder running across the moment, the answer is *"I looked too
+   late — unmeasured"*, never *"it was absent"* — and never a read taken while play was paused (see the
+   short-lived-things rule below; a paused read is proven to lie in this game).
 4. **Am I reading a number this machine is even allowed to know?** See the next section.
 
 Cannot rule all four out? Then the finding is **"I could not establish this, and here is what stopped me"** —
@@ -170,12 +175,25 @@ what it returned (size, and whether the interface was present) so the next teste
 that.** A buff runs 4 seconds. A cooldown ticks. Mana refills in 8. So "do the thing, then ask to look at it" is
 two trips, and the second one arrives after the thing is over — every time, forever, however carefully you work.
 
-**THE RULE: put a recorder INSIDE the game before you act, then act, then read the recording at leisure.** A
-short loop sampling the handful of values you care about, every step, with a timestamp, written to a file. Cause
-the thing, let it run for a few seconds at normal speed, then read the file. This is the ONLY technique that has
-produced a real timed finding in this game — every one of them (a buff arriving 0.35 seconds after a press, a
-pile decaying one stack at a time, two piles vanishing in a single shared frame) came from a recorder, and NONE
-came from pausing.
+**FIRST, ASK WHETHER THE GAME ALREADY SAYS IT.** With the log categories switched on, the game narrates its own
+decisions — a blow landing or refused and why, a passive firing, a buff arriving, a cast refused and which of six
+reasons refused it, a character that asked to move and did not, naming what is in the way. **When a log line
+answers the question, THAT IS THE OBSERVATION. Quote it and move on.** Do not build an instrument to re-derive
+what the game just told you, and do not treat its own line as something that needs corroborating.
+
+*(This paragraph exists because its absence cost a measured 9% more time and 21% more tool calls on an identical
+task. A run read "MOVEMENT REFUSED for 31.8s — nearest solid: Tavern" twenty-four times and then built five
+recorders to measure the same fact independently, because the rule below used to say a recorder was the only
+technique that counts. It is not. It is the technique for what the log does NOT say.)*
+
+**THE RULE FOR WHAT THE LOG DOES NOT SAY: put a recorder INSIDE the game before you act, then act, then read the
+recording at leisure.** A short loop sampling the handful of values you care about, every step, with a timestamp,
+written to a file. Cause the thing, let it run for a few seconds at normal speed, then read the file.
+
+Reach for one when you need something the log has no line for: an exact timing, a frame-by-frame value, how
+often a condition held across a window, or the single frame two things changed together. Those are real needs —
+a buff arriving 0.35 seconds after a press, a pile decaying one stack at a time, two piles vanishing in one
+shared frame — and every one of them came from a recorder. **None came from pausing.**
 
 **PAUSING PLAY TO FREEZE A MOMENT IS BANNED IN THIS GAME — it is not merely unhelpful, it is actively wrong twice
 over:**
