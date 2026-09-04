@@ -14,6 +14,7 @@ The folders match the sections below, so the file tree and this index say the sa
 ## Process
 
 - [The Three-Brain Design Process](0-process/design-process.md) — the standing Claude+Vince+GPT workflow for designing any system (frame → ideate → filter → co-design → validate → stress-test → review → lock+document). Reuse for every design unit.
+- [Reading the Game Log](0-process/reading-the-game-log.md) — the categorised game log: which categories exist, how to switch them on, and the three questions it answers that nothing else can. Read before any play-test.
 
 ## Planning & production
 

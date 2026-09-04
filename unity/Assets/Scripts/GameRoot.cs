@@ -90,7 +90,7 @@ public class GameRoot : MonoBehaviour
         BringUpMap();
         // A server writes to a log file, not to a screen, so the only way anyone knows it came up is if it
         // says so. Server-only: a player's console is not the place to announce this.
-        if (GameServer.IsServer) Debug.Log("[server] world up — loading map '" + MapToLoad() + "'");
+        if (GameServer.IsServer) GameLog.Info(LogCat.Server, "world up — loading map '" + MapToLoad() + "'");
     }
 
     // The persistent layer exists from the first frame — it IS this scene — so it gets switched off rather than

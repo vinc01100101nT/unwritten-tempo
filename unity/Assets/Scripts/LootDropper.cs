@@ -200,7 +200,7 @@ public class LootDropper : MonoBehaviour
         // SAID OUT LOUD, ONCE. Without it a coin dropped in a shared world lies there showing nothing at all,
         // which looks exactly like loot that was never sent.
         if (watchedCoin == null)
-            Debug.LogError("[net] no sprite called '" + CoinSpriteName + "' in Resources — Zeny dropped in a "
+            GameLog.Error(LogCat.Net, "no sprite called '" + CoinSpriteName + "' in Resources — Zeny dropped in a "
                            + "shared world will lie on the ground with nothing to show for it.");
         return watchedCoin;
     }

@@ -75,6 +75,35 @@
       "unwritten-server.app ];"
     ]
   },
+  "f0d88296-1594-41db-a1f5-e1626de21316": {
+    "counts": {
+      "build-game.sh": 1,
+      "build-game.sh leaves": 1,
+      "build-game.sh server": 2,
+      "check-perf-hotpaths.py": 2,
+      "check-perf-hotpaths.py 2>&1": 4,
+      "check-perf-hotpaths.py |": 1,
+      "check-unity-code.sh 2>&1": 25,
+      "editor_play 2>&1": 4,
+      "recompile": 3,
+      "recompile 2>&1": 2,
+      "recompile ===\";": 1,
+      "recompile _status": 6,
+      "recompile start?": 1,
+      "unwritten-server.app": 14
+    },
+    "told": [
+      "build-game.sh server",
+      "check-perf-hotpaths.py",
+      "check-perf-hotpaths.py 2>&1",
+      "check-unity-code.sh 2>&1",
+      "editor_play 2>&1",
+      "recompile",
+      "recompile 2>&1",
+      "recompile _status",
+      "unwritten-server.app"
+    ]
+  },
   "f3b0d73e-e6b2-44be-b82c-adab050b405d": {
     "counts": {
       "check-perf-hotpaths.py 2>&1": 2,

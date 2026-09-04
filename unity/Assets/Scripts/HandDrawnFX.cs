@@ -120,7 +120,7 @@ public class HandDrawnFX : MonoBehaviour
         var sh = Shader.Find("Unwritten/InkScreen");
         if (sh == null)
         {
-            Debug.LogWarning("[HandDrawnFX] Shader 'Unwritten/InkScreen' not found — ink linework disabled. " +
+            GameLog.Warn(LogCat.Unwritten, "HandDrawnFX: Shader 'Unwritten/InkScreen' not found — ink linework disabled. " +
                              "(In a build, add it to Project Settings ▸ Graphics ▸ Always Included Shaders.) " +
                              "Saturation still works.");
         }

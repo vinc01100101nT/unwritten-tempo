@@ -25,7 +25,7 @@ public static class ItemUse
         var runner = PlayerSkills.ById(item.useSkillId) as SkillRunner;
         if (runner == null || runner.def == null)
         {
-            Debug.LogError($"[ItemUse] \"{item.id}\" names skill \"{item.useSkillId}\", which the player has no runner " +
+            GameLog.Error(LogCat.Unwritten, $"ItemUse: \"{item.id}\" names skill \"{item.useSkillId}\", which the player has no runner " +
                            $"for. Either the id is wrong or that skill isn't in the catalog.");
             return false;
         }
@@ -33,7 +33,7 @@ public static class ItemUse
         var entry = runner.def.ItemUseEntry;
         if (entry == null)
         {
-            Debug.LogError($"[ItemUse] \"{item.id}\" runs skill \"{item.useSkillId}\", but that skill has no On Item " +
+            GameLog.Error(LogCat.Unwritten, $"ItemUse: \"{item.id}\" runs skill \"{item.useSkillId}\", but that skill has no On Item " +
                            $"Used trigger — so nothing would happen. Add one in the Skill Composer.");
             return false;
         }

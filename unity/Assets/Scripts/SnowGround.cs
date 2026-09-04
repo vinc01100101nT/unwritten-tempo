@@ -99,7 +99,7 @@ public class SnowGround : MonoBehaviour
         var sh = Shader.Find("Unwritten/SnowGround");
         if (sh == null)
         {
-            Debug.LogWarning("[SnowGround] Shader 'Unwritten/SnowGround' not found — snow accumulation disabled. " +
+            GameLog.Warn(LogCat.Unwritten, "SnowGround: Shader 'Unwritten/SnowGround' not found — snow accumulation disabled. " +
                              "(In a build, add it to Project Settings ▸ Graphics ▸ Always Included Shaders.)");
             enabled = false;
             return;

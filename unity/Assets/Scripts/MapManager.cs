@@ -82,7 +82,7 @@ public static class MapManager
             if (!warnedNoSystems)
             {
                 warnedNoSystems = true;
-                Debug.LogWarning("[map] the '" + SystemsScene + "' scene is not loaded, so things the server sent "
+                GameLog.Warn(LogCat.Map, "the '" + SystemsScene + "' scene is not loaded, so things the server sent "
                                  + "are living in the current map and will be destroyed when it is left.");
             }
             return;
@@ -131,7 +131,7 @@ public static class MapManager
         // A map arriving is the one thing a server operator needs to see in the log: it is the difference
         // between "asked for the town" and "the town is up". Server-only — a player sees the map instead.
         if (GameServer.IsServer && scene.name != SystemsScene)
-            Debug.Log("[server] map '" + scene.name + "' loaded — "
+            GameLog.Info(LogCat.Server, "map '" + scene.name + "' loaded — "
                       + scene.rootCount + " root objects, active scene is now '"
                       + SceneManager.GetActiveScene().name + "'");
     }
@@ -239,7 +239,7 @@ public static class MapManager
         // raycasting it already does this; the one that moves a whole map at runtime must too.
         Physics.SyncTransforms();
 
-        Debug.Log("[server] map '" + scene.name + "' set down " + at.x + " away, clear of the others.");
+        GameLog.Info(LogCat.Server, "map '" + scene.name + "' set down " + at.x + " away, clear of the others.");
     }
 
 

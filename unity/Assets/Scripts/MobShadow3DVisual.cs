@@ -89,7 +89,7 @@ public class MobShadow3DVisual : Agent3DVisual
         string modelName = spec.RandomFighter();
         if (string.IsNullOrWhiteSpace(modelName))
         {
-            Debug.LogWarning("[unwritten] CharacterSpec has no fighter models — '" + name + "' stays a billboard.");
+            GameLog.Warn(LogCat.Unwritten, "CharacterSpec has no fighter models — '" + name + "' stays a billboard.");
             enabled = false;
             return;
         }
@@ -101,7 +101,7 @@ public class MobShadow3DVisual : Agent3DVisual
             building = false;
             if (model == null)
             {
-                Debug.LogWarning("[unwritten] No character model registered as '" + modelName + "' — '" + name +
+                GameLog.Warn(LogCat.Unwritten, "No character model registered as '" + modelName + "' — '" + name +
                                  "' stays a billboard.");
                 enabled = false;
                 return;

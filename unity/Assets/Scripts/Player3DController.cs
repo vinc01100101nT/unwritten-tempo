@@ -433,12 +433,65 @@ public partial class Player3DController : MonoBehaviour
     // real air time (the body accelerates) instead of the old constant-rate descent that looked glued to the
     // floor. On the ground we hold a small downward stick so CharacterController.isGrounded stays reliable;
     // airborne we integrate vy and, once descending past fallAnimSpeed, flag `falling` for the in-air pose.
+    // WAS THE MOVE REFUSED, and for how long. NOT a bare change gate: a character grinding along a wall moves a
+    // little on some frames and nothing on others — measured, 20 frames out of 512 — so a plain "did it change"
+    // test would flip-flop and print twice a second, which is the very firehose this log exists to end. So the
+    // refusal has to PERSIST before it is worth saying, and it is not repeated more often than once every few
+    // seconds. Same hysteresis rule the performance guide gives for every per-frame boundary check.
+    float blockedSince = -1f;
+    float lastBlockedSaid = -99f;
+    const float BlockedForSeconds = 0.5f;
+    const float BlockedRepeatSeconds = 5f;
+
     void ApplyGravityAndMove(Vector3 horizVel)
     {
         if (controller.isGrounded && vy < 0f) vy = -2f;        // stick to the floor (keeps isGrounded true on slopes)
         else vy -= gravity * Time.deltaTime;                   // in the air → accelerate downward (free-fall)
+
+        // ASKED TO MOVE, AND WHETHER IT HAPPENED. The single most expensive silence in this game: the character
+        // asks to walk, something eats the step, and NOTHING says so — so "the player cannot move" has twice been
+        // investigated from scratch by hand-built probes across two sessions. The answer was always right here.
+        var before = transform.position;
         controller.Move((horizVel + Vector3.up * vy) * Time.deltaTime);
         falling = !controller.isGrounded && vy < -fallAnimSpeed;
+
+        if (horizVel.sqrMagnitude <= 0.0001f) { blockedSince = -1f; return; }   // not trying to move — nothing to say
+
+        var moved = transform.position - before;
+        moved.y = 0f;
+        if (moved.sqrMagnitude > 0.0000001f) { blockedSince = -1f; return; }    // it moved — nothing to say
+
+        if (blockedSince < 0f) blockedSince = Time.time;
+        if (Time.time - blockedSince < BlockedForSeconds) return;               // a single stuck frame is normal
+        if (Time.time - lastBlockedSaid < BlockedRepeatSeconds) return;         // already said so recently
+        lastBlockedSaid = Time.time;
+
+        if (GameLog.On(LogCat.Hit))
+            // perf-ok: only reachable after half a second of continuously refused movement, and at most once every
+            // five seconds after that — so the string and the scan below run on a stall, never on a moving frame.
+            GameLog.Info(LogCat.Hit, string.Concat(
+                "MOVEMENT REFUSED for ", (Time.time - blockedSince).ToString("0.#"), "s — asked to move ",
+                (horizVel.magnitude * Time.deltaTime).ToString("0.####"), " per frame and moved 0. Nearest solid: ",
+                NearestSolidDescription(), ". Touching: ", controller.collisionFlags.ToString()));   // perf-ok: stall-only — gated on 0.5s of refused movement, then at most once per 5s
+    }
+
+    // Only ever called the frame movement STOPS or RESUMES working — never per frame — so an allocating scan here
+    // costs nothing in the hot path. Says what is actually in the way, which is the whole point of the line.
+    string NearestSolidDescription()
+    {
+        var here = transform.position;
+        // perf-ok: called only from the movement-stall report above, which is rate-limited to once per 5s.
+        var hits = Physics.OverlapSphere(here + Vector3.up * 0.5f, 1.5f);   // perf-ok: only runs on a movement stall, once per 5s
+        float best = float.MaxValue; string name = "nothing within 1.5 units";
+        for (int i = 0; i < hits.Length; i++)
+        {
+            var c = hits[i];
+            if (c == null || c.isTrigger || c.transform.IsChildOf(transform)) continue;
+            float d = (c.bounds.ClosestPoint(here) - here).magnitude;
+            // perf-ok: same — this whole function only runs when movement has been stuck for half a second.
+            if (d < best) { best = d; name = c.name + " at " + d.ToString("0.##"); }   // perf-ok: same, stall-only
+        }
+        return name;
     }
 
     // Play the footstep sound on the REAL foot-plant. FootstepTracker fires PlayerStepped the instant the walk/run
@@ -865,13 +918,34 @@ public partial class Player3DController : MonoBehaviour
     }
 
     // ---- routing (Pathfinder3D) -----------------------------------------------
+    // Whether the last route search failed — so the line in StartRoute fires on the change, not per search.
+    bool lastRouteFailed;
+
     void StartRoute(Vector3 goal)
     {
         var from = new Vector2(transform.position.x, transform.position.z);
         var to = new Vector2(goal.x, goal.z);
         // Fills `path` in place (allocation-free); player uses the full default expansion budget.
         if (!Pathfinder3D.FindPath(from, to, agentRadius, path))
-            { path.Clear(); path.Add(to); }
+        {
+            // NO ROUTE. The fallback below walks straight at the goal regardless, which is right — but it means a
+            // failed search and a good one look identical from outside, so a character shuffling into a wall reads
+            // as working. Change-gated: routing is re-asked several times a second while chasing.
+            if (!lastRouteFailed)
+            {
+                lastRouteFailed = true;
+                // A fault, not chatter — so it prints whatever the category switches say.
+                GameLog.Warn(LogCat.Hit, string.Concat("NO ROUTE to ", to.ToString("0.##"),
+                                                       " — walking straight at it instead. ",
+                                                       Pathfinder3D.LastOutcome));
+            }
+            path.Clear(); path.Add(to);
+        }
+        else if (lastRouteFailed)
+        {
+            lastRouteFailed = false;
+            if (GameLog.On(LogCat.Hit)) GameLog.Info(LogCat.Hit, "routing working again");
+        }
         wp = 0; routing = path.Count > 0;
     }
 

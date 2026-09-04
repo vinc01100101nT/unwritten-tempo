@@ -49,7 +49,7 @@ public static class PlayerFighter
         {
             if (playing.Contains(characterId))
             {
-                Debug.LogWarning("[server] '" + shell.playerName + "' is already in this world — the second "
+                GameLog.Warn(LogCat.Server, "'" + shell.playerName + "' is already in this world — the second "
                                  + "connection claiming that character was turned away.");
                 return false;
             }
@@ -80,7 +80,7 @@ public static class PlayerFighter
         if (pushed != null && pushed.version > 0)
         {
             character.RestoreSave(pushed);
-            Debug.Log("[server] " + shell.playerName + " is level " + character.Level + " with "
+            GameLog.Info(LogCat.Server, "" + shell.playerName + " is level " + character.Level + " with "
                       + character.Bag.Count + " stack(s) — their character came with them.");
         }
         else
@@ -89,7 +89,7 @@ public static class PlayerFighter
             // be their own machine that decided this, and the two raced: whichever landed last won, so a new
             // player either saw a bag the server did not have (every use silently ignored) or none at all.
             character.SeedBag();
-            Debug.Log("[server] " + shell.playerName + " has never been played — given "
+            GameLog.Info(LogCat.Server, "" + shell.playerName + " has never been played — given "
                       + character.Bag.Count + " starter stack(s).");
             shell.SaveSoon();
         }

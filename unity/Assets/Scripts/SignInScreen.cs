@@ -63,6 +63,12 @@ public class SignInScreen : MonoBehaviour
     const float StatusGap = 60f;   // last field to the status line
     const float ButtonGap = 32f;   // status line to the buttons
 
+    // Listening starts before anything can sign in and stops when this object goes, so a destroyed screen can
+    // never be called back into. Paired deliberately: an event a dead object stays subscribed to is a leak that
+    // throws on the next sign-in.
+    void OnEnable()  { AccountSession.OnChanged += OnSignedIn; }
+    void OnDisable() { AccountSession.OnChanged -= OnSignedIn; }
+
     void Start()
     {
         var canvas = FrontScreen.Canvas(transform);
@@ -156,15 +162,41 @@ public class SignInScreen : MonoBehaviour
         });
     }
 
+    // WHAT HAPPENS WHEN SOMEBODY SIGNS IN — answered ONCE, off the fact of signing in, not off the button that
+    // usually causes it.
+    //
+    // It used to live inside the button's own reply handler, so it only ran for somebody who pressed the button.
+    // Anything else that signed in — a test driving the game through the same functions a player's clicks reach —
+    // got signed in and entered the world while this screen stayed up forever, a full-screen overlay at the very
+    // top draw order covering the running game. The world was visible in the editor's scene view and completely
+    // hidden in the game view, which reads as the game being stuck on the sign-in screen when it is not.
+    //
+    // ORDER MATTERS AND IS THE WHOLE REASON THIS SHAPE WORKS: the session is set BEFORE the reply handler runs
+    // (AccountClient.cs:116, then :117). So this fires first, opens character select and takes the screen down,
+    // and the reply handler below then finds itself destroyed and returns — which is now correct rather than a
+    // dropped step, because everything it used to do has already happened here.
+    void OnSignedIn()
+    {
+        // Unity's null test, so an already-destroyed screen answers true here. Called twice on purpose (see the
+        // reply handler), and reaching gameObject on a destroyed object throws — so the second call stops here.
+        if (this == null) return;
+        if (string.IsNullOrEmpty(AccountSession.AccessToken)) return;   // a sign-OUT also raises this
+        CharacterSelectScreen.Open();
+        Destroy(gameObject);
+    }
+
     void SignIn(string email, string password)
     {
         AccountClient.SignIn(email, password, (ok, error) =>
         {
-            if (this == null) return;
-            if (!ok) { Busy(false); Say(error ?? "Could not sign in."); return; }
+            if (!ok) { if (this != null) { Busy(false); Say(error ?? "Could not sign in."); } return; }
 
-            CharacterSelectScreen.Open();
-            Destroy(gameObject);
+            // BELT AND BRACES, DELIBERATELY. Normally this screen is already gone by now, because setting the
+            // session raises the event above and that happens first. But relying on that order would make a
+            // login silently do nothing if anybody ever reorders those two lines — and an ordering promise in
+            // somebody else's file is exactly the kind that rots unnoticed. So say it again here; opening
+            // character select twice is now a no-op, and destroying an already-destroyed object is too.
+            OnSignedIn();
         });
     }
 

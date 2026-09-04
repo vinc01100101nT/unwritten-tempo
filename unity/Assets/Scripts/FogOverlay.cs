@@ -77,7 +77,7 @@ public class FogOverlay : MonoBehaviour
         var sh = Shader.Find("Unwritten/FogScreen");
         if (sh == null)
         {
-            Debug.LogWarning("[FogOverlay] Shader 'Unwritten/FogScreen' not found — fog disabled. " +
+            GameLog.Warn(LogCat.Unwritten, "FogOverlay: Shader 'Unwritten/FogScreen' not found — fog disabled. " +
                              "(In a build, add it to Project Settings ▸ Graphics ▸ Always Included Shaders.)");
             enabled = false;
             return;

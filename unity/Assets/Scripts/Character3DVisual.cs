@@ -51,7 +51,7 @@ public class Character3DVisual : MonoBehaviour
     void Start()
     {
         if (player == null) player = FindAnyObjectByType<Player3DController>();
-        if (player == null) { Debug.LogWarning("[unwritten] Character3DVisual found no Player3DController."); return; }
+        if (player == null) { GameLog.Warn(LogCat.Unwritten, "Character3DVisual found no Player3DController."); return; }
 
         cc = player.GetComponent<CharacterController>();
         int gl = LayerMask.NameToLayer("Ground");

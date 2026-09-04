@@ -70,7 +70,7 @@ public class Minimap : MonoBehaviour
 
         if (view == null || blipRoot == null)
         {
-            Debug.LogWarning("[unwritten] Minimap is missing its view/blipRoot refs — rebuild the UI shell " +
+            GameLog.Warn(LogCat.Unwritten, "Minimap is missing its view/blipRoot refs — rebuild the UI shell " +
                              "(Tools ▸ unwritten ▸ Build UI Shell).");
             enabled = false;
             return;

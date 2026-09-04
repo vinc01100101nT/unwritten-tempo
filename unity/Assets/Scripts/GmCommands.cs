@@ -80,6 +80,7 @@ public static class GmCommands
         Array.Copy(tokens, 1, args, 0, args.Length);
 
         var ctx = new GmContext { args = args, reply = reply };
+        if (GameLog.On(LogCat.Command)) GameLog.Info(LogCat.Command, line);
         try { cmd.run(ctx); }
         catch (Exception e) { reply?.Invoke($"<color=#FF8080>/{name} failed: {e.Message}</color>"); }
     }
@@ -130,6 +131,16 @@ public static class GmCommands
         bootstrapped = true;
         Register(new GmCommand("help", "help [command]", "List commands, or show one command's usage.", Help,
                                anyoneMayRun: true, changesTheWorld: false, "h", "commands"));
+
+        // WHICH KINDS OF LINE THE SERVER'S LOG WRITES. Marked as the server's, and that is the whole point:
+        // hits, passives and buffs are DECIDED on the server and announced only in the server's log, so a
+        // switch that could not reach the server left the categories that matter unreachable. A play-test hit
+        // exactly that — it could not tell whether a passive had fired, and correctly refused to call that a
+        // fault. To change what YOUR OWN machine writes, call the switch in code; this command is the server's.
+        Register(new GmCommand("log", "log [category] [on|off]  ·  log all on|off  ·  log reset",
+                               "Show which kinds of line the SERVER's log writes, or switch one on and off. "
+                               + "Warnings and errors always print whatever this says.", CmdLog,
+                               anyoneMayRun: false, changesTheWorld: true, "logs"));
 
         // --- Character ---
         Register(new GmCommand("lvl", "lvl <n>", "Set character level.", CmdLevel, "level"));
@@ -409,6 +420,51 @@ public static class GmCommands
         // a mob that then shrugged it off — the health write was refused, the popup was not.
         CombatAuthority.ApplyTrue(m.Health, int.MaxValue, KillColor);
         c.Reply("Killed nearest mob.");
+    }
+
+    // WHAT THE LOG IS ALLOWED TO SAY. Named categories rather than one on-off switch, because the failure this
+    // exists to fix was not "too little log" — it was one routine line printing twice a second and burying every
+    // line that mattered underneath it, 1205 against 53.
+    static void CmdLog(GmContext c)
+    {
+        var what = c.Arg(0);
+        if (what == null) { c.Reply(GameLog.Describe()); return; }
+
+        if (string.Equals(what, "reset", System.StringComparison.OrdinalIgnoreCase))
+        {
+            GameLog.Reset();
+            c.Reply("Log categories back to their defaults. " + GameLog.Describe());
+            return;
+        }
+
+        var state = c.Arg(1);
+        if (state == null)
+        {
+            c.Reply("Usage: /log  ·  /log <category> on|off  ·  /log all on|off  ·  /log reset");
+            return;
+        }
+
+        bool on;
+        if (string.Equals(state, "on", System.StringComparison.OrdinalIgnoreCase)) on = true;
+        else if (string.Equals(state, "off", System.StringComparison.OrdinalIgnoreCase)) on = false;
+        else { c.Reply($"Say 'on' or 'off', not '{state}'."); return; }
+
+        if (string.Equals(what, "all", System.StringComparison.OrdinalIgnoreCase))
+        {
+            GameLog.SetAll(on);
+            c.Reply((on ? "Every category on. "
+                        : "Every category off — warnings and errors still print. ")
+                    + GameLog.Describe());
+            return;
+        }
+
+        if (!GameLog.TryParse(what, out var cat))
+        {
+            c.Reply($"No log category called '{what}'. " + GameLog.Describe());
+            return;
+        }
+
+        c.Reply($"{GameLog.Tag(cat)} → {(GameLog.Set(cat, on) ? "on" : "off")}.");
     }
 
     static void CmdKillAll(GmContext c)

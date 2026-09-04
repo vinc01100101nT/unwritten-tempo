@@ -84,13 +84,13 @@ public static class PlayerModelSwap
         if (i < 0 || i >= p.Count) return;
         if (Attacher == null)
         {
-            Debug.LogWarning("[unwritten] PlayerModelSwap has no attacher — the editor hook didn't run. Reimport scripts.");
+            GameLog.Warn(LogCat.Unwritten, "PlayerModelSwap has no attacher — the editor hook didn't run. Reimport scripts.");
             return;
         }
         var player = Object.FindAnyObjectByType<Player3DController>();
         if (player == null)
         {
-            Debug.LogWarning("[unwritten] PlayerModelSwap: no Player3DController in the scene to re-skin.");
+            GameLog.Warn(LogCat.Unwritten, "PlayerModelSwap: no Player3DController in the scene to re-skin.");
             return;
         }
         if (Attacher(player, p[i]) != null) index = i;   // only advance the marker on a successful attach

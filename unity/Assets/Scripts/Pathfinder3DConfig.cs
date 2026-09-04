@@ -32,7 +32,7 @@ public class Pathfinder3DConfig : MonoBehaviour
 
         if (groundMask.value == 0)
         {
-            Debug.LogWarning("[unwritten] Pathfinder3DConfig: groundMask is empty — every cell will read " +
+            GameLog.Warn(LogCat.Unwritten, "Pathfinder3DConfig: groundMask is empty — every cell will read " +
                              "as void and nothing is walkable. Assign the Ground layer.");
             return;
         }

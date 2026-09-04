@@ -199,7 +199,7 @@ public class WetGround : MonoBehaviour
         var sh = Shader.Find("Unwritten/WetGround");
         if (sh == null)
         {
-            Debug.LogWarning("[WetGround] Shader 'Unwritten/WetGround' not found — wet ground disabled. " +
+            GameLog.Warn(LogCat.Unwritten, "WetGround: Shader 'Unwritten/WetGround' not found — wet ground disabled. " +
                              "(In a build, add it to Project Settings ▸ Graphics ▸ Always Included Shaders.)");
             enabled = false;
             return;

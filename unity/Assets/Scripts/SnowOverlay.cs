@@ -76,7 +76,7 @@ public class SnowOverlay : MonoBehaviour
         var sh = Shader.Find("Unwritten/SnowScreen");
         if (sh == null)
         {
-            Debug.LogWarning("[SnowOverlay] Shader 'Unwritten/SnowScreen' not found — snow disabled. " +
+            GameLog.Warn(LogCat.Unwritten, "SnowOverlay: Shader 'Unwritten/SnowScreen' not found — snow disabled. " +
                              "(In a build, add it to Project Settings ▸ Graphics ▸ Always Included Shaders.)");
             enabled = false;
             return;

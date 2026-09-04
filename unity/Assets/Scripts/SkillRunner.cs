@@ -120,17 +120,37 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     /// answers to as a side effect, because a press always runs the OnCast entry.</summary>
     bool CanStart()
     {
-        if (def == null || def.vfx == null) return false;
-        if (def.IsPassive) return false;   // no pressed entry — this skill only ever fires via PassiveEvents on its triggers
+        if (def == null || def.vfx == null) return Refused("the skill has nothing to play");
+        if (def.IsPassive) return Refused("it is a passive — it only fires on its own triggers");
         firedBy = def.CastEntry;           // a press always runs the OnCast entry, whatever other triggers this skill has
-        if (Caster == null || Caster.IsDead) return false;
+        if (Caster == null || Caster.IsDead) return Refused("the caster is gone or dead");
         var gate = Status;
         if (gate != null && gate.Silenced)
-        { BattleNotice.Warn("Silenced", new Color(0.7f, 0.5f, 1f)); return false; }
-        if (gate != null && gate.CannotStartSkill) return false;   // stunned / frozen / casting / mid-aftercast / mid-jump — can't start another skill
-        if (castRoutine != null) return false;   // already winding up a cast — ignore until it resolves
-        if (Time.time < nextUse) return false;
+        { BattleNotice.Warn("Silenced", new Color(0.7f, 0.5f, 1f)); return Refused("silenced"); }
+        if (gate != null && gate.CannotStartSkill) return Refused("stunned, frozen, already casting, or mid-jump");
+        if (castRoutine != null) return Refused("already winding up a cast");
+        if (Time.time < nextUse) return Refused("still on cooldown");
+
+        if (GameLog.On(LogCat.Cast)) GameLog.Info(LogCat.Cast, string.Concat(CasterName(), " casts ", SkillName()));
         return true;
+    }
+
+    // EVERY "no" ABOVE SAYS WHY. A refused cast used to be six silent `return false`s that looked identical from
+    // outside, so a play-test could only report "nothing happened" and had no way to find out which of the six it
+    // was. Returns false so it reads as the answer at each call site rather than as a statement beside it.
+    bool Refused(string why)
+    {
+        if (GameLog.On(LogCat.Cast))
+            GameLog.Info(LogCat.Cast, string.Concat(CasterName(), " could not cast ", SkillName(), " — ", why));
+        return false;
+    }
+
+    string SkillName() => def != null ? def.id : "(no skill)";
+
+    string CasterName()
+    {
+        var body = Caster != null ? Caster.Body : null;
+        return body != null ? body.name : "somebody";
     }
 
     /// <summary>Cast this skill for the character the server holds, with the aim already decided by the person who

@@ -499,7 +499,7 @@ public class NetPlayer : NetworkBehaviour
                 {
                     // SAID OUT LOUD, and the character is marked as still needing writing so the next beat tries
                     // again. A failed save that nobody hears about is a character quietly going stale.
-                    Debug.LogWarning("[server] could not write " + playerName + " down — " + error);
+                    GameLog.Warn(LogCat.Server, "could not write " + playerName + " down — " + error);
                     needsSaving = true;
                     nextSaveAt = Time.time + SecondsBetweenSaves;
                 }
@@ -617,7 +617,7 @@ public class NetPlayer : NetworkBehaviour
         if (e == null || e.def == null) return false;
         if (!string.IsNullOrEmpty(expectedItemId) && e.def.id != expectedItemId)
         {
-            Debug.LogWarning("[server] " + playerName + " asked about position " + index + " expecting '"
+            GameLog.Warn(LogCat.Server, "" + playerName + " asked about position " + index + " expecting '"
                              + expectedItemId + "' but it now holds '" + e.def.id + "' — ignored.");
             return false;
         }
@@ -761,7 +761,7 @@ public class NetPlayer : NetworkBehaviour
         // from go on seeing each other, at positions that mean nothing, indefinitely.
         var into = SceneManager.GetSceneByName(map);
         if (!into.IsValid() || !into.isLoaded)
-            Debug.LogWarning("[server] " + playerName + " says they are in '" + map
+            GameLog.Warn(LogCat.Server, "" + playerName + " says they are in '" + map
                              + "', which this server is not holding — they will be filed under '"
                              + gameObject.scene.name + "' and seen by the wrong people. Add it to the map list.");
         MapManager.PutInMap(gameObject, into);
@@ -786,7 +786,7 @@ public class NetPlayer : NetworkBehaviour
         // registry; until then this is the narrow version.
         if (Time.time - lastForgivenMapChangeAt < ForgivenMapChangeGap)
         {
-            Debug.LogWarning("[server] " + playerName + " changed map again after only "
+            GameLog.Warn(LogCat.Server, "" + playerName + " changed map again after only "
                              + (Time.time - lastForgivenMapChangeAt).ToString("0.00")
                              + "s — not forgiving the jump this time.");
             return;
@@ -969,7 +969,7 @@ public class NetPlayer : NetworkBehaviour
         // Said once per run of refusals rather than per report — these arrive ten times a second, and a line each
         // would bury the log the moment one turned up.
         if (refusedInARow == RefusalsBeforeCorrecting)
-            Debug.LogWarning("[server] " + playerName + " reported " + refusedInARow
+            GameLog.Warn(LogCat.Server, "" + playerName + " reported " + refusedInARow
                              + " impossible moves in a row — putting them back.");
         return false;
     }
@@ -1061,7 +1061,7 @@ public class NetPlayer : NetworkBehaviour
             if (this == null) return;                   // player left while their model was loading
             if (model == null)
             {
-                Debug.LogWarning("[net] no character model called '" + wanted + "' — "
+                GameLog.Warn(LogCat.Net, "no character model called '" + wanted + "' — "
                                  + playerName + " will be invisible.");
                 return;
             }

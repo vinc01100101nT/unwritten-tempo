@@ -41,7 +41,7 @@ public static class WorldClock
             {
                 // Not fatal, and not silent: the world keeps running on the local clock, which is what it did
                 // before this existed. Saying so is what stops it looking like the sky is simply wrong.
-                Debug.LogWarning("[unwritten] Could not read the world clock from the server (" + error +
+                GameLog.Warn(LogCat.Unwritten, "Could not read the world clock from the server (" + error +
                                  ") — running on this machine's clock until the next sign-in.");
                 return;
             }

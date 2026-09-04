@@ -69,7 +69,7 @@ public static class CharacterModels
                 }
             names.Sort(StringComparer.OrdinalIgnoreCase);
             if (names.Count == 0)
-                Debug.LogWarning("[unwritten] No character models carry the '" + Label + "' Addressable label — the " +
+                GameLog.Warn(LogCat.Unwritten, "No character models carry the '" + Label + "' Addressable label — the " +
                                  "roster is empty, so no character can be dressed. Register the models and build " +
                                  "Addressables content.");
             namesLoading = false;

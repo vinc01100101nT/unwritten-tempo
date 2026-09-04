@@ -41,6 +41,11 @@ public class CharacterSelectScreen : MonoBehaviour
 
     public static void Open()
     {
+        // NEVER A SECOND ONE — the same guard its sibling the sign-in screen has always had, and the reason it
+        // needs one: both are full-screen overlays at the top draw order, so a duplicate is invisible, sits on
+        // top of the real one, and swallows every click aimed at it.
+        if (Object.FindAnyObjectByType<CharacterSelectScreen>() != null) return;
+
         var go = new GameObject("CharacterSelectScreen") { hideFlags = HideFlags.DontSaveInEditor };
         DontDestroyOnLoad(go);
         go.AddComponent<CharacterSelectScreen>();

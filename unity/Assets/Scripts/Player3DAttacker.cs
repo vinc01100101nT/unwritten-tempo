@@ -157,8 +157,26 @@ public class Player3DAttacker : MonoBehaviour
         PassiveEvents.Fire(Character.Instance, SkillTrigger.OnBasicAttackStart, null, t.transform);
     }
 
+    // WAS THE LAST SWING REFUSED FOR REACH. Remembered so the line below prints once when the target goes out of
+    // reach and once when it comes back — never per frame, because this is asked every frame while attacking.
+    bool wasOutOfReach;
+
     public void TryAttack(Health t)
     {
+        // OUT OF REACH IS A REASON, NOT A SILENCE. A sword with no authored reach makes every swing impossible
+        // and said nothing about it, so two play-tests reported "attacks do not work" and one of them had both
+        // numbers in hand without comparing them. The numbers now say it themselves.
+        bool outOfReach = t != null && !t.IsDead && !InRange(t);
+        if (outOfReach != wasOutOfReach)
+        {
+            wasOutOfReach = outOfReach;
+            if (GameLog.On(LogCat.Hit))
+                GameLog.Info(LogCat.Hit, outOfReach
+                    ? string.Concat("CANNOT REACH ", t.name, " — it is ", PlanarDist(t).ToString("0.###"),
+                                    " away and this weapon reaches ", RangeAgainst(t).ToString("0.###"))
+                    : "target back in reach");
+        }
+
         if (Time.time < nextSwing || swing != null || !InRange(t)) return;
         attemptOpen = false;   // the announced attack is happening — this attempt is resolved
         // AttackSpeed shortens the gap between swings AND the motion itself (faster = higher mult),

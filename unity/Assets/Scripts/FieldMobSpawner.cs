@@ -191,7 +191,7 @@ public class FieldMobSpawner : MonoBehaviour
         if (!warnedNoFloor)
         {
             warnedNoFloor = true;
-            Debug.LogWarning("[spawn] '" + gameObject.scene.name + "' found no ground under " + name
+            GameLog.Warn(LogCat.Spawn, "'" + gameObject.scene.name + "' found no ground under " + name
                              + " in sixteen tries — its creatures are being placed unchecked.");
         }
         return c;

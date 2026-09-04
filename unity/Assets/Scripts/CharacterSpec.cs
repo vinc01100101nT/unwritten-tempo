@@ -43,7 +43,7 @@ public class CharacterSpec : ScriptableObject
             _active = Resources.Load<CharacterSpec>(ResourcePath);
             if (_active == null)
             {
-                Debug.LogWarning("[unwritten] No Resources/CharacterSpec.asset — live-3D characters fall back to " +
+                GameLog.Warn(LogCat.Unwritten, "No Resources/CharacterSpec.asset — live-3D characters fall back to " +
                                  "code defaults and have no models to draw from.");
                 _active = CreateInstance<CharacterSpec>();
             }

@@ -150,7 +150,7 @@ public class WorldPickup : MonoBehaviour
         {
             var bag = InventoryStore.Instance;
             if (bag != null) bag.Give(item, 1);
-            else Debug.LogWarning($"[unwritten] Nowhere to put {item.displayName} — no inventory yet.");
+            else GameLog.Warn(LogCat.Unwritten, $"Nowhere to put {item.displayName} — no inventory yet.");
             Sfx.Play(collectSfx);
         }
         else if (goldAmount > 0)

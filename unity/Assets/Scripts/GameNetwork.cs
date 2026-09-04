@@ -74,7 +74,7 @@ public class GameNetwork : NetworkManager
         if (mobPrefab == null) mobPrefab = Resources.Load<GameObject>(MobPrefabName);
         if (mobPrefab == null)
         {
-            Debug.LogError("[net] no '" + MobPrefabName + "' prefab in Resources — mobs will exist on the "
+            GameLog.Error(LogCat.Net, "no '" + MobPrefabName + "' prefab in Resources — mobs will exist on the "
                            + "server but no player will see them.");
             return;
         }
@@ -97,7 +97,7 @@ public class GameNetwork : NetworkManager
         if (lootPrefab == null) lootPrefab = Resources.Load<GameObject>(LootPrefabName);
         if (lootPrefab == null)
         {
-            Debug.LogError("[net] no '" + LootPrefabName + "' prefab in Resources — loot will exist on the "
+            GameLog.Error(LogCat.Net, "no '" + LootPrefabName + "' prefab in Resources — loot will exist on the "
                            + "server but no player will see it.");
             return false;
         }
@@ -155,18 +155,18 @@ public class GameNetwork : NetworkManager
         // the same asset with no scene wiring — the same way the skill and monster catalogs already load.
         spawned.playerPrefab = Resources.Load<GameObject>(PlayerPrefabName);
         if (spawned.playerPrefab == null)
-            Debug.LogError("[net] no '" + PlayerPrefabName + "' prefab in Resources — players will connect "
+            GameLog.Error(LogCat.Net, "no '" + PlayerPrefabName + "' prefab in Resources — players will connect "
                            + "but nobody will have a body.");
 
         // Anything the server can spawn must be known to the clients too, or an arriving mob is an object
         // nobody can build. The player body is registered automatically; everything else is listed here.
         mobPrefab = Resources.Load<GameObject>(MobPrefabName);
         if (mobPrefab != null) spawned.spawnPrefabs.Add(mobPrefab);
-        else Debug.LogError("[net] no '" + MobPrefabName + "' prefab in Resources — no player will see mobs.");
+        else GameLog.Error(LogCat.Net, "no '" + MobPrefabName + "' prefab in Resources — no player will see mobs.");
 
         lootPrefab = Resources.Load<GameObject>(LootPrefabName);
         if (lootPrefab != null) spawned.spawnPrefabs.Add(lootPrefab);
-        else Debug.LogError("[net] no '" + LootPrefabName + "' prefab in Resources — no player will see loot.");
+        else GameLog.Error(LogCat.Net, "no '" + LootPrefabName + "' prefab in Resources — no player will see loot.");
 
         // The server hands out bodies itself, when a client says who it is (see OnJoinRequest). Mirror's
         // automatic version would spawn one before we know which character to build.
@@ -219,7 +219,7 @@ public class GameNetwork : NetworkManager
 
             if (!PortIsFree(kcp.port, kcp.DualMode))
             {
-                Debug.LogError(Shout("[server] port " + kcp.port + " is already taken — another server is running. "
+                GameLog.Error(LogCat.Server, Shout("port " + kcp.port + " is already taken — another server is running. "
                                      + "This one is quitting rather than sitting here listening to nothing. Stop the "
                                      + "other one first, or give this one a different GAME_SERVER_PORT."));
                 Stop();
@@ -227,7 +227,9 @@ public class GameNetwork : NetworkManager
             }
 
             spawned.StartServer();
-            Debug.Log("[server] listening for players on port " + kcp.port);
+            GameLog.Info(LogCat.Server, "listening for players on port " + kcp.port);
+            // Said here, on the server, because the server's log is the one a play-test actually reads.
+            GameLog.AnnounceToTesters();
         }
         else
         {
@@ -259,7 +261,7 @@ public class GameNetwork : NetworkManager
             //
             // The commonest way to arrive here is launching the built game with `open`, which starts it through
             // the operating system and passes it NONE of the settings from the terminal that ran it.
-            Debug.LogError("[client] this copy has no character server to ask, so nobody can let it into the "
+            GameLog.Error(LogCat.Client, "this copy has no character server to ask, so nobody can let it into the "
                            + "world — CHAR_SERVER_URL is not set"
                            + (string.IsNullOrEmpty(characterId) ? ", and no character has been chosen" : "")
                            + ". Start the game with that setting; see docs/1-planning/starting-the-network.md.");
@@ -274,7 +276,7 @@ public class GameNetwork : NetworkManager
 
             if (!ok)
             {
-                Debug.LogError("[client] the character server would not let us in — " + error + " " + body);
+                GameLog.Error(LogCat.Client, "the character server would not let us in — " + error + " " + body);
                 Stop();
                 OnLostWorld?.Invoke();
                 return;
@@ -283,7 +285,7 @@ public class GameNetwork : NetworkManager
             var where = JsonUtility.FromJson<EntryReply>(body);
             if (where == null || string.IsNullOrEmpty(where.ticket))
             {
-                Debug.LogError("[client] the character server let us in but said nowhere to go: " + body);
+                GameLog.Error(LogCat.Client, "the character server let us in but said nowhere to go: " + body);
                 Stop();
                 OnLostWorld?.Invoke();
                 return;
@@ -296,7 +298,7 @@ public class GameNetwork : NetworkManager
             // every player.
             if (where.port > 0 && where.port <= ushort.MaxValue) kcp.port = (ushort)where.port;
 
-            Debug.Log("[client] dialling " + spawned.networkAddress + ":" + kcp.port + " with a ticket");
+            GameLog.Info(LogCat.Client, "dialling " + spawned.networkAddress + ":" + kcp.port + " with a ticket");
             spawned.StartClient();
         });
     }
@@ -725,17 +727,17 @@ public class GameNetwork : NetworkManager
         // nothing anywhere saying so. A refusal that cannot be explained is the same as a crash you cannot see.
         if (fighter == null)
         {
-            Debug.LogWarning("[server] somebody asked to be revived but this server holds no fighter for them.");
+            GameLog.Warn(LogCat.Server, "somebody asked to be revived but this server holds no fighter for them.");
             return;
         }
         if (!fighter.IsDead)
         {
-            Debug.LogWarning("[server] " + (conn.identity != null ? conn.identity.name : "somebody")
+            GameLog.Warn(LogCat.Server, "" + (conn.identity != null ? conn.identity.name : "somebody")
                              + " asked to be revived but this server has them alive on "
                              + fighter.CurrentHP + " health — nothing to do.");
             return;
         }
-        Debug.Log("[server] reviving a player who was dead.");
+        GameLog.Info(LogCat.Server, "reviving a player who was dead.");
 
         fighter.Revive();
 
@@ -937,7 +939,7 @@ public class GameNetwork : NetworkManager
     {
         string key = (skillId ?? "") + "|" + why;
         if (!saidWhyNoStrike.Add(key)) return;
-        Debug.LogWarning("[client] a skill strike from '" + (string.IsNullOrEmpty(skillId) ? "(unnamed)" : skillId)
+        GameLog.Warn(LogCat.Client, "a skill strike from '" + (string.IsNullOrEmpty(skillId) ? "(unnamed)" : skillId)
                          + "' was neither sent to the server nor shown: " + why + ".");
     }
 
@@ -1143,14 +1145,14 @@ public class GameNetwork : NetworkManager
     {
         string key = (skillId ?? "") + "|" + why;
         if (!saidWhyRefused.Add(key)) return;
-        Debug.LogWarning("[server] refused a skill strike from '" + (string.IsNullOrEmpty(skillId) ? "(unnamed)" : skillId)
+        GameLog.Warn(LogCat.Server, "refused a skill strike from '" + (string.IsNullOrEmpty(skillId) ? "(unnamed)" : skillId)
                          + "': " + why + ". Nothing was damaged and no number was shown.");
     }
 
     static void WarnNoFighter(int connectionId)
     {
         if (!warnedNoFighter.Add(connectionId)) return;
-        Debug.LogWarning("[server] connection " + connectionId + " swung, but this server has no fighter for "
+        GameLog.Warn(LogCat.Server, "connection " + connectionId + " swung, but this server has no fighter for "
                          + "them yet, so the blow was refused. Player stats are still tied to one global "
                          + "character; each connection needs its own before the server can resolve combat.");
     }
@@ -1211,7 +1213,7 @@ public class GameNetwork : NetworkManager
         {
             // SAID, not dropped in silence: a blow that vanishes with nothing in the log looks exactly like a bug
             // in the swing itself, and the whole point of this guard is that it can be wrong about honest players.
-            Debug.LogWarning("[server] a blow from connection " + connectionId + " arrived "
+            GameLog.Warn(LogCat.Server, "a blow from connection " + connectionId + " arrived "
                              + (due - now).ToString("0.00") + "s before that fighter's next swing was due — dropped.");
             return false;
         }
@@ -1704,7 +1706,7 @@ public class GameNetwork : NetworkManager
         // other skill that person cast for the rest of their session — so a log with one line in it looked like
         // one broken skill when it was all of them.
         if (!warnedNotTheirSkill.Add(connectionId + "|" + skillId)) return;
-        Debug.LogWarning("[server] connection " + connectionId + " cast '" + skillId + "', which is neither bound on "
+        GameLog.Warn(LogCat.Server, "connection " + connectionId + " cast '" + skillId + "', which is neither bound on "
                          + "the hotbar this server holds for them nor on their equipped weapon, so the strike was "
                          + "refused. Either their character's progress never loaded (they are standing here at "
                          + "starting numbers, holding nothing), or the skill was never theirs.");
@@ -1842,7 +1844,7 @@ public class GameNetwork : NetworkManager
         //    question with no single answer here.
         GmCommands.ExecuteAsAsker(msg.line, asker.ServerCombatUnit as Character, asker.transform, Answer);
 
-        Debug.Log("[server] " + asker.playerName + " ran '" + msg.line + "'");
+        GameLog.Info(LogCat.Server, "" + asker.playerName + " ran '" + msg.line + "'");
     }
 
     // A body per connection, built from the identity that connection announced.
@@ -1857,7 +1859,7 @@ public class GameNetwork : NetworkManager
         var announced = MapServerLink.TakeExpected(msg.ticket);
         if (announced == null)
         {
-            Debug.LogWarning("[server] refused a connection nobody announced — no good ticket.");
+            GameLog.Warn(LogCat.Server, "refused a connection nobody announced — no good ticket.");
             conn.Disconnect();
             return;
         }
@@ -1866,7 +1868,7 @@ public class GameNetwork : NetworkManager
         // only what to draw; anything that decides something is read off what the character server sent.
         if (PlayerFighter.AlreadyPlaying(announced.characterId))
         {
-            Debug.LogWarning("[server] refused a second connection for a character already being played.");
+            GameLog.Warn(LogCat.Server, "refused a second connection for a character already being played.");
             conn.Disconnect();
             return;
         }
@@ -1885,8 +1887,15 @@ public class GameNetwork : NetworkManager
         // character server announcing somebody before sending them.
         PlayerFighter.BuildFrom(np, announced);
 
-        Debug.Log("[server] " + (np != null ? np.playerName : "someone") + " entered the world — "
+        GameLog.Info(LogCat.Server, "" + (np != null ? np.playerName : "someone") + " entered the world — "
                   + NetworkServer.connections.Count + " player(s) here");
+
+        // SAID AGAIN, HERE, EVERY TIME SOMEBODY ARRIVES. Saying it only at start-up was not enough and the reason
+        // is worth keeping: a tester reads the END of a log, and a start-up line sits at the beginning of it
+        // forever — hours and tens of thousands of routine lines away by the time anybody spawns. It also does not
+        // survive a cleared console. An arrival is the one moment every tester passes through, and it lands at the
+        // tail of the log exactly when they start reading.
+        GameLog.AnnounceToTesters();
     }
 
     // ---- what each side reports -------------------------------------------------------------------------
@@ -1896,7 +1905,7 @@ public class GameNetwork : NetworkManager
     public override void OnServerConnect(NetworkConnectionToClient conn)
     {
         base.OnServerConnect(conn);
-        Debug.Log("[server] player connected — connection " + conn.connectionId
+        GameLog.Info(LogCat.Server, "player connected — connection " + conn.connectionId
                   + ", " + NetworkServer.connections.Count + " now on this world");
     }
 
@@ -1907,7 +1916,7 @@ public class GameNetwork : NetworkManager
     {
         foreach (var conn in NetworkServer.connections.Values)
             ShellFor(conn)?.SaveNow(null);
-        Debug.Log("[server] stopping — asked for a write for every player still here.");
+        GameLog.Info(LogCat.Server, "stopping — asked for a write for every player still here.");
         shellByConnection.Clear();   // nothing about the world that just ended survives into the next one
         base.OnStopServer();
     }
@@ -1916,7 +1925,7 @@ public class GameNetwork : NetworkManager
     {
         // COUNTED AFTER, not guessed at. Taking one off the current count assumed this connection was still in
         // it, and by this point it sometimes is not — so the number went NEGATIVE as people left.
-        Debug.Log("[server] player left — connection " + conn.connectionId);
+        GameLog.Info(LogCat.Server, "player left — connection " + conn.connectionId);
 
         // Everything remembered ABOUT a connection goes when the connection does. A long-lived server hands out
         // connection numbers for months; anything kept per connection and never dropped grows forever.
@@ -1959,7 +1968,7 @@ public class GameNetwork : NetworkManager
             // very next line without touching what is already on its way.
             leaving.SaveNow(ok =>
             {
-                if (!ok) Debug.LogError("[server] " + whoLeft + " left and their character could NOT be "
+                if (!ok) GameLog.Error(LogCat.Server, "" + whoLeft + " left and their character could NOT be "
                                         + "written down. Their last few seconds are lost.");
                 // Said again for the case the line above cannot cover: if anything else released the body
                 // first, the name still has to come free.
@@ -1973,13 +1982,13 @@ public class GameNetwork : NetworkManager
         }
 
         base.OnServerDisconnect(conn);
-        Debug.Log("[server] " + NetworkServer.connections.Count + " player(s) still here");
+        GameLog.Info(LogCat.Server, "" + NetworkServer.connections.Count + " player(s) still here");
     }
 
     public override void OnClientConnect()
     {
         base.OnClientConnect();
-        Debug.Log("[client] connected to the server");
+        GameLog.Info(LogCat.Client, "connected to the server");
 
         // NOTHING IS RESET HERE, and the world is NOT woken here. The wire coming up is also exactly what
         // happens a moment before a join is refused, so treating it as success is what made a refused player
@@ -2014,7 +2023,7 @@ public class GameNetwork : NetworkManager
 
     public override void OnClientDisconnect()
     {
-        Debug.Log("[client] disconnected from the server");
+        GameLog.Info(LogCat.Client, "disconnected from the server");
         base.OnClientDisconnect();
 
         // Mirror reports a REFUSED first attempt and a DROPPED live connection through this same door, which is
@@ -2025,7 +2034,7 @@ public class GameNetwork : NetworkManager
         attemptsSpent++;
         if (attemptsSpent < JoinAttempts)
         {
-            Debug.Log("[client] lost the world — retrying (" + attemptsSpent + " of " + JoinAttempts + ")");
+            GameLog.Info(LogCat.Client, "lost the world — retrying (" + attemptsSpent + " of " + JoinAttempts + ")");
             ReconnectNotice.Show();
             StartCoroutine(DialAgainShortly());
             return;
@@ -2033,7 +2042,7 @@ public class GameNetwork : NetworkManager
 
         goneForGood = true;
         ReconnectNotice.Hide();
-        Debug.LogWarning("[client] gave up after " + JoinAttempts + " attempts — leaving the world");
+        GameLog.Warn(LogCat.Client, "gave up after " + JoinAttempts + " attempts — leaving the world");
         OnLostWorld?.Invoke();
     }
 

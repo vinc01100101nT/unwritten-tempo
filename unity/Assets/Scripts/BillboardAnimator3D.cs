@@ -59,7 +59,7 @@ public class BillboardAnimator3D : MonoBehaviour
 
     void BuildFrames()
     {
-        if (sheet == null) { Debug.LogWarning("[unwritten] BillboardAnimator3D has no sheet on " + name); return; }
+        if (sheet == null) { GameLog.Warn(LogCat.Unwritten, "BillboardAnimator3D has no sheet on " + name); return; }
         // Shared slice cache: all mobs that use the same sheet+cell share ONE set of walk frames instead
         // of each instance allocating its own identical copies in Awake.
         var dirs = SpriteSheetCache.Walk4(sheet, cell, walkFrames);

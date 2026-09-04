@@ -345,7 +345,7 @@ public class NetMob : NetworkBehaviour
         var def = MonsterCatalog.Get(defId);
         if (def == null)
         {
-            Debug.LogWarning("[net] no mob called '" + defId + "' in the catalog — it will be invisible.");
+            GameLog.Warn(LogCat.Net, "no mob called '" + defId + "' in the catalog — it will be invisible.");
             return;
         }
 

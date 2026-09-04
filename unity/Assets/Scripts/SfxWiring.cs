@@ -86,7 +86,7 @@ public class SfxWiringCheck : MonoBehaviour
             var issues = new List<string>();
             SfxWiring.ScanInto(player.gameObject, issues);
             if (issues.Count > 0)
-                Debug.LogWarning($"[unwritten] {issues.Count} skill SFX unassigned on the player " +
+                GameLog.Warn(LogCat.Unwritten, $"{issues.Count} skill SFX unassigned on the player " +
                     $"(stale Systems scene?): {string.Join(", ", issues)}. Re-run " +
                     "Tools ▸ unwritten ▸ Scene Setup ▸ Setup Systems Scene to re-wire them.");
         }

@@ -63,7 +63,7 @@ public sealed class ServerProfileStore : IProfileStore
         {
             if (!ok)
             {
-                Debug.LogWarning($"[unwritten] Could not load '{AccountSession.CharacterName}': {error}");
+                GameLog.Warn(LogCat.Unwritten, $"Could not load '{AccountSession.CharacterName}': {error}");
                 onLoaded?.Invoke(null);
                 return;
             }
@@ -111,7 +111,7 @@ public sealed class ServerProfileStore : IProfileStore
         AccountClient.Send(method, path, body, true, (ok, _, error) =>
         {
             // Losing a save silently is the one failure a player never forgives, so it is always said out loud.
-            if (!ok) Debug.LogWarning($"[unwritten] {what} failed for '{AccountSession.CharacterName}': {error}");
+            if (!ok) GameLog.Warn(LogCat.Unwritten, $"{what} failed for '{AccountSession.CharacterName}': {error}");
             onDone?.Invoke(ok);
         });
     }

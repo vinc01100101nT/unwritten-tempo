@@ -116,7 +116,7 @@ public class SkyboxSky : MonoBehaviour
         var shader = Shader.Find("Unwritten/SkyboxClouds");
         if (shader == null)
         {
-            Debug.LogWarning("[SkyboxSky] Shader 'Unwritten/SkyboxClouds' not found — procedural sky disabled. " +
+            GameLog.Warn(LogCat.Unwritten, "SkyboxSky: Shader 'Unwritten/SkyboxClouds' not found — procedural sky disabled. " +
                              "(In a build, add it to Project Settings ▸ Graphics ▸ Always Included Shaders.)");
             enabled = false;
             return;

@@ -90,7 +90,7 @@ public class CloudShadows : MonoBehaviour
         var shader = Shader.Find("Unwritten/CloudShadow");
         if (shader == null)
         {
-            Debug.LogWarning("[CloudShadows] Shader 'Unwritten/CloudShadow' not found — cloud shadows disabled. " +
+            GameLog.Warn(LogCat.Unwritten, "CloudShadows: Shader 'Unwritten/CloudShadow' not found — cloud shadows disabled. " +
                              "(In a build, add it to Project Settings ▸ Graphics ▸ Always Included Shaders.)");
             enabled = false;
             return;

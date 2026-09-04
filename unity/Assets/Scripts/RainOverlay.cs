@@ -70,7 +70,7 @@ public class RainOverlay : MonoBehaviour
         var sh = Shader.Find("Unwritten/RainScreen");
         if (sh == null)
         {
-            Debug.LogWarning("[RainOverlay] Shader 'Unwritten/RainScreen' not found — rain disabled. " +
+            GameLog.Warn(LogCat.Unwritten, "RainOverlay: Shader 'Unwritten/RainScreen' not found — rain disabled. " +
                              "(In a build, add it to Project Settings ▸ Graphics ▸ Always Included Shaders.)");
             enabled = false;
             return;

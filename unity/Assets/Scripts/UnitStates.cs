@@ -726,9 +726,23 @@ public class UnitStates : MonoBehaviour
         s.description = description;
         s.tint = tint == default ? Color.white : tint;
         Recompute();
+
+        // A BUFF ARRIVING OR GROWING. Written here because this is the one door every state comes through, so no
+        // way of granting one can forget to say so. A play-test spent two runs unable to tell whether a pile had
+        // been granted at all, reading an empty store that was empty only because the reading was done wrong.
+        if (GameLog.On(LogCat.Buff))
+            GameLog.Info(LogCat.Buff, string.Concat(
+                s.id.ToString(), " x", s.stacks.Count.ToString(), " on ", OwnerName(),
+                " from ", string.IsNullOrEmpty(s.sourceSkillId) ? "(unnamed)" : s.sourceSkillId,
+                " for ", seconds.ToString("0.##"), "s"));
+
         OnChanged?.Invoke();
         return s;
     }
+
+    /// <summary>Whose store this is, for a log line. The null test is Unity's, so it also catches a store whose
+    /// body has been destroyed — a log line must never be the thing that breaks a fight.</summary>
+    string OwnerName() => this != null ? gameObject.name : "somebody";
 
     /// <summary>How many stacks of <paramref name="id"/> are live (0 if absent). The gate reads this for "min stacks".</summary>
     public int StackCount(StateId id)

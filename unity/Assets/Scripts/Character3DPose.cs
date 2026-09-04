@@ -91,7 +91,7 @@ public class Character3DPose : MonoBehaviour, IStancePose
             if (!warnedNoController)
             {
                 warnedNoController = true;
-                Debug.LogWarning($"[Character3DPose] \"{name}\" has no AnimatorController — posing skipped for it. " +
+                GameLog.Warn(LogCat.Unwritten, $"Character3DPose: \"{name}\" has no AnimatorController — posing skipped for it. " +
                                  "Reported once, not per frame.", this);
             }
             return false;

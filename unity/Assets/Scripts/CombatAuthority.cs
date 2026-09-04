@@ -47,7 +47,7 @@ public static class CombatAuthority
     {
         string kind = target.GetType().Name;
         if (!warnedAbout.Add(kind)) return;
-        Debug.LogWarning("[net] a blow aimed at a '" + kind + "' was dropped: this machine is not the authority "
+        GameLog.Warn(LogCat.Net, "a blow aimed at a '" + kind + "' was dropped: this machine is not the authority "
                          + "and the server does not know that thing. Nothing local decides damage any more. If "
                          + "this is a creature hitting a player, that path is still waiting on per-connection "
                          + "fighters — see the migration plan.");
@@ -75,6 +75,21 @@ public static class CombatAuthority
         if (attackerStates != null) attackerStates.NoteAttackHit(target as ICombatUnit);
 
         int dealt = target.ApplyDamage(info);
+
+        // WHAT A BLOW ACTUALLY DID, written where the answer is real. A player's own machine reads zero for every
+        // blow it throws — that is by design a few lines up — so three separate play-tests read that zero and
+        // reported the game broken when it was working. This line is the honest answer, and it says WHY nothing
+        // happened as well as when something did: a miss, a full absorb and a parry all arrive here as zero and
+        // each is a different fact. Guarded because this is the per-hit path.
+        if (GameLog.On(LogCat.Hit))
+            GameLog.Info(LogCat.Hit, string.Concat(
+                info.attacker != null && !PlayerUnits.Gone(info.attacker) ? info.attacker.Body != null ? info.attacker.Body.name : "somebody" : "somebody",
+                info.missed ? " MISSED " : " hit ",
+                (target as ICombatUnit)?.Body != null ? (target as ICombatUnit).Body.name : target.GetType().Name,
+                " for ", dealt.ToString(),
+                info.isCrit ? " (critical)" : "",
+                dealt == 0 && !info.missed ? " — nothing got through" : ""));
+
         // WHO DID THIS, recorded once, here, for every unit alike — a kill pays whoever landed it, and this is the
         // only place that knows. A blow that cost nothing (a miss, a parry, a full absorb) is not a claim on anyone.
         if (dealt > 0 && !PlayerUnits.Gone(info.attacker) && target is ICombatUnit hurt) hurt.NoteAttacker(info.attacker);

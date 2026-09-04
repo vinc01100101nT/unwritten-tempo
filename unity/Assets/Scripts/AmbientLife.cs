@@ -45,11 +45,11 @@ public class AmbientLife : MonoBehaviour
         var spec = CharacterSpec.Active;
         if (spec.civilianModels == null || spec.civilianModels.Count == 0)
         {
-            Debug.LogWarning("[unwritten] CharacterSpec has no civilian models — no townsfolk spawned.");
+            GameLog.Warn(LogCat.Unwritten, "CharacterSpec has no civilian models — no townsfolk spawned.");
             return;
         }
         if (spec.animatorController == null)
-            Debug.LogWarning("[unwritten] CharacterSpec has no animatorController — townsfolk will T-pose.");
+            GameLog.Warn(LogCat.Unwritten, "CharacterSpec has no animatorController — townsfolk will T-pose.");
 
         var pc = FindAnyObjectByType<Player3DController>();
         Transform player = pc != null ? pc.transform : null;
@@ -74,7 +74,7 @@ public class AmbientLife : MonoBehaviour
             if (this == null) return;   // director (or its map) went away while the model was loading
             if (model == null)
             {
-                Debug.LogWarning("[unwritten] No character model registered as '" + modelName +
+                GameLog.Warn(LogCat.Unwritten, "No character model registered as '" + modelName +
                                  "' — one townsperson was skipped.");
                 return;
             }

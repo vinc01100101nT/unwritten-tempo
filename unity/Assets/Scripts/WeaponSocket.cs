@@ -57,7 +57,7 @@ public class WeaponSocket : MonoBehaviour
 
         var grip = model.GetComponent<WeaponGrip>();
         var hand = HandSocketResolver.Find(anim, grip != null ? grip.hand : WeaponHand.Right);
-        if (hand == null) { Debug.LogWarning($"[unwritten] WeaponSocket: no hand bone found on '{name}' for '{weapon.displayName}'."); return; }
+        if (hand == null) { GameLog.Warn(LogCat.Unwritten, $"WeaponSocket: no hand bone found on '{name}' for '{weapon.displayName}'."); return; }
 
         mounted = Instantiate(model, hand, false);
         mounted.name = model.name;

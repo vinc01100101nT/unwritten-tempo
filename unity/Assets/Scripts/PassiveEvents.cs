@@ -117,6 +117,14 @@ public static class PassiveEvents
             var r = owner != null ? owner.RunnerAt(i) : runners[i];
             if (r == null || !r) continue;
 
+            // A PASSIVE ACTUALLY FIRING — the moment a play-test could not see. Every line above this one is a
+            // reason NOT to fire, so reaching here is the event worth writing down. Behind the switch because
+            // this is the per-hit path: with the category off it costs one bit test and builds no string.
+            if (GameLog.On(LogCat.Passive))
+                GameLog.Info(LogCat.Passive, string.Concat(
+                    owner != null ? owner.name : "somebody", " fired ", def.id, " on ", trigger.ToString(),
+                    victim != null ? string.Concat(" at ", victim.name) : ""));
+
             r.FireAsPassive(entry, victim, chain | bit);   // fire the whole skill; the chain it hands to its own effects includes itself
         }
     }

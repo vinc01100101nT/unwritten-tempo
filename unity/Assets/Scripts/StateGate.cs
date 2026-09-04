@@ -71,7 +71,7 @@ public static class StateGate
     {
         if (ReadsRunOfHits(entry)) return;   // it names no pile because there is none to name — that is the whole point
         if (entry.requireStateIdSet || !reported.Add(entry.requireSkillId ?? "")) return;
-        Debug.LogError($"[StateGate] A skill reads \"{entry.requireSkillId}\"'s stacks but never names WHICH pile, so " +
+        GameLog.Error(LogCat.Unwritten, $"StateGate: A skill reads \"{entry.requireSkillId}\"'s stacks but never names WHICH pile, so " +
                        "it counts nothing and spends nothing. Open it in the Skill Composer, pick the pile, and save.");
     }
 

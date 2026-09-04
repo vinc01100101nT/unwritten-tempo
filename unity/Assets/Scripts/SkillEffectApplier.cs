@@ -776,7 +776,7 @@ public static class SkillEffectApplier
     {
         if (e.modifierStateIdSet && !string.IsNullOrEmpty(e.modifierSkillId)) return true;
         if (reportedModifiers.Add(e.modifierSkillId ?? ""))
-            Debug.LogError("[Modifier] A skill edits another skill's charges but never names which skill or which " +
+            GameLog.Error(LogCat.Unwritten, "Modifier: A skill edits another skill's charges but never names which skill or which " +
                            "charges, so it does nothing. Open it in the Skill Composer, finish the modifier, and save.");
         return false;
     }

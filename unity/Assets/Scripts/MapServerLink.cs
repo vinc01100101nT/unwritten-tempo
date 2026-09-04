@@ -91,7 +91,7 @@ public class MapServerLink : MonoBehaviour
 
         if (string.IsNullOrEmpty(ServerSecret))
         {
-            Debug.LogError("[map] SERVER_SECRET is not set, so the character server will refuse this map server "
+            GameLog.Error(LogCat.Map, "SERVER_SECRET is not set, so the character server will refuse this map server "
                            + "and nobody will be able to enter the world. Set the same value on both.");
             return;
         }
@@ -135,7 +135,7 @@ public class MapServerLink : MonoBehaviour
             }
             catch (Exception inner)
             {
-                Debug.LogError("[map] could not listen for arrivals on " + ArrivalsPort + " — " + e.Message
+                GameLog.Error(LogCat.Map, "could not listen for arrivals on " + ArrivalsPort + " — " + e.Message
                                + " / " + inner.Message + ". Nobody will be able to enter the world.");
                 return;
             }
@@ -144,7 +144,7 @@ public class MapServerLink : MonoBehaviour
         listening = new Thread(Listen) { IsBackground = true };
         listening.Start();
 
-        Debug.Log("[map] listening for arrivals on " + ArrivalsPort + " as '" + ServerId + "'");
+        GameLog.Info(LogCat.Map, "listening for arrivals on " + ArrivalsPort + " as '" + ServerId + "'");
 
         // SAID AGAIN EVERY TIME THE MAPS CHANGE, not once at the start. This stands up before the world does, so
         // the first thing it had to say was that it held NOTHING — and the character server believed it, because
@@ -163,7 +163,7 @@ public class MapServerLink : MonoBehaviour
             catch { return; }   // stopped, or the listener has gone
 
             try { Answer(ctx); }
-            catch (Exception e) { Debug.LogWarning("[map] an arrival went wrong — " + e.Message); }
+            catch (Exception e) { GameLog.Warn(LogCat.Map, "an arrival went wrong — " + e.Message); }
         }
     }
 
@@ -231,7 +231,7 @@ public class MapServerLink : MonoBehaviour
                 var who = arrived.Dequeue();
                 who.expiresAt = Time.time + ExpectedFor;
                 expected[who.ticket] = who;
-                Debug.Log("[map] expecting " + who.characterName + " — their character arrived ahead of them.");
+                GameLog.Info(LogCat.Map, "expecting " + who.characterName + " — their character arrived ahead of them.");
             }
         }
 
@@ -301,8 +301,8 @@ public class MapServerLink : MonoBehaviour
 
         ServerHttp.Send("POST", CharacterServerUrl + "/map-servers", body, ServerSecret, (ok, reply, error) =>
         {
-            if (ok) Debug.Log("[map] the character server knows this map server holds " + maps.Count + " map(s).");
-            else Debug.LogError("[map] the character server would not take this map server — " + error
+            if (ok) GameLog.Info(LogCat.Map, "the character server knows this map server holds " + maps.Count + " map(s).");
+            else GameLog.Error(LogCat.Map, "the character server would not take this map server — " + error
                                 + " " + reply + ". Nobody will be able to enter the world.");
         });
     }
