@@ -24,11 +24,6 @@ public class GameRoot : MonoBehaviour
              "whichever map you had open is remembered and used instead.")]
     public string firstMap = "town_0";
 
-    [Tooltip("SERVER ONLY: maps the server keeps open BESIDES the first one, so their mobs are alive and moving " +
-             "before anybody walks in. A player ignores this — they are only ever in one map. GAME_MAPS overrides " +
-             "it when set, for trying a different set without a rebuild.")]
-    public string[] alsoHeldOpen = { "field_11" };
-
     bool worldUp;
 
     void Start()
@@ -62,7 +57,11 @@ public class GameRoot : MonoBehaviour
 
         // A server IS the world and waits for nobody. A player waits to be let in (see OnJoinedWorld).
         if (GameServer.IsServer) BringTheWorldUp();
-        else ReconnectNotice.Show();   // something is happening, and it is not nothing
+        // SOMETHING IS HAPPENING AND IT IS NOT NOTHING — but only while we are still trying. Asking to enter
+        // can fail before the line above has even returned: with no character server to ask, the answer comes
+        // back on the spot, and it signs the player out and puts the front door back up. Saying "reconnecting"
+        // after that would be a veil over a door nobody is knocking on.
+        else if (AccountSession.IsActive) ReconnectNotice.Show();
     }
 
     // The wire came up. THIS is the moment a player is allowed to be somewhere.
@@ -77,6 +76,7 @@ public class GameRoot : MonoBehaviour
     // put back at the front door with a line saying why — not left standing in a town nobody else can see.
     void OnLostWorld()
     {
+        ReconnectNotice.Hide();
         GameNetwork.Forget();
         AccountSession.SignOut();
         SceneManager.LoadScene(MapManager.SystemsScene, LoadSceneMode.Single);
@@ -147,26 +147,19 @@ public class GameRoot : MonoBehaviour
         // so it makes nothing, and a player walking in finds it empty. Which maps to hold is authored above.
         if (!GameServer.IsServer) return;
 
-        foreach (string name in AlsoHeldOpen())
-        {
-            if (name == first) continue;                                  // already coming up above
-            if (SceneManager.GetSceneByName(name).isLoaded) continue;     // somebody already has it
-            MapManager.LoadMap(name, null);
-        }
+        // THE CARETAKER FOR THE MAPS THIS PROCESS HOLDS. It lets a map go once nobody has been in it for a while
+        // and brings one up when the character server says somebody is coming, so a process ends up holding the
+        // zones people are actually in rather than a list decided before anyone signed in.
+        if (MapHosting.Instance == null) gameObject.AddComponent<MapHosting>();
+
     }
 
-    // The extra maps a server keeps open. Normally the authored list; GAME_MAPS replaces it wholesale so a
-    // different set can be tried without a rebuild, the same way GAME_SERVER and ACCOUNTS_URL work. Read once
-    // at boot: this runs when the world comes up and never again.
-    string[] AlsoHeldOpen()
-    {
-        string v = System.Environment.GetEnvironmentVariable("GAME_MAPS");
-        if (string.IsNullOrWhiteSpace(v)) return alsoHeldOpen ?? System.Array.Empty<string>();
-
-        var names = v.Split(',');
-        for (int i = 0; i < names.Length; i++) names[i] = names[i].Trim();
-        return names;
-    }
+    // NO LIST OF MAPS ANY MORE. A server used to be handed the zones it would hold before anybody had signed in,
+    // which meant every process held the same starting map and fought over it, and a quiet field was held all
+    // night for nobody. Now no process is given anything: the character server decides which process a zone goes
+    // to, at the moment somebody wants it, weighing how busy each one already is — and MapHosting lets a map go
+    // again once nobody has been in it for a while. The one map that comes up above is only somewhere to stand
+    // while that is being decided.
 
     string MapToLoad()
     {

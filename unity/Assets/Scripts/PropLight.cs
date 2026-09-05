@@ -63,12 +63,9 @@ public class PropLight : MonoBehaviour
         lamp.intensity = baseIntensity * (1f + n * flickerAmount);
     }
 
-#if UNITY_EDITOR
-    void OnValidate()
-    {
-        if (!Application.isPlaying && TryGetComponent(out Light _)) Apply();
-    }
-#endif
+// NO OnValidate HERE. It used to push these values onto the Light the moment one was typed, which is a saved
+// change — and it fires on every script recompile too, so the scene was being rewritten by nobody. The builder
+// that places a lamp still calls Apply, so an authored lamp is correct; a value typed by hand shows on Play.
 
     /// <summary>
     /// One-call lamp authoring for generators / scene builders: add (or reuse) a child light at the given

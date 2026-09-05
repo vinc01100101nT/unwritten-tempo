@@ -16,7 +16,7 @@ using System;
 [Serializable]
 public class SaveData
 {
-    public const int CurrentVersion = 8;
+    public const int CurrentVersion = 9;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
@@ -98,4 +98,17 @@ public class SaveData
     // The sprint pool (v8+), saved for the same reason HP and MP are: it is a current value against a
     // maximum, and coming back with it full is a small free refill.
     public float stamina = -1f;   // below zero = not recorded; the character keeps its own starting value
+
+    // COOLDOWNS STILL RUNNING (v9+), as parallel arrays like the trio-ring walk above: the skill's id, and the
+    // MOMENT it becomes ready again, counted in seconds since 1970 on the world's clock.
+    //
+    // A moment, not a countdown, because a countdown means nothing once it leaves the process that was counting
+    // it — every process starts its own timer at zero. A moment survives being written down, a map being put to
+    // sleep, and a character moving to another server, and needs no arithmetic on arrival.
+    //
+    // A skill with NO ENTRY HERE IS READY. That is not a default standing in for a missing value — "no cooldown
+    // is running" and "nothing was written for this skill" are the same fact, which is why an older save needs
+    // no upgrading. Never repurpose these arrays to say a skill IS available, or that stops being true.
+    public string[] cooldownSkillIds;
+    public double[] cooldownDueAt;
 }

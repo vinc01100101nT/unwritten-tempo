@@ -47,6 +47,9 @@ public enum LogCat
 
     /// <summary>A typed command being run.</summary>
     Command,
+
+    /// <summary>What a kill paid, and who it went to.</summary>
+    Loot,
 }
 
 /// <summary>
@@ -80,7 +83,12 @@ public static class GameLog
                        | (1 << (int)LogCat.Client)    | (1 << (int)LogCat.Map)    | (1 << (int)LogCat.Spawn)
                        | (1 << (int)LogCat.Census);
 
-    static int enabled = LegacyOn;
+    // WHAT IS ON WHEN NOBODY HAS SAID OTHERWISE. Loot sits on top of the legacy set because a kill's pay-out is
+    // now the only record of it: nothing is left lying on the ground to be looked at afterwards, so this line is
+    // the only way to see what a kill gave and who it went to. Switch it off with '/log loot off'.
+    const int DefaultOn = LegacyOn | (1 << (int)LogCat.Loot);
+
+    static int enabled = DefaultOn;
 
     /// <summary>Is this category being written right now? <b>Guard every built string with this</b> — an off
     /// category must cost one bit test, not a string build.</summary>
@@ -98,16 +106,16 @@ public static class GameLog
     /// <summary>Switch every category at once — "show me everything", or "quiet down".</summary>
     public static void SetAll(bool on) => enabled = on ? ~0 : 0;
 
-    /// <summary>Put the switches back where they start: everything that printed before categories existed, and
-    /// none of the new event detail.</summary>
-    public static void Reset() => enabled = LegacyOn;
+    /// <summary>Put the switches back where they start: everything that printed before categories existed, plus
+    /// the loot line, and none of the other event detail.</summary>
+    public static void Reset() => enabled = DefaultOn;
 
     /// <summary>Every category, in order — the fixed list the command reads and writes. A static array, so
     /// asking for it never allocates (unlike <c>Enum.GetValues</c>, which builds a fresh one each call).</summary>
     public static readonly LogCat[] AllCategories =
     {
         LogCat.Unwritten, LogCat.Server, LogCat.Net, LogCat.Client, LogCat.Map, LogCat.Spawn, LogCat.Census,
-        LogCat.Hit, LogCat.Passive, LogCat.Buff, LogCat.Cast, LogCat.Command,
+        LogCat.Hit, LogCat.Passive, LogCat.Buff, LogCat.Cast, LogCat.Command, LogCat.Loot,
     };
 
     /// <summary>The lower-case word in square brackets at the head of the line. A tester filters the file on
@@ -128,6 +136,7 @@ public static class GameLog
             case LogCat.Buff:      return "buff";
             case LogCat.Cast:      return "cast";
             case LogCat.Command:   return "command";
+            case LogCat.Loot:      return "loot";
             default:               return "log";
         }
     }

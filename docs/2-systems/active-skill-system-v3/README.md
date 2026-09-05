@@ -185,7 +185,7 @@ For these to fire, each skill still carries a **damage type as real data** — *
 A skill's **trigger** (`SkillDef.trigger`) decides what makes it run — one authored property:
 
 - **OnCast** — a normal active the player presses (default). Takes a hotbar slot; uses the cost / cadence / aim of §Tier B.
-- **Passive** (any other trigger) — no slot, never casts; it runs its authored effects when a combat moment fires.
+- **Passive** (any other trigger) — never casts; it runs its authored effects when a combat moment fires. It holds no *numbered* slot and no key, but it does show: a read-only row of four smaller squares above the bar lists the passives running, weapon-granted first and then the ones ticked on. A player may tick on at most four of their own (2026-09-05), and swapping a weapon clears those so the new weapon's have room.
 
 Passive triggers come in **two shapes, each matched to the space it names:**
 

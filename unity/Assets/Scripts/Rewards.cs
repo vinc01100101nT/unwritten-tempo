@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -15,6 +16,9 @@ using UnityEngine;
 ///
 /// <para>On a server the person being paid is the fighter it holds for that connection, and their machine is told
 /// so their own character records it (see <see cref="GameNetwork"/>). On a single machine it is simply themselves.</para>
+///
+/// <para><b>Experience and loot are paid to the SAME person, always</b>, because both ask <see cref="WhoEarned"/>
+/// and there is no second answer anywhere.</para>
 /// </summary>
 public static class Rewards
 {
@@ -34,5 +38,67 @@ public static class Rewards
         // On a server the character being paid is not the one on that player's screen, so their machine has to be
         // told or the kill quietly earns them nothing. Does nothing anywhere else.
         GameNetwork.TellOwnerTheyEarned(character, xp);
+    }
+
+    /// <summary>WHO EARNED WHAT THIS UNIT WAS CARRYING — its experience and its loot both. Today the answer is the
+    /// last unit to land a blow that cost it health, which is the simplest thing a player can predict from what
+    /// they can see and costs nothing to track: the damage door already writes it down.
+    ///
+    /// <para>THE ONE PLACE THIS IS DECIDED. When a share of the work is worked out properly — how much damage each
+    /// person did, who healed, who held it still — it is worked out HERE, and every payment follows it without
+    /// another line changing.</para></summary>
+    public static ICombatUnit WhoEarned(Health victim) => victim != null ? victim.LastAttacker : null;
+
+    /// <summary>Pay <paramref name="winner"/> everything one kill was carrying: the items in
+    /// <paramref name="items"/> and <paramref name="gold"/> Zeny, straight into their bag. Nothing is left lying
+    /// in the world — there is no drop to walk to and nothing to click.
+    ///
+    /// <para>ONE CALL PER KILL, not one per thing dropped: on a server every payment hands the owner their whole
+    /// bag again and asks for it to be written down, so paying four times over would send four bags and four
+    /// writes for one dead creature.</para></summary>
+    public static void PayLoot(ICombatUnit winner, List<Item> items, int gold)
+    {
+        if (PlayerUnits.Gone(winner)) return;
+
+        // Only a CHARACTER has a bag and a purse; a creature killing a creature carries nothing away.
+        var character = winner as Character;
+        if (character == null) return;
+
+        int given = 0;
+        if (items != null)
+            for (int i = 0; i < items.Count; i++)
+                if (items[i] != null && character.TakeIntoBag(items[i], 1) != null) given++;
+
+        if (gold > 0) character.AddGold(gold);
+        if (given == 0 && gold <= 0) return;
+
+        // On a server the bag that just changed is not the one on that player's screen, so their machine is handed
+        // the whole thing and the change is written down. Off a server there is only one bag and the window that
+        // shows it is told directly.
+        if (!GameNetwork.TellOwnerTheirBagChanged(character)) InventoryStore.Instance?.Notify();
+
+        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, gold));
+    }
+
+    /// <summary>What a kill paid, as one line: who got it, how much Zeny, and every item by name. Builds a string,
+    /// so it is only ever called behind <see cref="GameLog.On"/>.</summary>
+    static string Describe(Character who, List<Item> items, int gold)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append(GameNetwork.NameOf(who)).Append(" earned ");
+
+        bool wroteSomething = false;
+        if (gold > 0) { sb.Append(gold).Append(" Zeny"); wroteSomething = true; }
+
+        if (items != null)
+            for (int i = 0; i < items.Count; i++)
+            {
+                if (items[i] == null) continue;
+                if (wroteSomething) sb.Append(", ");
+                sb.Append(items[i].displayName);
+                wroteSomething = true;
+            }
+
+        return sb.ToString();
     }
 }

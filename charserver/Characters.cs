@@ -9,7 +9,7 @@ namespace CharServer;
 /// Everything a character IS, and the only code that reads or writes one. The map server never touches this
 /// database; it asks here. That is the single rule this whole server exists to make true.
 /// </summary>
-public sealed partial class Characters(Db db, Auth auth, Roster roster, Config config, MapServers maps)
+public sealed partial class Characters(Db db, Auth auth, Roster roster, MapServers maps)
 {
     // Names players read out loud and type at each other: letters, digits and underscore only, so a name
     // cannot hide look-alike whitespace or wear punctuation that breaks a chat command.
@@ -40,7 +40,11 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, Config c
         chars.MapPatch("/characters/{id}/appearance", AppearanceAsync);
         chars.MapDelete("/characters/{id}", DeleteAsync);
         chars.MapGet("/characters/{id}/progress", ReadProgressAsync);
-        chars.MapPut("/characters/{id}/progress", WriteProgressAsync);
+        // NO WRITE FOR A PLAYER. A character's progress is written by the map server running the world that
+        // character is in, through the server-secret door, and by nothing else. A player's own machine never
+        // learns what really happened in a fight, so anything it sent would be older than the truth and would
+        // land on top of it. Their look is different and still has its own door above: it is not progress, and
+        // it is chosen on a screen the server never sees.
 
         // THE DOOR INTO THE WORLD. A player asks to enter with a character; this hands their whole character to
         // the map server that holds the map they are entering, and gives them back only an address and a
@@ -208,6 +212,12 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, Config c
         // server, to decide which it will actually carry out. Answering it in a second place as well would be
         // two owners for one fact.
         await using var conn = await db.ConnectAsync();
+        // AND ANYBODY ALREADY PLAYING THIS CHARACTER LETS GO OF THEM FIRST — writing them down and waiting for
+        // that write, BEFORE the row below is read. Read first and whoever is arriving picks up the last ordinary
+        // save, up to fifteen seconds old, and everything the machine being taken over did since is lost. This is
+        // the same order a door already uses: write, wait, then hand over.
+        await maps.LetGoOfEverywhereAsync(characterId.ToString(), http.RequestAborted);
+
         await using var cmd = new NpgsqlCommand(
             @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm
                 from character c join account a on a.id = c.account_id
@@ -235,47 +245,6 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, Config c
         });
     }
 
-    async Task<IResult> WriteProgressAsync(HttpContext http, string id, ProgressBody? body)
-    {
-        if (!IsId(id, out var characterId)) return Bad("invalid character id");
-        if (body is null || body.progress.ValueKind == JsonValueKind.Undefined) return Bad("send { progress: … }");
-
-        var raw = body.progress.GetRawText();
-        if (raw.Length > config.MaxProgressBytes)
-            return Results.Json(new { error = "that save is too large" }, statusCode: 413);
-
-        var verdict = Progress.Check(body.progress);
-        if (!verdict.Ok) return Bad(verdict.Reason ?? "invalid save");
-
-        // A save REPLACES the document, because the game owns it whole. The one exception is the look: a client
-        // that does not carry it must not be able to wipe it, so an incoming save that names no body keeps the
-        // one already stored. Without this, a single save from an older build erases a character's appearance.
-        bool keepsLook = body.progress.TryGetProperty("modelName", out var m)
-                         && m.ValueKind == JsonValueKind.String
-                         && (m.GetString()?.Length ?? 0) > 0;
-
-        var sql = keepsLook
-            ? $@"update character set progress = $3, updated_at = now()
-                  where id = $1 and account_id = $2 and deleted_at is null returning {Columns}"
-            : $@"update character
-                    set progress = $3::jsonb
-                                 || jsonb_build_object('modelName',  progress -> 'modelName',
-                                                       'dyeSources', progress -> 'dyeSources',
-                                                       'dyeTargets', progress -> 'dyeTargets'),
-                        updated_at = now()
-                  where id = $1 and account_id = $2 and deleted_at is null returning {Columns}";
-
-        await using var conn = await db.ConnectAsync();
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.Add(new NpgsqlParameter { Value = characterId });
-        cmd.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
-        cmd.Parameters.Add(new NpgsqlParameter { Value = raw, NpgsqlDbType = NpgsqlDbType.Jsonb });
-
-        await using var rows = await cmd.ExecuteReaderAsync();
-        if (!await rows.ReadAsync()) return NoSuchCharacter();
-        return Results.Ok(Summarise(rows));
-    }
-
     // ---- entering the world -----------------------------------------------------------------------------
 
     async Task<IResult> EnterAsync(HttpContext http, string id, EnterBody? body)
@@ -283,6 +252,37 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, Config c
         if (!IsId(id, out var characterId)) return Bad("invalid character id");
 
         await using var conn = await db.ConnectAsync();
+
+        // IS THIS THE SIGN-IN THAT IS STILL THE LIVE ONE. Signing in a second time takes over: the login service
+        // writes a fresh marker on the account, and the pass this request is carrying holds the marker from the
+        // sign-in that made it. An older one belongs to a machine that has since been taken over, and letting it
+        // into the world is what puts one account into two places — which is where the same item ends up saved
+        // twice, because two world servers write that character down on their own beats.
+        //
+        // Asked HERE and nowhere else: this is the one door into the world, so it is the one moment it decides
+        // anything. Every other request stays as cheap as it was.
+        //
+        // NOTE: this reads a column on a table the LOGIN service owns. It is a read, at one moment, of the one
+        // fact only that service can know — but it is a line across the ownership split, and if that split is
+        // ever enforced this becomes a question asked of that service instead.
+        var carrying = auth.SessionIdFrom(http.Request.Headers.Authorization);
+        await using (var session = new NpgsqlCommand(
+            "select session_id from account where id = $1", conn))
+        {
+            session.Parameters.Add(new NpgsqlParameter { Value = AccountOf(http) });
+            var current = await session.ExecuteScalarAsync();
+            // A null on the account means nobody has signed in since sign-ins started being marked, so there is
+            // nothing to be older than and nothing to refuse.
+            if (current is Guid live && !string.Equals(carrying, live.ToString(), StringComparison.OrdinalIgnoreCase))
+                return Results.Json(new { error = "this account has been signed in somewhere else" }, statusCode: 409);
+        }
+
+        // AND ANYBODY ALREADY PLAYING THIS CHARACTER LETS GO OF THEM FIRST — writing them down and waiting for
+        // that write, BEFORE the row below is read. Read first and whoever is arriving picks up the last ordinary
+        // save, up to fifteen seconds old, and everything the machine being taken over did since is lost. This is
+        // the same order a door already uses: write, wait, then hand over.
+        await maps.LetGoOfEverywhereAsync(characterId.ToString(), http.RequestAborted);
+
         await using var cmd = new NpgsqlCommand(
             @"select c.id, c.name, c.progress, c.created_at, c.updated_at, a.is_gm
                 from character c join account a on a.id = c.account_id
@@ -303,11 +303,26 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, Config c
             && scene.ValueKind == JsonValueKind.String)
             map = scene.GetString();
 
-        // Nobody has claimed that map — or the character has never played and named none. Fall back to the one
-        // map server there is, which is the ordinary case and the whole of it until maps are ever split up.
-        var to = (map is not null ? maps.Holding(map) : null) ?? maps.Alive.FirstOrDefault();
-        if (to is null)
-            return Results.Json(new { error = "no map server is holding that map" }, statusCode: 503);
+        // WHICH PROCESS HOLDS THAT MAP — and if nobody does, one is asked to bring it up and we wait for it.
+        // No process is given a list of zones when it starts, so "nobody is holding it" is the ordinary state of
+        // every map nobody is standing in, not an error. It only becomes one when there is no process at all, or
+        // the map never comes up.
+        MapServers.Registration? to;
+        if (map is not null)
+        {
+            to = await maps.EnsureHeldAsync(map, http.RequestAborted);
+            if (to is null)
+                return Results.Json(new { error = "the world could not bring that map up just now" }, statusCode: 503);
+        }
+        else
+        {
+            // A character nobody has played yet names no map, so there is nothing to place. They go to the
+            // quietest process, which brings up whatever it starts with.
+            to = maps.QuietestAlive();
+            if (to is null)
+                return Results.Json(new { error = "no map server is running" }, statusCode: 503);
+        }
+
 
         var ticket = maps.MintTicket(AccountOf(http).ToString(), characterId.ToString());
 
@@ -352,5 +367,4 @@ public sealed partial class Characters(Db db, Auth auth, Roster roster, Config c
 
     public sealed record CreateBody(string? name, string? modelName, string[]? dyeSources, string[]? dyeTargets);
     public sealed record AppearanceBody(string? modelName, string[]? dyeSources, string[]? dyeTargets);
-    public sealed record ProgressBody(JsonElement progress);
 }

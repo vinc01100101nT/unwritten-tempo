@@ -7,7 +7,7 @@ using UnityEngine;
 /// "airborne → Jump", "took a hit → Hurt" is authored ONCE and can't drift between the two presentations.
 ///
 /// <para>Pure decision — no side effects, no allocation (returns a value struct). The caller feeds it the
-/// momentary windows it can't poll (hurt/pickUp) and the two capability flags the resolved stance depends on
+/// momentary window it can't poll (hurt) and the two capability flags the resolved stance depends on
 /// (does the visual have a Run / Jump clip), then applies the result to its own <see cref="StanceController"/>.</para>
 /// </summary>
 public static class PlayerStanceBrain
@@ -27,7 +27,7 @@ public static class PlayerStanceBrain
     /// <paramref name="hasRun"/>/<paramref name="hasJump"/>/<paramref name="hasSprint"/> are the visual's clip capabilities (Walk↔Run choice,
     /// Fall-reuses-Jump gate). Death is handled by the CALLER (each visual grounds its corpse differently).</summary>
     public static Decision Decide(Player3DController player, Player3DAttacker attacker, float speed,
-                                  float walkThreshold, float hurtUntil, float pickUpUntil, bool hasRun, bool hasJump,
+                                  float walkThreshold, float hurtUntil, bool hasRun, bool hasJump,
                                   bool hasSprint)
     {
         var d = new Decision();
@@ -50,7 +50,6 @@ public static class PlayerStanceBrain
         // action AND skip the velocity check below, so the character just slides while holding its idle/held pose.
         if (player.SkillGliding)                    { d.hasAction = false; return d; }
         if (player.Dashing || player.EDashing)      { d.hasAction = true; d.id = StanceId.Roll;   d.window = player.EDashing ? player.eDashDuration : 0.4f; return d; }
-        if (Time.time < pickUpUntil)                { d.hasAction = true; d.id = StanceId.PickUp; return d; }
         // Hurt only flinches when fully idle — a hit never interrupts an action or a run.
         if (Time.time < hurtUntil && speed < walkThreshold) { d.hasAction = true; d.id = StanceId.Hurt; return d; }
 

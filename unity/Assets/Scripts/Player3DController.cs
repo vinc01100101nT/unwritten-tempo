@@ -139,12 +139,6 @@ public partial class Player3DController : MonoBehaviour
     bool resumeAttackMove;
     AutoCombatIndicator autoIndicator;
 
-    // Click-to-pickup: a clicked item we walk to and collect on arrival; collecting then locks input briefly
-    // (gravity only) while the PickUp gesture plays, so the player can't WASD out of the animation.
-    WorldPickup pendingPickup;
-    float pickupLockUntil;
-    const float PickupLockSeconds = 0.6f;
-
     CharacterController controller;
     Player3DAttacker attacker;
     StatusController status;   // stun/freeze (no act), slow (speed), silence/blind — read here + by the spells/attacker
@@ -239,7 +233,7 @@ public partial class Player3DController : MonoBehaviour
     void EnsureComposedSkills()
     {
         var me = Character.Instance;
-        if (me != null) me.BindSkills(gameObject, SkillCatalog.All);
+        if (me != null) me.BindSkills(gameObject, me.UsableSkills());
     }
 
     // THE CHARACTER MAY NOT EXIST YET when this body wakes — the two are separate objects and Unity does not promise
@@ -249,7 +243,7 @@ public partial class Player3DController : MonoBehaviour
     void Start()
     {
         var me = Character.Instance;
-        if (me != null && !me.HasSkills) me.BindSkills(gameObject, SkillCatalog.All);
+        if (me != null && !me.HasSkills) me.BindSkills(gameObject, me.UsableSkills());
     }
 
     /// <summary>Push the SHARED character capsule onto this player's CharacterController. Called in Awake so the
@@ -264,10 +258,10 @@ public partial class Player3DController : MonoBehaviour
 #if UNITY_EDITOR
     // Live-apply the shared capsule as you tune the spec — including in Play mode (Awake ran once and won't re-read
     // it). Editor-only; no runtime cost.
-    void OnValidate()
-    {
-        if (GetComponent<CharacterController>() != null) ApplyCapsule();
-    }
+    // NO OnValidate HERE. It used to write the capsule onto the CharacterController whenever anything on this
+    // component was typed, which is a saved change — and it fires on every script recompile too, so the scene
+    // was being rewritten by nobody. ApplyDefaultCapsule is still what the player builders call, so a freshly
+    // built player has the right shape.
 #endif
 
     /// <summary>Write the shared character capsule onto a CharacterController — the one place the player builders
@@ -326,15 +320,6 @@ public partial class Player3DController : MonoBehaviour
         if (dashing)
         {
             StepDash();   // footstep SFX/prints ride the animation via FootstepTracker — no explicit tick here
-            return;
-        }
-
-        // Click-to-pickup: collect a clicked item once we've walked into range, then lock input for a beat while
-        // the PickUp gesture plays — gravity only, no WASD/clicks/orders.
-        TryCollectPending();
-        if (Time.time < pickupLockUntil)
-        {
-            controller.Move(Vector3.down * gravity * Time.deltaTime);
             return;
         }
 
@@ -538,16 +523,11 @@ public partial class Player3DController : MonoBehaviour
             }
             else
             {
-                // Plain click: a mob → target-lock + attack it (shows the target indicator); else a pickup
-                // (walk to it + collect); else a ground move (which clears any lock via ClearCombat).
+                // Plain click: a mob → target-lock + attack it (shows the target indicator); else a ground move
+                // (which clears any lock via ClearCombat).
                 var mob = MonsterUnderCursor(cam);
                 if (mob != null) BeginAttack(mob, false);
-                else
-                {
-                    var pick = PickupUnderCursor(cam);
-                    if (pick != null) BeginPickup(pick);
-                    else if (GroundPoint(cam, out var gp)) BeginMove(gp);
-                }
+                else if (GroundPoint(cam, out var gp)) BeginMove(gp);
             }
         }
     }
@@ -675,28 +655,6 @@ public partial class Player3DController : MonoBehaviour
     void BeginMove(Vector3 point)       { ClearCombat(); order = Order.Move;       movePoint = point; StartRoute(point); }
     void BeginAttackMove(Vector3 point) { ClearCombat(); order = Order.AttackMove; movePoint = point; StartRoute(point); }
 
-    // Click-to-pickup: walk to the clicked item; TryCollectPending() collects it on arrival.
-    void BeginPickup(WorldPickup p)
-    {
-        ClearCombat();   // clears any combat AND a prior pendingPickup
-        pendingPickup = p;
-        order = Order.Move; movePoint = p.transform.position; StartRoute(movePoint);
-    }
-
-    void TryCollectPending()
-    {
-        if (pendingPickup == null) return;               // Unity-null once destroyed
-        Vector3 a = transform.position, b = pendingPickup.transform.position; a.y = 0f; b.y = 0f;
-        // Loot reach == melee reach: you must be as close as you'd stand to swing (no looting from afar).
-        // The pickup's own collectRadius stays the CLICK size; this gates the actual collect.
-        float reach = attacker != null ? attacker.EffectiveRange : pendingPickup.collectRadius;
-        if ((a - b).sqrMagnitude > reach * reach) return;
-        pendingPickup.Collect();                         // item/gold + fires WorldPickup.OnCollected (PickUp anim)
-        pickupLockUntil = Time.time + PickupLockSeconds;
-        pendingPickup = null;
-        Stop();                                          // end routing; the lock holds us through the gesture
-    }
-
     void BeginAttack(Health mob, bool resume)
     {
         if (attacker != null) attacker.Cancel();
@@ -762,7 +720,7 @@ public partial class Player3DController : MonoBehaviour
 
     void Stop()
     {
-        AttackArmed = false; order = Order.Idle; pendingPickup = null;
+        AttackArmed = false; order = Order.Idle;
         routing = false; path.Clear(); attackTarget = null; resumeAttackMove = false;
         dashing = false; dashOnArrive = null; dashTarget = null; dashToPoint = false;   // a charge is cancelled by Stop / S
         if (attacker != null) attacker.Cancel();   // drop an in-flight swing's damage
@@ -884,7 +842,7 @@ public partial class Player3DController : MonoBehaviour
     void ClearCombat()
     {
         if (attacker != null) attacker.Cancel();
-        attackTarget = null; resumeAttackMove = false; pendingPickup = null;
+        attackTarget = null; resumeAttackMove = false;
         if (targetMarker != null) targetMarker.Follow(null);
     }
 
@@ -1026,17 +984,6 @@ public partial class Player3DController : MonoBehaviour
 
     /// <summary>Public wrapper for the cursor→ground raycast — used by ground-targeted skills (e.g. Meteor).</summary>
     public static bool GroundUnderCursor(Camera cam, out Vector3 point) => GroundPoint(cam, out point);
-
-    /// <summary>Is there a collectable pickup under the cursor? Lets <see cref="GameCursor3D"/> show the grab hand.</summary>
-    public static bool PickupHovered(Camera cam) => PickupUnderCursor(cam) != null;
-
-    /// <summary>The world pickup under the cursor (camera raycast hits its trigger sphere), or null. Drives click-to-collect.</summary>
-    static WorldPickup PickupUnderCursor(Camera cam)
-    {
-        if (cam == null) return null;
-        var ray = cam.ScreenPointToRay(MousePos());
-        return Physics.Raycast(ray, out var hit, 500f) ? hit.collider.GetComponentInParent<WorldPickup>() : null;
-    }
 
     static int groundMask = -1;   // cached "Ground" layer mask (-1 = unresolved, 0 = no Ground layer in scene)
 

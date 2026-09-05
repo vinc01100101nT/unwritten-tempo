@@ -1,5 +1,6 @@
 using System.Text.Json;
 using CharServer;
+using Npgsql;
 
 // The character server. It owns what a character IS — the list, the creation, the deletion, the save — and it
 // is the only thing that reads or writes those rows. The map server never touches the database; it asks here.
@@ -88,7 +89,7 @@ catch (Exception e)
 }
 
 var maps = new MapServers(config);
-new Characters(db, auth, roster, config, maps).MapOnto(app);
+new Characters(db, auth, roster, maps).MapOnto(app);
 
 // ---- the map servers' own door ----------------------------------------------------------------------------
 // Reached with the shared SERVER secret, never with a player's token. A person signing in must not be able to
@@ -111,9 +112,11 @@ app.MapPost("/map-servers", async (HttpContext http, MapServerRegistration? reg)
             got = reg.build ?? "",
         }, statusCode: 409);
 
-    var registered = maps.Register(reg.id, reg.address, reg.port, reg.playerPort, reg.maps ?? [], reg.build);
+    var registered = maps.Register(reg.id, reg.address, reg.port, reg.playerPort, reg.maps ?? [], reg.build,
+                                   reg.players, reg.creatures);
     Console.WriteLine($"[char] map server '{registered.Id}' at {registered.Address}:{registered.Port} " +
-                      $"holds {registered.Maps.Length} map(s): {string.Join(", ", registered.Maps)}");
+                      $"holds {registered.Maps.Length} map(s): {string.Join(", ", registered.Maps)} " +
+                      $"[{registered.Players} player(s), {registered.Creatures} creature(s)]");
     return Results.Ok(new { ok = true, holding = registered.Maps.Length });
 });
 
@@ -167,6 +170,54 @@ app.MapPut("/server/characters/{id}/progress", async (HttpContext http, string i
         : Results.Ok(new { ok = true });
 });
 
+// WHERE A PLAYER GOES WHEN THEY WALK THROUGH A DOOR INTO A ZONE ANOTHER PROCESS HOLDS. Asked by the map server
+// they are LEAVING, never by the player: only that server knows whether it has finished writing them down, and
+// only it can put them back where they were if this fails. Reached with the SERVER secret.
+//
+// The character is read from the store rather than travelling with the request, and that is safe only because
+// the process asking has already written them down and waited for it to land — which is the step before this one.
+app.MapPost("/server/characters/{id}/move", async (HttpContext http, string id, MoveBody? body) =>
+{
+    if (!maps.IsAServer(http.Request)) return Results.Json(new { error = "not a server" }, statusCode: 401);
+    if (!Guid.TryParseExact(id, "D", out var characterId))
+        return Results.Json(new { error = "invalid character id" }, statusCode: 400);
+    if (body is null || string.IsNullOrWhiteSpace(body.map))
+        return Results.Json(new { error = "send { map: … }" }, statusCode: 400);
+
+    await using var conn = await db.ConnectAsync();
+    await using var read = new NpgsqlCommand(
+        "select id, name, progress from character where id = $1 and deleted_at is null", conn);
+    read.Parameters.Add(new NpgsqlParameter { Value = characterId });
+
+    string name;
+    JsonDocument progress;
+    await using (var rows = await read.ExecuteReaderAsync())
+    {
+        if (!await rows.ReadAsync()) return Results.Json(new { error = "no such character" }, statusCode: 404);
+        name = rows.GetString(1);
+        progress = JsonDocument.Parse(rows.GetString(2));
+    }
+
+    using (progress)
+    {
+        // SOMEBODY MUST BE HOLDING IT BEFORE ANYBODY IS SENT TO IT. Nobody is given a list of zones at start-up,
+        // so a zone nobody is standing in is held by nobody — the ordinary state, not a fault. This puts it on
+        // the quietest process and waits for it to actually stand up.
+        var to = await maps.EnsureHeldAsync(body.map, http.RequestAborted);
+        if (to is null)
+            return Results.Json(new { error = "the world could not bring that map up just now" }, statusCode: 503);
+
+        var ticket = maps.MintTicket(body.accountId ?? "", characterId.ToString());
+        bool taken = await maps.AnnounceAsync(to, ticket, name, progress.RootElement, body.isGm,
+                                              http.RequestAborted);
+        if (!taken)
+            return Results.Json(new { error = "the world would not take them just now" }, statusCode: 503);
+
+        Console.WriteLine($"[char] moving '{name}' to '{body.map}' on map server '{to.Id}'.");
+        return Results.Ok(new { host = to.Address, port = to.PlayerPort, ticket = ticket.Value, map = body.map });
+    }
+});
+
 // DELIBERATELY NO "spend this ticket" DOOR. A ticket is handed to the map server in the same breath as the
 // character it belongs to, so that server already holds it and checks it against its own list — one place, no
 // round trip while somebody waits at the door. A second door here would be a second answer to one question, and
@@ -194,5 +245,9 @@ Console.WriteLine($"[char] listening on {config.Port}, {roster.Models.Count} cha
 app.Run();
 return 0;
 
-record MapServerRegistration(string? id, string? address, int port, int playerPort, string[]? maps, string? build);
+// `players` and `creatures` are how busy that process says it is — the two numbers a zone is placed by. An older
+// map server that does not send them registers as idle, which is honest: it has not told us otherwise.
+record MapServerRegistration(string? id, string? address, int port, int playerPort, string[]? maps, string? build,
+                             int players = 0, int creatures = 0);
 record SpendBody(string? ticket);
+record MoveBody(string? map, string? accountId, bool isGm);

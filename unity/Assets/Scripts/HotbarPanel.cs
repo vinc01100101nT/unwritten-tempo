@@ -143,6 +143,7 @@ public class HotbarPanel : MonoBehaviour
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
 
         EnsureCells();
+        EnsurePassiveRow();
         EnsureSharedTooltip();
 
         slots.Clear();
@@ -159,6 +160,7 @@ public class HotbarPanel : MonoBehaviour
             var ultCell = holder.GetChild(HotbarBindings.SlotCount).GetComponent<Image>();
             if (ultCell != null) ult = BuildUltSlot(ultCell);
         }
+        RefreshPassiveRow();
         built = slots.Count > 0;
     }
 
@@ -171,8 +173,23 @@ public class HotbarPanel : MonoBehaviour
         int have = holder.childCount;
         if (have == 0) return;
         var template = holder.GetChild(0).gameObject;
-        // Nine numbered slots + one dedicated ult cell = SlotCount + 1 cells total.
+        // Four numbered slots + one dedicated ult cell = SlotCount + 1 cells total.
         int wanted = HotbarBindings.SlotCount + 1;
+
+        // AND ANY CELL PAST THAT GOES. A scene baked when the bar was nine long still has those children, and
+        // leaving them switched on drew five empty squares nothing could ever fill or answer. Switched off
+        // first, because a Destroy does not take effect until the end of the frame and they would draw once more.
+        for (int i = have - 1; i >= wanted; i--)
+        {
+            var extra = holder.GetChild(i).gameObject;
+            extra.SetActive(false);
+            Destroy(extra);
+        }
+
+        // THE CELL AT THE END IS THE ULT, whether it was baked as a numbered one or cloned as one just now. A
+        // scene baked with nine identical cells has no cell that calls itself the ult, so it is named here.
+        if (have > HotbarBindings.SlotCount)
+            holder.GetChild(HotbarBindings.SlotCount).gameObject.name = "UltSlot";
         for (int i = have; i < wanted; i++)
         {
             var clone = Instantiate(template, holder);
@@ -183,7 +200,95 @@ public class HotbarPanel : MonoBehaviour
             var s = clone.GetComponent<HotbarSlotTarget>();if (s != null) Destroy(s);
             var d = clone.GetComponent<HotbarSlotDragSource>(); if (d != null) Destroy(d);
         }
-        if (holder is RectTransform rt) rt.sizeDelta = new Vector2(wanted * 54, 54);
+        // THE ULT IS THE BIG ONE. It is the seat a weapon only fills at its best, so it reads as a different
+        // kind of thing at a glance rather than as a sixth number key.
+        if (holder.childCount > HotbarBindings.SlotCount
+            && holder.GetChild(HotbarBindings.SlotCount) is RectTransform ultRT)
+            ultRT.sizeDelta = new Vector2(UltCellSize, UltCellSize);
+
+        if (holder is RectTransform rt)
+            rt.sizeDelta = new Vector2(HotbarBindings.SlotCount * 54 + UltCellSize + 6, UltCellSize);
+    }
+
+    const int UltCellSize = 64;
+    const int PassiveCellSize = 30;
+
+    // The read-only row of passives, above the bar. Built the same way the extra bar cells are — at runtime, from
+    // the bar's own first cell — so a scene baked before this existed grows the row without being re-baked.
+    RectTransform passiveRow;
+    readonly List<Image> passiveCells = new List<Image>();
+    readonly List<string> activePassives = new List<string>();
+
+    void EnsurePassiveRow()
+    {
+        if (passiveRow != null || holder == null || holder.childCount == 0) return;
+
+        var rowGO = new GameObject("HUD_HotbarPassives", typeof(RectTransform));
+        passiveRow = (RectTransform)rowGO.transform;
+        passiveRow.SetParent(holder.parent, false);
+
+        // Anchored to the same place as the bar and lifted clear of it, so the two move together.
+        var barRT = holder as RectTransform;
+        if (barRT != null)
+        {
+            passiveRow.anchorMin = barRT.anchorMin;
+            passiveRow.anchorMax = barRT.anchorMax;
+            passiveRow.pivot = barRT.pivot;
+            passiveRow.anchoredPosition = barRT.anchoredPosition + new Vector2(0f, barRT.sizeDelta.y * 0.5f + PassiveCellSize * 0.5f + 4f);
+        }
+        passiveRow.sizeDelta = new Vector2(PassiveLoadout.MaxChecked * (PassiveCellSize + 4), PassiveCellSize);
+
+        var lay = rowGO.AddComponent<HorizontalLayoutGroup>();
+        lay.spacing = 4;
+        lay.childAlignment = TextAnchor.MiddleCenter;
+        lay.childControlWidth = lay.childControlHeight = false;
+        lay.childForceExpandWidth = lay.childForceExpandHeight = false;
+
+        var template = holder.GetChild(0).gameObject;
+        for (int i = 0; i < PassiveLoadout.MaxChecked; i++)
+        {
+            var clone = Instantiate(template, passiveRow);
+            clone.name = "PassiveSlot";
+            for (int c = clone.transform.childCount - 1; c >= 0; c--) Destroy(clone.transform.GetChild(c).gameObject);
+            // NOTHING ON A PASSIVE CELL IS TOUCHABLE. It is a readout of what is running, not a place to put
+            // anything: a passive fires on its own trigger and has no key, so a click could only ever do nothing.
+            var b = clone.GetComponent<Button>();               if (b != null) Destroy(b);
+            var t = clone.GetComponent<EventTrigger>();          if (t != null) Destroy(t);
+            var st = clone.GetComponent<HotbarSlotTarget>();     if (st != null) Destroy(st);
+            var d = clone.GetComponent<HotbarSlotDragSource>();  if (d != null) Destroy(d);
+
+            var img = clone.GetComponent<Image>();
+            if (img != null)
+            {
+                img.raycastTarget = false;
+                passiveCells.Add(img);
+            }
+            if (clone.transform is RectTransform crt) crt.sizeDelta = new Vector2(PassiveCellSize, PassiveCellSize);
+        }
+    }
+
+    // Fill the row from what is actually running: the weapon's passives first, then the ones the player ticked.
+    void RefreshPassiveRow()
+    {
+        if (passiveCells.Count == 0 || Character.Instance == null) return;
+
+        var me = Character.Instance;
+        me.PassiveSkills.CollectActive(me.GetEquippedInstance(EquipSlotType.Weapon), activePassives);
+
+        for (int i = 0; i < passiveCells.Count; i++)
+        {
+            var cell = passiveCells[i];
+            if (cell == null) continue;
+            for (int c = cell.transform.childCount - 1; c >= 0; c--) Destroy(cell.transform.GetChild(c).gameObject);
+
+            var def = i < activePassives.Count ? SkillCatalog.Get(activePassives[i]) : null;
+            if (def == null) { cell.color = CellEmpty; continue; }
+
+            cell.color = SkillSymbol.ColorFor(def);
+            var label = NewText("Label", cell.transform, def.Symbol, 11, FontStyle.Bold, TextAnchor.MiddleCenter, Color.white);
+            Stretch(label.rectTransform, 1, 1);
+            label.raycastTarget = false;
+        }
     }
 
     Slot BuildSlot(Image cell, int index)

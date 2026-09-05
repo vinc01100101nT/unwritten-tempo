@@ -21,14 +21,9 @@ public class SaveManager : MonoBehaviour
 {
     public static SaveManager Instance { get; private set; }
 
-    [Tooltip("Seconds between background autosaves. Only writes if something actually changed.")]
-    public float autosaveInterval = 20f;
-
     Character character;
     bool initialized;
     bool loading;      // a load is in flight — the answer comes over a network, so it spans frames
-    bool dirty;
-    float nextAutosave;
 
     /// <summary>The last data read or written. Kept so the resume point and anything else that wants to know
     /// what the save SAID can ask, without going back to the network for it.</summary>
@@ -76,7 +71,6 @@ public class SaveManager : MonoBehaviour
             return;
         }
 
-        if (dirty && Time.unscaledTime >= nextAutosave) SaveNow();
     }
 
     void BeginLoad()
@@ -106,7 +100,7 @@ public class SaveManager : MonoBehaviour
                 // AND THE BAG WINDOW IS TOLD. Filling the list does not repaint anything by itself, and the
                 // window is built before the save arrives — so without this it shows the empty bag the
                 // character had a moment ago until something unrelated happens to refresh it.
-                InventoryStore.Instance?.Notify(alsoSave: false);
+                InventoryStore.Instance?.Notify();
             }
             else if (GameNetwork.MyPlayer == null)
             {
@@ -117,13 +111,10 @@ public class SaveManager : MonoBehaviour
                 InventoryStore.Instance?.Notify();
             }
 
-            // Subscribe AFTER restoring, so loading doesn't immediately mark us dirty.
-            character.OnLeveledUp         += OnLeveledUp;    // biggest checkpoints
-            character.OnRevived           += SaveNow;        // persist the post-death respawn
-            character.OnStatsChanged      += MarkDirty;      // spent a stat/skill point, gear, etc.
-            character.OnAppearanceChanged += SaveAppearance; // recoloured — goes to the character record, not the save
+            // Only the recolour is still listened for. Levelling, reviving and spending a point used to be
+            // listened for too, purely to trigger a write from this machine; the server writes all three.
+            character.OnAppearanceChanged += SaveAppearance;
 
-            nextAutosave = Time.unscaledTime + autosaveInterval;
             initialized  = true;
             loading      = false;
         });
@@ -143,12 +134,6 @@ public class SaveManager : MonoBehaviour
         if (character == null) return;
         ProfileStore.Current.SaveAppearance(character.DyeModel, character.DyeSources, character.DyeTargets);
     }
-
-    void OnLeveledUp(int newLevel) => SaveNow();
-
-    /// <summary>Flag a pending autosave. Public so the bag (InventoryStore) can mark itself dirty on a
-    /// bag-only change (give/consume/reorder) that doesn't touch Character's stat events.</summary>
-    public void MarkDirty() => dirty = true;
 
     /// <summary>Stand the player where their save says they were. The save always arrives AFTER the map has
     /// come up, so this either moves them within the map they are already in, or sends them to the one they
@@ -170,60 +155,18 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    /// <summary>Write the live character now and reset the autosave timer.</summary>
-    public void SaveNow()
-    {
-        if (character == null) return;
-
-        // NOT OURS TO WRITE, IN A WORLD. The server owns this character while somebody is playing it — it holds
-        // their bag, their money and the result of every fight — and it writes them down itself. A save from
-        // here would be this machine telling the database what it thinks it owns, which is the whole hole the
-        // move was meant to close: authoritative during the fight, not authoritative about its result.
-        //
-        // Offline, there is no server and this is still the only thing that could write anything.
-        if (GameNetwork.MyPlayer != null)
-        {
-            dirty = false;
-            nextAutosave = Time.unscaledTime + autosaveInterval;
-            return;
-        }
-
-        // THE WHOLE CHARACTER, IN ONE CALL. The bag used to be fetched separately from the inventory window and
-        // stitched in here, with a fallback that carried forward the last loaded bag for the case where the
-        // window had never been opened and there was nothing to fetch. The bag belongs to the character now, so
-        // there is nothing to stitch and no case where it is missing.
-        var data = character.CaptureSave();
-
-        // Where the player is standing, so signing back in puts them there instead of at the map's front door.
-        var player = PersistentPlayer3D.Instance;
-        if (player != null && !string.IsNullOrEmpty(MapManager.CurrentMap))
-        {
-            data.sceneName = MapManager.CurrentMap;
-            var p = player.transform.position;
-            data.posX = p.x; data.posY = p.y; data.posZ = p.z;
-        }
-        else if (Loaded != null)
-        {
-            // No map yet (the world has not finished coming up) — carry forward what we loaded rather than
-            // recording nowhere, which would silently forget the spot on the very first autosave.
-            data.sceneName = Loaded.sceneName;
-            data.posX = Loaded.posX; data.posY = Loaded.posY; data.posZ = Loaded.posZ;
-        }
-        ProfileStore.Current.Save(data);
-        Loaded = data;
-        dirty = false;
-        nextAutosave = Time.unscaledTime + autosaveInterval;
-    }
-
-    void OnApplicationPause(bool paused) { if (paused && initialized) SaveNow(); }  // mobile/web background
-    void OnApplicationQuit()             { if (initialized) SaveNow(); }            // editor Stop + standalone quit
+    // NO SAVE FROM HERE, AND THERE IS NO CONDITION UNDER WHICH THERE COULD BE. A character is owned by the
+    // server that is running the world it is in, and that server writes it down itself. This program is a
+    // client for its whole life; a client never learns what actually happened in a fight, so anything it wrote
+    // would be older than the truth and would land on top of it. The write used to live here, refused only
+    // while a body happened to exist, which left every moment between bodies open.
+    //
+    // Reading a character back is unaffected and still happens here. Appearance is not part of a character's
+    // progress and has always gone its own way, which is why it survives below.
 
     void OnDestroy()
     {
         if (character == null) return;
-        character.OnLeveledUp         -= OnLeveledUp;
-        character.OnRevived           -= SaveNow;
-        character.OnStatsChanged      -= MarkDirty;
         character.OnAppearanceChanged -= SaveAppearance;
     }
 }

@@ -41,7 +41,23 @@ public class Portal3D : MonoBehaviour
         if (fired || string.IsNullOrEmpty(targetScene)) return;
         if (other.GetComponentInParent<Player3DController>() == null) return;   // only the player triggers it
         fired = true;
-        MapManager.Travel(targetScene, spawnId);   // additive swap; Systems (HUD/player) stays loaded
+
+        // THE CURTAIN GOES UP THE MOMENT THE DOOR IS TOUCHED, before anything is asked. The player has already
+        // committed by walking into it, and the world behind them must stop being something they can act on —
+        // whether the map on the other side is held by this same server or by another one entirely.
+        LoadingScreen.Show("Stepping through…");
+
+        // AND THE SERVER DECIDES, not this machine. The map on the other side may be held by a different
+        // process, and only the server can find out which, bring it up, or refuse — so this asks instead of
+        // travelling. When the map turns out to be right here, the answer comes straight back and the door is
+        // exactly as instant as it has always been.
+        var me = GameNetwork.MyPlayer;
+        if (me != null) { me.CmdWalkThroughPortal(targetScene, spawnId); return; }
+
+        // No world to ask. There is no offline game, so this is a broken state rather than a case to serve —
+        // said out loud instead of silently doing nothing at a door the player is standing in.
+        LoadingScreen.Hide();
+        GameLog.Warn(LogCat.Client, "walked into a door with no world to ask — staying put.");
     }
 
     // Draw a translucent box in the Scene view so you can place it (the trigger is invisible in-game;

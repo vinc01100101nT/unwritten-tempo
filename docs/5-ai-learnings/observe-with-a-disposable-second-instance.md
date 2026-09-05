@@ -54,4 +54,4 @@ so the sentence is never needed.
 
 - [AI Learnings & Improvements](README.md) — the index.
 - [A Hanging Tool Is Usually a Dialog](a-hanging-tool-is-usually-a-dialog.md) — the other half of "look, don't assume".
-- [Starting the Network](../1-planning/starting-the-network.md) — the ports and environment settings a second copy needs.
+- [Starting the Network](../2-systems/networking/starting-the-network.md) — the ports and environment settings a second copy needs.

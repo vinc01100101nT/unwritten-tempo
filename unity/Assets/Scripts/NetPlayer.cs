@@ -99,6 +99,10 @@ public class NetPlayer : NetworkBehaviour
     /// deliberately not a synced value and no client is ever told it.</summary>
     public string ServerCharacterId { get; set; }
 
+    /// <summary>SERVER ONLY: whose account this character belongs to. Like the id above it is never told to any
+    /// client; it is here because a one-time ticket is minted against an account.</summary>
+    public string ServerAccountId { get; set; }
+
 
 
     /// <summary>SERVER ONLY: is the person on this connection trusted with the game's commands? Set from what the
@@ -109,6 +113,96 @@ public class NetPlayer : NetworkBehaviour
     /// learns its own mark from the account service directly, and this copy is the only one that decides whether
     /// anything actually happens to the world.</para></summary>
     public bool ServerIsGm { get; set; }
+
+    // ---- walking through a door into a zone another process holds -------------------------------------------
+
+    /// <summary>SERVER ONLY: this person is on their way out and nothing they send may be acted on any more.
+    ///
+    /// <para>It goes up BEFORE they are written down, and never comes back down: from that instant their state
+    /// on this process is finished, and anything accepted after it — a swing, a pick-up, a spent point — happens
+    /// to a copy that is about to be thrown away, so the player would simply lose it.</para></summary>
+    public bool Leaving { get; private set; }
+
+    /// <summary>SERVER ONLY: this person's character now belongs to another connection — they were signed in
+    /// again elsewhere, or they have walked into a zone another process holds. Nothing they send is acted on
+    /// after this, and the write their disconnect would otherwise make is skipped, because it would land on top
+    /// of the copy that is now live.</summary>
+    public void MarkLeaving() => Leaving = true;
+
+    /// <summary>A door. The player's own machine no longer travels by itself, because the map it is walking into
+    /// may be held by a different process — and only the server can find out which, or refuse.</summary>
+    [Command]
+    public void CmdWalkThroughPortal(string map, string spawnId)
+    {
+        if (Leaving || string.IsNullOrWhiteSpace(map)) return;
+
+        // ALREADY HERE: nothing crosses the wire and nothing is written down. This is most doors, and it stays
+        // exactly as instant as it has always been.
+        if (MapHosting.Holding(map)) { TargetTravelHere(connectionToClient, map, spawnId); return; }
+
+        MarkLeaving();
+        MapHosting.Want(map);
+        TargetMoveStep(connectionToClient, "Saving your character…");
+
+        // WRITTEN DOWN, AND THE WRITE CONFIRMED, BEFORE ANYBODY ELSE IS TOLD ABOUT THEM. The process they are
+        // going to is handed the stored character, so a move that started before the write landed would hand
+        // over whoever they were fifteen seconds ago and lose everything since.
+        SaveNow(ok =>
+        {
+            if (this == null) return;
+            if (!ok) { Leaving = false; TargetMoveFailed(connectionToClient, "could not save your character"); return; }
+            AskTheCharacterServerToMoveMe(map);
+        });
+    }
+
+    void AskTheCharacterServerToMoveMe(string map)
+    {
+        TargetMoveStep(connectionToClient, "Finding the map…");
+
+        var body = JsonUtility.ToJson(new MoveAsk { map = map, accountId = ServerAccountId ?? "", isGm = ServerIsGm });
+        ServerHttp.Send("POST", MapServerLink.CharacterServerUrl + "/server/characters/" + ServerCharacterId + "/move",
+                        body, MapServerLink.ServerSecret, (ok, reply, error) =>
+        {
+            if (this == null) return;
+            var where = ok ? JsonUtility.FromJson<MoveReply>(reply) : null;
+            if (!ok || where == null || string.IsNullOrEmpty(where.ticket))
+            {
+                // THEY STAY WHERE THEY ARE. Nothing has been handed over, so putting the latch down leaves them
+                // exactly as they were before they touched the door.
+                Leaving = false;
+                GameLog.Warn(LogCat.Server, "could not move " + playerName + " to '" + map + "' — " + error + " " + reply);
+                TargetMoveFailed(connectionToClient, "that place would not take you just now");
+                return;
+            }
+
+            GameLog.Info(LogCat.Server, playerName + " is moving to '" + map + "' at " + where.host + ":" + where.port);
+            TargetMoveTo(connectionToClient, where.host, where.port, where.ticket, map);
+        });
+    }
+
+    [TargetRpc]
+    void TargetTravelHere(NetworkConnectionToClient target, string map, string spawnId)
+        => SceneTravel.ArriveLocally(map, spawnId);
+
+    [TargetRpc]
+    void TargetMoveStep(NetworkConnectionToClient target, string what) => LoadingScreen.SetStep(what);
+
+    [TargetRpc]
+    void TargetMoveTo(NetworkConnectionToClient target, string host, int port, string ticket, string map)
+        => GameNetwork.MoveToAnotherServer(host, port, ticket, map);
+
+    [TargetRpc]
+    void TargetMoveFailed(NetworkConnectionToClient target, string why)
+    {
+        LoadingScreen.Hide();
+        BattleNotice.Warn(why);
+    }
+
+    [System.Serializable]
+    class MoveAsk { public string map; public string accountId; public bool isGm; }
+
+    [System.Serializable]
+    class MoveReply { public string host; public int port; public string ticket; public string map; }
 
     // How often the owner tells the server where it is. Ten times a second is far below the frame rate and
     // still smoother than a person can walk; sending every frame would be bandwidth spent on nothing.
@@ -155,7 +249,7 @@ public class NetPlayer : NetworkBehaviour
             var waiting = bagWaitingForACharacter.Value;
             bagWaitingForACharacter = null;
             waiting.Onto(Character.Instance);
-            InventoryStore.Instance?.Notify(alsoSave: false);
+            InventoryStore.Instance?.Notify();
         }
 
         // THREE possible askers, not two — and this is where the server used to fall through the crack. "Am I the
@@ -445,9 +539,19 @@ public class NetPlayer : NetworkBehaviour
         SaveNow(null);
     }
 
-    /// <summary>Server-only: write this character down NOW. <paramref name="whenDone"/> is told whether it
-    /// landed — the disconnect path waits on it, because a character released before the write has finished is
-    /// how the same items end up in two places.</summary>
+    // THE DOCUMENT WAITING ITS TURN, and everybody who asked for a write while one was already out. Only ONE
+    // document ever waits: each is a whole snapshot of the character, so a newer one already says everything an
+    // older one said. The waiters, though, all stay — the newer document carries their state too, so telling
+    // every one of them that it landed is the truth rather than a convenience.
+    string queuedBody;
+    Action<bool> queuedWaiters;
+
+    // Who is waiting on the write that is out right now.
+    Action<bool> inFlightWaiters;
+
+    /// <summary>Server-only: write this character down NOW. <paramref name="whenDone"/> is told whether the state
+    /// captured by THIS call reached the store — the disconnect path waits on it, because a character released
+    /// before the write has finished is how the same items end up in two places.</summary>
     public void SaveNow(Action<bool> whenDone)
     {
         if (!isServer) { whenDone?.Invoke(false); return; }
@@ -459,42 +563,74 @@ public class NetPlayer : NetworkBehaviour
             return;
         }
 
-        // ONE AT A TIME. Two writes in flight are two whole documents racing, and whichever lands last wins —
-        // so a slow first one arriving after a newer one silently puts the older state back. A save asked for
-        // while one is out is remembered instead and goes on the next beat.
-        if (savingNow)
+        // REFUSED OUTRIGHT WHILE NOBODY KNOWS WHICH MAP THEY ARE IN. The character server does not merge — it
+        // replaces the whole stored document with the one it is sent. Between somebody joining and their own
+        // machine first saying where it is, this map name is still empty, so a write in that window stored an
+        // empty map and the origin ON TOP of a real map and a real position. The next login then put them at the
+        // front door of the default map, however far they had actually travelled, and nothing anywhere recorded
+        // where they had been. Losing one write costs at most fifteen seconds of play and the next beat gets it;
+        // losing where somebody was standing cannot be undone, so the write does not go at all.
+        if (string.IsNullOrEmpty(mapName))
         {
+            GameLog.Warn(LogCat.Server, "not writing " + playerName + " down — they have not said which map they "
+                             + "are in yet, and a save without one would erase where they were standing.");
             needsSaving = true;
+            nextSaveAt = Time.time + SecondsBetweenSaves;
             whenDone?.Invoke(false);
             return;
         }
 
-        needsSaving = false;
-        savingNow = true;
-
-        // SENT TO THE CHARACTER SERVER, which is the only thing that writes to the store. This machine has no
-        // database and never will — it asks, as a SERVER, with the secret the two of them share, and not as
-        // whoever happens to be playing.
+        // WHAT GETS WRITTEN IS TAKEN NOW, before anything is sent and before this call can be made to wait. The
+        // disconnect path depends on exactly that: it asks for a write and then tears the body down on the very
+        // next line, so anything read later than this line would be read off a character that no longer exists.
         var save = c.CaptureSave();
 
         // AND WHERE THEY WERE STANDING. The character itself does not know — it has no map of its own and its
         // body is this object — so the two things that decide where somebody comes back to are filled in here.
         // Left out, every save wrote an empty map and the origin, so everybody logged in at the front door of
         // the default map however far they had travelled, and the character server could not route them either.
-        if (!string.IsNullOrEmpty(mapName))
+        save.sceneName = mapName;
+        save.posX = netPosition.x;
+        save.posY = netPosition.y;
+        save.posZ = netPosition.z;
+
+        needsSaving = false;
+        var body = JsonUtility.ToJson(new SaveEnvelope { progress = save });
+
+        // ONE AT A TIME, STILL. Two writes in flight are two whole documents racing, and whichever lands last
+        // wins — so a slow first one arriving after a newer one silently puts the older state back.
+        //
+        // But a caller asked to WAIT is not the same as a caller refused. This used to answer "no" straight away
+        // and leave the rest to the next beat, which was wrong twice over: the caller could not tell "the write
+        // failed" from "somebody else was writing", and the person leaving had no next beat — their shell is
+        // dismissed a moment later, so their last few seconds were simply gone. Now the document above is put in
+        // the queue and sent the instant the current write returns, and this caller is told about THAT write.
+        if (savingNow)
         {
-            save.sceneName = mapName;
-            save.posX = netPosition.x;
-            save.posY = netPosition.y;
-            save.posZ = netPosition.z;
+            queuedBody = body;
+            queuedWaiters += whenDone;
+            return;
         }
 
-        var body = JsonUtility.ToJson(new SaveEnvelope { progress = save });
+        SendTheWrite(body, whenDone);
+    }
+
+    /// <summary>Server-only: put one already-captured document on the wire to the character server, which is the
+    /// only thing that writes to the store. This machine has no database and never will — it asks, as a SERVER,
+    /// with the secret the two of them share, and not as whoever happens to be playing.</summary>
+    void SendTheWrite(string body, Action<bool> waiters)
+    {
+        savingNow = true;
+        inFlightWaiters = waiters;
+
         ServerHttp.Send("PUT", MapServerLink.CharacterServerUrl + "/server/characters/" + ServerCharacterId
                         + "/progress", body, MapServerLink.ServerSecret,
             (ok, reply, error) =>
             {
                 savingNow = false;
+                var told = inFlightWaiters;
+                inFlightWaiters = null;
+
                 if (!ok)
                 {
                     // SAID OUT LOUD, and the character is marked as still needing writing so the next beat tries
@@ -503,7 +639,20 @@ public class NetPlayer : NetworkBehaviour
                     needsSaving = true;
                     nextSaveAt = Time.time + SecondsBetweenSaves;
                 }
-                whenDone?.Invoke(ok);
+
+                // THE ONE THAT WAS WAITING GOES NOW, and it goes BEFORE anybody is told. A waiter is free to ask
+                // for another save the moment it hears back, and starting the queued write first means such a
+                // request queues behind it rather than racing it.
+                if (queuedBody != null)
+                {
+                    var next = queuedBody;
+                    var nextWaiters = queuedWaiters;
+                    queuedBody = null;
+                    queuedWaiters = null;
+                    SendTheWrite(next, nextWaiters);
+                }
+
+                told?.Invoke(ok);
             });
     }
 
@@ -522,8 +671,11 @@ public class NetPlayer : NetworkBehaviour
     // more than somebody else has.
 
     [Command]
+    // EVERY REQUEST BELOW REFUSES A PERSON ON THEIR WAY OUT. Their state on this process is finished the moment
+    // a move starts and is about to be thrown away, so anything accepted after that is simply lost to the player.
     void CmdSpendStatPoint(int stat)
     {
+        if (Leaving) return;
         var c = ServerCharacter;
         if (c == null) return;
         if (!System.Enum.IsDefined(typeof(PrimaryStat), stat)) return;
@@ -543,6 +695,7 @@ public class NetPlayer : NetworkBehaviour
     [Command]
     void CmdSetHotbar(string[] bindings)
     {
+        if (Leaving) return;
         var c = ServerCharacter;
         if (c == null || bindings == null || bindings.Length > 64) return;
         c.Hotbar.Restore(bindings);
@@ -552,6 +705,7 @@ public class NetPlayer : NetworkBehaviour
     [Command]
     void CmdSetPassives(string[] chosen)
     {
+        if (Leaving) return;
         var c = ServerCharacter;
         if (c == null || chosen == null || chosen.Length > 64) return;
         c.PassiveSkills.Restore(chosen);
@@ -598,7 +752,7 @@ public class NetPlayer : NetworkBehaviour
         bag.Onto(me);
         // The window redraws from what just arrived. NOT marked as needing saving: this IS what the server has,
         // so writing it back would be this machine telling the server what the server just told it.
-        InventoryStore.Instance?.Notify(alsoSave: false);
+        InventoryStore.Instance?.Notify();
     }
 
     /// <summary>The server's copy of whoever is playing here, or null when this connection has no fighter
@@ -627,6 +781,7 @@ public class NetPlayer : NetworkBehaviour
     [Command]
     void CmdEquipFromBag(int index, string expectedItemId)
     {
+        if (Leaving) return;
         var c = ServerCharacter;
         if (!StillTheSameStack(c, index, expectedItemId)) return;
         var e = c.Bag[index];
@@ -644,6 +799,7 @@ public class NetPlayer : NetworkBehaviour
     [Command]
     void CmdUnequipToBag(int slot)
     {
+        if (Leaving) return;
         var c = ServerCharacter;
         if (c == null) return;
         var worn = c.GetEquippedInstance((EquipSlotType)slot);
@@ -658,6 +814,7 @@ public class NetPlayer : NetworkBehaviour
     [Command]
     void CmdReorderBag(int from, int to, string expectedItemId)
     {
+        if (Leaving) return;
         var c = ServerCharacter;
         if (!StillTheSameStack(c, from, expectedItemId) || from == to) return;
 
@@ -675,73 +832,22 @@ public class NetPlayer : NetworkBehaviour
     public void AskToUnequip(EquipSlotType slot) => CmdUnequipToBag((int)slot);
     public void AskToReorder(int from, int to, string itemId) => CmdReorderBag(from, to, itemId);
 
-    // ---- loot: asked for, granted once -------------------------------------------------------------------
-
-    /// <summary>WHAT WE ASKED FOR, held only until the answer comes back, so the reward can be shown with the
-    /// drop's own sound. A person can only be reaching for one thing at a time.</summary>
-    WorldPickup askedFor;
-
-    /// <summary>Client-only: ask the server for a drop. Goes through <see cref="GameNetwork.SendPickupToServer"/>,
-    /// which is the one place that decides whether a drop is ours to give or the server's.</summary>
-    public void AskForLoot(NetLoot shell, WorldPickup body)
-    {
-        if (shell == null) return;
-        askedFor = body;
-        CmdClaimLoot(shell.netId);
-    }
-
-    /// <summary>The server decides. A drop pays out ONCE however many people reach for it in the same breath —
-    /// the loser is simply told nothing, and watches it vanish like everybody else.</summary>
-    [Command]
-    void CmdClaimLoot(uint shellId)
-    {
-        if (!NetworkServer.spawned.TryGetValue(shellId, out var identity) || identity == null) return;
-
-        var loot = identity.GetComponent<NetLoot>();
-        if (loot == null || !loot.ClaimOnServer()) return;
-
-        // PAID INTO THE BAG THE SERVER HOLDS. It used to be paid on the winner's own machine, which was the only
-        // place a bag existed; now the bag is here, and a coin added on their machine alone would be rubbed out
-        // by the next thing the server said they were carrying.
-        var c = ServerCharacter;
-        if (c != null)
-        {
-            var def = ItemCatalog.Resolve(loot.ItemId);
-            if (def != null)
-            {
-                if (def.slot != EquipSlotType.None)
-                    c.Bag.Add(new BagEntry { def = def, count = 1, isNew = true,
-                                             instance = EquipmentInstance.CreateRolled(def, null) });
-                else
-                {
-                    var stack = c.Bag.Find(x => x.def == def && !x.IsEquip);
-                    if (stack != null) stack.count += 1;
-                    else c.Bag.Add(new BagEntry { def = def, count = 1, isNew = true });
-                }
-            }
-            if (loot.Gold > 0) c.AddGold(loot.Gold);
-            PushBagToOwner();
-            SaveSoon();
-        }
-
-        // The winner is told BEFORE the drop is taken away, so the two arrive in that order. What they are told
-        // now is only that they got it — the reward itself already happened, up here.
-        TargetLootGranted(connectionToClient, loot.ItemId, loot.Gold);
-        NetworkServer.Destroy(loot.gameObject);
-    }
-
-    /// <summary>…and only the person who won it is told, so their own machine can play the sound and the
-    /// reaching gesture. It adds NOTHING: what they own arrived with the bag.</summary>
-    [TargetRpc]
-    void TargetLootGranted(NetworkConnectionToClient target, string itemId, int gold)
-    {
-        WorldPickup.Celebrate(askedFor != null ? askedFor.collectSfx : null);
-        askedFor = null;
-    }
-
     [Command]
     void CmdReportMap(string map)
     {
+        if (Leaving) return;
+        // AN EMPTY NAME IS NOT A MAP, and taking one would rub out the only record this server has of where this
+        // person is standing. Everything downstream reads it: the save refuses to write at all without it, the
+        // body is filed into the scene it names, and who is told about whom is decided by comparing it. An honest
+        // game never sends one — it says which map it is in only when that name CHANGES, and it starts out with
+        // nothing to say — so an empty one is a broken game or a lying one, and neither may erase a known map.
+        if (string.IsNullOrWhiteSpace(map))
+        {
+            GameLog.Warn(LogCat.Server, "" + playerName + " said they are in a map with no name — ignored, they "
+                             + "stay filed under '" + mapName + "'.");
+            return;
+        }
+
         // NOTHING TO DO IF THEY ARE STILL WHERE THEY WERE, and saying so matters far more than the work it saves.
         // The end of this method forgives the next move, because walking through a door is a jump no checker could
         // tell from a lie. A client that simply repeats its map before every step would therefore be forgiven
@@ -803,6 +909,7 @@ public class NetPlayer : NetworkBehaviour
     [Command]
     void CmdReportPosition(Vector3 p, float yaw)
     {
+        if (Leaving) return;
         // COULD THEY ACTUALLY HAVE GOT THERE. A person's own machine works out where they are standing and then
         // says so, which is the one thing in the world a player is still trusted about — so this is where that
         // trust is checked. A report that could not be true is DROPPED: nothing is written, so the server goes on

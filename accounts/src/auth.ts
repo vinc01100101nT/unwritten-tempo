@@ -44,12 +44,16 @@ export async function verifyPassword(password: string, stored: string): Promise<
 
 export interface AccessTokenClaims {
   accountId: string;
+  /** WHICH SIGN-IN THIS PASS BELONGS TO. A new sign-in takes over: it writes a new one of these on the account,
+   *  and every pass carrying an older one stops being let into the world. Without it a pass proves who you are
+   *  and nothing about being the only one, so the same account could play in two places at once. */
+  sessionId?: string;
 }
 
 /** The proof of identity the game carries. Short-lived and stateless — the game server will verify it with
  *  the same secret, which is the whole point of issuing it here rather than handing out a session cookie. */
-export function issueAccessToken(accountId: string): string {
-  return jwt.sign({ accountId } satisfies AccessTokenClaims, config.jwtSecret, {
+export function issueAccessToken(accountId: string, sessionId?: string): string {
+  return jwt.sign({ accountId, sessionId } satisfies AccessTokenClaims, config.jwtSecret, {
     expiresIn: config.accessTokenSeconds,
     subject: accountId,
   });
@@ -59,7 +63,8 @@ export function readAccessToken(token: string): AccessTokenClaims | null {
   try {
     const claims = jwt.verify(token, config.jwtSecret);
     if (typeof claims === "object" && claims !== null && typeof (claims as AccessTokenClaims).accountId === "string") {
-      return { accountId: (claims as AccessTokenClaims).accountId };
+      const c = claims as AccessTokenClaims;
+      return { accountId: c.accountId, sessionId: typeof c.sessionId === "string" ? c.sessionId : undefined };
     }
     return null;
   } catch {

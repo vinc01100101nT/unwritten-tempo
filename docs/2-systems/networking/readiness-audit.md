@@ -98,7 +98,7 @@ Picking a transport (Netcode for GameObjects / Mirror / Fishnet), accounts/auth,
 ## Related
 
 - [Networking — Implementation Notes](implementation-notes.md) — **the current layer.** What this doc deferred, actually built.
-- [Starting the Network](../../1-planning/starting-the-network.md) — how to run the thing this audit prepared for.
+- [Starting the Network](starting-the-network.md) — how to run the thing this audit prepared for.
 - [Active Skill System — V3](../active-skill-system-v3/README.md) — the applier and the choke points this audit measured.
 - [Unified Unit Stats](../active-skill-system-v3/unified-unit-stats.md) — the one stat model that made a server-side fighter cheap.
 - [Roadmap to Launch](../../1-planning/roadmap-to-launch.md) — Tier 2 › Networking core.

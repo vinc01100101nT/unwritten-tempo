@@ -48,7 +48,7 @@ public class MapServerLink : MonoBehaviour
     /// silently, which is the most expensive kind of wrong. Refusing to start is the cheap failure.</para>
     ///
     /// <para>Change this whenever the save's shape changes, and change it on both sides in the same edit.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v9";
+    public const string CharacterBuild = "unwritten-character-v10";
 
     /// <summary>Who this server is, to the character server. Stable for the life of the process.</summary>
     public static string ServerId { get; private set; } = "";
@@ -112,7 +112,9 @@ public class MapServerLink : MonoBehaviour
 
     HttpListener listener;
     Thread listening;
-    readonly Queue<Expected> arrived = new();
+    // WHAT ARRIVED, AND WHO IS STILL WAITING TO BE TOLD IT WAS TAKEN. Both travel together because the answer
+    // is not sent from the listening thread — see the end of Answer below.
+    readonly Queue<(Expected who, HttpListenerContext asker)> arrived = new();
     volatile bool stopping;
 
     void StartListening()
@@ -177,7 +179,32 @@ public class MapServerLink : MonoBehaviour
         string body;
         using (var reader = new System.IO.StreamReader(ctx.Request.InputStream, Encoding.UTF8))
             body = reader.ReadToEnd();
-        if (ctx.Request.Url == null || !ctx.Request.Url.AbsolutePath.EndsWith("/arriving")) { Reply(ctx, 404, "{}"); return; }
+        if (ctx.Request.Url == null) { Reply(ctx, 404, "{}"); return; }
+
+        // BRING A MAP UP. The character server decides which process hosts a zone and says so here; the process
+        // itself never chooses, because only the character server can see how loaded the others are. Answered at
+        // once — the caller waits for the map to be STANDING through the arrival below, not through this.
+        if (ctx.Request.Url.AbsolutePath.EndsWith("/host"))
+        {
+            var ask = JsonUtility.FromJson<HostRequest>(body);
+            if (ask == null || string.IsNullOrEmpty(ask.map)) { Reply(ctx, 400, "{\"error\":\"no map\"}"); return; }
+            lock (toHost) toHost.Enqueue(ask.map);
+            Reply(ctx, 200, "{\"ok\":true}");
+            return;
+        }
+
+        // SOMEBODY IS BEING TAKEN OVER. Written down FIRST, and this is not answered until that write has
+        // landed — the character server reads the row the moment it hears back, and answering early would hand
+        // the new machine whoever this person was up to fifteen seconds ago, losing everything since.
+        if (ctx.Request.Url.AbsolutePath.EndsWith("/evict"))
+        {
+            var who = JsonUtility.FromJson<EvictRequest>(body);
+            if (who == null || string.IsNullOrEmpty(who.characterId)) { Reply(ctx, 400, "{\"error\":\"no character\"}"); return; }
+            lock (toEvict) toEvict.Enqueue((who.characterId, ctx));
+            return;
+        }
+
+        if (!ctx.Request.Url.AbsolutePath.EndsWith("/arriving")) { Reply(ctx, 404, "{}"); return; }
 
         var msg = JsonUtility.FromJson<Arrival>(body);
         if (msg == null || string.IsNullOrEmpty(msg.ticket)) { Reply(ctx, 400, "{\"error\":\"no ticket\"}"); return; }
@@ -189,7 +216,7 @@ public class MapServerLink : MonoBehaviour
 
         lock (arrived)
         {
-            arrived.Enqueue(new Expected
+            arrived.Enqueue((new Expected
             {
                 ticket = msg.ticket,
                 accountId = msg.accountId,
@@ -197,9 +224,14 @@ public class MapServerLink : MonoBehaviour
                 characterName = msg.characterName,
                 isGm = msg.isGm,
                 progress = msg.progress,
-            });
+            }, ctx));
         }
-        Reply(ctx, 200, "{\"ok\":true}");
+
+        // AND NOT ANSWERED HERE. The character server reads a yes as "they may knock now" and hands the player an
+        // address in the same breath — but nobody can be let in until the frame below has filed this person, and a
+        // player who beat that frame was refused at the door as somebody nobody had announced, and had to dial
+        // again. Answered from Update instead, once the ticket genuinely opens the door. This thread does not wait
+        // for that: it goes straight back to listening, so a second arrival is never stuck behind the first.
     }
 
     static bool SameSecret(string given)
@@ -222,16 +254,37 @@ public class MapServerLink : MonoBehaviour
     void Update()
     {
         Heartbeat();
+        BringUpWhatWasAskedFor();
+        LetGoOfWhoWasAskedFor();
 
         // Taken off the queue on the ordinary frame — the clock below is Unity's, and it may only be read here.
         lock (arrived)
         {
             while (arrived.Count > 0)
             {
-                var who = arrived.Dequeue();
+                var (who, asker) = arrived.Dequeue();
                 who.expiresAt = Time.time + ExpectedFor;
                 expected[who.ticket] = who;
                 GameLog.Info(LogCat.Map, "expecting " + who.characterName + " — their character arrived ahead of them.");
+
+                // AND ANYBODY STILL PLAYING THAT CHARACTER HERE IS FINISHED. By now they have almost always been
+                // written down and let go already, because the character server asks every server to do that
+                // before it reads the row — this is the backstop for the one case that misses: somebody walking
+                // through a door back into a zone THIS server holds, where nothing was asked of anybody. Their
+                // write has already happened, before the door was answered, so nothing is lost by dropping them.
+                GameNetwork.DropWhoeverIsPlaying(who.characterId);
+                PlayerFighter.ReleaseCharacter(who.characterId);
+
+                // NOW they may be told, and not one line sooner: the ticket above is what the door checks, so the
+                // yes going out here is true the instant it is read. If the character server has already given up
+                // waiting (it allows five seconds) this throws, and this person is simply never sent — the entry
+                // above is swept a minute later like anybody else who was announced and never came.
+                try { Reply(asker, 200, "{\"ok\":true}"); }
+                catch (Exception e)
+                {
+                    GameLog.Warn(LogCat.Map, "could not tell the character server that " + who.characterName
+                                   + " was taken — " + e.Message + ". They will not be sent here.");
+                }
             }
         }
 
@@ -270,6 +323,61 @@ public class MapServerLink : MonoBehaviour
 
     float nextHeartbeat;
 
+    // Maps the character server has asked for, taken off the listening thread and acted on in the game loop —
+    // nothing about a scene may be touched from a thread that is not the one running the game.
+    readonly Queue<string> toHost = new Queue<string>();
+
+    void BringUpWhatWasAskedFor()
+    {
+        while (true)
+        {
+            string map;
+            lock (toHost)
+            {
+                if (toHost.Count == 0) return;
+                map = toHost.Dequeue();
+            }
+            MapHosting.Want(map);
+        }
+    }
+
+    [Serializable]
+    class HostRequest
+    {
+        public string map;
+    }
+
+    [Serializable]
+    class EvictRequest
+    {
+        public string characterId;
+    }
+
+    // People the character server has asked us to let go of, taken off the listening thread and dealt with in the
+    // game loop — a body and a save may only be touched from the thread running the game.
+    readonly Queue<(string characterId, HttpListenerContext asker)> toEvict = new Queue<(string, HttpListenerContext)>();
+
+    void LetGoOfWhoWasAskedFor()
+    {
+        while (true)
+        {
+            string characterId; HttpListenerContext asker;
+            lock (toEvict)
+            {
+                if (toEvict.Count == 0) return;
+                (characterId, asker) = toEvict.Dequeue();
+            }
+            GameNetwork.SaveAndDrop(characterId, () =>
+            {
+                try { Reply(asker, 200, "{\"ok\":true}"); }
+                catch (Exception e)
+                {
+                    GameLog.Warn(LogCat.Map, "could not confirm letting go of a character — " + e.Message);
+                }
+            });
+        }
+    }
+
     void Heartbeat()
     {
         if (Time.time < nextHeartbeat) return;
@@ -297,6 +405,11 @@ public class MapServerLink : MonoBehaviour
             playerPort = GameNetwork.PlayerPort,
             maps = maps.ToArray(),
             build = CharacterBuild,
+            // HOW BUSY THIS ONE IS, so the character server can put a zone on the quietest process instead of
+            // guessing. People first, because a person costs far more than a creature and is the thing a zone
+            // placed here would have to share a frame with.
+            players = Mirror.NetworkServer.connections != null ? Mirror.NetworkServer.connections.Count : 0,
+            creatures = MonsterAI3D.Active != null ? MonsterAI3D.Active.Count : 0,
         });
 
         ServerHttp.Send("POST", CharacterServerUrl + "/map-servers", body, ServerSecret, (ok, reply, error) =>
@@ -312,6 +425,19 @@ public class MapServerLink : MonoBehaviour
     void OnDestroy()
     {
         stopping = true;
+
+        // ANYBODY STILL WAITING TO BE TOLD IS TOLD NO. Their arrival was never filed and this server is going
+        // away, so leaving the request hanging would only make the character server sit out its own five seconds
+        // before deciding the same thing, with a player watching a loading screen for all of it.
+        lock (arrived)
+        {
+            while (arrived.Count > 0)
+            {
+                var (_, asker) = arrived.Dequeue();
+                try { Reply(asker, 503, "{\"error\":\"this map server is going away\"}"); } catch { }
+            }
+        }
+
         try { listener?.Stop(); } catch { }
 
         // ONCE. Quitting calls this itself AND Unity calls it again on teardown, so without the latch the
@@ -334,6 +460,11 @@ public class MapServerLink : MonoBehaviour
         public int playerPort;
         public string[] maps;
         public string build;
+
+        // How busy this process is right now — the two numbers the character server weighs when it decides
+        // which process a zone nobody is holding should be brought up on.
+        public int players;
+        public int creatures;
     }
 
     [Serializable]

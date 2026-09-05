@@ -38,9 +38,6 @@ public class GameNetwork : NetworkManager
     /// <summary>The shell spawned for each mob the server owns, found in Resources by this name.</summary>
     public const string MobPrefabName = "NetMob";
 
-    /// <summary>The shell spawned for each drop the server owns, found in Resources by this name.</summary>
-    public const string LootPrefabName = "NetLoot";
-
     // DELIBERATELY ABSENT: a public "am I joined right now" answer. It had no readers, and the one use anybody
     // would reach for it for — gating behaviour — is the timing accident this layer already outlawed: dialling
     // takes a moment, and a question asked inside that moment gets the wrong answer and acts on it. The question
@@ -84,47 +81,6 @@ public class GameNetwork : NetworkManager
         NetworkServer.Spawn(shell);
     }
 
-    static GameObject lootPrefab;
-
-    /// <summary>Server-only: announce a drop that has just been made, so every connected player receives it and
-    /// builds its own body for it. TRUE when the announcement was made — which is also the answer to "should I
-    /// skip building one here", because a server has no screen and the body belongs on the machines watching.
-    /// FALSE off a server, so a game with no world but its own drops exactly as it always did.</summary>
-    public static bool PublishLoot(Item item, int gold, Vector3 start, Vector3 landing, string map)
-    {
-        if (!NetworkServer.active) return false;
-
-        if (lootPrefab == null) lootPrefab = Resources.Load<GameObject>(LootPrefabName);
-        if (lootPrefab == null)
-        {
-            GameLog.Error(LogCat.Net, "no '" + LootPrefabName + "' prefab in Resources — loot will exist on the "
-                           + "server but no player will see it.");
-            return false;
-        }
-
-        var shell = Instantiate(lootPrefab);
-        shell.GetComponent<NetLoot>()?.BindOnServer(item, gold, start, landing, map);
-        NetworkServer.Spawn(shell);
-        return true;
-    }
-
-    /// <summary>ASK for a drop this machine is only watching. TRUE when the question was sent and the answer is
-    /// the server's to give — the caller must then do NOTHING, because paying out here as well would hand the
-    /// same coin to two people. FALSE for a drop no server has heard of, which is this machine's own to give.</summary>
-    public static bool SendPickupToServer(WorldPickup pickup)
-    {
-        if (pickup == null) return false;
-
-        var shell = NetLoot.ShellForView(pickup.gameObject);
-        if (shell == null) return false;                       // an offline drop — nobody else can be holding it
-
-        var me = NetworkClient.localPlayer != null ? NetworkClient.localPlayer.GetComponent<NetPlayer>() : null;
-        if (me == null) return false;                          // watching a drop with no body of our own to ask with
-
-        me.AskForLoot(shell, pickup);
-        return true;
-    }
-
     static GameNetwork spawned;
 
     /// <summary>Bring the net layer up. Called once, by <see cref="GameRoot"/>, at the moment the world starts
@@ -163,10 +119,6 @@ public class GameNetwork : NetworkManager
         mobPrefab = Resources.Load<GameObject>(MobPrefabName);
         if (mobPrefab != null) spawned.spawnPrefabs.Add(mobPrefab);
         else GameLog.Error(LogCat.Net, "no '" + MobPrefabName + "' prefab in Resources — no player will see mobs.");
-
-        lootPrefab = Resources.Load<GameObject>(LootPrefabName);
-        if (lootPrefab != null) spawned.spawnPrefabs.Add(lootPrefab);
-        else GameLog.Error(LogCat.Net, "no '" + LootPrefabName + "' prefab in Resources — no player will see loot.");
 
         // The server hands out bodies itself, when a client says who it is (see OnJoinRequest). Mirror's
         // automatic version would spawn one before we know which character to build.
@@ -247,7 +199,12 @@ public class GameNetwork : NetworkManager
     /// <summary>Ask the character server to let this person into the world, then dial wherever it says.
     ///
     /// <para>Falls back to the address in the environment when there is no character server to ask — which is
-    /// how a single machine is run for testing, with no character server at all.</para></summary>
+    /// how a single machine is run for testing, with no character server at all.</para>
+    ///
+    /// <para><b>Failing to get in never ends the process.</b> All three failures below hand the player back to
+    /// the sign-in screen with a line saying the world was lost — the same answer as running out of retries, and
+    /// the only one they can act on. Closing the application is out of all proportion to one request that did
+    /// not come back, and it is the single thing done to a player that they cannot undo.</para></summary>
     static void AskWhereToEnter(kcp2k.KcpTransport kcp)
     {
         string characterId = AccountSession.CharacterId;
@@ -265,7 +222,6 @@ public class GameNetwork : NetworkManager
                            + "world — CHAR_SERVER_URL is not set"
                            + (string.IsNullOrEmpty(characterId) ? ", and no character has been chosen" : "")
                            + ". Start the game with that setting; see docs/1-planning/starting-the-network.md.");
-            Stop();
             OnLostWorld?.Invoke();
             return;
         }
@@ -277,7 +233,6 @@ public class GameNetwork : NetworkManager
             if (!ok)
             {
                 GameLog.Error(LogCat.Client, "the character server would not let us in — " + error + " " + body);
-                Stop();
                 OnLostWorld?.Invoke();
                 return;
             }
@@ -286,7 +241,6 @@ public class GameNetwork : NetworkManager
             if (where == null || string.IsNullOrEmpty(where.ticket))
             {
                 GameLog.Error(LogCat.Client, "the character server let us in but said nowhere to go: " + body);
-                Stop();
                 OnLostWorld?.Invoke();
                 return;
             }
@@ -379,6 +333,16 @@ public class GameNetwork : NetworkManager
     /// <summary>What a client says on arrival: who it is playing. The server cannot know this by itself — the
     /// account service told the CLIENT which character it chose — so the client states it and the server spawns
     /// a body to match. Deliberately just identity: nothing here is trusted for anything that affects gameplay.</summary>
+    /// <summary>What time it is, said by the machine running the world, at the moment it hands somebody a body.
+    ///
+    /// <para>The world's sun and every timer that has to outlive something are anchored to this one clock, so a
+    /// player's machine must be told it rather than reading its own. It is sent once per world joined: a moment
+    /// is all that is needed, because the receiver counts forward from it against its own steady timer.</para></summary>
+    public struct WorldTime : NetworkMessage
+    {
+        public double epochSeconds;
+    }
+
     public struct JoinRequest : NetworkMessage
     {
         public string characterName;
@@ -684,7 +648,12 @@ public class GameNetwork : NetworkManager
         NetworkClient.RegisterHandler<XpEarned>(OnXpEarned);
         NetworkClient.RegisterHandler<SkillCastPlayed>(OnSkillCastPlayed);
         NetworkClient.RegisterHandler<GmCommandReply>(OnGmCommandReply);
+        NetworkClient.RegisterHandler<WorldTime>(OnWorldTime);
     }
+
+    // THE WORLD'S CLOCK ARRIVING. Until this lands the sun has nothing to draw itself from, which is why it is
+    // sent with the body rather than waited for by anything.
+    static void OnWorldTime(WorldTime msg) => WorldClock.TakeFromServer(msg.epochSeconds);
 
     // A blow on a PERSON, arriving on every machine that can see them. Each one shows it in the way it honestly
     // can — see NetPlayer.ShowBlow.
@@ -751,6 +720,74 @@ public class GameNetwork : NetworkManager
     /// <summary>The body belonging to this character, on a server. Lets anything holding a CHARACTER reach the
     /// connection that owns it — a GM command acting on somebody's bag has to be able to tell them about it.
     /// Null off a server, and null for a character nobody is connected as.</summary>
+    /// <summary>Cut off whoever is currently playing this character here, because somebody else has just been
+    /// announced as arriving with it. TRUE when somebody was actually dropped.
+    ///
+    /// <para>Two different things need this and both are the same act. A person signing in a second time TAKES
+    /// OVER, so the one already playing has to go. And a person walking through a door into a zone this process
+    /// holds is announced while their old body is still standing somewhere — if that body is here, it is the
+    /// same character twice and the older one is the one that is finished with.</para></summary>
+    /// <summary>Write this character down, wait for the write to land, and only then let go of the connection
+    /// playing them. <paramref name="done"/> is called either way, and is what tells the character server it may
+    /// now read the row.
+    ///
+    /// <para><b>The order is the whole point.</b> Reading the row before this person has been written down hands
+    /// the machine taking over whoever they were on the last routine save — up to fifteen seconds ago — and
+    /// everything since is simply never recorded. It is the same order a door already uses: write, wait, then
+    /// hand over.</para></summary>
+    public static void SaveAndDrop(string characterId, System.Action done)
+    {
+        if (string.IsNullOrEmpty(characterId) || !NetworkServer.active) { done?.Invoke(); return; }
+
+        NetPlayer shell = null;
+        NetworkConnectionToClient holding = null;
+        foreach (var conn in NetworkServer.connections.Values)
+        {
+            var s = conn != null && conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+            if (s != null && s.ServerCharacterId == characterId) { shell = s; holding = conn; break; }
+        }
+        // NOT HERE. Every server is asked, because none of them is written down as holding anybody — so most
+        // answer this, at once, and that is the ordinary case rather than a failure.
+        if (shell == null) { done?.Invoke(); return; }
+
+        // NOTHING MORE FROM THEM. Said before the write, so what is written is the last thing they actually did
+        // rather than something accepted while the write was in the air.
+        shell.MarkLeaving();
+
+        GameLog.Info(LogCat.Server, shell.playerName + " is being taken over — writing them down before letting go.");
+        shell.SaveNow(ok =>
+        {
+            if (!ok) GameLog.Warn(LogCat.Server, "could not write that character down before letting go of them — "
+                                       + "whoever takes over will start from their last ordinary save.");
+            if (holding != null) holding.Disconnect();
+            done?.Invoke();
+        });
+    }
+
+    public static bool DropWhoeverIsPlaying(string characterId)
+    {
+        if (string.IsNullOrEmpty(characterId) || !NetworkServer.active) return false;
+
+        NetworkConnectionToClient found = null;
+        foreach (var conn in NetworkServer.connections.Values)
+        {
+            var shell = conn != null && conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+            if (shell != null && shell.ServerCharacterId == characterId) { found = conn; break; }
+        }
+        if (found == null) return false;
+
+        // SAID BEFORE THEY ARE DROPPED. Leaving is what stops the disconnect below writing this copy down over
+        // the one the other process is already holding, and it stops anything else this connection sends being
+        // acted on in the moment it has left.
+        var going = found.identity != null ? found.identity.GetComponent<NetPlayer>() : null;
+        going?.MarkLeaving();
+
+        GameLog.Info(LogCat.Server, "dropping the connection already playing that character — somebody has just "
+                         + "been announced with it, so this one is the older of the two.");
+        found.Disconnect();
+        return true;
+    }
+
     public static NetPlayer ShellFor(Character who)
     {
         if (who == null || !NetworkServer.active) return null;
@@ -783,7 +820,12 @@ public class GameNetwork : NetworkManager
     static ICombatUnit FighterFor(NetworkConnectionToClient conn)
     {
         var shell = ShellFor(conn);
-        return shell != null ? shell.ServerCombatUnit : null;
+        // NOBODY WHO IS LEAVING ACTS. From the moment a move starts, this person's state on this process is
+        // finished and about to be thrown away — so a swing, a heal, a pick-up or a spent point accepted after it
+        // happens to a copy nobody will ever read again, and the player simply loses it. Refused HERE, at the one
+        // place every player-driven request resolves who is asking, rather than at each of them in turn.
+        if (shell == null || shell.Leaving) return null;
+        return shell.ServerCombatUnit;
     }
 
     /// <summary>Announce a blow the server decided landed on a person, to everybody who can see them. Called by the
@@ -880,6 +922,37 @@ public class GameNetwork : NetworkManager
         var identity = IdentityOfFighter(who);
         if (identity == null || identity.connectionToClient == null) return;
         identity.connectionToClient.Send(new XpEarned { amount = xp });
+    }
+
+    /// <summary>Server-only: hand <paramref name="who"/>'s own machine the bag as it now stands, and write the
+    /// change down. TRUE when it was sent — which is also the answer to "was this a server's doing", so a caller
+    /// paying somebody knows whether the window still has to be told directly (see <see cref="Rewards.PayLoot"/>).
+    /// FALSE on a machine with no world, where the only bag there is is the one already on screen.</summary>
+    public static bool TellOwnerTheirBagChanged(Character who)
+    {
+        if (!NetworkServer.active || who == null) return false;
+
+        var identity = IdentityOfFighter(who);
+        var shell = identity != null ? identity.GetComponent<NetPlayer>() : null;
+        if (shell == null) return false;
+
+        shell.PushBagToOwner();
+        shell.SaveSoon();
+        return true;
+    }
+
+    /// <summary>What to call <paramref name="who"/> in a line of log. On a server that is the name the person
+    /// signed in with, which is the only way to tell several people apart; on a machine with one person at it, it
+    /// is whoever is signed in here.</summary>
+    public static string NameOf(Character who)
+    {
+        if (who == null) return "someone";
+
+        var identity = NetworkServer.active ? IdentityOfFighter(who) : null;
+        var shell = identity != null ? identity.GetComponent<NetPlayer>() : null;
+        if (shell != null && !string.IsNullOrWhiteSpace(shell.playerName)) return shell.playerName;
+
+        return string.IsNullOrWhiteSpace(AccountSession.CharacterName) ? "someone" : AccountSession.CharacterName;
     }
 
     /// <summary>Name an authored skill's strike to the server so IT can roll the damage. Returns TRUE when it was
@@ -1293,7 +1366,8 @@ public class GameNetwork : NetworkManager
         if (VictimBehind(identity) == null) return;
 
         var attacker = ShellFor(conn);
-        var swinger = attacker != null ? attacker.ServerCombatUnit : null;
+        // Same refusal as FighterFor makes: somebody on their way out of this world does not act in it.
+        var swinger = attacker != null && !attacker.Leaving ? attacker.ServerCombatUnit : null;
         if (swinger == null)
         {
             // NOT YET BUILT, and it must never fail quietly. The server has no fighter for this connection,
@@ -1370,7 +1444,8 @@ public class GameNetwork : NetworkManager
         if (victim == null) return;
 
         var attacker = ShellFor(conn);
-        var swinger = attacker != null ? attacker.ServerCombatUnit : null;
+        // Same refusal as FighterFor makes: somebody on their way out of this world does not act in it.
+        var swinger = attacker != null && !attacker.Leaving ? attacker.ServerCombatUnit : null;
         if (swinger == null) return;
 
         // Reach is judged HERE, at the contact moment, exactly as it was when the swinger's own machine chose that
@@ -1882,6 +1957,11 @@ public class GameNetwork : NetworkManager
         }
         NetworkServer.AddPlayerForConnection(conn, go);
 
+        // WHAT TIME IT IS HERE, sent with the body. This machine's clock is the world's, and everything the
+        // arriving player is about to draw or count from it — the sun, a cooldown still running, a creature due
+        // back — is measured against it. Sent after the body because a connection with no body is nobody.
+        conn.Send(new WorldTime { epochSeconds = WorldClock.EpochSecondsNow });
+
         // AND A CHARACTER TO GO WITH THE BODY — the one that was PUSHED here, already in hand. Nothing is
         // fetched: this server never asks the character store for anything, which is the whole point of the
         // character server announcing somebody before sending them.
@@ -1957,6 +2037,21 @@ public class GameNetwork : NetworkManager
             string whoLeft = leaving.playerName;
             string theirCharacter = leaving.ServerCharacterId;
 
+            // BUT NOT IF THEY ARE ALREADY SOMEBODY ELSE'S. A person walking through a door, or one whose account
+            // has just been signed in again somewhere else, is dropped here AFTER another process has been handed
+            // their character — so writing this copy down now puts a state that is already finished with on top
+            // of the one that is live, and the player loses whatever they have done since. The write that mattered
+            // has already happened, before the move began, and was waited for.
+            if (leaving.Leaving)
+            {
+                GameLog.Info(LogCat.Server, whoLeft + " left because they are being played elsewhere now — not "
+                                 + "writing this copy down over theirs.");
+                PlayerFighter.Dismiss(leaving);
+                PlayerFighter.ReleaseCharacter(theirCharacter);
+                base.OnServerDisconnect(conn);
+                return;
+            }
+
             // THE WRITE IS ASKED FOR FIRST, AND THIS ORDER IS THE WHOLE POINT. Letting go of the fighter unbinds
             // the character from this shell and destroys it — so asking for the write afterwards found nothing to
             // write, gave up without so much as sending a request, and reported failure. MEASURED 2026-09-03: every
@@ -2019,6 +2114,49 @@ public class GameNetwork : NetworkManager
         spawned.attemptsSpent = 0;
         ReconnectNotice.Hide();
         OnJoinedWorld?.Invoke();
+
+        // ARRIVED SOMEWHERE ELSE. The map is loaded only now, with a body already granted on the far side: if the
+        // dial had failed, the player would still be standing in the world they left, which is somewhere they can
+        // be put back. Loading first and then failing to dial leaves them in a map connected to nobody.
+        if (string.IsNullOrEmpty(movingToMap)) return;
+        string map = movingToMap;
+        movingToMap = null;
+        LoadingScreen.SetStep("Arriving…");
+        MapManager.Travel(map, null);
+    }
+
+    // The map this player is moving to on ANOTHER server, remembered across the hang-up and the dial because the
+    // connection that knew about it is the one being replaced.
+    static string movingToMap;
+
+    /// <summary>Leave this world for another one, with the address and the one-time ticket the character server
+    /// has already handed the process we are leaving.
+    ///
+    /// <para><b>Dial first, load the map second.</b> The two failures are not alike: arriving before the map is
+    /// up is untidy and fixes itself the moment the map lands, while loading the map and then failing to dial
+    /// leaves somebody standing in a world with nobody in it. So the risky step is taken while there is still
+    /// somewhere to be put back to.</para>
+    ///
+    /// <para>It does not walk the ordinary reconnect path: that one waits two seconds before it even asks, counts
+    /// against the three tries that end in being signed out, and is written for a connection that DROPPED. This
+    /// hang-up is deliberate.</para></summary>
+    public static void MoveToAnotherServer(string host, int port, string ticket, string map)
+    {
+        if (spawned == null || string.IsNullOrEmpty(ticket)) return;
+
+        LoadingScreen.SetStep("Arriving…");
+        movingToMap = map;
+
+        AccountSession.EntryTicket = ticket;
+        if (NetworkClient.active) spawned.StopClient();
+        if (!string.IsNullOrEmpty(host)) spawned.networkAddress = host;
+        if (port > 0 && port <= ushort.MaxValue && Transport.active is kcp2k.KcpTransport kcp)
+            kcp.port = (ushort)port;
+
+        spawned.attemptsSpent = 0;
+        spawned.goneForGood = false;
+        GameLog.Info(LogCat.Client, "moving to " + spawned.networkAddress + ":" + port + " for '" + map + "'");
+        spawned.StartClient();
     }
 
     public override void OnClientDisconnect()

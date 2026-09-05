@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-02
+last-updated: 2026-09-05
 tags:
   - systems-combat-design
 ---
@@ -10,9 +10,35 @@ tags:
 
 Code-facing companion for the multiplayer layer. Read this before touching anything networked, or before adding a new kind of thing that has to exist for more than one player.
 
-Sibling docs: **[Architecture](README.md)** (the shape on one page — start there) · [Network-Readiness Audit](readiness-audit.md) (the July survey that chose the shape) · [Starting the Network](../../1-planning/starting-the-network.md) (how to run it) · [Querying the Database](../../1-planning/querying-the-database.md) (how to read what it persisted) · `charserver/README.md` (the character server).
+Sibling docs: **[Architecture](README.md)** (the shape on one page — start there) · [Network-Readiness Audit](readiness-audit.md) (the July survey that chose the shape) · [Starting the Network](starting-the-network.md) (how to run it) · [Querying the Database](../../1-planning/querying-the-database.md) (how to read what it persisted) · `charserver/README.md` (the character server).
 
 ---
+
+## Traps paid for on 2026-09-05
+
+**A map's place is found, not counted.** Every map a server holds is slid two kilometres from the others, because
+they are all authored starting at the same point and would otherwise be stacked. The place was chosen by counting
+how many maps were loaded — which was only ever right while nothing left. Unload one in the middle and the count
+drops, so the next map to arrive is handed a place another map is still standing on: two worlds' ground, walls
+and creatures in one spot, with nothing to say so. It now walks the places in use and takes the first genuinely
+free one. **Anything that unloads a map inherits this**, so it was fixed before unloading was built.
+
+**Dropping a connection writes that character down — including when you dropped it on purpose.** The takeover was
+built by dropping whoever was already playing a character, and dropping is what a player leaving does, so the
+machine being taken over wrote its now-stale copy over the one the new machine was already playing. The exact
+duplication the takeover existed to prevent, arriving through the back door. A connection that is being
+superseded now does not write on the way out; the write that mattered already happened, before the handover.
+
+**Reading a character before the machine holding them has let go hands over a stale copy.** The first version of
+the takeover read the row and then dropped the old machine, so whoever took over started from the last routine
+save — up to fifteen seconds old — and everything since was never recorded anywhere. Not overwritten: never
+written. The order is now write, wait, drop, then read, which is the order a door already used.
+
+**A scene marking itself modified is a script writing saved data outside Play.** Two depth sorters ran in the
+editor and wrote a draw order worked out from the SCENE VIEW CAMERA'S direction, so merely looking around the
+world rewrote the scene and every build stopped to ask whether to save a change nobody made. The rule that came
+out of it is at the top of the project's own instructions, above everything else.
+
 
 ## The decision, and why it is not up for re-litigation
 
@@ -136,7 +162,7 @@ A player who is not joined is not in the world at all, so there is no state in w
 
 ## What is done, and what is not
 
-**Working, watched with two players:** the headless server boots and loads its map; two copies of the built game sign in as different accounts, are let in by the character server, get a body, hold their connection and see each other move — **watched on 2026-09-02**, and the first time two clients have ever been run against this layer. A tester also watched the bag arrive from the server, an item picked up land in it and survive a relog, money paid exactly once for a drop several people reached for, and reordering hold across a sign-out.
+**Working, watched with two players:** the headless server boots and loads its map; two copies of the built game sign in as different accounts, are let in by the character server, get a body, hold their connection and see each other move — **watched on 2026-09-02**, and the first time two clients have ever been run against this layer. A tester also watched the bag arrive from the server, an item land in it and survive a relog, and reordering hold across a sign-out.
 
 **Watched working, one client:** a fight against server-owned creatures — the hit round-trip in both directions, the damage numbers, the creatures walking, running, swinging and flinching. **Played on 2026-09-02.**
 
@@ -160,7 +186,7 @@ A player who is not joined is not in the world at all, so there is no state in w
 
 **Movement is CHECKED, not simulated.** A player's machine still moves them — that is what keeps the controls answering at this camera distance — but every reported position is measured against how far they could possibly have travelled since the last one accepted, at their real top speed with their buffs. An impossible report is dropped rather than written down, and a run of them puts the person back where the server has them. It is forgiving on purpose: a wrong correction on an honest player is worse than a missed cheat, so a door, a respawn and any shove the server itself ordered are all let off. **This raises the reach checks with it** — they measure from a position that can no longer be arbitrary.
 
-**The bag, the money and the worn gear are the server's.** Equipping, taking off, reordering, using an item and picking loot up are all asked for and decided there; what comes back is the whole bag, and the window redraws from that. A client cannot add an item at all. Requests name a POSITION in the bag **and what the asker expected to find there**, so a second click landing inside the first one's round trip cannot act on whatever slid into that place.
+**The bag, the money and the worn gear are the server's.** Equipping, taking off, reordering and using an item are all asked for and decided there; what comes back is the whole bag, and the window redraws from that. Loot is not asked for at all: the server rolls what a dead creature was carrying and pays it straight into the bag of whoever earned the kill, so nothing is ever left in the world to be reached for. A client cannot add an item at all. Requests name a POSITION in the bag **and what the asker expected to find there**, so a second click landing inside the first one's round trip cannot act on whatever slid into that place.
 
 **The server writes the save**, on a 15-second beat, on a map change, and on disconnect — where the write is asked for before the character is let go, which is the guard against the same items existing twice. A save from a player's own machine is refused outright while they are in a world. Spending a stat point is the server's too; arranging the hotbar and choosing passives are asked for and taken as said, because that is a person's own arrangement of their own things and cannot be worth more than somebody else has.
 
@@ -193,7 +219,7 @@ Mobs had to become server-owned *before* combat could, and that was found the ha
 
 - [Action Alarms](action-alarms.md) — how a body says what it is DOING across the wire, and who owns the animation, the timing and the rendering.
 - [Network-Readiness — Combat Audit & Refactor Plan](readiness-audit.md) — the July survey whose four prep steps this layer was built on top of.
-- [Starting the Network](../../1-planning/starting-the-network.md) — the runbook: database → sign-in → character server → game server → players.
+- [Starting the Network](starting-the-network.md) — the runbook: database → sign-in → character server → game server → players.
 - [Querying the Database](../../1-planning/querying-the-database.md) — reading back the accounts and characters this layer persists.
 - [Unified Unit Stats](../active-skill-system-v3/unified-unit-stats.md) — the stat block the server builds per connection.
 - [Active Skill System — V3](../active-skill-system-v3/README.md) — the effects the server now runs, one runner per authored skill per connection.

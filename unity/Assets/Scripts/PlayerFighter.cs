@@ -33,10 +33,10 @@ public static class PlayerFighter
     public static bool BuildFrom(NetPlayer shell, MapServerLink.Expected announced)
     {
         if (announced == null) return false;
-        return Build(shell, announced.characterId, announced.progress, announced.isGm);
+        return Build(shell, announced.characterId, announced.accountId, announced.progress, announced.isGm);
     }
 
-    static bool Build(NetPlayer shell, string characterId, SaveData pushed, bool isGm)
+    static bool Build(NetPlayer shell, string characterId, string accountId, SaveData pushed, bool isGm)
     {
         if (shell == null || !GameServer.IsServer) return false;
 
@@ -55,6 +55,9 @@ public static class PlayerFighter
             }
             playing.Add(characterId);
             shell.ServerCharacterId = characterId;
+            // AND WHOSE ACCOUNT IT IS. Needed the moment they walk through a door into a zone another process
+            // holds: the character server mints their one-time ticket against the account, not the character.
+            shell.ServerAccountId = accountId;
         }
 
         var host = new GameObject("Fighter_" + shell.playerName) { hideFlags = HideFlags.DontSaveInEditor };
@@ -129,7 +132,7 @@ public static class PlayerFighter
 
     static void GiveThemTheirSkills(GameObject host, Character fighter)
     {
-        fighter.BindSkills(host, SkillCatalog.All);
+        fighter.BindSkills(host, fighter.UsableSkills());
     }
 
     /// <summary>The runner this fighter casts <paramref name="skillId"/> with, or null if that is not a skill.</summary>

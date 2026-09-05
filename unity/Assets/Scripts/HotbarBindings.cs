@@ -9,7 +9,10 @@ using System.Collections.Generic;
 /// </summary>
 public sealed class HotbarBindings
 {
-    public const int SlotCount = 9;   // keys 1–9
+    // FOUR, BECAUSE FOUR IS ALL A WEAPON CAN EVER GRANT. The richest weapon in the game rolls four numbered
+    // skills plus its ultimate (see WeaponSkillRoll.SizeFor), so a bar of nine was five slots that nothing could
+    // ever fill — and every one of them was a skill this character had to carry the possibility of.
+    public const int SlotCount = 4;   // keys 1–4
 
     // slot → skill id ("" = empty). Fixed-length; never reallocated after construction.
     readonly string[] slots = new string[SlotCount];
@@ -189,7 +192,12 @@ public sealed class HotbarBindings
             // stale binding can't linger as a dead slot — the pool is the composed SkillCatalog now.
             slots[i] = SkillCatalog.IsKnown(id) ? id : "";
         }
-        string ult = (saved != null && saved.Length > slots.Length && saved[slots.Length] != null) ? saved[slots.Length] : "";
+        // THE LAST ELEMENT, NOT A FIXED POSITION. Capture always appends the ult after however many numbered
+        // slots there were, so a save written when the bar was longer keeps its ult at the end of a longer array.
+        // Reading a fixed index instead made every character saved before the bar shrank load one of their old
+        // numbered skills as their ultimate.
+        string ult = (saved != null && saved.Length > slots.Length && saved[saved.Length - 1] != null)
+                     ? saved[saved.Length - 1] : "";
         ultSkillId = SkillCatalog.IsKnown(ult) ? ult : "";
     }
 }

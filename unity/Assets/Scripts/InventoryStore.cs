@@ -60,20 +60,20 @@ public class InventoryStore : MonoBehaviour
         }
     }
 
-    /// <summary>The bag changed — repaint whatever is showing it, and (unless told otherwise) remember that it
-    /// needs writing down. <paramref name="alsoSave"/> is false for the one case that is not a change at all:
-    /// the bag having just been FILLED FROM a save, where marking it dirty would write back what was read.</summary>
-    public void Notify(bool alsoSave = true)
+    /// <summary>The bag changed — repaint whatever is showing it.
+    ///
+    /// <para>It used to also flag the bag for writing down from this machine. It no longer can: the server owns
+    /// a character while somebody is playing it and writes the bag itself, and a player's own machine has no way
+    /// to save one any more.</para></summary>
+    public void Notify()
     {
         OnChanged?.Invoke();
-        // Bag-only changes (give/consume/reorder) don't touch Character's stat events, so flag the autosave
-        // here too; equip/unequip already mark dirty via Character.OnStatsChanged.
-        if (alsoSave) SaveManager.Instance?.MarkDirty();
     }
 
-    /// <summary>Drop <paramref name="count"/> of an item into the bag. Equipment adds one entry per copy (each its
-    /// own <see cref="EquipmentInstance"/>); stackables merge into an existing non-equip stack. The single
-    /// add-item path — callers never poke <see cref="Entries"/> directly.</summary>
+    /// <summary>Put <paramref name="count"/> of an item into THIS machine's own bag and repaint the window. What
+    /// lands where is decided by <see cref="Character.TakeIntoBag"/>, which is the one place a thing enters any
+    /// bag; this adds the two things only a screen needs — the refusal below, and the repaint. Callers never poke
+    /// <see cref="Entries"/> directly.</summary>
     public void Give(Item def, int count)
     {
         if (def == null || count <= 0 || Character.Instance == null) return;
@@ -82,29 +82,21 @@ public class InventoryStore : MonoBehaviour
         // did — a drop claimed, a command carried out — and it puts them in its own copy and says so. A client
         // adding one here would be inventing an item, and it would vanish on the server's next word anyway.
         if (GameNetwork.MyPlayer != null && !NetworkServer.active) return;
-        if (def.slot != EquipSlotType.None)
-        {
-            for (int i = 0; i < count; i++) GiveEquipment(def);   // each copy rolls its own identity (and notifies)
-            return;
-        }
-        var entries = Entries;
-        var e = entries.Find(x => x.def == def && !x.IsEquip);
-        if (e != null) e.count += count;
-        else entries.Add(new BagEntry { def = def, count = count, isNew = true });
+
+        Character.Instance.TakeIntoBag(def, count);
         Notify();
     }
 
-    /// <summary>Add ONE rolled copy of a piece of equipment and hand it back, so the caller can report what fate
-    /// gave it (rarity + kit). <paramref name="rarity"/> forces the drop's rarity; null rolls it off the drop table.
-    /// The single place a wearable copy is born — loot, GM grants and rewards all land here, so nothing can enter
-    /// the bag having skipped its roll.</summary>
+    /// <summary>Add ONE rolled copy of a piece of equipment to this machine's own bag and hand it back, so the
+    /// caller can report what fate gave it (rarity + kit). <paramref name="rarity"/> forces the drop's rarity;
+    /// null rolls it off the drop table. The roll itself happens in <see cref="Character.TakeIntoBag"/>, so
+    /// nothing can enter a bag having skipped it.</summary>
     public EquipmentInstance GiveEquipment(Item def, Rarity? rarity = null)
     {
         if (def == null || def.slot == EquipSlotType.None || Character.Instance == null) return null;
-        var inst = EquipmentInstance.CreateRolled(def, rarity);
-        Entries.Add(new BagEntry { def = def, count = 1, instance = inst, isNew = true });
+        var entry = Character.Instance.TakeIntoBag(def, 1, rarity);
         Notify();
-        return inst;
+        return entry != null ? entry.instance : null;
     }
 
     /// <summary>Empty the whole bag and report how many stacks went. WORN gear is untouched — this is the bag, not

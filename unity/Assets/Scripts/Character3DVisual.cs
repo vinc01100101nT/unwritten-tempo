@@ -17,8 +17,6 @@ public class Character3DVisual : MonoBehaviour
     public Player3DController player;
     [Tooltip("Ground speed (units/sec) above which the player counts as moving.")]
     public float walkThreshold = 0.12f;
-    [Tooltip("Seconds the PickUp action plays when collecting loot.")]
-    public float pickUpDuration = 0.6f;
     [Tooltip("Extra world-Y offset applied ONLY while a Mixamo one-shot clip plays (Quaternius clips unaffected). " +
              "Negative sinks the model so the Mixamo rig's stretched foot hides UNDER the floor, like Mixamo's own " +
              "preview. Tune live in Play; one value grounds every Mixamo clip because they share one baked baseline.")]
@@ -36,7 +34,7 @@ public class Character3DVisual : MonoBehaviour
     Character subscribed;
     int groundMask;
     Vector3 lastPlayerPos;
-    float hurtUntil, pickUpUntil;
+    float hurtUntil;
     bool wasDead;
 
     void Awake()
@@ -70,7 +68,6 @@ public class Character3DVisual : MonoBehaviour
 
         subscribed = Character.Instance;
         if (subscribed != null) subscribed.OnDamaged += OnDamaged;
-        WorldPickup.OnCollected += OnPickUp;
 
         lastPlayerPos = player.transform.position;
         transform.position = GroundedPos(lastPlayerPos);
@@ -83,8 +80,6 @@ public class Character3DVisual : MonoBehaviour
         if (stance != null && (Character.Instance == null || !Character.Instance.IsDead))
             hurtUntil = Time.time + stance.ActionDuration(StanceId.Hurt);
     }
-
-    void OnPickUp() => pickUpUntil = Time.time + pickUpDuration;
 
     // Seat the model's feet on the Ground layer (same truth the townsfolk use). The Quaternius
     // pivot is at the feet, so grounding places the origin on the surface; a jump/fall lifts by how far the
@@ -128,7 +123,7 @@ public class Character3DVisual : MonoBehaviour
         // full-speed run "moved" to the Sprint gear). StanceCatalog.Get is a cheap array index — no per-frame alloc.
         var sprintBinding = StanceCatalog.Get(StanceId.Sprint);
         bool hasSprint = sprintBinding != null && !string.IsNullOrEmpty(sprintBinding.clip);
-        var d = PlayerStanceBrain.Decide(player, attacker, speed, walkThreshold, hurtUntil, pickUpUntil,
+        var d = PlayerStanceBrain.Decide(player, attacker, speed, walkThreshold, hurtUntil,
                                          hasRun: true, hasJump: true, hasSprint: hasSprint);
         if (d.hasAction) stance.DriveStance(d.id, d.window, d.release);
         else stance.ClearAction();
@@ -138,7 +133,6 @@ public class Character3DVisual : MonoBehaviour
     void OnDestroy()
     {
         if (subscribed != null) subscribed.OnDamaged -= OnDamaged;
-        WorldPickup.OnCollected -= OnPickUp;
         if (hiddenPlayerSprite != null) hiddenPlayerSprite.enabled = true;
     }
 }

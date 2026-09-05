@@ -91,6 +91,13 @@ public class TimeOfDay : MonoBehaviour
             // PRODUCTION: time comes from the SERVER's clock, so every client agrees. Reading the local clock
             // here meant a player could move the world's day and night by changing their computer's date, while
             // everyone else stayed where they were.
+            //
+            // AND IT WAITS RATHER THAN GUESSING. Until the machine running the world has said what time it is,
+            // there is no answer to draw a sun from, and the local clock is not a stand-in for one — that is the
+            // exact substitution this was taken away from. The sky holds where it is; a player who is not joined
+            // is not in the world anyway, and the sign-in screen is over the top of it.
+            if (!WorldClock.Synced) return;
+
             double elapsed = WorldClock.SecondsSince(Epoch);
             overrideElapsed = elapsed;                                   // keep synced so toggling to override doesn't jump
             DayIndex = (long)Math.Floor(elapsed / dayLen);

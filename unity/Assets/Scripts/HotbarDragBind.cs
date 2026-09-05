@@ -5,6 +5,23 @@ using UnityEngine.UI;
 
 /// <summary>Marks a hotbar cell as a drop target for skill binding. Carries the slot index so a dragged
 /// skill knows where it landed (see <see cref="SkillDragSource"/>). Added to each cell by <see cref="HotbarPanel"/>.</summary>
+/// <summary>What every change to the bar does afterwards, in one place so the two drag sources cannot drift.
+/// </summary>
+static class HotbarCommit
+{
+    public static void Now()
+    {
+        // THE SKILLS FIRST, THEN THE PICTURE OF THEM. A character carries only what it can use, and what is on
+        // the bar is part of that — so a skill that has just been put there has no component behind it until
+        // this runs, and the slot would draw empty however many times the bar was redrawn, which looks exactly
+        // like the drop having failed.
+        Character.Instance?.RefreshUsableSkills();
+        HotbarPanel.RebuildRequested?.Invoke();
+        HotbarSaved.Now();
+        UISounds.PlayClick();
+    }
+}
+
 public class HotbarSlotTarget : MonoBehaviour
 {
     public int slotIndex;
@@ -61,20 +78,15 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
             if (target == null) continue;
             // Dropped ON a hotbar cell: swap (rearrange). An ult↔numbered swap is rejected by Swap (invalid
             // slot), so it's a harmless no-op — either way the drop landed on the bar, never a removal.
-            if (Character.Instance.Hotbar.Swap(slotIndex, target.slotIndex)) Commit();
+            if (Character.Instance.Hotbar.Swap(slotIndex, target.slotIndex)) HotbarCommit.Now();
             return;
         }
-        // Dropped AWAY from every hotbar cell → take the skill off the bar.
-        bool removed = slotIndex < 0 ? Character.Instance.Hotbar.ClearUlt() : Character.Instance.Hotbar.Clear(slotIndex);
-        if (removed) Commit();
+        // DROPPED AWAY FROM THE BAR: nothing happens. The bar holds exactly what the equipped weapon grants,
+        // so a slot is not the player's to empty — dragging is for putting their four in the order they want.
+        // An emptied slot could not be refilled from anywhere, which is what made dropping one off the bar a
+        // way to lose a skill until the weapon was taken off and put back on.
     }
 
-    static void Commit()
-    {
-        HotbarPanel.RebuildRequested?.Invoke();
-        HotbarSaved.Now();
-        UISounds.PlayClick();
-    }
 
     void Position(PointerEventData e)
     {
@@ -130,12 +142,7 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         {
             var target = raycastBuf[i].gameObject.GetComponentInParent<HotbarSlotTarget>();
             if (target == null) continue;
-            if (Character.Instance.Hotbar.BindFromDrag(target.slotIndex, skillId))
-            {
-                HotbarPanel.RebuildRequested?.Invoke();
-                HotbarSaved.Now();
-                UISounds.PlayClick();
-            }
+            if (Character.Instance.Hotbar.BindFromDrag(target.slotIndex, skillId)) HotbarCommit.Now();
             return;
         }
     }
@@ -163,8 +170,6 @@ static class HotbarSaved
         if (me != null && Character.Instance != null)
         {
             me.AskToSetHotbar(Character.Instance.Hotbar.Capture());
-            return;
         }
-        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
     }
 }

@@ -82,10 +82,10 @@ public static class AccountSession
         AccessToken = accessToken;
         IsGm = false;   // a fresh sign-in is untrusted until the account service says otherwise
 
-        // The world's clock belongs to the server, and this is the one moment it is worth asking: we have just
-        // proved we can reach it, and the answer holds for the whole session.
-        WorldClock.Sync();
-
+        // NOT WHERE THE WORLD'S CLOCK COMES FROM ANY MORE. It used to be asked of the account service here,
+        // which is a different machine from the one running the world — so the sun and every lasting timer were
+        // read off two different clocks. The world's time now comes from the machine running the world, and it
+        // arrives at the one moment that machine speaks to this one: when it hands over a body.
         OnChanged?.Invoke();
     }
 

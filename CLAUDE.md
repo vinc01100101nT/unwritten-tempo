@@ -1,5 +1,23 @@
 # CLAUDE.md — roguelike-mmo (unwritten)
 
+## ⛔⛔ RULE NOEDITORWRITES — NOTHING MAY CHANGE A SCENE, PREFAB OR ASSET UNLESS THE USER JUST ASKED FOR IT (ULTRA-PRIORITY — OUTRANKS EVERY OTHER RULE IN THIS FILE)
+
+**A script must never write saved data while the game is not playing.** Not to preview something, not to keep something tidy, not to be helpful. If the editor marks a scene modified and the user did not do anything, that is a BUG of the highest severity in this project, and it is this rule's job to make sure one is never written again.
+
+**Banned, absolutely:**
+
+- `[ExecuteAlways]` / `[ExecuteInEditMode]` code that writes ANY serialized value — a `sortingOrder`, a transform, a colour, a material property, a field on a component. Reading is fine. Writing is not.
+- `OnValidate` that changes values rather than only complaining about them.
+- `[InitializeOnLoad]` / `[InitializeOnLoadMethod]` that touches scene objects, or calls `MarkSceneDirty` / `SetDirty` / `MarkAllScenesDirty`.
+- Anything on an editor-update, selection, hierarchy or scene-opened callback that writes.
+- A "preview" that is worth a saved change. **It never is.** If a value only matters while the game runs, compute it while the game runs.
+
+**The only thing that may dirty a scene is a deliberate authoring action the user has just taken** — they clicked a menu item, they ran a tool, they answered a prompt. That write must happen because of their click and nothing else.
+
+**The mandatory test before adding or editing ANY component:** *"if the user opens this scene, moves the Scene view camera, and touches nothing — can anything I wrote change one saved byte?"* If yes, or you are unsure, guard it with `if (!Application.isPlaying) return;` **before** the write.
+
+*(Scar, 2026-09-05: the persistent scene marked itself modified constantly, so every single build stopped with "Modified Scenes must be saved to continue". Two depth sorters ran in the editor and wrote a draw order worked out from the SCENE VIEW CAMERA'S direction — so merely looking around the world rewrote saved data. The user changed nothing and was told their scene had changes, for months. Their words: "wala dapat kahit anong nagbabago sa editor".)*
+
 ## Bugfix confidence protocol (ALWAYS)
 
 At the END of every bugfix response, state your confidence that the bug is ALREADY fixed, as a percentage (0%–100%) on its own final line, e.g. `**Fix confidence: 75%**`. Be honest — reflect whether the fix was verified live, only reasoned about, or blocked (e.g. Unity unreachable). Do not inflate.
@@ -228,6 +246,13 @@ that costs a round.
 
 - **Say the contract back BEFORE building anything bigger than a one-liner.** First reply with three bullets — what I'm about to build, and the exact in-game check that will prove it works — then WAIT for a go. No code until then. Most wasted rounds here were not bad code; they were the wrong thing built well, or extra things nobody asked for. Three bullets cost one line and buy the acceptance test for free (see the play-test rule below, which reuses them).
 - **Hand back a numbered play-test checklist — never "go test it".** When a batch of gameplay changes is ready, end with a numbered list: what to press, what should happen, and what would count as a FAILURE for each. Batch the changes so one play session covers several, instead of one session per change. A step the user can't act on without already knowing the answer is not a checklist item — see the concrete-UI-steps rule in the global file.
+- **⛔ EVERY PLAY-TEST CHECKLIST OPENS WITH WHAT MUST BE REBUILT AND RESTARTED FIRST (HARD-PINNED, added 2026-09-05 at the user's instruction).** Before the numbered steps, state — for each of the four things, by name, every time, even when the answer is "nothing" — whether the user must act:
+  1. **The game server build** (`builds/server/unwritten-server.app`) — REBUILD needed, or not? Any change to C# under `unity/Assets/Scripts/` that the server runs does NOT reach a running server until that build is remade. A recompile in the editor updates the EDITOR only.
+  2. **The map server process** — RESTART needed, or not? A running one keeps serving the old world; it never picks up a new build on its own.
+  3. **The character server** (`charserver/`) — RESTART needed, or not? It rebuilds on start, so a restart is the whole of it.
+  4. **The account service** (`accounts/`) — RESTART needed, or not?
+
+  **And say WHY in one line when the answer is yes**, so the user can tell a formality from a hard requirement. **The trap this exists for:** the two servers refuse each other when their shared character-build string disagrees, so a change that bumps it makes restarting only ONE of them look like a broken game rather than a half-finished deploy. A checklist that omits this sends the user to play-test a world their changes never reached, and the failure looks exactly like a bug in the work. Never make them ask.
 - **"Copy-ready" / "paste-ready" = wrap it in a fenced code block** — whenever the user asks for copy-ready / paste-ready content (a GPT or peer message, a prompt, a snippet to paste elsewhere), output that content INSIDE a fenced code block so Tempo renders a one-click **copy** button. Use a non-shell language tag (` ```text ` or ` ```markdown `) so it gets the copy button, NOT the Run button that ` ```bash `/` ```sh ` triggers. Plain prose the user must hand-select is NOT copy-ready — it fails the request.
 - **User is new to Unity, strong in JS/TS** — explain C#/Unity by analogy; give click-by-click UI steps
 - **One-step walkthrough style** — during interactive click-by-click UI guidance (Blender/Mixamo/Unity/etc.), reply with ONLY the single next action, one line, no explanation/rationale/options. User asks one question at a time and wants one answer; expand only if asked

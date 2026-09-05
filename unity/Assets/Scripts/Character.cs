@@ -744,8 +744,10 @@ public class Character : MonoBehaviour, ICombatUnit
     // so the displayed numbers stay consistent for the dialed-in level. No-op outside Play / before Awake.
     void OnValidate()
     {
-        if (level < 1) level = 1;
+        // THE GUARD COMES FIRST. Clamping the level above it wrote a saved value while nobody was playing, so a
+        // component holding an invalid number quietly marked the scene changed on every recompile.
         if (!Application.isPlaying || Instance != this) return;
+        if (level < 1) level = 1;
         ReconcilePointsToLevel();
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
@@ -824,8 +826,18 @@ public class Character : MonoBehaviour, ICombatUnit
         // granted skills. Only fires on a real equip action, not on load (RestoreEquipment writes the dict directly).
         if (slot == EquipSlotType.Weapon)
         {
+            // THE TICKED PASSIVES GO WITH THE OLD WEAPON. There are four passive slots and the new weapon
+            // brings its own to fill them, so the player's own choices are cleared rather than fighting the
+            // weapon for room. They pick again, knowing what they are now holding.
+            PassiveSkills.ClearChecked();
+
             var kit = (instance != null && instance.def != null) ? instance.skillIds : null;
             if (Hotbar.SetWeaponKit(kit)) HotbarPanel.RebuildRequested?.Invoke();
+
+            // AND THE SKILLS THEMSELVES, not just the bar. A character carries only what it can use, so changing
+            // weapons changes the list — without this a player would keep the old weapon's skills and have none
+            // of the new one's, and the bar would show slots nothing answered.
+            RefreshUsableSkills();
         }
     }
 
@@ -951,6 +963,73 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>True once this character has been told what its skills are.</summary>
     public bool HasSkills => skillDefs != null && skillDefs.Length > 0;
+
+    /// <summary>Rebuild what this character carries from what it can use RIGHT NOW. Anything that changes the
+    /// answer calls this: a weapon changing, a skill being put on the bar, a passive being ticked.
+    ///
+    /// <para>Without it, a skill dropped onto the bar is recorded in the bar and has no component behind it, so
+    /// the slot draws empty and the skill cannot be cast — which looks exactly like the drop having failed.</para></summary>
+    public void RefreshUsableSkills()
+    {
+        if (skillHost != null) BindSkills(skillHost, UsableSkills());
+    }
+
+    /// <summary>THE skills this character can actually use — everything on their bar, everything their weapon
+    /// grants them, everything they ticked on, and whatever the consumables in their bag run. Nothing else.
+    ///
+    /// <para>A player used to be handed the WHOLE authored catalog, so every person the server held carried a
+    /// position for every skill in the game whether or not they could ever cast it. What they can use comes from
+    /// four places and this is the one that puts them together, in the catalog's own order so the list is the
+    /// same however it was assembled.</para>
+    ///
+    /// <para>It reads THIS character's gear rather than asking the passive loadout whether a weapon granted a
+    /// skill: that question is answered against whoever is playing at this keyboard, which is nobody on a server
+    /// holding twenty people.</para></summary>
+    public System.Collections.Generic.List<SkillDef> UsableSkills()
+    {
+        usableIds.Clear();
+
+        for (int i = 0; i < HotbarBindings.SlotCount; i++)
+        {
+            var id = Hotbar.Get(i);
+            if (!string.IsNullOrEmpty(id)) usableIds.Add(id);
+        }
+        if (!string.IsNullOrEmpty(Hotbar.Ult)) usableIds.Add(Hotbar.Ult);
+
+        var weapon = GetEquippedInstance(EquipSlotType.Weapon);
+        var kit = weapon != null ? weapon.skillIds : null;
+        if (kit != null)
+            for (int i = 0; i < kit.Count; i++)
+                if (!string.IsNullOrEmpty(kit[i])) usableIds.Add(kit[i]);
+
+        var ticked = PassiveSkills.Capture();
+        if (ticked != null)
+            for (int i = 0; i < ticked.Length; i++)
+                if (!string.IsNullOrEmpty(ticked[i])) usableIds.Add(ticked[i]);
+
+        for (int i = 0; i < bag.Count; i++)
+        {
+            var def = bag[i] != null ? bag[i].def : null;
+            if (def != null && def.IsUsable) usableIds.Add(def.useSkillId);
+        }
+
+        // IN THE CATALOG'S ORDER, always. A skill's position is what the no-self-feeding brake identifies it by
+        // within this process, so the list must not depend on which pocket each id happened to come out of.
+        usable.Clear();
+        var all = SkillCatalog.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var def = all[i];
+            if (def != null && !string.IsNullOrEmpty(def.id) && usableIds.Contains(def.id)) usable.Add(def);
+        }
+        return usable;
+    }
+
+    // Reused across calls: this runs on a weapon swap and at every join, and a server does it once per person.
+    readonly System.Collections.Generic.HashSet<string> usableIds =
+        new System.Collections.Generic.HashSet<string>();
+    readonly System.Collections.Generic.List<SkillDef> usable =
+        new System.Collections.Generic.List<SkillDef>(16);
 
     /// <summary>Say which skills are this character's, and which object their components live on. Called again
     /// whenever that list is rebuilt (a fresh avatar after a door, a newly composed skill).
@@ -1489,6 +1568,38 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <see cref="InventoryStore"/>, which is the one door for changing it.</summary>
     public System.Collections.Generic.List<BagEntry> Bag => bag;
 
+    /// <summary>Put <paramref name="count"/> of <paramref name="def"/> into this character's bag, and hand back the
+    /// stack it landed in. Anything wearable adds one entry per copy, each rolling its own upgrade and cards,
+    /// because two copies cannot share a stack without losing one of them; everything else merges into a stack
+    /// already there.
+    ///
+    /// <para>THE one place a thing enters a bag. A server does this for whoever earned it, on the copy of them it
+    /// holds; a game with no world does it through <see cref="InventoryStore.Give"/>, which calls this and then
+    /// repaints the window. Nobody adds an entry to <see cref="Bag"/> by hand.</para></summary>
+    public BagEntry TakeIntoBag(Item def, int count, Rarity? rarity = null)
+    {
+        if (def == null || count <= 0) return null;
+
+        if (def.slot != EquipSlotType.None)
+        {
+            BagEntry last = null;
+            for (int i = 0; i < count; i++)
+            {
+                last = new BagEntry { def = def, count = 1, isNew = true,
+                                      instance = EquipmentInstance.CreateRolled(def, rarity) };
+                bag.Add(last);
+            }
+            return last;
+        }
+
+        var stack = bag.Find(x => x.def == def && !x.IsEquip);
+        if (stack != null) { stack.count += count; return stack; }
+
+        var entry = new BagEntry { def = def, count = count, isNew = true };
+        bag.Add(entry);
+        return entry;
+    }
+
     /// <summary>How much money this character has.</summary>
     public int Gold { get; private set; }
 
@@ -1555,6 +1666,7 @@ public class Character : MonoBehaviour, ICombatUnit
         d.dyeTargets = DyeTargets;
 
         d.stamina = Stamina;
+        CaptureCooldowns(d);
         return d;
     }
 
@@ -1775,9 +1887,68 @@ public class Character : MonoBehaviour, ICombatUnit
         // Below zero means a save older than v8, which never recorded it — keep the full pool it starts with.
         SetStamina(d.stamina < 0f ? maxStamina : d.stamina);
 
+        RestoreCooldowns(d);
+
         OnStatsChanged?.Invoke();
         OnHealthChanged?.Invoke();
         OnManaChanged?.Invoke();
         OnAppearanceChanged?.Invoke();   // apply the loaded outfit dye
+    }
+
+    // ---- cooldowns that outlive the process ------------------------------------------------------------
+
+    // A skill this character has NOT cast has no runner at all, so it cannot be on cooldown and contributes
+    // nothing. That is why the walk below skips nulls rather than building anything: RunnerAt makes a runner on
+    // first use only, and forcing one here for every skill would undo the whole reason it is lazy.
+    void CaptureCooldowns(SaveData d)
+    {
+        if (SkillRunners == null) return;
+
+        System.Collections.Generic.List<string> ids = null;
+        System.Collections.Generic.List<double> due = null;
+        for (int i = 0; i < SkillRunners.Length; i++)
+        {
+            var r = SkillRunners[i];
+            if (r == null || !r) continue;
+            if (r.def == null || string.IsNullOrEmpty(r.def.id)) continue;
+            if (WorldClock.SecondsUntil(r.DueAtUtc) <= 0f) continue;
+
+            (ids ??= new System.Collections.Generic.List<string>()).Add(r.def.id);
+            (due ??= new System.Collections.Generic.List<double>()).Add(WorldClock.ToEpochSeconds(r.DueAtUtc));
+        }
+
+        d.cooldownSkillIds = ids?.ToArray();
+        d.cooldownDueAt = due?.ToArray();
+    }
+
+    // HELD, NOT APPLIED. At the moment a save is restored the runners do not exist yet — they are built on first
+    // use, and on a freshly built fighter there is nothing to write onto. So the moments wait here, and the one
+    // place BOTH runner-creation paths pass through takes each one as it builds that skill.
+    readonly System.Collections.Generic.Dictionary<string, System.DateTime> pendingCooldowns =
+        new System.Collections.Generic.Dictionary<string, System.DateTime>();
+
+    void RestoreCooldowns(SaveData d)
+    {
+        pendingCooldowns.Clear();
+        if (d.cooldownSkillIds == null || d.cooldownDueAt == null) return;
+
+        int n = Mathf.Min(d.cooldownSkillIds.Length, d.cooldownDueAt.Length);
+        for (int i = 0; i < n; i++)
+        {
+            string id = d.cooldownSkillIds[i];
+            if (string.IsNullOrEmpty(id)) continue;
+            pendingCooldowns[id] = WorldClock.FromEpochSeconds(d.cooldownDueAt[i]);
+        }
+    }
+
+    /// <summary>The moment this skill was still cooling down to when the character was written down, handed over
+    /// once and then forgotten. Called only as a runner is built.</summary>
+    public bool TakePendingCooldown(string skillId, out System.DateTime dueAtUtc)
+    {
+        dueAtUtc = default;
+        if (string.IsNullOrEmpty(skillId) || pendingCooldowns.Count == 0) return false;
+        if (!pendingCooldowns.TryGetValue(skillId, out dueAtUtc)) return false;
+        pendingCooldowns.Remove(skillId);
+        return true;
     }
 }

@@ -29,7 +29,16 @@ public sealed class MapServers(Config config)
         int PlayerPort,
         string[] Maps,
         string Build,
-        DateTimeOffset At);
+        DateTimeOffset At,
+        int Players,
+        int Creatures)
+    {
+        /// <summary>How busy this process is, as one number to compare processes by. A person weighs far more
+        /// than a creature because a person is played at: they move every frame, they fight, they are written
+        /// down, and everything they do is answered. The exact weight is a judgement, not a measurement, and it
+        /// only has to rank processes correctly — it is never shown to anybody or used as a budget.</summary>
+        public int Load => Players * 50 + Creatures;
+    }
 
     readonly ConcurrentDictionary<string, Registration> byId = new();
 
@@ -43,7 +52,7 @@ public sealed class MapServers(Config config)
     /// below is what keeps strangers off it. It catches a HALF-FINISHED DEPLOY: a map server built against a
     /// different character than this one understands would read the pushed bytes into the wrong fields and
     /// store somebody's life slightly wrong, silently. Refusing to start is the cheap failure.</para></summary>
-    public const string CharacterBuild = "unwritten-character-v9";
+    public const string CharacterBuild = "unwritten-character-v10";
 
     public IReadOnlyCollection<Registration> All => byId.Values.ToArray();
 
@@ -58,9 +67,11 @@ public sealed class MapServers(Config config)
                       System.Text.Encoding.UTF8.GetBytes(config.ServerSecret));
     }
 
-    public Registration Register(string id, string address, int port, int playerPort, string[] maps, string build)
+    public Registration Register(string id, string address, int port, int playerPort, string[] maps, string build,
+                                 int players, int creatures)
     {
-        var reg = new Registration(id, address, port, playerPort, maps ?? [], build, DateTimeOffset.UtcNow);
+        var reg = new Registration(id, address, port, playerPort, maps ?? [], build, DateTimeOffset.UtcNow,
+                                   players, creatures);
         byId[id] = reg;
         Rebuild();
         return reg;
@@ -117,6 +128,115 @@ public sealed class MapServers(Config config)
             Console.WriteLine($"[char] map server '{id}' has said nothing for {TrustedFor.TotalMinutes:0} minutes — forgotten.");
         }
         Rebuild();
+    }
+
+    /// <summary>Ask every map server to let go of this character, writing them down first, and wait until they
+    /// have all answered. TRUE when one of them actually had them.
+    ///
+    /// <para>Every one is asked because none of them is written down as holding anybody — so most answer at once
+    /// saying they do not have this person, which is the ordinary case rather than a failure. The one that does
+    /// have them writes them down and waits for that write to land before answering, which is the entire reason
+    /// this exists: reading their row before that hands whoever is taking over a copy up to fifteen seconds old,
+    /// and everything since is never recorded anywhere.</para></summary>
+    public async Task<bool> LetGoOfEverywhereAsync(string characterId, CancellationToken ct = default)
+    {
+        var servers = Alive;
+        if (servers.Count == 0) return false;
+
+        var asks = new List<Task<bool>>(servers.Count);
+        foreach (var reg in servers) asks.Add(AskToLetGoAsync(reg, characterId, ct));
+        var answers = await Task.WhenAll(asks);
+
+        foreach (var had in answers) if (had) return true;
+        return false;
+    }
+
+    async Task<bool> AskToLetGoAsync(Registration to, string characterId, CancellationToken ct)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"http://{to.Address}:{to.Port}/evict")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(new { characterId }),
+                                        System.Text.Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("x-server-secret", config.ServerSecret);
+
+        try
+        {
+            var reply = await wire.SendAsync(request, ct);
+            return reply.IsSuccessStatusCode;
+        }
+        catch (Exception e)
+        {
+            // A server that cannot answer is one this person is not going to keep playing on either way, so this
+            // is said and stepped past rather than stopping somebody from signing in.
+            Console.Error.WriteLine($"[char] map server {to.Id} did not answer about letting go of a character — {e.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>Which process a map nobody is holding should be brought up on: the quietest one that is still
+    /// answering. Every process can host any zone — none is given a list when it starts — so this is the only
+    /// thing that decides, and it is the only thing that can, because it is the only one that sees them all.</summary>
+    public Registration? QuietestAlive()
+    {
+        Registration? best = null;
+        foreach (var reg in Alive)
+            if (best is null || reg.Load < best.Load) best = reg;
+        return best;
+    }
+
+    /// <summary>Tell a map server to bring a map up. TRUE when it took the request — which means it has STARTED
+    /// loading, not that the map is standing. What proves it is standing is the map appearing in that server's
+    /// next registration.</summary>
+    public async Task<bool> AskToHostAsync(Registration to, string map, CancellationToken ct = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"http://{to.Address}:{to.Port}/host")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(new { map }),
+                                        System.Text.Encoding.UTF8, "application/json"),
+        };
+        request.Headers.Add("x-server-secret", config.ServerSecret);
+
+        try
+        {
+            var reply = await wire.SendAsync(request, ct);
+            return reply.IsSuccessStatusCode;
+        }
+        catch (Exception e)
+        {
+            Console.Error.WriteLine($"[char] could not ask map server {to.Id} to host '{map}' — {e.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>Make sure SOMETHING is holding this map, bringing it up on the quietest process if nobody is.
+    /// Returns the server holding it, or null when there is nobody to ask or it never came up.
+    ///
+    /// <para>It waits for the map to actually appear in a registration rather than trusting the request, because
+    /// a map that has been asked for is not a map a player can be pushed into yet.</para></summary>
+    public async Task<Registration?> EnsureHeldAsync(string map, CancellationToken ct = default)
+    {
+        var already = Holding(map);
+        if (already is not null) return already;
+
+        var host = QuietestAlive();
+        if (host is null) return null;
+
+        Console.WriteLine($"[char] nobody holds '{map}' — asking '{host.Id}' to bring it up (load {host.Load}).");
+        if (!await AskToHostAsync(host, map, ct)) return null;
+
+        // A map has to load its ground and spawn its creatures before anybody can be put into it, and how long
+        // that takes depends on what is in it. Asked for repeatedly rather than waited out in one go, so a map
+        // that comes up quickly costs a player almost nothing.
+        for (int i = 0; i < 40 && !ct.IsCancellationRequested; i++)
+        {
+            await Task.Delay(250, ct);
+            var now = Holding(map);
+            if (now is not null) return now;
+        }
+
+        Console.Error.WriteLine($"[char] '{map}' was asked for but never came up on '{host.Id}'.");
+        return null;
     }
 
     // ---- the ticket ------------------------------------------------------------------------------------

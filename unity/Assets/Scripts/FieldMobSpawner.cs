@@ -154,11 +154,38 @@ public class FieldMobSpawner : MonoBehaviour
         if (isActiveAndEnabled) StartCoroutine(RespawnAfterDelay());
     }
 
+    // WHEN EACH BANKED CREATURE IS DUE BACK, on the world's clock, one moment per return owed. The wait below
+    // is a coroutine, and a coroutine stops dead when its object is switched off and never restarts itself — so
+    // a map put to sleep with returns outstanding would wake up permanently short of those creatures, silently,
+    // and lose more of its population every time it slept. A moment does not care that nothing was running.
+    readonly List<System.DateTime> returnsOwed = new List<System.DateTime>();
+
+    void OnEnable()
+    {
+        // BACK FROM BEING SWITCHED OFF with returns still owed. Anything whose moment passed while this was off
+        // comes back at once; the rest pick up their waits with only the time genuinely left on them.
+        for (int i = returnsOwed.Count - 1; i >= 0; i--)
+        {
+            System.DateTime due = returnsOwed[i];
+            returnsOwed.RemoveAt(i);
+            if (WorldClock.SecondsUntil(due) <= 0f) SpawnOne();
+            else StartCoroutine(RespawnAtMoment(due));
+        }
+    }
+
     IEnumerator RespawnAfterDelay()
     {
         float delay = respawnDelay + Random.value * Mathf.Max(0f, respawnJitter);
-        // Zero-alloc wait (no per-death `new WaitForSeconds`): manual timer per PERFORMANCE.md.
-        for (float el = 0f; el < delay; el += Time.deltaTime) yield return null;
+        return RespawnAtMoment(WorldClock.UtcNow.AddSeconds(delay));
+    }
+
+    IEnumerator RespawnAtMoment(System.DateTime due)
+    {
+        returnsOwed.Add(due);
+        // Zero-alloc wait (no per-death `new WaitForSeconds`): manual timer per PERFORMANCE.md. It counts the
+        // frames it is actually run for; the moment above is what makes the wait survive not being run at all.
+        for (float el = 0f, left = WorldClock.SecondsUntil(due); el < left; el += Time.deltaTime) yield return null;
+        returnsOwed.Remove(due);
         SpawnOne();
     }
 

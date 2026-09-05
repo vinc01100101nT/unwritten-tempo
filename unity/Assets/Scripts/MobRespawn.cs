@@ -50,14 +50,34 @@ public class MobRespawn : MonoBehaviour
     WaitForSeconds respawnWait;
     float respawnWaitFor = -1f;
 
+    // WHEN THIS ONE IS DUE BACK, on the world's clock. The wait itself is a coroutine, and a coroutine stops
+    // dead the moment its object is switched off and never starts again by itself — so a map put to sleep with
+    // creatures waiting to return would wake up permanently short of them, quietly, every time. The moment does
+    // not care that nothing was running: whatever was due while the map slept is simply due on waking.
+    System.DateTime dueAtUtc = System.DateTime.MinValue;
+
+    void OnEnable()
+    {
+        if (dueAtUtc == System.DateTime.MinValue) return;
+
+        // BACK FROM BEING SWITCHED OFF with a return still owed. Past due, it comes back now; otherwise the
+        // wait picks up with only the time that is genuinely left.
+        if (WorldClock.SecondsUntil(dueAtUtc) <= 0f) { dueAtUtc = System.DateTime.MinValue; Respawn(); return; }
+        StartCoroutine(RespawnAfter());
+    }
+
     IEnumerator RespawnAfter()
     {
-        if (respawnWait == null || respawnWaitFor != respawnDelay)
+        if (dueAtUtc == System.DateTime.MinValue) dueAtUtc = WorldClock.UtcNow.AddSeconds(respawnDelay);
+
+        float left = WorldClock.SecondsUntil(dueAtUtc);
+        if (respawnWait == null || respawnWaitFor != left)
         {
-            respawnWait = new WaitForSeconds(respawnDelay);
-            respawnWaitFor = respawnDelay;
+            respawnWait = new WaitForSeconds(left);
+            respawnWaitFor = left;
         }
         yield return respawnWait;
+        dueAtUtc = System.DateTime.MinValue;
         Respawn();
     }
 
@@ -71,6 +91,12 @@ public class MobRespawn : MonoBehaviour
     public static void Reactivate(GameObject mob, Vector3 pos)
     {
         mob.transform.position = pos;
+
+        // A MOB STANDING HERE IS NOT OWED A RETURN. Both revival paths come through this one method, and the
+        // pooled one switches the object on again — which would otherwise fire the moment-check below with a
+        // return still recorded from an earlier death, and bring back a creature that is already back.
+        var owed = mob.GetComponent<MobRespawn>();
+        if (owed != null) owed.dueAtUtc = System.DateTime.MinValue;
 
         // SWITCHING THE OBJECT ON IS ITSELF A VALIDATION OF THE CONTROLLER, against whatever step it was banked
         // with — so the clamp further down, which runs after, was always too late: switching a field's worth of

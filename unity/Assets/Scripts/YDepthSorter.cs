@@ -18,7 +18,10 @@ using UnityEngine;
 /// Tilemaps (ground/decor/overhead) and FX do NOT use this — they sit at fixed bands (see
 /// <see cref="DepthSortRuntime"/>). Runs in edit mode too so the Scene view previews depth.
 /// </summary>
-[ExecuteAlways]
+// NOT IN THE EDITOR, EVER. This used to run outside Play so sprites would overlap correctly in the Scene view
+// window — a preview, worth nothing to the game — and it did that by writing a draw order, which is saved data.
+// Every glance around the world rewrote the scene and every build then stopped to ask whether to save a change
+// nobody made. Draw order is decided at runtime and rebuilt from scratch on Play, so there is nothing to keep.
 [DisallowMultipleComponent]
 public class YDepthSorter : MonoBehaviour
 {
@@ -43,6 +46,7 @@ public class YDepthSorter : MonoBehaviour
         // In the editor the hierarchy can change between frames — re-scan in GROUP mode so the
         // preview stays correct. At play time the cached arrays are stable.
         if (!Application.isPlaying && self == null) Cache();
+
 
         if (self != null)
         {

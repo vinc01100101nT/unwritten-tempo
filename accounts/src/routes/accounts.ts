@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { query, queryOne, isUniqueViolation } from "../db.ts";
@@ -143,6 +144,16 @@ async function startSession(accountId: string) {
     [accountId],
   );
 
+  // THE NEWEST SIGN-IN TAKES OVER. A fresh marker is written on the account and carried in the pass below, so
+  // every pass handed out before this moment stops being let into the world. The old refresh tokens go with it:
+  // leaving them alive would let the machine that was just taken over quietly mint itself a new pass.
+  const sessionId = randomUUID();
+  await query("update account set session_id = $1 where id = $2", [sessionId, accountId]);
+  await query(
+    "update refresh_token set revoked_at = now() where account_id = $1 and revoked_at is null",
+    [accountId],
+  );
+
   const refresh = newRefreshToken();
   await query("insert into refresh_token (token_hash, account_id, expires_at) values ($1, $2, $3)", [
     refresh.hash,
@@ -151,7 +162,7 @@ async function startSession(accountId: string) {
   ]);
   return {
     accountId,
-    accessToken: issueAccessToken(accountId),
+    accessToken: issueAccessToken(accountId, sessionId),
     refreshToken: refresh.token,
   };
 }

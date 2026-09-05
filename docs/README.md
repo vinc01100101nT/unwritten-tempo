@@ -21,7 +21,7 @@ The folders match the sections below, so the file tree and this index say the sa
 - [Roadmap to Launch](1-planning/roadmap-to-launch.md) — how far from a shippable game; Tier 1 (Steam ARPG) vs Tier 2 (MMO), milestones M1–M5.
 - [Dev Contribution Log](1-planning/dev-contribution-log.md) — gamified record of the dev's design/diagnosis contributions.
 - [Performance Checkup — My Routine](1-planning/performance-checkup-routine.md) — the recurring `/perf-checkup` routine.
-- [Starting the Network](1-planning/starting-the-network.md) — the runbook for getting more than one player into the world: database → sign-in service → character server → game server → players, with how to tell each step worked; also stopping and restarting to pick up changes, and which maps the server holds open.
+- [Starting the Network](2-systems/networking/starting-the-network.md) — the runbook for getting more than one player into the world: database → sign-in service → character server → game server → players, with how to tell each step worked; also stopping and restarting to pick up changes, and how zones are placed on servers and let go again.
 - [Querying the Database](1-planning/querying-the-database.md) — how to ask the accounts database questions by hand: find a player, look up a character by name or body, read a level out of a save, and the habits that keep the queries safe.
 - [YouTube Update Format Template](1-planning/youtube-update-template.md) — the lowercase progress-update template.
 

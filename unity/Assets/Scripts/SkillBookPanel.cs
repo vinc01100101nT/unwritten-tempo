@@ -289,12 +289,15 @@ static class PassivesSaved
 {
     public static void Now()
     {
+        // A TICKED PASSIVE IS A SKILL THIS CHARACTER NOW CARRIES. Without rebuilding the list it has no
+        // component behind it and would never fire — the tick would look accepted and do nothing.
+        Character.Instance?.RefreshUsableSkills();
+        HotbarPanel.RebuildRequested?.Invoke();
+
         var me = GameNetwork.MyPlayer;
         if (me != null && Character.Instance != null)
         {
             me.AskToSetPassives(Character.Instance.PassiveSkills.Capture());
-            return;
         }
-        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
     }
 }

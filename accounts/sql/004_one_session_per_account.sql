@@ -1,0 +1,11 @@
+-- ONE SIGN-IN AT A TIME, AND THE NEWEST ONE WINS.
+--
+-- Nothing used to record that an account was signed in, so the same account could be signed in on two machines
+-- and both were equally valid. Two machines playing one character is how the same item ends up in two places:
+-- each world server writes that character down on its own beat, and whichever wrote last decided what the player
+-- owns. It cannot be caught further downstream, because by then there is nothing left that knows the two are the
+-- same person.
+--
+-- This is the whole record: which sign-in is the live one. A new sign-in puts a new value here, and every older
+-- pass stops being accepted at the door into the world the moment it does.
+alter table account add column if not exists session_id uuid;

@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-02
+last-updated: 2026-09-05
 tags:
   - planning-production
 ---
@@ -162,16 +162,6 @@ Lists who has it.
 psql -d unwritten -c "select email, is_gm from account order by created_at;"
 ```
 
-### Running the server with a different set of maps
-
-Replaces the authored map list for that run only.
-
-```
-GAME_MAPS=field_11,field_15 builds/server/unwritten-server.app/unwritten -batchmode -nographics -logFile -
-```
-
----
-
 ## 1. The database
 
 Check whether it is already up:
@@ -313,20 +303,27 @@ character server will not hand players to a game server it cannot recognise.
 [server] listening for players on port 7777
 [server] world up — loading map 'town_0'
 [server] map 'town_0' loaded — 15 root objects, active scene is now 'town_0'
-[server] map 'field_11' loaded — 10 root objects, active scene is now 'field_11'
-[map] the character server knows this map server holds 2 map(s).
+[map] the character server knows this map server holds 1 map(s).
 ```
 
-The `listening for players` line means it is reachable. The `loaded` lines mean the world is actually up, not
-just requested. **The last line is the one people forget to read** — until the character server knows what this
-server holds, nobody can be sent here. It says `0 map(s)` first and then the real number; that is correct, the
-maps come up after the link does.
+The `listening for players` line means it is reachable. The `loaded` line means the world is actually up, not just
+requested. **The last line is the one people forget to read** — until the character server knows this server is
+there, nobody can be sent here. It says `0 map(s)` first and then the real number; that is correct, the map comes
+up after the link does.
 
-The character server's own terminal says the same thing from its side:
+**One map is the whole of what it starts with, and that is right.** A game server is no longer told which zones
+to hold. It comes up with one map purely so there is somewhere to stand, and everything after that is decided
+while people play: the character server tells it to bring a zone up when somebody wants one, and it lets a zone
+go again once nobody has been in it for forty-five seconds. So this list is a snapshot, and it changes all
+evening. See *Which maps a server holds open* below.
+
+The character server's own terminal says the same thing from its side, with how busy that server is:
 
 ```
-[char] map server 'YourMac-1a2b3c4d' at 127.0.0.1:7788 holds 2 map(s): town_0, field_11
+[char] map server 'YourMac-1a2b3c4d' at 127.0.0.1:7788 holds 1 map(s): town_0 [0 player(s), 15 creature(s)]
 ```
+
+Those two numbers are what it weighs when it decides which server a new zone should be brought up on.
 
 **Two doors, two ports.** Players connect on **7777**. The character server pushes characters in on **7788**.
 They are different conversations and neither port does the other's job.
@@ -386,8 +383,12 @@ Nothing here is baked into a build. A build made once can be aimed anywhere by s
 | `CHAR_SERVER_URL` | Where the character server lives. **Required on a player's build too:** left unset, the game has nobody to ask to be let in, cannot be announced to the world, and refuses to dial rather than being turned away at the door. | `http://localhost:8081` on a server; empty on a player's build — which is why you must set it |
 | `SERVER_SECRET` | How the game server and the character server recognise each other. Must match on both. Never a player's token. **Required on the game server.** | none — the game server says so and nobody can enter |
 | `MAP_SERVER_ADDRESS` | How the character server reaches this game server back. Its address on the network, not the player's. | `127.0.0.1` |
+
+**There is no setting for which maps a server holds, and there is nothing missing.** There used to be one. A game
+server is now told nothing about zones when it starts: the character server decides which server a zone is
+brought up on, at the moment somebody wants it, and each server lets a zone go again once nobody has been in it.
+Nothing to configure, and nothing to keep in step between machines.
 | `MAP_SERVER_ARRIVALS_PORT` | The door the character server pushes characters in on. Not the port players use. | `7788` |
-| `GAME_MAPS` | Which maps the server holds open besides the starting one, comma-separated. Replaces the authored list rather than adding to it. Server only. | the authored list |
 
 A dedicated server build already knows it is a server; `GAME_SERVER` is for running an ordinary build, or the editor, as one.
 
@@ -426,29 +427,31 @@ Two things follow from this that are easy to trip over:
 
 ---
 
-## Which maps the server holds open
+## Which maps a server holds open
 
-A player is only ever in one map. **A server holds several at once**, and that is what makes a field have
-creatures in it before anyone walks in — a map the server never opened has no spawner running, so it makes
-nothing, and whoever arrives finds it empty.
+**No server is told.** A map server is handed no list of zones when it starts. It comes up holding one map,
+purely so there is somewhere to stand, and everything after that is decided while people are playing:
 
-Two maps are held by default: the starting town, and **field_11**, the field through the town's western door.
+- **A zone is brought up when somebody wants it.** When a player enters a map nobody is holding, the character
+  server picks the **quietest** map server — weighing how many players and creatures each already has — tells it
+  to bring that zone up, and waits until the zone is genuinely standing before pushing the character across.
+- **A zone is let go when nobody is in it.** Each server checks its own maps every few seconds; one that has
+  stood empty for forty-five seconds is unloaded, creatures and all. It never lets go of its last map.
+- **A zone that comes back is fully populated**, because loading it runs its spawners again. There is nothing to
+  remember about what was in it.
 
-The list is authored on the `GameRoot` object in the `Systems` scene, under **Also Held Open**. To try a
-different set without touching the scene or rebuilding, set `GAME_MAPS` when you start the server — it replaces
-the authored list for that run:
+So the `map … loaded` and `letting … go` lines in the start-up and running output are the truth about what a
+given server is holding at any moment, and that changes through the evening.
 
-```
-GAME_MAPS=field_11,field_15 builds/server/unwritten-server.app/unwritten -batchmode -nographics -logFile -
-```
+Holding a map costs the server real work, because every creature in it is thinking whether or not anyone is
+there — which is the whole reason empty ones are let go. Measured on this Mac with nobody playing: the starting
+town alone sits near 13% of one processor core; the town plus four fields — 129 creatures — near 16%; every map
+in the world at once — 1,809 creatures — near 50%, with the server's own heartbeat starting to slip from 60 to
+53–55.
 
-Either way, the `map … loaded` lines in the start-up output are the truth about what came up.
-
-Holding more maps costs the server real work, because every creature in them is thinking whether or not anyone
-is there. Measured on this Mac with nobody playing: the starting town alone sits near 13% of one processor core;
-the town plus four fields — 129 creatures — near 16%; every map in the world at once — 1,809 creatures — near
-50%, with the server's own heartbeat starting to slip from 60 to 53–55. The cost is close to a straight line,
-about a fiftieth of one percent of a core per creature, so you can price a change by multiplying.
+**Treat those numbers as a rough shape, not a budget.** They were all taken with nobody playing, and this game
+switches a creature's brain off when no player is near it — so every figure above is the cost of *sleeping*
+creatures. What an awake creature costs, and what a player costs, has never been measured.
 
 ---
 

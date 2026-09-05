@@ -6,6 +6,16 @@
 /// </summary>
 public static class SceneTravel
 {
+    /// <summary>Walk through a door into a map the SAME process is holding. Nothing crosses the wire, nothing is
+    /// written down and no curtain is needed — this is what a door has always been, and it stays that way for
+    /// every door that does not leave the process. It is started by the server's word rather than by the
+    /// player's own machine only because the machine cannot know which side of the line a map is on.</summary>
+    public static void ArriveLocally(string map, string spawnId)
+    {
+        LoadingScreen.Hide();
+        MapManager.Travel(map, spawnId);
+    }
+
     public static string Target;
 
     /// <summary>Where a signing-in player left off, carried the same one-shot way <see cref="Target"/> is.

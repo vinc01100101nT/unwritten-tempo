@@ -17,9 +17,8 @@ public class GameCursor3D : MonoBehaviour
     public Texture2D attackCursor;     public Vector2 attackHotspot = Vector2.zero;       // (0,0) => centered
     public Texture2D attackMoveCursor; public Vector2 attackMoveHotspot = Vector2.zero;   // (0,0) => centered
     public Texture2D targetCursor;     public Vector2 targetHotspot = Vector2.zero;       // (0,0) => centered; shown while aiming a skill
-    public Texture2D grabCursor;       public Vector2 grabHotspot = Vector2.zero;         // (0,0) => centered; shown while hovering a collectable pickup
 
-    enum Kind { None, Default, Attack, AttackMove, Target, Grab }
+    enum Kind { None, Default, Attack, AttackMove, Target }
     Kind current = Kind.None;
 
     Player3DController player;
@@ -43,7 +42,6 @@ public class GameCursor3D : MonoBehaviour
         Kind want = UnitTargeter.Active || GroundTargeter.Active ? Kind.Target
                   : player != null && player.AttackArmed       ? Kind.AttackMove
                   : freeHover && Player3DController.MonsterUnderCursor(cam) != null ? Kind.Attack
-                  : freeHover && Player3DController.PickupHovered(cam)             ? Kind.Grab
                   :                                               Kind.Default;
 
         if (want != current) { Apply(want); current = want; }
@@ -54,7 +52,6 @@ public class GameCursor3D : MonoBehaviour
         switch (k)
         {
             case Kind.Attack:     Set(attackCursor, attackHotspot); break;
-            case Kind.Grab:       Set(grabCursor != null ? grabCursor : defaultCursor, grabHotspot); break;
             case Kind.AttackMove: Set(attackMoveCursor, attackMoveHotspot); break;
             // Reticle is the large 64×64 texture; ForceSoftware so the OS doesn't clamp it to ~32px (hardware
             // cursors are size-limited). Software cursor renders the texture at its full native resolution.

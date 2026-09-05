@@ -12,7 +12,7 @@ tags:
 
 An **alarm** is one announcement that says: *this unit began this action, at this moment, and it lasts this long.* Nobody ever sends "stop" — it expires on its own clock. Borrowed from Ragnarok, whose server source was read for this doc rather than remembered.
 
-Sibling docs: **[Architecture](README.md)** (the shape on one page) · [Networking — Implementation Notes](implementation-notes.md) (what is actually built) · [Network-Readiness Audit](readiness-audit.md) (the survey that chose the shape) · [Starting the Network](../../1-planning/starting-the-network.md) (how to run it).
+Sibling docs: **[Architecture](README.md)** (the shape on one page) · [Networking — Implementation Notes](implementation-notes.md) (what is actually built) · [Network-Readiness Audit](readiness-audit.md) (the survey that chose the shape) · [Starting the Network](starting-the-network.md) (how to run it).
 
 **Status: built, and played on 2026-09-02 — it works.** [What shipped, and what has not](#what-shipped-and-what-has-not) is the ledger.
 
@@ -170,5 +170,5 @@ What already worked and was NOT rebuilt: a blow on a creature or a person is ann
 
 - [Networking — Implementation Notes](implementation-notes.md) — what is actually built, the shell/body split, and the traps already paid for.
 - [Network-Readiness — Combat Audit & Refactor Plan](readiness-audit.md) — the survey that chose the shape.
-- [Starting the Network](../../1-planning/starting-the-network.md) — the runbook for standing the world up.
+- [Starting the Network](starting-the-network.md) — the runbook for standing the world up.
 - [Active Skill System — V3](../active-skill-system-v3/README.md) — the effects the server now runs, and the vocabulary a cast's alarm would use.

@@ -41,3 +41,4 @@
 - [One screen's answer breaks on a server](../one-screens-answer-breaks-on-a-server.md) — "the player" singletons and scene searches answer null on a server, silently; ask PlayerUnits instead.
 - [Interface refs are not Unity-null](../net-interface-refs-are-not-unity-null.md) — an ICombatUnit to a destroyed object passes `== null` then throws; use PlayerUnits.Gone.
 - [May stop & restart the local server to test](../may-restart-local-server-to-test.md) — standing permission (2026-08-30): kill/rebuild/relaunch the game server yourself rather than working blind around a running one; launch with a log FILE, and rebuild after any C# change.
+- [The world is split across processes now](../world-split-across-processes.md) — no map lists, zones placed by load and unloaded when empty, doors move players between servers, all timers on the server's clock.

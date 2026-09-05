@@ -104,6 +104,15 @@ public static class PlayerUnits
     /// one set of coordinates, so a spot judged across all of them is judged against people who are not there — see
     /// <see cref="ICombatUnit.Map"/>. An empty map asks about everybody, which is what a machine holding exactly one
     /// map wants.</para></summary>
+    /// <summary>Is anybody at all standing in this map? Asked by the server when it is deciding whether a map
+    /// still needs to exist. The unfiled list counts: somebody whose map has not been reported yet is somewhere,
+    /// and letting a map go out from under them is worse than holding an empty one a few seconds longer.</summary>
+    public static bool AnyoneIn(string map)
+    {
+        if (unfiled.Count > 0) return true;
+        return !string.IsNullOrEmpty(map) && byMap.TryGetValue(map, out var here) && here.Count > 0;
+    }
+
     public static bool AnyoneWithin(Vector3 point, float radius, string map)
     {
         float rSqr = radius * radius;

@@ -21,6 +21,18 @@ public class PassiveLoadout
 {
     readonly HashSet<string> checkedIds = new HashSet<string>();
 
+    /// <summary>How many passives a player may tick on at once — the same four a weapon can grant, so the row of
+    /// passive slots beside the hotbar has a fixed size and a player has a budget to spend rather than a list
+    /// that grows for free. A weapon-granted passive does not count against it: it is live because of the
+    /// weapon, and it already has its own slot.</summary>
+    public const int MaxChecked = 4;
+
+    /// <summary>How many the player has ticked on themselves, against <see cref="MaxChecked"/>.</summary>
+    public int CheckedCount => checkedIds.Count;
+
+    /// <summary>True when ticking one more would be refused.</summary>
+    public bool Full => checkedIds.Count >= MaxChecked;
+
     /// <summary>Fired whenever the checked set changes — the Grimoire redraws off this.</summary>
     public event Action OnChanged;
 
@@ -50,12 +62,48 @@ public class PassiveLoadout
     {
         if (string.IsNullOrEmpty(id)) return false;
         if (on && GrantedByWeapon(id)) return false;
+        // FULL IS A REFUSAL, NOT A SWAP. Deciding which of the four to drop is the player's, and quietly picking
+        // one for them would take a passive off their bar that they never chose to remove.
+        if (on && !IsChecked(id) && Full) return false;
         bool changed = on ? checkedIds.Add(id) : checkedIds.Remove(id);
         if (changed) OnChanged?.Invoke();
         return changed;
     }
 
     public bool Toggle(string id) => Set(id, !IsChecked(id));
+
+    /// <summary>Untick everything the player chose. Called when a weapon changes: the new weapon brings its own
+    /// passives and they need the slots, and a player cannot be asked to guess which of their four to give up
+    /// before they have seen what they just equipped. Returns true if anything was on.</summary>
+    public bool ClearChecked()
+    {
+        if (checkedIds.Count == 0) return false;
+        checkedIds.Clear();
+        OnChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>Every passive live on this character right now, weapon-granted first and then the ticked ones —
+    /// the exact list the row of passive slots draws, in the order it draws them.</summary>
+    public void CollectActive(EquipmentInstance weapon, System.Collections.Generic.List<string> into)
+    {
+        if (into == null) return;
+        into.Clear();
+
+        var kit = weapon != null ? weapon.skillIds : null;
+        if (kit != null)
+            for (int i = 0; i < kit.Count; i++)
+            {
+                var def = SkillCatalog.Get(kit[i]);
+                if (def != null && def.IsPassive && !into.Contains(kit[i])) into.Add(kit[i]);
+            }
+
+        foreach (var id in checkedIds)
+        {
+            var def = SkillCatalog.Get(id);
+            if (def != null && def.IsPassive && !into.Contains(id)) into.Add(id);
+        }
+    }
 
     /// <summary>The checked ids, for the save file.</summary>
     public string[] Capture()
@@ -74,7 +122,10 @@ public class PassiveLoadout
             for (int i = 0; i < saved.Length; i++)
             {
                 var def = SkillCatalog.Get(saved[i]);
-                if (def != null && def.IsPassive) checkedIds.Add(saved[i]);
+                // THE CAP HOLDS ON LOAD TOO. A character saved before there was one can be carrying more than
+                // four; the extras are dropped here rather than being allowed in through a door the player
+                // cannot use. Which four survive is the order they were written in, and a player can retick.
+                if (def != null && def.IsPassive && checkedIds.Count < MaxChecked) checkedIds.Add(saved[i]);
             }
         OnChanged?.Invoke();
     }

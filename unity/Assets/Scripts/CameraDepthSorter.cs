@@ -21,7 +21,10 @@ using UnityEngine;
 /// Only XZ matters for horizontal depth, so the sprite's foot HEIGHT is irrelevant — the
 /// base position (this transform) is the sort point in both modes.
 /// </summary>
-[ExecuteAlways]
+// NOT IN THE EDITOR, EVER. This used to run outside Play so sprites would overlap correctly in the Scene view
+// window — a preview, worth nothing to the game — and it did that by writing a draw order, which is saved data.
+// Every glance around the world rewrote the scene and every build then stopped to ask whether to save a change
+// nobody made. Draw order is decided at runtime and rebuilt from scratch on Play, so there is nothing to keep.
 [DisallowMultipleComponent]
 public class CameraDepthSorter : MonoBehaviour
 {
@@ -44,6 +47,8 @@ public class CameraDepthSorter : MonoBehaviour
     void LateUpdate()
     {
         if (!Application.isPlaying && self == null && (group == null || group.Length == 0)) Cache();
+
+
         if (CameraRig.Cam == null) return;
 
         // Camera's horizontal forward = the depth axis. CameraRig computes it ONCE per frame and shares

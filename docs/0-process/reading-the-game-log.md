@@ -20,8 +20,10 @@ and nobody could see it.
 
 ## The categories
 
-Seven of these already existed as hand-typed labels and are **on** by default. Five are new, answer the questions
-a play-test actually asks, and are **off** by default — they cost nothing until you ask for them.
+Seven of these already existed as hand-typed labels and are **on** by default. `loot` is on with them, because a
+kill's pay-out is the only record of itself — nothing is left lying in the world afterwards to be looked at. The
+other five answer the questions a play-test actually asks and are **off** by default; they cost nothing until you
+ask for them.
 
 | Category | What it writes | Default |
 | --- | --- | --- |
@@ -32,6 +34,7 @@ a play-test actually asks, and are **off** by default — they cost nothing unti
 | `map` | Maps loading, handing over, being held | on |
 | `spawn` | Something being created in the world | on |
 | `census` | The routine head-count, twice a second — **the one that buries everything** | on |
+| `loot` | What a kill paid, and who it went to | on |
 | `hit` | A blow landing, or being refused, and why | **off** |
 | `passive` | A passive skill firing, naming which and which moment | **off** |
 | `buff` | A buff arriving or growing, with its stacks, source and duration | **off** |
@@ -149,5 +152,5 @@ Name it for **one kind of thing that happens** — never an umbrella. `hit`, not
 - [The Three-Brain Design Process](design-process.md) — the workflow this sits inside.
 - [Put the Recorder Inside — Don't Stop the World](../5-ai-learnings/put-the-recorder-inside-dont-stop-the-world.md)
   — why a log written from inside beats pausing the game to read it.
-- [Starting the Network](../1-planning/starting-the-network.md) — standing the world up, and where the server's
+- [Starting the Network](../2-systems/networking/starting-the-network.md) — standing the world up, and where the server's
   log goes.

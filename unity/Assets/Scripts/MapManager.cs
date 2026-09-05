@@ -200,6 +200,16 @@ public static class MapManager
     static readonly System.Collections.Generic.Dictionary<string, Vector3> parked =
         new System.Collections.Generic.Dictionary<string, Vector3>();
 
+    // Is any map already standing on this one? Walked rather than counted, because the spots in use stop being
+    // 0,1,2,… the moment a map in the middle unloads.
+    static bool SpotTaken(int spot)
+    {
+        float x = spot * ParkingGap;
+        foreach (var at in parked.Values)
+            if (Mathf.Approximately(at.x, x)) return true;
+        return false;
+    }
+
     /// <summary>Where this machine set <paramref name="mapName"/> down. Nowhere, for anybody but a server.</summary>
     public static Vector3 ParkedAt(string mapName)
     {
@@ -224,7 +234,14 @@ public static class MapManager
     {
         if (!GameServer.IsServer || parked.ContainsKey(scene.name)) return;
 
-        Vector3 at = new Vector3(parked.Count * ParkingGap, 0f, 0f);
+        // THE FIRST FREE SPOT, NOT A COUNT OF WHAT IS HERE. Counting worked only while nothing ever left: let a
+        // map in the middle go and the count drops, so the next map to arrive is handed a spot another map is
+        // still standing on — two worlds' ground, walls and creatures sharing one place, with nothing to say so.
+        // Now every spot in use is checked, so one is only handed out when it is genuinely empty.
+        int spot = 0;
+        while (SpotTaken(spot)) spot++;
+
+        Vector3 at = new Vector3(spot * ParkingGap, 0f, 0f);
         parked[scene.name] = at;
         if (at == Vector3.zero) return;
 

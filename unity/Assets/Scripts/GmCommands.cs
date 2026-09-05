@@ -397,7 +397,6 @@ public static class GmCommands
         var shell = GameNetwork.ShellFor(who);
         if (shell != null) { shell.PushBagToOwner(); shell.SaveSoon(); return; }
         InventoryStore.Instance?.Notify();
-        SaveManager.Instance?.SaveNow();
     }
 
     static void CmdBind(GmContext c)
@@ -407,7 +406,6 @@ public static class GmCommands
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.Ch.Hotbar.AutoBind(id)) { c.Reply($"Couldn't bind '{id}' (unknown, already bound, or bar full)."); return; }
         HotbarPanel.RebuildRequested?.Invoke();
-        if (SaveManager.Instance != null) SaveManager.Instance.SaveNow();
         c.Reply($"Bound {id} (ultimates → ult slot).");
     }
 

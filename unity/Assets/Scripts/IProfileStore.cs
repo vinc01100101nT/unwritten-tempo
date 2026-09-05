@@ -17,12 +17,13 @@ public interface IProfileStore
     /// no session, a character nobody has played yet, or a request that failed.</summary>
     void Load(Action<SaveData> onLoaded);
 
-    /// <summary>Write the character's progress. <paramref name="onDone"/> reports whether it landed.</summary>
-    void Save(SaveData data, Action<bool> onDone = null);
+    // THERE IS NO WRITE FOR PROGRESS HERE, DELIBERATELY. A character's progress is written by the server
+    // running the world it is in, and by nothing else. This program is a client for its whole life and never
+    // learns what really happened in a fight, so anything it wrote would be older than the truth.
 
     /// <summary>Write the character's APPEARANCE. It lives in the same document as everything else, but it has
-    /// its own call because it changes at a different moment — the instant a player recolours, rather than on
-    /// the next autosave — and the service merges it in rather than replacing the document.</summary>
+    /// its own call because it is not progress: it changes the instant a player recolours, and the service
+    /// merges it in rather than replacing the document.</summary>
     void SaveAppearance(string modelName, string[] dyeSources, string[] dyeTargets, Action<bool> onDone = null);
 }
 
@@ -79,19 +80,6 @@ public sealed class ServerProfileStore : IProfileStore
             bool played = envelope?.progress != null && envelope.progress.version > 0;
             onLoaded?.Invoke(played ? envelope.progress : null);
         });
-    }
-
-    public void Save(SaveData data, Action<bool> onDone = null)
-    {
-        // NOT WHILE THERE IS A WORLD. The server owns this character while somebody is playing it and writes it
-        // down itself; a write from here would be a machine the player controls telling the database what it
-        // thinks it owns, over the top of what actually happened. Refused HERE rather than at each caller,
-        // because a caller that forgets is a silent rollback nobody would look for.
-        if (GameNetwork.MyPlayer != null) { onDone?.Invoke(false); return; }
-
-        if (data == null || !AccountSession.IsActive) { onDone?.Invoke(false); return; }
-        Write("PUT", CharacterPath + "/progress",
-              JsonUtility.ToJson(new ProgressEnvelope { progress = data }), "Save", onDone);
     }
 
     public void SaveAppearance(string modelName, string[] dyeSources, string[] dyeTargets, Action<bool> onDone = null)

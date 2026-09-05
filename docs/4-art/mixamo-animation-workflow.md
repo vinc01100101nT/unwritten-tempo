@@ -52,7 +52,7 @@ How to add a new Mixamo animation to the live-3D player and NPCs. **No coding re
 
 1. Open the **Systems** scene.
 2. Run **Tools ▸ unwritten ▸ Rigs ▸ Set 3D Player Model (Systems scene)**.
-3. Press **Play** and watch the character perform the new animation. *(Play needs a running server — see [Starting the Network](../1-planning/starting-the-network.md).)*
+3. Press **Play** and watch the character perform the new animation. *(Play needs a running server — see [Starting the Network](../2-systems/networking/starting-the-network.md).)*
 
 > **Note:** only animations that a stance actually references get used. Unused `.fbx` files in the folder are simply ignored.
 
@@ -101,5 +101,5 @@ The per-clip grounding slider from the Generic era (`Character3DVisual`'s Mixamo
 - [GPT Concept Prompts — Paste-Me](gpt-concept-prompts.md) — the sibling art pipeline (props and weapons, not characters).
 - [Story & Setting (Canon)](../3-world/story-setting-canon.md) — why the player body is a charcoal husk, which is what these clips animate.
 - [HUD/UI System — Design & Relay](../2-systems/hud-ui-system.md) — the character preview and wardrobe that show this rig.
-- [Starting the Network](../1-planning/starting-the-network.md) — Play needs a world before you can watch a clip run.
+- [Starting the Network](../2-systems/networking/starting-the-network.md) — Play needs a world before you can watch a clip run.
 - [Roadmap to Launch](../1-planning/roadmap-to-launch.md) — the art-pipeline line under the foundation.

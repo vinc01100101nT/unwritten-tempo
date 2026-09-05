@@ -147,7 +147,7 @@ public static class RigBuilder25D
     {
         const string dir = "Assets/0_Raw/KenneyCursorPack/PNG/Outline/Default";
         const string dirBig = "Assets/0_Raw/KenneyCursorPack/PNG/Outline/Double";   // 64×64 variants
-        foreach (var n in new[] { "pointer_b", "tool_sword_a", "target_b", "hand_open" })
+        foreach (var n in new[] { "pointer_b", "tool_sword_a", "target_b" })
             AssetDatabase.ImportAsset($"{dir}/{n}.png", ImportAssetOptions.ForceUpdate);   // ensure readable Cursor textures
         AssetDatabase.ImportAsset($"{dirBig}/target_round_b.png", ImportAssetOptions.ForceUpdate);
 
@@ -156,7 +156,6 @@ public static class RigBuilder25D
         cur.attackCursor     = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/tool_sword_a.png");       // hovering a mob
         cur.attackMoveCursor = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/target_b.png");           // A-armed
         cur.targetCursor     = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dirBig}/target_round_b.png");  // aiming a skill — large 64×64 reticle, drawn full-size (software cursor)
-        cur.grabCursor       = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/hand_open.png");          // hovering a collectable loot pickup
         // defaultHotspot is left at GameCursor3D's field default (the tip of pointer_b.png) — that field
         // is the single source of truth for the hotspot, so it isn't re-typed here.
         if (cur.defaultCursor == null)
@@ -341,7 +340,7 @@ public static class RigBuilder25D
         go.AddComponent<MobRespawn>();               // recycle the mob back into the world after it dies
         go.AddComponent<CameraDepthSorter>();        // camera-relative depth sorting (occlude / be occluded)
 
-        // Loot: drop Zeny and/or items on death.
+        // Loot: Zeny and/or items paid to whoever earned the kill, on death.
         bool hasGold  = arc.goldMax > 0;
         bool hasItems = arc.itemDropNames != null && arc.itemDropNames.Length > 0;
         if (hasGold || hasItems)
@@ -349,9 +348,6 @@ public static class RigBuilder25D
             var dropper = go.AddComponent<LootDropper>();
             dropper.goldMin = arc.goldMin;
             dropper.goldMax = arc.goldMax;
-            // GoldCoin.png is a Multiple-sprite sheet — LoadAllAssetsAtPath picks the first Sprite.
-            foreach (var obj in AssetDatabase.LoadAllAssetsAtPath("Assets/1_Authored/Art/Billboards/Items/Treasure/GoldCoin.png"))
-                if (obj is Sprite s) { dropper.coinSprite = s; break; }
 
             if (hasItems)
             {

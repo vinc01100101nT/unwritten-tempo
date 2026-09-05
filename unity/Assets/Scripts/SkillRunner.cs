@@ -17,6 +17,29 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     public SkillDef def;
 
     float nextUse, lastDuration;
+
+    // WHEN THIS SKILL IS NEXT READY, as a moment on the world's clock — the one value that means anything once
+    // it leaves this process. It is what gets saved, what crosses to another server, and what a map that went to
+    // sleep wakes up holding. `nextUse` above is its per-frame MIRROR and nothing else: the gate and the hotbar
+    // ring ask several times a frame, and a float compare is what PERFORMANCE.md allows there where reading a
+    // date is not. Set them together, always; the moment is the owner and the float is derived from it.
+    System.DateTime dueAtUtc = System.DateTime.MinValue;
+
+    /// <summary>When this skill is ready again, on the world's clock. <see cref="System.DateTime.MinValue"/>
+    /// when it has never been cast, which is the same fact as "ready now" and is stored as neither.</summary>
+    public System.DateTime DueAtUtc => dueAtUtc;
+
+    /// <summary>Put a cooldown back exactly where it was, from a moment that outlived this process — a save
+    /// being loaded, or a character arriving from another server. Rebuilds the per-frame mirror against THIS
+    /// machine's timer, which is the whole reason the moment is stored instead of a countdown.</summary>
+    public void ResumeCooldown(System.DateTime moment)
+    {
+        dueAtUtc = moment;
+        float left = WorldClock.SecondsUntil(moment);
+        lastDuration = def != null ? def.cooldown : left;
+        nextUse = Time.time + left;
+    }
+
     // WHICH authored trigger started the run in progress — set at every entry point (a press, a passive
     // fire) and read by everything that must differ between them: which state gate applies, what the run spends, and
     // whether finishing it announces "the player cast this". Never null while a run is resolving.
@@ -67,8 +90,16 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // deliberately: the two answer the same kind of question.
     Character boundCaster;
 
-    /// <summary>Say whose character this runner casts for. One-way for the life of the runner.</summary>
-    public void BindCaster(Character c) { boundCaster = c; }
+    /// <summary>Say whose character this runner casts for. One-way for the life of the runner.
+    ///
+    /// <para>THE ONE PLACE BOTH RUNNER-CREATION PATHS MEET, which is why a cooldown that outlived the process is
+    /// picked up here. A runner is built either when a character binds its whole skill list or lazily the first
+    /// time one skill is used; putting this in either alone would restore half of them.</para></summary>
+    public void BindCaster(Character c)
+    {
+        boundCaster = c;
+        if (c != null && def != null && c.TakePendingCooldown(def.id, out var dueAtUtc)) ResumeCooldown(dueAtUtc);
+    }
 
     /// <summary>The character this run belongs to — the one every roll, gate and cost reads.</summary>
     public Character Caster => boundCaster != null ? boundCaster : Character.Instance;
@@ -584,6 +615,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         }
         pendingMana = def.manaCost;
         lastDuration = def.cooldown;
+        // BOTH, TOGETHER. The moment is the one that survives being saved, slept or moved to another server;
+        // the float beside it is the copy the per-frame gate and the hotbar ring read, because a date is too
+        // expensive to ask for at that rate. They are set here and nowhere else apart from ResumeCooldown.
+        dueAtUtc = WorldClock.UtcNow.AddSeconds(lastDuration);
         nextUse = Time.time + lastDuration;
         return true;
     }

@@ -238,13 +238,13 @@ public static class UIShellBuilder
         var holder = NewColor("HUD_Hotbar", canvas, new Color(0, 0, 0, 0f));
         Anchor(holder.rectTransform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0.5f, 0));
         holder.rectTransform.anchoredPosition = new Vector2(0, 42);   // lifted to clear the bottom XP strip (XpBarHUD)
-        holder.rectTransform.sizeDelta = new Vector2(9 * 54, 54);   // nine bindable slots (keys 1–9)
+        holder.rectTransform.sizeDelta = new Vector2(5 * 54, 54);   // four bindable slots (keys 1–4) + the ult
         var h = holder.gameObject.AddComponent<HorizontalLayoutGroup>();
         h.spacing = 6;
         h.childAlignment = TextAnchor.MiddleCenter;
         h.childControlWidth = h.childControlHeight = false;
         h.childForceExpandWidth = h.childForceExpandHeight = false;
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < HotbarBindings.SlotCount; i++)
             NewSliced("Hotslot", holder.transform, cellSprite).rectTransform.sizeDelta = new Vector2(48, 48);
     }
 
