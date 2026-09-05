@@ -18,6 +18,48 @@
 
 *(Scar, 2026-09-05: the persistent scene marked itself modified constantly, so every single build stopped with "Modified Scenes must be saved to continue". Two depth sorters ran in the editor and wrote a draw order worked out from the SCENE VIEW CAMERA'S direction — so merely looking around the world rewrote saved data. The user changed nothing and was told their scene had changes, for months. Their words: "wala dapat kahit anong nagbabago sa editor".)*
 
+### ⛔ THE OTHER HALF — REMOVING A SERIALIZED FIELD CAUSES ONE PROMPT, AND YOU SAY SO. ANY OTHER PROMPT IS A BUG YOU DIAGNOSE BY DIFFING, NEVER BY GUESSING (same ultra-priority)
+
+There are exactly **two** reasons a scene reports unsaved changes when nobody touched it. The rule above bans the
+first. This is the second, and it is not a bug — but it becomes one the moment the user is left to discover it.
+
+**A field deleted from a script leaves its VALUE in every scene and prefab that held it.** Unity drops that value
+when it loads the file, so what is in memory no longer matches what is on disk, and it says so — on every load,
+forever, until the file is written once without it.
+
+**So, whenever I remove a serialized field — or delete a script that had any — I MUST, in the same reply:**
+
+1. **Say that the next open will report unsaved changes, and that this is my change causing it.**
+2. **Name which scenes or prefabs are affected**, found by grepping the field name across `unity/Assets/`.
+3. **Say that saving once settles it permanently**, and offer to do it. Saving is a write to the user's project,
+   so it is offered, never done unasked.
+
+Letting them meet that prompt with no warning is indistinguishable from the bug the rule above exists to kill,
+and it costs a whole round re-diagnosing something I already knew the answer to.
+
+**AND WHEN A PROMPT APPEARS THAT NOBODY REMOVED A FIELD FOR — MEASURE, DO NOT THEORISE.** There is one method and
+it takes two minutes. Save a throwaway COPY of the in-editor scene and diff it against the file on disk:
+
+```
+unity cmd eval --code 'var s = UnityEngine.SceneManagement.SceneManager.GetSceneByName("Systems"); UnityEditor.SceneManagement.EditorSceneManager.SaveScene(s, "Assets/__dirty_probe.unity", true); return "saved";'
+diff unity/Assets/Scenes/Systems.unity unity/Assets/__dirty_probe.unity
+unity cmd eval --code 'UnityEditor.AssetDatabase.DeleteAsset("Assets/__dirty_probe.unity"); return "gone";'
+```
+
+The `true` is what makes it a COPY — the real scene is not written and does not stop being dirty, so nothing is
+decided behind the user's back. The diff names the exact lines, and the answer is usually five of them.
+
+**Never reason about which script "might be" writing.** The first attempt at this was reasoned, found a real
+culprit, fixed it — and the prompt came back the same evening from a completely different cause the reasoning
+never had a chance of reaching. The diff would have said so in two minutes, on the first try.
+
+*(Scar, 2026-09-05, the same evening: after the sorters were fixed, the build stopped again. The user: "i thought
+you fixed this already?" The real cause was three deleted fields — one of them mine, from that same session —
+whose values the scene still carried. Five lines, found by diffing, invisible to any amount of thinking.)*
+
+**If the editor stops answering while a prompt is on screen, that is the prompt blocking it.** Ask the user to
+dismiss the dialog; do not click through it, and do not diagnose blind while it is up.
+
 ## Bugfix confidence protocol (ALWAYS)
 
 At the END of every bugfix response, state your confidence that the bug is ALREADY fixed, as a percentage (0%–100%) on its own final line, e.g. `**Fix confidence: 75%**`. Be honest — reflect whether the fix was verified live, only reasoned about, or blocked (e.g. Unity unreachable). Do not inflate.
