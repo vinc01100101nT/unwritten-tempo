@@ -43,7 +43,7 @@ the game can never disagree. Design intent lives in the roster docs; this is wha
 | `Fl` | Flow | passive | MP **0**  CD **0s**  Instant  Range **1** | When a basic attack lands | Adds **1** to **Momentum** |
 | `Gs` | Guard Stance | active | MP **12**  CD **9s**  Instant | pressed | +**50%** damage reduction for **6s** |
 | `Ls` | Last Stand | passive | MP **0**  CD **0s**  Instant | When your HP drops low | Adds **5** to **Brace** |
-| `Lb` | Lock Blades | passive | MP **0**  CD **0s**  Instant  Range **11** | After casting Lunge | +**5%** attack speed per stack for **5s** |
+| `Lb` | Lock Blades | passive | MP **0**  CD **0s**  Instant  Range **11** | After casting Lunge | +2 max MP per stack for **5s** |
 | `Lu` | Lunge | active | MP **8**  CD **5s**  Instant  Range **8** | When you start a basic attack | Dashes to the target location · Deals **1×** physical damage |
 | `Mo` | Momentum | passive | MP **0**  CD **0s**  Instant | When a basic attack lands | +**3%** damage per stack for **5s** |
 | `Ob` | Offbeat | active | MP **12**  CD **8s**  Instant  Range **5** | pressed | Deals **1×** physical damage · −**30%** attack speed for **5s** |

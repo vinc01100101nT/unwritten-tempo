@@ -112,5 +112,5 @@ honest answer was reasoning about the crash sites, which is exactly the position
 ## Related
 
 - [AI Learnings & Improvements](README.md) — the index.
-- [A Busy Host App Drops Your Request Without Failing](wait-for-the-host-app-to-be-idle.md) — the other half of asking the host its state first.
+- [A Busy Host App Never Gets To Your Request](wait-for-the-host-app-to-be-idle.md) — the other half of asking the host its state first.
 - [A Hanging Tool Is Usually a Dialog](a-hanging-tool-is-usually-a-dialog.md) — when a driven app goes quiet instead of loud.

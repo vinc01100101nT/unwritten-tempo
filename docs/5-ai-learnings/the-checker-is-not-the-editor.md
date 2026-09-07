@@ -68,4 +68,4 @@ tools/build-game.sh server         # only now
 
 - [AI Learnings & Improvements](README.md) — the index.
 - [A Rebuild May Delete the Old Output First](a-rebuild-may-delete-the-old-output-first.md) — what a failed build costs you on top.
-- [A Busy Host App Drops Your Request](wait-for-the-host-app-to-be-idle.md) — the other half of driving an editor you do not control.
+- [A Busy Host App Never Gets To Your Request](wait-for-the-host-app-to-be-idle.md) — the other half of driving an editor you do not control.

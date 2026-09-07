@@ -212,6 +212,9 @@ public enum SubStat
     // One axis for how hard incoming damage lands: positive CUTS it (what Guard used to be), negative makes it hurt
     // more (what Vulnerability used to be). They were always the same number pointed two ways.
     DamageReduction,
+    // How far this unit's BASIC ATTACK reaches, in world units, on top of what its weapon gives. Not melee-only:
+    // a bow reads the same reach number, so a bonus here lengthens whatever the unit is holding.
+    BasicAttackRange,
 }
 
 /// <summary>THE sub-stat table — which pile each sub-stat lives in, and what its authored number MEANS. Every reader
@@ -246,6 +249,7 @@ public static class SubStats
             case SubStat.CritDamage:    return StateId.CritDamage;
             case SubStat.MaxHP:         return StateId.MaxHP;
             case SubStat.DamageReduction: return StateId.DamageReduction;
+            case SubStat.BasicAttackRange: return StateId.BasicAttackRange;
             default:                    return StateId.MaxMP;
         }
     }
@@ -290,7 +294,10 @@ public static class SubStats
             case SubStat.Reflect:
             case SubStat.LifeSteal:
             case SubStat.CritChance:
-            case SubStat.CritDamage: return false;
+            case SubStat.CritDamage:
+            // WORLD UNITS, not a percentage of the weapon's reach: a bonus that scaled with the weapon would be worth
+            // more on a spear than on a dagger for the same authored number, which is not what "+2 reach" means.
+            case SubStat.BasicAttackRange: return false;
             default:                 return true;
         }
     }
@@ -305,6 +312,7 @@ public static class SubStats
             case SubStat.HPRegen: return "HP per second";
             case SubStat.MPRegen: return "MP per second";
             case SubStat.CritDamage: return "0.5 = +50% crit damage";
+            case SubStat.BasicAttackRange: return "world units of extra reach";
             default: return "0.3 = 30%";
         }
     }

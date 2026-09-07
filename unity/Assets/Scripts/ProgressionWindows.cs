@@ -598,6 +598,7 @@ public class ProgressionWindows : MonoBehaviour
             $"GUARD {Pct(b.guardCutPct)}{DeltaPct(d.guardCutPct - b.guardCutPct)}    BARRIER {b.barrierHP}{Delta(d.barrierHP - b.barrierHP)}\n" +
             $"LEECH {Pct(b.lifeStealPct)}{DeltaPct(d.lifeStealPct - b.lifeStealPct)}    MP LEECH {Pct(b.manaLeechPct)}{DeltaPct(d.manaLeechPct - b.manaLeechPct)}\n" +
             $"REFLECT {Pct(b.reflectPct)}{DeltaPct(d.reflectPct - b.reflectPct)}\n" +
+            $"RANGE {b.basicAttackRange:0.##}{Delta(d.basicAttackRange - b.basicAttackRange)}\n" +
             $"HP {c.MaxHP}  MP {c.MaxMP}  STA {Mathf.RoundToInt(c.Stamina)}/{Mathf.RoundToInt(c.maxStamina)}";
     }
 

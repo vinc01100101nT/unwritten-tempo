@@ -47,13 +47,13 @@ public static class PlayerFighter
         // wire's own timeout, which frees the name a moment later.
         if (!string.IsNullOrEmpty(characterId))
         {
-            if (playing.Contains(characterId))
+            if (playing.ContainsKey(characterId))
             {
                 GameLog.Warn(LogCat.Server, "'" + shell.playerName + "' is already in this world — the second "
                                  + "connection claiming that character was turned away.");
                 return false;
             }
-            playing.Add(characterId);
+            playing[characterId] = shell;
             shell.ServerCharacterId = characterId;
             // AND WHOSE ACCOUNT IT IS. Needed the moment they walk through a door into a zone another process
             // holds: the character server mints their one-time ticket against the account, not the character.
@@ -83,6 +83,10 @@ public static class PlayerFighter
         if (pushed != null && pushed.version > 0)
         {
             character.RestoreSave(pushed);
+            // AND WHERE THE CHARACTER SERVER SENT THEM. Their save says which map they were in, and that is the
+            // map this server was asked to hold for them — so it is known now, not a second later when their own
+            // machine gets round to saying it.
+            shell.SetMapOnArrival(pushed.sceneName);
             GameLog.Info(LogCat.Server, "" + shell.playerName + " is level " + character.Level + " with "
                       + character.Bag.Count + " stack(s) — their character came with them.");
         }
@@ -96,6 +100,13 @@ public static class PlayerFighter
                       + character.Bag.Count + " starter stack(s).");
             shell.SaveSoon();
         }
+
+        // AND NOW THEY GET THEIR SKILLS, NOT BEFORE. A character carries only the skills it can USE — its bar, its
+        // weapon's kit, the passives it ticked, whatever its bag can run — and NONE of that exists until the save
+        // above has been laid onto them. Bound any earlier and the answer is an empty list, which is a person
+        // standing in the world who cannot cast anything at all. The binding a few lines up gives them their
+        // positions; this is the one that fills them.
+        character.RefreshUsableSkills();
 
         // AND THEIR BELONGINGS GO STRAIGHT TO THEM. The bag is the server's, so the person's own machine starts
         // empty and only ever learns what it is carrying from here.
@@ -130,6 +141,20 @@ public static class PlayerFighter
         if (!string.IsNullOrEmpty(characterId)) playing.Remove(characterId);
     }
 
+    /// <summary>Let go of a character's name ONLY if this shell is still the one holding it.
+    ///
+    /// <para>Somebody walking into a map this same server holds ends up with TWO shells for a moment: the one they
+    /// arrived on, and the one they walked in with, which is torn down a fraction of a second later. That old
+    /// shell's teardown used to free the name outright — while the new shell was live and playing it — so the roll
+    /// said nobody was playing that character and a third connection could be let in to play a second copy of it.
+    /// The whole point of the roll is that this cannot happen.</para></summary>
+    public static void ReleaseCharacterIfHeldBy(string characterId, NetPlayer shell)
+    {
+        if (string.IsNullOrEmpty(characterId)) return;
+        if (playing.TryGetValue(characterId, out var held) && !ReferenceEquals(held, shell)) return;
+        playing.Remove(characterId);
+    }
+
     static void GiveThemTheirSkills(GameObject host, Character fighter)
     {
         fighter.BindSkills(host, fighter.UsableSkills());
@@ -139,14 +164,19 @@ public static class PlayerFighter
     public static SkillRunner RunnerFor(Character fighter, string skillId)
         => fighter != null ? fighter.RunnerById(skillId) : null;
 
-    // Which characters are being played on this server right now. Emptied one name at a time as people leave, so
-    // it never grows past the number of people actually here.
-    static readonly System.Collections.Generic.HashSet<string> playing = new System.Collections.Generic.HashSet<string>();
+    // Which characters are being played on this server right now, AND BY WHICH SHELL. Emptied one name at a time
+    // as people leave, so it never grows past the number of people actually here.
+    //
+    // WHY THE SHELL AND NOT JUST THE NAME. A person walking into a map this same server holds is briefly on two
+    // connections at once, and the older one is torn down after the newer one is already playing. Without knowing
+    // whose name it is, that teardown frees a name that is live.
+    static readonly System.Collections.Generic.Dictionary<string, NetPlayer> playing =
+        new System.Collections.Generic.Dictionary<string, NetPlayer>();
 
     /// <summary>Is this character already being played here? Asked at the door, before a body is made for somebody
     /// who is not going to be let in.</summary>
     public static bool AlreadyPlaying(string characterId)
-        => !string.IsNullOrEmpty(characterId) && playing.Contains(characterId);
+        => !string.IsNullOrEmpty(characterId) && playing.ContainsKey(characterId);
 
     /// <summary>Tear the fighter down when its player leaves. The roll of who is here must not keep a name that is
     /// gone, or every creature in the world goes on chasing somebody who is not there.</summary>
@@ -159,8 +189,9 @@ public static class PlayerFighter
         if (shell == null) return;
 
         // Their character is free to be played again — released BEFORE the early return below, because a
-        // connection that never got as far as a fighter has still claimed the name.
-        ReleaseCharacter(shell.ServerCharacterId);
+        // connection that never got as far as a fighter has still claimed the name. Only if it is still THEIRS:
+        // this same shell may already have been replaced by a newer one for the same character.
+        ReleaseCharacterIfHeldBy(shell.ServerCharacterId, shell);
 
         var unit = shell.ServerCombatUnit;
         if (unit == null) return;

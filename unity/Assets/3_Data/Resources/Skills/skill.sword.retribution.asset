@@ -34,7 +34,7 @@ MonoBehaviour:
     requireSkillId: skill.sword.brace
     requireStateId: 19
     requireStateIdSet: 1
-    requireMinStacks: 1
+    requireMinStacks: 0
     consumeAllStacks: 1
     consumeStacks: 0
   manaCost: 40

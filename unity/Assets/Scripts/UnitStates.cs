@@ -62,6 +62,7 @@ public enum StateId
     Accuracy, Evasion,
     CritChance, CritDamage,
     MaxHP, MaxMP,
+    BasicAttackRange,
 }
 
 /// <summary>

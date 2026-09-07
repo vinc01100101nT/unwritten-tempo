@@ -664,7 +664,7 @@
       "trigger": "After casting Lunge",
       "description": "No escape.\nCasting Lunge arms 5 charges, each +5% Attack Speed for 5s. Every hit you land spends one to lunge at the target again.",
       "effects": [
-        "+**5%** attack speed per stack for **5s**"
+        "+2 max MP per stack for **5s**"
       ]
     },
     {

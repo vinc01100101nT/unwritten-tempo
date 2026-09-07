@@ -23,4 +23,5 @@ public struct DerivedSnapshot
     public float reflectPct;   // permanent thorns + any timed reflect window
     public float manaLeechPct; // fraction of damage dealt returned as MP (a state; 0 at rest)
     public int barrierHP;      // remaining Shield pool (a state; 0 at rest)
+    public float basicAttackRange;   // how far a basic attack reaches, in world units — gear alone on the baseline
 }

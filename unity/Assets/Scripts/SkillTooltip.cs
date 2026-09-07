@@ -387,8 +387,8 @@ public static class SkillTooltip
     // (Overclock's fragile window), not a debuff on enemies, and saying "enemies" tells the player the opposite.
     static string Subject(SkillEffect e, string caster, string target) => SkillEffect.LandsOnCaster(e) ? caster : target;
 
-    /// <summary>The sub-stat's name in ordinary words. Every stat has a row, so a new one cannot silently fall
-    /// through to a run-together enum name on the player's screen.</summary>
+    /// <summary>The sub-stat's name in ordinary words. Every stat has its OWN row and the catch-all answers
+    /// "undefined", so a stat added without a row here says so on screen instead of wearing another stat's name.</summary>
     static string SubStatName(SubStat s)
     {
         switch (s)
@@ -412,7 +412,12 @@ public static class SkillTooltip
             case SubStat.CritDamage:    return "crit damage";
             case SubStat.MaxHP:         return "max HP";
             case SubStat.DamageReduction: return "damage reduction";
-            default:                    return "max MP";
+            case SubStat.BasicAttackRange: return "basic attack range";
+            case SubStat.MaxMP:         return "max MP";
+            // NOT A REAL STAT'S NAME. A catch-all that answers with a plausible stat makes a missing row look
+            // like a working one: a new stat read "max MP" on the player's screen and nothing anywhere said it
+            // had no row. A word that is obviously not a stat is the whole point.
+            default:                    return "undefined";
         }
     }
 

@@ -42,3 +42,4 @@
 - [Interface refs are not Unity-null](../net-interface-refs-are-not-unity-null.md) — an ICombatUnit to a destroyed object passes `== null` then throws; use PlayerUnits.Gone.
 - [May stop & restart the local server to test](../may-restart-local-server-to-test.md) — standing permission (2026-08-30): kill/rebuild/relaunch the game server yourself rather than working blind around a running one; launch with a log FILE, and rebuild after any C# change.
 - [The world is split across processes now](../world-split-across-processes.md) — no map lists, zones placed by load and unloaded when empty, doors move players between servers, all timers on the server's clock.
+- [Check Play mode before recompiling](../check-play-mode-before-recompiling.md) — `unity cmd editor_status` FIRST, every time; a recompile during Play nulls everything and kills the session. Has now cost three sessions.

@@ -52,7 +52,7 @@ public class UnitTargeter : MonoBehaviour
     {
         // Quick cast (Settings ▸ Gameplay): skip the reticle entirely and fire at the target the player is
         // already engaged with. Every caster inherits this because it sits in the aim step itself.
-        if (GameSettings.QuickCastSingleTarget && QuickTarget(player, castRange, mask, out var quick))
+        if (GameSettings.QuickCastSingleTarget && QuickTarget(player, mask, out var quick))
         { active = false; onConfirm?.Invoke(quick); return; }
 
         if (inst == null)
@@ -71,16 +71,19 @@ public class UnitTargeter : MonoBehaviour
     }
 
     // The current target, ONLY when this cast could legally have landed on it through the reticle: the skill must
-    // accept mobs and the target must be alive and inside castRange. Anything else returns false, so the reticle
-    // opens exactly as it would with quick cast off (no target yet, a self-only skill, a target out of reach).
-    static bool QuickTarget(Transform player, float castRange, SkillTargets mask, out Transform target)
+    // accept mobs and the target must be alive. Anything else returns false, so the reticle opens exactly as it
+    // would with quick cast off (no target yet, a self-only skill).
+    //
+    // DISTANCE IS NOT ASKED HERE ANY MORE. It used to refuse a target further away than the skill reaches, which
+    // sent the player to a reticle to click the very mob they were already fighting. The cast now walks them into
+    // range instead (SkillRunner.CastTargeted), so how far away it is stopped being this picker's question.
+    static bool QuickTarget(Transform player, SkillTargets mask, out Transform target)
     {
         target = null;
         if (player == null || (mask & SkillTargets.Mobs) == 0) return false;
         var pc = player.GetComponentInParent<Player3DController>();
         var mob = pc != null ? pc.AttackTarget : null;
         if (mob == null) return false;
-        if (castRange > 0f && PlanarDist(player.position, mob.transform.position) > castRange) return false;
         target = mob.transform;
         return true;
     }
@@ -137,13 +140,15 @@ public class UnitTargeter : MonoBehaviour
 
         if (LeftDown() && !PointerOverUI() && hoverUnit != null)
         {
-            // Illegal kind → the exact warning the design asks for; out of range → a range warning. No spend either way.
+            // Illegal kind → the exact warning the design asks for. No spend.
             if (!hoverAllowed)
             {
                 BattleNotice.Warn(hoverIsPlayer ? "Can't target yourself" : "Can't target mobs");
                 return;
             }
-            if (!hoverInRange) { BattleNotice.Warn("Out of range"); return; }
+            // OUT OF RANGE IS NO LONGER A REFUSAL. Clicking a legal target too far away confirms it and the cast
+            // walks there before firing (SkillRunner.CastTargeted). The ring still reads red while it is out of
+            // reach, so the picture of the distance is unchanged — only the answer to clicking it is.
 
             var cb = onConfirm; var target = hoverUnit;
             Cancel();              // leave aim mode BEFORE firing so the skill's cooldown sweep starts cleanly

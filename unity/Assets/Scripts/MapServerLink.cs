@@ -272,8 +272,16 @@ public class MapServerLink : MonoBehaviour
                 // before it reads the row — this is the backstop for the one case that misses: somebody walking
                 // through a door back into a zone THIS server holds, where nothing was asked of anybody. Their
                 // write has already happened, before the door was answered, so nothing is lost by dropping them.
-                GameNetwork.DropWhoeverIsPlaying(who.characterId);
-                PlayerFighter.ReleaseCharacter(who.characterId);
+                // THE ONE EXCEPTION IS THE PERSON DOING THE MOVING. When the map they walked into is one THIS
+                // server already holds, the announcement is about them — and cutting them here would cut the
+                // connection their new address and ticket still have to be sent down. They keep their body and
+                // their registration until they turn up at the door with the ticket, which drops them there.
+                if (GameNetwork.WhoIsPlayingIsAlreadyMoving(who.characterId)) { /* left alone on purpose */ }
+                else
+                {
+                    GameNetwork.DropWhoeverIsPlaying(who.characterId);
+                    PlayerFighter.ReleaseCharacter(who.characterId);
+                }
 
                 // NOW they may be told, and not one line sooner: the ticket above is what the door checks, so the
                 // yes going out here is true the instant it is read. If the character server has already given up

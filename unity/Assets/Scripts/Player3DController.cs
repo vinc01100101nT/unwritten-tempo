@@ -132,7 +132,7 @@ public partial class Player3DController : MonoBehaviour
     /// Read by quick cast (<see cref="UnitTargeter"/>) so a pressed skill can fire at it without a reticle.</summary>
     public Health AttackTarget => attackTarget != null && !attackTarget.IsDead ? attackTarget : null;
 
-    enum Order { Idle, Move, AttackMove, Attack, AutoCombat }
+    enum Order { Idle, Move, AttackMove, Attack, AutoCombat, MoveIntoRange }
     Order order = Order.Idle;
     Vector3 movePoint;
     Health attackTarget;
@@ -581,6 +581,9 @@ public partial class Player3DController : MonoBehaviour
             case Order.AutoCombat:
                 return AutoStep();
 
+            case Order.MoveIntoRange:
+                return CloseTheGapStep();
+
             default:
                 return Vector3.zero;
         }
@@ -628,6 +631,75 @@ public partial class Player3DController : MonoBehaviour
         return routing ? FollowRoute() : Vector3.zero;
     }
 
+    // ---- walking into a skill's range ---------------------------------------------------------------------------
+    //
+    // WHY THIS EXISTS AT ALL. A basic attack has always walked you to whatever you told it to hit and swung the
+    // moment you were close enough, re-measuring the real gap every frame so a target that moves is followed. A
+    // skill did not: it measured the gap ONCE, at the click, and refused. This is that same walk, told a distance
+    // instead of a weapon's reach.
+    //
+    // IT LIVES HERE, ON THE MACHINE OF THE PERSON WALKING, for the same reason the attack pursuit does: this is the
+    // only machine that decides where they are. The server never moves anybody, and it is only told a position ten
+    // times a second, so a version of this waiting there would fire up to a tenth of a second past the line.
+    Transform gapTarget;
+    Health gapTargetHealth;        // resolved ONCE when the wait begins — never looked up per frame
+    float gapWanted;
+    System.Action onGapClosed;
+
+    /// <summary>Walk to <paramref name="target"/> and run <paramref name="onArrive"/> the first frame the flat
+    /// distance between the two bodies is <paramref name="range"/> or less. Replaces whatever order was running.
+    /// A target that dies or disappears drops the whole thing, and so does any new order the player gives.</summary>
+    public void BeginMoveIntoRange(Transform target, float range, System.Action onArrive)
+    {
+        if (target == null || onArrive == null) return;
+        ClearCombat();
+        DropTheWait();
+        order = Order.MoveIntoRange;
+        gapTarget = target;
+        gapTargetHealth = target.GetComponentInParent<Health>();
+        gapWanted = Mathf.Max(0f, range);
+        onGapClosed = onArrive;
+        routing = false; path.Clear(); nextChaseRepath = 0f;
+        if (targetMarker != null) targetMarker.Follow(target);
+    }
+
+    /// <summary>Forget a held skill without running it — the player gave another order, the target died, or they
+    /// pressed the same skill again. Leaves the order alone: every caller either sets its own or is already ending.</summary>
+    public void DropTheWait()
+    {
+        gapTarget = null; gapTargetHealth = null; onGapClosed = null; gapWanted = 0f;
+    }
+
+    // One step of the walk. The gap is measured against where the target is THIS frame, so a target that walks away
+    // is followed and one that walks toward us ends the wait early — the whole point of not deciding at the click.
+    Vector3 CloseTheGapStep()
+    {
+        if (gapTarget == null || (gapTargetHealth != null && gapTargetHealth.IsDead))
+        {
+            DropTheWait();
+            order = Order.Idle; routing = false; path.Clear();
+            if (targetMarker != null) targetMarker.Follow(null);
+            return Vector3.zero;
+        }
+
+        Vector3 gap = gapTarget.position - transform.position; gap.y = 0f;
+        if (gap.sqrMagnitude <= gapWanted * gapWanted)
+        {
+            var run = onGapClosed;
+            // CLEARED BEFORE IT RUNS. The skill about to start may begin an order of its own — a dash, a glide, a new
+            // target — and a wait still holding the reins would take that away from it on the very next frame.
+            DropTheWait();
+            order = Order.Idle; routing = false; path.Clear();
+            if (targetMarker != null) targetMarker.Follow(null);
+            worldFacing = gap.sqrMagnitude > 1e-4f ? gap : worldFacing;
+            run();
+            return Vector3.zero;
+        }
+
+        if (!routing || Time.time >= nextChaseRepath) { StartRoute(gapTarget.position); nextChaseRepath = Time.time + 0.3f; }
+        return routing ? FollowRoute() : Vector3.zero;
+    }
+
     // T: flip roam auto-combat on/off. Pressing it again (or S, or any manual order) turns it off.
     void ToggleAuto()
     {
@@ -658,6 +730,7 @@ public partial class Player3DController : MonoBehaviour
     void BeginAttack(Health mob, bool resume)
     {
         if (attacker != null) attacker.Cancel();
+        DropTheWait();   // same rule as ClearCombat: a new order calls off a held skill
         order = Order.Attack; attackTarget = mob; resumeAttackMove = resume;
         routing = false; path.Clear();
         if (targetMarker != null) targetMarker.Follow(mob != null ? mob.transform : null);
@@ -722,6 +795,7 @@ public partial class Player3DController : MonoBehaviour
     {
         AttackArmed = false; order = Order.Idle;
         routing = false; path.Clear(); attackTarget = null; resumeAttackMove = false;
+        DropTheWait();
         dashing = false; dashOnArrive = null; dashTarget = null; dashToPoint = false;   // a charge is cancelled by Stop / S
         if (attacker != null) attacker.Cancel();   // drop an in-flight swing's damage
         if (targetMarker != null) targetMarker.Follow(null);
@@ -843,6 +917,9 @@ public partial class Player3DController : MonoBehaviour
     {
         if (attacker != null) attacker.Cancel();
         attackTarget = null; resumeAttackMove = false;
+        // A NEW ORDER CALLS OFF A HELD SKILL. Every order that starts by clearing combat is the player saying to do
+        // something else instead, and a skill still waiting to fire behind that would go off during it.
+        DropTheWait();
         if (targetMarker != null) targetMarker.Follow(null);
     }
 

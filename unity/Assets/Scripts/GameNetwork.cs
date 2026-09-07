@@ -59,6 +59,17 @@ public class GameNetwork : NetworkManager
     int attemptsSpent;
     bool goneForGood;   // stop retrying once we have already bounced; a late failure must not restart the loop
 
+    // HANGING UP ON PURPOSE, to dial somewhere else. Walking through a door to a zone another process holds means
+    // letting go of this world deliberately — and Mirror reports that hang-up through the very same door as a
+    // connection that DROPPED, so without this the ordinary "you lost the world" answer runs on a move that is
+    // going perfectly well. That answer asks the character server to let this player in again two seconds later,
+    // and asking evicts them from wherever they now are — which drops them, which asks again, forever.
+    bool hangingUpToMove;
+
+    // The retry already waiting to fire, so a deliberate dial can call it off. Left running, it re-enters the
+    // world on top of a move that has already succeeded.
+    Coroutine pendingRetry;
+
     static GameObject mobPrefab;
 
     /// <summary>Server-only: announce a mob that has just come into existence, so every connected player
@@ -764,6 +775,25 @@ public class GameNetwork : NetworkManager
         });
     }
 
+    /// <summary>SERVER ONLY: is the connection playing this character one that has already walked into a door and
+    /// is waiting to be told where to go?
+    ///
+    /// <para>This exists for the map a player walks into that THIS SAME server already holds. The character server
+    /// announces them here before it answers the process they are standing on, and the ordinary answer to an
+    /// announcement is to drop whoever is playing that character — which here is the mover themselves, on the one
+    /// connection their new address and ticket still have to travel down. Cutting it kills the move at its first
+    /// step and leaves the player behind a curtain nothing can lower.</para></summary>
+    public static bool WhoIsPlayingIsAlreadyMoving(string characterId)
+    {
+        if (string.IsNullOrEmpty(characterId) || !NetworkServer.active) return false;
+        foreach (var conn in NetworkServer.connections.Values)
+        {
+            var shell = conn != null && conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+            if (shell != null && shell.ServerCharacterId == characterId) return shell.Leaving;
+        }
+        return false;
+    }
+
     public static bool DropWhoeverIsPlaying(string characterId)
     {
         if (string.IsNullOrEmpty(characterId) || !NetworkServer.active) return false;
@@ -1216,11 +1246,30 @@ public class GameNetwork : NetworkManager
 
     static void WhyRefused(string skillId, string why)
     {
-        string key = (skillId ?? "") + "|" + why;
-        if (!saidWhyRefused.Add(key)) return;
-        GameLog.Warn(LogCat.Server, "refused a skill strike from '" + (string.IsNullOrEmpty(skillId) ? "(unnamed)" : skillId)
+        if (!SaidOnce("strike|" + skillId + "|" + why)) return;
+        GameLog.Warn(LogCat.Server, "refused a skill strike from '" + Named(skillId)
                          + "': " + why + ". Nothing was damaged and no number was shown.");
     }
+
+    /// <summary>The same thing for the door one step earlier — the CAST itself, before any strike exists.
+    ///
+    /// <para>Every way out of that door used to be a bare return, so a skill the server would not run was silent on
+    /// every machine at once: nothing on the player's screen, nothing in any log, and the skill's own cooldown and
+    /// mana already spent on their side. "It does nothing" was the only report a play-test could make, and it named
+    /// none of the six different reasons it could have been. A WARNING rather than a category line, because the
+    /// category is off by default and a refusal nobody can see is exactly the thing this ends.</para></summary>
+    static void WhyCastRefused(string skillId, string why)
+    {
+        if (!SaidOnce("cast|" + skillId + "|" + why)) return;
+        GameLog.Warn(LogCat.Server, "would not cast '" + Named(skillId) + "': " + why
+                         + ". The skill did not run here, so nothing it does happened to anybody.");
+    }
+
+    // ONCE PER REASON PER SKILL. Said every time, a refused cast in a fight would fill the log with the same line
+    // sixty times a second and bury everything else in it.
+    static bool SaidOnce(string key) => saidWhyRefused.Add(key ?? "");
+
+    static string Named(string skillId) => string.IsNullOrEmpty(skillId) ? "(unnamed)" : skillId;
 
     static void WarnNoFighter(int connectionId)
     {
@@ -1396,6 +1445,17 @@ public class GameNetwork : NetworkManager
         // The pose is chosen from the weapon THIS machine holds for them, never from what their machine claims.
         if (attacker != null) attacker.BeganAction(WeaponStances.AttackFor(weapon), swingTime);
 
+        // ABOUT TO SWING — RAISED HERE, WHERE THE SWING ACTUALLY BEGINS. It used to be raised down at the contact
+        // moment instead, alongside "a swing landed", which put two moments that mean different things at the same
+        // instant and left the earlier one meaning nothing. The swing starts here and connects a fraction of a
+        // second later, and those are the two instants the two moments belong to.
+        //
+        // ONCE PER ACCEPTED SWING, on both roads out of this method — the melee blow scheduled below and a bow's,
+        // which lands straight away — so neither can raise it twice and neither can skip it.
+        var announceTo = VictimBehind(identity);
+        PassiveEvents.Fire(swinger, SkillTrigger.OnBasicAttackStart, null,
+                           announceTo is ICombatUnit hit ? hit.Body : identity.transform);
+
         // WHEN IT LANDS IS THIS MACHINE'S TOO. A swing was asked for at the moment it began, and it connects part
         // way through — the same fraction the swinger's own animation reaches, because both read the one number in
         // the shared character spec. Until this, the swinger's machine sent the request AT its contact frame, which
@@ -1448,6 +1508,13 @@ public class GameNetwork : NetworkManager
         var swinger = attacker != null && !attacker.Leaving ? attacker.ServerCombatUnit : null;
         if (swinger == null) return;
 
+        // AND THE DEAD DO NOT SWING. A blow is scheduled when the swing begins and lands a fraction of a second
+        // later, so a person killed inside their own wind-up was still landing it — and nothing here refused a
+        // request from somebody this machine already knew was dead, which left that entirely to the honesty of
+        // their own machine. The skill door has always refused a dead caster; this is the same refusal, on the
+        // one moment every basic attack passes through.
+        if (swinger.IsDead) return;
+
         // Reach is judged HERE, at the contact moment, exactly as it was when the swinger's own machine chose that
         // moment — so a target that walked out during the swing is missed the same way it always was.
         if (!WithinReach(swinger, victim)) return;
@@ -1459,10 +1526,11 @@ public class GameNetwork : NetworkManager
         // this was found — the two moments a swing raises, "about to swing" and "a swing landed", fired on NOBODY.
         // Every passive keyed to either of them was dead in a shared world.
         //
-        // It announces the intent here because the machine that swung can no longer do it: its own announcement
-        // fires against a character it does not decide for, so nothing comes of it.
+        // THE INTENT IS NOT ANNOUNCED HERE. It belongs to the moment the swing STARTED, which is where this machine
+        // now raises it (see OnHitRequest) — raising it again at the contact moment would be the same swing
+        // announcing itself twice, and would put "about to swing" and "a swing landed" at one instant.
         BasicSwing.Land(swinger, victim as ICombatUnit, ScaledNumber.Of(1f), StackVars.None,
-                        outer: 1f, overkill: false, announceIntent: true, out var resolved);
+                        outer: 1f, overkill: false, announceIntent: false, out var resolved);
 
         // …and then TELL EVERYONE. The server has no screen, so a blow it keeps to itself is a blow nobody sees.
         NetworkServer.SendToReadyObservers(identity, new HitResult
@@ -1484,6 +1552,13 @@ public class GameNetwork : NetworkManager
     // stop a blow aimed at something on the far side of the map. It is NOT a skill's range — the skill's own range
     // is checked on the machine that ran it, and moving that check here is part of resolving skills server-side.
     const float SkillReachCeiling = 30f;
+
+    // HOW MUCH FURTHER THAN ITS RANGE A CAST MAY BE AND STILL BE BELIEVED. This machine is told where a person is
+    // ten times a second, so its copy of both bodies can be a tenth of a second old — at a run that is a little
+    // over half a unit of drift between them, before any hitch on either side. Two units is several times that and
+    // still fifteen times tighter than the ceiling above, so an honest cast fired right on the line is never
+    // refused and a claim from across the clearing still is. Forgiving on purpose, exactly as the movement check is.
+    const float SkillRangeSlack = 2f;
 
     /// <summary>THE SERVER ROLLS THE SKILL. It is told which skill and which of that skill's strikes just landed on
     /// what — and works out how hard from the authored data and the character it holds, exactly as the player's own
@@ -1629,24 +1704,39 @@ public class GameNetwork : NetworkManager
     // a named strike already answers to, read from the same constant so the two cannot drift apart.
     void OnSkillCastRequest(NetworkConnectionToClient conn, SkillCastRequest msg)
     {
-        if (CastingTooFast(conn.connectionId)) return;
+        // EVERY REFUSAL BELOW SAYS SO, exactly as the strike door above already does. These were six bare returns,
+        // and a cast stopped by any of them was invisible everywhere: the player's own machine had already spent the
+        // mana and started the cooldown, their screen showed the skill doing nothing, and no log anywhere said which
+        // of the six it was. Silence has no stack trace.
+        if (CastingTooFast(conn.connectionId))
+        { WhyCastRefused(msg.skillId, "asked for faster than the ceiling allows"); return; }
 
         var def = SkillCatalog.Get(msg.skillId);
-        if (def == null || def.IsPassive) return;   // a passive has no pressed form: it fires from its own moments, here
+        if (def == null) { WhyCastRefused(msg.skillId, "this server has no such skill in its catalog"); return; }
+        // a passive has no pressed form: it fires from its own moments, here
+        if (def.IsPassive) { WhyCastRefused(msg.skillId, "it is a passive — it has no pressed form"); return; }
 
         var caster = FighterFor(conn) as Character;
         if (caster == null) { WarnNoFighter(conn.connectionId); return; }
         if (!Owns(caster, msg.skillId)) { WarnNotTheirSkill(conn.connectionId, msg.skillId); return; }
 
         var runner = PlayerFighter.RunnerFor(caster, msg.skillId);
-        if (runner == null) return;
+        if (runner == null)
+        { WhyCastRefused(msg.skillId, "this server built them no runner for it — it is not among the skills they can use"); return; }
 
         // WHERE THEY AIMED, put back into this machine's copy of their map.
         Vector3 point = MapManager.InWorld(msg.aimPoint, caster.Map);
 
         var casterBody = caster.Body;
-        if (casterBody == null) return;
-        if ((point - casterBody.position).sqrMagnitude > SkillReachCeiling * SkillReachCeiling) return;
+        if (casterBody == null)
+        { WhyCastRefused(msg.skillId, "this server has no body bound for that character"); return; }
+        if ((point - casterBody.position).sqrMagnitude > SkillReachCeiling * SkillReachCeiling)
+        {
+            WhyCastRefused(msg.skillId, "they aimed " + Mathf.RoundToInt((point - casterBody.position).magnitude)
+                             + " units away, past the ceiling of " + SkillReachCeiling
+                             + " — usually the map this server has them in disagreeing with the one they are in");
+            return;
+        }
 
         Transform aimed = null;
         if (msg.targetNetId != 0u && NetworkServer.spawned.TryGetValue(msg.targetNetId, out var identity) && identity != null)
@@ -1661,9 +1751,33 @@ public class GameNetwork : NetworkManager
             }
         }
 
+        // AND NOW THE SKILL'S OWN RANGE, which nothing on this machine used to ask. The ceiling above is one
+        // generous number for every skill in the game, so a cast authored to reach eight units was accepted from
+        // twenty-nine — the real range was checked only on the machine that asked, which is the machine with the
+        // most reason to lie about it.
+        //
+        // MEASURED AGAINST WHAT THE CAST NAMED: the picked unit when there is one, otherwise the aimed spot, which
+        // the aiming reticle already keeps inside the same range.
+        if (def.castRange > 0f)
+        {
+            Vector3 at = aimed != null ? aimed.position : point;
+            Vector3 gap = at - casterBody.position; gap.y = 0f;
+            float allowed = def.castRange + SkillRangeSlack;
+            if (gap.sqrMagnitude > allowed * allowed)
+            {
+                WhyCastRefused(msg.skillId, "they cast it from " + gap.magnitude.ToString("0.#")
+                                 + " units away and it reaches " + def.castRange);
+                return;
+            }
+        }
+
         // The cast itself announces each of its plays as they start (see AnnounceCastPlayed) — including its
         // repeats, so a shower's later falls reach every screen too, rather than only its first.
-        runner.CastFromRequest(aimed, point);
+        //
+        // AND WHEN THE RUNNER ITSELF SAYS NO, IT SAYS WHY. Its own gates — silenced, stunned, on cooldown, no mana,
+        // a pile it spends that is not there — were only ever written to a log category that is off by default, on
+        // the one machine nobody is watching. The reason comes back here and is said out loud with the rest.
+        if (!runner.CastFromRequest(aimed, point, out string why)) WhyCastRefused(msg.skillId, why);
     }
 
     /// <summary>Tell the server an item was used, so the skill it names is run there like every other skill.
@@ -1939,13 +2053,19 @@ public class GameNetwork : NetworkManager
             return;
         }
 
-        // AND IT MUST BE THE CHARACTER THEY WERE ANNOUNCED WITH. The name and the body on their message are
-        // only what to draw; anything that decides something is read off what the character server sent.
+        // AND WHOEVER WAS PLAYING THAT CHARACTER HERE IS FINISHED, NOW. A ticket is minted once, by the character
+        // server, in the same breath as it decides this arrival is the live copy — so somebody holding a good one
+        // always outranks whoever is already sitting on that character here.
+        //
+        // This is where the person walking through a door into a map this same server holds is let go: they were
+        // deliberately spared when they were announced, because that announcement had to leave their old
+        // connection alive long enough to send them this address and this ticket.
         if (PlayerFighter.AlreadyPlaying(announced.characterId))
         {
-            GameLog.Warn(LogCat.Server, "refused a second connection for a character already being played.");
-            conn.Disconnect();
-            return;
+            GameLog.Info(LogCat.Server, "letting go of the connection already playing that character — the one at "
+                             + "the door has a ticket for it.");
+            DropWhoeverIsPlaying(announced.characterId);
+            PlayerFighter.ReleaseCharacter(announced.characterId);
         }
 
         var go = Instantiate(playerPrefab);
@@ -2047,7 +2167,10 @@ public class GameNetwork : NetworkManager
                 GameLog.Info(LogCat.Server, whoLeft + " left because they are being played elsewhere now — not "
                                  + "writing this copy down over theirs.");
                 PlayerFighter.Dismiss(leaving);
-                PlayerFighter.ReleaseCharacter(theirCharacter);
+                // ONLY IF THE NAME IS STILL THIS SHELL'S. Somebody who walked into a map this same server holds is
+                // already playing again on a NEWER connection by the time this one is torn down, and freeing the
+                // name here would say nobody is playing that character while somebody plainly is.
+                PlayerFighter.ReleaseCharacterIfHeldBy(theirCharacter, leaving);
                 base.OnServerDisconnect(conn);
                 return;
             }
@@ -2066,8 +2189,9 @@ public class GameNetwork : NetworkManager
                 if (!ok) GameLog.Error(LogCat.Server, "" + whoLeft + " left and their character could NOT be "
                                         + "written down. Their last few seconds are lost.");
                 // Said again for the case the line above cannot cover: if anything else released the body
-                // first, the name still has to come free.
-                PlayerFighter.ReleaseCharacter(theirCharacter);
+                // first, the name still has to come free — but only while it is still THIS shell's, because a
+                // slow write can land long after the character has been handed to a newer connection.
+                PlayerFighter.ReleaseCharacterIfHeldBy(theirCharacter, leaving);
             });
 
             // AND THE NAME IS FREED IMMEDIATELY, not when the write lands — this runs now, not in the answer above.
@@ -2112,6 +2236,9 @@ public class GameNetwork : NetworkManager
     {
         if (spawned == null) return;
         spawned.attemptsSpent = 0;
+        // AND THE HANG-UP IS OVER. Left standing — because a hang-up did not reach the handler for once — it would
+        // swallow the next REAL drop and leave somebody staring at a world that is not there.
+        spawned.hangingUpToMove = false;
         ReconnectNotice.Hide();
         OnJoinedWorld?.Invoke();
 
@@ -2122,12 +2249,45 @@ public class GameNetwork : NetworkManager
         string map = movingToMap;
         movingToMap = null;
         LoadingScreen.SetStep("Arriving…");
-        MapManager.Travel(map, null);
+
+        // AND THE CURTAIN COMES DOWN WHEN THE MAP IS ACTUALLY THERE, not when it was asked for. Travel only
+        // STARTS a load; without waiting for it to land the screen stayed up on "Arriving…" forever, because
+        // nothing else on this path ever lowered it. Signed up for one arrival and taken straight off again, so
+        // an ordinary door later cannot lower a screen that is not up.
+        string spawn = movingToSpawn;
+        movingToSpawn = null;
+
+        // ALREADY THERE? Then put them at the doorway they arrived by and lower it now. The map can finish
+        // loading before this runs, and waiting for an arrival that has already happened never ends.
+        var already = UnityEngine.SceneManagement.SceneManager.GetSceneByName(map);
+        if (already.IsValid() && already.isLoaded)
+        {
+            SceneTravel.Target = spawn;
+            if (PersistentPlayer3D.Instance != null) PersistentPlayer3D.Instance.ReturnToSavedPlace();
+            LoadingScreen.Hide();
+            return;
+        }
+
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnMoveArrived;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnMoveArrived;
+        MapManager.Travel(map, spawn);
     }
 
     // The map this player is moving to on ANOTHER server, remembered across the hang-up and the dial because the
     // connection that knew about it is the one being replaced.
     static string movingToMap;
+
+    // WHICH DOORWAY THEY CAME OUT OF. Arriving with no spawn point left them standing exactly where they were,
+    // which is INSIDE the door they just walked into — so it fired again the moment they landed, and again after
+    // that. The curtain never came down because the move never stopped starting over.
+    static string movingToSpawn;
+
+    static void OnMoveArrived(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (scene.name == MapManager.SystemsScene) return;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnMoveArrived;
+        LoadingScreen.Hide();
+    }
 
     /// <summary>Leave this world for another one, with the address and the one-time ticket the character server
     /// has already handed the process we are leaving.
@@ -2140,15 +2300,27 @@ public class GameNetwork : NetworkManager
     /// <para>It does not walk the ordinary reconnect path: that one waits two seconds before it even asks, counts
     /// against the three tries that end in being signed out, and is written for a connection that DROPPED. This
     /// hang-up is deliberate.</para></summary>
-    public static void MoveToAnotherServer(string host, int port, string ticket, string map)
+    public static void MoveToAnotherServer(string host, int port, string ticket, string map, string spawnId)
     {
         if (spawned == null || string.IsNullOrEmpty(ticket)) return;
 
         LoadingScreen.SetStep("Arriving…");
         movingToMap = map;
+        movingToSpawn = spawnId;
 
         AccountSession.EntryTicket = ticket;
-        if (NetworkClient.active) spawned.StopClient();
+
+        // SAID BEFORE THE HANG-UP, NOT AFTER. Letting go of this world fires the same handler as a connection
+        // that dropped, and that handler starts a two-second retry — which asks the character server to let this
+        // player in all over again, on top of a move that is already working. Asking evicts them from the world
+        // they have just arrived in, and being evicted asks again: MEASURED on a real run, thirty-two rounds of
+        // dropping and reconnecting over sixty-five seconds after one step through a door.
+        if (NetworkClient.active) { spawned.hangingUpToMove = true; spawned.StopClient(); }
+
+        // AND ANY RETRY ALREADY WAITING IS CALLED OFF. One left over from an earlier drop would fire in the
+        // middle of this move and start the same loop from the other end.
+        if (spawned.pendingRetry != null) { spawned.StopCoroutine(spawned.pendingRetry); spawned.pendingRetry = null; }
+
         if (!string.IsNullOrEmpty(host)) spawned.networkAddress = host;
         if (port > 0 && port <= ushort.MaxValue && Transport.active is kcp2k.KcpTransport kcp)
             kcp.port = (ushort)port;
@@ -2169,12 +2341,16 @@ public class GameNetwork : NetworkManager
         // answer — try again, then give up.
         if (GameServer.IsServer || goneForGood) return;
 
+        // WE HUNG UP ON PURPOSE. Nothing was lost, so nothing is counted, no notice goes on screen, and above all
+        // no retry is scheduled — the dial to the other world is already on its way from the line that set this.
+        if (hangingUpToMove) { hangingUpToMove = false; return; }
+
         attemptsSpent++;
         if (attemptsSpent < JoinAttempts)
         {
             GameLog.Info(LogCat.Client, "lost the world — retrying (" + attemptsSpent + " of " + JoinAttempts + ")");
             ReconnectNotice.Show();
-            StartCoroutine(DialAgainShortly());
+            pendingRetry = StartCoroutine(DialAgainShortly());
             return;
         }
 
@@ -2187,6 +2363,7 @@ public class GameNetwork : NetworkManager
     System.Collections.IEnumerator DialAgainShortly()
     {
         yield return new WaitForSeconds(SecondsBetweenAttempts);
+        pendingRetry = null;
         if (goneForGood) yield break;
 
         // A FRESH TICKET, not the spent one. A ticket opens the door exactly once — that is the whole point of

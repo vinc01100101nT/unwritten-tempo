@@ -104,6 +104,25 @@ public static class PassiveEvents
             // off whoever happens to be at a keyboard.
             if (owner != null && !owner.PassiveSkills.IsActive(def)) continue;
 
+            // THE SAME REACH ITS PRESSED FORM HAS. A skill whose manual cast makes you PICK a target can only pick
+            // one inside its cast range — the picker is built with that number. Fired by a moment instead of by a
+            // press, it had no range at all, so the same skill reached as far as whatever moment produced it: an
+            // auto-fired Lunge answered a target picked up at fourteen units when pressing Lunge cannot reach past
+            // eight. One skill, two reaches, and the longer one is the one nobody authored.
+            //
+            // Only skills that ask for a PICK are bound by this, because they are the only ones whose pressed form
+            // is range-limited at all. A skill that lands on whoever the moment names — every passive that answers a
+            // hit you just dealt or took — is untouched, and so is any moment that names nobody.
+            if (victim != null && def.NeedsUnitPick && def.castRange > 0f)
+            {
+                var from = actor.Body;
+                if (from != null)
+                {
+                    Vector3 gap = victim.position - from.position; gap.y = 0f;
+                    if (gap.sqrMagnitude > def.castRange * def.castRange) continue;
+                }
+            }
+
             // THE BRAKE: skip a passive already in this causal chain (it, or something it caused, led here). Unrelated
             // passives are untouched — "passive A kills, passive B reacts" stays legal.
             ulong bit = 1UL << i;
@@ -121,9 +140,25 @@ public static class PassiveEvents
             // reason NOT to fire, so reaching here is the event worth writing down. Behind the switch because
             // this is the per-hit path: with the category off it costs one bit test and builds no string.
             if (GameLog.On(LogCat.Passive))
+            {
+                // HOW FAR AWAY IT WAS, said with the name. A trigger-fired skill has no range limit of its own, so
+                // "it fired" answers nothing on its own — the question is always whether it fired from where the
+                // player thought it would. Only built when the category is on, and only when there is a body and a
+                // victim to measure between.
+                string how = "";
+                if (victim != null)
+                {
+                    var from = actor.Body;
+                    if (from != null)
+                    {
+                        Vector3 d = victim.position - from.position; d.y = 0f;
+                        how = string.Concat(" at ", victim.name, ", ", d.magnitude.ToString("0.##"), " units away");
+                    }
+                    else how = string.Concat(" at ", victim.name);
+                }
                 GameLog.Info(LogCat.Passive, string.Concat(
-                    owner != null ? owner.name : "somebody", " fired ", def.id, " on ", trigger.ToString(),
-                    victim != null ? string.Concat(" at ", victim.name) : ""));
+                    owner != null ? owner.name : "somebody", " fired ", def.id, " on ", trigger.ToString(), how));
+            }
 
             r.FireAsPassive(entry, victim, chain | bit);   // fire the whole skill; the chain it hands to its own effects includes itself
         }

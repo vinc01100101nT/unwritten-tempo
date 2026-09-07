@@ -380,7 +380,14 @@ public class Character : MonoBehaviour, ICombatUnit
     /// the answer only existed while a body was standing in the scene — so a server, which holds a character with no
     /// body of its own, got 0 and refused every blow as out of reach. Reach is a fact about what somebody is holding,
     /// and what somebody is holding lives here.</para></summary>
-    public float MeleeReachFullSize => WeaponReach.Of(GetEquipped(EquipSlotType.Weapon), unarmedReach);
+    /// <para>PLUS whatever a skill is lending right now. A basic-attack range bonus is added here, at the one place
+    /// reach is answered, so the walk that stops when you are close enough, the swing that decides it may land, and
+    /// the server that checks it really did all read the same longer number and cannot disagree.</para>
+    public float MeleeReachFullSize
+        => Mathf.Max(0f, EquippedReachFullSize + States.SubStatBonus(SubStat.BasicAttackRange));
+
+    /// <summary>Gear alone, with nothing a skill is lending — see <see cref="ICombatUnit.EquippedReachFullSize"/>.</summary>
+    public float EquippedReachFullSize => WeaponReach.Of(GetEquipped(EquipSlotType.Weapon), unarmedReach);
 
     /// <summary>SECONDS BETWEEN SWINGS at this unit's current attack speed — the live cadence, buffs included.
     ///
@@ -418,6 +425,21 @@ public class Character : MonoBehaviour, ICombatUnit
         var r = Rig(); if (r != null) r.BeginGlideTo(dest, speedMult, easeIn, easeOut, easeSeconds, faceAt);
     }
     public bool IsRelocating { get { var r = Rig(); return r != null && r.SkillGliding; } }
+
+    /// <summary>Walk this character to <paramref name="target"/> and run <paramref name="onArrive"/> the moment the
+    /// gap is <paramref name="range"/> or less — the walk a skill does when it was pressed from too far away. FALSE
+    /// when there are no legs to do it with, which is every character a server holds: walking is the owner's machine
+    /// to do, so the wait belongs there and nowhere else.</summary>
+    public bool WalkIntoRange(Transform target, float range, System.Action onArrive)
+    {
+        var r = Rig();
+        if (r == null) return false;
+        r.BeginMoveIntoRange(target, range, onArrive);
+        return true;
+    }
+
+    /// <summary>Call off a walk started by <see cref="WalkIntoRange"/> without running what it was holding.</summary>
+    public void StopWalkingIntoRange() { var r = Rig(); if (r != null) r.DropTheWait(); }
     public void Shove(Vector3 worldFrom, float speed, float seconds, float stagger)
     {
         if (States != null && States.DisablesBlocked) return;   // a shove is a disable: the window turns it away
@@ -512,7 +534,12 @@ public class Character : MonoBehaviour, ICombatUnit
         hardDefPct = HardDefPercent, hardMdefPct = HardMagicDefPercent,
         guardCutPct = DamageCutNow, lifeStealPct = LifeStealPct,
         reflectPct = ReflectPctNow, manaLeechPct = ManaLeechPctNow, barrierHP = BarrierNow,
+        basicAttackRange = ReachNow,
     };
+
+    // Reach for the sheet, on the same baseline switch every other line uses: gear alone when the window is
+    // snapshotting what you are without your buffs, gear plus whatever a skill is lending in the live view.
+    float ReachNow => ignoreStates ? EquippedReachFullSize : MeleeReachFullSize;
 
     // State-sourced readouts, neutral while BaseDerived is snapshotting — so each reads 0 on the baseline and shows its
     // real value in the live view, giving the window a clean "0 (+25)" bonus line instead of a silently-mixed number.
@@ -969,6 +996,18 @@ public class Character : MonoBehaviour, ICombatUnit
     ///
     /// <para>Without it, a skill dropped onto the bar is recorded in the bar and has no component behind it, so
     /// the slot draws empty and the skill cannot be cast — which looks exactly like the drop having failed.</para></summary>
+    /// <summary>Rebuild what this character can use, and the positions behind it.
+    ///
+    /// <para><b>THE RULE, and it binds every caller: change any of the FOUR sources below and call this in the same
+    /// breath.</b> The four are the hotbar (its slots and its ult), the ticked passives, the equipped weapon's kit,
+    /// and the consumables in the bag — see <see cref="UsableSkills"/>. A skill has nothing to run it until this has
+    /// run, so a source changed without it leaves the character agreeing the skill is theirs and holding nothing to
+    /// cast it with: the press is refused and, before it said so, refused in total silence.</para>
+    ///
+    /// <para>This was a real bug on the SERVER for every one of them: only a weapon swap and the moment somebody
+    /// joined ever rebuilt, so a skill dragged onto the bar from the Grimoire, a passive ticked on, and a potion
+    /// picked up all did nothing until the next sign-in. The player's own machine had always rebuilt on the same
+    /// changes, which is why it looked like it should work right up until it was pressed.</para></summary>
     public void RefreshUsableSkills()
     {
         if (skillHost != null) BindSkills(skillHost, UsableSkills());

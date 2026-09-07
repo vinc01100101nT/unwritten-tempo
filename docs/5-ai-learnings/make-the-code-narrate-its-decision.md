@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-02
+last-updated: 2026-09-06
 tags:
   - ai-learnings
 ---
@@ -50,9 +50,19 @@ the shipped build.
 4. **Filter the subject deliberately.** The first thing to tick is often a special case — a training dummy, a
    placeholder — and you will read its numbers thinking they are typical. Require a property only a real subject
    has.
-5. **Get the output where you can actually read it.** If the process writes to a terminal nobody is watching,
-   restart it with its output to a file first.
-6. **"Nothing fired" means nothing fired in EVERY process's log — and the report must NAME the logs that were
+5. **Get the output where you can actually read it — and do it FIRST, before any diagnosis at all.** If the
+   process writes to a terminal nobody is watching, ask for it to be restarted with its output to a file **as the
+   opening move of the session**, not after the blind rounds. **Cost: 2026-09-05, three separate rounds.** Every
+   one of them ended at the same wall — the answer was in a headless server's own output, which was going to a
+   terminal window and nowhere else — and each time it was noticed only after the reasoning had already run out.
+   One sentence at the start would have bought all three.
+6. **When one door in a file names its refusals and its SIBLING does not, the silent one is where the bug is.**
+   The fix is already written next door, so copy it rather than inventing a style. 2026-09-05: a skill's damage
+   door opened with "each way out names itself — silence has no stack trace" and did exactly that at ten exits.
+   The CAST door, one function below it, had **six bare returns and not a word**. Everything the player reported
+   as "the skill does nothing" came through those six. Whoever wrote the first one had already learned the
+   lesson; nobody carried it across.
+7. **"Nothing fired" means nothing fired in EVERY process's log — and the report must NAME the logs that were
    read.** A game with a client and a separate server is two programs with two separate logs, and a probe that
    lives in shared code prints into whichever one ran it. Reading one of them and concluding the probe never
    fired is not a measurement, it is half a measurement wearing a measurement's confidence. Before writing the
@@ -62,9 +72,9 @@ the shipped build.
    itself, and not one fired" and closed at 0% confidence. One HAD fired, in the standalone server's own log
    file, which was still sitting on disk untouched. Its single line named the exact path the damage was taking
    and the next session found the root cause from it in minutes.
-7. **A probe's stated REASON can be wrong on a machine it was not written for.** The line that finally cracked
+8. **A probe's stated REASON can be wrong on a machine it was not written for.** The line that finally cracked
    this one blamed "no shell for that body" when the real reason on that machine was simply being the
    authority — the same early return, two different causes. Read what the probe PROVES (this code ran, here),
    not only what it CLAIMS.
-8. **Delete it when done, and prove it is gone** — rebuild and confirm the probe's own text does not appear in
+9. **Delete it when done, and prove it is gone** — rebuild and confirm the probe's own text does not appear in
    the shipped artifact. Then say so in the report.

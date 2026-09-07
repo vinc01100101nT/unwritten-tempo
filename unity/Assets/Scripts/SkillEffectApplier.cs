@@ -145,7 +145,11 @@ public static class SkillEffectApplier
         Transform body = mover?.Body;
         if (body == null) return aim;
 
-        float full = mover.MeleeReachFullSize;
+        // GEAR ONLY, never what a skill is lending. This is the one reader that PLACES a body rather than judging a
+        // blow: it wants striking distance, and striking distance is a fact about the weapon. Reading the lent
+        // version put the mover as far past the target as the bonus was long — and further with every charge, so a
+        // gap-closer whose own buff lengthened reach flung you further away the better it was working.
+        float full = mover.EquippedReachFullSize;
         if (full <= 0f) return aim;   // reach unknown (avatar not spawned yet) — don't invent a landing spot
 
         // The thing we're landing next to: the cast's picked unit, else whatever mob the aim point is sitting on (a

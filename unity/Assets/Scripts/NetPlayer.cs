@@ -99,6 +99,19 @@ public class NetPlayer : NetworkBehaviour
     /// deliberately not a synced value and no client is ever told it.</summary>
     public string ServerCharacterId { get; set; }
 
+    /// <summary>SERVER ONLY: where this person was sent, taken from the character the character server pushed —
+    /// so the server knows which map they are in from the moment it hands them a body, instead of waiting to be
+    /// told by their machine.
+    ///
+    /// <para>Waiting was the bug: for the first second or so of a session the server had no map for them, so a
+    /// save in that window was refused to avoid erasing where they were standing — and walking through a door in
+    /// that window aborted the move, because a move begins by writing them down. The server put them there; it
+    /// does not need to be told.</para></summary>
+    public void SetMapOnArrival(string map)
+    {
+        if (!string.IsNullOrWhiteSpace(map) && string.IsNullOrEmpty(mapName)) mapName = map;
+    }
+
     /// <summary>SERVER ONLY: whose account this character belongs to. Like the id above it is never told to any
     /// client; it is here because a one-time ticket is minted against an account.</summary>
     public string ServerAccountId { get; set; }
@@ -151,11 +164,11 @@ public class NetPlayer : NetworkBehaviour
         {
             if (this == null) return;
             if (!ok) { Leaving = false; TargetMoveFailed(connectionToClient, "could not save your character"); return; }
-            AskTheCharacterServerToMoveMe(map);
+            AskTheCharacterServerToMoveMe(map, spawnId);
         });
     }
 
-    void AskTheCharacterServerToMoveMe(string map)
+    void AskTheCharacterServerToMoveMe(string map, string spawnId)
     {
         TargetMoveStep(connectionToClient, "Finding the map…");
 
@@ -176,7 +189,7 @@ public class NetPlayer : NetworkBehaviour
             }
 
             GameLog.Info(LogCat.Server, playerName + " is moving to '" + map + "' at " + where.host + ":" + where.port);
-            TargetMoveTo(connectionToClient, where.host, where.port, where.ticket, map);
+            TargetMoveTo(connectionToClient, where.host, where.port, where.ticket, map, spawnId);
         });
     }
 
@@ -188,8 +201,8 @@ public class NetPlayer : NetworkBehaviour
     void TargetMoveStep(NetworkConnectionToClient target, string what) => LoadingScreen.SetStep(what);
 
     [TargetRpc]
-    void TargetMoveTo(NetworkConnectionToClient target, string host, int port, string ticket, string map)
-        => GameNetwork.MoveToAnotherServer(host, port, ticket, map);
+    void TargetMoveTo(NetworkConnectionToClient target, string host, int port, string ticket, string map, string spawnId)
+        => GameNetwork.MoveToAnotherServer(host, port, ticket, map, spawnId);
 
     [TargetRpc]
     void TargetMoveFailed(NetworkConnectionToClient target, string why)
@@ -699,6 +712,12 @@ public class NetPlayer : NetworkBehaviour
         var c = ServerCharacter;
         if (c == null || bindings == null || bindings.Length > 64) return;
         c.Hotbar.Restore(bindings);
+        // AND THE SKILLS BEHIND THE NEW BAR. What a character can use is built from four places — the bar, their
+        // ticked passives, their weapon and their bag — and a skill only gets something to run it when that list is
+        // rebuilt. Storing the bar without this left the server agreeing the skill was theirs and holding nothing to
+        // cast it with, so the press was refused: their own machine spent the mana and the cooldown and the skill did
+        // nothing. Their machine has always done this on the very same change (HotbarCommit.Now); this side never was.
+        c.RefreshUsableSkills();
         SaveSoon();
     }
 
@@ -709,6 +728,7 @@ public class NetPlayer : NetworkBehaviour
         var c = ServerCharacter;
         if (c == null || chosen == null || chosen.Length > 64) return;
         c.PassiveSkills.Restore(chosen);
+        c.RefreshUsableSkills();   // same rule as the bar above: what they can use changed, so the list is rebuilt
         SaveSoon();
     }
 
@@ -736,6 +756,11 @@ public class NetPlayer : NetworkBehaviour
     {
         if (!isServer) return;
         if (ServerCombatUnit is not Character fighter || fighter == null) return;
+        // WHAT THEY CAN USE CHANGED TOO. A consumable's effect is a skill, and the bag is one of the four places
+        // that list is built from — so a potion picked up mid-session had nothing behind it here and drinking it
+        // did nothing at all. This is the one place every change the server makes to a bag passes through, which
+        // is why the rebuild sits here rather than at each of them.
+        fighter.RefreshUsableSkills();
         TargetBagChanged(connectionToClient, BagWire.From(fighter));
     }
 

@@ -60,6 +60,17 @@ public class Portal3D : MonoBehaviour
         GameLog.Warn(LogCat.Client, "walked into a door with no world to ask — staying put.");
     }
 
+    // WALKING BACK OUT MAKES THE DOOR USABLE AGAIN. The latch above only exists to stop the same step through a
+    // door being counted several times while the answer is still coming back. When the answer is "no" the player
+    // is left standing exactly where they were — inside this trigger — and without this the door they are stood
+    // in is dead for the rest of the session and there is nothing on screen to say why. Clearing it here and not
+    // on the refusal is deliberate: standing in a door that just refused them must not ask again every frame.
+    void OnTriggerExit(Collider other)
+    {
+        if (other.GetComponentInParent<Player3DController>() == null) return;
+        fired = false;
+    }
+
     // Draw a translucent box in the Scene view so you can place it (the trigger is invisible in-game;
     // the bakers add a separate visible "warp pad" child).
     void OnDrawGizmos()

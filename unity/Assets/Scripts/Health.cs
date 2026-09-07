@@ -88,6 +88,19 @@ public class Health : MonoBehaviour, ICombatUnit
     {
         get
         {
+            // AND WHATEVER A SKILL IS LENDING, exactly as the player's does — a mob gets every skill a player gets, so
+            // a reach bonus has to reach it here or the same buff would mean nothing on half the units in the world.
+            float worn = EquippedReachFullSize;
+            var st = States;
+            return st != null ? Mathf.Max(0f, worn + st.SubStatBonus(SubStat.BasicAttackRange)) : worn;
+        }
+    }
+
+    /// <summary>Gear alone, with nothing a skill is lending — see <see cref="ICombatUnit.EquippedReachFullSize"/>.</summary>
+    public float EquippedReachFullSize
+    {
+        get
+        {
             var b = Brain;
             return b != null ? WeaponReach.For(b.Equipment, b.touchRange) : 0.5f;   // no brain (the spike): sane default
         }

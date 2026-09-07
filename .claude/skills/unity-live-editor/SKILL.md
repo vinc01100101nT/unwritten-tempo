@@ -55,6 +55,39 @@ what you MEASURED:
   just-edited `.cs` hasn't recompiled. Use that to sidestep compile order: patch the asset directly instead of
   waiting on a code edit.
 
+## "Main thread operation timed out" is the CALLER giving up — not a crash
+
+Every command runs on Unity's ONE main thread, and that thread is blocked for whole seconds to whole minutes
+while it compiles scripts, imports assets, loads a scene, or builds a player. The wait budgets belong to the
+CALLER, and they are short:
+
+- **30 seconds** for any `unity cmd …` — the CLI's `--timeout`, which is in SECONDS and defaults to 30.
+- **5 seconds** for `eval` / `eval_file` — those carry their OWN `--timeout`, in MILLISECONDS, default 5000,
+  and it overrides the CLI one.
+
+When a budget runs out the editor prints a red `Failed to handle /api/exec request: Main thread operation timed
+out after Nms`. **It does not mean the work was undone:** a command still sitting in the queue is cancelled, but
+one that had already begun on the main thread runs to completion anyway — so after a timeout on a MUTATING
+command, go and look at what it did before re-firing it.
+
+**Before any command that needs the main thread, check the editor is idle:**
+
+```bash
+unity cmd editor_status --json   # want compiling:false, domainReloadInProgress:false, playMode:"stopped"
+```
+
+The in-editor half has a busy gate of its own, but it only covers the first seconds after an editor START. A
+mid-session compile, asset import or player build is NOT rejected for you — the command queues, waits, and then
+times out.
+
+**And give a slow call a budget bigger than the work:**
+
+```bash
+unity cmd eval --code '…' --timeout 120000   # eval/eval_file only, MILLISECONDS
+unity cmd <other-command> --timeout 300      # everything else, SECONDS
+unity cmd <slow-command> --detach            # returns a job id at once, then poll for the result
+```
+
 ## Proven vs unproven — say which
 
 **Reading is proven** (2026-08-20): the live scene tree, the console, compile state, and a scene-view screenshot

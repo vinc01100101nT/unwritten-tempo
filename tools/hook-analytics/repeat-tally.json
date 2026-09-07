@@ -19,6 +19,19 @@
       "unwritten-server.app"
     ]
   },
+  "299ee55d-a527-4b41-8c2c-bc458145f035": {
+    "counts": {
+      "build-game.sh": 1
+    }
+  },
+  "2c18bf0c-b6b2-42e6-acc2-e434f8bf65e8": {
+    "counts": {
+      "build-game.sh": 3
+    },
+    "told": [
+      "build-game.sh"
+    ]
+  },
   "7c69e1a3-4830-490f-a8d2-3f1fccafeb0a": {
     "counts": {
       "check-perf-hotpaths.py 2>&1": 5,
@@ -36,26 +49,34 @@
       "recompile _status"
     ]
   },
+  "a37e24ce-511d-435d-8b56-b728ef073780": {
+    "counts": {
+      "unwritten-server.app": 1
+    }
+  },
   "b6f716f6-6077-4ede-8e0e-96850e637db3": {
     "counts": {
-      "check-perf-hotpaths.py 2>&1": 18,
+      "check-perf-hotpaths.py 2>&1": 19,
+      "check-skill-data.py 2>&1": 2,
       "check-unity-code.sh": 1,
-      "check-unity-code.sh 2>&1": 60,
+      "check-unity-code.sh 2>&1": 73,
       "check-unity-code.sh ;": 1,
       "check-unity-code.sh >": 2,
       "check-unity-code.sh |": 2,
       "npm run migrate": 1,
       "npm run typecheck": 1,
-      "recompile 2>&1": 4,
+      "recompile 2>&1": 6,
       "recompile 2>&1|tail": 1,
       "recompile _status": 3,
       "recompile _status\";": 1,
       "recompile d": 1,
       "recompile was": 3,
-      "unwritten-server.app": 2
+      "unwritten-server.app": 8,
+      "unwritten-server.app \"": 1
     },
     "told": [
       "check-perf-hotpaths.py 2>&1",
+      "check-skill-data.py 2>&1",
       "check-unity-code.sh 2>&1",
       "check-unity-code.sh >",
       "check-unity-code.sh |",
@@ -113,6 +134,25 @@
       "unwritten-server.app",
       "unwritten-server.app \"",
       "unwritten-server.app ];"
+    ]
+  },
+  "dceca411-458d-42aa-a1c0-4a274045918e": {
+    "counts": {
+      "build-game.sh": 2,
+      "check-perf-hotpaths.py 2>&1": 3,
+      "check-skill-data.py 2>&1": 1,
+      "check-unity-code.sh 2>&1": 14,
+      "recompile 120": 7,
+      "recompile _status": 4,
+      "recompile during": 1,
+      "recompile without": 1
+    },
+    "told": [
+      "build-game.sh",
+      "check-perf-hotpaths.py 2>&1",
+      "check-unity-code.sh 2>&1",
+      "recompile 120",
+      "recompile _status"
     ]
   },
   "f0d88296-1594-41db-a1f5-e1626de21316": {

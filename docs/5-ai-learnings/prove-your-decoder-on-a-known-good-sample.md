@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-01
+last-updated: 2026-09-06
 tags:
   - ai-learnings
 ---
@@ -11,13 +11,20 @@ tags:
 ## Reach for this when
 
 **You wrote a small parser or probe to inspect some data, and it is telling you the data is corrupt, empty or
-wrong.**
+wrong.** Or **you built a throwaway copy of something to test against, and the code you are testing appears to
+do nothing to it.**
 
 ## The rule
 
 An instrument you just wrote is a hypothesis, not a measurement. Before reporting anything it says, run it on a
 sample you already know is GOOD. If the good sample comes back looking broken too, the broken thing is your
 decoder — say nothing about the data until it can tell the two apart.
+
+**A throwaway OBJECT is an instrument too, and it is a worse one, because it can be in a state the real thing
+never is.** Something you assembled by hand skips whatever the real one goes through to become valid — it can be
+dead, unregistered, unowned, uninitialised — and every one of those makes real, working code do nothing to it,
+for reasons that have nothing to do with the bug. **So make it succeed at something FIRST**, and only then trust
+it to show a failure.
 
 ## Why
 
@@ -33,9 +40,26 @@ Cost: one false statement to the user inside a report of otherwise measured fact
 because it makes the real measurements around it untrustworthy. The control took one command and would have
 caught it before a word was sent.
 
+**2026-09-05 — the same failure, with an OBJECT instead of a parser, twice in ten minutes.** Two of a player's
+skills did nothing. To test the machinery offline I built a bare character in a throwaway object, fed it the
+real authored skill data, and read back: nothing applied. Every skill of that kind came back empty. It looked
+like clear evidence the whole delivery layer was broken.
+
+It was not. **The character had 0 health, so it counted as dead**, and the very first line of the code I was
+testing turns dead casters away. Reviving it did nothing either — a fresh object has no health to restore.
+Handing it health directly finally worked, and then **every one of those skills applied perfectly**.
+
+Ten minutes later the same probe lied a second way: a full end-to-end cast returned success and still armed
+nothing. The reason was that **a second character on a player's machine destroys itself** — the object I was
+measuring was gone by the next frame, before the effect landed.
+
+Cost: about half an hour, and I came close to reporting a healthy system as broken inside a report of otherwise
+measured facts.
+
 This is the sibling of the rule that an empty search result is not proof of absence. That one says *prove your
-search can see a known-present case*. This one says *prove your decoder can read a known-good file*. Same
-failure, opposite direction: there, the instrument was blind; here, the instrument was lying.
+search can see a known-present case*. This one says *prove your decoder can read a known-good file*, and *prove
+your test subject is alive enough to be acted on*. Same failure, three directions: the instrument blind, the
+instrument lying, or the instrument in a state that guarantees the answer.
 
 ## How to apply
 
@@ -48,3 +72,16 @@ failure, opposite direction: there, the instrument was blind; here, the instrume
 - **Different ⇒ you have a real finding**, and now you can say so with the comparison attached.
 - **When you cannot build a control, say the reading is unverified** in the same sentence as the reading. A
   number with no control is a guess wearing a lab coat.
+
+**When the instrument is a hand-built OBJECT rather than a parser, add these:**
+
+- **Make it succeed at something first.** Run the code on a case you are certain works, or on the real live
+  object, before you trust it to report a failure. A subject that produces nothing for every input is not
+  evidence about any of them.
+- **Read the very first lines of the code you are testing and check your subject passes them.** Alive, owned,
+  registered, enabled, in the right list. Those gates exist for the real thing and they will turn your stand-in
+  away without a word.
+- **Check your subject is still THERE when you read the answer.** Anything that spans more than one frame gives
+  the system a chance to tear down something it did not expect to exist. Read the object back by name before
+  believing what it says.
+

@@ -79,6 +79,12 @@ public interface ICombatUnit : IDamageable
     /// same-sized shadow mob disagree about the identical pairing.</summary>
     float MeleeReachFullSize { get; }
 
+    /// <summary>The same reach WITHOUT anything a skill is lending — what this unit's gear alone gives it. Asked by
+    /// the one caller that is placing a body rather than judging a blow: a dash lands you at striking distance from
+    /// what you are hitting, and striking distance is a fact about your weapon. Reading the lent version there sent
+    /// you as far past the target as the bonus was long, and further with every charge.</summary>
+    float EquippedReachFullSize { get; }
+
     /// <summary>How big this unit's BODY is, for melee-contact maths — the shared character size for anything built to
     /// the <see cref="CharacterSpec"/> body, the shrunken mob size for a sprite mob. Reported, never folded into a
     /// distance, so any measurement between two units blends the real pair.</summary>

@@ -171,10 +171,16 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     // was. Returns false so it reads as the answer at each call site rather than as a statement beside it.
     bool Refused(string why)
     {
+        lastRefusal = why;
         if (GameLog.On(LogCat.Cast))
             GameLog.Info(LogCat.Cast, string.Concat(CasterName(), " could not cast ", SkillName(), " — ", why));
         return false;
     }
+
+    // THE LAST REASON THIS RUNNER SAID NO. Kept because the line above only reaches the log when the cast category
+    // is switched on, and the server's door has to be able to say the reason OUT LOUD whatever the log settings are —
+    // a refusal nobody can see is the whole bug this exists to end.
+    string lastRefusal;
 
     string SkillName() => def != null ? def.id : "(no skill)";
 
@@ -187,14 +193,15 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     /// <summary>Cast this skill for the character the server holds, with the aim already decided by the person who
     /// asked for it. The SERVER'S entry point, and deliberately the same body a press runs — the aiming is all that
     /// differs, because the reticle happened on their machine and the answer arrived here.</summary>
-    public bool CastFromRequest(Transform aimedAt, Vector3 point)
+    public bool CastFromRequest(Transform aimedAt, Vector3 point, out string why)
     {
-        if (!CanStart()) return false;
+        why = null;
+        if (!CanStart()) { why = lastRefusal; return false; }
         // A skill that asks the caster to PICK something must have been given one; without it the cast would silently
         // fall back to an area sweep the person never aimed. Asked BEFORE anything is paid, so a cast that cannot
         // happen costs neither the mana nor the cooldown.
-        if (def.NeedsUnitPick && aimedAt == null) return false;
-        if (!Spend()) return false;
+        if (def.NeedsUnitPick && aimedAt == null) { why = "it needs a target picked and none arrived"; return false; }
+        if (!Spend()) { why = lastRefusal; return false; }
         lastCtx = BuildCtx(def.NeedsUnitPick ? aimedAt : null, def.NeedsAimPoint ? point : transform.position);
         StartCastOrPlay();
         return true;
@@ -211,6 +218,15 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // A re-press mid-aim cancels the whole sequence, including a stage-1 pick already banked.
         if (UnitTargeter.Active) { UnitTargeter.Cancel(); pendingUnit = null; return false; }
         if (GroundTargeter.Active) { GroundTargeter.Cancel(); pendingUnit = null; return false; }
+        // A SECOND PRESS CALLS OFF A WALK, exactly as it cancels an aim still on screen — the two are the same
+        // gesture from the player's seat: "never mind".
+        if (waitingForRange)
+        {
+            waitingForRange = false;
+            if (Caster != null) Caster.StopWalkingIntoRange();
+            pendingUnit = null;
+            return false;
+        }
         pendingUnit = null;
 
         if (def.NeedsUnitPick)
@@ -239,7 +255,34 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         if (unit == null) return;
         if (def.NeedsAimPoint) { pendingUnit = unit; BeginPointAim(); return; }
+
+        // TOO FAR IS A WALK, NOT A REFUSAL — the same answer a basic attack has always given. The gap is re-measured
+        // every frame while walking, so a target that moves is followed and the cast fires on the first frame the
+        // real distance is inside the skill's range, instead of on a distance measured once at the click.
+        //
+        // A cast that also asks for a POINT is deliberately left alone: that point was aimed from where the caster
+        // stood, so walking somewhere else and then firing it would put the skill down where nobody aimed.
+        if (TooFarToCast(unit) && Caster != null
+            && Caster.WalkIntoRange(unit.transform, def.castRange, () => { waitingForRange = false; CastResolved(unit, unit.position); }))
+        {
+            waitingForRange = true;
+            return;
+        }
+
         CastResolved(unit, unit.position);
+    }
+
+    // A cast this runner is holding until its caster has walked close enough. Only ever true on the machine of the
+    // person who pressed it — a server holds no legs, so WalkIntoRange refuses there and this never turns on.
+    bool waitingForRange;
+
+    // Is the picked unit outside what this skill can reach. Flat distance, squared on both sides, and answered as
+    // NO by any skill that authored no range at all.
+    bool TooFarToCast(Transform unit)
+    {
+        if (unit == null || def == null || def.castRange <= 0f) return false;
+        Vector3 gap = unit.position - transform.position; gap.y = 0f;
+        return gap.sqrMagnitude > def.castRange * def.castRange;
     }
 
     // Stage-2 confirm (also the only confirm for a point-only cast): fire with whatever stage 1 banked.
@@ -602,16 +645,23 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
     bool Spend()
     {
-        if (Caster == null || Caster.IsDead || Time.time < nextUse) return false;
+        // EVERY "no" HERE SAYS WHY TOO, for the same reason CanStart's do: these three were silent, and a cast
+        // stopped by one of them looked from every seat exactly like a cast that was never sent.
+        if (Caster == null || Caster.IsDead) return Refused("the caster is gone or dead");
+        if (Time.time < nextUse) return Refused("still on cooldown");
         // The stack gate: a skill that requires a state doesn't run at all when unmet — checked BEFORE any cost is paid.
         // A press is always gated by the OnCast entry; the skill's other triggers have their own, separate gates.
-        if (!StateGate.IsMet(def.CastEntry, CasterStates)) { BattleNotice.Warn("Not ready"); return false; }
+        if (!StateGate.IsMet(def.CastEntry, CasterStates))
+        {
+            BattleNotice.Warn("Not ready");
+            return Refused("the pile this skill spends is not there yet");
+        }
         // CHECKED here, PAID at the release (PayPendingMana): a wind-up that gets broken costs you the attempt and
         // the cooldown, never the mana — you never got the skill off.
         if (Caster.CurrentMP < def.manaCost)
         {
             BattleNotice.Warn("No MP", NoManaColor);
-            return false;
+            return Refused("not enough mana — " + Caster.CurrentMP + " held, " + def.manaCost + " needed");
         }
         pendingMana = def.manaCost;
         lastDuration = def.cooldown;

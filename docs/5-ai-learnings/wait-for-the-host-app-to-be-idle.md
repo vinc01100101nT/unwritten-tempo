@@ -1,18 +1,19 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-01
+last-updated: 2026-09-07
 tags:
   - ai-learnings
 ---
 
-# ⏳ A Busy Host App Drops Your Request Without Failing
+# ⏳ A Busy Host App Never Gets To Your Request In Time
 
 **Reach for this when:** a script that drives another running application produced nothing, and there is no error where the work should be — only a "timed out" line in the *app's* own log.
 
 > Work that runs INSIDE another application runs on that application's main thread. A request sent while it is
-> still busy with the last one is not queued and not refused — it is **dropped**. Wait for the host to say it is
-> idle BEFORE you ask, not only after.
+> still busy with the last one is not refused — it waits in line behind that work, and the **caller gives up
+> first**, because the caller's patience is measured in seconds and the host's work is measured in minutes. Wait
+> for the host to say it is idle BEFORE you ask, not only after.
 
 ## The rule
 
@@ -21,7 +22,12 @@ first request returns quickly — it only *starts* the work — so a script that
 immediately fires the next request is asking a host that is still busy.
 
 Nothing about the failure looks like a failure. The caller sees a normal return. The host logs a main-thread
-timeout, in its own log, which nobody is reading. The work simply never happens.
+timeout, in its own log, which nobody is reading.
+
+And **give-up is not undo**: a request still waiting in line when the caller quits is thrown away and never
+happens, but one that had already started on the host's main thread runs to completion regardless — nobody is
+left to collect the answer. So when a timeout lands on a request that CHANGES something, go and look at what it
+did before sending it again.
 
 So the wait belongs on **both** sides of the request:
 
