@@ -27,7 +27,7 @@ create table if not exists character (
     dye_targets text[] not null default '{}',
 
     -- The character's whole save, exactly as the game writes it. It is stored as ONE document on purpose:
-    -- the game owns that shape (it is already at version 7), and mirroring its fields into columns here
+    -- the game owns that shape, and it moves on its own (version 10 today) — mirroring its fields into columns here
     -- would create a second owner for every value that then has to be kept in sync by hand. Anything this
     -- service needs to show — the level on a character-select screen — is READ out of this document, never
     -- copied beside it. An unstarted character has {}: the game builds a fresh one exactly as it does today

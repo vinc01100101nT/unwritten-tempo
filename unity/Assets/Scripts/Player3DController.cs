@@ -410,7 +410,14 @@ public partial class Player3DController : MonoBehaviour
         if (ch != null) ch.SetStamina(stam);
         if (sprintLocked && max > 0f && stam >= max * sprintUnlockFrac) sprintLocked = false;
 
-        // Fire the OnSprint cue once, the frame sprinting kicks on (not per-frame).
+        // WHICH GEAR THIS BODY IS IN, said out loud the frame it changes and never in between. Speed alone cannot
+        // tell a sprint from a hasted run — both are simply fast — so the machine that owns the legs is the only one
+        // that knows, and without this every other screen showed a sprinting person jogging.
+        if (Sprinting != wasSprinting) GameNetwork.ReportSprinting(Sprinting);
+
+        // Fire the OnSprint cue once, the frame sprinting kicks on (not per-frame). On a machine that has joined
+        // somebody else's world this does nothing and the world says it instead, so the puff reaches everybody
+        // watching rather than only the person sprinting — see VfxCue.
         if (Sprinting && !wasSprinting) VfxCue.Fire(VfxCueId.OnSprint, transform);
     }
 

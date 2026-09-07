@@ -257,6 +257,13 @@ public class GameNetwork : NetworkManager
             }
 
             AccountSession.EntryTicket = where.ticket;
+
+            // AND WHICH MAP THEY ARE BEING SENT TO. The character server has just read this person's save, decided
+            // which map they logged out in, and brought that map up on the process below — so it is the ONE thing
+            // that already knows, and the boot gate loads what it says instead of the authored starting map.
+            // Written unconditionally, empty included, so a second sign-in in the same session can never boot the
+            // first one's map.
+            AccountSession.EntryMap = where.map;
             if (!string.IsNullOrEmpty(where.host)) spawned.networkAddress = where.host;
             // AND THE PORT IT NAMED. A build pointed at one machine by its environment must still go wherever
             // the character server sends it, or splitting the world across machines would need a new build for
@@ -524,6 +531,74 @@ public class GameNetwork : NetworkManager
         public int seed;
     }
 
+    /// <summary>A CAST WINDING UP — sent the moment somebody starts a spell with a cast time, to every machine
+    /// that can see them, so their cast bar and the skill's name appear over their head there as they do over
+    /// their own. Nothing about a wind-up crossed before this: a watcher saw somebody stand still and then an
+    /// explosion, with no way to tell a long spell from a pause.
+    ///
+    /// <para>It names the SKILL rather than its name and colour, because a watcher already holds the authored
+    /// skill and can read both off it — the same reason a cast going off names one.</para></summary>
+    public struct CastWindupStarted : NetworkMessage
+    {
+        public uint casterNetId;
+        public string skillId;
+
+        /// <summary>When it began, on the clock both machines share — so a watcher whose message took a moment to
+        /// arrive starts the bar part-filled rather than restarting it, and every screen empties at once.</summary>
+        public double startedAt;
+
+        /// <summary>How long the wind-up runs, as the server measured it against the character IT holds. A caster
+        /// with more dexterity winds up faster, and that is the server's number, not the asker's.</summary>
+        public float seconds;
+
+        /// <summary>Where the cast is aimed, in the caster's own map — so the ring that opens on the ground under
+        /// the wind-up appears in the same place on every screen as it does on the caster's. Without it a watcher
+        /// saw the bar and the pose but no ring, which is most of what tells you a spell is about to land there.</summary>
+        public Vector3 aimPoint;
+    }
+
+    /// <summary>A CUE GOING OFF ON A UNIT — the one message every visual reaction in the game travels on.
+    ///
+    /// <para><b>Why one message for all of them.</b> A hit spark, a death poof, a poison glow, a stun flash, a heal
+    /// sparkle and a sprint puff are the same KIND of thing: a picture played on a body because something happened
+    /// to it. They all already go through one door in the game (<see cref="VfxCue"/>), and this is that door's other
+    /// half. Written once, so a cue added later crosses the wire without anybody wiring it up.</para>
+    ///
+    /// <para>It carries no outcome and no number. Whatever the event DID reached this machine through the doors that
+    /// announce a blow, a heal or a death; this is only what it looked like.</para></summary>
+    public struct CuePlayed : NetworkMessage
+    {
+        /// <summary>Whose body it plays on — the shared name every machine knows that unit by.</summary>
+        public uint onNetId;
+
+        /// <summary>The cue's second reference point, when it has one. 0 when it does not.</summary>
+        public uint targetNetId;
+
+        public VfxCueId cue;
+
+        /// <summary>0 = a one-shot puff, over the moment it plays. Anything else NAMES a lasting aura, so the
+        /// message that ends it can say which one — two people poisoned at once is the ordinary case, and each
+        /// one's glow has to come off its own body.</summary>
+        public int auraKey;
+    }
+
+    /// <summary>A LASTING CUE THAT IS OVER — the ailment expired, the wind-up ended, the body went away. Sent from
+    /// the one place an aura stops, so all three reasons take it off every screen the same way.</summary>
+    public struct CueStopped : NetworkMessage
+    {
+        public uint onNetId;
+        public int auraKey;
+    }
+
+    /// <summary>A WIND-UP THAT IS OVER — finished, or broken by a hit, a silence or a death. Sent from the one
+    /// place a cast ends, so all three reasons clear the bar the same way and at the same moment the caster's own
+    /// does. A watcher also puts a bar away on its own when nothing refreshes it, so a lost message costs a frame
+    /// rather than leaving a bar hanging over somebody forever.</summary>
+    public struct CastWindupEnded : NetworkMessage
+    {
+        public uint casterNetId;
+    }
+
     /// <summary>A PERSON USING AN ITEM — a potion drunk, a food eaten. It names the ITEM, never the skill: the item
     /// is what says which skill runs, so a machine that named the skill itself could run any skill in the game by
     /// calling it a potion.
@@ -608,6 +683,32 @@ public class GameNetwork : NetworkManager
         public string text;
     }
 
+    /// <summary>A LINE SOMEBODY TYPED AND SAID OUT LOUD. It carries the words and nothing else: not who said them
+    /// and not where they were standing, because the server already knows which connection this arrived on and
+    /// where it holds that person. A machine that named its own speaker could put words in anybody's mouth.</summary>
+    public struct ChatSaid : NetworkMessage
+    {
+        public string text;
+    }
+
+    /// <summary>A line as everybody HEARS it — sent to every machine that can see the speaker, the speaker's own
+    /// included, so one line said is one row in one chat log on every screen rather than each machine drawing its
+    /// own idea of what was said.
+    ///
+    /// <para>It carries WHO as well as WHAT, twice over and for two different reasons: the name is what the log row
+    /// reads, and the shell's number is which body the white bubble hangs over.</para></summary>
+    public struct ChatHeard : NetworkMessage
+    {
+        public uint speakerNetId;
+        public string speaker;
+        public string text;
+
+        /// <summary>TRUE when the words are a skill NAME the speaker called out rather than something they typed.
+        /// The line is drawn identically either way — same row, same white bubble over the same head — and only
+        /// tinted apart, so a call reads as a call at a glance.</summary>
+        public bool isSkillCall;
+    }
+
     // WHO IS TOLD ABOUT WHAT. Without this, everything that happens is sent to every person connected, however far
     // away and whatever map they are standing in — so the traffic climbed with the SQUARE of how many people were
     // here, and a person in a dungeon paid for every cast in every town.
@@ -649,6 +750,7 @@ public class GameNetwork : NetworkManager
         NetworkServer.RegisterHandler<ItemUsedRequest>(OnItemUsedRequest);
         NetworkServer.RegisterHandler<ResolvedStrikeRequest>(OnResolvedStrikeRequest);
         NetworkServer.RegisterHandler<GmCommandRequest>(OnGmCommandRequest);
+        NetworkServer.RegisterHandler<ChatSaid>(OnChatSaid);
     }
 
     public override void OnStartClient()
@@ -660,6 +762,11 @@ public class GameNetwork : NetworkManager
         NetworkClient.RegisterHandler<SkillCastPlayed>(OnSkillCastPlayed);
         NetworkClient.RegisterHandler<GmCommandReply>(OnGmCommandReply);
         NetworkClient.RegisterHandler<WorldTime>(OnWorldTime);
+        NetworkClient.RegisterHandler<ChatHeard>(OnChatHeard);
+        NetworkClient.RegisterHandler<CastWindupStarted>(OnCastWindupStarted);
+        NetworkClient.RegisterHandler<CastWindupEnded>(OnCastWindupEnded);
+        NetworkClient.RegisterHandler<CuePlayed>(OnCuePlayed);
+        NetworkClient.RegisterHandler<CueStopped>(OnCueStopped);
     }
 
     // THE WORLD'S CLOCK ARRIVING. Until this lands the sun has nothing to draw itself from, which is why it is
@@ -1860,6 +1967,192 @@ public class GameNetwork : NetworkManager
         });
     }
 
+    /// <summary>Say a skill's NAME out loud to everybody who can see the caster — the call, not the effect.
+    ///
+    /// <para>Sent once per CAST, from where the caster's own machine says it, so the same words reach every screen at
+    /// the same moment. Not to the caster's own machine, which said it there and would otherwise say it twice.
+    /// Silent off a server, so the single-machine game is untouched.</para></summary>
+    public static void AnnounceSkillCall(Character caster, SkillDef def)
+    {
+        if (!NetworkServer.active || caster == null || def == null) return;
+        if (string.IsNullOrEmpty(def.displayName)) return;
+        var identity = IdentityOfFighter(caster);
+        if (identity == null) return;
+        var shell = identity.GetComponent<NetPlayer>();
+        if (shell == null) return;
+
+        NetworkServer.SendToReadyObservers(identity, new ChatHeard
+        {
+            speakerNetId = identity.netId,
+            speaker = shell.playerName,
+            text = def.displayName,
+            isSkillCall = true,
+        }, includeOwner: false);
+    }
+
+    /// <summary>Say that a cast is WINDING UP, to everybody who can see the caster — so the bar and the skill's
+    /// name appear over their head there too. Not to the caster's own machine, which draws its bar from the
+    /// wind-up it is running itself. Silent off a server, and silent for a skill with no wind-up to show.</summary>
+    public static void AnnounceCastWindup(Character caster, SkillDef def, float seconds, Vector3 aimPoint)
+    {
+        if (!NetworkServer.active || caster == null || def == null || seconds <= 0f) return;
+        var identity = IdentityOfFighter(caster);
+        if (identity == null) return;
+
+        NetworkServer.SendToReadyObservers(identity, new CastWindupStarted
+        {
+            casterNetId = identity.netId,
+            skillId = def.id,
+            startedAt = NetworkTime.time,
+            seconds = seconds,
+            aimPoint = MapManager.InMap(aimPoint, caster.Map),
+        }, includeOwner: false);
+    }
+
+    /// <summary>Say that a wind-up is over — finished or broken. The pair of the one above, sent from the same
+    /// side to the same people, so a bar cannot be left standing on somebody else's screen.</summary>
+    public static void AnnounceCastWindupEnded(Character caster)
+    {
+        if (!NetworkServer.active || caster == null) return;
+        var identity = IdentityOfFighter(caster);
+        if (identity == null) return;
+
+        NetworkServer.SendToReadyObservers(identity, new CastWindupEnded
+        {
+            casterNetId = identity.netId,
+        }, includeOwner: false);
+    }
+
+    // Somebody else starting to cast, arriving as a thing to LOOK at. Their shell holds the wind-up and draws the
+    // bar over their body each frame; nothing here decides anything.
+    static void OnCastWindupStarted(CastWindupStarted msg)
+    {
+        if (!NetworkClient.spawned.TryGetValue(msg.casterNetId, out var identity) || identity == null) return;
+        var shell = identity.GetComponent<NetPlayer>();
+        if (shell == null) return;
+        shell.ShowCastWindup(SkillCatalog.Get(msg.skillId), msg.startedAt, msg.seconds, msg.aimPoint);
+    }
+
+    static void OnCastWindupEnded(CastWindupEnded msg)
+    {
+        if (!NetworkClient.spawned.TryGetValue(msg.casterNetId, out var identity) || identity == null) return;
+        var shell = identity.GetComponent<NetPlayer>();
+        if (shell == null) return;
+        shell.StopCastWindup();
+    }
+
+    // ---- cues: every visual reaction in the game, on one road -------------------------------------------
+
+    /// <summary>Say that a cue just played on a unit, to every machine watching it. Returns the shared name of the
+    /// unit it was announced on, or 0 when nothing was said — off a server, or for a body no client has ever been
+    /// told about. <see cref="VfxCue.Begin"/> keeps that name so the aura's ENDING can be sent to the same people.
+    ///
+    /// <para>Called from the one door every cue in the game passes through, so nothing has to remember to do this
+    /// and nothing can be added later that forgets to.</para></summary>
+    public static uint AnnounceCue(Transform actor, Transform target, VfxCueId cue, int auraKey)
+    {
+        if (!NetworkServer.active || actor == null) return 0u;
+        var identity = SharedIdentityOnServer(actor);
+        if (identity == null) return 0u;
+
+        var aimed = target != null && target != actor ? SharedIdentityOnServer(target) : null;
+
+        NetworkServer.SendToReadyObservers(identity, new CuePlayed
+        {
+            onNetId = identity.netId,
+            targetNetId = aimed != null ? aimed.netId : 0u,
+            cue = cue,
+            auraKey = auraKey,
+        });
+        return identity.netId;
+    }
+
+    /// <summary>Say that a lasting cue is over, to the same people who were told it began.</summary>
+    public static void AnnounceCueStopped(uint onNetId, int auraKey)
+    {
+        if (!NetworkServer.active || onNetId == 0u || auraKey == 0) return;
+        if (!NetworkServer.spawned.TryGetValue(onNetId, out var identity) || identity == null) return;
+
+        NetworkServer.SendToReadyObservers(identity, new CueStopped { onNetId = onNetId, auraKey = auraKey });
+    }
+
+    /// <summary>THE SHARED THING THAT SPEAKS FOR A BODY, asked on the SERVER. A creature answers through the shell
+    /// filed under it — a creature is NOT a child of its shell, so walking up the parents finds nothing — and a
+    /// person answers through the shell their fighter's body hangs on.
+    ///
+    /// <para>perf-ok: the creature lookup is one dictionary read, and the person's identity sits on the very object
+    /// asked about (their fighter's body IS the shell) or one parent above it (their status host). Neither searches
+    /// the scene and neither allocates, which is what the per-hit path bans.</para></summary>
+    static NetworkIdentity SharedIdentityOnServer(Transform body)
+    {
+        if (body == null) return null;
+        var shell = NetMob.ShellForServerMob(body.gameObject);
+        if (shell != null) return shell.netIdentity;
+        return body.GetComponentInParent<NetworkIdentity>();
+    }
+
+    /// <summary>THE BODY THIS MACHINE ACTUALLY DRAWS for a unit — the copy built for a creature, the copy built for
+    /// another person, and your own real avatar for yourself. Every announced picture is played on the answer to
+    /// this, so one question is asked of every kind of unit instead of one per kind.</summary>
+    static Transform DrawnBodyOf(NetworkIdentity identity)
+    {
+        if (identity == null) return null;
+        var mob = identity.GetComponent<NetMob>();
+        if (mob != null) return mob.DrawnBody;
+        var person = identity.GetComponent<NetPlayer>();
+        return person != null ? person.DrawnBody : null;
+    }
+
+    // Somebody else's cue — or your own, coming back from the machine that decided it. Nothing here decides
+    // anything: it is a picture played on a body, and every consequence of the event behind it arrived separately.
+    static void OnCuePlayed(CuePlayed msg)
+    {
+        if (!NetworkClient.spawned.TryGetValue(msg.onNetId, out var identity) || identity == null) return;
+        Transform on = DrawnBodyOf(identity);
+        if (on == null) return;
+
+        Transform at = null;
+        if (msg.targetNetId != 0u && NetworkClient.spawned.TryGetValue(msg.targetNetId, out var other) && other != null)
+            at = DrawnBodyOf(other);
+
+        VfxCue.PlayFromServer(msg.cue, on, at, msg.auraKey, msg.onNetId);
+    }
+
+    static void OnCueStopped(CueStopped msg) => VfxCue.StopFromServer(msg.onNetId, msg.auraKey);
+
+    // ---- stances: what a person's body is doing, said by the machine that owns their legs ----------------
+
+    /// <summary>Tell the world this body has begun a ONE-SHOT action pose — a skill's release swing. It plays once
+    /// and is over, so it travels as a moment: what, and when it began.</summary>
+    public static void ReportActionBegan(StanceId id, float seconds)
+    {
+        var me = MyPlayer;
+        if (me != null) me.CmdActionBegan(id, seconds);
+    }
+
+    /// <summary>Tell the world which pose this body is HOLDING while it does something that takes time — a jump, a
+    /// dodge, a flinch, a death. Sent on the change, and "nothing" is a change like any other.</summary>
+    public static void ReportDrivenStance(bool has, StanceId id, float window, bool release)
+    {
+        var me = MyPlayer;
+        if (me != null) me.CmdDrivenStance(has, id, window, release);
+    }
+
+    /// <summary>Tell the world which standing pose is underneath all that — the guard, the cast, the seat.</summary>
+    public static void ReportHeldStance(bool has, StanceId id, float window)
+    {
+        var me = MyPlayer;
+        if (me != null) me.CmdHeldStance(has, id, window);
+    }
+
+    /// <summary>Tell the world this body has changed into or out of the sprint gear. Which gear somebody is in
+    /// cannot be read off their speed alone — a hasted run and a sprint are both simply fast — so it is said.</summary>
+    public static void ReportSprinting(bool on)
+    {
+        var me = MyPlayer;
+        if (me != null) me.CmdSprinting(on);
+    }
+
     // What the cast was aimed at, as the shared thing that speaks for it — asked on the SERVER, where a creature is
     // the real one and its shell is the parent that carries the identity.
     static uint IdentityOfServerSide(Transform aimed)
@@ -2001,6 +2294,91 @@ public class GameNetwork : NetworkManager
         pendingCommandReply?.Invoke(msg.text);
     }
 
+    // ---- SAYING SOMETHING OUT LOUD ----------------------------------------------------------------------
+    //
+    // A said line takes exactly the shape a cast already takes, and deliberately so: the speaker ASKS, the server
+    // DECIDES who is near enough to hear, and what comes back is one message to every one of them — the speaker
+    // included. Nothing is drawn at the keyboard that typed it, so there is no second copy of a chat log to drift.
+
+    /// <summary>The longest line the server will pass on. Anything past this is cut rather than refused, so a
+    /// paste that ran away still says its first sentence instead of vanishing with no explanation.</summary>
+    const int MostCharactersInALine = 200;
+
+    /// <summary>How many lines one connection may say in a second. Far above anybody typing and well below what a
+    /// machine could shout, the same shape every other ceiling on this layer has.</summary>
+    const int MaxLinesSaidPerSecond = 4;
+
+    static readonly System.Collections.Generic.Dictionary<int, ClaimLedger> chatLedgers =
+        new System.Collections.Generic.Dictionary<int, ClaimLedger>();
+
+    static bool SayingTooFast(int connectionId) => TooMany(chatLedgers, connectionId, MaxLinesSaidPerSecond);
+
+    /// <summary>Say a line to the world. Returns TRUE when it went, which means the caller must NOT show it
+    /// itself — it comes back from the server a moment later, as everybody else receives it.
+    ///
+    /// <para>FALSE with no world, where there is nobody to ask and the chat log is the only place the line can
+    /// go.</para></summary>
+    public static bool SendSayToServer(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        if (!NetworkClient.active || !NetworkClient.isConnected) return false;
+        // AND NOT BEFORE THERE IS A BODY TO HAVE SAID IT. The server names the speaker by the body it holds for
+        // this connection, so a line arriving in the second or two before one exists has nobody to attribute it to
+        // and is dropped there in silence. Answering false puts it in this machine's own log instead — the same
+        // answer having no world at all gives, rather than a line that simply vanishes.
+        if (NetworkClient.localPlayer == null) return false;
+        NetworkClient.Send(new ChatSaid { text = text });
+        return true;
+    }
+
+    // Said BY a player, passed on HERE. Nothing about the speaker is taken from the message: who said it is the
+    // connection it arrived on, and who hears it is whoever can already see that person's body.
+    void OnChatSaid(NetworkConnectionToClient conn, ChatSaid msg)
+    {
+        if (SayingTooFast(conn.connectionId)) return;
+
+        var text = msg.text != null ? msg.text.Trim() : "";
+        if (text.Length == 0) return;
+        if (text.Length > MostCharactersInALine) text = text.Substring(0, MostCharactersInALine);
+
+        // A COMMAND IS NOT A SAID LINE and must never become one. Commands have their own door, which asks whether
+        // the person is a GM; letting one through here would print it to the room and, worse, teach anybody reading
+        // the log to type it.
+        if (GmCommands.IsCommand(text)) return;
+
+        var speaker = ShellFor(conn);
+        if (speaker == null) return;   // no body here yet, so there is nobody to have said it and nobody to hang a bubble on
+        var identity = speaker.netIdentity;
+        if (identity == null) return;
+
+        NetworkServer.SendToReadyObservers(identity, new ChatHeard
+        {
+            speakerNetId = identity.netId,
+            speaker = speaker.playerName,
+            text = text,
+            isSkillCall = false,
+        });
+    }
+
+    // A line arriving to be READ. Your own comes back here too and is the copy that gets shown, which is why the
+    // box that typed it showed nothing: one line said is one row, decided in one place.
+    static void OnChatHeard(ChatHeard msg)
+    {
+        if (string.IsNullOrEmpty(msg.text)) return;
+
+        if (NetworkClient.localPlayer != null && NetworkClient.localPlayer.netId == msg.speakerNetId)
+        {
+            if (msg.isSkillCall) ChatController.SkillCall(msg.text);
+            else ChatController.Said(msg.text);
+            return;
+        }
+
+        if (!NetworkClient.spawned.TryGetValue(msg.speakerNetId, out var identity) || identity == null) return;
+        var shell = identity.GetComponent<NetPlayer>();
+        if (shell == null) return;
+        ChatController.Heard(msg.speaker, msg.text, shell.SpeechPose, msg.isSkillCall);
+    }
+
     // Asked BY a player, carried out HERE. Three things are checked before anything happens, in this order,
     // because each one is cheaper than the next and each one is a way the request can be a lie.
     void OnGmCommandRequest(NetworkConnectionToClient conn, GmCommandRequest msg)
@@ -2134,6 +2512,7 @@ public class GameNetwork : NetworkManager
         swingLedgers.Remove(conn.connectionId);
         healLedgers.Remove(conn.connectionId);
         skillLedgers.Remove(conn.connectionId);
+        chatLedgers.Remove(conn.connectionId);
         swingDueAt.Remove(conn.connectionId);
         // AND ANY SWING STILL IN FLIGHT. A blow scheduled a moment before somebody left would otherwise come round
         // and look for a fighter that has been dismissed — harmless, but it would sit in the list until it did.

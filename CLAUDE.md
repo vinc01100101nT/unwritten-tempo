@@ -70,7 +70,34 @@ If a fix attempt doesn't resolve the bug, do NOT ship a second fix built on more
 
 Ground-truth sources for THIS project (cheap, no Unity needed — a plain Python/Bash script reads them):
 
-- **Save file** = the persisted state that's actually loaded: `%USERPROFILE%\AppData\LocalLow\DefaultCompany\unwritten\unwritten_save.json`.
+- **A CHARACTER** = a row in postgres, and this is the single most useful measurement in the project. A player's
+  machine has not written progress since the server took ownership of it — `SaveManager` only READS — so what a
+  character actually IS lives in one place and you can read it in one command. It settles "is their hotbar really
+  empty", "did that binding save", "what is equipped" in seconds, and it is the truth the game loads:
+  ```bash
+  psql "$(grep '^DATABASE_URL=' accounts/.env | cut -d= -f2-)" -A -t -c \
+    "select name, updated_at, progress->'hotbarBindings', progress->'equipItemIds' \
+     from character where deleted_at is null order by updated_at desc limit 5;"
+  ```
+  `jsonb_pretty(progress)` dumps a whole character. Full detail: `docs/1-planning/querying-the-database.md`.
+- **Did my edit reach the editor** = search the assembly it built, never the source on disk — the rule and the
+  encoding trap are in the console section below, written once.
+- **WHAT ACTUALLY HAPPENED AT RUNTIME** = three different logs, and they are not interchangeable. The editor's is
+  `~/Library/Logs/Unity/Editor.log`; a client BUILD writes `~/Library/Logs/DefaultCompany/unwritten/Player.log`
+  (and `Player-prev.log` for the run before it); and the GAME SERVER writes `logs/server.log` at the top of this
+  repo, with the run before it kept as `logs/server-prev.log`. An idle server is now SILENT — nothing writes on a
+  timer — so a quiet log means nothing happened, not that logging is off. **READ THE SERVER'S OWN LOG BEFORE REASONING ABOUT
+  WHAT IT DECIDED** — it already writes down why it refused a cast, turned a connection away, dropped a player or
+  failed to save somebody, in 44 places. Working that out from the source instead is the slow way to an answer it
+  has already written. If it is missing, the server was started the old way, straight to the terminal: the run
+  command in the network runbook now tees it to that file.
+- **WHAT IS ACTUALLY IN THE CLIENT BUILD, and how big** = Unity's own size report, written into
+  `~/Library/Logs/Unity/Editor.log` after every build. Search it for `Used Assets and files from the Resources
+  folder, sorted by uncompressed size`: above that line is the split by kind (textures / meshes / audio /
+  levels), below it is every shipped asset in descending size. **Never add up folder sizes instead** — most of
+  `Assets/` is never referenced and never ships, so the folders and the build disagree by multiples. (Measured
+  2026-09-07: the client is 75% textures and 5% audio, while on disk the audio folder is bigger than the
+  textures. Guessing from folders sent a whole round in the wrong direction.)
 - **Textures** = decode the PNG bytes (pure-Python zlib/PNG, no PIL) to get exact per-pixel colors/coverage.
 - **Meshes/rigs** = parse the binary FBX (zlib-compressed node arrays: Vertices / PolygonVertexIndex / UV) to get real UVs, tris, verts.
 - **Scenes/prefabs/.meta** = YAML/text — grep them directly for the actual wired values (renderer names, import flags).
@@ -120,6 +147,47 @@ through the live editor and reports what it OBSERVED — the protocol is the **`
 
 It is the opposite half of the reviewer: a reviewer only reads, a tester only reports what it watched happen.
 Never let one wear the other's words. Two players at once is beyond it — the editor is one client.
+
+## Harvest protocol — the phrase "harvest"
+
+**"harvest"** (or "harvest the session" / "do a harvest") is a COMMAND: without further prompting, go back over
+everything this session found and put each piece where it will actually fire next time. It is the opposite of a
+handoff — a handoff carries an UNFINISHED task to the next session; a harvest banks what a FINISHED one learned.
+
+**Sort every finding into one of four homes. The fourth is the one that gets forgotten.**
+
+1. **A lesson that generalises past this project** — a way of measuring, diagnosing, or running a long task →
+   a page in `docs/5-ai-learnings/` **and its index line**.
+2. **A project fact** — a bug's real root cause, how something actually works, a decision → **memory**, plus the
+   pointer line in the matching `memory/index/<group>.md`.
+3. **Something that must change behaviour every session with nobody looking it up** → a line in THIS file or the
+   global one. Never a page; a page nobody opens at the right moment is a diary.
+4. **An OPEN DEFECT you found and only described in prose** → **fix it now, or it is gone.** This is the whole
+   reason the phrase exists. A stale doc, a guard that misfires, a leftover you noticed in passing: it was never
+   the task, so nothing wrote it down, and when the session ends it exists nowhere. Ask explicitly: *what did I
+   say out loud today that lives only in this chat?*
+
+**Then five checks, all mechanical:**
+
+- **Is the always-on file still TRUE?** Walk its ground-truth list, its paths, its commands. One that names a
+  dead file sends the next session to a dead end while looking authoritative.
+- **RUN every command you write into a doc.** A query nobody executed is a guess wearing a code block.
+- **Is what you wrote REACHABLE?** A memory with no index line is never loaded; a page with no index row is
+  never found. Grep for each new file's own name and confirm something points at it.
+- **Did you create a SECOND home for anything?** If the new note duplicates a rule that already exists, delete
+  yours and fix the existing one instead — that is usually the better repair, because the incumbent is the one
+  that will be read.
+- **Delete what has served its purpose** — scaffolding whose comment says to, resolved handoffs, dead helpers.
+
+**Hand back a CLOSED list, and say plainly when it is empty.** "Nothing to harvest" is a complete and correct
+answer for a session that cost nothing. Never pad it: a lesson nobody paid for is advice, and advice filed as a
+lesson makes the real ones harder to find.
+
+*(Why this is a phrase and not a habit: on 2026-09-07 a harvest run at the user's request turned up a database
+guide whose every example query would have failed — the schema had moved three migrations earlier — a guard that
+had cried wolf three times that session and never once on a real repeat, and a temporary diagnostic still
+writing a line every five seconds weeks after its own comment said to delete it. None of the three was a lesson.
+All three had been noticed and spoken aloud. Not one was written down anywhere.)*
 
 ## AI learnings — `docs/5-ai-learnings/`
 
@@ -287,6 +355,7 @@ that costs a round.
 ## Standing rules
 
 - **Say the contract back BEFORE building anything bigger than a one-liner.** First reply with three bullets — what I'm about to build, and the exact in-game check that will prove it works — then WAIT for a go. No code until then. Most wasted rounds here were not bad code; they were the wrong thing built well, or extra things nobody asked for. Three bullets cost one line and buy the acceptance test for free (see the play-test rule below, which reuses them).
+  **A GO GIVEN IN ADVANCE REMOVES THE WAIT, NEVER THE BULLETS.** "just do it", "fix it all", "go" — all of those mean start now without a round-trip. None of them means the user has seen what I am about to build. So the bullets still go in the FIRST reply of that turn, and the work starts in the same reply. **This matters most on a long build**, where the user sees only my final message: everything between is invisible to them, so a build that says nothing until it is finished is one they cannot steer, correct, or stop. (Scar, 2026-09-07: told "fix it all, go", I built for several turns in silence and the user had to interrupt to ask whether I was writing a general fix or one patch per case. I was — but they had no way to know, and finding out cost a round.)
 - **Hand back a numbered play-test checklist — never "go test it".** When a batch of gameplay changes is ready, end with a numbered list: what to press, what should happen, and what would count as a FAILURE for each. Batch the changes so one play session covers several, instead of one session per change. A step the user can't act on without already knowing the answer is not a checklist item — see the concrete-UI-steps rule in the global file.
 - **⛔ EVERY PLAY-TEST CHECKLIST OPENS WITH WHAT MUST BE REBUILT AND RESTARTED FIRST (HARD-PINNED, added 2026-09-05 at the user's instruction).** Before the numbered steps, state — for each of the four things, by name, every time, even when the answer is "nothing" — whether the user must act:
   1. **The game server build** (`builds/server/unwritten-server.app`) — REBUILD needed, or not? Any change to C# under `unity/Assets/Scripts/` that the server runs does NOT reach a running server until that build is remade. A recompile in the editor updates the EDITOR only.
@@ -305,7 +374,7 @@ that costs a round.
   tools/check-unity-code.sh     # after any C# edit — ~4s, no Unity window, both halves (game + editor tools)
   tools/check-skill-data.py     # after any skill .asset edit — proves the DATA is sane, where silent bugs live
   ```
-  Neither touches the running editor, so neither breaks the no-refresh rule. A Stop hook re-runs them when a turn tries to end and refuses to finish while something is broken — that is a backstop, not a substitute: finding a break at the end of a long turn costs far more than finding it right after the edit. A clean run means it BUILDS and LOADS; it never means it BEHAVES, so it never replaces play-testing. (`tools/prove-skill-data-check.py` keeps the data checker honest — never edit that checker without re-running it. Details: the `unity-live-editor` and `compose-skill` skills.)
+  Neither touches the running editor, so neither breaks the no-refresh rule. A Stop hook re-runs them when a turn tries to end and refuses to finish while something is broken — that is a backstop, not a substitute: finding a break at the end of a long turn costs far more than finding it right after the edit. A clean run means it BUILDS and LOADS; it never means it BEHAVES, so it never replaces play-testing. (`tools/prove-skill-data-check.py` keeps the data checker honest, and `tools/hook-analytics/prove_repeat_watch.py` does the same for the repeat watcher, which decides whether a command was RUN or only MENTIONED and gets that wrong in silence — never edit either without re-running its prover. Details: the `unity-live-editor` and `compose-skill` skills.)
 
   **AND READ THE EDITOR'S CONSOLE BEFORE SAYING THE WORK IS DONE — every time, unprompted (HARD-PINNED, added 2026-08-29 at the user's instruction).** The offline checker and the console answer DIFFERENT questions, and a clean checker has never meant a clean console: the checker compiles the source it finds on disk, while the console is the only place that shows what the running editor actually did with it — an import failure, a serialization complaint, a null thrown by a tool, a package window falling over. So the closing move of any turn that touched C#, an asset, a scene or a prefab is: run the checker, then read the console, then report. **The user must never be the one to say "check the console".** Being asked is the failure this rule exists to remove.
 
@@ -335,7 +404,7 @@ that costs a round.
   the bug. If the console buffer is empty, read the log; if the link is down, say so plainly and fix that. A
   screenshot is something the user may VOLUNTEER, never something I request.
 
-  When an edit MUST be proven to have reached the running editor, search the built assembly for a string unique to the change — `Library/ScriptAssemblies/Assembly-CSharp.dll`, with a control string you know predates the edit to prove the search works. **.NET stores literals as UTF-16, so macOS `strings` cannot see them and will report a false ABSENT** — match `s.encode('utf-16-le')` against the raw bytes instead. (Scar: that exact false negative nearly had a working, already-compiled fix reported as missing from the build.)
+  When an edit MUST be proven to have reached the running editor, search the built assembly for something unique to the change — `Library/ScriptAssemblies/Assembly-CSharp.dll` — always with a CONTROL you know predates the edit, so a miss cannot be a broken search. **THE BEST CONTROL IS A NAME YOU DELETED**: its absence and the new name's presence together prove the swap landed, which neither proves alone. **AND MATCH THE RIGHT ENCODING, because .NET stores the two kinds of text differently and one probe shape cannot find both** — identifier NAMES (a method, a field, a type) are UTF-8, string LITERALS are UTF-16. Search a name as `s.encode('utf-8')` and a literal as `s.encode('utf-16-le')` against the raw bytes; macOS `strings` sees neither reliably. The wrong one reports a false ABSENT. (Scar: that exact false negative nearly had a working, already-compiled fix reported as missing from the build. Used the other way round on 2026-09-07, a UTF-8 name search proved five new methods HAD reached the editor when its own recompile was answering "up to date, nothing to compile".)
 - **EVERY SESSION, PROVE THE GUARDS ARE ALIVE — a hook that cannot start fails SILENTLY (HARD-PINNED, added 2026-08-31 at the user's instruction).** A hook whose command is missing does not error, does not warn, and does not appear anywhere in the reply: the turn proceeds exactly as if the guard had approved the work. The performance gate died that way when this project moved to the Mac — it was configured to start with a Python that does not exist here — and it guarded NOTHING for five weeks while its own log sat there looking finished. Nobody noticed because nothing was watching the watchers. So, every session, without being asked:
   1. **The guard check runs on its own at session start** and answers two DIFFERENT questions about every hook configured on this machine, the user's global ones included: *can it start* (the program exists, the file it runs exists, the settings parse) and *has it actually run* (each of our hooks stamps a heartbeat the moment it is invoked, so one that is configured, runnable and never firing shows up as one nobody has seen in weeks). **Runnable is not running** — either question alone misses a whole class of dead guard.
   2. **If it reports a fault, SAY IT TO THE USER IN THE FIRST REPLY**, in plain words, before whatever else they asked for. A silent guard is the user's problem to know about, not mine to file away.

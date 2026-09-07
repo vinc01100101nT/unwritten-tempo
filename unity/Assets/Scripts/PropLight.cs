@@ -9,7 +9,9 @@ using UnityEngine;
 ///
 /// Why a component and not just a raw Light: keeps lamp authoring one-click + consistent (same warm
 /// preset everywhere), and gives a single place to add behaviour (flicker, day/night gating) later.
-/// Additional-light shadows are OFF in the URP asset, so this never adds a shadow pass.
+/// A prop light never casts a shadow, so it never adds a shadow pass. Additional-light shadows ARE
+/// enabled in the URP asset — <see cref="NightLight"/> promotes the few lamps nearest the player to
+/// real casters after dark — but a prop light is not part of that selection and stays off.
 /// </summary>
 [RequireComponent(typeof(Light))]
 public class PropLight : MonoBehaviour
@@ -50,7 +52,8 @@ public class PropLight : MonoBehaviour
         lamp.color = color;
         lamp.range = range;
         lamp.intensity = intensity;
-        lamp.shadows = LightShadows.None;   // URP additional-light shadows are disabled project-wide
+        // Never a caster: only NightLight's nearest-few selection is allowed to spend the shadow budget.
+        lamp.shadows = LightShadows.None;
         lamp.renderMode = LightRenderMode.Auto;
         baseIntensity = intensity;
     }

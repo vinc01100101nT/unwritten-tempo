@@ -167,6 +167,7 @@ public class CharacterSpec : ScriptableObject
     /// gears, so every character changes gear at the same pace.</summary>
     public float GearSwitchSpeed => 0.5f * (WalkGearSpeed + RunGearSpeed);
 
+
     /// <summary>Leg cadence for a character travelling under <paramref name="liveMoveMult"/> (its own live Slow/Haste)
     /// in a gear whose animation tier is <paramref name="gearAnimTier"/>. ONE rule for every character: the player's
     /// controller folds exactly this, and an AI unit now folds it too instead of holding a value frozen at spawn.</summary>

@@ -1,4 +1,16 @@
 {
+  "0464e031-7687-4db6-b520-6569f7a756d2": {
+    "counts": {
+      "check-perf-hotpaths.py": 3,
+      "check-unity-code.sh": 1,
+      "npm run": 1,
+      "recompile": 2
+    },
+    "told": [
+      "check-perf-hotpaths.py",
+      "recompile"
+    ]
+  },
   "07e29be4-4ab9-42bf-b310-7c04d134830f": {
     "counts": {
       "build-game.sh": 2,
@@ -30,6 +42,64 @@
     },
     "told": [
       "build-game.sh"
+    ]
+  },
+  "3dd5bd25-bf27-4e7c-adcc-458d3f323917": {
+    "counts": {
+      "build-game.sh": 1,
+      "build-game.sh server": 2,
+      "check-unity-code.sh 2>&1": 1,
+      "recompile 120": 1,
+      "recompile _status": 2,
+      "recompile full": 1,
+      "recompile requested\";'": 1,
+      "unwritten-server.app": 1,
+      "unwritten-server.app .no-content.txt;": 1
+    },
+    "told": [
+      "build-game.sh server",
+      "recompile _status"
+    ]
+  },
+  "3ea91dff-99e2-4f09-afe2-d7374b950f2f": {
+    "counts": {
+      "build-game.sh": 3,
+      "build-game.sh &&": 1,
+      "build-game.sh '": 1,
+      "build-game.sh ;": 1,
+      "build-game.sh |": 1,
+      "check-perf-hotpaths.py 2>&1": 3,
+      "check-skill-data.py": 1,
+      "check-skill-data.py 2>&1": 1,
+      "check-unity-code.sh": 1,
+      "check-unity-code.sh \",": 1,
+      "check-unity-code.sh 2>&1": 10,
+      "npm run migrate`": 1,
+      "recompile 2>&1": 3,
+      "recompile _status": 4,
+      "recompile was": 1,
+      "unwritten-server.app": 1
+    },
+    "told": [
+      "build-game.sh",
+      "check-perf-hotpaths.py 2>&1",
+      "check-unity-code.sh 2>&1",
+      "recompile 2>&1",
+      "recompile _status"
+    ]
+  },
+  "73e119e7-a37e-450a-9160-8276de5c0157": {
+    "counts": {
+      "check-perf-hotpaths.py": 2,
+      "check-skill-data.py": 1,
+      "check-unity-code.sh": 7,
+      "npm start": 1,
+      "recompile": 4
+    },
+    "told": [
+      "check-perf-hotpaths.py",
+      "check-unity-code.sh",
+      "recompile"
     ]
   },
   "7c69e1a3-4830-490f-a8d2-3f1fccafeb0a": {

@@ -70,6 +70,12 @@ public class Character : MonoBehaviour, ICombatUnit
     public int Level => level;
 
     public int XP { get; private set; }
+
+    /// <summary>Every point of experience this character has ever been given, the part already spent on levels
+    /// included. <see cref="XP"/> only holds what is standing inside the CURRENT level and is emptied on each
+    /// level-up, so it can never say who has earned the most — this can. Saved (v10+) rather than worked out
+    /// from the level, so a change to the curve never rewrites what somebody actually earned.</summary>
+    public long LifetimeXp { get; private set; }
     public int CurrentHP { get; private set; }
     public int CurrentMP { get; private set; }
 
@@ -345,7 +351,7 @@ public class Character : MonoBehaviour, ICombatUnit
     public int MaxMagicAttack => MagicAttack;
     public int MinMagicAttack => UnitStatMath.MinMagicAttack(MagicAttack, P(PrimaryStat.INT));
 
-    public int XPToNext => 5 + Level * 5;
+    public int XPToNext => UnitStatMath.XpToNextFrom(Level);
     public bool IsDead => CurrentHP <= 0;
 
     // IDamageable seam (network-readiness): same one apply-entry a mob's Health exposes, so a future net layer targets
@@ -805,6 +811,11 @@ public class Character : MonoBehaviour, ICombatUnit
     public void SetLevel(int newLevel)
     {
         level = Mathf.Max(1, newLevel);
+        // Dialing a level in hands out no experience, so the lifetime figure would still read as whatever was
+        // actually earned — 0 on a character levelled straight to 80, which reads as broken on a board that
+        // ranks by it. Raised to the least a climb to this level would have cost, and never lowered, so a
+        // dialed-DOWN level cannot erase experience somebody really gathered.
+        LifetimeXp = System.Math.Max(LifetimeXp, UnitStatMath.XpEarnedByLevel(level) + XP);
         ReconcilePointsToLevel();
         CurrentHP = MaxHP;
         CurrentMP = MaxMP;
@@ -1111,6 +1122,17 @@ public class Character : MonoBehaviour, ICombatUnit
         }
 
         IndexTriggers();
+
+        // AND THE BAR IS REDRAWN, HERE, because this is the one moment the list it draws from is rebuilt. A cell
+        // finds its skill by asking this character for the component that plays it, so a cell built while the list
+        // was still empty draws as an open slot and stays that way until something unrelated happens to redraw it.
+        // That is exactly what a sign-in looks like: the bar is built the moment the HUD exists, and the saved
+        // bindings arrive over the network a second or two later, on a body that may itself be a second one built
+        // after the map finished loading. Saying it at each of the six places that rebind is how one of them was
+        // forgotten; saying it once, where they all pass, cannot be.
+        // ONLY FOR THE PERSON AT THIS KEYBOARD. A server rebinds this list for everybody signed in, and none of
+        // them has a bar on this screen.
+        if (ReferenceEquals(this, Instance)) HotbarPanel.RebuildRequested?.Invoke();
     }
 
     void IndexTriggers()
@@ -1568,6 +1590,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (RingEquipped) Ring.AddXP(amount);
 
         XP += amount;
+        LifetimeXp += amount;
         while (XP >= XPToNext)
         {
             XP -= XPToNext;
@@ -1678,6 +1701,7 @@ public class Character : MonoBehaviour, ICombatUnit
             version    = SaveData.CurrentVersion,
             level      = level,
             xp         = XP,
+            lifetimeXp = LifetimeXp,
             currentHP  = CurrentHP,
             currentMP  = CurrentMP,
             statPoints = StatPoints,
@@ -1899,6 +1923,12 @@ public class Character : MonoBehaviour, ICombatUnit
 
         level      = Mathf.Max(1, d.level);
         XP         = Mathf.Max(0, d.xp);
+        // v10+ carries the lifetime figure. Anything older never recorded one and 0 is a real answer, so the
+        // VERSION decides rather than the value: below 10, it is worked out from the level curve — exactly what
+        // a character who climbed there honestly would have been given.
+        LifetimeXp = d.version >= 10
+            ? System.Math.Max(0L, d.lifetimeXp)
+            : UnitStatMath.XpEarnedByLevel(level) + XP;
         StatPoints = Mathf.Max(0, d.statPoints);
         if (d.primary != null)
             for (int i = 0; i < primary.Length && i < d.primary.Length; i++)

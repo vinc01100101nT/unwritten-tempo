@@ -38,3 +38,24 @@ frame (the user's explicit call — never skip, however little is left).
   after two report intervals of silence.
 
 Related: [[mobs-get-everything-players-get]], [[npc-footsteps-frame-locked]].
+
+## Two more facts that had to be TOLD (2026-09-07) — both found by "a jump does nothing for watchers"
+
+**HOW FAR OFF THE FLOOR.** `Agent3DVisual` seats a body by pinning its model onto the ground raycast every frame.
+Right for everything that walks and wrong for the one role that can leave the floor: a jumping player's watched
+copy DID rise at the root (the height crosses the wire, and the movement check is measured flat on purpose so a
+jump is never refused) and then had its model slammed back down. **It cannot be derived at the far end** — a
+watched copy has no CharacterController, so it cannot tell real lift from the height the capsule sits at while
+standing, and using the raw reported Y would leave everybody hovering by that offset. `Character3DVisual` already
+separates the two (`HeightAboveGround`); that is what travels.
+
+**THE LEG CADENCE.** `StanceController.GaitFor` reads `playerCtrl.GaitSpeedMult` when it has a controller and the
+bare `CharacterSpec` baseline when it does not — and a watched body never has one. So every movement-paced clip on
+somebody else's body ran at the baseline, ignoring their gear, Slow and Haste. **Measured on the Jump stance
+(MoveGait, ×2): the owner played it at 1.5× and every watcher at 3.0× — exactly twice as fast**, which also threw
+the crouch/freeze/landing phases out of step, since the owner derives those timings from the same resolved mult
+(`ResolvedSpeedMultOf(Jump)`). Told via `StanceController.TellGait`, and used AS-IS with no gear tier on top: the
+number already has the owner's tier folded in, and re-applying one counts it twice.
+
+Both ride the POSITION report, not the pose channel, because both change continuously while a pose does not — and
+the report gate had to learn that rising counts as moving, or a jump straight up sent nothing at all.

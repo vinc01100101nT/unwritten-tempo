@@ -1,7 +1,7 @@
 ---
 status: current
 owner: vince
-last-updated: 2026-09-05
+last-updated: 2026-09-07
 tags:
   - systems-combat-design
 ---
@@ -174,6 +174,8 @@ This table is the one home for it. The other documents in this folder point here
 | Health, death, revival | the server | is told |
 | **When your own animation starts on your own screen** | **your machine** | — |
 | **When your action starts on everyone else's screen** | the server's clock | is told, and shows it |
+| **Which pose your body is holding** | **your machine**, reported on the frame it changes | is told, and holds it |
+| **That a visual reaction happened** (a hit spark, a poison glow, a heal sparkle) | whichever machine **decided the event** — in a shared world, always the server | is told, and plays it on the body it draws |
 | **Which clip, which model, how it looks** | **each machine, locally** | — |
 | Your bag, money and worn gear | the server | asks, is sent the result |
 | Writing to the database | the **character server**, only | the map server pushes progress to it and never writes |
@@ -227,9 +229,10 @@ these three, and a latecomer is treated differently by each.
 
 | Kind | Examples | How it is sent | Somebody who arrives late… |
 | --- | --- | --- | --- |
-| **Continuous state** | position, facing, health, ground speed | a value, re-sent and smoothed | is told the current value |
-| **An action that expires by itself** | a swing, a cast, a death | which action, when it began, how long | **joins it at the right frame** |
-| **A one-off with no duration** | a damage number, a hit spark, a crit flag | announced once | **is told nothing** |
+| **Continuous state** | position, facing, health, ground speed, the travel gear, the pose a body is holding | a value, re-sent and smoothed | is told the current value |
+| **An action that expires by itself** | a swing, a skill's release swing, a cast wind-up, a death | which action, when it began, how long | **joins it at the right frame** |
+| **A one-off with no duration** | a damage number, a hit spark, a heal sparkle, a crit flag | announced once | **is told nothing** |
+| **Something that lasts until it is over** | a poison glow, the charge-up glow under a cast | named when it starts, named again when it ends | is told nothing, and picks it up next time it starts |
 
 A late *number* is dropped; a late *action* is joined. Opposite rules, so one channel cannot carry both — but
 both halves of one event are fired from the same instant on the server, or the number floats up before the arm

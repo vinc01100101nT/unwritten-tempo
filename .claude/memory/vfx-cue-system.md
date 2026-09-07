@@ -13,10 +13,30 @@ Vfx Composer (author look) → **Vfx Cue Composer** (`Tools ▸ unwritten ▸ Ar
 - `VfxCue.cs` — the ONE front door. `Fire(id, actor, target=null)` = one-shot puff; `Begin(id, actor)` = persistent aura, sets `ctx.follow=actor`, RETURNS `VfxSequenceRunner` the caller must `.Stop()`. Both call `VfxDirector.Play(seq, ctx, null)` — null onTick (no gameplay, no capturing closure). Unbound cue = silent no-op.
 - `Editor/VfxCueComposerWindow.cs` — flat table, one row per enum id (auto-reconciled), Save+Reload button.
 
+## ⛔ WHO IS ALLOWED TO SAY A CUE HAPPENED (2026-09-07) — read this BEFORE adding a Fire site
+**A joined client fires NOTHING and draws only what the server tells it.** `Fire`/`Begin` return immediately when
+`GameNetwork.TheWorldIsElsewhere` — so a new `VfxCue.Fire(...)` added on a client-only path is a **silent no-op**,
+which is exactly the trap that costs a round. The server announces every cue it fires to everyone watching that
+unit (`GameNetwork.AnnounceCue` → `CuePlayed` → `VfxCue.PlayFromServer`), and draws nothing itself. A single
+machine with no world attached is unchanged: it both fires and draws.
+
+Consequence for a NEW cue on something only the client knows about (the sprint puff was the one such case): the
+client cannot say it — tell the server the fact, and let the server fire the cue. Sprint does that via
+`NetPlayer.CmdSprinting`.
+
+A `Begin` aura is NAMED (an int key) so the server's later "it ended" can say which one; the client's handle is
+fenced by `VfxSequenceRunner.Generation`, so a runner that finished and was re-pooled cannot be stopped by a stale
+handle. `VfxCue.ForgetAurasOn(netId)` strips a body's auras when it leaves view.
+
 ## Fire sites (one-liners; centralized per the choke-point rule)
 - `StatusController.cs` — DoT: `Apply` (new) → `StartAura` holds `aura[i]=VfxCue.Begin(*Start)`; `TickDot` → `VfxCue.Fire(*Tick)`; expiry sweep in `Update` + `OnDestroy` Stop the aura. CC/Haste apply → one-shot `VfxCue.Fire`. `aura[]` array parallels the ailment arrays. Covers MOBS too (StatusController is on both).
-- `Character.cs` — `Heal`→OnHeal, `AddXP` levelup→OnLevelUp, and new `RaiseDeath()` helper (replaces the 3 inline `OnDied?.Invoke()` sites)→OnDeath.
-- `Player3DAttacker.cs` — swing→OnAttack, landed basic hit→OnHit/OnCrit (at target).
+- `CombatAuthority.cs` — `NoteHPAdded` (the ONE door every HP gain passes through) → OnHPAdded. NOT `Character.Heal`: that only calls the door.
+- `Character.cs` — `AddXP` levelup→OnLevelUp; `RaiseDeath()` + `SetHealthFromServer` death→OnDeath.
+- `Health.cs` — basic hit→OnHitByNormalAttack/OnHitByCriticalAttack, skill hit→OnHitBySkill, `Die`/`PlayDeathVisuals`→OnDeath.
+- `BasicSwing.cs` — a landed swing→OnHitByNormalAttack/OnHitByCriticalAttack (at the victim).
+- `MonsterAI3D.cs` — magic mob's attack→OnCastStart, mob levelup→OnLevelUp.
+- `SkillRunner.cs` — `BeginCastVisuals`→`Begin(OnCastStart)` aura for the wind-up.
+- `Player3DController.cs` — sprint engaged→OnSprint. (`Player3DAttacker`'s OnAttack line is commented out — there is no swing cue.)
 
 ## Lifecycle decision (user 2026-07-02)
 DoTs get **persistent aura (`*Start`) + per-tick puff (`*Tick`)**. `*Start` MUST be authored as an Attach/looping sequence (returnAt=0, lives until Stop) — else pooled-runner reuse could let a stale handle Stop a different play. Everything else = one-shot.

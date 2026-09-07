@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-05
+last-updated: 2026-09-07
 tags:
   - systems-combat-design
 ---
@@ -178,11 +178,35 @@ A player who is not joined is not in the world at all, so there is no state in w
 
 **THE WHOLE SKILL RUNS ON THE SERVER** *(2026-09-01)* — not just its damage. A cast crosses as one message naming the skill, what it was aimed at and where; the server runs the **same** skill machinery the player's own machine would have, with one runner per authored skill per connection, and the player's copy only draws it. Before this, only the damage effect ever reached the server — 45 of the 57 effects across the 42 composed skills were applied against a character the server never saw, so a brace armed nothing, buffs protected nobody, and charges were spent on a copy. A skill's damage, a heal's size and a player's own buffs are now all the server's word.
 
-**A cast's randomness is seeded by the server**, so where a scattered shot lands is the same on every screen — and, deliberately, your own spell effect now plays on the server's word rather than at the press. The pose, the cast bar and the skill's own call still fire instantly.
+**A cast's randomness is seeded by the server**, so where a scattered shot lands is the same on every screen — and, deliberately, your own spell effect now plays on the server's word rather than at the press. The pose, the cast bar, the ring on the ground and the skill's own call still fire instantly at the keyboard that pressed it; all four reach everybody watching as well, described below. The one wind-up visual that does NOT appear instantly for the caster is the charge-up glow on their own body: that is a cue, and a cue is now always the world's to say — see the entry on cues below.
+
+**SAYING SOMETHING CROSSES THE WIRE, AND SO DOES CALLING A SKILL'S NAME** *(2026-09-07)*. A typed line goes to the server carrying the words and nothing else — not who said them, not where they were standing — and the server says it back to everybody who can see the speaker, the speaker included. So nothing is drawn at the keyboard that typed it: one line said is one row and one white bubble on every screen, decided in one place, and a person cannot see a different chat from the people listening. A skill's NAME travels the same way and lands in the same chat row and the same bubble, only tinted — sent once per cast from the server, and never back to the caster, whose own machine says it the instant they press. Before this the whole of chat was local: two people standing together could see each other's spells go off and hear neither the words nor the names. A command is refused at that door rather than said out loud, because commands have their own, which asks whether the person is a GM. Both are flood-guarded like every other claim, four lines a second, and a line is cut at 200 characters rather than refused.
+
+**A WIND-UP IS VISIBLE TO EVERYBODY WATCHING** *(2026-09-07)*. The server says when a cast starts, how long it runs against the character IT holds, and when it ended — finished or broken — and each watcher fills the bar in between on its own clock. So somebody else's four-second spell is four seconds of a filling bar with the skill's name over their head, where it used to be four seconds of them standing still followed by an explosion. The bar itself became one per CASTER rather than one in the game: it was a single widget on the reasoning that the player casts one spell at a time, which is true of the player and false of the world. A bar nobody refreshed for a frame puts itself away, so a lost end-message cannot leave one hanging over somebody forever. **The casting POSE crosses with it**, though not on this message: it rides the general channel that carries every held pose (below), which pushes it onto the watched body's own stance choke point exactly as the caster's machine pushes it, fitted to the same length. It deliberately does NOT travel down the channel that carries a swing — that one plays a clip once inside its beat, which would have played the incantation once and dropped the body back to idle for the rest of a long spell. A held pose and a one-shot action are different layers, and a cast is the held one. **The ring on the ground crosses too**: the wind-up message carries where the spell is aimed, and each watcher reads its own ring off the same authored skill.
 
 **Only what is near you is sent to you.** Range-based interest is on at 60 units, comfortably past the 28 at which the game already stops simulating creatures.
 
 **A watching machine reuses creature bodies.** Arriving shells take a spare body of the same kind rather than building a rigged model and throwing it away, which is what a field of respawning monsters used to cost every player.
+
+**EVERY POSE AND EVERY CUE NOW CROSSES, AND BOTH ARE GENERAL** *(2026-09-07)*. Neither names a particular pose or a particular effect anywhere, so one added later travels without being wired up.
+
+*Poses.* Reported from the single place every pose in the game resolves, on the frame it changes — so a jump held in the air, a dodge roll, a flinch, a body lying dead, a seat, a guard and a skill's release swing all reach every screen. Before this, the only thing a watcher ever saw a person's body do was walk and swing. Two poses are deliberately NOT reported, and both because something else already owns the answer: a travel gear (each machine works walking out from the speed and the gear it is told) and a weapon swing (the server announces that itself, from the weapon it holds). Which is which is asked of the stance vocabulary rather than kept as a list at the reporting site, so a new pose is reported by default — the safe way round.
+
+*The sprint gear is told, not measured.* A hasted run and a sprint are both simply fast and no threshold separates them, so the machine that owns the legs says which gear it is in. Walk and run stay on the speed, which genuinely does separate those two.
+
+*Cues* — every visual reaction in the game, from a hit spark to a poison glow — are announced by whichever machine DECIDED the event, which in a shared world is always the server. **A machine that has joined somebody else's world now fires none of its own and draws only what it is told, including cues on its own body.** That one rule is what stops the same puff playing twice on one screen and not at all on another, and it needs no list of which cue belongs to whom. It is the same bargain your own spell effects already make. A lasting glow is NAMED when it starts so the "it is over" can say which one, since two people can be poisoned at once; the name is fenced against the effect pool handing that runner to something else in between.
+
+*Two things sit next to this and are deliberately NOT done, so nobody has to rediscover them.* **The floating
+WORDS over a head still do not travel** — the stun flash reaches every screen but the word "Stun!" above it does
+not, and neither does the green "+12" over a heal somebody else cast on you. Those belong to the floating-number
+system, not to cues, and damage numbers already cross by their own route, so a second general door for them would
+draw every damage number twice; it needs its own small message instead. **And a release swing is capped at its own
+natural length on a watcher**: the caster's machine stretches that animation by one over their attack speed, so a
+caster under an attack-speed DEBUFF stretches it past the clip and the watcher's side clamps it back down. The
+clamp is right for a creature's bite (it must not still be swinging when the next one lands) and wrong only here,
+and only in that one direction — a buffed or normal caster is exact.
+
+**A CHARACTER'S FACING IS THE MODEL'S, NOT THE ROOT'S** *(2026-09-07)*. A live-3D character turns by yawing the MODEL hanging under its root; nothing anywhere rotates that root. The position report read the root's angle, so every player told the world they were facing the direction their root was built at, forever — and everybody else watched them run around permanently facing one way. Read a facing off the pose sink that actually turns. The watched body's root is still what gets turned at the far end, and its own visual then turns its model to match, so the two models end up at the same angle.
 
 **Movement is CHECKED, not simulated.** A player's machine still moves them — that is what keeps the controls answering at this camera distance — but every reported position is measured against how far they could possibly have travelled since the last one accepted, at their real top speed with their buffs. An impossible report is dropped rather than written down, and a run of them puts the person back where the server has them. It is forgiving on purpose: a wrong correction on an honest player is worse than a missed cheat, so a door, a respawn and any shove the server itself ordered are all let off. **This raises the reach checks with it** — they measure from a position that can no longer be arbitrary.
 

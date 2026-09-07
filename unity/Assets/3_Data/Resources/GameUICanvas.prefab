@@ -1769,7 +1769,7 @@ MonoBehaviour:
   blipRoot: {fileID: 9194040257217233294}
   viewRadius: 20
   camHeight: 120
-  renderHz: 0
+  renderHz: 20
   maxRenderHz: 120
   textureSize: 256
   toggleKey: 109

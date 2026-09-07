@@ -252,9 +252,12 @@ public class SkillBookPanel : MonoBehaviour
     {
         var c = Character.Instance;
         if (c == null || !c.Hotbar.AutoBind(id)) return;   // unknown, already bound, or bar full (ultimates → ult slot)
-        PassivesSaved.Now();
-        HotbarPanel.RebuildRequested?.Invoke();
-        UISounds.PlayClick();
+        // THROUGH THE BAR'S OWN DOOR, which is the one that tells the SERVER. This used to run the PASSIVE commit,
+        // which redraws the picture and sends the ticked passives — never the bar. So a skill clicked in here
+        // existed on this machine only: the server refused every press of it as not that character's, and its next
+        // write of them (within fifteen seconds) put the old bar back, so the binding was gone by the next sign-in.
+        // Dragging the same skill onto the same slot always worked, because drag already came through here.
+        HotbarCommit.Now();
     }
 
     // ---- tiny UI helpers (match SkillDraftPanel's style) --------------------

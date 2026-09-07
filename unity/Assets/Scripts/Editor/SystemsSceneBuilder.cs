@@ -85,7 +85,7 @@ public static class SystemsSceneBuilder
             new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
 
         var gameSystems = new GameObject("GameSystems");
-        gameSystems.AddComponent<GameSystems>();        // global services host + frame-rate cap (120 FPS, VSync off)
+        gameSystems.AddComponent<GameSystems>();        // global services host + frame-rate cap (60 FPS, VSync off)
         RigBuilder25D.BuildCursor(gameSystems);         // hardware GameCursor3D (pointer / sword / crosshair)
         gameSystems.AddComponent<DeathScreen>();        // Phase F: "YOU DIED" overlay + respawn (builds its own canvas)
         gameSystems.AddComponent<Sfx>();                // pooled one-shot SFX player (attack/hit/block/footsteps)

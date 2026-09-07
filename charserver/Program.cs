@@ -91,6 +91,10 @@ catch (Exception e)
 var maps = new MapServers(config);
 new Characters(db, auth, roster, maps).MapOnto(app);
 
+// The one public read: what the world looks like right now, for the player wiki's status page. No token, no
+// secret, counts and public names only — see WorldStats.
+new WorldStats(db, maps, config).MapOnto(app);
+
 // ---- the map servers' own door ----------------------------------------------------------------------------
 // Reached with the shared SERVER secret, never with a player's token. A person signing in must not be able to
 // register a map server, and a map server does not sign in.

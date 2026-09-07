@@ -75,6 +75,21 @@ public class NetMob : NetworkBehaviour
     /// and every watcher rebuilt the creature from its kind alone, which is always the sprite.</summary>
     [SyncVar] public bool isShadow;
 
+    /// <summary>WHICH BODY a live-3D creature wears, chosen once by this server before the creature is announced.
+    /// Empty on a flat sprite creature, which wears none.
+    ///
+    /// <para>On the wire because it is this creature's IDENTITY, not a picture each machine may invent. Every
+    /// watcher used to draw its own at random from the same pool, so the same creature stood in front of two people
+    /// wearing two different bodies. It changes once, before anybody is told about the creature at all.</para>
+    ///
+    /// <para>Carries a change hook because the body a watcher builds and this name can land in either order: the
+    /// hook covers the name arriving second, and the build covers it arriving first.</para></summary>
+    [SyncVar(hook = nameof(OnShadowModelArrived))] string shadowModel = "";
+
+    // The name landed after this machine had already built the creature's body. Told straight away; a body that has
+    // not been built yet is told by the build instead, so neither order can leave it wearing nothing.
+    void OnShadowModelArrived(string _, string now) => (viewVisual as MobShadow3DVisual)?.WearModel(now);
+
     [SyncVar] Vector3 netPosition;
     [SyncVar] float netYaw;
     [SyncVar] int netHealth;
@@ -119,6 +134,11 @@ public class NetMob : NetworkBehaviour
     /// when the copy is built, never looked up per hit — the door that uses it runs on every blow.</summary>
     public IDamageable WatchedTarget { get; private set; }
 
+    /// <summary>THE BODY THIS MACHINE DRAWS FOR THIS CREATURE — the watched copy, or null before it is built. The
+    /// creature half of the same question a person's shell answers, so anything that plays a picture on a unit asks
+    /// one question rather than one per kind of unit.</summary>
+    public Transform DrawnBody => view != null ? view.transform : null;
+
     const float PushInterval = 0.1f;   // ten times a second, same cadence as a player's position
 
     float nextPush;
@@ -138,7 +158,11 @@ public class NetMob : NetworkBehaviour
         if (mob != null) byServerMob[mob] = this;
         defId = id;
         mapName = mob != null ? mob.gameObject.scene.name : "";
-        isShadow = mob != null && mob.GetComponent<MobShadow3DVisual>() != null;
+        var shadow = mob != null ? mob.GetComponent<MobShadow3DVisual>() : null;
+        isShadow = shadow != null;
+        // AND THE BODY IT WEARS, read off the creature at the same moment its kind is. The creature chose it as it
+        // was built, on the line above the one that announces it, so there is always an answer here to hand over.
+        shadowModel = shadow != null ? (shadow.ModelName ?? "") : "";
         serverHealth = mob != null ? mob.GetComponent<Health>() : null;
         serverAgent = mob != null ? mob.GetComponent<PathAgent3D>() : null;
         if (serverHealth != null) { netMaxHealth = serverHealth.maxHealth; netHealth = serverHealth.CurrentHP; }
@@ -220,7 +244,7 @@ public class NetMob : NetworkBehaviour
     /// this machine is headless and has no business reading art to decide gameplay timing.</para></summary>
     public void BeganAction(StanceId action, float seconds)
     {
-        if (!isServer || seconds <= 0f) return;
+        if (!isServer || seconds < 0f) return;
         netAction = action;
         netActionSeconds = seconds;
         // Stamped LAST, and stamped HERE rather than by whoever asked: the moment is the thing every watcher
@@ -385,6 +409,11 @@ public class NetMob : NetworkBehaviour
         // filed as having none and would never be told anything for the whole of its life.
         viewVisual = go.GetComponent<Agent3DVisual>();
 
+        // AND WHICH BODY THIS CREATURE WEARS, which is the server's to choose and never this machine's. Said even
+        // when the name has not arrived yet: an empty one tells the creature to WAIT for it rather than draw one of
+        // its own, and the change hook above finishes the job the moment it lands.
+        if (isShadow) (viewVisual as MobShadow3DVisual)?.WearModel(shadowModel);
+
         // A REUSED BODY MUST BE TOLD ITS HEALTH AGAIN. These remember what was last drawn so a creature at steady
         // health costs nothing; left as they were, a recycled body would keep showing the last creature's wounds
         // until its health happened to change.
@@ -441,6 +470,10 @@ public class NetMob : NetworkBehaviour
     void DropTheView()
     {
         if (view == null) return;
+        // EVERY LASTING CUE RIDING THIS BODY COMES OFF FIRST. A glow is held by the name the server gave it, not by
+        // the body it is attached to, and this body is about to be banked for the next creature to use — so a
+        // poisoned creature you walked away from would hand its glow to whatever came back in its place.
+        VfxCue.ForgetAurasOn(netId);
         byView.Remove(view);   // before the object goes, or the table keeps a dead key forever
         PutBodyBack(BodyKind, view);
         view = null;
@@ -482,8 +515,13 @@ public class NetMob : NetworkBehaviour
 
     /// <summary>What a banked body IS, not merely which creature it belongs to. A flat one and a live-3D one of the
     /// same creature are not interchangeable — the 3D one hides the sprite and builds a rig it keeps for life — so
-    /// handing one back for the other would either strip a body that cannot be rebuilt or leave an invisible mob.</summary>
-    string BodyKind => isShadow ? defId + " 3d" : defId;
+    /// handing one back for the other would either strip a body that cannot be rebuilt or leave an invisible mob.
+    ///
+    /// <para>A LIVE-3D BODY IS FILED UNDER ITS MODEL TOO. A shadow builds its rig once and keeps it for life, so a
+    /// body handed back for a creature wearing a different model would come back wearing the wrong one — which is
+    /// the very thing putting the model on the wire exists to stop. Bodies of one model still pool among themselves,
+    /// which is the case that matters: a field of the same creature reuses freely.</para></summary>
+    string BodyKind => isShadow ? defId + " 3d " + shadowModel : defId;
 
     /// <summary>How many bodies of one kind are worth keeping. Past this they are let go — a player who walks
     /// through a whole map should not still be holding a body for every creature they passed.</summary>

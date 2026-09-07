@@ -43,6 +43,19 @@ public static class AccountSession
     /// <para>Good once and for about half a minute. Cleared as it is spent.</para></summary>
     public static string EntryTicket { get; set; }
 
+    /// <summary>WHICH MAP THE CHARACTER SERVER IS SENDING THIS PERSON TO — the map they logged out in, decided by the
+    /// one thing that knows, at the moment it hands out the ticket above. Empty for a character nobody has played
+    /// yet, and empty on a server, which is never sent anywhere.
+    ///
+    /// <para>Read once, by the boot gate, to decide which map comes up underneath the persistent layer. Without it
+    /// the game loaded its authored starting map whoever was signing in, announced THAT to the world server as where
+    /// the player was standing, and only walked back to the real map once a SECOND request for the character had
+    /// come back. So every single sign-in filed the player in the wrong map for a moment, and any interruption
+    /// inside that moment left the starting town as the last thing written down about where they were.</para>
+    ///
+    /// <para>Set on every entry, including to empty, so it can never be a previous session's answer.</para></summary>
+    public static string EntryMap { get; set; }
+
     public static string AccessToken { get; private set; }
     public static string AccountId { get; private set; }
 

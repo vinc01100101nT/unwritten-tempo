@@ -99,11 +99,30 @@ public class StanceController : MonoBehaviour
     float GaitFor(StanceId id)
     {
         if (playerCtrl != null) return playerCtrl.GaitSpeedMult;
+        // TOLD, for a body standing in for somebody on another machine. Their cadence is folded from their gear,
+        // their Slow and their Haste by the controller they actually have, and none of those three reach here — so
+        // a watched person's legs, and every clip paced by them, ran at the bare baseline. On the jump clip that
+        // came out at exactly twice the speed the jumper saw. Used AS IT IS, with no gear tier applied on top: the
+        // number arrives with the owner's own tier already in it, and applying one again would count it twice.
+        if (toldGait > 0f) return toldGait;
         var spec = CharacterSpec.Active;
         // Run legs churn at the run gear so the slower travel doesn't foot-skate — the same tier rule the player uses.
         float gearAnimTier = id == StanceId.Run ? spec.runGearMult : 1f;
         return spec.GaitMult(status != null ? status.MoveMult : 1f, gearAnimTier);
     }
+
+    // The owner's own leg cadence, for a body that is only being watched. 0 = nobody has said, which is every
+    // townsperson and every creature — they read the shared baseline below exactly as they always have.
+    float toldGait;
+
+    /// <summary>The owning machine's word on this body's leg cadence. The watched-body mirror of
+    /// <see cref="SetGaitSource"/>: one hands over the live owner, the other hands over its answer.</summary>
+    public void TellGait(float gaitMult) { toldGait = gaitMult > 0f ? gaitMult : 0f; }
+
+    /// <summary>This body's leg cadence as it stands right now — the number every clip paced by movement is played
+    /// at. Read by the position report so the machines watching this person can be told it; asking any other object
+    /// for it would be a second owner of one answer.</summary>
+    public float TravelGait => GaitFor(StanceId.Idle);
 
     /// <summary>Point the MoveGait source at the player controller (the gait-mult owner) — for a rig whose billboard
     /// rides a separate object from the controller (e.g. the player visual).</summary>
@@ -112,6 +131,12 @@ public class StanceController : MonoBehaviour
     /// <summary>Claim this as the PLAYER's controller: register it as <see cref="Player"/> (so cast/combat systems
     /// can push held stances onto it) and switch its fallback to hold the authored Idle stance instead of self-drive.</summary>
     public void BecomePlayer() { Player = this; selfDrive = false; }
+
+    /// <summary>The visual this controller drives — the same answer <see cref="Character3DVisual.Pose"/> and
+    /// <see cref="Agent3DVisual.Pose"/> give, under the same name. Reach for it to ask a body something about
+    /// itself that only the visual knows, such as which way it has actually turned: on a live-3D character the
+    /// model yaws and the root it hangs under never does.</summary>
+    public IStancePose Pose => pose;
 
     void OnDestroy() { if (Player == this) Player = null; }
 
@@ -155,6 +180,23 @@ public class StanceController : MonoBehaviour
         overrideId = id; overrideWindow = played; overrideUntil = Time.time + left; overrideFit = fitToWindow;
         // The clip is still fit to its WHOLE length, so it plays at the right speed; only the entry point moves.
         overrideSeekTo = startedSecondsAgo > 0f ? Mathf.Clamp01(startedSecondsAgo / played) : -1f;
+
+        // SAID OUT LOUD, so a skill's release swing happens on every screen and not only the caster's. It travels as
+        // a MOMENT — what, and when it began — because that is the shape it is: it plays once and it is over.
+        //
+        // Only from the body at THIS keyboard, and only for a beat starting NOW. A watched body reaches this same
+        // line when it is told about somebody else's beat, and reporting from there would bounce that beat straight
+        // back out again.
+        //
+        // WHAT IS SENT WITH IT IS A WINDOW THE PLAY MUST FIT INSIDE, and only GAMEPLAY owns such a window — a repeat
+        // beat, a swing cadence, a dash length. A caller that named one is passed on; a caller that named none is
+        // asking for the animation's own length, which belongs to the ART, and every machine has its own copy of the
+        // art and must read it there. Sending a length in that case is what made a skill's ending run visibly shorter
+        // for everybody else than for the person casting it: the watching side takes the SHORTER of the two answers,
+        // so the caster's number could only ever cut its own play short, never lengthen it, and any disagreement at
+        // all between the two machines came out as a clipped animation on every screen but the caster's.
+        float windowToTell = (fitToWindow || seconds > 0f) ? played : 0f;
+        if (Player == this && startedSecondsAgo <= 0f) GameNetwork.ReportActionBegan(id, windowToTell);
         return played;
     }
 
@@ -240,9 +282,96 @@ public class StanceController : MonoBehaviour
         return b != null && pose != null ? pose.NaturalFrameCount(b.action, b.clip) : 0;
     }
 
+    // WHAT WAS LAST SAID TO THE MACHINES WATCHING THIS BODY. Kept so the report below is a change gate: nothing goes
+    // out on a frame where nothing moved, which is almost every frame.
+    bool saidHasPose;
+    StanceId saidPose;
+    float saidPoseWindow;
+    bool saidPoseRelease;
+    bool saidHasHeld;
+    StanceId saidHeld;
+    float saidHeldWindow;
+
+    // Below this, a window has not really changed — a float that wobbles in its last digits must not spend a packet.
+    const float WindowEpsilon = 0.001f;
+
+    /// <summary>Tell the world what this body settled on, whenever it settles on something new.
+    ///
+    /// <para><b>Why it is here and nowhere else.</b> This is the one place every pose in the game passes through, so
+    /// a pose reported from here is a pose that cannot be forgotten — and a pose added to the game later travels
+    /// without anybody wiring it up. Reporting from each of the places that DECIDE a pose instead would be one wiring
+    /// job per pose, and the one somebody forgets is the one nobody ever sees.</para>
+    ///
+    /// <para><b>What is deliberately NOT reported, and why.</b> A travel gear, because every machine already works
+    /// walking out from the speed and the gear it is told; and a weapon swing, because the server announces that
+    /// itself from the weapon IT holds. Saying either again would make two owners of one answer — the swing would
+    /// replay from the top on every screen, and the walk would fight the speed. Which is which is the stance
+    /// vocabulary's own question to answer, not a list kept here.</para>
+    ///
+    /// <para>Only the body at THIS keyboard reports; a watched copy of somebody else is showing what it was told and
+    /// has nothing of its own to say.</para></summary>
+    void ReportToWatchers(bool hasPose, StanceId poseId, float window, bool release,
+                          bool hasHeld, StanceId heldId, float heldWindow)
+    {
+        if (hasPose && !StanceCatalog.WatchersMustBeTold(poseId)) hasPose = false;
+
+        if (hasPose != saidHasPose || (hasPose && (poseId != saidPose || release != saidPoseRelease
+                                                   || Mathf.Abs(window - saidPoseWindow) > WindowEpsilon)))
+        {
+            saidHasPose = hasPose; saidPose = poseId; saidPoseWindow = window; saidPoseRelease = release;
+            GameNetwork.ReportDrivenStance(hasPose, poseId, window, release);
+        }
+
+        if (hasHeld != saidHasHeld || (hasHeld && (heldId != saidHeld
+                                                   || Mathf.Abs(heldWindow - saidHeldWindow) > WindowEpsilon)))
+        {
+            saidHasHeld = hasHeld; saidHeld = heldId; saidHeldWindow = heldWindow;
+            GameNetwork.ReportHeldStance(hasHeld, heldId, heldWindow);
+        }
+    }
+
+    /// <summary>FORGET WHAT HAS ALREADY BEEN SAID, so the very next frame says all of it again.
+    ///
+    /// <para>Called when this body arrives in a world — a first sign-in, or walking through a door into a zone
+    /// another server holds. The new world starts out believing this body is doing nothing, and the change gate
+    /// above would agree with it and stay silent: a person who walked through that door holding a pose would keep
+    /// it on their own screen and hold none on anybody else's, until the next time they happened to change.</para></summary>
+    public void ForgetWhatWasSaid()
+    {
+        saidHasPose = false; saidPose = default; saidPoseWindow = 0f; saidPoseRelease = false;
+        saidHasHeld = false; saidHeld = default; saidHeldWindow = 0f;
+    }
+
+    /// <summary>The held stance currently winning, by priority alone — the answer this body is REPORTING, which is
+    /// not quite the answer it PLAYS. Whether a body has the art for a stance is a question about that machine's own
+    /// copy of the character, so each one asks it of itself; what travels is which stance was pushed.
+    ///
+    /// <para>Walks the one or two stances a body holds at once — an index loop over a short list, no allocation.</para></summary>
+    bool HeldWinner(out StanceId id, out float window)
+    {
+        id = default; window = 0f;
+        int bestPri = int.MinValue;
+        bool found = false;
+        for (int i = 0; i < active.Count; i++)
+        {
+            var b = StanceCatalog.Get(active[i].id);
+            if (b == null) continue;
+            if (b.priority >= bestPri) { bestPri = b.priority; id = active[i].id; window = active[i].window; found = true; }
+        }
+        return found;
+    }
+
     void LateUpdate()
     {
         if (pose == null) return;
+
+        // SAID BEFORE IT IS DRAWN, and from one place rather than from each of the branches below — every one of
+        // which returns, so a report written inside them would be three reports and one of them would rot.
+        if (Player == this)
+        {
+            bool hasHeld = HeldWinner(out var heldId, out float heldWindow);
+            ReportToWatchers(hasAction, actionId, actionWindow, actionRelease, hasHeld, heldId, heldWindow);
+        }
 
         // 0) One-shot action override (skill release) — beats even the brain's per-frame action until it expires.
         if (Time.time < overrideUntil)

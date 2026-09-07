@@ -39,6 +39,35 @@ public static class StanceCatalog
     /// <summary>Drop the cache so the next access reloads from Resources (use after editing the library).</summary>
     public static void Reload() { _byId = null; }
 
+    /// <summary>Must the machine that owns this body SAY OUT LOUD that it went into this stance, or can every
+    /// other machine already work it out for itself?
+    ///
+    /// <para>Two kinds answer NO, for two different reasons, and everything else answers YES. A travel gear is
+    /// worked out from how fast the body is moving and which gear it is in, both of which already cross the wire —
+    /// saying it again would be a second owner of one answer. A weapon swing is chosen by the SERVER, from the
+    /// weapon the server holds, and announced from there — saying it here as well would play one swing twice.</para>
+    ///
+    /// <para>Everything else — a jump, a dodge, a flinch, a death, a skill's release swing, a pose held while
+    /// guarding or sitting — happens at a moment nothing else on the wire describes, so it is reported. A stance
+    /// added later inherits that by default, which is the way round it should be: a new stance nobody remembers to
+    /// list is one watchers still see.</para></summary>
+    public static bool WatchersMustBeTold(StanceId id)
+        => !IsLocomotion(id) && !WeaponStances.IsBasicAttack(id);
+
+    /// <summary>The travel gears — the stances a body picks from its own measured speed. Named here, beside the
+    /// registry that resolves every stance, so the one list lives in one place.</summary>
+    public static bool IsLocomotion(StanceId id)
+        => id == StanceId.Idle || id == StanceId.Walk || id == StanceId.Run || id == StanceId.Sprint;
+
+    /// <summary>Is this a real stance at all — a value inside the authored vocabulary? Asked of anything that
+    /// arrived over the wire, where the number is whatever the sender wrote rather than something Unity picked.</summary>
+    public static bool Exists(StanceId id)
+    {
+        EnsureLoaded();
+        int idx = (int)id;
+        return idx >= 0 && idx < _byId.Length;
+    }
+
     /// <summary>Resolve a stance's binding, or null if it isn't bound. Zero-alloc array index.</summary>
     public static StanceBinding Get(StanceId id)
     {

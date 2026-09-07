@@ -1,11 +1,17 @@
 # A doc cannot vouch for its own freshness
 
 **Reach for this when** you are about to repeat, to the user or into another doc, something a document states —
-especially under a heading like *"still true"*, *"current"*, *"as of today"* or a `last-updated` date.
+especially under a heading like *"still true"*, *"current"*, *"as of today"* or a `last-updated` date — **or when
+a CODE COMMENT tells you the value of a setting that lives in another file.**
 
 ## The rule
 
 **A doc's claim about the code is a claim, not a measurement.** Before repeating one, check it against the code.
+
+**A code comment is a document.** It sits inside the source file, so reading it feels like reading the code — and
+that is exactly why it is the more dangerous of the two. A comment describing a value that lives somewhere else
+(a project setting, a config, another file's field) is the same unverified claim in a costume. Go open the file
+that HOLDS the value.
 Treat a freshness heading as the strongest possible warning sign, not as reassurance: somebody wrote it on the
 day it was true, and nothing has re-checked it since. A `last-updated` line dates the *edit*, never the *claim* —
 the two drift the moment anyone touches the file for another reason.
@@ -30,10 +36,22 @@ The cost: I repeated all four to the user as the state of their own game, listed
 The user caught it with one question — *"aren't they already in the server?"* — which is the cheapest possible
 way to find out and the most expensive place to be found wrong.
 
+2026-09-07, the same rot in a code comment. Asked which settings could be turned down without losing anything
+visible, I read a comment on the torch light saying *"Additional-light shadows are OFF in the URP asset, so this
+never adds a shadow pass"* and told the user that nothing in the game used lamp shadows, so the whole shadow
+buffer could be freed for nothing. The setting said the opposite, and a whole system sat on top of it: after
+dark, the few lamps nearest the player are promoted to real shadow casters, and the billboard characters turn
+their own shadows to face whichever one is casting.
+
+The user asked me to make the change. I had to stop and retract a recommendation I had by then given twice. The
+comment was two lines from the code it described and had been wrong for as long as anyone had been reading it.
+
 ## How to apply
 
 - When updating a doc, **list every factual claim it makes about the code**, then check each one. Not the diff;
   the document.
+- **A comment that names a setting is a pointer, not an answer.** Open the settings file and read the value. It
+  costs one grep, and it is the difference between a recommendation and a retraction.
 - Give a **freshness heading no weight at all.** "Still true" is the sentence most likely to be stale, because
   it is written once and never revisited.
 - **Search the project's memory for the subject first.** The correction was sitting in a memory file the whole

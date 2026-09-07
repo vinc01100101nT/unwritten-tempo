@@ -1,6 +1,6 @@
 # VFX (particle/effect layer, cue choke, composer/tuner, gotchas)
 
-- [VfxCue — event→VFX choke point](../vfx-cue-system.md) — `VfxCue.Fire`/`Begin`→`VfxCueCatalog`→`VfxCueLibrary.asset`.
+- [VfxCue — event→VFX choke point](../vfx-cue-system.md) — `VfxCue.Fire`/`Begin`→`VfxCueCatalog`→`VfxCueLibrary.asset`. **A joined client fires NOTHING** — the server announces every cue and the client only draws what it is told, so a Fire added on a client-only path is a silent no-op.
 - [Ground-cast Origin anchor collapse](../vfx-ground-cast-origin-collapse.md) — `VfxContext.At` set origin==target, so a ground skill's Origin anchor played at the impact; fixed to origin=caster/target=aim in `SkillRunner.Cast`.
 - [One-shot VFX re-looped at runtime](../vfx-looping-oneshot-double-play.md) — fix `m.loop = oneShot ? false : baseLoop[i]`.
 - [Vfx particle-effect layer](../vfx-effect-library.md) — `Vfx.PlayAt`/`Attach`→`EffectCatalog`→`EffectLibrary.asset` (pooled).

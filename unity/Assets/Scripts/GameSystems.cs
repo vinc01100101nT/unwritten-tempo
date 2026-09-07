@@ -14,17 +14,17 @@ public class GameSystems : MonoBehaviour
     public static GameSystems Instance { get; private set; }
 
     [Header("Frame rate (whole game)")]
-    [Tooltip("Frames-per-second cap for the entire game. Default 120. VSync is turned OFF so this is " +
+    [Tooltip("Frames-per-second cap for the entire game. Default 60. VSync is turned OFF so this is " +
              "honoured even on a 60 Hz panel (may tear above the refresh rate). Tick 'lock to VSync' " +
              "instead to follow the monitor refresh cleanly with no tearing.")]
-    public int targetFps = 120;
+    public int targetFps = 60;
 
     [Tooltip("Lock to the monitor's refresh rate (no tearing) instead of the targetFps cap. " +
              "On a 60 Hz monitor this caps you at 60.")]
     public bool lockToVSync = false;
 
     /// <summary>How often a SERVER runs a frame. A server draws nothing, so every frame it spends is pure
-    /// simulation — and it was spending them at the client's 120, four times more than the world needs, on a
+    /// simulation — and it was spending them at the client's cap, four times more than the world needs, on a
     /// machine with no screen to show for it.
     ///
     /// <para>This is also the ceiling on how often anything can reach a player: the wire is pumped once per
@@ -46,7 +46,7 @@ public class GameSystems : MonoBehaviour
     static void BootFrameRate()
     {
         QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = GameServer.IsServer ? ServerFps : 120;
+        Application.targetFrameRate = GameServer.IsServer ? ServerFps : 60;
     }
 
     void Awake()

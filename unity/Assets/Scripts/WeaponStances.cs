@@ -26,4 +26,26 @@ public static class WeaponStances
             default:                  return StanceId.AttackBareHands;
         }
     }
+
+    /// <summary>Is this stance one of the weapon swings above? Asked by the stance choke point, which must not
+    /// report a swing to the machines watching: the server already announces one, from the weapon IT holds, and a
+    /// second announcement would replay the same swing from the top on every screen.
+    ///
+    /// <para>Kept HERE, beside the list it is asking about, so a weapon variant added to that switch is covered by
+    /// this the same day rather than the day somebody notices.</para></summary>
+    public static bool IsBasicAttack(StanceId id)
+    {
+        switch (id)
+        {
+            case StanceId.AttackBareHands:
+            case StanceId.AttackSword:
+            case StanceId.AttackDagger:
+            case StanceId.AttackStaff:
+            case StanceId.AttackLance:
+            case StanceId.AttackHandGun:
+            case StanceId.AttackRifle:
+            case StanceId.AttackBow:  return true;
+            default:                  return false;
+        }
+    }
 }

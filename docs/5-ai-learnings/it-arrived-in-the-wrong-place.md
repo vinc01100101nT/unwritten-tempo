@@ -14,6 +14,9 @@ tags:
 comes out the far end is missing something, sitting in the wrong spot, or in a state nobody expected.** Often
 there is no error at all, and sometimes it loops.
 
+Sibling: [The Far End Reads More Than You Sent](the-far-end-reads-more-than-you-sent.md) — reach for that one when
+there is no old path to compare against, because the thing never travelled before at all.
+
 ## The rule
 
 **Before writing the new path, open the OLD one and list every value it carries from one end to the other. Then

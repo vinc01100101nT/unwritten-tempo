@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-09-07
 tags:
   - planning-production
 ---
@@ -10,7 +10,10 @@ tags:
 
 How to ask the accounts database questions by hand — find a player, look up a character by name, see who is
 wearing which body, read a level out of a save. Every query below is written against the tables the account
-service actually creates in `accounts/sql/001_init.sql`, so what you type here matches what the game stores.
+service actually has, so what you type here matches what the game stores. The shape is `001_init.sql` PLUS every
+migration beside it — a later one can move a value or drop a column, which is exactly how the body and its colours
+stopped being columns. **`\d character` is the authority**, not any list written down here; if this page and the
+table disagree, the table is right and this page needs fixing.
 
 This is a **read-and-poke** guide for a developer at a terminal. The service itself never queries this way:
 it goes through its two helpers in `accounts/src/db.ts`, which always pass values as parameters. Anything you
@@ -56,9 +59,12 @@ identity, progress is progress.** (A fourth, `schema_migration`, is bookkeeping 
 records which `.sql` files this database has already run.)
 
 - **`account`** — `id`, `email`, `password_hash`, `created_at`. Nothing else. There is no display name here.
-- **`character`** — `id`, `account_id`, `name`, `model_name`, `dye_sources`, `dye_targets`, `progress`,
-  `created_at`, `updated_at`, `deleted_at`. The body and recolour live in columns; everything that only exists
-  after playing — level, XP, gear, gold — lives inside the single `progress` JSON document.
+- **`character`** — `id`, `account_id`, `name`, `progress`, `created_at`, `updated_at`, `deleted_at`. That is
+  the whole table: **everything about a character except its name lives inside the single `progress` JSON
+  document** — level, XP, gear, gold, hotbar, AND the body and its recolour (`modelName`, `dyeSources`,
+  `dyeTargets`). A player changes their look in-game exactly as they change everything else, so it belongs with
+  the rest of what they change; keeping it in columns as well meant two homes for one fact that could disagree.
+  Reach into the document with `->>` for a value and `->` for an array or object.
 - **`refresh_token`** — `token_hash`, `account_id`, `expires_at`, `revoked_at`. Live sessions, hashed.
 
 Two things about `character` that will bite you if you forget them:
@@ -110,7 +116,7 @@ Names are unique across the whole game, case-insensitively, among characters tha
 same way the index does:
 
 ```sql
-select id, name, model_name, created_at
+select id, name, progress->>'modelName', created_at
   from character
  where lower(name) = lower('Ashwalker')
    and deleted_at is null;
@@ -121,7 +127,7 @@ select id, name, model_name, created_at
 A prefix search — useful for "who is called Ash-something":
 
 ```sql
-select name, model_name
+select name, progress->>'modelName'
   from character
  where name ilike 'ash%'
    and deleted_at is null
@@ -144,7 +150,8 @@ reads every row.
 This is the query behind the character-select screen:
 
 ```sql
-select id, name, model_name, dye_sources, dye_targets, created_at, updated_at
+select id, name, progress->>'modelName', progress->'dyeSources', progress->'dyeTargets',
+       created_at, updated_at
   from character
  where account_id = '00000000-0000-0000-0000-000000000000'
    and deleted_at is null
@@ -156,7 +163,7 @@ select id, name, model_name, dye_sources, dye_targets, created_at, updated_at
 Joining reaches the email, which the character row does not carry:
 
 ```sql
-select c.name, c.model_name, a.email
+select c.name, c.progress->>'modelName', a.email
   from character c
   join account a on a.id = c.account_id
  where c.deleted_at is null
@@ -165,32 +172,33 @@ select c.name, c.model_name, a.email
 
 ### Filtering by body and recolour
 
-The model is a plain column:
+The model is a value inside the document, so it is read with `->>` (which returns text) and compared as text:
 
 ```sql
 select name, created_at
   from character
- where model_name = 'BlueSoldier_Female'
+ where progress->>'modelName' = 'BlueSoldier_Female'
    and deleted_at is null;
 ```
 
 How popular each body is:
 
 ```sql
-select model_name, count(*) as characters
+select progress->>'modelName' as body, count(*) as characters
   from character
  where deleted_at is null
- group by model_name
+ group by body
  order by characters desc;
 ```
 
-The two dye columns are arrays that move in step — `dye_sources[i]` is a colour in the model's own art and
-`dye_targets[i]` is what it was recoloured to. `= any(...)` asks whether a value appears anywhere in an array:
+The two dye lists are JSON arrays that move in step — `dyeSources[i]` is a colour in the model's own art and
+`dyeTargets[i]` is what it was recoloured to. `@>` asks whether a JSON array contains a value; the value is
+written as JSON, so a string needs its own quotes inside the literal:
 
 ```sql
-select name, dye_sources, dye_targets
+select name, progress->'dyeTargets'
   from character
- where '#FF0000' = any(dye_targets)
+ where progress->'dyeTargets' @> '"#FF0000"'::jsonb
    and deleted_at is null;
 ```
 
@@ -198,7 +206,7 @@ Characters that were never recoloured at all:
 
 ```sql
 select name from character
- where cardinality(dye_sources) = 0 and deleted_at is null;
+ where coalesce(jsonb_array_length(progress->'dyeSources'), 0) = 0 and deleted_at is null;
 ```
 
 ### Deleted characters
@@ -378,7 +386,8 @@ select name from character where lower(name) = lower('Ashwalker') and deleted_at
 
 ## Changing the shape of a table
 
-Never edit `accounts/sql/001_init.sql`. Add `002_*.sql` beside it and run `npm run migrate` — every `.sql`
+Never edit a migration that has already run. Add the next numbered `.sql` file beside the others and run
+`npm run migrate` — every `.sql`
 file the database has not seen yet is applied in filename order, each inside its own transaction, and the
 filename is recorded in `schema_migration`. Re-running is therefore harmless. Editing the old file instead
 leaves every database that already ran it behind, silently.

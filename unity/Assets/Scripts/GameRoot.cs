@@ -164,7 +164,26 @@ public class GameRoot : MonoBehaviour
     string MapToLoad()
     {
         string map = firstMap;
+
+        // WHERE THE CHARACTER SERVER IS ACTUALLY SENDING THIS PERSON, which beats the authored starting map because
+        // it is the only answer that knows who is signing in. It has just read their save, taken the map they logged
+        // out in, and brought that map up on the process this game is about to dial — so loading anything else here
+        // means arriving in a map the world server is not holding for us.
+        //
+        // What that cost: the game always loaded the starting town, told the world server THAT was where the player
+        // was standing, and only walked back to the real map when a second, separate request for the character came
+        // back a moment later. The world server writes down whichever map it was last told, so a sign-in interrupted
+        // inside that moment left the starting town as the last record of where that person was — and they came back
+        // there next time, however far they had travelled. MEASURED in the server's own log: two players who had
+        // saved in field_15 both announced the starting town the instant they entered.
+        //
+        // EMPTY IS A REAL ANSWER AND IT MEANS THE STARTING MAP: a character nobody has played yet has no map to go
+        // back to, and a SERVER never signs in at all, so both fall through to the line above exactly as before.
+        if (!string.IsNullOrEmpty(AccountSession.EntryMap)) map = AccountSession.EntryMap;
 #if UNITY_EDITOR
+        // THE EDITOR'S REMEMBERED MAP STILL WINS OVER BOTH, deliberately and unchanged: pressing Play with a map
+        // scene open is how a map gets tested, and that has to keep testing THAT map. The save still walks the
+        // player to where they really were a moment later, exactly as it did before.
         string remembered = UnityEditor.SessionState.GetString("unwritten.bootMap", "");
         if (!string.IsNullOrEmpty(remembered)) map = remembered;
 #endif

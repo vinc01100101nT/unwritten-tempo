@@ -43,6 +43,43 @@ public abstract class Agent3DVisual : MonoBehaviour
     // every frame rather than an event that fires once, so without this it would restart on every frame it held.
     double playedActionAt = double.NegativeInfinity;
 
+    // THE POSE THIS BODY IS HOLDING, as the machine that owns it says. Separate from the beat above because the two
+    // are different shapes: a beat plays once and finishes (a swing), while this LASTS until it is replaced (a jump
+    // frozen in the air, a dodge, a flinch, a body lying dead). False means "nothing special" and the body falls back
+    // to walking or standing as its speed says.
+    protected bool toldHasPose;
+    protected StanceId toldPose;
+    protected float toldPoseWindow;
+    protected bool toldPoseRelease;
+
+    /// <summary>Which travel gear this body is in, as a fact rather than a guess. Speed alone cannot tell a sprint
+    /// from a hasted run — both are simply fast.</summary>
+    protected bool toldSprinting;
+
+    // HOW FAR OFF THE FLOOR this body is, in world units. 0 for everything that walks — a townsperson, a creature,
+    // a person standing or running — and positive only while somebody is in the air.
+    float toldAbove;
+
+    /// <summary>The owning machine's word on how far this body is off the floor. Told rather than measured for the
+    /// same reason its speed is: a watched copy has no physics capsule, so it cannot tell the part of a reported
+    /// height that is real lift from the part that is just where the capsule sits at rest.</summary>
+    public void TellHeightAboveGround(float above) { toldAbove = above > 0f ? above : 0f; }
+
+    /// <summary>The owning machine's word on what pose this body is holding, and which travel gear it is in. Call it
+    /// every frame this body is being followed; a role that acts on it reads the fields above.
+    ///
+    /// <para>TOLD rather than worked out, for the same reason the speed above is: almost everything a person's body
+    /// does is decided on their own machine and nothing else on the wire describes it, so a body nobody told would
+    /// walk, swing, and do nothing else for the whole of its life.</para></summary>
+    public void TellPose(bool has, StanceId pose, float window, bool release, bool sprinting)
+    {
+        toldHasPose = has;
+        toldPose = pose;
+        toldPoseWindow = window;
+        toldPoseRelease = release;
+        toldSprinting = sprinting;
+    }
+
     /// <summary>The server's word on how fast this body is travelling on the ground, in units per second (0 =
     /// standing). Call it every frame this body is being followed.
     ///
@@ -111,7 +148,23 @@ public abstract class Agent3DVisual : MonoBehaviour
         speedIsTold = false;
         toldGroundSpeed = 0f;
         playedActionAt = double.NegativeInfinity;
+        // …and last life's pose with them, or a body handed back out of the pool would come back mid-roll, or lying
+        // dead, until whoever is following it got round to saying otherwise.
+        toldHasPose = false;
+        toldPoseRelease = false;
+        toldPoseWindow = 0f;
+        toldSprinting = false;
+        toldAbove = 0f;
+        // …and the leg cadence it was told, which lives on the stance choke point rather than here. Nothing pools a
+        // watched PERSON today (their body is destroyed outright), so this changes nothing now — it is here so that
+        // the day one is pooled, it cannot come back walking at the last person's cadence.
+        if (stance != null) stance.TellGait(0f);
     }
+
+    /// <summary>This body's pose sink — the same answer <see cref="Character3DVisual.Pose"/> gives for the avatar at
+    /// this keyboard, under the same name, so anything that hangs something over a head (a speech bubble) asks one
+    /// question of every character rather than one per kind of character. Null before the body is built.</summary>
+    public IStancePose Pose => pose;
 
     /// <summary>Re-resolve the pose sink after the body is built at runtime (the model child doesn't exist yet when
     /// Awake runs on a mob that becomes a shadow mid-spawn).</summary>
@@ -160,12 +213,21 @@ public abstract class Agent3DVisual : MonoBehaviour
     /// <see cref="PlayersGearFor"/>.</summary>
     protected virtual StanceId LocomotionStanceFor(float groundSpeed) => StanceId.Walk;
 
-    /// <summary>Walk or Run, chosen the way the PLAYER's own two gears are chosen — one threshold, read from the
-    /// one place that holds it, so a body standing in for a player changes gear at the same speed the player does.
-    /// Written once here because more than one role stands in for a player: the shadow that copies them, and
-    /// another person's body watched over the wire.</summary>
-    protected static StanceId PlayersGearFor(float groundSpeed)
-        => groundSpeed >= CharacterSpec.Active.GearSwitchSpeed ? StanceId.Run : StanceId.Walk;
+    /// <summary>Walk, Run or Sprint, chosen the way the PLAYER's own three gears are chosen — the thresholds read
+    /// from the one place that holds them, so a body standing in for a player changes gear at the same speed the
+    /// player does. Written once here because more than one role stands in for a player: the shadow that copies
+    /// them, and another person's body watched over the wire.
+    ///
+    /// <para><paramref name="sprinting"/> is the sprint gear as a FACT, never a guess — and there is deliberately
+    /// no speed threshold for it. A hasted run and a sprint are both simply fast, so a threshold would draw a
+    /// speed-buffed jog as a sprint and there is no number that could tell them apart. The machine that owns the
+    /// legs says which gear it is in; a body nobody has said anything about (a shadow copying you) never sprints,
+    /// which is exactly what it did before.</para></summary>
+    protected static StanceId PlayersGearFor(float groundSpeed, bool sprinting = false)
+    {
+        if (sprinting) return StanceId.Sprint;
+        return groundSpeed >= CharacterSpec.Active.GearSwitchSpeed ? StanceId.Run : StanceId.Walk;
+    }
 
     /// <summary>Which way this body should look this frame, or a zero vector for "leave it as it is".
     ///
@@ -224,10 +286,18 @@ public abstract class Agent3DVisual : MonoBehaviour
         // correct and the ground doesn't move, so re-casting for it was a physics ray per idle character per frame —
         // the exact cost GroundSnap's own contract says callers must avoid ("callers gate it to MOVING units... so a
         // still crowd costs nothing"). This caller was the one not honouring it, across a town of standing NPCs.
+        // AND A BODY CAN BE OFF THE FLOOR. Pinning the feet ONTO the ground is right for everything that walks, and
+        // wrong for the one role that can leave it: a person's watched copy is placed wherever the server says they
+        // are, so a jumping player's copy rose at the root and had its visible model slammed back down every frame —
+        // they jumped on their own screen and hopped nowhere on anybody else's. The lift is TOLD (0 for a
+        // townsperson, a creature, and anybody standing), so nothing that walks changes by a hair.
+        //
+        // The raycast is still gated on having moved — a body in the air is moving every frame, so an airborne one
+        // re-seats; a still crowd standing on the floor costs nothing, exactly as before.
         if (model != null && (!seated || moved.sqrMagnitude > 1e-10f)
             && GroundSnap.TryGroundY(transform.position, groundMask, out float groundY))
         {
-            model.position = new Vector3(model.position.x, groundY, model.position.z);
+            model.position = new Vector3(model.position.x, groundY + toldAbove, model.position.z);
             seated = true;
         }
     }

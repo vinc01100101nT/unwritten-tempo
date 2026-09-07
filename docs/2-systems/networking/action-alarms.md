@@ -1,7 +1,7 @@
 ---
 status: built and play-tested
 owner: vince
-last-updated: 2026-09-02
+last-updated: 2026-09-07
 tags:
   - systems-combat-design
 ---
@@ -53,6 +53,8 @@ Same shape with no request at the front: the monster's brain is already on the s
 
 Not an alarm — a **continuous value**. The server publishes each monster's actual ground speed with its position. Watchers pick walk or run from that number on the same threshold every character uses, and churn the legs at the right cadence for a slowed monster. See [decision 5](#5-locomotion-is-told-as-a-speed-not-a-flag).
 
+**The sprint gear is the one exception, and it is told rather than measured.** A hasted run and a sprint are both simply fast, so no threshold can separate them — a speed-buffed jog would be drawn as a sprint and there is no number that would fix it. The machine that owns the legs says which gear it is in, once, on the frame it changes. Walk and run stay on the speed, because the speed genuinely does separate those two.
+
 ---
 
 ## Three kinds of traffic, three different rules
@@ -61,9 +63,10 @@ Confusing these is how a channel ends up carrying something it cannot serve. Eve
 
 | Kind | Examples | Delivery | A latecomer… |
 | --- | --- | --- | --- |
-| **Continuous state** | position, facing, health, ground speed | a value, re-sent, smoothed | is told the current value |
-| **An action that expires by itself** | a swing, a cast, a channel, a death | an alarm: which, when, how long | **joins it at the right frame** |
-| **A one-off with no duration** | a damage number, a hit spark, a crit flag | announced once | **is told nothing** |
+| **Continuous state** | position, facing, health, ground speed, the travel gear, the pose a body is holding | a value, re-sent, smoothed | is told the current value |
+| **An action that expires by itself** | a swing, a skill's release swing, a cast wind-up, a death | an alarm: which, when, how long | **joins it at the right frame** |
+| **A one-off with no duration** | a damage number, a hit spark, a heal sparkle, a crit flag | announced once | **is told nothing** |
+| **Something that lasts until it is over** | a poison glow, the charge-up glow under a cast | named when it starts, named again when it ends | is told nothing, and picks it up when it next starts |
 
 A late *number* is dropped; a late *action* is joined. Opposite rules, so one channel cannot carry both — but both halves of one event must be **fired from the same instant on the server**, or the number floats up before the arm moves.
 
@@ -150,7 +153,7 @@ Built and played on 2026-09-02 — creatures walk, run, swing and flinch, and it
 1. **Locomotion is told as a speed** — creatures publish the mover's own live figure; people have theirs worked out on the server from the position reports it accepted, and zeroed when they go quiet for longer than two report intervals (a person who stops walking stops reporting).
 2. **The held action value and the alarm**, on creatures and on people alike. The clip plays at its own natural length, capped by the beat.
 3. **The flinch has one owner** — the announced blow. The body's inference from its health number dropping is gone.
-4. **A person's swing is announced**, with the pose chosen from the weapon the server holds for them.
+4. **A person's swing is announced**, with the pose chosen from the weapon the server holds for them — the one pose their own machine does NOT report, precisely because this already owns it.
 5. **The map server builds no rigs** — it applies the capsule, the footprint and the character travel gears, and fetches no model.
 6. **The shared clock is in use** — every beat is stamped on it, by the server.
 
@@ -160,7 +163,18 @@ Built and played on 2026-09-02 — creatures walk, run, swing and flinch, and it
 
 The early-swing guard stays deliberately loose — a blow may arrive up to half a beat early and still be believed — because the swinger's machine still times its own animation and refusing an honest player is worse than missing a cheat. It cuts the fastest a machine can possibly swing from the flood ceiling's twenty a second down to twice its real rate. Every refusal is logged rather than dropped in silence.
 
-**Skills have no alarm yet.** The whole skill already runs on the server, so the missing piece is only the announcement — a cast has no "this body began a cast, at this moment, for this long" the way a swing now does. It is the obvious next thing this channel carries, and nothing about it is blocked.
+8. **Every pose a body takes travels, and so does every cue** (2026-09-07). Both are general: nothing names a
+   particular pose or a particular effect anywhere, so one added later crosses the wire without being wired up.
+   - **Poses** are reported from the one place every pose in the game resolves — so a jump, a dodge, a flinch, a
+     death, a seat, a guard and a skill's release swing all reach every screen. Two are deliberately not sent, and
+     both because something else already owns the answer: a travel gear (worked out from the speed and the gear
+     each machine is already told) and a weapon swing (the server announces that itself, from the weapon it holds).
+   - **Cues** — every visual reaction in the game — are announced by whichever machine DECIDED the event, which in
+     a shared world is always the server. A machine that has joined somebody else's world fires none of its own and
+     draws only what it is told, which is why the same puff can no longer play twice on one screen and not at all
+     on another. That is the same bargain your own spell effects already make.
+   - A **cast wind-up** now carries where it is aimed, so the ring on the ground appears under every watcher's copy
+     of the caster and not only the caster's own.
 
 What already worked and was NOT rebuilt: a blow on a creature or a person is announced to everyone in range with its amount, element, crit, miss, overkill and whether it folds into a rising total, and each machine runs it through the same door the offline game used.
 

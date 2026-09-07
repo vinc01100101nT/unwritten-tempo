@@ -16,7 +16,7 @@ using System;
 [Serializable]
 public class SaveData
 {
-    public const int CurrentVersion = 9;
+    public const int CurrentVersion = 10;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
@@ -27,6 +27,16 @@ public class SaveData
     // Core progression.
     public int level = 1;
     public int xp;
+
+    // EVERY POINT OF EXPERIENCE THIS CHARACTER HAS EVER BEEN GIVEN (v10+), including the part already spent
+    // climbing levels. `xp` above is only what is standing inside the CURRENT level — it is reset on each
+    // level-up — so it can never answer "who has earned the most", which is what a leaderboard is asking.
+    //
+    // A save older than v10 carries no figure, and 0 is a perfectly real one (a level-1 character who has
+    // never fought), so the two cannot be told apart by the value. `version` is what separates them: below 10,
+    // RestoreSave works the figure out from the level curve instead.
+    public long lifetimeXp;
+
     public int currentHP;
     public int currentMP;
 

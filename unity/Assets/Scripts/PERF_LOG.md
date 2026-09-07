@@ -33,6 +33,58 @@ or the Profiler ▸ Hierarchy for the precise per-system number.
 
 ---
 
+## 2026-09-07 — Texture memory halved: compression + mipmaps on every texture outside `Art/`
+
+First **memory / GPU-side** checkup in this log — every prior entry measured CPU allocation. Prompted by a
+frame-timing read that showed the town at **GPU 30.3 ms vs CPU main thread 2.5 ms**: this project is
+GPU-bound by ~12×, so the CPU work the earlier entries settled is no longer the binding constraint.
+
+- **Measured before:** 2,485 authored textures = **4,900 MB** fully loaded. 2,459 of them stored raw
+  (`RGB24`/`RGBA32`), 2,460 with **no mipmaps**. Concentrated: 299 weapon textures alone were 3,900 MB
+  (2048×2048 each, ~13 MB apiece).
+- **Measured after:** **2,043 MB** — a **2.9 GB / 58% cut**, with mipmaps now present on everything changed.
+  - Weapons 3,900 → **1,302 MB** (299 files; 74 retyped to NormalMap from the material slot they're bound to,
+    225 to Default; all compressed + mipmapped)
+  - Props 350 → **96 MB** (40 files)
+  - VFX 102 → **35 MB** (55 files)
+- **Frame time: NOT comparable this session.** The post-change reading was taken with a different view in
+  the Game window (4.5 K triangles vs 1.09 M), so it proves nothing. Texture format work moves **memory and
+  texture bandwidth**, not triangle count — re-measure from a Development Build with the same town view.
+- **Root causes — three separate things, not one. Do not collapse them:**
+  1. `ProjectSettings/EditorSettings.asset` has `m_DefaultBehaviorMode: 1` (2D), so anything imported
+     without an explicit rule defaults to **Sprite** type. **Measured with a throwaway probe imported
+     outside `Art/`:** Sprite type yields `Compressed` + `mipmapEnabled = false` (DXT1, mips=1); the same
+     file re-imported as `Default` yields `Compressed` + `mipmapEnabled = true` (DXT1, mips=7). So the 2D
+     mode explains the **missing mipmaps** on the weapons and props, and NOT their raw formats —
+     compression is on by default either way.
+  1b. The raw formats came from each file's OWN record: the default platform block in every affected
+     `.meta` carried `textureCompression: 0` explicitly (later per-platform blocks read `1`). Origin not
+     established — most likely how those asset packs were first brought in. Not caused by the project mode.
+  2. `Editor/PixelArtImportPostprocessor.cs` **force-sets** `textureCompression = Uncompressed`,
+     `mipmapEnabled = false`, `textureType = Sprite` on **every** texture whose path contains `/Art/`, on
+     every import. This is deliberate (crisp pixel-art look, Point filter) and it silently reverted a first
+     attempt at the character atlases — the reimport reported success and the format did not change.
+- **Left untouched, on purpose:** everything under `Art/` — Billboards (1,841 files, 163 MB), GroundTiles
+  (9, 101 MB), UI (182, 76 MB), Characters (52, 61 MB) = **401 MB still recoverable**. Changing it means
+  editing that postprocessor, which changes how the pixel art *looks* (compression artefacts on hard edges,
+  mipmap blur). That is an art-direction call, not a perf call.
+- **Risk deliberately not taken:** the character atlas is read pixel-by-pixel at runtime by
+  `CharacterDye3D` (`ReadbackSRGB` → colour histogram, quantised /12, protected skin+eye colours matched at
+  0.14 tolerance). Block compression shifts colours and could make the wardrobe mis-detect clothing or stop
+  protecting skin. 61 MB of prize against a visible wardrobe bug — not worth it without a verification pass.
+- **Safety checks run before touching anything:** every reference to the weapon (423), prop (290),
+  ground (149), VFX (53) and character (2) textures resolves to `fileID: 2800000` (the Texture2D main
+  asset), never `21300000` (a Sprite sub-asset) — so retyping away from Sprite breaks no links. All target
+  folders were clean in git first, and every `.meta` was copied to scratch before the bulk edit.
+- **Console after:** 30 entries, read in full. No import errors. Two `/api/exec` timeouts were this
+  session's own eval calls; the rest (PlayableGraph, disabled audio source, no-transport, sign-in) predate
+  the work by 25+ minutes.
+- **New rule added to PERFORMANCE.md?** no — but the next perf checkup should note that this project's
+  bottleneck moved to the GPU, and the two remaining GPU items are mesh density (houses at ~73 K triangles
+  each, no LODs) and 399 of 400 renderers casting shadows.
+
+---
+
 ## 2026-07-14 — Zero-alloc sweep + dead-code purge; PerfHud at/below the known editor floor
 
 Checkup after a full-codebase review session: alloc fixes applied first, then measured.

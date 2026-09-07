@@ -36,6 +36,13 @@ they had to do the looking.
 
 - **Symptom check:** one command hangs **and** unrelated read-only requests to the same application time out ⇒
   suspect a dialog first, before suspecting slow work.
+- **First, separate BLOCKED from merely BUSY, because they look identical from outside.** Find a request that
+  does NOT need the application's main thread — reading its log buffer, asking its process list, anything served
+  by a side channel — and send that. If it answers while everything else dies at the same timeout, the app is
+  BUSY and will come back on its own: wait, do not ask the user. If nothing at all answers, it is blocked, and
+  the bullet above applies. (2026-09-07: every request that ran code inside the editor died at exactly 5000 ms
+  for several minutes while its console read answered instantly. It was re-importing 226 audio files. Treating
+  that as a dialog would have sent the user hunting for a window that was not there.)
 - **Say so immediately.** The user can see the screen and you cannot. Ask what is on it rather than waiting it
   out. Asking costs a line; waiting cost twenty minutes.
 - **When automating a windowed application, remove the dialog's reason to appear** — satisfy the precondition, or

@@ -405,7 +405,10 @@ public static class GmCommands
         if (id == null) { c.Reply("Usage: /bind <skillId>"); return; }
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.Ch.Hotbar.AutoBind(id)) { c.Reply($"Couldn't bind '{id}' (unknown, already bound, or bar full)."); return; }
-        HotbarPanel.RebuildRequested?.Invoke();
+        // THE SAME DOOR EVERY OTHER WAY OF BINDING GOES THROUGH — it redraws the bar, builds the component behind
+        // the new skill, and tells the server. Redrawing alone left the server holding the old bar, which refused
+        // the skill on every press and then overwrote the binding with its next write of this character.
+        if (c.Ch == Character.Instance) HotbarCommit.Now();
         c.Reply($"Bound {id} (ultimates → ult slot).");
     }
 

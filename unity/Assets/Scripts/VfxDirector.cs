@@ -94,8 +94,25 @@ public class VfxSequenceRunner : MonoBehaviour
     CombatRng.Stream dice;
     float startTime, endBy;
     int gen;                        // bumped each Begin/Finish → stale carrier callbacks are ignored
+
+    /// <summary>WHICH PLAY THIS RUNNER IS ON. These come out of a pool, so a handle somebody kept can end up
+    /// pointing at a runner that has since finished and been handed to something else entirely — and stopping it
+    /// then would tear down whatever is using it now. Anything holding a runner past the frame it started it keeps
+    /// this number beside it and checks the two still agree.</summary>
+    internal int Generation => gen;
     bool active;
     bool hasLiveAura;               // a persistent (Begin) Attach is running → never auto-tear-down; wait for Stop()
+
+    // THE LASTING CUE THIS PLAY IS SHOWING, if it is one, and the unit it is riding — so every machine watching that
+    // unit can be told the moment it ends. Whoever holds a status aura stops the runner and knows nothing about the
+    // wire, so the runner is what says so: one door for "this aura is over", whether it was stopped, expired, or torn
+    // down with its host. 0 = this play is not an announced cue (a skill's own sequence, or a single-machine game).
+    uint cueOnNetId;
+    int cueKey;
+
+    /// <summary>Say this play IS a named lasting cue on a unit, so its ending is announced. Set by
+    /// <see cref="VfxCue.Begin"/> on the machine that owns the world; never set anywhere else.</summary>
+    internal void AnnounceStopAs(uint onNetId, int key) { cueOnNetId = onNetId; cueKey = key; }
 
     internal void Begin(VfxSequence s, VfxContext c, System.Action<VfxTick> cb)
     {
@@ -106,6 +123,10 @@ public class VfxSequenceRunner : MonoBehaviour
         startTime = Time.time;
         active = true;
         hasLiveAura = false;
+        // CLEARED FOR THE NEW PLAY. These runners come back out of a pool, so last play's aura name left sitting here
+        // would have this one announce an ending that belongs to somebody else's poison.
+        cueOnNetId = 0u;
+        cueKey = 0;
         attached.Clear();
         intervals.Clear();
 
@@ -455,6 +476,16 @@ public class VfxSequenceRunner : MonoBehaviour
             if (attached[i] != null) attached[i].Stop();
         attached.Clear();
         onTick = null;
+
+        // AND EVERY MACHINE WATCHING THAT UNIT TAKES IT OFF TOO. Cleared before the announce, so a teardown that
+        // somehow ran twice could not say it twice.
+        if (cueKey != 0)
+        {
+            uint on = cueOnNetId; int key = cueKey;
+            cueOnNetId = 0u; cueKey = 0;
+            GameNetwork.AnnounceCueStopped(on, key);
+        }
+
         VfxDirector.Return(this);
     }
 }

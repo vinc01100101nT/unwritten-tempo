@@ -77,6 +77,46 @@ public class NetPlayer : NetworkBehaviour
     [SyncVar] double netActionAt;
     [SyncVar] float netActionSeconds;
 
+    // …and the pose it is HOLDING for as long as something takes: a jump frozen in the air, a dodge roll, a flinch,
+    // a body lying dead. These are not beats that play once and finish — they last until the thing they are showing
+    // is over — so they travel as a value that stands until it is replaced, not as a moment. `netHasDriven` false
+    // means "nothing special", and the body falls back to walking or standing as its speed says.
+    [SyncVar] bool netHasDriven;
+    [SyncVar] StanceId netDriven;
+    [SyncVar] float netDrivenWindow;
+    [SyncVar] bool netDrivenRelease;
+
+    // The standing pose UNDERNEATH all of that — guarding, casting, sitting. It outlives any one action, so it is
+    // its own value rather than a second meaning for the one above.
+    [SyncVar] bool netHasHeld;
+    [SyncVar] StanceId netHeld;
+    [SyncVar] float netHeldWindow;
+
+    // WHICH TRAVEL GEAR they are in. Speed alone cannot tell a sprint from a hasted run — both are simply fast — so
+    // the machine that owns the legs says which it is, and the body standing in for them on every other screen plays
+    // the right one instead of guessing from a threshold.
+    [SyncVar] bool netSprinting;
+
+    // HOW FAR OFF THE FLOOR they are, and how fast their legs are churning. Both travel with the POSITION rather
+    // than with the pose, because both change continuously while a pose does not — a jump's height moves every
+    // frame it is in the air, and a cadence follows a Haste up and down.
+    //
+    // Neither can be worked out at the far end. A watched copy has no physics capsule, so it cannot tell real lift
+    // from the height the capsule sits at when standing; and it has no controller, so it cannot fold this person's
+    // gear, Slow and Haste into a cadence. Both were therefore missing entirely: a jumping player's copy never left
+    // the ground, and its clips played at the bare baseline.
+    [SyncVar] float netAboveGround;
+    [SyncVar] float netGait;
+
+    /// <summary>THE BODY THIS MACHINE DRAWS FOR THIS PERSON — the watched copy built for somebody else, and your own
+    /// real avatar for yourself, because your own machine keeps no copy of you. Null before either exists.
+    ///
+    /// <para>Asked by everything that plays a picture on a person: a cast's effect, a cue, a floating number. One
+    /// question, one answer, so nothing has to work out for itself which of the two it is looking at.</para></summary>
+    public Transform DrawnBody
+        => isOwned ? (Character.Instance != null ? Character.Instance.Body : null)
+                   : (body != null ? body.transform : null);
+
     /// <summary>SERVER ONLY: the fighter this connection swings with — the thing that owns their stats, rolls
     /// their crits and takes their hits. Null on a client, which has no business holding anyone's authoritative
     /// stats, and null on the server until their character has been built.</summary>
@@ -227,6 +267,16 @@ public class NetPlayer : NetworkBehaviour
     const float TurnEpsilon = 1f;      // degrees
     Vector3 lastReported;
     float lastReportedYaw;
+    float lastReportedAbove;
+    float lastReportedGait;
+
+    // Below this a cadence has not really moved — it is a multiplier around 1, so a hundredth of it is already
+    // finer than anything a leg could show.
+    const float GaitEpsilon = 0.01f;
+
+    // The visual that owns "how far off the floor am I". Held rather than looked up, because the report runs ten
+    // times a second for the whole of a session; re-resolved after a door builds a new body.
+    Character3DVisual playerVisual;
 
     /// <summary>WHICH MAP this person is standing in, as they last said so. The server cannot work this out for
     /// itself — it holds every map at once and steers nobody — and everything that asks "who is near this creature"
@@ -295,15 +345,80 @@ public class NetPlayer : NetworkBehaviour
 
     /// <summary>SERVER ONLY: say that this person just BEGAN an action, and the beat it has to finish inside. The
     /// mirror of a creature's, and it exists for the same reason: nothing else on the wire says that a body did
-    /// anything, so another person's swing does not exist on your screen at all without it.</summary>
+    /// anything, so another person's swing does not exist on your screen at all without it.
+    ///
+    /// <para><paramref name="beatSeconds"/> of ZERO means "however long the animation itself takes". A swing has a
+    /// beat because the server owns the swing cadence; a skill's release swing does not, because how long it runs
+    /// is a property of the art and a headless server has no business reading art. Each watching machine reads the
+    /// length off its own copy of the animation, which is the one that has to look right.</para></summary>
     public void BeganAction(StanceId action, float beatSeconds)
     {
-        if (!isServer || beatSeconds <= 0f) return;
+        if (!isServer || beatSeconds < 0f) return;
         netAction = action;
         netActionSeconds = beatSeconds;
         // Stamped by the server, never by the machine that asked: a moment a client writes is a moment a client
         // can move, and every watcher measures the action against it.
         netActionAt = NetworkTime.time;
+    }
+
+    // ---- the owner's half: say what their body is doing ---------------------------------------------------
+    //
+    // WHY THE OWNER AND NOT THE SERVER. Almost everything a person's body does is decided on their own machine and
+    // nowhere else: they pressed jump, they rolled, they flinched, they sat down, their spell finished winding up
+    // and threw. The server never sees any of it — it holds their stats, not their legs — so a pose it was not told
+    // about is a pose no other player ever sees. The two exceptions stay the server's and are deliberately NOT sent
+    // from here: a weapon swing (the server chooses it from the weapon IT holds) and plain walking (every machine
+    // works that out from the speed it is already told). See StanceCatalog.WatchersMustBeTold.
+    //
+    // NOTHING HERE DECIDES ANYTHING. A pose is a picture; it moves no health, spends nothing and gates nothing, so
+    // taking the owner's word for it costs the world nothing. The checks below are only to keep a broken or lying
+    // machine from asking for a pose that does not exist or an animation stretched over an hour.
+
+    // The longest a pose may be asked to last. Far above any real animation, low enough that a nonsense number
+    // cannot leave somebody frozen mid-roll on everybody else's screen for the rest of the session.
+    const float LongestPose = 60f;
+
+    static bool RealStance(StanceId id) => StanceCatalog.Exists(id);
+
+    static float SanePose(float seconds) => Mathf.Clamp(seconds, 0f, LongestPose);
+
+    [Command]
+    public void CmdActionBegan(StanceId id, float seconds)
+    {
+        if (Leaving || !RealStance(id)) return;
+        BeganAction(id, SanePose(seconds));
+    }
+
+    [Command]
+    public void CmdDrivenStance(bool has, StanceId id, float window, bool release)
+    {
+        if (Leaving) return;
+        if (has && !RealStance(id)) return;
+        netHasDriven = has;
+        netDriven = id;
+        netDrivenWindow = SanePose(window);
+        netDrivenRelease = release;
+    }
+
+    [Command]
+    public void CmdHeldStance(bool has, StanceId id, float window)
+    {
+        if (Leaving) return;
+        if (has && !RealStance(id)) return;
+        netHasHeld = has;
+        netHeld = id;
+        netHeldWindow = SanePose(window);
+    }
+
+    [Command]
+    public void CmdSprinting(bool on)
+    {
+        if (Leaving || netSprinting == on) return;
+        netSprinting = on;
+        // AND THE PUFF THAT GOES WITH IT, said from here so it reaches every screen — the person's own included.
+        // Their machine no longer plays a cue it decided itself; it plays what the world tells it, exactly as it
+        // already does for their own spells.
+        if (on) VfxCue.Fire(VfxCueId.OnSprint, transform);
     }
 
     // ---- the server's half: say how hurt this person is --------------------------------------------------
@@ -504,20 +619,34 @@ public class NetPlayer : NetworkBehaviour
         }
 
         Vector3 p = me.transform.position;
-        float yaw = me.transform.eulerAngles.y;
+        float yaw = FacingYaw(me.transform);
+        // BOTH READ FROM THEIR SINGLE OWNER, never re-derived here: the visual is what separates real lift from the
+        // capsule's resting offset, and the stance choke point is what folds a cadence out of gear, Slow and Haste.
+        // perf-ok: resolved once and held. A destroyed object reads as null, so walking through a door re-resolves
+        // it against the new body — the same shape the turned part below uses, for the same reason.
+        if (playerVisual == null && StanceController.Player != null)
+            playerVisual = StanceController.Player.GetComponent<Character3DVisual>();
+        float above = playerVisual != null ? playerVisual.HeightAboveGround : 0f;
+        float gait = StanceController.Player != null ? StanceController.Player.TravelGait : 1f;
 
         // TURNING COUNTS AS A CHANGE, and it did not before. Only a step used to be worth a packet, so a person
         // who stood their ground and turned to face you never sent anything — they went on facing whichever way
         // they had last walked, on everybody else's screen, for as long as they stood there. Standing and turning
         // is exactly what a person does when somebody walks up to them, so this was the common case.
+        // RISING OR FALLING COUNTS AS A CHANGE TOO. A jump straight up moves the feet barely at all on the flat, so
+        // the two tests above would have held the whole hop back and everybody else would have seen nothing.
         if (hasReportedOnce
             && (p - lastReported).sqrMagnitude < MoveEpsilon * MoveEpsilon
-            && Mathf.Abs(Mathf.DeltaAngle(lastReportedYaw, yaw)) < TurnEpsilon) return;
+            && Mathf.Abs(Mathf.DeltaAngle(lastReportedYaw, yaw)) < TurnEpsilon
+            && Mathf.Abs(above - lastReportedAbove) < MoveEpsilon
+            && Mathf.Abs(gait - lastReportedGait) < GaitEpsilon) return;
 
         lastReported = p;
         lastReportedYaw = yaw;
+        lastReportedAbove = above;
+        lastReportedGait = gait;
         hasReportedOnce = true;
-        CmdReportPosition(p, yaw);
+        CmdReportPosition(p, yaw, above, gait);
     }
 
 
@@ -932,7 +1061,7 @@ public class NetPlayer : NetworkBehaviour
     const float ForgivenMapChangeGap = 1f;
 
     [Command]
-    void CmdReportPosition(Vector3 p, float yaw)
+    void CmdReportPosition(Vector3 p, float yaw, float aboveGround, float gait)
     {
         if (Leaving) return;
         // COULD THEY ACTUALLY HAVE GOT THERE. A person's own machine works out where they are standing and then
@@ -960,6 +1089,11 @@ public class NetPlayer : NetworkBehaviour
         netPosition = p;
         netYaw = yaw;
         netSpeed = acceptedGroundSpeed;
+        // TWO PICTURES, KEPT SANE RATHER THAN TRUSTED. Neither moves anything the server decides — one lifts a model
+        // and the other paces a clip — so the only thing worth guarding is that a broken or lying machine cannot
+        // leave somebody hanging in the sky or twitching at fifty times speed on everybody else's screen.
+        netAboveGround = Mathf.Clamp(aboveGround, 0f, HighestAnybodyGets);
+        netGait = Mathf.Clamp(gait, 0.05f, FastestLegsGet);
 
         // AND THE SERVER'S OWN COPY ACTUALLY STANDS THERE. Writing only the figure above left this object sitting
         // at the world origin on the server for the whole of a player's life — which was harmless while nothing on
@@ -971,6 +1105,29 @@ public class NetPlayer : NetworkBehaviour
         // WHERE THIS MACHINE KEEPS THAT MAP. What arrives is where the person is inside their own map; a
         // server sets each map it holds down somewhere of its own, so the two are not the same number here.
         transform.SetPositionAndRotation(MapManager.InWorld(p, mapName), Quaternion.Euler(0f, yaw, 0f));
+    }
+
+    // WHICH WAY THEY ARE ACTUALLY FACING — read off the part of them that TURNS.
+    //
+    // On a live-3D character that is the MODEL, and the root it hangs under is never rotated at all: turning is
+    // done by the pose sink on its own transform, and nothing anywhere writes a rotation to the root. So reading
+    // the root gave the angle it was built at, unchanged, for the whole of a session — and since that is the only
+    // thing said about which way anybody is pointing, every other player on every other screen ran around
+    // permanently facing one fixed direction while their legs moved.
+    //
+    // The far end turns the watched body's ROOT to this angle, and that body's own visual then turns its model to
+    // match the root — so the model this reads and the model they see end up at the same angle.
+    Transform turnedPart;   // resolved once, and again after a door builds a new body
+
+    float FacingYaw(Transform root)
+    {
+        if (turnedPart == null)
+        {
+            // perf-ok: a static property read, at most ten times a second, and only until the body exists
+            var stance = StanceController.Player;
+            turnedPart = stance != null && stance.Pose is Component c ? c.transform : null;
+        }
+        return turnedPart != null ? turnedPart.eulerAngles.y : root.eulerAngles.y;
     }
 
     // ---- is that where they could be? -------------------------------------------------------------------
@@ -1010,6 +1167,12 @@ public class NetPlayer : NetworkBehaviour
     // Nothing legitimate crosses this in one report, whatever the clock says. The backstop for a report that
     // arrives after a long silence, where elapsed time alone would justify almost any distance.
     const float NeverThisFarInOneStep = 40f;
+
+    // The ceilings on the two pictures a person's machine paints of its own body. Both are far above anything the
+    // game produces — a jump clears a fraction of a unit and the fastest legs run at a few times normal — and are
+    // here only so that a nonsense number cannot leave somebody floating in the sky or blurring on every screen.
+    const float HighestAnybodyGets = 20f;
+    const float FastestLegsGet = 8f;
 
     /// <summary>Server-only: accept whatever position comes next without question. Called when the server ITSELF
     /// moved this person — walking through a door is a jump the checker must not read as a lie.</summary>
@@ -1165,17 +1328,134 @@ public class NetPlayer : NetworkBehaviour
         {
             bodyVisual.TellTravelSpeed(netSpeed);
             if (netActionAt > 0d) bodyVisual.TellAction(netAction, netActionAt, netActionSeconds);
+            // …AND THE POSE THEY ARE HOLDING WHILE IT LASTS. A swing is a beat that plays once, which is what the
+            // line above shows; a jump, a roll, a flinch or a death lasts until it is over, so it is handed over as
+            // something to keep doing rather than something that happened. Told every frame and applied only when it
+            // changed — the body's own driver holds it from there.
+            bodyVisual.TellPose(netHasDriven, netDriven, netDrivenWindow, netDrivenRelease, netSprinting);
+            // …AND THE TWO THINGS A COPY CANNOT WORK OUT FOR ITSELF: how far off the floor they are, which is what
+            // makes a jump actually leave the ground here, and how fast their legs are churning, which is what every
+            // movement-paced clip is played at.
+            bodyVisual.TellHeightAboveGround(netAboveGround);
+            if (bodyStance != null) bodyStance.TellGait(netGait);
         }
+
+        ShowTheirHeldStance();
+        ShowTheirWindup();
+    }
+
+    // The held pose last put on this body, so the push and the pop happen once each rather than every frame.
+    bool showingHeld;
+    StanceId shownHeld;
+
+    /// <summary>The standing pose this person is holding — guarding, casting, sitting. Pushed onto the watched
+    /// body's own stance choke point, which is the same layer their own machine holds it on, so the two resolve it
+    /// against an action the identical way.</summary>
+    void ShowTheirHeldStance()
+    {
+        if (bodyStance == null) return;
+
+        // A DIFFERENT ONE MEANS THE OLD ONE COMES OFF. Held poses are pushed and popped by name, so swapping a
+        // guard for a seat without popping the guard would leave a body holding both and the higher-ranking one
+        // winning forever.
+        if (showingHeld && (!netHasHeld || shownHeld != netHeld)) { bodyStance.Pop(shownHeld); showingHeld = false; }
+        if (!netHasHeld) return;
+
+        // Pushed every frame rather than once: it is idempotent, it refreshes the window a fitted pose is stretched
+        // to, and it is what puts the pose on a body that finished loading after the pose had already started.
+        bodyStance.Push(netHeld, netHeldWindow);
+        showingHeld = true;
+        shownHeld = netHeld;
+    }
+
+    // ---- somebody else's wind-up: their cast bar and the pose they hold while it runs --------------------
+    //
+    // A wind-up is the one thing a watcher has to draw for ITSELF over time rather than being told each frame:
+    // the server says it began, how long it runs and when it ended, and everything in between is this machine's
+    // own clock. Both halves are driven exactly as the caster's own machine drives them — the same bar and the
+    // same held stance, refreshed every frame — so the two cannot come to look different.
+
+    SkillDef windingUp;        // the skill they are casting, or null when they are not
+    double windupStartedAt;    // on the clock both machines share, so a message that took a moment still lands right
+    float windupSeconds;
+    Vector3 windupAimPoint;    // where the spell is aimed, in this person's map — the ring on the ground sits there
+    Vfx.EffectHandle windupRing;   // that ring, held so it comes off again however the wind-up ends
+    StanceController bodyStance;   // the watched body's stance choke point, held from the moment it is built
+
+    /// <summary>Start showing this person's wind-up. Called when the server says one began.
+    ///
+    /// <para>The POSE they hold while it runs is not started here — it travels with every other pose they take, on
+    /// the one road that carries them. This is the two things a wind-up has that no other pose does: a bar counting
+    /// down over their head, and a ring on the ground where the spell is going to land.</para></summary>
+    public void ShowCastWindup(SkillDef def, double startedAt, float seconds, Vector3 aimPointInMap)
+    {
+        if (def == null || seconds <= 0f) return;
+        StopCastWindup();          // a second wind-up replaces the first; never two rings on one body
+        windingUp = def;
+        windupStartedAt = startedAt;
+        windupSeconds = seconds;
+        windupAimPoint = aimPointInMap;
+        ShowTheirCastRing();
+    }
+
+    /// <summary>Stop showing it — the cast finished, or was broken. Called when the server says so, and whenever
+    /// this machine stops being able to draw them at all.</summary>
+    public void StopCastWindup()
+    {
+        windingUp = null;
+        if (body != null) CastBar.Hide(body.transform);
+        // AND THE RING ON THE GROUND GOES WITH IT. Stopped wherever the wind-up ends — the server saying so, the
+        // clock running out, or the body going away — so a broken cast cannot leave a circle glowing in an empty
+        // field for the rest of the session.
+        if (windupRing != null) { windupRing.Stop(); windupRing = null; }
+    }
+
+    // The ring that opens on the ground under a wind-up — the same one the caster sees, read off the same authored
+    // skill, sized by the same authored radius. Attached to the BODY rather than dropped at a fixed spot, exactly as
+    // the caster's own is, so a caster shoved mid-cast takes their ring with them.
+    void ShowTheirCastRing()
+    {
+        if (body == null || windingUp == null || string.IsNullOrEmpty(windingUp.castCircleId)) return;
+        Vector3 at = MapManager.InWorld(windupAimPoint, mapName);
+        windupRing = Vfx.AttachGroundCircle(windingUp.castCircleId, body.transform, at - body.transform.position,
+                                            windingUp.LargestAreaRadius, windingUp.castCircleTint);
+    }
+
+    void ShowTheirWindup()
+    {
+        if (windingUp == null) return;
+
+        float elapsed = (float)(NetworkTime.time - windupStartedAt);
+        // ITS OWN CLOCK RUNNING OUT ENDS IT TOO, not only the server saying so. A wind-up that completes normally
+        // is announced as ended, but that message crosses a network and the bar would otherwise sit full for as
+        // long as it took to arrive.
+        if (elapsed >= windupSeconds) { StopCastWindup(); return; }
+
+        CastBar.Set(body.transform, elapsed / windupSeconds, windingUp.displayName, windingUp.tint);
+
+        // THE RING, IF THE BODY ONLY JUST ARRIVED. A person can walk into view part-way through a long spell, and
+        // the message that started this had no body to hang anything on at the time.
+        if (windupRing == null) ShowTheirCastRing();
     }
 
     /// <summary>Stop drawing this person. Two reasons to, so one description of it: they left, or this machine
     /// walked into another map.</summary>
     void DropTheBody()
     {
+        // THE BAR GOES WITH THE BODY IT WAS FLOATING OVER. It is asked for by naming that body, so a body destroyed
+        // mid-cast would leave one hanging in the air with nothing under it.
+        StopCastWindup();
+        // AND EVERY LASTING CUE RIDING THIS BODY. A glow is held by the name the server gave it, not by the thing it
+        // is attached to, so a person who walked out of view while poisoned would otherwise leave their poison
+        // hanging in the air where they were standing.
+        VfxCue.ForgetAurasOn(netId);
         if (body != null) Destroy(body);
         body = null;
         bodyVisual = null;
+        bodyStance = null;
         bodyLoading = false;
+        // The pose bookkeeping belonged to the body that just went; a new one starts from nothing.
+        showingHeld = false;
     }
 
     void EnsureBody()
@@ -1221,6 +1501,9 @@ public class NetPlayer : NetworkBehaviour
             // Held so the per-frame follow below can hand this body the server's word without looking a component
             // up on every frame of every person on screen.
             bodyVisual = visual;
+            // AND THE STANCE CHOKE POINT ON IT. Held here rather than looked up when it is wanted, because what
+            // wants it is a per-frame drive; the builder puts one on the root of every character it makes.
+            bodyStance = root.GetComponent<StanceController>();
 
             // The body belongs to the WORLD, not to the map this machine is standing in — same reason a creature's
             // does. Travelling unloads the map you left, and everything built into it goes with it.
@@ -1230,6 +1513,12 @@ public class NetPlayer : NetworkBehaviour
             bodyLoading = false;
         });
     }
+
+    /// <summary>THE HEAD THIS PERSON SPEAKS OVER — where a white speech bubble hangs for anything they say or call
+    /// out. It is the watched copy this machine built for them; null on their OWN machine, which draws its real
+    /// avatar and never builds a copy, and null before their body has finished loading. Either way a null simply
+    /// means no bubble, never a missing log row.</summary>
+    public IStancePose SpeechPose => bodyVisual != null ? bodyVisual.Pose : null;
 
     /// <summary>Show a blow the server decided landed on this person.
     ///
@@ -1277,8 +1566,7 @@ public class NetPlayer : NetworkBehaviour
 
         // WHOSE BODY TO PLAY IT ON. Your own machine keeps no watched copy of you — it draws your real avatar — so
         // your own casts play there, and everybody else's play on the copy built for them.
-        Transform on = isOwned ? (Character.Instance != null ? Character.Instance.Body : null)
-                               : (body != null ? body.transform : null);
+        Transform on = DrawnBody;
         if (on == null) return;
 
         Vector3 point = MapManager.InWorld(aimPointInMap, isOwned ? MapManager.CurrentMap : mapName);
@@ -1329,11 +1617,18 @@ public class NetPlayer : NetworkBehaviour
     {
         base.OnStartLocalPlayer();
         GameNetwork.ConfirmedInTheWorld();
+        // AND THIS WORLD KNOWS NOTHING ABOUT WHAT THIS BODY IS DOING. Poses are reported only when they CHANGE, and
+        // a world we have only just arrived in starts out believing this body is doing nothing — so whatever it is
+        // holding right now has to be said again, or it would be held on this screen and on no other until the next
+        // time it happened to change. The one place that arrival is known is here.
+        if (StanceController.Player != null) StanceController.Player.ForgetWhatWasSaid();
     }
 
     public override void OnStopClient()
     {
-        if (body != null) Destroy(body);
+        // THE SAME TIDY-UP A BODY GOING AWAY GETS, because this is a body going away — the person left, or this
+        // machine did. Written as the one call so a route out of the world cannot skip a step the other takes.
+        DropTheBody();
         base.OnStopClient();
     }
 }

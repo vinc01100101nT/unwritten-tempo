@@ -18,8 +18,11 @@ running world; being polite about the process defeats it.
 **How to apply:**
 - Read the port first — `GAME_SERVER_PORT` (default 7777). A second server for a probe can run on a spare port
   instead of touching the user's (that trick still works, and is preferred when the user is mid-session).
-- Launch it with a log FILE, never `-logFile -`, so the output can actually be read:
-  `GAME_SERVER=1 builds/server/unwritten-server.app/unwritten -batchmode -nographics -logFile <path>`
+- **Read `logs/server.log` FIRST.** Since 2026-09-07 the blessed run command tees the server's output to that file
+  (previous run kept as `logs/server-prev.log`), so the server's own account of what it decided is already on disk
+  and usually answers the question without restarting anything. The exact command is in the network runbook.
+- A throwaway server you start yourself on a spare port takes its own log file:
+  `GAME_SERVER=1 ... -batchmode -nographics -logFile <path>`
 - After a C# change the server must be REBUILT (`tools/build-game.sh server`) before restarting — a relaunch
   alone runs the old code. The build drives the open editor and takes minutes.
 - Say in the report that the server was restarted, so the user knows their session was interrupted.

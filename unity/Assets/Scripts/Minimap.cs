@@ -35,7 +35,7 @@ public class Minimap : MonoBehaviour
     public float camHeight = 120f;
     [Tooltip("Live-camera re-render cap (Hz). 0 = follow the game's frame rate (so the terrain pans as smoothly " +
              "as the world moves, up to 120). Blips/baked-image pan always track every frame regardless.")]
-    public float renderHz = 0f;
+    public float renderHz = 20f;
     [Tooltip("Upper bound on the live re-render rate when following the frame rate, so it never exceeds the world cap.")]
     public float maxRenderHz = 120f;
     public int textureSize = 256;
@@ -160,7 +160,7 @@ public class Minimap : MonoBehaviour
 
         if (Time.unscaledTime >= nextRender)
         {
-            // renderHz <= 0 → match the world's frame rate (the game targets 120; -1 = display refresh), so the
+            // renderHz <= 0 → match the world's frame rate (the game targets 60; -1 = display refresh), so the
             // terrain pans in lock-step with movement instead of stepping at a fixed low rate.
             float hz = renderHz > 0f
                 ? renderHz

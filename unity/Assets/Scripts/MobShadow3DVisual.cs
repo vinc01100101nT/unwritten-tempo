@@ -47,6 +47,33 @@ public class MobShadow3DVisual : Agent3DVisual
     readonly FootstepTracker.Gait gait = new FootstepTracker.Gait();
     System.Action<Vector3, float> onFootPlant;
 
+    /// <summary>WHICH BODY THIS SHADOW WEARS, drawn from the shared cast's fighter pool. Empty until somebody has
+    /// chosen — which on a machine that only WATCHES this creature means the choice has not arrived yet.
+    ///
+    /// <para>It is a per-creature IDENTITY, so exactly one machine may decide it: the one that owns the creature.
+    /// Every machine used to draw its own, independently, from the same pool — so the same creature stood in front
+    /// of two people wearing two different bodies, and neither of them was wrong from where they were sitting.</para></summary>
+    public string ModelName { get; private set; }
+
+    // Whether the machine that owns this creature has spoken about its body yet — separately from WHAT it said,
+    // because "the owner will name it in a moment" and "nobody owns this, choose your own" are different answers
+    // and both of them look like an empty name.
+    bool modelIsTold;
+
+    /// <summary>The owning machine's word on which body this creature wears. Called by whatever is following this
+    /// creature for the server, both when the body is built and again if the name lands after it.
+    ///
+    /// <para>Calling it with nothing is meaningful and is not ignored: it says the owner is the one choosing, so
+    /// this machine must wait rather than draw a body of its own. Until then the creature is simply still a
+    /// sprite, which is a legal state it was already in.</para></summary>
+    public void WearModel(string name)
+    {
+        modelIsTold = true;
+        if (string.IsNullOrWhiteSpace(name) || name == ModelName) return;
+        ModelName = name;
+        BuildBody();
+    }
+
     protected override void Awake()
     {
         base.Awake();
@@ -54,6 +81,13 @@ public class MobShadow3DVisual : Agent3DVisual
         health = GetComponent<Health>();
         status = GetComponent<StatusController>();
         onFootPlant = OnFootPlant;
+
+        // THE OWNER CHOOSES THE BODY, HERE, BEFORE THE CREATURE IS ANNOUNCED. This is a name out of a list and
+        // nothing else — no model is fetched and no rig is assembled, so a machine with no screen pays a single
+        // random pick for it. It is chosen in Awake rather than Start because both places that create a shadow add
+        // this component and announce the creature on the very next line, and what crosses the wire is read off the
+        // creature at that moment.
+        if (GameServer.IsServer) ModelName = CharacterSpec.Active.RandomFighter();
     }
 
     void Start()
@@ -81,12 +115,21 @@ public class MobShadow3DVisual : Agent3DVisual
     {
         if (built || building) return;
 
-        // A shadow has its OWN look, drawn at random from the shared cast's FIGHTER pool. It used to CLONE the live
-        // player, which made every shadow identical to you and to each other, tied a mob's appearance to a player
-        // (wrong the moment more than one player shares a map), and made shadows silently fail to exist at all on any
-        // map where no live 3D player had spawned yet. A shadow now depends on nothing but the spec.
+        // A shadow has its OWN look, drawn from the shared cast's FIGHTER pool. It used to CLONE the live player,
+        // which made every shadow identical to you and to each other, tied a mob's appearance to a player (wrong the
+        // moment more than one player shares a map), and made shadows silently fail to exist at all on any map where
+        // no live 3D player had spawned yet. A shadow now depends on nothing but the spec.
         var spec = CharacterSpec.Active;
-        string modelName = spec.RandomFighter();
+        if (string.IsNullOrWhiteSpace(ModelName))
+        {
+            // NOTHING TO WEAR YET. If the machine that owns this creature is the one choosing, waiting is the whole
+            // of the job — it will say, and this creature stays a sprite in the meantime. Drawing one here instead
+            // is exactly the bug this replaced: every watcher picked its own and no two agreed.
+            if (modelIsTold) return;
+            ModelName = spec.RandomFighter();
+        }
+
+        string modelName = ModelName;
         if (string.IsNullOrWhiteSpace(modelName))
         {
             GameLog.Warn(LogCat.Unwritten, "CharacterSpec has no fighter models — '" + name + "' stays a billboard.");
@@ -234,10 +277,18 @@ public class MobShadow3DVisual : Agent3DVisual
 
     /// <summary>Turn toward whoever this creature is after while it stands its ground, so a bite lands facing its
     /// target instead of facing wherever it last walked. Falls back to the shared answer — the line it travelled —
-    /// the moment it is walking, and to nothing at all on a watched copy, which chooses nobody to chase and so has
-    /// nobody to turn to.</summary>
+    /// the moment it is walking.
+    ///
+    /// <para>A COPY IS TOLD WHICH WAY IT FACES AND NEVER WORKS IT OUT, exactly as another player's watched body is:
+    /// the machine that owns the creature has already turned its body, that direction travels with its position,
+    /// and the body root here has already been turned to match — so it is read straight off the root rather than
+    /// kept a second time. This used to answer NOTHING on a copy, because a copy chases nobody and so had nobody to
+    /// turn to: every shadow anybody watched faced the direction it was summoned in for the whole of its life,
+    /// including while it was biting somebody standing behind it.</para></summary>
     protected override Vector3 FacingThisFrame(Vector3 groundTravel, bool walking, Vector3 position)
     {
+        if (brain != null && !brain.ThinksForItself) return transform.forward;
+
         if (walking) return base.FacingThisFrame(groundTravel, true, position);
 
         var prey = brain != null ? brain.PreyBody : null;
@@ -279,6 +330,13 @@ public class MobShadow3DVisual : Agent3DVisual
 
     protected override void LateUpdate()
     {
+        // A MACHINE WITH NO SCREEN STILL HAS TO TURN THIS BODY. Everything below needs a model to drive and there is
+        // none here, so the shared driver stops at its first line — which left this body pointing whichever way it
+        // was spawned for the whole of its life. Which way a creature is turned is the one thing about it that every
+        // watching machine can see and none of them can work out alone, so it is decided here and travels with the
+        // creature's position like every other fact about it.
+        if (GameServer.IsServer) { TurnTheBodyItself(); return; }
+
         base.LateUpdate();
 
         // Footsteps: the SAME shared plant detector the player and townsfolk run, fired off this unit's own
@@ -286,6 +344,40 @@ public class MobShadow3DVisual : Agent3DVisual
         var tracker = FootstepTracker.Instance;
         if (built && tracker != null && pose != null)
             tracker.DetectPlants(pose, transform.position, gait, onFootPlant);
+    }
+
+    // Where this body stood last frame. Kept here because the shared driver's own copy of it is never reached on a
+    // machine with no screen — that driver returns before it updates it.
+    Vector3 serverLastPos;
+    bool serverPosSeeded;
+
+    /// <summary>A BODY HANDED BACK OUT OF THE POOL COMES BACK SOMEWHERE ELSE, so last life's position would read as
+    /// one enormous step on its first frame and snap this creature to face along that jump. Re-baselined on every
+    /// switch-on, for the same reason and at the same moment the shared driver re-baselines its own.</summary>
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+        serverPosSeeded = false;
+    }
+
+    /// <summary>SERVER ONLY: point this creature's body the way it is actually going, or at whoever it is fighting.
+    ///
+    /// <para>Asked of the SAME function that answers it on a machine that can see, so the two can never drift into
+    /// deciding a facing differently. Written straight on with no easing: every machine watching already glides
+    /// toward each direction it is sent, so easing it here as well would only make the creature turn late.</para></summary>
+    void TurnTheBodyItself()
+    {
+        Vector3 p = transform.position;
+        if (!serverPosSeeded) { serverLastPos = p; serverPosSeeded = true; }
+        Vector3 d = p - serverLastPos; d.y = 0f;
+        serverLastPos = p;
+
+        bool walking = Travelling(d, Mathf.Max(Time.deltaTime, 1e-4f), out _);
+        Vector3 face = FacingThisFrame(d, walking, p);
+        face.y = 0f;
+        if (face.sqrMagnitude <= 1e-8f) return;
+
+        transform.rotation = Quaternion.LookRotation(face.normalized);
     }
 
     // Steps come from the SHARED character sound set, not off the player object — a shadow's feet are its own.

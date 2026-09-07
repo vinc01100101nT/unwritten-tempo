@@ -108,6 +108,24 @@ public static class UnitStatMath
         return total;
     }
 
+    /// <summary>Experience needed to climb from base level <paramref name="level"/> to the next one: <c>5 + 5L</c>.
+    /// The character's level curve lives HERE so the bar a player watches and the lifetime total below can never
+    /// disagree about what a level costs.</summary>
+    public static int XpToNextFrom(int level) => 5 + 5 * Mathf.Max(1, level);
+
+    /// <summary>The TOTAL experience a character that legitimately climbed to <paramref name="level"/> was given
+    /// on the way — every rung from 1 up to it, and none of the level they are standing in. Add the experience
+    /// held inside the current level to get a lifetime figure.</summary>
+    public static long XpEarnedByLevel(int level)
+    {
+        decimal L = Mathf.Max(1, level);
+        // Every rung from 1 to L-1 added up in one step. Written out rather than looped because a junk level
+        // sitting in an old row would otherwise spin this billions of times while somebody waits to load in,
+        // and worked out in decimal so an impossible level saturates instead of wrapping round to a negative.
+        decimal total = 5m * (L - 1m) + 5m * L * (L - 1m) / 2m;
+        return total > long.MaxValue ? long.MaxValue : (long)total;
+    }
+
     /// <summary>What it cost to raise ONE stat from 1 up to <paramref name="value"/> — the running integral of
     /// <see cref="StatCost"/>.</summary>
     public static int PointsToRaise(int value)

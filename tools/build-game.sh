@@ -149,7 +149,8 @@ esac
 if [ "$STATUS" -eq 0 ]; then
   echo
   echo "Run the server with:"
-  echo "  $OUT_ROOT/server/unwritten-server.app/unwritten -batchmode -nographics -logFile -"
+  echo "  mkdir -p logs && mv -f logs/server.log logs/server-prev.log 2>/dev/null"
+  echo "  $OUT_ROOT/server/unwritten-server.app/unwritten -batchmode -nographics -logFile - 2>&1 | tee logs/server.log"
   echo "Open a player's game with:"
   echo "  open -n $OUT_ROOT/client/unwritten.app"
 fi

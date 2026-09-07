@@ -10,8 +10,14 @@ using TMPro;
 ///
 /// <para>Input focus rides the shared typing guard: while the box is focused, <see cref="Hotkeys.Typing"/> is
 /// true, so every gameplay/HUD key (WASD, hotbar, window toggles) is suppressed automatically — no per-site
-/// "am I typing?" checks. Plain lines echo as chat; lines starting with '/' route to <see cref="GmCommands"/>,
-/// the single command dispatcher (gameplay commands are declared there later).</para>
+/// "am I typing?" checks. Plain lines are SAID; lines starting with '/' route to <see cref="GmCommands"/>,
+/// the single command dispatcher.</para>
+///
+/// <para><b>A said line goes to the server and comes back.</b> In a world nothing is shown at the keyboard that
+/// typed it: the line crosses to the server, which says it to everybody standing near enough to see the speaker —
+/// the speaker included — so one line said is one row and one bubble on every screen, decided in one place. With
+/// no world there is nobody to ask and the line simply lands here. Somebody else's line, and somebody else's skill
+/// call, arrive through <see cref="Heard"/> and are drawn by the very same body as your own.</para>
 /// </summary>
 public class ChatController : MonoBehaviour
 {
@@ -35,19 +41,49 @@ public class ChatController : MonoBehaviour
     void Awake() { instance = this; }
     void OnDestroy() { if (instance == this) instance = null; }
 
-    /// <summary>A skill CALL: the player names the skill they just fired. Identical in every way to saying that word
-    /// in chat — the same speaker prefix, the same white bubble over the head for the same time, the same log row —
-    /// only tinted, so a call reads apart from a said line at a glance. The ONE entry point, so the two can't drift.</summary>
+    /// <summary>A skill CALL by the person at this keyboard: they name the skill they just fired. Identical in every
+    /// way to saying that word in chat — the same speaker prefix, the same white bubble over the head for the same
+    /// time, the same log row — only tinted, so a call reads apart from a said line at a glance.</summary>
     public static void SkillCall(string skillName)
     {
-        if (instance == null || string.IsNullOrEmpty(skillName)) return;
-        instance.AddLine($"{SpeakerPrefix} <color=#{CallHex}>{Sanitize(skillName)}</color>");
-        instance.ShowOverheadBubble(skillName);
+        if (instance == null) return;
+        Post("", skillName, instance.MyPose, true);
+    }
+
+    /// <summary>A line the person at this keyboard said. Used when the server hands their own line back to them, and
+    /// when there is no server to hand it back.</summary>
+    public static void Said(string text)
+    {
+        if (instance == null) return;
+        Post("", text, instance.MyPose, false);
+    }
+
+    /// <summary>SOMEBODY ELSE speaking — a line they said, or the skill they just called out. It lands exactly as
+    /// one of your own does: the same log row, the same white bubble over their head for the same time, only their
+    /// name in front of it instead of "You". <paramref name="over"/> is the head to hang the bubble over; null when
+    /// their body has not been built on this machine yet, which simply means no bubble.</summary>
+    public static void Heard(string speaker, string text, IStancePose over, bool isSkillCall)
+    {
+        if (instance == null) return;
+        Post(speaker, text, over, isSkillCall);
+    }
+
+    // THE one place a spoken line becomes a row in the log and a bubble over a head. A said line and a skill call,
+    // mine and everybody else's, all four arrive here — so no two of them can drift apart.
+    // Cold path: once per line somebody says.
+    static void Post(string speaker, string text, IStancePose over, bool isSkillCall)
+    {
+        if (instance == null || string.IsNullOrEmpty(text)) return;
+        string body = isSkillCall ? $"<color=#{CallHex}>{Sanitize(text)}</color>" : Sanitize(text);
+        instance.AddLine($"{SpeakerPrefix(speaker)} {body}");
+        if (over != null) SpeechBubble.ShowOverHead(over, text, BubbleLife);
     }
 
     // Who is speaking, written once: a said line and a skill call are the same person talking, so they share this
-    // rather than each typing their own copy.
-    const string SpeakerPrefix = "<color=#9FB4CC>You:</color>";
+    // rather than each typing their own copy. An empty name is the person at this keyboard.
+    static string SpeakerPrefix(string name)
+        => string.IsNullOrEmpty(name) ? "<color=#9FB4CC>You:</color>"
+                                      : $"<color=#9FB4CC>{Sanitize(name)}:</color>";
 
     // The tint a call is logged in, taken from the palette's own colour rather than typed here as a second copy.
     static string callHex;
@@ -185,18 +221,24 @@ public class ChatController : MonoBehaviour
         }
         else
         {
-            AddLine($"{SpeakerPrefix} {Sanitize(text)}");
-            ShowOverheadBubble(text);
+            // SAID TO THE SERVER when there is one, and it says the line back to everybody standing near enough to
+            // hear it — this machine included. That is why nothing is shown here in that case: one line said is one
+            // row and one bubble for everybody, decided in one place, so the speaker cannot see a different chat
+            // from the people listening. With no server there is nobody to ask and the line lands here.
+            if (!GameNetwork.SendSayToServer(text)) Said(text);
         }
     }
 
-    // Float the said line over the player's head in the same white bubble the NPCs use for their barks, through the
-    // exact same anchor path (SpeechBubble.ShowOverHead) so it sits identically. Cold path: once per sent line.
-    void ShowOverheadBubble(string line)
+    // The head THIS machine's own player speaks over — their avatar's feet-seated visual, which is what the white
+    // NPC bark bubble already anchors to, through the same path so a said line sits exactly where a bark does.
+    // The find happens once per session and is kept.
+    IStancePose MyPose
     {
-        if (playerVisual == null) playerVisual = FindAnyObjectByType<Character3DVisual>();
-        if (playerVisual == null) return;
-        SpeechBubble.ShowOverHead(playerVisual.Pose, line, BubbleLife);
+        get
+        {
+            if (playerVisual == null) playerVisual = FindAnyObjectByType<Character3DVisual>();   // perf-ok: once per line said or skill called, never per frame
+            return playerVisual != null ? playerVisual.Pose : null;
+        }
     }
 
     void AddLine(string message)
@@ -209,7 +251,21 @@ public class ChatController : MonoBehaviour
         // Trim the oldest rows so the log stays bounded.
         while (logContent.childCount > MaxLines) Destroy(logContent.GetChild(0).gameObject);
 
-        // Snap to the newest line (force a layout pass first so the scroll clamps correctly).
+        // ASKED FOR, NOT DONE HERE. Snapping to the newest line needs a layout pass forced through first, and that
+        // rebuilds every dirty canvas on screen. It used to run per line added, which was fine when the only lines
+        // were the ones typed at this keyboard — a handful a minute. Every nearby person's said lines and every
+        // nearby person's skill calls now land here too, so the cost multiplies by how many people are standing
+        // around: five in a fight is several rebuilds a second, forever, for one scroll position. Once a frame,
+        // however many lines arrived in it, costs the same as it ever did for one.
+        wantsScrollToNewest = true;
+    }
+
+    bool wantsScrollToNewest;
+
+    void LateUpdate()
+    {
+        if (!wantsScrollToNewest) return;
+        wantsScrollToNewest = false;
         Canvas.ForceUpdateCanvases();
         if (scroll != null) scroll.verticalNormalizedPosition = 0f;
     }

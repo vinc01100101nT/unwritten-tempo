@@ -84,6 +84,17 @@ public class Character3DVisual : MonoBehaviour
     // Seat the model's feet on the Ground layer (same truth the townsfolk use). The Quaternius
     // pivot is at the feet, so grounding places the origin on the surface; a jump/fall lifts by how far the
     // player's root sits above its grounded resting height (0 at rest).
+    /// <summary>HOW FAR OFF THE FLOOR THIS BODY IS, in world units — 0 while standing or walking, positive for the
+    /// whole of a jump or a fall. Worked out here because this is the one place that already separates the two
+    /// things a physics root's height is made of: the capsule's own resting offset, which is not height at all, and
+    /// the real lift above the ground.
+    ///
+    /// <para>It is READ by the position report, because no other machine can work it out. A watched copy of this
+    /// person has no physics capsule to subtract, so a raw height told to it would leave everybody permanently
+    /// hovering by the capsule's offset — and deriving it there instead would be a second owner of a number this
+    /// one already holds.</para></summary>
+    public float HeightAboveGround { get; private set; }
+
     Vector3 GroundedPos(Vector3 p)
     {
         if (cc == null) return p;
@@ -92,6 +103,7 @@ public class Character3DVisual : MonoBehaviour
             float lossy = player != null ? player.transform.lossyScale.y : 1f;
             float restingRootY = groundY + cc.skinWidth - (cc.center.y - cc.height * 0.5f) * lossy;
             float above = Mathf.Max(0f, p.y - restingRootY);
+            HeightAboveGround = above;
             p.y = groundY + above;
             return p;
         }

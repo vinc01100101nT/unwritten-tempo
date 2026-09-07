@@ -1670,7 +1670,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cd9aa7c45312e54bbc7428d18e4b64c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSystems
-  targetFps: 120
+  targetFps: 60
   lockToVSync: 0
 --- !u!4 &1559929218
 Transform:

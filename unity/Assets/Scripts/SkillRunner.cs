@@ -357,6 +357,14 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (dur > 0f)
         {
             BeginCastVisuals();
+            // THE WIND-UP, TO EVERY MACHINE WATCHING THE CASTER. Nothing about a cast reached a watcher until it
+            // was already going off, so somebody else's four-second spell was four seconds of them standing still
+            // followed by an explosion. Sent from the server, which is where the wind-up that decides anything
+            // runs; the caster's own machine draws its bar from this very coroutine, a line below.
+            // …AND WHERE IT IS AIMED, so the ring that opens on the ground under a wind-up appears on every screen
+            // and not only the caster's. A watcher holds the same authored skill and reads its own ring off that;
+            // the one thing it cannot know is the spot, which is why the spot is what travels.
+            GameNetwork.AnnounceCastWindup(Caster, def, dur, lastCtx.target);
             if (Mine && StanceController.Player != null) StanceController.Player.Push(StanceId.Casting, dur);   // hold the cast pose, stretched to span the whole wind-up (FitWindow)
             var sc = Status;
             if (sc != null) sc.LockActions(dur);   // fully root for the wind-up (no move/attack/other skills); freed in EndCast on complete or interrupt
@@ -371,7 +379,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
                     (sc != null && (sc.Silenced || sc.CannotAct ||
                                     (!sc.DisablesBlocked && sc.LastHpLossTime > startedAt))))
                 { pendingMana = 0; EndCast(); yield break; }
-                if (Mine) CastBar.Set(UnitAnchor.Head(transform), t / dur, label, def.tint);
+                if (Mine) CastBar.Set(transform, t / dur, label, def.tint);
                 yield return null;
             }
         }
@@ -404,7 +412,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (Mine && StanceController.Player != null) StanceController.Player.Pop(StanceId.Casting);   // release the cast pose (complete/interrupt/OnDisable)
         var unlock = Status;
         if (unlock != null) unlock.Unlock();   // free the wind-up root; on completion PlayCycles re-locks for the aftercast beat
-        if (Mine) CastBar.Hide();
+        if (Mine) CastBar.Hide(transform);
+        // AND EVERY MACHINE WATCHING THIS CASTER LETS GO OF ITS BAR TOO. This is the one place a wind-up ends —
+        // finished, interrupted, or the runner switched off — so saying it here is saying it for all three.
+        GameNetwork.AnnounceCastWindupEnded(Caster);
         castRoutine = null;
     }
 
@@ -430,7 +441,16 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // the chat log — through the very same path a said line takes, so the two can never drift apart. Here, at the
         // one place every way of firing (a press, one of the skill's own automatic triggers) passes
         // through, so no entry point can forget it. A passive is not called out: it has no gesture to announce.
-        if (Mine && !def.IsPassive) ChatController.SkillCall(def.displayName);
+        if (!def.IsPassive)
+        {
+            if (Mine) ChatController.SkillCall(def.displayName);
+            // AND TO EVERY MACHINE WATCHING THE CASTER, from the one that owns the world. A skill somebody else
+            // cast used to go off in silence for everybody but them: its effect was announced, its NAME never was.
+            // Said from here — the same moment, the same words — rather than beside the effect, because a repeating
+            // skill announces its effect once per fall and would have called its own name five times over.
+            // Silent off a server, and never to the caster's own machine, which has just said it a line above.
+            GameNetwork.AnnounceSkillCall(Caster, def);
+        }
 
         // The cast finished UNINTERRUPTED (an interrupt runs EndCast + bails before here) — announce it so any passive
         // keyed to this skill via OnSkillCastComplete<skill> fires.
@@ -595,7 +615,10 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             // Restart the release animation ON the beat, fit to this beat's length, so every repeat shows the whole
             // animation instead of one play stretched across the run. Forced to fit because the release stance is
             // usually authored to a gait, which would otherwise ignore the window and drift out of step with the beat.
-            if (def.hasReleaseStance && def.releaseStanceReplayPerRepeat && StanceController.Player != null)
+            // MINE ONLY, like the opening play a few lines up. Without that word this reached for the one stance
+            // controller on the machine BY NAME — so a repeating skill run for somebody else, on a machine that also
+            // has a player standing on it, played its animation on the wrong body.
+            if (def.hasReleaseStance && def.releaseStanceReplayPerRepeat && Mine && StanceController.Player != null)
                 StanceController.Player.PlayActionFor(def.releaseStance, interval, 1f, fitToWindow: true);
 
             PlaySequence(ref ctx);
