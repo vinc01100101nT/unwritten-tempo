@@ -10,7 +10,7 @@ using System.Collections.Generic;
 public sealed class HotbarBindings
 {
     // FOUR, BECAUSE FOUR IS ALL A WEAPON CAN EVER GRANT. The richest weapon in the game rolls four numbered
-    // skills plus its ultimate (see WeaponSkillRoll.SizeFor), so a bar of nine was five slots that nothing could
+    // skills plus its ultimate (see WeaponSkillRoll.ActiveMax), so a bar of nine was five slots that nothing could
     // ever fill — and every one of them was a skill this character had to carry the possibility of.
     public const int SlotCount = 4;   // keys 1–4
 

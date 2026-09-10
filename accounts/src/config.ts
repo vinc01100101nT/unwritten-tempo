@@ -18,6 +18,14 @@ function optionalInt(name: string, fallback: number): number {
 
 export const config = {
   port: optionalInt("PORT", 8080),
+
+  // WHICH ADDRESSES THIS ANSWERS ON. The default answers on all of them, which is what a machine on your own
+  // desk needs. On a hosted machine set this to 127.0.0.1: the encrypting proxy sits on the same machine and
+  // reaches it there, and nothing on the internet can then reach this service unencrypted — a password sent
+  // to the open port would travel readable, and no amount of certificate on the proxy prevents that while a
+  // second, plain door stands open beside it.
+  bindHost: process.env.BIND_HOST || "0.0.0.0",
+
   databaseUrl: required("DATABASE_URL"),
   jwtSecret: required("JWT_SECRET"),
 

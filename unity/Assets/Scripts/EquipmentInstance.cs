@@ -48,7 +48,7 @@ public class EquipmentInstance
 
         bool isWeapon = def.slot == EquipSlotType.Weapon && def.weaponType != WeaponType.None;
         inst.rarity = forcedRarity ?? (isWeapon ? WeaponSkillRoll.RollRarity() : def.rarity);
-        if (isWeapon) inst.skillIds = WeaponSkillRoll.RollKit(def.weaponType, inst.rarity);
+        if (isWeapon) inst.skillIds = WeaponSkillRoll.RollKit(def.weaponType);
         return inst;
     }
 

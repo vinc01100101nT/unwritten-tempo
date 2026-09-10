@@ -15,6 +15,13 @@ public sealed class Config
     public required string JwtSecret { get; init; }
     public required int Port { get; init; }
 
+    /// <summary>Which addresses this answers on. The default answers on all of them, which is what a machine on
+    /// your own desk needs. On a hosted machine set BIND_HOST to 127.0.0.1: the encrypting proxy sits on the same
+    /// machine and reaches it there, and nothing on the internet can then reach this server unencrypted — a
+    /// character's save sent to the open port would travel readable, and a certificate on the proxy does not
+    /// prevent that while a second, plain door stands open beside it.</summary>
+    public required string BindHost { get; init; }
+
     /// <summary>A save document larger than this is a bug or an attack, not a character.</summary>
     public required int MaxProgressBytes { get; init; }
 
@@ -37,6 +44,7 @@ public sealed class Config
             DatabaseUrl = Required("DATABASE_URL"),
             JwtSecret = Required("JWT_SECRET"),
             Port = OptionalInt("CHAR_SERVER_PORT", 8081),
+            BindHost = Environment.GetEnvironmentVariable("BIND_HOST") ?? "0.0.0.0",
             MaxProgressBytes = OptionalInt("MAX_PROGRESS_BYTES", 256 * 1024),
             ServerSecret = Required("SERVER_SECRET"),
             WikiOrigins = Origins(Environment.GetEnvironmentVariable("WIKI_ORIGINS") ?? "http://127.0.0.1:8099"),

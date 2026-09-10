@@ -31,7 +31,7 @@ public static class LoadingScreen
         Build();
         if (root == null) return;
         root.gameObject.SetActive(true);
-        root.SetAsLastSibling();
+        UiLayers.Raise(root, UiLayers.Layer.Loading);
         SetStep(firstStep);
         SetBar(-1f);
     }

@@ -1,0 +1,29 @@
+{
+  "generated_by": "tools/ui-geometry.py \u2014 measured from the running editor; re-run it",
+  "Inventory": {
+    "parts": {
+      "window": 710.0,
+      "header_size": 11.0,
+      "row": 34.0,
+      "search": 41.0,
+      "list": 340.0
+    },
+    "columns": {
+      "Name": 292.0,
+      "Slot": 82.0,
+      "Tier": 76.0,
+      "Skills": 52.0,
+      "Atk/Def": 62.0,
+      "Out": 48.0
+    },
+    "cell_sizes": {
+      "Name": 14.0,
+      "Slot": 12.0,
+      "Tier": 12.0,
+      "Skills": 11.0,
+      "Atk/Def": 11.0,
+      "Out": 11.0
+    },
+    "note": "the bag window is 742x528; its frame leaves 710x470 inside"
+  }
+}

@@ -77,10 +77,45 @@ public class GameRoot : MonoBehaviour
     void OnLostWorld()
     {
         ReconnectNotice.Hide();
+        LogOut("Lost the connection to the world.");
+    }
+
+    /// <summary>Leave the world and go back to signing in, forgetting who was playing. What the <b>Log out</b>
+    /// entry does, and what a lost connection does too — being put out of a world is the same act whether it was
+    /// asked for or not, so both take this one road rather than two front doors that can drift apart.
+    ///
+    /// <para><paramref name="message"/> is the line shown on the sign-in screen explaining why they are looking
+    /// at it. Left out for a player who chose to go, who needs no explanation.</para></summary>
+    public static void LogOut(string message = null)
+    {
+        LeaveTheWorld(signOut: true);
+        if (string.IsNullOrEmpty(message)) SignInScreen.Open();
+        else SignInScreen.OpenSaying(message);
+    }
+
+    /// <summary>Leave the world and go back to the character list, still signed in. What the <b>Select
+    /// character</b> entry does.</summary>
+    public static void BackToCharacterSelect()
+    {
+        LeaveTheWorld(signOut: false);
+        CharacterSelectScreen.Open();
+    }
+
+    // Nobody is left in a world once this returns: the connection is let go, whoever was playing is forgotten,
+    // and the persistent scene comes back alone with no map under it.
+    //
+    // THE ORDER IS THE POINT. Forgetting who was playing has to happen BEFORE the scene reloads, because the
+    // fresh GameRoot that comes up with it reads the session in its Start — and a session still naming a
+    // character would have it dial straight back into the world the player just left.
+    //
+    // The server writes that character down by itself the moment the connection drops (see its own disconnect
+    // handling), so nothing is saved from this side and nothing is lost by going.
+    static void LeaveTheWorld(bool signOut)
+    {
         GameNetwork.Forget();
-        AccountSession.SignOut();
+        if (signOut) AccountSession.SignOut();
+        else AccountSession.LeaveCharacter();
         SceneManager.LoadScene(MapManager.SystemsScene, LoadSceneMode.Single);
-        SignInScreen.OpenSaying("Lost the connection to the world.");
     }
 
     void BringTheWorldUp()

@@ -33,7 +33,7 @@ public class WindowDragHandle : MonoBehaviour, IBeginDragHandler, IDragHandler
     {
         // Lift the grabbed window above its siblings so overlapping windows
         // (e.g. Bag + Character open at once) come to the front when you grab one.
-        if (window != null) window.SetAsLastSibling();
+        if (window != null) UiLayers.Raise(window, UiLayers.Layer.Window);
     }
 
     public void OnDrag(PointerEventData e)

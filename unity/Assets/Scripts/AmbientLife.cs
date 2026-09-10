@@ -3,14 +3,22 @@ using UnityEngine;
 
 /// <summary>
 /// Drop-in "make this map feel alive" director. Place ONE in a scene (Tools ▸ unwritten ▸ World ▸ Add Ambient
-/// Townsfolk) and at Play it spawns wandering LIVE-3D townsfolk drawn from the rigged Quaternius models — the same
-/// cast the player is built from, so there's zero new art. Each gets a <see cref="TownNPC"/> brain (stroll near
-/// where it spawned + occasional barks) on the shared <see cref="PathAgent3D"/> mover, and animates through the SAME
-/// machinery the player uses: a <see cref="Character3DPose"/> sink driven by a <see cref="StanceController"/> choke
-/// point, fed Walk/Idle by <see cref="TownNPC3DVisual"/>. (Mobs stay billboards; townsfolk + player are live-3D.)
+/// Townsfolk) and the machine that OWNS the world spawns wandering LIVE-3D townsfolk drawn from the rigged
+/// Quaternius models — the same cast the player is built from, so there's zero new art. Each gets a
+/// <see cref="TownNPC"/> brain (stroll near where it spawned + occasional barks) on the shared
+/// <see cref="PathAgent3D"/> mover, and animates through the SAME machinery the player uses: a
+/// <see cref="Character3DPose"/> sink driven by a <see cref="StanceController"/> choke point, fed Walk/Idle by
+/// <see cref="TownNPC3DVisual"/>. (Mobs stay billboards; townsfolk + player are live-3D.)
 ///
-/// Townsfolk are NOT independently tuned: their walk speed, gait cadence, and height are READ off the live player at
-/// spawn (single source of truth), so a townsperson strolls and stands exactly like the player walking.
+/// <para>ONE TOWN, SO ONE SET OF PEOPLE, AND ONLY THE SERVER MAKES THEM. Every machine used to run this and
+/// populate its own town, so two players standing in the same square saw different people, in different places,
+/// saying different things — and pointing at one of them meant nothing to anybody else. Each townsperson is now
+/// announced over the wire (see <see cref="NetNpc"/>) and every player within range receives that same person.
+/// The same rule the creature spawner already follows.</para>
+///
+/// Townsfolk are NOT independently tuned: the cast, the animator, their height, their capsule and their walk speed
+/// all come from the shared CharacterSpec (single source of truth), so a townsperson strolls and stands exactly
+/// like the player walking. This object decides only WHERE and HOW MANY.
 ///
 /// This is intentionally self-contained (no recipe wiring required): its own transform + <see cref="areaRadius"/>
 /// define where folk appear and roam, and it ground-snaps each spawn with a single downward raycast. The
@@ -42,6 +50,15 @@ public class AmbientLife : MonoBehaviour
 
     void Start()
     {
+        // ONLY THE MACHINE THAT OWNS THE WORLD POPULATES IT. A player receives the people who are already there
+        // (see NetNpc); one that made its own would give every player a private town at private positions — which
+        // is what this game did before it had a server, and is the thing that makes a shared world impossible.
+        if (!GameServer.IsServer)
+        {
+            enabled = false;
+            return;
+        }
+
         var spec = CharacterSpec.Active;
         if (spec.civilianModels == null || spec.civilianModels.Count == 0)
         {
@@ -51,17 +68,17 @@ public class AmbientLife : MonoBehaviour
         if (spec.animatorController == null)
             GameLog.Warn(LogCat.Unwritten, "CharacterSpec has no animatorController — townsfolk will T-pose.");
 
-        var pc = FindAnyObjectByType<Player3DController>();
-        Transform player = pc != null ? pc.transform : null;
-
         for (int i = 0; i < count; i++)
-            SpawnOne(player, spec);
+            SpawnOne(spec);
     }
 
-    // The model ARRIVES rather than being on hand: the cast holds names and the asset is fetched through the shared
-    // roster, so a townsperson is built in the callback. Everything that decides WHERE it stands is settled first, so
-    // a late-arriving model lands exactly where an instant one would have.
-    void SpawnOne(Transform player, CharacterSpec spec)
+    // One townsperson: pick which body they wear, pick where they stand, build them, and announce them so every
+    // player near enough receives the same person.
+    //
+    // NO MODEL IS FETCHED HERE. The name is the whole of what this machine needs — it has no screen, and a rigged
+    // model assembled for nobody is the cost the live-3D creatures already stopped paying. Each watching machine
+    // fetches its own copy from the name that crosses the wire.
+    void SpawnOne(CharacterSpec spec)
     {
         var modelName = spec.RandomCivilian();
         if (string.IsNullOrWhiteSpace(modelName)) return;
@@ -69,46 +86,11 @@ public class AmbientLife : MonoBehaviour
         Vector2 r = Random.insideUnitCircle * areaRadius;
         Vector3 p = GroundSnap(transform.position + new Vector3(r.x, 0f, r.y));
 
-        CharacterModels.Load(modelName, model =>
-        {
-            if (this == null) return;   // director (or its map) went away while the model was loading
-            if (model == null)
-            {
-                GameLog.Warn(LogCat.Unwritten, "No character model registered as '" + modelName +
-                                 "' — one townsperson was skipped.");
-                return;
-            }
-            Build(player, spec, model, p);
-        });
-    }
+        // The ONE recipe for a townsperson, shared with the machines that only watch one.
+        var root = Townsperson.Build(modelName, p, gameObject.scene, null);
+        root.GetComponent<TownNPC>().Init(p, wanderRadius, barks);
 
-    void Build(Transform player, CharacterSpec spec, GameObject model, Vector3 p)
-    {
-        // The MOVER must live on an UNSCALED root: a CharacterController silently refuses to translate when its
-        // transform is scaled down to character size (~0.1) — MEASURED, its move came out 0 at scale 0.098 but works
-        // at scale 1. So (same split the player uses) the unscaled root carries the controller + brain, and the
-        // scaled visual model rides it as a child.
-        var root = new GameObject("Townsfolk_" + model.name);
-        // The town that made them is the town they live in — never whichever map was loaded last.
-        MapManager.PutInMap(root, gameObject.scene);
-        root.transform.position = p;
-        root.hideFlags = HideFlags.DontSaveInEditor;   // runtime spawn — never bake a stray copy into the scene
-
-        // The scaled model child + its animator + the pose sink + the stance choke point — built by the SHARED
-        // character-body recipe, the same one the 3D shadow mobs use, so there is one definition of "a character
-        // body" rather than one per unit type. Leg cadence is no longer handed in: the stance choke point folds it
-        // live from the shared baseline and this unit's own Slow/Haste.
-        Character3DBody.Build(root, model, spec.animatorController, spec.bodyHeight);
-
-        // Shared mover on the UNSCALED root (auto-adds a CharacterController), then the ONE character rig — the same
-        // capsule and routing footprint the player and the shadow mobs get. This used to be a copy of the formula.
-        var agent = root.AddComponent<PathAgent3D>();
-        Character3DBody.ApplyRig(root, agent);
-
-        // 3D animation driver + wander brain, both on the root (added last so they resolve their siblings).
-        root.AddComponent<TownNPC3DVisual>();
-        var npc = root.AddComponent<TownNPC>();
-        npc.Init(p, wanderRadius, spec.WalkGearSpeed, barks, player);
+        GameNetwork.PublishNpc(root, modelName);
     }
 
     // Drop a candidate point onto the ground with one downward ray (Ground layer only, so it lands on the floor,

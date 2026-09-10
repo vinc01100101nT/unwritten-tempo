@@ -27,7 +27,7 @@ public class WindowFrame : MonoBehaviour, IPointerDownHandler
         if (rt == null) rt = (RectTransform)transform;
         if (PlayerPrefs.HasKey(KeyX))
             rt.anchoredPosition = new Vector2(PlayerPrefs.GetFloat(KeyX), PlayerPrefs.GetFloat(KeyY));
-        transform.SetAsLastSibling();   // a freshly-opened window comes to the front
+        UiLayers.Raise(transform, UiLayers.Layer.Window);   // a freshly-opened window comes to the front
     }
 
     void OnDisable() => Save();
@@ -41,5 +41,5 @@ public class WindowFrame : MonoBehaviour, IPointerDownHandler
         PlayerPrefs.SetFloat(KeyY, p.y);
     }
 
-    public void OnPointerDown(PointerEventData e) => transform.SetAsLastSibling();
+    public void OnPointerDown(PointerEventData e) => UiLayers.Raise(transform, UiLayers.Layer.Window);
 }

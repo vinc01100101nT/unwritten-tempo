@@ -1,6 +1,6 @@
 /// <summary>
 /// The SINGLE OWNER of "which basic-attack stance does each weapon TYPE play". The player brain
-/// (<see cref="PlayerStanceBrain"/>) calls this every swing to pick the weapon-specific <see cref="StanceId"/>
+/// (<see cref="CharacterBrain"/>) calls this every swing to pick the weapon-specific <see cref="StanceId"/>
 /// (AttackSword/AttackBow/…) instead of one generic Attack; the actual clip per variant is authored in the Stance
 /// Composer. Unmapped / unarmed → <see cref="StanceId.AttackBareHands"/>. Pure switch — no allocation.
 /// </summary>

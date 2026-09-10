@@ -229,6 +229,25 @@ public class Character : MonoBehaviour, ICombatUnit
     /// passive layer does. Reads the same choke as every effective-stat getter.</summary>
     public float RingBonus(StatId stat) => PassivePercent(stat);
 
+    /// <summary>The rarity lift this character's gear puts on <paramref name="skillId"/>'s OUTPUT — the equipped
+    /// weapon's ladder value (<see cref="Rarities.OutputLift"/>) when that weapon is what granted the skill, and 0
+    /// otherwise. A skill ticked on in the Grimoire has no weapon behind it, so it scales off the ring alone; the
+    /// kit is the test rather than "is a weapon worn", so a Grimoire skill can never borrow the lift of whatever
+    /// happens to be in hand.
+    ///
+    /// <para>Resolved ONCE per cast by the applier, never per hit — the loop below compares skill ids, which has no
+    /// business running inside the per-hit path.</para></summary>
+    public float SkillRarityLift(string skillId)
+    {
+        if (string.IsNullOrEmpty(skillId)) return 0f;
+        var weapon = GetEquippedInstance(EquipSlotType.Weapon);
+        var kit = weapon != null ? weapon.skillIds : null;
+        if (kit == null) return 0f;
+        for (int i = 0; i < kit.Count; i++)
+            if (string.Equals(kit[i], skillId)) return Rarities.OutputLift(weapon.rarity);
+        return 0f;
+    }
+
     /// <summary>The live signed bonus a timed sub-stat buff or debuff is putting on <paramref name="stat"/>, 0 when
     /// none. Neutral while the baseline snapshot is being taken, so the "before" column of a level-up preview shows
     /// the character without their windows rather than a moment frozen mid-fight.</summary>
@@ -1824,9 +1843,10 @@ public class Character : MonoBehaviour, ICombatUnit
             if (def.slot == EquipSlotType.Weapon) continue;
             if (def.slot != EquipSlotType.None)
             {
-                // Showcase the +N enhancement channel: rarer gear arrives pre-refined.
-                int up = def.rarity >= Rarity.Legendary ? 9 : def.rarity >= Rarity.Rare ? 7 : 0;
-                bag.Add(new BagEntry { def = def, count = 1, instance = new EquipmentInstance(def, up) });
+                // Seeded gear arrives unrefined. Rarity used to set a starting +N here; it no longer touches
+                // anything but the output lift, so refine is its own channel and starts where every other
+                // piece's does.
+                bag.Add(new BagEntry { def = def, count = 1, instance = new EquipmentInstance(def) });
             }
             else
                 bag.Add(new BagEntry { def = def, count = def.IsUsable ? 5 : 1 });

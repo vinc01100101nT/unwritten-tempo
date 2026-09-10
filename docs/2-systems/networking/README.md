@@ -169,6 +169,7 @@ This table is the one home for it. The other documents in this folder point here
 | Where **you** are | your machine moves you; the server **checks** it | watches |
 | Where anything else is | the server | watches |
 | A creature's brain, path and target | the server | watches |
+| A townsperson: which body they wear, where they wander, and the line they speak | the server | watches, and puts the line in a bubble |
 | Whether a blow lands, and for how much | the server | is told, and shows it |
 | **When a blow lands inside a swing** | the server, on its own clock | is told |
 | Health, death, revival | the server | is told |
@@ -218,7 +219,14 @@ the game already had, instead of shipping models over the wire.
 
 **A watched copy does not think.** Its brain is silenced and its mover switched off — but the brain is left
 switched *on* as a component, because the registry it belongs to is how the game finds something to attack,
-picks area-effect targets and draws map blips.
+picks area-effect targets, draws map blips, and — for a townsperson — is how pressing F finds somebody to talk to.
+
+**Townsfolk cross the wire the same way, and it is the same three objects.** The town is populated only on the
+machine that owns the world; each person is announced with the name of the body they wear, and every player
+close enough builds their own copy of that person from the name. Before this, every machine populated its own
+town, so two people standing in the same square saw different villagers in different places saying different
+things. Talking to one is a request the server carries out — it stops them and turns them to face the speaker,
+so everybody in the square watches that conversation happen rather than only the person holding it.
 
 ---
 
@@ -233,6 +241,12 @@ these three, and a latecomer is treated differently by each.
 | **An action that expires by itself** | a swing, a skill's release swing, a cast wind-up, a death | which action, when it began, how long | **joins it at the right frame** |
 | **A one-off with no duration** | a damage number, a hit spark, a heal sparkle, a crit flag | announced once | **is told nothing** |
 | **Something that lasts until it is over** | a poison glow, the charge-up glow under a cast | named when it starts, named again when it ends | is told nothing, and picks it up next time it starts |
+
+**Which bucket something goes in is decided by one question: can both machines PREDICT it?** If the shape is
+known to both — a scripted jump arc, a timed swing — send the shape once and let each machine draw it; sampling it
+instead is both coarser and later, however often you sample. Send a stream of values only for something neither
+side can work out, like where somebody chose to walk. (A jump's lift was filed as continuous state first and came
+out 135 ms late with four values on the way up; its sideways half genuinely IS unpredictable and stays streamed.)
 
 A late *number* is dropped; a late *action* is joined. Opposite rules, so one channel cannot carry both — but
 both halves of one event are fired from the same instant on the server, or the number floats up before the arm

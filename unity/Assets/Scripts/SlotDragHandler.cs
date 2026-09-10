@@ -41,7 +41,7 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         // Floating ghost icon: a copy of this slot's sprite that follows the cursor above the windows.
         ghost = new GameObject("DragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
         ghost.transform.SetParent(canvas.transform, false);
-        ghost.transform.SetAsLastSibling();
+        UiLayers.Raise(ghost.transform, UiLayers.Layer.DragGhost);
         var gi = ghost.GetComponent<Image>();
         gi.raycastTarget = false;
         gi.preserveAspect = true;

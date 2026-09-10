@@ -2,8 +2,10 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// The <b>System</b> window — what Escape opens when nothing else answers it. Holds the out-of-game menu;
-/// today its only entry is <b>Settings</b>, which shows the <see cref="SettingsWindow"/>.
+/// The <b>System</b> window — what Escape opens when nothing else answers it. Holds the out-of-game menu:
+/// <b>Settings</b> shows the <see cref="SettingsWindow"/>; <b>Select character</b> and <b>Log out</b> leave the
+/// world through <see cref="GameRoot"/>, one keeping the account signed in and the other not; <b>Quit game</b>
+/// ends the process through <see cref="GameExit"/>.
 ///
 /// <para>Escape is shared with every other panel (they all read <see cref="Hotkeys.CancelDown"/>), so this
 /// window is deliberately LAST in line: it runs in <c>LateUpdate</c>, after every panel's <c>Update</c>, and
@@ -25,7 +27,7 @@ public class SystemWindow : MonoBehaviour
         if (canvas == null) { enabled = false; return; }
         settings = GetComponent<SettingsWindow>();
 
-        var content = UiKit.Window(canvas.transform, "System", new Vector2(240, 150), Vector2.zero, out root);
+        var content = UiKit.Window(canvas.transform, "System", new Vector2(240, 220), Vector2.zero, out root);
 
         var list = UiKit.Img("Entries", content, new Color(0, 0, 0, 0));
         list.raycastTarget = false;
@@ -37,7 +39,16 @@ public class SystemWindow : MonoBehaviour
         vlg.childForceExpandHeight = false;
         vlg.childAlignment = TextAnchor.UpperCenter;
 
-        var btn = UiKit.Btn("Settings", list.transform, OpenSettings);
+        Entry(list.transform, "Settings", OpenSettings);
+        Entry(list.transform, "Select character", GameRoot.BackToCharacterSelect);
+        Entry(list.transform, "Log out", () => GameRoot.LogOut());
+        Entry(list.transform, "Quit game", () => GameExit.Quit());
+    }
+
+    // One menu line. Every entry is the same height, so the list reads as a column whatever is in it.
+    static void Entry(Transform list, string label, System.Action onClick)
+    {
+        var btn = UiKit.Btn(label, list, onClick);
         btn.gameObject.AddComponent<LayoutElement>().preferredHeight = 34;
     }
 

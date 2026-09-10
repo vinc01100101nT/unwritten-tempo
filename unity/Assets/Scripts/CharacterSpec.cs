@@ -139,6 +139,16 @@ public class CharacterSpec : ScriptableObject
              "moment — instead of right at the end.")]
     [Range(0.1f, 1f)] public float hitTiming = 0.70f;
 
+    [Tooltip("Once close enough to stand and fight, keep standing until the target has drifted this many times your " +
+             "reach away. Stops the stand-vs-chase decision flickering against somebody hovering right at the edge " +
+             "of reach, which otherwise machine-guns the footsteps and snaps the body between standing and walking. " +
+             "It never extends reach — landing a blow still asks the strict distance.")]
+    [Range(1f, 3f)] public float stayEngagedFactor = 1.4f;
+
+    // WHY IT LIVES HERE: this is one question — "am I close enough to stand and fight" — and every character asks it.
+    // It used to be an authored field on the player's attacker and a number written into the shared rule for
+    // creatures, so the person at the keyboard was tunable and the thing biting them was not.
+
     // WHY IT LIVES HERE rather than on the attacker where it started: the SERVER decides when a blow lands now, and
     // it has no attacker component to read — it holds a fighter, not an avatar. Two copies of this number would mean
     // the swing on your screen and the blow on the server drifting apart by however far they disagreed.

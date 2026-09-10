@@ -14,10 +14,6 @@ public class Player3DAttacker : MonoBehaviour
     [Tooltip("How close (world units, XZ) you must be to land a hit. This is the FULL-SIZE reach; the live reach " +
              "is this blended with the TARGET's size at each hit test (see RangeAgainst), so it tracks both bodies.")]
     public float range = 0.5f;
-    [Tooltip("Once in range, stay 'engaged' (stand & swing) until the target passes range×this. Prevents the " +
-             "stand-vs-chase decision from thrashing frame-to-frame against a target that hovers at the range " +
-             "edge (e.g. a kiting caster) — which otherwise machine-guns the step SFX and freezes the pose.")]
-    public float rangeHysteresis = 1.4f;
     [Tooltip("Seconds between auto-attacks.")]
     public float cooldown = 0.6f;
     [Tooltip("Delay between a swing starting and the hit landing (cancellable window).")]
@@ -44,8 +40,9 @@ public class Player3DAttacker : MonoBehaviour
     float nextSwing;
     bool attemptOpen;                     // an announced attack that hasn't started or been cancelled yet (see AnnounceAttackIntent)
     Coroutine swing;
-    bool engaged;                         // sticky in-range state (hysteresis) for the stand-vs-chase decision
-    Health engagedTarget;                 // who `engaged` refers to, so a new target re-evaluates from scratch
+    // "Am I close enough to stand and fight?" — the SHARED answer, the same one every creature asks, so the person
+    // at this keyboard and the thing biting them can never decide it by two different rules.
+    UnitOffense.EngageLatch engagement;
     public bool Swinging => swing != null;
 
     /// <summary>
@@ -116,17 +113,14 @@ public class Player3DAttacker : MonoBehaviour
     public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= RangeAgainst(t);
 
     /// <summary>Sticky version of <see cref="InRange"/> for the controller's stand-vs-chase decision:
-    /// turns true at <see cref="range"/> and stays true until the target passes range×<see cref="rangeHysteresis"/>.
+    /// turns true at <see cref="range"/> and stays true until the target has drifted past reach by the one authored
+    /// factor every character reads.
     /// Landing a hit still uses the strict <see cref="InRange"/>, so the extra margin never extends reach.</summary>
     public bool EngagedWith(Health t)
     {
-        if (t == null || t.IsDead) { engaged = false; engagedTarget = null; return false; }
-        if (t != engagedTarget) { engaged = false; engagedTarget = t; }   // new target → must reach `range` afresh
+        if (t == null || t.IsDead) return engagement.Ask(null, 0f, 0f);
         float r = RangeAgainst(t);
-        float d = PlanarDist(t);
-        if (d <= r) engaged = true;
-        else if (d > r * Mathf.Max(1f, rangeHysteresis)) engaged = false;
-        return engaged;
+        return engagement.Ask(t, PlanarDistSqr(t), r * r);
     }
 
     float PlanarDist(Health t)
@@ -134,6 +128,15 @@ public class Player3DAttacker : MonoBehaviour
         Vector3 a = transform.position, b = t.transform.position;
         a.y = 0f; b.y = 0f;
         return Vector3.Distance(a, b);
+    }
+
+    // The same gap, left squared. Asked every frame while attacking, and the answer is only ever compared against
+    // another distance — so the square root is bought only where a number is actually printed.
+    float PlanarDistSqr(Health t)
+    {
+        Vector3 d = t.transform.position - transform.position;
+        d.y = 0f;
+        return d.sqrMagnitude;
     }
 
     /// <summary>Announce that we WANT to basic-attack <paramref name="t"/> — the one fire-site of
@@ -284,7 +287,7 @@ public class Player3DAttacker : MonoBehaviour
     {
         if (swing != null) { StopCoroutine(swing); swing = null; }
         attemptOpen = false;
-        engaged = false; engagedTarget = null;
+        engagement.Ask(null, 0f, 0f);   // let go of "close enough to stand and fight" — the same reset it always did
     }
 
     /// <summary>Execute a SKILL strike (e.g. the Swordsman's Bash) on <paramref name="t"/>: a heavier,

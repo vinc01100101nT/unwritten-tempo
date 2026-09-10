@@ -48,10 +48,15 @@ public static class WatchedBody
         if ((here - wherePosition).sqrMagnitude > SettledDistance * SettledDistance)
             t.position = Vector3.Lerp(here, wherePosition, CaughtUpThisFrame());
 
-        // Asked of the ROTATIONS themselves. Reading a transform's euler angles rebuilds them from the rotation
-        // every time, and this runs on every watched body every frame — so the comparison stays in the form the
-        // value is already stored in.
+        // THE DIRECTION IS TAKEN WHOLE, NOT EASED INTO. A body that draws a real character turns its own model toward
+        // whatever it is told, at the character turn speed — the same single easing the person at this keyboard gets.
+        // Easing here as well put a SECOND, much slower easing in front of that one, so a watched character crawled
+        // round to face things while the person beside it snapped round: two smoothings in series, and the outer one
+        // decided the speed. Handing over the real answer leaves exactly one, and it is the character's own.
+        //
+        // Nothing that draws a flat sprite is affected: a sprite is swung to face the camera every frame regardless
+        // of what this says.
         if (Quaternion.Angle(t.rotation, whichWay) > SettledAngle)
-            t.rotation = Quaternion.Slerp(t.rotation, whichWay, CaughtUpThisFrame());
+            t.rotation = whichWay;
     }
 }

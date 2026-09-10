@@ -88,6 +88,11 @@
       "recompile _status"
     ]
   },
+  "444e4cf2-1624-4d9a-84db-75edd07cbd99": {
+    "counts": {
+      "npm run typecheck": 1
+    }
+  },
   "73e119e7-a37e-450a-9160-8276de5c0157": {
     "counts": {
       "check-perf-hotpaths.py": 2,
@@ -166,6 +171,11 @@
       "check-perf-hotpaths.py 2>&1",
       "check-unity-code.sh 2>&1"
     ]
+  },
+  "daaf4851-9328-4bdf-83b3-e299028dc0da": {
+    "counts": {
+      "build-game.sh both": 1
+    }
   },
   "dbff358d-c100-4f3c-ab1e-4e528b8c6636": {
     "counts": {

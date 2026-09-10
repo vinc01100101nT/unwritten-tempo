@@ -60,6 +60,38 @@ whose values the scene still carried. Five lines, found by diffing, invisible to
 **If the editor stops answering while a prompt is on screen, that is the prompt blocking it.** Ask the user to
 dismiss the dialog; do not click through it, and do not diagnose blind while it is up.
 
+## ⛔ RULE MYPROCESSES — EVERY PROCESS I START, I STOP, IN THE SAME RESPONSE. AND I NEVER STOP ONE I DID NOT START (HARD RULE — added 2026-09-07 at the user's instruction)
+
+**The user starts their own servers. They do not want mine.** A server I started for a measurement is scaffolding,
+exactly like a throwaway script, and it is stopped before the reply is written — not at the end of the session,
+not "when I am done with it", not left for them to find.
+
+**The two halves, both absolute:**
+
+1. **Stop what I started, in the same response that started it.** Every one: a character server on a spare port,
+   a wiki file server, a sign-in service, a probe, a watcher. If a reply ends with something of mine still
+   listening, that reply is a FAILED reply, however good the work in it was. A process I need across several
+   replies is one I ASK about first and name in the report every time it is still up.
+2. **Never stop a process I did not start.** Theirs is running because they are using it. If a port I want is
+   taken, that is an answer — use a different port, or ask.
+
+**STOP IT BY ITS PORT, NEVER BY ITS NAME.** `pkill -f CharServer` kills EVERY character server on this machine,
+including the one the user is playing against. The safe form, always:
+
+```
+PID=$(lsof -nP -iTCP:<port> -sTCP:LISTEN -t); [ -n "$PID" ] && kill $PID
+```
+
+**And before assuming a listening process is mine, check WHEN IT STARTED** — `ps -o pid,lstart,command -p <pid>`.
+A start time later than my own last kill means it is theirs, and it stays up.
+
+**Say in the report what I started and that it is stopped**, or say plainly that I started nothing. The report
+line is what makes this checkable rather than a good intention.
+
+*(Scar, 2026-09-07: cleaning up a test copy of the character server, I ran `pkill -f CharServer` and killed the
+user's running one along with it — which is also the "stop everything" command their own runbook prints. Their
+words afterwards: "i dont need your servers, i start them myself".)*
+
 ## Bugfix confidence protocol (ALWAYS)
 
 At the END of every bugfix response, state your confidence that the bug is ALREADY fixed, as a percentage (0%–100%) on its own final line, e.g. `**Fix confidence: 75%**`. Be honest — reflect whether the fix was verified live, only reasoned about, or blocked (e.g. Unity unreachable). Do not inflate.
@@ -298,9 +330,15 @@ context · "previously this worked like…". **History lives in git and in chat,
 
 **The mandatory pass after EVERY doc edit — not optional, not "if it feels risky":**
 1. Re-read the WHOLE doc, top to bottom. Not the part I edited — all of it.
-2. Grep the doc, and the folder around it, for the OLD term / OLD number / OLD name I just replaced.
-3. Reconcile every hit in the SAME turn. A stale line I plan to fix later is a stale line that ships.
-4. Say in the report which stale passages I found and killed, or say plainly that I found none.
+2. **GREP FOR THE SUBJECT, NEVER FOR THE WORDING I REPLACED.** Search `docs/` AND `wiki/` for the THING the
+   rule is about — the noun, the feature, the stat — and READ every hit. A search built from my own old
+   sentence can only find pages that happened to use my words; the page that states the same dead rule in
+   different words is invisible to it, and that is precisely the page nobody has re-checked. Grepping my own
+   phrasing is confirming my own edit, not sweeping for stale claims.
+3. **The player WIKI is part of the sweep, every time.** It states the same rules in player words, so it is
+   the surface most likely to phrase a dead claim differently — and the one a reader actually sees.
+4. Reconcile every hit in the SAME turn. A stale line I plan to fix later is a stale line that ships.
+5. Say in the report which stale passages I found and killed, or say plainly that I found none.
 
 **One string is enough to break it.** A single leftover old number reads exactly as authoritative as the twenty
 correct ones around it, so the whole doc becomes untrustworthy and every future read pays for it. There is no
@@ -414,6 +452,31 @@ that costs a round.
   A guard nobody can see fail is worse than no guard at all, because it buys confidence it is not paying for.
 
 - **Run it yourself through the live editor — don't hand the user a menu click.** When an author-time action can be executed against the running editor (asset mutations, one-shot fixes, an existing tool's logic), RUN IT. A menu path is for the user ONLY when the editor link genuinely can't do it (a live Scene-view interaction, Play mode, or their own judgement). Separate from the forced-recompile ban above, which stays.
+- **PROTOTYPING A UI? NEVER TYPE A COLOUR OR A FONT — IMPORT THE GAME'S OWN, AND SHOW THE SCREEN AND NOTHING
+  ELSE.** Any in-game screen gets prototyped as one clickable local HTML file in `prototypes/` (`mockups/` is for
+  static pictures), and it starts by importing `prototypes/ui-tokens.css`, which `tools/ui-tokens.py` writes from
+  the game's own code — the shared palette, the rarity table and the game's three real font files. A hand-typed
+  hex is the drift this replaces: the values used to live in the code, the token doc AND the page, and a doc
+  cannot vouch for itself (on 2026-09-09 three of its nine colours existed nowhere in the project). Colours are
+  floats in the source and in scenes, so convert before searching or an absent hex will look like proof; anything
+  the doc still gets wrong is fixed in the doc the same session.
+  **Mark the element that IS the window** with `data-mocks="Inventory"`, and mark every separately-drawn piece
+  with its own name (`data-mocks="Item Tooltip"` on the tooltip) — then run `tools/check-ui-prototypes.py` before
+  showing the page. It renders the page in a browser and reads what is PAINTED inside each marked region, so it
+  flags every colour that exists nowhere in the game AND every colour that is real but belongs to a DIFFERENT
+  screen — the second is the one a project-wide check can never see. A marked region containing nothing is flagged,
+  never called clean, so a state the page never shows can't pass unchecked. **Sizes are checked too**: run
+  `tools/ui-geometry.py` (needs the editor open) to measure the real window offline, label the mock's parts with
+  `data-part="header" / "row" / "search" / "list"`, and the checker reports every width, height and text size the
+  two disagree about. Colours can be read from the source; a column's width cannot — it is whatever the layout
+  works out at the window's real size, which is how a mock drawn at 712px was passing for a window that is 488px.
+  After ANY edit to that checker, re-run `tools/prove-ui-prototype-check.py`, or it can go deaf in silence.
+  **Inside a marked region the page is the screen and nothing else** — no title, no explanatory paragraph, no
+  legend, no slider, no invented tab, no note about what is real: anything that would not be on screen in-game
+  teaches the wrong thing and gets built by mistake. Anything for the reader goes outside every marked region,
+  clear of the frame, or in the reply. Then, before promising a port,
+  list what the prototype silently DROPS from the working screen — that list is the deliverable, not the
+  prototype. Full sequence: `docs/0-process/prototyping-ui-workflow.md`.
 - **Writing an editor window or tool? Use the `editor-window` skill** — it owns the shrink rule (max-width only, never a fixed or minimum width), the tools-catalog update, and the quick-fix tagging. A window that can't shrink hides every field beside the greedy control.
 - **Enemy term is "mobs"** — never "bestiary"
 - **"Set default values" = change it EVERYWHERE, not just the code.** A serialized value in a scene or prefab ALWAYS beats the code default, so changing only the code silently does nothing. The four layers to hunt are the `set-defaults` skill.

@@ -64,7 +64,7 @@ public class StateInfoCard : MonoBehaviour
                   + (string.IsNullOrEmpty(state.description) ? "" : "\n" + state.description);
         lastSecs = -1;                    // force the time line to write this frame
         root.gameObject.SetActive(true);
-        root.SetAsLastSibling();          // above every icon
+        UiLayers.Raise(root, UiLayers.Layer.Tooltip);
         Position(cell, side);
         Tick();
     }

@@ -38,6 +38,9 @@ public class GameNetwork : NetworkManager
     /// <summary>The shell spawned for each mob the server owns, found in Resources by this name.</summary>
     public const string MobPrefabName = "NetMob";
 
+    /// <summary>The shell spawned for each townsperson the server owns, found in Resources by this name.</summary>
+    public const string NpcPrefabName = "NetNpc";
+
     // DELIBERATELY ABSENT: a public "am I joined right now" answer. It had no readers, and the one use anybody
     // would reach for it for — gating behaviour — is the timing accident this layer already outlawed: dialling
     // takes a moment, and a question asked inside that moment gets the wrong answer and acts on it. The question
@@ -71,6 +74,7 @@ public class GameNetwork : NetworkManager
     Coroutine pendingRetry;
 
     static GameObject mobPrefab;
+    static GameObject npcPrefab;
 
     /// <summary>Server-only: announce a mob that has just come into existence, so every connected player
     /// receives it. Called from wherever a creature is born; does nothing off a server, so the offline game
@@ -90,6 +94,54 @@ public class GameNetwork : NetworkManager
         var shell = Instantiate(mobPrefab);
         shell.GetComponent<NetMob>()?.BindOnServer(mob, defId);
         NetworkServer.Spawn(shell);
+    }
+
+    /// <summary>Server-only: announce a townsperson who has just come into existence, so every player near enough
+    /// receives them. Called from wherever a town is populated; does nothing off a server.</summary>
+    public static void PublishNpc(GameObject npc, string modelName)
+    {
+        if (npc == null || !NetworkServer.active) return;
+
+        if (npcPrefab == null) npcPrefab = Resources.Load<GameObject>(NpcPrefabName);
+        if (npcPrefab == null)
+        {
+            GameLog.Error(LogCat.Net, "no '" + NpcPrefabName + "' prefab in Resources — townsfolk will exist on the "
+                           + "server but no player will see them.");
+            return;
+        }
+
+        var shell = Instantiate(npcPrefab);
+        shell.GetComponent<NetNpc>()?.BindOnServer(npc, modelName);
+        NetworkServer.Spawn(shell);
+    }
+
+    /// <summary>Server-only: say that a townsperson just spoke, and what they said, so the same words appear over
+    /// their head on every screen that can see them at the same moment. Silent off a server.</summary>
+    public static void AnnounceNpcSaid(GameObject serverNpc, string line)
+    {
+        if (!NetworkServer.active || serverNpc == null) return;
+        NetNpc.ShellForServerNpc(serverNpc)?.Said(line);
+    }
+
+    /// <summary>Server-only: a player has started, or finished, talking to a townsperson. The townsperson stops
+    /// where they are and turns to face whoever is speaking — decided here so that everybody watching sees it, not
+    /// only the person holding the conversation.</summary>
+    public static void SetNpcTalkedTo(uint npcNetId, Transform speaker)
+    {
+        if (!NetworkServer.active) return;
+        if (!NetworkServer.spawned.TryGetValue(npcNetId, out var identity) || identity == null) return;
+        identity.GetComponent<NetNpc>()?.ServerTalkTo(speaker);
+    }
+
+    /// <summary>Ask the server to start, or stop, a conversation with the townsperson whose body is
+    /// <paramref name="npcBody"/>. Called on the machine of the person pressing F; silent with no world, where the
+    /// townsperson is this machine's own and stops on its own.</summary>
+    public static void TellServerTalkingTo(GameObject npcBody, bool talking)
+    {
+        var shell = NetNpc.ShellForView(npcBody);
+        if (shell == null) return;
+        var me = NetworkClient.localPlayer != null ? NetworkClient.localPlayer.GetComponent<NetPlayer>() : null;
+        if (me != null) me.AskToTalkTo(shell.netId, talking);
     }
 
     static GameNetwork spawned;
@@ -130,6 +182,10 @@ public class GameNetwork : NetworkManager
         mobPrefab = Resources.Load<GameObject>(MobPrefabName);
         if (mobPrefab != null) spawned.spawnPrefabs.Add(mobPrefab);
         else GameLog.Error(LogCat.Net, "no '" + MobPrefabName + "' prefab in Resources — no player will see mobs.");
+
+        npcPrefab = Resources.Load<GameObject>(NpcPrefabName);
+        if (npcPrefab != null) spawned.spawnPrefabs.Add(npcPrefab);
+        else GameLog.Error(LogCat.Net, "no '" + NpcPrefabName + "' prefab in Resources — no player will see townsfolk.");
 
         // The server hands out bodies itself, when a client says who it is (see OnJoinRequest). Mirror's
         // automatic version would spawn one before we know which character to build.
@@ -227,12 +283,16 @@ public class GameNetwork : NetworkManager
             // single line in the log. MEASURED on a real run: a player who launched the game in a way that did
             // not carry CHAR_SERVER_URL printed "retrying 1 of 3" more than forty times and never got in.
             //
-            // The commonest way to arrive here is launching the built game with `open`, which starts it through
-            // the operating system and passes it NONE of the settings from the terminal that ran it.
+            // Every way of arriving here is the same way: something started the game WITHOUT a terminal, so none
+            // of the settings a shell would have carried reached it — `open` on the built game, a player
+            // double-clicking one, or the EDITOR started from the Dock. The file the build ships with covers all
+            // three, so reaching this now means that file is empty too, not merely that nobody typed anything.
             GameLog.Error(LogCat.Client, "this copy has no character server to ask, so nobody can let it into the "
                            + "world — CHAR_SERVER_URL is not set"
                            + (string.IsNullOrEmpty(characterId) ? ", and no character has been chosen" : "")
-                           + ". Start the game with that setting; see docs/1-planning/starting-the-network.md.");
+                           + ". Set it in the terminal you start from, or — for the editor and for a copy "
+                           + "somebody double-clicks, neither of which has one — in "
+                           + "Assets/StreamingAssets/server.txt. See docs/2-systems/networking/starting-the-network.md.");
             OnLostWorld?.Invoke();
             return;
         }
@@ -337,16 +397,9 @@ public class GameNetwork : NetworkManager
     /// makes this work — that almost nothing else is red.</para></summary>
     static string Shout(string line) => "\u001b[31m" + line + "\u001b[0m";
 
-    /// <summary>Give up and go. A dedicated server has no window to close, and stopping the editor is a
-    /// different action from quitting a built game — so the one place that has to end the process says both.</summary>
-    static void Stop()
-    {
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit(1);
-#endif
-    }
+    /// <summary>Give up and go, reporting a failure. Ending the process is the same act however it was asked
+    /// for, so it is written once in <see cref="GameExit"/> and this only says WHY it is ending.</summary>
+    static void Stop() => GameExit.Quit(1);
 
     /// <summary>What a client says on arrival: who it is playing. The server cannot know this by itself — the
     /// account service told the CLIENT which character it chose — so the client states it and the server spawns
@@ -2145,6 +2198,22 @@ public class GameNetwork : NetworkManager
         if (me != null) me.CmdHeldStance(has, id, window);
     }
 
+    /// <summary>Tell the world this body has begun a scripted hop — how tall and how long. Said once, at the launch,
+    /// because the lift is a curve every machine can draw for itself rather than a stream of heights.</summary>
+    public static void ReportHopBegan(float peak, float seconds)
+    {
+        var me = MyPlayer;
+        if (me != null) me.CmdHopBegan(peak, seconds);
+    }
+
+    /// <summary>…and that it is over — at the touchdown, which is the real end, rather than when the arithmetic says
+    /// it should have been. A hop cut short by a ceiling ends on every screen when it ends here.</summary>
+    public static void ReportHopEnded()
+    {
+        var me = MyPlayer;
+        if (me != null) me.CmdHopEnded();
+    }
+
     /// <summary>Tell the world this body has changed into or out of the sprint gear. Which gear somebody is in
     /// cannot be read off their speed alone — a hasted run and a sprint are both simply fast — so it is said.</summary>
     public static void ReportSprinting(bool on)
@@ -2754,13 +2823,29 @@ public class GameNetwork : NetworkManager
 
     /// <summary>Put this copy back to knowing nothing, so a later sign-in dials a genuinely fresh connection
     /// instead of finding a half-dead one still sitting there. Called by <see cref="GameRoot"/> as it tears the
-    /// world down.</summary>
+    /// world down — for a player who chose to go as much as for one whose connection died.</summary>
     public static void Forget()
     {
-        if (spawned == null) return;
-        if (NetworkClient.active) spawned.StopClient();
-        Destroy(spawned.gameObject);
-        spawned = null;
-        mobPrefab = null;
+        if (spawned != null)
+        {
+            // SAID BEFORE THE HANG-UP, and this is the whole reason the line is here. Stopping the client fires
+            // the very same handler a dropped connection does, and that handler counts an attempt, puts
+            // "Reconnecting…" on screen and schedules another dial. Nothing is being reconnected: this call's
+            // entire job is to stop being in a world. It is the same trap the move-to-another-server path
+            // already guards, marked here instead of at each caller because EVERY caller of this is leaving.
+            spawned.goneForGood = true;
+
+            if (NetworkClient.active) spawned.StopClient();
+            Destroy(spawned.gameObject);
+            spawned = null;
+            mobPrefab = null;
+            npcPrefab = null;
+        }
+
+        // AND THE NOTICE COMES DOWN, whether this call put it up or found it already showing — a player can
+        // choose to leave in the middle of a reconnect. It is its own don't-destroy canvas at the very top of
+        // the draw order, so one left showing outlives the scene reload and sits over the sign-in screen with
+        // nothing alive to take it down.
+        ReconnectNotice.Hide();
     }
 }

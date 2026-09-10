@@ -167,6 +167,11 @@ public class InventoryStore : MonoBehaviour
     /// end (dropped on an empty cell). No-op if nothing actually changes.</summary>
     public void Reorder(BagEntry moving, BagEntry before)
     {
+        // A WORN piece is not in the bag, so it has no place in the bag's order — dragging one can only mean
+        // "put it somewhere", and there is nowhere to put it. Taking it off is the menu's job.
+        if (moving != null && moving.worn) return;
+        if (before != null && before.worn) return;
+
         if (moving == null || moving == before) return;
         var entries = Entries;
         int from = entries.IndexOf(moving);

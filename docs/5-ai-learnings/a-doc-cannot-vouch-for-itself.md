@@ -46,6 +46,16 @@ their own shadows to face whichever one is casting.
 The user asked me to make the change. I had to stop and retract a recommendation I had by then given twice. The
 comment was two lines from the code it described and had been wrong for as long as anyone had been reading it.
 
+2026-09-09, the same rot in a design token sheet. A prototype was designed straight from the HUD doc's locked
+palette. **Three of its nine documented colours existed nowhere in the project** — not in a script, a scene, a
+prefab or a material — a fourth was real but belonged to a different screen entirely, and the window border the
+doc called brown is in fact gold. The type scale it locked in four bands described six of the thirteen sizes
+actually in use.
+
+The doc had been the only description of the game's look for months, and every value in it read as authoritative
+because the correct ones sat beside the invented ones in the same table. The cost was a whole prototype restyled
+after the fact, and a hover colour that broke the game's own rule that hover must never be a rarity colour.
+
 ## How to apply
 
 - When updating a doc, **list every factual claim it makes about the code**, then check each one. Not the diff;
@@ -58,5 +68,9 @@ comment was two lines from the code it described and had been wrong for as long 
   time, written by the session that made the change.
 - Before repeating a doc's claim to the user, ask: *did I read this in the code, or in a document?* If it was a
   document, say so, or go and read the code.
+- **A palette or token sheet is a doc like any other.** Convert the authored values and compare them one by one;
+  the correct entries sitting beside the invented ones is exactly what makes the whole table read as verified.
+- **Convert before you search, or you will report a real value as missing.** Engines store colours as floats, so
+  a hex search of a scene or prefab can never match one — and an empty result then looks like proof of absence.
 - When you find one stale claim, **assume there are more in the same section** — they were written in the same
   sitting, by the same person, on the same day.

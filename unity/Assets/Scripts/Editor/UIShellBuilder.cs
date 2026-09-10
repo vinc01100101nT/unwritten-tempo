@@ -120,13 +120,6 @@ public static class UIShellBuilder
         // the runtime can't AssetDatabase-load, so wire the Sprite refs into the prefab now (same pattern as the
         // calendar weather icons below). Mismatched-but-close stubs until the final flourish kit ships.
         Sprite SlotIcon(string n) => AssetDatabase.LoadAssetAtPath<Sprite>(ITEMS + "/" + n + ".png");
-        prog.silHead       = SlotIcon("Helmet");
-        prog.silArmor      = SlotIcon("Armor");
-        prog.silGarment    = SlotIcon("Scroll");
-        prog.silWeapon     = SlotIcon("Kunai");
-        prog.silShield     = SlotIcon("Guard");
-        prog.silAccessory1 = SlotIcon("Ring");
-        prog.silAccessory2 = SlotIcon("Amulet");
         canvasGO.AddComponent<CharacterWardrobePanel>();   // O = Wardrobe: per-part runtime clothing dye (live-3D)
         var calPanel = canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: 12-day season grid w/ per-day weather (+ click the date widget)
         // Bake in the Ninja Adventure "Meteo" weather icons (the runtime can't AssetDatabase-load, so we wire the

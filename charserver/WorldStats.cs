@@ -15,15 +15,23 @@ namespace CharServer;
 ///
 /// <para><b>Worked out on a beat, not per reader.</b> One answer is built at most every
 /// <see cref="FreshFor"/> and handed to everyone who asks inside that window, so a page open on a thousand
-/// screens costs this server the same as one open on a single screen: one database read per half minute. The
-/// list of processes needs no database at all — the map servers already say what they are holding.</para>
+/// screens costs this server exactly what one open on a single screen costs. The list of processes needs no
+/// database at all — the map servers already say what they are holding.</para>
 /// </summary>
 public sealed class WorldStats(Db db, MapServers maps, Config config)
 {
-    /// <summary>How long one built answer is handed out for. Matched to the beat a map server re-announces
-    /// itself on (30 seconds), because a shorter window cannot produce a newer number — it would only ask the
-    /// database more often for the same answer.</summary>
-    public static readonly TimeSpan FreshFor = TimeSpan.FromSeconds(30);
+    /// <summary>How long one built answer is handed out for.
+    ///
+    /// <para>FIVE SECONDS is a deliberate trade. Two of the three numbers on the page cannot be newer than this
+    /// makes them — a game server says how many players it holds every 30 seconds, and a character's level
+    /// reaches the database at most every 15 — so this window alone does not make the page keener. What it does
+    /// buy is that a change already IN the database is on screen within seconds instead of within half a
+    /// minute, which is what somebody watching their own name wants.</para>
+    ///
+    /// <para>The cost is the database read below, taken 12 times a minute instead of twice, whatever the number
+    /// of readers. It reads every character row — there is no index for this ordering — so if the character
+    /// count ever grows into the tens of thousands, this window is the first thing to lengthen again.</para></summary>
+    public static readonly TimeSpan FreshFor = TimeSpan.FromSeconds(5);
 
     readonly SemaphoreSlim oneBuilderAtATime = new(1, 1);
     string? built;

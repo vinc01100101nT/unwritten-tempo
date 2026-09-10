@@ -48,14 +48,41 @@ public struct BagWire
     public int[] wornRarities;
     public string[] wornSkills;
 
-    /// <summary>Read a character's belongings off it, ready to send.</summary>
-    public static BagWire From(Character c)
+    // ---- and the BAR the server just rewrote ----------------------------------------------------------
+    //
+    // Changing weapons replaces somebody's whole bar and clears the passives they had ticked, and the server is
+    // where that is decided. It used to be decided there and nowhere else: the new weapon appeared on the body
+    // while the keys kept the old weapon's skills, so pressing one asked for a skill the server no longer agreed
+    // was theirs. Sending WHAT THE SERVER DECIDED, rather than having the other machine work the same rule out a
+    // second time, is what keeps one answer to "what is on my bar".
+    //
+    // BOTH ARE NULL ON AN ORDINARY BAG CHANGE — picking something up, drinking a potion, tidying the bag — and
+    // are filled in only by a push that follows a weapon going on or coming off. That is deliberate: a bar sent
+    // with every bag change would undo an arrangement the player made a moment earlier, if the two crossed in
+    // flight. A null array costs one byte and arrives as null, so "the server did not touch your bar" and "your
+    // bar is empty" cannot be mistaken for each other.
+    //
+    // Same arrays as the save, like everything above.
+
+    public string[] hotbarBindings;
+    public string[] activePassives;
+
+    /// <summary>Read a character's belongings off it, ready to send. Pass <paramref name="alsoTheBar"/> when the
+    /// server has just rewritten this person's hotbar — see the note above; on every other change it is left out
+    /// so an arrangement the player has just made cannot be undone by a message that crossed it.</summary>
+    public static BagWire From(Character c, bool alsoTheBar = false)
     {
         var wire = new BagWire { gold = c != null ? c.Gold : 0 };
         if (c == null) { wire.itemIds = new string[0]; return wire; }
 
         c.CaptureWornInto(out wire.wornSlots, out wire.wornItemIds, out wire.wornRefines,
                           out wire.wornCards, out wire.wornRarities, out wire.wornSkills);
+
+        if (alsoTheBar)
+        {
+            wire.hotbarBindings = c.Hotbar.Capture();
+            wire.activePassives = c.PassiveSkills.Capture();
+        }
 
         var bag = c.Bag;
         int n = 0;
@@ -133,6 +160,17 @@ public struct BagWire
 
         c.RestoreWornFrom(wornSlots, wornItemIds, wornRefines, wornCards, wornRarities, wornSkills);
         c.SetGold(gold);
+
+        // THE BAR LAST, AFTER THE GEAR.
+        // What a character can cast is built from the bar AND the weapon they are holding, so rebuilding it
+        // before the new weapon was on would build it against the old one.
+        if (hotbarBindings != null)
+        {
+            c.Hotbar.Restore(hotbarBindings);
+            c.PassiveSkills.Restore(activePassives);
+            // The bar redraws from inside this, and the skills behind the keys get something to run them.
+            c.RefreshUsableSkills();
+        }
     }
 
     static T At<T>(IList<T> a, int i, T fallback) => a != null && i < a.Count ? a[i] : fallback;

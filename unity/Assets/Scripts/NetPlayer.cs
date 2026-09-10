@@ -108,6 +108,22 @@ public class NetPlayer : NetworkBehaviour
     [SyncVar] float netAboveGround;
     [SyncVar] float netGait;
 
+    // A HOP, AS A CURVE RATHER THAN AS SAMPLES OF ONE. A jump's lift is scripted — a symmetric arc that is entirely
+    // decided by the moment it began, how tall it goes and how long it lasts — so it is said ONCE and every machine
+    // draws the identical curve on the clock they share.
+    //
+    // WHY IT CANNOT RIDE THE POSITION REPORT. That report goes ten times a second and a watched body then EASES
+    // toward each value, and an arc this short survives neither. Replayed offline against the authored numbers, a
+    // 730 ms hop reached only 95% of its height, peaked 135 ms late, and was still visibly off the ground a quarter
+    // of a second after the jumper had landed — drawn, in total, from four reported values on the way up. None of
+    // that is fixable by easing faster: the easing is what makes ordinary walking smooth.
+    //
+    // The SIDEWAYS half deliberately stays on the position report, because it is not scripted at all — it is steered
+    // live by whatever keys are held each frame in the air.
+    [SyncVar] double netHopAt;      // when the curve began, on the clock both machines share. 0 = no hop running
+    [SyncVar] float netHopPeak;     // how high it goes at the top, in world units
+    [SyncVar] float netHopSeconds;  // how long the whole curve lasts
+
     /// <summary>THE BODY THIS MACHINE DRAWS FOR THIS PERSON — the watched copy built for somebody else, and your own
     /// real avatar for yourself, because your own machine keeps no copy of you. Null before either exists.
     ///
@@ -126,12 +142,29 @@ public class NetPlayer : NetworkBehaviour
     public void BindCombatUnitOnServer(ICombatUnit unit)
     {
         ServerCombatUnit = unit;
+        BindMapToFighter();
+    }
 
-        // WHATEVER WE ALREADY KNOW, HANDED OVER AT ONCE. The two halves arrive in whichever order the wire and the
-        // account service settle in: a person can say which map they are in before their fighter has been built, and
-        // a report that landed first would otherwise be lost — leaving that one person's fighter with no map for as
-        // long as they stay put, which is exactly as long as nothing would correct it.
-        if (unit is Character fighter && fighter != null && !string.IsNullOrEmpty(mapName)) fighter.BindMap(mapName);
+    /// <summary>THE ONE PLACE THIS CONNECTION'S MAP REACHES ITS FIGHTER, called from every moment either half can
+    /// become known.
+    ///
+    /// <para>WHY IT IS CALLED FROM MORE THAN ONE PLACE: the two halves arrive in whichever order the wire and the
+    /// account service settle in, and EITHER can be last. The fighter is built before the character server's answer
+    /// is laid onto it, so at that moment there is no map to hand over; a person's own machine can equally name a
+    /// map before the fighter exists. Whichever lands second has to complete the pair, so each of those moments
+    /// calls THIS rather than carrying its own copy of the handover.</para>
+    ///
+    /// <para>WHAT IT COSTS TO CALL TOO OFTEN: nothing. Doing nothing until both halves exist is the first line, and
+    /// the fighter ignores a map it is already in — so a repeat re-files nobody and re-runs nothing downstream.</para>
+    ///
+    /// <para>WHAT GOES WRONG WITHOUT IT: the fighter keeps no map of its own, and a blank one falls back to
+    /// whichever map this process loaded last. On a server holding one map that is accidentally right; on a server
+    /// that has brought a second map up it is somebody else's map, and that person is then filed under a place they
+    /// have never been — hunted by nothing, and refused by anything that builds at their feet.</para></summary>
+    void BindMapToFighter()
+    {
+        if (string.IsNullOrEmpty(mapName)) return;
+        if (ServerCombatUnit is Character fighter && fighter != null) fighter.BindMap(mapName);
     }
 
     /// <summary>SERVER ONLY: which character this connection is playing. Held so that the name can be released
@@ -150,6 +183,7 @@ public class NetPlayer : NetworkBehaviour
     public void SetMapOnArrival(string map)
     {
         if (!string.IsNullOrWhiteSpace(map) && string.IsNullOrEmpty(mapName)) mapName = map;
+        BindMapToFighter();
     }
 
     /// <summary>SERVER ONLY: whose account this character belongs to. Like the id above it is never told to any
@@ -409,6 +443,28 @@ public class NetPlayer : NetworkBehaviour
         netHeld = id;
         netHeldWindow = SanePose(window);
     }
+
+    [Command]
+    public void CmdHopBegan(float peak, float seconds)
+    {
+        if (Leaving || peak <= 0f || seconds <= 0f) return;
+        netHopPeak = Mathf.Clamp(peak, 0f, HighestAnybodyGets);
+        netHopSeconds = Mathf.Clamp(seconds, 0.05f, LongestHop);
+        // STAMPED HERE, never by the machine that asked — the same rule a swing's moment already answers to. A
+        // moment a client writes is a moment a client can move, and every watcher measures the curve against it.
+        netHopAt = NetworkTime.time;
+    }
+
+    [Command]
+    public void CmdHopEnded()
+    {
+        if (Leaving) return;
+        netHopAt = 0d;
+    }
+
+    // The longest a scripted hop may claim to last. Far beyond any real one, and here only so a broken machine
+    // cannot leave somebody arcing through the sky for a minute.
+    const float LongestHop = 5f;
 
     [Command]
     public void CmdSprinting(bool on)
@@ -880,8 +936,13 @@ public class NetPlayer : NetworkBehaviour
     // of two identical swords carrying different upgrades.
 
     /// <summary>Server-only: hand this connection its belongings as they now stand. Called after every change
-    /// the server makes to them, so there is exactly one way the client ever learns what it is holding.</summary>
-    public void PushBagToOwner()
+    /// the server makes to them, so there is exactly one way the client ever learns what it is holding.
+    ///
+    /// <para>Pass <paramref name="alsoTheBar"/> when the change was a WEAPON going on or coming off, which is the
+    /// one thing that makes this side rewrite somebody's hotbar and clear the passives they had ticked. Their
+    /// machine then draws the bar this one decided instead of working the same rule out again. Every other change
+    /// leaves the bar out — see the note in <see cref="BagWire"/>.</para></summary>
+    public void PushBagToOwner(bool alsoTheBar = false)
     {
         if (!isServer) return;
         if (ServerCombatUnit is not Character fighter || fighter == null) return;
@@ -890,7 +951,7 @@ public class NetPlayer : NetworkBehaviour
         // did nothing at all. This is the one place every change the server makes to a bag passes through, which
         // is why the rebuild sits here rather than at each of them.
         fighter.RefreshUsableSkills();
-        TargetBagChanged(connectionToClient, BagWire.From(fighter));
+        TargetBagChanged(connectionToClient, BagWire.From(fighter, alsoTheBar));
     }
 
     // WHAT ARRIVED BEFORE THERE WAS ANYBODY TO GIVE IT TO. The bag can land before this machine has built its
@@ -941,12 +1002,16 @@ public class NetPlayer : NetworkBehaviour
         var e = c.Bag[index];
         if (e == null || !e.IsEquip || e.instance == null) return;
 
+        // A WEAPON CHANGE IS ALSO A BAR CHANGE, so the bar this side is about to rewrite travels back with the
+        // gear. Any other slot leaves the bar alone and must not send one.
+        bool theirBarChanges = e.def.slot == EquipSlotType.Weapon;
+
         var prev = c.GetEquippedInstance(e.def.slot);
         c.SetEquipped(e.def.slot, e.instance);
         c.Bag.RemoveAt(index);
         if (prev != null && prev.def != null)
             c.Bag.Add(new BagEntry { def = prev.def, count = 1, instance = prev });
-        PushBagToOwner();
+        PushBagToOwner(theirBarChanges);
         SaveSoon();
     }
 
@@ -959,9 +1024,12 @@ public class NetPlayer : NetworkBehaviour
         var worn = c.GetEquippedInstance((EquipSlotType)slot);
         if (worn == null) return;
 
+        // Taking the weapon off empties the bar, for the same reason putting one on refills it.
+        bool theirBarChanges = (EquipSlotType)slot == EquipSlotType.Weapon;
+
         c.SetEquipped((EquipSlotType)slot, (EquipmentInstance)null);
         if (worn.def != null) c.Bag.Add(new BagEntry { def = worn.def, count = 1, instance = worn });
-        PushBagToOwner();
+        PushBagToOwner(theirBarChanges);
         SaveSoon();
     }
 
@@ -1028,7 +1096,7 @@ public class NetPlayer : NetworkBehaviour
 
         // AND THE FIGHTER IS TOLD TOO. It is the thing creatures actually look at, and it has no body in any map of
         // its own to be found in — so if this is not pushed across, every creature goes on hunting the whole world.
-        if (ServerCombatUnit is Character fighter && fighter != null) fighter.BindMap(map);
+        BindMapToFighter();
 
         // WORTH WRITING DOWN, because where somebody is standing is part of their character — coming back to
         // the wrong map is the one save mistake a player notices immediately.
@@ -1059,6 +1127,27 @@ public class NetPlayer : NetworkBehaviour
     // When the last map change was let off the movement check, and how long until another one can be. Server-only.
     float lastForgivenMapChangeAt = -999f;
     const float ForgivenMapChangeGap = 1f;
+
+    /// <summary>Ask the server to start, or stop, a conversation with a townsperson. Sent from THIS person's own
+    /// machine, on the press of F and again when the dialog box closes.
+    ///
+    /// <para>It goes through this object rather than straight to the townsperson because this is the one thing on
+    /// the wire this connection owns — which is what makes "who is talking" the server's answer rather than
+    /// something the message claims about itself.</para></summary>
+    public void AskToTalkTo(uint npcNetId, bool talking)
+    {
+        if (!isOwned) return;
+        CmdTalkToNpc(npcNetId, talking);
+    }
+
+    // Asked BY a player, carried out HERE. Who is doing the talking is the connection it arrived on — this shell,
+    // which on the server stands exactly where that person stands — never anything the message said about itself.
+    [Command]
+    void CmdTalkToNpc(uint npcNetId, bool talking)
+    {
+        if (Leaving) return;
+        GameNetwork.SetNpcTalkedTo(npcNetId, talking ? transform : null);
+    }
 
     [Command]
     void CmdReportPosition(Vector3 p, float yaw, float aboveGround, float gait)
@@ -1336,12 +1425,30 @@ public class NetPlayer : NetworkBehaviour
             // …AND THE TWO THINGS A COPY CANNOT WORK OUT FOR ITSELF: how far off the floor they are, which is what
             // makes a jump actually leave the ground here, and how fast their legs are churning, which is what every
             // movement-paced clip is played at.
-            bodyVisual.TellHeightAboveGround(netAboveGround);
+            bodyVisual.TellHeightAboveGround(HeightRightNow());
             if (bodyStance != null) bodyStance.TellGait(netGait);
         }
 
         ShowTheirHeldStance();
         ShowTheirWindup();
+    }
+
+    /// <summary>How far off the floor this person is THIS FRAME.
+    ///
+    /// <para>While a scripted hop is running, this is the curve itself, worked out on the clock both machines share —
+    /// so it is drawn every frame rather than eased toward a value that arrives ten times a second, and it is in step
+    /// with the jumper rather than trailing them. The moment the curve is over, or was never running, the answer goes
+    /// back to the height the position report carries — which is what covers a real FALL off a ledge, where there is
+    /// no script and gravity is doing the work.</para></summary>
+    float HeightRightNow()
+    {
+        if (netHopAt <= 0d || netHopSeconds <= 0f) return netAboveGround;
+
+        float u = (float)((NetworkTime.time - netHopAt) / netHopSeconds);
+        if (u <= 0f || u >= 1f) return netAboveGround;
+
+        // The identical arc the jumper's own machine draws: nothing at both ends, the peak halfway through.
+        return netHopPeak * 4f * u * (1f - u);
     }
 
     // The held pose last put on this body, so the push and the pop happen once each rather than every frame.

@@ -23,6 +23,57 @@ public enum EquipSlotType
     Ring = 12,        // the Ring of Progression vessel — holds the passive draft + active-skill ownership
 }
 
+/// <summary>The words a slot goes by on screen. The paperdoll draws silhouettes rather than labels, so until now
+/// nothing in the game named a slot in text — and a text inventory has to, because with no icon the slot is the
+/// only thing telling a helm from a sword at a glance.
+///
+/// <para><see cref="Order"/> is the PAPERDOLL's order, not alphabetical: a reader scans a body, so sorting a list
+/// by slot must group it the way the equipment window lays it out.</para></summary>
+public static class EquipSlots
+{
+    public static string Label(EquipSlotType s)
+    {
+        switch (s)
+        {
+            case EquipSlotType.Head:        return "Head";
+            case EquipSlotType.Armor:       return "Armor";
+            case EquipSlotType.Weapon:      return "Weapon";
+            case EquipSlotType.Shield:      return "Shield";
+            case EquipSlotType.Boots:       return "Boots";
+            case EquipSlotType.Accessory1:  return "Accessory 1";
+            case EquipSlotType.Accessory2:  return "Accessory 2";
+            case EquipSlotType.Garment:    return "Garment";
+            case EquipSlotType.CostumeHead: return "Costume Head";
+            case EquipSlotType.CostumeBody: return "Costume Body";
+            case EquipSlotType.CostumeBack: return "Costume Back";
+            case EquipSlotType.Ring:        return "Ring";
+            default:                        return "";
+        }
+    }
+
+    /// <summary>Where this slot sits when a list is grouped by slot — the equipment window's own top-to-bottom
+    /// order. Anything unslotted sorts last.</summary>
+    public static int Order(EquipSlotType s)
+    {
+        switch (s)
+        {
+            case EquipSlotType.Head:        return 0;
+            case EquipSlotType.Armor:       return 1;
+            case EquipSlotType.Weapon:      return 2;
+            case EquipSlotType.Shield:      return 3;
+            case EquipSlotType.Garment:     return 4;
+            case EquipSlotType.Accessory1:  return 5;
+            case EquipSlotType.Accessory2:  return 6;
+            case EquipSlotType.Boots:       return 7;
+            case EquipSlotType.CostumeHead: return 8;
+            case EquipSlotType.CostumeBody: return 9;
+            case EquipSlotType.CostumeBack: return 10;
+            case EquipSlotType.Ring:        return 11;
+            default:                        return 99;
+        }
+    }
+}
+
 /// <summary>Inventory tab bucket. Independent of <see cref="EquipSlotType"/>: an item with a
 /// real slot is <see cref="Equip"/>; bag-only items split into Use / Material / Etc / Quest for the tabs.
 ///

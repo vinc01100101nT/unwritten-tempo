@@ -188,7 +188,11 @@ MonoBehaviour:
         scaler: 1
       side: 1
       subStat: 0
-      affinity: []
+      affinity:
+      - stat: 0
+        weight: 80
+      - stat: 8
+        weight: 20
       chanceAffinity: []
       durationAffinity: []
       hitCountAffinity: []

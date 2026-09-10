@@ -7,6 +7,7 @@
 - [Tempo docs drop markdown tables on edit](../tempo-docs-no-markdown-tables.md) — GFM tables vanish on docs_edit; use bullet lists.
 - [Overwrite docs, don't append history](../docs-overwrite-not-append.md) — on doc revisions replace stale claims in place + fix title; keep docs lean (v1 skill doc hit ~65k chars/overflow).
 - [Reading ChatGPT share links](../chatgpt-share-extractor.md) — run tools/extract_chatgpt_share.py, NOT WebFetch.
+- [Play mode can't enter the world = editor started from the Dock](../editor-launched-without-terminal-has-no-server-addresses.md) — "CHAR_SERVER_URL is not set" in Play mode means the editor inherited no shell settings; fix it in `unity/Assets/StreamingAssets/server.txt`, not by relaunching Unity.
 - [Live link to Unity = the Unity CLI](../unity-mcp-bridge.md) — `~/.unity/bin/unity` + `com.unity.pipeline`; old HTTP bridge RETIRED 2026-08-20; check `unity status` says `ready`, never assume; reading proven, mutating not.
 - [Run editor actions YOURSELF](../act-editor-actions-via-mcp.md) — NEVER tell user to click Tools ▸ unwritten / add a component; `eval` the dialog-free `*Core()`; still never force a recompile.
 - [Maintain gamified Dev Contribution Log](../dev-contribution-log.md) — score dev's OWN contributions; doc q17a89053cf2xqjadkyk7agjb988nvgp.

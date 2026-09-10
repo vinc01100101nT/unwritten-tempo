@@ -37,6 +37,11 @@ public static class SkillEffectApplier
     /// (an AoE scan, or the cast's designated unit for Single). Zero-alloc: a squared-distance sweep over the small
     /// Active list, no physics / Find / GetComponent.
     /// <paramref name="caster"/> is the acting entity whose stats scale the roll (defaults to the local player).</summary>
+    // The rarity lift of the weapon that granted the cast currently applying, as a fraction (see
+    // Rarities.OutputLift). Held here rather than passed through every signature because it is one value for a whole
+    // burst — the same reason PassiveEvents and RepeatsDamageTotal hold theirs this way.
+    static float rarityLift;
+
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   string srcSymbol = null, string srcName = null, string srcId = null,
@@ -47,6 +52,27 @@ public static class SkillEffectApplier
         // Resolve the acting caster ONCE here (the local player today; a per-connection entity once server-authoritative),
         // so nothing downstream reaches for the Character.Instance global — the whole burst scales off THIS entity.
         var ch = caster ?? Character.Instance;
+
+        // Which weapon's rarity is paying for this cast, resolved ONCE for the whole burst — it compares skill ids, so
+        // it has no business running per hit. Restored on the way out because a passive can cast INSIDE this burst
+        // (OnDamageDealt / OnKill fire synchronously below): without the restore, the inner cast's weapon would go on
+        // paying for the outer cast's remaining hits.
+        float prevLift = rarityLift;
+        rarityLift = ch != null ? ch.SkillRarityLift(srcId) : 0f;
+        try
+        {
+            ApplyBurstTargets(point, radius, scope, targets, effects, singleTarget,
+                              srcSymbol, srcName, srcId, aimPoint, ch, vars);
+        }
+        finally { rarityLift = prevLift; }
+    }
+
+    // The body of a burst, split out ONLY so the lift above is restored on every exit — this method has several.
+    static void ApplyBurstTargets(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
+                                  List<SkillEffect> effects, Transform singleTarget,
+                                  string srcSymbol, string srcName, string srcId,
+                                  Vector3? aimPoint, Character ch, StackVars vars)
+    {
 
         // Where a relocation (Teleport / Dash) sends whoever it moves — the caster, or a mob when the author put the
         // effect on the target side: the AIM point, NOT the tick's VFX anchor point. The two differ once a ground cast
@@ -302,7 +328,7 @@ public static class SkillEffectApplier
                 if (hit == 0) unit.Heal(ScaledAmount(e, caster, vars));
                 break;
             case SkillEffectKind.Status:
-                if (body != null && Fires(e, hit, caster, vars)) Status.Apply(body.gameObject, e.ailment, seconds, ScaledMagnitude(e, caster, vars));
+                if (body != null && Fires(e, hit, caster, vars)) Status.Apply(body.gameObject, e.ailment, seconds, OutputMagnitude(e, caster, vars));
                 break;
             case SkillEffectKind.Cleanse:
                 if (body != null && Fires(e, hit, caster, vars))
@@ -321,14 +347,14 @@ public static class SkillEffectApplier
                 if (hit == 0 && ModifierIsAuthored(e)) AddStacksToOtherSkill(e, states, caster, vars);
                 break;
             // EVERY timed sub-stat change, buff and debuff alike, lands here — move speed, both regens, leech,
-            // reflect, evasion, the lot. The authored magnitude is FLAT (not affinity-scaled): a support's value is
-            // uptime, not a bigger number. A debuff is authored as a POSITIVE amount and negated here, so nobody has
-            // to type a minus sign to make something worse.
+            // reflect, evasion, the lot. The amount is OUTPUT, so it takes both scalings: ring investment and the
+            // rarity of the weapon that granted the cast. A debuff is authored as a POSITIVE amount and negated
+            // here, so nobody has to type a minus sign to make something worse.
             case SkillEffectKind.SubStatBuff:
             case SkillEffectKind.SubStatDebuff:
                 if (Fires(e, hit, caster, vars))
                 {
-                    float amount = Mathf.Max(0f, StackedMagnitude(e, vars));
+                    float amount = Mathf.Max(0f, OutputMagnitude(e, caster, vars));
                     if (e.kind == SkillEffectKind.SubStatDebuff) amount = -amount;
                     states.ApplySubStat(e.subStat, amount, seconds);
                 }
@@ -344,18 +370,18 @@ public static class SkillEffectApplier
                 if (Fires(e, hit, caster, vars)) states.BeginBrace(seconds);
                 break;
             case SkillEffectKind.BoostOutgoingDamage:
-                // Charges ride the apply context like Parry's; each carries the authored bonus, which is FLAT for the
-                // same reason a stat buff's is — a support's value is how many attacks it covers, not a bigger number.
-                if (Fires(e, hit, caster, vars)) states.BeginOutgoingBoost(seconds, StackedMagnitude(e, vars));
+                // Charges ride the apply context like Parry's; each carries the authored bonus, scaled by ring and by
+                // rarity for the same reason a stat buff's is — what one charge is worth is this effect's OUTPUT.
+                if (Fires(e, hit, caster, vars)) states.BeginOutgoingBoost(seconds, OutputMagnitude(e, caster, vars));
                 break;
             case SkillEffectKind.ImmuneToDisables:
                 // No magnitude: being stopped is binary. The whole knob is how long it lasts.
                 if (Fires(e, hit, caster, vars)) states.BeginDisableImmunity(seconds);
                 break;
             case SkillEffectKind.ReduceOutgoingDamage:
-                // The boost's mirror, charges and all — authored as the CUT, and flat for the same reason: how many
-                // attacks it covers is the knob, not how big the number is.
-                if (Fires(e, hit, caster, vars)) states.BeginOutgoingPenalty(seconds, StackedMagnitude(e, vars));
+                // The boost's mirror, charges and all — authored as the CUT, and scaled the same two ways, so the
+                // pair can never drift into one growing with investment while the other stays still.
+                if (Fires(e, hit, caster, vars)) states.BeginOutgoingPenalty(seconds, OutputMagnitude(e, caster, vars));
                 break;
             case SkillEffectKind.Taunt:
                 // Force this unit onto the caster. Both sides implement it (a mob locks its chase, a player's
@@ -583,7 +609,7 @@ public static class SkillEffectApplier
         if (unit.MaxHP <= 0 || power <= 0f) return;
         float missing = 1f - Mathf.Clamp01((float)unit.CurrentHP / unit.MaxHP);
         if (missing <= 0f) return;
-        int roll = RollPower(e, vars, AffinityMult(e.affinity, caster),
+        int roll = RollPower(e, vars, OutputMult(e, caster),
                              out bool crit, caster);
         int bonus = Mathf.RoundToInt(roll * power * missing);
         if (bonus <= 0) return;
@@ -671,7 +697,7 @@ public static class SkillEffectApplier
         resolved = default;
         // Ring investment and the combo ramp are both OUTER multipliers of the finished number, so they travel together
         // as one scale — the pile's contribution answers to them exactly as the caster's own damage does.
-        float outer = AffinityMult(e.affinity, caster);
+        float outer = OutputMult(e, caster);
 
         // The caster swings; the skill only says how hard. The swing's own roll becomes the basis the damage
         // multiplier is applied to, and the pile meets the result — so the one thing the checkbox changes is WHICH
@@ -749,11 +775,13 @@ public static class SkillEffectApplier
     static int ScaledModifierStacks(SkillEffect e, Character caster, in StackVars vars) =>
         e.modifierStacks.ResolveInt(vars, AffinityMult(e.affinity, caster));
 
-    // The kinds whose bonus is deliberately FLAT against ring investment (a stat buff, leech, reflect, the outgoing
-    // charges) still answer to the cast's pile: that exemption was a decision about what your BUILD may lift, never
-    // about what a cast EARNED this fight. So they take the pile's multiplier and skip affinity's.
+    // The pile-only form, for the numbers no multiplier may touch. Just ONE kind of number is left here: a shove's
+    // SPEED, which is movement rather than power — a rare weapon must not throw people further. The stat buffs and
+    // the outgoing charges used to sit here too and no longer do: they are output, so they scale like output.
     static float StackedMagnitude(SkillEffect e, in StackVars vars) =>
         e.magnitude.Resolve(vars);
+    // The same, for a cleanse's COUNT — a whole number of ailments removed, which no fractional multiplier can move
+    // by less than one, so it reads the pile alone.
     static int StackedAmount(SkillEffect e, in StackVars vars) =>
         e.amount.ResolveInt(vars);
     // A shove's travel time is its own field because it is MOVEMENT, not a state window — but it is still this
@@ -761,9 +789,11 @@ public static class SkillEffectApplier
     static float StackedShoveSeconds(SkillEffect e, in StackVars vars) =>
         Mathf.Max(0.01f, e.shoveSeconds.Resolve(vars));
 
-    // The flat-amount sibling of ScaledMagnitude (a heal's HP, a shield's pool, a cleanse's count) — same two scalings.
+    // The flat-amount sibling of OutputMagnitude (a heal's HP, a shield's pool) — same scalings, ring and rarity both.
+    // A cleanse's count does NOT come through here: it is a whole number of ailments removed, so it reads the pile
+    // alone (StackedAmount) and no multiplier can move it by less than a whole one.
     static int ScaledAmount(SkillEffect e, Character caster, in StackVars vars) =>
-        e.amount.ResolveInt(vars, AffinityMult(e.affinity, caster));
+        e.amount.ResolveInt(vars, OutputMult(e, caster));
     /// <summary>Feed ANOTHER skill's pile. What one of its charges is worth is read from THAT skill's own authored
     /// effect — the single definition of its charge — so a pile that is running and one that is not both end up with
     /// identical stacks, and a modifier never has to invent a number. A skill that grants nothing of that kind (or was
@@ -815,6 +845,20 @@ public static class SkillEffectApplier
     // investment. The author's number is never ignored and never replaced — it is the base the pile builds on.
     static float ScaledMagnitude(SkillEffect e, Character caster, in StackVars vars) =>
         e.magnitude.Resolve(vars, AffinityMult(e.affinity, caster));
+
+    // An effect's own OUTPUT multiplier: what the ring's affinity earns, PLUS the rarity of the weapon that granted
+    // this cast. Added, never multiplied — so a Legendary is worth the same +30 POINTS to a new character as to a
+    // maxed one, instead of paying out more the more ring somebody has already built. Points, not percent: at a ring
+    // term of 1 those 30 points ARE +30% output, and at a term of 2 the same 30 points work out to +15%.
+    static float OutputMult(SkillEffect e, Character caster) =>
+        AffinityMult(e.affinity, caster) + rarityLift;
+
+    // The rarity-lifted form of ScaledMagnitude, for every number that IS output: an ailment's damage per tick, how
+    // far a sub-stat buff or debuff moves, and what one outgoing-damage charge is worth.
+    // Deliberately a separate function: ScaledMagnitude also reads ANOTHER skill's authored charge when a modifier
+    // feeds its pile, and a weapon's rarity must never travel into a second skill's numbers.
+    static float OutputMagnitude(SkillEffect e, Character caster, in StackVars vars) =>
+        e.magnitude.Resolve(vars, OutputMult(e, caster));
     static float ScaledSeconds(SkillEffect e, Character caster, in StackVars vars) =>
         e.seconds.Resolve(vars, AffinityMult(e.durationAffinity, caster));
 

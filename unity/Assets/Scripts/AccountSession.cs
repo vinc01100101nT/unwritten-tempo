@@ -19,11 +19,15 @@ public static class AccountSession
 {
     /// <summary>Where the account service lives. Overridden by the ACCOUNTS_URL environment variable so a
     /// build can point at a real host without a rebuild — and, ahead of that, by a host typed on the device
-    /// (<see cref="ServerAddress"/>), which is the only route a phone has since Android carries no environment.</summary>
+    /// (<see cref="ServerAddress"/>), which is the only route a phone has since Android carries no environment.
+    ///
+    /// <para>A copy handed to a player has neither, and is aimed by the settings file it was built with — the
+    /// same one setting, read by <see cref="ServerAddress.Setting"/>, which is why a whole address including
+    /// <c>https://</c> can be given here without a line of this changing.</para></summary>
     public static string ServerUrl =>
         ServerAddress.HasTypedHost
             ? $"http://{ServerAddress.TypedHost}:{ServerAddress.AccountsPort}"
-            : Environment.GetEnvironmentVariable("ACCOUNTS_URL") ?? "http://localhost:8080";
+            : ServerAddress.Setting("ACCOUNTS_URL") ?? "http://localhost:8080";
 
     /// <summary>Where the CHARACTER server lives — the thing that owns the list of characters and their saves,
     /// as opposed to signing in, which stays with the account service above.
@@ -31,9 +35,13 @@ public static class AccountSession
     /// <para><b>Empty means "the same place as everything else"</b>, which is how this has always worked and is
     /// still the default. Set CHAR_SERVER_URL to move characters onto their own server; leave it unset and not
     /// one request changes address. That is the whole migration: a setting, not a rebuild, and it can be put
-    /// back just as fast if the new server misbehaves.</para></summary>
+    /// back just as fast if the new server misbehaves.</para>
+    ///
+    /// <para><b>Empty also means nobody can enter the world</b>, because the character server is the only thing
+    /// that hands out an entry ticket and says which machine holds the map. A copy handed to a player therefore
+    /// carries this address in its settings file alongside the account service's — two addresses, not one.</para></summary>
     public static string CharacterServerUrl =>
-        Environment.GetEnvironmentVariable("CHAR_SERVER_URL") ?? "";
+        ServerAddress.Setting("CHAR_SERVER_URL") ?? "";
 
     /// <summary>The one-time secret the CHARACTER server hands out when a player asks to enter the world. It is
     /// what a map server matches an arriving connection against, and it is the only thing about this person that
@@ -112,6 +120,17 @@ public static class AccountSession
         ModelName = modelName;
         DyeSources = dyeSources ?? Array.Empty<string>();
         DyeTargets = dyeTargets ?? Array.Empty<string>();
+        OnChanged?.Invoke();
+    }
+
+    /// <summary>Put the character down but stay signed in — what choosing a different character is. The account
+    /// and its token are left exactly as they are, so nothing has to be typed again; only the answer to "which
+    /// character" is cleared, and that is the half <see cref="IsActive"/> reads, so the world comes down and the
+    /// character list is the next thing that can happen.</summary>
+    public static void LeaveCharacter()
+    {
+        CharacterId = CharacterName = ModelName = null;
+        DyeSources = DyeTargets = null;
         OnChanged?.Invoke();
     }
 

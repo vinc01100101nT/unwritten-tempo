@@ -57,5 +57,18 @@ the crouch/freeze/landing phases out of step, since the owner derives those timi
 (`ResolvedSpeedMultOf(Jump)`). Told via `StanceController.TellGait`, and used AS-IS with no gear tier on top: the
 number already has the owner's tier folded in, and re-applying one counts it twice.
 
-Both ride the POSITION report, not the pose channel, because both change continuously while a pose does not — and
+The cadence rides the POSITION report, and so does the height WHEN GRAVITY IS DOING THE WORK (a fall off a ledge) —
 the report gate had to learn that rising counts as moving, or a jump straight up sent nothing at all.
+
+**But a scripted JUMP does not, and putting it there first was the mistake.** A hop's lift is a symmetric arc
+decided entirely by when it began, how tall and how long — so it is an ALARM, not continuous state, and it is said
+once at the launch and once at the touchdown. Replayed offline against the authored numbers (0.8 units, gravity 12
+→ a 730 ms arc), the streamed version reached only 95% of its height, peaked **135 ms late**, hung visibly in the
+air **253 ms after the jumper had landed**, and drew the whole rise from **four** reported values. Drawing the
+curve from the shared clock instead: full height, **2 ms** late on a local network and 35 ms at 30 ms ping, nothing
+left hanging, and 44 frames of curve. None of it was fixable by easing faster — the easing is what makes ordinary
+walking smooth. The SIDEWAYS half stays on the position report, because it is steered live by the keys and is not
+scripted at all.
+
+The test, and it is the one that was missed: **if the shape is known to both machines, send the SHAPE, not samples
+of it.** Only send samples for something neither side can predict.

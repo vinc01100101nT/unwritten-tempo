@@ -67,6 +67,7 @@ MonoBehaviour:
   capsuleSkinWidth: 0.02
   routingRadius: 0.35
   hitTiming: 0.7
+  stayEngagedFactor: 1.4
   moveSpeed: 2
   gaitSpeed: 1.5
   walkGearMult: 0.2

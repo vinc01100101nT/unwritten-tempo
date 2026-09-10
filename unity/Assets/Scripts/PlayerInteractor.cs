@@ -7,6 +7,10 @@ using UnityEngine;
 /// NEXT/CLOSE button or the Right-Arrow key; only <b>Esc</b> cancels early (WASD does not). When it closes, the
 /// camera eases back and the HUD returns.
 ///
+/// <para>The townsperson you are talking to belongs to the server, so the halt-and-turn is ASKED FOR rather than
+/// done here (see <see cref="GameNetwork.TellServerTalkingTo"/>) — everything else on this screen (the camera, the
+/// hidden HUD, the box and its lines) is yours alone and stays local.</para>
+///
 /// <para>This is the 3D press-to-talk system the dormant <see cref="InteractPrompt"/>/<see cref="DialogueUI"/> were
 /// left for. It finds NPCs via <see cref="TownNPC"/>'s registry (FindObjectsByType can't see them — DontSaveInEditor).
 /// Self-attached by <see cref="Player3DController"/> (idempotent); while a chat is active <see cref="Talking"/> is
@@ -61,7 +65,10 @@ public class PlayerInteractor : MonoBehaviour
     {
         partner = npc;
         Talking = true;
-        npc.BeginTalk(transform);
+        // THE TOWNSPERSON IS THE SERVER'S TO STOP, not this machine's. The body in front of you is a copy of
+        // somebody the world owns, so asking here is what makes them halt and turn on EVERY screen — including the
+        // screens of the other people standing in the square, who would otherwise watch them stroll away mid-chat.
+        GameNetwork.TellServerTalkingTo(npc.gameObject, true);
         player.FaceWorldPoint(npc.transform.position);
         FrameCamera();
         HideHud(true);
@@ -75,7 +82,7 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (!Talking) return;
         Talking = false;
-        if (partner != null) partner.EndTalk();
+        if (partner != null) GameNetwork.TellServerTalkingTo(partner.gameObject, false);
         partner = null;
         if (CameraFollow3D.Main != null) CameraFollow3D.Main.ExitCinematic();
         HideHud(false);

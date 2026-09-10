@@ -37,7 +37,7 @@ public class DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         ItemTooltip.HideTip();
         ItemSlot.HighlightAcceptingEquip(slot.Item);   // glow the slots this fits
         rt.SetParent(canvas.transform, true);   // float above the panels
-        rt.SetAsLastSibling();
+        UiLayers.Raise(rt, UiLayers.Layer.DragGhost);
         cg.blocksRaycasts = false;              // let the slot underneath receive the drop
     }
 

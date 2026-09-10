@@ -7,32 +7,28 @@ using System.Collections.Generic;
 /// <see cref="Item"/> asset can carry completely different skills. The kit lives on the copy
 /// (<see cref="EquipmentInstance.skillIds"/>), never on the shared asset.
 ///
-/// <para>Actives and passives are rolled as INDEPENDENT counts (an Uncommon can land 1 active + 2 passives), and
-/// the ultimate is a Legendary-only guarantee rather than a per-drop chance. Every number below is a tuning
-/// constant here — this file is the single source for the drop table AND the kit sizes.</para>
+/// <para><b>RARITY DOES NOT TOUCH THE KIT.</b> Every drop rolls the same size band and the same ultimate chance,
+/// whatever tier it is. Rarity's ONE job in this game is the output lift it puts on a skill's numbers
+/// (<see cref="Rarities.OutputLift"/>) — it decides how hard a kit hits, never what is in it. Do not reintroduce
+/// a per-rarity kit size or ultimate chance here.</para>
+///
+/// <para>Actives and passives are rolled as INDEPENDENT counts, so one drop can land 3 actives and 4 passives.
+/// Every number below is a tuning constant here — this file is the single source for the drop table AND the
+/// kit sizes.</para>
 /// </summary>
 public static class WeaponSkillRoll
 {
-    /// <summary>How big a kit each rarity rolls. Actives and passives are drawn independently between their own
-    /// min/max, so the two halves of a kit don't track each other.</summary>
-    public readonly struct KitSize
-    {
-        public readonly int ActiveMin, ActiveMax, PassiveMin, PassiveMax;
-        public readonly bool Ultimate;
-        public KitSize(int aMin, int aMax, int pMin, int pMax, bool ult)
-        { ActiveMin = aMin; ActiveMax = aMax; PassiveMin = pMin; PassiveMax = pMax; Ultimate = ult; }
-    }
+    /// <summary>How big a kit a drop rolls — THE SAME FOR EVERY DROP, whatever its rarity. Actives and passives
+    /// are drawn independently between their own min/max, so the two halves don't track each other.
+    ///
+    /// <para><b>ActiveMax is load-bearing:</b> the hotbar is built with exactly that many numbered slots plus the
+    /// ultimate slot, so lowering it leaves a slot nothing can ever fill. Change the bar in the same edit or
+    /// don't lower it.</para></summary>
+    public const int ActiveMin = 3, ActiveMax = 4, PassiveMin = 3, PassiveMax = 4;
 
-    /// <summary>The rarity → kit-size table. The ultimate is EXTRA (it rides the dedicated ult slot), so a
-    /// Legendary fills 4 numbered slots + the ult slot + 4 passives.</summary>
-    public static KitSize SizeFor(Rarity r) => r switch
-    {
-        Rarity.Uncommon  => new KitSize(1, 2, 1, 2, false),
-        Rarity.Rare      => new KitSize(2, 3, 2, 3, false),
-        Rarity.Epic      => new KitSize(3, 4, 3, 4, false),
-        Rarity.Legendary => new KitSize(4, 4, 4, 4, true),
-        _                => new KitSize(1, 1, 1, 1, false),   // Common
-    };
+    /// <summary>Percent chance that a drop carries an ultimate. One number for every drop — a weapon's ultimate
+    /// is its build anchor, and which anchor you get is fate's call, not the tier's.</summary>
+    public const int UltimatePct = 25;
 
     // Drop weights in whole percent — MUST sum to 100. Legendary is pinned at 5% (design call, subject to tuning);
     // the rest are spread so a Common is the everyday drop and an Epic is a genuine event.
@@ -55,19 +51,20 @@ public static class WeaponSkillRoll
     static readonly List<SkillDef> actives = new List<SkillDef>(32);
     static readonly List<SkillDef> passives = new List<SkillDef>(32);
 
-    /// <summary>Roll the whole kit for a <paramref name="weapon"/> of <paramref name="rarity"/> — the ultimate
-    /// (Legendary only) first, then the actives, then the passives. Never returns a duplicate id, and quietly rolls
-    /// a SHORT kit when the published pool can't fill it (author more skills, or publish the ones you have).</summary>
-    public static List<string> RollKit(WeaponType weapon, Rarity rarity)
+    /// <summary>Roll the whole kit for a <paramref name="weapon"/> — the ultimate first, then the actives, then
+    /// the passives. It takes NO rarity, deliberately: a kit is the same shape at every tier, and rarity's only
+    /// effect is the lift it puts on that kit's numbers once the weapon is worn. Never returns a duplicate id,
+    /// and quietly rolls a SHORT kit when the published pool can't fill it (author more skills, or publish the
+    /// ones you have).</summary>
+    public static List<string> RollKit(WeaponType weapon)
     {
         var kit = new List<string>(9);
         if (weapon == WeaponType.None) return kit;
 
         BuildPools(weapon);
-        var size = SizeFor(rarity);
-        if (size.Ultimate) TakeRandom(ults, 1, kit);
-        TakeRandom(actives, CombatRng.Range(size.ActiveMin, size.ActiveMax + 1), kit);
-        TakeRandom(passives, CombatRng.Range(size.PassiveMin, size.PassiveMax + 1), kit);
+        if (CombatRng.Range(0, 100) < UltimatePct) TakeRandom(ults, 1, kit);
+        TakeRandom(actives, CombatRng.Range(ActiveMin, ActiveMax + 1), kit);
+        TakeRandom(passives, CombatRng.Range(PassiveMin, PassiveMax + 1), kit);
         return kit;
     }
 

@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Unwritten Inventory Ledger</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Inter:wght@400;500;600&display=swap">
+<style>
+  /* Every value below is the game's own, from the HUD/UI system doc's token sheet — which was itself read
+     off UiKit and Rarity. Nothing here is invented for the page. */
+  :root {
+    /* Surfaces — flat fills, no gradients anywhere in this game */
+    --ground:     #0D0E10;   /* the sign-in screen's dark; the only authored "outside a window" tone */
+    --panel:      #15161A;   /* every window's body */
+    --panel-up:   #212228;   /* detail and sub-panels, ~6% lighter */
+    --slot:       #121317;   /* a slot's well, darker than the panel it sits in */
+
+    /* Text */
+    --text:       #E7E3D5;   /* warm ivory */
+    --text-dim:   #A79E88;
+
+    /* Accents */
+    --gold:       #C8A862;   /* the border of every window AND of the item tooltip */
+    --gold-wash:  rgba(200, 168, 98, 0.16);   /* the header strip behind a window title */
+    --gold-soft:  rgba(200, 168, 98, 0.30);
+    --cyan:       #59F2FF;                    /* selection ring */
+    --cyan-glow:  rgba(76, 217, 255, 0.22);   /* hover bloom, deliberately soft */
+
+    /* The five rarity tiers — the ONLY colours allowed to mark an item */
+    --common:     #CBD2E0;
+    --uncommon:   #A8F0C5;
+    --rare:       #BCD4FF;
+    --epic:       #E6C6FF;
+    --legendary:  #F1E7D0;
+    --common-b:    #4B5563;
+    --uncommon-b:  #46D17F;
+    --rare-b:      #4F8CFF;
+    --epic-b:      #A855F7;
+    --legendary-b: #F5B942;
+
+    /* Type: Cinzel titles, Inter everything else. The project has no monospaced font, so columns are
+       aligned by the grid and by tabular figures instead of by character width. */
+    --title: "Cinzel", "Trajan Pro", Georgia, serif;
+    --ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--ui);
+    font-size: 14px;
+    line-height: 1.55;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 28px 22px 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  /* ---- masthead ---- */
+  header { display: flex; flex-direction: column; gap: 6px; }
+  .eyebrow {
+    font-family: var(--ui);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--gold-soft); }
+  h1 {
+    font-family: var(--title);
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 34px);
+    line-height: 1.1;
+    margin: 0;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  h1 em { font-style: italic; color: var(--text-dim); }
+  .standfirst {
+    max-width: 62ch;
+    color: var(--text-dim);
+    font-size: 14.5px;
+    font-weight: 300;
+    margin: 2px 0 0;
+  }
+  .standfirst b { color: var(--text); font-weight: 600; }
+
+  /* ---- tabs ---- */
+  nav[role="tablist"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    border-bottom: 1px solid var(--gold-soft);
+    margin-top: 4px;
+  }
+  .tab {
+    appearance: none;
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    color: var(--text-dim);
+    font-family: var(--ui);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 9px 16px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    transition: color 120ms ease, background 120ms ease;
+  }
+  .tab .count { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .tab:hover { color: var(--text-dim); background: var(--slot); }
+  .tab[aria-selected="true"] {
+    color: var(--text);
+    background: var(--gold-wash);
+    border-color: var(--gold);
+    box-shadow: inset 0 2px 0 0 var(--gold);
+  }
+  .tab[aria-selected="true"] .count { color: var(--text-dim); }
+  .tab:focus-visible { outline: 2px solid var(--rare-b); outline-offset: -2px; }
+
+  /* ---- the index ---- */
+  /* A window in this game is a GOLD border around a flat panel, with a gold wash behind its header. */
+  .pane { background: var(--panel); border: 1px solid var(--gold); }
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--gold-soft);
+    background: var(--slot);
+  }
+  .search label {
+    font-family: var(--ui);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .search input {
+    flex: 1;
+    min-width: 0;
+    appearance: none;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--gold-soft);
+    color: var(--text);
+    font-family: var(--ui);
+    font-size: 14px;
+    padding: 3px 0;
+  }
+  .search input::placeholder { color: var(--text-dim); }
+  .search input:focus { outline: none; border-bottom-color: var(--cyan); }
+  .search input:focus-visible { outline: none; }
+  .hits {
+    font-family: var(--ui);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  /* The matched run inside a name — underlined rather than filled, so it never fights the rarity colour. */
+  .hit {
+    color: inherit;
+    background: rgba(245, 185, 66, 0.14);
+    box-shadow: inset 0 -1px 0 0 var(--legendary-b);
+  }
+
+  .rows {
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    /* Fixed, so the window is the same size on every tab and after every drop — about ten rows. */
+    height: 340px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* A narrow window scrolls the columns rather than collapsing the name out of existence. The header is a
+     sibling inside this, so a sideways scroll carries the header and the rows together and they stay aligned. */
+  .scroller { overflow-x: auto; }
+
+  /* A thin gold-family bar, so the list does not wear the browser's own chrome inside a game window. */
+  .rows::-webkit-scrollbar { width: 10px; }
+  .rows::-webkit-scrollbar-track { background: var(--slot); }
+  .rows::-webkit-scrollbar-thumb { background: var(--gold-soft); border: 2px solid var(--slot); }
+  .rows::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+  .rows { scrollbar-width: thin; scrollbar-color: var(--gold-soft) var(--slot); }
+
+  /* Rows are deliberately NOT focusable and are not buttons: an inventory line is read, and its
+     whole detail arrives on hover. Nothing here takes a tab stop or draws a focus ring. */
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: baseline;
+    font-family: var(--ui);
+    font-size: 14px;
+    color: var(--text);
+    padding: 6px 14px;
+    border-left: 2px solid transparent;
+    cursor: default;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  /* Rarity border > selection ring > hover bloom. Hover must never borrow the rarity colour, or the two
+     channels collide — so the bloom is cyan and the name keeps its tier. */
+  .row:hover { background: var(--cyan-glow); border-left-color: var(--cyan); }
+  .row-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Real columns, so the header above them can sort them and the digits line up down the page.
+     One template per tab shape, shared by the header row and every data row — they cannot drift. */
+  .row.eq,  .hdr.eq  { grid-template-columns: minmax(120px, 1fr) 82px 76px 52px 62px 48px; min-width: 600px; }
+  .row.bag, .hdr.bag { grid-template-columns: minmax(120px, 1fr) 76px 58px; min-width: 320px; }
+
+  .c-slot, .c-tier, .c-kit, .c-stat, .c-lift, .c-qty {
+    text-align: right;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* With no icons, the slot is the only thing telling a helm from a sword at a glance — and the tier word
+     is here because a colour cannot be ranked precisely, and is worth nothing to a colour-blind reader. */
+  .c-slot, .c-tier { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .c-lift { font-weight: 600; }
+
+  .hdr {
+    display: grid;
+    gap: 14px;
+    align-items: baseline;
+    padding: 7px 14px 6px;
+    border-bottom: 1px solid var(--gold-soft);
+    background: var(--slot);
+  }
+  .hdr button {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--ui);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-align: right;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .hdr button.first { text-align: left; }
+  .hdr button:hover { color: var(--text-dim); }
+  .hdr button.active { color: var(--text); }
+  .hdr button:focus-visible { outline: 1px solid var(--rare-b); outline-offset: 2px; }
+  .hdr .arrow { color: var(--cyan); margin-left: 4px; }
+  .forged {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid var(--gold-soft);
+    padding: 0 4px;
+    margin-left: 8px;
+    vertical-align: 1px;
+  }
+  .empty {
+    padding: 30px 16px;
+    color: var(--text-dim);
+    font-family: var(--ui);
+    font-size: 12px;
+    text-align: center;
+    line-height: 1.9;
+  }
+
+  /* ---- the hover card: every detail an entry has ---- */
+  #card {
+    position: fixed;
+    z-index: 40;
+    width: 340px;
+    max-width: calc(100vw - 24px);
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+    padding: 14px 15px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* Never eat the pointer — the row underneath must keep its hover. */
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 90ms ease;
+  }
+  #card.on { opacity: 1; }
+  #card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2px;
+    background: var(--edge, var(--gold-soft));
+  }
+
+  /* ---- the right-click menu ---- */
+  #menu {
+    position: fixed;
+    z-index: 60;
+    min-width: 196px;
+    background: var(--panel);
+    border: 1px solid var(--gold-soft);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+    padding: 5px 0;
+    display: none;
+    flex-direction: column;
+  }
+  #menu.on { display: flex; }
+  #menu .mtitle {
+    font-family: var(--ui);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 5px 12px 7px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--gold-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #menu button {
+    appearance: none;
+    background: none;
+    border: none;
+    text-align: left;
+    font-family: var(--ui);
+    font-size: 12px;
+    color: var(--text);
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  #menu button:hover:not(:disabled) { background: var(--panel-up); }
+  #menu button:focus-visible { outline: 1px solid var(--rare-b); outline-offset: -2px; }
+  #menu button:disabled { color: var(--text-dim); cursor: not-allowed; }
+  #menu button .planned {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border: 1px solid var(--gold-soft);
+    padding: 0 4px;
+  }
+  #menu .msep { height: 1px; background: var(--gold-soft); margin: 4px 0; }
+
+  /* Worn gear is marked in the list, the way an inventory has to mark it. */
+  .worn {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--rare-b);
+    border: 1px solid rgba(79, 140, 255, 0.42);
+    padding: 0 4px;
+    margin-left: 8px;
+    vertical-align: 1px;
+  }
+
+  .card-title {
+    font-family: var(--title);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0;
+    line-height: 1.25;
+  }
+  .card-sub {
+    font-family: var(--ui);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin: -9px 0 0;
+  }
+  .card-flavour {
+    font-size: 14px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text-dim);
+    margin: 0;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+    gap: 1px;
+    background: var(--gold-soft);
+    border: 1px solid var(--gold-soft);
+    margin: 0;
+  }
+  .stat { background: var(--panel); padding: 7px 9px; }
+  .stat dt {
+    font-family: var(--ui);
+    font-size: 11px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .stat dd {
+    margin: 2px 0 0;
+    font-family: var(--ui);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+
+  .section-label {
+    font-family: var(--ui);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .section-label::after { content: ""; flex: 1; height: 1px; background: var(--gold-soft); }
+
+  .kit { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+  .kit li {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    gap: 9px;
+    align-items: baseline;
+    font-family: var(--ui);
+    font-size: 12px;
+  }
+  .sym {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--slot);
+    background: var(--text-dim);
+    text-align: center;
+    padding: 1px 0;
+  }
+  .kit .tag {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .kit .tag.ult { color: var(--legendary-b); }
+
+  .scaling { border: 1px solid var(--gold-soft); background: var(--slot); padding: 10px 11px; display: flex; flex-direction: column; gap: 9px; }
+  .weights { display: flex; flex-wrap: wrap; gap: 5px; }
+  .weight {
+    font-family: var(--ui);
+    font-size: 12px;
+    color: var(--text-dim);
+    border: 1px solid var(--gold-soft);
+    padding: 1px 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .weight b { color: var(--text); font-weight: 600; }
+  .terms { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; }
+  .term { display: flex; flex-direction: column; gap: 1px; }
+  .term span {
+    font-family: var(--ui);
+    font-size: 11px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .term strong {
+    font-family: var(--ui);
+    font-size: 15px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .term.ring strong { color: var(--text-dim); }
+  .term.total strong { color: var(--text); }
+  .op { font-family: var(--ui); color: var(--text-dim); font-size: 13px; align-self: center; padding-top: 9px; }
+
+  .card-note {
+    font-family: var(--ui);
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--text-dim);
+    border-left: 1px solid var(--gold-soft);
+    padding-left: 9px;
+    margin: 0;
+  }
+
+  /* ---- status bar ---- */
+  .status {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px 24px;
+    border-top: 1px solid var(--gold-soft);
+    padding-top: 10px;
+    font-family: var(--ui);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .status b { color: var(--text-dim); font-weight: 500; }
+  kbd { font-family: var(--ui); font-size: 12px; border: 1px solid var(--gold-soft); padding: 1px 5px; color: var(--text-dim); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 13px; }
+  .legend i { font-style: normal; display: flex; align-items: baseline; gap: 5px; }
+  .legend i::before { content: "■"; font-size: 11px; }
+
+  /* Ring investment belongs to the CHARACTER, not to an item, so it lives out here — and a slider
+     could never live inside a hover card you have to leave to reach it. */
+  .ring-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--gold-soft);
+    background: var(--panel);
+    padding: 9px 13px;
+  }
+  .ring-bar label {
+    font-family: var(--ui);
+    font-size: 11px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  input[type="range"] { flex: 1; min-width: 100px; accent-color: var(--gold); background: transparent; }
+  input[type="range"]:focus-visible { outline: 2px solid var(--rare-b); outline-offset: 3px; }
+  .ranks { font-family: var(--ui); font-size: 12px; color: var(--text); font-variant-numeric: tabular-nums; min-width: 8ch; text-align: right; }
+
+  .note { font-family: var(--ui); font-size: 12px; line-height: 1.7; color: var(--text-dim); border-left: 1px solid var(--gold-soft); padding-left: 10px; margin: 0; }
+
+  /* On a narrow screen a floating card has nowhere to float: dock it to the bottom, full width. */
+  @media (max-width: 720px) {
+    #card {
+      left: 0 !important;
+      right: 0;
+      top: auto !important;
+      bottom: 0;
+      width: 100%;
+      max-width: none;
+      border-left: none;
+      border-right: none;
+      border-bottom: none;
+      max-height: 62vh;
+      overflow-y: auto;
+    }
+    .wrap { padding-bottom: 64vh; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">unwritten &middot; interface prototype</p>
+    <h1>The ledger of what <em>survived</em></h1>
+    <p class="standfirst">
+      A text-only inventory, no icons: the <b>name</b> carries the build, the <b>colour</b> carries the rarity, and
+      the <b>+N</b> carries the refine. A weapon that rolled an ultimate is named for it; one that didn't is only
+      ever called a sword. <b>Hover any line</b> for everything it holds.
+    </p>
+  </header>
+
+  <nav role="tablist" aria-label="Inventory categories" id="tabs"></nav>
+
+  <section class="pane" aria-label="Item index" data-mocks="Inventory">
+    <div class="search" data-part="search">
+      <label for="q">Find</label>
+      <input type="search" id="q" placeholder="name, slot, tier, weapon type, or a skill"
+             autocomplete="off" spellcheck="false" />
+      <span class="hits" id="hits"></span>
+    </div>
+    <div class="scroller">
+      <div class="hdr" id="hdr" role="row" data-part="header"></div>
+      <ul class="rows" id="rows" data-part="list"></ul>
+    </div>
+  </section>
+
+  <div class="ring-bar">
+    <label for="ranks">Ring investment</label>
+    <input type="range" id="ranks" min="0" max="200" step="1" value="50" />
+    <span class="ranks" id="ranks-out">50 ranks</span>
+  </div>
+
+  <div class="status">
+    <span class="legend" id="legend"></span>
+    <span><b>Zeny</b> 12,480 &nbsp;&middot;&nbsp; <b>Weight</b> 34/120</span>
+    <span>double-click to equip or use &nbsp; right-click for more &nbsp; click a column to sort &nbsp; <kbd>&larr;</kbd><kbd>&rarr;</kbd> category &nbsp; <kbd>esc</kbd> clear search</span>
+  </div>
+
+  <p class="note" style="max-width:78ch">
+    Real from the game: the five rarity colours, the twenty-two composed sword skills and their two-letter symbols,
+    the kit sizes each rarity rolls, the refine value of +3&nbsp;ATK per level, the rarity ladder at
+    0/3/9/18/30&nbsp;%, and the ring's soft-cap curve the slider runs on. Invented for this mock: the base ATK
+    figures, every piece of armour and its stat bonuses, the Zeny and the carried weight. Only
+    &ldquo;Ring of Beginnings&rdquo; and the eleven consumables are real authored item names.
+  </p>
+</div>
+
+<div id="card" role="tooltip" aria-hidden="true" data-mocks="Item Tooltip"></div>
+<div id="menu" role="menu" aria-hidden="true" data-mocks="Inventory"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* The rarity table, mirroring Rarity.cs: text colour, label colour, and the output lift. */
+  var RARITY = {
+    common:    { label: "Common",    text: "var(--common)",    edge: "var(--common-b)",    lift: 0.00 },
+    uncommon:  { label: "Uncommon",  text: "var(--uncommon)",  edge: "var(--uncommon-b)",  lift: 0.03 },
+    rare:      { label: "Rare",      text: "var(--rare)",      edge: "var(--rare-b)",      lift: 0.09 },
+    epic:      { label: "Epic",      text: "var(--epic)",      edge: "var(--epic-b)",      lift: 0.18 },
+    legendary: { label: "Legendary", text: "var(--legendary)", edge: "var(--legendary-b)", lift: 0.30 }
+  };
+
+  /* The composed sword pool — symbol, name, role. */
+  var S = {
+    db: ["Db", "Deathblow", "ultimate"], rt: ["Rt", "Retribution", "ultimate"], bd: ["Bd", "Blade Dance", "ultimate"],
+    br: ["Br", "Brace", ""], pa: ["Pa", "Parry", ""], oc: ["Oc", "Overclock", ""], lu: ["Lu", "Lunge", ""],
+    gs: ["Gs", "Guard Stance", ""], cs: ["Cs", "Committed Strike", ""], ds: ["Ds", "Disarm", ""],
+    ch: ["Ch", "Challenge", ""], ob: ["Ob", "Offbeat", ""], on: ["On", "Onslaught", ""],
+    mo: ["Mo", "Momentum", "passive"], fl: ["Fl", "Flow", "passive"], en: ["En", "Encore", "passive"],
+    ls: ["Ls", "Last Stand", "passive"], cp: ["Cp", "Composure", "passive"], un: ["Un", "Unwavering", "passive"],
+    op: ["Op", "Opening", "passive"], pr: ["Pr", "Pressure", "passive"], lb: ["Lb", "Lock Blades", "passive"]
+  };
+
+  var CATS = [
+    { id: "all",      name: "All" },
+    { id: "equip",    name: "Equip" },
+    { id: "use",      name: "Use" },
+    { id: "material", name: "Material" },
+    { id: "etc",      name: "Etc" }
+  ];
+
+  var ITEMS = {
+    equip: [
+      { name: "Deathblow Sword", refine: 7, rarity: "legendary", kind: "Sword", slot: "Weapon", baseAtk: 40,
+        sockets: 2, filled: 1,
+        flavour: "It remembers the last thing it ever did, and nothing before that.",
+        kit: ["db", "mo", "fl", "br", "pa", "oc", "lb", "lu", "op"],
+        anchor: "db", weights: [["Atk", 100]] },
+
+      { name: "Blade Dance Sword", refine: 3, rarity: "epic", kind: "Sword", slot: "Weapon", baseAtk: 38,
+        sockets: 1, filled: 0, forged: true,
+        flavour: "Forged into an anchor it never dropped with. The name arrived with the memory.",
+        kit: ["bd", "oc", "en", "pa", "cp", "on", "ds"],
+        anchor: "bd", weights: [["Atk", 80], ["Attack Speed", 20]] },
+
+      { name: "Retribution Sword", refine: 0, rarity: "rare", kind: "Sword", slot: "Weapon", baseAtk: 36,
+        sockets: 1, filled: 0,
+        flavour: "Whoever held it last was owed something.",
+        kit: ["rt", "br", "ls", "gs", "un"],
+        anchor: "rt", weights: [["Atk", 100]] },
+
+      { name: "Rare Sword", refine: 2, rarity: "rare", kind: "Sword", slot: "Weapon", baseAtk: 36,
+        sockets: 1, filled: 0,
+        flavour: "Three fragments, and none of them a name.",
+        kit: ["lu", "ob", "pr"],
+        anchor: "lu", weights: [["Atk", 100]] },
+
+      { name: "Uncommon Sword", refine: 0, rarity: "uncommon", kind: "Sword", slot: "Weapon", baseAtk: 34,
+        sockets: 0, filled: 0,
+        flavour: "Two fragments. Forge fodder, or a base worth feeding.",
+        kit: ["ch", "op"],
+        anchor: "ch", weights: [["Atk", 100]] },
+
+      { name: "Sword", refine: 0, rarity: "common", kind: "Sword", slot: "Weapon", baseAtk: 32,
+        sockets: 0, filled: 0,
+        flavour: "It recalls one motion and repeats it.",
+        kit: ["cs", "cp"],
+        anchor: "cs", weights: [["Atk", 100]] },
+
+      { name: "Rare Bow", refine: 2, rarity: "rare", kind: "Bow", slot: "Weapon", baseAtk: 33,
+        sockets: 1, filled: 0,
+        flavour: "Nothing surfaced. The Bow's pool has no published skills yet.",
+        kit: [], anchor: null, weights: [] },
+
+      /* Gear grants no skills — only a weapon's kit does — so these carry DEF and stat bonuses instead of a
+         kit, and no output lift. Refine is worth +1 DEF a level on every piece, against a weapon's +3 ATK. */
+      { name: "Tower Shield", refine: 1, rarity: "rare", kind: null, slot: "Shield", baseDef: 14,
+        sockets: 1, filled: 0,
+        flavour: "Someone stood behind this for a long time.",
+        bonuses: [["HP", "+120"], ["M.DEF", "+6"]], kit: [], anchor: null, weights: [] },
+
+      { name: "Iron Cuirass", refine: 4, rarity: "epic", kind: null, slot: "Armor", baseDef: 22,
+        sockets: 2, filled: 1,
+        flavour: "Dented in the same place a dozen times over.",
+        bonuses: [["HP", "+240"], ["VIT", "+4"]], kit: [], anchor: null, weights: [] },
+
+      { name: "Iron Helm", refine: 0, rarity: "rare", kind: null, slot: "Head", baseDef: 9,
+        sockets: 0, filled: 0,
+        flavour: "Scratched where a name used to be scratched in.",
+        bonuses: [["HP", "+80"]], kit: [], anchor: null, weights: [] },
+
+      { name: "Traveller's Cloak", refine: 0, rarity: "uncommon", kind: null, slot: "Garment", baseDef: 5,
+        sockets: 0, filled: 0,
+        flavour: "It has been rained on in four regions.",
+        bonuses: [["M.DEF", "+8"], ["AGI", "+2"]], kit: [], anchor: null, weights: [] },
+
+      { name: "Copper Band", refine: 0, rarity: "common", kind: null, slot: "Accessory 1", baseDef: 1,
+        sockets: 1, filled: 0,
+        flavour: "Worth more as essence than as jewellery.",
+        bonuses: [["LUK", "+2"]], kit: [], anchor: null, weights: [] },
+
+      { name: "Ring of Beginnings", refine: 0, rarity: "common", kind: null, slot: "Ring", baseDef: 0,
+        sockets: 0, filled: 0, noRecycle: true,
+        flavour: "The vessel your whole life's work is written into. It is not gear, and it is never dropped.",
+        bonuses: [["Ring level", "90"], ["Points spent", "90"]], kit: [], anchor: null, weights: [] }
+    ],
+    use: [
+      { name: "Greater Healing Potion", rarity: "rare",     qty: 3,  effect: "Restores 420 HP." },
+      { name: "Healing Potion",         rarity: "uncommon", qty: 11, effect: "Restores 180 HP." },
+      { name: "Minor Healing Potion",   rarity: "common",   qty: 24, effect: "Restores 60 HP." },
+      { name: "Mana Draught",           rarity: "uncommon", qty: 7,  effect: "Restores 90 MP." },
+      { name: "Minor Mana Draught",     rarity: "common",   qty: 16, effect: "Restores 35 MP." },
+      { name: "Antidote",               rarity: "common",   qty: 5,  effect: "Cleanses 1 ailment." },
+      { name: "Grilled Fish",           rarity: "uncommon", qty: 2,  effect: "+12 Attack for 180s." },
+      { name: "Spiced Broth",           rarity: "uncommon", qty: 1,  effect: "+8 HP per second for 120s." },
+      { name: "Lucky Dumpling",         rarity: "rare",     qty: 1,  effect: "+15 Critical for 120s." },
+      { name: "Traveller's Tea",        rarity: "common",   qty: 4,  effect: "+20% move speed for 300s." },
+      { name: "Hard Bread",             rarity: "common",   qty: 9,  effect: "Restores 40 HP over 20s." }
+    ],
+    material: [
+      { name: "Weapon Essence",   rarity: "uncommon", qty: 148, effect: "Recycled from weapons. Every modification wants it." },
+      { name: "Refinement Stone", rarity: "rare",     qty: 6,   effect: "Spent on a +N refine attempt." }
+    ],
+    etc: []
+  };
+
+  var state = { cat: "all", ranks: 50, q: "" };
+  var shown = [];   /* the items currently drawn, in the order the rows show them */
+
+  /* The columns each tab shape has, and which one it sorts by until someone says otherwise. Equip opens on
+     SLOT because grouping the paperdoll is what a reader of an icon-less list needs first; a bag opens on
+     name. dir is 1 for ascending, -1 for descending. */
+  var COLS = {
+    equip: [
+      { key: "name", label: "Name",    cls: "c-name" },
+      { key: "slot", label: "Slot",    cls: "c-slot" },
+      { key: "tier", label: "Tier",    cls: "c-tier" },
+      { key: "kit",  label: "Skills",  cls: "c-kit"  },
+      { key: "stat", label: "Atk/Def", cls: "c-stat" },
+      { key: "lift", label: "Out",     cls: "c-lift" }
+    ],
+    bag: [
+      { key: "name", label: "Name", cls: "c-name" },
+      { key: "tier", label: "Tier", cls: "c-tier" },
+      { key: "qty",  label: "Held", cls: "c-qty"  }
+    ]
+  };
+
+  var SORTS = {
+    all:      { key: "name", dir: 1 },
+    equip:    { key: "slot", dir: 1 },
+    use:      { key: "name", dir: 1 },
+    material: { key: "name", dir: 1 },
+    etc:      { key: "name", dir: 1 }
+  };
+
+  /* The paperdoll's own order, from EquipSlotType — not alphabetical, because a reader scans a body. */
+  var SLOT_ORDER = ["Head", "Armor", "Weapon", "Shield", "Accessory 1", "Accessory 2", "Garment", "Ring"];
+  var TIER_ORDER = ["common", "uncommon", "rare", "epic", "legendary"];
+
+  function isEquip() { return state.cat === "equip" || state.cat === "all"; }
+  function cols() { return isEquip() ? COLS.equip : COLS.bag; }
+  function sortOf() { return SORTS[state.cat]; }
+
+  /* One comparable value per column, so the comparator never has to know which tab it is in. */
+  function sortValue(it, key) {
+    switch (key) {
+      case "slot": return it.slot ? SLOT_ORDER.indexOf(it.slot) : -1;
+      case "tier": return TIER_ORDER.indexOf(it.rarity);
+      case "kit":  return it.slot === "Weapon" ? it.kit.length : -1;
+      case "stat": return it.slot === "Weapon" ? it.baseAtk + it.refine * 3
+                                               : it.slot ? (it.baseDef || 0) + it.refine : -1;
+      case "lift": return it.slot === "Weapon" ? RARITY[it.rarity].lift : -1;
+      case "qty":  return it.qty || 0;
+      default:     return it.name.toLowerCase();
+    }
+  }
+
+  function sorted(items) {
+    var s = sortOf();
+    /* Name breaks every tie, so the order is stable and identical run to run. */
+    return items.slice().sort(function (a, b) {
+      var va = sortValue(a, s.key), vb = sortValue(b, s.key);
+      if (va < vb) return -s.dir;
+      if (va > vb) return s.dir;
+      var na = a.name.toLowerCase(), nb = b.name.toLowerCase();
+      return na < nb ? -1 : na > nb ? 1 : 0;
+    });
+  }
+  var hovered = null;                 /* the item the card is currently describing */
+  var pointer = { x: 0, y: 0 };       /* last cursor position, in viewport coords */
+
+  /* The ring's soft-cap curve, from SkillRing.Percent: cap x ranks / (ranks + 40). */
+  function ringPercent(stat, ranks) {
+    var cap = stat === "Critical" ? 0.50 : stat === "Evasion" ? 0.60 : 0.80;
+    return ranks <= 0 ? 0 : cap * ranks / (ranks + 40);
+  }
+
+  /* AffinityMult: 1 + sum(weight x ringPercent) / sum(weight). Empty list is exactly 1. */
+  function ringTerm(weights, ranks) {
+    if (!weights || !weights.length) return 1;
+    var sum = 0, acc = 0;
+    for (var i = 0; i < weights.length; i++) {
+      sum += weights[i][1];
+      acc += weights[i][1] * ringPercent(weights[i][0], ranks);
+    }
+    return sum > 0 ? 1 + acc / sum : 1;
+  }
+
+  /* Case-insensitive, and it reaches past the name: the slot, the rarity word, what a consumable does, and
+     every skill the weapon remembers — so "momentum" finds the swords carrying it, which is the question a
+     build-shaped inventory actually gets asked. */
+  function haystack(it) {
+    var parts = [it.name, it.slot || "", it.kind || "", RARITY[it.rarity].label, it.effect || ""];
+    if (it.kit) it.kit.forEach(function (k) { parts.push(S[k][1]); });
+    if (it.bonuses) it.bonuses.forEach(function (b) { parts.push(b[0]); });
+    return parts.join(" ").toLowerCase();
+  }
+
+  function matches(it) { return !state.q || haystack(it).indexOf(state.q) !== -1; }
+
+  /* Put the matched run of the displayed name in its own span so it can be marked. */
+  function nameNodes(display, into) {
+    var i = state.q ? display.toLowerCase().indexOf(state.q) : -1;
+    if (i === -1) { into.appendChild(document.createTextNode(display)); return; }
+    into.appendChild(document.createTextNode(display.slice(0, i)));
+    var m = el("span", "hit");
+    m.textContent = display.slice(i, i + state.q.length);
+    into.appendChild(m);
+    into.appendChild(document.createTextNode(display.slice(i + state.q.length)));
+  }
+
+  function pct(f) { return (f * 100).toFixed(1) + "%"; }
+  function el(tag, cls) { var n = document.createElement(tag); if (cls) n.className = cls; return n; }
+  function cell(cls, text) { var n = el("span", cls); n.textContent = text; return n; }
+  function allItems() {
+    var out = [];
+    CATS.forEach(function (c) { if (c.id !== "all") out = out.concat(ITEMS[c.id] || []); });
+    return out;
+  }
+  function list() { return state.cat === "all" ? allItems() : (ITEMS[state.cat] || []); }
+
+  /* ---- tabs ---- */
+  function drawTabs() {
+    var nav = document.getElementById("tabs");
+    nav.textContent = "";
+    CATS.forEach(function (c) {
+      var b = el("button", "tab");
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", c.id === state.cat ? "true" : "false");
+      b.appendChild(document.createTextNode(c.name));
+      var n = el("span", "count");
+      n.textContent = c.id === "all" ? allItems().length : (ITEMS[c.id] || []).length;
+      b.appendChild(n);
+      b.addEventListener("click", function () { state.cat = c.id; hideCard(); draw(); });
+      nav.appendChild(b);
+    });
+  }
+
+  /* ---- the index ---- */
+  function drawRows() {
+    var ul = document.getElementById("rows");
+    var keepScroll = ul.scrollTop;
+    ul.textContent = "";
+    var all = list();
+    var items = sorted(all.filter(matches));
+    shown = items;
+    drawHits(all.length, items.length);
+
+    if (!items.length) {
+      var li = el("li");
+      var d = el("div", "empty");
+      if (!all.length) {
+        d.appendChild(document.createTextNode("— nothing recorded —"));
+        d.appendChild(el("br"));
+        d.appendChild(document.createTextNode("no items are authored in this category yet"));
+      } else {
+        d.appendChild(document.createTextNode("no match for \u201c" + state.q + "\u201d here"));
+        var other = elsewhere();
+        if (other) {
+          d.appendChild(el("br"));
+          d.appendChild(document.createTextNode(other));
+        }
+      }
+      li.appendChild(d);
+      ul.appendChild(li);
+      wireListScroll();
+      return;
+    }
+
+    /* Restored after the rows are rebuilt, below. */
+    items.forEach(function (it) {
+      var r = RARITY[it.rarity];
+      var li = el("li");
+      /* A plain element, not a button: no tab stop, no focus ring. */
+      var row = el("div", "row " + (isEquip() ? "eq" : "bag"));
+      row.setAttribute("data-part", "row");
+      row.style.color = r.text;
+
+      var nm = el("span", "row-name c-name");
+      nameNodes((it.refine ? "+" + it.refine + " " : "") + it.name, nm);
+      if (it.worn) {
+        var wn = el("span", "worn");
+        wn.textContent = "worn";
+        nm.appendChild(wn);
+      }
+      if (it.forged) {
+        var f = el("span", "forged");
+        f.textContent = "forged";
+        nm.appendChild(f);
+      }
+      row.appendChild(nm);
+
+      if (isEquip()) {
+        var gear = !!it.slot;
+        var isWeapon = it.slot === "Weapon";
+        row.appendChild(cell("c-slot", it.slot || ""));
+        row.appendChild(cell("c-tier", r.label));
+        row.appendChild(cell("c-kit", isWeapon ? String(it.kit.length) : "—"));
+        row.appendChild(cell("c-stat", gear ? String(isWeapon ? it.baseAtk + it.refine * 3
+                                                              : (it.baseDef || 0) + it.refine) : "—"));
+        var l = cell("c-lift", isWeapon && r.lift ? "+" + Math.round(r.lift * 100) + "%" : "—");
+        if (isWeapon && r.lift) l.style.color = r.text;
+        row.appendChild(l);
+      } else {
+        row.appendChild(cell("c-tier", r.label));
+        row.appendChild(cell("c-qty", "×" + it.qty));
+      }
+
+      row.addEventListener("mouseenter", function (ev) {
+        pointer.x = ev.clientX; pointer.y = ev.clientY;
+        showCard(it);
+      });
+      row.addEventListener("contextmenu", function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        openMenu(it, ev.clientX, ev.clientY);
+      });
+      /* The same two gestures the real bag answers to: a double-click wears equipment and drinks a
+         consumable. Nothing else in the bag has a single obvious action, so nothing else responds. */
+      row.addEventListener("dblclick", function () {
+        if (it.slot) wear(it);
+        else if (ITEMS.use.indexOf(it) !== -1) use(it);
+      });
+      li.appendChild(row);
+      ul.appendChild(li);
+    });
+
+    ul.scrollTop = keepScroll;
+    wireListScroll();
+  }
+
+  function drawHeader() {
+    var box = document.getElementById("hdr");
+    box.textContent = "";
+    box.className = "hdr " + (isEquip() ? "eq" : "bag");
+    var s = sortOf();
+    cols().forEach(function (c, i) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = (i === 0 ? "first" : "") + (c.key === s.key ? " active" : "");
+      b.setAttribute("aria-sort", c.key === s.key ? (s.dir === 1 ? "ascending" : "descending") : "none");
+      b.appendChild(document.createTextNode(c.label));
+      if (c.key === s.key) {
+        var a = el("span", "arrow");
+        a.textContent = s.dir === 1 ? "▲" : "▼";
+        b.appendChild(a);
+      }
+      b.addEventListener("click", function () {
+        if (s.key === c.key) s.dir = -s.dir;
+        else { s.key = c.key; s.dir = 1; }
+        hideCard();
+        drawHeader();
+        drawRows();
+      });
+      box.appendChild(b);
+    });
+  }
+
+  /* A wheel over the list moves rows under a cursor that has not moved, so no mouseenter fires and the card
+     would keep describing a row that is no longer there. Simplest honest answer: close it. */
+  function wireListScroll() {
+    var ul = document.getElementById("rows");
+    if (ul.dataset.wired) return;
+    ul.dataset.wired = "1";
+    ul.addEventListener("scroll", function () { hideCard(); if (menuIsOpen()) closeMenu(); }, { passive: true });
+  }
+
+  function drawHits(total, shown) {
+    var box = document.getElementById("hits");
+    box.textContent = state.q ? shown + " / " + total : total + " held";
+  }
+
+  /* Where else the term hits, so a search in the wrong tab is a signpost rather than a dead end. */
+  function elsewhere() {
+    var hits = [];
+    CATS.forEach(function (c) {
+      if (c.id === state.cat) return;
+      var n = (c.id === "all" ? allItems() : (ITEMS[c.id] || [])).filter(matches).length;
+      if (n) hits.push(n + " in " + c.name);
+    });
+    return hits.length ? hits.join(" · ") : "";
+  }
+
+  /* ---- the right-click menu ---- */
+  var menu = document.getElementById("menu");
+  var menuFor = null;
+
+  /* What is REAL in the game today versus what the crafting design describes but nobody has built.
+     A planned row is shown and disabled rather than hidden, so the menu reads as the honest action
+     surface instead of pretending the unbuilt half does not exist. */
+  function actionsFor(it) {
+    var out = [];
+    if (it.slot) {
+      var isWeapon = it.slot === "Weapon";
+      out.push({ label: it.worn ? "Unequip" : "Equip", run: function () { toggleWorn(it); } });
+      out.push({ sep: true });
+      out.push({ label: "Refine  +" + (it.refine + 1), run: function () { refine(it); },
+                 off: it.refine >= 10, why: it.refine >= 10 ? "max" : "" });
+      out.push({ label: "Insert card", off: !it.sockets || it.filled >= it.sockets,
+                 why: !it.sockets ? "no socket" : (it.filled >= it.sockets ? "full" : ""),
+                 run: function () { insertCard(it); } });
+      if (isWeapon) {
+        out.push({ sep: true });
+        out.push({ label: "Reforge skills", planned: true });
+        out.push({ label: "Add skill", planned: true });
+        out.push({ label: "Transmog", planned: true });
+      }
+      out.push({ sep: true });
+      if (it.noRecycle) {
+        out.push({ label: "Recycle", off: true, why: "the Ring" });
+        out.push({ label: "Drop", off: true, why: "the Ring" });
+      } else {
+        out.push({ label: "Recycle \u2192 Essence", planned: true });
+        out.push({ label: "Drop", run: function () { drop(it); } });
+      }
+    } else if (it.effect && it.qty !== undefined && ITEMS.use.indexOf(it) !== -1) {
+      out.push({ label: "Use", run: function () { use(it); } });
+      out.push({ sep: true });
+      out.push({ label: "Drop", run: function () { drop(it); } });
+    } else {
+      out.push({ label: "Drop", run: function () { drop(it); } });
+    }
+    return out;
+  }
+
+  function openMenu(it, x, y) {
+    menuFor = it;
+    hideCard();
+    menu.textContent = "";
+
+    var r = RARITY[it.rarity];
+    var t = el("div", "mtitle");
+    t.style.color = r.text;
+    t.textContent = (it.refine ? "+" + it.refine + " " : "") + it.name;
+    menu.appendChild(t);
+
+    actionsFor(it).forEach(function (a) {
+      if (a.sep) { menu.appendChild(el("div", "msep")); return; }
+      var b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "menuitem");
+      b.disabled = !!(a.off || a.planned);
+      b.appendChild(document.createTextNode(a.label));
+      if (a.planned) {
+        var tag = el("span", "planned");
+        tag.textContent = "planned";
+        b.appendChild(tag);
+      } else if (a.why) {
+        var w = el("span", "planned");
+        w.textContent = a.why;
+        b.appendChild(w);
+      }
+      if (!b.disabled) b.addEventListener("click", function () { closeMenu(); a.run(); });
+      menu.appendChild(b);
+    });
+
+    menu.classList.add("on");
+    menu.setAttribute("aria-hidden", "false");
+
+    var w = menu.offsetWidth, h = menu.offsetHeight, pad = 8;
+    var left = x + 2, top = y + 2;
+    if (left + w > window.innerWidth - pad) left = x - w - 2;
+    if (top + h > window.innerHeight - pad) top = Math.max(pad, y - h - 2);
+    menu.style.left = Math.max(pad, Math.round(left)) + "px";
+    menu.style.top = Math.round(top) + "px";
+
+    var first = menu.querySelector("button:not(:disabled)");
+    if (first) first.focus();
+  }
+
+  function closeMenu() {
+    menuFor = null;
+    menu.classList.remove("on");
+    menu.setAttribute("aria-hidden", "true");
+  }
+
+  function menuIsOpen() { return menu.classList.contains("on"); }
+
+  /* ---- what the actions actually do, so the list reacts like the real thing ---- */
+
+  /* One item per slot, exactly as the equip window enforces: wearing this displaces whatever was in the
+     slot. The real Equip never un-equips — it swaps the previous piece back into the bag — so a double-click
+     only ever wears something, and taking a piece off is the menu's own Unequip. */
+  function wear(it) {
+    ITEMS.equip.forEach(function (o) { if (o.slot === it.slot) o.worn = false; });
+    it.worn = true;
+    drawRows();
+  }
+
+  function toggleWorn(it) {
+    if (it.worn) { it.worn = false; drawRows(); }
+    else wear(it);
+  }
+
+  function refine(it) { it.refine = Math.min(10, it.refine + 1); drawRows(); }
+
+  function insertCard(it) { it.filled = Math.min(it.sockets, it.filled + 1); drawRows(); }
+
+  function use(it) {
+    it.qty -= 1;
+    if (it.qty <= 0) removeItem(it);
+    drawRows();
+  }
+
+  function drop(it) { removeItem(it); drawRows(); }
+
+  function removeItem(it) {
+    CATS.forEach(function (c) {
+      var arr = ITEMS[c.id];
+      if (!arr) return;
+      var i = arr.indexOf(it);
+      if (i !== -1) arr.splice(i, 1);
+    });
+    drawTabs();
+  }
+
+  document.addEventListener("click", function (e) {
+    if (menuIsOpen() && !menu.contains(e.target)) closeMenu();
+  });
+  document.addEventListener("contextmenu", function (e) {
+    /* A right-click anywhere but a row closes the menu rather than opening the browser's own. */
+    if (menuIsOpen() && !menu.contains(e.target)) closeMenu();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && menuIsOpen()) { closeMenu(); e.stopPropagation(); }
+  });
+  window.addEventListener("scroll", function () { if (menuIsOpen()) closeMenu(); }, { passive: true });
+
+  /* ---- the hover card ---- */
+  var card = document.getElementById("card");
+
+  function hideCard() {
+    hovered = null;
+    card.classList.remove("on");
+    card.setAttribute("aria-hidden", "true");
+  }
+
+  function showCard(it) {
+    if (menuIsOpen()) return;
+    hovered = it;
+    buildCard(it);
+    place();
+    card.classList.add("on");
+    card.setAttribute("aria-hidden", "false");
+  }
+
+  function buildCard(it) {
+    var r = RARITY[it.rarity];
+    card.textContent = "";
+    card.style.setProperty("--edge", r.edge);
+
+    var h = el("p", "card-title");
+    h.style.color = r.text;
+    h.textContent = (it.refine ? "+" + it.refine + " " : "") + it.name;
+    card.appendChild(h);
+
+    var sub = el("p", "card-sub");
+    sub.style.color = r.edge;
+    sub.textContent = r.label + " · " + (it.slot || "Use") + (it.kind ? " · " + it.kind : "");
+    card.appendChild(sub);
+
+    var fl = el("p", "card-flavour");
+    fl.textContent = it.flavour || it.effect || "";
+    card.appendChild(fl);
+
+    var isWeapon = state.cat === "equip" && it.slot === "Weapon";
+    var dl = el("dl", "stats");
+    if (state.cat === "equip") {
+      if (isWeapon) addStat(dl, "Attack", String(it.baseAtk + it.refine * 3));
+      else if (it.slot !== "Ring") addStat(dl, "Defense", String(it.baseDef + it.refine));
+      addStat(dl, "Refine", it.refine ? "+" + it.refine : "—");
+      addStat(dl, "Sockets", it.sockets ? "◇".repeat(it.filled) + "○".repeat(it.sockets - it.filled) : "—");
+      if (it.bonuses) it.bonuses.forEach(function (b) { addStat(dl, b[0], b[1]); });
+      if (isWeapon) {
+        var lift = el("div", "stat");
+        var dt = el("dt"); dt.textContent = "Output"; lift.appendChild(dt);
+        var dd = el("dd"); dd.style.color = r.text;
+        dd.textContent = r.lift ? "+" + Math.round(r.lift * 100) + "%" : "±0%";
+        lift.appendChild(dd);
+        dl.appendChild(lift);
+      }
+    } else {
+      addStat(dl, "Held", "×" + it.qty);
+      addStat(dl, "Tier", r.label);
+    }
+    card.appendChild(dl);
+
+    if (state.cat !== "equip") return;
+
+    /* Only a weapon carries a kit, so only a weapon has a rarity lift to explain. */
+    if (!isWeapon) {
+      var g = el("p", "card-note");
+      g.textContent = it.slot === "Ring"
+        ? "The Ring is the progression vessel, not gear: no rarity lift, and it is never recycled."
+        : "Grants no skills, so its rarity colours the name and nothing else — only a weapon's kit takes the output lift.";
+      card.appendChild(g);
+      return;
+    }
+
+    card.appendChild(labelled("Remembered"));
+    if (!it.kit.length) {
+      var none = el("p", "card-note");
+      none.textContent = "Rolled no skills — nothing is published in this weapon's pool.";
+      card.appendChild(none);
+    } else {
+      var ul = el("ul", "kit");
+      it.kit.forEach(function (key) {
+        var s = S[key];
+        var li = el("li");
+        var sym = el("span", "sym");
+        sym.textContent = s[0];
+        if (s[2] === "ultimate") sym.style.background = "var(--legendary-b)";
+        else if (s[2] === "passive") { sym.style.background = "var(--gold-soft)"; sym.style.color = "var(--text-dim)"; }
+        li.appendChild(sym);
+        var nm = el("span");
+        nm.textContent = s[1];
+        li.appendChild(nm);
+        var tg = el("span", "tag" + (s[2] === "ultimate" ? " ult" : ""));
+        tg.textContent = s[2] || "";
+        li.appendChild(tg);
+        ul.appendChild(li);
+      });
+      card.appendChild(ul);
+    }
+
+    if (it.anchor) drawScaling(it, r);
+    else {
+      var n = el("p", "card-note");
+      n.textContent = "No ultimate, so nothing anchors a build here. Forge one in, and this entry renames itself.";
+      card.appendChild(n);
+    }
+  }
+
+  function addStat(dl, k, v) {
+    var d = el("div", "stat");
+    var dt = el("dt"); dt.textContent = k; d.appendChild(dt);
+    var dd = el("dd"); dd.textContent = v; d.appendChild(dd);
+    dl.appendChild(d);
+  }
+
+  function labelled(text) {
+    var s = el("div", "section-label");
+    s.appendChild(document.createTextNode(text));
+    return s;
+  }
+
+  function term(cls, label, value, colour) {
+    var t = el("div", "term " + cls);
+    var s = el("span"); s.textContent = label; t.appendChild(s);
+    var v = el("strong"); v.textContent = value;
+    if (colour) v.style.color = colour;
+    t.appendChild(v);
+    return t;
+  }
+
+  function drawScaling(it, r) {
+    var s = S[it.anchor];
+    card.appendChild(labelled("What scales " + s[1]));
+
+    var wrap = el("div", "scaling");
+
+    var w = el("div", "weights");
+    it.weights.forEach(function (pair) {
+      var chip = el("span", "weight");
+      chip.appendChild(document.createTextNode(pair[0] + " "));
+      var b = el("b"); b.textContent = pair[1] + "%";
+      chip.appendChild(b);
+      w.appendChild(chip);
+    });
+    wrap.appendChild(w);
+
+    var ring = ringTerm(it.weights, state.ranks);
+    var total = ring + r.lift;
+
+    var terms = el("div", "terms");
+    terms.appendChild(term("ring", "Ring", "+" + pct(ring - 1), null));
+    var plus = el("span", "op"); plus.textContent = "+"; terms.appendChild(plus);
+    terms.appendChild(term("rarity", "Rarity", "+" + pct(r.lift), r.text));
+    var eq = el("span", "op"); eq.textContent = "="; terms.appendChild(eq);
+    terms.appendChild(term("total", "Output", "×" + total.toFixed(3), null));
+    wrap.appendChild(terms);
+
+    var note = el("p", "card-note");
+    note.textContent = "Added, never multiplied — worth the same " + Math.round(r.lift * 100)
+      + " points to a new character and to a maxed one.";
+    wrap.appendChild(note);
+
+    card.appendChild(wrap);
+  }
+
+  /* The card rides the cursor, flipping to the other side of it near an edge — a game tooltip, not a panel.
+     Its own pointer-events are off, so it can sit under the cursor without stealing the row's hover. */
+  function place() {
+    var w = card.offsetWidth || 340;
+    var h = card.offsetHeight || 320;
+    var pad = 8, offX = 18, offY = 16;
+
+    var left = pointer.x + offX;
+    if (left + w > window.innerWidth - pad) left = pointer.x - w - offX;
+    if (left < pad) left = pad;
+
+    var top = pointer.y + offY;
+    if (top + h > window.innerHeight - pad) top = pointer.y - h - offY;
+    if (top < pad) top = pad;
+
+    card.style.left = Math.round(left) + "px";
+    card.style.top = Math.round(top) + "px";
+  }
+
+  var rowsBox = document.getElementById("rows");
+
+  /* Follow the cursor across the whole index — moving between rows re-aims through the new row's enter. */
+  rowsBox.addEventListener("mousemove", function (ev) {
+    pointer.x = ev.clientX; pointer.y = ev.clientY;
+    if (hovered) place();
+  }, { passive: true });
+
+  /* Leaving the list closes the card. */
+  rowsBox.addEventListener("mouseleave", hideCard);
+
+  window.addEventListener("resize", function () { if (hovered) place(); });
+
+  /* ---- the search field ---- */
+  var qBox = document.getElementById("q");
+  qBox.addEventListener("input", function () {
+    state.q = qBox.value.trim().toLowerCase();
+    hideCard();
+    drawRows();
+  });
+  qBox.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && qBox.value) {
+      qBox.value = "";
+      state.q = "";
+      hideCard();
+      drawRows();
+      e.stopPropagation();
+    }
+  });
+
+  /* ---- the global ring control ---- */
+  var range = document.getElementById("ranks");
+  var out = document.getElementById("ranks-out");
+  range.addEventListener("input", function () {
+    state.ranks = +range.value;
+    out.textContent = state.ranks + (state.ranks === 1 ? " rank" : " ranks");
+    if (hovered) { buildCard(hovered); place(); }
+  });
+
+  function drawLegend() {
+    var box = document.getElementById("legend");
+    box.textContent = "";
+    Object.keys(RARITY).forEach(function (k) {
+      var r = RARITY[k];
+      var i = el("i");
+      i.style.color = r.text;
+      i.appendChild(document.createTextNode(r.label));
+      var l = el("span");
+      l.style.color = "var(--text-dim)";
+      l.textContent = r.lift ? "+" + Math.round(r.lift * 100) + "%" : "±0%";
+      i.appendChild(l);
+      box.appendChild(i);
+    });
+  }
+
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+    /* An open menu owns the keyboard — switching tabs behind it would leave it pointing at nothing. */
+    if (menuIsOpen()) return;
+    var ci = 0;
+    for (var i = 0; i < CATS.length; i++) if (CATS[i].id === state.cat) ci = i;
+    if (e.key === "ArrowRight") { state.cat = CATS[(ci + 1) % CATS.length].id; hideCard(); draw(); e.preventDefault(); }
+    else if (e.key === "ArrowLeft") { state.cat = CATS[(ci - 1 + CATS.length) % CATS.length].id; hideCard(); draw(); e.preventDefault(); }
+  });
+
+  function draw() { drawTabs(); drawHeader(); drawRows(); }
+
+  drawLegend();
+  draw();
+
+  /* Open on the first entry so the page at rest already shows what a line holds. */
+  requestAnimationFrame(function () {
+    var first = document.querySelector("#rows .row");
+    if (!first) return;
+    var r = first.getBoundingClientRect();
+    pointer.x = r.left + r.width * 0.5; pointer.y = r.bottom;
+    if (shown.length) showCard(shown[0]);
+  });
+})();
+</script>
+</body>
+</html>

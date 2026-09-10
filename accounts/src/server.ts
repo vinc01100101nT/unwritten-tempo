@@ -49,7 +49,7 @@ function portIsFree(port: number, host: string): Promise<boolean> {
 
 // Only starts listening when this file is the program, so the tests can build a server without one.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const host = "0.0.0.0";
+  const host = config.bindHost;
 
   // IS ANYBODY ALREADY THERE. Asked BEFORE anything else starts, because the alternative is an unreadable
   // stack trace after the database is already connected — and because a copy that never took the port looks

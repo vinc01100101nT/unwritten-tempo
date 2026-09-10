@@ -66,22 +66,26 @@ fit together — stays authored, and lives around the generated cards rather tha
 
 A channel is a **stat-agnostic numeric output** — the common language every other system references. A skill exposes **only the channels it owns**. Channels split into two tiers by who owns them. *(Live view: **Tools ▸ unwritten ▸ Catalogs ▸ Skill Channels & Effects**.)*
 
-**Tier A — effect-output channels** — attach per-effect; these are what the ring scales (via affinity weights):
+**Tier A — effect-output channels** — attach per-effect. **TWO things scale them, and they are ADDED together, never multiplied:** the ring (via affinity weights) and the RARITY of the weapon that granted the skill. Both columns below were read off the applier on 2026-09-09.
 
-| Channel | Meaning | Unit | Ring-scales? |
-| --- | --- | --- | --- |
-| damage | Direct damage — base power × ATK/MATK × affinity | mult | yes |
-| hits | Strikes per landing; each is a proc trigger | int | yes |
-| heal_amount | Flat HP restored | HP | yes |
-| shield_amount | Barrier HP absorbed before it breaks | HP | yes |
-| dot_damage | Status DoT per tick (Poison / Bleed / Burn) | HP | yes |
-| sub_stat_magnitude | How far ONE sub-stat moves, up or down | frac or amount (the stat's own answer) | yes |
-| shove_speed | Knockback / Pull speed | u/s | no (raw) |
-| charges | How many uses a charge pile holds (Parry, Brace, the two outgoing-damage piles) | int | no (`stacksPerApply`, or derived from swing rate) |
-| modifier_seconds / modifier_stacks | What ExtendDuration / AddStacks hand another skill's pile | sec / int | no |
-| execute_scale | Execute bonus multiplier vs missing HP | mult | base roll scales; this is raw |
-| proc_chance | Per-hit roll for a Status / Execute proc | 0..1 | no |
-| duration | Effect window length | sec | yes (own affinity list) |
+| Channel | Meaning | Unit | Ring-scales? | Rarity-scales? |
+| --- | --- | --- | --- | --- |
+| damage | Direct damage — base power × ATK/MATK × affinity | mult | yes | yes |
+| hits | Strikes per landing; each is a proc trigger | int | yes (own affinity list) | no |
+| heal_amount | Flat HP restored | HP | yes | yes |
+| shield_amount | Barrier HP absorbed before it breaks | HP | yes | yes |
+| dot_damage | Status DoT per tick (Poison / Bleed / Burn) | HP | yes | yes |
+| sub_stat_magnitude | How far ONE sub-stat moves, up or down | frac or amount (the stat's own answer) | yes | yes |
+| outgoing_charge_worth | What ONE charge of Boost / Reduce Outgoing Damage is worth | frac | yes | yes |
+| shove_speed | Knockback / Pull speed | u/s | no (raw) | no — movement, not power |
+| charges | How many uses a charge pile holds (Parry, Brace, the two outgoing-damage piles) | int | no (`stacksPerApply`, or derived from swing rate) | no |
+| cleanse_count | How many ailments one Cleanse removes | int | no (raw) | no — a whole number no fraction can move |
+| modifier_seconds / modifier_stacks | What ExtendDuration / AddStacks hand another skill's pile | sec / int | yes (duration list / affinity list) | no — the other skill takes its own lift |
+| execute_scale | Execute bonus multiplier vs missing HP | mult | base roll scales; this is raw | base roll scales; this is raw |
+| proc_chance | Per-hit roll for a Status / Execute proc | 0..1 | yes (own affinity list) | no — clamped to 100%, so a lift saturates then does nothing |
+| duration | Effect window length | sec | yes (own affinity list) | **NEVER** — a Legendary must not hold a longer stun |
+
+**The rarity lift, in full:** a weapon adds **+0% Common, +3% Uncommon, +9% Rare, +18% Epic, +30% Legendary** to the ring's affinity term on the channels marked above. It is **added** to that term, never multiplied onto the finished number — multiplying would pay out more the more ring a player had already built, so the same drop would be worth far more to a veteran than to the person who needs it; adding makes a Legendary worth the same +30 points to everyone. **It needs no affinity weights:** an effect that authors none has a ring term of exactly 1, and the lift is added to that, so a weightless skill on a Legendary is still ×1.30. The lift applies only when the skill came from the EQUIPPED WEAPON'S rolled kit — a skill ticked on in the Grimoire scales off the ring alone.
 
 **Retired channels — folded into `sub_stat_magnitude` when the sub-stat collapse landed:** `dmg_reduction` (Guard), `dmg_taken_frac` (Vulnerability), `heal_per_tick` (Regen), `slow_amount`, `accuracy_loss`, `move_mult` (Haste), `leech_frac`, `reflect_frac`, `buff_mult`. Do not reintroduce any of them as its own channel — see the note under the Effects catalog.
 
@@ -104,7 +108,7 @@ A channel is a **stat-agnostic numeric output** — the common language every ot
 
 ## 2. Effects Catalog — LOCKED (the behaviors, "what happens?")
 
-Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer), not rolled onto a weapon — a skill that knocks back simply *is* a knockback skill. The **ring does numbers only**, so there's nothing to "fold" between weapon and ring. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
+Every behavior is a **natural effect authored on the skill** (composed in the Skill Composer), not rolled onto a weapon — a skill that knocks back simply *is* a knockback skill. **The weapon contributes no BEHAVIOUR, only a numeric lift from its rarity** (§1), so there is still nothing to "fold": the ring and the rarity both move the same channels and never add a verb. Each effect owns the channels in its row; **ring scales** = what affinity actually grows (verified against the applier, not just the composer label).
 
 **This table is the `SkillEffectKind` enum, in enum order** (re-read off `SkillEffect.cs` on 2026-08-24). It is the full set — there is no effect a skill can author that is not here.
 

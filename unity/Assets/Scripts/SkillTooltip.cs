@@ -225,18 +225,37 @@ public static class SkillTooltip
     {
         effectLines.Clear();
         if (def == null || def.bindings == null) return effectLines;
-        for (int i = 0; i < def.bindings.Count; i++)
+        // The estimate below has to agree with what the cast will really deal, and the weapon's rarity is part of that
+        // now. Held for the whole listing the same way the dialect is, because it is one value for one skill — and
+        // restored after, so a line described with no skill in hand can't inherit the last weapon's rarity.
+        float prevLift = describeLift;
+        describeLift = Character.Instance != null ? Character.Instance.SkillRarityLift(def.id) : 0f;
+        try
         {
-            var b = def.bindings[i];
-            if (b == null || b.effects == null) continue;
-            for (int k = 0; k < b.effects.Count; k++)
+            for (int i = 0; i < def.bindings.Count; i++)
             {
-                string line = DescribeEffect(b.effects[k]);
-                if (!string.IsNullOrEmpty(line)) effectLines.Add(line);
+                var b = def.bindings[i];
+                if (b == null || b.effects == null) continue;
+                for (int k = 0; k < b.effects.Count; k++)
+                {
+                    string line = DescribeEffect(b.effects[k]);
+                    if (!string.IsNullOrEmpty(line)) effectLines.Add(line);
+                }
             }
         }
+        finally { describeLift = prevLift; }
         return effectLines;
     }
+
+    // The rarity lift of the skill currently being described, or 0 when it is being described without one (the buff
+    // tray's "what it does" line asks about a single effect, with no skill and no weapon behind it).
+    static float describeLift;
+
+    // What a live cast really produces from an authored OUTPUT number: the ring's affinity term plus the weapon's
+    // rarity lift, added exactly as the applier adds them. Every line that shows such a number goes through here —
+    // a card showing the raw authored figure promises one number while the fight deals another, and the two only
+    // disagree by more as a player invests.
+    static float LiveMult(SkillEffect e) => SkillEffectApplier.AffinityMult(e.affinity) + describeLift;
 
     /// <summary>Every effect line in a chosen dialect. Copies into <paramref name="into"/> so the caller owns the
     /// result (the no-alloc list above is only safe until the next call).</summary>
@@ -281,8 +300,8 @@ public static class SkillTooltip
                 string s = "Deals " + Hl(mult.ToString("0.##") + "×") + " " + DmgWord(e.damageType) + " damage";
                 if (ch != null)
                 {
-                    // Mirror the runtime roll: base attack × mult × the damage-affinity scaling (ring investment).
-                    float aff = SkillEffectApplier.AffinityMult(e.affinity);
+                    // Mirror the runtime roll: base attack × mult × what a live cast really scales by.
+                    float aff = LiveMult(e);
                     int est = Mathf.RoundToInt((e.damageType == DamageType.Magic ? ch.MaxMagicAttack : ch.MaxAttack) * mult * aff);
                     if (est > 0) s += " (~" + Hl(est.ToString()) + ")";
                 }
@@ -310,7 +329,7 @@ public static class SkillTooltip
             case SkillEffectKind.Execute:
                 return (e.chance.value < 1f ? Pct(e.chance.value) + " per hit: " : "")
                      + "execute — bonus " + DmgWord(e.damageType) + " damage scaling with the target's missing HP (×" + Hl(e.magnitude.value.ToString("0.##")) + ")";
-            case SkillEffectKind.Heal:          return "Heals " + Hl(e.amount.value.ToString()) + " HP";
+            case SkillEffectKind.Heal:          return "Heals " + Hl(Mathf.RoundToInt(e.amount.value * LiveMult(e)).ToString()) + " HP";
             case SkillEffectKind.Taunt:         return "Taunts nearby enemies for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.Teleport:      return "Blinks to the target location";
             case SkillEffectKind.Dash:          return "Dashes to the target location";
@@ -320,13 +339,13 @@ public static class SkillTooltip
             case SkillEffectKind.Cleanse:       return "Removes " + Hl(Mathf.Max(1, e.amount.value).ToString()) + " debuff(s)";
             case SkillEffectKind.Knockback:     return "Knocks enemies back";
             case SkillEffectKind.Pull:          return "Pulls enemies in";
-            case SkillEffectKind.Shield:        return "Absorbs " + Hl(e.amount.value.ToString()) + " damage for " + Hl(e.seconds.value.ToString("0.#") + "s");
+            case SkillEffectKind.Shield:        return "Absorbs " + Hl(Mathf.RoundToInt(e.amount.value * LiveMult(e)).ToString()) + " damage for " + Hl(e.seconds.value.ToString("0.#") + "s");
             case SkillEffectKind.BoostOutgoingDamage:
             {
                 // Charges ARE stacks, read from the same knob the runtime uses — never a second number to keep in sync.
                 int charges = e.stacking ? Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value)) : 1;
                 string window = " within " + Hl(e.seconds.value.ToString("0.#") + "s");
-                string amount = "+" + Pct(e.magnitude.value) + " damage";
+                string amount = "+" + Pct(e.magnitude.value * LiveMult(e)) + " damage";
                 return charges > 1
                     ? "Your next " + Hl(charges.ToString()) + " attacks deal " + amount + window
                     : "Your next attack deals " + amount + window;
@@ -340,7 +359,7 @@ public static class SkillTooltip
                 // whoever the effect lands on, since this one is authored on either side.
                 int charges = e.stacking ? Mathf.Max(1, Mathf.RoundToInt(e.stacksPerApply.value)) : 1;
                 string window = " within " + Hl(e.seconds.value.ToString("0.#") + "s");
-                string amount = "−" + Pct(Mathf.Clamp01(e.magnitude.value)) + " damage";
+                string amount = "−" + Pct(Mathf.Clamp01(e.magnitude.value * LiveMult(e))) + " damage";
                 string who = Subject(e, "Your", "Their");
                 return charges > 1
                     ? who + " next " + Hl(charges.ToString()) + " attacks deal " + amount + window
@@ -426,7 +445,7 @@ public static class SkillTooltip
     /// "+6%" of a trickle that is usually zero.</summary>
     static string SubStatLine(SkillEffect e, bool worse)
     {
-        float v = Mathf.Max(0f, e.magnitude.value);
+        float v = Mathf.Max(0f, e.magnitude.value * LiveMult(e));
         string amount = SubStats.IsPercent(e.subStat) ? Pct(v) : v.ToString("0.##");
         return (worse ? "−" : "+") + amount + " " + SubStatName(e.subStat)
              + (e.stacking ? " per stack" : "")

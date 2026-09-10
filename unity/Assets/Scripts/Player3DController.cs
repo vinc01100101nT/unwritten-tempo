@@ -171,7 +171,10 @@ public partial class Player3DController : MonoBehaviour
     readonly List<Vector2> path = new List<Vector2>();
     int wp; bool routing;
     float nextChaseRepath;
-    Vector3 worldFacing = Vector3.back;          // last move/aim world dir; facing derived camera-relative
+    // Held in the SHARED holder every character uses — a creature's brain holds the same one — so "point at this"
+    // cannot mean two different things on two kinds of character. Starts pointed the way a fresh body faces.
+    CharacterBrain.Facing facing = MakeFacing(Vector3.back);
+    static CharacterBrain.Facing MakeFacing(Vector3 dir) { var f = new CharacterBrain.Facing(); f.Toward(dir); return f; }
 
     // Free-fall: vertical velocity that ACCUMULATES under gravity while airborne (so a ledge walk-off
     // accelerates downward with real air time), reset to a small stick value on landing. `falling` gates
@@ -185,14 +188,14 @@ public partial class Player3DController : MonoBehaviour
 
     /// <summary>Last move/aim direction in WORLD space (XZ meaningful). Read by the minimap to orient the
     /// player arrow, and by the stance visual for facing. Fixed-north top-down: world +X = map right, world +Z = map up.</summary>
-    public Vector3 WorldFacing => worldFacing;
+    public Vector3 WorldFacing => facing.World;
 
     /// <summary>Turn the player to look at a world point on the XZ plane (skills call this so the caster faces
     /// where it cast). A point on top of the player (self-cast) is a no-op — the planar direction is ~zero.</summary>
     public void FaceWorldPoint(Vector3 point)
     {
         Vector3 d = point - transform.position; d.y = 0f;
-        if (d.sqrMagnitude > 1e-4f) worldFacing = d;   // facing derived camera-relative in Update
+        facing.Toward(d);   // facing derived camera-relative in Update
     }
 
     void Awake()
@@ -362,7 +365,7 @@ public partial class Player3DController : MonoBehaviour
         if (status != null && status.MovementFlinched) move = Vector3.zero;
 
         bool moving = move.sqrMagnitude > 0.001f;
-        if (moving) worldFacing = move;
+        if (moving) facing.Toward(move);
         // Sprint gear (V toggle, stamina-gated) decided FIRST so it wins over Shift-walk; also drains/refills stamina.
         UpdateSprintAndStamina(moving);
         WalkingSlow = moving && HeldShift() && !Sprinting;   // Shift = walk (unless sprinting); read by the stance visual
@@ -698,7 +701,7 @@ public partial class Player3DController : MonoBehaviour
             DropTheWait();
             order = Order.Idle; routing = false; path.Clear();
             if (targetMarker != null) targetMarker.Follow(null);
-            worldFacing = gap.sqrMagnitude > 1e-4f ? gap : worldFacing;
+            facing.Toward(gap);
             run();
             return Vector3.zero;
         }
@@ -882,9 +885,9 @@ public partial class Player3DController : MonoBehaviour
             if (dashToPoint && dashFaceAt.HasValue)
             {
                 Vector3 look = dashFaceAt.Value - transform.position; look.y = 0f;
-                if (look.sqrMagnitude > 1e-4f) worldFacing = look;
+                facing.Toward(look);
             }
-            else worldFacing = dir;
+            else facing.Toward(dir);
             // CLAMP THE STEP TO WHAT'S LEFT. One frame of dash travel is routinely LONGER than the whole trip
             // (8× run speed ≈ 0.4 units/frame vs a ~0.3-unit lunge to a mob's side), so an unclamped step flies past
             // the destination, the arrive test (a 0.05 radius) never sees it, and the glide ping-pongs across the spot
@@ -934,7 +937,7 @@ public partial class Player3DController : MonoBehaviour
     {
         if (attackTarget == null) return;
         Vector3 d = attackTarget.transform.position - transform.position; d.y = 0f;
-        if (d.sqrMagnitude > 1e-4f) worldFacing = d;   // facing derived camera-relative in Update
+        facing.Toward(d);   // facing derived camera-relative in Update
     }
 
     // Nearest living mob within radius (planar XZ). Scans the MonsterAI3D registry rather than a physics

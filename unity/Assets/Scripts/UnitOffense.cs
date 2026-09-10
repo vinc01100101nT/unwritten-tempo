@@ -61,4 +61,44 @@ public static class UnitOffense
         float m = Mathf.Clamp(attackSpeedMult, 0.01f, UnitStatMath.MaxAttackSpeedMult);
         return Mathf.Max(0.05f, baseInterval / m);
     }
+
+    /// <summary>"AM I CLOSE ENOUGH TO STAND AND FIGHT?" — the single answer, held by whoever is asking.
+    ///
+    /// <para>It is STICKY on purpose. A plain distance test flips true and false on alternate frames against a target
+    /// hovering at the edge of reach, and everything hanging off it flips with it: the feet start and stop, the step
+    /// sounds machine-gun, and the body snaps between standing and walking. So it turns on at reach and stays on
+    /// until the target has drifted, by the one authored factor on the shared character spec, past its reach.</para>
+    ///
+    /// <para><b>It never extends reach.</b> Landing a blow still asks the strict distance; this only answers whether
+    /// to stand still, which is why the extra margin costs nothing.</para>
+    ///
+    /// <para>Held as a value on the asker — the player's attacker and every creature's brain — so one description of
+    /// "stand and fight" serves both. Before this, the person at the keyboard stopped the moment they could swing and
+    /// a creature walked on past that point to an authored hold distance, so it bit you while still walking.</para></summary>
+    public struct EngageLatch
+    {
+        Object at;      // who the answer below is about; a different target starts the question again
+        bool engaged;
+
+        /// <summary>Answer for this frame. Both figures are SQUARED — every caller here already has the squared gap
+        /// in hand and this runs on every creature every frame, so squaring the reach costs one multiply where taking
+        /// the root of the gap would cost a square root per creature. They must be measured the same way as each other
+        /// and as the blow itself.</summary>
+        public bool Ask(Object target, float distanceSqr, float reachSqr)
+        {
+            if (target == null) { engaged = false; at = null; return false; }
+            if (target != at) { engaged = false; at = target; }
+
+            if (distanceSqr <= reachSqr) engaged = true;
+            else
+            {
+                // READ FROM THE ONE AUTHORED HOME, here and nowhere else, so there is exactly one place this number
+                // exists and one place it is read. It used to be an authored field on the player and a number written
+                // into this file for creatures — same rule, one side tunable and the other not.
+                float stay = Mathf.Max(1f, CharacterSpec.Active.stayEngagedFactor);
+                if (distanceSqr > reachSqr * stay * stay) engaged = false;
+            }
+            return engaged;
+        }
+    }
 }

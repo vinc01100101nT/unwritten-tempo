@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// The live-3D player visual — Animator-driven. It rides the real
 /// <see cref="Player3DController"/> (snaps to its feet each frame, hides the player's own sprite) and, using the
-/// SHARED <see cref="PlayerStanceBrain"/>, decides the action stance and routes it through the single choke point
+/// SHARED <see cref="CharacterBrain"/>, decides the action stance and routes it through the single choke point
 /// <see cref="StanceController"/> — which drives this object's <see cref="Character3DPose"/> (an
 /// <see cref="IStancePose"/>). Movement/combat stay the real controller's; this is purely presentation.
 ///
@@ -15,8 +15,6 @@ public class Character3DVisual : MonoBehaviour
 {
     [Tooltip("The real player to ride. Auto-found at Start if empty.")]
     public Player3DController player;
-    [Tooltip("Ground speed (units/sec) above which the player counts as moving.")]
-    public float walkThreshold = 0.12f;
     [Tooltip("Extra world-Y offset applied ONLY while a Mixamo one-shot clip plays (Quaternius clips unaffected). " +
              "Negative sinks the model so the Mixamo rig's stretched foot hides UNDER the floor, like Mixamo's own " +
              "preview. Tune live in Play; one value grounds every Mixamo clip because they share one baked baseline.")]
@@ -31,11 +29,13 @@ public class Character3DVisual : MonoBehaviour
     Player3DAttacker attacker;
     CharacterController cc;
     SpriteRenderer hiddenPlayerSprite;
-    Character subscribed;
     int groundMask;
     Vector3 lastPlayerPos;
-    float hurtUntil;
-    bool wasDead;
+
+    // THE ONE THING THAT DECIDES A FLINCH, for everybody. The door every real hit passes through sets it, and a
+    // creature's body already read it here. This used to keep its own timer instead, started from a damage event and
+    // measured against the hurt clip — a second owner of one fact, on the one body where the two could disagree.
+    StatusController status;
 
     void Awake()
     {
@@ -66,19 +66,10 @@ public class Character3DVisual : MonoBehaviour
         hiddenPlayerSprite = player.GetComponent<SpriteRenderer>();
         if (hiddenPlayerSprite != null) hiddenPlayerSprite.enabled = false;
 
-        subscribed = Character.Instance;
-        if (subscribed != null) subscribed.OnDamaged += OnDamaged;
+        status = Status.Of(player.gameObject);
 
         lastPlayerPos = player.transform.position;
         transform.position = GroundedPos(lastPlayerPos);
-    }
-
-    void OnDamaged(int dmg)
-    {
-        // How long the flinch reads for comes from the CLIP, not a number typed here — the same length the movement
-        // stop uses, so what you see and how long you're pinned can never drift apart.
-        if (stance != null && (Character.Instance == null || !Character.Instance.IsDead))
-            hurtUntil = Time.time + stance.ActionDuration(StanceId.Hurt);
     }
 
     // Seat the model's feet on the Ground layer (same truth the townsfolk use). The Quaternius
@@ -124,27 +115,46 @@ public class Character3DVisual : MonoBehaviour
         float speed = (pos - lastPlayerPos).magnitude / dt;
         lastPlayerPos = pos;
 
-        // Death overrides everything: Die plays once and holds its final (lying) frame (non-looping state).
-        bool dead = Character.Instance != null && Character.Instance.IsDead;
-        if (dead) { stance.CancelActionOverride(); stance.DriveStance(StanceId.Die); wasDead = true; return; }
-        if (wasDead) { stance.ClearAction(); wasDead = false; }
+        // WHAT THIS BODY IS DOING, said in the plain terms every live-3D character is described in. This is the only
+        // part of the whole decision that belongs to the person at the keyboard: it is read off their input, their
+        // weapon and their traversal, and everything after it is the shared brain that a townsperson and a creature
+        // wearing the same rig also run.
+        var it = new CharacterBrain.Intent
+        {
+            facing        = player.WorldFacing,
+            groundSpeed   = speed,
+            sprinting     = player.Sprinting,
+            walkingSlow   = player.WalkingSlow,
+            dead          = Character.Instance != null && Character.Instance.IsDead,
+            falling       = player.IsFalling,
+            swinging      = attacker != null && attacker.Swinging,
+            swing         = WeaponStances.AttackFor(EquippedWeapon()),
+            swingWindow   = attacker != null ? attacker.SwingTime : 0f,
+            airborne      = player.IsAirborne,
+            airborneFreeze    = player.JumpClipFreeze,
+            airborneReleasing = player.JumpClipReleasing,
+            gliding       = player.SkillGliding,
+            dashing       = player.Dashing || player.EDashing,
+            dashWindow    = player.EDashing ? player.eDashDuration : 0.4f,
+            flinching     = status != null && status.MovementFlinched,
+        };
 
-        // Shared brain: same decision the billboard uses. A full 3D controller always supports Run/Jump beats (the
-        // clip a beat plays is authored per-stance in the Stance Composer; capability here is structural, not clip).
-        // hasSprint = a distinct Sprint clip is authored; otherwise the brain sprints on the Run clip (the old
-        // full-speed run "moved" to the Sprint gear). StanceCatalog.Get is a cheap array index — no per-frame alloc.
-        var sprintBinding = StanceCatalog.Get(StanceId.Sprint);
-        bool hasSprint = sprintBinding != null && !string.IsNullOrEmpty(sprintBinding.clip);
-        var d = PlayerStanceBrain.Decide(player, attacker, speed, walkThreshold, hurtUntil,
-                                         hasRun: true, hasJump: true, hasSprint: hasSprint);
-        if (d.hasAction) stance.DriveStance(d.id, d.window, d.release);
-        else stance.ClearAction();
-        if (d.applyFacing) pose.SetFacing(d.facing);
+        // A full 3D controller always has run and jump beats — that capability is structural, not a clip. Whether a
+        // DISTINCT sprint clip exists is asked of the one place that knows.
+        var d = CharacterBrain.Decide(it, CharacterBrain.WalkThreshold, hasRun: true, hasJump: true,
+                                      hasSprint: CharacterBrain.HasSprintClip());
+        CharacterBrain.Apply(stance, pose, d);
+    }
+
+    // The equipped weapon TYPE (None when unarmed) — picks which swing this body plays. Reads the single owner.
+    static WeaponType EquippedWeapon()
+    {
+        var it = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
+        return it != null ? it.weaponType : WeaponType.None;
     }
 
     void OnDestroy()
     {
-        if (subscribed != null) subscribed.OnDamaged -= OnDamaged;
         if (hiddenPlayerSprite != null) hiddenPlayerSprite.enabled = true;
     }
 }

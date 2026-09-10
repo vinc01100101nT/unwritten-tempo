@@ -55,7 +55,7 @@ public class HotbarSlotDragSource : MonoBehaviour, IBeginDragHandler, IDragHandl
 
         ghost = new GameObject("HotbarDragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
         ghost.transform.SetParent(canvas.transform, false);
-        ghost.transform.SetAsLastSibling();
+        UiLayers.Raise(ghost.transform, UiLayers.Layer.DragGhost);
         var img = ghost.GetComponent<Image>();
         img.color = new Color(tint.r, tint.g, tint.b, 0.75f);
         img.raycastTarget = false;
@@ -121,7 +121,7 @@ public class SkillDragSource : MonoBehaviour, IBeginDragHandler, IDragHandler, I
 
         ghost = new GameObject("SkillDragGhost", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image)) { hideFlags = HideFlags.DontSaveInEditor };
         ghost.transform.SetParent(canvas.transform, false);
-        ghost.transform.SetAsLastSibling();
+        UiLayers.Raise(ghost.transform, UiLayers.Layer.DragGhost);
         var img = ghost.GetComponent<Image>();
         img.color = new Color(tint.r, tint.g, tint.b, 0.75f);
         img.raycastTarget = false;

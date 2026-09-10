@@ -30,7 +30,7 @@ public abstract class Agent3DVisual : MonoBehaviour
 
     // What counts as walking for a body with no mover to ask, in units per second. Well above the crawl a body
     // makes while easing the last centimetre onto a position it has nearly reached, well below a walk.
-    const float MinTravelSpeed = 0.05f;
+    const float MinTravelSpeed = CharacterBrain.WalkThreshold;
 
     // ---- the server's word about this body -------------------------------------------------------------
     // A body the server PLACES is TOLD two things rather than asked for them: how fast it is travelling, and what
@@ -122,6 +122,40 @@ public abstract class Agent3DVisual : MonoBehaviour
     Vector3 lastPos;
     bool seated;   // the feet have been placed at least once; a still unit then needs no further ground ray
 
+    // FOOTSTEPS, for every body this drives. Fired the instant this body's OWN walk or run animation crosses an
+    // authored foot-plant frame — never a per-second timer — so the steps are glued to the feet you can see planting,
+    // at any speed, with nothing to retune. This used to be written out twice, once on a townsperson and once on a
+    // creature, in two places that had to be kept in step by hand.
+    // Per-body state and a cached sink, so the per-frame detection allocates nothing.
+    readonly FootstepTracker.Gait gait = new FootstepTracker.Gait();
+    System.Action<Vector3, float> onFootPlant;
+
+    /// <summary>THIS BODY WAS PUT SOMEWHERE ELSE — spawned, revived, handed back out of a pool, or thawed after being
+    /// frozen far away. Baseline everything that measures against where it was standing, or the first frame back
+    /// reads one enormous stride: a phantom footstep from wherever it used to be, and feet placed on ground it is no
+    /// longer over.</summary>
+    public void ReseatAfterMove()
+    {
+        gait.Seed(transform.position);
+        lastPos = transform.position;
+        seated = false;
+    }
+
+    // One foot-plant: feed the shared ring (wet-ground ripples and snow prints under everybody), then play the shared
+    // footstep clip POSITIONALLY so you hear WHERE the step happened — the engine fades distant ones, so a busy
+    // plaza is not a wall of stomps. Swaps in the splash step over a puddle, the same test the player uses. The
+    // sounds come from the shared character set, not off the player object, so a town has footsteps whether or not
+    // anybody is playing. Zero-GC: the puddle test is a single fbm, and the voice and ripple slot are pooled.
+    void OnFootPlant(Vector3 foot, float sizeScale)
+    {
+        FootstepTracker.Instance?.EmitStep(foot, sizeScale);
+        var spec = CharacterSpec.Active;
+        if (spec.footstepSfx == null || spec.footstepSfx.Empty) return;
+        bool onWater = spec.waterFootstepSfx != null && !spec.waterFootstepSfx.Empty
+                       && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(foot);
+        Sfx.PlayAt(onWater ? spec.waterFootstepSfx : spec.footstepSfx, foot);
+    }
+
     protected virtual void Awake()
     {
         agent = GetComponent<PathAgent3D>();
@@ -131,6 +165,7 @@ public abstract class Agent3DVisual : MonoBehaviour
         int gl = LayerMask.NameToLayer("Ground");
         groundMask = gl >= 0 ? (1 << gl) : 0;
         lastPos = transform.position;
+        onFootPlant = OnFootPlant;   // cached once → the per-frame detection allocates no closure
     }
 
     /// <summary>Coming back after a freeze (or a pooled reuse) resumes with a <see cref="lastPos"/> from wherever this
@@ -142,6 +177,10 @@ public abstract class Agent3DVisual : MonoBehaviour
     {
         lastPos = transform.position;
         seated = false;
+        // A BODY HANDED BACK OUT OF A POOL COMES BACK SOMEWHERE ELSE, so last life's position would read as one
+        // enormous step on its first frame and snap this unit to face along that jump. Re-baselined for the same
+        // reason lastPos above is, and at the same moment.
+        serverPosSeeded = false;
         // A POOLED BODY COMES BACK AS SOMEBODY ELSE. It may be handed to a different unit entirely, so last life's
         // told speed would have it walking on the spot, and last life's played beat would swallow the new unit's
         // first swing if that swing happened to be stamped earlier on the clock.
@@ -159,6 +198,7 @@ public abstract class Agent3DVisual : MonoBehaviour
         // watched PERSON today (their body is destroyed outright), so this changes nothing now — it is here so that
         // the day one is pooled, it cannot come back walking at the last person's cadence.
         if (stance != null) stance.TellGait(0f);
+        gait.Seed(transform.position);
     }
 
     /// <summary>This body's pose sink — the same answer <see cref="Character3DVisual.Pose"/> gives for the avatar at
@@ -176,10 +216,15 @@ public abstract class Agent3DVisual : MonoBehaviour
         seated = false;   // a brand-new body has never been placed on the ground, even if this unit hasn't moved
     }
 
-    /// <summary>Drive a role-specific action stance this frame (attack / hurt / die). Return true to claim the
-    /// frame — locomotion and facing are then skipped, because the role action outranks walking. Default: no
-    /// role vocabulary at all.</summary>
-    protected virtual bool DriveRoleAction() => false;
+    /// <summary>ADD WHAT ONLY THIS KIND OF BODY KNOWS to the description the shared brain is about to read — which
+    /// way it wants to look, whether it is swinging, flinching or dead. The base has already filled in everything
+    /// that is true of EVERY body: how fast it is travelling, which gear it is in, and the line it travelled, which
+    /// is the facing a body wants when it has no opinion of its own.
+    ///
+    /// <para>This is the ONLY thing a kind of body is allowed to own. Every rule that turns this description into a
+    /// pose and a direction lives in <see cref="CharacterBrain"/> and is the same one the person at the keyboard
+    /// runs. There used to be three of those rules — one per kind — and they drifted.</para></summary>
+    protected virtual void DescribeSelf(ref CharacterBrain.Intent it) { }
 
     /// <summary>"AM I WALKING, AND HOW FAST?" — the one question, answered from the best source this body has.
     ///
@@ -208,48 +253,75 @@ public abstract class Agent3DVisual : MonoBehaviour
         return moving;
     }
 
-    /// <summary>Which locomotion gear to play at this measured ground speed. Base = always Walk, because a
-    /// strolling townsperson has exactly one gear. A body that has the player's TWO gears overrides it with
-    /// <see cref="PlayersGearFor"/>.</summary>
-    protected virtual StanceId LocomotionStanceFor(float groundSpeed) => StanceId.Walk;
-
-    /// <summary>Walk, Run or Sprint, chosen the way the PLAYER's own three gears are chosen — the thresholds read
-    /// from the one place that holds them, so a body standing in for a player changes gear at the same speed the
-    /// player does. Written once here because more than one role stands in for a player: the shadow that copies
-    /// them, and another person's body watched over the wire.
+    /// <summary>THE WHOLE DESCRIPTION of what this body is doing this frame — everything true of every body, then
+    /// whatever only this kind knows. One function, so a creature and a townsperson cannot be described differently.
     ///
-    /// <para><paramref name="sprinting"/> is the sprint gear as a FACT, never a guess — and there is deliberately
-    /// no speed threshold for it. A hasted run and a sprint are both simply fast, so a threshold would draw a
-    /// speed-buffed jog as a sprint and there is no number that could tell them apart. The machine that owns the
-    /// legs says which gear it is in; a body nobody has said anything about (a shadow copying you) never sprints,
-    /// which is exactly what it did before.</para></summary>
-    protected static StanceId PlayersGearFor(float groundSpeed, bool sprinting = false)
+    /// <para>The travel line is the FACING a body falls back on, and it is only offered while the body is actually
+    /// moving: a body standing still with no opinion keeps whatever facing it had, which is what a standing
+    /// townsperson has always done. Mid-glide the glide's own aim point is offered instead, because a hop that ends
+    /// in a strike has to arrive already looking at what it will hit.</para>
+    ///
+    /// <para>The gear is TOLD, never guessed from the speed: a hasted run and a sprint are both simply fast, and no
+    /// threshold could tell them apart. Whichever machine owns the legs says which gear they are in.</para></summary>
+    CharacterBrain.Intent DescribeThisFrame(Vector3 groundTravel, bool walking, float groundSpeed, Vector3 position)
     {
-        if (sprinting) return StanceId.Sprint;
-        return groundSpeed >= CharacterSpec.Active.GearSwitchSpeed ? StanceId.Run : StanceId.Walk;
+        var it = new CharacterBrain.Intent
+        {
+            groundSpeed = groundSpeed,
+            sprinting = toldSprinting,
+            // Nothing here has a keyboard, so unless this kind of body knows its own gear it is worked out from how
+            // fast it is going — against the one gear-change speed every character shares.
+            gearFromSpeed = true,
+        };
+
+        if (walking)
+        {
+            it.facing = groundTravel;
+            if (agent != null && agent.GlideFaceAt.HasValue)
+            {
+                Vector3 look = agent.GlideFaceAt.Value - position; look.y = 0f;
+                if (look.sqrMagnitude > 1e-4f) it.facing = look;
+            }
+        }
+
+        DescribeSelf(ref it);
+        return it;
     }
 
-    /// <summary>Which way this body should look this frame, or a zero vector for "leave it as it is".
+
+    // Where this body stood last frame, on the machine that OWNS it. Kept apart from lastPos because that one is
+    // never reached on a machine with no screen — this driver returns before it updates it.
+    Vector3 serverLastPos;
+    bool serverPosSeeded;
+
+    /// <summary>THE MACHINE THAT OWNS THE WORLD STILL HAS TO TURN THIS BODY, and it is the only thing it does with
+    /// it. Everything in the frame below needs a model to drive and there is none there, so this driver would stop
+    /// at its first line — leaving every body pointing whichever way it was spawned for the whole of its life.
+    /// Which way a body is turned is the one thing about it every watching machine can see and none of them can
+    /// work out alone, so it is decided here and travels with the body's position like every other fact about it.
     ///
-    /// <para>Base answer: the line it just travelled — or, mid-glide, the point the glide named instead, because a
-    /// hop that ends in a strike has to arrive already looking at what it will hit. A body that is not walking
-    /// keeps whatever facing it had, which is what a standing townsperson has always done.</para>
-    ///
-    /// <para>A role whose facing comes from somewhere OTHER than its own travel overrides this — a body that is
-    /// placed by a server is told which way it faces, and is told that even while it stands still.</para></summary>
-    protected virtual Vector3 FacingThisFrame(Vector3 groundTravel, bool walking, Vector3 position)
+    /// <para>Asked of the SAME function that answers it on a machine that can see, so the two can never drift into
+    /// deciding a facing differently. Written straight on with no easing: every machine watching already glides
+    /// toward each direction it is sent, so easing it here as well would only make the body turn late.</para></summary>
+    void TurnTheBodyItself()
     {
-        if (!walking) return Vector3.zero;
-        if (agent != null && agent.GlideFaceAt.HasValue)
-        {
-            Vector3 look = agent.GlideFaceAt.Value - position; look.y = 0f;
-            if (look.sqrMagnitude > 1e-4f) return look;
-        }
-        return groundTravel;
+        Vector3 p = transform.position;
+        if (!serverPosSeeded) { serverLastPos = p; serverPosSeeded = true; }
+        Vector3 d = p - serverLastPos; d.y = 0f;
+        serverLastPos = p;
+
+        bool walking = Travelling(d, Mathf.Max(Time.deltaTime, 1e-4f), out float groundSpeed);
+        var it = DescribeThisFrame(d, walking, groundSpeed, p);
+        var dec = CharacterBrain.Decide(it, CharacterBrain.WalkThreshold, hasRun: true, hasJump: true, hasSprint: false);
+        if (!dec.applyFacing) return;
+
+        transform.rotation = Quaternion.LookRotation(dec.facing);
     }
 
     protected virtual void LateUpdate()
     {
+        if (GameServer.IsServer) { TurnTheBodyItself(); return; }
+
         if (stance == null) return;
 
         // Travel this frame (LateUpdate runs after PathAgent3D's move). `moved` keeps the VERTICAL component so a
@@ -263,20 +335,30 @@ public abstract class Agent3DVisual : MonoBehaviour
 
         bool walking = Travelling(d, dt, out float groundSpeed);
 
-        if (!DriveRoleAction())
-        {
-            if (walking) stance.DriveStance(LocomotionStanceFor(groundSpeed));
-            else stance.ClearAction();   // fall through to the authored Idle stance (selfDrive = false)
+        // WHAT THIS BODY IS DOING, then THE ONE BRAIN, then THE ONE PLACE THAT PUTS THE ANSWER ON. Exactly the three
+        // steps the person at the keyboard goes through, running exactly the same middle step — which is the whole
+        // point: these are the same rig with the same clips, so they flinch, die, swing, jump, dash, walk, run and
+        // turn by one rule or they drift, and they did drift.
+        var it = DescribeThisFrame(d, walking, groundSpeed, p);
 
-            // Facing is asked EVERY frame, not only while walking, because which way a body looks and whether it is
-            // walking are two different questions — a person can stand their ground and turn. The default answer
-            // below still says "nothing" while standing, so a townsperson behaves exactly as it always has.
-            //
-            // Pass a UNIT direction, not the raw per-frame delta (~0.01 long): Character3DPose only yaws when the
-            // facing's sqrMagnitude clears 1e-4, and a tiny delta sits below that gate so the model never turns.
-            Vector3 face = FacingThisFrame(d, walking, p);
-            if (face.sqrMagnitude > 1e-8f && pose != null) pose.SetFacing(face.normalized);
-        }
+        // A BODY WHOSE OWNER ALREADY DECIDED is not decided about again. Almost everything a person's body does is
+        // known only on their own machine — they pressed jump, they rolled, they sat down — so what arrives here is
+        // that machine's verdict, already run through this same brain. Deciding it a second time from the little
+        // this machine can see would overrule somebody who actually knows.
+        CharacterBrain.Decision dec;
+        if (toldHasPose)
+            dec = new CharacterBrain.Decision
+            {
+                hasAction = true, id = toldPose, window = toldPoseWindow, release = toldPoseRelease,
+                cancelOneShot = toldPose == StanceId.Die,
+                facing = it.facing.sqrMagnitude > 1e-6f ? it.facing.normalized : Vector3.zero,
+                applyFacing = it.facing.sqrMagnitude > 1e-6f,
+            };
+        else
+            dec = CharacterBrain.Decide(it, CharacterBrain.WalkThreshold, hasRun: true, hasJump: true,
+                                        hasSprint: CharacterBrain.HasSprintClip());
+
+        CharacterBrain.Apply(stance, pose, dec);
 
         // Seat the feet: share the player's ground raycast (GroundSnap — the single owner of "how high is the floor
         // here"), then pin the model origin (feet pivot) onto the hit. The player instead seats its physics root
@@ -300,5 +382,10 @@ public abstract class Agent3DVisual : MonoBehaviour
             model.position = new Vector3(model.position.x, groundY + toldAbove, model.position.z);
             seated = true;
         }
+
+        // …and the steps, off the very frames this body just posed. Last, so it reads the pose this frame produced.
+        var tracker = FootstepTracker.Instance;
+        if (pose != null && tracker != null)
+            tracker.DetectPlants(pose, transform.position, gait, onFootPlant);
     }
 }

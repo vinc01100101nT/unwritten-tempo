@@ -35,7 +35,7 @@ Twelve people fought the thing that silenced the scribe. Because they acted **af
 
 - **Each of the 12 weapons is one of them.** A weapon is not a tool; it is the only surviving trace of a person the record never captured. The one-sentence identity in `active-skill-system-v3/weapon-roster-12-identities.md` **is** that person's character — the Shield is the one who stood in front, the Dagger is the one nobody saw arrive.
 - **They are known only by epithet, never by name.** An epithet is what witnesses called someone when no one had written the name down. The missing name is the point — and the reward.
-- **The random 4-skill kit is recollection, not a compromise.** A dropped weapon remembers its wielder in fragments; the rolled 1 ultimate + 3 normals is *which memories surfaced this time*. Two Scythes rolling different kits is incomplete memory, not inconsistency.
+- **The rolled kit is recollection, not a compromise.** A dropped weapon remembers its wielder in fragments; whichever skills it carries are *which memories surfaced this time*, and a finer weapon remembers more of them. Two Scythes rolling different kits is incomplete memory, not inconsistency.
 - **Carrying one bleeds their identity into you** — that is the charcoal → color return. You are not recovering *the* truth; you are finishing *a* story.
 - **Naming an Unwritten is the mastery endgame.** Learn enough of a weapon's pool and its true name can finally be written — a codex entry authored by play. Twelve names to write, twelve mastery tracks.
 

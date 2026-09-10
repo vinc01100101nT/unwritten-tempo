@@ -108,7 +108,7 @@ public partial class Player3DController
     {
         Vector3 wasd = ReadWasd();
         if (wasd.sqrMagnitude > 1e-4f) return wasd.normalized;
-        Vector3 f = worldFacing; f.y = 0f;
+        Vector3 f = WorldFacing; f.y = 0f;
         return f.sqrMagnitude > 1e-4f ? f.normalized : Vector3.forward;
     }
 
@@ -127,6 +127,12 @@ public partial class Player3DController
             {
                 jumpPhase = JumpPhase.Air; jumpPhaseStart = now;
                 jumpStart = now; jumpBaseY = transform.position.y;   // launch: latch the arc's takeoff time + height
+                // SAID ONCE, RATHER THAN STREAMED. The lift below is a scripted parabola — a pure function of when
+                // it began, how tall it goes and how long it lasts — so every machine can draw the identical curve
+                // for itself instead of being sent samples of it. Told as height-above-ground, which is what the
+                // watching side needs; the sideways half is NOT sent, because it is steered live by the keys and
+                // travels with the position like all other movement.
+                GameNetwork.ReportHopBegan(jumpHeight * UnitScale.ForPlayer, JumpAirTime);
             }
             return;
         }
@@ -186,13 +192,18 @@ public partial class Player3DController
             }
         }
 
-        if (jumpDir.sqrMagnitude > 1e-4f) worldFacing = jumpDir;   // re-face toward live input; no input keeps facing
+        facing.Toward(jumpDir);   // re-face toward live input; no input keeps facing
     }
 
     // On touchdown: if we landed in a visible rain puddle, splash. Same puddle test as the walking water step,
     // so the landing sound only fires where you'd see (and hear) water — dry-ground landings stay silent.
     void OnJumpLand()
     {
+        // AND THE CURVE IS OVER, whatever its clock said. A hop cut short by a ceiling or by rough ground ends here
+        // rather than when the arithmetic says it should, so the watching side stops drawing it at the same moment
+        // and hands the height back to what is actually reported.
+        GameNetwork.ReportHopEnded();
+
         if (waterJumpSfx != null && !waterJumpSfx.Empty
             && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(transform.position))
             Sfx.Play(waterJumpSfx);
@@ -235,7 +246,7 @@ public partial class Player3DController
         {
             float spd = eDashSpeedMult * CurrentRunSpeed;   // roll = 2× the player's CURRENT run speed (scales with size + buffs)
             controller.Move((eDashDir * spd + Vector3.down * gravity) * Time.deltaTime);
-            worldFacing = eDashDir;
+            facing.Toward(eDashDir);
         }
         if (Time.time - eDashStart >= eDashDuration)
         {

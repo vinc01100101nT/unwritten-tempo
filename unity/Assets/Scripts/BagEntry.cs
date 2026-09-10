@@ -26,6 +26,13 @@ public class BagEntry
     /// <summary>Picked up since the player last looked, so the window can mark it.</summary>
     public bool isNew;
 
+    /// <summary>This piece is being WORN. The bag holds only what is off your body, so a worn row is made for
+    /// the list from what the character has equipped, and is the only kind of row that offers Unequip.</summary>
+    public bool worn;
+
+    /// <summary>Which slot it is worn in — meaningless unless <see cref="worn"/>.</summary>
+    public EquipSlotType wornSlot;
+
     /// <summary>Is this something that can be worn.</summary>
     public bool IsEquip => def != null && def.slot != EquipSlotType.None;
 }

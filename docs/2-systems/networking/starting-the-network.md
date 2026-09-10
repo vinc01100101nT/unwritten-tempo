@@ -19,6 +19,9 @@ How to get the game running with more than one player. Follow it top to bottom; 
 
 Then you open the game, once per player.
 
+There is an optional fifth thing, the **player wiki** — a website with a live Server Status page. Nothing in the
+game needs it and it is section 6 below.
+
 The character server is the newest of the four and the one most likely to be forgotten. **Without it nobody can
 enter the world at all** — a player is no longer told an address by their own build; they ask the character
 server to let them in, and it decides where to send them.
@@ -89,6 +92,19 @@ Opens the game for one player. Run it again for each extra player. **The setting
 CHAR_SERVER_URL=http://127.0.0.1:8081 builds/client/unwritten.app/Contents/MacOS/unwritten &
 ```
 
+Serves the player wiki, whose **Server Status** page reads the live numbers from the character server. Optional
+— nothing in the game needs it. Then open `http://127.0.0.1:8099/#status`.
+
+```
+cd wiki && python3 -m http.server 8099 --bind 127.0.0.1
+```
+
+Proves the public status door answers. Want `playersOnline`, `servers` and `topPlayers`.
+
+```
+curl -s http://localhost:8081/stats
+```
+
 ### Building
 
 Builds the server. Unity must be open. Add `--linux` for a hosted machine.
@@ -107,6 +123,15 @@ Builds both at once.
 
 ```
 tools/build-game.sh both
+```
+
+### Backing up
+
+Saves the whole database to a dated file, proves the file is readable, and keeps the last fourteen. It prints
+how many characters it read back **out of the file**, so a backup that saved nothing cannot report success.
+
+```
+tools/backup-database.sh
 ```
 
 ### Checking what is running
@@ -263,6 +288,23 @@ If it refuses to start it says why in one line and quits, rather than listening 
 player. The two reasons it refuses: the port is already taken (another one is running — that is the common
 one), or it cannot reach the database.
 
+### The public status door
+
+One route on this server needs no sign-in and no shared secret: `/stats`. It answers, as plain JSON, how many
+players are in the world, which maps are standing on which game-server process, and the twenty characters who
+have earned the most experience. It carries counts and public names ONLY — never an account, never a position.
+
+```
+curl -s http://localhost:8081/stats
+```
+
+**Worked when:** it answers with `playersOnline`, `servers` and `topPlayers`. With no game server running,
+`servers` is an empty list and `playersOnline` is 0, which is the honest answer rather than a fault.
+
+It works the answer out at most once every 5 seconds and hands everyone the same copy, so a status page open
+on a thousand screens costs this server exactly what one screen costs. It is read by the player wiki's **Server
+Status** page — section 6 below.
+
 ## 4. The game server
 
 The server is a separate build of the game with no window. You only rebuild it when the game's code has changed — otherwise skip straight to running it.
@@ -379,19 +421,70 @@ the troubleshooting entry below. That is the one failure this step has actually 
 
 ---
 
+## 6. The player wiki
+
+Optional — nothing in the game needs it, and none of the five steps above wait for it.
+
+The wiki is a folder of files with no program behind it, so it needs something to hand those files to a
+browser. Python's built-in one is enough and needs nothing installed:
+
+```
+cd wiki && python3 -m http.server 8099 --bind 127.0.0.1
+```
+
+Leave that terminal open, then open `http://127.0.0.1:8099` in a browser.
+
+**Worked when:** the wiki loads with its left-hand list of pages.
+
+`--bind 127.0.0.1` keeps it on this machine only. Drop it and anyone on your network can read it — which is
+what you want on a hosted machine and not on a laptop in a cafe.
+
+### The Server Status page
+
+`http://127.0.0.1:8099/#status` shows how many players are in the world right now, which maps are standing on
+which game-server process, and who has earned the most experience. It reads those numbers from the character
+server's public door (section 3 above) and asks again every 5 seconds while you have it open.
+
+**Two of those numbers cannot be fresher than the game makes them**, however often the page asks: a level
+reaches the database within 15 seconds of being earned, and a game server reports how many players it is
+holding every 30 seconds. So a level appears within about 20 seconds of a level-up, and a player count within
+about 35 seconds of somebody arriving.
+
+**A browser treats the wiki and the character server as two different sites**, because they answer on two
+different ports — so it refuses to hand the page that reply unless the character server names the wiki's
+address as allowed. It allows `http://127.0.0.1:8099` unless told otherwise. Serve the wiki from anywhere else
+and the character server must be started with that address in `WIKI_ORIGINS`. Setting it REPLACES that default
+rather than adding to it, so list every address that needs to read it, separated by commas:
+
+```
+WIKI_ORIGINS=http://wiki.example.com SERVER_SECRET=change-me charserver/run.sh
+```
+
+**That refusal is SILENT** — the page simply says it cannot reach the character server, and the browser writes
+nothing anywhere you would look. So if the status page says that while `curl -s http://localhost:8081/stats` in
+a terminal answers fine, this setting is the thing to check.
+
+The experience column reads *not recorded* for a character whose lifetime figure was never written down. That
+is filled in for every existing character the next time the sign-in service starts.
+
 ## Pointing it somewhere else
 
-Nothing here is baked into a build. A build made once can be aimed anywhere by setting these before you start it — no rebuild.
+A build made once can be aimed anywhere by setting these before you start it — no rebuild. A copy you HAND TO
+SOMEBODY ELSE has no terminal to set them in, so it carries the two addresses in a file instead
+(`unity/Assets/StreamingAssets/server.txt`); anything set here still wins over that file, so nothing about your
+own builds or the servers changes.
 
 | Setting | What it does | Default |
 | --- | --- | --- |
 | `GAME_SERVER` | Makes this copy BE the server. Any value except `0` or `false` counts as on. | off |
 | `GAME_SERVER_HOST` | Which machine a player's game dials. | `localhost` |
 | `GAME_SERVER_PORT` | The port both sides use. Must match. | `7777` |
-| `ACCOUNTS_URL` | Where the sign-in service lives. | `http://localhost:8080` |
-| `CHAR_SERVER_URL` | Where the character server lives. **Required on a player's build too:** left unset, the game has nobody to ask to be let in, cannot be announced to the world, and refuses to dial rather than being turned away at the door. | `http://localhost:8081` on a server; empty on a player's build — which is why you must set it |
+| `ACCOUNTS_URL` | Where the sign-in service lives. A whole address, so `https://…` needs nothing else changed. | `http://localhost:8080` |
+| `CHAR_SERVER_URL` | Where the character server lives. **Required on a player's build too:** left unset, the game has nobody to ask to be let in, cannot be announced to the world, and refuses to dial rather than being turned away at the door. On a copy you hand out, put it in the settings file instead. | `http://localhost:8081` on a server; empty on a player's build — which is why you must set it |
+| `BIND_HOST` | Which addresses the sign-in service and the character server answer on. Set it to `127.0.0.1` on a hosted machine so the only way in is through the encrypting front door. Set on BOTH. | `0.0.0.0` — every address |
 | `SERVER_SECRET` | How the game server and the character server recognise each other. Must match on both. Never a player's token. **Required on the game server.** | none — the game server says so and nobody can enter |
 | `MAP_SERVER_ADDRESS` | How the character server reaches this game server back. Its address on the network, not the player's. | `127.0.0.1` |
+| `WIKI_ORIGINS` | Which website addresses a browser may read the character server's public status from — the wiki, and nothing else. Comma-separated; replaces the default rather than adding to it. Set on the CHARACTER server. | `http://127.0.0.1:8099` |
 
 **There is no setting for which maps a server holds, and there is nothing missing.** There used to be one. A game
 server is now told nothing about zones when it starts: the character server decides which server a zone is
@@ -612,6 +705,21 @@ Stop everything — game server, character server and sign-in service:
 pkill -f 'unwritten-server.app/unwritten'; pkill -f CharServer; pkill -f 'node .*src/server.ts'
 ```
 
+**That middle one stops EVERY character server on this machine**, including one you started on a spare port to
+test something. There is no way to stop only one of them by name, so if you are running two, stop the one you
+mean by its port:
+
+```
+lsof -nP -iTCP:8091 -sTCP:LISTEN     # the port yours is on — read the PID from the second column
+kill <that PID>
+```
+
+And the wiki, if you started it (section 6):
+
+```
+pkill -f 'http.server 8099'
+```
+
 **Stopped when:** the check below prints nothing at all.
 
 ```
@@ -660,10 +768,47 @@ If that start time is older than your last change, that server is the problem.
 
 ## Where it goes when it leaves your machine
 
-One ordinary always-on virtual machine, near the players — Singapore for South-East Asia. It runs all four
-things above. Not a match-based game-hosting service: those spin a session up and throw it away, while this world runs continuously.
+One ordinary always-on virtual machine, near the players. It runs all four things above. Not a match-based
+game-hosting service: those spin a session up and throw it away, while this world runs continuously.
 
-Unity's own hosting service shut down on 31 March 2026; do not plan around it.
+**Which machine, from whom, and what it costs is [Where the Game Is Hosted](../../1-planning/where-the-game-is-hosted.md)** — the choice lives there so
+there is one place to argue with it. Unity's own hosting service shut down on 31 March 2026; do not plan
+around it.
+
+### Three things that are only true once it leaves your machine
+
+**The two web services must stop being readable.** The sign-in service and the character server speak plain
+text. On your desk nothing can read it; over the internet a password and a save can be read by anything on the
+path. So on a hosted machine one program stands in front of both, holds the certificate and renews it by
+itself — `deploy/Caddyfile` is the whole configuration, with the domain names and the checks to prove it.
+Start both services with `BIND_HOST=127.0.0.1` in the same change: a certificate on the front door does nothing
+while the plain door beside it is still open to the internet. **The world servers are deliberately not behind
+it** — players reach those on a different kind of connection that certificates do not cover, and its protection
+is the one-time entry ticket the character server hands out.
+
+**A copy with no terminal carries its addresses.** `unity/Assets/StreamingAssets/server.txt` holds
+`ACCOUNTS_URL` and `CHAR_SERVER_URL` — the same two names you would set in a terminal, and a terminal still
+wins where there is one. Fill it in, then build the copies you give people. **Both are needed:** signing in
+uses the first, and without the second nobody can enter the world at all. **This is also what the EDITOR
+reads** when it was started from the Dock or Unity Hub instead of a terminal, which is why the file ships
+pointing at this machine rather than empty — an editor with no addresses can sign in and then cannot enter.
+
+**Back the database up on a schedule.** It is the only thing here that exists nowhere else — the code is in git
+and every build can be rebuilt, but a lost database is lost players. On the hosted machine, once a day:
+
+```
+10 4 * * * BACKUP_DIR=/var/backups/unwritten /srv/unwritten/tools/backup-database.sh >> /var/log/unwritten-backup.log 2>&1
+```
+
+To put one back — this destroys what is in the database now, so read it twice:
+
+```
+pg_restore --clean --if-exists -d "$DATABASE_URL" /var/backups/unwritten/unwritten-2026-09-08-0410.dump
+```
+
+When the world later runs on more than one machine, the character server and the world servers still speak
+plain text to each other. That is fine only while they share a private network, which every host offers within
+one region — never over the open internet.
 ---
 
 ## Related

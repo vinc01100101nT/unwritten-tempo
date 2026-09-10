@@ -402,7 +402,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player3DAttacker
   range: 0.5
-  rangeHysteresis: 1.4
   cooldown: 0.6
   windupTime: 0.18
   damage: 3
@@ -1837,7 +1836,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Character3DVisual
   player: {fileID: 236044106}
-  walkThreshold: 0.12
   mixamoFootOffsetY: 0
 --- !u!114 &1720462579
 MonoBehaviour:

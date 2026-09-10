@@ -1,0 +1,57 @@
+# THE ENCRYPTING FRONT DOOR for the hosted machine.
+#
+# WHY THIS EXISTS: the sign-in service and the character server both speak plain, readable text. On your own
+# desk that is harmless. Over the internet it means a player's password and their save travel where anyone on
+# the path can read them. This program stands in front of both, holds the certificate, and is the only thing
+# the internet can reach.
+#
+# WHY CADDY AND NOT SOMETHING ELSE: it fetches and renews the certificate itself, with no second program and
+# nothing to remember. The whole configuration is the twenty lines below.
+#
+# WHAT YOU NEED FIRST:
+#   1. A domain name. A certificate cannot be issued for a bare numeric address, so this is not optional.
+#   2. Two DNS "A" records, both pointing at the machine's address:
+#        accounts.example.com    -> 203.0.113.10
+#        characters.example.com  -> 203.0.113.10
+#      Two names rather than one because the two services are two different programs on two ports, and a name
+#      each means neither the game nor these services need to learn about paths they did not have before.
+#   3. Ports 80 and 443 open on the machine. Port 80 is how the certificate is issued and renewed; closing it
+#      makes renewal fail silently three months later.
+#   4. Both services started with BIND_HOST=127.0.0.1, so the only way in is through this file.
+#
+# INSTALL AND RUN (Debian/Ubuntu):
+#   sudo apt install -y caddy
+#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile      # after editing the names below
+#   sudo systemctl reload caddy
+#
+# PROVE IT WORKS:
+#   curl -s https://accounts.example.com/health        # want {"ok":true}
+#   curl -s http://203.0.113.10:8080/health            # want NOTHING — the plain door must be shut
+
+{
+	# Where the certificate authority writes to you when a renewal is failing. A real address you read.
+	email you@example.com
+}
+
+accounts.example.com {
+	reverse_proxy 127.0.0.1:8080
+}
+
+characters.example.com {
+	reverse_proxy 127.0.0.1:8081
+}
+
+# THE PLAYER WIKI, if you serve it. Its Server Status page reads the character server from a browser, and a
+# browser refuses that unless the character server was told this exact address — including the https:// and
+# with no trailing slash. It refuses SILENTLY, with nothing in the browser's console, so a status page that
+# has simply gone blank is almost always this. Start the character server with:
+#     WIKI_ORIGINS=https://wiki.example.com
+#
+# wiki.example.com {
+# 	root * /srv/unwritten/wiki
+# 	file_server
+# }
+
+# DELIBERATELY NOT HERE: the world servers. Players reach those on a different kind of connection that
+# certificates do not cover, and its protection is the one-time entry ticket the character server hands out.
+# Putting them behind this would break them, not secure them.

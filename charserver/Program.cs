@@ -11,7 +11,7 @@ using Npgsql;
 var config = Config.FromEnvironment();
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseUrls($"http://0.0.0.0:{config.Port}");
+builder.WebHost.UseUrls($"http://{config.BindHost}:{config.Port}");
 
 // NOBODY IS TOLD HOW THIS SERVER IS BUILT. Left as the scaffolding made it, an unhandled fault answers the
 // caller with the exception and its stack — which anyone can reach, without a token, by sending a malformed

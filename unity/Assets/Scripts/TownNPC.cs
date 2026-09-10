@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Ambient-life brain for a wandering townsfolk billboard (liveliness layers 1 + 3). It is a deliberately
+/// Ambient-life brain for a wandering live-3D townsperson (liveliness layers 1 + 3). It is a deliberately
 /// DUMB cousin of <see cref="MonsterAI3D"/>: no aggro, no combat — it just strolls to random points near where
 /// it spawned, pauses, and occasionally throws a canned "bark" when the player passes. "Lively" here = motion +
 /// believable purpose + reactivity, NOT intelligence (RO felt alive with almost no NPC AI). No Claude/LLM here.
@@ -9,8 +9,16 @@ using UnityEngine;
 /// Reuse, not reinvention:
 ///   • Movement rides the SAME <see cref="PathAgent3D"/> the mobs use (routes around props, crowd-spreads,
 ///     gravity-grounded); the live-3D <see cref="Character3DPose"/> self-animates Walk/Idle from that motion.
-///   • Barks reuse the pooled <see cref="DamagePopup.SpawnBubble"/> (zero per-bark allocation).
-///   • Crowd pass-through reuses <see cref="UnitCrowd"/> so the player walks THROUGH townsfolk (no getting stuck).
+///   • Barks are CHOSEN here and SHOWN by whoever is watching (<see cref="NetNpc"/>), in the pooled white bubble
+///     every character speaks through (zero per-bark allocation).
+///   • Crowd pass-through reuses <see cref="UnitCrowd"/> so the player walks THROUGH townsfolk (no getting
+///     stuck) — registered by the shared build recipe (<see cref="Townsperson"/>), because it is true of a
+///     townsperson's body whether or not this machine is the one deciding where it walks.
+///
+/// <para>ONE TOWN, SO ONE SET OF PEOPLE. This brain only ever runs on the machine that owns the world; every
+/// other machine receives the townsperson over the wire (see <see cref="NetNpc"/>) and gets a copy of this
+/// component with <see cref="ThinksForItself"/> switched off — kept, rather than left out, because pressing F to
+/// talk finds a townsperson through the registry below, and a body with no brain is one nobody can talk to.</para>
 ///
 /// PERFORMANCE (PERFORMANCE.md — hard constraint): simulate-near / freeze-far. Beyond <see cref="simulateRadius"/>
 /// from the player the brain stops AND the movement/animation components are disabled, so a town full of NPCs
@@ -24,7 +32,17 @@ public class TownNPC : MonoBehaviour
     Vector3 home;
     float wanderRadius = 6f;
     bool barksEnabled;
-    Transform player;
+
+    /// <summary>FALSE on the copy a watching machine draws for a townsperson the server owns. Such a body still
+    /// stands in the registry below, still answers for its height and its lines when somebody presses F, and still
+    /// puts its feet down audibly — it simply stops DECIDING anything, because where it walks, which way it looks
+    /// and what it says all arrive from the server. The same word a watched creature's brain uses, for the same
+    /// reason and with the same shape.</summary>
+    public bool ThinksForItself { get; private set; } = true;
+
+    /// <summary>Who this person is currently turned toward in conversation, or null. Read by the animation driver,
+    /// which is the one thing that can turn a body on a machine with no screen.</summary>
+    public Transform TalkTarget => talkTarget;
 
     [Header("Wander")]
     [Tooltip("Seconds to linger at a spot before strolling to the next one.")]
@@ -54,36 +72,11 @@ public class TownNPC : MonoBehaviour
     Behaviour visualBehaviour;
     Animator visualAnimator;
     Behaviour visualDriver;
-    float nextWander, nextBark, nextResolveCheck;
+    float nextWander, nextBark;
     bool paused;                               // true while lingering at an arrived spot (waiting out the pause before the next stroll)
     float wanderDeadline, nextProgressCheck;   // stuck-detection: time budget + periodic progress sampling
     Vector3 lastProgressPos;
     SimulationLod lod;                         // the SHARED simulate-near / freeze-far switch (mobs use the same one)
-
-    // Footsteps run through the SAME frame-locked plant detector the player uses (FootstepTracker.DetectPlants):
-    // townsfolk are live-3D (a self-animating Character3DPose), so each NPC's steps fire on its OWN walk/run animation
-    // crossing an authored foot-plant frame — never a distance odometer — so its SFX + ripple land on the visibly-
-    // planting foot with no foot-slide. Per-NPC gait state + a cached (zero-alloc) plant sink.
-    Character3DPose pose3d;
-    readonly FootstepTracker.Gait npcGait = new FootstepTracker.Gait();
-    System.Action<Vector3, float> onFootPlant;
-
-    // Borrow the SAME clips the player walks on, so a town shares one consistent footstep voice (zero new audio
-    // assets). Resolved once for the whole town straight off Player3DController.
-    static bool sSfxResolved;
-    static SfxSet sPlayerFootstep;
-    static SfxSet sWaterFootstep;   // the player's puddle-splash step, swapped in when an NPC is over a puddle
-
-    static bool ResolveFootstepSfx()
-    {
-        if (sSfxResolved) return true;
-        var pc = FindAnyObjectByType<Player3DController>();
-        if (pc == null) return false;
-        sPlayerFootstep = pc.footstepSfx;
-        sWaterFootstep = pc.waterFootstepSfx;
-        sSfxResolved = true;
-        return true;
-    }
 
     Transform talkTarget;   // set while the player is talking to us (F-interact): hold still + face them, no wander/bark
 
@@ -98,8 +91,6 @@ public class TownNPC : MonoBehaviour
         visualBehaviour = visual as Behaviour;
         visualAnimator = GetComponentInChildren<Animator>(true);   // 3D only; null for a billboard NPC
         visualDriver = GetComponent<TownNPC3DVisual>();            // 3D only; null for a billboard NPC
-        pose3d = GetComponentInChildren<Character3DPose>(true);    // the self-animating pose we read foot-plants from
-        onFootPlant = OnFootPlant;                                 // cache once → per-frame detection allocates no closure
 
         // The freeze-far switch. It owns the staggered distance test and disables the mover/animator/visual driver;
         // this brain only asks whether it's simulating, and re-seeds the gait when it thaws.
@@ -113,7 +104,7 @@ public class TownNPC : MonoBehaviour
     // FREEZE so a frozen NPC doesn't resume mid-stride. Same two beats the old inline gate did.
     void OnSimulatingChanged(bool on)
     {
-        if (on) npcGait.Seed(transform.position);
+        if (on) (visualDriver as Agent3DVisual)?.ReseatAfterMove();
         else if (agent != null) agent.Halt();
     }
 
@@ -147,22 +138,36 @@ public class TownNPC : MonoBehaviour
 
     public void EndTalk() => talkTarget = null;
 
+    /// <summary>Turn this into the copy a watching machine draws for a townsperson the server owns: it stops
+    /// deciding anything, its mover is switched off, and the freeze switch is told to keep its hands off.
+    ///
+    /// <para>The brain is left switched ON rather than removed, deliberately — the same asymmetry a watched
+    /// creature's has. Switching it off would drop this person out of the registry that pressing F searches,
+    /// leaving somebody standing there who could never be spoken to.</para>
+    ///
+    /// <para>THE FREEZE SWITCH IS SUSPENDED, not merely left alone. It captured this body's mover as it woke and
+    /// re-asserts everything it holds each time somebody crosses its radius — so a watched townsperson you walked
+    /// away from and came back to would have their mover switched back ON, and a live mover shoves a body about
+    /// with crowd separation and gravity, fighting the positions the server is sending.</para></summary>
+    public void BecomeAWatchedCopy()
+    {
+        ThinksForItself = false;
+        talkTarget = null;
+        if (agent != null) { agent.Halt(); agent.enabled = false; }
+        if (lod != null) lod.Suspend();
+        // Baselined from where this body actually is. Left at nothing it reads its first frame as one enormous
+        // stride and fires a footstep from the world origin — the copy never runs the set-up call that seeds it,
+        // because everything that call decides is the server's to decide now.
+        (visualDriver as Agent3DVisual)?.ReseatAfterMove();
+    }
+
     /// <summary>Set this townsperson up. Called by <see cref="AmbientLife"/> right after spawn so all the
-    /// per-NPC randomization (speed, home, pools, phase offsets) lives in one place.</summary>
-    public void Init(Vector3 homePoint, float wander, float moveSpeed, bool barksOn, Transform playerT)
+    /// per-NPC randomization (home, phase offsets) lives in one place.</summary>
+    public void Init(Vector3 homePoint, float wander, bool barksOn)
     {
         home = homePoint;
         wanderRadius = Mathf.Max(0.5f, wander);
         barksEnabled = barksOn;
-        player = playerT;
-
-        agent.moveSpeed = moveSpeed;
-        // Spread apart from other units WHILE WALKING, but townsfolk don't chase anyone — no avoidIgnore target.
-        agent.avoidMask = UnitCrowd.Mask;
-        // Don't drift while paused: the player is on the Crowd layer, so idle separation would shove a standing
-        // townsperson away when the player steps beside it (sliding in the Idle pose). Hold ground when halted.
-        agent.separateWhenIdle = false;
-        UnitCrowd.Register(gameObject);   // player + mobs pass through townsfolk (no stacking / getting stuck)
 
         // Desync the herd: random first-step delay + random LOD phase, so a freshly spawned crowd doesn't all
         // step / LOD-check on the same frame. The FIRST bark is allowed almost immediately (small random
@@ -170,41 +175,22 @@ public class TownNPC : MonoBehaviour
         // the long cooldown only governs REPEAT barks once the first has fired.
         nextWander = Time.time + Random.value * pauseMax;
         nextBark = Time.time + 0.5f + Random.value * 2.5f;
-        nextResolveCheck = Time.time + Random.value * 0.4f;
-        npcGait.Seed(transform.position);
+        (visualDriver as Agent3DVisual)?.ReseatAfterMove();
     }
 
     void Update()
     {
-        // --- Load-order recovery (staggered, not per-frame; stops once both are resolved) ---
-        if ((player == null || !sSfxResolved) && Time.time >= nextResolveCheck)
-        {
-            nextResolveCheck = Time.time + 0.4f + Random.value * 0.2f;
+        // --- A COPY OF SOMEBODY THE SERVER OWNS. Nothing here is this machine's to decide. Their feet still make a
+        // noise, because that comes off the animation the shared body driver is already playing, and it runs for
+        // every body it drives whether or not that body thinks for itself. ---
+        if (!ThinksForItself) return;
 
-            // If AmbientLife.Start ran before the (additively-loaded) player existed, re-acquire it here. Bounded
-            // cost — only runs while player is still null, on this slow cadence, never per-frame.
-            if (player == null)
-            {
-                var pc = FindAnyObjectByType<Player3DController>();
-                if (pc != null) player = pc.transform;
-            }
-
-            // Resolve the shared footstep SFX once the player exists (load order can spawn NPCs before the
-            // additive player). The step CADENCE isn't resolved here anymore — it comes from each NPC's own walk/run
-            // animation via FootstepTracker.DetectPlants, exactly like the player.
-            if (!sSfxResolved) ResolveFootstepSfx();
-        }
-
-        // --- Frozen because the player is far away (the shared switch owns the distance test) ---
+        // --- Frozen because nobody is near (the shared switch owns the distance test) ---
         if (lod != null && !lod.Simulating) return;
 
-        // --- Talking to the player (F-interact): hold still, turn to face them, skip wander/barks/footsteps. ---
-        if (talkTarget != null)
-        {
-            Vector3 toSpeaker = talkTarget.position - transform.position; toSpeaker.y = 0f;
-            if (toSpeaker.sqrMagnitude > 1e-4f && visual != null) visual.SetFacing(toSpeaker);
-            return;
-        }
+        // --- Talking to somebody (F-interact): hold still and skip wander/barks/footsteps. Which way they TURN is
+        // the animation driver's answer, because the machine deciding this has no model to turn. ---
+        if (talkTarget != null) return;
 
         // --- Layer 1: wander → pause → wander. Stroll to a random point near home, stand a moment, then pick a new
         // one. The pause is timed from ARRIVAL (not departure): when the agent reports Arrived we start the linger
@@ -231,44 +217,27 @@ public class TownNPC : MonoBehaviour
             WanderTo(home + RandomOffset(wanderRadius * 0.35f));
         }
 
-        // --- Layer 3: reactive barks when the player passes by ---
-        if (barksEnabled && player != null && Time.time >= nextBark)
+        // --- Layer 3: reactive barks when somebody passes by ---
+        // WHO IS NEAR is asked of the roll of everybody actually here — the same question this unit's freeze switch
+        // and the creatures' hunt already ask. It used to hunt the scene for the ONE avatar at this keyboard, which
+        // is a fact about a screen: the machine that owns a town has no avatar of its own, so nobody ever spoke.
+        if (barksEnabled && Time.time >= nextBark)
         {
-            if ((player.position - transform.position).sqrMagnitude <= barkRadius * barkRadius)
+            if (PlayerUnits.AnyoneWithin(transform.position, barkRadius, gameObject.scene.name))
             {
-                string line = NpcBarks.PickTownLine();   // time-of-day aware: morning / day / evening / night pool
-                SpeechBubble.ShowOverHead(visual, line, 2.6f);   // shared anchor: bubble bottom just above the head
+                // time-of-day aware: morning / day / evening / night pool
+                string line = NpcBarks.PickTownLine();
+                // SAID ONCE, BY THE MACHINE THAT OWNS THE TOWN, so everybody standing there hears the same words at
+                // the same moment. The bubble itself is put up by each watcher when the line reaches it.
+                GameNetwork.AnnounceNpcSaid(gameObject, line);
                 nextBark = Time.time + Random.Range(barkCooldownMin, barkCooldownMax);
             }
-            else nextBark = Time.time + 1f;   // out of range — re-check soon, don't burn the full cooldown
+            // out of range — re-check soon, don't burn the full cooldown
+            else nextBark = Time.time + 1f;
         }
 
-        Footsteps();
     }
 
-    // Layer-1 polish: spatial footstep SFX + puddle ripple, fired the instant this NPC's OWN walk/run animation
-    // crosses an authored foot-plant frame — the SAME FootstepTracker.DetectPlants the player runs, so a townsperson's
-    // steps are glued to its visibly-planting feet at any speed (no foot-slide, no timer to retune). The per-plant
-    // work happens in OnFootPlant. Cheap: near the camera only, and detection is a couple of subtracts + a phase read.
-    void Footsteps()
-    {
-        var tracker = FootstepTracker.Instance;
-        if (pose3d == null || tracker == null) return;
-        tracker.DetectPlants(pose3d, transform.position, npcGait, onFootPlant);
-    }
-
-    // One foot-plant: feed the shared ring (wet-ground ripples / snow prints under townsfolk too), then play the
-    // player's footstep clip POSITIONALLY (Sfx.PlayAt) so you hear WHERE the townsperson stepped — the engine fades
-    // distant ones, so a busy plaza isn't a wall of stomps. Swaps in the splash step when the foot is over a puddle,
-    // the same test the player uses. Zero-GC: IsPuddleAt is a single fbm, the SFX voice + ripple slot are pooled.
-    void OnFootPlant(Vector3 foot, float sizeScale)
-    {
-        FootstepTracker.Instance?.EmitStep(foot, sizeScale);
-        if (sPlayerFootstep == null || sPlayerFootstep.Empty) return;
-        bool onWater = sWaterFootstep != null && !sWaterFootstep.Empty
-                       && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(foot);
-        Sfx.PlayAt(onWater ? sWaterFootstep : sPlayerFootstep, foot);
-    }
 
     static Vector3 RandomOffset(float radius)
     {

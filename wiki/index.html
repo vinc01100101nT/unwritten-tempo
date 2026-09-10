@@ -11,7 +11,8 @@
   This file holds ZERO wiki text — only structure, styling, and the renderers.
   Page content lives in ./content/ as JSON block documents ({ title, blocks:[] }) —
   the one content format (see content/manifest.json for the page list). Block types:
-  lede, heading, paragraph, list, table, quote/callout, image, skillTable, hr.
+  lede, heading, paragraph, list, table, quote/callout, image, skillTable, serverStats, hr.
+  serverStats draws an empty box that is filled from a live server and refreshed while the page is open.
 -->
 <style>
   :root{
@@ -228,6 +229,89 @@ function block(b){
     default:          return '';
   }
 }
+// ---- live server numbers -----------------------------------------------------------------------------------
+//
+// A serverStats block draws an EMPTY box (block() is synchronous and cannot wait for a reply). This fills it
+// afterwards and keeps filling it, because these numbers go stale while somebody is looking at the page.
+//
+// The character server works its answer out once every 5 seconds and hands everyone the same copy, so asking
+// faster than that cannot produce a newer number — it would only be more requests for the same answer.
+const ASK_EVERY_MS = 5000;
+
+// The one timer, held so that leaving the page STOPS it. Without this, every visit to the status page would
+// leave another timer running against a box that no longer exists, forever.
+let statsTimer = null;
+function stopLiveStats(){ if(statsTimer){ clearInterval(statsTimer); statsTimer = null; } }
+
+function num(n){ return (n===null||n===undefined) ? '—' : Number(n).toLocaleString(); }
+function ago(seconds){
+  if(seconds < 60) return seconds + 's ago';
+  const m = Math.floor(seconds/60);
+  return m + (m===1 ? ' min ago' : ' mins ago');
+}
+
+function statsHtml(d){
+  let h = '<div class="tiles">'+
+    `<div class="tile"><div class="n">${num(d.playersOnline)}</div><div class="k">Players online</div></div>`+
+    `<div class="tile"><div class="n">${num(d.mapsOnline)}</div><div class="k">Maps standing</div></div>`+
+    `<div class="tile"><div class="n">${num((d.servers||[]).length)}</div><div class="k">World processes</div></div>`+
+    '</div>';
+
+  const servers = d.servers||[];
+  h += '<h2>Where the world is running</h2>';
+  h += servers.length
+    ? '<table><thead><tr><th>Process</th><th>Maps it is holding</th><th>Players</th><th>Creatures</th><th>Last heard</th></tr></thead><tbody>'+
+      servers.map(s=>'<tr>'+
+        `<td>${esc(s.id||'')}</td>`+
+        `<td>${(s.maps||[]).length ? (s.maps||[]).map(esc).join(', ') : '<em>none yet</em>'}</td>`+
+        `<td class="num">${num(s.players)}</td>`+
+        `<td class="num">${num(s.creatures)}</td>`+
+        `<td class="num">${ago(s.lastHeardSecondsAgo||0)}</td>`+
+      '</tr>').join('')+'</tbody></table>'
+    : '<p><em>No world process is running right now, so nobody can be online.</em></p>';
+
+  const top = d.topPlayers||[];
+  h += '<h2>Most experienced adventurers</h2>';
+  h += top.length
+    ? '<table><thead><tr><th>#</th><th>Name</th><th>Level</th><th>Experience earned</th></tr></thead><tbody>'+
+      top.map(p=>'<tr>'+
+        `<td class="num">${num(p.rank)}</td>`+
+        `<td>${esc(p.name||'')}</td>`+
+        `<td class="num">${num(p.level)}</td>`+
+        // A character last saved before the game began recording a lifetime total has none. Shown as a dash
+        // rather than as 0, because 0 is a real answer somebody can honestly have.
+        `<td class="num">${p.lifetimeXp===null||p.lifetimeXp===undefined ? '<em>not recorded</em>' : num(p.lifetimeXp)}</td>`+
+      '</tr>').join('')+'</tbody></table>'
+    : '<p><em>Nobody has been played yet.</em></p>';
+
+  // What is said here is the SLOWEST link, not this page's own beat — saying "every 5 seconds" beside a player
+  // count that a game server only reports twice a minute would be a promise the numbers cannot keep.
+  return h + `<p class="asof">Re-read every 5 seconds. A level reaches the database within 15 seconds of being earned, and a world process reports its player count every 30, so those two can be that far behind.</p>`;
+}
+
+async function fillLiveStats(box){
+  const from = box.dataset.from;
+  if(!from){ box.innerHTML = '<p class="down">This page was not told where to read the numbers from.</p>'; return; }
+  try{
+    const res = await fetch(from, {cache:'no-store'});
+    if(!res.ok) throw new Error('the server answered ' + res.status);
+    box.innerHTML = statsHtml(await res.json());
+  }catch(e){
+    // A browser refusing this read across sites throws exactly here, with a message that says nothing useful,
+    // so the likely cause is named rather than left for somebody to guess at.
+    box.innerHTML = '<p class="down"><strong>Cannot reach the character server.</strong> It may be stopped, or it '+
+      'may not be allowing this page to read it (its WIKI_ORIGINS setting).</p>';
+  }
+}
+
+function startLiveStats(){
+  stopLiveStats();
+  const boxes = Array.from(document.querySelectorAll('.livestats'));
+  if(!boxes.length) return;
+  boxes.forEach(fillLiveStats);
+  statsTimer = setInterval(()=>boxes.forEach(fillLiveStats), ASK_EVERY_MS);
+}
+
 function renderDoc(doc){
   let html = doc.title ? `<h1>${inline(doc.title)}</h1>` : '';
   (doc.blocks||[]).forEach(b=>{ html+=block(b); });
@@ -239,6 +323,8 @@ let PAGES={};
 async function load(id){
   const p=PAGES[id]; if(!p) return;
   const el=document.getElementById('content');
+  // BEFORE the page is replaced: whatever the last page left running is pointed at boxes about to be thrown away.
+  stopLiveStats();
   el.innerHTML='<div class="loading">Loading…</div>';
   try{
     const res=await fetch('content/'+p.file,{cache:'no-store'});
@@ -247,6 +333,7 @@ async function load(id){
     // A page whose skill cards are generated needs the export in hand before it renders — block() is synchronous.
     if(needsSkills(doc)) await ensureSkills();
     el.innerHTML=renderDoc(doc);
+    startLiveStats();
   }catch(e){
     el.innerHTML=`<h1>Couldn't load page</h1><p class="lede">${p.file} — ${e.message}</p>`;
   }

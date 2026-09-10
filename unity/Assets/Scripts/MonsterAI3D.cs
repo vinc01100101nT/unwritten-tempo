@@ -200,6 +200,30 @@ public class MonsterAI3D : MonoBehaviour
     /// Pushed in rather than looked up so the per-frame path never calls GetComponent (PERFORMANCE.md).</summary>
     public SimulationLod Lod { get; set; }
 
+    /// <summary>WHICH WAY THIS CREATURE IS POINTED, in world space, decided by the brain rather than by whatever is
+    /// drawing it — the exact mirror of <see cref="Player3DController.WorldFacing"/>, so a creature and the person
+    /// fighting it turn by ONE rule.
+    ///
+    /// <para>Zero means "no opinion, use the line I am travelling" — which is what a wandering or fleeing creature
+    /// wants, and what every body already did before this existed.</para>
+    ///
+    /// <para>It is set to the target for exactly as long as this creature is standing and fighting, which is the
+    /// player's own rule (<c>Player3DController.PursueAttackTarget</c> faces its target in the same breath as it
+    /// stops). Before this, a creature faced the line it was walking along even while biting, so it bit you side-on
+    /// and never turned to look at you.</para></summary>
+    public Vector3 WorldFacing => facing.World;
+
+    // Held in the SHARED holder every character uses, so "point at this" and "I have no opinion" cannot mean two
+    // different things on a creature and on the person fighting it.
+    CharacterBrain.Facing facing;
+
+    void FaceToward(Vector3 dir) => facing.TowardOrNothing(dir);
+    void FaceNothing() => facing.AtNothing();
+
+    // "Am I close enough to stand and fight?" — the SHARED answer, the identical one the person at the keyboard
+    // asks, so a creature can never decide it by a different rule from the one hitting it.
+    UnitOffense.EngageLatch engagement;
+
     /// <summary>False on a mob that is only a COPY of one the server owns: it is watched, not simulated, so it
     /// must not chase, attack or decide anything for itself.
     ///
@@ -500,7 +524,24 @@ public class MonsterAI3D : MonoBehaviour
         // the identical rule Player3DAttacker.BaseRange uses, via the shared WeaponReach. Arming a mob now extends
         // its reach exactly as arming the player does; before, a mob's weapon changed its damage but not its reach.
         float touch = Reach;
-        if (player != null && touch3DSqr <= touch * touch && Time.time >= nextTouch && Prey != null)
+
+        // AM I STANDING AND FIGHTING? Asked ONCE, here, BEFORE the blow — which is the order the person at the
+        // keyboard has always used: they ask whether they are close enough, and that single answer both stops their
+        // feet and lets the swing happen. This creature used to answer it twice, in two places, with two different
+        // numbers: the blow fired the moment the gap was inside its reach, while the feet went on closing to a
+        // shorter authored hold. So it bit you while still walking, and faced its own path instead of you.
+        //
+        // Sticky through the shared rule, so somebody hovering at the edge of reach cannot flip it on alternate
+        // frames and set the feet, the steps and the whole body flickering.
+        //
+        // MEASURED ON THE TRUE DISTANCE, not the flat one, because that is what the blow is judged on. They used to
+        // be different: the creature decided it had ARRIVED on a measurement that ignores height and whether it could
+        // REACH on the real one, so a creature 0.54 away flat and 0.79 away in truth held still against a reach of
+        // 0.59 and never landed anything.
+        float hold = HoldDistance();
+        bool standing = Prey != null && player != null && engagement.Ask(player, touch3DSqr, hold * hold);
+
+        if (player != null && standing && touch3DSqr <= touch * touch && Time.time >= nextTouch && Prey != null)
         {
             // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
             bool isMagic = attackType == AttackType.Magic;
@@ -560,10 +601,14 @@ public class MonsterAI3D : MonoBehaviour
 
         if (chasing)
         {
-            Pursue(pos, toPlayerSqr, touch3DSqr);
+            Pursue(pos, toPlayerSqr, standing);
         }
         else
         {
+            // NOBODY TO LOOK AT. A wandering creature faces the line it is walking, which is what every body did
+            // before a creature had an opinion at all — and leaving the last target's direction standing here would
+            // have it strolling around still staring at somebody it gave up on.
+            FaceNothing();
             if (was) { agent.Halt(); nextWander = Time.time; }
             if (agent.Arrived && Time.time >= nextWander)
             {
@@ -594,14 +639,16 @@ public class MonsterAI3D : MonoBehaviour
 
     // The chase brain, split by behavior style. All branches reuse the per-frame distance already computed
     // in Update — no extra Find/GetComponent/alloc (PERFORMANCE.md: nothing new in the per-mob hot path).
-    // to3DSqr is the SAME true distance the bite is judged on. It is passed in rather than measured again so the
-    // two can never be computed differently, and so the per-frame cost is paid once.
-    void Pursue(Vector3 pos, float toPlayerSqr, float to3DSqr)
+    // `standing` is the ONE stand-and-fight answer, decided in Update before the blow, so the feet and the blow can
+    // never be judged by two different measurements.
+    void Pursue(Vector3 pos, float toPlayerSqr, bool standing)
     {
         // Skittish: wounded enough → break off and run from the player (unless taunted, which pins it in the fight).
         if (!Taunted && fleeHpFraction > 0f && Health != null && Health.Current <= Health.maxHealth * fleeHpFraction)
         {
             agent.MoveToward(AwayPoint(pos));
+            // Running away is travel like any other: it faces where it is going, as a person fleeing does.
+            FaceNothing();
             return;
         }
 
@@ -615,38 +662,64 @@ public class MonsterAI3D : MonoBehaviour
         if (preferredRange > 0f && !Taunted)
         {
             float near = preferredRange * 0.8f;
-            if (toPlayerSqr < near * near)            agent.MoveToward(AwayPoint(pos));
-            else if (toPlayerSqr > preferredRange * preferredRange) agent.MoveToward(player.position);
-            else                                       agent.Halt();
+            if (toPlayerSqr < near * near)            { agent.MoveToward(AwayPoint(pos)); FaceToward(player.position - pos); }
+            else if (toPlayerSqr > preferredRange * preferredRange) { agent.MoveToward(player.position); FaceNothing(); }
+            // HOLDING ITS GROUND AND SHOOTING IS STANDING AND FIGHTING, so it looks at what it is shooting. Backing
+            // off keeps looking at them too — a caster gives ground without turning its back, which is the one place
+            // a creature's facing is deliberately NOT its travel line.
+            else                                       { agent.Halt(); FaceToward(player.position - pos); }
             return;
         }
 
-        // Melee: close and bite. The hold distance keeps its AUTHORED FRACTION of this mob's reach (stopDistance ÷
-        // touchRange), so a mob holding a long weapon stands off at the same relative spot a fist-fighter does
-        // instead of walking to punching distance with a spear. Then rescale to the current unit size, matching the
-        // touch range scaled in Update.
+        // Melee: close and bite. STANDING AND FIGHTING WAS ALREADY DECIDED THIS FRAME, before the blow, which is the
+        // whole point — the person at the keyboard stops and swings on ONE answer, and so does this.
+        if (standing)
+        {
+            agent.Halt();
+            // AND LOOKS AT THEM WHILE DOING IT — the same line the player runs in the same breath as standing still.
+            FaceToward(player.position - pos);
+        }
+        else
+        {
+            agent.MoveToward(player.position);
+            // Walking in, the line travelled IS the facing, exactly as it is for a person walking to their target.
+            FaceNothing();
+        }
+    }
+
+    /// <summary>HOW CLOSE THIS CREATURE COMES BEFORE IT STANDS AND FIGHTS. One answer, read by the blow and by the
+    /// feet, so the two can never disagree — which is exactly what they used to do.
+    ///
+    /// <para>The authored hold distance keeps its FRACTION of this creature's reach, so a creature holding a long
+    /// weapon stands off at the same relative spot a fist-fighter does instead of walking to punching distance with a
+    /// spear. Two limits then bound it, and the second outranks the first:</para>
+    ///
+    /// <para><b>Never closer than it needs to be to strike.</b> The blow lands the moment the gap is inside its reach,
+    /// and this used to go on closing to a fraction of that reach afterwards — so a creature bit while still walking,
+    /// side-on, which is nothing a person at a keyboard has ever done.</para>
+    ///
+    /// <para><b>Never farther than the person can reach back — at THEIR ACTUAL REACH, not a fraction of it.</b> An
+    /// authored hold can exceed the person's own reach (0.7 against 0.5), and a creature holding out there bites
+    /// freely while every swing at it whiffs. It used to stop at nine tenths of that reach, which was a number
+    /// nobody authored quietly redefining how far the attacker could hit; the reach itself is the one owner of that,
+    /// and it is what is read now. Read from the TARGET as a unit rather than off a component bolted to its body: a
+    /// person the server is holding has stats but no rig, and this is the identical rule that component was
+    /// applying.</para></summary>
+    float HoldDistance()
+    {
+        // A standoff shooter holds its pocket instead; the pocket IS its hold distance. A taunt takes the pocket
+        // away — being unable to back off is the whole point of the verb — so a taunted one falls through to melee.
+        if (preferredRange > 0f && !Taunted) return preferredRange;
+
         float reachFraction = touchRange > 1e-4f ? stopDistance / touchRange : 1f;
-        float stop = Reach * reachFraction;   // same reach the bite uses — one rule, so the two can't disagree
-        // INVARIANT: a melee mob must never hold farther than the PLAYER can reach, or the player whiffs every swing
-        // while the mob bites freely (authored stopDistance can exceed the player's range, e.g. 0.7 vs 0.5). Clamp the
-        // hold distance to just inside the player's effective melee reach so a halted mob is always in trading range.
-        // Read from the TARGET as a unit rather than from a component bolted to its body: a person the server is
-        // holding has stats but no rig, and the blend below is the identical rule that component was applying.
+        float hold = Mathf.Max(Reach * reachFraction, Reach);
+
         if (Prey != null && Health != null)
         {
             float preyReach = Prey.MeleeReachFullSize * UnitScale.MeleeBlend(Prey.MeleeScale, Health.MeleeScale);
-            if (preyReach > 0f) stop = Mathf.Min(stop, preyReach * 0.9f);
+            if (preyReach > 0f) hold = Mathf.Min(hold, preyReach);
         }
-        // STOP ON THE SAME MEASUREMENT THE BITE IS JUDGED ON — the true one, not the flat one.
-        //
-        // These were two different distances: the creature decided it had ARRIVED on a flat measurement that
-        // ignores height, and then decided whether it could REACH on the real one. Any height between the two
-        // bodies is invisible to the first and counted by the second, so a creature halted where it could never
-        // land a blow and stood there for as long as you let it. Measured: a creature 0.54 away flat, 0.79 away
-        // in truth, holding still against a reach of 0.59, while the person it was hunting took no damage at all.
-        // A creature that has stopped is now always a creature that can bite.
-        if (to3DSqr <= stop * stop) agent.Halt();
-        else agent.MoveToward(player.position);
+        return hold;
     }
 
     /// <summary>Look up and decide who this creature is after.
@@ -681,6 +754,8 @@ public class MonsterAI3D : MonoBehaviour
         if (Prey == unit) return;
         Prey = unit;
         player = unit != null ? unit.Body : null;
+        // Losing somebody takes the opinion about which way to look with it.
+        if (player == null) FaceNothing();
         // Do not shoulder past the one you are hunting — the same exception the chase always had, moved with it.
         if (agent != null) agent.avoidIgnore = player;
     }

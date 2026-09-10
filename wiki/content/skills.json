@@ -21,7 +21,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Each weapon *type* has its own **pool of skills** — **3 ultimates** plus a set of normal skills (how many depends on the weapon; the pool is only as large as the weapon's identity naturally supports). No single weapon gives you all of them; a weapon holds up to **1 ultimate + 3 normals**, and what it drops with depends on its **rarity** — higher rarity means more skills already filled in and a better chance of carrying an ultimate. (A common weapon might drop with a single skill; a legendary can arrive nearly complete.) You can then **craft** the rest — see *Crafting & Recycling*."
+      "text": "Each weapon *type* has its own **pool of skills** — **3 ultimates** plus a set of normal skills (how many depends on the weapon; the pool is only as large as the weapon's identity naturally supports). No single weapon gives you all of them: a drop rolls **3 or 4 actives**, **3 or 4 passives**, and a **1-in-4 chance** of an **Ultimate** — the same roll at every rarity, so a common weapon can arrive as complete as a legendary one. What rarity changes is how hard those skills hit. You can then **craft** the rest — see *Crafting & Recycling*."
     },
     {
       "type": "paragraph",
@@ -117,7 +117,7 @@
     },
     {
       "type": "paragraph",
-      "text": "**Ultimate skills** are a special tier — the biggest thing a weapon does, at **40 mana** and a long cooldown rather than a charge meter. Every weapon's pool holds **3** of them, and a weapon can carry **one** (higher-rarity drops are far more likely to come with it)."
+      "text": "**Ultimate skills** are a special tier — the biggest thing a weapon does, at **40 mana** and a long cooldown rather than a charge meter. Every weapon's pool holds **3** of them, and a weapon can carry **one** — a **1-in-4** chance on every drop, whatever its rarity."
     },
     {
       "type": "quote",

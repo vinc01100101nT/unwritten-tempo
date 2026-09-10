@@ -72,7 +72,7 @@ public class WeaponSkillDetailsPanel
         if (!root.activeSelf) root.SetActive(true);
         // Front of the canvas every time it opens: a window built earlier than some other panel would otherwise sit
         // UNDER it, and a covered close button is an un-closable window.
-        root.transform.SetAsLastSibling();
+        UiLayers.Raise(root.transform, UiLayers.Layer.Window);
         if (shown == inst) return;
         shown = inst;
         Populate(inst);

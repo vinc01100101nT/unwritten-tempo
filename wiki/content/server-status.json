@@ -1,0 +1,25 @@
+{
+  "title": "Server Status",
+  "blocks": [
+    { "type": "lede", "text": "Who is playing right now, which parts of the world are standing, and who has earned the most." },
+    {
+      "type": "serverStats",
+      "from": "http://127.0.0.1:8081/stats",
+      "note": "Where these numbers are read from. The character server is the only thing that sees every world process at once, so it is the only thing that can answer this. Change this address when the wiki is served from somewhere other than this machine — and add that address to the character server's WIKI_ORIGINS, or a browser will refuse the read."
+    },
+    { "type": "heading", "level": 2, "text": "What these numbers mean" },
+    {
+      "type": "list",
+      "items": [
+        "**Players online** counts characters standing in the world — not people sitting at the character-select screen.",
+        "**Maps standing** counts the parts of the world currently loaded. A map with nobody in it can be put back to sleep, so this number moves on its own.",
+        "**World processes** are the separate programs the world is split across. Each one holds whichever maps it was given, and a character can only be in one place at a time.",
+        "**Experience earned** is every point a character has ever gained, the part already spent on levels included — not the progress showing on their level bar."
+      ]
+    },
+    {
+      "type": "callout",
+      "text": "A process that has said nothing for two minutes is dropped from this list. It has either stopped or lost its connection, and the players it was holding are no longer reachable there. The page re-reads every 5 seconds; a level takes up to 15 seconds to reach the database after it is earned, and a player count up to 30."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 ---
 status: "the crafting loop above is designed; exact costs, drop rates, and Potential values are still being tuned"
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-09-10
 tags:
   - systems-combat-design
 ---
@@ -12,7 +12,7 @@ tags:
 
 ## Every drop is a starting point
 
-A weapon you find is rarely finished. What it arrives with depends on its **rarity**: higher-rarity weapons drop with more of their skills already filled in, a better chance of carrying an **Ultimate**, and more **Potential** to craft with. A common weapon might show up with a single skill; a legendary can drop nearly complete.
+A weapon you find is rarely finished. Every weapon rolls the same kind of kit whatever its rarity — **3 or 4 actives, 3 or 4 passives, and a 1-in-4 chance of an Ultimate** — so a common weapon can arrive as complete as a legendary one. What its rarity buys is how hard all of it hits, and more **Potential** to craft with.
 
 ## Potential — a weapon's crafting budget
 
@@ -22,7 +22,7 @@ Every weapon has a **Potential** score — its personal, one-time crafting budge
 
 - **Add** — fill an empty skill slot with a random skill from that weapon's pool.
 - **Reforge** — re-roll a weapon's normal skills, locking the ones you want to keep.
-- Your **Ultimate is never crafted** — it only ever comes from a drop. Hunting for the Ultimate you want is part of the chase, because **your Ultimate points at your build** (see *Skills*).
+- Your **Ultimate points at your build** (see *Skills*), so which one you get is the thing worth chasing. A drop is the fast way to one; forging it in is the slow way, and both are open to you.
 
 ## Refining (+N)
 
@@ -47,7 +47,7 @@ The weapons you don't want aren't trash:
 
 ## Related
 
-- [Weapon Crafting & Economy](active-skill-system-v3/weapon-crafting-economy.md) — the systems-side design this player-facing page is the readable half of. **Neither is in code yet.**
+- [Weapon Crafting & Economy](active-skill-system-v3/weapon-crafting-economy.md) — the systems-side design this player-facing page is the readable half of. **The rarity ladder, the per-copy rolled rarity, the rolled kit and the output lift are live; the crafting loop itself is not.**
 - [Weapon Roster — 12 Identities](active-skill-system-v3/weapon-roster-12-identities.md) — the pools an Add or a Reforge draws from.
 - [Active Skill System — V3](active-skill-system-v3/README.md) — why a weapon grants skills and the Ring grants power.
 - [Ring System — Current Facts (Trio-Ring)](ring-system-trio-ring.md) — the commitment crafting deliberately cannot shortcut.

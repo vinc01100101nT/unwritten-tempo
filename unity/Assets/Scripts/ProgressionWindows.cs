@@ -15,44 +15,29 @@ using TMPro;
 [RequireComponent(typeof(InventoryStore))]
 public class ProgressionWindows : MonoBehaviour
 {
-    static readonly EquipSlotType[] PaperdollOrder =
+    // The order worn pieces are listed in — a body read top to bottom, not the alphabet.
+    static readonly EquipSlotType[] WornOrder =
         { EquipSlotType.Head, EquipSlotType.Armor, EquipSlotType.Garment, EquipSlotType.Weapon,
           EquipSlotType.Shield, EquipSlotType.Accessory1, EquipSlotType.Ring, EquipSlotType.Accessory2 };
 
-    // Empty equip-slot silhouettes (faint gold watermarks). Wired by UIShellBuilder from the Ninja
-    // Adventure "Items & Weapon" set so an empty paperdoll reads as labelled slots, not black holes.
-    // Runtime can't AssetDatabase-load, so these are serialized refs baked into the GameUICanvas prefab.
-    [Header("Empty equip-slot silhouettes (wired by UIShellBuilder)")]
-    public Sprite silHead, silArmor, silGarment, silWeapon, silShield, silAccessory1, silAccessory2;
-
-    Sprite SilhouetteFor(EquipSlotType s) => s switch
-    {
-        EquipSlotType.Head       => silHead,
-        EquipSlotType.Armor      => silArmor,
-        EquipSlotType.Garment    => silGarment,
-        EquipSlotType.Weapon     => silWeapon,
-        EquipSlotType.Shield     => silShield,
-        EquipSlotType.Accessory1 => silAccessory1,
-        EquipSlotType.Accessory2 => silAccessory2,
-        EquipSlotType.Ring       => null,   // procedural ring watermark (SlotWatermark default) covers this slot
-        _                        => null,
-    };
 
     Transform canvas;
-    GameObject invRoot, equipRoot, charRoot;
+    GameObject invRoot, charRoot;
 
     // Inventory
-    ItemSlot[] bagSlots;
+    // The bag is a TEXT LIST now, not a grid of 40 squares. It still hands every interaction to ItemSlot and
+    // SlotDragHandler per row, so hover, the stat-delta preview, double-click-to-equip and both drags are the
+    // same code they always were — see InventoryList.
+    readonly InventoryList bagList = new InventoryList();
     readonly List<BagEntry> filtered = new List<BagEntry>();
     bool useFilter; ItemCategory tab; // useFilter=false => "All"
     TMP_Text invFooter;
     readonly List<Button> tabButtons = new List<Button>();
 
-    // Equipment
-    readonly Dictionary<EquipSlotType, ItemSlot> paperdoll = new Dictionary<EquipSlotType, ItemSlot>();
-    EquipSlotType selectedSlot = EquipSlotType.None;
-    TMP_Text detailName, detailStats, detailCards;
+    // The card picker, opened from a worn piece's right-click menu. It outlived the Equipment window that
+    // used to host it, because inserting a card is the one thing that window did that nothing else could.
     GameObject cardDialog; Transform cardListRoot;
+    BagEntry cardTarget;
 
     // Character
     static ProgressionWindows active;   // singleton guard (avoid a doubled build if two canvases carry it)
@@ -71,7 +56,6 @@ public class ProgressionWindows : MonoBehaviour
         ResetDockedWindowPositionsOnce();   // must run BEFORE the windows build (WindowFrame loads its saved pos on enable)
         EnsureTooltip();
         BuildInventory();
-        BuildEquipment();
         BuildCharacter();
 
         if (Character.Instance != null) Character.Instance.OnStatsChanged += RefreshAll;
@@ -88,15 +72,16 @@ public class ProgressionWindows : MonoBehaviour
         Wallet.OnChanged -= OnGold;
     }
 
-    // One-time migration: the Equipment window is now DOCKED to the bag's left (new default positions in
-    // BuildInventory/BuildEquipment). Clear any position saved by the OLD free-floating layout so the docked default
-    // takes effect once; the user's later drags persist normally after that. WindowFrame keys are "win_<title>_x/y".
+    // One-time move: the bag is now a single centred window holding what you carry AND what you wear, so a
+    // position saved when it sat off to one side would drop it back there. Clear it once; drags after that
+    // persist normally. The Equipment keys are deleted because that window no longer exists.
+    // WindowFrame keys are "win_<title>_x/y".
     static void ResetDockedWindowPositionsOnce()
     {
-        if (PlayerPrefs.HasKey("pw_dock_v1")) return;
+        if (PlayerPrefs.HasKey("pw_dock_v2")) return;
         PlayerPrefs.DeleteKey("win_Inventory_x"); PlayerPrefs.DeleteKey("win_Inventory_y");
         PlayerPrefs.DeleteKey("win_Equipment_x"); PlayerPrefs.DeleteKey("win_Equipment_y");
-        PlayerPrefs.SetInt("pw_dock_v1", 1);
+        PlayerPrefs.SetInt("pw_dock_v2", 1);
     }
 
     void OnGold(int _) => RefreshInventoryFooter();
@@ -104,27 +89,30 @@ public class ProgressionWindows : MonoBehaviour
     void Update()
     {
         // Bare-key window hotkeys (no Alt — the Unity/OS Alt menu accelerators interfere with it):
-        //   B = Bag (Inventory + the docked Equipment panel, opened together) · C = Character (K = Skills, owned by
-        //   SkillDraftPanel). V is now the Sprint key (Player3DController) — Equipment no longer has its own key.
+        //   B = Bag (what you carry AND what you wear, one list) · C = Character (K = Skills, owned by
+        //   SkillDraftPanel). V is the Sprint key (Player3DController).
         if (Hotkeys.Down(KeyCode.B))
         {
             bool open = UiAnim.Toggle(invRoot);
-            // Equipment is docked to the bag's left side — mirror the bag's state so they open/close as one panel.
-            if (open) UiAnim.Open(equipRoot); else UiAnim.Close(equipRoot);
+            // A right-click menu floats on the HUD canvas, not inside the window, so closing the bag has to take
+            // it down explicitly or it outlives the thing it was opened from.
+            if (!open) bagList.Close();
         }
         if (Hotkeys.Down(KeyCode.C)) UiAnim.Toggle(charRoot);
         if (Hotkeys.CancelDown() && AnyWindowOpen())
         {
             if (cardDialog != null) UiAnim.Close(cardDialog);
-            UiAnim.Close(invRoot); UiAnim.Close(equipRoot); UiAnim.Close(charRoot);
+            bagList.Close();
+            UiAnim.Close(invRoot); UiAnim.Close(charRoot);
             Hotkeys.MarkCancelHandled();   // this Escape is spent — it must not also pop the System window
         }
 
+        bagList.Tick();          // a click outside the row menu takes it down
         KeepDerivedLive();
     }
 
     bool AnyWindowOpen() =>
-        UiAnim.IsOpen(invRoot) || UiAnim.IsOpen(equipRoot) || UiAnim.IsOpen(charRoot) ||
+        UiAnim.IsOpen(invRoot) || UiAnim.IsOpen(charRoot) ||
         (cardDialog != null && UiAnim.IsOpen(cardDialog));
 
     // Keep the Character sheet honest while a buff runs, expires, or ramps. Only while the window is actually OPEN, and
@@ -161,9 +149,6 @@ public class ProgressionWindows : MonoBehaviour
     void RefreshAll()
     {
         RefreshInventory();
-        RefreshPaperdoll();
-        RefreshSelectionRings();
-        RefreshDetail();
         RefreshCharacter();
     }
 
@@ -171,9 +156,9 @@ public class ProgressionWindows : MonoBehaviour
 
     void BuildInventory()
     {
-        // Bag sits right-of-centre; the Equipment window docks flush to its LEFT edge (see BuildEquipment), so the two
-        // read as one panel that opens together on B. Pair is centred: bag right edge +560, equip left edge -576.
-        var content = UiKit.Window(canvas, "Inventory", new Vector2(520, 480), new Vector2(300, 0), out invRoot);
+        // One centred window, holding what you carry and what you wear. Its size is the approved design's,
+        // measured: 742x528 leaves the list exactly the 710px the mock lays its columns out in.
+        var content = UiKit.Window(canvas, "Inventory", new Vector2(742, 528), new Vector2(0, 0), out invRoot);
 
         // tabs
         var tabRow = UiKit.Img("Tabs", content, new Color(0, 0, 0, 0));
@@ -192,26 +177,13 @@ public class ProgressionWindows : MonoBehaviour
         AddTab(tabRow.transform, "Material", true, ItemCategory.Material);
         AddTab(tabRow.transform, "Etc", true, ItemCategory.Etc);
 
-        // grid
-        var gridGo = UiKit.Img("Grid", content, new Color(0, 0, 0, 0));
-        gridGo.raycastTarget = false;
-        UiKit.Fill(gridGo.rectTransform, new Vector2(0, 28), new Vector2(0, -34));
-        var grid = gridGo.gameObject.AddComponent<GridLayoutGroup>();
-        grid.cellSize = new Vector2(60, 60);
-        grid.spacing = new Vector2(6, 6);
-        grid.padding = new RectOffset(2, 2, 4, 2);
+        // the list
+        bagList.Build(content, RefreshAll);
 
-        const int slotCount = 40;
-        bagSlots = new ItemSlot[slotCount];
-        for (int i = 0; i < slotCount; i++)
-        {
-            int idx = i;
-            var s = UiKit.Slot(gridGo.transform, 60);
-            s.previewOnHover = true;
-            s.clickOverride = e => OnBagClick(idx, e);
-            s.gameObject.AddComponent<SlotDragHandler>();   // drag-to-sort + drag-to-equip
-            bagSlots[i] = s;
-        }
+        // The card picker lives with the bag now, and the row's own menu opens it on the piece you
+        // right-clicked — there is no longer a selected slot anywhere for it to read.
+        BuildCardDialog(content);
+        ItemActionMenu.OpenCardPicker = OpenCardDialog;
 
         // footer
         invFooter = UiKit.Label("Footer", content, "", 14, FontStyle.Bold, TextAnchor.MiddleRight);
@@ -228,38 +200,48 @@ public class ProgressionWindows : MonoBehaviour
         tabButtons.Add(btn);
     }
 
-    void OnBagClick(int index, PointerEventData e)
-    {
-        if (index >= filtered.Count) return;
-        var entry = filtered[index];
-        bool doubleClick = e.clickCount >= 2;
-        bool right = e.button == PointerEventData.InputButton.Right;
-        if (entry.IsEquip && (doubleClick || right)) InventoryStore.Instance.Equip(entry);
-        else if (!entry.IsEquip && right && entry.def != null && entry.def.IsUsable)
-            InventoryStore.Instance.Consume(entry);
-    }
-
     void RefreshInventory()
     {
-        if (bagSlots == null || InventoryStore.Instance == null) return;
+        if (InventoryStore.Instance == null) return;
         filtered.Clear();
+
+        // What you are WEARING comes first, marked, then what is in the bag. The two used to live in two
+        // windows; a worn piece is still an item you own, and this is the only list that shows it.
+        var who = Character.Instance;
+        if (who != null && (!useFilter || tab == ItemCategory.Equip))
+            for (int i = 0; i < WornOrder.Length; i++)
+            {
+                var st = WornOrder[i];
+                var inst = who.GetEquippedInstance(st);
+                if (inst == null || inst.def == null) continue;
+                var row = WornRow(i);
+                row.def = inst.def;
+                row.instance = inst;
+                row.count = 1;
+                row.worn = true;
+                row.wornSlot = st;
+                filtered.Add(row);
+            }
+
         foreach (var e in InventoryStore.Instance.Entries)
             if (!useFilter || (e.def != null && e.def.category == tab))
                 filtered.Add(e);
 
-        for (int i = 0; i < bagSlots.Length; i++)
-        {
-            if (i < filtered.Count)
-            {
-                var entry = filtered[i];
-                if (entry.instance != null) bagSlots[i].SetInstance(entry.instance);
-                else bagSlots[i].SetItem(entry.def);
-                bagSlots[i].previewSlot = entry.def != null ? entry.def.slot : EquipSlotType.None;
-                bagSlots[i].boundEntry = entry;     // drag handler reorders/equips against this live entry
-            }
-            else { bagSlots[i].SetItem(null); bagSlots[i].boundEntry = null; }
-        }
+        // The gear columns (slot / skills / atk-def / output) mean nothing on a tab of potions, so they are
+        // hidden there rather than filled with dashes. "All" keeps them: gear can be in it.
+        bagList.SetEquipColumns(!useFilter || tab == ItemCategory.Equip);
+        bagList.Refresh(filtered);
         RefreshInventoryFooter();
+    }
+
+    // Worn rows are made here rather than by the store, because the bag genuinely does not contain them —
+    // and they are POOLED, so refreshing the window allocates nothing (PERFORMANCE.md).
+    readonly List<BagEntry> wornRows = new List<BagEntry>(8);
+
+    BagEntry WornRow(int i)
+    {
+        while (wornRows.Count <= i) wornRows.Add(new BagEntry());
+        return wornRows[i];
     }
 
     void RefreshInventoryFooter()
@@ -268,154 +250,6 @@ public class ProgressionWindows : MonoBehaviour
         int w = InventoryStore.Instance != null ? InventoryStore.Instance.TotalWeight : 0;
         invFooter.text = $"<color=#A79E88>Weight</color> {w}        <color=#C8A862>{Wallet.Gold:n0} z</color>";
     }
-
-    // ---- Equipment window -----------------------------------------------------
-
-    void BuildEquipment()
-    {
-        // Docked to the LEFT of the bag (Inventory at x=300, width 520 → left edge x=40). Equipment (width 620) is
-        // centred at -266 so its right edge (x=44) meets the bag with a ~10px gap — one combined panel opened on B.
-        var content = UiKit.Window(canvas, "Equipment", new Vector2(620, 440), new Vector2(-266, 0), out equipRoot);
-
-        // paperdoll (left)
-        var doll = UiKit.Img("Paperdoll", content, new Color(0, 0, 0, 0));
-        doll.rectTransform.anchorMin = new Vector2(0, 0);
-        doll.rectTransform.anchorMax = new Vector2(0.55f, 1);
-        UiKit.Fill(doll.rectTransform, new Vector2(0, 0), new Vector2(0, 0));
-        doll.rectTransform.anchorMax = new Vector2(0.55f, 1);
-        doll.raycastTarget = false;
-
-        var pos = new Dictionary<EquipSlotType, Vector2>
-        {
-            { EquipSlotType.Head,        new Vector2(0, 130) },
-            { EquipSlotType.Armor,       new Vector2(-85, 45) },
-            { EquipSlotType.Garment,     new Vector2(-85, -45) },
-            { EquipSlotType.Weapon,      new Vector2(85, 45) },
-            { EquipSlotType.Shield,      new Vector2(85, -45) },
-            { EquipSlotType.Accessory1,  new Vector2(-72, -130) },
-            { EquipSlotType.Ring,        new Vector2(0, -130) },
-            { EquipSlotType.Accessory2,  new Vector2(72, -130) },
-        };
-        foreach (var st in PaperdollOrder)
-        {
-            var slot = UiKit.Slot(doll.transform, 64, st);
-            // Final Watermark Set v1: the Unwritten procedural ink+gold silhouette REPLACES the old borrowed
-            // Ninja sprites (a different art language). SilhouetteFor(st) is left wired but NOT applied — it
-            // stays available as a future drop-in authored-sprite override (which would then win over this).
-            SlotWatermark.Build(slot, st);
-            slot.SetItem(null);                          // re-render now so the watermark shows before any Character-gated refresh
-            var rt = slot.GetComponent<RectTransform>();
-            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = pos[st];
-            var t = st;
-            slot.clickOverride = e => OnPaperClick(t, e);
-            slot.gameObject.AddComponent<SlotDragHandler>();   // drag equipped piece back to the bag
-            paperdoll[st] = slot;
-        }
-
-        // detail panel (right) — same charcoal family as the window, lifted a touch so it reads as part
-        // of the panel (not a separate gray block).
-        var detail = UiKit.Img("Detail", content, UiKit.PanelRaise);
-        detail.rectTransform.anchorMin = new Vector2(0.57f, 0);
-        detail.rectTransform.anchorMax = new Vector2(1, 1);
-        UiKit.Fill(detail.rectTransform, Vector2.zero, Vector2.zero);
-        detail.rectTransform.anchorMin = new Vector2(0.57f, 0);
-        detail.rectTransform.anchorMax = new Vector2(1, 1);
-        detail.raycastTarget = false;
-
-        // Item names use the Cinzel face at Normal weight (one step lighter than window titles, which stay Bold).
-        detailName = UiKit.Label("Name", detail.transform, "Select a slot", 17, FontStyle.Normal, TextAnchor.UpperLeft, title: true);
-        detailName.rectTransform.anchorMin = new Vector2(0, 1); detailName.rectTransform.anchorMax = new Vector2(1, 1);
-        detailName.rectTransform.pivot = new Vector2(0.5f, 1);
-        detailName.rectTransform.sizeDelta = new Vector2(-12, 26);
-        detailName.rectTransform.anchoredPosition = new Vector2(0, -6);
-
-        detailStats = UiKit.Label("Stats", detail.transform, "", 14, FontStyle.Normal, TextAnchor.UpperLeft);
-        detailStats.rectTransform.anchorMin = new Vector2(0, 1); detailStats.rectTransform.anchorMax = new Vector2(1, 1);
-        detailStats.rectTransform.pivot = new Vector2(0.5f, 1);
-        detailStats.rectTransform.sizeDelta = new Vector2(-12, 150);
-        detailStats.rectTransform.anchoredPosition = new Vector2(0, -38);
-
-        detailCards = UiKit.Label("Cards", detail.transform, "", 14, FontStyle.Normal, TextAnchor.UpperLeft);
-        detailCards.rectTransform.anchorMin = new Vector2(0, 1); detailCards.rectTransform.anchorMax = new Vector2(1, 1);
-        detailCards.rectTransform.pivot = new Vector2(0.5f, 1);
-        detailCards.rectTransform.sizeDelta = new Vector2(-12, 90);
-        detailCards.rectTransform.anchoredPosition = new Vector2(0, -196);
-
-        var insert = UiKit.Btn("Insert Card…", detail.transform, OpenCardDialog);
-        var irt = (RectTransform)insert.transform;
-        irt.anchorMin = new Vector2(0, 0); irt.anchorMax = new Vector2(1, 0);
-        irt.pivot = new Vector2(0.5f, 0);
-        irt.sizeDelta = new Vector2(-12, 30);
-        irt.anchoredPosition = new Vector2(0, 10);
-
-        BuildCardDialog(content);
-    }
-
-    void OnPaperClick(EquipSlotType slot, PointerEventData e)
-    {
-        if (e.button == PointerEventData.InputButton.Right) { InventoryStore.Instance.Unequip(slot); return; }
-        selectedSlot = slot;
-        RefreshSelectionRings();
-        RefreshDetail();
-    }
-
-    void RefreshPaperdoll()
-    {
-        if (Character.Instance == null) return;
-        foreach (var kv in paperdoll)
-        {
-            var inst = Character.Instance.GetEquippedInstance(kv.Key);
-            if (inst != null) kv.Value.SetInstance(inst);
-            else kv.Value.SetItem(null);
-        }
-    }
-
-    void RefreshSelectionRings()
-    {
-        foreach (var kv in paperdoll) kv.Value.SetSelected(kv.Key == selectedSlot);
-    }
-
-    void RefreshDetail()
-    {
-        if (detailName == null) return;
-        var inst = (selectedSlot != EquipSlotType.None && Character.Instance != null)
-            ? Character.Instance.GetEquippedInstance(selectedSlot) : null;
-
-        if (inst == null || inst.def == null)
-        {
-            detailName.text = selectedSlot == EquipSlotType.None ? "Select a slot" : Spaced(selectedSlot.ToString()) + " — empty";
-            detailName.color = UiKit.TextDim;
-            detailStats.text = "";
-            detailCards.text = "";
-            return;
-        }
-
-        var def = inst.def;
-        detailName.text = (inst.upgrade > 0 ? "+" + inst.upgrade + " " : "") + def.displayName;
-        detailName.color = Rarities.Text(def.rarity);
-
-        // This PIECE's own contribution (def + refine + cards), not the whole character.
-        var eb = EquipBonuses.Aggregate(new[] { inst });
-        var sb = new System.Text.StringBuilder();
-        sb.Append($"<color=#A79E88>{Rarities.Label(def.rarity)} · {Spaced(def.slot.ToString())}</color>");
-        Stat(sb, "ATK", eb.atk);   Stat(sb, "DEF", eb.def);
-        Stat(sb, "M.ATK", eb.matk); Stat(sb, "M.DEF", eb.mdef);
-        Stat(sb, "Max HP", eb.hp);  Stat(sb, "Max MP", eb.mp);
-        Stat(sb, "STR", eb.str); Stat(sb, "AGI", eb.agi); Stat(sb, "VIT", eb.vit);
-        Stat(sb, "INT", eb.intel); Stat(sb, "DEX", eb.dex); Stat(sb, "LUK", eb.luk);
-        Stat(sb, "CRIT", eb.critPercent, "%"); Stat(sb, "ASPD", eb.aspdPercent, "%");
-        detailStats.text = sb.ToString();
-
-        int slots = def.cardSlots;
-        sb.Clear();
-        sb.Append("<color=#A79E88>Cards ").Append(inst.FilledSockets).Append('/').Append(slots).Append("</color>");
-        if (inst.cards != null)
-            foreach (var c in inst.cards)
-                if (c != null) sb.Append("\n  <color=#C7B27A>◇ ").Append(c.displayName).Append("</color>");
-        detailCards.text = slots > 0 ? sb.ToString() : "<color=#A79E88>No card sockets</color>";
-    }
-
     // ---- Card insert dialog ---------------------------------------------------
 
     void BuildCardDialog(Transform parent)
@@ -451,11 +285,11 @@ public class ProgressionWindows : MonoBehaviour
         cardDialog.SetActive(false);
     }
 
-    void OpenCardDialog()
+    void OpenCardDialog(BagEntry target)
     {
-        if (cardDialog == null) return;
-        var inst = (selectedSlot != EquipSlotType.None && Character.Instance != null)
-            ? Character.Instance.GetEquippedInstance(selectedSlot) : null;
+        if (cardDialog == null || target == null) return;
+        cardTarget = target;
+        var inst = target.instance;
         if (inst == null || inst.def == null || inst.def.cardSlots <= 0 || !inst.HasFreeSocket) return;
 
         for (int i = cardListRoot.childCount - 1; i >= 0; i--) Destroy(cardListRoot.GetChild(i).gameObject);
@@ -471,16 +305,19 @@ public class ProgressionWindows : MonoBehaviour
                 btn.gameObject.AddComponent<LayoutElement>().preferredHeight = 28;
             }
 
-        cardDialog.transform.SetAsLastSibling();
+        UiLayers.Raise(cardDialog.transform, UiLayers.Layer.Menu);
         UiAnim.Open(cardDialog);
     }
 
     void InsertCard(Card card)
     {
-        var inst = Character.Instance != null ? Character.Instance.GetEquippedInstance(selectedSlot) : null;
+        var inst = cardTarget != null ? cardTarget.instance : null;
         if (inst == null || card == null || !inst.HasFreeSocket) return;
         inst.cards.Add(card);
-        Character.Instance.SetEquipped(selectedSlot, inst);   // re-aggregate + fire stat events
+        // Re-seating a WORN piece is what re-aggregates the stats and fires the events; a piece sitting in the
+        // bag has no stats live, so its card is simply recorded on the instance.
+        if (cardTarget.worn && Character.Instance != null)
+            Character.Instance.SetEquipped(cardTarget.wornSlot, inst);
         UiAnim.Close(cardDialog);
         RefreshAll();
     }

@@ -1,16 +1,18 @@
 using UnityEngine;
 
 /// <summary>
-/// The five item-rarity tiers (locked in the GPT⇄Claude HUD relay). Rarity is ONE
-/// visual channel — the slot BORDER color — and nothing else: enhancement (+N) and
-/// card pips have their own channels and never tint the rarity border. Legendary is
-/// GOLD (not Diablo orange) to fit the "unwritten" tone + the +N enhancement language.
+/// The five item-rarity tiers (locked in the GPT⇄Claude HUD relay). Rarity drives exactly two
+/// things and nothing else: one VISUAL channel — the slot BORDER color, where enhancement (+N)
+/// and card pips have their own channels and never tint it — and one GAMEPLAY channel, the output
+/// lift a weapon of this rarity puts on the skills it granted (<see cref="Rarities.OutputLift"/>).
+/// Legendary is GOLD (not Diablo orange) to fit the "unwritten" tone + the +N enhancement language.
 /// </summary>
 public enum Rarity { Common, Uncommon, Rare, Epic, Legendary }
 
-/// <summary>Per-rarity presentation (border / name-text / soft glow color). The single
-/// source of truth for rarity coloring — uGUI slots, tooltips, and the inventory grid
-/// all read from <see cref="Of"/> so the channel stays consistent everywhere.</summary>
+/// <summary>Everything one rarity tier means: its presentation (border / name-text / soft glow color)
+/// and its gameplay weight (<see cref="OutputLift"/>). The single source of truth for both — uGUI slots,
+/// tooltips, and the inventory grid all read from <see cref="Of"/>, and the skill applier reads the lift
+/// from here, so neither channel can be re-typed somewhere else and drift.</summary>
 public static class Rarities
 {
     public readonly struct Style
@@ -46,4 +48,26 @@ public static class Rarities
     public static Color Text(Rarity r) => Table[(int)r].Text;
     public static Color Glow(Rarity r) => Table[(int)r].Glow;
     public static string Label(Rarity r) => Table[(int)r].Label;
+
+    // The rarity ladder, as fractions. It ACCELERATES on purpose — each tier is a bigger step up than the last, so
+    // a Legendary reads as a real prize rather than the fifth notch on a straight line.
+    static readonly float[] Lifts = { 0f, 0.03f, 0.09f, 0.18f, 0.30f };
+
+    /// <summary>How much a weapon of this rarity lifts the OUTPUT of the skills it granted: +0% Common, +3% Uncommon,
+    /// +9% Rare, +18% Epic, +30% Legendary.
+    ///
+    /// <para>It is ADDED to the ring's affinity term, never multiplied onto the finished number. That is the whole
+    /// reason it lives as a plain fraction here: added, a Legendary is worth the same +30 POINTS to a new character
+    /// and to a maxed one; multiplied, it would pay out more the more ring a player had already built, so the same
+    /// drop would be worth far more to a veteran than to the person who needs it.</para>
+    ///
+    /// <para>Only a skill's OUTPUT takes it — damage, execute power, a heal's HP, a shield's pool, an ailment's damage
+    /// per tick, how far a sub-stat buff or debuff moves, and what one outgoing-damage charge is worth. Never a
+    /// duration (a Legendary must not hold a longer stun), never a proc chance (it is clamped to 100%, so lifting it
+    /// saturates and then does nothing), never a hit or cleanse count (whole numbers: dead until they jump a whole
+    /// extra unit), and never a shove's speed, which is movement rather than power.</para>
+    ///
+    /// <para>It does NOT require the skill to author any ring weights. The ring's term is exactly 1 when an effect
+    /// declares none, and this is ADDED to it — so a weightless skill on a Legendary is still lifted the full 30%.</para></summary>
+    public static float OutputLift(Rarity r) => Lifts[(int)r];
 }

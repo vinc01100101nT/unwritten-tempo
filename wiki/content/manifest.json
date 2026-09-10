@@ -4,6 +4,16 @@
   "syncNote": "sourceDocs = the design docs a page is written from; syncedAt = the doc commit it was last written against. Run `python3 tools/wiki-sync-check.py` (or /sync-wiki in Claude) to find pages that fell behind. The renderer ignores both fields.",
   "groups": [
     {
+      "title": "Live",
+      "pages": [
+        {
+          "id": "status",
+          "title": "Server Status",
+          "file": "server-status.json"
+        }
+      ]
+    },
+    {
       "title": "Lore & World",
       "pages": [
         {

@@ -68,6 +68,12 @@ Confusing these is how a channel ends up carrying something it cannot serve. Eve
 | **A one-off with no duration** | a damage number, a hit spark, a heal sparkle, a crit flag | announced once | **is told nothing** |
 | **Something that lasts until it is over** | a poison glow, the charge-up glow under a cast | named when it starts, named again when it ends | is told nothing, and picks it up when it next starts |
 
+**Which bucket something goes in is decided by one question: can both machines PREDICT it?** If the shape is
+known to both — a scripted jump arc, a timed swing — send the shape once and let each machine draw it; sampling it
+instead is both coarser and later, however often you sample. Send a stream of values only for something neither
+side can work out, like where somebody chose to walk. (A jump's lift was filed as continuous state first and came
+out 135 ms late with four values on the way up; its sideways half genuinely IS unpredictable and stays streamed.)
+
 A late *number* is dropped; a late *action* is joined. Opposite rules, so one channel cannot carry both — but both halves of one event must be **fired from the same instant on the server**, or the number floats up before the arm moves.
 
 The third kind already works: a blow on a monster is already announced to everyone watching it and run through the same door the offline game used, so the digits, the flash and the impact are not written twice. **Do not rebuild it.**

@@ -47,6 +47,7 @@ trace, which anyone could otherwise reach without a token by sending a malformed
 | `DATABASE_URL` | required — the same one `accounts` uses |
 | `JWT_SECRET` | required — the same one `accounts` uses |
 | `CHAR_SERVER_PORT` | 8081 |
+| `BIND_HOST` | `0.0.0.0` — every address. Set it to `127.0.0.1` on a hosted machine, where the encrypting proxy in front is the only thing that should be reachable |
 | `CHARACTER_MODELS_PATH` | `accounts/data/character-models.json` |
 | `SERVER_SECRET` | required — shared with the map servers, never a player token |
 | `MAX_PROGRESS_BYTES` | 262144 — the ceiling on ONE save; a larger one is refused in words, not by the wire |
@@ -74,8 +75,11 @@ One setting on the game, and nothing else:
 CHAR_SERVER_URL=http://localhost:8081
 ```
 
-Leave it unset and every request goes where it always did — the login service answers characters too, exactly
-as before. That is what makes this switchable back in one line if anything misbehaves.
+Leave it unset and every request about a character goes where it always did — the login service answers those
+too, exactly as before. That is what makes this switchable back in one line if anything misbehaves. **Entering
+the world is the exception:** only this server hands out an entry ticket, so a game with no address for it can
+sign in and then get no further. Anything without a terminal — a copy handed to a player, and the editor started from the Dock — reads the
+address from the file the build ships with (`unity/Assets/StreamingAssets/server.txt`) instead.
 
 ## The endpoints
 

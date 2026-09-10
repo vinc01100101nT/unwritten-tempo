@@ -130,7 +130,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Each weapon type has a deep pool of skills, and **every weapon that drops rolls its own kit** from that pool — how full it arrives, and whether it carries an ultimate, scales with its **rarity**, so no two of the same weapon play exactly alike. You can then shape it further at the forge. See *Skills* for how kits roll, and *Crafting & Recycling* for reforging, refining, transmog, and turning unwanted weapons into Essence."
+      "text": "Each weapon type has a deep pool of skills, and **every weapon that drops rolls its own kit** from that pool — which skills surface is pure chance, so no two of the same weapon play exactly alike. You can then shape it further at the forge. See *Skills* for how kits roll, and *Crafting & Recycling* for reforging, refining, transmog, and turning unwanted weapons into Essence."
     },
     {
       "type": "heading",
@@ -179,7 +179,84 @@
     },
     {
       "type": "paragraph",
-      "text": "Gear comes in rarity tiers — **Common, Uncommon, Rare, Epic, Legendary** — which drive its border color and, loosely, how many **card slots** it has. For weapons, rarity also shapes the drop: higher rarity means more skills pre-filled, a better chance at an ultimate, and more crafting **Potential** (see *Crafting & Recycling*)."
+      "text": "Gear comes in rarity tiers — **Common, Uncommon, Rare, Epic, Legendary** — which drive its border color. Rarity does **not** decide which skills a weapon carries, how many of them, or whether it gets an ultimate: every weapon rolls the same kind of kit whatever its tier."
+    },
+    {
+      "type": "paragraph",
+      "text": "**And a rarer weapon hits harder.** Every skill it grants is lifted by its tier — **+3** on an Uncommon, **+9** Rare, **+18** Epic, **+30** Legendary. Those are points added to how much your Ring already multiplies that skill, so early on a Legendary is about a third more damage, and as your Ring grows the same 30 points become a smaller slice of a bigger number. Either way a Legendary is worth the same to you as to anyone else. It lifts damage, healing, shield size, damage-over-time, how far a buff or debuff moves your stats, and what one Opening-style charge is worth. It never makes a stun, a freeze or any other timer last longer, and it never changes how often something procs. Two swords with the same skills are not the same sword."
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Rarity",
+        "How often it drops",
+        "Skills hit harder by"
+      ],
+      "rows": [
+        [
+          "**Common**",
+          "45%",
+          "—"
+        ],
+        [
+          "**Uncommon**",
+          "30%",
+          "+3%"
+        ],
+        [
+          "**Rare**",
+          "15%",
+          "+9%"
+        ],
+        [
+          "**Epic**",
+          "5%",
+          "+18%"
+        ],
+        [
+          "**Legendary**",
+          "5%",
+          "+30%"
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "How many skills a weapon rolls"
+    },
+    {
+      "type": "paragraph",
+      "text": "Every weapon rolls the same way, whatever its rarity: **3 or 4 actives**, **3 or 4 passives**, and a **1-in-4 chance** of an **Ultimate** on top. The two halves are rolled separately, so 3 actives with 4 passives is just as likely as 4 and 4."
+    },
+    {
+      "type": "table",
+      "headers": [
+        "Skills on the weapon",
+        "Chance"
+      ],
+      "rows": [
+        [
+          "6",
+          "18.75%"
+        ],
+        [
+          "7",
+          "43.75%"
+        ],
+        [
+          "8",
+          "31.25%"
+        ],
+        [
+          "9 — a full kit with its Ultimate",
+          "6.25%"
+        ]
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "So **seven skills is typical**, and about **one weapon in sixteen** drops with the full nine. Only the **Sword**'s skill pool is finished today — every other weapon type currently drops with no skills at all until its pool is written."
     },
     {
       "type": "heading",
@@ -188,7 +265,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Higher-rarity gear has **card slots** you can socket with cards for monster-matchup bonuses. See **Cards**."
+      "text": "Some gear has **card slots** you can socket with cards for monster-matchup bonuses. See **Cards**."
     },
     {
       "type": "quote",

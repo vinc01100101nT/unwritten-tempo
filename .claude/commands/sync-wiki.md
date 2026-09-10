@@ -41,7 +41,7 @@ Read the current page JSON first and preserve its structure and tone. Then apply
 
 - Wiki pages are **JSON block documents**: `{ title, blocks: [] }`. Block types the renderer
   (`wiki/index.html`) understands: `lede, heading, paragraph, list, table, quote`/`callout, image,
-  skillTable, hr`. Inline `**bold**` / `*italic*` / `` `code` `` / `[links]()` work in any text field.
+  skillTable, serverStats, hr`. Inline `**bold**` / `*italic*` / `` `code` `` / `[links]()` work in any text field.
 - Skills render as cards via a `skillTable` block (`skills:[{name,icon,cost,flavor,effect}]`).
 - **Voice**: skill text reads as an in-game tooltip — declarative rules, bold numbers, no article prose and
   no designer commentary about *why* a thing is balanced that way. The player reads what it DOES.

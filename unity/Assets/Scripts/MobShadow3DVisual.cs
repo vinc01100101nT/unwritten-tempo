@@ -41,12 +41,6 @@ public class MobShadow3DVisual : Agent3DVisual
     bool built;
     bool building;   // a model is on its way — keeps a second call from starting a second load for the same mob
 
-    // Footsteps run through the SAME frame-locked plant detector the player and the townsfolk use, so a shadow's
-    // steps fire on ITS OWN walk/run animation crossing an authored plant frame — never a distance timer. Per-unit
-    // gait state + a cached sink so the per-frame detection allocates nothing.
-    readonly FootstepTracker.Gait gait = new FootstepTracker.Gait();
-    System.Action<Vector3, float> onFootPlant;
-
     /// <summary>WHICH BODY THIS SHADOW WEARS, drawn from the shared cast's fighter pool. Empty until somebody has
     /// chosen — which on a machine that only WATCHES this creature means the choice has not arrived yet.
     ///
@@ -80,7 +74,6 @@ public class MobShadow3DVisual : Agent3DVisual
         brain = GetComponent<MonsterAI3D>();
         health = GetComponent<Health>();
         status = GetComponent<StatusController>();
-        onFootPlant = OnFootPlant;
 
         // THE OWNER CHOOSES THE BODY, HERE, BEFORE THE CREATURE IS ANNOUNCED. This is a name out of a list and
         // nothing else — no model is fetched and no rig is assembled, so a machine with no screen pays a single
@@ -101,7 +94,7 @@ public class MobShadow3DVisual : Agent3DVisual
         // creature is simply still a sprite, which is a legal state it was already in, rather than nothing at all.
         if (GameServer.IsServer) { BecomeACharactersBody(); built = true; }
         else BuildBody();
-        gait.Seed(transform.position);
+        ReseatAfterMove();
     }
 
     /// <summary>Swap the billboard for a live-3D character body. Idempotent — a pooled mob that already has a body
@@ -173,6 +166,23 @@ public class MobShadow3DVisual : Agent3DVisual
         if (billboardAnim != null) { billboardAnim.enabled = false; Destroy(billboardAnim); }
         var billboardShadow = GetComponent<BillboardShadow>();
         if (billboardShadow != null) Destroy(billboardShadow);
+
+        // THE CAMERA-FACING TURN, WHICH IS THE ONE THAT WAS LEFT BEHIND. A flat sprite is a quad that has to be
+        // swung to face the camera or it renders edge-on, and that swing is written straight onto this object's
+        // rotation every single frame, after everything else has had its say. A character is not a quad: it has a
+        // real front, and which way it is turned is the whole point.
+        //
+        // MEASURED, and it is why a creature seen by anybody else pointed the wrong way: every mob is one object, so
+        // this was rewriting the very rotation the server had just sent for this creature. The body then handed that
+        // camera direction on to the model as "which way am I facing", so a live-3D creature faced the camera for its
+        // whole life — and this camera barely turns, which is what made it look like one fixed direction. A machine
+        // with no screen has no camera at all, so it never saw any of this and its own copy was turned correctly the
+        // whole time; only the machines watching threw that answer away.
+        //
+        // Destroyed rather than switched off, like the two above and for the same reason: the revive path switches a
+        // mob's parts back on wholesale, and a part that is gone cannot be switched back on by mistake.
+        var cameraFacing = GetComponent<Billboard>();
+        if (cameraFacing != null) Destroy(cameraFacing);
         var lunge = GetComponent<AttackLunge>();
         if (lunge != null) Destroy(lunge);
         var depthSorter = GetComponent<CameraDepthSorter>();
@@ -239,63 +249,37 @@ public class MobShadow3DVisual : Agent3DVisual
         PointTheFreezeSwitchAt(builtPose.GetComponent<Animator>());
     }
 
-    /// <summary>Die beats hurt; anything else falls through to the shared walk/idle. Two comparisons against state
-    /// this mob already owns — no polling of other systems, no allocation.
+    /// <summary>Everything only a CREATURE knows, and nothing else: which way its brain says to look, whether it is
+    /// flinching, and whether it is dead. Two comparisons against state this creature already owns — nothing is
+    /// polled and nothing allocates.
     ///
-    /// <para>THE SWING IS NOT HERE ANY MORE, deliberately. It arrives as a beat — which action, the moment it
-    /// began, and the window it must finish inside — through <see cref="Agent3DVisual.TellAction"/>, from the
-    /// creature's own brain on the machine that owns it and from the server's announcement on every machine
-    /// watching. That layer outranks this one, so a swing plays over a walk without either having to know about
-    /// the other, and one description of a swing serves every machine.</para></summary>
-    protected override bool DriveRoleAction()
+    /// <para>Every rule that turns these facts into a pose and a direction — death outranking a swing still in the
+    /// air, a flinch only showing on a body that is standing still, which gear the legs churn at, how fast it
+    /// turns — is the shared <see cref="CharacterBrain"/>, the same one the person at the keyboard runs. This type
+    /// used to carry its own shorter copy of that, which is why a creature bit you side-on while walking.</para>
+    ///
+    /// <para>THE SWING IS NOT HERE, deliberately. It arrives as a beat — which action, the moment it began, and the
+    /// window it must finish inside — through <see cref="Agent3DVisual.TellAction"/>, from the creature's own brain
+    /// on the machine that owns it and from the server's announcement on every machine watching. That layer plays a
+    /// beat that began BEFORE this machine started watching, joining it part-way through, which is something a
+    /// per-frame description cannot express.</para></summary>
+    protected override void DescribeSelf(ref CharacterBrain.Intent it)
     {
-        if (health == null) return false;
+        // A COPY IS TOLD WHICH WAY IT FACES AND NEVER WORKS IT OUT, exactly as another person's watched body is: the
+        // machine that owns the creature has already turned its body, that direction travels with its position, and
+        // the body root here has already been turned to match.
+        if (brain != null && !brain.ThinksForItself) it.facing = transform.forward;
+        // THE BRAIN SAYS, AND THIS ONLY DRAWS IT — the identical arrangement the person at the keyboard has, where
+        // their controller owns which way they are pointed and their visual reads it. A creature that is standing
+        // and fighting names its target; anything else names nothing, and nothing means the line it travelled.
+        else if (brain != null && brain.WorldFacing.sqrMagnitude > 1e-4f) it.facing = brain.WorldFacing;
 
-        if (health.IsDead)
-        {
-            // Death has to beat a swing that was still running when the killing blow landed, or a creature dies
-            // mid-bite and finishes the bite lying down. The one-shot layer outranks this one, so it is cancelled
-            // rather than merely out-driven.
-            stance.CancelActionOverride();
-            stance.DriveStance(StanceId.Die);
-            return true;
-        }
+        if (health != null && health.IsDead) it.dead = true;
 
         // FLINCH, from the ONE thing that decides it: the door every real hit passes through sets this, and it is
-        // set on a watched copy too because the blow was announced to this machine. It used to be inferred here
-        // from the health number dropping, which made two owners of one reaction — and the inferred one was the
-        // worse: a watched creature's health arrives ten times a second, so two hits inside the same tenth of a
-        // second showed one flinch, and a creature that had earned its footing flinched anyway.
-        if (status != null && status.MovementFlinched)
-        {
-            stance.DriveStance(StanceId.Hurt);
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>Turn toward whoever this creature is after while it stands its ground, so a bite lands facing its
-    /// target instead of facing wherever it last walked. Falls back to the shared answer — the line it travelled —
-    /// the moment it is walking.
-    ///
-    /// <para>A COPY IS TOLD WHICH WAY IT FACES AND NEVER WORKS IT OUT, exactly as another player's watched body is:
-    /// the machine that owns the creature has already turned its body, that direction travels with its position,
-    /// and the body root here has already been turned to match — so it is read straight off the root rather than
-    /// kept a second time. This used to answer NOTHING on a copy, because a copy chases nobody and so had nobody to
-    /// turn to: every shadow anybody watched faced the direction it was summoned in for the whole of its life,
-    /// including while it was biting somebody standing behind it.</para></summary>
-    protected override Vector3 FacingThisFrame(Vector3 groundTravel, bool walking, Vector3 position)
-    {
-        if (brain != null && !brain.ThinksForItself) return transform.forward;
-
-        if (walking) return base.FacingThisFrame(groundTravel, true, position);
-
-        var prey = brain != null ? brain.PreyBody : null;
-        if (prey == null) return Vector3.zero;
-
-        Vector3 toPrey = prey.position - position; toPrey.y = 0f;
-        return toPrey.sqrMagnitude > 1e-4f ? toPrey : Vector3.zero;
+        // set on a watched copy too because the blow was announced to this machine. It used to be inferred here from
+        // the health number dropping, which made two owners of one reaction.
+        if (status != null && status.MovementFlinched) it.flinching = true;
     }
 
     /// <summary>Show or hide the 3D body. The billboard death path hides the SPRITE, which a shadow doesn't render —
@@ -320,74 +304,7 @@ public class MobShadow3DVisual : Agent3DVisual
         // Drop the death pose and re-baseline the per-life state, so a recycled body doesn't hold last life's
         // swing or fire a phantom footstep from where it died.
         if (stance != null) { stance.ClearAction(); stance.CancelActionOverride(); }
-        gait.Seed(transform.position);
+        ReseatAfterMove();
     }
 
-    /// <summary>Walk vs Run, switched at the shared gear-change speed rather than a hand-picked threshold — so every
-    /// character changes gear at the same pace, whoever is driving it. A shadow copies a player, so it uses the
-    /// player's own two gears; the rule lives in the base because another body stands in for a player too.</summary>
-    protected override StanceId LocomotionStanceFor(float groundSpeed) => PlayersGearFor(groundSpeed);
-
-    protected override void LateUpdate()
-    {
-        // A MACHINE WITH NO SCREEN STILL HAS TO TURN THIS BODY. Everything below needs a model to drive and there is
-        // none here, so the shared driver stops at its first line — which left this body pointing whichever way it
-        // was spawned for the whole of its life. Which way a creature is turned is the one thing about it that every
-        // watching machine can see and none of them can work out alone, so it is decided here and travels with the
-        // creature's position like every other fact about it.
-        if (GameServer.IsServer) { TurnTheBodyItself(); return; }
-
-        base.LateUpdate();
-
-        // Footsteps: the SAME shared plant detector the player and townsfolk run, fired off this unit's own
-        // walk/run animation frames. Cheap — a couple of subtracts and a phase read, no allocation.
-        var tracker = FootstepTracker.Instance;
-        if (built && tracker != null && pose != null)
-            tracker.DetectPlants(pose, transform.position, gait, onFootPlant);
-    }
-
-    // Where this body stood last frame. Kept here because the shared driver's own copy of it is never reached on a
-    // machine with no screen — that driver returns before it updates it.
-    Vector3 serverLastPos;
-    bool serverPosSeeded;
-
-    /// <summary>A BODY HANDED BACK OUT OF THE POOL COMES BACK SOMEWHERE ELSE, so last life's position would read as
-    /// one enormous step on its first frame and snap this creature to face along that jump. Re-baselined on every
-    /// switch-on, for the same reason and at the same moment the shared driver re-baselines its own.</summary>
-    protected override void OnEnable()
-    {
-        base.OnEnable();
-        serverPosSeeded = false;
-    }
-
-    /// <summary>SERVER ONLY: point this creature's body the way it is actually going, or at whoever it is fighting.
-    ///
-    /// <para>Asked of the SAME function that answers it on a machine that can see, so the two can never drift into
-    /// deciding a facing differently. Written straight on with no easing: every machine watching already glides
-    /// toward each direction it is sent, so easing it here as well would only make the creature turn late.</para></summary>
-    void TurnTheBodyItself()
-    {
-        Vector3 p = transform.position;
-        if (!serverPosSeeded) { serverLastPos = p; serverPosSeeded = true; }
-        Vector3 d = p - serverLastPos; d.y = 0f;
-        serverLastPos = p;
-
-        bool walking = Travelling(d, Mathf.Max(Time.deltaTime, 1e-4f), out _);
-        Vector3 face = FacingThisFrame(d, walking, p);
-        face.y = 0f;
-        if (face.sqrMagnitude <= 1e-8f) return;
-
-        transform.rotation = Quaternion.LookRotation(face.normalized);
-    }
-
-    // Steps come from the SHARED character sound set, not off the player object — a shadow's feet are its own.
-    void OnFootPlant(Vector3 foot, float sizeScale)
-    {
-        FootstepTracker.Instance?.EmitStep(foot, sizeScale);
-        var spec = CharacterSpec.Active;
-        if (spec.footstepSfx == null || spec.footstepSfx.Empty) return;
-        bool onWater = spec.waterFootstepSfx != null && !spec.waterFootstepSfx.Empty
-                       && WetGround.Instance != null && WetGround.Instance.IsPuddleAt(foot);
-        Sfx.PlayAt(onWater ? spec.waterFootstepSfx : spec.footstepSfx, foot);
-    }
 }

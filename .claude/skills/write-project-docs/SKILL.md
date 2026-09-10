@@ -21,7 +21,10 @@ block document** — `{ title, blocks: [] }` — in `wiki/content/*.json`, and e
 `wiki/content/manifest.json` (the nav).
 
 - Block types the renderer (`wiki/index.html`) understands: `lede, heading, paragraph, list, table, quote` /
-  `callout, image, skillTable, hr`.
+  `callout, image, skillTable, serverStats, hr`.
+- `serverStats` is the only LIVE block: it renders an empty box that JavaScript fills from the character
+  server's public `/stats` and refreshes every 30s. It carries `from` (the address to read). Everything else
+  in the wiki is static text served off disk.
 - Inline `**bold**` / `*italic*` / `` `code` `` / `[links]()` work inside any text field.
 - **Never create `wiki/content/*.md`** — the markdown renderer was removed. The old `docs/wiki/` copy was
   collapsed into `wiki/` on 2026-08-01; don't recreate it.

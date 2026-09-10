@@ -12,7 +12,7 @@ tags:
 
 ## What the Ring is
 
-The Ring is the character's **stat-growth engine** — a closed loop of ten generic percentage-passive stats you build up as you level. It is **built and shipped** (since 2026-06-18) and **persists in the save file** (the full ring walk is serialized). It is a separate layer from your equipped weapon: the **weapon grants your skills**, the **Ring scales their power**.
+The Ring is the character's **stat-growth engine** — a closed loop of ten generic percentage-passive stats you build up as you level. It is **built and shipped** (since 2026-06-18) and **persists in the save file** (the full ring walk is serialized). It is a separate layer from your equipped weapon: the **weapon grants your skills**, and **the Ring is the larger half of what scales their power** — the weapon's RARITY adds a second, smaller lift on top (+0% Common up to +30% Legendary, added to the ring's term, never multiplied). The ring reaches every channel; rarity reaches only a skill's output, and never a duration. See the Channels Catalog for the split.
 
 ## The ten Ring stats — BUILT
 
