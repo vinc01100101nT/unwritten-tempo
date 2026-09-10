@@ -151,6 +151,35 @@ public class InventoryStore : MonoBehaviour
         Notify();
     }
 
+    /// <summary>Put <paramref name="count"/> of an entry DOWN, on the ground at the character's feet, where it
+    /// stays until somebody picks it up. Nothing is destroyed: what leaves the bag lands on the floor as a sparkle
+    /// in its rarity colour, named to anybody holding Alt (see <see cref="GroundDrop"/>).
+    ///
+    /// <para>A wearable always goes down one at a time, because each copy is its own stack. A worn piece cannot
+    /// be dropped at all — take it off first — and neither can a quest item or the Ring.</para></summary>
+    public void Drop(BagEntry e, int count)
+    {
+        if (e == null || e.def == null || count <= 0 || Character.Instance == null) return;
+        if (e.worn) return;
+        if (e.def.category == ItemCategory.Quest || e.def.slot == EquipSlotType.Ring) return;
+
+        var me = GameNetwork.MyPlayer;
+        if (me != null) { me.AskToDrop(Entries.IndexOf(e), e.def.id, count); return; }
+
+        int take = e.IsEquip ? 1 : Mathf.Clamp(count, 1, e.count);
+        var body = Character.Instance.Body;
+        // The same "nearest clear spot" the server picks, so a game with no world scatters exactly as a world does.
+        var where = GroundDrop.FreeSpotNear(body != null ? body.position : Vector3.zero, MapManager.CurrentMap);
+        var drop = GroundDrop.Place(where, e.def, take, e.instance, e.def.rarity, 0, MapManager.CurrentMap, 0);
+        if (drop == null) return;
+
+        // OUT OF THE BAG ONLY ONCE IT IS ON THE FLOOR, so a placement that fails cannot leave an item in neither
+        // place. The same order the server does it in.
+        if (e.IsEquip || take >= e.count) Entries.Remove(e);
+        else e.count -= take;
+        Notify();
+    }
+
     public void Consume(BagEntry e)
     {
         if (e == null || e.def == null) return;

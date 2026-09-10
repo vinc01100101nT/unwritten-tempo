@@ -10,10 +10,14 @@ using UnityEngine.UI;
 /// be done to the thing under the cursor and nothing else, so a player never reads an action the game cannot
 /// perform.
 ///
-/// <para><b>Every enabled row calls an existing method.</b> Equip and Use route into
-/// <see cref="InventoryStore"/>, which is already server-authoritative. Nothing here reimplements an action —
-/// which is also why DROP is disabled: the store has no way to discard a single entry, only a GM-style wipe of
-/// the whole bag, so a Drop that appeared to work would be a lie.</para>
+/// <para><b>Every enabled row calls an existing method.</b> Equip, Use and Drop all route into
+/// <see cref="InventoryStore"/>, which is already server-authoritative. Nothing here reimplements an action.</para>
+///
+/// <para><b>Drop puts a thing on the FLOOR — it never destroys it.</b> What leaves the bag lands at your feet as
+/// a sparkle in its rarity colour; hold Alt to read its name, and anybody standing there can pick it up with F
+/// (see <see cref="GroundDrop"/>). A stack of more than one asks HOW MANY first, because that is the one bag
+/// action a second click cannot undo. Three things are refused outright and say why: a piece you are WEARING
+/// (take it off first), a QUEST item, and the Ring.</para>
 ///
 /// <para><b>An action the design describes but nobody built is shown DISABLED, tagged "planned".</b> Reforge,
 /// Add skill, Transmog and Recycle live in the crafting design and in no source file. Hiding them would make the
@@ -46,6 +50,10 @@ public class ItemActionMenu
 
     Action onChanged;
     int openedFrame = -1;      // the click that opens the menu must not also dismiss it
+
+    // WHERE THE MENU WAS OPENED, so the box asking how many opens in the same spot rather than at the corner of
+    // the screen: by the time it is needed the click that started all this is long gone.
+    Vector2 openedAt;
 
     /// <summary>Opens the card picker on a piece. Set by the window that owns the picker; null until then,
     /// and the row is shown disabled when it is null so the menu never offers what nobody can do.</summary>
@@ -113,6 +121,7 @@ public class ItemActionMenu
         if (root == null || entry == null || entry.def == null) return;
         onChanged = refresh;
 
+        openedAt = screenPos;
         BuildEntries(entry);
         Render(entry);
         Place(screenPos);
@@ -128,6 +137,7 @@ public class ItemActionMenu
     public void Close()
     {
         if (root != null) root.gameObject.SetActive(false);
+        DropAmountPrompt.CloseShared();
     }
 
     /// <summary>Close on a click that lands anywhere but on this menu. Call once a frame from whatever owns
@@ -186,33 +196,44 @@ public class ItemActionMenu
             }
 
             entries.Add(new Entry { separator = true });
-            if (def.slot == EquipSlotType.Ring)
-            {
-                // The Ring is the progression vessel, not gear: it is never recycled and never thrown away.
-                entries.Add(new Entry { label = "Recycle", note = "the Ring" });
-                entries.Add(new Entry { label = "Drop",    note = "the Ring" });
-            }
-            else
-            {
-                entries.Add(new Entry { label = "Recycle → Essence", note = "planned" });
-                entries.Add(new Entry { label = "Drop", note = "planned" });
-            }
+            // The Ring is the progression vessel, not gear: it is never recycled and never thrown away.
+            entries.Add(def.slot == EquipSlotType.Ring
+                ? new Entry { label = "Recycle", note = "the Ring" }
+                : new Entry { label = "Recycle → Essence", note = "planned" });
+            entries.Add(DropRow(e));
         }
         else if (def.IsUsable)
         {
             entries.Add(new Entry { label = "Use", run = store != null ? () => store.Consume(e) : (Action)null });
             entries.Add(new Entry { separator = true });
-            entries.Add(new Entry { label = "Drop", note = "planned" });
-        }
-        else if (def.category == ItemCategory.Quest)
-        {
-            entries.Add(new Entry { label = "Drop", note = "quest item" });
+            entries.Add(DropRow(e));
         }
         else
         {
-            entries.Add(new Entry { label = "Drop", note = "planned" });
+            entries.Add(DropRow(e));
         }
     }
+
+    /// <summary>The Drop row, built in ONE place however the thing got into the bag. Every kind of item offers
+    /// it and every kind refuses it for the same reasons, so four copies of this decision would be four chances
+    /// for one of them to disagree with the server — which answers the same three refusals for real.</summary>
+    Entry DropRow(BagEntry e)
+    {
+        // A QUEST item is not yours to put down, and the Ring never leaves you. Both are refused by the server
+        // too; these rows say WHY rather than simply being dead.
+        if (e.def.category == ItemCategory.Quest) return new Entry { label = "Drop", note = "quest item" };
+        if (e.def.slot == EquipSlotType.Ring) return new Entry { label = "Drop", note = "the Ring" };
+        // A worn piece is on your body, not in your bag — there is no bag position to name, so it cannot be
+        // asked for. Unequip is directly above.
+        if (e.worn) return new Entry { label = "Drop", note = "worn" };
+        if (InventoryStore.Instance == null) return new Entry { label = "Drop" };
+        return new Entry { label = "Drop", run = () => BeginDrop(e) };
+    }
+
+    /// <summary>Put a stack down, through the one door every screen uses. The menu is already down by the time
+    /// this runs, so the box asking how many opens where the menu WAS — the click that started this is long past
+    /// and its position is the only thing that still points at the row.</summary>
+    void BeginDrop(BagEntry e) => DropAmountPrompt.DropFromScreen(e, openedAt, canvas, onChanged);
 
     void Render(BagEntry e)
     {

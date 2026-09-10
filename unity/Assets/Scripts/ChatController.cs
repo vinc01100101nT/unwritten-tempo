@@ -58,6 +58,26 @@ public class ChatController : MonoBehaviour
         Post("", text, instance.MyPose, false);
     }
 
+    /// <summary>THE game telling the person at this keyboard that something arrived in their bag — a kill's loot,
+    /// a command, a thing picked up off the floor, and anything that is written later. It reads the same wherever
+    /// it came from, because WHERE it came from is not what a player needs to be told; WHAT they now have is.
+    ///
+    /// <para>Built here rather than by each caller so there is one sentence, one word order and one colour. The
+    /// name carries its rarity colour, exactly as it does in the bag list and on the floor.</para></summary>
+    public static void ItemArrived(Item def, int count, Rarity rarity, int upgrade)
+    {
+        if (instance == null || def == null || count <= 0) return;
+
+        string name = upgrade > 0 ? "+" + upgrade + " " + def.displayName : def.displayName;
+        if (count > 1) name += " ×" + count;
+        instance.AddLine($"<color=#{ObtainedHex}>Obtained</color>  "
+                         + $"<color=#{ColorUtility.ToHtmlStringRGB(Rarities.Text(rarity))}>{Sanitize(name)}</color>");
+    }
+
+    // The dim tint the word in front of an arrival is written in, taken from the palette rather than typed here.
+    static string obtainedHex;
+    static string ObtainedHex => obtainedHex ??= ColorUtility.ToHtmlStringRGB(UiKit.TextDim);
+
     /// <summary>SOMEBODY ELSE speaking — a line they said, or the skill they just called out. It lands exactly as
     /// one of your own does: the same log row, the same white bubble over their head for the same time, only their
     /// name in front of it instead of "You". <paramref name="over"/> is the head to hang the bubble over; null when

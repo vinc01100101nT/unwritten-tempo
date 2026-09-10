@@ -332,7 +332,7 @@ public static class GmCommands
         }
 
         var inst = EquipmentInstance.CreateRolled(pick, rarity);
-        c.Ch.Bag.Add(new BagEntry { def = pick, count = 1, instance = inst, isNew = true });
+        c.Ch.TakeIntoBag(inst);
         AfterChangingTheirBag(c.Ch);
         if (inst == null) { c.Reply("Couldn't create the weapon."); return; }
 
@@ -375,18 +375,10 @@ public static class GmCommands
     static void GiveTo(Character who, Item def, int count)
     {
         if (who == null || def == null || count <= 0) return;
-        if (def.slot != EquipSlotType.None)
-        {
-            for (int i = 0; i < count; i++)
-                who.Bag.Add(new BagEntry { def = def, count = 1, isNew = true,
-                                           instance = EquipmentInstance.CreateRolled(def, null) });
-        }
-        else
-        {
-            var stack = who.Bag.Find(x => x.def == def && !x.IsEquip);
-            if (stack != null) stack.count += count;
-            else who.Bag.Add(new BagEntry { def = def, count = count, isNew = true });
-        }
+        // THROUGH THE ONE DOOR, not a second copy of what it does. This used to roll copies and merge stacks
+        // itself — the same rules written twice, and a way into a bag that nothing else could see, so a command
+        // was the one source of items that never announced itself.
+        who.TakeIntoBag(def, count);
         AfterChangingTheirBag(who);
     }
 

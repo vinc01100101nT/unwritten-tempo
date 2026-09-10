@@ -490,6 +490,15 @@ MonoBehaviour:
     measuredPlaySeconds: 2.15
     measuredFadeSeconds: 1.15
     measuredLoops: 1
+  - id: loot.drop
+    prefab: {fileID: 1943286446490004412, guid: 7371b69947157424b8634b526d5e6151, type: 3}
+    scale: 0.1
+    offset: {x: 0, y: 0, z: 0}
+    lifetime: 0
+    groundRingRadius: 0
+    measuredPlaySeconds: 2.15
+    measuredFadeSeconds: 1.15
+    measuredLoops: 1
   - id: portal.blue
     prefab: {fileID: 5607819269926399345, guid: 45e0f06c750176947862c10346226439, type: 3}
     scale: 1

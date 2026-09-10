@@ -19,6 +19,28 @@ public static class GroundSnap
     public const float DefaultRayUp = 2f;
     public const float DefaultMaxDistance = 8f;
 
+    /// <summary>THE Ground layer, as a mask, worked out once. Every caller here used to look the layer up itself,
+    /// which is the same answer written out in several places — and a place that spells the layer's name wrongly
+    /// fails by quietly finding no ground at all, rather than by complaining.
+    ///
+    /// <para>0 when this project has no Ground layer, which every query below already treats as "no ground here"
+    /// and answers false for.</para></summary>
+    public static int GroundMask
+    {
+        get
+        {
+            if (groundMask == -1)
+            {
+                int layer = LayerMask.NameToLayer("Ground");
+                groundMask = layer >= 0 ? (1 << layer) : 0;
+            }
+            return groundMask;
+        }
+    }
+
+    // -1 = not looked up yet. The answer cannot change while the game runs, so it is asked once.
+    static int groundMask = -1;
+
     /// <summary>Foot-seat query with the shared per-frame convention (start 2u above, 8u total cast).</summary>
     public static bool TryGroundY(Vector3 p, int groundMask, out float y)
         => TryGroundY(p, groundMask, DefaultRayUp, DefaultMaxDistance, out y);

@@ -1654,9 +1654,13 @@ public class Character : MonoBehaviour, ICombatUnit
     /// because two copies cannot share a stack without losing one of them; everything else merges into a stack
     /// already there.
     ///
-    /// <para>THE one place a thing enters a bag. A server does this for whoever earned it, on the copy of them it
-    /// holds; a game with no world does it through <see cref="InventoryStore.Give"/>, which calls this and then
-    /// repaints the window. Nobody adds an entry to <see cref="Bag"/> by hand.</para></summary>
+    /// <para>THE one place a thing ARRIVES in a bag, and the reason the chat can say so without knowing what
+    /// brought it. A server does this for whoever earned it, on the copy of them it holds; a game with no world
+    /// does it through <see cref="InventoryStore.Give"/>, which calls this and then repaints the window.</para>
+    ///
+    /// <para>The only code that may add to <see cref="Bag"/> by hand is code moving a thing you ALREADY OWN — a
+    /// piece coming off your body, a whole bag arriving from the server, a save being read. Those are not
+    /// arrivals and must not be announced as any; every one of them says so where it does it.</para></summary>
     public BagEntry TakeIntoBag(Item def, int count, Rarity? rarity = null)
     {
         if (def == null || count <= 0) return null;
@@ -1665,20 +1669,55 @@ public class Character : MonoBehaviour, ICombatUnit
         {
             BagEntry last = null;
             for (int i = 0; i < count; i++)
-            {
-                last = new BagEntry { def = def, count = 1, isNew = true,
-                                      instance = EquipmentInstance.CreateRolled(def, rarity) };
-                bag.Add(last);
-            }
+                last = TakeIntoBag(EquipmentInstance.CreateRolled(def, rarity));
             return last;
         }
 
         var stack = bag.Find(x => x.def == def && !x.IsEquip);
-        if (stack != null) { stack.count += count; return stack; }
+        if (stack != null) stack.count += count;
+        else bag.Add(stack = new BagEntry { def = def, count = count, isNew = true });
+        Arrived(def, count, null);
+        return stack;
+    }
 
-        var entry = new BagEntry { def = def, count = count, isNew = true };
+    /// <summary>Put a copy that has ALREADY been rolled into this character's bag — a thing picked up off the
+    /// floor, a weapon a command built, a gift, a trade. Same door as the roll above, so an item that arrives
+    /// this way is announced exactly like one that arrives any other way.
+    ///
+    /// <para>It exists because the callers that hold a finished copy used to add it to the list themselves, and
+    /// every one of them was a way into the bag that nothing could see. There is one way in now.</para></summary>
+    public BagEntry TakeIntoBag(EquipmentInstance ready)
+    {
+        if (ready == null || ready.def == null) return null;
+        var entry = new BagEntry { def = ready.def, count = 1, isNew = true, instance = ready };
         bag.Add(entry);
+        Arrived(ready.def, 1, ready);
         return entry;
+    }
+
+    /// <summary>SOMETHING JUST ARRIVED — say so, once, wherever it came from. Called from the two doors above and
+    /// nowhere else, which is what makes the chat line source-agnostic: a way of getting an item that is written
+    /// next year is announced without anybody remembering to announce it.
+    ///
+    /// <para>In a world the person this happened to is sitting at another machine, so the server asks theirs to
+    /// say it. With no world there is one character and their chat is right here.</para>
+    ///
+    /// <para><b>Deliberately not called for a thing MOVING within what you already own</b> — taking a piece off
+    /// your body, the piece a new one displaces, a bag arriving from the server, or a save being loaded. None of
+    /// those is a thing arriving, and a line for each would fire on every equip and fill the log on every login.
+    /// Those paths add to the list directly, and say why where they do it.</para></summary>
+    void Arrived(Item def, int count, EquipmentInstance inst)
+    {
+        if (def == null || count <= 0) return;
+
+        var tier = inst != null ? inst.Rarity : def.rarity;
+        int refine = inst != null ? inst.upgrade : 0;
+        if (GameNetwork.TellOwnerTheyGot(this, def.id, count, (int)tier, refine)) return;
+
+        // A server holds several people and has no chat of its own; one that could not reach the owner above has
+        // nobody to tell.
+        if (GameServer.IsServer || this != Instance) return;
+        ChatController.ItemArrived(def, count, tier, refine);
     }
 
     /// <summary>How much money this character has.</summary>

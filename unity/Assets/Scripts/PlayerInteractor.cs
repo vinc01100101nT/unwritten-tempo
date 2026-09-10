@@ -53,12 +53,39 @@ public class PlayerInteractor : MonoBehaviour
             return;
         }
 
-        // Not talking: F starts a chat with the nearest townsperson in range.
-        if (Hotkeys.Down(KeyCode.F))
+        // Not talking: F reaches for whatever is nearest — a thing on the floor, or a townsperson.
+        if (Hotkeys.Down(KeyCode.F)) ReachForTheNearestThing();
+    }
+
+    /// <summary>What the reach key does: pick up the nearest thing lying on the ground, or start a chat with the
+    /// nearest townsperson — whichever is actually CLOSER, rather than one of them always winning. A player who
+    /// puts something down at a shopkeeper's feet and reaches for it must get the item back, and a player
+    /// standing over nothing must still be able to talk.</summary>
+    void ReachForTheNearestThing()
+    {
+        var here = transform.position;
+        var drop = GroundDrop.Nearest(here, GroundDrop.Reach);
+        var npc = TownNPC.Nearest(here, interactRange);
+
+        if (drop != null && npc != null)
         {
-            var npc = TownNPC.Nearest(transform.position, interactRange);
-            if (npc != null) StartTalk(npc);
+            // Flat and squared, the way every other reach in this game is measured.
+            float dropSqr = FlatSqrTo(here, drop.transform.position);
+            float npcSqr = FlatSqrTo(here, npc.transform.position);
+            if (npcSqr < dropSqr) { StartTalk(npc); return; }
+            GroundDrop.AskToTake(drop);
+            return;
         }
+
+        if (drop != null) { GroundDrop.AskToTake(drop); return; }
+        if (npc != null) StartTalk(npc);
+    }
+
+    static float FlatSqrTo(Vector3 from, Vector3 to)
+    {
+        float dx = to.x - from.x;
+        float dz = to.z - from.z;
+        return dx * dx + dz * dz;
     }
 
     void StartTalk(TownNPC npc)

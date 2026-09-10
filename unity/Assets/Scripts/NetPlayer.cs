@@ -970,6 +970,27 @@ public class NetPlayer : NetworkBehaviour
         InventoryStore.Instance?.Notify();
     }
 
+    /// <summary>Server-only: tell this connection that something has just arrived in their bag, so their chat can
+    /// say so. Called from the ONE place a thing enters any bag, never from whatever caused it — a kill, a
+    /// command, a thing picked up and anything written later all reach the player through this one line.
+    ///
+    /// <para>The ITEM'S NAME is not sent: what crosses is its id and the three numbers that decide how the line
+    /// reads, and the other machine looks the rest up in the catalog it already has — the same way it builds the
+    /// words for a thing lying on the ground.</para></summary>
+    public void TellOwnerTheyGot(string itemId, int count, int rarity, int upgrade)
+    {
+        if (!isServer || connectionToClient == null) return;
+        TargetGotItem(connectionToClient, itemId, count, rarity, upgrade);
+    }
+
+    [TargetRpc]
+    void TargetGotItem(NetworkConnectionToClient target, string itemId, int count, int rarity, int upgrade)
+    {
+        var def = ItemCatalog.Resolve(itemId);
+        if (def == null) return;
+        ChatController.ItemArrived(def, count, (Rarity)rarity, upgrade);
+    }
+
     /// <summary>The server's copy of whoever is playing here, or null when this connection has no fighter
     /// yet. Every bag command below goes through it, so "is there anybody to do this to" is asked once.</summary>
     Character ServerCharacter => ServerCombatUnit as Character;
@@ -1009,6 +1030,9 @@ public class NetPlayer : NetworkBehaviour
         var prev = c.GetEquippedInstance(e.def.slot);
         c.SetEquipped(e.def.slot, e.instance);
         c.Bag.RemoveAt(index);
+        // BY HAND ON PURPOSE. The piece being displaced is already theirs and is only moving from their body back
+        // into their bag — putting it through the arrival door would tell them they had "obtained" a sword they
+        // have been carrying all day, on every single equip.
         if (prev != null && prev.def != null)
             c.Bag.Add(new BagEntry { def = prev.def, count = 1, instance = prev });
         PushBagToOwner(theirBarChanges);
@@ -1028,6 +1052,7 @@ public class NetPlayer : NetworkBehaviour
         bool theirBarChanges = (EquipSlotType)slot == EquipSlotType.Weapon;
 
         c.SetEquipped((EquipSlotType)slot, (EquipmentInstance)null);
+        // By hand, for the same reason as the swap above: taking your own gear off is not obtaining it.
         if (worn.def != null) c.Bag.Add(new BagEntry { def = worn.def, count = 1, instance = worn });
         PushBagToOwner(theirBarChanges);
         SaveSoon();
@@ -1047,12 +1072,83 @@ public class NetPlayer : NetworkBehaviour
         SaveSoon();
     }
 
+    // WHAT A TENTH OF A SECOND OF RUNNING IS WORTH, added to the reach when the server decides whether somebody
+    // was really standing over the thing they just reached for. A player's position arrives ten times a second,
+    // so the place the server has them is always slightly behind the place they are — and without this the game
+    // would refuse a pick-up it had just offered, to anybody who reached while still moving.
+    const float ReachSlack = 0.6f;
+
+    [Command]
+    void CmdDropFromBag(int index, string expectedItemId, int howMany)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (!StillTheSameStack(c, index, expectedItemId)) return;
+        var e = c.Bag[index];
+
+        // THE TWO THINGS THAT ARE NEVER PUT DOWN, refused here and not only greyed out on the window that asked.
+        // A screen can be got round; this is the answer that counts.
+        if (e.def.category == ItemCategory.Quest) return;
+        if (e.def.slot == EquipSlotType.Ring) return;
+
+        int take = e.IsEquip ? 1 : Mathf.Clamp(howMany, 1, e.count);
+        if (take <= 0) return;
+
+        // AT YOUR FEET, or the nearest clear spot to them — two things in one place read as one thing, and the
+        // one underneath cannot be seen or pointed at.
+        var where = GroundDrop.FreeSpotNear(MapManager.InWorld(netPosition, mapName), mapName);
+        var drop = GroundDrop.Place(where, e.def, take, e.instance, e.def.rarity, 0, mapName, 0);
+        if (drop == null) return;
+
+        // OUT OF THE BAG ONLY ONCE IT IS ON THE FLOOR. Taking it out first and failing to place it would be an
+        // item that existed in neither place.
+        if (e.IsEquip || take >= e.count) c.Bag.RemoveAt(index);
+        else e.count -= take;
+
+        GameNetwork.PublishDrop(drop);
+        PushBagToOwner();
+        SaveSoon();
+    }
+
+    [Command]
+    void CmdPickUpDrop(uint dropNetId)
+    {
+        if (Leaving) return;
+        var c = ServerCharacter;
+        if (c == null) return;
+        if (!NetworkServer.spawned.TryGetValue(dropNetId, out var identity) || identity == null) return;
+
+        var shell = identity.GetComponent<NetGroundDrop>();
+        var drop = shell != null ? shell.ServerDrop : null;
+        if (drop == null || drop.def == null) return;
+
+        // IN THE SAME PLACE, AND WITHIN ARM'S LENGTH OF IT. Asked here rather than trusted from the machine that
+        // asked, which is the whole reason picking up is a request at all.
+        if (drop.mapName != mapName) return;
+        var mine = MapManager.InWorld(netPosition, mapName);
+        float dx = drop.transform.position.x - mine.x;
+        float dz = drop.transform.position.z - mine.z;
+        float reach = GroundDrop.Reach + ReachSlack;
+        if (dx * dx + dz * dz > reach * reach) return;
+
+        // FIRST COME. The shell is taken away the moment somebody wins it, so a second person asking for the same
+        // thing a frame later finds nothing to be given — there is no way for one drop to be handed out twice.
+        if (drop.instance != null) c.TakeIntoBag(drop.instance);
+        else c.TakeIntoBag(drop.def, drop.count);
+
+        NetworkServer.Destroy(shell.gameObject);
+        PushBagToOwner();
+        SaveSoon();
+    }
+
     // ---- what a client asks for, from the bag window -----------------------------------------------------
     // Public so InventoryStore can send them without knowing anything about the wire.
 
     public void AskToEquip(int index, string itemId) => CmdEquipFromBag(index, itemId);
     public void AskToUnequip(EquipSlotType slot) => CmdUnequipToBag((int)slot);
     public void AskToReorder(int from, int to, string itemId) => CmdReorderBag(from, to, itemId);
+    public void AskToDrop(int index, string itemId, int howMany) => CmdDropFromBag(index, itemId, howMany);
+    public void AskToPickUp(uint dropNetId) => CmdPickUpDrop(dropNetId);
 
     [Command]
     void CmdReportMap(string map)

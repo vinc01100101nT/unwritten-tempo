@@ -168,9 +168,14 @@ public struct BagWire
         {
             c.Hotbar.Restore(hotbarBindings);
             c.PassiveSkills.Restore(activePassives);
-            // The bar redraws from inside this, and the skills behind the keys get something to run them.
-            c.RefreshUsableSkills();
         }
+
+        // AND ON EVERY BAG THAT ARRIVES, not only one that brought a bar with it.
+        // What this character can use is built from the bag as well, so a potion picked up mid-session used to
+        // land here with nothing behind it to run its effect: drinking it was refused on this machine, by name.
+        // The server rebuilds on every change it makes to a bag; this is that same rule at the other end.
+        // The bar also redraws from inside this, which is what the weapon-swap push above relies on.
+        c.RefreshUsableSkills();
     }
 
     static T At<T>(IList<T> a, int i, T fallback) => a != null && i < a.Count ? a[i] : fallback;

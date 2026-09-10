@@ -9,8 +9,13 @@ using UnityEngine.UI;
 /// <see cref="InventoryStore"/> / <see cref="Character"/> model rather than mutating slot
 /// <see cref="ItemSlot.Item"/>s, so it never desyncs from the data on the next refresh.
 ///
-/// Drops: bag→bag = reorder · bag→matching equip slot = equip · equipped→bag = unequip. A cursor-
-/// following ghost shows what's moving and every valid target lights a green halo while dragging.
+/// Drops: bag→bag = reorder · bag→matching equip slot = equip · equipped→bag = unequip · bag→THE WORLD = put it
+/// down on the ground. A cursor-following ghost shows what's moving and every valid target lights a green halo
+/// while dragging.
+///
+/// <para><b>Letting go over the world means dropping it</b>, and "the world" means the cursor is over no window
+/// at all — not merely outside the bag. Releasing onto your character sheet or your skill book does nothing,
+/// because throwing a sword on the floor is not what somebody dragging it onto another window meant to do.</para>
 /// </summary>
 [RequireComponent(typeof(ItemSlot))]
 public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
@@ -75,8 +80,30 @@ public class SlotDragHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         if (ghost != null) { Destroy(ghost); ghost = null; }
 
         var target = SlotUnder(e);
+        if (target == null && NothingUnder(e)) { DropIntoTheWorld(e); return; }
         ResolveDrop(target);
         // Equip/Unequip/Reorder each Notify() the store → ProgressionWindows.RefreshAll re-renders.
+    }
+
+    /// <summary>Let go over the world: put it down where you are standing, through the same door the right-click
+    /// menu's Drop uses — so a stack still asks how many, and a worn piece, a quest item and the Ring are still
+    /// refused with the reason shown there.</summary>
+    void DropIntoTheWorld(PointerEventData e)
+    {
+        // A WORN piece is on your body, not in the bag: there is no bag position to name, so there is nothing to
+        // ask the server for. Taking it off is what the menu's Unequip is for.
+        if (slot == null || !slot.IsBag || slot.boundEntry == null) return;
+        DropAmountPrompt.DropFromScreen(slot.boundEntry, e.position, canvas, null);
+    }
+
+    // Is the cursor over NO user interface at all — i.e. over the world. The ghost is raycast-transparent, so it
+    // cannot shadow whatever is really underneath.
+    static bool NothingUnder(PointerEventData e)
+    {
+        if (EventSystem.current == null) return false;
+        hits.Clear();
+        EventSystem.current.RaycastAll(e, hits);
+        return hits.Count == 0;
     }
 
     void ResolveDrop(ItemSlot target)

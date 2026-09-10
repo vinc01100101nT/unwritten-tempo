@@ -493,7 +493,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainingDummy
   regenInterval: 5
-  labelHeight: 1.3
 --- !u!114 &15493032
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -512,8 +511,6 @@ MonoBehaviour:
   lootTable:
   - item: {fileID: 11400000, guid: ed399b31d384c554cbd9faa613031152, type: 2}
     chance: 0.08
-  scatterRadius: 0.5
-  coinSprite: {fileID: -8171958947958391838, guid: d833d8d5b4847c74cab606b3b3fe8a1f, type: 3}
   wornDropChance: 0.15
 --- !u!114 &15493033
 MonoBehaviour:
@@ -606,6 +603,7 @@ MonoBehaviour:
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
+  simulateRadius: 28
 --- !u!114 &15493037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -624,6 +622,7 @@ MonoBehaviour:
   hardDefPercent: 5
   hardMagicDefPercent: 0
   luk: 1
+  hpRegenPerSecond: 0
   flee: 15
   element: 2
   flashColor: {r: 1, g: 1, b: 1, a: 1}
@@ -646,7 +645,6 @@ MonoBehaviour:
   moveSpeed: 2.2
   agentRadius: 0.3
   arriveRadius: 0.1
-  gravity: 12
   repathInterval: 0.35
   repathThreshold: 0.6
   maxPathExpansions: 2500
@@ -23070,40 +23068,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f99682b10a4072e4fa9e0f90ffaf93e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AmbientLife
-  models:
-  - {fileID: 919132149155446097, guid: 8c253ad026f38254390dae75484bdac8, type: 3}
-  - {fileID: 919132149155446097, guid: 0c927d10c77d01345ad1d2199d30bd4a, type: 3}
-  - {fileID: 919132149155446097, guid: eb917d793eb54284d9d76c4b30a4c5ff, type: 3}
-  - {fileID: 919132149155446097, guid: 356a413bfa09f6c488685167e033ff3a, type: 3}
-  - {fileID: 919132149155446097, guid: 035819627887434409ddeb6411b5a753, type: 3}
-  - {fileID: 919132149155446097, guid: aa867f76defbb894bb7aa884b5a965cf, type: 3}
-  - {fileID: 919132149155446097, guid: 900eb34ab388cb845aabe93ed774f80d, type: 3}
-  - {fileID: 919132149155446097, guid: ed17305d441251541ae95387541cd014, type: 3}
-  - {fileID: 919132149155446097, guid: 1547ab1d0e3e8564dac1534dfda7d617, type: 3}
-  - {fileID: 919132149155446097, guid: b3560ce9507aa584f8655ed0d7a46202, type: 3}
-  - {fileID: 919132149155446097, guid: 693dd85549ee87b45889edcfc7ea9e46, type: 3}
-  - {fileID: 919132149155446097, guid: 7904eaa012889e64c988e18e6756d19d, type: 3}
-  - {fileID: 919132149155446097, guid: 601368c4250a66449bbf7b1e704215c7, type: 3}
-  - {fileID: 919132149155446097, guid: f8f123f0c5631b14fb6f94d678b2caeb, type: 3}
-  - {fileID: 919132149155446097, guid: ce2a6fad891b88441ae4c0d56730d099, type: 3}
-  - {fileID: 919132149155446097, guid: fe743a24eb9775c4996d08bc0c7521b9, type: 3}
-  - {fileID: 919132149155446097, guid: ab970332b8637834b9091f4013221334, type: 3}
-  - {fileID: 919132149155446097, guid: f167c9dfaf03adc4e916df488f587287, type: 3}
-  - {fileID: 919132149155446097, guid: b2c6dd7cdcaa2ba44944e486e8beb314, type: 3}
-  - {fileID: 919132149155446097, guid: 681b26c59bfb90b4f83f854f1d691998, type: 3}
-  - {fileID: 919132149155446097, guid: 714ffb43c5cdaa44f9e82101b8792e26, type: 3}
-  - {fileID: 919132149155446097, guid: 842622f825c872d489d87a2613474e4e, type: 3}
-  - {fileID: 919132149155446097, guid: fe72f10e6ad7fa7429ae449216300be8, type: 3}
-  - {fileID: 919132149155446097, guid: 23979fa220a09004ca0bc8a577139232, type: 3}
-  - {fileID: 919132149155446097, guid: 4fc631cb0964ed84d91941a77259605b, type: 3}
-  - {fileID: 919132149155446097, guid: bc8a6b07489d36642aab341d9e23db3c, type: 3}
-  - {fileID: 919132149155446097, guid: fd9d1a52863cd1d42add5f6c855648a9, type: 3}
-  - {fileID: 919132149155446097, guid: 128b3ca1a45896c4eb037b7f55753924, type: 3}
-  - {fileID: 919132149155446097, guid: 8cbdfd7e15094d64588b7b8f132ca59b, type: 3}
-  - {fileID: 919132149155446097, guid: 79e40cbfbb941e74d8570757bf8c6208, type: 3}
-  - {fileID: 919132149155446097, guid: eafc3debf4978f64eaa59b4919c983e3, type: 3}
-  - {fileID: 919132149155446097, guid: df576b6bda449ec4fbaa9f05d799db1d, type: 3}
-  sharedController: {fileID: 9100000, guid: aba9e80c47c9a9c49911925e7b4a0422, type: 2}
   count: 12
   areaRadius: 25
   wanderRadius: 6

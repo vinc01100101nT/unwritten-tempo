@@ -41,6 +41,9 @@ public class GameNetwork : NetworkManager
     /// <summary>The shell spawned for each townsperson the server owns, found in Resources by this name.</summary>
     public const string NpcPrefabName = "NetNpc";
 
+    /// <summary>The shell spawned for each thing lying on the ground, found in Resources by this name.</summary>
+    public const string DropPrefabName = "NetGroundDrop";
+
     // DELIBERATELY ABSENT: a public "am I joined right now" answer. It had no readers, and the one use anybody
     // would reach for it for — gating behaviour — is the timing accident this layer already outlawed: dialling
     // takes a moment, and a question asked inside that moment gets the wrong answer and acts on it. The question
@@ -75,6 +78,7 @@ public class GameNetwork : NetworkManager
 
     static GameObject mobPrefab;
     static GameObject npcPrefab;
+    static GameObject dropPrefab;
 
     /// <summary>Server-only: announce a mob that has just come into existence, so every connected player
     /// receives it. Called from wherever a creature is born; does nothing off a server, so the offline game
@@ -113,6 +117,29 @@ public class GameNetwork : NetworkManager
         var shell = Instantiate(npcPrefab);
         shell.GetComponent<NetNpc>()?.BindOnServer(npc, modelName);
         NetworkServer.Spawn(shell);
+    }
+
+    /// <summary>Server-only: announce a thing somebody has just put on the ground, so every player near enough
+    /// can read it. Does nothing off a server, where the drop this machine made IS the only one there is.</summary>
+    public static void PublishDrop(GroundDrop drop)
+    {
+        if (drop == null || !NetworkServer.active) return;
+
+        if (dropPrefab == null) dropPrefab = Resources.Load<GameObject>(DropPrefabName);
+        if (dropPrefab == null)
+        {
+            GameLog.Error(LogCat.Net, "no '" + DropPrefabName + "' prefab in Resources — dropped items will exist "
+                           + "on the server but nobody will see them lying there.");
+            return;
+        }
+
+        var shell = Instantiate(dropPrefab);
+        shell.GetComponent<NetGroundDrop>()?.BindOnServer(drop);
+        NetworkServer.Spawn(shell);
+        // NAMED ONLY NOW. Its name on the wire is handed out by the spawn above, and picking a thing up is a
+        // request that names it — so the drop could not carry its own name until this moment.
+        var identity = shell.GetComponent<NetworkIdentity>();
+        if (identity != null) drop.netId = identity.netId;
     }
 
     /// <summary>Server-only: say that a townsperson just spoke, and what they said, so the same words appear over
@@ -186,6 +213,11 @@ public class GameNetwork : NetworkManager
         npcPrefab = Resources.Load<GameObject>(NpcPrefabName);
         if (npcPrefab != null) spawned.spawnPrefabs.Add(npcPrefab);
         else GameLog.Error(LogCat.Net, "no '" + NpcPrefabName + "' prefab in Resources — no player will see townsfolk.");
+
+        dropPrefab = Resources.Load<GameObject>(DropPrefabName);
+        if (dropPrefab != null) spawned.spawnPrefabs.Add(dropPrefab);
+        else GameLog.Error(LogCat.Net, "no '" + DropPrefabName + "' prefab in Resources — no player will see what "
+                           + "anybody drops.");
 
         // The server hands out bodies itself, when a client says who it is (see OnJoinRequest). Mirror's
         // automatic version would spawn one before we know which character to build.
@@ -1257,6 +1289,19 @@ public class GameNetwork : NetworkManager
     {
         var body = fighter != null ? fighter.transform : null;
         return body != null ? body.GetComponentInParent<NetworkIdentity>() : null;
+    }
+
+    /// <summary>Server-only: tell whoever is playing <paramref name="who"/> that something just arrived in their
+    /// bag. True when it was sent — false when there is no world, or nobody is playing that character here, which
+    /// is the caller's signal to say it on this machine instead.</summary>
+    public static bool TellOwnerTheyGot(Character who, string itemId, int count, int rarity, int upgrade)
+    {
+        if (!NetworkServer.active || who == null || string.IsNullOrEmpty(itemId)) return false;
+        var identity = IdentityOfFighter(who);
+        var shell = identity != null ? identity.GetComponent<NetPlayer>() : null;
+        if (shell == null || identity.connectionToClient == null) return false;
+        shell.TellOwnerTheyGot(itemId, count, rarity, upgrade);
+        return true;
     }
 
     /// <summary>MOVING A PERSON is the server's decision and their own machine's job. Walking and running are still

@@ -19,10 +19,12 @@ public class ItemDropEntry
 /// <see cref="Health.onDeath"/> and hands everything that won its roll straight to whoever earned the kill —
 /// Zeny into their purse, items into their bag. Configured per-archetype by <see cref="RigBuilder25D"/>.
 ///
-/// <para><b>Nothing is left lying in the world.</b> Loot used to burst out of the body and land on the ground as
-/// objects a player walked to and clicked, which on a server meant a race: two people clicking the same coin, one
-/// of them quietly told no. It is now given directly, so there is nothing to reach, nothing to compete for and
-/// nothing to leave behind. Who receives it is <see cref="Rewards.WhoEarned"/>'s answer and nothing else's.</para>
+/// <para><b>A KILL never leaves anything lying in the world.</b> Loot used to burst out of the body and land on
+/// the ground as objects a player walked to and clicked, which on a server meant a race: two people clicking the
+/// same coin, one of them quietly told no. It is now given directly, so there is nothing to reach, nothing to
+/// compete for and nothing to leave behind. Who receives it is <see cref="Rewards.WhoEarned"/>'s answer and
+/// nothing else's. A player putting something down on purpose is the other thing entirely, and that DOES lie
+/// there for anybody to pick up — see <see cref="GroundDrop"/>.</para>
 /// </summary>
 [RequireComponent(typeof(Health))]
 public class LootDropper : MonoBehaviour
