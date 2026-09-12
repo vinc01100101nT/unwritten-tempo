@@ -1,18 +1,18 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-09-12
 tags:
   - planning-production
 ---
 
 # unwritten — Roadmap to Launch
 
-RO-style **2.5D** action-RPG (3D world + billboard sprites), built in Unity. *Counts re-measured 2026-08-30; the percentage estimates below are still the 2026-08-24 ones and have not been re-judged.*
+RO-style **2.5D** action-RPG (3D world + billboard sprites), built in Unity. *Counts re-measured 2026-09-12; the percentage estimates below are still the 2026-08-24 ones and have not been re-judged.*
 
-> **Progress snapshot (percentages estimated 2026-08-24, counts re-measured 2026-08-30):** against **Tier 1 (Minimum Shippable Steam game)** we were, by estimate, **~45–50% done** (up from ~30–35% on 2026-07-02); against the **full MMORPG dream** ~**10–12%**. Per-milestone estimate: **M1 ~95%**, **M2 ~20%**, **M3 ~35%**, **M4 ~0%**, **M5 ~0%**. ⚠️ **Those percentages predate the multiplayer layer** (see Tier 2 below, which is no longer untouched) and predate the consumables and the build pipeline — they need re-judging, which is a call for vince, not a measurement.
+> **Progress snapshot (percentages estimated 2026-08-24, counts re-measured 2026-09-12):** against **Tier 1 (Minimum Shippable Steam game)** we were, by estimate, **~45–50% done** (up from ~30–35% on 2026-07-02); against the **full MMORPG dream** ~**10–12%**. Per-milestone estimate: **M1 ~95%**, **M2 ~20%**, **M3 ~35%**, **M4 ~0%**, **M5 ~0%**. ⚠️ **Those percentages predate the multiplayer layer** (see Tier 2 below, which is no longer untouched) and predate the consumables and the build pipeline — they need re-judging, which is a call for vince, not a measurement.
 >
-> The July snapshot's headline gap — *the first fully-realized class kit* — is **closed**: the sword pool finished on 2026-08-24 at 22 composed skills. The gap has moved. It is now that **the world has no reasons in it**: only 2 wearable items exist, no quests, no named NPCs, no boss placed in any map, no title screen, and no client build has ever been produced.
+> The July snapshot's headline gap — *the first fully-realized class kit* — is **closed**: the sword pool finished on 2026-08-24 at 22 composed skills. The gap has moved, and it has NOT moved since: **the world still has no reasons in it**. Only 2 wearable items exist, no quests, no named NPCs, no boss placed in any map, and no title screen. Every content number in this document is unchanged from 30 August, while the whole of September went into the online layer and the tooling. A **client build now exists** (produced 2026-09-08), so packaging is no longer wholly unproven.
 
 > **What this doc is.** The single source of truth for *how far we are from a real, shippable game* and *what stands between here and a Steam launch*. It replaces the old phase-by-phase 2D plan (the 2D build order is now history — see **Appendix**). It is deliberately honest about scope: the dream is a full MMORPG; the **shippable path** is a single-player (or small co-op) RO-style ARPG first.
 
@@ -33,13 +33,13 @@ RO-style **2.5D** action-RPG (3D world + billboard sprites), built in Unity. *Co
 
 | Thing | Count | Note |
 | --- | --- | --- |
-| Game + tooling C# files | 357 | 93 of them editor tools |
+| Game + tooling C# files | 375 | 95 of them editor tools |
 | Playable maps on disk | 41 | 10 towns · 17 fields · 14 dungeons — all carry real content |
-| Mob definitions | 86 | 20 flagged as bosses — **0 placed in any map** |
+| Mob definitions | 86 | 20 flagged as bosses — **0 placed in any map**, though all 20 now carry their own art (until 2026-09-12 every one of them wore an ordinary creature's sprite) |
 | Composed skills | 42 | 22 sword (pool complete) · 9 magic/support · 11 carried by consumable items |
 | Items in the entire game | 13 | **2 wearable** (one sword, one bow) · 11 consumables |
 | Cards | 4 | |
-| Client builds ever produced | **0** | the build script makes a client, but only the server has been built |
+| Client builds ever produced | **1** | a playable client, 458 MB, produced 2026-09-08; the server build is 227 MB |
 
 **The foundation — the hardest part to start — is real:**
 
@@ -55,6 +55,9 @@ RO-style **2.5D** action-RPG (3D world + billboard sprites), built in Unity. *Co
 - **HUD:** inventory / equipment / character trio, skill book, data-driven hotbar, buff bar, cast bar, damage popups, death screen.
 - **Workflow:** offline C# and skill-data checkers that run in seconds without opening Unity, plus a live editor link for reading real values.
 - **Multiplayer — started, and no longer a Tier-2 abstraction (see Tier 2 below):** **four** processes now — a sign-in service, a character server that owns every character and every save, a headless game server that owns the world and never touches the database, and one shared Postgres. Two players have been watched standing in the same town seeing each other move. A player is let in by the character server, which pushes their whole character to the game server before telling them where to knock. Combat crosses the wire in both directions and the whole skill runs on the server; a fight has been played against server-owned creatures, though not yet with two people in it. There is deliberately **no offline game any more** — pressing Play needs a running server. Details in [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md); how to stand it up in [Starting the Network](starting-the-network.md).
+
+- **Everything built in September, which no earlier version of this document mentions:** the world now runs across **many servers** — an area is placed on the least busy machine when somebody wants it and released 45 seconds after the last person leaves, and walking through a door into an area another machine holds writes your character down, waits for the write, and hands you over. **One account can only be signed in once**, and a character is written down and released before a second machine picks it up, so it can never be alive in two places. **Things you drop lie on the ground** as a sparkle coloured by rarity, and the server decides where they land and who wins when two people reach at the same instant. **Anything entering your bag says so in chat**, through one door that replaced four hand-written copies. A **categorised game log** with twelve switchable groups, built because one play-test's log held 1205 useless lines against 53 useful ones; it now says why a cast was refused, in six places that used to be silent. **Touch controls** so the game can be played on a phone. A **hosting decision with measured latency** — one always-on machine in Singapore, 49 ms from Manila against Frankfurt's 244. A **performance pass**: the frame cap dropped from 120 to 60 on a 60 Hz screen, the minimap's redraw cut from 120 times a second to 20, and 66.6 MB of decoded audio per client moved to streaming. **A skill cast from too far walks you there** instead of refusing, and reach became a real stat the server enforces per skill. **One shared animation brain** for every body in the game, replacing four copies that had drifted. **Blocked and absorbed hits finally say so** — a shield, a brace and a parry were all invisible because the machine deciding them threw the numbers away.
+- **The checks that guard all of it, built 2026-09-12:** the game's C# compiles in 4.4 s without opening Unity; its **arithmetic** is pinned and checked in 3 s outside the editor entirely — the experience curve, the stat-point budget, the accuracy window, the element chart, the ring's ceilings; and a **wiring sweep** asks whether everything the game loads still points at something that exists. Each has a prover that breaks the thing on purpose and confirms the check complains, because a check nobody has watched fail proves nothing. All of them run at the end of a turn and speak only about files that turn touched.
 
 **Honest read:** this is a combat system a stranger could enjoy for twenty minutes and then run out of reasons to keep playing. The technology is not the blocker and has not been for a while.
 
@@ -91,7 +94,7 @@ Milestones are in dependency order; each ends in something you can actually *pla
 ### M4 — Game-shaped product — **~0%**
 
 - No title screen or new-game flow; no pause; no controller support; no tutorial; no localization scaffolding. In-game settings and audio wiring exist, and a sign-in + character-select door now stands in front of the game, which is the only part standing.
-- **Steam integration** — nothing started. **Packaging is no longer entirely unproven:** a one-command build script exists that produces either half, and the **server** has actually been built and run. A **client** build has still never been produced, so the player-facing half of packaging is the unproven part.
+- **Steam integration** — nothing started. **Packaging is proven on both halves:** a one-command build script produces either, and both have been built and run — the server, and a 458 MB playable **client** on 2026-09-08. What remains unproven is not making a build but shipping one: no store page, no installer, no update path.
 - *Shippable when:* a first-time player needs zero outside instructions.
 
 ### M5 — Content multiplication (the real 80%) — **~0%**
@@ -123,8 +126,8 @@ Then, in dependency order:
 
 What now stands, measured (details in [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md)):
 
-- **Networking core** — **partly built.** Server-authoritative on headless Unity, Mirror as the library, a shell/body split so only ids and positions cross the wire, range-based interest at 60 units, and a reconnect-then-give-up loop. **Watched working:** the server boots, players sign in and see each other move. **Written and never run:** server-owned creatures and the whole combat round-trip. **Not built:** client prediction/reconciliation — movement is relayed and trusted, which is the largest piece left — and zoning/sharding.
-- **Backend & accounts** — **built for the basics, and the authority moved.** Login/auth, a real database of accounts and characters, and a separate character server that owns the list, the saves and the door into the world. **The server now writes progress, and owns the bag, the money and the worn gear**; a save from a player's own machine is refused while they are in a world, and movement reports are checked against what was possible. **Not built:** sharding and trade. Resolving skills server-side is **done** — the whole skill runs there, so a skill's damage, a heal's size and a player's own buffs are the server's word.
+- **Networking core** — **built and played.** Server-authoritative on headless Unity, Mirror as the library, a shell/body split so only ids and positions cross the wire, range-based interest, and a reconnect-then-give-up loop. **Watched working in a real session:** the server boots, people sign in and see each other move, creatures the server owns are fought and killed, and the whole combat round-trip runs — a swing asks the server before it lands. **Zoning across machines is built** (see the line below). **Still not built:** client prediction and reconciliation. Movement is relayed and trusted, and that remains the largest single piece left — the code says so itself, marking it as belonging to a later phase.
+- **Backend & accounts** — **built for the basics, and the authority moved.** Login/auth, a real database of accounts and characters, and a separate character server that owns the list, the saves and the door into the world. **The server now writes progress, and owns the bag, the money and the worn gear**; a save from a player's own machine is refused while they are in a world, and movement reports are checked against what was possible. **Splitting the world across machines is built** — an area is placed on the least busy server when somebody asks for it, released 45 seconds after the last person leaves, and crossing between them writes your character down first and hands you over with a one-time pass; one account can only be signed in once, so a character can never be alive in two places. **Not built:** trade. Resolving skills server-side is **done** — the whole skill runs there, so a skill's damage, a heal's size and a player's own buffs are the server's word.
 - **Live service** — **nothing started.** 24/7 hosting + ops cost, anti-cheat, monitoring, patching/live-ops, community/moderation, customer support.
 - **MMO content systems** — **chat exists.** Parties/guilds, trading, auction house, PvP, world bosses and social spaces do not.
 
