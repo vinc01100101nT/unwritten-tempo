@@ -37,6 +37,10 @@ REPO = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 TOOLS = os.path.join(REPO, "tools")
 SCRIPTS = os.path.join(REPO, "unity", "Assets", "Scripts")
 SKILLS = os.path.join(REPO, "unity", "Assets", "3_Data", "Resources", "Skills")
+AUTHORED = os.path.join(REPO, "unity", "Assets", "1_Authored")
+GENERATED = os.path.join(REPO, "unity", "Assets", "2_Generated")
+DATA = os.path.join(REPO, "unity", "Assets", "3_Data")
+SCENES = os.path.join(REPO, "unity", "Assets", "Scenes")
 LEARNINGS = os.path.join(REPO, "docs", "5-ai-learnings", "README.md")
 sys.path.insert(0, os.path.join(TOOLS, "hook-analytics"))
 import guard_check   # the one implementation of "is every guard alive"
@@ -79,6 +83,24 @@ GROUPS = {
     },
     # The guard check is guarded the same way: it only runs here because I just edited it,
     # and a proof that names no file of mine would otherwise be filtered into silence.
+    # Does everything the game loads still point at something that exists? A stale reference is
+    # silent — the engine drops it, the code falls back, and the game runs wearing the wrong art.
+    "wiring": {
+        "roots": [(DATA, ".asset"), (AUTHORED, ".mat"), (AUTHORED, ".prefab"),
+                  (GENERATED, ".prefab"), (SCENES, ".unity")],
+        "run": [sys.executable, os.path.join(TOOLS, "check-asset-wiring.py")],
+        "headline": "Something the game loads points at a file that is not there:",
+    },
+    # And the sweep is guarded like every other checker: edit it and we re-prove it still sees a
+    # planted break, because a blind sweep prints exactly what a sound project prints.
+    "wiring-checker": {
+        "files": [os.path.join(TOOLS, "check-asset-wiring.py"),
+                  os.path.join(TOOLS, "unity_assets.py")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-asset-wiring-check.py")],
+        "headline": "The asset-wiring sweep can no longer see a broken reference, so its silence "
+                    "proves nothing until this passes:",
+        "mine_by_construction": True,
+    },
     "guard-checker": {
         "files": [os.path.join(TOOLS, "hook-analytics", "guard_check.py")],
         "run": [sys.executable, os.path.join(TOOLS, "hook-analytics", "prove-guard-check.py")],
@@ -158,7 +180,11 @@ def mine_only(body, touched):
     them. Lines naming no file at all (headings, counts) ride along with the ones kept."""
     kept, saw_fault = [], False
     for line in body.splitlines():
-        hit = re.search(r"([\w./\\-]+\.(?:cs|asset|py))\s*[(:]", line)
+        # Every kind of file a checker can blame, not just the three the first checkers
+        # happened to report on. A kind missing from this list is never recognised as a
+        # file at all, so its fault line is kept unconditionally and every pre-existing
+        # one in the project rides along on every turn — the opposite of this filter's job.
+        hit = re.search(r"([\w./\\-]+\.(?:cs|asset|py|mat|prefab|unity|sh|md|json|shader))\s*[(:]", line)
         if not hit:
             kept.append(line)
             continue

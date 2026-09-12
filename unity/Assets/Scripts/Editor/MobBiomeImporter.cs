@@ -26,8 +26,11 @@ using UnityEngine;
 /// </summary>
 public static class MobBiomeImporter
 {
-    const string MonsterArtDir = "Assets/1_Authored/Art/Billboards/Actor/Monster";
-    const string BossArtDir     = "Assets/1_Authored/Art/Billboards/Actor/Boss";
+    // Public because the prefab baker resolves a creature's sheet from these same two folders. It used to
+    // hardcode the monster one and know nothing of the boss one, so every boss baked with the fallback sheet
+    // and all 20 of them stood in the world wearing KappaGreen's sprite. One owner for the pair, read by both.
+    public const string MonsterArtDir = "Assets/1_Authored/Art/Billboards/Actor/Monster";
+    public const string BossArtDir     = "Assets/1_Authored/Art/Billboards/Actor/Boss";
     const string ResourceDir    = "Assets/3_Data/Resources/Monsters";
 
     // The 5 biomes mob/boss cells cycle through (same enum the map ground uses).

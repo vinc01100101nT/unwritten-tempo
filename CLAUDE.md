@@ -152,6 +152,41 @@ survived one fix — that is the instruction. Measure, don't guess.
 The connection details, the proven-vs-unproven list, how to run an editor action safely, and the offline compile
 checker are the **`unity-live-editor` skill**.
 
+## Agent roles — WHEN to spawn one without being asked
+
+Seven roles live in `.claude/agents/`. Five of them cannot write at all, or can write only one
+narrow place, and that is enforced by a refusal rather than by their good intentions — the gate is
+`tools/hook-analytics/write_scope_gate.py`, proven by `tools/prove-write-scope-gate.py`.
+
+**THREE of them are spawned WITHOUT asking, the moment their situation arrives.** This section is
+what authorises that; the default everywhere else is still to do the work here.
+
+- **`debugger` — the moment a fix FAILS.** A bug that survived one attempt has a cause this
+  session's model of the system is missing, so the next move is never a second reasoned fix. Hand
+  it over: the debugger only measures, and it cannot change anything, so its answer comes back as
+  evidence rather than as a patch. This is the second-fix rule at the top of this file, carried out
+  by somebody whose hands are tied.
+- **`data-author` — bulk authoring of saved game data.** More than a handful of items, creatures,
+  drop tables or skills. It may write game data and nothing else.
+- **`planner` — a feature whose SHAPE is not obvious.** A system, not a change: a loot spine, a
+  quest system, a new screen. Not for anything a paragraph of contract bullets already settles —
+  spawning one to plan a one-liner is a slower way to start.
+
+**Everything else is spawned only when the user asks for it BY NAME.**
+
+- **`analyzer`** answers questions about where the project stands. It is deliberately NOT automatic:
+  most such questions are faster answered here, and it starts cold knowing nothing of the
+  conversation.
+- **`doc-keeper`** revises docs and the wiki. Writing a doc is usually part of the work in hand,
+  not a job to hand off.
+- **`reviewer` and `tester` stay exactly as their own sections below say** — the user's words are the
+  only thing that starts either, and neither is ever offered. Nothing here loosens that.
+
+**Relaying what one hands back.** Only its final report reaches this session, and none of it reaches
+the user — so it gets relayed, never pasted as though it were watched. **Spot-check any number it
+leads with before repeating it**, because a count it invented and a count it measured arrive in the
+same confident voice, and the user has no way to tell them apart. Say which parts came from it.
+
 ## Handoff protocol — the phrase "do a handoff"
 
 **"do a handoff"** (or "handoff this" / "hand off the task") is a COMMAND: without further prompting, write a
@@ -485,6 +520,7 @@ that costs a round.
 - **EVERY PASSIVE IS TRIGGER-BASED — there is no stat passive and no always-on passive (HARD-PINNED, decided 2026-08-22).** A passive is a skill that fires on a moment. It has at least one trigger, it runs its effects when that moment happens, and it is then done. **Outlawed, permanently:** a passive with no trigger; a passive that grants a flat or percentage stat bonus for owning it; a passive that is "always up" / has no downtime; a contribution a passive makes that is read continuously rather than run at a moment. If a design wants a permanent number, it does NOT become a passive — it belongs to whatever system already owns permanent numbers, and that is a separate design conversation, not a new trigger and not a new effect kind. **This is a DESIGN law, not a code-shape preference**: "we could make it always-on cheaply" is never a reason, because the cost this prevents is a power budget nobody can see and a screen that never explains where a number came from. Before adding any passive, ask: *what moment does this happen at?* No answer = it is not a passive and must not be built as one. **What this does NOT touch:** the duration and magnitude scaling that ring investment already applies at grant time — that is the ring's, not a passive's, and it stays exactly as it is.
 - **PRIMARY STATS COME FROM GEAR ONLY — a skill NEVER touches them; skills move SUB-STATS (HARD-PINNED, decided 2026-08-22).** The six primaries (STR/AGI/VIT/INT/DEX/LUK) have exactly two sources: the points you allocate, and what your gear grants (weapons, armour, shields, accessories, garments, and the cards slotted into them). **No skill, buff, debuff, passive, ailment or state may add or subtract a primary stat, ever** — not timed, not permanent, not "just a small one". A primary is what you BUILT; a fight does not rewrite it. **What skills move instead: sub-stats**, through the one `SubStatBuff` / `SubStatDebuff` effect — attack, magic attack, defence, magic defence, accuracy, evasion, attack speed, cast speed, crit chance, crit damage, max HP, max MP, movement speed, HP regen, MP regen, mana leech, reflect, life steal, damage. **Why sub-stats and not primaries:** a primary fans out into five or six derived numbers at once through the shared formulas, so "+20 AGI for 10s" is an unreadable bundle nobody can balance; a sub-stat is one number moving one thing, which a designer can price and a player can see change on the character sheet. **Every timed sub-stat change is that ONE effect** — there is no per-stat verb, and adding one back (a `Haste`, a `Regen`) is the DRY violation this collapse removed. A new sub-stat is one row in the sub-stat table plus one lift at the stat's read site; if a change needs more than that, it is not a sub-stat.
 - **Centralize cross-cutting concerns** (full rule in global CLAUDE.md) — Unity primitives to wrap: `Input.GetKeyDown`, `DateTime.Now`, `Random`, direct `PlayerPrefs`. Canonical: `Hotkeys.cs` (typing-guard + `Down/Held/DigitDown`) replaced \~20 raw input sites
+- **⛔ ARITHMETIC NEVER LIVES INSIDE A BEHAVIOUR — it goes in a plain function that takes numbers and returns numbers (HARD-PINNED, decided 2026-09-12 at the user's instruction).** Any calculation written inside a component — how much damage lands, how far something can see, how fast it swings, what a drop rolls, what a stack is worth, how a price is worked out — is arithmetic that **cannot be checked without standing the whole game up**, which in practice means it is never checked at all. So it does not go there. It goes in a plain static function fed the numbers it needs, and the component calls it. **This is the general rule, not a list of jobs:** it is about EVERY sum in the game, and damage is merely the example that surfaced it. **Forwards, it is free and it is absolute** — new arithmetic is written this way from the start, with no exception for "it's only a small one", because the small ones are how the pile regrows faster than it is cleared. **Backwards**, existing arithmetic is pulled out in stages ranked by what its failure would cost, since doing every component at once is the sort of refactor that never lands — but the staging is about ORDER, never about scope, and a stage that touches a component must take its arithmetic with it. The test that decides: *can this sum be checked by calling one function with numbers?* No ⇒ it is in the wrong place.
 - **Single source of truth** (full rule in global CLAUDE.md) — Canonical: the **Vfx Composer's radius ring reads** `SkillTickBinding.radius` (Skill Composer owns it) not a hand-typed copy (`VfxComposerWindow.RefreshSkillRadii`); see also **Pivot = base anchor** below
 - **Player + NPC share ONE function per behaviour (HARD-PINNED)** — the player and every NPC (townsfolk, and later combat NPCs) are the SAME live-3D character rig, so any behaviour they BOTH perform — animation/stance, footsteps, foot-grounding, facing/yaw, crowd, hurt/death, status effects, whatever — must be implemented ONCE in a shared function/component that both call. NEVER copy-paste a character behaviour per type, re-implement it for the NPC, or leave two paths you must hand-sync (a stale copy is the bug: e.g. NPC footsteps drifted for months on a distance odometer while the player was frame-locked — fixed by both routing through `FootstepTracker.DetectPlants` + a per-character `Gait`; see memory [[npc-footsteps-frame-locked]]). Only the per-role DECISION may differ (player = input, NPC = AI/PathAgent intent); the mechanism it drives is shared. When the split is legitimate (player has a CharacterController + jumps, NPC doesn't), share the largest common PRIMITIVE (e.g. both call `GroundSnap.TryGroundY`) and split only the genuinely rig-specific tail — and say so in a comment so nobody "re-unifies" wrongly. **Before adding ANY character behaviour, check the other character type first**: if it exists there, extract/reuse; if it's new, write it shared from the start. Canonical shared pieces today: `StanceController`+`Character3DPose` (animation body), `FootstepTracker.DetectPlants` (steps), `GroundSnap.TryGroundY` (ground raycast), `UnitCrowd` (pass-through). Legitimately per-role: movement (`Player3DController` input vs `PathAgent3D` routing) and the brain.
 - **Name by function, not source** (full rule in global CLAUDE.md) — functional: `GlbPropImporter`, `FbxKitPrefabBaker`, `WalkableGround`. Source-specific names allowed only when hardcoded to a pack's folders/quirk: `PxltgrMaterialFixer`, `MobBiomeImporter` (NinjaAdventure dirs)

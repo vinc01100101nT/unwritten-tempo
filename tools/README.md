@@ -44,6 +44,56 @@ Exit code **0** = clean, **1** = compile errors (printed with exact file + line)
 
 Verified to **catch** deliberate errors in both halves, not just to report "clean". A clean run means Unity will build it — it does **not** mean the game behaves correctly, so it never replaces play-testing.
 
+## check-asset-wiring.py · prove-asset-wiring-check.py · unity_assets.py
+
+Does everything the game loads still point at something that exists?
+
+```bash
+tools/check-asset-wiring.py          # sweep; exit 1 if anything points at nothing
+tools/prove-asset-wiring-check.py    # prove the sweep still SEES a planted break
+```
+
+A stale reference is **silent**: Unity drops it, the code falls back to a default, and the game runs wearing the
+wrong art with nothing written anywhere. The case that prompted it had all 20 bosses standing in the world
+wearing an ordinary creature's sprite for weeks, because the prefab baker searched one art folder and their art
+was in the other.
+
+It checks two things today: every reference in our own files resolves, and every creature's sprite folder exists
+in **either** art folder. It reports and never repairs — what to do about a break is a decision, not a sweep's
+job. Runs in about 3.5 s and is wired into the end-of-turn gate, which shows only faults in files the session
+actually edited.
+
+**The trap it is built against:** resolving guids from `Assets/` alone reports every reference into an installed
+package as broken. Measured on 2026-09-12, that mistake produced 34 confident false alarms about hand-authored
+material files that were completely fine. `unity_assets.py` is the shared reader that resolves guids across the
+project **and** its packages — 28,346 of them against the 7,547 a project-only walk sees — so both this sweep and
+anything written later ask one correct question instead of each getting it wrong separately.
+
+## hook-analytics/write_scope_gate.py · prove-write-scope-gate.py
+
+The fence behind every restricted agent role in `.claude/agents/`. A role told "you only read" is a promise the
+agent can break the moment it decides that would help; this turns the promise into a refusal.
+
+```bash
+tools/prove-write-scope-gate.py    # prove the fence still refuses AND still allows
+```
+
+It is a `PreToolUse` gate, wired from a role's own frontmatter rather than from a settings file. Given no
+arguments the role may write **nothing** (planner, reviewer, debugger); given folders it may write only under
+those and nowhere else (the data author gets the game-data folder, the doc keeper gets docs and the wiki). The
+scratchpad is always allowed, so a measurement can still have a throwaway script.
+
+It asks `tool_writes.py` which files a call writes, so an edit made with a shell command counts exactly like one
+made with the editing tools. Editor-mutating command lines are refused by name as well, because changing the
+running editor never names a file and so is invisible to that answer.
+
+The prover matters as much as the gate: a fence that silently stops refusing looks identical to one with nothing
+to refuse, and the first version of this gate refused *everything* — including the writes its roles exist to
+make — because it worked out the repo's location one folder short. Both halves are checked, 17 cases.
+
+How the session-start checker REPORTS on these gates is proven next door, in `hook-analytics/prove-guard-check.py`, not here: a gate on a role stamps nothing until somebody spawns
+that role, so "never reported running" is its ordinary state and must never be raised as a fault.
+
 ## ui-tokens.py · ui-geometry.py · check-ui-prototypes.py · prove-ui-prototype-check.py
 
 Keep the mock pages in `prototypes/` and `mockups/` honest about the game's real look.

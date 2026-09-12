@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-07
+last-updated: 2026-09-12
 tags:
   - ai-learnings
 ---
@@ -42,6 +42,17 @@ two words long (`npm run`, `npm start`), and the matching only ever compared sin
 **never matched anything, in any session**. A dead entry reports no error. It was found only because a test case
 written for the first fix failed.
 
+2026-09-12, the same failure from the other end. Five fenced agent roles were added, each carrying its own
+guard. The session-start checker was taught to list them — and it then reported all five as "never once
+reported running" on the very first turn, because a guard on a role stamps nothing until somebody spawns that
+role. On a fresh machine that is the ordinary state, so it would have fired in almost every session forever.
+
+Two rounds were lost to it, and the second one only because the first fix was half a fix: the checker asks the
+same question in **two** places — once at the start of a session and once at the end of a turn — and only one
+was corrected. The other kept firing. Worse, the checker already had a prover that would have caught both in
+one run, and it was never opened before the change was made; the real roles leaked into its fixtures because
+it could redirect the settings file but not the new folder.
+
 ## How to apply
 
 1. **Split the list by what a repeat MEANS.** Expensive-and-usually-a-retry on it; fast-and-mandated off it.
@@ -52,3 +63,11 @@ written for the first fix failed.
    history answers "is this guard useful?" in seconds, and no amount of reasoning does.
 4. **Test every entry, not just the shapes.** An entry that can never match is silent, permanent and invisible.
    One case per entry catches it.
+5. **Adding a new KIND of thing to a checker? Open its prover BEFORE the change.** The prover is the list of
+   every question that checker asks, which is exactly what you need to re-ask of the new kind — and it will
+   tell you whether the new kind can even be isolated from the real machine, or whether it leaks into every
+   fixture. Then answer each question for the new kind: some hold, some are meaningless, and the meaningless
+   ones are the false alarms.
+6. **Find every place the same question is asked.** One checker asked "has this guard run?" in two functions —
+   session start and end of turn. Fixing one and assuming the other looked exactly like a fix that worked, then
+   failed again on the next turn.

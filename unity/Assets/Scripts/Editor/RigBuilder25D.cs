@@ -381,14 +381,20 @@ public static class RigBuilder25D
         return sheetPath == null ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
     }
 
-    /// <summary>Load a specific monster sheet by its folder name under Actor/Monster (e.g. "Slime"),
-    /// or null if that art folder has no usable sheet — callers fall back to <see cref="MonsterSheet()"/>.
+    /// <summary>Load a specific creature's sheet by its folder name (e.g. "Slime"), or null if no art folder
+    /// of that name has a usable sheet — callers fall back to <see cref="MonsterSheet()"/>.
     /// Handles both naming conventions in the pack: <c>SpriteSheet.png</c> and a single sheet named after the
-    /// folder (e.g. <c>Slime/Slime.png</c>); else the first non-Faceset/non-Preview png.</summary>
+    /// folder (e.g. <c>Slime/Slime.png</c>); else the first non-Faceset/non-Preview png.
+    ///
+    /// <para>BOTH art folders are searched, ordinary creatures and bosses, because the sheet name is just a
+    /// folder name and the asset does not record which of the two it came from. Searching only the monster
+    /// folder is what left all 20 bosses baked with the fallback sheet — every one of them standing in the
+    /// world wearing KappaGreen's sprite, which nothing reported because falling back is silent by design.</para></summary>
     public static Texture2D MonsterSheet(string name)
     {
         if (string.IsNullOrEmpty(name)) return MonsterSheet();
-        string sheetPath = ResolveMonsterSheetPath($"Assets/1_Authored/Art/Billboards/Actor/Monster/{name}", name);
+        string sheetPath = ResolveMonsterSheetPath($"{MobBiomeImporter.MonsterArtDir}/{name}", name)
+                        ?? ResolveMonsterSheetPath($"{MobBiomeImporter.BossArtDir}/{name}", name);
         return sheetPath == null ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
     }
 

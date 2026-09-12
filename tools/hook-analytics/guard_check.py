@@ -46,6 +46,13 @@ SETTINGS_FILES = [
     os.path.join(REPO, ".claude", "settings.local.json"),
 ]
 
+# Where fenced agent ROLES live. A module-level name rather than a path built inside the
+# function, for the same reason SETTINGS_FILES is one: the prover replaces both to test this
+# checker against planted fixtures, and anything it cannot replace leaks the real machine into
+# every case. (Measured: built inline, the five real role gates turned all three healthy
+# fixtures into false alarms.)
+AGENTS_DIR = os.path.join(REPO, ".claude", "agents")
+
 SCRIPT_SUFFIXES = (".py", ".sh", ".js", ".ts", ".mjs")
 SHELL_CHARS = "|;&<>()`"
 LAUNCHER_NAME = "run-hook.sh"
@@ -92,10 +99,55 @@ def _heartbeats():
         return {}
 
 
+def _agent_hooks():
+    """Hooks configured inside an AGENT's own file rather than in a settings file. A fenced
+    role carries its gate in its frontmatter, so a gate that cannot start would be invisible
+    to a check that reads only the settings files — which is precisely the silent death this
+    whole script exists to catch.
+
+    The frontmatter is read with a plain search for its command lines rather than a YAML
+    parser: no third-party library is guaranteed to exist on this machine, and a guard that
+    cannot import what it needs fails exactly as quietly as the hooks it is meant to watch.
+    Every command line is enough, because all this check does with one is ask whether the
+    file it names is really there."""
+    out = []
+    folder = AGENTS_DIR
+    if not os.path.isdir(folder):
+        return out
+    for name in sorted(os.listdir(folder)):
+        if not name.endswith(".md"):
+            continue
+        path = os.path.join(folder, name)
+        try:
+            with io.open(path, encoding="utf-8") as f:
+                text = f.read()
+        except OSError:
+            continue
+        if not text.startswith("---"):
+            continue
+        # Everything up to the CLOSING delimiter is the frontmatter; the body comes after it.
+        front = text[3:].split("\n---", 1)[0]
+        for line in front.splitlines():
+            stripped = line.strip()
+            if not stripped.startswith("command:"):
+                continue
+            command = stripped[len("command:"):].strip().strip('"').strip("'")
+            command = command.replace('\\"', '"')
+            if command:
+                # scope "agent" is what keeps this out of the never-ran-this-session check
+                # below. A gate on a role fires only while that role is running, so a session
+                # that never spawned the role is the ORDINARY case, not a dead guard — and a
+                # warning that fires on the ordinary case teaches everyone to ignore it.
+                out.append({"event": "PreToolUse", "matcher": name[:-3], "scope": "agent",
+                            "command": command, "source": path})
+    return out
+
+
 def configured():
     """Every hook configured for this machine, from every settings file that can hold one —
-    the user's own and the project's. A guard in the global file is just as able to die
-    quietly as a guard in this repo, so both are read."""
+    the user's own and the project's — plus the gates that fenced agent roles carry in their
+    own files. A guard in the global file is just as able to die quietly as a guard in this
+    repo, and one in an agent's frontmatter just as able as either, so all three are read."""
     found, unreadable = [], []
     for path in SETTINGS_FILES:
         if not os.path.isfile(path):
@@ -116,9 +168,11 @@ def configured():
                     found.append({
                         "event": event,
                         "matcher": entry.get("matcher") or hook.get("matcher") or "*",
+                        "scope": "session",
                         "command": hook["command"].strip(),
                         "source": path,
                     })
+    found.extend(_agent_hooks())
     return found, unreadable
 
 
@@ -204,6 +258,14 @@ def problems():
         script = _target_of(hook["command"])
         if not script or not script.startswith(REPO):
             continue                    # not ours; it cannot stamp a heartbeat, so we can't ask
+        if hook.get("scope") == "agent":
+            # Whether it CAN START is asked above, and that is the question that protects it
+            # from dying quietly. The heartbeat questions below are not askable of it: a gate
+            # on a role stamps nothing until somebody spawns that role, so "never reported"
+            # and "not seen in days" are the ORDINARY state, not a fault. Asked anyway, it
+            # would complain on a fresh machine forever — and an alarm that is usually wrong
+            # trains everyone to skim past the one time it is right.
+            continue
         name = os.path.basename(script)
         stamp = (seen.get(name) or {}).get("ts")
         if not stamp:
@@ -228,7 +290,14 @@ def never_ran_this_session(session_id):
     consulted at least once, so one that has not reported in is attached to nothing being used and
     is approving everything in silence. The two questions above cannot see this — a guard can be
     perfectly runnable, and stamped minutes ago by some other session, while sitting out this one
-    entirely. That is exactly how the performance gate watched a whole session of edits go by."""
+    entirely. That is exactly how the performance gate watched a whole session of edits go by.
+
+    ONLY session-wide guards are asked. A guard carried by an agent role fires when that role
+    runs and at no other time, so a session that never spawned the role has nothing to explain
+    — asking it the same question makes it cry wolf on every ordinary turn, which is worse than
+    not watching it at all: a warning everyone learns to scroll past is not a warning. Whether
+    that guard CAN start is still checked, above, which is the question that actually protects
+    it from dying quietly."""
     if not session_id:
         return []
     seen = _heartbeats()
@@ -237,7 +306,7 @@ def never_ran_this_session(session_id):
     out = []
     hooks, _ = configured()
     for hook in hooks:
-        if hook["event"] != "PreToolUse":
+        if hook["event"] != "PreToolUse" or hook.get("scope") == "agent":
             continue
         script = _target_of(hook["command"])
         if not script or not script.startswith(REPO):
@@ -251,9 +320,19 @@ def never_ran_this_session(session_id):
 
 
 def summary():
-    """One short line for a healthy machine: how many guards, and that they are alive."""
+    """One short line for a healthy machine: how many guards, and that they are alive.
+
+    The two kinds are counted apart because only one of them has reported in. A session-wide
+    guard is expected to fire in any session that writes; a guard on an agent role fires only
+    while that role runs, so claiming they are all "reporting in" would be an overclaim on
+    every turn that spawned nobody."""
     hooks, _ = configured()
-    return "guards: %d configured, all able to run and reporting in" % len(hooks)
+    on_roles = sum(1 for h in hooks if h.get("scope") == "agent")
+    if not on_roles:
+        return "guards: %d configured, all able to run and reporting in" % len(hooks)
+    return ("guards: %d configured and able to run — %d session-wide and reporting in, "
+            "%d waiting on the agent roles they fence"
+            % (len(hooks), len(hooks) - on_roles, on_roles))
 
 
 def main():

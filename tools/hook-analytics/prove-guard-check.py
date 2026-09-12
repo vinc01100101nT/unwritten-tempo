@@ -3,7 +3,7 @@
 
 A checker that has gone blind reports silence, and silence reads exactly like good news —
 which is the whole failure this project just paid five weeks for. So the guard check gets a
-guard of its own: seven planted faults it must catch, and two healthy setups it must NOT
+guard of its own: planted faults it must catch, and healthy setups it must NOT
 complain about. Edit the guard check and this re-runs; if it ever stops catching one of
 these, a clean run from it means nothing.
 """
@@ -12,6 +12,7 @@ import importlib.util
 import io
 import json
 import os
+import shutil
 import sys
 import tempfile
 
@@ -22,8 +23,24 @@ spec.loader.exec_module(gc)
 
 WORK = tempfile.mkdtemp(prefix="prove-guards-")
 
+# A fenced role's file, cut to the only part this checker reads: the gate in its frontmatter.
+ROLE_FILE = """---
+name: a-fenced-role
+description: a role used only by this prover
+tools: Read, Bash
+hooks:
+  PreToolUse:
+    - matcher: "Edit|Write|Bash"
+      hooks:
+        - type: command
+          command: "%s"
+---
 
-def setup(settings, beats=None, raw=None):
+The body is never read by the guard check.
+"""
+
+
+def setup(settings, beats=None, raw=None, agents=None):
     path = os.path.join(WORK, "settings.json")
     with io.open(path, "w", encoding="utf-8") as f:
         f.write(raw if raw is not None else json.dumps(settings))
@@ -32,6 +49,17 @@ def setup(settings, beats=None, raw=None):
     with io.open(hb, "w", encoding="utf-8") as f:
         json.dump(beats or {}, f)
     gc.HEARTBEAT = hb
+    # The agent roles get redirected too, or every fixture silently inherits whatever roles
+    # this machine really has — which is exactly how five real gates turned all three healthy
+    # cases into false alarms the first time roles were added.
+    folder = os.path.join(WORK, "agents")
+    if os.path.isdir(folder):
+        shutil.rmtree(folder)
+    os.makedirs(folder)
+    for name, command in (agents or {}).items():
+        with io.open(os.path.join(folder, name), "w", encoding="utf-8") as f:
+            f.write(ROLE_FILE % command)
+    gc.AGENTS_DIR = folder
 
 
 def hooks(*commands):
@@ -76,11 +104,55 @@ CASES = [
      hooks(LAUNCHED % "tools/check-before-done.py"),
      {"check-before-done.py": ago(gc.UNSEEN_DAYS + 3)}, True),
     ("a launched hook seen today", hooks(LAUNCHED % "tools/check-before-done.py"), FRESH, False),
+
+    # A fenced agent ROLE carries its gate in its own file rather than in the settings, and the
+    # two questions are NOT the same for it. Whether it can start still matters — a gate whose
+    # script is gone is as dead as any other. Whether it has reported running does not: it
+    # stamps nothing until somebody spawns that role, so on a fresh machine "never reported"
+    # is the ordinary state. Asked anyway it complains every single session, and an alarm that
+    # is usually wrong trains everyone to skim past the one time it is right.
+    ("a role whose gate points at a script that is gone",
+     hooks(OURS), FRESH, True, {"broken.md": LAUNCHED % "tools/no-such-gate.py"}),
+    ("a role whose gate has never reported running",
+     hooks(OURS), FRESH, False, {"fresh.md": LAUNCHED % "tools/check-before-done.py"}),
+    ("a role whose gate has not been used in weeks",
+     hooks(OURS), {"check-before-done.py": ago(0), "write_scope_gate.py": ago(gc.UNSEEN_DAYS + 9)},
+     False, {"stale.md": LAUNCHED % "tools/hook-analytics/write_scope_gate.py"}),
+]
+
+# The END-OF-TURN question is a different function from the session-start one above, and the
+# role exclusion had to be made in BOTH. It was made in only one the first time, which is why
+# this is checked here rather than trusted: "I fixed the other one too" is not evidence.
+END_OF_TURN = [
+    # (name, heartbeats, agents, must_be_caught)
+    # The heartbeat file must be NON-EMPTY and simply not mention this guard. An empty one
+    # means "no diary to read", which the check deliberately treats as cannot-tell rather than
+    # never-ran — so an empty fixture here would pass while proving nothing.
+    ("a session-wide guard that really slept through a turn that wrote files",
+     {"check-before-done.py": ago(0)},
+     {"fresh.md": LAUNCHED % "tools/hook-analytics/write_scope_gate.py"}, True),
+    ("a role's gate, in a turn that never spawned that role",
+     {"perf_gate.py": ago(0)}, {"fresh.md": LAUNCHED % "tools/hook-analytics/write_scope_gate.py"},
+     False),
 ]
 
 failures = []
-for name, settings, beats, must_catch in CASES:
-    setup(settings, beats, raw="{ not json" if settings is None else None)
+for name, beats, agents, must_catch in END_OF_TURN:
+    setup({"hooks": {"PreToolUse": [{"matcher": "Edit|Write|Bash", "hooks": [
+        {"type": "command", "command": LAUNCHED % "tools/hook-analytics/perf_gate.py"}]}]}},
+        beats, agents=agents)
+    complaints = gc.never_ran_this_session("a-session-id-that-never-existed")
+    about_roles = [c for c in complaints if "write_scope_gate" in c]
+    caught = bool(about_roles) if not must_catch else bool(complaints)
+    if must_catch and not caught:
+        failures.append("MISSED at end of turn: %s" % name)
+    if not must_catch and caught:
+        failures.append("FALSE ALARM at end of turn on %s -> %s" % (name, about_roles))
+
+for case in CASES:
+    name, settings, beats, must_catch = case[:4]
+    agents = case[4] if len(case) > 4 else None
+    setup(settings, beats, raw="{ not json" if settings is None else None, agents=agents)
     found = gc.problems()
     if must_catch and not found:
         failures.append("MISSED: %s" % name)
@@ -92,5 +164,6 @@ if failures:
     for f in failures:
         print("  ·", f)
     sys.exit(1)
-print("guard check proven: catches %d planted faults, quiet on %d healthy setups"
-      % (sum(1 for c in CASES if c[3]), sum(1 for c in CASES if not c[3])))
+print("guard check proven: catches %d planted faults, quiet on %d healthy setups, "
+      "and %d end-of-turn cases behaved"
+      % (sum(1 for c in CASES if c[3]), sum(1 for c in CASES if not c[3]), len(END_OF_TURN)))
