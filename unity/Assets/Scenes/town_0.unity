@@ -508,9 +508,7 @@ MonoBehaviour:
   goldMin: 2
   goldMax: 6
   goldDropChance: 0.85
-  lootTable:
-  - item: {fileID: 11400000, guid: ed399b31d384c554cbd9faa613031152, type: 2}
-    chance: 0.08
+  lootTable: []
   wornDropChance: 0.15
 --- !u!114 &15493033
 MonoBehaviour:
