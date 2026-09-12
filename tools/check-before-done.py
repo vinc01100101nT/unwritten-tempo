@@ -83,6 +83,22 @@ GROUPS = {
     },
     # The guard check is guarded the same way: it only runs here because I just edited it,
     # and a proof that names no file of mine would otherwise be filtered into silence.
+    # The game's arithmetic, pinned. A wrong number is silent — a hit that does 47 instead of 52 looks
+    # exactly like a hit — so nothing but a check like this ever finds one before a player does.
+    "math": {
+        "roots": [(SCRIPTS, ".cs"), (os.path.join(TOOLS, "game-math-tests"), ".cs")],
+        "run": ["sh", os.path.join(TOOLS, "check-game-math.sh")],
+        "headline": "A number the game works out is no longer what it was:",
+    },
+    # And the check is guarded like the rest: edit it and we re-prove it still catches a moved number AND
+    # still names the file, because a failure that names nothing is filtered into silence.
+    "math-checker": {
+        "files": [os.path.join(TOOLS, "check-game-math.sh")],
+        "run": [sys.executable, os.path.join(TOOLS, "prove-game-math-check.py")],
+        "headline": "The game-math check can no longer see a moved number, so its silence proves "
+                    "nothing until this passes:",
+        "mine_by_construction": True,
+    },
     # Does everything the game loads still point at something that exists? A stale reference is
     # silent — the engine drops it, the code falls back, and the game runs wearing the wrong art.
     "wiring": {

@@ -44,6 +44,36 @@ Exit code **0** = clean, **1** = compile errors (printed with exact file + line)
 
 Verified to **catch** deliberate errors in both halves, not just to report "clean". A clean run means Unity will build it — it does **not** mean the game behaves correctly, so it never replaces play-testing.
 
+## check-game-math.sh · prove-game-math-check.py · game-math-tests/
+
+Is every number the game works out still what it was?
+
+```bash
+tools/check-game-math.sh          # ~3 s, no Unity window; exit 1 if a number moved
+tools/prove-game-math-check.py    # prove the check still CATCHES a moved number
+```
+
+A wrong number is **silent**. A hit that does 47 instead of 52 looks exactly like a hit, and nothing on screen
+says the experience curve moved. Without this, the only thing that finds one is playing the game and eventually
+noticing — weeks later, with no clue which change caused it.
+
+**How it runs without Unity:** the game's scripts compile to an ordinary .NET library, and Unity ships a runner
+that executes one outside the editor. Pure arithmetic runs; anything reaching the live engine throws loudly
+rather than quietly returning a wrong answer — which is the exact boundary wanted, since the sums are what is
+being checked. No test framework, no test assembly, no domain reload. The test sources live outside
+`unity/Assets/` so Unity never imports them and they never ship in a build.
+
+**Pinned today:** the experience curve against its own closed form · the stat-point budget round-tripping · the
+promised accuracy window · a critical ignoring both halves of defence · magic never falling below half · the
+element chart matching its enum's real size · every stat on the ring exactly once and under its ceiling · the
+rarity ladder accelerating.
+
+**Two rules for anything added here.** Write the GENERAL form — "the table matches its list's real size" survives
+an eleventh element; "the table is 10 by 10" quietly stops covering the thing it names. And where a specific
+number was PROMISED, assert the literal, never the constant: reading the ceiling from the code makes the check
+self-referential, so raising the ceiling raises the assertion and it can never fail. That mistake was made here
+on the first draft and the prover caught it — which is what the prover is for.
+
 ## check-asset-wiring.py · prove-asset-wiring-check.py · unity_assets.py
 
 Does everything the game loads still point at something that exists?
