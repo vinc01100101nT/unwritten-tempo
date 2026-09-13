@@ -13,7 +13,7 @@ Built 2026-07-01 (was design-concept [[ring-of-progression-concept]], now code).
 
 - **Same kills feed both tracks:** `Character.AddXP` also calls `Ring.AddXP` (only while `RingEquipped`). Char level → flat stats; RING level → banks one passive draft point (grant moved OFF char level; removed the old `Passives.AddPoint()` + `SetBankedPoints` reconcile).
 - **Active-skill picks gate on ring points ALLOCATED, not char level:** `SkillRoster.EarnedPicks(pointsAllocated)` = allocated/10 (renamed const `UnlockEveryLevels`→`PointsPerUnlock`; added `PointsToNextPick`). Allocated = `Ring.PointsAllocated` = `Passives.TotalRanks()`.
-- **Equippable vessel:** new `EquipSlotType.Ring = 12`; authored "Ring of Beginnings" item (ItemStarterSet, in Resources/Items). `Character.EnsureRingEquipped()` auto-equips it at Awake + after load (equipment isn't persisted yet). InventoryStore/BagSeeder SKIP ring-slot items (Character owns the one vessel). Paperdoll got a Ring slot (ProgressionWindows).
+- **Equippable vessel:** new `EquipSlotType.Ring = 12`; authored "Ring of Beginnings" item (ItemStarterSet, in Resources/Items). `Character.EnsureRingEquipped()` auto-equips it at Awake + after load (equipment isn't persisted yet). InventoryStore/BagSeeder SKIP ring-slot items (Character owns the one vessel).
 - **Suppression ("diminished, not erased"):** `Character.RingEquipped` gates everything. `PassivePercent(stat)` returns 0 when no ring → all effective-stat getters route through it. HotbarPanel blocks activation + dims the bar when no ring. SkillDraftPanel shows only "No ring equipped" (hides level/XP/walk entirely).
 - **Save:** `SaveData` v4 adds `ringLevel`/`ringXp`; pre-v4 saves derive ring level from `TotalRanks + BankedPoints`.
 

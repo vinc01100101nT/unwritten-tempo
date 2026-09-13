@@ -5,10 +5,9 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Builds and drives the progression window trio (Inventory · Equipment · Character) from the
-/// locked HUD spec, wired to the real <see cref="Character"/> + <see cref="InventoryStore"/>.
-/// Toggle keys: B = Bag (Inventory + docked Equipment, opened together), C = Character, Esc = close all. (V is now
-/// the Sprint key on Player3DController — Equipment no longer has its own key.) Each window self-builds
+/// Builds and drives the Inventory and Character windows from the locked HUD spec, wired to the real
+/// <see cref="Character"/> + <see cref="InventoryStore"/>.
+/// Toggle keys: B = Inventory (what you carry and what you wear, one list), C = Character, Esc = close all. Each window self-builds
 /// at Start into a <see cref="UiKit.Window"/>; the shared <see cref="ItemTooltip"/> handles hover
 /// (incl. the live equip→stat-delta preview). Lives on its own canvas (the builder sets it up).
 /// </summary>
@@ -34,8 +33,7 @@ public class ProgressionWindows : MonoBehaviour
     TMP_Text invFooter;
     readonly List<Button> tabButtons = new List<Button>();
 
-    // The card picker, opened from a worn piece's right-click menu. It outlived the Equipment window that
-    // used to host it, because inserting a card is the one thing that window did that nothing else could.
+    // The card picker, opened from a worn piece's right-click menu.
     GameObject cardDialog; Transform cardListRoot;
     BagEntry cardTarget;
 

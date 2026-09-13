@@ -23,8 +23,8 @@
     --gold:       #C8A862;   /* the border of every window AND of the item tooltip */
     --gold-wash:  rgba(200, 168, 98, 0.16);   /* the header strip behind a window title */
     --gold-soft:  rgba(200, 168, 98, 0.30);
-    --cyan:       #59F2FF;                    /* selection ring */
-    --cyan-glow:  rgba(76, 217, 255, 0.22);   /* hover bloom, deliberately soft */
+    --cyan:       #59F2FF;                    /* hover and selection tint */
+    --cyan-glow:  rgba(76, 217, 255, 0.22);   /* hover wash, deliberately soft */
 
     /* The five rarity tiers — the ONLY colours allowed to mark an item */
     --common:     #CBD2E0;
@@ -221,8 +221,8 @@
     -webkit-user-select: none;
     user-select: none;
   }
-  /* Rarity border > selection ring > hover bloom. Hover must never borrow the rarity colour, or the two
-     channels collide — so the bloom is cyan and the name keeps its tier. */
+  /* Hover must never borrow the rarity colour, or the two collide — so the hover wash is cyan and the name
+     keeps its tier. */
   .row:hover { background: var(--cyan-glow); border-left-color: var(--cyan); }
   .row-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -759,7 +759,7 @@
   var shown = [];   /* the items currently drawn, in the order the rows show them */
 
   /* The columns each tab shape has, and which one it sorts by until someone says otherwise. Equip opens on
-     SLOT because grouping the paperdoll is what a reader of an icon-less list needs first; a bag opens on
+     SLOT because grouping by body slot is what a reader of an icon-less list needs first; a bag opens on
      name. dir is 1 for ascending, -1 for descending. */
   var COLS = {
     equip: [
@@ -785,7 +785,7 @@
     etc:      { key: "name", dir: 1 }
   };
 
-  /* The paperdoll's own order, from EquipSlotType — not alphabetical, because a reader scans a body. */
+  /* A body's order, from EquipSlotType — not alphabetical, because a reader scans a body. */
   var SLOT_ORDER = ["Head", "Armor", "Weapon", "Shield", "Accessory 1", "Accessory 2", "Garment", "Ring"];
   var TIER_ORDER = ["common", "uncommon", "rare", "epic", "legendary"];
 
@@ -1131,7 +1131,7 @@
 
   /* ---- what the actions actually do, so the list reacts like the real thing ---- */
 
-  /* One item per slot, exactly as the equip window enforces: wearing this displaces whatever was in the
+  /* One item per slot, exactly as the game enforces: wearing this displaces whatever was in the
      slot. The real Equip never un-equips — it swaps the previous piece back into the bag — so a double-click
      only ever wears something, and taking a piece off is the menu's own Unequip. */
   function wear(it) {

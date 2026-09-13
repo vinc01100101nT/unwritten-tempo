@@ -23,12 +23,11 @@ public enum EquipSlotType
     Ring = 12,        // the Ring of Progression vessel — holds the passive draft + active-skill ownership
 }
 
-/// <summary>The words a slot goes by on screen. The paperdoll draws silhouettes rather than labels, so until now
-/// nothing in the game named a slot in text — and a text inventory has to, because with no icon the slot is the
-/// only thing telling a helm from a sword at a glance.
+/// <summary>The words a slot goes by on screen. A text inventory has to name the slot, because with no icon the
+/// slot is the only thing telling a helm from a sword at a glance.
 ///
-/// <para><see cref="Order"/> is the PAPERDOLL's order, not alphabetical: a reader scans a body, so sorting a list
-/// by slot must group it the way the equipment window lays it out.</para></summary>
+/// <para><see cref="Order"/> is a body's order, not alphabetical: a reader scans a body, so sorting a list by slot
+/// groups it that way.</para></summary>
 public static class EquipSlots
 {
     public static string Label(EquipSlotType s)
@@ -51,8 +50,7 @@ public static class EquipSlots
         }
     }
 
-    /// <summary>Where this slot sits when a list is grouped by slot — the equipment window's own top-to-bottom
-    /// order. Anything unslotted sorts last.</summary>
+    /// <summary>Where this slot sits when a list is grouped by slot. Anything unslotted sorts last.</summary>
     public static int Order(EquipSlotType s)
     {
         switch (s)

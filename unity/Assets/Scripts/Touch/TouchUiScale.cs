@@ -13,7 +13,7 @@ using UnityEngine.UI;
 /// loads are untouched.</para>
 ///
 /// <para><b>Known limit, and it is why the real window pass is still owed:</b> doubling scales the big windows
-/// too, so an inventory or equipment panel will be cramped on a small screen and will not fit at all in
+/// too, so the inventory window will be cramped on a small screen and will not fit at all in
 /// portrait. Making those windows phone-shaped is a layout job, not a scale factor.</para>
 ///
 /// <para>Canvases appear late (the death screen builds itself the first time you die), so this re-checks on a

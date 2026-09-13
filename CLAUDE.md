@@ -154,11 +154,13 @@ checker are the **`unity-live-editor` skill**.
 
 ## Agent roles — WHEN to spawn one without being asked
 
-Seven roles live in `.claude/agents/`. Five of them cannot write at all, or can write only one
+Eight roles live in `.claude/agents/`. Five of them cannot write at all, or can write only one
 narrow place, and that is enforced by a refusal rather than by their good intentions — the gate is
-`tools/hook-analytics/write_scope_gate.py`, proven by `tools/prove-write-scope-gate.py`.
+`tools/hook-analytics/write_scope_gate.py`, proven by `tools/prove-write-scope-gate.py`. The
+eighth, `sprint-manager`, may write exactly two files — the action plan and the wiki Roadmap page —
+fenced by that same gate.
 
-**THREE of them are spawned WITHOUT asking, the moment their situation arrives.** This section is
+**FOUR of them are spawned WITHOUT asking, the moment their situation arrives.** This section is
 what authorises that; the default everywhere else is still to do the work here.
 
 - **`debugger` — the moment a fix FAILS.** A bug that survived one attempt has a cause this
@@ -171,6 +173,8 @@ what authorises that; the default everywhere else is still to do the work here.
 - **`planner` — a feature whose SHAPE is not obvious.** A system, not a change: a loot spine, a
   quest system, a new screen. Not for anything a paragraph of contract bullets already settles —
   spawning one to plan a one-liner is a slower way to start.
+- **`sprint-manager` — ANY task tracking**: ticking a task done, and moving an entry on the wiki
+  Roadmap. The rule is **RULE TRACKING** below.
 
 **Everything else is spawned only when the user asks for it BY NAME.**
 
@@ -186,6 +190,23 @@ what authorises that; the default everywhere else is still to do the work here.
 the user — so it gets relayed, never pasted as though it were watched. **Spot-check any number it
 leads with before repeating it**, because a count it invented and a count it measured arrive in the
 same confident voice, and the user has no way to tell them apart. Say which parts came from it.
+
+## ⛔ RULE TRACKING — THE MAIN AGENT NEVER TICKS A TASK OR MOVES THE ROADMAP. THE SPRINT MANAGER DOES (HARD RULE — added 2026-09-13 at the user's instruction)
+
+**Task tracking lives in `docs/1-planning/action-plan.md` (its checkboxes) and the wiki Roadmap page
+`wiki/content/roadmap.json`.** Jira was tried and left on 2026-09-13; its connection stays installed
+but unused. The main session never ticks a checkbox and never moves a Roadmap entry — spawn
+`sprint-manager` with the whole job and relay what it hands back, saying that it came from the sprint
+manager. Editing the plan's WORDING (planning) is not tracking and stays with the main session.
+
+- **Access is never the fence.** Should a guard be needed, it waits for the user's go — it never
+  removes a capability. The user's words: "we only block it with guards waiting our go signal, not
+  access".
+- **If the sprint manager cannot do something, it reports that — and it stays its report.** The
+  answer is never for the main session to do it instead.
+
+*(Scar, 2026-09-13: asked to clear Jira's sample content, the main session started reading and
+deleting on its own. The user stopped it: "why are you doing it yourself?")*
 
 ## Handoff protocol — the phrase "do a handoff"
 
@@ -322,7 +343,7 @@ Never both homes, ever.
 
 - `unity/Assets/Scripts/` — all game C# (Unity 6 + URP); see `unity/Assets/Scripts/CLAUDE.md`
 - `unity/Assets/Scripts/Editor/` — one-click editor tools under `Tools ▸ unwritten ▸ …`
-- `unity/Assets/Scripts/Editor/TOOLS.md` — canonical catalog of all editor menu items (\~39 cmds)
+- `unity/Assets/Scripts/Editor/TOOLS.md` — canonical catalog of all editor menu items (88 cmds)
 - `tools/` — HTML/Python authoring tools (world-creator, map-painter, chatgpt extractor)
 - `tempo/` — auto-generated canvas dev server; do NOT write app code here
 

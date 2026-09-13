@@ -11,13 +11,11 @@ using UnityEngine.UI;
 /// It replaces the 40-square grid inside the Inventory window and owns nothing else: the bag, the tooltip and
 /// every action still belong to <see cref="InventoryStore"/>, <see cref="ItemTooltip"/> and <see cref="ItemSlot"/>.
 ///
-/// <para><b>Why a row still carries an <see cref="ItemSlot"/>.</b> Hovering, the equip→stat-delta preview,
-/// clicking, double-clicking and BOTH drag behaviours (reorder within the bag, drag onto the paperdoll to equip)
-/// are already implemented on that component and on <see cref="SlotDragHandler"/>, driven entirely by the bound
-/// <see cref="BagEntry"/> rather than by any icon. So each row gets one, with none of its visual references
-/// wired, and every one of those behaviours keeps working without being rewritten. The single cosmetic
-/// consequence: a drag's floating ghost is an icon copy, so with no icon there is nothing to see while dragging
-/// — the drop still resolves.</para>
+/// <para><b>Why a row carries an <see cref="ItemSlot"/>.</b> Hovering, the equip→stat-delta preview,
+/// clicking, double-clicking and BOTH drag behaviours (reorder within the bag, drop onto the ground) are
+/// implemented on that component and on <see cref="SlotDragHandler"/>, driven entirely by the bound
+/// <see cref="BagEntry"/>. So each row gets one, and none of those behaviours is written twice. The drag's
+/// floating ghost carries no icon.</para>
 ///
 /// <para><b>Sorting is a LENS, never the order.</b> A column re-orders what you SEE; the bag's own order is the
 /// player's, set by dragging, and is what you get back when no column is active. Clicking a column cycles
@@ -100,7 +98,7 @@ public class InventoryList
 
     /// <summary>Build the search field, the sortable header and the scrolling row list into
     /// <paramref name="parent"/>. <paramref name="refresh"/> is raised after any action that changes the bag,
-    /// so the window that owns this can re-render its footer and its equipment panel too.</summary>
+    /// so the window that owns this can re-render its footer too.</summary>
     public void Build(Transform parent, Action refresh)
     {
         onChanged = refresh;
@@ -281,10 +279,9 @@ public class InventoryList
         h.childForceExpandHeight = true;
         h.childForceExpandWidth = false;
 
-        // The row IS a bag slot, with none of its visual channels wired — that is what keeps hover, the stat
-        // preview, clicking and both drags working without reimplementing any of them.
+        // The row carries the slot and drag components — that is what gives it hover, the stat preview,
+        // clicking and both drags without reimplementing any of them.
         r.slot = bg.gameObject.AddComponent<ItemSlot>();
-        r.slot.accepts = EquipSlotType.None;
         r.slot.previewOnHover = true;
         bg.gameObject.AddComponent<SlotDragHandler>();
 

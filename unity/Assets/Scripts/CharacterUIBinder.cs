@@ -7,14 +7,8 @@ using TMPro;
 /// bars. Lives on the GameUICanvas; because both it and Character persist, it binds once and never
 /// needs to re-find anything across scene loads.
 ///
-/// NOTE: this binder no longer drives a "Character-panel stats text" — that panel is gone and the
-/// character stats are now owned by <see cref="ProgressionWindows"/>. The old code grabbed the first
-/// Text named "Stats" on the canvas, which collided with the Equipment detail panel's "Stats" label
-/// and clobbered it with a character summary; that hijack is intentionally removed.
-///
-/// It also no longer pushes equip-slot changes into the character (equipment is owned by
-/// ProgressionWindows + <see cref="InventoryStore"/>); the old re-equip-on-Changed wiring formed an
-/// infinite OnStatsChanged ↔ slot.Changed loop that stack-overflowed.
+/// It drives nothing else: character stats are shown by <see cref="ProgressionWindows"/>, and equipment is
+/// owned by <see cref="InventoryStore"/>.
 /// </summary>
 public class CharacterUIBinder : MonoBehaviour
 {

@@ -18,7 +18,8 @@ The folders match the sections below, so the file tree and this index say the sa
 
 ## Planning & production
 
-- [Roadmap to Launch](1-planning/roadmap-to-launch.md) — how far from a shippable game; Tier 1 (Steam ARPG) vs Tier 2 (MMO), milestones M1–M5.
+- [Roadmap to Launch](1-planning/roadmap-to-launch.md) — how far from a shippable game, every figure counted rather than estimated: what is built, what is half-built, what is missing.
+- [Action Plan](1-planning/action-plan.md) — the single trackable list of what to do next, phase by phase, with a done-check on every item.
 - [Dev Contribution Log](1-planning/dev-contribution-log.md) — gamified record of the dev's design/diagnosis contributions.
 - [Performance Checkup — My Routine](1-planning/performance-checkup-routine.md) — the recurring `/perf-checkup` routine.
 - [Where the Game Is Hosted](1-planning/where-the-game-is-hosted.md) — which machine to rent and why: the Manila latency numbers that rule Europe out, what Singapore costs across five providers, and what has to be true on that machine before anyone can play on it.

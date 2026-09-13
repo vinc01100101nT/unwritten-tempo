@@ -164,12 +164,12 @@ The bag's squares carried an `ItemSlot` plus a `SlotDragHandler`, and between th
 the stat preview, clicking, double-clicking and both drag behaviours — all driven by the bound `BagEntry`, none
 of it by the icon.
 
-So each **text row** was given the same two components with none of their visual references wired, and every one
-of those behaviours kept working without being reimplemented. The presentation was replaced; the behaviour was
+So each **text row** was given the same two components, and every one of those behaviours kept working without
+being reimplemented. The presentation was replaced; the behaviour was
 not touched.
 
-**Look for this before writing any new interaction code.** The one cosmetic consequence here: a drag's floating
-ghost is a copy of the icon, so with no icon there is nothing to see mid-drag. The drop still resolves.
+**Look for this before writing any new interaction code.** The one cosmetic consequence here: the drag's floating
+ghost has no icon to show.
 
 ### 8. Keep the new work additive until it compiles
 

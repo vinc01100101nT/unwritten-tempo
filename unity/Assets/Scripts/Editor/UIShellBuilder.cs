@@ -9,7 +9,7 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Builds the Phase E UI shell (HUD + Bag/Character/Skills toggle panels) skinned
+/// Builds the Phase E UI shell (HUD + the Skills, Customize and Calendar panels) skinned
 /// with a chosen Ninja Adventure UI theme. The theme + frame scale are picked in
 /// the <see cref="UIShellWindow"/> (Tools ▸ unwritten ▸ UI Shell Theme…) and stored
 /// in EditorPrefs; the plain menu item rebuilds with whatever was last chosen.
@@ -24,7 +24,6 @@ public static class UIShellBuilder
     const string CanvasName = "GameUICanvas";
     const string UIRoot = "Assets/1_Authored/Art/Billboards/Ui";
     const string WOOD   = UIRoot + "/Theme/Theme Wood";
-    const string ITEMS  = UIRoot + "/Skill Icon/Items & Weapon";
     const string METEO  = UIRoot + "/Skill Icon/Meteo";   // weather icons (Sun/Rain/Snow) for the calendar
     const string FontPath = UIRoot + "/Font/NormalFont.ttf";
     const string ResourcePrefabPath = "Assets/3_Data/Resources/GameUICanvas.prefab";
@@ -88,14 +87,12 @@ public static class UIShellBuilder
         BuildHud(root);
         // All panels' hotkeys/Esc are owned by their own runtime controllers (code-driven, no rebake to change a key):
         //   Skills (K)→SkillDraftPanel · Wardrobe (O)→CharacterWardrobePanel · Calendar (L)→CalendarPanel ·
-        //   Bag (B, Inventory+docked Equipment)/Character (C)→ProgressionWindows. PanelToggle is retired. (V=Sprint.)
+        //   Inventory (B)/Character (C)→ProgressionWindows. PanelToggle is retired.
         BuildSkillsPanel(root);
         BuildCustomizePanel(root);
         BuildCalendarPanel(root);
-        // Bag / Character / Equipment panels + the item tooltip were REMOVED — replaced by the new
-        // ProgressionWindows trio (Inventory I · Equipment E · Character C, built via
-        // Tools ▸ unwritten ▸ UI ▸ Build Progression Windows). Stat-point allocation moved into that
-        // Character window, so StatPanel + BagSeeder are no longer added here.
+        // The Inventory and Character windows are built by ProgressionWindows (added below), and stat-point
+        // allocation lives in that Character window, so StatPanel + BagSeeder are not added here.
         // (The old UI-image sword cursor was retired — GameCursor now drives a hardware
         //  cursor from the Kenney pack, wired by Tools ▸ unwritten ▸ Setup Global Systems.)
 
@@ -112,14 +109,10 @@ public static class UIShellBuilder
         canvasGO.AddComponent<SettingsWindow>();           // Gameplay/Sound/Graphics tabs, opened from the System window
         canvasGO.AddComponent<SystemWindow>();             // Esc (when nothing else answers it) → System menu ▸ Settings
 
-        // The new progression window trio (Inventory I · Equipment E · Character C) — replaces the old
-        // Bag/Character panels. Builds itself into this canvas at runtime; needs the starter Card assets.
+        // The Inventory (B) and Character (C) windows. Builds itself into this canvas at runtime; needs the
+        // starter Card assets.
         ProgressionWindowsBuilder.EnsureStarterCards();
         var prog = canvasGO.AddComponent<ProgressionWindows>();   // also pulls in InventoryStore (RequireComponent)
-        // Bake the empty equip-slot silhouettes (faint gold watermarks) from the Ninja "Items & Weapon" set —
-        // the runtime can't AssetDatabase-load, so wire the Sprite refs into the prefab now (same pattern as the
-        // calendar weather icons below). Mismatched-but-close stubs until the final flourish kit ships.
-        Sprite SlotIcon(string n) => AssetDatabase.LoadAssetAtPath<Sprite>(ITEMS + "/" + n + ".png");
         canvasGO.AddComponent<CharacterWardrobePanel>();   // O = Wardrobe: per-part runtime clothing dye (live-3D)
         var calPanel = canvasGO.AddComponent<CalendarPanel>();  // L = Calendar: 12-day season grid w/ per-day weather (+ click the date widget)
         // Bake in the Ninja Adventure "Meteo" weather icons (the runtime can't AssetDatabase-load, so we wire the
@@ -379,23 +372,6 @@ public static class UIShellBuilder
         img.sprite = sprite;
         img.type = Image.Type.Sliced;
         return img;
-    }
-
-    // Turns an inventory-cell Image into a drag-and-drop ItemSlot with a child icon.
-    static ItemSlot MakeItemSlot(Image cell, EquipSlotType accepts, Sprite placeholder)
-    {
-        cell.raycastTarget = true;                 // so OnDrop fires on the cell
-        var icon = NewColor("Icon", cell.transform, Color.white);
-        Fill(icon.rectTransform, new Vector2(4, 4), new Vector2(-4, -4));
-
-        var slot = cell.gameObject.AddComponent<ItemSlot>();
-        slot.accepts = accepts;
-        slot.iconImage = icon;
-        slot.emptyPlaceholder = placeholder;
-
-        icon.gameObject.AddComponent<DraggableItem>().slot = slot;
-        slot.SetItem(null);                        // show placeholder / hide
-        return slot;
     }
 
     static Image NewColor(string name, Transform parent, Color color)

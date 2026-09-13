@@ -104,7 +104,7 @@ public static class UiKit
     public static readonly Color SlotFill  = new Color(0.07f, 0.075f, 0.09f, 1f);
     public static readonly Color Gold      = new Color(0.784f, 0.659f, 0.384f, 1f);    // #C8A862
     public static readonly Color Cyan      = new Color(0.35f, 0.95f, 1f, 1f);
-    // Hover bloom kept deliberately soft so the hierarchy stays rarity-border > select-ring > hover.
+    // A soft cyan kept in the shared palette; nothing in the game draws it at this alpha.
     public static readonly Color CyanGlow  = new Color(0.30f, 0.85f, 1f, 0.22f);
     public static readonly Color TextMain  = new Color(0.906f, 0.890f, 0.835f);        // #E7E3D5
     public static readonly Color TextDim   = new Color(0.655f, 0.620f, 0.533f);        // #A79E88
@@ -295,67 +295,5 @@ public static class UiKit
         border.gameObject.SetActive(false);
         root = border.gameObject;
         return content.rectTransform;
-    }
-
-    /// <summary>A rich ItemSlot wired with all channels. Sibling order keeps the cyan select ring
-    /// inside the rarity border and the icon on top.</summary>
-    public static ItemSlot Slot(Transform parent, int size, EquipSlotType accepts = EquipSlotType.None)
-    {
-        var border = Img("Slot", parent, Color.white);
-        border.rectTransform.sizeDelta = new Vector2(size, size);
-        var le = border.gameObject.AddComponent<LayoutElement>();
-        le.preferredWidth = le.preferredHeight = size;
-        border.raycastTarget = true;
-
-        var glow = Img("HoverGlow", border.transform, CyanGlow);
-        Fill(glow.rectTransform, new Vector2(-8, -8), new Vector2(8, 8));   // soft outer bloom (~8px spread)
-        glow.raycastTarget = false; glow.gameObject.SetActive(false);
-
-        // Green "valid drop target" halo shown only while dragging (SlotDragHandler). A touch wider and
-        // more opaque than the cyan hover bloom so targets read clearly; kept behind the icon/badges.
-        var drop = Img("DropHighlight", border.transform, new Color(0.35f, 1f, 0.45f, 0.30f));
-        Fill(drop.rectTransform, new Vector2(-9, -9), new Vector2(9, 9));
-        drop.raycastTarget = false; drop.gameObject.SetActive(false);
-
-        // Selection = a clear-but-not-shouty cyan ring INSIDE the rarity border. Inset 1 with the
-        // fill at inset 3 leaves a ~2px ring; alpha 0.78 reads as intentional without out-shouting rarity.
-        var ring = Img("SelectRing", border.transform, new Color(Cyan.r, Cyan.g, Cyan.b, 0.78f));
-        Fill(ring.rectTransform, new Vector2(1, 1), new Vector2(-1, -1));
-        ring.raycastTarget = false; ring.gameObject.SetActive(false);
-
-        var fill = Img("Fill", border.transform, SlotFill);
-        Fill(fill.rectTransform, new Vector2(3, 3), new Vector2(-3, -3));
-        fill.raycastTarget = false;
-
-        var icon = Img("Icon", fill.transform, Color.white);
-        Fill(icon.rectTransform, new Vector2(7, 7), new Vector2(-7, -7));
-        icon.raycastTarget = false; icon.preserveAspect = true;
-
-        var badge = Label("Badge", border.transform, "", 14, FontStyle.Bold, TextAnchor.UpperLeft);
-        badge.color = Gold;
-        badge.rectTransform.anchorMin = badge.rectTransform.anchorMax = new Vector2(0, 1);
-        badge.rectTransform.pivot = new Vector2(0, 1);
-        badge.rectTransform.sizeDelta = new Vector2(40, 18);
-        badge.rectTransform.anchoredPosition = new Vector2(3, -2);
-        badge.raycastTarget = false;
-
-        var pips = Label("Pips", border.transform, "", 14, FontStyle.Bold, TextAnchor.LowerCenter);
-        pips.rectTransform.anchorMin = new Vector2(0, 0);
-        pips.rectTransform.anchorMax = new Vector2(1, 0);
-        pips.rectTransform.pivot = new Vector2(0.5f, 0);
-        pips.rectTransform.sizeDelta = new Vector2(0, 15);
-        pips.rectTransform.anchoredPosition = new Vector2(0, 1);
-        pips.raycastTarget = false;
-
-        var slot = border.gameObject.AddComponent<ItemSlot>();
-        slot.accepts = accepts;
-        slot.iconImage = icon;
-        slot.rarityBorder = border;
-        slot.upgradeBadge = badge;
-        slot.cardPips = pips;
-        slot.selectRing = ring.gameObject;
-        slot.hoverGlow = glow.gameObject;
-        slot.dropHighlight = drop.gameObject;
-        return slot;
     }
 }

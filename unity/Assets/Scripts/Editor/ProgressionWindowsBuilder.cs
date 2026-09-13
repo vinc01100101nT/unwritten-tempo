@@ -6,10 +6,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// One-click setup for the Inventory / Equipment / Character window trio: ensures the starter
-/// Item + Card assets exist, then drops a canvas carrying <see cref="ProgressionWindows"/> (+ its
-/// <see cref="InventoryStore"/>) into the open scene. Press Play and toggle with I / E / C (Esc
-/// closes). Reads the live <see cref="Character"/> from the Systems scene for real stats.
+/// One-click setup for the Inventory and Character windows: ensures the starter Card assets exist,
+/// then drops a canvas carrying <see cref="ProgressionWindows"/> (+ its <see cref="InventoryStore"/>)
+/// into the open scene. Press Play and toggle with B / C (Esc closes). Reads the live <see cref="Character"/> from the Systems scene for real stats.
 /// </summary>
 public static class ProgressionWindowsBuilder
 {
@@ -45,8 +44,8 @@ public static class ProgressionWindowsBuilder
         Undo.RegisterCreatedObjectUndo(go, "Build Progression Windows");
         EditorSceneManager.MarkSceneDirty(go.scene);
         Selection.activeGameObject = go;
-        Debug.Log("[unwritten] Built Progression Windows (Inventory/Equipment/Character). Press Play: " +
-                  "I = Inventory, E = Equipment, C = Character, Esc = close. Stats read the live Character " +
+        Debug.Log("[unwritten] Built Progression Windows (Inventory/Character). Press Play: " +
+                  "B = Inventory, C = Character, Esc = close. Stats read the live Character " +
                   "(load via Systems scene); layout works standalone too.");
     }
 

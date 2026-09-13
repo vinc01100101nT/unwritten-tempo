@@ -10,7 +10,7 @@ metadata:
 2026-07-01: clicks on HUD windows leaked THROUGH to the 3D world (clicking a mob behind the window) because world-input scripts gate on `EventSystem.IsPointerOverGameObject()`, which is FALSE over any gap in a window that has no raycast-target graphic (transparent margins, space between elements). Moving the HUD to its own scene/layer does NOT fix this — it's an input-gating + raycast-coverage issue, not a scene-ownership one.
 
 **Single-source fix = `UiKit.ClickShield(RectTransform root)`** (`UiKit.cs`): inserts a full-rect, fully transparent, `raycastTarget=true` Image as the BACKMOST child of a window root, so the WHOLE window area registers as UI. Idempotent (guards on `root.Find("ClickShield")`). Applied at every window root:
-- `UiKit.Window` (covers the ProgressionWindows trio: Inventory/Equipment/Character).
+- `UiKit.Window` (covers the ProgressionWindows: Inventory/Character).
 - Runtime in the panels that find a pre-baked UIShellBuilder window: `SkillDraftPanel` (SkillsPanel), `CharacterCustomizePanel` (CustomizePanel), `CalendarPanel` (CalendarPanel) — shield applied where each resolves `panelRoot`/`panel` from `content.parent`, so existing baked scenes are fixed WITHOUT re-running Build UI Shell.
 - `WorldMapHUD` was already fine (full-screen `dim` backdrop with raycastTarget).
 

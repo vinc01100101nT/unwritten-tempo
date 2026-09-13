@@ -8,160 +8,116 @@ tags:
 
 # unwritten — Roadmap to Launch
 
-RO-style **2.5D** action-RPG (3D world + billboard sprites), built in Unity. *Counts re-measured 2026-09-12; the percentage estimates below are still the 2026-08-24 ones and have not been re-judged.*
+How far the game is from being something a stranger can buy and finish. **This document is the picture. [Action Plan](action-plan.md) is the list of what to do next** — it has the checkboxes, the done-checks and the order. Neither repeats the other.
 
-> **Progress snapshot (percentages estimated 2026-08-24, counts re-measured 2026-09-12):** against **Tier 1 (Minimum Shippable Steam game)** we were, by estimate, **~45–50% done** (up from ~30–35% on 2026-07-02); against the **full MMORPG dream** ~**10–12%**. Per-milestone estimate: **M1 ~95%**, **M2 ~20%**, **M3 ~35%**, **M4 ~0%**, **M5 ~0%**. ⚠️ **Those percentages predate the multiplayer layer** (see Tier 2 below, which is no longer untouched) and predate the consumables and the build pipeline — they need re-judging, which is a call for vince, not a measurement.
->
-> The July snapshot's headline gap — *the first fully-realized class kit* — is **closed**: the sword pool finished on 2026-08-24 at 22 composed skills. The gap has moved, and it has NOT moved since: **the world still has no reasons in it**. Only 2 wearable items exist, no quests, no named NPCs, no boss placed in any map, and no title screen. Every content number in this document is unchanged from 30 August, while the whole of September went into the online layer and the tooling. A **client build now exists** (produced 2026-09-08), so packaging is no longer wholly unproven.
-
-> **What this doc is.** The single source of truth for *how far we are from a real, shippable game* and *what stands between here and a Steam launch*. It replaces the old phase-by-phase 2D plan (the 2D build order is now history — see **Appendix**). It is deliberately honest about scope: the dream is a full MMORPG; the **shippable path** is a single-player (or small co-op) RO-style ARPG first.
+**Every number on this page was counted on 2026-09-12 by reading the game's own files, its database, or its builds.** Nothing here is an estimate. Where something cannot be counted, it says so.
 
 ---
 
-## TL;DR — the honest distance
+## The one-paragraph answer
 
-- **Against the full MMORPG dream** (huge map, 8 classes w/ advancements, dungeons, NPCs, stories, **massively-multiplayer**, polished on Steam): roughly **10% of the way** there. The remaining 90% is a **multi-year, multi-person, funded-studio** effort. The "MMO" alone is a *second entire game* the size of the one we have.
-- **Against a Minimum Shippable Game** (single-player/small-co-op RO-style ARPG, one region, one class line, a few dungeons, a real story thread, on Steam): **about halfway**, and reachable on a plannable horizon — **months, not years**.
-- **The shape of what remains has changed.** Through July and August the work was *combat technology*, and it is now deep and finished for one weapon. What is left is almost entirely **content and connective tissue**: things to find, people to talk to, reasons to enter a dungeon, and a wrapper that makes it a product.
-- **Strategy:** Ship Tier 1 first. *The MMO is what kills projects like this* — it's the most expensive, least-finished part, and it makes the whole thing feel "0% done" forever. Prove the game is fun and find an audience with Tier 1; let success justify Tier 2.
+The technology is built and the game is empty. Fighting is finished and deep: one weapon has a full skill set, the arithmetic behind every hit is pinned and checked, and the whole of a fight now runs on a server that four separate programs stand up between them. What is missing is everything that makes fighting worth doing — there are thirteen items in the entire game, two of which can be worn; eighty-five of the eighty-six creatures give up nothing but gold; twenty bosses exist and none is placed anywhere; and twenty-three of the forty-one maps have no doorway, so nothing leads to them. A stranger would enjoy twenty minutes and then run out of reasons.
 
 ---
 
-## Where we actually are (counts measured 2026-08-30)
+## What is built, counted
 
-**The counts, so nobody has to guess:**
-
-| Thing | Count | Note |
+| Thing | Count | What the count means |
 | --- | --- | --- |
-| Game + tooling C# files | 375 | 95 of them editor tools |
-| Playable maps on disk | 41 | 10 towns · 17 fields · 14 dungeons — all carry real content |
-| Mob definitions | 86 | 20 flagged as bosses — **0 placed in any map**, though all 20 now carry their own art (until 2026-09-12 every one of them wore an ordinary creature's sprite) |
-| Composed skills | 42 | 22 sword (pool complete) · 9 magic/support · 11 carried by consumable items |
-| Items in the entire game | 13 | **2 wearable** (one sword, one bow) · 11 consumables |
-| Cards | 4 | |
-| Client builds ever produced | **1** | a playable client, 458 MB, produced 2026-09-08; the server build is 227 MB |
+| Game and tooling code files | 375 | 95 of them editor tools, exposing 88 menu commands |
+| Playable maps | 41 | 10 towns · 17 fields · 14 dungeons |
+| Creature definitions | 86 | 20 of them bosses; all 20 now have their own artwork |
+| Skills | 42 | see the split below |
+| Items in the whole game | 13 | 11 consumables · 2 that can be worn (a sword and a bow) |
+| Cards | 4 | Andre, Poring, Whisper, Zipper Bear |
+| Live characters in the database | 14 | the furthest is level 80 with 4,396 gold |
+| Builds that exist | 2 | a 458 MB player build (8 Sep) and a 227 MB server build (10 Sep) |
 
-**The foundation — the hardest part to start — is real:**
+**The 42 skills, split by what can reach them:** 22 belong to the sword and all 22 are published, which is what lets a dropped weapon carry them. 11 are carried by consumable items. 1 belongs to the staff and is unpublished. The remaining 8 — two heals, a healing circle, a fire bolt, a hex field, a bulwark, a war banner and a blink — belong to no weapon and no item, and all 8 are unpublished, so nothing in the game can currently grant them.
 
-- **2.5D rendering:** 3D world + billboard sprites, merged terrain platforms, per-feet depth sorting, occluder fading, planar reflection, hand-drawn grade pass.
-- **Spatial layer:** WASD/click movement, camera rig, grid A* pathfinding, crowd pass-through, portals/spawns, persistent global-systems scene with additive map loading.
-- **Combat — the deep, finished part (built 2026-08-11 → 08-24):** player and mob resolve damage through **one shared set of rules** and **one landing choke point**; crit → hit → damage resolves in a fixed order; stacks belong to the skill that granted them and finishers cash them; every timed stat change is **one** sub-stat effect (the per-stat verbs were deleted); modifiers fire at a moment and finish; flinch, earned footing, weapon reach, parry charges, banked damage, combo runs counted by the fight.
-- **The first class kit is done:** 22 composed sword skills, each with an authored description, all written by one composer that everything else reads from. Nine more magic/support skills exist across staff and healing.
-- **RPG numbers:** RO-style primaries (STR/AGI/VIT/INT/DEX/LUK) + allocatable points, per-level growth, 10 elements + modifier table, pre-renewal ATK/MATK formula port, the **Trio-Ring** percent-passive draft.
-- **Gear machinery — deeper than the item count suggests:** equipment instances carry **refine levels, slotted cards, per-copy rolled rarity, and rolled skills**, and all of it persists (save format v7, alongside level, XP, stats, ring walk, bag, gold, hotbar bindings, dyes).
-- **World & life:** procedural town/map generator, tiered interiors, ambient townsfolk with reactive barks, weather (rain/snow/wet ground/reflections) on a calendar, day/night with night lamps, music director, minimap + world map.
-- **VFX pipeline:** particle library behind one play-at choke point, an event→cue layer, and an edit-mode composer window.
-- **Art pipeline:** GPT→Trellis→Blender→Unity prop pipeline proven, 8-dir sprite baker, live-3D player and NPC rigs, locked style guide v2.1 and charcoal+gold UI palette.
-- **HUD:** inventory / equipment / character trio, skill book, data-driven hotbar, buff bar, cast bar, damage popups, death screen.
-- **Workflow:** offline C# and skill-data checkers that run in seconds without opening Unity, plus a live editor link for reading real values.
-- **Multiplayer — started, and no longer a Tier-2 abstraction (see Tier 2 below):** **four** processes now — a sign-in service, a character server that owns every character and every save, a headless game server that owns the world and never touches the database, and one shared Postgres. Two players have been watched standing in the same town seeing each other move. A player is let in by the character server, which pushes their whole character to the game server before telling them where to knock. Combat crosses the wire in both directions and the whole skill runs on the server; a fight has been played against server-owned creatures, though not yet with two people in it. There is deliberately **no offline game any more** — pressing Play needs a running server. Details in [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md); how to stand it up in [Starting the Network](starting-the-network.md).
+**The parts that are genuinely finished:**
 
-- **Everything built in September, which no earlier version of this document mentions:** the world now runs across **many servers** — an area is placed on the least busy machine when somebody wants it and released 45 seconds after the last person leaves, and walking through a door into an area another machine holds writes your character down, waits for the write, and hands you over. **One account can only be signed in once**, and a character is written down and released before a second machine picks it up, so it can never be alive in two places. **Things you drop lie on the ground** as a sparkle coloured by rarity, and the server decides where they land and who wins when two people reach at the same instant. **Anything entering your bag says so in chat**, through one door that replaced four hand-written copies. A **categorised game log** with twelve switchable groups, built because one play-test's log held 1205 useless lines against 53 useful ones; it now says why a cast was refused, in six places that used to be silent. **Touch controls** so the game can be played on a phone. A **hosting decision with measured latency** — one always-on machine in Singapore, 49 ms from Manila against Frankfurt's 244. A **performance pass**: the frame cap dropped from 120 to 60 on a 60 Hz screen, the minimap's redraw cut from 120 times a second to 20, and 66.6 MB of decoded audio per client moved to streaming. **A skill cast from too far walks you there** instead of refusing, and reach became a real stat the server enforces per skill. **One shared animation brain** for every body in the game, replacing four copies that had drifted. **Blocked and absorbed hits finally say so** — a shield, a brace and a parry were all invisible because the machine deciding them threw the numbers away.
-- **The checks that guard all of it, built 2026-09-12:** the game's C# compiles in 4.4 s without opening Unity; its **arithmetic** is pinned and checked in 3 s outside the editor entirely — the experience curve, the stat-point budget, the accuracy window, the element chart, the ring's ceilings; and a **wiring sweep** asks whether everything the game loads still points at something that exists. Each has a prover that breaks the thing on purpose and confirms the check complains, because a check nobody has watched fail proves nothing. All of them run at the end of a turn and speak only about files that turn touched.
-
-**Honest read:** this is a combat system a stranger could enjoy for twenty minutes and then run out of reasons to keep playing. The technology is not the blocker and has not been for a while.
+- **Fighting.** Players and creatures resolve damage through one shared set of rules and one landing point. Crit, then hit, then damage, in a fixed order. Flinch, footing, weapon reach, parry charges, banked damage, combo runs. Every timed stat change is one effect rather than a verb per stat.
+- **The numbers behind it**, pinned and checked in three seconds without opening Unity: the experience curve, the stat-point budget, the accuracy window, the element chart, the ring's ceilings.
+- **The world's shape.** Movement, camera, pathfinding, crowd pass-through, doorways, additive map loading, weather on a calendar, day and night with lamps, a music director, a minimap and a world map.
+- **Four programs that make it online.** A sign-in service; a character keeper that owns every character and every save; a game server that owns the world and never touches the database; one shared database. Two people have been watched standing in the same town seeing each other move, and a fight against server-owned creatures has been played. The whole of a skill runs on the server. An area is placed on the least busy machine when somebody wants it and released 45 seconds after the last person leaves. One account can only be signed in once. There is deliberately no offline game.
+- **Saving.** Save format version 10 holds level, experience, the six primaries and unspent points, the full ring walk, gold, hotbar bindings, active passives, the bag and worn gear with their refine levels, slotted cards, rolled rarities and rolled skill kits, and outfit dyes.
+- **The screens.** Sign-in, character select, loading, inventory, character sheet, the ring draft, the grimoire, the wardrobe, the calendar, the world map, the system menu and settings, the death screen, chat, the dialogue box, tooltips, the right-click item menu, and a separate touch layout for phones.
+- **The checks.** The game's code compiles in about four seconds without opening Unity; the arithmetic is checked outside the editor entirely; a sweep asks whether everything the game loads still points at something that exists — 28,341 links, all resolving. Each has a prover that breaks it on purpose to confirm it complains.
 
 ---
 
-## TIER 1 — Minimum Shippable Game (the Steam target)
+## What is half-built — measured, each one
 
-**Definition of done:** a stranger buys it on Steam, plays 3–8 hours, and feels they got a complete RO-flavored ARPG. **Single-player or small co-op.** No "MMO."
+**Loot is a machine with almost nothing in it.** All 86 creatures have an empty drop list. Exactly one creature — the Axolot — wears anything, and it is the sword; it gives it up 15 times in 100. That single roll is the whole loot economy. Refine levels, card sockets, per-copy rarity and rolled skill kits are all built and all persist, and pay out nothing. A worn ring is deliberately near-impossible to get: 1 in 100,000.
 
-Milestones are in dependency order; each ends in something you can actually *play*.
+**Gear is one place deep.** Eight places on the body can hold something — head, armour, garment, weapon, shield, two accessories, and the ring. Only the weapon has any item authored for it.
 
-### M1 — Core loop is fun for 30 minutes — **~95%, effectively done**
+**Drop lists name items by typing their names, and nothing checks the spelling.** The sweep that checks everything else follows proper links only. Rebuilding the creatures prints one warning per missing name and then never mentions it again. This is not hypothetical: the older creature roster already asks for nine items that do not exist — Life Potion, Silver Ring, Wooden Guard, Leather Vest, Fire Scroll, Jade Amulet, Katana, Iron Sword and Boots.
 
-- **Death → respawn/game-over flow** — built. "YOU DIED" vignette, death pose, countdown, revive at full HP at the map spawn point.
-- **Save/load** — built and now well past the original slice: level, XP, HP/MP, the six primaries + unspent points, the full Trio-Ring walk, gold, hotbar bindings, active passives, **equipment and bag with refines/cards/rarities/rolled kits**, and outfit dyes. Auto-loads on launch; auto-saves on level-up / respawn / quit / every 20s when changed.
-- **Enemy variety + behavior feel** — 86 mob definitions with kiting and fleeing behavior axes, weighted field scatter, hit-flash, death poof, floating combat text.
-- **One fully-realized starting class** — **done 2026-08-24.** The sword pool closed at 22 skills.
-- *Remaining:* a combat-feel polish pass (hit-stop, knockback, crit emphasis) and a real ranged projectile for casters.
-- *Playable when:* you can start a character, fight a varied field, level, die, reload — **and your progress survives a restart.** ✅ true today.
+**Loot attaches when creatures are rebuilt, not when the game runs.** Editing a drop list and then play-testing without rebuilding shows nothing, and looks exactly like a bug.
 
-### M2 — A world worth exploring (one region) — **~20%**
+**Cards are free, and named after creatures that do not exist.** The socket screen loads every card in the game and offers all four to anyone with an empty socket, regardless of what they own. The four names are Ragnarok Online creatures; none of our 86 goes by any of them. Cards also cannot be carried — a drop list can only name an item, and the bag can only hold an item, and a card is neither.
 
-- **Built:** 41 maps exist with real geometry, mob spawning and portals; minimap and world map work; map transitions work. The four largest towns are hand-finished.
-- **Missing, and this is the milestone:** **no quest system exists at all** (not partial — no such code). **No named NPCs** — townsfolk are anonymous and speak random ambient lines; the dialogue box exists but nothing drives it. **No boss is placed in any map**, so no dungeon has a destination. The 14 dungeons are generator output with no identity.
-- *Playable when:* you can follow a quest from the town into a dungeon and beat its boss.
+**Bosses are defined but unreachable.** None is placed in any map. All 34 creature spawn points are set to pick any ordinary creature. Each dungeon has exactly one spawn point, so a boss cannot simply be added to it without removing that dungeon's ordinary creatures. The two shortcuts also mislead: asking for "a boss" gives a different random one on every respawn, and the one-click placement tool always places the first boss in the list.
 
-### M3 — Progression & loot spine — **~35%**
+**Over half the world cannot be walked into.** 36 doorways across 18 maps. The other 23 maps have none at all — 7 towns, 4 fields, and 12 of the 14 dungeons — and nothing anywhere leads to them.
 
-- **Built:** the *machinery* — equip/inventory/stat-bonus UI, refine, card slotting, rolled rarity and rolled skills per copy, gold, loot-dropper hooks on death, all persisted.
-- **Missing:** the *content* — **only 2 wearable items in the whole game**, no drop tables authored, no armor, no shop or economy, no crafting (despite a crafting design already written). **Class advancement does not exist** in any form. No respec, no demo level cap.
-- **Landed since this milestone was last judged:** **11 consumables** (potions, food, an antidote), each carrying its own composed skill and going through the same one door every other item use does.
-- *Playable when:* killing things drops gear that meaningfully changes your build.
+**Townsfolk have no identity.** Every villager in the game returns the same hardcoded name, "Villager", and speaks randomly chosen ambient lines. There is no field to author a name into.
 
-### M4 — Game-shaped product — **~0%**
+**The ring nobody authored.** Every character wears a "Ring of Beginnings" that the game builds in memory as it loads, because no ring item exists. The game already prefers an authored one if it finds it, so authoring it needs no code change.
 
-- No title screen or new-game flow; no pause; no controller support; no tutorial; no localization scaffolding. In-game settings and audio wiring exist, and a sign-in + character-select door now stands in front of the game, which is the only part standing.
-- **Steam integration** — nothing started. **Packaging is proven on both halves:** a one-command build script produces either, and both have been built and run — the server, and a 458 MB playable **client** on 2026-09-08. What remains unproven is not making a build but shipping one: no store page, no installer, no update path.
-- *Shippable when:* a first-time player needs zero outside instructions.
-
-### M5 — Content multiplication (the real 80%) — **~0%**
-
-- One weapon of the twelve declared has a skill pool. Scaling to 7–8 classes (+ advancements), hundreds of items, more zones and story is where most of the calendar time goes.
-- Balance pass, QA/bug pass, "no unfinished work" polish.
-- **Optional small co-op** (2–4 players, friend-hosted) — far cheaper than a true MMO and a big Steam selling point.
-
-> **Recommended first public step:** a **vertical-slice demo** (M1 + a thin M2) — one class, one dungeon, one story beat — as a **WebGL build** or a **Steam "Next Fest" demo** to test whether it's fun *before* committing to M5's content grind.
+**Bosses pay 500 to 2000 gold; an ordinary creature pays 6 to 24.** The reward is already there; what they drop is not.
 
 ---
 
-## The recommended next move — the loot spine, before quests
+## What is missing entirely
 
-Two items means every fight the last two months perfected pays out **nothing**. Loot is also the cheapest large win available: the gear machinery is already built and proven, so authoring items is data entry against a working system rather than new technology. Fifty items with real drop tables would turn the existing 86 mobs and 41 maps into a loop, with no engine work at all.
+No quest system — the only trace is a category an item can be filed under, which today does nothing but stop that item being dropped. No shop, no buying, no selling; every item carries a sell value, but nothing carries a buy price. No crafting or recycling, though a full design exists. No class or job advancement. No title screen or new-game flow — a sign-in box is the first thing a player meets. No tutorial, no pause, no controller support, no translations. Nothing to do with Steam: no store page, no installer, no update path. No parties, guilds, trading, auction house or player-versus-player. No monitoring, no anti-cheat and no way to patch a running game; hosting is decided and costed — one always-on machine in Singapore, 49 ms from Manila against Frankfurt's 244 — and nothing else in live-service is started.
 
-Then, in dependency order:
-
-1. **Loot spine** — ~50 items (weapons, armor, consumables), drop tables per mob, a first shop.
-2. **One dungeon with a point** — place a boss (20 are already defined), give that dungeon a layout and a reward.
-3. **A minimal quest system** — track and turn in, with three named NPCs to carry it.
-4. **A title screen and a first real build** — prove packaging early, while it is cheap to fix.
+*(The absences in this section were established by searching the code for each thing by name. A search proves absence only as far as its own reach; these were not exhaustively re-derived.)*
 
 ---
 
-## TIER 2 — Full MMORPG Vision (started, ahead of the strategy above)
+## The honest distance
 
-**This tier is no longer untouched.** The plan said defer it until Tier 1 lands; the work went ahead anyway through late August, so the honest statement is that the foundation of Tier 2 exists and Tier 1's content gap did not shrink while it was being built. That is a real trade already made, not a proposal. Whether to keep spending here before the loot spine is the open strategic question — see *The recommended next move* above, which still says content first.
+**The blocker is not technology, and has not been for months.** Everything left in the shippable version is content and connective tissue: things to find, people to talk to, reasons to enter a dungeon, and a wrapper that makes it a product. That is work that can be chewed through item by item, which is what the [Action Plan](action-plan.md) is for.
 
-What now stands, measured (details in [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md)):
+**Three things put a real floor under the calendar,** and none of them is an estimate — they are counts of work not yet begun: eleven of the twelve weapon families have no skill anybody can obtain; twelve of the thirteen kinds of gear have no item at all; and none of the forty-one maps has a quest, a named person, or a placed boss in it.
 
-- **Networking core** — **built and played.** Server-authoritative on headless Unity, Mirror as the library, a shell/body split so only ids and positions cross the wire, range-based interest, and a reconnect-then-give-up loop. **Watched working in a real session:** the server boots, people sign in and see each other move, creatures the server owns are fought and killed, and the whole combat round-trip runs — a swing asks the server before it lands. **Zoning across machines is built** (see the line below). **Still not built:** client prediction and reconciliation. Movement is relayed and trusted, and that remains the largest single piece left — the code says so itself, marking it as belonging to a later phase.
-- **Backend & accounts** — **built for the basics, and the authority moved.** Login/auth, a real database of accounts and characters, and a separate character server that owns the list, the saves and the door into the world. **The server now writes progress, and owns the bag, the money and the worn gear**; a save from a player's own machine is refused while they are in a world, and movement reports are checked against what was possible. **Splitting the world across machines is built** — an area is placed on the least busy server when somebody asks for it, released 45 seconds after the last person leaves, and crossing between them writes your character down first and hands you over with a one-time pass; one account can only be signed in once, so a character can never be alive in two places. **Not built:** trade. Resolving skills server-side is **done** — the whole skill runs there, so a skill's damage, a heal's size and a player's own buffs are the server's word.
-- **Live service** — **nothing started.** 24/7 hosting + ops cost, anti-cheat, monitoring, patching/live-ops, community/moderation, customer support.
-- **MMO content systems** — **chat exists.** Parties/guilds, trading, auction house, PvP, world bosses and social spaces do not.
+**The multiplayer half went further than the plan intended.** The strategy was to ship a single-player or small-co-op game first and let success justify an online one. Through late August and September the online layer was built anyway, and it now works — while the content gap did not shrink. That is a trade already made, not a proposal. What it bought is real: the world runs across several machines, the server owns the fight, and progress is written where a player's own machine cannot forge it. What it did not buy is a reason to play.
 
-**Reality check (unchanged):** solo devs almost never ship a *true* MMO; they ship co-op or "online-lite." Plan for **funding and/or a small team and a backend specialist** before finishing this tier — or scope it permanently to small co-op and call the dream answered.
+**Still not built inside that half:** movement is relayed and trusted rather than predicted and reconciled, which the code itself marks as belonging to a later phase. Six trust gaps are written down in the networking notes under a heading calling them deliberate limits — among them that a phone can sign in but cannot enter the world, and that a creature has no sense of who is fighting it, so two people attacking one is not resolved fairly.
 
 ---
 
-## What it would realistically take
+## Where the last month went
 
-- **Honest playable demo (M1 + thin M2):** months of focused content work — no new technology required.
-- **Full Tier 1 on Steam (M1–M5):** roughly a **year-plus** of sustained work, dominated by M5 content volume.
-- **Tier 2 (true MMO):** **multi-year**, and the part that most needs people/money beyond just direction.
+Almost entirely the online layer and the checking tools, in this order: characters moved onto a server and a sign-in door appeared (26 Aug) → the server took ownership of creatures, then of each fighter (27–31 Aug) → the server took ownership of whole skills, and damage numbers began crossing the wire (2 Sep) → a categorised game log, so a play-test can see why something did not happen (4 Sep) → the world split across several machines, one login per account (5 Sep) → reach became a real stat and a far cast walks you there, plus a client performance pass (7 Sep) → hosting decided, townsfolk networked, dropped things left lying on the ground (10 Sep) → boss artwork fixed, a dangling-reference sweep, an arithmetic checker (12 Sep).
 
-Nothing in Tier 1 is blocked by missing *technology*. It is blocked by **content and connective tissue** — which is exactly the kind of work we can chew through milestone by milestone.
+**The content number that matters:** across those thirty commits, the only new game content added anywhere was 11 consumables and their 11 skills, on 26 August. No new wearable item, no new creature, no new map, no new weapon skill. The last new map was added 29 June; the last new creature 17 July; the last sword skill 24 August.
 
 ---
 
-## Appendix — build history (the 2D → 2.5D path)
+## What is open right now
 
-The original plan built a **2D** foundation in phases A–G (engine → character/world → towns/interaction → monsters/combat → UI shell → RPG numbers → skill draft), single-player-first with MMO deferred. As of **2026-06-16** the project **pivoted to RO-style 2.5D** (3D world + billboard sprites); the RPG/UI/combat/art systems ported over while the spatial layer (movement/depth/pathfinding/maps) was rebuilt for 3D. On **2026-06-18** the skill system was redesigned to **TRIO-RING** (the old 28-node graph is retired) and the RO-style flat stat layer was added. Through **July–August 2026** the effort was almost entirely combat: unified player/mob rules, one damage choke point, the stack and sub-stat collapses, and the composed skill pool that closed the sword line on **2026-08-24**. Those built systems are folded into "Where we actually are" above; this appendix exists so the lineage isn't lost.
+One play-test has been open since 3 September, covering eleven server and skill changes, with about half its checklist still unrun. Its one inconclusive item — the only thing that came back neither passed nor unrun — is whether a passive fires when a normal attack lands and again when something dies.
 
 ---
 
 ## Related
 
-- [Active Skill System — V3](../2-systems/active-skill-system-v3/README.md) — what M1's combat actually is.
-- [Weapon Roster — 12 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — the twelve pools M5 has to fill.
-- [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the progression engine behind M3.
-- [Crafting & Recycling](../2-systems/crafting-and-recycling.md) — the loot loop M3 is missing the content for.
-- [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — why the 86 mobs are comparable to a player.
-- [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md) — what Tier 2 has actually become.
-- [Starting the Network](starting-the-network.md) — how to stand the multiplayer half up.
+- [Action Plan](action-plan.md) — the trackable list of what to do next, phase by phase.
+- [Active Skill System — V3](../2-systems/active-skill-system-v3/README.md) — what the finished combat actually is.
+- [Weapon Roster — 12 Identities](../2-systems/active-skill-system-v3/weapon-roster-12-identities.md) — ten families with no skill at all, and the staff's single unpublished one.
+- [Ring System — Current Facts (Trio-Ring)](../2-systems/ring-system-trio-ring.md) — the progression engine.
+- [Crafting & Recycling](../2-systems/crafting-and-recycling.md) — designed, no code.
+- [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — why the 86 creatures are comparable to a player.
+- [Networking — Implementation Notes](../2-systems/networking/implementation-notes.md) — what the online half is, and its deliberate limits.
+- [Starting the Network](../2-systems/networking/starting-the-network.md) — how to stand the multiplayer half up.
 - [World Creator — Spec](../3-world/world-creator-spec.md) — the pipeline that made the 41 maps.
-- [Biome Mob Families — Tiered Spawning](../3-world/biome-mob-families.md) — how M2's maps get populated.
-- [Story & Setting (Canon)](../3-world/story-setting-canon.md) — the reasons M2 needs to put in the world.
-- [Performance Checkup — My Routine](performance-checkup-routine.md) — the habit that keeps M1 smooth.
-- [Dev Contribution Log](dev-contribution-log.md) — who steered which of these calls.
+- [Biome Mob Families — Tiered Spawning](../3-world/biome-mob-families.md) — how maps get populated.
+- [Story & Setting (Canon)](../3-world/story-setting-canon.md) — the reasons the world still needs put into it.
+- [Where the Game Is Hosted](where-the-game-is-hosted.md) — the machine, the latency numbers, and the cost.
+- [Performance Checkup — My Routine](performance-checkup-routine.md) — the recurring measurement habit.
+- [Dev Contribution Log](dev-contribution-log.md) — who steered which call.

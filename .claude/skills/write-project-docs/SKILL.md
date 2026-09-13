@@ -21,7 +21,10 @@ block document** — `{ title, blocks: [] }` — in `wiki/content/*.json`, and e
 `wiki/content/manifest.json` (the nav).
 
 - Block types the renderer (`wiki/index.html`) understands: `lede, heading, paragraph, list, table, quote` /
-  `callout, image, skillTable, serverStats, hr`.
+  `callout, image, skillTable, serverStats, timeline, hr`.
+- `timeline` draws one vertical line of dated dots: `items:[{state, when, title, text}]`, where `state` is
+  `planned` (hollow dot), `now` (highlighted) or `done` (filled). Items render in array order, top to bottom —
+  the Roadmap page puts upcoming first, then `now`, then finished work newest to oldest.
 - `serverStats` is the only LIVE block: it renders an empty box that JavaScript fills from the character
   server's public `/stats` and refreshes every 30s. It carries `from` (the address to read). Everything else
   in the wiki is static text served off disk.

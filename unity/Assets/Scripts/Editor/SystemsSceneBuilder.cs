@@ -71,7 +71,7 @@ public static class SystemsSceneBuilder
         RigBuilder25D.BuildCamera(rendererIndex, player);
         RigBuilder25D.BuildCharacter();
 
-        // Full UI shell: HP bar + Bag(B, Inventory+docked Equipment)/Character(C)/Skills(K) panels, bound to Character.Instance
+        // Full UI shell: HP bar + Inventory(B)/Character(C)/Skills(K) windows, bound to Character.Instance
         // (each panel's controller owns its own hotkey; CharacterUIBinder lives on the prefab). Falls back to the bare HUD.
         var uiCanvas = Resources.Load<GameObject>("GameUICanvas");
         if (uiCanvas != null) PrefabUtility.InstantiatePrefab(uiCanvas, sys);

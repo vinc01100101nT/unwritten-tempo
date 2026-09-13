@@ -1033,7 +1033,7 @@ public partial class Player3DController : MonoBehaviour
     static Health PickMonsterUnderCursor(Camera cam)
     {
         if (cam == null) return null;
-        // The cursor is over a HUD element (e.g. an open Inventory/Equipment/Character window): don't
+        // The cursor is over a HUD element (e.g. an open Inventory or Character window): don't
         // pick the mob "behind" it. This single guard makes the sword cursor (GameCursor3D), the hover
         // panel (UnitStatusPanel), and click-to-attack all ignore mobs occluded by the UI.
         if (PointerOverUI()) return null;

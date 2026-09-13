@@ -12,10 +12,10 @@ The bag no longer draws 40 icon squares. `InventoryList.cs` renders **text rows*
 the `+N` refine prefix), slot, tier, skill count, attack-or-defence, and the rarity output lift — inside the same
 Inventory window, same `B` key, same tabs, same footer.
 
-**The load-bearing trick: each row carries an `ItemSlot` plus a `SlotDragHandler` with none of their visual
-references wired.** Both components drive themselves from the bound `BagEntry` and null-guard every visual field,
-so hovering, the equip→stat-delta preview, clicking, double-click-to-equip, drag-to-reorder and drag-to-equip all
-kept working with zero interaction code rewritten. Do NOT reimplement any of those on the rows.
+**The load-bearing trick: each row carries an `ItemSlot` plus a `SlotDragHandler`.** Both drive themselves from
+the bound `BagEntry` and draw nothing, so hovering, the equip→stat-delta preview, clicking, double-click-to-equip,
+drag-to-reorder and drag-onto-the-ground all work with no interaction code on the rows. Do NOT reimplement any of
+those on the rows.
 
 **Decisions baked in:**
 - **Sorting is a LENS, never the order.** A column header cycles ascending → descending → **off**, and off is the
@@ -39,11 +39,9 @@ kept working with zero interaction code rewritten. Do NOT reimplement any of tho
   cells and put the `Button` on that same object.
 
 **Gotchas:**
-- **There is no per-item Drop in the game** — `InventoryStore` has `Equip`, `Unequip`, `Consume`, `Reorder`,
-  `Give`, `GiveEquipment`, `ClearAll` and nothing else. Drop is disabled in the menu for that reason. Don't call
-  a `Discard` — it does not exist.
-- A drag's floating ghost is a copy of the icon, so with no icon **there is nothing visible while dragging**. The
-  drop still resolves. Fixing it means giving `SlotDragHandler` a text ghost.
-- `EquipSlots.Label/Order` in `Item.cs` are new: nothing in the game named a slot in words before (the paperdoll
-  draws silhouettes). `Order` is the PAPERDOLL's order, not alphabetical.
+- **Dropping an item goes through `InventoryStore.Drop`**, reached from the menu's Drop and from dragging a row onto
+  the ground — both via `DropAmountPrompt.DropFromScreen`. It refuses worn pieces, quest items and the Ring.
+- A drag's floating ghost has no icon to show. A readable ghost means giving `SlotDragHandler` a text ghost.
+- `EquipSlots.Label/Order` in `Item.cs` name a slot in words for the list. `Order` is a body's order, not
+  alphabetical.
 - The list height is fixed (300px) on purpose, so the window is one size on every tab.

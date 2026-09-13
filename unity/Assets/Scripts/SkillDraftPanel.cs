@@ -18,7 +18,7 @@ using TMPro;
 public class SkillDraftPanel : MonoBehaviour
 {
     RectTransform content;          // the panel's "Content" node we build into
-    GameObject panelRoot;           // the "SkillsPanel" root we show/hide on K (code-driven, like the window trio)
+    GameObject panelRoot;           // the "SkillsPanel" root we show/hide on K (code-driven, like the Inventory and Character windows)
     DraftService.Draft? pending;    // the draft currently shown (cached so the wildcard is stable between renders)
     bool bound, animating;
 

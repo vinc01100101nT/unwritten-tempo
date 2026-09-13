@@ -86,6 +86,17 @@
       ]
     },
     {
+      "type": "heading",
+      "level": 3,
+      "text": "Development"
+    },
+    {
+      "type": "list",
+      "items": [
+        "**Roadmap** — one timeline of what has been built and what is coming next"
+      ]
+    },
+    {
       "type": "hr"
     },
     {

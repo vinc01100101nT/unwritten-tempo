@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Ornament Kit v1.1 — the "Unwritten" branding layer over the locked window trio (UiKit windows).
+/// Ornament Kit v1.1 — the "Unwritten" branding layer over the UiKit windows.
 /// Art direction (GPT⇄Claude relay, 2026-06-25): <b>ink + gold, explorer's journal / grimoire margin</b>
 /// — NOT royal filigree. Guardrails, enforced here:
 ///   • monochrome GOLD only (never competes with rarity colors),

@@ -221,6 +221,20 @@
           }
         }
       ]
+    },
+    {
+      "title": "Development",
+      "pages": [
+        {
+          "id": "roadmap",
+          "title": "Roadmap",
+          "file": "roadmap.json",
+          "sourceDocs": [
+            "docs/1-planning/action-plan.md",
+            "docs/1-planning/roadmap-to-launch.md"
+          ]
+        }
+      ]
     }
   ]
 }

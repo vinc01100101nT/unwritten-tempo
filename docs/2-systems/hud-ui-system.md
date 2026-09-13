@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-09
+last-updated: 2026-09-13
 tags:
   - systems-combat-design
 ---
@@ -10,7 +10,7 @@ tags:
 
 A two-AI collaboration: **GPT** = design/UX/systems lead, **Claude** = engineering/architecture lead, **user** = relay between them. This doc is the running source of truth for the HUD/UI workstream.
 
-Tracking issue: **VIN-22** (Inventory + Equipment + Character window trio).
+Tracking issue: **VIN-22**.
 
 ## Locked foundations
 
@@ -36,9 +36,9 @@ Tracking issue: **VIN-22** (Inventory + Equipment + Character window trio).
 
 ## Status
 
-Visual spec LOCKED (v2). Selection = cyan inner ring, hover = cyan outer bloom (both sit over an untouched rarity border — no collision). Portrait = billboard front-facing frame (no separate portrait-art pipeline). The token sheet is below, and every value in it was read off the code.
+Visual spec LOCKED (v2). Hover and selection are tinted cyan, never a rarity colour. Portrait = billboard front-facing frame (no separate portrait-art pipeline). The token sheet is below, and every value in it was read off the code.
 
-**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory / equipment / character trio, the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina and XP bars, the world map, a settings window and a wardrobe panel all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
+**The uGUI port happened.** Measured 2026-08-30 against the scripts on disk: the inventory and character windows (what you wear is listed at the top of the inventory), the skill book, the hotbar, the buff bar, the cast bar, item and skill tooltips, the stamina and XP bars, the world map, a settings window and a wardrobe panel all exist, and windows carry a drag handle and a close button. The character sheet is described in [Active Skill System — Implementation Notes](active-skill-system-v3/implementation-notes.md).
 
 ## Design tokens — read off the code 2026-09-09
 
@@ -52,7 +52,7 @@ here and the code disagree, the code is right and this table is stale — re-ver
 | --- | --- | --- | --- |
 | Panel fill | `#15161A` | 0.98 | every window's body |
 | Panel raise | `#212228` | 0.98 | detail and sub-panels — the same charcoal ~6% lighter |
-| Slot fill | `#121317` | 1.0 | an inventory slot's well, darker than the panel it sits on |
+| Slot fill | `#121317` | 1.0 | the well behind a text field, the bag's search box and a slider track, darker than the panel it sits on |
 
 There is **no background gradient and no gradient of any kind** — every surface is a flat fill. `#0D0E10` is a
 real authored colour but it belongs to the **sign-in screen** (its camera background and veil), not the HUD.
@@ -70,15 +70,15 @@ real authored colour but it belongs to the **sign-in screen** (its camera backgr
 | --- | --- | --- | --- |
 | Gold | `#C8A862` | 1.0 | **the window border**, and every gold accent |
 | Gold (header wash) | `#C8A862` | 0.16 | the title strip behind a window's header |
-| Cyan | `#59F2FF` | 1.0 | selection inner ring |
-| Cyan glow | `#4CD9FF` | 0.22 | hover outer bloom, deliberately soft |
+| Cyan | `#59F2FF` | 1.0 | hover and pressed tints on buttons, text carets, checkbox ticks, the selected character's border |
+| Cyan glow | `#4CD9FF` | 0.22 | in the shared palette, but nothing in the game draws it at this alpha |
 
 **The window border is GOLD, at full alpha.** There is no brown border and no gold gradient anywhere in the
 project — not in a script, a scene, a prefab or a material. Do not add either: a border is one flat gold.
 
 ### Rarity — the load-bearing colour system
 
-Five tiers, each owning three colours, and it is the **only** thing that colours an item's name or slot border.
+Five tiers, each owning three colours, and it is the **only** thing that colours an item's name.
 Selection and hover are cyan precisely so they can never be mistaken for a tier.
 
 | Tier | Border | Name text | Glow | Glow alpha |
@@ -90,9 +90,8 @@ Selection and hover are cyan precisely so they can never be mistaken for a tier.
 | Legendary | `#F5B942` | `#F1E7D0` | `#F5B942` | 0.40 |
 
 Legendary's name is warm ivory rather than its gold border, so the name never merges with the label carrying
-the gold. Enhancement (+N) and card pips are their own channels and never tint the rarity border.
-
-**Layering, in order of who wins:** rarity border → selection ring → hover bloom.
+the gold. The border colour marks the rarity word in the item tooltip and tints a dropped item's sparkle on the
+ground. The glow colour is defined for every tier, but nothing in the game draws it.
 
 ### Fonts
 
@@ -123,14 +122,14 @@ text stays sharp when the window is smaller than the 1280×720 reference. A canv
 
 ## Asset sourcing (settled with GPT)
 
-- **Flourishes** — GPT authors a custom "unwritten" ornament kit (corner filigree, dividers, empty-slot watermark, portrait backplate) as transparent gold-only PNGs, separable pieces (not baked mockups). Claude implements them as a **decorative overlay layer** (Panel → Border → Background → Flourish Overlay) so future re-skins stay possible. Kit delivered later; build structural UI first, drop overlays in when they land.
-- **Item & card icons** — ~95% from a curated icon pack (breadth: weapons/armor/consumables/materials/cards), ~5% custom GPT-generated "hero" art for named Legendaries / boss drops / quest artifacts / class relics. The slot frame (rarity + N + pips) unifies mixed sources. Rule: Common→Epic = pack, Legendary = custom.
+- **Flourishes** — GPT authors a custom "unwritten" ornament kit (corner filigree, dividers, portrait backplate) as transparent gold-only PNGs, separable pieces (not baked mockups). Claude implements them as a **decorative overlay layer** (Panel → Border → Background → Flourish Overlay) so future re-skins stay possible. Kit delivered later; build structural UI first, drop overlays in when they land.
+- **Item & card icons** — ~95% from a curated icon pack (breadth: weapons/armor/consumables/materials/cards), ~5% custom GPT-generated "hero" art for named Legendaries / boss drops / quest artifacts / class relics. Rule: Common→Epic = pack, Legendary = custom.
 - **Stat icons** — reuse the approved brand-sheet family (Might/Magic/Finesse) for BOTH base (STR/AGI/VIT/INT/DEX/LUK) and derived (ATK/MATK/DEF/MDEF/CRIT/ASPD/HIT/FLEE). One icon language, no second set.
-- **Built in uGUI, no art files** — flat panel fills, gold borders, cyan selection ring + hover bloom, +N badges, ◇ pips, tabs, stat-row strips, dividers. **Fonts** Cinzel + Inter + PixelFont = open-license, imported as TMP assets (see the token sheet above; there are three, and PixelFont is the combat numbers alone).
+- **Built in uGUI, no art files** — flat panel fills, gold borders, cyan hover and selection tints, tabs, stat-row strips, dividers. **Fonts** Cinzel + Inter + PixelFont = open-license, imported as TMP assets (see the token sheet above; there are three, and PixelFont is the combat numbers alone).
 
 ## Phase plan — where it actually stands (measured 2026-08-30)
 
-- **Phase 1 — DONE.** Inventory, Equipment and Character windows all exist. Hotbar + stat allocation were already done.
+- **Phase 1 — DONE.** The Inventory and Character windows exist; what you wear is listed at the top of the inventory. Hotbar + stat allocation were already done.
 - **Phase 2 — mostly done.** The buff/debuff bar and both tooltips (item and skill) are built. **The quest tracker is not**, and cannot be: no quest system exists anywhere in the game.
 - **Phase 3 — no longer "deferred", and no longer one phase.** Chat is built. Guild / marketplace / mail are still absent, but they are now ordinary features on a real networked game rather than a bracket nobody expected to open.
 - **Phase 4 — partly done.** Windows are movable and carry drag handles and close buttons. **Saved layouts and UI scaling are not built**, and UI Toolkit was never revisited — it is still uGUI throughout.
