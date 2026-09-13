@@ -38,7 +38,6 @@ public struct MonsterArchetype
     public int hardDefPercent, hardMagicDefPercent;
 
     // Offense. `attack` / `hit` / damage spread are likewise derived from `stats`, not carried.
-    public MonsterAI3D.AttackType attackType;
     public int   xpReward;
     public float touchRange, touchInterval;
 

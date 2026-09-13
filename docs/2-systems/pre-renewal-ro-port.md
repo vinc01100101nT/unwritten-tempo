@@ -47,7 +47,7 @@ Porting the game's combat/stat math from its custom **linear** system to authent
 
 The combat-feel rewrite. It landed as one unit (formulas + mob stats + retuning) — the "TODO, HIGH" this section used to carry contradicted the status list above it and was the stale half. **Verified in code 2026-08-30**; every line below is a thing that exists.
 
-- **Status ATK bonus — DONE.** StatusATK = STR + ⌊STR/10⌋² (and the DEX/LUK contributions); same shape for MATK from INT. The squared term is `UnitStatMath.StatSquareBonus`.
+- **Status ATK bonus — DONE, in this game's own shape.** Melee attack = STR + STR's jump (plus DEX/LUK contributions); ranged attack mirrors it with DEX leading; MATK = INT + INT's jump. The jump is `UnitStatMath.StatJumpBonus` = ⌊stat/10⌋² + 3×⌊stat/10⌋ — RO's plain square plus a step, so the early jumps are felt — and VIT, AGI and LUK carry one too (defence, evasion, crit damage).
 - **DEF split (authentic) — DONE.** damage = `ATK × (1 − hardDef/100) − softDef`, where hard DEF = % reduction, soft DEF = flat (from VIT). Same split for MATK vs MDEF. Lives in `Combat.AfterDefense`.
 - **Crit semantics — DONE.** A crit **ignores FLEE** (guaranteed hit) AND **ignores both hard + soft DEF**; `Combat.Missed` skips the miss roll on a crit and `AfterDefense` returns the raw attack. Element/race/size modifiers still apply. All three wiring tasks are in: the `crit` flag reaches the damage call, the miss roll is skipped, and the DEF step is skipped whole.
 - **Crit shield — DONE.** Target LUK lowers attacker crit chance (`UnitStatMath.CritShieldPerLuk`, 0.3%/pt), and mobs carry LUK because they carry all six primaries now.
@@ -69,7 +69,7 @@ The combat-feel rewrite. It landed as one unit (formulas + mob stats + retuning)
 ## Watch-outs
 
 - **Breakpoint inflation:** pre-renewal has hard breakpoints (DEX 150 = instant cast, ASPD thresholds). Stat-granting gear must be budgeted / soft-capped, or gear trivializes the breakpoints. Options: budget stat gear, soft-cap gear stat contributions, or keep a fixed cast floor.
-- **Equipment + cards complement pre-renewal:** cards are pre-renewal's native progression and map cleanly onto the game's two-layer model (flat-stat cards → flat layer; %-cards → passive-% layer; proc cards → StatusController/MultiHitBurst hooks). Card-slot count is authored per item and is not gated by rarity — rarity's only job is the output lift it puts on a weapon's skills.
+- **Equipment + cards complement pre-renewal:** cards are pre-renewal's native progression and map cleanly onto the game's two-layer model (flat-stat cards → flat layer; %-cards → passive-% layer; proc cards → StatusController/MultiHitBurst hooks). Card-slot count is authored per item and is not gated by rarity — rarity lifts a weapon's skills and its attack, and a rolled piece of armour's defence and main stats, and nothing else.
 
 ## Source
 

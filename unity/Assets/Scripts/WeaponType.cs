@@ -29,6 +29,15 @@ public enum WeaponType
     Firearm = 12,       // collapses RO's revolver/rifle/shotgun/gatling/launcher
 }
 
+/// <summary>Facts about a <see cref="WeaponType"/> that more than one system asks.</summary>
+public static class WeaponTypes
+{
+    /// <summary>A bow or a firearm — the weapons whose blow travels rather than connecting, and which swing with
+    /// ranged attack instead of melee attack. The one answer the arrow, the whiff sound, the server's landing check
+    /// and the damage roll all read, so they can never disagree about which weapons are ranged.</summary>
+    public static bool IsRanged(WeaponType w) => w == WeaponType.Bow || w == WeaponType.Firearm;
+}
+
 /// <summary>A mob's body size — pure data for now (nothing reads it in the slice). It's the column index of
 /// the deferred <see cref="WeaponSizes"/> modifier table; defaulting everything to <see cref="Medium"/>
 /// reproduces RO's "100% everywhere" baseline, so backfill is a no-op.</summary>

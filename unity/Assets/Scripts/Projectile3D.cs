@@ -41,6 +41,9 @@ public class Projectile3D : MonoBehaviour
         public int amount;
         public Element element;
         public Vector3 at;
+        // The rest of a physical blow rolled at launch, for a handler that lands it on arrival.
+        public bool isCrit, missed;
+        public int attackerHit;
     }
 
     /// <summary>As <see cref="Spawn"/> but zero-alloc per shot: the hit's state rides in a
@@ -49,12 +52,14 @@ public class Projectile3D : MonoBehaviour
     public static void Spawn(Texture2D body, int frameSize, int frameCount, float fps, float scale,
                              Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
                              float arriveRadius, float maxLife, System.Action<HitPayload> onArrive,
-                             Component source, Health hitTarget, int amount, Element element)
+                             Component source, Health hitTarget, int amount, Element element,
+                             bool isCrit = false, bool missed = false, int attackerHit = -1)
     {
         var payload = new HitPayload
         {
             source = source, target = hitTarget, homing = target,
-            amount = amount, element = element, at = fallbackPoint
+            amount = amount, element = element, at = fallbackPoint,
+            isCrit = isCrit, missed = missed, attackerHit = attackerHit
         };
         // no art → the blow lands instantly, same as the closure overload's null-body path
         if (body == null) { onArrive?.Invoke(payload); return; }

@@ -57,9 +57,15 @@ public class Health : MonoBehaviour, ICombatUnit
     public Vector3 DamagePosition => transform.position;
     public int ApplyDamage(in DamageInfo info)
     {
+        // A swing that missed is a miss wherever it came from — a basic-attack strike inside a flurry included — so it
+        // shows MISS and deals nothing, instead of falling into the flurry sink, which has no miss.
+        if (info.missed)
+            return TakeDamage(info.amount, info.isCrit, info.attackerHit, info.element, info.missed, info.attacker);
+        // A flurry beat on a creature that is ALREADY dead is presentation only: the digits and the hit cue, nothing else.
+        if (info.overkill && IsDead) return ShowOverkillBeat(info);
         if (info.overkill)   // multi-hit flurry: keep numbers/sound climbing past the kill (RO cascade)
             return info.isMagic ? TakeMagicDamageOverkill(info.amount, info.isCrit, info.element, info.attacker)
-                                : TakeDamageOverkill(info.amount, info.isCrit, info.element, info.attacker);
+                                : TakeDamageOverkill(info.amount, info.isCrit, info.attackerHit, info.element, info.attacker);
         return info.isMagic ? TakeMagicDamage(info.amount, info.isCrit, info.element, info.attacker)
                             : TakeDamage(info.amount, info.isCrit, info.attackerHit, info.element, info.missed,
                                          info.attacker);
@@ -110,17 +116,48 @@ public class Health : MonoBehaviour, ICombatUnit
     // at its own attack site — so a swing it walks up and makes and a swing a skill asks of it come from one place.
     public int BasicHit { get { var b = Brain; return b != null ? b.BasicHit : 0; } }
     public Element BasicElement { get { var b = Brain; return b != null ? b.BasicElement : Element.Neutral; } }
-    public bool BasicIsMagic { get { var b = Brain; return b != null && b.BasicIsMagic; } }
     public int RollBasicDamage(bool crit) { var b = Brain; return b != null ? b.RollBasicDamage(crit) : 0; }
 
-    /// <summary>Mobs never crit — crit is the Finesse identity, and the whole armour-piercing rule hangs off it.</summary>
-    public bool RollBasicCrit(ICombatUnit victim) => false;
+    /// <summary>Whether this mob's swing crits — forwarded to the brain, which rolls it by the player's own rule.</summary>
+    public bool RollBasicCrit(ICombatUnit victim) { var b = Brain; return b != null && b.RollBasicCrit(victim); }
 
     /// <summary>Our dodge, rolled against an attacker's accuracy.</summary>
     public int Flee => flee;
 
     /// <summary>Our LUK, which lowers an attacker's crit chance against us.</summary>
     public int CritShieldLuk => luk;
+
+    // A skill in this mob's hands: forwarded to the pieces that own each number, exactly as the swing above is.
+    // Looked up once, found or not: the training dummy removes its stat block on purpose, and a miss must not turn
+    // into a search on every skill hit.
+    UnitStatBlock statBlock;
+    bool statBlockLooked;
+    UnitStatBlock StatBlock
+    {
+        get
+        {
+            if (!statBlockLooked) { statBlock = GetComponent<UnitStatBlock>(); statBlockLooked = true; }
+            return statBlock;
+        }
+    }
+
+    public float RingBonus(StatId stat) { var s = StatBlock; return s != null ? s.RingBonus(stat) : 0f; }
+
+    public float SkillRarityLift(string skillId)
+    {
+        var b = Brain;
+        var gear = b != null ? b.Equipment : null;
+        return Rarities.LiftFor(gear != null ? gear.Get(EquipSlotType.Weapon) : null, skillId);
+    }
+
+    public float SwingTime { get { var b = Brain; return b != null ? b.SwingTime : 0f; } }
+
+    public int RollSkillDamage(DamageType type, int targetLuk, out bool crit)
+    {
+        var b = Brain;
+        if (b == null) { crit = false; return 0; }
+        return b.RollSkillDamage(type, targetLuk, out crit);
+    }
 
     // Movement + aggro: the mob's half of the shared unit verbs, forwarded to the rig that owns each primitive (the
     // pathing agent moves, the brain holds aggro). Cached once — these run per cast, never per frame.
@@ -312,12 +349,9 @@ public class Health : MonoBehaviour, ICombatUnit
         SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
         // Impact FROM the mob (spatial). A basic attack (rolled accuracy, attackerHit ≥ 0) → hit/crit;
         // a skill strike (always-lands, attackerHit −1) → the unified skill impact.
-        if (attackerHit >= 0)
-        {
-            CombatSfx.Hit(transform.position, crit);
-            VfxCue.Fire(crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack, transform);
-        }
-        else { CombatSfx.SkillHit(transform.position); VfxCue.Fire(VfxCueId.OnHitBySkill, transform); }
+        if (attackerHit >= 0) CombatSfx.Hit(transform.position, crit);
+        else CombatSfx.SkillHit(transform.position);
+        VfxCue.Fire(VfxCue.HitCue(false, crit, attackerHit), transform);
         if (isActiveAndEnabled) StartCoroutine(Flash());
 
         ApplyLeech(this, dmg, attacker);
@@ -336,7 +370,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
         if (Parried()) return 0;
 
-        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * Combat.MagicGlanceMult(flee));
+        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod);
         SubtractHealth(dmg);
 
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
@@ -360,7 +394,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
         if (Parried()) return 0;
 
-        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod * Combat.MagicGlanceMult(flee));
+        int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod);
         bool wasAlive = !IsDead;
         SubtractHealth(dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
@@ -381,7 +415,7 @@ public class Health : MonoBehaviour, ICombatUnit
     /// number + hit spark/sound even past death, so a physical multi-hit flurry keeps sounding to the end of the
     /// count instead of cutting off the instant the mob's HP hits 0. Always-lands (skill hit, no FLEE roll). HP
     /// floors at 0; death fires exactly once. Returns the hit's value so a combo total keeps climbing past the kill.</summary>
-    public int TakeDamageOverkill(int attackerAttack, bool crit, Element attackElement = Element.Neutral,
+    public int TakeDamageOverkill(int attackerAttack, bool crit, int attackerHit, Element attackElement = Element.Neutral,
                                   ICombatUnit attacker = null)
     {
         float mod = Elements.Modifier(attackElement, element);
@@ -393,8 +427,9 @@ public class Health : MonoBehaviour, ICombatUnit
         SubtractHealth(dmg);
         SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
         CombatSfx.SkillHit(transform.position);   // always-lands skill strike → the unified skill impact
-        // Hit spark + impact SOUND on EVERY strike, incl. overkill beats past death — same as the magic path.
-        VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
+        // Hit spark + impact SOUND on EVERY strike, incl. overkill beats past death — same as the magic path. Chosen by
+        // the shared rule, so a basic-attack strike inside a flurry shows the normal or crit cue a player would.
+        VfxCue.Fire(VfxCue.HitCue(false, crit, attackerHit), transform);
         if (wasAlive)
         {
             if (isActiveAndEnabled) StartCoroutine(Flash());
@@ -402,6 +437,25 @@ public class Health : MonoBehaviour, ICombatUnit
             if (IsDead) Die();
         }
         return dmg;
+    }
+
+    /// <summary>A flurry beat on a creature that is already dead: the number that beat would have been, and the hit
+    /// cue — and NOTHING else. No health lost, no parry or barrier spent, no flash, no leech, no passive, no death.</summary>
+    int ShowOverkillBeat(in DamageInfo info)
+    {
+        float mod = Elements.Modifier(info.element, element);
+        Color colour = info.isCrit ? CritColor : info.isMagic ? MagicColor : Color.white;
+        if (mod <= 0f) { SpawnElementNumber(0, mod, colour); return 0; }
+        float afterDefence = info.isMagic
+            ? Combat.AfterDefense(info.amount, hardMagicDefPercent, magicDefense, info.isCrit)
+            : Combat.AfterDefense(info.amount, hardDefPercent, defense, info.isCrit);
+        int shown = Mathf.Max(1, Mathf.RoundToInt(afterDefence * mod));
+        SpawnElementNumber(shown, mod, colour);
+        // The same impact sound and cue a live beat plays, so a flurry sounds to the end of its count.
+        if (!info.isMagic && info.attackerHit >= 0) CombatSfx.Hit(transform.position, info.isCrit);
+        else CombatSfx.SkillHit(transform.position);
+        VfxCue.Fire(VfxCue.HitCue(info.isMagic, info.isCrit, info.attackerHit), transform);
+        return shown;
     }
 
     /// <summary>Apply raw over-time / reflected damage that bypasses Defense and element (used by
@@ -475,7 +529,7 @@ public class Health : MonoBehaviour, ICombatUnit
         var c = Character.Instance;
         if (c == null) return false;
         var w = c.GetEquipped(EquipSlotType.Weapon);
-        return w != null && (w.weaponType == WeaponType.Bow || w.weaponType == WeaponType.Firearm);
+        return w != null && WeaponTypes.IsRanged(w.weaponType);
     }
 
     /// <summary>Refill to full HP silently — no popup, no color reset (used on a mob LEVEL-UP, which fully

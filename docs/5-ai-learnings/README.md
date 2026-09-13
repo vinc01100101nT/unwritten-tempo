@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-08
+last-updated: 2026-09-13
 tags:
   - ai-learnings
 ---
@@ -47,6 +47,7 @@ You arrive here knowing the symptom and nothing else, so that is what these line
 | You changed a value, read it back, and it had not moved — and you are about to call that a bug | [A Value You Just Changed Reads Stale](a-value-you-just-changed-reads-stale.md) — your read-back is slower than the value moves, so it changed and changed back before you looked. Probe from inside with timestamps. |
 | You paused or froze a running system to read it, and everything reads empty | [Put the Recorder Inside — Don't Stop the World](put-the-recorder-inside-dont-stop-the-world.md) — a pause times out every heartbeat and frozen reads report zero on values that are really there. Sample every step from inside, read the recording after. |
 | You added a tool to make a job easier and the job got slower | [You Added a Tool and Everything Got Slower](new-tooling-must-replace-work-not-add-it.md) — a tool only saves work if a rule lets something STOP. Find the rule that still demands the old method and let the new answer end the work. |
+| Every fix round finds a new bug, the user is exhausted, or you are about to hand over a play-test with findings still open | [The Path Table Is the Reviewer's Checklist](the-path-table-is-the-reviewers-checklist.md) — list every path with today/after BEFORE the edit, walk it again after, give the reviewer that table as its checklist; no play-test until it is clean. |
 | The user is asking "is there anything else?" for the third or fourth time | [Give the Whole List, Not a Trickle](give-the-whole-list-not-a-trickle.md) — one finding per reply is a loop with no exit. Sweep once, hand back the closed list with its boundary, then fix without asking again. |
 | A tool printed a summary and deleted the detail, and you want to copy the tool to keep its log | [A Tool Threw Away the Detail You Needed](dont-copy-a-tool-to-keep-its-output.md) — a copy resolves the repo from its own path and cannot run. Ask the source first; otherwise run the original with its cleanup disabled. |
 | A wait-loop never finishes, but the thing it is watching answers fine by hand | [A Wait-Loop Must Know Every Answer](a-wait-loop-must-know-every-answer.md) — it exits on the answers you expected, and the tool gave a different healthy one. Read the real answer first, or match on the failure state. |

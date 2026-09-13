@@ -321,8 +321,8 @@ public static class SubStats
 /// <summary>How a Damage/Execute effect RESOLVES — the RPS-triangle axis (design doc "Combat Ontology"). Serialized
 /// by int, so order is load-bearing: <c>Physical=0, Magic=1, Crit=2</c> (a legacy <c>magic:1</c> bool migrates to
 /// Magic for free — same int, so old assets keep their behaviour with no data patch). Physical → ATK vs armour;
-/// Magic → MATK, unmissable, glances vs Evasion, cannot crit; Crit → physical that PIERCES armour and always crits.
-/// NOTE: the full pierce/glance math lands in a later combat pass (it touches <c>Health</c>); for now Physical/Magic
+/// Magic → MATK, unmissable, untouched by Evasion, cannot crit; Crit → physical that PIERCES armour and always crits.
+/// NOTE: the full pierce math lands in a later combat pass (it touches <c>Health</c>); for now Physical/Magic
 /// behave exactly as the old bool and Crit routes the physical roll with a forced crit.</summary>
 public enum DamageType { Physical, Magic, Crit }
 

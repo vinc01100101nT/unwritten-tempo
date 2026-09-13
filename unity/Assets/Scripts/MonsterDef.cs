@@ -80,7 +80,6 @@ public class MonsterDef : ScriptableObject
     //  old values, so there was nothing left for them to carry.)
 
     [Header("Offense")]
-    public MonsterAI3D.AttackType attackType = MonsterAI3D.AttackType.Physical;
     public int xpReward = 5;
     public float touchRange = 0.9f;
     public float touchInterval = 1.0f;
@@ -145,14 +144,15 @@ public class MonsterDef : ScriptableObject
 
     /// <summary>Produce the runtime DTO the mob builders consume. Combat numbers are DERIVED here through
     /// <see cref="UnitStatMath"/> — the player's formulas — so a mob and a player of the same level and primaries
-    /// have the same stats. A mob wears no gear yet, so equipment aggregates to zero and the ring % is 0.</summary>
+    /// have the same stats. Worn gear and the ring are not folded in here: the spawned mob's
+    /// <see cref="UnitStatBlock"/> adds them.</summary>
     public MonsterArchetype ToArchetype()
     {
         var u = StatInputs;
         return new MonsterArchetype
         {
             // The stat block is ALL that's carried for combat numbers — UnitStatBlock derives HP/ATK/DEF/HIT/FLEE
-            // from it on the spawned mob, and re-derives on every level-up and gear change. Nothing is snapshotted
+            // from it on the spawned mob, and re-derives whenever something feeding it changes (see UnitStatBlock). Nothing is snapshotted
             // here, so there is no second copy able to disagree with the formulas.
             stats = u,
             startingGear = startingGear,
@@ -166,7 +166,6 @@ public class MonsterDef : ScriptableObject
             flash = flash,
             hardDefPercent = hardDefPercent,
             hardMagicDefPercent = hardMagicDefPercent,
-            attackType = attackType,
             xpReward = xpReward,
             touchRange = touchRange,
             touchInterval = touchInterval,

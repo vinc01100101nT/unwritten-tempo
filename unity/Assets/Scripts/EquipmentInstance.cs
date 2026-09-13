@@ -24,6 +24,19 @@ public class EquipmentInstance
              "creation by WeaponSkillRoll and carried in the save. Empty for anything that isn't a weapon.")]
     public List<string> skillIds = new List<string>();
 
+    /// <summary>How many main stats a copy keeps, in this order: STR, AGI, VIT, INT, DEX, LUK.</summary>
+    public const int MainStatCount = 6;
+    [Tooltip("TRUE once THIS copy's armour numbers were rolled (ArmourRoll). False on anything that never rolled — a " +
+             "weapon, the ring, or a piece saved before rolls existed — which then adds its item's own flat bonuses.")]
+    public bool rolled;
+    [Tooltip("THIS copy's rolled defence, before rarity.")]
+    public int rolledDefense;
+    [Tooltip("THIS copy's rolled magic defence, before rarity.")]
+    public int rolledMagicDefense;
+    [Tooltip("THIS copy's rolled main stats, before rarity's flat extra, in the order STR, AGI, VIT, INT, DEX, LUK. " +
+             "0 = not carried.")]
+    public int[] rolledStats = new int[MainStatCount];
+
     // Enhancement scaling (kept simple for v1 — mirrors the locked prototype):
     //   weapon ATK gains +3 per refine level; every piece gains +1 soft DEF per level.
     public const int AtkPerRefine = 3;
@@ -37,19 +50,67 @@ public class EquipmentInstance
         rarity = def != null ? def.rarity : Rarity.Common;
     }
 
-    /// <summary>Make a fresh copy of <paramref name="def"/> as a DROP: a weapon rolls its rarity (unless one is
-    /// forced) and then its skill kit from the published pool of its type; anything else just inherits the def's
-    /// rarity. THE single creation path for anything entering the world — loot, a GM grant, a reward — so no
-    /// caller can hand out a weapon that skipped its roll.</summary>
+    /// <summary>Make a fresh copy of <paramref name="def"/> as it ENTERS THE WORLD: a weapon rolls its rarity (unless
+    /// one is forced) and then its skill kit from the published pool of its type; a Head, Armor, Garment or Shield
+    /// rolls its rarity the same way and then its defence, magic defence and main stats (<see cref="ArmourRoll"/>);
+    /// anything else just inherits the def's rarity. THE single creation path for anything entering the world — loot,
+    /// a GM grant, a reward, what a creature spawns wearing — so no caller can hand out a copy that skipped its roll.</summary>
     public static EquipmentInstance CreateRolled(Item def, Rarity? forcedRarity = null, int upgrade = 0)
     {
         var inst = new EquipmentInstance(def, upgrade);
         if (def == null) return inst;
 
         bool isWeapon = def.slot == EquipSlotType.Weapon && def.weaponType != WeaponType.None;
-        inst.rarity = forcedRarity ?? (isWeapon ? WeaponSkillRoll.RollRarity() : def.rarity);
+        bool isArmour = ArmourRoll.IsRolledSlot(def.slot);
+        inst.rarity = forcedRarity ?? (isWeapon || isArmour ? WeaponSkillRoll.RollRarity() : def.rarity);
         if (isWeapon) inst.skillIds = WeaponSkillRoll.RollKit(def.weaponType);
+        if (isArmour) ArmourRoll.Roll(inst);
         return inst;
+    }
+
+    /// <summary>The rolled-stats array always has its six places — a copy built by a serializer can arrive without it.</summary>
+    public void EnsureStatArray()
+    {
+        if (rolledStats == null || rolledStats.Length != MainStatCount) rolledStats = new int[MainStatCount];
+    }
+
+    /// <summary>This copy's rolled armour numbers joined for the save and the wire: "defence,magic defence,STR,AGI,VIT,INT,
+    /// DEX,LUK". "" = this copy never rolled. Paired with <see cref="DecodeRoll"/>.</summary>
+    public string EncodeRoll()
+    {
+        if (!rolled) return "";
+        EnsureStatArray();
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        var sb = new System.Text.StringBuilder();
+        sb.Append(rolledDefense.ToString(ci)).Append(',').Append(rolledMagicDefense.ToString(ci));
+        for (int i = 0; i < MainStatCount; i++) sb.Append(',').Append(rolledStats[i].ToString(ci));
+        return sb.ToString();
+    }
+
+    /// <summary>Rebuild the rolled armour numbers from a saved string. Anything that is not exactly eight whole numbers
+    /// — "", a save written before rolls existed, a damaged entry — leaves the copy UNROLLED, so it adds its item's own
+    /// flat bonuses and is never mistaken for a copy that rolled zeroes.</summary>
+    public void DecodeRoll(string encoded)
+    {
+        rolled = false;
+        rolledDefense = 0;
+        rolledMagicDefense = 0;
+        EnsureStatArray();
+        System.Array.Clear(rolledStats, 0, rolledStats.Length);
+        if (string.IsNullOrEmpty(encoded)) return;
+
+        var parts = encoded.Split(',');
+        if (parts.Length != 2 + MainStatCount) return;
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        var ns = System.Globalization.NumberStyles.Integer;
+        var values = new int[parts.Length];
+        for (int i = 0; i < parts.Length; i++)
+            if (!int.TryParse(parts[i], ns, ci, out values[i])) return;
+
+        rolledDefense = values[0];
+        rolledMagicDefense = values[1];
+        for (int i = 0; i < MainStatCount; i++) rolledStats[i] = values[2 + i];
+        rolled = true;
     }
 
     /// <summary>The rolled kit joined for the save file ("" = none). Paired with <see cref="DecodeSkills"/>.</summary>
@@ -78,23 +139,11 @@ public class EquipmentInstance
     {
         if (def == null) return;
 
-        eb.hp   += def.bonusHP;
-        eb.mp   += def.bonusMP;
-        eb.matk += def.bonusMAtk;
-        eb.mdef += def.bonusMDef;
-        eb.str  += def.bonusStr;
-        eb.agi  += def.bonusAgi;
-        eb.vit  += def.bonusVit;
-        eb.intel+= def.bonusInt;
-        eb.dex  += def.bonusDex;
-        eb.luk  += def.bonusLuk;
-        eb.critPercent += def.bonusCritPercent;
-        eb.aspdPercent += def.bonusAspdPercent;
+        AddPieceInto(ref eb);
 
-        // ATK: flat weapon ATK + refine scaling (weapons only).
-        eb.atk += def.bonusAttack + (def.slot == EquipSlotType.Weapon ? upgrade * AtkPerRefine : 0);
-        // DEF: flat armor DEF + a small refine bump on every piece.
-        eb.def += def.bonusDefense + upgrade * DefPerRefine;
+        // Refine: a weapon's ATK scaling (weapons only), and a small DEF bump on every piece. Never lifted by rarity.
+        if (def.slot == EquipSlotType.Weapon) eb.atk += upgrade * AtkPerRefine;
+        eb.def += upgrade * DefPerRefine;
 
         if (cards == null) return;
         for (int i = 0; i < cards.Count; i++)
@@ -112,6 +161,54 @@ public class EquipmentInstance
             eb.aspdPercent += c.bonusAspdPercent;
         }
     }
+
+    /// <summary>What THIS copy itself adds, before refine and cards — the one place a copy's own numbers are worked out,
+    /// read by the stat sheet, the equip preview, the tooltip and the inventory column alike.
+    /// <list type="bullet">
+    /// <item>A ROLLED piece of armour: its rolled defence and magic defence lifted by rarity, and each rolled main stat
+    /// plus rarity's flat extra. Its item's flat bonus fields are not read.</item>
+    /// <item>A weapon: its item's bonuses, with attack and magic attack lifted by rarity.</item>
+    /// <item>Anything else, and a copy that never rolled: its item's flat bonuses, exactly as authored.</item>
+    /// </list>
+    /// Allocation-free.</summary>
+    public void AddPieceInto(ref EquipBonuses eb)
+    {
+        if (def == null) return;
+
+        if (rolled && ArmourRoll.IsRolledSlot(def.slot))
+        {
+            EnsureStatArray();
+            eb.def  += Rarities.Lifted(rolledDefense, rarity);
+            eb.mdef += Rarities.Lifted(rolledMagicDefense, rarity);
+            int extra = Rarities.StatExtra(rarity);
+            eb.str   += WithExtra(rolledStats[0], extra);
+            eb.agi   += WithExtra(rolledStats[1], extra);
+            eb.vit   += WithExtra(rolledStats[2], extra);
+            eb.intel += WithExtra(rolledStats[3], extra);
+            eb.dex   += WithExtra(rolledStats[4], extra);
+            eb.luk   += WithExtra(rolledStats[5], extra);
+            return;
+        }
+
+        bool weapon = def.slot == EquipSlotType.Weapon;
+        eb.hp   += def.bonusHP;
+        eb.mp   += def.bonusMP;
+        eb.matk += weapon ? Rarities.Lifted(def.bonusMAtk, rarity) : def.bonusMAtk;
+        eb.mdef += def.bonusMDef;
+        eb.str  += def.bonusStr;
+        eb.agi  += def.bonusAgi;
+        eb.vit  += def.bonusVit;
+        eb.intel+= def.bonusInt;
+        eb.dex  += def.bonusDex;
+        eb.luk  += def.bonusLuk;
+        eb.critPercent += def.bonusCritPercent;
+        eb.aspdPercent += def.bonusAspdPercent;
+        eb.atk  += weapon ? Rarities.Lifted(def.bonusAttack, rarity) : def.bonusAttack;
+        eb.def  += def.bonusDefense;
+    }
+
+    // A rolled main stat the copy does not carry (0) stays 0 — rarity's extra is only added to a stat that is there.
+    static int WithExtra(int rolledValue, int extra) => rolledValue > 0 ? rolledValue + extra : 0;
 }
 
 /// <summary>

@@ -1,15 +1,17 @@
 ---
 name: rarity-lifts-skill-output
-description: "Rarity does ONE gameplay thing: adds 0/3/9/18/30 POINTS to the ring's term on a skill's output channels. It does NOT drive kit size, the ultimate, refine or card slots."
+description: "Rarity: 0/3/9/18/30 POINTS on a weapon's skill output and its own attack; on rolled armour the same ladder on defence plus +0/1/2/3/5 per rolled main stat. NOT kit size, the ultimate, refine or card slots."
 metadata:
   node_type: memory
   type: project
 ---
 
-**RARITY IS DISCONNECTED FROM EVERYTHING ELSE (2026-09-10, at the user's explicit instruction).** It drives the
-output lift and the name/border colour, and nothing else. It does NOT set kit size, the ultimate chance, the
-refine level or the card-slot count — every one of those couplings was cut, and the kit roll no longer even
-takes a rarity argument so it cannot quietly come back.
+**WHAT RARITY DRIVES (2026-09-13).** On a weapon: the skill output lift below AND the weapon's own attack / magic attack
+(`Rarities.Lifted`, same 0/3/9/18/30% ladder). On a rolled piece of armour (Head/Armor/Garment/Shield — `ArmourRoll`,
+rolled per copy as it enters the world): its defence and magic defence by the same ladder, and +0/1/2/3/5 flat on each
+rolled main stat (`Rarities.StatExtra`). Plus the name/border colour. Nothing else — in particular NOT (2026-09-10, the
+user's instruction) the kit size, the ultimate chance, refine or card slots — every one of those couplings was cut, and the
+kit roll no longer even takes a rarity argument so it cannot quietly come back.
 
 **What a drop rolls, identically at every tier:** 3–4 actives, 3–4 passives, and a **25% chance** of an
 ultimate. Exact odds for the total: 6 skills 18.75%, 7 skills 43.75%, 8 skills 31.25%, 9 skills 6.25%.
@@ -59,5 +61,6 @@ because a passive can cast inside a burst.
   while the ring scaled it.
 - The lift lookup reads the **Weapon slot only**. The weapon roster lists Shield as one of the twelve identities
   with its own skill pool; the day a shield grants skills, its kit gets NO lift until that lookup widens.
-- A mob casting a skill the player also has equipped would pick up the PLAYER's weapon rarity. Pre-existing flaw
-  in the same shape as the ring's (a mob's cast already reads `Character.Instance`'s ring) — inherited, not new.
+- Since 2026-09-13 the lift, the ring affinity and the damage roll are all asked of the unit USING the skill
+  (`ICombatUnit.SkillRarityLift` / `RingBonus` / `RollSkillDamage`, one rule in `Rarities.LiftFor`) — the applier no
+  longer falls back to `Character.Instance`, so a creature's cast would read its own weapon, ring and attack.

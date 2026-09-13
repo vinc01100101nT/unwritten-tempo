@@ -18,8 +18,8 @@ roll crit  ->  roll accuracy (once, on the ATTACKER)  ->  roll damage magnitude 
 **Fix (commit `54473237`).** `Combat.Missed(crit, attackerHit, defenderFlee)` is the ONE place the whole accuracy condition lives. The attacker calls it and the answer rides along in **`DamageInfo.missed`**; `Health.TakeDamage` and `Character.TakeDamage` only PRESENT the miss (red = player-dealt, white = mob-dealt) and never re-roll. On a miss, `amount` is 0 — **no damage roll happens at all**.
 
 **Facts worth not re-deriving:**
-- Only **TWO** accuracy rolls exist in the whole game: player→mob (`Player3DAttacker`) and mob→player (`MonsterAI3D`). Skill strikes always land (`attackerHit: -1`), including the overkill paths.
-- Mobs never crit, so their `Combat.Missed(false, …)` reduces to exactly the old condition.
+- Accuracy is rolled by every ordinary swing: the shared `BasicSwing.Land` (player swings, and any skill strike authored to resolve as a basic attack) and the creature's own attack site (`MonsterAI3D`). Other skill strikes always land (`attackerHit: -1`). A missed basic-attack strike inside a flurry shows MISS since 2026-09-13 (`Health.ApplyDamage` routes `missed` before the overkill sinks).
+- Mobs crit by the player's rule since 2026-09-13 (`MonsterAI3D.RollBasicCrit`, chance and multiplier stamped by `UnitStatBlock`), so their swing calls `Combat.Missed(crit, …)` exactly as the player's does.
 - `CombatRng` is unseeded Unity `Random` — there is **no** replay/netcode determinism to preserve, so changing the draw order is safe.
 - Verified over 400k simulated attacks: miss rate and damage-on-hit unchanged; ~12% fewer random draws per attack.
 

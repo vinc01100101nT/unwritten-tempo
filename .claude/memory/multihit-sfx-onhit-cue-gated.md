@@ -17,5 +17,5 @@ metadata:
 
 **Gotchas:**
 - Two skill-hit sound PATHS exist (dual path): `CombatSfx.SkillHit` (dormant/empty) and the `OnHitBySkill` VfxCue (the live one). Don't wire a fix into `CombatSfx.skillHit` — it's silent. If ever populated it would DOUBLE the VfxCue sound.
-- `Health.TakeDamage` (the normal physical path) still bails at `if (IsDead) return 0;` — that's correct for single-hit/basic attacks. Multi-hit physical instead goes through the new `TakeDamageOverkill`, which keeps sounding past death.
+- `Health.TakeDamage` (the normal physical path) still bails at `if (IsDead) return 0;` — that's correct for single-hit/basic attacks. Multi-hit physical instead goes through `TakeDamageOverkill`, which keeps sounding past death. Since 2026-09-13 a beat on a creature that was ALREADY dead goes to `Health.ShowOverkillBeat` instead: digits + hit cue (so the sound still runs to the end) and no gameplay at all — no charge, leech, passive, parry/barrier or run-of-hits (`SkillEffectApplier.Strike` corpse branch, `CombatAuthority.Land` presentationOnly).
 - The measurement that cracked it: a probe in `CombatSfx.SkillHit` logging `empty=` + a probe in `MultiHitBurst` logging per-beat null/invoke state. See [[name-knobs-concretely-one-job]] and the project's second-fix rule.

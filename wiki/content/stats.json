@@ -17,11 +17,11 @@
   {
    "type": "list",
    "items": [
-    "**STR** — physical attack power",
+    "**STR** — melee attack power",
     "**AGI** — attack speed and dodge",
     "**VIT** — health and defense",
     "**INT** — magic power and mana",
-    "**DEX** — accuracy and cast speed",
+    "**DEX** — ranged attack power, accuracy and cast speed",
     "**LUK** — critical chance and luck"
    ]
   },
@@ -36,7 +36,7 @@
   },
   {
    "type": "paragraph",
-   "text": "Every stat feeds several numbers at once — that spread is what makes a build. The exact per-point values:"
+   "text": "Every stat feeds several numbers at once — that spread is what makes a build. On top of that, **every time a stat reaches a multiple of 10 — gear included — it jumps one number up**: +4 at 10, +6 at 20, +22 at 100, each jump bigger than the last. Your character sheet shows the next jump beside each stat. The exact per-point values:"
   },
   {
    "type": "table",
@@ -47,27 +47,27 @@
    "rows": [
     [
      "**STR**",
-     "+1 ATK. Every full 10 STR also adds a bonus equal to that tens digit squared — so 50 STR is +25 ATK on top, and 99 STR is +81."
+     "+1 MELEE ATK and +½ RANGED ATK. STR's jump goes to MELEE ATK."
     ],
     [
      "**AGI**",
-     "+1 FLEE (dodge), and +0.5% attack speed."
+     "+1 FLEE (dodge), and +0.5% attack speed. AGI's jump goes to FLEE."
     ],
     [
      "**VIT**",
-     "+2% max HP, +⅓ DEF, and health regeneration worth 0.02% of your max HP every second."
+     "+2% max HP, +⅓ DEF, and health regeneration worth 0.02% of your max HP every second. VIT's jump goes to DEF."
     ],
     [
      "**INT**",
-     "+1 M.ATK (with the same tens-squared bonus STR gets), +1.5% max MP, +⅓ M.DEF, mana regeneration worth 0.02% of your max MP every second, and steadier magic damage."
+     "+1 M.ATK, +1.5% max MP, +⅓ M.DEF, mana regeneration worth 0.02% of your max MP every second, and steadier magic damage. INT's jump goes to M.ATK."
     ],
     [
      "**DEX**",
-     "+1 HIT (accuracy), +½ ATK, +0.125% attack speed, steadier physical damage, and a shorter cast wind-up — reaching **instant casting at 150 DEX**."
+     "+1 RANGED ATK, +1 HIT (accuracy), +½ MELEE ATK, +0.125% attack speed, steadier physical damage, and a shorter cast wind-up — reaching **instant casting at 150 DEX**. DEX's jump goes to RANGED ATK."
     ],
     [
      "**LUK**",
-     "+0.3% crit chance, +0.2% crit damage, +¼ ATK, +¼ M.ATK, +⅓ HIT, +⅕ FLEE — and it works defensively too: your LUK lowers an attacker's crit chance against you by 0.3% per point."
+     "+0.3% crit chance, +0.2% crit damage, +¼ MELEE ATK, +¼ RANGED ATK, +¼ M.ATK, +⅓ HIT, +⅕ FLEE — and it works defensively too: your LUK lowers an attacker's crit chance against you by 0.3% per point. LUK's jump goes to crit damage, counted in percent."
     ]
    ]
   },
@@ -92,16 +92,20 @@
    ],
    "rows": [
     [
-     "**ATK**",
-     "STR (plus its tens bonus), DEX÷2, LUK÷4, your level, your gear, the Attack ring stat"
+     "**MELEE ATK**",
+     "STR (plus its jump), DEX÷2, LUK÷4, your level, your gear, the Attack ring stat — what normal attacks and physical skills use while you hold anything that isn't a bow or firearm, or nothing at all"
+    ],
+    [
+     "**RANGED ATK**",
+     "DEX (plus its jump), STR÷2, LUK÷4, your level, your gear, the *same* Attack ring stat — what normal attacks and physical skills use while you hold a bow or firearm"
     ],
     [
      "**M.ATK**",
-     "INT (plus its tens bonus), LUK÷4, your level, your gear, the Magic Attack ring stat"
+     "INT (plus its jump), LUK÷4, your level, your gear, the Magic Attack ring stat"
     ],
     [
      "**DEF**",
-     "VIT÷3, your level, your gear, the Defense ring stat"
+     "VIT÷3 (plus VIT's jump), your level, your gear, the Defense ring stat"
     ],
     [
      "**M.DEF**",
@@ -121,7 +125,7 @@
     ],
     [
      "**FLEE** (dodge)",
-     "your level + AGI + LUK÷5, the Evasion ring stat"
+     "your level + AGI (plus its jump) + LUK÷5, the Evasion ring stat"
     ],
     [
      "**Attack speed**",
@@ -137,7 +141,7 @@
     ],
     [
      "**Crit damage**",
-     "starts at 140%, plus 0.2% a point of LUK, plus the *same* Critical ring stat"
+     "starts at 140%, plus 0.2% a point of LUK, plus LUK's jump in percent, plus the *same* Critical ring stat"
     ],
     [
      "**HP regen**",
@@ -313,7 +317,7 @@
   {
    "type": "list",
    "items": [
-    "**Green** — something is helping you, e.g. `ATK 120-140 (+24)`",
+    "**Green** — something is helping you, e.g. `MELEE ATK 120-140 (+24)`",
     "**Red** — something is hurting you, e.g. `HIT 82 (-30)` while blinded",
     "**No parentheses** — nothing is affecting that stat right now"
    ]
@@ -335,7 +339,7 @@
    "rows": [
     [
      "Offense",
-     "ATK · M.ATK · CRIT chance and crit damage · HIT"
+     "MELEE ATK · RANGED ATK · M.ATK · CRIT chance and crit damage · HIT"
     ],
     [
      "Defense",

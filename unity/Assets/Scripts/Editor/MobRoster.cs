@@ -24,7 +24,7 @@ public static class MobRoster
             stats = UnitStatMath.Allocate(1, wStr: 3f, wAgi: 1f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f),   // fodder bruiser
             name = "Slime", sheet = "Slime", weight = 4, tint = None, scale = 1.0f, flash = Color.white,
             hardDefPercent = 5, hardMagicDefPercent = 0,   // fodder: a sliver of DEF, no crit shield
-            attackType = MonsterAI3D.AttackType.Physical, xpReward = 5,
+            xpReward = 5,
             touchRange = 0.9f, touchInterval = 1.0f,
             moveSpeed = 2.2f, aggroRadius = 6f, leashRadius = 10f, stopDistance = 0.7f, wanderRadius = 3f,
             preferredRange = 0f, fleeHpFraction = 0f,
@@ -38,7 +38,7 @@ public static class MobRoster
             stats = UnitStatMath.Allocate(2, wStr: 2f, wAgi: 5f, wVit: 1f, wInt: 1f, wDex: 2f, wLuk: 2f),   // fast + dodgy
             name = "Bat", sheet = "BlueBat", weight = 4, tint = Cyan, scale = 0.78f, flash = Color.white,
             hardDefPercent = 0, hardMagicDefPercent = 0,   // no DEF (dodges instead); lucky → some crit shield
-            attackType = MonsterAI3D.AttackType.Physical, xpReward = 3,
+            xpReward = 3,
             touchRange = 0.8f, touchInterval = 0.8f,
             moveSpeed = 3.6f, aggroRadius = 7f, leashRadius = 12f, stopDistance = 0.6f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0f,
@@ -52,7 +52,7 @@ public static class MobRoster
             stats = UnitStatMath.Allocate(6, wStr: 3f, wAgi: 1f, wVit: 5f, wInt: 1f, wDex: 2f, wLuk: 1f),   // tanky
             name = "Kappa", sheet = "KappaGreen", weight = 2, tint = None, scale = 1.15f, flash = Color.white,
             hardDefPercent = 25, hardMagicDefPercent = 8,   // TANK: % DEF cuts normal hits hard — crit builds shine here
-            attackType = MonsterAI3D.AttackType.Physical, xpReward = 12,
+            xpReward = 12,
             touchRange = 1.0f, touchInterval = 1.4f,
             moveSpeed = 1.6f, aggroRadius = 5f, leashRadius = 9f, stopDistance = 0.8f, wanderRadius = 2.5f,
             preferredRange = 0f, fleeHpFraction = 0f,
@@ -61,14 +61,14 @@ public static class MobRoster
             itemDropNames = new[]{ "Wooden Guard", "Leather Vest" }, itemDropChances = new[]{ 0.12f, 0.08f },
         },
 
-        // 4) CASTER — holds JUST outside melee and lobs magic (hits MagicDefense, can't be dodged). Uncommon.
+        // 4) CASTER — holds JUST outside melee and attacks from there. Uncommon. (Its ordinary attack is physical, like every unit's.)
         // Tuned to be catchable: it kites only when you're inside ~2.6u, holds & casts from ~3.2u, and the
         // player (speed 4) closes the gap in ~1s. A real telegraphed bolt is the follow-up that sells it.
         new MonsterArchetype {
             stats = UnitStatMath.Allocate(5, wStr: 1f, wAgi: 2f, wVit: 2f, wInt: 5f, wDex: 2f, wLuk: 1f),   // caster
             name = "Flam", sheet = "Flam", weight = 2, tint = Arcane, scale = 0.95f, flash = Color.white,
             hardDefPercent = 0, hardMagicDefPercent = 10,   // squishy to melee; a caster's own magic resist
-            attackType = MonsterAI3D.AttackType.Magic, xpReward = 10,
+            xpReward = 10,
             touchRange = 3.6f, touchInterval = 1.6f,
             moveSpeed = 2.2f, aggroRadius = 7f, leashRadius = 11f, stopDistance = 0.7f, wanderRadius = 3f,
             preferredRange = 3.2f, fleeHpFraction = 0f,
@@ -83,7 +83,7 @@ public static class MobRoster
             stats = UnitStatMath.Allocate(8, wStr: 5f, wAgi: 1f, wVit: 3f, wInt: 1f, wDex: 2f, wLuk: 1f),   // heavy hitter
             name = "Cyclope", sheet = "Cyclope", weight = 2, tint = None, scale = 0.9f, flash = Color.white,
             hardDefPercent = 5, hardMagicDefPercent = 0,   // evasive hit-and-run: high crit shield + dodge
-            attackType = MonsterAI3D.AttackType.Physical, xpReward = 8,
+            xpReward = 8,
             touchRange = 0.9f, touchInterval = 1.0f,
             moveSpeed = 3.2f, aggroRadius = 6f, leashRadius = 11f, stopDistance = 0.7f, wanderRadius = 4f,
             preferredRange = 0f, fleeHpFraction = 0.4f,
@@ -106,7 +106,7 @@ public static class MobRoster
         // A real wall of HP + real defenses so the whole kit (multi-hit, status, crit) matters.
         hardDefPercent = 30, hardMagicDefPercent = 20,   // WALL: heavy % DEF + strong crit shield — crit/element/status all matter
 
-        attackType = MonsterAI3D.AttackType.Physical, xpReward = 400,
+        xpReward = 400,
             touchRange = 1.6f, touchInterval = 1.5f,
         // Slow and relentless: wide aggro, long leash so it commits to the chase, never flees.
         moveSpeed = 1.7f, aggroRadius = 9f, leashRadius = 22f, stopDistance = 1.1f, wanderRadius = 5f,

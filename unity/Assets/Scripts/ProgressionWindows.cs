@@ -17,7 +17,7 @@ public class ProgressionWindows : MonoBehaviour
     // The order worn pieces are listed in — a body read top to bottom, not the alphabet.
     static readonly EquipSlotType[] WornOrder =
         { EquipSlotType.Head, EquipSlotType.Armor, EquipSlotType.Garment, EquipSlotType.Weapon,
-          EquipSlotType.Shield, EquipSlotType.Accessory1, EquipSlotType.Ring, EquipSlotType.Accessory2 };
+          EquipSlotType.Shield, EquipSlotType.Ring };
 
 
     Transform canvas;
@@ -44,6 +44,7 @@ public class ProgressionWindows : MonoBehaviour
     TMP_Text charIdentity, charPoints, charDerived;
     readonly TMP_Text[] statValue = new TMP_Text[6];
     readonly TMP_Text[] statCost = new TMP_Text[6];
+    readonly TMP_Text[] statJump = new TMP_Text[6];
     readonly Button[] statPlus = new Button[6];
 
     void Start()
@@ -135,6 +136,7 @@ public class ProgressionWindows : MonoBehaviour
     // Field-by-field so the compare stays allocation-free (a struct's default Equals can box/reflect).
     static bool Same(in DerivedSnapshot a, in DerivedSnapshot b) =>
         a.atkMin == b.atkMin && a.atkMax == b.atkMax && a.matkMin == b.matkMin && a.matkMax == b.matkMax &&
+        a.meleeMin == b.meleeMin && a.meleeMax == b.meleeMax && a.rangedMin == b.rangedMin && a.rangedMax == b.rangedMax &&
         a.def == b.def && a.mdef == b.mdef && a.hit == b.hit && a.flee == b.flee &&
         a.maxHP == b.maxHP && a.maxMP == b.maxMP && a.moveSpeed == b.moveSpeed &&
         a.hardDefPct == b.hardDefPct && a.hardMdefPct == b.hardMdefPct && a.barrierHP == b.barrierHP &&
@@ -377,6 +379,9 @@ public class ProgressionWindows : MonoBehaviour
         statValue[i] = UiKit.Label("Val", row.transform, "1", 15, FontStyle.Normal, TextAnchor.MiddleRight);
         statValue[i].gameObject.AddComponent<LayoutElement>().flexibleWidth = 1;
 
+        statJump[i] = UiKit.Label("Jump", row.transform, "", 11, FontStyle.Normal, TextAnchor.MiddleRight);
+        statJump[i].gameObject.AddComponent<LayoutElement>().preferredWidth = 96;
+
         statCost[i] = UiKit.Label("Cost", row.transform, "", 12, FontStyle.Normal, TextAnchor.MiddleRight);
         statCost[i].gameObject.AddComponent<LayoutElement>().preferredWidth = 38;
 
@@ -404,6 +409,9 @@ public class ProgressionWindows : MonoBehaviour
         {
             var s = StatOrder[i];
             statValue[i].text = c.GetStat(s).ToString();
+            // The jump counts gear, so the next one is measured from the stat the formulas see, not the points bought.
+            int jumpAt = UnitStatMath.NextJumpAt(c.EffectiveStat(s));
+            statJump[i].text = "next +" + UnitStatMath.JumpGainAt(jumpAt) + (s == PrimaryStat.LUK ? "%" : "") + " at " + jumpAt;
             int cost = c.CostToRaise(s);
             bool capped = cost < 0;
             bool can = c.CanRaise(s);
@@ -424,7 +432,8 @@ public class ProgressionWindows : MonoBehaviour
         // subtraction, then a percentage), so pairing them beats giving each its own row.
         charDerived.text =
             "<color=#A79E88>DERIVED</color>\n" +
-            $"ATK   {b.atkMin}-{b.atkMax}{Delta(d.atkMin - b.atkMin, d.atkMax - b.atkMax)}    M.ATK {b.matkMin}-{b.matkMax}{Delta(d.matkMin - b.matkMin, d.matkMax - b.matkMax)}\n" +
+            $"MELEE ATK  {b.meleeMin}-{b.meleeMax}{Delta(d.meleeMin - b.meleeMin, d.meleeMax - b.meleeMax)}    RANGED ATK {b.rangedMin}-{b.rangedMax}{Delta(d.rangedMin - b.rangedMin, d.rangedMax - b.rangedMax)}\n" +
+            $"M.ATK {b.matkMin}-{b.matkMax}{Delta(d.matkMin - b.matkMin, d.matkMax - b.matkMax)}\n" +
             $"DEF   {b.def}{Hard(b.hardDefPct)}{Delta(d.def - b.def)}    M.DEF {b.mdef}{Hard(b.hardMdefPct)}{Delta(d.mdef - b.mdef)}\n" +
             $"HIT   {b.hit}{Delta(d.hit - b.hit)}    FLEE {b.flee}{Delta(d.flee - b.flee)}\n" +
             $"CRIT  {Pct(b.critChance)}{DeltaPct(d.critChance - b.critChance)}  ×{b.critMult:0.00}{Delta(d.critMult - b.critMult)}\n" +

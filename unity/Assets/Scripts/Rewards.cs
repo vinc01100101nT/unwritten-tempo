@@ -56,7 +56,9 @@ public static class Rewards
     /// <para>ONE CALL PER KILL, not one per thing dropped: on a server every payment hands the owner their whole
     /// bag again and asks for it to be written down, so paying four times over would send four bags and four
     /// writes for one dead creature.</para></summary>
-    public static void PayLoot(ICombatUnit winner, List<Item> items, int gold)
+    /// <param name="items">Item DEFINITIONS the kill pays — a fresh copy is rolled for each as it enters the bag.</param>
+    /// <param name="worn">Finished COPIES the kill pays — the pieces the creature wore, handed over as they are.</param>
+    public static void PayLoot(ICombatUnit winner, List<Item> items, List<EquipmentInstance> worn, int gold)
     {
         if (PlayerUnits.Gone(winner)) return;
 
@@ -68,6 +70,9 @@ public static class Rewards
         if (items != null)
             for (int i = 0; i < items.Count; i++)
                 if (items[i] != null && character.TakeIntoBag(items[i], 1) != null) given++;
+        if (worn != null)
+            for (int i = 0; i < worn.Count; i++)
+                if (worn[i] != null && character.TakeIntoBag(worn[i]) != null) given++;
 
         if (gold > 0) character.AddGold(gold);
         if (given == 0 && gold <= 0) return;
@@ -77,12 +82,12 @@ public static class Rewards
         // shows it is told directly.
         if (!GameNetwork.TellOwnerTheirBagChanged(character)) InventoryStore.Instance?.Notify();
 
-        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, gold));
+        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, worn, gold));
     }
 
     /// <summary>What a kill paid, as one line: who got it, how much Zeny, and every item by name. Builds a string,
     /// so it is only ever called behind <see cref="GameLog.On"/>.</summary>
-    static string Describe(Character who, List<Item> items, int gold)
+    static string Describe(Character who, List<Item> items, List<EquipmentInstance> worn, int gold)
     {
         var sb = new System.Text.StringBuilder();
         sb.Append(GameNetwork.NameOf(who)).Append(" earned ");
@@ -96,6 +101,14 @@ public static class Rewards
                 if (items[i] == null) continue;
                 if (wroteSomething) sb.Append(", ");
                 sb.Append(items[i].displayName);
+                wroteSomething = true;
+            }
+        if (worn != null)
+            for (int i = 0; i < worn.Count; i++)
+            {
+                if (worn[i] == null || worn[i].def == null) continue;
+                if (wroteSomething) sb.Append(", ");
+                sb.Append(worn[i].def.displayName);
                 wroteSomething = true;
             }
 

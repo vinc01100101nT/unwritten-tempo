@@ -725,11 +725,6 @@
         flavour: "It has been rained on in four regions.",
         bonuses: [["M.DEF", "+8"], ["AGI", "+2"]], kit: [], anchor: null, weights: [] },
 
-      { name: "Copper Band", refine: 0, rarity: "common", kind: null, slot: "Accessory 1", baseDef: 1,
-        sockets: 1, filled: 0,
-        flavour: "Worth more as essence than as jewellery.",
-        bonuses: [["LUK", "+2"]], kit: [], anchor: null, weights: [] },
-
       { name: "Ring of Beginnings", refine: 0, rarity: "common", kind: null, slot: "Ring", baseDef: 0,
         sockets: 0, filled: 0, noRecycle: true,
         flavour: "The vessel your whole life's work is written into. It is not gear, and it is never dropped.",
@@ -786,7 +781,7 @@
   };
 
   /* A body's order, from EquipSlotType — not alphabetical, because a reader scans a body. */
-  var SLOT_ORDER = ["Head", "Armor", "Weapon", "Shield", "Accessory 1", "Accessory 2", "Garment", "Ring"];
+  var SLOT_ORDER = ["Head", "Armor", "Weapon", "Shield", "Garment", "Ring"];
   var TIER_ORDER = ["common", "uncommon", "rare", "epic", "legendary"];
 
   function isEquip() { return state.cat === "equip" || state.cat === "all"; }

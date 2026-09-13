@@ -66,6 +66,9 @@ public class LootDropper : MonoBehaviour
     // would send four bags and four writes for one dead creature. One static list because death is not a hot path
     // but it does happen per kill, and there is never a second one being filled at the same time.
     static readonly List<Item> won = new List<Item>(8);
+    // WORN pieces given up are handed over as the very copies the creature wore — their rolled numbers, their kit —
+    // never re-rolled at the bag. Gathered beside the table's items so one kill is still one payment.
+    static readonly List<EquipmentInstance> wonWorn = new List<EquipmentInstance>(4);
     static readonly List<EquipmentInstance> wornScratch = new List<EquipmentInstance>(8);
 
     void GiveLoot()
@@ -76,6 +79,7 @@ public class LootDropper : MonoBehaviour
         if (PlayerUnits.Gone(winner) || winner is not Character) return;
 
         won.Clear();
+        wonWorn.Clear();
         int gold = 0;
 
         if (Random.value <= goldDropChance)
@@ -93,12 +97,13 @@ public class LootDropper : MonoBehaviour
 
         RollWornGear();
 
-        Rewards.PayLoot(winner, won, gold);
+        Rewards.PayLoot(winner, won, wonWorn, gold);
         won.Clear();
+        wonWorn.Clear();
     }
 
-    // A unit gives up what it WEARS: the equipment that made it dangerous is the equipment you take off its corpse.
-    // Rolled per piece, independently, like the loot table.
+    // A unit gives up what it WEARS: the equipment that made it dangerous is the equipment you take off its corpse —
+    // the exact copy, roll and all. Whether each piece drops is rolled independently, like the loot table.
     void RollWornGear()
     {
         var gear = GetComponent<UnitEquipment>();
@@ -111,7 +116,7 @@ public class LootDropper : MonoBehaviour
             if (inst?.def == null) continue;
             // A ring rolls on its own vanishingly-small chance; everything else uses this mob's normal gear rate.
             float chance = inst.def.slot == EquipSlotType.Ring ? RingDropChance : wornDropChance;
-            if (chance > 0f && Random.value <= chance) won.Add(inst.def);
+            if (chance > 0f && Random.value <= chance) wonWorn.Add(inst);
         }
         wornScratch.Clear();
     }

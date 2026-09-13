@@ -55,6 +55,36 @@ public static class VfxCue
         Draw(b, actor, target);
     }
 
+    /// <summary>WHICH hit cue a landed blow plays on the unit it landed on — the one rule for every unit, so a player
+    /// and a creature taking the same blow show the same thing. Magic, and any strike that rolled no accuracy (a skill
+    /// strike, <paramref name="attackerHit"/> −1), is a skill hit; a swing that rolled accuracy is a normal or a
+    /// critical attack.</summary>
+    public static VfxCueId HitCue(bool isMagic, bool crit, int attackerHit)
+        => isMagic || attackerHit < 0 ? VfxCueId.OnHitBySkill
+         : crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack;
+
+    /// <summary>The cue a sub-stat effect plays when it BEGINS on a unit: a movement-speed debuff is a Slow, a
+    /// movement-speed buff is a Haste, an accuracy debuff is a Blind. Judged per effect, never by the unit's total, so
+    /// a slow landing on a hasted unit still shows. <paramref name="started"/> is false for a refresh or a stack added
+    /// to an effect already running, which plays nothing — each plays once, when it begins.</summary>
+    public static bool SubStatStartCue(SubStat stat, bool started, float amount, out VfxCueId cue)
+    {
+        cue = default;
+        if (!started) return false;
+        switch (stat)
+        {
+            case SubStat.MovementSpeed:
+                if (amount < 0f) { cue = VfxCueId.OnSlow;  return true; }
+                if (amount > 0f) { cue = VfxCueId.OnHaste; return true; }
+                return false;
+            case SubStat.Accuracy:
+                if (amount < 0f) { cue = VfxCueId.OnBlind; return true; }
+                return false;
+            default:
+                return false;
+        }
+    }
+
     /// <summary>TRUE where there is nobody to watch an effect — a headless server. It decides the whole of combat
     /// now, so every blow it resolves would otherwise build and tick a visual effect for an empty room. Asked at
     /// this door because every cue in the game passes through it.</summary>

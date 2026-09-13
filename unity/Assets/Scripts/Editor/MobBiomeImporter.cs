@@ -148,7 +148,6 @@ public static class MobBiomeImporter
         def.attackElement = Element.Neutral;
         def.flash = Color.white;
         def.tint = Color.white;
-        def.attackType = MonsterAI3D.AttackType.Physical;
         def.touchRange = 0.9f;
         def.touchInterval = 1.0f;
         def.aggroRadius = 6f;

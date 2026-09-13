@@ -115,12 +115,8 @@ public interface ICombatUnit : IDamageable
     /// <summary>The element this unit's ordinary attack carries (its weapon's, or Neutral unarmed).</summary>
     Element BasicElement { get; }
 
-    /// <summary>True when this unit's ordinary attack resolves as MAGIC (a caster mob), so a swing lands against the
-    /// magic side of the defence maths rather than armour.</summary>
-    bool BasicIsMagic { get; }
-
-    /// <summary>Roll whether one swing at <paramref name="victim"/> crits, by this unit's own crit rule (a mob never
-    /// crits). Separate from the damage roll because a crit cannot be evaded, so accuracy needs this answer first.</summary>
+    /// <summary>Roll whether one swing at <paramref name="victim"/> crits, by the one crit rule every unit shares.
+    /// Separate from the damage roll because a crit cannot be evaded, so accuracy needs this answer first.</summary>
     bool RollBasicCrit(ICombatUnit victim);
 
     /// <summary>Roll ONE ordinary swing's damage, crit already decided — this unit's own attack range, spread and
@@ -130,9 +126,27 @@ public interface ICombatUnit : IDamageable
     /// <summary>This unit's dodge, rolled against an attacker's <see cref="BasicHit"/>.</summary>
     int Flee { get; }
 
-    /// <summary>The LUK that lowers an attacker's crit chance when it swings at this unit. The player has no LUK stat
-    /// today, so its answer is 0 — and nothing reads it, because mobs never crit.</summary>
+    /// <summary>The LUK that lowers an attacker's crit chance when it swings at this unit — gear included.</summary>
     int CritShieldLuk { get; }
+
+    // ---- a SKILL this unit uses: everything the applier reads off whoever is using it ----------------------------
+    // Asked of the unit, never of the player at this keyboard, so a skill in a creature's hands scales off the
+    // creature exactly as one in a player's hands scales off the player.
+
+    /// <summary>The percentage this unit's worn ring adds to <paramref name="stat"/> (0.32 = +32%), 0 with no ring.</summary>
+    float RingBonus(StatId stat);
+
+    /// <summary>What the rarity of the weapon in hand adds to <paramref name="skillId"/>'s output — 0 unless that
+    /// weapon's own rolled kit granted the skill.</summary>
+    float SkillRarityLift(string skillId);
+
+    /// <summary>Seconds between this unit's swings at its current attack speed.</summary>
+    float SwingTime { get; }
+
+    /// <summary>Roll ONE skill strike's base damage from this unit's own numbers: magic attack for a
+    /// <see cref="DamageType.Magic"/> strike (never a crit), otherwise its physical attack, critting by the shared rule
+    /// against a defender with <paramref name="targetLuk"/> LUK — always for <see cref="DamageType.Crit"/>.</summary>
+    int RollSkillDamage(DamageType type, int targetLuk, out bool crit);
 
     // ---- movement + aggro: the same verbs on every unit ---------------------------------------------------------
     // Each side drives a different rig (the player's controller vs a mob's pathing agent), but the CAPABILITY is

@@ -32,14 +32,32 @@ public class UnitEquipment : MonoBehaviour
     {
         if (spawned) return;
         spawned = true;
-        if (startingGear == null) return;
-        for (int i = 0; i < startingGear.Length; i++)
-        {
-            var item = startingGear[i];
-            if (item == null || item.slot == EquipSlotType.None) continue;
-            equipped[item.slot] = new EquipmentInstance(item);
-        }
+        SeatStartingGear();
+    }
+
+    // Every starting piece as a FRESH ROLLED copy — the same door a drop or a grant comes through, so a creature's
+    // armour rolls its numbers and its weapon rolls its kit exactly as a player's would. The Ring keeps its authored
+    // rarity, as it does everywhere.
+    void SeatStartingGear()
+    {
+        equipped.Clear();
+        if (startingGear != null)
+            for (int i = 0; i < startingGear.Length; i++)
+            {
+                var item = startingGear[i];
+                if (item == null || item.slot == EquipSlotType.None) continue;
+                equipped[item.slot] = EquipmentInstance.CreateRolled(item);
+            }
         dirty = true;
+    }
+
+    /// <summary>A respawn is a fresh creature, so it wears fresh copies: everything is re-rolled from the authored
+    /// starting gear. New objects, never the old ones edited — a copy the last life gave up as a drop may be sitting in
+    /// somebody's bag. Called from <c>MobRespawn.Reactivate</c>, the one revive choke point.</summary>
+    public void ReseatForNewLife()
+    {
+        spawned = true;
+        SeatStartingGear();
     }
 
     /// <summary>The whole worn set folded into one bonus total. Cached; recomputed only after a change.</summary>

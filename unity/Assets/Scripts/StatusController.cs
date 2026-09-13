@@ -334,13 +334,18 @@ public class StatusController : MonoBehaviour
     public void Haste(float multiplier, float seconds)
     {
         if (seconds <= 0f || states == null) return;
-        bool wasActive = states.Has(StateId.MovementSpeed);
-        // This API speaks MULTIPLIERS (×1.3), the store keeps a BONUS FRACTION (0.3) — convert once, here.
-        states.Apply(StateId.MovementSpeed, seconds, Mathf.Max(0.01f, multiplier) - 1f);
-        if (!wasActive)
+        // This API speaks MULTIPLIERS (×1.3), the store keeps a BONUS FRACTION (0.3) — convert once, here. It goes through
+        // the one sub-stat door, so "did this start" is judged on THIS haste's own pile, never on whatever else is
+        // moving speed right now.
+        float bonus = Mathf.Max(0.01f, multiplier) - 1f;
+        // ×1 means "take the haste off": a zero bonus replaces the running one newest-wins, which the sub-stat door
+        // would refuse as applying nothing.
+        if (Mathf.Approximately(bonus, 0f)) { states.Apply(StateId.MovementSpeed, seconds, 0f); return; }
+        bool started = states.ApplySubStat(SubStat.MovementSpeed, bonus, seconds);
+        if (started)
         {
             DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "Haste!", HasteColor);
-            VfxCue.Fire(VfxCueId.OnHaste, transform);
+            if (VfxCue.SubStatStartCue(SubStat.MovementSpeed, true, bonus, out var cue)) VfxCue.Fire(cue, transform);
         }
     }
 

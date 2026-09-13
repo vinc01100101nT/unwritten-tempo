@@ -16,7 +16,9 @@ using System;
 [Serializable]
 public class SaveData
 {
-    public const int CurrentVersion = 10;
+    // v11: a copy's rolled armour numbers ride the save (equipRolls / bagRolls). Older saves carry none, which loads
+    // every piece as never rolled — nothing to migrate.
+    public const int CurrentVersion = 11;
 
     // 0 means "nobody has played this character yet" — the server hands back an empty document for a freshly
     // created character, which deserializes to exactly this. CaptureSave stamps the real version, so a zero
@@ -76,6 +78,7 @@ public class SaveData
     // v7+: what makes each COPY unique now that a weapon rolls its own identity at the drop.
     public int[]    equipRarities;  // (int)Rarity rolled for this copy; null/short on a pre-v7 save → the def's rarity
     public string[] equipSkills;    // '|'-joined rolled SkillDef ids ("" = none)
+    public string[] equipRolls;     // v11+: the copy's rolled armour numbers (EquipmentInstance.EncodeRoll; "" = never rolled)
 
     // Bag (v6+): parallel arrays, one entry per stack. Owned by the CHARACTER, alongside its worn gear, and
     // written and read by Character itself. NULL means the save predates bags being stored at all, and that
@@ -88,6 +91,7 @@ public class SaveData
     public string[] bagCards;
     public int[]    bagRarities;    // v7+: per-copy rolled rarity (see equipRarities)
     public string[] bagSkills;      // v7+: per-copy rolled kit (see equipSkills)
+    public string[] bagRolls;       // v11+: per-copy rolled armour numbers (see equipRolls)
 
     // Appearance (v8+). A player changes their body and their colours in the game, exactly as they change
     // everything else here, so this is where it lives. It used to sit in its own columns beside the save on

@@ -12,7 +12,7 @@ tags:
 
 ## Every drop is a starting point
 
-A weapon you find is rarely finished. Every weapon rolls the same kind of kit whatever its rarity — **3 or 4 actives, 3 or 4 passives, and a 1-in-4 chance of an Ultimate** — so a common weapon can arrive as complete as a legendary one. What its rarity buys is how hard all of it hits, and more **Potential** to craft with.
+A weapon you find is rarely finished. Every weapon rolls the same kind of kit whatever its rarity — **3 or 4 actives, 3 or 4 passives, and a 1-in-4 chance of an Ultimate** — so a common weapon can arrive as complete as a legendary one. What its rarity buys is how hard all of it hits (and how much attack the weapon itself carries), and more **Potential** to craft with.
 
 ## Potential — a weapon's crafting budget
 

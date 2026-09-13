@@ -22,6 +22,7 @@ public struct BagWire
     public string[] cards;
     public int[] rarities;
     public string[] skills;
+    public string[] rolls;
 
     /// <summary>Which of these were picked up since the person last looked. Rebuilt on arrival, so without
     /// carrying it the "new" marker could never appear on anything.</summary>
@@ -47,6 +48,7 @@ public struct BagWire
     public string[] wornCards;
     public int[] wornRarities;
     public string[] wornSkills;
+    public string[] wornRolls;
 
     // ---- and the BAR the server just rewrote ----------------------------------------------------------
     //
@@ -76,7 +78,7 @@ public struct BagWire
         if (c == null) { wire.itemIds = new string[0]; return wire; }
 
         c.CaptureWornInto(out wire.wornSlots, out wire.wornItemIds, out wire.wornRefines,
-                          out wire.wornCards, out wire.wornRarities, out wire.wornSkills);
+                          out wire.wornCards, out wire.wornRarities, out wire.wornSkills, out wire.wornRolls);
 
         if (alsoTheBar)
         {
@@ -95,6 +97,7 @@ public struct BagWire
         wire.cards = new string[n];
         wire.rarities = new int[n];
         wire.skills = new string[n];
+        wire.rolls = new string[n];
         wire.isNew = new bool[n];
 
         int at = 0;
@@ -115,6 +118,7 @@ public struct BagWire
                 wire.cards[at] = ItemCatalog.EncodeCards(e.instance.cards);
                 wire.rarities[at] = (int)e.instance.rarity;
                 wire.skills[at] = e.instance.EncodeSkills();
+                wire.rolls[at] = e.instance.EncodeRoll();
             }
             else
             {
@@ -122,6 +126,7 @@ public struct BagWire
                 wire.cards[at] = "";
                 wire.rarities[at] = (int)e.def.rarity;
                 wire.skills[at] = "";
+                wire.rolls[at] = "";
             }
             at++;
         }
@@ -153,12 +158,13 @@ public struct BagWire
                     ItemCatalog.DecodeCards(At(cards, i, ""), entry.instance.cards);
                     entry.instance.rarity = (Rarity)At(rarities, i, (int)def.rarity);
                     entry.instance.DecodeSkills(At(skills, i, ""));
+                    entry.instance.DecodeRoll(At(rolls, i, ""));
                 }
                 c.Bag.Add(entry);
             }
         }
 
-        c.RestoreWornFrom(wornSlots, wornItemIds, wornRefines, wornCards, wornRarities, wornSkills);
+        c.RestoreWornFrom(wornSlots, wornItemIds, wornRefines, wornCards, wornRarities, wornSkills, wornRolls);
         c.SetGold(gold);
 
         // THE BAR LAST, AFTER THE GEAR.

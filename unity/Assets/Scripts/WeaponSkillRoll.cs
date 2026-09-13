@@ -8,9 +8,9 @@ using System.Collections.Generic;
 /// (<see cref="EquipmentInstance.skillIds"/>), never on the shared asset.
 ///
 /// <para><b>RARITY DOES NOT TOUCH THE KIT.</b> Every drop rolls the same size band and the same ultimate chance,
-/// whatever tier it is. Rarity's ONE job in this game is the output lift it puts on a skill's numbers
-/// (<see cref="Rarities.OutputLift"/>) — it decides how hard a kit hits, never what is in it. Do not reintroduce
-/// a per-rarity kit size or ultimate chance here.</para>
+/// whatever tier it is. On a weapon, rarity decides how hard the kit hits (<see cref="Rarities.OutputLift"/>) and how
+/// big the weapon's own attack is (<see cref="Rarities.Lifted"/>) — never what is in the kit. Do not reintroduce a
+/// per-rarity kit size or ultimate chance here.</para>
 ///
 /// <para>Actives and passives are rolled as INDEPENDENT counts, so one drop can land 3 actives and 4 passives.
 /// Every number below is a tuning constant here — this file is the single source for the drop table AND the

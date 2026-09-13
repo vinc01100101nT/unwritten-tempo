@@ -25,11 +25,7 @@ public class MonsterAI3D : MonoBehaviour
     public float wanderPauseMin = 1f;
     public float wanderPauseMax = 3f;
 
-    public enum AttackType { Physical, Magic }
-
     [Header("Combat")]
-    [Tooltip("Physical hits the player's Defense; Magic hits MagicDefense (and ignores Evasion).")]
-    public AttackType attackType = AttackType.Physical;
     public int attack = 3;
     [Tooltip("This mob's attack ELEMENT (RO property), checked against the player's armor element. The mob's " +
              "OWN armor element (what the player's spells hit) lives on its Health component.")]
@@ -81,8 +77,9 @@ public class MonsterAI3D : MonoBehaviour
              "and runs from the player — a skittish 'wounded animal' that breaks off when hurt.")]
     [Range(0f, 1f)] public float fleeHpFraction = 0f;
 
-    [Header("Ranged projectile (magic mobs only)")]
-    [Tooltip("Visible projectile lobbed by a Magic attacker; the hit lands on arrival. Null = instant magic touch.")]
+    [Header("Ranged projectile (while holding a ranged weapon)")]
+    [Tooltip("Visible projectile fired while this creature holds a bow or firearm; the blow lands on arrival. " +
+             "Null = the blow lands instantly.")]
     public Texture2D projectileSheet;
     public int projFrameSize = 16;
     public int projFrames = 4;
@@ -109,7 +106,9 @@ public class MonsterAI3D : MonoBehaviour
         // A bolt is in the air for a moment, and a person can leave the world inside it — which does NOT read as
         // null from an interface reference (see PlayerUnits.Gone).
         if (PlayerUnits.Gone(victim) || victim.IsDead) return;
-        int d = CombatAuthority.Apply(victim, new DamageInfo(p.amount, p.element, isMagic: true, source: mob,
+        // A PHYSICAL blow, exactly as the bite it replaces at range: its crit and its accuracy were rolled at launch.
+        int d = CombatAuthority.Apply(victim, new DamageInfo(p.amount, p.element, isCrit: p.isCrit,
+                                                             attackerHit: p.attackerHit, source: mob, missed: p.missed,
                                                              attacker: mob != null ? mob.Health : null));
         if (d > 0)
         {
@@ -168,23 +167,48 @@ public class MonsterAI3D : MonoBehaviour
     // by walking up to the player and a swing a skill asks it for are the same numbers, from one place. HOW a swing
     // lands (the crit → accuracy → magnitude order, and the announcement) is BasicSwing's, shared with the player.
 
-    /// <summary>Our accuracy for a swing, Blind already taken off. A MAGIC mob answers −1: its attack can't be dodged,
-    /// it only glances.</summary>
-    public int BasicHit => attackType == AttackType.Magic
-        ? -1
-        : Mathf.Max(0, hit);   // any accuracy debuff is already folded into `hit` by UnitStatBlock
+    /// <summary>Our accuracy for a swing, Blind already taken off. Every creature's ordinary attack is physical, like
+    /// the player's, so it can always be dodged.</summary>
+    public int BasicHit => Mathf.Max(0, hit);   // any accuracy debuff is already folded into `hit` by UnitStatBlock
 
     /// <summary>The element our attack carries.</summary>
     public Element BasicElement => attackElement;
 
-    /// <summary>True for a caster mob, whose ordinary attack IS its spell.</summary>
-    public bool BasicIsMagic => attackType == AttackType.Magic;
+    // Derived by UnitStatBlock from the primaries, gear and the ring through the player's own formulas — never authored.
+    [System.NonSerialized] public float critChance;
+    [System.NonSerialized] public float critMultiplier = UnitStatMath.BaseCritMultiplier;
+    [System.NonSerialized] public int magicAttack;
+    [System.NonSerialized] public float magicDamageSpread;
+
+    /// <summary>Whether one swing at <paramref name="victim"/> crits — the player's rule: our crit chance less the
+    /// victim's LUK shield.</summary>
+    public bool RollBasicCrit(ICombatUnit victim) => RollCrit(victim != null ? victim.CritShieldLuk : 0);
+
+    bool RollCrit(int targetLuk) => CombatRng.Chance(UnitStatMath.EffectiveCritChance(critChance, targetLuk));
+
+    /// <summary>One skill strike's base damage from OUR numbers — the mob's half of the rule the player's roll follows:
+    /// magic attack with its INT-steadied spread for a magic strike (never a crit), otherwise our physical attack,
+    /// critting by the shared rule (always, for a Crit strike).</summary>
+    public int RollSkillDamage(DamageType type, int targetLuk, out bool crit)
+    {
+        if (type == DamageType.Magic)
+        {
+            crit = false;
+            return UnitOffense.Dealt(MobStates, magicAttack * (1f - CombatRng.Range(0f, magicDamageSpread)));
+        }
+        crit = type == DamageType.Crit || RollCrit(targetLuk);
+        return RollBasicDamage(crit);
+    }
+
+    /// <summary>Seconds between our swings at our current attack speed — the same interval the attack site waits.</summary>
+    public float SwingTime => UnitOffense.AttackInterval(touchInterval, MobStates != null ? MobStates.AttackSpeedBuffMult : 1f);
 
     /// <summary>RO-style spread, then our own damage buffs/debuffs — the SAME call the player's roll makes, so "cut
-    /// this mob's damage" lands on a mob exactly as it would on the player. <paramref name="crit"/> is ignored: mobs
-    /// never crit.</summary>
+    /// this mob's damage" lands on a mob exactly as it would on the player. A crit hits for full attack × our crit
+    /// multiplier and skips the spread, as the player's does.</summary>
     public int RollBasicDamage(bool crit)
-        => UnitOffense.Dealt(MobStates, attack * (1f - CombatRng.Range(0f, damageSpread)));
+        => crit ? UnitOffense.Dealt(MobStates, attack * critMultiplier)
+                : UnitOffense.Dealt(MobStates, attack * (1f - CombatRng.Range(0f, damageSpread)));
 
     /// <summary>This mob's shared effect store — the SAME <see cref="UnitStates"/> the player carries, so buffs and
     /// debuffs read identically on either. Null only in the standalone spike, which has no Health.</summary>
@@ -543,32 +567,30 @@ public class MonsterAI3D : MonoBehaviour
 
         if (player != null && standing && touch3DSqr <= touch * touch && Time.time >= nextTouch && Prey != null)
         {
-            // Magic mobs hit MagicDefense (and can't be dodged); physical mobs hit Defense/Evasion.
-            bool isMagic = attackType == AttackType.Magic;
-            int effHit = BasicHit;   // blind already taken off; −1 for a magic mob, which can't be dodged
+            // Every creature's ordinary attack is PHYSICAL, like the player's: it hits Defense and can be dodged.
+            int effHit = BasicHit;   // blind already taken off
             // ORDER: accuracy FIRST, damage number second — a whiff never pays for a damage roll, and the roll happens
-            // exactly once here rather than again on the player. Mobs don't crit, so crit is false.
-            bool missed = Combat.Missed(false, effHit, Prey.Flee);
-            int atk = missed ? 0 : RollBasicDamage(false);
+            // exactly once here rather than again on the player. Crit is rolled first because a crit cannot be dodged.
+            bool crit = RollBasicCrit(Prey);
+            bool missed = Combat.Missed(crit, effHit, Prey.Flee);
+            int atk = missed ? 0 : RollBasicDamage(crit);
             atk = UnitOffense.SpendCharges(MobStates, atk);   // one attack, one charge — spent on the whiff too
-            // A magic mob's attack IS its cast — fire the cast cue at the caster (player-parity OnCastStart).
-            if (isMagic) VfxCue.Fire(VfxCueId.OnCastStart, transform);
-            if (isMagic && projectileSheet != null)
+            var held = Equipment != null ? Equipment.WeaponType : WeaponType.None;
+            if (WeaponTypes.IsRanged(held) && projectileSheet != null)
             {
-                // Ranged caster: lob a VISIBLE projectile at the player; the magic damage lands on arrival.
-                // The hit state (damage/element/this) rides the projectile's HitPayload into the CACHED
-                // LandRangedHit handler — no per-shot closure (PERFORMANCE.md: no `new` per combat event).
-                // cast from the mob's mid-body (feet-pivoted)
+                // Holding a ranged weapon: fire a VISIBLE projectile at the prey; the same physical blow lands on arrival.
+                // The blow (damage, crit, accuracy result, element, this) rides the projectile's HitPayload into the
+                // CACHED LandRangedHit handler — no per-shot closure (PERFORMANCE.md: no `new` per combat event).
+                // fired from the mob's mid-body (feet-pivoted)
                 Vector3 from = UnitAnchor.Center(transform);
                 Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
                     from, player, UnitAnchor.Center(player), projSpeed, 0.45f, 3f, LandRangedHit,
-                    this, null, atk, attackElement);
+                    this, null, atk, attackElement, crit, missed, effHit);
             }
             else
             {
-                int dealt = CombatAuthority.Apply(Prey, isMagic
-                    ? new DamageInfo(atk, attackElement, isMagic: true, source: this, attacker: Health)                              // magic: MATK vs MDEF + element
-                    : new DamageInfo(atk, attackElement, attackerHit: effHit, source: this, missed: missed, attacker: Health));      // physical: the HIT vs FLEE result, rolled above
+                int dealt = CombatAuthority.Apply(Prey,
+                    new DamageInfo(atk, attackElement, isCrit: crit, attackerHit: effHit, source: this, missed: missed, attacker: Health));      // physical: the crit and the HIT vs FLEE result, rolled above
                 if (dealt > 0)
                 {
                     TryInflictOnHit();
@@ -576,7 +598,7 @@ public class MonsterAI3D : MonoBehaviour
                 }
             }
             // Attack-speed buffs shorten a mob's cadence by the same rule they shorten the player's swing.
-            float beat = UnitOffense.AttackInterval(touchInterval, MobStates != null ? MobStates.AttackSpeedBuffMult : 1f);
+            float beat = SwingTime;
             nextTouch = Time.time + beat;
             LastAttackTime = Time.time;         // the general "it attacked" beat every visual reads
             if (lunge != null) lunge.Punch();   // squash-stretch "chomp" tell (billboard mobs only)

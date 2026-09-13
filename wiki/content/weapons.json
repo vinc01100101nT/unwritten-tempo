@@ -144,7 +144,7 @@
     {
       "type": "list",
       "items": [
-        "**Head**, **Armor**, **Garment**, **Shield**, and two **Accessory** slots",
+        "**Head**, **Armor**, **Garment** and **Shield**",
         "Your **Ring** — the vessel of your growth (see *Stats & the Ring*)"
       ]
     },
@@ -179,7 +179,7 @@
     },
     {
       "type": "paragraph",
-      "text": "Gear comes in rarity tiers — **Common, Uncommon, Rare, Epic, Legendary** — which drive its border color. Rarity does **not** decide which skills a weapon carries, how many of them, or whether it gets an ultimate: every weapon rolls the same kind of kit whatever its tier."
+      "text": "Gear comes in rarity tiers — **Common, Uncommon, Rare, Epic, Legendary** — rolled for each copy as it drops, and shown by its border color. On a weapon, rarity makes its skills and its own attack hit harder. On a piece of armour, it raises the piece's defence or magic defence by the same ladder and adds a flat extra to every main stat the piece rolled. Rarity does **not** decide which skills a weapon carries, how many of them, or whether it gets an ultimate: every weapon rolls the same kind of kit whatever its tier."
     },
     {
       "type": "paragraph",
@@ -190,33 +190,39 @@
       "headers": [
         "Rarity",
         "How often it drops",
-        "Skills hit harder by"
+        "Skills, attack and defence lifted by",
+        "Extra on each rolled main stat"
       ],
       "rows": [
         [
           "**Common**",
           "45%",
+          "—",
           "—"
         ],
         [
           "**Uncommon**",
           "30%",
-          "+3%"
+          "+3%",
+          "+1"
         ],
         [
           "**Rare**",
           "15%",
-          "+9%"
+          "+9%",
+          "+2"
         ],
         [
           "**Epic**",
           "5%",
-          "+18%"
+          "+18%",
+          "+3"
         ],
         [
           "**Legendary**",
           "5%",
-          "+30%"
+          "+30%",
+          "+5"
         ]
       ]
     },

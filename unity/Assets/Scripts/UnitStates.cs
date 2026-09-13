@@ -428,10 +428,16 @@ public class UnitStates : MonoBehaviour
     ///
     /// <para>A buff is worth exactly what it says: there is no growth-over-time channel any more (removed 2026-08-17,
     /// unused and unreadable on screen). Uptime is the support's contribution.</para></summary>
-    public void ApplySubStat(SubStat stat, float bonus, float seconds)
+    /// <returns>TRUE when this apply STARTED a pile — the granting skill had none running on this stat — and false
+    /// when it grew or refreshed one already running, or applied nothing. What a "this effect began" cue waits for.</returns>
+    public bool ApplySubStat(SubStat stat, float bonus, float seconds)
     {
-        if (seconds <= 0f || Mathf.Approximately(bonus, 0f)) return;
-        Apply(SubStats.PileFor(stat), seconds, bonus);
+        if (seconds <= 0f || Mathf.Approximately(bonus, 0f)) return false;
+        var pile = SubStats.PileFor(stat);
+        EnsureFresh();   // a lapsed pile is gone before Apply looks, so re-applying it counts as a fresh start
+        bool started = Find(pile, ctxSourceId) == null;
+        Apply(pile, seconds, bonus);
+        return started;
     }
 
     /// <summary>The live SIGNED bonus on one sub-stat, summed over every pile holding it — what a buff and a debuff on

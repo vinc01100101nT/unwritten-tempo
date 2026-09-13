@@ -1685,7 +1685,7 @@ public class GameNetwork : NetworkManager
 
     /// <summary>A bow or a firearm — the two weapons whose blow travels rather than connecting. Read from the same
     /// weapon type the swinger's own machine reads, so the two can never disagree about which is which.</summary>
-    static bool IsRangedWeapon(WeaponType w) => w == WeaponType.Bow || w == WeaponType.Firearm;
+    static bool IsRangedWeapon(WeaponType w) => WeaponTypes.IsRanged(w);
 
     // Whatever actually takes the damage behind a shell: a creature's real body on this machine, or the thing
     // itself. One reading of it, because both the accepting half and the landing half need the same answer.

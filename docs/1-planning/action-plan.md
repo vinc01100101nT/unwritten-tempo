@@ -1,16 +1,16 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-12
+last-updated: 2026-09-13
 tags:
   - planning-production
 ---
 
 # unwritten — Action Plan
 
-Twelve weeks of work, as tasks you can tick. **This is the "what next" list.** [Roadmap to Launch](roadmap-to-launch.md) is the "how far are we" picture — what is built, what is half-built, what is missing, all counted. Neither repeats the other.
+Twelve weeks of work, as tasks. **This is the "what next" list.** [Roadmap to Launch](roadmap-to-launch.md) is the "how far are we" picture — what is built, what is half-built, what is missing, all counted. Neither repeats the other.
 
-**Every fact in this plan was measured on 2026-09-12** by reading the game's own files, its database or its builds.
+**Every fact in this plan was measured on 2026-09-12 or 2026-09-13** by reading the game's own files, its database or its builds.
 
 ---
 
@@ -20,6 +20,7 @@ Each week opens with **the goal** — what you can do in the game at the end of 
 
 Every task carries:
 
+- **A status**, inside the brackets in front of the task: `[DONE]`, `[ON-GOING]`, or empty `[ ]` when it has not started.
 - **An ID.** A main task is `MT-N`; a subtask sits indented under its main task as `ST-N-A`, where `N` is the parent's number and `A`, `B`, `C` … count its subtasks in order. An ID never changes and is never reused: a new main task takes the next free number, and a new subtask takes the next free letter under its parent.
 - **`[D]` decision · `[A]` authoring · `[E]` engineering.** A decision task is yours alone. An authoring task can be handed to the data-author agent. An engineering task is code.
 - **An estimate in days**, as a range. **The range already carries the swing from any decision it depends on** — you do not need to answer anything now for the estimate to hold.
@@ -40,13 +41,36 @@ Every task carries:
 - [ ] `MT-1` **`[E]` Finish the play-test open since 3 September.** About half its checklist was never run. Start with its one inconclusive item: whether a passive fires when a normal attack lands, and again when something dies. — **2–3 days**
   *Done when:* every line of that checklist reads passed or failed with none unrun, and the passive question has a watched answer either way.
 
-- [x] `MT-2` **`[E]` Kill the last descriptions of the deleted equipment window.** The editor-tools catalogue says one tool drops an Inventory/Equipment/Character trio toggled with I, E and C. The window code's own comments still call them a trio and still mention dragging onto a paperdoll. Those stale comments are what misled the first draft of this plan. — **0.5 days**
+- [DONE] `MT-2` **`[E]` Kill the last descriptions of the deleted equipment window.** The editor-tools catalogue says one tool drops an Inventory/Equipment/Character trio toggled with I, E and C. The window code's own comments still call them a trio and still mention dragging onto a paperdoll. Those stale comments are what misled the first draft of this plan. — **0.5 days**
   *Done when:* no document and no code comment describes an equipment window.
 
-- [ ] `MT-3` **`[D]` Decide the gear shape.** Eight places on the body can hold something — head, armour, garment, weapon, shield, two accessories, and the ring. Only the weapon has any item authored. *Recommendation: fill head, armour, garment, shield and the two accessories — six places — with a low, a middle and a high piece each. Eighteen pieces.* — **0.5 days**
+- [ON-GOING] `MT-3` **`[D]` Decide the gear shape.** Six places on the body can hold something — head, armour, garment, weapon, shield and the ring. Only the weapon has any item authored. *Recommendation: fill head, armour, garment and shield — four places — with a low, a middle and a high piece each. Twelve pieces.* — **0.5 days**
   *Done when:* you have written down which places get gear, how many pieces each, and roughly what each does.
+  - [DONE] `ST-3-A` **`[D]` Armour gives stats, not skills.** The weapon stays the only item that grants skills.
+  - [DONE] `ST-3-B` **`[D]` The two accessory places go.** The ring already fills that role. That leaves head, armour, garment, weapon, shield and the ring.
+  - [DONE] `ST-3-C` **`[D]` Any armour piece can carry any of the six main stats — STR, AGI, VIT, INT, DEX, LUK — in any place, and no sub-stats.** The ring handles sub-stats.
+  - [DONE] `ST-3-D` **`[D]` Main-stat bonuses are flat, never scaled to level.** +10 STR is +10 at level 1 and at level 99. It stays worth chasing late because the last points a player buys into a stat cost the most, and gear adds on top of the 99 that buying stops at.
+  - [DONE] `ST-3-E` **`[D]` Each place's main job is a flat number on each copy of the piece, never scaled to the wearer's level.** Better gear has to come from harder creatures, or there is no reason to hunt them.
+  - [DONE] `ST-3-F` **`[D]` Each place's main job.** Armour — defence, the largest share; head — defence and magic defence, smaller; garment — magic defence; shield — defence plus block chance, which already works in combat. The main job is the one exception to `ST-3-C`'s "no sub-stats". It does not overlap the ring: the ring multiplies the defence a character already has and adds none of its own.
+  - [DONE] `ST-3-G` **`[D]` Gear has no level needed to wear it.** Any character can wear any piece.
+  - [DONE] `ST-3-H` **`[D]` Rarity is rolled when a piece drops, and raises both its main job and its main-stat bonuses.** Each tier lifts the main job by 0 / 3 / 9 / 18 / 30% — the weapon skill ladder — and adds +0 / +1 / +2 / +3 / +5 to each rolled main stat. A weapon's own attack is lifted by the same ladder.
+  - [DONE] `ST-3-I` **`[D]` A piece's main job and its main stats are both rolled each time it drops**, within what the item allows — so two copies of the same piece can differ, the way two copies of a weapon already carry different skills.
+  - [DONE] `ST-3-J` **`[D]` How the jumps in main stats work.** Each main stat has one headline jump every 10 points, gear included: STR → melee attack, INT → magic attack, VIT → defence, AGI → evasion, DEX → ranged attack, LUK → crit damage. Every jump uses the same shape: (the stat ÷ 10, rounded down) squared, plus 3 for every 10 — so crossing 10 adds 4 and crossing 100 adds 22, on top of what each point already gives. The stat screen shows what the next jump will give.
+  - [ON-GOING] `ST-3-K` **`[E]` Remove the two accessory places from the game.** Built: gone from the game code, the equipment screen and the creature table in the editor. No item and no saved character ever used them. Waiting on a play-test.
+  - [ON-GOING] `ST-3-L` **`[E]` Make creatures count main stats from the gear they wear.** Built: a creature's attack, hit, max HP, max MP, HP and MP regen, defence, magic defence, evasion and crit shield are worked out from its bought stats plus its gear's, as a player's already were. Waiting on a play-test.
+  - [DONE] `ST-3-M` **`[D]` Physical damage splits into melee attack and ranged attack.** Melee attack gets +1 per STR plus STR's jump, and +1 per 2 DEX. Ranged attack gets +1 per DEX plus DEX's jump, and +1 per 2 STR. Level, LUK and gear attack feed both. The weapon held decides which one a normal attack and a physical skill use: a Bow or Firearm uses ranged attack, anything else uses melee attack. Magic damage is untouched — a skill whose damage is magic rolls magic attack whatever is held. The ring's attack node and attack buffs raise whichever of the two is in use, creatures follow the same rule, and the stat screen shows both.
+  - [ON-GOING] `ST-3-N` **`[E]` Build ranged attack.** Built: holding a Bow or Firearm, normal attacks and physical skills roll ranged attack, for players and creatures. Waiting on a play-test.
+    *Done when:* holding a bow, raising DEX raises the damage of normal attacks and physical skills by DEX's full amount; holding a sword, DEX still adds only 1 attack per 2 points.
+  - [ON-GOING] `ST-3-O` **`[E]` Build the jumps for all six main stats.** Built, for players and creatures. Waiting on a play-test.
+    *Done when:* crossing 10 in STR, INT, VIT, AGI or DEX moves that stat's headline number by 4 more than a normal point does, for a player and for a creature — and crossing 10 LUK adds 4% crit damage more than a normal point does.
+  - [ON-GOING] `ST-3-P` **`[E]` Show melee attack, ranged attack and each main stat's next jump on the stat screen.** Built. Waiting on a play-test.
+    *Done when:* the stat screen shows both attack numbers, and next to each main stat what its next jump gives and at which value.
+  - [DONE] `ST-3-Q` **`[D]` A staff's and a wand's normal attack rolls melee attack.** It is a physical melee swing, as a staff's is today; magic damage comes only from skills.
+  - [DONE] `ST-3-R` **`[D]` LUK's jump counts in crit damage percent.** The jump numbers are percentages: crossing 10 LUK adds 4% crit damage, crossing 100 adds 22%, and by 100 LUK the jumps add up to +130% — on top of the 0.2% each point already gives and the 140% every crit starts at.
+  - [ON-GOING] `ST-3-S` **`[E]` Roll armour when it drops.** Built: a head, armour, garment or shield copy rolls its rarity, main job and main stats as it enters the world — a drop, a GM grant, or a creature spawning wearing it — and keeps them through the bag, the body, a save and a drop off a creature's corpse. A weapon's attack is lifted by its rarity. Waiting on a play-test.
+    *Done when:* two copies of the same piece from two kills show different rolls, and both keep them after the game restarts.
 
-- [ ] `MT-4` **`[D]` Decide whether gear comes only from kills, or from a shop too.** Every item already carries a sell value, so selling works the moment a shop exists; nothing carries a buy price, so buying needs one more number per item. *Recommendation: kills only for now; the shop is Week 10.* — **0.25 days**
+- [DONE] `MT-4` **`[D]` Decide whether gear comes only from kills, or from a shop too.** Every item already carries a sell value, so selling works the moment a shop exists; nothing carries a buy price, so buying needs one more number per item. *Decided 2026-09-13: the shop is deferred; gear comes from loot for now.* — **0.25 days**
 
 ---
 
@@ -60,8 +84,8 @@ Every task carries:
 - [ ] `MT-6` **`[A]` Author the ring as a real item.** Every character wears a "Ring of Beginnings" the game builds in memory as it loads, because no ring item exists. The game already prefers an authored one, so no code changes. — **0.5 days**
   *Done when:* a ring exists alongside the other items — created with **Create ▸ unwritten ▸ Item**, filled in through **Tools ▸ unwritten ▸ Catalogs ▸ Items ▸ Rings** — and a freshly created character wears that one rather than the invented one.
 
-- [ ] `MT-7` **`[A]` Author the first six pieces of gear** — the low tier of each place you chose. Name, place on the body, stats, sell value, rarity. Each is created singly with **Create ▸ unwritten ▸ Item**, then filled in as a batch in **Tools ▸ unwritten ▸ Catalogs ▸ Items ▸ Armor**. — **2–3 days**
-  *Done when:* you can wear one piece in each of the six places and watch the character sheet numbers move for each.
+- [ ] `MT-7` **`[A]` Author the first four pieces of gear** — the low tier of each place you chose. Name, place on the body, the range its main job and main stats roll within, how much each rarity tier adds, and sell value. Each is created singly with **Create ▸ unwritten ▸ Item**, then filled in as a batch in **Tools ▸ unwritten ▸ Catalogs ▸ Items ▸ Armor**. — **2–3 days**
+  *Done when:* you can wear one piece in each of the four places and watch the character sheet numbers move for each.
 
 - [ ] `MT-8` **`[D]` Decide how rare gear should be.** A creature gives up what it wears 15 times in 100 today; a worn ring is 1 in 100,000. *Recommendation: leave both alone until Week 4 puts real fights in front of you, then judge once.* — **0.25 days**
 
@@ -71,8 +95,8 @@ Every task carries:
 
 **Goal:** every place on the body has something to find and something better to find later — even though nothing drops it yet.
 
-- [ ] `MT-9` **`[A]` Author the middle and high tiers.** Twelve more pieces, two per place. — **3–4 days**
-  *Done when:* every place on the body has three pieces at different power levels, and swapping low for high moves the character sheet in the direction you expect.
+- [ ] `MT-9` **`[A]` Author the middle and high tiers.** Eight more pieces, two per place. — **3–4 days**
+  *Done when:* every place on the body has three pieces, and a high piece's main job can roll higher than a low piece's can.
 
 - [ ] `MT-10` **`[E]` Check the whole item set at once.** — **0.5 days**
   *Done when:* `tools/check-asset-wiring.py` and `tools/check-unity-code.sh` both run clean, and the editor console is read in full and reported.

@@ -38,6 +38,17 @@ public struct UnitStatInputs
         PrimaryStat.DEX => dex,
         _               => luk,
     };
+
+    /// <summary>These inputs with a worn set's primary bonuses added. A creature's authored inputs hold only what it
+    /// bought, so it goes through this before any formula — otherwise a STR helm on a creature would add nothing. The
+    /// player folds its gear in while building its own inputs, so it never needs this.</summary>
+    public UnitStatInputs WithGear(in EquipBonuses eb)
+    {
+        var e = this;
+        e.str += eb.str; e.agi += eb.agi; e.vit += eb.vit;
+        e.intel += eb.intel; e.dex += eb.dex; e.luk += eb.luk;
+        return e;
+    }
 }
 
 /// <summary>
@@ -52,8 +63,8 @@ public struct UnitStatInputs
 public static class UnitStatMath
 {
     // Per-point contributions of each primary to the derived layer.
-    public const int   AtkPerStr = 1, MatkPerInt = 1;
-    public const int   DefPerVit = 3, MdefPerInt = 3, AtkPerDex = 2, AtkPerLuk = 4, MatkPerLuk = 4;  // DIVISORS
+    public const int   AtkPerStr = 1, MatkPerInt = 1, RangedAtkPerDex = 1;
+    public const int   DefPerVit = 3, MdefPerInt = 3, AtkPerDex = 2, AtkPerLuk = 4, MatkPerLuk = 4, RangedAtkPerStr = 2;  // DIVISORS
     public const float AspdPerAgi = 0.005f, CritPerLuk = 0.003f;   // pre-renewal CRIT = LUK×0.3%
     // VIT and INT scale HP/SP as a PERCENT per point (they multiply the level-driven base, not add flat);
     // DEX raises ASPD a fraction of what AGI does.
@@ -201,9 +212,24 @@ public static class UnitStatMath
         return u;
     }
 
-    /// <summary>Pre-renewal status-point damage bonus: a stat adds <c>+⌊stat/10⌋²</c> to its damage stat (STR→ATK,
-    /// INT→MATK). Tiny early, large with heavy investment (50 → +25, 99 → +81).</summary>
-    public static int StatSquareBonus(int stat) { int tens = stat / 10; return tens * tens; }
+    /// <summary>How much <see cref="StatJumpBonus"/> grows for each ten beyond the square.</summary>
+    public const int JumpStepPerTen = 3;
+
+    /// <summary>What crossing every ten points of a primary adds to that primary's headline number, on top of what
+    /// each point already gives: <c>⌊stat/10⌋² + 3 × ⌊stat/10⌋</c>. Crossing 10 adds 4 and crossing 100 adds 22, so
+    /// the first jump is felt and the late ones keep growing. The headlines: STR → melee attack, DEX → ranged
+    /// attack, INT → magic attack, VIT → defence, AGI → evasion, LUK → crit damage (counted in percent).</summary>
+    public static int StatJumpBonus(int stat)
+    {
+        int tens = Mathf.Max(0, stat) / 10;
+        return tens * tens + JumpStepPerTen * tens;
+    }
+
+    /// <summary>The value a stat at <paramref name="stat"/> next jumps at — the next multiple of ten above it.</summary>
+    public static int NextJumpAt(int stat) => (Mathf.Max(0, stat) / 10 + 1) * 10;
+
+    /// <summary>What reaching <paramref name="stat"/> adds through the jump alone (0 off a multiple of ten).</summary>
+    public static int JumpGainAt(int stat) => StatJumpBonus(stat) - StatJumpBonus(stat - 1);
 
     // The flat layer × (1 + ring %). Kept private-shaped as a helper so every stat applies its channel identically.
     static int Scale(int flat, float ringPct) => Mathf.RoundToInt(flat * (1f + ringPct));
@@ -216,17 +242,31 @@ public static class UnitStatMath
         Scale(Mathf.RoundToInt((u.baseMaxMP + u.mpPerLevel * (u.level - 1)) * (1f + u.intel * IntSpPercent)) + eb.mp, ringPct);
 
     // ---- offence ------------------------------------------------------------------------------------------------
-    public static int Attack(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
+    /// <summary>The physical attack of every weapon that is not ranged, and of bare hands: STR leads, DEX helps.</summary>
+    public static int MeleeAttack(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Scale(u.baseAttack + u.attackPerLevel * (u.level - 1) + u.str * AtkPerStr
-              + StatSquareBonus(u.str) + u.dex / AtkPerDex + u.luk / AtkPerLuk + eb.atk, ringPct);
+              + StatJumpBonus(u.str) + u.dex / AtkPerDex + u.luk / AtkPerLuk + eb.atk, ringPct);
+
+    /// <summary>The physical attack of a ranged weapon: <see cref="MeleeAttack"/> with STR and DEX swapped — DEX
+    /// leads, STR helps. Base, level growth, LUK, gear and the ring feed both the same way, so the two differ only in
+    /// which primary drives them.</summary>
+    public static int RangedAttack(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
+        Scale(u.baseAttack + u.attackPerLevel * (u.level - 1) + u.dex * RangedAtkPerDex
+              + StatJumpBonus(u.dex) + u.str / RangedAtkPerStr + u.luk / AtkPerLuk + eb.atk, ringPct);
+
+    /// <summary>The physical attack a unit holding <paramref name="weapon"/> swings with — the one place the held
+    /// weapon decides between the two, for normal attacks and physical skills alike.</summary>
+    public static int PhysicalAttack(WeaponType weapon, in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
+        WeaponTypes.IsRanged(weapon) ? RangedAttack(u, eb, ringPct) : MeleeAttack(u, eb, ringPct);
 
     public static int MagicAttack(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Scale(u.baseMagicAttack + u.magicAttackPerLevel * (u.level - 1) + u.intel * MatkPerInt
-              + StatSquareBonus(u.intel) + u.luk / MatkPerLuk + eb.matk, ringPct);
+              + StatJumpBonus(u.intel) + u.luk / MatkPerLuk + eb.matk, ringPct);
 
     // ---- defence ------------------------------------------------------------------------------------------------
     public static int Defense(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
-        Scale(u.baseDefense + u.defensePerLevel * (u.level - 1) + u.vit / DefPerVit + eb.def, ringPct);
+        Scale(u.baseDefense + u.defensePerLevel * (u.level - 1) + u.vit / DefPerVit
+              + StatJumpBonus(u.vit) + eb.def, ringPct);
 
     public static int MagicDefense(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Scale(u.baseMagicDefense + u.magicDefensePerLevel * (u.level - 1) + u.intel / MdefPerInt + eb.mdef, ringPct);
@@ -236,14 +276,19 @@ public static class UnitStatMath
         Scale(u.level + u.dex * HitPerDex + u.luk / LukPerHit, ringPct);
 
     public static int Flee(in UnitStatInputs u, float ringPct) =>
-        Mathf.RoundToInt((u.level + u.agi * FleePerAgi + u.luk / LukPerFlee) * (1f + ringPct));
+        Mathf.RoundToInt((u.level + u.agi * FleePerAgi + StatJumpBonus(u.agi) + u.luk / LukPerFlee) * (1f + ringPct));
 
     // ---- crit / speeds ------------------------------------------------------------------------------------------
+    /// <summary>The chance one swing crits against a defender with <paramref name="targetLuk"/> LUK: the attacker's
+    /// crit chance minus the defender's crit shield, held inside [0, 95%]. The same sum for a player and a mob.</summary>
+    public static float EffectiveCritChance(float critChance01, int targetLuk) =>
+        Mathf.Clamp(critChance01 - targetLuk * CritShieldPerLuk, 0f, 0.95f);
+
     public static float CritChance01(in UnitStatInputs u, in EquipBonuses eb, float ringPct) =>
         Mathf.Min(0.95f, u.luk * CritPerLuk + ringPct + eb.critPercent / 100f);
 
     public static float CritMultiplier(in UnitStatInputs u, float ringPct) =>
-        BaseCritMultiplier + u.luk * CritDamagePerLuk + ringPct;
+        BaseCritMultiplier + u.luk * CritDamagePerLuk + StatJumpBonus(u.luk) / 100f + ringPct;
 
     // ---- natural regeneration ------------------------------------------------------------------------------------
     // Both pools regenerate on their own, from the primary that grows them. Reported as a RATE PER SECOND so the

@@ -6,8 +6,8 @@
 //
 // PREFER THE GENERAL FORM. "The element table matches its list's real size" survives an eleventh element being
 // added; "the table is 10 by 10" does not, and is the check that quietly stops covering the thing it names.
-// Write a specific number only where a specific number was PROMISED — the 95% accuracy ceiling, the half-damage
-// floor on glancing magic. Those are promises, and a promise has to be stated to be checked.
+// Write a specific number only where a specific number was PROMISED — the 95% accuracy ceiling, the jump at ten.
+// Those are promises, and a promise has to be stated to be checked.
 using System;
 using System.Collections.Generic;
 
@@ -117,15 +117,63 @@ static class Checks
         That(Math.Abs(Combat.AfterDefense(100f, 100, 7, false) - (-7f)) < 0.001f, CombatF,
              "100% hard defence should leave exactly minus the flat defence");
 
-        // Magic is dodge-RESISTANT, never dodgeable: it keeps all its bite at zero evasion and at least half
-        // of it however evasive the target.
-        That(Math.Abs(Combat.MagicGlanceMult(0) - 1f) < 0.001f, CombatF,
-             "magic should lose nothing against a target with no evasion");
-        That(Math.Abs(Combat.MagicGlanceMaxReduction - 0.5f) < 0.0001f, CombatF,
-             "magic's worst case is no longer half damage: " + Combat.MagicGlanceMaxReduction);
-        for (int flee = 0; flee <= 5000; flee += 50)
-            That(Combat.MagicGlanceMult(flee) >= 0.5f - 0.001f, CombatF,
-                 "magic fell below half damage against evasion " + flee);
+        // A crit's chance is held inside [0, 95%] however much LUK either side has — the same sum for every unit.
+        for (int luk = 0; luk <= 1000; luk += 50)
+            foreach (float chance in new[] { 0f, 0.3f, 0.95f, 5f })
+            {
+                float c = UnitStatMath.EffectiveCritChance(chance, luk);
+                That(c >= 0f && c <= 0.95f + 0.0001f, StatMath,
+                     "crit chance " + chance + " against " + luk + " LUK left [0, 95%]: " + c);
+            }
+    }
+
+    // ---- the jump every ten points of a primary -------------------------------------------------------
+    // A jump that shrinks, or lands off a multiple of ten, shows only as a build that "feels flat". The two
+    // literals are the promise from the action plan: crossing 10 adds 4, crossing 100 adds 22.
+    static void StatJumps()
+    {
+        That(UnitStatMath.StatJumpBonus(10) - UnitStatMath.StatJumpBonus(9) == 4, StatMath,
+             "crossing 10 no longer adds 4: " + (UnitStatMath.StatJumpBonus(10) - UnitStatMath.StatJumpBonus(9)));
+        That(UnitStatMath.StatJumpBonus(100) - UnitStatMath.StatJumpBonus(99) == 22, StatMath,
+             "crossing 100 no longer adds 22: " + (UnitStatMath.StatJumpBonus(100) - UnitStatMath.StatJumpBonus(99)));
+        int lastJump = 0;
+        for (int stat = 1; stat <= 300; stat++)
+        {
+            int step = UnitStatMath.StatJumpBonus(stat) - UnitStatMath.StatJumpBonus(stat - 1);
+            if (stat % 10 != 0)
+                That(step == 0, StatMath, "the jump bonus moved at " + stat + ", which is not a multiple of ten");
+            else
+            {
+                That(step > lastJump, StatMath, "the jump at " + stat + " is not bigger than the one before it");
+                lastJump = step;
+            }
+        }
+
+        // Melee and ranged attack are mirrors: swap STR and DEX and one becomes the other.
+        var none = default(EquipBonuses);
+        var u = UnitStatInputs.Default(30);
+        u.str = 57; u.dex = 23; u.luk = 14;
+        var swapped = u;
+        swapped.str = 23; swapped.dex = 57;
+        That(UnitStatMath.MeleeAttack(u, none, 0f) == UnitStatMath.RangedAttack(swapped, none, 0f), StatMath,
+             "melee attack and ranged attack are no longer mirrors with STR and DEX swapped");
+
+        // The held weapon picks which one a unit swings with.
+        foreach (WeaponType w in Enum.GetValues(typeof(WeaponType)))
+        {
+            int expected = WeaponTypes.IsRanged(w) ? UnitStatMath.RangedAttack(u, none, 0f)
+                                                   : UnitStatMath.MeleeAttack(u, none, 0f);
+            That(UnitStatMath.PhysicalAttack(w, u, none, 0f) == expected, StatMath,
+                 "holding a " + w + " swings with the wrong attack");
+        }
+        That(WeaponTypes.IsRanged(WeaponType.Bow) && WeaponTypes.IsRanged(WeaponType.Firearm), "unity/Assets/Scripts/WeaponType.cs",
+             "a bow or a firearm is no longer a ranged weapon");
+
+        // A worn primary reaches the formulas once folded into a unit's inputs — the creature's road.
+        var gear = default(EquipBonuses);
+        gear.str = 10;
+        That(UnitStatMath.MeleeAttack(u.WithGear(gear), none, 0f) > UnitStatMath.MeleeAttack(u, none, 0f), StatMath,
+             "a worn STR bonus does not raise melee attack once folded into a unit's inputs");
     }
 
     // ---- the element chart ----------------------------------------------------------------------------
@@ -195,6 +243,24 @@ static class Checks
                  "the rarity ladder stops accelerating at " + tiers[i] + " — its step is smaller than the last");
             previousStep = step; previous = lift;
         }
+
+        // What a rolled main stat gains per tier is a PROMISED number, so it is written out rather than read back.
+        int[] promised = { 0, 1, 2, 3, 5 };
+        That(tiers.Length == promised.Length, RarityF,
+             "there are " + tiers.Length + " rarity tiers but " + promised.Length + " promised main-stat extras");
+        for (int i = 0; i < tiers.Length && i < promised.Length; i++)
+            That(Rarities.StatExtra(tiers[i]) == promised[i], RarityF,
+                 tiers[i] + " no longer adds +" + promised[i] + " to a rolled main stat: " + Rarities.StatExtra(tiers[i]));
+
+        // A gear number lifted by rarity: nothing at the lowest tier, never below itself, and zero stays zero.
+        foreach (var tier in tiers)
+        {
+            That(Rarities.Lifted(0, tier) == 0, RarityF, "a zero gear number lifted by " + tier + " is no longer zero");
+            for (int flat = 1; flat <= 500; flat += 7)
+                That(Rarities.Lifted(flat, tier) >= flat, RarityF, tier + " lifted " + flat + " below itself");
+        }
+        for (int flat = 0; flat <= 500; flat += 7)
+            That(Rarities.Lifted(flat, tiers[0]) == flat, RarityF, "the lowest rarity changes a gear number of " + flat);
     }
 
     static int Main()
@@ -202,6 +268,7 @@ static class Checks
         ExperienceCurve();
         StatPoints();
         AccuracyAndDefence();
+        StatJumps();
         ElementChart();
         Ring();
         RarityLadder();

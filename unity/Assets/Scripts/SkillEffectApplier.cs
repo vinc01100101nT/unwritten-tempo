@@ -22,8 +22,9 @@ using UnityEngine;
 ///
 /// <para><b>Caster threading (network-readiness).</b> The acting caster is resolved ONCE at <see cref="ApplyBurst"/>
 /// and threaded through the whole resolve, so no inner method reaches for the <c>Character.Instance</c> global. Today
-/// the caster IS the local player; once combat is server-authoritative the net layer passes the acting connection's
-/// entity and the entire burst scales off THAT entity's stats. Callers may omit it — it falls back to the local player.</para>
+/// the caster is whoever is using the skill — a player or a creature, as an <see cref="ICombatUnit"/> — and the entire
+/// burst scales off THAT unit's own numbers. There is no fallback to the local player: a burst with no caster lands
+/// nothing, because a skill nobody is using has no numbers to scale from.</para>
 /// </summary>
 public static class SkillEffectApplier
 {
@@ -36,7 +37,7 @@ public static class SkillEffectApplier
     /// <summary>Apply the binding's effects — CASTER effects to the caster, TARGET effects to whoever the tick reaches
     /// (an AoE scan, or the cast's designated unit for Single). Zero-alloc: a squared-distance sweep over the small
     /// Active list, no physics / Find / GetComponent.
-    /// <paramref name="caster"/> is the acting entity whose stats scale the roll (defaults to the local player).</summary>
+    /// <paramref name="caster"/> is the unit using the skill, whose own numbers scale every roll.</summary>
     // The rarity lift of the weapon that granted the cast currently applying, as a fraction (see
     // Rarities.OutputLift). Held here rather than passed through every signature because it is one value for a whole
     // burst — the same reason PassiveEvents and RepeatsDamageTotal hold theirs this way.
@@ -45,13 +46,13 @@ public static class SkillEffectApplier
     public static void ApplyBurst(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   string srcSymbol = null, string srcName = null, string srcId = null,
-                                  Vector3? aimPoint = null, Character caster = null, StackVars vars = default)
+                                  Vector3? aimPoint = null, ICombatUnit caster = null, StackVars vars = default)
     {
         if (effects == null || effects.Count == 0) return;
 
-        // Resolve the acting caster ONCE here (the local player today; a per-connection entity once server-authoritative),
-        // so nothing downstream reaches for the Character.Instance global — the whole burst scales off THIS entity.
-        var ch = caster ?? Character.Instance;
+        // The unit using the skill, threaded through the whole burst so nothing downstream reaches for a global.
+        var ch = caster;
+        if (ch == null) return;
 
         // Which weapon's rarity is paying for this cast, resolved ONCE for the whole burst — it compares skill ids, so
         // it has no business running per hit. Restored on the way out because a passive can cast INSIDE this burst
@@ -71,7 +72,7 @@ public static class SkillEffectApplier
     static void ApplyBurstTargets(Vector3 point, float radius, SkillScope scope, SkillTargets targets,
                                   List<SkillEffect> effects, Transform singleTarget,
                                   string srcSymbol, string srcName, string srcId,
-                                  Vector3? aimPoint, Character ch, StackVars vars)
+                                  Vector3? aimPoint, ICombatUnit ch, StackVars vars)
     {
 
         // Where a relocation (Teleport / Dash) sends whoever it moves — the caster, or a mob when the author put the
@@ -261,7 +262,7 @@ public static class SkillEffectApplier
     // Every CASTER-side effect in the list, applied ONCE to the acting caster. No hit loop: a caster effect isn't a
     // strike, so a multi-hit flurry must not dash you N times (target effects own hitCount, see HitLoops).
     static void ApplyCasterEffects(List<SkillEffect> effects, Vector3 point, Transform aimUnit,
-                                   string srcSymbol, string srcName, string srcId, Character ch, in StackVars vars)
+                                   string srcSymbol, string srcName, string srcId, ICombatUnit ch, in StackVars vars)
     {
         if (ch == null || ch.IsDead) return;
         for (int i = 0; i < effects.Count; i++)
@@ -287,7 +288,7 @@ public static class SkillEffectApplier
     /// strength of a buff you place on an ally is yours to earn. <paramref name="relocatePoint"/> is where a Dash /
     /// Teleport sends whoever it moves.</para></summary>
     static void ApplyOne(SkillEffect e, ICombatUnit unit, int hit,
-                         Character caster,
+                         ICombatUnit caster,
                          Vector3 relocatePoint, Transform aimUnit,
                          string srcSymbol, string srcName, string srcId, in StackVars vars)
     {
@@ -356,7 +357,10 @@ public static class SkillEffectApplier
                 {
                     float amount = Mathf.Max(0f, OutputMagnitude(e, caster, vars));
                     if (e.kind == SkillEffectKind.SubStatDebuff) amount = -amount;
-                    states.ApplySubStat(e.subStat, amount, seconds);
+                    bool started = states.ApplySubStat(e.subStat, amount, seconds);
+                    // A slow, haste or blind STARTING plays its cue on whoever it landed on, player or creature alike.
+                    if (body != null && VfxCue.SubStatStartCue(e.subStat, started, amount, out var startCue))
+                        VfxCue.Fire(startCue, body);
                 }
                 break;
             case SkillEffectKind.Shield:
@@ -447,7 +451,7 @@ public static class SkillEffectApplier
 
     // Where a shove is measured FROM: the caster's body. Falls back to the target's own spot when there's no caster,
     // which makes the shove direction arbitrary rather than crashing — same fallback the mob-only version had.
-    static Vector3 ShoveOrigin(ICombatUnit unit, Character caster)
+    static Vector3 ShoveOrigin(ICombatUnit unit, ICombatUnit caster)
     {
         if (caster != null && caster.Body != null) return caster.Body.position;
         return unit.Body != null ? unit.Body.position : unit.DamagePosition;
@@ -455,7 +459,7 @@ public static class SkillEffectApplier
 
     // The binding's strike count = the largest Damage hitCount (min 1). Each iteration is the trigger point where
     // proc effects roll.
-    static int HitLoops(List<SkillEffect> effects, Character caster, in StackVars vars)
+    static int HitLoops(List<SkillEffect> effects, ICombatUnit caster, in StackVars vars)
     {
         int loops = 1;
         for (int i = 0; i < effects.Count; i++)
@@ -469,9 +473,9 @@ public static class SkillEffectApplier
     // A Damage effect's strike count = authored hitCount scaled by its hit-count affinity (ring investment).
     // hits = round(hitCount × mult). The ONE source of truth for both the flurry length (HitLoops) and each Damage's
     // per-strike cap, so they can't disagree. AffinityMult is stable within a cast (ring investment doesn't change).
-    // Public so the tooltip shows the SAME live count the runtime will land (no parallel formula) — it omits the
-    // caster, falling back to the local player, which is exactly whose tooltip it is.
-    public static int EffectiveHits(SkillEffect e, Character caster = null, StackVars vars = default)
+    // Public so the tooltip shows the SAME live count the runtime will land (no parallel formula) — it passes the local
+    // player, which is exactly whose tooltip it is.
+    public static int EffectiveHits(SkillEffect e, ICombatUnit caster = null, StackVars vars = default)
         => Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, e.hitCount.ResolveInt(vars)) * AffinityMult(e.hitCountAffinity, caster)));
 
     /// <summary>Does this strike belong to a run that draws ONE RISING YELLOW TOTAL instead of a number per beat?
@@ -481,14 +485,14 @@ public static class SkillEffectApplier
     /// <para>Read in ONE place because two different parts of the server now have to answer it — the one landing a
     /// skill it is running itself, and the one answering a strike a client named — and an answer written out twice
     /// is an answer that drifts.</para></summary>
-    public static bool ShowsRunTotal(SkillDef def, SkillEffect e, Character caster, in StackVars vars)
+    public static bool ShowsRunTotal(SkillDef def, SkillEffect e, ICombatUnit caster, in StackVars vars)
         => (def != null && def.showRepeatsTotalDamage) || (e != null && EffectiveHits(e, caster, vars) > 1);
 
     // Single hit (the common case): apply instantly to each mob, unchanged. Multi-hit (hitCount > 1): hand the mob
     // snapshot to MultiHitBurst so the strikes CASCADE over time and each mob shows ONE rising yellow combo total,
     // exactly like RO — instead of N overlapping numbers dumped in a single frame.
     static void DispatchMobHits(List<SkillEffect> effects, List<MonsterAI3D> mobs,
-                                Character caster, Vector3 relocatePoint,
+                                ICombatUnit caster, Vector3 relocatePoint,
                                 string srcSymbol = null, string srcName = null, string srcId = null,
                                 StackVars vars = default)
     {
@@ -524,7 +528,7 @@ public static class SkillEffectApplier
     // climbing even past the kill, RO-style) and roll the binding's procs THIS hit. Returns the damage dealt so the
     // yellow combo total can accumulate it.
     static int ApplyHitToMob(List<SkillEffect> effects, MonsterAI3D ai, int hit,
-                             Character caster, Vector3 relocatePoint,
+                             ICombatUnit caster, Vector3 relocatePoint,
                              string srcSymbol = null, string srcName = null, string srcId = null,
                              StackVars vars = default)
     {
@@ -543,7 +547,8 @@ public static class SkillEffectApplier
                 // the kill — the whole count runs to the end, RO-style.
                 dealt += LandStrike(e, h, caster, vars, overkill: true);
             }
-            else
+            // A target that is already dead takes the flurry's numbers and nothing else: every other effect is skipped.
+            else if (!h.IsDead)
                 ApplyToTarget(e, h, hit, caster, relocatePoint, srcSymbol, srcName, srcId, vars);   // procs / status / one-shots
         }
         return dealt;
@@ -562,7 +567,7 @@ public static class SkillEffectApplier
     // The odds have their OWN scaling channel, on every kind alike: invest in it and a gamble lands more often. It used
     // to borrow the output channel, which meant an ailment could scale how OFTEN it landed or how BIG it was but never
     // both, and which of the two you got depended on a number somewhere else in the effect.
-    static bool Fires(SkillEffect e, int hitIndex, Character caster, in StackVars vars)
+    static bool Fires(SkillEffect e, int hitIndex, ICombatUnit caster, in StackVars vars)
     {
         float odds = e.chance.Resolve(vars);
         if (odds <= 0f) return false;
@@ -573,7 +578,7 @@ public static class SkillEffectApplier
     // ---- mob ----------------------------------------------------------------
     /// <summary>Run the hit loop for one MOB: each hit lands the Damage strike + rolls the binding's procs.</summary>
     public static void ApplyEffectsToMob(List<SkillEffect> effects, MonsterAI3D ai, Vector3 relocatePoint,
-                                         Character caster = null,
+                                         ICombatUnit caster = null,
                                          string srcSymbol = null, string srcName = null, string srcId = null, StackVars vars = default)
     {
         if (effects == null || ai == null) return;
@@ -592,7 +597,7 @@ public static class SkillEffectApplier
     // caster side reads, so one cast has one destination however the author pointed the effect. No aimed UNIT is given
     // here on purpose: the aimed unit IS the one being moved, and landing it beside itself would move it nowhere.
     static void ApplyToTarget(SkillEffect e, ICombatUnit unit, int hit,
-                              Character caster, Vector3 relocatePoint,
+                              ICombatUnit caster, Vector3 relocatePoint,
                               string srcSymbol, string srcName, string srcId, in StackVars vars)
     {
         if (e == null || SkillEffect.LandsOnCaster(e)) return;
@@ -603,14 +608,14 @@ public static class SkillEffectApplier
     // execute power: bonus = roll x magnitude x (1 - HP fraction), so it's tiny at full HP and huge near death.
     // One implementation for every unit — it used to be two copies (one reading a mob's HP, one the player's) that had
     // to be kept in step by hand.
-    static void ApplyExecute(SkillEffect e, ICombatUnit unit, in StackVars vars, Character caster)
+    static void ApplyExecute(SkillEffect e, ICombatUnit unit, in StackVars vars, ICombatUnit caster)
     {
         float power = e.magnitude.Resolve(vars);
         if (unit.MaxHP <= 0 || power <= 0f) return;
         float missing = 1f - Mathf.Clamp01((float)unit.CurrentHP / unit.MaxHP);
         if (missing <= 0f) return;
         int roll = RollPower(e, vars, OutputMult(e, caster),
-                             out bool crit, caster);
+                             out bool crit, caster, unit.CritShieldLuk);
         int bonus = Mathf.RoundToInt(roll * power * missing);
         if (bonus <= 0) return;
         // Its own damage number, so its own charge — an execute is a second outgoing hit riding the first, not part of it.
@@ -632,12 +637,12 @@ public static class SkillEffectApplier
     // ---- player as a TARGET (pass 2) ----------------------------------------
     /// <summary>Run the hit loop for the PLAYER as a gathered TARGET (heal / self-damage / an ailment on yourself).
     /// Caster effects are NOT here — they run once in <see cref="ApplyBurst"/>'s caster pass. <paramref name="caster"/>
-    /// is the acting entity (its own self-cast target); defaults to the local player.</summary>
+    /// is the unit using the skill (its own self-cast target).</summary>
     public static void ApplyEffectsToPlayer(List<SkillEffect> effects, Vector3 relocatePoint,
-                                            string srcSymbol = null, string srcName = null, string srcId = null, Character caster = null,
+                                            string srcSymbol = null, string srcName = null, string srcId = null, ICombatUnit caster = null,
                                             StackVars vars = default)
     {
-        var ch = caster ?? Character.Instance;
+        var ch = caster;
         if (effects == null || ch == null) return;
         int loops = HitLoops(effects, ch, vars);
         for (int n = 0; n < loops; n++)
@@ -652,7 +657,7 @@ public static class SkillEffectApplier
     /// <para>TWO ways a strike is paid for, and they differ only in WHICH roll sits underneath: a strike authored to
     /// RESOLVE AS A BASIC ATTACK is the caster's own swing, and everything else is the ordinary skill roll. Either way
     /// the effect's damage multiplier scales it — that number always multiplies, whatever it was built from.</para></summary>
-    static int LandStrike(SkillEffect e, ICombatUnit unit, Character caster,
+    static int LandStrike(SkillEffect e, ICombatUnit unit, ICombatUnit caster,
                           in StackVars vars, bool overkill)
     {
         // THE SERVER ROLLS THIS ONE, and is told WHICH strike it is rather than how hard it hit. It holds the same
@@ -690,7 +695,7 @@ public static class SkillEffectApplier
     /// description from the authored effect instead gets the element and the crit wrong for a strike that swings the
     /// weapon, cannot say a swing whiffed at all, and states a number that has already had the victim's armour taken
     /// out of it — which every watching machine would then take out of it a second time.</param>
-    public static int Strike(SkillEffect e, ICombatUnit unit, Character caster,
+    public static int Strike(SkillEffect e, ICombatUnit unit, ICombatUnit caster,
                              in StackVars vars, bool overkill, out bool crit, out DamageInfo resolved)
     {
         crit = false;
@@ -698,6 +703,26 @@ public static class SkillEffectApplier
         // Ring investment and the combo ramp are both OUTER multipliers of the finished number, so they travel together
         // as one scale — the pile's contribution answers to them exactly as the caster's own damage does.
         float outer = OutputMult(e, caster);
+
+        // A FLURRY BEAT ON A TARGET THAT IS ALREADY DEAD is presentation only: the number it would have been and the hit
+        // cue — no charge spent, no swing announced, no passive fed. Decided here, the one place every strike is rolled,
+        // so the server's own flurry and a strike a client named both get it.
+        if (overkill && unit.IsDead)
+        {
+            bool basic = e.resolveAsBasicAttack && caster != null;
+            int shown;
+            if (basic)
+            {
+                crit = caster.RollBasicCrit(unit);
+                shown = Mathf.Max(1, Mathf.RoundToInt(e.damageMult.Resolve(vars, Mathf.Max(0f, outer),
+                                                                          caster.RollBasicDamage(crit))));
+            }
+            else shown = RollPower(e, vars, outer, out crit, caster, unit.CritShieldLuk);
+            resolved = new DamageInfo(shown, basic ? caster.BasicElement : e.element,
+                                      !basic && e.damageType == DamageType.Magic, crit,
+                                      attackerHit: basic ? caster.BasicHit : -1, overkill: true, attacker: caster);
+            return CombatAuthority.Apply(unit, resolved);
+        }
 
         // The caster swings; the skill only says how hard. The swing's own roll becomes the basis the damage
         // multiplier is applied to, and the pile meets the result — so the one thing the checkbox changes is WHICH
@@ -715,7 +740,7 @@ public static class SkillEffectApplier
             return swung;
         }
 
-        int power = RollPower(e, vars, outer, out crit, caster);
+        int power = RollPower(e, vars, outer, out crit, caster, unit.CritShieldLuk);
         // One strike, one charge. (The basic-attack branch above doesn't come back through here: the swing spends its
         // own, so nothing is charged twice.)
         power = UnitOffense.SpendCharges(caster != null ? caster.States : null, power);
@@ -727,28 +752,26 @@ public static class SkillEffectApplier
 
     // Damage = (the caster's rolled hit × this effect's damage multiplier) met by the pile, all × ring × combo. The
     // roll is the BASIS the multiplier is applied to, which is what puts both sides of the operation in damage.
-    // Crit-aware so a tick crits like any other skill. No allocation.
-    static int RollPower(SkillEffect e, in StackVars vars, float outer, out bool crit, Character caster)
+    // Crit-aware so a tick crits like any other skill, and the defender's LUK shields against it exactly as it shields
+    // against a swing. No allocation.
+    static int RollPower(SkillEffect e, in StackVars vars, float outer, out bool crit, ICombatUnit caster, int targetLuk)
     {
         crit = false;
-        var ch = caster ?? Character.Instance;
-        if (ch == null) return 1;
-        // Magic → MATK roll (unmissable). Physical → ATK roll. Crit type → ATK roll with a FORCED crit (its
-        // armour-pierce is the deferred combat-pass TODO; the forced crit is the part we can honour now).
-        int roll = e.damageType == DamageType.Magic
-            ? ch.RollMagicDamage(out crit)
-            : ch.RollDamage(out crit, 0, e.damageType == DamageType.Crit);
+        if (caster == null) return 1;
+        // Magic → the user's magic attack (unmissable, never a crit). Physical → its physical attack. Crit type → the
+        // physical roll with a FORCED crit (its armour-pierce is the deferred combat-pass TODO).
+        int roll = caster.RollSkillDamage(e.damageType, targetLuk, out crit);
         return Mathf.Max(1, Mathf.RoundToInt(e.damageMult.Resolve(vars, outer, roll)));
     }
 
     // ---- affinity (ring-investment scaling) ---------------------------------
     // The multiplier for ONE affinity channel = 1 + Σ(normalised weight × the caster's gated ring % in that stat).
     // Empty/absent list ⇒ 1 (no scaling). Zero-alloc: one pass over the small authored list, no LINQ / temp collections.
-    // The caster defaults to the local player, so the tooltip (which has no caster) reads the local ring investment.
-    public static float AffinityMult(List<StatWeight> weights, Character caster = null)
+    // The tooltip passes the local player, whose ring investment it is describing.
+    public static float AffinityMult(List<StatWeight> weights, ICombatUnit caster = null)
     {
         if (weights == null || weights.Count == 0) return 1f;
-        var ch = caster ?? Character.Instance;
+        var ch = caster;
         if (ch == null) return 1f;
         float sum = 0f, acc = 0f;
         for (int i = 0; i < weights.Count; i++)
@@ -768,11 +791,11 @@ public static class SkillEffectApplier
     // because they describe another skill's pile rather than this effect's own body: the seconds it adds are a
     // DURATION, the stacks it adds are its OUTPUT. Routed here so a modifier scales off the ring and off the cast's
     // pile exactly like everything else, instead of being the one kind whose numbers are frozen.
-    static float ScaledModifierSeconds(SkillEffect e, Character caster, in StackVars vars) =>
+    static float ScaledModifierSeconds(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
         Mathf.Max(0f, e.modifierSeconds.Resolve(vars, AffinityMult(e.durationAffinity, caster)));
     // HOW MANY stacks a modifier hands over is a plain size, so the pile sizes it like every other output — that is
     // Perfect Form: a run of hits read as a count, times a third, floored, so three in a row adds one and six adds two.
-    static int ScaledModifierStacks(SkillEffect e, Character caster, in StackVars vars) =>
+    static int ScaledModifierStacks(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
         e.modifierStacks.ResolveInt(vars, AffinityMult(e.affinity, caster));
 
     // The pile-only form, for the numbers no multiplier may touch. Just ONE kind of number is left here: a shove's
@@ -792,7 +815,7 @@ public static class SkillEffectApplier
     // The flat-amount sibling of OutputMagnitude (a heal's HP, a shield's pool) — same scalings, ring and rarity both.
     // A cleanse's count does NOT come through here: it is a whole number of ailments removed, so it reads the pile
     // alone (StackedAmount) and no multiplier can move it by less than a whole one.
-    static int ScaledAmount(SkillEffect e, Character caster, in StackVars vars) =>
+    static int ScaledAmount(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
         e.amount.ResolveInt(vars, OutputMult(e, caster));
     /// <summary>Feed ANOTHER skill's pile. What one of its charges is worth is read from THAT skill's own authored
     /// effect — the single definition of its charge — so a pile that is running and one that is not both end up with
@@ -815,7 +838,7 @@ public static class SkillEffectApplier
         return false;
     }
 
-    static void AddStacksToOtherSkill(SkillEffect e, UnitStates states, Character caster, in StackVars vars)
+    static void AddStacksToOtherSkill(SkillEffect e, UnitStates states, ICombatUnit caster, in StackVars vars)
     {
         var granter = SkillCatalog.Get(e.modifierSkillId);
         SkillEffect grant = null;
@@ -843,23 +866,23 @@ public static class SkillEffectApplier
     // so neither scaling has to be taught to a single effect — and a new kind inherits both by existing.
     // An effect's OUTPUT: the authored base value met by the pile through the one shared formula, then scaled by ring
     // investment. The author's number is never ignored and never replaced — it is the base the pile builds on.
-    static float ScaledMagnitude(SkillEffect e, Character caster, in StackVars vars) =>
+    static float ScaledMagnitude(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
         e.magnitude.Resolve(vars, AffinityMult(e.affinity, caster));
 
     // An effect's own OUTPUT multiplier: what the ring's affinity earns, PLUS the rarity of the weapon that granted
     // this cast. Added, never multiplied — so a Legendary is worth the same +30 POINTS to a new character as to a
     // maxed one, instead of paying out more the more ring somebody has already built. Points, not percent: at a ring
     // term of 1 those 30 points ARE +30% output, and at a term of 2 the same 30 points work out to +15%.
-    static float OutputMult(SkillEffect e, Character caster) =>
+    static float OutputMult(SkillEffect e, ICombatUnit caster) =>
         AffinityMult(e.affinity, caster) + rarityLift;
 
     // The rarity-lifted form of ScaledMagnitude, for every number that IS output: an ailment's damage per tick, how
     // far a sub-stat buff or debuff moves, and what one outgoing-damage charge is worth.
     // Deliberately a separate function: ScaledMagnitude also reads ANOTHER skill's authored charge when a modifier
     // feeds its pile, and a weapon's rarity must never travel into a second skill's numbers.
-    static float OutputMagnitude(SkillEffect e, Character caster, in StackVars vars) =>
+    static float OutputMagnitude(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
         e.magnitude.Resolve(vars, OutputMult(e, caster));
-    static float ScaledSeconds(SkillEffect e, Character caster, in StackVars vars) =>
+    static float ScaledSeconds(SkillEffect e, ICombatUnit caster, in StackVars vars) =>
         e.seconds.Resolve(vars, AffinityMult(e.durationAffinity, caster));
 
     /// <summary>How many stacks this apply grants. Normally the authored number; when the effect is driven by attack
@@ -873,7 +896,7 @@ public static class SkillEffectApplier
     ///
     /// <para>Falls back to the authored count when there is no swing rate to read (the avatar hasn't spawned) rather
     /// than granting nothing — a missing body must not silently erase a skill's charges.</para></summary>
-    static int ResolveStacks(SkillEffect e, Character caster, in StackVars vars)
+    static int ResolveStacks(SkillEffect e, ICombatUnit caster, in StackVars vars)
     {
         int authored = Mathf.Max(1, e.stacksPerApply.ResolveInt(vars));
         if (!e.stacksFromAttackSpeed) return authored;

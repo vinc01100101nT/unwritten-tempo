@@ -7,7 +7,9 @@
 /// </summary>
 public struct DerivedSnapshot
 {
-    public int atkMin, atkMax;
+    public int atkMin, atkMax;         // the physical attack of the weapon in hand — one of the two below
+    public int meleeMin, meleeMax;     // what any non-ranged weapon, or bare hands, swings with
+    public int rangedMin, rangedMax;   // what a ranged weapon swings with
     public int matkMin, matkMax;
     public int def, mdef;
     public int hit, flee;

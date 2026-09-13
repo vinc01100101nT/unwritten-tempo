@@ -255,7 +255,7 @@ public static class SkillTooltip
     // rarity lift, added exactly as the applier adds them. Every line that shows such a number goes through here —
     // a card showing the raw authored figure promises one number while the fight deals another, and the two only
     // disagree by more as a player invests.
-    static float LiveMult(SkillEffect e) => SkillEffectApplier.AffinityMult(e.affinity) + describeLift;
+    static float LiveMult(SkillEffect e) => SkillEffectApplier.AffinityMult(e.affinity, Character.Instance) + describeLift;
 
     /// <summary>Every effect line in a chosen dialect. Copies into <paramref name="into"/> so the caller owns the
     /// result (the no-alloc list above is only safe until the next call).</summary>
@@ -305,7 +305,7 @@ public static class SkillTooltip
                     int est = Mathf.RoundToInt((e.damageType == DamageType.Magic ? ch.MaxMagicAttack : ch.MaxAttack) * mult * aff);
                     if (est > 0) s += " (~" + Hl(est.ToString()) + ")";
                 }
-                int hits = SkillEffectApplier.EffectiveHits(e);   // affinity-scaled, matches what actually lands
+                int hits = SkillEffectApplier.EffectiveHits(e, Character.Instance);   // affinity-scaled, matches what actually lands
                 if (hits > 1) s += ", " + Hl(hits + "×") + " hits";
                 // Any number may answer to the pile now, so the note belongs to the NUMBER, said the same way
                 // wherever it appears rather than spelled out per kind.

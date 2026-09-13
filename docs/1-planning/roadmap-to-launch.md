@@ -51,7 +51,7 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 
 **Loot is a machine with almost nothing in it.** All 86 creatures have an empty drop list. Exactly one creature — the Axolot — wears anything, and it is the sword; it gives it up 15 times in 100. That single roll is the whole loot economy. Refine levels, card sockets, per-copy rarity and rolled skill kits are all built and all persist, and pay out nothing. A worn ring is deliberately near-impossible to get: 1 in 100,000.
 
-**Gear is one place deep.** Eight places on the body can hold something — head, armour, garment, weapon, shield, two accessories, and the ring. Only the weapon has any item authored for it.
+**Gear is one place deep.** Six places on the body can hold something — head, armour, garment, weapon, shield and the ring. Only the weapon has any item authored for it.
 
 **Drop lists name items by typing their names, and nothing checks the spelling.** The sweep that checks everything else follows proper links only. Rebuilding the creatures prints one warning per missing name and then never mentions it again. This is not hypothetical: the older creature roster already asks for nine items that do not exist — Life Potion, Silver Ring, Wooden Guard, Leather Vest, Fire Scroll, Jade Amulet, Katana, Iron Sword and Boots.
 

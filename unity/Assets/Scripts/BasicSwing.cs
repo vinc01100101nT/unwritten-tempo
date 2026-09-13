@@ -60,14 +60,16 @@ public static class BasicSwing
         // One swing, one charge — spent on the whiff too, which is why this sits outside the miss branch.
         dmg = UnitOffense.SpendCharges(attacker.States, dmg);
 
-        resolved = new DamageInfo(dmg, attacker.BasicElement, attacker.BasicIsMagic,
+        // An ordinary attack is PHYSICAL for every unit — player and creature alike — so it always lands against armour.
+        resolved = new DamageInfo(dmg, attacker.BasicElement, false,
                                   crit, attackerHit: hit, overkill: overkill,
                                   missed: missed, attacker: attacker);
         int dealt = CombatAuthority.Apply(victim, resolved);
         if (dealt > 0)
         {
+            // The hit cue is NOT played here: the unit that was hit plays it from its own damage intake, which every
+            // blow reaches — a swing firing it as well showed it twice.
             var body = victim.Body;
-            if (body != null) VfxCue.Fire(crit ? VfxCueId.OnHitByCriticalAttack : VfxCueId.OnHitByNormalAttack, body);
             // A real basic attack connected — the moment Momentum, Perfect Form and every other on-basic passive wait
             // for. Fired HERE, at the one place a swing lands, so no way of swinging can forget to announce it.
             PassiveEvents.Fire(attacker, SkillTrigger.OnBasicAttackDealt, null, body);

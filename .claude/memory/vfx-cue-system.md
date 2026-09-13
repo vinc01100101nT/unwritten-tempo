@@ -33,8 +33,11 @@ handle. `VfxCue.ForgetAurasOn(netId)` strips a body's auras when it leaves view.
 - `CombatAuthority.cs` — `NoteHPAdded` (the ONE door every HP gain passes through) → OnHPAdded. NOT `Character.Heal`: that only calls the door.
 - `Character.cs` — `AddXP` levelup→OnLevelUp; `RaiseDeath()` + `SetHealthFromServer` death→OnDeath.
 - `Health.cs` — basic hit→OnHitByNormalAttack/OnHitByCriticalAttack, skill hit→OnHitBySkill, `Die`/`PlayDeathVisuals`→OnDeath.
-- `BasicSwing.cs` — a landed swing→OnHitByNormalAttack/OnHitByCriticalAttack (at the victim).
-- `MonsterAI3D.cs` — magic mob's attack→OnCastStart, mob levelup→OnLevelUp.
+- `Character.cs` `LandOnMe` — the SAME three hit cues on the player. Every PHYSICAL intake on both sides (player, creature, creature overkill) picks through `VfxCue.HitCue`; the creature's MAGIC intakes play `OnHitBySkill` directly, which is what `HitCue` answers for magic anyway.
+- `BasicSwing.cs` — fires NO hit cue since 2026-09-13: the victim's intake owns it (it used to fire too, so every swing showed twice).
+- `SkillEffectApplier.cs` sub-stat buff/debuff — OnSlow / OnHaste / OnBlind when THAT effect starts (`UnitStates.ApplySubStat` returns true only when the granting skill had no pile running on the stat), judged per effect, never by the unit's total (`VfxCue.SubStatStartCue`). A first version used the total and missed a slow landing on a hasted unit.
+- The hit sounds you HEAR ride the cue sequences: `CombatSfx`'s hit/crit/skillHit sets are empty in `Systems.unity` (measured 2026-09-13).
+- `MonsterAI3D.cs` — mob levelup→OnLevelUp. (A creature's ordinary attack is always PHYSICAL since 2026-09-13 — the "magic mob" attack type and its OnCastStart were removed.)
 - `SkillRunner.cs` — `BeginCastVisuals`→`Begin(OnCastStart)` aura for the wind-up.
 - `Player3DController.cs` — sprint engaged→OnSprint. (`Player3DAttacker`'s OnAttack line is commented out — there is no swing cue.)
 

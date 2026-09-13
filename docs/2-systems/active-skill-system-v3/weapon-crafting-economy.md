@@ -81,8 +81,9 @@ more.
 | Epic      | 5%                             | +18%                    | same     | same            | ~45                       |
 | Legendary | 5%                             | +30%                    | same     | same            | ~50                       |
 
-**Scope of that claim:** the output lift is the only thing rarity does to a skill's POWER, and the only other
-thing it does in the live game is **colour an item's name and slot border**. It does not touch the kit, the
+**Scope of that claim:** the output lift is the only thing rarity does to a skill's POWER. Elsewhere it lifts the
+weapon's own attack by the same ladder, lifts a rolled piece of armour's defence and adds a flat extra to its main
+stats, and **colours an item's name and slot border**. It does not touch the kit, the
 ultimate, or the refine level. The unbuilt crafting economy below still keys off rarity in three places —
 Potential budget, recycle yield and salvage yield — and deliberately so: the yield rules are what stop white
 drops being farmed into unlimited Essence. None of that is in code.

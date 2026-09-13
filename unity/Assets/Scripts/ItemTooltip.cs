@@ -117,7 +117,8 @@ public class ItemTooltip : MonoBehaviour
             var before = c.CurrentDerived;
             var after  = c.DeriveWith(previewSlot, inst);
             sb.Append("\n<color=#B9B9B9>If equipped:</color>");
-            AppendDelta(sb, "ATK", before.atkMax, after.atkMax);
+            AppendDelta(sb, "MELEE ATK", before.meleeMax, after.meleeMax);
+            AppendDelta(sb, "RANGED ATK", before.rangedMax, after.rangedMax);
             AppendDelta(sb, "M.ATK", before.matkMax, after.matkMax);
             AppendDelta(sb, "DEF", before.def, after.def);
             AppendDelta(sb, "M.DEF", before.mdef, after.mdef);
@@ -227,7 +228,9 @@ public class ItemTooltip : MonoBehaviour
     {
         var sb = new StringBuilder();
         AppendHeader(sb, item, item.rarity);
-        AppendItemStats(sb, item);
+        AppendAttackKind(sb, item);
+        if (ArmourRoll.IsRolledSlot(item.slot)) AppendRollRanges(sb, item);
+        else AppendItemStats(sb, item);
         AppendUseEffect(sb, item);
         AppendFooter(sb, item);
         return sb.ToString();
@@ -254,7 +257,8 @@ public class ItemTooltip : MonoBehaviour
         var sb = new StringBuilder();
         var def = inst.def;
         AppendHeader(sb, def, inst.Rarity);
-        AppendItemStats(sb, def);
+        AppendAttackKind(sb, def);
+        AppendCopyStats(sb, inst);
         AppendRolledSkills(sb, inst.skillIds);
         if (inst.upgrade > 0)
             sb.Append("\n<color=#F5B942>Enhancement +").Append(inst.upgrade).Append("</color>");
@@ -281,6 +285,52 @@ public class ItemTooltip : MonoBehaviour
         sb.Append("<color=#").Append(ColorUtility.ToHtmlStringRGB(Rarities.Border(rarity)))
           .Append('>').Append(Rarities.Label(rarity)).Append("</color>")
           .Append(" <color=#B9B9B9>· ").Append(category).Append("</color>");
+    }
+
+    // A weapon says which of the two physical attacks it swings with; nothing else about it is spelled out.
+    static void AppendAttackKind(StringBuilder sb, Item item)
+    {
+        if (item.slot != EquipSlotType.Weapon || item.weaponType == WeaponType.None) return;
+        sb.Append('\n').Append(WeaponTypes.IsRanged(item.weaponType) ? "RANGED attack" : "MELEE attack");
+    }
+
+    // THIS COPY's own numbers — what it really adds, read from the same sum the stat sheet uses, so the card and the
+    // sheet can never disagree. Rarity is already inside them. Refine and cards have their own lines below.
+    static void AppendCopyStats(StringBuilder sb, EquipmentInstance inst)
+    {
+        var eb = default(EquipBonuses);
+        inst.AddPieceInto(ref eb);
+        AppendStat(sb, "ATK", eb.atk);
+        AppendStat(sb, "DEF", eb.def);
+        AppendStat(sb, "M.ATK", eb.matk);
+        AppendStat(sb, "M.DEF", eb.mdef);
+        AppendStat(sb, "Max HP", eb.hp);
+        AppendStat(sb, "Max MP", eb.mp);
+        AppendStat(sb, "STR", eb.str);
+        AppendStat(sb, "AGI", eb.agi);
+        AppendStat(sb, "VIT", eb.vit);
+        AppendStat(sb, "INT", eb.intel);
+        AppendStat(sb, "DEX", eb.dex);
+        AppendStat(sb, "LUK", eb.luk);
+        AppendStat(sb, "CRIT", eb.critPercent, "%");
+        AppendStat(sb, "ASPD", eb.aspdPercent, "%");
+    }
+
+    // A bare armour DEFINITION has no numbers of its own — only the ranges its copies roll inside.
+    static void AppendRollRanges(StringBuilder sb, Item item)
+    {
+        AppendRange(sb, "DEF", item.defenseMin, item.defenseMax);
+        AppendRange(sb, "M.DEF", item.magicDefenseMin, item.magicDefenseMax);
+        if (item.mainStatCountMax > 0)
+            sb.Append("\n<color=#C9C9C9>Main stats</color>  ").Append(Mathf.Max(0, item.mainStatCountMin)).Append('–')
+              .Append(item.mainStatCountMax).Append(" × ").Append(item.mainStatValueMin).Append('–').Append(item.mainStatValueMax);
+    }
+
+    static void AppendRange(StringBuilder sb, string label, int min, int max)
+    {
+        if (max <= 0 && min <= 0) return;
+        sb.Append("\n<color=#C9C9C9>").Append(label).Append("</color>  ").Append(min);
+        if (max > min) sb.Append('–').Append(max);
     }
 
     static void AppendItemStats(StringBuilder sb, Item item)

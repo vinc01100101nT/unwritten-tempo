@@ -105,7 +105,7 @@ public class Player3DAttacker : MonoBehaviour
         get
         {
             var w = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
-            return w != null && (w.weaponType == WeaponType.Bow || w.weaponType == WeaponType.Firearm);
+            return w != null && WeaponTypes.IsRanged(w.weaponType);
         }
     }
 

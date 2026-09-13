@@ -103,7 +103,7 @@ With tier and the throttle gone there is no single number to turn when playtesti
 
 ### What stays on `MonsterDef`
 
-Behaviour is not stats and does not unify: `moveSpeed`, `aggroRadius`, `leashRadius`, `stopDistance`, wander knobs, `preferredRange`, `fleeHpFraction`, `touchRange`, `touchInterval`, `attackType`, on-hit ailment, loot, sheet/tint/scale.
+Behaviour is not stats and does not unify: `moveSpeed`, `aggroRadius`, `leashRadius`, `stopDistance`, wander knobs, `preferredRange`, `fleeHpFraction`, `touchRange`, `touchInterval`, on-hit ailment, loot, sheet/tint/scale.
 
 **One open question:** move speed is arguably a shared stat (the movement-speed sub-stat pile already multiplies it on both sides through `UnitStates.MoveMult`), but it's stored on the mover today, not in either stat block. Recommend leaving it where it is for this pass and revisiting once the block is in.
 
@@ -155,18 +155,19 @@ STR, AGI, VIT, INT, DEX, LUK. Each starts at 1, caps at 99, and has exactly **tw
 
 | Sub-stat | Scaled by |
 | --- | --- |
-| Attack | STR ×1/pt + `⌊STR/10⌋²`, DEX÷2, LUK÷4, base + 1/level, gear, the Atk ring node, a timed Attack change |
-| Magic attack | INT ×1/pt + `⌊INT/10⌋²`, LUK÷4, base + 1/level, gear, the MAtk ring node, a timed MagicAttack change |
-| Defence | VIT÷3, base + 1/level, gear, the Def ring node, a timed Defense change |
+| Melee attack | STR ×1/pt + STR's jump, DEX÷2, LUK÷4, base + 1/level, gear, the Atk ring node, a timed Attack change. Used by every weapon that is not ranged, and bare hands |
+| Ranged attack | DEX ×1/pt + DEX's jump, STR÷2, LUK÷4, base + 1/level, gear, the **same** Atk ring node, a timed Attack change. Used while holding a Bow or Firearm (`WeaponTypes.IsRanged`) |
+| Magic attack | INT ×1/pt + INT's jump, LUK÷4, base + 1/level, gear, the MAtk ring node, a timed MagicAttack change |
+| Defence | VIT÷3 + VIT's jump, base + 1/level, gear, the Def ring node, a timed Defense change |
 | Magic defence | INT÷3, base + 1/level, gear, the **same** Def ring node, a timed MagicDefense change |
 | Max health | level curve × (1 + VIT×0.02), gear, the HP ring node, a timed MaxHP change |
 | Max mana | level curve × (1 + INT×0.015), gear, the MP ring node, a timed MaxMP change |
 | Accuracy | level + DEX×1 + LUK÷3, the Accuracy ring node, a timed Accuracy change |
-| Evasion | level + AGI×1 + LUK÷5, the Evasion ring node, a timed Evasion change |
+| Evasion | level + AGI×1 + AGI's jump + LUK÷5, the Evasion ring node, a timed Evasion change |
 | Attack speed | AGI 0.5%/pt + DEX at 0.25× that, gear, the AttackSpeed ring node, a timed AttackSpeed change; capped ×3 |
 | Cast speed | `1 − DEX/150` (instant at 150 DEX), divided by the CastSpeed ring node and a timed CastSpeed change |
 | Crit chance | LUK 0.3%/pt, gear, the Critical ring node, a timed CritChance change; capped 95% |
-| Crit damage | 1.4 base + **LUK 0.2%/pt**, the same Critical ring node, a timed CritDamage change |
+| Crit damage | 1.4 base + **LUK 0.2%/pt** + LUK's jump as percentage points, the same Critical ring node, a timed CritDamage change |
 | Crit resistance | the DEFENDER's LUK, 0.3%/pt off the attacker's crit chance |
 | HP regen | **VIT 0.02% of MaxHP per second per point**, plus a timed HPRegen change |
 | Mana regen | 1.5/s base + **INT 0.02% of MaxMP per second per point**, plus a timed MPRegen change |

@@ -9,10 +9,12 @@ using UnityEngine;
 /// <para><b>Why this exists:</b> a mob's derived numbers used to be stamped onto <see cref="Health"/> and
 /// <see cref="MonsterAI3D"/> once at spawn and then hand-scaled by a flat multiplier on level-up — a second growth
 /// curve that drifted away from the player's. Now level-up just raises <see cref="Level"/> and RE-DERIVES; nothing
-/// is ever scaled by a mob-only factor. Equipping or losing gear re-derives the same way.</para>
+/// is ever scaled by a mob-only factor.</para>
 ///
 /// <para>Attached by the mob builder alongside <see cref="Health"/>. Zero per-frame cost: derivation runs only when
-/// something that feeds it actually changes (spawn, level-up, gear change).</para>
+/// something that feeds it actually changes — spawn, level-up, a respawn back to its spawn level, its spawn stats being
+/// replaced, a buff or debuff on it starting or ending, and the dev settings. A mob's gear changes only when it comes
+/// back for a new life, when it is re-seated as fresh rolled copies and this re-derives (<c>MobRespawn.Reactivate</c>).</para>
 /// </summary>
 [RequireComponent(typeof(Health))]
 public class UnitStatBlock : MonoBehaviour
@@ -55,6 +57,9 @@ public class UnitStatBlock : MonoBehaviour
     // power is the thing that can drop.
     float RingPercent(StatId stat) =>
         Gear != null && Gear.RingEquipped ? Ranks.Percent(stat) : 0f;
+
+    /// <summary>The ring's percentage on one stat — what a skill in this unit's hands scales off.</summary>
+    public float RingBonus(StatId stat) => RingPercent(stat);
 
     /// <summary>The whole percentage lift on one stat: ring investment plus any live sub-stat buff or debuff — the
     /// mob-side twin of <c>Character.Lift</c>, so a window that raises a player's evasion raises a mob's by the same
@@ -115,13 +120,17 @@ public class UnitStatBlock : MonoBehaviour
     // MP, on the same footing as the player's. Mobs don't spend it on anything yet (they have no cost-bearing
     // skills), but it EXISTS so an MP-touching effect — ManaLeech landing on a mob — has a real pool to move,
     // instead of being a knob that silently does nothing on half the units in the game.
-    public int MaxMP => UnitStatMath.MaxMP(inputs, Bonuses, Lift(StatId.MP, SubStat.MaxMP));
+    public int MaxMP => UnitStatMath.MaxMP(Effective, Bonuses, Lift(StatId.MP, SubStat.MaxMP));
+
+    /// <summary>What this unit bought plus the primaries its gear adds — what every formula is fed, so a creature's
+    /// worn STR raises its attack exactly as a player's does.</summary>
+    UnitStatInputs Effective => inputs.WithGear(Bonuses);
     public int CurrentMP { get; private set; }
 
     /// <summary>Mana refilled per second with no skill running — the mob's half of the same INT rule the player uses,
     /// on top of the shared flat base every unit gets.</summary>
     public float MPRegenPerSecond =>
-        UnitStatMath.BaseMpRegenPerSecond + UnitStatMath.MPRegenPerSecond(inputs, MaxMP);
+        UnitStatMath.BaseMpRegenPerSecond + UnitStatMath.MPRegenPerSecond(Effective, MaxMP);
 
     public void GainMana(int amount)
     {
@@ -163,21 +172,27 @@ public class UnitStatBlock : MonoBehaviour
         if (ai == null) ai = GetComponent<MonsterAI3D>();
 
         var eb = Bonuses;
+        var u = inputs.WithGear(eb);
 
-        health.maxHealth    = UnitStatMath.MaxHP(inputs, eb, Lift(StatId.HP, SubStat.MaxHP));
-        health.defense      = UnitStatMath.Defense(inputs, eb, Lift(StatId.Def, SubStat.Defense));
-        health.magicDefense = UnitStatMath.MagicDefense(inputs, eb, Lift(StatId.Def, SubStat.MagicDefense));
-        health.flee         = UnitStatMath.Flee(inputs, Lift(StatId.Evasion, SubStat.Evasion));
-        health.luk          = inputs.luk;   // pre-renewal crit shield — the attacker reads this off the target
-        health.hpRegenPerSecond = UnitStatMath.HPRegenPerSecond(inputs, health.maxHealth);
+        health.maxHealth    = UnitStatMath.MaxHP(u, eb, Lift(StatId.HP, SubStat.MaxHP));
+        health.defense      = UnitStatMath.Defense(u, eb, Lift(StatId.Def, SubStat.Defense));
+        health.magicDefense = UnitStatMath.MagicDefense(u, eb, Lift(StatId.Def, SubStat.MagicDefense));
+        health.flee         = UnitStatMath.Flee(u, Lift(StatId.Evasion, SubStat.Evasion));
+        health.luk          = u.luk;   // pre-renewal crit shield — the attacker reads this off the target
+        health.hpRegenPerSecond = UnitStatMath.HPRegenPerSecond(u, health.maxHealth);
 
         if (ai != null)
         {
             ai.level        = inputs.level;
-            ai.attack       = UnitStatMath.Attack(inputs, eb, Lift(StatId.Atk, SubStat.Attack));
-            ai.hit          = UnitStatMath.Hit(inputs, Lift(StatId.Accuracy, SubStat.Accuracy));
+            var held        = Gear != null ? Gear.WeaponType : WeaponType.None;
+            ai.attack       = UnitStatMath.PhysicalAttack(held, u, eb, Lift(StatId.Atk, SubStat.Attack));
+            ai.hit          = UnitStatMath.Hit(u, Lift(StatId.Accuracy, SubStat.Accuracy));
+            ai.critChance     = UnitStatMath.CritChance01(u, eb, Lift(StatId.Critical, SubStat.CritChance));
+            ai.critMultiplier = UnitStatMath.CritMultiplier(u, Lift(StatId.Critical, SubStat.CritDamage));
+            ai.magicAttack       = UnitStatMath.MagicAttack(u, eb, Lift(StatId.MAtk, SubStat.MagicAttack));
+            ai.magicDamageSpread = 1f - UnitStatMath.MinFraction(u.intel);
             // Spread is DEX-driven for everyone: high DEX both lifts and STABILISES damage.
-            ai.damageSpread = 1f - UnitStatMath.MinFraction(inputs.dex);
+            ai.damageSpread = 1f - UnitStatMath.MinFraction(u.dex);
         }
 
         if (healToFull) { health.RefillToMax(); CurrentMP = MaxMP; }

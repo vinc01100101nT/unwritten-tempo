@@ -245,7 +245,7 @@ not behaving** — a wrong formula compiles perfectly, so neither replaces a pla
 
 ## Known gaps
 
-- **Damage-type combat math** — Crit armour-pierce and Magic glance-vs-Evasion are still stubbed. Physical and Magic
+- **Damage-type combat math** — Crit armour-pierce is still stubbed. Evasion has no effect on magic at all. Physical and Magic
   behave as before and Crit forces a crit; the full pass touches `Health` and is separate from V3.
 - **Composer starter weights** don't yet match the scaling defaults locked in *Skill Numbers & Balance Baseline*.
 - **A formal Channels-catalog data type** with stable ids does not exist: the per-kind labels live in a switch and the

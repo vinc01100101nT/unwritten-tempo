@@ -259,7 +259,6 @@ public static class RigBuilder25D
         if (mystic)
         {
             arc.name       = "Mystic";
-            arc.attackType = MonsterAI3D.AttackType.Magic;
             arc.tint       = new Color(0.62f, 0.72f, 1f);   // arcane blue marks a caster
         }
         return BuildMonster(tex, foot, arc);
@@ -301,7 +300,6 @@ public static class RigBuilder25D
         mh.element      = arc.element;                        // armor PROPERTY — what the player's spells/melee hit
 
         var ai = go.AddComponent<MonsterAI3D>();
-        ai.attackType     = arc.attackType;
         // attack / hit / damageSpread: same story — derived, written by UnitStatBlock, not stamped here.
         ai.xpReward       = arc.xpReward;
         ai.touchRange     = arc.touchRange;
@@ -314,8 +312,9 @@ public static class RigBuilder25D
         ai.preferredRange = arc.preferredRange;             // >0 = caster/archer kites at range
         ai.fleeHpFraction = arc.fleeHpFraction;             // >0 = skittish: flees when wounded
         // The LIVE stat block + the worn set — the SINGLE writer of every derived combat number on this mob. It fills
-        // Health.maxHealth/defense/magicDefense/flee/luk and MonsterAI3D.attack/hit/damageSpread on Awake, and again
-        // on every level-up and gear change, so a mob can never drift onto a curve of its own.
+        // Health.maxHealth/defense/magicDefense/flee/luk and MonsterAI3D's attack, hit, spread and crit numbers on Awake,
+        // and again whenever something feeding them changes (the list is on UnitStatBlock), so a mob can never drift
+        // onto a curve of its own.
         var equip = go.AddComponent<UnitEquipment>();
         if (arc.startingGear != null) equip.startingGear = arc.startingGear;   // worn gear is also the drop table
         var block = go.AddComponent<UnitStatBlock>();
@@ -328,7 +327,7 @@ public static class RigBuilder25D
         ai.onHitAilmentChance     = arc.onHitAilmentChance;
         ai.onHitAilmentSeconds    = arc.onHitAilmentSeconds;
         ai.onHitAilmentMagnitude  = arc.onHitAilmentMagnitude;
-        // No NinjaAdventure VFX sheets: magic mobs fall back to the instant magic touch (null projectileSheet)
+        // No NinjaAdventure VFX sheets: a creature holding a ranged weapon lands its blow instantly (null projectileSheet)
         // and the stun indicator stays off (null stunSheet) until a non-Ninja effect is wired in.
 
         go.AddComponent<BillboardAnimator3D>().sheet = tex;

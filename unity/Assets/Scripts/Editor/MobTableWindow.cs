@@ -299,18 +299,54 @@ public class MobTableWindow : EditorWindow
     enum DerivedStat { HP, Atk, Def, Flee }
 
     // The table's derived columns read the SAME functions the game runs (UnitStatMath), through the def's own
-    // StatInputs — so what a designer sees here is what the mob will actually have, not a parallel estimate.
-    // A mob wears no gear and no ring yet, so both contribute nothing.
+    // StatInputs — so what a designer sees here is what the mob will actually have, not a parallel estimate. Its worn
+    // gear and its ring are folded in the way a spawned mob folds them in: one piece per slot (the last one authored
+    // for a slot wins, as UnitEquipment seats them), gear primaries added to the inputs, the weapon held picking melee
+    // or ranged attack, and the ring's percentages counting only while a ring is worn. No sub-stat buffs: a table row
+    // is a mob at rest.
+    // Scratch reused by every Derived call: the table asks four times per row per draw and twice per comparison while
+    // sorting, so nothing in it may allocate.
+    static readonly Item[] wornScratch = new Item[System.Enum.GetValues(typeof(EquipSlotType)).Cast<int>().Max() + 1];
+    static readonly EquipmentInstance pieceScratch = new EquipmentInstance();
+    static readonly PassiveRanks ringScratch = new PassiveRanks();
+
     static int Derived(MonsterDef def, DerivedStat which)
     {
-        var u = def.StatInputs;
-        var noGear = default(EquipBonuses);
+        System.Array.Clear(wornScratch, 0, wornScratch.Length);
+        if (def.startingGear != null)
+            foreach (var item in def.startingGear)
+                if (item != null && item.slot != EquipSlotType.None) wornScratch[(int)item.slot] = item;
+
+        var gear = default(EquipBonuses);
+        foreach (var item in wornScratch)
+        {
+            if (item == null) continue;
+            pieceScratch.def = item;
+            pieceScratch.upgrade = 0;
+            pieceScratch.cards.Clear();
+            pieceScratch.rarity = item.rarity;
+            // The real copy is rolled only when the creature spawns, so the table shows the MIDDLE of a piece of
+            // armour's ranges; anything else is as authored. Reset per piece, or a roll would leak between rows.
+            if (ArmourRoll.IsRolledSlot(item.slot)) ArmourRoll.FillMidpoints(pieceScratch);
+            else pieceScratch.rolled = false;
+            pieceScratch.AccumulateInto(ref gear);
+        }
+        pieceScratch.def = null;
+        var weapon = wornScratch[(int)EquipSlotType.Weapon];
+        var held = weapon != null ? weapon.weaponType : WeaponType.None;
+
+        bool ringWorn = wornScratch[(int)EquipSlotType.Ring] != null && def.ringRankStats != null
+                        && def.ringRankValues != null && def.ringRankStats.Length > 0;
+        if (ringWorn) ringScratch.LoadState(def.ringRankStats, def.ringRankValues, def.ringRankStats[0], true, 0);
+        float Ring(StatId stat) => ringWorn ? ringScratch.Percent(stat) : 0f;
+
+        var u = def.StatInputs.WithGear(gear);
         switch (which)
         {
-            case DerivedStat.HP:   return UnitStatMath.MaxHP(u, noGear, 0f);
-            case DerivedStat.Atk:  return UnitStatMath.Attack(u, noGear, 0f);
-            case DerivedStat.Def:  return UnitStatMath.Defense(u, noGear, 0f);
-            default:               return UnitStatMath.Flee(u, 0f);
+            case DerivedStat.HP:   return UnitStatMath.MaxHP(u, gear, Ring(StatId.HP));
+            case DerivedStat.Atk:  return UnitStatMath.PhysicalAttack(held, u, gear, Ring(StatId.Atk));
+            case DerivedStat.Def:  return UnitStatMath.Defense(u, gear, Ring(StatId.Def));
+            default:               return UnitStatMath.Flee(u, Ring(StatId.Evasion));
         }
     }
 
@@ -342,8 +378,7 @@ public class MobTableWindow : EditorWindow
     static readonly EquipSlotType[] GearSlots =
     {
         EquipSlotType.Weapon, EquipSlotType.Shield, EquipSlotType.Head, EquipSlotType.Armor,
-        EquipSlotType.Garment, EquipSlotType.Boots, EquipSlotType.Accessory1, EquipSlotType.Accessory2,
-        EquipSlotType.Ring,
+        EquipSlotType.Garment, EquipSlotType.Boots, EquipSlotType.Ring,
     };
 
     /// <summary>The per-mob detail editor: what it WEARS (one object field per slot) and, when a ring is worn, that

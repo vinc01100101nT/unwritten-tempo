@@ -88,6 +88,8 @@ public class Character : MonoBehaviour, ICombatUnit
     const float CritShieldPerLuk = UnitStatMath.CritShieldPerLuk;
 
     public int GetStat(PrimaryStat s) => primary[(int)s];
+    /// <summary>What the formulas use for this stat: the points bought plus what gear and cards add.</summary>
+    public int EffectiveStat(PrimaryStat s) => P(s);
     // EFFECTIVE primary stat = allocated points + equipment/card bonuses. Every derived/combat
     // getter below reads P(), so gear that grants +STR now flows into ATK/HP/etc. (The raw
     // allocation economy — costs, caps, GetStat — uses primary[] directly and is unaffected.)
@@ -198,6 +200,7 @@ public class Character : MonoBehaviour, ICombatUnit
     // Non-null ONLY inside DeriveWith, where a hypothetical loadout is previewed. Every stat getter reads
     // `equipBonuses`, so overriding it here makes the whole snapshot reflect the preview without mutating any gear.
     EquipBonuses? previewBonuses;
+    WeaponType? previewWeaponType;
 
     /// <summary>Equipment's stat contribution. Cached inside <see cref="UnitEquipment"/> (recomputed only when gear
     /// changes), so the hot combat getters don't re-sum the worn set per hit.</summary>
@@ -237,16 +240,7 @@ public class Character : MonoBehaviour, ICombatUnit
     ///
     /// <para>Resolved ONCE per cast by the applier, never per hit — the loop below compares skill ids, which has no
     /// business running inside the per-hit path.</para></summary>
-    public float SkillRarityLift(string skillId)
-    {
-        if (string.IsNullOrEmpty(skillId)) return 0f;
-        var weapon = GetEquippedInstance(EquipSlotType.Weapon);
-        var kit = weapon != null ? weapon.skillIds : null;
-        if (kit == null) return 0f;
-        for (int i = 0; i < kit.Count; i++)
-            if (string.Equals(kit[i], skillId)) return Rarities.OutputLift(weapon.rarity);
-        return 0f;
-    }
+    public float SkillRarityLift(string skillId) => Rarities.LiftFor(GetEquippedInstance(EquipSlotType.Weapon), skillId);
 
     /// <summary>The live signed bonus a timed sub-stat buff or debuff is putting on <paramref name="stat"/>, 0 when
     /// none. Neutral while the baseline snapshot is being taken, so the "before" column of a level-up preview shows
@@ -342,7 +336,24 @@ public class Character : MonoBehaviour, ICombatUnit
     // about states — is what lets a new sub-stat work everywhere by touching one line.
     public int MaxHP   => UnitStatMath.MaxHP(Inputs, equipBonuses, Lift(StatId.HP, SubStat.MaxHP));
     public float HPRegenPerSecond => UnitStatMath.HPRegenPerSecond(Inputs, MaxHP);
-    public int Attack  => UnitStatMath.Attack(Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
+    public int MeleeAttack  => UnitStatMath.MeleeAttack(Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
+    public int RangedAttack => UnitStatMath.RangedAttack(Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
+    /// <summary>The physical attack this character swings with: ranged attack while holding a ranged weapon, melee
+    /// attack otherwise. Every physical roll reads this, so the held weapon decides for normal attacks and physical
+    /// skills alike.</summary>
+    public int Attack  => UnitStatMath.PhysicalAttack(HeldWeaponType, Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
+
+    // The weapon type in hand — or, while DeriveWith previews a different weapon, that one, so the hover preview
+    // of a bow shows ranged attack rather than the sword's melee attack.
+    WeaponType HeldWeaponType
+    {
+        get
+        {
+            if (previewWeaponType.HasValue) return previewWeaponType.Value;
+            var w = GetEquipped(EquipSlotType.Weapon);
+            return w != null ? w.weaponType : WeaponType.None;
+        }
+    }
     public int Defense => UnitStatMath.Defense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.Defense));
 
     public int MaxMP        => UnitStatMath.MaxMP(Inputs, equipBonuses, Lift(StatId.MP, SubStat.MaxMP));
@@ -374,12 +385,12 @@ public class Character : MonoBehaviour, ICombatUnit
     public bool IsDead => CurrentHP <= 0;
 
     // IDamageable seam (network-readiness): same one apply-entry a mob's Health exposes, so a future net layer targets
-    // player and mob through ONE type. Routes into the existing player sinks (mobs don't crit the player, so isCrit is
-    // ignored here) — no behavior change; consumed by the Step D authority seam.
+    // player and mob through ONE type. Routes into the existing player sinks, carrying a mob's crit so it ignores our
+    // defence exactly as the player's crit ignores a mob's; consumed by the Step D authority seam.
     public Vector3 DamagePosition { get { var a = Avatar(); return a != null ? a.position : transform.position; } }
     public int ApplyDamage(in DamageInfo info)
         => info.isMagic ? TakeMagicDamage(info.amount, info.element, info.source)
-                        : TakeDamage(info.amount, info.attackerHit, info.element, info.source, info.missed);
+                        : TakeDamage(info.amount, info.attackerHit, info.element, info.source, info.missed, info.isCrit);
     public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
 
     // ICombatUnit seam: the rest of the shared vocabulary an effect needs, so a skill effect targets the player through
@@ -535,6 +546,8 @@ public class Character : MonoBehaviour, ICombatUnit
             if (b != 1f)
             {
                 d.atkMin = Mathf.RoundToInt(d.atkMin * b);   d.atkMax = Mathf.RoundToInt(d.atkMax * b);
+                d.meleeMin = Mathf.RoundToInt(d.meleeMin * b);   d.meleeMax = Mathf.RoundToInt(d.meleeMax * b);
+                d.rangedMin = Mathf.RoundToInt(d.rangedMin * b); d.rangedMax = Mathf.RoundToInt(d.rangedMax * b);
                 d.matkMin = Mathf.RoundToInt(d.matkMin * b); d.matkMax = Mathf.RoundToInt(d.matkMax * b);
             }
             d.moveSpeed = Mathf.RoundToInt(d.moveSpeed * States.MoveMult);    // the move-speed sub-stat (NOT the cast/aftercast
@@ -549,6 +562,8 @@ public class Character : MonoBehaviour, ICombatUnit
     DerivedSnapshot SnapshotNow() => new DerivedSnapshot
     {
         atkMin = MinAttack,       atkMax = MaxAttack,
+        meleeMin = UnitStatMath.MinAttack(MeleeAttack, P(PrimaryStat.DEX)),   meleeMax = MeleeAttack,
+        rangedMin = UnitStatMath.MinAttack(RangedAttack, P(PrimaryStat.DEX)), rangedMax = RangedAttack,
         matkMin = MinMagicAttack, matkMax = MaxMagicAttack,
         def = Defense,            mdef = MagicDefense,
         hit = Hit,                flee = Flee,
@@ -585,8 +600,10 @@ public class Character : MonoBehaviour, ICombatUnit
         // Aggregate the hypothetical set = live gear with `slot` replaced by `hypothetical`. Pure — the worn set is
         // never touched; only this snapshot sees the swap.
         previewBonuses = Gear.BonusesWith(slot, hypothetical);
+        if (slot == EquipSlotType.Weapon)
+            previewWeaponType = hypothetical != null && hypothetical.def != null ? hypothetical.def.weaponType : WeaponType.None;
         try { return SnapshotNow(); }
-        finally { previewBonuses = null; }
+        finally { previewBonuses = null; previewWeaponType = null; }
     }
 
     /// <summary>Roll the player's outgoing hit: a random value in [<see cref="MinAttack"/>,
@@ -628,16 +645,16 @@ public class Character : MonoBehaviour, ICombatUnit
         get { var w = GetEquipped(EquipSlotType.Weapon); return w != null ? w.element : Element.Neutral; }
     }
 
-    /// <summary>A player's ordinary attack is physical — a spell is a cast, never a swing.</summary>
-    public bool BasicIsMagic => false;
-
     public bool RollBasicCrit(ICombatUnit victim) => RollCrit(victim != null ? victim.CritShieldLuk : 0);
 
     public int RollBasicDamage(bool crit) => RollDamageMagnitude(crit);
 
-    /// <summary>The player has no LUK stat, so nothing shields against a crit on us — and nothing reads this today,
-    /// because mobs never crit.</summary>
-    public int CritShieldLuk => 0;
+    public int RollSkillDamage(DamageType type, int targetLuk, out bool crit)
+        => type == DamageType.Magic ? RollMagicDamage(out crit)
+                                    : RollDamage(out crit, targetLuk, type == DamageType.Crit);
+
+    /// <summary>Our LUK, which lowers an attacker's crit chance against us — the same shield a mob's LUK gives it.</summary>
+    public int CritShieldLuk => P(PrimaryStat.LUK);
 
     /// <summary>Roll the damage NUMBER for an attack whose crit is already decided. Only called once the strike is
     /// known to connect. UnitOffense.Dealt folds in the damage buffs — the same call a mob's swing makes, so both
@@ -662,7 +679,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Our crit chance against a defender with <paramref name="targetLuk"/> LUK — base
     /// <see cref="CritChance01"/> minus the crit shield, clamped to [0, 0.95].</summary>
-    float EffectiveCritChance(int targetLuk) => Mathf.Clamp(CritChance01 - targetLuk * CritShieldPerLuk, 0f, 0.95f);
+    float EffectiveCritChance(int targetLuk) => UnitStatMath.EffectiveCritChance(CritChance01, targetLuk);
 
     /// <summary>Try to spend <paramref name="amount"/> mana; returns false (and spends nothing)
     /// if there isn't enough. Used by the caster before firing a spell.</summary>
@@ -1375,7 +1392,7 @@ public class Character : MonoBehaviour, ICombatUnit
     /// (RO accuracy); a miss negates the hit. Pass −1 to skip the roll (always lands). <paramref name="source"/>
     /// (the attacking mob) is used for damage-reflect. Returns damage dealt.</summary>
     public int TakeDamage(int attackerAttack, int attackerHit, Element attackElement = Element.Neutral,
-                          MonsterAI3D source = null, bool missed = false)
+                          MonsterAI3D source = null, bool missed = false, bool crit = false)
     {
         if (IsDead) return 0;
         if (DodgedByInvuln()) return 0;   // i-frames (dodge-dash): the hit passes harmlessly through
@@ -1394,7 +1411,7 @@ public class Character : MonoBehaviour, ICombatUnit
         // than counted. The server has already taken the block, the parry, the armour's element and DEF off this
         // figure, so weighing them a second time here would draw the person a smaller number than the blow they
         // actually took, or swallow the blow entirely on a coin this machine had no business tossing.
-        if (IsWatchedCopy) return LandOnMe(attackerAttack, source, MonsterHitColor);
+        if (IsWatchedCopy) return LandOnMe(attackerAttack, source, MonsterHitColor, false, crit, attackerHit);
 
         // Off-hand block: a shield can negate the hit (and clang) before any damage applies.
         var off = GetEquipped(EquipSlotType.Shield);
@@ -1412,12 +1429,12 @@ public class Character : MonoBehaviour, ICombatUnit
         if (ParriedHit(source)) return 0;   // read LAST of the negations, so a charge is only ever spent on a hit that
                                             // would really have landed (a miss / block / immunity keeps it in hand)
 
-        // Pre-renewal DEF split: hard-DEF % then flat soft DEF. Mobs don't crit the player → crit:false.
-        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, false) * mod);
+        // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both, exactly as it does on a mob.
+        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, crit) * mod);
         // Everything below reads what LANDED, never the pre-barrier figure: a hit a Shield ate or a Brace holds costs
         // no HP, so it must also not flash, not bounce thorns, and must report 0 to the attacker
         // (whose own "did I connect" check pops the damage number and grants its XP).
-        return LandOnMe(dmg, source, MonsterHitColor);
+        return LandOnMe(dmg, source, MonsterHitColor, false, crit, attackerHit);
     }
 
     /// <summary>Where every hit on the player ends: what a Shield or a Brace leaves of it comes off HP, the DIGITS
@@ -1426,13 +1443,17 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <para>The number is drawn HERE, on the side it happened to, for the same reason a creature's is drawn inside
     /// its own <see cref="Health"/>: whoever swung is no longer on this machine. A monster's bite is decided on the
     /// server, so a number the monster itself drew appeared on a screen nobody is sitting at.</para></summary>
-    int LandOnMe(int dmg, MonsterAI3D source, Color numberColor)
+    int LandOnMe(int dmg, MonsterAI3D source, Color numberColor, bool isMagic, bool crit, int attackerHit)
     {
         dmg = ApplyHitToHP(dmg, source);
         OnHealthChanged?.Invoke();
+        var av = Avatar();
+        // The hit cue, chosen by the same rule a creature's is and played whenever the blow got this far — a miss, a
+        // block, a parry or an immunity has already returned — exactly as a creature plays it whatever its barrier
+        // left. The digits keep our own colour. Silent on a joined machine: the server's cue reaches every screen.
+        if (av != null) VfxCue.Fire(VfxCue.HitCue(isMagic, crit, attackerHit), av);
         if (dmg > 0)
         {
-            var av = Avatar();
             if (av != null) DamagePopup.Spawn(UnitAnchor.Overhead(av), dmg, numberColor);
             // player hurt grunt
             Sfx.Play(hurtSfx);
@@ -1459,23 +1480,22 @@ public class Character : MonoBehaviour, ICombatUnit
         if (a != null) VfxCue.Fire(VfxCueId.OnDeath, a);
     }
 
-    /// <summary>Apply an incoming MAGIC hit: reduced by <see cref="MagicDefense"/> (not <see cref="Defense"/>).
-    /// Magic can't be fully dodged, but our <see cref="Flee"/> makes it GLANCE (a partial reduction via
-    /// <see cref="Combat.MagicGlanceMult"/>) — the Arcane→Finesse edge of the triangle. Returns the damage dealt.</summary>
+    /// <summary>Apply an incoming MAGIC hit: reduced by <see cref="MagicDefense"/> (not <see cref="Defense"/>). Magic
+    /// can't be dodged, and evasion does nothing to it. Returns the damage dealt.</summary>
     public int TakeMagicDamage(int attackerMagic, Element attackElement = Element.Neutral, MonsterAI3D source = null)
     {
         if (IsDead) return 0;
         if (DodgedByInvuln()) return 0;   // i-frames (dodge-dash) dodge magic too
 
         // Told, not worked out — the same rule the physical intake above explains.
-        if (IsWatchedCopy) return LandOnMe(attackerMagic, source, MonsterMagicColor);
+        if (IsWatchedCopy) return LandOnMe(attackerMagic, source, MonsterMagicColor, true, false, -1);
 
         float mod = Elements.Modifier(attackElement, armorElement);
         if (mod <= 0f) return 0;          // armour already nullified it — nothing to parry, so no charge is spent
         if (ParriedHit(source)) return 0;   // the read catches magic too: Parry is a timing skill, not a physical block
 
-        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod * Combat.MagicGlanceMult(Flee));
-        return LandOnMe(dmg, source, MonsterMagicColor);
+        int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod);
+        return LandOnMe(dmg, source, MonsterMagicColor, true, false, -1);
     }
 
     /// <summary>Apply raw over-time damage (e.g. a <see cref="StatusController"/> Poison/Bleed/Burn tick) that
@@ -1805,6 +1825,7 @@ public class Character : MonoBehaviour, ICombatUnit
         var cards = new List<string>();
         var rarities = new List<int>();
         var kits = new List<string>();
+        var rolls = new List<string>();
         foreach (var e in bag)
         {
             if (e == null || e.def == null) continue;
@@ -1819,8 +1840,9 @@ public class Character : MonoBehaviour, ICombatUnit
                 cards.Add(ItemCatalog.EncodeCards(e.instance.cards));
                 rarities.Add((int)e.instance.rarity);
                 kits.Add(e.instance.EncodeSkills());
+                rolls.Add(e.instance.EncodeRoll());
             }
-            else { refines.Add(0); cards.Add(""); rarities.Add((int)e.def.rarity); kits.Add(""); }
+            else { refines.Add(0); cards.Add(""); rarities.Add((int)e.def.rarity); kits.Add(""); rolls.Add(""); }
         }
         d.bagItemIds = ids.ToArray();
         d.bagCounts = counts.ToArray();
@@ -1828,6 +1850,7 @@ public class Character : MonoBehaviour, ICombatUnit
         d.bagCards = cards.ToArray();
         d.bagRarities = rarities.ToArray();
         d.bagSkills = kits.ToArray();
+        d.bagRolls = rolls.ToArray();
     }
 
     // Unknown item ids are dropped, so an asset removed from the game cannot stop a character loading.
@@ -1861,6 +1884,8 @@ public class Character : MonoBehaviour, ICombatUnit
                 // an empty kit rather than silently re-rolling into something the player never earned.
                 if (d.bagRarities != null && i < d.bagRarities.Length) entry.instance.rarity = (Rarity)d.bagRarities[i];
                 if (d.bagSkills != null && i < d.bagSkills.Length) entry.instance.DecodeSkills(d.bagSkills[i]);
+                // v11+: the copy's rolled armour numbers. Missing on an older save, which leaves the piece unrolled.
+                if (d.bagRolls != null && i < d.bagRolls.Length) entry.instance.DecodeRoll(d.bagRolls[i]);
             }
             bag.Add(entry);
         }
@@ -1880,6 +1905,9 @@ public class Character : MonoBehaviour, ICombatUnit
             // WEAPONS are never seeded: a weapon's identity is its ROLLED kit, so it may only enter the world
             // through a roll (a drop, or /weapon). A hand-placed starter weapon would have no kit at all.
             if (def.slot == EquipSlotType.Weapon) continue;
+            // ARMOUR is never seeded either, for the same reason: each copy's numbers are rolled as it enters the
+            // world, and a hand-placed starter piece would carry no roll at all.
+            if (ArmourRoll.IsRolledSlot(def.slot)) continue;
             if (def.slot != EquipSlotType.None)
             {
                 // Seeded gear arrives unrefined. Rarity used to set a starting +N here; it no longer touches
@@ -1898,24 +1926,24 @@ public class Character : MonoBehaviour, ICombatUnit
     /// it beside the bag — equipping moves an item between the two in one decision, and sending only one half
     /// leaves the item apparently nowhere. The Ring vessel is excluded, as it is from the save.</summary>
     public void CaptureWornInto(out int[] slots, out string[] ids, out int[] refines,
-                                out string[] cards, out int[] rarities, out string[] kits)
+                                out string[] cards, out int[] rarities, out string[] kits, out string[] rolls)
     {
         var d = new SaveData();
         CaptureEquipment(d);
         slots = d.equipSlots; ids = d.equipItemIds; refines = d.equipRefines;
-        cards = d.equipCards; rarities = d.equipRarities; kits = d.equipSkills;
+        cards = d.equipCards; rarities = d.equipRarities; kits = d.equipSkills; rolls = d.equipRolls;
     }
 
     /// <summary>Wear exactly this, replacing whatever was worn. The Ring is put back on afterwards because it
     /// is never in what arrives.</summary>
     public void RestoreWornFrom(int[] slots, string[] ids, int[] refines,
-                                string[] cards, int[] rarities, string[] kits)
+                                string[] cards, int[] rarities, string[] kits, string[] rolls)
     {
         if (slots == null || ids == null) return;
         RestoreEquipment(new SaveData
         {
             equipSlots = slots, equipItemIds = ids, equipRefines = refines,
-            equipCards = cards, equipRarities = rarities, equipSkills = kits,
+            equipCards = cards, equipRarities = rarities, equipSkills = kits, equipRolls = rolls,
         });
         EnsureRingEquipped();
     }
@@ -1928,6 +1956,7 @@ public class Character : MonoBehaviour, ICombatUnit
         var cards = new List<string>();
         var rarities = new List<int>();
         var kits = new List<string>();
+        var rolls = new List<string>();
         foreach (var kv in Gear.Worn)
         {
             if (kv.Key == EquipSlotType.Ring) continue;
@@ -1938,6 +1967,7 @@ public class Character : MonoBehaviour, ICombatUnit
             cards.Add(ItemCatalog.EncodeCards(inst.cards));
             rarities.Add((int)inst.rarity);
             kits.Add(inst.EncodeSkills());
+            rolls.Add(inst.EncodeRoll());
         }
         d.equipSlots   = slots.ToArray();
         d.equipItemIds = ids.ToArray();
@@ -1945,6 +1975,7 @@ public class Character : MonoBehaviour, ICombatUnit
         d.equipCards   = cards.ToArray();
         d.equipRarities = rarities.ToArray();
         d.equipSkills   = kits.ToArray();
+        d.equipRolls    = rolls.ToArray();
     }
 
     // Rebuild the equip dictionary from the saved arrays (Ring excluded — EnsureRingEquipped re-wears it).
@@ -1968,6 +1999,8 @@ public class Character : MonoBehaviour, ICombatUnit
                 // rarity and an empty kit — it re-rolls nothing, it simply has no rolled identity yet.
                 if (d.equipRarities != null && i < d.equipRarities.Length) inst.rarity = (Rarity)d.equipRarities[i];
                 if (d.equipSkills != null && i < d.equipSkills.Length) inst.DecodeSkills(d.equipSkills[i]);
+                // v11+: the copy's rolled armour numbers. Missing on an older save, which leaves the piece unrolled.
+                if (d.equipRolls != null && i < d.equipRolls.Length) inst.DecodeRoll(d.equipRolls[i]);
                 Gear.Equip(slot, inst);
             }
         }

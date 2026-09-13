@@ -71,7 +71,10 @@ public static class CombatAuthority
         // when the sink fires the moment a skill reads it — and switching targets restarts the run at this very hit.
         // Gone, not merely null: a blow can outlive whoever threw it — a projectile in flight, a delayed tick, a
         // player who disconnected — and a destroyed object behind an interface reference passes a null check.
-        var attackerStates = !PlayerUnits.Gone(info.attacker) ? info.attacker.States : null;
+        // A flurry beat on a target that is ALREADY dead is presentation only — the sink draws its number and nothing
+        // else — so it teaches nobody anything: no run of hits, no credit for the kill, no flinch.
+        bool presentationOnly = info.overkill && target.IsDead;
+        var attackerStates = !presentationOnly && !PlayerUnits.Gone(info.attacker) ? info.attacker.States : null;
         if (attackerStates != null) attackerStates.NoteAttackHit(target as ICombatUnit);
 
         int dealt = target.ApplyDamage(info);
@@ -92,11 +95,11 @@ public static class CombatAuthority
 
         // WHO DID THIS, recorded once, here, for every unit alike — a kill pays whoever landed it, and this is the
         // only place that knows. A blow that cost nothing (a miss, a parry, a full absorb) is not a claim on anyone.
-        if (dealt > 0 && !PlayerUnits.Gone(info.attacker) && target is ICombatUnit hurt) hurt.NoteAttacker(info.attacker);
+        if (!presentationOnly && dealt > 0 && !PlayerUnits.Gone(info.attacker) && target is ICombatUnit hurt) hurt.NoteAttacker(info.attacker);
         // FLINCH is decided here because this is the one door every real hit passes through — a player swing, a skill
         // tick and a mob's bite alike. It keys off what was actually DEALT, so a miss, a parry, a full shield absorb
         // and a braced hit all cost no HP and stagger nobody, with no case written for any of them.
-        if (dealt > 0 && target is ICombatUnit unit)
+        if (!presentationOnly && dealt > 0 && target is ICombatUnit unit)
         {
             var status = unit.StatusHost;
             if (status != null) status.TookHit(dealt);

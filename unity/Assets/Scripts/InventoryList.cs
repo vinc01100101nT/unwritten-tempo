@@ -322,17 +322,24 @@ public class InventoryList
     static int SkillCount(BagEntry e) =>
         e != null && e.instance != null && e.instance.skillIds != null ? e.instance.skillIds.Count : -1;
 
+    // The copy's own number, rarity included, from the same sum the stat sheet uses: a weapon's ATK, a Garment's M.DEF
+    // (it carries no DEF), anything else's DEF — plus refine.
     static int StatValue(BagEntry e)
     {
         if (e == null || e.def == null) return -1;
         int refine = e.instance != null ? e.instance.upgrade : 0;
-        return e.def.slot == EquipSlotType.Weapon
-            ? e.def.bonusAttack + refine * EquipmentInstance.AtkPerRefine
-            : e.def.bonusDefense + refine * EquipmentInstance.DefPerRefine;
+        var eb = default(EquipBonuses);
+        if (e.instance != null) e.instance.AddPieceInto(ref eb);
+        else { eb.atk = e.def.bonusAttack; eb.def = e.def.bonusDefense; eb.mdef = e.def.bonusMDef; }
+        if (e.def.slot == EquipSlotType.Weapon) return eb.atk + refine * EquipmentInstance.AtkPerRefine;
+        if (e.def.slot == EquipSlotType.Garment) return eb.mdef;
+        return eb.def + refine * EquipmentInstance.DefPerRefine;
     }
 
+    // What the copy's rarity lifts: a weapon's skills and attack, a rolled piece of armour's defence.
     static float LiftOf(BagEntry e) =>
-        e != null && e.def != null && e.def.slot == EquipSlotType.Weapon && e.instance != null
+        e != null && e.def != null && e.instance != null
+        && (e.def.slot == EquipSlotType.Weapon || (e.instance.rolled && ArmourRoll.IsRolledSlot(e.def.slot)))
             ? Rarities.OutputLift(e.instance.Rarity) : -1f;
 
     int Compare(BagEntry a, BagEntry b)

@@ -1,11 +1,13 @@
 using UnityEngine;
 
 /// <summary>Which equipment slot an item fits. None = a bag-only item (consumable / material).
-/// Integer values are PINNED so the rename from the old taxonomy (Body→Armor, OffHand→Shield,
-/// Trinket→Accessory1) doesn't shift any serialized scene/prefab/item data — only the names changed.
-/// The 7 VISIBLE slots (spec) are Head/Armor/Garment/Weapon/Shield/Accessory1/Accessory2; Boots is
-/// legacy (kept for old data, not shown); the three Costume* slots are reserved for a future cosmetic
-/// layer (also not shown in v1).</summary>
+/// Integer values are PINNED so the rename from the old taxonomy (Body→Armor, OffHand→Shield) doesn't shift any
+/// serialized scene/prefab/item data — only the names changed. The VISIBLE places are Head/Armor/Garment/Weapon/
+/// Shield/Ring; Boots is legacy (kept for old data, not shown); the three Costume* slots are reserved for a future
+/// cosmetic layer (also not shown in v1).
+///
+/// <para>6 and 7 were the two accessory places, removed because the ring already fills that role. Never give those
+/// numbers to a new slot: an old save or asset still holding one would silently land in it.</para></summary>
 public enum EquipSlotType
 {
     None = 0,
@@ -14,8 +16,6 @@ public enum EquipSlotType
     Weapon = 3,
     Shield = 4,       // was OffHand — still the block source in combat
     Boots = 5,        // legacy; not a visible slot in the v1 window
-    Accessory1 = 6,   // was Trinket
-    Accessory2 = 7,
     Garment = 8,
     CostumeHead = 9,  // reserved cosmetic layer — not shown in v1 UI
     CostumeBody = 10,
@@ -39,8 +39,6 @@ public static class EquipSlots
             case EquipSlotType.Weapon:      return "Weapon";
             case EquipSlotType.Shield:      return "Shield";
             case EquipSlotType.Boots:       return "Boots";
-            case EquipSlotType.Accessory1:  return "Accessory 1";
-            case EquipSlotType.Accessory2:  return "Accessory 2";
             case EquipSlotType.Garment:    return "Garment";
             case EquipSlotType.CostumeHead: return "Costume Head";
             case EquipSlotType.CostumeBody: return "Costume Body";
@@ -60,13 +58,11 @@ public static class EquipSlots
             case EquipSlotType.Weapon:      return 2;
             case EquipSlotType.Shield:      return 3;
             case EquipSlotType.Garment:     return 4;
-            case EquipSlotType.Accessory1:  return 5;
-            case EquipSlotType.Accessory2:  return 6;
-            case EquipSlotType.Boots:       return 7;
-            case EquipSlotType.CostumeHead: return 8;
-            case EquipSlotType.CostumeBody: return 9;
-            case EquipSlotType.CostumeBack: return 10;
-            case EquipSlotType.Ring:        return 11;
+            case EquipSlotType.Boots:       return 5;
+            case EquipSlotType.CostumeHead: return 6;
+            case EquipSlotType.CostumeBody: return 7;
+            case EquipSlotType.CostumeBack: return 8;
+            case EquipSlotType.Ring:        return 9;
             default:                        return 99;
         }
     }
@@ -151,6 +147,27 @@ public class Item : ScriptableObject
     public int bonusCritPercent;
     [Tooltip("Added to attack SPEED, in whole percent (e.g. 4 = +4%). May be negative.")]
     public int bonusAspdPercent;
+
+    // A Head, Armor, Garment or Shield copy ROLLS its numbers inside these ranges when it enters the world (ArmourRoll),
+    // and a rolled copy adds only what it rolled — the flat bonus fields above are not read for it. Rarity is added on
+    // top when the copy's bonuses are summed (Rarities.Lifted / StatExtra), never baked into the roll.
+    [Header("Rolled armour (Head, Armor, Garment, Shield) — each copy rolls inside these")]
+    [Tooltip("Lowest defence a copy can roll. Armor's main job; Head and Shield carry some too.")]
+    public int defenseMin;
+    [Tooltip("Highest defence a copy can roll (both ends included). Below the minimum = always the minimum.")]
+    public int defenseMax;
+    [Tooltip("Lowest magic defence a copy can roll. Garment's main job; Head carries some too.")]
+    public int magicDefenseMin;
+    [Tooltip("Highest magic defence a copy can roll (both ends included). Below the minimum = always the minimum.")]
+    public int magicDefenseMax;
+    [Tooltip("Fewest main stats (STR, AGI, VIT, INT, DEX, LUK) a copy carries. Which ones is random, never the same twice.")]
+    public int mainStatCountMin;
+    [Tooltip("Most main stats a copy carries (at most 6).")]
+    public int mainStatCountMax;
+    [Tooltip("Lowest value each rolled main stat can have, before rarity's flat extra.")]
+    public int mainStatValueMin;
+    [Tooltip("Highest value each rolled main stat can have, before rarity's flat extra.")]
+    public int mainStatValueMax;
 
     [Header("Consumable")]
     // ONE way to say what a consumable does: it runs a skill. The old `healAmount` int was deleted with this change —

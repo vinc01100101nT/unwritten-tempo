@@ -25,7 +25,8 @@ public class ItemTableWindow : EditorWindow
     // ---- The buckets -----------------------------------------------------------------------------------------
     // Adding a table later is this list plus a menu entry — never another copy of the window.
 
-    enum ColId { Icon, Id, Name, Type, Kind, Elem, Rarity, Atk, Def, MAtk, MDef, HP, MP, Reach, Sockets, Weight, Zeny, UseSkill, Select }
+    enum ColId { Icon, Id, Name, Type, Kind, Elem, Rarity, Atk, Def, MAtk, MDef, HP, MP, Reach, Sockets, Weight, Zeny, UseSkill, Select,
+                 DefRange, MDefRange, StatCount, StatValue }
 
     struct Col
     {
@@ -53,6 +54,11 @@ public class ItemTableWindow : EditorWindow
         new Col(ColId.Weight,  "wt",      null,     38),
         new Col(ColId.Zeny,    "zeny",    "zeny",   52),
         new Col(ColId.UseSkill,"runs skill", null,  200),
+        // A piece of armour rolls inside RANGES per copy, so its table shows the ranges — not a single number.
+        new Col(ColId.DefRange,  "DEF min–max",   null, 96),
+        new Col(ColId.MDefRange, "M.DEF min–max", null, 96),
+        new Col(ColId.StatCount, "stats min–max", null, 96),
+        new Col(ColId.StatValue, "stat value min–max", null, 116),
         new Col(ColId.Select,  "",        null,     28),
     };
 
@@ -65,8 +71,10 @@ public class ItemTableWindow : EditorWindow
                 return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Kind, ColId.Elem, ColId.Rarity,
                                ColId.Atk, ColId.MAtk, ColId.Reach, ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
             case ItemType.Armor:
-                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Kind, ColId.Elem, ColId.Rarity,
-                               ColId.Def, ColId.MDef, ColId.HP, ColId.MP, ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
+                // Rarity is ROLLED per copy for Head/Armor/Garment/Shield, so the authored one is not shown here.
+                return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Kind, ColId.Elem,
+                               ColId.DefRange, ColId.MDefRange, ColId.StatCount, ColId.StatValue,
+                               ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
             case ItemType.Ring:
                 return new[] { ColId.Icon, ColId.Id, ColId.Name, ColId.Rarity,
                                ColId.HP, ColId.MP, ColId.Sockets, ColId.Weight, ColId.Zeny, ColId.Select };
@@ -286,6 +294,10 @@ public class ItemTableWindow : EditorWindow
                 case ColId.Weight:  it.weight = EditorGUI.IntField(Field(), it.weight); break;
                 case ColId.Zeny:    it.zeny = EditorGUI.IntField(Field(), it.zeny); break;
                 case ColId.UseSkill: DrawUseSkill(Field(), it); break;
+                case ColId.DefRange:  DrawRange(Field(), ref it.defenseMin, ref it.defenseMax); break;
+                case ColId.MDefRange: DrawRange(Field(), ref it.magicDefenseMin, ref it.magicDefenseMax); break;
+                case ColId.StatCount: DrawRange(Field(), ref it.mainStatCountMin, ref it.mainStatCountMax); break;
+                case ColId.StatValue: DrawRange(Field(), ref it.mainStatValueMin, ref it.mainStatValueMax); break;
 
                 case ColId.Select:
                     if (GUI.Button(Field(), "◎")) { Selection.activeObject = it; EditorGUIUtility.PingObject(it); }
@@ -322,6 +334,20 @@ public class ItemTableWindow : EditorWindow
         if (def == null)              EditorGUI.LabelField(mark, new GUIContent("✗", "No skill with that id."), EditorStyles.centeredGreyMiniLabel);
         else if (def.ItemUseEntry == null) EditorGUI.LabelField(mark, new GUIContent("!", "That skill has no On Item Used trigger, so using this item would do nothing."), EditorStyles.centeredGreyMiniLabel);
         else                          EditorGUI.LabelField(mark, new GUIContent("✓", def.displayName), EditorStyles.centeredGreyMiniLabel);
+    }
+
+    // Two whole numbers side by side: the low end and the high end a copy rolls between. A high end below the low
+    // one is drawn red — the roller treats it as "always the minimum", which is almost never what was meant.
+    static void DrawRange(Rect r, ref int min, ref int max)
+    {
+        float half = (r.width - 4) * 0.5f;
+        var lo = new Rect(r.x, r.y, half, r.height);
+        var hi = new Rect(r.x + half + 4, r.y, half, r.height);
+        min = EditorGUI.IntField(lo, min);
+        var was = GUI.color;
+        if (max < min) GUI.color = new Color(1f, 0.45f, 0.45f);
+        max = EditorGUI.IntField(hi, max);
+        GUI.color = was;
     }
 
     static Rect VCenter(Rect r, float h) => new Rect(r.x, r.y + (r.height - h) * 0.5f, r.width, h);
