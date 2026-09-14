@@ -596,33 +596,27 @@ psql -d unwritten -c "select email, is_gm from account order by created_at;"
 
 ### Where each command actually runs
 
-Two kinds, and the difference is who else can see the result.
+**Every command except `/help` is carried out by the server** — `/summon`, `/dummy`, `/kill`, `/killall`, `/log`,
+`/gold`, `/item`, `/weapon`, `/clearbag`, `/lvl`, `/xp`, `/ringxp`, `/statpts`, `/heal`, `/revive`, `/invuln`,
+`/bind`, `/tp`, `/speed`, `/model`, `/time` and `/weather`. Your game hands the typed line over, the server checks its own copy of the mark, does the work on your
+character, sends your game the result, and sends the answer back into your chat a moment later. Each one shows
+up in the server's log as *"<name> ran '/…'"*. Summoned creatures are visible to everybody and can actually be
+hit, because they are born on the machine that owns the world.
 
-**Commands the server carries out** — `/summon`, `/dummy`, `/kill`, `/killall`, and now `/gold`, `/item`,
-`/weapon` and `/clearbag`. Your game hands the typed line over, the server checks its own copy of the mark,
-does the work, and sends the answer back into your chat a moment later. Summoned creatures are visible to
-everybody and can actually be hit, because they are born on the machine that owns the world.
+They are here because **everything about a character is the server's**. Run on a player's own machine they
+lied — `/item` answered *"Gave 5× Healing Potion"* while the bag went from nothing to nothing, and `/statpts`
+showed 61 points while the server held 1, so every point spent past the real ones was silently refused.
 
-The four money-and-item ones are here because **what somebody owns is the server's**. Run on a player's own
-machine they lied — `/item` answered *"Gave 5× Healing Potion"* while the bag went
-from nothing to nothing, and `/gold` moved the number on screen until the server next spoke and put it back.
+`/help` only lists the commands, so it runs in your own game and anybody may type it.
 
-**Commands that change only you** — level, XP, stat points, heal, revive, invulnerability, model, binding a
-skill, travelling, time of day, weather, move speed — still run in your own game, and refuse unless you are a GM.
+**`/model`, `/time` and `/weather` change what everybody sees.** `/model` changes your body on every screen that
+can see you. `/time` and `/weather` change the sky for every player on that game server, and anybody who joins
+it later gets the same sky. None of the three is saved: your model goes back to your character's own when you
+sign in again or move to a map another game server holds, and the time and weather go back to the real clock and
+the calendar when that game server restarts.
 
 The server never believes a game's claim about who is playing it. It reads the mark from the character server
 itself, the same way it reads a player's real name and body rather than the one they announced.
-
-### An honest limit
-
-The commands that change only your own character are checked **in your own game**. That is a lock on the door,
-not a vault: it stops an ordinary player using them, and it would not stop someone who tampered with their own
-copy.
-
-**It is a much smaller gap than it was.** Your bag, your money, your worn gear, your stat points, your hotbar
-and your saves all belong to the server now, so nothing in that list can be faked into permanence — a tampered
-copy would be corrected by the server's next word. What is left in your own game is level, XP, healing and
-invulnerability, which is the remaining work.
 
 ---
 

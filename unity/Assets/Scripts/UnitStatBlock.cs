@@ -104,7 +104,8 @@ public class UnitStatBlock : MonoBehaviour
             inputs.level = spawnLevel;
             Rederive(healToFull: true);
         }
-        CurrentMP = MaxMP;   // a fresh creature comes back with a full pool, like its HP
+        // A fresh creature comes back with a full pool, like its HP — on the server, which owns both.
+        if (!GameNetwork.TheWorldIsElsewhere) CurrentMP = MaxMP;
     }
 
     /// <summary>Replace this unit's level + primaries after it has spawned and re-derive from them. Re-baselines the
@@ -120,7 +121,19 @@ public class UnitStatBlock : MonoBehaviour
     // MP, on the same footing as the player's. Mobs don't spend it on anything yet (they have no cost-bearing
     // skills), but it EXISTS so an MP-touching effect — ManaLeech landing on a mob — has a real pool to move,
     // instead of being a knob that silently does nothing on half the units in the game.
-    public int MaxMP => UnitStatMath.MaxMP(Effective, Bonuses, Lift(StatId.MP, SubStat.MaxMP));
+    public int MaxMP => GameNetwork.TheWorldIsElsewhere
+        ? toldMaxMP
+        : UnitStatMath.MaxMP(Effective, Bonuses, Lift(StatId.MP, SubStat.MaxMP));
+
+    // A watching machine's copy is told its pool rather than working it out (NetMob pushes both numbers).
+    int toldMaxMP;
+
+    /// <summary>The mana the server says this creature has — the twin of <c>Health.SetHealthFromServer</c>.</summary>
+    public void SetManaFromServer(int current, int max)
+    {
+        toldMaxMP = Mathf.Max(0, max);
+        CurrentMP = Mathf.Clamp(current, 0, toldMaxMP);
+    }
 
     /// <summary>What this unit bought plus the primaries its gear adds — what every formula is fed, so a creature's
     /// worn STR raises its attack exactly as a player's does.</summary>
@@ -153,7 +166,8 @@ public class UnitStatBlock : MonoBehaviour
         ai = GetComponent<MonsterAI3D>();
         if (spawnLevel < 0) spawnLevel = Mathf.Max(1, inputs.level);   // remember the authored level, for respawns
         Rederive(healToFull: true);
-        CurrentMP = MaxMP;
+        // Mana is worked out from the formulas, so a watching machine's copy is not given any.
+        if (!GameNetwork.TheWorldIsElsewhere) CurrentMP = MaxMP;
     }
 
     /// <summary>Raise the level by one and re-derive everything from the shared formulas — the mob's mirror of a
@@ -170,6 +184,14 @@ public class UnitStatBlock : MonoBehaviour
     {
         if (health == null) health = GetComponent<Health>();
         if (ai == null) ai = GetComponent<MonsterAI3D>();
+
+        // A WATCHING MACHINE DERIVES NOTHING. Its copy of a creature is drawn from what the server says — health
+        // included — so no number is worked out for it here. The level is authored, not derived, and is stamped as-is.
+        if (GameNetwork.TheWorldIsElsewhere)
+        {
+            if (ai != null) ai.level = inputs.level;
+            return;
+        }
 
         var eb = Bonuses;
         var u = inputs.WithGear(eb);

@@ -1,16 +1,4 @@
 {
-  "0464e031-7687-4db6-b520-6569f7a756d2": {
-    "counts": {
-      "check-perf-hotpaths.py": 3,
-      "check-unity-code.sh": 1,
-      "npm run": 1,
-      "recompile": 2
-    },
-    "told": [
-      "check-perf-hotpaths.py",
-      "recompile"
-    ]
-  },
   "07e29be4-4ab9-42bf-b310-7c04d134830f": {
     "counts": {
       "build-game.sh": 2,
@@ -160,6 +148,11 @@
       "recompile was",
       "unwritten-server.app"
     ]
+  },
+  "b9fb257d-eac4-4491-8601-d5bcea8775b1": {
+    "counts": {
+      "editor_play": 1
+    }
   },
   "ce1e2d28-d6de-418e-bfb1-d26ef3761083": {
     "counts": {

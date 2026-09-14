@@ -26,7 +26,7 @@ public class OccludedSilhouetteFeature : ScriptableRendererFeature
     [Tooltip("Colour (and alpha) of the see-through silhouette. Alpha < 1 = ghostly; 1 = solid.")]
     public Color silhouetteColor = new Color(0.55f, 0.8f, 1f, 1f);
 
-    [Tooltip("Runtime master switch (a DevSettings toggle can flip this).")]
+    [Tooltip("Runtime master switch.")]
     public static bool Enabled = true;
 
     static readonly int OutlineColorID = Shader.PropertyToID("_OutlineColor");

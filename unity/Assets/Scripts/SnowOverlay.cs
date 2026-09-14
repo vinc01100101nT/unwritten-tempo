@@ -8,7 +8,7 @@ using UnityEngine;
 /// (<see cref="SnowGround"/>) that follows this overlay's <see cref="intensity"/>.
 ///
 /// <para>Zero-cost when clear: at <see cref="intensity"/> ≈ 0 the quad is deactivated, so it draws nothing.
-/// Tune it live from the DevSettings panel (<b>P</b>) under "Snow". The fall scroll (<see cref="phase"/>) is
+/// The fall scroll (<see cref="phase"/>) is
 /// advanced in C# so it's framerate-independent and freezes if the game is paused. Runs on every quality tier
 /// (it's cheap), unlike the heavier <see cref="SnowGround"/> footprints which are High-tier only.</para>
 /// </summary>
@@ -16,7 +16,7 @@ using UnityEngine;
 public class SnowOverlay : MonoBehaviour
 {
     [Range(0f, 1f)] [Tooltip("Master snow amount (the TARGET the flakes ease toward). 0 = clear (quad disabled). " +
-             "Default 0 — snow is OFF until raised (DevSettings 'Snow' toggle, or a weather preset).")]
+             "Default 0 — snow is OFF until raised (by a weather preset).")]
     public float intensity = 0f;
     [Range(0f, 60f)] [Tooltip("Seconds for the flakes to fade IN when snow starts (or out when it stops). Kept " +
              "separate from SnowGround's accumTime — flakes appear fast, the ground blanket builds up slower.")]
@@ -61,7 +61,7 @@ public class SnowOverlay : MonoBehaviour
     static readonly int FlakeSizeID = Shader.PropertyToID("_FlakeSize");
     static readonly int ParallaxID  = Shader.PropertyToID("_Parallax");
 
-    /// <summary>Find the live snow overlay, creating one if none exists yet (used by the DevSettings knob so
+    /// <summary>Find the live snow overlay, creating one if none exists yet (so
     /// snow works even on a Systems scene baked before this component joined the rig).</summary>
     public static SnowOverlay Ensure()
     {
@@ -124,7 +124,7 @@ public class SnowOverlay : MonoBehaviour
         if (mat == null) return;
 
         // Follow the Snow weather channel when present (central easing in WeatherChannels); fall back to the local
-        // `intensity` ease when there's no channels hub (standalone / DevSettings on a bare scene).
+        // `intensity` ease when there's no channels hub (standalone, on a bare scene).
         var wc = WeatherChannels.Instance;
         if (wc != null) shown = wc.Shown(WeatherChannel.Snow);
         else            shown = Mathf.MoveTowards(shown, intensity, Time.deltaTime / Mathf.Max(0.1f, rampTime));

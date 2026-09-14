@@ -35,7 +35,7 @@ V3 says a skill is a list of `SkillEffect`s resolved by one applier, and the rin
 
 **The training dummy opts OUT of the model.** `TrainingDummyTool` destroys the `UnitStatBlock` after building, because the block would re-derive over its hand-set 10M HP / 0 attack and turn the punching bag into an ordinary level-1 mob. It's a measuring instrument, not a unit.
 
-**Dev Settings tunes the CAUSE.** The mob sliders drive Level + the six primaries and re-derive; they no longer write derived stats, which the block would silently overwrite on the next level-up.
+**Tune the CAUSE, never the result.** Anything that changes a mob's numbers — `/summon` with a level included — sets Level + the six primaries and re-derives. Writing a derived stat directly is silently overwritten by the block on the next level-up.
 
 **Level-up RE-DERIVES, it never scales.** `UnitStatBlock.LevelUp()` raises the level and recomputes. `MonsterAI3D.perLevelGrowth` (a flat 1.15× on attack/HP) is **deleted**. A mob's level-20 numbers are simply what level 20 produces.
 

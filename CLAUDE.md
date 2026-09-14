@@ -1,5 +1,41 @@
 # CLAUDE.md — roguelike-mmo (unwritten)
 
+## ⛔⛔⛔ RULE NOCLIENTMATH — THE PLAYER'S MACHINE NEVER WORKS OUT A GAME NUMBER. IT DRAWS WHAT THE SERVER SENDS AND SENDS WHAT THE PLAYER PRESSED. NOTHING ELSE, EVER (HIGHEST PRIORITY IN THIS PROJECT — OUTRANKS EVERY OTHER RULE IN THIS FILE, NO EXCEPTIONS)
+
+**The player's machine has exactly two jobs:** show what the server says, and tell the server what the player
+pressed. It does not decide, roll, subtract, multiply, derive, predict or "work out for display" any number the game
+uses or shows. Not damage, not defence, not an element chart, not a crit, not a hit or a miss, not a heal, not
+regeneration, not mana, not a cooldown, not a stat on the character sheet, not a rarity, not a roll, not a drop, not
+experience.
+
+- **THE ONE EXCEPTION IS MOVEMENT, decided by the user on 2026-09-14.** The player's machine moves its own legs —
+  walking, jumping, the stop a hurt stagger puts on them — and reports where it is; the server checks every report and
+  corrects it. Nothing else rides on that exception: not what a step costs, not what it hits, not what it heals.
+- **Comparing numbers the server SENT, to choose what to draw, is showing — not computing.** Greying a hotbar button
+  whose cooldown end the server sent, or saying "No MP" against the mana the server sent, produces no new number and
+  decides nothing: the press still goes to the server, and the server still says yes or no. Starting a cooldown,
+  spending mana, or working out either one is computing, and is banned.
+
+- **Server → player: finished values only.** Every message carries the final number and the final flags exactly as
+  they will be shown. The player's machine copies them onto the screen. If it would have to do a sum to show it, the
+  message is wrong and the SERVER must send the answer instead.
+- **Player → server: intent only.** Which key, which skill, which target, where they aimed, which bag position.
+  **Never an amount.** A message from the player carrying a number the server then uses is a bug by definition.
+- **"It is only for display" is not an exception.** A number worked out twice — once to decide it, once to draw it —
+  is two answers, and the moment the two machines hold different inputs the screen lies.
+- **"It feels more immediate" is not an exception either.** If a design wants something to appear before the server
+  answers, that is a design decision the user makes out loud, never a shortcut taken in code.
+
+**The mandatory test before writing or editing ANY runtime line:** *"can this run on a player's machine, and does
+it produce a number the game uses or shows?"* If yes, it belongs on the server, and the player's machine receives the
+result. If unsure, it is yes. Code that already breaks this is not precedent — it is a violation waiting to be moved.
+
+*(Scar, 2026-09-14: the server sent each blow to the player's machine BEFORE defence, and the player's machine took
+defence off itself to draw the number — using its OWN copy of the creature, which rolls its own armour. The number on
+screen and the health actually lost were computed from two different creatures. A full map then found the same
+mistake in regeneration, heals, swing damage, cooldowns, mana checks and the stat sheet. The user's words: "i dont
+care about the client, its only job is to render, not compute".)*
+
 ## ⛔⛔ RULE NOEDITORWRITES — NOTHING MAY CHANGE A SCENE, PREFAB OR ASSET UNLESS THE USER JUST ASKED FOR IT (ULTRA-PRIORITY — OUTRANKS EVERY OTHER RULE IN THIS FILE)
 
 **A script must never write saved data while the game is not playing.** Not to preview something, not to keep something tidy, not to be helpful. If the editor marks a scene modified and the user did not do anything, that is a BUG of the highest severity in this project, and it is this rule's job to make sure one is never written again.

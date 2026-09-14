@@ -215,7 +215,7 @@ def resets_its_own_test(line):
 
 def throttled_return(lines, start, n):
     """An early `if (clock/flag …) return;` whose tested field is pushed forward just below it —
-    the "not again until later" gate the guide asks for (see DevSettings.EnsureRefs)."""
+    the "not again until later" gate the guide asks for (see FootstepTracker's nextFind)."""
     for i in range(start, n):
         line = strip_noise(lines[i])
         m = re.match(r"\s*if\s*\(\s*([\w.]+)\s*[<>=]", line)

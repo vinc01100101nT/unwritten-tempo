@@ -4,8 +4,8 @@ using UnityEngine;
 /// <summary>
 /// Builds the rich-text body of a skill's hover card from its <see cref="SkillDef"/> — title, tag/category/tier chips,
 /// cost line, description, and a human-readable line per effect with its VARIABLE NUMBERS highlighted. Pure function
-/// (no UI dependency), so the hotbar, grimoire, or any hover can share one description. Numbers are estimated off the
-/// live caster stats (<see cref="Character.Instance"/>) when available, else shown as the raw multiplier.
+/// (no UI dependency), so the hotbar, grimoire, or any hover can share one description. A Damage effect shows its
+/// authored multiplier and no damage estimate.
 /// </summary>
 public static class SkillTooltip
 {
@@ -225,8 +225,8 @@ public static class SkillTooltip
     {
         effectLines.Clear();
         if (def == null || def.bindings == null) return effectLines;
-        // The estimate below has to agree with what the cast will really deal, and the weapon's rarity is part of that
-        // now. Held for the whole listing the same way the dialect is, because it is one value for one skill — and
+        // The amounts below have to agree with what the cast will really produce, and the weapon's rarity is part of
+        // that now. Held for the whole listing the same way the dialect is, because it is one value for one skill — and
         // restored after, so a line described with no skill in hand can't inherit the last weapon's rarity.
         float prevLift = describeLift;
         describeLift = Character.Instance != null ? Character.Instance.SkillRarityLift(def.id) : 0f;
@@ -295,16 +295,8 @@ public static class SkillTooltip
         {
             case SkillEffectKind.Damage:
             {
-                var ch = Character.Instance;
                 float mult = e.damageMult.value <= 0f ? 1f : e.damageMult.value;
                 string s = "Deals " + Hl(mult.ToString("0.##") + "×") + " " + DmgWord(e.damageType) + " damage";
-                if (ch != null)
-                {
-                    // Mirror the runtime roll: base attack × mult × what a live cast really scales by.
-                    float aff = LiveMult(e);
-                    int est = Mathf.RoundToInt((e.damageType == DamageType.Magic ? ch.MaxMagicAttack : ch.MaxAttack) * mult * aff);
-                    if (est > 0) s += " (~" + Hl(est.ToString()) + ")";
-                }
                 int hits = SkillEffectApplier.EffectiveHits(e, Character.Instance);   // affinity-scaled, matches what actually lands
                 if (hits > 1) s += ", " + Hl(hits + "×") + " hits";
                 // Any number may answer to the pile now, so the note belongs to the NUMBER, said the same way

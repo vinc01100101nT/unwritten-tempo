@@ -61,8 +61,10 @@ public class Health : MonoBehaviour, ICombatUnit
         // shows MISS and deals nothing, instead of falling into the flurry sink, which has no miss.
         if (info.missed)
             return TakeDamage(info.amount, info.isCrit, info.attackerHit, info.element, info.missed, info.attacker);
-        // A flurry beat on a creature that is ALREADY dead is presentation only: the digits and the hit cue, nothing else.
-        if (info.overkill && IsDead) return ShowOverkillBeat(info);
+        // ANY BLOW ON A CREATURE THAT IS ALREADY DEAD still shows — a flurry beat, a swing or an arrow that was on its way.
+        // Presentation only: the digits and the hit cue, nothing else. (Damage over time comes through TakeTrueDamage,
+        // which shows nothing on a dead creature.)
+        if (IsDead) return ShowOverkillBeat(info);
         if (info.overkill)   // multi-hit flurry: keep numbers/sound climbing past the kill (RO cascade)
             return info.isMagic ? TakeMagicDamageOverkill(info.amount, info.isCrit, info.element, info.attacker)
                                 : TakeDamageOverkill(info.amount, info.isCrit, info.attackerHit, info.element, info.attacker);
@@ -331,28 +333,25 @@ public class Health : MonoBehaviour, ICombatUnit
         // (see Character.TakeDamage).
         if (missed)
         {
-            DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "MISS", MissColor);
-            CombatSfx.Miss(transform.position, PlayerRanged());   // whiff FROM the mob (spatial), melee/ranged by weapon
+            Show(ShownBlow.Miss(RangedAttacker(attacker)), attacker);
             return 0;
         }
 
         // Element property: the attack's element vs this unit's armor element scales the damage (RO chart).
         // Neutral-vs-Neutral is 1.0, so default callers are unaffected.
         float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f) { SpawnElementNumber(0, mod, Color.white); return 0; }
+        if (mod <= 0f) { Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker); return 0; }
         if (Parried()) return 0;
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
         int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
         SubtractHealth(dmg);
 
-        SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
         // Impact FROM the mob (spatial). A basic attack (rolled accuracy, attackerHit ≥ 0) → hit/crit;
         // a skill strike (always-lands, attackerHit −1) → the unified skill impact.
-        if (attackerHit >= 0) CombatSfx.Hit(transform.position, crit);
-        else CombatSfx.SkillHit(transform.position);
+        Show(new ShownBlow(dmg, mod, crit, magic: false, attackerHit >= 0 ? BlowSound.Hit : BlowSound.SkillHit,
+                           flash: true), attacker);
         VfxCue.Fire(VfxCue.HitCue(false, crit, attackerHit), transform);
-        if (isActiveAndEnabled) StartCoroutine(Flash());
 
         ApplyLeech(this, dmg, attacker);
         if (IsDead) Die();
@@ -367,16 +366,15 @@ public class Health : MonoBehaviour, ICombatUnit
         if (IsDead) return 0;
 
         float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
+        if (mod <= 0f) { Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker); return 0; }
         if (Parried()) return 0;
 
         int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod);
         SubtractHealth(dmg);
 
-        SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
-        CombatSfx.SkillHit(transform.position);   // magic = skill impact, spatial from the mob
+        // magic = skill impact, spatial from the mob
+        Show(new ShownBlow(dmg, mod, crit, magic: true, BlowSound.SkillHit, flash: true), attacker);
         VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
-        if (isActiveAndEnabled) StartCoroutine(Flash());
 
         ApplyLeech(this, dmg, attacker);
         if (IsDead) Die();
@@ -391,20 +389,18 @@ public class Health : MonoBehaviour, ICombatUnit
                                        ICombatUnit attacker = null)
     {
         float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f) { SpawnElementNumber(0, mod, MagicColor); return 0; }
+        if (mod <= 0f) { Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker); return 0; }
         if (Parried()) return 0;
 
         int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod);
         bool wasAlive = !IsDead;
         SubtractHealth(dmg);
-        SpawnElementNumber(dmg, mod, crit ? CritColor : MagicColor);
-        CombatSfx.SkillHit(transform.position);   // overkill beats still sound (throttled per frame)
         // Hit spark + impact SOUND fire on EVERY strike, including overkill beats past death — the per-hit
         // multi-hit SFX must run to the end of the flurry, not cut off the instant the mob's HP hits 0.
+        Show(new ShownBlow(dmg, mod, crit, magic: true, BlowSound.SkillHit, flash: wasAlive), attacker);
         VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
         if (wasAlive)
         {
-            if (isActiveAndEnabled) StartCoroutine(Flash());
             ApplyLeech(this, dmg, attacker);
             if (IsDead) Die();
         }
@@ -419,20 +415,19 @@ public class Health : MonoBehaviour, ICombatUnit
                                   ICombatUnit attacker = null)
     {
         float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f) { SpawnElementNumber(0, mod, Color.white); return 0; }
+        if (mod <= 0f) { Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker); return 0; }
         if (Parried()) return 0;
 
         int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
         bool wasAlive = !IsDead;
         SubtractHealth(dmg);
-        SpawnElementNumber(dmg, mod, crit ? CritColor : Color.white);
-        CombatSfx.SkillHit(transform.position);   // always-lands skill strike → the unified skill impact
-        // Hit spark + impact SOUND on EVERY strike, incl. overkill beats past death — same as the magic path. Chosen by
-        // the shared rule, so a basic-attack strike inside a flurry shows the normal or crit cue a player would.
+        // Always-lands skill strike → the unified skill impact. Hit spark + impact SOUND on EVERY strike, incl. overkill
+        // beats past death — same as the magic path. The cue is chosen by the shared rule, so a basic-attack strike
+        // inside a flurry shows the normal or crit cue a player would.
+        Show(new ShownBlow(dmg, mod, crit, magic: false, BlowSound.SkillHit, flash: wasAlive), attacker);
         VfxCue.Fire(VfxCue.HitCue(false, crit, attackerHit), transform);
         if (wasAlive)
         {
-            if (isActiveAndEnabled) StartCoroutine(Flash());
             ApplyLeech(this, dmg, attacker);
             if (IsDead) Die();
         }
@@ -444,16 +439,15 @@ public class Health : MonoBehaviour, ICombatUnit
     int ShowOverkillBeat(in DamageInfo info)
     {
         float mod = Elements.Modifier(info.element, element);
-        Color colour = info.isCrit ? CritColor : info.isMagic ? MagicColor : Color.white;
-        if (mod <= 0f) { SpawnElementNumber(0, mod, colour); return 0; }
+        if (mod <= 0f) { Show(ShownBlow.Immune(mod, info.isCrit, info.isMagic), info.attacker); return 0; }
         float afterDefence = info.isMagic
             ? Combat.AfterDefense(info.amount, hardMagicDefPercent, magicDefense, info.isCrit)
             : Combat.AfterDefense(info.amount, hardDefPercent, defense, info.isCrit);
         int shown = Mathf.Max(1, Mathf.RoundToInt(afterDefence * mod));
-        SpawnElementNumber(shown, mod, colour);
         // The same impact sound and cue a live beat plays, so a flurry sounds to the end of its count.
-        if (!info.isMagic && info.attackerHit >= 0) CombatSfx.Hit(transform.position, info.isCrit);
-        else CombatSfx.SkillHit(transform.position);
+        Show(new ShownBlow(shown, mod, info.isCrit, info.isMagic,
+                           !info.isMagic && info.attackerHit >= 0 ? BlowSound.Hit : BlowSound.SkillHit, flash: false),
+             info.attacker);
         VfxCue.Fire(VfxCue.HitCue(info.isMagic, info.isCrit, info.attackerHit), transform);
         return shown;
     }
@@ -472,17 +466,46 @@ public class Health : MonoBehaviour, ICombatUnit
         return dmg;
     }
 
-    // Element feedback IS the damage number's opacity now (no word cue): a resisted hit dims to 70%, an
-    // immune hit to 30% (shown as a faded "0" since it deals none); strong/normal stay fully opaque.
-    void SpawnElementNumber(int dmg, float mod, Color baseCol)
+    // EVERY BLOW THIS UNIT SHOWS PASSES HERE — a hit, an immunity, a whiff, a flurry beat past death — on the machine
+    // that decided it. It draws the blow and, on the server, tells every watching machine exactly what was drawn, AT THE
+    // MOMENT it was drawn: announced any later, a reaction to this hit (a passive, a leech) could land a second blow on
+    // the same unit in between, and the two announcements would describe each other's numbers.
+    void Show(in ShownBlow blow, ICombatUnit attacker)
     {
-        baseCol.a *= Elements.DamageAlpha(mod);
-        if (dmg > 0) DamagePopup.Spawn(UnitAnchor.Overhead(transform), dmg, baseCol);
-        else DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "0", baseCol);
-        // Every skill strike's white number is spawned HERE, whichever path rolled it — so this is also the one place a
-        // run that shows its own total can hear about the hit, with nothing per-path to keep in step. Null unless a run
-        // asked for the total, so the normal case costs one reference check.
-        if (RepeatsDamageTotal.Current != null) RepeatsDamageTotal.Current.Report(transform, dmg);
+        DrawShownBlow(blow);
+        // Every skill strike's number is shown HERE, whichever path rolled it — so this is also the one place a run that
+        // shows its own total can hear about the hit, with nothing per-path to keep in step. Null unless a run asked for
+        // the total, so the normal case costs one reference check.
+        if (!blow.missed && RepeatsDamageTotal.Current != null) RepeatsDamageTotal.Current.Report(transform, blow.number);
+        GameNetwork.AnnounceBlowOnMob(this, attacker, blow);
+    }
+
+    /// <summary>Put a blow on screen exactly as it was decided — the digits, the sound, the flash — with no sums: every
+    /// number in <paramref name="blow"/> is already final. The server's own intake and every watching machine draw
+    /// through this one function, so one blow cannot be shown two ways.
+    ///
+    /// <para>Element feedback IS the number's opacity (no word cue): a resisted hit dims, an immune hit is a faded "0",
+    /// strong and normal hits stay fully opaque.</para></summary>
+    public void DrawShownBlow(in ShownBlow blow)
+    {
+        var at = UnitAnchor.Overhead(transform);
+        if (blow.missed)
+        {
+            DamagePopup.SpawnText(at, "MISS", MissColor);
+            // Whiff FROM the mob (spatial), melee or ranged by the swinger's weapon.
+            CombatSfx.Miss(transform.position, blow.rangedMiss);
+            return;
+        }
+
+        Color colour = blow.crit ? CritColor : blow.magic ? MagicColor : Color.white;
+        colour.a *= Elements.DamageAlpha(blow.elementModifier);
+        if (blow.number > 0) DamagePopup.Spawn(at, blow.number, colour);
+        else DamagePopup.SpawnText(at, "0", colour);
+
+        if (blow.sound == BlowSound.Hit) CombatSfx.Hit(transform.position, blow.crit);
+        else if (blow.sound == BlowSound.SkillHit) CombatSfx.SkillHit(transform.position);
+
+        if (blow.flash && isActiveAndEnabled) StartCoroutine(Flash());
     }
 
     // Lifesteal: a fraction of damage dealt to this mob heals the player (RO leech, the mechanical core of
@@ -522,11 +545,12 @@ public class Health : MonoBehaviour, ICombatUnit
 
     static readonly Color ReflectColor = new Color(1f, 0.6f, 0.9f);   // damage bounced back at the attacker
 
-    // A Health MISS is always the player attacking a mob (a mob missing the PLAYER pops a white MISS in
-    // Character, not here), so read the player's equipped weapon to pick the ranged vs melee whiff.
-    static bool PlayerRanged()
+    // A Health MISS is always a person swinging at a mob (a mob missing a PERSON pops a white MISS in Character, not
+    // here), so the whiff sounds like THAT person's weapon — read off whoever swung, on the machine that decided the
+    // miss, and carried to every other machine inside the blow.
+    static bool RangedAttacker(ICombatUnit attacker)
     {
-        var c = Character.Instance;
+        var c = attacker as Character;
         if (c == null) return false;
         var w = c.GetEquipped(EquipSlotType.Weapon);
         return w != null && WeaponTypes.IsRanged(w.weaponType);
@@ -556,6 +580,8 @@ public class Health : MonoBehaviour, ICombatUnit
     public void Heal(int amount)
     {
         if (amount <= 0 || IsDead) return;
+        // A watched copy's health is the server's to state, gains included — the same rule as SubtractHealth.
+        if (IsWatchedCopy) return;
         Current = Mathf.Min(maxHealth, Current + amount);
         CombatAuthority.NoteHPAdded(this, amount);
     }
@@ -595,4 +621,50 @@ public class Health : MonoBehaviour, ICombatUnit
         if (fx != null && gameObject.activeInHierarchy) fx.Play(done);
         else done();
     }
+}
+
+/// <summary>Which impact sound a shown blow plays.</summary>
+public enum BlowSound : byte { None, Hit, SkillHit }
+
+/// <summary>
+/// A blow on a creature EXACTLY AS IT WAS PUT ON SCREEN, with every number already final — what the server's own intake
+/// draws, and what it tells every watching machine to draw. Nothing in it is an input to a sum: a watching machine that
+/// holds one of these has nothing left to work out, which is the whole reason it exists.
+/// </summary>
+public readonly struct ShownBlow
+{
+    /// <summary>The digits shown. 0 is the faded "0" of an immune hit, or of a hit a barrier ate whole.</summary>
+    public readonly int number;
+    /// <summary>The element chart's answer for this blow. Only its opacity is read from it.</summary>
+    public readonly float elementModifier;
+    /// <summary>Coloured as a critical hit.</summary>
+    public readonly bool crit;
+    /// <summary>Coloured as magic.</summary>
+    public readonly bool magic;
+    /// <summary>A whiff: "MISS" instead of a number.</summary>
+    public readonly bool missed;
+    /// <summary>The whiff of a bow or a firearm rather than a blade.</summary>
+    public readonly bool rangedMiss;
+    public readonly BlowSound sound;
+    /// <summary>The creature was alive to be hit, so it flashes — a flurry beat past its death does not.</summary>
+    public readonly bool flash;
+
+    public ShownBlow(int number, float elementModifier, bool crit, bool magic, BlowSound sound, bool flash,
+                     bool missed = false, bool rangedMiss = false)
+    {
+        this.number = number;
+        this.elementModifier = elementModifier;
+        this.crit = crit;
+        this.magic = magic;
+        this.sound = sound;
+        this.flash = flash;
+        this.missed = missed;
+        this.rangedMiss = rangedMiss;
+    }
+
+    public static ShownBlow Miss(bool ranged) =>
+        new ShownBlow(0, 1f, false, false, BlowSound.None, false, missed: true, rangedMiss: ranged);
+
+    public static ShownBlow Immune(float elementModifier, bool crit, bool magic) =>
+        new ShownBlow(0, elementModifier, crit, magic, BlowSound.None, false);
 }

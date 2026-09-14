@@ -6,8 +6,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 /// <summary>
-/// The bag rendered as TEXT ROWS rather than a grid of icons — a name, a slot, a tier, a skill count, an
-/// attack-or-defence figure and the rarity's output lift, in columns you can sort and a field you can search.
+/// The bag rendered as TEXT ROWS rather than a grid of icons — a name, a tier and how many are held, in columns you
+/// can sort and a field you can search.
 /// It replaces the 40-square grid inside the Inventory window and owns nothing else: the bag, the tooltip and
 /// every action still belong to <see cref="InventoryStore"/>, <see cref="ItemTooltip"/> and <see cref="ItemSlot"/>.
 ///
@@ -25,7 +25,7 @@ using UnityEngine.UI;
 public class InventoryList
 {
     // ---- the columns, and what each one sorts by ----
-    public enum SortKey { Stored, Name, Slot, Tier, Skills, Stat, Lift, Held }
+    public enum SortKey { Stored, Name, Tier, Held }
 
     struct Column
     {
@@ -33,7 +33,6 @@ public class InventoryList
         public string label;
         public float width;      // 0 = the flexible name column
         public float textSize;   // the row cell's type size — the name reads larger than the figures beside it
-        public bool equipOnly;
         public TextAlignmentOptions align;
     }
 
@@ -44,11 +43,7 @@ public class InventoryList
     static readonly Column[] Columns =
     {
         new Column { key = SortKey.Name,   label = "Name",    width = 0f,   textSize = 14f, align = TextAlignmentOptions.Left },
-        new Column { key = SortKey.Slot,   label = "Slot",    width = 82f,  textSize = 12f, equipOnly = true, align = TextAlignmentOptions.Right },
         new Column { key = SortKey.Tier,   label = "Tier",    width = 76f,  textSize = 12f, align = TextAlignmentOptions.Right },
-        new Column { key = SortKey.Skills, label = "Skills",  width = 52f,  textSize = 11f, equipOnly = true, align = TextAlignmentOptions.Right },
-        new Column { key = SortKey.Stat,   label = "Atk/Def", width = 62f,  textSize = 11f, equipOnly = true, align = TextAlignmentOptions.Right },
-        new Column { key = SortKey.Lift,   label = "Out",     width = 48f,  textSize = 11f, equipOnly = true, align = TextAlignmentOptions.Right },
         new Column { key = SortKey.Held,   label = "Held",    width = 48f,  textSize = 11f, align = TextAlignmentOptions.Right },
     };
 
@@ -75,7 +70,6 @@ public class InventoryList
 
     readonly List<Row> rows = new List<Row>(RowPool);
     readonly List<BagEntry> view = new List<BagEntry>(RowPool);
-    readonly List<Button> headerButtons = new List<Button>(Columns.Length);
     readonly List<TMP_Text> headerLabels = new List<TMP_Text>(Columns.Length);
 
     RectTransform content;           // the scroll view's content, holding the rows
@@ -86,7 +80,6 @@ public class InventoryList
     SortKey sortKey = SortKey.Stored;
     bool sortDescending;
     string query = "";
-    bool equipColumns = true;        // whether the Slot / Skills / Atk-Def / Out columns are shown
     Action onChanged;                // the window's own refresh, raised after an action mutates the bag
 
     // Rare-blue, the same mark the approved design uses — never a rarity colour, so it cannot be mistaken
@@ -115,8 +108,6 @@ public class InventoryList
         BuildSearch(col);
         BuildHeader(col);
         BuildScroller(col);
-
-        ApplyColumns();   // the built state must MATCH the flag, or the first tab shows the wrong columns
 
         menu = new ItemActionMenu();
         menu.Build(parent.GetComponentInParent<Canvas>());
@@ -221,7 +212,6 @@ public class InventoryList
 
             var key = c.key;
             btn.onClick.AddListener(() => CycleSort(key));
-            headerButtons.Add(btn);
         }
     }
 
@@ -319,29 +309,6 @@ public class InventoryList
         e != null && e.instance != null ? (int)e.instance.Rarity
       : e != null && e.def != null ? (int)e.def.rarity : -1;
 
-    static int SkillCount(BagEntry e) =>
-        e != null && e.instance != null && e.instance.skillIds != null ? e.instance.skillIds.Count : -1;
-
-    // The copy's own number, rarity included, from the same sum the stat sheet uses: a weapon's ATK, a Garment's M.DEF
-    // (it carries no DEF), anything else's DEF — plus refine.
-    static int StatValue(BagEntry e)
-    {
-        if (e == null || e.def == null) return -1;
-        int refine = e.instance != null ? e.instance.upgrade : 0;
-        var eb = default(EquipBonuses);
-        if (e.instance != null) e.instance.AddPieceInto(ref eb);
-        else { eb.atk = e.def.bonusAttack; eb.def = e.def.bonusDefense; eb.mdef = e.def.bonusMDef; }
-        if (e.def.slot == EquipSlotType.Weapon) return eb.atk + refine * EquipmentInstance.AtkPerRefine;
-        if (e.def.slot == EquipSlotType.Garment) return eb.mdef;
-        return eb.def + refine * EquipmentInstance.DefPerRefine;
-    }
-
-    // What the copy's rarity lifts: a weapon's skills and attack, a rolled piece of armour's defence.
-    static float LiftOf(BagEntry e) =>
-        e != null && e.def != null && e.instance != null
-        && (e.def.slot == EquipSlotType.Weapon || (e.instance.rolled && ArmourRoll.IsRolledSlot(e.def.slot)))
-            ? Rarities.OutputLift(e.instance.Rarity) : -1f;
-
     int Compare(BagEntry a, BagEntry b)
     {
         int sign = sortDescending ? -1 : 1;
@@ -349,12 +316,7 @@ public class InventoryList
         switch (sortKey)
         {
             case SortKey.Name:   c = string.Compare(NameOf(a), NameOf(b), StringComparison.OrdinalIgnoreCase); break;
-            case SortKey.Slot:   c = EquipSlots.Order(a.def != null ? a.def.slot : EquipSlotType.None)
-                                     .CompareTo(EquipSlots.Order(b.def != null ? b.def.slot : EquipSlotType.None)); break;
             case SortKey.Tier:   c = TierRank(a).CompareTo(TierRank(b)); break;
-            case SortKey.Skills: c = SkillCount(a).CompareTo(SkillCount(b)); break;
-            case SortKey.Stat:   c = StatValue(a).CompareTo(StatValue(b)); break;
-            case SortKey.Lift:   c = LiftOf(a).CompareTo(LiftOf(b)); break;
             case SortKey.Held:   c = a.count.CompareTo(b.count); break;
             default:             return 0;
         }
@@ -384,37 +346,6 @@ public class InventoryList
                 if (d != null && d.displayName != null && d.displayName.ToLowerInvariant().Contains(query)) return true;
             }
         return false;
-    }
-
-    /// <summary>Which columns are meaningful for what is on screen. The bag tabs have no slot, skills or
-    /// attack figure, so those columns are hidden rather than filled with dashes.</summary>
-    public void SetEquipColumns(bool on)
-    {
-        equipColumns = on;
-        ApplyColumns();
-    }
-
-    /// <summary>Show or hide each column for the current tab shape. Called on BUILD as well as on every change —
-    /// an earlier version compared against a starting value that had never been applied, so the very first call
-    /// did nothing and the Held column stayed on every tab, eating the name column's width.</summary>
-    void ApplyColumns()
-    {
-        for (int i = 0; i < Columns.Length; i++)
-        {
-            bool show = ShowColumn(i);
-            if (i < headerButtons.Count && headerButtons[i] != null)
-                headerButtons[i].gameObject.SetActive(show);
-            for (int r = 0; r < rows.Count; r++)
-                if (rows[r].cells[i] != null) rows[r].cells[i].gameObject.SetActive(show);
-        }
-    }
-
-    bool ShowColumn(int i)
-    {
-        var c = Columns[i];
-        if (c.key == SortKey.Held) return !equipColumns;      // a count belongs to stackables, not to gear
-        if (c.equipOnly) return equipColumns;
-        return true;
     }
 
     // ---- rendering ----
@@ -491,20 +422,8 @@ public class InventoryList
         if (e.worn) name += WornTag;
 
         Set(row, 0, name, tint);
-        Set(row, 1, def != null ? EquipSlots.Label(def.slot) : "", UiKit.TextDim);
-        Set(row, 2, Rarities.Label(rar), UiKit.TextDim);
-
-        int skills = SkillCount(e);
-        Set(row, 3, skills >= 0 ? skills.ToString() : "—", UiKit.TextDim);
-
-        bool isGear = def != null && def.slot != EquipSlotType.None;
-        Set(row, 4, isGear ? StatValue(e).ToString() : "—", UiKit.TextDim);
-
-        float lift = LiftOf(e);
-        Set(row, 5, lift > 0f ? "+" + Mathf.RoundToInt(lift * 100f) + "%" : "—",
-            lift > 0f ? tint : UiKit.TextDim);
-
-        Set(row, 6, e.count > 1 ? "×" + e.count : (e.count == 1 ? "1" : ""), UiKit.TextDim);
+        Set(row, 1, Rarities.Label(rar), UiKit.TextDim);
+        Set(row, 2, e.count > 1 ? "×" + e.count : (e.count == 1 ? "1" : ""), UiKit.TextDim);
     }
 
     static void Set(Row row, int i, string text, Color c)

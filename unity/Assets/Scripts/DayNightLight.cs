@@ -120,8 +120,8 @@ public class DayNightLight : MonoBehaviour
     }
 
     /// <summary>Force the next <see cref="Update"/> to re-apply colour/intensity/angle even when the clock
-    /// hasn't moved. The DevSettings sun sliders call this so tuning shows instantly instead of waiting for
-    /// the next time-of-day change.</summary>
+    /// hasn't moved, so a changed sun setting shows instantly instead of waiting for the next time-of-day
+    /// change.</summary>
     public void Refresh() => lastTime = float.NaN;
 
     void Update()

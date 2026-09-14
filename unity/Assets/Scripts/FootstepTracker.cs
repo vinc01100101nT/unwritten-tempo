@@ -137,7 +137,7 @@ public class FootstepTracker : MonoBehaviour
         }
     }
 
-    /// <summary>Find the live tracker, creating one if none exists (used on demand by the effects/DevSettings).</summary>
+    /// <summary>Find the live tracker, creating one if none exists (used on demand by the effects).</summary>
     public static FootstepTracker Ensure()
     {
         var t = Instance != null ? Instance : FindAnyObjectByType<FootstepTracker>();

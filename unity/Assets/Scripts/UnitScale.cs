@@ -5,7 +5,7 @@ using UnityEngine;
 /// at <c>baseSpeed × multiplier</c>, so shrinking a unit also slows it proportionally — it crosses the same
 /// number of body-lengths per second and keeps the same "feel" at any size.
 ///
-/// <para>Two knobs (live-tunable in the P ▸ DevSettings panel):
+/// <para>Two knobs:
 ///   • <see cref="Global"/>      — scales ALL units (player + mobs) together.
 ///   • <see cref="MobRelative"/> — an extra multiplier on MOBS only, to match their on-screen size to the
 ///     player, so this can default &lt; 1 when the mob art reads larger on screen than the player.</para>

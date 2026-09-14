@@ -228,10 +228,9 @@
 
   /* Real columns, so the header above them can sort them and the digits line up down the page.
      One template per tab shape, shared by the header row and every data row — they cannot drift. */
-  .row.eq,  .hdr.eq  { grid-template-columns: minmax(120px, 1fr) 82px 76px 52px 62px 48px; min-width: 600px; }
-  .row.bag, .hdr.bag { grid-template-columns: minmax(120px, 1fr) 76px 58px; min-width: 320px; }
+  .row, .hdr { grid-template-columns: minmax(120px, 1fr) 76px 48px; min-width: 320px; }
 
-  .c-slot, .c-tier, .c-kit, .c-stat, .c-lift, .c-qty {
+  .c-tier, .c-qty {
     text-align: right;
     font-size: 11px;
     color: var(--text-dim);
@@ -240,10 +239,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  /* With no icons, the slot is the only thing telling a helm from a sword at a glance — and the tier word
-     is here because a colour cannot be ranked precisely, and is worth nothing to a colour-blind reader. */
-  .c-slot, .c-tier { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
-  .c-lift { font-weight: 600; }
+  /* The tier word is here because a colour cannot be ranked precisely, and is worth nothing to a colour-blind
+     reader. */
+  .c-tier { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
 
   .hdr {
     display: grid;
@@ -753,51 +751,32 @@
   var state = { cat: "all", ranks: 50, q: "" };
   var shown = [];   /* the items currently drawn, in the order the rows show them */
 
-  /* The columns each tab shape has, and which one it sorts by until someone says otherwise. Equip opens on
-     SLOT because grouping by body slot is what a reader of an icon-less list needs first; a bag opens on
-     name. dir is 1 for ascending, -1 for descending. */
-  var COLS = {
-    equip: [
-      { key: "name", label: "Name",    cls: "c-name" },
-      { key: "slot", label: "Slot",    cls: "c-slot" },
-      { key: "tier", label: "Tier",    cls: "c-tier" },
-      { key: "kit",  label: "Skills",  cls: "c-kit"  },
-      { key: "stat", label: "Atk/Def", cls: "c-stat" },
-      { key: "lift", label: "Out",     cls: "c-lift" }
-    ],
-    bag: [
-      { key: "name", label: "Name", cls: "c-name" },
-      { key: "tier", label: "Tier", cls: "c-tier" },
-      { key: "qty",  label: "Held", cls: "c-qty"  }
-    ]
-  };
+  /* The columns every tab shows, and which one each tab sorts by until someone says otherwise. Every tab opens
+     on name. dir is 1 for ascending, -1 for descending. */
+  var COLS = [
+    { key: "name", label: "Name", cls: "c-name" },
+    { key: "tier", label: "Tier", cls: "c-tier" },
+    { key: "qty",  label: "Held", cls: "c-qty"  }
+  ];
 
   var SORTS = {
     all:      { key: "name", dir: 1 },
-    equip:    { key: "slot", dir: 1 },
+    equip:    { key: "name", dir: 1 },
     use:      { key: "name", dir: 1 },
     material: { key: "name", dir: 1 },
     etc:      { key: "name", dir: 1 }
   };
 
-  /* A body's order, from EquipSlotType — not alphabetical, because a reader scans a body. */
-  var SLOT_ORDER = ["Head", "Armor", "Weapon", "Shield", "Garment", "Ring"];
   var TIER_ORDER = ["common", "uncommon", "rare", "epic", "legendary"];
 
-  function isEquip() { return state.cat === "equip" || state.cat === "all"; }
-  function cols() { return isEquip() ? COLS.equip : COLS.bag; }
+  function cols() { return COLS; }
   function sortOf() { return SORTS[state.cat]; }
 
   /* One comparable value per column, so the comparator never has to know which tab it is in. */
   function sortValue(it, key) {
     switch (key) {
-      case "slot": return it.slot ? SLOT_ORDER.indexOf(it.slot) : -1;
       case "tier": return TIER_ORDER.indexOf(it.rarity);
-      case "kit":  return it.slot === "Weapon" ? it.kit.length : -1;
-      case "stat": return it.slot === "Weapon" ? it.baseAtk + it.refine * 3
-                                               : it.slot ? (it.baseDef || 0) + it.refine : -1;
-      case "lift": return it.slot === "Weapon" ? RARITY[it.rarity].lift : -1;
-      case "qty":  return it.qty || 0;
+      case "qty":  return it.qty || 1;
       default:     return it.name.toLowerCase();
     }
   }
@@ -920,7 +899,7 @@
       var r = RARITY[it.rarity];
       var li = el("li");
       /* A plain element, not a button: no tab stop, no focus ring. */
-      var row = el("div", "row " + (isEquip() ? "eq" : "bag"));
+      var row = el("div", "row");
       row.setAttribute("data-part", "row");
       row.style.color = r.text;
 
@@ -938,21 +917,10 @@
       }
       row.appendChild(nm);
 
-      if (isEquip()) {
-        var gear = !!it.slot;
-        var isWeapon = it.slot === "Weapon";
-        row.appendChild(cell("c-slot", it.slot || ""));
-        row.appendChild(cell("c-tier", r.label));
-        row.appendChild(cell("c-kit", isWeapon ? String(it.kit.length) : "—"));
-        row.appendChild(cell("c-stat", gear ? String(isWeapon ? it.baseAtk + it.refine * 3
-                                                              : (it.baseDef || 0) + it.refine) : "—"));
-        var l = cell("c-lift", isWeapon && r.lift ? "+" + Math.round(r.lift * 100) + "%" : "—");
-        if (isWeapon && r.lift) l.style.color = r.text;
-        row.appendChild(l);
-      } else {
-        row.appendChild(cell("c-tier", r.label));
-        row.appendChild(cell("c-qty", "×" + it.qty));
-      }
+      /* Gear never stacks, so it holds 1 — the same reading the game gives it. */
+      var held = it.qty || 1;
+      row.appendChild(cell("c-tier", r.label));
+      row.appendChild(cell("c-qty", held > 1 ? "×" + held : "1"));
 
       row.addEventListener("mouseenter", function (ev) {
         pointer.x = ev.clientX; pointer.y = ev.clientY;
@@ -980,7 +948,7 @@
   function drawHeader() {
     var box = document.getElementById("hdr");
     box.textContent = "";
-    box.className = "hdr " + (isEquip() ? "eq" : "bag");
+    box.className = "hdr";
     var s = sortOf();
     cols().forEach(function (c, i) {
       var b = document.createElement("button");

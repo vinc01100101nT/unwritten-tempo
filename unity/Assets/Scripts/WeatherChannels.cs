@@ -15,7 +15,7 @@ using UnityEngine;
 /// channels ease independently. So "heavy clouds, then very light rain, then puddles, then storm" is authored as data,
 /// not hard-wired. Easing happens in ONE place (here), so a sequence's ramp times are honoured exactly.</para>
 ///
-/// <para><b>Auto-puddle.</b> So that manually raising just the rain (DevSettings, or any code) still wets the ground,
+/// <para><b>Auto-puddle.</b> So that manually raising just the rain (from any code) still wets the ground,
 /// the <see cref="WeatherChannel.Puddle"/> channel derives its target from rain — soak-in delay, spread, after-rain
 /// linger, dry-out — UNLESS a sequence explicitly drives puddles (then <see cref="autoPuddle"/> is switched off for
 /// that sequence and the keyframes own the look). This is the only built-in cross-channel coupling, and it's optional.</para>
@@ -57,7 +57,7 @@ public class WeatherChannels : MonoBehaviour
     float puddleDelayTimer;
     bool  puddleWasRaining;
 
-    /// <summary>Find the live channels hub, creating one if none exists yet (used by the director + DevSettings so
+    /// <summary>Find the live channels hub, creating one if none exists yet (used by the director so
     /// weather works even on a Systems scene baked before this component joined the rig).</summary>
     public static WeatherChannels Ensure()
     {
@@ -92,7 +92,7 @@ public class WeatherChannels : MonoBehaviour
     }
 
     /// <summary>Snap a channel instantly to a value (no easing) — used on scene load so you drop straight into the
-    /// day's established weather, and by the DevSettings sliders for immediate feedback.</summary>
+    /// day's established weather.</summary>
     public void Snap(WeatherChannel c, float value)
     {
         var k = ch[(int)c];

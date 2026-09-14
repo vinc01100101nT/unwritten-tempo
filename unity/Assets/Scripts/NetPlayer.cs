@@ -36,7 +36,7 @@ public class NetPlayer : NetworkBehaviour
     // separate so a body that is standing still costs nothing to keep in sync.
 
     [SyncVar] public string playerName = "";
-    [SyncVar] public string modelName = "";
+    [SyncVar(hook = nameof(OnModelChanged))] public string modelName = "";
 
     [SyncVar] Vector3 netPosition;
     [SyncVar] float netYaw;
@@ -219,9 +219,14 @@ public class NetPlayer : NetworkBehaviour
     /// <summary>A door. The player's own machine no longer travels by itself, because the map it is walking into
     /// may be held by a different process — and only the server can find out which, or refuse.</summary>
     [Command]
-    public void CmdWalkThroughPortal(string map, string spawnId)
+    public void CmdWalkThroughPortal(string map, string spawnId) => MoveToMap(map, spawnId);
+
+    /// <summary>Server-only: take this person to <paramref name="map"/>. The one way anybody changes map — a door
+    /// they walked through and a GM's <c>/tp</c> both come here, so a command cannot skip the save that has to
+    /// land before they are handed to another process.</summary>
+    public void MoveToMap(string map, string spawnId)
     {
-        if (Leaving || string.IsNullOrWhiteSpace(map)) return;
+        if (!isServer || Leaving || string.IsNullOrWhiteSpace(map)) return;
 
         // ALREADY HERE: nothing crosses the wire and nothing is written down. This is most doors, and it stays
         // exactly as instant as it has always been.
@@ -349,6 +354,14 @@ public class NetPlayer : NetworkBehaviour
             InventoryStore.Instance?.Notify();
         }
 
+        // …and the character sheet, held for the same reason.
+        if (sheetWaiting && Character.Instance != null)
+        {
+            sheetWaiting = false;
+            Character.Instance.SetSheetFromServer(waitingCurrent, waitingBaseline, waitingWithStates,
+                                                  waitingRaiseCost, waitingJumpAt, waitingJumpGain);
+        }
+
         // THREE possible askers, not two — and this is where the server used to fall through the crack. "Am I the
         // one steering this?" is false on a server for EVERY player, because the server steers nobody, so it took
         // the watcher's branch and built a visible body for each person who connected: a rigged model fetched,
@@ -356,7 +369,7 @@ public class NetPlayer : NetworkBehaviour
         //
         // The creature shells never had this problem because they ask a different question. So this asks it too:
         // a body is built only by a machine that is actually WATCHING.
-        if (isServer) { PushMyHealth(); ForgetSpeedIfTheyStopped(); return; }
+        if (isServer) { PushMyHealth(); PushMySheet(); ForgetSpeedIfTheyStopped(); return; }
         if (isOwned) { ReportMyPosition(); TakeTheServersWord(); return; }
         if (isClient) FollowTheServer();
     }
@@ -497,6 +510,76 @@ public class NetPlayer : NetworkBehaviour
         }
         healthKnown = true;
     }
+
+    // ---- the server's half: hand the person their character sheet ----------------------------------------
+    //
+    // A player's machine works out none of the numbers a character's stats produce, so the server derives the whole
+    // sheet from the character it holds and sends it — but only when something on it moved. Checked twice a second
+    // rather than on every beat: a sheet is read by a window, not by a swing, and it is three snapshots to build.
+
+    const float SheetInterval = 0.5f;
+    float nextSheetPush;
+    bool sheetSent;
+    DerivedSnapshot sentCurrent, sentBaseline, sentWithStates;
+    readonly int[] sentRaiseCost = new int[6];
+    readonly int[] sentJumpAt = new int[6];
+    readonly int[] sentJumpGain = new int[6];
+
+    void PushMySheet()
+    {
+        if (Time.time < nextSheetPush || connectionToClient == null) return;
+        nextSheetPush = Time.time + SheetInterval;
+
+        var person = ServerCombatUnit as Character;
+        if (person == null) return;
+
+        var current = person.CurrentDerived;
+        var baseline = person.BaseDerived;
+        var withStates = person.DerivedWithStates;
+        bool changed = !sheetSent
+                       || !DerivedSnapshot.Same(current, sentCurrent)
+                       || !DerivedSnapshot.Same(baseline, sentBaseline)
+                       || !DerivedSnapshot.Same(withStates, sentWithStates);
+        for (int i = 0; i < 6; i++)
+        {
+            var stat = (PrimaryStat)i;
+            int cost = person.CostToRaise(stat), jumpAt = person.NextJumpAt(stat), gain = person.JumpGainAt(stat);
+            if (cost != sentRaiseCost[i] || jumpAt != sentJumpAt[i] || gain != sentJumpGain[i]) changed = true;
+            sentRaiseCost[i] = cost;
+            sentJumpAt[i] = jumpAt;
+            sentJumpGain[i] = gain;
+        }
+        if (!changed) return;
+
+        sheetSent = true;
+        sentCurrent = current;
+        sentBaseline = baseline;
+        sentWithStates = withStates;
+        // Copied only on a change, which is when a new sheet is worth a send at all.
+        TargetSheet(connectionToClient, current, baseline, withStates,
+                    (int[])sentRaiseCost.Clone(), (int[])sentJumpAt.Clone(), (int[])sentJumpGain.Clone());
+    }
+
+    [TargetRpc]
+    void TargetSheet(NetworkConnectionToClient target, DerivedSnapshot current, DerivedSnapshot baseline,
+                     DerivedSnapshot withStates, int[] raiseCost, int[] jumpAt, int[] jumpGain)
+    {
+        var me = Character.Instance;
+        if (me != null) { me.SetSheetFromServer(current, baseline, withStates, raiseCost, jumpAt, jumpGain); return; }
+        // ARRIVED BEFORE THERE WAS A CHARACTER TO GIVE IT TO. The server only sends a sheet when it changes, so a
+        // dropped one would leave zeros on the window until something happened to move a stat. Held until there is.
+        sheetWaiting = true;
+        waitingCurrent = current;
+        waitingBaseline = baseline;
+        waitingWithStates = withStates;
+        waitingRaiseCost = raiseCost;
+        waitingJumpAt = jumpAt;
+        waitingJumpGain = jumpGain;
+    }
+
+    bool sheetWaiting;
+    DerivedSnapshot waitingCurrent, waitingBaseline, waitingWithStates;
+    int[] waitingRaiseCost, waitingJumpAt, waitingJumpGain;
 
     // ---- the server's half: say what is running on them --------------------------------------------------
 
@@ -879,7 +962,19 @@ public class NetPlayer : NetworkBehaviour
         if (!System.Enum.IsDefined(typeof(PrimaryStat), stat)) return;
         if (!c.AddStat((PrimaryStat)stat)) return;   // no points left, or already at the ceiling
         SaveSoon();
+        PushStatsToOwner();
+    }
+
+    /// <summary>Server-only: hand this connection its level, unspent points and primaries as they now stand.
+    /// Called after every change the server makes to them — a point spent, or a GM command.</summary>
+    public void PushStatsToOwner()
+    {
+        if (!isServer || connectionToClient == null) return;
+        var c = ServerCharacter;
+        if (c == null) return;
         TargetStatsChanged(connectionToClient, (int)c.Level, c.StatPoints, c.CaptureStatsForOwner());
+        // The sheet those stats produce follows on the very next beat instead of waiting out its interval.
+        nextSheetPush = 0f;
     }
 
     [TargetRpc]
@@ -1661,6 +1756,16 @@ public class NetPlayer : NetworkBehaviour
         showingHeld = false;
     }
 
+    /// <summary>A GM's <c>/model</c> changed what this person wears. Their own machine dresses its avatar; everybody
+    /// else drops the copy they drew, and the next frame builds it again in the new model. The name arriving for the
+    /// first time is not a change — the body is built by the usual path then.</summary>
+    void OnModelChanged(string was, string now)
+    {
+        if (string.IsNullOrEmpty(was) || was == now) return;
+        if (isOwned) { Player3DBody.Wear(now); return; }
+        DropTheBody();
+    }
+
     void EnsureBody()
     {
         // A body is on its way — not "one was asked for once". The same latch on a creature's shell meant a body
@@ -1674,6 +1779,9 @@ public class NetPlayer : NetworkBehaviour
         CharacterModels.Load(wanted, model =>
         {
             if (this == null) return;                   // player left while their model was loading
+            // A GM's /model landed while this was loading. The hook already dropped the body and started loading the
+            // new one, so this stale load builds nothing and leaves that load's latch alone.
+            if (wanted != modelName) return;
             if (model == null)
             {
                 GameLog.Warn(LogCat.Net, "no character model called '" + wanted + "' — "
@@ -1725,17 +1833,17 @@ public class NetPlayer : NetworkBehaviour
 
     /// <summary>Show a blow the server decided landed on this person.
     ///
-    /// <para>The SAME two jobs this class already splits by: on the machine of the person it happened to, the blow
-    /// goes through the ordinary door every hit has always gone through — the number, the flash, the stagger, the
-    /// passives that listen for being hurt — with only the health left for the server to say. On everybody else's
-    /// machine it is a number over somebody's head, which is all a bystander can honestly know.</para></summary>
-    public void ShowBlow(in DamageInfo info, in UnitMitigation.Outcome mitigated)
+    /// <para>The SAME two jobs this class already splits by: on the machine of the person it happened to, it is the
+    /// number, the grunt, the flash and the stagger, drawn exactly as the server decided them
+    /// (<see cref="Character.ShowBlowFromServer"/>). On everybody else's machine it is a number over somebody's head,
+    /// which is all a bystander can honestly know.</para></summary>
+    public void ShowBlow(in DamageInfo info, in UnitMitigation.Outcome mitigated, bool tick = false)
     {
         if (isOwned)
         {
             var me = Character.Instance;
             if (me == null) return;
-            CombatAuthority.ApplyFromServer(me, info);
+            me.ShowBlowFromServer(info, tick);
 
             // WHAT THE BLOW RAN INTO, drawn here because this is the first machine in the chain with a screen. The
             // server decided all of it and suppresses every floating number it makes, and none of these survives in

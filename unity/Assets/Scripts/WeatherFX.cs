@@ -1,7 +1,7 @@
 /// <summary>
 /// Global weather quality gate. The HEAVY wet-ground + splash effects only run at <see cref="Tier.High"/>,
 /// so they NEVER raise the minimum spec — Low/Medium ship the cheap rain overlay only. A graphics-quality
-/// setting (or the DevSettings "Weather quality" knob) drives <see cref="Quality"/>. Default Medium = heavy off.
+/// setting drives <see cref="Quality"/>. Default Medium = heavy off.
 /// </summary>
 public static class WeatherFX
 {

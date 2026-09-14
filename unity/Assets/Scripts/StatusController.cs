@@ -390,17 +390,31 @@ public class StatusController : MonoBehaviour
         if (states == null) return;   // player pre-Character load window — nothing can be active yet
         // Only the damage-over-time ailments need per-frame attention; the rest are read on demand via the
         // flags above. Tick each live DoT on its own cadence and apply it to whatever we're attached to.
-        TickDot(Ailment.Poison);
-        TickDot(Ailment.Bleed);
-        TickDot(Ailment.Burn);
-        TickRegen();
-        TickMana();
-        TickBrace();
+        // A PLAYER'S MACHINE TICKS NOTHING THAT MOVES A NUMBER — no poison, no regeneration, no mana, no brace bill.
+        // The server ticks its own copy of every unit and says what happened; ticking here as well would pay the
+        // same regeneration once from each machine.
+        // A unit that is a watched copy never ticks either — which also covers the moments between two connections,
+        // when this machine is briefly joined to no world while its copies are still standing.
+        if (!GameNetwork.TheWorldIsElsewhere && !UnitIsWatchedCopy())
+        {
+            TickDot(Ailment.Poison);
+            TickDot(Ailment.Bleed);
+            TickDot(Ailment.Burn);
+            TickRegen();
+            TickMana();
+            TickBrace();
+        }
 
         // Tear down a DoT's aura once its state has lapsed (aura[i] != null gates it, so states.Has is only hit for
         // the handful of active DoT slots — cheap, no alloc; only DoT slots ever hold an aura).
         for (int i = 0; i < N; i++)
             if (aura[i] != null && !states.Has((StateId)i)) StopAura(i);
+    }
+
+    bool UnitIsWatchedCopy()
+    {
+        var u = Unit;
+        return u is Health creature ? creature.IsWatchedCopy : u is Character person && person.IsWatchedCopy;
     }
 
     void TickDot(Ailment a)
@@ -426,7 +440,9 @@ public class StatusController : MonoBehaviour
         if (Time.time < nextRegenTick) return;
         nextRegenTick = Time.time + UnitStates.RegenInterval;
         var u = Unit;
-        if (u == null) return;
+        // At full health there is nothing to restore — the same stop the mana tick below has always had. Paying into
+        // a full bar still announced green digits to every screen watching, once per tick, per unit, forever.
+        if (u == null || u.CurrentHP >= u.MaxHP) { hpAccum = 0f; return; }
         // Both halves are HP per SECOND: what the unit's own VIT restores, plus whatever a timed regen change adds
         // (or, negative, takes away).
         int pay = Owed(ref hpAccum, u.HPRegenPerSecond + states.SubStatBonus(SubStat.HPRegen));

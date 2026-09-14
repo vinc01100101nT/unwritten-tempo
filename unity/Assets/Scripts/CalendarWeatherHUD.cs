@@ -10,7 +10,7 @@ using TMPro;
 ///
 /// <para><b>Perf:</b> like the rest of the HUD this is essentially event-rate. We can't subscribe to a
 /// single event because the date changes on a day rollover (<see cref="GameCalendar"/>) while the weather
-/// can ALSO change mid-day when DevSettings forces a preset (Phase 5). So we poll with two cheap compares
+/// can ALSO change mid-day when a preset is forced. So we poll with two cheap compares
 /// (a <c>long</c> day index + an <c>enum</c> preset) and only rebuild the text — the one allocating step,
 /// incl. the enum's <c>ToString</c> — when one of them actually changes (≈ once per in-game day at runtime).
 /// No string work, no <c>GetComponent</c>, no <c>Find*</c> on the steady-state frame.</para>

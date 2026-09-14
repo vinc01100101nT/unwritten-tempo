@@ -86,7 +86,7 @@ public class SnowGround : MonoBehaviour
     static readonly int StepsID      = Shader.PropertyToID("_Steps");
     static readonly int ShadowStrengthID = Shader.PropertyToID("_ShadowStrength");
 
-    /// <summary>Find the live snow-ground effect, creating one if none exists (used by the DevSettings knob).</summary>
+    /// <summary>Find the live snow-ground effect, creating one if none exists.</summary>
     public static SnowGround Ensure()
     {
         var s = FindAnyObjectByType<SnowGround>();

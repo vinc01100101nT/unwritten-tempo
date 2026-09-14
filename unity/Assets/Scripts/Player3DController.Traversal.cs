@@ -68,8 +68,8 @@ public partial class Player3DController
         if (eDashing) { StepEDash(); transform.localScale = baseScale; return true; }
         if (jumping)  { StepJump();  transform.localScale = baseScale; return true; }
 
-        // Same input guards as ReadInput so a panel/skill-aim click doesn't also hop/dash.
-        if (DevSettings.Blocking || GroundTargeter.Active || UnitTargeter.Active) return false;
+        // Same input guards as ReadInput so a skill-aim click doesn't also hop/dash.
+        if (GroundTargeter.Active || UnitTargeter.Active) return false;
 
         if (KeyDash() && Time.time >= eDashReadyAt)
         {

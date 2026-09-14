@@ -10,8 +10,8 @@ using UnityEngine;
 ///
 /// <para><b>Why real-UTC-anchored:</b> in MMO play every client derives the SAME <see cref="time01"/> and
 /// <see cref="DayIndex"/> from <see cref="Epoch"/> + the system clock, so the world's time-of-day, calendar,
-/// and (seeded) weather agree on every machine with zero networking — and the world keeps advancing while
-/// logged out. <see cref="GameCalendar"/> reads <see cref="DayIndex"/>; <see cref="WeatherDirector"/> seeds
+/// and (seeded) weather agree on every machine — and the world keeps advancing while logged out. The one part
+/// that travels over the network is a GM's <c>/time</c> shift (<see cref="ShiftSeconds"/>). <see cref="GameCalendar"/> reads <see cref="DayIndex"/>; <see cref="WeatherDirector"/> seeds
 /// off it.</para>
 ///
 /// <para>It's also the in-game <b>test tuner</b>: untick <see cref="useRealClock"/> (or tick
@@ -49,6 +49,30 @@ public class TimeOfDay : MonoBehaviour
     public float time01 = 0f;
     [SerializeField] [Tooltip("Read-only live readout.")]
     string _readout = "";
+
+    /// <summary>Seconds added to the world clock when working out the time of day — moved by a GM's <c>/time</c>
+    /// on the server and told to every player there, so everyone's sky moves together. Zero until somebody moves it,
+    /// and gone when that server restarts. Only the time of DAY reads it: cooldowns and respawns count from
+    /// <see cref="WorldClock"/> untouched.</summary>
+    public static double ShiftSeconds { get; private set; }
+
+    /// <summary>Take the shift the server holds. On a server this is the command setting it; on a player's machine
+    /// it is the server's word arriving.</summary>
+    public static void TakeShift(double seconds) => ShiftSeconds = seconds;
+
+    /// <summary>How far to move the clock, in seconds, so that <paramref name="elapsedSeconds"/> lands on
+    /// <paramref name="target01"/> of the SAME day — never the next one, so the date and the weather picked for it
+    /// stay put. Negative when the target is earlier in the day.</summary>
+    public static double SecondsToReach(double elapsedSeconds, double dayLengthSeconds, double target01)
+    {
+        double intoDay = elapsedSeconds - Math.Floor(elapsedSeconds / dayLengthSeconds) * dayLengthSeconds;
+        // 1 is the same moment as 0; kept in [0, 1) so asking for 1 cannot step into the next day.
+        double target = target01 - Math.Floor(target01);
+        return target * dayLengthSeconds - intoDay;
+    }
+
+    /// <summary>Seconds since <see cref="Epoch"/> as the time of day counts them: the world clock plus the shift.</summary>
+    public static double ElapsedForTimeOfDay => WorldClock.SecondsSince(Epoch) + ShiftSeconds;
 
     /// <summary>Whole in-game days elapsed since <see cref="Epoch"/> — the shared, deterministic day counter the
     /// calendar and weather seed off. In real-clock mode it's <c>floor(secondsSinceEpoch / DayLengthSeconds)</c>,
@@ -98,7 +122,7 @@ public class TimeOfDay : MonoBehaviour
             // is not in the world anyway, and the sign-in screen is over the top of it.
             if (!WorldClock.Synced) return;
 
-            double elapsed = WorldClock.SecondsSince(Epoch);
+            double elapsed = ElapsedForTimeOfDay;
             overrideElapsed = elapsed;                                   // keep synced so toggling to override doesn't jump
             DayIndex = (long)Math.Floor(elapsed / dayLen);
             time01 = (float)((elapsed - DayIndex * dayLen) / dayLen);    // mod into [0,1)
@@ -141,7 +165,7 @@ public class TimeOfDay : MonoBehaviour
 
     void SetTime(float t) { time01 = Mathf.Repeat(t, 1f); paused = true; }
 
-    /// <summary>Dev day-scrub (DevSettings "Calendar &amp; Weather"): shift the clock by whole in-game days,
+    /// <summary>Dev day-scrub: shift the clock by whole in-game days,
     /// keeping the current time-of-day. Detaches from real UTC first — the production clock recomputes
     /// <see cref="DayIndex"/> from the wall clock every frame, so it would instantly undo any offset.
     /// <see cref="GameCalendar"/>/<see cref="WeatherDirector"/> poll <see cref="DayIndex"/>, so the date +

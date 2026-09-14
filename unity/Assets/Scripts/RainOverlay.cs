@@ -7,7 +7,7 @@ using UnityEngine;
 /// minus the depth sampling and the baked texture (rain is a pure 2D overlay drawn after everything).
 ///
 /// <para>Zero-cost when dry: at <see cref="intensity"/> ≈ 0 the quad is deactivated, so it draws nothing.
-/// Tune it live from the DevSettings panel (<b>P</b>) under "Rain". The clock-style scroll (<see cref="phase"/>)
+/// The clock-style scroll (<see cref="phase"/>)
 /// is advanced in C# so it's framerate-independent and freezes if the game is paused.</para>
 /// </summary>
 [DisallowMultipleComponent]
@@ -55,7 +55,7 @@ public class RainOverlay : MonoBehaviour
     static readonly int SlantID     = Shader.PropertyToID("_Slant");
     static readonly int DensityID   = Shader.PropertyToID("_Density");
 
-    /// <summary>Find the live rain overlay, creating one if none exists yet (used by the DevSettings knob so
+    /// <summary>Find the live rain overlay, creating one if none exists yet (so
     /// rain works even on a scene built before this component was added to the rig).</summary>
     public static RainOverlay Ensure()
     {

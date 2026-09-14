@@ -13,7 +13,7 @@ using UnityEngine.InputSystem;
 ///
 /// If the caller passes no circle id (an un-authored skill), aiming still works — there's just no visible
 /// reticle. While aiming, <see cref="Active"/> is true and <see cref="Player3DController"/> skips its
-/// click/move input that frame (same pattern as <see cref="DevSettings.Blocking"/>) so the confirm click
+/// click/move input that frame so the confirm click
 /// doesn't also order a move. Self-boots a single hidden instance on first use.
 /// </summary>
 public class GroundTargeter : MonoBehaviour

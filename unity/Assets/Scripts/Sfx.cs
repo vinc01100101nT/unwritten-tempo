@@ -135,7 +135,7 @@ public class Sfx : MonoBehaviour
 
     /// <summary>Live-retune the 3D positional range (how far from the listener a world sound can be heard).
     /// The pool copies <see cref="minDistance"/>/<see cref="maxDistance"/> once in <see cref="Awake"/>, so this
-    /// pushes new values onto every already-created 3D voice — lets the DevSettings sliders work mid-Play.</summary>
+    /// pushes new values onto every already-created 3D voice, so a change takes effect mid-Play.</summary>
     public void SetSpatialRange(float min, float max)
     {
         minDistance = Mathf.Max(0f, min);

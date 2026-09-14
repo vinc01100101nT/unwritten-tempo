@@ -90,13 +90,11 @@ public class HotbarPanel : MonoBehaviour
         Refresh();
     }
 
-    // Central key router: pressing a slot's number key fires whatever skill is bound there. Gated only by the
-    // dev panel (DevSettings.Blocking) — number keys aren't blocked by mouse-over-UI the way the old per-skill
-    // mouse path was, so hovering the bar doesn't swallow the key.
+    // Central key router: pressing a slot's number key fires whatever skill is bound there. Number keys aren't
+    // blocked by mouse-over-UI the way the old per-skill mouse path was, so hovering the bar doesn't swallow the key.
     void HandleHotkeys()
     {
         if (Character.Instance == null || Character.Instance.IsDead) return;
-        if (DevSettings.Blocking) return;
         for (int i = 0; i < slots.Count; i++)
         {
             if (!SlotKeyDown(i)) continue;

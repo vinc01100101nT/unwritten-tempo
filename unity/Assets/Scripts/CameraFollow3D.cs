@@ -182,8 +182,6 @@ public class CameraFollow3D : MonoBehaviour
 
     void HandleInput()
     {
-        if (DevSettings.Blocking) return;   // cursor is over the dev-settings panel — don't zoom/orbit while tuning
-
         int zoom = ScrollDir();
         if (zoom != 0)
         {

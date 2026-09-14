@@ -10,7 +10,7 @@ using UnityEngine.UI;
 /// 1. <b>uGUI</b> (Canvas windows) — <see cref="EventSystem.IsPointerOverGameObject"/>. For this to be true the
 ///    window must have a raycast-target graphic under the cursor; <see cref="UiKit.ClickShield"/> guarantees
 ///    that across a whole window.
-/// 2. <b>IMGUI</b> (OnGUI dev overlays like the Effect/Sequence Tuner / DevSettings) — the EventSystem CANNOT see
+/// 2. <b>IMGUI</b> (OnGUI dev overlays like the Effect/Sequence Tuner) — the EventSystem CANNOT see
 ///    these, so each overlay calls <see cref="MarkImguiHot"/> in its OnGUI while the cursor is over its window;
 ///    that pulse is honored here for a frame (OnGUI runs after Update, so we accept last frame's mark too).
 ///

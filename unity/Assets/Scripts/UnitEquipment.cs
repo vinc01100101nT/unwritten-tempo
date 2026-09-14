@@ -46,7 +46,11 @@ public class UnitEquipment : MonoBehaviour
             {
                 var item = startingGear[i];
                 if (item == null || item.slot == EquipSlotType.None) continue;
-                equipped[item.slot] = EquipmentInstance.CreateRolled(item);
+                // A WATCHING MACHINE ROLLS NOTHING. Its copy of a creature wears the plain authored pieces, which is all
+                // it needs to draw what is held; the rolled copies live on the server's creature.
+                equipped[item.slot] = GameNetwork.TheWorldIsElsewhere
+                    ? new EquipmentInstance(item)
+                    : EquipmentInstance.CreateRolled(item);
             }
         dirty = true;
     }

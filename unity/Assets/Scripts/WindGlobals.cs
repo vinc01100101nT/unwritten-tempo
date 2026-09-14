@@ -7,8 +7,8 @@ using UnityEngine;
 /// animation itself runs in the GPU vertex stage).
 ///
 /// <para>Direction + base speed come from the <see cref="CloudShadows"/> wind (<c>windDirDeg</c> / <c>windSpeed</c>),
-/// the same wind that drifts the cloud shadows — so plants lean the way the clouds move, and the DevSettings
-/// "Wind direction / Wind speed" sliders steer both at once. Strength ramps up with the Rain weather channel, so
+/// the same wind that drifts the cloud shadows — so plants lean the way the clouds move, and changing that
+/// wind steers both at once. Strength ramps up with the Rain weather channel, so
 /// a storm whips the grass harder than a calm afternoon.</para>
 ///
 /// <para>Lives on the persistent Systems Sun (bootstrapped by <see cref="DayNightLight"/>, and added explicitly by
@@ -22,7 +22,7 @@ public class WindGlobals : MonoBehaviour
 {
     public static WindGlobals Instance { get; private set; }
 
-    [Tooltip("Master multiplier on ALL foliage sway (0 = perfectly still). DevSettings exposes this live.")]
+    [Tooltip("Master multiplier on ALL foliage sway (0 = perfectly still).")]
     [Range(0f, 3f)] public float swayScale = 1f;
 
     [Tooltip("Sway strength on a calm, clear day (before any storm boost).")]

@@ -47,7 +47,7 @@ Performance is a **hard constraint** for this game (3D world + many billboard mo
 - ❌ Building a `GameObject` + `Canvas` per UI element that spawns repeatedly. → Pool under one canvas.
 - ❌ **Returning a** `new List`**/array from a hot, repeatedly-called API.** → Fill a **caller-owned buffer** passed in (see `Pathfinder3D.FindPath(..., List<Vector2> result)`). This was the single biggest combat allocator — mobs repath constantly, and each call newed several lists.
 - ❌ `new WaitForSeconds(x)` every coroutine start. → **Fixed** duration: cache the `WaitForSeconds` in a field (`Health.flashWait`). **Variable** duration (anything scaled by attack speed / per-skill config — a field can't cover it): zero-alloc manual timer, `for (float el = 0f; el < dur; el += Time.deltaTime) yield return null;` (see `Player3DAttacker`; don't name the counter `t` — it collides with the conventional `Health t` parameter, CS0136).
-- ❌ A lazy `if (x == null) x = FindFirstObjectByType<T>()` fallback **inside a per-frame path** when `x` can be legitimately ABSENT (system not in this scene, player between scenes). The "runs once" intent silently becomes a `Find` every frame, forever. → Resolve at open/scene-load, or throttle the retry to a cadence (see `DevSettings.EnsureRefs`, 0.5 s).
+- ❌ A lazy `if (x == null) x = FindFirstObjectByType<T>()` fallback **inside a per-frame path** when `x` can be legitimately ABSENT (system not in this scene, player between scenes). The "runs once" intent silently becomes a `Find` every frame, forever. → Resolve at open/scene-load, or throttle the retry to a cadence (see `FootstepTracker`'s `nextFind`, 1 s).
 - ❌ `GetComponent<T>() ?? AddComponent<T>()` for a component meant to be **shared per unit**. It can't fail, so a cross-GameObject miss silently becomes a **DUPLICATE** — two instances doing the same per-frame work, with every cached value computed on the wrong one. The player is TWO GameObjects (persistent `Character` + the spawned body carrying `Player3DController`/`StatusController`), so this pattern quietly gave it two `UnitStates` stores: gameplay read one, the buff tray the other. → Resolve the owner **explicitly** (`Character.Instance.States`); a genuine miss should be visible, not papered over. Note rule "cache sibling refs in `Awake`" assumes the sibling is on the SAME GameObject — when it isn't, resolve lazily and **cache the failure path too**, or it degrades into the per-frame lookup below.
 - ❌ `Vector3.Distance` / `.magnitude` when you only need to compare. → `sqrMagnitude` vs `r*r`.
 - ❌ Writing `RenderSettings.*` or other globals every frame. → Only when the value actually changed (see `DayNightLight` early-out).
@@ -68,7 +68,7 @@ the automatic scan below understands exactly these three — write one of them a
 
 1. **The null cache** — `if (cam == null) cam = CameraRig.Cam;`. Fine when the thing always turns
    up. When it can legitimately be ABSENT forever, this is the anti-pattern above instead: throttle
-   the retry (see `DevSettings.EnsureRefs`, 0.5 s) or resolve it at load.
+   the retry (see `FootstepTracker`'s `nextFind`, 1 s) or resolve it at load.
 2. **The memo** — `if (map.TryGetValue(k, out var v)) return v;` before building `v`, or
    `while (pool.Count <= i)` before growing a pool. The work happens on the miss and never again.
 3. **The change gate** — `if (secs != last) { label.text = …; last = secs; }`. Nothing is written,

@@ -7,6 +7,24 @@
 /// </summary>
 public struct DerivedSnapshot
 {
+    /// <summary>A sheet nobody has filled in yet: every number zero, except the three multipliers, which are 1 — so a
+    /// swing or a cast read off it before the server's first word is neither instant nor infinite.</summary>
+    public static readonly DerivedSnapshot Neutral = new DerivedSnapshot { critMult = 1f, aspdMult = 1f, castTimeMult = 1f };
+
+    /// <summary>Field-by-field, so a compare allocates nothing (a struct's default Equals can box and reflect).</summary>
+    public static bool Same(in DerivedSnapshot a, in DerivedSnapshot b) =>
+        a.atkMin == b.atkMin && a.atkMax == b.atkMax && a.matkMin == b.matkMin && a.matkMax == b.matkMax &&
+        a.meleeMin == b.meleeMin && a.meleeMax == b.meleeMax && a.rangedMin == b.rangedMin && a.rangedMax == b.rangedMax &&
+        a.def == b.def && a.mdef == b.mdef && a.hit == b.hit && a.flee == b.flee &&
+        a.maxHP == b.maxHP && a.maxMP == b.maxMP && a.moveSpeed == b.moveSpeed &&
+        a.hardDefPct == b.hardDefPct && a.hardMdefPct == b.hardMdefPct && a.barrierHP == b.barrierHP &&
+        UnityEngine.Mathf.Approximately(a.critChance, b.critChance) && UnityEngine.Mathf.Approximately(a.critMult, b.critMult) &&
+        UnityEngine.Mathf.Approximately(a.aspdMult, b.aspdMult) && UnityEngine.Mathf.Approximately(a.castTimeMult, b.castTimeMult) &&
+        UnityEngine.Mathf.Approximately(a.guardCutPct, b.guardCutPct) &&
+        UnityEngine.Mathf.Approximately(a.lifeStealPct, b.lifeStealPct) && UnityEngine.Mathf.Approximately(a.reflectPct, b.reflectPct) &&
+        UnityEngine.Mathf.Approximately(a.manaLeechPct, b.manaLeechPct) &&
+        UnityEngine.Mathf.Approximately(a.basicAttackRange, b.basicAttackRange);
+
     public int atkMin, atkMax;         // the physical attack of the weapon in hand — one of the two below
     public int meleeMin, meleeMax;     // what any non-ranged weapon, or bare hands, swings with
     public int rangedMin, rangedMax;   // what a ranged weapon swings with

@@ -70,6 +70,7 @@ public static class PlayerFighter
         status.BindUnit(character);
         character.BindStatusHost(status);
         character.BindBody(shell.transform);
+        character.BindServerIdentity(shell.netIdentity);
 
         shell.BindCombatUnitOnServer(character);
         PlayerUnits.Enter(character);

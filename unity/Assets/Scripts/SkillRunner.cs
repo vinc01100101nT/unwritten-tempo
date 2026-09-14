@@ -32,6 +32,12 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     /// <summary>Put a cooldown back exactly where it was, from a moment that outlived this process — a save
     /// being loaded, or a character arriving from another server. Rebuilds the per-frame mirror against THIS
     /// machine's timer, which is the whole reason the moment is stored instead of a countdown.</summary>
+    // The connection the last press of this skill was sent on, until the server answers it. Null = nothing waiting.
+    Mirror.NetworkConnection awaitingOn;
+
+    /// <summary>The server answered this skill's last press — cast or refused. Any cooldown it started arrived first.</summary>
+    public void ServerAnsweredPress() => awaitingOn = null;
+
     public void ResumeCooldown(System.DateTime moment)
     {
         dueAtUtc = moment;
@@ -140,6 +146,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
     {
         pendingUnit = null;   // a half-aimed cast dies with the runner; never resume stage 2 against a stale pick
         pendingMana = 0;      // …and an unfinished wind-up is never charged for
+        awaitingOn = null;
         EndRunTotal();        // the beat coroutine dies with the runner, so its total is ended here or never
         if (castRoutine != null || castAura != null || castCircle != null) EndCast();
     }
@@ -161,6 +168,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         if (gate != null && gate.CannotStartSkill) return Refused("stunned, frozen, already casting, or mid-jump");
         if (castRoutine != null) return Refused("already winding up a cast");
         if (Time.time < nextUse) return Refused("still on cooldown");
+        // A PRESS THE SERVER HAS NOT ANSWERED YET. This machine starts no cooldown, so without this a second press
+        // inside the round trip would send a second cast and play its picture again. Tied to the connection it was
+        // sent on, so a press lost to a dropped connection can never lock the skill for the next one.
+        if (awaitingOn != null && awaitingOn == Mirror.NetworkClient.connection)
+            return Refused("waiting for the server to answer the last press");
 
         if (GameLog.On(LogCat.Cast)) GameLog.Info(LogCat.Cast, string.Concat(CasterName(), " casts ", SkillName()));
         return true;
@@ -301,7 +313,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // SAID TO THE SERVER, ONCE, for the whole skill. Everything the skill does is decided there against the
         // character it holds for this person; what happens below is the picture of it, started now so the game feels
         // exactly as immediate as it always has.
-        GameNetwork.SendCastToServer(def, unit, point);
+        if (GameNetwork.SendCastToServer(def, unit, point)) awaitingOn = Mirror.NetworkClient.connection;
 
         lastCtx = BuildCtx(unit, point);
         StartCastOrPlay();
@@ -686,6 +698,11 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
             BattleNotice.Warn("No MP", NoManaColor);
             return Refused("not enough mana — " + Caster.CurrentMP + " held, " + def.manaCost + " needed");
         }
+        // A PLAYER'S MACHINE STARTS NO COOLDOWN AND BILLS NO MANA. Everything above only compared numbers the server
+        // sent, to decide what to show; the cast itself goes to the server, which starts the cooldown and says when it
+        // ends (GameNetwork.TellOwnerCooldownStarted → ResumeCooldown).
+        if (Watching) return true;
+
         pendingMana = def.manaCost;
         lastDuration = def.cooldown;
         // BOTH, TOGETHER. The moment is the one that survives being saved, slept or moved to another server;
@@ -693,6 +710,7 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
         // expensive to ask for at that rate. They are set here and nowhere else apart from ResumeCooldown.
         dueAtUtc = WorldClock.UtcNow.AddSeconds(lastDuration);
         nextUse = Time.time + lastDuration;
+        GameNetwork.TellOwnerCooldownStarted(Caster, def.id, dueAtUtc);
         return true;
     }
 

@@ -5,7 +5,7 @@ WHY THIS EXISTS: a checker that silently stops seeing anything reports exactly w
 project reports. That "0 problems" then reads as proof the data is fine, when it is really
 proof of nothing at all — the instrument went deaf and said so in the same words it uses for
 good news. So the checker itself gets checked: this makes a throwaway copy of the real skill
-data, breaks ONE thing in it per case, and fails if the checker doesn't notice.
+data and the visuals it plays, breaks ONE thing in it per case, and fails if the checker doesn't notice.
 
 The fixtures are deliberately anchored to REAL text in the real assets. If someone re-saves a
 skill and a fixture's anchor disappears, that case reports NOT PROVEN rather than passing
@@ -26,6 +26,7 @@ import tempfile
 REPO = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 CHECKER = os.path.join(REPO, "tools", "check-skill-data.py")
 REAL_SKILLS = os.path.join(REPO, "unity", "Assets", "3_Data", "Resources", "Skills")
+REAL_VISUALS = os.path.join(REPO, "unity", "Assets", "3_Data", "Resources", "VfxSequences")
 
 RED, YEL, GRN, OFF = "\033[31m", "\033[33m", "\033[32m", "\033[0m"
 
@@ -53,6 +54,12 @@ def patch(filename, *replacements):
     return apply
 
 
+def patch_visual(filename, *replacements):
+    """The same swap as patch(), made in the copy of the visuals that sits beside the copied skills."""
+    inner = patch(filename, *replacements)
+    return lambda folder: inner(os.path.join(os.path.dirname(folder), "VfxSequences"))
+
+
 # Each case: a plain-language name, the breakage, and a phrase the report MUST contain.
 CASES = [
     ("a gate that names no pile",
@@ -69,6 +76,11 @@ CASES = [
     ("gameplay wired to a beat the visual does not have",
      patch("skill.sword.deathblow.asset", ("tickId: follow_hit", "tickId: nonesuch")),
      "does not have"),
+    # A second step carrying the beat Lunge's gameplay is wired to — the shape that made Dash restart its glide
+    # three times a cast.
+    ("a beat carried by two steps of a visual",
+     patch_visual("skill_dash.asset", ("\n  loopEnd: 3", "\n  - note: VFX\n    tickId: dash_tick\n  loopEnd: 3")),
+     "steps of its visual carry that beat"),
     # A NUMBER is what pulls now, so the break has to be made on a number's own record, not on the effect.
     ("a number sized by stacks on a skill with no gate",
      patch("skill.sword.committed_strike.asset",
@@ -123,17 +135,21 @@ def run_against(checker, break_it):
     tmp = tempfile.mkdtemp()
     try:
         folder = os.path.join(tmp, "Skills")
+        visuals = os.path.join(tmp, "VfxSequences")
         shutil.copytree(REAL_SKILLS, folder)
+        shutil.copytree(REAL_VISUALS, visuals)
         why_not = break_it(folder) if break_it else None
         if why_not:
             return None, why_not
         original, checker.SKILLS_DIR = checker.SKILLS_DIR, folder
+        original_visuals, checker.VISUALS_DIR = checker.VISUALS_DIR, visuals
         out = io.StringIO()
         try:
             with contextlib.redirect_stdout(out):
                 code = checker.main()
         finally:
             checker.SKILLS_DIR = original
+            checker.VISUALS_DIR = original_visuals
         return (code, out.getvalue()), None
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

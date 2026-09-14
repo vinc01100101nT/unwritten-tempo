@@ -21,7 +21,6 @@ Tracking issue: **VIN-22**.
 - **UI tech** — stay **uGUI**. We already have working, data-driven uGUI and won't rewrite it in UI Toolkit yet:
   - `HotbarPanel` + `IHotbarSkill` (any active auto-appears; click + keybind both call `Activate()`). *It used to name Bash / Charge / Caster as what it was wired to — those hand-written skills are gone; the bar is now filled from the equipped weapon's rolled kit.*
   - `StatPanel` (RO stat allocation)
-  - `DevSettings` panel (P key, live tunables)
   - pooled `DamagePopup`, `SpriteSheetCache`
   - skill icons from a Ninja Adventure UI set; shell baked via the **Build UI Shell** editor command
   - Revisit UI Toolkit only for movable windows + saved layouts (later phase).

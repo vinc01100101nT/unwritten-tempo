@@ -128,23 +128,10 @@ public class ProgressionWindows : MonoBehaviour
         // Compare the DISPLAYED (rounded) resource values, not the raw floats — otherwise a draining stamina bar would
         // rebuild the text every single frame instead of only when the number on screen actually changes.
         int sta = Mathf.RoundToInt(c.Stamina);
-        if (lastLiveValid && sta == lastSta && Same(now, lastLive)) return;
+        if (lastLiveValid && sta == lastSta && DerivedSnapshot.Same(now, lastLive)) return;
         lastLive = now; lastLiveValid = true; lastSta = sta;
         RefreshCharacter();
     }
-
-    // Field-by-field so the compare stays allocation-free (a struct's default Equals can box/reflect).
-    static bool Same(in DerivedSnapshot a, in DerivedSnapshot b) =>
-        a.atkMin == b.atkMin && a.atkMax == b.atkMax && a.matkMin == b.matkMin && a.matkMax == b.matkMax &&
-        a.meleeMin == b.meleeMin && a.meleeMax == b.meleeMax && a.rangedMin == b.rangedMin && a.rangedMax == b.rangedMax &&
-        a.def == b.def && a.mdef == b.mdef && a.hit == b.hit && a.flee == b.flee &&
-        a.maxHP == b.maxHP && a.maxMP == b.maxMP && a.moveSpeed == b.moveSpeed &&
-        a.hardDefPct == b.hardDefPct && a.hardMdefPct == b.hardMdefPct && a.barrierHP == b.barrierHP &&
-        Mathf.Approximately(a.critChance, b.critChance) && Mathf.Approximately(a.critMult, b.critMult) &&
-        Mathf.Approximately(a.aspdMult, b.aspdMult) && Mathf.Approximately(a.castTimeMult, b.castTimeMult) &&
-        Mathf.Approximately(a.guardCutPct, b.guardCutPct) &&
-        Mathf.Approximately(a.lifeStealPct, b.lifeStealPct) && Mathf.Approximately(a.reflectPct, b.reflectPct) &&
-        Mathf.Approximately(a.manaLeechPct, b.manaLeechPct);
 
     void RefreshAll()
     {
@@ -227,9 +214,6 @@ public class ProgressionWindows : MonoBehaviour
             if (!useFilter || (e.def != null && e.def.category == tab))
                 filtered.Add(e);
 
-        // The gear columns (slot / skills / atk-def / output) mean nothing on a tab of potions, so they are
-        // hidden there rather than filled with dashes. "All" keeps them: gear can be in it.
-        bagList.SetEquipColumns(!useFilter || tab == ItemCategory.Equip);
         bagList.Refresh(filtered);
         RefreshInventoryFooter();
     }
@@ -410,8 +394,8 @@ public class ProgressionWindows : MonoBehaviour
             var s = StatOrder[i];
             statValue[i].text = c.GetStat(s).ToString();
             // The jump counts gear, so the next one is measured from the stat the formulas see, not the points bought.
-            int jumpAt = UnitStatMath.NextJumpAt(c.EffectiveStat(s));
-            statJump[i].text = "next +" + UnitStatMath.JumpGainAt(jumpAt) + (s == PrimaryStat.LUK ? "%" : "") + " at " + jumpAt;
+            int jumpAt = c.NextJumpAt(s);
+            statJump[i].text = "next +" + c.JumpGainAt(s) + (s == PrimaryStat.LUK ? "%" : "") + " at " + jumpAt;
             int cost = c.CostToRaise(s);
             bool capped = cost < 0;
             bool can = c.CanRaise(s);

@@ -13,14 +13,13 @@ using UnityEngine;
 /// mobs/player; sprites aren't in the depth texture, so they fog by the distance of the ground directly behind them
 /// (≈ their own distance). Decoupled like every other renderer: it follows its own <see cref="WeatherChannel.Fog"/>
 /// channel (central easing lives in <see cref="WeatherChannels"/>), so a sequence can roll fog in gradually,
-/// independent of clouds and rain. Zero-cost when clear: at fog ≈ 0 the quad is deactivated, so it draws nothing.
-/// Tune it live from the DevSettings panel (<b>P</b>) under "Fog".</para>
+/// independent of clouds and rain. Zero-cost when clear: at fog ≈ 0 the quad is deactivated, so it draws nothing.</para>
 /// </summary>
 [DisallowMultipleComponent]
 public class FogOverlay : MonoBehaviour
 {
     [Range(0f, 1f)] [Tooltip("Master fog amount (the TARGET the haze eases toward). 0 = clear (quad disabled). " +
-             "Default 0 — fog is OFF until raised (DevSettings 'Fog', or the Fog weather preset).")]
+             "Default 0 — fog is OFF until raised (by the Fog weather preset).")]
     public float intensity = 0f;
     [Range(0f, 60f)] [Tooltip("Seconds for the fog to roll IN when it starts (or out when it clears) — used by the " +
              "standalone fallback; weather sequences set their own ramp.")]
@@ -43,7 +42,7 @@ public class FogOverlay : MonoBehaviour
     [Tooltip("Colour the fog fades toward at MIDNIGHT so it doesn't glow over a dark world. White (no change) by day.")]
     public Color nightTint = new Color(0.34f, 0.37f, 0.46f, 1f);
 
-    /// <summary>Most-recently-awoken fog overlay (mirrors <see cref="RainOverlay.Instance"/>) for DevSettings.</summary>
+    /// <summary>Most-recently-awoken fog overlay (mirrors <see cref="RainOverlay.Instance"/>).</summary>
     public static FogOverlay Instance { get; private set; }
 
     Material mat;
@@ -62,7 +61,7 @@ public class FogOverlay : MonoBehaviour
     static readonly int FogStartID  = Shader.PropertyToID("_FogStart");
     static readonly int FogEndID    = Shader.PropertyToID("_FogEnd");
 
-    /// <summary>Find the live fog overlay, creating one if none exists yet (used by the DevSettings knob + the
+    /// <summary>Find the live fog overlay, creating one if none exists yet (used by the
     /// director so fog works even on a Systems scene baked before this component joined the rig).</summary>
     public static FogOverlay Ensure()
     {
@@ -125,7 +124,7 @@ public class FogOverlay : MonoBehaviour
         if (mat == null) return;
 
         // Follow the Fog weather channel when present (central easing in WeatherChannels); fall back to the local
-        // `intensity` ease when there's no channels hub (standalone / DevSettings on a bare scene).
+        // `intensity` ease when there's no channels hub (standalone, on a bare scene).
         var wc = WeatherChannels.Instance;
         if (wc != null) shown = wc.Shown(WeatherChannel.Fog);
         else            shown = Mathf.MoveTowards(shown, intensity, Time.deltaTime / Mathf.Max(0.1f, rampTime));

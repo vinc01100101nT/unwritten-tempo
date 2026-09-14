@@ -53,6 +53,6 @@ swing INLINE instead of calling `BasicSwing.Land`, a second copy of "what a swin
 impact cue. Fixed by deleting the duplicate and calling the shared one. `OnItemUsed` now goes through a new
 `ItemUsedRequest` naming the ITEM (never the skill — a message naming a skill could run any skill in the game).
 
-**Still open** (see [[stack-piles-two-states-and-readings]] for the Brace design itself): `SkillStrikeRequest` and
-`SendSkillStrikeToServer` are unreachable for skills and should be deleted once play-tested; whether the player
-actually HAD the item is still their own machine's word, until inventory is server-side.
+**Still open** (see [[stack-piles-two-states-and-readings]] for the Brace design itself): whether the player actually HAD
+the item is still their own machine's word, until inventory is server-side. (`SkillStrikeRequest`, the
+client-rolled `ResolvedStrikeRequest` and `HealClaim` were deleted on 2026-09-14 under RULE NOCLIENTMATH.)

@@ -28,6 +28,9 @@ REPO = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 ASSETS = os.path.join(REPO, "unity", "Assets")
 SKILLS_DIR = os.path.join(ASSETS, "3_Data", "Resources", "Skills")
 SCRIPTS = os.path.join(ASSETS, "Scripts")
+# Where visuals are read from on top of ASSETS. None = only where they really sit; the self-test points it at a
+# broken copy so it never has to edit the real ones.
+VISUALS_DIR = None
 
 RED, YEL, GRN, DIM, OFF = "\033[31m", "\033[33m", "\033[32m", "\033[2m", "\033[0m"
 
@@ -414,8 +417,14 @@ def main():
                 g = guid_of(read(os.path.join(root, f)))
                 if g:
                     guid_to_asset[g] = os.path.join(root, f[:-len(".meta")])
+    if VISUALS_DIR:
+        for f in os.listdir(VISUALS_DIR):
+            if f.endswith(".asset.meta"):
+                g = guid_of(read(os.path.join(VISUALS_DIR, f)))
+                if g:
+                    guid_to_asset[g] = os.path.join(VISUALS_DIR, f[:-len(".meta")])
 
-    tick_cache = {}
+    tick_cache, repeat_cache = {}, {}
 
     def ticks_of(vfx_ref):
         g = guid_of(vfx_ref)
@@ -428,9 +437,11 @@ def main():
             tick_cache[g] = None
             return None
         steps = parse_asset(path).get("steps") or []
-        found = {str(s.get("tickId", "")).strip() for s in steps if isinstance(s, dict)}
+        named = [str(s.get("tickId", "")).strip() for s in steps if isinstance(s, dict)]
+        found = set(named)
         found.discard("")
         tick_cache[g] = found
+        repeat_cache[g] = {t: named.count(t) for t in found if named.count(t) > 1}
         return found
 
     # ---- what each skill GRANTS: {state_name: stacking? (None = the engine's own, not
@@ -570,6 +581,7 @@ def main():
 
         # ---- bindings, effects, modifiers ---------------------------------------------
         exposed = ticks_of(s.get("vfx"))
+        repeated = repeat_cache.get(guid_of(s.get("vfx")), {})
         bindings = s.get("bindings") or []
         if bindings and not guid_of(s.get("vfx")):
             problem(s, "has gameplay wired up but no visual to hang it on, so none of it ever runs.")
@@ -582,6 +594,11 @@ def main():
             elif exposed is not None and tick not in exposed:
                 problem(s, "wires gameplay to a beat called \"%s\" that its visual does not have, "
                            "so that gameplay never runs." % tick)
+            # Every step carrying a beat sets off the gameplay wired to it, so a beat on two steps runs it twice —
+            # the Dash that restarted its glide three times a cast and never eased out.
+            elif tick in repeated:
+                problem(s, "wires gameplay to the beat \"%s\", but %d steps of its visual carry that beat, so the "
+                           "gameplay is set off again by every one of them." % (tick, repeated[tick]))
             if tick in bound_ticks:
                 problem(s, "wires two pieces of gameplay to the same beat \"%s\"; only the first is read." % tick)
             bound_ticks.add(tick)

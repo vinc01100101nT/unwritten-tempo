@@ -143,14 +143,17 @@ public static class GmCommands
                                anyoneMayRun: false, changesTheWorld: true, "logs"));
 
         // --- Character ---
-        Register(new GmCommand("lvl", "lvl <n>", "Set character level.", CmdLevel, "level"));
-        Register(new GmCommand("xp", "xp <n>", "Grant character XP.", CmdXp, "exp"));
-        Register(new GmCommand("ringxp", "ringxp <n>", "Grant Ring of Progression XP.", CmdRingXp));
-        Register(new GmCommand("statpts", "statpts <n>", "Grant allocatable stat points.", CmdStatPts, "sp"));
-        Register(new GmCommand("heal", "heal", "Full-heal (revives if dead).", CmdHeal));
-        Register(new GmCommand("revive", "revive", "Revive the player at full HP/MP.", CmdRevive));
-        Register(new GmCommand("invuln", "invuln", "Toggle invincibility (no damage taken).", CmdInvuln, "nodmg"));
-        Register(new GmCommand("model", "model [name]", "Wear a character model. No name lists the roster.", CmdModel, "body"));
+        // THE SERVER'S, like everything else about a character. Run on a player's own machine these changed only
+        // that machine's copy: /statpts showed 61 points while the server — which decides whether a point may be
+        // spent — held 1, so every + press after the real points ran out was silently refused.
+        Register(new GmCommand("lvl", "lvl <n>", "Set character level.", CmdLevel, false, true, "level"));
+        Register(new GmCommand("xp", "xp <n>", "Grant character XP.", CmdXp, false, true, "exp"));
+        Register(new GmCommand("ringxp", "ringxp <n>", "Grant Ring of Progression XP.", CmdRingXp, false, true));
+        Register(new GmCommand("statpts", "statpts <n>", "Grant allocatable stat points.", CmdStatPts, false, true, "sp"));
+        Register(new GmCommand("heal", "heal", "Full-heal (revives if dead).", CmdHeal, false, true));
+        Register(new GmCommand("revive", "revive", "Revive the player at full HP/MP.", CmdRevive, false, true));
+        Register(new GmCommand("invuln", "invuln", "Toggle invincibility (no damage taken).", CmdInvuln, false, true, "nodmg"));
+        Register(new GmCommand("model", "model [name]", "Wear a character model. No name lists the roster.", CmdModel, false, true, "body"));
 
         // --- Economy & items ---
         // THE FOUR BELOW CHANGE WHAT SOMEBODY OWNS, and what somebody owns is the server's. Run on a player's own
@@ -163,7 +166,7 @@ public static class GmCommands
             "rare/epic/legendary (default: rolled off the drop table). Its skills are rolled from the published pool " +
             "of that weapon type.", CmdWeapon, false, true, "drop"));
         Register(new GmCommand("clearbag", "clearbag", "Empty the bag (worn gear is left alone).", CmdClearBag, false, true, "clearinv", "clearinventory"));
-        Register(new GmCommand("bind", "bind <skillId>", "Bind a composed skill to the first empty hotbar slot.", CmdBind));
+        Register(new GmCommand("bind", "bind <skillId>", "Bind a composed skill to the first empty hotbar slot.", CmdBind, false, true));
 
         // --- Mobs ---
         Register(new GmCommand("kill", "kill", "Kill the mob nearest the player.", CmdKill,
@@ -178,10 +181,12 @@ public static class GmCommands
                                anyoneMayRun: false, changesTheWorld: true));
 
         // --- World & weather ---
-        Register(new GmCommand("tp", "tp <scene> [spawnId]", "Travel to another map.", CmdTp, "warp", "goto"));
-        Register(new GmCommand("time", "time <0..1>", "Set time of day (0=midnight, 0.5=noon).", CmdTime));
-        Register(new GmCommand("weather", "weather <clear|cloudy|rain|storm|snow|fog>", "Force the weather preset.", CmdWeather));
-        Register(new GmCommand("speed", "speed <mult>", "Set a persistent move-speed multiplier on the player.", CmdSpeed));
+        Register(new GmCommand("tp", "tp <scene> [spawnId]", "Travel to another map.", CmdTp, false, true, "warp", "goto"));
+        // THE SERVER'S TOO. Run on one machine these changed one person's sky and nobody else's; held on the server,
+        // everybody on it — and everybody who arrives later — sees the same one.
+        Register(new GmCommand("time", "time <0..1>", "Set time of day (0=midnight, 0.5=noon).", CmdTime, false, true));
+        Register(new GmCommand("weather", "weather <clear|cloudy|rain|storm|snow|fog>", "Force the weather preset.", CmdWeather, false, true));
+        Register(new GmCommand("speed", "speed <mult>", "Set a persistent move-speed multiplier on the player.", CmdSpeed, false, true));
     }
 
     // ---- handlers (grouped; each just calls into the owning system) --------------
@@ -193,6 +198,7 @@ public static class GmCommands
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.TryInt(0, out var n)) { c.Reply("Usage: /lvl <n>"); return; }
         c.Ch.SetLevel(Mathf.Max(1, n));
+        AfterChangingTheirStats(c.Ch);
         c.Reply($"Level → {c.Ch.Level}.");
     }
 
@@ -216,9 +222,12 @@ public static class GmCommands
             string match = CharacterModels.Resolve(typed);
             if (match == null) { c.Reply($"No model called '{typed}'. Type /model to list them."); return; }
 
-            Player3DBody.Wear(match, worn => c.Reply(worn != null
-                ? $"Wearing {worn}."
-                : $"Couldn't load '{match}' — is Addressables content built?"));
+            // ON THE BODY EVERYBODY SEES. The name travels to every machine watching this person, and each one —
+            // theirs included — dresses the body in it (see NetPlayer.OnModelChanged).
+            var shell = GameNetwork.ShellFor(c.Ch);
+            if (shell == null) { c.Reply("No character."); return; }
+            shell.modelName = match;
+            c.Reply($"Wearing {match}.");
         });
     }
 
@@ -227,6 +236,8 @@ public static class GmCommands
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.TryInt(0, out var n) || n <= 0) { c.Reply("Usage: /xp <n>"); return; }
         c.Ch.AddXP(n);
+        GameNetwork.TellOwnerTheyEarned(c.Ch, n);
+        GameNetwork.ShellFor(c.Ch)?.SaveSoon();
         c.Reply($"+{n} XP.");
     }
 
@@ -235,6 +246,8 @@ public static class GmCommands
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.TryInt(0, out var n) || n <= 0) { c.Reply("Usage: /ringxp <n>"); return; }
         c.Ch.AddRingXP(n);
+        GameNetwork.TellOwnerTheyEarned(c.Ch, 0, n);
+        GameNetwork.ShellFor(c.Ch)?.SaveSoon();
         c.Reply($"+{n} ring XP.");
     }
 
@@ -243,20 +256,21 @@ public static class GmCommands
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.TryInt(0, out var n) || n <= 0) { c.Reply("Usage: /statpts <n>"); return; }
         c.Ch.GrantStatPoints(n);
+        AfterChangingTheirStats(c.Ch);
         c.Reply($"+{n} stat points.");
     }
 
     static void CmdHeal(GmContext c)
     {
         if (c.Ch == null) { c.Reply("No character."); return; }
-        if (c.Ch.IsDead) { c.Ch.Revive(); c.Reply("Revived at full HP/MP."); }
+        if (c.Ch.IsDead) { GameNetwork.ReviveOnServer(c.Ch); c.Reply("Revived at full HP/MP."); }
         else { c.Ch.Heal(c.Ch.MaxHP); c.Reply("Full HP."); }
     }
 
     static void CmdRevive(GmContext c)
     {
         if (c.Ch == null) { c.Reply("No character."); return; }
-        c.Ch.Revive();
+        GameNetwork.ReviveOnServer(c.Ch);
         c.Reply("Revived at full HP/MP.");
     }
 
@@ -391,16 +405,26 @@ public static class GmCommands
         InventoryStore.Instance?.Notify();
     }
 
+    /// <summary>Hand whoever owns this character their level, points and primaries as the server now has them, and
+    /// have it written down.</summary>
+    static void AfterChangingTheirStats(Character who)
+    {
+        var shell = GameNetwork.ShellFor(who);
+        if (shell == null) return;
+        shell.PushStatsToOwner();
+        shell.SaveSoon();
+    }
+
     static void CmdBind(GmContext c)
     {
         var id = c.Arg(0);
         if (id == null) { c.Reply("Usage: /bind <skillId>"); return; }
         if (c.Ch == null) { c.Reply("No character."); return; }
         if (!c.Ch.Hotbar.AutoBind(id)) { c.Reply($"Couldn't bind '{id}' (unknown, already bound, or bar full)."); return; }
-        // THE SAME DOOR EVERY OTHER WAY OF BINDING GOES THROUGH — it redraws the bar, builds the component behind
-        // the new skill, and tells the server. Redrawing alone left the server holding the old bar, which refused
-        // the skill on every press and then overwrote the binding with its next write of this character.
-        if (c.Ch == Character.Instance) HotbarCommit.Now();
+        // Bound HERE, so their machine is handed the bar the server now holds — the same push a weapon swap uses,
+        // which also rebuilds the skills behind the bar on both sides and redraws it.
+        var shell = GameNetwork.ShellFor(c.Ch);
+        if (shell != null) { shell.PushBagToOwner(alsoTheBar: true); shell.SaveSoon(); }
         c.Reply($"Bound {id} (ultimates → ult slot).");
     }
 
@@ -588,7 +612,11 @@ public static class GmCommands
     {
         var scene = c.Arg(0);
         if (scene == null) { c.Reply("Usage: /tp <scene> [spawnId]"); return; }
-        MapManager.Travel(scene, c.Arg(1));
+        // THROUGH THE DOOR EVERY PORTAL USES. Loading the map on the asker's machine moved nobody: the server
+        // still had them where they stood, and the map they wanted may be held by another process entirely.
+        var shell = GameNetwork.ShellFor(c.Ch);
+        if (shell == null) { c.Reply("No character."); return; }
+        shell.MoveToMap(scene, c.Arg(1));
         c.Reply($"Traveling to {scene}…");
     }
 
@@ -597,27 +625,30 @@ public static class GmCommands
         if (!c.TryFloat(0, out var t)) { c.Reply("Usage: /time <0..1>"); return; }
         var tod = TimeOfDay.Instance;
         if (tod == null) { c.Reply("No clock."); return; }
-        tod.time01 = Mathf.Clamp01(t);
-        c.Reply($"Time → {tod.time01:0.00}.");
+        t = Mathf.Clamp01(t);
+        TimeOfDay.TakeShift(TimeOfDay.ShiftSeconds
+                            + TimeOfDay.SecondsToReach(TimeOfDay.ElapsedForTimeOfDay, tod.DayLengthSeconds, t));
+        GameNetwork.TellEveryoneTheTimeOfDay();
+        c.Reply($"Time → {t:0.00}.");
     }
 
     static void CmdWeather(GmContext c)
     {
         var w = c.Arg(0);
         if (w == null || !ParseWeather(w, out var preset)) { c.Reply("Usage: /weather <clear|cloudy|rain|storm|snow|fog>"); return; }
-        var wx = WeatherDirector.Instance;
-        if (wx == null) { c.Reply("No weather director."); return; }
-        wx.autoFromCalendar = false;
-        wx.forcedPreset = preset;
+        WeatherDirector.TakeForced(preset);
+        GameNetwork.TellEveryoneTheWeather();
         c.Reply($"Weather → {preset}.");
     }
 
     static void CmdSpeed(GmContext c)
     {
         if (!c.TryFloat(0, out var s)) { c.Reply("Usage: /speed <mult>"); return; }
-        var p = c.Player;
-        if (p == null) { c.Reply("No player."); return; }
-        Status.Of(p.gameObject).Haste(Mathf.Max(0.1f, s), 9999f);
+        // THE ASKER'S OWN STATUS HOST, never one looked up on their body: on a server the body and the fighter are
+        // different objects, and a status found-or-made on the body is a second store nothing reads.
+        var host = c.Ch != null ? c.Ch.StatusHost : null;
+        if (host == null) { c.Reply("No player."); return; }
+        host.Haste(Mathf.Max(0.1f, s), 9999f);
         c.Reply($"Move speed ×{s:0.0}.");
     }
 

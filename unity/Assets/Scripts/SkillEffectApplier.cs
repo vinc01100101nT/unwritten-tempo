@@ -96,7 +96,9 @@ public static class SkillEffectApplier
             var mob = singleTarget.GetComponentInParent<MonsterAI3D>();
             if (mob != null)
             {
-                if ((targets & SkillTargets.Mobs) != 0 && mob.Health != null && !mob.Health.IsDead)
+                // A single target that died before this landed is still struck — its numbers show, and nothing else
+                // lands on it (DispatchMobHits routes a dead mob to the damage-only beat).
+                if ((targets & SkillTargets.Mobs) != 0 && mob.Health != null)
                 {
                     burstTargets.Clear(); burstTargets.Add(mob);
                     DispatchMobHits(effects, burstTargets, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
@@ -480,13 +482,25 @@ public static class SkillEffectApplier
 
     /// <summary>Does this strike belong to a run that draws ONE RISING YELLOW TOTAL instead of a number per beat?
     /// Two things have always drawn one: a skill that asks to show a single total across its repeats, and a strike
-    /// that lands more than once.
-    ///
-    /// <para>Read in ONE place because two different parts of the server now have to answer it — the one landing a
-    /// skill it is running itself, and the one answering a strike a client named — and an answer written out twice
-    /// is an answer that drifts.</para></summary>
+    /// that lands more than once.</summary>
     public static bool ShowsRunTotal(SkillDef def, SkillEffect e, ICombatUnit caster, in StackVars vars)
         => (def != null && def.showRepeatsTotalDamage) || (e != null && EffectiveHits(e, caster, vars) > 1);
+
+    /// <summary>Whether the strike being LANDED RIGHT NOW draws a rising total — <see cref="ShowsRunTotal"/>'s answer for
+    /// it, held for exactly as long as the strike takes to land. A creature announces each blow from inside its own
+    /// intake (<c>Health.Show</c>), which knows the blow but not the skill behind it, so the strike leaves its answer
+    /// here on the way in. Put back on the way out, so a strike set off by this one answers for itself, and a blow with
+    /// no skill behind it reads false.</summary>
+    public static bool StrikeShowsTotal { get; private set; }
+
+    // Holds StrikeShowsTotal for one strike and puts the outer value back when it ends. A struct in a using statement,
+    // so the per-hit path allocates nothing.
+    readonly struct StrikeTotalScope : System.IDisposable
+    {
+        readonly bool outer;
+        public StrikeTotalScope(bool showsTotal) { outer = StrikeShowsTotal; StrikeShowsTotal = showsTotal; }
+        public void Dispose() => StrikeShowsTotal = outer;
+    }
 
     // Single hit (the common case): apply instantly to each mob, unchanged. Multi-hit (hitCount > 1): hand the mob
     // snapshot to MultiHitBurst so the strikes CASCADE over time and each mob shows ONE rising yellow combo total,
@@ -500,7 +514,14 @@ public static class SkillEffectApplier
         if (HitLoops(effects, caster, vars) <= 1)
         {
             for (int i = 0; i < mobs.Count; i++)
-                ApplyEffectsToMob(effects, mobs[i], relocatePoint, caster, srcSymbol, srcName, srcId, vars);
+            {
+                // Already dead: the strike's numbers only — every other effect is skipped, exactly as in a flurry beat.
+                var mh = mobs[i] != null ? mobs[i].Health : null;
+                if (mh != null && mh.IsDead)
+                    ApplyHitToMob(effects, mobs[i], 0, caster, relocatePoint, srcSymbol, srcName, srcId, vars);
+                else
+                    ApplyEffectsToMob(effects, mobs[i], relocatePoint, caster, srcSymbol, srcName, srcId, vars);
+            }
             return;
         }
         // A flurry's later strikes land on LATER FRAMES, outside the caster's tick — so the causal chain must ride the
@@ -622,16 +643,10 @@ public static class SkillEffectApplier
         bonus = UnitOffense.SpendCharges(caster != null ? caster.States : null, bonus);
         var resolved = new DamageInfo(bonus, e.element, e.damageType == DamageType.Magic, crit,
                                       attacker: caster);
-        CombatAuthority.Apply(unit, resolved);
-
-        // ANNOUNCED FOR THE SAME REASON A STRIKE IS. This is the other place a skill's damage reaches a creature on
-        // the server, and it had the identical silence: the health went down and the number it says it draws was
-        // never drawn anywhere. Fixed here rather than only at the strike, because the two are the same thing done
-        // twice and a fix at one of them is a fix that comes back.
-        if (GameServer.IsServer)
-            GameNetwork.AnnounceBlowOnMob(unit, caster, resolved,
-                                          ShowsRunTotal(SkillCatalog.Get(PassiveEvents.CurrentSkillId),
-                                                        e, caster, vars));
+        // The same "does this draw a rising total" answer a strike holds while it lands — this is the other place a
+        // skill's damage reaches a creature, and the two must announce alike.
+        using (new StrikeTotalScope(ShowsRunTotal(SkillCatalog.Get(PassiveEvents.CurrentSkillId), e, caster, vars)))
+            CombatAuthority.Apply(unit, resolved);
     }
 
     // ---- player as a TARGET (pass 2) ----------------------------------------
@@ -660,41 +675,18 @@ public static class SkillEffectApplier
     static int LandStrike(SkillEffect e, ICombatUnit unit, ICombatUnit caster,
                           in StackVars vars, bool overkill)
     {
-        // THE SERVER ROLLS THIS ONE, and is told WHICH strike it is rather than how hard it hit. It holds the same
-        // authored skill and the same character, so everything it needs to work the number out itself is already
-        // there — the only thing it cannot know is which of a skill's strikes just landed.
-        //
-        // Returns 0 here for the same reason a swing does: this machine did not decide it. The number appears when
-        // the server's answer comes back, through the same door every other blow arrives by.
-        if (GameNetwork.SendSkillStrikeToServer(e, unit, vars, overkill)) return 0;
+        // ONLY THE SERVER LANDS A STRIKE. A player's machine plays the picture of a cast and none of what it does, so a
+        // strike reaching this line anywhere else is refused before a single die is rolled.
+        if (!GameServer.IsServer) return 0;
 
-        int dealt = Strike(e, unit, caster, vars, overkill, out _, out var resolved);
-
-        // AND THE SERVER SAYS WHAT IT JUST DID. A joined player hands the whole cast over and resolves nothing of
-        // it, so this line is where a skill's damage really lands — on the server, with no request behind it for a
-        // handler to answer and announce. Without this the creature loses health and no number is ever drawn for
-        // it, because health travels as a synced value that is written in without drawing anything.
-        //
-        // Silent for a person: a blow on one is already announced at the damage door, and saying it twice would
-        // draw their number twice.
-        if (GameServer.IsServer)
-            GameNetwork.AnnounceBlowOnMob(unit, caster, resolved,
-                                          ShowsRunTotal(SkillCatalog.Get(PassiveEvents.CurrentSkillId),
-                                                        e, caster, vars));
-        return dealt;
+        // Whether this strike draws a rising total is the authored skill's answer, held while it lands so the creature
+        // can carry it when it announces the blow (Health.Show). A blow on a person is announced at the damage door.
+        using (new StrikeTotalScope(ShowsRunTotal(SkillCatalog.Get(PassiveEvents.CurrentSkillId), e, caster, vars)))
+            return Strike(e, unit, caster, vars, overkill, out _, out _);
     }
 
-    /// <summary>Roll and land ONE authored strike, on the machine that is allowed to decide it — a player's own
-    /// machine when there is no server in the picture, and the server itself otherwise.
-    ///
-    /// <para>Public because the server calls it from the net layer with the character IT holds. Deliberately the same
-    /// function either way: a second copy written for the server is how the two come to disagree about what a skill
-    /// does.</para></summary>
-    /// <param name="resolved">THE BLOW THAT ACTUALLY HAPPENED, handed back whole. The server has to repeat this to
-    /// every machine watching, and the only honest description of it is the one that was applied: rebuilding a
-    /// description from the authored effect instead gets the element and the crit wrong for a strike that swings the
-    /// weapon, cannot say a swing whiffed at all, and states a number that has already had the victim's armour taken
-    /// out of it — which every watching machine would then take out of it a second time.</param>
+    /// <summary>Roll and land ONE authored strike — on the server, the only machine that lands one.</summary>
+    /// <param name="resolved">The blow exactly as it was applied, handed back whole.</param>
     public static int Strike(SkillEffect e, ICombatUnit unit, ICombatUnit caster,
                              in StackVars vars, bool overkill, out bool crit, out DamageInfo resolved)
     {

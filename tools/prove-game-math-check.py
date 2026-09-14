@@ -91,6 +91,19 @@ def main():
                 "public const float MaxHitChance = 0.95f;",
                 "public const float MaxHitChance = 1.05f;",
                 "Combat.cs")
+    # The bug that made Momentum's +3% a stack run as +103%, put back: a plain buff's number read as the whole
+    # multiplier instead of as a bonus.
+    bad += case("a buff number read as a whole multiplier again is caught",
+                "UnitStates.cs",
+                "public float Mult => 1f + magnitude;",
+                "public float Mult => stacking ? 1f + magnitude : magnitude;",
+                "UnitStates.cs")
+    # Regen paid per tick instead of per second, put back — the 0.8s tick that healed 25% more than its label.
+    bad += case("regen paid per tick again is caught",
+                "StatusController.cs",
+                "accum += ratePerSecond * UnitStates.RegenInterval;",
+                "accum += ratePerSecond;",
+                "StatusController.cs")
     print()
     if bad:
         print(RED + "%d case(s) wrong - the check's silence proves nothing." % bad + OFF)

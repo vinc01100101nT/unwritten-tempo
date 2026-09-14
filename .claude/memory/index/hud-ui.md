@@ -1,7 +1,7 @@
 # HUD / UI
 
 - [UI click-shield](../ui-click-shield.md) — `UiKit.ClickShield(rootRect)` transparent raycast; once per NEW root.
-- [In-game DevSettings panel (P key)](../dev-settings-panel.md) — add in `DevSettings.cs` BuildKnobs(); checks `DevSettings.Blocking`.
+- [GM commands are the test tool](../gm-commands-are-the-test-tool.md) — the P-key dev panel was deleted 2026-09-13; test through `/` commands, which all run on the server.
 - [HUD progression windows + Ornament Kit v1](../hud-progression-windows.md) — `ProgressionWindows.cs` on `UiKit`; `Ornament.cs`.
 - [HUD hotbar = IHotbarSkill + HotbarPanel](../hotbar-ihotbarskill.md) — implement `IHotbarSkill` → auto on bar; re-bake Build UI Shell.
 - [HUD build process (ONE way)](../hud-build-process.md) — GameUICanvas Resources PREFAB; wire into UIShellBuilder + Build UI Shell.

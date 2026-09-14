@@ -6,8 +6,8 @@ using UnityEngine.Rendering.Universal;
 /// One-click registration for the hand-drawn colour grade. <see cref="HandDrawnGradeFeature"/> only runs once it's
 /// added to the project's URP renderer(s); doing that by hand in the inspector is easy to forget, so this menu finds
 /// every <see cref="UniversalRendererData"/> in the project and adds the feature as a sub-asset if it isn't there
-/// yet. Idempotent — safe to re-run; it skips renderers that already have it. After this, the "Saturation"/"Contrast"
-/// knobs in DevSettings ▸ Hand-Drawn take effect.
+/// yet. Idempotent — safe to re-run; it skips renderers that already have it. After this, the <c>saturation</c>/<c>contrast</c>
+/// values on <see cref="HandDrawnFX"/> take effect.
 /// </summary>
 public static class SetupHandDrawnGrade
 {
@@ -56,7 +56,7 @@ public static class SetupHandDrawnGrade
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
         Debug.Log($"[HandDrawnGrade] Added to {added} renderer(s); {already} already had it. " +
-                  "Press Play and drag DevSettings ▸ Hand-Drawn ▸ Saturation.");
+                  "Its saturation and contrast values on HandDrawnFX now take effect.");
     }
 
     static bool HasFeature(UniversalRendererData data)

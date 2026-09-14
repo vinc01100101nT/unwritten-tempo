@@ -37,15 +37,15 @@ public class NightLight : MonoBehaviour
     [Tooltip("Flicker speed.")]
     public float flickerSpeed = 6f;
 
-    // ── live global dials (DevSettings) — affect EVERY lamp without re-touching prefabs ──
+    // ── live global dials — affect EVERY lamp without re-touching prefabs ──
     public static bool GlobalEnabled = true;
     public static float GlobalIntensity = 1f;
     public static float GlobalRange = 1f;
-    /// <summary>Master switch for the nearest-lamp cast shadow (DevSettings ▸ Shadows). Off → no lamp casts.</summary>
+    /// <summary>Master switch for the nearest-lamp cast shadow. Off → no lamp casts.</summary>
     public static bool GlobalShadows = true;
     /// <summary>Only lamps within this distance of the player are eligible to be a shadow caster.</summary>
     public static float MaxShadowDist = 12f;
-    /// <summary>Darkness of the cast lamp shadow (0 = invisible, 1 = black). DevSettings ▸ Shadows.</summary>
+    /// <summary>Darkness of the cast lamp shadow (0 = invisible, 1 = black).</summary>
     public static float GlobalShadowStrength = 1f;
     /// <summary>How many lamps may cast a real point-light shadow at once. Each is a cubemap (6 face renders),
     /// so this is the cost dial. PC-only target → 4 is comfortable. Clamped to <see cref="HardCap"/>.</summary>

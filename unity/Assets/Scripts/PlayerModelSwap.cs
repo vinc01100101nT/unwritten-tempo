@@ -6,8 +6,7 @@ using UnityEngine;
 
 /// <summary>
 /// EDITOR-PLAY dev tool: hot-swap the live-3D player character model while the game runs, for quick
-/// visual testing across the rigged-character library. Cycled with the <b>[</b> / <b>]</b> keys or
-/// picked from the list in the <see cref="DevSettings"/> panel (▸ 3D Character).
+/// visual testing across the rigged-character library. Cycled with the <b>[</b> / <b>]</b> keys.
 ///
 /// <para>Editor-only by nature — it loads the rigged FBXs by project path via <see cref="AssetDatabase"/>,
 /// which doesn't exist in a build (the models aren't in a Resources/Addressables group, so there's nothing
@@ -29,7 +28,7 @@ public static class PlayerModelSwap
     static List<string> paths;      // rigged FBX asset paths, sorted by name — built lazily once, then cached
     static int index = -1;          // index of the model last applied (−1 = unknown / matches whatever was baked)
 
-    /// <summary>All rigged model paths (lazily enumerated once). Drives the DevSettings list.</summary>
+    /// <summary>All rigged model paths (lazily enumerated once).</summary>
     public static IReadOnlyList<string> Paths => Ensure();
     /// <summary>Index of the model last applied via this tool, or −1 if none yet.</summary>
     public static int Index => index;

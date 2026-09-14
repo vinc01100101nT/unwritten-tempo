@@ -446,6 +446,21 @@ public class GameNetwork : NetworkManager
         public double epochSeconds;
     }
 
+    /// <summary>How far a GM's <c>/time</c> has moved the time of day on this server — sent to everybody when it
+    /// moves, and to each person as they arrive. See <see cref="TimeOfDay.ShiftSeconds"/>.</summary>
+    public struct TimeOfDayShift : NetworkMessage
+    {
+        public double seconds;
+    }
+
+    /// <summary>The weather a GM's <c>/weather</c> is holding on this server — sent to everybody when it changes,
+    /// and to each person as they arrive. See <see cref="WeatherDirector.ForcedByServer"/>.</summary>
+    public struct WeatherHeld : NetworkMessage
+    {
+        /// <summary>The preset, or -1 when this server holds none and the calendar decides.</summary>
+        public int preset;
+    }
+
     public struct JoinRequest : NetworkMessage
     {
         public string characterName;
@@ -476,35 +491,32 @@ public class GameNetwork : NetworkManager
         public uint targetNetId;
     }
 
-    /// <summary>What the server DECIDED one blow was, sent out to everybody watching. Carries the resolved swing —
-    /// how hard, which element, whether it crit, whether it whiffed — and NOT the victim's remaining health, which
-    /// travels the usual way.
+    /// <summary>What the server DREW for one blow on a creature, sent to everybody watching it — the number, its
+    /// colour and opacity, the sound, the flash — and NOT the creature's remaining health, which travels the usual way.
     ///
-    /// <para><b>Why this has to exist.</b> Once a client forwards its hits, the client itself stops applying them,
-    /// so without this nothing on any screen reacts: no damage number, no flash, no stagger. The server decides the
-    /// blow but has no screen of its own, so if it does not say what happened, the hit is invisible everywhere.</para></summary>
+    /// <para><b>Why it carries the finished blow.</b> A player's machine works nothing out. Handed the blow as it went
+    /// in, it would take armour and the element chart off itself using its OWN copy of the creature — which is not the
+    /// creature the server hit, so it could draw a number the health bar never lost.</para></summary>
     public struct HitResult : NetworkMessage
     {
         public uint targetNetId;
 
-        /// <summary>WHO swung it. Without this a landed blow arrives on every machine with no attacker attached, and
-        /// everything a hit teaches its OWN attacker goes dead: the run of consecutive hits never advances, the
-        /// on-damage-dealt passives never fire, lifesteal never pays out. Each machine compares it with its own
-        /// player and credits the person at THIS keyboard only when the blow was theirs — so one swing teaches one
-        /// attacker, not everybody watching.</summary>
+        /// <summary>WHO swung it, as the shared name every machine agrees on. It keys the rising yellow total, so two
+        /// people flurrying one creature keep two numbers. It teaches nobody anything: whatever a hit gives its
+        /// attacker — a run of hits, a passive, lifesteal — was already given, on the server.</summary>
         public uint attackerNetId;
 
-        public int amount;
-        public Element element;
-        public bool isMagic;
-        public bool isCrit;
+        /// <summary>THE BLOW EXACTLY AS THE SERVER DREW IT, every number final — see <see cref="ShownBlow"/>. The
+        /// watching machine copies it onto the screen and works nothing out: not armour, not the element chart, not
+        /// a parry, not a barrier.</summary>
+        public int number;
+        public float elementModifier;
+        public bool crit;
+        public bool magic;
         public bool missed;
-        public int attackerHit;
-
-        /// <summary>An extra beat of a flurry, landing past the moment the creature died. Carried because it changes
-        /// what the receiving machine SHOWS — the numbers keep climbing to the end of the count instead of stopping
-        /// dead mid-combo — and that is the whole visible difference between the two.</summary>
-        public bool overkill;
+        public bool rangedMiss;
+        public BlowSound sound;
+        public bool flash;
 
         /// <summary>This strike belongs to a run that shows a RISING YELLOW TOTAL, and the receiving machine should
         /// fold it into one.
@@ -543,6 +555,35 @@ public class GameNetwork : NetworkManager
         /// wearing it saw no sign that anything had happened at all. This is the same kind of fact as
         /// <see cref="missed"/>, which has always travelled for exactly this reason.</para></summary>
         public UnitMitigation.Outcome mitigated;
+
+        /// <summary>A damage-over-time tick — poison, bleed, burn, a brace's bill — rather than a hit. A tick staggers
+        /// nobody, and one arriving after the person is dead is not shown.</summary>
+        public bool tick;
+    }
+
+    /// <summary>What the server HEALED a unit for, so the green digits appear over it. Health is the server's, and so is
+    /// every gain — a potion, a heal skill, regeneration, lifesteal — so this is the only road the digits have to a
+    /// screen. A person's gains are told to that person alone, the audience they have always had; a creature's reach
+    /// everybody watching it.</summary>
+    public struct HPAddedShown : NetworkMessage
+    {
+        public uint netId;
+        public int amount;
+    }
+
+    /// <summary>A cooldown the server just started on one of this person's skills, and the moment on the world's clock
+    /// it ends. A player's machine starts no cooldown of its own; this is how its hotbar learns that one is running.</summary>
+    public struct CooldownStarted : NetworkMessage
+    {
+        public string skillId;
+        public double endsAtEpochSeconds;
+    }
+
+    /// <summary>The server has finished with a press of this skill — it cast it or refused it. Sent for every press,
+    /// after any <see cref="CooldownStarted"/> it caused, so the pressing machine knows when it may send the next.</summary>
+    public struct CastAnswered : NetworkMessage
+    {
+        public string skillId;
     }
 
     /// <summary>What a kill was worth, told to the person who earned it. Progress is written by a player's own
@@ -550,33 +591,10 @@ public class GameNetwork : NetworkManager
     public struct XpEarned : NetworkMessage
     {
         public int amount;
-    }
 
-    /// <summary>A player's SKILL strike, NAMED rather than measured — which skill, which of its strikes, and at what.
-    ///
-    /// <para><b>The server works the damage out itself.</b> It holds the same authored skill (the catalog loads from
-    /// the same data on both sides) and the same character, so being told the id is enough: it looks the strike up
-    /// and rolls it off the stats it holds. Nothing about how hard it hit crosses the wire, which is the whole
-    /// point — a number a client states is a number a client can inflate.</para>
-    ///
-    /// <para><b>The pile is the one exception, and it is a narrow one.</b> Three of the game's skills let a strike
-    /// answer to a pile the cast banked part-way through its own run, and that reading exists only inside the run.
-    /// It travels here, and the server ignores it outright unless the strike it names actually reads a pile — so for
-    /// every other skill the client says nothing that affects the number at all.</para></summary>
-    public struct SkillStrikeRequest : NetworkMessage
-    {
-        public uint targetNetId;
-        public string skillId;
-
-        /// <summary>WHICH strike, as the two numbers it takes to name one: a skill is a list of beats, and each beat
-        /// carries its own list of things it does. Both are needed — "the third effect" means nothing without
-        /// saying third effect of which beat.</summary>
-        public int tickIndex;
-        public int effectIndex;
-
-        public int stackCount;
-        public float stackCarried;
-        public bool overkill;
+        /// <summary>Experience for the RING alone, whether or not it is worn — only a GM's <c>/ringxp</c> sends it.
+        /// A kill's experience reaches the ring through <see cref="amount"/>, by the ring's own rule.</summary>
+        public int ringOnlyAmount;
     }
 
     /// <summary>A PERSON CASTING A SKILL — the whole of it, named rather than resolved. Which skill, what they
@@ -703,50 +721,9 @@ public class GameNetwork : NetworkManager
         public string expectedItemId;
     }
 
-    /// <summary>A strike whose damage the client resolved and the server CANNOT re-derive, because no authored skill
-    /// stands behind it — a weapon's own flurry or cleave, split off a swing by the modifiers on that weapon.
-    ///
-    /// <para><b>Still trusted, and now the only thing that is.</b> It used to carry every skill in the game; a skill
-    /// names itself instead (see <see cref="SkillStrikeRequest"/>). What is left is the handful of strikes that are
-    /// properties of a weapon rather than of a skill, and moving those needs the weapon's modifiers resolved on the
-    /// server — a smaller job than the one just done, and the next one.</para></summary>
-    ///
-    /// <para><b>Why this one carries numbers when an ordinary swing does not.</b> A swing is the same act every
-    /// time, so the server can roll it from the fighter it already holds and needs to be told nothing but the
-    /// target. A skill is whatever it was authored to be — its own damage, its own element, its own count of hits,
-    /// its own rules about landing past a death — and none of that lives on the server today. So the strike travels
-    /// as the client resolved it, and the server checks what it CAN check: that this is a real target, that it is
-    /// near enough to be plausible, and that nobody is sending thousands a second.</para>
-    ///
-    /// <para><b>This is the trusted half of the layer, and it is trusted on purpose rather than by accident.</b>
-    /// Refusing it instead — which is what happened until now — means skills simply do not work in a shared world.
-    /// The end state is the server running the skill itself; that needs the whole skill system to exist there, and
-    /// it is its own piece of work. Until then a skill's damage is the client's word.</para></summary>
-    public struct ResolvedStrikeRequest : NetworkMessage
-    {
-        public uint targetNetId;
-        public int amount;
-        public Element element;
-        public bool isMagic;
-        public bool isCrit;
-        public bool overkill;
-    }
-
     /// <summary>A player asking to come back after a death. Carries nothing — the server knows who is asking and
     /// whether they are actually dead, and those are the only two facts that matter.</summary>
     public struct ReviveRequest : NetworkMessage { }
-
-    /// <summary>A player saying they healed themselves — a potion, a bandage, anything that puts health back.
-    ///
-    /// <para><b>Trusted, and deliberately so for now.</b> Health belongs to the server, so a heal that happened only
-    /// on somebody's own machine would be undone by the server's next word about them, and a potion would appear to
-    /// do nothing. The honest fix is for the thing that heals to happen ON the server — the same fix skills need,
-    /// and the same one the migration plan already has on its list. Until then this crosses as a claim, which is no
-    /// more trusted than a skill's own damage already is.</para></summary>
-    public struct HealClaim : NetworkMessage
-    {
-        public int amount;
-    }
 
     /// <summary>A command a player typed that only the machine owning the world can carry out — summoning a
     /// creature, killing one, standing a dummy up. The whole typed line crosses rather than a parsed command,
@@ -828,12 +805,9 @@ public class GameNetwork : NetworkManager
         swingDueAt.Clear();
         NetworkServer.RegisterHandler<JoinRequest>(OnJoinRequest);
         NetworkServer.RegisterHandler<HitRequest>(OnHitRequest);
-        NetworkServer.RegisterHandler<HealClaim>(OnHealClaim);
         NetworkServer.RegisterHandler<ReviveRequest>(OnReviveRequest);
-        NetworkServer.RegisterHandler<SkillStrikeRequest>(OnSkillStrikeRequest);
         NetworkServer.RegisterHandler<SkillCastRequest>(OnSkillCastRequest);
         NetworkServer.RegisterHandler<ItemUsedRequest>(OnItemUsedRequest);
-        NetworkServer.RegisterHandler<ResolvedStrikeRequest>(OnResolvedStrikeRequest);
         NetworkServer.RegisterHandler<GmCommandRequest>(OnGmCommandRequest);
         NetworkServer.RegisterHandler<ChatSaid>(OnChatSaid);
     }
@@ -843,10 +817,15 @@ public class GameNetwork : NetworkManager
         base.OnStartClient();
         NetworkClient.RegisterHandler<HitResult>(OnHitResult);
         NetworkClient.RegisterHandler<PlayerHitResult>(OnPlayerHitResult);
+        NetworkClient.RegisterHandler<HPAddedShown>(OnHPAddedShown);
+        NetworkClient.RegisterHandler<CooldownStarted>(OnCooldownStarted);
+        NetworkClient.RegisterHandler<CastAnswered>(OnCastAnswered);
         NetworkClient.RegisterHandler<XpEarned>(OnXpEarned);
         NetworkClient.RegisterHandler<SkillCastPlayed>(OnSkillCastPlayed);
         NetworkClient.RegisterHandler<GmCommandReply>(OnGmCommandReply);
         NetworkClient.RegisterHandler<WorldTime>(OnWorldTime);
+        NetworkClient.RegisterHandler<TimeOfDayShift>(OnTimeOfDayShift);
+        NetworkClient.RegisterHandler<WeatherHeld>(OnWeatherHeld);
         NetworkClient.RegisterHandler<ChatHeard>(OnChatHeard);
         NetworkClient.RegisterHandler<CastWindupStarted>(OnCastWindupStarted);
         NetworkClient.RegisterHandler<CastWindupEnded>(OnCastWindupEnded);
@@ -858,6 +837,27 @@ public class GameNetwork : NetworkManager
     // sent with the body rather than waited for by anything.
     static void OnWorldTime(WorldTime msg) => WorldClock.TakeFromServer(msg.epochSeconds);
 
+    static void OnTimeOfDayShift(TimeOfDayShift msg) => TimeOfDay.TakeShift(msg.seconds);
+    static void OnWeatherHeld(WeatherHeld msg)
+        => WeatherDirector.TakeForced(msg.preset < 0 ? null : (WeatherDirector.Preset?)msg.preset);
+
+    static WeatherHeld WeatherHeldNow()
+        => new WeatherHeld { preset = WeatherDirector.ForcedByServer.HasValue ? (int)WeatherDirector.ForcedByServer.Value : -1 };
+
+    /// <summary>Server-only: tell everybody on this server the time-of-day shift it now holds.</summary>
+    public static void TellEveryoneTheTimeOfDay()
+    {
+        if (!NetworkServer.active) return;
+        NetworkServer.SendToAll(new TimeOfDayShift { seconds = TimeOfDay.ShiftSeconds });
+    }
+
+    /// <summary>Server-only: tell everybody on this server the weather it is now holding.</summary>
+    public static void TellEveryoneTheWeather()
+    {
+        if (!NetworkServer.active) return;
+        NetworkServer.SendToAll(WeatherHeldNow());
+    }
+
     // A blow on a PERSON, arriving on every machine that can see them. Each one shows it in the way it honestly
     // can — see NetPlayer.ShowBlow.
     static void OnPlayerHitResult(PlayerHitResult msg)
@@ -868,25 +868,49 @@ public class GameNetwork : NetworkManager
 
         shell.ShowBlow(new DamageInfo(msg.amount, msg.element, msg.isMagic, msg.isCrit,
                                       attackerHit: msg.attackerHit, missed: msg.missed),
-                       msg.mitigated);
+                       msg.mitigated, msg.tick);
+    }
+
+    // Green digits the server said it healed, over the body this machine draws for that unit.
+    static void OnHPAddedShown(HPAddedShown msg)
+    {
+        if (!NetworkClient.spawned.TryGetValue(msg.netId, out var identity) || identity == null) return;
+        Transform body = null;
+        var shell = identity.GetComponent<NetMob>();
+        if (shell != null)
+        {
+            var creature = shell.WatchedTarget as Health;
+            body = creature != null ? creature.transform : null;
+        }
+        else
+        {
+            var person = identity.GetComponent<NetPlayer>();
+            body = person != null ? person.DrawnBody : null;
+        }
+        if (body != null) CombatAuthority.ShowHPAdded(body, msg.amount);
+    }
+
+    // A cooldown the server started: this machine's runner for that skill is set to end exactly when the server's does.
+    static void OnCooldownStarted(CooldownStarted msg)
+    {
+        var me = Character.Instance;
+        var runner = me != null ? me.RunnerById(msg.skillId) : null;
+        if (runner != null) runner.ResumeCooldown(WorldClock.FromEpochSeconds(msg.endsAtEpochSeconds));
+    }
+
+    // The server is done with a press: the skill may be pressed again (its cooldown, if any, has already arrived).
+    static void OnCastAnswered(CastAnswered msg)
+    {
+        var me = Character.Instance;
+        var runner = me != null ? me.RunnerById(msg.skillId) : null;
+        if (runner != null) runner.ServerAnsweredPress();
     }
 
     static void OnXpEarned(XpEarned msg)
     {
-        if (Character.Instance == null || msg.amount <= 0) return;
-        Character.Instance.AddXP(msg.amount);
-    }
-
-    void OnHealClaim(NetworkConnectionToClient conn, HealClaim msg)
-    {
-        // THE SAME FLOOD GUARD EVERY OTHER CLAIM GOES THROUGH. Left off, this was the one message a machine could
-        // send as fast as the wire allows: each one legally tops a character back up, so nothing the server decided
-        // could ever bring them down. The guard is not a heal RATE — it sits far above any real one — it is the
-        // ceiling on how many claims a second one connection may make at all.
-        if (HealingTooFast(conn.connectionId)) return;
-        if (msg.amount <= 0) return;
-        var fighter = FighterFor(conn);
-        if (fighter != null) fighter.Heal(msg.amount);
+        if (Character.Instance == null) return;
+        if (msg.amount > 0) Character.Instance.AddXP(msg.amount);
+        if (msg.ringOnlyAmount > 0) Character.Instance.AddRingXP(msg.ringOnlyAmount);
     }
 
     void OnReviveRequest(NetworkConnectionToClient conn, ReviveRequest msg)
@@ -910,13 +934,20 @@ public class GameNetwork : NetworkManager
             return;
         }
         GameLog.Info(LogCat.Server, "reviving a player who was dead.");
+        ReviveOnServer(fighter);
+    }
 
-        fighter.Revive();
+    /// <summary>Server-only: stand <paramref name="who"/> back up. The one way the server revives a person — their
+    /// own Respawn button and a GM's <c>/revive</c> both come here.</summary>
+    public static void ReviveOnServer(Character who)
+    {
+        if (!NetworkServer.active || who == null) return;
+        who.Revive();
 
         // AND COMING BACK MOVES THEM. A person stands up at a spawn point, which is nowhere near where they fell —
         // a jump the movement check would otherwise read as the largest lie it has ever seen, on every single
         // death. Forgiven from HERE because this is the server granting it: nothing a client says can reach it.
-        var shell = ShellFor(conn);
+        var shell = ShellFor(who);
         if (shell != null) shell.ForgiveNextMoveAfterServerMove();
     }
 
@@ -1050,10 +1081,41 @@ public class GameNetwork : NetworkManager
         return shell.ServerCombatUnit;
     }
 
+    /// <summary>SERVER ONLY: say what a unit was just healed for. A person hears their own gains and nobody else does —
+    /// the audience the green digits have always had; a creature's gains reach everybody watching it.</summary>
+    public static void AnnounceHPAdded(ICombatUnit unit, int amount)
+    {
+        if (!NetworkServer.active || unit == null || amount <= 0) return;
+
+        if (unit is Character person)
+        {
+            var identity = IdentityOfFighter(person);
+            var conn = identity != null ? identity.connectionToClient : null;
+            if (conn != null) conn.Send(new HPAddedShown { netId = identity.netId, amount = amount });
+            return;
+        }
+
+        var body = unit.Body;
+        var shell = body != null ? NetMob.ShellForServerMob(body.gameObject) : null;
+        if (shell != null)
+            NetworkServer.SendToReadyObservers(shell.netIdentity, new HPAddedShown { netId = shell.netId, amount = amount });
+    }
+
+    /// <summary>SERVER ONLY: tell a person the server just started a cooldown on one of their skills, and when it ends.
+    /// Silent for a character nobody is playing.</summary>
+    public static void TellOwnerCooldownStarted(Character who, string skillId, System.DateTime endsAtUtc)
+    {
+        if (!NetworkServer.active || who == null || string.IsNullOrEmpty(skillId)) return;
+        var identity = IdentityOfFighter(who);
+        var conn = identity != null ? identity.connectionToClient : null;
+        if (conn == null) return;
+        conn.Send(new CooldownStarted { skillId = skillId, endsAtEpochSeconds = WorldClock.ToEpochSeconds(endsAtUtc) });
+    }
+
     /// <summary>Announce a blow the server decided landed on a person, to everybody who can see them. Called by the
     /// damage door rather than by whatever swung, so a creature's bite, a poison tick and anything written later all
     /// reach the screens through one line.</summary>
-    public static void AnnounceBlowOnPlayer(Character victim, in DamageInfo info, int dealt)
+    public static void AnnounceBlowOnPlayer(Character victim, in DamageInfo info, int dealt, bool tick = false)
     {
         if (!NetworkServer.active || victim == null) return;
 
@@ -1072,26 +1134,11 @@ public class GameNetwork : NetworkManager
             // TAKEN AND CLEARED, right after the blow was applied and before anything else can be hit. The victim
             // recorded this on its way through its own intake, which is the only place that knows a barrier ate part
             // of it or a brace held all of it.
-            mitigated = victim.TakeMitigation()
+            mitigated = victim.TakeMitigation(),
+            tick = tick
         });
     }
 
-    /// <summary>Announce a blow the server decided landed on a CREATURE, to everybody watching that creature. The
-    /// exact mirror of <see cref="AnnounceBlowOnPlayer"/>, and it exists for the same reason: the server has no
-    /// screen, so a blow it keeps to itself is a blow that appears on nobody's.
-    ///
-    /// <para><b>The gap this closes.</b> A joined player sends the WHOLE cast across and then resolves none of it,
-    /// so every strike of a skill is landed by the server on its own initiative, with no request from anybody to
-    /// answer. The handlers below each announce the blow they were ASKED for — there was nothing announcing the
-    /// blows nobody asked for. The creature's health still reached every screen, because that is a synced number
-    /// that is written straight in without drawing anything, which is exactly why the bar moved and no digits
-    /// ever did.</para>
-    ///
-    /// <para><b>What it deliberately does nothing for.</b> Off a server. A victim that is a person — that is the
-    /// line above, and announcing here as well would draw their number twice. And a creature no server published,
-    /// which has no audience to announce to.</para></summary>
-    /// <param name="showsTotal">Whether this strike belongs to a run that draws ONE rising yellow total rather
-    /// than a number per beat. Worked out by the caller from the authored skill, never from a client's claim.</param>
     /// <summary>SERVER ONLY: say that a creature just BEGAN an action — a swing, and later anything else its body
     /// does that takes time. Silent off a server, and silent for a creature no shell speaks for.
     ///
@@ -1107,12 +1154,18 @@ public class GameNetwork : NetworkManager
         if (shell != null) shell.BeganAction(action, beatSeconds);
     }
 
-    public static void AnnounceBlowOnMob(ICombatUnit victim, ICombatUnit attacker, in DamageInfo info, bool showsTotal)
+    /// <summary>SERVER ONLY: tell everybody watching a creature what it just drew for a blow. Called by the creature
+    /// itself at the moment it draws one (<c>Health.Show</c>), so every blow — a swing, a strike, an execute, a whiff,
+    /// a flurry beat past death — is announced by one line nobody has to remember to add. The mirror of
+    /// <see cref="AnnounceBlowOnPlayer"/>.
+    ///
+    /// <para><b>What it deliberately does nothing for.</b> Off a server. And a creature no server published, which has
+    /// no audience to announce to.</para></summary>
+    public static void AnnounceBlowOnMob(Health victim, ICombatUnit attacker, in ShownBlow blow)
     {
         if (!NetworkServer.active || victim == null) return;
 
-        var body = victim.Body;
-        var shell = body != null ? NetMob.ShellForServerMob(body.gameObject) : null;
+        var shell = NetMob.ShellForServerMob(victim.gameObject);
         if (shell == null) return;
 
         var attackerIdentity = IdentityOfFighter(attacker as Character);
@@ -1121,29 +1174,30 @@ public class GameNetwork : NetworkManager
         {
             targetNetId = shell.netId,
             attackerNetId = attackerIdentity != null ? attackerIdentity.netId : 0u,
-            // THE BLOW AS IT WENT IN, not the number that came out of it. Every watching machine runs what arrives
-            // through the same door the server did — armour, element chart and all — so handing over the finished
-            // figure would have the victim's armour taken out of it a second time.
-            amount = info.amount,
-            element = info.element,
-            isMagic = info.isMagic,
-            isCrit = info.isCrit,
-            missed = info.missed,
-            attackerHit = info.attackerHit,
-            overkill = info.overkill,
-            showsTotal = showsTotal
+            // THE BLOW AS IT CAME OUT, every number final: armour, the element chart, a parry and a barrier have all
+            // already been taken off here, and nothing on the watching machine takes anything off again.
+            number = blow.number,
+            elementModifier = blow.elementModifier,
+            crit = blow.crit,
+            magic = blow.magic,
+            missed = blow.missed,
+            rangedMiss = blow.rangedMiss,
+            sound = blow.sound,
+            flash = blow.flash,
+            // The authored skill's answer, held by the strike being landed right now — never a client's.
+            showsTotal = SkillEffectApplier.StrikeShowsTotal
         });
     }
 
     /// <summary>Tell the person a reward belongs to that they earned it. Silent off a server, and silent for a
     /// character that is not somebody's — so the single-machine game is untouched.</summary>
-    public static void TellOwnerTheyEarned(Character who, int xp)
+    public static void TellOwnerTheyEarned(Character who, int xp, int ringOnlyXp = 0)
     {
-        if (!NetworkServer.active || who == null || xp <= 0) return;
+        if (!NetworkServer.active || who == null || (xp <= 0 && ringOnlyXp <= 0)) return;
 
         var identity = IdentityOfFighter(who);
         if (identity == null || identity.connectionToClient == null) return;
-        identity.connectionToClient.Send(new XpEarned { amount = xp });
+        identity.connectionToClient.Send(new XpEarned { amount = Mathf.Max(0, xp), ringOnlyAmount = Mathf.Max(0, ringOnlyXp) });
     }
 
     /// <summary>Server-only: hand <paramref name="who"/>'s own machine the bag as it now stands, and write the
@@ -1177,95 +1231,6 @@ public class GameNetwork : NetworkManager
         return string.IsNullOrWhiteSpace(AccountSession.CharacterName) ? "someone" : AccountSession.CharacterName;
     }
 
-    /// <summary>Name an authored skill's strike to the server so IT can roll the damage. Returns TRUE when it was
-    /// sent, which means the caller must not land anything itself.
-    ///
-    /// <para>Returns FALSE — leaving the caller to carry on as it always did — on the server, and for a strike whose
-    /// skill cannot be named. The second case is the honest fallback: a strike that no authored skill claims cannot
-    /// be re-rolled at the far end, so it goes down the older path that carries its own number.</para></summary>
-    public static bool SendSkillStrikeToServer(SkillEffect e, IDamageable target, in StackVars vars, bool overkill)
-    {
-        // THE SERVER HAS NOBODY TO ASK, and that is not a fault worth a word. It lands the strike itself and
-        // announces it (see AnnounceBlowOnMob), which is the ordinary case for every cast a joined player sends
-        // across whole. Answered before the warning below, because that warning blamed "no shell for that body"
-        // on a machine where the real reason was simply being the authority — a wrong reason printed once per
-        // skill, in the one log somebody debugging this would read.
-        if (NetworkServer.active) return false;
-
-        var identity = SharedIdentityOf(target);
-        if (identity == null)
-        {
-            // SAYS WHY IT DID NOTHING. A strike that is neither sent nor applied is silent — no error, no number,
-            // nothing on screen — and silence has no stack trace. Whichever of the two reasons it is, it is said
-            // once per skill rather than per strike, so a flurry cannot bury it.
-            WhyNoStrike(PassiveEvents.CurrentSkillId, "the target is not a creature this server owns "
-                        + "(no shell for that body), so there is nobody to ask");
-            return false;
-        }
-
-        // WHICH skill is landing right now — already tracked for the passives that answer "this skill killed it",
-        // so naming a strike costs no new bookkeeping anywhere.
-        var def = SkillCatalog.Get(PassiveEvents.CurrentSkillId);
-        if (!FindStrike(def, e, out int tick, out int index))
-        {
-            WhyNoStrike(PassiveEvents.CurrentSkillId, def == null
-                ? "no skill is named as the cause right now, so the strike cannot say which one it belongs to"
-                : "that damage effect is not one of '" + def.id + "'s own authored effects");
-            return false;
-        }
-
-        NetworkClient.Send(new SkillStrikeRequest
-        {
-            targetNetId = identity.netId,
-            skillId = def.id,
-            tickIndex = tick,
-            effectIndex = index,
-            stackCount = vars.Count,
-            stackCarried = vars.Carried,
-            overkill = overkill
-        });
-        return true;
-    }
-
-    // Once per skill, not once per strike — a flurry raises dozens and a line each would bury the log.
-    static readonly System.Collections.Generic.HashSet<string> saidWhyNoStrike = new System.Collections.Generic.HashSet<string>();
-
-    static void WhyNoStrike(string skillId, string why)
-    {
-        string key = (skillId ?? "") + "|" + why;
-        if (!saidWhyNoStrike.Add(key)) return;
-        GameLog.Warn(LogCat.Client, "a skill strike from '" + (string.IsNullOrEmpty(skillId) ? "(unnamed)" : skillId)
-                         + "' was neither sent to the server nor shown: " + why + ".");
-    }
-
-    // WHERE this strike sits inside its skill. By reference, so it names the exact authored effect rather than one
-    // that merely looks the same. Runs once per strike — never per frame — so a short walk is the right shape.
-    static bool FindStrike(SkillDef def, SkillEffect e, out int tickIndex, out int effectIndex)
-    {
-        tickIndex = -1; effectIndex = -1;
-        if (def == null || def.bindings == null || e == null) return false;
-
-        for (int t = 0; t < def.bindings.Count; t++)
-        {
-            var effects = def.bindings[t] != null ? def.bindings[t].effects : null;
-            if (effects == null) continue;
-            int i = effects.IndexOf(e);
-            if (i < 0) continue;
-            tickIndex = t; effectIndex = i;
-            return true;
-        }
-        return false;
-    }
-
-    /// <summary>Tell the server about health this player put back. Returns TRUE when it was sent — the caller must
-    /// then NOT apply it here, for the same reason a swing is not applied here.</summary>
-    public static bool SendHealToServer(int amount)
-    {
-        if (!WatchingOnly() || amount <= 0) return false;
-        NetworkClient.Send(new HealClaim { amount = amount });
-        return true;
-    }
-
     /// <summary>Ask the server to bring this player back. Returns TRUE when it was sent.</summary>
     public static bool SendReviveToServer()
     {
@@ -1283,12 +1248,13 @@ public class GameNetwork : NetworkManager
     // it, so the server's own fighters act for real rather than sending themselves messages.
     static bool WatchingOnly() => !NetworkServer.active && NetworkClient.active && NetworkClient.isConnected;
 
-    // The shell a server-held fighter belongs to. The fighter is built as a child of that shell (see PlayerFighter),
-    // so this is a walk up the parents rather than a search — the same reason the creature side uses a table.
+    // The shell a server-held fighter belongs to — bound onto the fighter when PlayerFighter builds it, because this is
+    // asked for every blow and every heal. A fighter built some other way falls back to walking up its parents.
     static NetworkIdentity IdentityOfFighter(Character fighter)
     {
-        var body = fighter != null ? fighter.transform : null;
-        return body != null ? body.GetComponentInParent<NetworkIdentity>() : null;
+        if (fighter == null) return null;
+        if (fighter.ServerIdentity != null) return fighter.ServerIdentity;
+        return fighter.transform.GetComponentInParent<NetworkIdentity>();
     }
 
     /// <summary>Server-only: tell whoever is playing <paramref name="who"/> that something just arrived in their
@@ -1325,9 +1291,8 @@ public class GameNetwork : NetworkManager
         return true;
     }
 
-    // A watching machine's half: show the blow the server just decided, using the SAME sink the offline game uses.
-    // The presentation is not written a second time for the networked case — the resolved blow is simply handed to
-    // the door every hit already went through.
+    // A watching machine's half: draw the blow exactly as the server drew it, through the SAME function the server's
+    // own intake draws with — so the picture is written once, and nothing about the blow is worked out here.
     /// <summary>How many blows this machine has been told about, and how many it could not find a victim for.
     /// A probe: "the number did not show" has two very different causes — the announcement never arrived, or it
     /// arrived and was dropped — and nothing else on this machine can tell them apart.</summary>
@@ -1340,73 +1305,25 @@ public class GameNetwork : NetworkManager
         if (!NetworkClient.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null) return;
 
         var shell = identity.GetComponent<NetMob>();
-        var victim = shell != null ? shell.WatchedTarget : identity.GetComponent<IDamageable>();
+        var victim = (shell != null ? shell.WatchedTarget : identity.GetComponent<IDamageable>()) as Health;
         if (victim == null) { HitResultsWithNoVictim++; return; }
 
-        int dealt = CombatAuthority.ApplyFromServer(victim, new DamageInfo(msg.amount, msg.element, msg.isMagic,
-                                                              msg.isCrit,
-                                                              attackerHit: msg.attackerHit, overkill: msg.overkill,
-                                                              missed: msg.missed,
-                                                              attacker: AttackerIfItWasMe(msg.attackerNetId)));
+        victim.DrawShownBlow(new ShownBlow(msg.number, msg.elementModifier, msg.crit, msg.magic, msg.sound, msg.flash,
+                                           msg.missed, msg.rangedMiss));
+
+        // THE HURT STAGGER, fed the server's final number. It is the one thing a blow still starts on this machine,
+        // because a stagger is a body stopping — movement — and each machine drives the bodies it draws.
+        if (msg.flash && !msg.missed && msg.number > 0)
+        {
+            var status = victim.StatusHost;
+            if (status != null) status.TookHit(msg.number);
+        }
 
         // THE RISING YELLOW TOTAL, built from the numbers that actually arrived. Keyed by WHO struck — the shared
-        // name every machine agrees on, not "was it me" — so two people flurrying one creature keep two climbing
-        // numbers instead of pooling into a third that belongs to neither. The body it hangs over is the one this
-        // machine can see, which is the watched copy the number was just drawn on.
-        if (msg.showsTotal && dealt > 0)
-        {
-            var body = victim as ICombatUnit;
-            if (body != null) RepeatsDamageTotal.ReportArrived(body.Body, dealt, msg.attackerNetId);
-        }
-    }
-
-    /// <summary>The local fighter, but ONLY when the blow the server just announced was this keyboard's. Everyone
-    /// receives every blow, and a hit teaches its attacker things — a run of consecutive hits, the on-damage-dealt
-    /// passives, a lifesteal trickle — so handing my own character to somebody ELSE's swing would credit me for
-    /// every blow anybody landed anywhere in sight. Null for a stranger's swing, which is the honest answer: this
-    /// machine holds no copy of their fighter and has nothing of theirs to teach.</summary>
-    static ICombatUnit AttackerIfItWasMe(uint attackerNetId)
-    {
-        if (attackerNetId == 0) return null;
-        var me = NetworkClient.localPlayer;
-        return me != null && me.netId == attackerNetId ? Character.Instance : null;
-    }
-
-    /// <summary>Send a hit to the server instead of applying it here. Returns TRUE when it was sent — which
-    /// means the caller must NOT apply anything itself. Returns FALSE offline, or on the server, where the
-    /// caller is the authority and should carry on as normal.
-    ///
-    /// <para>Lives on the net layer rather than in the combat door so that <see cref="CombatAuthority"/> keeps
-    /// knowing nothing about wires: it asks one question and gets a yes or no.</para></summary>
-    public static bool SendHitToServer(IDamageable target, in DamageInfo info)
-    {
-        var identity = SharedIdentityOf(target);
-        if (identity == null) return false;
-
-        // A SWING AND A SKILL ASK DIFFERENT QUESTIONS, and the game already tells them apart everywhere else by the
-        // accuracy the attacker rolled: a real swing rolled one (zero or more), a skill strike says −1 for "always
-        // lands". No new flag, no second way to ask.
-        //
-        // A swing says only WHAT it is hitting, because the server holds everything else about it. An authored SKILL
-        // says only which skill and which of its strikes, for the same reason — and never reaches this line, because
-        // it is sent from where the skill is known (SendSkillStrikeToServer). What is left here is an always-lands
-        // strike with no skill behind it: a weapon's own flurry or cleave. Its damage is still the client's word.
-        if (info.attackerHit < 0)
-        {
-            NetworkClient.Send(new ResolvedStrikeRequest
-            {
-                targetNetId = identity.netId,
-                amount = info.amount,
-                element = info.element,
-                isMagic = info.isMagic,
-                isCrit = info.isCrit,
-                overkill = info.overkill
-            });
-            return true;
-        }
-
-        NetworkClient.Send(new HitRequest { targetNetId = identity.netId });
-        return true;
+        // name every machine agrees on — so two people flurrying one creature keep two climbing numbers instead of
+        // pooling into a third that belongs to neither. It hangs over the watched copy the number was just drawn on.
+        if (msg.showsTotal && !msg.missed && msg.number > 0)
+            RepeatsDamageTotal.ReportArrived(victim.transform, msg.number, msg.attackerNetId);
     }
 
     /// <summary>The shared name for something both halves know about, or null when this machine is the authority,
@@ -1449,13 +1366,6 @@ public class GameNetwork : NetworkManager
     // Once per reason per skill, so a flurry cannot bury it and a genuine repeat still shows.
     static readonly System.Collections.Generic.HashSet<string> saidWhyRefused = new System.Collections.Generic.HashSet<string>();
 
-    static void WhyRefused(string skillId, string why)
-    {
-        if (!SaidOnce("strike|" + skillId + "|" + why)) return;
-        GameLog.Warn(LogCat.Server, "refused a skill strike from '" + Named(skillId)
-                         + "': " + why + ". Nothing was damaged and no number was shown.");
-    }
-
     /// <summary>The same thing for the door one step earlier — the CAST itself, before any strike exists.
     ///
     /// <para>Every way out of that door used to be a bare return, so a skill the server would not run was silent on
@@ -1495,27 +1405,14 @@ public class GameNetwork : NetworkManager
     // server that has since moved the target — refusing those would make a fair hit fail at a bad moment.
     const float ReachForgiveness = 1.5f;
 
-    // How many SKILL STRIKES a connection may send in one second. Its own budget rather than a share of the blow
-    // ceiling above, for exactly the reason the heal ceiling has one: a skill legitimately sends a request PER HIT
-    // PER CREATURE, so one flurry across a crowd is five hits times however many it caught — twenty-five of them
-    // before anybody has done anything unusual. Sharing the twenty-a-second blow budget meant those extra strikes
-    // were dropped in silence, mid-combo, with nothing on screen to say a hit had gone missing.
-    //
-    // The number is MY CALL and it is deliberately far above any real cast: nothing here is a rate a player can
-    // reach, it is only the ceiling that stops one machine asking the server to resolve thousands a second.
-    const int MaxSkillStrikesPerSecond = 200;
-
-    // How many HEALS a connection may claim in one second. Its own ceiling rather than a share of the one above,
-    // because the two are different actions at different rates: a flurry skill legitimately sends a request per
-    // hit, and making a potion eat into that budget would silently drop real strikes mid-combo. Like the blow
-    // ceiling, this sits far above anything a person can actually do.
-    const int MaxHealsPerSecond = 10;
+    // How many CASTS AND ITEM USES a connection may send in one second — each one asks the server to run a whole
+    // skill. The number is deliberately far above any real rate: it is only the ceiling that stops one machine
+    // asking the server to run thousands a second.
+    const int MaxSkillRequestsPerSecond = 200;
 
     class ClaimLedger { public float windowEnds; public int countedThisWindow; }
 
     static readonly System.Collections.Generic.Dictionary<int, ClaimLedger> swingLedgers =
-        new System.Collections.Generic.Dictionary<int, ClaimLedger>();
-    static readonly System.Collections.Generic.Dictionary<int, ClaimLedger> healLedgers =
         new System.Collections.Generic.Dictionary<int, ClaimLedger>();
     static readonly System.Collections.Generic.Dictionary<int, ClaimLedger> skillLedgers =
         new System.Collections.Generic.Dictionary<int, ClaimLedger>();
@@ -1549,8 +1446,7 @@ public class GameNetwork : NetworkManager
         return true;
     }
     static bool SwingingTooFast(int connectionId) => TooMany(swingLedgers, connectionId, MaxHitsPerSecond);
-    static bool HealingTooFast(int connectionId) => TooMany(healLedgers, connectionId, MaxHealsPerSecond);
-    static bool CastingTooFast(int connectionId) => TooMany(skillLedgers, connectionId, MaxSkillStrikesPerSecond);
+    static bool CastingTooFast(int connectionId) => TooMany(skillLedgers, connectionId, MaxSkillRequestsPerSecond);
 
     // One counter, used by every ledger — so a new kind of claim gets a flood guard by adding a ceiling and a
     // dictionary, not by writing the counting again and getting it subtly different.
@@ -1734,22 +1630,11 @@ public class GameNetwork : NetworkManager
         // THE INTENT IS NOT ANNOUNCED HERE. It belongs to the moment the swing STARTED, which is where this machine
         // now raises it (see OnHitRequest) — raising it again at the contact moment would be the same swing
         // announcing itself twice, and would put "about to swing" and "a swing landed" at one instant.
+        //
+        // EVERYBODY WATCHING IS TOLD by the victim itself, at the moment it draws the blow (Health.Show for a creature,
+        // the damage door for a person) — so there is no second announcement to send from here.
         BasicSwing.Land(swinger, victim as ICombatUnit, ScaledNumber.Of(1f), StackVars.None,
-                        outer: 1f, overkill: false, announceIntent: false, out var resolved);
-
-        // …and then TELL EVERYONE. The server has no screen, so a blow it keeps to itself is a blow nobody sees.
-        NetworkServer.SendToReadyObservers(identity, new HitResult
-        {
-            targetNetId = targetNetId,
-            attackerNetId = conn.identity != null ? conn.identity.netId : 0u,
-            amount = resolved.amount,
-            element = resolved.element,
-            isMagic = resolved.isMagic,
-            isCrit = resolved.isCrit,
-            missed = resolved.missed,
-            attackerHit = resolved.attackerHit,
-            overkill = false
-        });
+                        outer: 1f, overkill: false, announceIntent: false, out _);
     }
 
     // How far a skill may reach before the server calls it impossible. Deliberately generous: skills range from a
@@ -1764,105 +1649,6 @@ public class GameNetwork : NetworkManager
     // still fifteen times tighter than the ceiling above, so an honest cast fired right on the line is never
     // refused and a claim from across the clearing still is. Forgiving on purpose, exactly as the movement check is.
     const float SkillRangeSlack = 2f;
-
-    /// <summary>THE SERVER ROLLS THE SKILL. It is told which skill and which of that skill's strikes just landed on
-    /// what — and works out how hard from the authored data and the character it holds, exactly as the player's own
-    /// machine would have.</summary>
-    void OnSkillStrikeRequest(NetworkConnectionToClient conn, SkillStrikeRequest msg)
-    {
-        // EVERY REFUSAL BELOW SAYS SO. A strike that is dropped here is silent from the player's seat — the skill
-        // plays, nothing takes damage, no number appears, and no log anywhere mentions it. Silence has no stack
-        // trace, so each way out names itself, once per reason per skill.
-        if (CastingTooFast(conn.connectionId)) { WhyRefused(msg.skillId, "asked for faster than the ceiling allows"); return; }
-
-        var def = SkillCatalog.Get(msg.skillId);
-        if (def == null || def.bindings == null)
-        {
-            WhyRefused(msg.skillId, "this server has no such skill in its catalog");
-            return;
-        }
-        if (msg.tickIndex < 0 || msg.tickIndex >= def.bindings.Count)
-        {
-            WhyRefused(msg.skillId, "tick " + msg.tickIndex + " is outside that skill's " + def.bindings.Count + " tick(s)");
-            return;
-        }
-
-        var effects = def.bindings[msg.tickIndex] != null ? def.bindings[msg.tickIndex].effects : null;
-        if (effects == null || msg.effectIndex < 0 || msg.effectIndex >= effects.Count)
-        {
-            WhyRefused(msg.skillId, "effect " + msg.effectIndex + " is outside that tick's effects");
-            return;
-        }
-
-        var effect = effects[msg.effectIndex];
-        // ONLY A STRIKE may be asked for here. Naming any other kind of effect would have the server land a
-        // damage roll for something authored to heal or to buff.
-        if (effect == null || effect.kind != SkillEffectKind.Damage)
-        {
-            WhyRefused(msg.skillId, "that effect is not a Damage effect");
-            return;
-        }
-
-        if (!NetworkServer.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null)
-        {
-            WhyRefused(msg.skillId, "the target it named is not anything this server is holding");
-            return;
-        }
-        var shell = identity.GetComponent<NetMob>();
-        var victim = (shell != null && shell.ServerMob != null
-            ? shell.ServerMob.GetComponent<IDamageable>()
-            : identity.GetComponent<IDamageable>()) as ICombatUnit;
-        if (victim == null) { WhyRefused(msg.skillId, "the target it named cannot be hurt"); return; }
-
-        var caster = FighterFor(conn) as Character;
-        if (caster == null) { WarnNoFighter(conn.connectionId); return; }
-        if (!Owns(caster, msg.skillId)) { WarnNotTheirSkill(conn.connectionId, msg.skillId); return; }
-
-        var casterBody = caster.Body;
-        var victimBody = victim.Body;
-        if (casterBody == null || victimBody == null)
-        {
-            WhyRefused(msg.skillId, "one of the two bodies does not exist on this server");
-            return;
-        }
-        if ((victimBody.position - casterBody.position).sqrMagnitude > SkillReachCeiling * SkillReachCeiling)
-        {
-            WhyRefused(msg.skillId, "the target is further than the ceiling of " + SkillReachCeiling + " units away");
-            return;
-        }
-
-        // THE PILE IS IGNORED UNLESS THIS STRIKE ACTUALLY READS ONE. The reading is the single thing a client still
-        // states that can move a number, so it is accepted only where the authored data says it means something —
-        // which is three skills in the whole game. Everywhere else the client's figure is dropped on the floor.
-        var vars = effect.damageMult.useStacks
-            ? new StackVars(Mathf.Max(0, msg.stackCount), msg.stackCarried)
-            : StackVars.None;
-
-        SkillEffectApplier.Strike(effect, victim, caster, vars, msg.overkill, out _, out var resolved);
-
-        // ANNOUNCED EXACTLY AS IT WAS RESOLVED, never rebuilt from the authored effect. Every watching machine runs
-        // the blow through the same door the server did — armour, element chart and all — so what travels is the
-        // blow as it went IN, not the number that came out of it. Describing it from the effect instead got three
-        // things wrong at once: it stated the finished number, so armour was taken off twice and every number on
-        // screen read low; and for a strike that swings the weapon it named the skill's element and could never
-        // report a crit or a whiff, because those belong to the swing rather than to the skill that asked for it.
-        NetworkServer.SendToReadyObservers(identity, new HitResult
-        {
-            targetNetId = msg.targetNetId,
-            attackerNetId = conn.identity != null ? conn.identity.netId : 0u,
-            amount = resolved.amount,
-            element = resolved.element,
-            isMagic = resolved.isMagic,
-            isCrit = resolved.isCrit,
-            missed = resolved.missed,
-            attackerHit = resolved.attackerHit,
-            overkill = msg.overkill,
-            // WHETHER A TOTAL WAS OWED, read off the authored skill on the machine that holds it. The two things
-            // that draw one have always been these: a run that asked to show ONE number across all its repeats, and
-            // a strike that lands more than once. Read here rather than sent, so it stays the skill's decision.
-            showsTotal = SkillEffectApplier.ShowsRunTotal(def, effect, caster, vars)
-        });
-    }
 
     /// <summary>TRUE when the world this machine is playing in belongs to somebody else — a joined client. Nothing
     /// here decides anything then: not a blow, not a buff, not a charge.
@@ -1907,7 +1693,15 @@ public class GameNetwork : NetworkManager
 
     // How far a cast may be aimed from the caster before the server calls it impossible — the same generous ceiling
     // a named strike already answers to, read from the same constant so the two cannot drift apart.
+    // EVERY PRESS IS ANSWERED, whichever way it went, so the pressing machine — which starts no cooldown of its own —
+    // knows when it may send the next one.
     void OnSkillCastRequest(NetworkConnectionToClient conn, SkillCastRequest msg)
+    {
+        RunCastRequest(conn, msg);
+        conn.Send(new CastAnswered { skillId = msg.skillId });
+    }
+
+    void RunCastRequest(NetworkConnectionToClient conn, SkillCastRequest msg)
     {
         // EVERY REFUSAL BELOW SAYS SO, exactly as the strike door above already does. These were six bare returns,
         // and a cast stopped by any of them was invisible everywhere: the player's own machine had already spent the
@@ -2342,46 +2136,6 @@ public class GameNetwork : NetworkManager
         return false;
     }
 
-    void OnResolvedStrikeRequest(NetworkConnectionToClient conn, ResolvedStrikeRequest msg)
-    {
-        if (SwingingTooFast(conn.connectionId)) return;
-        if (!NetworkServer.spawned.TryGetValue(msg.targetNetId, out var identity) || identity == null) return;
-
-        var shell = identity.GetComponent<NetMob>();
-        var victim = shell != null && shell.ServerMob != null
-            ? shell.ServerMob.GetComponent<IDamageable>()
-            : identity.GetComponent<IDamageable>();
-        if (victim == null) return;
-
-        var caster = FighterFor(conn);
-        if (caster == null) { WarnNoFighter(conn.connectionId); return; }
-
-        var casterBody = caster.Body;
-        var victimUnit = victim as ICombatUnit;
-        var victimBody = victimUnit != null ? victimUnit.Body : null;
-        if (casterBody == null || victimBody == null) return;
-        if ((victimBody.position - casterBody.position).sqrMagnitude > SkillReachCeiling * SkillReachCeiling) return;
-
-        // A skill always lands — that is what the −1 accuracy means everywhere else in the game — so no roll
-        // happens here. The strike is applied exactly as it was resolved, through the same door as everything else.
-        var resolved = new DamageInfo(msg.amount, msg.element, msg.isMagic, msg.isCrit,
-                                      attackerHit: -1, overkill: msg.overkill, attacker: caster);
-        CombatAuthority.Apply(victim, resolved);
-
-        NetworkServer.SendToReadyObservers(identity, new HitResult
-        {
-            targetNetId = msg.targetNetId,
-            attackerNetId = conn.identity != null ? conn.identity.netId : 0u,
-            amount = resolved.amount,
-            element = resolved.element,
-            isMagic = resolved.isMagic,
-            isCrit = resolved.isCrit,
-            missed = false,
-            attackerHit = -1,
-            overkill = msg.overkill
-        });
-    }
-
     // ---- commands a player asks the world to carry out ---------------------------------------------------
 
     /// <summary>Hand a typed command to the machine that owns the world. Returns FALSE when there is no world to
@@ -2573,6 +2327,11 @@ public class GameNetwork : NetworkManager
         // arriving player is about to draw or count from it — the sun, a cooldown still running, a creature due
         // back — is measured against it. Sent after the body because a connection with no body is nobody.
         conn.Send(new WorldTime { epochSeconds = WorldClock.EpochSecondsNow });
+        // …and whatever a GM has done to this server's sky, so somebody arriving after a /time or a /weather sees
+        // the same sky as everybody already here. Sent even when nothing was done: a person coming from another
+        // server would otherwise keep that server's sky.
+        conn.Send(new TimeOfDayShift { seconds = TimeOfDay.ShiftSeconds });
+        conn.Send(WeatherHeldNow());
 
         // AND A CHARACTER TO GO WITH THE BODY — the one that was PUSHED here, already in hand. Nothing is
         // fetched: this server never asks the character store for anything, which is the whole point of the
@@ -2624,7 +2383,6 @@ public class GameNetwork : NetworkManager
         warnedNoFighter.Remove(conn.connectionId);
         shellByConnection.Remove(conn.connectionId);
         swingLedgers.Remove(conn.connectionId);
-        healLedgers.Remove(conn.connectionId);
         skillLedgers.Remove(conn.connectionId);
         chatLedgers.Remove(conn.connectionId);
         swingDueAt.Remove(conn.connectionId);

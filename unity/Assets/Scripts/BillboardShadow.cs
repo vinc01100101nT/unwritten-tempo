@@ -20,10 +20,10 @@ using UnityEngine.Rendering;
 [DisallowMultipleComponent]
 public class BillboardShadow : MonoBehaviour
 {
-    /// <summary>Global on/off (DevSettings ▸ Shadows). When off, every proxy hides — the sprites stop casting entirely.</summary>
+    /// <summary>Global on/off. When off, every proxy hides — the sprites stop casting entirely.</summary>
     public static bool Enabled = true;
     /// <summary>Past this distance from the camera a proxy is disabled (no billboard shadow). Shared by all proxies
-    /// so one DevSettings knob tunes the whole world.</summary>
+    /// so one value tunes the whole world.</summary>
     public static float MaxDistance = 32f;
     /// <summary>Slides the cast shadow along its own length (metres) to line its root up with the feet. + pushes the
     /// shadow away from the unit (along the light→sprite ground direction), − pulls it back under the feet.</summary>

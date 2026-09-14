@@ -51,7 +51,7 @@ public sealed class RingProgress
         OnChanged?.Invoke();
     }
 
-    /// <summary>Dev/testing: set the ring's level directly (DevSettings "Ring level" knob). Each level gained
+    /// <summary>Dev/testing: set the ring's level directly. Each level gained
     /// banks one passive draft point, exactly like a normal level-up, so the ring track can be exercised
     /// without grinding XP. Lowering only sets the level (banked points are left alone).</summary>
     public void SetLevel(int newLevel)

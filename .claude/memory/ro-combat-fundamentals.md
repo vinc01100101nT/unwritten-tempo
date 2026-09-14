@@ -19,4 +19,4 @@ RO combat fundamentals built 2026-06-19 on branch `experiment/3d-world`. Three s
 
 **DEFERRED (4th gap):** threat/aggro table for party/ally play — needs the MMO/party layer first (mobs only target the player today).
 
-Could not local-compile (Unity is the compiler); built by careful review. Links [[combat-multihit-status]] [[class-system-design]] [[dev-settings-panel]] [[stat-distribution-system]].
+Could not local-compile (Unity is the compiler); built by careful review. Links [[combat-multihit-status]] [[class-system-design]] [[gm-commands-are-the-test-tool]] [[stat-distribution-system]].

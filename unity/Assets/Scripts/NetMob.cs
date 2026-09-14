@@ -95,6 +95,11 @@ public class NetMob : NetworkBehaviour
     [SyncVar] int netHealth;
     [SyncVar] int netMaxHealth = 1;
 
+    // Mana, on the same footing as health: a creature's pool is the server's, and a watching machine works none of it
+    // out. 0 and 0 = no pool, which is what hides the bar.
+    [SyncVar] int netMana;
+    [SyncVar] int netMaxMana;
+
     /// <summary>How fast this creature is actually travelling on the ground, in units per second — 0 while it
     /// stands. TOLD rather than left for each watcher to work out, because a watcher can only measure the
     /// catch-up glide toward the positions it received, not the walk: see <see cref="Agent3DVisual.TellTravelSpeed"/>
@@ -120,6 +125,7 @@ public class NetMob : NetworkBehaviour
     public GameObject ServerMob { get; private set; }
 
     Health serverHealth;
+    UnitStatBlock serverBlock;
     // The real creature's mover, cached when the shell is bound. It is the one thing on the server that knows
     // whether this creature is travelling and how fast, and this is read on the push beat — never looked up there.
     PathAgent3D serverAgent;
@@ -166,6 +172,8 @@ public class NetMob : NetworkBehaviour
         serverHealth = mob != null ? mob.GetComponent<Health>() : null;
         serverAgent = mob != null ? mob.GetComponent<PathAgent3D>() : null;
         if (serverHealth != null) { netMaxHealth = serverHealth.maxHealth; netHealth = serverHealth.CurrentHP; }
+        serverBlock = mob != null ? mob.GetComponent<UnitStatBlock>() : null;
+        if (serverBlock != null) { netMaxMana = serverBlock.MaxMP; netMana = serverBlock.CurrentMP; }
         if (mob != null)
         {
             // WHERE IT IS INSIDE ITS MAP, not where this machine happens to keep that map — see MapManager's
@@ -234,6 +242,11 @@ public class NetMob : NetworkBehaviour
             netHealth = serverHealth.CurrentHP;
             netMaxHealth = serverHealth.maxHealth;
         }
+        if (serverBlock != null)
+        {
+            netMana = serverBlock.CurrentMP;
+            netMaxMana = serverBlock.MaxMP;
+        }
     }
 
     /// <summary>SERVER ONLY: say that this creature just BEGAN an action, and how long it runs. Called at the
@@ -258,12 +271,15 @@ public class NetMob : NetworkBehaviour
     // every mob on screen every frame and a per-frame component lookup at that rate is exactly what
     // PERFORMANCE.md bans.
     Health viewHealth;
+    UnitStatBlock viewBlock;
     // The copy's animation driver, cached at build time for the same reason its health is: this is read every
     // frame on every creature on screen, and a per-frame component lookup at that rate is exactly what
     // PERFORMANCE.md bans. Null on a flat sprite creature, which has no such driver and needs none.
     Agent3DVisual viewVisual;
     int lastShownHealth = -1;
     int lastShownMaxHealth = -1;
+    int lastShownMana = -1;
+    int lastShownMaxMana = -1;
 
     // The map this machine was standing in when we last decided whether to draw this creature. An INTEGER, not the
     // name: this runs on every creature in the world every frame, and PERFORMANCE.md bans a string compare at that
@@ -338,6 +354,14 @@ public class NetMob : NetworkBehaviour
 
             viewHealth.SetHealthFromServer(netHealth, netMaxHealth);
         }
+
+        // THE MANA BAR, the same pair of numbers watched the same way.
+        if (viewBlock != null && (netMana != lastShownMana || netMaxMana != lastShownMaxMana))
+        {
+            lastShownMana = netMana;
+            lastShownMaxMana = netMaxMana;
+            viewBlock.SetManaFromServer(netMana, netMaxMana);
+        }
     }
 
     void ReviveTheWatchedCopy()
@@ -395,6 +419,7 @@ public class NetMob : NetworkBehaviour
         view = go;
         viewLoading = false;
         viewHealth = go.GetComponent<Health>();   // cached once; never looked up per frame
+        viewBlock = go.GetComponent<UnitStatBlock>();
         WatchedTarget = viewHealth;               // cached once; the per-hit door reads it
         byView[go] = this;                        // so a swing at this body finds the shared identity
 
@@ -419,6 +444,8 @@ public class NetMob : NetworkBehaviour
         // until its health happened to change.
         lastShownHealth = -1;
         lastShownMaxHealth = -1;
+        lastShownMana = -1;
+        lastShownMaxMana = -1;
 
         // This body does not get to decide it died. It shows a blow — the number, the flash — but the moment
         // it is DEAD is a fact that arrives from the server like every other fact about it. Without this, a

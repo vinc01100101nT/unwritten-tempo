@@ -25,7 +25,7 @@ public class RainAudio : MonoBehaviour
 
     public static RainAudio Instance { get; private set; }
 
-    /// <summary>Find the live rain audio, creating one if none exists (used by the DevSettings knob).</summary>
+    /// <summary>Find the live rain audio, creating one if none exists.</summary>
     public static RainAudio Ensure()
     {
         var a = FindAnyObjectByType<RainAudio>();

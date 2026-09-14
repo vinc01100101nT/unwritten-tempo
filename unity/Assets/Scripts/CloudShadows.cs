@@ -112,7 +112,7 @@ public class CloudShadows : MonoBehaviour
     }
 
     /// <summary>Flag the baked params (coverage/darkness/softness) as changed; the texture rebuilds shortly
-    /// after (debounced so dragging a slider doesn't rebuild every frame). Called by the DevSettings knobs.</summary>
+    /// after (debounced so a value changing every frame doesn't rebuild every frame).</summary>
     public void MarkDirty() { dirty = true; regenAt = Time.unscaledTime + 0.12f; }
 
     void LateUpdate()

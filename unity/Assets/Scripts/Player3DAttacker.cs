@@ -210,8 +210,8 @@ public class Player3DAttacker : MonoBehaviour
         return s != null && !s.Empty ? s : fallback;
     }
 
-    // Whether the swing currently playing was handed to the server at its start. False on a machine that is its own
-    // authority and for the Character-less spike, both of which still land their own blow at the contact frame.
+    // Whether the swing currently playing was handed to the server at its start. False for the Character-less spike
+    // and when there was nothing shared to aim at; the contact frame then asks the server instead (LandBasicHit).
     bool AskedTheServer;
 
     // Ask only when there is a fighter for the server to swing WITH. Without a character this is the spike — a scene
@@ -263,21 +263,15 @@ public class Player3DAttacker : MonoBehaviour
         swing = null;
     }
 
-    /// <summary>Apply one basic-attack hit to <paramref name="t"/>: roll damage/crit/HIT through Character (spike
-    /// falls back to flat <see cref="damage"/>), deal it, and fire the receiver-side impact cue. Called directly at
-    /// the melee contact moment, or from the arrow's on-arrive for ranged weapons — so it re-checks validity (the
-    /// target may have died during windup or arrow flight).</summary>
+    /// <summary>An arrow arriving, or a melee swing the server could not be asked about at its start: the moment a
+    /// basic attack's blow is due. A player's machine rolls nothing — it asks the server, which rolls the blow, lands it
+    /// and tells every screen what it drew. Re-checks the target first, which may have died during the wind-up or the
+    /// arrow's flight.</summary>
     void LandBasicHit(Health t)
     {
-        if (t == null || t.IsDead) return;
-        // ONE implementation of what a swing is, shared with every other unit that has one and with any skill strike
-        // authored to resolve as a basic attack — so the crit → accuracy → magnitude order, the impact cue and the
-        // OnBasicAttackDealt announcement can never differ between them.
-        if (Character.Instance != null) { BasicSwing.Land(Character.Instance, t); return; }
-
-        // The Character-less spike: no stats to roll, so the serialized flat damage always lands.
-        int dealt = CombatAuthority.Apply(t, new DamageInfo(damage, MeleeElement));
-        if (dealt > 0) VfxCue.Fire(VfxCueId.OnHitByNormalAttack, t.transform);
+        // A target that died while the arrow flew is still asked about: the blow still shows over it.
+        if (t == null) return;
+        GameNetwork.AskToSwingAt(t);
     }
 
     /// <summary>Abandon the current attack: drop an in-flight swing and CLOSE the attempt an
@@ -290,101 +284,10 @@ public class Player3DAttacker : MonoBehaviour
         engagement.Ask(null, 0f, 0f);   // let go of "close enough to stand and fight" — the same reset it always did
     }
 
-    /// <summary>Execute a SKILL strike (e.g. the Swordsman's Bash) on <paramref name="t"/>: a heavier,
-    /// always-landing hit that reuses the normal swing's windup → slash-FX → damage pipeline, then
-    /// staggers the target. Independent of the auto-swing cooldown (the skill owns its own), but shares
-    /// the <c>swing</c> flag so the controller shows the attack pose and no double-swing overlaps.</summary>
-    public void Strike(Health t, float damageMult, float fxScale, SfxSet swingSfx, SfxSet hitSfx, float staggerSecs)
-        => Strike(t, SkillContext.Default(damageMult, fxScale, staggerSecs), swingSfx, hitSfx);
-
-    /// <summary>Context-aware skill strike: same windup→slash-FX→damage pipeline, but the cast's
-    /// <see cref="SkillContext"/> (built from the skill's modifier loadout) shapes damage, element, the
-    /// on-hit status (stagger/slow), lifesteal, and cleave. The plain overload above just feeds a default
-    /// context, so existing callers (e.g. Charge) are unchanged.</summary>
-    public void Strike(Health t, in SkillContext ctx, SfxSet swingSfx, SfxSet hitSfx)
-    {
-        if (t == null || t.IsDead || swing != null) return;
-        // SelfEffect that fires on CAST (no hit needed) — the Bulwark self-shield mod. Writes the damage-reduction
-        // sub-stat pile, the one place protection is held for player and mob alike.
-        if (ctx.ShieldSecs > 0f && ctx.ShieldCut > 0f && Character.Instance != null)
-            Character.Instance.States.ApplySubStat(SubStat.DamageReduction, Mathf.Clamp01(ctx.ShieldCut), ctx.ShieldSecs);
-        Sfx.Play(swingSfx != null && !swingSfx.Empty ? swingSfx : WeaponSfx(w => w.attackSfx, defaultAttackSfx));
-        swing = StartCoroutine(StrikeRoutine(t, ctx, hitSfx));
-    }
-
     // Cached arrow on-arrive — one delegate ever; the shot's attacker + target travel in the HitPayload.
-    // LandBasicHit re-rolls damage/crit at arrival and re-checks the target, exactly as the old closure did.
+    // LandBasicHit asks the server for the blow when the arrow arrives, after re-checking the target.
     static readonly System.Action<Projectile3D.HitPayload> LandArrow = p =>
         ((Player3DAttacker)p.source).LandBasicHit(p.target);
-
-    static readonly Collider[] cleaveBuf = new Collider[16];
-
-    // Coroutines can't take `in`/`ref` params, so the context is copied by value here (a small struct).
-    IEnumerator StrikeRoutine(Health t, SkillContext ctx, SfxSet hitSfx)
-    {
-        float scale = MotionScale;
-        // manual timer for the same reason as SwingThenHit: per-cast coroutine, variable duration
-        float windup = windupTime * scale;
-        for (float el = 0f; el < windup; el += Time.deltaTime) yield return null;
-        swing = null;
-        if (t == null || t.IsDead) yield break;
-        if (PlanarDist(t) > RangeAgainst(t) * 1.6f) yield break;   // target slipped out of the skill's (extended) reach
-
-        bool crit = false;
-        int basePower = Character.Instance != null ? Character.Instance.RollDamage(out crit, t.luk, ctx.ForceCrit) : damage;
-        int power = Mathf.RoundToInt(basePower * Mathf.Max(1f, ctx.DamageMult));
-        Element element = ctx.ConvertElement ? ctx.NewElement : MeleeElement;
-
-        // Skill strike VFX is authored in the skill's own composed sequence (SkillDef.vfx → VfxDirector), not here.
-        // Skills always LAND (no FLEE roll, hit −1), but they still respect DEF unless they actually crit —
-        // so pass the real rolled `crit` (which also colours the number gold + bypasses DEF), RO-style.
-        // MultiHit (Flurry mod) splits the strike into N hits sharing the total — visual flair, same DPS;
-        // a single TakeDamage when HitCount is 1 (the default), so the common path is unchanged.
-        int hitCount = Mathf.Max(1, ctx.HitCount);
-        int perHit = Mathf.Max(1, Mathf.RoundToInt(power / (float)hitCount));
-        int dealt = 0;
-        for (int h = 0; h < hitCount && !t.IsDead; h++)
-            dealt += CombatAuthority.Apply(t, new DamageInfo(perHit, element, false, crit, attackerHit: -1,
-                                                            attacker: Character.Instance));
-        if (dealt > 0)
-        {
-            // Impact SOUND now plays FROM the mob in Health.TakeDamage (received_hit_skill, spatial) — no 2D play here.
-            ApplyOnHit(t, ctx);
-            if (ctx.LifestealFracDealt > 0f && Character.Instance != null)
-                Character.Instance.LeechHeal(Mathf.RoundToInt(dealt * ctx.LifestealFracDealt));
-        }
-
-        // Cleave (Targeting phase): also strike up to ExtraTargets OTHER mobs within CleaveRadius. Runs once
-        // per cast (~every few s), so the NonAlloc overlap + per-hit GetComponentInParent are fine here.
-        if (ctx.ExtraTargets > 0 && ctx.CleaveRadius > 0f)
-        {
-            int n = Physics.OverlapSphereNonAlloc(t.transform.position, ctx.CleaveRadius, cleaveBuf);
-            int extra = 0;
-            for (int i = 0; i < n && extra < ctx.ExtraTargets; i++)
-            {
-                var h = cleaveBuf[i].GetComponentInParent<Health>();
-                if (h == null || h == t || h.IsDead || h.GetComponent<MonsterAI3D>() == null) continue;
-                if (CombatAuthority.Apply(h, new DamageInfo(power, element, false, crit, attackerHit: -1)) > 0) ApplyOnHit(h, ctx);
-                extra++;
-            }
-        }
-    }
-
-    void ApplyOnHit(Health h, in SkillContext ctx)
-    {
-        var ai = h.GetComponent<MonsterAI3D>();   // perf-ok: once per landed hit, not per frame
-        if (ai == null) return;
-        // Knockback (Repelling mod) shoves from the player and carries its own freeze, so it subsumes the
-        // separate Stagger; a plain Stagger applies only when there's no shove.
-        if (ctx.KnockbackSpeed > 0f)
-            ai.Knockback(transform.position, ctx.KnockbackSpeed, ctx.KnockbackSecs, Mathf.Max(ctx.StaggerSecs, ctx.KnockbackSecs));
-        else if (ctx.StaggerSecs > 0f) ai.Stagger(ctx.StaggerSecs);
-        // Slow / Root write the MOVE-SPEED sub-stat pile — the single mob-speed source, shared with every buff and
-        // debuff that touches it. SlowFactor is a TARGET SPEED (0.6 = moves at 60%); the pile keeps a signed bonus, so
-        // the slow is that speed MINUS one (a negative).
-        if (ctx.SlowSecs > 0f && ctx.SlowFactor < 1f) h.States.Apply(StateId.MovementSpeed, ctx.SlowSecs, ctx.SlowFactor - 1f);
-        if (ctx.RootSecs > 0f) h.States.Apply(StateId.MovementSpeed, ctx.RootSecs, -1f);   // Root (Entangling mod) = 100% slower = full stop
-    }
 
     void OnDrawGizmosSelected()
     {

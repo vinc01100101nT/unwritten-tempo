@@ -13,7 +13,7 @@ using UnityEngine.InputSystem;
 /// skill) cancels.
 ///
 /// While aiming, <see cref="Active"/> is true and <see cref="Player3DController"/> skips its click/move input
-/// that frame (same pattern as <see cref="GroundTargeter"/> / <see cref="DevSettings.Blocking"/>), so the
+/// that frame (same pattern as <see cref="GroundTargeter"/>), so the
 /// confirm click doesn't also order a move. Self-boots a single hidden instance on first use; the ring follows
 /// the (moving) target each frame with no per-frame allocation. Any future single-target skill (mage OR melee)
 /// can reuse this — it only deals in a <c>castRange</c> and an <c>onConfirm(Health)</c> callback.

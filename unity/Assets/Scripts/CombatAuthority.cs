@@ -6,11 +6,9 @@ using UnityEngine;
 /// through <see cref="Apply"/> instead of calling a sink directly. Centralized like <c>Hotkeys</c> (input) and
 /// <c>CombatRng</c> (dice): a single choke point a rule can be added to ONCE and can't be forgotten at a call site.
 ///
-/// <para><b>Today</b> it applies locally and synchronously — zero behavior change, still singleplayer. <b>Once
-/// server-authoritative</b> this is the seam the network layer swaps: a client's <see cref="Apply"/> becomes "send the
-/// intent to the server → the server validates it, rolls the outcome via <see cref="CombatRng"/>, and broadcasts an
-/// authoritative <see cref="DamageInfo"/> → every client applies it here." The <see cref="IDamageable"/> target +
-/// <see cref="DamageInfo"/> result are exactly the payload that crosses the wire, so no call site changes when it does.</para>
+/// <para><b>Only the server lands anything here.</b> A player's machine asks the server to swing or to cast, the server
+/// rolls and lands the blow through this door, and every screen is told what was drawn — a creature's blow by the
+/// creature itself (<c>Health.Show</c>), a person's by <see cref="GameNetwork.AnnounceBlowOnPlayer"/>.</para>
 /// </summary>
 public static class CombatAuthority
 {
@@ -20,18 +18,13 @@ public static class CombatAuthority
     {
         if (target == null) return 0;
 
-        // ON A PLAYER'S MACHINE, NOBODY'S HP CHANGES HERE — EVER. The world lives on the server, so a hit is a
-        // REQUEST, not an act: it is sent, the server decides what really happened, and the answer comes back to
-        // every player at once. Returning 0 is not a failure — it is this machine saying "I did not decide that".
-        if (GameNetwork.SendHitToServer(target, info)) return 0;
-
-        // The server is the only thing that reaches this line. There is no longer an offline game to fall through
-        // to: a player who is not joined is not in the world, so there is nothing for them to hit and nothing of
-        // theirs to be hit. A blow that gets here on a player's machine is one aimed at something the server has
-        // never heard of, and the honest answer is that it does not land.
+        // ON A PLAYER'S MACHINE, NOTHING LANDS HERE — EVER — AND NOTHING IS SENT FROM HERE EITHER. A blow reaching this
+        // door has already been rolled, and a player's machine rolls nothing: it asks the server to swing
+        // (GameNetwork.AskToSwingAt) or to cast, and the server lands the blow and tells every screen what it drew.
+        // Returning 0 is this machine saying "I did not decide that".
         if (!GameServer.IsServer)
         {
-            WarnUnownedTarget(target);
+            WarnNotTheAuthority(target);
             return 0;
         }
 
@@ -43,24 +36,13 @@ public static class CombatAuthority
     // blow in silence — is how "why does nothing take damage" costs somebody an afternoon.
     static readonly System.Collections.Generic.HashSet<string> warnedAbout = new System.Collections.Generic.HashSet<string>();
 
-    static void WarnUnownedTarget(IDamageable target)
+    static void WarnNotTheAuthority(IDamageable target)
     {
         string kind = target.GetType().Name;
         if (!warnedAbout.Add(kind)) return;
-        GameLog.Warn(LogCat.Net, "a blow aimed at a '" + kind + "' was dropped: this machine is not the authority "
-                         + "and the server does not know that thing. Nothing local decides damage any more. If "
-                         + "this is a creature hitting a player, that path is still waiting on per-connection "
-                         + "fighters — see the migration plan.");
-    }
-
-    /// <summary>Apply a blow the SERVER already decided, on a machine that is only watching. Skips the forwarding
-    /// step — this hit has already been to the server and come back, and sending it again would loop forever — and
-    /// otherwise runs the identical door, so the number, the flash, the impact and the stagger are the ones the
-    /// offline game has always produced rather than a second set written for the networked case.</summary>
-    public static int ApplyFromServer(IDamageable target, in DamageInfo info)
-    {
-        if (target == null) return 0;
-        return Land(target, info);
+        GameLog.Warn(LogCat.Net, "a blow aimed at a '" + kind + "' was dropped: only the server lands blows, and "
+                         + "something on this player's machine rolled one anyway. Whatever produced it is working "
+                         + "out damage where it must not.");
     }
 
     // The door itself, once. Everything above decides WHETHER this machine is the one that gets to open it.
@@ -71,9 +53,10 @@ public static class CombatAuthority
         // when the sink fires the moment a skill reads it — and switching targets restarts the run at this very hit.
         // Gone, not merely null: a blow can outlive whoever threw it — a projectile in flight, a delayed tick, a
         // player who disconnected — and a destroyed object behind an interface reference passes a null check.
-        // A flurry beat on a target that is ALREADY dead is presentation only — the sink draws its number and nothing
-        // else — so it teaches nobody anything: no run of hits, no credit for the kill, no flinch.
-        bool presentationOnly = info.overkill && target.IsDead;
+        // A blow on a target that is ALREADY dead — a flurry beat, a swing or an arrow that was on its way — is
+        // presentation only: the sink draws its number and nothing else, so it teaches nobody anything: no run of hits,
+        // no credit for the kill, no flinch.
+        bool presentationOnly = target.IsDead;
         var attackerStates = !presentationOnly && !PlayerUnits.Gone(info.attacker) ? info.attacker.States : null;
         if (attackerStates != null) attackerStates.NoteAttackHit(target as ICombatUnit);
 
@@ -108,7 +91,7 @@ public static class CombatAuthority
         // is the ONLY place that fact exists — a miss, a parry and a fully absorbed hit fire no trigger for anything to
         // hear. Overkill beats are excluded: a flurry's extra numbers past a mob's death are presentation, and reading
         // them as failed hits would break a run the attacker never actually dropped.
-        if (attackerStates != null && dealt <= 0 && !info.overkill) attackerStates.BreakConsecutiveHits();
+        if (attackerStates != null && dealt <= 0 && !info.overkill && !presentationOnly) attackerStates.BreakConsecutiveHits();
 
         // A BLOW ON A PERSON HAS TO BE SAID OUT LOUD. The server has no screen, and the machine of the person it
         // happened to no longer works its own health out — so a hit the server keeps to itself is a hit that
@@ -138,11 +121,18 @@ public static class CombatAuthority
         var body = unit.Body;
         if (body != null)
         {
-            DamagePopup.SpawnText(UnitAnchor.Overhead(body), "+" + amount, HPAddedColor);
+            ShowHPAdded(body, amount);
             VfxCue.Fire(VfxCueId.OnHPAdded, body);
         }
         OnHPAdded?.Invoke(unit, amount);
+        // Health is the server's, so this is where every gain happens — and a gain nobody says out loud is a bar that
+        // rises with no digits to explain it.
+        GameNetwork.AnnounceHPAdded(unit, amount);
     }
+
+    /// <summary>The green digits alone — what a watching machine draws when the server says a unit was healed.</summary>
+    public static void ShowHPAdded(Transform body, int amount) =>
+        DamagePopup.SpawnText(UnitAnchor.Overhead(body), "+" + amount, HPAddedColor);
 
     /// <summary>Apply RAW over-time / reflected damage (poison/burn/bleed ticks, thorns reflect) — the second combat
     /// channel through this seam. Bypasses DEF/element/crit; same server-authoritative interception point as
@@ -161,7 +151,7 @@ public static class CombatAuthority
         // Announced for the same reason an ordinary blow is: a person's own machine no longer works their health
         // out, so a burn nobody says out loud is a bar that drops with no number to explain it.
         if (dealt > 0 && target is Character person)
-            GameNetwork.AnnounceBlowOnPlayer(person, new DamageInfo(dealt, Element.Neutral, isMagic: false), dealt);
+            GameNetwork.AnnounceBlowOnPlayer(person, new DamageInfo(dealt, Element.Neutral, isMagic: false), dealt, tick: true);
         return dealt;
     }
 }

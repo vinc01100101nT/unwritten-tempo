@@ -10,6 +10,7 @@
 // Those are promises, and a promise has to be stated to be checked.
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 static class Checks
 {
@@ -34,6 +35,8 @@ static class Checks
     const string ElementF = "unity/Assets/Scripts/Element.cs";
     const string RingF    = "unity/Assets/Scripts/SkillRing.cs";
     const string RarityF  = "unity/Assets/Scripts/Rarity.cs";
+    const string StatesF  = "unity/Assets/Scripts/UnitStates.cs";
+    const string StatusF  = "unity/Assets/Scripts/StatusController.cs";
 
     // ---- the experience curve, against its own closed form --------------------------------------------
     // Two expressions of one rule: the per-level cost, and a hand-written formula for the running total. They
@@ -263,6 +266,50 @@ static class Checks
             That(Rarities.Lifted(flat, tiers[0]) == flat, RarityF, "the lowest rarity changes a gear number of " + flat);
     }
 
+    // ---- a buff's number is a bonus, stacking or not --------------------------------------------------
+    // Pinned because it broke: one field meant a whole multiplier on a plain buff and a per-stack bonus on a
+    // stacking one, so Momentum authored at 1.03 ran as +103% a stack. The literals are the promise written on the
+    // property itself: 0.3 is +30%, and ten stacks of 0.03 are +30% too.
+    static void BuffBonus()
+    {
+        var single = new UnitStates.State { stacking = false };
+        single.stacks.Add(new UnitStates.State.Stack { magnitude = 0.3f });
+        single.Refold();
+        That(Math.Abs(single.Mult - 1.3f) < 0.0001f, StatesF,
+             "a single +30% buff (0.3) no longer multiplies by 1.3: " + single.Mult);
+
+        var pile = new UnitStates.State { stacking = true };
+        for (int i = 0; i < 10; i++) pile.stacks.Add(new UnitStates.State.Stack { magnitude = 0.03f });
+        pile.Refold();
+        That(Math.Abs(pile.Mult - 1.3f) < 0.0001f, StatesF,
+             "ten stacks of +3% (0.03 each) no longer multiply by 1.3: " + pile.Mult);
+    }
+
+    // ---- regen is paid per SECOND ---------------------------------------------------------------------
+    // Pinned because it broke: regen was authored per tick and labelled per second, so the 0.8s tick healed 25% more
+    // than any screen said. The rule now lives in the one payout health and mana both use, so it is checked there:
+    // a rate of R a second, ticked for T seconds, pays R x T, give or take the one point still carried over.
+    // The payout is private to the ticker, so it is reached by name — a rename fails here loudly instead of
+    // quietly leaving regen unchecked.
+    static void RegenPerSecond()
+    {
+        var owed = typeof(StatusController).GetMethod("Owed", BindingFlags.NonPublic | BindingFlags.Static);
+        if (owed == null)
+        {
+            Fail(StatusF, "the regen payout (Owed) is gone, so regen per second is no longer checked");
+            return;
+        }
+        foreach (float rate in new[] { 6f, 2.5f, 0.5f })
+        {
+            var args = new object[] { 0f, rate };
+            int ticks = 100, paid = 0;
+            for (int i = 0; i < ticks; i++) paid += (int)owed.Invoke(null, args);
+            float seconds = ticks * UnitStates.RegenInterval;
+            That(Math.Abs(paid - rate * seconds) <= 1f, StatusF,
+                 "regen of " + rate + " a second paid " + paid + " over " + seconds + " seconds, not " + rate * seconds);
+        }
+    }
+
     static int Main()
     {
         ExperienceCurve();
@@ -272,6 +319,8 @@ static class Checks
         ElementChart();
         Ring();
         RarityLadder();
+        BuffBonus();
+        RegenPerSecond();
 
         if (failures == 0)
         {

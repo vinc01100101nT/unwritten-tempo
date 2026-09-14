@@ -20,7 +20,7 @@ using Season = GameCalendar.Season;
 /// <para>Lives on the persistent <c>Systems</c> layer next to <see cref="TimeOfDay"/>/<see cref="GameCalendar"/>
 /// (added by <c>SystemsSceneBuilder</c>). Per-frame cost is a single long compare (repick only on a day boundary)
 /// plus one cloud-fade lerp. Uncheck <see cref="autoFromCalendar"/> and set <see cref="forcedPreset"/> to pin a
-/// preset for testing (the DevSettings "Calendar &amp; Weather" panel does this in Phase 5).</para>
+/// preset for testing.</para>
 /// </summary>
 [DisallowMultipleComponent]
 public class WeatherDirector : MonoBehaviour
@@ -36,7 +36,7 @@ public class WeatherDirector : MonoBehaviour
              "derives the same daily weather. Change it only to re-roll the whole world's weather history.")]
     public int worldSeed = 20260101;
 
-    [Header("Manual override (testing / DevSettings)")]
+    [Header("Manual override (testing)")]
     [Tooltip("ON: weather is auto-picked each in-game day from the calendar (production). OFF: hold forcedPreset.")]
     public bool autoFromCalendar = true;
     [Tooltip("The preset to hold while autoFromCalendar is OFF — lets you force any weather to look at it.")]
@@ -99,7 +99,7 @@ public class WeatherDirector : MonoBehaviour
 
     long lastDay;
     bool applied;
-    bool wasAuto = true;   // tracks autoFromCalendar so flipping it back ON re-picks immediately (DevSettings)
+    bool wasAuto = true;   // tracks autoFromCalendar so flipping it back ON re-picks immediately
     bool firstApply = true;   // the very first Apply is a LOAD: SETTLE into the day's weather, never play the build-up
 
     void Awake()
@@ -110,16 +110,33 @@ public class WeatherDirector : MonoBehaviour
 
     void OnDestroy() { if (Instance == this) Instance = null; }
 
+    /// <summary>The weather a GM's <c>/weather</c> holds on the server, told to every player there. Null until
+    /// somebody forces one, and gone when that server restarts. While set it wins over the calendar and over the
+    /// inspector override below.</summary>
+    public static Preset? ForcedByServer { get; private set; }
+
+    /// <summary>Take the weather the server holds — null when it holds none. On a server this is the command setting
+    /// it; on a player's machine it is the server's word arriving.</summary>
+    public static void TakeForced(Preset? preset) => ForcedByServer = preset;
+
     void Update()
     {
+        if (ForcedByServer.HasValue)
+        {
+            var held = ForcedByServer.Value;
+            if (!applied || held != Current) { Apply(held); applied = true; }
+            wasAuto = false;
+            return;
+        }
+
         if (autoFromCalendar)
         {
-            // Just resumed auto (e.g. DevSettings toggled it back on after forcing) → re-pick this frame instead of
+            // Just resumed auto (toggled back on after forcing) → re-pick this frame instead of
             // waiting for the next day boundary, so the calendar's real weather returns immediately.
             if (!wasAuto) applied = false;
             var cal = GameCalendar.Instance;
             // Hot-path guard: the weather only changes when the in-game DAY rolls over (same one-long-compare idiom
-            // GameCalendar uses). Polling rather than subscribing also means a DevSettings day-scrub repicks for free.
+            // GameCalendar uses). Polling rather than subscribing also means a day-scrub repicks for free.
             if (cal != null && (!applied || cal.DayIndex != lastDay))
             {
                 Apply(Pick(cal.CurrentSeason, cal.DayIndex));

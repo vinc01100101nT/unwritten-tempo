@@ -19,7 +19,7 @@ using UnityEngine;
 ///
 /// Self-booting + decoupled like the weather renderers: <see cref="Ensure"/> creates it on demand. Zero-cost when
 /// off: at <see cref="intensity"/> 0 the ink quad is deactivated (no draw call) and at full saturation/zero contrast
-/// the grade feature skips its blit, so it adds nothing until you turn it on. Tune live from DevSettings (P).
+/// the grade feature skips its blit, so it adds nothing until you turn it on.
 ///
 /// NOTE for builds: add <c>Unwritten/InkScreen</c> AND <c>Unwritten/HandDrawnGrade</c> to Project Settings ▸ Graphics
 /// ▸ Always Included Shaders (same requirement as the other Unwritten/* screen shaders). The grade feature must also
@@ -28,7 +28,7 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class HandDrawnFX : MonoBehaviour
 {
-    // Defaults below are the dialled-in look (DevSettings ▸ Hand-Drawn, 2026-07-14). Ink is ON by default and the
+    // Defaults below are the dialled-in look (2026-07-14). Ink is ON by default and the
     // filter self-boots (see Boot) so the game launches with the hand-drawn look. The grade is OFF by default
     // (saturation 1, contrast 0 → untouched colour, feature skips its blit); the look comes purely from the ink.
     [Header("Master")]
@@ -73,7 +73,7 @@ public class HandDrawnFX : MonoBehaviour
     /// <summary>Current contrast (-0.3..0.3) the feature applies; 0 = untouched.</summary>
     public static float GradeContrast;
 
-    /// <summary>Most-recently-awoken instance (mirrors <see cref="FogOverlay.Instance"/>) for DevSettings.</summary>
+    /// <summary>Most-recently-awoken instance (mirrors <see cref="FogOverlay.Instance"/>).</summary>
     public static HandDrawnFX Instance { get; private set; }
 
     Material mat;
@@ -90,7 +90,7 @@ public class HandDrawnFX : MonoBehaviour
     static readonly int PaperID     = Shader.PropertyToID("_PaperStrength");
 
     /// <summary>When true, the filter self-boots on game start (with the tuned defaults above) so the world launches
-    /// with the hand-drawn look. Flip to false here to make it opt-in via DevSettings only.</summary>
+    /// with the hand-drawn look. Flip to false here to make it opt-in.</summary>
     public const bool BootEnabled = true;
 
     // Spawn the filter at startup and re-create it after a map swap destroys it, so the look persists everywhere
@@ -105,8 +105,8 @@ public class HandDrawnFX : MonoBehaviour
         }
     }
 
-    /// <summary>Find the live hand-drawn FX, creating one if none exists yet (used by the DevSettings knobs so it
-    /// works even on a Systems scene baked before this component joined the rig).</summary>
+    /// <summary>Find the live hand-drawn FX, creating one if none exists yet (so it works even on a
+    /// Systems scene baked before this component joined the rig).</summary>
     public static HandDrawnFX Ensure()
     {
         var f = Instance != null ? Instance : FindAnyObjectByType<HandDrawnFX>();

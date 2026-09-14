@@ -44,6 +44,29 @@ Exit code **0** = clean, **1** = compile errors (printed with exact file + line)
 
 Verified to **catch** deliberate errors in both halves, not just to report "clean". A clean run means Unity will build it — it does **not** mean the game behaves correctly, so it never replaces play-testing.
 
+## check-before-commit.sh
+
+Every commit runs the game's checks over the **whole project** first, and is refused while one fails.
+
+```bash
+tools/check-before-commit.sh      # run by .git/hooks/pre-commit; fine to run by hand
+git commit --no-verify            # commit past a failure anyway, knowing it is broken
+```
+
+Why it's needed: the end-of-turn guard only checks the files an AI session edited, and only inside that session. A
+change to one file that breaks another, or any change made by hand, used to reach a commit with nothing checked.
+
+Always runs: the compile check, the game-math check, the skill-data check, the asset-wiring sweep and the per-frame
+performance scan — 13 seconds together on this Mac. A checker's own self-test runs only when that checker is part of
+the commit, and adds up to a minute (34 seconds with the game-math and skill-data self-tests both in). Left out on purpose: `wiki-sync-check.py` and `check-ui-prototypes.py`, which judge documents and mock pages
+rather than whether the game works.
+
+It reads the project **as it is on disk**, not only what is staged, so unfinished work outside the commit can stop
+it. A check that cannot run at all (no Unity, no Python) is reported and does not block.
+
+The hook itself lives in `.git/hooks/`, which git does not copy with the repository — a fresh clone needs it put
+back: a two-line file whose last line is `exec sh "$(git rev-parse --show-toplevel)/tools/check-before-commit.sh"`.
+
 ## check-game-math.sh · prove-game-math-check.py · game-math-tests/
 
 Is every number the game works out still what it was?
@@ -66,7 +89,11 @@ being checked. No test framework, no test assembly, no domain reload. The test s
 **Pinned today:** the experience curve against its own closed form · the stat-point budget round-tripping · the
 promised accuracy window · a critical ignoring both halves of defence · magic never falling below half · the
 element chart matching its enum's real size · every stat on the ring exactly once and under its ceiling · the
-rarity ladder accelerating.
+rarity ladder accelerating · a buff's number read as a bonus whether it stacks or not · regen paid per second, not
+per tick.
+
+The last two are past bugs pinned so they cannot come back: Momentum's +3% a stack once ran as +103%, and regen once
+healed 25% more than its own label. The prover puts each bug back in turn and watches the check fail.
 
 **Two rules for anything added here.** Write the GENERAL form — "the table matches its list's real size" survives
 an eleventh element; "the table is 10 by 10" quietly stops covering the thing it names. And where a specific

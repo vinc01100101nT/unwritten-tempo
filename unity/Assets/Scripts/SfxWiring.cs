@@ -57,7 +57,7 @@ public static class SfxWiring
 /// DEV-ONLY runtime guard. Self-boots, waits for the player to load (it arrives under <c>Systems</c> async via
 /// <c>GameRoot</c>), scans its skill SFX once, and logs a single clear warning if any are empty — so a stale
 /// Systems scene is OBVIOUS the moment you hit Play instead of just making no sound. Compiled out of release
-/// builds entirely (zero cost), like <see cref="DevSettings"/> / <c>PerfHud</c>.
+/// builds entirely (zero cost), like <c>PerfHud</c>.
 /// </summary>
 public class SfxWiringCheck : MonoBehaviour
 {

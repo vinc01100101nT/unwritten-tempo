@@ -9,20 +9,14 @@
       "list": 340.0
     },
     "columns": {
-      "Name": 292.0,
-      "Slot": 82.0,
+      "Name": 530.0,
       "Tier": 76.0,
-      "Skills": 52.0,
-      "Atk/Def": 62.0,
-      "Out": 48.0
+      "Held": 48.0
     },
     "cell_sizes": {
       "Name": 14.0,
-      "Slot": 12.0,
       "Tier": 12.0,
-      "Skills": 11.0,
-      "Atk/Def": 11.0,
-      "Out": 11.0
+      "Held": 11.0
     },
     "note": "the bag window is 742x528; its frame leaves 710x470 inside"
   }

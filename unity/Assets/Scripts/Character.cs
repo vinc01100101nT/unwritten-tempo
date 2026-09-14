@@ -89,6 +89,47 @@ public class Character : MonoBehaviour, ICombatUnit
 
     public int GetStat(PrimaryStat s) => primary[(int)s];
     /// <summary>What the formulas use for this stat: the points bought plus what gear and cards add.</summary>
+    // ---- the character sheet, as the SERVER worked it out ------------------------------------------------------
+    // A player's machine works out none of the numbers a character's stats produce — not attack, not defence, not a
+    // point's cost, not the next jump. The server derives them from the character it holds and sends the finished
+    // sheet (NetPlayer.PushMySheet); on that machine every getter below answers from it.
+    //
+    // THE ONE PLACE THAT STILL DERIVES HERE is the equip-hover preview (CurrentDerived / DeriveWith), which asks "what
+    // if I wore this" of a loadout the server has never seen. It sets computeHere for exactly as long as it snapshots.
+    bool computeHere;
+    bool Told => !computeHere && (IsWatchedCopy || GameNetwork.TheWorldIsElsewhere);
+
+    DerivedSnapshot toldCurrent = DerivedSnapshot.Neutral;
+    DerivedSnapshot toldBaseline = DerivedSnapshot.Neutral;
+    DerivedSnapshot toldWithStates = DerivedSnapshot.Neutral;
+    int toldMaxHP = 1, toldMaxMP = 1;
+    // -1 = "cannot raise", until the server's first sheet says otherwise — a 0 would read as a free point at the cap.
+    readonly int[] toldRaiseCost = { -1, -1, -1, -1, -1, -1 };
+    readonly int[] toldJumpAt = new int[6];
+    readonly int[] toldJumpGain = new int[6];
+
+    /// <summary>The sheet the server derived for this character — the three views, and per stat its next point's cost
+    /// (-1 at the cap) and its next jump. Arrays are indexed by <see cref="PrimaryStat"/>.</summary>
+    public void SetSheetFromServer(in DerivedSnapshot current, in DerivedSnapshot baseline, in DerivedSnapshot withStates,
+                                   int[] raiseCost, int[] jumpAt, int[] jumpGain)
+    {
+        toldCurrent = current;
+        toldBaseline = baseline;
+        toldWithStates = withStates;
+        for (int i = 0; i < 6; i++)
+        {
+            toldRaiseCost[i] = raiseCost != null && i < raiseCost.Length ? raiseCost[i] : -1;
+            toldJumpAt[i] = jumpAt != null && i < jumpAt.Length ? jumpAt[i] : 0;
+            toldJumpGain[i] = jumpGain != null && i < jumpGain.Length ? jumpGain[i] : 0;
+        }
+    }
+
+    /// <summary>The value at which <paramref name="s"/> next jumps, counting gear.</summary>
+    public int NextJumpAt(PrimaryStat s) => Told ? toldJumpAt[(int)s] : UnitStatMath.NextJumpAt(P(s));
+
+    /// <summary>How much <paramref name="s"/>'s next jump gives.</summary>
+    public int JumpGainAt(PrimaryStat s) => Told ? toldJumpGain[(int)s] : UnitStatMath.JumpGainAt(NextJumpAt(s));
+
     public int EffectiveStat(PrimaryStat s) => P(s);
     // EFFECTIVE primary stat = allocated points + equipment/card bonuses. Every derived/combat
     // getter below reads P(), so gear that grants +STR now flows into ATK/HP/etc. (The raw
@@ -117,16 +158,17 @@ public class Character : MonoBehaviour, ICombatUnit
     static int StatPointsSpentRaising(int value) => UnitStatMath.PointsToRaise(value);
 
     /// <summary>Points needed to raise <paramref name="s"/> by one, or -1 if it's already at the cap.</summary>
-    public int CostToRaise(PrimaryStat s) => primary[(int)s] >= MaxStatValue ? -1 : StatCost(primary[(int)s]);
+    public int CostToRaise(PrimaryStat s) =>
+        Told ? toldRaiseCost[(int)s] : primary[(int)s] >= MaxStatValue ? -1 : StatCost(primary[(int)s]);
 
     /// <summary>True when <paramref name="s"/> is below the cap AND the next point is affordable.</summary>
     public bool CanRaise(PrimaryStat s)
     {
-        int v = primary[(int)s];
-        return v < MaxStatValue && StatPoints >= StatCost(v);
+        int cost = CostToRaise(s);
+        return cost >= 0 && StatPoints >= cost;
     }
 
-    /// <summary>Grant unspent status points (dev/testing — e.g. the DevSettings panel).</summary>
+    /// <summary>Grant unspent status points (dev/testing — the <c>/statpts</c> command).</summary>
     public void GrantStatPoints(int n) { if (n <= 0) return; StatPoints += n; OnStatsChanged?.Invoke(); }
 
     /// <summary>Re-clamp current HP/MP to the (possibly changed) max and refire the UI events. Call when
@@ -143,7 +185,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Refund every allocated stat point (all stats back to 1) and restore the full pre-renewal
     /// budget for the current level. Also the clean way to migrate a character saved under the old flat
-    /// economy onto the new cost curve — or just to re-roll a build. Wired to the DevSettings respec button.</summary>
+    /// economy onto the new cost curve — or just to re-roll a build.</summary>
     public void RespecStats()
     {
         for (int i = 0; i < primary.Length; i++) primary[i] = 1;
@@ -174,6 +216,8 @@ public class Character : MonoBehaviour, ICombatUnit
 
     public bool AddStat(PrimaryStat s)
     {
+        // A point is real power, spent on the server (NetPlayer.AskToSpendStatPoint); a player's machine spends none.
+        if (Told) return false;
         int v = primary[(int)s];
         if (v >= MaxStatValue) return false;
         int cost = StatCost(v);
@@ -334,14 +378,14 @@ public class Character : MonoBehaviour, ICombatUnit
     // Each stat's lift is ONE number handed to the shared formula: what the ring invested, plus whatever a timed
     // sub-stat buff or debuff is adding right now. Folding the two together here — rather than teaching every formula
     // about states — is what lets a new sub-stat work everywhere by touching one line.
-    public int MaxHP   => UnitStatMath.MaxHP(Inputs, equipBonuses, Lift(StatId.HP, SubStat.MaxHP));
+    public int MaxHP   => Told ? toldMaxHP : UnitStatMath.MaxHP(Inputs, equipBonuses, Lift(StatId.HP, SubStat.MaxHP));
     public float HPRegenPerSecond => UnitStatMath.HPRegenPerSecond(Inputs, MaxHP);
-    public int MeleeAttack  => UnitStatMath.MeleeAttack(Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
-    public int RangedAttack => UnitStatMath.RangedAttack(Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
+    public int MeleeAttack  => Told ? toldCurrent.meleeMax : UnitStatMath.MeleeAttack(Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
+    public int RangedAttack => Told ? toldCurrent.rangedMax : UnitStatMath.RangedAttack(Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
     /// <summary>The physical attack this character swings with: ranged attack while holding a ranged weapon, melee
     /// attack otherwise. Every physical roll reads this, so the held weapon decides for normal attacks and physical
     /// skills alike.</summary>
-    public int Attack  => UnitStatMath.PhysicalAttack(HeldWeaponType, Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
+    public int Attack  => Told ? toldCurrent.atkMax : UnitStatMath.PhysicalAttack(HeldWeaponType, Inputs, equipBonuses, Lift(StatId.Atk, SubStat.Attack));
 
     // The weapon type in hand — or, while DeriveWith previews a different weapon, that one, so the hover preview
     // of a bow shows ranged attack rather than the sword's melee attack.
@@ -354,13 +398,13 @@ public class Character : MonoBehaviour, ICombatUnit
             return w != null ? w.weaponType : WeaponType.None;
         }
     }
-    public int Defense => UnitStatMath.Defense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.Defense));
+    public int Defense => Told ? toldCurrent.def : UnitStatMath.Defense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.Defense));
 
-    public int MaxMP        => UnitStatMath.MaxMP(Inputs, equipBonuses, Lift(StatId.MP, SubStat.MaxMP));
+    public int MaxMP        => Told ? toldMaxMP : UnitStatMath.MaxMP(Inputs, equipBonuses, Lift(StatId.MP, SubStat.MaxMP));
     public float MPRegenPerSecond => mpRegenPerSecond + UnitStatMath.MPRegenPerSecond(Inputs, MaxMP);
-    public int MagicAttack  => UnitStatMath.MagicAttack(Inputs, equipBonuses, Lift(StatId.MAtk, SubStat.MagicAttack));
+    public int MagicAttack  => Told ? toldCurrent.matkMax : UnitStatMath.MagicAttack(Inputs, equipBonuses, Lift(StatId.MAtk, SubStat.MagicAttack));
     // The ring has no separate M.DEF node — the Def node is dual, so MagicDefense reads the Def passive %.
-    public int MagicDefense => UnitStatMath.MagicDefense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.MagicDefense));
+    public int MagicDefense => Told ? toldCurrent.mdef : UnitStatMath.MagicDefense(Inputs, equipBonuses, Lift(StatId.Def, SubStat.MagicDefense));
 
     // Pre-renewal DEF split (player side): incoming damage is cut by HARD DEF (a % reduction, from armor)
     // FIRST, then by SOFT DEF (the flat Defense/MagicDefense above, mostly VIT/INT). Hard DEF has no item
@@ -377,9 +421,9 @@ public class Character : MonoBehaviour, ICombatUnit
     // The damage window each hit rolls within. MAX = the full Attack/MagicAttack above; MIN is a
     // fraction of it raised by DEX (physical) / INT (magic). See MinDmgFloorFraction / MinFractionPerStat.
     public int MaxAttack      => Attack;
-    public int MinAttack      => UnitStatMath.MinAttack(Attack, P(PrimaryStat.DEX));
+    public int MinAttack      => Told ? toldCurrent.atkMin : UnitStatMath.MinAttack(Attack, P(PrimaryStat.DEX));
     public int MaxMagicAttack => MagicAttack;
-    public int MinMagicAttack => UnitStatMath.MinMagicAttack(MagicAttack, P(PrimaryStat.INT));
+    public int MinMagicAttack => Told ? toldCurrent.matkMin : UnitStatMath.MinMagicAttack(MagicAttack, P(PrimaryStat.INT));
 
     public int XPToNext => UnitStatMath.XpToNextFrom(Level);
     public bool IsDead => CurrentHP <= 0;
@@ -498,27 +542,30 @@ public class Character : MonoBehaviour, ICombatUnit
     // passive % layer directly, so a stat with 0 ranks is simply neutral.
     public const float BaseCritMultiplier = UnitStatMath.BaseCritMultiplier;          // pre-renewal: a crit deals 140%…
     // The single Critical ring node drives BOTH crit rate and crit damage — both read PassivePercent(StatId.Critical).
-    public float CritMultiplier  => UnitStatMath.CritMultiplier(Inputs, Lift(StatId.Critical, SubStat.CritDamage));   // …+ LUK + the Critical node's % on top
+    public float CritMultiplier  => Told ? toldCurrent.critMult : UnitStatMath.CritMultiplier(Inputs, Lift(StatId.Critical, SubStat.CritDamage));   // …+ LUK + the Critical node's % on top
     // These combine the primary-stat contribution (LUK/AGI/DEX) with the passive % layer.
-    public float CritChance01    => UnitStatMath.CritChance01(Inputs, equipBonuses, Lift(StatId.Critical, SubStat.CritChance));
+    public float CritChance01    => Told ? toldCurrent.critChance : UnitStatMath.CritChance01(Inputs, equipBonuses, Lift(StatId.Critical, SubStat.CritChance));
     // RO accuracy/evasion. HIT (DEX + level) is rolled against a target's FLEE to decide a physical hit;
     // FLEE (AGI + level, scaled by the Evasion passive) is how often incoming physical attacks whiff on us.
     // Both feed the shared HIT-vs-FLEE roll in Combat; magic ignores them. See Combat for the formula.
-    public int Hit  => UnitStatMath.Hit(Inputs, Lift(StatId.Accuracy, SubStat.Accuracy));
-    public int Flee => UnitStatMath.Flee(Inputs, Lift(StatId.Evasion, SubStat.Evasion));
+    public int Hit  => Told ? toldCurrent.hit : UnitStatMath.Hit(Inputs, Lift(StatId.Accuracy, SubStat.Accuracy));
+    public int Flee => Told ? toldCurrent.flee : UnitStatMath.Flee(Inputs, Lift(StatId.Evasion, SubStat.Evasion));
     // Pre-renewal ASPD: AGI is the primary driver, DEX contributes a fraction (DexAspdShare). Kept as a
     // SPEED MULTIPLIER (the game's attack model) rather than the RO 0–200 scale. >1 = swing faster.
-    public float AttackSpeedMult => UnitStatMath.AttackSpeedMult(Inputs, equipBonuses, PassivePercent(StatId.AttackSpeed), AspdBuffMult);
+    public float AttackSpeedMult => Told ? toldCurrent.aspdMult : UnitStatMath.AttackSpeedMult(Inputs, equipBonuses, PassivePercent(StatId.AttackSpeed), AspdBuffMult);
 
     /// <summary>The ONE cast-speed number: the multiplier applied to a spell's base wind-up, so a spell's real cast
     /// time is <c>baseCast × CastTimeMult</c>. 1 at 0 DEX, 0 (instant) at DEX 150; the CastSpeed ring node and the
     /// cast-speed buff shorten it further. Lower is faster.</summary>
-    public float CastTimeMult => UnitStatMath.CastTimeMult(Inputs, PassivePercent(StatId.CastSpeed), CastBuffMult);
+    public float CastTimeMult => Told ? toldCurrent.castTimeMult : UnitStatMath.CastTimeMult(Inputs, PassivePercent(StatId.CastSpeed), CastBuffMult);
 
     // ---- Derived-stat snapshots (the pure keystone for the HUD windows) -----------------------
     /// <summary>A readout of every derived stat for the CURRENT loadout (what the Character /
     /// Inventory windows display live).</summary>
-    public DerivedSnapshot CurrentDerived => SnapshotNow();
+    public DerivedSnapshot CurrentDerived
+    {
+        get { computeHere = true; try { return SnapshotNow(); } finally { computeHere = false; } }
+    }
 
     // ---- states ON vs OFF: the two views the Character window diffs to show "(+N)" ---------------
     // Buffs/debuffs land in DIFFERENT places at runtime — some inside a getter (attack/cast speed), some at swing
@@ -530,7 +577,11 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>Derived stats with every buff/debuff EXCLUDED — the character's own baseline.</summary>
     public DerivedSnapshot BaseDerived
     {
-        get { ignoreStates = true; try { return SnapshotNow(); } finally { ignoreStates = false; } }
+        get
+        {
+            if (Told) return toldBaseline;
+            ignoreStates = true; try { return SnapshotNow(); } finally { ignoreStates = false; }
+        }
     }
 
     /// <summary>Derived stats with the live states folded in — what the player is actually fighting at right now.
@@ -541,6 +592,7 @@ public class Character : MonoBehaviour, ICombatUnit
     {
         get
         {
+            if (Told) return toldWithStates;
             var d = SnapshotNow();               // aspd + cast speed already include their buffs
             float b = DamageBuffMult;            // the same multiplier the damage rolls apply
             if (b != 1f)
@@ -602,8 +654,9 @@ public class Character : MonoBehaviour, ICombatUnit
         previewBonuses = Gear.BonusesWith(slot, hypothetical);
         if (slot == EquipSlotType.Weapon)
             previewWeaponType = hypothetical != null && hypothetical.def != null ? hypothetical.def.weaponType : WeaponType.None;
+        computeHere = true;
         try { return SnapshotNow(); }
-        finally { previewBonuses = null; previewWeaponType = null; }
+        finally { previewBonuses = null; previewWeaponType = null; computeHere = false; }
     }
 
     /// <summary>Roll the player's outgoing hit: a random value in [<see cref="MinAttack"/>,
@@ -712,7 +765,8 @@ public class Character : MonoBehaviour, ICombatUnit
     /// nobody can pay for, and two machines counting the same pool separately disagree about what that is.</summary>
     public void SetManaFromServer(int current, int max)
     {
-        CurrentMP = Mathf.Clamp(current, 0, Mathf.Max(1, max));
+        toldMaxMP = Mathf.Max(1, max);
+        CurrentMP = Mathf.Clamp(current, 0, toldMaxMP);
         OnManaChanged?.Invoke();
     }
 
@@ -843,7 +897,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Dev/testing: set the character level at runtime — reconciles the stat/skill point pools
     /// and refills HP/MP, exactly like dragging the inspector <c>level</c> field (see <see cref="OnValidate"/>).
-    /// Used by the DevSettings (P) panel's "Level" knob.</summary>
+    /// Used by the <c>/lvl</c> command.</summary>
     public void SetLevel(int newLevel)
     {
         level = Mathf.Max(1, newLevel);
@@ -972,7 +1026,8 @@ public class Character : MonoBehaviour, ICombatUnit
     public void SetHealthFromServer(int current, int max)
     {
         bool wasAlive = !IsDead;
-        CurrentHP = Mathf.Clamp(current, 0, Mathf.Max(1, max));
+        toldMaxHP = Mathf.Max(1, max);
+        CurrentHP = Mathf.Clamp(current, 0, toldMaxHP);
         OnHealthChanged?.Invoke();
 
         // DEATH IS THE SERVER'S WORD TOO. It arrives as health reaching zero, which is the same shape the offline
@@ -1437,6 +1492,38 @@ public class Character : MonoBehaviour, ICombatUnit
         return LandOnMe(dmg, source, MonsterHitColor, false, crit, attackerHit);
     }
 
+    /// <summary>Show a blow the SERVER decided landed on this person, on their own machine — exactly as decided, with
+    /// nothing worked out: no dodge, no block, no armour, no barrier, no thorns, no low-health check. Every one of those
+    /// already happened on the server, which also owns the health this blow took; that arrives on its own beat.
+    ///
+    /// <para>The one thing this starts is the hurt stagger, fed the server's final number: a stagger stops the legs,
+    /// and the legs are this machine's to drive.</para></summary>
+    public void ShowBlowFromServer(in DamageInfo info, bool tick = false)
+    {
+        // THE BLOW THAT KILLED YOU STILL SHOWS, whichever reached this machine first — it or the health reading zero.
+        // Only a damage-over-time tick is dropped once you are dead.
+        if (tick && IsDead) return;
+        var av = Avatar();
+        if (info.missed)
+        {
+            if (av != null) DamagePopup.SpawnText(UnitAnchor.Overhead(av), "MISS", MonsterMissColor);
+            OnEvaded?.Invoke();
+            return;
+        }
+        if (info.amount <= 0) return;
+
+        if (av != null)
+            DamagePopup.Spawn(UnitAnchor.Overhead(av), info.amount, info.isMagic ? MonsterMagicColor : MonsterHitColor);
+        // The hurt grunt, and the event that drives the hurt flash.
+        Sfx.Play(hurtSfx);
+        OnDamaged?.Invoke(info.amount);
+
+        // A tick staggers nobody — the same rule the server's damage door keeps. And nothing staggers the dead.
+        if (tick || IsDead) return;
+        var status = StatusHost;
+        if (status != null) status.TookHit(info.amount);
+    }
+
     /// <summary>Where every hit on the player ends: what a Shield or a Brace leaves of it comes off HP, the DIGITS
     /// appear over the body, the hurt grunt and flash run, thorns bounce back, and a death is raised once.
     ///
@@ -1531,6 +1618,8 @@ public class Character : MonoBehaviour, ICombatUnit
     public void LeechHeal(int amount)
     {
         if (amount <= 0 || IsDead) return;
+        // The same rule as Heal: health is the server's, so a player's machine never adds to it.
+        if (IsWatchedCopy || GameNetwork.TheWorldIsElsewhere) return;
         int before = CurrentHP;
         CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
         if (CurrentHP != before) OnHealthChanged?.Invoke();
@@ -1558,10 +1647,9 @@ public class Character : MonoBehaviour, ICombatUnit
     {
         if (amount <= 0 || IsDead) return;
 
-        // On a machine whose health belongs to the server, the gain is SENT rather than made. The green digits still
-        // pop here and now, because the heal really did happen and a potion that looked like it did nothing for a
-        // tenth of a second reads as a broken potion.
-        if (GameNetwork.SendHealToServer(amount)) { CombatAuthority.NoteHPAdded(this, amount); return; }
+        // A PLAYER'S MACHINE HEALS NOBODY. Health is the server's, and so is every gain: the server heals the copy it
+        // holds and tells every screen what it healed, green digits included (CombatAuthority.NoteHPAdded).
+        if (IsWatchedCopy || GameNetwork.TheWorldIsElsewhere) return;
 
         int before = CurrentHP;
         CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
@@ -1593,6 +1681,11 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>Tell this character which body in the world is theirs, instead of letting it search. Used by the
     /// server, which holds one of these per connected player and cannot tell them apart by looking.</summary>
     public void BindBody(Transform body) { boundBody = body; }
+
+    /// <summary>SERVER ONLY: the shared identity of the person this fighter belongs to, bound once when it is built —
+    /// so every blow and heal announced for them reads a field instead of walking up the hierarchy.</summary>
+    public Mirror.NetworkIdentity ServerIdentity { get; private set; }
+    public void BindServerIdentity(Mirror.NetworkIdentity identity) { ServerIdentity = identity; }
 
     string boundMap;
 
@@ -1646,7 +1739,7 @@ public class Character : MonoBehaviour, ICombatUnit
         OnHealthChanged?.Invoke();
     }
 
-    /// <summary>Dev/testing: feed the ring XP directly (DevSettings "ring XP" action), regardless of whether
+    /// <summary>Dev/testing: feed the ring XP directly (the <c>/ringxp</c> command), regardless of whether
     /// it's currently worn — so the ring track can be exercised without grinding.</summary>
     public void AddRingXP(int amount) => Ring.AddXP(amount);
 

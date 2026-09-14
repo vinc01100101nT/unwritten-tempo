@@ -31,7 +31,7 @@ Porting the game's combat/stat math from its custom **linear** system to authent
 - Status points gained on reaching base level L = **⌊L/5⌋ + 3**.
 - Starting grant = **48** points at level 1 (exactly enough to take three stats from 1→9, the classic creation budget).
 - Base stat cap = **99**.
-- Code: `Character.cs` (`StatCost`, `StatusPointsForLevel`, `TotalStatPointsEarned`, `StatPointsSpentRaising`, `CostToRaise`, `CanRaise`, `MaxStatValue`, `GrantStatPoints`, `RespecStats`), `AddStat` rewritten, `ReconcilePointsToLevel` + level-up award updated. `StatPanel.cs` shows per-stat next-point cost / MAX. `DevSettings.cs` grant + respec buttons. `Systems.unity` `startingStatPoints` set to 48.
+- Code: `Character.cs` (`StatCost`, `StatusPointsForLevel`, `TotalStatPointsEarned`, `StatPointsSpentRaising`, `CostToRaise`, `CanRaise`, `MaxStatValue`, `GrantStatPoints`, `RespecStats`), `AddStat` rewritten, `ReconcilePointsToLevel` + level-up award updated. `StatPanel.cs` shows per-stat next-point cost / MAX. The `/statpts` GM command grants points. `Systems.unity` `startingStatPoints` set to 48.
 - Migration: old saves keep stored points (no schema change); use the **Respec** button to rebudget onto the new curve.
 
 ## Phase 2 — Accuracy + Crit (DONE)

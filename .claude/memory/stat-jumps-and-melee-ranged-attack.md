@@ -6,7 +6,7 @@ metadata:
   type: project
 ---
 
-**Decided 2026-09-13 with the user, all built the same day (unplayed — see `handoffs/gear-shape-playtest.md`).**
+**Decided 2026-09-13 with the user, all built the same day (unplayed — see `docs/1-planning/play-test-checklist.md`).**
 
 - **One headline jump per primary, every 10 points, gear included:** `UnitStatMath.StatJumpBonus(s)` =
   ⌊s/10⌋² + 3×⌊s/10⌋ ("shape C": crossing 10 adds 4, 100 adds 22). STR → melee attack, DEX → ranged attack,
