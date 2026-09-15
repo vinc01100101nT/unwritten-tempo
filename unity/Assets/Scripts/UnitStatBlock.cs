@@ -211,6 +211,10 @@ public class UnitStatBlock : MonoBehaviour
             ai.hit          = UnitStatMath.Hit(u, Lift(StatId.Accuracy, SubStat.Accuracy));
             ai.critChance     = UnitStatMath.CritChance01(u, eb, Lift(StatId.Critical, SubStat.CritChance));
             ai.critMultiplier = UnitStatMath.CritMultiplier(u, Lift(StatId.Critical, SubStat.CritDamage));
+            // Swing speed from AGI, DEX, worn attack speed, the ring and any live attack-speed buff — the player's own
+            // formula, cap included, so a creature's gear and agility speed its swings exactly as a player's do.
+            ai.attackSpeedMult = UnitStatMath.AttackSpeedMult(u, eb, RingPercent(StatId.AttackSpeed),
+                                                              health.States != null ? health.States.AttackSpeedBuffMult : 1f);
             ai.magicAttack       = UnitStatMath.MagicAttack(u, eb, Lift(StatId.MAtk, SubStat.MagicAttack));
             ai.magicDamageSpread = 1f - UnitStatMath.MinFraction(u.intel);
             // Spread is DEX-driven for everyone: high DEX both lifts and STABILISES damage.

@@ -331,7 +331,7 @@ public static class SkillEffectApplier
                 if (hit == 0) unit.Heal(ScaledAmount(e, caster, vars));
                 break;
             case SkillEffectKind.Status:
-                if (body != null && Fires(e, hit, caster, vars)) Status.Apply(body.gameObject, e.ailment, seconds, OutputMagnitude(e, caster, vars));
+                if (body != null && Fires(e, hit, caster, vars)) Status.Apply(body.gameObject, e.ailment, seconds, OutputMagnitude(e, caster, vars), caster);
                 break;
             case SkillEffectKind.Cleanse:
                 if (body != null && Fires(e, hit, caster, vars))

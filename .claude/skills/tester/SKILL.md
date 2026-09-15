@@ -67,21 +67,22 @@ this is what was done.
 ### ⛔ FIRST MOVE OF EVERY RUN: SWITCH ON THE LOG CATEGORIES THIS RUN NEEDS
 
 The game keeps a categorised log, and **the categories that matter most to a tester start switched OFF** —
-a blow landing or being refused and why, a passive firing, a buff arriving or growing, a cast being accepted or
-refused and which of six reasons refused it, and every command run. Off, they cost nothing; on, they answer most
-of what a play-test exists to ask.
+blows and deaths, passives firing or skipped, states arriving, spent or running out, casts accepted or refused,
+heals, and every command run. Off, they cost nothing; on, they answer most of what a play-test exists to ask. How
+to read what they write is the `server-log` skill, loaded into you with this one.
 
 **Switch them on before doing anything else**, from code — never by typing in the chat window and never by faking
 keystrokes:
 
     GameLog.SetAll(true);                      // everything
     GameLog.Set(LogCat.Hit, true);             // or just the ones this run needs
-    GameLog.Set(LogCat.Census, false);         // and silence the head-count, which prints twice a second
+    GameLog.Set(LogCat.Spawn, false);          // and silence "appeared" / "came back" if a busy field drowns the rest
 
 **That code switches THIS machine only.** The SERVER has its own switches, and hits, passives and buffs are
 decided THERE — so a tester almost always needs both. The server's are switched with the `/log` command
 (`/log all on`, `/log hit on`), which is carried to the server and run there; run it the way the chat box runs
-it, not by typing into a chat window.
+it, not by typing into a chat window. A server started with `LOG_CATEGORIES=` on its run command already has
+those categories on — its log says `LOG_CATEGORIES applied — …` near the top.
 
 **The server's own log announces this every time somebody enters the world**, leading with what it is NOT telling
 you — so it lands at the tail of the log the moment you arrive, not hours up at the top where a start-up line
@@ -152,8 +153,9 @@ concludes the game is broken when it is working perfectly.
 3. **The server's own log.** It is the only window into the server, and it says things nothing else will —
    including when it THROWS A BLOW AWAY: *"a blow … arrived 0.01s before that fighter's next swing was due —
    dropped."* Swing faster than the cadence allows and nothing local will ever tell you why nothing happened.
-   Record the log's byte length before an action and read only from that offset afterwards, or the twice-a-second
-   chatter will bury it.
+   Its hit line ends with the target's health after the blow (`[HP 88/100]`), written by the server itself — that
+   settles point 1 without a recorder. How to read a slice of it, the facts that stop a wrong report, and the two
+   scripts to run after the run are the `server-log` skill.
 
 ## ⛔ THE SCREEN CAPTURE IS NOT PROVEN — do not lean on it, and say so when you skip it
 
@@ -176,8 +178,10 @@ that.** A buff runs 4 seconds. A cooldown ticks. Mana refills in 8. So "do the t
 two trips, and the second one arrives after the thing is over — every time, forever, however carefully you work.
 
 **FIRST, ASK WHETHER THE GAME ALREADY SAYS IT.** With the log categories switched on, the game narrates its own
-decisions — a blow landing or refused and why, a passive firing, a buff arriving, a cast refused and which of six
-reasons refused it, a character that asked to move and did not, naming what is in the way. **When a log line
+decisions — a blow landing or refused and why with the target's health after it, a death and who got the kill and
+its loot and experience, a passive firing or skipped and why, a state arriving, spent or running out, damage over
+time, a heal, a cast refused and which of six reasons refused it, a character that asked to move and did not,
+naming what is in the way. **When a log line
 answers the question, THAT IS THE OBSERVATION. Quote it and move on.** Do not build an instrument to re-derive
 what the game just told you, and do not treat its own line as something that needs corroborating.
 
@@ -260,7 +264,10 @@ When it genuinely matters, **look at the picture** rather than arguing from a li
 
 **A long run that saves its report for the end hands back nothing when it is killed**, and these runs are killed:
 four of the first five died to usage limits or a cancel. After EVERY step, write one short line of what was
-OBSERVED. If the run is stopped, whatever is written by then IS the report.
+OBSERVED, **with the time that step took** — read the clock (`TZ=Asia/Manila date "+%H:%M:%S"`) when the step
+starts and again when it ends, and put the difference on the line, e.g. `(4 min 20 s)`. Pass, fail or not
+established, every step carries one (added 2026-09-14 at the user's instruction). If the run is stopped,
+whatever is written by then IS the report.
 
 A stopped tester keeps its context and can be resumed by messaging it — so ASK it where it got to. Never read
 its raw transcript.
@@ -306,7 +313,7 @@ lives only in that play session, but say in the report that it added some.
 
 ## What it hands back
 
-- **What it actually did**, step by step, so the run can be repeated.
+- **What it actually did**, step by step, so the run can be repeated — each step with the time it took.
 - **What it observed** — the real values, and screenshots where they carry the answer. For anything on screen,
   say separately what the interface DREW and what the value behind it was.
 - **For every finding it calls a fault: the four own-fault-first answers**, measured. A finding without them is

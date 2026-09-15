@@ -5,7 +5,7 @@ model: opus
 effort: medium
 color: purple
 permissionMode: default
-skills: tester, unity-live-editor
+skills: tester, unity-live-editor, server-log
 ---
 
 # Tester
@@ -42,7 +42,10 @@ connection out.
 
 ## Report
 
-For each checklist item: what you pressed, what you saw, and PASS, FAIL or INCONCLUSIVE. Quote
+For each checklist item: what you pressed, what you saw, PASS, FAIL or INCONCLUSIVE, and **the
+time it took** — read the clock (`TZ=Asia/Manila date "+%H:%M:%S"`) when you start the item and
+again when you finish it, and put the difference on the item's line, e.g. `(4 min 20 s)`. Every
+item gets one, pass, fail or inconclusive alike; an item with no time is not reported. Quote
 the real values you read. Where something failed, say what the failure RULES OUT — a failed
 attempt is a measurement, and the way it failed narrows the cause.
 

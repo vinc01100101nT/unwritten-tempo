@@ -49,7 +49,7 @@ The technology is built and the game is empty. Fighting is finished and deep: on
 
 ## What is half-built — measured, each one
 
-**Loot is a machine with almost nothing in it.** All 86 creatures have an empty drop list. Exactly one creature — the Axolot — wears anything, and it is the sword; it gives it up 15 times in 100. That single roll is the whole loot economy. Refine levels, card sockets, per-copy rarity and rolled skill kits are all built and all persist, and pay out nothing. A worn ring is deliberately near-impossible to get: 1 in 100,000.
+**Loot is a machine running on random stand-ins.** All 86 creatures have an empty drop list. Since 2026-09-15 every creature puts on random pieces from the six equipment items as it spawns — rarer pieces less often — and gives each up on a chance that falls with its rarity, from 20% for Common to 1% for Legendary; each kill also has a 30% chance of one random item that isn't equipment. It all lands on the ground, held for the killer for 10 seconds. Nothing about which creature carries what is authored yet. Refine levels, card sockets, per-copy rarity and rolled skill kits are all built and all persist, and pay out nothing. A worn ring is deliberately near-impossible to get: 1 in 100,000.
 
 **Gear is one place deep.** Six places on the body can hold something — head, armour, garment, weapon, shield and the ring. Only the weapon has any item authored for it.
 

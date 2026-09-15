@@ -107,7 +107,13 @@ public class NetGroundDrop : NetworkBehaviour
 
     void Update()
     {
-        if (isServer || !isClient) return;
+        // THE SERVER'S HALF: something with an end that nobody took goes away, and every watcher's copy with it.
+        if (isServer)
+        {
+            if (ServerDrop != null && ServerDrop.Expired) NetworkServer.Destroy(gameObject);
+            return;
+        }
+        if (!isClient) return;
 
         // WHAT ARRIVED LATE. The item's id and its map are values of their own on the wire and can land a frame
         // or two after the object itself, exactly as a creature's kind does — so this keeps asking until there

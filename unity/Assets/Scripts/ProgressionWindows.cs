@@ -386,13 +386,18 @@ public class ProgressionWindows : MonoBehaviour
     {
         if (charIdentity == null || Character.Instance == null) return;
         var c = Character.Instance;
+        // Nothing is drawn from placeholder zeros: the window fills in the moment the server's first sheet arrives.
+        if (!c.SheetReady) return;
         charIdentity.text = $"<color=#C8A862>Adventurer</color>\nLevel {c.Level}    XP {c.XP}/{c.XPToNext}";
         charPoints.text = $"Stat Points: {c.StatPoints}";
 
         for (int i = 0; i < StatOrder.Length; i++)
         {
             var s = StatOrder[i];
-            statValue[i].text = c.GetStat(s).ToString();
+            // The points you bought, then what your gear adds in brackets — the server's own number, copied, never summed here.
+            int gear = c.GearStat(s);
+            statValue[i].text = gear == 0 ? c.GetStat(s).ToString()
+                                          : c.GetStat(s) + " (" + (gear > 0 ? "+" : "") + gear + ")";
             // The jump counts gear, so the next one is measured from the stat the formulas see, not the points bought.
             int jumpAt = c.NextJumpAt(s);
             statJump[i].text = "next +" + c.JumpGainAt(s) + (s == PrimaryStat.LUK ? "%" : "") + " at " + jumpAt;

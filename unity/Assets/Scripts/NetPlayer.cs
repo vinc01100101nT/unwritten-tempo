@@ -359,7 +359,7 @@ public class NetPlayer : NetworkBehaviour
         {
             sheetWaiting = false;
             Character.Instance.SetSheetFromServer(waitingCurrent, waitingBaseline, waitingWithStates,
-                                                  waitingRaiseCost, waitingJumpAt, waitingJumpGain);
+                                                  waitingRaiseCost, waitingJumpAt, waitingJumpGain, waitingGearStat);
         }
 
         // THREE possible askers, not two — and this is where the server used to fall through the crack. "Am I the
@@ -524,6 +524,7 @@ public class NetPlayer : NetworkBehaviour
     readonly int[] sentRaiseCost = new int[6];
     readonly int[] sentJumpAt = new int[6];
     readonly int[] sentJumpGain = new int[6];
+    readonly int[] sentGearStat = new int[6];
 
     void PushMySheet()
     {
@@ -544,10 +545,13 @@ public class NetPlayer : NetworkBehaviour
         {
             var stat = (PrimaryStat)i;
             int cost = person.CostToRaise(stat), jumpAt = person.NextJumpAt(stat), gain = person.JumpGainAt(stat);
-            if (cost != sentRaiseCost[i] || jumpAt != sentJumpAt[i] || gain != sentJumpGain[i]) changed = true;
+            int gear = person.GearStat(stat);
+            if (cost != sentRaiseCost[i] || jumpAt != sentJumpAt[i] || gain != sentJumpGain[i] || gear != sentGearStat[i])
+                changed = true;
             sentRaiseCost[i] = cost;
             sentJumpAt[i] = jumpAt;
             sentJumpGain[i] = gain;
+            sentGearStat[i] = gear;
         }
         if (!changed) return;
 
@@ -557,15 +561,16 @@ public class NetPlayer : NetworkBehaviour
         sentWithStates = withStates;
         // Copied only on a change, which is when a new sheet is worth a send at all.
         TargetSheet(connectionToClient, current, baseline, withStates,
-                    (int[])sentRaiseCost.Clone(), (int[])sentJumpAt.Clone(), (int[])sentJumpGain.Clone());
+                    (int[])sentRaiseCost.Clone(), (int[])sentJumpAt.Clone(), (int[])sentJumpGain.Clone(),
+                    (int[])sentGearStat.Clone());
     }
 
     [TargetRpc]
     void TargetSheet(NetworkConnectionToClient target, DerivedSnapshot current, DerivedSnapshot baseline,
-                     DerivedSnapshot withStates, int[] raiseCost, int[] jumpAt, int[] jumpGain)
+                     DerivedSnapshot withStates, int[] raiseCost, int[] jumpAt, int[] jumpGain, int[] gearStat)
     {
         var me = Character.Instance;
-        if (me != null) { me.SetSheetFromServer(current, baseline, withStates, raiseCost, jumpAt, jumpGain); return; }
+        if (me != null) { me.SetSheetFromServer(current, baseline, withStates, raiseCost, jumpAt, jumpGain, gearStat); return; }
         // ARRIVED BEFORE THERE WAS A CHARACTER TO GIVE IT TO. The server only sends a sheet when it changes, so a
         // dropped one would leave zeros on the window until something happened to move a stat. Held until there is.
         sheetWaiting = true;
@@ -575,11 +580,12 @@ public class NetPlayer : NetworkBehaviour
         waitingRaiseCost = raiseCost;
         waitingJumpAt = jumpAt;
         waitingJumpGain = jumpGain;
+        waitingGearStat = gearStat;
     }
 
     bool sheetWaiting;
     DerivedSnapshot waitingCurrent, waitingBaseline, waitingWithStates;
-    int[] waitingRaiseCost, waitingJumpAt, waitingJumpGain;
+    int[] waitingRaiseCost, waitingJumpAt, waitingJumpGain, waitingGearStat;
 
     // ---- the server's half: say what is running on them --------------------------------------------------
 
@@ -1226,6 +1232,10 @@ public class NetPlayer : NetworkBehaviour
         float reach = GroundDrop.Reach + ReachSlack;
         if (dx * dx + dz * dz > reach * reach) return;
 
+        // NOT YOURS YET. What falls from a kill is kept for whoever earned it for a few seconds before anybody else may
+        // have it (GroundDrop.KillerOnlySeconds).
+        if (!drop.MayBeTakenBy(c)) return;
+
         // FIRST COME. The shell is taken away the moment somebody wins it, so a second person asking for the same
         // thing a frame later finds nothing to be given — there is no way for one drop to be handed out twice.
         if (drop.instance != null) c.TakeIntoBag(drop.instance);
@@ -1837,13 +1847,13 @@ public class NetPlayer : NetworkBehaviour
     /// number, the grunt, the flash and the stagger, drawn exactly as the server decided them
     /// (<see cref="Character.ShowBlowFromServer"/>). On everybody else's machine it is a number over somebody's head,
     /// which is all a bystander can honestly know.</para></summary>
-    public void ShowBlow(in DamageInfo info, in UnitMitigation.Outcome mitigated, bool tick = false)
+    public void ShowBlow(in DamageInfo info, in UnitMitigation.Outcome mitigated, bool tick = false, Color tickColor = default)
     {
         if (isOwned)
         {
             var me = Character.Instance;
             if (me == null) return;
-            me.ShowBlowFromServer(info, tick);
+            me.ShowBlowFromServer(info, tick, tickColor);
 
             // WHAT THE BLOW RAN INTO, drawn here because this is the first machine in the chain with a screen. The
             // server decided all of it and suppresses every floating number it makes, and none of these survives in
@@ -1858,9 +1868,8 @@ public class NetPlayer : NetworkBehaviour
         }
 
         if (body == null || info.amount <= 0 || info.missed) return;
-        // The SAME two colours the person it happened to sees over their own body — one owner, read here.
-        DamagePopup.Spawn(UnitAnchor.Overhead(body.transform), info.amount,
-                          info.isMagic ? Character.MonsterMagicColor : Character.MonsterHitColor);
+        // The SAME colour the person it happened to sees over their own body — one owner, read here.
+        DamagePopup.Spawn(UnitAnchor.Overhead(body.transform), info.amount, Character.ColourOfBlow(info, tick, tickColor));
     }
 
     /// <summary>Show this person casting a skill, on the machines watching them. The EFFECT and nothing else — no

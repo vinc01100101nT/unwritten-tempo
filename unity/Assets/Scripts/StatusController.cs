@@ -252,7 +252,9 @@ public class StatusController : MonoBehaviour
 
     /// <summary>Inflict (or refresh) an ailment for <paramref name="seconds"/>. <paramref name="magnitude"/>
     /// means: damage-per-tick for DoTs, the speed multiplier (0..1) for Slow, or HIT lost for Blind.</summary>
-    public void Apply(Ailment a, float seconds, float magnitude)
+    /// <param name="inflictor">The unit putting it on, when known. A damage-over-time ailment remembers the newest one,
+    /// and each tick credits them as the one who cost this unit health — so a kill by poison pays the poisoner.</param>
+    public void Apply(Ailment a, float seconds, float magnitude, ICombatUnit inflictor = null)
     {
         if (seconds <= 0f || states == null) return;
         // Turned away at the door rather than suppressed after landing: an immune unit never gains the ailment at all,
@@ -265,6 +267,9 @@ public class StatusController : MonoBehaviour
         if (IsDot(a))
         {
             var s = states.Apply(id, seconds, Mathf.Max(1f, magnitude));   // magnitude = damage per tick
+            // THE NEWEST INFLICTOR owns the ticks from here on: the kill goes to whoever last put it on, the same
+            // "last to cost it health" rule a blow follows.
+            if (s != null && !PlayerUnits.Gone(inflictor)) s.appliedBy = inflictor;
             if (s != null && !wasActive)
             {
                 s.nextTick = Time.time + DotInterval;   // first tick after one interval
@@ -427,8 +432,12 @@ public class StatusController : MonoBehaviour
         VfxCue.Fire(TickCue(a), transform);   // one-shot puff per DoT tick
 
         var u = Unit;
-        if (u != null) CombatAuthority.ApplyTrue(u, dmg, c);
+        if (u != null) CombatAuthority.ApplyTrue(u, dmg, c, AilmentNames[(int)a], s.appliedBy);
     }
+
+    // Each ailment's name for the log line its tick writes, built once: an enum's ToString builds a string per call,
+    // and this runs per tick per unit.
+    static readonly string[] AilmentNames = System.Enum.GetNames(typeof(Ailment));
 
     // Heal-over-time (Mending Tide). Lives here — the one per-unit ticker BOTH sides already run — so a regen cast on a
     // mob actually heals it. It used to tick inside Character.Update, which is why regen was a player-only state in
@@ -488,7 +497,7 @@ public class StatusController : MonoBehaviour
         int owed = states.TakeExpiredDebt();
         if (owed <= 0) return;
         var u = Unit;
-        if (u != null) CombatAuthority.ApplyTrue(u, owed, BraceDueColor);
+        if (u != null) CombatAuthority.ApplyTrue(u, owed, BraceDueColor, "brace debt");
     }
 
     // The bill coming due gets its OWN colour, deliberately not Brace's blue: the blue numbers are damage you dodged
@@ -509,9 +518,9 @@ public static class Status
         return s != null ? s : go.AddComponent<StatusController>();
     }
 
-    public static void Apply(GameObject go, Ailment a, float seconds, float magnitude = 0f)
+    public static void Apply(GameObject go, Ailment a, float seconds, float magnitude = 0f, ICombatUnit inflictor = null)
     {
         var s = Of(go);
-        if (s != null) s.Apply(a, seconds, magnitude);
+        if (s != null) s.Apply(a, seconds, magnitude, inflictor);
     }
 }

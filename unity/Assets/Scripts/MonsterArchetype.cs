@@ -18,7 +18,6 @@ public struct MonsterArchetype
     public int    weight;       // relative spawn frequency in a mixed field
     public Color  tint;         // SpriteRenderer tint (white = none)
     public float  scale;        // size multiplier on the base billboard scale
-    public Color  flash;        // hit-flash color
 
     // THE stat block, carried through to the spawned mob so it can RE-DERIVE on level-up instead of being scaled
     // by a mob-only growth rate. The derived fields below are the values at THIS level — a convenience snapshot for

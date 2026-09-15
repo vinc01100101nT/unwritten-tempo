@@ -36,6 +36,11 @@ public interface ICombatUnit : IDamageable
     /// at somebody and never reach them.</para></summary>
     string Map { get; }
 
+    /// <summary>This unit's spawn_id — its number in the map it was numbered in, for telling two of the same creature
+    /// apart in the server's log. Handed out by <see cref="SpawnIds"/> on the server; null on a player's machine, and
+    /// on the server until the unit is announced.</summary>
+    SpawnTag Spawn { get; set; }
+
     /// <summary>This unit's status host — the thing that holds its ailments, its action lock and its flinch. Exposed
     /// (and CACHED on both sides) because the damage door touches it on every landed hit, and a component lookup per
     /// hit per mob is exactly the per-frame cost PERFORMANCE.md bans.</summary>
@@ -98,7 +103,8 @@ public interface ICombatUnit : IDamageable
     /// call site — and so a kill can pay whoever earned it rather than whoever happens to be standing there.</summary>
     ICombatUnit LastAttacker { get; }
 
-    /// <summary>Remember who just landed a blow. Called ONLY by the damage door.</summary>
+    /// <summary>Remember who just landed a blow — or hand the record back (null included) when that blow cost nothing.
+    /// Called ONLY by the damage door.</summary>
     void NoteAttacker(ICombatUnit attacker);
 
     // ---- the BASIC SWING: what one ordinary attack from this unit is made of -------------------------------------

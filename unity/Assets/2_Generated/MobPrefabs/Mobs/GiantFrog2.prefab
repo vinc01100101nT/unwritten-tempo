@@ -190,8 +190,6 @@ MonoBehaviour:
   hpRegenPerSecond: 0
   flee: 0
   element: 0
-  flashColor: {r: 1, g: 1, b: 1, a: 1}
-  flashTime: 0.08
   onDeath:
     m_PersistentCalls:
       m_Calls: []
@@ -214,7 +212,6 @@ MonoBehaviour:
   wanderRadius: 3
   wanderPauseMin: 1
   wanderPauseMax: 3
-  attackType: 0
   attack: 3
   attackElement: 0
   onHitAilment: 0
@@ -366,7 +363,6 @@ MonoBehaviour:
   goldMax: 1000
   goldDropChance: 0.85
   lootTable: []
-  wornDropChance: 0.15
 --- !u!114 &6663847572923620743
 MonoBehaviour:
   m_ObjectHideFlags: 0

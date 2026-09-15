@@ -152,6 +152,7 @@ def main():
     out.pop("generated_by", None)
 
     bad = 0
+    measured = 0
     for name in wanted:
         if name not in RECIPES:
             print("no recipe for %r — the screens with one are: %s" % (name, ", ".join(sorted(RECIPES))))
@@ -163,11 +164,14 @@ def main():
             bad += 1
             continue
         out[name] = data
+        measured += 1
         print("%s: window %gpx, %d columns, row %gpx"
               % (name, data["parts"].get("window", 0), len(data["columns"]),
                  data["parts"].get("row", 0)))
 
-    if out:
+    # Written only when something was actually measured: rewriting the old numbers after a failed measurement
+    # printed "wrote", which read as a fresh measurement that never happened.
+    if measured:
         out = {"generated_by": "tools/ui-geometry.py — measured from the running editor; re-run it",
                **{k: v for k, v in sorted(out.items()) if k != "generated_by"}}
         with open(OUT, "w", encoding="utf-8") as fh:

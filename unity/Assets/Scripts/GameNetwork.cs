@@ -86,6 +86,8 @@ public class GameNetwork : NetworkManager
     public static void PublishMob(GameObject mob, string defId)
     {
         if (mob == null || !NetworkServer.active) return;
+        // Every creature the world gains is announced here, so this is where it gets its spawn_id.
+        SpawnIds.MobAppeared(mob.GetComponent<Health>(), defId);   // perf-ok: once per creature announced
 
         if (mobPrefab == null) mobPrefab = Resources.Load<GameObject>(MobPrefabName);
         if (mobPrefab == null)
@@ -105,6 +107,7 @@ public class GameNetwork : NetworkManager
     public static void PublishNpc(GameObject npc, string modelName)
     {
         if (npc == null || !NetworkServer.active) return;
+        SpawnIds.NpcAppeared(npc, modelName);
 
         if (npcPrefab == null) npcPrefab = Resources.Load<GameObject>(NpcPrefabName);
         if (npcPrefab == null)
@@ -278,6 +281,7 @@ public class GameNetwork : NetworkManager
             }
 
             spawned.StartServer();
+            GameLog.ApplyStartSetting();
             GameLog.Info(LogCat.Server, "listening for players on port " + kcp.port);
             // Said here, on the server, because the server's log is the one a play-test actually reads.
             GameLog.AnnounceToTesters();
@@ -492,7 +496,7 @@ public class GameNetwork : NetworkManager
     }
 
     /// <summary>What the server DREW for one blow on a creature, sent to everybody watching it — the number, its
-    /// colour and opacity, the sound, the flash — and NOT the creature's remaining health, which travels the usual way.
+    /// colour and opacity, whether it staggers — and NOT the creature's remaining health, which travels the usual way.
     ///
     /// <para><b>Why it carries the finished blow.</b> A player's machine works nothing out. Handed the blow as it went
     /// in, it would take armour and the element chart off itself using its OWN copy of the creature — which is not the
@@ -514,8 +518,6 @@ public class GameNetwork : NetworkManager
         public bool crit;
         public bool magic;
         public bool missed;
-        public bool rangedMiss;
-        public BlowSound sound;
         public bool flash;
 
         /// <summary>This strike belongs to a run that shows a RISING YELLOW TOTAL, and the receiving machine should
@@ -559,6 +561,10 @@ public class GameNetwork : NetworkManager
         /// <summary>A damage-over-time tick — poison, bleed, burn, a brace's bill — rather than a hit. A tick staggers
         /// nobody, and one arriving after the person is dead is not shown.</summary>
         public bool tick;
+
+        /// <summary>The colour the server gave this tick — a poison's own colour, a brace bill's violet. Read only when
+        /// <see cref="tick"/> is set: without it every tick on a person was drawn in plain hit red (play-test, 2026-09-14).</summary>
+        public Color tickColor;
     }
 
     /// <summary>What the server HEALED a unit for, so the green digits appear over it. Health is the server's, and so is
@@ -868,7 +874,7 @@ public class GameNetwork : NetworkManager
 
         shell.ShowBlow(new DamageInfo(msg.amount, msg.element, msg.isMagic, msg.isCrit,
                                       attackerHit: msg.attackerHit, missed: msg.missed),
-                       msg.mitigated, msg.tick);
+                       msg.mitigated, msg.tick, msg.tickColor);
     }
 
     // Green digits the server said it healed, over the body this machine draws for that unit.
@@ -933,7 +939,7 @@ public class GameNetwork : NetworkManager
                              + fighter.CurrentHP + " health — nothing to do.");
             return;
         }
-        GameLog.Info(LogCat.Server, "reviving a player who was dead.");
+        GameLog.Info(LogCat.Server, "reviving " + NameOf(fighter) + " (" + CharacterIdOf(fighter) + "), who was dead.");
         ReviveOnServer(fighter);
     }
 
@@ -1115,7 +1121,8 @@ public class GameNetwork : NetworkManager
     /// <summary>Announce a blow the server decided landed on a person, to everybody who can see them. Called by the
     /// damage door rather than by whatever swung, so a creature's bite, a poison tick and anything written later all
     /// reach the screens through one line.</summary>
-    public static void AnnounceBlowOnPlayer(Character victim, in DamageInfo info, int dealt, bool tick = false)
+    public static void AnnounceBlowOnPlayer(Character victim, in DamageInfo info, int dealt, bool tick = false,
+                                            Color tickColor = default)
     {
         if (!NetworkServer.active || victim == null) return;
 
@@ -1135,7 +1142,8 @@ public class GameNetwork : NetworkManager
             // recorded this on its way through its own intake, which is the only place that knows a barrier ate part
             // of it or a brace held all of it.
             mitigated = victim.TakeMitigation(),
-            tick = tick
+            tick = tick,
+            tickColor = tickColor
         });
     }
 
@@ -1181,8 +1189,6 @@ public class GameNetwork : NetworkManager
             crit = blow.crit,
             magic = blow.magic,
             missed = blow.missed,
-            rangedMiss = blow.rangedMiss,
-            sound = blow.sound,
             flash = blow.flash,
             // The authored skill's answer, held by the strike being landed right now — never a client's.
             showsTotal = SkillEffectApplier.StrikeShowsTotal
@@ -1229,6 +1235,15 @@ public class GameNetwork : NetworkManager
         if (shell != null && !string.IsNullOrWhiteSpace(shell.playerName)) return shell.playerName;
 
         return string.IsNullOrWhiteSpace(AccountSession.CharacterName) ? "someone" : AccountSession.CharacterName;
+    }
+
+    /// <summary>The player id of the character <paramref name="who"/> — the id their row has in the database. Server
+    /// only; for a log line, so an unknown one reads as "no player id" rather than an empty pair of brackets.</summary>
+    public static string CharacterIdOf(Character who)
+    {
+        var identity = who != null && NetworkServer.active ? IdentityOfFighter(who) : null;
+        var shell = identity != null ? identity.GetComponent<NetPlayer>() : null;
+        return shell != null && !string.IsNullOrEmpty(shell.ServerCharacterId) ? shell.ServerCharacterId : "no player id";
     }
 
     /// <summary>Ask the server to bring this player back. Returns TRUE when it was sent.</summary>
@@ -1308,8 +1323,7 @@ public class GameNetwork : NetworkManager
         var victim = (shell != null ? shell.WatchedTarget : identity.GetComponent<IDamageable>()) as Health;
         if (victim == null) { HitResultsWithNoVictim++; return; }
 
-        victim.DrawShownBlow(new ShownBlow(msg.number, msg.elementModifier, msg.crit, msg.magic, msg.sound, msg.flash,
-                                           msg.missed, msg.rangedMiss));
+        victim.DrawShownBlow(new ShownBlow(msg.number, msg.elementModifier, msg.crit, msg.magic, msg.flash, msg.missed));
 
         // THE HURT STAGGER, fed the server's final number. It is the one thing a blow still starts on this machine,
         // because a stagger is a body stopping — movement — and each machine drives the bodies it draws.
@@ -2338,8 +2352,9 @@ public class GameNetwork : NetworkManager
         // character server announcing somebody before sending them.
         PlayerFighter.BuildFrom(np, announced);
 
-        GameLog.Info(LogCat.Server, "" + (np != null ? np.playerName : "someone") + " entered the world — "
-                  + NetworkServer.connections.Count + " player(s) here");
+        GameLog.Info(LogCat.Server, "" + (np != null ? np.playerName : "someone")
+                  + " (" + (np != null && !string.IsNullOrEmpty(np.ServerCharacterId) ? np.ServerCharacterId : "no player id")
+                  + ") entered the world — " + NetworkServer.connections.Count + " player(s) here");
 
         // SAID AGAIN, HERE, EVERY TIME SOMEBODY ARRIVES. Saying it only at start-up was not enough and the reason
         // is worth keeping: a tester reads the END of a log, and a start-up line sits at the beginning of it
@@ -2376,7 +2391,12 @@ public class GameNetwork : NetworkManager
     {
         // COUNTED AFTER, not guessed at. Taking one off the current count assumed this connection was still in
         // it, and by this point it sometimes is not — so the number went NEGATIVE as people left.
-        GameLog.Info(LogCat.Server, "player left — connection " + conn.connectionId);
+        var leftShell = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        GameLog.Info(LogCat.Server, "player left — connection " + conn.connectionId
+                  + (leftShell != null
+                      ? " — " + leftShell.playerName + " ("
+                        + (string.IsNullOrEmpty(leftShell.ServerCharacterId) ? "no player id" : leftShell.ServerCharacterId) + ")"
+                      : ""));
 
         // Everything remembered ABOUT a connection goes when the connection does. A long-lived server hands out
         // connection numbers for months; anything kept per connection and never dropped grows forever.
@@ -2398,7 +2418,7 @@ public class GameNetwork : NetworkManager
         // ASKED FOR DIRECTLY, not through the remembered answer: this runs AFTER that memory has been dropped a few
         // lines up, and going through it here would quietly write the entry back for a connection that is leaving —
         // one stranded entry per departure, on a server that runs for months.
-        var leaving = conn.identity != null ? conn.identity.GetComponent<NetPlayer>() : null;
+        var leaving = leftShell;
         if (leaving != null)
         {
             // THE NAME AND THE ID, TAKEN NOW. Everything below this runs after Mirror has destroyed the body, so

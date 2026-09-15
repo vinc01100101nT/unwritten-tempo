@@ -56,6 +56,39 @@ public class GroundDrop : MonoBehaviour
     /// <summary>The shell that announced it, so reaching for it can name it to the server. 0 with no world.</summary>
     public uint netId;
 
+    /// <summary>SERVER ONLY: who may pick this up before anybody else — whoever earned the kill it fell from. Null for
+    /// anything a player put down, which anybody may take at once.</summary>
+    public Character reservedFor;
+
+    /// <summary>SERVER ONLY: the moment, on the server's clock (<c>Time.time</c>), that anybody may take it.</summary>
+    public float reservedUntil;
+
+    /// <summary>SERVER ONLY: the moment, on the server's clock, it vanishes if nobody has taken it. 0 = it never does,
+    /// which is everything a player put down.</summary>
+    public float expiresAt;
+
+    /// <summary>How long a kill's drops are kept for whoever earned the kill, in seconds.</summary>
+    public const float KillerOnlySeconds = 10f;
+
+    /// <summary>How long a kill's drops lie on the ground before they vanish, in seconds. Without an end, every creature
+    /// killed and never looted would leave something the server holds and tells people about for as long as it runs.</summary>
+    public const float KillDropLifetimeSeconds = 60f;
+
+    /// <summary>SERVER: keep this for <paramref name="killer"/> for <paramref name="killerOnlySeconds"/>, and let it
+    /// vanish after <paramref name="lifetimeSeconds"/>.</summary>
+    public void ReserveFor(Character killer, float killerOnlySeconds, float lifetimeSeconds)
+    {
+        reservedFor = killer;
+        reservedUntil = Time.time + killerOnlySeconds;
+        expiresAt = Time.time + lifetimeSeconds;
+    }
+
+    /// <summary>SERVER: whether <paramref name="who"/> may pick this up now. A killer who has since left frees it at once.</summary>
+    public bool MayBeTakenBy(Character who) => reservedFor == null || Time.time >= reservedUntil || reservedFor == who;
+
+    /// <summary>SERVER: true once a thing that has an end has reached it.</summary>
+    public bool Expired => expiresAt > 0f && Time.time >= expiresAt;
+
     // Every drop on THIS machine. A registry rather than a scene scan, because the pick-up key asks it and a
     // long session can leave a few hundred of these about — the same reason the creatures keep one.
     static readonly List<GroundDrop> all = new List<GroundDrop>(32);

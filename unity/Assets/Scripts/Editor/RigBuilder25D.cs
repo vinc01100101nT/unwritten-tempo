@@ -296,7 +296,6 @@ public static class RigBuilder25D
         // disagree. Only the ARMOUR-sourced percentages and presentation stay authored.
         mh.hardDefPercent      = arc.hardDefPercent;         // pre-renewal HARD DEF % (applied first; a crit ignores it)
         mh.hardMagicDefPercent = arc.hardMagicDefPercent;    // pre-renewal HARD MDEF %
-        mh.flashColor   = arc.flash.a > 0f ? arc.flash : Color.white;
         mh.element      = arc.element;                        // armor PROPERTY — what the player's spells/melee hit
 
         var ai = go.AddComponent<MonsterAI3D>();

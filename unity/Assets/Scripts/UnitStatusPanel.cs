@@ -32,6 +32,9 @@ public class UnitStatusPanel : MonoBehaviour
     const float BadgeW = 72f, BadgeH = 14f;
     const float IconH  = 24f, IconGap = 3f;
     const int   MaxIcons = 10;   // a unit showing more than this is already unreadable; the rest are dropped
+    const float GearRowH = 14f;
+    // One row per place a unit can wear something: head, armour, weapon, shield, garment and the ring.
+    const int   MaxGearRows = 6;
 
     static readonly Color PanelBg   = new Color(0.05f, 0.04f, 0.08f, 0.88f);
     static readonly Color TrackBg   = new Color(0.10f, 0.08f, 0.13f, 1f);
@@ -105,6 +108,13 @@ public class UnitStatusPanel : MonoBehaviour
         readonly List<Cell> cells = new List<Cell>(MaxIcons);
         readonly List<UnitStates.State> shown = new List<UnitStates.State>(MaxIcons);
 
+        // WHAT THE UNIT WEARS: one row per piece, its name in its rarity's colour and the chance it is given up, exactly
+        // as the server wrote them (NetMob.WornText). Rebuilt only when that text changes.
+        readonly List<TMP_Text> gearRows = new List<TMP_Text>(MaxGearRows);
+        readonly List<WornList.Entry> gearEntries = new List<WornList.Entry>(MaxGearRows);
+        NetMob shell;
+        string shownWorn;
+
         Health tracked;
         UnitStates subscribed;
         int lastHP = int.MinValue, lastMP = int.MinValue;
@@ -154,6 +164,13 @@ public class UnitStatusPanel : MonoBehaviour
             statesRow.pivot = new Vector2(0f, 1f);
             for (int i = 0; i < MaxIcons; i++) cells.Add(BuildCell(statesRow, hoverableIcons));
 
+            for (int i = 0; i < MaxGearRows; i++)
+            {
+                var row = NewText("Gear", root, 10, TextAlignmentOptions.TopLeft, Color.white);
+                row.gameObject.SetActive(false);
+                gearRows.Add(row);
+            }
+
             Layout();
         }
 
@@ -168,6 +185,8 @@ public class UnitStatusPanel : MonoBehaviour
             if (statesDirty) { statesDirty = false; RebuildStates(); }
             RefreshNumbers();
             RefreshStates();
+            // A new life wears new gear on the same body, so the list is re-read whenever the server's text changes.
+            if (shell != null && !ReferenceEquals(shell.WornText, shownWorn)) RebuildGear();
         }
 
         public void Unbind() => Bind(null);
@@ -179,6 +198,9 @@ public class UnitStatusPanel : MonoBehaviour
 
             tracked = h;
             lastHP = lastMP = int.MinValue;
+            // The shell speaking for this body, found once per bind — a dictionary probe, never per frame.
+            shell = h != null ? (NetMob.ShellForView(h.gameObject) ?? NetMob.ShellForServerMob(h.gameObject)) : null;
+            RebuildGear();
             statesDirty = true;
 
             if (h == null) { group.alpha = 0f; RebuildStates(); return; }   // drops the icons and any card they opened
@@ -215,6 +237,24 @@ public class UnitStatusPanel : MonoBehaviour
         }
 
         void MarkStatesDirty() => statesDirty = true;
+
+        void RebuildGear()
+        {
+            shownWorn = shell != null ? shell.WornText : null;
+            WornList.Decode(shownWorn, gearEntries);
+            for (int i = 0; i < gearRows.Count; i++)
+            {
+                var row = gearRows[i];
+                bool on = i < gearEntries.Count;
+                if (row.gameObject.activeSelf != on) row.gameObject.SetActive(on);
+                if (!on) continue;
+                var e = gearEntries[i];
+                // perf-ok: runs only when the server's worn text changes, never per frame
+                row.text = e.def.displayName + "  " + e.chance;
+                row.color = Rarities.Text(e.rarity);
+            }
+            Layout();
+        }
 
         void RefreshNumbers()
         {
@@ -318,6 +358,14 @@ public class UnitStatusPanel : MonoBehaviour
                 y -= IconH;
             }
             statesRow.gameObject.SetActive(shown.Count > 0);
+
+            int gear = Mathf.Min(gearEntries.Count, gearRows.Count);
+            if (gear > 0) y -= 4f;
+            for (int i = 0; i < gear; i++)
+            {
+                PlaceTopLeft(gearRows[i].rectTransform, new Vector2(Pad, y), new Vector2(inner, GearRowH));
+                y -= GearRowH;
+            }
 
             root.sizeDelta = new Vector2(width, -y + Pad);
         }

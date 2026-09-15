@@ -219,6 +219,10 @@ public partial class Player3DController
     public void Teleport(Vector3 dest)
     {
         if (eDashing) { eDashing = false; SetDashInvuln(false); }
+        // A teleport carries no fall. Every reposition comes through here, the server's "putting you back" among
+        // them, and a body that kept its falling speed across one was put back mid-air, fell past the server's
+        // limit again, and was put back again — forever (play-test, 2026-09-14).
+        vy = 0f;
         if (controller != null) controller.enabled = false;
         transform.position = dest;
         if (controller != null) controller.enabled = true;

@@ -24,7 +24,7 @@ public static class Rewards
 {
     /// <summary>Pay <paramref name="killer"/> for a kill worth <paramref name="xp"/>. Does nothing when nobody
     /// landed the blow — a creature that fell to a poison nobody owns, or died as its world was torn down.</summary>
-    public static void PayForKill(ICombatUnit killer, int xp)
+    public static void PayForKill(ICombatUnit killer, int xp, Health victim)
     {
         // A creature can outlive the person who mortally wounded it — its death fade takes a moment, and they can
         // disconnect inside it. That leaves a reference that passes a plain null check and throws when read.
@@ -35,6 +35,14 @@ public static class Rewards
         if (character == null) return;
 
         character.AddXP(xp);
+        // "field_15 Alpha #1 (id) earned 40 experience from Snake #3" — beside the loot line, so what a kill paid is
+        // all in the log and nothing about it needs a recorder.
+        if (GameLog.On(LogCat.Loot))
+            GameLog.Info(LogCat.Loot, string.Concat(new[]
+            {
+                SpawnIds.MapOf(character), " ", SpawnIds.Label(character), " (", GameNetwork.CharacterIdOf(character),
+                ") earned ", xp.ToString(), " experience from ", victim != null ? SpawnIds.Label(victim) : "somebody",
+            }));
         // On a server the character being paid is not the one on that player's screen, so their machine has to be
         // told or the kill quietly earns them nothing. Does nothing anywhere else.
         GameNetwork.TellOwnerTheyEarned(character, xp);
@@ -49,69 +57,100 @@ public static class Rewards
     /// another line changing.</para></summary>
     public static ICombatUnit WhoEarned(Health victim) => victim != null ? victim.LastAttacker : null;
 
-    /// <summary>Pay <paramref name="winner"/> everything one kill was carrying: the items in
-    /// <paramref name="items"/> and <paramref name="gold"/> Zeny, straight into their bag. Nothing is left lying
-    /// in the world — there is no drop to walk to and nothing to click.
+    /// <summary>Pay <paramref name="winner"/> everything one kill was carrying: <paramref name="gold"/> Zeny straight
+    /// into their purse, and every item in <paramref name="items"/> and <paramref name="worn"/> onto the ground where
+    /// <paramref name="victim"/> fell — kept for <paramref name="winner"/> for <see cref="GroundDrop.KillerOnlySeconds"/>,
+    /// then anybody's, and gone after <see cref="GroundDrop.KillDropLifetimeSeconds"/>.
     ///
-    /// <para>ONE CALL PER KILL, not one per thing dropped: on a server every payment hands the owner their whole
-    /// bag again and asks for it to be written down, so paying four times over would send four bags and four
-    /// writes for one dead creature.</para></summary>
-    /// <param name="items">Item DEFINITIONS the kill pays — a fresh copy is rolled for each as it enters the bag.</param>
-    /// <param name="worn">Finished COPIES the kill pays — the pieces the creature wore, handed over as they are.</param>
-    public static void PayLoot(ICombatUnit winner, List<Item> items, List<EquipmentInstance> worn, int gold)
+    /// <para>ONE CALL PER KILL, not one per thing dropped: on a server the purse is handed to its owner and written down
+    /// every time it changes, so paying piece by piece would send and write it several times for one dead creature.</para></summary>
+    /// <param name="items">Item DEFINITIONS the kill gives up — any equipment among them is rolled as a fresh copy as it lands.</param>
+    /// <param name="worn">Finished COPIES the kill gives up — the pieces the creature wore, put down exactly as they are.</param>
+    public static void PayLoot(ICombatUnit winner, List<Item> items, List<EquipmentInstance> worn, int gold, Health victim)
     {
         if (PlayerUnits.Gone(winner)) return;
 
-        // Only a CHARACTER has a bag and a purse; a creature killing a creature carries nothing away.
+        // Only a CHARACTER has a purse; a creature killing a creature carries nothing away.
         var character = winner as Character;
         if (character == null) return;
 
-        int given = 0;
-        if (items != null)
-            for (int i = 0; i < items.Count; i++)
-                if (items[i] != null && character.TakeIntoBag(items[i], 1) != null) given++;
-        if (worn != null)
-            for (int i = 0; i < worn.Count; i++)
-                if (worn[i] != null && character.TakeIntoBag(worn[i]) != null) given++;
+        int dropped = 0;
+        if (victim != null)
+        {
+            var at = victim.transform.position;
+            string map = victim.gameObject.scene.name;
+            if (items != null)
+                for (int i = 0; i < items.Count; i++)
+                {
+                    var def = items[i];
+                    if (def == null) continue;
+                    var copy = def.slot != EquipSlotType.None ? EquipmentInstance.CreateRolled(def) : null;
+                    if (DropForKiller(at, map, def, copy, character)) dropped++;
+                }
+            if (worn != null)
+                for (int i = 0; i < worn.Count; i++)
+                    if (worn[i] != null && worn[i].def != null && DropForKiller(at, map, worn[i].def, worn[i], character))
+                        dropped++;
+        }
 
-        if (gold > 0) character.AddGold(gold);
-        if (given == 0 && gold <= 0) return;
+        if (gold > 0)
+        {
+            character.AddGold(gold);
+            // On a server the purse that just changed is not the one on that player's screen, so their machine is handed
+            // it and the change is written down. Off a server there is only one purse and its window is told directly.
+            if (!GameNetwork.TellOwnerTheirBagChanged(character)) InventoryStore.Instance?.Notify();
+        }
 
-        // On a server the bag that just changed is not the one on that player's screen, so their machine is handed
-        // the whole thing and the change is written down. Off a server there is only one bag and the window that
-        // shows it is told directly.
-        if (!GameNetwork.TellOwnerTheirBagChanged(character)) InventoryStore.Instance?.Notify();
-
-        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, worn, gold));
+        // A KILL THAT PAID NOTHING SAYS SO too — without it "paid nothing" and "the payout never ran" are both silence,
+        // and only the second is a bug.
+        if (GameLog.On(LogCat.Loot)) GameLog.Info(LogCat.Loot, Describe(character, items, worn, gold, dropped, victim));
     }
 
-    /// <summary>What a kill paid, as one line: who got it, how much Zeny, and every item by name. Builds a string,
-    /// so it is only ever called behind <see cref="GameLog.On"/>.</summary>
-    static string Describe(Character who, List<Item> items, List<EquipmentInstance> worn, int gold)
+    // ONE THING DOWN ON THE GROUND for the killer, next to where the creature fell, and every player near enough told.
+    static bool DropForKiller(Vector3 at, string map, Item def, EquipmentInstance copy, Character killer)
+    {
+        var drop = GroundDrop.Place(GroundDrop.FreeSpotNear(at, map), def, 1, copy, def.rarity, 0, map, 0);
+        if (drop == null) return false;
+        drop.ReserveFor(killer, GroundDrop.KillerOnlySeconds, GroundDrop.KillDropLifetimeSeconds);
+        GameNetwork.PublishDrop(drop);
+        return true;
+    }
+
+    /// <summary>What a kill paid, as one line: who got it, how much Zeny, every item put down for them by name, and which
+    /// unit it came from — "field_15 Alpha #1 (id) earned 6 Zeny and dropped Jellopy for them from Snake #3", or "earned
+    /// nothing from Snake #3". Builds a string, so it is only ever called behind <see cref="GameLog.On"/>.</summary>
+    static string Describe(Character who, List<Item> items, List<EquipmentInstance> worn, int gold, int dropped, Health victim)
     {
         var sb = new System.Text.StringBuilder();
-        sb.Append(GameNetwork.NameOf(who)).Append(" earned ");
+        sb.Append(SpawnIds.MapOf(who)).Append(' ').Append(SpawnIds.Label(who))
+          .Append(" (").Append(GameNetwork.CharacterIdOf(who)).Append(") earned ");
 
-        bool wroteSomething = false;
-        if (gold > 0) { sb.Append(gold).Append(" Zeny"); wroteSomething = true; }
+        if (gold <= 0 && dropped <= 0) sb.Append("nothing");
+        if (gold > 0) sb.Append(gold).Append(" Zeny");
+        if (dropped > 0)
+        {
+            sb.Append(gold > 0 ? " and dropped " : "dropped ");
+            bool first = true;
+            if (items != null)
+                for (int i = 0; i < items.Count; i++)
+                {
+                    if (items[i] == null) continue;
+                    if (!first) sb.Append(", ");
+                    sb.Append(items[i].displayName);
+                    first = false;
+                }
+            if (worn != null)
+                for (int i = 0; i < worn.Count; i++)
+                {
+                    if (worn[i] == null || worn[i].def == null) continue;
+                    if (!first) sb.Append(", ");
+                    sb.Append(worn[i].def.displayName);
+                    first = false;
+                }
+            sb.Append(" for them");
+        }
 
-        if (items != null)
-            for (int i = 0; i < items.Count; i++)
-            {
-                if (items[i] == null) continue;
-                if (wroteSomething) sb.Append(", ");
-                sb.Append(items[i].displayName);
-                wroteSomething = true;
-            }
-        if (worn != null)
-            for (int i = 0; i < worn.Count; i++)
-            {
-                if (worn[i] == null || worn[i].def == null) continue;
-                if (wroteSomething) sb.Append(", ");
-                sb.Append(worn[i].def.displayName);
-                wroteSomething = true;
-            }
-
+        if (victim != null) sb.Append(" from ").Append(SpawnIds.Label(victim));
         return sb.ToString();
     }
 }

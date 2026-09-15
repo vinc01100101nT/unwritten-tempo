@@ -107,6 +107,10 @@ public class UnitStates : MonoBehaviour
         /// The mechanical effect is still generic — <see cref="id"/> decides what the stacks DO; this decides whose
         /// they are.</summary>
         public string sourceSkillId = "";
+        /// <summary>WHICH UNIT put this state on, when that is known — set for ailments, by the newest application. A
+        /// damage-over-time tick credits this unit as the one who cost the target health, so a kill by poison pays
+        /// whoever poisoned it. Null for states nobody in particular applied.</summary>
+        public ICombatUnit appliedBy;
         /// <summary>True when this state was applied as a stacking pile. Decides how <see cref="magnitude"/> READS:
         /// stacking = the sum of per-stack DELTAS (a mult channel is 1 + sum); non-stacking = the absolute value.</summary>
         public bool stacking;
@@ -337,6 +341,7 @@ public class UnitStates : MonoBehaviour
             if (take <= 0) continue;
             s.stacks.RemoveRange(0, take);           // oldest first — spend the stack nearest its expiry
             spent += take;
+            LogStacksGone(s, take, "spent");
             if (s.stacks.Count == 0) { active.RemoveAt(i); pool.Push(s); }
             else s.Refold();
             if (!all && spent >= count) break;
@@ -635,6 +640,7 @@ public class UnitStates : MonoBehaviour
             string owner = armed.sourceSkillId;   // the debt belongs to the skill that armed it, so a consumer can name it
             string symbol = armed.symbol; string label = armed.name; string desc = armed.description;
             armed.stacks.RemoveAt(0);
+            LogStacksGone(armed, 1, "spent");
             if (armed.stacks.Count == 0) { active.RemoveAt(i); pool.Push(armed); }   // out of charges → the armed state (and its tile) go
             else armed.Refold();
 
@@ -706,6 +712,7 @@ public class UnitStates : MonoBehaviour
             s = pool.Count > 0 ? pool.Pop() : new State();
             s.id = id; s.startTime = now; s.nextTick = 0f;
             s.sourceSkillId = ctxSourceId ?? "";
+            s.appliedBy = null;   // a pooled entry must not carry an earlier life's inflictor
             s.stacks.Clear();
             active.Add(s);
         }
@@ -721,7 +728,9 @@ public class UnitStates : MonoBehaviour
         {
             int limit = ctxStackLimit > 0 ? Mathf.Min(ctxStackLimit, MaxStacks) : MaxStacks;
             for (int i = 0; i < ctxStacksPerApply; i++) s.stacks.Add(stack);
+            int overLimit = s.stacks.Count - limit;
             while (s.stacks.Count > limit) s.stacks.RemoveAt(0);   // overflow drops the OLDEST
+            if (overLimit > 0) LogStacksGone(s, overLimit, "dropped over the stack limit");
         }
         s.Refold();
 
@@ -739,7 +748,7 @@ public class UnitStates : MonoBehaviour
         // been granted at all, reading an empty store that was empty only because the reading was done wrong.
         if (GameLog.On(LogCat.Buff))
             GameLog.Info(LogCat.Buff, string.Concat(
-                s.id.ToString(), " x", s.stacks.Count.ToString(), " on ", OwnerName(),
+                OwnerMap(), " ", s.id.ToString(), " x", s.stacks.Count.ToString(), " on ", OwnerName(),
                 " from ", string.IsNullOrEmpty(s.sourceSkillId) ? "(unnamed)" : s.sourceSkillId,
                 " for ", seconds.ToString("0.##"), "s"));
 
@@ -749,7 +758,42 @@ public class UnitStates : MonoBehaviour
 
     /// <summary>Whose store this is, for a log line. The null test is Unity's, so it also catches a store whose
     /// body has been destroyed — a log line must never be the thing that breaks a fight.</summary>
-    string OwnerName() => this != null ? gameObject.name : "somebody";
+    /// <summary>A pile losing stacks, or going altogether — "field_15 Parry on Alpha #1 from skill.sword.parry: 1 spent,
+    /// 0 left". Written at every place a state loses stacks, so a charge that was used and a buff that ran out read as
+    /// the two different things they are. Call BEFORE the state goes back to the pool: its fields are read here.
+    /// <paramref name="wholePile"/> says the pile is going altogether, so nothing is left whatever its list still holds.</summary>
+    void LogStacksGone(State s, int gone, string how, bool wholePile = false)
+    {
+        if (!GameLog.On(LogCat.Buff) || s == null) return;
+        GameLog.Info(LogCat.Buff, string.Concat(new[]
+        {
+            OwnerMap(), " ", s.id.ToString(), " on ", OwnerName(), " from ",
+            string.IsNullOrEmpty(s.sourceSkillId) ? "(unnamed)" : s.sourceSkillId,
+            ": ", gone.ToString(), " ", how, ", ", wholePile ? "0" : s.stacks.Count.ToString(), " left",
+        }));
+    }
+
+    string OwnerName()
+    {
+        var unit = OwnerUnit();
+        return unit != null ? SpawnIds.Label(unit) : this != null ? gameObject.name : "somebody";
+    }
+
+    string OwnerMap()
+    {
+        var unit = OwnerUnit();
+        return unit != null ? SpawnIds.MapOf(unit) : "nowhere";
+    }
+
+    // THE UNIT THIS STORE BELONGS TO, looked up once and only by the log line above: a store always sits on the same
+    // object as the creature or character that owns it.
+    ICombatUnit ownerUnit;
+    bool ownerLooked;
+    ICombatUnit OwnerUnit()
+    {
+        if (!ownerLooked && this != null) { ownerUnit = GetComponent<ICombatUnit>(); ownerLooked = true; }
+        return ownerUnit;
+    }
 
     /// <summary>How many stacks of <paramref name="id"/> are live (0 if absent). The gate reads this for "min stacks".</summary>
     public int StackCount(StateId id)
@@ -770,6 +814,7 @@ public class UnitStates : MonoBehaviour
         int take = all ? s.stacks.Count : Mathf.Clamp(count, 0, s.stacks.Count);
         if (take <= 0) return 0;
         s.stacks.RemoveRange(0, take);           // oldest first — spend the stack nearest its expiry
+        LogStacksGone(s, take, "spent");
         if (s.stacks.Count == 0) { active.Remove(s); pool.Push(s); }
         else s.Refold();
         Recompute();
@@ -814,6 +859,7 @@ public class UnitStates : MonoBehaviour
     {
         var s = Find(id);
         if (s == null) return;
+        LogStacksGone(s, s.stacks.Count, "removed", wholePile: true);
         active.Remove(s);
         pool.Push(s);
         Recompute();
@@ -829,6 +875,7 @@ public class UnitStates : MonoBehaviour
         var s = Find(StateId.Shield);
         if (s == null || s.intAmount <= 0) return 0;
         int soaked = Mathf.Min(s.intAmount, dmg);
+        int barrierStacks = s.stacks.Count;
         // Drain the OLDEST barrier stacks first (same order stacks expire and are spent), so several shields layered
         // on one unit break in a predictable order instead of all thinning at once.
         int left = soaked;
@@ -841,6 +888,8 @@ public class UnitStates : MonoBehaviour
         }
         for (int i = s.stacks.Count - 1; i >= 0; i--)
             if (s.stacks[i].intAmount <= 0) s.stacks.RemoveAt(i);   // spent barrier stacks drop out
+        int broke = barrierStacks - s.stacks.Count;
+        if (broke > 0) LogStacksGone(s, broke, "used up");
         if (s.stacks.Count == 0) { active.Remove(s); pool.Push(s); }   // barrier broke → drop it (and its icon)
         else s.Refold();
         Recompute();
@@ -858,6 +907,7 @@ public class UnitStates : MonoBehaviour
         {
             var s = active[i];
             var st = s.stacks;
+            int stacksBefore = st.Count;
             for (int k = st.Count - 1; k >= 0; k--)
                 if (now >= st[k].endTime)
                 {
@@ -868,6 +918,7 @@ public class UnitStates : MonoBehaviour
                     if (s.id == StateId.DeferredDamage) pendingDebt += st[k].intAmount;
                     st.RemoveAt(k); changed = true;
                 }
+            if (st.Count < stacksBefore) LogStacksGone(s, stacksBefore - st.Count, "ran out");
             if (st.Count == 0) { pool.Push(s); active.RemoveAt(i); changed = true; }
             else s.Refold();
         }
@@ -888,7 +939,11 @@ public class UnitStates : MonoBehaviour
     {
         pendingDebt = 0;   // death clears the slate: nothing owed follows you through a respawn
         if (active.Count == 0) return;
-        for (int i = 0; i < active.Count; i++) pool.Push(active[i]);
+        for (int i = 0; i < active.Count; i++)
+        {
+            LogStacksGone(active[i], active[i].stacks.Count, "cleared", wholePile: true);
+            pool.Push(active[i]);
+        }
         active.Clear();
         Recompute();
         OnChanged?.Invoke();

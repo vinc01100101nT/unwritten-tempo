@@ -278,6 +278,10 @@ public static class GmCommands
     {
         if (c.Ch == null) { c.Reply("No character."); return; }
         c.Ch.Invincible = !c.Ch.Invincible;
+        // WRITTEN AS A STATE, not only as "ran '/invuln'" — the command is a toggle, so the ran line alone cannot say
+        // which way it went, and the log checker needs to know whether a blow landed on somebody who could not be hurt.
+        GameLog.Info(LogCat.Server, string.Concat(SpawnIds.MapOf(c.Ch), " ", SpawnIds.Label(c.Ch),
+                                                  " invincibility ", c.Ch.Invincible ? "on" : "off"));
         c.Reply(c.Ch.Invincible ? "Invincibility ON." : "Invincibility OFF.");
     }
 
@@ -435,7 +439,7 @@ public static class GmCommands
         // THROUGH THE ONE DAMAGE DOOR, not straight into the sink. Reaching past it skipped the rule about who is
         // allowed to change a creature's health, so on a player's machine this popped a number in the billions over
         // a mob that then shrugged it off — the health write was refused, the popup was not.
-        CombatAuthority.ApplyTrue(m.Health, int.MaxValue, KillColor);
+        CombatAuthority.ApplyTrue(m.Health, int.MaxValue, KillColor, "GM kill");
         c.Reply("Killed nearest mob.");
     }
 
@@ -489,7 +493,7 @@ public static class GmCommands
         var snapshot = new List<MonsterAI3D>(MonsterAI3D.Active);   // Die() mutates the live list
         int n = 0;
         foreach (var m in snapshot)
-            if (m != null && m.Health != null && !m.Health.IsDead) { CombatAuthority.ApplyTrue(m.Health, int.MaxValue, KillColor); n++; }
+            if (m != null && m.Health != null && !m.Health.IsDead) { CombatAuthority.ApplyTrue(m.Health, int.MaxValue, KillColor, "GM kill"); n++; }
         c.Reply($"Killed {n} mob(s).");
     }
 

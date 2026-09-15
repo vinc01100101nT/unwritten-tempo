@@ -24,7 +24,9 @@ shows. You do not do the work described in the tasks, and you never change a tas
 ## The two files — the only ones you may write
 
 - **The action plan** — `docs/1-planning/action-plan.md`. Goals are the `## Week N — <title>` headings,
-  each followed by its tasks as `- [ ]` checkboxes. Every task starts with its ID: a main task is
+  each followed by its tasks. A task's status sits in the brackets in front of it — `[DONE]`, `[ON-GOING]`,
+  or empty `[ ]` when it has not started, as the plan's own "How to read it" key says. After the status,
+  every task starts with its ID: a main task is
   `MT-N`, a subtask is indented under it as `ST-N-A` (N = the parent's number). A `## Backlog` section
   follows, then `## Not scheduled at all`. A gate refuses a write to any other file.
 - **The Roadmap page** — `wiki/content/roadmap.json`, one `timeline` block. Its `items` draw top to
@@ -33,8 +35,8 @@ shows. You do not do the work described in the tasks, and you never change a tas
 
 ## Ticking a task
 
-- Tick ONLY the task the request names — by its ID (`MT-12`, `ST-35-A`) or its title — by turning its
-  `- [ ]` into `- [x]`. Nothing else on the line or around it changes. Ticking a main task does NOT tick
+- Tick ONLY the task the request names — by its ID (`MT-12`, `ST-35-A`) or its title — by setting the status in
+  its brackets to `[DONE]`. Nothing else on the line or around it changes. Ticking a main task does NOT tick
   its subtasks; say so if any are still open.
 - A tick means the user says the work is done. Never tick a task because it looks finished.
 - If the request names an ID or title you cannot find exactly, stop and report the closest matches.
@@ -49,7 +51,7 @@ shows. You do not do the work described in the tasks, and you never change a tas
   something you earn") together with its subtasks (ST-35-A …) is the item **"Cards"**.
 - "Ideas for later" follows nothing and never moves.
 
-A goal is **fully done** when every checkbox under it (sub-tasks included) is `[x]`.
+A goal is **fully done** when every task under it (sub-tasks included) is `[DONE]`.
 
 ## Moving the Roadmap — after EVERY tick, and whenever asked
 

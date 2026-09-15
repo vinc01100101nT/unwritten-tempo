@@ -89,7 +89,6 @@ public static class SystemsSceneBuilder
         RigBuilder25D.BuildCursor(gameSystems);         // hardware GameCursor3D (pointer / sword / crosshair)
         gameSystems.AddComponent<DeathScreen>();        // Phase F: "YOU DIED" overlay + respawn (builds its own canvas)
         gameSystems.AddComponent<Sfx>();                // pooled one-shot SFX player (attack/hit/block/footsteps)
-        gameSystems.AddComponent<CombatSfx>();   // "received" impact/whiff cues — clips assigned by hand in the Inspector (no baked defaults)
         gameSystems.AddComponent<MusicDirector>();      // persistent BGM: crossfades to each map's BgmTrack, survives map swaps
         gameSystems.AddComponent<TimeOfDay>();          // real-UTC-anchored day/night clock (2-hour cycle, 12×) + DayIndex + live tuner
         gameSystems.AddComponent<GameCalendar>();       // 4-season / 48-day calendar derived from TimeOfDay.DayIndex (+ OnNewDay/OnSeasonChange)

@@ -37,6 +37,11 @@ public static class Combat
     public static bool Missed(bool crit, int attackerHit, int defenderFlee)
         => !crit && attackerHit >= 0 && !Lands(attackerHit, defenderFlee);
 
+    /// <summary>Whether a worn <paramref name="shield"/> stops one physical blow outright — its block chance, rolled once.
+    /// The one roll for every unit, so a creature's shield blocks exactly as often as a player's does.</summary>
+    public static bool Blocked(Item shield)
+        => shield != null && shield.blockChance > 0f && CombatRng.Chance(shield.blockChance);
+
     /// <summary>
     /// Pre-renewal damage after DEF — the one place the split lives, shared by both directions
     /// (player→mob in <see cref="Health"/>, mob→player in <see cref="Character"/>) so they never drift.

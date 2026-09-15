@@ -109,7 +109,7 @@ public static class ServerAddress
         {
             // A copy that cannot read its own settings must say so and carry on with the built-in defaults —
             // never throw at sign-in, where the player has no way to act on an exception.
-            Debug.LogWarning("[server address] could not read " + SettingsFileName + ": " + e.Message);
+            GameLog.Warn(LogCat.Client, "server address: could not read " + SettingsFileName + ": " + e.Message);
         }
 
         return found;

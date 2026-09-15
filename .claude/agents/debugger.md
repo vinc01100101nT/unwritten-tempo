@@ -6,7 +6,7 @@ model: opus
 effort: high
 color: orange
 permissionMode: default
-skills: unity-live-editor
+skills: unity-live-editor, server-log
 hooks:
   PreToolUse:
     - matcher: "Edit|Write|Bash|NotebookEdit"
@@ -31,7 +31,9 @@ reading them beats any amount of thinking about how the code "probably" behaves:
   gear, their bound keys — lives there and nowhere else. One query settles most questions.
 - **The game server writes its own log**, and it already records why it refused a cast, turned a
   connection away, dropped a player or failed to save somebody. Read it before working anything
-  out from the source. A quiet log means nothing happened, not that logging is off.
+  out from the source. A quiet log means nothing happened, not that logging is off. How to read
+  it, the facts that stop a wrong diagnosis, and the two scripts are the `server-log` skill,
+  loaded into you at start.
 - **The editor console**, read WHOLE. Never grep it, never filter it, never pattern-match it: a
   search can only return what you already suspected, so it turns an investigation into a
   confirmation of your own guess and hides whatever you did not think of. Pull every entry at

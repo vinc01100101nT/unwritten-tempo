@@ -90,6 +90,21 @@ public class NetMob : NetworkBehaviour
     // not been built yet is told by the build instead, so neither order can leave it wearing nothing.
     void OnShadowModelArrived(string _, string now) => (viewVisual as MobShadow3DVisual)?.WearModel(now);
 
+    /// <summary>WHAT THIS CREATURE IS WEARING and the chance each piece is given up, written by the server
+    /// (<see cref="WornList"/>). A watcher dresses its copy in it and draws it on the creature's health bar, and works
+    /// none of it out. PRIVATE for the same reason the map name is: the wire carries it, the saved prefab does not.</summary>
+    [SyncVar(hook = nameof(OnWornArrived))] string worn = "";
+
+    /// <summary>What this creature wears, as the server wrote it (<see cref="WornList"/>) — read by the hover and target
+    /// panel. The same string object until the server sends a different one, so a reader can notice a change by reference.</summary>
+    public string WornText => worn;
+
+    // It landed after this machine had built the body. A body built later is dressed by AdoptView instead.
+    void OnWornArrived(string _, string now)
+    {
+        if (view != null) ApplyWornToView();
+    }
+
     [SyncVar] Vector3 netPosition;
     [SyncVar] float netYaw;
     [SyncVar] int netHealth;
@@ -126,6 +141,18 @@ public class NetMob : NetworkBehaviour
 
     Health serverHealth;
     UnitStatBlock serverBlock;
+
+    // What the real creature wears, and which version of it this shell last put on the wire. The push beat compares
+    // one number, so a creature whose gear has not changed costs nothing.
+    UnitEquipment serverGear;
+    int wornVersionSent = int.MinValue;
+
+    // SERVER: put what the creature wears on the wire.
+    void PublishWorn()
+    {
+        wornVersionSent = serverGear != null ? serverGear.Version : int.MinValue;
+        worn = WornList.Encode(serverGear);
+    }
     // The real creature's mover, cached when the shell is bound. It is the one thing on the server that knows
     // whether this creature is travelling and how fast, and this is read on the push beat — never looked up there.
     PathAgent3D serverAgent;
@@ -174,6 +201,9 @@ public class NetMob : NetworkBehaviour
         if (serverHealth != null) { netMaxHealth = serverHealth.maxHealth; netHealth = serverHealth.CurrentHP; }
         serverBlock = mob != null ? mob.GetComponent<UnitStatBlock>() : null;
         if (serverBlock != null) { netMaxMana = serverBlock.MaxMP; netMana = serverBlock.CurrentMP; }
+        serverGear = mob != null ? mob.GetComponent<UnitEquipment>() : null;
+        // AND WHAT IT WEARS, so the very first message about this creature already says so.
+        PublishWorn();
         if (mob != null)
         {
             // WHERE IT IS INSIDE ITS MAP, not where this machine happens to keep that map — see MapManager's
@@ -232,6 +262,9 @@ public class NetMob : NetworkBehaviour
         // cadence for a slowed creature, neither of which a plain walking/not-walking flag could say.
         netSpeed = serverAgent != null && serverAgent.Moving ? serverAgent.moveSpeed : 0f;
 
+        // WHAT IT WEARS, re-sent only when the worn set has changed — a new life's fresh gear, above all.
+        if (serverGear != null && serverGear.Version != wornVersionSent) PublishWorn();
+
         // BOTH numbers, every push — not just the current one. A creature's maximum is not fixed for life: it
         // levels up, and levelling re-derives its whole stat block including how much health it can hold. Sending
         // only the current figure meant every watching player measured a grown creature's bar against the maximum
@@ -276,6 +309,10 @@ public class NetMob : NetworkBehaviour
     // frame on every creature on screen, and a per-frame component lookup at that rate is exactly what
     // PERFORMANCE.md bans. Null on a flat sprite creature, which has no such driver and needs none.
     Agent3DVisual viewVisual;
+    // The copy's worn set, cached at build time: dressed from what the server wrote, never worked out.
+    UnitEquipment viewGear;
+    readonly System.Collections.Generic.List<WornList.Entry> wornEntries =
+        new System.Collections.Generic.List<WornList.Entry>(5);
     int lastShownHealth = -1;
     int lastShownMaxHealth = -1;
     int lastShownMana = -1;
@@ -368,6 +405,24 @@ public class NetMob : NetworkBehaviour
     {
         MobRespawn.Reactivate(view, MapManager.InWorld(netPosition, mapName));
         SilenceTheBrain(view);
+        // Reviving put its authored gear back on; what it actually wears is what the server says.
+        ApplyWornToView();
+    }
+
+    // DRESS THE WATCHED COPY in what the server says this creature wears — so its swing pose and reach follow the weapon
+    // it really holds. Only on arrival or change.
+    void ApplyWornToView()
+    {
+        WornList.Decode(worn, wornEntries);
+        if (viewGear != null)
+        {
+            viewGear.Clear();
+            for (int i = 0; i < wornEntries.Count; i++)
+            {
+                var e = wornEntries[i];
+                viewGear.Equip(e.def.slot, new EquipmentInstance(e.def) { rarity = e.rarity });
+            }
+        }
     }
 
     void EnsureView()
@@ -447,11 +502,15 @@ public class NetMob : NetworkBehaviour
         lastShownMana = -1;
         lastShownMaxMana = -1;
 
-        // This body does not get to decide it died. It shows a blow — the number, the flash — but the moment
+        // This body does not get to decide it died. It shows a blow — the number — but the moment
         // it is DEAD is a fact that arrives from the server like every other fact about it. Without this, a
         // watching machine's own arithmetic could reach zero first, fire a kill nobody else fired, and tear
         // the body down underneath the shell that speaks for it.
         if (viewHealth != null) viewHealth.MarkAsWatchedCopy();
+
+        // AND WHAT IT WEARS. A reused body still wears the last creature's gear until told.
+        viewGear = go.GetComponent<UnitEquipment>();
+        ApplyWornToView();
     }
 
     // A watched mob must not also be a thinking mob. What remains is a body that follows what the server says.
@@ -506,6 +565,7 @@ public class NetMob : NetworkBehaviour
         view = null;
         viewHealth = null;
         viewVisual = null;
+        viewGear = null;
         WatchedTarget = null;
         viewLoading = false;
     }

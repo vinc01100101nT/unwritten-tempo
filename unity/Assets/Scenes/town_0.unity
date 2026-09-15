@@ -471,7 +471,6 @@ GameObject:
   - component: {fileID: 15493035}
   - component: {fileID: 15493034}
   - component: {fileID: 15493033}
-  - component: {fileID: 15493032}
   - component: {fileID: 15493031}
   m_Layer: 9
   m_Name: Training_Dummy
@@ -493,23 +492,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TrainingDummy
   regenInterval: 5
---- !u!114 &15493032
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 15493030}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a20794ae48d9253438b2c6825e1a6a79, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LootDropper
-  goldMin: 2
-  goldMax: 6
-  goldDropChance: 0.85
-  lootTable: []
-  wornDropChance: 0.15
 --- !u!114 &15493033
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -575,7 +557,6 @@ MonoBehaviour:
   wanderRadius: 0
   wanderPauseMin: 1
   wanderPauseMax: 3
-  attackType: 0
   attack: 0
   attackElement: 0
   onHitAilment: 0
@@ -623,8 +604,6 @@ MonoBehaviour:
   hpRegenPerSecond: 0
   flee: 15
   element: 2
-  flashColor: {r: 1, g: 1, b: 1, a: 1}
-  flashTime: 0.08
   onDeath:
     m_PersistentCalls:
       m_Calls: []

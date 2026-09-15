@@ -55,7 +55,7 @@
   },
   {
    "type": "paragraph",
-   "text": "A monster's equipment **is** its loot table. If you can see it carrying something, that something can fall — there is no separate hidden list of rewards that has nothing to do with the creature in front of you. Materials and coin drop on top of that."
+   "text": "A monster's equipment **is** its loot table. Hover over it, or fight it, and its panel at the top of the screen lists every piece it wears and the chance that piece falls — the rarer the piece, the smaller the chance. What falls lands on the ground where it died: for 10 seconds only the player who earned the kill can pick it up, then anyone can, and it vanishes after a minute if nobody does. Coin goes straight into your purse."
   },
   {
    "type": "list",

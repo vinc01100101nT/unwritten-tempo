@@ -21,6 +21,13 @@ public class PassiveLoadout
 {
     readonly HashSet<string> checkedIds = new HashSet<string>();
 
+    // THE CHARACTER THIS LOADOUT BELONGS TO — never Character.Instance. That handle names whoever is at this
+    // keyboard, which on a server holding twenty people is nobody, so a weapon check through it said "no weapon"
+    // for every player and no weapon-granted passive ever fired there (play-test, 2026-09-14).
+    readonly Character owner;
+
+    public PassiveLoadout(Character owner) { this.owner = owner; }
+
     /// <summary>How many passives a player may tick on at once — the same four a weapon can grant, so the row of
     /// passive slots beside the hotbar has a fixed size and a player has a budget to spend rather than a list
     /// that grows for free. A weapon-granted passive does not count against it: it is live because of the
@@ -43,8 +50,7 @@ public class PassiveLoadout
     public bool GrantedByWeapon(string id)
     {
         if (string.IsNullOrEmpty(id)) return false;
-        var c = Character.Instance;
-        var weapon = c != null ? c.GetEquippedInstance(EquipSlotType.Weapon) : null;
+        var weapon = owner != null ? owner.GetEquippedInstance(EquipSlotType.Weapon) : null;
         var kit = weapon != null ? weapon.skillIds : null;
         if (kit == null) return false;
         for (int i = 0; i < kit.Count; i++) if (kit[i] == id) return true;

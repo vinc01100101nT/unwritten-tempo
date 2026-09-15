@@ -52,8 +52,24 @@ public class UnitEquipment : MonoBehaviour
                     ? new EquipmentInstance(item)
                     : EquipmentInstance.CreateRolled(item);
             }
+        // AND WHATEVER IT PICKS UP AT RANDOM for the places nothing was authored for — a creature on the machine that
+        // owns the world only. A watching machine is told what it wears (NetMob), and a player never gets any.
+        if (WearsRandomGear) CreatureWardrobe.FillEmptyPlaces(equipped);
         dirty = true;
+        version++;
     }
+
+    // A creature the server owns, and not a training dummy — an instrument that must measure raw output and can never
+    // give anything up. Asked only when gear is seated, never per frame.
+    bool WearsRandomGear =>
+        Application.isPlaying && !GameNetwork.TheWorldIsElsewhere &&
+        GetComponent<MonsterAI3D>() != null && GetComponent<TrainingDummy>() == null;
+
+    int version;
+
+    /// <summary>Goes up every time the worn set changes. Lets a watcher of this unit notice a change by comparing one
+    /// number instead of walking the set.</summary>
+    public int Version { get { EnsureSpawnedGear(); return version; } }
 
     /// <summary>A respawn is a fresh creature, so it wears fresh copies: everything is re-rolled from the authored
     /// starting gear. New objects, never the old ones edited — a copy the last life gave up as a drop may be sitting in
@@ -107,6 +123,7 @@ public class UnitEquipment : MonoBehaviour
         if (inst == null) equipped.Remove(slot);
         else equipped[slot] = inst;
         dirty = true;
+        version++;
         return prev;
     }
 
@@ -119,6 +136,7 @@ public class UnitEquipment : MonoBehaviour
         spawned = true;      // a deliberate wipe must not be undone by lazy starting-gear seeding afterwards
         equipped.Clear();
         dirty = true;
+        version++;
     }
 
     /// <summary>Every worn (slot, piece) pair — what a save walks. Skips empty slots.</summary>

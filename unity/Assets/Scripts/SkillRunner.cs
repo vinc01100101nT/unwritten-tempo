@@ -196,11 +196,8 @@ public class SkillRunner : MonoBehaviour, IHotbarSkill
 
     string SkillName() => def != null ? def.id : "(no skill)";
 
-    string CasterName()
-    {
-        var body = Caster != null ? Caster.Body : null;
-        return body != null ? body.name : "somebody";
-    }
+    // "field_15 Alpha #1" — the map and the spawn_id, so a cast line names the same unit the hit lines do.
+    string CasterName() => string.Concat(SpawnIds.MapOf(Caster), " ", SpawnIds.Label(Caster));
 
     /// <summary>Cast this skill for the character the server holds, with the aim already decided by the person who
     /// asked for it. The SERVER'S entry point, and deliberately the same body a press runs — the aiming is all that

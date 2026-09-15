@@ -149,6 +149,9 @@ public class MobRespawn : MonoBehaviour
         // answer changes, so "still far" would early-out and leave it running forever. Re-asserting here keeps the
         // switch's belief and the components in step. (Same class of bug as the sprite/3D-body restore right above.)
         var lod = mob.GetComponent<SimulationLod>(); if (lod != null) lod.Resync();
+
+        // Both ways a creature returns pass through here, so this is the one place the log hears about it.
+        SpawnIds.MobCameBack(health);
     }
 
     // A ground point within homeRadius of home, kept clear of the player; falls back to home.

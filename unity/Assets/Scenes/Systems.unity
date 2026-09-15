@@ -1471,7 +1471,6 @@ GameObject:
   - component: {fileID: 1559929216}
   - component: {fileID: 1559929215}
   - component: {fileID: 1559929214}
-  - component: {fileID: 1559929213}
   - component: {fileID: 1559929212}
   - component: {fileID: 1559929211}
   - component: {fileID: 1559929210}
@@ -1573,38 +1572,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MusicDirector
   masterVolume: 1
---- !u!114 &1559929213
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1559929206}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a8265d92a1fc1f340b43d89c57ef3a11, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CombatSfx
-  hit:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  crit:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  skillHit:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  missMelee:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
-  missRanged:
-    clips: []
-    volume: 1
-    pitch: {x: 0.95, y: 1.05}
 --- !u!114 &1559929214
 MonoBehaviour:
   m_ObjectHideFlags: 0

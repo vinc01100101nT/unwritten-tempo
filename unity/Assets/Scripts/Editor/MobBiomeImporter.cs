@@ -146,7 +146,6 @@ public static class MobBiomeImporter
     {
         def.element = BiomeElement(biome);
         def.attackElement = Element.Neutral;
-        def.flash = Color.white;
         def.tint = Color.white;
         def.touchRange = 0.9f;
         def.touchInterval = 1.0f;

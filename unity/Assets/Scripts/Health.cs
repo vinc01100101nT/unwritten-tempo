@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -42,10 +41,6 @@ public class Health : MonoBehaviour, ICombatUnit
              "so a Fire attack on an Earth mob does extra, on a Water mob is resisted, etc. Neutral = no interaction.")]
     public Element element = Element.Neutral;
 
-    [Header("Hit feedback")]
-    public Color flashColor = Color.white;
-    public float flashTime = 0.08f;
-
     [Tooltip("Invoked once, just before the GameObject is removed.")]
     public UnityEngine.Events.UnityEvent onDeath;
 
@@ -83,6 +78,10 @@ public class Health : MonoBehaviour, ICombatUnit
     /// <summary>The map this creature is in — simply the scene its body lives in, which is true on the machine that
     /// owns it and on every machine watching it, with nothing to keep in step.</summary>
     public string Map => gameObject.scene.name;
+
+    /// <summary>This body's spawn_id — see <see cref="ICombatUnit.Spawn"/>. Kept through death and respawn, because
+    /// a body that comes back is the same creature as far as the log is concerned.</summary>
+    public SpawnTag Spawn { get; set; }
 
     /// <summary>How big this unit's BODY is, for melee-contact maths — read from its brain, which knows whether it is a
     /// character-sized shadow or a shrunken sprite mob. REPORTED rather than folded into a reach, so whoever measures
@@ -197,7 +196,7 @@ public class Health : MonoBehaviour, ICombatUnit
 
     /// <summary>Who last cost this unit health — see <see cref="ICombatUnit.LastAttacker"/>.</summary>
     public ICombatUnit LastAttacker { get; private set; }
-    public void NoteAttacker(ICombatUnit attacker) { if (attacker != null) LastAttacker = attacker; }
+    public void NoteAttacker(ICombatUnit attacker) => LastAttacker = attacker;
 
     // Same shape and same reason as the store above: looked up once, then held.
     StatusController statusHost;
@@ -235,7 +234,9 @@ public class Health : MonoBehaviour, ICombatUnit
     int Mitigate(float rawAfterDefence)
     {
         int landed = UnitMitigation.AfterShield(States, UnitMitigation.Landed(States, rawAfterDefence), out _);
-        return UnitMitigation.Deferred(States, landed, out _);
+        int dealt = UnitMitigation.Deferred(States, landed, out int banked);
+        if (dealt <= 0) CombatAuthority.NoDamage(banked > 0 ? NoDamageReason.Braced : NoDamageReason.Soaked);
+        return dealt;
     }
 
     // Parry — the SAME read the player gets (one primitive, no mob copy to hand-sync). Kept OUT of Mitigate on purpose:
@@ -250,16 +251,10 @@ public class Health : MonoBehaviour, ICombatUnit
     static readonly Color CritColor = new Color(1f, 0.85f, 0.2f);  // a crit pops a gold number
     static readonly Color MagicColor = new Color(0.7f, 0.5f, 1f);  // magic damage is purple
 
-    SpriteRenderer sr;
-    Color baseColor;
-    WaitForSeconds flashWait;   // cached so each hit's Flash() doesn't allocate a new yield instruction
 
     void Awake()
     {
         Current = maxHealth;
-        sr = GetComponent<SpriteRenderer>();
-        baseColor = sr.color;
-        flashWait = new WaitForSeconds(flashTime);
     }
 
     /// <summary>Write in the health the SERVER says this creature has. Only ever called on a mob that is a
@@ -281,7 +276,7 @@ public class Health : MonoBehaviour, ICombatUnit
     }
 
     /// <summary>True on a body that is only a WATCHED COPY of a creature the server owns. Such a copy still shows
-    /// every blow in full — the number, the flash, the impact — but it never decides that the creature DIED. That
+    /// every blow in full — the number and the impact — but it never decides that the creature DIED. That
     /// answer arrives from the server, like every other fact about it.</summary>
     public bool IsWatchedCopy { get; private set; }
 
@@ -291,7 +286,7 @@ public class Health : MonoBehaviour, ICombatUnit
     /// <summary>Take hit points off — the ONE place a blow lowers this unit's health, so the rule about who is
     /// allowed to do that is written once instead of at five separate sinks.
     ///
-    /// <para><b>A watched copy does not do this at all.</b> It still shows the whole blow — the number, the flash,
+    /// <para><b>A watched copy does not do this at all.</b> It still shows the whole blow — the number and
     /// the impact — but its health is the server's to state, and it arrives already correct. Letting the copy
     /// subtract as well means two answers to one question: the copy could reach zero a moment early, count itself
     /// dead, then be corrected back to alive, and the real death — when it came — would find a body that already
@@ -312,6 +307,23 @@ public class Health : MonoBehaviour, ICombatUnit
         if (fx != null && gameObject.activeInHierarchy) fx.Play(() => { });
     }
 
+    // What this unit wears, looked up once on the first blow and never again — found or not — because the lookup would
+    // otherwise run on every hit this unit takes.
+    UnitEquipment wornGear;
+    bool wornGearLooked;
+
+    /// <summary>A worn shield stopping this physical blow outright — the same roll a player's shield makes
+    /// (<see cref="Combat.Blocked"/>), on the same blows. A watched copy tosses no coin: the server already did.</summary>
+    bool BlockedByShield()
+    {
+        if (IsWatchedCopy) return false;
+        if (!wornGearLooked) { wornGear = GetComponent<UnitEquipment>(); wornGearLooked = true; }
+        var shield = wornGear != null ? wornGear.Get(EquipSlotType.Shield) : null;
+        if (shield == null || !Combat.Blocked(shield.def)) return false;
+        if (shield.def.guardSfx != null && !shield.def.guardSfx.Empty) Sfx.Play(shield.def.guardSfx);
+        return true;
+    }
+
     /// <summary>Apply a hit; final damage = max(1, attackerAttack − defense). Returns the damage dealt.</summary>
     public int TakeDamage(int attackerAttack) => TakeDamage(attackerAttack, false, -1);
 
@@ -325,7 +337,7 @@ public class Health : MonoBehaviour, ICombatUnit
     public int TakeDamage(int attackerAttack, bool crit, int attackerHit, Element attackElement = Element.Neutral,
                           bool missed = false, ICombatUnit attacker = null)
     {
-        if (IsDead) return 0;
+        if (IsDead) return CombatAuthority.NoDamage(NoDamageReason.AlreadyDead);
 
         // Accuracy was already rolled by the ATTACKER (Combat.Missed) — we only PRESENT the result, never re-roll it:
         // the roll is random, so a second one could disagree with the number the attacker already acted on. The hit
@@ -333,15 +345,20 @@ public class Health : MonoBehaviour, ICombatUnit
         // (see Character.TakeDamage).
         if (missed)
         {
-            Show(ShownBlow.Miss(RangedAttacker(attacker)), attacker);
-            return 0;
+            Show(ShownBlow.Miss(), attacker);
+            return CombatAuthority.NoDamage(NoDamageReason.Missed);
         }
+        if (BlockedByShield()) return CombatAuthority.NoDamage(NoDamageReason.Guarded);
 
         // Element property: the attack's element vs this unit's armor element scales the damage (RO chart).
         // Neutral-vs-Neutral is 1.0, so default callers are unaffected.
         float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f) { Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker); return 0; }
-        if (Parried()) return 0;
+        if (mod <= 0f)
+        {
+            Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker);
+            return CombatAuthority.NoDamage(NoDamageReason.Immune);
+        }
+        if (Parried()) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
         int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
@@ -349,8 +366,7 @@ public class Health : MonoBehaviour, ICombatUnit
 
         // Impact FROM the mob (spatial). A basic attack (rolled accuracy, attackerHit ≥ 0) → hit/crit;
         // a skill strike (always-lands, attackerHit −1) → the unified skill impact.
-        Show(new ShownBlow(dmg, mod, crit, magic: false, attackerHit >= 0 ? BlowSound.Hit : BlowSound.SkillHit,
-                           flash: true), attacker);
+        Show(new ShownBlow(dmg, mod, crit, magic: false, flash: true), attacker);
         VfxCue.Fire(VfxCue.HitCue(false, crit, attackerHit), transform);
 
         ApplyLeech(this, dmg, attacker);
@@ -363,17 +379,21 @@ public class Health : MonoBehaviour, ICombatUnit
     public int TakeMagicDamage(int attackerMagic, bool crit, Element attackElement = Element.Neutral,
                                ICombatUnit attacker = null)
     {
-        if (IsDead) return 0;
+        if (IsDead) return CombatAuthority.NoDamage(NoDamageReason.AlreadyDead);
 
         float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f) { Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker); return 0; }
-        if (Parried()) return 0;
+        if (mod <= 0f)
+        {
+            Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker);
+            return CombatAuthority.NoDamage(NoDamageReason.Immune);
+        }
+        if (Parried()) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod);
         SubtractHealth(dmg);
 
         // magic = skill impact, spatial from the mob
-        Show(new ShownBlow(dmg, mod, crit, magic: true, BlowSound.SkillHit, flash: true), attacker);
+        Show(new ShownBlow(dmg, mod, crit, magic: true, flash: true), attacker);
         VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
 
         ApplyLeech(this, dmg, attacker);
@@ -389,15 +409,19 @@ public class Health : MonoBehaviour, ICombatUnit
                                        ICombatUnit attacker = null)
     {
         float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f) { Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker); return 0; }
-        if (Parried()) return 0;
+        if (mod <= 0f)
+        {
+            Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker);
+            return CombatAuthority.NoDamage(NoDamageReason.Immune);
+        }
+        if (Parried()) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod);
         bool wasAlive = !IsDead;
         SubtractHealth(dmg);
         // Hit spark + impact SOUND fire on EVERY strike, including overkill beats past death — the per-hit
         // multi-hit SFX must run to the end of the flurry, not cut off the instant the mob's HP hits 0.
-        Show(new ShownBlow(dmg, mod, crit, magic: true, BlowSound.SkillHit, flash: wasAlive), attacker);
+        Show(new ShownBlow(dmg, mod, crit, magic: true, flash: wasAlive), attacker);
         VfxCue.Fire(VfxCueId.OnHitBySkill, transform);
         if (wasAlive)
         {
@@ -414,9 +438,14 @@ public class Health : MonoBehaviour, ICombatUnit
     public int TakeDamageOverkill(int attackerAttack, bool crit, int attackerHit, Element attackElement = Element.Neutral,
                                   ICombatUnit attacker = null)
     {
+        if (BlockedByShield()) return CombatAuthority.NoDamage(NoDamageReason.Guarded);
         float mod = Elements.Modifier(attackElement, element);
-        if (mod <= 0f) { Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker); return 0; }
-        if (Parried()) return 0;
+        if (mod <= 0f)
+        {
+            Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker);
+            return CombatAuthority.NoDamage(NoDamageReason.Immune);
+        }
+        if (Parried()) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
         bool wasAlive = !IsDead;
@@ -424,7 +453,7 @@ public class Health : MonoBehaviour, ICombatUnit
         // Always-lands skill strike → the unified skill impact. Hit spark + impact SOUND on EVERY strike, incl. overkill
         // beats past death — same as the magic path. The cue is chosen by the shared rule, so a basic-attack strike
         // inside a flurry shows the normal or crit cue a player would.
-        Show(new ShownBlow(dmg, mod, crit, magic: false, BlowSound.SkillHit, flash: wasAlive), attacker);
+        Show(new ShownBlow(dmg, mod, crit, magic: false, flash: wasAlive), attacker);
         VfxCue.Fire(VfxCue.HitCue(false, crit, attackerHit), transform);
         if (wasAlive)
         {
@@ -435,33 +464,34 @@ public class Health : MonoBehaviour, ICombatUnit
     }
 
     /// <summary>A flurry beat on a creature that is already dead: the number that beat would have been, and the hit
-    /// cue — and NOTHING else. No health lost, no parry or barrier spent, no flash, no leech, no passive, no death.</summary>
+    /// cue — and NOTHING else. No health lost, no parry or barrier spent, no leech, no passive, no death.</summary>
     int ShowOverkillBeat(in DamageInfo info)
     {
         float mod = Elements.Modifier(info.element, element);
-        if (mod <= 0f) { Show(ShownBlow.Immune(mod, info.isCrit, info.isMagic), info.attacker); return 0; }
+        if (mod <= 0f)
+        {
+            Show(ShownBlow.Immune(mod, info.isCrit, info.isMagic), info.attacker);
+            return CombatAuthority.NoDamage(NoDamageReason.Immune);
+        }
         float afterDefence = info.isMagic
             ? Combat.AfterDefense(info.amount, hardMagicDefPercent, magicDefense, info.isCrit)
             : Combat.AfterDefense(info.amount, hardDefPercent, defense, info.isCrit);
         int shown = Mathf.Max(1, Mathf.RoundToInt(afterDefence * mod));
         // The same impact sound and cue a live beat plays, so a flurry sounds to the end of its count.
-        Show(new ShownBlow(shown, mod, info.isCrit, info.isMagic,
-                           !info.isMagic && info.attackerHit >= 0 ? BlowSound.Hit : BlowSound.SkillHit, flash: false),
-             info.attacker);
+        Show(new ShownBlow(shown, mod, info.isCrit, info.isMagic, flash: false), info.attacker);
         VfxCue.Fire(VfxCue.HitCue(info.isMagic, info.isCrit, info.attackerHit), transform);
         return shown;
     }
 
     /// <summary>Apply raw over-time / reflected damage that bypasses Defense and element (used by
     /// <see cref="StatusController"/> DoTs and damage-reflect). Pops a <paramref name="color"/>-tinted
-    /// number, flashes, and dies exactly once. Does NOT leech (it isn't a player swing).</summary>
+    /// number and dies exactly once. Does NOT leech (it isn't a player swing).</summary>
     public int TakeTrueDamage(int amount, Color color)
     {
         if (IsDead || amount <= 0) return 0;
         int dmg = Mathf.Max(1, amount);
         SubtractHealth(dmg);
         DamagePopup.Spawn(UnitAnchor.Overhead(transform), dmg, color);
-        if (isActiveAndEnabled) StartCoroutine(Flash());
         if (IsDead) Die();
         return dmg;
     }
@@ -480,7 +510,7 @@ public class Health : MonoBehaviour, ICombatUnit
         GameNetwork.AnnounceBlowOnMob(this, attacker, blow);
     }
 
-    /// <summary>Put a blow on screen exactly as it was decided — the digits, the sound, the flash — with no sums: every
+    /// <summary>Put a blow on screen exactly as it was decided — the digits and their colour — with no sums: every
     /// number in <paramref name="blow"/> is already final. The server's own intake and every watching machine draw
     /// through this one function, so one blow cannot be shown two ways.
     ///
@@ -492,8 +522,6 @@ public class Health : MonoBehaviour, ICombatUnit
         if (blow.missed)
         {
             DamagePopup.SpawnText(at, "MISS", MissColor);
-            // Whiff FROM the mob (spatial), melee or ranged by the swinger's weapon.
-            CombatSfx.Miss(transform.position, blow.rangedMiss);
             return;
         }
 
@@ -501,11 +529,6 @@ public class Health : MonoBehaviour, ICombatUnit
         colour.a *= Elements.DamageAlpha(blow.elementModifier);
         if (blow.number > 0) DamagePopup.Spawn(at, blow.number, colour);
         else DamagePopup.SpawnText(at, "0", colour);
-
-        if (blow.sound == BlowSound.Hit) CombatSfx.Hit(transform.position, blow.crit);
-        else if (blow.sound == BlowSound.SkillHit) CombatSfx.SkillHit(transform.position);
-
-        if (blow.flash && isActiveAndEnabled) StartCoroutine(Flash());
     }
 
     // Lifesteal: a fraction of damage dealt to this mob heals the player (RO leech, the mechanical core of
@@ -530,7 +553,7 @@ public class Health : MonoBehaviour, ICombatUnit
             if (vs.ReflectBonus > 0f)
             {
                 int r = Mathf.RoundToInt(dmgDealt * vs.ReflectBonus);
-                if (r > 0) CombatAuthority.ApplyTrue(ch, r, ReflectColor);
+                if (r > 0) CombatAuthority.ApplyTrue(ch, r, ReflectColor, "reflect");
             }
             if (vs.ManaLeechPct > 0f)
             {
@@ -545,26 +568,14 @@ public class Health : MonoBehaviour, ICombatUnit
 
     static readonly Color ReflectColor = new Color(1f, 0.6f, 0.9f);   // damage bounced back at the attacker
 
-    // A Health MISS is always a person swinging at a mob (a mob missing a PERSON pops a white MISS in Character, not
-    // here), so the whiff sounds like THAT person's weapon — read off whoever swung, on the machine that decided the
-    // miss, and carried to every other machine inside the blow.
-    static bool RangedAttacker(ICombatUnit attacker)
-    {
-        var c = attacker as Character;
-        if (c == null) return false;
-        var w = c.GetEquipped(EquipSlotType.Weapon);
-        return w != null && WeaponTypes.IsRanged(w.weaponType);
-    }
-
     /// <summary>Refill to full HP silently — no popup, no color reset (used on a mob LEVEL-UP, which fully
-    /// heals like the player's, but shouldn't spam a giant green heal number or clear a hit flash).</summary>
+    /// heals like the player's, but shouldn't spam a giant green heal number).</summary>
     public void RefillToMax() => Current = maxHealth;
 
-    /// <summary>Reset to full HP and base color (used by <see cref="MobRespawn"/> to bring a mob back).</summary>
+    /// <summary>Reset to full HP (used by <see cref="MobRespawn"/> to bring a mob back).</summary>
     public void Revive()
     {
         Current = maxHealth;
-        if (sr != null) sr.color = baseColor;
 
         // Coming back to life hands this unit's mover + animator back to the simulate-near switch, which stood down
         // while it was a corpse. Done HERE, at the one revive choke, rather than only at the respawn call site: several
@@ -586,19 +597,13 @@ public class Health : MonoBehaviour, ICombatUnit
         CombatAuthority.NoteHPAdded(this, amount);
     }
 
-    IEnumerator Flash()
-    {
-        sr.color = flashColor;
-        yield return flashWait;
-        if (sr != null) sr.color = baseColor;
-    }
-
     void Die()
     {
         // A WATCHED COPY never gets to decide this. Its death is played from the health the server sends
         // (see SetHealthFromServer). Deciding it here as well would announce a kill on every machine that happened
         // to be looking, and dismantle a body the shell speaking for it still owns.
         if (IsWatchedCopy) return;
+        CombatAuthority.LogDeath(this);
 
         // A mob died (mobs only die to the player here) — announce OnKill with the dying mob as victim NOW, before it's
         // pooled/destroyed below (FireAsPassive reads victim.position synchronously). The killing SKILL rides along
@@ -623,9 +628,6 @@ public class Health : MonoBehaviour, ICombatUnit
     }
 }
 
-/// <summary>Which impact sound a shown blow plays.</summary>
-public enum BlowSound : byte { None, Hit, SkillHit }
-
 /// <summary>
 /// A blow on a creature EXACTLY AS IT WAS PUT ON SCREEN, with every number already final — what the server's own intake
 /// draws, and what it tells every watching machine to draw. Nothing in it is an input to a sum: a watching machine that
@@ -643,28 +645,22 @@ public readonly struct ShownBlow
     public readonly bool magic;
     /// <summary>A whiff: "MISS" instead of a number.</summary>
     public readonly bool missed;
-    /// <summary>The whiff of a bow or a firearm rather than a blade.</summary>
-    public readonly bool rangedMiss;
-    public readonly BlowSound sound;
-    /// <summary>The creature was alive to be hit, so it flashes — a flurry beat past its death does not.</summary>
+    /// <summary>The creature was alive to be hit, so it staggers — a flurry beat past its death does not.</summary>
     public readonly bool flash;
 
-    public ShownBlow(int number, float elementModifier, bool crit, bool magic, BlowSound sound, bool flash,
-                     bool missed = false, bool rangedMiss = false)
+    public ShownBlow(int number, float elementModifier, bool crit, bool magic, bool flash, bool missed = false)
     {
         this.number = number;
         this.elementModifier = elementModifier;
         this.crit = crit;
         this.magic = magic;
-        this.sound = sound;
         this.flash = flash;
         this.missed = missed;
-        this.rangedMiss = rangedMiss;
     }
 
-    public static ShownBlow Miss(bool ranged) =>
-        new ShownBlow(0, 1f, false, false, BlowSound.None, false, missed: true, rangedMiss: ranged);
+    public static ShownBlow Miss() =>
+        new ShownBlow(0, 1f, false, false, false, missed: true);
 
     public static ShownBlow Immune(float elementModifier, bool crit, bool magic) =>
-        new ShownBlow(0, elementModifier, crit, magic, BlowSound.None, false);
+        new ShownBlow(0, elementModifier, crit, magic, false);
 }

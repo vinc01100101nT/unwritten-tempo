@@ -66,6 +66,26 @@ public static class PassiveEvents
 
     public static void Pop(Cause prev) { chain = prev.chain; causeSkillId = prev.skillId; }
 
+    // A PASSIVE THAT DID NOT FIRE, AND WHY — "field_15 Alpha #1 skipped skill.sword.encore on OnKill — not switched on".
+    // "It never fired" used to be provable only by a missing line, which cannot tell a passive that was turned away
+    // from one that was never asked. Only the reasons a player could act on are written: a skill that simply does not
+    // answer this moment is not a skip. Behind the switch, because moments like a landed hit fire per blow.
+    static void Skipped(ICombatUnit actor, SkillDef def, SkillTrigger trigger, string why)
+    {
+        if (!GameLog.On(LogCat.Passive)) return;
+        GameLog.Info(LogCat.Passive, string.Concat(new[]
+        {
+            SpawnIds.MapOf(actor), " ", SpawnIds.Label(actor), " skipped ", def.id, " on ", trigger.ToString(), " — ", why,
+        }));
+    }
+
+    static void SkippedOutOfRange(ICombatUnit actor, SkillDef def, SkillTrigger trigger, Vector3 gap)
+    {
+        if (!GameLog.On(LogCat.Passive)) return;
+        Skipped(actor, def, trigger, string.Concat("target ", gap.magnitude.ToString("0.##"), " units away, cast range ",
+                                                   def.castRange.ToString("0.##")));
+    }
+
     /// <summary>Fire a passive trigger AT <paramref name="actor"/> — the unit the moment happened to. Only that
     /// unit's own passives are considered. For <see cref="SkillTrigger.OnSkillCastComplete"/>,
     /// <paramref name="skillId"/> is the completed active's id and only the passive keyed to it runs; the natural
@@ -102,7 +122,7 @@ public static class PassiveEvents
             // THE OWNERSHIP GATE: a runner exists for every authored skill, but a passive only RUNS when this
             // character ticked it on in the Grimoire or their equipped weapon rolled it. Read off THEIR loadout, not
             // off whoever happens to be at a keyboard.
-            if (owner != null && !owner.PassiveSkills.IsActive(def)) continue;
+            if (owner != null && !owner.PassiveSkills.IsActive(def)) { Skipped(actor, def, trigger, "not switched on"); continue; }
 
             // THE SAME REACH ITS PRESSED FORM HAS. A skill whose manual cast makes you PICK a target can only pick
             // one inside its cast range — the picker is built with that number. Fired by a moment instead of by a
@@ -119,18 +139,22 @@ public static class PassiveEvents
                 if (from != null)
                 {
                     Vector3 gap = victim.position - from.position; gap.y = 0f;
-                    if (gap.sqrMagnitude > def.castRange * def.castRange) continue;
+                    if (gap.sqrMagnitude > def.castRange * def.castRange) { SkippedOutOfRange(actor, def, trigger, gap); continue; }
                 }
             }
 
             // THE BRAKE: skip a passive already in this causal chain (it, or something it caused, led here). Unrelated
             // passives are untouched — "passive A kills, passive B reacts" stays legal.
             ulong bit = 1UL << i;
-            if ((chain & bit) != 0UL) continue;
+            if ((chain & bit) != 0UL) { Skipped(actor, def, trigger, "already part of this chain"); continue; }
 
             // THE GATE: a trigger that requires a state doesn't run at all when unmet — no VFX, no cast. Asked of the
             // caster's own store rather than through a component, so an unmet gate also costs nothing to build.
-            if (!StateGate.IsMet(entry, owner != null ? owner.States : (runners[i] != null ? runners[i].CasterStates : null))) continue;
+            if (!StateGate.IsMet(entry, owner != null ? owner.States : (runners[i] != null ? runners[i].CasterStates : null)))
+            {
+                Skipped(actor, def, trigger, "its required state is not met");
+                continue;
+            }
 
             // ONLY NOW is the component built, if this is the first time this person has fired this passive.
             var r = owner != null ? owner.RunnerAt(i) : runners[i];
@@ -148,16 +172,19 @@ public static class PassiveEvents
                 string how = "";
                 if (victim != null)
                 {
+                    // perf-ok: only with the passive category on, and only when a passive actually fires
+                    var victimUnit = victim.GetComponent<ICombatUnit>();
+                    string victimName = victimUnit != null ? SpawnIds.Label(victimUnit) : victim.name;
                     var from = actor.Body;
                     if (from != null)
                     {
                         Vector3 d = victim.position - from.position; d.y = 0f;
-                        how = string.Concat(" at ", victim.name, ", ", d.magnitude.ToString("0.##"), " units away");
+                        how = string.Concat(" at ", victimName, ", ", d.magnitude.ToString("0.##"), " units away");
                     }
-                    else how = string.Concat(" at ", victim.name);
+                    else how = string.Concat(" at ", victimName);
                 }
                 GameLog.Info(LogCat.Passive, string.Concat(
-                    owner != null ? owner.name : "somebody", " fired ", def.id, " on ", trigger.ToString(), how));
+                    SpawnIds.MapOf(actor), " ", SpawnIds.Label(actor), " fired ", def.id, " on ", trigger.ToString(), how));
             }
 
             r.FireAsPassive(entry, victim, chain | bit);   // fire the whole skill; the chain it hands to its own effects includes itself

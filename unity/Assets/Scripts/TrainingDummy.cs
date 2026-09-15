@@ -63,6 +63,12 @@ public class TrainingDummy : MonoBehaviour
         // It never dies, so the recycle and death effects would never fire — dropped so it stays predictable.
         Strip<MobRespawn>(go);
         Strip<DeathDissolve>(go);
+        // A GM kill command CAN kill it, and a dummy that kept its drop paid gold to whoever had been hitting it.
+        Strip<LootDropper>(go);
+        // NOTHING WORN, including whatever it was handed at random as it was built: an instrument has no gear, and its
+        // health bar must not list pieces it can never give up.
+        var gear = go.GetComponent<UnitEquipment>();
+        if (gear != null) gear.Clear();
 
         var sr = go.GetComponent<SpriteRenderer>();
         if (sr != null) sr.color = new Color(0.7f, 0.72f, 0.78f);   // slate-gray "training" tint
@@ -86,7 +92,7 @@ public class TrainingDummy : MonoBehaviour
         if (timer >= regenInterval)
         {
             timer = 0f;
-            health.Revive();   // resets Current to maxHealth (and clears the hit-flash tint)
+            health.Revive();   // resets Current to maxHealth
         }
     }
 }

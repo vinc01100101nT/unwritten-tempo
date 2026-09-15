@@ -33,7 +33,7 @@ public enum LogCat
     /// against 53 lines that said anything, which is what buried the findings.</summary>
     Census,
 
-    /// <summary>A blow landing, or being refused, and why.</summary>
+    /// <summary>A blow landing, or being refused, and why — and a unit dying, and who the kill is credited to.</summary>
     Hit,
 
     /// <summary>A passive skill firing.</summary>
@@ -50,6 +50,9 @@ public enum LogCat
 
     /// <summary>What a kill paid, and who it went to.</summary>
     Loot,
+
+    /// <summary>A unit gaining health, and which skill gave it when one did.</summary>
+    Heal,
 }
 
 /// <summary>
@@ -115,7 +118,7 @@ public static class GameLog
     public static readonly LogCat[] AllCategories =
     {
         LogCat.Unwritten, LogCat.Server, LogCat.Net, LogCat.Client, LogCat.Map, LogCat.Spawn, LogCat.Census,
-        LogCat.Hit, LogCat.Passive, LogCat.Buff, LogCat.Cast, LogCat.Command, LogCat.Loot,
+        LogCat.Hit, LogCat.Passive, LogCat.Buff, LogCat.Cast, LogCat.Command, LogCat.Loot, LogCat.Heal,
     };
 
     /// <summary>The lower-case word in square brackets at the head of the line. A tester filters the file on
@@ -137,6 +140,7 @@ public static class GameLog
             case LogCat.Cast:      return "cast";
             case LogCat.Command:   return "command";
             case LogCat.Loot:      return "loot";
+            case LogCat.Heal:      return "heal";
             default:               return "log";
         }
     }
@@ -165,14 +169,37 @@ public static class GameLog
 
         if (off == 0)
         {
-            Debug.Log("[" + Tag(LogCat.Unwritten) + "] every kind of log line is switched on. Quieten one with "
+            Debug.Log(Head(LogCat.Unwritten) + "every kind of log line is switched on. Quieten one with "
                       + "'/log <name> off' — '/log' on its own lists them.");
             return;
         }
 
-        Debug.Log("[" + Tag(LogCat.Unwritten) + "] THIS LOG IS NOT TELLING YOU ABOUT: " + sb
+        Debug.Log(Head(LogCat.Unwritten) + "THIS LOG IS NOT TELLING YOU ABOUT: " + sb
                   + ".  Switch one on with '/log <name> on', or all of them with '/log all on'. "
                   + "'/log' on its own shows every category and its state. Warnings and errors always print.");
+    }
+
+    /// <summary>The name of the setting on the server's start command that switches categories on before anybody
+    /// arrives — so a play-test does not begin with somebody retyping '/log hit on' after every restart.</summary>
+    public const string StartSettingName = "LOG_CATEGORIES";
+
+    /// <summary>Switch on the categories named in <see cref="StartSettingName"/>: category names separated by commas
+    /// or spaces, or "all". Only switches ON — the defaults stay as they are for anything not named. A word that is
+    /// not a category is refused out loud rather than ignored. Called once, as the server starts.</summary>
+    public static void ApplyStartSetting()
+    {
+        string setting = System.Environment.GetEnvironmentVariable(StartSettingName);
+        if (string.IsNullOrWhiteSpace(setting)) return;
+
+        var words = setting.Split(new[] { ',', ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
+        for (int i = 0; i < words.Length; i++)
+        {
+            if (string.Equals(words[i], "all", System.StringComparison.OrdinalIgnoreCase)) { SetAll(true); continue; }
+            if (TryParse(words[i], out var cat)) Set(cat, true);
+            else Warn(LogCat.Unwritten, StartSettingName + " names '" + words[i] + "', which is not a log category. "
+                                        + Describe());
+        }
+        Info(LogCat.Unwritten, StartSettingName + " applied — " + Describe());
     }
 
     /// <summary>Every category and whether it is on right now — what a tester reads to know what it is missing.
@@ -213,14 +240,22 @@ public static class GameLog
     public static void Info(LogCat cat, string message, Object context = null)
     {
         if (!On(cat)) return;
-        Debug.Log("[" + Tag(cat) + "] " + message, context);
+        Debug.Log(Head(cat) + message, context);
     }
 
     /// <summary>Something is wrong but the game carries on. ALWAYS printed — a switch never hides it.</summary>
     public static void Warn(LogCat cat, string message, Object context = null)
-        => Debug.LogWarning("[" + Tag(cat) + "] " + message, context);
+        => Debug.LogWarning(Head(cat) + message, context);
 
     /// <summary>Something is broken. ALWAYS printed — a switch never hides it.</summary>
     public static void Error(LogCat cat, string message, Object context = null)
-        => Debug.LogError("[" + Tag(cat) + "] " + message, context);
+        => Debug.LogError(Head(cat) + message, context);
+
+    /// <summary>"2026-09-15 23:27:14.382 [hit] " — the start of every line. THE TIME, TO THE MILLISECOND, comes first
+    /// so two lines can be measured against each other: without it nothing in the log could say whether five blows
+    /// landed in one second or in thirty. The DATE is there because a play-test can run past midnight, and a time alone
+    /// then sorts the small hours before the evening. Read from the world's clock, shown in this machine's own time
+    /// zone.</summary>
+    static string Head(LogCat cat) =>
+        string.Concat(WorldClock.UtcNow.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"), " [", Tag(cat), "] ");
 }

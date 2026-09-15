@@ -15,6 +15,43 @@ public static class ItemCatalog
     static Dictionary<string, Item> itemsById;
     static Dictionary<string, Card> cardsByName;
 
+    // Every item, split once into what is worn in each place and what is not worn at all. Built on first ask and kept.
+    static Dictionary<EquipSlotType, List<Item>> wornBySlot;
+    static List<Item> unworn;
+
+    static void EnsurePools()
+    {
+        if (wornBySlot != null) return;
+        wornBySlot = new Dictionary<EquipSlotType, List<Item>>();
+        unworn = new List<Item>();
+        foreach (var it in Resources.LoadAll<Item>("Items"))
+        {
+            if (it == null) continue;
+            if (it.slot == EquipSlotType.None)
+            {
+                // A quest item is never put down, so it is never handed out at random either.
+                if (it.category != ItemCategory.Quest) unworn.Add(it);
+                continue;
+            }
+            if (!wornBySlot.TryGetValue(it.slot, out var list)) wornBySlot[it.slot] = list = new List<Item>();
+            list.Add(it);
+        }
+    }
+
+    /// <summary>A random item worn in <paramref name="slot"/>, or null when no such item exists.</summary>
+    public static Item RandomFor(EquipSlotType slot)
+    {
+        EnsurePools();
+        return wornBySlot.TryGetValue(slot, out var list) && list.Count > 0 ? list[CombatRng.Range(0, list.Count)] : null;
+    }
+
+    /// <summary>A random item that is not worn — a potion, a food, a material — and never a quest item. Null when none exists.</summary>
+    public static Item RandomUnworn()
+    {
+        EnsurePools();
+        return unworn.Count > 0 ? unworn[CombatRng.Range(0, unworn.Count)] : null;
+    }
+
     /// <summary>The shared <see cref="Item"/> definition for a saved id, or null if it no longer exists.</summary>
     public static Item Resolve(string id)
     {

@@ -6,7 +6,7 @@ model: opus
 effort: high
 color: red
 permissionMode: default
-skills: reviewer
+skills: reviewer, server-log
 hooks:
   PreToolUse:
     - matcher: "Edit|Write|Bash|NotebookEdit"

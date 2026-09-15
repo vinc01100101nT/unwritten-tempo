@@ -81,6 +81,11 @@ CHAR_SERVER_URL=http://127.0.0.1:8081 SERVER_SECRET=change-me MAP_SERVER_ADDRESS
   | tee logs/server.log
 ```
 
+**To start with log categories already switched on**, put `LOG_CATEGORIES=` in front of the command with the
+categories you want, separated by commas — `LOG_CATEGORIES=hit,passive,buff,cast` — or `LOG_CATEGORIES=all`. It
+only switches categories on; the server writes a line saying what it applied, and refuses a word that is not a
+category by name. See [Reading the Game Log](../../0-process/reading-the-game-log.md).
+
 **It keeps its log now.** Everything the server decides — a refused cast, a connection turned away, a character it
 could not write down, a map that would not come up — goes to `logs/server.log` as well as to your screen, and the run
 before it is kept as `logs/server-prev.log`. It used to go only to the terminal, which meant the one account of what

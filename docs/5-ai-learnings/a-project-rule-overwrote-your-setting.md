@@ -1,15 +1,15 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-07
+last-updated: 2026-09-15
 tags:
   - ai-learnings
 ---
 
 # A Project Rule Overwrote the Setting You Just Wrote
 
-**Reach for this when:** you changed a setting through an API, the call returned success, and reading the value
-back shows the OLD one — and it is not a stale read, because it still reads old minutes later.
+**Reach for this when:** you changed a setting or re-saved files through an API, the call returned success, and
+reading the result back shows the OLD value — and it is not a stale read, because it still reads old minutes later.
 
 ## The rule
 
@@ -39,7 +39,16 @@ imported into an empty folder — showed the default did *not* do what I had cla
 reproduce it in isolation before writing it down; a plausible cause sitting next to measured numbers reads as
 measured too.
 
+**The same symptom has a second cause: the write never happened at all.** 2026-09-15, re-saving 86 generated
+prefabs to drop a field deleted from the code. Unity's force re-save call returned success, and all 86 files still
+held the field. No hook was involved — every file's modified time was still three days old, so nothing had been
+written. Loading each prefab and saving it through the prefab save call removed the field from all 86. Counting the
+files that still held the old value caught it at once; the success message alone would have been reported as done.
+
 ## How to apply
+
+- **Check the file's modified time first.** Unchanged means the write never happened, so look at the call itself,
+  not at hooks. Changed but still old means something rewrote it afterwards, which is the hook case below.
 
 - **Before the change**, grep for the setting's own name and for the hook types that can rewrite it:
   ```bash

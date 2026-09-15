@@ -16,18 +16,20 @@ metadata:
 - **The one sum:** `EquipmentInstance.AddPieceInto` — rolled armour adds `Rarities.Lifted(def/mdef)` (×1+0/3/9/18/30%)
   and each rolled stat + `Rarities.StatExtra` (+0/1/2/3/5); a WEAPON adds its flat fields with ATK/M.ATK lifted by
   the same ladder; anything unrolled adds its flat fields as authored. Refine and cards are added after, unlifted.
-  Tooltip (`AppendCopyStats`), bag column (`InventoryList.StatValue`) and the stat sheet all read this.
+  The tooltip (`AppendCopyStats`) and the stat sheet read this.
 - **Persistence:** `EncodeRoll`/`DecodeRoll` = "def,mdef,6 stats"; anything not exactly 8 ints loads UNROLLED (never a
   fake zero). `SaveData` v11 `equipRolls`/`bagRolls`; `BagWire.rolls`/`wornRolls`; `Character.CaptureWornInto` /
   `RestoreWornFrom` gained a `rolls` parameter. Older saves load every piece unrolled with flat bonuses.
-- **Creatures:** `UnitEquipment.SeatStartingGear` seats `CreateRolled` copies — so a creature's WEAPON also rolls a
+- **Creatures:** on the server, `UnitEquipment.SeatStartingGear` seats `CreateRolled` copies (a watching player's
+  machine seats plain `new EquipmentInstance(item)` copies and rolls nothing) — so a creature's WEAPON also rolls a
   random rarity + kit per life (only the Axolot wears one today; the user has NOT yet been asked whether that is
   wanted). `MobRespawn.Reactivate` calls `ReseatForNewLife` (fresh objects — a dropped copy may be in a bag) then
   re-derives. `LootDropper` hands over the worn INSTANCE (`wonWorn`) via `Rewards.PayLoot(winner, items, worn, gold)`.
 - **Decisions made by the session, flagged in the plan:** head's DEF and M.DEF roll independently; block chance
   stays authored and unlifted; refine unlifted; no starter armour (`SeedBag` skips rolled slots); Garment's bag
   column shows M.DEF.
-- **Gotchas:** no armour `Item` exists yet, so no roll has ever produced a real piece; all-zero ranges roll DEF 0
+- **Gotchas:** the first armour items were authored 2026-09-15 (`item.leather-cap`, `item.padded-vest`,
+  `item.travellers-cloak`, `item.wooden-buckler`) and none has been rolled in play yet; all-zero ranges roll DEF 0
   with `rolled = true`. A watched creature copy on a client rolls its OWN local numbers — harmless until creatures
   wear rolled armour, then a hit's on-screen number uses the client's DEF roll. The Armor tab of the item table
   edits the RANGES (`DrawRange`, red when max < min) and hides rarity.

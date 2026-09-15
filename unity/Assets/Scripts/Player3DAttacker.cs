@@ -175,7 +175,7 @@ public class Player3DAttacker : MonoBehaviour
             wasOutOfReach = outOfReach;
             if (GameLog.On(LogCat.Hit))
                 GameLog.Info(LogCat.Hit, outOfReach
-                    ? string.Concat("CANNOT REACH ", t.name, " — it is ", PlanarDist(t).ToString("0.###"),
+                    ? string.Concat(SpawnIds.MapOf(t), " CANNOT REACH ", SpawnIds.Label(t), " — it is ", PlanarDist(t).ToString("0.###"),
                                     " away and this weapon reaches ", RangeAgainst(t).ToString("0.###"))
                     : "target back in reach");
         }

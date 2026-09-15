@@ -84,10 +84,11 @@ Every task carries:
 - [ ] `MT-6` **`[A]` Author the ring as a real item.** Every character wears a "Ring of Beginnings" the game builds in memory as it loads, because no ring item exists. The game already prefers an authored one, so no code changes. — **0.5 days**
   *Done when:* a ring exists alongside the other items — created with **Create ▸ unwritten ▸ Item**, filled in through **Tools ▸ unwritten ▸ Catalogs ▸ Items ▸ Rings** — and a freshly created character wears that one rather than the invented one.
 
-- [ ] `MT-7` **`[A]` Author the first four pieces of gear** — the low tier of each place you chose. Name, place on the body, the range its main job and main stats roll within, how much each rarity tier adds, and sell value. Each is created singly with **Create ▸ unwritten ▸ Item**, then filled in as a batch in **Tools ▸ unwritten ▸ Catalogs ▸ Items ▸ Armor**. — **2–3 days**
+- [ON-GOING] `MT-7` **`[A]` Author the first four pieces of gear** — the low tier of each place you chose. Name, place on the body, the range its main job and main stats roll within, how much each rarity tier adds, and sell value. Each is created singly with **Create ▸ unwritten ▸ Item**, then filled in as a batch in **Tools ▸ unwritten ▸ Catalogs ▸ Items ▸ Armor**. — **2–3 days**
   *Done when:* you can wear one piece in each of the four places and watch the character sheet numbers move for each.
+  Built 2026-09-15: Leather Cap (head), Padded Vest (armour), Traveller's Cloak (garment) and Wooden Buckler (shield) are authored. Waiting on a play-test.
 
-- [ ] `MT-8` **`[D]` Decide how rare gear should be.** A creature gives up what it wears 15 times in 100 today; a worn ring is 1 in 100,000. *Recommendation: leave both alone until Week 4 puts real fights in front of you, then judge once.* — **0.25 days**
+- [ ] `MT-8` **`[D]` Decide how rare gear should be.** A creature gives up what it wears on a chance by the piece's rarity today — 20% Common down to 1% Legendary; a worn ring is 1 in 100,000. *Recommendation: leave both alone until Week 4 puts real fights in front of you, then judge once.* — **0.25 days**
 
 ---
 
@@ -109,7 +110,7 @@ Every task carries:
 
 **Goal:** the phase that turns two months of finished combat into a game. You kill something, gear falls out, you put it on, your character sheet changes.
 
-Today that works for exactly one creature in the whole game: an Axolot wears a sword and gives it up 15 times in 100. The other 85 give nothing but gold — all 86 have an empty drop list.
+Today every creature puts on random pieces as it spawns and can give them up, plus a 30% chance of one random item that isn't equipment — a stand-in until drop tables are authored. All 86 still have an empty drop list.
 
 - [ ] `MT-12` **`[A]` Author the drop tables.** A drop list on each of the 86 creatures: which items, at what chance. Creatures can also simply **wear** gear — what a creature wears is what it can give up, so putting a sword on a bandit needs no separate list. — **3–4 days**
   *Done when:* every creature has at least one thing it can give, and the wiring sweep reports no unresolved names.

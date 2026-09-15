@@ -171,8 +171,16 @@ public class MonsterAI3D : MonoBehaviour
     /// the player's, so it can always be dodged.</summary>
     public int BasicHit => Mathf.Max(0, hit);   // any accuracy debuff is already folded into `hit` by UnitStatBlock
 
-    /// <summary>The element our attack carries.</summary>
-    public Element BasicElement => attackElement;
+    /// <summary>The element our attack carries: the held weapon's, exactly as a player's is, or this creature's own
+    /// natural element while its hands are empty.</summary>
+    public Element BasicElement
+    {
+        get
+        {
+            var w = Equipment != null ? Equipment.Get(EquipSlotType.Weapon) : null;
+            return w != null && w.def != null ? w.def.element : attackElement;
+        }
+    }
 
     // Derived by UnitStatBlock from the primaries, gear and the ring through the player's own formulas — never authored.
     [System.NonSerialized] public float critChance;
@@ -201,7 +209,13 @@ public class MonsterAI3D : MonoBehaviour
     }
 
     /// <summary>Seconds between our swings at our current attack speed — the same interval the attack site waits.</summary>
-    public float SwingTime => UnitOffense.AttackInterval(touchInterval, MobStates != null ? MobStates.AttackSpeedBuffMult : 1f);
+    public float SwingTime => UnitOffense.AttackInterval(touchInterval,
+        attackSpeedMult > 0f ? attackSpeedMult : (MobStates != null ? MobStates.AttackSpeedBuffMult : 1f));
+
+    /// <summary>Our swing speed, stamped by <see cref="UnitStatBlock"/> through the player's own formula — AGI, DEX, worn
+    /// attack speed, the ring and any live attack-speed buff. Below zero until stamped (a watching machine's copy, a
+    /// training dummy), which falls back to the buff alone.</summary>
+    [System.NonSerialized] public float attackSpeedMult = -1f;
 
     /// <summary>RO-style spread, then our own damage buffs/debuffs — the SAME call the player's roll makes, so "cut
     /// this mob's damage" lands on a mob exactly as it would on the player. A crit hits for full attack × our crit
@@ -339,7 +353,7 @@ public class MonsterAI3D : MonoBehaviour
         // several people can be swinging at the same creature. It used to pay the one player at this keyboard,
         // which on a server is nobody at all.
         if (Health != null)
-            Health.onDeath.AddListener(() => Rewards.PayForKill(Rewards.WhoEarned(Health), xpReward));
+            Health.onDeath.AddListener(() => Rewards.PayForKill(Rewards.WhoEarned(Health), xpReward, Health));
 
         nextWander = Time.time + Random.value;
     }
@@ -497,7 +511,7 @@ public class MonsterAI3D : MonoBehaviour
         if (onHitAilmentChance <= 0f) return;
         var ps = Prey != null ? Prey.StatusHost : null;
         if (ps != null && CombatRng.Chance(onHitAilmentChance))
-            ps.Apply(onHitAilment, onHitAilmentSeconds, onHitAilmentMagnitude);
+            ps.Apply(onHitAilment, onHitAilmentSeconds, onHitAilmentMagnitude, Health);
     }
 
     void Update()
@@ -585,12 +599,12 @@ public class MonsterAI3D : MonoBehaviour
                 Vector3 from = UnitAnchor.Center(transform);
                 Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
                     from, player, UnitAnchor.Center(player), projSpeed, 0.45f, 3f, LandRangedHit,
-                    this, null, atk, attackElement, crit, missed, effHit);
+                    this, null, atk, BasicElement, crit, missed, effHit);
             }
             else
             {
                 int dealt = CombatAuthority.Apply(Prey,
-                    new DamageInfo(atk, attackElement, isCrit: crit, attackerHit: effHit, source: this, missed: missed, attacker: Health));      // physical: the crit and the HIT vs FLEE result, rolled above
+                    new DamageInfo(atk, BasicElement, isCrit: crit, attackerHit: effHit, source: this, missed: missed, attacker: Health));      // physical: the crit and the HIT vs FLEE result, rolled above
                 if (dealt > 0)
                 {
                     TryInflictOnHit();

@@ -99,6 +99,13 @@ public class Character : MonoBehaviour, ICombatUnit
     bool computeHere;
     bool Told => !computeHere && (IsWatchedCopy || GameNetwork.TheWorldIsElsewhere);
 
+    // Until the server's first sheet arrives, every told value below is still its placeholder zero.
+    bool sheetArrived;
+
+    /// <summary>False only while this character is waiting for the server's first sheet — a screen draws no numbers
+    /// from it until then, or it shows "0-0" and "next +0 at 0" for the half second before the sheet lands.</summary>
+    public bool SheetReady => !Told || sheetArrived;
+
     DerivedSnapshot toldCurrent = DerivedSnapshot.Neutral;
     DerivedSnapshot toldBaseline = DerivedSnapshot.Neutral;
     DerivedSnapshot toldWithStates = DerivedSnapshot.Neutral;
@@ -107,12 +114,14 @@ public class Character : MonoBehaviour, ICombatUnit
     readonly int[] toldRaiseCost = { -1, -1, -1, -1, -1, -1 };
     readonly int[] toldJumpAt = new int[6];
     readonly int[] toldJumpGain = new int[6];
+    readonly int[] toldGearStat = new int[6];
 
     /// <summary>The sheet the server derived for this character — the three views, and per stat its next point's cost
-    /// (-1 at the cap) and its next jump. Arrays are indexed by <see cref="PrimaryStat"/>.</summary>
+    /// (-1 at the cap), its next jump and what worn gear adds to it. Arrays are indexed by <see cref="PrimaryStat"/>.</summary>
     public void SetSheetFromServer(in DerivedSnapshot current, in DerivedSnapshot baseline, in DerivedSnapshot withStates,
-                                   int[] raiseCost, int[] jumpAt, int[] jumpGain)
+                                   int[] raiseCost, int[] jumpAt, int[] jumpGain, int[] gearStat)
     {
+        sheetArrived = true;
         toldCurrent = current;
         toldBaseline = baseline;
         toldWithStates = withStates;
@@ -121,6 +130,7 @@ public class Character : MonoBehaviour, ICombatUnit
             toldRaiseCost[i] = raiseCost != null && i < raiseCost.Length ? raiseCost[i] : -1;
             toldJumpAt[i] = jumpAt != null && i < jumpAt.Length ? jumpAt[i] : 0;
             toldJumpGain[i] = jumpGain != null && i < jumpGain.Length ? jumpGain[i] : 0;
+            toldGearStat[i] = gearStat != null && i < gearStat.Length ? gearStat[i] : 0;
         }
     }
 
@@ -131,6 +141,9 @@ public class Character : MonoBehaviour, ICombatUnit
     public int JumpGainAt(PrimaryStat s) => Told ? toldJumpGain[(int)s] : UnitStatMath.JumpGainAt(NextJumpAt(s));
 
     public int EffectiveStat(PrimaryStat s) => P(s);
+
+    /// <summary>What worn gear adds to <paramref name="s"/> — told by the server on a player's machine, which adds nothing up.</summary>
+    public int GearStat(PrimaryStat s) => Told ? toldGearStat[(int)s] : equipBonuses.Stat(s);
     // EFFECTIVE primary stat = allocated points + equipment/card bonuses. Every derived/combat
     // getter below reads P(), so gear that grants +STR now flows into ATK/HP/etc. (The raw
     // allocation economy — costs, caps, GetStat — uses primary[] directly and is unaffected.)
@@ -302,7 +315,8 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>Which PASSIVE skills are live — ticked on in the Grimoire (J) or rolled onto the equipped weapon.
     /// The single owner of that answer; <see cref="PassiveEvents"/> gates every dispatch on it. Persisted.
     /// (Not to be confused with <see cref="Passives"/>, which is the ring's stat walk.)</summary>
-    public PassiveLoadout PassiveSkills { get; } = new PassiveLoadout();
+    public PassiveLoadout PassiveSkills => passiveSkills ??= new PassiveLoadout(this);
+    PassiveLoadout passiveSkills;
 
     Transform avatar;   // the in-scene player, located lazily
 
@@ -351,6 +365,11 @@ public class Character : MonoBehaviour, ICombatUnit
     /// else's.</summary>
     public static readonly Color MonsterHitColor   = new Color(1f, 0.35f, 0.35f);
     public static readonly Color MonsterMagicColor = new Color(0.7f, 0.5f, 1f);
+
+    /// <summary>THE colour a blow on a person is drawn in, on their own machine and on everyone watching: a tick in the
+    /// colour the server gave it, otherwise magic violet or hit red.</summary>
+    public static Color ColourOfBlow(in DamageInfo info, bool tick, Color tickColor) =>
+        tick && tickColor.a > 0f ? tickColor : info.isMagic ? MonsterMagicColor : MonsterHitColor;
     static readonly Color ReflectColor = new Color(0.85f, 0.85f, 0.95f);   // thorns damage bounced back at a mob
 
     // Effective stat = flat layer (base + level growth + PRIMARY-STAT contribution + equipment) × (1 + passive%).
@@ -1002,7 +1021,7 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Who last cost this unit health — see <see cref="ICombatUnit.LastAttacker"/>.</summary>
     public ICombatUnit LastAttacker { get; private set; }
-    public void NoteAttacker(ICombatUnit attacker) { if (attacker != null) LastAttacker = attacker; }
+    public void NoteAttacker(ICombatUnit attacker) => LastAttacker = attacker;
 
     /// <summary>TRUE on a copy of a character the SERVER owns — the one on this player's own screen while a server
     /// holds the real one. It shows every blow (the number, the flash, the stagger) but its health is told to it
@@ -1057,6 +1076,7 @@ public class Character : MonoBehaviour, ICombatUnit
         ((ICombatUnit)this).BeginNewLife();
         OnManaChanged?.Invoke();
         OnRevived?.Invoke();
+        SpawnIds.PlayerGotUp(this);
     }
 
     // The player's host is a static handle the controller already publishes — nothing to look up, ever. It lives on the
@@ -1419,6 +1439,8 @@ public class Character : MonoBehaviour, ICombatUnit
         {
             dmg = UnitMitigation.AfterShield(States, dmg, out lastMitigation.soaked);
             dmg = UnitMitigation.Deferred(States, dmg, out lastMitigation.banked);
+            if (dmg <= 0)
+                CombatAuthority.NoDamage(lastMitigation.banked > 0 ? NoDamageReason.Braced : NoDamageReason.Soaked);
         }
         if (dmg > 0)
         {
@@ -1449,8 +1471,9 @@ public class Character : MonoBehaviour, ICombatUnit
     public int TakeDamage(int attackerAttack, int attackerHit, Element attackElement = Element.Neutral,
                           MonsterAI3D source = null, bool missed = false, bool crit = false)
     {
-        if (IsDead) return 0;
-        if (DodgedByInvuln()) return 0;   // i-frames (dodge-dash): the hit passes harmlessly through
+        if (IsDead) return CombatAuthority.NoDamage(NoDamageReason.AlreadyDead);
+        // i-frames (dodge-dash): the hit passes harmlessly through
+        if (DodgedByInvuln()) return CombatAuthority.NoDamage(Invincible ? NoDamageReason.Invincible : NoDamageReason.Dodged);
 
         // Accuracy was already rolled by the attacking MOB (Combat.Missed) — we only PRESENT it, never re-roll, since
         // a second random roll could disagree. A miss shows a WHITE MISS over the player (player-dealt = red, Health).
@@ -1459,7 +1482,7 @@ public class Character : MonoBehaviour, ICombatUnit
             var dav = Avatar();
             if (dav != null) DamagePopup.SpawnText(UnitAnchor.Overhead(dav), "MISS", MonsterMissColor);
             OnEvaded?.Invoke();
-            return 0;
+            return CombatAuthority.NoDamage(NoDamageReason.Missed);
         }
 
         // A WATCHED COPY IS TOLD WHAT LANDED — it does not work it out, exactly as its health is told to it rather
@@ -1470,19 +1493,21 @@ public class Character : MonoBehaviour, ICombatUnit
 
         // Off-hand block: a shield can negate the hit (and clang) before any damage applies.
         var off = GetEquipped(EquipSlotType.Shield);
-        if (off != null && off.blockChance > 0f && CombatRng.Chance(off.blockChance))
+        if (Combat.Blocked(off))
         {
             Sfx.Play(off.guardSfx != null && !off.guardSfx.Empty ? off.guardSfx : blockSfx);
             lastMitigation.blocked = true;
             OnBlocked?.Invoke();
-            return 0;
+            return CombatAuthority.NoDamage(NoDamageReason.Guarded);
         }
 
         // Element property: the incoming attack's element vs our armor element scales the damage (RO chart).
         float mod = Elements.Modifier(attackElement, armorElement);
-        if (mod <= 0f) return 0;   // our armor fully resists this element
-        if (ParriedHit(source)) return 0;   // read LAST of the negations, so a charge is only ever spent on a hit that
-                                            // would really have landed (a miss / block / immunity keeps it in hand)
+        // our armor fully resists this element
+        if (mod <= 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
+        // read LAST of the negations, so a charge is only ever spent on a hit that would really have landed (a miss /
+        // block / immunity keeps it in hand)
+        if (ParriedHit(source)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both, exactly as it does on a mob.
         int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, crit) * mod);
@@ -1498,7 +1523,7 @@ public class Character : MonoBehaviour, ICombatUnit
     ///
     /// <para>The one thing this starts is the hurt stagger, fed the server's final number: a stagger stops the legs,
     /// and the legs are this machine's to drive.</para></summary>
-    public void ShowBlowFromServer(in DamageInfo info, bool tick = false)
+    public void ShowBlowFromServer(in DamageInfo info, bool tick = false, Color tickColor = default)
     {
         // THE BLOW THAT KILLED YOU STILL SHOWS, whichever reached this machine first — it or the health reading zero.
         // Only a damage-over-time tick is dropped once you are dead.
@@ -1513,7 +1538,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (info.amount <= 0) return;
 
         if (av != null)
-            DamagePopup.Spawn(UnitAnchor.Overhead(av), info.amount, info.isMagic ? MonsterMagicColor : MonsterHitColor);
+            DamagePopup.Spawn(UnitAnchor.Overhead(av), info.amount, ColourOfBlow(info, tick, tickColor));
         // The hurt grunt, and the event that drives the hurt flash.
         Sfx.Play(hurtSfx);
         OnDamaged?.Invoke(info.amount);
@@ -1562,6 +1587,7 @@ public class Character : MonoBehaviour, ICombatUnit
         // fact about this character; deciding it here as well would raise a death screen on a machine whose
         // arithmetic happened to reach zero first, over a person the server still has standing.
         if (IsWatchedCopy) return;
+        CombatAuthority.LogDeath(this);
         OnDied?.Invoke();
         var a = Avatar();
         if (a != null) VfxCue.Fire(VfxCueId.OnDeath, a);
@@ -1571,15 +1597,18 @@ public class Character : MonoBehaviour, ICombatUnit
     /// can't be dodged, and evasion does nothing to it. Returns the damage dealt.</summary>
     public int TakeMagicDamage(int attackerMagic, Element attackElement = Element.Neutral, MonsterAI3D source = null)
     {
-        if (IsDead) return 0;
-        if (DodgedByInvuln()) return 0;   // i-frames (dodge-dash) dodge magic too
+        if (IsDead) return CombatAuthority.NoDamage(NoDamageReason.AlreadyDead);
+        // i-frames (dodge-dash) dodge magic too
+        if (DodgedByInvuln()) return CombatAuthority.NoDamage(Invincible ? NoDamageReason.Invincible : NoDamageReason.Dodged);
 
         // Told, not worked out — the same rule the physical intake above explains.
         if (IsWatchedCopy) return LandOnMe(attackerMagic, source, MonsterMagicColor, true, false, -1);
 
         float mod = Elements.Modifier(attackElement, armorElement);
-        if (mod <= 0f) return 0;          // armour already nullified it — nothing to parry, so no charge is spent
-        if (ParriedHit(source)) return 0;   // the read catches magic too: Parry is a timing skill, not a physical block
+        // armour already nullified it — nothing to parry, so no charge is spent
+        if (mod <= 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
+        // the read catches magic too: Parry is a timing skill, not a physical block
+        if (ParriedHit(source)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod);
         return LandOnMe(dmg, source, MonsterMagicColor, true, false, -1);
@@ -1610,7 +1639,7 @@ public class Character : MonoBehaviour, ICombatUnit
         var h = source.Health;
         if (h == null || h.IsDead) return;
         int r = Mathf.RoundToInt(dmgTaken * pct);
-        if (r > 0) CombatAuthority.ApplyTrue(h, r, ReflectColor);
+        if (r > 0) CombatAuthority.ApplyTrue(h, r, ReflectColor, "reflect");
     }
 
     /// <summary>Heal from lifesteal — like <see cref="Heal"/> but SILENT (no green popup), so multi-hit leech
@@ -1623,6 +1652,7 @@ public class Character : MonoBehaviour, ICombatUnit
         int before = CurrentHP;
         CurrentHP = Mathf.Min(MaxHP, CurrentHP + amount);
         if (CurrentHP != before) OnHealthChanged?.Invoke();
+        CombatAuthority.LogHeal(this, amount, "life steal");
     }
 
     // Neither pool is refilled here any more. StatusController owns both tickers for EVERY unit, so a mob's mana
@@ -1699,7 +1729,11 @@ public class Character : MonoBehaviour, ICombatUnit
         // AND THE ROLL IS TOLD. Creatures look for somebody to chase by map, so a person who walked through a door
         // and was never re-filed would be hunted by the map they left and invisible to the one they are in.
         PlayerUnits.Refile(this);
+        SpawnIds.PlayerEnteredMap(this, map);
     }
+
+    /// <summary>This person's spawn_id in the map they are in — see <see cref="ICombatUnit.Spawn"/>.</summary>
+    public SpawnTag Spawn { get; set; }
 
     /// <summary>Which map this person is in. On their own machine that is simply the map they are standing in; on a
     /// server it is whatever they last reported. Never a guess: a server that read its own active scene would hand

@@ -10,9 +10,9 @@ tags:
 
 **Status:** implemented 2026-08-10 (roster re-tune pending). Decided 2026-08-10.
 
-**Done — the model is complete in code.** `UnitStatMath` owns every formula, constant and the stat-point economy; `Character` computes nothing itself. `MonsterDef` authors level + six primaries. `UnitStatBlock` carries the live block onto each spawned mob and **re-derives on level-up** — the flat 1.15× mob growth rate is deleted, so nothing scales on a mob-only curve. `UnitEquipment` gives mobs the same worn set the player has, aggregated through the same `EquipBonuses`. `UnitMitigation` gives mobs the damage-reduction cut and Shield absorb; `Health` now also fires a mob's **reflect** and **mana-leech** piles, and mobs have a real **MP pool**. Death drops the worn set (`LootDropper.DropWornGear`). **Tier is deleted everywhere** — difficulty is level, and spawn bands are level bands. The Mob Table edits level + primaries with a live pts spent/budget guard that snaps over-budget entries down. `Tools ▸ unwritten ▸ Quick Fixes ▸ Reset Mob Stats to Level + Primaries` resets the whole roster (**86 mobs** today) onto the curve.
+**Done — the model is complete in code.** `UnitStatMath` owns every formula, constant and the stat-point economy; `Character` computes nothing itself. `MonsterDef` authors level + six primaries. `UnitStatBlock` carries the live block onto each spawned mob and **re-derives on level-up** — the flat 1.15× mob growth rate is deleted, so nothing scales on a mob-only curve. `UnitEquipment` gives mobs the same worn set the player has, aggregated through the same `EquipBonuses`. `UnitMitigation` gives mobs the damage-reduction cut and Shield absorb; `Health` now also fires a mob's **reflect** and **mana-leech** piles, and mobs have a real **MP pool**. Death drops the worn set (`LootDropper.RollWornGear`). **Tier is deleted everywhere** — difficulty is level, and spawn bands are level bands. The Mob Table edits level + primaries with a live pts spent/budget guard that snaps over-budget entries down. `Tools ▸ unwritten ▸ Quick Fixes ▸ Reset Mob Stats to Level + Primaries` resets the whole roster (**86 mobs** today) onto the curve.
 
-**Not done:** nothing in the model, and the roster reset has been run (86 mobs, levels 3–46, all on budget). What's left is content — real equipment for mobs to wear (only two weapons exist) — and re-tuning by playing it.
+**Not done:** nothing in the model, and the roster reset has been run (86 mobs, levels 3–46, all on budget). What's left is content — real equipment for mobs to wear (two weapons and four low armour pieces exist) — and re-tuning by playing it.
 
 ### The stat-point budget (added 2026-08-10)
 
@@ -78,11 +78,15 @@ A mob authors a ring ITEM plus that ring's invested ranks. Wearing the item is w
 
 The ranks resolve through `PassiveRanks` → `SkillRing.Percent`, the player's own curve: 10 ranks = +16%, 20 = +26.7%, 40 = +40%, asymptotic to +80%. No mob-side copy of the maths.
 
-**A ring drops at 0.001%** (1 in 100,000) — its own constant, `LootDropper.RingDropChance`, deliberately separate from the ordinary `wornDropChance`. A ring is the most valuable thing a unit carries, so it's the MVP-card-tier prize, not ordinary loot.
+**A ring drops at 0.001%** (1 in 100,000) — its own constant, `LootDropper.RingDropChance`, deliberately separate from the chance every other worn piece drops at. A ring is the most valuable thing a unit carries, so it's the MVP-card-tier prize, not ordinary loot.
 
 ### Mobs drop what they wear
 
-A mob's **equipped set is its gear drop table**: each worn piece rolls independently to drop, and because it's real equipment, the player can equip what drops. The loot table stays, but only for **materials and gold** — things the mob isn't wearing. Implemented as `LootDropper.DropWornGear` (`wornDropChance` per piece).
+A mob's **equipped set is its gear drop table**: each worn piece rolls independently to drop, and because it's real equipment, the player can equip what drops. The chance falls with the copy's rarity — Common 20%, Uncommon 12%, Rare 6%, Epic 3%, Legendary 1% — one game-wide table in `LootDropper.WornDropChance`, which the hover and target panel also shows beside each piece. The loot table stays, but only for **materials and gold** — things the mob isn't wearing — and each kill also has a 30% chance of one random item that isn't equipment. Everything a kill gives up except gold lands on the ground where the mob fell (see [Networking — Implementation Notes](../networking/implementation-notes.md)).
+
+### Mobs put on random gear as they come to life
+
+Until drop tables are authored, every place a player can wear a piece — weapon, head, armour, garment, shield — is offered one random item that fits it each time a mob spawns or respawns, rolled as a real copy. The mob keeps it on a chance that falls with the copy's rarity: Common 40%, Uncommon 30%, Rare 20%, Epic 10%, Legendary 5% (`CreatureWardrobe`). Authored starting gear is kept, and a place it fills is never offered anything. The server rolls it; a watching machine is told what each mob wears.
 
 Single source of truth: the thing it wears is the thing it drops, so a mob can never advertise gear it doesn't actually carry.
 
@@ -92,7 +96,7 @@ Single source of truth: the thing it wears is the thing it drops, so a mob can n
 
 The codebase already enforces the line: `ItemType` is DERIVED from `slot` + `category` (ItemType.cs:14-17), so an item is Weapon/Armor *because* it has an equip slot. A stat-carrying item with no slot would be data the equip pipeline can't read — dead by construction.
 
-- **Equipment** — has an equip slot, bonuses, and a model. Worn by anyone. Only two exist today: `item.sword` and `item.bow`.
+- **Equipment** — has an equip slot and bonuses; a weapon also has a model. Worn by anyone. Six exist today: the weapons `item.sword` and `item.bow`, and the armour `item.leather-cap`, `item.padded-vest`, `item.travellers-cloak` and `item.wooden-buckler`.
 - **Materials** — `ItemCategory.Material`: an icon, a name, a crafting input, **no stats and no model**. Fangs, hides, carapace live here and feed [Crafting & Recycling](../crafting-and-recycling.md).
 
 **A mob with no equipment is valid.** Its stats come from level + primaries; `EquipBonuses` aggregates to zeros and every formula still resolves. So mobs start unarmed and get armed as real gear is made — the art debt is incremental content, never a prerequisite for the stat unification.

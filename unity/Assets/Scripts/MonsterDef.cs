@@ -40,8 +40,6 @@ public class MonsterDef : ScriptableObject
     public Color tint = Color.white;
     [Tooltip("Size multiplier on the base billboard scale.")]
     public float scale = 1f;
-    [Tooltip("Hit-flash color.")]
-    public Color flash = Color.white;
 
     // ---- THE stat block: identical in shape and formula to the player's (design doc "Unified Unit Stats") -----------
     // A mob is authored as a LEVEL and six PRIMARIES; every combat number below is DERIVED from them through
@@ -163,7 +161,6 @@ public class MonsterDef : ScriptableObject
             weight = weight,
             tint = tint,
             scale = scale,
-            flash = flash,
             hardDefPercent = hardDefPercent,
             hardMagicDefPercent = hardMagicDefPercent,
             xpReward = xpReward,

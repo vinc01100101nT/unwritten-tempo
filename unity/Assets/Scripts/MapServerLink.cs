@@ -422,11 +422,26 @@ public class MapServerLink : MonoBehaviour
 
         ServerHttp.Send("POST", CharacterServerUrl + "/map-servers", body, ServerSecret, (ok, reply, error) =>
         {
-            if (ok) GameLog.Info(LogCat.Map, "the character server knows this map server holds " + maps.Count + " map(s).");
-            else GameLog.Error(LogCat.Map, "the character server would not take this map server — " + error
-                                + " " + reply + ". Nobody will be able to enter the world.");
+            // SAID WHEN IT CHANGES, NOT ON EVERY BEAT. This registration repeats on a timer, and writing the same
+            // "holds 1 map(s)" each time filled an idle server's log with a line every half minute — which made a quiet
+            // log mean nothing. It is written when the count differs from the last one said, and again after a failure.
+            if (ok)
+            {
+                if (maps.Count == lastSaidMapCount) return;
+                lastSaidMapCount = maps.Count;
+                GameLog.Info(LogCat.Map, "the character server knows this map server holds " + maps.Count + " map(s).");
+            }
+            else
+            {
+                lastSaidMapCount = -1;
+                GameLog.Error(LogCat.Map, "the character server would not take this map server — " + error
+                                  + " " + reply + ". Nobody will be able to enter the world.");
+            }
         });
     }
+
+    // The map count last written by the registration above; -1 until the first success and after any failure.
+    int lastSaidMapCount = -1;
 
     bool saidGoodbye;
 

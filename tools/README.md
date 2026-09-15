@@ -200,6 +200,24 @@ edit to the checker — a check that has gone deaf prints exactly what a clean p
 
 Full sequence: [Prototyping a UI Before Building It](../docs/0-process/prototyping-ui-workflow.md).
 
+## server-log-tally.py · check-server-log.py · server_log_lines.py
+
+Read the game server's log (`logs/server.log`) after a play-test.
+
+```bash
+tools/server-log-tally.py                        # per unit: blows, skills, damage, states, passives, heals, experience
+tools/server-log-tally.py --map field_15 --since 23:27:00
+tools/check-server-log.py                        # flags impossible events; exit 1 flagged, 3 no hit lines, 4 old-build log
+tools/check-server-log.py logs/server-prev.log   # the run before
+```
+
+The tally names every unit by map and spawn_id, so two snakes are counted apart, and splits damage by skill. The
+checker flags a kill that paid nobody, a player's kill with no loot line, a blow that hurt somebody whose invincibility
+was on, a unit named without a spawn_id, and a spawn_id handed out twice. Both need the `hit` category switched on
+while playing, and both say so when the log has no hit lines. `server_log_lines.py` holds the line shapes both read,
+so a line whose wording changes in the game is changed there once.
+Line shapes and everything else: [Reading the Game Log](../docs/0-process/reading-the-game-log.md).
+
 ## extract_chatgpt_share.py
 
 Reads a **ChatGPT share link** (`chatgpt.com/share/...`) and prints the full conversation (every user + assistant turn) as Markdown.
