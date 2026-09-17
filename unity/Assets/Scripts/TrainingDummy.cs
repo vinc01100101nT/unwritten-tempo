@@ -38,7 +38,10 @@ public class TrainingDummy : MonoBehaviour
         var health = go.GetComponent<Health>();
         if (health != null)
         {
-            health.maxHealth = DummyHP;   // Health.Awake copies this into Current on Play
+            health.maxHealth = DummyHP;
+            // A body built while the game runs has ALREADY woken, so its current health is still the creature's own
+            // figure against a 10,000,000 maximum, which reads as an empty bar. Filled here so both callers start it full.
+            health.RefillToMax();
             health.defense = 0;           // measure raw weapon/skill output, not post-mitigation
             health.magicDefense = 0;
             health.flee = 15;             // RO FLEE: low DEX misses it a fair bit (red MISS), accuracy climbs as you add DEX

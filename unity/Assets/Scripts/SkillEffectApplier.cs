@@ -93,6 +93,24 @@ public static class SkillEffectApplier
         // SINGLE scope: ignore the radius, land straight on the cast's designated unit. Falls back to Area if unset.
         if (scope == SkillScope.Single && singleTarget != null)
         {
+            // IN A CREATURE'S HANDS the other side is PEOPLE: the unit it picked is a person, and an effect aimed at
+            // "mobs" reaches them. Its own side (the caster) is reached exactly as a person's is.
+            if (CastByCreature(ch))
+            {
+                var person = PersonWithBody(singleTarget);
+                if (person != null)
+                {
+                    if ((targets & SkillTargets.Mobs) != 0)
+                    {
+                        burstPeople.Clear(); burstPeople.Add(person);
+                        DispatchPeopleHits(effects, burstPeople, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
+                    }
+                }
+                else if ((targets & SkillTargets.Player) != 0)
+                    ApplyEffectsToPlayer(effects, relocatePoint, srcSymbol, srcName, srcId, ch, vars);
+                return;
+            }
+
             var mob = singleTarget.GetComponentInParent<MonsterAI3D>();
             if (mob != null)
             {
@@ -111,7 +129,12 @@ public static class SkillEffectApplier
 
         float r2 = Mathf.Max(0.05f, radius); r2 *= r2;
 
-        if ((targets & SkillTargets.Mobs) != 0)
+        if ((targets & SkillTargets.Mobs) != 0 && CastByCreature(ch))
+        {
+            GatherPeople(point, r2, ch.Map);
+            DispatchPeopleHits(effects, burstPeople, ch, relocatePoint, srcSymbol, srcName, srcId, vars);
+        }
+        else if ((targets & SkillTargets.Mobs) != 0)
         {
             burstTargets.Clear();
             var list = MonsterAI3D.Active;
@@ -169,7 +192,7 @@ public static class SkillEffectApplier
     /// connection's entity. This used to read a static <c>Player3DAttacker</c> resolved from the local player, so both
     /// the reach and the bearing came from YOU no matter who was actually moving — teleporting a mob sent it to a spot
     /// computed from the player's position and the player's weapon range.</para></summary>
-    static Vector3 RelocationDest(Vector3 aim, Transform unit, ICombatUnit mover, int corners)
+    static Vector3 RelocationDest(Vector3 aim, Transform unit, ICombatUnit mover, ICombatUnit caster, int corners)
     {
         Transform body = mover?.Body;
         if (body == null) return aim;
@@ -188,23 +211,25 @@ public static class SkillEffectApplier
         // the same one-sided assumption that made the player and a shadow disagree about the identical pairing.
         Vector3 center;
         Transform targetT = unit;
-        Health targetHealth = null;
+        ICombatUnit target = null;
         if (targetT == null)
         {
-            // SEARCH radius assumes an ordinary sprite mob — this only asks "is a mob standing on the aimed spot", and
-            // widening it would silently make ground-aimed dashes snap from further away than they used to.
+            // SEARCH radius assumes an ordinary sprite mob — this only asks "is something of the other side standing on
+            // the aimed spot", and widening it would silently make ground-aimed dashes snap from further away than they
+            // used to.
             float searchR = full * UnitScale.MeleeBlend(mover.MeleeScale, UnitScale.MobScale) * LandingReachFactor;
-            if (!MobAt(aim, searchR, out center, out targetHealth)) return aim;
+            if (!OpponentAt(aim, searchR, caster, out center, out target)) return aim;
         }
         else
         {
             center = targetT.position;
-            targetHealth = targetT.GetComponentInParent<Health>();   // once per relocation cast, never per frame
+            // once per relocation cast, never per frame
+            target = UnitOn(targetT);
         }
 
         // LANDING distance blends the mover against the body it actually found.
         float reach = full * UnitScale.MeleeBlend(mover.MeleeScale,
-                                                  targetHealth != null ? targetHealth.MeleeScale : UnitScale.MobScale)
+                                                  target != null ? target.MeleeScale : UnitScale.MobScale)
                            * LandingReachFactor;
         if (reach <= 0f) return aim;
 
@@ -258,6 +283,95 @@ public static class SkillEffectApplier
             best = sqr; pos = ai.transform.position; hit = ai.Health; found = true;
         }
         return found;
+    }
+
+    // ---- the other side, when a creature is casting -------------------------
+    // SkillTargets.Mobs is "the side you fight". For a person that is the creatures; for a creature it is PEOPLE, so a
+    // creature's skill never lands on the creatures around it and always reaches whoever it is fighting.
+
+    /// <summary>Is a CREATURE using this skill — so its other side is people rather than creatures?</summary>
+    static bool CastByCreature(ICombatUnit caster) => caster is Health;
+
+    // Reused, like burstTargets: the people one tick of a creature's skill reaches.
+    static readonly List<ICombatUnit> burstPeople = new List<ICombatUnit>(8);
+
+    // Everybody alive within the squared radius of `point` (planar), in `map` — the people a creature's area tick
+    // reaches. Only people in the caster's own map: every map shares one set of coordinates on the server.
+    static void GatherPeople(Vector3 point, float radiusSqr, string map)
+    {
+        burstPeople.Clear();
+        var all = PlayerUnits.Present;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var person = all[i];
+            if (PlayerUnits.Gone(person) || person.IsDead) continue;
+            if (!string.IsNullOrEmpty(map) && person.Map != map) continue;
+            var body = person.Body;
+            if (body == null) continue;
+            Vector3 d = body.position - point; d.y = 0f;
+            if (d.sqrMagnitude > radiusSqr) continue;
+            burstPeople.Add(person);
+        }
+    }
+
+    /// <summary>The person whose body is <paramref name="t"/> (or holds it), or null when it is nobody's.</summary>
+    static ICombatUnit PersonWithBody(Transform t)
+    {
+        if (t == null) return null;
+        var all = PlayerUnits.Present;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var person = all[i];
+            if (PlayerUnits.Gone(person)) continue;
+            var body = person.Body;
+            if (body != null && (body == t || t.IsChildOf(body))) return person;
+        }
+        return null;
+    }
+
+    // The unit standing on a picked transform: a creature by its health, else a person by their body.
+    static ICombatUnit UnitOn(Transform t)
+    {
+        var creature = t.GetComponentInParent<Health>();
+        if (creature != null) return creature;
+        return PersonWithBody(t);
+    }
+
+    /// <summary>A living unit of <paramref name="caster"/>'s OTHER SIDE picked at random within
+    /// <paramref name="radius"/> of <paramref name="point"/> — people for a creature, creatures for a person — or null
+    /// when there is nobody. What a re-aiming run walks to next.</summary>
+    public static Transform RandomOpponentNear(Vector3 point, float radius, ICombatUnit caster)
+    {
+        if (!CastByCreature(caster)) return RandomMobNear(point, radius);
+        float r2 = Mathf.Max(0.01f, radius); r2 *= r2;
+        GatherPeople(point, r2, caster.Map);
+        Transform pick = burstPeople.Count > 0 ? burstPeople[CombatRng.Range(0, burstPeople.Count)].Body : null;
+        burstPeople.Clear();
+        return pick;
+    }
+
+    // The nearest living unit of the caster's other side within `radius` of `point` — what a relocation aimed at a
+    // bare spot lands beside.
+    static bool OpponentAt(Vector3 point, float radius, ICombatUnit caster, out Vector3 pos, out ICombatUnit hit)
+    {
+        if (!CastByCreature(caster))
+        {
+            bool found = MobAt(point, radius, out pos, out Health mob);
+            hit = mob;
+            return found;
+        }
+        pos = point; hit = null;
+        GatherPeople(point, radius * radius, caster.Map);
+        float best = float.MaxValue;
+        for (int i = 0; i < burstPeople.Count; i++)
+        {
+            Vector3 at = burstPeople[i].Body.position;
+            Vector3 d = at - point; d.y = 0f;
+            if (d.sqrMagnitude >= best) continue;
+            best = d.sqrMagnitude; pos = at; hit = burstPeople[i];
+        }
+        burstPeople.Clear();
+        return hit != null;
     }
 
     // ---- caster (pass 1) ----------------------------------------------------
@@ -391,7 +505,7 @@ public static class SkillEffectApplier
                 break;
             case SkillEffectKind.Taunt:
                 // Force this unit onto the caster. Both sides implement it (a mob locks its chase, a player's
-                // auto-combat can't retarget away), so a taunt is authored once and works on whoever it lands on.
+                // the auto-pilot AI can't retarget away), so a taunt is authored once and works on whoever it lands on.
                 if (Fires(e, hit, caster, vars)) unit.ForceAggro(caster, seconds);
                 break;
             case SkillEffectKind.Knockback:
@@ -416,13 +530,13 @@ public static class SkillEffectApplier
                 if (afterimage > 0f)
                     Afterimage.Capture(RenderedBody(unit), afterimage, e.afterimageTint);
                 if (e.kind == SkillEffectKind.Teleport)
-                    unit.TeleportTo(RelocationDest(relocatePoint, aimUnit, unit, e.starCorners.ResolveInt(vars)));   // instant blink
+                    unit.TeleportTo(RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars)));   // instant blink
                 else
                     // Face what the hop is AIMED AT for the whole trip, not the direction it flies. A relocation lands
                     // BESIDE its target (a star corner), so facing the travel line leaves the caster swinging at empty
                     // air on arrival — and nothing turns it back afterwards. No aimed unit = face travel, as before.
                 {
-                    unit.GlideTo(RelocationDest(relocatePoint, aimUnit, unit, e.starCorners.ResolveInt(vars)),   // A→B glide
+                    unit.GlideTo(RelocationDest(relocatePoint, aimUnit, unit, caster, e.starCorners.ResolveInt(vars)),   // A→B glide
                                  e.dashSpeedMult.Resolve(vars), e.dashEaseIn, e.dashEaseOut,
                                  Mathf.Max(0.05f, e.dashEaseSeconds.Resolve(vars)),
                                  aimUnit != null ? aimUnit.position : (Vector3?)null);
@@ -553,9 +667,15 @@ public static class SkillEffectApplier
                              string srcSymbol = null, string srcName = null, string srcId = null,
                              StackVars vars = default)
     {
-        if (ai == null) return 0;
-        var h = ai.Health;
-        if (h == null) return 0;
+        if (ai == null || ai.Health == null) return 0;
+        return ApplyHitToUnit(effects, ai.Health, hit, caster, relocatePoint, srcSymbol, srcName, srcId, vars);
+    }
+
+    // One beat of a flurry on ONE unit, creature or person — the body both flurries share.
+    static int ApplyHitToUnit(List<SkillEffect> effects, ICombatUnit h, int hit,
+                              ICombatUnit caster, Vector3 relocatePoint,
+                              string srcSymbol, string srcName, string srcId, StackVars vars)
+    {
         int dealt = 0;
         for (int i = 0; i < effects.Count; i++)
         {
@@ -602,9 +722,14 @@ public static class SkillEffectApplier
                                          ICombatUnit caster = null,
                                          string srcSymbol = null, string srcName = null, string srcId = null, StackVars vars = default)
     {
-        if (effects == null || ai == null) return;
-        var h = ai.Health;
-        if (h == null) return;
+        if (effects == null || ai == null || ai.Health == null) return;
+        ApplyEffectsToUnit(effects, ai.Health, relocatePoint, caster, srcSymbol, srcName, srcId, vars);
+    }
+
+    // The whole hit loop on ONE unit, creature or person, landing instantly.
+    static void ApplyEffectsToUnit(List<SkillEffect> effects, ICombatUnit h, Vector3 relocatePoint, ICombatUnit caster,
+                                   string srcSymbol, string srcName, string srcId, StackVars vars)
+    {
         int loops = HitLoops(effects, caster, vars);
         for (int n = 0; n < loops; n++)
             for (int i = 0; i < effects.Count; i++)
@@ -647,6 +772,38 @@ public static class SkillEffectApplier
         // skill's damage reaches a creature, and the two must announce alike.
         using (new StrikeTotalScope(ShowsRunTotal(SkillCatalog.Get(PassiveEvents.CurrentSkillId), e, caster, vars)))
             CombatAuthority.Apply(unit, resolved);
+    }
+
+    // The creature-cast twin of DispatchMobHits: one hit lands instantly on each person caught; a multi-hit strike
+    // cascades over the same interval, carrying the same cause and the same snapshot to its later beats.
+    static void DispatchPeopleHits(List<SkillEffect> effects, List<ICombatUnit> people,
+                                   ICombatUnit caster, Vector3 relocatePoint,
+                                   string srcSymbol, string srcName, string srcId, StackVars vars)
+    {
+        if (people.Count == 0) return;
+        int loops = HitLoops(effects, caster, vars);
+        if (loops <= 1)
+        {
+            for (int i = 0; i < people.Count; i++)
+            {
+                var person = people[i];
+                if (person.IsDead) ApplyHitToUnit(effects, person, 0, caster, relocatePoint, srcSymbol, srcName, srcId, vars);
+                else ApplyEffectsToUnit(effects, person, relocatePoint, caster, srcSymbol, srcName, srcId, vars);
+            }
+            return;
+        }
+        ulong chain = PassiveEvents.CurrentChain;
+        var flurryVars = vars;
+        Vector3 flurryPoint = relocatePoint;
+        var runTotal = RepeatsDamageTotal.Current;
+        MultiHitBurst.RunOnUnits(people, loops, MultiHitInterval,
+            (person, hit) =>
+            {
+                var prev = PassiveEvents.Push(chain, srcId);
+                var prevTotal = RepeatsDamageTotal.Push(runTotal);
+                try { return ApplyHitToUnit(effects, person, hit, caster, flurryPoint, srcSymbol, srcName, srcId, flurryVars); }
+                finally { RepeatsDamageTotal.Pop(prevTotal); PassiveEvents.Pop(prev); }
+            });
     }
 
     // ---- player as a TARGET (pass 2) ----------------------------------------

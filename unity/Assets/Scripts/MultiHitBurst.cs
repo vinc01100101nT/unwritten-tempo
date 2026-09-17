@@ -138,6 +138,35 @@ public class MultiHitBurst : MonoBehaviour
             Mathf.Max(1, hits), Mathf.Max(0.01f, hitInterval), onHit, onHitBeat, showTotal));
     }
 
+    /// <summary>The same flurry on PEOPLE — a creature's multi-hit skill landing on whoever it caught, one hit every
+    /// <paramref name="hitInterval"/> seconds, exactly as the creature version spaces them. Draws no total of its own:
+    /// every blow on a person is announced at the damage door, which is where their screen learns of it.</summary>
+    public static void RunOnUnits(List<ICombatUnit> targets, int hits, float hitInterval,
+                                  System.Func<ICombatUnit, int, int> onHit)
+    {
+        if (onHit == null || targets == null || targets.Count == 0) return;
+        var go = new GameObject("MultiHitBurst") { hideFlags = HideFlags.DontSaveInEditor };
+        go.AddComponent<MultiHitBurst>().StartCoroutine(RoutineUnits(go, new List<ICombatUnit>(targets),
+            Mathf.Max(1, hits), Mathf.Max(0.01f, hitInterval), onHit));
+    }
+
+    static IEnumerator RoutineUnits(GameObject self, List<ICombatUnit> targets, int hits, float hitInterval,
+                                    System.Func<ICombatUnit, int, int> onHit)
+    {
+        var hitWait = Wait(hitInterval);
+        for (int hit = 0; hit < hits; hit++)
+        {
+            for (int i = 0; i < targets.Count; i++)
+            {
+                var unit = targets[i];
+                if (PlayerUnits.Gone(unit)) continue;
+                onHit(unit, hit);
+            }
+            if (hit < hits - 1) yield return hitWait;
+        }
+        Object.Destroy(self);
+    }
+
     static IEnumerator RoutineList(GameObject self, List<MonsterAI3D> targets, int hits, float hitInterval,
                                    System.Func<MonsterAI3D, int, int> onHit, System.Action onHitBeat, bool showTotal)
     {

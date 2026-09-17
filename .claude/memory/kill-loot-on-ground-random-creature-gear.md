@@ -29,7 +29,6 @@ earlier "a kill never leaves anything lying in the world" design.
   `Health.TakeDamage` + `TakeDamageOverkill`); creature swing speed now `UnitStatMath.AttackSpeedMult` (AGI/DEX/gear/ring/buff)
   stamped as `MonsterAI3D.attackSpeedMult` — a balance change for every creature; creature attack element = held weapon's
   element, else its authored `attackElement`.
-- **Known gaps left:** creatures never cast their weapon's rolled skills (no creature casting exists); creature weapon
-  models are not drawn (`WeaponSocket` is player-only); a refused pick-up tells the player nothing.
+- **Known gaps left:** a refused pick-up tells the player nothing. (Weapon models on 3D creatures were drawn from 2026-09-16 — see [[creatures-cast-weapon-kit]].)
 
-Related: [[armour-rolls-per-copy]], [[mobs-get-everything-players-get]].
+Related: [[armour-rolls-per-copy]], [[mobs-get-everything-players-get]], [[creatures-cast-weapon-kit]].

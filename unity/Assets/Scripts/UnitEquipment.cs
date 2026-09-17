@@ -57,7 +57,12 @@ public class UnitEquipment : MonoBehaviour
         if (WearsRandomGear) CreatureWardrobe.FillEmptyPlaces(equipped);
         dirty = true;
         version++;
+        OnChanged?.Invoke();
     }
+
+    /// <summary>Raised whenever the worn set changes — seated, equipped, taken off or wiped. What a body showing the
+    /// weapon in its hand listens to, so it redraws on the change and never polls.</summary>
+    public event System.Action OnChanged;
 
     // A creature the server owns, and not a training dummy — an instrument that must measure raw output and can never
     // give anything up. Asked only when gear is seated, never per frame.
@@ -124,6 +129,7 @@ public class UnitEquipment : MonoBehaviour
         else equipped[slot] = inst;
         dirty = true;
         version++;
+        OnChanged?.Invoke();
         return prev;
     }
 
@@ -137,6 +143,7 @@ public class UnitEquipment : MonoBehaviour
         equipped.Clear();
         dirty = true;
         version++;
+        OnChanged?.Invoke();
     }
 
     /// <summary>Every worn (slot, piece) pair — what a save walks. Skips empty slots.</summary>

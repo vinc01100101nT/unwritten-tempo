@@ -541,6 +541,22 @@ public class GameNetwork : NetworkManager
     public struct PlayerHitResult : NetworkMessage
     {
         public uint victimNetId;
+
+        /// <summary>WHO struck it, as the shared name every machine agrees on — a creature or another person alike.
+        /// It keys the rising yellow total, so two creatures flurrying one person keep two climbing numbers instead
+        /// of pooling into a third that belongs to neither. 0 when the striker is not a shared body. It teaches
+        /// nobody anything: whatever the blow gave its attacker was already given, on the server.</summary>
+        public uint attackerNetId;
+
+        /// <summary>This blow belongs to a run that shows a RISING YELLOW TOTAL. The exact twin of the field on a
+        /// creature's blow, and it exists for the same reason: a person's machine works no damage out, so every
+        /// number reaches it separately and the run that sent them has long since finished. The only thing that
+        /// still knows whether a total was owed is the authored skill, which the server holds.
+        ///
+        /// <para>Without it a creature's multi-hit skill landing on a person drew its numbers one by one and never a
+        /// total, while the identical skill landing on a creature drew one — the same flurry, two different
+        /// pictures, depending only on which side of it you were standing.</para></summary>
+        public bool showsTotal;
         public int amount;
         public Element element;
         public bool isMagic;
@@ -675,6 +691,26 @@ public class GameNetwork : NetworkManager
     ///
     /// <para>It carries no outcome and no number. Whatever the event DID reached this machine through the doors that
     /// announce a blow, a heal or a death; this is only what it looked like.</para></summary>
+    /// <summary>A BOW WAS LOOSED — said by the machine that owns the world, drawn by every machine that can see the
+    /// shooter. It carries no damage and no timing: the blow it belongs to is already scheduled where it was decided,
+    /// and this is only the picture of the shot crossing the gap.</summary>
+    public struct ArrowLoosed : NetworkMessage
+    {
+        /// <summary>Who shot — the shared name every machine knows that unit by.</summary>
+        public uint fromNetId;
+
+        /// <summary>What it was shot at, so the drawn arrow homes onto a body that is still moving. 0 when the
+        /// target is not a shared body, and the arrow then flies to the point below instead.</summary>
+        public uint toNetId;
+
+        /// <summary>Where it was aimed, in the shooter's own map. The fallback when there is no body to home onto,
+        /// and what a machine that has not been told about the target draws toward.</summary>
+        public Vector3 aimPoint;
+
+        /// <summary>The shooter's map, so a watcher puts the flight in the right world.</summary>
+        public string map;
+    }
+
     public struct CuePlayed : NetworkMessage
     {
         /// <summary>Whose body it plays on — the shared name every machine knows that unit by.</summary>
@@ -835,6 +871,7 @@ public class GameNetwork : NetworkManager
         NetworkClient.RegisterHandler<ChatHeard>(OnChatHeard);
         NetworkClient.RegisterHandler<CastWindupStarted>(OnCastWindupStarted);
         NetworkClient.RegisterHandler<CastWindupEnded>(OnCastWindupEnded);
+        NetworkClient.RegisterHandler<ArrowLoosed>(OnArrowLoosed);
         NetworkClient.RegisterHandler<CuePlayed>(OnCuePlayed);
         NetworkClient.RegisterHandler<CueStopped>(OnCueStopped);
     }
@@ -874,7 +911,7 @@ public class GameNetwork : NetworkManager
 
         shell.ShowBlow(new DamageInfo(msg.amount, msg.element, msg.isMagic, msg.isCrit,
                                       attackerHit: msg.attackerHit, missed: msg.missed),
-                       msg.mitigated, msg.tick, msg.tickColor);
+                       msg.mitigated, msg.tick, msg.tickColor, msg.showsTotal, msg.attackerNetId);
     }
 
     // Green digits the server said it healed, over the body this machine draws for that unit.
@@ -1109,10 +1146,11 @@ public class GameNetwork : NetworkManager
 
     /// <summary>SERVER ONLY: tell a person the server just started a cooldown on one of their skills, and when it ends.
     /// Silent for a character nobody is playing.</summary>
-    public static void TellOwnerCooldownStarted(Character who, string skillId, System.DateTime endsAtUtc)
+    public static void TellOwnerCooldownStarted(ICombatUnit who, string skillId, System.DateTime endsAtUtc)
     {
-        if (!NetworkServer.active || who == null || string.IsNullOrEmpty(skillId)) return;
-        var identity = IdentityOfFighter(who);
+        if (!NetworkServer.active || PlayerUnits.Gone(who) || string.IsNullOrEmpty(skillId)) return;
+        // A creature's shell belongs to no connection, so nobody is told — its cooldowns are its own business.
+        var identity = IdentityOfCaster(who);
         var conn = identity != null ? identity.connectionToClient : null;
         if (conn == null) return;
         conn.Send(new CooldownStarted { skillId = skillId, endsAtEpochSeconds = WorldClock.ToEpochSeconds(endsAtUtc) });
@@ -1143,8 +1181,22 @@ public class GameNetwork : NetworkManager
             // of it or a brace held all of it.
             mitigated = victim.TakeMitigation(),
             tick = tick,
-            tickColor = tickColor
+            tickColor = tickColor,
+            // WHO STRUCK, through the one helper that answers for a creature and a person alike — the striker here is
+            // usually a creature, which the person-only lookup the creature's announce uses cannot name.
+            attackerNetId = SharedNameOfStriker(info.attacker),
+            // The authored skill's answer, held by the strike landing right now — never a client's.
+            showsTotal = SkillEffectApplier.StrikeShowsTotal
         });
+    }
+
+    // THE SHARED NAME FOR WHOEVER STRUCK, creature or person. Only the rising yellow total reads it, to keep two
+    // strikers' numbers apart; 0 means nobody in particular, which is what a blow with no unit behind it is.
+    static uint SharedNameOfStriker(ICombatUnit attacker)
+    {
+        if (PlayerUnits.Gone(attacker)) return 0u;
+        var identity = SharedIdentityOnServer(attacker.Body);
+        return identity != null ? identity.netId : 0u;
     }
 
     /// <summary>SERVER ONLY: say that a creature just BEGAN an action — a swing, and later anything else its body
@@ -1160,6 +1212,22 @@ public class GameNetwork : NetworkManager
         if (!NetworkServer.active || serverMob == null) return;
         var shell = NetMob.ShellForServerMob(serverMob);
         if (shell != null) shell.BeganAction(action, beatSeconds);
+    }
+
+    /// <summary>SERVER ONLY: a caster began an action — a skill's release. A PERSON's own machine already tells the world
+    /// every pose it plays, so this speaks only for a creature, through the same road its swings take.</summary>
+    public static void AnnounceActionOnCaster(ICombatUnit caster, StanceId action, float beatSeconds)
+    {
+        if (caster is Health creature && creature != null) AnnounceActionOnMob(creature.gameObject, action, beatSeconds);
+    }
+
+    /// <summary>SERVER ONLY: a caster started or stopped HOLDING a pose — the casting pose for a wind-up. Speaks only
+    /// for a creature, for the same reason as <see cref="AnnounceActionOnCaster"/>.</summary>
+    public static void AnnounceHeldOnCaster(ICombatUnit caster, bool has, StanceId pose, float window)
+    {
+        if (!NetworkServer.active || !(caster is Health creature) || creature == null) return;
+        var shell = NetMob.ShellForServerMob(creature.gameObject);
+        if (shell != null) shell.HoldPose(has, pose, window);
     }
 
     /// <summary>SERVER ONLY: tell everybody watching a creature what it just drew for a blow. Called by the creature
@@ -1265,6 +1333,18 @@ public class GameNetwork : NetworkManager
 
     // The shell a server-held fighter belongs to — bound onto the fighter when PlayerFighter builds it, because this is
     // asked for every blow and every heal. A fighter built some other way falls back to walking up its parents.
+    // The shared identity that speaks for whoever is casting: a person's shell, or a creature's.
+    static NetworkIdentity IdentityOfCaster(ICombatUnit caster)
+    {
+        if (caster is Character person) return IdentityOfFighter(person);
+        if (caster is Health creature && creature != null)
+        {
+            var mobShell = NetMob.ShellForServerMob(creature.gameObject);
+            return mobShell != null ? mobShell.netIdentity : null;
+        }
+        return null;
+    }
+
     static NetworkIdentity IdentityOfFighter(Character fighter)
     {
         if (fighter == null) return null;
@@ -1576,10 +1656,31 @@ public class GameNetwork : NetworkManager
         // the shared character spec. Until this, the swinger's machine sent the request AT its contact frame, which
         // handed it the say over when inside its own swing a blow landed.
         //
-        // A BOW IS THE EXCEPTION, and it is the swinger's machine that says so by asking at a different moment: an
-        // arrow's blow lands when the arrow arrives, which is worked out by flying it. This machine flies nothing,
-        // so a request from a bow is one whose moment has already come.
-        if (swingTime > 0f && !IsRangedWeapon(weapon))
+        // A BOW IS TIMED THE SAME WAY, by a different number: its blow lands when the arrow arrives, which is the gap
+        // divided by the one speed every arrow in the game flies at. The shooter's machine used to fly its own arrow
+        // and ask at the moment it landed, so how long a shot took was a fact about the shooter's frame rate rather
+        // than about the world — and nobody else could see the arrow at all, because nothing on the wire said one
+        // had been fired.
+        if (IsRangedWeapon(weapon))
+        {
+            var shotAt = announceTo as ICombatUnit;
+            Transform shotAtBody = shotAt != null ? shotAt.Body : null;
+            Vector3 fromPoint = swinger.Body != null ? UnitAnchor.Center(swinger.Body) : identity.transform.position;
+            // Aimed at the body when there is one to home onto, and otherwise at the shared object standing in for it
+            // — never at a reading off something that may not be there at all.
+            Vector3 toPoint = shotAtBody != null ? UnitAnchor.Center(shotAtBody) : identity.transform.position;
+            AnnounceArrow(swinger.Body, shotAtBody != null ? shotAtBody : identity.transform,
+                          MapManager.InMap(toPoint, swinger.Map), swinger.Map);
+            pendingBlows.Add(new PendingBlow
+            {
+                connectionId = conn.connectionId,
+                targetNetId = msg.targetNetId,
+                landsAt = Time.time + Arrow.FlightSeconds(fromPoint, toPoint)
+            });
+            return;
+        }
+
+        if (swingTime > 0f)
         {
             pendingBlows.Add(new PendingBlow
             {
@@ -1857,10 +1958,10 @@ public class GameNetwork : NetworkManager
     ///
     /// <para>Sent per PLAY rather than per cast, because a repeating skill is several plays and each one scatters
     /// again. Silent off a server, so the single-machine game is untouched.</para></summary>
-    public static void AnnounceCastPlayed(Character caster, SkillDef def, Transform aimedAt, Vector3 aimPoint, int seed)
+    public static void AnnounceCastPlayed(ICombatUnit caster, SkillDef def, Transform aimedAt, Vector3 aimPoint, int seed)
     {
-        if (!NetworkServer.active || caster == null || def == null) return;
-        var identity = IdentityOfFighter(caster);
+        if (!NetworkServer.active || PlayerUnits.Gone(caster) || def == null) return;
+        var identity = IdentityOfCaster(caster);
         if (identity == null) return;
 
         NetworkServer.SendToReadyObservers(identity, new SkillCastPlayed
@@ -1878,19 +1979,20 @@ public class GameNetwork : NetworkManager
     /// <para>Sent once per CAST, from where the caster's own machine says it, so the same words reach every screen at
     /// the same moment. Not to the caster's own machine, which said it there and would otherwise say it twice.
     /// Silent off a server, so the single-machine game is untouched.</para></summary>
-    public static void AnnounceSkillCall(Character caster, SkillDef def)
+    public static void AnnounceSkillCall(ICombatUnit caster, SkillDef def)
     {
-        if (!NetworkServer.active || caster == null || def == null) return;
+        if (!NetworkServer.active || PlayerUnits.Gone(caster) || def == null) return;
         if (string.IsNullOrEmpty(def.displayName)) return;
-        var identity = IdentityOfFighter(caster);
+        var identity = IdentityOfCaster(caster);
         if (identity == null) return;
+        // A PERSON is named beside their call; a creature's call is only a bubble over its head, so it carries none.
         var shell = identity.GetComponent<NetPlayer>();
-        if (shell == null) return;
+        if (shell == null && identity.GetComponent<NetMob>() == null) return;
 
         NetworkServer.SendToReadyObservers(identity, new ChatHeard
         {
             speakerNetId = identity.netId,
-            speaker = shell.playerName,
+            speaker = shell != null ? shell.playerName : "",
             text = def.displayName,
             isSkillCall = true,
         }, includeOwner: false);
@@ -1899,10 +2001,10 @@ public class GameNetwork : NetworkManager
     /// <summary>Say that a cast is WINDING UP, to everybody who can see the caster — so the bar and the skill's
     /// name appear over their head there too. Not to the caster's own machine, which draws its bar from the
     /// wind-up it is running itself. Silent off a server, and silent for a skill with no wind-up to show.</summary>
-    public static void AnnounceCastWindup(Character caster, SkillDef def, float seconds, Vector3 aimPoint)
+    public static void AnnounceCastWindup(ICombatUnit caster, SkillDef def, float seconds, Vector3 aimPoint)
     {
-        if (!NetworkServer.active || caster == null || def == null || seconds <= 0f) return;
-        var identity = IdentityOfFighter(caster);
+        if (!NetworkServer.active || PlayerUnits.Gone(caster) || def == null || seconds <= 0f) return;
+        var identity = IdentityOfCaster(caster);
         if (identity == null) return;
 
         NetworkServer.SendToReadyObservers(identity, new CastWindupStarted
@@ -1917,10 +2019,10 @@ public class GameNetwork : NetworkManager
 
     /// <summary>Say that a wind-up is over — finished or broken. The pair of the one above, sent from the same
     /// side to the same people, so a bar cannot be left standing on somebody else's screen.</summary>
-    public static void AnnounceCastWindupEnded(Character caster)
+    public static void AnnounceCastWindupEnded(ICombatUnit caster)
     {
-        if (!NetworkServer.active || caster == null) return;
-        var identity = IdentityOfFighter(caster);
+        if (!NetworkServer.active || PlayerUnits.Gone(caster)) return;
+        var identity = IdentityOfCaster(caster);
         if (identity == null) return;
 
         NetworkServer.SendToReadyObservers(identity, new CastWindupEnded
@@ -1934,17 +2036,20 @@ public class GameNetwork : NetworkManager
     static void OnCastWindupStarted(CastWindupStarted msg)
     {
         if (!NetworkClient.spawned.TryGetValue(msg.casterNetId, out var identity) || identity == null) return;
+        var def = SkillCatalog.Get(msg.skillId);
         var shell = identity.GetComponent<NetPlayer>();
-        if (shell == null) return;
-        shell.ShowCastWindup(SkillCatalog.Get(msg.skillId), msg.startedAt, msg.seconds, msg.aimPoint);
+        if (shell != null) { shell.ShowCastWindup(def, msg.startedAt, msg.seconds, msg.aimPoint); return; }
+        var creature = identity.GetComponent<NetMob>();
+        if (creature != null) creature.ShowCastWindup(def, msg.startedAt, msg.seconds, msg.aimPoint);
     }
 
     static void OnCastWindupEnded(CastWindupEnded msg)
     {
         if (!NetworkClient.spawned.TryGetValue(msg.casterNetId, out var identity) || identity == null) return;
         var shell = identity.GetComponent<NetPlayer>();
-        if (shell == null) return;
-        shell.StopCastWindup();
+        if (shell != null) { shell.StopCastWindup(); return; }
+        var creature = identity.GetComponent<NetMob>();
+        if (creature != null) creature.StopCastWindup();
     }
 
     // ---- cues: every visual reaction in the game, on one road -------------------------------------------
@@ -1971,6 +2076,29 @@ public class GameNetwork : NetworkManager
             auraKey = auraKey,
         });
         return identity.netId;
+    }
+
+    /// <summary>SERVER: say that <paramref name="shooter"/> has loosed an arrow at <paramref name="target"/>, to
+    /// everybody who can see them. The one announce for every bow in the game — a person's and a creature's — so an
+    /// arrow cannot look one way when a person fires it and another when a creature does.
+    ///
+    /// <para>Nothing about the blow travels with it. The server has already worked out when that shot arrives and
+    /// scheduled the blow for that moment; this is the picture, and it is sent at the instant of the release so the
+    /// two are seen together.</para></summary>
+    public static void AnnounceArrow(Transform shooter, Transform target, Vector3 aimPointInMap, string map)
+    {
+        if (!NetworkServer.active || shooter == null) return;
+        var identity = SharedIdentityOnServer(shooter);
+        if (identity == null) return;
+
+        var at = target != null && target != shooter ? SharedIdentityOnServer(target) : null;
+        NetworkServer.SendToReadyObservers(identity, new ArrowLoosed
+        {
+            fromNetId = identity.netId,
+            toNetId = at != null ? at.netId : 0u,
+            aimPoint = aimPointInMap,
+            map = map ?? "",
+        });
     }
 
     /// <summary>Say that a lasting cue is over, to the same people who were told it began.</summary>
@@ -2025,6 +2153,22 @@ public class GameNetwork : NetworkManager
     }
 
     static void OnCueStopped(CueStopped msg) => VfxCue.StopFromServer(msg.onNetId, msg.auraKey);
+
+    // AN ARROW CROSSING THE GAP. Drawn from the shooter's body to whatever it was shot at, on every machine that can
+    // see the shooter — including the shooter's own, which no longer flies one of its own. Nothing is decided here.
+    static void OnArrowLoosed(ArrowLoosed msg)
+    {
+        if (!NetworkClient.spawned.TryGetValue(msg.fromNetId, out var identity) || identity == null) return;
+        Transform from = DrawnBodyOf(identity);
+        if (from == null) return;
+
+        Transform at = null;
+        if (msg.toNetId != 0u && NetworkClient.spawned.TryGetValue(msg.toNetId, out var other) && other != null)
+            at = DrawnBodyOf(other);
+
+        Vector3 to = at != null ? UnitAnchor.Center(at) : MapManager.InWorld(msg.aimPoint, msg.map);
+        Arrow.Show(UnitAnchor.Center(from), at, to);
+    }
 
     // ---- stances: what a person's body is doing, said by the machine that owns their legs ----------------
 
@@ -2089,14 +2233,22 @@ public class GameNetwork : NetworkManager
     static void OnSkillCastPlayed(SkillCastPlayed msg)
     {
         if (!NetworkClient.spawned.TryGetValue(msg.casterNetId, out var identity) || identity == null) return;
-        var shell = identity.GetComponent<NetPlayer>();
-        if (shell == null) return;
 
         Transform aimed = null;
         if (msg.targetNetId != 0u && NetworkClient.spawned.TryGetValue(msg.targetNetId, out var at) && at != null)
-            aimed = at.transform;
+        {
+            // A PERSON is aimed at on the body this machine draws for them — their own avatar for yourself, the copy
+            // for anybody else — never at their shell. Only a creature's skill ever aims at a person.
+            var targetShell = at.GetComponent<NetPlayer>();
+            var drawn = targetShell != null ? targetShell.DrawnBody : null;
+            aimed = drawn != null ? drawn : at.transform;
+        }
 
-        shell.ShowCast(SkillCatalog.Get(msg.skillId), aimed, msg.aimPoint, msg.seed);
+        var def = SkillCatalog.Get(msg.skillId);
+        var shell = identity.GetComponent<NetPlayer>();
+        if (shell != null) { shell.ShowCast(def, aimed, msg.aimPoint, msg.seed); return; }
+        var creature = identity.GetComponent<NetMob>();
+        if (creature != null) creature.ShowCast(def, aimed, msg.aimPoint, msg.seed);
     }
 
     // SAID OUT LOUD, once per connection, for the same reason a missing fighter is: the refusal itself is silent —
@@ -2257,7 +2409,13 @@ public class GameNetwork : NetworkManager
 
         if (!NetworkClient.spawned.TryGetValue(msg.speakerNetId, out var identity) || identity == null) return;
         var shell = identity.GetComponent<NetPlayer>();
-        if (shell == null) return;
+        if (shell == null)
+        {
+            // A CREATURE calling out a skill: the bubble over its head, and nothing in the log.
+            var creature = identity.GetComponent<NetMob>();
+            if (creature != null && msg.isSkillCall) creature.ShowCreatureCall(msg.text);
+            return;
+        }
         ChatController.Heard(msg.speaker, msg.text, shell.SpeechPose, msg.isSkillCall);
     }
 

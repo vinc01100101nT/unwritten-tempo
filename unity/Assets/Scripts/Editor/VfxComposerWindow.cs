@@ -696,6 +696,11 @@ public class VfxComposerWindow : EditorWindow
                     "On: keep this effect playing (looping) until the skill's STAY DURATION elapses (set per-skill in " +
                     "the Skill Composer; fallback 3s). Off: play once for the effect's natural length, then end."),
                     st.looping);
+                st.stopPreviousOnReplay = EditorGUILayout.Toggle(new GUIContent("stop previous on replay",
+                    "On: when this step starts on a caster, the copy of it still showing on that same caster from an " +
+                    "earlier play is removed instantly (no fade), so a dash trail never doubles up. Other casters are " +
+                    "untouched. Off: copies overlap and each fades on its own."),
+                    st.stopPreviousOnReplay);
                 // Playback rate — shared by PlayAt and Attach (an aura can smoulder slowly or flicker fast). For an
                 // Attach it changes only the animation's pace, never how long the aura lives (that's Stay Duration).
                 st.speed = EditorGUILayout.Slider(new GUIContent("speed",

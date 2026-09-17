@@ -10,7 +10,7 @@ using TMPro;
 ///
 /// PERFORMANCE: popups are POOLED, not created-and-destroyed. The old version built a fresh
 /// GameObject + world-space <see cref="Canvas"/> + <see cref="Text"/> + <see cref="Outline"/> per hit
-/// and Destroyed it — worst case exactly when the game is busiest (auto-combat vs a field of mobs,
+/// and Destroyed it — worst case exactly when the game is busiest (auto-pilot AI vs a field of mobs,
 /// both directions dealing damage). That meant per-hit GC churn, a per-spawn builtin-font lookup, and
 /// a separate Canvas (its own batch + rebuild) for every number on screen.
 ///

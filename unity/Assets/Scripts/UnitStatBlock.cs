@@ -151,6 +151,17 @@ public class UnitStatBlock : MonoBehaviour
         CurrentMP = Mathf.Min(MaxMP, CurrentMP + amount);
     }
 
+    /// <summary>What this creature's cast wind-ups are multiplied by — the player's own formula fed this creature's DEX,
+    /// its ring's cast speed and any cast speed window on it.</summary>
+    public float CastTimeMult
+    {
+        get
+        {
+            float buff = health != null && health.States != null ? health.States.CastSpeedBuffMult : 1f;
+            return UnitStatMath.CastTimeMult(Effective, RingPercent(StatId.CastSpeed), buff);
+        }
+    }
+
     /// <summary>Spend MP if there's enough; returns false and spends nothing when short.</summary>
     public bool SpendMana(int amount)
     {

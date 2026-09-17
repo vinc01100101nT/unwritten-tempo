@@ -1,14 +1,14 @@
 ---
 status: open
 owner: vince
-last-updated: 2026-09-15
+last-updated: 2026-09-17
 tags:
   - planning-production
 ---
 
 # Play-Test Checklist
 
-Everything built but never watched working, in two lists: the checks that can be settled **without Play mode** — by searching the game's code and saved files, with no server and nothing rebuilt — and the checks that need the game running **in Play mode**. Every step says what to do, what should happen, and what counts as a **FAIL**. A step that is blocked by something other than the rebuild below says **Cannot be done now** and why; a step the tester cannot run says **Cannot be done by tester**. The steps come from eight batches:
+Everything built but never watched working, in two lists: the checks that can be settled **without Play mode** — by searching the game's code and saved files, with no server and nothing rebuilt — and the checks that need the game running **in Play mode**. Every step says what to do, what should happen, and what counts as a **FAIL**. A step that is blocked by something other than the rebuild below says **Cannot be done now** and why; a step the tester cannot run says **Cannot be done by tester**. The steps come from thirteen batches:
 
 1. **The bag's columns** (2026-09-14).
 2. **Your machine works out no game number** (2026-09-14) — the server sends every number and your screen only draws it.
@@ -18,6 +18,11 @@ Everything built but never watched working, in two lists: the checks that can be
 6. **The first armour pieces** (2026-09-15) — [Action Plan](action-plan.md) `MT-7`: Leather Cap, Padded Vest, Traveller's Cloak and Wooden Buckler.
 7. **Creature loot on the ground and random creature gear** (2026-09-15).
 8. **Gear bonuses beside the main stats on the character sheet** (2026-09-15).
+9. **Creatures cast their weapon's skills** (2026-09-16) — actives, the ultimate and passives, paying MP; their weapon's reach, the weapon in a 3D creature's hand, and its skill poses.
+10. **Creatures get every skill moment, the arrow, and other people's weapons** (2026-09-17) — a creature now answers a parry, a hit it took, dropping to low health, and its own swings; every bow fires a drawn arrow that everybody can see; another person's weapon shows in their hand; a creature casts a long-range skill from as far away as you can; Retribution's card matches what it does; the player's **T** mode is now called the auto-pilot AI; and a multi-hit skill landing on YOU now shows the rising yellow total it has always shown on a creature.
+11. **Dash trails and the stop previous on replay setting** (2026-09-17) — a new **stop previous on replay** setting on an effect step in the VFX Composer, left off on the dash effect so Blade Dance keeps its star; and dash trails that were drawn up to a unit to the side of the path you travelled.
+12. **The training dummy's health** (2026-09-17) — a dummy made with `/dummy` now starts at full health instead of an empty bar.
+13. **One extra skill slot on every creature** (2026-09-17) — apart from its weapon's skills, every creature carries one extra skill drawn at random from all published skills each life, and `/summon` can name that skill instead.
 
 ---
 
@@ -40,11 +45,11 @@ GM commands are typed into chat and need a GM account — see [Starting the Netw
 
 ### Before you start — what to rebuild and restart
 
-1. **Game server build — REBUILD.** Game code changed in batches 1 to 5, 7 and 8, and batch 6 adds four new items, and a server only runs the code and items it was built with. The message that carries a blow changed shape in batch 5, so an old server and the new game cannot understand each other's blows. In Unity, let the editor finish compiling, then run `tools/build-game.sh server`.
+1. **Game server build — REBUILD.** Game code changed in batches 1 to 5, 7 to 10, 12 and 13 (the server decides every creature's extra skill and runs `/summon`), and batch 10 adds a new message that says an arrow was fired, a new value that carries what a person is wearing, and two new pieces on the message that carries a blow to a person, and batch 6 adds four new items, and a server only runs the code and items it was built with. The message that carries a blow changed shape in batch 5, so an old server and the new game cannot understand each other's blows. In Unity, let the editor finish compiling, then run `tools/build-game.sh server`.
 2. **Game server process — RESTART** after the rebuild. Stop it with `pkill -f 'unwritten-server.app/unwritten'`, check `lsof -nP -iUDP:7777` prints nothing, then start it with the command under *The game server ▸ Running it* in [Starting the Network](../2-systems/networking/starting-the-network.md).
 3. **Character server — no restart.** Nothing inside it changed, and the one string both servers must agree on did not change.
 4. **Account service — no restart.** Nothing inside it changed.
-5. **The game you play — REBUILD** if you play the built game: `tools/build-game.sh client`. Batches 1 and 2 changed what your own screen draws, batch 6 adds items your screen must know to draw them, batch 7 changed the message that describes a creature, and batch 8 changed the message that carries your character sheet — an old game and a new server cannot read each other's creatures or sheets. Playing from the editor needs nothing extra: the game reads the character server's address from its own settings file.
+5. **The game you play — REBUILD** if you play the built game: `tools/build-game.sh client`. Batches 1 and 2 changed what your own screen draws, batch 6 adds items your screen must know to draw them, batch 7 changed the message that describes a creature, batch 8 changed the message that carries your character sheet, batch 9 changed how your screen draws a creature's cast, and batch 10 adds the message that says an arrow was fired, the value that says what a person is wearing, and two new pieces on the message that carries a blow to YOU — an old game and a new server cannot read each other's creatures, sheets, arrows or blows on a person, and an old game draws no arrow, no weapon in anybody else's hand and no rising total over you. Batch 11 changed only what your screen draws, so it needs this rebuild and nothing on the server side. Batch 13 changes nothing your screen draws — only the `/help` line for `/summon`. Playing from the editor needs nothing extra: the game reads the character server's address from its own settings file.
 
 **Never refresh the editor while a play session is running** — its automatic refresh is switched off, so an edit waits for a refresh, and a refresh mid-play reloads the game's code and ends the session.
 
@@ -232,3 +237,131 @@ Open the Grimoire with **J** to tick or untick a passive and to put any skill on
    *Should:* the brackets disappear within about half a second.
    *FAIL:* the brackets stay until you close and reopen the sheet.
 
+### 9. Creatures cast their weapon's skills
+
+Before starting, type `/log cast on` and `/log passive on` in chat. Only the Sword has published skills, so only a creature holding a **Sword** casts its weapon's skills. Every creature also carries one extra skill (batch 13), so any creature may cast that one.
+
+1. Type `/summon 5 normal` and hover over each creature until one's panel lists **Sword** — summon again if none does. Attack it and stay in its reach with invincibility off.
+   *Should:* within a minute its skill's name floats in a bubble over its head, the skill's effect plays and lands on you, and the MP bar in the top-centre panel drops. `logs/server.log` has a line naming that creature followed by `casts skill.sword.` and the skill.
+   *FAIL:* after 60 seconds at full MP it has only swung, or its name bubble appears and its MP bar never moves.
+   *Status:* 2026-09-16 play-test — no name bubble over any creature. A flat sprite creature had no head for a bubble to ride, so the bubble was silently skipped; it now sits above the sprite. Cast logging was off, so that run did not record whether any creature cast at all. Second run, about an hour: only Lunge and Parry were ever seen. Replayed offline with the real costs, a level 3–5 creature holds 17–23 MP and refills 1.5 a second, so its two 8-MP skills take almost every cast (about 5 a fight), each 12-MP skill gets about 1, Committed Strike about 0.3, and no 40-MP ultimate can ever be afforded below level 11. **Settled 2026-09-17:** a creature takes its ultimate first whenever that is off cooldown and affordable, and otherwise one of its ready ordinary actives at random — it never saves up. So seeing only the cheap skills on a low-level creature is correct, not a failure.
+2. Keep fighting until it casts a skill that shows a cast bar over its head.
+   *Should:* on your screen the bar fills over its head and a ring appears on the ground if the skill has one; the creature neither walks nor bites until the bar is gone.
+   *FAIL:* it walks or bites while its bar is still filling, or the ring stays on the ground after the bar is gone.
+3. Fight the same creature for two minutes, then search `logs/server.log` for `fired skill.sword.`.
+   *Should:* at least one line names that creature — its passives firing.
+   *FAIL:* every passive line naming the creature says `skipped … not switched on`.
+4. Stand so the sword creature and two other creatures are all within a few steps of you, and let it cast.
+   *Should:* its skills only ever take health off you; the other creatures' health bars stay full until you hit them.
+   *FAIL:* another creature's health drops when no player has hit it.
+5. With `/log cast on`, fight a creature whose panel lists **Sword** for 60 seconds, then search `logs/server.log` for `weighed its skills`.
+   *Should:* a line naming that creature each time it picks a skill, plus a `none ready, swinging` line only when its reasons change — never the identical wait repeated swing after swing. Each line lists every skill it holds with `ready` or the reason it was not — on cooldown with seconds left, not enough mana with held and needed, out of reach with the distance — and ending with `picked` a skill or `none ready, swinging`.
+   *FAIL:* no such line for a creature that was fighting you, a line whose pick is a skill it listed as not ready, or the same `none ready` line repeated back to back for one creature.
+6. With `/log cast on`, fight a creature whose panel lists **Bow**, or no weapon, for 60 seconds, then search `logs/server.log` for `weighed its skills` on lines naming it.
+   *Should:* every such line lists exactly one skill — its extra skill — and any name bubble over it is that skill. No line at all is also correct when its extra skill is a passive.
+   *FAIL:* a line naming it lists two or more skills, or a bubble shows a skill its line never listed.
+7. Type `/summon 5 normal` until a creature's panel lists **Bow**, then stand still and let it come at you.
+   *Should:* it stops about as far away as you shoot with a Bow yourself and hits you from there.
+   *FAIL:* it walks up to arm's length before it hits you.
+8. Type `/summon 5 normal shadow` until a 3D creature's panel lists **Sword** or **Bow**.
+   *Should:* the weapon listed is in its hand. After it dies and comes back, its hand shows whatever its panel now lists, or nothing.
+   *FAIL:* an empty hand while its panel lists a weapon, or a weapon in its hand that its panel does not list.
+9. Fight a 3D creature holding a **Sword** until it casts.
+   *Should:* while its cast bar fills it holds the same casting pose you hold when you cast, and when the skill goes off it plays the same release animation you play for that skill.
+   *FAIL:* it stands in its idle or walking pose through its cast bar, or the skill goes off with no animation.
+10. Type `/summon 1 normal shadow`, kill the 3D creature, and wait for it to come back.
+   *Should:* when it is back it stands, walks, runs and swings with its animations, exactly as before it died.
+   *FAIL:* it stands static with no pose after coming back.
+   *Status:* 2026-09-16 play-test — static after coming back. A body that came back had its animations switched off by a distance check that looked for players in the wrong place; fixed, needs re-test.
+11. **Cannot be done by tester** — with a second player signed in and watching you fight the sword creature.
+   *Should:* they see the same name bubble, cast bar and skill effect on it that you see.
+   *FAIL:* the creature casts on your screen and stands still or only swings on theirs.
+12. Type `/summon 5 normal shadow` until a 3D creature's panel lists **Sword**, and fight it until it casts **Onslaught** (its damage numbers start landing about twice as fast as its normal swings).
+   *Should:* for as long as those fast numbers land, its sword swings once for every number — the swing is visibly faster than its normal attack.
+   *FAIL:* its swing stays at normal speed, or it restarts the swing before finishing, while the numbers land fast.
+13. **Cannot be done by tester** — with a second player signed in, have them press **Onslaught** on a creature while you watch them.
+   *Should:* on your screen their sword swings as fast as their damage numbers land, the same as on their own screen.
+   *FAIL:* on your screen they swing at normal speed while their numbers land fast.
+
+### 10. Creatures get every skill moment, the arrow, and other people's weapons
+
+Before starting, type `/log cast on` and `/log passive on` in chat.
+
+1. **Without Play mode** — open the player wiki's Sword page (or press **K** in game and hover **Retribution**).
+   *Should:* its words read that it lands five strikes each worth 100% Attack plus 250% of the banked total, and that with an empty bank it still casts for five plain attacks.
+   *FAIL:* it still says the damage is "split across 5 strikes", or that it "does nothing with an empty bank".
+2. Type `/summon 5 normal` until a creature's panel lists **Sword**, fight it for two minutes with invincibility off, then search `logs/server.log` for `fired skill.sword.` on lines naming that creature.
+   *Should:* lines for moments that used to be yours alone — `OnParry`, `OnDamageReceived`, `OnLowHP`, `OnBasicAttackStart` and `OnBasicAttackDealt` — as its skills answer them.
+   *FAIL:* every line naming that creature is on `OnCast`, `OnKill` or `OnSkillCastComplete` only.
+3. Fight that same creature down to under a third of its health without killing it, then search the log for `OnLowHP` on a line naming it.
+   *Should:* one line at the moment its bar crossed about a third.
+   *FAIL:* no such line, or a line every hit after that.
+4. Type `/summon 5 normal` until a creature's panel lists **Bow**, then stand still and let it shoot you.
+   *Should:* a thin pale line flies from the creature to you, and your health only drops when the line reaches you — not at the moment it fires.
+   *FAIL:* no line appears, or your health drops the instant it fires.
+5. Equip a Bow yourself (`/weapon bow`), stand well back from a creature and attack it.
+   *Should:* the same thin pale line flies from you to the creature, and the damage number appears over it when the line arrives.
+   *FAIL:* no line, or the number appears instantly.
+6. Type `/summon 5 normal` until a creature's panel lists **Sword**, stand about eight steps away from it — well outside biting distance — and let it come at you.
+   *Should:* it can jump at you with **Lunge** from that distance instead of walking all the way in first.
+   *FAIL:* it never casts anything until it is close enough to bite.
+7. Press **T**.
+   *Should:* the tag near the bottom of the screen reads **AUTO-PILOT — press S to stop**.
+   *FAIL:* it reads AUTO-COMBAT.
+8. **Cannot be done by tester** — with a second player signed in, stand where you can see each other and have them type `/weapon sword`.
+   *Should:* a sword appears in their hand on your screen within a second, and changing or removing it changes what you see.
+   *FAIL:* their hands stay empty whatever they equip.
+9. **Cannot be done by tester** — with a second player signed in, have them shoot a creature with a Bow while you watch.
+   *Should:* you see the same line fly from them to the creature.
+   *FAIL:* you see the creature take damage with nothing flying at it.
+10. Type `/summon 5 normal` until a creature's panel lists **Sword**, turn invincibility off, and let it cast **Retribution** at you (its five strikes land a fifth of a second apart).
+   *Should:* the five white numbers appear over you one after another AND a big yellow number sits above them, climbing with each strike, then fading a second after the last one.
+   *FAIL:* only the white numbers, with no yellow total — which is what this step exists to catch.
+11. Let two creatures hit you with a multi-hit skill at the same time.
+   *Should:* two separate yellow totals, one per creature.
+   *FAIL:* one yellow number adding both creatures' damage together.
+12. Stand poisoned (or with a Brace bill due) while a creature lands a multi-hit skill on you.
+   *Should:* the poison's own coloured numbers stay out of the yellow total — it counts only the skill's strikes.
+   *FAIL:* the yellow total jumps by the poison tick's amount.
+
+### 11. Dash trails and the stop previous on replay setting
+
+1. **Without Play mode** — open the VFX Composer, pick any effect step that plays at a spot or rides a character.
+   *Should:* a **stop previous on replay** checkbox under **looping**. On **skill_dash** it is unticked, so Blade Dance keeps drawing its star.
+   *FAIL:* no such checkbox.
+2. Tick **stop previous on replay** on a test step that rides you, play that effect twice in a row within a second.
+   *Should:* the first copy vanishes the instant the second starts; with it unticked, both show and each fades on its own.
+   *FAIL:* ticked and both still show, or unticked and the first vanishes.
+3. Equip **Lunge** and **Lock Blades**, press Lunge on a creature, and keep attacking so Lock Blades sends you lunging again.
+   *Should:* any trails that overlap in time sit on top of each other along the path you actually travelled — never two copies side by side.
+   *FAIL:* two trails running side by side a short distance apart.
+   *Status:* 2026-09-17 — seen by the user: two trails side by side. Measured: 8 of 78 trails started up to 1 unit to the side of the body they follow, because the dash had already moved the body by the time the trail started, and the trail kept that gap for its whole life. Fixed so a trail keeps only the height difference; not yet watched in play.
+4. Press **Blade Dance** on a group of creatures.
+   *Should:* the dashes leave the star shape on the ground.
+   *FAIL:* only one line at a time, or no star.
+
+### 12. The training dummy's health
+
+1. Type `/dummy` and look at the dummy's health bar straight away, before hitting it.
+   *Should:* the bar is full.
+   *FAIL:* the bar is empty or nearly empty.
+
+### 13. One extra skill slot on every creature
+
+Before starting, type `/log cast on` in chat.
+
+1. Type `/summon 3 normal skill.sword.onslaught` and pick one whose panel lists **Bow** or no weapon (summon again if none does). Fight it with invincibility off for 60 seconds, then search `logs/server.log` for `weighed its skills` on lines naming it.
+   *Should:* the chat reply ends `with extra skill skill.sword.onslaught`; it casts **Onslaught** at you (its name floats over its head), and its log lines list `skill.sword.onslaught`.
+   *FAIL:* it never casts Onslaught with full MP, or its log lines list a different skill.
+2. Kill that creature, wait for it to come back, and fight it again for 60 seconds.
+   *Should:* it still casts **Onslaught**, and its new log lines still list `skill.sword.onslaught`.
+   *FAIL:* after coming back its lines list a different extra skill.
+3. Type `/summon 1 normal skill.ember_bolt` (a skill that is not published) and fight it.
+   *Should:* it is summoned, and it casts **Ember Bolt** at you.
+   *FAIL:* the command is refused, or it never casts Ember Bolt with full MP.
+4. Type `/summon 1 normal skill.does_not_exist`.
+   *Should:* the reply is `No skill with the id 'skill.does_not_exist'.` followed by the usage line, and no creature appears.
+   *FAIL:* a creature is summoned.
+5. Type `/summon 5 normal`, fight each creature holding a **Bow** or nothing for a while, then search `logs/server.log` for `weighed its skills`.
+   *Should:* each of those creatures lists one skill, and not all of them list the same one.
+   *FAIL:* a Bow or unarmed creature lists no skill across several fights where its extra skill is not a passive, or all five always list the same skill.

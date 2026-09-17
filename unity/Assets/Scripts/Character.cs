@@ -452,8 +452,8 @@ public class Character : MonoBehaviour, ICombatUnit
     // defence exactly as the player's crit ignores a mob's; consumed by the Step D authority seam.
     public Vector3 DamagePosition { get { var a = Avatar(); return a != null ? a.position : transform.position; } }
     public int ApplyDamage(in DamageInfo info)
-        => info.isMagic ? TakeMagicDamage(info.amount, info.element, info.source)
-                        : TakeDamage(info.amount, info.attackerHit, info.element, info.source, info.missed, info.isCrit);
+        => info.isMagic ? TakeMagicDamage(info.amount, info.element, info.attacker)
+                        : TakeDamage(info.amount, info.attackerHit, info.element, info.attacker, info.missed, info.isCrit);
     public int ApplyTrueDamage(int amount, Color color) => TakeTrueDamage(amount, color);
 
     // ICombatUnit seam: the rest of the shared vocabulary an effect needs, so a skill effect targets the player through
@@ -1086,32 +1086,22 @@ public class Character : MonoBehaviour, ICombatUnit
     // a server holding several people has one per person.
     public StatusController StatusHost => boundStatusHost != null ? boundStatusHost : StatusController.Player;
 
-    /// <summary>This character's own skills, in the fixed order the passive dispatch walks them in — one entry per
-    /// authored skill, and a slot stays EMPTY until that skill is actually wanted. The order is the whole catalog's,
-    /// identical on every machine, because a skill's position IS its identity to the no-self-feeding brake.</summary>
-    public SkillRunner[] SkillRunners { get; private set; }
+    /// <summary>This character's own skills, in the fixed order the passive dispatch walks them in — the shared list
+    /// every unit that casts holds (see <see cref="UnitSkills"/>). The order is the whole catalog's, identical on every
+    /// machine, because a skill's position IS its identity to the no-self-feeding brake.</summary>
+    public UnitSkills Skills => skills ??= new UnitSkills(this);
+    UnitSkills skills;
 
-    // The authored skill each position stands for. Held separately from the runners above so a moment can ask "does
-    // this skill answer me?" without a component having to exist yet — which is what lets a person carry the whole
-    // catalog's worth of positions while paying for only the handful they actually use.
-    SkillDef[] skillDefs;
+    /// <summary>A person's list holds everything they can use — their bar, their ticked passives, their bag — so a
+    /// passive in it runs only when their loadout says it is switched on.</summary>
+    public bool PassiveIsOn(SkillDef def) => PassiveSkills.IsActive(def);
 
     // The object a skill component gets attached to when one is finally needed. A character and the body it drives
     // are two different objects here, so this has to be told, not looked up.
     GameObject skillHost;
 
-    // WHICH POSITION A SKILL ID SITS AT. Built with the list, so it can never answer for a list this character no
-    // longer has.
-    readonly System.Collections.Generic.Dictionary<string, int> slotById =
-        new System.Collections.Generic.Dictionary<string, int>(64);
-
-    // WHICH POSITIONS ANSWER A GIVEN MOMENT. One entry per authored trigger; a moment none of these skills answer
-    // holds an empty array, which is the common case and costs a length check. This is what turned a landed blow
-    // from asking every skill in the catalog into asking the two or three that authored that moment.
-    int[][] slotsByTrigger;
-
     /// <summary>True once this character has been told what its skills are.</summary>
-    public bool HasSkills => skillDefs != null && skillDefs.Length > 0;
+    public bool HasSkills => Skills.HasSkills;
 
     /// <summary>Rebuild what this character carries from what it can use RIGHT NOW. Anything that changes the
     /// answer calls this: a weapon changing, a skill being put on the bar, a passive being ticked.
@@ -1205,34 +1195,7 @@ public class Character : MonoBehaviour, ICombatUnit
     public void BindSkills(GameObject host, System.Collections.Generic.IReadOnlyList<SkillDef> defs)
     {
         skillHost = host;
-        int n = defs != null ? defs.Count : 0;
-        skillDefs = new SkillDef[n];
-        SkillRunners = new SkillRunner[n];
-        slotById.Clear();
-        for (int i = 0; i < n; i++)
-        {
-            var def = defs[i];
-            skillDefs[i] = def;
-            if (def != null && !string.IsNullOrEmpty(def.id)) slotById[def.id] = i;
-        }
-
-        if (host != null)
-        {
-            var already = host.GetComponents<SkillRunner>();
-            for (int k = 0; k < already.Length; k++)
-            {
-                var r = already[k];
-                var def = r != null ? r.def : null;
-                if (def == null || string.IsNullOrEmpty(def.id)) continue;
-                if (slotById.TryGetValue(def.id, out int slot) && SkillRunners[slot] == null)
-                {
-                    r.BindCaster(this);
-                    SkillRunners[slot] = r;
-                }
-            }
-        }
-
-        IndexTriggers();
+        Skills.Bind(host, defs);
 
         // AND THE BAR IS REDRAWN, HERE, because this is the one moment the list it draws from is rebuilt. A cell
         // finds its skill by asking this character for the component that plays it, so a cell built while the list
@@ -1246,91 +1209,9 @@ public class Character : MonoBehaviour, ICombatUnit
         if (ReferenceEquals(this, Instance)) HotbarPanel.RebuildRequested?.Invoke();
     }
 
-    void IndexTriggers()
-    {
-        int triggerKinds = System.Enum.GetValues(typeof(SkillTrigger)).Length;
-        var counts = new int[triggerKinds];
-        for (int i = 0; i < skillDefs.Length; i++) CountTriggers(skillDefs[i], counts);
-
-        slotsByTrigger = new int[triggerKinds][];
-        for (int t = 0; t < triggerKinds; t++)
-            slotsByTrigger[t] = counts[t] > 0 ? new int[counts[t]] : System.Array.Empty<int>();
-
-        var filled = new int[triggerKinds];
-        for (int i = 0; i < skillDefs.Length; i++) FileTriggers(skillDefs[i], i, filled);
-    }
-
-    // A skill with no authored trigger list still answers a press — the same fallback the dispatch makes, said once
-    // here so the index and the dispatch cannot disagree about which moments a skill has.
-    void CountTriggers(SkillDef def, int[] counts)
-    {
-        if (def == null) return;
-        var list = def.triggers;
-        if (list == null || list.Count == 0) { counts[(int)SkillTrigger.OnCast]++; return; }
-        for (int k = 0; k < list.Count; k++)
-        {
-            var e = list[k];
-            if (e == null) continue;
-            int t = (int)e.trigger;
-            if (t >= 0 && t < counts.Length) counts[t]++;
-        }
-    }
-
-    void FileTriggers(SkillDef def, int slot, int[] filled)
-    {
-        if (def == null) return;
-        var list = def.triggers;
-        if (list == null || list.Count == 0)
-        {
-            int c = (int)SkillTrigger.OnCast;
-            slotsByTrigger[c][filled[c]++] = slot;
-            return;
-        }
-        for (int k = 0; k < list.Count; k++)
-        {
-            var e = list[k];
-            if (e == null) continue;
-            int t = (int)e.trigger;
-            if (t < 0 || t >= filled.Length) continue;
-            slotsByTrigger[t][filled[t]++] = slot;
-        }
-    }
-
-    /// <summary>The authored skill at <paramref name="slot"/>, WITHOUT building anything. This is what a moment asks
-    /// first, so a skill that turns out not to answer never costs a component.</summary>
-    public SkillDef DefAt(int slot)
-        => skillDefs != null && slot >= 0 && slot < skillDefs.Length ? skillDefs[slot] : null;
-
-    /// <summary>The live component for <paramref name="slot"/>, BUILDING it if this is the first time this character
-    /// has needed that skill. Never null for a real slot on a bound character.</summary>
-    public SkillRunner RunnerAt(int slot)
-    {
-        if (SkillRunners == null || slot < 0 || slot >= SkillRunners.Length) return null;
-        var r = SkillRunners[slot];
-        if (r != null && r) return r;
-        var def = skillDefs[slot];
-        if (def == null || skillHost == null) return null;
-        // perf-ok: builds once per skill this character ever uses, then never again — the memo shape.
-        r = skillHost.AddComponent<SkillRunner>();
-        r.def = def;
-        r.BindCaster(this);
-        SkillRunners[slot] = r;
-        return r;
-    }
-
     /// <summary>The component this character casts <paramref name="skillId"/> with, built on first use, or null if
     /// that is not one of their skills. One lookup, whatever the size of the skill catalog.</summary>
-    public SkillRunner RunnerById(string skillId)
-        => !string.IsNullOrEmpty(skillId) && slotById.TryGetValue(skillId, out int slot) ? RunnerAt(slot) : null;
-
-    /// <summary>The positions of the skills that answer <paramref name="trigger"/> — the only ones a moment needs to
-    /// ask. Never null; empty when none of this character's skills answer it.</summary>
-    public int[] SlotsFor(SkillTrigger trigger)
-    {
-        int t = (int)trigger;
-        if (slotsByTrigger == null || t < 0 || t >= slotsByTrigger.Length) return System.Array.Empty<int>();
-        return slotsByTrigger[t] ?? System.Array.Empty<int>();
-    }
+    public SkillRunner RunnerById(string skillId) => Skills.RunnerById(skillId);
 
     StatusController boundStatusHost;
 
@@ -1365,9 +1246,6 @@ public class Character : MonoBehaviour, ICombatUnit
     // Timed skill windows (V3: the old weapon Mana-Leech / Reflect affixes, rehomed as skill effects) — now stored in
     // the unified state store. The combat sinks read the fraction via States and see 0 once the window lapses.
 
-    /// <summary>The live mana-leech fraction (0 when no window active) — read where the player's damage is dealt
-    /// (<see cref="Health"/>), converting that fraction of damage into MP.</summary>
-    public float ActiveManaLeechPct => States.ManaLeechPct;
     /// <summary>The live extra damage-reflect fraction from a skill window (0 when inactive), added on top of the
     /// permanent thorns-card <c>reflectPct</c> where incoming damage is bounced back.</summary>
     public float ActiveReflectBonus => States.ReflectBonus;
@@ -1390,14 +1268,13 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>Remaining parry charges (0 when none) — for a HUD pip / the tooltip readout.</summary>
     public int ParryCharges => States.ParryCharges;
 
-    // A parry cancels the hit BEFORE defence/element math, exactly like the off-hand block below it. The spend + the
-    // "PARRY" word are the shared unit primitive (mobs get the identical read); only the OnParry dispatch is here,
-    // because passives belong to the player. `source` rides along so a counter-passive can aim at who was parried.
-    bool ParriedHit(MonsterAI3D source)
+    // A parry cancels the hit BEFORE defence/element math, exactly like the off-hand block below it. The spend, the
+    // "PARRY" word AND the moment it raises are all the shared unit primitive now, so a creature's parry announces
+    // itself exactly as this one does. `attacker` rides along so a counter-passive can aim at who was parried.
+    bool ParriedHit(ICombatUnit attacker)
     {
-        if (!UnitMitigation.TryParry(States)) return false;
+        if (!UnitMitigation.TryParry(this, attacker)) return false;
         lastMitigation.parried = true;
-        PassiveEvents.Fire(this, SkillTrigger.OnParry, null, source != null ? source.transform : null);
         return true;
     }
 
@@ -1419,15 +1296,13 @@ public class Character : MonoBehaviour, ICombatUnit
 
     // Drain the barrier first, then HP. Pops a pale-cyan number for the soaked part so the absorb is visible. No alloc
     // (int math + the pooled DamagePopup). The two hit intakes route through here; DoT keeps its own line (shield bypass).
-    // Fraction of MaxHP at/under which the player counts as "low HP" — the OnLowHP falling-edge threshold.
-    const float LowHpFrac = 0.3f;
 
     /// <summary>Run the last two mitigations (Shield absorb, then Brace defer) and subtract what's left from HP.
     /// RETURNS what actually landed, which is NOT what the caller passed in — a barrier or a brace can reduce it, to
     /// zero. Every caller must use the RETURN for anything downstream (the number shown, thorns, what it
     /// reports back); the figure it passed in is only the hit's size BEFORE these two, and using that is the bug this
     /// signature exists to prevent.</summary>
-    int ApplyHitToHP(int dmg, MonsterAI3D source = null)
+    int ApplyHitToHP(int dmg, ICombatUnit attacker = null)
     {
         if (dmg <= 0) return 0;
         // A WATCHED COPY WEIGHS NOTHING. The figure it was handed is what already got through on the server, with the
@@ -1446,17 +1321,10 @@ public class Character : MonoBehaviour, ICombatUnit
         {
             int before = CurrentHP;
             SubtractHealth(dmg);
-            // A hit got THROUGH — the exact mirror of OnDamageDealt, whose fire-site (Health.ApplyLeech) likewise bails
-            // on damage <= 0 after the victim's own mitigation. Both sides therefore mean one damage instance that
-            // really landed, and a parried / fully shielded / braced hit reaches neither. The attacker travels as the
-            // trigger's entity, so a counter-attack passive aims back at whoever hit you.
-            PassiveEvents.Fire(this, SkillTrigger.OnDamageReceived, null, source != null ? source.transform : null);
-            // Falling-edge into low HP: this hit crossed the threshold and left the player alive → fire OnLowHP (Last
-            // Stand). Computed locally (before vs after), so it re-arms after any heal with no persisted flag. DoT-only
-            // crossings bypass this line and aren't covered — fine until OnLowHP becomes a queried state.
-            int thr = Mathf.CeilToInt(MaxHP * LowHpFrac);
-            if (before > thr && CurrentHP > 0 && CurrentHP <= thr)
-                PassiveEvents.Fire(this, SkillTrigger.OnLowHP);
+            // A hit got THROUGH — the two moments that answer it are raised by the SHARED dispatch, the same call a
+            // creature's damage door makes, so "damage landed on me" and "that dropped me under a third of my health"
+            // cannot mean one thing for a person and another for a creature.
+            PassiveEvents.HitLanded(this, before, attacker);
         }
         return dmg;
     }
@@ -1466,10 +1334,11 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <summary>Apply an incoming PHYSICAL hit: damage = max(1, attackerAttack − Defense), then scaled by the
     /// attacker's <paramref name="attackElement"/> vs our <see cref="armorElement"/>. When
     /// <paramref name="attackerHit"/> ≥ 0, the attacker's HIT is first rolled against our <see cref="Flee"/>
-    /// (RO accuracy); a miss negates the hit. Pass −1 to skip the roll (always lands). <paramref name="source"/>
-    /// (the attacking mob) is used for damage-reflect. Returns damage dealt.</summary>
+    /// (RO accuracy); a miss negates the hit. Pass −1 to skip the roll (always lands). <paramref name="attacker"/>
+    /// — whoever swung, person or creature — is what thorns bounce back at and what the moments this blow raises aim
+    /// at. Returns damage dealt.</summary>
     public int TakeDamage(int attackerAttack, int attackerHit, Element attackElement = Element.Neutral,
-                          MonsterAI3D source = null, bool missed = false, bool crit = false)
+                          ICombatUnit attacker = null, bool missed = false, bool crit = false)
     {
         if (IsDead) return CombatAuthority.NoDamage(NoDamageReason.AlreadyDead);
         // i-frames (dodge-dash): the hit passes harmlessly through
@@ -1489,7 +1358,7 @@ public class Character : MonoBehaviour, ICombatUnit
         // than counted. The server has already taken the block, the parry, the armour's element and DEF off this
         // figure, so weighing them a second time here would draw the person a smaller number than the blow they
         // actually took, or swallow the blow entirely on a coin this machine had no business tossing.
-        if (IsWatchedCopy) return LandOnMe(attackerAttack, source, MonsterHitColor, false, crit, attackerHit);
+        if (IsWatchedCopy) return LandOnMe(attackerAttack, attacker, MonsterHitColor, false, crit, attackerHit);
 
         // Off-hand block: a shield can negate the hit (and clang) before any damage applies.
         var off = GetEquipped(EquipSlotType.Shield);
@@ -1507,14 +1376,14 @@ public class Character : MonoBehaviour, ICombatUnit
         if (mod <= 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
         // read LAST of the negations, so a charge is only ever spent on a hit that would really have landed (a miss /
         // block / immunity keeps it in hand)
-        if (ParriedHit(source)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
+        if (ParriedHit(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both, exactly as it does on a mob.
         int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerAttack, HardDefPercent, Defense, crit) * mod);
         // Everything below reads what LANDED, never the pre-barrier figure: a hit a Shield ate or a Brace holds costs
         // no HP, so it must also not flash, not bounce thorns, and must report 0 to the attacker
         // (whose own "did I connect" check pops the damage number and grants its XP).
-        return LandOnMe(dmg, source, MonsterHitColor, false, crit, attackerHit);
+        return LandOnMe(dmg, attacker, MonsterHitColor, false, crit, attackerHit);
     }
 
     /// <summary>Show a blow the SERVER decided landed on this person, on their own machine — exactly as decided, with
@@ -1555,9 +1424,9 @@ public class Character : MonoBehaviour, ICombatUnit
     /// <para>The number is drawn HERE, on the side it happened to, for the same reason a creature's is drawn inside
     /// its own <see cref="Health"/>: whoever swung is no longer on this machine. A monster's bite is decided on the
     /// server, so a number the monster itself drew appeared on a screen nobody is sitting at.</para></summary>
-    int LandOnMe(int dmg, MonsterAI3D source, Color numberColor, bool isMagic, bool crit, int attackerHit)
+    int LandOnMe(int dmg, ICombatUnit attacker, Color numberColor, bool isMagic, bool crit, int attackerHit)
     {
-        dmg = ApplyHitToHP(dmg, source);
+        dmg = ApplyHitToHP(dmg, attacker);
         OnHealthChanged?.Invoke();
         var av = Avatar();
         // The hit cue, chosen by the same rule a creature's is and played whenever the blow got this far — a miss, a
@@ -1572,7 +1441,7 @@ public class Character : MonoBehaviour, ICombatUnit
             // drives the player hurt flash
             OnDamaged?.Invoke(dmg);
             // thorns: bounce a fraction back at the attacker
-            Reflect(dmg, source);
+            Reflect(dmg, attacker);
         }
         // Phase F: DeathScreen handles the death → respawn flow
         if (CurrentHP == 0) RaiseDeath();
@@ -1595,23 +1464,23 @@ public class Character : MonoBehaviour, ICombatUnit
 
     /// <summary>Apply an incoming MAGIC hit: reduced by <see cref="MagicDefense"/> (not <see cref="Defense"/>). Magic
     /// can't be dodged, and evasion does nothing to it. Returns the damage dealt.</summary>
-    public int TakeMagicDamage(int attackerMagic, Element attackElement = Element.Neutral, MonsterAI3D source = null)
+    public int TakeMagicDamage(int attackerMagic, Element attackElement = Element.Neutral, ICombatUnit attacker = null)
     {
         if (IsDead) return CombatAuthority.NoDamage(NoDamageReason.AlreadyDead);
         // i-frames (dodge-dash) dodge magic too
         if (DodgedByInvuln()) return CombatAuthority.NoDamage(Invincible ? NoDamageReason.Invincible : NoDamageReason.Dodged);
 
         // Told, not worked out — the same rule the physical intake above explains.
-        if (IsWatchedCopy) return LandOnMe(attackerMagic, source, MonsterMagicColor, true, false, -1);
+        if (IsWatchedCopy) return LandOnMe(attackerMagic, attacker, MonsterMagicColor, true, false, -1);
 
         float mod = Elements.Modifier(attackElement, armorElement);
         // armour already nullified it — nothing to parry, so no charge is spent
         if (mod <= 0f) return CombatAuthority.NoDamage(NoDamageReason.Immune);
         // the read catches magic too: Parry is a timing skill, not a physical block
-        if (ParriedHit(source)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
+        if (ParriedHit(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         int dmg = UnitMitigation.Landed(States, Combat.AfterDefense(attackerMagic, HardMagicDefPercent, MagicDefense, false) * mod);
-        return LandOnMe(dmg, source, MonsterMagicColor, true, false, -1);
+        return LandOnMe(dmg, attacker, MonsterMagicColor, true, false, -1);
     }
 
     /// <summary>Apply raw over-time damage (e.g. a <see cref="StatusController"/> Poison/Bleed/Burn tick) that
@@ -1632,14 +1501,13 @@ public class Character : MonoBehaviour, ICombatUnit
 
     // Damage reflect (thorns card): bounce a fraction of damage taken back at the attacking mob as true
     // damage (bypasses its defense, can't itself be reflected — TakeTrueDamage never calls back here).
-    void Reflect(int dmgTaken, MonsterAI3D source)
+    void Reflect(int dmgTaken, ICombatUnit attacker)
     {
-        float pct = reflectPct + ActiveReflectBonus;   // permanent thorns card + a timed skill reflect window
-        if (pct <= 0f || dmgTaken <= 0 || source == null) return;
-        var h = source.Health;
-        if (h == null || h.IsDead) return;
+        // permanent thorns card + a timed skill reflect window
+        float pct = reflectPct + ActiveReflectBonus;
+        if (pct <= 0f || dmgTaken <= 0 || PlayerUnits.Gone(attacker) || attacker.IsDead) return;
         int r = Mathf.RoundToInt(dmgTaken * pct);
-        if (r > 0) CombatAuthority.ApplyTrue(h, r, ReflectColor, "reflect");
+        if (r > 0) CombatAuthority.ApplyTrue(attacker, r, ReflectColor, "reflect");
     }
 
     /// <summary>Heal from lifesteal — like <see cref="Heal"/> but SILENT (no green popup), so multi-hit leech
@@ -2190,13 +2058,13 @@ public class Character : MonoBehaviour, ICombatUnit
     // first use only, and forcing one here for every skill would undo the whole reason it is lazy.
     void CaptureCooldowns(SaveData d)
     {
-        if (SkillRunners == null) return;
+        var runners = Skills.Runners;
 
         System.Collections.Generic.List<string> ids = null;
         System.Collections.Generic.List<double> due = null;
-        for (int i = 0; i < SkillRunners.Length; i++)
+        for (int i = 0; i < runners.Length; i++)
         {
-            var r = SkillRunners[i];
+            var r = runners[i];
             if (r == null || !r) continue;
             if (r.def == null || string.IsNullOrEmpty(r.def.id)) continue;
             if (WorldClock.SecondsUntil(r.DueAtUtc) <= 0f) continue;

@@ -75,8 +75,7 @@ Run `tools/check-unity-code.sh` — it type-checks both halves (game + editor to
 ## Still open
 
 - ~~Reset the roster~~ **DONE** — 86 mobs across levels **3–46**, every one exactly on its point budget (verified by parsing the assets: 0 over-budget, 0 left at level 1). The one-shot migration tool has been deleted; a future bulk reset would mean re-writing it from `UnitStatMath.Allocate`.
-- Only two equipment items exist — `item.sword` and `item.bow` — so mobs are effectively unarmed. Content, not code.
-- Mob MP has a pool but nothing spends it — mobs don't pay skill costs yet.
+- Only six equipment items exist — two weapons (`item.sword`, `item.bow`) and four armour pieces (`item.leather-cap`, `item.padded-vest`, `item.travellers-cloak`, `item.wooden-buckler`) — so the random gear a mob puts on draws from a very small pool. Content, not code.
 - Roster re-tuning by playing it — the numbers are consistent now, not necessarily *fun* yet.
 - Nothing has been run in Play mode.
 

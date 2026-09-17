@@ -18,6 +18,7 @@ public class WeaponSocket : MonoBehaviour
     public Animator anim;
 
     Character subscribed;
+    UnitEquipment gear;     // the worn set this body shows, when it is not the person at this keyboard's
     Item shown;             // the weapon def whose model is currently mounted (null = nothing shown)
     GameObject mounted;     // the live instantiated weapon, or null
 
@@ -26,8 +27,19 @@ public class WeaponSocket : MonoBehaviour
         if (anim == null) anim = GetComponentInChildren<Animator>();
     }
 
+    /// <summary>Show the weapon <paramref name="worn"/> holds instead of the player's — a creature's 3D body. Redrawn
+    /// whenever that worn set changes, a new life included. Call before this body's first frame.</summary>
+    public void ShowWeaponOf(UnitEquipment worn)
+    {
+        if (gear != null) gear.OnChanged -= Refresh;
+        gear = worn;
+        if (gear != null) gear.OnChanged += Refresh;
+        Refresh();
+    }
+
     void Start()
     {
+        if (gear != null) return;   // told whose weapon to show; the player's is not this body's
         // Character.Instance is up by Start (same contract Character3DVisual relies on for its own subscribe).
         subscribed = Character.Instance;
         if (subscribed != null) subscribed.OnStatsChanged += Refresh;
@@ -37,11 +49,13 @@ public class WeaponSocket : MonoBehaviour
     void OnDestroy()
     {
         if (subscribed != null) subscribed.OnStatsChanged -= Refresh;
+        if (gear != null) gear.OnChanged -= Refresh;
     }
 
     void Refresh()
     {
-        var weapon = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
+        var weapon = gear != null ? WeaponReach.WeaponOf(gear)
+                   : Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
         // Same weapon still equipped → nothing to rebuild (the common case: OnStatsChanged fired for level/stats).
         if (weapon == shown) return;
         Remount(weapon);

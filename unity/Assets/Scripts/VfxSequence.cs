@@ -142,6 +142,11 @@ public class VfxStep
              "set in the Skill Composer). Off = play once for the effect's natural length, then end. Carrier ignores " +
              "this — it always ends on arrival.")]
     public bool looping = false;
+    [Tooltip("Play At / Attach only: when this step starts on a caster, any copy of THIS step of THIS sequence still " +
+             "showing on that same caster is removed instantly (no fade) — so a dash trail never doubles up when the " +
+             "next dash starts before the last one's trail has faded. Other casters are untouched. Off = copies " +
+             "overlap and each fades on its own.")]
+    public bool stopPreviousOnReplay = false;
 
     [Header("Event (visual chaining — gameplay-neutral)")]
     [Tooltip("Raise this event tag the moment the step STARTS (the effect is spawned / launched). OnEvent steps " +

@@ -46,13 +46,29 @@ public interface ICombatUnit : IDamageable
     /// hit per mob is exactly the per-frame cost PERFORMANCE.md bans.</summary>
     StatusController StatusHost { get; }
 
-    /// <summary>This unit's OWN skills, in a fixed order — what a passive moment is dispatched against, and what
-    /// gives each passive the bit that keeps it from firing off its own chain. Null for a unit that carries none
-    /// (every creature today), which costs one reference check at the dispatch.
+    /// <summary>This unit's OWN skills, in a fixed order — what a passive moment is dispatched against, what a cast is
+    /// found by, and what gives each passive the bit that keeps it from firing off its own chain. Null for a unit
+    /// that carries none (a creature with no weapon kit, a watched copy), which costs one reference check at the
+    /// dispatch.
     ///
-    /// <para>Held per unit rather than in one table because a server holds a character per person signed in: a
-    /// shared table would run out of bits after two of them, and an untracked passive is an unbraked one.</para></summary>
-    SkillRunner[] SkillRunners { get; }
+    /// <para>Held per unit rather than in one table because a server holds a character per person signed in and a
+    /// kit per armed creature: a shared table would run out of bits, and an untracked passive is an unbraked one.</para></summary>
+    UnitSkills Skills { get; }
+
+    /// <summary>May this passive, which is in <see cref="Skills"/>, run right now? The ownership gate the passive
+    /// dispatch asks, answered by whoever knows why the skill is on the list.</summary>
+    bool PassiveIsOn(SkillDef def);
+
+    /// <summary>What this unit's cast wind-ups are multiplied by — its DEX, its ring's cast speed and any cast speed
+    /// window, through the one shared formula. 1 = the authored length.</summary>
+    float CastTimeMult { get; }
+
+    /// <summary>Spend mana if there is enough; false and nothing spent when short.</summary>
+    bool SpendMana(int amount);
+
+    /// <summary>True on a machine that only WATCHES this unit — the server holds the real one, so nothing here may
+    /// decide anything about it.</summary>
+    bool IsWatchedCopy { get; }
 
     /// <summary>Current hit points — read by the effects whose strength scales off how hurt the target is.</summary>
     int CurrentHP { get; }
@@ -97,6 +113,17 @@ public interface ICombatUnit : IDamageable
 
     /// <summary>Restore hit points (clamped at full, ignored when dead).</summary>
     void Heal(int amount);
+
+    /// <summary>The fraction of the damage this unit's blows deal that comes back to it as health (0.1 = a tenth).
+    /// Asked of the UNIT because life steal is a property of whoever swung, not of the player — a creature wearing a
+    /// life-steal window used to get nothing from it, because the one place that pays it out asked for a
+    /// <see cref="Character"/> and turned every other kind of attacker away.</summary>
+    float LifeStealPct { get; }
+
+    /// <summary>Restore hit points from LIFE STEAL — the same gain as <see cref="Heal"/> but silent, so a flurry does
+    /// not bury the screen in green numbers. Separate verb rather than a flag, because the two are read by different
+    /// things: a heal is an event a player is meant to see, a leech is bookkeeping.</summary>
+    void LeechHeal(int amount);
 
     /// <summary>The last unit whose blow actually cost this one health, or null if nothing has. Recorded by the one
     /// damage door for every unit alike, so "who did this to me" has a single answer that cannot be forgotten at a

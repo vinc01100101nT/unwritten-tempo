@@ -60,6 +60,28 @@ public abstract class Agent3DVisual : MonoBehaviour
     // a person standing or running — and positive only while somebody is in the air.
     float toldAbove;
 
+    // The held pose last put on this body, so the push and the pop happen once each rather than every frame.
+    bool showingHeld;
+    StanceId shownHeld;
+
+    /// <summary>The standing pose this body is holding, as the machine that owns it says — guarding, casting, sitting.
+    /// Pushed onto the body's own stance choke point, the same layer the owner holds it on, so both resolve it against
+    /// an action the identical way. ONE door for a watched person and a watched creature alike.
+    ///
+    /// <para>Pushed every frame rather than once: it is idempotent, it refreshes the window a fitted pose is stretched
+    /// to, and it is what puts the pose on a body that finished loading after the pose had already started. A
+    /// different one means the old one comes off first — held poses are pushed and popped by name, and a body left
+    /// holding both lets the higher-ranking one win forever.</para></summary>
+    public void TellHeld(bool has, StanceId id, float window)
+    {
+        if (stance == null) return;
+        if (showingHeld && (!has || shownHeld != id)) { stance.Pop(shownHeld); showingHeld = false; }
+        if (!has) return;
+        stance.Push(id, window);
+        showingHeld = true;
+        shownHeld = id;
+    }
+
     /// <summary>The owning machine's word on how far this body is off the floor. Told rather than measured for the
     /// same reason its speed is: a watched copy has no physics capsule, so it cannot tell the part of a reported
     /// height that is real lift from the part that is just where the capsule sits at rest.</summary>
@@ -112,11 +134,16 @@ public abstract class Agent3DVisual : MonoBehaviour
         playedActionAt = startedAt;
 
         float natural = stance.ActionDuration(action);
-        float play = beatSeconds > 0f ? Mathf.Min(natural, beatSeconds) : natural;
+        bool capped = beatSeconds > 0f && beatSeconds < natural;
+        float play = capped ? beatSeconds : natural;
         if (play <= 0f) return;
 
+        // A CAPPED PLAY MUST BE SPED UP TO FIT, whatever speed the stance normally takes. Without the fit, a stance
+        // paced by its own gait (every skill release) ignored the window entirely and ran at its natural length —
+        // so a watched Onslaught swung at normal pace while its damage numbers landed at the run's fast beat, and
+        // each new beat restarted the clip before it finished. The caster's own screen always fit it.
         float elapsed = (float)(Mirror.NetworkTime.time - startedAt);
-        stance.PlayActionFor(action, play, startedSecondsAgo: Mathf.Max(0f, elapsed));
+        stance.PlayActionFor(action, play, fitToWindow: capped, startedSecondsAgo: Mathf.Max(0f, elapsed));
     }
     int groundMask;
     Vector3 lastPos;

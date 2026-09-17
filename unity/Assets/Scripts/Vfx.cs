@@ -49,6 +49,12 @@ public static class Vfx
         bool stopping;         // in the fade-out tail after Stop() → next returnAt hits Return, not another Stop
         Transform follow;      // tracked target for Attach (auras/shields); null for a fixed-point one-shot
         Vector3 offset;
+        int generation;
+
+        /// <summary>WHICH PLAY THIS INSTANCE IS ON. Instances are pooled, so a reference kept past its play can end
+        /// up pointing at an instance now showing somebody else's effect. Whoever keeps one keeps this number beside
+        /// it, and stops it only while the two still agree.</summary>
+        internal int Generation => generation;
 
 
         // Cache components + measure loop/duration + the authored speed/color baselines. Runs ONCE the first
@@ -107,6 +113,7 @@ public static class Vfx
                             Color tint, float lifetimeOverride, bool oneShot, Transform followTarget, Vector3 followOffset,
                             float tailTrim = 0f, float clipStart = 0f)
         {
+            generation++;
             follow = followTarget;
             offset = followOffset;
             stopping = false;

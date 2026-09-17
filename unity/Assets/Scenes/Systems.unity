@@ -405,12 +405,6 @@ MonoBehaviour:
   cooldown: 0.6
   windupTime: 0.18
   damage: 3
-  arrowSheet: {fileID: 0}
-  arrowFrameSize: 16
-  arrowFrames: 1
-  arrowFps: 12
-  arrowSpeed: 14
-  arrowScale: 1
   defaultAttackSfx:
     clips:
     - {fileID: 8300000, guid: 878de55de930ef847ae44df0e8de01eb, type: 3}

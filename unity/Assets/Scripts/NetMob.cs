@@ -131,6 +131,12 @@ public class NetMob : NetworkBehaviour
     // update, so they arrive together, and the watching side reads them in its own per-frame follow instead of
     // depending on the order three separate change-hooks would fire in.
 
+    // THE POSE IT IS HOLDING — the casting pose through a wind-up. Separate from the action above for the same reason a
+    // person's is: an action plays once, a held pose lasts until it is let go.
+    [SyncVar] bool netHasHeld;
+    [SyncVar] StanceId netHeld;
+    [SyncVar] float netHeldWindow;
+
     [SyncVar] StanceId netAction;
     [SyncVar] double netActionAt;
     [SyncVar] float netActionSeconds;
@@ -298,6 +304,15 @@ public class NetMob : NetworkBehaviour
         netActionAt = NetworkTime.time;
     }
 
+    /// <summary>SERVER ONLY: this creature started or stopped holding a pose.</summary>
+    public void HoldPose(bool has, StanceId pose, float window)
+    {
+        if (!isServer) return;
+        netHeld = pose;
+        netHeldWindow = Mathf.Max(0f, window);
+        netHasHeld = has;
+    }
+
     // ---- everybody else's half: show it ------------------------------------------------------------------
 
     // The view's own Health, cached at build time. Looked up once rather than per frame, because this runs on
@@ -356,6 +371,9 @@ public class NetMob : NetworkBehaviour
         if (facingBuiltFrom != netYaw) { facing = Quaternion.Euler(0f, netYaw, 0f); facingBuiltFrom = netYaw; }
         WatchedBody.Follow(view.transform, MapManager.InWorld(netPosition, mapName), facing);
 
+        // A WIND-UP IN PROGRESS: its bar over the body and its ring on the ground, drawn from the shared clock.
+        watchedCast.Tick(view.transform, mapName);
+
         // WHAT THE BODY IS DOING, handed over rather than guessed at. Its mover and its brain are switched off on
         // this machine, so the two things its animation used to read from both answer "nothing" forever — which is
         // why a watched creature slid about in its standing pose and never swung at anybody.
@@ -365,6 +383,7 @@ public class NetMob : NetworkBehaviour
             // A moment of zero means this creature has not done anything yet, not that it acted at the dawn of the
             // clock. Both calls are cheap and self-guarding: one beat plays once, however often it is offered.
             if (netActionAt > 0d) viewVisual.TellAction(netAction, netActionAt, netActionSeconds);
+            viewVisual.TellHeld(netHasHeld, netHeld, netHeldWindow);
         }
 
         // Only when a number actually changed — a mob at steady health should cost nothing, and the
@@ -400,6 +419,27 @@ public class NetMob : NetworkBehaviour
             viewBlock.SetManaFromServer(netMana, netMaxMana);
         }
     }
+
+    // This creature's casts, as a watcher sees them — drawn by the same code a person's shell draws theirs with.
+    readonly WatchedCast watchedCast = new WatchedCast();
+
+    /// <summary>Play a skill this creature cast, on the body this machine draws for it. Called when the server says so.</summary>
+    public void ShowCast(SkillDef def, Transform aimedAt, Vector3 aimPointInMap, int seed)
+    {
+        if (view == null) return;
+        watchedCast.Play(def, view.transform, aimedAt, MapManager.InWorld(aimPointInMap, mapName), seed);
+    }
+
+    /// <summary>Start showing this creature's wind-up — the bar over its head and the ring where the spell will land.</summary>
+    public void ShowCastWindup(SkillDef def, double startedAt, float seconds, Vector3 aimPointInMap)
+        => watchedCast.BeginWindup(def, startedAt, seconds, aimPointInMap, view != null ? view.transform : null, mapName);
+
+    /// <summary>Stop showing it — finished, broken, or the body is going away.</summary>
+    public void StopCastWindup() => watchedCast.StopWindup(view != null ? view.transform : null);
+
+    /// <summary>This creature calling out a skill: the name in a bubble over its head.</summary>
+    public void ShowCreatureCall(string skillName)
+        => ChatController.CreatureCall(view != null ? view.transform : null, viewVisual != null ? viewVisual.Pose : null, skillName);
 
     void ReviveTheWatchedCopy()
     {
@@ -524,21 +564,20 @@ public class NetMob : NetworkBehaviour
         var ai = mob.GetComponent<MonsterAI3D>();
         if (ai != null) ai.ThinksForItself = false;
 
+        // THE DISTANCE SWITCH LETS GO FIRST, WITH EVERY PART IT HOLDS SWITCHED ON. A watched body lives in the
+        // always-loaded Systems scene, where the switch finds nobody near, so a revive or a body handed back from the
+        // pool — both re-evaluate the distance on the way in — switched the animator and the body driver OFF, and
+        // merely suspending the switch then kept them off: a 3D creature that came back stood static with no pose.
+        // Released before the mover is switched off below, because the mover is one of the parts it hands back.
+        var lod = mob.GetComponent<SimulationLod>();
+        if (lod != null) lod.Release();
+
         var agent = mob.GetComponent<PathAgent3D>();
         if (agent != null) agent.enabled = false;
 
         var respawn = mob.GetComponent<MobRespawn>();
         if (respawn != null) respawn.enabled = false;
 
-        // AND SAY SO TO THE THING THAT ALSO OWNS THOSE PARTS, or it hands them straight back. The distance switch
-        // captured this mob's mover during Awake — before this ran — and re-asserts every part it holds each time
-        // the player crosses its radius. So a watched mob you walked away from and returned to had its mover switched
-        // back ON, and a live mover shoves its body about with crowd separation and gravity, fighting the positions
-        // the server is sending: the creature drifts, and two people standing together stop seeing it in the same
-        // place. Suspending is that switch's OWN answer to "something else owns these now" — the death fade already
-        // uses it for exactly this reason.
-        var lod = mob.GetComponent<SimulationLod>();
-        if (lod != null) lod.Suspend();
     }
 
     public override void OnStartClient()
@@ -556,6 +595,10 @@ public class NetMob : NetworkBehaviour
     void DropTheView()
     {
         if (view == null) return;
+        // A wind-up's bar and ring are hung on this body, which is about to be banked for another creature — and so is
+        // any pose it was told to hold.
+        StopCastWindup();
+        if (viewVisual != null) viewVisual.TellHeld(false, StanceId.Casting, 0f);
         // EVERY LASTING CUE RIDING THIS BODY COMES OFF FIRST. A glow is held by the name the server gave it, not by
         // the body it is attached to, and this body is about to be banked for the next creature to use — so a
         // poisoned creature you walked away from would hand its glow to whatever came back in its place.

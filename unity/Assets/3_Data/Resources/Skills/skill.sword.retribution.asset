@@ -19,9 +19,9 @@ MonoBehaviour:
   published: 1
   description: 'Answer all of it at once.
 
-    Cashes the damage Brace banked: 100%
-    Attack plus 250% of the banked total, split across 5 strikes, and the debt is
-    erased. Does nothing with an empty bank.'
+    Cashes the damage Brace banked: five strikes,
+    each landing 100% Attack plus 250% of the banked total, and the debt is erased.
+    With an empty bank it still casts, landing five plain attacks.'
   archetype: 0
   family: 0
   shape: 0

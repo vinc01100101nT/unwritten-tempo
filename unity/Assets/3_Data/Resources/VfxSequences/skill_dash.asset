@@ -30,6 +30,7 @@ MonoBehaviour:
     clipStart: 0
     tint: {r: 0.06679422, g: 0.29295716, b: 0.745283, a: 1}
     looping: 0
+    stopPreviousOnReplay: 0
     emitEventOnStart: 
     emitEventOnEnd: 
     tickId: dash_tick

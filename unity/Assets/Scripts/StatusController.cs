@@ -144,6 +144,10 @@ public class StatusController : MonoBehaviour
     /// (hard-CC only) instead, so a cast never interrupts itself.</summary>
     public bool ActionLocked => CannotAct || Time.time < recoverUntil;
 
+    /// <summary>Only the self-imposed half of <see cref="ActionLocked"/>: rooted by this unit's own skill — a wind-up, an
+    /// aftercast, a run that holds its caster. What a creature's brain waits out before it walks or attacks again.</summary>
+    public bool SkillRooted => Time.time < recoverUntil;
+
     /// <summary>The gate for STARTING a skill or combo: <see cref="ActionLocked"/>, PLUS being mid-jump (you can't cast
     /// in the air), PLUS being <see cref="Taunted"/>. Kept SEPARATE from <see cref="ActionLocked"/> on purpose: the
     /// movement Update roots on ActionLocked BEFORE it runs the jump arc (<see cref="Player3DController"/>), so folding

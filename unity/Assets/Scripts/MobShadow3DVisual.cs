@@ -244,6 +244,11 @@ public class MobShadow3DVisual : Agent3DVisual
         var builtPose = Character3DBody.Build(gameObject, model, spec.animatorController, spec.bodyHeight);
         if (builtPose == null) { enabled = false; return; }
         BindBody(builtPose);
+        // THE WEAPON IT WEARS, IN ITS HAND — the same socket the player's body carries, reading this creature's worn
+        // set instead of the player's. Only a drawn body gets one; the server builds no model to hold anything.
+        // perf-ok: once per body built; a pooled body keeps it for life.
+        var socket = builtPose.gameObject.AddComponent<WeaponSocket>();
+        socket.ShowWeaponOf(GetComponent<UnitEquipment>());
         built = true;
 
         PointTheFreezeSwitchAt(builtPose.GetComponent<Animator>());

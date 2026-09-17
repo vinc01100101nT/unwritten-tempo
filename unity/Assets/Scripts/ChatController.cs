@@ -88,6 +88,18 @@ public class ChatController : MonoBehaviour
         Post(speaker, text, over, isSkillCall);
     }
 
+    /// <summary>A creature calling out a skill: the bubble over its head and nothing in the log. A field of armed
+    /// creatures casting would otherwise bury every line a person said.</summary>
+    public static void CreatureCall(Transform body, IStancePose pose, string skillName)
+    {
+        if (instance == null || string.IsNullOrEmpty(skillName)) return;
+        // A live-3D creature has a head pose to ride; a flat sprite creature has none, so its bubble sits just above
+        // the crown of its sprite — the same clearance every bubble keeps.
+        if (pose != null) SpeechBubble.ShowOverHead(pose, skillName, BubbleLife);
+        else if (body != null)
+            SpeechBubble.Show(body, 2f * UnitAnchor.HalfHeight(body) + SpeechBubble.HeadClearance, skillName, BubbleLife);
+    }
+
     // THE one place a spoken line becomes a row in the log and a bubble over a head. A said line and a skill call,
     // mine and everybody else's, all four arrive here — so no two of them can drift apart.
     // Cold path: once per line somebody says.

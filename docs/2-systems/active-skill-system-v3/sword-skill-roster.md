@@ -50,7 +50,7 @@ All three are authored `tier = Ultimate` and priced as ultimates (**40 MP**, lon
 | Ult | Payoff | Effect | Numbers (as composed) | Specialist feeder |
 | --- | --- | --- | --- | --- |
 | **Deathblow** | Execution spike | One massive hit; **consumes all Momentum** | **600% ATK + 40%/stack** **×** the standing Momentum damage% (deliberate double-dip) · 40 MP · 60s cd · 1s cast · range 5 | **Momentum** |
-| **Retribution** | Reactive counter | Cash the damage **Brace** delayed, and **the debt is erased** — you never pay what you release | **100% ATK + 250% of the banked total**, split across **5 strikes** · **NO CAP** · plain strike (no reflect recursion) · 40 MP · 45s cd · range 11 | **Brace** |
+| **Retribution** | Reactive counter | Cash the damage **Brace** delayed, and **the debt is erased** — you never pay what you release | **5 strikes, each 100% ATK + 250% of the banked total** (not a split — every strike lands the whole amount) · **NO CAP** · plain strike (no reflect recursion) · **fires on an empty bank too**, for five plain attacks · 40 MP · 45s cd · range 11 | **Brace** |
 | **Blade Dance** | Sustained storm | Two attack-speed-sized piles, then a beat that walks target to target | Dance charges = `ceil(8 ÷ seconds-per-swing)`; Parry charges = half that (`stackShare 0.5`); both **8s**. **3 beats per swing**, each spends one dance charge, hops a **7-corner star** with a **1s afterimage**, strikes **100% ATK**, re-aims within **3 units**. Each held dance charge = **+1% damage** · 40 MP · 45s cd · range 11 | **Overclock** |
 
 **The structural question is answered by the data:** Sword ships with three ultimates. Nothing else in this doc assumed that, so treat any "one ult per weapon" line elsewhere as the older assumption.

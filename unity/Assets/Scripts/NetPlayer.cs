@@ -36,6 +36,19 @@ public class NetPlayer : NetworkBehaviour
     // separate so a body that is standing still costs nothing to keep in sync.
 
     [SyncVar] public string playerName = "";
+
+    /// <summary>WHAT THIS PERSON IS WEARING, written by the server in the same words a creature's worn set travels in
+    /// (<see cref="WornList"/>). A watching machine dresses the body it built for them out of it, so the weapon in
+    /// their hand is the weapon the server has them holding.
+    ///
+    /// <para>It had to go on the wire at all because nothing else said it: the body every other machine draws for a
+    /// person was built from their MODEL NAME and nothing more, so everybody stood empty-handed on everybody else's
+    /// screen no matter what they were carrying.</para></summary>
+    [SyncVar(hook = nameof(OnWornArrived))] string worn = "";
+
+    // It landed after this machine had built the body. A body built later dresses itself from `worn` as it is made,
+    // so neither order can leave somebody bare-handed.
+    void OnWornArrived(string _, string now) { if (bodyGear != null) DressTheBody(); }
     [SyncVar(hook = nameof(OnModelChanged))] public string modelName = "";
 
     [SyncVar] Vector3 netPosition;
@@ -142,7 +155,24 @@ public class NetPlayer : NetworkBehaviour
     public void BindCombatUnitOnServer(ICombatUnit unit)
     {
         ServerCombatUnit = unit;
+        // The worn set this person's body is drawn from. Held here so the push beat compares one number rather than
+        // walking the set, exactly as a creature's shell does.
+        serverGear = unit is Character who && who != null ? who.Gear : null;
+        wornVersionSent = int.MinValue;
         BindMapToFighter();
+    }
+
+    // What this person wears, and which version of it was last put on the wire.
+    UnitEquipment serverGear;
+    int wornVersionSent = int.MinValue;
+
+    // SERVER: put what this person wears on the wire, and only when it has actually changed — a new piece equipped,
+    // one taken off. A SyncVar written the value it already holds sends nothing, but building the text does not.
+    void PushWorn()
+    {
+        if (serverGear == null || serverGear.Version == wornVersionSent) return;
+        wornVersionSent = serverGear.Version;
+        worn = WornList.Encode(serverGear);
     }
 
     /// <summary>THE ONE PLACE THIS CONNECTION'S MAP REACHES ITS FIGHTER, called from every moment either half can
@@ -369,7 +399,7 @@ public class NetPlayer : NetworkBehaviour
         //
         // The creature shells never had this problem because they ask a different question. So this asks it too:
         // a body is built only by a machine that is actually WATCHING.
-        if (isServer) { PushMyHealth(); PushMySheet(); ForgetSpeedIfTheyStopped(); return; }
+        if (isServer) { PushMyHealth(); PushMySheet(); PushWorn(); ForgetSpeedIfTheyStopped(); return; }
         if (isOwned) { ReportMyPosition(); TakeTheServersWord(); return; }
         if (isClient) FollowTheServer();
     }
@@ -1652,28 +1682,12 @@ public class NetPlayer : NetworkBehaviour
         return netHopPeak * 4f * u * (1f - u);
     }
 
-    // The held pose last put on this body, so the push and the pop happen once each rather than every frame.
-    bool showingHeld;
-    StanceId shownHeld;
-
-    /// <summary>The standing pose this person is holding — guarding, casting, sitting. Pushed onto the watched
-    /// body's own stance choke point, which is the same layer their own machine holds it on, so the two resolve it
-    /// against an action the identical way.</summary>
+    /// <summary>The standing pose this person is holding — guarding, casting, sitting — put on their watched body through
+    /// the one held-pose door every drawn body shares (<see cref="Agent3DVisual.TellHeld"/>), the same one a creature's
+    /// casting pose goes through.</summary>
     void ShowTheirHeldStance()
     {
-        if (bodyStance == null) return;
-
-        // A DIFFERENT ONE MEANS THE OLD ONE COMES OFF. Held poses are pushed and popped by name, so swapping a
-        // guard for a seat without popping the guard would leave a body holding both and the higher-ranking one
-        // winning forever.
-        if (showingHeld && (!netHasHeld || shownHeld != netHeld)) { bodyStance.Pop(shownHeld); showingHeld = false; }
-        if (!netHasHeld) return;
-
-        // Pushed every frame rather than once: it is idempotent, it refreshes the window a fitted pose is stretched
-        // to, and it is what puts the pose on a body that finished loading after the pose had already started.
-        bodyStance.Push(netHeld, netHeldWindow);
-        showingHeld = true;
-        shownHeld = netHeld;
+        if (bodyVisual != null) bodyVisual.TellHeld(netHasHeld, netHeld, netHeldWindow);
     }
 
     // ---- somebody else's wind-up: their cast bar and the pose they hold while it runs --------------------
@@ -1683,11 +1697,8 @@ public class NetPlayer : NetworkBehaviour
     // own clock. Both halves are driven exactly as the caster's own machine drives them — the same bar and the
     // same held stance, refreshed every frame — so the two cannot come to look different.
 
-    SkillDef windingUp;        // the skill they are casting, or null when they are not
-    double windupStartedAt;    // on the clock both machines share, so a message that took a moment still lands right
-    float windupSeconds;
-    Vector3 windupAimPoint;    // where the spell is aimed, in this person's map — the ring on the ground sits there
-    Vfx.EffectHandle windupRing;   // that ring, held so it comes off again however the wind-up ends
+    // Their bar, their ring and their casts' effects — drawn by the same code a creature's shell draws its casts with.
+    readonly WatchedCast watchedCast = new WatchedCast();
     StanceController bodyStance;   // the watched body's stance choke point, held from the moment it is built
 
     /// <summary>Start showing this person's wind-up. Called when the server says one began.
@@ -1697,54 +1708,17 @@ public class NetPlayer : NetworkBehaviour
     /// down over their head, and a ring on the ground where the spell is going to land.</para></summary>
     public void ShowCastWindup(SkillDef def, double startedAt, float seconds, Vector3 aimPointInMap)
     {
-        if (def == null || seconds <= 0f) return;
-        StopCastWindup();          // a second wind-up replaces the first; never two rings on one body
-        windingUp = def;
-        windupStartedAt = startedAt;
-        windupSeconds = seconds;
-        windupAimPoint = aimPointInMap;
-        ShowTheirCastRing();
+        watchedCast.BeginWindup(def, startedAt, seconds, aimPointInMap, body != null ? body.transform : null, mapName);
     }
 
     /// <summary>Stop showing it — the cast finished, or was broken. Called when the server says so, and whenever
     /// this machine stops being able to draw them at all.</summary>
     public void StopCastWindup()
     {
-        windingUp = null;
-        if (body != null) CastBar.Hide(body.transform);
-        // AND THE RING ON THE GROUND GOES WITH IT. Stopped wherever the wind-up ends — the server saying so, the
-        // clock running out, or the body going away — so a broken cast cannot leave a circle glowing in an empty
-        // field for the rest of the session.
-        if (windupRing != null) { windupRing.Stop(); windupRing = null; }
+        watchedCast.StopWindup(body != null ? body.transform : null);
     }
 
-    // The ring that opens on the ground under a wind-up — the same one the caster sees, read off the same authored
-    // skill, sized by the same authored radius. Attached to the BODY rather than dropped at a fixed spot, exactly as
-    // the caster's own is, so a caster shoved mid-cast takes their ring with them.
-    void ShowTheirCastRing()
-    {
-        if (body == null || windingUp == null || string.IsNullOrEmpty(windingUp.castCircleId)) return;
-        Vector3 at = MapManager.InWorld(windupAimPoint, mapName);
-        windupRing = Vfx.AttachGroundCircle(windingUp.castCircleId, body.transform, at - body.transform.position,
-                                            windingUp.LargestAreaRadius, windingUp.castCircleTint);
-    }
-
-    void ShowTheirWindup()
-    {
-        if (windingUp == null) return;
-
-        float elapsed = (float)(NetworkTime.time - windupStartedAt);
-        // ITS OWN CLOCK RUNNING OUT ENDS IT TOO, not only the server saying so. A wind-up that completes normally
-        // is announced as ended, but that message crosses a network and the bar would otherwise sit full for as
-        // long as it took to arrive.
-        if (elapsed >= windupSeconds) { StopCastWindup(); return; }
-
-        CastBar.Set(body.transform, elapsed / windupSeconds, windingUp.displayName, windingUp.tint);
-
-        // THE RING, IF THE BODY ONLY JUST ARRIVED. A person can walk into view part-way through a long spell, and
-        // the message that started this had no body to hang anything on at the time.
-        if (windupRing == null) ShowTheirCastRing();
-    }
+    void ShowTheirWindup() => watchedCast.Tick(body != null ? body.transform : null, mapName);
 
     /// <summary>Stop drawing this person. Two reasons to, so one description of it: they left, or this machine
     /// walked into another map.</summary>
@@ -1759,11 +1733,10 @@ public class NetPlayer : NetworkBehaviour
         VfxCue.ForgetAurasOn(netId);
         if (body != null) Destroy(body);
         body = null;
+        bodyGear = null;
         bodyVisual = null;
         bodyStance = null;
         bodyLoading = false;
-        // The pose bookkeeping belonged to the body that just went; a new one starts from nothing.
-        showingHeld = false;
     }
 
     /// <summary>A GM's <c>/model</c> changed what this person wears. Their own machine dresses its avatar; everybody
@@ -1774,6 +1747,25 @@ public class NetPlayer : NetworkBehaviour
         if (string.IsNullOrEmpty(was) || was == now) return;
         if (isOwned) { Player3DBody.Wear(now); return; }
         DropTheBody();
+    }
+
+    // WATCHING MACHINES ONLY: the worn set the body this machine built is drawn from, and the pieces read back out
+    // of the server's word. One list, reused, so dressing somebody allocates nothing per change.
+    UnitEquipment bodyGear;
+    static readonly System.Collections.Generic.List<WornList.Entry> wornEntries =
+        new System.Collections.Generic.List<WornList.Entry>(8);
+
+    // Put on what the server says this person wears. Only on arrival or change — never per frame.
+    void DressTheBody()
+    {
+        if (bodyGear == null) return;
+        WornList.Decode(worn, wornEntries);
+        bodyGear.Clear();
+        for (int i = 0; i < wornEntries.Count; i++)
+        {
+            var e = wornEntries[i];
+            bodyGear.Equip(e.def.slot, new EquipmentInstance(e.def) { rarity = e.rarity });
+        }
     }
 
     void EnsureBody()
@@ -1826,6 +1818,15 @@ public class NetPlayer : NetworkBehaviour
             // wants it is a per-frame drive; the builder puts one on the root of every character it makes.
             bodyStance = root.GetComponent<StanceController>();
 
+            // AND WHAT THEY ARE CARRYING, IN THEIR HAND. The same socket the person's own avatar and every creature
+            // wear, reading a worn set this machine is TOLD rather than one it decides — so another person's sword is
+            // the sword the server has them holding.
+            // perf-ok: once per body built.
+            bodyGear = root.AddComponent<UnitEquipment>();
+            var socket = pose.gameObject.AddComponent<WeaponSocket>();
+            socket.ShowWeaponOf(bodyGear);
+            DressTheBody();
+
             // The body belongs to the WORLD, not to the map this machine is standing in — same reason a creature's
             // does. Travelling unloads the map you left, and everything built into it goes with it.
             MapManager.KeepAcrossMaps(root);
@@ -1847,7 +1848,8 @@ public class NetPlayer : NetworkBehaviour
     /// number, the grunt, the flash and the stagger, drawn exactly as the server decided them
     /// (<see cref="Character.ShowBlowFromServer"/>). On everybody else's machine it is a number over somebody's head,
     /// which is all a bystander can honestly know.</para></summary>
-    public void ShowBlow(in DamageInfo info, in UnitMitigation.Outcome mitigated, bool tick = false, Color tickColor = default)
+    public void ShowBlow(in DamageInfo info, in UnitMitigation.Outcome mitigated, bool tick = false,
+                         Color tickColor = default, bool showsTotal = false, uint attackerNetId = 0u)
     {
         if (isOwned)
         {
@@ -1864,12 +1866,31 @@ public class NetPlayer : NetworkBehaviour
                 var av = me.Body;
                 if (av != null) UnitMitigation.Show(mitigated, UnitAnchor.Overhead(av));
             }
+            FoldIntoRisingTotal(info, tick, showsTotal, attackerNetId);
             return;
         }
 
         if (body == null || info.amount <= 0 || info.missed) return;
         // The SAME colour the person it happened to sees over their own body — one owner, read here.
         DamagePopup.Spawn(UnitAnchor.Overhead(body.transform), info.amount, Character.ColourOfBlow(info, tick, tickColor));
+        FoldIntoRisingTotal(info, tick, showsTotal, attackerNetId);
+    }
+
+    /// <summary>Add this blow to the RISING YELLOW TOTAL over the body this machine draws for this person, when the
+    /// server says it belongs to one — the exact twin of what a creature's blow does, over the person's body instead.
+    ///
+    /// <para>Called from BOTH halves of <see cref="ShowBlow"/> on purpose: the person it happened to and everybody
+    /// watching them see the same climbing number, the same way both see the same white one. Keyed by who struck, so
+    /// two creatures flurrying one person keep two numbers.</para>
+    ///
+    /// <para>A damage-over-time tick never folds in. A total is one run's worth of strikes; a poison ticking through
+    /// the middle of one is a different thing happening at the same time, and adding it would make the number lie
+    /// about what the skill did.</para></summary>
+    void FoldIntoRisingTotal(in DamageInfo info, bool tick, bool showsTotal, uint attackerNetId)
+    {
+        if (!showsTotal || tick || info.missed || info.amount <= 0) return;
+        var on = DrawnBody;
+        if (on != null) RepeatsDamageTotal.ReportArrived(on, info.amount, attackerNetId);
     }
 
     /// <summary>Show this person casting a skill, on the machines watching them. The EFFECT and nothing else — no
@@ -1890,37 +1911,7 @@ public class NetPlayer : NetworkBehaviour
         if (on == null) return;
 
         Vector3 point = MapManager.InWorld(aimPointInMap, isOwned ? MapManager.CurrentMap : mapName);
-        Vector3 target = aimedAt != null ? aimedAt.position : point;
-        showing = def;
-        VfxDirector.Play(def.vfx, new VfxContext
-        {
-            origin = on.position,
-            target = target,
-            effectPoint = point,
-            follow = on,
-            targetUnit = aimedAt,
-            scaleMult = 1f,
-            // THE SERVER'S OWN NUMBER, so this picture scatters into exactly the places the server measured its
-            // damage from. Without it every screen drew a different shower.
-            seed = seed,
-            // …and the two answers that decide how much there is to look at: how long a looping step stays, and how
-            // many copies of a carrier fly. Read off the SAME authored skill the server read them off, so a watcher
-            // cannot draw one bolt where five were fired.
-            stayForTick = stayForShown,
-            fanForTick = fanForShown,
-        });
-    }
-
-    // The skill currently being drawn, and the two resolvers that read its per-step answers. Fields rather than
-    // fresh lambdas per cast, so drawing somebody's flurry allocates nothing per beat.
-    SkillDef showing;
-    System.Func<string, float> stayForShown;
-    System.Func<string, ProjectileFan> fanForShown;
-
-    void Awake()
-    {
-        stayForShown = tid => showing != null ? showing.StayForTick(tid) : 0f;
-        fanForShown = tid => showing != null ? showing.FanForTick(tid) : ProjectileFan.Single;
+        watchedCast.Play(def, on, aimedAt, point, seed);
     }
 
     public override void OnStartClient()

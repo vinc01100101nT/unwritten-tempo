@@ -23,16 +23,8 @@ public class Player3DAttacker : MonoBehaviour
     // machines read the same one. A copy here would let your animation and the server's blow drift apart.
     [Tooltip("Fallback damage when there's no Character (e.g. the standalone spike).")]
     public int damage = 3;
-    [Header("Ranged (Bow / Firearm) — arrow projectile")]
-    [Tooltip("Sprite-sheet for the arrow that flies to the target when a ranged weapon is equipped. Null = " +
-             "the blow lands instantly (no visible projectile), same as melee.")]
-    public Texture2D arrowSheet;
-    public int arrowFrameSize = 16;
-    public int arrowFrames = 1;
-    public float arrowFps = 12f;
-    [Tooltip("Arrow travel speed (world units/s). Higher = the hit connects sooner after the release frame.")]
-    public float arrowSpeed = 14f;
-    public float arrowScale = 1f;
+    // NO arrow knobs here any more. What an arrow looks like and how fast it travels belong to the ARROW, not to
+    // whoever happens to be holding the bow — see Arrow — so a person's shot and a creature's are the same shot.
     [Header("Audio (used when the equipped weapon has none of its own)")]
     public SfxSet defaultAttackSfx;   // swing
     public SfxSet defaultHitSfx;      // impact
@@ -95,19 +87,6 @@ public class Player3DAttacker : MonoBehaviour
     /// <see cref="BaseRange"/> and the audio/stance lookups, so there's no per-equip copy to keep in sync.</summary>
     public Element MeleeElement
         => Character.Instance != null ? Character.Instance.BasicElement : Element.Neutral;
-
-    /// <summary>True when the equipped weapon is a physical RANGED type (Bow/Firearm), so a basic attack lobs a
-    /// visible arrow that carries the blow to the target instead of connecting instantly. Read at use-time from the
-    /// equipped weapon — same pattern as <see cref="MeleeElement"/>/<see cref="BaseRange"/> — so there's no per-equip
-    /// copy to keep in sync; the Item's <see cref="Item.weaponType"/> stays the single owner.</summary>
-    public bool IsRanged
-    {
-        get
-        {
-            var w = Character.Instance != null ? Character.Instance.GetEquipped(EquipSlotType.Weapon) : null;
-            return w != null && WeaponTypes.IsRanged(w.weaponType);
-        }
-    }
 
     /// <summary>Strict planar range — used to actually LAND a hit (TryAttack / the windup check).</summary>
     public bool InRange(Health t) => t != null && !t.IsDead && PlanarDist(t) <= RangeAgainst(t);
@@ -191,10 +170,11 @@ public class Player3DAttacker : MonoBehaviour
         // of the damage number come from one message and cannot disagree. Your own character still swings this frame
         // and waits for nothing; only the OUTCOME travels.
         //
-        // A BOW IS DELIBERATELY NOT SENT HERE: its blow lands when the arrow arrives, which this machine works out by
-        // flying it. Asking the server to time that would mean the server flying its own arrow, which is a whole
-        // movement simulation rather than a timer — so a bow still asks at the moment its arrow lands, as before.
-        if (!IsRanged) AskTheServerToSwing(t);
+        // A BOW ASKS HERE TOO, at the release. The server times the flight from the one arrow speed and lands the
+        // blow when the shot arrives, and it tells every machine that can see you to draw the arrow. This machine
+        // used to fly its own arrow and ask when that arrow landed — so how long a shot took was a fact about this
+        // machine's frame rate, and nobody else ever saw an arrow at all.
+        AskTheServerToSwing(t);
 
         Sfx.Play(WeaponSfx(w => w.attackSfx, defaultAttackSfx));   // swing
         // OnAttack (attacker-side "Active Verb") is dormant — re-enable once we compose per-weapon swing vfx/sfx.
@@ -230,31 +210,17 @@ public class Player3DAttacker : MonoBehaviour
         float scale = MotionScale;
         float swingTime = SwingTime;
         float impactAt = swingTime * Mathf.Clamp01(CharacterSpec.Active.hitTiming);
-        // Manual timer, not `new WaitForSeconds`: this coroutine starts EVERY swing during auto-combat,
+        // Manual timer, not `new WaitForSeconds`: this coroutine starts EVERY swing under the auto-pilot AI,
         // and the duration varies with attack speed so a cached wait can't cover it (PERFORMANCE.md).
         for (float el = 0f; el < impactAt; el += Time.deltaTime) yield return null;
 
         // RO-style commit: once the swing has STARTED (gated on InRange in TryAttack), the blow LANDS regardless of how
         // far the target has since walked — the attack is animation-locked, not re-checked at impact. We only skip a
         // target that no longer exists or already died during the windup. (Melee is decided at swing start.)
-        if (t != null && !t.IsDead)
-        {
-            if (IsRanged)
-            {
-                // Ranged weapon: release an arrow that homes onto the target; the blow lands when it arrives (which
-                // re-checks validity — the target may die mid-flight). The target rides the projectile's HitPayload
-                // into the CACHED LandArrow handler — no per-shot closure.
-                // release from mid-body (feet-pivoted)
-                Vector3 from = UnitAnchor.Center(transform);
-                Projectile3D.Spawn(arrowSheet, arrowFrameSize, arrowFrames, arrowFps, arrowScale,
-                    from, t.transform, UnitAnchor.Center(t.transform), arrowSpeed, 0.35f, 3f, LandArrow,
-                    this, t, 0, Element.Neutral);
-            }
-            // MELEE IS NOT LANDED HERE ANY MORE. The server was asked when this swing began and lands it on its own
-            // clock, at the same point of the swing this animation reaches now — both read one number. Landing it
-            // here as well would be the same blow twice: once asked for at the start, once at the contact frame.
-            else if (!AskedTheServer) LandBasicHit(t);
-        }
+        // NOTHING IS LANDED HERE ANY MORE, by any weapon. The server was asked when this swing began and lands the
+        // blow on its own clock — at this same point of the swing for a melee weapon, and when the arrow arrives for
+        // a bow. Landing it here as well would be the same blow twice.
+        if (t != null && !t.IsDead && !AskedTheServer) LandBasicHit(t);
 
         // Let the rest of the swing play out before freeing the slot, so the pose/animation completes and the next
         // swing still starts one SwingTime after this one began (DPS unchanged).
@@ -263,13 +229,11 @@ public class Player3DAttacker : MonoBehaviour
         swing = null;
     }
 
-    /// <summary>An arrow arriving, or a melee swing the server could not be asked about at its start: the moment a
-    /// basic attack's blow is due. A player's machine rolls nothing — it asks the server, which rolls the blow, lands it
-    /// and tells every screen what it drew. Re-checks the target first, which may have died during the wind-up or the
-    /// arrow's flight.</summary>
+    /// <summary>A swing the server could not be asked about at its start — the standalone spike, a body with no
+    /// character behind it. A player's machine rolls nothing: it asks the server, which rolls the blow, lands it and
+    /// tells every screen what it drew.</summary>
     void LandBasicHit(Health t)
     {
-        // A target that died while the arrow flew is still asked about: the blow still shows over it.
         if (t == null) return;
         GameNetwork.AskToSwingAt(t);
     }
@@ -283,11 +247,6 @@ public class Player3DAttacker : MonoBehaviour
         attemptOpen = false;
         engagement.Ask(null, 0f, 0f);   // let go of "close enough to stand and fight" — the same reset it always did
     }
-
-    // Cached arrow on-arrive — one delegate ever; the shot's attacker + target travel in the HitPayload.
-    // LandBasicHit asks the server for the blow when the arrow arrives, after re-checking the target.
-    static readonly System.Action<Projectile3D.HitPayload> LandArrow = p =>
-        ((Player3DAttacker)p.source).LandBasicHit(p.target);
 
     void OnDrawGizmosSelected()
     {

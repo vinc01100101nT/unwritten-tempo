@@ -17,7 +17,7 @@ A clean run means it BUILDS, not that it BEHAVES — it never replaces play-test
 
 ## ⚠️ Performance is a HARD constraint — read `PERFORMANCE.md` before writing runtime C#
 
-This is a 2.5D game with many billboard mobs and auto-combat that keeps the screen full. Code that's
+This is a 2.5D game with many billboard mobs and an auto-pilot AI that keeps the screen full. Code that's
 "fine for one object" becomes a frame-time or GC spike at ×N every frame. **`PERFORMANCE.md` (same
 folder) is the canonical guide** — its table of reusable systems and its anti-pattern list are required
 reading before you add or edit anything that runs per-frame or per-hit.
@@ -42,7 +42,7 @@ allocation to **~0 B/frame**. Don't reintroduce that class of mistake.
 ### Verifying perf changes
 There's **no local Play loop** — the dev presses Play. Quick glance: the in-game **`PerfHud`** overlay
 (press **F3**) shows `GC/s`, worst-frame peak, FPS, and mob count — `GC/s` should be ~0 during combat.
-Precise number: Profiler ▸ **Hierarchy**, watch the **GC Alloc** column per script during auto-combat;
+Precise number: Profiler ▸ **Hierarchy**, watch the **GC Alloc** column per script while the auto-pilot AI fights;
 target ~0 B/frame from gameplay scripts. In-Editor frame time is inflated by editor overhead — judge true
 frame time from a **Development Build**, not the editor.
 

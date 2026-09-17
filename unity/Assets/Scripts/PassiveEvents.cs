@@ -12,7 +12,7 @@ using UnityEngine;
 /// server does not have.</para>
 ///
 /// <para>So a moment is fired AT a unit, and the only passives considered are the ones on that unit's own skills
-/// (<see cref="ICombatUnit.SkillRunners"/>). Each matched passive then FIRES AS A FULL SKILL
+/// (<see cref="ICombatUnit.Skills"/>). Each matched passive then FIRES AS A FULL SKILL
 /// (<see cref="SkillRunner.FireAsPassive"/>): same VFX + ticks + effects an active would play, with the aim
 /// auto-resolved from the trigger (the victim's spot for aimed skills; the caster for self skills).</para>
 ///
@@ -94,35 +94,36 @@ public static class PassiveEvents
     public static void Fire(ICombatUnit actor, SkillTrigger trigger, string skillId = null, Transform victim = null)
     {
         if (PlayerUnits.Gone(actor)) return;
-        var runners = actor.SkillRunners;
-        if (runners == null) return;
+        // A WATCHED COPY ANSWERS NOTHING. The unit it stands for belongs to the server, which is where its passives
+        // already ran; running them here as well would be this machine deciding a second time — a second cast, a
+        // second buff, a second blow — off its own copy of numbers it was merely told.
+        if (actor.IsWatchedCopy) return;
+        var skills = actor.Skills;
+        if (skills == null) return;
 
-        var owner = actor as Character;
-        int n = runners.Length < MaxTrackedPassives ? runners.Length : MaxTrackedPassives;
+        int n = skills.Count < MaxTrackedPassives ? skills.Count : MaxTrackedPassives;
 
-        // ONLY THE SKILLS THAT ANSWER THIS MOMENT. Their positions were worked out once, when this character's skill
-        // list was bound, so a blow no longer asks every skill in the catalog whether it cares — it asks the few that
-        // authored this trigger. A character that has not been indexed (none of ours, but the interface allows it)
-        // still gets the whole list, so nothing can silently stop firing.
-        var slots = owner != null ? owner.SlotsFor(trigger) : null;
-        int count = slots != null ? slots.Length : n;
-        for (int s = 0; s < count; s++)
+        // ONLY THE SKILLS THAT ANSWER THIS MOMENT. Their positions were worked out once, when this unit's skill list
+        // was bound, so a blow no longer asks every skill in the catalog whether it cares — it asks the few that
+        // authored this trigger.
+        var slots = skills.SlotsFor(trigger);
+        for (int s = 0; s < slots.Length; s++)
         {
-            int i = slots != null ? slots[s] : s;
+            int i = slots[s];
             if (i < 0 || i >= n) continue;
             // THE AUTHORED SKILL, not its component. Every question below is answered off the asset, so a skill that
             // turns out not to answer this moment — or that this person has not switched on — never costs a component.
-            var def = owner != null ? owner.DefAt(i) : (runners[i] != null && runners[i] ? runners[i].def : null);
+            var def = skills.DefAt(i);
             if (def == null) continue;
             // WHICH authored entry answers this moment (null = this skill doesn't). A skill may carry several triggers,
             // so the moment picks the entry, and that entry — not the skill — owns the gate and the stack cost below.
             // OnSkillCastComplete is parameterized inside EntryFor: only an entry bound to THIS skill id matches.
             var entry = def.EntryFor(trigger, skillId);
             if (entry == null) continue;
-            // THE OWNERSHIP GATE: a runner exists for every authored skill, but a passive only RUNS when this
-            // character ticked it on in the Grimoire or their equipped weapon rolled it. Read off THEIR loadout, not
-            // off whoever happens to be at a keyboard.
-            if (owner != null && !owner.PassiveSkills.IsActive(def)) { Skipped(actor, def, trigger, "not switched on"); continue; }
+            // THE OWNERSHIP GATE: a passive only RUNS when its unit says it is on — a person ticked it in the Grimoire
+            // or their weapon rolled it; a creature's list is its weapon's kit, so all of it is on. Asked of THIS
+            // unit, not of whoever happens to be at a keyboard.
+            if (!actor.PassiveIsOn(def)) { Skipped(actor, def, trigger, "not switched on"); continue; }
 
             // THE SAME REACH ITS PRESSED FORM HAS. A skill whose manual cast makes you PICK a target can only pick
             // one inside its cast range — the picker is built with that number. Fired by a moment instead of by a
@@ -150,14 +151,14 @@ public static class PassiveEvents
 
             // THE GATE: a trigger that requires a state doesn't run at all when unmet — no VFX, no cast. Asked of the
             // caster's own store rather than through a component, so an unmet gate also costs nothing to build.
-            if (!StateGate.IsMet(entry, owner != null ? owner.States : (runners[i] != null ? runners[i].CasterStates : null)))
+            if (!StateGate.IsMet(entry, actor.States))
             {
                 Skipped(actor, def, trigger, "its required state is not met");
                 continue;
             }
 
             // ONLY NOW is the component built, if this is the first time this person has fired this passive.
-            var r = owner != null ? owner.RunnerAt(i) : runners[i];
+            var r = skills.RunnerAt(i);
             if (r == null || !r) continue;
 
             // A PASSIVE ACTUALLY FIRING — the moment a play-test could not see. Every line above this one is a
@@ -189,5 +190,35 @@ public static class PassiveEvents
 
             r.FireAsPassive(entry, victim, chain | bit);   // fire the whole skill; the chain it hands to its own effects includes itself
         }
+    }
+
+    /// <summary>The fraction of full health at or under which a unit counts as badly hurt — the falling edge
+    /// <see cref="SkillTrigger.OnLowHP"/> answers. ONE owner, because both damage doors ask it and a copy on either
+    /// side would let a person and a creature disagree about what "nearly dead" means.</summary>
+    public const float LowHpFrac = 0.3f;
+
+    /// <summary>THE MOMENTS ONE LANDED HIT RAISES, for any unit alike — "damage landed on me", and "that hit dropped
+    /// me under <see cref="LowHpFrac"/> of my health and left me alive". Called by BOTH damage doors, straight after
+    /// the health has come off, with <paramref name="hpBefore"/> read immediately before it.
+    ///
+    /// <para><b>Why it is one function.</b> Both moments used to be raised inside the PLAYER's damage door and
+    /// nowhere else, so a creature holding Last Stand or Composure never fired them at all — the rule that creatures
+    /// get everything players get, broken by two lines living in the wrong file. Written once here, a third kind of
+    /// unit inherits them by calling this.</para>
+    ///
+    /// <para>Nothing is raised for a hit that cost no health: a miss, a parry, a full barrier soak and a braced hit
+    /// all reach the door with zero, and each of those is a different moment, or none. Damage over time does not come
+    /// through here on either side.</para></summary>
+    public static void HitLanded(ICombatUnit victim, int hpBefore, ICombatUnit attacker)
+    {
+        if (victim == null) return;
+        var from = !PlayerUnits.Gone(attacker) ? attacker.Body : null;
+        Fire(victim, SkillTrigger.OnDamageReceived, null, from);
+
+        // FALLING EDGE ONLY: above the line before this hit, at or under it now, and still alive. Worked out from the
+        // two readings rather than remembered, so it re-arms after any heal with no flag to reset.
+        int thr = Mathf.CeilToInt(victim.MaxHP * LowHpFrac);
+        if (hpBefore > thr && victim.CurrentHP > 0 && victim.CurrentHP <= thr)
+            Fire(victim, SkillTrigger.OnLowHP);
     }
 }

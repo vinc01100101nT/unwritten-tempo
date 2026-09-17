@@ -14,7 +14,7 @@ using UnityEngine;
 public class MobRespawn : MonoBehaviour
 {
     [Tooltip("Seconds after the corpse fades before the mob returns.")]
-    public float respawnDelay = 1f;   // near-instant respawn — keeps the field full for auto-combat
+    public float respawnDelay = 1f;   // near-instant respawn — keeps the field full for the auto-pilot AI
     [Tooltip("Respawn within this radius of the original spawn home.")]
     public float homeRadius = 4f;
     [Tooltip("Never respawn closer than this to the player (no spawning on their head). Per-instance ON PURPOSE — the " +
@@ -121,10 +121,12 @@ public class MobRespawn : MonoBehaviour
         // Fresh GEAR first, then the level: the re-derive below reads the worn set, so the new copies must be seated
         // before it runs. Re-derived unconditionally, because ResetToSpawnLevel only re-derives when the level moved.
         var gear = mob.GetComponent<UnitEquipment>(); if (gear != null) gear.ReseatForNewLife();
+        // Its extra skills are re-rolled with the weapon — after it, so the roll can skip what the new weapon carries.
+        var health = mob.GetComponent<Health>(); if (health != null) health.RollExtraSkillsForNewLife();
         var block = mob.GetComponent<UnitStatBlock>();
         if (block != null) { block.ResetToSpawnLevel(); if (gear != null) block.Rederive(healToFull: true); }
         var brain = mob.GetComponent<MonsterAI3D>(); if (brain != null) brain.ResetCombatXp();   // and its banked XP
-        var health = mob.GetComponent<Health>(); if (health != null) health.Revive();          // full HP again
+        if (health != null) health.Revive();          // full HP again
 
         // Re-enable everything DeathDissolve disabled when it became "remains".
         // PRESENTATION is owned by the unit, not assumed here. A billboard mob gets its sprite back; a live-3D
@@ -138,7 +140,7 @@ public class MobRespawn : MonoBehaviour
         // Clamp stepOffset FIRST: BillboardAnimator3D scales mobs by UnitScale.ForMob, and once a mob is small
         // enough the authored 0.3 step exceeds the capsule's climbable height (see ClampStepOffset for the exact
         // bound). Unity then rejects the enable and logs "Step Offset must be ≤ …" every respawn (floods during
-        // auto-combat) — and a controller left disabled also spams "Move called on inactive controller". Fitting
+        // the auto-pilot AI) — and a controller left disabled also spams "Move called on inactive controller". Fitting
         // the step to the live scale stops both.
         if (cc != null) { ClampStepOffset(cc); cc.enabled = true; }
         var agent = mob.GetComponent<PathAgent3D>(); if (agent != null) agent.enabled = true;

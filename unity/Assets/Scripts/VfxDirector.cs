@@ -31,6 +31,47 @@ public static class VfxDirector
         return r;
     }
 
+    // ---- stop previous on replay --------------------------------------------
+    // The newest copy of each opted-in step on each caster, keyed by sequence + step index + the caster's instance id.
+    // Held with its generation, so an entry whose effect has already ended and been reused elsewhere is never stopped.
+    struct LatestCopy { public Vfx.EffectHandle handle; public int generation; }
+    static readonly Dictionary<(VfxSequence, int, int), LatestCopy> latestCopies = new Dictionary<(VfxSequence, int, int), LatestCopy>();
+    static readonly List<(VfxSequence, int, int)> staleCopies = new List<(VfxSequence, int, int)>();
+    const int PruneLatestCopiesAbove = 64;
+
+    /// <summary>Remove, instantly, the copy of this step still showing on <paramref name="caster"/> from an earlier
+    /// play, if there is one. Called BEFORE the new copy is spawned, so the pool hands the freed instance straight
+    /// back instead of building a second one.</summary>
+    internal static void StopLatestCopy(VfxSequence seq, int step, Transform caster)
+    {
+        if (seq == null || caster == null) return;
+        var key = (seq, step, caster.GetInstanceID());
+        if (!latestCopies.TryGetValue(key, out var old)) return;
+        latestCopies.Remove(key);
+        if (old.handle != null && old.handle.IsActive && old.handle.Generation == old.generation) old.handle.Stop(true);
+    }
+
+    /// <summary>Remember <paramref name="copy"/> as the one the next play of this step on this caster removes.</summary>
+    internal static void RememberLatestCopy(VfxSequence seq, int step, Transform caster, Vfx.EffectHandle copy)
+    {
+        if (seq == null || caster == null || copy == null) return;
+        if (latestCopies.Count >= PruneLatestCopiesAbove) PruneLatestCopies();
+        latestCopies[(seq, step, caster.GetInstanceID())] = new LatestCopy { handle = copy, generation = copy.Generation };
+    }
+
+    // Casters that stopped playing (left, died for good) leave entries behind; drop every one whose effect is over.
+    static void PruneLatestCopies()
+    {
+        staleCopies.Clear();
+        foreach (var kv in latestCopies)
+        {
+            var c = kv.Value;
+            if (c.handle == null || !c.handle.IsActive || c.handle.Generation != c.generation) staleCopies.Add(kv.Key);
+        }
+        for (int i = 0; i < staleCopies.Count; i++) latestCopies.Remove(staleCopies[i]);
+        staleCopies.Clear();
+    }
+
     // ---- pool ---------------------------------------------------------------
     static Transform host;
     static readonly Stack<VfxSequenceRunner> pool = new Stack<VfxSequenceRunner>();
@@ -88,7 +129,10 @@ public class VfxSequenceRunner : MonoBehaviour
         public Transform follow;    // non-null → each tick resolves at its CURRENT position
     }
     readonly List<IntervalTick> intervals = new List<IntervalTick>(4);
-    readonly List<Vfx.EffectHandle> attached = new List<Vfx.EffectHandle>();
+    // Each kept with the play it belonged to: a trail removed early by a newer one goes back to the pool and may be
+    // showing someone else's effect by the time this sequence tears down.
+    struct HeldEffect { public Vfx.EffectHandle handle; public int generation; }
+    readonly List<HeldEffect> attached = new List<HeldEffect>();
     // THIS PLAY'S OWN DICE, rolled from the seed the cast carried, so every machine drawing this cast puts the
     // scattered shots in the same places — and therefore measures their damage from the same places.
     CombatRng.Stream dice;
@@ -232,9 +276,11 @@ public class VfxSequenceRunner : MonoBehaviour
                 // Looping PlayAt: keep the particle loop on and live for the skill's Stay Duration; otherwise a
                 // one-shot that plays once for its natural length. The window end (natural or Stay) drives End ticks.
                 float stayP = Stay(st);
-                Vfx.PlayAt(st.effectId, point, Quaternion.Euler(st.rotationEuler),
+                if (st.stopPreviousOnReplay) VfxDirector.StopLatestCopy(seq, i, ctx.follow);
+                var hP = Vfx.PlayAt(st.effectId, point, Quaternion.Euler(st.rotationEuler),
                            new Vfx.VfxParams { scale = scale, speed = st.speed, tint = st.tint, tailTrim = st.trimEnd,
                                                clipStart = st.clipStart, loop = st.looping, lifetime = st.looping ? stayP : 0f });
+                if (st.stopPreviousOnReplay) VfxDirector.RememberLatestCopy(seq, i, ctx.follow, hP);
                 // WHEN THIS BEAT LANDS is read off the effect TABLE, never off the instance we may or may not have
                 // just built. A machine that draws nothing has to reach the same moment as one that does, and asking
                 // the handle made the answer depend on having a screen.
@@ -248,12 +294,16 @@ public class VfxSequenceRunner : MonoBehaviour
                 {
                     // Anchor at the grounded ctx.origin (feet), not the raw follow pivot (visual centre), so a
                     // ground-authored aura doesn't ride up to the character's head; keep tracking its x/z.
-                    Vector3 followOff = st.offset + jitter + (ctx.origin - ctx.follow.position);
+                    // HEIGHT ONLY. ctx.origin was taken when the play began and this step can fire frames later, so
+                    // a dash has already carried the body away from it; keeping that sideways gap froze every trail
+                    // parallel to the real path, up to a unit off (measured 2026-09-17, Blade Dance's first beats).
+                    Vector3 followOff = st.offset + jitter + new Vector3(0f, ctx.origin.y - ctx.follow.position.y, 0f);
                     // Loops when the step asks (skill, capped by Stay Duration) OR the caller holds it (a status aura
                     // via VfxCue.Begin, which lives until Stop). A non-looping Attach plays its natural length once.
                     bool loop = st.looping || ctx.persistent;
                     float stayA = Stay(st);
                     float lifeA = (st.looping && !ctx.persistent) ? stayA : 0f;   // 0 → authored (persistent = until Stop)
+                    if (st.stopPreviousOnReplay) VfxDirector.StopLatestCopy(seq, i, ctx.follow);
                     var h = Vfx.Attach(st.effectId, ctx.follow, followOff, scale, st.tint, oneShot: !loop, clipStart: 0f, lifetime: lifeA,
                                        speed: st.speed <= 0f ? 1f : st.speed);   // 0 = unauthored / legacy step → normal rate
                     float endA;
@@ -262,7 +312,8 @@ public class VfxSequenceRunner : MonoBehaviour
                     if (ctx.persistent) { endA = float.PositiveInfinity; if (EffectCatalog.Has(st.effectId)) hasLiveAura = true; }
                     else { endA = StepEnds(st, lifeA, !loop, stayA);
                            if (endA + 0.5f > endBy) endBy = endA + 0.5f; }
-                    if (h != null) attached.Add(h);
+                    if (h != null) attached.Add(new HeldEffect { handle = h, generation = h.Generation });
+                    if (st.stopPreviousOnReplay) VfxDirector.RememberLatestCopy(seq, i, ctx.follow, h);
                     ArmTicks(i, point, endA, ctx.follow);
                 }
                 break;
@@ -473,7 +524,10 @@ public class VfxSequenceRunner : MonoBehaviour
 
         gen++;   // fence any carrier still in flight from this play
         for (int i = 0; i < attached.Count; i++)
-            if (attached[i] != null) attached[i].Stop();
+        {
+            var held = attached[i];
+            if (held.handle != null && held.handle.Generation == held.generation) held.handle.Stop();
+        }
         attached.Clear();
         onTick = null;
 

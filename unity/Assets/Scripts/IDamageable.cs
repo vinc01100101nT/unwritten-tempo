@@ -15,20 +15,22 @@ public readonly struct DamageInfo
     public readonly bool isMagic;
     public readonly bool isCrit;
     public readonly int attackerHit;      // ≥0 → the ATTACKER rolled HIT vs FLEE; −1 → always-lands (skill strike)
-    public readonly bool overkill;        // mob multi-hit: register the number/sound even past death (RO cascade)
-    public readonly MonsterAI3D source;   // the attacking mob, for player-side damage-reflect (null otherwise)
+    // mob multi-hit: register the number/sound even past death (RO cascade)
+    public readonly bool overkill;
     /// <summary>This attack already WHIFFED: the attacker rolled accuracy (<see cref="Combat.Missed"/>) and the answer
     /// rides along. The defender only PRESENTS the miss — it must never re-roll, since the roll is random and a second
     /// one could disagree with the first. On a miss <see cref="amount"/> is 0: no damage was rolled at all.</summary>
     public readonly bool missed;
     /// <summary>WHO SWUNG, whichever side they are on — the one handle both a player and a mob answer to. Carried so
     /// the damage door can tell the attacker what their own hit did, which is the only place a hit that dealt NOTHING
-    /// is visible: a miss, a parry and a full absorb fire no trigger anywhere. <see cref="source"/> stays the mob-only
-    /// handle the player's reflect already reaches back through.</summary>
+    /// is visible: a miss, a parry and a full absorb fire no trigger anywhere. It is also what thorns bounce back at
+    /// and what a counter-passive aims through. There used to be a SECOND, creature-only handle beside it that the
+    /// player's reflect and parry read instead — so a blow from another PERSON reached those with nobody named, and
+    /// a creature's skill strike named nobody either. One handle, and every side of every blow answers to it.</summary>
     public readonly ICombatUnit attacker;
 
     public DamageInfo(int amount, Element element, bool isMagic = false, bool isCrit = false,
-                      int attackerHit = -1, bool overkill = false, MonsterAI3D source = null, bool missed = false,
+                      int attackerHit = -1, bool overkill = false, bool missed = false,
                       ICombatUnit attacker = null)
     {
         this.amount = amount;
@@ -37,7 +39,6 @@ public readonly struct DamageInfo
         this.isCrit = isCrit;
         this.attackerHit = attackerHit;
         this.overkill = overkill;
-        this.source = source;
         this.missed = missed;
         this.attacker = attacker;
     }

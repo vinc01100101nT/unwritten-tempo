@@ -59,6 +59,17 @@ public class SimulationLod : MonoBehaviour
     /// <summary>Stop managing this unit's components until <see cref="Resync"/> revives it.</summary>
     public void Suspend() => Suspended = true;
 
+    /// <summary>Hand every part this switch holds to something else for good — SWITCHED ON — and stop deciding. For a
+    /// body another machine drives: its animator and its body driver must run whatever the distance, because what they
+    /// show is what they are told. <see cref="Suspend"/> alone keeps whatever state the parts were left in, and a revive
+    /// that re-evaluated the distance first can have just switched them off.</summary>
+    public void Release()
+    {
+        Suspended = true;
+        Simulating = true;
+        ApplyFrozen(true);
+    }
+
     // THE near/far decision, in one place so the timed tick and Resync can never answer it differently.
     // force = apply the answer to the components even when it hasn't changed (see Resync).
     void Evaluate(bool force)

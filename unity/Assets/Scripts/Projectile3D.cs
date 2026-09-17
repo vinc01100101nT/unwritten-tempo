@@ -69,6 +69,26 @@ public class Projectile3D : MonoBehaviour
         p.payload = payload;
     }
 
+    /// <summary>Fly a LOOK and nothing else, drawn as a straight line rather than a sprite: it travels from
+    /// <paramref name="from"/> to <paramref name="target"/> (or <paramref name="fallbackPoint"/> with no target) and
+    /// then vanishes. Nothing is decided by it and nothing lands — it is the picture of a shot whose blow the server
+    /// is timing on its own clock.
+    ///
+    /// <para>Here rather than in its own object so an arrow is pooled and homes exactly as every other projectile in
+    /// the game is and does; what an ARROW looks like belongs to <see cref="Arrow"/>, which hands the numbers in.</para></summary>
+    public static void SpawnLine(Vector3 from, Transform target, Vector3 fallbackPoint, float speed,
+                                 float arriveRadius, float maxLife, Color tint, float width, float length)
+    {
+        var p = Create(null, 0, 0, 1f, 1f, from, target, fallbackPoint, speed, arriveRadius, maxLife);
+        p.lineLength = Mathf.Max(0.01f, length);
+        var lr = p.line;
+        lr.startColor = tint;
+        lr.endColor = new Color(tint.r, tint.g, tint.b, 0f);
+        lr.widthMultiplier = Mathf.Max(0.001f, width);
+        lr.enabled = true;
+        p.DrawLine(from);
+    }
+
     // POOLED. Every ranged mob shot and every player arrow used to build a GameObject with three components and throw
     // it away on arrival; in a fight with archers or casters that is constant churn. Spent projectiles go dormant and
     // are reused (PERFORMANCE.md names projectiles explicitly in its "must be pooled" checklist).
@@ -86,10 +106,25 @@ public class Projectile3D : MonoBehaviour
         }
         var go = new GameObject("Projectile3D") { hideFlags = HideFlags.DontSaveInEditor };
         var sr = go.AddComponent<SpriteRenderer>();
-        sr.sortingOrder = DepthSortRuntime.FxSlash;   // FX band: in front of entities
+        // FX band: in front of entities
+        sr.sortingOrder = DepthSortRuntime.FxSlash;
         go.AddComponent<Billboard>();
         var made = go.AddComponent<Projectile3D>();
         made.sr = sr;
+        // THE OTHER LOOK a projectile can wear: a drawn line, for a shot with no art of its own. Built once with the
+        // pooled body rather than per flight, and left switched off until something asks for it.
+        var lr = go.AddComponent<LineRenderer>();
+        lr.useWorldSpace = true;
+        lr.positionCount = 2;
+        lr.numCornerVertices = 0;
+        lr.numCapVertices = 0;
+        lr.textureMode = LineTextureMode.Stretch;
+        lr.alignment = LineAlignment.View;
+        // always-included, URP-friendly — the same one the aim reticle draws with
+        lr.material = new Material(Shader.Find("Sprites/Default"));
+        lr.sortingOrder = DepthSortRuntime.FxSlash;
+        lr.enabled = false;
+        made.line = lr;
         return made;
     }
 
@@ -117,6 +152,8 @@ public class Projectile3D : MonoBehaviour
         p.impactSheet = null; p.impactFrameSize = 0; p.impactFrames = 0; p.impactFps = 20f; p.impactScale = 1f;
         p.travel = null;
         p.done = false;
+        p.lineLength = 0f;
+        if (p.line != null) p.line.enabled = false;
         p.sr.enabled = true;
         p.sr.sprite = p.frames != null && p.frames.Length > 0 ? p.frames[0] : null;
         p.gameObject.SetActive(true);
@@ -160,6 +197,7 @@ public class Projectile3D : MonoBehaviour
     }
 
     SpriteRenderer sr; Sprite[] frames; float fps, t;
+    LineRenderer line; float lineLength;
     Transform target; Vector3 point; float speed, arriveRadius, die;
     System.Action onArrive;
     // typed twin of onArrive: the payload rides here so callers can pass a cached handler (no closure)
@@ -180,18 +218,31 @@ public class Projectile3D : MonoBehaviour
             sr.sprite = frames[(int)t % frames.Length];
         }
 
-        if (target != null) point = UnitAnchor.Center(target);   // home onto mid-body (feet-pivoted)
+        // home onto mid-body (feet-pivoted)
+        if (target != null) point = UnitAnchor.Center(target);
         Vector3 to = point - transform.position;
         float d = to.magnitude;
         float step = speed * Time.deltaTime;
 
         if (d <= arriveRadius || d <= step || Time.time >= die) { Arrive(); return; }
         transform.position += to / d * step;
+        if (lineLength > 0f) DrawLine(transform.position);
+    }
+
+    // The two ends of the drawn line: the head where the shot is, and a tail trailing behind it down the flight
+    // path. No allocation — two SetPosition writes on a renderer built with the pooled body.
+    void DrawLine(Vector3 head)
+    {
+        Vector3 back = point - head;
+        Vector3 dir = back.sqrMagnitude > 1e-6f ? back.normalized : transform.forward;
+        line.SetPosition(0, head);
+        line.SetPosition(1, head - dir * lineLength);
     }
 
     void Arrive()
     {
         done = true;
+        if (line != null) line.enabled = false;
         if (travel != null) travel.Stop();                         // stop + fade the attached travel effect
         if (impactSheet != null)
             SlashEffect.Spawn(impactSheet, impactFrameSize, impactFrames, impactFps, transform.position, impactScale);
@@ -212,6 +263,7 @@ public class Projectile3D : MonoBehaviour
         payload = default;
         frames = null;
         travel = null;
+        lineLength = 0f;
         impactSheet = null;
         if (sr != null) sr.sprite = null;
         gameObject.SetActive(false);

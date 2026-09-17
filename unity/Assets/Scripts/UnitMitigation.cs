@@ -70,13 +70,19 @@ public static class UnitMitigation
     /// a screen.
     ///
     /// <para>Deliberately NOT part of the <see cref="Guarded"/>/<see cref="AfterShield"/> pipeline: those two are
-    /// mitigation MATH on a hit that lands, while a parry cancels the landing itself. Shared by the player and every
-    /// mob so the read behaves identically on both — only the fire-site of <see cref="SkillTrigger.OnParry"/> is
-    /// player-side (passives are the player's).</para></summary>
-    public static bool TryParry(UnitStates states)
+    /// mitigation MATH on a hit that lands, while a parry cancels the landing itself.</para>
+    ///
+    /// <para><b>THE PARRY MOMENT IS RAISED HERE</b>, at the one place a charge is ever spent, and it belongs to
+    /// whoever spent it — so a creature holding a counter-passive answers its own parry exactly as a person does.
+    /// It used to be raised only inside the player's damage door, which meant a creature's parry announced nothing
+    /// to anybody. <paramref name="attacker"/> travels as the moment's other party, so a counter can aim back.</para></summary>
+    public static bool TryParry(ICombatUnit unit, ICombatUnit attacker = null)
     {
+        var states = unit != null ? unit.States : null;
         if (states == null || states.ParryCharges <= 0) return false;
         states.Consume(StateId.Parry, 1);
+        PassiveEvents.Fire(unit, SkillTrigger.OnParry, null,
+                           !PlayerUnits.Gone(attacker) ? attacker.Body : null);
         return true;
     }
 

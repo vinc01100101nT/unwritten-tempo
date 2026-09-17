@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 ///   • W A S D             → move (camera-relative; overrides any active click order).
 ///   • Left-click ground   → move there (A* around props).
 ///   • Left-click a mob    → attack it (close in, then auto-swing).
-///   • T                   → toggle roam auto-combat.
+///   • T                   → hand the fight to the auto-pilot AI (press again, or S, to take it back).
 /// NOTE: the old A (arm attack-click → ATTACK-MOVE) and S (STOP) keyboard hotkeys are currently
 /// commented out in <see cref="ReadInput"/> because WASD reclaimed those keys — the Stop() /
 /// attack-arm functions are kept intact so they can be re-bound later.
@@ -118,26 +118,28 @@ public partial class Player3DController : MonoBehaviour
     // No step INTERVAL fields anymore: the footstep sound fires on the real foot-plant FRAME via
     // FootstepTracker.PlayerStepped (frame-locked to the walk/run animation), not a per-second timer. See OnPlayerStep.
 
-    [Header("Auto-combat (T to toggle)")]
-    [Tooltip("While auto-combat roams, it engages the nearest mob within this range and walks to it. " +
+    [Header("Auto-pilot AI (T to toggle)")]
+    [Tooltip("While the auto-pilot AI roams, it engages the nearest mob within this range and walks to it. " +
              "Larger = ranges farther from where you stand to find fights.")]
     public float roamRange = 14f;
 
     /// <summary>True after pressing A, until the next click (the cursor shows the crosshair).</summary>
     public bool AttackArmed { get; private set; }
-    /// <summary>True while roam auto-combat is running (drives the on-screen indicator).</summary>
-    public bool AutoActive => order == Order.AutoCombat;
+    /// <summary>True while the player's AUTO-PILOT AI is fighting for them (drives the on-screen tag). The same
+    /// name the creatures' own fighting goes by: an auto-pilot AI picks a target, closes, swings, and chooses which
+    /// skill to cast — and it is one idea whether it is steering a creature or standing in for a person.</summary>
+    public bool AutoActive => order == Order.AutoPilot;
 
     /// <summary>The mob the player is currently engaged with — the one wearing the target arrow — or null.
     /// Read by quick cast (<see cref="UnitTargeter"/>) so a pressed skill can fire at it without a reticle.</summary>
     public Health AttackTarget => attackTarget != null && !attackTarget.IsDead ? attackTarget : null;
 
-    enum Order { Idle, Move, AttackMove, Attack, AutoCombat, MoveIntoRange }
+    enum Order { Idle, Move, AttackMove, Attack, AutoPilot, MoveIntoRange }
     Order order = Order.Idle;
     Vector3 movePoint;
     Health attackTarget;
     bool resumeAttackMove;
-    AutoCombatIndicator autoIndicator;
+    AutoPilotIndicator autoIndicator;
 
     CharacterController controller;
     Player3DAttacker attacker;
@@ -209,7 +211,8 @@ public partial class Player3DController : MonoBehaviour
         baseScale = buildScale;
         targetMarker = TargetIndicator.Create();
         targetMarker.gameObject.AddComponent<Billboard>();   // face the camera so the arrow isn't edge-on when orbiting
-        autoIndicator = AutoCombatIndicator.Create();        // "AUTO-COMBAT" screen tag, hidden until toggled
+        // "AUTO-PILOT" screen tag, hidden until toggled
+        autoIndicator = AutoPilotIndicator.Create();
         UnitCrowd.Register(gameObject);                      // pass through mobs (so we can't hop on top of them)
 
         // The active-skill pool is now DATA: every composed SkillDef (Skill Composer output, under
@@ -292,7 +295,8 @@ public partial class Player3DController : MonoBehaviour
         if (Character.Instance != null && Character.Instance.IsDead)
         {
             if (order != Order.Idle) Stop();
-            if (autoIndicator != null) autoIndicator.Show(false);   // dying cancels auto-combat
+            // dying hands the fight back
+        if (autoIndicator != null) autoIndicator.Show(false);
             dashing = false;    // death cancels a charge in progress
             jumping = false; jumpPhase = JumpPhase.None; jumpRollQueued = false; eDashing = false;   // …and any hop/dash in progress
             SetDashInvuln(false);                // …so a dash cut short by death doesn't leave us invulnerable
@@ -512,7 +516,8 @@ public partial class Player3DController : MonoBehaviour
         //     and attack-arm functions are kept intact below — un-comment (and rebind off A/S) to
         //     restore them later.
         // if (KeyS()) { Stop(); return; }      // S = STOP (cancel move / attack-move / swing)
-        if (KeyT()) { ToggleAuto(); return; }   // T toggles roam auto-combat
+        // T hands the fight to the auto-pilot AI, and takes it back
+        if (KeyT()) { ToggleAuto(); return; }
         // if (KeyA()) AttackArmed = true;      // A = arm an attack-click (next left-click attacks)
         if (AttackArmed && KeyEsc()) { AttackArmed = false; Hotkeys.MarkCancelHandled(); }
 
@@ -587,7 +592,7 @@ public partial class Player3DController : MonoBehaviour
             case Order.Attack:
                 return AttackStep();
 
-            case Order.AutoCombat:
+            case Order.AutoPilot:
                 return AutoStep();
 
             case Order.MoveIntoRange:
@@ -598,13 +603,13 @@ public partial class Player3DController : MonoBehaviour
         }
     }
 
-    // Roam auto-combat: re-acquire the nearest mob within roamRange forever (never goes Idle, never
-    // leaves the AutoCombat order), walking to it and swinging in range. Mirrors AttackStep but loops
+    // The player's AUTO-PILOT AI: re-acquire the nearest mob within roamRange forever (never goes Idle, never
+    // leaves the AutoPilot order), walking to it and swinging in range. Mirrors AttackStep but loops
     // back to acquisition instead of stopping when a target dies. Any manual order (move/attack) or S
     // exits by switching the order out from under it.
     Vector3 AutoStep()
     {
-        // A taunt outranks acquisition: while the lock holds, the taunter IS the target and auto-combat can't drift
+        // A taunt outranks acquisition: while the lock holds, the taunter IS the target and the auto-pilot can't drift
         // to a nearer mob. Same rule a taunted mob obeys (MonsterAI3D.Taunted) — one aggro concept, both sides.
         if (Taunted && attackTarget != tauntSource)
         {
@@ -622,7 +627,7 @@ public partial class Player3DController : MonoBehaviour
         return PursueAttackTarget();
     }
 
-    // The shared body of every basic-attack order (Attack + AutoCombat): announce the attack intent, then either stand
+    // The shared body of every basic-attack order (Attack + AutoPilot): announce the attack intent, then either stand
     // and swing (in reach) or route toward the target. ONE body so both orders behave identically and a rule added here
     // can't be forgotten in the other. The announce runs BEFORE reach is judged — that ordering is the whole point of
     // OnBasicAttackStart: a passive gap-closer moves us first, and the same frame's reach check sees the new position.
@@ -709,14 +714,15 @@ public partial class Player3DController : MonoBehaviour
         return routing ? FollowRoute() : Vector3.zero;
     }
 
-    // T: flip roam auto-combat on/off. Pressing it again (or S, or any manual order) turns it off.
+    // T: hand the fight to the auto-pilot AI, or take it back. Pressing it again (or S, or any manual order) stops it.
     void ToggleAuto()
     {
-        if (order == Order.AutoCombat) { Stop(); return; }
+        if (order == Order.AutoPilot) { Stop(); return; }
         ClearCombat();              // drop any in-flight swing / stale target / marker
         AttackArmed = false;
         routing = false; path.Clear();
-        order = Order.AutoCombat;   // AutoStep acquires a target next tick
+        // AutoStep acquires a target next tick
+        order = Order.AutoPilot;
     }
 
     Vector3 AttackStep()
@@ -766,7 +772,7 @@ public partial class Player3DController : MonoBehaviour
         }
     }
 
-    /// <summary>Remember who taunted this player and engage them at once — auto-combat can't retarget away while the
+    /// <summary>Remember who taunted this player and engage them at once — the auto-pilot can't retarget away while the
     /// lock holds. The player's twin of <c>MonsterAI3D.LockOnTaunter</c>, so a taunt authored on a skill behaves the
     /// same whoever it lands on. The window itself was already stamped by <see cref="Character.ForceAggro"/>.</summary>
     public void Taunt(Health source, float seconds)
@@ -941,7 +947,7 @@ public partial class Player3DController : MonoBehaviour
 
     // Nearest living mob within radius (planar XZ). Scans the MonsterAI3D registry rather than a physics
     // OverlapSphere — the old fixed 32-collider buffer overflowed with props/terrain at large roamRange in
-    // a dense scene, returning colliders in arbitrary order and silently dropping mobs (auto-combat then
+    // a dense scene, returning colliders in arbitrary order and silently dropping mobs (the auto-pilot then
     // just stood still). The registry is unbounded, prop-free, and cheaper.
     Health NearestMonsterWithin(float radius)
     {

@@ -2,7 +2,7 @@
 
 **Read this before writing or editing any runtime C# in** `unity/Assets/Scripts/`**.**
 
-Performance is a **hard constraint** for this game (3D world + many billboard mobs + auto-combat that keeps the screen full of action). The frame budget is shared by dozens of mobs, their billboards, depth sorters, pathfinding, and a steady stream of combat FX. Code that's "fine for one object" becomes a frame-time or GC spike when it runs ×N every frame. The rules below are how we keep it smooth.
+Performance is a **hard constraint** for this game (3D world + many billboard mobs + an auto-pilot AI that keeps the screen full of action). The frame budget is shared by dozens of mobs, their billboards, depth sorters, pathfinding, and a steady stream of combat FX. Code that's "fine for one object" becomes a frame-time or GC spike when it runs ×N every frame. The rules below are how we keep it smooth.
 
 > **Two enemies:** (1) **per-frame CPU** that scales with object count, and (2) **GC allocations** in hot paths (every `new` in `Update`/per-hit eventually triggers a collection → a stutter). Most wins here are about not doing either.
 
@@ -33,7 +33,7 @@ Performance is a **hard constraint** for this game (3D world + many billboard mo
 | Static scenery depth (trees/houses) | **Baked once** in `DepthSortRuntime` (fixed `sortingOrder` from foot-Y) | Only **moving** units carry a per-frame sorter (`CameraDepthSorter`). Never add a per-frame sorter to a static prop. |
 | Physics overlap/raycast queries | `*NonAlloc` **variants with a reused buffer** | e.g. `Physics.OverlapSphereNonAlloc(..., overlapBuf, ...)`. No garbage per query. |
 | Recycling dead mobs | `MobRespawn` re-enables the same object | Don't `Destroy`/`Instantiate` mobs on a cadence — recycle. |
-| Handing state to an on-arrive / on-complete callback (projectiles, delayed hits) | `Projectile3D.HitPayload` + a **cached** `static readonly Action<HitPayload>` handler | A lambda that captures locals allocates a closure **per shot**. Instead the state rides the carrier in a by-value struct and one shared handler reads it back (see `MonsterAI3D.LandRangedHit`, `Player3DAttacker.LandArrow`). Reuse the pattern for any per-event callback. |
+| Handing state to an on-arrive / on-complete callback (projectiles, delayed hits) | `Projectile3D.HitPayload` + a **cached** `static readonly Action<HitPayload>` handler | A lambda that captures locals allocates a closure **per shot**. Instead the state rides the carrier in a by-value struct and one shared handler reads it back. Reuse the pattern for any per-event callback. (Both former users were bow shots; a bow's blow is now timed by the server and the arrow is a look-only flight, so this overload currently has no callers.) |
 | The same expensive question asked by several systems in one frame | **Frame memo**: stamp `Time.frameCount`, compute once, share the result | The cursor pick (raycast + mob snap-scan) was computed up to 3×/frame by `GameCursor3D`, `UnitStatusPanel`, and click handlers. A two-field memo (`Player3DController.MonsterUnderCursor`) makes N callers cost one scan. Sibling of rule 2 — this is the idiom for *queries*, `CameraRig` is the idiom for *values*. |
 
 ---

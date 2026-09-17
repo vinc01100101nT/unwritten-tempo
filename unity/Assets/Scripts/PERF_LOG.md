@@ -10,7 +10,7 @@ or the Profiler ▸ Hierarchy for the precise per-system number.
 ## Standard test scenario (keep it the same so numbers compare)
 
 1. Open **NatureStage**, press **Play**.
-2. Gather as many mobs as possible around the player, press **T** (auto-combat).
+2. Gather as many mobs as possible around the player, press **T** (the auto-pilot AI).
 3. Read the numbers:
    - **PerfHud** (top-left): `GC/s` should be ~0 (a small steady floor is the HUD itself); `peak /frame`
      should stay small (hundreds of B, not KB); FPS/ms healthy.

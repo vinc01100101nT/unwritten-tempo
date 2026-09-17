@@ -77,16 +77,6 @@ public class MonsterAI3D : MonoBehaviour
              "and runs from the player — a skittish 'wounded animal' that breaks off when hurt.")]
     [Range(0f, 1f)] public float fleeHpFraction = 0f;
 
-    [Header("Ranged projectile (while holding a ranged weapon)")]
-    [Tooltip("Visible projectile fired while this creature holds a bow or firearm; the blow lands on arrival. " +
-             "Null = the blow lands instantly.")]
-    public Texture2D projectileSheet;
-    public int projFrameSize = 16;
-    public int projFrames = 4;
-    public float projFps = 16f;
-    public float projSpeed = 9f;
-    public float projScale = 1.1f;
-
     [Header("Stun indicator (FX/Magic/Spirit)")]
     [Tooltip("Spinning swirl shown over the mob's head while stunned. Null = stun still freezes it (no swirl).")]
     public Texture2D stunSheet;
@@ -96,26 +86,15 @@ public class MonsterAI3D : MonoBehaviour
     static readonly Color StunColor     = new Color(1f, 0.9f, 0.3f);
     static readonly Color LevelUpColor  = new Color(1f, 0.85f, 0.35f);   // mob level-up toast
 
-    // Cached on-arrive for the ranged-caster projectile — allocated once, shared by every shot from every
-    // mob. The shot's damage/element/source travel in the HitPayload; `homing` is the player transform
-    // (guarded: the projectile only lands on a live Character, same as the old closure).
-    static readonly System.Action<Projectile3D.HitPayload> LandRangedHit = p =>
-    {
-        var mob = (MonsterAI3D)p.source;
-        var victim = mob != null ? mob.Prey : null;
-        // A bolt is in the air for a moment, and a person can leave the world inside it — which does NOT read as
-        // null from an interface reference (see PlayerUnits.Gone).
-        if (PlayerUnits.Gone(victim) || victim.IsDead) return;
-        // A PHYSICAL blow, exactly as the bite it replaces at range: its crit and its accuracy were rolled at launch.
-        int d = CombatAuthority.Apply(victim, new DamageInfo(p.amount, p.element, isCrit: p.isCrit,
-                                                             attackerHit: p.attackerHit, source: mob, missed: p.missed,
-                                                             attacker: mob != null ? mob.Health : null));
-        if (d > 0)
-        {
-            mob.TryInflictOnHit();
-            mob.GainCombatXp(d);
-        }
-    };
+    // AN ARROW THIS CREATURE HAS IN THE AIR: who it was shot at, and the moment it arrives. ONE slot, because the
+    // swing cadence paces every shot and a creature can therefore only ever have one in flight. Two plain fields
+    // rather than a list, so a field of archers allocates nothing (PERFORMANCE.md).
+    ICombatUnit arrowAt;
+    float arrowLandsAt;
+
+    // The next moment this creature's auto-pilot AI is allowed to WEIGH its skills. Its own clock, separate from the
+    // bite's, so a creature that has nothing ready does not re-weigh them every frame while it walks toward you.
+    float nextCastTry;
 
     PathAgent3D agent;
     AttackLunge lunge;
@@ -158,7 +137,7 @@ public class MonsterAI3D : MonoBehaviour
     StatusFX stunFx;      // looping swirl shown over the head while stunned (created on first stun)
     StatusController status;   // poison/bleed/burn/blind host (Stun/Slow still delegate to the fields above)
 
-    /// <summary>This mob's <see cref="Health"/>, cached once. The cursor pick and auto-combat target
+    /// <summary>This mob's <see cref="Health"/>, cached once. The cursor pick and auto-pilot target
     /// scans read this instead of calling <c>GetComponent&lt;Health&gt;()</c> per mob, every frame.</summary>
     public Health Health { get; private set; }
 
@@ -334,7 +313,12 @@ public class MonsterAI3D : MonoBehaviour
         Lod = lod;
     }
 
-    void OnEnable()  { if (!Active.Contains(this)) Active.Add(this); }
+    void OnEnable()
+    {
+        if (!Active.Contains(this)) Active.Add(this);
+        // A NEW LIFE HAS NOTHING IN THE AIR. A recycled body would otherwise land the shot its last life loosed.
+        arrowAt = null;
+    }
     void OnDisable() => Active.Remove(this);
 
     void Start()
@@ -526,7 +510,20 @@ public class MonsterAI3D : MonoBehaviour
         // targeted, hit and drawn on the map.
         if (!ThinksForItself) return;
 
+        // AN ARROW THIS CREATURE LOOSED, ARRIVING. Read before anything that could turn this frame around — a
+        // stagger, a root, a flinch — because a shot already in the air is not the shooter's to take back.
+        if (arrowAt != null && Time.time >= arrowLandsAt)
+        {
+            var shotAt = arrowAt;
+            arrowAt = null;
+            LandOneSwing(shotAt, announceIntent: false);
+        }
+
         if (Time.time < stunnedUntil) { if (agent != null) agent.Halt(); return; }   // staggered — frozen
+
+        // ROOTED BY ITS OWN SKILL — a wind-up, an aftercast, a run that holds it. The rule a person plays by: no walking
+        // and no attacking until the skill lets go.
+        if (status != null && status.SkillRooted) { if (agent != null) agent.Halt(); return; }
 
         // Move-speed states (Slow × Haste) come from the unified store's MoveMult — the SINGLE source, same as the
         // player reads. A Slow makes it <1, a Haste >1; 1 when neither is active. UnitScale.ForMob couples speed to
@@ -579,38 +576,44 @@ public class MonsterAI3D : MonoBehaviour
         float hold = HoldDistance();
         bool standing = Prey != null && player != null && engagement.Ask(player, touch3DSqr, hold * hold);
 
-        if (player != null && standing && touch3DSqr <= touch * touch && Time.time >= nextTouch && Prey != null)
+        bool swingMoment = player != null && standing && touch3DSqr <= touch * touch && Time.time >= nextTouch && Prey != null;
+
+        // A SKILL INSTEAD OF THE SWING — and it is NOT judged by biting reach. A creature used to have to be close
+        // enough to bite you before it was even asked whether it had a skill ready, so every long-range skill it
+        // owned was unreachable: a Lunge that a person fires from eight units away could only ever be fired by a
+        // creature from under one. Each skill is judged by ITS OWN cast range instead (see Reaches), which is the
+        // same rule the person's own aim obeys. The swing's cadence still paces it, so a creature never casts
+        // faster than it bites, and a creature that has not engaged you casts nothing at all.
+        // PACED BY ITS OWN CLOCK, and that clock moves whether or not anything was cast. Without it a creature
+        // walking toward you with nothing ready would weigh every skill it holds on EVERY frame, and a field of them
+        // would do it every frame each — the per-frame cost PERFORMANCE.md bans. One look per swing interval instead,
+        // which is the same cadence a cast is allowed at anyway.
+        bool castMoment = chasing && playerAlive && Prey != null && Time.time >= nextCastTry;
+        if (castMoment)
         {
-            // Every creature's ordinary attack is PHYSICAL, like the player's: it hits Defense and can be dodged.
-            int effHit = BasicHit;   // blind already taken off
-            // ORDER: accuracy FIRST, damage number second — a whiff never pays for a damage roll, and the roll happens
-            // exactly once here rather than again on the player. Crit is rolled first because a crit cannot be dodged.
-            bool crit = RollBasicCrit(Prey);
-            bool missed = Combat.Missed(crit, effHit, Prey.Flee);
-            int atk = missed ? 0 : RollBasicDamage(crit);
-            atk = UnitOffense.SpendCharges(MobStates, atk);   // one attack, one charge — spent on the whiff too
+            nextCastTry = Time.time + SwingTime;
+            if (TryCastAtPrey()) { nextTouch = Time.time + SwingTime; swingMoment = false; }
+        }
+
+        if (swingMoment)
+        {
             var held = Equipment != null ? Equipment.WeaponType : WeaponType.None;
-            if (WeaponTypes.IsRanged(held) && projectileSheet != null)
+            if (WeaponTypes.IsRanged(held))
             {
-                // Holding a ranged weapon: fire a VISIBLE projectile at the prey; the same physical blow lands on arrival.
-                // The blow (damage, crit, accuracy result, element, this) rides the projectile's HitPayload into the
-                // CACHED LandRangedHit handler — no per-shot closure (PERFORMANCE.md: no `new` per combat event).
-                // fired from the mob's mid-body (feet-pivoted)
+                // A BOW LOOSES AN ARROW, and the blow lands when it arrives. The flight is timed from the one speed
+                // every arrow in the game flies at, and every machine that can see this creature is told to draw it —
+                // the identical treatment a person's bow gets, from the identical numbers.
                 Vector3 from = UnitAnchor.Center(transform);
-                Projectile3D.Spawn(projectileSheet, projFrameSize, projFrames, projFps, projScale,
-                    from, player, UnitAnchor.Center(player), projSpeed, 0.45f, 3f, LandRangedHit,
-                    this, null, atk, BasicElement, crit, missed, effHit);
+                Vector3 to = UnitAnchor.Center(player);
+                arrowAt = Prey;
+                arrowLandsAt = Time.time + Arrow.FlightSeconds(from, to);
+                GameNetwork.AnnounceArrow(transform, player, MapManager.InMap(to, Health.Map), Health.Map);
+                // ABOUT TO ATTACK is the RELEASE for a bow, not the arrival — the shot is the gesture, and a passive
+                // that answers it must fire when the string is let go.
+                PassiveEvents.Fire(Health, SkillTrigger.OnBasicAttackStart, null, player);
             }
-            else
-            {
-                int dealt = CombatAuthority.Apply(Prey,
-                    new DamageInfo(atk, BasicElement, isCrit: crit, attackerHit: effHit, source: this, missed: missed, attacker: Health));      // physical: the crit and the HIT vs FLEE result, rolled above
-                if (dealt > 0)
-                {
-                    TryInflictOnHit();
-                    GainCombatXp(dealt);
-                }
-            }
+            else LandOneSwing(Prey, announceIntent: true);
+
             // Attack-speed buffs shorten a mob's cadence by the same rule they shorten the player's swing.
             float beat = SwingTime;
             nextTouch = Time.time + beat;
@@ -671,6 +674,123 @@ public class MonsterAI3D : MonoBehaviour
                 if (GroundSnap.TryGroundY(target, WanderGroundMask, 2f, 40f, out _)) agent.MoveTo(target);
             }
         }
+    }
+
+    /// <summary>ONE ordinary attack from this creature onto <paramref name="victim"/> — through the SAME
+    /// implementation a person's swing goes through, so the order of the rolls, the charge it spends, and the two
+    /// moments a swing raises are written once for every unit in the game.
+    ///
+    /// <para>It used to roll its own crit, accuracy and damage inline here. Everything matched except the part that
+    /// cannot be seen: neither "about to swing" nor "a swing landed" was ever announced, so every passive a creature
+    /// could hold that answers either moment was dead on every creature in the world.</para></summary>
+    void LandOneSwing(ICombatUnit victim, bool announceIntent)
+    {
+        if (Health == null || Health.IsDead || PlayerUnits.Gone(victim) || victim.IsDead) return;
+        int dealt = BasicSwing.Land(Health, victim, 1f, overkill: false, announceIntent: announceIntent);
+        if (dealt > 0)
+        {
+            TryInflictOnHit();
+            GainCombatXp(dealt);
+        }
+    }
+
+    // Reused: the ready skills a creature is choosing between at one swing moment. Cleared after every choice.
+    static readonly System.Collections.Generic.List<SkillRunner> readySkills = new System.Collections.Generic.List<SkillRunner>(4);
+
+    // Reused: the per-skill verdicts one swing moment writes to the cast log. Only filled while that log is on.
+    static readonly System.Text.StringBuilder castNote = new System.Text.StringBuilder(256);
+
+    /// <summary>THE AUTO-PILOT AI'S CHOICE OF SKILL — the same idea by the same name as the one that fights for a
+    /// person when they press T, here steering a creature. Cast one of this creature's own skills — its weapon's kit or its extra skills — at its prey
+    /// if any is ready: off cooldown, affordable, not refused by silence, a taunt or a missing pile, and inside that
+    /// skill's OWN cast range. False when nothing was cast, so the ordinary swing happens instead.
+    ///
+    /// <para><b>The order it picks in</b> (decided by the user, 2026-09-17): the ULTIMATE first whenever it is ready
+    /// and affordable, and otherwise one of the ready ordinary actives at random. It does not save mana for a bigger
+    /// skill and it does not reach for the most expensive one it can pay for. Deliberate combinations — a named
+    /// sequence of skills the auto-pilot AI plays in order — are a later piece of work and are not this.</para>
+    ///
+    /// <para>WITH THE CAST LOG ON, a swing moment writes one line: each active and ultimate it holds, and why each was
+    /// or was not ready, then what it picked. A skipped skill used to leave no trace at all, so "it only ever casts two
+    /// skills" could not be told apart from "it only ever holds two". The cast that follows writes its own line, or its
+    /// refusal with the reason.</para>
+    ///
+    /// <para>NOT EVERY SWING. A creature waiting on mana asks again every swing and gets the same answer each time, and
+    /// a field of them would bury the log. So a line is written when it PICKS a skill (at most once per cooldown), and a
+    /// "none ready" line only when the reasons changed since the last one it wrote — a skill coming off cooldown, mana
+    /// becoming the blocker, the prey stepping out of reach. The countdown numbers inside a reason do not count as a
+    /// change.</para></summary>
+    bool TryCastAtPrey()
+    {
+        var skills = Health != null ? Health.Skills : null;
+        if (skills == null || player == null) return false;
+        var pressed = skills.SlotsFor(SkillTrigger.OnCast);
+        if (pressed.Length == 0) return false;
+
+        bool logging = GameLog.On(LogCat.Cast);
+        if (logging) castNote.Clear();
+
+        readySkills.Clear();
+        SkillRunner ultimate = null;
+        // WHICH reason each skill had, as one number — what "the reasons changed" is measured against. Kinds only.
+        int reasons = 17;
+        for (int s = 0; s < pressed.Length; s++)
+        {
+            var def = skills.DefAt(pressed[s]);
+            if (def == null || def.IsPassive) continue;
+            if (!Reaches(def))
+            {
+                reasons = reasons * 31 + OutOfReachReason;
+                if (logging) NoteSkill(def, OutOfReach(def));
+                continue;
+            }
+            var runner = skills.RunnerAt(pressed[s]);
+            if (runner == null) continue;
+            var block = runner.BlockedBy;
+            reasons = reasons * 31 + (int)block;
+            if (logging) NoteSkill(def, runner.DescribeBlock(block));
+            if (block != SkillRunner.CastBlock.None) continue;
+            if (def.IsUltimate) { if (ultimate == null) ultimate = runner; }
+            else readySkills.Add(runner);
+        }
+
+        var pick = ultimate != null ? ultimate
+                 : readySkills.Count > 0 ? readySkills[CombatRng.Range(0, readySkills.Count)] : null;
+        readySkills.Clear();
+
+        if (logging && (pick != null || reasons != lastNoneReadyReasons))
+            GameLog.Info(LogCat.Cast, string.Concat(SpawnIds.MapOf(Health), " ", SpawnIds.Label(Health), " weighed its skills: ",
+                castNote.ToString(), pick != null ? " — picked " + pick.def.id : " — none ready, swinging"));
+        // A pick clears the memory, so the next wait is written once even if it looks like the last one.
+        // …and so does the log being off, so switching it on writes the wait that is already under way.
+        lastNoneReadyReasons = !logging || pick != null ? int.MinValue : reasons;
+
+        return pick != null && pick.CastFromRequest(player, player.position, out _);
+    }
+
+    // The reasons behind the last "none ready" line this creature wrote. Out-of-reach sits past every CastBlock value.
+    int lastNoneReadyReasons = int.MinValue;
+    const int OutOfReachReason = 100;
+
+    void NoteSkill(SkillDef def, string verdict)
+    {
+        if (castNote.Length > 0) castNote.Append("; ");
+        castNote.Append(def.id).Append(' ').Append(verdict);
+    }
+
+    string OutOfReach(SkillDef def)
+    {
+        Vector3 gap = player.position - transform.position; gap.y = 0f;
+        return string.Concat("out of reach — ", gap.magnitude.ToString("0.##"), " units away, cast range ", def.castRange.ToString("0.##"));
+    }
+
+    // Can this skill land on the prey from here? A skill that aims at nothing (a self buff) always can, and so can one
+    // with no authored range; otherwise the flat distance to the prey must be inside its cast range.
+    bool Reaches(SkillDef def)
+    {
+        if (!def.NeedsUnitPick && !def.NeedsAimPoint) return true;
+        if (def.castRange <= 0f) return true;
+        return PlanarSqr(transform.position, player.position) <= def.castRange * def.castRange;
     }
 
     // The chase brain, split by behavior style. All branches reuse the per-frame distance already computed
@@ -750,7 +870,12 @@ public class MonsterAI3D : MonoBehaviour
         float reachFraction = touchRange > 1e-4f ? stopDistance / touchRange : 1f;
         float hold = Mathf.Max(Reach * reachFraction, Reach);
 
-        if (Prey != null && Health != null)
+        // A WEAPON THAT SETS ITS OWN RANGE IS RESPECTED. A bow reaches as far as a bow reaches, for a creature exactly as
+        // for the person at the keyboard, so a creature holding one stands off at that range instead of walking into
+        // arm's length. The limit below is for an AUTHORED reach — bare hands, or a weapon that sets none.
+        var held = WeaponReach.WeaponOf(Equipment);
+        bool weaponSetsReach = held != null && held.attackRange > 0f;
+        if (!weaponSetsReach && Prey != null && Health != null)
         {
             float preyReach = Prey.MeleeReachFullSize * UnitScale.MeleeBlend(Prey.MeleeScale, Health.MeleeScale);
             if (preyReach > 0f) hold = Mathf.Min(hold, preyReach);

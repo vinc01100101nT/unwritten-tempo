@@ -177,7 +177,7 @@ public static class GmCommands
                                + "enormous health that never fights back, for measuring what your build actually does. "
                                + "The server owns it, so everybody can see and hit the same one.", CmdDummy,
                                anyoneMayRun: false, changesTheWorld: true));
-        Register(new GmCommand("summon", "summon <count> <normal|boss> [level] [shadow]", "Summon N random mobs near you (clones live mobs of that KIND — normal or boss). Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns. Add 'shadow' to render them as live-3D characters instead of sprites.", CmdSummon,
+        Register(new GmCommand("summon", "summon <count> <normal|boss> [level] [shadow] [skill id]", "Summon N random mobs near you (clones live mobs of that KIND — normal or boss). Give a level to re-stat each one at that level with a randomly weighted spread that spends exactly the stat points that level earns. Add 'shadow' to render them as live-3D characters instead of sprites. Give a skill id to make it every summoned mob's extra skill, for every life, instead of a random one — any skill, published or not.", CmdSummon,
                                anyoneMayRun: false, changesTheWorld: true));
 
         // --- World & weather ---
@@ -528,7 +528,7 @@ public static class GmCommands
     // Spawning is async (Addressables loads the prefab), so we count completions and reply once all land.
     static void CmdSummon(GmContext c)
     {
-        const string usage = "Usage: /summon <count> <normal|boss> [level] [shadow]";
+        const string usage = "Usage: /summon <count> <normal|boss> [level] [shadow] [skill id]";
         if (!TryAskersMap(c, out var askerMap)) return;
         if (!c.TryInt(0, out var count) || count <= 0) { c.Reply(usage); return; }
         count = Mathf.Clamp(count, 1, 50);
@@ -542,18 +542,21 @@ public static class GmCommands
             default: c.Reply(usage); return;
         }
 
-        // Optional trailing modifiers, order-free because one is a number and the other a word:
-        //   a LEVEL  — re-stats the summoned mob at that level (see the re-stat block below);
-        //   'shadow' — a VISUAL variant, orthogonal to the normal/boss kind, so it rides the one summon path
-        //              rather than forking a second command that would have to be kept in step with this one.
+        // Optional trailing modifiers, order-free because each is told apart by its shape:
+        //   a LEVEL    — re-stats the summoned mob at that level (see the re-stat block below);
+        //   'shadow'   — a VISUAL variant, orthogonal to the normal/boss kind, so it rides the one summon path
+        //                rather than forking a second command that would have to be kept in step with this one;
+        //   a SKILL ID — any id in the skill catalog, made the mob's extra skill for every life it lives.
         int level = 0;
         bool asShadow = false;
+        string extraSkillId = null;
         for (int i = 2; i < c.ArgCount; i++)
         {
             var a = c.Arg(i);
             if (int.TryParse(a, out var lv)) { level = Mathf.Clamp(lv, 1, 99); continue; }
             if (a.ToLowerInvariant() == "shadow") { asShadow = true; continue; }
-            c.Reply(usage); return;
+            if (SkillCatalog.IsKnown(a)) { extraSkillId = a; continue; }
+            c.Reply(a.StartsWith("skill.") ? $"No skill with the id '{a}'. {usage}" : usage); return;
         }
 
         var defs = new List<MonsterDef>(count);
@@ -591,6 +594,7 @@ public static class GmCommands
                                 UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value,
                                 UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value));
                     }
+                    if (extraSkillId != null) { var health = go.GetComponent<Health>(); if (health != null) health.PinExtraSkill(extraSkillId); }
                     // Purely the visual: the mob keeps the brain, stats, loot and death it just spawned with.
                     if (asShadow) go.AddComponent<MobShadow3DVisual>();
                     // Born on the server → every connected player gets to see it. Without this a summoned creature
@@ -607,6 +611,7 @@ public static class GmCommands
                     reply?.Invoke($"Summoned {spawned} random {(wantBoss ? "boss" : "normal")} " +
                                   (asShadow ? "shadow(s)" : "mob(s)") +
                                   (level > 0 ? $" at level {level}" : "") +
+                                  (extraSkillId != null ? $" with extra skill {extraSkillId}" : "") +
                                   (missing > 0 ? $" ({missing} skipped — no Addressable prefab)" : "") + ".");
             });
         }

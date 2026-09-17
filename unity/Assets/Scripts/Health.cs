@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 /// <summary>
 /// Hit points + hit feedback + death, for anything that can be hurt. Phase D uses
@@ -202,9 +203,111 @@ public class Health : MonoBehaviour, ICombatUnit
     StatusController statusHost;
     public StatusController StatusHost => statusHost != null ? statusHost : (statusHost = Status.Of(gameObject));
 
-    /// <summary>Creatures carry no skills of their own yet, so a passive moment aimed at one finds nothing to run.
-    /// Here rather than absent because the question is asked of every unit alike.</summary>
-    public SkillRunner[] SkillRunners => null;
+    /// <summary>The skills this creature casts — the kit its held weapon rolled, plus its extra skills (see
+    /// <see cref="ExtraSkillIds"/>). Rebuilt the moment either changes, which is every new life (both are re-rolled
+    /// then). Null on a watched copy, which decides nothing, and on anything that is not a creature the server thinks
+    /// for.</summary>
+    public UnitSkills Skills
+    {
+        get
+        {
+            var brain = Brain;
+            if (brain == null || IsWatchedCopy || GameNetwork.TheWorldIsElsewhere || !Application.isPlaying) return null;
+            var gear = brain.Equipment;
+            if (gear == null) return null;
+            if (!extraRolled) RollExtraSkillsForNewLife();
+            int worn = gear.Version;
+            if (worn != skillsBuiltFor || extraVersion != extraBuiltFor)
+            {
+                skillsBuiltFor = worn;
+                extraBuiltFor = extraVersion;
+                skills ??= new UnitSkills(this);
+                skills.Bind(gameObject, KitOf(gear, extraSkillIds));
+                // A NEW WEAPON IS A NEW LIFE, so nothing from the last one is still cooling down. Only a respawn
+                // re-seats what a creature wears, and a respawn is a fresh creature.
+                var runners = skills.Runners;
+                for (int i = 0; i < runners.Length; i++)
+                    if (runners[i] != null && runners[i]) runners[i].ForgetCooldown();
+            }
+            return skills;
+        }
+    }
+    UnitSkills skills;
+    int skillsBuiltFor = -1;
+
+    /// <summary>This creature's EXTRA skills — slots of their own, apart from its weapon's kit, <see
+    /// cref="ExtraSkillRoll.Slots"/> of them. Empty on a watched copy, which rolls nothing.</summary>
+    public IReadOnlyList<string> ExtraSkillIds => extraSkillIds;
+    readonly List<string> extraSkillIds = new List<string>(ExtraSkillRoll.Slots);
+    // A skill somebody named for this creature (a summon). Kept through every later life instead of a random roll.
+    string pinnedExtraSkillId;
+    bool extraRolled;
+    int extraVersion;
+    int extraBuiltFor = -1;
+
+    /// <summary>Decide this life's extra skills: the named one if this creature was given one, otherwise a fresh
+    /// random roll. Called by <c>MobRespawn.Reactivate</c> after the new weapon is seated, so the roll can skip what
+    /// that weapon already carries; the first life rolls on its first look at <see cref="Skills"/>.</summary>
+    public void RollExtraSkillsForNewLife()
+    {
+        if (IsWatchedCopy || GameNetwork.TheWorldIsElsewhere || !Application.isPlaying) return;
+        extraRolled = true;
+        // A training dummy is an instrument that never fights back, so it carries nothing extra — the same exclusion
+        // its random gear has. perf-ok: once per life.
+        if (GetComponent<TrainingDummy>() != null) extraSkillIds.Clear();
+        else if (!string.IsNullOrEmpty(pinnedExtraSkillId))
+        {
+            extraSkillIds.Clear();
+            extraSkillIds.Add(pinnedExtraSkillId);
+        }
+        else
+        {
+            var brainNow = Brain;
+            var gear = brainNow != null ? brainNow.Equipment : null;
+            var weapon = gear != null ? gear.Get(EquipSlotType.Weapon) : null;
+            ExtraSkillRoll.Roll(weapon != null ? weapon.skillIds : null, extraSkillIds);
+        }
+        extraVersion++;
+    }
+
+    /// <summary>Give this creature <paramref name="skillId"/> as its extra skill, for this life and every later one.
+    /// Any skill in the catalog, published or not — the caller checks it exists.</summary>
+    public void PinExtraSkill(string skillId)
+    {
+        pinnedExtraSkillId = skillId;
+        RollExtraSkillsForNewLife();
+    }
+
+    // Reused: filled only when what the creature wears changes.
+    static readonly System.Collections.Generic.List<SkillDef> kitScratch = new System.Collections.Generic.List<SkillDef>(9);
+
+    // The held weapon's rolled kit plus the extra skills, IN THE CATALOG'S ORDER — a skill's position is its identity
+    // to the passive brake, so the list must not depend on the order either was rolled in. The same rule a person's
+    // list keeps. A skill in both appears once.
+    static System.Collections.Generic.List<SkillDef> KitOf(UnitEquipment gear, List<string> extra)
+    {
+        kitScratch.Clear();
+        var weapon = gear.Get(EquipSlotType.Weapon);
+        var kit = weapon != null ? weapon.skillIds : null;
+        bool hasKit = kit != null && kit.Count > 0;
+        if (!hasKit && extra.Count == 0) return kitScratch;
+        var all = SkillCatalog.All;
+        for (int i = 0; i < all.Count; i++)
+        {
+            var def = all[i];
+            if (def == null || string.IsNullOrEmpty(def.id)) continue;
+            if ((hasKit && kit.Contains(def.id)) || extra.Contains(def.id)) kitScratch.Add(def);
+        }
+        return kitScratch;
+    }
+
+    /// <summary>A creature's list is its weapon's kit plus its extra skills and nothing else, so every passive on it is
+    /// live — the same rule that makes a person's weapon-granted passives always on.</summary>
+    public bool PassiveIsOn(SkillDef def) => def != null;
+
+    public float CastTimeMult => Block != null ? Block.CastTimeMult : 1f;
+
+    public bool SpendMana(int amount) => Block != null ? Block.SpendMana(amount) : amount <= 0;
 
     // Mana lives on the stat block (it is derived from INT, like every other pool), so this side just forwards. A mob
     // with no stat block reports an empty pool, which is what stops its regen rather than a special case for it.
@@ -239,10 +342,11 @@ public class Health : MonoBehaviour, ICombatUnit
         return dealt;
     }
 
-    // Parry — the SAME read the player gets (one primitive, no mob copy to hand-sync). Kept OUT of Mitigate on purpose:
+    // Parry — the SAME read the player gets, and now the same MOMENT too: the shared primitive spends the charge and
+    // raises it, so a creature holding a counter-passive answers its own parry. Kept OUT of Mitigate on purpose:
     // Mitigate is math on a hit that lands, while a parry cancels the landing, so each intake bails before its damage
     // number and hit spark. Checked after the miss/immunity gates so a charge is only spent on a hit that would land.
-    bool Parried() => UnitMitigation.TryParry(States);
+    bool Parried(ICombatUnit attacker) => UnitMitigation.TryParry(this, attacker);
 
     /// <summary>Mark this unit to TAKE +<paramref name="extraFraction"/> more damage (0.3 = +30%) for
     /// <paramref name="seconds"/>. Refreshes to the latest mark (newest-wins). Reusable armor-fray for skills like Hex Field.</summary>
@@ -358,11 +462,13 @@ public class Health : MonoBehaviour, ICombatUnit
             Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Immune);
         }
-        if (Parried()) return CombatAuthority.NoDamage(NoDamageReason.Parried);
+        if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         // Pre-renewal DEF split: hard-DEF % then flat soft DEF; a CRIT ignores both (and FLEE, above).
         int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
+        int before = Current;
         SubtractHealth(dmg);
+        PassiveEvents.HitLanded(this, before, attacker);
 
         // Impact FROM the mob (spatial). A basic attack (rolled accuracy, attackerHit ≥ 0) → hit/crit;
         // a skill strike (always-lands, attackerHit −1) → the unified skill impact.
@@ -387,10 +493,12 @@ public class Health : MonoBehaviour, ICombatUnit
             Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Immune);
         }
-        if (Parried()) return CombatAuthority.NoDamage(NoDamageReason.Parried);
+        if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod);
+        int before = Current;
         SubtractHealth(dmg);
+        PassiveEvents.HitLanded(this, before, attacker);
 
         // magic = skill impact, spatial from the mob
         Show(new ShownBlow(dmg, mod, crit, magic: true, flash: true), attacker);
@@ -414,11 +522,13 @@ public class Health : MonoBehaviour, ICombatUnit
             Show(ShownBlow.Immune(mod, crit: false, magic: true), attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Immune);
         }
-        if (Parried()) return CombatAuthority.NoDamage(NoDamageReason.Parried);
+        if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         int dmg = Mitigate(Combat.AfterDefense(attackerMagic, hardMagicDefPercent, magicDefense, crit) * mod);
         bool wasAlive = !IsDead;
+        int before = Current;
         SubtractHealth(dmg);
+        if (wasAlive) PassiveEvents.HitLanded(this, before, attacker);
         // Hit spark + impact SOUND fire on EVERY strike, including overkill beats past death — the per-hit
         // multi-hit SFX must run to the end of the flurry, not cut off the instant the mob's HP hits 0.
         Show(new ShownBlow(dmg, mod, crit, magic: true, flash: wasAlive), attacker);
@@ -445,11 +555,13 @@ public class Health : MonoBehaviour, ICombatUnit
             Show(ShownBlow.Immune(mod, crit: false, magic: false), attacker);
             return CombatAuthority.NoDamage(NoDamageReason.Immune);
         }
-        if (Parried()) return CombatAuthority.NoDamage(NoDamageReason.Parried);
+        if (Parried(attacker)) return CombatAuthority.NoDamage(NoDamageReason.Parried);
 
         int dmg = Mitigate(Combat.AfterDefense(attackerAttack, hardDefPercent, defense, crit) * mod);
         bool wasAlive = !IsDead;
+        int before = Current;
         SubtractHealth(dmg);
+        if (wasAlive) PassiveEvents.HitLanded(this, before, attacker);
         // Always-lands skill strike → the unified skill impact. Hit spark + impact SOUND on EVERY strike, incl. overkill
         // beats past death — same as the magic path. The cue is chosen by the shared rule, so a basic-attack strike
         // inside a flurry shows the normal or crit cue a player would.
@@ -531,39 +643,40 @@ public class Health : MonoBehaviour, ICombatUnit
         else DamagePopup.SpawnText(at, "0", colour);
     }
 
-    // Lifesteal: a fraction of damage dealt to this mob heals the player (RO leech, the mechanical core of
-    // a lifesteal card). Silent heal — a green "+N" per hit would spam during multi-hit; the HP bar is the cue.
+    // WHAT ONE LANDED BLOW PAYS THE ATTACKER, and what it costs them from the victim's own windows: the moment
+    // "I dealt damage", life steal, mana leech, and the victim's reflect.
+    //
+    // ASKED OF THE UNIT, NEVER OF A PERSON. This whole block used to begin by casting the attacker to Character and
+    // giving up when it was not one — so a creature that dealt damage raised no moment, drank no life steal and
+    // leeched no mana, and every passive a creature could hold that answers a landed blow was dead on every creature
+    // in the world. Nothing here needs to know which kind of thing swung.
     static void ApplyLeech(Health victim, int dmgDealt, ICombatUnit attacker)
     {
-        // WHOEVER ACTUALLY SWUNG, not "the one player at this keyboard". Reading a single global character meant
-        // this whole block — lifesteal, mana leech, the victim's reflect, and the "I dealt damage" moment — went
-        // silently dead on a server, where there is nobody at a keyboard and every fighter belongs to somebody else.
-        var ch = attacker as Character;
-        if (ch == null || dmgDealt <= 0) return;
-        // The ONE player-dealt-damage choke (basics + skills both funnel here) → also the OnDamageDealt fire-site (victim = the mob just hit).
-        PassiveEvents.Fire(ch, SkillTrigger.OnDamageDealt, null, victim != null ? victim.transform : null);
-        if (ch.ActiveManaLeechPct > 0f) ch.GainMana(Mathf.RoundToInt(dmgDealt * ch.ActiveManaLeechPct));   // ManaLeech skill window (V3)
+        if (PlayerUnits.Gone(attacker) || dmgDealt <= 0) return;
+        // The ONE dealt-damage choke (basics and skills both funnel here) → also the OnDamageDealt fire-site
+        // (victim = whatever was just hit).
+        PassiveEvents.Fire(attacker, SkillTrigger.OnDamageDealt, null, victim != null ? victim.transform : null);
+        // ManaLeech skill window (V3)
+        float manaLeech = attacker.States != null ? attacker.States.ManaLeechPct : 0f;
+        if (manaLeech > 0f) attacker.GainMana(Mathf.RoundToInt(dmgDealt * manaLeech));
 
-        // The VICTIM's own timed windows fire here too — the mob side of the rules the player already plays by, so a
-        // Reflect or ManaLeech landed ON a mob actually does something. Reflect bounces TRUE damage (bypasses defense
-        // and can't itself be reflected, exactly like Character.Reflect); ManaLeech feeds the mob's own MP pool.
+        // The VICTIM's own timed windows fire here too, so a Reflect or ManaLeech landed ON this creature actually
+        // does something. Reflect bounces TRUE damage (bypasses defence and can't itself be reflected); ManaLeech
+        // feeds the victim's own MP pool.
         if (victim != null)
         {
             var vs = victim.States;
             if (vs.ReflectBonus > 0f)
             {
                 int r = Mathf.RoundToInt(dmgDealt * vs.ReflectBonus);
-                if (r > 0) CombatAuthority.ApplyTrue(ch, r, ReflectColor, "reflect");
+                if (r > 0) CombatAuthority.ApplyTrue(attacker, r, ReflectColor, "reflect");
             }
-            if (vs.ManaLeechPct > 0f)
-            {
-                var block = victim.GetComponent<UnitStatBlock>();
-                if (block != null) block.GainMana(Mathf.RoundToInt(dmgDealt * vs.ManaLeechPct));
-            }
+            if (vs.ManaLeechPct > 0f) victim.GainMana(Mathf.RoundToInt(dmgDealt * vs.ManaLeechPct));
         }
 
-        if (ch.LifeStealPct <= 0f) return;
-        ch.LeechHeal(Mathf.RoundToInt(dmgDealt * ch.LifeStealPct));
+        float steal = attacker.LifeStealPct;
+        if (steal <= 0f) return;
+        attacker.LeechHeal(Mathf.RoundToInt(dmgDealt * steal));
     }
 
     static readonly Color ReflectColor = new Color(1f, 0.6f, 0.9f);   // damage bounced back at the attacker
@@ -595,6 +708,20 @@ public class Health : MonoBehaviour, ICombatUnit
         if (IsWatchedCopy) return;
         Current = Mathf.Min(maxHealth, Current + amount);
         CombatAuthority.NoteHPAdded(this, amount);
+    }
+
+    /// <summary>This creature's life steal — whatever a skill window is lending it. It has no gear affix for one, so
+    /// with no window running this is zero; the READ is here so a creature that is given one is paid exactly as a
+    /// person is.</summary>
+    public float LifeStealPct => Mathf.Max(0f, States.SubStatBonus(SubStat.LifeSteal));
+
+    /// <summary>Health returned by life steal — silent, and refused on a watched copy for the same reason every other
+    /// gain is: this creature's health is the server's to state.</summary>
+    public void LeechHeal(int amount)
+    {
+        if (amount <= 0 || IsDead || IsWatchedCopy) return;
+        Current = Mathf.Min(maxHealth, Current + amount);
+        CombatAuthority.LogHeal(this, amount, "life steal");
     }
 
     void Die()
