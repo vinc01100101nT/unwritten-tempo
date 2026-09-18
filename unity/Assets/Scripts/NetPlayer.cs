@@ -371,6 +371,36 @@ public class NetPlayer : NetworkBehaviour
     Quaternion facing = Quaternion.identity;
     float facingBuiltFrom = float.NaN;
 
+    /// <summary>THE PERSON AT THIS KEYBOARD, as their shell. Held so anything that needs to ask the server
+    /// something on their behalf has one place to find them instead of searching the scene for the owned shell.
+    /// Null on a server, which steers nobody, and between leaving one world and arriving in the next.</summary>
+    public static NetPlayer Mine { get; private set; }
+
+    /// <summary>EVERY OTHER PERSON'S BODY THIS MACHINE HAS BUILT, as the health copy that speaks for it. The same
+    /// shape as the creature registry: a plain list, filed when a body is built and struck when it is dropped, so a
+    /// cursor scan walks the people on screen without searching the scene. Never holds your own body.</summary>
+    public static readonly System.Collections.Generic.List<Health> WatchedBodies =
+        new System.Collections.Generic.List<Health>(8);
+
+    // THE SHELL THAT SPEAKS FOR A BODY THIS MACHINE BUILT, found by that body. The exact mirror of the table
+    // creatures already keep (NetMob.ShellForView) and for the same reason: a watched body is a separate object
+    // from the shell that speaks for it, so there is no parent to walk up to.
+    static readonly System.Collections.Generic.Dictionary<GameObject, NetPlayer> byBody =
+        new System.Collections.Generic.Dictionary<GameObject, NetPlayer>();
+
+    /// <summary>The network identity of whatever unit <paramref name="watchedBody"/> is the drawn copy of — a
+    /// creature's or a person's. ONE answer for both, so anything pointing at a body has a single way to name the
+    /// unit it belongs to when it asks the server about it.</summary>
+    public static NetworkIdentity ShellIdentityFor(GameObject watchedBody)
+    {
+        if (watchedBody == null) return null;
+        var mob = NetMob.ShellForView(watchedBody);
+        if (mob != null) return mob.netIdentity;
+        for (var t = watchedBody.transform; t != null; t = t.parent)
+            if (byBody.TryGetValue(t.gameObject, out var person) && person != null) return person.netIdentity;
+        return null;
+    }
+
     void Update()
     {
         if (isServer) ServerSaveTick();
@@ -681,6 +711,109 @@ public class NetPlayer : NetworkBehaviour
         var me = Character.Instance;
         if (me == null || me.States == null) return;
         me.States.MirrorFromServer(states);
+    }
+
+    // ---- WHAT IS RUNNING ON SOMEBODY YOU ARE POINTING AT ---------------------------------------------------
+    //
+    // A person's own buffs go only to them (above), because only they need to know how long their own window has
+    // left. But a watcher pointing AT somebody has to be able to see what is on them, and a single answer sent
+    // once would be a lie two seconds later. So this is a SUBSCRIPTION with a scope: while your cursor rests on
+    // one unit, the server tells you about that unit's buffs — once straight away, and again on every change —
+    // and the moment you look away it stops. Nothing is sent about anybody nobody is looking at, so the cost is
+    // one watcher times one unit, not everybody times everybody.
+    //
+    // It serves a creature and a person identically, because what is being watched is only ever "a unit".
+
+    // THE UNIT THIS CONNECTION IS POINTING AT, and the store being listened to on its behalf. Server-side only.
+    UnitStates pointedAtStates;
+    NetworkIdentity pointedAt;
+
+    /// <summary>The states of the unit this shell speaks for, as the SERVER holds them. This is a person's real
+    /// store, the one their skills are decided against.</summary>
+    public UnitStates ServerStates => watchedStates;
+
+    /// <summary>The store on the body THIS machine drew for this person, which is where a watcher's copy of their
+    /// buffs is kept. Null until their body has been built.</summary>
+    public UnitStates WatchedStates => bodyHealth != null ? bodyHealth.States : null;
+
+    // WHAT WAS LAST SAID TO THE SERVER, so pointing at the same unit for a hundred frames sends one message and
+    // not a hundred. The server ignores a repeat as well; this simply stops it ever being asked.
+    NetworkIdentity lastPointedSent;
+
+    /// <summary>Tell the server which unit the person at this keyboard is pointing at, naming it by the drawn body
+    /// under their cursor — or nothing at all. Safe to call every frame: it sends only when the answer changes.
+    ///
+    /// <para>Takes a plain object rather than a network handle so the thing that follows the cursor — a piece of
+    /// screen furniture — does not have to know anything about the wire.</para></summary>
+    public static void PointAt(GameObject watchedBody)
+    {
+        if (Mine == null) return;
+        var shell = ShellIdentityFor(watchedBody);
+        if (shell == Mine.lastPointedSent) return;
+        Mine.lastPointedSent = shell;
+        Mine.CmdPointAt(shell);
+    }
+
+    /// <summary>Point at a unit, or at nothing. Called by the thing that follows the cursor; the answer comes back
+    /// on <see cref="TargetPointedAtStates"/> and keeps coming until this is called again.</summary>
+    [Command]
+    public void CmdPointAt(NetworkIdentity who)
+    {
+        if (who == pointedAt) return;
+
+        if (pointedAtStates != null) pointedAtStates.OnChanged -= PushPointedAtStates;
+        pointedAt = who;
+        pointedAtStates = StatesHeldBy(who);
+
+        if (pointedAtStates == null) return;
+        pointedAtStates.OnChanged += PushPointedAtStates;
+        PushPointedAtStates();
+    }
+
+    // Whichever kind of unit this identity speaks for, its real store on this machine. A shell that is neither —
+    // a door, a dropped item — has none, and pointing at it simply subscribes to nothing.
+    static UnitStates StatesHeldBy(NetworkIdentity who)
+    {
+        if (who == null) return null;
+        if (who.TryGetComponent<NetMob>(out var mob)) return mob.ServerStates;
+        if (who.TryGetComponent<NetPlayer>(out var person)) return person.ServerStates;
+        return null;
+    }
+
+    void PushPointedAtStates()
+    {
+        if (pointedAtStates == null || pointedAt == null || connectionToClient == null) return;
+        pointedAtStates.SnapshotForOwner(statesScratch);
+        TargetPointedAtStates(connectionToClient, pointedAt, statesScratch);
+    }
+
+    /// <summary>What is running on the unit you are pointing at. Written onto the copy of that unit THIS machine
+    /// drew, which is where every readout already looks.</summary>
+    [TargetRpc]
+    void TargetPointedAtStates(NetworkConnectionToClient target, NetworkIdentity who,
+                               System.Collections.Generic.List<UnitStates.Mirrored> states)
+    {
+        var store = WatchedStatesOf(who);
+        if (store != null) store.MirrorFromServer(states);
+    }
+
+    /// <summary>The store on the body this machine drew for that unit — a creature's or a person's.</summary>
+    public static UnitStates WatchedStatesOf(NetworkIdentity who)
+    {
+        if (who == null) return null;
+        if (who.TryGetComponent<NetMob>(out var mob)) return mob.WatchedStates;
+        if (who.TryGetComponent<NetPlayer>(out var person)) return person.WatchedStates;
+        return null;
+    }
+
+    // THE SUBSCRIPTION DIES WITH THE CONNECTION. Left attached, a store would keep a handler belonging to somebody
+    // who has gone, and every change on that unit would try to speak to an empty seat.
+    public override void OnStopServer()
+    {
+        if (pointedAtStates != null) pointedAtStates.OnChanged -= PushPointedAtStates;
+        pointedAtStates = null;
+        pointedAt = null;
+        base.OnStopServer();
     }
 
     /// <summary>ONE way a skill moves a person, whichever way it does it. A blink, a glide and a shove differ only
@@ -1662,6 +1795,39 @@ public class NetPlayer : NetworkBehaviour
 
         ShowTheirHeldStance();
         ShowTheirWindup();
+        ShowTheirHealth();
+    }
+
+    // WHAT THIS PERSON IS CARRYING, put on the body that shows it. The pair of components below is the same pair a
+    // watched creature's body carries, so anything looking at somebody else — a floating plate, a target readout —
+    // reads one kind of thing and never has to ask whether it is pointed at a creature or a person.
+    Health bodyHealth;
+    UnitStatBlock bodyBlock;
+
+    // What was last put on that body. A person at steady health costs nothing, and a body just built is told again
+    // from scratch, exactly as a recycled creature body is.
+    int lastDrawnHealth = -1;
+    int lastDrawnMaxHealth = -1;
+    int lastDrawnMana = -1;
+    int lastDrawnMaxMana = -1;
+
+    void ShowTheirHealth()
+    {
+        if (!healthKnown || bodyHealth == null) return;
+
+        if (netHealth != lastDrawnHealth || netMaxHealth != lastDrawnMaxHealth)
+        {
+            lastDrawnHealth = netHealth;
+            lastDrawnMaxHealth = netMaxHealth;
+            bodyHealth.SetHealthFromServer(netHealth, netMaxHealth);
+        }
+
+        if (bodyBlock != null && (netMana != lastDrawnMana || netMaxMana != lastDrawnMaxMana))
+        {
+            lastDrawnMana = netMana;
+            lastDrawnMaxMana = netMaxMana;
+            bodyBlock.SetManaFromServer(netMana, netMaxMana);
+        }
     }
 
     /// <summary>How far off the floor this person is THIS FRAME.
@@ -1731,6 +1897,11 @@ public class NetPlayer : NetworkBehaviour
         // is attached to, so a person who walked out of view while poisoned would otherwise leave their poison
         // hanging in the air where they were standing.
         VfxCue.ForgetAurasOn(netId);
+        // STRUCK FROM THE REGISTRY BEFORE THE BODY GOES, or a cursor scan would walk a destroyed one.
+        if (bodyHealth != null) WatchedBodies.Remove(bodyHealth);
+        if (body != null) byBody.Remove(body);
+        bodyHealth = null;
+        bodyBlock = null;
         if (body != null) Destroy(body);
         body = null;
         bodyGear = null;
@@ -1827,6 +1998,30 @@ public class NetPlayer : NetworkBehaviour
             socket.ShowWeaponOf(bodyGear);
             DressTheBody();
 
+            // AND THE NUMBERS, on the body that shows them. Marked as a watched copy first thing: this body does
+            // not get to decide it died or how hard it was hit — both arrive from the server like every other fact
+            // about this person.
+            // perf-ok: once per body built.
+            bodyHealth = root.AddComponent<Health>();
+            bodyHealth.MarkAsWatchedCopy();
+
+            // That component insists on a sprite renderer, because for a billboard creature the sprite IS the body
+            // it flashes. A live-3D character has no billboard, so the renderer it just added is switched off
+            // rather than left to draw a white square where the person is standing.
+            var flashQuad = root.GetComponent<SpriteRenderer>();
+            if (flashQuad != null) flashQuad.enabled = false;
+
+            bodyBlock = root.AddComponent<UnitStatBlock>();
+
+            // Nothing has been drawn on this body yet, so the first word from the server must land whatever it says.
+            lastDrawnHealth = -1;
+            lastDrawnMaxHealth = -1;
+            lastDrawnMana = -1;
+            lastDrawnMaxMana = -1;
+
+            WatchedBodies.Add(bodyHealth);
+            byBody[root] = this;
+
             // The body belongs to the WORLD, not to the map this machine is standing in — same reason a creature's
             // does. Travelling unloads the map you left, and everything built into it goes with it.
             MapManager.KeepAcrossMaps(root);
@@ -1864,7 +2059,7 @@ public class NetPlayer : NetworkBehaviour
             if (!mitigated.Nothing)
             {
                 var av = me.Body;
-                if (av != null) UnitMitigation.Show(mitigated, UnitAnchor.Overhead(av));
+                if (av != null) UnitMitigation.Show(mitigated, av);
             }
             FoldIntoRisingTotal(info, tick, showsTotal, attackerNetId);
             return;
@@ -1872,7 +2067,7 @@ public class NetPlayer : NetworkBehaviour
 
         if (body == null || info.amount <= 0 || info.missed) return;
         // The SAME colour the person it happened to sees over their own body — one owner, read here.
-        DamagePopup.Spawn(UnitAnchor.Overhead(body.transform), info.amount, Character.ColourOfBlow(info, tick, tickColor));
+        DamagePopup.Spawn(body.transform, info.amount, Character.ColourOfBlow(info, tick, tickColor));
         FoldIntoRisingTotal(info, tick, showsTotal, attackerNetId);
     }
 
@@ -1927,6 +2122,7 @@ public class NetPlayer : NetworkBehaviour
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
+        Mine = this;
         GameNetwork.ConfirmedInTheWorld();
         // AND THIS WORLD KNOWS NOTHING ABOUT WHAT THIS BODY IS DOING. Poses are reported only when they CHANGE, and
         // a world we have only just arrived in starts out believing this body is doing nothing — so whatever it is
@@ -1937,6 +2133,7 @@ public class NetPlayer : NetworkBehaviour
 
     public override void OnStopClient()
     {
+        if (Mine == this) Mine = null;
         // THE SAME TIDY-UP A BODY GOING AWAY GETS, because this is a body going away — the person left, or this
         // machine did. Written as the one call so a route out of the world cannot skip a step the other takes.
         DropTheBody();

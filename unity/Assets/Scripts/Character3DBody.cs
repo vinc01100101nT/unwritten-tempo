@@ -94,7 +94,7 @@ public static class Character3DBody
         // Tell the world how tall this unit ACTUALLY is. A live-3D character's root scale is not its size (the body is
         // this fitted child), so without this every anchor — floating numbers, nameplates, cast bar, target marker,
         // projectile homing, cursor snap — would derive the height from the root and land far above the head.
-        UnitBody.Set(root, targetHeight);
+        UnitBody.Set(root, targetHeight, pose.VisualWorldWidth);
 
         return pose;
     }

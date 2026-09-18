@@ -53,15 +53,16 @@ public static class UnitMitigation
         public bool Nothing => soaked <= 0 && banked <= 0 && !parried && !blocked;
     }
 
-    /// <summary>Draw what the mitigations did, over <paramref name="at"/>, in the same words and colours the game has
-    /// always used for them. Called on the machine that has a screen — which is no longer the machine that decided
-    /// any of it. Silent when nothing was mitigated, and silent on a server, where the popups suppress themselves.</summary>
-    public static void Show(in Outcome o, Vector3 at)
+    /// <summary>Draw what the mitigations did, over <paramref name="unit"/>'s head, in the same words and colours the
+    /// game has always used for them. Called on the machine that has a screen — which is no longer the machine that
+    /// decided any of it. Silent when nothing was mitigated, and silent on a server, where the popups suppress
+    /// themselves.</summary>
+    public static void Show(in Outcome o, Transform unit)
     {
-        if (o.parried) DamagePopup.SpawnText(at, "PARRY", ParryColor);
-        if (o.blocked) DamagePopup.SpawnText(at, "Guard", GuardColor);
-        if (o.soaked > 0) DamagePopup.Spawn(at, o.soaked, ShieldAbsorbColor);
-        if (o.banked > 0) DamagePopup.Spawn(at, o.banked, BraceColor);
+        if (o.parried) DamagePopup.SpawnText(unit, "PARRY", ParryColor);
+        if (o.blocked) DamagePopup.SpawnText(unit, "Guard", GuardColor);
+        if (o.soaked > 0) DamagePopup.Spawn(unit, o.soaked, ShieldAbsorbColor);
+        if (o.banked > 0) DamagePopup.Spawn(unit, o.banked, BraceColor);
     }
 
     /// <summary>Spend a parry charge on an incoming hit, if the unit holds one: the hit is negated OUTRIGHT. Returns

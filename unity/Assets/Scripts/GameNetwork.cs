@@ -2336,7 +2336,7 @@ public class GameNetwork : NetworkManager
 
     /// <summary>The longest line the server will pass on. Anything past this is cut rather than refused, so a
     /// paste that ran away still says its first sentence instead of vanishing with no explanation.</summary>
-    const int MostCharactersInALine = 200;
+    public const int MostCharactersInALine = 200;
 
     /// <summary>How many lines one connection may say in a second. Far above anybody typing and well below what a
     /// machine could shout, the same shape every other ceiling on this layer has.</summary>
@@ -2787,6 +2787,20 @@ public class GameNetwork : NetworkManager
         ReconnectNotice.Hide();
         GameLog.Warn(LogCat.Client, "gave up after " + JoinAttempts + " attempts — leaving the world");
         OnLostWorld?.Invoke();
+    }
+
+    /// <summary>THE PLAYER IS CLOSING THE GAME, and that is the third and last way a world is left on purpose.
+    /// Mirror hangs up the client from here, which fires the very same handler a dropped connection does — so
+    /// without this the last thing a quitting client did was count an attempt, build a fresh full-screen canvas
+    /// for "Reconnecting…" and start a coroutine to dial again in two seconds, all while the engine was already
+    /// tearing itself down. The other two deliberate exits already say so before hanging up:
+    /// <see cref="MoveToAnotherServer"/> sets its hang-up flag and <see cref="Forget"/> sets this same one.</summary>
+    public override void OnApplicationQuit()
+    {
+        goneForGood = true;
+        if (pendingRetry != null) { StopCoroutine(pendingRetry); pendingRetry = null; }
+        ReconnectNotice.Hide();
+        base.OnApplicationQuit();
     }
 
     System.Collections.IEnumerator DialAgainShortly()

@@ -24,12 +24,22 @@ public class UnitBody : MonoBehaviour
     [Tooltip("Feet → mid-body distance in world units. Half the body's real rendered height.")]
     public float halfHeight;
 
-    /// <summary>Declare <paramref name="root"/>'s real body height (feet to crown). Idempotent — call it again after
-    /// a rebuild and it just updates the number.</summary>
-    public static void Set(GameObject root, float bodyHeight)
+    [Tooltip("Half the body's real rendered width in world units. ZERO means nobody measured it — readers fall " +
+             "back to the scale rule rather than trusting a made-up number.")]
+    public float halfWidth;
+
+    /// <summary>Declare <paramref name="root"/>'s real body height (feet to crown), and its width when the caller
+    /// has measured one. Idempotent — call it again after a rebuild and it just updates the numbers.
+    ///
+    /// <para>Width is optional because only the callers that build a body from a model have a bounds union to read
+    /// it from; the ones working from an authored height do not, and a width invented for them would be a wrong
+    /// number wearing a measured one's clothes. Left at zero it stays distinguishable from a real width, and
+    /// <see cref="UnitAnchor.HalfWidth"/> falls back to the same scale rule it uses for a billboard.</para></summary>
+    public static void Set(GameObject root, float bodyHeight, float bodyWidth = 0f)
     {
         if (root == null || bodyHeight <= 0f) return;
         var b = root.GetComponent<UnitBody>() ?? root.AddComponent<UnitBody>();
         b.halfHeight = 0.5f * bodyHeight;
+        if (bodyWidth > 0f) b.halfWidth = 0.5f * bodyWidth;
     }
 }

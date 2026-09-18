@@ -3877,10 +3877,11 @@ MonoBehaviour:
   respawnJitter: 3
   fixedMobId: 
   biome: 4
-  minTier: 2
-  maxTier: 4
+  minLevel: 1
+  maxLevel: 99
   includeCommons: 1
   playerClearRadius: 6
+  shadowFraction: 0
 --- !u!4 &765151934
 Transform:
   m_ObjectHideFlags: 0
@@ -10617,51 +10618,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7807492536487304316, guid: a9847c6576af64b478991913ded11168, type: 3}
   m_PrefabInstance: {fileID: 1962468953}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1978978251
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1978978253}
-  - component: {fileID: 1978978252}
-  m_Layer: 0
-  m_Name: SpawnPoint_Start
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1978978252
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1978978251}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca4b8f753fd71fa45bca76dc92a7245d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
-  id: Start
---- !u!4 &1978978253
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1978978251}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1981693706
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11443,5 +11399,4 @@ SceneRoots:
   - {fileID: 2033849978}
   - {fileID: 1054387350}
   - {fileID: 1692690479}
-  - {fileID: 1978978253}
   - {fileID: 765151934}

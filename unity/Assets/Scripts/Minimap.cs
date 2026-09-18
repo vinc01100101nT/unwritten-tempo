@@ -65,8 +65,10 @@ public class Minimap : MonoBehaviour
     {
         // A server has no screen and a dedicated server build ships no shaders, so asking the render pipeline
         // to draw the map throws — every frame, forever. Stand down the same way this already does when its
-        // refs are missing: the map still exists on the server, nobody is looking at a picture of it.
-        if (GameServer.IsServer) { enabled = false; return; }
+        // refs are missing: the map still exists on the server, nobody is looking at a picture of it. A client
+        // started with no window (a player reading the game as text) has no screen either, and its map camera
+        // fails the same way, about thirty times a second into its log.
+        if (GameServer.IsServer || Application.isBatchMode) { enabled = false; return; }
 
         if (view == null || blipRoot == null)
         {

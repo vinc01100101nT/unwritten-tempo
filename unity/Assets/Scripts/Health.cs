@@ -603,7 +603,7 @@ public class Health : MonoBehaviour, ICombatUnit
         if (IsDead || amount <= 0) return 0;
         int dmg = Mathf.Max(1, amount);
         SubtractHealth(dmg);
-        DamagePopup.Spawn(UnitAnchor.Overhead(transform), dmg, color);
+        DamagePopup.Spawn(transform, dmg, color);
         if (IsDead) Die();
         return dmg;
     }
@@ -630,17 +630,16 @@ public class Health : MonoBehaviour, ICombatUnit
     /// strong and normal hits stay fully opaque.</para></summary>
     public void DrawShownBlow(in ShownBlow blow)
     {
-        var at = UnitAnchor.Overhead(transform);
         if (blow.missed)
         {
-            DamagePopup.SpawnText(at, "MISS", MissColor);
+            DamagePopup.SpawnText(transform, "MISS", MissColor);
             return;
         }
 
         Color colour = blow.crit ? CritColor : blow.magic ? MagicColor : Color.white;
         colour.a *= Elements.DamageAlpha(blow.elementModifier);
-        if (blow.number > 0) DamagePopup.Spawn(at, blow.number, colour);
-        else DamagePopup.SpawnText(at, "0", colour);
+        if (blow.number > 0) DamagePopup.Spawn(transform, blow.number, colour);
+        else DamagePopup.SpawnText(transform, "0", colour);
     }
 
     // WHAT ONE LANDED BLOW PAYS THE ATTACKER, and what it costs them from the victim's own windows: the moment

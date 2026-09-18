@@ -35,11 +35,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 16a176495b5723845b4d0f00e731d2ee
-    m_Address: Mobs/DragonBlue
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 172ebe8822673594a8879eba921082d1
     m_Address: Mobs/GiantFrog2
     m_ReadOnly: 0
@@ -92,11 +87,6 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 3605ef2441b7ba64fb77f25e8e34c022
     m_Address: Mobs/AxolotBlue
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3c92e70899ad58442a4b5786ff9f4527
-    m_Address: Mobs/DragonGreen
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

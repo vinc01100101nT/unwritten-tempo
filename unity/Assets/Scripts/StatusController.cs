@@ -353,7 +353,7 @@ public class StatusController : MonoBehaviour
         bool started = states.ApplySubStat(SubStat.MovementSpeed, bonus, seconds);
         if (started)
         {
-            DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "Haste!", HasteColor);
+            DamagePopup.SpawnText(transform, "Haste!", HasteColor);
             if (VfxCue.SubStatStartCue(SubStat.MovementSpeed, true, bonus, out var cue)) VfxCue.Fire(cue, transform);
         }
     }
@@ -378,10 +378,10 @@ public class StatusController : MonoBehaviour
 
     void AnnounceIfNew(Ailment a, bool wasActive, string label, Color c)
     {
-        if (!wasActive) DamagePopup.SpawnText(UnitAnchor.Overhead(transform), label, c);
+        if (!wasActive) DamagePopup.SpawnText(transform, label, c);
     }
 
-    void Announce(Ailment a) => DamagePopup.SpawnText(UnitAnchor.Overhead(transform), a.ToString() + "!", ColorOf(a));
+    void Announce(Ailment a) => DamagePopup.SpawnText(transform, a.ToString() + "!", ColorOf(a));
 
     static Color ColorOf(Ailment a)
     {

@@ -40,9 +40,16 @@ Every one of these was done through the live editor link:
   contradict and neither has been re-checked since — treat capture as unreliable, see the capture rule below.
 - **Pausing play to freeze a moment.** PROVEN HARMFUL, not merely unproven — see the short-lived-things rule
   below. Never do this in this game.
-- **Two players at once.** The editor is ONE client. A second needs the built game with its own window and its
-  own sign-in, and nothing here has driven that. Any test needing two people is OUT OF SCOPE — say so plainly
-  instead of approximating it with one.
+- **Two players at once — now possible through GMCP, not through the editor.** The editor is ONE client. Extra
+  players come from the built game with no window, driven by text: `AGENT_PORT=<free port>
+  tools/agent-play/game_link.py launch`, then `login`, `play`, `look`, `move`, `attack`, `cast`, `say`, and
+  `quit` when done — one port per player, and never the port another player is using. PROVEN 2026-09-17: three
+  players (the user in the editor, the main session, and a tester) met in `town_0` and chatted. Full command
+  list: `docs/0-process/gmcp-playing-the-game-as-text.md`. Several commands fit on one line, separated by
+  `;` (`"go d1; wait 2; attack m1"`), and each answer says why every command ended. A GMCP player's own
+  client log is `logs/agent-client-<port>.log` (`logs/agent-client.log` on the default port 7790). When a
+  character falls, is stuck, or stands somewhere impossible, `ground` says what the physics engine finds under
+  them and what is touching them, with each thing's map and layer — that is the measurement, not a theory.
 
 ## Before it plays: the world must be up
 

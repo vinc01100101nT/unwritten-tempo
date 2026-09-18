@@ -3,7 +3,18 @@
     "unity-editor-mcp": {
       "type": "stdio",
       "command": "/Users/vince/.unity/bin/unity",
-      "args": ["mcp", "--project-path", "/Users/vince/Desktop/CODES/unwritten-tempo/unity"]
+      "args": [
+        "mcp",
+        "--project-path",
+        "/Users/vince/Desktop/CODES/unwritten-tempo/unity"
+      ]
+    },
+    "unwritten-game": {
+      "type": "stdio",
+      "command": "python3",
+      "args": [
+        "tools/agent-play/mcp_server.py"
+      ]
     }
   }
 }

@@ -222,7 +222,7 @@ public static class CombatAuthority
 
     /// <summary>The green digits alone — what a watching machine draws when the server says a unit was healed.</summary>
     public static void ShowHPAdded(Transform body, int amount) =>
-        DamagePopup.SpawnText(UnitAnchor.Overhead(body), "+" + amount, HPAddedColor);
+        DamagePopup.SpawnText(body, "+" + amount, HPAddedColor);
 
     /// <summary>Apply RAW over-time / reflected damage (poison/burn/bleed ticks, thorns reflect) — the second combat
     /// channel through this seam. Bypasses DEF/element/crit; same server-authoritative interception point as

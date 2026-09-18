@@ -75,7 +75,9 @@ public class PlanarReflection : MonoBehaviour
     {
         // Nothing is drawn on a server, so there is no camera to hook and no reflection to render. Standing
         // down in Awake means OnEnable never subscribes, rather than subscribing and then failing per frame.
-        if (GameServer.IsServer) { enabled = false; return; }
+        // The same for a client started with no window: it has no screen, and a reflection of nothing fails
+        // every frame into its log.
+        if (GameServer.IsServer || Application.isBatchMode) { enabled = false; return; }
 
         if (reflectMask == -1) reflectMask = DefaultReflectMask();
     }

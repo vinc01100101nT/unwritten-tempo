@@ -140,11 +140,9 @@ public static class RegionBuilder
         int groundMask = groundLayer >= 0 ? 1 << groundLayer : ~0;
         Physics.SyncTransforms();
 
-        // Drop the boss in an open spot away from the default arrival so you walk into it, not onto it.
-        Vector3 anchor = Vector3.zero;
-        foreach (var sp in Object.FindObjectsByType<SpawnPoint>())
-            if (sp.id == "Start") { anchor = sp.transform.position; break; }
-        Vector3 pos = WorldBuildUtil.SurfacePoint(anchor + new Vector3(6f, 0f, 10f), groundMask);
+        // Drop the boss in an open spot away from where anyone arrives, so you walk into it rather than onto it.
+        // The map's own arrival points are beside its doors, so the centre is the spot to keep clear of.
+        Vector3 pos = WorldBuildUtil.SurfacePoint(new Vector3(6f, 0f, 10f), groundMask);
 
         // Prefer the data-driven boss (MonsterCatalog), fall back to the legacy MobRoster seed if no assets yet.
         var bossDef = MonsterCatalog.Boss;

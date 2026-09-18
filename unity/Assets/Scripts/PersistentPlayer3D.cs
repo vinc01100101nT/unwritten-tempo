@@ -73,6 +73,13 @@ public class PersistentPlayer3D : MonoBehaviour
         var spawn = ResolveSpawn();
         if (spawn != null) MoveTo(spawn.transform.position);
 
+        // WHERE THEY WERE PUT, said once per arrival. "The player cannot move after a teleport" was investigated
+        // twice by hand before this line existed; the answer was that they had been put at the WRONG map's spot.
+        if (GameLog.On(LogCat.Client))
+            GameLog.Info(LogCat.Client, "placed in '" + MapManager.CurrentMap + "' at "
+                             + (spawn != null ? "spawn '" + spawn.id + "' " : "no spawn point — left ")
+                             + transform.position.ToString("0.00"));   // perf-ok: once per map arrival
+
         AimCamera();
     }
 
@@ -82,11 +89,22 @@ public class PersistentPlayer3D : MonoBehaviour
 
         // Snap so the sprite's FEET rest exactly on the terrain — place the capsule bottom on the
         // surface (computed from the controller, scaled), instead of lifting and hoping gravity settles.
-        if (Physics.Raycast(new Vector3(pos.x, pos.y + 50f, pos.z), Vector3.down, out var hit, 200f,
-                            groundMask.value != 0 ? groundMask : ~0, QueryTriggerInteraction.Ignore))
+        // THIS MAP'S GROUND, not the one being left: the old map is still there for the frame this runs in (its
+        // unload is asynchronous) and sits on the same coordinates, so a single nearest-hit raycast could seat
+        // the feet on ground that is about to vanish — and leave them sunk into this map's.
+        var arrivedIn = MapManager.CurrentScene;
+        var hits = Physics.RaycastAll(new Vector3(pos.x, pos.y + 50f, pos.z), Vector3.down, 200f,
+                                      groundMask.value != 0 ? groundMask : ~0, QueryTriggerInteraction.Ignore);   // perf-ok: once per map arrival / respawn
+        float groundY = float.NaN;
+        for (int i = 0; i < hits.Length; i++)
+        {
+            if (arrivedIn.IsValid() && hits[i].collider.gameObject.scene != arrivedIn) continue;
+            if (float.IsNaN(groundY) || hits[i].point.y > groundY) groundY = hits[i].point.y;
+        }
+        if (!float.IsNaN(groundY))
         {
             float capsuleBottom = cc != null ? (cc.center.y - cc.height * 0.5f) * transform.lossyScale.y : 0f;
-            pos.y = hit.point.y - capsuleBottom;
+            pos.y = groundY - capsuleBottom;
         }
 
         // CharacterController fights direct transform writes — disable it for the teleport frame. try/finally so
@@ -97,10 +115,25 @@ public class PersistentPlayer3D : MonoBehaviour
         finally { if (cc != null) cc.enabled = true; }
     }
 
-    // SpawnPoint a Portal requested (by id), else one named "Start", else the first, else null.
+    // The spawn point a Portal asked for by id, else the first one this map has, else null — and null means the
+    // arriving body is left exactly where it is.
+    // ONLY THE MAP BEING ARRIVED IN. This runs the moment the new map has loaded, and the map being left is
+    // still loaded for that frame (its unload is asynchronous) — so a search across everything finds BOTH maps'
+    // spawn points. Whichever came first won: MEASURED, a teleport from a field into the town put the player on
+    // the FIELD's arrival point (0,0) inside the town, sunk 0.14 below the town's ground and unable to move, on
+    // some arrivals and not others.
+    //
+    // THERE IS NO CENTRE ARRIVAL POINT ANY MORE (removed 2026-09-18 at the user's instruction). Every map used to
+    // carry one called "Start" at its exact middle, planted there by the generator with nothing checking what was
+    // already standing on that spot — which is why arriving in a field dropped you through the floor and out of
+    // the world. Doors name their own arrival points and are unaffected; anything that arrives without naming one
+    // (a teleport, a respawn, a new character) falls to the line below.
     SpawnPoint ResolveSpawn()
     {
-        var points = FindObjectsByType<SpawnPoint>();
+        var all = FindObjectsByType<SpawnPoint>();
+        var here = MapManager.CurrentScene;
+        var points = new System.Collections.Generic.List<SpawnPoint>(all.Length);   // perf-ok: once per map arrival / respawn
+        foreach (var sp in all) if (!here.IsValid() || sp.gameObject.scene == here) points.Add(sp);
 
         if (!string.IsNullOrEmpty(SceneTravel.Target))
         {
@@ -108,8 +141,7 @@ public class PersistentPlayer3D : MonoBehaviour
                 if (sp.id == SceneTravel.Target) { SceneTravel.Target = null; return sp; }
             SceneTravel.Target = null;   // id not in this map — ignore
         }
-        foreach (var sp in points) if (sp.id == "Start") return sp;
-        return points.Length > 0 ? points[0] : null;
+        return points.Count > 0 ? points[0] : null;
     }
 
     // The persistent follow camera lives in Systems and is the only rig — point it at us.

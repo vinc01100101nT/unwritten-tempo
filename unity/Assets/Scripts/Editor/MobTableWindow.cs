@@ -26,7 +26,7 @@ public class MobTableWindow : EditorWindow
     }
 
     readonly List<MonsterDef> _defs = new List<MonsterDef>();
-    readonly Dictionary<MonsterDef, Texture2D> _sheets = new Dictionary<MonsterDef, Texture2D>();
+    readonly Dictionary<MonsterDef, (Texture2D tex, Rect uv)> _sheets = new Dictionary<MonsterDef, (Texture2D, Rect)>();
     Vector2 _scroll, _hscroll;
     string _search = "";
     readonly HashSet<MonsterDef> _expanded = new HashSet<MonsterDef>();
@@ -72,10 +72,27 @@ public class MobTableWindow : EditorWindow
         _defs.Sort((a, b) => (_sortAsc ? 1 : -1) * cmp(a, b));
     }
 
-    Texture2D SheetFor(MonsterDef def)
+    // The picture and the part of it that is the creature's front-facing frame, in texture coordinates. A grid
+    // sheet's frame is its top-left 16px cell; strip art's (the bosses) is the first frame of the Idle picture.
+    (Texture2D tex, Rect uv) SheetFor(MonsterDef def)
     {
         if (_sheets.TryGetValue(def, out var t)) return t;
-        t = string.IsNullOrEmpty(def.sheet) ? null : RigBuilder25D.MonsterSheet(def.sheet);
+        t = (null, default);
+        if (!string.IsNullOrEmpty(def.sheet))
+        {
+            if (RigBuilder25D.TryStripArt(def.sheet, out var idle, out _, out _))
+                t = (idle.sheet, new Rect(0f, 0f, 1f / idle.frames, 1f));
+            else
+            {
+                var tex = RigBuilder25D.MonsterSheet(def.sheet);
+                if (tex != null)
+                {
+                    // Unity tex coords are bottom-left origin, so the top row sits at the top of the [0,1] V range.
+                    float c = Mathf.Min(Cell, Mathf.Min(tex.width, tex.height));
+                    t = (tex, new Rect(0f, 1f - c / tex.height, c / tex.width, c / tex.height));
+                }
+            }
+        }
         _sheets[def] = t;
         return t;
     }
@@ -507,13 +524,13 @@ public class MobTableWindow : EditorWindow
 
     void DrawPreview(Rect r, MonsterDef def)
     {
-        var tex = SheetFor(def);
+        var (tex, uv) = SheetFor(def);
         if (tex == null) { GUI.Label(r, "?", EditorStyles.centeredGreyMiniLabel); return; }
 
-        // Front-facing frame = top-left cell of the sheet (column 0, top row). Unity tex coords are
-        // bottom-left origin, so the top row sits at the top of the [0,1] V range.
-        float c = Mathf.Min(Cell, Mathf.Min(tex.width, tex.height));
-        var uv = new Rect(0f, 1f - c / tex.height, c / tex.width, c / tex.height);
+        // A strip frame is drawn at its own shape (a 96×48 Samurai frame is twice as wide as tall), fitted in the cell.
+        float aspect = (uv.width * tex.width) / (uv.height * tex.height);
+        if (aspect > 1f) { float h = r.width / aspect; r = new Rect(r.x, r.y + (r.height - h) * 0.5f, r.width, h); }
+        else if (aspect < 1f) { float w = r.height * aspect; r = new Rect(r.x + (r.width - w) * 0.5f, r.y, w, r.height); }
         var prev = GUI.color;
         GUI.color = def.tint.a > 0f ? def.tint : Color.white;
         GUI.DrawTextureWithTexCoords(r, tex, uv, true);

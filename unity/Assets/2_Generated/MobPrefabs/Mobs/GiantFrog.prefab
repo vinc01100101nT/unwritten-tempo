@@ -228,12 +228,6 @@ MonoBehaviour:
   xpToFirstLevel: 20
   preferredRange: 0
   fleeHpFraction: 0
-  projectileSheet: {fileID: 0}
-  projFrameSize: 16
-  projFrames: 4
-  projFps: 16
-  projSpeed: 9
-  projScale: 1.1
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
@@ -277,10 +271,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ce5573af86bf78488623cdd460ecfc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BillboardAnimator3D
-  sheet: {fileID: 2800000, guid: 494b5b9223e25a348ada2b8ea5c85b36, type: 3}
+  sheet: {fileID: 0}
   cell: 16
   walkFrames: 4
   framesPerSecond: 6
+  idleStrip:
+    sheet: {fileID: 2800000, guid: a9a806f18bb683c49a934d7f5b92e863, type: 3}
+    frames: 5
+    footPx: 6
+  walkStrip:
+    sheet: {fileID: 2800000, guid: 040899c171fbd024e9906ddcb570b496, type: 3}
+    frames: 6
+    footPx: 5
+  stripPixelsPerUnit: 40
   breathe: 1
   breatheAmount: 0.03
   breatheSpeed: 2.5
@@ -376,7 +379,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBanner
   bossName: GiantFrog
-  worldScale: 0.018
-  barWidth: 92
-  barHeight: 12
-  nameFontSize: 26

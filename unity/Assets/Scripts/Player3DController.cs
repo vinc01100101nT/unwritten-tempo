@@ -754,6 +754,22 @@ public partial class Player3DController : MonoBehaviour
     /// <summary>Cancel any move/attack order (used on map arrival by PersistentPlayer3D).</summary>
     public void Halt() => Stop();
 
+    // ---- the same orders a click gives, for a player who is not using a mouse (AgentLink) -------------------------
+    // Each one is exactly what ReadInput runs after resolving the cursor, so a click and one of these cannot mean two
+    // different things.
+
+    /// <summary>What a plain left-click on the ground does: walk there.</summary>
+    public void OrderMove(Vector3 point) => BeginMove(point);
+
+    /// <summary>What a left-click on a mob does: lock on and fight it.</summary>
+    public void OrderAttack(Health mob) { if (mob != null && !mob.IsDead) BeginAttack(mob, false); }
+
+    /// <summary>What T does, but told which way instead of flipping.</summary>
+    public void OrderAutoPilot(bool on) { if (on != AutoActive) ToggleAuto(); }
+
+    /// <summary>Name of the order running right now — Idle, Move, AttackMove, Attack, AutoPilot or MoveIntoRange.</summary>
+    public string OrderName => order.ToString();
+
     // ---- aggro (the player's half of the shared Taunt verb) -----------------------------------------------------
     Health tauntSource;
 
@@ -1071,6 +1087,74 @@ public partial class Player3DController : MonoBehaviour
             float sqr = ((Vector2)sp - mp).sqrMagnitude;
             if (sqr <= bestSqr) { bestSqr = sqr; best = h; }
         }
+        return best;
+    }
+
+    static int unitPickFrame = -1;
+    static Health unitPick;
+
+    /// <summary>The living UNIT under the cursor — a creature, another person, anything carrying health — or null.
+    ///
+    /// <para>Deliberately NOT the same question as <see cref="MonsterUnderCursor"/>, and deliberately not the same
+    /// answer. That one means "what can I attack", and it is what turns the cursor into a sword and what a click
+    /// swings at; widening it would make pointing at a person look and behave like pointing at an enemy. This one
+    /// means "what am I looking at", and nothing acts on it — it only decides what is described on screen.</para>
+    ///
+    /// <para>Frame-memoized on its own stamp, for the same reason the other is: several readouts ask it in one
+    /// frame and the scan should run once.</para></summary>
+    public static Health UnitUnderCursor(Camera cam)
+    {
+        if (Time.frameCount == unitPickFrame) return unitPick;
+        unitPickFrame = Time.frameCount;
+        unitPick = PickUnitUnderCursor(cam);
+        return unitPick;
+    }
+
+    static Health PickUnitUnderCursor(Camera cam)
+    {
+        if (cam == null) return null;
+        if (PointerOverUI()) return null;
+        Vector2 mp = MousePos();
+
+        // 1) Exact aim wins, whatever it is standing in — a creature, a person, a villager.
+        var ray = cam.ScreenPointToRay(mp);
+        if (Physics.Raycast(ray, out var hit, 500f))
+        {
+            var h = hit.collider.GetComponentInParent<Health>();
+            if (h != null && !h.IsDead) return h;
+        }
+
+        // 2) Soft-snap, over the two registries that hold what is on screen: the creatures, and the bodies this
+        //    machine has built for other people. Both are plain lists kept by arrival and departure, so this walks
+        //    what is here without searching the scene.
+        if (snapRadius <= 0f) return null;
+        Health best = null;
+        float bestSqr = snapRadius * snapRadius;
+
+        var mobs = MonsterAI3D.Active;
+        for (int i = 0; i < mobs.Count; i++)
+        {
+            var ai = mobs[i];
+            if (ai == null) continue;
+            var h = ai.Health;
+            if (h == null || h.IsDead) continue;
+            Vector3 sp = cam.WorldToScreenPoint(UnitAnchor.Center(ai.transform));
+            if (sp.z <= 0f) continue;
+            float sqr = ((Vector2)sp - mp).sqrMagnitude;
+            if (sqr <= bestSqr) { bestSqr = sqr; best = h; }
+        }
+
+        var folk = NetPlayer.WatchedBodies;
+        for (int i = 0; i < folk.Count; i++)
+        {
+            var h = folk[i];
+            if (h == null || h.IsDead) continue;
+            Vector3 sp = cam.WorldToScreenPoint(UnitAnchor.Center(h.transform));
+            if (sp.z <= 0f) continue;
+            float sqr = ((Vector2)sp - mp).sqrMagnitude;
+            if (sqr <= bestSqr) { bestSqr = sqr; best = h; }
+        }
+
         return best;
     }
 

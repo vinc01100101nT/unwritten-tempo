@@ -21,6 +21,7 @@
 
         { "state": "now", "when": "Now", "title": "Checking the foundations", "text": "Making sure everything already in the game works as it should, before the milestones above begin." },
 
+        { "state": "done", "when": "17 Sep 2026", "title": "GMCP — an AI can play", "text": "An AI can now **play the game as a real player**, with no window: it reads the screen as text and gives the same orders a click gives. Three players — one person and two AIs — met in town and talked in chat." },
         { "state": "done", "when": "12 Sep 2026", "title": "Boss looks", "text": "Every **boss** has its own look." },
         { "state": "done", "when": "10 Sep 2026", "title": "Dropped things stay put", "text": "Things you drop **stay on the ground**, and townsfolk are shared by everyone online." },
         { "state": "done", "when": "7 Sep 2026", "title": "Walk into range", "text": "Cast a skill from too far away and you **walk into range** first." },

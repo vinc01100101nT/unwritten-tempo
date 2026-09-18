@@ -1009,7 +1009,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (Invincible) return true;   // GM invuln: silently eat the hit
         if (!Invulnerable) return false;
         var a = Avatar();
-        if (a != null) DamagePopup.SpawnText(UnitAnchor.Overhead(a), "Dodge", DodgeColor);
+        if (a != null) DamagePopup.SpawnText(a, "Dodge", DodgeColor);
         OnEvaded?.Invoke();
         return true;
     }
@@ -1349,7 +1349,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (missed)
         {
             var dav = Avatar();
-            if (dav != null) DamagePopup.SpawnText(UnitAnchor.Overhead(dav), "MISS", MonsterMissColor);
+            if (dav != null) DamagePopup.SpawnText(dav, "MISS", MonsterMissColor);
             OnEvaded?.Invoke();
             return CombatAuthority.NoDamage(NoDamageReason.Missed);
         }
@@ -1400,14 +1400,14 @@ public class Character : MonoBehaviour, ICombatUnit
         var av = Avatar();
         if (info.missed)
         {
-            if (av != null) DamagePopup.SpawnText(UnitAnchor.Overhead(av), "MISS", MonsterMissColor);
+            if (av != null) DamagePopup.SpawnText(av, "MISS", MonsterMissColor);
             OnEvaded?.Invoke();
             return;
         }
         if (info.amount <= 0) return;
 
         if (av != null)
-            DamagePopup.Spawn(UnitAnchor.Overhead(av), info.amount, ColourOfBlow(info, tick, tickColor));
+            DamagePopup.Spawn(av, info.amount, ColourOfBlow(info, tick, tickColor));
         // The hurt grunt, and the event that drives the hurt flash.
         Sfx.Play(hurtSfx);
         OnDamaged?.Invoke(info.amount);
@@ -1435,7 +1435,7 @@ public class Character : MonoBehaviour, ICombatUnit
         if (av != null) VfxCue.Fire(VfxCue.HitCue(isMagic, crit, attackerHit), av);
         if (dmg > 0)
         {
-            if (av != null) DamagePopup.Spawn(UnitAnchor.Overhead(av), dmg, numberColor);
+            if (av != null) DamagePopup.Spawn(av, dmg, numberColor);
             // player hurt grunt
             Sfx.Play(hurtSfx);
             // drives the player hurt flash
@@ -1493,7 +1493,7 @@ public class Character : MonoBehaviour, ICombatUnit
         SubtractHealth(dmg);
         OnHealthChanged?.Invoke();
         var a = Avatar();
-        if (a != null) DamagePopup.Spawn(UnitAnchor.Overhead(a), dmg, color);
+        if (a != null) DamagePopup.Spawn(a, dmg, color);
         OnDamaged?.Invoke(dmg);
         if (CurrentHP == 0) RaiseDeath();
         return dmg;

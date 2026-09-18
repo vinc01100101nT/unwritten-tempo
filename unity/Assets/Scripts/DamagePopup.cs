@@ -82,6 +82,32 @@ public class DamagePopup : MonoBehaviour
         return s + "<color=" + SuffixColor + ">" + suf + "</color>";
     }
 
+    /// <summary>Every floating number or word drawn over a unit — a damage number, a heal, a MISS — with the unit it
+    /// was drawn over. For a player reading the game as text (AgentLink); nobody listens otherwise. Raised only by the
+    /// overloads that take the unit: a number spawned at a bare position belongs to nobody it could name.</summary>
+    public static event System.Action<Transform, string> Shown;
+
+    /// <summary>Spawn a number over <paramref name="unit"/>'s head, and say whose head it was.</summary>
+    public static void Spawn(Transform unit, int amount, Color color) => Spawn(unit, amount, color, 1f);
+
+    /// <summary>As <see cref="Spawn(Transform,int,Color)"/> at <paramref name="scaleMult"/>× size.</summary>
+    public static void Spawn(Transform unit, int amount, Color color, float scaleMult)
+    {
+        if (NobodyToShowItTo || amount <= 0) return;
+        SpawnText(unit, Format(amount), color, scaleMult);
+    }
+
+    /// <summary>Spawn floating text over <paramref name="unit"/>'s head, and say whose head it was.</summary>
+    public static void SpawnText(Transform unit, string label, Color color) => SpawnText(unit, label, color, 1f);
+
+    /// <summary>As <see cref="SpawnText(Transform,string,Color)"/> at <paramref name="scaleMult"/>× size.</summary>
+    public static void SpawnText(Transform unit, string label, Color color, float scaleMult)
+    {
+        if (unit == null || NobodyToShowItTo || string.IsNullOrEmpty(label)) return;
+        SpawnText(UnitAnchor.Overhead(unit), label, color, scaleMult);
+        Shown?.Invoke(unit, label);   // after the draw, so a listener's fault can never cost the screen its number
+    }
+
     /// <summary>Spawn arbitrary floating text (e.g. "+10" for heals, "MISS").</summary>
     public static void SpawnText(Vector3 worldPos, string label, Color color) => SpawnText(worldPos, label, color, 1f);
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -267,14 +268,25 @@ public static class RigBuilder25D
     /// <summary>Build a mob from a <see cref="MonsterArchetype"/>, resolving its sprite sheet by name
     /// (falls back to the default monster sheet if that art folder is missing).</summary>
     public static GameObject BuildMonster(in MonsterArchetype arc, Vector3 foot)
-        => BuildMonster(MonsterSheet(arc.sheet) ?? MonsterSheet(), foot, arc);
+    {
+        if (TryStripArt(arc.sheet, out var idle, out var walk, out int ppu))
+        {
+            var go = BuildMonster(null, foot, arc);
+            var anim = go.GetComponent<BillboardAnimator3D>();
+            anim.idleStrip = idle;
+            anim.walkStrip = walk;
+            anim.stripPixelsPerUnit = ppu;
+            return go;
+        }
+        return BuildMonster(MonsterSheet(arc.sheet) ?? MonsterSheet(), foot, arc);
+    }
 
     /// <summary>Core builder: stamp <paramref name="arc"/>'s stats / behavior / look onto the shared
     /// billboard-mob template using <paramref name="tex"/> as the sprite sheet.</summary>
     static GameObject BuildMonster(Texture2D tex, Vector3 foot, in MonsterArchetype arc)
     {
         float scale = arc.scale <= 0f ? 1f : arc.scale;
-        var go = new GameObject("Monster_" + (string.IsNullOrEmpty(arc.name) ? tex.name : arc.name));
+        var go = new GameObject("Monster_" + (!string.IsNullOrEmpty(arc.name) ? arc.name : tex != null ? tex.name : "Unnamed"));
         go.transform.localScale = Vector3.one * BillboardScale * scale;
         go.transform.position = foot;   // pivot = feet on the ground (foot-pivoted sprite renders up from here)
 
@@ -384,10 +396,9 @@ public static class RigBuilder25D
     /// Handles both naming conventions in the pack: <c>SpriteSheet.png</c> and a single sheet named after the
     /// folder (e.g. <c>Slime/Slime.png</c>); else the first non-Faceset/non-Preview png.
     ///
-    /// <para>BOTH art folders are searched, ordinary creatures and bosses, because the sheet name is just a
-    /// folder name and the asset does not record which of the two it came from. Searching only the monster
-    /// folder is what left all 20 bosses baked with the fallback sheet — every one of them standing in the
-    /// world wearing KappaGreen's sprite, which nothing reported because falling back is silent by design.</para></summary>
+    /// <para>Only a GRID sheet counts — a picture laid out in 16px cells, one column per direction. Boss art is one
+    /// picture per animation instead and is resolved by <see cref="TryStripArt"/>; slicing one of those pictures as a
+    /// grid is what showed every boss as a 16px corner of its Attack or Hit picture.</para></summary>
     public static Texture2D MonsterSheet(string name)
     {
         if (string.IsNullOrEmpty(name)) return MonsterSheet();
@@ -402,17 +413,96 @@ public static class RigBuilder25D
         if (File.Exists(preferred)) return preferred;
         if (!Directory.Exists(dir)) return null;
 
-        string fallback = null;
         foreach (var f in Directory.GetFiles(dir, "*.png"))
+            if (Path.GetFileNameWithoutExtension(f).Equals(name, System.StringComparison.OrdinalIgnoreCase))
+                return f.Replace('\\', '/');
+        return null;
+    }
+
+    /// <summary>True when <paramref name="dir"/> holds art a creature can be built from: a grid sheet, or an Idle
+    /// strip. The importer reads this so it never makes a creature out of a folder nothing can draw (the split-part
+    /// dragons: a head, body pieces and a wing, with no animation picture).</summary>
+    public static bool HasCreatureArt(string dir)
+        => ResolveMonsterSheetPath(dir, Path.GetFileName(dir)) != null || FindStrip(dir, "Idle") != null;
+
+    /// <summary>Resolve a creature whose art is one picture per animation (Boss/&lt;Name&gt;/Idle.png, Walk.png…).
+    /// Idle plays while standing; Walk plays while moving, or Jump for the creatures that move by jumping and have
+    /// no Walk. Frame count and feet line come from the slicing Unity already saved on each picture.</summary>
+    public static bool TryStripArt(string name, out BillboardAnimator3D.StripClip idle,
+                                   out BillboardAnimator3D.StripClip walk, out int pixelsPerUnit)
+    {
+        idle = default; walk = default; pixelsPerUnit = 0;
+        if (string.IsNullOrEmpty(name)) return false;
+        foreach (var dir in new[] { $"{MobBiomeImporter.MonsterArtDir}/{name}", $"{MobBiomeImporter.BossArtDir}/{name}" })
         {
-            string fn = Path.GetFileNameWithoutExtension(f);
-            if (fn.Equals("Faceset", System.StringComparison.OrdinalIgnoreCase)) continue;
-            if (fn.EndsWith("Preview", System.StringComparison.OrdinalIgnoreCase)) continue;
-            string assetPath = f.Replace('\\', '/');
-            if (fn.Equals(name, System.StringComparison.OrdinalIgnoreCase)) return assetPath;
-            fallback ??= assetPath;
+            if (!Directory.Exists(dir) || ResolveMonsterSheetPath(dir, name) != null) continue;
+            string idlePath = FindStrip(dir, "Idle");
+            if (idlePath == null || !TryStripClip(idlePath, out idle)) continue;
+            string walkPath = FindStrip(dir, "Walk") ?? FindStrip(dir, "Jump");
+            if (walkPath == null || !TryStripClip(walkPath, out walk)) walk = default;
+            pixelsPerUnit = idle.sheet.height;
+            return true;
         }
-        return fallback;
+        return false;
+    }
+
+    static string FindStrip(string dir, string animation)
+    {
+        if (!Directory.Exists(dir)) return null;
+        foreach (var f in Directory.GetFiles(dir, "*.png"))
+            if (Path.GetFileNameWithoutExtension(f).StartsWith(animation, System.StringComparison.OrdinalIgnoreCase))
+                return f.Replace('\\', '/');
+        return null;
+    }
+
+    static bool TryStripClip(string path, out BillboardAnimator3D.StripClip clip)
+    {
+        clip = default;
+        var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        if (tex == null) return false;
+        var rects = new List<Rect>();
+        foreach (var a in AssetDatabase.LoadAllAssetsAtPath(path))
+            if (a is Sprite sp) rects.Add(sp.rect);
+        int frames = StripFrameCount(tex.width, rects);
+        if (frames <= 0)
+        {
+            Debug.LogWarning($"[unwritten] {path}: couldn't work out its frames from the saved slicing ({rects.Count} pieces).");
+            return false;
+        }
+        clip = new BillboardAnimator3D.StripClip { sheet = tex, frames = frames, footPx = StripFootPx(rects) };
+        return true;
+    }
+
+    /// <summary>How many equal frames a single-row picture holds, from the pieces Unity sliced out of it: the LARGEST
+    /// count that divides the width evenly, keeps every piece inside one frame, and leaves no frame empty. Loose
+    /// flecks sliced as their own pieces sit inside a frame and don't add one. 0 = no count fits.</summary>
+    public static int StripFrameCount(int sheetWidth, IReadOnlyList<Rect> pieces)
+    {
+        if (pieces == null || pieces.Count == 0 || sheetWidth <= 0) return 0;
+        for (int n = sheetWidth; n >= 1; n--)
+        {
+            if (sheetWidth % n != 0) continue;
+            int w = sheetWidth / n;
+            var used = new bool[n];
+            bool fits = true;
+            foreach (var r in pieces)
+            {
+                int first = Mathf.FloorToInt(r.xMin / w), last = Mathf.FloorToInt((r.xMax - 1f) / w);
+                if (first != last || first < 0 || first >= n) { fits = false; break; }
+                used[first] = true;
+            }
+            if (!fits) continue;
+            if (System.Array.TrueForAll(used, u => u)) return n;
+        }
+        return 0;
+    }
+
+    /// <summary>The feet line of a single-row picture, in pixels up from the bottom: the lowest piece's bottom edge.</summary>
+    public static int StripFootPx(IReadOnlyList<Rect> pieces)
+    {
+        float min = float.MaxValue;
+        foreach (var r in pieces) min = Mathf.Min(min, r.yMin);
+        return min == float.MaxValue ? 0 : Mathf.FloorToInt(min);
     }
 
     static string FindMonsterSheet()

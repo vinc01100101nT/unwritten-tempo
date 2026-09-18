@@ -88,6 +88,29 @@ public static class SpriteSheetCache
         return dirs;
     }
 
+    // One animation laid out as a single row of equal frames. Used by the boss art (Idle.png, Walk.png…).
+    static readonly Dictionary<(EntityId tex, int frames, int footPx, int ppu), Sprite[]> rows
+        = new Dictionary<(EntityId, int, int, int), Sprite[]>();
+
+    /// <summary>A single-row animation: <paramref name="frames"/> equal frames across the whole sheet, each
+    /// <c>sheet.width / frames</c> wide and <c>sheet.height</c> tall (not necessarily square). The pivot sits on the
+    /// feet line <paramref name="footPx"/> pixels up from the bottom of the frame, so the sprite renders up from a
+    /// ground-seated transform. <paramref name="ppu"/> is shared by every strip of one creature so they all draw at
+    /// the same pixel size. Shared/read-only.</summary>
+    public static Sprite[] Row(Texture2D sheet, int frames, int footPx, int ppu)
+    {
+        if (sheet == null || frames <= 0 || ppu <= 0) return System.Array.Empty<Sprite>();
+        var key = (sheet.GetEntityId(), frames, footPx, ppu);
+        if (rows.TryGetValue(key, out var cached)) return cached;
+
+        int w = sheet.width / frames, h = sheet.height;
+        var arr = new Sprite[frames];
+        for (int i = 0; i < frames; i++)
+            arr[i] = Sprite.Create(sheet, new Rect(i * w, 0, w, h), new Vector2(0.5f, (float)footPx / h), ppu);
+        rows[key] = arr;
+        return arr;
+    }
+
     /// <summary>One horizontal clip: <paramref name="frames"/> cells of side <paramref name="cell"/>,
     /// read left→right starting at grid (<paramref name="row"/>, <paramref name="col"/>). Row 0 is the
     /// TOP of the sheet (Unity's texture origin is bottom-left). Pivot centred; pixels-per-unit =

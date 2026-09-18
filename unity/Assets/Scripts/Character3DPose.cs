@@ -255,21 +255,28 @@ public class Character3DPose : MonoBehaviour, IStancePose
 
     public void ResumeSelfDrive() { speedTarget = 0f; if (Posable) anim.speed = 1f; GoTo(Loco); }
 
-    float cachedHeight;
-    // World-space rendered height (union of this model's renderer bounds), cached on first successful read. Height
+    float cachedHeight, cachedWidth;
+    // World-space rendered height (union of this model's renderer bounds), cached on first successful read. Size
     // barely varies with pose and callers ask rarely (once per NPC bark), so computing it once is enough.
-    public float VisualWorldHeight
+    public float VisualWorldHeight { get { Measure(); return cachedHeight; } }
+
+    /// <summary>World-space rendered WIDTH — the wider of the two horizontal extents, so it does not shrink when the
+    /// body happens to be stood side-on to the camera. Read from the SAME bounds union as the height, in one pass:
+    /// a second walk over every renderer to answer a sibling question is the duplicate this cache exists to avoid.
+    /// </summary>
+    public float VisualWorldWidth { get { Measure(); return cachedWidth; } }
+
+    // Fills both caches from one bounds union. The height cache doubles as the "already measured" flag, exactly as
+    // it did before, so this stays the memo shape rather than becoming per-call work.
+    void Measure()
     {
-        get
-        {
-            if (cachedHeight > 0f) return cachedHeight;
-            var rends = GetComponentsInChildren<Renderer>();
-            if (rends.Length == 0) return 0f;
-            var b = rends[0].bounds;
-            for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
-            cachedHeight = b.size.y;
-            return cachedHeight;
-        }
+        if (cachedHeight > 0f) return;
+        var rends = GetComponentsInChildren<Renderer>();
+        if (rends.Length == 0) return;
+        var b = rends[0].bounds;
+        for (int i = 1; i < rends.Length; i++) b.Encapsulate(rends[i].bounds);
+        cachedHeight = b.size.y;
+        cachedWidth = Mathf.Max(b.size.x, b.size.z);
     }
 
     /// <summary>World-space facing/aim (XZ) — the model yaws toward it. Called by the 3D visual brain.</summary>

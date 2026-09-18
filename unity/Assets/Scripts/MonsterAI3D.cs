@@ -277,7 +277,7 @@ public class MonsterAI3D : MonoBehaviour
 
         // Floating HP bar + name under the sprite. Auto-added here so EVERY mob gets one (even those baked
         // before the nameplate existed — no re-bake), the training dummy included: a test target that reads
-        // differently from a real mob tests the wrong thing. The boss's bigger plate is configured by
+        // differently from a real mob tests the wrong thing. The boss's name + always-visible bar are configured by
         // BossBanner. DisallowMultipleComponent + this guard avoid a duplicate when one is already present.
         if (!TryGetComponent<MobNameplate>(out _)) gameObject.AddComponent<MobNameplate>();
 
@@ -377,7 +377,7 @@ public class MonsterAI3D : MonoBehaviour
         // says what killing this mob is worth to the player, which is a payout curve, not part of the unit model the
         // player and mobs share. Named so it can't be mistaken for a surviving stat multiplier.
         xpReward = Mathf.Max(xpReward + 1, Mathf.RoundToInt(xpReward * (1f + XpRewardGrowthPerLevel)));
-        DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "Level Up!", LevelUpColor);
+        DamagePopup.SpawnText(transform, "Level Up!", LevelUpColor);
         VfxCue.Fire(VfxCueId.OnLevelUp, transform);
     }
 
@@ -457,7 +457,7 @@ public class MonsterAI3D : MonoBehaviour
             if (stunFx == null) stunFx = StatusFX.Create(transform, stunSheet, stunFrameSize, stunFrames, 12f, 0.7f, 1.15f);
             stunFx.Show(seconds);
         }
-        if (!wasStunned) DamagePopup.SpawnText(UnitAnchor.Overhead(transform), "Stun!", StunColor);
+        if (!wasStunned) DamagePopup.SpawnText(transform, "Stun!", StunColor);
     }
 
     /// <summary>The brain's half of the taunt verb: engage the player NOW rather than waiting to be provoked, and take

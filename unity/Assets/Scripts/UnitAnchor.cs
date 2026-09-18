@@ -36,6 +36,21 @@ public static class UnitAnchor
             ? b.halfHeight
             : HalfHeightFactor * Mathf.Max(0.0001f, t.lossyScale.y);
 
+    /// <summary>How wide this unit's body is, from its middle out to one side, in world units.
+    ///
+    /// <para>Same two answers as <see cref="HalfHeight"/>, for the same reason. A LIVE-3D character states its
+    /// measured width outright, because its root scale is deliberately not its size. A billboard mob has no
+    /// measured width and keeps the scale rule, which is exactly right for it: the sprite IS the root, so the
+    /// horizontal scale is the body's width.</para>
+    ///
+    /// <para>The factor is shared with the height on purpose — a billboard's art sits in the same one-cell box
+    /// with the same transparent padding on every side, so the usable body is the same fraction across as it is
+    /// tall. One number, one place, no second constant to drift.</para></summary>
+    public static float HalfWidth(Transform t)
+        => t.TryGetComponent<UnitBody>(out var b) && b.halfWidth > 0f
+            ? b.halfWidth
+            : HalfHeightFactor * Mathf.Max(0.0001f, t.lossyScale.x);
+
     // The unit's feet on the ground. With the feet-pivot invariant this IS transform.position; kept as a
     // named accessor so callers read intent, not a raw field.
     public static Vector3 Feet(Transform t) => t.position;

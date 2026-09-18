@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-09-13
+last-updated: 2026-09-17
 tags:
   - planning-production
 ---
@@ -40,6 +40,9 @@ Every task carries:
 
 - [DONE] `MT-1` **`[E]` Finish the play-test open since 3 September.** About half its checklist was never run. Start with its one inconclusive item: whether a passive fires when a normal attack lands, and again when something dies. — **2–3 days**
   *Done when:* every line of that checklist reads passed or failed with none unrun, and the passive question has a watched answer either way.
+
+- [DONE] `MT-38` **`[E]` GMCP — let an AI play the built game as text.** The game's MCP: the client runs with no window and answers one text command per line — the screen as text out, the same orders a click gives in (walk, attack, cast, chat, pick up, equip, spend a point, respawn) — behind three plain MCP tools. A tester or debugger can now stand in the world as a second or third player beside you, which the editor alone never could. Doc: `docs/0-process/gmcp-playing-the-game-as-text.md`. — **1 day**
+  *Done when:* three players — a person in the editor and two AI clients with no window — stand in one town and read each other's chat lines. Watched 2026-09-17.
 
 - [DONE] `MT-2` **`[E]` Kill the last descriptions of the deleted equipment window.** The editor-tools catalogue says one tool drops an Inventory/Equipment/Character trio toggled with I, E and C. The window code's own comments still call them a trio and still mention dragging onto a paperdoll. Those stale comments are what misled the first draft of this plan. — **0.5 days**
   *Done when:* no document and no code comment describes an equipment window.

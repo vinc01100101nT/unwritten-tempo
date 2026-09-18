@@ -223,10 +223,11 @@ MonoBehaviour:
   respawnJitter: 3
   fixedMobId: 
   biome: 0
-  minTier: 1
-  maxTier: 4
+  minLevel: 1
+  maxLevel: 99
   includeCommons: 1
   playerClearRadius: 6
+  shadowFraction: 0
 --- !u!4 &9881129
 Transform:
   m_ObjectHideFlags: 0
@@ -13404,51 +13405,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2634346513711636879, guid: 11762379c77749e409f03787aa8292cd, type: 3}
   m_PrefabInstance: {fileID: 1887113207}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1906334095
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1906334097}
-  - component: {fileID: 1906334096}
-  m_Layer: 0
-  m_Name: SpawnPoint_Start
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1906334096
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1906334095}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca4b8f753fd71fa45bca76dc92a7245d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
-  id: Start
---- !u!4 &1906334097
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1906334095}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1915243000
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14654,7 +14610,6 @@ SceneRoots:
   - {fileID: 720252486}
   - {fileID: 1648437123}
   - {fileID: 1800108781}
-  - {fileID: 1906334097}
   - {fileID: 1639449066}
   - {fileID: 937294868}
   - {fileID: 1018144269}

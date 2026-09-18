@@ -60,7 +60,8 @@ public class Character3DVisual : MonoBehaviour
         // player's mid-body at 0.28 instead of 0.164 — which is where a ranged mob was aiming. Prefer the body's own
         // measured height over the authored one so the two can't drift.
         float measured = pose != null ? pose.VisualWorldHeight : 0f;
-        UnitBody.Set(player.gameObject, measured > 1e-3f ? measured : CharacterSpec.Active.bodyHeight);
+        UnitBody.Set(player.gameObject, measured > 1e-3f ? measured : CharacterSpec.Active.bodyHeight,
+                     pose != null ? pose.VisualWorldWidth : 0f);
         attacker = player.GetComponent<Player3DAttacker>();
         stance.SetGaitSource(player);
         hiddenPlayerSprite = player.GetComponent<SpriteRenderer>();

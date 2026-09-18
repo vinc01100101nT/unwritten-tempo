@@ -22,6 +22,9 @@ using TMPro;
 [DisallowMultipleComponent]
 public class BattleNotice : MonoBehaviour
 {
+    /// <summary>Every warning shown above the player, as its text — for a player reading the game as text (AgentLink).</summary>
+    public static event System.Action<string> Warned;
+
     /// <summary>Show a battle warning above the player (default warning colour). Duplicate of a still-showing
     /// message just refreshes its timer instead of stacking a copy (so holding a key doesn't spam the strip).</summary>
     public static void Warn(string message) => Warn(message, WarnColor);
@@ -33,6 +36,7 @@ public class BattleNotice : MonoBehaviour
         // NOBODY TO TELL on a headless server, which resolves everybody's skills and would otherwise build a heads-up
         // display in front of no screen. The twin of Sfx.Deaf and Vfx.Blind, written the same way.
         if (GameServer.IsServer) return;
+        Warned?.Invoke(message);
         Ensure();
         inst.Push(message, color);
     }

@@ -28,6 +28,11 @@ public class DialogBox : MonoBehaviour
 
     public bool IsOpen => panel != null && panel.activeSelf;
 
+    /// <summary>The speaker and every line of the conversation that is open, or null when none is — for a player
+    /// reading the game as text (AgentLink).</summary>
+    public string Speaker => lines != null && speakerText != null ? speakerText.text : null;
+    public System.Collections.Generic.IReadOnlyList<string> Lines => lines;
+
     /// <summary>Open the box on <paramref name="newLines"/> (one per NEXT). <paramref name="closed"/> fires when the
     /// player pages past the end or hits CLOSE (or the caller calls <see cref="Close"/>).</summary>
     public static void Open(string speaker, string[] newLines, Action closed)

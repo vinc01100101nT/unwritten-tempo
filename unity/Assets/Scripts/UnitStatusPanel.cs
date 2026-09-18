@@ -5,18 +5,13 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// The screen-space readout for ANOTHER unit — name, element, HP, MP and its live buffs/debuffs — drawn from ONE
-/// panel implementation and shown in two places at once:
-/// <list type="bullet">
-/// <item><b>Top-center</b> — the mob the player is engaged with (the one wearing the target arrow,
-/// <see cref="Player3DController.AttackTarget"/>). Persists while the fight lasts.</item>
-/// <item><b>Top-right</b> — whatever mob is under the cursor right now
-/// (<see cref="Player3DController.MonsterUnderCursor"/>), which is what this component used to do on its own.</item>
-/// </list>
+/// THE READOUT FOR THE UNIT YOU PICKED A FIGHT WITH — top-center of the screen, showing the one wearing the target
+/// arrow (<see cref="Player3DController.AttackTarget"/>): its name, its element, its HP and MP, its live
+/// buffs/debuffs, and what it is carrying. It stays up for as long as the fight does.
 ///
-/// <para>Both readouts are the SAME <see cref="Panel"/> class with different anchors and widths, so a change to how a
-/// unit is presented lands in both by construction — the hover readout is no longer a second implementation that can
-/// drift from the target one.</para>
+/// <para><b>Merely POINTING at something is not this readout's job</b> — that is <see cref="HoverPlate"/>, which
+/// floats over whoever is under the cursor. This one answers a different question: not "what am I looking at" but
+/// "what am I fighting", which is why it is the one that lists the unit's gear.</para>
 ///
 /// <para>Reads through <see cref="ICombatUnit"/> (HP, MP, state store), so nothing here is mob-specific. Rebuilds its
 /// state icons only when that unit's state SET changes (its store's OnChanged), and rewrites a number only when the
@@ -47,9 +42,7 @@ public class UnitStatusPanel : MonoBehaviour
     static Sprite White => white != null ? white
         : (white = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f)));
 
-    Panel target;   // top-center: the engaged mob
-    Panel hover;    // top-right: the mob under the cursor
-    Camera cam;
+    Panel target;   // top-center: the unit this person is fighting
     Player3DController player;
 
     void Awake()
@@ -59,26 +52,22 @@ public class UnitStatusPanel : MonoBehaviour
         canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 60;   // above the HUD
 
-        // Only the engaged target's icons answer the mouse: the hover readout follows whatever the cursor is over, so
-        // reaching for one of ITS icons would drop the very mob it is describing.
+        // Its icons answer the mouse, because the unit being described stays put while you reach for one — it is
+        // whoever you are fighting, not whoever the cursor happens to be resting on.
         target = new Panel(canvas, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -12f), 260f, true);
-        hover  = new Panel(canvas, new Vector2(1f,   1f), new Vector2(1f,   1f), new Vector2(-12f, -12f), 180f, false);
     }
 
     void OnDestroy()
     {
         target?.Unbind();
-        hover?.Unbind();
     }
 
     void Update()
     {
-        if (cam == null) cam = Camera.main;
         if (player == null && PersistentPlayer3D.Instance != null)
             player = PersistentPlayer3D.Instance.GetComponentInChildren<Player3DController>();
 
         target.Track(player != null ? player.AttackTarget : null);
-        hover.Track(Player3DController.MonsterUnderCursor(cam));
     }
 
     // ── one unit's readout ────────────────────────────────────────────────────

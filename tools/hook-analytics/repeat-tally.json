@@ -1,54 +1,4 @@
 {
-  "07e29be4-4ab9-42bf-b310-7c04d134830f": {
-    "counts": {
-      "build-game.sh": 2,
-      "build-game.sh both": 2,
-      "build-game.sh server": 4,
-      "check-perf-hotpaths.py 2>&1": 1,
-      "check-unity-code.sh 2>&1": 8,
-      "recompile _status": 1,
-      "unwritten-server.app": 7,
-      "unwritten-server.app \"Assembly-CSharp.dll\"": 1,
-      "unwritten-server.app .no-content.txt": 1
-    },
-    "told": [
-      "build-game.sh",
-      "build-game.sh both",
-      "build-game.sh server",
-      "check-unity-code.sh 2>&1",
-      "unwritten-server.app"
-    ]
-  },
-  "299ee55d-a527-4b41-8c2c-bc458145f035": {
-    "counts": {
-      "build-game.sh": 1
-    }
-  },
-  "2c18bf0c-b6b2-42e6-acc2-e434f8bf65e8": {
-    "counts": {
-      "build-game.sh": 3
-    },
-    "told": [
-      "build-game.sh"
-    ]
-  },
-  "3dd5bd25-bf27-4e7c-adcc-458d3f323917": {
-    "counts": {
-      "build-game.sh": 1,
-      "build-game.sh server": 2,
-      "check-unity-code.sh 2>&1": 1,
-      "recompile 120": 1,
-      "recompile _status": 2,
-      "recompile full": 1,
-      "recompile requested\";'": 1,
-      "unwritten-server.app": 1,
-      "unwritten-server.app .no-content.txt;": 1
-    },
-    "told": [
-      "build-game.sh server",
-      "recompile _status"
-    ]
-  },
   "3ea91dff-99e2-4f09-afe2-d7374b950f2f": {
     "counts": {
       "build-game.sh": 3,
@@ -111,6 +61,11 @@
       "recompile 2>&1",
       "recompile _status"
     ]
+  },
+  "9b455eae-e360-4634-a5b1-1471fd7bd6f7": {
+    "counts": {
+      "editor_play \\": 1
+    }
   },
   "a37e24ce-511d-435d-8b56-b728ef073780": {
     "counts": {
@@ -209,6 +164,14 @@
       "unwritten-server.app ];"
     ]
   },
+  "dc78c957-781a-4bde-9ad0-29bc85e6131b": {
+    "counts": {
+      "build-game.sh client": 2
+    },
+    "told": [
+      "build-game.sh client"
+    ]
+  },
   "dceca411-458d-42aa-a1c0-4a274045918e": {
     "counts": {
       "build-game.sh": 2,
@@ -227,6 +190,19 @@
       "recompile 120",
       "recompile _status"
     ]
+  },
+  "de79090c-4d16-4c75-8705-109698ef8e22": {
+    "counts": {
+      "build-game.sh client": 5
+    },
+    "told": [
+      "build-game.sh client"
+    ]
+  },
+  "e93c2c38-4af9-4a71-9dae-74795556cf6d": {
+    "counts": {
+      "build-game.sh client": 1
+    }
   },
   "f0d88296-1594-41db-a1f5-e1626de21316": {
     "counts": {

@@ -234,12 +234,25 @@ public class GroundTargeter : MonoBehaviour
                 circle = Vfx.AttachGroundCircle(circleId, transform, CircleLift, circleRadius, circleTint);
         }
 
-        if (LeftDown() && !PointerOverUI() && hasPoint)
-        {
-            var cb = onConfirm; var pt = point;
-            Cancel();          // leave aim mode BEFORE firing so the skill's cooldown sweep starts cleanly
-            cb?.Invoke(pt);
-        }
+        if (LeftDown() && !PointerOverUI() && hasPoint) Fire(point);
+    }
+
+    /// <summary>Place the skill being aimed at <paramref name="worldPoint"/>, pulled inside its range the same way the
+    /// reticle pulls the cursor — what a left-click does, for a player who names the spot instead (AgentLink).
+    /// Returns false when nothing is being aimed.</summary>
+    public static bool ConfirmAt(Vector3 worldPoint)
+    {
+        if (!Active) return false;
+        Vector3 me = inst.player != null ? inst.player.position : Vector3.zero;
+        inst.Fire(ClampToRange(me, worldPoint, inst.castRange));
+        return true;
+    }
+
+    void Fire(Vector3 pt)
+    {
+        var cb = onConfirm;
+        Cancel();          // leave aim mode BEFORE firing so the skill's cooldown sweep starts cleanly
+        cb?.Invoke(pt);
     }
 
     static bool PointerOverUI() => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();

@@ -153,7 +153,7 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 1. **Spec** (this doc). DONE
 2. **HTML World Creator** — paint + colours + Export/Import + adjacent **and distant** warps. DONE
 3. **Unity World Creator window** — import + validate + Build World loop (both adjacent + distant). DONE — `WorldCreator.cs`, `Tools ▸ unwritten ▸ World ▸ World Creator…`. Per-type content from **template recipe assets** wired into the window; each warp gets a unique paired spawn id `w{i}_from_{map}` so up to 3 stacked warps per border work (why `RegionBuilder.EnsurePortal`, which dedupes by destination, was *not* reused; Build World re-bakes scenes fresh so there's nothing stale to dedupe).
-4. `**RecipeGenerator` exit-points** — paths terminate at portal positions (pads on roads, not mid-field). DONE — `PathRouting.BuildToExits` routes a road from a shared centre hub to each portal doorway (crossroads at the centre Start spawn); `Generate(r, exitPointsXZ)` overload; `WorldCreator.ComputeExits` feeds them, using the same `EdgePoint` as portal placement so pads land on road ends. Portal-less maps fall back to random `pathCount` routes. (Templates need `pathWidth > 0` for roads to render.)
+4. `**RecipeGenerator` exit-points** — paths terminate at portal positions (pads on roads, not mid-field). DONE — `PathRouting.BuildToExits` routes a road from a shared centre hub to each portal doorway (crossroads at the map's centre, where the plaza sits — no arrival point is placed there any more, see 2026-09-18 below); `Generate(r, exitPointsXZ)` overload; `WorldCreator.ComputeExits` feeds them, using the same `EdgePoint` as portal placement so pads land on road ends. Portal-less maps fall back to random `pathCount` routes. (Templates need `pathWidth > 0` for roads to render.)
 5. Retire the old `MapLinkWindow` / `LinkMapsWindow` once Build World covers their job. **DONE** — neither exists in the project any more (checked 2026-08-30). Build World is the only linker.
 
 **The pipeline has been run in anger:** 41 maps sit on disk today — 10 towns, 17 fields, 14 dungeons — all generated through it and all carrying real content.
@@ -167,3 +167,19 @@ One centralized `EditorWindow` (e.g. `Tools ▸ unwritten ▸ World ▸ World Cr
 - [Roadmap to Launch](../1-planning/roadmap-to-launch.md) — the 41 maps this produced, and the M2 gap they still have (no quests, no boss placed).
 - [Unified Unit Stats](../2-systems/active-skill-system-v3/unified-unit-stats.md) — the level bands a generated map spawns against.
 - [Performance Checkup — My Routine](../1-planning/performance-checkup-routine.md) — the field maps this builds are where the stress test runs.
+
+## Arrival points — centre ones removed (2026-09-18)
+
+A map's only arrival points are the ones the World Creator places **beside each door**, one per portal. The map
+generators used to plant one more at every map's exact centre, called `Start`, with nothing checking what stood
+there — and the same generators put the plaza, its props and the treeline on that centre. Arriving on it dropped
+a player through the floor and out of the world, or left them standing on a building.
+
+At the user's instruction all 41 centre points were deleted from the maps and both generators stopped making one,
+so a re-import or a regeneration cannot bring one back. Nothing else changed: `RegionBuilder.MakeSpawn` /
+`EnsureSpawn` and the paired portal placement are exactly as they were.
+
+**What now answers "where do I arrive?"** A door names its own point, as always. Anything arriving without naming
+one — a teleport, a respawn, a brand-new character — takes the map's FIRST arrival point, which is a door's.
+A map with no doors has no arrival point at all, and the arriving body is left where it already stood; 23 maps are
+in that state (every dungeon but two, four fields, seven small towns) pending the respawn rule.

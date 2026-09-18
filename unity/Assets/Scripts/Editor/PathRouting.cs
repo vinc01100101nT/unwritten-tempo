@@ -81,7 +81,7 @@ public static class PathRouting
     /// A straight, plaza-centred <b>cardinal cross</b>: two dead-straight routes through the exact map centre — one
     /// E↔W and one N↔S — so a road runs from the central plaza out to each of the four edge midpoints (N/E/S/W) and
     /// nowhere else. No hub jitter, no wander, no extra spokes. The two routes cross exactly at <paramref name="center"/>,
-    /// which is where the "Start" spawn / plaza sits. Used when a recipe's <c>PathStyle</c> is <c>Cardinal</c>.
+    /// which is where the plaza sits. Used when a recipe's <c>PathStyle</c> is <c>Cardinal</c>.
     /// </summary>
     public static List<Route> BuildCardinal(Vector2 center, float sizeX, float sizeZ)
     {
@@ -110,7 +110,7 @@ public static class PathRouting
     /// Path network for a map whose roads must reach its <b>warp doorways</b>: one winding route from a shared
     /// centre hub out to each exit point in <paramref name="exits"/> (world-XZ positions on the plot rim, e.g. a
     /// portal's edge+offset). All routes share the hub, so they meet as a crossroads in the middle (where the
-    /// "Start" spawn sits) and a road runs to every portal. Used by <see cref="RecipeGenerator"/> when the World
+    /// the plaza sits) and a road runs to every portal. Used by <see cref="RecipeGenerator"/> when the World
     /// Creator passes a map's portal positions; falls back to <see cref="Build"/> for portal-less maps.
     /// Returns empty when there are no exits.
     /// </summary>

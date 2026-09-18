@@ -15,13 +15,14 @@ using UnityEngine;
 /// <list type="bullet">
 /// <item>Mobs: 5 biomes × 4 level bands × <b>3</b> = 60 placed evenly into the cells; any remainder (the 6 of 66)
 ///   become biome-agnostic <b>commons</b> (eligible in every biome's low level band — the universal trash layer).</item>
-/// <item>Bosses: 5 biomes × 4 level bands × <b>1</b> = 20, one per cell, flagged <see cref="MonsterDef.isBoss"/>.</item>
+/// <item>Bosses: one per (biome, level band) cell in folder order, flagged <see cref="MonsterDef.isBoss"/> — 18 today,
+///   because the two split-part dragon folders have no art a creature can be built from.</item>
 /// </list>
 /// Idempotent: an asset that already exists is left untouched, so hand edits + re-runs are safe.
 ///
-/// Sprites don't matter yet: a mob folder's <c>SpriteSheet.png</c> renders directly; boss folders have no
-/// single sheet, so a boss <see cref="MonsterDef.sheet"/> stores its real folder name but rendering falls back
-/// to the default monster sheet today (RigBuilder25D.BuildMonster: <c>MonsterSheet(sheet) ?? MonsterSheet()</c>).
+/// A mob folder's <c>SpriteSheet.png</c> renders directly as a grid; a boss folder has one picture per animation
+/// (Idle.png, Walk.png…), which RigBuilder25D.TryStripArt resolves from the folder name stored in
+/// <see cref="MonsterDef.sheet"/>. A folder with neither is skipped (see RigBuilder25D.HasCreatureArt).
 /// Boss art is a deferred pass.
 /// </summary>
 public static class MobBiomeImporter
@@ -87,10 +88,9 @@ public static class MobBiomeImporter
             "Re-tag any in the Inspector; re-running this never clobbers your edits.", "OK");
     }
 
-    /// <summary>Subfolders of <paramref name="artDir"/> that hold at least one usable sprite sheet, sorted by
-    /// name. A "usable" sheet is any PNG that isn't a <c>Faceset</c> portrait or a <c>*Preview</c> gif/png —
-    /// this catches both the <c>SpriteSheet.png</c> mobs and the ones whose single sheet is named after the
-    /// folder (e.g. <c>Slime/Slime.png</c>), plus the split-file bosses.</summary>
+    /// <summary>Subfolders of <paramref name="artDir"/> holding art a creature can be built from, sorted by name:
+    /// a grid sheet (<c>SpriteSheet.png</c>, or one named after the folder like <c>Slime/Slime.png</c>) or an Idle
+    /// strip (the bosses). Folders with neither — the split-part dragons — are skipped.</summary>
     static List<string> SpriteFolders(string artDir)
     {
         if (!Directory.Exists(artDir)) return new List<string>();
@@ -101,17 +101,7 @@ public static class MobBiomeImporter
             .ToList();
     }
 
-    static bool HasUsableSheet(string dir)
-    {
-        foreach (var f in Directory.GetFiles(dir, "*.png"))
-        {
-            string fn = Path.GetFileNameWithoutExtension(f);
-            if (fn.Equals("Faceset", System.StringComparison.OrdinalIgnoreCase)) continue;
-            if (fn.EndsWith("Preview", System.StringComparison.OrdinalIgnoreCase)) continue;
-            return true;
-        }
-        return false;
-    }
+    static bool HasUsableSheet(string dir) => RigBuilder25D.HasCreatureArt(dir.Replace('\\', '/'));
 
     static bool CreateDef(string folder, bool isBoss, Biome biome, int band, bool common, StringBuilder log)
     {

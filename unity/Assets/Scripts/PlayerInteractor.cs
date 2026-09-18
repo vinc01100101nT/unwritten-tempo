@@ -88,8 +88,11 @@ public class PlayerInteractor : MonoBehaviour
         return dx * dx + dz * dz;
     }
 
-    void StartTalk(TownNPC npc)
+    /// <summary>Start a conversation with <paramref name="npc"/> — what the reach key does when a townsperson is the
+    /// nearest thing. Public for a player who names who to talk to (AgentLink).</summary>
+    public void StartTalk(TownNPC npc)
     {
+        if (npc == null || Talking) return;
         partner = npc;
         Talking = true;
         // THE TOWNSPERSON IS THE SERVER'S TO STOP, not this machine's. The body in front of you is a copy of

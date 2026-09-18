@@ -99,6 +99,13 @@ public class GroundDrop : MonoBehaviour
     /// offered.</summary>
     public const float Reach = 1.4f;
 
+    /// <summary>Every drop this machine knows of, in no order. Read-only; <see cref="Readable"/> says which of them are
+    /// in the map the player is standing in.</summary>
+    public static IReadOnlyList<GroundDrop> All => all;
+
+    /// <summary>True when this drop lies in the player's current map and can be reached for.</summary>
+    public bool Readable => readable;
+
     /// <summary>The drop nearest <paramref name="worldPos"/> within <paramref name="range"/> world units, or null.
     /// Measured flat and squared: flat because a drop at the foot of the step you are standing on is still at
     /// your feet as far as reaching goes, squared because comparing distances never needs the square root.</summary>

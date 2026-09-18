@@ -176,8 +176,9 @@ public static class RecipeGenerator
                 mobs += PlaceMobSpawner(m, mobsRoot.transform, center, r.sizeX, r.sizeZ, r.biome);
             }
 
-        // ── SPAWN ──────────────────────────────────────────────────────────────────────────────────────────
-        RegionBuilder.MakeSpawn(scene, "Start", spawnPos);   // boot/arrival point (World Creator adds warp spawns later)
+        // NO ARRIVAL POINT IS PLANTED HERE. One used to go at the map's centre, where this also puts the plaza and
+        // its props, so arriving there put a player inside a building. The World Creator makes one beside each
+        // door when it links two maps, which is where an arriving player actually comes in.
 
         // ── SAVE + REGISTER ──────────────────────────────────────────────────────────────────────────────
         if (!Directory.Exists(ScenesDir)) AssetDatabase.CreateFolder("Assets", "Scenes");

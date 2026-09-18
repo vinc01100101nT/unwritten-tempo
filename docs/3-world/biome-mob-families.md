@@ -72,22 +72,23 @@ Every Monster sheet gets dropped into one of the biomes. **Assignment is arbitra
 
 ## Counts & division (actual)
 
-- **66 mob folders** (`Actor/Monster/*`, each has `SpriteSheet.png`) + **20 boss folders** (`Actor/Boss/*`).
+- **66 mob folders** (`Actor/Monster/*`, each has `SpriteSheet.png`) + **20 boss folders** (`Actor/Boss/*`), of which **18** are on the roster.
 - Mobs: spread across the 5 biomes, with a handful left as biome-agnostic commons (`Biome.None`).
-- Bosses: **20**, flagged `isBoss` and weighted 0 so the field spawner never rolls them.
-- Boss art isn't billboard-ready (split Idle/Walk files, no single `SpriteSheet.png`). Boss defs store their real folder name in `sheet`, but rendering falls back to the default monster sheet today (`BuildMonster: MonsterSheet(sheet) ?? MonsterSheet()`). Boss art = deferred pass. Bosses are weight 0 so the field spawner never rolls them.
+- Bosses: **18**, flagged `isBoss` and weighted 0 so the field spawner never rolls them.
+- Boss art is one picture per animation (`Idle.png`, `Walk.png`, …), each a single row of front-facing frames. Boss defs store their folder name in `sheet`; `RigBuilder25D.TryStripArt` resolves the Idle picture (played while standing) and the Walk picture, or Jump for the creatures that move by jumping (played while moving), reading each picture's frame count and feet line from the slicing Unity saved on it.
+- **DragonBlue and DragonGreen are not on the roster**: their art is separate body parts (head, body pieces, wing) with no animation picture, and the importer skips any folder with neither a grid sheet nor an Idle picture.
 
 ## Build phases
 
 1. DONE — **Fields**: `MonsterDef` gained `biome` (reusing `Biome`, with `Biome.None` as the commons marker) and a difficulty band. *The band shipped as `tier` and was later replaced by `level`.*
-2. DONE — **Bulk import tool**: **Tools ▸ unwritten ▸ Mobs & NPCs ▸ Import NinjaAdventure Monsters** (`MobBiomeImporter.cs`) scans both folders and creates one `MonsterDef` per folder in `Resources/Monsters`, with a deterministic biome. Idempotent (skips existing). `Editor/TOOLS.md` updated. **It has been run** — 86 assets exist.
+2. DONE — **Bulk import tool**: **Tools ▸ unwritten ▸ Mobs & NPCs ▸ Import NinjaAdventure Monsters** (`MobBiomeImporter.cs`) scans both folders and creates one `MonsterDef` per folder in `Resources/Monsters`, with a deterministic biome. Idempotent (skips existing). `Editor/TOOLS.md` updated. **It has been run** — 84 assets exist.
 3. DONE — **Catalog query**: `MonsterCatalog.WeightedPick(Biome, minLevel, maxLevel, includeCommons)` + `Eligible(...)`; falls back to the unfiltered pick so a map never spawns empty.
 4. DONE — **Generator wiring**: the recipe carries `minLevel`/`maxLevel`/`includeCommons`; `RecipeGenerator.PlaceMobs` plumbs `recipe.biome` + the band in, so an empty Archetype Name draws from the map's biome.
 5. TODO — **Tagging pass**: refine each mob's biome across the roster (only when we care about balance/theme). Levels are already set by the roster reset, so this step is about *theme*, not difficulty.
 
 ## Next step — the import already happened
 
-**Done.** The importer was run and **86 mob definitions sit in `Resources/Monsters`** today (counted 2026-08-30), so the "awaiting first click" note on step 2 above is spent. Generating any recipe draws that map's biome set.
+**Done.** The importer was run and **84 mob definitions sit in `Resources/Monsters`** today (counted 2026-09-17), so the "awaiting first click" note on step 2 above is spent. Generating any recipe draws that map's biome set.
 
 The roster has since been reset onto the shared player/mob stat model — 86 mobs across levels 3–46, every one on its stat-point budget — so a mob's difficulty is its level, not a tier tag.
 

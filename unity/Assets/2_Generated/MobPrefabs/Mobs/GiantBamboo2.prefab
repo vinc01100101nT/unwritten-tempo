@@ -228,12 +228,6 @@ MonoBehaviour:
   xpToFirstLevel: 20
   preferredRange: 0
   fleeHpFraction: 0
-  projectileSheet: {fileID: 0}
-  projFrameSize: 16
-  projFrames: 4
-  projFps: 16
-  projSpeed: 9
-  projScale: 1.1
   stunSheet: {fileID: 0}
   stunFrameSize: 32
   stunFrames: 5
@@ -277,10 +271,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ce5573af86bf78488623cdd460ecfc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BillboardAnimator3D
-  sheet: {fileID: 2800000, guid: 862a9958e55a7a74399198ba8762bd2d, type: 3}
+  sheet: {fileID: 0}
   cell: 16
   walkFrames: 4
   framesPerSecond: 6
+  idleStrip:
+    sheet: {fileID: 2800000, guid: a99131578a5cffe45b50ebd0781556bf, type: 3}
+    frames: 6
+    footPx: 4
+  walkStrip:
+    sheet: {fileID: 2800000, guid: 0b750e966acb42b48a8f174ec3ebea70, type: 3}
+    frames: 12
+    footPx: 1
+  stripPixelsPerUnit: 62
   breathe: 1
   breatheAmount: 0.03
   breatheSpeed: 2.5
@@ -376,7 +379,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossBanner
   bossName: GiantBamboo2
-  worldScale: 0.018
-  barWidth: 92
-  barHeight: 12
-  nameFontSize: 26

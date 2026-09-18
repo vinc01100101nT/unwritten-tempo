@@ -84,6 +84,9 @@ public class TownNPC : MonoBehaviour
     // spawned with HideFlags.DontSaveInEditor, which that call silently omits — so we keep our own list.
     static readonly System.Collections.Generic.List<TownNPC> Active = new System.Collections.Generic.List<TownNPC>();
 
+    /// <summary>Every townsperson live in the loaded map, read-only.</summary>
+    public static System.Collections.Generic.IReadOnlyList<TownNPC> All => Active;
+
     void Awake()
     {
         agent = GetComponent<PathAgent3D>();

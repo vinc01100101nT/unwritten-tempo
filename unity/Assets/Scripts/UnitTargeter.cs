@@ -138,22 +138,31 @@ public class UnitTargeter : MonoBehaviour
         }
         else if (ring.enabled) ring.enabled = false;
 
-        if (LeftDown() && !PointerOverUI() && hoverUnit != null)
-        {
-            // Illegal kind → the exact warning the design asks for. No spend.
-            if (!hoverAllowed)
-            {
-                BattleNotice.Warn(hoverIsPlayer ? "Can't target yourself" : "Can't target mobs");
-                return;
-            }
-            // OUT OF RANGE IS NO LONGER A REFUSAL. Clicking a legal target too far away confirms it and the cast
-            // walks there before firing (SkillRunner.CastTargeted). The ring still reads red while it is out of
-            // reach, so the picture of the distance is unchanged — only the answer to clicking it is.
+        if (LeftDown() && !PointerOverUI() && hoverUnit != null) ConfirmOn(hoverUnit, hoverIsPlayer);
+    }
 
-            var cb = onConfirm; var target = hoverUnit;
-            Cancel();              // leave aim mode BEFORE firing so the skill's cooldown sweep starts cleanly
-            cb?.Invoke(target);
+    /// <summary>Pick <paramref name="unit"/> as the target of the skill being aimed — what a left-click on it does,
+    /// and the one body of that answer, so a click and a player picking by name (AgentLink) are held to the same
+    /// rule. Returns false when nothing is being aimed or the unit's kind is not one this skill may land on.</summary>
+    public static bool ConfirmOn(Transform unit, bool isPlayer)
+    {
+        if (!Active || unit == null) return false;
+
+        // Illegal kind → the exact warning the design asks for. No spend.
+        bool allowed = isPlayer ? (inst.mask & SkillTargets.Player) != 0 : (inst.mask & SkillTargets.Mobs) != 0;
+        if (!allowed)
+        {
+            BattleNotice.Warn(isPlayer ? "Can't target yourself" : "Can't target mobs");
+            return false;
         }
+        // OUT OF RANGE IS NO LONGER A REFUSAL. Clicking a legal target too far away confirms it and the cast
+        // walks there before firing (SkillRunner.CastTargeted). The ring still reads red while it is out of
+        // reach, so the picture of the distance is unchanged — only the answer to clicking it is.
+
+        var cb = inst.onConfirm;
+        Cancel();              // leave aim mode BEFORE firing so the skill's cooldown sweep starts cleanly
+        cb?.Invoke(unit);
+        return true;
     }
 
     // Ring at the unit's FEET, so it reads as a ground marker under the billboard rather than a halo through

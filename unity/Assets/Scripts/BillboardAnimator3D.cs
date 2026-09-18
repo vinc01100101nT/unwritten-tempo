@@ -5,6 +5,10 @@ using UnityEngine;
 /// sheet at RUNTIME (via <see cref="Sprite.Create"/>, like CharacterAnimator2D's attack poses — so
 /// the sheet doesn't need to be pre-sliced in the project) and plays the walk frames based on a
 /// <see cref="PathAgent3D"/>'s motion. Columns are Down/Up/Left/Right; the top rows are walk frames.
+///
+/// <para>Art that comes as one picture per animation instead (the bosses: Idle.png, Walk.png…, each a single row of
+/// front-facing frames) sets <see cref="idleStrip"/> and <see cref="walkStrip"/>, which replace the grid sheet: the
+/// Walk row plays while moving, the Idle row while standing.</para>
 /// </summary>
 [RequireComponent(typeof(SpriteRenderer))]
 public class BillboardAnimator3D : MonoBehaviour
@@ -16,6 +20,25 @@ public class BillboardAnimator3D : MonoBehaviour
     [Tooltip("Walk frames per direction (top rows of each column).")]
     public int walkFrames = 4;
     public float framesPerSecond = 6f;
+
+    [System.Serializable]
+    public struct StripClip
+    {
+        [Tooltip("One animation as a single row of equal frames (e.g. Boss/<Name>/Idle.png). Empty = not used.")]
+        public Texture2D sheet;
+        [Tooltip("How many frames the row holds.")]
+        public int frames;
+        [Tooltip("Pixels from the bottom of a frame up to the creature's feet.")]
+        public int footPx;
+    }
+
+    [Header("Strip art (bosses) — replaces the grid sheet when the idle strip is set")]
+    [Tooltip("Played while standing still.")]
+    public StripClip idleStrip;
+    [Tooltip("Played while moving. Empty = the idle strip plays while moving too.")]
+    public StripClip walkStrip;
+    [Tooltip("Pixels per world unit for both strips, so the two animations draw the creature at the same size.")]
+    public int stripPixelsPerUnit;
 
     [Header("Idle breathing (procedural — the sheets have no idle frames)")]
     [Tooltip("Gentle squash-stretch loop while standing still, so a stopped mob still feels alive.")]
@@ -29,6 +52,8 @@ public class BillboardAnimator3D : MonoBehaviour
     PathAgent3D agent;
     AttackLunge lunge;
     Sprite[] down, up, left, right;
+    Sprite[] idleClip, walkClip;
+    Sprite[] playing;
     Vector2 facing = Vector2.down;
     float timer; int frame;
     Vector3 buildScale;   // authored localScale (UnitScale.ForMob is applied on top of this each frame)
@@ -59,6 +84,15 @@ public class BillboardAnimator3D : MonoBehaviour
 
     void BuildFrames()
     {
+        if (idleStrip.sheet != null)
+        {
+            idleClip  = SpriteSheetCache.Row(idleStrip.sheet, idleStrip.frames, idleStrip.footPx, stripPixelsPerUnit);
+            walkClip = walkStrip.sheet != null
+                ? SpriteSheetCache.Row(walkStrip.sheet, walkStrip.frames, walkStrip.footPx, stripPixelsPerUnit)
+                : idleClip;
+            down = idleClip;
+            return;
+        }
         if (sheet == null) { GameLog.Warn(LogCat.Unwritten, "BillboardAnimator3D has no sheet on " + name); return; }
         // Shared slice cache: all mobs that use the same sheet+cell share ONE set of walk frames instead
         // of each instance allocating its own identical copies in Awake.
@@ -72,9 +106,10 @@ public class BillboardAnimator3D : MonoBehaviour
         bool moving = agent != null && agent.Moving;
         if (moving) facing = agent.Facing;
 
-        var clip = ClipFor(facing);
+        var clip = idleClip != null ? (moving ? walkClip : idleClip) : ClipFor(facing);
         if (clip == null || clip.Length == 0) return;
-        if (moving)
+        if (idleClip != null && clip != playing) { playing = clip; frame = 0; timer = 0f; }
+        if (moving || idleClip != null)
         {
             timer += Time.deltaTime;
             float ft = 1f / Mathf.Max(framesPerSecond, 0.01f);
@@ -91,7 +126,7 @@ public class BillboardAnimator3D : MonoBehaviour
     void ApplyIdleScale(bool moving)
     {
         if (lunge != null && lunge.Punching) return;
-        if (breathe && !moving)
+        if (breathe && !moving && idleClip == null)
         {
             float e = Mathf.Sin(Time.time * breatheSpeed + breathePhase);
             transform.localScale = new Vector3(

@@ -1,7 +1,7 @@
 ---
 status:
 owner: vince
-last-updated: 2026-08-30
+last-updated: 2026-09-17
 tags:
 ---
 
@@ -15,6 +15,7 @@ The folders match the sections below, so the file tree and this index say the sa
 
 - [The Three-Brain Design Process](0-process/design-process.md) — the standing Claude+Vince+GPT workflow for designing any system (frame → ideate → filter → co-design → validate → stress-test → review → lock+document). Reuse for every design unit.
 - [Reading the Game Log](0-process/reading-the-game-log.md) — the categorised game log: which categories exist, how to switch them on, and the three questions it answers that nothing else can. Read before any play-test.
+- [GMCP — Playing the Game as Text](0-process/gmcp-playing-the-game-as-text.md) — the game's MCP: an AI plays the built client with no window, reading the screen as text and giving the orders a click gives; three players met in-game this way on 2026-09-17.
 
 ## Planning & production
 

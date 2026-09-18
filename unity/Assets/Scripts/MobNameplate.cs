@@ -69,7 +69,7 @@ public class MobNameplate : MonoBehaviour
 
     void Awake()
     {
-        // Used by regular mobs AND the field boss (the boss just gets a bigger one — see BossBanner).
+        // Used by regular mobs AND the field boss (the boss keeps its name and an always-visible bar — see BossBanner).
         health = GetComponent<Health>();
         if (string.IsNullOrEmpty(displayName))
             displayName = gameObject.name.StartsWith("Monster_") ? gameObject.name.Substring("Monster_".Length)
@@ -278,6 +278,17 @@ public class MobNameplate : MonoBehaviour
     }
 
     // ---- shared resources --------------------------------------------------------------------------
+
+    /// <summary>The ONE world-space canvas every floating unit widget hangs under, and the two shared drawing
+    /// resources that go with it. Opened up so a second world widget cannot quietly start a second canvas, a
+    /// second material and a second white sprite of its own — which is three copies of the thing this class was
+    /// written to keep single.</summary>
+    internal static Transform SharedHost { get { EnsureHost(); return host; } }
+
+    internal static Material SharedOnTop => OnTop;
+
+    internal static Sprite SharedWhite => White;
+
     static void EnsureHost()
     {
         if (host != null) return;                           // alive (Unity-null check); recreated after a scene unload

@@ -64,7 +64,7 @@ public class MapPainterImporter : EditorWindow
     Target _target = Target.NewScene;
     // When merging into the open scene, each category the author ticks is WIPED (its prior import) and rebuilt from the
     // JSON; unticked categories are left exactly as they are. Lets you re-import just the ground and keep hand-placed props.
-    bool _impGround = true, _impProps = true, _impWalls = true, _impSpawn = true;
+    bool _impGround = true, _impProps = true, _impWalls = true;
 
     [MenuItem("Tools/unwritten/World/Import Painted Map…", priority = 181)]
     static void Open()
@@ -122,13 +122,12 @@ public class MapPainterImporter : EditorWindow
             _impGround = EditorGUILayout.ToggleLeft(new GUIContent("Ground", "Replace the blended ground mesh (Ground_*)"), _impGround);
             _impProps  = EditorGUILayout.ToggleLeft(new GUIContent("Props", "Replace the painted props (the 'Props' group)"), _impProps);
             _impWalls  = EditorGUILayout.ToggleLeft(new GUIContent("Walls", "Replace the autotiled wall kit (the 'Wall' group)"), _impWalls);
-            _impSpawn  = EditorGUILayout.ToggleLeft(new GUIContent("Spawn point", "Replace the 'Start' arrival point"), _impSpawn);
         }
 
         EditorGUILayout.Space();
         bool jsonOk = !string.IsNullOrEmpty(_jsonPath) && File.Exists(_jsonPath);
         bool ready = jsonOk && (_target == Target.NewScene ? !string.IsNullOrWhiteSpace(_mapName)
-                                                           : openSaved && (_impGround || _impProps || _impWalls || _impSpawn));
+                                                           : openSaved && (_impGround || _impProps || _impWalls));
         using (new EditorGUI.DisabledScope(!ready))
             if (GUILayout.Button(_target == Target.NewScene ? "Import & Bake Scene" : "Merge Into Open Scene", GUILayout.Height(34)))
                 Import();
@@ -211,7 +210,6 @@ public class MapPainterImporter : EditorWindow
         bool doGround = !open || _impGround;
         bool doProps  = !open || _impProps;
         bool doWalls  = !open || _impWalls;
-        bool doSpawn  = !open || _impSpawn;
 
         string safe, scenePath;
         Scene scene;
@@ -222,7 +220,7 @@ public class MapPainterImporter : EditorWindow
             { EditorUtility.DisplayDialog("Import Painted Map", "Open and save a scene in Unity first, then re-run — that scene is the merge target.", "OK"); return; }
             scenePath = scene.path;
             safe = Sanitize(scene.name);
-            ClearImported(scene, doGround, doProps, doWalls, doSpawn);
+            ClearImported(scene, doGround, doProps, doWalls);
         }
         else
         {
@@ -424,9 +422,7 @@ public class MapPainterImporter : EditorWindow
             walls = AutotileWalls(wallCells, pathF, wallsRoot.transform, sizeX, sizeZ, cellSize, cols, rows, mask, WallKitScale, safe);
         }
 
-        // ── SPAWN (boot/arrival point; warps added later via MapLinker) ──────────────────────────────────
-        if (doSpawn)
-            RegionBuilder.MakeSpawn(scene, "Start", WorldBuildUtil.SurfacePoint(Vector3.zero, mask));
+        // NO ARRIVAL POINT IS PLANTED HERE — see RecipeGenerator for why. MapLinker makes one beside each door.
 
         // ── SAVE + REGISTER ──────────────────────────────────────────────────────────────────────────────
         if (open)
@@ -450,7 +446,6 @@ public class MapPainterImporter : EditorWindow
         if (doProps)  parts.Add($"{placed} props ({decor} walk-through)");
         if (doWalls)  parts.Add($"{walls} autotiled wall piece(s)");
         if (doGround) parts.Add($"ground {cols}×{rows} cells ({sizeX}×{sizeZ} u)" + (hasElevation ? " · elevated (gutters/steps + cliff collision)" : " · flat"));
-        if (doSpawn)  parts.Add("spawn point");
         string verb = open ? "Merged into" : "Imported";
         var msg = $"{verb} '{safe}':\n• " + string.Join("\n• ", parts) + $"\n→ {scenePath}";
         if (missing.Count  > 0) msg += "\n\n⚠ Missing prefabs (skipped): " + string.Join(", ", missing);
@@ -460,10 +455,9 @@ public class MapPainterImporter : EditorWindow
     }
 
     // Remove a prior import's category objects from the scene so the ticked ones can be rebuilt cleanly. Ground mesh =
-    // "Ground_*", props group = "Props", wall kit = "Wall". The spawn is matched by its SpawnPoint COMPONENT id, NOT the
-    // GameObject name — MakeSpawn names it "SpawnPoint_Start" (the name check "Start" never matched, so old Start spawns
-    // piled up on every re-import). Only the "Start" arrival is wiped; portal arrival spawns (w{i}_from_*) are left.
-    static void ClearImported(Scene scene, bool ground, bool props, bool walls, bool spawn)
+    // "Ground_*", props group = "Props", wall kit = "Wall". Arrival points are never touched: this tool no longer makes
+    // one, and the ones beside the doors belong to the World Creator.
+    static void ClearImported(Scene scene, bool ground, bool props, bool walls)
     {
         foreach (var go in scene.GetRootGameObjects())
         {
@@ -471,7 +465,6 @@ public class MapPainterImporter : EditorWindow
             if (ground && n.StartsWith("Ground_")) { Object.DestroyImmediate(go); continue; }
             if (props && n == "Props")             { Object.DestroyImmediate(go); continue; }
             if (walls && n == "Wall")              { Object.DestroyImmediate(go); continue; }
-            if (spawn) { var sp = go.GetComponent<SpawnPoint>(); if (sp != null && sp.id == "Start") { Object.DestroyImmediate(go); continue; } }
         }
     }
 

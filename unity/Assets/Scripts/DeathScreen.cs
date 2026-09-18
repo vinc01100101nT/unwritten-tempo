@@ -29,7 +29,9 @@ public class DeathScreen : MonoBehaviour
     Character character;
     bool building;
 
-    void Awake() => Build();
+    static DeathScreen instance;   // the one respawn button, so PressRespawn needs no scene search
+
+    void Awake() { instance = this; Build(); }
 
     void Start()
     {
@@ -38,7 +40,11 @@ public class DeathScreen : MonoBehaviour
         Hide();
     }
 
-    void OnDestroy() { if (character != null) character.OnDied -= Show; }
+    void OnDestroy()
+    {
+        if (character != null) character.OnDied -= Show;
+        if (instance == this) instance = null;
+    }
 
     // ---- flow -----------------------------------------------------------------
 
@@ -95,6 +101,17 @@ public class DeathScreen : MonoBehaviour
         countdown.text = "";
         SetButtonEnabled(true);
         building = false;
+    }
+
+    /// <summary>Press the respawn button, if there is one to press. False while dead-but-still-counting-down, and when
+    /// nobody is dead. For a player who is not using a mouse (AgentLink); the button itself goes through the same body.</summary>
+    public static bool PressRespawn()
+    {
+        var screen = instance;
+        if (Character.Instance == null || !Character.Instance.IsDead) return false;
+        if (screen == null || screen.respawnButton == null || !screen.respawnButton.interactable) return false;
+        screen.OnRespawnClicked();
+        return true;
     }
 
     void OnRespawnClicked()

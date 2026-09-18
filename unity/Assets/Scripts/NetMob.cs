@@ -95,6 +95,14 @@ public class NetMob : NetworkBehaviour
     /// none of it out. PRIVATE for the same reason the map name is: the wire carries it, the saved prefab does not.</summary>
     [SyncVar(hook = nameof(OnWornArrived))] string worn = "";
 
+    /// <summary>The states of the creature this shell speaks for, as the SERVER holds them — the real store its
+    /// buffs are decided against. Null on a watching machine, which owns no creature.</summary>
+    public UnitStates ServerStates => serverHealth != null ? serverHealth.States : null;
+
+    /// <summary>The store on the body THIS machine drew for this creature, which is where a watcher's copy of its
+    /// buffs is kept and where every readout already looks. Null until that body has arrived.</summary>
+    public UnitStates WatchedStates => viewHealth != null ? viewHealth.States : null;
+
     /// <summary>What this creature wears, as the server wrote it (<see cref="WornList"/>) — read by the hover and target
     /// panel. The same string object until the server sends a different one, so a reader can notice a change by reference.</summary>
     public string WornText => worn;

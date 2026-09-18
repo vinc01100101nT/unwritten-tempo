@@ -273,8 +273,22 @@ public class ChatController : MonoBehaviour
         }
     }
 
+    /// <summary>Every row the chat log gains, as the text it was given — raised whether or not the log is drawn, so a
+    /// player reading the game as text (AgentLink) sees exactly the rows a player reading the screen does.</summary>
+    public static event System.Action<string> LineAdded;
+
+    /// <summary>Send a line exactly as if it were typed into the chat box and Enter pressed: a /command runs, anything
+    /// else is said out loud. False when there is no chat to type into.</summary>
+    public static bool Send(string text)
+    {
+        if (instance == null || string.IsNullOrWhiteSpace(text)) return false;
+        instance.Submit(text.Trim());
+        return true;
+    }
+
     void AddLine(string message)
     {
+        LineAdded?.Invoke(message);
         if (logContent == null) return;
 
         var t = UiKit.MakeText("Line", logContent, message, 14, FontStyle.Normal, TextAnchor.UpperLeft);
